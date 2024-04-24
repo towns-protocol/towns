@@ -1,25 +1,16 @@
-import { Request, Response } from 'express'
-import { StatusCodes } from 'http-status-codes'
-import { database } from '../../infrastructure/database/prisma'
-import { logger } from '../logger'
 import {
     DeleteUserSettingsSchema,
     GetUserSettingsSchema,
-    SaveUserSettingsSchema,
     PatchUserSettingsSchema,
+    SaveUserSettingsSchema,
 } from '../../types'
 import { Prisma, UserSettings } from '@prisma/client'
+import { Request, Response } from 'express'
 
-let StreamsMonitorService:
-    | { instance: { addNewStreamsToDB: (arg0: Set<string>) => void } }
-    | undefined
-;(async () => {
-    if (process.env.NODE_ENV !== 'test') {
-        StreamsMonitorService = await import('../services/stream/streamsMonitorService').then(
-            (module) => module.StreamsMonitorService,
-        )
-    }
-})()
+import { StatusCodes } from 'http-status-codes'
+import { streamsMonitorService } from '../../serviceLoader'
+import { database } from '../../infrastructure/database/prisma'
+import { logger } from '../logger'
 
 export async function saveNotificationSettingsHandler(req: Request, res: Response) {
     const payload: SaveUserSettingsSchema = req.body
@@ -199,8 +190,8 @@ async function upsertChannelAndSpaceSettings(
 
     await Promise.all(upserts)
 
-    if (channelIds.size > 0 && StreamsMonitorService) {
-        StreamsMonitorService.instance.addNewStreamsToDB(channelIds)
+    if (channelIds.size > 0 && streamsMonitorService) {
+        streamsMonitorService.addNewStreamsToDB(channelIds)
     }
 }
 

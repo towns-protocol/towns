@@ -15,14 +15,15 @@ import assert from 'assert'
 import { nanoid } from 'nanoid'
 
 import { StreamRpcClient, errorContains } from '../../../infrastructure/rpc/streamRpcClient'
-import { bin_toHexString, streamIdToBytes, userIdFromAddress } from './utils'
+import { bin_toHexString, streamIdFromBytes, streamIdToBytes, userIdFromAddress } from './utils'
 import { database } from '../../../infrastructure/database/prisma'
 import { ParsedEvent, ParsedMiniblock, ParsedStreamAndCookie } from './types'
 import { NotifyUser, notificationService } from '../notificationService'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './id'
-import { StreamKind, SyncedStream } from '@prisma/client'
+import { Mute, StreamKind, SyncedStream } from '@prisma/client'
 import { NotificationKind, NotifyUsersSchema } from '../../../types'
 import { createLogger } from '../logger'
+import { streamsMonitorService } from '../../../serviceLoader'
 
 const logger = createLogger('syncedStreams')
 
@@ -821,7 +822,11 @@ export class SyncedStreams {
         const { op } = value
         if (op === MembershipOp.SO_JOIN) {
             const userAddress = userIdFromAddress(value.userAddress)
+            const parentStreamId = value.streamParentId
+                ? streamIdFromBytes(value.streamParentId)
+                : ''
             logger.info(`stream ${streamId} membership update SO_JOIN for user ${userAddress}`, {
+                parentStreamId: parentStreamId,
                 streamId,
                 userAddress,
             })
@@ -836,6 +841,8 @@ export class SyncedStreams {
                     },
                 })
             }
+            await this.addJoinedUserToChannelSettings(parentStreamId, streamId, userAddress)
+            await streamsMonitorService?.addNewStreamsToDB(new Set([streamId]))
         }
         if (op === MembershipOp.SO_LEAVE) {
             const userAddress = userIdFromAddress(value.userAddress)
@@ -854,7 +861,50 @@ export class SyncedStreams {
                     },
                 })
             }
+            await this.removeLeftUserFromChannelSettings(streamId, userAddress)
         }
+    }
+
+    private async addJoinedUserToChannelSettings(
+        spaceId: string,
+        channelId: string,
+        userId: string,
+    ) {
+        logger.info('add user who had joined the channel', {
+            spaceId,
+            channelId,
+            userId,
+        })
+        await database.userSettingsChannel.upsert({
+            where: {
+                ChannelId_UserId: {
+                    ChannelId: channelId,
+                    UserId: userId,
+                },
+            },
+            update: {},
+            create: {
+                ChannelId: channelId,
+                UserId: userId,
+                SpaceId: spaceId,
+                ChannelMute: Mute.default,
+            },
+        })
+    }
+
+    private async removeLeftUserFromChannelSettings(channelId: string, userId: string) {
+        logger.info('remove user who had left the channel', {
+            channelId,
+            userId,
+        })
+        await database.userSettingsChannel.delete({
+            where: {
+                ChannelId_UserId: {
+                    ChannelId: channelId,
+                    UserId: userId,
+                },
+            },
+        })
     }
 
     private async dispatchNotification(

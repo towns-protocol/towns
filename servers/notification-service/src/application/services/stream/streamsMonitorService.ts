@@ -1,18 +1,20 @@
-import { database } from '../../../infrastructure/database/prisma'
-import { StreamKind } from '@prisma/client'
+import { Err, MemberPayload_Membership, MembershipOp, MiniblockHeader } from '@river-build/proto'
 import {
     StreamRpcClient,
     errorContains,
     makeStreamRpcClient,
 } from '../../../infrastructure/rpc/streamRpcClient'
-import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './id'
 import { SyncedStreams, unpackStream } from './syncedStreams'
+import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './id'
 import { streamIdFromBytes, streamIdToBytes, userIdFromAddress } from './utils'
-import { env } from '../../utils/environment'
-import assert from 'assert'
-import { Err, MemberPayload_Membership, MembershipOp, MiniblockHeader } from '@river-build/proto'
+
+import { IStreamsMonitorService as IStreamsMonitorService } from '../../../serviceLoader'
 import { ParsedStreamAndCookie } from './types'
+import { StreamKind } from '@prisma/client'
+import assert from 'assert'
 import { createLogger } from '../logger'
+import { database } from '../../../infrastructure/database/prisma'
+import { env } from '../../utils/environment'
 
 const logger = createLogger('streamsMonitorService')
 
@@ -22,7 +24,7 @@ type StreamsMetadata = {
     }
 }
 
-export class StreamsMonitorService {
+export class StreamsMonitorService implements IStreamsMonitorService {
     private rpcClient: StreamRpcClient = makeStreamRpcClient()
     private streams: SyncedStreams = new SyncedStreams(this.rpcClient)
     private intervalId: NodeJS.Timeout | null = null
@@ -80,7 +82,8 @@ export class StreamsMonitorService {
         return ''
     }
 
-    private async addDMSyncStreamToDB(streamId: string): Promise<void> {
+    private async addDMSyncStreamToDB(streamId: string): Promise<Set<string>> {
+        const currentMembers = new Set<string>()
         logger.info(`adding DM ${streamId} to db`, { streamId })
 
         this.validateStream(streamId, StreamKind.DM)
@@ -97,7 +100,7 @@ export class StreamsMonitorService {
         }
 
         if (unpacked.miniblocks.length === 0) {
-            return
+            return currentMembers
         }
 
         let inceptionFound = false
@@ -110,13 +113,16 @@ export class StreamsMonitorService {
                 inceptionFound = true
 
                 const { firstPartyAddress, secondPartyAddress } = payload.value.content.value
+                if (firstPartyAddress) {
+                    currentMembers.add(userIdFromAddress(firstPartyAddress))
+                }
+                if (secondPartyAddress) {
+                    currentMembers.add(userIdFromAddress(secondPartyAddress))
+                }
                 await database.syncedStream.create({
                     data: {
                         StreamId: streamId,
-                        UserIds: [
-                            userIdFromAddress(firstPartyAddress),
-                            userIdFromAddress(secondPartyAddress),
-                        ],
+                        UserIds: Array.from(currentMembers),
                         Kind: StreamKind.DM,
                         SyncCookie: response.stream?.nextSyncCookie?.toJsonString() || '',
                     },
@@ -135,13 +141,16 @@ export class StreamsMonitorService {
                 logger.info('new DM snapshot, storing user ids')
 
                 const { firstPartyAddress, secondPartyAddress } = inception
+                if (firstPartyAddress) {
+                    currentMembers.add(userIdFromAddress(firstPartyAddress))
+                }
+                if (secondPartyAddress) {
+                    currentMembers.add(userIdFromAddress(secondPartyAddress))
+                }
                 await database.syncedStream.create({
                     data: {
                         StreamId: streamId,
-                        UserIds: [
-                            userIdFromAddress(firstPartyAddress),
-                            userIdFromAddress(secondPartyAddress),
-                        ],
+                        UserIds: Array.from(currentMembers),
                         Kind: StreamKind.DM,
                         SyncCookie: response.stream?.nextSyncCookie?.toJsonString() || '',
                     },
@@ -156,40 +165,71 @@ export class StreamsMonitorService {
         if (!inceptionFound) {
             logger.error('no inception found for DM channel', { streamId })
         }
+        return currentMembers
     }
 
-    private async addGDMStreamToDB(streamId: string): Promise<void> {
+    private async addGDMStreamToDB(streamId: string): Promise<Set<string>> {
         logger.info(`adding gdm ${streamId} to db`, { streamId })
         this.validateStream(streamId, StreamKind.GDM)
         const unpacked = await this.getAndParseStream(streamId)
-        const userIds = this.getUserIdsFromChannelOrGDMStreams(unpacked)
+        const currentMembers = this.getUserIdsFromChannelOrGDMStreams(unpacked)
         await database.syncedStream.create({
             data: {
                 StreamId: streamId,
                 Kind: StreamKind.GDM,
                 SyncCookie: unpacked?.nextSyncCookie?.toJsonString() || '',
-                UserIds: Array.from(userIds),
+                UserIds: Array.from(currentMembers),
             },
         })
+        return currentMembers
     }
 
-    private async addChannelStreamToDB(streamId: string): Promise<void> {
+    private async addChannelStreamToDB(streamId: string): Promise<Set<string>> {
         logger.info(`adding channel ${streamId} to db`, { streamId })
         this.validateStream(streamId, StreamKind.Channel)
         const unpacked = await this.getAndParseStream(streamId)
-        const userIds = this.getUserIdsFromChannelOrGDMStreams(unpacked)
+        const currentMembers = this.getUserIdsFromChannelOrGDMStreams(unpacked)
         await database.syncedStream.create({
             data: {
                 StreamId: streamId,
                 Kind: StreamKind.Channel,
                 SyncCookie: unpacked?.nextSyncCookie?.toJsonString() || '',
-                UserIds: Array.from(userIds),
+                UserIds: Array.from(currentMembers),
             },
         })
+        return currentMembers
     }
 
-    private getUserIdsFromChannelOrGDMStreams(unpacked: ParsedStreamAndCookie) {
-        const userIds = new Set<string>()
+    private async removeNonMembersFromChannelSettings(
+        streamId: string,
+        currentMembers: Set<string>,
+    ) {
+        const nonMembers = await database.userSettingsChannel.findMany({
+            where: {
+                ChannelId: streamId,
+                UserId: {
+                    notIn: Array.from(currentMembers),
+                },
+            },
+        })
+        if (nonMembers.length > 0) {
+            logger.info('removing non-members from channel settings', {
+                streamId,
+                nonMembers,
+            })
+            await database.userSettingsChannel.deleteMany({
+                where: {
+                    ChannelId: streamId,
+                    UserId: {
+                        notIn: Array.from(currentMembers),
+                    },
+                },
+            })
+        }
+    }
+
+    private getUserIdsFromChannelOrGDMStreams(unpacked: ParsedStreamAndCookie): Set<string> {
+        const currentMembers = new Set<string>()
         for (const miniblock of unpacked.miniblocks) {
             for (const envelope of miniblock.events) {
                 const isMembershipUpdate =
@@ -215,8 +255,8 @@ export class StreamsMonitorService {
                                 userAddress,
                             },
                         )
-                        if (!userIds.has(userAddress)) {
-                            userIds.add(userAddress)
+                        if (!currentMembers.has(userAddress)) {
+                            currentMembers.add(userAddress)
                         }
                     }
                     if (op === MembershipOp.SO_LEAVE) {
@@ -230,8 +270,8 @@ export class StreamsMonitorService {
                                 userAddress,
                             },
                         )
-                        if (userIds.has(userAddress)) {
-                            userIds.delete(userAddress)
+                        if (currentMembers.has(userAddress)) {
+                            currentMembers.delete(userAddress)
                         }
                     }
                 } else if (isSnapshot) {
@@ -240,12 +280,12 @@ export class StreamsMonitorService {
                         continue
                     }
                     for (const member of snapshot.members.joined) {
-                        userIds.add(userIdFromAddress(member.userAddress))
+                        currentMembers.add(userIdFromAddress(member.userAddress))
                     }
                 }
             }
         }
-        return userIds
+        return currentMembers
     }
 
     private async getAndParseStream(streamId: string): Promise<ParsedStreamAndCookie> {
@@ -379,7 +419,8 @@ export class StreamsMonitorService {
             const p = async () => {
                 try {
                     logger.info(`new dm stream ${streamId}`, { streamId })
-                    await this.addDMSyncStreamToDB(streamId)
+                    const currentMembers = await this.addDMSyncStreamToDB(streamId)
+                    await this.removeNonMembersFromChannelSettings(streamId, currentMembers)
                 } catch (error) {
                     if (errorContains(error, Err.NOT_FOUND)) {
                         logger.info(`DM ${streamId} stream not found`)
@@ -394,7 +435,8 @@ export class StreamsMonitorService {
         for (const streamId of streamsMetadata.GDM.streamIds) {
             const p = async () => {
                 try {
-                    await this.addGDMStreamToDB(streamId)
+                    const currentMembers = await this.addGDMStreamToDB(streamId)
+                    await this.removeNonMembersFromChannelSettings(streamId, currentMembers)
                 } catch (error) {
                     if (errorContains(error, Err.NOT_FOUND)) {
                         logger.info(`GDM ${streamId} stream not found`)
@@ -409,7 +451,8 @@ export class StreamsMonitorService {
         for (const streamId of streamsMetadata.Channel.streamIds) {
             const p = async () => {
                 try {
-                    await this.addChannelStreamToDB(streamId)
+                    const currentMembers = await this.addChannelStreamToDB(streamId)
+                    await this.removeNonMembersFromChannelSettings(streamId, currentMembers)
                 } catch (error) {
                     if (errorContains(error, Err.NOT_FOUND)) {
                         logger.info(`Channel ${streamId} stream not found`)
@@ -443,12 +486,14 @@ export class StreamsMonitorService {
         return this.processStreamsMetadata(streamsMetadata)
     }
 
-    private async removeStaleStreams() {
+    private async removeStaleStreams(): Promise<void> {
         const channelIds = (
             await database.userSettingsChannel.findMany({
                 select: { ChannelId: true },
+                distinct: ['ChannelId'],
             })
         ).map((s) => s.ChannelId)
+
         const staleStreams = (
             await database.syncedStream.findMany({
                 select: { StreamId: true },
@@ -463,7 +508,7 @@ export class StreamsMonitorService {
         ).map((s) => s.StreamId)
 
         if (staleStreams.length > 0) {
-            logger.info(`removeStaleStreams ${staleStreams.length}`, {
+            logger.info('deleting stale streams from database', {
                 staleStreams,
             })
             await database.syncedStream.deleteMany({
@@ -472,6 +517,21 @@ export class StreamsMonitorService {
                         in: staleStreams,
                     },
                 },
+            })
+
+            logger.info('removing stale streams from sync', { staleStreams })
+            const removePromises: Promise<void>[] = []
+            staleStreams.forEach((streamId) => {
+                removePromises.push(this.streams.removeStreamFromSync(streamId))
+            })
+            const allSettled = await Promise.allSettled(removePromises)
+            allSettled.forEach((p, i) => {
+                if (p.status === 'rejected') {
+                    logger.error('failed to remove stream from sync', {
+                        streamId: staleStreams[i],
+                        error: p.reason,
+                    })
+                }
             })
         }
     }
