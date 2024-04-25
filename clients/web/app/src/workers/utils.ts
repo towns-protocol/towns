@@ -11,7 +11,7 @@ export async function checkClientIsVisible(worker: ServiceWorkerGlobalScope): Pr
     })
 
     for (let i = 0; i < windowClients.length; i++) {
-        if (windowClients[i].visibilityState === 'visible') {
+        if (windowClients[i].focused) {
             return true
         }
     }
