@@ -52,7 +52,7 @@
         "sampleapp:build": "turbo build --filter sample-app",
         "syncpack:check": "syncpack list-mismatches",
         "syncpack:fix": "syncpack fix-mismatches && syncpack format",
-        "test": "turbo test  $(yarn csb:list:exclude:filter) --filter=!@towns/userops  --filter=!notification-service --filter=!use-towns-client && yarn csb:turbo",
+        "test": "turbo test  $(yarn csb:list:exclude:filter) --filter=!@towns/userops --filter=!use-towns-client && yarn csb:turbo",
         "test:unit": "turbo test:unit -- --silent",
         "worker:wait:stackup": "wait-on tcp:127.0.0.1:${PORT:-8686} --timeout=900000 --i=5000 --verbose",
         "workers:build": "turbo build --filter gateway-worker --filter siwe-worker --filter token-worker --filter unfurl-worker --filter jwt-worker"
