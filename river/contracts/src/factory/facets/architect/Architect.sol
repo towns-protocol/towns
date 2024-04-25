@@ -3,11 +3,9 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IArchitect} from "contracts/src/factory/facets/architect/IArchitect.sol";
-import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
-import {IWalletLink} from "contracts/src/river/wallet-link/IWalletLink.sol";
+import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
 import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
 import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
-import {IEntitlementChecker} from "contracts/src/crosschain/checker/IEntitlementChecker.sol";
 
 // libraries
 
@@ -29,16 +27,12 @@ contract Architect is
   function __Architect_init(
     ISpaceOwner ownerImplementation,
     IUserEntitlement userEntitlementImplementation,
-    IRuleEntitlement ruleEntitlementImplementation,
-    IWalletLink walletLink,
-    IEntitlementChecker entitlementChecker
+    IRuleEntitlement ruleEntitlementImplementation
   ) external onlyInitializing {
     _setImplementations(
       ownerImplementation,
       userEntitlementImplementation,
-      ruleEntitlementImplementation,
-      walletLink,
-      entitlementChecker
+      ruleEntitlementImplementation
     );
   }
 
@@ -66,16 +60,12 @@ contract Architect is
   function setSpaceArchitectImplementations(
     ISpaceOwner spaceToken,
     IUserEntitlement userEntitlementImplementation,
-    IRuleEntitlement ruleEntitlementImplementation,
-    IWalletLink walletLink,
-    IEntitlementChecker entitlementChecker
+    IRuleEntitlement ruleEntitlementImplementation
   ) external onlyOwner {
     _setImplementations(
       spaceToken,
       userEntitlementImplementation,
-      ruleEntitlementImplementation,
-      walletLink,
-      entitlementChecker
+      ruleEntitlementImplementation
     );
   }
 
@@ -85,9 +75,7 @@ contract Architect is
     returns (
       ISpaceOwner spaceToken,
       IUserEntitlement userEntitlementImplementation,
-      IRuleEntitlement ruleEntitlementImplementation,
-      IWalletLink walletLink,
-      IEntitlementChecker entitlementChecker
+      IRuleEntitlement ruleEntitlementImplementation
     )
   {
     return _getImplementations();

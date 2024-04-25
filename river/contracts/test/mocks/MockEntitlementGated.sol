@@ -1,29 +1,28 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.23;
 
-import {IEntitlementChecker} from "contracts/src/crosschain/checker/IEntitlementChecker.sol";
-import {EntitlementGated} from "contracts/src/crosschain/EntitlementGated.sol";
-import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
-import {console2} from "forge-std/console2.sol";
+import {IEntitlementChecker} from "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
+import {EntitlementGated} from "contracts/src/spaces/facets/gated/EntitlementGated.sol";
+import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
 
 contract MockEntitlementGated is EntitlementGated {
-  IEntitlementChecker internal _entitlementChecker;
-
   constructor(IEntitlementChecker checker) {
-    __EntitlementGatedBase_init(address(checker));
+    _setEntitlementChecker(checker);
   }
 
   function _onEntitlementCheckResultPosted(
     bytes32,
     NodeVoteStatus
-  ) internal pure override {
-    console2.log("onEntitlementCheckResultPosted");
-  }
+  ) internal pure override {}
 
   function requestEntitlementCheck(
     IRuleEntitlement.RuleData calldata ruleData
-  ) external returns (bytes32) {
+  ) external override returns (bytes32) {
     bytes memory encodedRuleData = abi.encode(ruleData);
-    return _requestEntitlementCheck(encodedRuleData);
+    bytes32 transactionId = keccak256(
+      abi.encodePacked(tx.origin, block.number)
+    );
+    _requestEntitlementCheck(transactionId, encodedRuleData);
+    return transactionId;
   }
 }

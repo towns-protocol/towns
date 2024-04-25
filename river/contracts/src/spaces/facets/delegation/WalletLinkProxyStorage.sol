@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IWalletLink} from "contracts/src/river/wallet-link/IWalletLink.sol";
+import {IWalletLink} from "contracts/src/factory/facets/wallet-link/IWalletLink.sol";
 
 // libraries
 

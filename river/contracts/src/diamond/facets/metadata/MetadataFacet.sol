@@ -15,6 +15,13 @@ contract MetadataFacet is IMetadata, OwnableBase, Facet {
     bytes32 _contractType,
     string memory _contractURI
   ) external onlyInitializing {
+    __MetadataFacet_init_unchained(_contractType, _contractURI);
+  }
+
+  function __MetadataFacet_init_unchained(
+    bytes32 _contractType,
+    string memory _contractURI
+  ) internal {
     _addInterface(type(IMetadata).interfaceId);
 
     MetadataStorage.Layout storage ds = MetadataStorage.layout();
@@ -22,19 +29,19 @@ contract MetadataFacet is IMetadata, OwnableBase, Facet {
     ds.contractURI = _contractURI;
   }
 
-  function contractType() external view override returns (bytes32) {
+  function contractType() external view returns (bytes32) {
     return MetadataStorage.layout().contractType;
   }
 
-  function contractVersion() external view override returns (uint32) {
+  function contractVersion() external view virtual returns (uint32) {
     return _getInitializedVersion();
   }
 
-  function contractURI() external view override returns (string memory) {
+  function contractURI() external view returns (string memory) {
     return MetadataStorage.layout().contractURI;
   }
 
-  function setContractURI(string calldata uri) external override onlyOwner {
+  function setContractURI(string calldata uri) external onlyOwner {
     MetadataStorage.layout().contractURI = uri;
     emit ContractURIChanged(uri);
   }

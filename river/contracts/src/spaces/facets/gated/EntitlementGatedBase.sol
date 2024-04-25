@@ -3,31 +3,25 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IEntitlementGatedBase} from "./IEntitlementGated.sol";
-import {IEntitlementChecker} from "./checker/IEntitlementChecker.sol";
-import {IRuleEntitlement} from "./IRuleEntitlement.sol";
+import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
+import {IEntitlementChecker} from "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
+import {IImplementationRegistry} from "contracts/src/factory/facets/registry/IImplementationRegistry.sol";
 
 // libraries
 import {EntitlementGatedStorage} from "./EntitlementGatedStorage.sol";
+import {MembershipStorage} from "contracts/src/spaces/facets/membership/MembershipStorage.sol";
 
 abstract contract EntitlementGatedBase is IEntitlementGatedBase {
-  function __EntitlementGatedBase_init(address checker) internal {
-    if (checker == address(0)) {
-      revert EntitlementGated_InvalidAddress();
-    }
-
-    EntitlementGatedStorage.Layout storage ds = EntitlementGatedStorage
-      .layout();
-
-    ds.entitlementChecker = IEntitlementChecker(checker);
+  function _setEntitlementChecker(
+    IEntitlementChecker entitlementChecker
+  ) internal {
+    EntitlementGatedStorage.layout().entitlementChecker = entitlementChecker;
   }
 
   function _requestEntitlementCheck(
+    bytes32 transactionId,
     bytes memory encodedRuleData
-  ) internal returns (bytes32) {
-    bytes32 transactionId = keccak256(
-      abi.encodePacked(tx.origin, block.number)
-    );
-
+  ) internal {
     EntitlementGatedStorage.Layout storage ds = EntitlementGatedStorage
       .layout();
 
@@ -37,10 +31,12 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
       revert EntitlementGated_TransactionAlreadyRegistered();
     }
 
-    address[] memory selectedNodes = ds.entitlementChecker.getRandomNodes(
-      5,
-      address(this)
-    );
+    // if the entitlement checker has not been set, set it
+    if (address(ds.entitlementChecker) == address(0)) {
+      _setFallbackEntitlementChecker();
+    }
+
+    address[] memory selectedNodes = ds.entitlementChecker.getRandomNodes(5);
 
     transaction.hasBenSet = true;
     transaction.clientAddress = msg.sender;
@@ -54,11 +50,11 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
       );
     }
 
-    ds.entitlementChecker.emitEntitlementCheckRequested(
+    ds.entitlementChecker.requestEntitlementCheck(
+      msg.sender,
       transactionId,
       selectedNodes
     );
-    return transactionId;
   }
 
   function _postEntitlementCheckResult(
@@ -133,14 +129,6 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
     delete ds.transactions[transactionId];
   }
 
-  // must be implemented by the derived contract
-  // to handle the result of the entitlement check
-  // the caller is verified to be an enrolled xchain node
-  function _onEntitlementCheckResultPosted(
-    bytes32 transactionId,
-    NodeVoteStatus result
-  ) internal virtual;
-
   function _getRuleData(
     bytes32 transactionId
   ) internal view returns (IRuleEntitlement.RuleData memory) {
@@ -154,5 +142,20 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
     }
 
     return abi.decode(transaction.encodedRuleData, (IRuleEntitlement.RuleData));
+  }
+
+  function _onEntitlementCheckResultPosted(
+    bytes32 transactionId,
+    NodeVoteStatus result
+  ) internal virtual {}
+
+  // TODO: This should be removed in the future when we wipe data
+  function _setFallbackEntitlementChecker() internal {
+    EntitlementGatedStorage.Layout storage ds = EntitlementGatedStorage
+      .layout();
+    address entitlementChecker = IImplementationRegistry(
+      MembershipStorage.layout().spaceFactory
+    ).getLatestImplementation("SpaceOperator");
+    ds.entitlementChecker = IEntitlementChecker(entitlementChecker);
   }
 }

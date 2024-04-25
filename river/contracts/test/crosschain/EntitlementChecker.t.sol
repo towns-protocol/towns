@@ -5,13 +5,12 @@ pragma solidity ^0.8.23;
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 
 //interfaces
-import {IEntitlementChecker} from "contracts/src/crosschain/checker/IEntitlementChecker.sol";
-import {IEntitlementCheckerBase} from "contracts/src/crosschain/checker/IEntitlementChecker.sol";
+import {IEntitlementChecker, IEntitlementCheckerBase} from "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
 
 //libraries
 
 //contracts
-import {EntitlementChecker} from "contracts/src/crosschain/checker/EntitlementChecker.sol";
+import {EntitlementChecker} from "contracts/src/base/registry/facets/checker/EntitlementChecker.sol";
 
 contract EntitlementCheckerTest is TestUtils, IEntitlementCheckerBase {
   IEntitlementChecker public checker;
@@ -32,20 +31,20 @@ contract EntitlementCheckerTest is TestUtils, IEntitlementCheckerBase {
     vm.prank(node);
     vm.expectEmit(true, true, true, true);
     emit NodeRegistered(node);
-    checker.registerNode();
+    checker.registerNode(node);
 
-    assertEq(checker.nodeCount(), 1);
+    assertEq(checker.getNodeCount(), 1);
   }
 
   function test_registerNode_revert_nodeAlreadyRegistered() external {
     address node = _randomAddress();
 
     vm.prank(node);
-    checker.registerNode();
+    checker.registerNode(node);
 
     vm.prank(node);
     vm.expectRevert(EntitlementChecker_NodeAlreadyRegistered.selector);
-    checker.registerNode();
+    checker.registerNode(node);
   }
 
   // =============================================================
@@ -55,14 +54,14 @@ contract EntitlementCheckerTest is TestUtils, IEntitlementCheckerBase {
     address node = _randomAddress();
 
     vm.prank(node);
-    checker.registerNode();
+    checker.registerNode(node);
 
     vm.prank(node);
     vm.expectEmit(true, true, true, true);
     emit NodeUnregistered(node);
-    checker.unregisterNode();
+    checker.unregisterNode(node);
 
-    assertEq(checker.nodeCount(), 0);
+    assertEq(checker.getNodeCount(), 0);
   }
 
   function test_unregisterNode_revert_nodeNotRegistered() external {
@@ -70,7 +69,7 @@ contract EntitlementCheckerTest is TestUtils, IEntitlementCheckerBase {
 
     vm.prank(node);
     vm.expectRevert(EntitlementChecker_NodeNotRegistered.selector);
-    checker.unregisterNode();
+    checker.unregisterNode(node);
   }
 
   // =============================================================
@@ -79,13 +78,13 @@ contract EntitlementCheckerTest is TestUtils, IEntitlementCheckerBase {
   function test_getRandomNodes() external {
     _registerNodes();
 
-    address[] memory nodes = checker.getRandomNodes(5, address(this));
+    address[] memory nodes = checker.getRandomNodes(5);
     assertEq(nodes.length, 5);
   }
 
   function test_getRandomNodes_revert_insufficientNumberOfNodes() external {
     vm.expectRevert(EntitlementChecker_InsufficientNumberOfNodes.selector);
-    checker.getRandomNodes(26, address(this));
+    checker.getRandomNodes(26);
   }
 
   // =============================================================
@@ -97,10 +96,10 @@ contract EntitlementCheckerTest is TestUtils, IEntitlementCheckerBase {
       nodeKeys[node] = string(abi.encodePacked("node", vm.toString(i)));
 
       vm.prank(node);
-      checker.registerNode();
+      checker.registerNode(node);
     }
 
-    uint256 len = checker.nodeCount();
+    uint256 len = checker.getNodeCount();
     assertEq(len, 10);
   }
 }

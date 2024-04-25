@@ -392,93 +392,6 @@ export default [
   },
   {
     "type": "function",
-    "name": "getRuleData",
-    "inputs": [
-      {
-        "name": "transactionId",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "tuple",
-        "internalType": "struct IRuleEntitlement.RuleData",
-        "components": [
-          {
-            "name": "operations",
-            "type": "tuple[]",
-            "internalType": "struct IRuleEntitlement.Operation[]",
-            "components": [
-              {
-                "name": "opType",
-                "type": "uint8",
-                "internalType": "enum IRuleEntitlement.CombinedOperationType"
-              },
-              {
-                "name": "index",
-                "type": "uint8",
-                "internalType": "uint8"
-              }
-            ]
-          },
-          {
-            "name": "checkOperations",
-            "type": "tuple[]",
-            "internalType": "struct IRuleEntitlement.CheckOperation[]",
-            "components": [
-              {
-                "name": "opType",
-                "type": "uint8",
-                "internalType": "enum IRuleEntitlement.CheckOperationType"
-              },
-              {
-                "name": "chainId",
-                "type": "uint256",
-                "internalType": "uint256"
-              },
-              {
-                "name": "contractAddress",
-                "type": "address",
-                "internalType": "address"
-              },
-              {
-                "name": "threshold",
-                "type": "uint256",
-                "internalType": "uint256"
-              }
-            ]
-          },
-          {
-            "name": "logicalOperations",
-            "type": "tuple[]",
-            "internalType": "struct IRuleEntitlement.LogicalOperation[]",
-            "components": [
-              {
-                "name": "logOpType",
-                "type": "uint8",
-                "internalType": "enum IRuleEntitlement.LogicalOperationType"
-              },
-              {
-                "name": "leftOperationIndex",
-                "type": "uint8",
-                "internalType": "uint8"
-              },
-              {
-                "name": "rightOperationIndex",
-                "type": "uint8",
-                "internalType": "uint8"
-              }
-            ]
-          }
-        ]
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
     "name": "getSpaceFactory",
     "inputs": [],
     "outputs": [
@@ -600,24 +513,6 @@ export default [
       }
     ],
     "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "postEntitlementCheckResult",
-    "inputs": [
-      {
-        "name": "transactionId",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      },
-      {
-        "name": "result",
-        "type": "uint8",
-        "internalType": "enum IEntitlementGatedBase.NodeVoteStatus"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
   },
   {
     "type": "function",

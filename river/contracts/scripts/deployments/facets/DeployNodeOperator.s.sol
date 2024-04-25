@@ -7,9 +7,23 @@ pragma solidity ^0.8.23;
 
 //contracts
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
+import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
 import {NodeOperatorFacet} from "contracts/src/base/registry/facets/operator/NodeOperatorFacet.sol";
 
-contract DeployNodeOperator is Deployer {
+contract DeployNodeOperator is Deployer, FacetHelper {
+  constructor() {
+    addSelector(NodeOperatorFacet.registerOperator.selector);
+    addSelector(NodeOperatorFacet.isOperator.selector);
+    addSelector(NodeOperatorFacet.setOperatorStatus.selector);
+    addSelector(NodeOperatorFacet.getOperatorStatus.selector);
+    addSelector(NodeOperatorFacet.setCommissionRate.selector);
+    addSelector(NodeOperatorFacet.getCommissionRate.selector);
+  }
+
+  function initializer() public pure override returns (bytes4) {
+    return NodeOperatorFacet.__NodeOperator_init.selector;
+  }
+
   function versionName() public pure override returns (string memory) {
     return "nodeOperatorFacet";
   }

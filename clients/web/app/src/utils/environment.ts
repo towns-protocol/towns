@@ -51,7 +51,6 @@ const envSchema = z.object({
     VITE_RIVER_CHAIN_ID: z.string().optional(),
     VITE_ADDRESS_SPACE_FACTORY: z.string().optional(),
     VITE_ADDRESS_SPACE_OWNER: z.string().optional(),
-    VITE_ADDRESS_WALLET_LINK: z.string().optional(),
     VITE_ADDRESS_RIVER_REGISTRY: z.string().optional(),
     // optional environment config
     VITE_BASE_CONTRACT_VERSION: z.string().optional(),

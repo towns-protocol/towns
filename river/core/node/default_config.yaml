@@ -43,9 +43,6 @@ riverChain:
 architectContract:
     address: ''
     version: ''
-walletLinkContract:
-    address: ''
-    version: ''
 
 # River contracts
 registryContract:

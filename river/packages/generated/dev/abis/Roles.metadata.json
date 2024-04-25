@@ -980,7 +980,7 @@
         "dweb:/ipfs/QmUFD83GFhupZo2d3PafyK5fjqrzFRDnJHEsTGYhHakzUM"
       ]
     },
-    "contracts/src/river/wallet-link/IWalletLink.sol": {
+    "contracts/src/factory/facets/wallet-link/IWalletLink.sol": {
       "keccak256": "0x548d2531215e1387f83265975af58947d37c01ae9ea75cce91147a2468fc653b",
       "license": "Apache-2.0",
       "urls": [
@@ -997,11 +997,11 @@
       ]
     },
     "contracts/src/spaces/facets/Entitled.sol": {
-      "keccak256": "0xbf6050ce2e1a7f617188da09f27ed24520f8e390d34233ed76cc835744d7ceed",
+      "keccak256": "0x3a46523cec9c4a9145104166c4c51820094f1a0d27f043a66ebefe4934409eb4",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://303bd13fe08b741d3b8d0164f35ca9c77de8a8d6dce07aa570d48e0470009521",
-        "dweb:/ipfs/QmWLxZ1mhyrfJhZK9MzX5ERvViwZrRrtTHoxyUoazRe5Pt"
+        "bzz-raw://8ecd2477ba216357a6e251902e84c4ce837abadf4af48abcb3bfb5612725ace5",
+        "dweb:/ipfs/QmdrjT3B7pRnU9ChYhRLCSxidFy277s7A7TRkPCRuZsd31"
       ]
     },
     "contracts/src/spaces/facets/Permissions.sol": {
@@ -1053,19 +1053,19 @@
       ]
     },
     "contracts/src/spaces/facets/delegation/WalletLinkProxyBase.sol": {
-      "keccak256": "0x2d800fabc6eaec00c2b25d72dda50cb612eca2ad08700ba537e1dcabf771efdc",
+      "keccak256": "0xac57b39cf710166b1c2dc1f0c7bf58fb813ceb047312b346a01e31df615c14f2",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://3d5346877c8dd48f84b4dc2b9958736fdded102211a8368e83ae82564f0f2334",
-        "dweb:/ipfs/Qmdfq725QN1vdtZd7xC2PSEUbt7ChWh3HEwCcFg7QiqNMd"
+        "bzz-raw://e3a22fb662252a0d23980b5a8700084f1a314b60a2f537243c9a5d202105a3a5",
+        "dweb:/ipfs/QmXd6ibShjPAtPsyFuo7Wmai8fcbKkfbS48sAhTtXU7Yk9"
       ]
     },
     "contracts/src/spaces/facets/delegation/WalletLinkProxyStorage.sol": {
-      "keccak256": "0x53bc0beb753473e7e927cede43c68006d27a30c212451ffd03b5b3d710713599",
+      "keccak256": "0xe4469f1cf8e5814c8b19b4ac664b904aa786590ece22ae7197abebe9b1bcb9ef",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://055bbca7d475e12d1d0344389803684ffe50fa04bbcc1755dc947f5c3fee5658",
-        "dweb:/ipfs/QmT3RDDQ8qvkRM91FxMixLfgsSvf77idAbA1AJL7aKxVMa"
+        "bzz-raw://5a7dea70d2ebaf427c44a4934c18578ab6bdc797a2a7abd4768b86e1a63fce07",
+        "dweb:/ipfs/QmYqnqHFfyMdHVsM8XuAttJWeMuGePfmYL9NZx8f8bw8Ek"
       ]
     },
     "contracts/src/spaces/facets/entitlements/EntitlementsManagerService.sol": {

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.24;
 
-import {ICustomEntitlement} from "contracts/src/crosschain/ICustomEntitlement.sol";
+import {ICustomEntitlement} from "contracts/src/spaces/entitlements/ICustomEntitlement.sol";
 
 contract MockCustomEntitlement is ICustomEntitlement {
   mapping(bytes32 => bool) entitled;

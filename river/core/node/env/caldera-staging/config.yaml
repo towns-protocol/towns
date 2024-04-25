@@ -9,8 +9,6 @@ riverChain:
 # Base contracts
 architectContract:
     address: '0x968696BC59431Ef085441641f550C8e2Eaca8BEd'
-walletLinkContract:
-    address: '0x4B53e313773df56d8f8b96942c5Cf7a49cFc9774'
 
 # River contracts
 registryContract:

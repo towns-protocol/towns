@@ -33,7 +33,7 @@ abstract contract Interaction is Script, DeployBase {
 
     info(
       string.concat(
-        unicode"running interaction \n\t📜 ",
+        unicode"running interaction",
         unicode"\n\t⚡️ on ",
         chainIdAlias(),
         unicode"\n\t📬 from deployer address"
@@ -43,7 +43,7 @@ abstract contract Interaction is Script, DeployBase {
 
     __interact(pk, deployer);
 
-    info(unicode"✅ ", " interaction complete");
+    info(unicode"🎉🎉", " interaction complete");
   }
 
   function run() public virtual {

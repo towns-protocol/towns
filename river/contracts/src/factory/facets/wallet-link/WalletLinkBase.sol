@@ -13,9 +13,6 @@ import {WalletLinkStorage} from "./WalletLinkStorage.sol";
 // contracts
 import {Nonces} from "contracts/src/diamond/utils/Nonces.sol";
 
-// debuggging
-import {console} from "forge-std/console.sol";
-
 abstract contract WalletLinkBase is IWalletLinkBase, Nonces {
   using EnumerableSet for EnumerableSet.AddressSet;
 

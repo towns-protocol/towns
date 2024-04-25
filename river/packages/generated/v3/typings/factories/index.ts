@@ -4,6 +4,7 @@
 export { IArchitect__factory } from "./IArchitect__factory";
 export { IBanning__factory } from "./IBanning__factory";
 export { IChannel__factory } from "./IChannel__factory";
+export { ICustomEntitlement__factory } from "./ICustomEntitlement__factory";
 export { IDiamond__factory } from "./IDiamond__factory";
 export { IDiamondCut__factory } from "./IDiamondCut__factory";
 export { IEntitlementsManager__factory } from "./IEntitlementsManager__factory";
@@ -21,6 +22,7 @@ export { IWalletLink__factory } from "./IWalletLink__factory";
 export { Member__factory } from "./Member__factory";
 export { MembershipFacet__factory } from "./MembershipFacet__factory";
 export { MockERC721A__factory } from "./MockERC721A__factory";
+export { MockEntitlementGated__factory } from "./MockEntitlementGated__factory";
 export { OwnableFacet__factory } from "./OwnableFacet__factory";
 export { TokenPausableFacet__factory } from "./TokenPausableFacet__factory";
 export { UserEntitlement__factory } from "./UserEntitlement__factory";

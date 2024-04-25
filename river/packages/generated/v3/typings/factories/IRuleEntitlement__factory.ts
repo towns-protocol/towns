@@ -25,6 +25,93 @@ const _abi = [
   },
   {
     type: "function",
+    name: "encodeRuleData",
+    inputs: [
+      {
+        name: "data",
+        type: "tuple",
+        internalType: "struct IRuleEntitlement.RuleData",
+        components: [
+          {
+            name: "operations",
+            type: "tuple[]",
+            internalType: "struct IRuleEntitlement.Operation[]",
+            components: [
+              {
+                name: "opType",
+                type: "uint8",
+                internalType: "enum IRuleEntitlement.CombinedOperationType",
+              },
+              {
+                name: "index",
+                type: "uint8",
+                internalType: "uint8",
+              },
+            ],
+          },
+          {
+            name: "checkOperations",
+            type: "tuple[]",
+            internalType: "struct IRuleEntitlement.CheckOperation[]",
+            components: [
+              {
+                name: "opType",
+                type: "uint8",
+                internalType: "enum IRuleEntitlement.CheckOperationType",
+              },
+              {
+                name: "chainId",
+                type: "uint256",
+                internalType: "uint256",
+              },
+              {
+                name: "contractAddress",
+                type: "address",
+                internalType: "address",
+              },
+              {
+                name: "threshold",
+                type: "uint256",
+                internalType: "uint256",
+              },
+            ],
+          },
+          {
+            name: "logicalOperations",
+            type: "tuple[]",
+            internalType: "struct IRuleEntitlement.LogicalOperation[]",
+            components: [
+              {
+                name: "logOpType",
+                type: "uint8",
+                internalType: "enum IRuleEntitlement.LogicalOperationType",
+              },
+              {
+                name: "leftOperationIndex",
+                type: "uint8",
+                internalType: "uint8",
+              },
+              {
+                name: "rightOperationIndex",
+                type: "uint8",
+                internalType: "uint8",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    outputs: [
+      {
+        name: "",
+        type: "bytes",
+        internalType: "bytes",
+      },
+    ],
+    stateMutability: "pure",
+  },
+  {
+    type: "function",
     name: "getCheckOperations",
     inputs: [
       {
@@ -348,93 +435,6 @@ const _abi = [
     ],
     outputs: [],
     stateMutability: "nonpayable",
-  },
-  {
-    type: "function",
-    name: "setRuleData",
-    inputs: [
-      {
-        name: "data",
-        type: "tuple",
-        internalType: "struct IRuleEntitlement.RuleData",
-        components: [
-          {
-            name: "operations",
-            type: "tuple[]",
-            internalType: "struct IRuleEntitlement.Operation[]",
-            components: [
-              {
-                name: "opType",
-                type: "uint8",
-                internalType: "enum IRuleEntitlement.CombinedOperationType",
-              },
-              {
-                name: "index",
-                type: "uint8",
-                internalType: "uint8",
-              },
-            ],
-          },
-          {
-            name: "checkOperations",
-            type: "tuple[]",
-            internalType: "struct IRuleEntitlement.CheckOperation[]",
-            components: [
-              {
-                name: "opType",
-                type: "uint8",
-                internalType: "enum IRuleEntitlement.CheckOperationType",
-              },
-              {
-                name: "chainId",
-                type: "uint256",
-                internalType: "uint256",
-              },
-              {
-                name: "contractAddress",
-                type: "address",
-                internalType: "address",
-              },
-              {
-                name: "threshold",
-                type: "uint256",
-                internalType: "uint256",
-              },
-            ],
-          },
-          {
-            name: "logicalOperations",
-            type: "tuple[]",
-            internalType: "struct IRuleEntitlement.LogicalOperation[]",
-            components: [
-              {
-                name: "logOpType",
-                type: "uint8",
-                internalType: "enum IRuleEntitlement.LogicalOperationType",
-              },
-              {
-                name: "leftOperationIndex",
-                type: "uint8",
-                internalType: "uint8",
-              },
-              {
-                name: "rightOperationIndex",
-                type: "uint8",
-                internalType: "uint8",
-              },
-            ],
-          },
-        ],
-      },
-    ],
-    outputs: [
-      {
-        name: "",
-        type: "bytes",
-        internalType: "bytes",
-      },
-    ],
-    stateMutability: "pure",
   },
   {
     type: "error",

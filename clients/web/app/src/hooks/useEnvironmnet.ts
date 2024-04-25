@@ -43,7 +43,6 @@ function makeEnvironments(): TownsEnvironmentInfo[] {
         check(isDefined(env.VITE_RIVER_CHAIN_ID), 'Missing VITE_RIVER_CHAIN_ID')
         check(isDefined(env.VITE_ADDRESS_SPACE_FACTORY), 'Missing VITE_ADDRESS_SPACE_FACTORY')
         check(isDefined(env.VITE_ADDRESS_SPACE_OWNER), 'Missing VITE_ADDRESS_SPACE_OWNER')
-        check(isDefined(env.VITE_ADDRESS_WALLET_LINK), 'Missing VITE_ADDRESS_WALLET_LINK')
         check(isDefined(env.VITE_ADDRESS_RIVER_REGISTRY), 'Missing VITE_ADDRESS_RIVER_REGISTRY')
         retVal.push({
             id: env.VITE_RIVER_ENV,
@@ -59,7 +58,6 @@ function makeEnvironments(): TownsEnvironmentInfo[] {
                 addresses: {
                     spaceFactory: env.VITE_ADDRESS_SPACE_FACTORY as Address,
                     spaceOwner: env.VITE_ADDRESS_SPACE_OWNER as Address,
-                    walletLink: env.VITE_ADDRESS_WALLET_LINK as Address,
                     mockNFT: env.VITE_ADDRESS_MOCK_NFT as Address | undefined,
                     member: env.VITE_ADDRESS_MEMBER as Address | undefined,
                 },

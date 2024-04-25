@@ -7,8 +7,8 @@
     "abi": [
       {
         "inputs": [],
-        "type": "error",
-        "name": "ECDSAInvalidSignature"
+        "name": "ECDSAInvalidSignature",
+        "type": "error"
       },
       {
         "inputs": [
@@ -18,8 +18,8 @@
             "type": "uint256"
           }
         ],
-        "type": "error",
-        "name": "ECDSAInvalidSignatureLength"
+        "name": "ECDSAInvalidSignatureLength",
+        "type": "error"
       },
       {
         "inputs": [
@@ -29,28 +29,28 @@
             "type": "bytes32"
           }
         ],
-        "type": "error",
-        "name": "ECDSAInvalidSignatureS"
+        "name": "ECDSAInvalidSignatureS",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Initializable_InInitializingState"
+        "name": "Initializable_InInitializingState",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Initializable_NotInInitializingState"
+        "name": "Initializable_NotInInitializingState",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Introspection_AlreadySupported"
+        "name": "Introspection_AlreadySupported",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Introspection_NotSupported"
+        "name": "Introspection_NotSupported",
+        "type": "error"
       },
       {
         "inputs": [
@@ -65,8 +65,8 @@
             "type": "uint256"
           }
         ],
-        "type": "error",
-        "name": "InvalidAccountNonce"
+        "name": "InvalidAccountNonce",
+        "type": "error"
       },
       {
         "inputs": [
@@ -81,28 +81,28 @@
             "type": "address"
           }
         ],
-        "type": "error",
-        "name": "WalletLink__CannotLinkToRootWallet"
+        "name": "WalletLink__CannotLinkToRootWallet",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "WalletLink__CannotLinkToSelf"
+        "name": "WalletLink__CannotLinkToSelf",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "WalletLink__CannotRemoveRootWallet"
+        "name": "WalletLink__CannotRemoveRootWallet",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "WalletLink__InvalidAddress"
+        "name": "WalletLink__InvalidAddress",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "WalletLink__InvalidSignature"
+        "name": "WalletLink__InvalidSignature",
+        "type": "error"
       },
       {
         "inputs": [
@@ -117,8 +117,8 @@
             "type": "address"
           }
         ],
-        "type": "error",
-        "name": "WalletLink__LinkAlreadyExists"
+        "name": "WalletLink__LinkAlreadyExists",
+        "type": "error"
       },
       {
         "inputs": [
@@ -133,8 +133,8 @@
             "type": "address"
           }
         ],
-        "type": "error",
-        "name": "WalletLink__LinkedToAnotherRootKey"
+        "name": "WalletLink__LinkedToAnotherRootKey",
+        "type": "error"
       },
       {
         "inputs": [
@@ -149,91 +149,92 @@
             "type": "address"
           }
         ],
-        "type": "error",
-        "name": "WalletLink__NotLinked"
+        "name": "WalletLink__NotLinked",
+        "type": "error"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": false,
             "internalType": "uint32",
             "name": "version",
-            "type": "uint32",
-            "indexed": false
+            "type": "uint32"
           }
         ],
-        "type": "event",
         "name": "Initialized",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "bytes4",
             "name": "interfaceId",
-            "type": "bytes4",
-            "indexed": true
+            "type": "bytes4"
           }
         ],
-        "type": "event",
         "name": "InterfaceAdded",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "bytes4",
             "name": "interfaceId",
-            "type": "bytes4",
-            "indexed": true
+            "type": "bytes4"
           }
         ],
-        "type": "event",
         "name": "InterfaceRemoved",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "address",
             "name": "wallet",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           },
           {
+            "indexed": true,
             "internalType": "address",
             "name": "rootKey",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           }
         ],
-        "type": "event",
         "name": "LinkWalletToRootKey",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "address",
             "name": "wallet",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           },
           {
+            "indexed": true,
             "internalType": "address",
             "name": "secondWallet",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           }
         ],
-        "type": "event",
         "name": "RemoveLink",
-        "anonymous": false
+        "type": "event"
       },
       {
         "inputs": [],
+        "name": "__WalletLink_init",
+        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function",
-        "name": "__WalletLink_init"
+        "type": "function"
       },
       {
         "inputs": [
@@ -248,8 +249,6 @@
             "type": "address"
           }
         ],
-        "stateMutability": "view",
-        "type": "function",
         "name": "checkIfLinked",
         "outputs": [
           {
@@ -257,7 +256,9 @@
             "name": "",
             "type": "bool"
           }
-        ]
+        ],
+        "stateMutability": "view",
+        "type": "function"
       },
       {
         "inputs": [
@@ -267,8 +268,6 @@
             "type": "address"
           }
         ],
-        "stateMutability": "view",
-        "type": "function",
         "name": "getLatestNonceForRootKey",
         "outputs": [
           {
@@ -276,7 +275,9 @@
             "name": "",
             "type": "uint256"
           }
-        ]
+        ],
+        "stateMutability": "view",
+        "type": "function"
       },
       {
         "inputs": [
@@ -286,8 +287,6 @@
             "type": "address"
           }
         ],
-        "stateMutability": "view",
-        "type": "function",
         "name": "getRootKeyForWallet",
         "outputs": [
           {
@@ -295,7 +294,9 @@
             "name": "rootKey",
             "type": "address"
           }
-        ]
+        ],
+        "stateMutability": "view",
+        "type": "function"
       },
       {
         "inputs": [
@@ -305,8 +306,6 @@
             "type": "address"
           }
         ],
-        "stateMutability": "view",
-        "type": "function",
         "name": "getWalletsByRootKey",
         "outputs": [
           {
@@ -314,14 +313,13 @@
             "name": "wallets",
             "type": "address[]"
           }
-        ]
+        ],
+        "stateMutability": "view",
+        "type": "function"
       },
       {
         "inputs": [
           {
-            "internalType": "struct IWalletLinkBase.LinkedWallet",
-            "name": "rootWallet",
-            "type": "tuple",
             "components": [
               {
                 "internalType": "address",
@@ -333,7 +331,10 @@
                 "name": "signature",
                 "type": "bytes"
               }
-            ]
+            ],
+            "internalType": "struct IWalletLinkBase.LinkedWallet",
+            "name": "rootWallet",
+            "type": "tuple"
           },
           {
             "internalType": "uint256",
@@ -341,33 +342,31 @@
             "type": "uint256"
           }
         ],
+        "name": "linkCallerToRootKey",
+        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function",
-        "name": "linkCallerToRootKey"
+        "type": "function"
       },
       {
         "inputs": [
           {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "addr",
+                "type": "address"
+              },
+              {
+                "internalType": "bytes",
+                "name": "signature",
+                "type": "bytes"
+              }
+            ],
             "internalType": "struct IWalletLinkBase.LinkedWallet",
             "name": "wallet",
-            "type": "tuple",
-            "components": [
-              {
-                "internalType": "address",
-                "name": "addr",
-                "type": "address"
-              },
-              {
-                "internalType": "bytes",
-                "name": "signature",
-                "type": "bytes"
-              }
-            ]
+            "type": "tuple"
           },
           {
-            "internalType": "struct IWalletLinkBase.LinkedWallet",
-            "name": "rootWallet",
-            "type": "tuple",
             "components": [
               {
                 "internalType": "address",
@@ -379,7 +378,10 @@
                 "name": "signature",
                 "type": "bytes"
               }
-            ]
+            ],
+            "internalType": "struct IWalletLinkBase.LinkedWallet",
+            "name": "rootWallet",
+            "type": "tuple"
           },
           {
             "internalType": "uint256",
@@ -387,9 +389,10 @@
             "type": "uint256"
           }
         ],
+        "name": "linkWalletToRootKey",
+        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function",
-        "name": "linkWalletToRootKey"
+        "type": "function"
       },
       {
         "inputs": [
@@ -399,9 +402,6 @@
             "type": "address"
           },
           {
-            "internalType": "struct IWalletLinkBase.LinkedWallet",
-            "name": "rootWallet",
-            "type": "tuple",
             "components": [
               {
                 "internalType": "address",
@@ -413,7 +413,10 @@
                 "name": "signature",
                 "type": "bytes"
               }
-            ]
+            ],
+            "internalType": "struct IWalletLinkBase.LinkedWallet",
+            "name": "rootWallet",
+            "type": "tuple"
           },
           {
             "internalType": "uint256",
@@ -421,12 +424,35 @@
             "type": "uint256"
           }
         ],
+        "name": "removeLink",
+        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function",
-        "name": "removeLink"
+        "type": "function"
       }
     ],
     "devdoc": {
+      "errors": {
+        "ECDSAInvalidSignature()": [
+          {
+            "details": "The signature derives the `address(0)`."
+          }
+        ],
+        "ECDSAInvalidSignatureLength(uint256)": [
+          {
+            "details": "The signature has an invalid length."
+          }
+        ],
+        "ECDSAInvalidSignatureS(bytes32)": [
+          {
+            "details": "The signature has an S value that is in the upper half order."
+          }
+        ],
+        "InvalidAccountNonce(address,uint256)": [
+          {
+            "details": "The nonce used for an `account` is not the expected current nonce."
+          }
+        ]
+      },
       "kind": "dev",
       "methods": {
         "checkIfLinked(address,address)": {
@@ -481,6 +507,20 @@
       "version": 1
     },
     "userdoc": {
+      "events": {
+        "InterfaceAdded(bytes4)": {
+          "notice": "Emitted when an interface is added to the contract via `_addInterface`."
+        },
+        "InterfaceRemoved(bytes4)": {
+          "notice": "Emitted when an interface is removed from the contract via `_removeInterface`."
+        },
+        "LinkWalletToRootKey(address,address)": {
+          "notice": "Emitted when a user links their wallet to a rootKey"
+        },
+        "RemoveLink(address,address)": {
+          "notice": "Emitted when two wallets are unlinked"
+        }
+      },
       "kind": "user",
       "methods": {
         "checkIfLinked(address,address)": {
@@ -509,190 +549,182 @@
     }
   },
   "settings": {
-    "remappings": [
-      "@openzeppelin/=lib/@openzeppelin/",
-      "@prb/math/=lib/@prb/math/src/",
-      "@prb/test/=lib/@prb/test/src/",
-      "account-abstraction/=lib/account-abstraction/contracts/",
-      "base64/=lib/base64/",
-      "ds-test/=lib/ds-test/src/",
-      "forge-std/=lib/forge-std/src/",
-      "hardhat-deploy/=lib/hardhat-deploy/"
-    ],
+    "compilationTarget": {
+      "contracts/src/factory/facets/wallet-link/WalletLink.sol": "WalletLink"
+    },
+    "evmVersion": "paris",
+    "libraries": {},
+    "metadata": {
+      "appendCBOR": false,
+      "bytecodeHash": "none"
+    },
     "optimizer": {
       "enabled": true,
       "runs": 200
     },
-    "metadata": {
-      "bytecodeHash": "none",
-      "appendCBOR": false
-    },
-    "compilationTarget": {
-      "contracts/src/river/wallet-link/WalletLink.sol": "WalletLink"
-    },
-    "evmVersion": "paris",
-    "libraries": {}
+    "remappings": [
+      ":@openzeppelin/=lib/@openzeppelin/",
+      ":@prb/math/=lib/@prb/math/src/",
+      ":@prb/test/=lib/@prb/test/src/",
+      ":account-abstraction/=lib/account-abstraction/contracts/",
+      ":base64/=lib/base64/",
+      ":ds-test/=lib/ds-test/src/",
+      ":forge-std/=lib/forge-std/src/",
+      ":hardhat-deploy/=lib/hardhat-deploy/"
+    ]
   },
   "sources": {
     "contracts/src/diamond/facets/Facet.sol": {
       "keccak256": "0xecbb7e8de0dae5bdbcbda879436335abac6808bcc2e14f1f4e9efbdc77c4e8be",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://b7b5446461a1492f16c86137ce49a699d8a3452e2174c5568b97f8d2d4bc85a7",
         "dweb:/ipfs/QmY74odf1qgTwBV3wjF12rV8TXs3DiNoMm9Pg9S8w2F4VP"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/initializable/Initializable.sol": {
       "keccak256": "0xe02e99665b5acb22d5c508c3bda97c35acd2597ce0a58569a19cc12f0010da90",
+      "license": "MIT",
       "urls": [
         "bzz-raw://b586a51dbe63e8763ae0b2b3dadd5c8559f47bc8cbaa0e9fe52aaec4c3677552",
         "dweb:/ipfs/QmRtaVikg6YDwzUAtY7WV793taZgT1ZxyMB4PLAEqGBeCC"
-      ],
-      "license": "MIT"
+      ]
     },
     "contracts/src/diamond/facets/initializable/InitializableStorage.sol": {
       "keccak256": "0x5dbbdca0faf75680e1c0d425d92bdb5ce16951c0f8215a668c5144c0ffdb1b01",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://05e5ba4fcd6e3e1e819e786fce3473d5ef69763b127fe162b2e0906d6a904d09",
         "dweb:/ipfs/QmYPN5xeMoMBVT2B2FwJrDpwocNNsCuVosgg7vdYrrWNep"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/introspection/IERC165.sol": {
       "keccak256": "0x243cfeefa64ba07bee887b0b03704147f9bd2f25571272a6ebca3ba684af1b00",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://1aed67ea7251fad9dbfb58a30f59f7edd81d48d7f6b193b98f957be359653361",
         "dweb:/ipfs/QmQauJL4nFMN3QDutjWezRbBjLX5GsTWt5jeLfkX4JW64T"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/introspection/IntrospectionBase.sol": {
       "keccak256": "0x5f458cf292b4b7b9d9c1efd110b3b65905c7bd7e47a48090af5eb9fb7d620ddf",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://84995121aafc9124ba3a1148835dcccc1061c25a5b074b4579a83c0dd213d613",
         "dweb:/ipfs/QmPYSKEqYWasPxVRzv4TCpXVfpkahfFDEPkTLp7UAT9fKq"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/introspection/IntrospectionStorage.sol": {
       "keccak256": "0x2e047e5efa9df7f3d60a8a114da39343635578b7475fcd987860eb5b87e8c758",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://a071eda8331b690b689bbbc23e6a6c227324aad90d4101c36410a06b1ca3c357",
         "dweb:/ipfs/QmTR76zN1durS5acgDZXixrkrheXvaaMqfwXrJsaGyAPkj"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/utils/Nonces.sol": {
       "keccak256": "0xce0cce96c8f30e4052523e2c67c7b08ed9defa8c2e3858d4534b359be9ee9ee3",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://caae09675d571304907f51e64c255981c5fbfbd60bf26d0117c00ecd7ed7a7fb",
         "dweb:/ipfs/QmPNReTvJDZ242duATLyDDt1JUUd2ACg472E1vftw5zgXB"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
-    "contracts/src/river/wallet-link/IWalletLink.sol": {
+    "contracts/src/factory/facets/wallet-link/IWalletLink.sol": {
       "keccak256": "0x548d2531215e1387f83265975af58947d37c01ae9ea75cce91147a2468fc653b",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://f2300ddc317d8f0e9f24dee7904de69a87325305d913f541a0dc877bba7e1f13",
         "dweb:/ipfs/QmY6kMFdswJnVtkYu415QG5ePjUrS9W1QiXi9VXaLBeRJR"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
-    "contracts/src/river/wallet-link/WalletLink.sol": {
+    "contracts/src/factory/facets/wallet-link/WalletLink.sol": {
       "keccak256": "0x0940bd508eeb3fcd0199c2a939bb7ff871b1b2929881f23cd346961a769fd807",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://c8d144ca39586757c4d58a76489b4cef6c8d0ad5dfb5a77686b6e49d8b310c44",
         "dweb:/ipfs/QmQd9TQtCzeXSgn5xvBADXEs7kVB9o7hxo8Nvqz4u5nJTu"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
-    "contracts/src/river/wallet-link/WalletLinkBase.sol": {
-      "keccak256": "0x53849623d165d06f802da96f6ec1e670711c526b3ce59baf45fb5636874af0c8",
+    "contracts/src/factory/facets/wallet-link/WalletLinkBase.sol": {
+      "keccak256": "0xfc27a5f7a57d45076dd4b4af704d6941f82d4ec825b262a0a144a00b3c83a0f0",
+      "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://e21c37a44f943aa969988e664f46150ee5995940fbbd1d52828a0c4cacca624c",
-        "dweb:/ipfs/QmNh75dbxe1Avg98kZW49GaByWJpXMhEhBQrAvAgX3ow7S"
-      ],
-      "license": "Apache-2.0"
+        "bzz-raw://a79133d20a0ad20691c88dbfa3832c1f767273eb17aaf3f20ab1f128bb5a7b48",
+        "dweb:/ipfs/QmcJbygpvz1tPifobw2SfgNvKRB4w9EZVqsM8kZKMtWf6e"
+      ]
     },
-    "contracts/src/river/wallet-link/WalletLinkStorage.sol": {
+    "contracts/src/factory/facets/wallet-link/WalletLinkStorage.sol": {
       "keccak256": "0x2903de293c75c301de25bef504a0bb56b31158a2d5340bdf8103fa8f0c06bad1",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://3e8bdb8c34b2c3ef8fff3755dce77dea42bc5d605e030cca17791c0b697e64c4",
         "dweb:/ipfs/QmYhS5h3sja3dZaoaQ9jdhwsrNSbJ4oPU5VtCbotvedUXP"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "lib/@openzeppelin/contracts/utils/Address.sol": {
       "keccak256": "0xaf28a975a78550e45f65e559a3ad6a5ad43b9b8a37366999abd1b7084eb70721",
+      "license": "MIT",
       "urls": [
         "bzz-raw://b7bd24e224f67f65bfadf85dc2929fa965456bb2415478bd0125471b5ce35245",
         "dweb:/ipfs/QmRaydGr8BTHs1kvaZfsNU69pKzUAGFrvABn1KiRSbE51y"
-      ],
-      "license": "MIT"
+      ]
     },
     "lib/@openzeppelin/contracts/utils/Strings.sol": {
       "keccak256": "0x55f102ea785d8399c0e58d1108e2d289506dde18abc6db1b7f68c1f9f9bc5792",
+      "license": "MIT",
       "urls": [
         "bzz-raw://6e52e0a7765c943ef14e5bcf11e46e6139fa044be564881378349236bf2e3453",
         "dweb:/ipfs/QmZEeeXoFPW47amyP35gfzomF9DixqqTEPwzBakv6cZw6i"
-      ],
-      "license": "MIT"
+      ]
     },
     "lib/@openzeppelin/contracts/utils/cryptography/ECDSA.sol": {
       "keccak256": "0xeed0a08b0b091f528356cbc7245891a4c748682d4f6a18055e8e6ca77d12a6cf",
+      "license": "MIT",
       "urls": [
         "bzz-raw://ba80ba06c8e6be852847e4c5f4492cef801feb6558ae09ed705ff2e04ea8b13c",
         "dweb:/ipfs/QmXRJDv3xHLVQCVXg1ZvR35QS9sij5y9NDWYzMfUfAdTHF"
-      ],
-      "license": "MIT"
+      ]
     },
     "lib/@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol": {
       "keccak256": "0xba333517a3add42cd35fe877656fc3dfcc9de53baa4f3aabbd6d12a92e4ea435",
+      "license": "MIT",
       "urls": [
         "bzz-raw://2ceacff44c0fdc81e48e0e0b1db87a2076d3c1fb497341de077bf1da9f6b406c",
         "dweb:/ipfs/QmRUo1muMRAewxrKQ7TkXUtknyRoR57AyEkoPpiuZQ8FzX"
-      ],
-      "license": "MIT"
+      ]
     },
     "lib/@openzeppelin/contracts/utils/introspection/IERC165.sol": {
       "keccak256": "0x4296879f55019b23e135000eb36896057e7101fb7fb859c5ef690cf14643757b",
+      "license": "MIT",
       "urls": [
         "bzz-raw://87b3541437c8c443ccd36795e56a338ed12855eec17f8da624511b8d1a7e14df",
         "dweb:/ipfs/QmeJQCtZrQjtJLr6u7ZHWeH3pBnjtLWzvRrKViAi7UZqxL"
-      ],
-      "license": "MIT"
+      ]
     },
     "lib/@openzeppelin/contracts/utils/math/Math.sol": {
       "keccak256": "0x005ec64c6313f0555d59e278f9a7a5ab2db5bdc72a027f255a37c327af1ec02d",
+      "license": "MIT",
       "urls": [
         "bzz-raw://4ece9f0b9c8daca08c76b6b5405a6446b6f73b3a15fab7ff56e296cbd4a2c875",
         "dweb:/ipfs/QmQyRpyPRL5SQuAgj6SHmbir3foX65FJjbVTTQrA2EFg6L"
-      ],
-      "license": "MIT"
+      ]
     },
     "lib/@openzeppelin/contracts/utils/math/SignedMath.sol": {
       "keccak256": "0x5f7e4076e175393767754387c962926577f1660dd9b810187b9002407656be72",
+      "license": "MIT",
       "urls": [
         "bzz-raw://7d533a1c97cd43a57cd9c465f7ee8dd0e39ae93a8fb8ff8e5303a356b081cdcc",
         "dweb:/ipfs/QmVBEei6aTnvYNZp2CHYVNKyZS4q1KkjANfY39WVXZXVoT"
-      ],
-      "license": "MIT"
+      ]
     },
     "lib/@openzeppelin/contracts/utils/structs/EnumerableSet.sol": {
       "keccak256": "0x86c1470cbfd878491e5de030072b647352d36bd27122cffb928970b1945282aa",
+      "license": "MIT",
       "urls": [
         "bzz-raw://ad85dd393ee0a1917c57046abc5155f51f77844b2c6a42c05c1b8dd26d6ff3c1",
         "dweb:/ipfs/QmNqYc8To2NdnpP6E1tGz7t6A7beuENde5yovwov5pW1fA"
-      ],
-      "license": "MIT"
-    },
-    "lib/forge-std/src/console.sol": {
-      "keccak256": "0x91d5413c2434ca58fd278b6e1e79fd98d10c83931cc2596a6038eee4daeb34ba",
-      "urls": [
-        "bzz-raw://91ccea707361e48b9b7a161fe81f496b9932bc471e9c4e4e1e9c283f2453cc70",
-        "dweb:/ipfs/QmcB66sZhQ6Kz7MUHcLE78YXRUZxoZnnxZjN6yATsbB2ec"
-      ],
-      "license": "MIT"
+      ]
     }
   },
   "version": 1

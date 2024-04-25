@@ -766,14 +766,6 @@
     ]
   },
   "sources": {
-    "contracts/src/crosschain/IRuleEntitlement.sol": {
-      "keccak256": "0x795b58a2ed6205d814e01e58a4a5e88ff69401ee7540d01c4881b7b28f04cfcf",
-      "license": "MIT",
-      "urls": [
-        "bzz-raw://684e395bce3abedfb499ba8b2708a4f0ca9d1b1f73eb0ebc647d4cead0b8fdd1",
-        "dweb:/ipfs/QmWz2Eu8UGXYskoBFtFXLBuwDrxUfYDLeQuTCeApALdf97"
-      ]
-    },
     "contracts/src/diamond/facets/introspection/IERC165.sol": {
       "keccak256": "0x243cfeefa64ba07bee887b0b03704147f9bd2f25571272a6ebca3ba684af1b00",
       "license": "Apache-2.0",
@@ -862,7 +854,7 @@
         "dweb:/ipfs/QmUFD83GFhupZo2d3PafyK5fjqrzFRDnJHEsTGYhHakzUM"
       ]
     },
-    "contracts/src/river/wallet-link/IWalletLink.sol": {
+    "contracts/src/factory/facets/wallet-link/IWalletLink.sol": {
       "keccak256": "0x548d2531215e1387f83265975af58947d37c01ae9ea75cce91147a2468fc653b",
       "license": "Apache-2.0",
       "urls": [
@@ -878,12 +870,20 @@
         "dweb:/ipfs/QmbCmoo6nMDou5m77JzFBPc2GBJkET5F2eWDEZaXQ5taHf"
       ]
     },
+    "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol": {
+      "keccak256": "0x795b58a2ed6205d814e01e58a4a5e88ff69401ee7540d01c4881b7b28f04cfcf",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://684e395bce3abedfb499ba8b2708a4f0ca9d1b1f73eb0ebc647d4cead0b8fdd1",
+        "dweb:/ipfs/QmWz2Eu8UGXYskoBFtFXLBuwDrxUfYDLeQuTCeApALdf97"
+      ]
+    },
     "contracts/src/spaces/facets/Entitled.sol": {
-      "keccak256": "0xbf6050ce2e1a7f617188da09f27ed24520f8e390d34233ed76cc835744d7ceed",
+      "keccak256": "0x3a46523cec9c4a9145104166c4c51820094f1a0d27f043a66ebefe4934409eb4",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://303bd13fe08b741d3b8d0164f35ca9c77de8a8d6dce07aa570d48e0470009521",
-        "dweb:/ipfs/QmWLxZ1mhyrfJhZK9MzX5ERvViwZrRrtTHoxyUoazRe5Pt"
+        "bzz-raw://8ecd2477ba216357a6e251902e84c4ce837abadf4af48abcb3bfb5612725ace5",
+        "dweb:/ipfs/QmdrjT3B7pRnU9ChYhRLCSxidFy277s7A7TRkPCRuZsd31"
       ]
     },
     "contracts/src/spaces/facets/banning/BanningBase.sol": {
@@ -911,27 +911,27 @@
       ]
     },
     "contracts/src/spaces/facets/delegation/WalletLinkProxyBase.sol": {
-      "keccak256": "0x2d800fabc6eaec00c2b25d72dda50cb612eca2ad08700ba537e1dcabf771efdc",
+      "keccak256": "0xac57b39cf710166b1c2dc1f0c7bf58fb813ceb047312b346a01e31df615c14f2",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://3d5346877c8dd48f84b4dc2b9958736fdded102211a8368e83ae82564f0f2334",
-        "dweb:/ipfs/Qmdfq725QN1vdtZd7xC2PSEUbt7ChWh3HEwCcFg7QiqNMd"
+        "bzz-raw://e3a22fb662252a0d23980b5a8700084f1a314b60a2f537243c9a5d202105a3a5",
+        "dweb:/ipfs/QmXd6ibShjPAtPsyFuo7Wmai8fcbKkfbS48sAhTtXU7Yk9"
       ]
     },
     "contracts/src/spaces/facets/delegation/WalletLinkProxyStorage.sol": {
-      "keccak256": "0x53bc0beb753473e7e927cede43c68006d27a30c212451ffd03b5b3d710713599",
+      "keccak256": "0xe4469f1cf8e5814c8b19b4ac664b904aa786590ece22ae7197abebe9b1bcb9ef",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://055bbca7d475e12d1d0344389803684ffe50fa04bbcc1755dc947f5c3fee5658",
-        "dweb:/ipfs/QmT3RDDQ8qvkRM91FxMixLfgsSvf77idAbA1AJL7aKxVMa"
+        "bzz-raw://5a7dea70d2ebaf427c44a4934c18578ab6bdc797a2a7abd4768b86e1a63fce07",
+        "dweb:/ipfs/QmYqnqHFfyMdHVsM8XuAttJWeMuGePfmYL9NZx8f8bw8Ek"
       ]
     },
     "contracts/src/spaces/facets/entitlements/EntitlementsManager.sol": {
-      "keccak256": "0xeac5fa14ebdb66810faac5cf11cdd4ae2e26560f875ea690f74f90cf4300e1ac",
+      "keccak256": "0x05f4728891e0e76cc9c302d6ffeca912e6ce31f6ebd34c858e0957a2a0cb8b20",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://e6442175adaceb574d39616fcbb8d0da45c47ec5afac043b8324d7f08c41cc44",
-        "dweb:/ipfs/QmR5gkWrzH8CL7u9jXjBfg5pwHWe8oz8xksBV2EpHggGuj"
+        "bzz-raw://c157881e4821492d3bd93a3a09ce2b93193a0ba97de015ea2f4e366663d7550f",
+        "dweb:/ipfs/QmPTiQ2DJTrujCKZCPqRTmwCQCK9patZwY4KYAyf5zo4N7"
       ]
     },
     "contracts/src/spaces/facets/entitlements/EntitlementsManagerBase.sol": {

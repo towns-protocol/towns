@@ -4,6 +4,7 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IDiamond} from "contracts/src/diamond/IDiamond.sol";
 import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
+import {IImplementationRegistry} from "./../../src/factory/facets/registry/IImplementationRegistry.sol";
 
 // helpers
 import {DiamondDeployer} from "../common/DiamondDeployer.s.sol";
@@ -41,7 +42,9 @@ import {DeployWalletLink} from "contracts/scripts/deployments/DeployWalletLink.s
 import {DeployTieredLogPricing} from "contracts/scripts/deployments/DeployTieredLogPricing.s.sol";
 import {DeployFixedPricing} from "contracts/scripts/deployments/DeployFixedPricing.s.sol";
 import {DeployPricingModules} from "contracts/scripts/deployments/facets/DeployPricingModules.s.sol";
-import {DeployEntitlementChecker} from "contracts/scripts/deployments/facets/DeployEntitlementChecker.s.sol";
+import {DeployImplementationRegistry} from "contracts/scripts/deployments/facets/DeployImplementationRegistry.s.sol";
+
+import {DeployBaseRegistry} from "contracts/scripts/deployments/DeployBaseRegistry.s.sol";
 
 contract DeploySpaceFactory is DiamondDeployer {
   // diamond helpers
@@ -52,6 +55,9 @@ contract DeploySpaceFactory is DiamondDeployer {
   DeployMetadata metadataHelper = new DeployMetadata();
   DeployArchitect architectHelper = new DeployArchitect();
   DeployPricingModules pricingModulesHelper = new DeployPricingModules();
+  DeployImplementationRegistry registryHelper =
+    new DeployImplementationRegistry();
+  DeployWalletLink walletLinkHelper = new DeployWalletLink();
   DeployMultiInit deployMultiInit = new DeployMultiInit();
 
   // dependencies
@@ -59,12 +65,9 @@ contract DeploySpaceFactory is DiamondDeployer {
   DeploySpaceOwner deploySpaceOwner = new DeploySpaceOwner();
   DeployUserEntitlement deployUserEntitlement = new DeployUserEntitlement();
   DeployRuleEntitlement deployRuleEntitlement = new DeployRuleEntitlement();
-  DeployWalletLink deployWalletLink = new DeployWalletLink();
   DeployTieredLogPricing deployTieredLogPricing = new DeployTieredLogPricing();
   DeployFixedPricing deployFixedPricing = new DeployFixedPricing();
-
-  DeployEntitlementChecker deployEntitlementChecker =
-    new DeployEntitlementChecker();
+  DeployBaseRegistry deployBaseRegistry = new DeployBaseRegistry();
 
   // helpers
   PausableHelper pausableHelper = new PausableHelper();
@@ -86,12 +89,14 @@ contract DeploySpaceFactory is DiamondDeployer {
   address pausable;
   address platformReqs;
   address prepay;
+  address registry;
+  address walletLink;
 
+  // external contracts
   address public userEntitlement;
   address public ruleEntitlement;
-  address public walletLink;
   address public spaceOwner;
-  address public entitlementChecker;
+  address public baseRegistry;
 
   address public tieredLogPricing;
   address public fixedPricing;
@@ -113,12 +118,6 @@ contract DeploySpaceFactory is DiamondDeployer {
     userEntitlement = deployUserEntitlement.deploy();
     ruleEntitlement = deployRuleEntitlement.deploy();
 
-    // wallet link
-    walletLink = deployWalletLink.deploy();
-
-    // entitlement checker
-    entitlementChecker = deployEntitlementChecker.deploy();
-
     // pricing modules
     tieredLogPricing = deployTieredLogPricing.deploy();
     fixedPricing = deployFixedPricing.deploy();
@@ -129,6 +128,9 @@ contract DeploySpaceFactory is DiamondDeployer {
     pricingModules[0] = tieredLogPricing;
     pricingModules[1] = fixedPricing;
 
+    // space operations
+    baseRegistry = deployBaseRegistry.deploy();
+
     // diamond facets
     ownable = ownableHelper.deploy();
     diamondCut = diamondCutHelper.deploy();
@@ -136,6 +138,8 @@ contract DeploySpaceFactory is DiamondDeployer {
     introspection = introspectionHelper.deploy();
     metadata = metadataHelper.deploy();
     architect = architectHelper.deploy();
+    registry = registryHelper.deploy();
+    walletLink = walletLinkHelper.deploy();
 
     vm.startBroadcast(deployerPK);
     proxyManager = address(new ProxyManager());
@@ -175,9 +179,7 @@ contract DeploySpaceFactory is DiamondDeployer {
       architectHelper.makeInitData(
         spaceOwner, // spaceOwner
         userEntitlement, // userEntitlement
-        ruleEntitlement, // ruleEntitlement
-        walletLink, // walletLink
-        entitlementChecker // entitlementChecker
+        ruleEntitlement // ruleEntitlement
       )
     );
     addFacet(
@@ -214,6 +216,16 @@ contract DeploySpaceFactory is DiamondDeployer {
       pricingModulesFacet,
       pricingModulesHelper.makeInitData(pricingModules)
     );
+    addFacet(
+      registryHelper.makeCut(registry, IDiamond.FacetCutAction.Add),
+      registry,
+      registryHelper.makeInitData("")
+    );
+    addFacet(
+      walletLinkHelper.makeCut(walletLink, IDiamond.FacetCutAction.Add),
+      walletLink,
+      walletLinkHelper.makeInitData("")
+    );
 
     return
       Diamond.InitParams({
@@ -229,7 +241,8 @@ contract DeploySpaceFactory is DiamondDeployer {
 
   function postDeploy(address deployer, address spaceFactory) public override {
     vm.startBroadcast(deployer);
-    ISpaceOwner(spaceOwner).setFactory(address(spaceFactory));
+    ISpaceOwner(spaceOwner).setFactory(spaceFactory);
+    IImplementationRegistry(spaceFactory).addImplementation(baseRegistry);
     vm.stopBroadcast();
   }
 }

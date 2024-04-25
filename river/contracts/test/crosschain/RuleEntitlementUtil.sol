@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
+import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
 
 library RuleEntitlementUtil {
   function getNoopRuleData()

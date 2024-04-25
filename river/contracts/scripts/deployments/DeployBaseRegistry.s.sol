@@ -9,13 +9,11 @@ import {DiamondDeployer} from "../common/DiamondDeployer.s.sol";
 import {Diamond} from "contracts/src/diamond/Diamond.sol";
 
 // helpers
-import {NodeOperatorHelper} from "contracts/test/base/registry/NodeOperatorHelper.sol";
 import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
 import {IntrospectionHelper} from "contracts/test/diamond/introspection/IntrospectionSetup.sol";
 
 // facets
 import {ERC721ANonTransferable} from "contracts/src/diamond/facets/token/ERC721A/ERC721ANonTransferable.sol";
-import {NodeOperatorFacet} from "contracts/src/base/registry/facets/operator/NodeOperatorFacet.sol";
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
 // deployers
@@ -25,10 +23,11 @@ import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDia
 import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
 import {DeployOwnable} from "contracts/scripts/deployments/facets/DeployOwnable.s.sol";
 import {DeployMainnetDelegation} from "contracts/scripts/deployments/DeployMainnetDelegation.s.sol";
-import {DeploySpaceOwner} from "contracts/scripts/deployments/DeploySpaceOwner.s.sol";
+import {DeployEntitlementChecker} from "contracts/scripts/deployments/facets/DeployEntitlementChecker.s.sol";
+import {DeployNodeOperator} from "contracts/scripts/deployments/facets/DeployNodeOperator.s.sol";
+import {DeployMetadata} from "contracts/scripts/deployments/facets/DeployMetadata.s.sol";
 
 contract DeployBaseRegistry is DiamondDeployer {
-  NodeOperatorHelper operatorHelper = new NodeOperatorHelper();
   ERC721AHelper erc721aHelper = new ERC721AHelper();
 
   // deployments
@@ -39,7 +38,9 @@ contract DeployBaseRegistry is DiamondDeployer {
   DeployOwnable ownableHelper = new DeployOwnable();
   DeployMainnetDelegation deployMainnetDelegation =
     new DeployMainnetDelegation();
-  DeploySpaceOwner deploySpaceOwner = new DeploySpaceOwner();
+  DeployEntitlementChecker checkerHelper = new DeployEntitlementChecker();
+  DeployMetadata metadataHelper = new DeployMetadata();
+  DeployNodeOperator operatorHelper = new DeployNodeOperator();
 
   function versionName() public pure override returns (string memory) {
     return "baseRegistry";
@@ -54,10 +55,12 @@ contract DeployBaseRegistry is DiamondDeployer {
     address diamondLoupe = loupeHelper.deploy();
     address introspection = introspectionHelper.deploy();
     address ownable = ownableHelper.deploy();
+    address metadata = metadataHelper.deploy();
+    address entitlementChecker = checkerHelper.deploy();
+    address operator = operatorHelper.deploy();
 
     vm.startBroadcast(deployerPK);
     address nft = address(new ERC721ANonTransferable());
-    address operator = address(new NodeOperatorFacet());
     vm.stopBroadcast();
 
     addFacet(
@@ -89,6 +92,16 @@ contract DeployBaseRegistry is DiamondDeployer {
       introspectionHelper.makeCut(introspection, IDiamond.FacetCutAction.Add),
       introspection,
       introspectionHelper.makeInitData("")
+    );
+    addFacet(
+      metadataHelper.makeCut(metadata, IDiamond.FacetCutAction.Add),
+      metadata,
+      metadataHelper.makeInitData("SpaceOperator", "")
+    );
+    addFacet(
+      checkerHelper.makeCut(entitlementChecker, IDiamond.FacetCutAction.Add),
+      entitlementChecker,
+      checkerHelper.makeInitData("")
     );
 
     return

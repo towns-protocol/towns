@@ -4,11 +4,25 @@ pragma solidity ^0.8.23;
 // interfaces
 
 // libraries
+import {NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 
 // contracts
-import {NodeOperatorStatus} from "contracts/src/base/registry/libraries/BaseRegistryStorage.sol";
+interface INodeOperatorBase {
+  // =============================================================
+  //                           Errors
+  // =============================================================
+  error NodeOperator__InvalidAddress();
+  error NodeOperator__NotTransferable();
+  error NodeOperator__AlreadyRegistered();
+  error NodeOperator__StatusNotChanged();
+  error NodeOperator__InvalidStatusTransition();
+  error NodeOperator__NotRegistered();
+  error NodeOperator__InvalidOperator();
+  error NodeOperator__InvalidSpace();
+  error NodeOperator__AlreadyDelegated(address operator);
+  error NodeOperator__NotEnoughStake();
+  error NodeOperator__InvalidStakeRequirement();
 
-interface INodeOperator {
   // =============================================================
   //                           Events
   // =============================================================
@@ -19,9 +33,11 @@ interface INodeOperator {
   );
   event OperatorCommissionChanged(
     address indexed operator,
-    uint256 indexed newCommission
+    uint256 indexed commission
   );
+}
 
+interface INodeOperator is INodeOperatorBase {
   // =============================================================
   //                           Registration
   // =============================================================
@@ -57,4 +73,17 @@ interface INodeOperator {
   // =============================================================
   //                           Commission
   // =============================================================
+  /*
+   * @notice  Sets the commission rate of an operator.
+   * @param   operator Address of the operator.
+   * @param   commission The new commission rate.
+   */
+  function setCommissionRate(uint256 commission) external;
+
+  /*
+   * @notice  Returns the commission rate of an operator.
+   * @param   operator Address of the operator.
+   * @return  The commission rate of the operator.
+   */
+  function getCommissionRate(address operator) external view returns (uint256);
 }

@@ -15,7 +15,6 @@ export interface BaseChainConfig {
         spaceOwner: Address
         mockNFT?: Address // mockErc721aAddress
         member?: Address // testGatingTokenAddress - For tesing token gating scenarios
-        walletLink: Address
     }
 }
 

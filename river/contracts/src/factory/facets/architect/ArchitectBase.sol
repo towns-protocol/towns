@@ -5,7 +5,7 @@ pragma solidity ^0.8.23;
 import {IArchitectBase} from "./IArchitect.sol";
 import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
-import {IRuleEntitlement} from "../../../crosschain/IRuleEntitlement.sol";
+import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
 import {IRoles, IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
 import {IChannel} from "contracts/src/spaces/facets/channels/IChannel.sol";
 import {IEntitlementsManager} from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
@@ -13,10 +13,9 @@ import {IProxyManager} from "contracts/src/diamond/proxy/manager/IProxyManager.s
 import {ITokenOwnableBase} from "contracts/src/diamond/facets/ownable/token/ITokenOwnable.sol";
 import {IManagedProxyBase} from "contracts/src/diamond/proxy/managed/IManagedProxy.sol";
 import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
-import {IWalletLink} from "contracts/src/river/wallet-link/IWalletLink.sol";
+import {IWalletLink} from "contracts/src/factory/facets/wallet-link/IWalletLink.sol";
 import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
-import {IEntitlementChecker} from "contracts/src/crosschain/checker/IEntitlementChecker.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -129,23 +128,18 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
   function _setImplementations(
     ISpaceOwner spaceToken,
     IUserEntitlement userEntitlement,
-    IRuleEntitlement ruleEntitlement,
-    IWalletLink walletLink,
-    IEntitlementChecker entitlementChecker
+    IRuleEntitlement ruleEntitlement
   ) internal {
     if (address(spaceToken).code.length == 0) revert Architect__NotContract();
     if (address(userEntitlement).code.length == 0)
       revert Architect__NotContract();
     if (address(ruleEntitlement).code.length == 0)
       revert Architect__NotContract();
-    if (address(walletLink).code.length == 0) revert Architect__NotContract();
 
     ImplementationStorage.Layout storage ds = ImplementationStorage.layout();
     ds.spaceToken = spaceToken;
     ds.userEntitlement = userEntitlement;
     ds.ruleEntitlement = ruleEntitlement;
-    ds.walletLink = walletLink;
-    ds.entitlementChecker = entitlementChecker;
   }
 
   function _getImplementations()
@@ -154,20 +148,12 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
     returns (
       ISpaceOwner spaceToken,
       IUserEntitlement userEntitlementImplementation,
-      IRuleEntitlement ruleEntitlementImplementation,
-      IWalletLink walletLink,
-      IEntitlementChecker entitlementChecker
+      IRuleEntitlement ruleEntitlementImplementation
     )
   {
     ImplementationStorage.Layout storage ds = ImplementationStorage.layout();
 
-    return (
-      ds.spaceToken,
-      ds.userEntitlement,
-      ds.ruleEntitlement,
-      ds.walletLink,
-      ds.entitlementChecker
-    );
+    return (ds.spaceToken, ds.userEntitlement, ds.ruleEntitlement);
   }
 
   // =============================================================
@@ -322,8 +308,6 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
       type(SpaceProxy).creationCode,
       abi.encode(
         msg.sender,
-        ds.walletLink,
-        ds.entitlementChecker,
         IManagedProxyBase.ManagedProxy({
           managerSelector: IProxyManager.getImplementation.selector,
           manager: address(this)

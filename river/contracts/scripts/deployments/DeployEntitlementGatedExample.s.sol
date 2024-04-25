@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 //interfaces
-import {IEntitlementChecker} from "contracts/src/crosschain/checker/IEntitlementChecker.sol";
+import {IEntitlementChecker} from "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
 
 //libraries
 

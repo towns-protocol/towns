@@ -1303,93 +1303,6 @@
         "type": "function"
       },
       {
-        "inputs": [
-          {
-            "internalType": "bytes32",
-            "name": "transactionId",
-            "type": "bytes32"
-          }
-        ],
-        "name": "getRuleData",
-        "outputs": [
-          {
-            "components": [
-              {
-                "components": [
-                  {
-                    "internalType": "enum IRuleEntitlement.CombinedOperationType",
-                    "name": "opType",
-                    "type": "uint8"
-                  },
-                  {
-                    "internalType": "uint8",
-                    "name": "index",
-                    "type": "uint8"
-                  }
-                ],
-                "internalType": "struct IRuleEntitlement.Operation[]",
-                "name": "operations",
-                "type": "tuple[]"
-              },
-              {
-                "components": [
-                  {
-                    "internalType": "enum IRuleEntitlement.CheckOperationType",
-                    "name": "opType",
-                    "type": "uint8"
-                  },
-                  {
-                    "internalType": "uint256",
-                    "name": "chainId",
-                    "type": "uint256"
-                  },
-                  {
-                    "internalType": "address",
-                    "name": "contractAddress",
-                    "type": "address"
-                  },
-                  {
-                    "internalType": "uint256",
-                    "name": "threshold",
-                    "type": "uint256"
-                  }
-                ],
-                "internalType": "struct IRuleEntitlement.CheckOperation[]",
-                "name": "checkOperations",
-                "type": "tuple[]"
-              },
-              {
-                "components": [
-                  {
-                    "internalType": "enum IRuleEntitlement.LogicalOperationType",
-                    "name": "logOpType",
-                    "type": "uint8"
-                  },
-                  {
-                    "internalType": "uint8",
-                    "name": "leftOperationIndex",
-                    "type": "uint8"
-                  },
-                  {
-                    "internalType": "uint8",
-                    "name": "rightOperationIndex",
-                    "type": "uint8"
-                  }
-                ],
-                "internalType": "struct IRuleEntitlement.LogicalOperation[]",
-                "name": "logicalOperations",
-                "type": "tuple[]"
-              }
-            ],
-            "internalType": "struct IRuleEntitlement.RuleData",
-            "name": "",
-            "type": "tuple"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
         "inputs": [],
         "name": "getSpaceFactory",
         "outputs": [
@@ -1511,24 +1424,6 @@
           }
         ],
         "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "bytes32",
-            "name": "transactionId",
-            "type": "bytes32"
-          },
-          {
-            "internalType": "enum IEntitlementGatedBase.NodeVoteStatus",
-            "name": "result",
-            "type": "uint8"
-          }
-        ],
-        "name": "postEntitlementCheckResult",
-        "outputs": [],
-        "stateMutability": "nonpayable",
         "type": "function"
       },
       {
@@ -1805,6 +1700,9 @@
       },
       "kind": "dev",
       "methods": {
+        "__Membership_init((string,string,uint256,uint256,uint64,address,address,uint256,address),address)": {
+          "details": "Initialization logic when facet is added to diamond"
+        },
         "_getMembershipPrice(uint256)": {
           "details": "Makes it virtual to allow other pricing strategies"
         },
@@ -2115,52 +2013,12 @@
     ]
   },
   "sources": {
-    "contracts/src/crosschain/EntitlementGated.sol": {
-      "keccak256": "0xf52c592838c7643c03297d83109500eb923d16f63829a9c588e586965d2d811b",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://2c46c4ec55c204a804f9406597edcf27572900e98c5433fa50976443ad8ded4f",
-        "dweb:/ipfs/QmR7yZGvfmCxprecUbskRo5nHM1d6WKBeEmKeYXrmSrc1j"
-      ]
-    },
-    "contracts/src/crosschain/EntitlementGatedBase.sol": {
-      "keccak256": "0x6a7a2f571c46b3f2ecd7339ed595c5a346342ef159cdcaff51ff389306e1b6a7",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://dc96856e7ff4682435d3ac531fe13da41991ac90159be99c16fa4ca3483361eb",
-        "dweb:/ipfs/QmWd2Uc2JN6wbfQM2Nyeccqz86zaaAh3kFKq4weFRXbinZ"
-      ]
-    },
-    "contracts/src/crosschain/EntitlementGatedStorage.sol": {
-      "keccak256": "0xe39060340d8e2a127895fdd7dd59802387c7da4dc6ae17fc0ed1b8104528c49b",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://a2bb9feff67b787287b77284f580b4cb0f44e7eec941cb78e928586fce8a0db6",
-        "dweb:/ipfs/QmNmvoGyBMPULSGkMAPMg9iR4s4HpfpudZ9K9hBSFSKHSz"
-      ]
-    },
-    "contracts/src/crosschain/IEntitlementGated.sol": {
-      "keccak256": "0x587784f179eded1b28c1b744710cc0bd07605b91dc52a91c2214d8e428bd2742",
+    "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol": {
+      "keccak256": "0xab26d5f9989fd9003fe1c835530704b5e70f74fa4c2164e49001f88b8e7ea507",
       "license": "MIT",
       "urls": [
-        "bzz-raw://38a98bc3c47c27e4cdedeaa5a50e806dbb27598403ae401c09856576b93dac79",
-        "dweb:/ipfs/QmPCt1sgZA8kFWb5ANraox2PgPPSuy1wM9htHNz2MhJnEB"
-      ]
-    },
-    "contracts/src/crosschain/IRuleEntitlement.sol": {
-      "keccak256": "0x795b58a2ed6205d814e01e58a4a5e88ff69401ee7540d01c4881b7b28f04cfcf",
-      "license": "MIT",
-      "urls": [
-        "bzz-raw://684e395bce3abedfb499ba8b2708a4f0ca9d1b1f73eb0ebc647d4cead0b8fdd1",
-        "dweb:/ipfs/QmWz2Eu8UGXYskoBFtFXLBuwDrxUfYDLeQuTCeApALdf97"
-      ]
-    },
-    "contracts/src/crosschain/checker/IEntitlementChecker.sol": {
-      "keccak256": "0x1a5c445aa01075ed316050d3b3495e1dec5d3bacaec54e04177bb84917d6b024",
-      "license": "MIT",
-      "urls": [
-        "bzz-raw://b19ce82cce8f656269a7f25e01c76862a79dff9e05ab93f543a9ff8114eafac3",
-        "dweb:/ipfs/QmfEThXgxzKtPAmgRcudr97BAAdQnxGb17pU3qJ83Z9jHc"
+        "bzz-raw://bfb7f3ca25d13c83891eea9512dc20262613f4bbe3eae89acf334716fa32d45d",
+        "dweb:/ipfs/QmXWCpJuWsnjU5pLBD6gX12RcsVQdW8rY9udU1MEyyQ7ix"
       ]
     },
     "contracts/src/diamond/facets/Facet.sol": {
@@ -2371,7 +2229,15 @@
         "dweb:/ipfs/QmVgPWMEL5q2J5kmZQZFRadWjuVQeFLaa9K2gCHdhjLUa9"
       ]
     },
-    "contracts/src/river/wallet-link/IWalletLink.sol": {
+    "contracts/src/factory/facets/registry/IImplementationRegistry.sol": {
+      "keccak256": "0x2409b9eb86a4dc5849050d06409fd7548ac21f9bf6e7419b91dfb9226db0a3d5",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://613195fc78a1a496820c5934f315c586ad33edf7608022d2ae0ea44f52529e61",
+        "dweb:/ipfs/QmR8Gn11UNq2rKC5Qp7Prdk61oWhNg3UVc8KeyWCRfrEqV"
+      ]
+    },
+    "contracts/src/factory/facets/wallet-link/IWalletLink.sol": {
       "keccak256": "0x548d2531215e1387f83265975af58947d37c01ae9ea75cce91147a2468fc653b",
       "license": "Apache-2.0",
       "urls": [
@@ -2387,12 +2253,20 @@
         "dweb:/ipfs/QmbCmoo6nMDou5m77JzFBPc2GBJkET5F2eWDEZaXQ5taHf"
       ]
     },
+    "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol": {
+      "keccak256": "0x795b58a2ed6205d814e01e58a4a5e88ff69401ee7540d01c4881b7b28f04cfcf",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://684e395bce3abedfb499ba8b2708a4f0ca9d1b1f73eb0ebc647d4cead0b8fdd1",
+        "dweb:/ipfs/QmWz2Eu8UGXYskoBFtFXLBuwDrxUfYDLeQuTCeApALdf97"
+      ]
+    },
     "contracts/src/spaces/facets/Entitled.sol": {
-      "keccak256": "0xbf6050ce2e1a7f617188da09f27ed24520f8e390d34233ed76cc835744d7ceed",
+      "keccak256": "0x3a46523cec9c4a9145104166c4c51820094f1a0d27f043a66ebefe4934409eb4",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://303bd13fe08b741d3b8d0164f35ca9c77de8a8d6dce07aa570d48e0470009521",
-        "dweb:/ipfs/QmWLxZ1mhyrfJhZK9MzX5ERvViwZrRrtTHoxyUoazRe5Pt"
+        "bzz-raw://8ecd2477ba216357a6e251902e84c4ce837abadf4af48abcb3bfb5612725ace5",
+        "dweb:/ipfs/QmdrjT3B7pRnU9ChYhRLCSxidFy277s7A7TRkPCRuZsd31"
       ]
     },
     "contracts/src/spaces/facets/Permissions.sol": {
@@ -2444,19 +2318,19 @@
       ]
     },
     "contracts/src/spaces/facets/delegation/WalletLinkProxyBase.sol": {
-      "keccak256": "0x2d800fabc6eaec00c2b25d72dda50cb612eca2ad08700ba537e1dcabf771efdc",
+      "keccak256": "0xac57b39cf710166b1c2dc1f0c7bf58fb813ceb047312b346a01e31df615c14f2",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://3d5346877c8dd48f84b4dc2b9958736fdded102211a8368e83ae82564f0f2334",
-        "dweb:/ipfs/Qmdfq725QN1vdtZd7xC2PSEUbt7ChWh3HEwCcFg7QiqNMd"
+        "bzz-raw://e3a22fb662252a0d23980b5a8700084f1a314b60a2f537243c9a5d202105a3a5",
+        "dweb:/ipfs/QmXd6ibShjPAtPsyFuo7Wmai8fcbKkfbS48sAhTtXU7Yk9"
       ]
     },
     "contracts/src/spaces/facets/delegation/WalletLinkProxyStorage.sol": {
-      "keccak256": "0x53bc0beb753473e7e927cede43c68006d27a30c212451ffd03b5b3d710713599",
+      "keccak256": "0xe4469f1cf8e5814c8b19b4ac664b904aa786590ece22ae7197abebe9b1bcb9ef",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://055bbca7d475e12d1d0344389803684ffe50fa04bbcc1755dc947f5c3fee5658",
-        "dweb:/ipfs/QmT3RDDQ8qvkRM91FxMixLfgsSvf77idAbA1AJL7aKxVMa"
+        "bzz-raw://5a7dea70d2ebaf427c44a4934c18578ab6bdc797a2a7abd4768b86e1a63fce07",
+        "dweb:/ipfs/QmYqnqHFfyMdHVsM8XuAttJWeMuGePfmYL9NZx8f8bw8Ek"
       ]
     },
     "contracts/src/spaces/facets/entitlements/EntitlementsManagerService.sol": {
@@ -2473,6 +2347,30 @@
       "urls": [
         "bzz-raw://01194896393f0e77f617f02bed7da7cee5ec7a2d810a058f9c1be8c2ad99f583",
         "dweb:/ipfs/QmbPtkGzBPHYKwvsM3d26MYJKLbFZ7p253pXJCe8aDzUfK"
+      ]
+    },
+    "contracts/src/spaces/facets/gated/EntitlementGatedBase.sol": {
+      "keccak256": "0x39e0ebe4f03d09ee583815bac0e0a4da975281c6c469a351d7eea9f3b1224ebe",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://4014149f01b099c547846b1c8e0000bece2b8a30ed65f5be37f7bd404a302b96",
+        "dweb:/ipfs/QmR2NsowX7isMfetiNdJvvdesSHgevwFmffTrFuVDLasiT"
+      ]
+    },
+    "contracts/src/spaces/facets/gated/EntitlementGatedStorage.sol": {
+      "keccak256": "0xff3a5f43d25eaa6b0ed745fbc4b1e870a0298bdc807d6912c400a40946adf4b1",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://1f6f76cafc4b7f8d3913a3cf376f0f135c8bbef0e89bdf94d85b4874f0a47097",
+        "dweb:/ipfs/QmV3dUfdG9M3zprGe1ZNRV4JHNYYVXH8eJAZL7eW7RM5p7"
+      ]
+    },
+    "contracts/src/spaces/facets/gated/IEntitlementGated.sol": {
+      "keccak256": "0x8cd5b96326e601fdc84ef770c841bb02d3b61977da8342f6fa20cd80a126a292",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://318f99255905d5aaa2d70b48567710737cdcc07f5fbc123085281065a3ae9c39",
+        "dweb:/ipfs/QmaYauqDGVzBWxXjjwrtSi4FQkfJyPoXoobe6hu5FMAkNF"
       ]
     },
     "contracts/src/spaces/facets/membership/IMembership.sol": {
@@ -2492,11 +2390,11 @@
       ]
     },
     "contracts/src/spaces/facets/membership/MembershipFacet.sol": {
-      "keccak256": "0x65935dc465a0932b4e2fee45d231aae25b4f04bad1f82495350e2abe0dc5f951",
+      "keccak256": "0xcd468d089fdcf297c196a992017d017749e946acebd5b85839087a9356f9842f",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://14faa6eec0a58989aeda4b713045499ae8e7574ad024938e73a887d37adc0e90",
-        "dweb:/ipfs/Qmf1VcViLNnyoP24qrCVx4ofLCNiUrswX69KRTRQCLzqKu"
+        "bzz-raw://a65bf967790a67366c8a8c4d9064585cb3b5671ba06cbbc0c50280004f539b2c",
+        "dweb:/ipfs/QmbV3vUn1UihaMocG1DksXaiBcPhHVeZKkrdypPDXaEXAr"
       ]
     },
     "contracts/src/spaces/facets/membership/MembershipStorage.sol": {
@@ -2657,14 +2555,6 @@
       "urls": [
         "bzz-raw://ad85dd393ee0a1917c57046abc5155f51f77844b2c6a42c05c1b8dd26d6ff3c1",
         "dweb:/ipfs/QmNqYc8To2NdnpP6E1tGz7t6A7beuENde5yovwov5pW1fA"
-      ]
-    },
-    "lib/forge-std/src/console2.sol": {
-      "keccak256": "0x954646445d1014c3cd85c7918f5e7adeeca5ee44b68c00bafa237e597a4e35ea",
-      "license": "MIT",
-      "urls": [
-        "bzz-raw://516fa3be52da4763147175bfba4be0aa011fadbb0c1afb01f97265bd4cee7973",
-        "dweb:/ipfs/QmdixAyMJefx7qePChgdxcBH5MxhmN7vsqPuPLx3CgrVmF"
       ]
     }
   },

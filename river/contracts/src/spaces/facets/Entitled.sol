@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 import {IEntitlementBase} from "contracts/src/spaces/entitlements/IEntitlement.sol";
-import {IWalletLink} from "contracts/src/river/wallet-link/IWalletLink.sol";
+import {IWalletLink} from "contracts/src/factory/facets/wallet-link/IWalletLink.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -155,7 +155,7 @@ abstract contract Entitled is
   function _getLinkedWalletsWithUser(
     address user
   ) internal view returns (address[] memory) {
-    IWalletLink wl = _getWalletLinkProxy();
+    IWalletLink wl = IWalletLink(MembershipStorage.layout().spaceFactory);
     address[] memory linkedWallets = wl.getWalletsByRootKey(user);
     uint256 linkedWalletsLength = linkedWallets.length;
 

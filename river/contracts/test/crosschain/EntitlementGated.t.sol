@@ -5,17 +5,17 @@ pragma solidity ^0.8.23;
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 
 //interfaces
-import {IEntitlementChecker} from "contracts/src/crosschain/checker/IEntitlementChecker.sol";
-import {IEntitlementCheckerBase} from "contracts/src/crosschain/checker/IEntitlementChecker.sol";
-import {IEntitlementGated} from "contracts/src/crosschain/IEntitlementGated.sol";
-import {IEntitlementGatedBase} from "contracts/src/crosschain/IEntitlementGated.sol";
-import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
+import {IEntitlementChecker} from "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
+import {IEntitlementCheckerBase} from "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
+import {IEntitlementGated} from "contracts/src/spaces/facets/gated/IEntitlementGated.sol";
+import {IEntitlementGatedBase} from "contracts/src/spaces/facets/gated/IEntitlementGated.sol";
+import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
 
 //libraries
 import {RuleEntitlementUtil} from "./RuleEntitlementUtil.sol";
 
 //contracts
-import {EntitlementChecker} from "contracts/src/crosschain/checker/EntitlementChecker.sol";
+import {EntitlementChecker} from "contracts/src/base/registry/facets/checker/EntitlementChecker.sol";
 import {MockEntitlementGated} from "contracts/test/mocks/MockEntitlementGated.sol";
 
 contract EntitlementGatedTest is
@@ -39,23 +39,26 @@ contract EntitlementGatedTest is
   function test_requestEntitlementCheck() external {
     _registerNodes();
 
-    address[] memory nodes = checker.getRandomNodes(5, address(gated));
+    vm.prank(address(gated));
+    address[] memory nodes = checker.getRandomNodes(5);
 
-    bytes32 transactionId = keccak256(
+    bytes32 transactionHash = keccak256(
       abi.encodePacked(tx.origin, block.number)
     );
 
-    vm.expectEmit(true, true, true, true);
+    vm.expectEmit(address(checker));
     emit EntitlementCheckRequested(
-      tx.origin,
-      transactionId,
-      nodes,
-      address(gated)
+      address(this),
+      address(gated),
+      transactionHash,
+      nodes
     );
-    bytes32 generatedTxId = gated.requestEntitlementCheck(
+
+    bytes32 realRequestId = gated.requestEntitlementCheck(
       RuleEntitlementUtil.getMockERC721RuleData()
     );
-    assertEq(generatedTxId, transactionId);
+
+    assertEq(realRequestId, transactionHash);
   }
 
   function test_requestEntitlementCheck_revert_alreadyRegistered() external {
@@ -73,63 +76,65 @@ contract EntitlementGatedTest is
   function test_postEntitlementCheckResult_passing() external {
     _registerNodes();
 
-    address[] memory nodes = checker.getRandomNodes(5, address(gated));
-    bytes32 transactionId = gated.requestEntitlementCheck(
+    vm.prank(address(gated));
+    address[] memory nodes = checker.getRandomNodes(5);
+    bytes32 requestId = gated.requestEntitlementCheck(
       RuleEntitlementUtil.getMockERC721RuleData()
     );
 
-    _nodeVotes(transactionId, nodes, NodeVoteStatus.PASSED);
+    _nodeVotes(requestId, nodes, NodeVoteStatus.PASSED);
   }
 
   function test_postEntitlementCheckResult_failing() external {
     _registerNodes();
 
-    address[] memory nodes = checker.getRandomNodes(5, address(gated));
+    vm.prank(address(gated));
+    address[] memory nodes = checker.getRandomNodes(5);
 
-    bytes32 transactionId = gated.requestEntitlementCheck(
+    bytes32 requestId = gated.requestEntitlementCheck(
       RuleEntitlementUtil.getMockERC721RuleData()
     );
 
-    _nodeVotes(transactionId, nodes, NodeVoteStatus.FAILED);
+    _nodeVotes(requestId, nodes, NodeVoteStatus.FAILED);
   }
 
   function test_postEntitlementCheckResult_revert_transactionNotRegistered()
     external
   {
-    bytes32 transactionId = _randomBytes32();
+    bytes32 requestId = _randomBytes32();
 
     vm.prank(_randomAddress());
     vm.expectRevert(EntitlementGated_TransactionNotRegistered.selector);
-    gated.postEntitlementCheckResult(transactionId, NodeVoteStatus.PASSED);
+    gated.postEntitlementCheckResult(requestId, NodeVoteStatus.PASSED);
   }
 
   function test_postEntitlementCheckResult_revert_nodeAlreadyVoted() external {
     _registerNodes();
+    vm.prank(address(gated));
+    address[] memory nodes = checker.getRandomNodes(5);
 
-    address[] memory nodes = checker.getRandomNodes(5, address(gated));
-
-    bytes32 transactionId = gated.requestEntitlementCheck(
+    bytes32 requestId = gated.requestEntitlementCheck(
       RuleEntitlementUtil.getMockERC721RuleData()
     );
 
     vm.prank(nodes[0]);
-    gated.postEntitlementCheckResult(transactionId, NodeVoteStatus.PASSED);
+    gated.postEntitlementCheckResult(requestId, NodeVoteStatus.PASSED);
 
     vm.prank(nodes[0]);
     vm.expectRevert(EntitlementGated_NodeAlreadyVoted.selector);
-    gated.postEntitlementCheckResult(transactionId, NodeVoteStatus.PASSED);
+    gated.postEntitlementCheckResult(requestId, NodeVoteStatus.PASSED);
   }
 
   function test_postEntitlementCheckResult_revert_nodeNotFound() external {
     _registerNodes();
 
-    bytes32 transactionId = gated.requestEntitlementCheck(
+    bytes32 requestId = gated.requestEntitlementCheck(
       RuleEntitlementUtil.getMockERC721RuleData()
     );
 
     vm.prank(_randomAddress());
     vm.expectRevert(EntitlementGated_NodeNotFound.selector);
-    gated.postEntitlementCheckResult(transactionId, NodeVoteStatus.PASSED);
+    gated.postEntitlementCheckResult(requestId, NodeVoteStatus.PASSED);
   }
 
   // =============================================================
@@ -186,12 +191,10 @@ contract EntitlementGatedTest is
 
   function test_getEncodedRuleData() external {
     _registerNodes();
-    bytes32 transactionId = gated.requestEntitlementCheck(
+    bytes32 requestId = gated.requestEntitlementCheck(
       RuleEntitlementUtil.getMockERC721RuleData()
     );
-    IRuleEntitlement.RuleData memory ruleData = gated.getRuleData(
-      transactionId
-    );
+    IRuleEntitlement.RuleData memory ruleData = gated.getRuleData(requestId);
     assertRuleDatasEqual(ruleData, RuleEntitlementUtil.getMockERC721RuleData());
   }
 
@@ -201,29 +204,29 @@ contract EntitlementGatedTest is
 
   function test_deleteTransaction() external {
     _registerNodes();
+    vm.prank(address(gated));
+    address[] memory nodes = checker.getRandomNodes(5);
 
-    address[] memory nodes = checker.getRandomNodes(5, address(gated));
-
-    bytes32 transactionId = gated.requestEntitlementCheck(
+    bytes32 requestId = gated.requestEntitlementCheck(
       RuleEntitlementUtil.getMockERC721RuleData()
     );
 
     for (uint256 i = 0; i < 3; i++) {
       vm.startPrank(nodes[i]);
-      gated.postEntitlementCheckResult(transactionId, NodeVoteStatus.PASSED);
+      gated.postEntitlementCheckResult(requestId, NodeVoteStatus.PASSED);
       vm.stopPrank();
     }
 
     vm.prank(nodes[3]);
     vm.expectRevert(EntitlementGated_TransactionNotRegistered.selector);
-    gated.postEntitlementCheckResult(transactionId, NodeVoteStatus.PASSED);
+    gated.postEntitlementCheckResult(requestId, NodeVoteStatus.PASSED);
   }
 
   // =============================================================
   //                           Internal
   // =============================================================
   function _nodeVotes(
-    bytes32 transactionId,
+    bytes32 requestId,
     address[] memory nodes,
     NodeVoteStatus vote
   ) internal {
@@ -238,15 +241,15 @@ contract EntitlementGatedTest is
         // if on the last voting node, expect the event to be emitted
         if (i == halfNodes + 1) {
           vm.expectEmit(true, true, true, true);
-          emit EntitlementCheckResultPosted(transactionId, vote);
-          gated.postEntitlementCheckResult(transactionId, vote);
+          emit EntitlementCheckResultPosted(requestId, vote);
+          gated.postEntitlementCheckResult(requestId, vote);
           eventEmitted = true;
         } else {
-          gated.postEntitlementCheckResult(transactionId, vote);
+          gated.postEntitlementCheckResult(requestId, vote);
         }
       } else {
         vm.expectRevert(EntitlementGated_TransactionNotRegistered.selector);
-        gated.postEntitlementCheckResult(transactionId, vote);
+        gated.postEntitlementCheckResult(requestId, vote);
       }
 
       vm.stopPrank();
@@ -259,10 +262,10 @@ contract EntitlementGatedTest is
       nodeKeys[node] = string(abi.encodePacked("node", vm.toString(i)));
 
       vm.prank(node);
-      checker.registerNode();
+      checker.registerNode(node);
     }
 
-    uint256 len = checker.nodeCount();
+    uint256 len = checker.getNodeCount();
     assertEq(len, 25);
   }
 }

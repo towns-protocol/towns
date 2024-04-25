@@ -4,7 +4,10 @@ pragma solidity ^0.8.23;
 // interfaces
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
-import {IEntitlementChecker} from "contracts/src/crosschain/checker/IEntitlementChecker.sol";
+import {IEntitlementChecker} from "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
+import {IImplementationRegistry} from "contracts/src/factory/facets/registry/IImplementationRegistry.sol";
+import {IWalletLink} from "contracts/src/factory/facets/wallet-link/IWalletLink.sol";
+import {INodeOperator} from "contracts/src/base/registry/facets/operator/INodeOperator.sol";
 
 // libraries
 
@@ -13,14 +16,12 @@ import {IEntitlementChecker} from "contracts/src/crosschain/checker/IEntitlement
 // deployments
 import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
 import {SpaceHelper} from "contracts/test/spaces/SpaceHelper.sol";
-import {RuleEntitlement} from "contracts/src/crosschain/RuleEntitlement.sol";
+import {RuleEntitlement} from "contracts/src/spaces/entitlements/rule/RuleEntitlement.sol";
 
 import {SpaceOwner} from "contracts/src/spaces/facets/owner/SpaceOwner.sol";
-import {NodeOperatorFacet} from "contracts/src/base/registry/facets/operator/NodeOperatorFacet.sol";
 
 // deployments
 import {DeploySpaceFactory} from "contracts/scripts/deployments/DeploySpaceFactory.s.sol";
-import {DeployBaseRegistry} from "contracts/scripts/deployments/DeployBaseRegistry.s.sol";
 import {DeployRiverBase} from "contracts/scripts/deployments/DeployRiverBase.s.sol";
 import {DeployMainnetDelegation} from "contracts/scripts/deployments/DeployMainnetDelegation.s.sol";
 
@@ -30,7 +31,6 @@ import {DeployMainnetDelegation} from "contracts/scripts/deployments/DeployMainn
  */
 contract BaseSetup is TestUtils, SpaceHelper {
   DeploySpaceFactory internal deploySpaceFactory = new DeploySpaceFactory();
-  DeployBaseRegistry internal deployBaseRegistry = new DeployBaseRegistry();
   DeployRiverBase internal deployRiverToken = new DeployRiverBase();
   DeployMainnetDelegation internal deployMainnetDelegation =
     new DeployMainnetDelegation();
@@ -43,14 +43,10 @@ contract BaseSetup is TestUtils, SpaceHelper {
 
   address internal userEntitlement;
   address internal ruleEntitlement;
-  address internal walletLink;
   address internal spaceOwner;
-  IEntitlementChecker internal entitlementChecker;
   address[] internal nodes;
 
-  address internal nodeOperator;
-  uint256 internal stakeRequirement;
-
+  address internal baseRegistry;
   address internal riverToken;
   address internal bridge;
   address internal association;
@@ -60,43 +56,45 @@ contract BaseSetup is TestUtils, SpaceHelper {
   address internal pricingModule;
   address internal fixedPricingModule;
 
+  IEntitlementChecker internal entitlementChecker;
+  IImplementationRegistry internal implementationRegistry;
+  IWalletLink internal walletLink;
+  INodeOperator internal nodeOperator;
+
   // @notice - This function is called before each test function
-  // @dev - It will create a new diamond contract and set the spaceFactory variable to the address of the diamond
+  // @dev - It will create a new diamond contract and set the spaceFactory variable to the address of the "diamond" variable
   function setUp() public virtual {
     deployer = getDeployer();
 
-    // deploy river token
+    // River Token
     riverToken = deployRiverToken.deploy();
     bridge = deployRiverToken.bridgeBase();
 
-    // deploy space factory
+    // Mainnet Delegation
+    mainnetDelegation = deployMainnetDelegation.deploy();
+
+    // Space Factory Diamond
     spaceFactory = deploySpaceFactory.deploy();
+
     userEntitlement = deploySpaceFactory.userEntitlement();
     ruleEntitlement = deploySpaceFactory.ruleEntitlement();
-    walletLink = deploySpaceFactory.walletLink();
     spaceOwner = deploySpaceFactory.spaceOwner();
     pricingModule = deploySpaceFactory.tieredLogPricing();
     fixedPricingModule = deploySpaceFactory.fixedPricing();
-    entitlementChecker = IEntitlementChecker(
-      deploySpaceFactory.entitlementChecker()
-    );
+    walletLink = IWalletLink(spaceFactory);
+    implementationRegistry = IImplementationRegistry(spaceFactory);
+
     deploySpaceFactory.postDeploy(deployer, spaceFactory);
 
-    // deploy node operator
-    mainnetDelegation = deployMainnetDelegation.deploy();
-    nodeOperator = deployBaseRegistry.deploy();
-
-    // set the space owner registry and mainnet delegation on the node operator
-    // vm.startPrank(deployer);
-    // NodeOperatorFacet(nodeOperator).setSpaceOwnerRegistry(spaceFactory);
-    // NodeOperatorFacet(nodeOperator).setMainnetDelegation(mainnetDelegation);
-    // NodeOperatorFacet(nodeOperator).setRiverToken(riverToken);
-    // vm.stopPrank();
-    // stakeRequirement = deployBaseRegistry.stakeRequirement();
+    // Base Registry Diamond
+    baseRegistry = deploySpaceFactory.baseRegistry();
+    entitlementChecker = IEntitlementChecker(baseRegistry);
+    nodeOperator = INodeOperator(baseRegistry);
 
     // create a new space
     founder = _randomAddress();
 
+    // Create the arguments necessary for creating a space
     IArchitectBase.SpaceInfo memory spaceInfo = _createSpaceInfo(
       "BaseSetupSpace"
     );
@@ -121,7 +119,7 @@ contract BaseSetup is TestUtils, SpaceHelper {
     for (uint256 i = 0; i < 10; i++) {
       nodes[i] = _randomAddress();
       vm.prank(nodes[i]);
-      IEntitlementChecker(entitlementChecker).registerNode();
+      entitlementChecker.registerNode(nodes[i]);
     }
   }
 }

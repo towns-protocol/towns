@@ -229,16 +229,6 @@ const _abi = [
         type: "address",
         internalType: "contract IRuleEntitlement",
       },
-      {
-        name: "walletLink",
-        type: "address",
-        internalType: "contract IWalletLink",
-      },
-      {
-        name: "entitlementChecker",
-        type: "address",
-        internalType: "contract IEntitlementChecker",
-      },
     ],
     stateMutability: "view",
   },
@@ -298,16 +288,6 @@ const _abi = [
         name: "ruleEntitlementImplementation",
         type: "address",
         internalType: "contract IRuleEntitlement",
-      },
-      {
-        name: "walletLink",
-        type: "address",
-        internalType: "contract IWalletLink",
-      },
-      {
-        name: "entitlementChecker",
-        type: "address",
-        internalType: "contract IEntitlementChecker",
       },
     ],
     outputs: [],

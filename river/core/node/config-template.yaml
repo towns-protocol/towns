@@ -43,9 +43,6 @@ riverChain:
 architectContract:
     address: <SPACE_FACTORY_ADDRESS>
     version: 'dev'
-walletLinkContract:
-    address: <WALLET_LINK_ADDRESS>
-    version: 'dev'
 
 # River contracts
 registryContract:

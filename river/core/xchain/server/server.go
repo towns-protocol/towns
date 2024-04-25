@@ -9,6 +9,7 @@ import (
 	"os"
 
 	xc "core/xchain/common"
+
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -158,7 +159,7 @@ func (x *xchain) registerNode(ctx context.Context) error {
 		if err != nil {
 			return nil, err
 		}
-		return checker.RegisterNode(opts)
+		return checker.RegisterNode(opts, x.baseChain.Wallet.Address)
 	})
 
 	ce, se, err := x.evmErrDecoder.DecodeEVMError(err)
@@ -167,7 +168,7 @@ func (x *xchain) registerNode(ctx context.Context) error {
 		if ce.DecodedError.Sig == "EntitlementChecker_NodeAlreadyRegistered()" {
 			log.Info("Node already registered", "address", x.baseChain.Wallet.Address)
 			return nil
-		}
+	}
 		log.Error("unable to submit transaction for node registration", "err", ce)
 		return ce
 	case se != nil:

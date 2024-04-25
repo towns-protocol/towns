@@ -2,25 +2,31 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IPricingModulesBase} from "contracts/src/factory/facets/architect/pricing/IPricingModules.sol";
 
 // libraries
 
 // contracts
 import {Interaction} from "../common/Interaction.s.sol";
-import {PricingModulesFacet} from "contracts/src/factory/facets/architect/pricing/PricingModulesFacet.sol";
+import {DeployEntitlementChecker} from "../deployments/facets/DeployEntitlementChecker.s.sol";
+import {DeployMetadata} from "../deployments/facets/DeployMetadata.s.sol";
+import {DeployMultiInit} from "../deployments/DeployMultiInit.s.sol";
+
+import {MetadataFacet} from "contracts/src/diamond/facets/metadata/MetadataFacet.sol";
 
 // debuggging
 import {console} from "forge-std/console.sol";
 
-contract InteractDiamond is IPricingModulesBase, Interaction {
-  function __interact(uint256, address) public override {
-    address diamond = getDeployment("spaceFactory");
-    PricingModule[] memory modules = PricingModulesFacet(diamond)
-      .listPricingModules();
+contract InteractDiamond is Interaction {
+  DeployEntitlementChecker checkerHelper = new DeployEntitlementChecker();
+  DeployMetadata metadataHelper = new DeployMetadata();
+  DeployMultiInit multiInitHelper = new DeployMultiInit();
 
-    for (uint256 i = 0; i < modules.length; i++) {
-      console.log(modules[i].module);
-    }
+  function __interact(uint256, address) public view override {
+    address baseRegistry = 0x08cC41b782F27d62995056a4EF2fCBAe0d3c266F;
+    console.log(_bytes32ToString(MetadataFacet(baseRegistry).contractType()));
+  }
+
+  function _bytes32ToString(bytes32 str) internal pure returns (string memory) {
+    return string(abi.encodePacked(str));
   }
 }

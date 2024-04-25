@@ -6,10 +6,8 @@ pragma solidity ^0.8.23;
 // libraries
 import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
 import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
-import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
-import {IWalletLink} from "contracts/src/river/wallet-link/IWalletLink.sol";
+import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
 import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
-import {IEntitlementChecker} from "contracts/src/crosschain/checker/IEntitlementChecker.sol";
 
 // contracts
 interface IArchitectBase {
@@ -79,9 +77,7 @@ interface IArchitect is IArchitectBase {
   function setSpaceArchitectImplementations(
     ISpaceOwner ownerTokenImplementation,
     IUserEntitlement userEntitlementImplementation,
-    IRuleEntitlement ruleEntitlementImplementation,
-    IWalletLink walletLink,
-    IEntitlementChecker entitlementChecker
+    IRuleEntitlement ruleEntitlementImplementation
   ) external;
 
   function getSpaceArchitectImplementations()
@@ -90,8 +86,6 @@ interface IArchitect is IArchitectBase {
     returns (
       ISpaceOwner ownerTokenImplementation,
       IUserEntitlement userEntitlementImplementation,
-      IRuleEntitlement ruleEntitlementImplementation,
-      IWalletLink walletLink,
-      IEntitlementChecker entitlementChecker
+      IRuleEntitlement ruleEntitlementImplementation
     );
 }

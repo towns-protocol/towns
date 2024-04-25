@@ -7,11 +7,8 @@ import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {IMembership, IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
 import {IManagedProxyBase} from "contracts/src/diamond/proxy/managed/IManagedProxy.sol";
 import {ITokenOwnableBase} from "contracts/src/diamond/facets/ownable/token/ITokenOwnable.sol";
-import {IWalletLink} from "contracts/src/river/wallet-link/IWalletLink.sol";
-import {IEntitlementChecker} from "contracts/src/crosschain/checker/IEntitlementChecker.sol";
 
 // libraries
-import {EntitlementGatedStorage} from "contracts/src/crosschain/EntitlementGatedStorage.sol";
 
 // contracts
 import {ManagedProxyBase} from "contracts/src/diamond/proxy/managed/ManagedProxyBase.sol";
@@ -20,8 +17,7 @@ import {MembershipBase} from "contracts/src/spaces/facets/membership/MembershipB
 import {MembershipReferralBase} from "contracts/src/spaces/facets/membership/referral/MembershipReferralBase.sol";
 import {ERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol";
 import {IntrospectionBase} from "contracts/src/diamond/facets/introspection/IntrospectionBase.sol";
-import {WalletLinkProxyBase} from "contracts/src/spaces/facets/delegation/WalletLinkProxyBase.sol";
-
+import {EntitlementGatedBase} from "contracts/src/spaces/facets/gated/EntitlementGatedBase.sol";
 import {Multicall} from "contracts/src/diamond/utils/multicall/Multicall.sol";
 
 contract SpaceProxy is
@@ -31,13 +27,11 @@ contract SpaceProxy is
   ERC721ABase,
   MembershipBase,
   MembershipReferralBase,
-  WalletLinkProxyBase,
+  EntitlementGatedBase,
   Multicall
 {
   constructor(
     address owner,
-    IWalletLink walletLink,
-    IEntitlementChecker entitlementChecker,
     IManagedProxyBase.ManagedProxy memory managedProxy,
     ITokenOwnableBase.TokenOwnable memory tokenOwnable,
     IMembershipBase.Membership memory membership
@@ -49,15 +43,9 @@ contract SpaceProxy is
     __MembershipBase_init(membership, managedProxy.manager);
     __MembershipReferralBase_init();
 
-    EntitlementGatedStorage.Layout storage ds = EntitlementGatedStorage
-      .layout();
-    ds.entitlementChecker = entitlementChecker;
-
-    _setWalletLinkProxy(walletLink);
-
-    uint256 tokenId = _nextTokenId();
     _safeMint(owner, 1);
-    _setMembershipTokenId(tokenId, owner);
+    _setMembershipTokenId(_nextTokenId(), owner);
+    _setFallbackEntitlementChecker();
 
     _setInterfaceIds();
   }

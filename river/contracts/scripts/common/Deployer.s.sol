@@ -44,9 +44,13 @@ abstract contract Deployer is Script, DeployBase {
       : getDeployment(versionName());
 
     if (!overrideDeployment && existingAddr != address(0)) {
-      debug(
-        string.concat("found existing ", versionName(), " deployment at"),
-        existingAddr
+      info(
+        string.concat(
+          unicode"📝 using an existing address for ",
+          versionName(),
+          " at"
+        ),
+        vm.toString(existingAddr)
       );
       return existingAddr;
     }

@@ -17,11 +17,6 @@
         "name": "ruleEntitlementImplementation",
         "type": "address",
         "internalType": "contract IRuleEntitlement"
-      },
-      {
-        "name": "walletLink",
-        "type": "address",
-        "internalType": "contract IWalletLink"
       }
     ],
     "outputs": [],
@@ -243,11 +238,6 @@
         "name": "ruleEntitlementImplementation",
         "type": "address",
         "internalType": "contract IRuleEntitlement"
-      },
-      {
-        "name": "walletLink",
-        "type": "address",
-        "internalType": "contract IWalletLink"
       }
     ],
     "stateMutability": "view"
@@ -308,11 +298,6 @@
         "name": "ruleEntitlementImplementation",
         "type": "address",
         "internalType": "contract IRuleEntitlement"
-      },
-      {
-        "name": "walletLink",
-        "type": "address",
-        "internalType": "contract IWalletLink"
       }
     ],
     "outputs": [],

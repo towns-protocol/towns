@@ -31,7 +31,7 @@ var (
 
 // IEntitlementCheckerMetaData contains all meta data concerning the IEntitlementChecker contract.
 var IEntitlementCheckerMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"emitEntitlementCheckRequested\",\"inputs\":[{\"name\":\"transactionId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"selectedNodes\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getRandomNodes\",\"inputs\":[{\"name\":\"requestedNodeCount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"requestingContract\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"nodeCount\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"registerNode\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"unregisterNode\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"EntitlementCheckRequested\",\"inputs\":[{\"name\":\"callerAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"transactionId\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"selectedNodes\",\"type\":\"address[]\",\"indexed\":false,\"internalType\":\"address[]\"},{\"name\":\"contractAddress\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"NodeRegistered\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"NodeUnregistered\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"EntitlementChecker_InsufficientNumberOfNodes\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"EntitlementChecker_NodeAlreadyRegistered\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"EntitlementChecker_NodeNotRegistered\",\"inputs\":[]}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"getNodeAtIndex\",\"inputs\":[{\"name\":\"index\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getNodeCount\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getRandomNodes\",\"inputs\":[{\"name\":\"count\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isValidNode\",\"inputs\":[{\"name\":\"node\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"registerNode\",\"inputs\":[{\"name\":\"node\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"requestEntitlementCheck\",\"inputs\":[{\"name\":\"callerAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"transactionId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"unregisterNode\",\"inputs\":[{\"name\":\"node\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"EntitlementCheckRequested\",\"inputs\":[{\"name\":\"callerAddress\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"contractAddress\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"transactionId\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"selectedNodes\",\"type\":\"address[]\",\"indexed\":false,\"internalType\":\"address[]\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"NodeRegistered\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"NodeUnregistered\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"EntitlementChecker_InsufficientNumberOfNodes\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"EntitlementChecker_InvalidNodeOperator\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"EntitlementChecker_NodeAlreadyRegistered\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"EntitlementChecker_NodeNotRegistered\",\"inputs\":[]}]",
 }
 
 // IEntitlementCheckerABI is the input ABI used to generate the binding from.
@@ -180,43 +180,43 @@ func (_IEntitlementChecker *IEntitlementCheckerTransactorRaw) Transact(opts *bin
 	return _IEntitlementChecker.Contract.contract.Transact(opts, method, params...)
 }
 
-// GetRandomNodes is a free data retrieval call binding the contract method 0x20f36dae.
+// GetNodeAtIndex is a free data retrieval call binding the contract method 0x3c59f126.
 //
-// Solidity: function getRandomNodes(uint256 requestedNodeCount, address requestingContract) view returns(address[])
-func (_IEntitlementChecker *IEntitlementCheckerCaller) GetRandomNodes(opts *bind.CallOpts, requestedNodeCount *big.Int, requestingContract common.Address) ([]common.Address, error) {
+// Solidity: function getNodeAtIndex(uint256 index) view returns(address)
+func (_IEntitlementChecker *IEntitlementCheckerCaller) GetNodeAtIndex(opts *bind.CallOpts, index *big.Int) (common.Address, error) {
 	var out []interface{}
-	err := _IEntitlementChecker.contract.Call(opts, &out, "getRandomNodes", requestedNodeCount, requestingContract)
+	err := _IEntitlementChecker.contract.Call(opts, &out, "getNodeAtIndex", index)
 
 	if err != nil {
-		return *new([]common.Address), err
+		return *new(common.Address), err
 	}
 
-	out0 := *abi.ConvertType(out[0], new([]common.Address)).(*[]common.Address)
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
 
 	return out0, err
 
 }
 
-// GetRandomNodes is a free data retrieval call binding the contract method 0x20f36dae.
+// GetNodeAtIndex is a free data retrieval call binding the contract method 0x3c59f126.
 //
-// Solidity: function getRandomNodes(uint256 requestedNodeCount, address requestingContract) view returns(address[])
-func (_IEntitlementChecker *IEntitlementCheckerSession) GetRandomNodes(requestedNodeCount *big.Int, requestingContract common.Address) ([]common.Address, error) {
-	return _IEntitlementChecker.Contract.GetRandomNodes(&_IEntitlementChecker.CallOpts, requestedNodeCount, requestingContract)
+// Solidity: function getNodeAtIndex(uint256 index) view returns(address)
+func (_IEntitlementChecker *IEntitlementCheckerSession) GetNodeAtIndex(index *big.Int) (common.Address, error) {
+	return _IEntitlementChecker.Contract.GetNodeAtIndex(&_IEntitlementChecker.CallOpts, index)
 }
 
-// GetRandomNodes is a free data retrieval call binding the contract method 0x20f36dae.
+// GetNodeAtIndex is a free data retrieval call binding the contract method 0x3c59f126.
 //
-// Solidity: function getRandomNodes(uint256 requestedNodeCount, address requestingContract) view returns(address[])
-func (_IEntitlementChecker *IEntitlementCheckerCallerSession) GetRandomNodes(requestedNodeCount *big.Int, requestingContract common.Address) ([]common.Address, error) {
-	return _IEntitlementChecker.Contract.GetRandomNodes(&_IEntitlementChecker.CallOpts, requestedNodeCount, requestingContract)
+// Solidity: function getNodeAtIndex(uint256 index) view returns(address)
+func (_IEntitlementChecker *IEntitlementCheckerCallerSession) GetNodeAtIndex(index *big.Int) (common.Address, error) {
+	return _IEntitlementChecker.Contract.GetNodeAtIndex(&_IEntitlementChecker.CallOpts, index)
 }
 
-// NodeCount is a free data retrieval call binding the contract method 0x6da49b83.
+// GetNodeCount is a free data retrieval call binding the contract method 0x39bf397e.
 //
-// Solidity: function nodeCount() view returns(uint256)
-func (_IEntitlementChecker *IEntitlementCheckerCaller) NodeCount(opts *bind.CallOpts) (*big.Int, error) {
+// Solidity: function getNodeCount() view returns(uint256)
+func (_IEntitlementChecker *IEntitlementCheckerCaller) GetNodeCount(opts *bind.CallOpts) (*big.Int, error) {
 	var out []interface{}
-	err := _IEntitlementChecker.contract.Call(opts, &out, "nodeCount")
+	err := _IEntitlementChecker.contract.Call(opts, &out, "getNodeCount")
 
 	if err != nil {
 		return *new(*big.Int), err
@@ -228,81 +228,143 @@ func (_IEntitlementChecker *IEntitlementCheckerCaller) NodeCount(opts *bind.Call
 
 }
 
-// NodeCount is a free data retrieval call binding the contract method 0x6da49b83.
+// GetNodeCount is a free data retrieval call binding the contract method 0x39bf397e.
 //
-// Solidity: function nodeCount() view returns(uint256)
-func (_IEntitlementChecker *IEntitlementCheckerSession) NodeCount() (*big.Int, error) {
-	return _IEntitlementChecker.Contract.NodeCount(&_IEntitlementChecker.CallOpts)
+// Solidity: function getNodeCount() view returns(uint256)
+func (_IEntitlementChecker *IEntitlementCheckerSession) GetNodeCount() (*big.Int, error) {
+	return _IEntitlementChecker.Contract.GetNodeCount(&_IEntitlementChecker.CallOpts)
 }
 
-// NodeCount is a free data retrieval call binding the contract method 0x6da49b83.
+// GetNodeCount is a free data retrieval call binding the contract method 0x39bf397e.
 //
-// Solidity: function nodeCount() view returns(uint256)
-func (_IEntitlementChecker *IEntitlementCheckerCallerSession) NodeCount() (*big.Int, error) {
-	return _IEntitlementChecker.Contract.NodeCount(&_IEntitlementChecker.CallOpts)
+// Solidity: function getNodeCount() view returns(uint256)
+func (_IEntitlementChecker *IEntitlementCheckerCallerSession) GetNodeCount() (*big.Int, error) {
+	return _IEntitlementChecker.Contract.GetNodeCount(&_IEntitlementChecker.CallOpts)
 }
 
-// EmitEntitlementCheckRequested is a paid mutator transaction binding the contract method 0xf22f8d2e.
+// GetRandomNodes is a free data retrieval call binding the contract method 0x4f845445.
 //
-// Solidity: function emitEntitlementCheckRequested(bytes32 transactionId, address[] selectedNodes) returns()
-func (_IEntitlementChecker *IEntitlementCheckerTransactor) EmitEntitlementCheckRequested(opts *bind.TransactOpts, transactionId [32]byte, selectedNodes []common.Address) (*types.Transaction, error) {
-	return _IEntitlementChecker.contract.Transact(opts, "emitEntitlementCheckRequested", transactionId, selectedNodes)
+// Solidity: function getRandomNodes(uint256 count) view returns(address[])
+func (_IEntitlementChecker *IEntitlementCheckerCaller) GetRandomNodes(opts *bind.CallOpts, count *big.Int) ([]common.Address, error) {
+	var out []interface{}
+	err := _IEntitlementChecker.contract.Call(opts, &out, "getRandomNodes", count)
+
+	if err != nil {
+		return *new([]common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]common.Address)).(*[]common.Address)
+
+	return out0, err
+
 }
 
-// EmitEntitlementCheckRequested is a paid mutator transaction binding the contract method 0xf22f8d2e.
+// GetRandomNodes is a free data retrieval call binding the contract method 0x4f845445.
 //
-// Solidity: function emitEntitlementCheckRequested(bytes32 transactionId, address[] selectedNodes) returns()
-func (_IEntitlementChecker *IEntitlementCheckerSession) EmitEntitlementCheckRequested(transactionId [32]byte, selectedNodes []common.Address) (*types.Transaction, error) {
-	return _IEntitlementChecker.Contract.EmitEntitlementCheckRequested(&_IEntitlementChecker.TransactOpts, transactionId, selectedNodes)
+// Solidity: function getRandomNodes(uint256 count) view returns(address[])
+func (_IEntitlementChecker *IEntitlementCheckerSession) GetRandomNodes(count *big.Int) ([]common.Address, error) {
+	return _IEntitlementChecker.Contract.GetRandomNodes(&_IEntitlementChecker.CallOpts, count)
 }
 
-// EmitEntitlementCheckRequested is a paid mutator transaction binding the contract method 0xf22f8d2e.
+// GetRandomNodes is a free data retrieval call binding the contract method 0x4f845445.
 //
-// Solidity: function emitEntitlementCheckRequested(bytes32 transactionId, address[] selectedNodes) returns()
-func (_IEntitlementChecker *IEntitlementCheckerTransactorSession) EmitEntitlementCheckRequested(transactionId [32]byte, selectedNodes []common.Address) (*types.Transaction, error) {
-	return _IEntitlementChecker.Contract.EmitEntitlementCheckRequested(&_IEntitlementChecker.TransactOpts, transactionId, selectedNodes)
+// Solidity: function getRandomNodes(uint256 count) view returns(address[])
+func (_IEntitlementChecker *IEntitlementCheckerCallerSession) GetRandomNodes(count *big.Int) ([]common.Address, error) {
+	return _IEntitlementChecker.Contract.GetRandomNodes(&_IEntitlementChecker.CallOpts, count)
 }
 
-// RegisterNode is a paid mutator transaction binding the contract method 0x1680b35c.
+// IsValidNode is a free data retrieval call binding the contract method 0x9ebd11ef.
 //
-// Solidity: function registerNode() returns()
-func (_IEntitlementChecker *IEntitlementCheckerTransactor) RegisterNode(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _IEntitlementChecker.contract.Transact(opts, "registerNode")
+// Solidity: function isValidNode(address node) view returns(bool)
+func (_IEntitlementChecker *IEntitlementCheckerCaller) IsValidNode(opts *bind.CallOpts, node common.Address) (bool, error) {
+	var out []interface{}
+	err := _IEntitlementChecker.contract.Call(opts, &out, "isValidNode", node)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
-// RegisterNode is a paid mutator transaction binding the contract method 0x1680b35c.
+// IsValidNode is a free data retrieval call binding the contract method 0x9ebd11ef.
 //
-// Solidity: function registerNode() returns()
-func (_IEntitlementChecker *IEntitlementCheckerSession) RegisterNode() (*types.Transaction, error) {
-	return _IEntitlementChecker.Contract.RegisterNode(&_IEntitlementChecker.TransactOpts)
+// Solidity: function isValidNode(address node) view returns(bool)
+func (_IEntitlementChecker *IEntitlementCheckerSession) IsValidNode(node common.Address) (bool, error) {
+	return _IEntitlementChecker.Contract.IsValidNode(&_IEntitlementChecker.CallOpts, node)
 }
 
-// RegisterNode is a paid mutator transaction binding the contract method 0x1680b35c.
+// IsValidNode is a free data retrieval call binding the contract method 0x9ebd11ef.
 //
-// Solidity: function registerNode() returns()
-func (_IEntitlementChecker *IEntitlementCheckerTransactorSession) RegisterNode() (*types.Transaction, error) {
-	return _IEntitlementChecker.Contract.RegisterNode(&_IEntitlementChecker.TransactOpts)
+// Solidity: function isValidNode(address node) view returns(bool)
+func (_IEntitlementChecker *IEntitlementCheckerCallerSession) IsValidNode(node common.Address) (bool, error) {
+	return _IEntitlementChecker.Contract.IsValidNode(&_IEntitlementChecker.CallOpts, node)
 }
 
-// UnregisterNode is a paid mutator transaction binding the contract method 0x3d385cf5.
+// RegisterNode is a paid mutator transaction binding the contract method 0x672d7a0d.
 //
-// Solidity: function unregisterNode() returns()
-func (_IEntitlementChecker *IEntitlementCheckerTransactor) UnregisterNode(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _IEntitlementChecker.contract.Transact(opts, "unregisterNode")
+// Solidity: function registerNode(address node) returns()
+func (_IEntitlementChecker *IEntitlementCheckerTransactor) RegisterNode(opts *bind.TransactOpts, node common.Address) (*types.Transaction, error) {
+	return _IEntitlementChecker.contract.Transact(opts, "registerNode", node)
 }
 
-// UnregisterNode is a paid mutator transaction binding the contract method 0x3d385cf5.
+// RegisterNode is a paid mutator transaction binding the contract method 0x672d7a0d.
 //
-// Solidity: function unregisterNode() returns()
-func (_IEntitlementChecker *IEntitlementCheckerSession) UnregisterNode() (*types.Transaction, error) {
-	return _IEntitlementChecker.Contract.UnregisterNode(&_IEntitlementChecker.TransactOpts)
+// Solidity: function registerNode(address node) returns()
+func (_IEntitlementChecker *IEntitlementCheckerSession) RegisterNode(node common.Address) (*types.Transaction, error) {
+	return _IEntitlementChecker.Contract.RegisterNode(&_IEntitlementChecker.TransactOpts, node)
 }
 
-// UnregisterNode is a paid mutator transaction binding the contract method 0x3d385cf5.
+// RegisterNode is a paid mutator transaction binding the contract method 0x672d7a0d.
 //
-// Solidity: function unregisterNode() returns()
-func (_IEntitlementChecker *IEntitlementCheckerTransactorSession) UnregisterNode() (*types.Transaction, error) {
-	return _IEntitlementChecker.Contract.UnregisterNode(&_IEntitlementChecker.TransactOpts)
+// Solidity: function registerNode(address node) returns()
+func (_IEntitlementChecker *IEntitlementCheckerTransactorSession) RegisterNode(node common.Address) (*types.Transaction, error) {
+	return _IEntitlementChecker.Contract.RegisterNode(&_IEntitlementChecker.TransactOpts, node)
+}
+
+// RequestEntitlementCheck is a paid mutator transaction binding the contract method 0xdde21cd2.
+//
+// Solidity: function requestEntitlementCheck(address callerAddress, bytes32 transactionId, address[] nodes) returns()
+func (_IEntitlementChecker *IEntitlementCheckerTransactor) RequestEntitlementCheck(opts *bind.TransactOpts, callerAddress common.Address, transactionId [32]byte, nodes []common.Address) (*types.Transaction, error) {
+	return _IEntitlementChecker.contract.Transact(opts, "requestEntitlementCheck", callerAddress, transactionId, nodes)
+}
+
+// RequestEntitlementCheck is a paid mutator transaction binding the contract method 0xdde21cd2.
+//
+// Solidity: function requestEntitlementCheck(address callerAddress, bytes32 transactionId, address[] nodes) returns()
+func (_IEntitlementChecker *IEntitlementCheckerSession) RequestEntitlementCheck(callerAddress common.Address, transactionId [32]byte, nodes []common.Address) (*types.Transaction, error) {
+	return _IEntitlementChecker.Contract.RequestEntitlementCheck(&_IEntitlementChecker.TransactOpts, callerAddress, transactionId, nodes)
+}
+
+// RequestEntitlementCheck is a paid mutator transaction binding the contract method 0xdde21cd2.
+//
+// Solidity: function requestEntitlementCheck(address callerAddress, bytes32 transactionId, address[] nodes) returns()
+func (_IEntitlementChecker *IEntitlementCheckerTransactorSession) RequestEntitlementCheck(callerAddress common.Address, transactionId [32]byte, nodes []common.Address) (*types.Transaction, error) {
+	return _IEntitlementChecker.Contract.RequestEntitlementCheck(&_IEntitlementChecker.TransactOpts, callerAddress, transactionId, nodes)
+}
+
+// UnregisterNode is a paid mutator transaction binding the contract method 0xc5e41cf6.
+//
+// Solidity: function unregisterNode(address node) returns()
+func (_IEntitlementChecker *IEntitlementCheckerTransactor) UnregisterNode(opts *bind.TransactOpts, node common.Address) (*types.Transaction, error) {
+	return _IEntitlementChecker.contract.Transact(opts, "unregisterNode", node)
+}
+
+// UnregisterNode is a paid mutator transaction binding the contract method 0xc5e41cf6.
+//
+// Solidity: function unregisterNode(address node) returns()
+func (_IEntitlementChecker *IEntitlementCheckerSession) UnregisterNode(node common.Address) (*types.Transaction, error) {
+	return _IEntitlementChecker.Contract.UnregisterNode(&_IEntitlementChecker.TransactOpts, node)
+}
+
+// UnregisterNode is a paid mutator transaction binding the contract method 0xc5e41cf6.
+//
+// Solidity: function unregisterNode(address node) returns()
+func (_IEntitlementChecker *IEntitlementCheckerTransactorSession) UnregisterNode(node common.Address) (*types.Transaction, error) {
+	return _IEntitlementChecker.Contract.UnregisterNode(&_IEntitlementChecker.TransactOpts, node)
 }
 
 // IEntitlementCheckerEntitlementCheckRequestedIterator is returned from FilterEntitlementCheckRequested and is used to iterate over the raw logs and unpacked data for EntitlementCheckRequested events raised by the IEntitlementChecker contract.
@@ -375,40 +437,30 @@ func (it *IEntitlementCheckerEntitlementCheckRequestedIterator) Close() error {
 // IEntitlementCheckerEntitlementCheckRequested represents a EntitlementCheckRequested event raised by the IEntitlementChecker contract.
 type IEntitlementCheckerEntitlementCheckRequested struct {
 	CallerAddress   common.Address
+	ContractAddress common.Address
 	TransactionId   [32]byte
 	SelectedNodes   []common.Address
-	ContractAddress common.Address
 	Raw             types.Log // Blockchain specific contextual infos
 }
 
-// FilterEntitlementCheckRequested is a free log retrieval operation binding the contract event 0x58529d9ba9cbe2a11e905b3c701769d5265641ce084d196095a7692839481a4b.
+// FilterEntitlementCheckRequested is a free log retrieval operation binding the contract event 0x02ad36fe59d6b02604c3f8d61b54de3b83ba919666c56c37109a8aa6c5a0c9dc.
 //
-// Solidity: event EntitlementCheckRequested(address indexed callerAddress, bytes32 transactionId, address[] selectedNodes, address contractAddress)
-func (_IEntitlementChecker *IEntitlementCheckerFilterer) FilterEntitlementCheckRequested(opts *bind.FilterOpts, callerAddress []common.Address) (*IEntitlementCheckerEntitlementCheckRequestedIterator, error) {
+// Solidity: event EntitlementCheckRequested(address callerAddress, address contractAddress, bytes32 transactionId, address[] selectedNodes)
+func (_IEntitlementChecker *IEntitlementCheckerFilterer) FilterEntitlementCheckRequested(opts *bind.FilterOpts) (*IEntitlementCheckerEntitlementCheckRequestedIterator, error) {
 
-	var callerAddressRule []interface{}
-	for _, callerAddressItem := range callerAddress {
-		callerAddressRule = append(callerAddressRule, callerAddressItem)
-	}
-
-	logs, sub, err := _IEntitlementChecker.contract.FilterLogs(opts, "EntitlementCheckRequested", callerAddressRule)
+	logs, sub, err := _IEntitlementChecker.contract.FilterLogs(opts, "EntitlementCheckRequested")
 	if err != nil {
 		return nil, err
 	}
 	return &IEntitlementCheckerEntitlementCheckRequestedIterator{contract: _IEntitlementChecker.contract, event: "EntitlementCheckRequested", logs: logs, sub: sub}, nil
 }
 
-// WatchEntitlementCheckRequested is a free log subscription operation binding the contract event 0x58529d9ba9cbe2a11e905b3c701769d5265641ce084d196095a7692839481a4b.
+// WatchEntitlementCheckRequested is a free log subscription operation binding the contract event 0x02ad36fe59d6b02604c3f8d61b54de3b83ba919666c56c37109a8aa6c5a0c9dc.
 //
-// Solidity: event EntitlementCheckRequested(address indexed callerAddress, bytes32 transactionId, address[] selectedNodes, address contractAddress)
-func (_IEntitlementChecker *IEntitlementCheckerFilterer) WatchEntitlementCheckRequested(opts *bind.WatchOpts, sink chan<- *IEntitlementCheckerEntitlementCheckRequested, callerAddress []common.Address) (event.Subscription, error) {
+// Solidity: event EntitlementCheckRequested(address callerAddress, address contractAddress, bytes32 transactionId, address[] selectedNodes)
+func (_IEntitlementChecker *IEntitlementCheckerFilterer) WatchEntitlementCheckRequested(opts *bind.WatchOpts, sink chan<- *IEntitlementCheckerEntitlementCheckRequested) (event.Subscription, error) {
 
-	var callerAddressRule []interface{}
-	for _, callerAddressItem := range callerAddress {
-		callerAddressRule = append(callerAddressRule, callerAddressItem)
-	}
-
-	logs, sub, err := _IEntitlementChecker.contract.WatchLogs(opts, "EntitlementCheckRequested", callerAddressRule)
+	logs, sub, err := _IEntitlementChecker.contract.WatchLogs(opts, "EntitlementCheckRequested")
 	if err != nil {
 		return nil, err
 	}
@@ -440,9 +492,9 @@ func (_IEntitlementChecker *IEntitlementCheckerFilterer) WatchEntitlementCheckRe
 	}), nil
 }
 
-// ParseEntitlementCheckRequested is a log parse operation binding the contract event 0x58529d9ba9cbe2a11e905b3c701769d5265641ce084d196095a7692839481a4b.
+// ParseEntitlementCheckRequested is a log parse operation binding the contract event 0x02ad36fe59d6b02604c3f8d61b54de3b83ba919666c56c37109a8aa6c5a0c9dc.
 //
-// Solidity: event EntitlementCheckRequested(address indexed callerAddress, bytes32 transactionId, address[] selectedNodes, address contractAddress)
+// Solidity: event EntitlementCheckRequested(address callerAddress, address contractAddress, bytes32 transactionId, address[] selectedNodes)
 func (_IEntitlementChecker *IEntitlementCheckerFilterer) ParseEntitlementCheckRequested(log types.Log) (*IEntitlementCheckerEntitlementCheckRequested, error) {
 	event := new(IEntitlementCheckerEntitlementCheckRequested)
 	if err := _IEntitlementChecker.contract.UnpackLog(event, "EntitlementCheckRequested", log); err != nil {

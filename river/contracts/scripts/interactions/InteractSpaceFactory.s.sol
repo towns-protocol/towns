@@ -5,11 +5,11 @@ pragma solidity ^0.8.23;
 import {IArchitect} from "contracts/src/factory/facets/architect/IArchitect.sol";
 import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
 import {IDiamondCut} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
-import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
-import {IWalletLink} from "contracts/src/river/wallet-link/IWalletLink.sol";
+import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
+import {IWalletLink} from "contracts/src/factory/facets/wallet-link/IWalletLink.sol";
 import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
 import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
-import {IEntitlementChecker} from "contracts/src/crosschain/checker/IEntitlementChecker.sol";
+import {IEntitlementChecker} from "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
 
 //libraries
 
@@ -36,9 +36,7 @@ contract InteractSpaceFactory is Interaction {
     IArchitect(spaceFactory).setSpaceArchitectImplementations(
       ISpaceOwner(getDeployment("spaceOwner")),
       IUserEntitlement(getDeployment("userEntitlement")),
-      IRuleEntitlement(getDeployment("ruleEntitlement")),
-      IWalletLink(getDeployment("walletLink")),
-      IEntitlementChecker(getDeployment("entitlementChecker"))
+      IRuleEntitlement(getDeployment("ruleEntitlement"))
     );
     vm.stopBroadcast();
 

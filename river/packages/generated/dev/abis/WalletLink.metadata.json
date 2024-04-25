@@ -550,7 +550,7 @@
   },
   "settings": {
     "compilationTarget": {
-      "contracts/src/river/wallet-link/WalletLink.sol": "WalletLink"
+      "contracts/src/factory/facets/wallet-link/WalletLink.sol": "WalletLink"
     },
     "evmVersion": "paris",
     "libraries": {},
@@ -630,7 +630,7 @@
         "dweb:/ipfs/QmPNReTvJDZ242duATLyDDt1JUUd2ACg472E1vftw5zgXB"
       ]
     },
-    "contracts/src/river/wallet-link/IWalletLink.sol": {
+    "contracts/src/factory/facets/wallet-link/IWalletLink.sol": {
       "keccak256": "0x548d2531215e1387f83265975af58947d37c01ae9ea75cce91147a2468fc653b",
       "license": "Apache-2.0",
       "urls": [
@@ -638,7 +638,7 @@
         "dweb:/ipfs/QmY6kMFdswJnVtkYu415QG5ePjUrS9W1QiXi9VXaLBeRJR"
       ]
     },
-    "contracts/src/river/wallet-link/WalletLink.sol": {
+    "contracts/src/factory/facets/wallet-link/WalletLink.sol": {
       "keccak256": "0x0940bd508eeb3fcd0199c2a939bb7ff871b1b2929881f23cd346961a769fd807",
       "license": "Apache-2.0",
       "urls": [
@@ -646,15 +646,15 @@
         "dweb:/ipfs/QmQd9TQtCzeXSgn5xvBADXEs7kVB9o7hxo8Nvqz4u5nJTu"
       ]
     },
-    "contracts/src/river/wallet-link/WalletLinkBase.sol": {
-      "keccak256": "0x53849623d165d06f802da96f6ec1e670711c526b3ce59baf45fb5636874af0c8",
+    "contracts/src/factory/facets/wallet-link/WalletLinkBase.sol": {
+      "keccak256": "0xfc27a5f7a57d45076dd4b4af704d6941f82d4ec825b262a0a144a00b3c83a0f0",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://e21c37a44f943aa969988e664f46150ee5995940fbbd1d52828a0c4cacca624c",
-        "dweb:/ipfs/QmNh75dbxe1Avg98kZW49GaByWJpXMhEhBQrAvAgX3ow7S"
+        "bzz-raw://a79133d20a0ad20691c88dbfa3832c1f767273eb17aaf3f20ab1f128bb5a7b48",
+        "dweb:/ipfs/QmcJbygpvz1tPifobw2SfgNvKRB4w9EZVqsM8kZKMtWf6e"
       ]
     },
-    "contracts/src/river/wallet-link/WalletLinkStorage.sol": {
+    "contracts/src/factory/facets/wallet-link/WalletLinkStorage.sol": {
       "keccak256": "0x2903de293c75c301de25bef504a0bb56b31158a2d5340bdf8103fa8f0c06bad1",
       "license": "Apache-2.0",
       "urls": [
@@ -724,14 +724,6 @@
       "urls": [
         "bzz-raw://ad85dd393ee0a1917c57046abc5155f51f77844b2c6a42c05c1b8dd26d6ff3c1",
         "dweb:/ipfs/QmNqYc8To2NdnpP6E1tGz7t6A7beuENde5yovwov5pW1fA"
-      ]
-    },
-    "lib/forge-std/src/console.sol": {
-      "keccak256": "0x91d5413c2434ca58fd278b6e1e79fd98d10c83931cc2596a6038eee4daeb34ba",
-      "license": "MIT",
-      "urls": [
-        "bzz-raw://91ccea707361e48b9b7a161fe81f496b9932bc471e9c4e4e1e9c283f2453cc70",
-        "dweb:/ipfs/QmcB66sZhQ6Kz7MUHcLE78YXRUZxoZnnxZjN6yATsbB2ec"
       ]
     }
   },

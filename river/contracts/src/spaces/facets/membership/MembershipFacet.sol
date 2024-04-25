@@ -5,14 +5,12 @@ pragma solidity ^0.8.23;
 import {IMembership} from "./IMembership.sol";
 import {IMembershipPricing} from "./pricing/IMembershipPricing.sol";
 import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
-import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
-//import {IEntitlementChecker} from "contracts/src/crosschain/checker/IEntitlementChecker.sol";
-import {IEntitlementGatedBase} from "contracts/src/crosschain/IEntitlementGated.sol";
+import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
+import {IEntitlementGatedBase} from "contracts/src/spaces/facets/gated/IEntitlementGated.sol";
 import {IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
 
 // libraries
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
-import {console2} from "forge-std/console2.sol";
 // contracts
 import {MembershipBase} from "./MembershipBase.sol";
 import {ERC721A} from "contracts/src/diamond/facets/token/ERC721A/ERC721A.sol";
@@ -20,9 +18,9 @@ import {ERC5643Base} from "contracts/src/diamond/facets/token/ERC5643/ERC5643Bas
 import {ReentrancyGuard} from "contracts/src/diamond/facets/reentrancy/ReentrancyGuard.sol";
 import {Entitled} from "contracts/src/spaces/facets/Entitled.sol";
 import {MembershipReferralBase} from "./referral/MembershipReferralBase.sol";
-import {EntitlementGated} from "./../../../crosschain/EntitlementGated.sol";
 import {MembershipStorage} from "./MembershipStorage.sol";
 import {RolesBase} from "contracts/src/spaces/facets/roles/RolesBase.sol";
+import {EntitlementGatedBase} from "contracts/src/spaces/facets/gated/EntitlementGatedBase.sol";
 
 contract MembershipFacet is
   IMembership,
@@ -33,16 +31,16 @@ contract MembershipFacet is
   ERC721A,
   Entitled,
   RolesBase,
-  EntitlementGated
+  EntitlementGatedBase
 {
   bytes32 constant JOIN_SPACE =
     bytes32(abi.encodePacked(Permissions.JoinSpace));
 
+  /// @dev Initialization logic when facet is added to diamond
   function __Membership_init(
     Membership memory info,
     address spaceFactory
   ) external onlyInitializing {
-    console2.log("MembershipFacet.__Membership_init");
     _addInterface(type(IMembership).interfaceId);
     __MembershipBase_init(info, spaceFactory);
     __ERC721A_init_unchained(info.name, info.symbol);
@@ -116,9 +114,12 @@ contract MembershipFacet is
               //console2.log("crosschain entitlement noop rule, skipping");
             } else {
               bytes memory encodedRuleData = re.encodeRuleData(ruleData);
-              bytes32 txId = _requestEntitlementCheck(encodedRuleData);
+              bytes32 transactionId = keccak256(
+                abi.encodePacked(tx.origin, block.number)
+              );
+              _requestEntitlementCheck(transactionId, encodedRuleData);
               MembershipStorage.Layout storage ds = MembershipStorage.layout();
-              ds.pendingJoinRequests[txId] = receiver;
+              ds.pendingJoinRequests[transactionId] = receiver;
               isCrosschainPending = true;
             }
           }
@@ -190,25 +191,6 @@ contract MembershipFacet is
 
     // set expiration of membership
     _renewSubscription(tokenId, _getMembershipDuration());
-  }
-
-  /// @inheritdoc EntitlementGated
-  function _onEntitlementCheckResultPosted(
-    bytes32 transactionId,
-    IEntitlementGatedBase.NodeVoteStatus result
-  ) internal override {
-    MembershipStorage.Layout storage ds = MembershipStorage.layout();
-
-    // get trasnaction from memmbership storage
-    if (result == NodeVoteStatus.PASSED) {
-      address receiver = ds.pendingJoinRequests[transactionId];
-      _issueToken(receiver);
-      delete ds.pendingJoinRequests[transactionId];
-    } else {
-      address receiver = ds.pendingJoinRequests[transactionId];
-      emit MembershipTokenRejected(receiver);
-      delete ds.pendingJoinRequests[transactionId];
-    }
   }
 
   // =============================================================
@@ -379,6 +361,25 @@ contract MembershipFacet is
   // =============================================================
   //                           Overrides
   // =============================================================
+
+  /// @dev Hook called after a node has posted the result of an entitlement check
+  function _onEntitlementCheckResultPosted(
+    bytes32 transactionId,
+    IEntitlementGatedBase.NodeVoteStatus result
+  ) internal override {
+    MembershipStorage.Layout storage ds = MembershipStorage.layout();
+
+    // get trasnaction from memmbership storage
+    if (result == NodeVoteStatus.PASSED) {
+      address receiver = ds.pendingJoinRequests[transactionId];
+      _issueToken(receiver);
+      delete ds.pendingJoinRequests[transactionId];
+    } else {
+      address receiver = ds.pendingJoinRequests[transactionId];
+      emit MembershipTokenRejected(receiver);
+      delete ds.pendingJoinRequests[transactionId];
+    }
+  }
 
   // ERC5643 overrides
   /// @dev only renewable if the expiration of the current membership is less than the default duration + current time. To prevent people from renewing too early.

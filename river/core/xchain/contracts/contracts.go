@@ -3,7 +3,7 @@ package contracts
 import (
 	"context"
 	"core/xchain/config"
-	"core/xchain/contracts/dev"
+	dev "core/xchain/contracts/dev"
 	v3 "core/xchain/contracts/v3"
 	"math/big"
 
@@ -481,34 +481,35 @@ func (c *IEntitlementChecker) EstimateGas(ctx context.Context, client *ethclient
 
 }
 
+
 func (c *IEntitlementChecker) NodeCount(opts *bind.CallOpts) (*big.Int, error) {
 	if config.GetConfig().GetContractVersion() == "v3" {
-		return c.v3IEntitlementChecker.NodeCount(opts)
+		return c.v3IEntitlementChecker.GetNodeCount(opts)
 	} else {
-		return c.devIEntitlementChecker.NodeCount(opts)
+		return c.devIEntitlementChecker.GetNodeCount(opts)
 	}
 }
 
-func (c *IEntitlementChecker) RegisterNode(opts *bind.TransactOpts) (*types.Transaction, error) {
+func (c *IEntitlementChecker) RegisterNode(opts *bind.TransactOpts, node common.Address) (*types.Transaction, error) {
 	if config.GetConfig().GetContractVersion() == "v3" {
-		return c.v3IEntitlementChecker.RegisterNode(opts)
+		return c.v3IEntitlementChecker.RegisterNode(opts, node)
 	} else {
-		return c.devIEntitlementChecker.RegisterNode(opts)
+		return c.devIEntitlementChecker.RegisterNode(opts, node)
 	}
 }
 
-func (c *IEntitlementChecker) UnregisterNode(opts *bind.TransactOpts) (*types.Transaction, error) {
+func (c *IEntitlementChecker) UnregisterNode(opts *bind.TransactOpts, node common.Address) (*types.Transaction, error) {
 	if config.GetConfig().GetContractVersion() == "v3" {
-		return c.v3IEntitlementChecker.UnregisterNode(opts)
+		return c.v3IEntitlementChecker.UnregisterNode(opts, node)
 	} else {
-		return c.devIEntitlementChecker.UnregisterNode(opts)
+		return c.devIEntitlementChecker.UnregisterNode(opts, node)
 	}
 }
 
 func (c *IEntitlementChecker) WatchEntitlementCheckRequested(opts *bind.WatchOpts, sink chan<- *IEntitlementCheckerEntitlementCheckRequested, nodeAddress []common.Address) (event.Subscription, error) {
 	if config.GetConfig().GetContractVersion() == "v3" {
 		v3Sink := make(chan *v3.IEntitlementCheckerEntitlementCheckRequested)
-		sub, err := c.v3IEntitlementChecker.WatchEntitlementCheckRequested(opts, v3Sink, nodeAddress)
+		sub, err := c.v3IEntitlementChecker.WatchEntitlementCheckRequested(opts, v3Sink)
 		go func() {
 			for v3Event := range v3Sink {
 				shimEvent := convertV3ToShimCheckRequested(v3Event)
@@ -518,7 +519,7 @@ func (c *IEntitlementChecker) WatchEntitlementCheckRequested(opts *bind.WatchOpt
 		return sub, err
 	} else {
 		devSink := make(chan *dev.IEntitlementCheckerEntitlementCheckRequested)
-		sub, err := c.devIEntitlementChecker.WatchEntitlementCheckRequested(opts, devSink, nodeAddress)
+		sub, err := c.devIEntitlementChecker.WatchEntitlementCheckRequested(opts, devSink)
 		go func() {
 			for devEvent := range devSink {
 				shimEvent := convertDevToShimCheckRequested(devEvent)

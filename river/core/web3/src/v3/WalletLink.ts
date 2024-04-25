@@ -11,11 +11,11 @@ export class WalletLink {
 
     constructor(config: BaseChainConfig, provider: ethers.providers.Provider | undefined) {
         this.walletLinkShim = new IWalletLinkShim(
-            config.addresses.walletLink,
+            config.addresses.spaceFactory,
             config.contractVersion,
             provider,
         )
-        this.address = config.addresses.walletLink
+        this.address = config.addresses.spaceFactory
     }
 
     private async assertNotAlreadyLinked(rootKey: ethers.Signer, wallet: ethers.Signer | Address) {

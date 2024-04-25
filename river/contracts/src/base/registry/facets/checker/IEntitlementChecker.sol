@@ -5,33 +5,38 @@ interface IEntitlementCheckerBase {
   error EntitlementChecker_NodeAlreadyRegistered();
   error EntitlementChecker_NodeNotRegistered();
   error EntitlementChecker_InsufficientNumberOfNodes();
+  error EntitlementChecker_InvalidNodeOperator();
 
   // Events
   event NodeRegistered(address indexed nodeAddress);
   event NodeUnregistered(address indexed nodeAddress);
 
   event EntitlementCheckRequested(
-    address indexed callerAddress,
+    address callerAddress,
+    address contractAddress,
     bytes32 transactionId,
-    address[] selectedNodes,
-    address contractAddress
+    address[] selectedNodes
   );
 }
 
 interface IEntitlementChecker is IEntitlementCheckerBase {
-  function registerNode() external;
+  function registerNode(address node) external;
 
-  function unregisterNode() external;
+  function unregisterNode(address node) external;
 
-  function nodeCount() external view returns (uint256);
+  function isValidNode(address node) external view returns (bool);
+
+  function getNodeCount() external view returns (uint256);
+
+  function getNodeAtIndex(uint256 index) external view returns (address);
 
   function getRandomNodes(
-    uint requestedNodeCount,
-    address requestingContract
+    uint256 count
   ) external view returns (address[] memory);
 
-  function emitEntitlementCheckRequested(
+  function requestEntitlementCheck(
+    address callerAddress,
     bytes32 transactionId,
-    address[] memory selectedNodes
+    address[] memory nodes
   ) external;
 }

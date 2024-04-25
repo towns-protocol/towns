@@ -34,7 +34,7 @@
           {
             "name": "module",
             "type": "address",
-            "internalType": "address"
+            "internalType": "contract IEntitlement"
           },
           {
             "name": "data",
@@ -69,7 +69,7 @@
           {
             "name": "module",
             "type": "address",
-            "internalType": "address"
+            "internalType": "contract IEntitlement"
           },
           {
             "name": "data",
@@ -146,7 +146,7 @@
           {
             "name": "entitlements",
             "type": "address[]",
-            "internalType": "address[]"
+            "internalType": "contract IEntitlement[]"
           }
         ]
       }
@@ -186,7 +186,7 @@
           {
             "name": "entitlements",
             "type": "address[]",
-            "internalType": "address[]"
+            "internalType": "contract IEntitlement[]"
           }
         ]
       }
@@ -241,7 +241,7 @@
           {
             "name": "module",
             "type": "address",
-            "internalType": "address"
+            "internalType": "contract IEntitlement"
           },
           {
             "name": "data",
@@ -281,7 +281,7 @@
           {
             "name": "module",
             "type": "address",
-            "internalType": "address"
+            "internalType": "contract IEntitlement"
           },
           {
             "name": "data",

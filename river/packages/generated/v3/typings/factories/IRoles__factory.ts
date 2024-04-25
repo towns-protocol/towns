@@ -42,7 +42,7 @@ const _abi = [
           {
             name: "module",
             type: "address",
-            internalType: "address",
+            internalType: "contract IEntitlement",
           },
           {
             name: "data",
@@ -77,7 +77,7 @@ const _abi = [
           {
             name: "module",
             type: "address",
-            internalType: "address",
+            internalType: "contract IEntitlement",
           },
           {
             name: "data",
@@ -154,7 +154,7 @@ const _abi = [
           {
             name: "entitlements",
             type: "address[]",
-            internalType: "address[]",
+            internalType: "contract IEntitlement[]",
           },
         ],
       },
@@ -194,7 +194,7 @@ const _abi = [
           {
             name: "entitlements",
             type: "address[]",
-            internalType: "address[]",
+            internalType: "contract IEntitlement[]",
           },
         ],
       },
@@ -249,7 +249,7 @@ const _abi = [
           {
             name: "module",
             type: "address",
-            internalType: "address",
+            internalType: "contract IEntitlement",
           },
           {
             name: "data",
@@ -289,7 +289,7 @@ const _abi = [
           {
             name: "module",
             type: "address",
-            internalType: "address",
+            internalType: "contract IEntitlement",
           },
           {
             name: "data",

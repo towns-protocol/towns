@@ -115,16 +115,16 @@ func NewChainAuth(
 	ctx context.Context,
 	blockchain *crypto.Blockchain,
 	architectCfg *config.ContractConfig,
-	walletLinkCfg *config.ContractConfig,
 	linkedWalletsLimit int,
 	contractCallsTimeoutMs int,
 ) (*chainAuth, error) {
+	// instantiate contract facets from diamond configuration
 	spaceContract, err := NewSpaceContractV3(ctx, architectCfg, blockchain.Client)
 	if err != nil {
 		return nil, err
 	}
 
-	walletLinkContract, err := NewWalletLink(ctx, walletLinkCfg, blockchain.Client)
+	walletLinkContract, err := NewWalletLink(ctx, architectCfg, blockchain.Client)
 	if err != nil {
 		return nil, err
 	}

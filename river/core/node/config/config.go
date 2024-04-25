@@ -35,8 +35,7 @@ type Config struct {
 	RiverChain ChainConfig
 
 	// Base chain contract configuration
-	ArchitectContract  ContractConfig
-	WalletLinkContract ContractConfig
+	ArchitectContract ContractConfig
 
 	// Contract configuration
 	RegistryContract ContractConfig

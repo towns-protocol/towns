@@ -636,7 +636,7 @@
   },
   "settings": {
     "compilationTarget": {
-      "contracts/src/crosschain/IRuleEntitlement.sol": "IRuleEntitlement"
+      "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol": "IRuleEntitlement"
     },
     "evmVersion": "paris",
     "libraries": {},
@@ -660,20 +660,20 @@
     ]
   },
   "sources": {
-    "contracts/src/crosschain/IRuleEntitlement.sol": {
-      "keccak256": "0x795b58a2ed6205d814e01e58a4a5e88ff69401ee7540d01c4881b7b28f04cfcf",
-      "license": "MIT",
-      "urls": [
-        "bzz-raw://684e395bce3abedfb499ba8b2708a4f0ca9d1b1f73eb0ebc647d4cead0b8fdd1",
-        "dweb:/ipfs/QmWz2Eu8UGXYskoBFtFXLBuwDrxUfYDLeQuTCeApALdf97"
-      ]
-    },
     "contracts/src/spaces/entitlements/IEntitlement.sol": {
       "keccak256": "0x84f059cb6d594cbe0a70ed4a10c9b96f82d530c9dba39a5d84e466f5b046b9ca",
       "license": "Apache-2.0",
       "urls": [
         "bzz-raw://68fdceef136a16c8a11e1b354119d39697029ea41db4ae4edc9ea9d68e9c12a3",
         "dweb:/ipfs/QmbCmoo6nMDou5m77JzFBPc2GBJkET5F2eWDEZaXQ5taHf"
+      ]
+    },
+    "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol": {
+      "keccak256": "0x795b58a2ed6205d814e01e58a4a5e88ff69401ee7540d01c4881b7b28f04cfcf",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://684e395bce3abedfb499ba8b2708a4f0ca9d1b1f73eb0ebc647d4cead0b8fdd1",
+        "dweb:/ipfs/QmWz2Eu8UGXYskoBFtFXLBuwDrxUfYDLeQuTCeApALdf97"
       ]
     }
   },

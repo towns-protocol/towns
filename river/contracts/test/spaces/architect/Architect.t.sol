@@ -10,13 +10,12 @@ import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {IPausableBase, IPausable} from "contracts/src/diamond/facets/pausable/IPausable.sol";
 import {IGuardian} from "contracts/src/spaces/facets/guardian/IGuardian.sol";
 import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
-import {IRuleEntitlement} from "contracts/src/crosschain/IRuleEntitlement.sol";
-import {RuleEntitlement} from "contracts/src/crosschain/RuleEntitlement.sol";
+import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
+import {RuleEntitlement} from "contracts/src/spaces/entitlements/rule/RuleEntitlement.sol";
 import {IRoles} from "contracts/src/spaces/facets/roles/IRoles.sol";
 import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.sol";
-import {IWalletLink} from "contracts/src/river/wallet-link/IWalletLink.sol";
+import {IWalletLink} from "contracts/src/factory/facets/wallet-link/IWalletLink.sol";
 import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
-import {IEntitlementChecker} from "contracts/src/crosschain/checker/IEntitlementChecker.sol";
 
 // libraries
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
@@ -27,8 +26,7 @@ import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
 import {MockERC721} from "contracts/test/mocks/MockERC721.sol";
 import {UserEntitlement} from "contracts/src/spaces/entitlements/user/UserEntitlement.sol";
-import {WalletLink} from "contracts/src/river/wallet-link/WalletLink.sol";
-import {EntitlementChecker} from "contracts/src/crosschain/checker/EntitlementChecker.sol";
+import {WalletLink} from "contracts/src/factory/facets/wallet-link/WalletLink.sol";
 import {Factory} from "contracts/src/utils/Factory.sol";
 
 // errors
@@ -119,23 +117,18 @@ contract ArchitectTest is
     (
       ISpaceOwner spaceTokenAddress,
       IUserEntitlement userEntitlementAddress,
-      IRuleEntitlement ruleEntitlementAddress,
-      IWalletLink walletLinkAddress,
-      IEntitlementChecker entitlementChecker
+      IRuleEntitlement ruleEntitlementAddress
     ) = spaceArchitect.getSpaceArchitectImplementations();
 
     assertEq(spaceOwner, address(spaceTokenAddress));
     assertEq(userEntitlement, address(userEntitlementAddress));
     assertEq(ruleEntitlement, address(ruleEntitlementAddress));
-    assertEq(walletLink, address(walletLinkAddress));
   }
 
   function test_setImplementations() external {
     ISpaceOwner newSpaceToken = ISpaceOwner(address(new MockERC721()));
     IUserEntitlement newUserEntitlement = new UserEntitlement();
     IRuleEntitlement newRuleEntitlement = new RuleEntitlement();
-    IWalletLink newWalletLink = new WalletLink();
-    IEntitlementChecker newEntitlementChecker = new EntitlementChecker();
 
     address user = _randomAddress();
 
@@ -144,32 +137,25 @@ contract ArchitectTest is
     spaceArchitect.setSpaceArchitectImplementations(
       newSpaceToken,
       newUserEntitlement,
-      newRuleEntitlement,
-      newWalletLink,
-      newEntitlementChecker
+      newRuleEntitlement
     );
 
     vm.prank(deployer);
     spaceArchitect.setSpaceArchitectImplementations(
       newSpaceToken,
       newUserEntitlement,
-      newRuleEntitlement,
-      newWalletLink,
-      newEntitlementChecker
+      newRuleEntitlement
     );
 
     (
       ISpaceOwner spaceTokenAddress,
       IUserEntitlement userEntitlementAddress,
-      IRuleEntitlement tokenEntitlementAddress,
-      IWalletLink walletLink,
-      IEntitlementChecker entitlementChecker
+      IRuleEntitlement tokenEntitlementAddress
     ) = spaceArchitect.getSpaceArchitectImplementations();
 
     assertEq(address(newSpaceToken), address(spaceTokenAddress));
     assertEq(address(newUserEntitlement), address(userEntitlementAddress));
     assertEq(address(newRuleEntitlement), address(tokenEntitlementAddress));
-    assertEq(address(newWalletLink), address(walletLink));
   }
 
   function test_transfer_space_ownership(string memory spaceName) external {
@@ -191,7 +177,7 @@ contract ArchitectTest is
       )
     );
 
-    (ISpaceOwner spaceOwner, , , , ) = spaceArchitect
+    (ISpaceOwner spaceOwner, , ) = spaceArchitect
       .getSpaceArchitectImplementations();
     uint256 tokenId = spaceArchitect.getTokenIdBySpace(newSpace);
 

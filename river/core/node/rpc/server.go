@@ -173,6 +173,7 @@ func (s *Service) initWallet() error {
 
 func (s *Service) initBaseChain() error {
 	ctx := s.serverCtx
+	cfg := s.config
 
 	if !s.config.DisableBaseChain {
 		baseChain, err := crypto.NewBlockchain(ctx, &s.config.BaseChain, nil)
@@ -183,10 +184,9 @@ func (s *Service) initBaseChain() error {
 		chainAuth, err := auth.NewChainAuth(
 			ctx,
 			baseChain,
-			&s.config.ArchitectContract,
-			&s.config.WalletLinkContract,
-			s.config.BaseChain.LinkedWalletsLimit,
-			s.config.BaseChain.ContractCallsTimeoutMs,
+			&cfg.ArchitectContract,
+			cfg.BaseChain.LinkedWalletsLimit,
+			cfg.BaseChain.ContractCallsTimeoutMs,
 		)
 		if err != nil {
 			return err
