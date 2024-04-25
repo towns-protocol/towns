@@ -211,7 +211,8 @@ export const ErrorReportForm = (props: { onHide?: () => void }) => {
                     onSuccess: () => {
                         setSuccess(true)
                     },
-                    onError: () => {
+                    onError: (error) => {
+                        console.error('Error submitting feedback', error)
                         setErrorMessage(
                             `There was an error while submitting your feedback. Please try again later.`,
                         )

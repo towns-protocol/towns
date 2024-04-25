@@ -6,6 +6,7 @@ export const SomethingWentWrong = ({
     children,
     ...boxProps
 }: { error: Error } & BoxProps) => {
+    console.error('SomethingWentWrong', error)
     return (
         <Box horizontal alignItems="center" gap="sm" color="error" {...boxProps}>
             <Icon type="alert" size="square_sm" color="error" gap="sm" />
