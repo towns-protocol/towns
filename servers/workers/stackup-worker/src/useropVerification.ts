@@ -17,6 +17,7 @@ import {
     checkUseTownKVOverrides,
 } from './checks'
 import { isPrivyApiSearchResponse, searchPrivyForUser } from './privy'
+import { ContractName, FunctionName } from './types'
 
 interface ITownTransactionParams {
     rootKeyAddress: `0x${string}`
@@ -69,7 +70,7 @@ export async function verifyCreateSpace(
         if (!network) {
             throw new Error(`Unknown environment network: ${params.env.ENVIRONMENT}`)
         }
-        const townFactoryAddress = contractAddress(network, 'TownFactory')
+        const townFactoryAddress = contractAddress(network, 'SpaceFactory')
         // check that quota has not been breached on-chain
         const queryResult = await runLogQuery(
             params.env.ENVIRONMENT,
@@ -208,7 +209,7 @@ export async function verifyJoinTown(params: ITownTransactionParams): Promise<IV
     Only Towns on HNT Labs curated whitelist can perform these 2 actions
 */
 export async function verifyUseTown(
-    params: ITownTransactionParams & { transactionName: string },
+    params: ITownTransactionParams & { transactionName: FunctionName },
 ): Promise<IVerificationResult> {
     const spaceDapp = await createSpaceDappForNetwork(params.env)
     if (!spaceDapp) {
@@ -311,7 +312,7 @@ export async function verifyUseTown(
 }
 
 export async function verifyUpdateTown(
-    params: ITownTransactionParams & { transactionName: string },
+    params: ITownTransactionParams & { transactionName: FunctionName },
 ): Promise<IVerificationResult> {
     const spaceDapp = await createSpaceDappForNetwork(params.env)
     if (!spaceDapp) {
@@ -421,7 +422,7 @@ export async function verifyUpdateTown(
     }
 }
 
-function mapTransactionNameToContractName(transactionName: string): string {
+function mapTransactionNameToContractName(transactionName: FunctionName): ContractName {
     switch (transactionName) {
         case 'updateSpaceInfo':
             return 'SpaceOwner'

@@ -7,17 +7,17 @@ import { Env } from './index'
 const LOCALHOST_RPC_URL = 'http://127.0.0.1:8545'
 const BASE_SEPOLIA_RPC_URL = 'https://base-sepolia.g.alchemy.com/v2/'
 
-const providerMap = new Map<string, string>([
+const providerMap = new Map<Environment, string>([
     ['development', LOCALHOST_RPC_URL],
     ['test-beta', `${BASE_SEPOLIA_RPC_URL}`],
 ])
 
-export const networkMap = new Map<string, string>([
+export const networkMap = new Map<Environment, string>([
     ['development', 'anvil'],
     ['test-beta', 'base_sepolia'],
 ])
 
-export const riverEnvMap = new Map<string, string>([
+export const riverEnvMap = new Map<Environment, string>([
     ['development', 'single'],
     ['test-beta', 'gamma'],
 ])

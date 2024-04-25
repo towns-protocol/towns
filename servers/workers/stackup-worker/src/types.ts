@@ -1,4 +1,5 @@
 import { IUserOperation } from 'userop.js'
+import { Environment } from 'worker-common'
 
 // see https://github.com/stackup-wallet/userop.js/blob/1d9d0e034691cd384e194c9e8b3165680a334180/src/preset/middleware/paymaster.ts
 export interface VerifyingPaymasterResult {
@@ -10,15 +11,19 @@ export interface VerifyingPaymasterResult {
 
 export type TownsUserOperation = IUserOperation & {
     townId?: string
-    functionHash: string
+    functionHash: (typeof FunctionHash)[keyof typeof FunctionHash]
     rootKeyAddress: string
 }
 
 export type TransactionLimitRequest = {
-    environment: string
-    operation: string // createSpace || joinTown || linkWallet || useTown
+    environment: Environment
+    operation: FunctionName
     rootAddress: string
     blockLookbackNum?: number
+}
+
+function isValidOperation(operation: string): operation is FunctionName {
+    return Object.values(FunctionName).includes(operation as FunctionName)
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -27,15 +32,19 @@ export function isTransactionLimitRequest(obj: any): obj is TransactionLimitRequ
         typeof obj === 'object' &&
         typeof obj.environment === 'string' &&
         typeof obj.operation === 'string' &&
+        isValidOperation(obj.operation) &&
         (obj.operation === 'createSpace' ||
             obj.operation === 'joinSpace' ||
             obj.operation === 'linkWalletToRootKey' ||
             obj.operation === 'linkCallerToRootKey' ||
-            obj.operation === 'removeLink' ||
-            obj.operation === 'useTown') &&
+            obj.operation === 'removeLink') &&
         typeof obj.rootAddress === 'string' &&
         (typeof obj.blockLookbackNum === 'number' || obj.blockLookbackNum === undefined)
     )
+}
+
+function isFunctionHash(operation: string): operation is FunctionHash {
+    return Object.values(FunctionHash).includes(operation as FunctionHash)
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -54,7 +63,8 @@ export function isTownsUserOperation(obj: any): obj is TownsUserOperation {
         typeof obj.maxPriorityFeePerGas === 'string' &&
         typeof obj.paymasterAndData === 'string' &&
         typeof obj.signature === 'string' &&
-        typeof obj.functionHash === 'string'
+        typeof obj.functionHash === 'string' &&
+        isFunctionHash(obj.functionHash)
     )
 }
 
@@ -137,3 +147,81 @@ export function isPmSponsorUserOperationResponse(obj: any): obj is pmSponsorUser
         ('error' in obj || 'result' in obj)
     )
 }
+
+export const ContractName = {
+    SpaceOwner: 'SpaceOwner',
+    WalletLink: 'WalletLink',
+    Banning: 'Banning',
+    Channels: 'Channels',
+    Roles: 'Roles',
+    SpaceFactory: 'SpaceFactory',
+    Space: 'Space',
+} as const
+
+export type ContractName = (typeof ContractName)[keyof typeof ContractName]
+
+export const FunctionName = {
+    createSpace: 'createSpace',
+    removeLink: 'removeLink',
+    joinSpace: 'joinSpace',
+    linkCallerToRootKey: 'linkCallerToRootKey',
+    // RoleBase.sol
+    createRole: 'createRole',
+    removeRole: 'removeRole',
+    updateRole: 'updateRole',
+    // ChannelBase.sol
+    createChannel: 'createChannel',
+    updateChannel: 'updateChannel',
+    removeChannel: 'removeChannel',
+    addRoleToChannel: 'addRoleToChannel',
+    removeRoleFromChannel: 'removeRoleFromChannel',
+    // EntitlementsManagerBase.sol
+    removeEntitlementModule: 'removeEntitlementModule',
+    addEntitlementModule: 'addEntitlementModule',
+    // SpaceOwnerBase.sol
+    updateSpaceInfo: 'updateSpaceInfo',
+    // WalletLink.sol
+    linkWalletToRootKey: 'linkWalletToRootKey',
+    // Banning.sol
+    ban: 'ban',
+    unban: 'unban',
+} as const
+
+export type FunctionName = (typeof FunctionName)[keyof typeof FunctionName]
+
+export const EventName = {
+    // RoleBase.sol
+    RoleCreated: 'RoleCreated',
+    RoleRemoved: 'RoleRemoved',
+    RoleUpdated: 'RoleUpdated',
+    // ChannelBase.sol
+    ChannelCreated: 'ChannelCreated',
+    ChannelUpdated: 'ChannelUpdated',
+    ChannelRemoved: 'ChannelRemoved',
+    ChannelRoleAdded: 'ChannelRoleAdded',
+    ChannelRoleRemoved: 'ChannelRoleRemoved',
+    // EntitlementsManagerBase.sol
+    EntitlementModuleRemoved: 'EntitlementModuleRemoved',
+    EntitlementModuleAdded: 'EntitlementModuleAdded',
+    // SpaceOwnerBase.sol
+    SpaceOwner__UpdateSpace: 'SpaceOwner__UpdateSpace',
+    // WalletLink.sol
+    LinkWalletToRootKey: 'LinkWalletToRootKey',
+    RemoveLink: 'RemoveLink',
+    // Banning.sol
+    Banned: 'Banned',
+    Unbanned: 'Unbanned',
+
+    Transfer: 'Transfer',
+} as const
+
+export type EventName = (typeof EventName)[keyof typeof EventName]
+
+// TODO: different name for this
+const FunctionHash = {
+    ...FunctionName,
+    createSpace_linkWallet: 'createSpace_linkWallet',
+    joinSpace_linkWallet: 'joinSpace_linkWallet',
+} as const
+
+type FunctionHash = (typeof FunctionHash)[keyof typeof FunctionHash]

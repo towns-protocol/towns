@@ -1,17 +1,9 @@
 import { ethers } from 'ethers'
 import { Environment, isErrorType } from 'worker-common'
-import BaseSepoliaTownOwnerAbi from '@river-build/generated/v3/abis/SpaceOwner.abi.json' assert { type: 'json' }
-import BaseSepoliaWalletLinkAbi from '@river-build/generated/v3/abis/WalletLink.abi.json' assert { type: 'json' }
-import BaseSepoliaTownOwnerContract from '@river-build/generated/deployments/gamma/base/addresses/spaceOwner.json' assert { type: 'json' }
-import BaseSepoliaBanningAbi from '@river-build/generated/v3/abis/IBanning.abi.json' assert { type: 'json' }
-import BaseSepoliaChannelsAbi from '@river-build/generated/v3/abis/Channels.abi.json' assert { type: 'json' }
-import BaseSepoliaRolesAbi from '@river-build/generated/v3/abis/Roles.abi.json' assert { type: 'json' }
-import BaseSepoliaTownFactoryContract from '@river-build/generated/deployments/gamma/base/addresses/spaceFactory.json' assert { type: 'json' }
-import BaseSepoliaTownContract from '@river-build/generated/deployments/gamma/base/addresses/space.json' assert { type: 'json' }
-import BaseSepoliaWalletLinkContract from '@river-build/generated/deployments/gamma/base/addresses/walletLink.json' assert { type: 'json' }
-
 import { createJsonProvider as createProvider } from './provider'
 import { Env } from '.'
+import { ContractName, EventName, FunctionName } from './types'
+import { BaseSepoliaContracts } from './contractsMap'
 
 interface ContractDetails {
     address: string
@@ -21,7 +13,7 @@ interface ContractDetails {
 interface LogFilterResult {
     events: ethers.Event[] | null
     contractAddress: string
-    eventName: string
+    eventName: EventName
     filter: ethers.EventFilter
     blockStart: number | undefined
     blockEnd: number
@@ -29,19 +21,6 @@ interface LogFilterResult {
 
 type filterArgType = string | number | null
 const BaseSepoliaBlocksPerDay = 43200 // at 2s blocks
-
-const BaseSepoliaContracts = new Map<string, ContractDetails>([
-    ['SpaceOwner', { address: BaseSepoliaTownOwnerContract.address, abi: BaseSepoliaTownOwnerAbi }],
-    ['TownFactory', { address: BaseSepoliaTownFactoryContract.address, abi: undefined }],
-    ['Town', { address: BaseSepoliaTownContract.address, abi: undefined }],
-    [
-        'WalletLink',
-        { address: BaseSepoliaWalletLinkContract.address, abi: BaseSepoliaWalletLinkAbi },
-    ],
-    ['Channels', { address: BaseSepoliaTownContract.address, abi: BaseSepoliaChannelsAbi }],
-    ['Roles', { address: BaseSepoliaTownContract.address, abi: BaseSepoliaRolesAbi }],
-    ['Banning', { address: BaseSepoliaTownContract.address, abi: BaseSepoliaBanningAbi }],
-])
 
 const NetworkContracts = new Map<string, Map<string, ContractDetails>>([
     ['base_sepolia', BaseSepoliaContracts],
@@ -52,7 +31,7 @@ export const NetworkBlocksPerDay = new Map<Environment, number>([
 ])
 
 // map of contract method to emitted event name
-export const EventByMethod = new Map<string, string>([
+export const EventByMethod = new Map<keyof typeof FunctionName, keyof typeof EventName>([
     // RoleBase.sol
     ['createRole', 'RoleCreated'],
     ['removeRole', 'RoleRemoved'],
@@ -77,7 +56,7 @@ export const EventByMethod = new Map<string, string>([
 
 function createContract(
     network: string,
-    contractName: string,
+    contractName: ContractName,
     provider: ethers.providers.Provider,
 ): ethers.Contract | null {
     const networkContracts = NetworkContracts.get(network)
@@ -97,7 +76,7 @@ function createContract(
     return new ethers.Contract(contractDetails.address, contractDetails.abi, provider)
 }
 
-export function contractAddress(network: string, contractName: string): string | null {
+export function contractAddress(network: string, contractName: ContractName): string | null {
     const networkContracts = NetworkContracts.get(network)
     if (!networkContracts) {
         console.error(`Unknown network: ${network}`)
@@ -113,7 +92,7 @@ export function contractAddress(network: string, contractName: string): string |
 
 /* Create contract filter
  * @param contract ethers.Contract
- * @param eventName string
+ * @param eventName EventName
  * @param args filterArgType[] - args are spread in order. Null is used for filtering on any value
  * @return ethers.providers.Filter | null
  *
@@ -121,7 +100,7 @@ export function contractAddress(network: string, contractName: string): string |
  */
 function createFilter(
     contract: ethers.Contract,
-    eventName: string,
+    eventName: EventName,
     args: filterArgType[],
 ): ethers.EventFilter | null {
     if (!Object.keys(contract.filters).includes(eventName)) {
@@ -133,13 +112,13 @@ function createFilter(
 
 type FilterFunctionType = (
     contract: ethers.Contract,
-    eventName: string,
+    eventName: EventName,
     eventArgs: filterArgType[],
 ) => ethers.EventFilter | null
 
 export function createFilterWrapper(
     contract: ethers.Contract,
-    eventName: string,
+    eventName: EventName,
     eventArgs: filterArgType[],
 ): ethers.EventFilter | null {
     const filter = createFilter(contract, eventName, [...eventArgs])
@@ -156,8 +135,8 @@ export async function runLogQuery(
     environment: Environment,
     network: string,
     env: Env,
-    contractName: string, // diamond contract emitting event
-    eventName: string, // name of event to filter on
+    contractName: ContractName, // diamond contract emitting event
+    eventName: EventName, // name of event to filter on
     eventArgs: filterArgType[], // args to pass into event filter
     createFilterFunc: FilterFunctionType,
     blockLookbackNum?: number,
@@ -220,7 +199,7 @@ export async function runLogQuery(
 export async function runLogQueryTownOwner(
     environment: Environment,
     env: Env,
-    eventName: string,
+    eventName: EventName,
     townOwnerAddress: string,
     blockLookbackNum?: number,
     provider?: ethers.providers.StaticJsonRpcProvider,

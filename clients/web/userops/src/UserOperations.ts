@@ -7,7 +7,7 @@ import {
 } from '@river-build/web3'
 import { ethers } from 'ethers'
 import { ISendUserOperationResponse, Client as UseropClient, Presets } from 'userop'
-import { UserOpsConfig, UserOpParams } from './types'
+import { UserOpsConfig, UserOpParams, FunctionHash } from './types'
 import { userOpsStore } from './userOpsStore'
 // TODO: we can probably add these via @account-abrstraction/contracts if preferred
 import { EntryPoint__factory, SimpleAccountFactory__factory } from 'userop/dist/typechain'
@@ -771,14 +771,14 @@ export class UserOps {
     }
 
     /**
-     * should return a matching functionHash as the paymaster proxy validation
-     * TODO: convert to same hash as paymaster proxy validation, for now it's just function name
+     * should return a matching functionHash for paymaster proxy validation
+     * TODO: proxy still uses function name, not sigHash
      */
     private getFunctionSigHash<ContractInterface extends ethers.utils.Interface>(
         _contractInterface: ContractInterface,
-        functionName: string,
+        functionHash: keyof typeof FunctionHash,
     ) {
-        return functionName
+        return functionHash
         // TODO: swap to this
         // const frag = contractInterface.getFunction(functionName)
         // return frag.format() // format sigHash

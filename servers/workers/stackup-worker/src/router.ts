@@ -59,7 +59,7 @@ router.post('/api/transaction-limits', async (request: WorkerRequest, env: Env) 
                     console.error(`Unknown environment network: ${environment}`)
                     return null
                 }
-                const townFactoryAddress = contractAddress(network, 'TownFactory')
+                const townFactoryAddress = contractAddress(network, 'SpaceFactory')
                 const queryResult = await runLogQuery(
                     environment as Environment,
                     network,
@@ -127,6 +127,7 @@ router.post('/api/transaction-limits', async (request: WorkerRequest, env: Env) 
                 break
             }
             default:
+                // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
                 return new Response(toJson({ error: `Unknown operation ${operation}` }), {
                     status: 404,
                 })
@@ -475,6 +476,7 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
                 break
             }
             default:
+                // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
                 return new Response(toJson({ error: `Unknown functionHash ${functionHash}` }), {
                     status: 404,
                 })
