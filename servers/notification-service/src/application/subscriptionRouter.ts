@@ -1,10 +1,7 @@
 import { Router } from 'express'
-import {
-    addSubscriptionHandler,
-    removeSubscriptionHandler,
-} from '../controller/subscriptionHandler'
-import { validateSchema } from '../middleware/validation'
-import { addSubscriptionSchema, removeSubscriptionSchema } from '../schema/subscriptionSchema'
+import { addSubscriptionHandler, removeSubscriptionHandler } from './controller/subscriptionHandler'
+import { validateSchema } from './middleware/validation'
+import { addSubscriptionSchema, removeSubscriptionSchema } from './subscriptionSchema'
 
 export const subscriptionRouter = Router()
 

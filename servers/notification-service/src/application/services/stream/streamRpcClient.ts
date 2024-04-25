@@ -1,8 +1,8 @@
 import { PromiseClient, createPromiseClient } from '@connectrpc/connect'
 import { ConnectTransportOptions, createConnectTransport } from '@connectrpc/connect-web'
 import { Err, StreamService } from '@river-build/proto'
-import { env } from '../../application/utils/environment'
-import { logger } from '../../application/logger'
+import { env } from '../../utils/environment'
+import { logger } from '../../logger'
 
 export type StreamRpcClient = PromiseClient<typeof StreamService> & { url?: string }
 

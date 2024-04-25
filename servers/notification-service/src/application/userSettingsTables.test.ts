@@ -1,6 +1,6 @@
 import { UserSettingsTables } from './userSettingsTables'
-import { database } from '../../infrastructure/database/prisma'
-import { Mute } from '../../application/schema/notificationSettingsSchema'
+import { database } from './prisma'
+import { Mute } from './notificationSettingsSchema'
 
 describe('userSettingsTables', () => {
     const users = ['user1', 'user2', 'user3']

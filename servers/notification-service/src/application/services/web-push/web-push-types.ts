@@ -1,4 +1,4 @@
-import { Urgency } from '../../schema/notificationSchema'
+import { Urgency } from '../../notificationSchema'
 import { JwtData } from './jwt'
 
 export interface VapidDetails {

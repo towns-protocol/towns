@@ -3,11 +3,11 @@ import './../utils/envs.mock'
 import { Request, Response } from 'express'
 
 import { StatusCodes } from 'http-status-codes'
-import { database } from '../../infrastructure/database/prisma'
+import { database } from '../prisma'
 import { tagAtChannelHandler, tagAttachmentHandler, tagMentionUsersHandler } from './tagHandler'
-import { NotificationAttachmentKind, NotificationKind } from '../schema/tagSchema'
+import { NotificationAttachmentKind, NotificationKind } from '../tagSchema'
 
-jest.mock('../../infrastructure/database/prisma', () => ({
+jest.mock('../../infrastructure/prisma', () => ({
     database: {
         notificationTag: {
             upsert: jest.fn(),

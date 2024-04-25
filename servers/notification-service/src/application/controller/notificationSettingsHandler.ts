@@ -9,7 +9,7 @@ import { Request, Response } from 'express'
 
 import { StatusCodes } from 'http-status-codes'
 import { streamsMonitorService } from '../../serviceLoader'
-import { database } from '../../infrastructure/database/prisma'
+import { database } from '../prisma'
 import { logger } from '../logger'
 
 export async function saveNotificationSettingsHandler(req: Request, res: Response) {

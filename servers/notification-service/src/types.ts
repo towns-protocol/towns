@@ -5,23 +5,20 @@ import {
     notificationContentSchema,
     notificationPayloadSchema,
     notifyUsersSchema,
-} from './application/schema/notificationSchema'
-import {
-    addSubscriptionSchema,
-    removeSubscriptionSchema,
-} from './application/schema/subscriptionSchema'
+} from './application/notificationSchema'
+import { addSubscriptionSchema, removeSubscriptionSchema } from './application/subscriptionSchema'
 import {
     deleteUserSettingsSchema,
     getUserSettingsSchema,
     saveUserSettingsSchema,
     patchUserSettingsSchema,
-} from './application/schema/notificationSettingsSchema'
-import { tagMentionUsersSchema, tagReplyUserSchema } from './application/schema/tagSchema'
+} from './application/notificationSettingsSchema'
+import { tagMentionUsersSchema, tagReplyUserSchema } from './application/tagSchema'
 
-export { Mute } from './application/schema/notificationSettingsSchema'
-export { NotificationKind, NotificationAttachmentKind } from './application/schema/tagSchema'
-export { PushType } from './application/schema/subscriptionSchema'
-export { Urgency } from './application/schema/notificationSchema'
+export { Mute } from './application/notificationSettingsSchema'
+export { NotificationKind, NotificationAttachmentKind } from './application/tagSchema'
+export { PushType } from './application/subscriptionSchema'
+export { Urgency } from './application/notificationSchema'
 
 export type AddSubscriptionSchema = z.infer<typeof addSubscriptionSchema>
 export type DeleteUserSettingsSchema = z.infer<typeof deleteUserSettingsSchema>

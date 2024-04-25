@@ -1,9 +1,5 @@
 import { Err, MemberPayload_Membership, MembershipOp, MiniblockHeader } from '@river-build/proto'
-import {
-    StreamRpcClient,
-    errorContains,
-    makeStreamRpcClient,
-} from '../../../infrastructure/rpc/streamRpcClient'
+import { StreamRpcClient, errorContains, makeStreamRpcClient } from './streamRpcClient'
 import { SyncedStreams, unpackStream } from './syncedStreams'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './id'
 import { streamIdFromBytes, streamIdToBytes, userIdFromAddress } from './utils'
@@ -13,7 +9,7 @@ import { ParsedStreamAndCookie } from './types'
 import { StreamKind } from '@prisma/client'
 import assert from 'assert'
 import { createLogger } from '../logger'
-import { database } from '../../../infrastructure/database/prisma'
+import { database } from '../../prisma'
 import { env } from '../../utils/environment'
 
 const logger = createLogger('streamsMonitorService')

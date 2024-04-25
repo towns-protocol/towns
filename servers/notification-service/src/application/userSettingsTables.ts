@@ -1,5 +1,5 @@
-import { Mute } from '../../application/schema/notificationSettingsSchema'
-import { database } from '../../infrastructure/database/prisma'
+import { Mute } from './notificationSettingsSchema'
+import { database } from './prisma'
 
 export class UserSettingsTables {
     public static async getUserMutedInChannel(

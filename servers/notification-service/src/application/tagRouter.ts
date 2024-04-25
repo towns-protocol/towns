@@ -1,17 +1,17 @@
 import { Router } from 'express'
-import { validateSchema } from '../middleware/validation'
+import { validateSchema } from './middleware/validation'
 import {
     tagAtChannelSchema,
     tagAttachmentSchema,
     tagMentionUsersSchema,
     tagReplyUserSchema,
-} from '../schema/tagSchema'
+} from './tagSchema'
 import {
     tagAttachmentHandler,
     tagAtChannelHandler,
     tagMentionUsersHandler,
     tagReplyUserHandler,
-} from '../controller/tagHandler'
+} from './controller/tagHandler'
 
 export const tagRouter = Router()
 

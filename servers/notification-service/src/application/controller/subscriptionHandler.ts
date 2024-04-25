@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
 import { StatusCodes } from 'http-status-codes'
-import { database } from '../../infrastructure/database/prisma'
-import { PushType } from '../schema/subscriptionSchema'
+import { database } from '../prisma'
+import { PushType } from '../subscriptionSchema'
 import { logger } from '../logger'
 
 export async function addSubscriptionHandler(request: Request, res: Response) {

@@ -1,17 +1,17 @@
 import { Router } from 'express'
-import { validateSchema } from '../middleware/validation'
+import { validateSchema } from './middleware/validation'
 import {
     deleteUserSettingsSchema,
     getUserSettingsSchema,
     saveUserSettingsSchema,
     patchUserSettingsSchema,
-} from '../schema/notificationSettingsSchema'
+} from './notificationSettingsSchema'
 import {
     deleteNotificationSettingsHandler,
     getNotificationSettingsHandler,
     saveNotificationSettingsHandler,
     patchNotificationSettingsHandler,
-} from '../controller/notificationSettingsHandler'
+} from './controller/notificationSettingsHandler'
 
 export const notificationSettingsRouter = Router()
 

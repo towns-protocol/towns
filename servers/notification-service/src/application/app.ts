@@ -7,8 +7,8 @@ import 'express-async-errors'
 import { cors } from './middleware/cors'
 import { validateAuthToken } from './middleware/auth'
 import { handleGlobalError, handleNotFound } from './middleware/errors'
-import { publicRoutes } from './routes/publicRoutes'
-import { routes } from './routes/routes'
+import { publicRoutes } from './publicRoutes'
+import { routes } from './routes'
 import { isProduction } from './utils/environment'
 
 export async function initializeApp() {

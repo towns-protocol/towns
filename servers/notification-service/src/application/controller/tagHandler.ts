@@ -1,9 +1,9 @@
 import { Request, Response } from 'express'
 
 import { StatusCodes } from 'http-status-codes'
-import { database } from '../../infrastructure/database/prisma'
+import { database } from '../prisma'
 import { logger } from '../logger'
-import { NotificationAttachmentKind, NotificationKind } from '../schema/tagSchema'
+import { NotificationAttachmentKind, NotificationKind } from '../tagSchema'
 
 export async function tagMentionUsersHandler(request: Request, res: Response) {
     const tagData = {

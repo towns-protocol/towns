@@ -2,10 +2,10 @@ import './../utils/envs.mock'
 import { Request, Response } from 'express'
 import { StatusCodes } from 'http-status-codes'
 import { addSubscriptionHandler, removeSubscriptionHandler } from './subscriptionHandler'
-import { database } from '../../infrastructure/database/prisma'
+import { database } from '../prisma'
 import { logger } from '../logger'
 
-jest.mock('../../infrastructure/database/prisma', () => ({
+jest.mock('./../prisma', () => ({
     database: {
         pushSubscription: {
             upsert: jest.fn(),

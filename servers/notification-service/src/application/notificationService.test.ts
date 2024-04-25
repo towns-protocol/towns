@@ -1,18 +1,18 @@
-import './../utils/envs.mock'
+import './utils/envs.mock'
 
-import { SendPushResponse, SendPushStatus } from './web-push/web-push-types'
+import { SendPushResponse, SendPushStatus } from './services/web-push/web-push-types'
 
 import { NotificationService, NotifyUser } from './notificationService'
-import { NotifyUsersSchema } from '../../types'
+import { NotifyUsersSchema } from '../types'
 import { PushSubscription } from '@prisma/client'
-import { UserSettingsTables } from '../database/userSettingsTables'
-import { database } from '../../infrastructure/database/prisma'
-import { NotificationAttachmentKind, NotificationKind } from '../schema/tagSchema'
-import { PushType } from '../schema/subscriptionSchema'
-import { sendNotificationViaWebPush } from './web-push/send-notification'
-import { StreamPrefix } from './stream/id'
+import { UserSettingsTables } from './userSettingsTables'
+import { database } from './prisma'
+import { NotificationAttachmentKind, NotificationKind } from './tagSchema'
+import { PushType } from './subscriptionSchema'
+import { sendNotificationViaWebPush } from './services/web-push/send-notification'
+import { StreamPrefix } from './services/stream/id'
 
-jest.mock('../../infrastructure/database/prisma', () => ({
+jest.mock('./prisma', () => ({
     database: {
         userSettings: {
             findMany: jest.fn(),
@@ -27,7 +27,7 @@ jest.mock('../../infrastructure/database/prisma', () => ({
     },
 }))
 
-jest.mock('./web-push/send-notification', () => ({
+jest.mock('./services/web-push/send-notification', () => ({
     sendNotificationViaWebPush: jest.fn(),
 }))
 

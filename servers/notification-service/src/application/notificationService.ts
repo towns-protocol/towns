@@ -3,20 +3,20 @@ import {
     NotificationContentMessageSchema,
     NotificationPayloadSchema,
     NotifyUsersSchema,
-} from '../../types'
-import { SendPushResponse, SendPushStatus } from './web-push/web-push-types'
+} from '../types'
+import { SendPushResponse, SendPushStatus } from './services/web-push/web-push-types'
 
 import { NotificationTag } from '@prisma/client'
-import { UserSettingsTables } from '../userSettingsTables'
-import { database } from '../prisma'
-import { env } from '../utils/environment'
-import { NotificationAttachmentKind, NotificationKind } from '../tagSchema'
-import { PushType } from '../subscriptionSchema'
-import { sendNotificationViaWebPush } from './web-push/send-notification'
-import { Urgency } from '../notificationSchema'
-import { createLogger } from './logger'
-import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './stream/id'
-import { isPayloadLengthValid } from './web-push/crypto-utils'
+import { UserSettingsTables } from './userSettingsTables'
+import { database } from './prisma'
+import { env } from './utils/environment'
+import { NotificationAttachmentKind, NotificationKind } from './tagSchema'
+import { PushType } from './subscriptionSchema'
+import { sendNotificationViaWebPush } from './services/web-push/send-notification'
+import { Urgency } from './notificationSchema'
+import { createLogger } from './services/logger'
+import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './services/stream/id'
+import { isPayloadLengthValid } from './services/web-push/crypto-utils'
 
 const logger = createLogger('notificationService')
 
