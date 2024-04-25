@@ -6,6 +6,7 @@ import { useDevice } from 'hooks/useDevice'
 import { useTimelineContext } from '@components/MessageTimeline/MessageTimelineContext'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useCreateLink } from 'hooks/useCreateLink'
+import { htmlToText } from 'workers/data_transforms'
 import { isRoomMessage } from '@components/MessageTimeline/util/getEventsByDate'
 import { MessageAttachments } from '@components/MessageAttachments/MessageAttachments'
 import { MessageAttachmentsContext } from '@components/MessageAttachments/MessageAttachmentsContext'
@@ -65,7 +66,7 @@ export const QuotedMessage = (props: Props) => {
                         </Text>
 
                         <Text truncate as="span" display="inline" size="sm">
-                            {event.content.body}
+                            {htmlToText(event.content.body)}
                         </Text>
                     </Box>
                     <MessageAttachmentsContext.Provider

@@ -15,6 +15,7 @@ import { Box, BoxProps, MotionBox, Paragraph, Stack, Text } from '@ui'
 import { notUndefined } from 'ui/utils/utils'
 import { formatShortDate } from 'utils/formatDates'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { htmlToText } from 'workers/data_transforms'
 import { GroupDMIcon, GroupDMIconProps } from './GroupDMIcon'
 
 type Props = {
@@ -199,12 +200,14 @@ const LastDirectMessageContent = (props: {
     switch (info?.kind) {
         case 'media':
             return '📷'
-        case 'text':
+        case 'text': {
+            const unescapedText = htmlToText(info.text)
             return latestUser
-                ? `${myUserId === latestUser.userId ? 'you' : getPrettyDisplayName(latestUser)}: ${
-                      info.text
-                  }`
-                : info.text
+                ? `${
+                      myUserId === latestUser.userId ? 'you' : getPrettyDisplayName(latestUser)
+                  }: ${unescapedText}`
+                : unescapedText
+        }
         case 'encrypted':
             return (
                 <Box grow horizontal paddingY="xs" width="200" shrink={false}>
