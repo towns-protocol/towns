@@ -14,6 +14,7 @@ import { ELEMENT_MENTION_CHANNEL } from '../plugins/createChannelPlugin'
 import { channelMentionHandler, listContentHandler, userMentionHandler } from './rehypeHandlers'
 import remarkTransformUserAndChannels from './remark/remarkTransformUserAndChannels'
 import remarkPreserveListContent from './remark/remarkPreserveListContent'
+import remarkRemoveHeadings from './remark/remarkRemoveHeadings'
 
 type MarkdownRendererProps = React.PropsWithChildren<{
     components: Partial<Components>
@@ -45,6 +46,7 @@ const MarkdownRenderer = ({
         .use(markdown)
         .use(remarkGfm)
         .use(remarkPreserveListContent)
+        .use(remarkRemoveHeadings)
         .use(remarkTransformUserAndChannels(channels, mentions, users))
         .use(remarkRehype, {
             passThrough: [ELEMENT_LIC, ELEMENT_MENTION, ELEMENT_MENTION_CHANNEL],

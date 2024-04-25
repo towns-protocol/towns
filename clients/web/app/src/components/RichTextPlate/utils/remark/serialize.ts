@@ -165,19 +165,6 @@ export default function serialize(
     }
 
     switch (type) {
-        case nodeTypes.heading[1]:
-            return `# ${children}\n`
-        case nodeTypes.heading[2]:
-            return `## ${children}\n`
-        case nodeTypes.heading[3]:
-            return `### ${children}\n`
-        case nodeTypes.heading[4]:
-            return `#### ${children}\n`
-        case nodeTypes.heading[5]:
-            return `##### ${children}\n`
-        case nodeTypes.heading[6]:
-            return `###### ${children}\n`
-
         case nodeTypes.block_quote:
             // For some reason, marked is parsing blockquotes w/ one new line
             // as contiued blockquotes, so adding two new lines ensures that doesn't
@@ -213,6 +200,12 @@ export default function serialize(
                 treatAsLeaf ? '\n' : ''
             }`
         }
+        case nodeTypes.heading[1]:
+        case nodeTypes.heading[2]:
+        case nodeTypes.heading[3]:
+        case nodeTypes.heading[4]:
+        case nodeTypes.heading[5]:
+        case nodeTypes.heading[6]:
         case nodeTypes.code_line:
         case nodeTypes.lic:
         case nodeTypes.paragraph:

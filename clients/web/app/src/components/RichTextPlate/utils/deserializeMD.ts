@@ -5,6 +5,7 @@ import { unified } from 'unified'
 import { Channel, OTWMention, RoomMember } from 'use-towns-client'
 import remarkSlate from './remark/plugin'
 import remarkTransformUserAndChannels from './remark/remarkTransformUserAndChannels'
+import remarkRemoveHeadings from './remark/remarkRemoveHeadings'
 
 /**
  * Deserialize content from Markdown format to Slate format.
@@ -23,6 +24,7 @@ export const deserializeMd = <V extends Value>(
     const tree = unified()
         .use(markdown)
         .use(remarkGfm)
+        .use(remarkRemoveHeadings)
         .use(remarkSlate)
         .use(remarkTransformUserAndChannels(channels, mentions, users))
         .processSync(data)
