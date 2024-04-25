@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { LookupUser, useMyUserId, useTownsClient, useUserLookupContext } from 'use-towns-client'
 import { useParams } from 'react-router'
 import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
-import { Box, Button, Icon, IconButton, Stack, Text, TextButton, TextField } from '@ui'
+import { Box, Button, Divider, IconButton, Stack, Text, TextButton, TextField } from '@ui'
 import { validateUsername } from '@components/SetUsernameForm/validateUsername'
 import { useSetUsername } from 'hooks/useSetUsername'
 import { EncryptedName } from '@components/EncryptedContent/EncryptedName'
@@ -55,7 +55,6 @@ export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties
 
     const { setUsername } = useSetUsername()
     const { setDisplayName } = useTownsClient()
-    const { setEnsName } = useSetEnsName()
     const [dirtyUsername, setDirtyUsername] = React.useState<string>(user?.username ?? '')
     const [usernameAvailable, setUsernameAvailable] = React.useState<boolean>(true)
     const [dirtyDisplayName, setDirtyDisplayName] = React.useState<string>(user?.displayName ?? '')
@@ -155,13 +154,6 @@ export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties
         }
     }, [titleProperties])
 
-    const onClearEnsName = useCallback(() => {
-        if (!streamId) {
-            return
-        }
-        void setEnsName(streamId, undefined)
-    }, [setEnsName, streamId])
-
     if (!user) {
         return null
     }
@@ -187,28 +179,6 @@ export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties
                         <EnsBadge userId={user.userId} ensAddress={user.ensAddress} />
                     )}
 
-                    <Stack horizontal gap="sm">
-                        <Button
-                            tone="level3"
-                            size="button_sm"
-                            width="auto"
-                            onClick={onSetEnsNameClicked}
-                        >
-                            {user?.ensAddress ? 'Change ENS Name' : 'Add ENS Name'}
-                        </Button>
-
-                        {user?.ensAddress && (
-                            <Button
-                                tone="level3"
-                                size="button_sm"
-                                color="error"
-                                onClick={onClearEnsName}
-                            >
-                                Remove
-                            </Button>
-                        )}
-                        {/* <Box grow /> */}
-                    </Stack>
                     <EditableInputField
                         title="Username"
                         value={dirtyUsername}
@@ -233,6 +203,17 @@ export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties
                     <UsernameDisplayNameEncryptedContent user={user} />
                 </>
             )}
+            <Stack horizontal gap="sm">
+                <Button
+                    tone="level3"
+                    size="button_sm"
+                    width="auto"
+                    color="default"
+                    onClick={onSetEnsNameClicked}
+                >
+                    {user?.ensAddress ? 'Edit ENS Display Name' : 'Add ENS Display Name'}
+                </Button>
+            </Stack>
             {showEditFields && (
                 <Stack horizontal>
                     <Box grow />
@@ -258,7 +239,7 @@ export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties
             )}
             {isShowingEnsDisplayNameForm && (
                 <EnsDisplayNameModal
-                    selectedEnsName={user?.ensAddress}
+                    currentEnsName={user?.ensAddress}
                     onHide={() => setShowinEnsDisplayNameForm(false)}
                 />
             )}
@@ -362,29 +343,46 @@ const UsernameDisplayNameEncryptedContent = (props: { user: LookupUser }) => {
     )
 }
 
-const EnsDisplayNameModal = (props: { selectedEnsName?: string; onHide: () => void }) => {
-    const { onHide, selectedEnsName: selectedEnsName } = props
+const EnsDisplayNameModal = (props: { currentEnsName?: string; onHide: () => void }) => {
+    const { onHide, currentEnsName: currentEnsName } = props
     const { ensNames, isFetching } = useEnsNames()
     const { setEnsName } = useSetEnsName()
     const streamId = useCurrentStreamID()
     const { openPanel } = usePanelActions()
+    const [selectedWallet, setSelectedWallet] = useState<string | undefined>(currentEnsName)
+    const [pendingWallet, setPendingWallet] = useState<string | undefined>(undefined)
 
-    const onSelectToken = useCallback(
-        (tokenId: string) => {
+    useEffect(() => {
+        setPendingWallet(currentEnsName)
+    }, [currentEnsName])
+
+    const onSelectWallet = useCallback(
+        (walletAddress: string | undefined) => {
             if (!streamId) {
                 return
             }
-            void setEnsName(streamId, tokenId)
+            setSelectedWallet(walletAddress)
         },
-        [setEnsName, streamId],
+        [streamId, setSelectedWallet],
     )
+
+    const onSave = useCallback(() => {
+        if (!streamId) {
+            return
+        }
+        void setEnsName(streamId, selectedWallet)
+        setPendingWallet(selectedWallet)
+    }, [setEnsName, streamId, selectedWallet])
+
+    const saveInProgress = pendingWallet != currentEnsName
+    const saveButtonEnabled = !saveInProgress && selectedWallet != currentEnsName
 
     const onViewLinkedWalletsClick = useCallback(() => {
         openPanel(CHANNEL_INFO_PARAMS.WALLETS)
     }, [openPanel])
 
     return (
-        <ModalContainer onHide={onHide}>
+        <ModalContainer minWidth="350" onHide={onHide}>
             <Box position="relative">
                 <IconButton position="topRight" icon="close" onClick={onHide} />
             </Box>
@@ -394,50 +392,89 @@ const EnsDisplayNameModal = (props: { selectedEnsName?: string; onHide: () => vo
                 </Text>
 
                 {ensNames.length === 0 && isFetching && <ButtonSpinner />}
-
+                {ensNames.length === 0 && (
+                    <Box grow centerContent padding>
+                        <Text fontWeight="medium">No ENS names found</Text>
+                    </Box>
+                )}
                 {ensNames.length > 0 && (
-                    <Stack horizontal alignContent="start" width="100%">
+                    <Stack scroll alignContent="start" width="100%" maxHeight="300" gap="sm">
                         {ensNames.map((ensName) => (
-                            <Stack
-                                hoverable
+                            <WalletRow
                                 key={ensName.wallet}
-                                alignItems="center"
-                                gap="sm"
-                                background={{ hover: 'level2' }}
-                                padding="sm"
-                                rounded="sm"
-                                onClick={() => onSelectToken(ensName.wallet)}
-                            >
-                                <Box
-                                    rounded="sm"
-                                    padding="sm"
-                                    width="x12"
-                                    aspectRatio="1/1"
-                                    background="cta2"
-                                >
-                                    {selectedEnsName && ensName.wallet == selectedEnsName && (
-                                        <Box position="relative">
-                                            <Icon
-                                                type="verifiedEnsName"
-                                                size="square_sm"
-                                                position="topRight"
-                                            />
-                                        </Box>
-                                    )}
-                                </Box>
-
-                                <Text size="md" color="gray2">
-                                    {ensName.ensName}
-                                </Text>
-                            </Stack>
+                                label={ensName.ensName}
+                                checked={ensName.wallet === selectedWallet}
+                                onSelectWallet={() => onSelectWallet(ensName.wallet)}
+                            />
                         ))}
+
+                        <WalletRow
+                            key="no-name"
+                            label="None"
+                            checked={selectedWallet === undefined}
+                            onSelectWallet={() => onSelectWallet(undefined)}
+                        />
                     </Stack>
                 )}
 
+                {ensNames.length > 0 && (
+                    <Button
+                        tone={saveButtonEnabled ? 'cta1' : 'level2'}
+                        width="100%"
+                        disabled={!saveButtonEnabled}
+                        onClick={onSave}
+                    >
+                        {saveInProgress ? <ButtonSpinner /> : 'Set ENS'}
+                    </Button>
+                )}
+                <Stack horizontal gap="sm" alignItems="center" width="100%">
+                    <Divider />
+                    <Text shrink={false} color="gray2" fontSize="sm">
+                        {ensNames.length > 0 ? 'Or add a verified ENS' : 'Add a verified ENS'}
+                    </Text>
+                    <Divider />
+                </Stack>
                 <Button tone="level2" width="100%" onClick={onViewLinkedWalletsClick}>
                     View Linked Wallets
                 </Button>
             </Stack>
         </ModalContainer>
+    )
+}
+
+const WalletRow = (props: {
+    label: string | undefined
+    checked: boolean
+    onSelectWallet: () => void
+}) => {
+    const { label: ensName, onSelectWallet, checked } = props
+    return (
+        <Stack
+            hoverable
+            horizontal
+            padding
+            alignItems="center"
+            gap="sm"
+            background={{ default: 'level2', hover: 'level3' }}
+            rounded="sm"
+            onClick={onSelectWallet}
+        >
+            <Text size="md" color="default">
+                {ensName}
+            </Text>
+            <Box grow />
+            <CircleInCircle checked={checked} />
+        </Stack>
+    )
+}
+
+const CircleInCircle = (props: { checked: boolean }) => {
+    const { checked } = props
+    return (
+        <Box centerContent rounded="full" padding="sm" width="x2" height="x2" background="level4">
+            {checked && (
+                <Box width="x2" height="x2" background="inverted" rounded="full" shrink={false} />
+            )}
+        </Box>
     )
 }
