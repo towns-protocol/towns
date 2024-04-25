@@ -72,6 +72,7 @@ export class UnauthenticatedClient {
                 [],
                 prevSnapshotMiniblockNum,
                 undefined,
+                [],
                 undefined,
             )
             return streamView

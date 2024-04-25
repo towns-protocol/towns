@@ -12,6 +12,7 @@ import TypedEmitter from 'typed-emitter'
 import {
     ConfirmedTimelineEvent,
     LocalEventStatus,
+    LocalTimelineEvent,
     ParsedEvent,
     ParsedMiniblock,
     RemoteTimelineEvent,
@@ -149,7 +150,7 @@ export class StreamStateView {
     }
 
     constructor(userId: string, streamId: string) {
-        log('streamStateView', streamId)
+        log('streamStateView::constructor', streamId)
         this.userId = userId
         this.streamId = streamId
 
@@ -522,6 +523,7 @@ export class StreamStateView {
         prependedMiniblocks: ParsedMiniblock[],
         prevSnapshotMiniblockNum: bigint,
         cleartexts: Record<string, string> | undefined,
+        localEvents: LocalTimelineEvent[],
         emitter: TypedEmitter<StreamEvents> | undefined,
     ): void {
         check(miniblocks.length > 0, `Stream has no miniblocks ${this.streamId}`, Err.STREAM_EMPTY)
@@ -580,6 +582,13 @@ export class StreamStateView {
                 emitter,
                 undefined,
             )
+        }
+
+        for (const localEvent of localEvents) {
+            localEvent.eventNum = this.lastEventNum++
+            this.events.set(localEvent.hashStr, localEvent)
+            this.timeline.push(localEvent)
+            this.getContent().onAppendLocalEvent(localEvent, emitter)
         }
 
         // let everyone know
@@ -661,6 +670,7 @@ export class StreamStateView {
         emitter: TypedEmitter<StreamEvents> | undefined,
     ) {
         const localId = genLocalId()
+        log('appendLocalEvent', localId)
         const timelineEvent = {
             hashStr: localId,
             creatorUserId: this.userId,
@@ -684,6 +694,7 @@ export class StreamStateView {
         status: LocalEventStatus,
         emitter: TypedEmitter<StreamEvents>,
     ) {
+        log('updateLocalEvent', { localId, parsedEventHash, status })
         const timelineEvent = this.events.get(localId)
         check(isDefined(timelineEvent), `Local event not found ${localId}`)
         check(isLocalEvent(timelineEvent), `Event is not local ${localId}`)

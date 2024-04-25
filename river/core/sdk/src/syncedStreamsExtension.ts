@@ -21,7 +21,6 @@ interface SyncedStreamsExtensionDelegate {
     startSyncStreams: () => Promise<void>
     initStream(streamId: string, allowGetStream: boolean): Promise<Stream>
     emitClientInitStatus: (status: ClientInitStatus) => void
-    emitStreamSyncActive: (active: boolean) => void
 }
 
 const concurrencyLimit = pLimit(50)
@@ -212,10 +211,8 @@ export class SyncedStreamsExtension {
     private async startSync() {
         try {
             await this.delegate.startSyncStreams()
-            this.delegate.emitStreamSyncActive(true)
         } catch (err) {
             this.logError('sync failure', err)
-            this.delegate.emitStreamSyncActive(false)
         }
     }
 

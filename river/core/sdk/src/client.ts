@@ -220,7 +220,6 @@ export class Client
             },
             initStream: (streamId, allowGetStream) => this.initStream(streamId, allowGetStream),
             emitClientInitStatus: (status) => this.emit('clientInitStatusUpdated', status),
-            emitStreamSyncActive: (active) => this.emit('streamSyncActive', active),
         })
 
         this.syncedStreamsExtensions.setHighPriority(highPriorityStreamIds ?? [])
@@ -686,6 +685,7 @@ export class Client
             [],
             unpackedResponse.prevSnapshotMiniblockNum,
             undefined,
+            [],
             undefined,
         )
 
@@ -922,6 +922,7 @@ export class Client
             [],
             unpackedResponse.prevSnapshotMiniblockNum,
             undefined,
+            [],
             undefined,
         )
         return streamView
@@ -998,7 +999,7 @@ export class Client
                     return this.waitForStream(streamId)
                 }
             } else {
-                this.logCall('initStream', streamId)
+                this.logCall('initStream creating stream', streamId)
                 const stream = this.createSyncedStream(streamId)
 
                 // Try initializing from persistence
@@ -1011,6 +1012,7 @@ export class Client
 
                 // if we're only allowing initializing from persistence, we've failed.
                 if (!allowGetStream) {
+                    this.logCall('initStream deleting stream', streamId)
                     // We need to remove the stream from syncedStreams, since we added it above
                     this.streams.delete(streamId)
                     throw new Error(
@@ -1025,6 +1027,7 @@ export class Client
                         streamId: streamIdAsBytes(streamId),
                     })
                     const unpacked = await unpackStream(response.stream)
+                    this.logCall('initStream calling initializingFromResponse', streamId)
                     await stream.initializeFromResponse(unpacked)
                     if (stream.view.syncCookie) {
                         await this.streams.addStreamToSync(stream.view.syncCookie)

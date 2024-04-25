@@ -3,7 +3,7 @@ import { DLogger } from '@river-build/dlog'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
 import { StreamStateView } from './streamStateView'
-import { ParsedEvent, ParsedMiniblock } from './types'
+import { ParsedEvent, ParsedMiniblock, isLocalEvent } from './types'
 import { StreamEvents } from './streamEvents'
 
 export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents>) {
@@ -43,6 +43,10 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
         prevSnapshotMiniblockNum: bigint,
         cleartexts: Record<string, string> | undefined,
     ): void {
+        // grab any local events from the previous view that haven't been processed
+        const localEvents = this.view.timeline
+            .filter(isLocalEvent)
+            .filter((e) => e.hashStr.startsWith('~'))
         this.view = new StreamStateView(this.userId, this.streamId)
         this.view.initialize(
             nextSyncCookie,
@@ -52,6 +56,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
             prependedMiniblocks,
             prevSnapshotMiniblockNum,
             cleartexts,
+            localEvents,
             this,
         )
     }
