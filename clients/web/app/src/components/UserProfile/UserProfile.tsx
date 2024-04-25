@@ -28,7 +28,7 @@ import {
 } from '@components/SetUsernameDisplayName/SetUsernameDisplayName'
 import { MutualTowns } from '@components/MutualTowns/MutualTowns'
 import { EnsBadge } from '@components/EnsBadge/EnsBadge'
-import { useNfts } from 'hooks/useNfts'
+import { useNfts, useResolveNft } from 'hooks/useNfts'
 import { useSetNftProfilePicture } from 'hooks/useSetNftProfilePicture'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { CHANNEL_INFO_PARAMS } from 'routes'
@@ -60,13 +60,18 @@ export const UserProfile = (props: Props) => {
 
     const { setNft } = useSetNftProfilePicture()
     const streamId = useCurrentStreamID()
-    const onClearNft = useCallback(() => {
-        if (!streamId) {
-            return
-        }
-        setNft(streamId, '', 0, '')
-    }, [setNft, streamId])
-
+    const onClearNft = useCallback(
+        (event: React.MouseEvent) => {
+            if (!streamId) {
+                return
+            }
+            event.stopPropagation()
+            event.preventDefault()
+            setNft(streamId, '', 0, '')
+        },
+        [setNft, streamId],
+    )
+    const resolvedNft = useResolveNft({ walletAddress: userId ?? '', info: user?.nft })
     const { mutateAsync: mutateAsyncBio } = useSetUserBio(abstractAccountAddress)
 
     const resourceId = useMemo(() => {
@@ -100,7 +105,7 @@ export const UserProfile = (props: Props) => {
 
     return (
         <Stack grow gap paddingBottom="none" position="relative">
-            <Stack centerContent={center} padding="lg">
+            <Stack centerContent={center}>
                 <FormRender maxWidth="200" width="100%" key={resourceId}>
                     {({ register, formState, setError, clearErrors }) => (
                         <LargeUploadImageTemplate
@@ -131,24 +136,42 @@ export const UserProfile = (props: Props) => {
                 </FormRender>
 
                 {canEdit && (
-                    <Stack horizontal gap="xs">
-                        <Button size="button_sm" onClick={() => setShowNftProfilePicture(true)}>
-                            <Stack
-                                horizontal
-                                gap="sm"
-                                alignItems="center"
-                                color="default"
-                                fontSize="sm"
-                                fontWeight="medium"
-                            >
-                                <Icon type="verifiedEnsName" size="square_xs" />
+                    <Stack
+                        horizontal
+                        grow
+                        hoverable
+                        gap="sm"
+                        paddingX="sm"
+                        paddingY="xs"
+                        rounded="full"
+                        background="level2"
+                        width="100%"
+                        alignItems="center"
+                        cursor="pointer"
+                        onClick={() => setShowNftProfilePicture(true)}
+                    >
+                        <Icon type="verifiedEnsName" size="square_sm" />
+                        {resolvedNft ? (
+                            <>
+                                <Text size="sm" fontWeight="medium">
+                                    {resolvedNft.title}
+                                </Text>
+                            </>
+                        ) : (
+                            <Text fontWeight="medium" fontSize="sm">
                                 NFT Profile Picture
-                            </Stack>
-                        </Button>
+                            </Text>
+                        )}
+
+                        <Box grow />
+
                         {user?.nft && (
-                            <Button size="button_sm" onClick={onClearNft}>
-                                <Icon type="close" size="square_xs" />
-                            </Button>
+                            <IconButton
+                                icon="close"
+                                size="square_xs"
+                                color="default"
+                                onClick={onClearNft}
+                            />
                         )}
                     </Stack>
                 )}
