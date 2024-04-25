@@ -127,35 +127,32 @@ function DmMetadata({ store }: { store: NotificationStore }) {
             const cachedDmChannels = (await store.getDmChannelsByIds(channelIds)).filter(
                 (c) => c !== undefined,
             )
-            const changedDmChannels = dmChannels.filter((channel) =>
-                cachedDmChannels.some(
-                    (c) => c?.id === channel.id && c.name !== channel.properties?.name,
-                ),
-            )
-            log(
-                'adding DM channels to notification cache',
-                'dmChannels:',
-                dmChannels,
-                'cachedDmChannels:',
-                cachedDmChannels,
-                'changedDmChannels:',
-                changedDmChannels,
+            const changedDmChannels = dmChannels.filter(
+                (channel) =>
+                    // cannot find the channel in the cache
+                    cachedDmChannels.filter((c) => c?.id === channel.id).length === 0 ||
+                    // the channel is in the cache, but the name is different
+                    cachedDmChannels.some(
+                        (c) => c?.id === channel.id && c.name !== channel.properties?.name,
+                    ),
             )
 
             if (changedDmChannels.length) {
-                log(
-                    'adding DM channels to notification cache',
-                    'channelIds',
-                    channelIds,
-                    'cachedDmChannels',
-                    cachedDmChannels,
-                )
                 const channelsToUpdate = changedDmChannels.map((c) => ({
                     id: c.id,
                     name: c.properties?.name ?? '',
                     parentSpaceId: parentSpaceId ?? '',
                 }))
                 await store.dmChannels.bulkPut(channelsToUpdate)
+                log(
+                    'added DM/GDM channels to notification cache',
+                    'channelIds',
+                    channelIds,
+                    'cachedDmChannels',
+                    cachedDmChannels,
+                    'changedDmChannels:',
+                    changedDmChannels,
+                )
             }
         },
         [dmChannels, store],
