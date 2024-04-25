@@ -5,12 +5,12 @@ import {
     MenuTextMatch,
     useBasicTypeaheadTriggerMatch,
 } from '@lexical/react/LexicalTypeaheadMenuPlugin'
+import fuzzysort from 'fuzzysort'
 
 import { $createTextNode, TextNode } from 'lexical'
 import * as React from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import * as ReactDOM from 'react-dom'
-import fuzzysort from 'fuzzysort'
 import { Text, TypeaheadMenu, TypeaheadMenuItem } from '@ui'
 import { TMentionEmoji } from '@components/RichTextPlate/utils/ComboboxTypes'
 import { $createEmojiNode } from '../nodes/EmojiNode'
@@ -182,14 +182,22 @@ export const search = async function (string: string) {
     emojiCache =
         emojiCache ??
         Object.values(emojis).map((emoji) => {
-            const keywords = [emoji.name, ...emoji.keywords].join(',')
+            const keywords = emoji.keywords
+                .map((word) => word.replace(/[^a-zA-Z0-9-_\s]/gi, ''))
+                .join(',')
             return { emoji: emoji.default, keywords: keywords, name: emoji.name }
         })
 
     return fuzzysort
         .go(string, emojiCache, {
-            key: 'keywords',
-            all: true,
+            keys: ['name', 'keywords'],
+            all: false,
+            limit: 5,
+            // Don't return matches with a score lower than -150
+            threshold: -150,
+            // Give a higher score if string matches "name" as opposed to "keyword"
+            scoreFn: (match) =>
+                Math.max(match[0] ? match[0].score : -151, match[1] ? match[1].score - 50 : -151),
         })
         .map((r) => ({
             name: r.obj.name,
@@ -254,8 +262,7 @@ const checkForColonEmoijis = (text: string, minMatchLength: number) => {
 }
 
 function getPossibleQueryMatch(text: string): MenuTextMatch | null {
-    const match = checkForColonEmoijis(text, 1)
-    return match
+    return checkForColonEmoijis(text, 1)
 }
 
 class EmojiTypeaheadOption extends MenuOption {

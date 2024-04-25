@@ -172,7 +172,7 @@ export const Combobox = <T extends TMentionComboboxTypes>({
     const focusedEditorId = useEventEditorSelectors.focus?.()
     const combobox = useComboboxControls()
     const activeId = useComboboxSelectors.activeId()
-    const query = (useComboboxSelectors.text() || '').replace(/[^a-zA-Z0-9-_\s]/gi, '')
+    const query = useComboboxSelectors.text() || ''
     const selectionDefined = useEditorSelector((editor) => !!editor.selection, [])
     const editorId = usePlateSelectors().id()
     const editor = useEditorRef()
