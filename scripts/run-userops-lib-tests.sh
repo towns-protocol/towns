@@ -35,7 +35,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Set the environment
-RIVER_ENV="${RIVER_ENV:-testnet}"
+RIVER_ENV="${RIVER_ENV:-gamma}"
 
 # Defaults in case not in .env file
 AA_PAYMASTER_PROXY_URL=http://localhost:8686

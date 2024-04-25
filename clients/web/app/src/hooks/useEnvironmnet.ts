@@ -105,9 +105,9 @@ function makeEnvironments(): TownsEnvironmentInfo[] {
         if (!riverChain) {
             continue
         }
-        // account abstraction only works on testnet, add some tech debt to figure out
+        // account abstraction only works on gamma, add some tech debt to figure out
         // how to support it elsewhere
-        const supportsAA = riverEnv === 'testnet'
+        const supportsAA = riverEnv === 'gamma'
         // add the env
         retVal.push({
             id: riverEnv,

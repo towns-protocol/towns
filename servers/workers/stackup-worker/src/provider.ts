@@ -19,7 +19,7 @@ export const networkMap = new Map<string, string>([
 
 export const riverEnvMap = new Map<string, string>([
     ['development', 'single'],
-    ['test-beta', 'testnet'],
+    ['test-beta', 'gamma'],
 ])
 
 export function createStaticProvider(

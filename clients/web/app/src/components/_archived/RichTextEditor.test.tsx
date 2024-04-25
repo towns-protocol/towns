@@ -13,7 +13,7 @@ import { describe, expect, test } from 'vitest'
 import { getCustomBaseChain, getCustomRiverChain } from 'customChains'
 import { RichTextEditor } from './RichTextEditor'
 
-const environmentId = 'testnet'
+const environmentId = 'gamma'
 const web3Deployment = getWeb3Deployment(environmentId)
 const baseChain = getCustomBaseChain(web3Deployment.base.chainId)!
 const riverChain = getCustomRiverChain(web3Deployment.river.chainId)!

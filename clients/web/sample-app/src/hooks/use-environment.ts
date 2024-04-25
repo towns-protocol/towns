@@ -6,7 +6,7 @@ export function useEnvironment() {
     if (_environment && !ENVIRONMENTS.find((e) => e.id === _environment)) {
         _environment = ENVIRONMENTS.at(0)?.id
     }
-    const environment = _environment || 'testnet'
+    const environment = _environment || 'gamma'
 
     const environmentInfo = ENVIRONMENTS.find((e) => e.id === environment)
     if (!environmentInfo) {

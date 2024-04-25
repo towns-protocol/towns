@@ -8,7 +8,7 @@ if [ -z "$ENVIRONMENT_NAME" ]; then
     exit 1
 fi
 
-export RIVER_ENV="${RIVER_ENV:-testnet}" # default to the testnet deployment 
+export RIVER_ENV="${RIVER_ENV:-gamma}" # default to the gamma deployment 
 export LATEST_DEV_TOWN_WORKER_PATH="servers/workers/latest-dev-town-worker"
 export NODE_NAME="river1"
 export CASABLANCA_SERVER_URL="https://${NODE_NAME}-${ENVIRONMENT_NAME}.towns.com"

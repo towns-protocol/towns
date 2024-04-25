@@ -2,13 +2,13 @@ import { ethers } from 'ethers'
 import { Environment, isErrorType } from 'worker-common'
 import BaseSepoliaTownOwnerAbi from '@river-build/generated/v3/abis/SpaceOwner.abi.json' assert { type: 'json' }
 import BaseSepoliaWalletLinkAbi from '@river-build/generated/v3/abis/WalletLink.abi.json' assert { type: 'json' }
-import BaseSepoliaTownOwnerContract from '@river-build/generated/deployments/testnet/base/addresses/spaceOwner.json' assert { type: 'json' }
+import BaseSepoliaTownOwnerContract from '@river-build/generated/deployments/gamma/base/addresses/spaceOwner.json' assert { type: 'json' }
 import BaseSepoliaBanningAbi from '@river-build/generated/v3/abis/IBanning.abi.json' assert { type: 'json' }
 import BaseSepoliaChannelsAbi from '@river-build/generated/v3/abis/Channels.abi.json' assert { type: 'json' }
 import BaseSepoliaRolesAbi from '@river-build/generated/v3/abis/Roles.abi.json' assert { type: 'json' }
-import BaseSepoliaTownFactoryContract from '@river-build/generated/deployments/testnet/base/addresses/spaceFactory.json' assert { type: 'json' }
-import BaseSepoliaTownContract from '@river-build/generated/deployments/testnet/base/addresses/space.json' assert { type: 'json' }
-import BaseSepoliaWalletLinkContract from '@river-build/generated/deployments/testnet/base/addresses/walletLink.json' assert { type: 'json' }
+import BaseSepoliaTownFactoryContract from '@river-build/generated/deployments/gamma/base/addresses/spaceFactory.json' assert { type: 'json' }
+import BaseSepoliaTownContract from '@river-build/generated/deployments/gamma/base/addresses/space.json' assert { type: 'json' }
+import BaseSepoliaWalletLinkContract from '@river-build/generated/deployments/gamma/base/addresses/walletLink.json' assert { type: 'json' }
 
 import { createJsonProvider as createProvider } from './provider'
 import { Env } from '.'

@@ -12,7 +12,7 @@ import { CombinedAuthContextProvider } from 'privy/useCombinedAuth'
 import '@testing-library/jest-dom'
 import { getCustomBaseChain, getCustomRiverChain } from 'customChains'
 
-const environmentId = 'testnet'
+const environmentId = 'gamma'
 const web3Deployment = Lib.getWeb3Deployment(environmentId)
 const baseChain = getCustomBaseChain(web3Deployment.base.chainId)!
 const riverChain = getCustomRiverChain(web3Deployment.river.chainId)!

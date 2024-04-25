@@ -61,7 +61,7 @@ jobs:
             #     AA_RPC_URL: ${{ secrets.AA_RPC_URL }}
             #     AA_BUNDLER_URL: ${{ secrets.AA_BUNDLER_URL }}
             #     RIVER_CHAIN_RPC_URL: https://devnet.rpc.river.build
-            #     RIVER_ENV: testnet
+            #     RIVER_ENV: gamma
 
             #   working-directory: ./clients/web/lib
             #   run: yarn test:userops:random-wallet
@@ -79,7 +79,7 @@ jobs:
             #     AA_RPC_URL: ${{ secrets.AA_RPC_URL }}
             #     AA_BUNDLER_URL: ${{ secrets.AA_BUNDLER_URL }}
             #     RIVER_CHAIN_RPC_URL: https://devnet.rpc.river.build
-            #     RIVER_ENV: testnet
+            #     RIVER_ENV: gamma
 
               # working-directory: ./clients/web/lib
               # run: yarn test:userops:privy-wallet
@@ -92,7 +92,7 @@ jobs:
                 AA_PAYMASTER_PROXY_AUTH_SECRET: Zm9v
                 AA_RPC_URL: ${{ secrets.AA_RPC_URL }}
                 AA_BUNDLER_URL: ${{ secrets.AA_BUNDLER_URL }}
-                RIVER_ENV: testnet
+                RIVER_ENV: gamma
 
               working-directory: ./clients/web/userops
               run: yarn test:userops:privy-wallet

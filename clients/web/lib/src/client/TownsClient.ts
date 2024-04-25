@@ -209,7 +209,7 @@ export class TownsClient
         }
 
         const userId = userIdFromAddress(context.creatorAddress)
-        const envSuffix = this.opts.environmentId === 'testnet' ? '' : `-${this.opts.environmentId}`
+        const envSuffix = this.opts.environmentId === 'gamma' ? '' : `-${this.opts.environmentId}`
         const cryptoDbName = `database-${userId}${envSuffix}`
         const persistenceDbName = `persistence-${userId}${envSuffix}`
         const cryptoStore = RiverDbManager.getCryptoDb(userId, cryptoDbName)
