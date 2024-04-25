@@ -7,6 +7,11 @@ import (
 	. "github.com/river-build/river/core/node/shared"
 )
 
+const (
+	StreamStorageTypeMemory   = "in-memory"
+	StreamStorageTypePostgres = "postgres"
+)
+
 type ReadStreamFromLastSnapshotResult struct {
 	StartMiniblockNumber int64
 	Miniblocks           [][]byte

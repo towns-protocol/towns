@@ -29,6 +29,7 @@ export class StreamStateView_UserMetadata {
         usernames: { userId: string; wrappedEncryptedData: WrappedEncryptedData }[],
         displayNames: { userId: string; wrappedEncryptedData: WrappedEncryptedData }[],
         ensAddresses: { userId: string; ensAddress: Uint8Array }[],
+        nfts: { userId: string; nft: MemberPayload_Nft }[],
         cleartexts: Record<string, string> | undefined,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ) {
@@ -74,6 +75,7 @@ export class StreamStateView_UserMetadata {
         }
 
         this.ensAddresses.applySnapshot(ensAddresses)
+        this.nfts.applySnapshot(nfts)
     }
 
     onConfirmedEvent(

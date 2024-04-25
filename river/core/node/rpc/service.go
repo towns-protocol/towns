@@ -2,6 +2,8 @@ package rpc
 
 import (
 	"context"
+	"log/slog"
+	"net"
 	"net/http"
 	"time"
 
@@ -12,28 +14,51 @@ import (
 	"github.com/river-build/river/core/node/infra"
 	"github.com/river-build/river/core/node/nodes"
 	. "github.com/river-build/river/core/node/protocol/protocolconnect"
+	"github.com/river-build/river/core/node/registries"
 	"github.com/river-build/river/core/node/storage"
+	httptrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/net/http"
 )
 
 var serviceRequests = infra.NewSuccessMetrics(infra.RPC_CATEGORY, nil)
 
 type Service struct {
-	storage        storage.StreamStorage
-	cache          events.StreamCache
-	chainAuth      auth.ChainAuth
-	wallet         *crypto.Wallet
-	exitSignal     chan error
-	nodeRegistry   nodes.NodeRegistry
-	streamRegistry nodes.StreamRegistry
-	streamConfig   *config.StreamConfig
-	networkConfig  *config.NetworkConfig
-	syncHandler    SyncHandler
-	serverCtx      context.Context
-	httpServer     *http.Server
-	startTime      time.Time
+	// Context and config
+	serverCtx     context.Context
+	config        *config.Config
+	instanceId    string
+	defaultLogger *slog.Logger
+	wallet        *crypto.Wallet
+	startTime     time.Time
+
+	// Storage
+	storagePoolInfo *storage.PgxPoolInfo
+	storage         storage.StreamStorage
+	exitSignal      chan error
+
+	// Streams
+	cache       events.StreamCache
+	syncHandler SyncHandler
+
+	// River chain
+	riverChain       *crypto.Blockchain
+	registryContract *registries.RiverRegistryContract
+	nodeRegistry     nodes.NodeRegistry
+	streamRegistry   nodes.StreamRegistry
+
+	// Base chain
+	chainAuth auth.ChainAuth
+
+	// Network
+	listener   net.Listener
+	httpServer *http.Server
+	mux        *httptrace.ServeMux
 }
 
 var (
 	_ StreamServiceHandler = (*Service)(nil)
 	_ NodeToNodeHandler    = (*Service)(nil)
 )
+
+func (s *Service) ExitSignal() chan error {
+	return s.exitSignal
+}

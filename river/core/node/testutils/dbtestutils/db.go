@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/river-build/river/core/node/config"
@@ -55,36 +56,38 @@ func DeleteTestSchema(ctx context.Context, dbUrl string, schemaName string) erro
 	return nil
 }
 
-func StartDB(ctx context.Context) (cfg config.DatabaseConfig, schema string, schemaDeleter func(), err error) {
+func StartDB(ctx context.Context) (*config.DatabaseConfig, string, func(), error) {
 	dbSchemaName := os.Getenv("TEST_DATABASE_SCHEMA_NAME")
 	if dbSchemaName == "" {
 		b := make([]byte, 16)
 		_, err := rand.Read(b)
 		if err != nil {
-			return config.DatabaseConfig{}, "", func() {}, err
+			return &config.DatabaseConfig{}, "", func() {}, err
 		}
 		// convert to hex string
 		dbSchemaName = "tst" + hex.EncodeToString(b)
 	}
 	dbUrl := os.Getenv("TEST_DATABASE_URL")
 	if dbUrl != "" {
-		cfg = config.DatabaseConfig{
-			Url: dbUrl,
-		}
-		schemaDeleter = func() {}
+		return &config.DatabaseConfig{
+			Url:          dbUrl,
+			StartupDelay: 2 * time.Millisecond,
+		}, dbSchemaName, func() {}, nil
 	} else {
-		cfg = config.DatabaseConfig{
-			Host:                      "localhost",
-			Port:                      5433,
-			User:                      "postgres",
-			Password:                  "postgres",
-			Database:                  "river",
-			Extra:                     "?sslmode=disable&pool_max_conns=1000",
-			StreamingConnectionsRatio: 0.1,
-		}
-		schemaDeleter = func() {
-			_ = DeleteTestSchema(ctx, dbUrl, dbSchemaName)
-		}
+		return &config.DatabaseConfig{
+				Host:                      "localhost",
+				Port:                      5433,
+				User:                      "postgres",
+				Password:                  "postgres",
+				Database:                  "river",
+				Extra:                     "?sslmode=disable&pool_max_conns=1000",
+				StreamingConnectionsRatio: 0.1,
+				StartupDelay:              2 * time.Millisecond,
+			},
+			dbSchemaName,
+			func() {
+				_ = DeleteTestSchema(ctx, dbUrl, dbSchemaName)
+			},
+			nil
 	}
-	return cfg, dbSchemaName, schemaDeleter, nil
 }

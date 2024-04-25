@@ -47,7 +47,7 @@ func makeTestStreamParams(p testParams) (context.Context, *testContext) {
 	var streamStorage storage.StreamStorage
 	var schemaDeleter func()
 	if p.usePostgres {
-		var cfg config.DatabaseConfig
+		var cfg *config.DatabaseConfig
 		var schema string
 		cfg, schema, schemaDeleter, err = dbtestutils.StartDB(ctx)
 		if err != nil {

@@ -54,6 +54,17 @@ type Config struct {
 	// Network configuration
 	Network NetworkConfig
 
+	// Go in stand-by mode on start checking if public address resolves to this node instance.
+	// This allows to reduce downtime when new version of the node is deployed in the new container or VM.
+	// Depending on the network routing configuration this approach may not work.
+	StandByOnStart bool
+
+	// ShutdownTimeout is the time the node waits for the graceful shutdown of the server.
+	// Then all active connections are closed and the node exits.
+	// If StandByOnStart is true, it's recommended to set it to the half of DatabaseConfig.StartupDelay.
+	// If set to 0, then default value is used. To disable the timeout set to 1ms or less.
+	ShutdownTimeout time.Duration
+
 	// Feature flags
 	// Used to disable functionality for some testing setups.
 
@@ -76,6 +87,12 @@ type DatabaseConfig struct {
 	Database                  string
 	Extra                     string
 	StreamingConnectionsRatio float32
+
+	// StartupDelay is the time the node waits between taking control of the database and starting the server
+	// if other nodes' records are found in the database.
+	// If StandByOnStart is true, it's recommended to set it to the double of Config.ShutdownTimeout.
+	// If set to 0, then default value is used. To disable the delay set to 1ms or less.
+	StartupDelay time.Duration
 }
 
 // TransactionPoolConfig specifies when it is time for a replacement transaction and its gas fee costs.
@@ -151,10 +168,6 @@ type ContractConfig struct {
 	Address common.Address
 	// Version of the contract to use.
 	Version string
-}
-
-func (cfg *Config) UsesHTTPS() bool {
-	return cfg.UseHttps
 }
 
 func (cfg *StreamConfig) GetMembershipLimit(streamId shared.StreamId) int {

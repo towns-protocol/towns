@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -32,85 +33,118 @@ import (
 	httptrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/net/http"
 )
 
-func createStore(
-	ctx context.Context,
-	dbConfig config.DatabaseConfig,
-	storageType string,
-	address string,
-	instanceId string,
-	exitSignal chan error,
-) (storage.StreamStorage, error) {
-	log := dlog.FromCtx(ctx)
-	if storageType == "in-memory" {
-		log.Warn("Using in-memory storage")
-		return storage.NewMemStorage(), nil
-	} else {
-		schema := storage.DbSchemaNameFromAddress(address)
-
-		pool, err := storage.CreateAndValidatePgxPool(ctx, dbConfig, schema)
-		if err != nil {
-			return nil, err
-		}
-
-		store, err := storage.NewPostgresEventStore(ctx, pool, instanceId, exitSignal)
-		if err != nil {
-			return nil, err
-		}
-
-		streamsCount, err := store.GetStreamsNumber(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		log.Info("Created postgres event store", "schema", schema)
-		log.Info("Current number of streams in the store", "totalStreamsCount", streamsCount)
-		return store, nil
-	}
-}
-
 func (s *Service) Close() {
 	if s.httpServer != nil {
-		err := s.httpServer.Shutdown(s.serverCtx)
-		if err != nil {
-			dlog.FromCtx(s.serverCtx).Error("failed to shutdown http server", "error", err)
+		timeout := s.config.ShutdownTimeout
+		if timeout == 0 {
+			timeout = time.Second
+		} else if timeout <= time.Millisecond {
+			timeout = 0
 		}
+		ctx := s.serverCtx
+		if timeout > 0 {
+			var cancel context.CancelFunc
+			ctx, cancel = context.WithTimeout(s.serverCtx, timeout)
+			defer cancel()
+		}
+		s.defaultLogger.Info("Shutting down http server", "timeout", timeout)
+		err := s.httpServer.Shutdown(ctx)
+		if err != nil {
+			if err != context.DeadlineExceeded {
+				s.defaultLogger.Error("failed to shutdown http server", "error", err)
+			}
+			s.defaultLogger.Warn("forcing http server close")
+			err = s.httpServer.Close()
+			if err != nil {
+				s.defaultLogger.Error("failed to close http server", "error", err)
+			}
+		} else {
+			s.defaultLogger.Info("http server shutdown")
+		}
+	}
+
+	// Try closing listener just in case: maybe httpServer was not started
+	if s.listener != nil {
+		s.listener.Close()
 	}
 
 	if s.storage != nil {
 		s.storage.Close(s.serverCtx)
 	}
+
+	s.defaultLogger.Info("Server closed")
 }
 
-// StartServer starts the server with the given configuration.
-// riverchain and listener can be provided for testing purposes.
-// Returns Service.
-// Service.Close should be called to close listener, db connection and stop stop the server.
-// Error is posted to Serivce.exitSignal if DB conflict is detected (newer instance is started)
-// and server must exit.
-func StartServer(
-	ctx context.Context,
-	cfg *config.Config,
-	riverChain *crypto.Blockchain,
-	listener net.Listener,
-) (streamService *Service, err error) {
-	streamService = &Service{
-		serverCtx: ctx,
+func (s *Service) start() error {
+	s.startTime = time.Now()
+
+	s.initInstance()
+
+	err := s.initWallet()
+	if err != nil {
+		return AsRiverError(err).Message("Failed to init wallet").LogError(s.defaultLogger)
 	}
 
-	// If service cannot be started, clean up any allocated resources.
-	defer func() {
-		if err != nil {
-			streamService.Close()
-			streamService = nil
-		}
-	}()
+	err = s.initBaseChain()
+	if err != nil {
+		return AsRiverError(err).Message("Failed to init base chain").LogError(s.defaultLogger)
+	}
 
-	log := dlog.FromCtx(ctx)
+	err = s.initRiverChain()
+	if err != nil {
+		return AsRiverError(err).Message("Failed to init river chain").LogError(s.defaultLogger)
+	}
 
-	log.Info("Starting server", "config", cfg)
+	err = s.prepareStore()
+	if err != nil {
+		return AsRiverError(err).Message("Failed to prepare store").LogError(s.defaultLogger)
+	}
 
+	err = s.runHttpServer()
+	if err != nil {
+		return AsRiverError(err).Message("Failed to run http server").LogError(s.defaultLogger)
+	}
+
+	err = s.initStore()
+	if err != nil {
+		return AsRiverError(err).Message("Failed to init store").LogError(s.defaultLogger)
+	}
+
+	err = s.initCacheAndSync()
+	if err != nil {
+		return AsRiverError(err).Message("Failed to init cache and sync").LogError(s.defaultLogger)
+	}
+
+	go s.riverChain.ChainMonitor.Run(s.serverCtx, s.riverChain.Client, s.riverChain.InitialBlockNum)
+
+	s.initHandlers()
+
+	// Retrieve the TCP address of the listener
+	tcpAddr := s.listener.Addr().(*net.TCPAddr)
+
+	// Get the port as an integer
+	port := tcpAddr.Port
+	s.defaultLogger.Info("Server started", "port", port, "https", s.config.UseHttps)
+	return nil
+}
+
+func (s *Service) initInstance() {
+	s.instanceId = GenShortNanoid()
+	s.defaultLogger = dlog.FromCtx(s.serverCtx).With(
+		"port", s.config.Port,
+		"instanceId", s.instanceId,
+		"type", "stream",
+		"mode", "full",
+	)
+	s.serverCtx = dlog.CtxWithLog(s.serverCtx, s.defaultLogger)
+	s.defaultLogger.Info("Starting server", "config", s.config)
+}
+
+func (s *Service) initWallet() error {
+	ctx := s.serverCtx
 	var wallet *crypto.Wallet
-	if riverChain == nil {
+	var err error
+	if s.riverChain == nil {
 		// Read env var WALLETPRIVATEKEY or PRIVATE_KEY
 		privKey := os.Getenv("WALLETPRIVATEKEY")
 		if privKey == "" {
@@ -122,129 +156,121 @@ func StartServer(
 			wallet, err = crypto.LoadWallet(ctx, crypto.WALLET_PATH_PRIVATE_KEY)
 		}
 		if err != nil {
-			return streamService, err
+			return err
 		}
 	} else {
-		wallet = riverChain.Wallet
+		wallet = s.riverChain.Wallet
 	}
-	streamService.wallet = wallet
+	s.wallet = wallet
 
-	instanceId := GenShortNanoid()
-	log = log.With(
-		"nodeAddress", wallet.Address.Hex(),
-		"port", cfg.Port,
-		"instanceId", instanceId,
-	)
-	ctx = dlog.CtxWithLog(ctx, log)
-	slog.SetDefault(log)
-	// update ctx in service after adding logger attributes.
-	streamService.serverCtx = ctx
+	// Add node address info to the logger
+	s.defaultLogger = s.defaultLogger.With("nodeAddress", wallet.Address.Hex())
+	s.serverCtx = dlog.CtxWithLog(ctx, s.defaultLogger)
+	slog.SetDefault(s.defaultLogger)
 
-	streamService.exitSignal = make(chan error, 1)
-	store, err := createStore(
-		ctx,
-		cfg.Database,
-		cfg.StorageType,
-		wallet.Address.Hex(),
-		instanceId,
-		streamService.exitSignal,
-	)
-	if err != nil {
-		return streamService, err
-	}
-	streamService.storage = store
+	return nil
+}
 
-	var chainAuth auth.ChainAuth
-	var baseChain *crypto.Blockchain
-	if !cfg.DisableBaseChain {
-		baseChain, err = crypto.NewBlockchain(ctx, &cfg.BaseChain, nil)
+func (s *Service) initBaseChain() error {
+	ctx := s.serverCtx
+
+	if !s.config.DisableBaseChain {
+		baseChain, err := crypto.NewBlockchain(ctx, &s.config.BaseChain, nil)
 		if err != nil {
-			log.Error("Failed to initialize blockchain for base", "error", err, "chain_config", cfg.BaseChain)
-			return streamService, err
+			return err
 		}
 
-		log.Info("Using River Auth", "chain_config", cfg.BaseChain)
-		chainAuth, err = auth.NewChainAuth(
+		chainAuth, err := auth.NewChainAuth(
 			ctx,
 			baseChain,
-			&cfg.ArchitectContract,
-			&cfg.WalletLinkContract,
-			cfg.BaseChain.LinkedWalletsLimit,
-			cfg.BaseChain.ContractCallsTimeoutMs,
+			&s.config.ArchitectContract,
+			&s.config.WalletLinkContract,
+			s.config.BaseChain.LinkedWalletsLimit,
+			s.config.BaseChain.ContractCallsTimeoutMs,
 		)
 		if err != nil {
-			log.Error("failed to create auth", "error", err)
-			return streamService, err
+			return err
 		}
+		s.chainAuth = chainAuth
+		return nil
 	} else {
-		log.Warn("Using fake auth for testing")
-		chainAuth = auth.NewFakeChainAuth()
+		s.defaultLogger.Warn("Using fake auth for testing")
+		s.chainAuth = auth.NewFakeChainAuth()
+		return nil
 	}
-	streamService.chainAuth = chainAuth
+}
 
-	if riverChain == nil {
-		riverChain, err = crypto.NewBlockchain(ctx, &cfg.RiverChain, wallet)
+func (s *Service) initRiverChain() error {
+	ctx := s.serverCtx
+	var err error
+	if s.riverChain == nil {
+		s.riverChain, err = crypto.NewBlockchain(ctx, &s.config.RiverChain, s.wallet)
 		if err != nil {
-			log.Error("Failed to initialize blockchain for river", "error", err, "chain_config", cfg.RiverChain)
-			return streamService, err
+			return err
 		}
 	}
 
-	registryContract, err := registries.NewRiverRegistryContract(ctx, riverChain, &cfg.RegistryContract)
+	s.registryContract, err = registries.NewRiverRegistryContract(ctx, s.riverChain, &s.config.RegistryContract)
 	if err != nil {
-		log.Error("NewRiverRegistryContract", "error", err)
-		return streamService, err
+		return err
 	}
 
-	log.Info("Using River Registry", "config", cfg.RegistryContract, "address", registryContract.Address)
-
-	nodeRegistry, err := nodes.LoadNodeRegistry(
-		ctx, registryContract, wallet.Address, riverChain.InitialBlockNum, riverChain.ChainMonitor)
+	s.nodeRegistry, err = nodes.LoadNodeRegistry(
+		ctx, s.registryContract, s.wallet.Address, s.riverChain.InitialBlockNum, s.riverChain.ChainMonitor)
 	if err != nil {
-		log.Error("Failed to load node registry", "error", err)
-		return streamService, err
+		return err
 	}
 
-	streamService.nodeRegistry = nodeRegistry
-	streamService.streamRegistry = nodes.NewStreamRegistry(
-		wallet.Address,
-		nodeRegistry,
-		registryContract,
-		cfg.Stream.ReplicationFactor,
+	s.streamRegistry = nodes.NewStreamRegistry(
+		s.wallet.Address,
+		s.nodeRegistry,
+		s.registryContract,
+		s.config.Stream.ReplicationFactor,
 	)
 
-	log.Info("Using blockchain river registry")
+	return nil
+}
 
-	streamCache, err := events.NewStreamCache(
-		ctx,
-		&events.StreamCacheParams{
-			Storage:      store,
-			Wallet:       wallet,
-			Riverchain:   riverChain,
-			Registry:     registryContract,
-			StreamConfig: &cfg.Stream,
-		},
-		riverChain.InitialBlockNum,
-		riverChain.ChainMonitor,
-	)
-	if err != nil {
-		log.Error("Failed to create stream cache", "error", err)
-		return streamService, err
+func (s *Service) prepareStore() error {
+	switch s.config.StorageType {
+	case storage.StreamStorageTypeMemory:
+		return nil
+	case storage.StreamStorageTypePostgres:
+		schema := storage.DbSchemaNameFromAddress(s.wallet.Address.Hex())
+
+		pool, err := storage.CreateAndValidatePgxPool(s.serverCtx, &s.config.Database, schema)
+		if err != nil {
+			return err
+		}
+		s.storagePoolInfo = pool
+
+		return nil
+	default:
+		return RiverError(Err_BAD_CONFIG, "Unknown storage type", "storageType", s.config.StorageType).Func("prepareStore")
 	}
-	streamService.cache = streamCache
+}
 
-	go riverChain.ChainMonitor.Run(ctx, riverChain.Client, riverChain.InitialBlockNum)
+func (s *Service) runHttpServer() error {
+	ctx := s.serverCtx
+	log := dlog.FromCtx(ctx)
+	cfg := s.config
 
-	streamService.syncHandler = NewSyncHandler(
-		wallet,
-		streamCache,
-		nodeRegistry,
-		streamService.streamRegistry,
-	)
-
-	streamService.streamConfig = &cfg.Stream
-	streamService.networkConfig = &cfg.Network
-	streamService.startTime = time.Now()
+	var err error
+	if s.listener == nil {
+		if cfg.Port == 0 {
+			return RiverError(Err_BAD_CONFIG, "Port is not set")
+		}
+		address := fmt.Sprintf("%s:%d", cfg.Address, cfg.Port)
+		s.listener, err = net.Listen("tcp", address)
+		if err != nil {
+			return err
+		}
+		log.Info("Listening", "addr", address)
+	} else {
+		if cfg.Port != 0 {
+			log.Warn("Port is ignored when listener is provided")
+		}
+	}
 
 	mux := httptrace.NewServeMux(
 		httptrace.WithResourceNamer(
@@ -253,37 +279,9 @@ func StartServer(
 			},
 		),
 	)
-
-	interceptors := connect.WithInterceptors(NewMetricsInterceptor(), NewTimeoutInterceptor(cfg.Network.RequestTimeout))
-	streamServicePattern, streamServiceHandler := protocolconnect.NewStreamServiceHandler(streamService, interceptors)
-	log.Info("Registering StreamServiceHandler", "pattern", streamServicePattern)
-	mux.Handle(streamServicePattern, newHttpHandler(streamServiceHandler, log))
-
-	nodeServicePattern, nodeServiceHandler := protocolconnect.NewNodeToNodeHandler(streamService, interceptors)
-	log.Info("Registering NodeToNodeHandler", "pattern", nodeServicePattern)
-	mux.Handle(nodeServicePattern, nodeServiceHandler)
+	s.mux = mux
 
 	mux.HandleFunc("/info", InfoIndexHandler)
-
-	registerDebugHandlers(ctx, cfg, mux, streamCache, streamService, riverChain.TxPool)
-
-	if listener == nil {
-		if cfg.Port == 0 {
-			log.Error("Port is not set")
-			return streamService, RiverError(Err_BAD_CONFIG, "Port is not set")
-		}
-		address := fmt.Sprintf("%s:%d", cfg.Address, cfg.Port)
-		listener, err = net.Listen("tcp", address)
-		if err != nil {
-			log.Error("failed to listen", "error", err)
-			return streamService, AsRiverError(err, Err_INTERNAL).Func("StartServer")
-		}
-		log.Info("Listening", "addr", address+streamServicePattern)
-	} else {
-		if cfg.Port != 0 {
-			log.Warn("Port is ignored when listener is provided")
-		}
-	}
 
 	corsMiddleware := cors.New(cors.Options{
 		AllowCredentials: false,
@@ -305,92 +303,167 @@ func StartServer(
 	})
 
 	address := fmt.Sprintf("%s:%d", cfg.Address, cfg.Port)
-	var srv *http.Server
-	var https bool
+	if cfg.UseHttps {
+		log.Info("Using TLS server")
+		if (cfg.TLSConfig.Cert == "") || (cfg.TLSConfig.Key == "") {
+			return RiverError(Err_BAD_CONFIG, "TLSConfig.Cert and TLSConfig.Key must be set if UseHttps is true")
+		}
 
-	if cfg.UsesHTTPS() {
-		if (cfg.TLSConfig.Cert != "") && (cfg.TLSConfig.Key != "") {
-			fileExists := func(filename string) bool {
-				_, err := os.Stat(filename)
-				return err == nil
-			}
-
-			isBase64 := func(s string) bool {
-				_, err := base64.StdEncoding.DecodeString(s)
-				return err == nil
-			}
-
-			decodeBase64 := func(s string) string {
-				decoded, err := base64.StdEncoding.DecodeString(s)
-				if err != nil {
-					return ""
-				}
-				return string(decoded)
-			}
-			if fileExists(cfg.TLSConfig.Cert) && fileExists(cfg.TLSConfig.Key) {
-				srv, err = createServerFromFile(
-					ctx,
-					address,
-					corsMiddleware.Handler(mux),
-					cfg.TLSConfig.Cert,
-					cfg.TLSConfig.Key,
-				)
-				https = true
-			} else if isBase64(cfg.TLSConfig.Cert) && isBase64(cfg.TLSConfig.Key) {
-				srv, err = createServerFromStrings(ctx, address, corsMiddleware.Handler(mux), decodeBase64(cfg.TLSConfig.Cert), decodeBase64(cfg.TLSConfig.Key))
-				https = true
-			} else {
-				log.Warn("TLSConfig.Cert and TLSConfig.Key must be valid file paths or base64 encoded strings, Using H2C server instead of HTTPS")
-				srv, err = createH2CServer(ctx, address, corsMiddleware.Handler(mux))
-				https = false
+		// Base 64 encoding can't contain ., if . is present then it's assumed it's a file path
+		if strings.Contains(cfg.TLSConfig.Cert, ".") || strings.Contains(cfg.TLSConfig.Key, ".") {
+			s.httpServer, err = createServerFromFile(
+				ctx,
+				address,
+				corsMiddleware.Handler(mux),
+				cfg.TLSConfig.Cert,
+				cfg.TLSConfig.Key,
+			)
+			if err != nil {
+				return err
 			}
 		} else {
-			log.Error("TLSConfig.Cert and TLSConfig.Key must be set")
-			return streamService, err
+			s.httpServer, err = createServerFromBase64(ctx, address, corsMiddleware.Handler(mux), cfg.TLSConfig.Cert, cfg.TLSConfig.Key)
+			if err != nil {
+				return err
+			}
 		}
+
+		go s.serveTLS()
+
+		return nil
 	} else {
 		log.Info("Using H2C server")
-		srv, err = createH2CServer(ctx, address, corsMiddleware.Handler(mux))
-		https = false
-	}
-
-	if err != nil {
-		log.Error("failed to create server", "err", err)
-		return streamService, err
-	}
-
-	streamService.httpServer = srv
-
-	// Run the server with graceful shutdown
-	go func() {
-		defer listener.Close()
-
-		if https {
-			// Since we are using a custom TLS config, we pass empty strings for the cert and key files
-			if err := srv.ServeTLS(listener, "", ""); err != nil && err != http.ErrServerClosed {
-				log.Error("ServeTLS failed", "err", err)
-			}
-		} else {
-			if err := srv.Serve(listener); err != nil && err != http.ErrServerClosed {
-				log.Error("Serve failed", "err", err)
-			}
+		s.httpServer, err = createH2CServer(ctx, address, corsMiddleware.Handler(mux))
+		if err != nil {
+			return err
 		}
-	}()
 
-	// Retrieve the TCP address of the listener
-	tcpAddr := listener.Addr().(*net.TCPAddr)
+		go s.serveH2C()
 
-	// Get the port as an integer
-	port := tcpAddr.Port
-	log.Info("Server started", "port", port, "https", https)
-
-	log.Info("Using DB", "url", cfg.Database)
-	if !cfg.DisableBaseChain {
-		log.Info("Using chain", "id", cfg.BaseChain.ChainId)
-	} else {
-		log.Info("Running Without Entitlements")
+		return nil
 	}
-	log.Info("Available on port", "port", port)
+}
+
+func (s *Service) serveTLS() {
+	// Run the server with graceful shutdown
+	err := s.httpServer.ServeTLS(s.listener, "", "")
+	if err != nil && err != http.ErrServerClosed {
+		s.defaultLogger.Error("ServeTLS failed", "err", err)
+	} else {
+		s.defaultLogger.Info("ServeTLS stopped")
+	}
+}
+
+func (s *Service) serveH2C() {
+	// Run the server with graceful shutdown
+	err := s.httpServer.Serve(s.listener)
+	if err != nil && err != http.ErrServerClosed {
+		s.defaultLogger.Error("serveH2C failed", "err", err)
+	} else {
+		s.defaultLogger.Info("serveH2C stopped")
+	}
+}
+
+func (s *Service) initStore() error {
+	ctx := s.serverCtx
+	log := s.defaultLogger
+
+	switch s.config.StorageType {
+	case storage.StreamStorageTypeMemory:
+		log.Warn("Using in-memory storage")
+		s.storage = storage.NewMemStorage()
+		return nil
+	case storage.StreamStorageTypePostgres:
+		s.exitSignal = make(chan error, 1)
+		store, err := storage.NewPostgresEventStore(ctx, s.storagePoolInfo, s.instanceId, s.exitSignal)
+		if err != nil {
+			return err
+		}
+		s.storage = store
+
+		streamsCount, err := store.GetStreamsNumber(ctx)
+		if err != nil {
+			return err
+		}
+
+		log.Info("Created postgres event store", "schema", s.storagePoolInfo.Schema, "totalStreamsCount", streamsCount)
+		return nil
+	default:
+		return RiverError(Err_BAD_CONFIG, "Unknown storage type", "storageType", s.config.StorageType).Func("createStore")
+	}
+}
+
+func (s *Service) initCacheAndSync() error {
+	var err error
+	s.cache, err = events.NewStreamCache(
+		s.serverCtx,
+		&events.StreamCacheParams{
+			Storage:      s.storage,
+			Wallet:       s.wallet,
+			Riverchain:   s.riverChain,
+			Registry:     s.registryContract,
+			StreamConfig: &s.config.Stream,
+		},
+		s.riverChain.InitialBlockNum,
+		s.riverChain.ChainMonitor,
+	)
+	if err != nil {
+		return err
+	}
+
+	s.syncHandler = NewSyncHandler(
+		s.wallet,
+		s.cache,
+		s.nodeRegistry,
+		s.streamRegistry,
+	)
+
+	return nil
+}
+
+func (s *Service) initHandlers() {
+	interceptors := connect.WithInterceptors(NewMetricsInterceptor(), NewTimeoutInterceptor(s.config.Network.RequestTimeout))
+	streamServicePattern, streamServiceHandler := protocolconnect.NewStreamServiceHandler(s, interceptors)
+	s.mux.Handle(streamServicePattern, newHttpHandler(streamServiceHandler, s.defaultLogger))
+
+	nodeServicePattern, nodeServiceHandler := protocolconnect.NewNodeToNodeHandler(s, interceptors)
+	s.mux.Handle(nodeServicePattern, nodeServiceHandler)
+
+	registerDebugHandlers(
+		s.serverCtx,
+		s.config,
+		s.mux,
+		s.cache,
+		s,
+		s.riverChain.TxPool,
+	)
+}
+
+// StartServer starts the server with the given configuration.
+// riverchain and listener can be provided for testing purposes.
+// Returns Service.
+// Service.Close should be called to close listener, db connection and stop stop the server.
+// Error is posted to Serivce.exitSignal if DB conflict is detected (newer instance is started)
+// and server must exit.
+func StartServer(
+	ctx context.Context,
+	cfg *config.Config,
+	riverChain *crypto.Blockchain,
+	listener net.Listener,
+) (*Service, error) {
+	streamService := &Service{
+		serverCtx:  ctx,
+		config:     cfg,
+		riverChain: riverChain,
+		listener:   listener,
+	}
+
+	err := streamService.start()
+	if err != nil {
+		streamService.Close()
+		return nil, err
+	}
+
 	return streamService, nil
 }
 
@@ -415,22 +488,29 @@ func InfoIndexHandler(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(output.Bytes())
 }
 
-func createServerFromStrings(
+func createServerFromBase64(
 	ctx context.Context,
 	address string,
 	handler http.Handler,
-	certString, keyString string,
+	certStringBase64 string,
+	keyStringBase64 string,
 ) (*http.Server, error) {
-	log := dlog.FromCtx(ctx)
-	// Load the certificate and key from strings
-	cert, err := tls.X509KeyPair([]byte(certString), []byte(keyString))
+	certBytes, err := base64.StdEncoding.DecodeString(certStringBase64)
 	if err != nil {
-		log.Error("Failed to create X509KeyPair from strings", "error", err)
+		return nil, err
+	}
+	keyBytes, err := base64.StdEncoding.DecodeString(keyStringBase64)
+	if err != nil {
+		return nil, err
+	}
+
+	// Load the certificate and key from strings
+	cert, err := tls.X509KeyPair(certBytes, keyBytes)
+	if err != nil {
 		return nil, AsRiverError(err, Err_BAD_CONFIG).
-			Message("Invalid TLS certs").
+			Message("Failed to create X509KeyPair from strings").
 			Func("createServerFromStrings")
 	}
-	log.Info("Loaded certificate and key from strings")
 
 	return &http.Server{
 		Addr:    address,
@@ -450,16 +530,12 @@ func createServerFromFile(
 	handler http.Handler,
 	certFile, keyFile string,
 ) (*http.Server, error) {
-	log := dlog.FromCtx(ctx)
 	// Read certificate and key from files
 	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
 	if err != nil {
-		log.Error("Failed to LoadX509KeyPair from files", "error", err)
 		return nil, AsRiverError(err, Err_BAD_CONFIG).
-			Message("Invalid TLS certificate files").
+			Message("Failed to LoadX509KeyPair from files").
 			Func("createServerFromFile")
-	} else {
-		log.Info("Loaded certificate and key from files", "certFile", certFile, "keyFile", keyFile)
 	}
 
 	return &http.Server{

@@ -1,4 +1,10 @@
-import { MembershipOp, MemberPayload, Snapshot, WrappedEncryptedData } from '@river-build/proto'
+import {
+    MembershipOp,
+    MemberPayload,
+    Snapshot,
+    WrappedEncryptedData,
+    MemberPayload_Nft,
+} from '@river-build/proto'
 import TypedEmitter from 'typed-emitter'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import { ConfirmedTimelineEvent, RemoteTimelineEvent } from './types'
@@ -20,6 +26,7 @@ export type StreamMember = {
     encryptedUsername?: WrappedEncryptedData
     encryptedDisplayName?: WrappedEncryptedData
     ensAddress?: Uint8Array
+    nft?: MemberPayload_Nft
 }
 
 export class StreamStateView_Members {
@@ -64,6 +71,7 @@ export class StreamStateView_Members {
                 encryptedUsername: member.username,
                 encryptedDisplayName: member.displayName,
                 ensAddress: member.ensAddress,
+                nft: member.nft,
             })
             this.membership.applyMembershipEvent(
                 userId,
@@ -91,11 +99,18 @@ export class StreamStateView_Members {
                 userId: member.userId,
                 ensAddress: member.ensAddress!,
             }))
+        const nfts = Array.from(this.joined.values())
+            .filter((x) => isDefined(x.nft))
+            .map((member) => ({
+                userId: member.userId,
+                nft: member.nft!,
+            }))
 
         this.userMetadata.applySnapshot(
             usernames,
             displayNames,
             ensAddresses,
+            nfts,
             cleartexts,
             encryptionEmitter,
         )

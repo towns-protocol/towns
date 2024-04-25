@@ -31,6 +31,7 @@ import (
 )
 
 type PostgresEventStore struct {
+	config            *config.DatabaseConfig
 	pool              *pgxpool.Pool
 	schemaName        string
 	nodeUUID          string
@@ -918,7 +919,7 @@ func DbSchemaNameFromAddress(address string) string {
 	return "s" + strings.ToLower(address)
 }
 
-func getDbURL(dbConfig config.DatabaseConfig) string {
+func getDbURL(dbConfig *config.DatabaseConfig) string {
 	if dbConfig.Password != "" {
 		return fmt.Sprintf(
 			"postgresql://%s:%s@%s:%d/%s%s",
@@ -938,12 +939,12 @@ type PgxPoolInfo struct {
 	Pool   *pgxpool.Pool
 	Url    string
 	Schema string
-	Config config.DatabaseConfig
+	Config *config.DatabaseConfig
 }
 
 func createAndValidatePgxPool(
 	ctx context.Context,
-	cfg config.DatabaseConfig,
+	cfg *config.DatabaseConfig,
 	databaseSchemaName string,
 ) (*PgxPoolInfo, error) {
 	databaseUrl := getDbURL(cfg)
@@ -979,7 +980,7 @@ func createAndValidatePgxPool(
 
 func CreateAndValidatePgxPool(
 	ctx context.Context,
-	cfg config.DatabaseConfig,
+	cfg *config.DatabaseConfig,
 	databaseSchemaName string,
 ) (*PgxPoolInfo, error) {
 	r, err := createAndValidatePgxPool(ctx, cfg, databaseSchemaName)
@@ -1054,6 +1055,7 @@ func newPostgresEventStore(
 	}
 
 	store := &PostgresEventStore{
+		config:               poolInfo.Config,
 		pool:                 poolInfo.Pool,
 		schemaName:           poolInfo.Schema,
 		nodeUUID:             instanceId,
@@ -1071,9 +1073,7 @@ func newPostgresEventStore(
 
 	cancelCtx, cancel := context.WithCancel(ctx)
 	store.cleanupListenFunc = cancel
-	go func() {
-		store.listenForNewNodes(cancelCtx)
-	}()
+	go store.listenForNewNodes(cancelCtx)
 
 	// TODO: publish these as metrics
 	// stats thread
@@ -1169,7 +1169,7 @@ func (s *PostgresEventStore) runMigrations() error {
 	return nil
 }
 
-func (s *PostgresEventStore) initializeSingleNodeKeyTx(ctx context.Context, tx pgx.Tx) error {
+func (s *PostgresEventStore) listOtherInstancesTx(ctx context.Context, tx pgx.Tx) error {
 	log := dlog.FromCtx(ctx)
 
 	rows, err := tx.Query(ctx, "SELECT uuid, storage_connection_time, info FROM singlenodekey")
@@ -1178,6 +1178,7 @@ func (s *PostgresEventStore) initializeSingleNodeKeyTx(ctx context.Context, tx p
 	}
 	defer rows.Close()
 
+	found := false
 	for rows.Next() {
 		var storedUUID string
 		var storedTimestamp time.Time
@@ -1187,9 +1188,27 @@ func (s *PostgresEventStore) initializeSingleNodeKeyTx(ctx context.Context, tx p
 			return err
 		}
 		log.Info("Found UUID during startup", "uuid", storedUUID, "timestamp", storedTimestamp, "info", storedInfo)
+		found = true
 	}
 
-	_, err = tx.Exec(ctx, "DELETE FROM singlenodekey")
+	if found {
+		delay := s.config.StartupDelay
+		if delay == 0 {
+			delay = 2 * time.Second
+		} else if delay <= time.Millisecond {
+			delay = 0
+		}
+		if delay > 0 {
+			log.Info("singlenodekey is not empty; Delaying startup to let other instance exit", "delay", delay)
+			time.Sleep(delay)
+		}
+	}
+
+	return nil
+}
+
+func (s *PostgresEventStore) initializeSingleNodeKeyTx(ctx context.Context, tx pgx.Tx) error {
+	_, err := tx.Exec(ctx, "DELETE FROM singlenodekey")
 	if err != nil {
 		return err
 	}
@@ -1263,6 +1282,7 @@ func (s *PostgresEventStore) listenForNewNodes(ctx context.Context) {
 				return
 			}
 			defer conn.Release()
+			continue
 		}
 
 		// Listen only for changes to our schema.
@@ -1270,9 +1290,9 @@ func (s *PostgresEventStore) listenForNewNodes(ctx context.Context) {
 			err = RiverError(Err_RESOURCE_EXHAUSTED, "No longer a current node, shutting down").
 				Func("listenForNewNodes").
 				Tag("schema", s.schemaName).
-				LogError(dlog.FromCtx(ctx))
+				LogWarn(dlog.FromCtx(ctx))
 
-				// In the event of detecting node conflict, send the error to the main thread to shut down.
+			// In the event of detecting node conflict, send the error to the main thread to shut down.
 			s.exitSignal <- err
 			return
 		}
@@ -1280,17 +1300,30 @@ func (s *PostgresEventStore) listenForNewNodes(ctx context.Context) {
 }
 
 func (s *PostgresEventStore) initStorage(ctx context.Context) error {
-	if err := s.txRunnerWithMetrics(
+	err := s.txRunnerWithMetrics(
 		ctx,
 		"createSchema",
 		pgx.ReadWrite,
 		s.createSchemaTx,
 		&txRunnerOpts{disableCompareUUID: true},
-	); err != nil {
+	)
+	if err != nil {
 		return err
 	}
 
-	if err := s.runMigrations(); err != nil {
+	err = s.runMigrations()
+	if err != nil {
+		return err
+	}
+
+	err = s.txRunnerWithMetrics(
+		ctx,
+		"listOtherInstances",
+		pgx.ReadOnly,
+		s.listOtherInstancesTx,
+		&txRunnerOpts{disableCompareUUID: true},
+	)
+	if err != nil {
 		return err
 	}
 

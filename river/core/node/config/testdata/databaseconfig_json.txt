@@ -1,1 +1,1 @@
-{"time":"[TIMESTAMP]","level":"INFO","msg":"test message","databaseConfig":{"Host":"localhost","Port":5432,"User":"user","Database":"testdb","Extra":"extra","StreamingConnectionsRatio":0}}
+{"time":"[TIMESTAMP]","level":"INFO","msg":"test message","databaseConfig":{"Host":"localhost","Port":5432,"User":"user","Database":"testdb","Extra":"extra","StreamingConnectionsRatio":0,"StartupDelay":0}}

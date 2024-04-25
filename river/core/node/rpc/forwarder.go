@@ -31,7 +31,7 @@ func peerNodeRequestWithRetries[T any](
 	var err error
 
 	if numRetries <= 0 {
-		numRetries = max(s.networkConfig.NumRetries, 1)
+		numRetries = max(s.config.Network.NumRetries, 1)
 	}
 
 	// Do not make more than one request to a single node
@@ -90,7 +90,7 @@ func peerNodeStreamingResponseWithRetries(
 	var hasStreamed bool
 
 	if numRetries <= 0 {
-		numRetries = max(s.networkConfig.NumRetries, 1)
+		numRetries = max(s.config.Network.NumRetries, 1)
 	}
 
 	// Do not make more than one request to a single node

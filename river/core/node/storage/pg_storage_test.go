@@ -39,8 +39,9 @@ func setupTestWithMigration(
 
 	pool, err := CreateAndValidatePgxPool(
 		ctx,
-		config.DatabaseConfig{
-			Url: dbUrl,
+		&config.DatabaseConfig{
+			Url:          dbUrl,
+			StartupDelay: 2 * time.Millisecond,
 		},
 		schemaName,
 	)

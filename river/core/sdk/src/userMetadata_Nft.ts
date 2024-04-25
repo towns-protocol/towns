@@ -21,11 +21,7 @@ export class userMetadata_Nft {
     applySnapshot(nfts: { userId: string; nft: MemberPayload_Nft }[]) {
         for (const item of nfts) {
             if (this.isValidNft(item.nft)) {
-                this.nftEvents.set(item.userId, {
-                    nft: item.nft,
-                    userId: item.userId,
-                    pending: false,
-                })
+                this.confirmedNfts.set(item.userId, item.nft)
             }
         }
     }

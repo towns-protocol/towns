@@ -195,7 +195,8 @@ func (st *serviceTester) startSingle(i int) error {
 		DisableBaseChain: true,
 		RegistryContract: st.btc.RegistryConfig(),
 		Database: config.DatabaseConfig{
-			Url: st.dbUrl,
+			Url:          st.dbUrl,
+			StartupDelay: 2 * time.Millisecond,
 		},
 		StorageType: "postgres",
 		Stream: config.StreamConfig{
@@ -212,6 +213,7 @@ func (st *serviceTester) startSingle(i int) error {
 		Network: config.NetworkConfig{
 			NumRetries: 3,
 		},
+		ShutdownTimeout: 2 * time.Millisecond,
 	}
 
 	bc := st.btc.GetBlockchain(st.ctx, i, true)
