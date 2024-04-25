@@ -16,6 +16,7 @@ import { sendNotificationViaWebPush } from './web-push/send-notification'
 import { Urgency } from '../schema/notificationSchema'
 import { createLogger } from './logger'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './stream/id'
+import { isPayloadLengthValid } from './web-push/crypto-utils'
 
 const logger = createLogger('notificationService')
 
@@ -205,6 +206,11 @@ export class NotificationService {
                 payload.content.event = {}
             }
             payload.content.kind = kind as NotificationKind
+
+            if (!isPayloadLengthValid(JSON.stringify(payload))) {
+                payload.content.event = {}
+                logger.info('Payload size exceeds the limit, trimming down the payload')
+            }
 
             const option: NotificationOptions = {
                 userId: n.userId,

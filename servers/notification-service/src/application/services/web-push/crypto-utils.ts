@@ -12,6 +12,8 @@ import { JwtData, JwtInfo } from './jwt'
 
 import crypto from 'crypto'
 
+const MAX_PAYLOAD_SIZE = 4078
+
 export async function sign(jwk: JsonWebKey, jwtData: JwtData): Promise<string> {
     const jwtInfo: JwtInfo = {
         typ: 'JWT',
@@ -94,19 +96,27 @@ function padPayload(payload: Uint8Array): Uint8Array {
     // Calculated as follows:
     // 4096 bytes maximum per post, with 16-bytes for encryption information and
     // at least 2 bytes for padding.
-    const MAX_PAYLOAD_SIZE = 4078
+    if (payload.byteLength > MAX_PAYLOAD_SIZE) {
+        throw new Error(
+            `Payload size ${payload.byteLength} is larger than the max size ${MAX_PAYLOAD_SIZE}`,
+        )
+    }
     let paddingSize = Math.round(Math.random() * 1000)
     // +2 because we need to use 2 bytes to indicate padding length
     const payloadSizeWithPadding = payload.byteLength + paddingSize + 2
     if (payloadSizeWithPadding > MAX_PAYLOAD_SIZE) {
         // if the payload is already too big, trim down the padding
-        paddingSize -= MAX_PAYLOAD_SIZE - payload.byteLength
+        paddingSize = MAX_PAYLOAD_SIZE - payload.byteLength
     }
     const arrayWithPadding = new ArrayBuffer(2 + paddingSize)
     const dataView = new DataView(arrayWithPadding)
     // store the padding size in the first 2 bytes
     dataView.setUint16(0, paddingSize)
     return concatTypedArrays([new Uint8Array(arrayWithPadding), payload])
+}
+
+export function isPayloadLengthValid(payload: string): boolean {
+    return new TextEncoder().encode(payload).byteLength <= MAX_PAYLOAD_SIZE
 }
 
 async function deriveContentEncryptionKey(
