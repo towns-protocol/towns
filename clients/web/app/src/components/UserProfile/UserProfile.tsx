@@ -3,7 +3,18 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { toast } from 'react-hot-toast/headless'
 import { isDefined } from '@river/sdk'
-import { Box, Button, FormRender, Icon, IconButton, Paragraph, Stack, Text, TextButton } from '@ui'
+import {
+    Box,
+    Button,
+    Divider,
+    FormRender,
+    Icon,
+    IconButton,
+    Paragraph,
+    Stack,
+    Text,
+    TextButton,
+} from '@ui'
 import { useSetUserBio } from 'hooks/useUserBio'
 import { TextArea } from 'ui/components/TextArea/TextArea'
 import { Spinner } from '@components/Spinner'
@@ -119,26 +130,28 @@ export const UserProfile = (props: Props) => {
                     )}
                 </FormRender>
 
-                <Stack horizontal gap="xs">
-                    <Button size="button_sm" onClick={() => setShowNftProfilePicture(true)}>
-                        <Stack
-                            horizontal
-                            gap="sm"
-                            alignItems="center"
-                            color="default"
-                            fontSize="sm"
-                            fontWeight="medium"
-                        >
-                            <Icon type="verifiedEnsName" size="square_xs" />
-                            NFT Profile Picture
-                        </Stack>
-                    </Button>
-                    {user?.nft && (
-                        <Button size="button_sm" onClick={onClearNft}>
-                            <Icon type="close" size="square_xs" />
+                {canEdit && (
+                    <Stack horizontal gap="xs">
+                        <Button size="button_sm" onClick={() => setShowNftProfilePicture(true)}>
+                            <Stack
+                                horizontal
+                                gap="sm"
+                                alignItems="center"
+                                color="default"
+                                fontSize="sm"
+                                fontWeight="medium"
+                            >
+                                <Icon type="verifiedEnsName" size="square_xs" />
+                                NFT Profile Picture
+                            </Stack>
                         </Button>
-                    )}
-                </Stack>
+                        {user?.nft && (
+                            <Button size="button_sm" onClick={onClearNft}>
+                                <Icon type="close" size="square_xs" />
+                            </Button>
+                        )}
+                    </Stack>
+                )}
             </Stack>
 
             {canEdit ? (
@@ -390,6 +403,17 @@ const NftProfilePicture = (props: { onHide: () => void; userId: string; currentN
     const { nfts, isFetching } = useNfts(userId)
     const { setNft } = useSetNftProfilePicture()
     const streamId = useCurrentStreamID()
+    const [selectedNft, setSelectedNft] = useState<Nft | undefined>(currentNft)
+    const [pendingSaveNft, setPendingSaveNft] = useState<Nft | undefined>(undefined)
+
+    useEffect(() => {
+        if (
+            currentNft?.contractAddress &&
+            currentNft?.contractAddress == pendingSaveNft?.contractAddress
+        ) {
+            setPendingSaveNft(undefined)
+        }
+    }, [currentNft, pendingSaveNft])
 
     const displayableNfts = useMemo(() => {
         if (!nfts) {
@@ -403,22 +427,35 @@ const NftProfilePicture = (props: { onHide: () => void; userId: string; currentN
                 return {
                     chainId: nft.chainId,
                     image: nft.data.image,
-                    address: nft.data.address,
+                    contractAddress: nft.data.address,
                     tokenId: nft.data.displayNft?.tokenId ?? '',
-                }
+                } as const
             })
     }, [nfts])
 
+    const saveNft = useCallback(() => {
+        if (!selectedNft || !streamId) {
+            return
+        }
+        setNft(streamId, selectedNft.tokenId, selectedNft.chainId, selectedNft.contractAddress)
+        setPendingSaveNft(selectedNft)
+    }, [setNft, streamId, selectedNft])
+
     const onSelectNft = useCallback(
-        (tokenId: string, contractAddress: string, chainId: number) => {
+        (nft: { tokenId: string; contractAddress: string; chainId: number }) => {
             if (!streamId) {
                 return
             }
-            setNft(streamId, tokenId, chainId, contractAddress)
+            setSelectedNft(nft)
         },
-        [setNft, streamId],
+        [streamId, setSelectedNft],
     )
 
+    const saveInProgress = !!pendingSaveNft
+    const saveButtonEnabled =
+        !saveInProgress &&
+        selectedNft?.contractAddress != currentNft?.contractAddress &&
+        selectedNft?.tokenId != currentNft?.tokenId
     const { openPanel } = usePanelActions()
     const onViewLinkedWalletsClick = useCallback(() => {
         openPanel(CHANNEL_INFO_PARAMS.WALLETS)
@@ -450,9 +487,9 @@ const NftProfilePicture = (props: { onHide: () => void; userId: string; currentN
                     {displayableNfts.map((nft) => (
                         <Box
                             padding
-                            key={nft.address}
+                            key={nft.contractAddress}
                             onClick={() => {
-                                onSelectNft(nft.tokenId, nft.address, nft.chainId)
+                                onSelectNft(nft)
                             }}
                         >
                             <Box
@@ -463,11 +500,11 @@ const NftProfilePicture = (props: { onHide: () => void; userId: string; currentN
                                 rounded="xs"
                                 border={{
                                     default:
-                                        nft.tokenId == currentNft?.tokenId &&
-                                        nft.address == currentNft.contractAddress
+                                        nft.tokenId == selectedNft?.tokenId &&
+                                        nft.contractAddress == selectedNft.contractAddress
                                             ? 'strong'
                                             : 'none',
-                                    hover: 'level4',
+                                    hover: 'strong',
                                 }}
                                 style={{
                                     backgroundImage: `url(${nft.image?.cachedUrl})`,
@@ -479,11 +516,26 @@ const NftProfilePicture = (props: { onHide: () => void; userId: string; currentN
                     ))}
                 </Stack>
             </Stack>
-            <Box shrink={false}>
-                <Button tone="level2" width="100%" onClick={onViewLinkedWalletsClick}>
-                    View Linked Wallets
+            <Stack gap shrink={false}>
+                <Button
+                    tone={saveButtonEnabled ? 'cta1' : 'level2'}
+                    width="100%"
+                    disabled={!saveButtonEnabled}
+                    onClick={saveNft}
+                >
+                    {pendingSaveNft ? <ButtonSpinner /> : 'Set as Profile Picture'}
                 </Button>
-            </Box>
+                <Stack horizontal gap="sm">
+                    <Divider />
+                    <Text shrink={false} color="gray2" fontSize="sm">
+                        Add more verified NFT profile pictures:
+                    </Text>
+                    <Divider />
+                </Stack>
+                <Button tone="level2" width="100%" onClick={onViewLinkedWalletsClick}>
+                    Link a Wallet
+                </Button>
+            </Stack>
         </ModalContainer>
     )
 }
