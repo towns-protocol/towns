@@ -1,5 +1,6 @@
 import escapeHtml from 'escape-html'
 import { BlockType, LeafType, NodeTypes, defaultNodeTypes } from './ast-types'
+import { BREAK_TAG } from '../helpers'
 
 interface Options {
     nodeTypes: NodeTypes
@@ -7,6 +8,7 @@ interface Options {
     olStartIndex?: number
     ignoreParagraphNewline?: boolean
     leafIndex?: number
+    childrenLength?: number
 }
 
 const MENTION_TYPES = [
@@ -24,8 +26,6 @@ const isLeafNode = (node: BlockType | LeafType): node is LeafType => {
 
 const VOID_ELEMENTS: Array<keyof NodeTypes> = ['thematic_break', 'image']
 
-const BREAK_TAG = '<br>'
-
 export default function serialize(
     chunk: BlockType | LeafType,
     opts: Options = { nodeTypes: defaultNodeTypes },
@@ -35,6 +35,7 @@ export default function serialize(
         ignoreParagraphNewline = false,
         listDepth = 0,
         leafIndex = undefined,
+        childrenLength = 0,
     } = opts
 
     let text = (chunk as LeafType).text || ''
@@ -108,6 +109,7 @@ export default function serialize(
                             : listDepth,
                         olStartIndex: (chunk as BlockType).start ?? 1,
                         leafIndex: index,
+                        childrenLength: chunk.children.length,
                     },
                 )
             })
@@ -120,7 +122,8 @@ export default function serialize(
         (text === '' || text === '\n') &&
         chunk.parentType === nodeTypes.paragraph &&
         !MENTION_TYPES.includes(type) &&
-        leafIndex !== 0
+        leafIndex !== 0 &&
+        leafIndex !== childrenLength - 1
     ) {
         type = nodeTypes.paragraph
         children = BREAK_TAG

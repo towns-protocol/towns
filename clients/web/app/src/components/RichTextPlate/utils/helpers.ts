@@ -7,6 +7,8 @@ import { TComboboxItemBase } from '@udecode/plate-combobox'
 import { VirtualRef } from '@udecode/plate-floating'
 import { MOCK_EMOJI } from './ComboboxTypes'
 
+export const BREAK_TAG = '<br>'
+
 export const isCodeBlockElement = (editor: PlateEditor) =>
     isType(editor, getBlockAbove(editor)?.[0], ELEMENT_CODE_LINE)
 
