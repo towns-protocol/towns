@@ -52,21 +52,12 @@ export const App = () => {
     useEffect(() => {
         console.warn('[App][push_hnt-5685]', 'route', {
             trackSource,
-            highPriorityStreamIds: highPriorityStreamIds.current,
             locationPath: location.pathname,
             locationParams: location.search,
             spaceIdBookmark,
             channelBookmark,
         })
-    }, [
-        channelBookmark,
-        location.hash,
-        location.pathname,
-        location.search,
-        searchParams,
-        spaceIdBookmark,
-        trackSource,
-    ])
+    }, [channelBookmark, location.pathname, location.search, spaceIdBookmark, trackSource])
 
     const didSetHighpriorityStreamIds = useRef<boolean>(false)
     if (!didSetHighpriorityStreamIds.current) {

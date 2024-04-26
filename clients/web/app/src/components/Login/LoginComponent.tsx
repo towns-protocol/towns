@@ -1,11 +1,14 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useEffect } from 'react'
 import { LoginStatus, useConnectivity } from 'use-towns-client'
 import { usePrivy } from '@privy-io/react-auth'
+import { useLocation } from 'react-router'
+import { useSearchParams } from 'react-router-dom'
 import { PrivyWrapper } from 'privy/PrivyProvider'
 import { useCombinedAuth } from 'privy/useCombinedAuth'
 import { Box, FancyButton } from '@ui'
 import { useErrorToast } from 'hooks/useErrorToast'
 import { mapToErrorMessage } from '@components/Web3/utils'
+import { useStore } from 'store/store'
 
 type LoginComponentProps = {
     text?: string
@@ -25,6 +28,35 @@ function LoginComponent({
     const errorMessage = loginError ? mapToErrorMessage(loginError) : undefined
 
     const isBusy = libLoginStatus === LoginStatus.LoggingIn || isAutoLoggingInToRiver
+
+    const location = useLocation()
+    const [searchParams] = useSearchParams()
+    const trackSource = searchParams.get('track_source') ?? ''
+    const state = useStore.getState()
+    const spaceIdBookmark = state.spaceIdBookmark
+    const channelBookmark = spaceIdBookmark ? state.townRouteBookmarks[spaceIdBookmark] : undefined
+
+    useEffect(() => {
+        console.warn('[LoginComponent][push_hnt-5685]', 'route', {
+            trackSource,
+            locationPath: location.pathname,
+            locationParams: location.search,
+            spaceIdBookmark,
+            channelBookmark,
+            libLoginStatus,
+            privyReady,
+            isAutoLoggingInToRiver,
+        })
+    }, [
+        channelBookmark,
+        isAutoLoggingInToRiver,
+        libLoginStatus,
+        location.pathname,
+        location.search,
+        privyReady,
+        spaceIdBookmark,
+        trackSource,
+    ])
 
     const loginContent = () => {
         if (isAutoLoggingInToRiver) {

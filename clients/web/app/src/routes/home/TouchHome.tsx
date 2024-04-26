@@ -86,7 +86,7 @@ type Overlay = undefined | 'main-panel' | 'create-channel' | 'browse-channels'
 
 export const TouchHome = () => {
     const space = useSpaceData()
-    const { loggedInWalletAddress, loginStatus } = useConnectivity()
+    const { isAuthenticated, loggedInWalletAddress, loginStatus } = useConnectivity()
     const { signerContext } = useTownsContext()
     const [isSearching, setIsSearching] = useState<boolean>(false)
     const [searchString, setSearchString] = useState<string>('')
@@ -111,11 +111,12 @@ export const TouchHome = () => {
             spaceId: space?.id ?? '',
             loggedInWalletAddress: loggedInWalletAddress ?? '',
             loginStatus,
+            isAuthenticated,
             hasSignerContext: signerContext !== undefined,
             locationPath: location.pathname,
             locationParams: location.search,
         })
-    }, [loggedInWalletAddress, loginStatus, signerContext, space?.id])
+    }, [isAuthenticated, loggedInWalletAddress, loginStatus, signerContext, space?.id])
 
     const onFocus = useCallback(() => {
         setIsSearching(true)

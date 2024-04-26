@@ -8,7 +8,7 @@ import { useStore } from 'store/store'
 
 export const SpaceHome = () => {
     const space = useSpaceData()
-    const { loggedInWalletAddress, loginStatus } = useConnectivity()
+    const { isAuthenticated, loggedInWalletAddress, loginStatus } = useConnectivity()
     const { signerContext } = useTownsContext()
     const spaceId = space?.id
     const navigate = useNavigate()
@@ -31,13 +31,22 @@ export const SpaceHome = () => {
             bookmarkedRoute,
             trackSource,
             spaceId: space?.id ?? '',
+            isAuthenticated,
             loggedInWalletAddress: loggedInWalletAddress ?? '',
             loginStatus,
             hasSignerContext: signerContext !== undefined,
             locationPath: location.pathname,
             locationParams: location.search,
         })
-    }, [bookmarkedRoute, loggedInWalletAddress, loginStatus, signerContext, space?.id, trackSource])
+    }, [
+        bookmarkedRoute,
+        isAuthenticated,
+        loggedInWalletAddress,
+        loginStatus,
+        signerContext,
+        space?.id,
+        trackSource,
+    ])
 
     useEffect(() => {
         // TODO: this hijacks invite routes if you leave and then rejoin a space with an invite link.
