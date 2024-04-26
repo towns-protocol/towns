@@ -20,6 +20,7 @@ import {
     useTokensGatingMembership,
 } from 'hooks/useTokensGatingMembership'
 import { useGetSpaceIdentity } from 'hooks/useSpaceIdentity'
+import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
 import { useReadableMembershipInfo } from './useReadableMembershipInfo'
 import { durationTitleSubtitle } from './townPageUtils'
 import { TokenInfoBox } from './TokenInfoBox'
@@ -94,6 +95,7 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
     const leftColRef = useRef<HTMLDivElement>(null)
     const rightColRef = useRef<HTMLDivElement>(null)
     const [leftColWidth, rightColWidth] = useColumnWidths({ leftColRef, rightColRef })
+    const isJoining = !!usePublicPageLoginFlow().joiningSpace
 
     return (
         <>
@@ -144,17 +146,19 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                                 motto={motto}
                             />
                         </Stack>
-                        <InformationBoxes
-                            imageSrc={imageSrc}
-                            price={membershipInfo?.price}
-                            duration={membershipInfo?.duration}
-                            address={address}
-                            chainId={chainId}
-                            anyoneCanJoin={anyoneCanJoin}
-                            isTokensGatingMembershipLoading={isTokensGatingMembershipLoading}
-                            tokensGatingMembership={tokensGatingMembership}
-                            membershipPricingModule={membershipPricingModule}
-                        />
+                        {!isJoining && (
+                            <InformationBoxes
+                                imageSrc={imageSrc}
+                                price={membershipInfo?.price}
+                                duration={membershipInfo?.duration}
+                                address={address}
+                                chainId={chainId}
+                                anyoneCanJoin={anyoneCanJoin}
+                                isTokensGatingMembershipLoading={isTokensGatingMembershipLoading}
+                                tokensGatingMembership={tokensGatingMembership}
+                                membershipPricingModule={membershipPricingModule}
+                            />
+                        )}
                         <Bio bio={bio} />
 
                         <Box>{props.activityContent}</Box>

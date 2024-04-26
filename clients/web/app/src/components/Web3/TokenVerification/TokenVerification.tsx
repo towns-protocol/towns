@@ -17,7 +17,6 @@ import { useJoinTown } from 'hooks/useJoinTown'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { TokenGatingMembership, useTokensGatingMembership } from 'hooks/useTokensGatingMembership'
-import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
 import { FullPanelOverlay, LinkedWallet, useConnectThenLink } from '../WalletLinkingPanel'
 import { mapToErrorMessage } from '../utils'
 import { currentWalletLinkingStore, useTokenBalances } from './tokenStatus'
@@ -102,7 +101,6 @@ function Content({
     const { joinSpace, errorMessage: errorJoinSpace } = useJoinTown(spaceId)
     const [isJoining, setIsJoining] = useState(false)
     const isJoinPending = useIsTransactionPending(BlockchainTransactionType.JoinSpace)
-    const { start: startPublicPageloginFlow } = usePublicPageLoginFlow()
 
     const {
         isLoading: isLoadingLinkingWallet,
@@ -132,11 +130,10 @@ function Content({
         if (isJoining) {
             return
         }
-        startPublicPageloginFlow()
         setIsJoining(true)
         await joinSpace()
         setIsJoining(false)
-    }, [isJoining, startPublicPageloginFlow, joinSpace])
+    }, [isJoining, joinSpace])
 
     return (
         <>

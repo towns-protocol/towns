@@ -17,14 +17,21 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
     const { client, signerContext } = useTownsClient()
     const { isAuthenticated, loggedInWalletAddress } = useConnectivity()
     const { connected, isLoading: isLoadingConnected } = useConnectedStatus()
-    const { start: startPublicPageloginFlow, joiningSpace } = usePublicPageLoginFlow()
+    const {
+        start: startPublicPageloginFlow,
+        joiningSpace,
+        end: endPublicPageLoginFlow,
+    } = usePublicPageLoginFlow()
 
     const { isTouch } = useDevice()
     const { joinSpace, errorMessage, isNoFundsError } = useJoinTown(spaceId)
     const [isJoining, setIsJoining] = useState(false)
     const [assetModal, setAssetModal] = useState(false)
     const showAssetModal = () => setAssetModal(true)
-    const hideAssetModal = () => setAssetModal(false)
+    const hideAssetModal = () => {
+        endPublicPageLoginFlow()
+        setAssetModal(false)
+    }
 
     const preventJoinUseEffect = useRef(false)
 
@@ -40,8 +47,8 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
             return
         }
         preventJoinUseEffect.current = true
+        startPublicPageloginFlow()
         if (meetsMembershipRequirements) {
-            startPublicPageloginFlow()
             setIsJoining(true)
             await joinSpace()
             setIsJoining(false)

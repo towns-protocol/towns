@@ -2,6 +2,7 @@ import React from 'react'
 import { Box, Icon } from '@ui'
 import { TokenImage } from '@components/Tokens/TokenSelector/TokenImage'
 import { useTokenMetadataForChainId } from 'api/lib/collectionMetadata'
+import { vars } from 'ui/styles/vars.css'
 import { InformationBox } from './InformationBox'
 
 export const TokenInfoBox = ({
@@ -39,7 +40,7 @@ export const TokenInfoBox = ({
                                         position="absolute"
                                         top="none"
                                         style={{
-                                            zIndex: 100 - index,
+                                            zIndex: +vars.zIndex.ui - index,
                                             transform: `translateX(${
                                                 -(tokensGatingMembership.length * 5) / 2
                                             }px)`,
