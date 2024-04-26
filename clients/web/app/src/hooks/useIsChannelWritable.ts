@@ -11,6 +11,7 @@ export const useIsChannelWritable = (
         walletAddress: loggedInWalletAddress ?? '',
         permission: Permission.Write,
     })
+
     const isChannelWritable = isLoading ? undefined : hasPermission
 
     return { isChannelWritable }

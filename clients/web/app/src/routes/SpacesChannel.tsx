@@ -293,7 +293,7 @@ export const SpacesChannelComponent = (props: Props) => {
                             <BlockedUserBottomBanner userId={counterParty} />
                         ) : (
                             <>
-                                {!showDMAcceptInvitation && channel && (
+                                {!showDMAcceptInvitation && channel && userId && (
                                     <RichTextEditor
                                         isFullWidthOnTouch
                                         editable={!!isChannelWritable}

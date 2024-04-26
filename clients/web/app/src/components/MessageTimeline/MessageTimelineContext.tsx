@@ -28,7 +28,7 @@ export enum MessageTimelineType {
 }
 
 export const MessageTimelineContext = createContext<{
-    userId: string
+    userId: string | undefined
     spaceId: string | undefined
     channelId: string
     isChannelEncrypted?: boolean
@@ -115,9 +115,6 @@ export const MessageTimelineWrapper = (props: {
     )
 
     const value = useMemo(() => {
-        if (!userId) {
-            return null
-        }
         return {
             userId,
             spaceId,
