@@ -461,6 +461,10 @@ resource "aws_ecs_task_definition" "river-fargate" {
         value = local.dd_required_tags
       },
       {
+        name  = "STANDBYONSTART",
+        value = "true"
+      },
+      {
         name  = "PERFORMANCETRACKING__PROFILINGENABLED",
         value = "true"
       },
@@ -570,8 +574,8 @@ resource "aws_ecs_service" "river-ecs-service" {
   cluster                            = var.ecs_cluster.id
   task_definition                    = aws_ecs_task_definition.river-fargate.arn
   desired_count                      = 1
-  deployment_minimum_healthy_percent = 0   // During deployment, actually bring down the old task before bringing up the new one.
-  deployment_maximum_percent         = 100 // Don't allow more than one task to run at a time, it results in two nodes accessing the same database
+  deployment_minimum_healthy_percent = 100
+  deployment_maximum_percent         = 200
 
   # do not attempt to create the service before the lambda runs
   depends_on = [
@@ -649,7 +653,7 @@ module "datadog_sythetics_test" {
   message   = local.datadog_monitor_slack_mention
   request_definition = {
     method = "GET"
-    url    = "${module.global_constants.nodes_metadata[var.node_number - 1].url}/info"
+    url    = "${module.global_constants.nodes_metadata[var.node_number - 1].url}/status"
   }
   assertions = [
     {
@@ -705,12 +709,13 @@ resource "aws_lb_target_group" "river_node_target_group" {
   vpc_id      = var.vpc_id
   target_type = "ip"
 
-  # TODO: test the best delay
-  deregistration_delay = 0
+  # this starts counting from the moment green is registered with the target group.
+  # we set this to 5 minutes.
+  deregistration_delay = 300
 
   health_check {
     // TODO: use the proper healthcheck endpoint here
-    path                = "/info"
+    path                = "/status"
     protocol            = "HTTPS"
     port                = local.rpc_https_port
     interval            = 10
