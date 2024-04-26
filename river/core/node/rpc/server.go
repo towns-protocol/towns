@@ -105,6 +105,18 @@ func (s *Service) start() error {
 		return AsRiverError(err).Message("Failed to run http server").LogError(s.defaultLogger)
 	}
 
+	err = s.setupStatusHandler()
+	if err != nil {
+		return AsRiverError(err).Message("Failed to setup status handler").LogError(s.defaultLogger)
+	}
+
+	if s.config.StandByOnStart {
+		err = s.standby()
+		if err != nil {
+			return AsRiverError(err).Message("Failed to standby").LogError(s.defaultLogger)
+		}
+	}
+
 	err = s.initStore()
 	if err != nil {
 		return AsRiverError(err).Message("Failed to init store").LogError(s.defaultLogger)
@@ -119,6 +131,8 @@ func (s *Service) start() error {
 
 	s.initHandlers()
 
+	s.SetStatus("OK")
+
 	// Retrieve the TCP address of the listener
 	tcpAddr := s.listener.Addr().(*net.TCPAddr)
 
@@ -130,8 +144,15 @@ func (s *Service) start() error {
 
 func (s *Service) initInstance() {
 	s.instanceId = GenShortNanoid()
+	port := s.config.Port
+	if port == 0 && s.listener != nil {
+		addr := s.listener.Addr().(*net.TCPAddr)
+		if addr != nil {
+			port = addr.Port
+		}
+	}
 	s.defaultLogger = dlog.FromCtx(s.serverCtx).With(
-		"port", s.config.Port,
+		"port", port,
 		"instanceId", s.instanceId,
 		"type", "stream",
 		"mode", "full",
@@ -342,6 +363,11 @@ func (s *Service) runHttpServer() error {
 
 		return nil
 	}
+}
+
+func (s *Service) setupStatusHandler() error {
+	s.mux.HandleFunc("/status", s.handleStatus)
+	return nil
 }
 
 func (s *Service) serveTLS() {

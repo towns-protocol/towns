@@ -134,7 +134,12 @@ func (st *serviceTester) setNodesStatus(start, stop int, status uint8) {
 	}
 }
 
-func (st *serviceTester) startNodes(start, stop int) {
+type startOpts struct {
+	configUpdater func(cfg *config.Config)
+	listeners     []net.Listener
+}
+
+func (st *serviceTester) startNodes(start, stop int, opts ...startOpts) {
 	// creates blocks that signals the river nodes to check and create miniblocks when required.
 	if st.btc.IsSimulated() || (st.btc.IsAnvil() && !st.btc.AnvilAutoMineEnabled()) {
 		ctx, cancel := context.WithCancel(st.ctx)
@@ -185,12 +190,17 @@ func (st *serviceTester) startNodes(start, stop int) {
 	}
 
 	for i := start; i < stop; i++ {
-		err := st.startSingle(i)
+		err := st.startSingle(i, opts...)
 		st.require.NoError(err)
 	}
 }
 
-func (st *serviceTester) startSingle(i int) error {
+func (st *serviceTester) startSingle(i int, opts ...startOpts) error {
+	options := &startOpts{}
+	if len(opts) > 0 {
+		options = &opts[0]
+	}
+
 	cfg := &config.Config{
 		DisableBaseChain: true,
 		RegistryContract: st.btc.RegistryConfig(),
@@ -216,8 +226,17 @@ func (st *serviceTester) startSingle(i int) error {
 		ShutdownTimeout: 2 * time.Millisecond,
 	}
 
+	if options.configUpdater != nil {
+		options.configUpdater(cfg)
+	}
+
+	listener := st.nodes[i].listener
+	if i < len(options.listeners) && options.listeners[i] != nil {
+		listener = options.listeners[i]
+	}
+
 	bc := st.btc.GetBlockchain(st.ctx, i, true)
-	service, err := rpc.StartServer(st.ctx, cfg, bc, st.nodes[i].listener)
+	service, err := rpc.StartServer(st.ctx, cfg, bc, listener)
 	if err != nil {
 		if service != nil {
 			// Sanity check

@@ -30,10 +30,9 @@ func TestShutdown(t *testing.T) {
 
 	listener, err := net.Listen("tcp", "localhost:0")
 	require.NoError(err)
-	tester.nodes[0].listener = listener
 
 	// Start the second node with same address
-	require.NoError(tester.startSingle(0))
+	require.NoError(tester.startSingle(0, startOpts{listeners: []net.Listener{listener}}))
 
 	firstErr := <-exitStatus
 	require.Error(firstErr)

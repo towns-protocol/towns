@@ -56,7 +56,8 @@ type Config struct {
 	// Go in stand-by mode on start checking if public address resolves to this node instance.
 	// This allows to reduce downtime when new version of the node is deployed in the new container or VM.
 	// Depending on the network routing configuration this approach may not work.
-	StandByOnStart bool
+	StandByOnStart    bool
+	StandByPollPeriod time.Duration
 
 	// ShutdownTimeout is the time the node waits for the graceful shutdown of the server.
 	// Then all active connections are closed and the node exits.
@@ -75,6 +76,16 @@ type NetworkConfig struct {
 	NumRetries int
 	// RequestTimeout only applies to unary requests.
 	RequestTimeout time.Duration
+
+	// If unset or <= 0, 5 seconds is used.
+	HttpRequestTimeout time.Duration
+}
+
+func (nc *NetworkConfig) GetHttpRequestTimeout() time.Duration {
+	if nc.HttpRequestTimeout <= 0 {
+		return 5 * time.Second
+	}
+	return nc.HttpRequestTimeout
 }
 
 type DatabaseConfig struct {

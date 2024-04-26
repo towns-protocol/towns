@@ -80,7 +80,7 @@ func MultiHandler(ctx context.Context, cfg *config.Config, streamService *Servic
 		log := dlog.FromCtx(ctx)
 		log.Info("MultiHandler request")
 
-		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		ctx, cancel := context.WithTimeout(ctx, cfg.Network.GetHttpRequestTimeout())
 		defer cancel()
 
 		allNodes := streamService.nodeRegistry.GetAllNodes()
@@ -92,6 +92,7 @@ func MultiHandler(ctx context.Context, cfg *config.Config, streamService *Servic
 		if err != nil {
 			log.Error("Error getting http client", "err", err)
 		}
+		client.Timeout = cfg.Network.GetHttpRequestTimeout()
 
 		data := &render.DebugMultiData{
 			CurrentTime: time.Now().UTC().Format(time.RFC3339),

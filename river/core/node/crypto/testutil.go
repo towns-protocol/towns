@@ -455,6 +455,30 @@ func (c *BlockchainTestContext) UpdateNodeStatus(ctx context.Context, index int,
 	return nil
 }
 
+func (c *BlockchainTestContext) UpdateNodeUrl(ctx context.Context, index int, url string) error {
+	pendingTx, err := c.DeployerBlockchain.TxPool.Submit(
+		ctx,
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			return c.NodeRegistry.UpdateNodeUrl(opts, c.Wallets[index].Address, url)
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	err = c.mineBlock()
+	if err != nil {
+		return err
+	}
+
+	receipt := <-pendingTx.Wait()
+	if receipt.Status != TransactionResultSuccess {
+		return fmt.Errorf("UpdateNodeStatus transaction failed")
+	}
+
+	return nil
+}
+
 func (c *BlockchainTestContext) RegistryConfig() config.ContractConfig {
 	return config.ContractConfig{
 		Address: c.RiverRegistryAddress,

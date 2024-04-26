@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"sync/atomic"
 	"time"
 
 	"github.com/river-build/river/core/node/auth"
@@ -52,6 +53,9 @@ type Service struct {
 	listener   net.Listener
 	httpServer *http.Server
 	mux        *httptrace.ServeMux
+
+	// Status string
+	status atomic.Pointer[string]
 }
 
 var (
@@ -61,4 +65,16 @@ var (
 
 func (s *Service) ExitSignal() chan error {
 	return s.exitSignal
+}
+
+func (s *Service) SetStatus(status string) {
+	s.status.Store(&status)
+}
+
+func (s *Service) GetStatus() string {
+	status := s.status.Load()
+	if status == nil {
+		return "STARTING"
+	}
+	return *status
 }

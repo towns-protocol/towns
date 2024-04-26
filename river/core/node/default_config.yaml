@@ -8,6 +8,7 @@ database:
     port: ''
     extra: ''
     host: ''
+    startupDelay: 2s
 storageType: postgres
 
 # Certificates for TLS
@@ -94,6 +95,16 @@ stream:
     # Interval to check for inactive streams in the cache (default=cacheExpirationSec/10)
     # valid time unites are "ns", "us" (or "µs"), "ms", "s", "m", "h"
     cacheExpirationPollInterval: 30s
+
+networkConfig:
+    numRetries: 3
+    requestTimeout: 0
+    httpRequestTimeout: 0
+
+standByOnStart: true
+standByPollPeriod: 500ms
+
+shutdownTimeout: 1s
 
 # Debug feature flags.
 disableBaseChain: false
