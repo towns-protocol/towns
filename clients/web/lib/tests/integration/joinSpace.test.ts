@@ -18,13 +18,13 @@ import {
     isHexString,
     publicMint,
     createExternalTokenStruct,
+    getDynamicPricingModule,
 } from '@river-build/web3'
 import { TestConstants } from './helpers/TestConstants'
 import { ethers } from 'ethers'
 import { ParsedChannelProperties, assert } from '@river/sdk'
 import { getTransactionHashFromTransactionOrUserOp } from '@towns/userops'
 import { waitFor } from '@testing-library/dom'
-import { getDynamicPricingModule } from '../../src/utils/web3'
 
 test('create space, and have user join', async () => {
     // create clients

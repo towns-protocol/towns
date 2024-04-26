@@ -4,10 +4,14 @@
 import { jest } from '@jest/globals'
 import { registerAndStartClients, createTestSpaceGatedByTownsNfts } from './helpers/TestUtils'
 
-import { IArchitectBase, NoopRuleData, Permission } from '@river-build/web3'
+import {
+    IArchitectBase,
+    NoopRuleData,
+    Permission,
+    getDynamicPricingModule,
+} from '@river-build/web3'
 import { waitFor } from '@testing-library/dom'
 import { ethers } from 'ethers'
-import { getDynamicPricingModule } from '../../src/utils/web3'
 
 test('should clear promise from promise queue after transaction resolves', async () => {
     // create clients

@@ -1,11 +1,15 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { IArchitectBase, NoopRuleData, Permission } from '@river-build/web3'
+import {
+    IArchitectBase,
+    NoopRuleData,
+    Permission,
+    getDynamicPricingModule,
+} from '@river-build/web3'
 import ethers from 'ethers'
 import { TownsTestClient } from '../tests/integration/helpers/TownsTestClient'
 import { Wallet } from 'ethers'
 import fs from 'fs'
-import { getDynamicPricingModule } from '../src/utils/web3'
 
 /**
  * This is not an actual test, it's just a quick hack to create a dev town.

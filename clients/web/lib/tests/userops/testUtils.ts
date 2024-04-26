@@ -1,11 +1,15 @@
-import { IArchitectBase, NoopRuleData, Permission } from '@river-build/web3'
+import {
+    IArchitectBase,
+    NoopRuleData,
+    Permission,
+    getDynamicPricingModule,
+} from '@river-build/web3'
 import { TownsTestClient } from '../integration/helpers/TownsTestClient'
 import { CreateSpaceInfo } from '../../src/types/towns-types'
 import { ethers } from 'ethers'
 import { TownsOpts } from '../../src/client/TownsClientTypes'
 import { paymasterProxyMiddleware } from '@towns/userops'
 import { TestConstants } from '../integration/helpers/TestConstants'
-import { getDynamicPricingModule } from '../../src/utils/web3'
 import { Address } from '../../src/types/web3-types'
 import { sleep } from '../../src/utils/towns-utils'
 

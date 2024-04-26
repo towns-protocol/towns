@@ -87,14 +87,19 @@ export class BaseContractShim<
         }
     }
 
-    // TODO: better type enforcing
-    public encodeFunctionData(functionName: string, args: readonly unknown[]): string {
-        const fragment = this.interface.getFunction(functionName)
-        if (!fragment) {
-            throw new Error(`Unknown function ${functionName}`)
+    public encodeFunctionData<
+        FnName extends keyof T_DEV_CONTRACT['functions'] | keyof T_VERSIONED_CONTRACT['functions'],
+        FnParams extends
+            | Parameters<T_DEV_CONTRACT['functions'][FnName]>
+            | Parameters<T_VERSIONED_CONTRACT['functions'][FnName]>,
+    >(functionName: FnName, args: FnParams): string {
+        if (typeof functionName !== 'string') {
+            throw new Error('functionName must be a string')
         }
-
-        return this.interface.encodeFunctionData(fragment, args)
+        if (!this.interface.getFunction(functionName)) {
+            throw new Error(`Function ${functionName} not found in contract interface`)
+        }
+        return this.interface.encodeFunctionData(functionName, args)
     }
 
     public parseError(error: unknown): Error & {

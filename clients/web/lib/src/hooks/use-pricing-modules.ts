@@ -4,7 +4,7 @@ import { blockchainKeys } from '../query/query-keys'
 import { useTownsContext } from '../components/TownsContextProvider'
 import { useMembershipInfo } from './use-membership-info'
 import { useMemo } from 'react'
-import { FIXED_PRICING } from '../utils/web3'
+import { FIXED_PRICING } from '@river-build/web3'
 
 export function usePricingModules() {
     const { baseProvider: provider, baseChain: chain, baseConfig: config } = useTownsContext()

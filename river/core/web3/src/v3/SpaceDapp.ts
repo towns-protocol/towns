@@ -26,6 +26,7 @@ import { WalletLink } from './WalletLink'
 import { SpaceInfo } from '../types'
 import { IRuleEntitlement } from './index'
 import { PricingModules } from './PricingModules'
+import { IPrepayShim } from './IPrepayShim'
 import { dlogger, isJest } from '@river-build/dlog'
 
 const logger = dlogger('csb:SpaceDapp:debug')
@@ -36,6 +37,7 @@ export class SpaceDapp implements ISpaceDapp {
     public readonly spaceRegistrar: SpaceRegistrar
     public readonly pricingModules: PricingModules
     public readonly walletLink: WalletLink
+    public readonly prepay: IPrepayShim
 
     constructor(config: BaseChainConfig, provider: ethers.providers.Provider) {
         this.config = config
@@ -43,6 +45,11 @@ export class SpaceDapp implements ISpaceDapp {
         this.spaceRegistrar = new SpaceRegistrar(config, provider)
         this.walletLink = new WalletLink(config, provider)
         this.pricingModules = new PricingModules(config, provider)
+        this.prepay = new IPrepayShim(
+            config.addresses.spaceFactory,
+            config.contractVersion,
+            provider,
+        )
     }
 
     public async addRoleToChannel(
@@ -321,6 +328,15 @@ export class SpaceDapp implements ISpaceDapp {
         return decodedErr
     }
 
+    public parsePrepayError(error: unknown): Error {
+        if (!this.prepay) {
+            throw new Error('Prepay is not deployed properly.')
+        }
+        const decodedErr = this.prepay.parseError(error)
+        logger.error(decodedErr)
+        return decodedErr
+    }
+
     public async parseSpaceLogs(
         spaceId: string,
         logs: ethers.providers.Log[],
@@ -416,6 +432,102 @@ export class SpaceDapp implements ISpaceDapp {
         } else {
             return wrapTransaction(() => space.Pausable.write(signer).unpause(), txnOpts)
         }
+    }
+
+    /**
+     *
+     * @param spaceId
+     * @param priceInWei
+     * @param signer
+     */
+    public async setMembershipPrice(
+        spaceId: string,
+        priceInWei: ethers.BigNumberish,
+        signer: ethers.Signer,
+        txnOpts?: TransactionOpts,
+    ): Promise<ContractTransaction> {
+        const space = this.getSpace(spaceId)
+        if (!space) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+        }
+        return wrapTransaction(
+            () => space.Membership.write(signer).setMembershipPrice(priceInWei),
+            txnOpts,
+        )
+    }
+
+    public async setMembershipPricingModule(
+        spaceId: string,
+        pricingModule: string,
+        signer: ethers.Signer,
+        txnOpts?: TransactionOpts,
+    ): Promise<ContractTransaction> {
+        const space = this.getSpace(spaceId)
+        if (!space) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+        }
+        return wrapTransaction(
+            () => space.Membership.write(signer).setMembershipPricingModule(pricingModule),
+            txnOpts,
+        )
+    }
+
+    public async setMembershipLimit(
+        spaceId: string,
+        limit: number,
+        signer: ethers.Signer,
+        txnOpts?: TransactionOpts,
+    ): Promise<ContractTransaction> {
+        const space = this.getSpace(spaceId)
+        if (!space) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+        }
+        return wrapTransaction(
+            () => space.Membership.write(signer).setMembershipLimit(limit),
+            txnOpts,
+        )
+    }
+
+    public async setMembershipFreeAllocation(
+        spaceId: string,
+        freeAllocation: number,
+        signer: ethers.Signer,
+        txnOpts?: TransactionOpts,
+    ) {
+        const space = this.getSpace(spaceId)
+        if (!space) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+        }
+        return wrapTransaction(
+            () => space.Membership.write(signer).setMembershipFreeAllocation(freeAllocation),
+            txnOpts,
+        )
+    }
+
+    public async prepayMembership(
+        spaceId: string,
+        supply: number,
+        signer: ethers.Signer,
+        txnOpts?: TransactionOpts,
+    ): Promise<ContractTransaction> {
+        const space = this.getSpace(spaceId)
+        if (!space) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+        }
+        const membershipAddress = space.Membership.address
+        return wrapTransaction(
+            () => this.prepay.write(signer).prepayMembership(membershipAddress, supply),
+            txnOpts,
+        )
+    }
+
+    public async getPrepaidMembershipSupply(spaceId: string) {
+        const space = this.getSpace(spaceId)
+        if (!space) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+        }
+        const membershipAddress = space.Membership.address
+        return this.prepay.read.prepaidMembershipSupply(membershipAddress)
     }
 
     public async setChannelAccess(

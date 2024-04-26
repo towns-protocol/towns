@@ -12,8 +12,9 @@ import {
     IArchitectBase,
     NoopRuleData,
     MembershipStruct,
+    getDynamicPricingModule,
+    getFixedPricingModule,
 } from '@river-build/web3'
-import { getDynamicPricingModule, getFixedPricingModule } from '../../../src/utils/web3'
 import { makeRiverConfig } from '@river/sdk'
 
 export const EVERYONE_ADDRESS = '0x0000000000000000000000000000000000000001'

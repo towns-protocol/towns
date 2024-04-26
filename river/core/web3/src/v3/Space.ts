@@ -235,24 +235,21 @@ export class Space {
     public parseError(error: unknown): Error {
         // try each of the contracts to see who can give the best error message
         let err = this.channel.parseError(error)
-        if (err?.name !== UNKNOWN_ERROR) {
-            return err
-        }
-        err = this.pausable.parseError(error)
-        if (err?.name !== UNKNOWN_ERROR) {
-            return err
-        }
-        err = this.entitlements.parseError(error)
-        if (err?.name !== UNKNOWN_ERROR) {
-            return err
-        }
-        err = this.roles.parseError(error)
-        if (err?.name !== UNKNOWN_ERROR) {
-            return err
-        }
-        err = this.membership.parseError(error)
-        if (err?.name !== UNKNOWN_ERROR) {
-            return err
+        for (const contract of [
+            this.entitlements,
+            this.multicall,
+            this.ownable,
+            this.pausable,
+            this.roles,
+            this.spaceOwner,
+            this.membership,
+            this.banning,
+            this.channel,
+        ]) {
+            err = contract.parseError(error)
+            if (err?.name !== UNKNOWN_ERROR) {
+                return err
+            }
         }
         return err
     }
@@ -324,7 +321,7 @@ export class Space {
         return Promise.all(getEntitlementShims)
     }
 
-    private async getEntitlementDetails(
+    public async getEntitlementDetails(
         entitlementShims: EntitlementShim[],
         roleId: BigNumberish,
     ): Promise<EntitlementDetails> {
@@ -395,7 +392,7 @@ export class Space {
         return Promise.all(getRoleStructsAsync)
     }
 
-    private async getRoleEntitlements(
+    public async getRoleEntitlements(
         entitlementShims: EntitlementShim[],
         roleId: BigNumberish,
     ): Promise<RoleEntitlements | null> {

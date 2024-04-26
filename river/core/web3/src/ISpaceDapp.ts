@@ -11,10 +11,11 @@ import {
 } from './ContractTypes'
 
 import { WalletLink as WalletLinkV3 } from './v3/WalletLink'
-import { BytesLike, ContractReceipt, ContractTransaction, ethers } from 'ethers'
+import { BigNumber, BytesLike, ContractReceipt, ContractTransaction, ethers } from 'ethers'
 import { SpaceInfo } from './types'
 import { IRolesBase, Space, SpaceRegistrar, IRuleEntitlement } from './v3'
 import { PricingModules } from './v3/PricingModules'
+import { IPrepayShim } from './v3/IPrepayShim'
 import { BaseChainConfig } from './IStaticContractsInfo'
 
 export type SignerType = ethers.Signer
@@ -60,6 +61,7 @@ export interface ISpaceDapp {
     readonly spaceRegistrar: SpaceRegistrar
     readonly walletLink: WalletLinkV3
     readonly pricingModules: PricingModules
+    readonly prepay: IPrepayShim
     addRoleToChannel: (
         spaceId: string,
         channelNetworkId: string,
@@ -126,6 +128,7 @@ export interface ISpaceDapp {
     ) => Promise<boolean>
     parseSpaceFactoryError: (error: unknown) => Error
     parseSpaceError: (spaceId: string, error: unknown) => Promise<Error>
+    parsePrepayError: (error: unknown) => Error
     parseSpaceLogs: (
         spaceId: string,
         logs: ethers.providers.Log[],
@@ -166,4 +169,30 @@ export interface ISpaceDapp {
     getWalletLink: () => WalletLinkV3
     getSpaceAddress: (receipt: ContractReceipt) => string | undefined
     listPricingModules: () => Promise<PricingModuleStruct[]>
+    setMembershipPrice: (
+        spaceId: string,
+        price: string,
+        signer: SignerType,
+    ) => Promise<TransactionType>
+    setMembershipPricingModule: (
+        spaceId: string,
+        moduleId: string,
+        signer: SignerType,
+    ) => Promise<TransactionType>
+    setMembershipLimit: (
+        spaceId: string,
+        limit: number,
+        signer: SignerType,
+    ) => Promise<TransactionType>
+    prepayMembership: (
+        spaceId: string,
+        supply: number,
+        signer: SignerType,
+    ) => Promise<TransactionType>
+    getPrepaidMembershipSupply: (spaceId: string) => Promise<BigNumber>
+    setMembershipFreeAllocation: (
+        spaceId: string,
+        freeAllocation: number,
+        signer: SignerType,
+    ) => Promise<TransactionType>
 }

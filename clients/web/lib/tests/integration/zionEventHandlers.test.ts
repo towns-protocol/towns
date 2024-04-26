@@ -15,9 +15,9 @@ import {
     IArchitectBase,
     NoopRuleData,
     Permission,
+    getDynamicPricingModule,
 } from '@river-build/web3'
 import { ethers } from 'ethers'
-import { getDynamicPricingModule } from '../../src/utils/web3'
 
 describe('Towns event handlers test', () => {
     test('onCreateSpace', async () => {

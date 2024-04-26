@@ -29,10 +29,10 @@ import {
     createOperationsTree,
     LOCALHOST_CHAIN_ID,
     CheckOperationType,
+    getDynamicPricingModule,
 } from '@river-build/web3'
 import { TSigner } from '../../src/types/web3-types'
 import { useTownsClient } from '../../src/hooks/use-towns-client'
-import { getDynamicPricingModule } from '../../src/utils/web3'
 
 /**
  * This test suite tests the useRoles hook.

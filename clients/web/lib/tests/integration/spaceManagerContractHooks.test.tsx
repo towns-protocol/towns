@@ -21,10 +21,14 @@ import {
 } from 'use-towns-client/tests/integration/helpers/TestUtils'
 import { useCreateSpaceTransactionWithRetries } from 'use-towns-client/src/hooks/use-create-space-transaction'
 import { useSpacesFromContract } from 'use-towns-client/src/hooks/use-spaces-from-contract'
-import { getTestGatingNftAddress, NoopRuleData, Permission } from '@river-build/web3'
+import {
+    getTestGatingNftAddress,
+    NoopRuleData,
+    Permission,
+    getDynamicPricingModule,
+} from '@river-build/web3'
 import { TSigner } from '../../src/types/web3-types'
 import { useTownsClient } from '../../src/hooks/use-towns-client'
-import { getDynamicPricingModule } from '../../src/utils/web3'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 

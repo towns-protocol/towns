@@ -21,10 +21,14 @@ import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { useTransactionStore } from '../../src/store/use-transactions-store'
 import { useSpaceData } from '../../src/hooks/use-space-data'
-import { getTestGatingNftAddress, NoopRuleData, Permission } from '@river-build/web3'
+import {
+    getTestGatingNftAddress,
+    NoopRuleData,
+    Permission,
+    getDynamicPricingModule,
+} from '@river-build/web3'
 import { TSigner } from '../../src/types/web3-types'
 import { useTownsClient } from '../../src/hooks/use-towns-client'
-import { getDynamicPricingModule } from '../../src/utils/web3'
 
 describe('useCreateChannelTransactionHook', () => {
     test('user can create channel', async () => {

@@ -20,9 +20,13 @@ import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { useUpdateChannelTransaction } from '../../src/hooks/use-update-channel-transaction'
 import { useSpaceData } from '../../src/hooks/use-space-data'
-import { getTestGatingNftAddress, NoopRuleData, Permission } from '@river-build/web3'
+import {
+    getTestGatingNftAddress,
+    NoopRuleData,
+    Permission,
+    getDynamicPricingModule,
+} from '@river-build/web3'
 import { TSigner } from '../../src/types/web3-types'
-import { getDynamicPricingModule } from '../../src/utils/web3'
 import { useTownsClient } from '../../src/hooks/use-towns-client'
 /**
  * This test suite tests the useRoles hook.

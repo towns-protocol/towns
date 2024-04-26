@@ -1,5 +1,7 @@
 import { ethers } from 'ethers'
 import { PublicClient } from 'viem'
+import { PricingModuleStruct } from './ContractTypes'
+import { ISpaceDapp } from './ISpaceDapp'
 
 export function isEthersProvider(
     provider: ethers.providers.Provider | PublicClient,
@@ -40,3 +42,36 @@ export function SpaceAddressFromSpaceId(spaceId: string): string {
 export function checkNever(value: never, message?: string): never {
     throw new Error(message ?? `Unhandled switch value ${value}`)
 }
+
+export const TIERED_PRICING_ORACLE = 'TieredLogPricingOracle'
+export const FIXED_PRICING = 'FixedPricing'
+
+export const getDynamicPricingModule = async (spaceDapp: ISpaceDapp | undefined) => {
+    if (!spaceDapp) {
+        throw new Error('getDynamicPricingModule: No spaceDapp')
+    }
+    const pricingModules = await spaceDapp.listPricingModules()
+    const dynamicPricingModule = findDynamicPricingModule(pricingModules)
+    if (!dynamicPricingModule) {
+        throw new Error('getDynamicPricingModule: no dynamicPricingModule')
+    }
+    return dynamicPricingModule
+}
+
+export const getFixedPricingModule = async (spaceDapp: ISpaceDapp | undefined) => {
+    if (!spaceDapp) {
+        throw new Error('getFixedPricingModule: No spaceDapp')
+    }
+    const pricingModules = await spaceDapp.listPricingModules()
+    const fixedPricingModule = findFixedPricingModule(pricingModules)
+    if (!fixedPricingModule) {
+        throw new Error('getFixedPricingModule: no fixedPricingModule')
+    }
+    return fixedPricingModule
+}
+
+export const findDynamicPricingModule = (pricingModules: PricingModuleStruct[]) =>
+    pricingModules.find((module) => module.name === TIERED_PRICING_ORACLE)
+
+export const findFixedPricingModule = (pricingModules: PricingModuleStruct[]) =>
+    pricingModules.find((module) => module.name === FIXED_PRICING)
