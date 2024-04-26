@@ -78,32 +78,8 @@ export function useCasablancaDMs(casablancaClient?: CasablancaClient): {
                 return a.lastEventCreatedAtEpochMs > b.lastEventCreatedAtEpochMs ? -1 : 1
             })
 
-            function isSorted(array: string[]) {
-                for (let i = 0; i < array.length - 1; i++) {
-                    if (array[i] > array[i + 1]) {
-                        return false
-                    }
-                }
-                return true
-            }
-
-            channels.forEach((channel) => {
-                if (!isSorted(channel.userIds)) {
-                    console.error('useCasablancaDMs: channel.userIds are not sorted', {
-                        channel,
-                    })
-                }
-            })
-
             setChannels((prev) => {
                 if (isEqual(prev, channels)) {
-                    prev.forEach((channel) => {
-                        if (!isSorted(channel.userIds)) {
-                            console.error('useCasablancaDMs: prev.userIds are not sorted', {
-                                channel,
-                            })
-                        }
-                    })
                     return prev
                 } else {
                     return channels
