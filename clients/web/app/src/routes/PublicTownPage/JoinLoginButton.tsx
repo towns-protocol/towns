@@ -14,7 +14,7 @@ const LoginComponent = React.lazy(() => import('@components/Login/LoginComponent
 
 export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
     const isPreview = false
-    const { client } = useTownsClient()
+    const { client, signerContext } = useTownsClient()
     const { isAuthenticated, loggedInWalletAddress } = useConnectivity()
     const { connected, isLoading: isLoadingConnected } = useConnectedStatus()
     const { start: startPublicPageloginFlow, joiningSpace } = usePublicPageLoginFlow()
@@ -61,15 +61,15 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
         // if widnow has join param and user is authenticated and has an embedded wallet
         if (
             !preventJoinUseEffect.current &&
-            client &&
             !!joiningSpace &&
+            signerContext &&
             isAuthenticated &&
             connected
         ) {
             preventJoinUseEffect.current = true
             onJoinClick()
         }
-    }, [isAuthenticated, connected, onJoinClick, joiningSpace, client])
+    }, [isAuthenticated, connected, onJoinClick, joiningSpace, client, signerContext])
 
     if (isPreview) {
         return
