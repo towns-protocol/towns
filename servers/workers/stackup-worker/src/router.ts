@@ -570,16 +570,6 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
                         //     env,
                         //     eventName: EventName.MembershipPriceUpdated
                         // }))
-
-                        // editing prepaid membership supply
-                        makeCheckPromise(
-                            verifyPrepaid({
-                                rootKeyAddress: rootKeyAddress,
-                                senderAddress: userOperation.sender,
-                                townId: townId,
-                                env,
-                            }),
-                        ),
                     ]
 
                     let verification: IVerificationResult = {

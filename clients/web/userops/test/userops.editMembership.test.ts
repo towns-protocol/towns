@@ -38,11 +38,7 @@ test('should update the rule entitlement on the minter role', async () => {
     const space = spaceDapp.getSpace(spaceId)
     expect(space).toBeDefined()
 
-    const {
-        roleData: ogRoleData,
-        membershipData: ogMembershipData,
-        prepaidMembershipData: ogPrepaidMembershipData,
-    } = await getMembershipData({
+    const { roleData: ogRoleData, membershipData: ogMembershipData } = await getMembershipData({
         spaceDapp,
         spaceId,
         space,
@@ -57,7 +53,6 @@ test('should update the rule entitlement on the minter role', async () => {
             ruleData: boredApeRuleData,
         },
         membershipParams: ogMembershipData,
-        prepaidMembershipParams: ogPrepaidMembershipData,
         signer: alice.wallet,
     })
 
@@ -117,11 +112,7 @@ test('should update free space to paid space', async () => {
     const space = spaceDapp.getSpace(spaceId)
     expect(space).toBeDefined()
 
-    const {
-        roleData: ogRoleData,
-        membershipData: ogMembershipData,
-        prepaidMembershipData: ogPrepaidMembershipData,
-    } = await getMembershipData({
+    const { roleData: ogRoleData, membershipData: ogMembershipData } = await getMembershipData({
         spaceDapp,
         spaceId,
         space,
@@ -141,7 +132,6 @@ test('should update free space to paid space', async () => {
             pricingModule: fixedPricingModule!.module as string,
             membershipPrice: ethers.utils.parseEther('0.1'),
         },
-        prepaidMembershipParams: ogPrepaidMembershipData,
         signer: alice.wallet,
     })
 
@@ -202,11 +192,7 @@ test('should update membership price on a paid space', async () => {
     const space = spaceDapp.getSpace(spaceId)
     expect(space).toBeDefined()
 
-    const {
-        roleData: ogRoleData,
-        membershipData: ogMembershipData,
-        prepaidMembershipData: ogPrepaidMembershipData,
-    } = await getMembershipData({
+    const { roleData: ogRoleData, membershipData: ogMembershipData } = await getMembershipData({
         spaceDapp,
         spaceId,
         space,
@@ -225,7 +211,6 @@ test('should update membership price on a paid space', async () => {
             ...ogMembershipData,
             membershipPrice: ethers.utils.parseEther('0.1'),
         },
-        prepaidMembershipParams: ogPrepaidMembershipData,
         signer: alice.wallet,
     })
 
@@ -276,11 +261,7 @@ test('should update limit on the membership', async () => {
     const space = spaceDapp.getSpace(spaceId)
     expect(space).toBeDefined()
 
-    const {
-        roleData: ogRoleData,
-        membershipData: ogMembershipData,
-        prepaidMembershipData: ogPrepaidMembershipData,
-    } = await getMembershipData({
+    const { roleData: ogRoleData, membershipData: ogMembershipData } = await getMembershipData({
         spaceDapp,
         spaceId,
         space,
@@ -295,7 +276,6 @@ test('should update limit on the membership', async () => {
             ...ogMembershipData,
             membershipSupply: 1_000_000,
         },
-        prepaidMembershipParams: ogPrepaidMembershipData,
         signer: alice.wallet,
     })
 
@@ -317,77 +297,6 @@ test('should update limit on the membership', async () => {
     expect(+updatedMembershipData.membershipSupply.toString()).toBe(1_000_000)
 })
 
-// this is skipped because prepaying cost eth, we can't batch the execution with the rest of the operations,
-// and we need to decide how to handle this from a ux perspective
-test.skip('should update prepaid membership supply', async () => {
-    const alice = new LocalhostWeb3Provider(
-        process.env.AA_RPC_URL as string,
-        generatePrivyWalletIfKey(process.env.PRIVY_WALLET_PRIVATE_KEY_1),
-    )
-    await alice.ready
-
-    const { spaceDapp, userOps } = createSpaceDappAndUserops(alice)
-
-    const sendSpy = vi.spyOn(userOps, 'sendUserOp')
-
-    const createSpaceOp = await createUngatedSpace({
-        userOps,
-        spaceDapp,
-        signer: alice.wallet,
-        rolePermissions: [Permission.Read, Permission.Write],
-    })
-
-    const createSpaceTxReceipt = await waitForOpAndTx(createSpaceOp, alice)
-    await sleepBetweenTxs()
-
-    const spaceId = await getSpaceId(spaceDapp, createSpaceTxReceipt)
-    const space = spaceDapp.getSpace(spaceId)
-    expect(space).toBeDefined()
-
-    const {
-        roleData: ogRoleData,
-        membershipData: ogMembershipData,
-        prepaidMembershipData: ogPrepaidMembershipData,
-    } = await getMembershipData({
-        spaceDapp,
-        spaceId,
-        space,
-        userOps,
-    })
-
-    // updated prepaid membership supply
-    const sendEditOp = await userOps.sendEditMembershipSettingsOp({
-        spaceId,
-        updateRoleParams: ogRoleData,
-        membershipParams: ogMembershipData,
-        prepaidMembershipParams: {
-            ...ogPrepaidMembershipData,
-            supply: 100,
-        },
-        signer: alice.wallet,
-    })
-
-    // make sure only sending operation with changed data
-    const lastSendOpCall = sendSpy.mock.lastCall
-    expect(lastSendOpCall?.[0].toAddress).toStrictEqual([spaceDapp.prepay.address])
-    expect(lastSendOpCall?.[0].callData).toStrictEqual([
-        await spaceDapp.prepay.encodeFunctionData('prepayMembership', [
-            space!.Membership.address,
-            100,
-        ]),
-    ])
-
-    await waitForOpAndTx(sendEditOp, alice)
-
-    const { prepaidMembershipData: updatedPrepaidMembershipData } = await getMembershipData({
-        spaceDapp,
-        spaceId,
-        space,
-        userOps,
-    })
-    expect(updatedPrepaidMembershipData.supply.toNumber()).toBe(100)
-})
-
 async function getMembershipData({
     spaceDapp,
     userOps,
@@ -399,7 +308,7 @@ async function getMembershipData({
     spaceDapp: ISpaceDapp
     userOps: TestUserOps
 }) {
-    const { membershipInfo, prepaidMembershipSupply, roleEntitlements } =
+    const { membershipInfo, roleEntitlements } =
         await userOps.getDetailsForEditingMembershipSettings(spaceId, space!)
 
     expect(roleEntitlements).toBeDefined()
@@ -423,9 +332,5 @@ async function getMembershipData({
         membershipSupply: membershipInfo.maxSupply as ethers.BigNumberish,
     }
 
-    const prepaidMembershipData = {
-        supply: prepaidMembershipSupply,
-    }
-
-    return { roleData, membershipData, prepaidMembershipData }
+    return { roleData, membershipData }
 }

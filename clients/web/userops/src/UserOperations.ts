@@ -761,10 +761,6 @@ export class UserOps {
         }
         const membershipInfo = await this.spaceDapp.getMembershipInfo(spaceId)
 
-        const prepaidMembershipSupply = await this.spaceDapp.getPrepaidMembershipSupply(spaceId)
-
-        ///////////////////////////////////////////////////////////////////////////////////
-        //// update minter role ///////////////////////////////////////////////////////////
         const entitlementShims = await space.getEntitlementShims()
         if (!entitlementShims.length) {
             throw new Error('Rule entitlement not found')
@@ -774,7 +770,6 @@ export class UserOps {
         const roleEntitlements = await space.getRoleEntitlements(entitlementShims, 1)
         return {
             membershipInfo,
-            prepaidMembershipSupply,
             roleEntitlements,
         }
     }
@@ -787,9 +782,6 @@ export class UserOps {
             membershipPrice: ethers.BigNumberish // wei
             membershipSupply: ethers.BigNumberish
             freeAllocationForPaidSpace?: ethers.BigNumberish
-        }
-        prepaidMembershipParams: {
-            supply: ethers.BigNumberish
         }
         signer: ethers.Signer
     }) {
@@ -818,11 +810,7 @@ export class UserOps {
 
         const newRuleData = args.updateRoleParams.ruleData
 
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const newPrepaidSupply = args.prepaidMembershipParams.supply
-
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { membershipInfo, prepaidMembershipSupply, roleEntitlements } =
+        const { membershipInfo, roleEntitlements } =
             await this.getDetailsForEditingMembershipSettings(spaceId, space)
 
         ///////////////////////////////////////////////////////////////////////////////////
@@ -939,7 +927,7 @@ export class UserOps {
         ///////////////////////////////////////////////////////////////////////////////////
         //// update prepay seats //////////////////////////////////////////////////////////
         //
-        // TODO: get this to work
+        // TODO: get this to work in its own M
         // also, need to pass value for prepayMembership
         // executeBatch does not support value
         // therefore this tx would have to be separate
@@ -963,6 +951,36 @@ export class UserOps {
             signer: args.signer,
             spaceId,
             functionHashForPaymasterProxy: 'editMembershipSettings',
+        })
+    }
+
+    public async sendPrepayMembershipOp(args: {
+        spaceId: string
+        prepaidSupply: ethers.BigNumberish
+        signer: ethers.Signer
+    }) {
+        const { spaceId, prepaidSupply, signer } = args
+
+        if (!this.spaceDapp) {
+            throw new Error('spaceDapp is required')
+        }
+        const space = await this.spaceDapp.getSpace(spaceId)
+
+        if (!space) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+        }
+
+        const callData = await this.spaceDapp.prepay.encodeFunctionData('prepayMembership', [
+            space.Membership.address,
+            prepaidSupply,
+        ])
+
+        return this.sendUserOp({
+            toAddress: this.spaceDapp.prepay.address,
+            callData,
+            signer,
+            spaceId,
+            functionHashForPaymasterProxy: 'prepayMembership',
         })
     }
 
