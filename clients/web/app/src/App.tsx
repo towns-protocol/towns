@@ -42,6 +42,32 @@ export const App = () => {
     const highPriorityStreamIds = useRef<string[]>([])
     const [touchInitialLink, setTouchInitialLink] = useState<string | undefined>(undefined)
 
+    const location = useLocation()
+    const [searchParams] = useSearchParams()
+    const trackSource = searchParams.get('track_source') ?? ''
+    const state = useStore.getState()
+    const spaceIdBookmark = state.spaceIdBookmark
+    const channelBookmark = spaceIdBookmark ? state.townRouteBookmarks[spaceIdBookmark] : undefined
+
+    useEffect(() => {
+        console.warn('[App][push_hnt-5685]', 'route', {
+            trackSource,
+            highPriorityStreamIds: highPriorityStreamIds.current,
+            locationPath: location.pathname,
+            locationParams: location.search,
+            spaceIdBookmark,
+            channelBookmark,
+        })
+    }, [
+        channelBookmark,
+        location.hash,
+        location.pathname,
+        location.search,
+        searchParams,
+        spaceIdBookmark,
+        trackSource,
+    ])
+
     const didSetHighpriorityStreamIds = useRef<boolean>(false)
     if (!didSetHighpriorityStreamIds.current) {
         didSetHighpriorityStreamIds.current = true
@@ -68,19 +94,6 @@ export const App = () => {
             setTouchInitialLink(link)
         }
     }
-
-    const location = useLocation()
-    const [searchParams] = useSearchParams()
-    const channelId = searchParams.get('channelId')
-
-    useEffect(() => {
-        console.warn('[app] track_source:', 'push_hnt-5685', {
-            channelId: channelId ?? 'undefined',
-            locationPath: location.pathname,
-            locationHash: location.hash,
-            locationParams: location.search,
-        })
-    }, [channelId, location.hash, location.pathname, location.search])
 
     useEffect(() => {
         if (!isTouch || !touchInitialLink) {

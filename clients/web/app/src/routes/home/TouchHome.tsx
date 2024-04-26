@@ -1,6 +1,6 @@
 import { AnimatePresence } from 'framer-motion'
 import fuzzysort from 'fuzzysort'
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useOutlet } from 'react-router'
 import {
     Address,
@@ -18,6 +18,7 @@ import {
     useSpaceMembers,
     useSpaceThreadRootsUnreadCount,
     useSpaceUnreadThreadMentions,
+    useTownsContext,
     useUserLookupContext,
 } from 'use-towns-client'
 import { Avatar } from '@components/Avatar/Avatar'
@@ -85,7 +86,8 @@ type Overlay = undefined | 'main-panel' | 'create-channel' | 'browse-channels'
 
 export const TouchHome = () => {
     const space = useSpaceData()
-    const { loggedInWalletAddress } = useConnectivity()
+    const { loggedInWalletAddress, loginStatus } = useConnectivity()
+    const { signerContext } = useTownsContext()
     const [isSearching, setIsSearching] = useState<boolean>(false)
     const [searchString, setSearchString] = useState<string>('')
     const [caretVisible, setCaretVisible] = useState<boolean>(false)
@@ -103,6 +105,17 @@ export const TouchHome = () => {
         walletAddress: loggedInWalletAddress ?? '',
         permission: Permission.AddRemoveChannels,
     })
+
+    useEffect(() => {
+        console.warn('[TouchHome][push_hnt-5685]', 'route', {
+            spaceId: space?.id ?? '',
+            loggedInWalletAddress: loggedInWalletAddress ?? '',
+            loginStatus,
+            hasSignerContext: signerContext !== undefined,
+            locationPath: location.pathname,
+            locationParams: location.search,
+        })
+    }, [loggedInWalletAddress, loginStatus, signerContext, space?.id])
 
     const onFocus = useCallback(() => {
         setIsSearching(true)

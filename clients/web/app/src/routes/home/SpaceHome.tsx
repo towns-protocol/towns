@@ -1,12 +1,15 @@
 import React, { useEffect, useMemo } from 'react'
 
 import { matchPath, useNavigate } from 'react-router'
-import { Membership, useSpaceData } from 'use-towns-client'
+import { Membership, useConnectivity, useSpaceData, useTownsContext } from 'use-towns-client'
+import { useSearchParams } from 'react-router-dom'
 import { PATHS } from 'routes'
 import { useStore } from 'store/store'
 
 export const SpaceHome = () => {
     const space = useSpaceData()
+    const { loggedInWalletAddress, loginStatus } = useConnectivity()
+    const { signerContext } = useTownsContext()
     const spaceId = space?.id
     const navigate = useNavigate()
     const channels = useMemo(
@@ -20,6 +23,21 @@ export const SpaceHome = () => {
     bookmarkedRoute = matchPath(`${PATHS.SPACES}/${space?.id}/*`, bookmarkedRoute ?? '')
         ? bookmarkedRoute
         : undefined
+
+    const [searchParams] = useSearchParams()
+    const trackSource = searchParams.get('track_source') ?? ''
+    useEffect(() => {
+        console.warn('[SpaceHome][push_hnt-5685]', 'route', {
+            bookmarkedRoute,
+            trackSource,
+            spaceId: space?.id ?? '',
+            loggedInWalletAddress: loggedInWalletAddress ?? '',
+            loginStatus,
+            hasSignerContext: signerContext !== undefined,
+            locationPath: location.pathname,
+            locationParams: location.search,
+        })
+    }, [bookmarkedRoute, loggedInWalletAddress, loginStatus, signerContext, space?.id, trackSource])
 
     useEffect(() => {
         // TODO: this hijacks invite routes if you leave and then rejoin a space with an invite link.

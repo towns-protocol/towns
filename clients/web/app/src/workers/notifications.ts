@@ -162,7 +162,7 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                 )
 
                 if (hadWindowToFocus) {
-                    console.warn('sw:push: posting message', 'push_hnt-5685', {
+                    log('sw:push: posting message to broadcast channel', {
                         path: pathToNavigateTo,
                         hadWindowToFocus: true,
                     })
@@ -171,14 +171,13 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                     // avoid reloading the page
                     navigationChannel.postMessage({ path: pathToNavigateTo })
                 } else {
-                    console.warn('sw:push: opening window', 'push_hnt-5685', {
+                    log('sw:push: opening window', {
                         path: pathToNavigateTo,
                         hadWindowToFocus: false,
                     })
                     const url = new URL(worker.location.origin)
                     url.pathname = pathToNavigateTo
-                    url.searchParams.set('track_source', 'push_hnt-5685')
-                    url.searchParams.set('channelId', data.channelId)
+                    url.searchParams.set('track_source', 'open_window')
                     const window = await worker.clients.openWindow(url.toString())
                     await window?.focus()
                 }
