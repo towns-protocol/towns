@@ -31,6 +31,7 @@ import { create } from 'zustand'
 import { IArchitectBase, Permission, IRuleEntitlement } from '@river-build/web3'
 import { TSigner } from 'types/web3-types'
 import { SignerContext } from '@river/sdk'
+import { UserOps } from '@towns/userops'
 
 export type TownsErrorStoreState = {
     errors: string[]
@@ -86,6 +87,12 @@ interface TownsClientImpl {
         walletAddress: string,
         signer: TSigner,
     ) => Promise<BanUnbanWalletTransactionContext | undefined>
+    editSpaceMembershipTransaction: (
+        args: Parameters<UserOps['sendEditMembershipSettingsOp']>[0],
+    ) => Promise<TransactionContext<void> | undefined>
+    waitForEditSpaceMembershipTransaction: (
+        context: TransactionContext<void> | undefined,
+    ) => Promise<TransactionContext<void> | undefined>
     walletAddressIsBanned(spaceId: string, walletAddress: string): Promise<boolean | undefined>
     waitForBanUnbanTransaction: (
         context: BanUnbanWalletTransactionContext,
@@ -297,6 +304,12 @@ export function useTownsClient(): TownsClientImpl {
             clientSingleton?.waitForUpdateSpaceNameTransaction,
         ),
         updateSpaceNameTransaction: useWithCatch(clientSingleton?.updateSpaceNameTransaction),
+        editSpaceMembershipTransaction: useWithCatch(
+            clientSingleton?.editSpaceMembershipTransaction,
+        ),
+        waitForEditSpaceMembershipTransaction: useWithCatch(
+            clientSingleton?.waitForEditSpaceMembershipTransaction,
+        ),
         editMessage: useWithCatch(clientSingleton?.editMessage),
         getIsUsernameAvailable: useWithCatch(clientSingleton?.getIsUsernameAvailable),
         getIsWalletRegisteredWithCasablanca,

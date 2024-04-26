@@ -949,6 +949,65 @@ export class TownsClient
         })
     }
 
+    /**
+     * This function is used to edit the membership settings of a space.
+     * With account abstraciton enabled, it consists of multiple transactions that are combined into a single user operation.
+     * Without account abstraction, it is a single transaction that should only update the minter role
+     */
+    public async editSpaceMembershipTransaction(
+        args: Parameters<UserOps['sendEditMembershipSettingsOp']>['0'],
+    ): Promise<TransactionContext<void>> {
+        const { spaceId, updateRoleParams, membershipParams, signer } = args
+        if (!signer) {
+            throw new SignerUndefinedError()
+        }
+        let transaction: TransactionOrUserOperation | undefined = undefined
+        let error: Error | undefined = undefined
+        const continueStoreTx = this.blockchainTransactionStore.begin({
+            type: BlockchainTransactionType.EditSpaceMembership,
+            data: {
+                spaceStreamId: spaceId,
+            },
+        })
+
+        try {
+            if (this.isAccountAbstractionEnabled()) {
+                transaction = await this.userOps?.sendEditMembershipSettingsOp({
+                    spaceId,
+                    updateRoleParams,
+                    membershipParams,
+                    signer,
+                })
+            } else {
+                transaction = await this.spaceDapp.updateRole(updateRoleParams, signer)
+            }
+
+            this.log(`[updateRoleTransaction] transaction created` /*, transaction*/)
+        } catch (err) {
+            error = await this.spaceDapp.parseSpaceError(spaceId, err)
+        }
+        // todo: add necessary contextual data
+        continueStoreTx({
+            hashOrUserOpHash: getTransactionHashOrUserOpHash(transaction),
+            transaction,
+            error,
+        })
+
+        return createTransactionContext({
+            transaction,
+            status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
+            error,
+        })
+    }
+
+    public async waitForEditSpaceMembershipTransaction(
+        context: TransactionContext<void> | undefined,
+    ): Promise<TransactionContext<void>> {
+        const txnContext = await this._waitForBlockchainTransaction(context)
+        logTxnResult('waitForEditSpaceMembershipTransaction', txnContext)
+        return txnContext
+    }
+
     public async updateRoleTransaction(
         spaceNetworkId: string,
         roleId: number,

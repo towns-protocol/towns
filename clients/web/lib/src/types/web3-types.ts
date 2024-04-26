@@ -42,6 +42,8 @@ export enum BlockchainTransactionType {
     BanUser = 'banUser',
     UnbanUser = 'unbanUser',
     JoinSpace = 'joinSpace',
+    // not a single tx, but a series of txs exectued in a single user operation
+    EditSpaceMembership = 'editSpaceMembership',
 }
 
 export type BlockchainTransaction = {

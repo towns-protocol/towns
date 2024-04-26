@@ -19,6 +19,7 @@ import { ChannelSettingsPanel } from '@components/ChannelSettings/ChannelSetting
 import { useCreateLink } from 'hooks/useCreateLink'
 import { ChannelInvitePanel } from 'routes/ChannelInvitePanel'
 import { UserPreferences } from '@components/UserProfile/UserPreferences'
+import { EditMembershipSettingsPanel } from '@components/SpaceSettingsPanel/EditMembershipSettingsPanel'
 
 export const usePanels = () => {
     const [searchParams] = useSearchParams()
@@ -85,6 +86,13 @@ export const usePanels = () => {
             return (
                 <Panel label="Wallets">
                     <WalletLinkingPanel />
+                </Panel>
+            )
+        }
+        case CHANNEL_INFO_PARAMS.EDIT_MEMBERSHIP: {
+            return (
+                <Panel label="Edit Membership Settings">
+                    <EditMembershipSettingsPanel />
                 </Panel>
             )
         }

@@ -82,6 +82,14 @@ export function BlockchainTxNotifier() {
                     })
                     break
                 }
+                case BlockchainTransactionType.EditSpaceMembership: {
+                    generateToast({
+                        tx,
+                        pendingMessage: 'Updating membership...',
+                        successMessage: 'Membership updated!',
+                    })
+                    break
+                }
                 default:
                     break
             }

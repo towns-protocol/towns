@@ -41,9 +41,7 @@ export function EditMembership() {
                         <TextField
                             background="level3"
                             border={formState.errors['membershipLimit'] ? 'negative' : 'none'}
-                            {...register('membershipLimit', {
-                                // setValueAs: (value) => Number(value),
-                            })}
+                            {...register('membershipLimit')}
                             textAlign="right"
                             onChange={onLimitChange}
                         />

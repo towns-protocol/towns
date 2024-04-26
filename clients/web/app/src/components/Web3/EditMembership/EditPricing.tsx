@@ -7,7 +7,12 @@ import {
     MembershipSettingsSchemaType,
 } from '../MembershipNFT/CreateSpaceFormV2/CreateSpaceFormV2.schema'
 
-export function EditPricing() {
+export function EditPricing({
+    // currently, a space cannot switch from fixed to dynamic pricing
+    enableDynamicPricing = true,
+}: {
+    enableDynamicPricing?: boolean
+}) {
     const { formState, setValue, watch, trigger } = useFormContext<MembershipSettingsSchemaType>()
 
     const formProps = useFormContext<MembershipSettingsSchemaType>()
@@ -50,7 +55,7 @@ export function EditPricing() {
 
     const onDynamicClick = useCallback((formProps: UseFormReturn<MembershipSettingsSchemaType>) => {
         formProps.setValue('membershipPricingType', 'dynamic')
-        formProps.setValue('membershipCost', '0', {
+        formProps.setValue('membershipCost', '0.0', {
             shouldValidate: true,
         })
     }, [])
@@ -67,14 +72,16 @@ export function EditPricing() {
 
     return (
         <Stack gap="sm" rounded="md">
-            <RadioCard
-                name="membershipPricingType"
-                value="dynamic"
-                title="Dynamic"
-                description="Free for the first 100 members, then increase from ..."
-                onClick={() => onDynamicClick(formProps)}
-                {...formProps}
-            />
+            {enableDynamicPricing && (
+                <RadioCard
+                    name="membershipPricingType"
+                    value="dynamic"
+                    title="Dynamic"
+                    description="Free for the first 100 members, then increase from ..."
+                    onClick={() => onDynamicClick(formProps)}
+                    {...formProps}
+                />
+            )}
             <RadioCard
                 name="membershipPricingType"
                 value="fixed"

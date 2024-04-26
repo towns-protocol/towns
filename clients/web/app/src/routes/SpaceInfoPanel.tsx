@@ -57,6 +57,7 @@ import { openSeaAssetUrl } from '@components/Web3/utils'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { Panel } from '@components/Panel/Panel'
 import { PrivyWrapper } from 'privy/PrivyProvider'
+import { EditMembershipSettingsPanel } from '@components/SpaceSettingsPanel/EditMembershipSettingsPanel'
 import { AllChannelsList } from './AllChannelsList/AllChannelsList'
 import { PublicTownPage } from './PublicTownPage/PublicTownPage'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
@@ -80,7 +81,9 @@ export const SpaceInfo = () => {
     const { isTouch } = useDevice()
     const [searchParams, setSearchParams] = useSearchParams()
     // touch handles roles panel with modals
-    const isRolesPanel = !isTouch && searchParams.get('roles') != null
+    const isRolesPanel = !isTouch && searchParams.get(CHANNEL_INFO_PARAMS.ROLES) != null
+    const isEditMembershipPanel =
+        !isTouch && searchParams.get(CHANNEL_INFO_PARAMS.EDIT_MEMBERSHIP) != null
     const { leaveRoom } = useTownsClient()
     const channels = useSpaceChannels()
     const { loggedInWalletAddress } = useConnectivity()
@@ -117,10 +120,10 @@ export const SpaceInfo = () => {
         | 'browse-channels'
         | 'members'
         | 'confirm-leave'
-        | 'settings'
         | 'preview'
         | 'wallets'
-        | 'roles'
+        | 'edit-membership'
+        | (typeof CHANNEL_INFO_PARAMS)[keyof typeof CHANNEL_INFO_PARAMS]
         | undefined
     >(undefined)
 
@@ -264,7 +267,16 @@ export const SpaceInfo = () => {
         if (!isRolesPanel) {
             openPanel(CHANNEL_INFO_PARAMS.ROLES)
             if (isTouch) {
-                setActiveModal('roles')
+                setActiveModal(CHANNEL_INFO_PARAMS.ROLES)
+            }
+        }
+    })
+
+    const onEditSpaceSettingsClick = useEvent(() => {
+        if (!isEditMembershipPanel) {
+            openPanel(CHANNEL_INFO_PARAMS.EDIT_MEMBERSHIP)
+            if (isTouch) {
+                setActiveModal(CHANNEL_INFO_PARAMS.EDIT_MEMBERSHIP)
             }
         }
     })
@@ -289,7 +301,7 @@ export const SpaceInfo = () => {
     }, [leaveRoom, navigate, spaceID])
 
     const onEditSpaceNameClick = useCallback(() => {
-        setActiveModal('settings')
+        setActiveModal(CHANNEL_INFO_PARAMS.EDIT_MEMBERSHIP)
     }, [setActiveModal])
 
     return (
@@ -501,6 +513,13 @@ export const SpaceInfo = () => {
                     <Paragraph color="default">Preview</Paragraph>
                 </PanelButton>
 
+                {canEdit && (
+                    <PanelButton onClick={onEditSpaceSettingsClick}>
+                        <Icon type="treasury" size="square_sm" color="gray2" />
+                        <Paragraph color="default">Edit Membership Settings</Paragraph>
+                    </PanelButton>
+                )}
+
                 <PanelButton onClick={onMembersClick}>
                     <Icon type="people" size="square_sm" color="gray2" />
                     <Paragraph color="default">
@@ -571,7 +590,7 @@ export const SpaceInfo = () => {
                 />
             )}
 
-            {activeModal === 'settings' && (
+            {activeModal === CHANNEL_INFO_PARAMS.EDIT_MEMBERSHIP && (
                 <PrivyWrapper>
                     <SpaceNameModal onHide={() => setActiveModal(undefined)} />
                 </PrivyWrapper>
@@ -597,9 +616,15 @@ export const SpaceInfo = () => {
                 </ModalContainer>
             )}
 
+            {activeModal === 'edit-membership' && (
+                <ModalContainer touchTitle="Wallets" onHide={() => setActiveModal(undefined)}>
+                    <EditMembershipSettingsPanel />
+                </ModalContainer>
+            )}
+
             {isRolesPanel && <RolesPanel />}
 
-            {activeModal === 'roles' && (
+            {activeModal === CHANNEL_INFO_PARAMS.ROLES && (
                 <ModalContainer
                     padding="none"
                     border="none"

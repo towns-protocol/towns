@@ -76,6 +76,7 @@ export { useTimelineThreadStats } from './hooks/use-timeline-thread-stats'
 export { useUpdateChannelTransaction } from './hooks/use-update-channel-transaction'
 export { useUpdateRoleTransaction } from './hooks/use-update-role-transaction'
 export { useUpdateSpaceNameTransaction } from './hooks/use-update-space-name-transaction'
+export { useEditSpaceMembershipTransaction } from './hooks/use-edit-space-membership-transaction'
 export { useUser } from './hooks/use-user'
 export {
     useBannedWalletAddresses,
@@ -94,7 +95,7 @@ export {
     useGetRootKeyFromLinkedWallet,
 } from './hooks/use-linked-wallets'
 export { useHasMemberNft } from './hooks/use-has-member-nft'
-export { usePricingModules } from './hooks/use-pricing-modules'
+export { usePricingModules, usePricingModuleForMembership } from './hooks/use-pricing-modules'
 
 export { useCasablancaStore } from './store/use-casablanca-store'
 export { useFullyReadMarkerStore } from './store/use-fully-read-marker-store'

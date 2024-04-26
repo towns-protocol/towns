@@ -40,6 +40,7 @@ export const CHANNEL_INFO_PARAMS = {
     THREAD: 'thread',
     TOWN_INFO: 'town-info',
     WALLETS: 'wallets',
+    EDIT_MEMBERSHIP: 'edit-membership',
 } as const
 
 export type CHANNEL_INFO_PARAMS_VALUES =

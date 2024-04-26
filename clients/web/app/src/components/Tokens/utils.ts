@@ -36,8 +36,10 @@ export function convertRuleDataToTokenFormSchema(
     ruleData: IRuleEntitlement.RuleDataStruct,
 ): TokenEntitlement[] {
     return createContractCheckOperationFromTree(ruleData).map((p) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { threshold, ...rest } = p
         return {
-            ...p,
+            ...rest,
             chainId: Number(p.chainId),
             type: convertOperationTypeToTokenType(p.type),
             quantity: Number(p.threshold),

@@ -18,12 +18,12 @@ export const radio = style({
     selectors: {
         '&:after': {
             content: '',
-            position: 'absolute',
-            display: 'block',
+            display: 'block !important',
             width: '50%',
             height: '50%',
             background: vars.color.foreground.default,
             borderRadius: '100%',
+            marginTop: '0 !important',
             opacity: 0,
         },
         '&:checked:after': {
