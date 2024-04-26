@@ -86,17 +86,14 @@ function set_env() {
 
     export VITE_ADDRESS_SPACE_FACTORY=$(get_aws_parameter_store_value_for_contract $pr_number "space-factory")
     export VITE_ADDRESS_SPACE_OWNER=$(get_aws_parameter_store_value_for_contract $pr_number "space-owner")
-    export VITE_ADDRESS_WALLET_LINK=$(get_aws_parameter_store_value_for_contract $pr_number "wallet-link")
     export VITE_ADDRESS_RIVER_REGISTRY=$(get_aws_parameter_store_value_for_contract $pr_number "river-registry")
 
     assert_is_address "$VITE_ADDRESS_SPACE_FACTORY"
     assert_is_address "$VITE_ADDRESS_SPACE_OWNER"
-    assert_is_address "$VITE_ADDRESS_WALLET_LINK"
     assert_is_address "$VITE_ADDRESS_RIVER_REGISTRY"
 
     echo "Setting VITE_ADDRESS_SPACE_FACTORY to $VITE_ADDRESS_SPACE_FACTORY"
     echo "Setting VITE_ADDRESS_SPACE_OWNER to $VITE_ADDRESS_SPACE_OWNER"
-    echo "Setting VITE_ADDRESS_WALLET_LINK to $VITE_ADDRESS_WALLET_LINK"
     echo "Setting VITE_ADDRESS_RIVER_REGISTRY to $VITE_ADDRESS_RIVER_REGISTRY"
 
     echo "Setting VITE_TRANSIENT_ENV_GITHUB_PR_NUMBER to $pr_number"

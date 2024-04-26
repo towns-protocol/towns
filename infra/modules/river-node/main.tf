@@ -373,10 +373,6 @@ resource "aws_ecs_task_definition" "river-fargate" {
         valueFrom = var.system_parameters.space_factory_contract_address_parameter.arn
       },
       {
-        name      = "WALLETLINKCONTRACT__ADDRESS"
-        valueFrom = var.system_parameters.wallet_link_contract_address_parameter.arn
-      },
-      {
         name      = "REGISTRYCONTRACT__ADDRESS",
         valueFrom = var.system_parameters.river_registry_contract_address_parameter.arn
       },

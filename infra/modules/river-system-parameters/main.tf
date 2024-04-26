@@ -14,18 +14,6 @@ resource "aws_ssm_parameter" "space_factory_contract_address" {
   tags = module.global_constants.tags
 }
 
-resource "aws_ssm_parameter" "wallet_link_contract_address" {
-  name  = "wallet-link-contract-address-${terraform.workspace}"
-  type  = "String"
-  value = "NULL"
-
-  lifecycle {
-    ignore_changes = [value]
-  }
-
-  tags = module.global_constants.tags
-}
-
 resource "aws_ssm_parameter" "river_registry_contract_address" {
   name  = "river-registry-contract-address-${terraform.workspace}"
   type  = "String"
@@ -79,7 +67,6 @@ resource "aws_iam_policy" "river_system_parameters_policy" {
         ]
         Resource = [
           aws_ssm_parameter.space_factory_contract_address.arn,
-          aws_ssm_parameter.wallet_link_contract_address.arn,
           aws_ssm_parameter.river_registry_contract_address.arn,
           aws_ssm_parameter.entitlement_checker_contract_address.arn,
           aws_ssm_parameter.space_owner_contract_address.arn,
