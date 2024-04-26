@@ -156,6 +156,8 @@ export const ContractName = {
     Roles: 'Roles',
     SpaceFactory: 'SpaceFactory',
     Space: 'Space',
+    Prepay: 'Prepay',
+    Membership: 'Membership',
 } as const
 
 export type ContractName = (typeof ContractName)[keyof typeof ContractName]
@@ -185,6 +187,11 @@ export const FunctionName = {
     // Banning.sol
     ban: 'ban',
     unban: 'unban',
+    // PrepayBase.sol
+    prepayMembership: 'prepayMembership',
+    // Membership.sol
+    setMembershipLimit: 'setMembershipLimit',
+    setMembershipPrice: 'setMembershipPrice',
 } as const
 
 export type FunctionName = (typeof FunctionName)[keyof typeof FunctionName]
@@ -211,6 +218,11 @@ export const EventName = {
     // Banning.sol
     Banned: 'Banned',
     Unbanned: 'Unbanned',
+    // PrepayBase.sol
+    PrepayBase__Prepaid: 'PrepayBase__Prepaid',
+    // Membership.sol
+    MembershipLimitUpdated: 'MembershipLimitUpdated',
+    MembershipPriceUpdated: 'MembershipPriceUpdated',
 
     Transfer: 'Transfer',
 } as const
@@ -222,6 +234,7 @@ const FunctionHash = {
     ...FunctionName,
     createSpace_linkWallet: 'createSpace_linkWallet',
     joinSpace_linkWallet: 'joinSpace_linkWallet',
+    editMembershipSettings: 'editMembershipSettings',
 } as const
 
 type FunctionHash = (typeof FunctionHash)[keyof typeof FunctionHash]

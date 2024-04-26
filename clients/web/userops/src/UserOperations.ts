@@ -4,8 +4,13 @@ import {
     IArchitectBase,
     SpaceDapp,
     createEntitlementStruct,
+    UpdateRoleParams,
+    Space,
+    findDynamicPricingModule,
+    findFixedPricingModule,
 } from '@river-build/web3'
 import { ethers } from 'ethers'
+import isEqual from 'lodash/isEqual'
 import { ISendUserOperationResponse, Client as UseropClient, Presets } from 'userop'
 import { UserOpsConfig, UserOpParams, FunctionHash } from './types'
 import { userOpsStore } from './userOpsStore'
@@ -641,7 +646,6 @@ export class UserOps {
         args: Parameters<SpaceDapp['updateRole']>,
     ): Promise<ISendUserOperationResponse> {
         const [updateRoleParams, signer] = args
-
         if (!this.spaceDapp) {
             throw new Error('spaceDapp is required')
         }
@@ -649,12 +653,37 @@ export class UserOps {
         if (!space) {
             throw new Error(`Space with spaceId "${updateRoleParams.spaceNetworkId}" is not found.`)
         }
+        const { functionHashForPaymasterProxy, callData } = await this.encodeUpdateRoleData({
+            space,
+            updateRoleParams,
+        })
+
+        return this.sendUserOp({
+            toAddress: [space.Roles.address],
+            callData: [callData],
+            signer,
+            spaceId: updateRoleParams.spaceNetworkId,
+            functionHashForPaymasterProxy,
+        })
+    }
+
+    public async encodeUpdateRoleData({
+        space,
+        updateRoleParams,
+    }: {
+        space: Space
+        updateRoleParams: UpdateRoleParams
+    }) {
         const functionName = 'updateRole'
 
         const functionHashForPaymasterProxy = this.getFunctionSigHash(
             space.Roles.interface,
             functionName,
         )
+
+        if (!this.spaceDapp) {
+            throw new Error('spaceDapp is required')
+        }
 
         const updatedEntitlemets = await this.spaceDapp.createUpdatedEntitlements(
             space,
@@ -668,13 +697,7 @@ export class UserOps {
             updatedEntitlemets,
         ])
 
-        return this.sendUserOp({
-            toAddress: [space.Roles.address],
-            callData: [callData],
-            signer,
-            spaceId: updateRoleParams.spaceNetworkId,
-            functionHashForPaymasterProxy,
-        })
+        return { functionHashForPaymasterProxy, callData }
     }
 
     public async sendBanWalletAddressOp(args: Parameters<SpaceDapp['banWalletAddress']>) {
@@ -729,6 +752,217 @@ export class UserOps {
             signer,
             spaceId: spaceId,
             functionHashForPaymasterProxy,
+        })
+    }
+
+    public async getDetailsForEditingMembershipSettings(spaceId: string, space: Space) {
+        if (!this.spaceDapp) {
+            throw new Error('spaceDapp is required')
+        }
+        const membershipInfo = await this.spaceDapp.getMembershipInfo(spaceId)
+
+        const prepaidMembershipSupply = await this.spaceDapp.getPrepaidMembershipSupply(spaceId)
+
+        ///////////////////////////////////////////////////////////////////////////////////
+        //// update minter role ///////////////////////////////////////////////////////////
+        const entitlementShims = await space.getEntitlementShims()
+        if (!entitlementShims.length) {
+            throw new Error('Rule entitlement not found')
+        }
+
+        // minter role = 1
+        const roleEntitlements = await space.getRoleEntitlements(entitlementShims, 1)
+        return {
+            membershipInfo,
+            prepaidMembershipSupply,
+            roleEntitlements,
+        }
+    }
+
+    public async sendEditMembershipSettingsOp(args: {
+        spaceId: string
+        updateRoleParams: UpdateRoleParams
+        membershipParams: {
+            pricingModule: string
+            membershipPrice: ethers.BigNumberish // wei
+            membershipSupply: ethers.BigNumberish
+            freeAllocationForPaidSpace?: ethers.BigNumberish
+        }
+        prepaidMembershipParams: {
+            supply: ethers.BigNumberish
+        }
+        signer: ethers.Signer
+    }) {
+        const spaceId = args.spaceId
+        if (!this.spaceDapp) {
+            throw new Error('spaceDapp is required')
+        }
+        const txs: {
+            callData: string
+            toAddress: string
+        }[] = []
+
+        const space = await this.spaceDapp.getSpace(spaceId)
+
+        if (!space) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+        }
+
+        const {
+            pricingModule: newPricingModule,
+            membershipPrice: newMembershipPrice,
+            membershipSupply: newMembershipSupply,
+            freeAllocationForPaidSpace: freeAllocation,
+        } = args.membershipParams
+        const newFreeAllocationForPaidSpace = freeAllocation ?? 1
+
+        const newRuleData = args.updateRoleParams.ruleData
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const newPrepaidSupply = args.prepaidMembershipParams.supply
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { membershipInfo, prepaidMembershipSupply, roleEntitlements } =
+            await this.getDetailsForEditingMembershipSettings(spaceId, space)
+
+        ///////////////////////////////////////////////////////////////////////////////////
+        //// update minter role ///////////////////////////////////////////////////////////
+        const entitlementShims = await space.getEntitlementShims()
+        if (!entitlementShims.length) {
+            throw new Error('Rule entitlement not found')
+        }
+
+        if (!isEqual(newRuleData, roleEntitlements?.ruleData)) {
+            const roleData = await this.encodeUpdateRoleData({
+                space,
+                updateRoleParams: args.updateRoleParams,
+            })
+
+            txs.push({
+                callData: roleData.callData,
+                toAddress: space.Roles.address,
+            })
+        }
+
+        ///////////////////////////////////////////////////////////////////////////////////
+        //// update membership pricing ////////////////////////////////////////////////////
+        // To change a free membership to a paid membership:
+        // 1. pricing module must be changed to a non-fixed pricing module
+        // 2. freeAllocation must be > 0 (contract reverts otherwise). If set to 1 (recommended), the first membership on the paid space will be free
+        // 3. membership price must be set
+        //
+        // Cannot change a paid space to a free space (contract reverts)
+
+        const pricingModules = await this.spaceDapp.listPricingModules()
+        const fixedPricingModule = findFixedPricingModule(pricingModules)
+        const dynamicPricingModule = findDynamicPricingModule(pricingModules)
+
+        if (!fixedPricingModule || !dynamicPricingModule) {
+            throw new Error('Pricing modules not found')
+        }
+
+        const currentPricingModule = await space.Membership.read.getMembershipPricingModule()
+        const currentIsFixedPricing =
+            currentPricingModule.toLowerCase() ===
+            fixedPricingModule.module.toString().toLowerCase()
+        const newIsFixedPricing =
+            newPricingModule.toLowerCase() === fixedPricingModule.module.toString().toLowerCase()
+
+        // switching to paid space
+        if (!currentIsFixedPricing && newIsFixedPricing) {
+            const pricingModuleCallData = await space.Membership.encodeFunctionData(
+                'setMembershipPricingModule',
+                [fixedPricingModule.module],
+            )
+            txs.push({
+                callData: pricingModuleCallData,
+                toAddress: space.Membership.address,
+            })
+
+            const freeAllocationCallData = await space.Membership.encodeFunctionData(
+                'setMembershipFreeAllocation',
+                [newFreeAllocationForPaidSpace],
+            )
+            txs.push({
+                callData: freeAllocationCallData,
+                toAddress: space.Membership.address,
+            })
+
+            const membershipPriceCallData = await space.Membership.encodeFunctionData(
+                'setMembershipPrice',
+                [newMembershipPrice],
+            )
+            txs.push({
+                callData: membershipPriceCallData,
+                toAddress: space.Membership.address,
+            })
+        }
+        // switching to free space
+        else if (currentIsFixedPricing && !newIsFixedPricing) {
+            throw new CodeException(
+                'Cannot change a paid space to a free space',
+                'USER_OPS_CANNOT_CHANGE_TO_FREE_SPACE',
+            )
+        }
+        // price update only
+        else if (currentIsFixedPricing && newIsFixedPricing) {
+            const membershipPriceCallData = await space.Membership.encodeFunctionData(
+                'setMembershipPrice',
+                [newMembershipPrice],
+            )
+            txs.push({
+                callData: membershipPriceCallData,
+                toAddress: space.Membership.address,
+            })
+        }
+        // free space to free space
+        else if (!currentIsFixedPricing && !newIsFixedPricing) {
+            // do nothing
+        }
+
+        ///////////////////////////////////////////////////////////////////////////////////
+        //// update membership limit ////////////////////////////////////////////////////
+        if (
+            !ethers.BigNumber.from(membershipInfo.maxSupply).eq(
+                ethers.BigNumber.from(newMembershipSupply),
+            )
+        ) {
+            const callData = await space.Membership.encodeFunctionData('setMembershipLimit', [
+                newMembershipSupply,
+            ])
+            txs.push({
+                callData,
+                toAddress: space.Membership.address,
+            })
+        }
+
+        ///////////////////////////////////////////////////////////////////////////////////
+        //// update prepay seats //////////////////////////////////////////////////////////
+        //
+        // TODO: get this to work
+        // also, need to pass value for prepayMembership
+        // executeBatch does not support value
+        // therefore this tx would have to be separate
+        //
+        // if (!prepaidMembershipSupply.eq(ethers.BigNumber.from(newPrepaidSupply))) {
+        //     const callData = await this.spaceDapp.prepay.encodeFunctionData('prepayMembership', [
+        //         space.Membership.address,
+        //         newPrepaidSupply,
+        //     ])
+        //     txs.push({
+        //         callData,
+        //         toAddress: this.spaceDapp.prepay.address,
+        //     })
+        // }
+        ///////////////////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////////////////////////////
+
+        return this.sendUserOp({
+            toAddress: txs.map((tx) => tx.toAddress),
+            callData: txs.map((tx) => tx.callData),
+            signer: args.signer,
+            spaceId,
+            functionHashForPaymasterProxy: 'editMembershipSettings',
         })
     }
 

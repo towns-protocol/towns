@@ -4,15 +4,27 @@ import { paymasterProxyMiddleware } from '../src/paymasterProxyMiddleware'
 import { ethers } from 'ethers'
 import {
     Address,
+    CheckOperationType,
     CreateSpaceParams,
     IArchitectBase,
     NoopRuleData,
     Permission,
-    PricingModuleStruct,
     SpaceDapp,
+    createOperationsTree,
+    getDynamicPricingModule,
+    getFixedPricingModule,
     getWeb3Deployment,
 } from '@river-build/web3'
 import { ISendUserOperationResponse } from 'userop'
+
+export const BORED_APE_ADDRESS = '0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d'
+export const boredApeRuleData = createOperationsTree([
+    {
+        address: BORED_APE_ADDRESS,
+        chainId: BigInt(1),
+        type: CheckOperationType.ERC721,
+    },
+])
 
 export const UserOps = ({ spaceDapp }: { spaceDapp: ISpaceDapp }) => {
     return new TestUserOps({
@@ -30,6 +42,13 @@ export const UserOps = ({ spaceDapp }: { spaceDapp: ISpaceDapp }) => {
     })
 }
 
+function getSpaceAndChannelName(signerAddress: string) {
+    return {
+        spaceName: `USEROPS_TESTS__TOWN__${signerAddress}__${new Date().getTime()}`,
+        channelName: `USEROPS_TESTS__CHANNEL__${signerAddress}__${new Date().getTime()}`,
+    }
+}
+
 export async function createUngatedSpace({
     userOps,
     spaceDapp,
@@ -44,12 +63,11 @@ export async function createUngatedSpace({
     spaceName?: string
 }): Promise<ISendUserOperationResponse> {
     const signerAddress = await signer.getAddress()
-    const name = spaceName ?? `USEROPS_TESTS__TOWN__${signerAddress}__${new Date().getTime()}`
-    const channelName = `USEROPS_TESTS__CHANNEL__${signerAddress}__${new Date().getTime()}`
-
+    const { spaceName: generatedSpaceName, channelName: channelName } =
+        getSpaceAndChannelName(signerAddress)
+    const name = spaceName ?? generatedSpaceName
     const dynamicPricingModule = await getDynamicPricingModule(spaceDapp)
 
-    // Everyone role
     const membershipInfo: IArchitectBase.MembershipStruct = {
         settings: {
             name: 'Everyone',
@@ -80,38 +98,105 @@ export async function createUngatedSpace({
     return userOps.sendCreateSpaceOp([townInfo, signer])
 }
 
-export const getDynamicPricingModule = async (spaceDapp: ISpaceDapp | undefined) => {
-    if (!spaceDapp) {
-        throw new Error('getDynamicPricingModule: No spaceDapp')
+export async function createGatedSpace({
+    userOps,
+    spaceDapp,
+    signer,
+    rolePermissions,
+    spaceName,
+}: {
+    userOps: TestUserOps
+    spaceDapp: ISpaceDapp
+    signer: ethers.Signer
+    rolePermissions: Permission[]
+    spaceName?: string
+}): Promise<ISendUserOperationResponse> {
+    const signerAddress = await signer.getAddress()
+    const { spaceName: generatedSpaceName, channelName: channelName } =
+        getSpaceAndChannelName(signerAddress)
+    const name = spaceName ?? generatedSpaceName
+
+    const dynamicPricingModule = await getDynamicPricingModule(spaceDapp)
+
+    const membershipInfo: IArchitectBase.MembershipStruct = {
+        settings: {
+            name: 'Gated Space',
+            symbol: 'MEMBER',
+            price: 0,
+            maxSupply: 100,
+            duration: 0,
+            currency: ethers.constants.AddressZero,
+            feeRecipient: signerAddress,
+            freeAllocation: 0,
+            pricingModule: dynamicPricingModule.module,
+        },
+        permissions: rolePermissions,
+        requirements: {
+            everyone: false,
+            users: [],
+            ruleData: boredApeRuleData,
+        },
     }
-    const pricingModules = await spaceDapp.listPricingModules()
-    const dynamicPricingModule = findDynamicPricingModule(pricingModules)
-    if (!dynamicPricingModule) {
-        throw new Error('getDynamicPricingModule: no dynamicPricingModule')
-    }
-    return dynamicPricingModule
+
+    const townInfo = {
+        spaceName: name,
+        spaceMetadata: name,
+        channelName,
+        membership: membershipInfo,
+    } satisfies CreateSpaceParams
+
+    return userOps.sendCreateSpaceOp([townInfo, signer])
 }
 
-export const getFixedPricingModule = async (spaceDapp: ISpaceDapp | undefined) => {
-    if (!spaceDapp) {
-        throw new Error('getFixedPricingModule: No spaceDapp')
+export async function createFixedPriceSpace({
+    userOps,
+    spaceDapp,
+    signer,
+    rolePermissions,
+    spaceName,
+}: {
+    userOps: TestUserOps
+    spaceDapp: ISpaceDapp
+    signer: ethers.Signer
+    rolePermissions: Permission[]
+    spaceName?: string
+}): Promise<ISendUserOperationResponse> {
+    const signerAddress = await signer.getAddress()
+    const { spaceName: generatedSpaceName, channelName: channelName } =
+        getSpaceAndChannelName(signerAddress)
+    const name = spaceName ?? generatedSpaceName
+
+    const fixedPricingModule = await getFixedPricingModule(spaceDapp)
+
+    const membershipInfo: IArchitectBase.MembershipStruct = {
+        settings: {
+            name: 'Gated Space',
+            symbol: 'MEMBER',
+            price: ethers.utils.parseEther('0.5'),
+            maxSupply: 100,
+            duration: 0,
+            currency: ethers.constants.AddressZero,
+            feeRecipient: signerAddress,
+            freeAllocation: 1, // needs to be > 0
+            pricingModule: fixedPricingModule.module,
+        },
+        permissions: rolePermissions,
+        requirements: {
+            everyone: true,
+            users: [],
+            ruleData: NoopRuleData,
+        },
     }
-    const pricingModules = await spaceDapp.listPricingModules()
-    const fixedPricingModule = findFixedPricingModule(pricingModules)
-    if (!fixedPricingModule) {
-        throw new Error('getFixedPricingModule: no fixedPricingModule')
-    }
-    return fixedPricingModule
+
+    const townInfo = {
+        spaceName: name,
+        spaceMetadata: name,
+        channelName,
+        membership: membershipInfo,
+    } satisfies CreateSpaceParams
+
+    return userOps.sendCreateSpaceOp([townInfo, signer])
 }
-
-export const TIERED_PRICING_ORACLE = 'TieredLogPricingOracle'
-export const FIXED_PRICING = 'FixedPricing'
-
-export const findDynamicPricingModule = (pricingModules: PricingModuleStruct[]) =>
-    pricingModules.find((module) => module.name === TIERED_PRICING_ORACLE)
-
-export const findFixedPricingModule = (pricingModules: PricingModuleStruct[]) =>
-    pricingModules.find((module) => module.name === FIXED_PRICING)
 
 export function generatePrivyWalletIfKey(privateKey?: string) {
     if (privateKey) {
@@ -133,6 +218,7 @@ export const waitForOpAndTx = async (
     provider: ethers.providers.StaticJsonRpcProvider,
 ) => {
     const createSpaceOpReceipt = await op.wait()
+    expect(createSpaceOpReceipt?.transactionHash).toBeDefined()
     const txReceipt = await provider.waitForTransaction(createSpaceOpReceipt!.transactionHash)
     expect(txReceipt?.status).toBe(1)
     return txReceipt

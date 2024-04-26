@@ -52,6 +52,11 @@ export const EventByMethod = new Map<keyof typeof FunctionName, keyof typeof Eve
     // Banning.sol
     ['ban', 'Banned'],
     ['unban', 'Unbanned'],
+    // PrepayBase.sol
+    ['prepayMembership', 'PrepayBase__Prepaid'],
+    // Membership.sol
+    ['setMembershipLimit', 'MembershipLimitUpdated'],
+    ['setMembershipPrice', 'MembershipPriceUpdated'],
 ])
 
 function createContract(

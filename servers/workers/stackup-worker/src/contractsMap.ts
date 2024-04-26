@@ -7,6 +7,8 @@ import BaseSepoliaRolesAbi from '@river-build/generated/v3/abis/Roles.abi.json' 
 import BaseSepoliaSpaceFactoryContract from '@river-build/generated/deployments/gamma/base/addresses/spaceFactory.json' assert { type: 'json' }
 import BaseSepoliaSpaceContract from '@river-build/generated/deployments/gamma/base/addresses/space.json' assert { type: 'json' }
 import BaseSepoliaWalletLinkContract from '@river-build/generated/deployments/gamma/base/addresses/walletLink.json' assert { type: 'json' }
+import BaseSepoliaPrepayAbi from '@river-build/generated/v3/abis/PrepayFacet.abi.json' assert { type: 'json' }
+import BaseSepoliaMembershipAbi from '@river-build/generated/v3/abis/MembershipFacet.abi.json' assert { type: 'json' }
 import { ContractName } from './types'
 import { ethers } from 'ethers'
 
@@ -47,5 +49,13 @@ export const BaseSepoliaContracts = new Map<keyof typeof ContractName, ContractD
     [
         ContractName.Banning,
         { address: BaseSepoliaSpaceContract.address, abi: BaseSepoliaBanningAbi },
+    ],
+    [
+        ContractName.Prepay,
+        { address: BaseSepoliaSpaceContract.address, abi: BaseSepoliaPrepayAbi }, //
+    ],
+    [
+        ContractName.Membership,
+        { address: BaseSepoliaSpaceContract.address, abi: BaseSepoliaMembershipAbi }, //
     ],
 ])

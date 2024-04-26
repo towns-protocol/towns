@@ -86,7 +86,7 @@ jobs:
 
             
             - name: Run @towns/userop package tests with verification (SpaceDapp/base-sepolia)
-              timeout-minutes: 15
+              timeout-minutes: 20
               env:
                 AA_PAYMASTER_PROXY_URL: http://127.0.0.1:8787
                 AA_PAYMASTER_PROXY_AUTH_SECRET: Zm9v

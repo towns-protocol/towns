@@ -17,7 +17,7 @@ import {
     checkUseTownKVOverrides,
 } from './checks'
 import { isPrivyApiSearchResponse, searchPrivyForUser } from './privy'
-import { ContractName, FunctionName } from './types'
+import { ContractName, EventName, FunctionName } from './types'
 
 interface ITownTransactionParams {
     rootKeyAddress: `0x${string}`
@@ -38,6 +38,7 @@ export const TRANSACTION_LIMIT_DEFAULTS_PER_DAY = {
     linkWallet: 10,
     updateSpaceInfo: 10,
     banUnban: 10,
+    prepayMembership: 10,
 }
 
 /* Verifies if a user can create a town
@@ -311,7 +312,7 @@ export async function verifyUseTown(
     }
 }
 
-export async function verifyUpdateTown(
+export async function verifyUpdateSpaceInfo(
     params: ITownTransactionParams & { transactionName: FunctionName },
 ): Promise<IVerificationResult> {
     const spaceDapp = await createSpaceDappForNetwork(params.env)
@@ -377,28 +378,8 @@ export async function verifyUpdateTown(
 
         let maxActionsPerDay: number | null = null
         switch (params.transactionName) {
-            case 'createChannel':
-            case 'updateChannel':
-            case 'removeChannel':
-                maxActionsPerDay = TRANSACTION_LIMIT_DEFAULTS_PER_DAY.channelCreate
-                break
-            case 'createRole':
-            case 'removeRole':
-            case 'updateRole':
-            case 'removeRoleFromChannel':
-            case 'addRoleToChannel':
-                maxActionsPerDay = TRANSACTION_LIMIT_DEFAULTS_PER_DAY.roleSet
-                break
-            case 'removeEntitlementModule':
-            case 'addEntitlementModule':
-                maxActionsPerDay = TRANSACTION_LIMIT_DEFAULTS_PER_DAY.entitlementSet
-                break
             case 'updateSpaceInfo':
                 maxActionsPerDay = TRANSACTION_LIMIT_DEFAULTS_PER_DAY.updateSpaceInfo
-                break
-            case 'ban':
-            case 'unban':
-                maxActionsPerDay = TRANSACTION_LIMIT_DEFAULTS_PER_DAY.banUnban
                 break
             default:
                 maxActionsPerDay = null
@@ -445,8 +426,7 @@ function mapTransactionNameToContractName(transactionName: FunctionName): Contra
 /* Verifies if a user can link an external wallet
 
    Verification criteria in order:
-   1. user must exist in privy
-   2. user must have a linked wallet quota available (10/day max)
+   1. user must have a linked wallet quota available (10/day max)
    OR 
    1. if more restrictive whitelist criteria is enabled,
    2. user address must also be on whitelist to link
@@ -530,6 +510,138 @@ export async function verifyLinkWallet(
             return { verified: false, error: 'user has reached max wallet links for the day' }
         }
         return { verified: true, maxActionsPerDay: TRANSACTION_LIMIT_DEFAULTS_PER_DAY.linkWallet }
+    } catch (error) {
+        return {
+            verified: false,
+            error: isErrorType(error) ? error?.message : 'Unkown error',
+        }
+    }
+}
+
+export async function verifyPrepaid(params: ITownTransactionParams): Promise<IVerificationResult> {
+    const spaceDapp = await createSpaceDappForNetwork(params.env)
+    if (!spaceDapp) {
+        return { verified: false, error: 'Unable to create SpaceDapp' }
+    }
+
+    try {
+        // check for restrictive rule which requires whitelist overrides for user address
+        const verification = await checkLinkKVOverrides(params.rootKeyAddress, params.env)
+        if (verification !== null) {
+            if (verification.verified === false) {
+                return { verified: false, error: verification.error }
+            }
+        }
+        // check max quota not exhausted
+        const network = networkMap.get(params.env.ENVIRONMENT)
+        if (!network) {
+            throw new Error(`Unknown environment network: ${params.env.ENVIRONMENT}`)
+        }
+
+        const space = spaceDapp.getSpace(params.townId)
+        if (!space) {
+            return { verified: false, error: 'Unable to get space for prepay membership' }
+        }
+
+        const queryResult = await runLogQuery(
+            params.env.ENVIRONMENT,
+            network,
+            params.env,
+            'Prepay',
+            'PrepayBase__Prepaid',
+            [space.Membership.address, null],
+            createFilterWrapper,
+            NetworkBlocksPerDay.get(params.env.ENVIRONMENT) ?? undefined,
+        )
+
+        if (!queryResult || !queryResult.events) {
+            return { verified: false, error: 'Unable to queryFilter for prepay memberships' }
+        }
+        if (params.env.SKIP_LIMIT_VERIFICATION === 'true') {
+            return {
+                verified: true,
+                maxActionsPerDay: 1_000_000,
+            }
+        }
+        if (queryResult.events.length >= TRANSACTION_LIMIT_DEFAULTS_PER_DAY.prepayMembership) {
+            return {
+                verified: false,
+                error: 'user has reached max prepay membership operations for the day',
+            }
+        }
+        return {
+            verified: true,
+            maxActionsPerDay: TRANSACTION_LIMIT_DEFAULTS_PER_DAY.prepayMembership,
+        }
+    } catch (error) {
+        return {
+            verified: false,
+            error: isErrorType(error) ? error?.message : 'Unkown error',
+        }
+    }
+}
+
+export async function verifyMembershipChecks(
+    params: ITownTransactionParams & {
+        eventName: 'MembershipLimitUpdated' | 'MembershipPriceUpdated'
+    },
+): Promise<IVerificationResult> {
+    const spaceDapp = await createSpaceDappForNetwork(params.env)
+    if (!spaceDapp) {
+        return { verified: false, error: 'Unable to create SpaceDapp' }
+    }
+
+    try {
+        // check for restrictive rule which requires whitelist overrides for user address
+        const verification = await checkLinkKVOverrides(params.rootKeyAddress, params.env)
+        if (verification !== null) {
+            if (verification.verified === false) {
+                return { verified: false, error: verification.error }
+            }
+        }
+        // check max quota not exhausted
+        const network = networkMap.get(params.env.ENVIRONMENT)
+        if (!network) {
+            throw new Error(`Unknown environment network: ${params.env.ENVIRONMENT}`)
+        }
+
+        const space = spaceDapp.getSpace(params.townId)
+        if (!space) {
+            return { verified: false, error: 'Unable to get space for prepay membership' }
+        }
+
+        const queryResult = await runLogQuery(
+            params.env.ENVIRONMENT,
+            network,
+            params.env,
+            'Membership',
+            params.eventName,
+            // TODO: these events should be indexed by sender
+            // https://linear.app/hnt-labs/issue/HNT-5985/imembershipsol-events-should-have-msgsender
+            [params.senderAddress, null],
+            createFilterWrapper,
+            NetworkBlocksPerDay.get(params.env.ENVIRONMENT) ?? undefined,
+        )
+
+        if (!queryResult || !queryResult.events) {
+            return { verified: false, error: 'Unable to queryFilter for prepay memberships' }
+        }
+        if (params.env.SKIP_LIMIT_VERIFICATION === 'true') {
+            return {
+                verified: true,
+                maxActionsPerDay: 1_000_000,
+            }
+        }
+        if (queryResult.events.length >= TRANSACTION_LIMIT_DEFAULTS_PER_DAY.prepayMembership) {
+            return {
+                verified: false,
+                error: 'user has reached max prepay membership operations for the day',
+            }
+        }
+        return {
+            verified: true,
+            maxActionsPerDay: TRANSACTION_LIMIT_DEFAULTS_PER_DAY.prepayMembership,
+        }
     } catch (error) {
         return {
             verified: false,

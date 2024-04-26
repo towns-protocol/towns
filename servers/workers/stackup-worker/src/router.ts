@@ -9,21 +9,25 @@ import {
     isWhitelistOperation,
     Whitelist,
     isTransactionLimitRequest,
+    EventName,
 } from './types'
 import {
     TRANSACTION_LIMIT_DEFAULTS_PER_DAY,
     verifyCreateSpace,
     verifyJoinTown,
     verifyLinkWallet,
-    verifyUpdateTown,
+    verifyPrepaid,
+    verifyUpdateSpaceInfo,
     verifyUseTown,
+    verifyMembershipChecks,
 } from './useropVerification'
 
 import { isErrorType, Environment } from 'worker-common'
 import { WorkerRequest, createPmSponsorUserOperationRequest, getContentAsJson } from './utils'
 import { contractAddress, createFilterWrapper, runLogQuery } from './logFilter'
-import { checkMintKVOverrides } from './checks'
+import { IVerificationResult, checkMintKVOverrides } from './checks'
 import { createSpaceDappForNetwork, networkMap } from './provider'
+import { UNKNOWN_ERROR } from '@river-build/web3'
 
 // can be 'payg' or 'erc20token'
 // see https://docs.stackup.sh/reference/pm-sponsoruseroperation
@@ -350,7 +354,7 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
                     )
                 }
                 if (env.SKIP_TOWNID_VERIFICATION !== 'true') {
-                    const verification = await verifyUpdateTown({
+                    const verification = await verifyUpdateSpaceInfo({
                         rootKeyAddress: rootKeyAddress,
                         senderAddress: userOperation.sender,
                         townId: townId,
@@ -475,6 +479,133 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
                 }
                 break
             }
+            case 'editMembershipSettings': {
+                if (!isHexString(rootKeyAddress)) {
+                    return new Response(
+                        toJson({ error: `rootKeyAddress ${rootKeyAddress} not valid` }),
+                        {
+                            status: 400,
+                        },
+                    )
+                }
+                if (!isHexString(userOperation.sender)) {
+                    return new Response(
+                        toJson({ error: `userOperation.sender ${userOperation.sender} not valid` }),
+                        {
+                            status: 400,
+                        },
+                    )
+                }
+                if (!townId) {
+                    return new Response(
+                        toJson({ error: `Missing townId, cannot verify town exists` }),
+                        {
+                            status: 400,
+                        },
+                    )
+                }
+
+                const makeCheckPromise = (promise: Promise<IVerificationResult>) => {
+                    const controller = new AbortController()
+                    const { signal } = controller
+
+                    const p = new Promise<IVerificationResult>((resolve, reject) => {
+                        signal.addEventListener('abort', () => {
+                            reject(new Error('Aborted'))
+                        })
+                        promise
+                            .then((val) => {
+                                if (val.verified) {
+                                    resolve(val)
+                                } else {
+                                    reject(val)
+                                }
+                            })
+                            .catch((e) => {
+                                reject({
+                                    verified: false,
+                                    error: e,
+                                })
+                            })
+                    })
+
+                    return {
+                        promise: p,
+                        abort: () => controller.abort(),
+                    }
+                }
+
+                if (env.SKIP_TOWNID_VERIFICATION !== 'true') {
+                    // editMembershipSettings can include various operations
+                    // for now, if they fail any of the checks, they will be unauthorized, even if their batched user operation does not actually include data for that operation
+
+                    const checks = [
+                        // editing minter role
+                        makeCheckPromise(
+                            verifyUseTown({
+                                rootKeyAddress: rootKeyAddress,
+                                senderAddress: userOperation.sender,
+                                townId: townId,
+                                env,
+                                transactionName: 'updateRole',
+                            }),
+                        ),
+
+                        // editing membership supply
+                        // skipped until  https://linear.app/hnt-labs/issue/HNT-5985/imembershipsol-events-should-have-msgsender
+                        // makeCheckPromise(verifyMembershipChecks({
+                        //     rootKeyAddress: rootKeyAddress,
+                        //     senderAddress: userOperation.sender,
+                        //     townId: townId,
+                        //     env,
+                        //     eventName: EventName.MembershipLimitUpdated
+                        // })),
+
+                        // editing membership price
+                        // skipped until  https://linear.app/hnt-labs/issue/HNT-5985/imembershipsol-events-should-have-msgsender
+                        // makeCheckPromise(verifyMembershipChecks({
+                        //     rootKeyAddress: rootKeyAddress,
+                        //     senderAddress: userOperation.sender,
+                        //     townId: townId,
+                        //     env,
+                        //     eventName: EventName.MembershipPriceUpdated
+                        // }))
+
+                        // editing prepaid membership supply
+                        makeCheckPromise(
+                            verifyPrepaid({
+                                rootKeyAddress: rootKeyAddress,
+                                senderAddress: userOperation.sender,
+                                townId: townId,
+                                env,
+                            }),
+                        ),
+                    ]
+
+                    let verification: IVerificationResult = {
+                        verified: false,
+                    }
+
+                    try {
+                        await Promise.all(checks.map((c) => c.promise))
+                        verification = {
+                            verified: true,
+                        }
+                    } catch (err) {
+                        console.error(`Verification error: ${JSON.stringify(err)}`)
+                        verification = err as IVerificationResult
+                        checks.forEach((p) => p.abort())
+                    }
+
+                    if (!verification.verified) {
+                        return new Response(
+                            toJson({ error: `Unauthorized: ${verification.error}` }),
+                            { status: 401 },
+                        )
+                    }
+                }
+                break
+            }
             default:
                 // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
                 return new Response(toJson({ error: `Unknown functionHash ${functionHash}` }), {
@@ -517,7 +648,14 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
             let spaceDappError: Error | undefined
             if (spaceDapp) {
                 if (townId) {
-                    spaceDappError = await spaceDapp.parseSpaceError(townId, json.error)
+                    if (functionHash === 'editMembershipSettings') {
+                        spaceDappError = await spaceDapp.parseSpaceError(townId, json.error)
+                        if (spaceDappError.name === UNKNOWN_ERROR) {
+                            spaceDappError = spaceDapp.parsePrepayError(json.error)
+                        }
+                    } else {
+                        spaceDappError = await spaceDapp.parseSpaceError(townId, json.error)
+                    }
                 } else {
                     spaceDappError = spaceDapp.parseSpaceFactoryError(json.error)
                 }
