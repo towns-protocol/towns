@@ -38,7 +38,10 @@ export const ReactionTootip = ({
 
                 <Paragraph size="sm" textAlign="center" color="default">
                     {names}{' '}
-                    <span style={{ whiteSpace: 'nowrap' }} className={atoms({ color: 'gray2' })}>
+                    <span
+                        style={{ whiteSpace: 'break-spaces' }}
+                        className={atoms({ color: 'gray2' })}
+                    >
                         reacted with :{reaction}:
                     </span>
                 </Paragraph>
