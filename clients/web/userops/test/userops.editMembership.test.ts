@@ -1,8 +1,15 @@
-import { ISpaceDapp, LocalhostWeb3Provider, Space, findFixedPricingModule } from '@river-build/web3'
+import {
+    ISpaceDapp,
+    LocalhostWeb3Provider,
+    NoopRuleData,
+    Space,
+    findFixedPricingModule,
+} from '@river-build/web3'
 import { Permission } from '@river-build/web3'
 import {
     boredApeRuleData,
     createFixedPriceSpace,
+    createGatedSpace,
     createSpaceDappAndUserops,
     createUngatedSpace,
     generatePrivyWalletIfKey,
@@ -13,8 +20,9 @@ import {
 import { vi } from 'vitest'
 import { ethers } from 'ethers'
 import { TestUserOps } from './TestUserOps'
+import { EVERYONE_ADDRESS } from '../src/utils'
 
-test('should update the rule entitlement on the minter role', async () => {
+test('should update ungated minter role to gated', async () => {
     const alice = new LocalhostWeb3Provider(
         process.env.AA_RPC_URL as string,
         generatePrivyWalletIfKey(process.env.PRIVY_WALLET_PRIVATE_KEY_1),
@@ -50,6 +58,7 @@ test('should update the rule entitlement on the minter role', async () => {
         spaceId,
         updateRoleParams: {
             ...ogRoleData,
+            users: [],
             ruleData: boredApeRuleData,
         },
         membershipParams: ogMembershipData,
@@ -65,6 +74,7 @@ test('should update the rule entitlement on the minter role', async () => {
                 space: space!,
                 updateRoleParams: {
                     ...ogRoleData,
+                    users: [],
                     ruleData: boredApeRuleData,
                 },
             })
@@ -79,12 +89,84 @@ test('should update the rule entitlement on the minter role', async () => {
         space,
         userOps,
     })
+    expect(updatedRoleData.users).toStrictEqual([])
     expect(updatedRoleData.ruleData.checkOperations[0].chainId.toString()).toBe(
         boredApeRuleData.checkOperations[0].chainId.toString(),
     )
     expect(
         updatedRoleData.ruleData.checkOperations[0].contractAddress.toString().toLowerCase(),
     ).toBe(boredApeRuleData.checkOperations[0].contractAddress.toString().toLowerCase())
+})
+
+test('should update gated minter role to everyone', async () => {
+    const alice = new LocalhostWeb3Provider(
+        process.env.AA_RPC_URL as string,
+        generatePrivyWalletIfKey(process.env.PRIVY_WALLET_PRIVATE_KEY_1),
+    )
+    await alice.ready
+
+    const { spaceDapp, userOps } = createSpaceDappAndUserops(alice)
+
+    const createSpaceOp = await createGatedSpace({
+        userOps,
+        spaceDapp,
+        signer: alice.wallet,
+        rolePermissions: [Permission.Read, Permission.Write],
+    })
+
+    const sendSpy = vi.spyOn(userOps, 'sendUserOp')
+    const createSpaceTxReceipt = await waitForOpAndTx(createSpaceOp, alice)
+    await sleepBetweenTxs()
+
+    const spaceId = await getSpaceId(spaceDapp, createSpaceTxReceipt)
+    const space = spaceDapp.getSpace(spaceId)
+    expect(space).toBeDefined()
+
+    const { roleData: ogRoleData, membershipData: ogMembershipData } = await getMembershipData({
+        spaceDapp,
+        spaceId,
+        space,
+        userOps,
+    })
+
+    // updated role data
+    const sendEditOp = await userOps.sendEditMembershipSettingsOp({
+        spaceId,
+        updateRoleParams: {
+            ...ogRoleData,
+            users: [EVERYONE_ADDRESS],
+            ruleData: NoopRuleData,
+        },
+        membershipParams: ogMembershipData,
+        signer: alice.wallet,
+    })
+
+    // make sure only sending operation with changed data
+    const lastSendOpCall = sendSpy.mock.lastCall
+    expect(lastSendOpCall?.[0].toAddress).toStrictEqual([space!.Roles.address])
+    expect(lastSendOpCall?.[0].callData).toStrictEqual([
+        (
+            await userOps.encodeUpdateRoleData({
+                space: space!,
+                updateRoleParams: {
+                    ...ogRoleData,
+                    users: [EVERYONE_ADDRESS],
+                    ruleData: NoopRuleData,
+                },
+            })
+        ).callData,
+    ])
+
+    await waitForOpAndTx(sendEditOp, alice)
+
+    const { roleData: updatedRoleData } = await getMembershipData({
+        spaceDapp,
+        spaceId,
+        space,
+        userOps,
+    })
+    expect(updatedRoleData.users).toStrictEqual([EVERYONE_ADDRESS])
+    expect(updatedRoleData.ruleData.checkOperations).toStrictEqual([])
 })
 
 test('should update free space to paid space', async () => {

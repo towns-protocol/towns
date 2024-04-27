@@ -8,6 +8,7 @@ import {
     Space,
     findDynamicPricingModule,
     findFixedPricingModule,
+    NoopRuleData,
 } from '@river-build/web3'
 import { ethers } from 'ethers'
 import isEqual from 'lodash/isEqual'
@@ -19,6 +20,7 @@ import { EntryPoint__factory, SimpleAccountFactory__factory } from 'userop/dist/
 import { ERC4337 } from 'userop/dist/constants'
 import { CodeException } from './errors'
 import { UserOperationEventEvent } from 'userop/dist/typechain/EntryPoint'
+import { EVERYONE_ADDRESS } from './utils'
 
 export class UserOps {
     private bundlerUrl: string
@@ -809,6 +811,7 @@ export class UserOps {
         const newFreeAllocationForPaidSpace = freeAllocation ?? 1
 
         const newRuleData = args.updateRoleParams.ruleData
+        const newUsers = args.updateRoleParams.users
 
         const { membershipInfo, roleEntitlements } =
             await this.getDetailsForEditingMembershipSettings(spaceId, space)
@@ -821,6 +824,20 @@ export class UserOps {
         }
 
         if (!isEqual(newRuleData, roleEntitlements?.ruleData)) {
+            const newRuleDataIsNoop = isEqual(newRuleData, NoopRuleData)
+
+            if (newRuleDataIsNoop && !newUsers.includes(EVERYONE_ADDRESS)) {
+                throw new CodeException(
+                    'Noop rule entitlement must be used with the everyone address',
+                    'USER_OPS_NOOP_REQUIRES_EVERYONE',
+                )
+            } else if (!newRuleDataIsNoop && newUsers.includes(EVERYONE_ADDRESS)) {
+                throw new CodeException(
+                    'Rule entitlements cannot be used with the everyone address',
+                    'USER_OPS_RULES_CANNOT_BE_USED_WITH_EVERYONE',
+                )
+            }
+
             const roleData = await this.encodeUpdateRoleData({
                 space,
                 updateRoleParams: args.updateRoleParams,

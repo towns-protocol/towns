@@ -35,6 +35,7 @@ import { MIN_FIXED_COST_OF_MEMBERSHIP_IN_ETH } from '@components/Web3/Membership
 import { FullPanelOverlay } from '@components/Web3/WalletLinkingPanel'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { useEnvironment } from 'hooks/useEnvironmnet'
+import { EVERYONE_ADDRESS } from 'utils'
 import { EditMembershipSchemaType, editMembershipSchema } from './editMembershipSchema'
 
 export const EDIT_MEMBERSHIP_SETTINGS_PANEL = 'editMembershipSettings'
@@ -362,8 +363,8 @@ function SubmitButton({
                 roleName: roleDetails.name,
                 permissions: roleDetails.permissions,
                 spaceNetworkId: spaceId,
-                users: roleDetails.users,
-                // at this time, the only thing we are updating is the rule data
+                // at this time, the only thing we are updating is entitlements
+                users: data.tokensGatingMembership.length > 0 ? [] : [EVERYONE_ADDRESS],
                 ruleData,
             },
             membershipParams: {
