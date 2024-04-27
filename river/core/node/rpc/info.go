@@ -147,9 +147,8 @@ func (s *Service) info(
 		}
 	}
 
-	// TODO: set graffiti in config
 	return connect.NewResponse(&InfoResponse{
-		Graffiti:  "River Node welcomes you!",
+		Graffiti:  s.config.GetGraffiti(),
 		StartTime: timestamppb.New(s.startTime),
 		Version:   version.GetFullVersion(),
 	}), nil

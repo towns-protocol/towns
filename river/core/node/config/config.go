@@ -65,6 +65,9 @@ type Config struct {
 	// If set to 0, then default value is used. To disable the timeout set to 1ms or less.
 	ShutdownTimeout time.Duration
 
+	// Graffiti is retunred in status and info requests.
+	Graffiti string
+
 	// Feature flags
 	// Used to disable functionality for some testing setups.
 
@@ -188,4 +191,11 @@ func (cfg *StreamConfig) GetMembershipLimit(streamId shared.StreamId) int {
 		}
 	}
 	return 0
+}
+
+func (c *Config) GetGraffiti() string {
+	if c.Graffiti == "" {
+		return "River Node welcomes you!"
+	}
+	return c.Graffiti
 }

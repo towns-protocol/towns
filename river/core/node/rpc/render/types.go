@@ -84,7 +84,7 @@ func (d AvailableDebugHandlersData) TemplateName() string {
 }
 
 type InfoIndexData struct {
-	NodeVersion string
+	StatusJson string
 }
 
 func (d InfoIndexData) TemplateName() string {
@@ -96,8 +96,12 @@ type DebugMultiNodeInfo struct {
 	Local       bool
 	HttpMsg     string
 	HttpSuccess bool
+	StatusJson  string
 	GrpcMsg     string
 	GrpcSuccess bool
+	Version     string
+	Uptime      string
+	Graffiti    string
 	Address     string
 	Status      string
 	Operator    string

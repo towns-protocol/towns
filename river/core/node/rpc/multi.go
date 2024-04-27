@@ -2,7 +2,9 @@ package rpc
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"slices"
 	"strings"
@@ -10,7 +12,6 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/contracts"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/http_client"
@@ -20,6 +21,21 @@ import (
 	"github.com/river-build/river/core/node/rpc/render"
 )
 
+func tryPrettyFormatJson(js []byte) []byte {
+	var data map[string]interface{}
+	err := json.Unmarshal(js, &data)
+	if err != nil {
+		return js
+	}
+
+	pj, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		return js
+	}
+
+	return pj
+}
+
 func getHttpStatus(ctx context.Context, record *render.DebugMultiNodeInfo, client *http.Client, wg *sync.WaitGroup) {
 	log := dlog.FromCtx(ctx)
 	defer wg.Done()
@@ -27,7 +43,7 @@ func getHttpStatus(ctx context.Context, record *render.DebugMultiNodeInfo, clien
 	log.Info("Fetching URL", "url", record.Url)
 
 	start := time.Now()
-	url := record.Url + "/info"
+	url := record.Url + "/status"
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		log.Error("Error creating request", "err", err, "url", url)
@@ -45,7 +61,15 @@ func getHttpStatus(ctx context.Context, record *render.DebugMultiNodeInfo, clien
 	if resp != nil {
 		defer resp.Body.Close()
 		record.HttpSuccess = resp.StatusCode == 200
-		record.HttpMsg = resp.Status + " " + elapsed.String()
+		record.HttpMsg = resp.Status + " " + elapsed.Round(time.Millisecond).String()
+		if resp.StatusCode == 200 {
+			statusJson, err := io.ReadAll(resp.Body)
+			if err == nil {
+				record.StatusJson = string(tryPrettyFormatJson(statusJson))
+			} else {
+				record.StatusJson = "Error reading response: " + err.Error()
+			}
+		}
 	} else {
 		record.HttpMsg = "No response"
 	}
@@ -71,60 +95,63 @@ func getGrpcStatus(
 
 	startTime := resp.Msg.StartTime.AsTime()
 	record.GrpcSuccess = true
-	record.GrpcMsg = startTime.UTC().Format(time.RFC3339) + " " + resp.Msg.Version + " " + elapsed.String()
+	record.GrpcMsg = elapsed.Round(time.Millisecond).String()
+	record.Version = resp.Msg.Version
+	record.Uptime = time.Since(startTime).Round(time.Second).String() + " (" + startTime.UTC().Format(time.RFC3339) + ")"
+	record.Graffiti = resp.Msg.Graffiti
 }
 
 // Initializes the template and returns a HTTP handler function
-func MultiHandler(ctx context.Context, cfg *config.Config, streamService *Service) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		log := dlog.FromCtx(ctx)
-		log.Info("MultiHandler request")
+func (s *Service) handleDebugMulti(w http.ResponseWriter, r *http.Request) {
+	ctx := s.serverCtx
+	cfg := s.config
+	log := dlog.FromCtx(ctx)
+	log.Info("MultiHandler request")
 
-		ctx, cancel := context.WithTimeout(ctx, cfg.Network.GetHttpRequestTimeout())
-		defer cancel()
+	ctx, cancel := context.WithTimeout(ctx, cfg.Network.GetHttpRequestTimeout())
+	defer cancel()
 
-		allNodes := streamService.nodeRegistry.GetAllNodes()
-		slices.SortFunc(allNodes, func(i, j *nodes.NodeRecord) int {
-			return strings.Compare(i.Url(), j.Url())
-		})
+	allNodes := s.nodeRegistry.GetAllNodes()
+	slices.SortFunc(allNodes, func(i, j *nodes.NodeRecord) int {
+		return strings.Compare(i.Url(), j.Url())
+	})
 
-		client, err := http_client.GetHttpClient(ctx)
-		if err != nil {
-			log.Error("Error getting http client", "err", err)
-		}
-		client.Timeout = cfg.Network.GetHttpRequestTimeout()
-
-		data := &render.DebugMultiData{
-			CurrentTime: time.Now().UTC().Format(time.RFC3339),
-		}
-		wg := sync.WaitGroup{}
-		for _, n := range allNodes {
-			r := &render.DebugMultiNodeInfo{
-				Url:      n.Url(),
-				Local:    n.Local(),
-				Address:  n.Address().Hex(),
-				Status:   fmt.Sprintf("%d (%s)", n.Status(), contracts.NodeStatusString(n.Status())),
-				Operator: n.Operator().Hex(),
-			}
-			data.Results = append(data.Results, r)
-
-			wg.Add(2)
-			go getHttpStatus(ctx, r, client, &wg)
-
-			grpcClient := n.StreamServiceClient()
-			if grpcClient == nil {
-				grpcClient = NewStreamServiceClient(client, n.Url(), connect.WithGRPC())
-			}
-			go getGrpcStatus(ctx, r, grpcClient, &wg)
-		}
-
-		wg.Wait()
-
-		err = render.ExecuteAndWrite(data, w)
-		if err != nil {
-			log.Error("Error rendering template for debug/multi", "err", err)
-			http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
-		}
-		log.Info("MultiHandler done")
+	client, err := http_client.GetHttpClient(ctx)
+	if err != nil {
+		log.Error("Error getting http client", "err", err)
 	}
+	client.Timeout = cfg.Network.GetHttpRequestTimeout()
+
+	data := &render.DebugMultiData{
+		CurrentTime: time.Now().UTC().Format(time.RFC3339),
+	}
+	wg := sync.WaitGroup{}
+	for _, n := range allNodes {
+		r := &render.DebugMultiNodeInfo{
+			Url:      n.Url(),
+			Local:    n.Local(),
+			Address:  n.Address().Hex(),
+			Status:   fmt.Sprintf("%d (%s)", n.Status(), contracts.NodeStatusString(n.Status())),
+			Operator: n.Operator().Hex(),
+		}
+		data.Results = append(data.Results, r)
+
+		wg.Add(2)
+		go getHttpStatus(ctx, r, client, &wg)
+
+		grpcClient := n.StreamServiceClient()
+		if grpcClient == nil {
+			grpcClient = NewStreamServiceClient(client, n.Url(), connect.WithGRPC())
+		}
+		go getGrpcStatus(ctx, r, grpcClient, &wg)
+	}
+
+	wg.Wait()
+
+	err = render.ExecuteAndWrite(data, w)
+	if err != nil {
+		log.Error("Error rendering template for debug/multi", "err", err)
+		http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
+	}
+	log.Info("MultiHandler done")
 }

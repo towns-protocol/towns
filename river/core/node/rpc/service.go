@@ -17,7 +17,6 @@ import (
 	. "github.com/river-build/river/core/node/protocol/protocolconnect"
 	"github.com/river-build/river/core/node/registries"
 	"github.com/river-build/river/core/node/storage"
-	httptrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/net/http"
 )
 
 var serviceRequests = infra.NewSuccessMetrics(infra.RPC_CATEGORY, nil)
@@ -52,7 +51,7 @@ type Service struct {
 	// Network
 	listener   net.Listener
 	httpServer *http.Server
-	mux        *httptrace.ServeMux
+	mux        httpMux
 
 	// Status string
 	status atomic.Pointer[string]

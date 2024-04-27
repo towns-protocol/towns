@@ -5,13 +5,15 @@
 import { makeTestClient, makeUniqueSpaceStreamId } from './util.test'
 import { Client } from './client'
 
-import { makeUniqueChannelStreamId } from './id'
+import { genShortId, makeUniqueChannelStreamId } from './id'
 import { ChannelMessage } from '@river-build/proto'
 
 describe('outboundSessionTests', () => {
+    let bobsDeviceId: string
     let bobsClient: Client
     beforeEach(async () => {
-        bobsClient = await makeTestClient()
+        bobsDeviceId = genShortId()
+        bobsClient = await makeTestClient({ deviceId: bobsDeviceId })
     })
 
     afterEach(async () => {
@@ -43,7 +45,10 @@ describe('outboundSessionTests', () => {
             },
         })
 
-        const bobsOtherClient = await makeTestClient({ context: bobsClient.signerContext })
+        const bobsOtherClient = await makeTestClient({
+            context: bobsClient.signerContext,
+            deviceId: bobsDeviceId,
+        })
         await expect(bobsOtherClient.initializeUser()).toResolve()
         bobsOtherClient.startSync()
 

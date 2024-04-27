@@ -24,7 +24,6 @@ services:
             - LOAD_TEST_DURATION_MS=600000
             - REDIS_HOST=host.docker.internal
             - DEBUG=csb:test:stress:run*
-            - MOCK_PERSISTENCE_STORE=true
             - COORDINATOR_LEAVE_CHANNELS=true
         depends_on:
             - redis
@@ -46,7 +45,6 @@ services:
             - REDIS_HOST=host.docker.internal
             - CHANNEL_SAMPLING_RATE=100
             - DEBUG=csb:test:stress:run*
-            - MOCK_PERSISTENCE_STORE=true
             # 10 minutes
             - LOAD_TEST_DURATION_MS=600000
             - MAX_MSG_DELAY_MS=10000
@@ -71,7 +69,6 @@ services:
             - REDIS_HOST=host.docker.internal
             - CHANNEL_SAMPLING_RATE=100
             - DEBUG=csb:test:stress:run*
-            - MOCK_PERSISTENCE_STORE=true
             # 10 minutes
             - LOAD_TEST_DURATION_MS=600000
             - MAX_MSG_DELAY_MS=10000
@@ -96,7 +93,6 @@ services:
             - REDIS_HOST=host.docker.internal
             - CHANNEL_SAMPLING_RATE=100
             - DEBUG=csb:test:stress:run*
-            - MOCK_PERSISTENCE_STORE=true
             # 10 minutes
             - LOAD_TEST_DURATION_MS=600000
             - MAX_MSG_DELAY_MS=10000

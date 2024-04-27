@@ -19,5 +19,4 @@ docker run \
 -e PROCESSES_PER_CONTAINER=1 \
 -e REDIS_HOST='host.docker.internal' \
 -e DEBUG='csb:test:stress*' \
--e MOCK_PERSISTENCE_STORE=true \
 stress-test:v0.9

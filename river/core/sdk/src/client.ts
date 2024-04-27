@@ -112,7 +112,7 @@ import {
 
 import debug from 'debug'
 import { Stream } from './stream'
-import { usernameChecksum, genPersistenceStoreName } from './utils'
+import { usernameChecksum } from './utils'
 import { isEncryptedContentKind, toDecryptedContent } from './encryptedContentTypes'
 import { ClientDecryptionExtensions } from './clientDecryptionExtensions'
 import { PersistenceStore, IPersistenceStore, StubPersistenceStore } from './persistenceStore'
@@ -145,7 +145,6 @@ export class Client
     private readonly logError: DLogger
     private readonly logInfo: DLogger
     private readonly logDebug: DLogger
-    private readonly logStress: DLogger
 
     public cryptoBackend?: GroupEncryptionCrypto
     public cryptoStore: CryptoStore
@@ -199,16 +198,11 @@ export class Client
         this.logError = dlogError('csb:cl:error').extend(shortId)
         this.logInfo = dlog('csb:cl:info', { defaultEnabled: true }).extend(shortId)
         this.logDebug = dlog('csb:cl:debug').extend(shortId)
-        this.logStress = dlog('csb:test:stress').extend(shortId)
         this.cryptoStore = cryptoStore
 
-        this.logStress('MOCK_PERSISTENCE_STORE', process.env.MOCK_PERSISTENCE_STORE)
-        if (!process.env.MOCK_PERSISTENCE_STORE) {
-            this.persistenceStore = new PersistenceStore(
-                persistenceStoreName ?? genPersistenceStoreName(this.userId, this.rpcClient.url),
-            )
+        if (persistenceStoreName) {
+            this.persistenceStore = new PersistenceStore(persistenceStoreName)
         } else {
-            this.logStress('Using StubPersistenceStore')
             this.persistenceStore = new StubPersistenceStore()
         }
 

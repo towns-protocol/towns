@@ -106,5 +106,7 @@ standByPollPeriod: 500ms
 
 shutdownTimeout: 1s
 
+graffiti: ''
+
 # Debug feature flags.
 disableBaseChain: false

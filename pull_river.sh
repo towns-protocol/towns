@@ -5,6 +5,7 @@ print_usage() {
     echo "Prerequisites: 1) have gh github cli installed, and"
     echo "               2) run: gh auth login && gh repo set-default"
     echo "  -h: Display this help message."
+    echo "  -a: AUTO_MODE. Will run the script without waiting for user input."
     echo "  -u: USER_MODE. Will wait if there are CI errors and allow you to fix them."
     echo "  -x: USER_MODE_X. includes -u, and runs yarn lint, build, and test:unit."
     echo "  -k: PROMPT_BEFORE_PR. Will prompt the user before creating the pull request. (use if you know you need to fix things)"
@@ -17,11 +18,17 @@ if [ $# -eq 0 ]; then
     USER_MODE=1 # user mode is currently the only way this script is used.
 fi
 
-while getopts "huxjki" arg; do
+while getopts "hauxjki" arg; do
   case $arg in
     h)
         print_usage
         exit 0
+        ;;
+    a) 
+        AUTO_MODE=1
+        USER_MODE=1
+        PROMPT_BEFORE_MERGE=0
+        PROMPT_BEFORE_PR=0
         ;;
     u)
         USER_MODE=1
@@ -194,8 +201,10 @@ SUBTREE_BRANCH="main"
 
 
 # prompt the user for a commit hash, if they don't enter one, just use the latest
-echo "Enter the commit hash of the river repo you would like to merge, or press enter to use the latest."
-read -p "Commit hash: " COMMIT_HASH
+if [[ $AUTO_MODE -ne 1 ]]; then
+    echo "Enter the commit hash of the river repo you would like to merge, or press enter to use the latest."
+    read -p "Commit hash: " COMMIT_HASH
+fi
 
 if [[ -z "$COMMIT_HASH" ]]; then
     echo "No commit hash entered. Using the latest commit."
@@ -204,19 +213,23 @@ else
     echo "Using commit hash: $COMMIT_HASH"
 fi
 
-if [[ $PROMPT_BEFORE_PR -ne 1 ]]; then
-    read -p "Do you need to make fixes before submitting a PR? (y/n) " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        PROMPT_BEFORE_PR=1
+if [[ $AUTO_MODE -ne 1 ]]; then
+    if [[ $PROMPT_BEFORE_PR -ne 1 ]]; then
+        read -p "Do you need to make fixes before submitting a PR? (y/n) " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            PROMPT_BEFORE_PR=1
+        fi
     fi
 fi
 
-if [[ $PROMPT_BEFORE_MERGE -ne 1 ]]; then
-    read -p "Would you like to auto commit when CI is green? (y/n) " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Nn]$ ]]; then
-        PROMPT_BEFORE_MERGE=1
+if [[ $AUTO_MODE -ne 1 ]]; then
+    if [[ $PROMPT_BEFORE_MERGE -ne 1 ]]; then
+        read -p "Would you like to auto commit when CI is green? (y/n) " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Nn]$ ]]; then
+            PROMPT_BEFORE_MERGE=1
+        fi
     fi
 fi
 

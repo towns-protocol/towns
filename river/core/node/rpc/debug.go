@@ -3,7 +3,6 @@ package rpc
 import (
 	"bufio"
 	"bytes"
-	"context"
 	"fmt"
 	"net/http"
 	"net/http/pprof"
@@ -12,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/events"
@@ -58,21 +56,15 @@ type httpMux interface {
 	Handle(pattern string, handler http.Handler)
 }
 
-func registerDebugHandlers(
-	ctx context.Context,
-	cfg *config.Config,
-	mux httpMux,
-	cache StreamCache,
-	streamService *Service,
-	riverTxPool crypto.TransactionPool,
-) {
+func (s *Service) registerDebugHandlers() {
+	mux := s.mux
 	handler := debugHandler{}
 	mux.HandleFunc("/debug", handler.ServeHTTP)
 
-	handler.Handle(mux, "/debug/cache", &cacheHandler{cache: cache})
-	handler.Handle(mux, "/debug/txpool", &txpoolHandler{riverTxPool: riverTxPool})
+	handler.Handle(mux, "/debug/cache", &cacheHandler{cache: s.cache})
+	handler.Handle(mux, "/debug/txpool", &txpoolHandler{riverTxPool: s.riverChain.TxPool})
 	handler.HandleFunc(mux, "/debug/memory", MemoryHandler)
-	handler.Handle(mux, "/debug/multi", MultiHandler(ctx, cfg, streamService))
+	handler.HandleFunc(mux, "/debug/multi", s.handleDebugMulti)
 	handler.HandleFunc(mux, "/debug/pprof/", pprof.Index)
 	mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
 	mux.HandleFunc("/debug/pprof/profile", pprof.Profile)

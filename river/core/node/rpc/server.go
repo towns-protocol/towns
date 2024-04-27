@@ -25,7 +25,6 @@ import (
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/protocol/protocolconnect"
 	"github.com/river-build/river/core/node/registries"
-	"github.com/river-build/river/core/node/rpc/render"
 	"github.com/river-build/river/core/node/storage"
 	"github.com/rs/cors"
 	"golang.org/x/net/http2"
@@ -103,11 +102,6 @@ func (s *Service) start() error {
 	err = s.runHttpServer()
 	if err != nil {
 		return AsRiverError(err).Message("Failed to run http server").LogError(s.defaultLogger)
-	}
-
-	err = s.setupStatusHandler()
-	if err != nil {
-		return AsRiverError(err).Message("Failed to setup status handler").LogError(s.defaultLogger)
 	}
 
 	if s.config.StandByOnStart {
@@ -302,7 +296,8 @@ func (s *Service) runHttpServer() error {
 	)
 	s.mux = mux
 
-	mux.HandleFunc("/info", InfoIndexHandler)
+	mux.HandleFunc("/info", s.handleInfo)
+	mux.HandleFunc("/status", s.handleStatus)
 
 	corsMiddleware := cors.New(cors.Options{
 		AllowCredentials: false,
@@ -363,11 +358,6 @@ func (s *Service) runHttpServer() error {
 
 		return nil
 	}
-}
-
-func (s *Service) setupStatusHandler() error {
-	s.mux.HandleFunc("/status", s.handleStatus)
-	return nil
 }
 
 func (s *Service) serveTLS() {
@@ -455,14 +445,7 @@ func (s *Service) initHandlers() {
 	nodeServicePattern, nodeServiceHandler := protocolconnect.NewNodeToNodeHandler(s, interceptors)
 	s.mux.Handle(nodeServicePattern, nodeServiceHandler)
 
-	registerDebugHandlers(
-		s.serverCtx,
-		s.config,
-		s.mux,
-		s.cache,
-		s,
-		s.riverChain.TxPool,
-	)
+	s.registerDebugHandlers()
 }
 
 // StartServer starts the server with the given configuration.
@@ -491,27 +474,6 @@ func StartServer(
 	}
 
 	return streamService, nil
-}
-
-func InfoIndexHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: reply with graffiti from config and with node version
-	var (
-		ctx   = r.Context()
-		reply = render.InfoIndexData{
-			NodeVersion: "TODO",
-		}
-	)
-
-	output, err := render.Execute(&reply)
-	if err != nil {
-		dlog.FromCtx(ctx).Error("unable to prepare info index response", "err", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "text/html")
-	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write(output.Bytes())
 }
 
 func createServerFromBase64(

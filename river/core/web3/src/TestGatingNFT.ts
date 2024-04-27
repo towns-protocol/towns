@@ -133,7 +133,11 @@ export async function getContractAddress(nftName: string): Promise<`0x${string}`
                         e !== null &&
                         'message' in e &&
                         typeof e.message === 'string' &&
-                        e.message.includes('nonce too low')
+                        (e.message.includes('nonce too low') ||
+                            e.message.includes('NonceTooLowError') ||
+                            e.message.includes(
+                                'Nonce provided for the transaction is lower than the current nonce',
+                            ))
                     ) {
                         logger.log('retrying because nonce too low', e, retryCount)
                     } else {

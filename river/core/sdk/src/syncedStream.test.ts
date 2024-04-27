@@ -4,10 +4,12 @@
 
 import { MembershipOp } from '@river-build/proto'
 import { makeTestClient, waitFor } from './util.test'
+import { genShortId } from './id'
 
 describe('syncedStream', () => {
     test('clientRefreshesStreamOnBadSyncCookie', async () => {
-        const bob = await makeTestClient()
+        const bobDeviceId = genShortId()
+        const bob = await makeTestClient({ deviceId: bobDeviceId })
         await bob.initializeUser()
         bob.startSync()
 
@@ -24,13 +26,13 @@ describe('syncedStream', () => {
         await bob.stopSync()
 
         // Force the creation of N snapshots, which will make the sync cookie invalid
-        for (let i = 0; i < 100; i++) {
+        for (let i = 0; i < 10; i++) {
             await alice.sendMessage(streamId, `'hello ${i}`)
-            await alice.debugForceMakeMiniblock(streamId)
+            await alice.debugForceMakeMiniblock(streamId, { forceSnapshot: true })
         }
 
         // later, Bob returns
-        const bob2 = await makeTestClient({ context: bob.signerContext })
+        const bob2 = await makeTestClient({ context: bob.signerContext, deviceId: bobDeviceId })
         await bob2.initializeUser()
         bob2.startSync()
 

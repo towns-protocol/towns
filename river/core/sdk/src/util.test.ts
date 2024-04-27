@@ -134,7 +134,7 @@ export interface TestClientOpts {
 export const makeTestClient = async (opts?: TestClientOpts): Promise<Client> => {
     const context = opts?.context ?? (await makeRandomUserContext())
     const entitlementsDelegate = opts?.entitlementsDelegate ?? new MockEntitlementsDelegate()
-    const deviceId = opts?.deviceId ? `-${opts.deviceId}` : ''
+    const deviceId = opts?.deviceId ? `-${opts.deviceId}` : `-${genId(5)}`
     const userId = userIdFromAddress(context.creatorAddress)
     const dbName = `database-${userId}${deviceId}`
     const persistenceDbName = `persistence-${userId}${deviceId}`
