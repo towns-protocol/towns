@@ -6,6 +6,7 @@ import {
     MessageType,
     UnfurledLinkAttachment,
 } from 'use-towns-client'
+import { isUrl } from 'utils/isUrl'
 import { ChunkedFile } from '@components/ChunkedFile/ChunkedFile'
 import { EmbeddedMessage } from '@components/EmbeddedMessageAttachement/EmbeddedMessage'
 import { Box, Stack, Text } from '@ui'
@@ -190,20 +191,37 @@ const UnfurledLinkAttachmentContainer = (props: UnfurledLinkAttachment) => {
                     height={props.image.height}
                 />
             )}
-            <Box>
-                <Text size="md">{props.title}</Text>
-            </Box>
-            <Text size="sm" color="gray2">
-                {props.description}
-            </Text>
-            <Box hoverable color={{ hover: 'default', default: 'cta2' }} maxWidth="100%">
+            {props.title && !isUrl(props.title) && (
+                <Box>
+                    <Text
+                        size="md"
+                        style={{
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                        }}
+                    >
+                        {props.title}
+                    </Text>
+                </Box>
+            )}
+            {props.description && (
                 <Text
-                    fontWeight="medium"
                     size="sm"
+                    color="gray2"
                     style={{
-                        overflowWrap: 'break-word',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 5,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
                     }}
                 >
+                    {props.description}
+                </Text>
+            )}
+            <Box hoverable color={{ hover: 'cta2', default: 'gray2' }} maxWidth="100%">
+                <Text truncate fontWeight="medium" size="sm">
                     {props.url}
                 </Text>
             </Box>
