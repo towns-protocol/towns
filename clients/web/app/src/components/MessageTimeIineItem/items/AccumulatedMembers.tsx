@@ -3,7 +3,7 @@ import uniqBy from 'lodash/uniqBy'
 import { Link } from 'react-router-dom'
 import { firstBy } from 'thenby'
 import { Address, LookupUserMap, Membership, useUserLookupContext } from 'use-towns-client'
-import { Box, Paragraph, Stack, Tooltip } from '@ui'
+import { Box, Stack, Tooltip } from '@ui'
 import { notUndefined } from 'ui/utils/utils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { AvatarStack } from 'routes/AvatarStack'
@@ -118,7 +118,7 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
             color="gray2"
         >
             <AvatarStack users={avatarUsers} size="avatar_xs" />
-            <Paragraph textAlign={{ mobile: 'center' }}>{message}</Paragraph>
+            <Stack textAlign={{ mobile: 'center' }}>{message}</Stack>
         </Stack>
     )
 }
