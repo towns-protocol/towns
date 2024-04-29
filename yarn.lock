@@ -8512,12 +8512,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/emoji-mart@npm:^3.0.9":
-  version: 3.0.9
-  resolution: "@types/emoji-mart@npm:3.0.9"
+"@types/emoji-mart@npm:^3.0.14":
+  version: 3.0.14
+  resolution: "@types/emoji-mart@npm:3.0.14"
   dependencies:
     "@types/react": "*"
-  checksum: 97e22728985e1542975b5d9ec43fc2bb9bfd1952640be177799a52f3cb5785def80ab59c23c34ac2310604c7097f2c1d24cebf4dd6a17706fceda6725c6d8150
+  checksum: c566969e7c1d5cab6308bc87556d6228295b64fe8b4c507444175eb98f305c2ba660762c13778cf54b6a6f3fbd2abad38bedf72e89633da0554b95b58793f681
   languageName: node
   linkType: hard
 
@@ -14232,10 +14232,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"emoji-mart@npm:^5.5.2":
-  version: 5.5.2
-  resolution: "emoji-mart@npm:5.5.2"
-  checksum: a9d8db731443581baebafbcb8494086e9d02b1475ddee9901fc657a7e8f08c14594a810605a3abe8d52627b75f5d78ea19adf3166fb0f38cea174694f86635f9
+"emoji-mart@npm:^5.6.0":
+  version: 5.6.0
+  resolution: "emoji-mart@npm:5.6.0"
+  checksum: 59b9336f09112580993a42ba3decbd91a026a7fe6615be87a8f57e067592e5adcb7a8403f0f8d90e85513b3f3256d8b8b0992d9d9e07b48ad220e0d341325cc6
   languageName: node
   linkType: hard
 
@@ -17434,7 +17434,7 @@ __metadata:
     "@testing-library/user-event": ^14.4.3
     "@towns/privy": "workspace:^"
     "@towns/userops": "workspace:^"
-    "@types/emoji-mart": ^3.0.9
+    "@types/emoji-mart": ^3.0.14
     "@types/html-to-text": ^9.0.4
     "@types/linkify-it": ^3.0.5
     "@types/react": ^18.2.11
@@ -17479,7 +17479,7 @@ __metadata:
     date-fns: ^2.29.3
     debug: ^4.3.4
     dexie: ^3.2.4
-    emoji-mart: ^5.5.2
+    emoji-mart: ^5.6.0
     eslint: ^8.53.0
     eslint-config-react-app: ^7.0.1
     eslint-config-standard-with-typescript: ^35.0.0

@@ -16,6 +16,7 @@ import { datadogRum } from '@datadog/browser-rum'
 import { isEditorEmpty as PlateIsEditorEmpty } from '@udecode/slate-utils'
 import { focusEditor } from '@udecode/slate-react'
 import { TComboboxItemWithData } from '@udecode/plate-combobox'
+import { ELEMENT_PARAGRAPH } from '@udecode/plate-paragraph'
 import { useMediaDropContext } from '@components/MediaDropContext/MediaDropContext'
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { Box, BoxProps, Stack } from '@ui'
@@ -29,6 +30,7 @@ import {
 } from '@components/EmbeddedMessageAttachement/EditorAttachmentPreview'
 import { useInlineReplyAttchmentPreview } from '@components/EmbeddedMessageAttachement/hooks/useInlineReplyAttchmentPreview'
 import { useInputStore } from 'store/store'
+import { RichTextPlaceholder } from './components/RichTextEditorPlaceholder'
 import { toMD } from './utils/toMD'
 import { RememberInputPlugin } from './plugins/RememberInputPlugin'
 import { deserializeMd } from './utils/deserializeMD'
@@ -38,7 +40,6 @@ import { MentionCombobox } from './components/plate-ui/MentionCombobox'
 import { Editor } from './components/plate-ui/Editor'
 import { PlateToolbar } from './components/plate-ui/PlateToolbar'
 import { RichTextBottomToolbar } from './components/RichTextBottomToolbar'
-import { RichTextPlaceholder } from './components/RichTextEditorPlaceholder'
 import { SendMarkdownPlugin } from './components/SendMarkdownPlugin'
 import PlatePlugins from './plugins'
 import { ELEMENT_MENTION_CHANNEL } from './plugins/createChannelPlugin'
@@ -71,7 +72,8 @@ type Props = {
 } & Pick<BoxProps, 'background'>
 
 const EMPTY_NODE: TElement = {
-    type: 'p',
+    id: '1',
+    type: ELEMENT_PARAGRAPH,
     children: [{ text: '' }],
 }
 export const RichTextEditor = (props: Props) => {
@@ -367,18 +369,17 @@ const PlateEditorWithoutBoundary = ({
                                 key="editor"
                             />
 
-                            <Box paddingX="md" ref={editableContainerRef}>
+                            <Box paddingX="md" position="relative" ref={editableContainerRef}>
                                 <Editor
                                     readOnly={!editable}
                                     autoFocus={autoFocus}
                                     tabIndex={tabIndex}
-                                    placeholder={placeholder}
-                                    renderPlaceholder={RichTextPlaceholder}
                                     disabled={isSendingMessage}
                                     handleSendOnEnter={handleSendOnEnter}
                                     onFocus={onFocus}
                                     onBlur={onBlur}
                                 />
+                                {isEditorEmpty && <RichTextPlaceholder placeholder={placeholder} />}
                             </Box>
                             <OnFocusPlugin
                                 autoFocus={autoFocus}

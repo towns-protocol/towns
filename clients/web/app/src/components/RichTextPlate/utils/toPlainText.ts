@@ -1,5 +1,5 @@
-import { Node } from 'slate'
+import { TNode, getNodeString } from '@udecode/slate'
 
-export const toPlainText = (nodes: Node[]) => {
-    return nodes.map((n) => Node.string(n)).join('\n')
+export const toPlainText = (nodes: TNode[]) => {
+    return nodes.map((n) => getNodeString(n)).join('\n')
 }
