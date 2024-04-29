@@ -23,7 +23,7 @@ contract DeployEntitlementGatedExample is Deployer {
     return
       address(
         new MockEntitlementGated(
-          IEntitlementChecker(getDeployment("entitlementChecker"))
+          IEntitlementChecker(getDeployment("baseRegistry"))
         )
       );
   }
