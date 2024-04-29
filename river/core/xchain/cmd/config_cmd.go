@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"core/xchain/config"
 	"fmt"
 
 	"github.com/mitchellh/mapstructure"
@@ -27,7 +26,7 @@ func init() {
 			fmt.Println()
 
 			configMap := make(map[string]interface{})
-			cfg := config.GetConfig()
+			cfg := loadedCfg
 			if err := mapstructure.Decode(cfg, &configMap); err != nil {
 				fmt.Printf("Failed to decode config struct: %v\n", err)
 				return

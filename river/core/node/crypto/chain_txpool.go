@@ -13,10 +13,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/river-build/river/core/node/base"
+	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/dlog"
-	"github.com/river-build/river/core/node/protocol"
+	. "github.com/river-build/river/core/node/protocol"
 )
 
 type (
@@ -92,23 +92,20 @@ type (
 // transactions in case the original transaction was included in the chain.
 func NewTransactionPoolWithPoliciesFromConfig(
 	ctx context.Context,
-	cfg config.ChainConfig,
+	cfg *config.ChainConfig,
 	riverClient BlockchainClient,
 	wallet *Wallet,
 	chainMonitor ChainMonitor,
 ) (*transactionPool, error) {
+	if cfg.BlockTimeMs <= 0 {
+		return nil, RiverError(Err_BAD_CONFIG, "BlockTimeMs must be set").
+			Func("NewBlockchainWithClient")
+
+	}
 	// if pending tx timeout is not specified use a default of 3*chain.BlockPeriod
 	txTimeout := cfg.TransactionPool.TransactionTimeout
 	if txTimeout == 0 {
-		if cfg.BlockTimeMs != 0 {
-			txTimeout = 3 * time.Duration(cfg.BlockTimeMs) * time.Millisecond
-		} else {
-			blockPeriod, err := EstimateBlockPeriod(ctx, riverClient)
-			if err != nil {
-				return nil, err
-			}
-			txTimeout = 3 * blockPeriod
-		}
+		txTimeout = 3 * time.Duration(cfg.BlockTimeMs) * time.Millisecond
 	}
 
 	var (
@@ -226,7 +223,7 @@ func (r *transactionPool) Submit(
 
 	// ensure that tx gas price is not higher than node operator has defined in the config he is willing to pay
 	if tx.GasFeeCap() != nil && r.pricePolicy.GasFeeCap() != nil && tx.GasFeeCap().Cmp(r.pricePolicy.GasFeeCap()) > 0 {
-		return nil, base.RiverError(protocol.Err_BAD_CONFIG, "Transaction too expensive").
+		return nil, RiverError(Err_BAD_CONFIG, "Transaction too expensive").
 			Tags("tx.GasFeeCap", tx.GasFeeCap().String(), "user.GasFeeCap", r.pricePolicy.GasFeeCap().String()).
 			Func("Submit")
 	}
@@ -235,7 +232,7 @@ func (r *transactionPool) Submit(
 		return nil, err
 	}
 
-	log.Info("Transaction sent", "txHash", tx.Hash(), "chain", r.chainID)
+	log.Info("transaction sent", "txHash", tx.Hash(), "chain", r.chainID)
 
 	pendingTx := &txPoolPendingTransaction{
 		txHashes:   []common.Hash{tx.Hash()},
@@ -296,7 +293,7 @@ func (r *transactionPool) OnHead(ctx context.Context, head *types.Header) {
 				r.firstPendingTx.listener <- receipt
 				r.firstPendingTx, pendingTx.next = r.firstPendingTx.next, nil
 
-				log.Info("transaction processed",
+				log.Debug("transaction processed",
 					"txHash", receipt.TxHash, "block#", receipt.BlockNumber.Uint64(), "status", receipt.Status)
 				break
 			}

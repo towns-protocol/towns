@@ -1000,10 +1000,10 @@
       "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/proxy/SpaceProxy.sol": {
-      "keccak256": "0x4615270039fb6d787a8bba146766fa335022578f2a00a248dc523de730b032e4",
+      "keccak256": "0xfbca6bf9555d15df29a0637eab95c3aaba6f83a60c2b6e9e9d1d83ab4ccc588f",
       "urls": [
-        "bzz-raw://f39bad601d2138f357b1b9c845960acab6ce9666f884b21b3ae291808cc6c87b",
-        "dweb:/ipfs/Qmdmep2iyEwpFnSTD6aU1NxPiWZWVURGuCQt16kAwt4MHc"
+        "bzz-raw://ab9196b03e0f8b66ffbbc824074c801ee5c127c8a8e0eec43878a1558ac85e89",
+        "dweb:/ipfs/QmZQVpJ4ryZQJuxLGizq4VEaPYSkmugFjQpwdtgsLWGgxp"
       ],
       "license": "Apache-2.0"
     },

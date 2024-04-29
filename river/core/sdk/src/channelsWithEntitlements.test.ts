@@ -16,6 +16,7 @@ import { makeDefaultChannelStreamId, makeSpaceStreamId, makeUserStreamId } from 
 import { MembershipOp } from '@river-build/proto'
 import { ethers } from 'ethers'
 import {
+    ETH_ADDRESS,
     LocalhostWeb3Provider,
     MembershipStruct,
     NoopRuleData,
@@ -25,7 +26,6 @@ import {
 import { makeBaseChainConfig } from './riverConfig'
 
 const log = dlog('csb:test:channelsWithEntitlements')
-const ETH_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
 
 describe('channelsWithEntitlements', () => {
     // Banning with entitlements — users need permission to ban other users.

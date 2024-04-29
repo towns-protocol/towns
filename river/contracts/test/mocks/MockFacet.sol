@@ -6,8 +6,10 @@ pragma solidity ^0.8.23;
 // libraries
 
 // contracts
+import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
 import {TokenOwnableBase} from "contracts/src/diamond/facets/ownable/token/TokenOwnableBase.sol";
+import {Facet} from "contracts/src/diamond/facets/Facet.sol";
 
 interface IMockFacet {
   function mockFunction() external pure returns (uint256);
@@ -17,6 +19,8 @@ interface IMockFacet {
   function setValue(uint256 value_) external;
 
   function getValue() external view returns (uint256);
+
+  function upgrade() external;
 }
 
 library MockFacetStorage {
@@ -35,12 +39,15 @@ library MockFacetStorage {
   }
 }
 
-contract MockFacet is IMockFacet, TokenOwnableBase {
+contract MockFacet is IMockFacet, TokenOwnableBase, Facet {
   using MockFacetStorage for MockFacetStorage.Layout;
 
-  function init(uint256 value) external {
-    require(value > 10, "value must be greater than 10");
+  function __MockFacet_init(uint256 value) external onlyInitializing {
     MockFacetStorage.layout().value = value;
+  }
+
+  function upgrade() external reinitializer(2) {
+    MockFacetStorage.layout().value = 100;
   }
 
   function mockFunction() external pure override returns (uint256) {
@@ -60,42 +67,34 @@ contract MockFacet is IMockFacet, TokenOwnableBase {
   }
 }
 
-contract MockFacetHelper is FacetHelper {
-  MockFacet internal mockFacet;
-
+contract DeployMockFacet is Deployer, FacetHelper {
   constructor() {
-    mockFacet = new MockFacet();
-  }
-
-  function facet() public view override returns (address) {
-    return address(mockFacet);
-  }
-
-  function selectors()
-    public
-    pure
-    override
-    returns (bytes4[] memory selectors_)
-  {
-    selectors_ = new bytes4[](4);
-
-    uint256 index;
-    selectors_[index++] = MockFacet.mockFunction.selector;
-    selectors_[index++] = MockFacet.anotherMockFunction.selector;
-    selectors_[index++] = MockFacet.setValue.selector;
-    selectors_[index++] = MockFacet.getValue.selector;
+    addSelector(MockFacet.mockFunction.selector);
+    addSelector(MockFacet.anotherMockFunction.selector);
+    addSelector(MockFacet.upgrade.selector);
+    addSelector(MockFacet.setValue.selector);
+    addSelector(MockFacet.getValue.selector);
   }
 
   function initializer() public pure override returns (bytes4) {
-    return bytes4(0);
+    return MockFacet.__MockFacet_init.selector;
   }
 
-  function supportedInterfaces()
-    public
-    pure
-    returns (bytes4[] memory interfaces)
-  {
-    interfaces = new bytes4[](1);
-    interfaces[0] = type(IMockFacet).interfaceId;
+  function makeInitData(uint256 value) public pure returns (bytes memory) {
+    return abi.encodeWithSelector(MockFacet.__MockFacet_init.selector, value);
+  }
+
+  function versionName() public pure override returns (string memory) {
+    return "mockFacet";
+  }
+
+  function __deploy(
+    uint256 deployerPK,
+    address
+  ) public override returns (address) {
+    vm.startBroadcast(deployerPK);
+    MockFacet facet = new MockFacet();
+    vm.stopBroadcast();
+    return address(facet);
   }
 }

@@ -3,6 +3,8 @@ import { PublicClient } from 'viem'
 import { PricingModuleStruct } from './ContractTypes'
 import { ISpaceDapp } from './ISpaceDapp'
 
+export const ETH_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
+
 export function isEthersProvider(
     provider: ethers.providers.Provider | PublicClient,
 ): provider is ethers.providers.Provider {

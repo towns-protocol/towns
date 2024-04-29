@@ -20,14 +20,13 @@ func run() error {
 	// }
 
 	var (
-		ctx, cancel = context.WithCancel(context.Background())
-		tasks       sync.WaitGroup
+		ctx   = context.Background()
+		tasks sync.WaitGroup
 	)
 
 	// create xchain instance
-	srv, err := server.New(ctx, 1)
+	srv, err := server.New(ctx, loadedCfg, nil, 1)
 	if err != nil {
-		cancel()
 		return err
 	}
 
@@ -43,8 +42,8 @@ func run() error {
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	<-interrupt
 
-	// order background tasks to stop
-	cancel()
+	// order background task to stop
+	srv.Stop()
 
 	// wait for background tasks to finish
 	tasks.Wait()

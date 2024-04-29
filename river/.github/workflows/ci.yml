@@ -873,14 +873,65 @@ jobs:
               run: go test --race ./...
               working-directory: core/xchain
 
-            - name: Build node
-              run: go build --race ./...
+    XChain_Integration:
+        permissions: write-all
+        if: github.event_name != 'workflow_dispatch' || !inputs.skip_client_noentitlements
+        runs-on: ubuntu-latest-8-cores
+        timeout-minutes: 30
+        
+        steps:
+            - name: Cancel previous runs
+              if: github.event_name != 'schedule'
+              uses: styfle/cancel-workflow-action@0.12.1
+              with:
+                  access_token: ${{ github.token }}
+                
+            - name: Checkout code
+              uses: actions/checkout@v4
+        
+            - name: Git submodules
+              run: git submodule update --init --recursive
+        
+            - name: Setup Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version-file: 'go.work'
+                  cache-dependency-path: '**/*.sum'
+        
+            - name: Install Foundry
+              uses: foundry-rs/foundry-toolchain@v1
+              with:
+                  version: ${{ env.FOUNDRY_VERSION }}
+        
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: '20'
+                  cache: 'yarn'
+        
+            - name: Install node dependencies
+              run: yarn install --immutable
+        
+            - name: Print versions
+              run: ./scripts/print-versions.sh
+        
+            - name: Start Local Basechain
+              run: ./scripts/start-local-basechain.sh &
+              
+            - name: Print Yarn package versions
+              run: yarn info --name-only --all
+        
+            - name: Maintain Turbo cache
+              uses: actions/cache@v4
+              with:
+                  path: node_modules/.cache/turbo
+                  key: ${{ runner.os }}-turbo-${{ github.run_id }}
+                  restore-keys: |
+                      ${{ runner.os }}-turbo-
+
+            - name: Run Integration Tests
+              run: make integration_tests
               working-directory: core/xchain
 
-            - name: Run xchain common go tests
-              run: go test --race ./...
-              working-directory: core/xchain
-    
     Slack_Notification:
         # NOTE: We should make sure that new jobs get added here
         needs: [Common_CI, Client_NoEntitlements, Multinode, Client_Entitlements, Multinode_Ent, Node, XChain_Node]

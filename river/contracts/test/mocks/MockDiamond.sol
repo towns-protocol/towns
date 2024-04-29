@@ -12,9 +12,7 @@ import {DeployOwnable} from "contracts/scripts/deployments/facets/DeployOwnable.
 import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamondCut.s.sol";
 import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
 import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
-
-import {ManagedProxyHelper} from "contracts/test/diamond/proxy/ManagedProxyHelper.sol";
-import {ManagedProxyFacet} from "contracts/src/diamond/proxy/managed/ManagedProxyFacet.sol";
+import {DeployManagedProxy} from "contracts/scripts/deployments/facets/DeployManagedProxy.s.sol";
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
 // debuggging
@@ -26,7 +24,7 @@ contract MockDiamondHelper {
   DeployDiamondLoupe diamondLoupeHelper = new DeployDiamondLoupe();
   DeployIntrospection introspectionHelper = new DeployIntrospection();
   DeployOwnable ownableHelper = new DeployOwnable();
-  ManagedProxyHelper managedProxyHelper = new ManagedProxyHelper();
+  DeployManagedProxy managedProxyHelper = new DeployManagedProxy();
 
   Diamond.FacetCut[] cuts;
   address[] addresses;
@@ -39,7 +37,7 @@ contract MockDiamondHelper {
     address diamondCut = diamondCutHelper.deploy();
     address diamondLoupe = diamondLoupeHelper.deploy();
     address introspection = introspectionHelper.deploy();
-    address managedProxy = address(new ManagedProxyFacet());
+    address managedProxy = managedProxyHelper.deploy();
 
     cuts.push(
       diamondCutHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add)

@@ -34,6 +34,24 @@ if (listeners.length > 0) {
         ) {
             return
         }
+        if (
+            warning?.name === 'ExperimentalWarning' &&
+            ('' + warning?.message).startsWith('Custom ESM Loaders')
+        ) {
+            return
+        }
+        if (
+            warning?.name === 'ExperimentalWarning' &&
+            ('' + warning?.message).startsWith('Importing JSON')
+        ) {
+            return
+        }
+        if (
+            warning?.name === 'ExperimentalWarning' &&
+            ('' + warning?.message).startsWith('Import assertions')
+        ) {
+            return
+        }
         prevListener(...args)
     })
 }

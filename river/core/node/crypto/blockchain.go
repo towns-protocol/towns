@@ -3,6 +3,7 @@ package crypto
 import (
 	"context"
 	"math/big"
+	"time"
 
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/config"
@@ -65,7 +66,7 @@ func NewBlockchain(ctx context.Context, cfg *config.ChainConfig, wallet *Wallet)
 			Func("NewBlockchain")
 	}
 
-	return NewBlockchainWithClient(ctx, cfg, wallet, client, client, NewChainMonitor())
+	return NewBlockchainWithClient(ctx, cfg, wallet, client, client)
 }
 
 func NewBlockchainWithClient(
@@ -74,8 +75,12 @@ func NewBlockchainWithClient(
 	wallet *Wallet,
 	client BlockchainClient,
 	clientCloser Closable,
-	chainMonitor ChainMonitor,
 ) (*Blockchain, error) {
+	if cfg.BlockTimeMs <= 0 {
+		return nil, RiverError(Err_BAD_CONFIG, "BlockTimeMs must be set").
+			Func("NewBlockchainWithClient")
+
+	}
 	chainId, err := client.ChainID(ctx)
 	if err != nil {
 		return nil, AsRiverError(err).
@@ -105,16 +110,18 @@ func NewBlockchainWithClient(
 		ClientCloser:    clientCloser,
 		Config:          cfg,
 		InitialBlockNum: initialBlockNum,
-		ChainMonitor:    chainMonitor,
+		ChainMonitor:    NewChainMonitor(),
 	}
 
 	if wallet != nil {
 		bc.Wallet = wallet
-		bc.TxPool, err = NewTransactionPoolWithPoliciesFromConfig(ctx, *cfg, bc.Client, wallet, bc.ChainMonitor)
+		bc.TxPool, err = NewTransactionPoolWithPoliciesFromConfig(ctx, cfg, bc.Client, wallet, bc.ChainMonitor)
 		if err != nil {
 			return nil, err
 		}
 	}
+
+	go bc.ChainMonitor.RunWithBlockPeriod(ctx, client, initialBlockNum, time.Duration(cfg.BlockTimeMs)*time.Millisecond)
 
 	return bc, nil
 }

@@ -111,6 +111,10 @@ contract MembershipJoinSpace is MembershipBaseSetup {
 
           address currentNode = selectedNodes[k];
 
+          if (postedResult[currentNode]) {
+            continue;
+          }
+
           vm.prank(currentNode);
           IEntitlementGated(contractAddress).postEntitlementCheckResult(
             transactionId,

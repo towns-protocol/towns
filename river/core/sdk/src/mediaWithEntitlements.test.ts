@@ -8,6 +8,7 @@ import { makeDefaultChannelStreamId, makeSpaceStreamId } from './id'
 import { ethers, Wallet } from 'ethers'
 import { Client } from './client'
 import {
+    ETH_ADDRESS,
     LocalhostWeb3Provider,
     MembershipStruct,
     NoopRuleData,
@@ -19,8 +20,6 @@ import { makeBaseChainConfig } from './riverConfig'
 import { dlog } from '@river-build/dlog'
 
 const log = dlog('csb:test:mediaWithEntitlements')
-
-const ETH_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
 
 describe('mediaWithEntitlements', () => {
     let bobClient: Client

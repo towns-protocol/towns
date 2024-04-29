@@ -124,9 +124,12 @@ export const makeUniqueChannelStreamId = (spaceId: string): string => {
     // fill the rest with random bytes
     return makeStreamId(StreamPrefix.Channel, spaceId.slice(2, 42) + genId(22))
 }
-export const makeDefaultChannelStreamId = (spaceContractAddress: string): string => {
+export const makeDefaultChannelStreamId = (spaceContractAddressOrId: string): string => {
+    if (spaceContractAddressOrId.startsWith(StreamPrefix.Space)) {
+        return StreamPrefix.Channel + spaceContractAddressOrId.slice(2)
+    }
     // matches code in the smart contract
-    return makeStreamId(StreamPrefix.Channel, spaceContractAddress + '0'.repeat(22))
+    return makeStreamId(StreamPrefix.Channel, spaceContractAddressOrId + '0'.repeat(22))
 }
 
 export const isDefaultChannelId = (streamId: string): boolean => {

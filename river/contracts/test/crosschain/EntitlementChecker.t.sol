@@ -12,6 +12,9 @@ import {IEntitlementChecker, IEntitlementCheckerBase} from "contracts/src/base/r
 //contracts
 import {EntitlementChecker} from "contracts/src/base/registry/facets/checker/EntitlementChecker.sol";
 
+// debuggging
+import {console} from "forge-std/console.sol";
+
 contract EntitlementCheckerTest is TestUtils, IEntitlementCheckerBase {
   IEntitlementChecker public checker;
 
@@ -79,6 +82,14 @@ contract EntitlementCheckerTest is TestUtils, IEntitlementCheckerBase {
     _registerNodes();
 
     address[] memory nodes = checker.getRandomNodes(5);
+
+    // validate no nodes are repeating
+    for (uint256 i = 0; i < nodes.length; i++) {
+      for (uint256 j = i + 1; j < nodes.length; j++) {
+        assertNotEq(nodes[i], nodes[j]);
+      }
+    }
+
     assertEq(nodes.length, 5);
   }
 

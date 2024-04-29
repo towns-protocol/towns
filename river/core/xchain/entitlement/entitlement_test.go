@@ -5,7 +5,6 @@ import (
 	"core/xchain/config"
 	"core/xchain/examples"
 	"math/big"
-	"os"
 	"testing"
 	"time"
 
@@ -114,16 +113,16 @@ var nftCheckBaseSepolia = CheckOperation{
 	Threshold:       big.NewInt(1),
 }
 
-func TestMain(m *testing.M) {
-	// Set the asset chains to be used in the tests
-	config.SetConfig(&config.Config{
-		ChainsString: "84532:https://sepolia.base.org,11155111:https://ethereum-sepolia-rpc.publicnode.com",
-	})
-	os.Exit(m.Run())
+var chains = map[uint64]string{
+	84532:    "https://sepolia.base.org",
+	11155111: "https://ethereum-sepolia-rpc.publicnode.com",
+}
+
+var cfg = &config.Config{
+	Chains: chains,
 }
 
 func TestAndOperation(t *testing.T) {
-	t.Log("TestAndOperation")
 	testCases := []struct {
 		a            Operation
 		b            Operation
@@ -145,7 +144,6 @@ func TestAndOperation(t *testing.T) {
 	}
 
 	for idx, tc := range testCases {
-		t.Log("TestAndOperation", tc)
 		tree := &AndOperation{
 			OpType:         LOGICAL,
 			LogicalType:    LogicalOperationType(AND),
@@ -156,9 +154,8 @@ func TestAndOperation(t *testing.T) {
 
 		callerAddress := common.Address{}
 
-		result, error := evaluateOp(context.Background(), tree, &callerAddress)
+		result, error := evaluateOp(context.Background(), cfg, tree, &callerAddress)
 		elapsedTime := time.Since(startTime)
-		t.Log("TestAndOperation elapsedTime", tc, elapsedTime)
 		if error != nil {
 			t.Errorf("evaluateAndOperation(%v) = %v; want %v", idx, error, nil)
 		}
@@ -172,13 +169,10 @@ func TestAndOperation(t *testing.T) {
 		) {
 			t.Errorf("evaluateAndOperation(%v) took %v; want %v", idx, elapsedTime, time.Duration(tc.expectedTime))
 		}
-		t.Log("TestAndOperation done", tc)
-
 	}
 }
 
 func TestOrOperation(t *testing.T) {
-	t.Log("TestOrOperation")
 	testCases := []struct {
 		a            Operation
 		b            Operation
@@ -200,7 +194,6 @@ func TestOrOperation(t *testing.T) {
 	}
 
 	for idx, tc := range testCases {
-		t.Log("TestOrOperation", tc)
 		tree := &OrOperation{
 			OpType:         LOGICAL,
 			LogicalType:    LogicalOperationType(OR),
@@ -211,7 +204,7 @@ func TestOrOperation(t *testing.T) {
 
 		callerAddress := common.Address{}
 
-		result, error := evaluateOp(context.Background(), tree, &callerAddress)
+		result, error := evaluateOp(context.Background(), cfg, tree, &callerAddress)
 		elapsedTime := time.Since(startTime)
 		if error != nil {
 			t.Errorf("evaluateOrOperation(%v) = %v; want %v", idx, error, nil)
@@ -226,7 +219,6 @@ func TestOrOperation(t *testing.T) {
 		) {
 			t.Errorf("evaluateOrOperation(%v) took %v; want %v", idx, elapsedTime, time.Duration(tc.expectedTime))
 		}
-		t.Log("TestOrOperation done", tc)
 
 	}
 }
@@ -240,7 +232,6 @@ func areDurationsClose(d1, d2, threshold time.Duration) bool {
 }
 
 func TestCheckOperation(t *testing.T) {
-	t.Log("TestCheckOperation")
 	testCases := []struct {
 		a             Operation
 		callerAddress common.Address
@@ -269,9 +260,8 @@ func TestCheckOperation(t *testing.T) {
 	for _, tc := range testCases {
 
 		startTime := time.Now() // Get the current time
-		t.Log("TestCheckOperation", tc)
 
-		result, err := evaluateOp(context.Background(), tc.a, &tc.callerAddress)
+		result, err := evaluateOp(context.Background(), cfg, tc.a, &tc.callerAddress)
 		elapsedTime := time.Since(startTime)
 
 		if err != nil {

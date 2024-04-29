@@ -73,16 +73,26 @@ This XChain Node resides in a monorepo and interfaces with the `EntitlementCheck
    ```
 
 3. **Run Tests:**
+
    ```bash
    make test
    ```
-4. **Run Go Vet:**
+
+4. **Run Integration Tests**
+   Note: this step requires that a local base chai nbe running.
+
+   ```bash
+   ../../scripts/start-local-basechain.sh
+   make integration_tests
+   ```
+
+5. **Run Go Vet:**
 
    ```bash
    make vet
    ```
 
-5. **Run Linter:**
+6. **Run Linter:**
    ```bash
    make lint
    ```

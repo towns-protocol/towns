@@ -19,7 +19,6 @@ import {DeployOwnable} from "contracts/scripts/deployments/facets/DeployOwnable.
 
 // mocks
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
-import {MockFacet} from "contracts/test/mocks/MockFacet.sol";
 
 abstract contract DiamondCutSetup is FacetTest {
   DeployDiamondCut cutHelper = new DeployDiamondCut();
@@ -29,14 +28,12 @@ abstract contract DiamondCutSetup is FacetTest {
 
   DiamondCutFacet internal diamondCut;
   DiamondLoupeFacet internal diamondLoupe;
-  MockFacet internal mockFacet;
 
   function setUp() public virtual override {
     super.setUp();
 
     diamondCut = DiamondCutFacet(diamond);
     diamondLoupe = DiamondLoupeFacet(diamond);
-    mockFacet = new MockFacet();
   }
 
   function diamondInitParams()

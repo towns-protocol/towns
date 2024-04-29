@@ -2,6 +2,7 @@ package entitlement
 
 import (
 	"context"
+	"core/xchain/config"
 	"errors"
 	"fmt"
 	"math/big"
@@ -13,14 +14,19 @@ import (
 	"github.com/river-build/river/core/node/dlog"
 )
 
-func EvaluateRuleData(ctx context.Context, callerAddress *common.Address, ruleData *er.IRuleData) (bool, error) {
+func EvaluateRuleData(
+	ctx context.Context,
+	cfg *config.Config,
+	callerAddress *common.Address,
+	ruleData *er.IRuleData,
+) (bool, error) {
 	opTree, err := getOperationTree(ruleData)
 	log := dlog.FromCtx(ctx)
 	log.Info("built operation tree", "opTree", opTree)
 	if err != nil {
 		return false, err
 	}
-	return evaluateOp(ctx, opTree, callerAddress)
+	return evaluateOp(ctx, cfg, opTree, callerAddress)
 }
 
 // OperationType Enum
@@ -215,6 +221,7 @@ func getOperationTree(ruleData *er.IRuleData) (Operation, error) {
 
 func evaluateAndOperation(
 	ctx context.Context,
+	cfg *config.Config,
 	op *AndOperation,
 	callerAddress *common.Address,
 ) (bool, error) {
@@ -232,7 +239,7 @@ func evaluateAndOperation(
 	defer leftCancel()
 	defer rightCancel()
 	go func() {
-		leftResult, leftErr = evaluateOp(leftCtx, op.LeftOperation, callerAddress)
+		leftResult, leftErr = evaluateOp(leftCtx, cfg, op.LeftOperation, callerAddress)
 		if !leftResult || leftErr != nil {
 			// cancel the other goroutine
 			// if the left result is false or there is an error
@@ -242,7 +249,7 @@ func evaluateAndOperation(
 	}()
 
 	go func() {
-		rightResult, rightErr = evaluateOp(rightCtx, op.RightOperation, callerAddress)
+		rightResult, rightErr = evaluateOp(rightCtx, cfg, op.RightOperation, callerAddress)
 		if !rightResult || rightErr != nil {
 			// cancel the other goroutine
 			// if the right result is false or there is an error
@@ -257,6 +264,7 @@ func evaluateAndOperation(
 
 func evaluateOrOperation(
 	ctx context.Context,
+	cfg *config.Config,
 	op *OrOperation,
 	callerAddress *common.Address,
 ) (bool, error) {
@@ -274,7 +282,7 @@ func evaluateOrOperation(
 	defer leftCancel()
 	defer rightCancel()
 	go func() {
-		leftResult, leftErr = evaluateOp(leftCtx, op.LeftOperation, callerAddress)
+		leftResult, leftErr = evaluateOp(leftCtx, cfg, op.LeftOperation, callerAddress)
 		if leftResult || leftErr != nil {
 			// cancel the other goroutine
 			// if the left result is true or there is an error
@@ -284,7 +292,7 @@ func evaluateOrOperation(
 	}()
 
 	go func() {
-		rightResult, rightErr = evaluateOp(rightCtx, op.RightOperation, callerAddress)
+		rightResult, rightErr = evaluateOp(rightCtx, cfg, op.RightOperation, callerAddress)
 		if rightResult || rightErr != nil {
 			// cancel the other goroutine
 			// if the right result is true or there is an error
@@ -316,6 +324,7 @@ func awaitTimeout(ctx context.Context, f func() error) error {
 
 func evaluateOp(
 	ctx context.Context,
+	cfg *config.Config,
 	op Operation,
 	callerAddress *common.Address,
 ) (bool, error) {
@@ -326,17 +335,17 @@ func evaluateOp(
 	switch op.GetOpType() {
 	case CHECK:
 		checkOp := (op).(*CheckOperation)
-		return evaluateCheckOperation(ctx, checkOp, callerAddress)
+		return evaluateCheckOperation(ctx, cfg, checkOp, callerAddress)
 	case LOGICAL:
 		logicalOp := (op).(LogicalOperation)
 
 		switch logicalOp.GetLogicalType() {
 		case AND:
 			andOp := (op).(*AndOperation)
-			return evaluateAndOperation(ctx, andOp, callerAddress)
+			return evaluateAndOperation(ctx, cfg, andOp, callerAddress)
 		case OR:
 			orOp := (op).(*OrOperation)
-			return evaluateOrOperation(ctx, orOp, callerAddress)
+			return evaluateOrOperation(ctx, cfg, orOp, callerAddress)
 		case LogNONE:
 			fallthrough
 		default:

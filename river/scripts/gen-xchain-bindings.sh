@@ -15,6 +15,7 @@ if [ -z ${ABIGEN_VERSION+x} ]; then
 fi
 
 XCHAIN_DIR="core/xchain/contracts"
+BINDING_DIR="core/xchain/bindings"
 
 mkdir -p "${XCHAIN_DIR}/${VERSION}"
 
@@ -30,12 +31,48 @@ generate_go() {
         --out "${XCHAIN_DIR}/${VERSION}/${GO_NAME}.go"
 }
 
+generate_test_binding() {
+    local CONTRACT=$1
+    local GO_NAME=$2
+
+    go run github.com/ethereum/go-ethereum/cmd/abigen@${ABIGEN_VERSION} \
+        --abi contracts/out/${CONTRACT}.sol/${CONTRACT}.abi.json \
+        --bin contracts/out/${CONTRACT}.sol/${CONTRACT}.bin \
+        --pkg "dev" \
+        --type "${GO_NAME}" \
+        --out "${XCHAIN_DIR}/test/${GO_NAME}.go"
+}
+
+generate_go_deploy() {
+    local CONTRACT=$1
+    local GO_NAME=$2
+
+    local OUT_DIR="core/node/contracts/deploy"
+    mkdir -p "${OUT_DIR}"
+
+    go run github.com/ethereum/go-ethereum/cmd/abigen@${ABIGEN_VERSION} \
+        --abi contracts/out/${CONTRACT}.sol/${CONTRACT}.abi.json \
+        --bin contracts/out/${CONTRACT}.sol/${CONTRACT}.bin \
+        --pkg "deploy" \
+        --type "${GO_NAME}" \
+        --out "${OUT_DIR}/${GO_NAME}.go"
+}
+
+
+# Interfaces
 generate_go IEntitlementChecker i_entitlement_checker
 generate_go IEntitlementGated i_entitlement_gated
 generate_go IEntitlement i_entitlement
 generate_go ICustomEntitlement i_custom_entitlement
+
+# Contracts
 generate_go MockCustomEntitlement mock_custom_entitlement
 generate_go MockEntitlementGated mock_entitlement_gated
+generate_go EntitlementChecker entitlement_checker
+
+# Unversion contracts
+generate_test_binding MockERC20 mock_erc20
+generate_test_binding MockERC721 mock_erc721
 
 mkdir -p bin
 go build -o bin/gen-bindings-remove-struct scripts/gen-bindings-remove-struct.go

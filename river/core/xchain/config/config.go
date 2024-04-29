@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/ethereum/go-ethereum/common"
 	node_config "github.com/river-build/river/core/node/config"
 	infra "github.com/river-build/river/core/node/infra/config"
 )
@@ -36,11 +37,33 @@ type ContractConfig struct {
 	Address string
 }
 
-var cmdConfig *Config
+func (c *Config) GetContractVersion() ContractVersion {
+	if c.contractVersion == VersionV3 {
+		return VersionV3
+	} else {
+		return VersionDev
+	}
+}
 
-func parseChain(chainStr string) map[uint64]string {
+func (c *Config) GetCheckerContractAddress() common.Address {
+	return common.HexToAddress(c.EntitlementContract.Address)
+}
+
+func (c *Config) GetMockEntitlementContractAddress() common.Address {
+	return common.HexToAddress(c.TestingContract.Address)
+}
+
+func (c *Config) GetTestCustomEntitlementContractAddress() common.Address {
+	return common.HexToAddress(c.TestCustomEntitlementContract.Address)
+}
+
+func (c *Config) Init() {
+	c.parseChains()
+}
+
+func (c *Config) parseChains() {
 	chainUrls := make(map[uint64]string)
-	chainPairs := strings.Split(chainStr, ",")
+	chainPairs := strings.Split(c.ChainsString, ",")
 	for _, pair := range chainPairs {
 		parts := strings.SplitN(pair, ":", 2) // Use SplitN to split into exactly two parts
 		if len(parts) == 2 {
@@ -52,23 +75,5 @@ func parseChain(chainStr string) map[uint64]string {
 			chainUrls[uint64(chainID)] = parts[1]
 		}
 	}
-	return chainUrls
-}
-
-func GetConfig() *Config {
-	return cmdConfig
-}
-
-func SetConfig(config *Config) {
-	chains := parseChain(config.ChainsString)
-	config.Chains = chains
-	cmdConfig = config
-}
-
-func (c *Config) GetContractVersion() ContractVersion {
-	if c.contractVersion == VersionV3 {
-		return VersionV3
-	} else {
-		return VersionDev
-	}
+	c.Chains = chainUrls
 }

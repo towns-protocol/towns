@@ -19,6 +19,8 @@ var (
 	logFile      string
 	logToConsole bool
 	logNoColor   bool
+
+	loadedCfg *config.Config
 )
 
 var rootCmd = &cobra.Command{
@@ -51,6 +53,8 @@ func initConfigAndLog() {
 			fmt.Printf("Failed to unmarshal config, error=%v\n", err)
 		}
 
+		configStruct.Init()
+
 		if configStruct.Log.Format == "" {
 			configStruct.Log.Format = "text"
 		}
@@ -72,8 +76,8 @@ func initConfigAndLog() {
 			configStruct.Log.NoColor = true
 		}
 
-		config.SetConfig(&configStruct)
-		infra.InitLogFromConfig(&config.GetConfig().Log)
+		loadedCfg = &configStruct
+		infra.InitLogFromConfig(&loadedCfg.Log)
 	} else {
 		fmt.Println("No config file specified")
 	}

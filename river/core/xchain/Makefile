@@ -15,20 +15,19 @@ clean:
 
 # The `build` target compiles the code and puts the resulting binary in OUTPUT_DIR.
 .PHONY: build
-build: $(OUTPUT_DIR)/node $(OUTPUT_DIR)/integration_test
+build: $(OUTPUT_DIR)/node
 
 # Compiles the node binary
 $(OUTPUT_DIR)/node: $(SRC)
 	go build -o $(OUTPUT_DIR)/xchain_node ./node
 
-# Compiles the integration_test binary
-$(OUTPUT_DIR)/integration_test: $(SRC)
-	go build -o $(OUTPUT_DIR)/integration_test ./integration_test
-
 # The `test` target runs the tests.
 test:
 	go test -v ./...
-	
+
+integration_tests:
+	go test -timeout 10m core/xchain/server -v -tags integration
+
 # The `vet` target runs go vet to examine Go source code and reports suspicious constructs.
 vet:
 	go vet ./...

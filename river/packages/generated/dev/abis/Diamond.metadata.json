@@ -187,16 +187,6 @@
       {
         "inputs": [],
         "type": "error",
-        "name": "Introspection_AlreadySupported"
-      },
-      {
-        "inputs": [],
-        "type": "error",
-        "name": "Introspection_NotSupported"
-      },
-      {
-        "inputs": [],
-        "type": "error",
         "name": "Proxy__ImplementationIsNotContract"
       },
       {
@@ -255,32 +245,6 @@
         "anonymous": false
       },
       {
-        "inputs": [
-          {
-            "internalType": "bytes4",
-            "name": "interfaceId",
-            "type": "bytes4",
-            "indexed": true
-          }
-        ],
-        "type": "event",
-        "name": "InterfaceAdded",
-        "anonymous": false
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "bytes4",
-            "name": "interfaceId",
-            "type": "bytes4",
-            "indexed": true
-          }
-        ],
-        "type": "event",
-        "name": "InterfaceRemoved",
-        "anonymous": false
-      },
-      {
         "inputs": [],
         "stateMutability": "payable",
         "type": "fallback"
@@ -329,10 +293,10 @@
   },
   "sources": {
     "contracts/src/diamond/Diamond.sol": {
-      "keccak256": "0xa8a96d00848014881be80175311f216bd75acacb82523f4bc6c45b0571c8b618",
+      "keccak256": "0x9e4da6928d58a8f0f62062cd4070dbcebdb716539e7a9d5cdb24588f5e20b84b",
       "urls": [
-        "bzz-raw://fc8b288d95c48076b206358e0f3d06d64af1013c8df27d5a072afe8f2b39e507",
-        "dweb:/ipfs/QmYGJGAEpmtvyDr5N3m2mHz2Mq8NHTjhnK17qNeaK6TRZ9"
+        "bzz-raw://c1db36481f741516e8bf5b6ce4eccbc8f91b6a5ee4351cb629e5c5f9b04c19f2",
+        "dweb:/ipfs/QmUVbZLWr9evtBpD3q9z9V1EJrchujUUxbS4SFKTEj5pU5"
       ],
       "license": "Apache-2.0"
     },
@@ -384,30 +348,6 @@
       ],
       "license": "Apache-2.0"
     },
-    "contracts/src/diamond/facets/introspection/IERC165.sol": {
-      "keccak256": "0x243cfeefa64ba07bee887b0b03704147f9bd2f25571272a6ebca3ba684af1b00",
-      "urls": [
-        "bzz-raw://1aed67ea7251fad9dbfb58a30f59f7edd81d48d7f6b193b98f957be359653361",
-        "dweb:/ipfs/QmQauJL4nFMN3QDutjWezRbBjLX5GsTWt5jeLfkX4JW64T"
-      ],
-      "license": "Apache-2.0"
-    },
-    "contracts/src/diamond/facets/introspection/IntrospectionBase.sol": {
-      "keccak256": "0x5f458cf292b4b7b9d9c1efd110b3b65905c7bd7e47a48090af5eb9fb7d620ddf",
-      "urls": [
-        "bzz-raw://84995121aafc9124ba3a1148835dcccc1061c25a5b074b4579a83c0dd213d613",
-        "dweb:/ipfs/QmPYSKEqYWasPxVRzv4TCpXVfpkahfFDEPkTLp7UAT9fKq"
-      ],
-      "license": "Apache-2.0"
-    },
-    "contracts/src/diamond/facets/introspection/IntrospectionStorage.sol": {
-      "keccak256": "0x2e047e5efa9df7f3d60a8a114da39343635578b7475fcd987860eb5b87e8c758",
-      "urls": [
-        "bzz-raw://a071eda8331b690b689bbbc23e6a6c227324aad90d4101c36410a06b1ca3c357",
-        "dweb:/ipfs/QmTR76zN1durS5acgDZXixrkrheXvaaMqfwXrJsaGyAPkj"
-      ],
-      "license": "Apache-2.0"
-    },
     "contracts/src/diamond/facets/loupe/DiamondLoupeBase.sol": {
       "keccak256": "0xad4a6b5803d9ba9cc7aba2d52a1f5129049f05102a202522550641877e348436",
       "urls": [
@@ -445,14 +385,6 @@
       "urls": [
         "bzz-raw://b7bd24e224f67f65bfadf85dc2929fa965456bb2415478bd0125471b5ce35245",
         "dweb:/ipfs/QmRaydGr8BTHs1kvaZfsNU69pKzUAGFrvABn1KiRSbE51y"
-      ],
-      "license": "MIT"
-    },
-    "lib/@openzeppelin/contracts/utils/introspection/IERC165.sol": {
-      "keccak256": "0x4296879f55019b23e135000eb36896057e7101fb7fb859c5ef690cf14643757b",
-      "urls": [
-        "bzz-raw://87b3541437c8c443ccd36795e56a338ed12855eec17f8da624511b8d1a7e14df",
-        "dweb:/ipfs/QmeJQCtZrQjtJLr6u7ZHWeH3pBnjtLWzvRrKViAi7UZqxL"
       ],
       "license": "MIT"
     },

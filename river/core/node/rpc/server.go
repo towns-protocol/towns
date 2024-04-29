@@ -121,8 +121,6 @@ func (s *Service) start() error {
 		return AsRiverError(err).Message("Failed to init cache and sync").LogError(s.defaultLogger)
 	}
 
-	go s.riverChain.ChainMonitor.Run(s.serverCtx, s.riverChain.Client, s.riverChain.InitialBlockNum)
-
 	s.initHandlers()
 
 	s.SetStatus("OK")

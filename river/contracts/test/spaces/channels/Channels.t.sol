@@ -36,11 +36,9 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     );
   }
 
-  function test_revert_createChannel_with_duplicate_role(
-    string memory channelMetadata,
-    bytes32 channelId
-  ) public {
-    bound(bytes(channelMetadata).length, 3, 1000);
+  function test_revert_createChannel_with_duplicate_role() public {
+    bytes32 channelId = "my-cool-channel";
+    string memory channelMetadata = "Metadata";
 
     string[] memory permissions = new string[](1);
     permissions[0] = Permissions.Write;

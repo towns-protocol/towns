@@ -10,12 +10,12 @@ import {IERC165} from "contracts/src/diamond/facets/introspection/IERC165.sol";
 
 //contracts
 import {DiamondCutSetup} from "contracts/test/diamond/cut/DiamondCutSetup.sol";
-import {MockFacetHelper} from "contracts/test/mocks/MockFacet.sol";
+import {DeployMockFacet} from "contracts/test/mocks/MockFacet.sol";
 import {MockFacet} from "contracts/test/mocks/MockFacet.sol";
 
 contract DiamondLoupeTest is DiamondCutSetup {
+  DeployMockFacet mockFacetHelper = new DeployMockFacet();
   IDiamond.FacetCut[] internal facetCuts;
-  MockFacetHelper internal mockFacetHelper = new MockFacetHelper();
 
   function test_supportsInterface() external {
     assertTrue(
@@ -24,13 +24,14 @@ contract DiamondLoupeTest is DiamondCutSetup {
   }
 
   function test_facets() external {
+    address mockFacet = mockFacetHelper.deploy();
     bytes4[] memory expectedSelectors = mockFacetHelper.selectors();
     IDiamondLoupe.Facet[] memory currentFacets = diamondLoupe.facets();
 
     // create facet cuts
     IDiamond.FacetCut[] memory extensions = new IDiamond.FacetCut[](1);
     extensions[0] = IDiamond.FacetCut({
-      facetAddress: mockFacetHelper.facet(),
+      facetAddress: mockFacet,
       action: IDiamond.FacetCutAction.Add,
       functionSelectors: expectedSelectors
     });
@@ -47,12 +48,13 @@ contract DiamondLoupeTest is DiamondCutSetup {
   }
 
   function test_facetFunctionSelectors() external {
+    address mockFacet = mockFacetHelper.deploy();
     bytes4[] memory expectedSelectors = mockFacetHelper.selectors();
 
     // create facet cuts
     IDiamond.FacetCut[] memory extensions = new IDiamond.FacetCut[](1);
     extensions[0] = IDiamond.FacetCut({
-      facetAddress: mockFacetHelper.facet(),
+      facetAddress: mockFacet,
       action: IDiamond.FacetCutAction.Add,
       functionSelectors: expectedSelectors
     });
@@ -62,9 +64,7 @@ contract DiamondLoupeTest is DiamondCutSetup {
     diamondCut.diamondCut(extensions, address(0), "");
 
     // get facet selectors
-    bytes4[] memory selectors = diamondLoupe.facetFunctionSelectors(
-      mockFacetHelper.facet()
-    );
+    bytes4[] memory selectors = diamondLoupe.facetFunctionSelectors(mockFacet);
 
     // assert selectors length is correct
     assertEq(selectors.length, expectedSelectors.length);
@@ -77,13 +77,14 @@ contract DiamondLoupeTest is DiamondCutSetup {
   }
 
   function test_facetAddresses() external {
+    address mockFacet = mockFacetHelper.deploy();
     bytes4[] memory expectedSelectors = mockFacetHelper.selectors();
     address[] memory currentFacetAddresses = diamondLoupe.facetAddresses();
 
     // create facet cuts
     IDiamond.FacetCut[] memory extensions = new IDiamond.FacetCut[](1);
     extensions[0] = IDiamond.FacetCut({
-      facetAddress: mockFacetHelper.facet(),
+      facetAddress: mockFacet,
       action: IDiamond.FacetCutAction.Add,
       functionSelectors: expectedSelectors
     });
@@ -99,19 +100,17 @@ contract DiamondLoupeTest is DiamondCutSetup {
     assertEq(facetAddresses.length, currentFacetAddresses.length + 1);
 
     // assert facet address is correct
-    assertEq(
-      facetAddresses[facetAddresses.length - 1],
-      mockFacetHelper.facet()
-    );
+    assertEq(facetAddresses[facetAddresses.length - 1], mockFacet);
   }
 
   function test_facetAddress() external {
+    address mockFacet = mockFacetHelper.deploy();
     bytes4[] memory expectedSelectors = mockFacetHelper.selectors();
 
     // create facet cuts
     IDiamond.FacetCut[] memory extensions = new IDiamond.FacetCut[](1);
     extensions[0] = IDiamond.FacetCut({
-      facetAddress: mockFacetHelper.facet(),
+      facetAddress: mockFacet,
       action: IDiamond.FacetCutAction.Add,
       functionSelectors: expectedSelectors
     });
@@ -123,20 +122,18 @@ contract DiamondLoupeTest is DiamondCutSetup {
     // loop through mock facet selectors
     for (uint256 i; i < expectedSelectors.length; i++) {
       // assert facet address is correct
-      assertEq(
-        diamondLoupe.facetAddress(expectedSelectors[i]),
-        mockFacetHelper.facet()
-      );
+      assertEq(diamondLoupe.facetAddress(expectedSelectors[i]), mockFacet);
     }
   }
 
   function test_facetAddressRemove() external {
+    address mockFacet = mockFacetHelper.deploy();
     bytes4[] memory expectedSelectors = mockFacetHelper.selectors();
 
     // create facet cuts
     IDiamond.FacetCut[] memory extensions = new IDiamond.FacetCut[](1);
     extensions[0] = IDiamond.FacetCut({
-      facetAddress: mockFacetHelper.facet(),
+      facetAddress: mockFacet,
       action: IDiamond.FacetCutAction.Add,
       functionSelectors: expectedSelectors
     });
@@ -147,7 +144,7 @@ contract DiamondLoupeTest is DiamondCutSetup {
 
     // remove facet cuts
     extensions[0] = IDiamond.FacetCut({
-      facetAddress: mockFacetHelper.facet(),
+      facetAddress: mockFacet,
       action: IDiamond.FacetCutAction.Remove,
       functionSelectors: expectedSelectors
     });
@@ -164,12 +161,13 @@ contract DiamondLoupeTest is DiamondCutSetup {
   }
 
   function test_facetAddressReplace() external {
+    address mockFacet = mockFacetHelper.deploy();
     bytes4[] memory expectedSelectors = mockFacetHelper.selectors();
 
     // create facet cuts
     IDiamond.FacetCut[] memory extensions = new IDiamond.FacetCut[](1);
     extensions[0] = IDiamond.FacetCut({
-      facetAddress: mockFacetHelper.facet(),
+      facetAddress: mockFacet,
       action: IDiamond.FacetCutAction.Add,
       functionSelectors: expectedSelectors
     });

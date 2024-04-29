@@ -19,7 +19,6 @@ import {PlatformRequirementsFacet} from "contracts/src/factory/facets/platform/r
 import {PrepayFacet} from "contracts/src/factory/facets/prepay/PrepayFacet.sol";
 
 // space helpers
-import {ProxyManagerHelper} from "contracts/test/diamond/proxy/ProxyManagerSetup.sol";
 import {PausableHelper} from "contracts/test/diamond/pausable/PausableSetup.sol";
 import {PlatformRequirementsHelper} from "contracts/test/spaces/platform/requirements/PlatformRequirementsHelper.sol";
 import {PrepayHelper} from "contracts/test/spaces/prepay/PrepayHelper.sol";
@@ -32,6 +31,7 @@ import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDia
 import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
 import {DeployMetadata} from "contracts/scripts/deployments/facets/DeployMetadata.s.sol";
 import {DeployArchitect} from "contracts/scripts/deployments/facets/DeployArchitect.s.sol";
+import {DeployProxyManager} from "contracts/scripts/deployments/facets/DeployProxyManager.s.sol";
 
 import {DeployUserEntitlement} from "contracts/scripts/deployments/DeployUserEntitlement.s.sol";
 import {DeployMultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.sol";
@@ -58,6 +58,7 @@ contract DeploySpaceFactory is DiamondDeployer {
   DeployImplementationRegistry registryHelper =
     new DeployImplementationRegistry();
   DeployWalletLink walletLinkHelper = new DeployWalletLink();
+  DeployProxyManager proxyManagerHelper = new DeployProxyManager();
   DeployMultiInit deployMultiInit = new DeployMultiInit();
 
   // dependencies
@@ -74,7 +75,6 @@ contract DeploySpaceFactory is DiamondDeployer {
   PlatformRequirementsHelper platformReqsHelper =
     new PlatformRequirementsHelper();
   PrepayHelper prepayHelper = new PrepayHelper();
-  ProxyManagerHelper proxyManagerHelper = new ProxyManagerHelper();
 
   // diamond addresses
   address ownable;
@@ -140,9 +140,9 @@ contract DeploySpaceFactory is DiamondDeployer {
     architect = architectHelper.deploy();
     registry = registryHelper.deploy();
     walletLink = walletLinkHelper.deploy();
+    proxyManager = proxyManagerHelper.deploy();
 
     vm.startBroadcast(deployerPK);
-    proxyManager = address(new ProxyManager());
     pausable = address(new PausableFacet());
     platformReqs = address(new PlatformRequirementsFacet());
     prepay = address(new PrepayFacet());

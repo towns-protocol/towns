@@ -140,6 +140,7 @@
                     "vite-tsconfig-paths"
                 ],
                 "packages": [
+                    "@river-build/stress",
                     "@river/sdk",
                     "@river/debug-app"
                 ],

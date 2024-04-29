@@ -17,6 +17,21 @@ import (
 	"github.com/river-build/river/core/node/dlog"
 )
 
+type EntitlementChecker struct {
+	v3EntitlementChecker  *v3.EntitlementChecker
+	devEntitlementChecker *dev.EntitlementChecker
+}
+
+func DeployEntitlementChecker(auth *bind.TransactOpts, backend bind.ContractBackend, version config.ContractVersion) (common.Address, *types.Transaction, *EntitlementChecker, error) {
+	if version == "v3" {
+		address, tx, v3Checker, err := v3.DeployEntitlementChecker(auth, backend)
+		return address, tx, &EntitlementChecker{v3EntitlementChecker: v3Checker}, err
+	} else {
+		address, tx, devChecker, err := dev.DeployEntitlementChecker(auth, backend)
+		return address, tx, &EntitlementChecker{devEntitlementChecker: devChecker}, err
+	}
+}
+
 type IRuleData struct {
 	Operations        []IRuleEntitlementOperation
 	CheckOperations   []IRuleEntitlementCheckOperation
@@ -92,9 +107,19 @@ func (e *entitlementCheckResultPosted) Raw() interface{} {
 	return e.devInner
 }
 
-func NewMockEntitlementGated(address common.Address, backend bind.ContractBackend) (*MockEntitlementGated, error) {
+func DeployMockEntitlementGated(auth *bind.TransactOpts, backend bind.ContractBackend, checker common.Address, version config.ContractVersion) (common.Address, *types.Transaction, *MockEntitlementGated, error) {
+	if version == "v3" {
+		address, tx, contract, err := v3.DeployMockEntitlementGated(auth, backend, checker)
+		return address, tx, &MockEntitlementGated{v3MockEntitlementGated: contract}, err
+	} else {
+		address, tx, contract, err := dev.DeployMockEntitlementGated(auth, backend, checker)
+		return address, tx, &MockEntitlementGated{devMockEntitlementGated: contract}, err
+	}
+}
+
+func NewMockEntitlementGated(address common.Address, backend bind.ContractBackend, version config.ContractVersion) (*MockEntitlementGated, error) {
 	res := &MockEntitlementGated{}
-	if config.GetConfig().GetContractVersion() == "v3" {
+	if version == "v3" {
 		contract, err := v3.NewMockEntitlementGated(address, backend)
 		res.v3MockEntitlementGated = contract
 		return res, err
@@ -105,8 +130,8 @@ func NewMockEntitlementGated(address common.Address, backend bind.ContractBacken
 	}
 }
 
-func (g *MockEntitlementGated) EntitlementCheckResultPosted() IEntitlementCheckResultPosted {
-	if config.GetConfig().GetContractVersion() == "v3" {
+func (g *MockEntitlementGated) EntitlementCheckResultPosted(version config.ContractVersion) IEntitlementCheckResultPosted {
+	if g.v3MockEntitlementGated != nil {
 		return &entitlementCheckResultPosted{&v3.IEntitlementGatedEntitlementCheckResultPosted{}, nil}
 	} else {
 		return &entitlementCheckResultPosted{nil, &dev.IEntitlementGatedEntitlementCheckResultPosted{}}
@@ -114,7 +139,7 @@ func (g *MockEntitlementGated) EntitlementCheckResultPosted() IEntitlementCheckR
 }
 
 func (g *MockEntitlementGated) GetMetadata() *bind.MetaData {
-	if config.GetConfig().GetContractVersion() == "v3" {
+	if g.v3MockEntitlementGated != nil {
 		return v3.MockEntitlementGatedMetaData
 	} else {
 		return dev.MockEntitlementGatedMetaData
@@ -131,7 +156,7 @@ func (g *MockEntitlementGated) GetAbi() *abi.ABI {
 }
 
 func (g *MockEntitlementGated) RequestEntitlementCheck(opts *bind.TransactOpts, ruledata IRuleData) (*types.Transaction, error) {
-	if config.GetConfig().GetContractVersion() == "v3" {
+	if g.v3MockEntitlementGated != nil {
 		return g.v3MockEntitlementGated.RequestEntitlementCheck(opts, convertRuleDataToV3(ruledata))
 	} else {
 		return g.devMockEntitlementGated.RequestEntitlementCheck(opts, convertRuleDataToDev(ruledata))
@@ -143,9 +168,19 @@ type MockCustomEntitlement struct {
 	devMockCustomEntitlement *dev.MockCustomEntitlement
 }
 
-func NewMockCustomEntitlement(address common.Address, backend bind.ContractBackend) (*MockCustomEntitlement, error) {
+func DeployMockCustomEntitlement(auth *bind.TransactOpts, backend bind.ContractBackend, version config.ContractVersion) (common.Address, *types.Transaction, *MockCustomEntitlement, error) {
+	if version == "v3" {
+		address, tx, contract, err := v3.DeployMockCustomEntitlement(auth, backend)
+		return address, tx, &MockCustomEntitlement{v3MockCustomEntitlement: contract}, err
+	} else {
+		address, tx, contract, err := dev.DeployMockCustomEntitlement(auth, backend)
+		return address, tx, &MockCustomEntitlement{devMockCustomEntitlement: contract}, err
+	}
+}
+
+func NewMockCustomEntitlement(address common.Address, backend bind.ContractBackend, version config.ContractVersion) (*MockCustomEntitlement, error) {
 	res := &MockCustomEntitlement{}
-	if config.GetConfig().GetContractVersion() == "v3" {
+	if version == "v3" {
 		contract, err := v3.NewMockCustomEntitlement(address, backend)
 		res.v3MockCustomEntitlement = contract
 		return res, err
@@ -161,16 +196,16 @@ func (m *MockCustomEntitlement) SetEntitled(
 	user []common.Address,
 	userIsEntitled bool,
 ) (*types.Transaction, error) {
-	if config.GetConfig().GetContractVersion() == "v3" {
+	if m.v3MockCustomEntitlement != nil {
 		return m.v3MockCustomEntitlement.SetEntitled(opts, user, userIsEntitled)
 	} else {
 		return m.devMockCustomEntitlement.SetEntitled(opts, user, userIsEntitled)
 	}
 }
 
-func NewIEntitlementGated(address common.Address, backend bind.ContractBackend) (*IEntitlementGated, error) {
+func NewIEntitlementGated(address common.Address, backend bind.ContractBackend, version config.ContractVersion) (*IEntitlementGated, error) {
 	res := &IEntitlementGated{}
-	if config.GetConfig().GetContractVersion() == "v3" {
+	if version == "v3" {
 		contract, err := v3.NewIEntitlementGated(address, backend)
 		res.v3IEntitlementGated = contract
 		return res, err
@@ -182,7 +217,7 @@ func NewIEntitlementGated(address common.Address, backend bind.ContractBackend) 
 }
 
 func (g *IEntitlementGated) PostEntitlementCheckResult(opts *bind.TransactOpts, transactionId [32]byte, result uint8) (*types.Transaction, error) {
-	if config.GetConfig().GetContractVersion() == "v3" {
+	if g.v3IEntitlementGated != nil {
 		return g.v3IEntitlementGated.PostEntitlementCheckResult(opts, transactionId, result)
 	} else {
 		return g.devIEntitlementGated.PostEntitlementCheckResult(opts, transactionId, result)
@@ -190,7 +225,7 @@ func (g *IEntitlementGated) PostEntitlementCheckResult(opts *bind.TransactOpts, 
 }
 
 func (g *IEntitlementGated) WatchEntitlementCheckResultPosted(opts *bind.WatchOpts, sink chan<- *IEntitlementGatedEntitlementCheckResultPosted, transactionId [][32]byte) (event.Subscription, error) {
-	if config.GetConfig().GetContractVersion() == "v3" {
+	if g.v3IEntitlementGated != nil {
 		v3Sink := make(chan *v3.IEntitlementGatedEntitlementCheckResultPosted)
 		sub, err := g.v3IEntitlementGated.WatchEntitlementCheckResultPosted(opts, v3Sink, transactionId)
 		go func() {
@@ -215,7 +250,7 @@ func (g *IEntitlementGated) WatchEntitlementCheckResultPosted(opts *bind.WatchOp
 
 func (g *IEntitlementGated) GetRuleData(opts *bind.CallOpts, transactionId [32]byte) (*IRuleData, error) {
 	var ruleData IRuleData
-	if config.GetConfig().GetContractVersion() == "v3" {
+	if g.v3IEntitlementGated != nil {
 		v3RuleData, err := g.v3IEntitlementGated.GetRuleData(opts, transactionId)
 		if err != nil {
 			return nil, err
@@ -287,9 +322,9 @@ type ICustomEntitlement struct {
 	devICustomEntitlement *dev.ICustomEntitlement
 }
 
-func NewICustomEntitlement(address common.Address, backend bind.ContractBackend) (*ICustomEntitlement, error) {
+func NewICustomEntitlement(address common.Address, backend bind.ContractBackend, version config.ContractVersion) (*ICustomEntitlement, error) {
 	res := &ICustomEntitlement{}
-	if config.GetConfig().GetContractVersion() == "v3" {
+	if version == "v3" {
 		contract, err := v3.NewICustomEntitlement(address, backend)
 		res.v3ICustomEntitlement = contract
 		return res, err
@@ -301,7 +336,7 @@ func NewICustomEntitlement(address common.Address, backend bind.ContractBackend)
 }
 
 func (c *ICustomEntitlement) GetMetadata() *bind.MetaData {
-	if config.GetConfig().GetContractVersion() == "v3" {
+	if c.v3ICustomEntitlement != nil {
 		return v3.ICustomEntitlementMetaData
 	} else {
 		return dev.ICustomEntitlementMetaData
@@ -318,7 +353,7 @@ func (c *ICustomEntitlement) GetAbi() *abi.ABI {
 }
 
 func (c *ICustomEntitlement) IsEntitled(opts *bind.CallOpts, user []common.Address) (bool, error) {
-	if config.GetConfig().GetContractVersion() == "v3" {
+	if c.v3ICustomEntitlement != nil {
 		return c.v3ICustomEntitlement.IsEntitled(opts, user)
 	} else {
 		return c.devICustomEntitlement.IsEntitled(opts, user)
@@ -326,7 +361,7 @@ func (c *ICustomEntitlement) IsEntitled(opts *bind.CallOpts, user []common.Addre
 }
 
 func (g *MockEntitlementGated) EntitlementGatedMetaData() *bind.MetaData {
-	if config.GetConfig().GetContractVersion() == "v3" {
+	if g.v3MockEntitlementGated != nil {
 		return v3.IEntitlementGatedMetaData
 	} else {
 		return dev.IEntitlementGatedMetaData
@@ -338,8 +373,8 @@ type EntitlementGatedMetaData struct {
 	devIEntitlementGatedMetaData *bind.MetaData
 }
 
-func NewEntitlementGatedMetaData() EntitlementGatedMetaData {
-	if config.GetConfig().GetContractVersion() == "v3" {
+func NewEntitlementGatedMetaData(version config.ContractVersion) EntitlementGatedMetaData {
+	if version == "v3" {
 		return EntitlementGatedMetaData{
 			v3IEntitlementGatedMetaData: v3.IEntitlementGatedMetaData,
 		}
@@ -362,9 +397,9 @@ type IEntitlementChecker struct {
 	devIEntitlementChecker *dev.IEntitlementChecker
 }
 
-func NewIEntitlementChecker(address common.Address, backend bind.ContractBackend) (*IEntitlementChecker, error) {
+func NewIEntitlementChecker(address common.Address, backend bind.ContractBackend, version config.ContractVersion) (*IEntitlementChecker, error) {
 	res := &IEntitlementChecker{}
-	if config.GetConfig().GetContractVersion() == "v3" {
+	if version == "v3" {
 		contract, err := v3.NewIEntitlementChecker(address, backend)
 		res.v3IEntitlementChecker = contract
 		return res, err
@@ -375,8 +410,15 @@ func NewIEntitlementChecker(address common.Address, backend bind.ContractBackend
 	}
 }
 
+func (c *IEntitlementChecker) IsValidNode(opts *bind.CallOpts, node common.Address) (bool, error) {
+	if c.v3IEntitlementChecker != nil {
+		return c.v3IEntitlementChecker.IsValidNode(opts, node)
+	}
+	return c.devIEntitlementChecker.IsValidNode(opts, node)
+}
+
 func (c *IEntitlementChecker) GetMetadata() *bind.MetaData {
-	if config.GetConfig().GetContractVersion() == "v3" {
+	if v3.IEntitlementCheckerMetaData != nil {
 		return v3.IEntitlementCheckerMetaData
 	} else {
 		return dev.IEntitlementCheckerMetaData
@@ -442,7 +484,7 @@ func (e *entitlementCheckRequestEvent) Raw() interface{} {
 }
 
 func (c *IEntitlementChecker) EntitlementCheckRequestEvent() IEntitlementCheckRequestEvent {
-	if config.GetConfig().GetContractVersion() == "v3" {
+	if c.v3IEntitlementChecker != nil {
 		return &entitlementCheckRequestEvent{&v3.IEntitlementCheckerEntitlementCheckRequested{}, nil}
 	} else {
 		return &entitlementCheckRequestEvent{nil, &dev.IEntitlementCheckerEntitlementCheckRequested{}}
@@ -481,9 +523,8 @@ func (c *IEntitlementChecker) EstimateGas(ctx context.Context, client *ethclient
 
 }
 
-
 func (c *IEntitlementChecker) NodeCount(opts *bind.CallOpts) (*big.Int, error) {
-	if config.GetConfig().GetContractVersion() == "v3" {
+	if c.v3IEntitlementChecker != nil {
 		return c.v3IEntitlementChecker.GetNodeCount(opts)
 	} else {
 		return c.devIEntitlementChecker.GetNodeCount(opts)
@@ -491,7 +532,7 @@ func (c *IEntitlementChecker) NodeCount(opts *bind.CallOpts) (*big.Int, error) {
 }
 
 func (c *IEntitlementChecker) RegisterNode(opts *bind.TransactOpts, node common.Address) (*types.Transaction, error) {
-	if config.GetConfig().GetContractVersion() == "v3" {
+	if c.v3IEntitlementChecker != nil {
 		return c.v3IEntitlementChecker.RegisterNode(opts, node)
 	} else {
 		return c.devIEntitlementChecker.RegisterNode(opts, node)
@@ -499,7 +540,7 @@ func (c *IEntitlementChecker) RegisterNode(opts *bind.TransactOpts, node common.
 }
 
 func (c *IEntitlementChecker) UnregisterNode(opts *bind.TransactOpts, node common.Address) (*types.Transaction, error) {
-	if config.GetConfig().GetContractVersion() == "v3" {
+	if c.v3IEntitlementChecker != nil {
 		return c.v3IEntitlementChecker.UnregisterNode(opts, node)
 	} else {
 		return c.devIEntitlementChecker.UnregisterNode(opts, node)
@@ -507,7 +548,7 @@ func (c *IEntitlementChecker) UnregisterNode(opts *bind.TransactOpts, node commo
 }
 
 func (c *IEntitlementChecker) WatchEntitlementCheckRequested(opts *bind.WatchOpts, sink chan<- *IEntitlementCheckerEntitlementCheckRequested, nodeAddress []common.Address) (event.Subscription, error) {
-	if config.GetConfig().GetContractVersion() == "v3" {
+	if c.v3IEntitlementChecker != nil {
 		v3Sink := make(chan *v3.IEntitlementCheckerEntitlementCheckRequested)
 		sub, err := c.v3IEntitlementChecker.WatchEntitlementCheckRequested(opts, v3Sink)
 		go func() {

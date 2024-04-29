@@ -1,0 +1,69 @@
+{
+    "root": true,
+    "extends": [
+        "eslint:recommended",
+        "plugin:import/recommended",
+        "plugin:import/typescript",
+        "plugin:@typescript-eslint/recommended",
+        "plugin:@typescript-eslint/recommended-requiring-type-checking",
+        "plugin:prettier/recommended",
+        "plugin:jest/recommended"
+    ],
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": { "project": ["./tsconfig.json"] },
+    "plugins": ["@typescript-eslint", "import"],
+    "ignorePatterns": ["dist/**", ".turbo/**", "node_modules/**", "jest.config.ts"],
+    "rules": {
+        "no-console": "error",
+        "import/no-extraneous-dependencies": [
+            "error",
+            {
+                "packageDir": "."
+            }
+        ],
+        "require-await": "off",
+        "@typescript-eslint/require-await": "error",
+        "@typescript-eslint/no-explicit-any": "error",
+        "@typescript-eslint/no-unsafe-assignment": "error",
+        "@typescript-eslint/no-non-null-assertion": "error",
+        "@typescript-eslint/no-unused-vars": [
+            "error",
+            {
+                "argsIgnorePattern": "^_",
+                "destructuredArrayIgnorePattern": "^_"
+            }
+        ],
+        "@typescript-eslint/restrict-template-expressions": [
+            "error",
+            {
+                "allowNever": true,
+                "allowBoolean": true,
+                "allowNumber": true,
+                "allowAny": true,
+                "allowNullish": true
+            }
+        ],
+        "@typescript-eslint/no-empty-function": [
+            "error",
+            {
+                "allow": ["arrowFunctions"]
+            }
+        ],
+
+        "@typescript-eslint/ban-ts-comment": "off"
+    },
+    "overrides": [
+        {
+            "files": ["**/*.test.*", "**/*.test_util.*"],
+            "rules": {
+                "jest/no-standalone-expect": "error",
+                "jest/expect-expect": "error",
+                "jest/no-conditional-expect": "off",
+                "jest/no-disabled-tests": "off",
+                "@typescript-eslint/no-unsafe-call": "error",
+                "@typescript-eslint/no-non-null-assertion": "error",
+                "@typescript-eslint/no-unsafe-argument": "error"
+            }
+        }
+    ]
+}

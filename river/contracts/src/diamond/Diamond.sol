@@ -10,7 +10,6 @@ import {IDiamond} from "./IDiamond.sol";
 import {Proxy} from "./proxy/Proxy.sol";
 import {DiamondCutBase} from "./facets/cut/DiamondCutBase.sol";
 import {DiamondLoupeBase} from "./facets/loupe/DiamondLoupeBase.sol";
-import {IntrospectionBase} from "./facets/introspection/IntrospectionBase.sol";
 import {Initializable} from "./facets/initializable/Initializable.sol";
 
 contract Diamond is
@@ -18,7 +17,6 @@ contract Diamond is
   Proxy,
   DiamondCutBase,
   DiamondLoupeBase,
-  IntrospectionBase,
   Initializable
 {
   struct InitParams {

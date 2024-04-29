@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	xc "core/xchain/client_simulator"
+	"core/xchain/util"
 	"log"
 	"os"
 	"os/signal"
@@ -46,6 +47,12 @@ func runClientSimulator() error {
 		keyboardInput(input)
 	}()
 
+	wallet, err := util.LoadWallet(bc)
+	if err != nil {
+		log.Error("error finding wallet")
+		return err
+	}
+
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
@@ -58,13 +65,13 @@ out:
 			log.Info("Input", "char", char)
 			switch char {
 			case 'a':
-				xc.ClientSimulator(xc.ERC20)
+				xc.ClientSimulator(bc, loadedCfg, wallet, xc.ERC20)
 			case 'b':
-				xc.ClientSimulator(xc.ERC721)
+				xc.ClientSimulator(bc, loadedCfg, wallet, xc.ERC721)
 			case 'c':
-				xc.ClientSimulator(xc.ISENTITLED)
+				xc.ClientSimulator(bc, loadedCfg, wallet, xc.ISENTITLED)
 			case 'd':
-				xc.ClientSimulator(xc.TOGGLEISENTITLED)
+				xc.ClientSimulator(bc, loadedCfg, wallet, xc.TOGGLEISENTITLED)
 			case 'q':
 				log.Info("Quit Exit")
 				break out

@@ -2,7 +2,6 @@ package common
 
 import (
 	"context"
-	"core/xchain/config"
 	"encoding/json"
 	"fmt"
 	"math/big"
@@ -21,30 +20,7 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 )
 
-var (
-	checkerContractAddress               common.Address
-	checkerContractUrl                   string
-	testContractAddress                  common.Address
-	testContractUrl                      string
-	testCustomEntitlementContractAddress common.Address
-)
-
 var loadAddressesOnce sync.Once
-
-func loadConfig() {
-	log := dlog.FromCtx(context.Background())
-	cfg := config.GetConfig()
-	checkerContractAddress = common.HexToAddress(cfg.EntitlementContract.Address)
-	testContractAddress = common.HexToAddress(cfg.TestingContract.Address)
-
-	baseWebsocketURL, err := ConvertHTTPToWebSocket(config.GetConfig().BaseChain.NetworkUrl)
-	if err != nil {
-		log.Error("Failed to convert BaseChain HTTP to WebSocket", "err", err)
-	}
-
-	checkerContractUrl = baseWebsocketURL
-	testCustomEntitlementContractAddress = common.HexToAddress(cfg.TestCustomEntitlementContract.Address)
-}
 
 func ConvertHTTPToWebSocket(httpURL string) (string, error) {
 	// Parse the URL
@@ -69,31 +45,6 @@ func ConvertHTTPToWebSocket(httpURL string) (string, error) {
 
 	// Return the modified URL
 	return parsedURL.String(), nil
-}
-
-func GetCheckerContractAddress() *common.Address {
-	loadAddressesOnce.Do(loadConfig)
-	return &checkerContractAddress
-}
-
-func GetCheckerContractUrl() string {
-	loadAddressesOnce.Do(loadConfig)
-	return checkerContractUrl
-}
-
-func GetTestContractAddress() *common.Address {
-	loadAddressesOnce.Do(loadConfig)
-	return &testContractAddress
-}
-
-func GetTestContractUrl() string {
-	loadAddressesOnce.Do(loadConfig)
-	return testContractUrl
-}
-
-func GetTestCustomEntitlementContractAddress() *common.Address {
-	loadAddressesOnce.Do(loadConfig)
-	return &testCustomEntitlementContractAddress
 }
 
 const requiredBalance = 10000000000000000 // 0.01 ETH in Wei

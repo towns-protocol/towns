@@ -9,7 +9,6 @@ import (
 	"crypto/ecdsa"
 	"fmt"
 	"math/big"
-	"os"
 	"time"
 
 	node_contracts "github.com/river-build/river/core/node/contracts"
@@ -32,11 +31,12 @@ var isEntitled = false
 
 func toggleCustomEntitlement(
 	ctx context.Context,
+	cfg *config.Config,
 	fromAddress common.Address,
 	client *ethclient.Client,
 	privateKey *ecdsa.PrivateKey,
 ) {
-	log := dlog.FromCtx(ctx)
+	log := dlog.FromCtx(ctx).With("application", "clientSimulator")
 
 	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
 	if err != nil {
@@ -63,7 +63,11 @@ func toggleCustomEntitlement(
 	auth.GasLimit = uint64(30000000) // in units
 	auth.GasPrice = gasPrice
 
-	mockCustomContract, err := e.NewMockCustomEntitlement(*xc.GetTestCustomEntitlementContractAddress(), client)
+	mockCustomContract, err := e.NewMockCustomEntitlement(
+		cfg.GetTestCustomEntitlementContractAddress(),
+		client,
+		cfg.GetContractVersion(),
+	)
 	if err != nil {
 		log.Error("Failed to parse contract ABI", "err", err)
 		return
@@ -95,7 +99,7 @@ func toggleCustomEntitlement(
 	)
 }
 
-func customEntitlementExample() e.IRuleData {
+func customEntitlementExample(cfg *config.Config) e.IRuleData {
 	return e.IRuleData{
 		Operations: []e.IRuleEntitlementOperation{
 			{
@@ -108,7 +112,7 @@ func customEntitlementExample() e.IRuleData {
 				OpType:  uint8(entitlement.ISENTITLED),
 				ChainId: big.NewInt(1),
 				// This contract is deployed on our local base dev chain.
-				ContractAddress: *xc.GetTestCustomEntitlementContractAddress(),
+				ContractAddress: cfg.GetTestCustomEntitlementContractAddress(),
 				Threshold:       big.NewInt(0),
 			},
 		},
@@ -170,6 +174,8 @@ type postResult struct {
 	result        bool
 }
 type clientSimulator struct {
+	cfg *config.Config
+
 	wallet *node_crypto.Wallet
 
 	decoder *node_contracts.EvmErrorDecoder
@@ -183,50 +189,37 @@ type clientSimulator struct {
 	checkerContract *bind.BoundContract
 
 	baseChain *node_crypto.Blockchain
+	ownsChain bool
 
 	checkRequests chan [32]byte
 	resultPosted  chan postResult
+
+	lastRequest [32]byte
 }
 
-func loadWallet(ctx context.Context) (*node_crypto.Wallet, error) {
-	var wallet *node_crypto.Wallet
-	var err error
-
-	log := dlog.FromCtx(ctx)
-
-	// Read env var WALLETPRIVATEKEY or PRIVATE_KEY
-	privKey := os.Getenv("WALLETPRIVATEKEY")
-	if privKey == "" {
-		privKey = os.Getenv("PRIVATE_KEY")
-	}
-	if privKey != "" {
-		wallet, err = node_crypto.NewWalletFromPrivKey(ctx, privKey)
-	} else {
-		wallet, err = node_crypto.LoadWallet(ctx, node_crypto.WALLET_PATH_PRIVATE_KEY)
-	}
-	if err != nil {
-		log.Error("error finding wallet")
-		return nil, err
-	}
-	return wallet, nil
-}
-
-func New(ctx context.Context) (*clientSimulator, error) {
-	entitlementGated, err := e.NewMockEntitlementGated(*xc.GetTestContractAddress(), nil)
+func New(
+	ctx context.Context,
+	cfg *config.Config,
+	baseChain *node_crypto.Blockchain,
+	wallet *node_crypto.Wallet,
+) (*clientSimulator, error) {
+	entitlementGated, err := e.NewMockEntitlementGated(
+		cfg.GetMockEntitlementContractAddress(),
+		nil,
+		cfg.GetContractVersion(),
+	)
 	if err != nil {
 		return nil, err
 	}
-	checker, err := e.NewIEntitlementChecker(*xc.GetCheckerContractAddress(), nil)
+	checker, err := e.NewIEntitlementChecker(cfg.GetCheckerContractAddress(), nil, cfg.GetContractVersion())
 	if err != nil {
 		return nil, err
 	}
 
 	var (
-		cfg = config.GetConfig()
-
 		entitlementGatedABI      = entitlementGated.GetAbi()
 		entitlementGatedContract = bind.NewBoundContract(
-			*xc.GetTestContractAddress(),
+			cfg.GetMockEntitlementContractAddress(),
 			*entitlementGated.GetAbi(),
 			nil,
 			nil,
@@ -234,17 +227,16 @@ func New(ctx context.Context) (*clientSimulator, error) {
 		)
 
 		checkerABI      = checker.GetAbi()
-		checkerContract = bind.NewBoundContract(*xc.GetCheckerContractAddress(), *checker.GetAbi(), nil, nil, nil)
+		checkerContract = bind.NewBoundContract(cfg.GetCheckerContractAddress(), *checker.GetAbi(), nil, nil, nil)
 	)
 
-	wallet, err := loadWallet(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	baseChain, err := node_crypto.NewBlockchain(ctx, &cfg.BaseChain, wallet)
-	if err != nil {
-		return nil, err
+	var ownsChain bool
+	if baseChain == nil {
+		ownsChain = true
+		baseChain, err = node_crypto.NewBlockchain(ctx, &cfg.BaseChain, wallet)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	decoder, err := node_contracts.NewEVMErrorDecoder(entitlementGated.GetMetadata(), checker.GetMetadata())
@@ -253,6 +245,7 @@ func New(ctx context.Context) (*clientSimulator, error) {
 	}
 
 	return &clientSimulator{
+		cfg,
 		wallet,
 		decoder,
 		entitlementGated,
@@ -262,8 +255,10 @@ func New(ctx context.Context) (*clientSimulator, error) {
 		checkerABI,
 		checkerContract,
 		baseChain,
+		ownsChain,
 		make(chan [32]byte, 256),
 		make(chan postResult, 256),
+		[32]byte{},
 	}, nil
 }
 
@@ -273,37 +268,34 @@ func (cs *clientSimulator) Stop() {
 
 func (cs *clientSimulator) Start(ctx context.Context) {
 	cs.baseChain.ChainMonitor.OnContractWithTopicsEvent(
-		*xc.GetTestContractAddress(),
+		cs.cfg.GetMockEntitlementContractAddress(),
 		[][]common.Hash{{cs.entitlementGatedABI.Events["EntitlementCheckResultPosted"].ID}},
 		func(ctx context.Context, event types.Log) {
 			cs.onEntitlementCheckResultPosted(ctx, event, cs.resultPosted)
 		},
 	)
 
+	dlog.FromCtx(ctx).
+		With("application", "clientSimulator").
+		Info("check requested topics", "topics", cs.checkerABI.Events["EntitlementCheckRequested"].ID)
 	cs.baseChain.ChainMonitor.OnContractWithTopicsEvent(
-		*xc.GetCheckerContractAddress(),
+		cs.cfg.GetCheckerContractAddress(),
 		[][]common.Hash{{cs.checkerABI.Events["EntitlementCheckRequested"].ID}},
 		func(ctx context.Context, event types.Log) {
 			cs.onEntitlementCheckRequested(ctx, event, cs.checkRequests)
 		},
 	)
-
-	initialBlockNum, err := cs.baseChain.Client.BlockNumber(ctx)
-	if err != nil {
-		dlog.FromCtx(ctx).Error("unable to retrieve latest block number", "err", err)
-		return
-	}
-
-	go func() {
-		cs.baseChain.ChainMonitor.Run(ctx, cs.baseChain.Client, node_crypto.BlockNumber(initialBlockNum))
-	}()
 }
 
 func (cs *clientSimulator) ExecuteCheck(ctx context.Context, ruleData *e.IRuleData) error {
-	log := dlog.FromCtx(ctx)
+	log := dlog.FromCtx(ctx).With("application", "clientSimulator")
 
 	pendingTx, err := cs.baseChain.TxPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
-		gated, err := contracts.NewMockEntitlementGated(*xc.GetTestContractAddress(), cs.baseChain.Client)
+		gated, err := contracts.NewMockEntitlementGated(
+			cs.cfg.GetMockEntitlementContractAddress(),
+			cs.baseChain.Client,
+			cs.cfg.GetContractVersion(),
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -335,14 +327,23 @@ func (cs *clientSimulator) ExecuteCheck(ctx context.Context, ruleData *e.IRuleDa
 }
 
 func (cs *clientSimulator) WaitForNextRequest(ctx context.Context) ([32]byte, error) {
-	log := dlog.FromCtx(ctx)
+	log := dlog.FromCtx(ctx).With("application", "clientSimulator")
 
-	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+	ctx, cancel := context.WithTimeout(ctx, time.Second*60)
 	defer cancel()
 
 	for {
 		select {
 		case transactionId := <-cs.checkRequests:
+			if transactionId == cs.lastRequest {
+				log.Error(
+					"Received duplicate request",
+					"TransactionId",
+					transactionId,
+				)
+				return [32]byte{}, fmt.Errorf("received duplicate request")
+			}
+			cs.lastRequest = transactionId
 			log.Info("Detected entitlement check request", "TransactionId", transactionId)
 			return transactionId, nil
 
@@ -354,16 +355,22 @@ func (cs *clientSimulator) WaitForNextRequest(ctx context.Context) ([32]byte, er
 }
 
 func (cs *clientSimulator) WaitForPostResult(ctx context.Context, txnId [32]byte) (bool, error) {
-	log := dlog.FromCtx(ctx)
+	log := dlog.FromCtx(ctx).With("application", "clientSimulator")
 
-	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+	ctx, cancel := context.WithTimeout(ctx, time.Second*60)
 	defer cancel()
 
 	for {
 		select {
 		case result := <-cs.resultPosted:
 			if result.transactionId != txnId {
-				log.Error("Received result for unexpected transaction", "TransactionId", result.transactionId)
+				log.Error(
+					"Received result for unexpected transaction",
+					"TransactionId",
+					result.transactionId,
+					"Expected",
+					txnId,
+				)
 				return false, fmt.Errorf("received result for unexpected transaction")
 			}
 			log.Info(
@@ -387,8 +394,8 @@ func (cs *clientSimulator) onEntitlementCheckResultPosted(
 	event types.Log,
 	postedResults chan postResult,
 ) {
-	entitlementCheckResultPosted := cs.entitlementGated.EntitlementCheckResultPosted()
-	log := dlog.FromCtx(ctx).With("function", "onEntitlementCheckResultPosted")
+	entitlementCheckResultPosted := cs.entitlementGated.EntitlementCheckResultPosted(cs.cfg.GetContractVersion())
+	log := dlog.FromCtx(ctx).With("application", "clientSimulator").With("function", "onEntitlementCheckResultPosted")
 
 	log.Info(
 		"Unpacking EntitlementCheckResultPosted event",
@@ -420,7 +427,7 @@ func (cs *clientSimulator) onEntitlementCheckRequested(
 	checkRequests chan [32]byte,
 ) {
 	entitlementCheckRequest := cs.checker.EntitlementCheckRequestEvent()
-	log := dlog.FromCtx(ctx).With("function", "onEntitlementCheckRequested")
+	log := dlog.FromCtx(ctx).With("application", "clientSimulator").With("function", "onEntitlementCheckRequested")
 
 	log.Info(
 		"Unpacking EntitlementCheckRequested event",
@@ -435,24 +442,61 @@ func (cs *clientSimulator) onEntitlementCheckRequested(
 		return
 	}
 
-	log.Info("Received EntitlementCheckRequested event", "TransactionId", entitlementCheckRequest.TransactionID())
+	log.Info("Received EntitlementCheckRequested event",
+		"TransactionId", entitlementCheckRequest.TransactionID(),
+		"selectedNodes", entitlementCheckRequest.SelectedNodes(),
+	)
 
 	checkRequests <- entitlementCheckRequest.TransactionID()
 }
 
-func ClientSimulator(simType SimulationType) {
+func (cs *clientSimulator) Wallet() *node_crypto.Wallet {
+	return cs.wallet
+}
+
+func (cs *clientSimulator) EvaluateRuleData(ctx context.Context, ruleData e.IRuleData) (bool, error) {
+	log := dlog.FromCtx(ctx).With("application", "clientSimulator")
+
+	err := cs.ExecuteCheck(ctx, &ruleData)
+	if err != nil {
+		log.Error("Failed to execute entitlement check", "err", err)
+		return false, err
+	}
+
+	log.Info("ClientSimulator waiting for request to publish")
+	txId, err := cs.WaitForNextRequest(ctx)
+	if err != nil {
+		log.Error("Failed to wait for request", "err", err)
+		return false, err
+	} else {
+		log.Info("ClientSimulator logged entitlement check request",
+			"TransactionId", txId,
+		)
+	}
+
+	log.Info("ClientSimulator waiting for result")
+	result, err := cs.WaitForPostResult(ctx, txId)
+	if err != nil {
+		log.Error("Failed to wait for result", "err", err)
+		return false, err
+	}
+	log.Info("ClientSimulator logged entitlement check result", "Result", result)
+	return result, nil
+}
+
+func ClientSimulator(ctx context.Context, cfg *config.Config, wallet *node_crypto.Wallet, simType SimulationType) {
 	if simType == TOGGLEISENTITLED {
-		ToggleEntitlement()
+		ToggleEntitlement(ctx, cfg, wallet)
 		return
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	log := dlog.FromCtx(ctx)
+	log := dlog.FromCtx(ctx).With("application", "clientSimulator")
 	log.Info("--- ClientSimulator starting", "simType", simType)
 
-	cs, err := New(ctx)
+	cs, err := New(ctx, cfg, nil, wallet)
 	if err != nil {
 		log.Error("--- Failed to create clientSimulator", "err", err)
 		return
@@ -467,61 +511,17 @@ func ClientSimulator(simType SimulationType) {
 	case ERC20:
 		ruleData = erc20Example()
 	case ISENTITLED:
-		ruleData = customEntitlementExample()
-	case TOGGLEISENTITLED:
-		fallthrough
+		ruleData = customEntitlementExample(cfg)
 	default:
 		log.Error("--- ClientSimulator invalid SimulationType", "simType", simType)
 		return
 	}
 
-	log.Info("--- ClientSimulator executing entitlement check", "ruleData", ruleData)
-	err = cs.ExecuteCheck(ctx, &ruleData)
-	if err != nil {
-		log.Error("--- Failed to execute entitlement check", "err", err)
-		return
-	}
-
-	log.Info("--- ClientSimulator waiting for request to publish")
-	txId, err := cs.WaitForNextRequest(ctx)
-	if err != nil {
-		log.Error("Failed to wait for request", "err", err)
-		return
-	} else {
-		log.Info("--- Sanity check - ClientSimulator logged entitlement check request",
-			"TransactionId", txId,
-		)
-	}
-
-	log.Info("--- ClientSimulator waiting for result")
-	result, err := cs.WaitForPostResult(ctx, txId)
-	if err != nil {
-		log.Error("--- Failed to wait for result", "err", err)
-		return
-	}
-	log.Info("--- ClientSimulator logged entitlement check result", "Result", result)
+	cs.EvaluateRuleData(ctx, ruleData)
 }
 
-func ToggleEntitlement() {
-	ctx := context.Background()
-	log := dlog.FromCtx(ctx)
-
-	var wallet *node_crypto.Wallet
-	var err error
-	// Read env var WALLETPRIVATEKEY or PRIVATE_KEY
-	privKey := os.Getenv("WALLETPRIVATEKEY")
-	if privKey == "" {
-		privKey = os.Getenv("PRIVATE_KEY")
-	}
-	if privKey != "" {
-		wallet, err = node_crypto.NewWalletFromPrivKey(ctx, privKey)
-	} else {
-		wallet, err = node_crypto.LoadWallet(ctx, node_crypto.WALLET_PATH_PRIVATE_KEY)
-	}
-	if err != nil {
-		log.Error("error finding wallet")
-		return
-	}
+func ToggleEntitlement(ctx context.Context, cfg *config.Config, wallet *node_crypto.Wallet) {
+	log := dlog.FromCtx(ctx).With("application", "clientSimulator")
 
 	privateKey := wallet.PrivateKeyStruct
 	publicKey := privateKey.Public()
@@ -535,7 +535,7 @@ func ToggleEntitlement() {
 
 	log.Info("ClientSimulator fromAddress", "fromAddress", fromAddress.Hex())
 
-	baseWebsocketURL, err := xc.ConvertHTTPToWebSocket(config.GetConfig().BaseChain.NetworkUrl)
+	baseWebsocketURL, err := xc.ConvertHTTPToWebSocket(cfg.BaseChain.NetworkUrl)
 	if err != nil {
 		log.Error("Failed to convert BaseChain HTTP to WebSocket", "err", err)
 		return
@@ -557,5 +557,5 @@ func ToggleEntitlement() {
 	}
 	log.Info("ClientSimulator add funds on anvil to wallet address", "result", result)
 
-	toggleCustomEntitlement(ctx, fromAddress, client, privateKey)
+	toggleCustomEntitlement(ctx, cfg, fromAddress, client, privateKey)
 }

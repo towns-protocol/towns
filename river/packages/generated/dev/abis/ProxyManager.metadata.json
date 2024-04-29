@@ -314,10 +314,10 @@
       "license": "Apache-2.0"
     },
     "contracts/src/diamond/proxy/manager/ProxyManager.sol": {
-      "keccak256": "0xdb7ed1c208dcacb855ae6ac89248c33d32d75996f55964c6033c6782e9550391",
+      "keccak256": "0x63c7b73579e0781bec91f6fe7c0475f6d15f4ce6c08f177bcdfd3ac2d8db91c2",
       "urls": [
-        "bzz-raw://04a26227c9710026c6214a1d867b92183cc3da3286dacdab5e39599ed105743b",
-        "dweb:/ipfs/QmUBiGMoDNhDyLvxFGiGB4iajRSqRHpjyh7jZqMxS4rdtq"
+        "bzz-raw://451e530fb61dac8b54ba043c18305b8ef0f902e19952401322bf053afa242613",
+        "dweb:/ipfs/QmQeD5nQJZRoPhyKJE6RvzgBYpJB6FGY7tnueqo2dTvLtq"
       ],
       "license": "Apache-2.0"
     },

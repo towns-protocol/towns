@@ -4,9 +4,7 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IERC5643} from "contracts/src/diamond/facets/token/ERC5643/IERC5643.sol";
 import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
-import {IMembership, IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
-import {IManagedProxyBase} from "contracts/src/diamond/proxy/managed/IManagedProxy.sol";
-import {ITokenOwnableBase} from "contracts/src/diamond/facets/ownable/token/ITokenOwnable.sol";
+import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.sol";
 
 // libraries
 
@@ -32,9 +30,9 @@ contract SpaceProxy is
 {
   constructor(
     address owner,
-    IManagedProxyBase.ManagedProxy memory managedProxy,
-    ITokenOwnableBase.TokenOwnable memory tokenOwnable,
-    IMembershipBase.Membership memory membership
+    ManagedProxy memory managedProxy,
+    TokenOwnable memory tokenOwnable,
+    Membership memory membership
   ) {
     __IntrospectionBase_init();
     __ManagedProxyBase_init(managedProxy);

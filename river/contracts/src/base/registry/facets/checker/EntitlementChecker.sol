@@ -155,10 +155,18 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
     }
 
     address[] memory randomNodes = new address[](count);
-    uint256 randomIndex;
+    uint256[] memory indices = new uint256[](nodeCount);
+
+    for (uint256 i = 0; i < nodeCount; i++) {
+      indices[i] = i;
+    }
+
+    uint256 n = nodeCount;
     for (uint256 i = 0; i < count; i++) {
-      randomIndex = _pseudoRandom(i, nodeCount);
-      randomNodes[i] = layout.nodes.at(randomIndex);
+      uint256 rand = _pseudoRandom(i, n); // Adjust random function to generate within range 0 to n-1
+      randomNodes[i] = layout.nodes.at(indices[rand]);
+      indices[rand] = indices[n - 1]; // Move the last element to the used slot
+      n--; // Reduce the pool size
     }
     return randomNodes;
   }
@@ -171,13 +179,7 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
     return
       uint256(
         keccak256(
-          abi.encodePacked(
-            block.prevrandao,
-            block.timestamp,
-            seed,
-            tx.origin,
-            msg.sender
-          )
+          abi.encodePacked(block.prevrandao, block.timestamp, seed, msg.sender)
         )
       ) % nodeCount;
   }

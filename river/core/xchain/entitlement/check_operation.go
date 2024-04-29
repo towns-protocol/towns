@@ -17,6 +17,7 @@ import (
 
 func evaluateCheckOperation(
 	ctx context.Context,
+	cfg *config.Config,
 	op *CheckOperation,
 	callerAddress *common.Address,
 ) (bool, error) {
@@ -24,11 +25,11 @@ func evaluateCheckOperation(
 	case CheckOperationType(MOCK):
 		return evaluateMockOperation(ctx, op)
 	case CheckOperationType(ISENTITLED):
-		return evaluateIsEntitledOperation(ctx, op, callerAddress)
+		return evaluateIsEntitledOperation(ctx, cfg, op, callerAddress)
 	case CheckOperationType(ERC20):
-		return evaluateErc20Operation(ctx, op, callerAddress)
+		return evaluateErc20Operation(ctx, cfg, op, callerAddress)
 	case CheckOperationType(ERC721):
-		return evaluateErc721Operation(ctx, op, callerAddress)
+		return evaluateErc721Operation(ctx, cfg, op, callerAddress)
 	case CheckOperationType(ERC1155):
 		return evaluateErc1155Operation(ctx, op)
 	case CheckOperationType(NONE):
@@ -60,11 +61,12 @@ func evaluateMockOperation(ctx context.Context,
 
 func evaluateIsEntitledOperation(
 	ctx context.Context,
+	cfg *config.Config,
 	op *CheckOperation,
 	callerAddress *common.Address,
 ) (bool, error) {
 	log := dlog.FromCtx(ctx).With("function", "evaluateErc20Operation")
-	url, ok := getChainRPCUrl(op.ChainID.Uint64())
+	url, ok := cfg.Chains[op.ChainID.Uint64()]
 	if !ok {
 		log.Error("Chain ID not found", "chainID", op.ChainID)
 		return false, fmt.Errorf("evaluateErc20Operation: Chain ID %v not found", op.ChainID)
@@ -74,7 +76,11 @@ func evaluateIsEntitledOperation(
 		log.Error("Failed to dial", "err", err)
 		return false, err
 	}
-	customEntitlementChecker, err := contracts.NewICustomEntitlement(op.ContractAddress, client)
+	customEntitlementChecker, err := contracts.NewICustomEntitlement(
+		op.ContractAddress,
+		client,
+		cfg.GetContractVersion(),
+	)
 	if err != nil {
 		log.Error("Failed to instantiate a CustomEntitlement contract from supplied contract address",
 			"err", err,
@@ -104,19 +110,14 @@ func evaluateIsEntitledOperation(
 	return isEntitled, nil
 }
 
-func getChainRPCUrl(chainId uint64) (string, bool) {
-	config := config.GetConfig()
-	ret, ok := config.Chains[chainId]
-	return ret, ok
-}
-
 func evaluateErc20Operation(
 	ctx context.Context,
+	cfg *config.Config,
 	op *CheckOperation,
 	callerAddress *common.Address,
 ) (bool, error) {
 	log := dlog.FromCtx(ctx).With("function", "evaluateErc20Operation")
-	url, ok := getChainRPCUrl(op.ChainID.Uint64())
+	url, ok := cfg.Chains[op.ChainID.Uint64()]
 	if !ok {
 		log.Error("Chain ID not found", "chainID", op.ChainID)
 		return false, fmt.Errorf("evaluateErc20Operation: Chain ID %v not found", op.ChainID)
@@ -164,12 +165,13 @@ func evaluateErc20Operation(
 
 func evaluateErc721Operation(
 	ctx context.Context,
+	cfg *config.Config,
 	op *CheckOperation,
 	callerAddress *common.Address,
 ) (bool, error) {
 	log := dlog.FromCtx(ctx).With("function", "evaluateErc721Operation")
 
-	url, ok := getChainRPCUrl(op.ChainID.Uint64())
+	url, ok := cfg.Chains[op.ChainID.Uint64()]
 	if !ok {
 		log.Error("Chain ID not found", "chainID", op.ChainID)
 		return false, fmt.Errorf("evaluateErc20Operation: Chain ID %v not found", op.ChainID)

@@ -8,6 +8,7 @@
     "./core/encryption",
     "./core/proto",
     "./core/sdk",
+    "./core/stress",
     "./core/web3",
   ],
   "[solidity]": {
@@ -25,5 +26,11 @@
   "[makefile]": {
     "editor.renderWhitespace": "all"
   },
-  "go.formatTool": "gofumpt"
+  "go.formatTool": "gofumpt",
+  "go.testFlags": [
+    "-v",
+    "-tags",
+    "integration",
+  ],
+  "go.buildTags": "integration",
 }

@@ -6,12 +6,11 @@ import {
     Permission,
     NoopRuleData,
     getFilteredRolesFromSpace,
+    ETH_ADDRESS,
 } from '@river-build/web3'
 import { makeDefaultChannelStreamId, makeSpaceStreamId, makeUniqueChannelStreamId } from './id'
 import { BigNumber, ethers } from 'ethers'
 import { dlog } from '@river-build/dlog'
-
-const ETH_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
 
 const log = dlog('csb:test:synthetic')
 export class RiverSDK {

@@ -108,32 +108,6 @@ export default [
     "anonymous": false
   },
   {
-    "type": "event",
-    "name": "InterfaceAdded",
-    "inputs": [
-      {
-        "name": "interfaceId",
-        "type": "bytes4",
-        "indexed": true,
-        "internalType": "bytes4"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "InterfaceRemoved",
-    "inputs": [
-      {
-        "name": "interfaceId",
-        "type": "bytes4",
-        "indexed": true,
-        "internalType": "bytes4"
-      }
-    ],
-    "anonymous": false
-  },
-  {
     "type": "error",
     "name": "AddressEmptyCode",
     "inputs": [
@@ -266,16 +240,6 @@ export default [
         "internalType": "uint32"
       }
     ]
-  },
-  {
-    "type": "error",
-    "name": "Introspection_AlreadySupported",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "Introspection_NotSupported",
-    "inputs": []
   },
   {
     "type": "error",
