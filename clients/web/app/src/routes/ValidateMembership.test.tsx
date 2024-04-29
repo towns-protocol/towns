@@ -71,9 +71,7 @@ const Wrapper = ({
 describe('<ValidateMembership />', () => {
     test('shows not found message when town does not exist', async () => {
         vi.spyOn(Lib, 'useSpaceData').mockImplementation(() => undefined)
-        vi.spyOn(Lib, 'useSpaceDataStore').mockImplementation(() => ({
-            spaceDataMap: {}, // loaded spaces
-        }))
+        vi.spyOn(Lib, 'useSpaceDataStore').mockReturnValue(() => ({}))
 
         render(<Wrapper />)
 

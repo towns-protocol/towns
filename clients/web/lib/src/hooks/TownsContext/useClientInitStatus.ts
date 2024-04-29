@@ -1,5 +1,5 @@
 import { Client as CasablancaClient, ClientInitStatus } from '@river/sdk'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 export function useClientInitStatus(client?: CasablancaClient) {
     const [clientStatus, setClientStatus] = useState<
@@ -40,5 +40,10 @@ export function useClientInitStatus(client?: CasablancaClient) {
             client.off('clientInitStatusUpdated', updateClientInitStatus)
         }
     }, [client, setClientStatus])
-    return { clientStatus }
+    return useMemo(
+        () => ({
+            clientStatus,
+        }),
+        [clientStatus],
+    )
 }

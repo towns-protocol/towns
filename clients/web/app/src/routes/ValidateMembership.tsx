@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Outlet } from 'react-router'
 import { Membership, useSpaceData, useSpaceDataStore, useTownsContext } from 'use-towns-client'
 import AnalyticsService, { AnalyticsEvents } from 'use-towns-client/dist/utils/analyticsService'
+import isEqual from 'lodash/isEqual'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { SetUsernameForm } from '@components/SetUsernameForm/SetUsernameForm'
 import { useUsernameConfirmed } from 'hooks/useUsernameConfirmed'
@@ -24,31 +25,34 @@ import { usePublicPageLoginFlow } from './PublicTownPage/usePublicPageLoginFlow'
 
 export const ValidateMembership = () => {
     const space = useSpaceData()
-    const { client, clientStatus, signerContext } = useTownsContext()
+    const { client, signerContext } = useTownsContext()
+    const { isLocalDataLoaded, isRemoteDataLoaded } = useDataLoaded()
     const spaceIdFromPathname = useSpaceIdFromPathname()
     const { confirmed: usernameConfirmed } = useUsernameConfirmed()
-    const isJoining = !!usePublicPageLoginFlow().joiningSpace
+    const { joiningSpace: isJoining } = usePublicPageLoginFlow()
     const [_PublicTownPage] = useState(<PublicTownPage />)
-    const spaceDataMap = useSpaceDataStore((s) => s.spaceDataMap)
+    const spaceDataIds = useSpaceDataIds()
 
     useEffect(() => {
         console.log('ValidateMembership', spaceIdFromPathname, {
             usernameConfirmed,
-            clientStatus,
+            isLocalDataLoaded,
+            isRemoteDataLoaded,
             client: client !== undefined,
             isJoining,
             space: space !== undefined,
             spaceIdFromPathname,
-            spaceDataMap,
+            spaceDataIds,
             signerContext: signerContext !== undefined,
         })
     }, [
         client,
-        clientStatus,
+        isLocalDataLoaded,
+        isRemoteDataLoaded,
         isJoining,
         signerContext,
         space,
-        spaceDataMap,
+        spaceDataIds,
         spaceIdFromPathname,
         usernameConfirmed,
     ])
@@ -75,11 +79,7 @@ export const ValidateMembership = () => {
     // we need to wait for the space to be ready
     if (!client || space === undefined) {
         // if user has loaded other spaces, but not this space, it indicates they've not joined this space
-        if (
-            spaceDataMap &&
-            Object.keys(spaceDataMap).length &&
-            spaceDataMap[spaceIdFromPathname] === undefined
-        ) {
+        if (spaceDataIds && !spaceDataIds.includes(spaceIdFromPathname)) {
             AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.PublicTownPage)
             return _PublicTownPage
         }
@@ -100,13 +100,9 @@ export const ValidateMembership = () => {
 
     AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.IsMember)
 
-    if (!clientStatus.isRemoteDataLoaded || !clientStatus.isLocalDataLoaded) {
+    if (!isRemoteDataLoaded || !isLocalDataLoaded) {
         AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.WelcomeLayoutLoadLocalData)
-        return (
-            <AppSkeletonView
-                progress={clientStatus.isLocalDataLoaded ? clientStatus.progress : undefined}
-            />
-        )
+        return <SkeletonWithProgress isLocalDataLoaded={isLocalDataLoaded} />
     }
 
     return (
@@ -115,4 +111,32 @@ export const ValidateMembership = () => {
             {!usernameConfirmed && <SetUsernameForm spaceData={space} />}
         </>
     )
+}
+
+function SkeletonWithProgress({ isLocalDataLoaded }: { isLocalDataLoaded: boolean }) {
+    const { clientStatus } = useTownsContext()
+
+    return <AppSkeletonView progress={isLocalDataLoaded ? clientStatus.progress : undefined} />
+}
+
+function useDataLoaded() {
+    const { clientStatus } = useTownsContext()
+
+    return useMemo(() => {
+        return {
+            isLocalDataLoaded: clientStatus.isLocalDataLoaded,
+            isRemoteDataLoaded: clientStatus.isRemoteDataLoaded,
+        }
+    }, [clientStatus.isLocalDataLoaded, clientStatus.isRemoteDataLoaded])
+}
+
+function useSpaceDataIds() {
+    const spaceDataMap = useSpaceDataStore((s) => s.spaceDataMap)
+    const ids = spaceDataMap ? Object.keys(spaceDataMap) : undefined
+    const [newIds, setNewIds] = useState<string[] | undefined>(ids)
+    if (!isEqual(ids, newIds)) {
+        setNewIds(ids)
+    }
+
+    return newIds
 }
