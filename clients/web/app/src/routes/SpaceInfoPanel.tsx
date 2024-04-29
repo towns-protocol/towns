@@ -57,7 +57,7 @@ import { openSeaAssetUrl } from '@components/Web3/utils'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { Panel } from '@components/Panel/Panel'
 import { PrivyWrapper } from 'privy/PrivyProvider'
-import { EditMembershipSettingsPanel } from '@components/SpaceSettingsPanel/EditMembershipSettingsPanel'
+import { SpaceSettingsNavigationPanel } from '@components/SpaceSettingsPanel/SpaceSettingsNavigationPanel'
 import { AllChannelsList } from './AllChannelsList/AllChannelsList'
 import { PublicTownPage } from './PublicTownPage/PublicTownPage'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
@@ -82,8 +82,8 @@ export const SpaceInfo = () => {
     const [searchParams, setSearchParams] = useSearchParams()
     // touch handles roles panel with modals
     const isRolesPanel = !isTouch && searchParams.get(CHANNEL_INFO_PARAMS.ROLES) != null
-    const isEditMembershipPanel =
-        !isTouch && searchParams.get(CHANNEL_INFO_PARAMS.EDIT_MEMBERSHIP) != null
+    const isSpaceSettingsPanel =
+        !isTouch && searchParams.get(CHANNEL_INFO_PARAMS.SPACE_SETTINGS_NAVIGATION) != null
     const { leaveRoom } = useTownsClient()
     const channels = useSpaceChannels()
     const { loggedInWalletAddress } = useConnectivity()
@@ -273,10 +273,10 @@ export const SpaceInfo = () => {
     })
 
     const onEditSpaceSettingsClick = useEvent(() => {
-        if (!isEditMembershipPanel) {
-            openPanel(CHANNEL_INFO_PARAMS.EDIT_MEMBERSHIP)
+        if (!isSpaceSettingsPanel) {
+            openPanel(CHANNEL_INFO_PARAMS.SPACE_SETTINGS_NAVIGATION)
             if (isTouch) {
-                setActiveModal(CHANNEL_INFO_PARAMS.EDIT_MEMBERSHIP)
+                setActiveModal(CHANNEL_INFO_PARAMS.SPACE_SETTINGS_NAVIGATION)
             }
         }
     })
@@ -616,9 +616,9 @@ export const SpaceInfo = () => {
                 </ModalContainer>
             )}
 
-            {activeModal === 'edit-membership' && (
-                <ModalContainer touchTitle="Wallets" onHide={() => setActiveModal(undefined)}>
-                    <EditMembershipSettingsPanel />
+            {activeModal === 'space-settings' && (
+                <ModalContainer touchTitle="Edit Me" onHide={() => setActiveModal(undefined)}>
+                    <SpaceSettingsNavigationPanel />
                 </ModalContainer>
             )}
 

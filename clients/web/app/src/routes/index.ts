@@ -41,6 +41,8 @@ export const CHANNEL_INFO_PARAMS = {
     TOWN_INFO: 'town-info',
     WALLETS: 'wallets',
     EDIT_MEMBERSHIP: 'edit-membership',
+    SPACE_SETTINGS_NAVIGATION: 'space-settings',
+    PREPAID_MEMBERSHIPS: 'prepaid-memberships',
 } as const
 
 export type CHANNEL_INFO_PARAMS_VALUES =

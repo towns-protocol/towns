@@ -223,10 +223,7 @@ function SubmitButton({
     const { editSpaceMembershipTransaction } = useEditSpaceMembershipTransaction()
     const { data: pricingModules, isLoading: isLoadingPricingModules } = usePricingModules()
     const { roleDetails, isLoading: isLoadingRoleDetails } = useRoleDetails(spaceId ?? '', 1)
-    const { closePanel, isStacked } = usePanelActions()
-    console.log('$$$$$$ evan.log::isStacked $$$$$$', {
-        isStacked,
-    })
+    const { closePanel } = usePanelActions()
 
     const isUnchanged = useMemo(() => {
         const def = structuredClone(defaultValues)

@@ -20,6 +20,8 @@ import { useCreateLink } from 'hooks/useCreateLink'
 import { ChannelInvitePanel } from 'routes/ChannelInvitePanel'
 import { UserPreferences } from '@components/UserProfile/UserPreferences'
 import { EditMembershipSettingsPanel } from '@components/SpaceSettingsPanel/EditMembershipSettingsPanel'
+import { SpaceSettingsNavigationPanel } from '@components/SpaceSettingsPanel/SpaceSettingsNavigationPanel'
+import { EditPrepaidPanel } from '@components/SpaceSettingsPanel/EditPrepaidPanel'
 
 export const usePanels = () => {
     const [searchParams] = useSearchParams()
@@ -86,6 +88,20 @@ export const usePanels = () => {
             return (
                 <Panel label="Wallets">
                     <WalletLinkingPanel />
+                </Panel>
+            )
+        }
+        case CHANNEL_INFO_PARAMS.SPACE_SETTINGS_NAVIGATION: {
+            return (
+                <Panel label="Membership Settings">
+                    <SpaceSettingsNavigationPanel />
+                </Panel>
+            )
+        }
+        case CHANNEL_INFO_PARAMS.PREPAID_MEMBERSHIPS: {
+            return (
+                <Panel label="Add Prepaid Memberships">
+                    <EditPrepaidPanel />
                 </Panel>
             )
         }
