@@ -11,6 +11,7 @@ import {
     useTownsClient,
     useUserLookupContext,
 } from 'use-towns-client'
+import { isDefined } from '@river/sdk'
 import { Box, Icon, Stack, Text, TextButton, TextField } from '@ui'
 import { Panel } from '@components/Panel/Panel'
 import { ConfirmLeaveModal } from '@components/ConfirmLeaveModal/ConfirmLeaveModal'
@@ -97,7 +98,7 @@ export const DMChannelInfo = (props: { channelId?: string; data?: DMChannelIdent
     // }, [navigate, isTouch])
 
     const membersExcludingSelf = useMemo(() => {
-        return members.filter((member) => member.userId !== myUserId)
+        return members.filter((member) => isDefined(member) && member.userId !== myUserId)
     }, [members, myUserId])
 
     const memberNamesExludingSelf = useMemo(() => {
