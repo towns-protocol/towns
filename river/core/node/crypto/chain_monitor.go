@@ -33,6 +33,8 @@ type (
 		OnContractEvent(addr common.Address, cb OnChainEventCallback)
 		// ContractWithTopics matches events created by the contract on the given
 		OnContractWithTopicsEvent(addr common.Address, topics [][]common.Hash, cb OnChainEventCallback)
+		// OnStopped calls cb after the chain monitor stopped monitoring the chain
+		OnStopped(cb OnChainMonitorStoppedCallback)
 	}
 
 	// OnChainEventCallback is called for each event that matches the filter.
@@ -47,6 +49,9 @@ type (
 
 	// OnChainNewBlock is called for each new block that is added to the chain.
 	OnChainNewBlock = func(context.Context, BlockNumber)
+
+	// OnChainMonitorStoppedCallback is called after the chain monitor stopped monitoring the chain.
+	OnChainMonitorStoppedCallback = func(context.Context)
 
 	chainMonitor struct {
 		muBuilder sync.Mutex
@@ -94,6 +99,12 @@ func (ecm *chainMonitor) OnContractWithTopicsEvent(
 	ecm.muBuilder.Lock()
 	defer ecm.muBuilder.Unlock()
 	ecm.builder.OnContractWithTopicsEvent(addr, topics, cb)
+}
+
+func (ecm *chainMonitor) OnStopped(cb OnChainMonitorStoppedCallback) {
+	ecm.muBuilder.Lock()
+	defer ecm.muBuilder.Unlock()
+	ecm.builder.OnChainMonitorStopped(cb)
 }
 
 // RunWithBlockPeriod monitors the chain the given client is connected to and calls the
@@ -148,7 +159,12 @@ func (ecm *chainMonitor) RunWithBlockPeriod(
 	for {
 		select {
 		case <-ctx.Done():
-			log.Info("chain monitor shutdown")
+			log.Info("initiate chain monitor shutdown")
+			//lint:ignore LE0000 context.Background() used correctly
+			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+			ecm.builder.stoppedCallbacks.onChainMonitorStopped(ctx)
+			cancel()
+			log.Info("chain monitor stopped")
 			return
 
 		case <-time.After(pollInterval):

@@ -6,18 +6,18 @@ import (
 	"core/xchain/contracts"
 	"core/xchain/entitlement"
 	"core/xchain/util"
-	"fmt"
 	"log/slog"
-	"sync"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	go_eth_types "github.com/ethereum/go-ethereum/core/types"
+	. "github.com/river-build/river/core/node/base"
 	node_contracts "github.com/river-build/river/core/node/contracts"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
+	. "github.com/river-build/river/core/node/protocol"
 )
 
 type (
@@ -32,8 +32,6 @@ type (
 		evmErrDecoder   *node_contracts.EvmErrorDecoder
 		config          *config.Config
 		cancel          context.CancelFunc
-
-		registered sync.WaitGroup
 	}
 
 	// entitlementCheckReceipt holds the outcome of an xchain entitlement check request
@@ -52,7 +50,6 @@ type (
 
 type XChain interface {
 	Run(ctx context.Context)
-	Ready(ctx context.Context) bool
 	Stop()
 }
 
@@ -117,7 +114,7 @@ func New(
 		return nil, err
 	}
 
-	xc := &xchain{
+	x := &xchain{
 		workerID:        workerID,
 		checker:         checker,
 		checkerABI:      checkerABI,
@@ -128,28 +125,16 @@ func New(
 		config:          cfg,
 		cancel:          cancel,
 	}
-	// increment waitgroup for xchain registration
-	xc.registered.Add(1)
 
-	return xc, nil
-}
-
-// Ready blocks until the xchain node is registered with the entitlement contract, returning
-// if the context times out or is cancelled. The return value indicates if the node is registered.
-func (x *xchain) Ready(ctx context.Context) bool {
-	c := make(chan struct{})
-
-	go func() {
-		x.registered.Wait()
-		close(c)
-	}()
-
-	select {
-	case <-c:
-		return true
-	case <-ctx.Done():
-		return false
+	isRegistered, err := x.isRegistered(ctx)
+	if err != nil {
+		return nil, err
 	}
+	if !isRegistered {
+		return nil, RiverError(Err_BAD_CONFIG, "xchain node not registered")
+	}
+
+	return x, nil
 }
 
 func (x *xchain) Stop() {
@@ -158,6 +143,17 @@ func (x *xchain) Stop() {
 
 func (x *xchain) Log(ctx context.Context) *slog.Logger {
 	return dlog.FromCtx(ctx).With("worker_id", x.workerID).With("application", "xchain")
+}
+
+// isRegistered returns an indication if this instance is registered by its operator as a xchain node.
+// if not this instance isn't allowed to submit entitlement check results.
+func (x *xchain) isRegistered(ctx context.Context) (bool, error) {
+	checker, err := contracts.NewIEntitlementChecker(
+		x.config.GetCheckerContractAddress(), x.baseChain.Client, x.config.GetContractVersion())
+	if err != nil {
+		return false, AsRiverError(err, Err_CANNOT_CALL_CONTRACT)
+	}
+	return checker.IsValidNode(&bind.CallOpts{Context: ctx}, x.baseChain.Wallet.Address)
 }
 
 // Run xchain until the given ctx expires.
@@ -184,76 +180,8 @@ func (x *xchain) Run(ctx context.Context) {
 		[][]common.Hash{{x.checkerABI.Events["EntitlementCheckRequested"].ID}},
 		onEntitlementCheckRequestedCallback)
 
-	err := x.registerNode(ctx)
-	if err != nil {
-		log.Error("Failed to register node", "err", err)
-		return
-	}
-	x.registered.Done()
-
 	// read entitlement check results from entitlementCheckReceipts and write the result to Base
 	x.writeEntitlementCheckResults(ctx, entitlementCheckReceipts)
-}
-
-func (x *xchain) registerNode(ctx context.Context) error {
-	log := x.Log(ctx)
-	log.Info("Registering node")
-	pendingTx, err := x.baseChain.TxPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
-		checker, err := contracts.NewIEntitlementChecker(
-			x.config.GetCheckerContractAddress(),
-			x.baseChain.Client,
-			x.config.GetContractVersion(),
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		// Ensure gas limit is at least 250,000 as a workaround for simulated backend issues in tests.
-		opts.GasLimit = max(opts.GasLimit, 250_000)
-
-		txn, err := checker.RegisterNode(opts, x.baseChain.Wallet.Address)
-		if err != nil {
-			log.Error("contract call against checker failed to register node", "err", err)
-		}
-		return txn, err
-	})
-
-	ce, se, err := x.evmErrDecoder.DecodeEVMError(err)
-	switch {
-	case ce != nil:
-		if ce.DecodedError.Sig == "EntitlementChecker_NodeAlreadyRegistered()" {
-			log.Info("Node already registered", "address", x.baseChain.Wallet.Address)
-			return nil
-		}
-		log.Error("unable to submit transaction for node registration", "err", ce)
-		return ce
-	case se != nil:
-		log.Error("unable to submit transaction for node registration", "err", se)
-		return se
-	case err != nil:
-		log.Error("unable to submit transaction for node registration", "err", err)
-		return err
-	}
-
-	log.Info("Node registration transaction submitted", "err", err)
-	log.Info("Waiting for node registration transaction to be processed")
-	receipt := <-pendingTx.Wait()
-	log.Info(
-		"Node registration transaction processed",
-		"tx",
-		receipt.TxHash.Hex(),
-		"logs",
-		receipt.Logs,
-		"tx.success",
-		receipt.Status == go_eth_types.ReceiptStatusSuccessful,
-		"status",
-		receipt.Status,
-	)
-	if receipt.Status == go_eth_types.ReceiptStatusFailed {
-		return fmt.Errorf("failed to register node - could not execute transaction")
-	}
-	log.Info("Node registered")
-	return nil
 }
 
 // onEntitlementCheckRequested is the callback that the chain monitor calls for each EntitlementCheckRequested

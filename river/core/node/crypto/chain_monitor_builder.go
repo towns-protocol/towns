@@ -11,11 +11,12 @@ import (
 
 // chainMonitorBuilder builds a chain monitor.
 type chainMonitorBuilder struct {
-	dirty           bool
-	cachedQuery     ethereum.FilterQuery
-	blockCallbacks  chainBlockCallbacks
-	eventCallbacks  chainEventCallbacks
-	headerCallbacks chainHeaderCallbacks
+	dirty            bool
+	cachedQuery      ethereum.FilterQuery
+	blockCallbacks   chainBlockCallbacks
+	eventCallbacks   chainEventCallbacks
+	headerCallbacks  chainHeaderCallbacks
+	stoppedCallbacks chainMonitorStoppedCallbacks
 }
 
 func (lfb *chainMonitorBuilder) Query() ethereum.FilterQuery {
@@ -68,6 +69,11 @@ func (lfb *chainMonitorBuilder) OnContractWithTopicsEvent(
 	lfb.dirty = true
 }
 
+func (lfb *chainMonitorBuilder) OnChainMonitorStopped(cb OnChainMonitorStoppedCallback) {
+	lfb.stoppedCallbacks = append(lfb.stoppedCallbacks, &chainMonitorStoppedCallback{handler: cb})
+	lfb.dirty = true
+}
+
 type chainEventCallback struct {
 	handler OnChainEventCallback
 	address *common.Address
@@ -116,5 +122,17 @@ func (ebc chainBlockCallbacks) onBlockReceived(ctx context.Context, blockNumber 
 			cb.handler(ctx, blockNumber)
 			cb.fromBlock = blockNumber
 		}
+	}
+}
+
+type chainMonitorStoppedCallback struct {
+	handler OnChainMonitorStoppedCallback
+}
+
+type chainMonitorStoppedCallbacks []*chainMonitorStoppedCallback
+
+func (cmsc chainMonitorStoppedCallbacks) onChainMonitorStopped(ctx context.Context) {
+	for _, cb := range cmsc {
+		cb.handler(ctx)
 	}
 }

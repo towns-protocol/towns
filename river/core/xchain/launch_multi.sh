@@ -57,6 +57,7 @@ do
   INSTANCE_DIR="${BASE_DIR}/instance_${i}"
   cp bin/xchain_node "${INSTANCE_DIR}/bin/xchain_node"
   pushd "${INSTANCE_DIR}"
+  "./bin/xchain_node" register --approve wallet/private_key
   "./bin/xchain_node" run &
   node_pid=$!
   pwd

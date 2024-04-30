@@ -15,7 +15,6 @@ import (
 	"log"
 	"log/slog"
 	"math/big"
-	"sync"
 	"testing"
 	"time"
 
@@ -203,28 +202,27 @@ func (st *serviceTester) Start(t *testing.T) {
 		}
 	}()
 
-	var registered sync.WaitGroup
-	registered.Add(len(st.nodes))
-
 	for i := 0; i < len(st.nodes); i++ {
 		st.nodes[i] = &testNodeRecord{}
 		bc := st.btc.GetBlockchain(st.ctx, i, true)
+
+		// register node
+		pendingTx, err := bc.TxPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			return st.entitlementChecker.RegisterNode(opts, bc.Wallet.Address)
+		})
+
+		require.NoError(t, err, "register node")
+		receipt := <-pendingTx.Wait()
+		if receipt == nil || receipt.Status != node_crypto.TransactionResultSuccess {
+			log.Fatal("unable to register node")
+		}
+
 		svr, err := server.New(st.ctx, st.Config(), bc, i)
 		st.require.NoError(err)
 		st.nodes[i].svr = svr
 		st.nodes[i].address = bc.Wallet.Address
 		go svr.Run(st.ctx)
-
-		go func() {
-			ctx, _ := context.WithTimeout(st.ctx, 10*time.Second)
-			success := st.nodes[i].svr.Ready(ctx)
-			require.True(t, success, "Node registration failed")
-			registered.Done()
-		}()
-
 	}
-	// Wait for all nodes to register
-	registered.Wait()
 }
 
 func (st *serviceTester) Config() *config.Config {

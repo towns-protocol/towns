@@ -49,7 +49,6 @@ func TestChainMonitorBlocks(t *testing.T) {
 func TestChainMonitorEvents(t *testing.T) {
 	require := require.New(t)
 	ctx, cancel := test.NewTestContext()
-	defer cancel()
 
 	tc, err := crypto.NewBlockchainTestContext(ctx, 1)
 	require.NoError(err)
@@ -78,6 +77,11 @@ func TestChainMonitorEvents(t *testing.T) {
 			contractWithTopicsEventCallbackCapturedEvents <- event
 		}
 
+		onMonitorStoppedCount = make(chan struct{})
+		onMonitorStopped      = func(context.Context) {
+			close(onMonitorStoppedCount)
+		}
+
 		nodeRegistryABI, _ = abi.JSON(strings.NewReader(contracts.NodeRegistryV1ABI))
 
 		urls  = []string{"https://river0.test"}
@@ -92,6 +96,7 @@ func TestChainMonitorEvents(t *testing.T) {
 		[][]common.Hash{{nodeRegistryABI.Events["NodeAdded"].ID}},
 		contractWithTopicsEventCallback,
 	)
+	tc.DeployerBlockchain.ChainMonitor.OnStopped(onMonitorStopped)
 
 	collectedBlocksCount.Store(0)
 
@@ -123,4 +128,7 @@ func TestChainMonitorEvents(t *testing.T) {
 	require.GreaterOrEqual(len(contractEventCallbackCapturedEvents), 1)
 	event := <-contractWithTopicsEventCallbackCapturedEvents
 	require.Equal(nodeRegistryABI.Events["NodeAdded"].ID, event.Topics[0])
+
+	cancel()
+	<-onMonitorStoppedCount // if the on stop callback isn't called this will time out
 }
