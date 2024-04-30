@@ -1,10 +1,9 @@
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import React, { useEffect, useRef, useState } from 'react'
-import { matchPath, useLocation, useNavigate } from 'react-router'
+import { useNavigate } from 'react-router'
 import { TownsContextProvider, ZTEvent } from 'use-towns-client'
 import { Helmet } from 'react-helmet'
 import { isDefined } from '@river/sdk'
-import { useSearchParams } from 'react-router-dom'
 import { Notifications } from '@components/Notifications/Notifications'
 import { useDevice } from 'hooks/useDevice'
 import { ENVIRONMENTS, useEnvironment } from 'hooks/useEnvironmnet'
@@ -21,9 +20,9 @@ import { ServiceWorkerMetadataSyncer } from 'workers/ServiceWorkerMetadataSyncer
 import DebugBar from '@components/DebugBar/DebugBar'
 import { BlockchainTxNotifier } from '@components/Web3/BlockchainTxNotifier'
 import { SyncNotificationSettings } from '@components/SyncNotificationSettings/SyncNotificationSettings'
-import { PATHS } from 'routes'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { MonitorJoinFlow } from 'routes/PublicTownPage/MontiorJoinFlow'
+import { getRouteParams } from 'routes/SpaceContextRoute'
 
 FontLoader.init()
 
@@ -42,49 +41,41 @@ export const App = () => {
     const highPriorityStreamIds = useRef<string[]>([])
     const [touchInitialLink, setTouchInitialLink] = useState<string | undefined>(undefined)
 
-    const location = useLocation()
-    const [searchParams] = useSearchParams()
-    const trackSource = searchParams.get('track_source') ?? ''
     const state = useStore.getState()
     const spaceIdBookmark = state.spaceIdBookmark
-    const channelBookmark = spaceIdBookmark ? state.townRouteBookmarks[spaceIdBookmark] : undefined
-
-    useEffect(() => {
-        console.warn('[App][push_hnt-5685]', 'route', {
-            trackSource,
-            locationPath: location.pathname,
-            locationParams: location.search,
-            spaceIdBookmark,
-            channelBookmark,
-        })
-    }, [channelBookmark, location.pathname, location.search, spaceIdBookmark, trackSource])
+    const channelBookmark = isDefined(spaceIdBookmark)
+        ? state.townRouteBookmarks[spaceIdBookmark]
+        : undefined
 
     const didSetHighpriorityStreamIds = useRef<boolean>(false)
     if (!didSetHighpriorityStreamIds.current) {
         didSetHighpriorityStreamIds.current = true
-        const state = useStore.getState()
-        const spaceId = state.spaceIdBookmark
-        const channelBookmark = spaceId ? state.townRouteBookmarks[spaceId] : undefined
-        const match = matchPath(
-            {
-                path: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/`,
-            },
-            channelBookmark ?? '',
-        )
+        const { spaceId, channelId } = getRouteParams(channelBookmark)
+        highPriorityStreamIds.current = [channelId, spaceId].filter(isDefined)
 
-        highPriorityStreamIds.current = [match?.params.spaceId, match?.params.channelId].filter(
-            isDefined,
-        )
-
-        if (match && window.location.pathname === '/') {
+        if (channelId && window.location.pathname === '/') {
             const link = createLink({
                 initial: 'initial',
-                spaceId: match.params.spaceId,
-                channelId: match.params.channelId,
+                spaceId: spaceId,
+                channelId: channelId,
             })
             setTouchInitialLink(link)
         }
     }
+
+    useEffect(() => {
+        // DataDog is configured to only log warnings and errors. This is a warning
+        // to track and verify that the routing code works after the fix. Will be removed
+        // after verification.
+        // Reminder to remove: https://linear.app/hnt-labs/issue/HNT-6068/remove-consolewarn-from-the-harmony-app-after-verifying-hnt-5685-is
+        console.warn('[App][push_hnt-5685]', 'route', {
+            spaceIdBookmark,
+            channelBookmark,
+            locationPathname: location.pathname,
+            search: location.search,
+            highPriorityStreamIds: highPriorityStreamIds.current,
+        })
+    }, [channelBookmark, spaceIdBookmark])
 
     useEffect(() => {
         if (!isTouch || !touchInitialLink) {

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react'
+import React, { useCallback, useEffect, useMemo } from 'react'
 import { LoginStatus, useConnectivity } from 'use-towns-client'
 import { usePrivy } from '@privy-io/react-auth'
 import { useLocation } from 'react-router'
@@ -9,6 +9,7 @@ import { Box, FancyButton } from '@ui'
 import { useErrorToast } from 'hooks/useErrorToast'
 import { mapToErrorMessage } from '@components/Web3/utils'
 import { useStore } from 'store/store'
+import { LINKED_RESOURCE } from '../../data/rel'
 
 type LoginComponentProps = {
     text?: string
@@ -31,14 +32,17 @@ function LoginComponent({
 
     const location = useLocation()
     const [searchParams] = useSearchParams()
-    const trackSource = searchParams.get('track_source') ?? ''
     const state = useStore.getState()
     const spaceIdBookmark = state.spaceIdBookmark
     const channelBookmark = spaceIdBookmark ? state.townRouteBookmarks[spaceIdBookmark] : undefined
 
+    const rel = useMemo(() => {
+        return searchParams.get(LINKED_RESOURCE) ?? ''
+    }, [searchParams])
+
     useEffect(() => {
         console.warn('[LoginComponent][push_hnt-5685]', 'route', {
-            trackSource,
+            rel,
             locationPath: location.pathname,
             locationParams: location.search,
             spaceIdBookmark,
@@ -55,7 +59,7 @@ function LoginComponent({
         location.search,
         privyReady,
         spaceIdBookmark,
-        trackSource,
+        rel,
     ])
 
     const loginContent = () => {

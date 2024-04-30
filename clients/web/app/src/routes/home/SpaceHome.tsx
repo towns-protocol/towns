@@ -5,6 +5,7 @@ import { Membership, useConnectivity, useSpaceData, useTownsContext } from 'use-
 import { useSearchParams } from 'react-router-dom'
 import { PATHS } from 'routes'
 import { useStore } from 'store/store'
+import { LINKED_RESOURCE } from '../../data/rel'
 
 export const SpaceHome = () => {
     const space = useSpaceData()
@@ -25,11 +26,14 @@ export const SpaceHome = () => {
         : undefined
 
     const [searchParams] = useSearchParams()
-    const trackSource = searchParams.get('track_source') ?? ''
+    const rel = useMemo(() => {
+        return searchParams.get(LINKED_RESOURCE) ?? ''
+    }, [searchParams])
+
     useEffect(() => {
         console.warn('[SpaceHome][push_hnt-5685]', 'route', {
             bookmarkedRoute,
-            trackSource,
+            rel,
             spaceId: space?.id ?? '',
             isAuthenticated,
             loggedInWalletAddress: loggedInWalletAddress ?? '',
@@ -45,7 +49,7 @@ export const SpaceHome = () => {
         loginStatus,
         signerContext,
         space?.id,
-        trackSource,
+        rel,
     ])
 
     useEffect(() => {

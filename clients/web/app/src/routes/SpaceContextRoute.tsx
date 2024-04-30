@@ -2,12 +2,18 @@ import capitalize from 'lodash/capitalize'
 import React, { useEffect, useMemo } from 'react'
 import { Outlet, useMatch } from 'react-router'
 import { matchPath, useLocation } from 'react-router-dom'
-import { SpaceContextProvider, SpaceData } from 'use-towns-client'
+import { Channel, SpaceContextProvider, SpaceData } from 'use-towns-client'
 import { PATHS } from 'routes'
 import { useStore } from 'store/store'
 import { useSetDocTitle } from 'hooks/useDocTitle'
 import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
 import { APP_NAME } from 'data/constants'
+import { useDevice } from 'hooks/useDevice'
+
+export interface RouteParams {
+    spaceId?: string
+    channelId?: string
+}
 
 const createSpaceTitle = (spaceName?: string, childLabel?: string) => {
     return [childLabel, spaceName].filter(Boolean).concat(APP_NAME).join(' - ')
@@ -27,7 +33,7 @@ export const SpaceContextRoute = () => {
 const SpaceContext = () => {
     const { serverSpace: space, chainSpace } = useContractAndServerSpaceData()
 
-    const spaceSlug = space?.id
+    const spaceSlug = space?.id ?? ''
     const setTownRouteBookmark = useStore((s) => s.setTownRouteBookmark)
 
     const setTitle = useSetDocTitle()
@@ -36,18 +42,31 @@ const SpaceContext = () => {
     const spaceName = space?.name || chainSpace?.name
 
     useEffect(() => {
-        if (!path || !spaceSlug || path.type === 'home' || path.type === 'settings') {
+        const locationPathname = path?.pathname ?? ''
+        const locationSearch = path?.search ?? ''
+        console.warn('[SpaceContextRoute][push_hnt-5685]', 'route', {
+            locationPathname,
+            locationSearch,
+            path: path ?? '',
+            spaceSlug,
+        })
+        if (
+            !path ||
+            (path.type !== 'messages' && !spaceSlug) ||
+            path.type === 'home' ||
+            path.type === 'settings'
+        ) {
             return
         }
-        if (path.type === 'channel') {
+        if (path.type === 'messages') {
+            setTownRouteBookmark(spaceSlug, locationPathname)
+        } else if (spaceSlug && path.type === 'channel') {
             // bookmark channel and known routes
-            setTownRouteBookmark(spaceSlug, location.pathname)
-        } else if (path.type === 'messages') {
-            // skip bookmarking outside of town
-        } else if (path.type === 'generic') {
+            setTownRouteBookmark(spaceSlug, locationPathname)
+        } else if (spaceSlug && path.type === 'generic') {
             // bookmark known routes (threads,mentions,etc)
-            setTownRouteBookmark(spaceSlug, location.pathname)
-        } else {
+            setTownRouteBookmark(spaceSlug, locationPathname)
+        } else if (spaceSlug) {
             // reset bookmark in case the route isn't referenced above
             setTownRouteBookmark(spaceSlug, '')
         }
@@ -82,15 +101,29 @@ const SpaceContext = () => {
 
 const { CHANNELS, MESSAGES, SPACES, SETTINGS } = PATHS
 
-const useSpaceRouteMatcher = (space: SpaceData | undefined) => {
+export interface RouteInfo {
+    type: 'channel' | 'invite' | 'messages' | 'settings' | 'generic' | 'home' | 'notfound'
+    pathname: string
+    search: string
+    name?: string
+    channel?: Channel
+}
+
+const useSpaceRouteMatcher = (space: SpaceData | undefined): RouteInfo | undefined => {
     const location = useLocation()
-    const pathname = location.pathname
-    const locationSearch = location.search
+    const { isTouch } = useDevice()
 
     return useMemo(() => {
-        const channelPath = matchPath(`${SPACES}/:spaceSlug/${CHANNELS}/:channelId`, pathname)
-        const childSpacePath = matchPath(`${SPACES}/:spaceSlug/:child/*`, pathname)
-        const homeSpacePath = matchPath(`${SPACES}/:spaceSlug/`, pathname)
+        const pathInfo = {
+            pathname: location.pathname,
+            search: location.search,
+        }
+        const channelPath = matchPath(
+            `${SPACES}/:spaceSlug/${CHANNELS}/:channelId`,
+            pathInfo.pathname,
+        )
+        const childSpacePath = matchPath(`${SPACES}/:spaceSlug/:child/*`, pathInfo.pathname)
+        const homeSpacePath = matchPath(`${SPACES}/:spaceSlug/`, pathInfo.pathname)
 
         const paramsChannelId = channelPath?.params.channelId
         const paramsChild = childSpacePath?.params.child
@@ -102,31 +135,108 @@ const useSpaceRouteMatcher = (space: SpaceData | undefined) => {
                 return {
                     type: 'channel',
                     channel,
+                    ...pathInfo,
                 } as const
             }
         } else {
-            if (locationSearch.includes('invite')) {
+            if (pathInfo.search.includes('invite')) {
                 return {
                     type: 'invite',
+                    ...pathInfo,
                 } as const
-            } else if (pathname.includes(MESSAGES)) {
+            } else if (pathInfo.pathname.includes(MESSAGES)) {
+                if (isTouch) {
+                    // handle the special case for Touch devices where the spaceId is inserted into the path
+                    const { spaceId, channelId } = getRouteParams(pathInfo.pathname)
+                    let spaceIdBookmark = spaceId
+                    // if the pathname does not have a spaceId, get it from the current space
+                    // if that is also unavailable, get it from the bookmark store
+                    if (!spaceIdBookmark) {
+                        const spaceIdFromStore = useStore.getState().spaceIdBookmark
+                        spaceIdBookmark = space ? space.id : spaceIdFromStore
+                    }
+                    if (spaceIdBookmark && channelId) {
+                        pathInfo.pathname = `/${SPACES}/${spaceIdBookmark}/${MESSAGES}/${channelId}`
+                    }
+                }
                 return {
                     type: 'messages',
+                    ...pathInfo,
                 } as const
-            } else if (pathname.includes(SETTINGS)) {
+            } else if (pathInfo.pathname.includes(SETTINGS)) {
                 return {
                     type: 'settings',
+                    ...pathInfo,
                 } as const
             } else {
                 return paramsChild
                     ? ({
                           type: 'generic',
                           name: paramsChild,
+                          ...pathInfo,
                       } as const)
                     : homeSpacePath
-                    ? ({ type: 'home' } as const)
-                    : ({ type: 'notfound' } as const)
+                    ? ({ type: 'home', ...pathInfo } as const)
+                    : ({ type: 'notfound', ...pathInfo } as const)
             }
         }
-    }, [locationSearch, pathname, space])
+    }, [isTouch, location.pathname, location.search, space])
+}
+
+export function getRouteParams(path?: string): RouteParams {
+    if (!path) {
+        return {}
+    }
+    // matchPath requires the string to start with a '/'
+    const prefix = path.startsWith('/') ? '' : '/'
+    path = prefix + path
+    // match for full spaceId and channelId in the path
+    const matchWithSpace = matchPath(
+        {
+            path: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/`,
+        },
+        path,
+    )
+    // match for desktop devices where the channelId is in the path, but no spaceId
+    const matchWithMessages = matchPath(
+        {
+            path: `${PATHS.MESSAGES}/:channelId`,
+        },
+        path,
+    )
+    // match for Touch devices where the spaceId is inserted into the path
+    const matchWithSpaceMessages = matchPath(
+        {
+            path: `/${PATHS.SPACES}/:spaceId/${PATHS.MESSAGES}/:channelId/`,
+        },
+        path,
+    )
+    let spaceId: string | undefined
+    let channelId: string | undefined
+    if (matchWithSpace?.params.spaceId) {
+        spaceId = matchWithSpace.params.spaceId
+    }
+    if (matchWithSpace?.params.channelId) {
+        channelId = matchWithSpace.params.channelId
+        console.warn('[SpaeContextRoute][push_hnt-5685]', 'route', {
+            spaceId: spaceId ?? '',
+            channelId,
+            matchPath: 'matchWithSpace',
+        })
+    } else if (matchWithMessages?.params.channelId) {
+        channelId = matchWithMessages.params.channelId
+        console.warn('[SpaeContextRoute][push_hnt-5685]', 'route', {
+            spaceId: spaceId ?? '',
+            channelId,
+            matchPath: 'matchWithMessages',
+        })
+    } else if (matchWithSpaceMessages?.params.channelId) {
+        channelId = matchWithSpaceMessages.params.channelId
+        console.warn('[SpaeContextRoute][push_hnt-5685]', 'route', {
+            spaceId: spaceId ?? '',
+            channelId,
+            matchPath: 'matchWithSpaceMessages',
+        })
+    }
+    return { spaceId, channelId }
 }

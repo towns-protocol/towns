@@ -27,6 +27,7 @@ import { NotificationCurrentUser } from '../store/notificationCurrentUser'
 import { NotificationStore } from '../store/notificationStore'
 import { env } from '../utils/environment'
 import { getEncryptedData, htmlToText } from './data_transforms'
+import { NotificationRel, getPathnameWithParams, getUrlWithParams } from '../data/rel'
 
 const MIDDLE_DOT = '\u00B7'
 const log = dlog('sw:push')
@@ -154,31 +155,41 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                     log('worker could not parse notification data')
                     return
                 }
-                const pathToNavigateTo = pathFromAppNotification(data)
-                console.warn('sw:push: pathToNavigateTo', pathToNavigateTo)
 
                 const hadWindowToFocus = clientsArr.find((windowClient) =>
                     windowClient.url.includes(worker.location.origin),
                 )
 
+                let path = pathFromAppNotification(data)
                 if (hadWindowToFocus) {
+                    // update the path with specific search params
+                    path = getPathnameWithParams(
+                        new URL(worker.location.origin),
+                        path,
+                        NotificationRel.BroadcastChannel,
+                        data.kind,
+                    )
                     log('sw:push: posting message to broadcast channel', {
-                        path: pathToNavigateTo,
+                        path,
                         hadWindowToFocus: true,
                     })
                     await hadWindowToFocus.focus()
                     const navigationChannel = new BroadcastChannel(WEB_PUSH_NAVIGATION_CHANNEL)
                     // avoid reloading the page
-                    navigationChannel.postMessage({ path: pathToNavigateTo })
+                    navigationChannel.postMessage({ path })
                 } else {
+                    // update the path with specific search params
+                    path = getUrlWithParams(
+                        new URL(worker.location.origin),
+                        path,
+                        NotificationRel.OpenWindow,
+                        data.kind,
+                    ).toString()
                     log('sw:push: opening window', {
-                        path: pathToNavigateTo,
+                        path,
                         hadWindowToFocus: false,
                     })
-                    const url = new URL(worker.location.origin)
-                    url.pathname = pathToNavigateTo
-                    url.searchParams.set('track_source', 'open_window')
-                    const window = await worker.clients.openWindow(url.toString())
+                    const window = await worker.clients.openWindow(path)
                     await window?.focus()
                 }
             }),
