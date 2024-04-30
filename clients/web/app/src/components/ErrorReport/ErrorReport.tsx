@@ -101,13 +101,10 @@ async function postCustomError(data: FormState) {
     data.comments += `\n\nLogs:\n\n${logs}`
 
     const uuid = hexlify(randomBytes(16))
-    const postCustom = await axiosClient.post(
-        url,
-        JSON.stringify({
-            ...data,
-            id: uuid,
-        }),
-    )
+    const postCustom = await axiosClient.post(url, {
+        ...data,
+        id: uuid,
+    })
     postCustomErrorToDatadog(data, uuid, logs)
     return postCustom
 }
