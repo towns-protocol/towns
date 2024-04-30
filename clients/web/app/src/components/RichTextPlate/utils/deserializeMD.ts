@@ -3,6 +3,7 @@ import markdown from 'remark-parse'
 import remarkGfm from 'remark-gfm'
 import { unified } from 'unified'
 import { Channel, OTWMention, RoomMember } from 'use-towns-client'
+import remarkDecodeHTMLCodeBlocks from './remark/remarkDecodeHTMLCodeBlocks'
 import remarkSlate from './remark/plugin'
 import remarkTransformUserAndChannels from './remark/remarkTransformUserAndChannels'
 import remarkRemoveHeadings from './remark/remarkRemoveHeadings'
@@ -25,6 +26,7 @@ export const deserializeMd = <V extends Value>(
         .use(markdown)
         .use(remarkGfm)
         .use(remarkRemoveHeadings)
+        .use(remarkDecodeHTMLCodeBlocks)
         .use(remarkSlate)
         .use(remarkTransformUserAndChannels(channels, mentions, users))
         .processSync(data)

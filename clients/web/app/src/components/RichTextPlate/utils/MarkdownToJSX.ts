@@ -10,12 +10,12 @@ import { Channel, OTWMention, RoomMember } from 'use-towns-client'
 import markdown from 'remark-parse'
 import remarkGfm from 'remark-gfm'
 import { unified } from 'unified'
-import { htmlToText } from 'workers/data_transforms'
 import { ELEMENT_MENTION_CHANNEL } from '../plugins/createChannelPlugin'
 import { channelMentionHandler, listContentHandler, userMentionHandler } from './rehypeHandlers'
 import remarkTransformUserAndChannels from './remark/remarkTransformUserAndChannels'
 import remarkPreserveListContent from './remark/remarkPreserveListContent'
 import remarkRemoveHeadings from './remark/remarkRemoveHeadings'
+import remarkDecodeHTMLCodeBlocks from './remark/remarkDecodeHTMLCodeBlocks'
 
 type MarkdownRendererProps = React.PropsWithChildren<{
     components: Partial<Components>
@@ -48,6 +48,7 @@ const MarkdownRenderer = ({
         .use(remarkGfm)
         .use(remarkPreserveListContent)
         .use(remarkRemoveHeadings)
+        .use(remarkDecodeHTMLCodeBlocks)
         .use(remarkTransformUserAndChannels(channels, mentions, users))
         .use(remarkRehype, {
             passThrough: [ELEMENT_LIC, ELEMENT_MENTION, ELEMENT_MENTION_CHANNEL],
@@ -59,7 +60,7 @@ const MarkdownRenderer = ({
         } as unknown as Options)
 
     if (typeof children === 'string') {
-        file.value = htmlToText(children) as string
+        file.value = children as string
     } else {
         throw new Error('Expected `children` to be a string')
     }

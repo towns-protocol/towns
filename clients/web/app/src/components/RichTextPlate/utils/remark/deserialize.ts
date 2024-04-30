@@ -1,5 +1,4 @@
 import { ELEMENT_MENTION } from '@udecode/plate-mention'
-import { htmlToText } from 'workers/data_transforms'
 import {
     BlockQuoteNode,
     CodeBlockNode,
@@ -99,9 +98,9 @@ export default function deserialize<T extends InputNodeTypes>(
                     typeof node.value === 'string'
                         ? node.value.split('\n').map((val) => ({
                               type: 'code_line',
-                              children: [{ text: htmlToText(val) }],
+                              children: [{ text: val }],
                           }))
-                        : [{ text: htmlToText(node.value) }],
+                        : [{ text: node.value }],
             } as CodeBlockNode<T>
         case ELEMENT_MENTION: {
             return {
