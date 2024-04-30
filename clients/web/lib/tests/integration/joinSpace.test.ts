@@ -64,7 +64,6 @@ test('create space, and have user join', async () => {
     await waitFor(() => expect(userStream?.view.userContent.isJoined(channelId)).toBeTruthy())
 })
 
-// TODO: check reversion type https://linear.app/hnt-labs/issue/HNT-5147/trying-to-mint-membership-nft-when-you-already-own-it-reverts-with
 test('create space, and have user that already has membership NFT join ', async () => {
     // create clients
     // alice needs to have a valid nft in order to join bob's space / channel

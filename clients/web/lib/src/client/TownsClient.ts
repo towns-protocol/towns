@@ -1412,9 +1412,7 @@ export class TownsClient
                 typeof error === 'object' &&
                 'name' in error &&
                 typeof error.name === 'string' &&
-                (error.name.match('Membership__AlreadyMember') ||
-                    // TODO: is this correct revert? https://linear.app/hnt-labs/issue/HNT-5147/trying-to-mint-membership-nft-when-you-already-own-it-reverts-with
-                    error.name.match('Entitlement__NotAllowed'))
+                error.name.match('Membership__AlreadyMember')
             ) {
                 this.log('[joinTown] already member')
             } else {
