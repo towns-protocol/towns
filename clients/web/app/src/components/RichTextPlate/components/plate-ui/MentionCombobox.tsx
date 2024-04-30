@@ -10,7 +10,7 @@ import {
 } from '@udecode/plate-common'
 import { ELEMENT_MENTION, MentionPlugin, getMentionOnSelectItem } from '@udecode/plate-mention'
 import cloneDeep from 'lodash/cloneDeep'
-import { Combobox } from './Combobox'
+import { ComboboxMemoized as Combobox } from './Combobox'
 import { TMentionComboboxTypes } from '../../utils/ComboboxTypes'
 
 /**

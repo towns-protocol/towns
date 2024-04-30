@@ -21,7 +21,9 @@ import {
 } from '@udecode/plate-common'
 import { createVirtualRef } from '@udecode/plate-floating'
 import { toDOMNode } from '@udecode/slate-react'
-import React, { useCallback, useEffect } from 'react'
+import every from 'lodash/every'
+import isEqual from 'lodash/isEqual'
+import React, { memo, useCallback, useEffect } from 'react'
 import { TypeaheadMenuAnchored, TypeaheadMenuItem } from '@ui'
 import { search } from '@components/RichText/plugins/EmojiShortcutPlugin'
 import { ComboboxTypes, TMentionComboboxTypes, TUserWithChannel } from '../../utils/ComboboxTypes'
@@ -104,14 +106,23 @@ export const ComboboxItem = withRef<
     },
 )
 
+type TComboboxContentProps<T extends TMentionComboboxTypes> = ComboboxContentProps<T> & {
+    editor: PlateEditor
+    currentUser?: string
+}
+
+const EMOJI_SEARCH_PATTERN = /[^a-zA-Z0-9\s]/gi
 export const ComboboxContent = <T extends TMentionComboboxTypes>(
-    props: ComboboxContentProps<T> & { editor: PlateEditor; currentUser?: string },
+    props: TComboboxContentProps<T>,
 ) => {
     const { component: Component, editor, items, combobox, onRenderItem } = props
 
     useComboboxContentState({ items, combobox })
-    const query = (useComboboxSelectors.text() || '').replace(/[^a-zA-Z0-9-_\s]/gi, '')
     const activeId = useComboboxSelectors.activeId()
+    const query =
+        activeId === ComboboxTypes.emojiMention
+            ? (useComboboxSelectors.text() || '').replace(EMOJI_SEARCH_PATTERN, '')
+            : useComboboxSelectors.text()
     const filteredItems = useComboboxSelectors.filteredItems() as typeof items
     const highlightedIndex = useComboboxSelectors.highlightedIndex() as number
     const activeComboboxStore = useActiveComboboxStore()!
@@ -154,7 +165,7 @@ export const ComboboxContent = <T extends TMentionComboboxTypes>(
     )
 }
 
-export const Combobox = <T extends TMentionComboboxTypes>({
+const Combobox = <T extends TMentionComboboxTypes>({
     id,
     trigger,
     searchPattern,
@@ -172,7 +183,10 @@ export const Combobox = <T extends TMentionComboboxTypes>({
     const focusedEditorId = useEventEditorSelectors.focus?.()
     const combobox = useComboboxControls()
     const activeId = useComboboxSelectors.activeId()
-    const query = useComboboxSelectors.text() || ''
+    const query =
+        activeId === ComboboxTypes.emojiMention
+            ? (useComboboxSelectors.text() || '').replace(EMOJI_SEARCH_PATTERN, '')
+            : useComboboxSelectors.text()
     const selectionDefined = useEditorSelector((editor) => !!editor.selection, [])
     const editorId = usePlateSelectors().id()
     const editor = useEditorRef()
@@ -191,20 +205,26 @@ export const Combobox = <T extends TMentionComboboxTypes>({
     }, [id, trigger, searchPattern, controlled, onSelectItem, maxSuggestions, filter, sort])
 
     useEffect(() => {
-        if (activeId !== ComboboxTypes.emojiMention || query.length < 1) {
+        if (activeId !== ComboboxTypes.emojiMention) {
             return
         }
-        // Since Plate does not support async search out of the box, we need to fetch the emojis here
-        // and update the combobox with the new list of items and filteredItems
-        search(query).then((_emojis) => {
-            const emojis = _emojis.slice(0, maxSuggestions ?? 5).map((_emoji) => ({
-                data: _emoji,
-                text: _emoji.name,
-                key: _emoji.emoji,
-            }))
-            comboboxActions.items(emojis)
-            comboboxActions.filteredItems(emojis)
-        })
+
+        if (query.length < 1) {
+            comboboxActions.filteredItems([])
+            comboboxActions.items([])
+        } else {
+            // Since Plate does not support async search out of the box, we need to fetch the emojis here
+            // and update the combobox with the new list of items and filteredItems
+            search(query).then((_emojis) => {
+                const emojis = _emojis.slice(0, maxSuggestions ?? 5).map((_emoji) => ({
+                    data: _emoji,
+                    text: _emoji.name,
+                    key: _emoji.emoji,
+                }))
+                comboboxActions.items(emojis)
+                comboboxActions.filteredItems(emojis)
+            })
+        }
     }, [query, activeId, maxSuggestions])
 
     if (
@@ -217,5 +237,36 @@ export const Combobox = <T extends TMentionComboboxTypes>({
         return null
     }
 
-    return <ComboboxContent<T> combobox={combobox} {...props} editor={editor} />
+    return <ComboboxContentMemoized<T> combobox={combobox} {...props} editor={editor} />
 }
+
+const arePropsEqualComboboxContent = (
+    prevProps: TComboboxContentProps<TMentionComboboxTypes>,
+    nextProps: TComboboxContentProps<TMentionComboboxTypes>,
+) =>
+    every(
+        [
+            isEqual(prevProps.items, nextProps.items),
+            isEqual(prevProps.disabled, nextProps.disabled),
+        ],
+        true,
+    )
+
+const arePropsEqualCombobox = (
+    prevProps: ComboboxProps<TMentionComboboxTypes>,
+    nextProps: ComboboxProps<TMentionComboboxTypes>,
+) =>
+    every(
+        [
+            isEqual(prevProps.id, nextProps.id),
+            isEqual(prevProps.items, nextProps.items),
+            isEqual(prevProps.disabled, nextProps.disabled),
+        ],
+        true,
+    )
+
+export const ComboboxMemoized = memo(Combobox, arePropsEqualCombobox) as typeof Combobox
+export const ComboboxContentMemoized = memo(
+    ComboboxContent,
+    arePropsEqualComboboxContent,
+) as typeof ComboboxContent
