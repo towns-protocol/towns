@@ -1,6 +1,13 @@
 import React from 'react'
 import { ComboboxProps, comboboxSelectors } from '@udecode/plate-combobox'
-import { TRange, getPluginOptions, isCollapsed, select, useEditorRef } from '@udecode/plate-common'
+import {
+    TRange,
+    getPluginOptions,
+    getPreviousSiblingNode,
+    isCollapsed,
+    select,
+    useEditorRef,
+} from '@udecode/plate-common'
 import { ELEMENT_MENTION, MentionPlugin, getMentionOnSelectItem } from '@udecode/plate-mention'
 import cloneDeep from 'lodash/cloneDeep'
 import { Combobox } from './Combobox'
@@ -21,7 +28,13 @@ const onSelectedItemWithRangeFix =
         if (!targetRange) {
             return
         }
-        if (isCollapsed(targetRange) && targetRange.focus.path[1] === 0) {
+        if (
+            isCollapsed(targetRange) &&
+            getPreviousSiblingNode(
+                editor,
+                targetRange.focus.path.slice(0, targetRange.focus.path.length - 1),
+            ) === undefined
+        ) {
             const newRange = cloneDeep(targetRange)
             newRange.focus.path[1] = 1
             newRange.anchor.path[1] = 1

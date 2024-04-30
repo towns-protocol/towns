@@ -105,5 +105,5 @@ export function htmlToText(html?: string): string | undefined {
     if (!html) {
         return
     }
-    return convert(html)
+    return convert(html, { preserveNewlines: true })
 }
