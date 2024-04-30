@@ -1,6 +1,12 @@
 import React, { useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router'
-import { Membership, useTownsClient, useTownsContext } from 'use-towns-client'
+import {
+    LoginStatus,
+    Membership,
+    useConnectivity,
+    useTownsClient,
+    useTownsContext,
+} from 'use-towns-client'
 import { PATHS } from 'routes'
 import { Button, Heading, Icon, Stack, Text } from '@ui'
 
@@ -12,6 +18,8 @@ export const NoJoinedSpacesFallback = () => {
     const navigate = useNavigate()
     const { spaces } = useTownsContext()
     const { client } = useTownsClient()
+    const { loginStatus } = useConnectivity()
+    const { clientStatus } = useTownsContext()
     //const spaceDataMap = useSpaceDataStore((s) => s.spaceDataMap)
 
     const spaceIdBookmark = useStore((s) => {
@@ -46,24 +54,65 @@ export const NoJoinedSpacesFallback = () => {
 
     if (spaces.length) {
         return isTouch ? <WelcomeLayout debugText="no joined space fallback" /> : <></>
-    }
-
-    return (
-        <Stack centerContent data-testid="space-home-fallback-content" paddingX="lg" height="100%">
-            <Stack centerContent gap="x4">
-                <Icon padding="md" size="square_xl" type="home" background="level2" />
-                <Stack centerContent gap>
-                    <Heading level={3} textAlign="center">
-                        You don&apos;t have invitations to any town
-                    </Heading>
-                    <Text textAlign="center" color="gray2">
-                        Quit waiting around and start a town now:
-                    </Text>
+    } else if (loginStatus === LoginStatus.LoggingIn) {
+        return (
+            <Stack
+                centerContent
+                data-testid="space-home-fallback-content"
+                paddingX="lg"
+                height="100%"
+            >
+                <Stack centerContent gap="x4">
+                    <Icon padding="md" size="square_xl" type="home" background="level2" />
+                    <Stack centerContent gap>
+                        <Text textAlign="center" color="gray2">
+                            Logging In
+                        </Text>
+                    </Stack>
                 </Stack>
-                <Button tone="cta1" width="auto" grow={false} onClick={openTownPanel}>
-                    Create a Town
-                </Button>
             </Stack>
-        </Stack>
-    )
+        )
+    } else if (!clientStatus.isLocalDataLoaded) {
+        return (
+            <Stack
+                centerContent
+                data-testid="space-home-fallback-content"
+                paddingX="lg"
+                height="100%"
+            >
+                <Stack centerContent gap="x4">
+                    <Icon padding="md" size="square_xl" type="home" background="level2" />
+                    <Stack centerContent gap>
+                        <Text textAlign="center" color="gray2">
+                            Loading Data
+                        </Text>
+                    </Stack>
+                </Stack>
+            </Stack>
+        )
+    } else {
+        return (
+            <Stack
+                centerContent
+                data-testid="space-home-fallback-content"
+                paddingX="lg"
+                height="100%"
+            >
+                <Stack centerContent gap="x4">
+                    <Icon padding="md" size="square_xl" type="home" background="level2" />
+                    <Stack centerContent gap>
+                        <Heading level={3} textAlign="center">
+                            You don&apos;t have invitations to any town
+                        </Heading>
+                        <Text textAlign="center" color="gray2">
+                            Quit waiting around and start a town now:
+                        </Text>
+                    </Stack>
+                    <Button tone="cta1" width="auto" grow={false} onClick={openTownPanel}>
+                        Create a Town
+                    </Button>
+                </Stack>
+            </Stack>
+        )
+    }
 }

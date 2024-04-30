@@ -227,39 +227,68 @@ class ClientStateMachine extends (EventEmitter as new () => TypedEmitter<ClientS
                 AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.LoggingIn)
                 this.emit('onErrorUpdated', undefined)
                 const { credentials } = transition
-                try {
-                    console.log('**logging in')
-                    const context = credentialsToSignerContext(credentials)
-
-                    // use unauthenticated client to check to see if we exist on the server, if so, we can login
-                    const unauthedClient = await this.client.makeUnauthenticatedClient()
-                    const isRegistered = await unauthedClient.userWithAddressExists(
-                        context.creatorAddress,
-                    )
-                    if (!isRegistered) {
-                        console.log("**user authenticated, hasn't joined a space")
-                        return new Authenticated(credentials, context)
-                    } else {
-                        console.log('**user authenticated, starting casablanca client')
-                        const casablancaClient = await this.client.startCasablancaClient(context)
-                        return new LoggedIn(credentials, casablancaClient, context)
-                    }
-                } catch (e) {
-                    console.log('******* casablanca client encountered exception *******', e)
-                    try {
-                        await this.client.logoutFromCasablanca()
-                    } catch (e) {
-                        console.log('error while logging out', e)
-                    }
-                    this.emit('onClearCredentials', credentials)
-                    this.emit('onErrorUpdated', e as Error)
-                    return new LoggedOut()
-                }
+                const newState = await logInWithRetries(credentials, this.client, this)
+                return newState
             }
             default:
                 staticAssertNever(transition)
         }
     }
+}
+
+async function logInWithRetries(
+    credentials: CasablancaCredentials,
+    client: TownsClient,
+    emitter: EventEmitter,
+): Promise<Situations> {
+    let retryCount = 0
+    const MAX_RETRY_COUNT = 20
+    while (retryCount < MAX_RETRY_COUNT) {
+        try {
+            console.log('**logging in')
+            const context = credentialsToSignerContext(credentials)
+
+            // use unauthenticated client to check to see if we exist on the server, if so, we can login
+            const unauthedClient = await client.makeUnauthenticatedClient()
+            const isRegistered = await unauthedClient.userWithAddressExists(context.creatorAddress)
+            if (!isRegistered) {
+                console.log("**user authenticated, hasn't joined a space")
+                return new Authenticated(credentials, context)
+            } else {
+                console.log('**user authenticated, starting casablanca client')
+                const casablancaClient = await client.startCasablancaClient(context)
+                return new LoggedIn(credentials, casablancaClient, context)
+            }
+        } catch (e) {
+            retryCount++
+            console.log('******* casablanca client encountered exception *******', e)
+            try {
+                await client.logoutFromCasablanca()
+            } catch (e) {
+                console.log('error while logging out', e)
+            }
+            // aellis - if you have credentials you should always be able to sign in to the stream node
+            // this error is probably a connect error, so we should just retry forever probably?
+            // but in the future we will have expiring delegate signatures, and perhaps rate limiting? which
+            // would necessitate a better conditions here
+            if (retryCount >= MAX_RETRY_COUNT) {
+                emitter.emit('onClearCredentials', credentials)
+                emitter.emit('onErrorUpdated', e as Error)
+                return new LoggedOut()
+            } else {
+                const retryDelay = getRetryDelay(retryCount)
+                console.log('******* retrying', { retryDelay, retryCount })
+                // sleep
+                await new Promise((resolve) => setTimeout(resolve, retryDelay))
+            }
+        }
+    }
+    throw new Error('unreachable')
+}
+
+// exponentially back off, but never wait more than 20 seconds
+function getRetryDelay(retryCount: number) {
+    return Math.min(1000 * 2 ** retryCount, 20000)
 }
 
 function getTransition(current: Situations, next: Next): Transitions | undefined {
