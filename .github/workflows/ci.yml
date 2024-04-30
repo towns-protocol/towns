@@ -85,6 +85,11 @@ jobs:
 
             - name: Print versions
               run: ./river/scripts/print-versions.sh
+
+            # Start an ssh session with tmate if the PR has the 'ssh' label
+            - name: Setup tmate session
+              uses: mxschmitt/action-tmate@v3
+              if: contains(github.event.pull_request.labels.*.name, 'ssh')
               
             - name: Start and configure blockchains
               run: ./river/scripts/bc-all-start.sh
@@ -198,6 +203,11 @@ jobs:
             - name: Print versions
               run: ./river/scripts/print-versions.sh
 
+            # Start an ssh session with tmate if the PR has the 'ssh' label
+            - name: Setup tmate session
+              uses: mxschmitt/action-tmate@v3
+              if: contains(github.event.pull_request.labels.*.name, 'ssh')
+              
             - name: Start and configure blockchains
               run: ./river/scripts/bc-all-start.sh
 
