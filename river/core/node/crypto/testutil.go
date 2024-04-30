@@ -44,6 +44,7 @@ type BlockchainTestContext struct {
 	ChainId              *big.Int
 	DeployerBlockchain   *Blockchain
 	RemoteNode           bool
+	ChainMonitor         ChainMonitor
 }
 
 func initSimulated(ctx context.Context, numKeys int) ([]*Wallet, *simulated.Backend, error) {
@@ -232,12 +233,17 @@ func NewBlockchainTestContext(ctx context.Context, numKeys int) (*BlockchainTest
 		return nil, err
 	}
 
-	// Add deployer as operator so it can register nodes and set configuration
-	deployerBC := makeTestBlockchain(ctx, wallets[len(wallets)-1], client, chainId, nil)
+	chainMonitor := NewChainMonitor()
+
+	// Add deployer as operator so it can register nodes
+	deployerBC := makeTestBlockchain(ctx, wallets[len(wallets)-1], client, chainMonitor, chainId, nil)
+
+	go chainMonitor.RunWithBlockPeriod(ctx, client, deployerBC.InitialBlockNum, 10*time.Millisecond)
 
 	btc := &BlockchainTestContext{
 		Backend:              backend,
 		EthClient:            ethClient,
+		ChainMonitor:         chainMonitor,
 		Wallets:              wallets,
 		RiverRegistryAddress: addr,
 		NodeRegistry:         nodeRegistry,
@@ -419,6 +425,7 @@ func makeTestBlockchain(
 	ctx context.Context,
 	wallet *Wallet,
 	client BlockchainClient,
+	chainMonitor ChainMonitor,
 	chainId *big.Int,
 	onSubmit func(),
 ) *Blockchain {
@@ -426,12 +433,13 @@ func makeTestBlockchain(
 		ctx,
 		&config.ChainConfig{
 			ChainId:         chainId.Uint64(),
-			BlockTimeMs:     10,
+			BlockTimeMs:     100,
 			TransactionPool: config.TransactionPoolConfig{}, // use defaults
 		},
 		wallet,
 		client,
 		nil,
+		chainMonitor,
 	)
 	if err != nil {
 		panic(err)
@@ -452,7 +460,7 @@ func (c *BlockchainTestContext) GetBlockchain(ctx context.Context, index int, au
 		}
 	}
 
-	return makeTestBlockchain(ctx, wallet, c.Client(), c.ChainId, onSubmit)
+	return makeTestBlockchain(ctx, wallet, c.Client(), c.ChainMonitor, c.ChainId, onSubmit)
 }
 
 func (c *BlockchainTestContext) InitNodeRecord(ctx context.Context, index int, url string) error {

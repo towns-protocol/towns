@@ -3,7 +3,6 @@ package crypto
 import (
 	"context"
 	"math/big"
-	"time"
 
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/config"
@@ -66,7 +65,7 @@ func NewBlockchain(ctx context.Context, cfg *config.ChainConfig, wallet *Wallet)
 			Func("NewBlockchain")
 	}
 
-	return NewBlockchainWithClient(ctx, cfg, wallet, client, client)
+	return NewBlockchainWithClient(ctx, cfg, wallet, client, client, NewChainMonitor())
 }
 
 func NewBlockchainWithClient(
@@ -75,6 +74,7 @@ func NewBlockchainWithClient(
 	wallet *Wallet,
 	client BlockchainClient,
 	clientCloser Closable,
+	chainMonitor ChainMonitor,
 ) (*Blockchain, error) {
 	if cfg.BlockTimeMs <= 0 {
 		return nil, RiverError(Err_BAD_CONFIG, "BlockTimeMs must be set").
@@ -110,7 +110,7 @@ func NewBlockchainWithClient(
 		ClientCloser:    clientCloser,
 		Config:          cfg,
 		InitialBlockNum: initialBlockNum,
-		ChainMonitor:    NewChainMonitor(),
+		ChainMonitor:    chainMonitor,
 	}
 
 	if wallet != nil {
@@ -120,8 +120,6 @@ func NewBlockchainWithClient(
 			return nil, err
 		}
 	}
-
-	go bc.ChainMonitor.RunWithBlockPeriod(ctx, client, initialBlockNum, time.Duration(cfg.BlockTimeMs)*time.Millisecond)
 
 	return bc, nil
 }

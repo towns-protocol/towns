@@ -19,10 +19,6 @@ import { IPrepayShim } from './v3/IPrepayShim'
 import { BaseChainConfig } from './IStaticContractsInfo'
 
 export type SignerType = ethers.Signer
-export interface EventsContractInfo {
-    abi: ethers.ContractInterface
-    address: string
-}
 
 export interface CreateSpaceParams {
     spaceName: string
@@ -54,6 +50,13 @@ export interface TransactionOpts {
 }
 
 type TransactionType = ContractTransaction
+
+export type ContractEventListener = {
+    wait: () => Promise<{
+        success: boolean
+        [x: string]: unknown
+    }>
+}
 
 export interface ISpaceDapp {
     readonly provider: ethers.providers.Provider
@@ -195,4 +198,5 @@ export interface ISpaceDapp {
         freeAllocation: number,
         signer: SignerType,
     ) => Promise<TransactionType>
+    listenForMembershipEvent: (spaceId: string, receiver: string) => ContractEventListener
 }

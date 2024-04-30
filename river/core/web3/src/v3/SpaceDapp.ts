@@ -9,6 +9,7 @@ import {
 } from '../ContractTypes'
 import { BytesLike, ContractReceipt, ContractTransaction, ethers } from 'ethers'
 import {
+    ContractEventListener,
     CreateSpaceParams,
     ISpaceDapp,
     TransactionOpts,
@@ -765,6 +766,60 @@ export class SpaceDapp implements ISpaceDapp {
             }
         }
         return undefined
+    }
+
+    public listenForMembershipEvent(spaceId: string, receiver: string): ContractEventListener {
+        const space = this.getSpace(spaceId)
+
+        if (!space) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+        }
+
+        const membershipPromises = Promise.race([
+            space.Membership.waitForMembershipTokenIssued(receiver).then((result) => {
+                return {
+                    receiver: result,
+                    success: true,
+                }
+            }),
+            space.Membership.waitForMembershipTokenRejected(receiver).then((result) => {
+                return {
+                    receiver: result,
+                    success: false,
+                }
+            }),
+        ])
+
+        return {
+            wait: async () => {
+                return new Promise<{
+                    receiver: string
+                    success: boolean
+                }>((resolve) => {
+                    const timeout = setTimeout(() => {
+                        logger.log('Membership mint event timed out')
+                        resolve({
+                            success: false,
+                            receiver: receiver,
+                        })
+                    }, 30_000)
+
+                    membershipPromises
+                        .then((result) => {
+                            clearTimeout(timeout)
+                            resolve(result)
+                        })
+                        .catch((error) => {
+                            clearTimeout(timeout)
+                            logger.error('Error waiting for membership mint event', error)
+                            resolve({
+                                success: false,
+                                receiver: receiver,
+                            })
+                        })
+                })
+            },
+        }
     }
 }
 

@@ -294,7 +294,7 @@ func (r *transactionPool) OnHead(ctx context.Context, head *types.Header) {
 				r.firstPendingTx, pendingTx.next = r.firstPendingTx.next, nil
 
 				log.Debug("transaction processed",
-					"txHash", receipt.TxHash, "block#", receipt.BlockNumber.Uint64(), "status", receipt.Status)
+					"txHash", receipt.TxHash, "block#", receipt.BlockNumber.Uint64(), "receiptStatus", receipt.Status)
 				break
 			}
 			if errors.Is(err, ethereum.NotFound) {

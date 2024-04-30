@@ -35,4 +35,26 @@ export class IMembershipShim extends BaseContractShim<
         const balance = (await this.read.balanceOf(wallet)).toNumber()
         return balance > 0
     }
+
+    async waitForMembershipTokenIssued(receiver: string): Promise<string> {
+        const filter = this.read.filters['MembershipTokenIssued(address,uint256)'](receiver)
+
+        return new Promise((resolve) => {
+            // TODO: this isn't picking up correct typed fucntion signature
+            this.read.once(filter as string, (recipient: string) => {
+                resolve(recipient)
+            })
+        })
+    }
+
+    async waitForMembershipTokenRejected(receiver: string): Promise<string> {
+        const filter = this.read.filters['MembershipTokenRejected(address)'](receiver)
+
+        return new Promise((resolve) => {
+            // TODO: this isn't picking up correct typed fucntion signature
+            this.read.once(filter as string, (recipient: string) => {
+                resolve(recipient)
+            })
+        })
+    }
 }
