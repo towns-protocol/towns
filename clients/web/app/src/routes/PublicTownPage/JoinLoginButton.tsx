@@ -1,5 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { Permission, useConnectivity, useHasPermission, useTownsClient } from 'use-towns-client'
+import {
+    Permission,
+    useConnectivity,
+    useHasPermission,
+    useTownsClient,
+    useTownsContext,
+} from 'use-towns-client'
 import { Box, BoxProps, FancyButton, Icon, IconProps, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { useJoinTown } from 'hooks/useJoinTown'
@@ -15,6 +21,7 @@ const LoginComponent = React.lazy(() => import('@components/Login/LoginComponent
 export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
     const isPreview = false
     const { client, signerContext } = useTownsClient()
+    const { casablancaClient } = useTownsContext()
     const { isAuthenticated, loggedInWalletAddress } = useConnectivity()
     const { connected, isLoading: isLoadingConnected } = useConnectedStatus()
     const {
@@ -41,6 +48,25 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
             walletAddress: loggedInWalletAddress,
             permission: Permission.JoinSpace,
         })
+
+    useEffect(() => {
+        // Reminder to remove: https://linear.app/hnt-labs/issue/HNT-6108/reminder-to-remove-consolewarn-for-hnt-6051
+        console.warn('[JoinLoginButton][hnt-6051]', 'states', {
+            rpcClient: casablancaClient?.rpcClient.url ?? '',
+            hasJoinSpacePermission: meetsMembershipRequirements,
+            loggedInWalletAddress,
+            isAuthenticated,
+            connected,
+            hasSignerContext: !!signerContext,
+        })
+    }, [
+        meetsMembershipRequirements,
+        loggedInWalletAddress,
+        isAuthenticated,
+        connected,
+        signerContext,
+        casablancaClient?.rpcClient.url,
+    ])
 
     const onJoinClick = useCallback(async () => {
         if (isJoining) {

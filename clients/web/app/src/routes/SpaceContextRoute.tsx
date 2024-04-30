@@ -2,7 +2,7 @@ import capitalize from 'lodash/capitalize'
 import React, { useEffect, useMemo } from 'react'
 import { Outlet, useMatch } from 'react-router'
 import { matchPath, useLocation } from 'react-router-dom'
-import { Channel, SpaceContextProvider, SpaceData } from 'use-towns-client'
+import { Channel, SpaceContextProvider, SpaceData, useTownsContext } from 'use-towns-client'
 import { PATHS } from 'routes'
 import { useStore } from 'store/store'
 import { useSetDocTitle } from 'hooks/useDocTitle'
@@ -31,6 +31,7 @@ export const SpaceContextRoute = () => {
 }
 
 const SpaceContext = () => {
+    const { casablancaClient } = useTownsContext()
     const { serverSpace: space, chainSpace } = useContractAndServerSpaceData()
 
     const spaceSlug = space?.id ?? ''
@@ -45,6 +46,7 @@ const SpaceContext = () => {
         const locationPathname = path?.pathname ?? ''
         const locationSearch = path?.search ?? ''
         console.warn('[SpaceContextRoute][push_hnt-5685]', 'route', {
+            rpcClient: casablancaClient?.rpcClient.url ?? '',
             locationPathname,
             locationSearch,
             path: path ?? '',
@@ -70,7 +72,7 @@ const SpaceContext = () => {
             // reset bookmark in case the route isn't referenced above
             setTownRouteBookmark(spaceSlug, '')
         }
-    }, [path, setTownRouteBookmark, spaceSlug])
+    }, [casablancaClient?.rpcClient.url, path, setTownRouteBookmark, spaceSlug])
 
     const title = useMemo(() => {
         if (!path) {

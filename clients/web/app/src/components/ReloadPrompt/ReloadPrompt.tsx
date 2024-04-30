@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import { AnimatePresence } from 'framer-motion'
 import { debug } from 'debug'
@@ -56,6 +56,14 @@ export const ReloadPrompt = () => {
         setIsUpdating(true)
         asyncUpdate()
     }, [isUpdating, updateServiceWorker])
+
+    useEffect(() => {
+        // Reminder to remove: https://linear.app/hnt-labs/issue/HNT-6108/reminder-to-remove-consolewarn-for-hnt-6051
+        console.warn('[ReloadPrompt][hnt-6051]', 'states', {
+            isUpdating,
+            needRefresh,
+        })
+    }, [isUpdating, needRefresh])
 
     return (
         <Box
