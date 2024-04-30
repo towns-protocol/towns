@@ -670,7 +670,7 @@ module "datadog_sythetics_test" {
       type     = "header"
       property = "content-type"
       operator = "is"
-      target   = "text/html"
+      target   = "application/json"
     }
   ]
   options_list = {
