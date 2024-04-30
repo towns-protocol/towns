@@ -3,6 +3,7 @@ package crypto
 import (
 	"context"
 	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"math/big"
@@ -18,11 +19,11 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/ethclient/simulated"
-	"github.com/river-build/river/core/node/base"
+	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/contracts"
 	"github.com/river-build/river/core/node/contracts/deploy"
-	"github.com/river-build/river/core/node/protocol"
+	. "github.com/river-build/river/core/node/protocol"
 )
 
 var (
@@ -36,6 +37,7 @@ type BlockchainTestContext struct {
 	Backend              *simulated.Backend
 	EthClient            *ethclient.Client
 	Wallets              []*Wallet
+	OnChainConfig        OnChainConfiguration
 	RiverRegistryAddress common.Address
 	NodeRegistry         *contracts.NodeRegistryV1
 	StreamRegistry       *contracts.StreamRegistryV1
@@ -109,7 +111,7 @@ func initRemoteNode(
 		tx := types.NewTx(&types.LegacyTx{
 			Nonce:    nonce,
 			To:       &wallets[i].Address,
-			Value:    big.NewInt(100000000000000),
+			Value:    Eth_100,
 			Gas:      21000,
 			GasPrice: gasPrice,
 		})
@@ -134,7 +136,7 @@ func initRemoteNode(
 		if receipt != nil && receipt.Status == TransactionResultSuccess {
 			break
 		} else if receipt != nil && receipt.Status == 0 {
-			return nil, nil, base.RiverError(protocol.Err_INTERNAL, "could not fund wallet")
+			return nil, nil, RiverError(Err_INTERNAL, "could not fund wallet")
 		} else if !errors.Is(err, ethereum.NotFound) {
 			return nil, nil, err
 		}
@@ -215,17 +217,22 @@ func NewBlockchainTestContext(ctx context.Context, numKeys int) (*BlockchainTest
 		return nil, err
 	}
 
-	node_registry, err := contracts.NewNodeRegistryV1(addr, client)
+	nodeRegistry, err := contracts.NewNodeRegistryV1(addr, client)
 	if err != nil {
 		return nil, err
 	}
 
-	stream_registry, err := contracts.NewStreamRegistryV1(addr, client)
+	streamRegistry, err := contracts.NewStreamRegistryV1(addr, client)
 	if err != nil {
 		return nil, err
 	}
 
-	// Add deployer as operator so it can register nodes
+	riverConfig, err := contracts.NewRiverConfigV1(addr, client)
+	if err != nil {
+		return nil, err
+	}
+
+	// Add deployer as operator so it can register nodes and set configuration
 	deployerBC := makeTestBlockchain(ctx, wallets[len(wallets)-1], client, chainId, nil)
 
 	btc := &BlockchainTestContext{
@@ -233,19 +240,73 @@ func NewBlockchainTestContext(ctx context.Context, numKeys int) (*BlockchainTest
 		EthClient:            ethClient,
 		Wallets:              wallets,
 		RiverRegistryAddress: addr,
-		NodeRegistry:         node_registry,
-		StreamRegistry:       stream_registry,
+		NodeRegistry:         nodeRegistry,
+		StreamRegistry:       streamRegistry,
 		ChainId:              chainId,
 		DeployerBlockchain:   deployerBC,
 		RemoteNode:           remoteNode,
 	}
 
-	err = btc.mineBlock()
+	// commit the river registry deployment transaction
+	if err := btc.mineBlock(); err != nil {
+		return nil, err
+	}
+
+	blockNum := btc.BlockNum(ctx).AsUint64()
+	btc.OnChainConfig, err = NewOnChainConfig(
+		ctx, btc.Client(), btc.RiverRegistryAddress, BlockNumber(blockNum), btc.DeployerBlockchain.ChainMonitor)
 	if err != nil {
 		return nil, err
 	}
 
+	if err = setOnChainConfig(ctx, btc, riverConfig); err != nil {
+		return nil, err
+	}
+
 	return btc, nil
+}
+
+func setOnChainConfig(ctx context.Context, btc *BlockchainTestContext, riverConfig *contracts.RiverConfigV1) error {
+	one, _ := hex.DecodeString("0000000000000000000000000000000000000000000000000000000000000001")
+	pendingTx, err := btc.DeployerBlockchain.TxPool.Submit(
+		ctx,
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			return riverConfig.SetConfiguration(opts, StreamReplicationFactorKey.ID(), 0, one)
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	err = btc.mineBlock()
+	if err != nil {
+		return err
+	}
+
+	// wait till set config tx is processed
+	receipt := <-pendingTx.Wait()
+	if receipt.Status != TransactionResultSuccess {
+		return AsRiverError(err, Err_CANNOT_CALL_CONTRACT).
+			Message("Unable to set on-chain configuration")
+	}
+
+	// chain monitor updates in the background the tx pool and calls the on chain changed callback to update the
+	// in-memory configuration cache. It is possible that the txpool already processed the tx before this callback
+	// was called/finished. Wait a bit more until the configuration change was processed.
+	for i := 0; true; i++ {
+		_, err = btc.OnChainConfig.GetUint64(StreamReplicationFactorKey)
+		if err == nil {
+			break
+		}
+		if i == 100 {
+			return AsRiverError(err, Err_CANNOT_CALL_CONTRACT).
+				Message("On-chain configuration was not set").
+				Tag("tx", receipt.TxHash)
+		}
+		<-time.After(100 * time.Millisecond)
+	}
+
+	return err
 }
 
 // SetNextBlockBaseFee sets the base fee of the next blocks. Only supported for Anvil chains!

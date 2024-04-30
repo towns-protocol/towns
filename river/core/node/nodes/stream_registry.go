@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/contracts"
+	"github.com/river-build/river/core/node/crypto"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/registries"
 	. "github.com/river-build/river/core/node/shared"
@@ -29,6 +30,7 @@ type streamRegistryImpl struct {
 	localNodeAddress common.Address
 	nodeRegistry     NodeRegistry
 	replFactor       int
+	onChainConfig    crypto.OnChainConfiguration
 	contract         *registries.RiverRegistryContract
 
 	streamNodeCache sync.Map
@@ -41,6 +43,7 @@ func NewStreamRegistry(
 	nodeRegistry NodeRegistry,
 	contract *registries.RiverRegistryContract,
 	replFactor int,
+	onChainConfig crypto.OnChainConfiguration,
 ) *streamRegistryImpl {
 	if replFactor < 1 {
 		replFactor = 1
@@ -49,6 +52,7 @@ func NewStreamRegistry(
 		localNodeAddress: localNodeAddress,
 		nodeRegistry:     nodeRegistry,
 		replFactor:       replFactor,
+		onChainConfig:    onChainConfig,
 		contract:         contract,
 	}
 }
@@ -97,6 +101,9 @@ func (sr *streamRegistryImpl) chooseStreamNodes(ctx context.Context, streamId St
 			nodes = append(nodes, n)
 		}
 	}
+
+	// TODO: switch to on-chain configuration
+	// replFactor, err := sr.onChainConfig.GetUint64(crypto.StreamReplicationFactorKey)
 
 	if len(nodes) < sr.replFactor {
 		return nil, RiverError(

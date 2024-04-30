@@ -234,11 +234,18 @@ func (s *Service) initRiverChain() error {
 		return err
 	}
 
+	s.onChainConfig, err = crypto.NewOnChainConfig(
+		ctx, s.riverChain.Client, s.registryContract.Address, s.riverChain.InitialBlockNum, s.riverChain.ChainMonitor)
+	if err != nil {
+		return err
+	}
+
 	s.streamRegistry = nodes.NewStreamRegistry(
 		s.wallet.Address,
 		s.nodeRegistry,
 		s.registryContract,
 		s.config.Stream.ReplicationFactor,
+		s.onChainConfig,
 	)
 
 	return nil
@@ -259,7 +266,12 @@ func (s *Service) prepareStore() error {
 
 		return nil
 	default:
-		return RiverError(Err_BAD_CONFIG, "Unknown storage type", "storageType", s.config.StorageType).Func("prepareStore")
+		return RiverError(
+			Err_BAD_CONFIG,
+			"Unknown storage type",
+			"storageType",
+			s.config.StorageType,
+		).Func("prepareStore")
 	}
 }
 
@@ -403,7 +415,12 @@ func (s *Service) initStore() error {
 		log.Info("Created postgres event store", "schema", s.storagePoolInfo.Schema, "totalStreamsCount", streamsCount)
 		return nil
 	default:
-		return RiverError(Err_BAD_CONFIG, "Unknown storage type", "storageType", s.config.StorageType).Func("createStore")
+		return RiverError(
+			Err_BAD_CONFIG,
+			"Unknown storage type",
+			"storageType",
+			s.config.StorageType,
+		).Func("createStore")
 	}
 }
 
@@ -436,7 +453,10 @@ func (s *Service) initCacheAndSync() error {
 }
 
 func (s *Service) initHandlers() {
-	interceptors := connect.WithInterceptors(NewMetricsInterceptor(), NewTimeoutInterceptor(s.config.Network.RequestTimeout))
+	interceptors := connect.WithInterceptors(
+		NewMetricsInterceptor(),
+		NewTimeoutInterceptor(s.config.Network.RequestTimeout),
+	)
 	streamServicePattern, streamServiceHandler := protocolconnect.NewStreamServiceHandler(s, interceptors)
 	s.mux.Handle(streamServicePattern, newHttpHandler(streamServiceHandler, s.defaultLogger))
 

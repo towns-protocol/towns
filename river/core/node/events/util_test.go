@@ -85,7 +85,7 @@ func makeTestStreamParams(p testParams) (context.Context, *testContext) {
 		panic(err)
 	}
 
-	sr := NewStreamRegistry(bc.Wallet.Address, nr, registry, p.replFactor)
+	sr := NewStreamRegistry(bc.Wallet.Address, nr, registry, p.replFactor, btc.OnChainConfig)
 
 	params := &StreamCacheParams{
 		Storage:      streamStorage,
