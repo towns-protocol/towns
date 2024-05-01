@@ -162,7 +162,6 @@ export class SyncedStreams {
 
     public checkStartTicking() {
         if (this.inProgressTick) {
-            logger.info('inProgressTick')
             return
         }
 
@@ -382,10 +381,6 @@ export class SyncedStreams {
                                     return iteration
                                 }
 
-                                logger.info(
-                                    `got syncStreams response syncOp ${value.syncOp} syncId ${value.syncId}`,
-                                )
-
                                 if (!value.syncId || !value.syncOp) {
                                     logger.info('missing syncId or syncOp', {
                                         value,
@@ -401,12 +396,10 @@ export class SyncedStreams {
                                         this.syncClosed()
                                         break
                                     case SyncOp.SYNC_UPDATE:
-                                        logger.info('SYNC_UPDATE', { value })
                                         this.responsesQueue.push(value)
                                         this.checkStartTicking()
                                         break
                                     case SyncOp.SYNC_PONG:
-                                        logger.info('SYNC_PONG', { value })
                                         pingStats = this.pingInfo.nonces[value.pongNonce]
                                         if (pingStats) {
                                             pingStats.receivedAt = performance.now()
