@@ -47,7 +47,7 @@ import {
 } from '../types/towns-types'
 import { SignerContext } from '@river/sdk'
 import { PushNotificationClient } from './PushNotificationClient'
-import { SignerUndefinedError } from '../types/error-types'
+import { MembershipRejectedError, SignerUndefinedError } from '../types/error-types'
 import { makeUniqueChannelStreamId } from '@river/sdk'
 import { makeSpaceStreamId, makeDefaultChannelStreamId } from '@river/sdk'
 import { staticAssertNever } from '../utils/towns-utils'
@@ -1481,6 +1481,13 @@ export class TownsClient
                 return
             }
 
+            // add listener for the minted membership
+            // await this.spaceDapp.addMembershipListener(spaceId, entitledWallet)
+            const membershipListener = this.spaceDapp.listenForMembershipEvent(
+                spaceId,
+                entitledWallet,
+            )
+
             if (this.isAccountAbstractionEnabled()) {
                 transaction = await this.userOps?.sendJoinSpaceOp([spaceId, entitledWallet, signer])
             } else {
@@ -1490,16 +1497,22 @@ export class TownsClient
             continueStoreTx({
                 hashOrUserOpHash: getTransactionHashOrUserOpHash(transaction),
                 transaction,
+                eventListener: membershipListener,
                 error: undefined, // if no throw then no error
             })
 
-            // TODO: should this be separated into create/wait methods like other transactions?
-            await this._waitForBlockchainTransaction({
-                transaction,
-                status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
-                receipt: undefined,
-                data: undefined,
-            })
+            this.log(
+                `[mintMembershipTransaction] transaction created, starting membershipListener`,
+                {
+                    transaction,
+                },
+            )
+            const result = await membershipListener.wait()
+            this.log('[mintMembershipTransaction] membershipListener result', result)
+
+            if (!result.success) {
+                throw new MembershipRejectedError()
+            }
         } catch (error) {
             if (error instanceof AggregateError) {
                 console.error('[mintMembershipTransaction] failed', error)
@@ -1508,7 +1521,12 @@ export class TownsClient
                 throw err
             }
             console.error('[mintMembershipTransaction] failed', error)
-            const decodeError = await this.getDecodedErrorForSpace(spaceId, error)
+            let decodeError: Error
+            if (error instanceof MembershipRejectedError) {
+                decodeError = error
+            } else {
+                decodeError = await this.getDecodedErrorForSpace(spaceId, error)
+            }
             console.error('[mintMembershipAndJoinRoom] failed', decodeError)
             continueStoreTx({
                 hashOrUserOpHash: getTransactionHashOrUserOpHash(transaction),

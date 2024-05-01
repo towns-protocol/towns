@@ -45,9 +45,11 @@ export class BlockchainTransactionStore extends (EventEmitter as new () => Typed
             hashOrUserOpHash,
             error,
             transaction,
+            eventListener,
         }: {
             hashOrUserOpHash: BlockchainTransaction['hashOrUserOpHash'] | undefined
             transaction: BlockchainTransaction['transaction'] | undefined
+            eventListener?: BlockchainTransaction['eventListener']
             error: Error | undefined
         }) => {
             if (hashOrUserOpHash && transaction) {
@@ -56,6 +58,7 @@ export class BlockchainTransactionStore extends (EventEmitter as new () => Typed
                     transaction,
                     type,
                     data,
+                    eventListener,
                 })
                 return
             }
@@ -98,39 +101,55 @@ export class BlockchainTransactionStore extends (EventEmitter as new () => Typed
                 try {
                     const transactionOrUserOp = tx.transaction
                     let hashToWaitFor = tx.hashOrUserOpHash
-                    if (isUserOpResponse(transactionOrUserOp)) {
-                        const userOpEvent = await transactionOrUserOp.wait()
+                    // wait for event to be emitted
+                    if (tx.eventListener) {
+                        const result = await tx.eventListener.wait()
 
                         if (this.abortController.signal.aborted) {
                             return
                         }
 
-                        // TODO: parse user operation error
-                        if (!userOpEvent || userOpEvent.args.success === false) {
-                            this.updateTransaction({
-                                ...tx,
-                                id,
-                                status: 'failure',
-                            })
+                        this.updateTransaction({
+                            ...tx,
+                            id,
+                            status: result.success ? 'success' : 'failure',
+                        })
+                        return
+                    } else {
+                        if (isUserOpResponse(transactionOrUserOp)) {
+                            const userOpEvent = await transactionOrUserOp.wait()
+
+                            if (this.abortController.signal.aborted) {
+                                return
+                            }
+
+                            // TODO: parse user operation error
+                            if (!userOpEvent || userOpEvent.args.success === false) {
+                                this.updateTransaction({
+                                    ...tx,
+                                    id,
+                                    status: 'failure',
+                                })
+                                return
+                            }
+
+                            hashToWaitFor = userOpEvent.transactionHash as `0x${string}`
+                        }
+
+                        // this should be the same wait time as townsClient.waitForTransaction
+                        // only waiting for tx.wait() can resolve quicker than provider.waitForTransaction
+                        await this.spaceDapp.provider?.waitForTransaction(hashToWaitFor)
+
+                        if (this.abortController.signal.aborted) {
                             return
                         }
 
-                        hashToWaitFor = userOpEvent.transactionHash as `0x${string}`
+                        this.updateTransaction({
+                            ...tx,
+                            id,
+                            status: 'success',
+                        })
                     }
-
-                    // this should be the same wait time as townsClient.waitForTransaction
-                    // only waiting for tx.wait() can resolve quicker than provider.waitForTransaction
-                    await this.spaceDapp.provider?.waitForTransaction(hashToWaitFor)
-
-                    if (this.abortController.signal.aborted) {
-                        return
-                    }
-
-                    this.updateTransaction({
-                        ...tx,
-                        id,
-                        status: 'success',
-                    })
                 } catch (error) {
                     const isWalletLink =
                         type === BlockchainTransactionType.LinkWallet ||

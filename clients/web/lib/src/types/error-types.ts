@@ -24,3 +24,10 @@ export function toError(error: any): Error {
     }
     return new Error(JSON.stringify(error))
 }
+
+export class MembershipRejectedError extends Error {
+    constructor(message?: string) {
+        super(message ?? 'Membership rejected')
+        this.name = 'MembershipRejected'
+    }
+}
