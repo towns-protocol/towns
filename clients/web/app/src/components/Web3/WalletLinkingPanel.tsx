@@ -29,13 +29,13 @@ import { env } from 'utils'
 import { useBalance } from 'hooks/useBalance'
 import { formatEthDisplay } from './utils'
 
-export function WalletLinkingPanel() {
+export const WalletLinkingPanel = React.memo(() => {
     return (
         <PrivyWrapper>
             <WalletLinkingPanelWithoutAuth />
         </PrivyWrapper>
     )
-}
+})
 
 function WalletLinkingPanelWithoutAuth() {
     const [unlinkModal, setUnlinkModal] = useState<{

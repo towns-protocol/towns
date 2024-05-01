@@ -46,26 +46,26 @@ import { useBlockedUsers } from 'hooks/useBlockedUsers'
 import { UserPreferences } from '@components/UserProfile/UserPreferences'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 
-export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
+export const SpaceProfilePanel = () => {
     return (
         <Panel label="Profile">
-            <SpaceProfile {...props} />
+            <SpaceProfile />
         </Panel>
     )
 }
 
-export const SpaceProfile = (props: { children?: React.ReactNode }) => (
+export const SpaceProfile = React.memo(() => (
     <PrivyWrapper>
-        <SpaceProfileWithoutAuth {...props} />
+        <SpaceProfileWithoutAuth />
     </PrivyWrapper>
-)
+))
 
 enum ModalType {
     Wallets = 'wallets',
     Preferences = 'preferences',
 }
 
-const SpaceProfileWithoutAuth = (props: { children?: React.ReactNode }) => {
+const SpaceProfileWithoutAuth = () => {
     const { client } = useTownsClient()
     const isAccountAbstractionEnabled = client?.isAccountAbstractionEnabled()
     const [search] = useSearchParams()

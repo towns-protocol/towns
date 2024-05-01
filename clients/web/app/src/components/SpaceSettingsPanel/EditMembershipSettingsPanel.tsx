@@ -40,7 +40,15 @@ import { EditMembershipSchemaType, editMembershipSchema } from './editMembership
 
 export const EDIT_MEMBERSHIP_SETTINGS_PANEL = 'editMembershipSettings'
 
-export function EditMembershipSettingsPanel() {
+export const EditMembershipSettingsPanel = React.memo(() => {
+    return (
+        <PrivyWrapper>
+            <EditMembershipSettingsPanelWithoutAuth />
+        </PrivyWrapper>
+    )
+})
+
+function EditMembershipSettingsPanelWithoutAuth() {
     const spaceIdFromPath = useSpaceIdFromPathname()
     const { data, isLoading } = useMembershipInfoAndRoleDetails(spaceIdFromPath)
     const transactionIsPending = useIsTransactionPending(
@@ -54,9 +62,7 @@ export function EditMembershipSettingsPanel() {
                         <ButtonSpinner />
                     </Stack>
                 ) : data ? (
-                    <PrivyWrapper>
-                        <EditMembershipForm defaultFormData={data} spaceId={spaceIdFromPath} />
-                    </PrivyWrapper>
+                    <EditMembershipForm defaultFormData={data} spaceId={spaceIdFromPath} />
                 ) : (
                     <Paragraph>Failed to load membership info</Paragraph>
                 )}

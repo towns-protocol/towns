@@ -17,6 +17,7 @@ import { isForbiddenError, isRejectionError } from 'ui/utils/utils'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
+import { PrivyWrapper } from 'privy/PrivyProvider'
 
 type Props = {
     onHide: () => void
@@ -34,7 +35,15 @@ export const schema = z.object({
     [FormStateKeys.name]: z.string().min(1, 'Please enter a town name'),
 })
 
-export const SpaceNameModal = (props: Props) => {
+export const SpaceNameModal = React.memo((props: Props) => {
+    return (
+        <PrivyWrapper>
+            <SpaceNameModalWithoutAuth {...props} />
+        </PrivyWrapper>
+    )
+})
+
+export const SpaceNameModalWithoutAuth = (props: Props) => {
     const { onHide } = props
     const space = useSpaceData()
     const { data } = useContractSpaceInfo(space?.id)

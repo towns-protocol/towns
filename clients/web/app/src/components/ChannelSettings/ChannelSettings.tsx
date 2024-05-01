@@ -318,7 +318,15 @@ const AutoResetFormStateComponent = (props: {
     return <></>
 }
 
-export const ChannelSettingsPanel = () => {
+export const ChannelSettingsPanel = React.memo(() => {
+    return (
+        <PrivyWrapper>
+            <ChannelSettingsWithoutAuth />
+        </PrivyWrapper>
+    )
+})
+
+const ChannelSettingsWithoutAuth = () => {
     const spaceId = useSpaceId()
     const channelId = useChannelId()
     const [transactionMessage, setTransactionMessage] = useState<string | undefined>()
@@ -334,13 +342,11 @@ export const ChannelSettingsPanel = () => {
     return spaceId && channelId ? (
         <Panel label="Edit channel" onClosed={_onHide}>
             <Stack>
-                <PrivyWrapper>
-                    <ChannelSettingsForm
-                        spaceId={spaceId}
-                        preventCloseMessage={transactionMessage}
-                        channelId={channelId}
-                    />
-                </PrivyWrapper>
+                <ChannelSettingsForm
+                    spaceId={spaceId}
+                    preventCloseMessage={transactionMessage}
+                    channelId={channelId}
+                />
             </Stack>
             <UserOpTxModal />
         </Panel>

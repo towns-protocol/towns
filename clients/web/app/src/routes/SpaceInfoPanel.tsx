@@ -56,7 +56,6 @@ import { RolesPanel } from '@components/SpaceSettingsPanel/RolesPanel'
 import { openSeaAssetUrl } from '@components/Web3/utils'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { Panel } from '@components/Panel/Panel'
-import { PrivyWrapper } from 'privy/PrivyProvider'
 import { SpaceSettingsNavigationPanel } from '@components/SpaceSettingsPanel/SpaceSettingsNavigationPanel'
 import { AllChannelsList } from './AllChannelsList/AllChannelsList'
 import { PublicTownPage } from './PublicTownPage/PublicTownPage'
@@ -127,7 +126,6 @@ export const SpaceInfo = () => {
         | undefined
     >(undefined)
 
-    const onHideBrowseChannels = useEvent(() => setActiveModal(undefined))
     const { openPanel } = usePanelActions()
 
     const onShowBrowseChannels = useEvent(() => {
@@ -138,7 +136,6 @@ export const SpaceInfo = () => {
         }
     })
 
-    const onHideTownPreview = useEvent(() => setActiveModal(undefined))
     const onShowTownPreview = useEvent(() => setActiveModal('preview'))
 
     const onEditMotto = useEvent(() => {
@@ -303,6 +300,8 @@ export const SpaceInfo = () => {
     const onEditSpaceNameClick = useCallback(() => {
         setActiveModal(CHANNEL_INFO_PARAMS.EDIT_MEMBERSHIP)
     }, [setActiveModal])
+
+    const setModalUndefined = useCallback(() => setActiveModal(undefined), [])
 
     return (
         <>
@@ -572,32 +571,28 @@ export const SpaceInfo = () => {
                 <ModalContainer
                     minWidth="500"
                     touchTitle="Browse channels"
-                    onHide={onHideBrowseChannels}
+                    onHide={setModalUndefined}
                 >
-                    <AllChannelsList onHideBrowseChannels={onHideBrowseChannels} />
+                    <AllChannelsList onHideBrowseChannels={setModalUndefined} />
                 </ModalContainer>
             )}
 
-            {activeModal === 'members' && (
-                <MembersPageTouchModal onHide={() => setActiveModal(undefined)} />
-            )}
+            {activeModal === 'members' && <MembersPageTouchModal onHide={setModalUndefined} />}
 
             {activeModal === 'confirm-leave' && (
                 <ConfirmLeaveModal
                     text={space?.name ? `Leave ${space.name}?` : 'Leave town?'}
                     onConfirm={leaveTown}
-                    onCancel={() => setActiveModal(undefined)}
+                    onCancel={setModalUndefined}
                 />
             )}
 
             {activeModal === CHANNEL_INFO_PARAMS.EDIT_MEMBERSHIP && (
-                <PrivyWrapper>
-                    <SpaceNameModal onHide={() => setActiveModal(undefined)} />
-                </PrivyWrapper>
+                <SpaceNameModal onHide={setModalUndefined} />
             )}
 
             {activeModal === 'preview' && (
-                <ModalContainer padding="none" border="none" onHide={onHideTownPreview}>
+                <ModalContainer padding="none" border="none" onHide={setModalUndefined}>
                     <Box
                         position="relative"
                         style={{
@@ -605,19 +600,19 @@ export const SpaceInfo = () => {
                             width: isTouch ? '100%' : 'calc(100vw - 100px)',
                         }}
                     >
-                        <PublicTownPage isPreview onClosePreview={onHideTownPreview} />
+                        <PublicTownPage isPreview onClosePreview={setModalUndefined} />
                     </Box>
                 </ModalContainer>
             )}
 
             {activeModal === 'wallets' && (
-                <ModalContainer touchTitle="Wallets" onHide={() => setActiveModal(undefined)}>
+                <ModalContainer touchTitle="Wallets" onHide={setModalUndefined}>
                     <WalletLinkingPanel />
                 </ModalContainer>
             )}
 
             {activeModal === 'space-settings' && (
-                <ModalContainer touchTitle="Edit Me" onHide={() => setActiveModal(undefined)}>
+                <ModalContainer touchTitle="Edit Me" onHide={setModalUndefined}>
                     <SpaceSettingsNavigationPanel />
                 </ModalContainer>
             )}
@@ -625,11 +620,7 @@ export const SpaceInfo = () => {
             {isRolesPanel && <RolesPanel />}
 
             {activeModal === CHANNEL_INFO_PARAMS.ROLES && (
-                <ModalContainer
-                    padding="none"
-                    border="none"
-                    onHide={() => setActiveModal(undefined)}
-                >
+                <ModalContainer padding="none" border="none" onHide={setModalUndefined}>
                     <RolesPanel />
                 </ModalContainer>
             )}

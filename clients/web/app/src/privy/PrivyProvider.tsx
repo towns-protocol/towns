@@ -61,8 +61,10 @@ function useAncestorContext() {
 }
 
 /**
- * This provider should wrap compoenents that require Privy: logging in or making transactions
- * Every time this provider is used, it will load the privy sdk. Hopefully this does not cause issue
+ * This compoenent should wrap components that require Privy: logging in or making transactions.
+ * Every time this provider is used, it will load the privy sdk.
+ * When using this component, try to put it as high up in the component tree as possible.
+ * And try to reduce renders of this component as much as possible. Consider wrapping the consuming component in React.memo.
  */
 export function PrivyWrapper({ children }: { children: JSX.Element }) {
     const hasAncestorContext = useAncestorContext()
@@ -70,6 +72,7 @@ export function PrivyWrapper({ children }: { children: JSX.Element }) {
 
     // If the parent is already a PrivyProvider, we don't need to wrap it again
     if (hasAncestorContext) {
+        console.warn('PrivyWrapper is being used inside another PrivyWrapper')
         return <>{children}</>
     }
 

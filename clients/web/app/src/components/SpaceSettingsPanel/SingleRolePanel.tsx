@@ -56,7 +56,15 @@ import { SearchInputHeightAdjuster } from './SearchInputHeightAdjuster'
 
 export type RoleFormSchemaType = z.infer<typeof formSchema>
 
-export function SingleRolePanel() {
+export const SingleRolePanel = React.memo(() => {
+    return (
+        <PrivyWrapper>
+            <SingleRolePanelWithoutAuth />
+        </PrivyWrapper>
+    )
+})
+
+export function SingleRolePanelWithoutAuth() {
     const spaceIdFromPath = useSpaceIdFromPathname()
     const [searchParams] = useSearchParams()
     const rolesParam = searchParams.get('roles')
@@ -222,16 +230,14 @@ export function SingleRolePanel() {
                                         </Stack>
 
                                         <Stack padding="md" paddingTop="sm">
-                                            <PrivyWrapper>
-                                                <SubmitButton
-                                                    isCreateRole={isCreateRole}
-                                                    roleId={roleId}
-                                                    spaceId={spaceIdFromPath}
-                                                    transactionIsPending={transactionIsPending}
-                                                >
-                                                    {isCreateRole ? 'Create Role' : 'Save Role'}
-                                                </SubmitButton>
-                                            </PrivyWrapper>
+                                            <SubmitButton
+                                                isCreateRole={isCreateRole}
+                                                roleId={roleId}
+                                                spaceId={spaceIdFromPath}
+                                                transactionIsPending={transactionIsPending}
+                                            >
+                                                {isCreateRole ? 'Create Role' : 'Save Role'}
+                                            </SubmitButton>
                                         </Stack>
 
                                         {Object.keys(_form.formState.errors).length > 0 && (
