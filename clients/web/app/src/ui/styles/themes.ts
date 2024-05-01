@@ -8,8 +8,11 @@ export const ToneName = {
     CTA2: 'cta2',
     Error: 'error',
     ENS: 'etherum',
+    Presence: 'presence',
     Positive: 'positive',
+    PositiveSubtle: 'positiveSubtle',
     Negative: 'negative',
+    NegativeSubtle: 'negativeSubtle',
     None: 'none',
 } as const
 
@@ -25,6 +28,7 @@ const tone = {
     [ToneName.Error]: Figma.Colors.Red,
     [ToneName.Positive]: Figma.Colors.Green,
     [ToneName.Negative]: Figma.Colors.Red,
+    [ToneName.Presence]: Figma.Colors.Green,
 } as const
 
 const overlay = {

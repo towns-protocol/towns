@@ -6,6 +6,7 @@ import { Box, Card, Stack } from '@ui'
 import { LogoSingleLetter } from '@components/Logo/Logo'
 import { MintAnimation } from '@components/MintAnimation/MintAnimation'
 import { useStore } from 'store/store'
+import { NodeStatusButton } from '@components/NodeConnectionStatusPanel/ConnectionStatusButton'
 
 export const TopBar = () => {
     const { recentlyMintedSpaceToken } = useStore()
@@ -38,6 +39,7 @@ export const TopBar = () => {
                 </Box>
 
                 <Stack horizontal gap="md" paddingRight="lg" alignItems="center">
+                    <NodeStatusButton />
                     <BugReportButton />
                     <Box ref={profileButtonRef}>
                         <ProfileCardButton />

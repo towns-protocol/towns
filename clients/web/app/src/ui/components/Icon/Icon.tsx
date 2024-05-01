@@ -1106,6 +1106,30 @@ const SidebarOpenIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => 
     </svg>
 ))
 
+export const SateliteIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" {...props} ref={ref}>
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M15 10.6114L16.8507 12.4621L16.2614 13.0513C15.0293 14.2834 13.4752 14.9972 11.87 15.1927L12.3429 17.0843H13.3333C13.7936 17.0843 14.1667 17.4574 14.1667 17.9176C14.1667 18.3779 13.7936 18.751 13.3333 18.751H3.33333C2.8731 18.751 2.5 18.3779 2.5 17.9176C2.5 17.4574 2.8731 17.0843 3.33333 17.0843H4.44452L5.75581 13.1504C5.72192 13.1178 5.68826 13.0847 5.65484 13.0513C2.72591 10.1224 2.72591 5.37366 5.65484 2.44472L6.2441 1.85547L8.1396 3.75097H15V10.6114ZM13.3333 8.9447V5.41763H9.80626L13.3333 8.9447ZM7.1575 14.2158C8.08846 14.7637 9.11233 15.0935 10.1551 15.2052L10.6249 17.0843H6.20134L7.1575 14.2158ZM6.28587 4.25426C4.57287 6.53912 4.75536 9.79482 6.83336 11.8728C8.91135 13.9508 12.1671 14.1333 14.4519 12.4203L6.28587 4.25426Z"
+            fill="#8A8791"
+        />
+        <circle cx="15" cy="3.75" r="2.5" fill="var(--dot-color,#21E078)" className="dot" />
+    </svg>
+))
+
+export const SateliteFillIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M16.8507 12.4621L15 10.6114V3.75097H8.1396L6.2441 1.85547L5.65484 2.44472C2.72591 5.37366 2.72591 10.1224 5.65484 13.0513C5.68826 13.0847 5.72192 13.1178 5.75581 13.1504L4.44452 17.0843H3.33333C2.8731 17.0843 2.5 17.4574 2.5 17.9176C2.5 18.3779 2.8731 18.751 3.33333 18.751H13.3333C13.7936 18.751 14.1667 18.3779 14.1667 17.9176C14.1667 17.4574 13.7936 17.0843 13.3333 17.0843H12.3429L11.87 15.1927C13.4752 14.9972 15.0293 14.2834 16.2614 13.0513L16.8507 12.4621ZM13.3333 5.41763V8.9447L9.80626 5.41763H13.3333ZM10.1551 15.2052C9.11233 15.0935 8.08846 14.7637 7.1575 14.2158L6.20134 17.0843H10.6249L10.1551 15.2052Z"
+            fill="currentColor"
+        />
+        <circle cx="15" cy="3.75" r="2.5" fill="var(--dot-color,#21E078)" className="dot" />
+    </svg>
+))
+
 export const SearchIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" {...props} ref={ref}>
         <path
@@ -1827,6 +1851,8 @@ const iconMap = {
     plus: PlusIcon,
     profile: ProfileIcon,
     reply: ReplyIcon,
+    satelite: SateliteIcon,
+    sateliteFill: SateliteFillIcon,
     search: SearchIcon,
     searchBadged: SearchIconBadged,
     settings: SettingsIcon,

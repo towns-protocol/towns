@@ -22,6 +22,7 @@ import { UserPreferences } from '@components/UserProfile/UserPreferences'
 import { EditMembershipSettingsPanel } from '@components/SpaceSettingsPanel/EditMembershipSettingsPanel'
 import { SpaceSettingsNavigationPanel } from '@components/SpaceSettingsPanel/SpaceSettingsNavigationPanel'
 import { EditPrepaidPanel } from '@components/SpaceSettingsPanel/EditPrepaidPanel'
+import { NodeStatusPanel } from '@components/NodeConnectionStatusPanel/ConnectionStatusPanel'
 
 export const usePanels = () => {
     const [searchParams] = useSearchParams()
@@ -118,12 +119,16 @@ export const usePanels = () => {
         case CHANNEL_INFO_PARAMS.INVITE: {
             return withWrapper(<ChannelInvitePanel />)
         }
+
         case CHANNEL_INFO_PARAMS.PREFERENCES: {
             return (
                 <Panel padding="lg" label="Preferences">
                     <UserPreferences />
                 </Panel>
             )
+        }
+        case CHANNEL_INFO_PARAMS.NODE_STATUS: {
+            return <NodeStatusPanel />
         }
     }
 

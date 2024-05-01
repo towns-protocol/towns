@@ -7,6 +7,7 @@ import { useMuteSettings } from 'api/lib/notificationSettings'
 import { BugReportButton } from '@components/BugReportButton/BugReportButton'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { CHANNEL_INFO_PARAMS } from 'routes'
+import { NodeStatusButton } from '@components/NodeConnectionStatusPanel/ConnectionStatusButton'
 
 type Props = {
     onDisplayMainPanel: () => void
@@ -79,6 +80,7 @@ export const TouchLayoutHeader = (props: Props) => {
                 ) : (
                     <Box grow />
                 )}
+                <NodeStatusButton />
                 <BugReportButton />
                 <IconButton
                     icon="info"

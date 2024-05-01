@@ -43,6 +43,7 @@ export const CHANNEL_INFO_PARAMS = {
     EDIT_MEMBERSHIP: 'edit-membership',
     SPACE_SETTINGS_NAVIGATION: 'space-settings',
     PREPAID_MEMBERSHIPS: 'prepaid-memberships',
+    NODE_STATUS: 'node-status',
 } as const
 
 export type CHANNEL_INFO_PARAMS_VALUES =

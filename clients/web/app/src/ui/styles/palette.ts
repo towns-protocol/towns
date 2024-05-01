@@ -51,7 +51,9 @@ export const Figma = {
         Blue: '#16C5DA',
         BlueTransparent: '#16C5DA90',
         Green: '#21E078',
+        GreenBackground: '#21E0780A',
         Red: '#F2693E',
+        RedBackground: '#F2693E0A',
 
         Purple: '#9B51FA',
         Pink: '#FF25E9',

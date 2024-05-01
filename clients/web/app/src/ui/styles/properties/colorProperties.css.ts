@@ -2,6 +2,7 @@ import { style } from '@vanilla-extract/css'
 import { defineProperties } from '@vanilla-extract/sprinkles'
 import { ToneName } from 'ui/styles/themes'
 import { darkTheme, lightTheme, vars } from 'ui/styles/vars.css'
+import { Figma } from '../palette'
 
 export const hoverableClass = style({
     transition: 'background 120ms ease',
@@ -229,6 +230,13 @@ export const colorProperties = defineProperties({
                     '--background': vars.color.tone.cta2,
                 },
             },
+            [ToneName.Presence]: {
+                background: vars.color.tone.presence,
+                color: vars.color.text.onTone,
+                vars: {
+                    '--background': vars.color.tone.presence,
+                },
+            },
             /** form semantic - positive feedback, valid etc. */
             [ToneName.Positive]: {
                 background: vars.color.tone.positive,
@@ -237,12 +245,27 @@ export const colorProperties = defineProperties({
                     '--background': vars.color.tone.positive,
                 },
             },
+            [ToneName.PositiveSubtle]: {
+                background: Figma.Colors.GreenBackground,
+                color: vars.color.tone.positive,
+                vars: {
+                    '--background': Figma.Colors.GreenBackground,
+                },
+            },
+
             /** form semantic - negative feedback, error msg. etc. */
             [ToneName.Negative]: {
                 background: vars.color.tone.negative,
                 color: vars.color.text.onTone,
                 vars: {
                     '--background': vars.color.tone.negative,
+                },
+            },
+            [ToneName.NegativeSubtle]: {
+                background: Figma.Colors.RedBackground,
+                color: vars.color.tone.negative,
+                vars: {
+                    '--background': Figma.Colors.RedBackground,
                 },
             },
             /** form semantic - neutral  */

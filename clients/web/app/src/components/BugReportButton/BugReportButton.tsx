@@ -1,11 +1,8 @@
 import React, { useCallback } from 'react'
-import { useTownsContext } from 'use-towns-client'
 import { Box, Icon } from '@ui'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 
 export const BugReportButton = () => {
-    const { clientStatus } = useTownsContext()
-
     const { closePanel, openPanel, isPanelOpen } = usePanelActions()
     const isActive = isPanelOpen('bug-report')
 
@@ -36,9 +33,7 @@ export const BugReportButton = () => {
                 <Icon
                     size="square_sm"
                     type={isActive ? 'bugFill' : 'bug'}
-                    color={
-                        !clientStatus.streamSyncActive ? 'error' : isActive ? 'default' : 'gray1'
-                    }
+                    color={isActive ? 'default' : 'gray1'}
                 />
             </Box>
         </>
