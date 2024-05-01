@@ -7,6 +7,7 @@ import (
 	"core/xchain/entitlement"
 	"core/xchain/util"
 	"log/slog"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -104,6 +105,7 @@ func New(
 		if err != nil {
 			return nil, err
 		}
+		go baseChain.ChainMonitor.RunWithBlockPeriod(ctx, baseChain.Client, baseChain.InitialBlockNum, time.Duration(cfg.BaseChain.BlockTimeMs)*time.Millisecond)
 	}
 
 	decoder, err := node_contracts.NewEVMErrorDecoder(

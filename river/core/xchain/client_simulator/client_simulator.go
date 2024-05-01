@@ -193,8 +193,6 @@ type clientSimulator struct {
 
 	checkRequests chan [32]byte
 	resultPosted  chan postResult
-
-	lastRequest [32]byte
 }
 
 func New(
@@ -237,6 +235,7 @@ func New(
 		if err != nil {
 			return nil, err
 		}
+		go baseChain.ChainMonitor.RunWithBlockPeriod(ctx, baseChain.Client, baseChain.InitialBlockNum, time.Duration(cfg.BaseChain.BlockTimeMs)*time.Millisecond)
 	}
 
 	decoder, err := node_contracts.NewEVMErrorDecoder(entitlementGated.GetMetadata(), checker.GetMetadata())
@@ -258,7 +257,6 @@ func New(
 		ownsChain,
 		make(chan [32]byte, 256),
 		make(chan postResult, 256),
-		[32]byte{},
 	}, nil
 }
 
@@ -278,6 +276,7 @@ func (cs *clientSimulator) Start(ctx context.Context) {
 	dlog.FromCtx(ctx).
 		With("application", "clientSimulator").
 		Info("check requested topics", "topics", cs.checkerABI.Events["EntitlementCheckRequested"].ID)
+
 	cs.baseChain.ChainMonitor.OnContractWithTopicsEvent(
 		cs.cfg.GetCheckerContractAddress(),
 		[][]common.Hash{{cs.checkerABI.Events["EntitlementCheckRequested"].ID}},
@@ -335,15 +334,6 @@ func (cs *clientSimulator) WaitForNextRequest(ctx context.Context) ([32]byte, er
 	for {
 		select {
 		case transactionId := <-cs.checkRequests:
-			if transactionId == cs.lastRequest {
-				log.Error(
-					"Received duplicate request",
-					"TransactionId",
-					transactionId,
-				)
-				return [32]byte{}, fmt.Errorf("received duplicate request")
-			}
-			cs.lastRequest = transactionId
 			log.Info("Detected entitlement check request", "TransactionId", transactionId)
 			return transactionId, nil
 

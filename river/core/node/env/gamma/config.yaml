@@ -2,9 +2,11 @@
 baseChain:
     chainId: 84532
     networkUrl: 'https://nexus-rpc-worker-test-beta.towns.com/84532?key=NOT_SET'
+    blockTimeMs: 2000
 riverChain:
     chainId: 6524490
     networkUrl: 'https://devnet.rpc.river.build'
+    blockTimeMs: 2000
 
 # Base contracts
 architectContract:
