@@ -19,6 +19,7 @@ const payloadMessage = z.object({
     senderId: z.string(),
     event: z.unknown(),
     attachmentOnly: z.nativeEnum(NotificationAttachmentKind).optional(),
+    reaction: z.boolean().optional(),
 })
 
 const payloadDm = z.object({
@@ -28,6 +29,7 @@ const payloadDm = z.object({
     recipients: z.array(z.string()),
     event: z.unknown(),
     attachmentOnly: z.nativeEnum(NotificationAttachmentKind).optional(),
+    reaction: z.boolean().optional(),
 })
 
 const payload = z.discriminatedUnion('kind', [payloadMessage, payloadDm])
@@ -51,6 +53,7 @@ const payloadSchema = z
                         recipients: data.content.recipients ?? [],
                         event: data.content.event as StreamEvent,
                         attachmentOnly: data.content.attachmentOnly,
+                        reaction: data.content.reaction,
                     },
                 }
             case AppNotificationType.NewMessage:
@@ -85,6 +88,7 @@ const payloadSchema = z
                         senderId: data.content.senderId,
                         event: data.content.event as StreamEvent,
                         attachmentOnly: data.content.attachmentOnly,
+                        reaction: data.content.reaction,
                     },
                 }
             default:

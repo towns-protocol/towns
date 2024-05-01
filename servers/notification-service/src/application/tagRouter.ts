@@ -4,6 +4,7 @@ import {
     tagAtChannelSchema,
     tagAttachmentSchema,
     tagMentionUsersSchema,
+    tagReactionSchema,
     tagReplyUserSchema,
 } from './tagSchema'
 import {
@@ -11,6 +12,7 @@ import {
     tagAtChannelHandler,
     tagMentionUsersHandler,
     tagReplyUserHandler,
+    tagReactionHandler,
 } from './controller/tagHandler'
 
 export const tagRouter = Router()
@@ -19,3 +21,4 @@ tagRouter.post('/tag/mention-users', validateSchema(tagMentionUsersSchema), tagM
 tagRouter.post('/tag/reply-to-users', validateSchema(tagReplyUserSchema), tagReplyUserHandler)
 tagRouter.post('/tag/at-channel', validateSchema(tagAtChannelSchema), tagAtChannelHandler)
 tagRouter.post('/tag/attachment', validateSchema(tagAttachmentSchema), tagAttachmentHandler)
+tagRouter.post('/tag/reaction', validateSchema(tagReactionSchema), tagReactionHandler)

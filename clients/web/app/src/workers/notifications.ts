@@ -285,6 +285,7 @@ function generateDM(
     recipients: UserRecord[] | undefined,
     plaintext: PlaintextDetails | undefined,
     attachmentKind?: NotificationAttachmentKind,
+    reaction?: boolean,
 ): NotificationDM | undefined {
     // if myUserId is available, remove it from the recipients list
     const recipientsExcludeMe =
@@ -302,14 +303,21 @@ function generateDM(
                 : 'A group you’re in has a new message'
     }
     log('generateDM INPUT', 'plaintext', plaintext)
-    const reaction = plaintext?.reaction ? emoji.get(plaintext.reaction) : undefined
-    if (reaction) {
-        // if there's a reaction, use it as the content instead
-        if (stringHasValue(sender)) {
-            body = `@${sender} reacted with: ${reaction}`
-        } else {
-            body = `Reaction: ${reaction}`
+    const reactionEmoji = plaintext?.reaction ? emoji.get(plaintext.reaction) : undefined
+    if (reaction || reactionEmoji) {
+        const senderText = stringHasValue(sender) ? `@${sender}` : 'Someone'
+
+        let reactText = 'reacted'
+        if (reactionEmoji) {
+            reactText = `reacted: ${reactionEmoji}`
         }
+        const defaultChannelName =
+            recipientsExcludeMe.length === 0 ? 'a direct message' : 'a group you’re in'
+        const formattedChannelName = stringHasValue(dmChannelName)
+            ? `#${dmChannelName}`
+            : defaultChannelName
+
+        body = `${senderText} ${reactText} to your message in ${formattedChannelName}`
     }
     log('generateDM OUTPUT', { title, body })
     return {
@@ -421,10 +429,25 @@ function generateReplyToMessage(
     sender: string | undefined,
     plaintext: PlaintextDetails | undefined,
     attachmentKind?: NotificationAttachmentKind,
+    reaction?: boolean,
 ): NotificationReplyTo {
     const title = generateReplyToTitle(sender, townName, channelName)
     let body = plaintext?.body
-    if (attachmentKind) {
+    if (reaction) {
+        const senderText = stringHasValue(sender) ? `@${sender}` : 'Someone'
+
+        const reactionEmoji = emoji.get(plaintext?.reaction ?? '')
+        let reactText = 'reacted'
+        if (reactionEmoji) {
+            reactText = `reacted: ${reactionEmoji}`
+        }
+
+        const formattedChannelName = stringHasValue(channelName)
+            ? `#${channelName}`
+            : `a channel you're in`
+
+        body = `${senderText} ${reactText} to your post in ${formattedChannelName}`
+    } else if (attachmentKind) {
         body = generateAttachmentBody(attachmentKind)
     } else if (!body) {
         switch (true) {
@@ -536,6 +559,7 @@ async function getNotificationContent(
                 recipients,
                 plaintext,
                 notification.content.attachmentOnly,
+                notification.content.reaction,
             )
         case AppNotificationType.NewMessage:
             return generateNewNotificationMessage(
@@ -564,6 +588,7 @@ async function getNotificationContent(
                 senderName,
                 plaintext,
                 notification.content.attachmentOnly,
+                notification.content.reaction,
             )
 
         default:

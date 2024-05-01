@@ -24,6 +24,11 @@ export interface AtChannelRequestParams {
     channelId: string
 }
 
+export interface ReactionRequestParams {
+    channelId: string
+    userId: string
+}
+
 export interface AttachmentTagRequestParams {
     spaceId?: string
     channelId: string

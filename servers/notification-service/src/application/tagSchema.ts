@@ -6,6 +6,7 @@ export enum NotificationKind {
     NewMessage = 'new_message',
     ReplyTo = 'reply_to',
     AtChannel = '@channel',
+    Reaction = 'reaction',
 }
 
 export enum NotificationAttachmentKind {
@@ -36,4 +37,9 @@ export const tagAttachmentSchema = z.object({
     channelId: z.string(),
     tag: z.nativeEnum(NotificationAttachmentKind),
     userIds: z.array(z.string()),
+})
+
+export const tagReactionSchema = z.object({
+    channelId: z.string(),
+    userId: z.string(),
 })

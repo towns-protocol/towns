@@ -12,6 +12,7 @@ import {
     AttachmentTagRequestParams,
     MentionUsersRequestParams,
     NotificationAttachmentKind,
+    ReactionRequestParams,
     ReplyToUsersRequestParams,
 } from '../types/notification-types'
 import { MediaInfo } from 'types/timeline-types'
@@ -220,6 +221,26 @@ export class PushNotificationClient {
         }
     }
 
+    public async sendUserReactionToNotificationService(channelId: string, creatorUserId: string) {
+        const headers = this.createHttpHeaders()
+        const body = this.createReactionNotificationParams({
+            channelId,
+            userId: creatorUserId,
+        })
+        const url = `${this.options.url}/api/tag/reaction`
+        console.log('PUSH: sending reaction tag to Notification Service ...', url, body)
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify(body),
+            })
+            console.log('PUSH: sent reaction tag to Notification Service', response.status)
+        } catch (error) {
+            console.error('PUSH: error sending reaction tag to Notification Service', error)
+        }
+    }
+
     private createUserMentionNotificationParams({
         spaceId,
         channelId,
@@ -289,6 +310,20 @@ export class PushNotificationClient {
             spaceId,
             channelId,
             userIds,
+        }
+        return params
+    }
+
+    private createReactionNotificationParams({
+        channelId,
+        userId,
+    }: {
+        channelId: string
+        userId: string
+    }): ReactionRequestParams {
+        const params: ReactionRequestParams = {
+            channelId,
+            userId,
         }
         return params
     }

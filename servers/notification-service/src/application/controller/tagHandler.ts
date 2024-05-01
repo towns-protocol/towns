@@ -41,6 +41,16 @@ export async function tagAttachmentHandler(request: Request, res: Response) {
     await upsertNotificationTags(tagData, res)
 }
 
+export async function tagReactionHandler(request: Request, res: Response) {
+    const tagData = {
+        ...request.body,
+        tag: NotificationKind.Reaction,
+        userIds: [request.body.userId],
+    }
+
+    await upsertNotificationTags(tagData, res)
+}
+
 export async function upsertNotificationTags(
     data: {
         channelId: string

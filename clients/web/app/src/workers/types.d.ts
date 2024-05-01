@@ -40,6 +40,7 @@ export type AppNotificationReplyTo = {
         senderId: string
         event: StreamEvent
         attachmentOnly?: NotificationAttachmentKind
+        reaction?: boolean
     }
 }
 
@@ -52,6 +53,7 @@ export type AppNotificationDM = {
         recipients: string[]
         event: StreamEvent
         attachmentOnly?: NotificationAttachmentKind
+        reaction?: boolean
     }
 }
 

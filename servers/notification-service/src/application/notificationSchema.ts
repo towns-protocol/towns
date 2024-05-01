@@ -14,11 +14,13 @@ export const notificationContentMessageSchema = z.object({
         NotificationKind.ReplyTo,
         NotificationKind.Mention,
         NotificationKind.AtChannel,
+        NotificationKind.Reaction,
     ]),
     spaceId: z.string(),
     channelId: z.string(),
     senderId: z.string(),
     attachmentOnly: z.nativeEnum(NotificationAttachmentKind).optional(),
+    reaction: z.boolean().optional(),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     event: z.object({}) as any,
 })
@@ -29,6 +31,7 @@ export const notificationContentDmSchema = z.object({
     senderId: z.string(),
     recipients: z.array(z.string()),
     attachmentOnly: z.nativeEnum(NotificationAttachmentKind).optional(),
+    reaction: z.boolean().optional(),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     event: z.object({}) as any,
 })

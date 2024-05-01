@@ -12,6 +12,8 @@ import {
     makeStreamRpcClient,
     userIdFromAddress,
     makeRiverRpcClient,
+    isChannelStreamId,
+    isDMChannelStreamId,
 } from '@river/sdk'
 import { EntitlementsDelegate, DecryptionStatus } from '@river-build/encryption'
 import { CreateSpaceParams, IRuleEntitlement, UpdateChannelParams } from '@river-build/web3'
@@ -1617,6 +1619,20 @@ export class TownsClient
     public async sendReaction(roomId: string, eventId: string, reaction: string): Promise<void> {
         if (!this.casablancaClient) {
             throw new Error('Casablanca client not initialized')
+        }
+        const creatorUserId = this.casablancaClient?.stream(roomId)?.view.events.get(eventId)
+            ?.remoteEvent?.creatorUserId
+        if (
+            this.pushNotificationClient &&
+            creatorUserId &&
+            (isChannelStreamId(roomId) ||
+                isGDMChannelStreamId(roomId) ||
+                isDMChannelStreamId(roomId))
+        ) {
+            await this.pushNotificationClient.sendUserReactionToNotificationService(
+                roomId,
+                creatorUserId,
+            )
         }
         await this.casablancaClient.sendChannelMessage_Reaction(roomId, {
             reaction,

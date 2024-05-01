@@ -68,6 +68,11 @@ export class NotificationService {
                 .filter((taggedUser) => taggedUser.Tag === NotificationKind.ReplyTo.toString())
                 .map((user) => user.UserId),
         )
+        const reactionUsersTagged = new Set(
+            taggedUsers
+                .filter((taggedUser) => taggedUser.Tag === NotificationKind.Reaction.toString())
+                .map((user) => user.UserId),
+        )
         const attachmentUsersTagged = taggedUsers.filter((taggedUser) =>
             Object.values(NotificationAttachmentKind).includes(
                 taggedUser.Tag as NotificationAttachmentKind,
@@ -122,13 +127,14 @@ export class NotificationService {
                 continue
             }
 
-            const isUserNotTagged =
-                !isDMorGDM &&
-                !metionUsersTagged.has(userId) &&
-                !replyToUsersTagged.has(userId) &&
-                !attachmentUsersTagged.some((user) => user.UserId === userId) &&
-                !isAtChannel &&
-                !isAttachmentNotifyChannel
+            const isUserTagged =
+                isDMorGDM ||
+                isAtChannel ||
+                isAttachmentNotifyChannel ||
+                metionUsersTagged.has(userId) ||
+                replyToUsersTagged.has(userId) ||
+                reactionUsersTagged.has(userId) ||
+                attachmentUsersTagged.some((user) => user.UserId === userId)
 
             const isUserMutedForMention =
                 metionUsersTagged.has(userId) && mutedMentionUsers.has(userId)
@@ -139,7 +145,7 @@ export class NotificationService {
                 (attachmentDMorGDMUsers.size > 0 || isDMorGDM) && mutedDMUsers.has(userId)
 
             if (
-                isUserNotTagged ||
+                !isUserTagged ||
                 isUserMutedForMention ||
                 isUserMutedForReplyTo ||
                 isUserMutedForDM
@@ -147,7 +153,14 @@ export class NotificationService {
                 continue
             }
 
-            if (metionUsersTagged.has(userId)) {
+            if (reactionUsersTagged.size > 0) {
+                if (reactionUsersTagged.has(userId)) {
+                    recipients[userId] = {
+                        userId,
+                        kind: NotificationKind.Reaction,
+                    }
+                }
+            } else if (metionUsersTagged.has(userId)) {
                 recipients[userId] = {
                     userId,
                     kind: NotificationKind.Mention,
@@ -205,6 +218,19 @@ export class NotificationService {
                 }
                 payload.content.event = {}
             }
+
+            if (kind === NotificationKind.Reaction) {
+                if (
+                    isDMChannelStreamId(payload.content.channelId) ||
+                    isGDMChannelStreamId(payload.content.channelId)
+                ) {
+                    kind = NotificationKind.DirectMessage
+                } else if (isChannelStreamId(payload.content.channelId)) {
+                    kind = NotificationKind.ReplyTo
+                }
+                payload.content.reaction = true
+            }
+
             payload.content.kind = kind as NotificationKind
 
             if (!isPayloadLengthValid(JSON.stringify(payload))) {

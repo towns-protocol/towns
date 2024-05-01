@@ -690,6 +690,43 @@ describe('NotificationService', () => {
                 expect(result).toEqual(expected)
             })
         })
+
+        describe('Tag: Reaction', () => {
+            it('should return the owner of the message the sender is reacting to notify as recipient', async () => {
+                const notificationData = {
+                    users: ['user1', 'user2', 'user3'],
+                    payload: {
+                        content: {
+                            kind: NotificationKind.NewMessage,
+                            spaceId: 'space123',
+                            channelId: 'channel123',
+                            senderId: 'user4',
+                        },
+                    },
+                    sender: 'user4',
+                } as NotifyUsersSchema
+
+                const channelId = 'channel123'
+                const taggedUsers = [
+                    {
+                        UserId: 'user1',
+                        Tag: NotificationKind.Reaction,
+                        SpaceId: 'space123',
+                        ChannelId: 'channel123',
+                    },
+                ]
+
+                const result = await notificationService.getUsersToNotify(
+                    notificationData,
+                    channelId,
+                    taggedUsers,
+                )
+
+                const expected: NotifyUser[] = []
+                expected.push({ userId: 'user1', kind: NotificationKind.Reaction })
+                expect(result).toEqual(expected)
+            })
+        })
     })
 
     describe('createNotificationAsyncRequests', () => {
