@@ -57,14 +57,50 @@ type (
 		muBuilder sync.Mutex
 		builder   chainMonitorBuilder
 	}
+
+	// ChainMonitorPollInterval determines the next poll interval for the chain monitor
+	ChainMonitorPollInterval interface {
+		Interval(took time.Duration, hitBlockRangeLimit bool, gotErr bool) time.Duration
+	}
+
+	defaultChainMonitorPollIntervalCalculator struct {
+		blockPeriod      time.Duration
+		errCounter       int64
+		errSlowdownLimit time.Duration
+	}
 )
 
-// NewChainMonitorBuilder constructs a chain monitor that implements ChainMinotor
-// and starts to monitor the chain on the given block.
+// NewChainMonitor constructs an EVM chain monitor that can track state changes on an EVM chain.
 func NewChainMonitor() *chainMonitor {
 	return &chainMonitor{
 		builder: chainMonitorBuilder{dirty: true},
 	}
+}
+
+func NewChainMonitorPollIntervalCalculator(
+	blockPeriod time.Duration, errSlowdownLimit time.Duration,
+) *defaultChainMonitorPollIntervalCalculator {
+	return &defaultChainMonitorPollIntervalCalculator{
+		blockPeriod:      blockPeriod,
+		errCounter:       0,
+		errSlowdownLimit: max(errSlowdownLimit, time.Second),
+	}
+}
+
+func (p *defaultChainMonitorPollIntervalCalculator) Interval(
+	took time.Duration, hitBlockRangeLimit bool, gotErr bool,
+) time.Duration {
+	if gotErr {
+		// increments each time an error was encountered the time for the next poll until errSlowdownLimit
+		p.errCounter = min(p.errCounter+1, 10000)
+		return min(time.Duration(p.errCounter)*p.blockPeriod, p.errSlowdownLimit)
+	}
+
+	p.errCounter = 0
+	if hitBlockRangeLimit { // fallen behind chain, fetch immediately next block range
+		return time.Duration(0)
+	}
+	return max(p.blockPeriod-took, 0)
 }
 
 func (ecm *chainMonitor) OnHeader(cb OnChainNewHeader) {
@@ -125,38 +161,19 @@ func (ecm *chainMonitor) RunWithBlockPeriod(
 	blockPeriod time.Duration,
 ) {
 	var (
-		fromBlock        = initialBlock.AsBigInt()
-		lastHead         *types.Header
-		shortBlockPeriod = blockPeriod / 20
-		one              = big.NewInt(1)
-		errCounter       = 0
-		errSlowdownLimit = 5
-		nextPollInterval = func(took time.Duration, gotBlock bool, gotErr bool) time.Duration {
-			if !gotErr {
-				errCounter = 0
-				if !gotBlock && took < blockPeriod {
-					return blockPeriod - took
-				}
-				return shortBlockPeriod
-			}
-
-			errCounter++
-			if errCounter > errSlowdownLimit { // RPC node down for some time, slow down to a max of 30s
-				interval := time.Duration(5*(errCounter-errSlowdownLimit))*time.Second + blockPeriod
-				if interval > 30*time.Second {
-					interval = 30 * time.Second
-				}
-				return interval
-			}
-			return blockPeriod
-		}
-		pollInterval = blockPeriod
 		log          = dlog.FromCtx(ctx)
+		one          = big.NewInt(1)
+		fromBlock    = initialBlock.AsBigInt()
+		lastHead     *types.Header
+		pollInterval = time.Duration(0)
+		poll         = NewChainMonitorPollIntervalCalculator(blockPeriod, 30*time.Second)
 	)
 
 	log.Info("chain monitor started", "blockPeriod", blockPeriod, "fromBlock", initialBlock)
 
 	for {
+		log.Debug("chain monitor iteration", "pollInterval", pollInterval)
+
 		select {
 		case <-ctx.Done():
 			log.Info("initiate chain monitor shutdown")
@@ -169,16 +186,15 @@ func (ecm *chainMonitor) RunWithBlockPeriod(
 
 		case <-time.After(pollInterval):
 			start := time.Now()
-
 			head, err := client.HeaderByNumber(ctx, nil)
 			if err != nil {
 				log.Warn("chain monitor is unable to retrieve chain head", "error", err)
-				pollInterval = nextPollInterval(time.Since(start), false, true)
+				pollInterval = poll.Interval(time.Since(start), false, true)
 				continue
 			}
 
 			if lastHead != nil && lastHead.Number.Cmp(head.Number) >= 0 { // no new block
-				pollInterval = nextPollInterval(time.Since(start), false, false)
+				pollInterval = poll.Interval(time.Since(start), false, false)
 				continue
 			}
 
@@ -188,20 +204,24 @@ func (ecm *chainMonitor) RunWithBlockPeriod(
 			ecm.builder.headerCallbacks.onHeadReceived(ctx, head)
 
 			var (
-				newBlocks         []BlockNumber
-				collectedLogs     []types.Log
-				toBlock           = new(big.Int).Set(head.Number)
-				callbacksExecuted sync.WaitGroup
+				newBlocks           []BlockNumber
+				collectedLogs       []types.Log
+				toBlock             = new(big.Int).Set(head.Number)
+				moreBlocksAvailable = false
+				callbacksExecuted   sync.WaitGroup
 			)
 
 			// ensure that the search range isn't too big because RPC providers
 			// often have limitations on the block range and/or response size.
 			if head.Number.Uint64()-fromBlock.Uint64() > 25 {
+				moreBlocksAvailable = true
 				toBlock.SetUint64(fromBlock.Uint64() + 25)
 			}
 
 			query := ecm.builder.Query()
 			query.FromBlock, query.ToBlock = fromBlock, toBlock
+
+			log.Debug("chain monitor block range", "from", query.FromBlock, "to", query.ToBlock)
 
 			if len(ecm.builder.blockCallbacks) > 0 {
 				for i := query.FromBlock.Uint64(); i <= query.ToBlock.Uint64(); i++ {
@@ -213,7 +233,7 @@ func (ecm *chainMonitor) RunWithBlockPeriod(
 				collectedLogs, err = client.FilterLogs(ctx, query)
 				if err != nil {
 					log.Warn("unable to retrieve logs", "error", err)
-					pollInterval = nextPollInterval(time.Since(start), false, true)
+					pollInterval = poll.Interval(time.Since(start), false, true)
 					ecm.muBuilder.Unlock()
 					continue
 				}
@@ -242,18 +262,9 @@ func (ecm *chainMonitor) RunWithBlockPeriod(
 			callbacksExecuted.Wait()
 			ecm.muBuilder.Unlock()
 
-			took := time.Since(start)
-
-			// log.Debug("EVM chain monitor work iteration",
-			// 	"from", query.FromBlock.Uint64(),
-			// 	"to", query.ToBlock.Uint64(),
-			// 	"count", len(collectedLogs),
-			// 	"took", took,
-			// )
-
 			// from and toBlocks are inclusive, start at the next block on next iteration
 			fromBlock = new(big.Int).Add(query.ToBlock, one)
-			pollInterval = nextPollInterval(took, true, false)
+			pollInterval = poll.Interval(time.Since(start), moreBlocksAvailable, false)
 		}
 	}
 }

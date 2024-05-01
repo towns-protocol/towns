@@ -2,6 +2,7 @@ package crypto_test
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -44,6 +45,92 @@ func TestChainMonitorBlocks(t *testing.T) {
 		}
 		prev = got
 	}
+}
+
+func TestNextPollInterval(t *testing.T) {
+	var (
+		require          = require.New(t)
+		blockPeriod      = 2 * time.Second
+		errSlowdownLimit = 10 * time.Second
+		tests            = []struct {
+			calc           crypto.ChainMonitorPollInterval
+			took           time.Duration
+			gotErr         bool
+			multipleBlocks bool
+			exp            time.Duration
+		}{
+			{
+				calc:           crypto.NewChainMonitorPollIntervalCalculator(blockPeriod, errSlowdownLimit),
+				took:           50 * time.Millisecond,
+				gotErr:         false,
+				multipleBlocks: false,
+				exp:            blockPeriod - 50*time.Millisecond,
+			},
+			{
+				calc:           crypto.NewChainMonitorPollIntervalCalculator(blockPeriod, errSlowdownLimit),
+				took:           50 * time.Millisecond,
+				gotErr:         true,
+				multipleBlocks: false,
+				exp:            blockPeriod,
+			},
+			{
+				calc:           crypto.NewChainMonitorPollIntervalCalculator(blockPeriod, errSlowdownLimit),
+				took:           50 * time.Millisecond,
+				gotErr:         false,
+				multipleBlocks: true,
+				exp:            time.Duration(0),
+			},
+			{
+				calc:           crypto.NewChainMonitorPollIntervalCalculator(blockPeriod, errSlowdownLimit),
+				took:           50 * time.Millisecond,
+				gotErr:         true,
+				multipleBlocks: true,
+				exp:            blockPeriod,
+			},
+		}
+	)
+
+	for i, tc := range tests {
+		require.Equal(tc.exp,
+			tc.calc.Interval(tc.took, tc.multipleBlocks, tc.gotErr), fmt.Sprintf("test# %d", i))
+	}
+
+	// test scenarios that require multiple times to request
+	var (
+		slowdownLim = 5 * time.Second
+		poll        = crypto.NewChainMonitorPollIntervalCalculator(blockPeriod, slowdownLim)
+		took        = 50 * time.Millisecond
+	)
+
+	// multiple errors followed by a successful call that yielded no new blocks
+	pollInterval := poll.Interval(took, false, true)
+	require.Equal(blockPeriod, pollInterval)
+	pollInterval = poll.Interval(took, false, true)
+	require.Equal(2*blockPeriod, pollInterval)
+	pollInterval = poll.Interval(took, false, true)
+	require.Equal(slowdownLim, pollInterval)
+	pollInterval = poll.Interval(took, false, false)
+	require.Equal(blockPeriod-took, pollInterval)
+
+	// multiple errors followed by a successful call that yielded one of just a couple of blocks
+	pollInterval = poll.Interval(took, false, true)
+	require.Equal(blockPeriod, pollInterval)
+	pollInterval = poll.Interval(took, false, true)
+	require.Equal(2*blockPeriod, pollInterval)
+	pollInterval = poll.Interval(took, false, true)
+	require.Equal(slowdownLim, pollInterval)
+	pollInterval = poll.Interval(took, false, false)
+	require.Equal(blockPeriod-took, pollInterval)
+
+	// multiple errors followed by a successful call that yielded multiple blocks
+	pollInterval = poll.Interval(took, false, true)
+	require.Equal(blockPeriod, pollInterval)
+	pollInterval = poll.Interval(took, false, true)
+	require.Equal(2*blockPeriod, pollInterval)
+	pollInterval = poll.Interval(took, false, true)
+	require.Equal(slowdownLim, pollInterval)
+	pollInterval = poll.Interval(took, true, false)
+	require.Equal(time.Duration(0), pollInterval)
 }
 
 func TestChainMonitorEvents(t *testing.T) {

@@ -79,7 +79,6 @@ func NewBlockchainWithClient(
 	if cfg.BlockTimeMs <= 0 {
 		return nil, RiverError(Err_BAD_CONFIG, "BlockTimeMs must be set").
 			Func("NewBlockchainWithClient")
-
 	}
 	chainId, err := client.ChainID(ctx)
 	if err != nil {
