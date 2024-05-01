@@ -128,7 +128,7 @@ export const ErrorReportModal = (props: { minimal?: boolean }) => {
 
             {modal && (
                 <ModalContainer onHide={onHide}>
-                    <ErrorReportForm />
+                    <ErrorReportForm onHide={onHide} />
                 </ModalContainer>
             )}
         </>
