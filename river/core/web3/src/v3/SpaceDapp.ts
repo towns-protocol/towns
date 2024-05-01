@@ -80,7 +80,9 @@ export class SpaceDapp implements ISpaceDapp {
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
-        const token = await space.Membership.read.getTokenIdByMembership(walletAddress)
+        const token = await space.ERC721AQueryable.read
+            .tokensOfOwner(walletAddress)
+            .then((tokens) => tokens[0])
         return wrapTransaction(() => space.Banning.write(signer).ban(token), txnOpts)
     }
 
@@ -94,7 +96,9 @@ export class SpaceDapp implements ISpaceDapp {
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
-        const token = await space.Membership.read.getTokenIdByMembership(walletAddress)
+        const token = await space.ERC721AQueryable.read
+            .tokensOfOwner(walletAddress)
+            .then((tokens) => tokens[0])
         return wrapTransaction(() => space.Banning.write(signer).unban(token), txnOpts)
     }
 
@@ -104,7 +108,9 @@ export class SpaceDapp implements ISpaceDapp {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
 
-        const token = await space.Membership.read.getTokenIdByMembership(walletAddress)
+        const token = await space.ERC721AQueryable.read
+            .tokensOfOwner(walletAddress)
+            .then((tokens) => tokens[0])
         return await space.Banning.read.isBanned(token)
     }
 

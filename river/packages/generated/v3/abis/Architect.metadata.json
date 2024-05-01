@@ -936,26 +936,26 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/membership/IMembership.sol": {
-      "keccak256": "0x2dded18bfe4bc134d2734ec8c7f33015c7eb3c5111910ab86a0c541be934c75d",
+      "keccak256": "0x2df191dfaf811a3d01a94d05264f440e1b8e9345418a852a68988815f57dfb97",
       "urls": [
-        "bzz-raw://6fe1f8057f1ca70cf161b02b5859257edf1edef2ccf4eacf664a545444e5a0e0",
-        "dweb:/ipfs/QmcpNS4pYi1RBHnSu2SPWQWgzbTncwt2ZNotYk68gHpSyh"
+        "bzz-raw://7848f687cd1c7e8c456ed75209398a5b6e52cb268570799d9f003f54a06dce39",
+        "dweb:/ipfs/QmT8WuBrViZq1de9ZkFLnD42YCmeJAPW55zCFqLgCxzwYi"
       ],
       "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/membership/MembershipBase.sol": {
-      "keccak256": "0x0f5df1f2ed7f20222d2f6d6c49ff4d55798d72f486fb815512fed6d1df527824",
+      "keccak256": "0xce2810e19c80d4ff43a5b68f6f7834ad0c001e3a60b56105114788118b54faac",
       "urls": [
-        "bzz-raw://a533e6c516bfe0961ab951b7e41622be1eddf9b9c14e652efbfceaed38a4ea6b",
-        "dweb:/ipfs/QmXT6JuEWtfWLULLiVHpEYpH43EZp5H3bLvyj3uJNdQiGt"
+        "bzz-raw://b3762e235b4bf039cdb14be92b5e8eccff2cf6d43202218ccd04bfd6429dca40",
+        "dweb:/ipfs/QmecUGXazcqHDMYKpAGmWF4RNmGFHKT3pvBLPC6UU7CDrA"
       ],
       "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/membership/MembershipStorage.sol": {
-      "keccak256": "0x10fa75bcf06a265b8454b0d76c6e2ed3316dc2542b227c6ca91429df042b1a69",
+      "keccak256": "0xfafb84c26848038b4c8e0bb2ac1ff6117fb6fa102986691b271146887f820f44",
       "urls": [
-        "bzz-raw://33d66bc406ce2d3ca8f1bf2a105dd67b357c671b32d1fc3152366bedae7b37ac",
-        "dweb:/ipfs/QmTbcxoxFx3iG1hQfzu29FMoN2cFuVZZCaNN4Ed86gDPRa"
+        "bzz-raw://5613011690b7c5d597003c6102f10bf666a11b6e80baf6480a00483baf5a7091",
+        "dweb:/ipfs/QmRL8Bt5MJ821jcnFGmjFg3vgfH98D2vT3xgr9cdtMJGwY"
       ],
       "license": "Apache-2.0"
     },
@@ -1000,10 +1000,10 @@
       "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/proxy/SpaceProxy.sol": {
-      "keccak256": "0x4615270039fb6d787a8bba146766fa335022578f2a00a248dc523de730b032e4",
+      "keccak256": "0x31a5bc85ec005c60e58c94948b159806b14c7cd0466cc8d3ef32844e4564412d",
       "urls": [
-        "bzz-raw://f39bad601d2138f357b1b9c845960acab6ce9666f884b21b3ae291808cc6c87b",
-        "dweb:/ipfs/Qmdmep2iyEwpFnSTD6aU1NxPiWZWVURGuCQt16kAwt4MHc"
+        "bzz-raw://4935d5100b48c5f7ad3adc068ea70701ad5e22963c4698aa6e42a61d54227984",
+        "dweb:/ipfs/QmXopMyXerTvJFV1xwLnVv2GdhBCwDAE2oNtWywVPbxKRf"
       ],
       "license": "Apache-2.0"
     },

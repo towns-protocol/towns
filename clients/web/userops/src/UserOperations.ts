@@ -718,7 +718,9 @@ export class UserOps {
             functionName,
         )
 
-        const tokenId = await space.Membership.read.getTokenIdByMembership(walletAddress)
+        const tokenId = await space.ERC721AQueryable.read
+            .tokensOfOwner(walletAddress)
+            .then((tokens) => tokens[0])
         const callData = await space.Banning.encodeFunctionData(functionName, [tokenId])
 
         return this.sendUserOp({
@@ -746,7 +748,9 @@ export class UserOps {
             functionName,
         )
 
-        const tokenId = await space.Membership.read.getTokenIdByMembership(walletAddress)
+        const tokenId = await space.ERC721AQueryable.read
+            .tokensOfOwner(walletAddress)
+            .then((tokens) => tokens[0])
         const callData = await space.Banning.encodeFunctionData(functionName, [tokenId])
         return this.sendUserOp({
             toAddress: [space.Banning.address],

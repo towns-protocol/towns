@@ -14,7 +14,7 @@ library MembershipStorage {
 
   struct Layout {
     mapping(uint256 => address) deprecatedMemberByTokenId;
-    mapping(address => uint256) tokenIdByMember;
+    mapping(address => uint256) deprecatedTokenIdByMember;
     uint256 membershipPrice;
     uint256 membershipMaxSupply;
     address membershipCurrency;

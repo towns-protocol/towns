@@ -61,19 +61,10 @@ contract MembershipFacet is
   // =============================================================
   function _validateJoinSpace(address receiver) internal view {
     if (receiver == address(0)) revert Membership__InvalidAddress();
-    if (_balanceOf(receiver) > 0) revert Membership__AlreadyMember();
-
     if (
       _getMembershipSupplyLimit() != 0 &&
       _totalSupply() >= _getMembershipSupplyLimit()
     ) revert Membership__MaxSupplyReached();
-  }
-
-  /// @inheritdoc IMembership
-  function getTokenIdByMembership(
-    address member
-  ) external view returns (uint256) {
-    return _getTokenIdByMembership(member);
   }
 
   // =============================================================
@@ -203,8 +194,10 @@ contract MembershipFacet is
 
     if (receiver == address(0)) revert Membership__InvalidAddress();
 
-    // should we wait for expiration to renew?
-    if (!_isRenewable(tokenId)) revert Membership__NotExpired();
+    // validate if the current expiration is 365 or more
+    uint256 expiration = _expiresAt(tokenId);
+    if (expiration - block.timestamp >= _getMembershipDuration())
+      revert Membership__NotExpired();
 
     // allocate protocol and membership fees
     uint256 membershipPrice = _getMembershipRenewalPrice(
@@ -227,23 +220,8 @@ contract MembershipFacet is
   }
 
   // =============================================================
-  //                           Cancellation
-  // =============================================================
-
-  /// @inheritdoc IMembership
-  function cancelMembership(uint256 tokenId) external nonReentrant {
-    if (!_isApprovedOrOwner(tokenId))
-      revert ApprovalCallerNotOwnerNorApproved();
-
-    _burn(tokenId);
-    _cancelSubscription(tokenId);
-  }
-
-  // =============================================================
   //                           Duration
   // =============================================================
-
-  function setMembershipDuration(uint64 newDuration) external onlyOwner {}
 
   /// @inheritdoc IMembership
   function getMembershipDuration() external view returns (uint64) {
@@ -346,19 +324,6 @@ contract MembershipFacet is
   }
 
   // =============================================================
-  //                           Internal
-  // =============================================================
-  function _isApprovedOrOwner(uint256 tokenId) internal view returns (bool) {
-    address owner = _ownerOf(tokenId);
-    address sender = msg.sender;
-
-    return
-      (sender == owner) ||
-      _isApprovedForAll(owner, sender) ||
-      _getApproved(tokenId) == sender;
-  }
-
-  // =============================================================
   //                           Overrides
   // =============================================================
 
@@ -379,32 +344,5 @@ contract MembershipFacet is
       emit MembershipTokenRejected(receiver);
       delete ds.pendingJoinRequests[transactionId];
     }
-  }
-
-  // ERC5643 overrides
-  /// @dev only renewable if the expiration of the current membership is less than the default duration + current time. To prevent people from renewing too early.
-  function _isRenewable(uint256 tokenId) internal view override returns (bool) {
-    return _expiresAt(tokenId) < _getMembershipDuration() + block.timestamp;
-  }
-
-  // ERC721A overrides
-  // =============================================================
-  function balanceOf(address account) public view override returns (uint256) {
-    // check if expiration has been reached, return 0 if so
-    if (_expiresAt(_getTokenIdByMembership(account)) <= block.timestamp) {
-      return 0;
-    }
-
-    return _balanceOf(account);
-  }
-
-  function _beforeTokenTransfers(
-    address from,
-    address to,
-    uint256 startTokenId,
-    uint256 quantity
-  ) internal override {
-    super._beforeTokenTransfers(from, to, startTokenId, quantity);
-    _setMembershipTokenId(startTokenId, to);
   }
 }

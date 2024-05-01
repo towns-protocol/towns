@@ -485,6 +485,25 @@ export default [
   },
   {
     "type": "event",
+    "name": "SubscriptionUpdate",
+    "inputs": [
+      {
+        "name": "tokenId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "expiration",
+        "type": "uint64",
+        "indexed": false,
+        "internalType": "uint64"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "Transfer",
     "inputs": [
       {
@@ -607,6 +626,38 @@ export default [
     "type": "error",
     "name": "ChannelService__RoleDoesNotExist",
     "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ERC5643__DurationZero",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ERC5643__InvalidTokenId",
+    "inputs": [
+      {
+        "name": "tokenId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "ERC5643__NotApprovedOrOwner",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ERC5643__SubscriptionNotRenewable",
+    "inputs": [
+      {
+        "name": "tokenId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
   },
   {
     "type": "error",

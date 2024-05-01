@@ -37,6 +37,14 @@ contract MembershipJoinSpace is MembershipBaseSetup {
     assertEq(membership.balanceOf(alice), 1);
   }
 
+  function test_multipleJoinSpace()
+    external
+    givenAliceHasMintedMembership
+    givenAliceHasMintedMembership
+  {
+    assertEq(membership.balanceOf(alice), 2);
+  }
+
   function test_revertWhen_joinSpaceWithZeroAddress() external {
     vm.prank(alice);
     vm.expectRevert(Membership__InvalidAddress.selector);
@@ -54,24 +62,6 @@ contract MembershipJoinSpace is MembershipBaseSetup {
   function test_joinSpace_passWhen_CallerIsFounder() external {
     vm.prank(founder);
     membership.joinSpace(bob);
-  }
-
-  function test_joinSpace_revertWhen_ReceiverIsAlreadyMember() external {
-    vm.prank(alice);
-    membership.joinSpace(alice);
-
-    vm.prank(charlie);
-    vm.expectRevert(Membership__AlreadyMember.selector);
-    membership.joinSpace(alice);
-  }
-
-  function test_joinSpace_revertWhen_ReceiverIsCallerAndMember() external {
-    vm.prank(alice);
-    membership.joinSpace(alice);
-
-    vm.prank(alice);
-    vm.expectRevert(Membership__AlreadyMember.selector);
-    membership.joinSpace(alice);
   }
 
   function test_joinSpace_pass_crossChain() external {
@@ -95,7 +85,7 @@ contract MembershipJoinSpace is MembershipBaseSetup {
     for (uint i = 0; i < requestLogs.length; i++) {
       if (requestLogs[i].topics[0] == checkRequested) {
         (
-          address callerAddress,
+          ,
           address contractAddress,
           bytes32 transactionId,
           address[] memory selectedNodes

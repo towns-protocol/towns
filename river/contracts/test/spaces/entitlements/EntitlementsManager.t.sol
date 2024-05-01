@@ -251,9 +251,5 @@ contract EntitlementsManagerTest is
       entitlements.isEntitledToSpace(founder, Permissions.JoinSpace),
       true
     );
-
-    vm.prank(user);
-    vm.expectRevert(Membership__AlreadyMember.selector);
-    MembershipFacet(everyoneSpace).joinSpace(user);
   }
 }

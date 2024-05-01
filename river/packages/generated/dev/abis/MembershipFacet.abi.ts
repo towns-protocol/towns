@@ -228,7 +228,7 @@ export default [
     "name": "balanceOf",
     "inputs": [
       {
-        "name": "account",
+        "name": "owner",
         "type": "address",
         "internalType": "address"
       }
@@ -241,19 +241,6 @@ export default [
       }
     ],
     "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "cancelMembership",
-    "inputs": [
-      {
-        "name": "tokenId",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -399,25 +386,6 @@ export default [
         "name": "",
         "type": "address",
         "internalType": "address"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "getTokenIdByMembership",
-    "inputs": [
-      {
-        "name": "member",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
       }
     ],
     "stateMutability": "view"
@@ -591,19 +559,6 @@ export default [
         "name": "approved",
         "type": "bool",
         "internalType": "bool"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "setMembershipDuration",
-    "inputs": [
-      {
-        "name": "newDuration",
-        "type": "uint64",
-        "internalType": "uint64"
       }
     ],
     "outputs": [],

@@ -21,12 +21,10 @@ contract MembershipHelper is FacetHelper {
     addSelector(IMembership.joinSpace.selector);
     addSelector(IMembership.joinSpaceWithReferral.selector);
     addSelector(IMembership.renewMembership.selector);
-    addSelector(IMembership.cancelMembership.selector);
+
     addSelector(IMembership.expiresAt.selector);
-    addSelector(IMembership.getTokenIdByMembership.selector);
 
     // Duration
-    addSelector(IMembership.setMembershipDuration.selector);
     addSelector(IMembership.getMembershipDuration.selector);
 
     // Pricing Module

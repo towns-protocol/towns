@@ -79,7 +79,6 @@ export interface MembershipFacetInterface extends utils.Interface {
     "_setPricingModule(address)": FunctionFragment;
     "approve(address,uint256)": FunctionFragment;
     "balanceOf(address)": FunctionFragment;
-    "cancelMembership(uint256)": FunctionFragment;
     "expiresAt(uint256)": FunctionFragment;
     "getApproved(uint256)": FunctionFragment;
     "getMembershipCurrency()": FunctionFragment;
@@ -90,7 +89,6 @@ export interface MembershipFacetInterface extends utils.Interface {
     "getMembershipPricingModule()": FunctionFragment;
     "getMembershipRenewalPrice(uint256)": FunctionFragment;
     "getSpaceFactory()": FunctionFragment;
-    "getTokenIdByMembership(address)": FunctionFragment;
     "isApprovedForAll(address,address)": FunctionFragment;
     "joinSpace(address)": FunctionFragment;
     "joinSpaceWithReferral(address,address,uint256)": FunctionFragment;
@@ -100,7 +98,6 @@ export interface MembershipFacetInterface extends utils.Interface {
     "safeTransferFrom(address,address,uint256)": FunctionFragment;
     "safeTransferFrom(address,address,uint256,bytes)": FunctionFragment;
     "setApprovalForAll(address,bool)": FunctionFragment;
-    "setMembershipDuration(uint64)": FunctionFragment;
     "setMembershipFreeAllocation(uint256)": FunctionFragment;
     "setMembershipLimit(uint256)": FunctionFragment;
     "setMembershipPrice(uint256)": FunctionFragment;
@@ -127,7 +124,6 @@ export interface MembershipFacetInterface extends utils.Interface {
       | "_setPricingModule"
       | "approve"
       | "balanceOf"
-      | "cancelMembership"
       | "expiresAt"
       | "getApproved"
       | "getMembershipCurrency"
@@ -138,7 +134,6 @@ export interface MembershipFacetInterface extends utils.Interface {
       | "getMembershipPricingModule"
       | "getMembershipRenewalPrice"
       | "getSpaceFactory"
-      | "getTokenIdByMembership"
       | "isApprovedForAll"
       | "joinSpace"
       | "joinSpaceWithReferral"
@@ -148,7 +143,6 @@ export interface MembershipFacetInterface extends utils.Interface {
       | "safeTransferFrom(address,address,uint256)"
       | "safeTransferFrom(address,address,uint256,bytes)"
       | "setApprovalForAll"
-      | "setMembershipDuration"
       | "setMembershipFreeAllocation"
       | "setMembershipLimit"
       | "setMembershipPrice"
@@ -213,10 +207,6 @@ export interface MembershipFacetInterface extends utils.Interface {
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
-    functionFragment: "cancelMembership",
-    values: [PromiseOrValue<BigNumberish>]
-  ): string;
-  encodeFunctionData(
     functionFragment: "expiresAt",
     values: [PromiseOrValue<BigNumberish>]
   ): string;
@@ -255,10 +245,6 @@ export interface MembershipFacetInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "getSpaceFactory",
     values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getTokenIdByMembership",
-    values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "isApprovedForAll",
@@ -305,10 +291,6 @@ export interface MembershipFacetInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "setApprovalForAll",
     values: [PromiseOrValue<string>, PromiseOrValue<boolean>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setMembershipDuration",
-    values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "setMembershipFreeAllocation",
@@ -394,10 +376,6 @@ export interface MembershipFacetInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "cancelMembership",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "expiresAt", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getApproved",
@@ -436,10 +414,6 @@ export interface MembershipFacetInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getTokenIdByMembership",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "isApprovedForAll",
     data: BytesLike
   ): Result;
@@ -464,10 +438,6 @@ export interface MembershipFacetInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "setApprovalForAll",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setMembershipDuration",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -956,14 +926,9 @@ export interface MembershipFacet extends BaseContract {
     ): Promise<ContractTransaction>;
 
     balanceOf(
-      account: PromiseOrValue<string>,
+      owner: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
-
-    cancelMembership(
-      tokenId: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
 
     expiresAt(
       tokenId: PromiseOrValue<BigNumberish>,
@@ -995,11 +960,6 @@ export interface MembershipFacet extends BaseContract {
     ): Promise<[BigNumber]>;
 
     getSpaceFactory(overrides?: CallOverrides): Promise<[string]>;
-
-    getTokenIdByMembership(
-      member: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
 
     isApprovedForAll(
       owner: PromiseOrValue<string>,
@@ -1049,11 +1009,6 @@ export interface MembershipFacet extends BaseContract {
     setApprovalForAll(
       operator: PromiseOrValue<string>,
       approved: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    setMembershipDuration(
-      newDuration: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -1148,14 +1103,9 @@ export interface MembershipFacet extends BaseContract {
   ): Promise<ContractTransaction>;
 
   balanceOf(
-    account: PromiseOrValue<string>,
+    owner: PromiseOrValue<string>,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
-
-  cancelMembership(
-    tokenId: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
 
   expiresAt(
     tokenId: PromiseOrValue<BigNumberish>,
@@ -1185,11 +1135,6 @@ export interface MembershipFacet extends BaseContract {
   ): Promise<BigNumber>;
 
   getSpaceFactory(overrides?: CallOverrides): Promise<string>;
-
-  getTokenIdByMembership(
-    member: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
 
   isApprovedForAll(
     owner: PromiseOrValue<string>,
@@ -1239,11 +1184,6 @@ export interface MembershipFacet extends BaseContract {
   setApprovalForAll(
     operator: PromiseOrValue<string>,
     approved: PromiseOrValue<boolean>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  setMembershipDuration(
-    newDuration: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -1338,14 +1278,9 @@ export interface MembershipFacet extends BaseContract {
     ): Promise<void>;
 
     balanceOf(
-      account: PromiseOrValue<string>,
+      owner: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
-
-    cancelMembership(
-      tokenId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
 
     expiresAt(
       tokenId: PromiseOrValue<BigNumberish>,
@@ -1375,11 +1310,6 @@ export interface MembershipFacet extends BaseContract {
     ): Promise<BigNumber>;
 
     getSpaceFactory(overrides?: CallOverrides): Promise<string>;
-
-    getTokenIdByMembership(
-      member: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
 
     isApprovedForAll(
       owner: PromiseOrValue<string>,
@@ -1429,11 +1359,6 @@ export interface MembershipFacet extends BaseContract {
     setApprovalForAll(
       operator: PromiseOrValue<string>,
       approved: PromiseOrValue<boolean>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    setMembershipDuration(
-      newDuration: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1761,13 +1686,8 @@ export interface MembershipFacet extends BaseContract {
     ): Promise<BigNumber>;
 
     balanceOf(
-      account: PromiseOrValue<string>,
+      owner: PromiseOrValue<string>,
       overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    cancelMembership(
-      tokenId: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     expiresAt(
@@ -1798,11 +1718,6 @@ export interface MembershipFacet extends BaseContract {
     ): Promise<BigNumber>;
 
     getSpaceFactory(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getTokenIdByMembership(
-      member: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
 
     isApprovedForAll(
       owner: PromiseOrValue<string>,
@@ -1852,11 +1767,6 @@ export interface MembershipFacet extends BaseContract {
     setApprovalForAll(
       operator: PromiseOrValue<string>,
       approved: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    setMembershipDuration(
-      newDuration: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1958,13 +1868,8 @@ export interface MembershipFacet extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     balanceOf(
-      account: PromiseOrValue<string>,
+      owner: PromiseOrValue<string>,
       overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    cancelMembership(
-      tokenId: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     expiresAt(
@@ -2007,11 +1912,6 @@ export interface MembershipFacet extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     getSpaceFactory(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    getTokenIdByMembership(
-      member: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
 
     isApprovedForAll(
       owner: PromiseOrValue<string>,
@@ -2061,11 +1961,6 @@ export interface MembershipFacet extends BaseContract {
     setApprovalForAll(
       operator: PromiseOrValue<string>,
       approved: PromiseOrValue<boolean>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    setMembershipDuration(
-      newDuration: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

@@ -17,6 +17,7 @@ import {WalletLinkProxyBase} from "contracts/src/spaces/facets/delegation/Wallet
 import {TokenOwnableBase} from "contracts/src/diamond/facets/ownable/token/TokenOwnableBase.sol";
 import {PausableBase} from "contracts/src/diamond/facets/pausable/PausableBase.sol";
 import {BanningBase} from "contracts/src/spaces/facets/banning/BanningBase.sol";
+import {ERC5643Base} from "contracts/src/diamond/facets/token/ERC5643/ERC5643Base.sol";
 
 abstract contract Entitled is
   IEntitlementBase,
@@ -24,7 +25,8 @@ abstract contract Entitled is
   PausableBase,
   BanningBase,
   ERC721ABase,
-  WalletLinkProxyBase
+  WalletLinkProxyBase,
+  ERC5643Base
 {
   using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -39,29 +41,27 @@ abstract contract Entitled is
     address user,
     bytes32 permission
   ) internal view returns (bool) {
+    address owner = _owner();
+
     address[] memory wallets = _getLinkedWalletsWithUser(user);
     uint256 linkedWalletsLength = wallets.length;
 
-    bool isMember = false;
-    address owner = _owner();
-    uint256 tokenId;
+    uint256[] memory bannedTokens = _bannedTokenIds();
+    uint256 bannedTokensLen = bannedTokens.length;
 
     for (uint256 i = 0; i < linkedWalletsLength; i++) {
       address wallet = wallets[i];
 
-      if (wallets[i] == owner) {
+      if (wallet == owner) {
         return true;
       }
 
-      if (_isMember(wallet)) {
-        isMember = true;
-        tokenId = MembershipStorage.layout().tokenIdByMember[wallet];
+      // check if banned
+      for (uint256 j; j < bannedTokensLen; j++) {
+        if (_ownerOf(bannedTokens[j]) == wallet) {
+          return false;
+        }
       }
-    }
-
-    // Check for ban conditions
-    if (_isBanned(tokenId)) {
-      return false;
     }
 
     // Entitlement checks for members

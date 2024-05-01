@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
+import {ERC721AQueryable} from "contracts/src/diamond/facets/token/ERC721A/extensions/ERC721AQueryable.sol";
 
 // libraries
 
@@ -23,6 +24,7 @@ contract BanningTest is BaseSetup, IRolesBase {
   Channels internal channels;
   Roles internal roles;
   EntitlementsManager internal manager;
+  ERC721AQueryable internal queryable;
 
   address alice;
 
@@ -34,6 +36,7 @@ contract BanningTest is BaseSetup, IRolesBase {
     channels = Channels(everyoneSpace);
     roles = Roles(everyoneSpace);
     manager = EntitlementsManager(everyoneSpace);
+    queryable = ERC721AQueryable(everyoneSpace);
   }
 
   function test_revertWhen_tokenDoesNotExist() external {
@@ -49,7 +52,8 @@ contract BanningTest is BaseSetup, IRolesBase {
   }
 
   function test_ban() public givenAliceHasJoinedSpace {
-    uint256 tokenId = membership.getTokenIdByMembership(alice);
+    uint256[] memory tokenIds = queryable.tokensOfOwner(alice);
+    uint256 tokenId = tokenIds[0];
 
     vm.prank(founder);
     banning.ban(tokenId);
@@ -59,14 +63,17 @@ contract BanningTest is BaseSetup, IRolesBase {
   }
 
   modifier givenAliceIsBanned() {
-    uint256 tokenId = membership.getTokenIdByMembership(alice);
+    uint256[] memory tokenIds = queryable.tokensOfOwner(alice);
+    uint256 tokenId = tokenIds[0];
+
     vm.prank(founder);
     banning.ban(tokenId);
     _;
   }
 
   function test_unban() external givenAliceHasJoinedSpace givenAliceIsBanned {
-    uint256 tokenId = membership.getTokenIdByMembership(alice);
+    uint256[] memory tokenIds = queryable.tokensOfOwner(alice);
+    uint256 tokenId = tokenIds[0];
 
     assertTrue(banning.isBanned(tokenId));
     assertFalse(manager.isEntitledToSpace(alice, Permissions.Read));

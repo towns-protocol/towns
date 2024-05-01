@@ -76,6 +76,38 @@
       {
         "inputs": [],
         "type": "error",
+        "name": "ERC5643__DurationZero"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "type": "error",
+        "name": "ERC5643__InvalidTokenId"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "ERC5643__NotApprovedOrOwner"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "type": "error",
+        "name": "ERC5643__SubscriptionNotRenewable"
+      },
+      {
+        "inputs": [],
+        "type": "error",
         "name": "Entitlement__InvalidValue"
       },
       {
@@ -416,6 +448,25 @@
         ],
         "type": "event",
         "name": "RoleUpdated",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256",
+            "indexed": true
+          },
+          {
+            "internalType": "uint64",
+            "name": "expiration",
+            "type": "uint64",
+            "indexed": false
+          }
+        ],
+        "type": "event",
+        "name": "SubscriptionUpdate",
         "anonymous": false
       },
       {
@@ -866,6 +917,30 @@
       ],
       "license": "Apache-2.0"
     },
+    "contracts/src/diamond/facets/token/ERC5643/ERC5643Base.sol": {
+      "keccak256": "0x08a5e803cae11a5ca3cb43e3243b4af0339cf044fe8a8f33c02eeac6a89771a3",
+      "urls": [
+        "bzz-raw://1b9dffbbd0c961d87eeaa10665ed93a3a919dc53db0e684b76d66b0f7e2a0714",
+        "dweb:/ipfs/QmbgTB2swkeRsc7Dc1Wf28cLcKTExw2pzDY66zy5kFLeE8"
+      ],
+      "license": "Apache-2.0"
+    },
+    "contracts/src/diamond/facets/token/ERC5643/ERC5643Storage.sol": {
+      "keccak256": "0x5d560d4d09c521bd463e6ea41eb6451a76f815222d9b3a9b15aff5ce56a2e15e",
+      "urls": [
+        "bzz-raw://395630900bc5b43af14ba8b2b9a97357d9b36ed2debfb72b4fab1999294645c7",
+        "dweb:/ipfs/QmNa6GUiCLSnL3jRKewzpC5TU5TtYxdNNUhPHTqoZ4sGC7"
+      ],
+      "license": "Apache-2.0"
+    },
+    "contracts/src/diamond/facets/token/ERC5643/IERC5643.sol": {
+      "keccak256": "0x3d75267c3894bc9b201b30af94a4587cca8dc3363593a47ee4cc3b9ff27a7218",
+      "urls": [
+        "bzz-raw://3e50378e2ca909177555139f16db11f2fc7f3e97acbc40fc6eea5848bbd61b3f",
+        "dweb:/ipfs/Qmdi2FBhdWAAFE8Kr5DFu9qoESLcH1STb7bm7kXxEjrsJB"
+      ],
+      "license": "Apache-2.0"
+    },
     "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol": {
       "keccak256": "0x8e6c8700603a5f50982462009bf0bd6d9167937d75d5d5b4ecaf2be25e48f334",
       "urls": [
@@ -907,10 +982,10 @@
       "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/Entitled.sol": {
-      "keccak256": "0x3a46523cec9c4a9145104166c4c51820094f1a0d27f043a66ebefe4934409eb4",
+      "keccak256": "0x60df2d441d103a23e8ff1fa5815399bf58dc25b19030de56c15cf9a84393c62c",
       "urls": [
-        "bzz-raw://8ecd2477ba216357a6e251902e84c4ce837abadf4af48abcb3bfb5612725ace5",
-        "dweb:/ipfs/QmdrjT3B7pRnU9ChYhRLCSxidFy277s7A7TRkPCRuZsd31"
+        "bzz-raw://d13b2b6464b4a820ff88aae2a59bf003bc7d61a1e630ac69e0849d54446539b7",
+        "dweb:/ipfs/QmZe187XqCCNxmwj3BKGRtyNyEoEga22oqGQe8iao7LQCc"
       ],
       "license": "Apache-2.0"
     },
@@ -923,10 +998,10 @@
       "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/banning/BanningBase.sol": {
-      "keccak256": "0x163f5533b00e6096222b5092e304766f5af36230071df93a394f5204d22b0a4a",
+      "keccak256": "0xa78695942b8e0415e7177d20dd06f596566a649e68c89d1ed15ec90e74a95270",
       "urls": [
-        "bzz-raw://02a891304d4ea26c0503ef3bf074c8c1d904cfa3cf73fd8f33eab8d4e706860f",
-        "dweb:/ipfs/QmS7gvCAAaZy8deFJ8vABjms6WN97KEFPvEtFzaX1Fa4vx"
+        "bzz-raw://07c4a45a6d0e3d03752be2a31a07282a39c8f72536e3ad834fd4d183052a879d",
+        "dweb:/ipfs/QmP7ww27otUvq2wKy7rewxEAu2JzD5ALwRgJhRBPNKr8EN"
       ],
       "license": "Apache-2.0"
     },
@@ -995,10 +1070,10 @@
       "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/membership/MembershipStorage.sol": {
-      "keccak256": "0x10fa75bcf06a265b8454b0d76c6e2ed3316dc2542b227c6ca91429df042b1a69",
+      "keccak256": "0xfafb84c26848038b4c8e0bb2ac1ff6117fb6fa102986691b271146887f820f44",
       "urls": [
-        "bzz-raw://33d66bc406ce2d3ca8f1bf2a105dd67b357c671b32d1fc3152366bedae7b37ac",
-        "dweb:/ipfs/QmTbcxoxFx3iG1hQfzu29FMoN2cFuVZZCaNN4Ed86gDPRa"
+        "bzz-raw://5613011690b7c5d597003c6102f10bf666a11b6e80baf6480a00483baf5a7091",
+        "dweb:/ipfs/QmRL8Bt5MJ821jcnFGmjFg3vgfH98D2vT3xgr9cdtMJGwY"
       ],
       "license": "Apache-2.0"
     },

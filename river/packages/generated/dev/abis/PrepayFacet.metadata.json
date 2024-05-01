@@ -465,10 +465,10 @@
       "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/membership/IMembership.sol": {
-      "keccak256": "0x2dded18bfe4bc134d2734ec8c7f33015c7eb3c5111910ab86a0c541be934c75d",
+      "keccak256": "0x2df191dfaf811a3d01a94d05264f440e1b8e9345418a852a68988815f57dfb97",
       "urls": [
-        "bzz-raw://6fe1f8057f1ca70cf161b02b5859257edf1edef2ccf4eacf664a545444e5a0e0",
-        "dweb:/ipfs/QmcpNS4pYi1RBHnSu2SPWQWgzbTncwt2ZNotYk68gHpSyh"
+        "bzz-raw://7848f687cd1c7e8c456ed75209398a5b6e52cb268570799d9f003f54a06dce39",
+        "dweb:/ipfs/QmT8WuBrViZq1de9ZkFLnD42YCmeJAPW55zCFqLgCxzwYi"
       ],
       "license": "Apache-2.0"
     },

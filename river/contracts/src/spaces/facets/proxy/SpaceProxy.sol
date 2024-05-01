@@ -42,7 +42,6 @@ contract SpaceProxy is
     __MembershipReferralBase_init();
 
     _safeMint(owner, 1);
-    _setMembershipTokenId(_nextTokenId(), owner);
     _setFallbackEntitlementChecker();
 
     _setInterfaceIds();

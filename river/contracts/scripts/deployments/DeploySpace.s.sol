@@ -37,6 +37,7 @@ import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamo
 import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
 import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
 import {DeployEntitlementGated} from "contracts/scripts/deployments/facets/DeployEntitlementGated.s.sol";
+import {DeployERC721AQueryable} from "./facets/DeployERC721AQueryable.s.sol";
 import {DeployMultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.sol";
 
 contract DeploySpace is DiamondDeployer {
@@ -44,6 +45,7 @@ contract DeploySpace is DiamondDeployer {
   DeployDiamondLoupe diamondLoupeHelper = new DeployDiamondLoupe();
   DeployIntrospection introspectionHelper = new DeployIntrospection();
   DeployEntitlementGated entitlementGatedHelper = new DeployEntitlementGated();
+  DeployERC721AQueryable erc721aQueryableHelper = new DeployERC721AQueryable();
   DeployMultiInit deployMultiInit = new DeployMultiInit();
 
   TokenOwnableHelper tokenOwnableHelper = new TokenOwnableHelper();
@@ -76,6 +78,7 @@ contract DeploySpace is DiamondDeployer {
   address membershipReferral;
   address banning;
   address entitlementGated;
+  address erc721aQueryable;
   address multiInit;
 
   function versionName() public pure override returns (string memory) {
@@ -90,6 +93,7 @@ contract DeploySpace is DiamondDeployer {
     diamondLoupe = diamondLoupeHelper.deploy();
     introspection = introspectionHelper.deploy();
     entitlementGated = entitlementGatedHelper.deploy();
+    erc721aQueryable = erc721aQueryableHelper.deploy();
     multiInit = deployMultiInit.deploy();
 
     vm.startBroadcast(deployerPK);
@@ -106,49 +110,44 @@ contract DeploySpace is DiamondDeployer {
 
     membershipHelper.addSelectors(erc721aHelper.selectors());
 
-    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](12);
+    addCut(
+      tokenOwnableHelper.makeCut(tokenOwnable, IDiamond.FacetCutAction.Add)
+    );
+    addCut(diamondCutHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add));
+    addCut(
+      diamondLoupeHelper.makeCut(diamondLoupe, IDiamond.FacetCutAction.Add)
+    );
+    addCut(
+      introspectionHelper.makeCut(introspection, IDiamond.FacetCutAction.Add)
+    );
+    addCut(
+      entitlementsHelper.makeCut(entitlements, IDiamond.FacetCutAction.Add)
+    );
+    addCut(rolesHelper.makeCut(roles, IDiamond.FacetCutAction.Add));
+    addCut(
+      tokenPausableHelper.makeCut(tokenPausable, IDiamond.FacetCutAction.Add)
+    );
+    addCut(channelsHelper.makeCut(channels, IDiamond.FacetCutAction.Add));
 
-    cuts[index++] = tokenOwnableHelper.makeCut(
-      tokenOwnable,
-      IDiamond.FacetCutAction.Add
+    addCut(membershipHelper.makeCut(membership, IDiamond.FacetCutAction.Add));
+    addCut(
+      membershipReferralHelper.makeCut(
+        membershipReferral,
+        IDiamond.FacetCutAction.Add
+      )
     );
-    cuts[index++] = diamondCutHelper.makeCut(
-      diamondCut,
-      IDiamond.FacetCutAction.Add
+    addCut(banningHelper.makeCut(banning, IDiamond.FacetCutAction.Add));
+    addCut(
+      entitlementGatedHelper.makeCut(
+        entitlementGated,
+        IDiamond.FacetCutAction.Add
+      )
     );
-    cuts[index++] = diamondLoupeHelper.makeCut(
-      diamondLoupe,
-      IDiamond.FacetCutAction.Add
-    );
-    cuts[index++] = entitlementsHelper.makeCut(
-      entitlements,
-      IDiamond.FacetCutAction.Add
-    );
-    cuts[index++] = rolesHelper.makeCut(roles, IDiamond.FacetCutAction.Add);
-    cuts[index++] = tokenPausableHelper.makeCut(
-      tokenPausable,
-      IDiamond.FacetCutAction.Add
-    );
-    cuts[index++] = channelsHelper.makeCut(
-      channels,
-      IDiamond.FacetCutAction.Add
-    );
-    cuts[index++] = introspectionHelper.makeCut(
-      introspection,
-      IDiamond.FacetCutAction.Add
-    );
-    cuts[index++] = membershipHelper.makeCut(
-      membership,
-      IDiamond.FacetCutAction.Add
-    );
-    cuts[index++] = membershipReferralHelper.makeCut(
-      membershipReferral,
-      IDiamond.FacetCutAction.Add
-    );
-    cuts[index++] = banningHelper.makeCut(banning, IDiamond.FacetCutAction.Add);
-    cuts[index++] = entitlementGatedHelper.makeCut(
-      entitlementGated,
-      IDiamond.FacetCutAction.Add
+    addCut(
+      erc721aQueryableHelper.makeCut(
+        erc721aQueryable,
+        IDiamond.FacetCutAction.Add
+      )
     );
 
     _resetIndex();
@@ -167,7 +166,7 @@ contract DeploySpace is DiamondDeployer {
 
     return
       Diamond.InitParams({
-        baseFacets: cuts,
+        baseFacets: baseFacets(),
         init: multiInit,
         initData: abi.encodeWithSelector(
           MultiInit.multiInit.selector,

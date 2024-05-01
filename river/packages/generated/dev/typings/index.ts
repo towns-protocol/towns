@@ -7,6 +7,7 @@ export type { IChannel } from "./IChannel";
 export type { ICustomEntitlement } from "./ICustomEntitlement";
 export type { IDiamond } from "./IDiamond";
 export type { IDiamondCut } from "./IDiamondCut";
+export type { IERC721AQueryable } from "./IERC721AQueryable";
 export type { IEntitlementsManager } from "./IEntitlementsManager";
 export type { IMulticall } from "./IMulticall";
 export type { INodeRegistry } from "./INodeRegistry";
@@ -35,6 +36,7 @@ export { ICustomEntitlement__factory } from "./factories/ICustomEntitlement__fac
 export { IDiamond__factory } from "./factories/IDiamond__factory";
 export { IDiamondCut__factory } from "./factories/IDiamondCut__factory";
 export { IEntitlementsManager__factory } from "./factories/IEntitlementsManager__factory";
+export { IERC721AQueryable__factory } from "./factories/IERC721AQueryable__factory";
 export { IMulticall__factory } from "./factories/IMulticall__factory";
 export { INodeRegistry__factory } from "./factories/INodeRegistry__factory";
 export { IOperatorRegistry__factory } from "./factories/IOperatorRegistry__factory";

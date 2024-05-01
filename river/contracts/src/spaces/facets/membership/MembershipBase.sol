@@ -43,16 +43,6 @@ abstract contract MembershipBase is IMembershipBase {
   // =============================================================
   //                           Membership
   // =============================================================
-  function _setMembershipTokenId(uint256 tokenId, address member) internal {
-    MembershipStorage.Layout storage ds = MembershipStorage.layout();
-    ds.tokenIdByMember[member] = tokenId;
-  }
-
-  function _getTokenIdByMembership(
-    address member
-  ) internal view returns (uint256) {
-    return MembershipStorage.layout().tokenIdByMember[member];
-  }
 
   function _collectProtocolFee(
     address buyer,
@@ -235,13 +225,12 @@ abstract contract MembershipBase is IMembershipBase {
   }
 
   function _getMembershipFreeAllocation() public view returns (uint256) {
-    uint256 freeAllocation = MembershipStorage.layout().freeAllocation;
+    MembershipStorage.Layout storage ds = MembershipStorage.layout();
+
+    uint256 freeAllocation = ds.freeAllocation;
 
     if (freeAllocation > 0) return freeAllocation;
-
-    return
-      IPlatformRequirements(MembershipStorage.layout().spaceFactory)
-        .getMembershipMintLimit();
+    return IPlatformRequirements(ds.spaceFactory).getMembershipMintLimit();
   }
 
   // =============================================================

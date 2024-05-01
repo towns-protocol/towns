@@ -478,10 +478,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/membership/MembershipStorage.sol": {
-      "keccak256": "0x10fa75bcf06a265b8454b0d76c6e2ed3316dc2542b227c6ca91429df042b1a69",
+      "keccak256": "0xfafb84c26848038b4c8e0bb2ac1ff6117fb6fa102986691b271146887f820f44",
       "urls": [
-        "bzz-raw://33d66bc406ce2d3ca8f1bf2a105dd67b357c671b32d1fc3152366bedae7b37ac",
-        "dweb:/ipfs/QmTbcxoxFx3iG1hQfzu29FMoN2cFuVZZCaNN4Ed86gDPRa"
+        "bzz-raw://5613011690b7c5d597003c6102f10bf666a11b6e80baf6480a00483baf5a7091",
+        "dweb:/ipfs/QmRL8Bt5MJ821jcnFGmjFg3vgfH98D2vT3xgr9cdtMJGwY"
       ],
       "license": "Apache-2.0"
     },

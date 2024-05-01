@@ -14,7 +14,16 @@ import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
 
 contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
   modifier givenMembershipHasExpired() {
-    uint256 tokenId = membership.getTokenIdByMembership(alice);
+    uint256 totalSupply = membership.totalSupply();
+    uint256 tokenId;
+
+    for (uint256 i = 1; i <= totalSupply; i++) {
+      if (membership.ownerOf(i) == alice) {
+        tokenId = i;
+        break;
+      }
+    }
+
     uint256 expiration = membership.expiresAt(tokenId);
     vm.warp(expiration);
     _;
@@ -25,10 +34,18 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
     givenAliceHasMintedMembership
     givenMembershipHasExpired
   {
-    uint256 tokenId = membership.getTokenIdByMembership(alice);
+    uint256 totalSupply = membership.totalSupply();
+    uint256 tokenId;
+
+    for (uint256 i = 1; i <= totalSupply; i++) {
+      if (membership.ownerOf(i) == alice) {
+        tokenId = i;
+        break;
+      }
+    }
 
     // membership has expired but alice still owns the token
-    assertEq(membership.balanceOf(alice), 0);
+    assertEq(membership.balanceOf(alice), 1);
     assertEq(membership.ownerOf(tokenId), alice);
 
     uint256 expiration = membership.expiresAt(tokenId);
@@ -52,7 +69,16 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
     uint256 protocolBalance = protocol.balance;
     uint256 spaceBalance = address(membership).balance;
 
-    uint256 tokenId = membership.getTokenIdByMembership(alice);
+    uint256 totalSupply = membership.totalSupply();
+    uint256 tokenId;
+
+    for (uint256 i = 1; i <= totalSupply; i++) {
+      if (membership.ownerOf(i) == alice) {
+        tokenId = i;
+        break;
+      }
+    }
+
     uint256 renewalPrice = membership.getMembershipRenewalPrice(tokenId);
     vm.prank(alice);
     vm.deal(alice, renewalPrice);
@@ -74,7 +100,15 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
     external
     givenAliceHasMintedMembership
   {
-    uint256 tokenId = membership.getTokenIdByMembership(alice);
+    uint256 totalSupply = membership.totalSupply();
+    uint256 tokenId;
+
+    for (uint256 i = 1; i <= totalSupply; i++) {
+      if (membership.ownerOf(i) == alice) {
+        tokenId = i;
+        break;
+      }
+    }
 
     vm.prank(alice);
     vm.expectRevert(Membership__NotExpired.selector);

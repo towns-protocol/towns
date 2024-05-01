@@ -93,33 +93,14 @@ interface IMembership is IMembershipBase {
   function renewMembership(uint256 tokenId) external payable;
 
   /**
-   * @notice Cancel a space membership
-   * @param tokenId The token id of the membership
-   */
-  function cancelMembership(uint256 tokenId) external;
-
-  /**
    * @notice Return the expiration date of a membership
    * @param tokenId The token id of the membership
    */
   function expiresAt(uint256 tokenId) external view returns (uint256);
 
-  /**
-   * @notice Return the token id associated to the membership
-   * @param membership The account address that holds the membership
-   */
-  function getTokenIdByMembership(
-    address membership
-  ) external view returns (uint256);
-
   // =============================================================
   //                           Duration
   // =============================================================
-  /**
-   * @notice Set the membership duration
-   * @param newDuration The new membership duration
-   */
-  function setMembershipDuration(uint64 newDuration) external;
 
   /**
    * @notice Get the membership duration

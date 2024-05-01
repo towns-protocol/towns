@@ -141,17 +141,31 @@ func (s *Service) CreateStream(
 	req *connect.Request[CreateStreamRequest],
 ) (*connect.Response[CreateStreamResponse], error) {
 	ctx, log := ctxAndLogForRequest(ctx, req)
-	log.Debug("CreateStream ENTER")
+	log.Info("CreateStream REQUEST", "streamId", req.Msg.StreamId)
 	r, e := s.createStreamImpl(ctx, req)
 	if e != nil {
 		return nil, AsRiverError(
 			e,
 		).Func("CreateStream").
-			Tag("req.Msg.StreamId", req.Msg.StreamId).
+			Tag("streamId", req.Msg.StreamId).
 			LogWarn(log).
 			AsConnectError()
 	}
-	log.Debug("CreateStream LEAVE", "response", r.Msg)
+	var numMiniblocks int
+	var numEvents int
+	var firstMiniblockHash []byte
+	if s := r.Msg.GetStream(); s != nil {
+		numMiniblocks = len(s.GetMiniblocks())
+		numEvents = len(s.GetEvents())
+		if numMiniblocks > 0 {
+			firstMiniblockHash = s.GetMiniblocks()[0].GetHeader().GetHash()
+		}
+	}
+	log.Info("CreateStream SUCCEESS",
+		"streamId", req.Msg.StreamId,
+		"numMiniblocks", numMiniblocks,
+		"numEvents", numEvents,
+		"firstMiniblockHash", firstMiniblockHash)
 	return r, nil
 }
 
