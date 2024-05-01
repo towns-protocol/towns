@@ -3,7 +3,6 @@ import { LoginStatus, useConnectivity } from 'use-towns-client'
 import { usePrivy } from '@privy-io/react-auth'
 import { useLocation } from 'react-router'
 import { useSearchParams } from 'react-router-dom'
-import { PrivyWrapper } from 'privy/PrivyProvider'
 import { useCombinedAuth } from 'privy/useCombinedAuth'
 import { Box, FancyButton } from '@ui'
 import { useErrorToast } from 'hooks/useErrorToast'
@@ -109,12 +108,4 @@ function LoginComponent({
     )
 }
 
-function LoginWithAuth(props: LoginComponentProps) {
-    return (
-        <PrivyWrapper>
-            <LoginComponent {...props} />
-        </PrivyWrapper>
-    )
-}
-
-export default LoginWithAuth
+export default LoginComponent
