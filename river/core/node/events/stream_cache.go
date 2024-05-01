@@ -133,7 +133,7 @@ func (s *streamCacheImpl) tryLoadStreamRecord(ctx context.Context, streamId Stre
 	if !nodes.IsLocal() {
 		return nil, nil, RiverError(
 			Err_INTERNAL,
-			"Stream is not local",
+			"tryLoadStreamRecord: Stream is not local",
 			"streamId", streamId,
 			"nodes", record.Nodes,
 			"localNode", s.params.Wallet,
@@ -142,7 +142,7 @@ func (s *streamCacheImpl) tryLoadStreamRecord(ctx context.Context, streamId Stre
 
 	if record.LastMiniblockNum > 0 {
 		// TODO: reconcile from other nodes.
-		return nil, nil, RiverError(Err_INTERNAL, "Stream is past genesis", "streamId", streamId)
+		return nil, nil, RiverError(Err_INTERNAL, "tryLoadStreamRecord: Stream is past genesis", "streamId", streamId, "record", record)
 	}
 
 	stream := &streamImpl{
@@ -184,7 +184,7 @@ func (s *streamCacheImpl) tryLoadStreamRecord(ctx context.Context, streamId Stre
 	} else {
 		// There was another record in the cache, use it.
 		if entry == nil {
-			return nil, nil, RiverError(Err_INTERNAL, "Cache corruption", "streamId", streamId)
+			return nil, nil, RiverError(Err_INTERNAL, "tryLoadStreamRecord: Cache corruption", "streamId", streamId)
 		}
 		stream = entry.(*streamImpl)
 		view, err := stream.GetView(ctx)

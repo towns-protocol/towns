@@ -320,7 +320,7 @@ func (s *streamImpl) initFromBlockchain(ctx context.Context) error {
 	if !nodes.IsLocal() {
 		return RiverError(
 			Err_INTERNAL,
-			"Stream is not local",
+			"initFromBlockchain: Stream is not local",
 			"streamId", s.streamId,
 			"nodes", record.Nodes,
 			"localNode", s.params.Wallet,
@@ -329,7 +329,7 @@ func (s *streamImpl) initFromBlockchain(ctx context.Context) error {
 	s.nodes = nodes
 
 	if record.LastMiniblockNum > 0 {
-		return RiverError(Err_INTERNAL, "Stream is past genesis", "streamId", s.streamId)
+		return RiverError(Err_INTERNAL, "initFromBlockchain: Stream is past genesis", "streamId", s.streamId, "record", record)
 	}
 
 	err = s.params.Storage.CreateStreamStorage(ctx, s.streamId, mb)
