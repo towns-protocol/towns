@@ -8,6 +8,7 @@ import { useUserLookupContext } from '../hooks/use-user-lookup-context'
 import { LookupUser, LookupUserMap, UserLookupContextType } from '../types/user-lookup'
 import { useAllSpaceUsers } from '../hooks/use-all-space-users'
 import { OfflineUser, useOfflineStore, generateOfflineUserKey } from '../store/use-offline-store'
+import { isDefined } from '@river/sdk'
 
 /**
  * utility provider added to topmost towns context
@@ -218,6 +219,20 @@ const mergeNames = ({ user, spaceId, offlineUserMap }: MergeNamesParams) => {
         } else if (offlineUserMap[user.userId]) {
             user.username = offlineUserMap[user.userId]!.username
             user.displayName = offlineUserMap[user.userId]!.displayName ?? ''
+        }
+    }
+    if (!user.nft && user.memberOf) {
+        const matches = Object.values(user.memberOf)
+            .filter((u) => isDefined(u.nft) && u.nft.contractAddress.length > 0)
+            .sort((a, b) =>
+                !spaceId
+                    ? 0
+                    : Math.sign(
+                          spaceCompare(a.spaceId, spaceId) - spaceCompare(b.spaceId, spaceId),
+                      ),
+            )
+        if (matches.length > 0) {
+            user.nft = matches[0].nft
         }
     }
 }

@@ -30,6 +30,7 @@ export type MemberOf = {
         displayName: string
         avatarUrl?: string
         ensAddress?: string
+        nft?: Nft
     }
 }
 
