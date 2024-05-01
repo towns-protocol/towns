@@ -87,15 +87,7 @@ export const SetUsernameForm = (props: Props) => {
                 <Text size="md" textAlign="center" fontWeight="strong">
                     Welcome to
                 </Text>
-                <Text
-                    size="h2"
-                    textAlign="center"
-                    textTransform="uppercase"
-                    fontWeight="strong"
-                    style={{
-                        fontFamily: 'TitleFont',
-                    }}
-                >
+                <Text size="h2" textAlign="center" fontWeight="strong">
                     {spaceData.name}
                 </Text>
 
