@@ -23,7 +23,9 @@ export const contentEditable = style([
 
 export const root = style({})
 
-export const paragraph = style({})
+export const paragraph = style({
+    overflowWrap: 'anywhere',
+})
 export const edited = style({})
 
 export const link = style([
