@@ -222,19 +222,6 @@ resource "aws_cloudwatch_log_subscription_filter" "river_log_group_filter" {
   destination_arn = module.global_constants.datadug_forwarder_stack_lambda.arn
 }
 
-resource "aws_cloudwatch_log_group" "dd_agent_log_group" {
-  name = "/ecs/dd-agent/${local.node_name}"
-
-  tags = local.dd_agent_tags
-}
-
-resource "aws_cloudwatch_log_subscription_filter" "dd_agent_log_group_filter" {
-  name            = "${local.node_name}-dd-agent-log-group"
-  log_group_name  = aws_cloudwatch_log_group.dd_agent_log_group.name
-  filter_pattern  = ""
-  destination_arn = module.global_constants.datadug_forwarder_stack_lambda.arn
-}
-
 resource "aws_iam_role_policy" "river_node_credentials" {
   name = "${local.node_name}-node-credentials"
   role = aws_iam_role.ecs_task_execution_role.id
@@ -554,15 +541,6 @@ resource "aws_ecs_task_definition" "river-fargate" {
           value = local.dd_required_tags
         },
       ]
-
-      logConfiguration = {
-        logDriver = "awslogs"
-        options = {
-          "awslogs-group"         = aws_cloudwatch_log_group.dd_agent_log_group.name
-          "awslogs-region"        = "us-east-1"
-          "awslogs-stream-prefix" = "dd-agent-${local.node_name}"
-        }
-      }
     }
   ])
 
