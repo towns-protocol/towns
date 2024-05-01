@@ -104,6 +104,13 @@
   },
   "overrides": [
     {
+      "files": ["src/components/NodeVisualization/**/*.tsx"],
+      "rules": {
+        // three react fiber
+        "react/no-unknown-property": ["off", { "ignore": ["JSX"] }]
+      }
+    },
+    {
       "files": ["src/*.mdx"],
       "extends": ["plugin:mdx/recommended"],
       "rules": {
