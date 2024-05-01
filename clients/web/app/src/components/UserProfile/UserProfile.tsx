@@ -35,6 +35,7 @@ import { CHANNEL_INFO_PARAMS } from 'routes'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { useDevice } from 'hooks/useDevice'
+import { VerifiedOnChainAssetTooltip } from '@components/VerifiedOnChainAssetTooltip/VerifiedOnChainAssetTooltip'
 import { UserWalletContent } from './UserWalletContent'
 
 type Props = {
@@ -135,46 +136,45 @@ export const UserProfile = (props: Props) => {
                     )}
                 </FormRender>
 
-                {canEdit && (
-                    <Stack
-                        horizontal
-                        grow
-                        hoverable
-                        gap="sm"
-                        paddingX="sm"
-                        paddingY="xs"
-                        rounded="full"
-                        background="level2"
-                        width="100%"
-                        alignItems="center"
-                        cursor="pointer"
-                        onClick={() => setShowNftProfilePicture(true)}
-                    >
-                        <Icon type="verifiedEnsName" size="square_sm" />
-                        {resolvedNft ? (
-                            <>
-                                <Text size="sm" fontWeight="medium">
-                                    {resolvedNft.title}
-                                </Text>
-                            </>
-                        ) : (
-                            <Text fontWeight="medium" fontSize="sm">
-                                NFT Profile Picture
+                <Stack
+                    horizontal
+                    grow
+                    hoverable
+                    gap="sm"
+                    paddingX="sm"
+                    paddingY="xs"
+                    rounded="full"
+                    background="level2"
+                    width="100%"
+                    alignItems="center"
+                    cursor="pointer"
+                    tooltip={<VerifiedOnChainAssetTooltip userId={userId} />}
+                    onClick={() => setShowNftProfilePicture(true)}
+                >
+                    <Icon type="verifiedEnsName" size="square_sm" />
+                    {resolvedNft ? (
+                        <>
+                            <Text size="sm" fontWeight="medium">
+                                {resolvedNft.title}
                             </Text>
-                        )}
+                        </>
+                    ) : (
+                        <Text fontWeight="medium" fontSize="sm">
+                            NFT Profile Picture
+                        </Text>
+                    )}
 
-                        <Box grow />
+                    <Box grow />
 
-                        {user?.nft && (
-                            <IconButton
-                                icon="close"
-                                size="square_xs"
-                                color="default"
-                                onClick={onClearNft}
-                            />
-                        )}
-                    </Stack>
-                )}
+                    {canEdit && user?.nft && (
+                        <IconButton
+                            icon="close"
+                            size="square_xs"
+                            color="default"
+                            onClick={onClearNft}
+                        />
+                    )}
+                </Stack>
             </Stack>
 
             {canEdit ? (

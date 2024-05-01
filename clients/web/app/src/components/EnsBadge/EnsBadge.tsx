@@ -1,6 +1,7 @@
 import React from 'react'
 import { useResolveEnsName } from 'api/lib/ensNames'
 import { Icon, Stack, Text } from '@ui'
+import { VerifiedOnChainAssetTooltip } from '@components/VerifiedOnChainAssetTooltip/VerifiedOnChainAssetTooltip'
 
 export const EnsBadge = (props: { userId: string; ensAddress: string }) => {
     const { userId, ensAddress } = props
@@ -19,6 +20,7 @@ export const EnsBadge = (props: { userId: string; ensAddress: string }) => {
             alignItems="center"
             gap="xs"
             color={{ hover: 'accent', default: 'default' }}
+            tooltip={<VerifiedOnChainAssetTooltip userId={userId} />}
         >
             <Text size="sm">{resolvedEnsName}</Text>
             <Icon type="verifiedEnsName" size="square_sm" color="gray2" />
