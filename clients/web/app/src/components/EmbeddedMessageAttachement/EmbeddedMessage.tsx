@@ -18,6 +18,7 @@ import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { AvatarWithoutDot } from '@components/Avatar/Avatar'
+import { useMessageLink } from '@components/MessageTimeline/hooks/useFocusItem'
 
 export const EmbeddedMessage = (props: {
     attachment: EmbeddedMessageAttachment
@@ -46,10 +47,6 @@ export const EmbeddedMessage = (props: {
         }
     }, [createLink, navigate, user])
 
-    if (!attachedMessage) {
-        return null
-    }
-
     const channelType =
         !channel?.id || !isDMChannelStreamId(channel?.id) || !isGDMChannelStreamId(channel?.id)
             ? `Direct Message`
@@ -66,14 +63,17 @@ export const EmbeddedMessage = (props: {
             : createLink({ spaceId: attachment.info.spaceId, channelId: attachment.info.channelId })
         : undefined
 
-    const messageLink = messageLinkRoot
-        ? `${messageLinkRoot}#${attachment.info.messageId}`
-        : undefined
-
+    const messageLink = useMessageLink(
+        `${window.location.origin}${messageLinkRoot}#${attachment.info.messageId}`,
+    )
     const channelName =
         isKnownChannel && !!channel?.name ? `#${channel?.name}` : `From a ${channelType}`
 
     const MessagePreview = env.VITE_ENABLE_SLATE_PREVIEW ? PlateRichTextPreview : RichTextPreview
+
+    if (!attachedMessage) {
+        return null
+    }
 
     return (
         <MessageAttachmentsContext.Provider value={{ isMessageAttachementContext: true }}>
@@ -133,19 +133,32 @@ export const EmbeddedMessage = (props: {
                     <Text size={{ desktop: 'sm', mobile: 'xs' }} whiteSpace="nowrap">
                         {formatDate(Number(attachment.info.createdAtEpochMs))}
                     </Text>
-                    {messageLink && (
-                        <>
-                            <Text>&bull;</Text>
-                            <Link to={messageLink}>
-                                <Text
-                                    size={{ desktop: 'sm', mobile: 'xs' }}
-                                    whiteSpace="nowrap"
-                                    color="cta2"
-                                >
-                                    View Message
-                                </Text>
-                            </Link>
-                        </>
+                    <Text>&bull;</Text>
+                    {messageLink.type === 'internal-link' && (
+                        <Link to={messageLink.path}>
+                            <Text
+                                size={{ desktop: 'sm', mobile: 'xs' }}
+                                whiteSpace="nowrap"
+                                color="cta2"
+                            >
+                                View Message
+                            </Text>
+                        </Link>
+                    )}
+                    {messageLink.type === 'same-channel-message' && (
+                        <Box
+                            as="a"
+                            style={{ cursor: 'pointer' }}
+                            onClick={() => messageLink.focusMessage()}
+                        >
+                            <Text
+                                size={{ desktop: 'sm', mobile: 'xs' }}
+                                whiteSpace="nowrap"
+                                color="cta2"
+                            >
+                                View Message
+                            </Text>
+                        </Box>
                     )}
                 </Stack>
             </Box>

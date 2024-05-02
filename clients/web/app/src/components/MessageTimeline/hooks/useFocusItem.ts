@@ -1,13 +1,31 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { FullyReadMarker } from '@river-build/proto'
+import { create } from 'zustand'
+import { useLocation } from 'react-router'
 import { ListItem } from '../types'
 
-export const useFocusMessage = (
+/** Global state for focusing on a message in the message timeline.
+ * @desc Keep in mind that the message will only be focused if you're in the MessageTimeline where the message is.
+ */
+const useFocusMessage = create<{
+    focusItem: { type: 'new' | 'forced'; id: string }
+    actions: {
+        setFocusItem: (id: string, type: 'new' | 'forced') => void
+    }
+}>((set) => ({
+    focusItem: { type: 'new', id: '' },
+    actions: {
+        setFocusItem: (id, type) => set({ focusItem: { id, type } }),
+    },
+}))
+
+export const useFocusItem = (
     listItems: ListItem[],
     highlightId: string | undefined,
     userId: string | undefined,
     fullyreadMarker: FullyReadMarker | undefined,
 ) => {
+    const { focusItem: storeFocus } = useFocusMessage()
     const last = listItems[listItems.length - 1]
 
     const lastKey = last?.key
@@ -25,6 +43,17 @@ export const useFocusMessage = (
                   align: 'end' as const,
               },
     )
+
+    useEffect(() => {
+        const isForced = storeFocus.type === 'forced'
+        setFocusItem({
+            key: storeFocus.id,
+            align: isForced ? 'start' : 'end',
+            sticky: true,
+            force: isForced,
+            margin: isForced ? 50 : 0,
+        })
+    }, [storeFocus])
 
     const force =
         last?.type === 'message' &&
@@ -44,27 +73,67 @@ export const useFocusMessage = (
     useEffect(() => {
         if (fullyreadMarker?.isUnread && !fullyreadMarkerFocusedOnceRef.current) {
             fullyreadMarkerFocusedOnceRef.current = true
-            setFocusItem((f) => ({
+            setFocusItem({
                 key: fullyreadMarker.eventId,
                 align: 'start' as const,
                 sticky: true,
                 force: true,
                 margin: 50,
-            }))
+            })
         }
     }, [fullyreadMarker])
 
     useEffect(() => {
         if (highlightId) {
-            setFocusItem((f) => ({
+            setFocusItem({
                 key: highlightId,
                 align: 'start' as const,
                 sticky: true,
                 force: true,
                 margin: 50,
-            }))
+            })
         }
     }, [highlightId])
 
     return { focusItem }
+}
+
+type MessageLink =
+    | { type: 'same-channel-message'; focusMessage: () => void }
+    | { type: 'internal-link'; path: string }
+    | {
+          type: 'external'
+          link: string
+      }
+    | { type: undefined; link: undefined }
+
+// Suggested usage:
+// If its on the same channel, focus the message
+// If its in a different channel, change the route
+// If its a external link, open it in a new tab
+export const useMessageLink = (href: string | undefined): MessageLink => {
+    const location = useLocation()
+    const { setFocusItem } = useFocusMessage((s) => s.actions)
+
+    return useMemo(() => {
+        if (!href) {
+            return { type: undefined, link: undefined }
+        }
+
+        const url = new URL(href)
+
+        if (url.hostname !== window.location.hostname) {
+            return { type: 'external', link: href }
+        }
+
+        if (url.pathname === location.pathname && url.hash) {
+            const messageId = url.hash.slice(1) // remove the # from the hash
+            return {
+                type: 'same-channel-message',
+                focusMessage: () => setFocusItem(messageId, 'forced'),
+            }
+        }
+
+        return { type: 'internal-link', path: url.pathname + url.hash }
+    }, [href, location.pathname, setFocusItem])
 }

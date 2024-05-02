@@ -15,7 +15,7 @@ import { FullyReadObserver } from '@components/MessageTimeIineItem/items/FullyRe
 import { DateDivider } from '../MessageTimeIineItem/items/DateDivider'
 import { NewDivider } from '../MessageTimeIineItem/items/NewDivider'
 import { MessageTimelineType, useTimelineContext } from './MessageTimelineContext'
-import { useFocusMessage } from './hooks/useFocusItem'
+import { useFocusItem } from './hooks/useFocusItem'
 import { ListItem } from './types'
 import {
     EncryptedMessageRenderEvent,
@@ -415,12 +415,7 @@ export const MessageTimeline = (props: Props) => {
         [listItems],
     )
 
-    const { focusItem } = useFocusMessage(
-        listItems,
-        props.highlightId,
-        userId,
-        initialFullyReadMarker,
-    )
+    const { focusItem } = useFocusItem(listItems, props.highlightId, userId, initialFullyReadMarker)
 
     const { visualViewportScrolled: tabBarHidden } = useVisualViewportContext()
 
