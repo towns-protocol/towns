@@ -484,6 +484,8 @@ const NftProfilePicture = (props: { onHide: () => void; userId: string; currentN
         openPanel(CHANNEL_INFO_PARAMS.WALLETS)
     }, [openPanel])
 
+    const hasNfts = displayableNfts.length > 0 && !isFetching
+
     return (
         <ModalContainer onHide={onHide}>
             <Stack width="100%" maxHeight="400" maxWidth={isTouch ? '100%' : '600'} gap="sm">
@@ -501,9 +503,12 @@ const NftProfilePicture = (props: { onHide: () => void; userId: string; currentN
                         <ButtonSpinner />
                     </Box>
                 )}
-                {!isFetching && displayableNfts.length === 0 && (
+                {!hasNfts && (
                     <Box grow centerContent padding>
-                        <Text fontWeight="medium">No Nfts</Text>
+                        <Text textAlign="center" color="gray2">
+                            No NFTs were found in your wallets.
+                            <br /> Link a new wallet to set a verified NFT as your profile picture.
+                        </Text>
                     </Box>
                 )}
                 <Stack horizontal centerContent scroll flexWrap="wrap" width="100%">
@@ -540,22 +545,30 @@ const NftProfilePicture = (props: { onHide: () => void; userId: string; currentN
                 </Stack>
             </Stack>
             <Stack gap shrink={false}>
+                {hasNfts && (
+                    <>
+                        <Button
+                            tone={saveButtonEnabled ? 'cta1' : 'level2'}
+                            width="100%"
+                            disabled={!saveButtonEnabled}
+                            onClick={saveNft}
+                        >
+                            {pendingSaveNft ? <ButtonSpinner /> : 'Set as Profile Picture'}
+                        </Button>
+                        <Stack horizontal gap="sm">
+                            <Divider />
+                            <Text shrink={false} color="gray2" fontSize="sm">
+                                Add more verified NFT profile pictures:
+                            </Text>
+                            <Divider />
+                        </Stack>
+                    </>
+                )}
                 <Button
-                    tone={saveButtonEnabled ? 'cta1' : 'level2'}
+                    tone={hasNfts ? 'level2' : 'cta1'}
                     width="100%"
-                    disabled={!saveButtonEnabled}
-                    onClick={saveNft}
+                    onClick={onViewLinkedWalletsClick}
                 >
-                    {pendingSaveNft ? <ButtonSpinner /> : 'Set as Profile Picture'}
-                </Button>
-                <Stack horizontal gap="sm">
-                    <Divider />
-                    <Text shrink={false} color="gray2" fontSize="sm">
-                        Add more verified NFT profile pictures:
-                    </Text>
-                    <Divider />
-                </Stack>
-                <Button tone="level2" width="100%" onClick={onViewLinkedWalletsClick}>
                     Link a Wallet
                 </Button>
             </Stack>

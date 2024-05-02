@@ -381,6 +381,8 @@ const EnsDisplayNameModal = (props: { currentEnsName?: string; onHide: () => voi
         openPanel(CHANNEL_INFO_PARAMS.WALLETS)
     }, [openPanel])
 
+    const hasEnsName = ensNames.length > 0 && !isFetching
+
     return (
         <ModalContainer minWidth="350" onHide={onHide}>
             <Box position="relative">
@@ -392,9 +394,12 @@ const EnsDisplayNameModal = (props: { currentEnsName?: string; onHide: () => voi
                 </Text>
 
                 {ensNames.length === 0 && isFetching && <ButtonSpinner />}
-                {ensNames.length === 0 && (
+                {!hasEnsName && (
                     <Box grow centerContent padding>
-                        <Text fontWeight="medium">No ENS names found</Text>
+                        <Text color="gray2" textAlign="center">
+                            No ENS names were found in your wallets. <br />
+                            Link a new name to set a verified ENS as your display name:
+                        </Text>
                     </Box>
                 )}
                 {ensNames.length > 0 && (
@@ -417,24 +422,33 @@ const EnsDisplayNameModal = (props: { currentEnsName?: string; onHide: () => voi
                     </Stack>
                 )}
 
-                {ensNames.length > 0 && (
-                    <Button
-                        tone={saveButtonEnabled ? 'cta1' : 'level2'}
-                        width="100%"
-                        disabled={!saveButtonEnabled}
-                        onClick={onSave}
-                    >
-                        {saveInProgress ? <ButtonSpinner /> : 'Set ENS'}
-                    </Button>
+                {hasEnsName && (
+                    <>
+                        <Button
+                            tone={saveButtonEnabled ? 'cta1' : 'level2'}
+                            width="100%"
+                            disabled={!saveButtonEnabled}
+                            onClick={onSave}
+                        >
+                            {saveInProgress ? <ButtonSpinner /> : 'Set ENS'}
+                        </Button>
+                        <Stack horizontal gap="sm" alignItems="center" width="100%">
+                            <Divider />
+                            <Text shrink={false} color="gray2" fontSize="sm">
+                                {ensNames.length > 0
+                                    ? 'Or add a verified ENS'
+                                    : 'Add a verified ENS'}
+                            </Text>
+                            <Divider />
+                        </Stack>
+                    </>
                 )}
-                <Stack horizontal gap="sm" alignItems="center" width="100%">
-                    <Divider />
-                    <Text shrink={false} color="gray2" fontSize="sm">
-                        {ensNames.length > 0 ? 'Or add a verified ENS' : 'Add a verified ENS'}
-                    </Text>
-                    <Divider />
-                </Stack>
-                <Button tone="level2" width="100%" onClick={onViewLinkedWalletsClick}>
+
+                <Button
+                    tone={hasEnsName ? 'level2' : 'cta1'}
+                    width="100%"
+                    onClick={onViewLinkedWalletsClick}
+                >
                     View Linked Wallets
                 </Button>
             </Stack>
