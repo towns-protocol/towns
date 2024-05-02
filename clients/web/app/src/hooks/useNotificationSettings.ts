@@ -37,6 +37,7 @@ export function useNotificationSettings(
         dmChannels: tcDmChannels,
         rooms: tcRooms,
         spaceHierarchies: tcSpaceHierarchies,
+        blockedUserIds: tcBlockedUserIds,
     } = useTownsContext()
     const userId = useMyProfile()?.userId
     const { data, isLoading } = useGetNotificationSettings()
@@ -44,6 +45,7 @@ export function useNotificationSettings(
     const [rooms, setRooms] = useState(tcRooms)
     const [dmChannels, setDmChannels] = useState(tcDmChannels)
     const [spaceHierarchies, setSpaceHierarchies] = useState(tcSpaceHierarchies)
+    const [blockedUserIds, setBlockedUserIds] = useState(tcBlockedUserIds)
 
     const debounceTimeout = useRef<NodeJS.Timeout | undefined>(undefined)
     const onSettingsUpdatedTimeout = useRef<NodeJS.Timeout | undefined>(undefined)
@@ -71,6 +73,7 @@ export function useNotificationSettings(
         setRooms(tcRooms)
         setDmChannels(tcDmChannels)
         setSpaceHierarchies(tcSpaceHierarchies)
+        setBlockedUserIds(tcBlockedUserIds)
     }
 
     useDebouncedEffect({
@@ -91,6 +94,21 @@ export function useNotificationSettings(
         currentValue: spaceHierarchies,
         onChange: onTownsContextDataChange,
     })
+    useDebouncedEffect({
+        compareFn: isEqual,
+        newValue: tcBlockedUserIds,
+        currentValue: blockedUserIds,
+        onChange: onTownsContextDataChange,
+    })
+
+    useEffect(() => {
+        if (isLoading || !isEqual(tcBlockedUserIds, blockedUserIds)) {
+            return
+        }
+        if (!isEqual(blockedUserIds, new Set<string>(data?.blockedUsers))) {
+            setSettingsUpdated(true)
+        }
+    }, [blockedUserIds, tcBlockedUserIds, data?.blockedUsers, isLoading])
 
     const savedSpaceSettings = useMemo(() => {
         let spaceSettings: SpaceSettings | undefined = undefined
@@ -239,8 +257,7 @@ export function useNotificationSettings(
             }
 
             onSettingsUpdatedTimeout.current = setTimeout(() => {
-                console.log('useNotificationSettings', 'onSettingsUpdated', onSettingsUpdated)
-                onSettingsUpdated({
+                const userSettings: SaveUserSettingsSchema['userSettings'] = {
                     userId,
                     directMessage: data?.directMessage ?? true,
                     mention: data?.mention ?? true,
@@ -249,7 +266,10 @@ export function useNotificationSettings(
                     channelSettings: updatedChannelSettings
                         ? Object.values(updatedChannelSettings)
                         : [],
-                })
+                    blockedUsers: Array.from(blockedUserIds),
+                }
+                console.log('useNotificationSettings', 'userSettings', userSettings)
+                onSettingsUpdated(userSettings)
                 setSettingsUpdated(false)
             }, SECOND_MS)
 
@@ -260,6 +280,7 @@ export function useNotificationSettings(
             }
         }
     }, [
+        blockedUserIds,
         data,
         onSettingsUpdated,
         settingsUpdated,

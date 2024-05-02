@@ -25,6 +25,7 @@ export const saveUserSettingsSchema = z.object({
         replyTo: z.boolean(),
         mention: z.boolean(),
         directMessage: z.boolean(),
+        blockedUsers: z.array(z.string()).default([]),
     }),
 })
 
@@ -51,6 +52,7 @@ export const patchUserSettingsSchema = z.object({
         replyTo: z.boolean().optional(),
         mention: z.boolean().optional(),
         directMessage: z.boolean().optional(),
+        blockedUsers: z.array(z.string()).optional(),
     }),
 })
 

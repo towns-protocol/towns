@@ -24,6 +24,7 @@ export async function saveNotificationSettingsHandler(req: Request, res: Respons
                 DirectMessage: userSettings.directMessage,
                 Mention: userSettings.mention,
                 ReplyTo: userSettings.replyTo,
+                BlockedUsers: userSettings.blockedUsers,
             }
 
             await upsertUserSettings(tx, userSettingsData)
@@ -83,6 +84,7 @@ export async function getNotificationSettingsHandler(req: Request, res: Response
                 channelId: c.ChannelId,
                 channelMute: c.ChannelMute,
             })),
+            blockedUsers: userSettings.BlockedUsers,
         })
     } catch (e) {
         logger.error('getSettings error', e)
@@ -106,6 +108,7 @@ export async function patchNotificationSettingsHandler(req: Request, res: Respon
         DirectMessage: userSettings.directMessage ?? dbUserSettings.DirectMessage,
         ReplyTo: userSettings.replyTo ?? dbUserSettings.ReplyTo,
         Mention: userSettings.mention ?? dbUserSettings.Mention,
+        BlockedUsers: userSettings.blockedUsers ?? dbUserSettings.BlockedUsers,
     }
 
     try {

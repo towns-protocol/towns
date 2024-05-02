@@ -36,6 +36,7 @@ const zSettingsData: z.ZodType<UserSettings> = z.object({
     replyTo: z.boolean(),
     mention: z.boolean(),
     directMessage: z.boolean(),
+    blockedUsers: z.array(z.string()),
 })
 
 async function getSettings({ userId }: Partial<GetUserSettingsSchema>): Promise<UserSettings> {
@@ -51,6 +52,7 @@ async function getSettings({ userId }: Partial<GetUserSettingsSchema>): Promise<
         replyTo: true,
         mention: true,
         directMessage: true,
+        blockedUsers: [],
     }
     try {
         console.log('[getSettings] fetching settings', userId)

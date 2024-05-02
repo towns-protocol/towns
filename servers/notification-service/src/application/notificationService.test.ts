@@ -16,6 +16,7 @@ jest.mock('./prisma', () => ({
     database: {
         userSettings: {
             findMany: jest.fn(),
+            findUnique: jest.fn(),
         },
         userSettingsChannel: {
             findMany: jest.fn(),

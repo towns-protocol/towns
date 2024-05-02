@@ -32,6 +32,7 @@ model UserSettings {
   DirectMessage       Boolean               @default(true)
   UserSettingsChannel UserSettingsChannel[]
   UserSettingsSpace   UserSettingsSpace[]
+  BlockedUsers        String[]              @default([])
 }
 
 model UserSettingsChannel {

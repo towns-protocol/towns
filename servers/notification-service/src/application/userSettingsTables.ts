@@ -57,4 +57,17 @@ export class UserSettingsTables {
             },
         })
     }
+
+    public static async getBlockedUsersBy(userId: string): Promise<string[]> {
+        const userSettings = await database.userSettings.findUnique({
+            where: {
+                UserId: userId,
+            },
+            select: {
+                BlockedUsers: true,
+            },
+        })
+
+        return userSettings?.BlockedUsers ?? []
+    }
 }

@@ -136,6 +136,10 @@ export class NotificationService {
                 reactionUsersTagged.has(userId) ||
                 attachmentUsersTagged.some((user) => user.UserId === userId)
 
+            const isSenderUserBlocked = (
+                await UserSettingsTables.getBlockedUsersBy(userId)
+            ).includes(notificationData.sender)
+
             const isUserMutedForMention =
                 metionUsersTagged.has(userId) && mutedMentionUsers.has(userId)
             const isUserMutedForReplyTo =
@@ -148,7 +152,8 @@ export class NotificationService {
                 !isUserTagged ||
                 isUserMutedForMention ||
                 isUserMutedForReplyTo ||
-                isUserMutedForDM
+                isUserMutedForDM ||
+                isSenderUserBlocked
             ) {
                 continue
             }
