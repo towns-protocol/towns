@@ -8,6 +8,7 @@ import {
     SaveUserSettingsSchema,
 } from '@notification-service/types'
 import { useMemo } from 'react'
+import { debug } from 'debug'
 import { env } from 'utils'
 import { axiosClient } from 'api/apiClient'
 import { MINUTE_MS } from 'data/constants'
@@ -16,6 +17,10 @@ const PUSH_WORKER_URL = env.VITE_WEB_PUSH_WORKER_URL
 export const notificationSettingsQueryKeys = {
     getSettings: (userId: string | undefined) => ['getSettings', userId],
 }
+
+// add localStoreage.debug=app:notification-settings to enable logging
+const log = debug('app:notification-settings')
+log.enabled = localStorage.getItem('debug')?.includes('app:notification-settings') ?? false
 
 type UserSettings = SaveUserSettingsSchema['userSettings']
 const zSettingsData: z.ZodType<UserSettings> = z.object({
@@ -55,7 +60,7 @@ async function getSettings({ userId }: Partial<GetUserSettingsSchema>): Promise<
         blockedUsers: [],
     }
     try {
-        console.log('[getSettings] fetching settings', userId)
+        log('[getSettings] fetching settings', userId)
         const response = await axiosClient.post(url, {
             userId,
         })
@@ -69,11 +74,11 @@ async function getSettings({ userId }: Partial<GetUserSettingsSchema>): Promise<
         }
 
         userSettings = parseResult.data
-        console.log('[getSettings] settings fetched', userSettings)
+        log('[getSettings] settings fetched', userSettings)
     } catch (error) {
         console.error('[getSettings] error', error)
         // if the user's settings is not found, create a new one
-        console.log('[getSettings] creating new settings')
+        log('[getSettings] creating new settings')
         await saveUserNotificationSettings({ userSettings })
     }
     return userSettings
@@ -139,7 +144,7 @@ export async function saveUserNotificationSettings({ userSettings }: SaveUserSet
     const response = await axiosClient.put(url, {
         userSettings,
     })
-    console.log('[saveUserNotificationSettings] settings saved')
+    log('[saveUserNotificationSettings] settings saved')
     return response.data
 }
 
@@ -148,7 +153,7 @@ export async function patchNotificationSettings({ userSettings }: PatchUserSetti
     const response = await axiosClient.patch(url, {
         userSettings,
     })
-    console.log('[patchNotificationSettings] settings updated')
+    log('[patchNotificationSettings] settings updated')
     return response.data
 }
 
@@ -251,7 +256,7 @@ export function useSetMuteSettingForChannelOrSpace() {
                 }
             }
 
-            console.log('[useSetNotificationSettings]', 'saving to cloud', notificationSettings)
+            log('[useSetNotificationSettings]', 'saving to cloud', notificationSettings)
             return saveUserNotificationSettings({ userSettings: notificationSettings })
         },
         onSuccess: async () => {

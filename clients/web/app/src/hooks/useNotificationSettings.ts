@@ -9,6 +9,7 @@ import {
     isSpaceStreamId,
 } from '@river/sdk'
 import { isEqual } from 'lodash'
+import { debug } from 'debug'
 import { useGetNotificationSettings } from 'api/lib/notificationSettings'
 import { SECOND_MS } from 'data/constants'
 
@@ -29,6 +30,10 @@ interface DebouncedEffectProps {
     currentValue: unknown
     onChange: (value: unknown) => void
 }
+
+// add localStoreage.debug=app:notification-settings to enable logging
+const log = debug('app:notification-settings')
+log.enabled = localStorage.getItem('debug')?.includes('app:notification-settings') ?? false
 
 export function useNotificationSettings(
     onSettingsUpdated?: (settings: SaveUserSettingsSchema['userSettings']) => void,
@@ -268,7 +273,7 @@ export function useNotificationSettings(
                         : [],
                     blockedUsers: Array.from(blockedUserIds),
                 }
-                console.log('useNotificationSettings', 'userSettings', userSettings)
+                log('useNotificationSettings', 'userSettings', userSettings)
                 onSettingsUpdated(userSettings)
                 setSettingsUpdated(false)
             }, SECOND_MS)
