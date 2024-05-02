@@ -196,10 +196,7 @@ const UnfurledLinkAttachmentContainer = (props: UnfurledLinkAttachment) => {
                     <Text
                         size="md"
                         style={{
-                            display: '-webkit-box',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden',
+                            overflowWrap: 'break-word',
                         }}
                     >
                         {props.title}
