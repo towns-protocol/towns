@@ -7,6 +7,7 @@ import (
 	"core/xchain/config"
 	"core/xchain/contracts"
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -19,17 +20,17 @@ func evaluateCheckOperation(
 	ctx context.Context,
 	cfg *config.Config,
 	op *CheckOperation,
-	callerAddress *common.Address,
+	linkedWallets []common.Address,
 ) (bool, error) {
 	switch op.CheckType {
 	case CheckOperationType(MOCK):
 		return evaluateMockOperation(ctx, op)
 	case CheckOperationType(ISENTITLED):
-		return evaluateIsEntitledOperation(ctx, cfg, op, callerAddress)
+		return evaluateIsEntitledOperation(ctx, cfg, op, linkedWallets)
 	case CheckOperationType(ERC20):
-		return evaluateErc20Operation(ctx, cfg, op, callerAddress)
+		return evaluateErc20Operation(ctx, cfg, op, linkedWallets)
 	case CheckOperationType(ERC721):
-		return evaluateErc721Operation(ctx, cfg, op, callerAddress)
+		return evaluateErc721Operation(ctx, cfg, op, linkedWallets)
 	case CheckOperationType(ERC1155):
 		return evaluateErc1155Operation(ctx, op)
 	case CheckOperationType(NONE):
@@ -63,7 +64,7 @@ func evaluateIsEntitledOperation(
 	ctx context.Context,
 	cfg *config.Config,
 	op *CheckOperation,
-	callerAddress *common.Address,
+	linkedWallets []common.Address,
 ) (bool, error) {
 	log := dlog.FromCtx(ctx).With("function", "evaluateErc20Operation")
 	url, ok := cfg.Chains[op.ChainID.Uint64()]
@@ -90,31 +91,36 @@ func evaluateIsEntitledOperation(
 		)
 		return false, err
 	}
-	// Check if the caller is entitled
-	isEntitled, err := customEntitlementChecker.IsEntitled(
-		&bind.CallOpts{Context: ctx},
-		[]common.Address{*callerAddress},
-	)
-	if err != nil {
-		log.Error("Failed to check if caller is entitled",
-			"error", err,
-			"contractAddress", op.ContractAddress,
-			"callerAddress", callerAddress,
-			"channelId", op.ChannelId,
-			"permission", op.Permission,
-			"chainId", op.ChainID,
-			"chainUrl", url,
+	for _, wallet := range linkedWallets {
+		// Check if the caller is entitled
+		isEntitled, err := customEntitlementChecker.IsEntitled(
+			&bind.CallOpts{Context: ctx},
+			[]common.Address{wallet},
 		)
-		return false, err
+		if err != nil {
+			log.Error("Failed to check if caller is entitled",
+				"error", err,
+				"contractAddress", op.ContractAddress,
+				"wallet", wallet,
+				"channelId", op.ChannelId,
+				"permission", op.Permission,
+				"chainId", op.ChainID,
+				"chainUrl", url,
+			)
+			return false, err
+		}
+		if isEntitled {
+			return true, nil
+		}
 	}
-	return isEntitled, nil
+	return false, nil
 }
 
 func evaluateErc20Operation(
 	ctx context.Context,
 	cfg *config.Config,
 	op *CheckOperation,
-	callerAddress *common.Address,
+	linkedWallets []common.Address,
 ) (bool, error) {
 	log := dlog.FromCtx(ctx).With("function", "evaluateErc20Operation")
 	url, ok := cfg.Chains[op.ChainID.Uint64()]
@@ -139,35 +145,41 @@ func evaluateErc20Operation(
 		return false, err
 	}
 
-	// Balance is returned as a representation of the balance according to the token's decimals,
-	// which stores the balance in exponentiated form.
-	// Default decimals for most tokens is 18, meaning the balance is stored as balance * 10^18.
-	balance, err := token.BalanceOf(&bind.CallOpts{Context: ctx}, *callerAddress)
-	if err != nil {
-		log.Error("Failed to retrieve token balance", "error", err)
-		return false, err
-	}
+	total := big.NewInt(0)
 
-	log.Debug("Retrieved token balance",
-		"balance", balance.String(),
-		"threshold", op.Threshold.String(),
-		"chainID", op.ChainID.String(),
-		"contractAddress", op.ContractAddress.String(),
-	)
+	for _, wallet := range linkedWallets {
+		// Balance is returned as a representation of the balance according to the token's decimals,
+		// which stores the balance in exponentiated form.
+		// Default decimals for most tokens is 18, meaning the balance is stored as balance * 10^18.
+		balance, err := token.BalanceOf(&bind.CallOpts{Context: ctx}, wallet)
+		if err != nil {
+			log.Error("Failed to retrieve token balance", "error", err)
+			return false, err
+		}
+		total.Add(total, balance)
 
-	// Balance is a *big.Int
-	if op.Threshold.Sign() > 0 && balance.Sign() > 0 && balance.Cmp(op.Threshold) >= 0 {
-		return true, nil
-	} else {
-		return false, nil
+		log.Debug("Retrieved ERC20 token balance",
+			"balance", balance.String(),
+			"total", total.String(),
+			"threshold", op.Threshold.String(),
+			"chainID", op.ChainID.String(),
+			"erc20ContractAddress", op.ContractAddress.String(),
+		)
+
+		// Balance is a *big.Int
+		// Iteratively check if the total balance of evaluated wallets is greater than or equal to the threshold
+		if op.Threshold.Sign() > 0 && total.Sign() > 0 && total.Cmp(op.Threshold) >= 0 {
+			return true, nil
+		}
 	}
+	return false, nil
 }
 
 func evaluateErc721Operation(
 	ctx context.Context,
 	cfg *config.Config,
 	op *CheckOperation,
-	callerAddress *common.Address,
+	linkedWallets []common.Address,
 ) (bool, error) {
 	log := dlog.FromCtx(ctx).With("function", "evaluateErc721Operation")
 
@@ -176,7 +188,6 @@ func evaluateErc721Operation(
 		log.Error("Chain ID not found", "chainID", op.ChainID)
 		return false, fmt.Errorf("evaluateErc20Operation: Chain ID %v not found", op.ChainID)
 	}
-	log.Info("Evalutating operation with chain RPC URL", "url", url)
 	client, err := ethclient.Dial(url)
 	if err != nil {
 		log.Error("Failed to dial", "err", err)
@@ -191,22 +202,33 @@ func evaluateErc721Operation(
 		return false, err
 	}
 
-	// Check if the caller owns the NFT
-	log.Info(
-		"Checking if caller owns NFT",
-		"callerAddress", callerAddress,
-		"contractAddress", op.ContractAddress,
-	)
-	tokenBalance, err := nft.BalanceOf(&bind.CallOpts{Context: ctx}, *callerAddress)
-	if err != nil {
-		log.Error("Failed to retrieve NFT balance",
-			"error", err,
-			"contractAddress", op.ContractAddress,
-		)
-		return false, err
+	total := big.NewInt(0)
+	for _, wallet := range linkedWallets {
+		tokenBalance, err := nft.BalanceOf(&bind.CallOpts{Context: ctx}, wallet)
+		if err != nil {
+			log.Error("Failed to retrieve NFT balance",
+				"error", err,
+				"contractAddress", op.ContractAddress,
+				"wallet", wallet,
+			)
+			return false, err
+		}
+
+		// Accumulate the total balance across evaluated wallets
+		total.Add(total, tokenBalance)
+		// log.Info("Retrieved ERC721 token balance for wallet",
+		// 	"balance", tokenBalance.String(),
+		// 	"total", total.String(),
+		// 	"threshold", op.Threshold.String(),
+		// 	"wallet", wallet,
+		// )
+
+		// Iteratively check if the total balance of evaluated wallets is greater than or equal to the threshold
+		if total.Cmp(op.Threshold) >= 0 {
+			return true, nil
+		}
 	}
-	// Require the caller to own at least one NFT in this contract.
-	return tokenBalance.Cmp(op.Threshold) >= 0, nil
+	return false, err
 }
 
 func evaluateErc1155Operation(ctx context.Context,

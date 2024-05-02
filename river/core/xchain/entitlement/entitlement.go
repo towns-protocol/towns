@@ -11,22 +11,19 @@ import (
 	er "core/xchain/contracts"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/river-build/river/core/node/dlog"
 )
 
 func EvaluateRuleData(
 	ctx context.Context,
 	cfg *config.Config,
-	callerAddress *common.Address,
+	linkedWallets []common.Address,
 	ruleData *er.IRuleData,
 ) (bool, error) {
 	opTree, err := getOperationTree(ruleData)
-	log := dlog.FromCtx(ctx)
-	log.Info("built operation tree", "opTree", opTree)
 	if err != nil {
 		return false, err
 	}
-	return evaluateOp(ctx, cfg, opTree, callerAddress)
+	return evaluateOp(ctx, cfg, opTree, linkedWallets)
 }
 
 // OperationType Enum
@@ -223,7 +220,7 @@ func evaluateAndOperation(
 	ctx context.Context,
 	cfg *config.Config,
 	op *AndOperation,
-	callerAddress *common.Address,
+	linkedWallets []common.Address,
 ) (bool, error) {
 	if op.LeftOperation == nil || op.RightOperation == nil {
 		return false, fmt.Errorf("operation is nil")
@@ -239,7 +236,7 @@ func evaluateAndOperation(
 	defer leftCancel()
 	defer rightCancel()
 	go func() {
-		leftResult, leftErr = evaluateOp(leftCtx, cfg, op.LeftOperation, callerAddress)
+		leftResult, leftErr = evaluateOp(leftCtx, cfg, op.LeftOperation, linkedWallets)
 		if !leftResult || leftErr != nil {
 			// cancel the other goroutine
 			// if the left result is false or there is an error
@@ -249,7 +246,7 @@ func evaluateAndOperation(
 	}()
 
 	go func() {
-		rightResult, rightErr = evaluateOp(rightCtx, cfg, op.RightOperation, callerAddress)
+		rightResult, rightErr = evaluateOp(rightCtx, cfg, op.RightOperation, linkedWallets)
 		if !rightResult || rightErr != nil {
 			// cancel the other goroutine
 			// if the right result is false or there is an error
@@ -266,7 +263,7 @@ func evaluateOrOperation(
 	ctx context.Context,
 	cfg *config.Config,
 	op *OrOperation,
-	callerAddress *common.Address,
+	linkedWallets []common.Address,
 ) (bool, error) {
 	if op.LeftOperation == nil || op.RightOperation == nil {
 		return false, fmt.Errorf("operation is nil")
@@ -282,7 +279,7 @@ func evaluateOrOperation(
 	defer leftCancel()
 	defer rightCancel()
 	go func() {
-		leftResult, leftErr = evaluateOp(leftCtx, cfg, op.LeftOperation, callerAddress)
+		leftResult, leftErr = evaluateOp(leftCtx, cfg, op.LeftOperation, linkedWallets)
 		if leftResult || leftErr != nil {
 			// cancel the other goroutine
 			// if the left result is true or there is an error
@@ -292,7 +289,7 @@ func evaluateOrOperation(
 	}()
 
 	go func() {
-		rightResult, rightErr = evaluateOp(rightCtx, cfg, op.RightOperation, callerAddress)
+		rightResult, rightErr = evaluateOp(rightCtx, cfg, op.RightOperation, linkedWallets)
 		if rightResult || rightErr != nil {
 			// cancel the other goroutine
 			// if the right result is true or there is an error
@@ -326,7 +323,7 @@ func evaluateOp(
 	ctx context.Context,
 	cfg *config.Config,
 	op Operation,
-	callerAddress *common.Address,
+	linkedWallets []common.Address,
 ) (bool, error) {
 	if op == nil {
 		return false, fmt.Errorf("operation is nil")
@@ -335,17 +332,17 @@ func evaluateOp(
 	switch op.GetOpType() {
 	case CHECK:
 		checkOp := (op).(*CheckOperation)
-		return evaluateCheckOperation(ctx, cfg, checkOp, callerAddress)
+		return evaluateCheckOperation(ctx, cfg, checkOp, linkedWallets)
 	case LOGICAL:
 		logicalOp := (op).(LogicalOperation)
 
 		switch logicalOp.GetLogicalType() {
 		case AND:
 			andOp := (op).(*AndOperation)
-			return evaluateAndOperation(ctx, cfg, andOp, callerAddress)
+			return evaluateAndOperation(ctx, cfg, andOp, linkedWallets)
 		case OR:
 			orOp := (op).(*OrOperation)
-			return evaluateOrOperation(ctx, cfg, orOp, callerAddress)
+			return evaluateOrOperation(ctx, cfg, orOp, linkedWallets)
 		case LogNONE:
 			fallthrough
 		default:

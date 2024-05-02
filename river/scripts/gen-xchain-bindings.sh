@@ -64,11 +64,13 @@ generate_go IEntitlementChecker i_entitlement_checker
 generate_go IEntitlementGated i_entitlement_gated
 generate_go IEntitlement i_entitlement
 generate_go ICustomEntitlement i_custom_entitlement
+generate_go IWalletLink i_wallet_link
 
 # Contracts
 generate_go MockCustomEntitlement mock_custom_entitlement
 generate_go MockEntitlementGated mock_entitlement_gated
 generate_go EntitlementChecker entitlement_checker
+generate_go WalletLink wallet_link
 
 # Unversion contracts
 generate_test_binding MockERC20 mock_erc20
@@ -77,3 +79,4 @@ generate_test_binding MockERC721 mock_erc721
 mkdir -p bin
 go build -o bin/gen-bindings-remove-struct scripts/gen-bindings-remove-struct.go
 ./bin/gen-bindings-remove-struct core/xchain/contracts/${VERSION}/mock_entitlement_gated.go IRuleEntitlementCheckOperation,IRuleEntitlementLogicalOperation,IRuleEntitlementOperation,IRuleEntitlementRuleData
+./bin/gen-bindings-remove-struct core/xchain/contracts/${VERSION}/wallet_link.go IWalletLinkBaseLinkedWallet

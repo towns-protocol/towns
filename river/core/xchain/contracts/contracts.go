@@ -17,6 +17,121 @@ import (
 	"github.com/river-build/river/core/node/dlog"
 )
 
+type IWalletLinkBaseLinkedWallet struct {
+	Addr      common.Address
+	Signature []byte
+}
+
+func (w IWalletLinkBaseLinkedWallet) v3() v3.IWalletLinkBaseLinkedWallet {
+	return v3.IWalletLinkBaseLinkedWallet{
+		Addr:      w.Addr,
+		Signature: w.Signature,
+	}
+}
+
+func (w IWalletLinkBaseLinkedWallet) dev() dev.IWalletLinkBaseLinkedWallet {
+	return dev.IWalletLinkBaseLinkedWallet{
+		Addr:      w.Addr,
+		Signature: w.Signature,
+	}
+}
+
+type WalletLink struct {
+	v3WalletLink  *v3.WalletLink
+	devWalletLink *dev.WalletLink
+}
+
+func DeployWalletLink(auth *bind.TransactOpts, backend bind.ContractBackend, version config.ContractVersion) (
+	common.Address,
+	*types.Transaction,
+	*WalletLink,
+	error,
+) {
+	if version == "v3" {
+		address, tx, contract, err := v3.DeployWalletLink(auth, backend)
+		return address, tx, &WalletLink{v3WalletLink: contract}, err
+	} else {
+		address, tx, contract, err := dev.DeployWalletLink(auth, backend)
+		return address, tx, &WalletLink{devWalletLink: contract}, err
+	}
+}
+
+type IWalletLink struct {
+	v3IWalletLink  *v3.IWalletLink
+	devIWalletLink *dev.IWalletLink
+}
+
+func NewIWalletLink(address common.Address, backend bind.ContractBackend, version config.ContractVersion) (*IWalletLink, error) {
+	res := &IWalletLink{}
+	if version == "v3" {
+		contract, err := v3.NewIWalletLink(address, backend)
+		res.v3IWalletLink = contract
+		return res, err
+	} else {
+		contract, err := dev.NewIWalletLink(address, backend)
+		res.devIWalletLink = contract
+		return res, err
+	}
+}
+
+func (w *IWalletLink) CheckIfLinked(opts *bind.CallOpts, rootKey common.Address, linkedWallet common.Address) (bool, error) {
+	if w.v3IWalletLink != nil {
+		return w.v3IWalletLink.CheckIfLinked(opts, rootKey, linkedWallet)
+	}
+	return w.devIWalletLink.CheckIfLinked(opts, rootKey, linkedWallet)
+}
+
+func (w *IWalletLink) GetMetadata() *bind.MetaData {
+	if w.v3IWalletLink != nil {
+		return v3.IWalletLinkMetaData
+	}
+	return dev.IWalletLinkMetaData
+}
+
+func (w *IWalletLink) GetAbi() *abi.ABI {
+	md := w.GetMetadata()
+	abi, err := md.GetAbi()
+	if err != nil {
+		panic("Failed to parse WalletLink ABI")
+	}
+	return abi
+}
+
+func (w *IWalletLink) GetRootKeyForWallet(opts *bind.CallOpts, wallet common.Address) (common.Address, error) {
+	if w.v3IWalletLink != nil {
+		return w.v3IWalletLink.GetRootKeyForWallet(opts, wallet)
+	}
+	return w.devIWalletLink.GetRootKeyForWallet(opts, wallet)
+}
+
+func (w *IWalletLink) GetWalletsByRootKey(opts *bind.CallOpts, rootKey common.Address) ([]common.Address, error) {
+	if w.v3IWalletLink != nil {
+		return w.v3IWalletLink.GetWalletsByRootKey(opts, rootKey)
+	}
+	return w.devIWalletLink.GetWalletsByRootKey(opts, rootKey)
+}
+
+func (w *IWalletLink) GetLatestNonceForRootKey(opts *bind.CallOpts, rootKey common.Address) (*big.Int, error) {
+	if w.v3IWalletLink != nil {
+		return w.v3IWalletLink.GetLatestNonceForRootKey(opts, rootKey)
+	}
+	return w.devIWalletLink.GetLatestNonceForRootKey(opts, rootKey)
+}
+
+func (w *IWalletLink) CheckIfLinkedWallet(opts *bind.CallOpts, rootKey common.Address, linkedWallet common.Address) (bool, error) {
+	if w.v3IWalletLink != nil {
+		return w.v3IWalletLink.CheckIfLinked(opts, rootKey, linkedWallet)
+	}
+	return w.devIWalletLink.CheckIfLinked(opts, rootKey, linkedWallet)
+}
+
+func (w *IWalletLink) LinkWalletToRootKey(opts *bind.TransactOpts, wallet IWalletLinkBaseLinkedWallet, rootWallet IWalletLinkBaseLinkedWallet, nonce *big.Int) (*types.Transaction, error) {
+	if w.v3IWalletLink != nil {
+		return w.v3IWalletLink.LinkWalletToRootKey(opts, wallet.v3(), rootWallet.v3(), nonce)
+	}
+	return w.devIWalletLink.LinkWalletToRootKey(opts, wallet.dev(), rootWallet.dev(), nonce)
+}
+
 type EntitlementChecker struct {
 	v3EntitlementChecker  *v3.EntitlementChecker
 	devEntitlementChecker *dev.EntitlementChecker

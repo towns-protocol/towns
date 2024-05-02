@@ -6,6 +6,7 @@ import (
 	"crypto/ecdsa"
 	"encoding/binary"
 	"encoding/hex"
+	"fmt"
 	"io"
 	"math/big"
 	"os"
@@ -425,6 +426,15 @@ func PackWithNonce(address common.Address, nonce uint64) ([]byte, error) {
 	bytes = hasher.Sum(nil)
 
 	return bytes, nil
+}
+
+func ToEthMessageHash(messageHash []byte) []byte {
+	bytes := append(
+		[]byte("\x19Ethereum Signed Message:\n"),
+		[]byte(fmt.Sprintf("%d", len(messageHash)))...,
+	)
+	bytes = append(bytes, messageHash...)
+	return crypto.Keccak256(bytes)
 }
 
 func (w Wallet) String() string {

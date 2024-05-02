@@ -9,7 +9,7 @@ import (
 	xc_common "core/xchain/common"
 	"core/xchain/config"
 	"core/xchain/contracts"
-	tc "core/xchain/contracts/test"
+	test_contracts "core/xchain/contracts/test"
 	"core/xchain/entitlement"
 	"core/xchain/server"
 	"log"
@@ -31,6 +31,8 @@ import (
 	node_crypto "github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 	infra "github.com/river-build/river/core/node/infra/config"
+
+	node_contracts "github.com/river-build/river/core/node/contracts"
 )
 
 type testNodeRecord struct {
@@ -46,11 +48,17 @@ type serviceTester struct {
 	nodes               []*testNodeRecord
 	stopBlockAutoMining func()
 
+	// Addresses
 	mockEntitlementGatedAddress  common.Address
 	mockCustomEntitlementAddress common.Address
 	entitlementCheckerAddress    common.Address
+	walletLinkingAddress         common.Address
 
+	// Contracts
 	entitlementChecker *contracts.IEntitlementChecker
+	walletLink         *contracts.IWalletLink
+
+	decoder *node_contracts.EvmErrorDecoder
 }
 
 // Disable color output for console testing.
@@ -60,6 +68,10 @@ func noColorLogger() *slog.Logger {
 			Colors: dlog.ColorMap_Disabled,
 		}),
 	)
+}
+
+func silentLogger() *slog.Logger {
+	return slog.New(&dlog.NullHandler{})
 }
 
 func newServiceTester(numNodes int, require *require.Assertions) *serviceTester {
@@ -87,7 +99,6 @@ func newServiceTester(numNodes int, require *require.Assertions) *serviceTester 
 	})
 
 	st.deployXchainTestContracts()
-
 	return st
 }
 
@@ -119,7 +130,6 @@ func (st *serviceTester) deployXchainTestContracts() {
 		st.Config().GetContractVersion(),
 	)
 	st.require.NoError(err)
-
 	st.mockEntitlementGatedAddress = addr
 
 	// Deploy the mock custom entitlement contract
@@ -127,6 +137,15 @@ func (st *serviceTester) deployXchainTestContracts() {
 	st.require.NoError(err)
 	st.mockCustomEntitlementAddress = addr
 
+	// Deploy the wallet linking contract
+	addr, _, _, err = contracts.DeployWalletLink(auth, client, st.Config().GetContractVersion())
+	st.require.NoError(err)
+	st.walletLinkingAddress = addr
+	walletLink, err := contracts.NewIWalletLink(addr, client, st.Config().GetContractVersion())
+	st.require.NoError(err)
+	st.walletLink = walletLink
+
+	// Commit all deploys
 	st.btc.Commit()
 
 	log = dlog.FromCtx(st.ctx)
@@ -138,7 +157,17 @@ func (st *serviceTester) deployXchainTestContracts() {
 		st.mockEntitlementGatedAddress.Hex(),
 		"mockCustomEntitlement",
 		st.mockCustomEntitlementAddress.Hex(),
+		"walletLink",
+		st.walletLinkingAddress.Hex(),
 	)
+
+	decoder, err := node_contracts.NewEVMErrorDecoder(iChecker.GetMetadata(), walletLink.GetMetadata())
+	st.decoder = decoder
+}
+
+func (st *serviceTester) AssertNoEVMError(err error) {
+	ce, se, wrapped := st.decoder.DecodeEVMError(err)
+	st.require.NoError(err, "EVM errors", ce, se, wrapped)
 }
 
 func (st *serviceTester) ClientSimulatorBlockchain() *node_crypto.Blockchain {
@@ -233,8 +262,11 @@ func (st *serviceTester) Config() *config.Config {
 		TestingContract: config.ContractConfig{
 			Address: st.mockEntitlementGatedAddress.String(),
 		},
-		EntitlementContract: config.ContractConfig{
+		EntitlementCheckerContract: config.ContractConfig{
 			Address: st.entitlementCheckerAddress.String(),
+		},
+		WalletLinkContract: config.ContractConfig{
+			Address: st.walletLinkingAddress.String(),
 		},
 		TestCustomEntitlementContract: config.ContractConfig{
 			Address: st.mockCustomEntitlementAddress.String(),
@@ -245,6 +277,48 @@ func (st *serviceTester) Config() *config.Config {
 	}
 	cfg.Init()
 	return cfg
+}
+
+func (st *serviceTester) linkWalletToRootWallet(
+	ctx context.Context,
+	wallet *node_crypto.Wallet,
+	rootWallet *node_crypto.Wallet,
+) {
+	// Root key nonce
+	rootKeyNonce, err := st.walletLink.GetLatestNonceForRootKey(nil, rootWallet.Address)
+	st.require.NoError(err)
+
+	// Create RootKey IWalletLinkLinkedWallet
+	hash, err := node_crypto.PackWithNonce(wallet.Address, rootKeyNonce.Uint64())
+	st.require.NoError(err)
+	rootKeySignature, err := rootWallet.SignHash(node_crypto.ToEthMessageHash(hash))
+	rootKeySignature[64] += 27 // Transform V from 0/1 to 27/28
+
+	rootKeyWallet := contracts.IWalletLinkBaseLinkedWallet{
+		Addr:      rootWallet.Address,
+		Signature: rootKeySignature,
+	}
+
+	// Create Wallet IWalletLinkLinkedWallet
+	hash, err = node_crypto.PackWithNonce(rootWallet.Address, rootKeyNonce.Uint64())
+	st.require.NoError(err)
+	nodeWalletSignature, err := wallet.SignHash(node_crypto.ToEthMessageHash(hash))
+	nodeWalletSignature[64] += 27 // Transform V from 0/1 to 27/28
+	nodeWallet := contracts.IWalletLinkBaseLinkedWallet{
+		Addr:      wallet.Address,
+		Signature: nodeWalletSignature,
+	}
+
+	pendingTx, err := st.ClientSimulatorBlockchain().TxPool.Submit(
+		ctx,
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			return st.walletLink.LinkWalletToRootKey(opts, nodeWallet, rootKeyWallet, rootKeyNonce)
+		},
+	)
+
+	st.AssertNoEVMError(err)
+	receipt := <-pendingTx.Wait()
+	st.require.Equal(uint64(1), receipt.Status)
 }
 
 func erc721Check(chainId uint64, contractAddress common.Address, threshold uint64) contracts.IRuleData {
@@ -354,84 +428,169 @@ func TestNodeIsRegistered(t *testing.T) {
 	}
 }
 
-func TestErc721Entitlements(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	ctx = dlog.CtxWithLog(ctx, noColorLogger())
-	defer cancel()
-
-	require := require.New(t)
-	st := newServiceTester(5, require)
-	defer st.Close()
-	st.Start(t)
-
-	bc := st.ClientSimulatorBlockchain()
-	cs, err := client_simulator.New(ctx, st.Config(), bc, bc.Wallet)
-	require.NoError(err)
-	cs.Start(ctx)
-	defer cs.Stop()
-
-	// Deploy mock ERC721 contract to anvil chain
+func mintTokenForWallet(
+	require *require.Assertions,
+	auth *bind.TransactOpts,
+	st *serviceTester,
+	erc721 *test_contracts.MockErc721,
+	wallet *node_crypto.Wallet,
+	amount int64,
+) {
 	nonce, err := anvilClient.PendingNonceAt(context.Background(), anvilWallet.Address)
 	require.NoError(err)
+	auth.Nonce = big.NewInt(int64(nonce))
+	txn, err := erc721.Mint(auth, wallet.Address, big.NewInt(amount))
+	st.AssertNoEVMError(err)
+	require.NotNil(xc_common.WaitForTransaction(anvilClient, txn))
+}
+
+func expectEntitlementCheckResult(
+	require *require.Assertions,
+	cs client_simulator.ClientSimulator,
+	ctx context.Context,
+	data contracts.IRuleData,
+	expected bool,
+) {
+	result, err := cs.EvaluateRuleData(ctx, data)
+	require.NoError(err)
+	require.Equal(expected, result)
+}
+
+func generateLinkedWallets(
+	ctx context.Context,
+	require *require.Assertions,
+	simulatorAsRoot bool,
+	st *serviceTester,
+	csWallet *node_crypto.Wallet,
+) (rootKey *node_crypto.Wallet, wallet1 *node_crypto.Wallet, wallet2 *node_crypto.Wallet, wallet3 *node_crypto.Wallet) {
+	// Create a set of 3 linked wallets using client simulator address.
+	var err error
+	if simulatorAsRoot {
+		rootKey = csWallet
+		wallet3, err = node_crypto.NewWallet(ctx)
+		require.NoError(err)
+	} else {
+		rootKey, err = node_crypto.NewWallet(ctx)
+		require.NoError(err)
+		wallet3 = csWallet
+	}
+	wallet1, err = node_crypto.NewWallet(ctx)
+	require.NoError(err)
+	wallet2, err = node_crypto.NewWallet(ctx)
+	require.NoError(err)
+
+	st.linkWalletToRootWallet(ctx, wallet1, rootKey)
+	st.linkWalletToRootWallet(ctx, wallet2, rootKey)
+	st.linkWalletToRootWallet(ctx, wallet3, rootKey)
+
+	return rootKey, wallet1, wallet2, wallet3
+}
+
+func deployMockErc721Contract(
+	require *require.Assertions,
+	st *serviceTester,
+) (*bind.TransactOpts, common.Address, *test_contracts.MockErc721) {
+	// Deploy mock ERC721 contract to anvil chain
 	auth, err := bind.NewKeyedTransactorWithChainID(anvilWallet.PrivateKeyStruct, big.NewInt(31337))
+	require.NoError(err)
+
+	nonce, err := anvilClient.PendingNonceAt(context.Background(), anvilWallet.Address)
 	require.NoError(err)
 	auth.Nonce = big.NewInt(int64(nonce))
 	auth.Value = big.NewInt(0)         // in wei
 	auth.GasLimit = uint64(30_000_000) // in units
 
-	contractAddress, txn, erc721, err := tc.DeployMockErc721(auth, anvilClient)
-	require.NoError(err)
+	contractAddress, txn, erc721, err := test_contracts.DeployMockErc721(auth, anvilClient)
+	st.AssertNoEVMError(err)
 	require.NotEmpty(contractAddress)
 	require.NotNil(erc721)
 	blockNum := xc_common.WaitForTransaction(anvilClient, txn)
 	require.NotNil(blockNum)
-
-	// Expect no NFT minted for the client simulator wallet
-	result, err := cs.EvaluateRuleData(ctx, erc721Check(1, contractAddress, 1))
-	require.NoError(err)
-	require.False(result)
-
-	// Update nonce
-	nonce, err = anvilClient.PendingNonceAt(context.Background(), anvilWallet.Address)
-	require.NoError(err)
-	auth.Nonce = big.NewInt(int64(nonce))
-
-	// Mint an NFT for simulator wallet.
-	txn, err = erc721.Mint(auth, cs.Wallet().Address, big.NewInt(1))
-	require.NoError(err)
-	require.NotNil(xc_common.WaitForTransaction(anvilClient, txn))
-
-	// Sanity check: Wallet has a balance of 1
-	balance, err := erc721.BalanceOf(nil, cs.Wallet().Address)
-	require.NoError(err)
-	require.Equal(big.NewInt(1), balance)
-
-	// Check if the wallet a 1 balance of the NFT - should pass
-	result, err = cs.EvaluateRuleData(ctx, erc721Check(1, contractAddress, 1))
-	require.NoError(err)
-	require.True(result)
-
-	// Checking for balance of 2 should fail
-	result, err = cs.EvaluateRuleData(ctx, erc721Check(1, contractAddress, 2))
-	require.NoError(err)
-	require.False(result)
+	return auth, contractAddress, erc721
 }
 
-func TestErc20Entitlements(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+func TestErc721Entitlements(t *testing.T) {
+	tests := map[string]struct {
+		sentByRootKeyWallet bool
+	}{
+		"request sent by root key wallet": {sentByRootKeyWallet: true},
+		"request sent by linked wallet":   {sentByRootKeyWallet: false},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			ctx, cancel := test.NewTestContext()
+			ctx = dlog.CtxWithLog(ctx, noColorLogger())
+			defer cancel()
 
-	require := require.New(t)
-	st := newServiceTester(5, require)
-	defer st.Close()
-	st.Start(t)
+			require := require.New(t)
+			st := newServiceTester(5, require)
+			defer st.Close()
+			st.Start(t)
 
-	bc := st.ClientSimulatorBlockchain()
-	cs, err := client_simulator.New(ctx, st.Config(), bc, bc.Wallet)
+			bc := st.ClientSimulatorBlockchain()
+			cs, err := client_simulator.New(ctx, st.Config(), bc, bc.Wallet)
+			require.NoError(err)
+			cs.Start(ctx)
+			defer cs.Stop()
+
+			// Deploy mock ERC721 contract to anvil chain
+			auth, contractAddress, erc721 := deployMockErc721Contract(require, st)
+
+			// Expect no NFT minted for the client simulator wallet
+			expectEntitlementCheckResult(require, cs, ctx, erc721Check(1, contractAddress, 1), false)
+
+			// Mint an NFT for client simulator wallet.
+			mintTokenForWallet(require, auth, st, erc721, cs.Wallet(), 1)
+
+			// Check if the wallet a 1 balance of the NFT - should pass
+			expectEntitlementCheckResult(require, cs, ctx, erc721Check(1, contractAddress, 1), true)
+
+			// Checking for balance of 2 should fail
+			expectEntitlementCheckResult(require, cs, ctx, erc721Check(1, contractAddress, 2), false)
+
+			// Create a set of 3 linked wallets using client simulator address.
+			_, wallet1, wallet2, wallet3 := generateLinkedWallets(ctx, require, tc.sentByRootKeyWallet, st, cs.Wallet())
+
+			// Sanity check: balance of 4 across all 3 wallets should fail
+			expectEntitlementCheckResult(require, cs, ctx, erc721Check(1, contractAddress, 4), false)
+
+			// Mint 2 NFTs for wallet1.
+			mintTokenForWallet(require, auth, st, erc721, wallet1, 2)
+
+			// Mint 1 NFT for wallet2.
+			mintTokenForWallet(require, auth, st, erc721, wallet2, 1)
+
+			// If wallet3 is not the client simulator, mint 1 NFT for wallet3.
+			if tc.sentByRootKeyWallet {
+				mintTokenForWallet(require, auth, st, erc721, wallet3, 1)
+			}
+
+			// Accumulated balance of 4 across all 3 wallets should now pass
+			expectEntitlementCheckResult(require, cs, ctx, erc721Check(1, contractAddress, 4), true)
+		})
+	}
+}
+
+func mintErc20TokensForWallet(
+	require *require.Assertions,
+	auth *bind.TransactOpts,
+	st *serviceTester,
+	erc20 *test_contracts.MockErc20,
+	wallet *node_crypto.Wallet,
+	amount int64,
+) {
+	nonce, err := anvilClient.PendingNonceAt(context.Background(), anvilWallet.Address)
 	require.NoError(err)
-	cs.Start(ctx)
-	defer cs.Stop()
+	auth.Nonce = big.NewInt(int64(nonce))
+	txn, err := erc20.Mint(auth, wallet.Address, big.NewInt(amount))
+	st.AssertNoEVMError(err)
+	require.NotNil(xc_common.WaitForTransaction(anvilClient, txn))
+}
 
+func deployMockErc20Contract(
+	require *require.Assertions,
+	st *serviceTester,
+) (*bind.TransactOpts, common.Address, *test_contracts.MockErc20) {
 	// Deploy mock ERC20 contract to anvil chain
 	nonce, err := anvilClient.PendingNonceAt(context.Background(), anvilWallet.Address)
 	require.NoError(err)
@@ -441,53 +600,94 @@ func TestErc20Entitlements(t *testing.T) {
 	auth.Value = big.NewInt(0)         // in wei
 	auth.GasLimit = uint64(30_000_000) // in units
 
-	contractAddress, txn, erc20, err := tc.DeployMockErc20(auth, anvilClient, "MockERC20", "M20")
+	contractAddress, txn, erc20, err := test_contracts.DeployMockErc20(auth, anvilClient, "MockERC20", "M20")
 	require.NoError(err)
-	require.NotEmpty(contractAddress)
-	require.NotNil(erc20)
 	require.NotNil(xc_common.WaitForTransaction(anvilClient, txn), "Failed to mine ERC20 contract deployment")
+	return auth, contractAddress, erc20
+}
 
-	// Check for balance of 1 should fail, as this wallet has no coins.
-	result, err := cs.EvaluateRuleData(ctx, erc20Check(1, contractAddress, 1))
-	require.NoError(err)
-	require.False(result)
+func TestErc20Entitlements(t *testing.T) {
+	tests := map[string]struct {
+		sentByRootKeyWallet bool
+	}{
+		"request sent by root key wallet": {sentByRootKeyWallet: true},
+		"request sent by linked wallet":   {sentByRootKeyWallet: false},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			ctx, cancel := test.NewTestContext()
+			defer cancel()
 
+			require := require.New(t)
+			st := newServiceTester(5, require)
+			defer st.Close()
+			st.Start(t)
+
+			bc := st.ClientSimulatorBlockchain()
+			cs, err := client_simulator.New(ctx, st.Config(), bc, bc.Wallet)
+			require.NoError(err)
+			cs.Start(ctx)
+			defer cs.Stop()
+
+			// Deploy mock ERC20 contract to anvil chain
+			auth, contractAddress, erc20 := deployMockErc20Contract(require, st)
+
+			// Check for balance of 1 should fail, as this wallet has no coins.
+			expectEntitlementCheckResult(require, cs, ctx, erc20Check(1, contractAddress, 1), false)
+
+			// Mint 10 tokens for the client simulator wallet.
+			mintErc20TokensForWallet(require, auth, st, erc20, cs.Wallet(), 10)
+
+			// Check for balance of 10 should pass.
+			expectEntitlementCheckResult(require, cs, ctx, erc20Check(1, contractAddress, 10), true)
+
+			// Checking for balance of 20 should fail
+			expectEntitlementCheckResult(require, cs, ctx, erc20Check(1, contractAddress, 20), false)
+
+			// Create a set of 3 linked wallets using client simulator address.
+			_, wallet1, wallet2, wallet3 := generateLinkedWallets(ctx, require, tc.sentByRootKeyWallet, st, cs.Wallet())
+
+			// Sanity check: balance of 30 across all 3 wallets should fail
+			expectEntitlementCheckResult(require, cs, ctx, erc20Check(1, contractAddress, 30), false)
+
+			// Mint 19 tokens for wallet1.
+			mintErc20TokensForWallet(require, auth, st, erc20, wallet1, 19)
+			// Mint 1 token for wallet2.
+			mintErc20TokensForWallet(require, auth, st, erc20, wallet2, 1)
+			// If wallet3 is not the client simulator, mint 10 tokens for wallet3. Otherwise, it will already have 10 tokens.
+			if tc.sentByRootKeyWallet {
+				mintErc20TokensForWallet(require, auth, st, erc20, wallet3, 10)
+			}
+
+			// Accumulated balance of 30 across all 3 wallets should now pass
+			expectEntitlementCheckResult(require, cs, ctx, erc20Check(1, contractAddress, 30), true)
+		})
+	}
+}
+
+func toggleEntitlement(
+	require *require.Assertions,
+	auth *bind.TransactOpts,
+	customEntitlement *contracts.MockCustomEntitlement,
+	wallet *node_crypto.Wallet,
+	response bool,
+) {
 	// Update nonce
-	nonce, err = anvilClient.PendingNonceAt(context.Background(), anvilWallet.Address)
+	nonce, err := anvilClient.PendingNonceAt(context.Background(), anvilWallet.Address)
 	require.NoError(err)
 	auth.Nonce = big.NewInt(int64(nonce))
 
-	// Mint 10 tokens
-	txn, err = erc20.Mint(auth, cs.Wallet().Address, big.NewInt(10))
+	// Toggle contract response
+	txn, err := customEntitlement.SetEntitled(auth, []common.Address{wallet.Address}, response)
 	require.NoError(err)
-	require.NotNil(xc_common.WaitForTransaction(anvilClient, txn), "Failed to mine ERC20 mint")
-
-	// Check if the wallet a balance of 10 should succeed
-	result, err = cs.EvaluateRuleData(ctx, erc721Check(1, contractAddress, 10))
-	require.NoError(err)
-	require.True(result)
-
-	// Checking for balance of 20 should fail
-	result, err = cs.EvaluateRuleData(ctx, erc721Check(1, contractAddress, 20))
-	require.NoError(err)
-	require.False(result)
+	blockNum := xc_common.WaitForTransaction(anvilClient, txn)
+	require.NotNil(blockNum)
 }
 
-func TestCustomEntitlements(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
-
-	require := require.New(t)
-	st := newServiceTester(5, require)
-	defer st.Close()
-	st.Start(t)
-
-	bc := st.ClientSimulatorBlockchain()
-	cs, err := client_simulator.New(ctx, st.Config(), bc, bc.Wallet)
-	require.NoError(err)
-	cs.Start(ctx)
-	defer cs.Stop()
-
+func deployMockCustomEntitlement(
+	require *require.Assertions,
+	st *serviceTester,
+) (*bind.TransactOpts, common.Address, *contracts.MockCustomEntitlement) {
 	// Deploy mock custom entitlement contract to anvil chain
 	nonce, err := anvilClient.PendingNonceAt(context.Background(), anvilWallet.Address)
 	require.NoError(err)
@@ -503,31 +703,67 @@ func TestCustomEntitlements(t *testing.T) {
 		st.Config().GetContractVersion(),
 	)
 	require.NoError(err)
-	require.NotEmpty(contractAddress)
-	require.NotNil(customEntitlement)
 	require.NotNil(
 		xc_common.WaitForTransaction(anvilClient, txn),
 		"Failed to mine custom entitlement contract deployment",
 	)
+	return auth, contractAddress, customEntitlement
+}
 
-	// Initially the check should fail.
-	customCheck := customEntitlementCheck(1, contractAddress)
-	result, err := cs.EvaluateRuleData(ctx, customCheck)
-	require.NoError(err)
-	require.False(result)
+func TestCustomEntitlements(t *testing.T) {
+	tests := map[string]struct {
+		sentByRootKeyWallet bool
+	}{
+		"request sent by root key wallet": {sentByRootKeyWallet: true},
+		"request sent by linked wallet":   {sentByRootKeyWallet: false},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			ctx, cancel := test.NewTestContext()
+			defer cancel()
 
-	// Update nonce
-	nonce, err = anvilClient.PendingNonceAt(context.Background(), anvilWallet.Address)
-	require.NoError(err)
-	auth.Nonce = big.NewInt(int64(nonce))
+			require := require.New(t)
+			st := newServiceTester(5, require)
+			defer st.Close()
+			st.Start(t)
 
-	// Toggle contract response
-	txn, err = customEntitlement.SetEntitled(auth, []common.Address{cs.Wallet().Address}, true)
-	require.NoError(err)
-	xc_common.WaitForTransaction(anvilClient, txn)
+			bc := st.ClientSimulatorBlockchain()
+			cs, err := client_simulator.New(ctx, st.Config(), bc, bc.Wallet)
+			require.NoError(err)
+			cs.Start(ctx)
+			defer cs.Stop()
 
-	// Check should now succeed.
-	result, err = cs.EvaluateRuleData(ctx, customCheck)
-	require.NoError(err)
-	require.True(result)
+			// Deploy mock custom entitlement contract to anvil chain
+			auth, contractAddress, customEntitlement := deployMockCustomEntitlement(require, st)
+
+			// Initially the check should fail.
+			customCheck := customEntitlementCheck(1, contractAddress)
+			expectEntitlementCheckResult(require, cs, ctx, customCheck, false)
+
+			toggleEntitlement(require, auth, customEntitlement, cs.Wallet(), true)
+
+			// Check should now succeed.
+			expectEntitlementCheckResult(require, cs, ctx, customCheck, true)
+
+			// Untoggle entitlement for client simulator wallet
+			toggleEntitlement(require, auth, customEntitlement, cs.Wallet(), false)
+
+			// Create a set of 3 linked wallets using client simulator address.
+			_, wallet1, wallet2, wallet3 := generateLinkedWallets(ctx, require, tc.sentByRootKeyWallet, st, cs.Wallet())
+
+			for _, wallet := range []*node_crypto.Wallet{wallet1, wallet2, wallet3} {
+				// Check should fail for all wallets.
+				expectEntitlementCheckResult(require, cs, ctx, customCheck, false)
+
+				// Toggle entitlement for a particular linked wallet
+				toggleEntitlement(require, auth, customEntitlement, wallet, true)
+
+				// Check should now succeed for the wallet.
+				expectEntitlementCheckResult(require, cs, ctx, customCheck, true)
+
+				// Untoggle entitlement for the wallet
+				toggleEntitlement(require, auth, customEntitlement, wallet, false)
+			}
+		})
+	}
 }

@@ -154,7 +154,7 @@ func TestAndOperation(t *testing.T) {
 
 		callerAddress := common.Address{}
 
-		result, error := evaluateOp(context.Background(), cfg, tree, &callerAddress)
+		result, error := evaluateOp(context.Background(), cfg, tree, []common.Address{callerAddress})
 		elapsedTime := time.Since(startTime)
 		if error != nil {
 			t.Errorf("evaluateAndOperation(%v) = %v; want %v", idx, error, nil)
@@ -204,7 +204,7 @@ func TestOrOperation(t *testing.T) {
 
 		callerAddress := common.Address{}
 
-		result, error := evaluateOp(context.Background(), cfg, tree, &callerAddress)
+		result, error := evaluateOp(context.Background(), cfg, tree, []common.Address{callerAddress})
 		elapsedTime := time.Since(startTime)
 		if error != nil {
 			t.Errorf("evaluateOrOperation(%v) = %v; want %v", idx, error, nil)
@@ -261,7 +261,7 @@ func TestCheckOperation(t *testing.T) {
 
 		startTime := time.Now() // Get the current time
 
-		result, err := evaluateOp(context.Background(), cfg, tc.a, &tc.callerAddress)
+		result, err := evaluateOp(context.Background(), cfg, tc.a, []common.Address{tc.callerAddress})
 		elapsedTime := time.Since(startTime)
 
 		if err != nil {

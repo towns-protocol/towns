@@ -173,6 +173,14 @@ type postResult struct {
 	transactionId [32]byte
 	result        bool
 }
+
+type ClientSimulator interface {
+	Start(ctx context.Context)
+	Stop()
+	EvaluateRuleData(ctx context.Context, ruleData e.IRuleData) (bool, error)
+	Wallet() *node_crypto.Wallet
+}
+
 type clientSimulator struct {
 	cfg *config.Config
 
@@ -195,12 +203,15 @@ type clientSimulator struct {
 	resultPosted  chan postResult
 }
 
+// Enforce interface
+var _ ClientSimulator = &clientSimulator{}
+
 func New(
 	ctx context.Context,
 	cfg *config.Config,
 	baseChain *node_crypto.Blockchain,
 	wallet *node_crypto.Wallet,
-) (*clientSimulator, error) {
+) (ClientSimulator, error) {
 	entitlementGated, err := e.NewMockEntitlementGated(
 		cfg.GetMockEntitlementContractAddress(),
 		nil,
@@ -286,7 +297,7 @@ func (cs *clientSimulator) Start(ctx context.Context) {
 	)
 }
 
-func (cs *clientSimulator) ExecuteCheck(ctx context.Context, ruleData *e.IRuleData) error {
+func (cs *clientSimulator) executeCheck(ctx context.Context, ruleData *e.IRuleData) error {
 	log := dlog.FromCtx(ctx).With("application", "clientSimulator")
 
 	pendingTx, err := cs.baseChain.TxPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
@@ -325,7 +336,7 @@ func (cs *clientSimulator) ExecuteCheck(ctx context.Context, ruleData *e.IRuleDa
 	return nil
 }
 
-func (cs *clientSimulator) WaitForNextRequest(ctx context.Context) ([32]byte, error) {
+func (cs *clientSimulator) waitForNextRequest(ctx context.Context) ([32]byte, error) {
 	log := dlog.FromCtx(ctx).With("application", "clientSimulator")
 
 	ctx, cancel := context.WithTimeout(ctx, time.Second*60)
@@ -344,7 +355,7 @@ func (cs *clientSimulator) WaitForNextRequest(ctx context.Context) ([32]byte, er
 	}
 }
 
-func (cs *clientSimulator) WaitForPostResult(ctx context.Context, txnId [32]byte) (bool, error) {
+func (cs *clientSimulator) waitForPostResult(ctx context.Context, txnId [32]byte) (bool, error) {
 	log := dlog.FromCtx(ctx).With("application", "clientSimulator")
 
 	ctx, cancel := context.WithTimeout(ctx, time.Second*60)
@@ -447,14 +458,14 @@ func (cs *clientSimulator) Wallet() *node_crypto.Wallet {
 func (cs *clientSimulator) EvaluateRuleData(ctx context.Context, ruleData e.IRuleData) (bool, error) {
 	log := dlog.FromCtx(ctx).With("application", "clientSimulator")
 
-	err := cs.ExecuteCheck(ctx, &ruleData)
+	err := cs.executeCheck(ctx, &ruleData)
 	if err != nil {
 		log.Error("Failed to execute entitlement check", "err", err)
 		return false, err
 	}
 
 	log.Info("ClientSimulator waiting for request to publish")
-	txId, err := cs.WaitForNextRequest(ctx)
+	txId, err := cs.waitForNextRequest(ctx)
 	if err != nil {
 		log.Error("Failed to wait for request", "err", err)
 		return false, err
@@ -465,7 +476,7 @@ func (cs *clientSimulator) EvaluateRuleData(ctx context.Context, ruleData e.IRul
 	}
 
 	log.Info("ClientSimulator waiting for result")
-	result, err := cs.WaitForPostResult(ctx, txId)
+	result, err := cs.waitForPostResult(ctx, txId)
 	if err != nil {
 		log.Error("Failed to wait for result", "err", err)
 		return false, err
@@ -474,7 +485,7 @@ func (cs *clientSimulator) EvaluateRuleData(ctx context.Context, ruleData e.IRul
 	return result, nil
 }
 
-func ClientSimulator(ctx context.Context, cfg *config.Config, wallet *node_crypto.Wallet, simType SimulationType) {
+func RunClientSimulator(ctx context.Context, cfg *config.Config, wallet *node_crypto.Wallet, simType SimulationType) {
 	if simType == TOGGLEISENTITLED {
 		ToggleEntitlement(ctx, cfg, wallet)
 		return

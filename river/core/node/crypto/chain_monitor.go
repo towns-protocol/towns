@@ -169,19 +169,19 @@ func (ecm *chainMonitor) RunWithBlockPeriod(
 		poll         = NewChainMonitorPollIntervalCalculator(blockPeriod, 30*time.Second)
 	)
 
-	log.Info("chain monitor started", "blockPeriod", blockPeriod, "fromBlock", initialBlock)
+	log.Debug("chain monitor started", "blockPeriod", blockPeriod, "fromBlock", initialBlock)
 
 	for {
 		log.Debug("chain monitor iteration", "pollInterval", pollInterval)
 
 		select {
 		case <-ctx.Done():
-			log.Info("initiate chain monitor shutdown")
+			log.Debug("initiate chain monitor shutdown")
 			//lint:ignore LE0000 context.Background() used correctly
 			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 			ecm.builder.stoppedCallbacks.onChainMonitorStopped(ctx)
 			cancel()
-			log.Info("chain monitor stopped")
+			log.Debug("chain monitor stopped")
 			return
 
 		case <-time.After(pollInterval):

@@ -65,13 +65,13 @@ out:
 			log.Info("Input", "char", char)
 			switch char {
 			case 'a':
-				xc.ClientSimulator(bc, loadedCfg, wallet, xc.ERC20)
+				go xc.RunClientSimulator(bc, loadedCfg, wallet, xc.ERC20)
 			case 'b':
-				xc.ClientSimulator(bc, loadedCfg, wallet, xc.ERC721)
+				go xc.RunClientSimulator(bc, loadedCfg, wallet, xc.ERC721)
 			case 'c':
-				xc.ClientSimulator(bc, loadedCfg, wallet, xc.ISENTITLED)
+				go xc.RunClientSimulator(bc, loadedCfg, wallet, xc.ISENTITLED)
 			case 'd':
-				xc.ClientSimulator(bc, loadedCfg, wallet, xc.TOGGLEISENTITLED)
+				go xc.RunClientSimulator(bc, loadedCfg, wallet, xc.TOGGLEISENTITLED)
 			case 'q':
 				log.Info("Quit Exit")
 				break out
