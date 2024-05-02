@@ -1,6 +1,6 @@
 import { visit } from 'unist-util-visit'
 import { Transformer } from 'unified'
-import { htmlToText } from 'workers/data_transforms'
+import unescape from 'lodash/unescape'
 import { MdastNode } from './ast-types'
 
 /**
@@ -10,7 +10,7 @@ import { MdastNode } from './ast-types'
 const remarkDecodeHTMLCodeBlocks = () => {
     const transformer: Transformer = (tree, _file) => {
         visit(tree, 'code', (node: MdastNode, _index) => {
-            node.value = htmlToText(node.value)
+            node.value = node.value ? unescape(node.value) : node.value
         })
     }
 

@@ -129,8 +129,13 @@ export default function serialize(
         children = BREAK_TAG
     }
 
-    if (children === '' && !VOID_ELEMENTS.find((k) => nodeTypes[k] === type)) {
-        return
+    if (children === '') {
+        if (
+            ![nodeTypes.code_line, nodeTypes.code_block].includes(chunk.parentType as string) &&
+            !VOID_ELEMENTS.find((k) => nodeTypes[k] === type)
+        ) {
+            return
+        }
     }
 
     // Never allow decorating break tags with rich text formatting,
