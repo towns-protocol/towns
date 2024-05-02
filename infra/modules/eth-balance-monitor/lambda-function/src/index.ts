@@ -41,7 +41,7 @@ import {
     "0x9df6e5F15ec682ca58Df6d2a831436973f98fe60": 8,
     "0xB79FaCbFC07Bff49cD2e2971305Da0DF7aCa9bF8": 9,
     "0xA278267f396a317c5Bb583f47F7f2792Bc00D3b3": 10,
-    "0x75b5eb02d2fe5e2f0008a05849d81526963886c2": 11,
+    "0x75b5eb02D2fE5E2F0008a05849d81526963886C2": 11,
   };
   
   // Handler function for Lambda
@@ -51,8 +51,8 @@ import {
     context: Context
   ): Promise<APIGatewayProxyResult> => {
     const {
-      ENVIRONMENT,
       DATADOG_API_KEY_SECRET_ARN,
+      ENVIRONMENT,
       RIVER_CHAIN_RPC_URL_SECRET_ARN,
       BASE_CHAIN_RPC_URL_SECRET_ARN,
       DATADOG_APPLICATION_KEY_SECRET_ARN,
@@ -78,12 +78,13 @@ import {
     );
     console.log(`Got node addresses`, nodeAddresses);
 
-    const riverChainWalletBalances = await getWalletBalances(riverChainClient, nodeAddresses, 'river');
-    console.log(`Got river chain wallet balances`, riverChainWalletBalances);
-
+    console.log('Getting wallet balances for base chain')
     const baseChainWalletBalances = await getWalletBalances(baseChainClient, nodeAddresses, 'base');
     console.log(`Got base chain wallet balances`, baseChainWalletBalances);
-  
+
+    console.log('Getting wallet balances for river chain')
+    const riverChainWalletBalances = await getWalletBalances(riverChainClient, nodeAddresses, 'river');
+    console.log(`Got river chain wallet balances`, riverChainWalletBalances);
 
     console.log(`Posting wallet balances to Datadog`);
     await postWalletBalancesToDatadog({
@@ -113,24 +114,27 @@ import {
   
     return nodeAddresses as string[];
   }
+
+  async function getWalletBalance(client: PublicClient, walletAddress: string, chain: string) {
+    console.log(`Getting balance for wallet ${walletAddress}`);
+    if (!isAddress(walletAddress)) {
+        throw new Error(`Invalid wallet address: ${walletAddress}`);
+    }
+    const balanceBigInt = await client.getBalance({
+        address: walletAddress,
+        blockTag: "latest",
+    });
+    const balanceNum = Number(balanceBigInt);
+    const balance = balanceNum / 10**18;
+    console.log(`Got balance for wallet ${walletAddress}: ${balance}`);
+    return { walletAddress, balance, chain };
+  }
   
   async function getWalletBalances(client: PublicClient, walletAddresses: string[], chain: string) {
-    const walletBalances: WalletBalance[] = [];
-    for (const walletAddress of walletAddresses) {
-        console.log(`Getting balance for wallet ${walletAddress}`);
-        if (!isAddress(walletAddress)) {
-            throw new Error(`Invalid wallet address: ${walletAddress}`);
-        }
-        const balanceBigInt = await client.getBalance({
-            address: walletAddress,
-            blockTag: "latest",
-        });
-        const balanceNum = Number(balanceBigInt);
-        const balance = balanceNum / 10**18;
-        console.log(`Got balance for wallet ${walletAddress}: ${balance}`);
-        walletBalances.push({ walletAddress, balance, chain });
-    }
-    return walletBalances;
+    const waleltBalancePromises = walletAddresses.map((walletAddress) => getWalletBalance(client, walletAddress, chain));
+    return await Promise.all(
+      waleltBalancePromises
+    );
   }
   
   async function postWalletBalancesToDatadog({

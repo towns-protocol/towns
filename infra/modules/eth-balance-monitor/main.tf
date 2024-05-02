@@ -45,6 +45,7 @@ module "lambda_function" {
 
   trigger_on_package_timestamp = false
 
+  memory_size = 256
   environment_variables = {
     DATADOG_API_KEY_SECRET_ARN         = local.global_remote_state.river_global_dd_agent_api_key.arn
     DATADOG_APPLICATION_KEY_SECRET_ARN = local.global_remote_state.datadog_application_key_secret.arn
@@ -84,18 +85,18 @@ resource "aws_cloudwatch_event_rule" "schedule" {
   schedule_expression = "rate(10 minutes)"
 }
 
-resource "aws_cloudwatch_event_target" "schedule_lambda" {
+resource "aws_cloudwatch_event_target" "schedule" {
   rule = aws_cloudwatch_event_rule.schedule.name
-  # target_id = "processing_lambda"
-  arn = module.lambda_function.lambda_function_arn
+  arn  = module.lambda_function.lambda_function_arn
 }
 
 
-resource "aws_lambda_permission" "allow_events_bridge_to_run_lambda" {
+resource "aws_lambda_permission" "allow_cloudwatch" {
   statement_id  = "AllowExecutionFromCloudWatch"
   action        = "lambda:InvokeFunction"
   function_name = module.lambda_function.lambda_function_name
   principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.schedule.arn
 }
 
 resource "aws_cloudwatch_log_subscription_filter" "log_group_filter" {

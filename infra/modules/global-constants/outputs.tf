@@ -153,7 +153,7 @@ output "nodes_metadata" {
       address = "0xA278267f396a317c5Bb583f47F7f2792Bc00D3b3"
       url     = local.river_node_urls[9]
       }, {
-      address = "0x75b5eb02d2fe5e2f0008a05849d81526963886c2",
+      address = "0x75b5eb02D2fE5E2F0008a05849d81526963886C2",
       url     = local.river_node_urls[10]
     }
   ]
