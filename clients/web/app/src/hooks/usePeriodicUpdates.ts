@@ -3,7 +3,6 @@ import { useRegisterSW } from 'virtual:pwa-register/react'
 import { debug } from 'debug'
 import { MINUTE_MS } from 'data/constants'
 import { env } from 'utils'
-import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 
 const log = debug('app:updating')
 log.enabled = true
@@ -12,8 +11,6 @@ const UPDATE_INTERVAL_MS = 5 * MINUTE_MS
 
 export const usePeriodicUpdates = () => {
     const intervalRef = useRef<NodeJS.Timeout>()
-    const { isPanelOpen } = usePanelActions()
-    const isBugReportActive = isPanelOpen('bug-report')
 
     useRegisterSW({
         onRegisteredSW: (swUrl, registration) => {
@@ -28,10 +25,6 @@ export const usePeriodicUpdates = () => {
             if (registration) {
                 const checkInterval = () => {
                     log('checking for updates...')
-                    if (isBugReportActive) {
-                        log('skip update because bug report is active')
-                        return
-                    }
                     if (!(!registration.installing && navigator)) {
                         log('already installing')
                         return
