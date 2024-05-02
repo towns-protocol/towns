@@ -4,6 +4,8 @@ import { z } from 'zod'
 import { hexlify, randomBytes } from 'ethers/lib/utils'
 import { datadogRum } from '@datadog/browser-rum'
 import { useMutation } from '@tanstack/react-query'
+import { toast } from 'react-hot-toast/headless'
+import { useShallow } from 'zustand/react/shallow'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import {
     Box,
@@ -27,6 +29,7 @@ import { BetaDebugger } from 'BetaDebugger'
 import { useRequestShakePermissions } from '@components/BugReportButton/ShakeToReport'
 import { useDevice } from 'hooks/useDevice'
 import { PanelButton } from '@components/Panel/PanelButton'
+import { BugSubmittedToast } from './BugSubmittedToast'
 
 const FormStateKeys = {
     name: 'name',
@@ -144,18 +147,12 @@ export const ErrorReportForm = (props: { onHide?: () => void }) => {
     })
     const { isTouch } = useDevice()
 
-    const { setSidePanel, setBugReportCredentials, bugReportCredentials } = useStore(
-        ({ setSidePanel, setBugReportCredentials, bugReportCredentials }) => ({
-            setSidePanel,
+    const { setBugReportCredentials, bugReportCredentials } = useStore(
+        useShallow(({ setBugReportCredentials, bugReportCredentials }) => ({
             setBugReportCredentials,
             bugReportCredentials,
-        }),
+        })),
     )
-
-    const onCancel = useCallback(() => {
-        setSidePanel(null)
-        onHide?.()
-    }, [setSidePanel, onHide])
 
     const { requestPermission, revokePermission, permissionStatus } = useRequestShakePermissions()
     const onActivateShake = useCallback(() => {
@@ -186,14 +183,15 @@ export const ErrorReportForm = (props: { onHide?: () => void }) => {
     })
 
     if (success) {
-        return (
-            <Stack centerContent gap="x4" padding="x4">
-                <Text>Thank you for your submission. Our team has been notified.</Text>
-                <Button tone="cta1" onClick={onCancel}>
-                    Close
-                </Button>
-            </Stack>
-        )
+        toast.custom((t) => {
+            return (
+                <BugSubmittedToast
+                    toast={t}
+                    message="Thank you for your submission. Our team has been notified."
+                />
+            )
+        })
+        onHide?.()
     }
 
     return (
