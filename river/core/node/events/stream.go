@@ -329,7 +329,14 @@ func (s *streamImpl) initFromBlockchain(ctx context.Context) error {
 	s.nodes = nodes
 
 	if record.LastMiniblockNum > 0 {
-		return RiverError(Err_INTERNAL, "initFromBlockchain: Stream is past genesis", "streamId", s.streamId, "record", record)
+		return RiverError(
+			Err_INTERNAL,
+			"initFromBlockchain: Stream is past genesis",
+			"streamId",
+			s.streamId,
+			"record",
+			record,
+		)
 	}
 
 	err = s.params.Storage.CreateStreamStorage(ctx, s.streamId, mb)

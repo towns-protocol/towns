@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	node_config "github.com/river-build/river/core/node/config"
@@ -28,6 +29,9 @@ type Config struct {
 	TestingContract               ContractConfig      `mapstructure:"test_contract"`
 	contractVersion               ContractVersion     `mapstructure:"contract_version"`
 	TestCustomEntitlementContract ContractConfig      `mapstructure:"test_custom_entitlement_contract"`
+
+	// History indicates how far back xchain must look for entitlement check requests after start
+	History time.Duration
 
 	// Blockchain configuration
 	BaseChain  node_config.ChainConfig

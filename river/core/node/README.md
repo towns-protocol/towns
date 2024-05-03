@@ -27,7 +27,7 @@ Connect install docs: https://connect.build/docs/go/getting-started/#install-too
 # Lint
 
     brew install golangci-lint
-    golangci-lint run
+    ./lint.sh
 
 # Creating a new migration
 
@@ -97,3 +97,11 @@ Logs are turned off by default in tests. To enable set `RIVER_TEST_LOG` variable
 
     # Run single test by name with debug logging on
     RIVER_TEST_LOG=debug go test ./rpc -v -run TestSingleAndMulti/multi/testMethods
+
+# Checking on Gamma Status from Local Host
+
+Run
+
+    ./env/gamma/run.sh info
+
+Browse to http://localhost:4040/debug/multi to see status and ping times as seen from the local machine.

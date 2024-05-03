@@ -109,7 +109,7 @@ func LoadNodeRegistry(
 		localFound = localFound || nn.local
 	}
 
-	if !localFound {
+	if localNodeAddress != (common.Address{}) && !localFound {
 		return nil, RiverError(
 			Err_UNKNOWN_NODE,
 			"Local node not found in registry",

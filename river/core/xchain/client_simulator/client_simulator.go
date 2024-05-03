@@ -246,7 +246,12 @@ func New(
 		if err != nil {
 			return nil, err
 		}
-		go baseChain.ChainMonitor.RunWithBlockPeriod(ctx, baseChain.Client, baseChain.InitialBlockNum, time.Duration(cfg.BaseChain.BlockTimeMs)*time.Millisecond)
+		go baseChain.ChainMonitor.RunWithBlockPeriod(
+			ctx,
+			baseChain.Client,
+			baseChain.InitialBlockNum,
+			time.Duration(cfg.BaseChain.BlockTimeMs)*time.Millisecond,
+		)
 	}
 
 	decoder, err := node_contracts.NewEVMErrorDecoder(entitlementGated.GetMetadata(), checker.GetMetadata())

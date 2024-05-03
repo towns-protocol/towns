@@ -83,7 +83,12 @@ func registerImpl(operatorKeyfile string, userConfirmationMessage string, regist
 	if err != nil {
 		return fmt.Errorf("unable to instantiate base chain client: %s", err)
 	}
-	go baseChain.ChainMonitor.RunWithBlockPeriod(ctx, baseChain.Client, 0, time.Duration(loadedCfg.BaseChain.BlockTimeMs)*time.Millisecond)
+	go baseChain.ChainMonitor.RunWithBlockPeriod(
+		ctx,
+		baseChain.Client,
+		0,
+		time.Duration(loadedCfg.BaseChain.BlockTimeMs)*time.Millisecond,
+	)
 
 	checker, err := contracts.NewIEntitlementChecker(
 		loadedCfg.GetCheckerContractAddress(), baseChain.Client, loadedCfg.GetContractVersion())

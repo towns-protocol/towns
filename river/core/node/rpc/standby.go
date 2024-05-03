@@ -86,7 +86,15 @@ func (s *Service) standbyFetchStatus(req *http.Request, client *http.Client) boo
 	}
 
 	if status.InstanceId != s.instanceId {
-		log.Info("Standby: instanceId is not matching, retrying...", "remoted_id", status.InstanceId, "local_id", s.instanceId, "status", status)
+		log.Info(
+			"Standby: instanceId is not matching, retrying...",
+			"remoted_id",
+			status.InstanceId,
+			"local_id",
+			s.instanceId,
+			"status",
+			status,
+		)
 		return false
 	}
 

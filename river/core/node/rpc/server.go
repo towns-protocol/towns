@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/river-build/river/core/node/auth"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/config"
@@ -30,6 +31,11 @@ import (
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 	httptrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/net/http"
+)
+
+const (
+	ServerModeFull = "full"
+	ServerModeInfo = "info"
 )
 
 func (s *Service) Close() {
@@ -77,7 +83,7 @@ func (s *Service) Close() {
 func (s *Service) start() error {
 	s.startTime = time.Now()
 
-	s.initInstance()
+	s.initInstance(ServerModeFull)
 
 	err := s.initWallet()
 	if err != nil {
@@ -122,7 +128,11 @@ func (s *Service) start() error {
 	}
 
 	go s.riverChain.ChainMonitor.RunWithBlockPeriod(
-		s.serverCtx, s.riverChain.Client, s.riverChain.InitialBlockNum, time.Duration(s.riverChain.Config.BlockTimeMs)*time.Millisecond)
+		s.serverCtx,
+		s.riverChain.Client,
+		s.riverChain.InitialBlockNum,
+		time.Duration(s.riverChain.Config.BlockTimeMs)*time.Millisecond,
+	)
 
 	s.initHandlers()
 
@@ -137,7 +147,7 @@ func (s *Service) start() error {
 	return nil
 }
 
-func (s *Service) initInstance() {
+func (s *Service) initInstance(mode string) {
 	s.instanceId = GenShortNanoid()
 	port := s.config.Port
 	if port == 0 && s.listener != nil {
@@ -150,7 +160,7 @@ func (s *Service) initInstance() {
 		"port", port,
 		"instanceId", s.instanceId,
 		"type", "stream",
-		"mode", "full",
+		"mode", mode,
 	)
 	s.serverCtx = dlog.CtxWithLog(s.serverCtx, s.defaultLogger)
 	s.defaultLogger.Info("Starting server", "config", s.config)
@@ -231,8 +241,12 @@ func (s *Service) initRiverChain() error {
 		return err
 	}
 
+	var walletAddress common.Address
+	if s.wallet != nil {
+		walletAddress = s.wallet.Address
+	}
 	s.nodeRegistry, err = nodes.LoadNodeRegistry(
-		ctx, s.registryContract, s.wallet.Address, s.riverChain.InitialBlockNum, s.riverChain.ChainMonitor)
+		ctx, s.registryContract, walletAddress, s.riverChain.InitialBlockNum, s.riverChain.ChainMonitor)
 	if err != nil {
 		return err
 	}
@@ -244,7 +258,7 @@ func (s *Service) initRiverChain() error {
 	}
 
 	s.streamRegistry = nodes.NewStreamRegistry(
-		s.wallet.Address,
+		walletAddress,
 		s.nodeRegistry,
 		s.registryContract,
 		s.config.Stream.ReplicationFactor,
@@ -403,7 +417,6 @@ func (s *Service) initStore() error {
 		s.storage = storage.NewMemStorage()
 		return nil
 	case storage.StreamStorageTypePostgres:
-		s.exitSignal = make(chan error, 1)
 		store, err := storage.NewPostgresEventStore(ctx, s.storagePoolInfo, s.instanceId, s.exitSignal)
 		if err != nil {
 			return err
@@ -486,6 +499,7 @@ func StartServer(
 		config:     cfg,
 		riverChain: riverChain,
 		listener:   listener,
+		exitSignal: make(chan error, 1),
 	}
 
 	err := streamService.start()

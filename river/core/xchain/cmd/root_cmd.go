@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
+	sconfig "github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/infra"
-
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -49,7 +49,7 @@ func initConfigAndLog() {
 		}
 
 		var configStruct config.Config
-		if err := viper.Unmarshal(&configStruct); err != nil {
+		if err := viper.Unmarshal(&configStruct, viper.DecodeHook(sconfig.DecodeDurationHook())); err != nil {
 			fmt.Printf("Failed to unmarshal config, error=%v\n", err)
 		}
 

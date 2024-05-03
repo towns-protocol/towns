@@ -142,7 +142,14 @@ func (s *streamCacheImpl) tryLoadStreamRecord(ctx context.Context, streamId Stre
 
 	if record.LastMiniblockNum > 0 {
 		// TODO: reconcile from other nodes.
-		return nil, nil, RiverError(Err_INTERNAL, "tryLoadStreamRecord: Stream is past genesis", "streamId", streamId, "record", record)
+		return nil, nil, RiverError(
+			Err_INTERNAL,
+			"tryLoadStreamRecord: Stream is past genesis",
+			"streamId",
+			streamId,
+			"record",
+			record,
+		)
 	}
 
 	stream := &streamImpl{

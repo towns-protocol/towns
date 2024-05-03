@@ -1,4 +1,5 @@
-chains: '1:ws://localhost:8545,2:ws://localhost:8546,84532:https://sepolia.base.org,11155111:https://ethereum-sepolia-rpc.publicnode.com'
+chains: '1:http://localhost:8545,2:http://localhost:8546,84532:https://sepolia.base.org,11155111:https://ethereum-sepolia-rpc.publicnode.com'
+history: 30s
 entitlement_contract:
     url: ''
     chainId: ''

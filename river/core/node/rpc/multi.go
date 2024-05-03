@@ -97,7 +97,12 @@ func getGrpcStatus(
 	record.GrpcSuccess = true
 	record.GrpcMsg = elapsed.Round(time.Millisecond).String()
 	record.Version = resp.Msg.Version
-	record.Uptime = time.Since(startTime).Round(time.Second).String() + " (" + startTime.UTC().Format(time.RFC3339) + ")"
+	record.Uptime = time.Since(startTime).
+		Round(time.Second).
+		String() +
+		" (" + startTime.UTC().
+		Format(time.RFC3339) +
+		")"
 	record.Graffiti = resp.Msg.Graffiti
 }
 

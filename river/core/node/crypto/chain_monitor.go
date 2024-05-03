@@ -161,12 +161,12 @@ func (ecm *chainMonitor) RunWithBlockPeriod(
 	blockPeriod time.Duration,
 ) {
 	var (
-		log          = dlog.FromCtx(ctx)
-		one          = big.NewInt(1)
-		fromBlock    = initialBlock.AsBigInt()
-		lastHead     *types.Header
-		pollInterval = time.Duration(0)
-		poll         = NewChainMonitorPollIntervalCalculator(blockPeriod, 30*time.Second)
+		log           = dlog.FromCtx(ctx)
+		one           = big.NewInt(1)
+		fromBlock     = initialBlock.AsBigInt()
+		lastProcessed *big.Int
+		pollInterval  = time.Duration(0)
+		poll          = NewChainMonitorPollIntervalCalculator(blockPeriod, 30*time.Second)
 	)
 
 	log.Debug("chain monitor started", "blockPeriod", blockPeriod, "fromBlock", initialBlock)
@@ -193,15 +193,10 @@ func (ecm *chainMonitor) RunWithBlockPeriod(
 				continue
 			}
 
-			if lastHead != nil && lastHead.Number.Cmp(head.Number) >= 0 { // no new block
+			if lastProcessed != nil && lastProcessed.Cmp(head.Number) >= 0 { // no new block
 				pollInterval = poll.Interval(time.Since(start), false, false)
 				continue
 			}
-
-			lastHead = head
-
-			ecm.muBuilder.Lock()
-			ecm.builder.headerCallbacks.onHeadReceived(ctx, head)
 
 			var (
 				newBlocks           []BlockNumber
@@ -218,6 +213,7 @@ func (ecm *chainMonitor) RunWithBlockPeriod(
 				toBlock.SetUint64(fromBlock.Uint64() + 25)
 			}
 
+			ecm.muBuilder.Lock()
 			query := ecm.builder.Query()
 			query.FromBlock, query.ToBlock = fromBlock, toBlock
 
@@ -237,6 +233,14 @@ func (ecm *chainMonitor) RunWithBlockPeriod(
 					ecm.muBuilder.Unlock()
 					continue
 				}
+			}
+
+			if len(ecm.builder.headerCallbacks) > 0 {
+				callbacksExecuted.Add(1)
+				go func() {
+					ecm.builder.headerCallbacks.onHeadReceived(ctx, head)
+					callbacksExecuted.Done()
+				}()
 			}
 
 			if len(ecm.builder.blockCallbacks) > 0 {
@@ -265,6 +269,7 @@ func (ecm *chainMonitor) RunWithBlockPeriod(
 			// from and toBlocks are inclusive, start at the next block on next iteration
 			fromBlock = new(big.Int).Add(query.ToBlock, one)
 			pollInterval = poll.Interval(time.Since(start), moreBlocksAvailable, false)
+			lastProcessed = toBlock
 		}
 	}
 }

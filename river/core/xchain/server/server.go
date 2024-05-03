@@ -76,6 +76,9 @@ func New(
 	}
 
 	var (
+		log = dlog.FromCtx(ctx).
+			With("worker_id", workerID).
+			With("application", "xchain")
 		checkerABI      = checker.GetAbi()
 		checkerContract = bind.NewBoundContract(
 			cfg.GetCheckerContractAddress(),
@@ -96,13 +99,29 @@ func New(
 	} else {
 		wallet = baseChain.Wallet
 	}
+	log = log.With("nodeAddress", wallet.Address.Hex())
 
 	if baseChain == nil {
 		baseChain, err = crypto.NewBlockchain(ctx, &cfg.BaseChain, wallet)
 		if err != nil {
 			return nil, err
 		}
-		go baseChain.ChainMonitor.RunWithBlockPeriod(ctx, baseChain.Client, baseChain.InitialBlockNum, time.Duration(cfg.BaseChain.BlockTimeMs)*time.Millisecond)
+		// determine from which block to start processing entitlement check requests
+		startBlock, err := util.StartBlockNumberWithHistory(ctx, baseChain.Client, cfg.History)
+		if err != nil {
+			return nil, err
+		}
+		if startBlock < baseChain.InitialBlockNum.AsUint64() {
+			baseChain.InitialBlockNum = crypto.BlockNumber(startBlock)
+		}
+
+		log.Info("Start processing entitlement check requests", "startBlock", baseChain.InitialBlockNum)
+		go baseChain.ChainMonitor.RunWithBlockPeriod(
+			ctx,
+			baseChain.Client,
+			baseChain.InitialBlockNum,
+			time.Duration(cfg.BaseChain.BlockTimeMs)*time.Millisecond,
+		)
 	}
 
 	walletLink, err := contracts.NewIWalletLink(
@@ -131,7 +150,6 @@ func New(
 		baseChain:       baseChain,
 		evmErrDecoder:   decoder,
 		config:          cfg,
-		cancel:          cancel,
 	}
 
 	isRegistered, err := x.isRegistered(ctx)
@@ -146,7 +164,9 @@ func New(
 }
 
 func (x *xchain) Stop() {
-	x.cancel()
+	if x.cancel != nil {
+		x.cancel()
+	}
 }
 
 func (x *xchain) Log(ctx context.Context) *slog.Logger {
@@ -172,6 +192,7 @@ func (x *xchain) isRegistered(ctx context.Context) (bool, error) {
 // Pending requests are processed before Run returns.
 func (x *xchain) Run(ctx context.Context) {
 	var (
+		runCtx, cancel                      = context.WithCancel(ctx)
 		log                                 = x.Log(ctx)
 		entitlementAddress                  = x.config.GetCheckerContractAddress()
 		entitlementCheckReceipts            = make(chan *entitlementCheckReceipt, 256)
@@ -179,6 +200,8 @@ func (x *xchain) Run(ctx context.Context) {
 			x.onEntitlementCheckRequested(ctx, event, entitlementCheckReceipts)
 		}
 	)
+	x.cancel = cancel
+
 	log.Info(
 		"Starting xchain node",
 		"entitlementAddress", entitlementAddress.Hex(),
@@ -192,7 +215,7 @@ func (x *xchain) Run(ctx context.Context) {
 		onEntitlementCheckRequestedCallback)
 
 	// read entitlement check results from entitlementCheckReceipts and write the result to Base
-	x.writeEntitlementCheckResults(ctx, entitlementCheckReceipts)
+	x.writeEntitlementCheckResults(runCtx, entitlementCheckReceipts)
 }
 
 // onEntitlementCheckRequested is the callback that the chain monitor calls for each EntitlementCheckRequested
@@ -275,41 +298,60 @@ func (x *xchain) writeEntitlementCheckResults(ctx context.Context, checkResults 
 
 	// write entitlement check outcome to base
 	go func() {
-		for receipt := range checkResults {
-			// 0 - NodeVoteStatus.NOT_VOTED, 1 - pass, 2 - fail
-			outcome := contracts.NodeVoteStatus__FAILED
-			if receipt.Outcome {
-				outcome = contracts.NodeVoteStatus__PASSED
-			}
-
-			pendingTx, err := x.baseChain.TxPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
-				gated, err := contracts.NewIEntitlementGated(
-					receipt.Event.ContractAddress(),
-					x.baseChain.Client,
-					x.config.GetContractVersion(),
-				)
-				if err != nil {
-					return nil, err
+		for {
+			select {
+			case <-ctx.Done():
+				close(pending)
+				return
+			case receipt := <-checkResults:
+				// 0 - NodeVoteStatus.NOT_VOTED, 1 - pass, 2 - fail
+				outcome := contracts.NodeVoteStatus__FAILED
+				if receipt.Outcome {
+					outcome = contracts.NodeVoteStatus__PASSED
 				}
-				// Ensure gas limit is at least 250,000 as a workaround for simulated backend issues in tests.
-				opts.GasLimit = max(opts.GasLimit, 250_000)
 
-				return gated.PostEntitlementCheckResult(opts, receipt.TransactionID, uint8(outcome))
-			})
-			if err != nil {
-				x.handleContractError(log, err, "Failed to submit transaction for xchain request")
-				continue
+				pendingTx, err := x.baseChain.TxPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
+					gated, err := contracts.NewIEntitlementGated(
+						receipt.Event.ContractAddress(),
+						x.baseChain.Client,
+						x.config.GetContractVersion(),
+					)
+					if err != nil {
+						return nil, err
+					}
+					// Ensure gas limit is at least 250,000 as a workaround for simulated backend issues in tests.
+					opts.GasLimit = max(opts.GasLimit, 250_000)
+
+					return gated.PostEntitlementCheckResult(opts, receipt.TransactionID, uint8(outcome))
+				})
+
+				// it is possible that some entitlement checks are already processed before xchain restarted,
+				// or enough other xchain instances have already reached a quorum -> ignore these errors.
+				ce, _, _ := x.evmErrDecoder.DecodeEVMError(err)
+				if ce != nil && (ce.DecodedError.Sig == "EntitlementGated_TransactionNotRegistered()" ||
+					ce.DecodedError.Sig == "EntitlementGated_NodeAlreadyVoted()") {
+					log.Debug("Unable to submit entitlement check outcome",
+						"err", ce.DecodedError.Name,
+						"txid", receipt.TransactionID.Hex())
+					continue
+				}
+
+				if err != nil {
+					x.handleContractError(log, err, "Failed to submit transaction for xchain request")
+					continue
+				}
+				pending <- &inprogress{pendingTx, receipt}
 			}
-			pending <- &inprogress{pendingTx, receipt}
 		}
-		close(pending)
 	}()
 
 	// wait until all transactions are processed before returning
 	for task := range pending {
 		receipt := <-task.ptx.Wait() // Base transaction receipt
 		if receipt.Status == go_eth_types.ReceiptStatusFailed {
-			log.Error("entitlement check response failed to post",
+			// it is possible that other xchain instances have already reached a quorum and our transaction was simply
+			// too late and failed because of that. Therefor this can be an expected error.
+			log.Warn("entitlement check response failed to post",
 				"tx", receipt.TxHash.Hex(), "tx.success", receipt.Status == crypto.TransactionResultSuccess,
 				"xchain.req.txid", task.outcome.TransactionID, "xchain.req.outcome", task.outcome.Outcome,
 				"gatedContract", task.outcome.Event.ContractAddress())
