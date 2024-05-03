@@ -87,11 +87,10 @@ export async function verifyCreateSpace(
             return { verified: false, error: 'Unable to queryFilter for create town' }
         }
 
-        if (params.env.SKIP_LIMIT_VERIFICATION === 'true') {
-            return { verified: true, maxActionsPerDay: 1_000_000 }
-        }
-
-        if (queryResult.events.length >= TRANSACTION_LIMIT_DEFAULTS_PER_DAY.createSpace) {
+        if (
+            queryResult.events.length >=
+            limitOrSkipLimitVerification(params.env, TRANSACTION_LIMIT_DEFAULTS_PER_DAY.createSpace)
+        ) {
             return { verified: false, error: 'user has reached max mints' }
         }
         return { verified: true, maxActionsPerDay: TRANSACTION_LIMIT_DEFAULTS_PER_DAY.createSpace }
@@ -261,13 +260,6 @@ export async function verifyUseTown(
             return { verified: false, error: 'Unable to queryFilter for use town' }
         }
 
-        if (params.env.SKIP_LIMIT_VERIFICATION === 'true') {
-            return {
-                verified: true,
-                maxActionsPerDay: 1_000_000,
-            }
-        }
-
         let maxActionsPerDay: number | null = null
         switch (params.transactionName) {
             case 'createChannel':
@@ -297,7 +289,9 @@ export async function verifyUseTown(
         if (!maxActionsPerDay) {
             return { verified: false, error: `transaction not supported ${params.transactionName}` }
         }
-        if (queryResult.events.length >= maxActionsPerDay) {
+        if (
+            queryResult.events.length >= limitOrSkipLimitVerification(params.env, maxActionsPerDay)
+        ) {
             return { verified: false, error: 'user has reached max mints' }
         }
         return {
@@ -369,13 +363,6 @@ export async function verifyUpdateSpaceInfo(
             return { verified: false, error: 'Unable to queryFilter for update space' }
         }
 
-        if (params.env.SKIP_LIMIT_VERIFICATION === 'true') {
-            return {
-                verified: true,
-                maxActionsPerDay: 1_000_000,
-            }
-        }
-
         let maxActionsPerDay: number | null = null
         switch (params.transactionName) {
             case 'updateSpaceInfo':
@@ -388,7 +375,9 @@ export async function verifyUpdateSpaceInfo(
         if (!maxActionsPerDay) {
             return { verified: false, error: `transaction not supported ${params.transactionName}` }
         }
-        if (queryResult.events.length >= maxActionsPerDay) {
+        if (
+            queryResult.events.length >= limitOrSkipLimitVerification(params.env, maxActionsPerDay)
+        ) {
             return { verified: false, error: 'user has reached max mints' }
         }
         return {
@@ -500,13 +489,11 @@ export async function verifyLinkWallet(
         if (!queryResult || !queryResult.events) {
             return { verified: false, error: 'Unable to queryFilter for wallet linking' }
         }
-        if (params.env.SKIP_LIMIT_VERIFICATION === 'true') {
-            return {
-                verified: true,
-                maxActionsPerDay: 1_000_000,
-            }
-        }
-        if (queryResult.events.length >= TRANSACTION_LIMIT_DEFAULTS_PER_DAY.linkWallet) {
+
+        if (
+            queryResult.events.length >=
+            limitOrSkipLimitVerification(params.env, TRANSACTION_LIMIT_DEFAULTS_PER_DAY.linkWallet)
+        ) {
             return { verified: false, error: 'user has reached max wallet links for the day' }
         }
         return { verified: true, maxActionsPerDay: TRANSACTION_LIMIT_DEFAULTS_PER_DAY.linkWallet }
@@ -557,13 +544,14 @@ export async function verifyPrepaid(params: ITownTransactionParams): Promise<IVe
         if (!queryResult || !queryResult.events) {
             return { verified: false, error: 'Unable to queryFilter for prepay memberships' }
         }
-        if (params.env.SKIP_LIMIT_VERIFICATION === 'true') {
-            return {
-                verified: true,
-                maxActionsPerDay: 1_000_000,
-            }
-        }
-        if (queryResult.events.length >= TRANSACTION_LIMIT_DEFAULTS_PER_DAY.prepayMembership) {
+
+        if (
+            queryResult.events.length >=
+            limitOrSkipLimitVerification(
+                params.env,
+                TRANSACTION_LIMIT_DEFAULTS_PER_DAY.prepayMembership,
+            )
+        ) {
             return {
                 verified: false,
                 error: 'user has reached max prepay membership operations for the day',
@@ -626,13 +614,14 @@ export async function verifyMembershipChecks(
         if (!queryResult || !queryResult.events) {
             return { verified: false, error: 'Unable to queryFilter for prepay memberships' }
         }
-        if (params.env.SKIP_LIMIT_VERIFICATION === 'true') {
-            return {
-                verified: true,
-                maxActionsPerDay: 1_000_000,
-            }
-        }
-        if (queryResult.events.length >= TRANSACTION_LIMIT_DEFAULTS_PER_DAY.prepayMembership) {
+
+        if (
+            queryResult.events.length >=
+            limitOrSkipLimitVerification(
+                params.env,
+                TRANSACTION_LIMIT_DEFAULTS_PER_DAY.prepayMembership,
+            )
+        ) {
             return {
                 verified: false,
                 error: 'user has reached max prepay membership operations for the day',
@@ -648,4 +637,12 @@ export async function verifyMembershipChecks(
             error: isErrorType(error) ? error?.message : 'Unkown error',
         }
     }
+}
+
+function isSkipLimitVerification(env: Env): boolean {
+    return env.SKIP_LIMIT_VERIFICATION === 'true'
+}
+
+function limitOrSkipLimitVerification(env: Env, limit: number): number {
+    return isSkipLimitVerification(env) ? 1_000_000 : limit
 }

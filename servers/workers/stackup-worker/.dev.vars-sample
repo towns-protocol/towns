@@ -2,10 +2,14 @@
 # for public variables, add them in wrangler.toml
 PAYMASTER_ADDRESS=
 STACKUP_API_TOKEN=
+# skips all verification checks for an operation
 SKIP_TOWNID_VERIFICATION=
 AUTH_SECRET=
 ADMIN_AUTH_SECRET=
+# skips the limit verification for the operation (testing purposes only)
 SKIP_LIMIT_VERIFICATION=
+# skips the privy verification for the operation (testing purposes only)
+SKIP_PRIVY_VERIFICATION
 
 # these are required if SKIP_TOWNID_VERIFICATION is not true
 PRIVY_APP_KEY=

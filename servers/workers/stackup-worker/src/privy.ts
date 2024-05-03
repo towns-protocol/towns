@@ -72,6 +72,25 @@ export function isPrivyApiSearchResponse(obj: any): obj is PrivyApiResponse {
     return true
 }
 
+function mockPrivyApiResponse(): PrivyApiResponse {
+    return {
+        data: [
+            {
+                id: 'x',
+                created_at: 1,
+                linked_accounts: [
+                    {
+                        type: 'privy',
+                        address: '0x123',
+                        verified_at: 1,
+                    },
+                ],
+            },
+        ],
+        next_cursor: 'x',
+    }
+}
+
 export function createPrivSearchRequest(requestObj: PrivySearchRequest, env: Env): RequestInit {
     console.log(env.PRIVY_APP_ID, env.PRIVY_APP_KEY)
     const init = {
@@ -90,6 +109,9 @@ export async function searchPrivyForUser(
     request: PrivySearchRequest,
     env: Env,
 ): Promise<PrivyApiResponse | Response> {
+    if (env.SKIP_PRIVY_VERIFICATION === 'true') {
+        return mockPrivyApiResponse()
+    }
     const init = createPrivSearchRequest(request, env)
     const responseFetched = await fetch(`${PRIVY_API_URL}/users/search`, init)
     console.log('responseFetched', responseFetched.status)

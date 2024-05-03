@@ -16,14 +16,14 @@ EOF
 }
 
 # Initialize variables
-SKIP_TOWNID_VERIFICATION="true"
+SKIP_PRIVY_VERIFICATION="true"
 OUTPUT_TO_FILE="false"
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
         -p | --privy )  
-            SKIP_TOWNID_VERIFICATION="false"
+            SKIP_PRIVY_VERIFICATION="false"
             ;;
         -o | --output )  
             OUTPUT_TO_FILE="true"
@@ -40,13 +40,13 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 
-echo "SKIP_TOWNID_VERIFICATION: ${SKIP_TOWNID_VERIFICATION}"
+echo "SKIP_PRIVY_VERIFICATION: ${SKIP_PRIVY_VERIFICATION}"
 echo "OUTPUT_TO_FILE: ${OUTPUT_TO_FILE}"
 
-if [ "$SKIP_TOWNID_VERIFICATION" = "true" ]; then
-    echo "SKIP_TOWNID_VERIFICATION is true, running with random wallets"
+if [ "$SKIP_PRIVY_VERIFICATION" = "true" ]; then
+    echo "SKIP_PRIVY_VERIFICATION is true, running with random wallets"
 else
-    echo "SKIP_TOWNID_VERIFICATION is false, running as privy user."
+    echo "SKIP_PRIVY_VERIFICATION is false, running as privy user."
 fi
 
 # if service running on port 8686, kill it
@@ -92,7 +92,7 @@ echo "PRIVY_APP_KEY: ${PRIVY_APP_KEY}"
 echo "ALCHEMY_API_KEY: ${ALCHEMY_API_KEY}"
 
 # Define the yarn command without output redirection
-stackup_command="cd ./servers/workers/stackup-worker && yarn dev:local --var PAYMASTER_ADDRESS:0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789 SKIP_LIMIT_VERIFICATION:true SKIP_TOWNID_VERIFICATION:$SKIP_TOWNID_VERIFICATION STACKUP_API_TOKEN:$STACKUP_API_TOKEN PRIVY_APP_KEY:$PRIVY_APP_KEY PRIVY_APP_ID:clml5fp7s013vmf0fnkabuaiw ALCHEMY_API_KEY:$ALCHEMY_API_KEY AUTH_SECRET:foo ENVIRONMENT:test-beta"
+stackup_command="cd ./servers/workers/stackup-worker && yarn dev:local --var PAYMASTER_ADDRESS:0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789 SKIP_LIMIT_VERIFICATION:true SKIP_PRIVY_VERIFICATION:$SKIP_PRIVY_VERIFICATION STACKUP_API_TOKEN:$STACKUP_API_TOKEN PRIVY_APP_KEY:$PRIVY_APP_KEY PRIVY_APP_ID:clml5fp7s013vmf0fnkabuaiw ALCHEMY_API_KEY:$ALCHEMY_API_KEY AUTH_SECRET:foo ENVIRONMENT:test-beta"
 
 # Run the command either in the background or in the foreground based on user's choice
 if [ "$OUTPUT_TO_FILE" = "true" ]; then
