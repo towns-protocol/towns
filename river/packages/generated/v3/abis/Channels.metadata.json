@@ -7,18 +7,18 @@
     "abi": [
       {
         "inputs": [],
-        "type": "error",
-        "name": "ApprovalCallerNotOwnerNorApproved"
+        "name": "ApprovalCallerNotOwnerNorApproved",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "ApprovalQueryForNonexistentToken"
+        "name": "ApprovalQueryForNonexistentToken",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "BalanceQueryForZeroAddress"
+        "name": "BalanceQueryForZeroAddress",
+        "type": "error"
       },
       {
         "inputs": [
@@ -28,13 +28,13 @@
             "type": "uint256"
           }
         ],
-        "type": "error",
-        "name": "Banning__AlreadyBanned"
+        "name": "Banning__AlreadyBanned",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Banning__CannotBanSelf"
+        "name": "Banning__CannotBanSelf",
+        "type": "error"
       },
       {
         "inputs": [
@@ -44,8 +44,8 @@
             "type": "uint256"
           }
         ],
-        "type": "error",
-        "name": "Banning__InvalidTokenId"
+        "name": "Banning__InvalidTokenId",
+        "type": "error"
       },
       {
         "inputs": [
@@ -55,38 +55,38 @@
             "type": "uint256"
           }
         ],
-        "type": "error",
-        "name": "Banning__NotBanned"
+        "name": "Banning__NotBanned",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "ChannelService__ChannelAlreadyExists"
+        "name": "ChannelService__ChannelAlreadyExists",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "ChannelService__ChannelDisabled"
+        "name": "ChannelService__ChannelDisabled",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "ChannelService__ChannelDoesNotExist"
+        "name": "ChannelService__ChannelDoesNotExist",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "ChannelService__RoleAlreadyExists"
+        "name": "ChannelService__RoleAlreadyExists",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "ChannelService__RoleDoesNotExist"
+        "name": "ChannelService__RoleDoesNotExist",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "ERC5643__DurationZero"
+        "name": "ERC5643__DurationZero",
+        "type": "error"
       },
       {
         "inputs": [
@@ -96,13 +96,13 @@
             "type": "uint256"
           }
         ],
-        "type": "error",
-        "name": "ERC5643__InvalidTokenId"
+        "name": "ERC5643__InvalidTokenId",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "ERC5643__NotApprovedOrOwner"
+        "name": "ERC5643__NotApprovedOrOwner",
+        "type": "error"
       },
       {
         "inputs": [
@@ -112,58 +112,58 @@
             "type": "uint256"
           }
         ],
-        "type": "error",
-        "name": "ERC5643__SubscriptionNotRenewable"
+        "name": "ERC5643__SubscriptionNotRenewable",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Entitlement__InvalidValue"
+        "name": "Entitlement__InvalidValue",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Entitlement__NotAllowed"
+        "name": "Entitlement__NotAllowed",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Entitlement__NotMember"
+        "name": "Entitlement__NotMember",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Entitlement__ValueAlreadyExists"
+        "name": "Entitlement__ValueAlreadyExists",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Initializable_InInitializingState"
+        "name": "Initializable_InInitializingState",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Introspection_AlreadySupported"
+        "name": "Introspection_AlreadySupported",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Introspection_NotSupported"
+        "name": "Introspection_NotSupported",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "MintERC2309QuantityExceedsLimit"
+        "name": "MintERC2309QuantityExceedsLimit",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "MintToZeroAddress"
+        "name": "MintToZeroAddress",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "MintZeroQuantity"
+        "name": "MintZeroQuantity",
+        "type": "error"
       },
       {
         "inputs": [
@@ -173,417 +173,417 @@
             "type": "address"
           }
         ],
-        "type": "error",
-        "name": "Ownable__NotOwner"
+        "name": "Ownable__NotOwner",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Ownable__ZeroAddress"
+        "name": "Ownable__ZeroAddress",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "OwnerQueryForNonexistentToken"
+        "name": "OwnerQueryForNonexistentToken",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "OwnershipNotInitializedForExtraData"
+        "name": "OwnershipNotInitializedForExtraData",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Pausable__NotPaused"
+        "name": "Pausable__NotPaused",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Pausable__Paused"
+        "name": "Pausable__Paused",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "TransferCallerNotOwnerNorApproved"
+        "name": "TransferCallerNotOwnerNorApproved",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "TransferFromIncorrectOwner"
+        "name": "TransferFromIncorrectOwner",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "TransferToNonERC721ReceiverImplementer"
+        "name": "TransferToNonERC721ReceiverImplementer",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "TransferToZeroAddress"
+        "name": "TransferToZeroAddress",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "URIQueryForNonexistentToken"
+        "name": "URIQueryForNonexistentToken",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Validator__InvalidStringLength"
+        "name": "Validator__InvalidStringLength",
+        "type": "error"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "address",
             "name": "owner",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           },
           {
+            "indexed": true,
             "internalType": "address",
             "name": "approved",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           },
           {
+            "indexed": true,
             "internalType": "uint256",
             "name": "tokenId",
-            "type": "uint256",
-            "indexed": true
+            "type": "uint256"
           }
         ],
-        "type": "event",
         "name": "Approval",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "address",
             "name": "owner",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           },
           {
+            "indexed": true,
             "internalType": "address",
             "name": "operator",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           },
           {
+            "indexed": false,
             "internalType": "bool",
             "name": "approved",
-            "type": "bool",
-            "indexed": false
+            "type": "bool"
           }
         ],
-        "type": "event",
         "name": "ApprovalForAll",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "address",
             "name": "moderator",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           },
           {
+            "indexed": true,
             "internalType": "uint256",
             "name": "tokenId",
-            "type": "uint256",
-            "indexed": true
+            "type": "uint256"
           }
         ],
-        "type": "event",
         "name": "Banned",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "address",
             "name": "caller",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           },
           {
+            "indexed": false,
             "internalType": "bytes32",
             "name": "channelId",
-            "type": "bytes32",
-            "indexed": false
+            "type": "bytes32"
           }
         ],
-        "type": "event",
         "name": "ChannelCreated",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "address",
             "name": "caller",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           },
           {
+            "indexed": false,
             "internalType": "bytes32",
             "name": "channelId",
-            "type": "bytes32",
-            "indexed": false
+            "type": "bytes32"
           }
         ],
-        "type": "event",
         "name": "ChannelRemoved",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "address",
             "name": "caller",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           },
           {
+            "indexed": false,
             "internalType": "bytes32",
             "name": "channelId",
-            "type": "bytes32",
-            "indexed": false
+            "type": "bytes32"
           },
           {
+            "indexed": false,
             "internalType": "uint256",
             "name": "roleId",
-            "type": "uint256",
-            "indexed": false
+            "type": "uint256"
           }
         ],
-        "type": "event",
         "name": "ChannelRoleAdded",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "address",
             "name": "caller",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           },
           {
+            "indexed": false,
             "internalType": "bytes32",
             "name": "channelId",
-            "type": "bytes32",
-            "indexed": false
+            "type": "bytes32"
           },
           {
+            "indexed": false,
             "internalType": "uint256",
             "name": "roleId",
-            "type": "uint256",
-            "indexed": false
+            "type": "uint256"
           }
         ],
-        "type": "event",
         "name": "ChannelRoleRemoved",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "address",
             "name": "caller",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           },
           {
+            "indexed": false,
             "internalType": "bytes32",
             "name": "channelId",
-            "type": "bytes32",
-            "indexed": false
+            "type": "bytes32"
           }
         ],
-        "type": "event",
         "name": "ChannelUpdated",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "uint256",
             "name": "fromTokenId",
-            "type": "uint256",
-            "indexed": true
+            "type": "uint256"
           },
           {
+            "indexed": false,
             "internalType": "uint256",
             "name": "toTokenId",
-            "type": "uint256",
-            "indexed": false
+            "type": "uint256"
           },
           {
+            "indexed": true,
             "internalType": "address",
             "name": "from",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           },
           {
+            "indexed": true,
             "internalType": "address",
             "name": "to",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           }
         ],
-        "type": "event",
         "name": "ConsecutiveTransfer",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": false,
             "internalType": "uint32",
             "name": "version",
-            "type": "uint32",
-            "indexed": false
+            "type": "uint32"
           }
         ],
-        "type": "event",
         "name": "Initialized",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "bytes4",
             "name": "interfaceId",
-            "type": "bytes4",
-            "indexed": true
+            "type": "bytes4"
           }
         ],
-        "type": "event",
         "name": "InterfaceAdded",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "bytes4",
             "name": "interfaceId",
-            "type": "bytes4",
-            "indexed": true
+            "type": "bytes4"
           }
         ],
-        "type": "event",
         "name": "InterfaceRemoved",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "address",
             "name": "previousOwner",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           },
           {
+            "indexed": true,
             "internalType": "address",
             "name": "newOwner",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           }
         ],
-        "type": "event",
         "name": "OwnershipTransferred",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": false,
             "internalType": "address",
             "name": "account",
-            "type": "address",
-            "indexed": false
+            "type": "address"
           }
         ],
-        "type": "event",
         "name": "Paused",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "uint256",
             "name": "tokenId",
-            "type": "uint256",
-            "indexed": true
+            "type": "uint256"
           },
           {
+            "indexed": false,
             "internalType": "uint64",
             "name": "expiration",
-            "type": "uint64",
-            "indexed": false
+            "type": "uint64"
           }
         ],
-        "type": "event",
         "name": "SubscriptionUpdate",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "address",
             "name": "from",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           },
           {
+            "indexed": true,
             "internalType": "address",
             "name": "to",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           },
           {
+            "indexed": true,
             "internalType": "uint256",
             "name": "tokenId",
-            "type": "uint256",
-            "indexed": true
+            "type": "uint256"
           }
         ],
-        "type": "event",
         "name": "Transfer",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "address",
             "name": "moderator",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           },
           {
+            "indexed": true,
             "internalType": "uint256",
             "name": "tokenId",
-            "type": "uint256",
-            "indexed": true
+            "type": "uint256"
           }
         ],
-        "type": "event",
         "name": "Unbanned",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": false,
             "internalType": "address",
             "name": "account",
-            "type": "address",
-            "indexed": false
+            "type": "address"
           }
         ],
-        "type": "event",
         "name": "Unpaused",
-        "anonymous": false
+        "type": "event"
       },
       {
         "inputs": [
@@ -598,9 +598,10 @@
             "type": "uint256"
           }
         ],
+        "name": "addRoleToChannel",
+        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function",
-        "name": "addRoleToChannel"
+        "type": "function"
       },
       {
         "inputs": [
@@ -620,9 +621,10 @@
             "type": "uint256[]"
           }
         ],
+        "name": "createChannel",
+        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function",
-        "name": "createChannel"
+        "type": "function"
       },
       {
         "inputs": [
@@ -632,14 +634,9 @@
             "type": "bytes32"
           }
         ],
-        "stateMutability": "view",
-        "type": "function",
         "name": "getChannel",
         "outputs": [
           {
-            "internalType": "struct IChannelBase.Channel",
-            "name": "channel",
-            "type": "tuple",
             "components": [
               {
                 "internalType": "bytes32",
@@ -661,20 +658,20 @@
                 "name": "roleIds",
                 "type": "uint256[]"
               }
-            ]
+            ],
+            "internalType": "struct IChannelBase.Channel",
+            "name": "channel",
+            "type": "tuple"
           }
-        ]
+        ],
+        "stateMutability": "view",
+        "type": "function"
       },
       {
         "inputs": [],
-        "stateMutability": "view",
-        "type": "function",
         "name": "getChannels",
         "outputs": [
           {
-            "internalType": "struct IChannelBase.Channel[]",
-            "name": "channels",
-            "type": "tuple[]",
             "components": [
               {
                 "internalType": "bytes32",
@@ -696,9 +693,14 @@
                 "name": "roleIds",
                 "type": "uint256[]"
               }
-            ]
+            ],
+            "internalType": "struct IChannelBase.Channel[]",
+            "name": "channels",
+            "type": "tuple[]"
           }
-        ]
+        ],
+        "stateMutability": "view",
+        "type": "function"
       },
       {
         "inputs": [
@@ -708,8 +710,6 @@
             "type": "bytes32"
           }
         ],
-        "stateMutability": "view",
-        "type": "function",
         "name": "getRolesByChannel",
         "outputs": [
           {
@@ -717,7 +717,9 @@
             "name": "roleIds",
             "type": "uint256[]"
           }
-        ]
+        ],
+        "stateMutability": "view",
+        "type": "function"
       },
       {
         "inputs": [
@@ -727,9 +729,10 @@
             "type": "bytes32"
           }
         ],
+        "name": "removeChannel",
+        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function",
-        "name": "removeChannel"
+        "type": "function"
       },
       {
         "inputs": [
@@ -744,9 +747,10 @@
             "type": "uint256"
           }
         ],
+        "name": "removeRoleFromChannel",
+        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function",
-        "name": "removeRoleFromChannel"
+        "type": "function"
       },
       {
         "inputs": [
@@ -766,12 +770,33 @@
             "type": "bool"
           }
         ],
+        "name": "updateChannel",
+        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function",
-        "name": "updateChannel"
+        "type": "function"
       }
     ],
     "devdoc": {
+      "events": {
+        "Approval(address,address,uint256)": {
+          "details": "Emitted when `owner` enables `approved` to manage the `tokenId` token."
+        },
+        "ApprovalForAll(address,address,bool)": {
+          "details": "Emitted when `owner` enables or disables (`approved`) `operator` to manage all of its assets."
+        },
+        "ConsecutiveTransfer(uint256,uint256,address,address)": {
+          "details": "Emitted when tokens in `fromTokenId` to `toTokenId` (inclusive) is transferred from `from` to `to`, as defined in the [ERC2309](https://eips.ethereum.org/EIPS/eip-2309) standard. See {_mintERC2309} for more details."
+        },
+        "OwnershipTransferred(address,address)": {
+          "details": "This emits when ownership of a contract changes."
+        },
+        "SubscriptionUpdate(uint256,uint64)": {
+          "details": "When a subscription is canceled, the expiration value should also be 0."
+        },
+        "Transfer(address,address,uint256)": {
+          "details": "Emitted when `tokenId` token is transferred from `from` to `to`."
+        }
+      },
       "kind": "dev",
       "methods": {
         "addRoleToChannel(bytes32,uint256)": {
@@ -830,6 +855,84 @@
       "version": 1
     },
     "userdoc": {
+      "errors": {
+        "ApprovalCallerNotOwnerNorApproved()": [
+          {
+            "notice": "The caller must own the token or be an approved operator."
+          }
+        ],
+        "ApprovalQueryForNonexistentToken()": [
+          {
+            "notice": "The token does not exist."
+          }
+        ],
+        "BalanceQueryForZeroAddress()": [
+          {
+            "notice": "Cannot query the balance for the zero address."
+          }
+        ],
+        "MintERC2309QuantityExceedsLimit()": [
+          {
+            "notice": "The `quantity` minted with ERC2309 exceeds the safety limit."
+          }
+        ],
+        "MintToZeroAddress()": [
+          {
+            "notice": "Cannot mint to the zero address."
+          }
+        ],
+        "MintZeroQuantity()": [
+          {
+            "notice": "The quantity of tokens minted must be more than zero."
+          }
+        ],
+        "OwnerQueryForNonexistentToken()": [
+          {
+            "notice": "The token does not exist."
+          }
+        ],
+        "OwnershipNotInitializedForExtraData()": [
+          {
+            "notice": "The `extraData` cannot be set on an unintialized ownership slot."
+          }
+        ],
+        "TransferCallerNotOwnerNorApproved()": [
+          {
+            "notice": "The caller must own the token or be an approved operator."
+          }
+        ],
+        "TransferFromIncorrectOwner()": [
+          {
+            "notice": "The token must be owned by `from`."
+          }
+        ],
+        "TransferToNonERC721ReceiverImplementer()": [
+          {
+            "notice": "Cannot safely transfer to a contract that does not implement the ERC721Receiver interface."
+          }
+        ],
+        "TransferToZeroAddress()": [
+          {
+            "notice": "Cannot transfer to the zero address."
+          }
+        ],
+        "URIQueryForNonexistentToken()": [
+          {
+            "notice": "The token does not exist."
+          }
+        ]
+      },
+      "events": {
+        "InterfaceAdded(bytes4)": {
+          "notice": "Emitted when an interface is added to the contract via `_addInterface`."
+        },
+        "InterfaceRemoved(bytes4)": {
+          "notice": "Emitted when an interface is removed from the contract via `_removeInterface`."
+        },
+        "SubscriptionUpdate(uint256,uint64)": {
+          "notice": "Emitted when a subscription expiration changes"
+        }
+      },
       "kind": "user",
       "methods": {
         "addRoleToChannel(bytes32,uint256)": {
@@ -861,350 +964,350 @@
     }
   },
   "settings": {
-    "remappings": [
-      "@openzeppelin/=lib/@openzeppelin/",
-      "@prb/math/=lib/@prb/math/src/",
-      "@prb/test/=lib/@prb/test/src/",
-      "account-abstraction/=lib/account-abstraction/contracts/",
-      "base64/=lib/base64/",
-      "ds-test/=lib/ds-test/src/",
-      "forge-std/=lib/forge-std/src/",
-      "hardhat-deploy/=lib/hardhat-deploy/"
-    ],
-    "optimizer": {
-      "enabled": true,
-      "runs": 200
-    },
-    "metadata": {
-      "bytecodeHash": "none",
-      "appendCBOR": false
-    },
     "compilationTarget": {
       "contracts/src/spaces/facets/channels/Channels.sol": "Channels"
     },
     "evmVersion": "paris",
-    "libraries": {}
+    "libraries": {},
+    "metadata": {
+      "appendCBOR": false,
+      "bytecodeHash": "none"
+    },
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "remappings": [
+      ":@openzeppelin/=lib/@openzeppelin/",
+      ":@prb/math/=lib/@prb/math/src/",
+      ":@prb/test/=lib/@prb/test/src/",
+      ":account-abstraction/=lib/account-abstraction/contracts/",
+      ":base64/=lib/base64/",
+      ":ds-test/=lib/ds-test/src/",
+      ":forge-std/=lib/forge-std/src/",
+      ":hardhat-deploy/=lib/hardhat-deploy/"
+    ]
   },
   "sources": {
     "contracts/src/diamond/facets/Facet.sol": {
       "keccak256": "0xecbb7e8de0dae5bdbcbda879436335abac6808bcc2e14f1f4e9efbdc77c4e8be",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://b7b5446461a1492f16c86137ce49a699d8a3452e2174c5568b97f8d2d4bc85a7",
         "dweb:/ipfs/QmY74odf1qgTwBV3wjF12rV8TXs3DiNoMm9Pg9S8w2F4VP"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/initializable/Initializable.sol": {
       "keccak256": "0xe02e99665b5acb22d5c508c3bda97c35acd2597ce0a58569a19cc12f0010da90",
+      "license": "MIT",
       "urls": [
         "bzz-raw://b586a51dbe63e8763ae0b2b3dadd5c8559f47bc8cbaa0e9fe52aaec4c3677552",
         "dweb:/ipfs/QmRtaVikg6YDwzUAtY7WV793taZgT1ZxyMB4PLAEqGBeCC"
-      ],
-      "license": "MIT"
+      ]
     },
     "contracts/src/diamond/facets/initializable/InitializableStorage.sol": {
       "keccak256": "0x5dbbdca0faf75680e1c0d425d92bdb5ce16951c0f8215a668c5144c0ffdb1b01",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://05e5ba4fcd6e3e1e819e786fce3473d5ef69763b127fe162b2e0906d6a904d09",
         "dweb:/ipfs/QmYPN5xeMoMBVT2B2FwJrDpwocNNsCuVosgg7vdYrrWNep"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/introspection/IERC165.sol": {
       "keccak256": "0x243cfeefa64ba07bee887b0b03704147f9bd2f25571272a6ebca3ba684af1b00",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://1aed67ea7251fad9dbfb58a30f59f7edd81d48d7f6b193b98f957be359653361",
         "dweb:/ipfs/QmQauJL4nFMN3QDutjWezRbBjLX5GsTWt5jeLfkX4JW64T"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/introspection/IntrospectionBase.sol": {
       "keccak256": "0x5f458cf292b4b7b9d9c1efd110b3b65905c7bd7e47a48090af5eb9fb7d620ddf",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://84995121aafc9124ba3a1148835dcccc1061c25a5b074b4579a83c0dd213d613",
         "dweb:/ipfs/QmPYSKEqYWasPxVRzv4TCpXVfpkahfFDEPkTLp7UAT9fKq"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/introspection/IntrospectionStorage.sol": {
       "keccak256": "0x2e047e5efa9df7f3d60a8a114da39343635578b7475fcd987860eb5b87e8c758",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://a071eda8331b690b689bbbc23e6a6c227324aad90d4101c36410a06b1ca3c357",
         "dweb:/ipfs/QmTR76zN1durS5acgDZXixrkrheXvaaMqfwXrJsaGyAPkj"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/ownable/IERC173.sol": {
       "keccak256": "0xec6475a73e1229430edadb6fd3e32f1599ebb8af78dbbc762d54ded196e534ae",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://46e9fef226666c827f408b5d2c9061600fa5233ddf5fcbc3a2b8956d89e8a872",
         "dweb:/ipfs/Qmd6L6wtehyrD8XwKqFD7gG5hJxsBZ1ja6hGSf2dtN4XEx"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/ownable/token/ITokenOwnable.sol": {
       "keccak256": "0x3035bb5eb69a7c939aa038f27eb216b117727beba7d89aa84657c3f24c98b32d",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://c1a6860c8105dad4d1b193883ecd700c223ea9b81c096ed86b3d25bd6c9eed7f",
         "dweb:/ipfs/QmVEDbbF6eyZfmqcM1FfedAuCQqiUYpagDmZMhHM4Ap7n9"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/ownable/token/TokenOwnableBase.sol": {
       "keccak256": "0xc5ef68652f692a56131badcf0adb92893d822fd5e0d97dda49a4520d1859a00a",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://bf38ee4ec154de7ef7de263241454d98392d6e61caf4582e2145325258bb8fa5",
         "dweb:/ipfs/QmcZGn5KeSPwsTVominE537CDPbTMGoVDgko51onHZoGyW"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/ownable/token/TokenOwnableStorage.sol": {
       "keccak256": "0xb348f08d762f1b4ccda363a361eb6d635b50501e93821fe9911296f86f4374f0",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://4416ee362b1485fb1cbae83087f7da85d34fec41a39146bd1fb9f877094df0fc",
         "dweb:/ipfs/QmPiCdrarzwS1YLYLPpcPMFxhkqE5rT9EFLYsVCV2N5Qkf"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/pausable/IPausable.sol": {
       "keccak256": "0xd5cc8d743bd12bbd23526178c11808634527c87e2f6da29dfb6aec75dab56261",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://c893da163481570ae2e00e5deae732404261cc0e7143fdc0448145810448c6b6",
         "dweb:/ipfs/QmbyUkcew8vmUXPVLDJ7GjvxMkmTqjhKZWLDYtWEPzZ2SM"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/pausable/PausableBase.sol": {
       "keccak256": "0xa278c9cdc622351a088d6d96759a51972b1720ef72424f1f98e5822dd9fd6438",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://379dabb0f68319e89d4b7447c31d5a3d0d2b4ecbce92b07f6e096974f2541c6c",
         "dweb:/ipfs/QmPQPKBYtuNiFDNh9nGCJGtLXP2AqPLkZ7BBTKgQZeaVH1"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/pausable/PausableStorage.sol": {
       "keccak256": "0x54ca45de7b414be27767111aa11f06e9d5deeb3241bb4c9476edda7febd92c07",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://0e573c53f32ec5c9c89e68ca9e2153635fcb2694ba261e93389dc360ef98226b",
         "dweb:/ipfs/QmQUfuRRg8zRFzrqfYaay7RyR2L4D4d4vb4c2TtUqb2GhL"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/token/ERC5643/ERC5643Base.sol": {
       "keccak256": "0x08a5e803cae11a5ca3cb43e3243b4af0339cf044fe8a8f33c02eeac6a89771a3",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://1b9dffbbd0c961d87eeaa10665ed93a3a919dc53db0e684b76d66b0f7e2a0714",
         "dweb:/ipfs/QmbgTB2swkeRsc7Dc1Wf28cLcKTExw2pzDY66zy5kFLeE8"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/token/ERC5643/ERC5643Storage.sol": {
       "keccak256": "0x5d560d4d09c521bd463e6ea41eb6451a76f815222d9b3a9b15aff5ce56a2e15e",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://395630900bc5b43af14ba8b2b9a97357d9b36ed2debfb72b4fab1999294645c7",
         "dweb:/ipfs/QmNa6GUiCLSnL3jRKewzpC5TU5TtYxdNNUhPHTqoZ4sGC7"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/token/ERC5643/IERC5643.sol": {
       "keccak256": "0x3d75267c3894bc9b201b30af94a4587cca8dc3363593a47ee4cc3b9ff27a7218",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://3e50378e2ca909177555139f16db11f2fc7f3e97acbc40fc6eea5848bbd61b3f",
         "dweb:/ipfs/Qmdi2FBhdWAAFE8Kr5DFu9qoESLcH1STb7bm7kXxEjrsJB"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol": {
       "keccak256": "0x8e6c8700603a5f50982462009bf0bd6d9167937d75d5d5b4ecaf2be25e48f334",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://4003c6a7b68ba9d38baa8a338a747c70048f6ce862b34bd5b8da390a888b73fa",
         "dweb:/ipfs/QmSGRHzFkquMpe6zdDnRBG6e5ngr7QNDHD8ovb4RDACB7W"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/token/ERC721A/ERC721AStorage.sol": {
       "keccak256": "0x8be3fa58d9bb445d169eda30dd35f34e149947eb0572cdb2ced99ed854b8cdc1",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://1b3d9b6c0aef7519ce60c08880a551a0579ae1625e16f89a728700f2eb7e075c",
         "dweb:/ipfs/QmZfS4Lt9mZBPpYxehPb5p9VAGGVdKGkHpZyhoKTP2rSUu"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol": {
       "keccak256": "0xfce3dc8955c337c405c27c7741b7beff81685ed89f2e102fbad517043e20edf9",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://6c0ef999aaa971921ba4a4d2190ce5fae92fe15a34a87aac02fd081773fdbe9e",
         "dweb:/ipfs/QmUFD83GFhupZo2d3PafyK5fjqrzFRDnJHEsTGYhHakzUM"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/factory/facets/wallet-link/IWalletLink.sol": {
       "keccak256": "0x548d2531215e1387f83265975af58947d37c01ae9ea75cce91147a2468fc653b",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://f2300ddc317d8f0e9f24dee7904de69a87325305d913f541a0dc877bba7e1f13",
         "dweb:/ipfs/QmY6kMFdswJnVtkYu415QG5ePjUrS9W1QiXi9VXaLBeRJR"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/spaces/entitlements/IEntitlement.sol": {
       "keccak256": "0x84f059cb6d594cbe0a70ed4a10c9b96f82d530c9dba39a5d84e466f5b046b9ca",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://68fdceef136a16c8a11e1b354119d39697029ea41db4ae4edc9ea9d68e9c12a3",
         "dweb:/ipfs/QmbCmoo6nMDou5m77JzFBPc2GBJkET5F2eWDEZaXQ5taHf"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/spaces/facets/Entitled.sol": {
       "keccak256": "0x60df2d441d103a23e8ff1fa5815399bf58dc25b19030de56c15cf9a84393c62c",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://d13b2b6464b4a820ff88aae2a59bf003bc7d61a1e630ac69e0849d54446539b7",
         "dweb:/ipfs/QmZe187XqCCNxmwj3BKGRtyNyEoEga22oqGQe8iao7LQCc"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/spaces/facets/Permissions.sol": {
       "keccak256": "0xd168f6402ce23a1bbc0503c1287e94096ef7c7b35733a8d835a8747f79df77f5",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://2d805a55d9e2050d763bc1cf3f0a5d40ca8066bdcdc3c920908f6f63cfa1a721",
         "dweb:/ipfs/QmPSieLU3W9f8FrDu918KPPSQQKBMfRUetRq5fdEsTBFxp"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/spaces/facets/banning/BanningBase.sol": {
       "keccak256": "0xa78695942b8e0415e7177d20dd06f596566a649e68c89d1ed15ec90e74a95270",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://07c4a45a6d0e3d03752be2a31a07282a39c8f72536e3ad834fd4d183052a879d",
         "dweb:/ipfs/QmP7ww27otUvq2wKy7rewxEAu2JzD5ALwRgJhRBPNKr8EN"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/spaces/facets/banning/BanningStorage.sol": {
       "keccak256": "0xd48969bfaf9c8bfc980981818ed96101e858652f5516567c08236ce525487492",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://95f1b33fb46ea8d8ed6145d4f646dca4f670712dca81ec75cab5db2dbff6e0f0",
         "dweb:/ipfs/QmPfCAZF3S5ehqKoL2SBg2TEB22TKFuytDNcG8PBa7qVe1"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/spaces/facets/banning/IBanning.sol": {
       "keccak256": "0x1983a3e375f4dd8a21be759a637b85ed5e416ca8fc7109153986eb2d4b08a505",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://1f5f5a54e4cbaca9e10cc174ba73f5f80b0875d097084a9ebc6b259b2c4c1419",
         "dweb:/ipfs/QmQSfNhhRNkiHeG1XXWVYhQtvuPRyrv72gxuARgsgupjn6"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/spaces/facets/channels/ChannelBase.sol": {
       "keccak256": "0x51d5d8335e585b052a43afc3b5018429c2dd22f67e4b60b3f8f659d9d0b0ec08",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://b6d5953dfa9b5e857aaf153df1c1d04ece5fb9d7250c78a87edaef84d3b053d7",
         "dweb:/ipfs/QmYrKaVH2ftMJBWfUJGdQYV3LBoYuxTsXj1erndYrEE4Jp"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/spaces/facets/channels/ChannelService.sol": {
       "keccak256": "0x5459092e3b26770de949b6ce3021e3582b62602cf3a419a695da19aa1810eab7",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://d80a0bc5adf516cfda380ac0bc966e2f430b395b78b5aa756adc3ef0a28ae1b9",
         "dweb:/ipfs/QmW2RvEFxrhFt5gxBK2Ay5BS1BgXAv37sipBPSxYBt1vfi"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/spaces/facets/channels/ChannelStorage.sol": {
       "keccak256": "0x2c56c47bf36e703f0703ea1f2a27db2406b17d2a173d24bde6efbbfc4bab301f",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://0030cd42de4b20ddb33284bec5065fa4d1edb817ac7f667f845881cb66a2a3b7",
         "dweb:/ipfs/QmNg6DmtqbHn4QMiMzu4yAr8G5G19HZSJ6dRteeGArsnzS"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/spaces/facets/channels/Channels.sol": {
       "keccak256": "0xeb1a27c173aa374fb10e7864b10926b2207b344099f35c36ceaa61f737c29580",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://dc8606c41a52c9c41dfe5fd26c306b6eae730618b1a074e6e862f46e6deeec82",
         "dweb:/ipfs/QmfVXU1NQkxKSYH3tApnHKEzatmHjmJnKzM1Vo6n9QaH7S"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/spaces/facets/channels/IChannel.sol": {
       "keccak256": "0x4a62ec6410779121880a21ae1a42bab2480f672c683f79c7f2e11bf2bfe1bd6e",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://61b4142a55418d8e15e4db77bf6614a830489dc6aa191afe3dadc9ef16534b2c",
         "dweb:/ipfs/Qmbuc8VBmoFrbWZGinbCQaCrBRw3DznYhZNLzqk2FXABUx"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/spaces/facets/delegation/WalletLinkProxyBase.sol": {
       "keccak256": "0xac57b39cf710166b1c2dc1f0c7bf58fb813ceb047312b346a01e31df615c14f2",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://e3a22fb662252a0d23980b5a8700084f1a314b60a2f537243c9a5d202105a3a5",
         "dweb:/ipfs/QmXd6ibShjPAtPsyFuo7Wmai8fcbKkfbS48sAhTtXU7Yk9"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/spaces/facets/delegation/WalletLinkProxyStorage.sol": {
       "keccak256": "0xe4469f1cf8e5814c8b19b4ac664b904aa786590ece22ae7197abebe9b1bcb9ef",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://5a7dea70d2ebaf427c44a4934c18578ab6bdc797a2a7abd4768b86e1a63fce07",
         "dweb:/ipfs/QmYqnqHFfyMdHVsM8XuAttJWeMuGePfmYL9NZx8f8bw8Ek"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/spaces/facets/entitlements/EntitlementsManagerStorage.sol": {
       "keccak256": "0xc8e97604a9fb7e2f90de70eed0299ad59bbede47563103fc4cdae8b5a90088f8",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://01194896393f0e77f617f02bed7da7cee5ec7a2d810a058f9c1be8c2ad99f583",
         "dweb:/ipfs/QmbPtkGzBPHYKwvsM3d26MYJKLbFZ7p253pXJCe8aDzUfK"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/spaces/facets/membership/MembershipStorage.sol": {
       "keccak256": "0xfafb84c26848038b4c8e0bb2ac1ff6117fb6fa102986691b271146887f820f44",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://5613011690b7c5d597003c6102f10bf666a11b6e80baf6480a00483baf5a7091",
         "dweb:/ipfs/QmRL8Bt5MJ821jcnFGmjFg3vgfH98D2vT3xgr9cdtMJGwY"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/utils/Validator.sol": {
       "keccak256": "0xb8d6d023395c2611e308cb09606dc9e49dce0d985a75f20572aeed590d738f50",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://144807c8826c643f74c48e3589243ac4b05dffd0a00b861b75ce46451224be64",
         "dweb:/ipfs/QmazGzxM9owCyKTV1cY46PiMHXdApYJR221Lm9YMcn7J72"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "lib/@openzeppelin/contracts/token/ERC721/IERC721.sol": {
       "keccak256": "0x5ef46daa3b58ef2702279d514780316efaa952915ee1aa3396f041ee2982b0b4",
+      "license": "MIT",
       "urls": [
         "bzz-raw://2f8f2a76e23b02fc69e8cd24c3cb47da6c7af3a2d6c3a382f8ac25c6e094ade7",
         "dweb:/ipfs/QmPV4ZS4tPVv4mTCf9ejyZ1ai57EEibDRj7mN2ARDCLV5n"
-      ],
-      "license": "MIT"
+      ]
     },
     "lib/@openzeppelin/contracts/utils/Address.sol": {
       "keccak256": "0xaf28a975a78550e45f65e559a3ad6a5ad43b9b8a37366999abd1b7084eb70721",
+      "license": "MIT",
       "urls": [
         "bzz-raw://b7bd24e224f67f65bfadf85dc2929fa965456bb2415478bd0125471b5ce35245",
         "dweb:/ipfs/QmRaydGr8BTHs1kvaZfsNU69pKzUAGFrvABn1KiRSbE51y"
-      ],
-      "license": "MIT"
+      ]
     },
     "lib/@openzeppelin/contracts/utils/introspection/IERC165.sol": {
       "keccak256": "0x4296879f55019b23e135000eb36896057e7101fb7fb859c5ef690cf14643757b",
+      "license": "MIT",
       "urls": [
         "bzz-raw://87b3541437c8c443ccd36795e56a338ed12855eec17f8da624511b8d1a7e14df",
         "dweb:/ipfs/QmeJQCtZrQjtJLr6u7ZHWeH3pBnjtLWzvRrKViAi7UZqxL"
-      ],
-      "license": "MIT"
+      ]
     },
     "lib/@openzeppelin/contracts/utils/structs/EnumerableSet.sol": {
       "keccak256": "0x86c1470cbfd878491e5de030072b647352d36bd27122cffb928970b1945282aa",
+      "license": "MIT",
       "urls": [
         "bzz-raw://ad85dd393ee0a1917c57046abc5155f51f77844b2c6a42c05c1b8dd26d6ff3c1",
         "dweb:/ipfs/QmNqYc8To2NdnpP6E1tGz7t6A7beuENde5yovwov5pW1fA"
-      ],
-      "license": "MIT"
+      ]
     }
   },
   "version": 1

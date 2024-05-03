@@ -26,7 +26,4 @@ interface IUserEntitlement is IEntitlement {
   function getEntitlementDataByRoleId(
     uint256 roleId
   ) external view returns (bytes memory);
-
-  // Include any events that the interface should expose
-  // event ExampleEvent(address indexed user, uint256 indexed roleId);
 }

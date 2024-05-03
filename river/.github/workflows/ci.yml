@@ -540,6 +540,9 @@ jobs:
             - name: Wait for (with entitlements) node to be up
               run: yarn csb:wait:entitlements
 
+            - name: Start xchain node with entitlements
+              run: (RUN_ENV=single ./core/xchain/launch_multi.sh &) && sleep 10
+
             - name: Build & Test (with entitlements)
               run: yarn csb:turbo-no-sdk
 
@@ -674,6 +677,9 @@ jobs:
                   ./run_multi.sh -r &
                   for i in {5170..5179}; do yarn wait-on https://localhost:$i/debug/multi --timeout=900000 --i=5000 --verbose; done
 
+            - name: Start xchain node with entitlements
+              run: (RUN_ENV=multi ./core/xchain/launch_multi.sh &) && sleep 10
+    
             - name: Build & Test (with entitlements)
               run: yarn csb:turbo-no-sdk
 

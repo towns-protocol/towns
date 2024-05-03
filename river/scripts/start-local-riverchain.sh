@@ -17,4 +17,4 @@ fi
 echo "Block time: $RIVER_BLOCK_TIME"
 echo "Options: $OPTS"
 
-anvil --chain-id 31338 --port 8546 --silent $OPTS
+anvil --chain-id 31338 --port 8546  $OPTS

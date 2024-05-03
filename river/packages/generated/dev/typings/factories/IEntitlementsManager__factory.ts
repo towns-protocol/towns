@@ -79,6 +79,37 @@ const _abi = [
   },
   {
     type: "function",
+    name: "getEntitlementDataByPermission",
+    inputs: [
+      {
+        name: "permission",
+        type: "string",
+        internalType: "string",
+      },
+    ],
+    outputs: [
+      {
+        name: "",
+        type: "tuple[]",
+        internalType: "struct IEntitlementsManager.EntitlementData[]",
+        components: [
+          {
+            name: "entitlementType",
+            type: "string",
+            internalType: "string",
+          },
+          {
+            name: "entitlementData",
+            type: "bytes",
+            internalType: "bytes",
+          },
+        ],
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
     name: "getEntitlements",
     inputs: [],
     outputs: [

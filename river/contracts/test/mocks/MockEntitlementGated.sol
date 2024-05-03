@@ -10,11 +10,6 @@ contract MockEntitlementGated is EntitlementGated {
     _setEntitlementChecker(checker);
   }
 
-  function _onEntitlementCheckResultPosted(
-    bytes32,
-    NodeVoteStatus
-  ) internal pure override {}
-
   function requestEntitlementCheck(
     IRuleEntitlement.RuleData calldata ruleData
   ) external override returns (bytes32) {

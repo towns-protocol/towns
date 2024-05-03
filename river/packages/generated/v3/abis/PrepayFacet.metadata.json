@@ -7,192 +7,193 @@
     "abi": [
       {
         "inputs": [],
-        "type": "error",
-        "name": "Initializable_InInitializingState"
+        "name": "Initializable_InInitializingState",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Initializable_NotInInitializingState"
+        "name": "Initializable_NotInInitializingState",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Introspection_AlreadySupported"
+        "name": "Introspection_AlreadySupported",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Introspection_NotSupported"
+        "name": "Introspection_NotSupported",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Platform__InvalidFeeRecipient"
+        "name": "Platform__InvalidFeeRecipient",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Platform__InvalidMembershipBps"
+        "name": "Platform__InvalidMembershipBps",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Platform__InvalidMembershipDuration"
+        "name": "Platform__InvalidMembershipDuration",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Platform__InvalidMembershipMintLimit"
+        "name": "Platform__InvalidMembershipMintLimit",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "PrepayBase__InvalidAddress"
+        "name": "PrepayBase__InvalidAddress",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "PrepayBase__InvalidAmount"
+        "name": "PrepayBase__InvalidAmount",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "PrepayBase__InvalidMembership"
+        "name": "PrepayBase__InvalidMembership",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "ReentrancyGuard__ReentrantCall"
+        "name": "ReentrancyGuard__ReentrantCall",
+        "type": "error"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": false,
             "internalType": "uint32",
             "name": "version",
-            "type": "uint32",
-            "indexed": false
+            "type": "uint32"
           }
         ],
-        "type": "event",
         "name": "Initialized",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "bytes4",
             "name": "interfaceId",
-            "type": "bytes4",
-            "indexed": true
+            "type": "bytes4"
           }
         ],
-        "type": "event",
         "name": "InterfaceAdded",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "bytes4",
             "name": "interfaceId",
-            "type": "bytes4",
-            "indexed": true
+            "type": "bytes4"
           }
         ],
-        "type": "event",
         "name": "InterfaceRemoved",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "address",
             "name": "recipient",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           }
         ],
-        "type": "event",
         "name": "PlatformFeeRecipientSet",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": false,
             "internalType": "uint16",
             "name": "bps",
-            "type": "uint16",
-            "indexed": false
+            "type": "uint16"
           }
         ],
-        "type": "event",
         "name": "PlatformMembershipBpsSet",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": false,
             "internalType": "uint256",
             "name": "duration",
-            "type": "uint256",
-            "indexed": false
+            "type": "uint256"
           }
         ],
-        "type": "event",
         "name": "PlatformMembershipDurationSet",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": false,
             "internalType": "uint256",
             "name": "fee",
-            "type": "uint256",
-            "indexed": false
+            "type": "uint256"
           }
         ],
-        "type": "event",
         "name": "PlatformMembershipFeeSet",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": false,
             "internalType": "uint256",
             "name": "limit",
-            "type": "uint256",
-            "indexed": false
+            "type": "uint256"
           }
         ],
-        "type": "event",
         "name": "PlatformMembershipMintLimitSet",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "address",
             "name": "membership",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           },
           {
+            "indexed": false,
             "internalType": "uint256",
             "name": "supply",
-            "type": "uint256",
-            "indexed": false
+            "type": "uint256"
           }
         ],
-        "type": "event",
         "name": "PrepayBase__Prepaid",
-        "anonymous": false
+        "type": "event"
       },
       {
         "inputs": [],
+        "name": "__PrepayFacet_init",
+        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function",
-        "name": "__PrepayFacet_init"
+        "type": "function"
       },
       {
         "inputs": [
@@ -202,8 +203,6 @@
             "type": "uint256"
           }
         ],
-        "stateMutability": "view",
-        "type": "function",
         "name": "calculateMembershipPrepayFee",
         "outputs": [
           {
@@ -211,7 +210,9 @@
             "name": "",
             "type": "uint256"
           }
-        ]
+        ],
+        "stateMutability": "view",
+        "type": "function"
       },
       {
         "inputs": [
@@ -221,8 +222,6 @@
             "type": "address"
           }
         ],
-        "stateMutability": "view",
-        "type": "function",
         "name": "prepaidMembershipSupply",
         "outputs": [
           {
@@ -230,7 +229,9 @@
             "name": "",
             "type": "uint256"
           }
-        ]
+        ],
+        "stateMutability": "view",
+        "type": "function"
       },
       {
         "inputs": [
@@ -245,9 +246,10 @@
             "type": "uint256"
           }
         ],
+        "name": "prepayMembership",
+        "outputs": [],
         "stateMutability": "payable",
-        "type": "function",
-        "name": "prepayMembership"
+        "type": "function"
       }
     ],
     "devdoc": {
@@ -279,6 +281,14 @@
       "version": 1
     },
     "userdoc": {
+      "events": {
+        "InterfaceAdded(bytes4)": {
+          "notice": "Emitted when an interface is added to the contract via `_addInterface`."
+        },
+        "InterfaceRemoved(bytes4)": {
+          "notice": "Emitted when an interface is removed from the contract via `_removeInterface`."
+        }
+      },
       "kind": "user",
       "methods": {
         "calculateMembershipPrepayFee(uint256)": {
@@ -295,246 +305,246 @@
     }
   },
   "settings": {
-    "remappings": [
-      "@openzeppelin/=lib/@openzeppelin/",
-      "@prb/math/=lib/@prb/math/src/",
-      "@prb/test/=lib/@prb/test/src/",
-      "account-abstraction/=lib/account-abstraction/contracts/",
-      "base64/=lib/base64/",
-      "ds-test/=lib/ds-test/src/",
-      "forge-std/=lib/forge-std/src/",
-      "hardhat-deploy/=lib/hardhat-deploy/"
-    ],
-    "optimizer": {
-      "enabled": true,
-      "runs": 200
-    },
-    "metadata": {
-      "bytecodeHash": "none",
-      "appendCBOR": false
-    },
     "compilationTarget": {
       "contracts/src/factory/facets/prepay/PrepayFacet.sol": "PrepayFacet"
     },
     "evmVersion": "paris",
-    "libraries": {}
+    "libraries": {},
+    "metadata": {
+      "appendCBOR": false,
+      "bytecodeHash": "none"
+    },
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "remappings": [
+      ":@openzeppelin/=lib/@openzeppelin/",
+      ":@prb/math/=lib/@prb/math/src/",
+      ":@prb/test/=lib/@prb/test/src/",
+      ":account-abstraction/=lib/account-abstraction/contracts/",
+      ":base64/=lib/base64/",
+      ":ds-test/=lib/ds-test/src/",
+      ":forge-std/=lib/forge-std/src/",
+      ":hardhat-deploy/=lib/hardhat-deploy/"
+    ]
   },
   "sources": {
     "contracts/src/diamond/facets/Facet.sol": {
       "keccak256": "0xecbb7e8de0dae5bdbcbda879436335abac6808bcc2e14f1f4e9efbdc77c4e8be",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://b7b5446461a1492f16c86137ce49a699d8a3452e2174c5568b97f8d2d4bc85a7",
         "dweb:/ipfs/QmY74odf1qgTwBV3wjF12rV8TXs3DiNoMm9Pg9S8w2F4VP"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/initializable/Initializable.sol": {
       "keccak256": "0xe02e99665b5acb22d5c508c3bda97c35acd2597ce0a58569a19cc12f0010da90",
+      "license": "MIT",
       "urls": [
         "bzz-raw://b586a51dbe63e8763ae0b2b3dadd5c8559f47bc8cbaa0e9fe52aaec4c3677552",
         "dweb:/ipfs/QmRtaVikg6YDwzUAtY7WV793taZgT1ZxyMB4PLAEqGBeCC"
-      ],
-      "license": "MIT"
+      ]
     },
     "contracts/src/diamond/facets/initializable/InitializableStorage.sol": {
       "keccak256": "0x5dbbdca0faf75680e1c0d425d92bdb5ce16951c0f8215a668c5144c0ffdb1b01",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://05e5ba4fcd6e3e1e819e786fce3473d5ef69763b127fe162b2e0906d6a904d09",
         "dweb:/ipfs/QmYPN5xeMoMBVT2B2FwJrDpwocNNsCuVosgg7vdYrrWNep"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/introspection/IERC165.sol": {
       "keccak256": "0x243cfeefa64ba07bee887b0b03704147f9bd2f25571272a6ebca3ba684af1b00",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://1aed67ea7251fad9dbfb58a30f59f7edd81d48d7f6b193b98f957be359653361",
         "dweb:/ipfs/QmQauJL4nFMN3QDutjWezRbBjLX5GsTWt5jeLfkX4JW64T"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/introspection/IntrospectionBase.sol": {
       "keccak256": "0x5f458cf292b4b7b9d9c1efd110b3b65905c7bd7e47a48090af5eb9fb7d620ddf",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://84995121aafc9124ba3a1148835dcccc1061c25a5b074b4579a83c0dd213d613",
         "dweb:/ipfs/QmPYSKEqYWasPxVRzv4TCpXVfpkahfFDEPkTLp7UAT9fKq"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/introspection/IntrospectionStorage.sol": {
       "keccak256": "0x2e047e5efa9df7f3d60a8a114da39343635578b7475fcd987860eb5b87e8c758",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://a071eda8331b690b689bbbc23e6a6c227324aad90d4101c36410a06b1ca3c357",
         "dweb:/ipfs/QmTR76zN1durS5acgDZXixrkrheXvaaMqfwXrJsaGyAPkj"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/ownable/IERC173.sol": {
       "keccak256": "0xec6475a73e1229430edadb6fd3e32f1599ebb8af78dbbc762d54ded196e534ae",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://46e9fef226666c827f408b5d2c9061600fa5233ddf5fcbc3a2b8956d89e8a872",
         "dweb:/ipfs/Qmd6L6wtehyrD8XwKqFD7gG5hJxsBZ1ja6hGSf2dtN4XEx"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/reentrancy/IReentrancyGuard.sol": {
       "keccak256": "0xcf0384936029c121c827aca432891d18f7c7db3d234dfbdad69373726d41003a",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://6c7127aa6cc24cb43dac1bea76e16b09c2ce26421baf08792f767d6b204ba39b",
         "dweb:/ipfs/QmSziExRUyaUEVteBXtsxkNMgcdXS9PPaDdCNdLvivcFJq"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/reentrancy/ReentrancyGuard.sol": {
       "keccak256": "0x96999935d243afdc7370154431fef7de13cd74b892949070d8488d5ad83dfa4f",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://e5978c51e1bab72ec8d3a8e5bb80c7e2bcac60c08d04b3406b6863efb585100c",
         "dweb:/ipfs/QmUDtXQHEx1kgQeEQ5Sui9xdDQgf931ts2ZCKpwfH88U4T"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/reentrancy/ReentrancyGuardStorage.sol": {
       "keccak256": "0xbfd5548227b70eec020b03bdec1ae0ef0b51c5e3380147153a93c0f03c5e630c",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://dab049fa3dd63981697ccffab59be2e6d531a77692c80c857ce54ee8484bd6a6",
         "dweb:/ipfs/QmYVE2qptk62RDXSFJMYUYSUzjksxbHEVtG3pBP8m3s9VC"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol": {
       "keccak256": "0xfce3dc8955c337c405c27c7741b7beff81685ed89f2e102fbad517043e20edf9",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://6c0ef999aaa971921ba4a4d2190ce5fae92fe15a34a87aac02fd081773fdbe9e",
         "dweb:/ipfs/QmUFD83GFhupZo2d3PafyK5fjqrzFRDnJHEsTGYhHakzUM"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol": {
       "keccak256": "0xc0b22b0caa2336e0c3f6b6813432643053785c39531d30e5851eeb613a0a7991",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://8a7ceb199e92f484efcc444fffd54fbabaf332c210dda0ef46d89a66f4cb47c7",
         "dweb:/ipfs/QmRJVrZiZpbGsLngz4J3NVgapKXLErdLc7BPyEyTNKdijg"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/factory/facets/platform/requirements/PlatformRequirementsBase.sol": {
       "keccak256": "0x158587dabf0ee4b1c3d0871feb4cdd661de24fc27746bea3e9781d8410a1d987",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://6e3a3faf324ace9cd621f0579f665f1fdd13c700b7a0983f3fb88fa3ed21b877",
         "dweb:/ipfs/QmYzUNVXABjw4Av39mYXwdTLrCeGdq4qBHqCUDnw7N9vYv"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/factory/facets/platform/requirements/PlatformRequirementsStorage.sol": {
       "keccak256": "0xbfe5f3eb736f32a6b32ce92ac245b50b35e2b09c83da83675825faa118ce7985",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://f3070ff80c5066fc5239efdcf7eb764223bae7db941e8ebbc6124ad273d873e7",
         "dweb:/ipfs/QmSDqnPShWVwrG66A4LoNMgQ2q1MfRBebRUctWhjKpb5Y1"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/factory/facets/prepay/IPrepay.sol": {
       "keccak256": "0x0c5c097dd77471d041cdbb84011ac789147af937d275329d857d1a4b257635e9",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://baca271a5a66856f3144a4bf0ed6a484b0c981539d6bf0c57ffade9e4986eb49",
         "dweb:/ipfs/QmVgPWMEL5q2J5kmZQZFRadWjuVQeFLaa9K2gCHdhjLUa9"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/factory/facets/prepay/PrepayBase.sol": {
       "keccak256": "0xfebe9ae4138390535139e73b23d1e32af042114beea5ef4d013c57b49069c210",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://57588fd465f1ee19fbe06dcc017b7de5b242f3bf35633b2373744263b61c11c4",
         "dweb:/ipfs/QmXktbrFSheqQ6AFQkwBpyNcaA13xK5gcEY3nLCi79Qpd8"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/factory/facets/prepay/PrepayFacet.sol": {
       "keccak256": "0x9bf79ae0025eaa4136fcf9425de17ac7a37278d3177a4727271b1ce7766b3345",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://5abffb1af0022309f8bed4f41b2d4fa11f33eac4f2dc1599751e85d62092fa9f",
         "dweb:/ipfs/QmceRDb3dH9MGYn8cWLoZmfTDWy8o7aSf8xKLyi99ZQtkU"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/factory/facets/prepay/PrepayStorage.sol": {
       "keccak256": "0x78dc307810bb9021b19fc2793fe744e0e5b980441b4a98c457011eac402faa6a",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://72a3727192e0b4f4c560ec0c0fd9d02b8fdd1e176d288684306f1bf3788ce8ab",
         "dweb:/ipfs/QmTxpmnY7wtmdX3k4GSepHLLxm3KBvqDBeRreMyDPMg8E4"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/spaces/facets/membership/IMembership.sol": {
       "keccak256": "0x2df191dfaf811a3d01a94d05264f440e1b8e9345418a852a68988815f57dfb97",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://7848f687cd1c7e8c456ed75209398a5b6e52cb268570799d9f003f54a06dce39",
         "dweb:/ipfs/QmT8WuBrViZq1de9ZkFLnD42YCmeJAPW55zCFqLgCxzwYi"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/utils/interfaces/IWETH.sol": {
       "keccak256": "0xd274612ab96215dcdb6e3717a63e7a0f76c7facadff93b2b23ed278f6e7b3b00",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://12444da1f06a0fbe6d2d564d73d6d6bc58c09496af3aeea6988c3d3f9ee81c73",
         "dweb:/ipfs/QmTkpQ6cZmRYgvLUS4mqzLvFg5nabgQjpMnVK8JENboiA3"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/utils/libraries/BasisPoints.sol": {
       "keccak256": "0x797b0a1d3da51f4256c83b5d5c885b034df5bdff69c8dfa0fac9777cfa2f1d26",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://52ba0c85e5de8a7d76e2e4bcbccdaffa68e29281191ae1f889430a496ce5cf1c",
         "dweb:/ipfs/Qmd5bYypjF6gcJKKagdRpvAgV4LCs4iyn7KYdaLBWjjuHr"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "contracts/src/utils/libraries/CurrencyTransfer.sol": {
       "keccak256": "0x1c6b5b33831f8c5c02c49dff5ceac3ad1a6cdb74c988ebba72c36329ca704750",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://78122f27b67a5d3ebe95c4260dc972ab7be5c04b277cbd71a833dd74fbd23fa4",
         "dweb:/ipfs/QmU78EApEim92KMVtW69coFPZdhvbkhmYn6dW2zwqJKPBp"
-      ],
-      "license": "Apache-2.0"
+      ]
     },
     "lib/@openzeppelin/contracts/token/ERC20/IERC20.sol": {
       "keccak256": "0xc6a8ff0ea489379b61faa647490411b80102578440ab9d84e9a957cc12164e70",
+      "license": "MIT",
       "urls": [
         "bzz-raw://0ea104e577e63faea3b69c415637e99e755dcbf64c5833d7140c35a714d6d90c",
         "dweb:/ipfs/Qmau6x4Ns9XdyynRCNNp3RhLqijJjFm7z5fyZazfYFGYdq"
-      ],
-      "license": "MIT"
+      ]
     },
     "lib/@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol": {
       "keccak256": "0x6008dabfe393240d73d7dd7688033f72740d570aa422254d29a7dce8568f3aff",
+      "license": "MIT",
       "urls": [
         "bzz-raw://f5196ec75139918c6c7bb4251b36395e668f1fa6d206beba7e7520e74913940d",
         "dweb:/ipfs/QmSyqjksXxmm2mCG6qRd1yuwLykypkSVBbnBnGqJRcuJMi"
-      ],
-      "license": "MIT"
+      ]
     },
     "lib/@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol": {
       "keccak256": "0x37bb49513c49c87c4642a891b13b63571bc87013dde806617aa1efb54605f386",
+      "license": "MIT",
       "urls": [
         "bzz-raw://b3036b3a83b7c48f96641f2a9002b9f2dcb6a5958dd670894ada21ae8229b3d0",
         "dweb:/ipfs/QmUNfSBdoVtjhETaUJCYcaC7pTMgbhht926tJ2uXJbiVd3"
-      ],
-      "license": "MIT"
+      ]
     },
     "lib/@openzeppelin/contracts/utils/Address.sol": {
       "keccak256": "0xaf28a975a78550e45f65e559a3ad6a5ad43b9b8a37366999abd1b7084eb70721",
+      "license": "MIT",
       "urls": [
         "bzz-raw://b7bd24e224f67f65bfadf85dc2929fa965456bb2415478bd0125471b5ce35245",
         "dweb:/ipfs/QmRaydGr8BTHs1kvaZfsNU69pKzUAGFrvABn1KiRSbE51y"
-      ],
-      "license": "MIT"
+      ]
     },
     "lib/@openzeppelin/contracts/utils/introspection/IERC165.sol": {
       "keccak256": "0x4296879f55019b23e135000eb36896057e7101fb7fb859c5ef690cf14643757b",
+      "license": "MIT",
       "urls": [
         "bzz-raw://87b3541437c8c443ccd36795e56a338ed12855eec17f8da624511b8d1a7e14df",
         "dweb:/ipfs/QmeJQCtZrQjtJLr6u7ZHWeH3pBnjtLWzvRrKViAi7UZqxL"
-      ],
-      "license": "MIT"
+      ]
     }
   },
   "version": 1

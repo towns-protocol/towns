@@ -12,6 +12,24 @@ import {EntitlementGatedStorage} from "./EntitlementGatedStorage.sol";
 import {MembershipStorage} from "contracts/src/spaces/facets/membership/MembershipStorage.sol";
 
 abstract contract EntitlementGatedBase is IEntitlementGatedBase {
+  // Function to convert the first four bytes of bytes32 to a hex string of 8 characters
+  /*
+  function bytes32ToHexStringFirst8(
+    bytes32 _data
+  ) public pure returns (string memory) {
+    bytes memory alphabet = "0123456789abcdef";
+    bytes memory str = new bytes(8); // Since we need only the first 8 hex characters
+
+    for (uint256 i = 0; i < 4; i++) {
+      // Loop only through the first 4 bytes
+      str[i * 2] = alphabet[uint256(uint8(_data[i] >> 4))];
+      str[1 + i * 2] = alphabet[uint256(uint8(_data[i] & 0x0f))];
+    }
+
+    return string(str);
+  }
+  */
+
   function _setEntitlementChecker(
     IEntitlementChecker entitlementChecker
   ) internal {
@@ -40,7 +58,6 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
 
     transaction.hasBenSet = true;
     transaction.clientAddress = msg.sender;
-    transaction.checkResult = NodeVoteStatus.NOT_VOTED;
     transaction.isCompleted = false;
     transaction.encodedRuleData = encodedRuleData;
 
@@ -65,6 +82,14 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
       .layout();
 
     Transaction storage transaction = ds.transactions[transactionId];
+
+    if (transaction.clientAddress == address(0)) {
+      revert EntitlementGated_TransactionNotRegistered();
+    }
+
+    if (transaction.isCompleted) {
+      revert EntitlementGated_TransactionAlreadyCompleted();
+    }
 
     if (transaction.hasBenSet == false) {
       revert EntitlementGated_TransactionNotRegistered();
@@ -104,20 +129,16 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
       }
     }
 
-    if (!transaction.isCompleted) {
-      if (passed > transaction.nodeVotesArray.length / 2) {
-        transaction.isCompleted = true;
-        transaction.checkResult = NodeVoteStatus.PASSED;
-        _onEntitlementCheckResultPosted(transactionId, NodeVoteStatus.PASSED);
-        emit EntitlementCheckResultPosted(transactionId, NodeVoteStatus.PASSED);
-        _removeTransaction(transactionId);
-      } else if (failed > transaction.nodeVotesArray.length / 2) {
-        transaction.checkResult = NodeVoteStatus.FAILED;
-        transaction.isCompleted = true;
-        _onEntitlementCheckResultPosted(transactionId, NodeVoteStatus.FAILED);
-        emit EntitlementCheckResultPosted(transactionId, NodeVoteStatus.FAILED);
-        _removeTransaction(transactionId);
-      }
+    if (passed > transaction.nodeVotesArray.length / 2) {
+      transaction.isCompleted = true;
+      _onEntitlementCheckResultPosted(transactionId, NodeVoteStatus.PASSED);
+      emit EntitlementCheckResultPosted(transactionId, NodeVoteStatus.PASSED);
+      _removeTransaction(transactionId);
+    } else if (failed > transaction.nodeVotesArray.length / 2) {
+      transaction.isCompleted = true;
+      _onEntitlementCheckResultPosted(transactionId, NodeVoteStatus.FAILED);
+      emit EntitlementCheckResultPosted(transactionId, NodeVoteStatus.FAILED);
+      _removeTransaction(transactionId);
     }
   }
 
@@ -125,7 +146,10 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
     EntitlementGatedStorage.Layout storage ds = EntitlementGatedStorage
       .layout();
 
-    // TODO check to make sure the transaction is completed
+    Transaction storage transaction = ds.transactions[transactionId];
+
+    delete transaction.nodeVotesArray;
+    delete transaction.encodedRuleData;
     delete ds.transactions[transactionId];
   }
 

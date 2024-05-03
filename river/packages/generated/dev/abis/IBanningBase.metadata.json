@@ -13,13 +13,13 @@
             "type": "uint256"
           }
         ],
-        "type": "error",
-        "name": "Banning__AlreadyBanned"
+        "name": "Banning__AlreadyBanned",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Banning__CannotBanSelf"
+        "name": "Banning__CannotBanSelf",
+        "type": "error"
       },
       {
         "inputs": [
@@ -29,8 +29,8 @@
             "type": "uint256"
           }
         ],
-        "type": "error",
-        "name": "Banning__InvalidTokenId"
+        "name": "Banning__InvalidTokenId",
+        "type": "error"
       },
       {
         "inputs": [
@@ -40,46 +40,46 @@
             "type": "uint256"
           }
         ],
-        "type": "error",
-        "name": "Banning__NotBanned"
+        "name": "Banning__NotBanned",
+        "type": "error"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "address",
             "name": "moderator",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           },
           {
+            "indexed": true,
             "internalType": "uint256",
             "name": "tokenId",
-            "type": "uint256",
-            "indexed": true
+            "type": "uint256"
           }
         ],
-        "type": "event",
         "name": "Banned",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "address",
             "name": "moderator",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           },
           {
+            "indexed": true,
             "internalType": "uint256",
             "name": "tokenId",
-            "type": "uint256",
-            "indexed": true
+            "type": "uint256"
           }
         ],
-        "type": "event",
         "name": "Unbanned",
-        "anonymous": false
+        "type": "event"
       }
     ],
     "devdoc": {
@@ -94,38 +94,38 @@
     }
   },
   "settings": {
-    "remappings": [
-      "@openzeppelin/=lib/@openzeppelin/",
-      "@prb/math/=lib/@prb/math/src/",
-      "@prb/test/=lib/@prb/test/src/",
-      "account-abstraction/=lib/account-abstraction/contracts/",
-      "base64/=lib/base64/",
-      "ds-test/=lib/ds-test/src/",
-      "forge-std/=lib/forge-std/src/",
-      "hardhat-deploy/=lib/hardhat-deploy/"
-    ],
-    "optimizer": {
-      "enabled": true,
-      "runs": 200
-    },
-    "metadata": {
-      "bytecodeHash": "none",
-      "appendCBOR": false
-    },
     "compilationTarget": {
       "contracts/src/spaces/facets/banning/IBanning.sol": "IBanningBase"
     },
     "evmVersion": "paris",
-    "libraries": {}
+    "libraries": {},
+    "metadata": {
+      "appendCBOR": false,
+      "bytecodeHash": "none"
+    },
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "remappings": [
+      ":@openzeppelin/=lib/@openzeppelin/",
+      ":@prb/math/=lib/@prb/math/src/",
+      ":@prb/test/=lib/@prb/test/src/",
+      ":account-abstraction/=lib/account-abstraction/contracts/",
+      ":base64/=lib/base64/",
+      ":ds-test/=lib/ds-test/src/",
+      ":forge-std/=lib/forge-std/src/",
+      ":hardhat-deploy/=lib/hardhat-deploy/"
+    ]
   },
   "sources": {
     "contracts/src/spaces/facets/banning/IBanning.sol": {
       "keccak256": "0x1983a3e375f4dd8a21be759a637b85ed5e416ca8fc7109153986eb2d4b08a505",
+      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://1f5f5a54e4cbaca9e10cc174ba73f5f80b0875d097084a9ebc6b259b2c4c1419",
         "dweb:/ipfs/QmQSfNhhRNkiHeG1XXWVYhQtvuPRyrv72gxuARgsgupjn6"
-      ],
-      "license": "Apache-2.0"
+      ]
     }
   },
   "version": 1

@@ -161,7 +161,7 @@ func (s *Service) CreateStream(
 			firstMiniblockHash = s.GetMiniblocks()[0].GetHeader().GetHash()
 		}
 	}
-	log.Info("CreateStream SUCCEESS",
+	log.Info("CreateStream SUCCESS",
 		"streamId", req.Msg.StreamId,
 		"numMiniblocks", numMiniblocks,
 		"numEvents", numEvents,

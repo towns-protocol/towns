@@ -1,35 +1,38 @@
 #!/bin/bash
 set -euo pipefail
 
-# Check if Homebrew is installed
-if ! command -v brew &> /dev/null; then
-    echo "Homebrew is not installed. Installing Homebrew first..."
-    # Download and execute Homebrew installation script
-    # Handle potential failure in downloading the script
-    if ! /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
-        echo "Failed to install Homebrew."
-        exit 1
+# Skip script execution if running in a CI environment
+if [ -z "${CI:-}" ]; then
+    # Check if Homebrew is installed
+    if ! command -v brew &> /dev/null; then
+        echo "Homebrew is not installed. Installing Homebrew first..."
+        # Download and execute Homebrew installation script
+        # Handle potential failure in downloading the script
+        if ! /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
+            echo "Failed to install Homebrew."
+            exit 1
+        fi
     fi
-fi
 
-# Install yq using Homebrew if not present
-if ! command -v yq &> /dev/null; then
-    echo "yq is not installed. Installing it using Homebrew..."
-    if ! brew install yq; then
-        echo "Failed to install yq."
-        exit 1
+    # Install yq using Homebrew if not present
+    if ! command -v yq &> /dev/null; then
+        echo "yq is not installed. Installing it using Homebrew..."
+        if ! brew install yq; then
+            echo "Failed to install yq."
+            exit 1
+        fi
+        echo "yq installed successfully."
     fi
-    echo "yq installed successfully."
-fi
 
-# Install yq using Homebrew if not present
-if ! command -v jq &> /dev/null; then
-    echo "jq is not installed. Installing it using Homebrew..."
-    if ! brew install jq; then
-        echo "Failed to install jq."
-        exit 1
+    # Install yq using Homebrew if not present
+    if ! command -v jq &> /dev/null; then
+        echo "jq is not installed. Installing it using Homebrew..."
+        if ! brew install jq; then
+            echo "Failed to install jq."
+            exit 1
+        fi
+        echo "jq installed successfully."
     fi
-    echo "jq installed successfully."
 fi
 
 # Change the current working directory to the directory of the script

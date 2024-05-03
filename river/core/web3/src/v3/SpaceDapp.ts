@@ -571,18 +571,25 @@ export class SpaceDapp implements ISpaceDapp {
         signer: ethers.Signer,
         txnOpts?: TransactionOpts,
     ): Promise<ContractTransaction> {
+        logger.log('joinSpace result before wrap', spaceId)
+
         const space = this.getSpace(spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
         const price = await space.Membership.read.getMembershipPrice()
-        return wrapTransaction(
-            () =>
-                space.Membership.write(signer).joinSpace(recipient, {
-                    value: price,
-                }),
-            txnOpts,
-        )
+        const result = await wrapTransaction(async () => {
+            // Set gas limit instead of using estimateGas
+            // As the estimateGas is not reliable for this contract
+            const result = await space.Membership.write(signer).joinSpace(recipient, {
+                gasLimit: 1_000_000,
+                value: price,
+            })
+            logger.log('joinSpace result', result)
+            return result
+        }, txnOpts)
+        logger.log('joinSpace result outside wrap', result)
+        return result
     }
 
     public async hasSpaceMembership(spaceId: string, address: string): Promise<boolean> {

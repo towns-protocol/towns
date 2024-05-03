@@ -3,7 +3,6 @@ pragma solidity ^0.8.19;
 
 // utils
 import {MembershipBaseSetup} from "../MembershipBaseSetup.sol";
-import {console2} from "forge-std/console2.sol";
 
 //interfaces
 import {IEntitlementGated} from "contracts/src/spaces/facets/gated/IEntitlementGated.sol";
@@ -16,22 +15,6 @@ import {Vm} from "forge-std/Test.sol";
 
 contract MembershipJoinSpace is MembershipBaseSetup {
   mapping(address => bool) public postedResult;
-
-  function toHexChar(uint8 _value) internal pure returns (bytes1) {
-    return _value < 10 ? bytes1(_value + 48) : bytes1(_value + 87);
-  }
-
-  function bytes32ToString(
-    bytes32 _bytes32
-  ) public pure returns (string memory) {
-    bytes memory buffer = new bytes(64);
-    for (uint256 i = 0; i < 32; i++) {
-      bytes1 currentByte = bytes1(_bytes32 << (i * 8));
-      buffer[i * 2] = toHexChar(uint8(currentByte) / 16);
-      buffer[i * 2 + 1] = toHexChar(uint8(currentByte) % 16);
-    }
-    return string(buffer);
-  }
 
   function test_joinSpace() external givenAliceHasMintedMembership {
     assertEq(membership.balanceOf(alice), 1);
@@ -49,14 +32,6 @@ contract MembershipJoinSpace is MembershipBaseSetup {
     vm.prank(alice);
     vm.expectRevert(Membership__InvalidAddress.selector);
     membership.joinSpace(address(0));
-  }
-
-  function test_joinSpace_passWhen_CallerIsAlreadyMember() external {
-    vm.prank(alice);
-    membership.joinSpace(alice);
-
-    vm.prank(alice); // alice is the caller
-    membership.joinSpace(bob);
   }
 
   function test_joinSpace_passWhen_CallerIsFounder() external {

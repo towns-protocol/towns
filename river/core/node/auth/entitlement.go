@@ -17,8 +17,8 @@ import (
 type Entitlements interface {
 	IsEntitledToChannel(opts *bind.CallOpts, channelId [32]byte, user common.Address, permission string) (bool, error)
 	IsEntitledToSpace(opts *bind.CallOpts, user common.Address, permission string) (bool, error)
+	GetEntitlementDataByPermission(opts *bind.CallOpts, permission string) ([]base.IEntitlementsManagerEntitlementData, error)
 }
-
 type entitlementsProxy struct {
 	contract *base.EntitlementsManager
 	address  common.Address
@@ -26,8 +26,9 @@ type entitlementsProxy struct {
 }
 
 var (
-	isEntitledToChannelCalls = infra.NewSuccessMetrics("is_entitled_to_channel_calls", contractCalls)
-	isEntitledToSpaceCalls   = infra.NewSuccessMetrics("is_entitled_to_space_calls", contractCalls)
+	isEntitledToChannelCalls             = infra.NewSuccessMetrics("is_entitled_to_channel_calls", contractCalls)
+	isEntitledToSpaceCalls               = infra.NewSuccessMetrics("is_entitled_to_space_calls", contractCalls)
+	getEntitlementDataByPermissionsCalls = infra.NewSuccessMetrics("get_entitlement_data_by_permissions_calls", contractCalls)
 )
 
 func NewEntitlements(
@@ -139,4 +140,31 @@ func (proxy *entitlementsProxy) IsEntitledToSpace(
 		time.Since(start).Milliseconds(),
 	)
 	return result, nil
+}
+
+func (proxy *entitlementsProxy) GetEntitlementDataByPermission(opts *bind.CallOpts, permission string) ([]base.IEntitlementsManagerEntitlementData, error) {
+	log := dlog.FromCtx(proxy.ctx)
+	start := time.Now()
+	defer infra.StoreExecutionTimeMetrics("GetEntitlementDataByPermissions", infra.CONTRACT_CALLS_CATEGORY, start)
+	log.Debug("GetEntitlementDataByPermissions", "permission", permission, "address", proxy.address)
+	result, err := proxy.contract.GetEntitlementDataByPermission(opts, permission)
+	if err != nil {
+		getEntitlementDataByPermissionsCalls.FailInc()
+		log.Error("GetEntitlementDataByPermissions", "permission", permission, "address", proxy.address, "error", err)
+		return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err)
+	}
+	getEntitlementDataByPermissionsCalls.PassInc()
+	log.Debug(
+		"GetEntitlementDataByPermissions",
+		"permission",
+		permission,
+		"address",
+		proxy.address,
+		"result",
+		result,
+		"duration",
+		time.Since(start).Milliseconds(),
+	)
+	return result, nil
+
 }

@@ -139,12 +139,16 @@ type ChainConfig struct {
 	TransactionPool TransactionPoolConfig
 
 	// TODO: these need to be removed from here
-	LinkedWalletsLimit                 int
-	ContractCallsTimeoutMs             int
-	PositiveEntitlementCacheSize       int
-	PositiveEntitlementCacheTTLSeconds int
-	NegativeEntitlementCacheSize       int
-	NegativeEntitlementCacheTTLSeconds int
+	LinkedWalletsLimit                        int
+	ContractCallsTimeoutMs                    int
+	PositiveEntitlementCacheSize              int
+	PositiveEntitlementCacheTTLSeconds        int
+	NegativeEntitlementCacheSize              int
+	NegativeEntitlementCacheTTLSeconds        int
+	PositiveEntitlementManagerCacheSize       int
+	PositiveEntitlementManagerCacheTTLSeconds int
+	NegativeEntitlementManagerCacheSize       int
+	NegativeEntitlementManagerCacheTTLSeconds int
 }
 
 type PerformanceTrackingConfig struct {

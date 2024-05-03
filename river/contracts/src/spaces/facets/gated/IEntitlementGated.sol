@@ -19,7 +19,6 @@ interface IEntitlementGatedBase {
   struct Transaction {
     bool hasBenSet;
     address clientAddress;
-    NodeVoteStatus checkResult;
     bool isCompleted;
     NodeVote[] nodeVotesArray;
     bytes encodedRuleData;

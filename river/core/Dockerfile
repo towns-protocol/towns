@@ -11,10 +11,11 @@ ARG VER_COMMIT=commit_unset
 
 # Build node_app
 WORKDIR /build/node
-COPY node/go.* /build/node/
-RUN go mod download
-COPY node/ /build/node/
-RUN go build \
+COPY node/go.* /build/node/node/
+COPY xchain/ /build/node/xchain/
+RUN cd node && go mod download
+COPY node/ /build/node/node
+RUN cd node && go build \
     -trimpath \
     -o /bin/stream_node \
     -ldflags="-X github.com/river-build/river/core/node/node/version.version=$VER_VERSION -X github.com/river-build/river/core/node/node/version.branch=$VER_BRANCH -X github.com/river-build/river/core/node/node/version.commit=$VER_COMMIT" \
@@ -46,7 +47,7 @@ COPY --from=builder /bin/xchain_node /usr/bin/xchain_node
 # Use setcap to allow the web server binary to bind to privileged ports
 RUN setcap 'cap_net_bind_service=+ep' /usr/bin/stream_node
 
-COPY --from=builder /build/node/default_config.yaml /riveruser/stream_node/config/config.yaml
+COPY --from=builder /build/node/node/default_config.yaml /riveruser/stream_node/config/config.yaml
 COPY --from=builder /build/xchain/xchain/default_config.yaml /riveruser/xchain_node/config/config.yaml
 
 RUN mkdir -p /riveruser/stream_node/logs

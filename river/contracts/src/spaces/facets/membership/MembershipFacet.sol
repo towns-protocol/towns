@@ -11,6 +11,7 @@ import {IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
 
 // libraries
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
+
 // contracts
 import {MembershipBase} from "./MembershipBase.sol";
 import {ERC721A} from "contracts/src/diamond/facets/token/ERC721A/ERC721A.sol";
@@ -20,7 +21,8 @@ import {Entitled} from "contracts/src/spaces/facets/Entitled.sol";
 import {MembershipReferralBase} from "./referral/MembershipReferralBase.sol";
 import {MembershipStorage} from "./MembershipStorage.sol";
 import {RolesBase} from "contracts/src/spaces/facets/roles/RolesBase.sol";
-import {EntitlementGatedBase} from "contracts/src/spaces/facets/gated/EntitlementGatedBase.sol";
+import {DispatcherBase} from "contracts/src/spaces/facets/dispatcher/DispatcherBase.sol";
+import {EntitlementGated} from "contracts/src/spaces/facets/gated/EntitlementGated.sol";
 
 contract MembershipFacet is
   IMembership,
@@ -31,7 +33,8 @@ contract MembershipFacet is
   ERC721A,
   Entitled,
   RolesBase,
-  EntitlementGatedBase
+  DispatcherBase,
+  EntitlementGated
 {
   bytes32 constant JOIN_SPACE =
     bytes32(abi.encodePacked(Permissions.JoinSpace));
@@ -74,12 +77,23 @@ contract MembershipFacet is
   /// @inheritdoc IMembership
   function joinSpace(address receiver) external payable nonReentrant {
     _validateJoinSpace(receiver);
+
+    bool isCrosschainPending;
     address sender = msg.sender;
-    bool isCrosschainPending = false;
+
+    bytes32 keyHash = keccak256(abi.encodePacked(sender, block.number));
+    bytes32 transactionId = _makeDispatchId(
+      keyHash,
+      _makeDispatchInputSeed(keyHash, sender, _useDispatchNonce(keyHash))
+    );
+
+    _captureData(transactionId, abi.encode(receiver));
+    if (msg.value > 0) _captureValue(transactionId, msg.value);
 
     IRolesBase.Role[] memory roles = _getRolesWithPermission(
       Permissions.JoinSpace
     );
+
     for (uint256 i = 0; i < roles.length; i++) {
       IRolesBase.Role memory role = roles[i];
 
@@ -90,7 +104,7 @@ contract MembershipFacet is
             address[] memory users = new address[](1);
             users[0] = sender;
             if (entitlement.isEntitled(0x0, users, JOIN_SPACE)) {
-              _issueToken(receiver);
+              _issueToken(transactionId);
               return;
             }
           } else {
@@ -105,12 +119,7 @@ contract MembershipFacet is
               //console2.log("crosschain entitlement noop rule, skipping");
             } else {
               bytes memory encodedRuleData = re.encodeRuleData(ruleData);
-              bytes32 transactionId = keccak256(
-                abi.encodePacked(tx.origin, block.number)
-              );
               _requestEntitlementCheck(transactionId, encodedRuleData);
-              MembershipStorage.Layout storage ds = MembershipStorage.layout();
-              ds.pendingJoinRequests[transactionId] = receiver;
               isCrosschainPending = true;
             }
           }
@@ -122,18 +131,29 @@ contract MembershipFacet is
     }
   }
 
-  function _issueToken(address receiver) internal {
+  function _issueToken(bytes32 transactionId) internal {
+    address receiver = abi.decode(_getCapturedData(transactionId), (address));
+
     // allocate protocol and membership fees
     uint256 membershipPrice = _getMembershipPrice(_totalSupply());
     uint256 tokenId = _nextTokenId();
 
     if (membershipPrice > 0) {
+      uint256 userValue = _getCapturedValue(transactionId);
+
+      if (userValue == 0) revert Membership__InsufficientPayment();
+      if (membershipPrice > userValue) revert Membership__InsufficientPayment();
+
       // set renewal price for token
       _setMembershipRenewalPrice(tokenId, membershipPrice);
       uint256 protocolFee = _collectProtocolFee(receiver, membershipPrice);
 
       uint256 surplus = membershipPrice - protocolFee;
       if (surplus > 0) _transferIn(receiver, surplus);
+
+      // release captured value
+      _releaseCapturedValue(transactionId, membershipPrice);
+      _captureData(transactionId, "");
     }
 
     // mint membership
@@ -332,17 +352,13 @@ contract MembershipFacet is
     bytes32 transactionId,
     IEntitlementGatedBase.NodeVoteStatus result
   ) internal override {
-    MembershipStorage.Layout storage ds = MembershipStorage.layout();
-
     // get trasnaction from memmbership storage
     if (result == NodeVoteStatus.PASSED) {
-      address receiver = ds.pendingJoinRequests[transactionId];
-      _issueToken(receiver);
-      delete ds.pendingJoinRequests[transactionId];
+      _issueToken(transactionId);
     } else {
-      address receiver = ds.pendingJoinRequests[transactionId];
+      address receiver = abi.decode(_getCapturedData(transactionId), (address));
+      _captureData(transactionId, "");
       emit MembershipTokenRejected(receiver);
-      delete ds.pendingJoinRequests[transactionId];
     }
   }
 }

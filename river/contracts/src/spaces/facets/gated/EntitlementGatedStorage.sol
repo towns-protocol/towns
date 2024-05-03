@@ -17,7 +17,6 @@ library EntitlementGatedStorage {
   struct Layout {
     IEntitlementChecker entitlementChecker;
     mapping(bytes32 => IEntitlementGatedBase.Transaction) transactions;
-    mapping(uint256 requestId => bytes32 transactionHash) transactionByRequestId;
   }
 
   function layout() internal pure returns (Layout storage l) {

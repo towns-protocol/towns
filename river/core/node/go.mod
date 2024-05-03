@@ -2,6 +2,8 @@ module github.com/river-build/river/core/node
 
 go 1.22.2
 
+replace github.com/river-build/river/core/xchain => ./../xchain
+
 require (
 	connectrpc.com/connect v1.14.0
 	github.com/deckarep/golang-set/v2 v2.3.1
@@ -32,6 +34,7 @@ require (
 
 require (
 	github.com/google/uuid v1.4.0 // indirect
+	github.com/river-build/river/core/xchain v0.0.0-00010101000000-000000000000 // indirect
 	github.com/stretchr/objx v0.5.1 // indirect
 )
 

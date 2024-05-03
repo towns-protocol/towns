@@ -319,8 +319,8 @@ func (x *xchain) writeEntitlementCheckResults(ctx context.Context, checkResults 
 					if err != nil {
 						return nil, err
 					}
-					// Ensure gas limit is at least 250,000 as a workaround for simulated backend issues in tests.
-					opts.GasLimit = max(opts.GasLimit, 250_000)
+					// Ensure gas limit is at least 2_500_000 as a workaround for simulated backend issues in tests.
+					opts.GasLimit = max(opts.GasLimit, 2_500_000)
 
 					return gated.PostEntitlementCheckResult(opts, receipt.TransactionID, uint8(outcome))
 				})

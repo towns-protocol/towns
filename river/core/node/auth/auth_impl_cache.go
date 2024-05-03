@@ -22,10 +22,39 @@ type entitlementCache struct {
 	negativeCacheTTL time.Duration
 }
 
+type CacheResult interface {
+	IsAllowed() bool
+}
+
 // Cached results of isEntitlement check with the TTL of the result
-type entitlementCacheValue struct {
-	Allowed   bool
-	Timestamp time.Time
+type entitlementCacheValue interface {
+	IsAllowed() bool
+	GetTimestamp() time.Time
+}
+
+type timestampedCacheValue struct {
+	result    CacheResult
+	timestamp time.Time
+}
+
+func (ccv *timestampedCacheValue) IsAllowed() bool {
+	return ccv.result.IsAllowed()
+}
+
+func (ccv *timestampedCacheValue) Result() CacheResult {
+	return ccv.result
+}
+
+func (ccv *timestampedCacheValue) GetTimestamp() time.Time {
+	return ccv.timestamp
+}
+
+type boolCacheResult struct {
+	allowed bool
+}
+
+func (scr *boolCacheResult) IsAllowed() bool {
+	return scr.allowed
 }
 
 func newEntitlementCache(ctx context.Context, cfg *config.ChainConfig) (*entitlementCache, error) {
@@ -69,17 +98,57 @@ func newEntitlementCache(ctx context.Context, cfg *config.ChainConfig) (*entitle
 	}, nil
 }
 
-// Returns: result, isCacheHit, error
+func newEntitlementManagerCache(ctx context.Context, cfg *config.ChainConfig) (*entitlementCache, error) {
+	log := dlog.FromCtx(ctx)
+
+	positiveCacheSize := 10000
+	if cfg.PositiveEntitlementCacheSize > 0 {
+		positiveCacheSize = cfg.PositiveEntitlementManagerCacheSize
+	}
+
+	negativeCacheSize := 10000
+	if cfg.NegativeEntitlementCacheSize > 0 {
+		negativeCacheSize = cfg.NegativeEntitlementManagerCacheSize
+	}
+	// Need to figure out how to determine the size of the cache
+	positiveCache, err := lru.NewARC[ChainAuthArgs, entitlementCacheValue](positiveCacheSize)
+	if err != nil {
+		log.Error("error creating auth_impl entitlement manager positive cache", "error", err)
+		return nil, WrapRiverError(protocol.Err_CANNOT_CONNECT, err)
+	}
+	negativeCache, err := lru.NewARC[ChainAuthArgs, entitlementCacheValue](negativeCacheSize)
+	if err != nil {
+		log.Error("error creating auth_impl entitlement manager negative cache", "error", err)
+		return nil, WrapRiverError(protocol.Err_CANNOT_CONNECT, err)
+	}
+
+	positiveCacheTTL := 15 * time.Second
+	if cfg.PositiveEntitlementCacheTTLSeconds > 0 {
+		positiveCacheTTL = time.Duration(cfg.PositiveEntitlementManagerCacheTTLSeconds) * time.Second
+	}
+	negativeCacheTTL := 2 * time.Second
+	if cfg.NegativeEntitlementCacheTTLSeconds > 0 {
+		negativeCacheTTL = time.Duration(cfg.NegativeEntitlementManagerCacheTTLSeconds) * time.Second
+	}
+
+	return &entitlementCache{
+		positiveCache,
+		negativeCache,
+		positiveCacheTTL,
+		negativeCacheTTL,
+	}, nil
+}
+
 func (ec *entitlementCache) executeUsingCache(
 	ctx context.Context,
 	key *ChainAuthArgs,
-	onMiss func(context.Context, *ChainAuthArgs) (bool, error),
-) (bool, bool, error) {
+	onMiss func(context.Context, *ChainAuthArgs) (CacheResult, error),
+) (CacheResult, bool, error) {
 	// Check positive cache first
 	if val, ok := ec.positiveCache.Get(*key); ok {
-		// Positive cache is only valid for 15 minutes
-		if time.Since(val.Timestamp) < ec.positiveCacheTTL {
-			return val.Allowed, true, nil
+		// Positive cache is only valid for a longer time
+		if time.Since(val.GetTimestamp()) < ec.positiveCacheTTL {
+			return val, true, nil
 		} else {
 			// Positive cache key is stale, remove it
 			ec.positiveCache.Remove(*key)
@@ -89,8 +158,8 @@ func (ec *entitlementCache) executeUsingCache(
 	// Check negative cache
 	if val, ok := ec.negativeCache.Get(*key); ok {
 		// Negative cache is only valid for 2 seconds, basically one block
-		if time.Since(val.Timestamp) < ec.negativeCacheTTL {
-			return val.Allowed, true, nil
+		if time.Since(val.GetTimestamp()) < ec.negativeCacheTTL {
+			return val, true, nil
 		} else {
 			// Negative cache key is stale, remove it
 			ec.negativeCache.Remove(*key)
@@ -98,18 +167,22 @@ func (ec *entitlementCache) executeUsingCache(
 	}
 
 	// Cache miss, execute the closure
-	isAllowed, err := onMiss(ctx, key)
+	result, err := onMiss(ctx, key)
 	if err != nil {
-		return false, false, err
+		return nil, false, err
 	}
 
 	// Store the result in the appropriate cache
-	cacheVal := entitlementCacheValue{Allowed: isAllowed, Timestamp: time.Now()}
-	if isAllowed {
+	cacheVal := &timestampedCacheValue{
+		result:    result,
+		timestamp: time.Now(),
+	}
+
+	if result.IsAllowed() {
 		ec.positiveCache.Add(*key, cacheVal)
 	} else {
 		ec.negativeCache.Add(*key, cacheVal)
 	}
 
-	return isAllowed, false, nil
+	return cacheVal, false, nil
 }

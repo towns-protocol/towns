@@ -11,6 +11,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type simpleCacheResult struct {
+	allowed bool
+}
+
+func (scr *simpleCacheResult) IsAllowed() bool {
+	return scr.allowed
+}
+
 // Test for the newEntitlementCache function
 func TestCache(t *testing.T) {
 	ctx := context.Background()
@@ -31,13 +39,13 @@ func TestCache(t *testing.T) {
 	result, cacheHit, err := c.executeUsingCache(
 		ctx,
 		NewChainAuthArgsForChannel(spaceId, channelId, "3", PermissionWrite),
-		func(context.Context, *ChainAuthArgs) (bool, error) {
+		func(context.Context, *ChainAuthArgs) (CacheResult, error) {
 			cacheMissForReal = true
-			return true, nil
+			return &simpleCacheResult{allowed: true}, nil
 		},
 	)
 	assert.NoError(t, err)
-	assert.True(t, result)
+	assert.True(t, result.IsAllowed())
 	assert.False(t, cacheHit)
 	assert.True(t, cacheMissForReal)
 
@@ -45,13 +53,13 @@ func TestCache(t *testing.T) {
 	result, cacheHit, err = c.executeUsingCache(
 		ctx,
 		NewChainAuthArgsForChannel(spaceId, channelId, "3", PermissionWrite),
-		func(context.Context, *ChainAuthArgs) (bool, error) {
+		func(context.Context, *ChainAuthArgs) (CacheResult, error) {
 			cacheMissForReal = true
-			return false, nil
+			return &simpleCacheResult{allowed: false}, nil
 		},
 	)
 	assert.NoError(t, err)
-	assert.True(t, result)
+	assert.True(t, result.IsAllowed())
 	assert.True(t, cacheHit)
 	assert.False(t, cacheMissForReal)
 }

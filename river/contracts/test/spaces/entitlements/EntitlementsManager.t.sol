@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
+import {IEntitlementsManager} from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
 import {IEntitlementsManagerBase} from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
 import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
 
@@ -214,6 +215,19 @@ contract EntitlementsManagerTest is
     );
 
     assertEq(address(entitlement.moduleAddress), address(mockEntitlement));
+  }
+
+  function test_getEntitlementDataByRole() external {
+    _arrangeInitialEntitlements();
+
+    IEntitlementsManager.EntitlementData[] memory entitlement = entitlements
+      .getEntitlementDataByPermission(Permissions.JoinSpace);
+
+    assertEq(entitlement.length == 1, true);
+    assertEq(
+      keccak256(abi.encodePacked(entitlement[0].entitlementType)),
+      keccak256(abi.encodePacked("UserEntitlement"))
+    );
   }
 
   function test_getEntitlement_revert_when_invalid_entitlement_address()

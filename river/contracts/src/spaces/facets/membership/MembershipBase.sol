@@ -52,12 +52,6 @@ abstract contract MembershipBase is IMembershipBase {
     IPlatformRequirements platform = IPlatformRequirements(ds.spaceFactory);
 
     address currency = ds.membershipCurrency;
-
-    if (
-      currency == CurrencyTransfer.NATIVE_TOKEN && msg.value != membershipPrice
-    ) revert Membership__InsufficientPayment();
-
-    // Compute fees and recipient addresses
     address platformRecipient = platform.getFeeRecipient();
     uint16 bpsFee = platform.getMembershipBps();
     protocolFeeBps = BasisPoints.calculate(membershipPrice, bpsFee);
@@ -81,14 +75,11 @@ abstract contract MembershipBase is IMembershipBase {
     address currency = _getMembershipCurrency();
 
     if (currency == CurrencyTransfer.NATIVE_TOKEN) {
-      if (msg.value == 0) revert Membership__InsufficientPayment();
       ds.tokenBalance += amount;
       return amount;
     }
 
     // handle erc20 tokens
-    if (msg.value != 0) revert Membership__InvalidCurrency();
-
     IERC20 token = IERC20(currency);
     uint256 balanceBefore = token.balanceOf(address(this));
     CurrencyTransfer.transferCurrency(currency, from, address(this), amount);

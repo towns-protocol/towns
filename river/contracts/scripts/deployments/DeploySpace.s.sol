@@ -92,7 +92,6 @@ contract DeploySpace is DiamondDeployer {
     diamondCut = diamondCutHelper.deploy();
     diamondLoupe = diamondLoupeHelper.deploy();
     introspection = introspectionHelper.deploy();
-    entitlementGated = entitlementGatedHelper.deploy();
     erc721aQueryable = erc721aQueryableHelper.deploy();
     multiInit = deployMultiInit.deploy();
 
@@ -138,10 +137,7 @@ contract DeploySpace is DiamondDeployer {
     );
     addCut(banningHelper.makeCut(banning, IDiamond.FacetCutAction.Add));
     addCut(
-      entitlementGatedHelper.makeCut(
-        entitlementGated,
-        IDiamond.FacetCutAction.Add
-      )
+      entitlementGatedHelper.makeCut(membership, IDiamond.FacetCutAction.Add)
     );
     addCut(
       erc721aQueryableHelper.makeCut(

@@ -37,9 +37,15 @@ type IEntitlementsManagerBaseEntitlement struct {
 	IsImmutable	bool
 }
 
+// IEntitlementsManagerEntitlementData is an auto generated low-level Go binding around an user-defined struct.
+type IEntitlementsManagerEntitlementData struct {
+	EntitlementType	string
+	EntitlementData	[]byte
+}
+
 // EntitlementsManagerMetaData contains all meta data concerning the EntitlementsManager contract.
 var EntitlementsManagerMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"addEntitlementModule\",\"inputs\":[{\"name\":\"entitlement\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"addImmutableEntitlements\",\"inputs\":[{\"name\":\"entitlements\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getEntitlement\",\"inputs\":[{\"name\":\"entitlement\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"entitlements\",\"type\":\"tuple\",\"internalType\":\"structIEntitlementsManagerBase.Entitlement\",\"components\":[{\"name\":\"name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"moduleAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"moduleType\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"isImmutable\",\"type\":\"bool\",\"internalType\":\"bool\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getEntitlements\",\"inputs\":[],\"outputs\":[{\"name\":\"entitlements\",\"type\":\"tuple[]\",\"internalType\":\"structIEntitlementsManagerBase.Entitlement[]\",\"components\":[{\"name\":\"name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"moduleAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"moduleType\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"isImmutable\",\"type\":\"bool\",\"internalType\":\"bool\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isEntitledToChannel\",\"inputs\":[{\"name\":\"channelId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"user\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"permission\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isEntitledToSpace\",\"inputs\":[{\"name\":\"user\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"permission\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"removeEntitlementModule\",\"inputs\":[{\"name\":\"entitlement\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"EntitlementModuleAdded\",\"inputs\":[{\"name\":\"caller\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"entitlement\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"EntitlementModuleRemoved\",\"inputs\":[{\"name\":\"caller\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"entitlement\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"}],\"anonymous\":false}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"addEntitlementModule\",\"inputs\":[{\"name\":\"entitlement\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"addImmutableEntitlements\",\"inputs\":[{\"name\":\"entitlements\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getEntitlement\",\"inputs\":[{\"name\":\"entitlement\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"entitlements\",\"type\":\"tuple\",\"internalType\":\"structIEntitlementsManagerBase.Entitlement\",\"components\":[{\"name\":\"name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"moduleAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"moduleType\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"isImmutable\",\"type\":\"bool\",\"internalType\":\"bool\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getEntitlementDataByPermission\",\"inputs\":[{\"name\":\"permission\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIEntitlementsManager.EntitlementData[]\",\"components\":[{\"name\":\"entitlementType\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"entitlementData\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getEntitlements\",\"inputs\":[],\"outputs\":[{\"name\":\"entitlements\",\"type\":\"tuple[]\",\"internalType\":\"structIEntitlementsManagerBase.Entitlement[]\",\"components\":[{\"name\":\"name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"moduleAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"moduleType\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"isImmutable\",\"type\":\"bool\",\"internalType\":\"bool\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isEntitledToChannel\",\"inputs\":[{\"name\":\"channelId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"user\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"permission\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isEntitledToSpace\",\"inputs\":[{\"name\":\"user\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"permission\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"removeEntitlementModule\",\"inputs\":[{\"name\":\"entitlement\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"EntitlementModuleAdded\",\"inputs\":[{\"name\":\"caller\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"entitlement\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"EntitlementModuleRemoved\",\"inputs\":[{\"name\":\"caller\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"entitlement\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"}],\"anonymous\":false}]",
 }
 
 // EntitlementsManagerABI is the input ABI used to generate the binding from.
@@ -217,6 +223,37 @@ func (_EntitlementsManager *EntitlementsManagerSession) GetEntitlement(entitleme
 // Solidity: function getEntitlement(address entitlement) view returns((string,address,string,bool) entitlements)
 func (_EntitlementsManager *EntitlementsManagerCallerSession) GetEntitlement(entitlement common.Address) (IEntitlementsManagerBaseEntitlement, error) {
 	return _EntitlementsManager.Contract.GetEntitlement(&_EntitlementsManager.CallOpts, entitlement)
+}
+
+// GetEntitlementDataByPermission is a free data retrieval call binding the contract method 0xdb0a69a8.
+//
+// Solidity: function getEntitlementDataByPermission(string permission) view returns((string,bytes)[])
+func (_EntitlementsManager *EntitlementsManagerCaller) GetEntitlementDataByPermission(opts *bind.CallOpts, permission string) ([]IEntitlementsManagerEntitlementData, error) {
+	var out []interface{}
+	err := _EntitlementsManager.contract.Call(opts, &out, "getEntitlementDataByPermission", permission)
+
+	if err != nil {
+		return *new([]IEntitlementsManagerEntitlementData), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]IEntitlementsManagerEntitlementData)).(*[]IEntitlementsManagerEntitlementData)
+
+	return out0, err
+
+}
+
+// GetEntitlementDataByPermission is a free data retrieval call binding the contract method 0xdb0a69a8.
+//
+// Solidity: function getEntitlementDataByPermission(string permission) view returns((string,bytes)[])
+func (_EntitlementsManager *EntitlementsManagerSession) GetEntitlementDataByPermission(permission string) ([]IEntitlementsManagerEntitlementData, error) {
+	return _EntitlementsManager.Contract.GetEntitlementDataByPermission(&_EntitlementsManager.CallOpts, permission)
+}
+
+// GetEntitlementDataByPermission is a free data retrieval call binding the contract method 0xdb0a69a8.
+//
+// Solidity: function getEntitlementDataByPermission(string permission) view returns((string,bytes)[])
+func (_EntitlementsManager *EntitlementsManagerCallerSession) GetEntitlementDataByPermission(permission string) ([]IEntitlementsManagerEntitlementData, error) {
+	return _EntitlementsManager.Contract.GetEntitlementDataByPermission(&_EntitlementsManager.CallOpts, permission)
 }
 
 // GetEntitlements is a free data retrieval call binding the contract method 0x487dc38c.

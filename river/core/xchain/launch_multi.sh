@@ -10,9 +10,11 @@ cd "$(dirname "$0")"
 RUN_FILES_DIR="./run_files"
 
 # PID file for the script, stored in the base directory
-SCRIPT_PID_FILE="${RUN_FILES_DIR}/launch_multi.pid"
+SCRIPT_PID_FILE="${RUN_FILES_DIR}/${RUN_ENV}/launch_multi.pid"
 
 BASE_DIR="${RUN_FILES_DIR}/${RUN_ENV}"
+
+mkdir -p "${BASE_DIR}"
 
 # stop previous instances
 ./stop_multi.sh
