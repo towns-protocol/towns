@@ -3,7 +3,7 @@ import uniqBy from 'lodash/uniqBy'
 import { Link } from 'react-router-dom'
 import { firstBy } from 'thenby'
 import { Address, LookupUserMap, Membership, useUserLookupContext } from 'use-towns-client'
-import { Box, Stack, Tooltip } from '@ui'
+import { Box, Paragraph, Stack, Tooltip } from '@ui'
 import { notUndefined } from 'ui/utils/utils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { AvatarStack } from 'routes/AvatarStack'
@@ -118,7 +118,7 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
             color="gray2"
         >
             <AvatarStack users={avatarUsers} size="avatar_xs" />
-            <Stack textAlign={{ mobile: 'center' }}>{message}</Stack>
+            <Paragraph textAlign={{ mobile: 'center' }}>{message}</Paragraph>
         </Stack>
     )
 }
@@ -182,7 +182,12 @@ const UserNameLink = (props: UserNameLinkProps) => {
 
     return (
         <Link to={`profile/${abstractAccountAddress}`}>
-            <Box color="default" display="inline" tooltip={<ProfileHoverCard userId={userId} />}>
+            <Box
+                as="span"
+                color="default"
+                display="inline"
+                tooltip={<ProfileHoverCard userId={userId} />}
+            >
                 {userDisplayName}
             </Box>
         </Link>
