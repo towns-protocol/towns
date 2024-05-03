@@ -57,6 +57,7 @@ import { createExitComboboxPlugin } from './ExitComboboxPlugin'
 import { createFormatTextLinkPlugin } from './formatTextLinks/createFormatTextLinkPlugin'
 import { ELEMENT_MENTION_CHANNEL, createChannelPlugin } from './createChannelPlugin'
 import { ELEMENT_MENTION_EMOJI, createEmojiPlugin } from './emoji/createEmojiPlugin'
+import { createErrorHandlingPlugin } from './WithErrorHandlingPlugin'
 import { ComboboxTypes, TUserMention } from '../utils/ComboboxTypes'
 
 const PlatePlugins = createPlugins(
@@ -116,7 +117,6 @@ const PlatePlugins = createPlugins(
         createUnderlinePlugin(),
         createStrikethroughPlugin(),
         createCodePlugin(),
-        createNormalizeTypesPlugin(),
         createResetNodePlugin({
             options: {
                 rules: nodeResetRules,
@@ -152,6 +152,8 @@ const PlatePlugins = createPlugins(
         }),
         createDeserializeMdPlugin(), // should be before createFormatTextLinkPlugin
         createFormatTextLinkPlugin(), // should be after createDeserializeMdPlugin
+        createNormalizeTypesPlugin(),
+        createErrorHandlingPlugin(),
     ],
     {
         components: {
