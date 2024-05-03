@@ -244,6 +244,9 @@ jobs:
                   for i in {5170..5179}; do yarn wait-on https://localhost:$i/debug/multi --timeout=900000 --i=5000 --verbose; done
               working-directory: river/core/node
 
+            - name: Start xchain node with entitlements
+              run: (RUN_ENV=multi ./core/xchain/launch_multi.sh &) && sleep 10
+
             - name: Build & Test (with entitlements)
               run: RIVER_ENV=local_multi yarn csb:turbo-no-sdk
 
