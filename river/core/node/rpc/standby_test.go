@@ -13,9 +13,9 @@ import (
 	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/contracts"
 	"github.com/river-build/river/core/node/nodes"
+	"github.com/river-build/river/core/node/rpc/statusinfo"
 
 	. "github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/rpc"
 	"github.com/stretchr/testify/require"
 )
 
@@ -27,7 +27,7 @@ func stanbyStartOpts() startOpts {
 	}
 }
 
-func getNodeStatus(url string) (*rpc.StatusResponse, error) {
+func getNodeStatus(url string) (*statusinfo.StatusResponse, error) {
 	url = url + "/status"
 	client := nodes.TestHttpClientMaker()
 	resp, err := client.Get(url)
@@ -38,7 +38,7 @@ func getNodeStatus(url string) (*rpc.StatusResponse, error) {
 	if resp.StatusCode != 200 {
 		return nil, errors.New("status request failed")
 	}
-	var status rpc.StatusResponse
+	var status statusinfo.StatusResponse
 	err = json.NewDecoder(resp.Body).Decode(&status)
 	if err != nil {
 		return nil, err

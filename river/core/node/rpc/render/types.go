@@ -1,5 +1,9 @@
 package render
 
+import (
+	"github.com/river-build/river/core/node/rpc/statusinfo"
+)
+
 // RenderableData is the interface for all data that can be rendered
 type RenderableData interface {
 	*AvailableDebugHandlersData | *CacheData | *TransactionPoolData |
@@ -91,25 +95,8 @@ func (d InfoIndexData) TemplateName() string {
 	return "templates/info/index.template.html"
 }
 
-type DebugMultiNodeInfo struct {
-	Url         string
-	Local       bool
-	HttpMsg     string
-	HttpSuccess bool
-	StatusJson  string
-	GrpcMsg     string
-	GrpcSuccess bool
-	Version     string
-	Uptime      string
-	Graffiti    string
-	Address     string
-	Status      string
-	Operator    string
-}
-
 type DebugMultiData struct {
-	Results     []*DebugMultiNodeInfo
-	CurrentTime string
+	Status *statusinfo.RiverStatus
 }
 
 func (d DebugMultiData) TemplateName() string {

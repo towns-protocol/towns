@@ -65,6 +65,7 @@ func (s *Service) registerDebugHandlers() {
 	handler.Handle(mux, "/debug/txpool", &txpoolHandler{riverTxPool: s.riverChain.TxPool})
 	handler.HandleFunc(mux, "/debug/memory", MemoryHandler)
 	handler.HandleFunc(mux, "/debug/multi", s.handleDebugMulti)
+	handler.HandleFunc(mux, "/debug/multi/json", s.handleDebugMultiJson)
 	handler.HandleFunc(mux, "/debug/pprof/", pprof.Index)
 	mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
 	mux.HandleFunc("/debug/pprof/profile", pprof.Profile)

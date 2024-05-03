@@ -7,6 +7,7 @@ import (
 
 	"github.com/river-build/river/core/node/http_client"
 	"github.com/river-build/river/core/node/nodes"
+	"github.com/river-build/river/core/node/rpc/statusinfo"
 )
 
 func (s *Service) standby() error {
@@ -78,7 +79,7 @@ func (s *Service) standbyFetchStatus(req *http.Request, client *http.Client) boo
 		return false
 	}
 
-	var status StatusResponse
+	var status statusinfo.StatusResponse
 	err = json.NewDecoder(resp.Body).Decode(&status)
 	if err != nil {
 		log.Warn("Standby: failed to decode JSON, retrying...", "error", err)

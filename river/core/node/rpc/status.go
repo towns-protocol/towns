@@ -9,20 +9,11 @@ import (
 
 	"github.com/river-build/river/core/node/node/version"
 	"github.com/river-build/river/core/node/rpc/render"
+	"github.com/river-build/river/core/node/rpc/statusinfo"
 )
 
-type StatusResponse struct {
-	Status     string `json:"status"`
-	InstanceId string `json:"instance_id"`
-	Address    string `json:"address"`
-	Version    string `json:"version"`
-	StartTime  string `json:"start_time"`
-	Uptime     string `json:"uptime"`
-	Graffiti   string `json:"graffiti,omitempty"`
-}
-
-func (s *Service) getStatusReponse() *StatusResponse {
-	return &StatusResponse{
+func (s *Service) getStatusReponse() *statusinfo.StatusResponse {
+	return &statusinfo.StatusResponse{
 		Status:     s.GetStatus(),
 		InstanceId: s.instanceId,
 		Address:    s.wallet.Address.Hex(),

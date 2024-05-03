@@ -56,19 +56,19 @@ func getTLSConfig(ctx context.Context) *tls.Config {
 // test CA in the test suite. Running under github action environment
 // there was no other way to get the test CA into the client.
 func GetHttpClient(ctx context.Context) (*http.Client, error) {
-	tlsConfig := getTLSConfig(ctx)
-	var client *http.Client
-	var transport *http2.Transport
-	if tlsConfig != nil {
-		transport = &http2.Transport{
-			TLSClientConfig: tlsConfig,
-		}
-	} else {
-		transport = &http2.Transport{}
-	}
-	client = &http.Client{
-		Transport: transport,
-	}
+	return &http.Client{
+		Transport: &http2.Transport{
+			TLSClientConfig: getTLSConfig(ctx),
+		},
+	}, nil
+}
 
-	return client, nil
+func GetHttp11Client(ctx context.Context) (*http.Client, error) {
+	return &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig:   getTLSConfig(ctx),
+			ForceAttemptHTTP2: false,
+			TLSNextProto:      map[string]func(authority string, c *tls.Conn) http.RoundTripper{},
+		},
+	}, nil
 }

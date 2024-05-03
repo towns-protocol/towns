@@ -105,3 +105,7 @@ Run
     ./env/gamma/run.sh info
 
 Browse to http://localhost:4040/debug/multi to see status and ping times as seen from the local machine.
+
+Or, to get JSON on the console:
+
+    ./env/gamma/run.sh ping

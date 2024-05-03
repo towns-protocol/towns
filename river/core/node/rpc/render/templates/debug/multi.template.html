@@ -4,6 +4,9 @@
     <meta charset="UTF-8" />
     <title>Protocol and Node Responses</title>
     <style>
+      body {
+        font-family: monospace;
+      }
       .success {
         color: green;
       }
@@ -18,7 +21,7 @@
       }
       th,
       td {
-        padding: 5px;
+        padding: 8px;
         text-align: center;
       }
       .tooltip {
@@ -44,48 +47,85 @@
       }
     </style>
   </head>
+  <!-- prettier-ignore -->
   <body>
     <h2>Node Response Times</h2>
     <table>
       <!-- Header row -->
       <tr>
         <th>Node</th>
-        <th>Local</th>
-        <th>HTTP</th>
+        <th>HTTP/1.1</th>
+        <th>HTTP/2</th>
         <th>GRPC</th>
         <th>Version</th>
-        <th>Uptime / Starttime</th>
+        <th>Uptime</th>
         <th>Address</th>
         <th>Status</th>
         <th>Operator</th>
+        <th>River Eth Balance</th>
       </tr>
 
       <!-- Data rows for each Node -->
-      {{range $r := .Results}}
-      <!-- prettier-ignore -->
+      {{range .Status.Nodes}}
       <tr>
-        <th><a href="{{$r.Url}}/debug/multi">{{$r.Url}}</a></th>
-        <td>{{if $r.Local}}*{{end}}</td>
-        <td class="{{if $r.HttpSuccess}}success{{else}}error{{end}}">
+        <th><a href="{{.Record.Url}}/debug/multi">{{.Record.Url}}</a>{{if .Local}} <b>*</b>{{end}}</th>
+        {{with .Http11}}
+        <td class="{{if .Success}}success{{else}}error{{end}}">
           <span class="tooltip">
-            {{$r.HttpMsg}}
-            <span class="tooltiptext"><pre>{{$r.StatusJson}}</pre></span>
+            {{.StatusText}} {{.Elapsed}}
+            <span class="tooltiptext"><pre>{{.ToPrettyJson}}</pre></span>
           </span>
         </td>
-        <td class="{{if $r.GrpcSuccess}}success{{else}}error{{end}}">
+        {{end}}
+        {{with .Http20}}
+        <td class="{{if .Success}}success{{else}}error{{end}}">
           <span class="tooltip">
-            {{$r.GrpcMsg}}
-            <span class="tooltiptext"><pre>{{$r.Graffiti}}</pre></span>
+            {{.StatusText}} {{.Elapsed}}
+            <span class="tooltiptext"><pre>{{.ToPrettyJson}}</pre></span>
           </span>
         </td>
-        <td>{{$r.Version}}</td>
-        <td>{{$r.Uptime}}</td>
-        <td>{{$r.Address}}</td>
-        <td>{{$r.Status}}</td>
-        <td>{{$r.Operator}}</td>
+        {{end}}        {{with .Grpc}}
+        <td class="{{if .Success}}success{{else}}error{{end}}">
+          <span class="tooltip">
+            {{.StatusText}} {{.Elapsed}}
+            <span class="tooltiptext"><pre>{{.ToPrettyJson}}</pre></span>
+          </span>
+        </td>
+        <td>{{.Version}}</td>
+        <td>
+          <span class="tooltip">
+            {{.Uptime}}
+            <span class="tooltiptext"><pre>Start time: <span class="timeconvert">{{.StartTime}}</span>
+UTC: {{.StartTime}}</pre></span>
+          </span>
+        </td>
+        {{end}}
+        <td>{{.Record.Address}}</td>
+        <td>{{.Record.Status}} ({{.Record.StatusText}})</td>
+        <td>{{.Record.Operator}}</td>
+        <td>{{.RiverEthBalance}}</td>
       </tr>
       {{end}}
     </table>
-    Current UTC Time: {{.CurrentTime}}
+    <span class="tooltip">
+      Current Time: <span class="timeconvert">{{.Status.QueryTime}}</span><br />
+      Elapsed Time: {{.Status.Elapsed}}
+      <span class="tooltiptext"><pre>UTC: {{.Status.QueryTime}}</pre></span>
+    </span>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {
+        var times = document.querySelectorAll('.timeconvert');
+        times.forEach(function(time) {
+          try {
+            var originalTime = time.textContent;
+            var localTime = new Date(originalTime).toLocaleString();
+            time.textContent = localTime;
+          } catch (e) {
+            console.error('Error converting time:', e);
+          }
+        });
+      });
+    </script>
   </body>
 </html>
