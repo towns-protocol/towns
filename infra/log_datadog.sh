@@ -14,7 +14,6 @@ function check_env()
 }
 function determine_runtype()
 {
-    echo $CI_AUTOAPPROVE
     if [ -z "$CI_AUTOAPPROVE" ]; then
         RUN_TYPE=Local
     elif [ "$CI_AUTOAPPROVE" = true ] || [ "$CI_AUTOAPPROVE" = "-auto-approve" ] ; then
@@ -28,7 +27,7 @@ function sendto_datadog()
 {
     RUN_TYPE=$1
     LOG_MESSAGE=$2
-    JSON_PAYLOAD="{\"ddsource\": \"log_datadog\", \"service\": \"terraform\", \"ddtags\": \"environment:$ENV, run_type:$RUN_TYPE, tf_run_type:$TF_ACTION_TYPE\", \"message\": \"$LOG_MESSAGE\"}"
+    JSON_PAYLOAD="{\"ddsource\": \"log_datadog\", \"hostname\": \"$ENV\" , \"service\": \"terraform\", \"status\": \"$TF_ACTION_TYPE\", \"ddtags\": \"environment:$ENV, run_type:$RUN_TYPE, tf_run_type:$TF_ACTION_TYPE\", \"message\": \"$LOG_MESSAGE\"}"
     DATADOG_URL="https://http-intake.logs.datadoghq.com/v1/input"
     echo "Sending metrics to Datadog"
     RESPONSE_CODE=$(curl -o /dev/null -sw '%{http_code}' -X POST -H "Content-type: application/json" -H "DD-API-KEY: $TF_VAR_datadog_api_key" -d "$JSON_PAYLOAD" "$DATADOG_URL")
