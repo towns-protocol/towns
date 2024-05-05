@@ -3,6 +3,7 @@ import { Box, IconButton, Text } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
 import { TokenDataWithChainId } from '../types'
 import { TokenImage } from './TokenImage'
+import { NetworkName } from './NetworkName'
 
 export function TokenSelection(
     props: TokenDataWithChainId & {
@@ -34,13 +35,16 @@ export function TokenSelection(
                             textOverflow: 'ellipsis',
                         }}
                     >
-                        {label ?? 'Unknown NFT'}
+                        {label?.length ? label : 'Unknown Token'}
                     </Box>
-                    {address && (
-                        <Box color="gray2" fontSize="sm" tooltip={address}>
-                            {shortAddress(address)}
-                        </Box>
-                    )}
+                    <Box horizontal gap centerContent>
+                        {address && (
+                            <Box color="gray2" fontSize="sm" tooltip={address}>
+                                {shortAddress(address)}
+                            </Box>
+                        )}
+                        <NetworkName fontSize="sm" chainId={props.chainId} />
+                    </Box>
                     {/* TODO: handle ERC1155 */}
                     {/* <Box horizontal gap="xs">
                     {tokenIds.map((id) => (

@@ -338,7 +338,7 @@ const InformationBoxes = (props: {
         >
             <TokenInfoBox
                 title="For"
-                subtitle={anyoneCanJoin ? 'Anyone' : 'Holders'}
+                subtitle={anyoneCanJoin ? 'Anyone' : 'ERC-721'}
                 anyoneCanJoin={anyoneCanJoin}
                 tokensGatingMembership={_tokens}
             />

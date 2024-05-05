@@ -10,6 +10,7 @@ import {
     useContractSpaceInfo,
     useGetRootKeyFromLinkedWallet,
     useHasPermission,
+    useRoleDetails,
     useSpaceData,
     useSpaceId,
     useSpaceMembers,
@@ -57,6 +58,10 @@ import { openSeaAssetUrl } from '@components/Web3/utils'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { Panel } from '@components/Panel/Panel'
 import { SpaceSettingsNavigationPanel } from '@components/SpaceSettingsPanel/SpaceSettingsNavigationPanel'
+import { convertRuleDataToTokenFormSchema } from '@components/Tokens/utils'
+import { TokenImage } from '@components/Tokens/TokenSelector/TokenImage'
+import { useTokenMetadataForChainId } from 'api/lib/collectionMetadata'
+import { NetworkName } from '@components/Tokens/TokenSelector/NetworkName'
 import { AllChannelsList } from './AllChannelsList/AllChannelsList'
 import { PublicTownPage } from './PublicTownPage/PublicTownPage'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
@@ -351,6 +356,11 @@ export const SpaceInfo = () => {
                 </Stack>
             )}
             <Stack gap>
+                <TokensGatingSpace
+                    spaceId={spaceID}
+                    canEdit={!!canEdit}
+                    onClick={onEditSpaceSettingsClick}
+                />
                 <MdGap>
                     <Stack gap>
                         <Stack horizontal alignItems="center" width="100%">
@@ -714,5 +724,86 @@ const BannedUsersPanelButton = (props: { onClick: () => void; spaceId?: string }
             <Icon type="ban" size="square_sm" color="negative" />
             <Paragraph color="error">Banned Users</Paragraph>
         </PanelButton>
+    )
+}
+
+const TokensGatingSpace = ({
+    spaceId,
+    canEdit,
+    onClick,
+}: {
+    spaceId: string | undefined
+    canEdit: boolean
+    onClick: () => void
+}) => {
+    const { isLoading: isLoadingRoleDetails, roleDetails } = useRoleDetails(spaceId ?? '', 1)
+    const tokens = roleDetails?.ruleData
+        ? convertRuleDataToTokenFormSchema(roleDetails.ruleData)
+        : []
+
+    if (isLoadingRoleDetails || tokens.length === 0) {
+        return null
+    }
+
+    return (
+        <MdGap padding="none">
+            <Box horizontal gap="sm" alignItems="center" paddingY="sm" paddingX="md">
+                <Box horizontal gap centerContent>
+                    <Icon type="lock" size="square_sm" color="gray2" />
+                    For ERC-721 Holders
+                </Box>
+                <Box
+                    horizontal
+                    gap="sm"
+                    style={{
+                        marginLeft: 'auto',
+                    }}
+                >
+                    {tokens.slice(0, 3).map((token) => {
+                        return (
+                            <>
+                                <TokenToDisplay
+                                    key={token.address}
+                                    contractAddress={token.address}
+                                    chainId={token.chainId}
+                                />
+                            </>
+                        )
+                    })}
+                </Box>
+                {canEdit && (
+                    <IconButton icon="edit" size="square_sm" color="gray2" onClick={onClick} />
+                )}
+                {tokens.length > 3 && `+${tokens.length - 3} more`}
+            </Box>
+        </MdGap>
+    )
+}
+
+function TokenToDisplay({
+    contractAddress,
+    chainId,
+}: {
+    contractAddress: string
+    chainId: number
+}) {
+    const { data: tokenDataWithChainId } = useTokenMetadataForChainId(contractAddress, chainId)
+
+    return (
+        <Box
+            tooltip={
+                <Box centerContent background="level1" padding="sm" rounded="sm" gap="sm">
+                    <Text size="sm" textAlign="center">
+                        {tokenDataWithChainId?.data.label ?? 'Unknown Token'}
+                    </Text>
+                    <NetworkName chainId={chainId} />
+                    <Text size="sm" textAlign="center" color="gray2">
+                        {tokenDataWithChainId?.data.address}
+                    </Text>
+                </Box>
+            }
+        >
+            <TokenImage imgSrc={tokenDataWithChainId?.data.imgSrc} width="x3" />
+        </Box>
     )
 }

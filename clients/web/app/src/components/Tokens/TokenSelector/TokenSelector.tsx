@@ -1,7 +1,8 @@
 import React, { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { z } from 'zod'
+import { TokenType } from '@token-worker/types'
 import { TokenDataWithChainId } from '@components/Tokens/types'
-import { Box, Button, IconButton, Text, TextField } from '@ui'
+import { Box, Button, Icon, IconButton, Text, TextField } from '@ui'
 import { useTokenMetadataAcrossNetworks } from 'api/lib/collectionMetadata'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { supportedNftNetworks } from '@components/Web3/utils'
@@ -16,10 +17,20 @@ type Props = {
     initialSelection?: TokenDataWithChainId[]
     inputContainerRef?: React.RefObject<HTMLDivElement>
     onSelectionChange: (args: { tokens: TokenDataWithChainId[] }) => void
+    allowedTokenTypes?: TokenType[]
+    allowedNetworks?: number[]
 }
 
+// Shows a list of tokens that can be selected. Also allows for adding your own token
+// valid tokens can either be ERC721, UNKNOWN, or NOT_A_CONTRACT
+//
+// if ERC721, it can be selected from the drop down on the appropriate network
+//
+// if UNKNOWN or NOT_A_CONTRACT, it can be added by entering the contract address
+// the user must select the network (if allowed), and be made aware that only ERC721 tokens are supported
 export function TokenSelector(props: Props) {
-    const { isValidationError, onSelectionChange, initialSelection } = props
+    const allowedTokenTypes = props.allowedTokenTypes ?? [TokenType.ERC721]
+    const { isValidationError, onSelectionChange, initialSelection, allowedNetworks } = props
     const [textFieldValue, setTextFieldValue] = useState('')
     const [selection, setSelection] = useState<TokenDataWithChainId[]>(initialSelection ?? [])
     const [tokenEditor, setTokenEditor] = useState<TokenDataWithChainId | undefined>()
@@ -28,7 +39,32 @@ export function TokenSelector(props: Props) {
     const { data: tokenMetadata, isLoading: isTokenMetadataLoading } =
         useTokenMetadataAcrossNetworks(textFieldValue)
 
-    const sortedTokenMetadata = useSorted(tokenMetadata)
+    const resultsOnAllowedNetworks = useMemo(() => {
+        if (!allowedNetworks) {
+            return tokenMetadata
+        }
+        return tokenMetadata?.filter((t) => allowedNetworks.includes(t.chainId))
+    }, [allowedNetworks, tokenMetadata])
+
+    const anyResultIsERC1155OrERC20 = useMemo(() => {
+        return tokenMetadata?.some(
+            (t) => t.data.type === TokenType.ERC1155 || t.data.type === TokenType.ERC20,
+        )
+    }, [tokenMetadata])
+
+    const allResultsOnAllowedNetworkAreUnknownOrNotAContract = useMemo(() => {
+        return resultsOnAllowedNetworks?.every(
+            (t) => t.data.type === TokenType.UNKNOWN || t.data.type === TokenType.NOT_A_CONTRACT,
+        )
+    }, [resultsOnAllowedNetworks])
+
+    const showUnknownTokensList =
+        allResultsOnAllowedNetworkAreUnknownOrNotAContract && !anyResultIsERC1155OrERC20
+
+    const knownTokens = useValidTokens({
+        tokenMetadata: useSorted(resultsOnAllowedNetworks),
+        allowedTokenTypes,
+    })
 
     const onChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
         setTextFieldValue(e.target.value)
@@ -98,7 +134,7 @@ export function TokenSelector(props: Props) {
     }, [onSelectionChange, selection])
 
     return (
-        <Box gap="md" ref={containerRef} position="relative">
+        <Box gap="md" ref={containerRef} position="relative" zIndex="above">
             <Box
                 horizontal
                 gap="sm"
@@ -107,7 +143,7 @@ export function TokenSelector(props: Props) {
                 flexWrap="wrap"
                 minHeight="x6"
                 overflow="hidden"
-                border={isValidationError ? 'negative' : 'default'}
+                border={isValidationError || anyResultIsERC1155OrERC20 ? 'negative' : 'default'}
             >
                 <TextField
                     data-testid="token-selector-input"
@@ -120,6 +156,14 @@ export function TokenSelector(props: Props) {
                 />
             </Box>
 
+            {anyResultIsERC1155OrERC20 && (
+                <Box>
+                    <Text size="sm" color="error">
+                        We currently only support ERC-71 tokens.
+                    </Text>
+                </Box>
+            )}
+
             <Box gap="sm">
                 {Array.from(selection).map((token) => (
                     <TokenSelection
@@ -130,40 +174,52 @@ export function TokenSelector(props: Props) {
                     />
                 ))}
             </Box>
+
             {isTokenMetadataLoading && (
-                <Box>
+                <Box centerContent position="absolute" bottom="-sm" width="100%">
                     <ButtonSpinner />
                 </Box>
             )}
 
-            {sortedTokenMetadata && (
-                <Box
-                    padding
-                    gap
-                    scroll
-                    width="100%"
-                    top="x8"
-                    position="absolute"
-                    rounded="sm"
-                    background="level2"
-                    style={{ maxHeight: 380 }}
-                    boxShadow="card"
-                >
-                    {sortedTokenMetadata
-                        .map((token) => ({
-                            chainId: token.chainId,
-                            data: token.data,
-                        }))
-                        .map((option) => (
-                            <TokenOption
-                                key={option.chainId + option.data.address}
-                                option={option}
-                                selected={false}
-                                onAddItem={(option) => onAddItem(option)}
-                            />
-                        ))}
-                </Box>
-            )}
+            {knownTokens?.length ? (
+                <TokenOptions tokens={knownTokens} onAddItem={onAddItem} />
+            ) : showUnknownTokensList ? (
+                <>
+                    <TokenOptions
+                        headerElement={
+                            <Box horizontal gap="sm">
+                                <Icon type="alert" color="negative" size="square_sm" />
+                                <Box gap="sm">
+                                    <Text
+                                        size="sm"
+                                        color="gray1"
+                                    >{`We didn't find your token on any of the supported networks.`}</Text>
+                                    <Text
+                                        size="sm"
+                                        color="gray1"
+                                    >{`If you add this token, it will be submitted as an ERC-721.`}</Text>
+                                </Box>
+                            </Box>
+                        }
+                        tokens={
+                            resultsOnAllowedNetworks?.filter(
+                                (t) =>
+                                    t.data.type === TokenType.UNKNOWN ||
+                                    t.data.type === TokenType.NOT_A_CONTRACT,
+                            ) ?? []
+                        }
+                        onAddItem={(o) =>
+                            onAddItem({
+                                ...o,
+                                data: {
+                                    ...o.data,
+                                    type: TokenType.ERC721,
+                                },
+                            })
+                        }
+                    />
+                </>
+            ) : null}
 
             {tokenEditor && (
                 <ModalContainer
@@ -177,6 +233,46 @@ export function TokenSelector(props: Props) {
                     />
                 </ModalContainer>
             )}
+        </Box>
+    )
+}
+
+function TokenOptions({
+    tokens,
+    onAddItem,
+    headerElement,
+}: {
+    tokens: TokenDataWithChainId[]
+    onAddItem: (option: TokenDataWithChainId) => void
+    headerElement?: React.ReactNode
+}) {
+    return (
+        <Box
+            padding
+            gap
+            scroll
+            width="100%"
+            top="x8"
+            position="absolute"
+            rounded="sm"
+            background="level2"
+            style={{ maxHeight: 380 }}
+            boxShadow="card"
+        >
+            {headerElement}
+            {tokens
+                .map((token) => ({
+                    chainId: token.chainId,
+                    data: token.data,
+                }))
+                .map((option) => (
+                    <TokenOption
+                        key={option.chainId + option.data.address}
+                        option={option}
+                        selected={false}
+                        onAddItem={(option) => onAddItem(option)}
+                    />
+                ))}
         </Box>
     )
 }
@@ -304,12 +400,27 @@ function TokenEditor(props: {
     )
 }
 
+function useValidTokens(args: {
+    tokenMetadata: TokenDataWithChainId[] | undefined
+    allowedTokenTypes: TokenType[]
+}) {
+    return useMemo(() => {
+        if (!args.tokenMetadata) {
+            return undefined
+        }
+        const tokens = args.tokenMetadata.filter((t) =>
+            args.allowedTokenTypes.includes(t.data.type),
+        )
+
+        return tokens
+    }, [args.allowedTokenTypes, args.tokenMetadata])
+}
+
 function useSorted(tokenMetadata: TokenDataWithChainId[] | undefined) {
     return useMemo(
         () =>
             tokenMetadata
                 ? tokenMetadata
-                      .filter((t) => t.data.label)
                       .slice()
                       // sort by whether the token has a hit in NFT api
                       .sort((a, b) => {

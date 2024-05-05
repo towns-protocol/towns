@@ -166,6 +166,7 @@ export function openSeaAssetUrl(chainId: number, contractAddress: string) {
 
 export const openSeaBaseAssetUrl = 'https://opensea.io/assets/base'
 
+// TODO: supportedNftNetworks will be grabbed from river
 export const supportedNftNetworks = [
     { vChain: mainnet, alchemyIdentifier: 'eth-mainnet' },
     { vChain: base, alchemyIdentifier: 'base-mainnet' },

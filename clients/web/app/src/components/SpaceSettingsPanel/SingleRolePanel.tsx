@@ -2,7 +2,9 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
     Address,
+    BASE_SEPOLIA,
     BlockchainTransactionType,
+    LOCALHOST_CHAIN_ID,
     NoopRuleData,
     Permission,
     createOperationsTree,
@@ -49,6 +51,8 @@ import {
     convertRuleDataToTokenFormSchema,
     convertTokenTypeToOperationType,
 } from '@components/Tokens/utils'
+import { useEnvironment } from 'hooks/useEnvironmnet'
+import { env } from 'utils'
 import { convertToNumber, mapTokenOptionsToTokenDataStruct } from './utils'
 import { formSchema } from './schema'
 import { UserPillSelector } from './UserPillSelector'
@@ -516,6 +520,16 @@ function TokenSearch({ isCreateRole }: { isCreateRole: boolean }) {
         },
         [setValue],
     )
+    const { baseChainConfig } = useEnvironment()
+
+    const allowedNetworks = useMemo(() => {
+        if (env.DEV) {
+            if (baseChainConfig.chainId === LOCALHOST_CHAIN_ID) {
+                return [baseChainConfig.chainId, BASE_SEPOLIA]
+            }
+        }
+        return [baseChainConfig.chainId]
+    }, [baseChainConfig.chainId])
 
     return (
         <Stack gap data-testid="token-search">
@@ -545,6 +559,7 @@ function TokenSearch({ isCreateRole }: { isCreateRole: boolean }) {
                     <TokenSelector
                         initialSelection={initialTokensData}
                         isValidationError={formState.errors.tokens !== undefined}
+                        allowedNetworks={allowedNetworks}
                         onSelectionChange={onSelectionChange}
                     />
                 </>

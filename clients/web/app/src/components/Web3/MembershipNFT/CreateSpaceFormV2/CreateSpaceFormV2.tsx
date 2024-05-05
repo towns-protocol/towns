@@ -362,7 +362,7 @@ function CreateSpaceFormV2WithoutAuth() {
                                                             subtitle={
                                                                 isEveryoneMembership
                                                                     ? 'Anyone'
-                                                                    : 'Holders'
+                                                                    : 'ERC-721'
                                                             }
                                                             anyoneCanJoin={isEveryoneMembership}
                                                             onInfoBoxClick={onInfoBoxClick}

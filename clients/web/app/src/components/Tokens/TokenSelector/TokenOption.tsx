@@ -1,6 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react'
 import { Box, IconButton, Paragraph, Text } from '@ui'
-import { supportedNftNetworks } from '@components/Web3/utils'
 import { shortAddress } from 'ui/utils/utils'
 import { Field } from 'ui/components/_internal/Field'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
@@ -8,6 +7,7 @@ import { TokenDataWithChainId, TokenType } from '../types'
 import { tokenIdSchema } from './tokenSchemas'
 import { TokenImage } from './TokenImage'
 import { TokenSelectorStyles } from './TokenSelector.css'
+import { NetworkName } from './NetworkName'
 
 export function TokenOption({
     option,
@@ -73,15 +73,9 @@ export function TokenOption({
         },
         [addTokenId],
     )
-
     return (
         <Box gap="sm">
-            <Text color="gray2">
-                {
-                    supportedNftNetworks.find((network) => network.vChain.id === option.chainId)
-                        ?.vChain.name
-                }
-            </Text>
+            <NetworkName chainId={option.chainId} />
             <Box
                 horizontal
                 alignItems="center"
@@ -110,7 +104,7 @@ export function TokenOption({
                             overflow="hidden"
                         >
                             <Paragraph truncate>
-                                {option.data?.label ? option.data.label : 'Unknown NFT'}
+                                {option.data?.label ? option.data.label : 'Unknown Token'}
                             </Paragraph>
                             {option.data?.address && (
                                 <Box color="gray2" fontSize="sm" tooltip={option.data?.address}>
