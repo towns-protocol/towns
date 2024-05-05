@@ -51,7 +51,7 @@ export const TouchLayoutHeader = (props: Props) => {
                         background="level2"
                         onClick={() => props.onDisplayMainPanel()}
                     />
-                    {hasUnread && <Dot />}
+                    {hasUnread && <Dot position="topRight" />}
                 </Box>
 
                 {space && myMembership === Membership.Join ? (
