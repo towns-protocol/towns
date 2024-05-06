@@ -69,7 +69,14 @@ fileUpload(filename: $filename, size: $size, contentType: $contentType) {
     // failed to get the upload url
     if (res.status !== 200) {
         const body = await res.text()
-        console.error('Failed to get upload url:', res.status, body)
+        let rateLimitedErrors = ''
+        // rate limited errors are stored in the response headers
+        if (res.status === 429) {
+            res.headers.forEach((value, key) => {
+                rateLimitedErrors += `${key}: ${value}\n`
+            })
+        }
+        console.error('Failed to get upload url:', { status: res.status, body, rateLimitedErrors })
         return {
             uploadFile: {
                 assetUrl: '',
