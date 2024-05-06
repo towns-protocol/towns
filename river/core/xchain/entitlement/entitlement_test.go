@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -257,8 +259,9 @@ func TestCheckOperation(t *testing.T) {
 		{&nftCheckBaseSepolia, sepoliaTestNoNftsWallet, false, 0},
 	}
 
-	for _, tc := range testCases {
+	require.NoError(t, Init(context.Background(), cfg), "init entitlement package")
 
+	for _, tc := range testCases {
 		startTime := time.Now() // Get the current time
 
 		result, err := evaluateOp(context.Background(), cfg, tc.a, []common.Address{tc.callerAddress})

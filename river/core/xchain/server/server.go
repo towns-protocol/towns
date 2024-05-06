@@ -70,6 +70,10 @@ func New(
 		}
 	}()
 
+	if err = entitlement.Init(ctx, cfg); err != nil {
+		return nil, err
+	}
+
 	checker, err := contracts.NewIEntitlementChecker(cfg.GetCheckerContractAddress(), nil, cfg.GetContractVersion())
 	if err != nil {
 		return nil, err
@@ -310,20 +314,23 @@ func (x *xchain) writeEntitlementCheckResults(ctx context.Context, checkResults 
 					outcome = contracts.NodeVoteStatus__PASSED
 				}
 
-				pendingTx, err := x.baseChain.TxPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
-					gated, err := contracts.NewIEntitlementGated(
-						receipt.Event.ContractAddress(),
-						x.baseChain.Client,
-						x.config.GetContractVersion(),
-					)
-					if err != nil {
-						return nil, err
-					}
-					// Ensure gas limit is at least 2_500_000 as a workaround for simulated backend issues in tests.
-					opts.GasLimit = max(opts.GasLimit, 2_500_000)
+				pendingTx, err := x.baseChain.TxPool.Submit(
+					ctx,
+					func(opts *bind.TransactOpts) (*types.Transaction, error) {
+						gated, err := contracts.NewIEntitlementGated(
+							receipt.Event.ContractAddress(),
+							x.baseChain.Client,
+							x.config.GetContractVersion(),
+						)
+						if err != nil {
+							return nil, err
+						}
+						// Ensure gas limit is at least 2_500_000 as a workaround for simulated backend issues in tests.
+						opts.GasLimit = max(opts.GasLimit, 2_500_000)
 
-					return gated.PostEntitlementCheckResult(opts, receipt.TransactionID, uint8(outcome))
-				})
+						return gated.PostEntitlementCheckResult(opts, receipt.TransactionID, uint8(outcome))
+					},
+				)
 
 				// it is possible that some entitlement checks are already processed before xchain restarted,
 				// or enough other xchain instances have already reached a quorum -> ignore these errors.

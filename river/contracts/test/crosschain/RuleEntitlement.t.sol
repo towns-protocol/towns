@@ -45,13 +45,13 @@ contract EntitlementGatedTest is TestUtils {
       memory logicalOperations = new IRuleEntitlement.LogicalOperation[](1);
     checkOperations[0] = IRuleEntitlement.CheckOperation(
       IRuleEntitlement.CheckOperationType.ERC20,
-      1,
+      31337,
       address(0x12),
       100
     );
     checkOperations[1] = IRuleEntitlement.CheckOperation(
       IRuleEntitlement.CheckOperationType.ERC721,
-      1,
+      31337,
       address(0x23),
       100
     );
@@ -102,13 +102,13 @@ contract EntitlementGatedTest is TestUtils {
       memory logicalOperations = new IRuleEntitlement.LogicalOperation[](2);
     checkOperations[0] = IRuleEntitlement.CheckOperation(
       IRuleEntitlement.CheckOperationType.ERC20,
-      1,
+      31337,
       address(0x12),
       100
     );
     checkOperations[1] = IRuleEntitlement.CheckOperation(
       IRuleEntitlement.CheckOperationType.ERC721,
-      1,
+      31337,
       address(0x21),
       100
     );

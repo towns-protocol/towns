@@ -8,13 +8,26 @@ import (
 	"core/xchain/contracts"
 	"fmt"
 	"math/big"
+	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/river-build/river/core/node/dlog"
 )
+
+var (
+	clientsOnce sync.Once
+	clients     BlockchainClientPool
+)
+
+func Init(ctx context.Context, cfg *config.Config) error {
+	var err error
+	clientsOnce.Do(func() {
+		clients, err = NewBlockchainClientPool(ctx, cfg)
+	})
+	return err
+}
 
 func evaluateCheckOperation(
 	ctx context.Context,
@@ -67,16 +80,12 @@ func evaluateIsEntitledOperation(
 	linkedWallets []common.Address,
 ) (bool, error) {
 	log := dlog.FromCtx(ctx).With("function", "evaluateErc20Operation")
-	url, ok := cfg.Chains[op.ChainID.Uint64()]
-	if !ok {
+	client, err := clients.Get(op.ChainID.Uint64())
+	if err != nil {
 		log.Error("Chain ID not found", "chainID", op.ChainID)
 		return false, fmt.Errorf("evaluateErc20Operation: Chain ID %v not found", op.ChainID)
 	}
-	client, err := ethclient.Dial(url)
-	if err != nil {
-		log.Error("Failed to dial", "err", err)
-		return false, err
-	}
+
 	customEntitlementChecker, err := contracts.NewICustomEntitlement(
 		op.ContractAddress,
 		client,
@@ -87,7 +96,6 @@ func evaluateIsEntitledOperation(
 			"err", err,
 			"contractAddress", op.ContractAddress,
 			"chainId", op.ChainID,
-			"chainUrl", url,
 		)
 		return false, err
 	}
@@ -105,7 +113,6 @@ func evaluateIsEntitledOperation(
 				"channelId", op.ChannelId,
 				"permission", op.Permission,
 				"chainId", op.ChainID,
-				"chainUrl", url,
 			)
 			return false, err
 		}
@@ -123,15 +130,10 @@ func evaluateErc20Operation(
 	linkedWallets []common.Address,
 ) (bool, error) {
 	log := dlog.FromCtx(ctx).With("function", "evaluateErc20Operation")
-	url, ok := cfg.Chains[op.ChainID.Uint64()]
-	if !ok {
+	client, err := clients.Get(op.ChainID.Uint64())
+	if err != nil {
 		log.Error("Chain ID not found", "chainID", op.ChainID)
 		return false, fmt.Errorf("evaluateErc20Operation: Chain ID %v not found", op.ChainID)
-	}
-	client, err := ethclient.Dial(url)
-	if err != nil {
-		log.Error("Failed to dial", "err", err)
-		return false, err
 	}
 
 	// Create a new instance of the token contract
@@ -183,16 +185,12 @@ func evaluateErc721Operation(
 ) (bool, error) {
 	log := dlog.FromCtx(ctx).With("function", "evaluateErc721Operation")
 
-	url, ok := cfg.Chains[op.ChainID.Uint64()]
-	if !ok {
+	client, err := clients.Get(op.ChainID.Uint64())
+	if err != nil {
 		log.Error("Chain ID not found", "chainID", op.ChainID)
 		return false, fmt.Errorf("evaluateErc20Operation: Chain ID %v not found", op.ChainID)
 	}
-	client, err := ethclient.Dial(url)
-	if err != nil {
-		log.Error("Failed to dial", "err", err)
-		return false, err
-	}
+
 	nft, err := erc721.NewErc721Caller(op.ContractAddress, client)
 	if err != nil {
 		log.Error("Failed to instantiate a NFT contract",

@@ -249,7 +249,7 @@ describe('spaceWithEntitlements', () => {
                     checkOperations: [
                         {
                             opType: CheckOperationType.ERC721,
-                            chainId: 1n,
+                            chainId: 31337n,
                             contractAddress: testNftAddress,
                             threshold: 1n,
                         },

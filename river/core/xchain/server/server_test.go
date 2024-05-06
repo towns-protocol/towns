@@ -12,27 +12,29 @@ import (
 	test_contracts "core/xchain/contracts/test"
 	"core/xchain/entitlement"
 	"core/xchain/server"
+	"fmt"
 	"log"
 	"log/slog"
 	"math/big"
 	"testing"
 	"time"
 
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/ethclient"
-
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-
-	"github.com/stretchr/testify/require"
-
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/river-build/river/core/node/base/test"
 	node_config "github.com/river-build/river/core/node/config"
+	node_contracts "github.com/river-build/river/core/node/contracts"
 	node_crypto "github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 	infra "github.com/river-build/river/core/node/infra/config"
+	"github.com/stretchr/testify/require"
+)
 
-	node_contracts "github.com/river-build/river/core/node/contracts"
+const (
+	ChainID         = 31337
+	BaseRpcEndpoint = "http://localhost:8545"
 )
 
 type testNodeRecord struct {
@@ -258,7 +260,7 @@ func (st *serviceTester) Config() *config.Config {
 	cfg := &config.Config{
 		BaseChain:    node_config.ChainConfig{},
 		RiverChain:   node_config.ChainConfig{},
-		ChainsString: "1:ws://localhost:8545",
+		ChainsString: fmt.Sprintf("%d:%s", ChainID, BaseRpcEndpoint),
 		TestingContract: config.ContractConfig{
 			Address: st.mockEntitlementGatedAddress.String(),
 		},
@@ -382,9 +384,8 @@ func customEntitlementCheck(chainId uint64, contractAddress common.Address) cont
 // Expect base anvil chain available at localhost:8545.
 // xchain needs an rpc url endpoint available for evaluating entitlements.
 var (
-	baseWebsocketURL = "ws://localhost:8545"
-	anvilWallet      *node_crypto.Wallet
-	anvilClient      *ethclient.Client
+	anvilWallet *node_crypto.Wallet
+	anvilClient *ethclient.Client
 )
 
 func TestMain(m *testing.M) {
@@ -395,7 +396,7 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 
-	anvilClient, err = ethclient.Dial(baseWebsocketURL)
+	anvilClient, err = ethclient.Dial(BaseRpcEndpoint)
 	if err != nil {
 		// Expect a panic here if anvil base chain is not running.
 		panic(err)
@@ -537,22 +538,22 @@ func TestErc721Entitlements(t *testing.T) {
 			auth, contractAddress, erc721 := deployMockErc721Contract(require, st)
 
 			// Expect no NFT minted for the client simulator wallet
-			expectEntitlementCheckResult(require, cs, ctx, erc721Check(1, contractAddress, 1), false)
+			expectEntitlementCheckResult(require, cs, ctx, erc721Check(ChainID, contractAddress, 1), false)
 
 			// Mint an NFT for client simulator wallet.
 			mintTokenForWallet(require, auth, st, erc721, cs.Wallet(), 1)
 
 			// Check if the wallet a 1 balance of the NFT - should pass
-			expectEntitlementCheckResult(require, cs, ctx, erc721Check(1, contractAddress, 1), true)
+			expectEntitlementCheckResult(require, cs, ctx, erc721Check(ChainID, contractAddress, 1), true)
 
 			// Checking for balance of 2 should fail
-			expectEntitlementCheckResult(require, cs, ctx, erc721Check(1, contractAddress, 2), false)
+			expectEntitlementCheckResult(require, cs, ctx, erc721Check(ChainID, contractAddress, 2), false)
 
 			// Create a set of 3 linked wallets using client simulator address.
 			_, wallet1, wallet2, wallet3 := generateLinkedWallets(ctx, require, tc.sentByRootKeyWallet, st, cs.Wallet())
 
 			// Sanity check: balance of 4 across all 3 wallets should fail
-			expectEntitlementCheckResult(require, cs, ctx, erc721Check(1, contractAddress, 4), false)
+			expectEntitlementCheckResult(require, cs, ctx, erc721Check(ChainID, contractAddress, 4), false)
 
 			// Mint 2 NFTs for wallet1.
 			mintTokenForWallet(require, auth, st, erc721, wallet1, 2)
@@ -566,7 +567,7 @@ func TestErc721Entitlements(t *testing.T) {
 			}
 
 			// Accumulated balance of 4 across all 3 wallets should now pass
-			expectEntitlementCheckResult(require, cs, ctx, erc721Check(1, contractAddress, 4), true)
+			expectEntitlementCheckResult(require, cs, ctx, erc721Check(ChainID, contractAddress, 4), true)
 		})
 	}
 }
@@ -633,22 +634,22 @@ func TestErc20Entitlements(t *testing.T) {
 			auth, contractAddress, erc20 := deployMockErc20Contract(require, st)
 
 			// Check for balance of 1 should fail, as this wallet has no coins.
-			expectEntitlementCheckResult(require, cs, ctx, erc20Check(1, contractAddress, 1), false)
+			expectEntitlementCheckResult(require, cs, ctx, erc20Check(ChainID, contractAddress, 1), false)
 
 			// Mint 10 tokens for the client simulator wallet.
 			mintErc20TokensForWallet(require, auth, st, erc20, cs.Wallet(), 10)
 
 			// Check for balance of 10 should pass.
-			expectEntitlementCheckResult(require, cs, ctx, erc20Check(1, contractAddress, 10), true)
+			expectEntitlementCheckResult(require, cs, ctx, erc20Check(ChainID, contractAddress, 10), true)
 
 			// Checking for balance of 20 should fail
-			expectEntitlementCheckResult(require, cs, ctx, erc20Check(1, contractAddress, 20), false)
+			expectEntitlementCheckResult(require, cs, ctx, erc20Check(ChainID, contractAddress, 20), false)
 
 			// Create a set of 3 linked wallets using client simulator address.
 			_, wallet1, wallet2, wallet3 := generateLinkedWallets(ctx, require, tc.sentByRootKeyWallet, st, cs.Wallet())
 
 			// Sanity check: balance of 30 across all 3 wallets should fail
-			expectEntitlementCheckResult(require, cs, ctx, erc20Check(1, contractAddress, 30), false)
+			expectEntitlementCheckResult(require, cs, ctx, erc20Check(ChainID, contractAddress, 30), false)
 
 			// Mint 19 tokens for wallet1.
 			mintErc20TokensForWallet(require, auth, st, erc20, wallet1, 19)
@@ -660,7 +661,7 @@ func TestErc20Entitlements(t *testing.T) {
 			}
 
 			// Accumulated balance of 30 across all 3 wallets should now pass
-			expectEntitlementCheckResult(require, cs, ctx, erc20Check(1, contractAddress, 30), true)
+			expectEntitlementCheckResult(require, cs, ctx, erc20Check(ChainID, contractAddress, 30), true)
 		})
 	}
 }
@@ -737,7 +738,7 @@ func TestCustomEntitlements(t *testing.T) {
 			auth, contractAddress, customEntitlement := deployMockCustomEntitlement(require, st)
 
 			// Initially the check should fail.
-			customCheck := customEntitlementCheck(1, contractAddress)
+			customCheck := customEntitlementCheck(ChainID, contractAddress)
 			expectEntitlementCheckResult(require, cs, ctx, customCheck, false)
 
 			toggleEntitlement(require, auth, customEntitlement, cs.Wallet(), true)
