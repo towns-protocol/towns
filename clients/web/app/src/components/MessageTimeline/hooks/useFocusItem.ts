@@ -126,7 +126,13 @@ export const useMessageLink = (href: string | undefined): MessageLink => {
             return { type: 'external', link: href }
         }
 
-        if (url.pathname === location.pathname && url.hash) {
+        // remove the / from the end of the pathname
+        const locationPathname = location.pathname.endsWith('/')
+            ? location.pathname.slice(0, -1)
+            : location.pathname
+        const urlPathname = url.pathname.endsWith('/') ? url.pathname.slice(0, -1) : url.pathname
+
+        if (urlPathname === locationPathname && url.hash) {
             const messageId = url.hash.slice(1) // remove the # from the hash
             return {
                 type: 'same-channel-message',
