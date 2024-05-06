@@ -2,10 +2,10 @@ import { Box, Button, TextField, Theme, Typography } from '@mui/material'
 import React, { useCallback, useMemo, useState } from 'react'
 
 interface Props {
-    roomId: string
-    roomName: string
+    streamId: string
+    streamName: string
     isSpace?: boolean
-    sendInvite: (roomId: string, invitee: string) => Promise<void>
+    sendInvite: (streamId: string, invitee: string) => Promise<void>
     onClickCancel: () => void
 }
 
@@ -13,8 +13,8 @@ export function InviteForm(props: Props): JSX.Element {
     const [inviteeUserId, setInviteeUserId] = useState<string>('')
 
     const header = props.isSpace
-        ? `Invite to join space "${props.roomName}"`
-        : `Invite to join room "${props.roomName}"`
+        ? `Invite to join space "${props.streamName}"`
+        : `Invite to join channel "${props.streamName}"`
 
     const disableInviteButton = useMemo(() => inviteeUserId.length === 0, [inviteeUserId.length])
 
@@ -23,7 +23,7 @@ export function InviteForm(props: Props): JSX.Element {
     }, [])
 
     const onClickInvite = useCallback(async () => {
-        props.sendInvite(props.roomId, inviteeUserId)
+        props.sendInvite(props.streamId, inviteeUserId)
     }, [inviteeUserId, props])
 
     return (
@@ -52,7 +52,7 @@ export function InviteForm(props: Props): JSX.Element {
                     <TextField
                         fullWidth
                         id="filled-basic"
-                        label="@userId:homeServer"
+                        label="0x..."
                         variant="filled"
                         onChange={onChangeUserId}
                     />

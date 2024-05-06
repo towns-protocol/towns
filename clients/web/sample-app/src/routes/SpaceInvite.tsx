@@ -24,8 +24,8 @@ export function SpaceInvite() {
     return space ? (
         <InviteForm
             isSpace
-            roomId={space.id}
-            roomName={space.name}
+            streamId={space.id}
+            streamName={space.name}
             sendInvite={onClickSendInvite}
             onClickCancel={onClickCancel}
         />
