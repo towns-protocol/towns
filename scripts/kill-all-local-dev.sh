@@ -81,7 +81,10 @@ fi
 
 if prompt 'Stop XChain?:y/n '
 then
-    ./river/core/xchain/stop_multi.sh 
+    RUN_ENV=single ./river/core/xchain/stop_multi.sh
+    RUN_ENV=single_ne ./river/core/xchain/stop_multi.sh
+    RUN_ENV=multi ./river/core/xchain/stop_multi.sh
+    RUN_ENV=multi_ne ./river/core/xchain/stop_multi.sh
 
     # that script doesn't always work
     do_killl './bin/xchain_node run'
