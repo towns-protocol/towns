@@ -1,19 +1,22 @@
 import React from 'react'
 import headlessToast, { Toast } from 'react-hot-toast/headless'
-import { Box, Button, Icon, Text } from '@ui'
+import { Box, Icon, IconButton, Text } from '@ui'
 
 export const BugSubmittedToast = ({ toast, message }: { toast: Toast; message: string }) => {
     return (
-        <Box horizontal gap width="300">
-            <Icon color="gray2" type="tag" />
-            <Box gap alignItems="end">
+        <Box horizontal width="300" justifyContent="spaceBetween">
+            <Box horizontal gap alignItems="center">
+                <Icon color="gray2" type="tag" background="level4" padding="xs" />
                 <Text size="sm">{message}</Text>
-                <Box horizontal gap>
-                    <Button size="button_sm" onClick={() => headlessToast.dismiss(toast.id)}>
-                        Dismiss
-                    </Button>
-                </Box>
             </Box>
+            <IconButton
+                alignSelf="start"
+                padding="none"
+                size="square_sm"
+                icon="close"
+                border="none"
+                onClick={() => headlessToast.dismiss(toast.id)}
+            />
         </Box>
     )
 }
