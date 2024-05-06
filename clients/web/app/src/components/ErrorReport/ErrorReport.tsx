@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { z } from 'zod'
-import { hexlify, randomBytes } from 'ethers/lib/utils'
 import { datadogRum } from '@datadog/browser-rum'
 import { useMutation } from '@tanstack/react-query'
 import { toast } from 'react-hot-toast/headless'
@@ -35,12 +34,14 @@ const FormStateKeys = {
     name: 'name',
     email: 'email',
     comments: 'comments',
+    logs: 'logs',
 } as const
 
 type FormState = {
     [FormStateKeys.name]: string
     [FormStateKeys.email]: string
     [FormStateKeys.comments]: string
+    [FormStateKeys.logs]: string
 }
 
 const schema = z.object({
@@ -101,9 +102,9 @@ async function postCustomError(data: FormState) {
     data.comments += `\n\nUser Agent:  + ${navigator.userAgent}`
     data.comments += `\n\nDevice Type: ${deviceType}`
     data.comments += `\n\nPWA: ${PWAflag}`
-    data.comments += `\n\nLogs:\n\n${logs}`
+    data.logs = logs
 
-    const uuid = hexlify(randomBytes(16))
+    const uuid = crypto.randomUUID()
     const postCustom = await axiosClient.post(url, {
         ...data,
         id: uuid,
@@ -205,12 +206,13 @@ export const ErrorReportForm = (props: { onHide?: () => void }) => {
                 doCustomError(data, {
                     onSuccess: () => {
                         setSuccess(true)
+                        console.log('[ErrorReport] Feedback submitted successfully')
                     },
                     onError: (error) => {
-                        console.error('Error submitting feedback', error)
                         setErrorMessage(
                             `There was an error while submitting your feedback. Please try again later.`,
                         )
+                        console.error('[ErrorReport] Error submitting feedback', error)
                     },
                 })
             }}

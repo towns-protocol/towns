@@ -1,56 +1,64 @@
 import { Logger, pino } from 'pino'
+import stringify from 'json-stringify-safe'
 
 export class BufferedLogger {
     private bufferSize: number
-    private buffer: object[] = []
+    private buffer: unknown[] = []
 
-    private initalLoggers = {
+    private consoleLogger = {
         log: console.log,
         warn: console.warn,
         error: console.error,
         debug: console.debug,
     }
-    //eslint-disable-next-line @typescript-eslint/no-explicit-any
-    write = (record: object) => {
+    write = (args: unknown) => {
         while (this.buffer.length >= this.bufferSize) {
             this.buffer.shift()
         }
-        this.buffer.push(record)
+        this.buffer.push(args)
     }
 
-    private logger: Logger = pino({ browser: { asObject: true, write: this.write } })
+    private pinoLogger: Logger = pino({
+        browser: {
+            asObject: true,
+            write: this.write,
+        },
+        timestamp: pino.stdTimeFunctions.isoTime,
+    }).child({ session: crypto.randomUUID() })
 
     constructor(bufferSize: number) {
         this.buffer = []
         this.bufferSize = bufferSize
     }
 
-    //eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private info(msg?: string, ...args: any[]) {
-        this.logger.info(msg ? msg : '', args)
-        this.initalLoggers.log(msg ? msg : '', args)
+    private info(...args: unknown[]) {
+        this.pinoLogger.info(args)
+        this.consoleLogger.log(args)
     }
 
-    //eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private warn(msg?: string, ...args: any[]) {
-        this.logger.warn(msg ? msg : '', args)
-        this.initalLoggers.warn(msg ? msg : '', args)
+    private warn(...args: unknown[]) {
+        this.pinoLogger.warn(args)
+        this.consoleLogger.warn(args)
     }
 
-    //eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private debug(msg?: string, ...args: any[]) {
-        this.logger.debug(msg ? msg : '', args)
-        this.initalLoggers.debug(msg ? msg : '', args)
+    private debug(...args: unknown[]) {
+        this.pinoLogger.debug(args)
+        this.consoleLogger.debug(args)
     }
 
-    //eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private error(msg?: string, ...args: any[]) {
-        this.logger.error(msg ? msg : '', args)
-        this.initalLoggers.error(msg ? msg : '', args)
+    private error(...args: unknown[]) {
+        this.pinoLogger.error(args)
+        this.consoleLogger.error(args)
     }
 
     public getBufferAsString(limit = 100000) {
-        return JSON.stringify(this.buffer).substring(0, limit)
+        let str = '[\n'
+        for (let i = 0; i < this.buffer.length && str.length < limit; i++) {
+            const delimiter = i === this.buffer.length - 1 ? '' : ',\n'
+            str = str.concat('  ', stringify(this.buffer[i]), delimiter)
+        }
+        str = str.concat('\n]')
+        return str
     }
 
     public getLogger() {

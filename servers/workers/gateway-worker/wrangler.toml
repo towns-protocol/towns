@@ -22,6 +22,10 @@ local_protocol = "http"
 ENVIRONMENT = "development"
 CF_API = "https://api.cloudflare.com/client/v4/accounts"
 ACCOUNT_ID = "9840f8a36a817b103e00e29a0e2bad6f"
+LINEAR_TEAM_ID = "2de99085-cb4a-4fd2-89c7-a892c91c0383"
+LINEAR_USER_FEEDBACK_PROJECT_ID = "56801874-57ba-42e7-a9ae-5052b27500eb"
+# LINEAR_STABLE_ENV_PROJECT_ID = "ab916e54-519b-4372-8ef9-cc2ba2ec8637"
+LINEAR_GRAPHQL_URL = "https://api.linear.app/graphql"
 
 # The necessary secrets are:
 # AUTH_SECRET
@@ -29,6 +33,7 @@ ACCOUNT_ID = "9840f8a36a817b103e00e29a0e2bad6f"
 # API_TOKEN - images api token obtained from CF dashboard
 # AWS_SECRET_ACCESS_KEY
 # AWS_ACCESS_KEY_ID
+# LINEAR_API_KEY
 # for local development, you can add these in .dev.vars
 # 
 # Not necessary - SKIP_SIWE - if true, skip siwe auth, useful if you are debugging locally via curl, etc.

@@ -9044,6 +9044,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/json-stringify-safe@npm:^5.0.3":
+  version: 5.0.3
+  resolution: "@types/json-stringify-safe@npm:5.0.3"
+  checksum: 66826a59b53ce5a5becc9c05cd0bdadb7e2032e02803a9dd13137de134a0882a6c67ae334371ccff07a20b1d2b2c23fa3a81b5e23f40b27cfcf553c7cce06e35
+  languageName: node
+  linkType: hard
+
 "@types/json5@npm:^0.0.29":
   version: 0.0.29
   resolution: "@types/json5@npm:0.0.29"
@@ -18205,6 +18212,7 @@ __metadata:
     "@towns/userops": "workspace:^"
     "@types/emoji-mart": ^3.0.14
     "@types/html-to-text": ^9.0.4
+    "@types/json-stringify-safe": ^5.0.3
     "@types/linkify-it": ^3.0.5
     "@types/react": ^18.2.11
     "@types/react-dom": ^18.2.4
@@ -18272,6 +18280,7 @@ __metadata:
     idb: ^7.1.1
     immer: ^10.0.1
     jsdom: ^22.1.0
+    json-stringify-safe: ^5.0.1
     lexical: ^0.12.4
     linkify-it: ^5.0.0
     lodash: ^4.17.21
@@ -20638,6 +20647,13 @@ __metadata:
   version: 1.0.1
   resolution: "json-stable-stringify-without-jsonify@npm:1.0.1"
   checksum: cff44156ddce9c67c44386ad5cddf91925fe06b1d217f2da9c4910d01f358c6e3989c4d5a02683c7a5667f9727ff05831f7aa8ae66c8ff691c556f0884d49215
+  languageName: node
+  linkType: hard
+
+"json-stringify-safe@npm:^5.0.1":
+  version: 5.0.1
+  resolution: "json-stringify-safe@npm:5.0.1"
+  checksum: 48ec0adad5280b8a96bb93f4563aa1667fd7a36334f79149abd42446d0989f2ddc58274b479f4819f1f00617957e6344c886c55d05a4e15ebb4ab931e4a6a8ee
   languageName: node
   linkType: hard
 

@@ -411,14 +411,23 @@ router.get('/space/:id/identity', async (request: WorkerRequest, env) => {
 
 router.post('/user-feedback', async (request: WorkerRequest, env) => {
     const requestBody = JSON.parse(JSON.stringify(await request.json()))
-    console.log(`requestBody: ${JSON.stringify(requestBody)}`)
+    console.log('requestBody.name:', requestBody.name)
+    console.log('requestBody.email:', requestBody.email)
+    console.log('requestBody.comments:', requestBody.comments)
+    const linearConfig = {
+        apiKey: env.LINEAR_API_KEY,
+        teamId: env.LINEAR_TEAM_ID,
+        graphQLUrl: env.LINEAR_GRAPHQL_URL,
+        userFeedbackProjectId: env.LINEAR_USER_FEEDBACK_PROJECT_ID,
+    }
     const promises = [
         createLinearIssue({
-            apiKey: env.LINEAR_API_KEY,
+            config: linearConfig,
             id: requestBody.id,
             name: requestBody.name,
             email: requestBody.email,
             comments: requestBody.comments,
+            logJson: requestBody.logs,
         }),
         sendSnsTopic(
             {
