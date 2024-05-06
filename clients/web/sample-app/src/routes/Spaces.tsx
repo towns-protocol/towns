@@ -48,7 +48,7 @@ export const Spaces = () => {
                 <h1>Unknown space Id</h1>
                 <h3>id: {spaceId}</h3>
                 <Divider />
-                <MissingSpaceInfo spaceId={spaceId} onJoinRoom={onClickJoinSpace} />
+                <MissingSpaceInfo spaceId={spaceId} onJoinSpace={onClickJoinSpace} />
             </>
         )
     } else {
@@ -56,7 +56,7 @@ export const Spaces = () => {
     }
 }
 
-const MissingSpaceInfo = (props: { spaceId: string; onJoinRoom: () => void }) => {
+const MissingSpaceInfo = (props: { spaceId: string; onJoinSpace: () => void }) => {
     const { space: spaceOnChainInfo } = useSpaceFromContract(props.spaceId)
     return spaceOnChainInfo ? (
         <>
@@ -72,17 +72,18 @@ const MissingSpaceInfo = (props: { spaceId: string; onJoinRoom: () => void }) =>
             <Typography display="block" variant="body1" component="span" sx={messageStyle}>
                 onchain space disabled: {spaceOnChainInfo.disabled}
             </Typography>
-            <Button variant="contained" onClick={props.onJoinRoom}>
-                Join Room
+            <Button variant="contained" onClick={props.onJoinSpace}>
+                Join Space
             </Button>
         </>
     ) : (
         <>
             <Typography display="block" variant="body1" component="span" sx={messageStyle}>
-                We don&apos;t have any information for this room, would you like to attempt to join?
+                We don&apos;t have any information for this space, would you like to attempt to
+                join?
             </Typography>
-            <Button variant="contained" onClick={props.onJoinRoom}>
-                Join Room
+            <Button variant="contained" onClick={props.onJoinSpace}>
+                Join Space
             </Button>
         </>
     )

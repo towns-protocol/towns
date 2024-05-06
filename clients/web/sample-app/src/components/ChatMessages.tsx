@@ -131,7 +131,7 @@ export function ChatMessages(props: Props): JSX.Element {
                 return <NoMessages />
             }
         } else {
-            return <MissingMembershipInfo onJoinRoom={onJoinRoom} />
+            return <MissingMembershipInfo onJoinChannel={onJoinRoom} />
         }
     }
 
@@ -249,13 +249,13 @@ const NoMessages = () => (
     </Typography>
 )
 
-const MissingMembershipInfo = (props: { onJoinRoom: () => void }) => (
+const MissingMembershipInfo = (props: { onJoinChannel: () => void }) => (
     <>
         <Typography display="block" variant="body1" component="span" sx={messageStyle}>
-            We don&apos;t have membership information for this room
+            We don&apos;t have membership information for this channel
         </Typography>
-        <Button variant="contained" onClick={props.onJoinRoom}>
-            Join Room
+        <Button variant="contained" onClick={props.onJoinChannel}>
+            Join Channel
         </Button>
     </>
 )
