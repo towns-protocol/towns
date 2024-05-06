@@ -2,7 +2,7 @@ import { AnimatePresence } from 'framer-motion'
 import React, { forwardRef, useEffect, useRef } from 'react'
 import { Box, Paragraph } from '@ui'
 import { FadeInBox } from '@components/Transitions'
-import { NodeData } from './scene/utils/types'
+import { NodeData } from '@components/NodeConnectionStatusPanel/hooks/useNodeData'
 
 type Props = {
     hoveredNode: NodeData | null
@@ -68,12 +68,6 @@ const NodeTooltip = forwardRef<HTMLDivElement, { node: NodeData }>(({ node }, re
                 style={{ color: `#${node.color.getHexString()}` }}
             >
                 {node.id}
-            </Paragraph>
-            <Paragraph size="sm" color="gray2">
-                ping: n/a
-            </Paragraph>
-            <Paragraph size="sm" color="gray2">
-                uptime: n/a
             </Paragraph>
         </Box>
     )

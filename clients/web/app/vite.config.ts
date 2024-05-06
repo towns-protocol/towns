@@ -80,6 +80,7 @@ export default ({ mode }: { mode: string }) => {
             react(),
             tsconfigPaths(),
             vanillaExtractPlugin(),
+            // visualizer({ filename: 'dist/stats.html', template: 'treemap' }) as PluginOption,
         ].concat(mode === 'development' ? devPlugins : prodPlugins) as PluginOption[],
         server: {
             host: env.VITE_LOCAL_HOSTNAME,

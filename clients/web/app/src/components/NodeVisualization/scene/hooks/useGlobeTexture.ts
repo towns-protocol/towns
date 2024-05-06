@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { NodeVisualizationContext } from '@components/NodeVisualization/NodeVisualizationContext'
 import { createNoise } from '../utils/quickNoise'
+import { randxy, smoothstep } from '../utils/globeUtils'
 
 const textureSize = [2000 * 1, 1000 * 1] as [number, number]
 
@@ -7,6 +9,7 @@ export const useGlobeTexture = (
     noise: ReturnType<typeof createNoise>,
     mapSize: [number, number],
 ) => {
+    const { darkMode } = useContext(NodeVisualizationContext)
     const [{ canvas, ctx }] = useState(() => {
         const canvas =
             (document.getElementById('canvas') as HTMLCanvasElement) ||
@@ -47,9 +50,9 @@ export const useGlobeTexture = (
 
     const update = useCallback(() => {
         if (ctx) {
-            drawTexture(ctx, textureData, mapSize)
+            drawTexture(ctx, textureData, darkMode)
         }
-    }, [ctx, mapSize, textureData])
+    }, [ctx, darkMode, textureData])
 
     useEffect(() => {
         update()
@@ -121,10 +124,12 @@ const createTextureData = (noise: ReturnType<typeof createNoise>, mapSize: [numb
 const drawTexture = (
     ctx: CanvasRenderingContext2D,
     data: { value: number; xy: [number, number] }[],
-    mapSize: [number, number],
+    darkMode: boolean,
 ) => {
-    ctx.fillStyle = `hsla(260, 9%, 0%, 1)`
+    ctx.fillStyle = darkMode ? `hsla(260, 9%, 0%, 1)` : `#fff0`
     ctx.fillRect(0, 0, textureSize[0], textureSize[1])
+
+    let lightness = 0
 
     for (let i = 0; i < data.length; i++) {
         // 0 - 1
@@ -133,9 +138,12 @@ const drawTexture = (
 
         const intensity = data[i].value
 
-        const color = `hsla(0, 0%, ${
-            intensity >= 0.6 ? 80 : intensity >= 0.3 ? 30 + intensity * 10 : 20
-        }%, 1)`
+        if (darkMode) {
+            lightness = intensity >= 0.6 ? 80 : intensity >= 0.3 ? 30 + intensity * 10 : 20
+        } else {
+            lightness = intensity >= 0.3 ? 10 : 80
+        }
+        const color = `hsla(0, 0%, ${lightness}%, 1)`
 
         const size = intensity >= 0.3 ? 3.5 : 3.5
 
@@ -145,15 +153,4 @@ const drawTexture = (
         ctx.arc(x * textureSize[0] + 5, y * textureSize[1], size, 0, 2 * Math.PI)
         ctx.fill()
     }
-}
-
-const smoothstep = (min: number, max: number, value: number) => {
-    const x = Math.max(0, Math.min(1, (value - min) / (max - min)))
-    return x * x * (3 - 2 * x)
-}
-
-const randxy = (x: number, y: number, seed: number) => {
-    let h = seed + x * 374761393 + y * 668265263
-    h = (h ^ (h >> 13)) * 1274126177
-    return h ^ (h >> 16)
 }

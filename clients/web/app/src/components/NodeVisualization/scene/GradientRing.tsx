@@ -1,9 +1,9 @@
-import { Line, LineProps } from '@react-three/drei'
+import { Billboard, Line, LineProps, RoundedBox } from '@react-three/drei'
 import { Object3DProps, useFrame } from '@react-three/fiber'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Line2, LineSegments2 } from 'three-stdlib'
-import { Color, Object3D } from 'three'
-import { NodeData } from './utils/types'
+import { Color, Object3D, Vector3 } from 'three'
+import { NodeData } from '@components/NodeConnectionStatusPanel/hooks/useNodeData'
 
 type Props = {
     nodes: NodeData[]
@@ -31,65 +31,98 @@ export const GradientRing = (props: Props) => {
     const gradientRef = useRef(null)
     const numPoints = 100
 
-    const [sortedColors] = useState(() => nodes.map((n) => new Color(n.color)))
-
     const positionFromOffset = useCallback(
-        (angle: number) => {
-            const debugPoints = false
-            return (
-                debugPoints
-                    ? // draws a straight line
-                      [angle * 4 - 2, 1, 2]
-                    : // circle
-                      [
-                          Math.cos(angle * Math.PI * 2) * radius,
-                          Math.sin(angle * Math.PI * 2) * radius,
-                          0,
-                      ]
-            ) as [number, number, number]
+        (angle: number, dest: Vector3) => {
+            return dest.set(
+                Math.cos(angle * Math.PI * 2) * radius,
+                Math.sin(angle * Math.PI * 2) * radius,
+                0,
+            )
         },
         [radius],
     )
 
-    const nodePositions = useMemo<NodeRef[]>(
+    const [{ linePoints, vertexColors, bufferColors }] = useState(
         () =>
-            nodes.map((node, index, arr) => ({
-                index,
-                speed: 0.01,
-                interpolatedSpeed: 0,
-                position: (1 / arr.length) * index,
-                offset: (1 / arr.length) * index,
-                destOffset: (1 / arr.length) * index + Math.random() * 0.05,
-            })),
-        [nodes],
+            ({
+                linePoints: Array.from({ length: numPoints }).map((_, i) =>
+                    positionFromOffset(i / (numPoints - 1), new Vector3()),
+                ),
+                vertexColors: Array.from({ length: numPoints }).map((_, i) => new Color(0xffffff)),
+                bufferColors: Array.from({ length: numPoints * 3 }).map((_, i) => 0),
+            } as const),
     )
 
-    positions.node = connectedNode ? nodePositions[connectedNode.index].el ?? undefined : undefined
+    const sortedColors = useMemo(() => nodes.map((n) => new Color(n.color)), [nodes])
 
+    const [nodePositions, setNodePositions] = useState<NodeRef[]>(() =>
+        nodes.map((node, index, arr) => ({
+            index,
+            speed: Math.random() * 0.01 + 0.002,
+            interpolatedSpeed: 0,
+            position: (1 / arr.length) * index,
+            offset: (1 / arr.length) * index,
+            destOffset: 0,
+        })),
+    )
+
+    useEffect(() => {
+        setNodePositions((prev) =>
+            nodes.map((node, index, arr) => {
+                return (
+                    prev[index] ?? {
+                        index,
+                        speed: Math.random() * 0.01 + 0.002,
+                        interpolatedSpeed: 0,
+                        position: (1 / arr.length) * index,
+                        offset: (1 / arr.length) * index,
+                        destOffset: 0,
+                    }
+                )
+            }),
+        )
+    }, [nodes])
+
+    positions.node = connectedNode ? nodePositions[connectedNode.index]?.el ?? undefined : undefined
+
+    const prevDelta = useRef(0)
+    const prevDate = useRef(Date.now())
     const updateAnimation = useCallback(() => {
-        nodePositions.forEach((node) => {
-            node.interpolatedSpeed += (node.speed - node.interpolatedSpeed) * 0.01
-            node.offset += (node.destOffset - node.offset) * node.speed
-            node.el?.position.set(...positionFromOffset(node.offset % 1))
-            const isInit = !!node.destOffset
-            if (Math.random() < (!isInit ? 0.02 : 0.01)) {
-                if (node.destOffset) {
-                    node.speed = 0.01 * (Math.random() * 0.2)
-                }
-                node.destOffset = node.position + Math.random() * 0.07
+        const dn = Date.now()
+        prevDelta.current += dn - prevDate.current
+        prevDate.current = dn
+
+        const r = prevDelta.current > 1000
+        const sp = 0.001 + Math.random() * 0.004
+
+        if (r) {
+            prevDelta.current = 0
+        }
+        const dof = ((Math.random() * 1) / nodePositions.length) * 0.8
+
+        nodePositions.forEach((node, i) => {
+            node.offset += (node.position + node.destOffset - node.offset) * node.speed
+            if (node.el?.position) {
+                positionFromOffset(node.offset % 1, node.el.position)
+            }
+            if (r && Math.random() < 0.25) {
+                node.destOffset = dof
+                node.speed = sp
             }
         })
 
         const g = gradientRef.current as null | LineProps | Line2 | LineSegments2
 
-        if (g?.geometry) {
-            const sortedNodes = nodePositions.slice().sort((a, b) => a.offset - b.offset)
+        if (g?.geometry && nodePositions.length) {
+            const sortedNodes = nodePositions
+                .map((n) => ({ ...n, offset: n.offset % 1 }))
+                .sort((a, b) => a.offset - b.offset)
 
             sortedNodes.forEach((n, i) => {
                 sortedColors[i].lerp(nodes[n.index].color, 0.1)
             })
 
-            const vertexColors = Array.from({ length: numPoints }).map((_, i) => {
+            vertexColors.map((c, i) => {
                 let i1 = sortedNodes.findIndex((n) => n.offset >= i / numPoints) - 1
                 i1 = i1 < 0 ? sortedNodes.length - 1 : i1
 
@@ -106,14 +139,18 @@ export const GradientRing = (props: Props) => {
                 const b = sortedNodes[i1].offset
                 const l = (a >= b ? a - b : 1 + a - b) / t
 
-                return new Color(c1).lerp(c2, l)
+                return c.copy(c1).lerp(c2, l)
             })
 
-            const cValues = vertexColors.map((c) => (c instanceof Color ? c.toArray() : c))
+            vertexColors.forEach((c, i) => {
+                bufferColors[i * 3] = c.r
+                bufferColors[i * 3 + 1] = c.g
+                bufferColors[i * 3 + 2] = c.b
+            })
 
-            g.geometry.setColors(cValues.flat(), 3)
+            g.geometry.setColors(bufferColors, 3)
         }
-    }, [nodePositions, nodes, positionFromOffset, sortedColors])
+    }, [bufferColors, nodePositions, nodes, positionFromOffset, sortedColors, vertexColors])
 
     useFrame((a, d) => {
         if (!animating) {
@@ -121,25 +158,15 @@ export const GradientRing = (props: Props) => {
         }
         updateAnimation()
         if (ref.current) {
-            ref.current.rotation.z += d * 0.01
-            ref.current.rotation.x = Math.cos(0.0001 * Date.now() * Math.PI) * 0.1
-            ref.current.rotation.y = Math.sin(0.0001 * Date.now() * Math.PI) * 0.1
+            ref.current.rotation.z -= d * 0.033
+            ref.current.rotation.x = Math.cos(0.00015 * Date.now() * Math.PI) * 0.15
+            ref.current.rotation.y = Math.sin(0.00015 * Date.now() * Math.PI) * 0.15
         }
     })
 
     useEffect(() => {
         updateAnimation()
     }, [updateAnimation])
-
-    const [[linePoints, vertexColors]] = useState(
-        () =>
-            [
-                Array.from({ length: numPoints }).map((_, i) =>
-                    positionFromOffset(i / (numPoints - 1)),
-                ),
-                Array.from({ length: numPoints }).map((_, i) => new Color(0xffffff)),
-            ] as const,
-    )
 
     const [hoveredNode, setHoveredNode] = useState<NodeData | null>(null)
 
@@ -155,22 +182,33 @@ export const GradientRing = (props: Props) => {
         setHoveredNode((n) => (n === node ? null : n))
     }, [])
 
-    return (
+    return nodes.length ? (
         <object3D {...restProps} ref={ref}>
-            <Line points={linePoints} lineWidth={1} vertexColors={vertexColors} ref={gradientRef} />
-            {nodes.map((node, i) => {
-                const n = nodePositions[i]
-                return n ? (
-                    <CircleNode
-                        key={node.id}
-                        node={node}
-                        nodePosition={n}
-                        onHover={onNodeHover}
-                        onLeave={onNodeLeave}
-                    />
-                ) : null
-            })}
+            <group>
+                <Line
+                    points={linePoints}
+                    lineWidth={1}
+                    vertexColors={vertexColors}
+                    ref={gradientRef}
+                />
+            </group>
+            <group>
+                {nodes.map((node, i) =>
+                    nodePositions[i] ? (
+                        <CircleNode
+                            key={node.id}
+                            node={node}
+                            nodePosition={nodePositions[i]}
+                            selected={node === connectedNode}
+                            onHover={onNodeHover}
+                            onLeave={onNodeLeave}
+                        />
+                    ) : null,
+                )}
+            </group>
         </object3D>
+    ) : (
+        <></>
     )
 }
 
@@ -179,31 +217,58 @@ const CircleNode = (props: {
     nodePosition: NodeRef
     onHover: (node: NodeData) => void
     onLeave: (node: NodeData) => void
+    selected?: boolean
 }) => {
     const { node, nodePosition } = props
 
+    const onPointerEnter = useCallback(() => {
+        props.onHover(node)
+    }, [node, props])
+
+    const onPointerLeave = useCallback(() => {
+        props.onLeave(node)
+    }, [node, props])
+
     return (
         <object3D
-            ref={(e) => (nodePosition.el = e)}
-            key={node.id}
-            onPointerEnter={(e) => {
-                props.onHover(node)
+            ref={(e) => {
+                nodePosition.el = e
             }}
-            onPointerLeave={(e) => props.onLeave(node)}
+            onPointerEnter={onPointerEnter}
+            onPointerLeave={onPointerLeave}
         >
             <pointLight color={node.color} intensity={1} />
+
             <mesh>
-                <sphereGeometry args={[0.08 * 3, 4, 2]} />
+                <sphereGeometry args={[0.08 * 3, 4]} />
                 <meshBasicMaterial visible={false} />
             </mesh>
-            <mesh>
-                <sphereGeometry args={[0.08 * 1.5, 4, 2]} />
-                <meshBasicMaterial visible depthTest={false} color={0x252525} />
-            </mesh>
-            <mesh>
-                <sphereGeometry args={[0.08 * 1, 4, 2]} />
-                <meshBasicMaterial color={node.color} />
-            </mesh>
+
+            <Billboard>
+                {props.selected && (
+                    <RoundedBox
+                        args={[0.1, 0.1, 0.05]}
+                        radius={0.03}
+                        rotation-z={Math.PI / 4}
+                        bevelSegments={2}
+                    >
+                        <meshPhongMaterial
+                            transparent
+                            color={node.color}
+                            opacity={0.5}
+                            depthTest={false}
+                        />
+                    </RoundedBox>
+                )}
+                <RoundedBox
+                    args={[0.15, 0.15, 0.05]}
+                    radius={0.03}
+                    rotation-z={Math.PI / 4}
+                    bevelSegments={2}
+                >
+                    <meshBasicMaterial color={node.color} />
+                </RoundedBox>
+            </Billboard>
         </object3D>
     )
 }

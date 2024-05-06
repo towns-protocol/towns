@@ -11,7 +11,7 @@ const NodeStatusAnimation = React.lazy(() =>
 
 export const NodeVisualization = () => {
     const [{ noise, mapSize }] = useState(() => ({
-        noise: createNoise(seedrandom('towns1')),
+        noise: createNoise(seedrandom('towns2')),
         mapSize: [200, 100] as [number, number],
     }))
 

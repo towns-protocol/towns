@@ -3,15 +3,14 @@ import { PerspectiveCamera } from '@react-three/drei'
 import { Canvas, useFrame } from '@react-three/fiber'
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useDrag } from 'react-use-gesture'
-import { CanvasTexture, Color, Euler, Object3D } from 'three'
-import { useStaticNodeData } from '../../NodeConnectionStatusPanel/hooks/useStaticNodeData'
+import { Color, Euler, Object3D } from 'three'
+import { NodeData, useNodeData } from '../../NodeConnectionStatusPanel/hooks/useNodeData'
 import { NodeVisualizationContext } from '../NodeVisualizationContext'
 import { GradientRing } from './GradientRing'
 import { HomeDot } from './HomeDot'
 import { ConnectionArc } from './ConnectionArc'
 import { useGlobeTexture } from './hooks/useGlobeTexture'
 import { createNoise } from './utils/quickNoise'
-import { NodeData } from './utils/types'
 import { NodeAnimationTooltips } from '../NodeAnimationTooltips'
 
 export const NodeStatusAnimation = (props: {
@@ -22,19 +21,32 @@ export const NodeStatusAnimation = (props: {
 }) => {
     const { noise, mapSize } = props
 
+    const containerRef = useRef<HTMLCanvasElement>(null)
+
     const [hoveredNode, setHoveredNode] = useState<NodeData | null>(null)
     const onNodeHover = useCallback((node: NodeData | null) => {
         setHoveredNode(node)
     }, [])
 
-    const ref = useRef<HTMLCanvasElement>(null)
+    const [hovered, setHovered] = useState(false)
+    const onHover = useCallback((h: boolean) => {
+        setHovered(h)
+    }, [])
 
     return (
         <>
-            <Canvas style={{ cursor: hoveredNode ? 'pointer' : undefined }} ref={ref}>
-                <GlobeScene noise={noise} mapSize={mapSize} onNodeHover={onNodeHover} />
+            <Canvas
+                style={{ cursor: hovered ? 'grab' : hoveredNode ? 'pointer' : undefined }}
+                ref={containerRef}
+            >
+                <GlobeScene
+                    noise={noise}
+                    mapSize={mapSize}
+                    onNodeHover={onNodeHover}
+                    onHover={onHover}
+                />
             </Canvas>
-            <NodeAnimationTooltips hoveredNode={hoveredNode} containerRef={ref} />
+            <NodeAnimationTooltips hoveredNode={hoveredNode} containerRef={containerRef} />
         </>
     )
 }
@@ -43,18 +55,18 @@ const GlobeScene = (props: {
     noise: ReturnType<typeof createNoise>
     mapSize: [number, number]
     onNodeHover: (node: NodeData | null) => void
+    onHover: (hovered: boolean) => void
 }) => {
     const { nodeUrl } = useContext(NodeVisualizationContext)
     const { mapSize, noise } = props
     const { canvas, homePoint, relevantPoints } = useGlobeTexture(noise, mapSize)
+    const { darkMode } = useContext(NodeVisualizationContext)
 
-    const textureRef = useRef<CanvasTexture>(null)
-
-    const nodeConnections = useStaticNodeData()
+    const globeRef = useRef<Object3D>(null)
+    const nodeConnections = useNodeData(nodeUrl)
 
     const nodes = useMemo(() => {
         return nodeConnections.map((n, index) => ({
-            index,
             ...n,
             color: new Color(n.color),
             offset: (1 / 3) * index + Math.random() * (0.9 / 3),
@@ -118,7 +130,18 @@ const GlobeScene = (props: {
 
     useFrame((state) => {
         state.camera.lookAt(0, 0, 0)
+        if (globeRef.current) {
+            globeRef.current.rotation.y += 0.001
+        }
     })
+
+    const onPointerEnter = useCallback(() => {
+        props.onHover(true)
+    }, [props])
+
+    const onPointerLeave = useCallback(() => {
+        props.onHover(false)
+    }, [props])
 
     const [positions, setPositions] = useState<{ [key: string]: Object3D | undefined }>(() => ({
         node: undefined,
@@ -138,12 +161,14 @@ const GlobeScene = (props: {
             >
                 <PerspectiveCamera makeDefault />
             </animated.group>
-            <ambientLight intensity={0.5} />
-            <directionalLight intensity={0.5} position={[10, 0, -10]} rotation={[-Math.PI, 0, 0]} />
-            <directionalLight intensity={1} position={[-10, 0, 5]} rotation={[-Math.PI, 0, 0]} />
-            {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-            {/* @ts-ignore */}
-
+            <ambientLight intensity={darkMode ? 1 : 2} />
+            {!darkMode && (
+                <directionalLight
+                    intensity={5}
+                    position={[-10, 0, 5]}
+                    rotation={[-Math.PI, 0, 0]}
+                />
+            )}
             <GradientRing
                 animating
                 nodes={nodes}
@@ -159,24 +184,31 @@ const GlobeScene = (props: {
                 rotation-y={worldSpring.rotationY}
                 rotation-x={worldSpring.rotationX}
             >
-                {homePoint && (
-                    <HomeDot
-                        key="home"
-                        dot={homePoint}
-                        ref={(r) => {
-                            positions.dot = r ?? undefined
-                        }}
-                    />
-                )}
-                {relevantPoints.map((dot) => (
-                    <HomeDot key={dot.id} dot={dot} />
-                ))}
-                <mesh>
-                    <sphereGeometry args={[2, 16, 32]} />
-                    <meshPhysicalMaterial color="#fff" roughness={1}>
-                        <canvasTexture ref={textureRef} attach="map" image={canvas} />
-                    </meshPhysicalMaterial>
-                </mesh>
+                <object3D ref={globeRef} rotation-y={-0.1}>
+                    {homePoint && (
+                        <HomeDot
+                            key="home"
+                            dot={homePoint}
+                            ref={(r) => {
+                                positions.dot = r ?? undefined
+                            }}
+                        />
+                    )}
+                    {darkMode ? (
+                        relevantPoints.map((dot) => <HomeDot key={dot.id} dot={dot} />)
+                    ) : (
+                        <></>
+                    )}
+                    <mesh onPointerEnter={onPointerEnter} onPointerLeave={onPointerLeave}>
+                        <sphereGeometry args={[2, 120, 60]} />
+                        <meshPhysicalMaterial
+                            roughness={darkMode ? 1 : 0.5}
+                            transparent={!darkMode}
+                        >
+                            <canvasTexture attach="map" image={canvas} />
+                        </meshPhysicalMaterial>
+                    </mesh>
+                </object3D>
             </animated.object3D>
             <ConnectionArc positions={positions} color={connectedNode?.color ?? 0xffffff} />
         </>
