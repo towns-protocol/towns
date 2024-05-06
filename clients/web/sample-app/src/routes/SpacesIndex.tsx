@@ -21,9 +21,9 @@ export const SpacesIndex = () => {
     const [joinFailed, setJoinFailed] = useState(false)
     const [clipboarded, setClipboarded] = useState(false)
 
-    const onClickSettings = useCallback(() => {
+    const onClickInvite = useCallback(() => {
         if (space?.id) {
-            navigate('/spaces/' + space.id + '/settings')
+            navigate('/spaces/' + space.id + '/invite')
         }
     }, [space?.id, navigate])
 
@@ -69,14 +69,14 @@ export const SpacesIndex = () => {
             {membership === Membership.Join && (
                 <>
                     <div>
-                        <button onClick={onClickSettings}>Space settings</button>
-                    </div>
-                    <div>
                         <button onClick={onCreateChannelClick}>Create a channel</button>
                     </div>
                     <div>
                         <button onClick={onClickCopy}>Copy town link</button>{' '}
                         {clipboarded && 'Copied!'}
+                    </div>
+                    <div>
+                        <button onClick={onClickInvite}>Invite</button>
                     </div>
                     <div>
                         <button onClick={onClickLeaveSpace}>Leave space</button>
