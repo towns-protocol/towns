@@ -82,7 +82,7 @@ kv_namespaces = [
 routes = [
     { pattern = "gateway-worker-test-beta.towns.com", custom_domain = true },
 ]
-vars = { ENVIRONMENT = "test-beta", SKIP_SIWE = true, CF_API = "https://api.cloudflare.com/client/v4/accounts", ACCOUNT_ID = "9840f8a36a817b103e00e29a0e2bad6f" } # [vars] access, not secrets
+vars = { ENVIRONMENT = "test-beta", SKIP_SIWE = true, CF_API = "https://api.cloudflare.com/client/v4/accounts", ACCOUNT_ID = "9840f8a36a817b103e00e29a0e2bad6f", LINEAR_TEAM_ID = "2de99085-cb4a-4fd2-89c7-a892c91c0383", LINEAR_USER_FEEDBACK_PROJECT_ID = "56801874-57ba-42e7-a9ae-5052b27500eb", LINEAR_GRAPHQL_URL = "https://api.linear.app/graphql" } # [vars] access, not secrets
 services = [
     { binding = "authz", service = "siwe-worker-test-beta", environment = "production" },
 ]
