@@ -211,9 +211,8 @@ export class TownsClient
         }
 
         const userId = userIdFromAddress(context.creatorAddress)
-        const envSuffix = this.opts.environmentId === 'gamma' ? '' : `-${this.opts.environmentId}`
-        const cryptoDbName = `database-${userId}${envSuffix}`
-        const persistenceDbName = `persistence-${userId}${envSuffix}`
+        const cryptoDbName = this.cryptoDbName(context)
+        const persistenceDbName = this.persistenceDbName(context)
         const cryptoStore = RiverDbManager.getCryptoDb(userId, cryptoDbName)
         this.casablancaClient = new CasablancaClient(
             context,
@@ -239,6 +238,20 @@ export class TownsClient
         this.casablancaClient.startSync()
         this.emit('onCasablancaClientCreated', this.casablancaClient)
         return this.casablancaClient
+    }
+
+    public persistenceDbName(signerContext: SignerContext): string {
+        const userId = userIdFromAddress(signerContext.creatorAddress)
+        const envSuffix = this.opts.environmentId === 'gamma' ? '' : `-${this.opts.environmentId}`
+        const persistenceDbName = `persistence-${userId}${envSuffix}`
+        return persistenceDbName
+    }
+
+    public cryptoDbName(signerContext: SignerContext): string {
+        const userId = userIdFromAddress(signerContext.creatorAddress)
+        const envSuffix = this.opts.environmentId === 'gamma' ? '' : `-${this.opts.environmentId}`
+        const cryptoDbName = `database-${userId}${envSuffix}`
+        return cryptoDbName
     }
 
     /************************************************
