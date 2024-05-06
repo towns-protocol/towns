@@ -63,6 +63,7 @@ function NetworkInfo() {
     const { loginWithWalletToCasablanca } = useTownsClient()
     const { loginStatus: casablancaLoginStatus } = useCasablancaStore()
     const { id: environmentId } = useEnvironment()
+    const { isAuthenticated } = useConnectivity()
     const getSigner = useGetEmbeddedSigner()
 
     const onLoginCasablanca = useCallback(
@@ -76,7 +77,7 @@ function NetworkInfo() {
     const casablancaButton = useMemo(() => {
         if (casablancaLoginStatus === LoginStatus.LoggingIn) {
             return <CircularProgress size={56} />
-        } else if (casablancaLoginStatus === LoginStatus.LoggedOut) {
+        } else if (casablancaLoginStatus === LoginStatus.LoggedOut || !isAuthenticated) {
             return (
                 <ChainSwitchingButton
                     variant="contained"
@@ -94,7 +95,7 @@ function NetworkInfo() {
                 </Typography>
             )
         }
-    }, [casablancaLoginStatus, onLoginCasablanca])
+    }, [casablancaLoginStatus, isAuthenticated, onLoginCasablanca])
 
     //{`Remote Url: ${(casablancaUrl ?? '').substring(0, 50)}`}
     return (
