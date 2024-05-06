@@ -375,11 +375,15 @@ const PlateEditorWithoutBoundary = ({
                                     autoFocus={autoFocus}
                                     tabIndex={tabIndex}
                                     disabled={isSendingMessage}
+                                    isTouch={isTouch}
                                     handleSendOnEnter={handleSendOnEnter}
                                     onFocus={onFocus}
                                     onBlur={onBlur}
                                 />
-                                {isEditorEmpty && <RichTextPlaceholder placeholder={placeholder} />}
+                                {isEditorEmpty &&
+                                    (!valueFromStore || valueFromStore.trim().length === 0) && (
+                                        <RichTextPlaceholder placeholder={placeholder} />
+                                    )}
                             </Box>
                             <OnFocusPlugin
                                 autoFocus={autoFocus}

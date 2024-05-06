@@ -9,8 +9,11 @@ const inputClassName = clsx([fieldStyles.field, styles.richText, styles.contentE
 
 const Editor = React.forwardRef<
     HTMLDivElement,
-    PlateContentProps & { handleSendOnEnter?: (e: React.KeyboardEvent<HTMLDivElement>) => void }
->(({ className, disabled, readOnly, handleSendOnEnter, onKeyDown, ...props }, ref) => {
+    PlateContentProps & {
+        handleSendOnEnter?: (e: React.KeyboardEvent<HTMLDivElement>) => void
+        isTouch: boolean
+    }
+>(({ className, disabled, isTouch, readOnly, handleSendOnEnter, onKeyDown, ...props }, ref) => {
     /**
      * We need to make sure `onKeyDown` passed as `PlateContentProps` is called as well, to ensure default behavior is intact
      */
@@ -25,7 +28,9 @@ const Editor = React.forwardRef<
     return (
         <PlateContent
             disableDefaultStyles
-            className={inputClassName}
+            className={clsx(inputClassName, {
+                [styles.contentEditablePWA]: isTouch,
+            })}
             readOnly={disabled || readOnly}
             aria-disabled={disabled}
             spellCheck={false}
