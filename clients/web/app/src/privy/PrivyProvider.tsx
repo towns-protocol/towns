@@ -46,7 +46,7 @@ function PrivyProvider({ children }: { children: JSX.Element }) {
                     createOnLogin: 'all-users',
                     noPromptOnSignature: true,
                 },
-                loginMethods: ['sms', 'google', 'twitter', 'apple'],
+                loginMethods: ['sms', 'google', 'twitter', 'apple', 'email'],
             }}
         >
             {children}
