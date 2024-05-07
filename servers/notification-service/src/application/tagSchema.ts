@@ -15,6 +15,11 @@ export enum NotificationAttachmentKind {
     File = 'file',
 }
 
+export enum ApnsEndpoint {
+    Sandbox = 'sandbox',
+    Production = 'production',
+}
+
 export const tagMentionUsersSchema = z.object({
     spaceId: z.string(),
     channelId: z.string().min(1),

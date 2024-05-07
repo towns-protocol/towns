@@ -12,7 +12,10 @@ import { database } from './prisma'
 import { env } from './utils/environment'
 import { NotificationAttachmentKind, NotificationKind } from './tagSchema'
 import { PushType } from './subscriptionSchema'
-import { sendNotificationViaWebPush } from './services/web-push/send-notification'
+import {
+    sendNotificationViaAPNS,
+    sendNotificationViaWebPush,
+} from './services/web-push/send-notification'
 import { Urgency } from './notificationSchema'
 import { createLogger } from './services/logger'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './services/stream/id'
@@ -263,6 +266,9 @@ export class NotificationService {
             for (const subscription of pushSubscriptions) {
                 if (subscription.PushType === PushType.WebPush) {
                     const sendNotificationPromise = sendNotificationViaWebPush(option, subscription)
+                    pushNotificationPromises.push(sendNotificationPromise)
+                } else if (subscription.PushType === PushType.iOS) {
+                    const sendNotificationPromise = sendNotificationViaAPNS(option, subscription)
                     pushNotificationPromises.push(sendNotificationPromise)
                 }
             }

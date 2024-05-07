@@ -27,6 +27,7 @@
         "@bufbuild/protobuf": "^1.4.1",
         "@connectrpc/connect": "^1.3.0",
         "@connectrpc/connect-web": "^1.3.0",
+        "@parse/node-apn": "^6.0.1",
         "@prisma/client": "^5.10.0",
         "@river-build/proto": "workspace:^",
         "cors": "^2.8.5",

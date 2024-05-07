@@ -14,6 +14,27 @@ import { Urgency } from '../../notificationSchema'
 import crypto from 'crypto'
 import { env } from '../../utils/environment'
 import { logger } from '../logger'
+import { Provider, Notification } from '@parse/node-apn'
+import { ApnsEndpoint } from '../../tagSchema'
+
+const authKey = env.APNS_AUTH_KEY.replaceAll('\\n', '\n')
+const apnsProviderProd = new Provider({
+    token: {
+        key: Buffer.from(authKey),
+        keyId: env.APNS_KEY_ID,
+        teamId: env.APNS_TEAM_ID,
+    },
+    production: true,
+})
+
+const apnsProviderSandbox = new Provider({
+    token: {
+        key: Buffer.from(authKey),
+        keyId: env.APNS_KEY_ID,
+        teamId: env.APNS_TEAM_ID,
+    },
+    production: false,
+})
 
 export async function sendNotificationViaWebPush(
     options: NotificationOptions,
@@ -82,6 +103,67 @@ export async function sendNotificationViaWebPush(
         return {
             status: SendPushStatus.Error,
             message: e.message,
+            userId: options.userId,
+            pushSubscription: subscribed.PushSubscription,
+        }
+    }
+}
+
+export async function sendNotificationViaAPNS(
+    options: NotificationOptions,
+    subscribed: PushSubscription,
+): Promise<SendPushResponse> {
+    try {
+        const subscription: WebPushSubscription = JSON.parse(subscribed.PushSubscription)
+        if (
+            subscription.endpoint !== ApnsEndpoint.Production &&
+            subscription.endpoint !== ApnsEndpoint.Sandbox
+        ) {
+            return {
+                status: SendPushStatus.Error,
+                message: 'invalid APNS endpoint',
+                userId: options.userId,
+                pushSubscription: subscribed.PushSubscription,
+            }
+        }
+        const provider =
+            subscription.endpoint === ApnsEndpoint.Sandbox ? apnsProviderSandbox : apnsProviderProd
+
+        const notification = new Notification()
+        notification.alert = 'You have a new message'
+        notification.expiry = Math.floor(Date.now() / 1000) + 3600 // 1hr
+        notification.topic = env.APNS_TOWNS_APP_IDENTIFIER
+        notification.sound = 'default'
+        notification.pushType = 'alert'
+        notification.payload = options.payload
+        notification.threadId = options.channelId
+        notification.mutableContent = true
+
+        const response = await provider.send(notification, subscription.keys.auth)
+        logger.info('sendNotificationViaAPNS response', {
+            environment: subscription.endpoint,
+            failed: response.failed,
+            sent: response.sent,
+            userId: options.userId,
+        })
+        if (response.failed.length > 0) {
+            return {
+                status: SendPushStatus.Error,
+                message: response.failed[0].response?.reason,
+                userId: options.userId,
+                pushSubscription: subscribed.PushSubscription,
+            }
+        } else {
+            return {
+                status: SendPushStatus.Success,
+                userId: options.userId,
+                pushSubscription: subscribed.PushSubscription,
+            }
+        }
+    } catch (err) {
+        return {
+            status: SendPushStatus.Error,
+            message: `Error sending APNS notification: ${err}`,
             userId: options.userId,
             pushSubscription: subscribed.PushSubscription,
         }

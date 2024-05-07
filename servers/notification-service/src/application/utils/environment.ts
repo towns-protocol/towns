@@ -12,6 +12,10 @@ const envSchema = z.object({
     RIVER_NODE_URL: z.string(),
     RIVER_DEBUG_TRANSPORT: z.string().optional(),
     NODE_TLS_REJECT_UNAUTHORIZED: z.string().optional(),
+    APNS_AUTH_KEY: z.string(),
+    APNS_KEY_ID: z.string(),
+    APNS_TEAM_ID: z.string(),
+    APNS_TOWNS_APP_IDENTIFIER: z.string(),
 })
 
 const parsed = envSchema.safeParse(process.env)
