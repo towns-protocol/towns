@@ -756,10 +756,7 @@ describe('clientTest', () => {
         )
         const aliceUserDeviceKeyStreamId = alicesClient.userDeviceKeyStreamId
         const bobUserDeviceKeyStreamId = bobsClient.userDeviceKeyStreamId
-        const fallbackKeys = await bobsClient.downloadUserDeviceInfo(
-            [alicesUserId, bobsUserId],
-            true,
-        )
+        const fallbackKeys = await bobsClient.downloadUserDeviceInfo([alicesUserId, bobsUserId])
 
         expect(fallbackKeys).toBeDefined()
         expect(Object.keys(fallbackKeys).length).toEqual(2)
@@ -779,7 +776,7 @@ describe('clientTest', () => {
         })
         const alicesUserId = alicesClient.userId
 
-        const fallbackKeys = await bobsClient.downloadUserDeviceInfo([alicesUserId], true)
+        const fallbackKeys = await bobsClient.downloadUserDeviceInfo([alicesUserId])
         expect(Object.keys(fallbackKeys)).toContain(alicesUserId)
         expect(Object.keys(fallbackKeys).length).toEqual(1)
         expect(fallbackKeys[alicesUserId].map((k) => k.fallbackKey)).toContain(

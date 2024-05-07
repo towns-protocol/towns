@@ -1619,10 +1619,10 @@ export class Client
         }
     }
 
-    public async downloadUserDeviceInfo(
-        userIds: string[],
-        forceDownload: boolean = false,
-    ): Promise<UserDeviceCollection> {
+    public async downloadUserDeviceInfo(userIds: string[]): Promise<UserDeviceCollection> {
+        // always fetch keys for arbitrarily small channels/dms/gdms. For large channels only
+        // fetch keys if you don't already have keys, extended keysharing should work for those cases
+        const forceDownload = userIds.length <= 10
         const promises = userIds.map(
             async (userId): Promise<{ userId: string; devices: UserDevice[] }> => {
                 const streamId = makeUserDeviceKeyStreamId(userId)

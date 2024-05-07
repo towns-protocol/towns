@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -52,7 +53,14 @@ func (s *Service) startInfoMode() error {
 
 	// Get the port as an integer
 	port := tcpAddr.Port
-	s.defaultLogger.Info("Server started", "port", port, "https", s.config.UseHttps)
+	// convert the integer to a string
+	url := "localhost:" + strconv.Itoa(port) + "/debug/multi"
+	if s.config.UseHttps {
+		url = "https://" + url
+	} else {
+		url = "http://" + url
+	}
+	s.defaultLogger.Info("Server started", "port", port, "https", s.config.UseHttps, "url", url)
 	return nil
 }
 

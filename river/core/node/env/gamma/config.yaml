@@ -23,7 +23,7 @@ registryContract:
 # Disable logging
 log:
     file: ''
-    level: error
+    level: info
     console: true
     noColor: false
     format: text
