@@ -23,7 +23,7 @@ export const ProfileHoverCard = (props: Props) => {
         rootKeyAddress: userId as Address | undefined,
     })
     const { data: userBio } = useGetUserBio(abstractAccountAddress)
-    const { resolvedEnsName } = useResolveEnsName({ userId, ensAddress: user.ensAddress })
+    const { resolvedEnsName } = useResolveEnsName({ userId, ensAddress: user?.ensAddress })
 
     return user ? (
         <Tooltip gap elevate maxWidth="300" background="level2">
