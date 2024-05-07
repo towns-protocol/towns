@@ -121,7 +121,7 @@ function toCasablancaRoom(
     streamId: string,
     client: CasablancaClient,
     spaceInfos?: SpaceInfo[],
-): Room {
+): Room | undefined {
     //reject if client is not defined
     if (!client) {
         throw new Error('Client not defined')
@@ -149,7 +149,7 @@ function toCasablancaRoom(
 
     const stream = client.streams.get(streamId)
     if (!stream) {
-        throw new Error('Stream not found')
+        return undefined
     }
     const { members, membersMap } = toTownsMembers(stream)
 
