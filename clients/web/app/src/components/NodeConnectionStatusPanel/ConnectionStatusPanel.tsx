@@ -36,6 +36,8 @@ export const NodeStatusPanel = () => {
             <Box centerContent ref={ref}>
                 <Box width="300" height="300" />
                 <Box
+                    width="300"
+                    height="300"
                     position="absolute"
                     style={{
                         opacity: `calc(1 - var(--scroll-top) * 1)`,
