@@ -82,7 +82,9 @@ export class StreamsMonitorService implements IStreamsMonitorService {
         const currentMembers = new Set<string>()
         logger.info(`adding DM ${streamId} to db`, { streamId })
 
-        this.validateStream(streamId, StreamKind.DM)
+        if (!(await this.validateStream(streamId, StreamKind.DM))) {
+            return currentMembers
+        }
 
         const response = await this.rpcClient.getStream({
             streamId: streamIdToBytes(streamId),
@@ -166,7 +168,9 @@ export class StreamsMonitorService implements IStreamsMonitorService {
 
     private async addGDMStreamToDB(streamId: string): Promise<Set<string>> {
         logger.info(`adding gdm ${streamId} to db`, { streamId })
-        this.validateStream(streamId, StreamKind.GDM)
+        if (!(await this.validateStream(streamId, StreamKind.GDM))) {
+            return new Set()
+        }
         const unpacked = await this.getAndParseStream(streamId)
         const currentMembers = this.getUserIdsFromChannelOrGDMStreams(unpacked)
         await database.syncedStream.create({
@@ -182,7 +186,9 @@ export class StreamsMonitorService implements IStreamsMonitorService {
 
     private async addChannelStreamToDB(streamId: string): Promise<Set<string>> {
         logger.info(`adding channel ${streamId} to db`, { streamId })
-        this.validateStream(streamId, StreamKind.Channel)
+        if (!(await this.validateStream(streamId, StreamKind.Channel))) {
+            return new Set()
+        }
         const unpacked = await this.getAndParseStream(streamId)
         const currentMembers = this.getUserIdsFromChannelOrGDMStreams(unpacked)
         await database.syncedStream.create({
@@ -301,7 +307,7 @@ export class StreamsMonitorService implements IStreamsMonitorService {
         return unpacked
     }
 
-    private async validateStream(streamId: string, kind: StreamKind): Promise<void> {
+    private async validateStream(streamId: string, kind: StreamKind): Promise<boolean> {
         let streamIsValid = false
         if (kind === StreamKind.DM) {
             streamIsValid = isDMChannelStreamId(streamId)
@@ -311,13 +317,21 @@ export class StreamsMonitorService implements IStreamsMonitorService {
             streamIsValid = isChannelStreamId(streamId)
         }
 
-        assert(streamIsValid, `stream is not a ${kind} stream`)
-        assert(
+        if (!streamIsValid) {
+            logger.warn(`stream is not a ${kind} stream`, { streamId })
+            return false
+        }
+
+        if (
             (await database.syncedStream.count({
                 where: { StreamId: streamId },
-            })) === 0,
-            `stream already added to db`,
-        )
+            })) > 0
+        ) {
+            logger.warn(`stream ${streamId} already in db`, { streamId })
+            return false
+        }
+
+        return true
     }
 
     public async startMonitoringStreams() {
