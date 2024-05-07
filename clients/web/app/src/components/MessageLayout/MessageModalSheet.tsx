@@ -1,6 +1,7 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react'
 import Sheet from 'react-modal-sheet'
 import { useTownsClient } from 'use-towns-client'
+import { useCreateUnreadMarker } from '@components/MessageLayout/hooks/useCreateUnreadMarker'
 import { modalSheetClass } from 'ui/styles/globals/sheet.css'
 import { Button, Divider, Icon, Stack, useZLayerContext } from '@ui'
 import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimelineContext'
@@ -21,6 +22,7 @@ type Props = {
     canReply?: boolean
     canReact?: boolean
     messageBody?: string
+    threadParentId?: string
 }
 
 const emojis: { id: string; native: string }[] = [
@@ -35,9 +37,19 @@ export const MessageModalSheet = (props: Props) => {
     const timelineContext = useContext(MessageTimelineContext)
     const mountPoint = useZLayerContext().rootLayerRef?.current ?? undefined
 
-    const { onClose, eventId, spaceId, channelId, canReply, canEdit, canReact, messageBody } = props
+    const {
+        onClose,
+        eventId,
+        spaceId,
+        channelId,
+        canReply,
+        canEdit,
+        canReact,
+        messageBody,
+        threadParentId,
+    } = props
     const [isHidden, setIsHidden] = React.useState(false)
-    const { redactEvent, sendReaction } = useTownsClient()
+    const { redactEvent, sendReaction, sendReadReceipt } = useTownsClient()
 
     const [isOpen, setIsOpen] = useState(false)
     useEffect(() => {
@@ -57,6 +69,12 @@ export const MessageModalSheet = (props: Props) => {
     }, [eventId, timelineContext, closeSheet])
 
     const { onOpenMessageThread } = useOpenMessageThread(spaceId, channelId)
+    const { createUnreadMarker: markAsUnread } = useCreateUnreadMarker({
+        eventId,
+        channelId,
+        threadParentId,
+        timeline: timelineContext?.events,
+    })
     const { canReplyInline, setReplyToEventId } = useContext(ReplyToMessageContext)
     const onThreadClick = useCallback(() => {
         onClose()
@@ -136,6 +154,13 @@ export const MessageModalSheet = (props: Props) => {
         }
     }, [channelId, copy, eventId, onClose, spaceId])
 
+    const onMarkAsUnreadClick = useCallback(() => {
+        const unreadMarker = markAsUnread()
+        if (unreadMarker) {
+            void sendReadReceipt(unreadMarker, true)
+        }
+    }, [markAsUnread, sendReadReceipt])
+
     return (
         <>
             <Sheet
@@ -210,6 +235,11 @@ export const MessageModalSheet = (props: Props) => {
                                         onClick={onCopyClick}
                                     />
                                 )}
+                                <TableCell
+                                    iconType="messageUnread"
+                                    text="Mark as Unread"
+                                    onClick={onMarkAsUnreadClick}
+                                />
                                 {canEdit && (
                                     <TableCell
                                         isError

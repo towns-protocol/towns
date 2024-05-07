@@ -294,6 +294,7 @@ export const MessageLayout = (props: Props) => {
                         eventId={eventId}
                         canEdit={isEditable}
                         messageBody={messageBody}
+                        threadParentId={threadParentId}
                         onClose={() => setIsModalSheetVisible(false)}
                     />
                 )}
