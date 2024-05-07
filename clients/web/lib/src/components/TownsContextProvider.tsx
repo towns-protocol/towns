@@ -82,6 +82,9 @@ interface TownsContextProviderProps {
     pushNotificationWorkerUrl?: string
     accountAbstractionConfig?: AccountAbstractionConfig
     highPriorityStreamIds?: string[]
+    supportedXChainRpcMapping?: {
+        [chainId: number]: string
+    }
 }
 
 export function TownsContextProvider({
@@ -152,6 +155,7 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
             pushNotificationWorkerUrl: props.pushNotificationWorkerUrl,
             accountAbstractionConfig: props.accountAbstractionConfig,
             highPriorityStreamIds: props.highPriorityStreamIds,
+            supportedXChainRpcMapping: props.supportedXChainRpcMapping,
         } satisfies TownsOpts
     }, [
         baseChain.id,
@@ -162,6 +166,7 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
         props.highPriorityStreamIds,
         props.pushNotificationAuthToken,
         props.pushNotificationWorkerUrl,
+        props.supportedXChainRpcMapping,
         riverChain.chainId,
         riverConfig,
         riverProvider,

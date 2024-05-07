@@ -13,6 +13,9 @@ export interface TownsOpts {
     riverConfig: RiverChainConfig
     riverProvider?: TProvider
     eventHandlers?: TownsClientEventHandlers
+    supportedXChainRpcMapping?: {
+        [chainId: number]: string
+    }
     logNamespaceFilter?: string
     pushNotificationWorkerUrl?: string
     pushNotificationAuthToken?: string

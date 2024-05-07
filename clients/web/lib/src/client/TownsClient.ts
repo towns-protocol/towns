@@ -14,9 +14,15 @@ import {
     makeRiverRpcClient,
     isChannelStreamId,
     isDMChannelStreamId,
+    isDefined,
 } from '@river/sdk'
 import { EntitlementsDelegate, DecryptionStatus } from '@river-build/encryption'
-import { CreateSpaceParams, IRuleEntitlement, UpdateChannelParams } from '@river-build/web3'
+import {
+    ContractEventListener,
+    CreateSpaceParams,
+    IRuleEntitlement,
+    UpdateChannelParams,
+} from '@river-build/web3'
 import { ChannelMessage_Post_Mention, FullyReadMarker } from '@river-build/proto'
 import {
     ChannelTransactionContext,
@@ -100,6 +106,7 @@ export class TownsClient
     protected _eventHandlers?: TownsClientEventHandlers
     private pushNotificationClient?: PushNotificationClient
     private userOps: UserOps | undefined = undefined
+    private supportedXChainIds: number[] | undefined
 
     constructor(opts: TownsOpts, name?: string) {
         super()
@@ -720,6 +727,11 @@ export class TownsClient
         user: string,
         permission: Permission,
     ): Promise<boolean> {
+        // special handling for xchain rule entitlements on permission JoinSpace
+        if (permission === Permission.JoinSpace) {
+            return this.isEntitledToJoinSpace(spaceId, user)
+        }
+
         const rootKeyPromise = this.isWalletEntitled(
             spaceId,
             channelId,
@@ -758,6 +770,60 @@ export class TownsClient
         return Promise.any(allPromises).catch(() => false)
     }
 
+    public async getSupportedXChainIds(): Promise<number[]> {
+        // this should eventually be provided by river
+        // the below assumes a gamma env running on base-sepolia
+        if (!this.supportedXChainIds) {
+            this.supportedXChainIds = await Promise.resolve([
+                // ethereum
+                1,
+                // polygon
+                137,
+                // arb
+                42161,
+                // optimism
+                10,
+                // base-sepolia
+                84532,
+            ])
+        }
+        return this.supportedXChainIds
+    }
+
+    /**
+     *
+     * @returns a list of ethers providers for the supported xchains plus the base provider
+     */
+    public async getSupportedXChainRpcUrls(): Promise<string[]> {
+        const xChainIds = await this.getSupportedXChainIds()
+
+        const filteredByRiverSupported = Object.entries(this.opts.supportedXChainRpcMapping ?? {})
+            .filter(([chainId, rpcUrl]) => isDefined(rpcUrl) && xChainIds.includes(+chainId))
+            .map(([, rpcUrl]) => rpcUrl)
+
+        return filteredByRiverSupported.concat(this.opts.baseProvider.connection.url)
+    }
+
+    private async isEntitledToJoinSpace(spaceId: string | undefined, rootKey: string) {
+        if (!spaceId) {
+            throw new Error('spaceId is required for permission JoinSpace')
+        }
+
+        const supportedXChainRpcUrls = await this.getSupportedXChainRpcUrls()
+        const entitledWallet = await this.spaceDapp.getEntitledWalletForJoiningSpace(
+            spaceId,
+            rootKey,
+            supportedXChainRpcUrls,
+        )
+
+        this.log(`[isEntitledToJoinSpace] is user entitlted for Permission.JoinSpace`, {
+            entitledWallet,
+            isEntitled: !!entitledWallet,
+            spaceId: spaceId,
+        })
+        return !!entitledWallet
+    }
+
     private async isWalletEntitled(
         spaceId: string | undefined,
         channelId: string | undefined,
@@ -774,6 +840,9 @@ export class TownsClient
                 permission,
             )
         } else if (spaceId) {
+            if (permission === Permission.JoinSpace) {
+                throw new Error('use isEntitledToJoinSpace for Permission.JoinSpace')
+            }
             isEntitled = await this.spaceDapp.isEntitledToSpace(spaceId, wallet, permission)
         } else {
             // TODO: Implement entitlement checks for DMs (channels without a space)
@@ -1452,41 +1521,23 @@ export class TownsClient
         })
 
         try {
-            // If any of the linked wallets are entitled, we can join the room
-            // get linked wallets includes the root wallet
-            const wallets = await this.getLinkedWallets(rootWallet)
-            const allPromises = wallets.map(async (wallet) => {
-                const isEntitled = await this.isWalletEntitled(
-                    spaceId,
-                    undefined,
-                    wallet,
-                    Permission.JoinSpace,
-                    `mintMembershipTransaction:wallet`,
-                )
-                if (isEntitled) {
-                    return wallet
-                } else {
-                    throw new Error('not entitled')
-                }
-            })
-            allPromises.push(
-                (async () => {
-                    const isEntitled = await this.isWalletEntitled(
-                        spaceId,
-                        undefined,
-                        rootWallet,
-                        Permission.JoinSpace,
-                        `mintMembershipTransaction:rootWallet`,
-                    )
-                    if (isEntitled) {
-                        return rootWallet
-                    } else {
-                        throw new Error('not entitled')
-                    }
-                })(),
+            const entitledWallet = await this.spaceDapp.getEntitledWalletForJoiningSpace(
+                spaceId,
+                rootWallet,
+                await this.getSupportedXChainRpcUrls(),
             )
-            // This will throw an AggregateError if none of the wallets are entitled
-            const entitledWallet = await Promise.any(allPromises)
+
+            if (!entitledWallet) {
+                console.error('[mintMembershipTransaction] failed, no wallets have balance')
+                const err = new Error('execution reverted')
+                err.name = 'Entitlement__NotAllowed'
+                continueStoreTx({
+                    hashOrUserOpHash: getTransactionHashOrUserOpHash(transaction),
+                    transaction,
+                    error: err,
+                })
+                throw err
+            }
 
             const hasMembership = await this.spaceDapp.hasSpaceMembership(spaceId, entitledWallet)
 
@@ -1494,16 +1545,27 @@ export class TownsClient
                 return
             }
 
-            // add listener for the minted membership
-            // await this.spaceDapp.addMembershipListener(spaceId, entitledWallet)
-            const membershipListener = this.spaceDapp.listenForMembershipEvent(
-                spaceId,
-                entitledWallet,
-            )
+            let membershipListener: ContractEventListener
 
             if (this.isAccountAbstractionEnabled()) {
-                transaction = await this.userOps?.sendJoinSpaceOp([spaceId, entitledWallet, signer])
+                // i.e. when a non gated town is joined
+                // recipients should always be the smart account address
+                let recipient: string | undefined = entitledWallet
+                if (recipient.toLowerCase() === rootWallet.toLowerCase()) {
+                    recipient = await this.getAbstractAccountAddress({
+                        rootKeyAddress: recipient as Address,
+                    })
+                }
+                if (!recipient) {
+                    throw new Error('Abstract account address not found')
+                }
+                membershipListener = this.spaceDapp.listenForMembershipEvent(spaceId, recipient)
+                transaction = await this.userOps?.sendJoinSpaceOp([spaceId, recipient, signer])
             } else {
+                membershipListener = this.spaceDapp.listenForMembershipEvent(
+                    spaceId,
+                    entitledWallet,
+                )
                 transaction = await this.spaceDapp.joinSpace(spaceId, entitledWallet, signer)
             }
 
@@ -1511,7 +1573,7 @@ export class TownsClient
                 hashOrUserOpHash: getTransactionHashOrUserOpHash(transaction),
                 transaction,
                 eventListener: membershipListener,
-                error: undefined, // if no throw then no error
+                error: undefined,
             })
 
             this.log(
@@ -1527,12 +1589,6 @@ export class TownsClient
                 throw new MembershipRejectedError()
             }
         } catch (error) {
-            if (error instanceof AggregateError) {
-                console.error('[mintMembershipTransaction] failed', error)
-                const err = new Error('execution reverted')
-                err.name = 'Entitlement__NotAllowed'
-                throw err
-            }
             console.error('[mintMembershipTransaction] failed', error)
             let decodeError: Error
             if (error instanceof MembershipRejectedError) {

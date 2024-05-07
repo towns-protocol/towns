@@ -12,6 +12,8 @@ import { BaseContractShim } from './BaseContractShim'
 import { BigNumberish, ethers } from 'ethers'
 import { EntitlementModuleType, EntitlementModule } from '../ContractTypes'
 import { ContractVersion } from '../IStaticContractsInfo'
+import { dlogger } from '@river-build/dlog'
+const logger = dlogger('csb:SpaceDapp:debug')
 
 export class RuleEntitlementShim
     extends BaseContractShim<
@@ -48,5 +50,25 @@ export class RuleEntitlementShim
             }
         }
         return this.read.getRuleData(roleId)
+    }
+
+    public decodeGetRuleData(
+        entitlmentData: string,
+    ): LocalhostContract.RuleDataStruct[] | undefined {
+        try {
+            const decoded = this.decodeFunctionResult(
+                'getRuleData',
+                entitlmentData,
+            ) as unknown as LocalhostContract.RuleDataStruct[]
+
+            if (decoded.length === 0) {
+                logger.error('RuleEntitlementShim No rule data', decoded)
+                return undefined
+            }
+            return decoded
+        } catch (error) {
+            logger.error('RuleEntitlementShim Error decoding RuleDataStruct', error)
+        }
+        return
     }
 }

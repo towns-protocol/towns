@@ -129,6 +129,11 @@ export interface ISpaceDapp {
         user: string,
         permission: Permission,
     ) => Promise<boolean>
+    getEntitledWalletForJoiningSpace: (
+        spaceId: string,
+        wallet: string,
+        supportedXChainRpcUrls: string[],
+    ) => Promise<string | undefined>
     parseSpaceFactoryError: (error: unknown) => Error
     parseSpaceError: (spaceId: string, error: unknown) => Promise<Error>
     parsePrepayError: (error: unknown) => Error

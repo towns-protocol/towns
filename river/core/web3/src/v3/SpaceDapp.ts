@@ -25,10 +25,13 @@ import { createEntitlementStruct } from '../ConvertersRoles'
 import { BaseChainConfig } from '../IStaticContractsInfo'
 import { WalletLink } from './WalletLink'
 import { SpaceInfo } from '../types'
-import { IRuleEntitlement } from './index'
+import { IRuleEntitlement, UserEntitlementShim } from './index'
 import { PricingModules } from './PricingModules'
 import { IPrepayShim } from './IPrepayShim'
 import { dlogger, isJest } from '@river-build/dlog'
+import { EVERYONE_ADDRESS } from '../Utils'
+import { evaluateOperationsForEntitledWallet, ruleDataToOperations } from '../entitlement'
+import { RuleEntitlementShim } from './RuleEntitlementShim'
 
 const logger = dlogger('csb:SpaceDapp:debug')
 
@@ -287,6 +290,121 @@ export class SpaceDapp implements ISpaceDapp {
         )
     }
 
+    private async getEntitlementsForPermission(spaceId: string, permission: Permission) {
+        const space = this.getSpace(spaceId)
+        if (!space) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+        }
+
+        const entitlementData = await space.Entitlements.read.getEntitlementDataByPermission(
+            permission,
+        )
+
+        type EntitlementData = {
+            entitlementType: EntitlementModuleType
+            ruleEntitlement: IRuleEntitlement.RuleDataStruct[] | undefined
+            userEntitlement: string[] | undefined
+        }
+
+        const entitlements: EntitlementData[] = entitlementData.map((x) => ({
+            entitlementType: x.entitlementType as EntitlementModuleType,
+            ruleEntitlement: undefined,
+            userEntitlement: undefined,
+        }))
+
+        const [userEntitlementShim, ruleEntitlementShim] = (await Promise.all([
+            space.findEntitlementByType(EntitlementModuleType.UserEntitlement),
+            space.findEntitlementByType(EntitlementModuleType.RuleEntitlement),
+        ])) as [UserEntitlementShim | null, RuleEntitlementShim | null]
+
+        for (let i = 0; i < entitlementData.length; i++) {
+            const entitlement = entitlementData[i]
+            if (
+                (entitlement.entitlementType as EntitlementModuleType) ===
+                EntitlementModuleType.RuleEntitlement
+            ) {
+                entitlements[i].entitlementType = EntitlementModuleType.RuleEntitlement
+                const decodedData = ruleEntitlementShim?.decodeGetRuleData(
+                    entitlement.entitlementData,
+                )
+                if (decodedData) {
+                    entitlements[i].ruleEntitlement = decodedData
+                }
+            } else if (
+                (entitlement.entitlementType as EntitlementModuleType) ===
+                EntitlementModuleType.UserEntitlement
+            ) {
+                entitlements[i].entitlementType = EntitlementModuleType.UserEntitlement
+                const decodedData = userEntitlementShim?.decodeGetAddresses(
+                    entitlement.entitlementData,
+                )
+                if (decodedData) {
+                    entitlements[i].userEntitlement = decodedData
+                }
+            } else {
+                throw new Error('Unknown entitlement type')
+            }
+        }
+
+        return entitlements
+    }
+
+    /**
+     * Checks if user has a wallet entitled to join a space based on the minter role rule entitlements
+     */
+    public async getEntitledWalletForJoiningSpace(
+        spaceId: string,
+        rootKey: string,
+        supportedXChainRpcUrls: string[],
+    ): Promise<string | undefined> {
+        const linkedWallets = await this.walletLink.getLinkedWallets(rootKey)
+        const allWallets = [rootKey, ...linkedWallets]
+
+        const space = this.getSpace(spaceId)
+        if (!space) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+        }
+
+        const entitlements = await this.getEntitlementsForPermission(spaceId, Permission.JoinSpace)
+
+        const isEveryOneSpace = entitlements.some((e) =>
+            e.userEntitlement?.includes(EVERYONE_ADDRESS),
+        )
+
+        // todo: more user checks
+        if (isEveryOneSpace) {
+            return rootKey
+        }
+
+        const providers = supportedXChainRpcUrls.map(
+            (url) => new ethers.providers.StaticJsonRpcProvider(url),
+        )
+        await Promise.all(providers.map((p) => p.ready))
+
+        const ruleEntitlements = entitlements
+            .filter((x) => x.entitlementType === EntitlementModuleType.RuleEntitlement)
+            .map((x) => x.ruleEntitlement)
+
+        const entitledWalletsForAllRuleEntitlements = await Promise.all(
+            ruleEntitlements.map(async (ruleData) => {
+                if (!ruleData) {
+                    throw new Error('Rule data not found')
+                }
+                const operations = ruleDataToOperations(ruleData)
+
+                return evaluateOperationsForEntitledWallet(operations, allWallets, providers)
+            }),
+        )
+
+        // if every check has an entitled wallet, return the first one
+        if (
+            entitledWalletsForAllRuleEntitlements.every((w) => w !== ethers.constants.AddressZero)
+        ) {
+            return entitledWalletsForAllRuleEntitlements[0]
+        }
+        return
+    }
+
     public async isEntitledToSpace(
         spaceId: string,
         user: string,
@@ -296,6 +414,10 @@ export class SpaceDapp implements ISpaceDapp {
         if (!space) {
             return false
         }
+        if (permission === Permission.JoinSpace) {
+            throw new Error('use getEntitledWalletForJoiningSpace instead of isEntitledToSpace')
+        }
+
         return space.Entitlements.read.isEntitledToSpace(user, permission)
     }
 

@@ -1,3 +1,4 @@
+import { ethers } from 'ethers'
 import {
     CheckOperation,
     CheckOperationType,
@@ -13,6 +14,7 @@ import {
     treeToRuleData,
     ruleDataToOperations,
 } from '../src/entitlement'
+import { MOCK_ADDRESS } from '../src/Utils'
 
 function makeRandomOperation(depth: number): Operation {
     const rand = Math.random()
@@ -44,10 +46,9 @@ function makeRandomOperation(depth: number): Operation {
 
 test('random', async () => {
     const operation = makeRandomOperation(0)
-
     // it takes a Uint8Array and returns a Uint8Array
     const controller = new AbortController()
-    const result = await evaluateTree(controller, operation)
+    const result = await evaluateTree(controller, [], [], operation)
     expect(result).toBeDefined()
 })
 
@@ -103,10 +104,10 @@ const slowTrueCheck: CheckOperation = {
 */
 
 const orCases = [
-    { leftCheck: trueCheck, rightCheck: trueCheck, expectedResult: true },
-    { leftCheck: trueCheck, rightCheck: falseCheck, expectedResult: true },
-    { leftCheck: falseCheck, rightCheck: trueCheck, expectedResult: true },
-    { leftCheck: falseCheck, rightCheck: falseCheck, expectedResult: false },
+    { leftCheck: trueCheck, rightCheck: trueCheck, expectedResult: MOCK_ADDRESS },
+    { leftCheck: trueCheck, rightCheck: falseCheck, expectedResult: MOCK_ADDRESS },
+    { leftCheck: falseCheck, rightCheck: trueCheck, expectedResult: MOCK_ADDRESS },
+    { leftCheck: falseCheck, rightCheck: falseCheck, expectedResult: ethers.constants.AddressZero },
 ]
 
 test.each(orCases)('orOperation', async (props) => {
@@ -119,7 +120,7 @@ test.each(orCases)('orOperation', async (props) => {
     } as const
 
     const controller = new AbortController()
-    const result = await evaluateTree(controller, orOperation)
+    const result = await evaluateTree(controller, [], [], orOperation)
     expect(result).toBe(expectedResult)
 })
 
@@ -127,25 +128,25 @@ const slowOrCases = [
     {
         leftCheck: trueCheck,
         rightCheck: slowTrueCheck,
-        expectedResult: true,
+        expectedResult: MOCK_ADDRESS,
         expectedTime: 10,
     },
     {
         leftCheck: trueCheck,
         rightCheck: slowFalseCheck,
-        expectedResult: true,
+        expectedResult: MOCK_ADDRESS,
         expectedTime: 10,
     },
     {
         leftCheck: slowFalseCheck,
         rightCheck: trueCheck,
-        expectedResult: true,
+        expectedResult: MOCK_ADDRESS,
         expectedTime: 10,
     },
     {
         leftCheck: falseCheck,
         rightCheck: slowFalseCheck,
-        expectedResult: false,
+        expectedResult: ethers.constants.AddressZero,
         expectedTime: 500,
     },
 ]
@@ -161,17 +162,17 @@ test.each(slowOrCases)('slowOrOperation', async (props) => {
 
     const controller = new AbortController()
     const start = performance.now()
-    const result = await evaluateTree(controller, operation)
+    const result = await evaluateTree(controller, [], [], operation)
     const timeTaken = performance.now() - start
     expect(timeTaken).toBeCloseTo(expectedTime, -2)
     expect(result).toBe(expectedResult)
 })
 
 const andCases = [
-    { leftCheck: trueCheck, rightCheck: trueCheck, expectedResult: true },
-    { leftCheck: trueCheck, rightCheck: falseCheck, expectedResult: false },
-    { leftCheck: falseCheck, rightCheck: trueCheck, expectedResult: false },
-    { leftCheck: falseCheck, rightCheck: falseCheck, expectedResult: false },
+    { leftCheck: trueCheck, rightCheck: trueCheck, expectedResult: MOCK_ADDRESS },
+    { leftCheck: trueCheck, rightCheck: falseCheck, expectedResult: ethers.constants.AddressZero },
+    { leftCheck: falseCheck, rightCheck: trueCheck, expectedResult: ethers.constants.AddressZero },
+    { leftCheck: falseCheck, rightCheck: falseCheck, expectedResult: ethers.constants.AddressZero },
 ]
 
 test.each(andCases)('andOperation', async (props) => {
@@ -184,7 +185,7 @@ test.each(andCases)('andOperation', async (props) => {
     } as const
 
     const controller = new AbortController()
-    const result = await evaluateTree(controller, operation)
+    const result = await evaluateTree(controller, [], [], operation)
     expect(result).toBe(expectedResult)
 })
 
@@ -192,25 +193,25 @@ const slowAndCases = [
     {
         leftCheck: trueCheck,
         rightCheck: slowTrueCheck,
-        expectedResult: true,
+        expectedResult: MOCK_ADDRESS,
         expectedTime: 500,
     },
     {
         leftCheck: slowTrueCheck,
         rightCheck: falseCheck,
-        expectedResult: false,
+        expectedResult: ethers.constants.AddressZero,
         expectedTime: 10,
     },
     {
         leftCheck: falseCheck,
         rightCheck: slowTrueCheck,
-        expectedResult: false,
+        expectedResult: ethers.constants.AddressZero,
         expectedTime: 10,
     },
     {
         leftCheck: falseCheck,
         rightCheck: slowFalseCheck,
-        expectedResult: false,
+        expectedResult: ethers.constants.AddressZero,
         expectedTime: 10,
     },
 ]
@@ -226,7 +227,7 @@ test.each(slowAndCases)('slowAndOperation', async (props) => {
 
     const controller = new AbortController()
     const start = performance.now()
-    const result = await evaluateTree(controller, operation)
+    const result = await evaluateTree(controller, [], [], operation)
     const timeTaken = performance.now() - start
 
     expect(result).toBe(expectedResult)
@@ -235,24 +236,24 @@ test.each(slowAndCases)('slowAndOperation', async (props) => {
 
 test('empty', async () => {
     const controller = new AbortController()
-    const result = await evaluateTree(controller, undefined)
-    expect(result).toBeFalsy()
+    const result = await evaluateTree(controller, [], [], undefined)
+    expect(result).toBe(ethers.constants.AddressZero)
 })
 
 test('true', async () => {
     const operation = trueCheck
 
     const controller = new AbortController()
-    const result = await evaluateTree(controller, operation)
-    expect(result).toBeTruthy()
+    const result = await evaluateTree(controller, [], [], operation)
+    expect(result).toBe(MOCK_ADDRESS)
 })
 
 test('false', async () => {
     const operation = falseCheck
 
     const controller = new AbortController()
-    const result = await evaluateTree(controller, operation)
-    expect(result).toBeFalsy()
+    const result = await evaluateTree(controller, [], [], operation)
+    expect(result).toBe(ethers.constants.AddressZero)
 })
 
 test('encode', async () => {

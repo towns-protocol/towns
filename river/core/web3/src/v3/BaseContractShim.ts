@@ -87,6 +87,30 @@ export class BaseContractShim<
         }
     }
 
+    public decodeFunctionResult<
+        FnName extends keyof T_DEV_CONTRACT['functions'] | keyof T_VERSIONED_CONTRACT['functions'],
+    >(functionName: FnName, data: BytesLike) {
+        if (typeof functionName !== 'string') {
+            throw new Error('functionName must be a string')
+        }
+        if (!this.interface.getFunction(functionName)) {
+            throw new Error(`Function ${functionName} not found in contract interface`)
+        }
+        return this.interface.decodeFunctionResult(functionName, data)
+    }
+
+    public decodeFunctionData<
+        FnName extends keyof T_DEV_CONTRACT['functions'] | keyof T_VERSIONED_CONTRACT['functions'],
+    >(functionName: FnName, data: BytesLike) {
+        if (typeof functionName !== 'string') {
+            throw new Error('functionName must be a string')
+        }
+        if (!this.interface.getFunction(functionName)) {
+            throw new Error(`Function ${functionName} not found in contract interface`)
+        }
+        return this.interface.decodeFunctionData(functionName, data)
+    }
+
     public encodeFunctionData<
         FnName extends keyof T_DEV_CONTRACT['functions'] | keyof T_VERSIONED_CONTRACT['functions'],
         FnParams extends

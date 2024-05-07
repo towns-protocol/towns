@@ -1,7 +1,7 @@
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { TownsContextProvider, ZTEvent } from 'use-towns-client'
+import { LOCALHOST_CHAIN_ID, TownsContextProvider, ZTEvent } from 'use-towns-client'
 import { Helmet } from 'react-helmet'
 import { isDefined } from '@river/sdk'
 import { Notifications } from '@components/Notifications/Notifications'
@@ -98,6 +98,20 @@ export const App = () => {
         })
     }
 
+    const supportedXChainRpcMapping = useMemo(() => {
+        const supported: { [x: number]: string } = {
+            1: env.VITE_XCHAIN_ETHEREUM_RPC_URL,
+            137: env.VITE_XCHAIN_POLYGON_RPC_URL,
+            42161: env.VITE_XCHAIN_ARBITRUM_RPC_URL,
+            10: env.VITE_XCHAIN_OPTIMISM_RPC_URL,
+        }
+
+        if (environment.baseChain.id === LOCALHOST_CHAIN_ID && env.VITE_BASE_SEPOLIA_RPC_URL) {
+            supported[84532] = env.VITE_BASE_SEPOLIA_RPC_URL
+        }
+        return supported
+    }, [environment.baseChain.id])
+
     return (
         <TownsContextProvider
             mutedChannelIds={mutedChannelIds}
@@ -111,6 +125,7 @@ export const App = () => {
             pushNotificationWorkerUrl={env.VITE_WEB_PUSH_WORKER_URL}
             accountAbstractionConfig={environment.accountAbstractionConfig}
             highPriorityStreamIds={highPriorityStreamIds.current}
+            supportedXChainRpcMapping={supportedXChainRpcMapping}
         >
             <>
                 <FaviconBadge />

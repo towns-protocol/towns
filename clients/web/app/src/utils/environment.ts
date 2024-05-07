@@ -66,6 +66,11 @@ const envSchema = z.object({
     // end env specific config
     VITE_RIVER_DEFAULT_ENV: z.string().optional(), // if more than one env is available, and VITE_RIVER_ENV is not set, this is the default
 
+    VITE_XCHAIN_ETHEREUM_RPC_URL: z.string(),
+    VITE_XCHAIN_POLYGON_RPC_URL: z.string(),
+    VITE_XCHAIN_ARBITRUM_RPC_URL: z.string(),
+    VITE_XCHAIN_OPTIMISM_RPC_URL: z.string(),
+
     VITE_TYPEFORM_ALPHA_URL: z.string().optional(),
     VITE_IGNORE_IS_DEV_CHECKS: z.string().optional(),
     VITE_TOKEN_SERVER_URL: z.string().url(),

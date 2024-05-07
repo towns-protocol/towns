@@ -4,6 +4,8 @@ import { PricingModuleStruct } from './ContractTypes'
 import { ISpaceDapp } from './ISpaceDapp'
 
 export const ETH_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
+export const EVERYONE_ADDRESS = '0x0000000000000000000000000000000000000001'
+export const MOCK_ADDRESS = '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef'
 
 export function isEthersProvider(
     provider: ethers.providers.Provider | PublicClient,

@@ -56,4 +56,20 @@ export class UserEntitlementShim
             throw e
         }
     }
+
+    public decodeGetAddresses(entitlementData: string): string[] | undefined {
+        // where does this come from?
+        const abiDef = `[{"name":"getAddresses","outputs":[{"type":"address[]","name":"out"}],"constant":true,"payable":false,"type":"function"}]`
+        const abi = new ethers.utils.Interface(abiDef)
+        try {
+            const decoded = abi.decodeFunctionResult(
+                'getAddresses',
+                entitlementData,
+            ) as unknown as { out: string[] }
+            return decoded.out
+        } catch (error) {
+            logger.error('RuleEntitlementShim Error decoding RuleDataStruct', error)
+        }
+        return
+    }
 }
