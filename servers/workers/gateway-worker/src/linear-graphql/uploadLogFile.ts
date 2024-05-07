@@ -13,7 +13,7 @@ export interface Uploaded {
 }
 
 export async function uploadLogFile({ filename, uploadFile, content }: Upload): Promise<Uploaded> {
-    console.log('Uploading file', {
+    console.log('[uploadLogFile] Uploading file', {
         filename,
         assetUrl: uploadFile.assetUrl,
         uploadUrl: uploadFile.uploadUrl,
@@ -26,7 +26,9 @@ export async function uploadLogFile({ filename, uploadFile, content }: Upload): 
     uploadFile.headers.forEach(({ key, value }) => {
         headers.set(key, value)
     })
-    //headers.forEach((value, key) => console.log(key, value))
+    console.log('[uploadLogFile] --- BEGIN headers ---')
+    headers.forEach((value, key) => console.log(key, value))
+    console.log('[uploadLogFile] --- END headers ---')
 
     const res = await fetch(uploadFile.uploadUrl, {
         // Note PUT is important here, other verbs will not work.
@@ -34,15 +36,21 @@ export async function uploadLogFile({ filename, uploadFile, content }: Upload): 
         body: content,
         headers,
     })
-    console.log('Upload response', res.status, res.statusText, await res.text())
-    if (res.status) {
+    console.log('[uploadLogFile] Upload response', res.status, res.statusText, await res.text())
+    if (res.status === 200) {
         return {
             filename,
             storageFilename: uploadFile.filename,
             logUrl: uploadFile.assetUrl,
         }
     } else {
-        console.error('Failed to upload file', { filename: uploadFile.filename })
+        console.error('[uploadLogFile] Failed to upload file', {
+            filename,
+            contentType: uploadFile.contentType,
+            headers: uploadFile.headers.map(({ key, value }) => `${key}: ${value}`).join('\n'),
+            uploadFilename: uploadFile.filename,
+            uploadUrl: uploadFile.uploadUrl,
+        })
         return {
             filename,
             storageFilename: undefined,

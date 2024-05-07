@@ -41,13 +41,10 @@ mutation CreateIssue($issueTitle: String!, $issueDescription: String!){
             ? issueTitleRaw.substring(0, issueTitleCutoff) + '...'
             : issueTitleRaw
 
-    // const datadogSessionUrl = `https://app.datadoghq.com/rum/sessions?query=@type:action%20@application.id:c6afdc65-2431-48ff-b8f2-c4879fc75293%20@action.name:user-feedback-custom-error%20@context.id:${params.id}&cols=&saved-view-id=2282427`
-
     const logInfo = logFilename && logUrl ? `Logs: [${logFilename}](${logUrl})` : ''
     const issueDescription = [
         `**Name**: ${name}`,
         `**Email**: ${email}`,
-        // `**Datadog Session**: ${datadogSessionUrl}`,
         '### User Feedback:',
         comments,
         '### Logs:',

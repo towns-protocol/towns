@@ -54,7 +54,11 @@ async function uploadFileToLinear({
     })
     // failed to get the upload url
     if (!success) {
-        console.error('Failed to get upload url:', { filename, httpStatusCode, error })
+        console.error('[uploadFileToLinear] Failed to get upload url:', {
+            filename,
+            httpStatusCode,
+            error,
+        })
         return {
             filename,
             logUrl: undefined,
