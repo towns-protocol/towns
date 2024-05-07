@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import React from 'react'
 import { useNavigate } from 'react-router'
 import { useEvent } from 'react-use-event-hook'
 import {
@@ -16,7 +16,6 @@ import { Box, Icon, IconName, Paragraph, Stack } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
 import { InteractiveSpaceIcon } from '@components/SpaceIcon'
 import { CopySpaceLink } from '@components/CopySpaceLink/CopySpaceLink'
-import { FadeIn } from '@components/Transitions'
 import { OpenInEtherscan } from '@components/Tooltips/OpenInEtherscan'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { baseScanUrl } from '@components/Web3/utils'
@@ -72,14 +71,6 @@ export const SpaceSideBarHeader = (props: {
     const size = useSizeContext()
     const isSmall = size.lessThan(200)
 
-    const [isHeaderHovering, setIsHeaderHovering] = useState(false)
-    const onHeaderOver = useCallback(() => {
-        setIsHeaderHovering(true)
-    }, [])
-    const onHeaderLeave = useCallback(() => {
-        setIsHeaderHovering(false)
-    }, [])
-
     return (
         <>
             <Stack
@@ -89,8 +80,6 @@ export const SpaceSideBarHeader = (props: {
                 pointerEvents={opaqueHeaderBar ? 'auto' : 'none'}
                 className={styles.spaceHeader}
                 justifyContent="spaceBetween"
-                onPointerEnter={onHeaderOver}
-                onPointerLeave={onHeaderLeave}
             >
                 <Box centerContent width="x6" pointerEvents="auto">
                     <Box
@@ -106,15 +95,11 @@ export const SpaceSideBarHeader = (props: {
                 </Box>
                 <Box centerContent width="x6" pointerEvents="auto">
                     <AnimatePresence>
-                        {isHeaderHovering && (
-                            <FadeIn fast>
-                                <CopySpaceLink
-                                    spaceId={space.id}
-                                    background="none"
-                                    color={{ hover: 'default', default: 'gray2' }}
-                                />
-                            </FadeIn>
-                        )}
+                        <CopySpaceLink
+                            spaceId={space.id}
+                            background="none"
+                            color={{ hover: 'default', default: 'gray2' }}
+                        />
                     </AnimatePresence>
                 </Box>
             </Stack>
@@ -126,8 +111,6 @@ export const SpaceSideBarHeader = (props: {
                 width="100%"
                 className={styles.spaceIconContainer}
                 insetBottom="sm" // cheating since sibling is sticky and needs more top space
-                onPointerEnter={onHeaderOver}
-                onPointerLeave={onHeaderLeave}
                 onClick={onTokenClick}
             >
                 {space ? (
