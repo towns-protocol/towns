@@ -1,17 +1,18 @@
-import React, { useMemo } from 'react'
-import { NodeVisualization } from '@components/NodeVisualization/NodeVisualization'
+import React, { useCallback, useMemo, useRef } from 'react'
 import {
     DEFAULT_CONFIG,
-    NodeVisualizationContext,
-} from '@components/NodeVisualization/NodeVisualizationContext'
+    NodeAnimationContext,
+} from '@components/NodeAnimation/NodeAnimationContext'
 import { Panel } from '@components/Panel/Panel'
-import { Box, Paragraph } from '@ui'
+import { Box } from '@ui'
 import { useStore } from 'store/store'
-import { atoms } from 'ui/styles/atoms.css'
+
+import { NodeAnimationLoader } from '@components/NodeAnimation/NodeAnimationLoader'
+
 import { ConnectionStatusBanner } from './ConnectionStatusBanner'
+import { NodeStatusPill } from './NodeStatusPill'
 import { useConnectionStatus } from './hooks/useConnectionStatus'
-import { NodeData, useNodeData } from './hooks/useNodeData'
-import { SVGDot } from './SVGDot'
+import { useNodeData } from './hooks/useNodeData'
 
 export const NodeStatusPanel = () => {
     const darkMode = useStore((state) => state.getTheme() === 'dark')
@@ -23,74 +24,51 @@ export const NodeStatusPanel = () => {
 
     const nodes = useNodeData(nodeUrl)
 
-    return (
-        <Panel label="Node Connection" style={{ userSelect: 'none' }}>
-            <Box centerContent>
-                <NodeVisualizationContext.Provider value={config}>
-                    {nodes?.length ? <NodeVisualization /> : <></>}
-                </NodeVisualizationContext.Provider>
-            </Box>
+    const ref = useRef<HTMLDivElement>(null)
 
-            {nodes?.length ? (
-                <Box gap>
-                    {nodes.map((n) => {
-                        return (
-                            <NodeStatusRow
-                                nodeData={n}
-                                key={n.id}
-                                contentBefore={
-                                    n.nodeUrl === nodeUrl ? (
-                                        <ConnectionStatusBanner status={connectionStatus} />
-                                    ) : undefined
-                                }
-                            />
-                        )
-                    })}
-                </Box>
-            ) : (
-                <Box>No nodes found</Box>
-            )}
-        </Panel>
-    )
-}
+    const onScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+        const scrollTop = e.currentTarget.scrollTop
+        ref.current?.style.setProperty('--scroll-top', `${Math.max(0, scrollTop - 50) / 250}`)
+    }, [])
 
-const NodeStatusRow = ({
-    nodeData,
-    contentBefore,
-}: {
-    nodeData: NodeData
-    contentBefore?: JSX.Element
-}) => {
     return (
-        <Box padding gap background="level2" rounded="sm">
-            {contentBefore}
-            <Box gap="sm">
+        <Panel label="Node Connection" style={{ userSelect: 'none' }} onScroll={onScroll}>
+            <Box centerContent ref={ref}>
+                <Box width="300" height="300" />
                 <Box
-                    horizontal
-                    alignItems="center"
-                    style={{ color: `#${nodeData.color.getHexString()}` }}
+                    position="absolute"
+                    style={{
+                        opacity: `calc(1 - var(--scroll-top) * 1)`,
+                        transform: `translateY(
+                            calc(var(--scroll-top) * -32px)
+                        )`,
+                    }}
                 >
-                    <Box minWidth="x2">
-                        <SVGDot />
-                    </Box>
-                    <Paragraph truncate>{nodeData.nodeUrl}</Paragraph>
-                    <Box grow alignItems="end">
-                        <Box
-                            fontSize="sm"
-                            rounded="sm"
-                            padding="xs"
-                            background={nodeData.status === 2 ? 'positiveSubtle' : 'negativeSubtle'}
-                        >
-                            {nodeData.statusText}
-                        </Box>
-                    </Box>
+                    <NodeAnimationContext.Provider value={config}>
+                        <NodeAnimationLoader />
+                    </NodeAnimationContext.Provider>
                 </Box>
-
-                <Paragraph>
-                    <span className={atoms({ color: 'gray2' })}>Health: </span>
-                    {nodeData.data.grpc.elapsed} gRPC &bull; {nodeData.data.http20.elapsed} HTTP/2
-                </Paragraph>
             </Box>
-        </Box>
+            <Box gap position="relative">
+                {nodes?.length ? (
+                    nodes.map((n) => (
+                        <NodeStatusPill
+                            nodeData={n}
+                            key={n.id}
+                            contentBefore={
+                                n.nodeUrl === nodeUrl ? (
+                                    <Box>
+                                        <ConnectionStatusBanner status={connectionStatus} />
+                                    </Box>
+                                ) : undefined
+                            }
+                            boxShadow={n.nodeUrl === nodeUrl ? 'panel' : undefined}
+                        />
+                    ))
+                ) : (
+                    <></>
+                )}
+            </Box>
+        </Panel>
     )
 }

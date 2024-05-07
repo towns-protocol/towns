@@ -71,7 +71,7 @@ export const GradientRing = (props: Props) => {
             nodes.map((node, index, arr) => {
                 return (
                     prev[index] ?? {
-                        index,
+                        index: node.index,
                         speed: Math.random() * 0.01 + 0.002,
                         interpolatedSpeed: 0,
                         position: (1 / arr.length) * index,
@@ -83,10 +83,12 @@ export const GradientRing = (props: Props) => {
         )
     }, [nodes])
 
-    positions.node = connectedNode ? nodePositions[connectedNode.index]?.el ?? undefined : undefined
+    const connectedNodeIndex = nodes.findIndex((n) => n.index === connectedNode?.index)
+    positions.node = connectedNode ? nodePositions[connectedNodeIndex]?.el ?? undefined : undefined
 
     const prevDelta = useRef(0)
     const prevDate = useRef(Date.now())
+
     const updateAnimation = useCallback(() => {
         const dn = Date.now()
         prevDelta.current += dn - prevDate.current
@@ -159,8 +161,8 @@ export const GradientRing = (props: Props) => {
         updateAnimation()
         if (ref.current) {
             ref.current.rotation.z -= d * 0.033
-            ref.current.rotation.x = Math.cos(0.00015 * Date.now() * Math.PI) * 0.15
-            ref.current.rotation.y = Math.sin(0.00015 * Date.now() * Math.PI) * 0.15
+            ref.current.rotation.x = Math.cos(0.00015 * Date.now() * Math.PI) * 0.075
+            ref.current.rotation.y = Math.sin(0.00015 * Date.now() * Math.PI) * 0.075
         }
     })
 

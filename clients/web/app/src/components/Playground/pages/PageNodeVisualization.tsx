@@ -1,10 +1,10 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { Box, Checkbox } from '@ui'
-import { NodeVisualization } from '@components/NodeVisualization/NodeVisualization'
 import {
     DEFAULT_CONFIG,
-    NodeVisualizationContext,
-} from '@components/NodeVisualization/NodeVisualizationContext'
+    NodeAnimationContext,
+} from '@components/NodeAnimation/NodeAnimationContext'
+import { NodeAnimationLoader } from '@components/NodeAnimation/NodeAnimationLoader'
 
 export const PageNodeVisualization = () => {
     const [options, setOptions] = useState(() => ({ spinning: true, animateNodes: true }))
@@ -23,9 +23,9 @@ export const PageNodeVisualization = () => {
     return (
         <Box centerContent absoluteFill gap>
             <Box rounded="md" width="300" background="level2">
-                <NodeVisualizationContext.Provider value={config}>
-                    <NodeVisualization />
-                </NodeVisualizationContext.Provider>
+                <NodeAnimationContext.Provider value={config}>
+                    <NodeAnimationLoader />
+                </NodeAnimationContext.Provider>
             </Box>
             <Box width="300">
                 <Checkbox

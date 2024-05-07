@@ -6,7 +6,7 @@ import { Line2 } from 'three-stdlib'
 import { notUndefined } from 'ui/utils/utils'
 import { slerp } from './utils/globeUtils'
 
-export const ConnectionArc = (props: {
+export const DashedArc = (props: {
     positions?: { [key: string]: Object3D | undefined }
     color: ColorRepresentation
 }) => {
@@ -28,6 +28,7 @@ export const ConnectionArc = (props: {
 
     const o1 = positions?.node
     const o2 = positions?.dot
+
     const lines = [lineOpaqueRef.current, lineTransparentRef.current].filter(notUndefined)
 
     useFrame(() => {

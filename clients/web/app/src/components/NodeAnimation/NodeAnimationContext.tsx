@@ -9,4 +9,4 @@ export const DEFAULT_CONFIG = {
     radius: 110,
 } as const
 
-export const NodeVisualizationContext = createContext(DEFAULT_CONFIG)
+export const NodeAnimationContext = createContext(DEFAULT_CONFIG)

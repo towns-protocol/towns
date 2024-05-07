@@ -3,13 +3,15 @@ import React, { forwardRef, useEffect, useRef } from 'react'
 import { Box, Paragraph } from '@ui'
 import { FadeInBox } from '@components/Transitions'
 import { NodeData } from '@components/NodeConnectionStatusPanel/hooks/useNodeData'
+import { atoms } from 'ui/styles/atoms.css'
+import { formatUptime } from 'utils/formatDates'
 
 type Props = {
     hoveredNode: NodeData | null
     containerRef: React.RefObject<HTMLElement>
 }
 
-export const NodeAnimationTooltips = (props: Props) => {
+export const NodeTooltips = (props: Props) => {
     const { hoveredNode, containerRef } = props
     const tooltipPositionRef = useRef<HTMLDivElement>(null)
     const tooltipRef = useRef<HTMLDivElement>(null)
@@ -44,14 +46,14 @@ export const NodeAnimationTooltips = (props: Props) => {
         <AnimatePresence>
             {hoveredNode && (
                 <FadeInBox fast position="topLeft" ref={tooltipPositionRef} pointerEvents="none">
-                    <NodeTooltip node={hoveredNode} ref={tooltipRef} />
+                    <NodeTooltip nodeData={hoveredNode} ref={tooltipRef} />
                 </FadeInBox>
             )}
         </AnimatePresence>
     )
 }
 
-const NodeTooltip = forwardRef<HTMLDivElement, { node: NodeData }>(({ node }, ref) => {
+const NodeTooltip = forwardRef<HTMLDivElement, { nodeData: NodeData }>(({ nodeData }, ref) => {
     return (
         <Box
             padding="sm"
@@ -63,11 +65,19 @@ const NodeTooltip = forwardRef<HTMLDivElement, { node: NodeData }>(({ node }, re
             ref={ref}
         >
             <Paragraph
-                size="sm"
+                size="xs"
                 whiteSpace="nowrap"
-                style={{ color: `#${node.color.getHexString()}` }}
+                style={{ color: `#${nodeData.color.getHexString()}` }}
             >
-                {node.id}
+                {nodeData.id}
+            </Paragraph>
+            <Paragraph truncate size="xs">
+                <span className={atoms({ color: 'gray1' })}>Health</span>{' '}
+                {nodeData.data.grpc.elapsed} gRPC &bull; {nodeData.data.http20.elapsed} HTTP/2
+            </Paragraph>
+            <Paragraph truncate size="xs">
+                <span className={atoms({ color: 'gray1' })}>Uptime</span>{' '}
+                {formatUptime(new Date(nodeData.data.grpc.start_time))}
             </Paragraph>
         </Box>
     )

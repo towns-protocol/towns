@@ -4,26 +4,26 @@ import { Canvas, useFrame } from '@react-three/fiber'
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useDrag } from 'react-use-gesture'
 import { Color, Euler, Object3D } from 'three'
+import seedrandom from 'seedrandom'
 import { NodeData, useNodeData } from '../../NodeConnectionStatusPanel/hooks/useNodeData'
-import { NodeVisualizationContext } from '../NodeVisualizationContext'
+import { NodeAnimationContext } from '../NodeAnimationContext'
 import { GradientRing } from './GradientRing'
 import { HomeDot } from './HomeDot'
-import { ConnectionArc } from './ConnectionArc'
+import { DashedArc } from './DashedArc'
 import { useGlobeTexture } from './hooks/useGlobeTexture'
 import { createNoise } from './utils/quickNoise'
-import { NodeAnimationTooltips } from '../NodeAnimationTooltips'
+import { NodeTooltips } from '../NodeTooltips'
 
-export const NodeStatusAnimation = (props: {
-    noise: ReturnType<typeof createNoise>
-    mapSize: [number, number]
-    width?: number
-    height?: number
-}) => {
-    const { noise, mapSize } = props
+export const NodeAnimationScene = () => {
+    const [{ noise, mapSize }] = useState(() => ({
+        noise: createNoise(seedrandom('towns2')),
+        mapSize: [200, 100] as [number, number],
+    }))
 
     const containerRef = useRef<HTMLCanvasElement>(null)
 
     const [hoveredNode, setHoveredNode] = useState<NodeData | null>(null)
+
     const onNodeHover = useCallback((node: NodeData | null) => {
         setHoveredNode(node)
     }, [])
@@ -46,7 +46,8 @@ export const NodeStatusAnimation = (props: {
                     onHover={onHover}
                 />
             </Canvas>
-            <NodeAnimationTooltips hoveredNode={hoveredNode} containerRef={containerRef} />
+
+            <NodeTooltips hoveredNode={hoveredNode} containerRef={containerRef} />
         </>
     )
 }
@@ -57,10 +58,10 @@ const GlobeScene = (props: {
     onNodeHover: (node: NodeData | null) => void
     onHover: (hovered: boolean) => void
 }) => {
-    const { nodeUrl } = useContext(NodeVisualizationContext)
+    const { nodeUrl } = useContext(NodeAnimationContext)
     const { mapSize, noise } = props
     const { canvas, homePoint, relevantPoints } = useGlobeTexture(noise, mapSize)
-    const { darkMode } = useContext(NodeVisualizationContext)
+    const { darkMode } = useContext(NodeAnimationContext)
 
     const globeRef = useRef<Object3D>(null)
     const nodeConnections = useNodeData(nodeUrl)
@@ -74,8 +75,10 @@ const GlobeScene = (props: {
     }, [nodeConnections])
 
     const connectedNode = useMemo(() => {
-        return nodes.find((n) => n.id === nodeUrl)
+        return nodes.find((n) => n.nodeUrl === nodeUrl)
     }, [nodeUrl, nodes])
+
+    // debugger
 
     const size = {
         width: 300,
@@ -96,7 +99,7 @@ const GlobeScene = (props: {
         config: { mass: 1, tension: 200, friction: 40 },
     }))
 
-    const bind = useDrag(({ delta: [dx, dy], offset, active }) => {
+    const bindDrag = useDrag(({ delta: [dx, dy], offset, active }) => {
         if (active) {
             cameraRotation.x = Math.min(
                 0.5,
@@ -126,7 +129,7 @@ const GlobeScene = (props: {
                 ? { mass: 1, tension: 200, friction: 20 }
                 : { mass: 1, tension: 40, friction: 20 },
         })
-    })
+    }, {})
 
     useFrame((state) => {
         state.camera.lookAt(0, 0, 0)
@@ -161,14 +164,15 @@ const GlobeScene = (props: {
             >
                 <PerspectiveCamera makeDefault />
             </animated.group>
-            <ambientLight intensity={darkMode ? 1 : 2} />
-            {!darkMode && (
-                <directionalLight
-                    intensity={5}
-                    position={[-10, 0, 5]}
-                    rotation={[-Math.PI, 0, 0]}
-                />
-            )}
+
+            <ambientLight intensity={darkMode ? 0.45 : 2} />
+
+            <directionalLight
+                intensity={darkMode ? 2 : 2}
+                position={[-10, 0, 5]}
+                rotation={[-Math.PI, 0, 0]}
+            />
+
             <GradientRing
                 animating
                 nodes={nodes}
@@ -180,7 +184,7 @@ const GlobeScene = (props: {
             {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
             {/* @ts-ignore */}
             <animated.object3D
-                {...bind()}
+                {...bindDrag()}
                 rotation-y={worldSpring.rotationY}
                 rotation-x={worldSpring.rotationX}
             >
@@ -210,7 +214,7 @@ const GlobeScene = (props: {
                     </mesh>
                 </object3D>
             </animated.object3D>
-            <ConnectionArc positions={positions} color={connectedNode?.color ?? 0xffffff} />
+            <DashedArc positions={positions} color={connectedNode?.color ?? 0xffffff} />
         </>
     )
 }

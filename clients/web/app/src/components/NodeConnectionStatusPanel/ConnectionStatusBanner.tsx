@@ -9,7 +9,7 @@ export const ConnectionStatusBanner = ({ status }: Props) => {
     return status === 'synced' ? (
         <Banner>
             <Icon type="check" color="positive" size="square_xs" />
-            <Text truncate>You are connected and message streams are synced.</Text>
+            <Text truncate>Connected to node and message streams synced.</Text>
         </Banner>
     ) : status === 'syncing' ? (
         <Banner>

@@ -1,15 +1,15 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { NodeVisualizationContext } from '@components/NodeVisualization/NodeVisualizationContext'
+import { NodeAnimationContext } from '@components/NodeAnimation/NodeAnimationContext'
 import { createNoise } from '../utils/quickNoise'
 import { randxy, smoothstep } from '../utils/globeUtils'
 
-const textureSize = [2000 * 1, 1000 * 1] as [number, number]
+const textureSize = [2000, 1000] as [number, number]
 
 export const useGlobeTexture = (
     noise: ReturnType<typeof createNoise>,
     mapSize: [number, number],
 ) => {
-    const { darkMode } = useContext(NodeVisualizationContext)
+    const { darkMode } = useContext(NodeAnimationContext)
     const [{ canvas, ctx }] = useState(() => {
         const canvas =
             (document.getElementById('canvas') as HTMLCanvasElement) ||

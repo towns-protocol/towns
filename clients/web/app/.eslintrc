@@ -104,7 +104,7 @@
   },
   "overrides": [
     {
-      "files": ["src/components/NodeVisualization/**/*.tsx"],
+      "files": ["src/components/NodeAnimation/**/*.tsx"],
       "rules": {
         // three react fiber
         "react/no-unknown-property": ["off", { "ignore": ["JSX"] }]
