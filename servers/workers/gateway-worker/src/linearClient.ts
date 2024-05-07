@@ -22,7 +22,9 @@ export async function createLinearIssue({
     logJson,
 }: CreateLinearIssueInput) {
     // Upload logs
+    /* https://linear.app/hnt-labs/issue/HNT-6258/uploading-logs-to-linear-run-into-the-rate-limiting-error-429-in
     const { filename: logFilename, logUrl } = await uploadFileToLinear({ config, id, logJson })
+    */
 
     // Create issue
     await createIssue({
@@ -31,8 +33,8 @@ export async function createLinearIssue({
         email,
         comments,
         id,
-        logFilename,
-        logUrl,
+        //logFilename,
+        //logUrl,
     })
 }
 
