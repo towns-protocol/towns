@@ -43,14 +43,13 @@ variable "is_transient" {
   default     = false
 }
 
-# TODO: reenable post-migration
-# variable "river_node_url" {
-#   description = "The url of the river node"
-#   type        = string
-# }
-
 variable "vapid_key_secret_arn" {
   description = "The arn of the vapid key secret"
+  type        = string
+}
+
+variable "apns_auth_key_secret_arn" {
+  description = "The arn of the apns auth key secret"
   type        = string
 }
 

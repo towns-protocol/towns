@@ -106,13 +106,9 @@ module "pgadmin" {
   alb_https_listener_arn = module.river_alb.lb_https_listener_arn
 }
 
-resource "aws_secretsmanager_secret" "notification_vapid_key" {
-  name        = "notification-vapid-keypair-${terraform.workspace}"
-  description = "Key-pair for notification service"
-}
-
 locals {
-  num_nodes = 11
+  num_nodes           = 11
+  global_remote_state = module.global_constants.global_remote_state.outputs
 }
 
 module "system_parameters" {
@@ -169,7 +165,8 @@ module "notification_service" {
   subnets = module.vpc.private_subnets
   vpc_id  = module.vpc.vpc_id
 
-  vapid_key_secret_arn = aws_secretsmanager_secret.notification_vapid_key.arn
+  vapid_key_secret_arn     = local.global_remote_state.notification_vapid_key_secret.arn
+  apns_auth_key_secret_arn = local.global_remote_state.notification_apns_auth_key_secret.arn
 
   # TODO: check with brian & team to see who runs this account
   vapid_subject = "mailto:support@towns.com"

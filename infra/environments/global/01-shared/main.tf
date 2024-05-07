@@ -262,3 +262,13 @@ resource "aws_secretsmanager_secret" "stress_test_wallet_private_key" {
 resource "aws_secretsmanager_secret" "node_operator_wallet_private_key" {
   name = "node-operator-wallet-private-key-${terraform.workspace}"
 }
+
+resource "aws_secretsmanager_secret" "notification_vapid_key" {
+  name        = "notifications-vapid-keypair-${terraform.workspace}"
+  description = "Key-pair for notification service"
+}
+
+resource "aws_secretsmanager_secret" "notification_apns_auth_key" {
+  name        = "notifications-apns-auth-key-${terraform.workspace}"
+  description = "APNS auth key for notification service"
+}

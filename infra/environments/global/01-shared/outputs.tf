@@ -81,3 +81,11 @@ output "stress_test_wallet_private_key_secret" {
 output "node_operator_wallet_private_key" {
   value = aws_secretsmanager_secret.node_operator_wallet_private_key
 }
+
+output "notification_vapid_key_secret" {
+  value = aws_secretsmanager_secret.notification_vapid_key
+}
+
+output "notification_apns_auth_key_secret" {
+  value = aws_secretsmanager_secret.notification_apns_auth_key
+}

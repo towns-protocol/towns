@@ -131,6 +131,7 @@ resource "aws_iam_role_policy" "iam_policy" {
         "Effect": "Allow",
         "Resource": [
           "${var.vapid_key_secret_arn}",
+          "${var.apns_auth_key_secret_arn}",
           "${local.global_remote_state.river_global_push_notification_auth_token.arn}",
           "${local.global_remote_state.notification_service_db_password_secret.arn}"
         ]
@@ -228,6 +229,10 @@ resource "aws_ecs_task_definition" "fargate_task_definition" {
       {
         name      = "VAPID_PRIVATE_KEY",
         valueFrom = "${var.vapid_key_secret_arn}:privateKey::"
+      },
+      {
+        name      = "APNS_AUTH_KEY",
+        valueFrom = var.apns_auth_key_secret_arn
       }
     ]
 
@@ -255,6 +260,18 @@ resource "aws_ecs_task_definition" "fargate_task_definition" {
       {
         name  = "RIVER_NODE_URL",
         value = var.river_node_url
+      },
+      {
+        name  = "APNS_KEY_ID",
+        value = "M4QUBD2Q36"
+      },
+      {
+        name  = "APNS_TEAM_ID",
+        value = "KG4HQQ5Y2X"
+      },
+      {
+        name  = "APNS_TOWNS_APP_IDENTIFIER",
+        value = "com.towns.internal"
       }
     ]
 
