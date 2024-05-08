@@ -1,9 +1,14 @@
 import Dexie, { Table } from 'dexie'
 
-export interface CurrentUserRecord {
-    keyPath: string
+export interface CurrentUser {
     userId: string
     databaseName: string
+    lastUrl?: string
+    lastUrlTimestamp?: DOMHighResTimeStamp
+}
+
+export interface CurrentUserRecord extends CurrentUser {
+    keyPath: string
 }
 
 export class NotificationCurrentUser extends Dexie {
@@ -15,7 +20,7 @@ export class NotificationCurrentUser extends Dexie {
         const storeName = 'notification-current-user'
         super(storeName)
         this.storeName = storeName
-        this.version(2).stores({
+        this.version(3).stores({
             currentUser: 'keyPath',
         })
     }
@@ -32,7 +37,15 @@ export class NotificationCurrentUser extends Dexie {
         })
     }
 
+    public async setLastUrl(url: string): Promise<void> {
+        const lastUrlTimestamp = performance.now()
+        await this.currentUser.update(NotificationCurrentUser.keyPath, {
+            lastUrl: url,
+            lastUrlTimestamp,
+        })
+    }
+
     public async deleteCurrentUser(): Promise<void> {
-        await this.currentUser.delete(NotificationCurrentUser.keyPath)
+        return this.currentUser.delete(NotificationCurrentUser.keyPath)
     }
 }

@@ -9,6 +9,7 @@ import { useSetDocTitle } from 'hooks/useDocTitle'
 import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
 import { APP_NAME } from 'data/constants'
 import { useDevice } from 'hooks/useDevice'
+import { PathInfo, useHnt5685 } from 'hooks/useHnt5685'
 
 export interface RouteParams {
     spaceId?: string
@@ -39,8 +40,8 @@ const SpaceContext = () => {
     const setTownRouteBookmark = useStore((s) => s.setTownRouteBookmark)
 
     const setTitle = useSetDocTitle()
-
-    const path = useSpaceRouteMatcher(space)
+    const touchInitialLink = useHnt5685()
+    const path = useSpaceRouteMatcher(space, touchInitialLink)
     const spaceName = space?.name || chainSpace?.name
 
     useEffect(() => {
@@ -113,15 +114,22 @@ export interface RouteInfo {
     channel?: Channel
 }
 
-const useSpaceRouteMatcher = (space: SpaceData | undefined): RouteInfo | undefined => {
+const useSpaceRouteMatcher = (
+    space: SpaceData | undefined,
+    touchInitialLink?: PathInfo,
+): RouteInfo | undefined => {
     const location = useLocation()
     const { isTouch } = useDevice()
 
-    return useMemo(() => {
-        const pathInfo = {
+    const pathInfo = useMemo(() => {
+        const { pathname, search } = touchInitialLink ?? {
             pathname: location.pathname,
             search: location.search,
         }
+        return { pathname, search }
+    }, [location.pathname, location.search, touchInitialLink])
+
+    return useMemo(() => {
         const channelPath = matchPath(
             `${SPACES}/:spaceSlug/${CHANNELS}/:channelId`,
             pathInfo.pathname,
@@ -184,7 +192,7 @@ const useSpaceRouteMatcher = (space: SpaceData | undefined): RouteInfo | undefin
                     : ({ type: 'notfound', ...pathInfo } as const)
             }
         }
-    }, [isTouch, location.pathname, location.search, space])
+    }, [isTouch, pathInfo, space])
 }
 
 export function getRouteParams(path?: string): RouteParams {
@@ -222,25 +230,10 @@ export function getRouteParams(path?: string): RouteParams {
     }
     if (matchWithSpace?.params.channelId) {
         channelId = matchWithSpace.params.channelId
-        console.warn('[SpaeContextRoute][hnt-5685]', 'route', {
-            spaceId: spaceId ?? '',
-            channelId,
-            matchPath: 'matchWithSpace',
-        })
     } else if (matchWithMessages?.params.channelId) {
         channelId = matchWithMessages.params.channelId
-        console.log('[SpaeContextRoute][hnt-5685]', 'route', {
-            spaceId: spaceId ?? '',
-            channelId,
-            matchPath: 'matchWithMessages',
-        })
     } else if (matchWithSpaceMessages?.params.channelId) {
         channelId = matchWithSpaceMessages.params.channelId
-        console.log('[SpaeContextRoute][hnt-5685]', 'route', {
-            spaceId: spaceId ?? '',
-            channelId,
-            matchPath: 'matchWithSpaceMessages',
-        })
     }
     return { spaceId, channelId }
 }

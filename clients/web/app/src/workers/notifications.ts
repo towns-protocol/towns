@@ -23,7 +23,7 @@ import {
 } from './notificationParsers'
 import { checkClientIsVisible, getShortenedName, stringHasValue } from './utils'
 
-import { NotificationCurrentUser } from '../store/notificationCurrentUser'
+import { CurrentUser, NotificationCurrentUser } from '../store/notificationCurrentUser'
 import { NotificationStore } from '../store/notificationStore'
 import { env } from '../utils/environment'
 import { getEncryptedData, htmlToText } from './data_transforms'
@@ -36,17 +36,33 @@ const logError = dlogError('sw:push')
 const notificationStores: Record<string, NotificationStore> = {}
 let currentUserStore: NotificationCurrentUser | undefined = undefined
 
+async function getCurrentUserStore(): Promise<NotificationCurrentUser> {
+    if (!currentUserStore) {
+        currentUserStore = new NotificationCurrentUser()
+    }
+    return currentUserStore
+}
+
+async function getCurrentUser(): Promise<CurrentUser> {
+    const currentUserStore = await getCurrentUserStore()
+    const currentUser = await currentUserStore.getCurrentUserRecord()
+    return (
+        currentUser ?? {
+            userId: '',
+            databaseName: '',
+            lastUrl: undefined,
+            lastUrlTimestamp: undefined,
+        }
+    )
+}
+
 // initialize the current user's notification store
 // which allows us to map the ids in the notification to the names
 async function initCurrentUserNotificationStore(): Promise<
     { userId: string; databaseName: string } | undefined
 > {
-    if (!currentUserStore) {
-        currentUserStore = new NotificationCurrentUser()
-    }
     // if the notificationStore is not initialized, initialize it
-    const currentUser = await currentUserStore.getCurrentUserRecord()
-    const { userId, databaseName } = currentUser || { userId: undefined, databaseName: undefined }
+    const { userId, databaseName } = await getCurrentUser()
     log('currentUser', {
         userId: userId ? userId : 'undefined',
         databaseName: databaseName ? databaseName : 'undefined',
@@ -166,6 +182,7 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                     windowClient.url.includes(worker.location.origin),
                 )
 
+                const currentUserStore = await getCurrentUserStore()
                 let path = pathFromAppNotification(data)
                 if (hadWindowToFocus) {
                     // update the path with specific search params
@@ -179,6 +196,8 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                         path,
                         hadWindowToFocus: true,
                     })
+                    // work around for hnt-5685
+                    await currentUserStore.setLastUrl(path)
                     await hadWindowToFocus.focus()
                     const navigationChannel = new BroadcastChannel(WEB_PUSH_NAVIGATION_CHANNEL)
                     // avoid reloading the page
@@ -195,6 +214,8 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                         path,
                         hadWindowToFocus: false,
                     })
+                    // work around for hnt-5685
+                    await currentUserStore.setLastUrl(path)
                     const window = await worker.clients.openWindow(path)
                     await window?.focus()
                 }

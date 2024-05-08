@@ -1,6 +1,5 @@
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
-import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router'
+import React, { useEffect, useMemo, useRef } from 'react'
 import { LOCALHOST_CHAIN_ID, TownsContextProvider, ZTEvent } from 'use-towns-client'
 import { Helmet } from 'react-helmet'
 import { isDefined } from '@river/sdk'
@@ -20,7 +19,6 @@ import { ServiceWorkerMetadataSyncer } from 'workers/ServiceWorkerMetadataSyncer
 import DebugBar from '@components/DebugBar/DebugBar'
 import { BlockchainTxNotifier } from '@components/Web3/BlockchainTxNotifier'
 import { SyncNotificationSettings } from '@components/SyncNotificationSettings/SyncNotificationSettings'
-import { useCreateLink } from 'hooks/useCreateLink'
 import { MonitorJoinFlow } from 'routes/PublicTownPage/MontiorJoinFlow'
 import { getRouteParams } from 'routes/SpaceContextRoute'
 
@@ -34,38 +32,25 @@ export const App = () => {
         theme: state.getTheme(),
         mutedChannelIds: state.mutedChannelIds,
     }))
-    const { createLink } = useCreateLink()
     const { isTouch } = useDevice()
-    const navigate = useNavigate()
 
     const highPriorityStreamIds = useRef<string[]>([])
-    const [touchInitialLink, setTouchInitialLink] = useState<string | undefined>(undefined)
 
     const state = useStore.getState()
     const spaceIdBookmark = state.spaceIdBookmark
     const channelBookmark = isDefined(spaceIdBookmark)
         ? state.townRouteBookmarks[spaceIdBookmark]
         : undefined
-
     const didSetHighpriorityStreamIds = useRef<boolean>(false)
-    if (!didSetHighpriorityStreamIds.current) {
-        didSetHighpriorityStreamIds.current = true
-        const { spaceId, channelId } = getRouteParams(channelBookmark)
-        highPriorityStreamIds.current = [channelId, spaceId].filter(isDefined)
+    const { spaceId, channelId } = useMemo(() => getRouteParams(channelBookmark), [channelBookmark])
 
-        if (channelId && window.location.pathname === '/') {
-            const link = createLink({
-                initial: 'initial',
-                spaceId: spaceId,
-                channelId: channelId,
-            })
-            console.warn('[App][hnt-5685] setTouchInitialLink', 'route', {
-                link,
-                deviceType: isTouch ? 'mobile' : 'desktop',
-            })
-            setTouchInitialLink(link)
+    useEffect(() => {
+        if (didSetHighpriorityStreamIds.current) {
+            return
         }
-    }
+        didSetHighpriorityStreamIds.current = true
+        highPriorityStreamIds.current = [channelId, spaceId].filter(isDefined)
+    }, [channelId, spaceId])
 
     useEffect(() => {
         // DataDog is configured to only log warnings and errors. This is a warning
@@ -73,23 +58,14 @@ export const App = () => {
         // after verification.
         // Reminder to remove: https://linear.app/hnt-labs/issue/HNT-6068/remove-consolewarn-from-the-harmony-app-after-verifying-hnt-5685-is
         console.warn('[App][hnt-5685]', 'route', {
+            deviceType: isTouch ? 'mobile' : 'desktop',
             spaceIdBookmark,
             channelBookmark,
             locationPathname: location.pathname,
             search: location.search,
             highPriorityStreamIds: highPriorityStreamIds.current,
-            deviceType: isTouch ? 'mobile' : 'desktop',
         })
-    }, [channelBookmark, isTouch, spaceIdBookmark])
-
-    useEffect(() => {
-        if (!isTouch || !touchInitialLink) {
-            return
-        }
-        console.log('[hnt-5685] Navigating to initial touch link', touchInitialLink)
-        navigate(touchInitialLink)
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [touchInitialLink, isTouch])
+    }, [channelBookmark, channelId, isTouch, spaceId, spaceIdBookmark])
 
     useWindowListener()
 
