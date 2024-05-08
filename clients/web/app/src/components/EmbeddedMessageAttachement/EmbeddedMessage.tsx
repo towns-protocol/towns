@@ -66,6 +66,7 @@ export const EmbeddedMessage = (props: {
     const messageLink = useMessageLink(
         `${window.location.origin}${messageLinkRoot}#${attachment.info.messageId}`,
     )
+
     const channelName =
         isKnownChannel && !!channel?.name ? `#${channel?.name}` : `From a ${channelType}`
 

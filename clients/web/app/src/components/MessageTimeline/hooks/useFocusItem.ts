@@ -119,8 +119,13 @@ export const useMessageLink = (href: string | undefined): MessageLink => {
         if (!href) {
             return { type: undefined, link: undefined }
         }
+        let url = null
 
-        const url = new URL(href)
+        try {
+            url = new URL(href)
+        } catch (_error) {
+            return { type: undefined, link: undefined }
+        }
 
         if (url.hostname !== window.location.hostname) {
             return { type: 'external', link: href }
