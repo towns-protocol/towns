@@ -15,14 +15,11 @@ export const useAppNotifications = () => {
         broadcastChannel.onmessage = (event) => {
             const deviceType = isTouch ? 'mobile' : 'desktop'
             const path = event.data.path
-            log(
-                '[useAppNotifications][push_hnt-5685] received navigation event on broadcast channel',
-                {
-                    deviceType,
-                    url: path,
-                    refEventId: event.data.refEventId ? event.data.refEventId : 'undefined',
-                },
-            )
+            log('[useAppNotifications][hnt-5685] received navigation event on broadcast channel', {
+                deviceType,
+                url: path,
+                refEventId: event.data.refEventId ? event.data.refEventId : 'undefined',
+            })
             navigate(path)
         }
 

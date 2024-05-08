@@ -7,6 +7,7 @@ import { ZLayerProvider } from '@ui'
 import { useRootTheme } from 'hooks/useRootTheme'
 import { WelcomeLayout } from 'routes/layouts/WelcomeLayout'
 import { usePeriodicUpdates } from 'hooks/usePeriodicUpdates'
+import { useDevice } from 'hooks/useDevice'
 
 const App = React.lazy(() => import('App'))
 
@@ -22,6 +23,15 @@ const DebugRouter = ({ children }: { children: JSX.Element }) => {
     return children
 }
 export const Main = () => {
+    const location = useLocation()
+    const { isTouch } = useDevice()
+
+    console.warn('[Main][hnt-5685]', 'route', {
+        pathname: location.pathname,
+        search: location.search,
+        deviceType: isTouch ? 'mobile' : 'desktop',
+    })
+
     useRootTheme({
         ammendHTMLBody: true,
         useDefaultOSTheme: true,

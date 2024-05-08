@@ -59,6 +59,10 @@ export const App = () => {
                 spaceId: spaceId,
                 channelId: channelId,
             })
+            console.warn('[App][hnt-5685] setTouchInitialLink', 'route', {
+                link,
+                deviceType: isTouch ? 'mobile' : 'desktop',
+            })
             setTouchInitialLink(link)
         }
     }
@@ -68,19 +72,21 @@ export const App = () => {
         // to track and verify that the routing code works after the fix. Will be removed
         // after verification.
         // Reminder to remove: https://linear.app/hnt-labs/issue/HNT-6068/remove-consolewarn-from-the-harmony-app-after-verifying-hnt-5685-is
-        console.warn('[App][push_hnt-5685]', 'route', {
+        console.warn('[App][hnt-5685]', 'route', {
             spaceIdBookmark,
             channelBookmark,
             locationPathname: location.pathname,
             search: location.search,
             highPriorityStreamIds: highPriorityStreamIds.current,
+            deviceType: isTouch ? 'mobile' : 'desktop',
         })
-    }, [channelBookmark, spaceIdBookmark])
+    }, [channelBookmark, isTouch, spaceIdBookmark])
 
     useEffect(() => {
         if (!isTouch || !touchInitialLink) {
             return
         }
+        console.log('[hnt-5685] Navigating to initial touch link', touchInitialLink)
         navigate(touchInitialLink)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [touchInitialLink, isTouch])

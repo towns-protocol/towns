@@ -107,7 +107,7 @@ export const TouchHome = () => {
     })
 
     useEffect(() => {
-        console.warn('[TouchHome][push_hnt-5685]', 'route', {
+        console.warn('[TouchHome][hnt-5685]', 'route', {
             spaceId: space?.id ?? '',
             loggedInWalletAddress: loggedInWalletAddress ?? '',
             loginStatus,

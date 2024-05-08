@@ -5,10 +5,12 @@ import { Membership, useConnectivity, useSpaceData, useTownsContext } from 'use-
 import { useSearchParams } from 'react-router-dom'
 import { PATHS } from 'routes'
 import { useStore } from 'store/store'
+import { useDevice } from 'hooks/useDevice'
 import { LINKED_RESOURCE } from '../../data/rel'
 
 export const SpaceHome = () => {
     const space = useSpaceData()
+    const { isTouch } = useDevice()
     const { isAuthenticated, loggedInWalletAddress, loginStatus } = useConnectivity()
     const { signerContext } = useTownsContext()
     const spaceId = space?.id
@@ -31,7 +33,7 @@ export const SpaceHome = () => {
     }, [searchParams])
 
     useEffect(() => {
-        console.warn('[SpaceHome][push_hnt-5685]', 'route', {
+        console.warn('[SpaceHome][hnt-5685]', 'route', {
             bookmarkedRoute,
             rel,
             spaceId: space?.id ?? '',
@@ -41,6 +43,7 @@ export const SpaceHome = () => {
             hasSignerContext: signerContext !== undefined,
             locationPath: location.pathname,
             locationParams: location.search,
+            deviceType: isTouch ? 'mobile' : 'desktop',
         })
     }, [
         bookmarkedRoute,
@@ -50,6 +53,7 @@ export const SpaceHome = () => {
         signerContext,
         space?.id,
         rel,
+        isTouch,
     ])
 
     useEffect(() => {

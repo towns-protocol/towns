@@ -33,6 +33,7 @@ export const SpaceContextRoute = () => {
 const SpaceContext = () => {
     const { casablancaClient } = useTownsContext()
     const { serverSpace: space, chainSpace } = useContractAndServerSpaceData()
+    const { isTouch } = useDevice()
 
     const spaceSlug = space?.id ?? ''
     const setTownRouteBookmark = useStore((s) => s.setTownRouteBookmark)
@@ -45,12 +46,13 @@ const SpaceContext = () => {
     useEffect(() => {
         const locationPathname = path?.pathname ?? ''
         const locationSearch = path?.search ?? ''
-        console.warn('[SpaceContextRoute][push_hnt-5685]', 'route', {
+        console.warn('[SpaceContextRoute][hnt-5685]', 'route', {
             rpcClient: casablancaClient?.rpcClient.url ?? '',
             locationPathname,
             locationSearch,
             path: path ?? '',
             spaceSlug,
+            deviceType: isTouch ? 'mobile' : 'desktop',
         })
         if (
             !path ||
@@ -72,7 +74,7 @@ const SpaceContext = () => {
             // reset bookmark in case the route isn't referenced above
             setTownRouteBookmark(spaceSlug, '')
         }
-    }, [casablancaClient?.rpcClient.url, path, setTownRouteBookmark, spaceSlug])
+    }, [casablancaClient?.rpcClient.url, isTouch, path, setTownRouteBookmark, spaceSlug])
 
     const title = useMemo(() => {
         if (!path) {
@@ -220,21 +222,21 @@ export function getRouteParams(path?: string): RouteParams {
     }
     if (matchWithSpace?.params.channelId) {
         channelId = matchWithSpace.params.channelId
-        console.warn('[SpaeContextRoute][push_hnt-5685]', 'route', {
+        console.warn('[SpaeContextRoute][hnt-5685]', 'route', {
             spaceId: spaceId ?? '',
             channelId,
             matchPath: 'matchWithSpace',
         })
     } else if (matchWithMessages?.params.channelId) {
         channelId = matchWithMessages.params.channelId
-        console.warn('[SpaeContextRoute][push_hnt-5685]', 'route', {
+        console.log('[SpaeContextRoute][hnt-5685]', 'route', {
             spaceId: spaceId ?? '',
             channelId,
             matchPath: 'matchWithMessages',
         })
     } else if (matchWithSpaceMessages?.params.channelId) {
         channelId = matchWithSpaceMessages.params.channelId
-        console.warn('[SpaeContextRoute][push_hnt-5685]', 'route', {
+        console.log('[SpaeContextRoute][hnt-5685]', 'route', {
             spaceId: spaceId ?? '',
             channelId,
             matchPath: 'matchWithSpaceMessages',

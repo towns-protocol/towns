@@ -6,11 +6,13 @@ import { Box, FancyButton } from '@ui'
 import { FadeInBox } from '@components/Transitions'
 import { SECOND_MS } from 'data/constants'
 import { clearAllWorkers } from 'hooks/usePeriodicUpdates'
+import { useDevice } from 'hooks/useDevice'
 
 const log = debug('app:ReloadPrompt')
 log.enabled = true
 
 export const ReloadPrompt = () => {
+    const { isTouch } = useDevice()
     const {
         needRefresh: [needRefresh],
         updateServiceWorker,
@@ -25,7 +27,22 @@ export const ReloadPrompt = () => {
             // and updateServiceWorker() doesn't throw an error if it doesn't work, so we don't want to clear the timeout immediately
             setTimeout(async () => {
                 log('update failed, clearing workers and reloading...')
+                console.warn(
+                    '[ReloadPrompt][hnt-6051]',
+                    'update failed, clearing workers and reloading...',
+                    {
+                        deviceType: isTouch ? 'mobile' : 'desktop',
+                    },
+                )
                 await clearAllWorkers()
+                console.warn(
+                    '[ReloadPrompt][hnt-6051]',
+                    'after clearing workers, window.location.reload',
+                    {
+                        location: window.location.href,
+                        deviceType: isTouch ? 'mobile' : 'desktop',
+                    },
+                )
                 window.location.reload()
             }, SECOND_MS * 10)
 
@@ -35,7 +52,13 @@ export const ReloadPrompt = () => {
 
             if (!isCleanUrl) {
                 log('cleaning url...', window.location.href)
+                const beforeCleanUrl = window.location.href
                 window.location.replace(`${window.location.href}${isCleanUrl ? '' : '/'}`)
+                console.warn('[ReloadPrompt][hnt-6051]', 'cleaning url', {
+                    beforeCleanUrl,
+                    afterCleanUrl: window.location.href,
+                    deviceType: isTouch ? 'mobile' : 'desktop',
+                })
             }
 
             log('updateServiceWorker...')
@@ -55,15 +78,16 @@ export const ReloadPrompt = () => {
         }
         setIsUpdating(true)
         asyncUpdate()
-    }, [isUpdating, updateServiceWorker])
+    }, [isTouch, isUpdating, updateServiceWorker])
 
     useEffect(() => {
         // Reminder to remove: https://linear.app/hnt-labs/issue/HNT-6108/reminder-to-remove-consolewarn-for-hnt-6051
         console.warn('[ReloadPrompt][hnt-6051]', 'states', {
             isUpdating,
             needRefresh,
+            deviceType: isTouch ? 'mobile' : 'desktop',
         })
-    }, [isUpdating, needRefresh])
+    }, [isTouch, isUpdating, needRefresh])
 
     return (
         <Box

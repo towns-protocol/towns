@@ -41,7 +41,7 @@ function LoginComponent({
 
     useEffect(() => {
         // Reminder to remove: https://linear.app/hnt-labs/issue/HNT-6068/remove-consolewarn-from-the-harmony-app-after-verifying-hnt-5685-is
-        console.warn('[LoginComponent][push_hnt-5685]', 'route', {
+        console.warn('[LoginComponent][hnt-5685]', 'route', {
             rel,
             locationPath: location.pathname,
             locationParams: location.search,
