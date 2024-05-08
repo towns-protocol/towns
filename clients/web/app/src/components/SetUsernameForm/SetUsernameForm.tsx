@@ -1,4 +1,4 @@
-import React, { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
+import React, { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { SpaceData, useMyDefaultUsernames, useTownsClient } from 'use-towns-client'
 import { AnimatePresence } from 'framer-motion'
 import { ModalContainer } from '@components/Modals/ModalContainer'
@@ -15,6 +15,7 @@ export const SetUsernameForm = (props: Props) => {
     const defaultUsernames = useMyDefaultUsernames()
     const { getIsUsernameAvailable } = useTownsClient()
     const { setUsername } = useSetUsername()
+    const isModified = useRef<boolean>(false)
     const [requestInFlight, setRequestInFlight] = useState<boolean>(false)
 
     const [value, setValue] = useState<string>('')
@@ -22,11 +23,12 @@ export const SetUsernameForm = (props: Props) => {
     const [loading, setLoading] = useState<boolean>(true)
     const onTextFieldChange = useCallback(
         async (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+            isModified.current = true
             setValue(e.target.value)
             setUsernameAvailable(true)
-            const usernameAvailable =
+            const _usernameAvailable =
                 (await getIsUsernameAvailable(spaceData.id, e.target.value)) ?? false
-            setUsernameAvailable(usernameAvailable)
+            setUsernameAvailable(_usernameAvailable)
         },
         [setValue, setUsernameAvailable, getIsUsernameAvailable, spaceData.id],
     )
@@ -74,6 +76,12 @@ export const SetUsernameForm = (props: Props) => {
     }, [defaultUsernames, getIsUsernameAvailable, spaceData.id])
 
     useEffect(() => {
+        // If user has modified the input field, don't set the default username
+        // This is to prevent the user from losing their input
+        // checkAndSetDefaultUsername mutates because props keep changing
+        if (isModified.current) {
+            return
+        }
         checkAndSetDefaultUsername()
     }, [checkAndSetDefaultUsername])
 
