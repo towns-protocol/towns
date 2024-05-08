@@ -316,6 +316,7 @@ func (x *xchain) writeEntitlementCheckResults(ctx context.Context, checkResults 
 
 				pendingTx, err := x.baseChain.TxPool.Submit(
 					ctx,
+					"PostEntitlementCheckResult",
 					func(opts *bind.TransactOpts) (*types.Transaction, error) {
 						gated, err := contracts.NewIEntitlementGated(
 							receipt.Event.ContractAddress(),

@@ -213,6 +213,7 @@ func (st *serviceTester) Start(t *testing.T) {
 			case <-blockPeriod.C:
 				_, _ = st.btc.DeployerBlockchain.TxPool.Submit(
 					ctx,
+					"noop",
 					func(opts *bind.TransactOpts) (*types.Transaction, error) {
 						gp, err := st.btc.Client().SuggestGasPrice(ctx)
 						if err != nil {
@@ -238,7 +239,7 @@ func (st *serviceTester) Start(t *testing.T) {
 		bc := st.btc.GetBlockchain(st.ctx, i, true)
 
 		// register node
-		pendingTx, err := bc.TxPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
+		pendingTx, err := bc.TxPool.Submit(ctx, "RegisterNode", func(opts *bind.TransactOpts) (*types.Transaction, error) {
 			return st.entitlementChecker.RegisterNode(opts, bc.Wallet.Address)
 		})
 
@@ -313,6 +314,7 @@ func (st *serviceTester) linkWalletToRootWallet(
 
 	pendingTx, err := st.ClientSimulatorBlockchain().TxPool.Submit(
 		ctx,
+		"LinkWalletToRootKey",
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
 			return st.walletLink.LinkWalletToRootKey(opts, nodeWallet, rootKeyWallet, rootKeyNonce)
 		},

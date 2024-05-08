@@ -168,6 +168,7 @@ func (st *serviceTester) startNodes(start, stop int, opts ...startOpts) {
 				case <-blockPeriod.C:
 					_, _ = st.btc.DeployerBlockchain.TxPool.Submit(
 						ctx,
+						"noop",
 						func(opts *bind.TransactOpts) (*types.Transaction, error) {
 							gp, err := st.btc.Client().SuggestGasPrice(ctx)
 							if err != nil {

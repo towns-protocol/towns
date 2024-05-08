@@ -126,10 +126,27 @@ func (c *RiverRegistryContract) AllocateStream(
 	genesisMiniblockHash common.Hash,
 	genesisMiniblock []byte,
 ) error {
-	pendingTx, err := c.Blockchain.TxPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
-		return c.StreamRegistry.AllocateStream(
-			opts, streamId, addresses, genesisMiniblockHash, genesisMiniblock)
-	})
+	log := dlog.FromCtx(ctx)
+
+	pendingTx, err := c.Blockchain.TxPool.Submit(
+		ctx,
+		"AllocateStream",
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			tx, err := c.StreamRegistry.AllocateStream(
+				opts, streamId, addresses, genesisMiniblockHash, genesisMiniblock)
+			if err == nil {
+				log.Info(
+					"RiverRegistryContract: prepared transaction",
+					"name", "AllocateStream",
+					"streamId", streamId,
+					"addresses", addresses,
+					"genesisMiniblockHash", genesisMiniblockHash,
+					"txHash", tx.Hash(),
+				)
+			}
+			return tx, err
+		},
+	)
 	if err != nil {
 		return AsRiverError(err, Err_CANNOT_CALL_CONTRACT).
 			Func("AllocateStream").
@@ -250,10 +267,29 @@ func (c *RiverRegistryContract) SetStreamLastMiniblock(
 	lastMiniblockNum uint64,
 	isSealed bool,
 ) error {
-	pendingTx, err := c.Blockchain.TxPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
-		return c.StreamRegistry.SetStreamLastMiniblock(
-			opts, streamId, prevMiniblockHash, lastMiniblockHash, lastMiniblockNum, isSealed)
-	})
+	log := dlog.FromCtx(ctx)
+
+	pendingTx, err := c.Blockchain.TxPool.Submit(
+		ctx,
+		"SetStreamLastMiniblock",
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			tx, err := c.StreamRegistry.SetStreamLastMiniblock(
+				opts, streamId, prevMiniblockHash, lastMiniblockHash, lastMiniblockNum, isSealed)
+			if err == nil {
+				log.Info(
+					"RiverRegistryContract: prepared transaction",
+					"name", "SetStreamLastMiniblock",
+					"streamId", streamId,
+					"prevMiniblockHash", prevMiniblockHash,
+					"lastMiniblockHash", lastMiniblockHash,
+					"lastMiniblockNum", lastMiniblockNum,
+					"isSealed", isSealed,
+					"txHash", tx.Hash(),
+				)
+			}
+			return tx, err
+		},
+	)
 	if err != nil {
 		return AsRiverError(err, Err_CANNOT_CALL_CONTRACT).
 			Func("SetStreamLastMiniblock").

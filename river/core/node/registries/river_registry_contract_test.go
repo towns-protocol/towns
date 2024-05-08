@@ -43,15 +43,15 @@ func TestNodeEvents(t *testing.T) {
 	nodeAddr1 := crypto.GetTestAddress()
 	nodeUrl1 := "http://node1.node"
 	nodeUrl2 := "http://node2.node"
-	_, err = owner.TxPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
+	_, err = owner.TxPool.Submit(ctx, "RegisterNode", func(opts *bind.TransactOpts) (*types.Transaction, error) {
 		return tt.NodeRegistry.RegisterNode(opts, nodeAddr1, nodeUrl1, 2)
 	})
 	require.NoError(err)
-	_, err = owner.TxPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
+	_, err = owner.TxPool.Submit(ctx, "RegisterNode", func(opts *bind.TransactOpts) (*types.Transaction, error) {
 		return tt.NodeRegistry.RegisterNode(opts, crypto.GetTestAddress(), "url2", 0)
 	})
 	require.NoError(err)
-	_, err = owner.TxPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
+	_, err = owner.TxPool.Submit(ctx, "RegisterNode", func(opts *bind.TransactOpts) (*types.Transaction, error) {
 		return tt.NodeRegistry.RegisterNode(opts, crypto.GetTestAddress(), "url3", 0)
 	})
 	require.NoError(err)
@@ -83,7 +83,7 @@ func TestNodeEvents(t *testing.T) {
 	//
 	// Test UpdateNodeUrl
 	//
-	_, err = owner.TxPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
+	_, err = owner.TxPool.Submit(ctx, "UpdateNodeUrl", func(opts *bind.TransactOpts) (*types.Transaction, error) {
 		return tt.NodeRegistry.UpdateNodeUrl(opts, nodeAddr1, nodeUrl2)
 	})
 	require.NoError(err)
@@ -105,7 +105,7 @@ func TestNodeEvents(t *testing.T) {
 	//
 	// Test UpdateNodeStatus to Departing
 	//
-	_, err = owner.TxPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
+	_, err = owner.TxPool.Submit(ctx, "UpdateNodeStatus", func(opts *bind.TransactOpts) (*types.Transaction, error) {
 		return tt.NodeRegistry.UpdateNodeStatus(opts, nodeAddr1, 4)
 	})
 	require.NoError(err)
@@ -127,7 +127,7 @@ func TestNodeEvents(t *testing.T) {
 	//
 	// Test UpdateNodeStatus to Deleted
 	//
-	_, err = owner.TxPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
+	_, err = owner.TxPool.Submit(ctx, "UpdateNodeStatus", func(opts *bind.TransactOpts) (*types.Transaction, error) {
 		return tt.NodeRegistry.UpdateNodeStatus(opts, nodeAddr1, 5)
 	})
 	require.NoError(err)
@@ -149,7 +149,7 @@ func TestNodeEvents(t *testing.T) {
 	//
 	// Test RemoveNode
 	//
-	_, err = owner.TxPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
+	_, err = owner.TxPool.Submit(ctx, "RemoveNode", func(opts *bind.TransactOpts) (*types.Transaction, error) {
 		return tt.NodeRegistry.RemoveNode(opts, nodeAddr1)
 	})
 	require.NoError(err)

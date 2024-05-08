@@ -6,19 +6,17 @@ import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
 import {IDiamondCut} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
 
 // helpers
-import {BanningHelper} from "contracts/test/spaces/banning/BanningHelper.sol";
 import {DeployBanning} from "contracts/scripts/deployments/facets/DeployBanning.s.sol";
 
 // contracts
 import {Interaction} from "contracts/scripts/common/Interaction.s.sol";
 
 contract InteractBanning is Interaction {
-  DeployBanning deployBanning = new DeployBanning();
-  BanningHelper banningHelper = new BanningHelper();
+  DeployBanning banningHelper = new DeployBanning();
 
   function __interact(uint256 pk, address) public override {
     address space = getDeployment("space");
-    address banning = deployBanning.deploy();
+    address banning = banningHelper.deploy();
 
     IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](2);
     cuts[0] = IDiamond.FacetCut({

@@ -19,7 +19,6 @@ import {ERC5643Base} from "contracts/src/diamond/facets/token/ERC5643/ERC5643Bas
 import {ReentrancyGuard} from "contracts/src/diamond/facets/reentrancy/ReentrancyGuard.sol";
 import {Entitled} from "contracts/src/spaces/facets/Entitled.sol";
 import {MembershipReferralBase} from "./referral/MembershipReferralBase.sol";
-import {MembershipStorage} from "./MembershipStorage.sol";
 import {RolesBase} from "contracts/src/spaces/facets/roles/RolesBase.sol";
 import {DispatcherBase} from "contracts/src/spaces/facets/dispatcher/DispatcherBase.sol";
 import {EntitlementGated} from "contracts/src/spaces/facets/gated/EntitlementGated.sol";
@@ -111,16 +110,17 @@ contract MembershipFacet is
             IRuleEntitlement re = IRuleEntitlement(address(entitlement));
             IRuleEntitlement.RuleData memory ruleData = re.getRuleData(role.id);
 
-            if (
-              ruleData.operations.length == 1 &&
-              ruleData.operations[0].opType ==
-              IRuleEntitlement.CombinedOperationType.NONE
-            ) {
-              //console2.log("crosschain entitlement noop rule, skipping");
-            } else {
-              bytes memory encodedRuleData = re.encodeRuleData(ruleData);
-              _requestEntitlementCheck(transactionId, encodedRuleData);
-              isCrosschainPending = true;
+            if (ruleData.operations.length > 0) {
+              IRuleEntitlement.CombinedOperationType opType = ruleData
+                .operations[0]
+                .opType;
+
+              if (opType != IRuleEntitlement.CombinedOperationType.NONE) {
+                // Since the operation type is not NONE, we need to handle it
+                bytes memory encodedRuleData = abi.encode(ruleData);
+                _requestEntitlementCheck(transactionId, encodedRuleData);
+                isCrosschainPending = true;
+              }
             }
           }
         }

@@ -35,7 +35,7 @@ type (
 		// Submit calls createTx and sends the resulting transaction to the blockchain. It returns a pending transaction
 		// for which the caller can wait for the transaction receipt to arrive. The pool will resubmit transactions
 		// when necessary.
-		Submit(ctx context.Context, createTx CreateTransaction) (TransactionPoolPendingTransaction, error)
+		Submit(ctx context.Context, name string, createTx CreateTransaction) (TransactionPoolPendingTransaction, error)
 
 		// SetOnSubmitHandler is called each time a transaction was sent to the chain
 		SetOnSubmitHandler(func())
@@ -59,6 +59,7 @@ type (
 		tx         *types.Transaction
 		txOpts     *bind.TransactOpts
 		next       *txPoolPendingTransaction
+		name       string
 		resubmit   CreateTransaction
 		lastSubmit time.Time
 		// listener waits on this channel for the transaction receipt
@@ -84,6 +85,8 @@ type (
 		onSubmitHandler func()
 	}
 )
+
+var _ TransactionPool = (*transactionPool)(nil)
 
 // NewTransactionPoolWithPoliciesFromConfig creates an in-memory transaction pool that tracks transactions that are
 // submitted through it. Pending transactions checked on each block if they are eligable to be replaced (through the
@@ -195,6 +198,7 @@ func (r *transactionPool) SetOnSubmitHandler(handler func()) {
 
 func (r *transactionPool) Submit(
 	ctx context.Context,
+	name string,
 	createTx CreateTransaction,
 ) (TransactionPoolPendingTransaction, error) {
 	log := dlog.Log()
@@ -223,7 +227,7 @@ func (r *transactionPool) Submit(
 	// ensure that tx gas price is not higher than node operator has defined in the config he is willing to pay
 	if tx.GasFeeCap() != nil && r.pricePolicy.GasFeeCap() != nil && tx.GasFeeCap().Cmp(r.pricePolicy.GasFeeCap()) > 0 {
 		return nil, RiverError(Err_BAD_CONFIG, "Transaction too expensive").
-			Tags("tx.GasFeeCap", tx.GasFeeCap().String(), "user.GasFeeCap", r.pricePolicy.GasFeeCap().String()).
+			Tags("tx.GasFeeCap", tx.GasFeeCap().String(), "user.GasFeeCap", r.pricePolicy.GasFeeCap().String(), "name", name).
 			Func("Submit")
 	}
 
@@ -231,13 +235,25 @@ func (r *transactionPool) Submit(
 		return nil, err
 	}
 
-	log.Info("transaction sent", "txHash", tx.Hash(), "chain", r.chainID)
+	log.Info(
+		"TxPool: Transaction SENT",
+		"txHash", tx.Hash(),
+		"chain", r.chainID,
+		"name", name,
+		"nonce", tx.Nonce(),
+		"from", opts.From,
+		"to", tx.To(),
+		"gasPrice", tx.GasPrice(),
+		"gasFeeCap", tx.GasFeeCap(),
+		"gasTipCap", tx.GasTipCap(),
+	)
 
 	pendingTx := &txPoolPendingTransaction{
 		txHashes:   []common.Hash{tx.Hash()},
 		tx:         tx,
 		txOpts:     opts,
 		resubmit:   createTx,
+		name:       name,
 		lastSubmit: time.Now(),
 		listener:   make(chan *types.Receipt, 1),
 	}
@@ -292,8 +308,22 @@ func (r *transactionPool) OnHead(ctx context.Context, head *types.Header) {
 				r.firstPendingTx.listener <- receipt
 				r.firstPendingTx, pendingTx.next = r.firstPendingTx.next, nil
 
-				log.Debug("transaction processed",
-					"txHash", receipt.TxHash, "block#", receipt.BlockNumber.Uint64(), "receiptStatus", receipt.Status)
+				log.Info(
+					"TxPool: Transaction DONE",
+					"txHash", txHash,
+					"chain", r.chainID,
+					"name", pendingTx.name,
+					"from", pendingTx.txOpts.From,
+					"to", pendingTx.tx.To(),
+					"nonce", pendingTx.tx.Nonce(),
+					"succeeded", receipt.Status == 1,
+					"cumulativeGasUsed", receipt.CumulativeGasUsed,
+					"contractAddress", receipt.ContractAddress,
+					"gasUsed", receipt.GasUsed,
+					"effectiveGasPrice", receipt.EffectiveGasPrice,
+					"blockHash", receipt.BlockHash,
+					"blockNumber", receipt.BlockNumber,
+				)
 				break
 			}
 			if errors.Is(err, ethereum.NotFound) {
@@ -321,7 +351,20 @@ func (r *transactionPool) OnHead(ctx context.Context, head *types.Header) {
 			}
 
 			if err := r.client.SendTransaction(ctx, tx); err == nil {
-				log.Info("Transaction replaced", "old", pendingTx.tx.Hash(), "new", tx.Hash())
+				log.Info(
+					"TxPool: Transaction REPLACED",
+					"old", pendingTx.tx.Hash(),
+					"txHash", tx.Hash(),
+					"chain", r.chainID,
+					"name", pendingTx.name,
+					"nonce", tx.Nonce(),
+					"from", pendingTx.txOpts.From,
+					"to", tx.To(),
+					"gasPrice", tx.GasPrice(),
+					"gasFeeCap", tx.GasFeeCap(),
+					"gasTipCap", tx.GasTipCap(),
+				)
+
 				pendingTx.tx = tx
 				pendingTx.txHashes = append(pendingTx.txHashes, tx.Hash())
 				pendingTx.lastSubmit = time.Now()

@@ -18,7 +18,6 @@ import {TokenPausableHelper} from "contracts/test/diamond/pausable/token/TokenPa
 import {MembershipHelper} from "contracts/test/spaces/membership/MembershipHelper.sol";
 import {MembershipReferralHelper} from "contracts/test/spaces/membership/MembershipReferralSetup.sol";
 import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
-import {BanningHelper} from "contracts/test/spaces/banning/BanningHelper.sol";
 
 // Facets
 import {OwnablePendingFacet} from "contracts/src/diamond/facets/ownable/pending/OwnablePendingFacet.sol";
@@ -38,6 +37,7 @@ import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDia
 import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
 import {DeployEntitlementGated} from "contracts/scripts/deployments/facets/DeployEntitlementGated.s.sol";
 import {DeployERC721AQueryable} from "./facets/DeployERC721AQueryable.s.sol";
+import {DeployBanning} from "contracts/scripts/deployments/facets/DeployBanning.s.sol";
 import {DeployMultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.sol";
 
 contract DeploySpace is DiamondDeployer {
@@ -46,6 +46,7 @@ contract DeploySpace is DiamondDeployer {
   DeployIntrospection introspectionHelper = new DeployIntrospection();
   DeployEntitlementGated entitlementGatedHelper = new DeployEntitlementGated();
   DeployERC721AQueryable erc721aQueryableHelper = new DeployERC721AQueryable();
+  DeployBanning banningHelper = new DeployBanning();
   DeployMultiInit deployMultiInit = new DeployMultiInit();
 
   TokenOwnableHelper tokenOwnableHelper = new TokenOwnableHelper();
@@ -59,7 +60,6 @@ contract DeploySpace is DiamondDeployer {
   MembershipHelper membershipHelper = new MembershipHelper();
   MembershipReferralHelper membershipReferralHelper =
     new MembershipReferralHelper();
-  BanningHelper banningHelper = new BanningHelper();
 
   uint256 initDataCount = 4;
   address[] initAddresses = new address[](initDataCount);
@@ -93,6 +93,7 @@ contract DeploySpace is DiamondDeployer {
     diamondLoupe = diamondLoupeHelper.deploy();
     introspection = introspectionHelper.deploy();
     erc721aQueryable = erc721aQueryableHelper.deploy();
+    banning = banningHelper.deploy();
     multiInit = deployMultiInit.deploy();
 
     vm.startBroadcast(deployerPK);
@@ -104,7 +105,6 @@ contract DeploySpace is DiamondDeployer {
     tokenPausable = address(new TokenPausableFacet());
     membership = address(new MembershipFacet());
     membershipReferral = address(new MembershipReferralFacet());
-    banning = address(new Banning());
     vm.stopBroadcast();
 
     membershipHelper.addSelectors(erc721aHelper.selectors());

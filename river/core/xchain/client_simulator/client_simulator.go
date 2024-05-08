@@ -305,17 +305,21 @@ func (cs *clientSimulator) Start(ctx context.Context) {
 func (cs *clientSimulator) executeCheck(ctx context.Context, ruleData *e.IRuleData) error {
 	log := dlog.FromCtx(ctx).With("application", "clientSimulator")
 
-	pendingTx, err := cs.baseChain.TxPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
-		gated, err := contracts.NewMockEntitlementGated(
-			cs.cfg.GetMockEntitlementContractAddress(),
-			cs.baseChain.Client,
-			cs.cfg.GetContractVersion(),
-		)
-		if err != nil {
-			return nil, err
-		}
-		return gated.RequestEntitlementCheck(opts, *ruleData)
-	})
+	pendingTx, err := cs.baseChain.TxPool.Submit(
+		ctx,
+		"RequestEntitlementCheck",
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			gated, err := contracts.NewMockEntitlementGated(
+				cs.cfg.GetMockEntitlementContractAddress(),
+				cs.baseChain.Client,
+				cs.cfg.GetContractVersion(),
+			)
+			if err != nil {
+				return nil, err
+			}
+			return gated.RequestEntitlementCheck(opts, *ruleData)
+		},
+	)
 
 	log.Info("Submitted entitlement check...")
 

@@ -276,6 +276,7 @@ func setOnChainConfig(ctx context.Context, btc *BlockchainTestContext, riverConf
 	one, _ := hex.DecodeString("0000000000000000000000000000000000000000000000000000000000000001")
 	pendingTx, err := btc.DeployerBlockchain.TxPool.Submit(
 		ctx,
+		"SetConfiguration",
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
 			return riverConfig.SetConfiguration(opts, StreamReplicationFactorKey.ID(), 0, one)
 		},
@@ -470,6 +471,7 @@ func (c *BlockchainTestContext) InitNodeRecord(ctx context.Context, index int, u
 func (c *BlockchainTestContext) InitNodeRecordEx(ctx context.Context, index int, url string, status uint8) error {
 	pendingTx, err := c.DeployerBlockchain.TxPool.Submit(
 		ctx,
+		"RegisterNode",
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
 			return c.NodeRegistry.RegisterNode(opts, c.Wallets[index].Address, url, status)
 		},
@@ -494,6 +496,7 @@ func (c *BlockchainTestContext) InitNodeRecordEx(ctx context.Context, index int,
 func (c *BlockchainTestContext) UpdateNodeStatus(ctx context.Context, index int, status uint8) error {
 	pendingTx, err := c.DeployerBlockchain.TxPool.Submit(
 		ctx,
+		"UpdateNodeStatus",
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
 			return c.NodeRegistry.UpdateNodeStatus(opts, c.Wallets[index].Address, status)
 		},
@@ -518,6 +521,7 @@ func (c *BlockchainTestContext) UpdateNodeStatus(ctx context.Context, index int,
 func (c *BlockchainTestContext) UpdateNodeUrl(ctx context.Context, index int, url string) error {
 	pendingTx, err := c.DeployerBlockchain.TxPool.Submit(
 		ctx,
+		"UpdateNodeUrl",
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
 			return c.NodeRegistry.UpdateNodeUrl(opts, c.Wallets[index].Address, url)
 		},

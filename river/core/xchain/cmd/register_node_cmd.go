@@ -101,15 +101,19 @@ func registerImpl(operatorKeyfile string, userConfirmationMessage string, regist
 		return err
 	}
 
-	pendingTx, err := baseChain.TxPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
-		if err != nil {
-			return nil, err
-		}
-		if register {
-			return checker.RegisterNode(opts, xchainWallet.Address)
-		}
-		return checker.UnregisterNode(opts, xchainWallet.Address)
-	})
+	pendingTx, err := baseChain.TxPool.Submit(
+		ctx,
+		"RegisterNode or maybe UnregisterNode",
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			if err != nil {
+				return nil, err
+			}
+			if register {
+				return checker.RegisterNode(opts, xchainWallet.Address)
+			}
+			return checker.UnregisterNode(opts, xchainWallet.Address)
+		},
+	)
 
 	ce, se, err := decoder.DecodeEVMError(err)
 	switch {

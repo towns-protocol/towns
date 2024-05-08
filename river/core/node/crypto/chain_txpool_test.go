@@ -35,12 +35,16 @@ func TestNewTransactionPoolWithReplaceTx(t *testing.T) {
 	require.NoError(err, "unable to construct transaction pool")
 
 	for i := 0; i < N; i++ {
-		pendingTx, err := txPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			nodeWallet, err := crypto.NewWallet(ctx)
-			require.Nil(err, "generate node wallet")
-			url := fmt.Sprintf("http://%d.node.test", i)
-			return tc.NodeRegistry.RegisterNode(opts, nodeWallet.Address, url, 2)
-		})
+		pendingTx, err := txPool.Submit(
+			ctx,
+			"RegisterNode",
+			func(opts *bind.TransactOpts) (*types.Transaction, error) {
+				nodeWallet, err := crypto.NewWallet(ctx)
+				require.Nil(err, "generate node wallet")
+				url := fmt.Sprintf("http://%d.node.test", i)
+				return tc.NodeRegistry.RegisterNode(opts, nodeWallet.Address, url, 2)
+			},
+		)
 		require.NoError(err, "unable to send transaction")
 		pendingTxs = append(pendingTxs, pendingTx)
 	}

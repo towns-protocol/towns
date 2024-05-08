@@ -40,12 +40,12 @@ func TestBlockchain(t *testing.T) {
 	nodeAddr2 := bc2.Wallet.Address
 	nodeUrl2 := "http://node2.node"
 
-	tx1, err := owner.TxPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
+	tx1, err := owner.TxPool.Submit(ctx, "RegisterNode", func(opts *bind.TransactOpts) (*types.Transaction, error) {
 		return tc.NodeRegistry.RegisterNode(opts, nodeAddr1, nodeUrl1, 2)
 	})
 	require.NoError(err)
 
-	tx2, err := owner.TxPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
+	tx2, err := owner.TxPool.Submit(ctx, "RegisterNode", func(opts *bind.TransactOpts) (*types.Transaction, error) {
 		return tc.NodeRegistry.RegisterNode(opts, nodeAddr2, nodeUrl2, 2)
 	})
 	require.NoError(err)
@@ -75,7 +75,7 @@ func TestBlockchain(t *testing.T) {
 	assert.Equal(nodeUrl2, nodes[1].Url)
 
 	// Can't add the same node twice
-	tx1, err = owner.TxPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
+	tx1, err = owner.TxPool.Submit(ctx, "RegisterNode", func(opts *bind.TransactOpts) (*types.Transaction, error) {
 		return tc.NodeRegistry.RegisterNode(opts, nodeAddr1, nodeUrl1, 2)
 	})
 	// Looks like this is a difference for simulated backend:
@@ -99,6 +99,7 @@ func TestBlockchain(t *testing.T) {
 
 	tx1, err = bc1.TxPool.Submit(
 		ctx,
+		"AllocateStream",
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
 			return tc.StreamRegistry.AllocateStream(opts, streamId, addrs, genesisHash, genesisMiniblock)
 		},
@@ -121,6 +122,7 @@ func TestBlockchain(t *testing.T) {
 	// Can't allocate the same stream twice
 	tx1, err = bc1.TxPool.Submit(
 		ctx,
+		"AllocateStream",
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
 			return tc.StreamRegistry.AllocateStream(opts, streamId, addrs, genesisHash, genesisMiniblock)
 		},
@@ -131,6 +133,7 @@ func TestBlockchain(t *testing.T) {
 	// Can't allocate with unknown node
 	tx1, err = bc1.TxPool.Submit(
 		ctx,
+		"AllocateStream",
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
 			streamId := testutils.StreamIdFromBytes([]byte{0x10, 0x22, 0x33})
 			return tc.StreamRegistry.AllocateStream(
@@ -152,6 +155,7 @@ func TestBlockchain(t *testing.T) {
 		allIds[streamId] = true
 		lastPendingTx, err = bc1.TxPool.Submit(
 			ctx,
+			"AllocateStream",
 			func(opts *bind.TransactOpts) (*types.Transaction, error) {
 				return tc.StreamRegistry.AllocateStream(
 					opts,

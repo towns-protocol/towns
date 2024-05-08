@@ -84,6 +84,9 @@ test-base-sepolia :;
 verify-basescan-base-sepolia :;
 	@forge verify-contract ${address} ${contract} --chain-id 84532 --verifier-url ${BASESCAN_SEPOLIA_URL} --etherscan-api-key ${BASESCAN_API_KEY}
 
+verify-blockscout-base-sepolia :;
+	@forge verify-contract ${address} ${contract} --chain-id 84532 --verifier blockscout --verifier-url ${BLOCKSCOUT_SEPOLIA_URL}
+
 # ===========================
 # 				 		Base
 # ===========================
