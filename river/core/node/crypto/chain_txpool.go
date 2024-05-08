@@ -201,7 +201,7 @@ func (r *transactionPool) Submit(
 	name string,
 	createTx CreateTransaction,
 ) (TransactionPoolPendingTransaction, error) {
-	log := dlog.Log()
+	log := dlog.FromCtx(ctx)
 
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -318,7 +318,6 @@ func (r *transactionPool) OnHead(ctx context.Context, head *types.Header) {
 					"nonce", pendingTx.tx.Nonce(),
 					"succeeded", receipt.Status == 1,
 					"cumulativeGasUsed", receipt.CumulativeGasUsed,
-					"contractAddress", receipt.ContractAddress,
 					"gasUsed", receipt.GasUsed,
 					"effectiveGasPrice", receipt.EffectiveGasPrice,
 					"blockHash", receipt.BlockHash,
