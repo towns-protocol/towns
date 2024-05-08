@@ -8,10 +8,11 @@ export const EditMessageButtons = (props: {
     isEditing: boolean
     isEditorEmpty: boolean
     hasImage: boolean
+    verticalButtons?: boolean
     disabled?: boolean
 }) => {
     const { isTouch } = useDevice()
-    const { onCancel, onSave, isEditing, isEditorEmpty, hasImage } = props
+    const { onCancel, onSave, isEditing, isEditorEmpty, hasImage, verticalButtons } = props
 
     useEffect(() => {
         if (!onCancel) {
@@ -49,7 +50,12 @@ export const EditMessageButtons = (props: {
     const disabled = props.disabled || (isEditorEmpty && !hasImage)
 
     return (
-        <Stack horizontal gap paddingX={isTouch ? 'none' : 'xs'}>
+        <Stack
+            horizontal
+            gap="sm"
+            justifyContent={verticalButtons ? 'start' : 'end'}
+            paddingX={isTouch ? 'none' : 'xs'}
+        >
             {isEditing ? (
                 <>
                     <Button size="button_xs" onMouseDown={cancelButtonPressed}>

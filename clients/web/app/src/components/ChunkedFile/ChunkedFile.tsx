@@ -5,6 +5,7 @@ import { Box, Button, Icon, IconButton, Stack, Text } from '@ui'
 import { isMediaMimeType } from 'utils/isMediaMimeType'
 import { useDevice } from 'hooks/useDevice'
 import { useIsMessageAttachementContext } from '@components/MessageAttachments/hooks/useIsMessageAttachementContext'
+import { useSizeContext } from 'ui/hooks/useSizeContext'
 
 type Props = {
     streamId: string
@@ -60,18 +61,20 @@ const ChunkedFileDownload = (
 ) => {
     const { filename, mimetype, onDownloadClicked } = props
 
+    const size = useSizeContext()
+    const reducedWidth = size.lessThan(350)
+
     return (
         <Stack
             horizontal
             gap
-            paddingX="md"
-            paddingY="sm"
+            padding="sm"
             border="level3"
             rounded="sm"
             pointerEvents="auto"
             cursor="pointer"
             alignItems="center"
-            maxWidth="300"
+            maxWidth={reducedWidth ? '250' : '300'}
             tooltip={filename}
             onClick={onDownloadClicked}
         >

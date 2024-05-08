@@ -406,11 +406,7 @@ const PlateEditorWithoutBoundary = ({
                             <OfflineIndicator attemptingToSend={isAttemptingSend} />
                             <RememberInputPlugin storageId={storageId} />
                         </Box>
-                        {!isEditing && (
-                            <Box paddingY="sm" paddingRight="xs">
-                                {sendButtons}
-                            </Box>
-                        )}
+                        {!isEditing && sendButtons}
                     </Stack>
                     {unfurledLinkAttachments.length > 0 && (
                         <Box horizontal gap padding flexWrap="wrap" width="100%">
@@ -432,6 +428,7 @@ const PlateEditorWithoutBoundary = ({
                         horizontal
                         paddingX
                         paddingBottom="sm"
+                        flexWrap="wrap"
                         pointerEvents={editable ? 'auto' : 'none'}
                     >
                         <RichTextBottomToolbar
@@ -447,11 +444,7 @@ const PlateEditorWithoutBoundary = ({
                             key="toolbar"
                         />
                         <Box grow />
-                        {isEditing && (
-                            <Box paddingY="sm" paddingRight="xs">
-                                {sendButtons}
-                            </Box>
-                        )}
+                        {isEditing && sendButtons}
                     </Stack>
                 </Plate>
             </Stack>
