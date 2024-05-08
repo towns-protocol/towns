@@ -102,10 +102,9 @@ describe('useCreateRoleTransaction', () => {
         // click button to create the space
         // this will create the space with a member role
         fireEvent.click(createSpaceButton)
-        const spaceElement = await waitFor(
-            () => screen.getByTestId('spacesElement'),
-            TestConstants.DecaDefaultWaitForTimeout,
-        )
+        const spaceElement = await waitFor(() => screen.getByTestId('spacesElement'), {
+            timeout: TestConstants.DecaDefaultWaitForTimeout.timeout ?? 1000 * 10,
+        })
         const rolesElement = screen.getByTestId('rolesElement')
         // wait for the space name to render
         await waitFor(

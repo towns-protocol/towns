@@ -127,7 +127,7 @@ contract MembershipFacet is
       }
     }
     if (!isCrosschainPending) {
-      revert Entitlement__NotAllowed();
+      emit MembershipTokenRejected(receiver);
     }
   }
 

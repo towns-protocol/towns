@@ -169,12 +169,12 @@ export class RiverSDK {
         )
         if (!hasMembership) {
             // mint membership
-            const transaction = await this.spaceDapp.joinSpace(
+            const { issued } = await this.spaceDapp.joinSpace(
                 spaceId,
                 this.walletWithProvider.address,
                 this.walletWithProvider,
             )
-            await transaction.wait()
+            expect(issued).toBe(true)
         }
 
         await this.client.joinStream(spaceId)

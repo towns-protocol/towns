@@ -13,7 +13,6 @@ import {IProxyManager} from "contracts/src/diamond/proxy/manager/IProxyManager.s
 import {ITokenOwnableBase} from "contracts/src/diamond/facets/ownable/token/ITokenOwnable.sol";
 import {IManagedProxyBase} from "contracts/src/diamond/proxy/managed/IManagedProxy.sol";
 import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
-import {IWalletLink} from "contracts/src/factory/facets/wallet-link/IWalletLink.sol";
 import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
 

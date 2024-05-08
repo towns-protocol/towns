@@ -170,7 +170,11 @@ export interface ISpaceDapp {
     ) => Promise<TransactionType>
     getSpace(spaceId: string): Space | undefined
     getSpaceMembershipTokenAddress: (spaceId: string) => Promise<string>
-    joinSpace: (spaceId: string, recipient: string, signer: SignerType) => Promise<TransactionType>
+    joinSpace: (
+        spaceId: string,
+        recipient: string,
+        signer: SignerType,
+    ) => Promise<{ issued: true; tokenId: string } | { issued: false; tokenId: undefined }>
     hasSpaceMembership: (spaceId: string, wallet: string) => Promise<boolean>
     getMembershipSupply: (spaceId: string) => Promise<TotalSupplyInfo>
     getMembershipInfo: (spaceId: string) => Promise<MembershipInfo>
@@ -203,5 +207,8 @@ export interface ISpaceDapp {
         freeAllocation: number,
         signer: SignerType,
     ) => Promise<TransactionType>
-    listenForMembershipEvent: (spaceId: string, receiver: string) => ContractEventListener
+    listenForMembershipEvent: (
+        spaceId: string,
+        receiver: string,
+    ) => Promise<{ issued: true; tokenId: string } | { issued: false; tokenId: undefined }>
 }

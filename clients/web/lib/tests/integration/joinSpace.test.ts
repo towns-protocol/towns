@@ -140,7 +140,7 @@ test('create a space with a fixed cost that is higher than joining user balance'
     } catch (error) {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        expect(error.message).toMatch(/insufficient funds/)
+        expect(error.message).toMatch(/insufficient funds/i)
     }
 })
 

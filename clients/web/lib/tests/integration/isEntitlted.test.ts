@@ -187,14 +187,13 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
             throw new Error('spaceId is undefined')
         }
 
-        const transaction = await bobWithNft.spaceDapp.joinSpace(
+        const { issued } = await bobWithNft.spaceDapp.joinSpace(
             spaceId,
             bobWithNft.wallet.address,
             bobWithNft.wallet,
         )
 
-        const receipt = await transaction.wait()
-        expect(receipt.status).toBe(1)
+        expect(issued).toBeTruthy()
         /** Act */
         const isAliceEntitledToSpace = await alice.isEntitled(
             spaceId,

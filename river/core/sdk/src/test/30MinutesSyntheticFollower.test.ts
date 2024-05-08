@@ -121,12 +121,12 @@ describe('mirrorMessages', () => {
                         )
                         if (!hasMembership) {
                             // mint membership
-                            const transaction = await spaceDapp.joinSpace(
+                            const { issued } = await spaceDapp.joinSpace(
                                 spaceAndChannelIds.townId,
                                 walletWithProvider.address,
                                 walletWithProvider,
                             )
-                            await transaction.wait()
+                            expect(issued).toBe(true)
                         }
 
                         await client.joinStream(spaceAndChannelIds.townId)

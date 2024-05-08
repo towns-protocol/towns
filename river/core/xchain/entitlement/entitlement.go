@@ -11,6 +11,7 @@ import (
 	er "core/xchain/contracts"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/river-build/river/core/node/dlog"
 )
 
 func EvaluateRuleData(
@@ -19,7 +20,9 @@ func EvaluateRuleData(
 	linkedWallets []common.Address,
 	ruleData *er.IRuleData,
 ) (bool, error) {
-	opTree, err := getOperationTree(ruleData)
+	log := dlog.FromCtx(ctx)
+	log.Debug("Evaluating rule data", "ruleData", ruleData)
+	opTree, err := getOperationTree(ctx, ruleData)
 	if err != nil {
 		return false, err
 	}
@@ -148,8 +151,11 @@ func (a *AndOperation) SetRightOperation(right Operation) {
 	a.RightOperation = right
 }
 
-func getOperationTree(ruleData *er.IRuleData) (Operation, error) {
+func getOperationTree(ctx context.Context,
+	ruleData *er.IRuleData) (Operation, error) {
+	log := dlog.FromCtx(ctx)
 	decodedOperations := []Operation{}
+	log.Debug("Decoding operations", "ruleData", ruleData)
 	for _, operation := range ruleData.Operations {
 		if OperationType(operation.OpType) == CHECK {
 			checkOperation := ruleData.CheckOperations[operation.Index]
@@ -182,6 +188,7 @@ func getOperationTree(ruleData *er.IRuleData) (Operation, error) {
 		} else {
 			return nil, errors.New("Unknown logical operation type")
 		}
+		log.Debug("Decoded operation", "operation", operation, "decodedOperations", decodedOperations)
 	}
 
 	var stack []Operation
@@ -189,7 +196,7 @@ func getOperationTree(ruleData *er.IRuleData) (Operation, error) {
 	for _, op := range decodedOperations {
 		if OperationType(op.GetOpType()) == LOGICAL {
 			if len(stack) < 2 {
-				return nil, errors.New("Invalid post-order array")
+				return nil, errors.New("Invalid post-order array, not enough operands")
 			}
 			right := stack[len(stack)-1]
 			left := stack[len(stack)-2]
@@ -198,15 +205,16 @@ func getOperationTree(ruleData *er.IRuleData) (Operation, error) {
 			if logicalOp, ok := op.(LogicalOperation); ok {
 				logicalOp.SetLeftOperation(left)
 				logicalOp.SetRightOperation(right)
+				stack = append(stack, logicalOp)
 			} else {
 				return nil, errors.New("Unknown logical operation type")
 			}
-
 		} else if OperationType(op.GetOpType()) == CHECK {
 			stack = append(stack, op)
 		} else {
 			return nil, errors.New("Unknown operation type")
 		}
+		log.Debug("decodedOperation", "op", op, "stack", stack)
 	}
 
 	if len(stack) != 1 {

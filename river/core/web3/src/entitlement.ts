@@ -122,18 +122,22 @@ function isOrOperation(operation: LogicalOperation): operation is OrOperation {
     return operation.logicalType === LogicalOperationType.OR
 }
 
-export function postOrderArrayToTree(operations: Operation[]) {
+export function postOrderArrayToTree(operations: Operation[]): Operation {
     const stack: Operation[] = []
 
     operations.forEach((op) => {
         if (isLogicalOperation(op)) {
+            if (stack.length < 2) {
+                throw new Error('Invalid post-order array, missing operations')
+            }
+
             // Pop the two most recent operations from the stack
             const right = stack.pop()
             const left = stack.pop()
 
             // Ensure the operations exist
             if (!left || !right) {
-                throw new Error('Invalid post-order array')
+                throw new Error('Invalid post-order array, missing operations')
             }
 
             // Update the current logical operation's children

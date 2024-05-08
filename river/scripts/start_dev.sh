@@ -67,10 +67,10 @@ popd
 ./core/scripts/launch_storage.sh &
 
 # Start chains and Postgres in separate panes of the same window
-tmux new-window -t $SESSION_NAME -n 'BlockChains'
-tmux send-keys -t $SESSION_NAME:1 "./scripts/start-local-basechain.sh" C-m
-tmux split-window -v
-tmux send-keys -t $SESSION_NAME:1 "./scripts/start-local-riverchain.sh" C-m
+tmux new-window -t $SESSION_NAME -n 'BlockChains_base'
+tmux send-keys -t $SESSION_NAME:'BlockChains_base' "./scripts/start-local-basechain.sh &" C-m
+tmux new-window -t $SESSION_NAME -n 'BlockChains_river'
+tmux send-keys -t $SESSION_NAME:'BlockChains_river' "./scripts/start-local-riverchain.sh &" C-m
 
 # Function to wait for a specific port
 wait_for_port() {
@@ -103,7 +103,7 @@ echo "STARTED ALL CHAINS AND BUILT ALL CONTRACTS"
 # Now generate the core server config
 ./scripts/configure-nodes.sh --single
 ./scripts/configure-nodes.sh --single_ne
-#./scripts/configure-nodes.sh --multi
+./scripts/configure-nodes.sh --multi
 #./scripts/configure-nodes.sh --multi_ne
 
 
@@ -132,11 +132,12 @@ commands=(
     "watch_web3:cd core/web3 && yarn watch"
     "watch_go:cd core/proto && yarn watch:go"
     "debug_app:cd core/debug-app && yarn dev"
-    "core_single:sleep 3 && ./core/node/run_single.sh -r"
-    "core_single_ne:./scripts/wait-for-core.sh && ./core/node/run_single.sh -r --de"
-    #"core:./core/node/run_multi.sh -r"
-    #"core:./core/node/run_multi.sh -r --de"
-    "xchain:RUN_ENV=single ./core/xchain/launch_multi.sh"
+    "core_single:./core/node/run_single.sh -r"
+    "core_single_ne:./core/node/run_single.sh -r --de"
+    "core_multi:./core/node/run_multi.sh -r"
+    #"core_multi_ne:./core/node/run_multi.sh -r --de"
+    "xchain_single:RUN_ENV=single ./core/xchain/launch_multi.sh"
+    "xchain_multi:RUN_ENV=multi ./core/xchain/launch_multi.sh"
 )
 
 # Create a Tmux window for each command

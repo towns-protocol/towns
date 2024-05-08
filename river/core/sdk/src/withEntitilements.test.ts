@@ -145,13 +145,13 @@ describe('withEntitlements', () => {
         // first join the space on chain
         const aliceSpaceDapp = createSpaceDapp(aliceProvider, baseConfig.chainConfig)
         log('transaction start Alice joining space')
-        const transaction2 = await aliceSpaceDapp.joinSpace(
+        const { issued, tokenId } = await aliceSpaceDapp.joinSpace(
             spaceId,
             alicesWallet.address,
             aliceProvider.wallet,
         )
-        const receipt2 = await transaction2.wait()
-        log('transaction receipt for alice joining space', receipt2)
+        log('transaction receipt for alice joining space', issued, tokenId)
+        expect(issued).toBe(true)
 
         await expect(alice.joinStream(spaceId)).toResolve()
         await expect(alice.joinStream(channelId)).toResolve()

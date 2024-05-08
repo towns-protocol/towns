@@ -35,10 +35,8 @@ export function SpaceInvite() {
                 console.error('No signer found')
                 return
             }
-            const transaction = await spaceDapp.joinSpace(spaceId, walletAddress, signer)
-            console.log('::transaction::', transaction)
-            const receipt = await transaction.wait()
-            console.log('::receipt::', receipt)
+            const { issued } = await spaceDapp.joinSpace(spaceId, walletAddress, signer)
+            console.log('::transaction::', issued)
         },
         [getSigner, spaceDapp],
     )

@@ -17,12 +17,7 @@ import {
     isDefined,
 } from '@river/sdk'
 import { EntitlementsDelegate, DecryptionStatus } from '@river-build/encryption'
-import {
-    ContractEventListener,
-    CreateSpaceParams,
-    IRuleEntitlement,
-    UpdateChannelParams,
-} from '@river-build/web3'
+import { CreateSpaceParams, IRuleEntitlement, UpdateChannelParams } from '@river-build/web3'
 import { ChannelMessage_Post_Mention, FullyReadMarker } from '@river-build/proto'
 import {
     ChannelTransactionContext,
@@ -1545,7 +1540,16 @@ export class TownsClient
                 return
             }
 
-            let membershipListener: ContractEventListener
+            let membershipListener: Promise<
+                | {
+                      issued: true
+                      tokenId: string
+                  }
+                | {
+                      issued: false
+                      tokenId: undefined
+                  }
+            >
 
             if (this.isAccountAbstractionEnabled()) {
                 // i.e. when a non gated town is joined
@@ -1562,17 +1566,25 @@ export class TownsClient
                 membershipListener = this.spaceDapp.listenForMembershipEvent(spaceId, recipient)
                 transaction = await this.userOps?.sendJoinSpaceOp([spaceId, recipient, signer])
             } else {
-                membershipListener = this.spaceDapp.listenForMembershipEvent(
-                    spaceId,
-                    entitledWallet,
-                )
-                transaction = await this.spaceDapp.joinSpace(spaceId, entitledWallet, signer)
+                // joinSpace when called directly sets up the membershipListener
+                membershipListener = this.spaceDapp.joinSpace(spaceId, entitledWallet, signer)
             }
 
             continueStoreTx({
                 hashOrUserOpHash: getTransactionHashOrUserOpHash(transaction),
                 transaction,
-                eventListener: membershipListener,
+                eventListener: {
+                    wait: async (): Promise<{
+                        success: boolean
+                        [x: string]: unknown
+                    }> => {
+                        const { issued, tokenId } = await membershipListener
+                        return {
+                            success: issued,
+                            tokenId,
+                        }
+                    },
+                },
                 error: undefined,
             })
 
@@ -1582,10 +1594,10 @@ export class TownsClient
                     transaction,
                 },
             )
-            const result = await membershipListener.wait()
-            this.log('[mintMembershipTransaction] membershipListener result', result)
+            const { issued, tokenId } = await membershipListener
+            this.log('[mintMembershipTransaction] membershipListener result', issued, tokenId)
 
-            if (!result.success) {
+            if (!issued) {
                 throw new MembershipRejectedError()
             }
         } catch (error) {

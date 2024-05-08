@@ -6,6 +6,7 @@ import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
 import { Permission } from '@river-build/web3'
 import { TestConstants } from './helpers/TestConstants'
 import { getTransactionHashFromTransactionOrUserOp } from '@towns/userops'
+
 describe('Link Wallet', () => {
     // in this test the rootKey needs funds to link the wallet
     test('link wallet using linkEOAToRootKey', async () => {
@@ -182,15 +183,12 @@ describe('Link Wallet', () => {
             Permission.Write,
         ])
 
-        const joinTx = await alice.spaceDapp.joinSpace(
+        const { issued: aliceIssued } = await alice.spaceDapp.joinSpace(
             spaceId,
             metamaskWallet.address,
             alice.wallet,
         )
-
-        if (joinTx?.hash) {
-            await alice.opts.baseProvider?.waitForTransaction(joinTx?.hash)
-        }
+        expect(aliceIssued).toBeTruthy()
 
         const isEntitledToSpace = await bob.isEntitled(
             spaceId,
@@ -201,8 +199,12 @@ describe('Link Wallet', () => {
         expect(isEntitledToSpace).toBeTruthy()
 
         // ES: 12/11/23 for this to work the contract check for joinSpace needs to change
-        const bobJoinTx = await bob.spaceDapp.joinSpace(spaceId, metamaskWallet.address, bob.wallet)
+        const { issued } = await bob.spaceDapp.joinSpace(
+            spaceId,
+            metamaskWallet.address,
+            bob.wallet,
+        )
 
-        expect(bobJoinTx).toBeTruthy()
+        expect(issued).toBeTruthy()
     })
 })

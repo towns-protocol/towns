@@ -95,8 +95,13 @@ if [ "$CONFIG" == "true" ]; then
         "getAllNodes()((uint8,string,address,address)[])" | sed 's/),/),\n/g'
     echo "<<<<<<<<<<<<<<<<<<<<<<<<<"
 
-    # config multi-node for this deployment
-    ../xchain/create_multi.sh
+    # config xchain config for this deployment
+    # the script is call create_multi.sh because there are always multiple xchain nodes for a deployment
+    # xchain depends on base, so only configure it when base is enabled
+    if [ "$DISABLE_BASE_CHAIN" != "true" ]; then
+        ../xchain/create_multi.sh
+    fi
+
 fi
 
 if [ "$BUILD" == "true" ]; then

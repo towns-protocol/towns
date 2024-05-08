@@ -49,7 +49,7 @@ export class Space {
     private readonly addressToEntitlement: AddressToEntitlement = {}
     private readonly spaceId: string
     private readonly version: ContractVersion
-    private readonly provider: ethers.providers.Provider | undefined
+    public readonly provider: ethers.providers.Provider | undefined
     private readonly channel: IChannelShim
     private readonly entitlements: IEntitlementsShim
     private readonly multicall: IMulticallShim

@@ -7,12 +7,15 @@ import {
     MembershipFacetInterface as BaseSepoliaInterface,
 } from '@river-build/generated/v3/typings/MembershipFacet'
 
-import { ethers } from 'ethers'
+import { BigNumber, BigNumberish, ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'
 import { ContractVersion } from '../IStaticContractsInfo'
 
 import LocalhostAbi from '@river-build/generated/dev/abis/MembershipFacet.abi.json' assert { type: 'json' }
 import BaseSepoliaAbi from '@river-build/generated/v3/abis/MembershipFacet.abi.json' assert { type: 'json' }
+import { dlogger } from '@river-build/dlog'
+
+const log = dlogger('csb:IMembershipShim')
 
 export class IMembershipShim extends BaseContractShim<
     LocalhostContract,
@@ -36,25 +39,37 @@ export class IMembershipShim extends BaseContractShim<
         return balance > 0
     }
 
-    async waitForMembershipTokenIssued(receiver: string): Promise<string> {
-        const filter = this.read.filters['MembershipTokenIssued(address,uint256)'](receiver)
+    async listenForMembershipToken(
+        receiver: string,
+    ): Promise<{ issued: true; tokenId: string } | { issued: false; tokenId: undefined }> {
+        const issuedFilter = this.read.filters['MembershipTokenIssued(address,uint256)'](receiver)
+        const rejectedFilter = this.read.filters['MembershipTokenRejected(address)'](receiver)
 
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
+            const issuedListener = (recipient: string, tokenId: BigNumberish) => {
+                this.read.off(issuedFilter as string, issuedListener)
+                this.read.off(rejectedFilter as string, rejectedListener)
+
+                if (receiver !== recipient) {
+                    log.error('Received event for wrong recipient', { receiver, recipient })
+                    reject(new Error('Received event for wrong recipient'))
+                }
+                resolve({ issued: true, tokenId: BigNumber.from(tokenId).toString() })
+            }
+
+            const rejectedListener = (recipient: string) => {
+                this.read.off(issuedFilter as string, issuedListener)
+                this.read.off(rejectedFilter as string, rejectedListener)
+                if (receiver !== recipient) {
+                    log.error('Received event for wrong recipient', { receiver, recipient })
+                    reject(new Error('Received event for wrong recipient'))
+                }
+                resolve({ issued: false, tokenId: undefined })
+            }
+
             // TODO: this isn't picking up correct typed fucntion signature
-            this.read.once(filter as string, (recipient: string) => {
-                resolve(recipient)
-            })
-        })
-    }
-
-    async waitForMembershipTokenRejected(receiver: string): Promise<string> {
-        const filter = this.read.filters['MembershipTokenRejected(address)'](receiver)
-
-        return new Promise((resolve) => {
-            // TODO: this isn't picking up correct typed fucntion signature
-            this.read.once(filter as string, (recipient: string) => {
-                resolve(recipient)
-            })
+            this.read.on(issuedFilter as string, issuedListener)
+            this.read.on(rejectedFilter as string, rejectedListener)
         })
     }
 }

@@ -121,14 +121,12 @@ export class StressClient {
     }
 
     async joinSpace(spaceId: string) {
-        const transaction = await this.spaceDapp.joinSpace(
+        const { issued } = await this.spaceDapp.joinSpace(
             spaceId,
             this.connection.wallet.address,
             this.connection.baseProvider.wallet,
         )
-        logger.log('joinSpace transaction', transaction)
-        const receipt = await transaction.wait()
-        logger.log('joinSpace receipt', receipt)
+        logger.log('joinSpace transaction', issued)
         await this.startStreamsClient()
         await this.streamsClient.joinStream(spaceId)
         await this.streamsClient.joinStream(makeDefaultChannelStreamId(spaceId))

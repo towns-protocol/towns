@@ -9,7 +9,6 @@ import {
 } from '../ContractTypes'
 import { BytesLike, ContractReceipt, ContractTransaction, ethers } from 'ethers'
 import {
-    ContractEventListener,
     CreateSpaceParams,
     ISpaceDapp,
     TransactionOpts,
@@ -692,26 +691,50 @@ export class SpaceDapp implements ISpaceDapp {
         recipient: string,
         signer: ethers.Signer,
         txnOpts?: TransactionOpts,
-    ): Promise<ContractTransaction> {
+    ): Promise<{ issued: true; tokenId: string } | { issued: false; tokenId: undefined }> {
+        const joinSpaceStart = Date.now()
+
         logger.log('joinSpace result before wrap', spaceId)
 
+        const getSpaceStart = Date.now()
         const space = this.getSpace(spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
+
+        const issuedListener = space.Membership.listenForMembershipToken(recipient)
+
+        const blockNumber = await space.provider?.getBlockNumber()
+
+        logger.log('joinSpace before blockNumber', Date.now() - getSpaceStart, blockNumber)
+        const getPriceStart = Date.now()
         const price = await space.Membership.read.getMembershipPrice()
+        logger.log('joinSpace getMembershipPrice', Date.now() - getPriceStart)
+        const wrapStart = Date.now()
         const result = await wrapTransaction(async () => {
             // Set gas limit instead of using estimateGas
             // As the estimateGas is not reliable for this contract
-            const result = await space.Membership.write(signer).joinSpace(recipient, {
-                gasLimit: 1_000_000,
+            return await space.Membership.write(signer).joinSpace(recipient, {
+                gasLimit: 1_500_000,
                 value: price,
             })
-            logger.log('joinSpace result', result)
-            return result
         }, txnOpts)
-        logger.log('joinSpace result outside wrap', result)
-        return result
+
+        const blockNumberAfterTx = await space.provider?.getBlockNumber()
+
+        logger.log('joinSpace wrap', Date.now() - wrapStart, blockNumberAfterTx)
+
+        const issued = await issuedListener
+        const blockNumberAfter = await space.provider?.getBlockNumber()
+
+        logger.log(
+            'joinSpace after blockNumber',
+            Date.now() - joinSpaceStart,
+            blockNumberAfter,
+            result,
+            issued,
+        )
+        return issued
     }
 
     public async hasSpaceMembership(spaceId: string, address: string): Promise<boolean> {
@@ -903,95 +926,87 @@ export class SpaceDapp implements ISpaceDapp {
         return undefined
     }
 
-    public listenForMembershipEvent(spaceId: string, receiver: string): ContractEventListener {
+    public listenForMembershipEvent(
+        spaceId: string,
+        receiver: string,
+    ): Promise<{ issued: true; tokenId: string } | { issued: false; tokenId: undefined }> {
         const space = this.getSpace(spaceId)
 
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
 
-        const membershipPromises = Promise.race([
-            space.Membership.waitForMembershipTokenIssued(receiver).then((result) => {
-                return {
-                    receiver: result,
-                    success: true,
-                }
-            }),
-            space.Membership.waitForMembershipTokenRejected(receiver).then((result) => {
-                return {
-                    receiver: result,
-                    success: false,
-                }
-            }),
-        ])
+        const listener = space.Membership.listenForMembershipToken(receiver)
 
-        return {
-            wait: async () => {
-                return new Promise<{
-                    receiver: string
-                    success: boolean
-                }>((resolve) => {
-                    const timeout = setTimeout(() => {
-                        logger.log('Membership mint event timed out')
-                        resolve({
-                            success: false,
-                            receiver: receiver,
-                        })
-                    }, 30_000)
-
-                    membershipPromises
-                        .then((result) => {
-                            clearTimeout(timeout)
-                            resolve(result)
-                        })
-                        .catch((error) => {
-                            clearTimeout(timeout)
-                            logger.error('Error waiting for membership mint event', error)
-                            resolve({
-                                success: false,
-                                receiver: receiver,
-                            })
-                        })
+        return new Promise<
+            { issued: true; tokenId: string } | { issued: false; tokenId: undefined }
+        >((resolve) => {
+            const timeout = setTimeout(() => {
+                logger.log('Membership mint event timed out')
+                resolve({ issued: false, tokenId: undefined })
+            }, 30_000)
+            listener
+                .then((result) => {
+                    clearTimeout(timeout)
+                    resolve(result)
                 })
-            },
-        }
+                .catch((error) => {
+                    clearTimeout(timeout)
+                    logger.error('Error waiting for membership mint event', error)
+                    resolve({ issued: false, tokenId: undefined })
+                })
+        })
     }
 }
 
+// Retry submitting the transaction N times (3 by default in jest, 0 by default elsewhere)
+// and then wait until the first confirmation of the transaction has been mined
 async function wrapTransaction(
     txFn: () => Promise<ContractTransaction>,
     txnOpts?: TransactionOpts,
 ): Promise<ContractTransaction> {
-    const tx = await txFn()
     if (!txnOpts) {
         txnOpts = isJest() ? { retryCount: 3 } : { retryCount: 0 }
     }
-    if ((txnOpts.retryCount ?? 0) === 0) {
-        return tx
-    }
-    let wait = tx.wait.bind(tx)
-    tx.wait = async function (confirmations?: number) {
-        let retryCount = 0
+    let retryCount = 0
+
+    const runTx = async () => {
         // eslint-disable-next-line no-constant-condition
         while (true) {
             try {
-                const receipt = await wait(confirmations)
-                return receipt
+                const txStart = Date.now()
+                const tx = await txFn()
+                logger.log('Transaction submitted in', Date.now() - txStart)
+                const startConfirm = Date.now()
+                await confirmTransaction(tx)
+                logger.log('Transaction confirmed in', Date.now() - startConfirm)
+                return tx
             } catch (error) {
                 retryCount++
-                const bRetrying = retryCount < (txnOpts?.retryCount ?? 0)
-                logger.error('Transaction failed', { error, retryCount, bRetrying })
-                if (!bRetrying) {
-                    throw error
-                } else {
-                    logger.info('Waiting 1 sec for retry', { retryCount })
-                    await new Promise((resolve) => setTimeout(resolve, 1000))
-                    const retryTx = await txFn()
-                    wait = retryTx.wait.bind(retryTx)
+                if (retryCount >= (txnOpts?.retryCount ?? Infinity)) {
+                    throw new Error('Transaction failed after retries: ' + (error as Error).message)
                 }
+                logger.error('Transaction submission failed, retrying...', { error, retryCount })
+                await new Promise((resolve) => setTimeout(resolve, 1000))
             }
         }
     }
 
-    return tx
+    // Wait until the first confirmation of the transaction
+    const confirmTransaction = async (tx: ContractTransaction) => {
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+            try {
+                const receipt = await tx.wait(0)
+                if (receipt.status === 1) {
+                    break
+                } else {
+                    throw new Error('Transaction confirmed but failed')
+                }
+            } catch (error) {
+                await new Promise((resolve) => setTimeout(resolve, 100))
+            }
+        }
+    }
+    return await runTx()
 }
