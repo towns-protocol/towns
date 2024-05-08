@@ -41,9 +41,14 @@ export const RichTextBottomToolbar = (props: Props) => {
     /** Open formatting toolbar when user selects any text and keep it open */
     useEffect(() => {
         if (!isFormattingToolbarOpen && selectedText && selectedText.length > 0) {
-            setIsFormattingToolbarOpen(true)
+            setTimeout(() => {
+                const _selectedText = getSelectionText(editor)
+                if (_selectedText && _selectedText.length > 0) {
+                    setIsFormattingToolbarOpen(true)
+                }
+            }, SECOND_MS)
         }
-    }, [selectedText, setIsFormattingToolbarOpen, isFormattingToolbarOpen])
+    }, [editor, selectedText, setIsFormattingToolbarOpen, isFormattingToolbarOpen])
 
     const onSelectEmoji = useCallback(
         (data: EmojiPickerSelection) => {
