@@ -84,7 +84,7 @@ export const RichTextBottomToolbar = (props: Props) => {
     const mediaInputId = 'media' + mediaDropContext.channelId + mediaDropContext.eventId
 
     return (
-        <Stack horizontal gap="xs" alignItems="center">
+        <Stack horizontal gap={isTouch ? 'sm' : 'xs'} alignItems="center">
             {isTouch ? (
                 <>
                     {props.visible && (

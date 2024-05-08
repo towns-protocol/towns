@@ -89,7 +89,7 @@ export const PlateToolbar = ({ showFormattingToolbar, focused }: Props) => {
                             <Stack
                                 horizontal
                                 overflowX="scroll"
-                                gap="xs"
+                                gap={isTouch ? 'sm' : 'xs'}
                                 pointerEvents="auto"
                                 width="100%"
                                 opacity={focused ? 'opaque' : '0.4'}
