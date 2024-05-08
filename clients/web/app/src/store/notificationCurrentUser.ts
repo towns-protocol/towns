@@ -29,11 +29,10 @@ export class NotificationCurrentUser extends Dexie {
         return this.currentUser.get(NotificationCurrentUser.keyPath)
     }
 
-    public async setCurrentUserRecord(userId: string, databaseName: string): Promise<void> {
+    public async setCurrentUserRecord(updatedRecord: CurrentUser): Promise<void> {
         await this.currentUser.put({
             keyPath: NotificationCurrentUser.keyPath,
-            userId,
-            databaseName,
+            ...updatedRecord,
         })
     }
 

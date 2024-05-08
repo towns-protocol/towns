@@ -10,7 +10,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
 import debug from 'debug'
-import { NotificationCurrentUser } from 'store/notificationCurrentUser'
+import { CurrentUser, NotificationCurrentUser } from 'store/notificationCurrentUser'
 import { NotificationStore } from '../store/notificationStore'
 import { User } from './types.d'
 import { preferredUsername } from './utils'
@@ -47,11 +47,21 @@ export function ServiceWorkerMetadataSyncer() {
 
             const currentUserId = myProfile.userId
             try {
-                await currentUser.setCurrentUserRecord(currentUserId, cryptoStoreDatabaseName)
+                const currentRecord = await currentUser.getCurrentUserRecord()
+                const updatedRecord: CurrentUser = {
+                    userId: currentUserId,
+                    databaseName: cryptoStoreDatabaseName,
+                }
+                if (currentRecord?.userId === currentUserId) {
+                    // retain the last URL and timestamp
+                    updatedRecord.lastUrl = currentRecord.lastUrl
+                    updatedRecord.lastUrlTimestamp = currentRecord.lastUrlTimestamp
+                }
+                await currentUser.setCurrentUserRecord(updatedRecord)
                 if (!cancelled) {
                     // open the notification cache for this user
                     setStore(new NotificationStore(currentUserId))
-                    log('set currentUser', { currentUser })
+                    log('set currentUser', updatedRecord)
                 }
             } catch (error) {
                 console.error('sw:push: error setting my userId', error)
