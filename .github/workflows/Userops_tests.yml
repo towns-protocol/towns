@@ -10,7 +10,6 @@ on:
 
 jobs:
     user_ops_tests:
-        environment: gamma
         runs-on: ubuntu-latest-8-cores
         timeout-minutes: 240
         steps:
