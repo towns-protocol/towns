@@ -301,8 +301,23 @@ export class NotificationService {
                 continue
             }
 
+            if (
+                result.value.statusCode &&
+                result.value.statusCode >= 400 &&
+                result.value.statusCode < 500
+            ) {
+                logger.error(
+                    'failed to send notification because of subscription error. Delete subscription',
+                    {
+                        result,
+                    },
+                )
+                await this.deleteFailedSubscription(result)
+                continue
+            }
+
+            // all other errors
             logger.info('failed to send notification', { result })
-            await this.deleteFailedSubscription(result)
         }
         return notificationsSentCount
     }

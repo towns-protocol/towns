@@ -47,4 +47,5 @@ export interface SendPushResponse {
     userId: string
     pushSubscription: string
     message?: string
+    statusCode?: number
 }

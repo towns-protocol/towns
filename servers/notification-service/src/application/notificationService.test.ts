@@ -803,18 +803,21 @@ describe('NotificationService', () => {
                     status: SendPushStatus.Success,
                     userId: 'user1',
                     pushSubscription: 'subscription1',
+                    statusCode: 200,
                 }),
                 Promise.resolve({
                     status: SendPushStatus.Error,
                     userId: 'user2',
                     pushSubscription: 'subscription2',
                     message: 'error 2',
+                    statusCode: 400,
                 }),
                 Promise.resolve({
                     status: SendPushStatus.Error,
                     userId: 'user3',
                     pushSubscription: 'subscription3',
                     message: 'error 3',
+                    statusCode: 400,
                 }),
             ]
 
@@ -837,6 +840,7 @@ describe('NotificationService', () => {
                     message: 'Invalid token',
                     userId: 'user1',
                     pushSubscription: 'subscription123',
+                    statusCode: 400,
                 },
                 status: 'fulfilled',
             }

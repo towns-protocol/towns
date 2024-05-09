@@ -57,6 +57,7 @@ export async function sendNotificationViaWebPush(
                 message: 'cannot parse subscription',
                 userId: options.userId,
                 pushSubscription: subscribed.PushSubscription,
+                statusCode: undefined,
             }
         }
         // ok to proceed
@@ -96,6 +97,7 @@ export async function sendNotificationViaWebPush(
             status: status >= 200 && status <= 204 ? SendPushStatus.Success : SendPushStatus.Error,
             userId: options.userId,
             pushSubscription: subscribed.PushSubscription,
+            statusCode: status,
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
