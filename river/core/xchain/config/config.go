@@ -24,7 +24,7 @@ type Config struct {
 	Log                           infra.LogConfig     `mapstructure:"log"`
 	ChainsString                  string              `mapstructure:"chains"`
 	Chains                        map[uint64]string   `mapstructure:"-"` // This is a derived field
-	EntitlementCheckerContract    ContractConfig      `mapstructure:"entitlement_checker_contract"`
+	EntitlementContract           ContractConfig      `mapstructure:"entitlement_contract"`
 	WalletLinkContract            ContractConfig      `mapstructure:"wallet_link_contract"`
 	TestingContract               ContractConfig      `mapstructure:"test_contract"`
 	contractVersion               ContractVersion     `mapstructure:"contract_version"`
@@ -50,8 +50,8 @@ func (c *Config) GetContractVersion() ContractVersion {
 	}
 }
 
-func (c *Config) GetCheckerContractAddress() common.Address {
-	return common.HexToAddress(c.EntitlementCheckerContract.Address)
+func (c *Config) GetEntitlementContractAddress() common.Address {
+	return common.HexToAddress(c.EntitlementContract.Address)
 }
 
 func (c *Config) GetWalletLinkContractAddress() common.Address {

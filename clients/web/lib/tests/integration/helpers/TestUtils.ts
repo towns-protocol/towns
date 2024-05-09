@@ -16,6 +16,7 @@ import {
     getFixedPricingModule,
 } from '@river-build/web3'
 import { makeRiverConfig } from '@river/sdk'
+import { log } from 'console'
 
 export const EVERYONE_ADDRESS = '0x0000000000000000000000000000000000000001'
 
@@ -150,7 +151,12 @@ export async function createTestSpaceGatedByTownsNfts(
                     name: client.makeUniqueName(),
                 }
             }
-            return client.createSpace(createSpaceInfo, membershipInfo)
+            try {
+                return client.createSpace(createSpaceInfo, membershipInfo)
+            } catch (e) {
+                log('createSpace error', e)
+                throw e
+            }
         },
         {
             intervalMs: 1000 * 5,

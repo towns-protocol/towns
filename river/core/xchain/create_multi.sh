@@ -84,9 +84,9 @@ do
     echo "Creating instance_${i}"
     
     yq eval ".metrics.port = \"$METRICS_PORT\"" -i "${INSTANCE_DIR}/config/config.yaml"
-    yq eval ".entitlement_checker_contract.url = \"$BASE_CHAIN_URL\"" -i "${INSTANCE_DIR}/config/config.yaml"
-    yq eval ".entitlement_checker_contract.address = \"$BASE_REGISTRY_ADDRESS\"" -i "${INSTANCE_DIR}/config/config.yaml"
-    yq eval ".entitlement_checker_contract.chainId = \"$BASE_CHAIN_ID\"" -i "${INSTANCE_DIR}/config/config.yaml"
+    yq eval ".entitlement_contract.url = \"$BASE_CHAIN_URL\"" -i "${INSTANCE_DIR}/config/config.yaml"
+    yq eval ".entitlement_contract.address = \"$BASE_REGISTRY_ADDRESS\"" -i "${INSTANCE_DIR}/config/config.yaml"
+    yq eval ".entitlement_contract.chainId = \"$BASE_CHAIN_ID\"" -i "${INSTANCE_DIR}/config/config.yaml"
     yq eval ".wallet_link_contract.url = \"$BASE_CHAIN_URL\"" -i "${INSTANCE_DIR}/config/config.yaml"
     yq eval ".wallet_link_contract.address = \"$SPACE_FACTORY_ADDRESS\"" -i "${INSTANCE_DIR}/config/config.yaml"
     yq eval ".wallet_link_contract.chainId = \"$BASE_CHAIN_ID\"" -i "${INSTANCE_DIR}/config/config.yaml"

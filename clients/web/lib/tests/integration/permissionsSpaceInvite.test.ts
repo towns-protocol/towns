@@ -87,7 +87,8 @@ describe('space invite', () => {
         expect(isEntitledWrite).toBe(false)
     }) // end test
 
-    test('Invitee is allowed to write to token gated space with token', async () => {
+    // TODO this test isn't valid until we add Channel Read/Write gating back in
+    test.skip('Invitee is allowed to write to token gated space with token', async () => {
         /** Arrange */
 
         // create all the users for the test

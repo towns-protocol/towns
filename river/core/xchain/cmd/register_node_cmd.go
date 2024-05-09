@@ -91,7 +91,7 @@ func registerImpl(operatorKeyfile string, userConfirmationMessage string, regist
 	)
 
 	checker, err := contracts.NewIEntitlementChecker(
-		loadedCfg.GetCheckerContractAddress(), baseChain.Client, loadedCfg.GetContractVersion())
+		loadedCfg.GetEntitlementContractAddress(), baseChain.Client, loadedCfg.GetContractVersion())
 	if err != nil {
 		return err
 	}

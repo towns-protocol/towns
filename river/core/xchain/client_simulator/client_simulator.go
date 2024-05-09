@@ -220,7 +220,7 @@ func New(
 	if err != nil {
 		return nil, err
 	}
-	checker, err := e.NewIEntitlementChecker(cfg.GetCheckerContractAddress(), nil, cfg.GetContractVersion())
+	checker, err := e.NewIEntitlementChecker(cfg.GetEntitlementContractAddress(), nil, cfg.GetContractVersion())
 	if err != nil {
 		return nil, err
 	}
@@ -236,7 +236,7 @@ func New(
 		)
 
 		checkerABI      = checker.GetAbi()
-		checkerContract = bind.NewBoundContract(cfg.GetCheckerContractAddress(), *checker.GetAbi(), nil, nil, nil)
+		checkerContract = bind.NewBoundContract(cfg.GetEntitlementContractAddress(), *checker.GetAbi(), nil, nil, nil)
 	)
 
 	var ownsChain bool
@@ -294,7 +294,7 @@ func (cs *clientSimulator) Start(ctx context.Context) {
 		Info("check requested topics", "topics", cs.checkerABI.Events["EntitlementCheckRequested"].ID)
 
 	cs.baseChain.ChainMonitor.OnContractWithTopicsEvent(
-		cs.cfg.GetCheckerContractAddress(),
+		cs.cfg.GetEntitlementContractAddress(),
 		[][]common.Hash{{cs.checkerABI.Events["EntitlementCheckRequested"].ID}},
 		func(ctx context.Context, event types.Log) {
 			cs.onEntitlementCheckRequested(ctx, event, cs.checkRequests)

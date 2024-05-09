@@ -74,7 +74,7 @@ func New(
 		return nil, err
 	}
 
-	checker, err := contracts.NewIEntitlementChecker(cfg.GetCheckerContractAddress(), nil, cfg.GetContractVersion())
+	checker, err := contracts.NewIEntitlementChecker(cfg.GetEntitlementContractAddress(), nil, cfg.GetContractVersion())
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +85,7 @@ func New(
 			With("application", "xchain")
 		checkerABI      = checker.GetAbi()
 		checkerContract = bind.NewBoundContract(
-			cfg.GetCheckerContractAddress(),
+			cfg.GetEntitlementContractAddress(),
 			*checker.GetAbi(),
 			nil,
 			nil,
@@ -93,6 +93,8 @@ func New(
 		)
 		entitlementGatedMetaData = contracts.NewEntitlementGatedMetaData(cfg.GetContractVersion())
 	)
+
+	log.Info("Starting xchain node", "cfg", cfg)
 
 	var wallet *crypto.Wallet
 	if baseChain == nil {
@@ -184,7 +186,7 @@ func (x *xchain) Log(ctx context.Context) *slog.Logger {
 // if not this instance isn't allowed to submit entitlement check results.
 func (x *xchain) isRegistered(ctx context.Context) (bool, error) {
 	checker, err := contracts.NewIEntitlementChecker(
-		x.config.GetCheckerContractAddress(), x.baseChain.Client, x.config.GetContractVersion())
+		x.config.GetEntitlementContractAddress(), x.baseChain.Client, x.config.GetContractVersion())
 	if err != nil {
 		return false, AsRiverError(err, Err_CANNOT_CALL_CONTRACT)
 	}
@@ -198,7 +200,7 @@ func (x *xchain) Run(ctx context.Context) {
 	var (
 		runCtx, cancel                      = context.WithCancel(ctx)
 		log                                 = x.Log(ctx)
-		entitlementAddress                  = x.config.GetCheckerContractAddress()
+		entitlementAddress                  = x.config.GetEntitlementContractAddress()
 		entitlementCheckReceipts            = make(chan *entitlementCheckReceipt, 256)
 		onEntitlementCheckRequestedCallback = func(ctx context.Context, event types.Log) {
 			x.onEntitlementCheckRequested(ctx, event, entitlementCheckReceipts)
