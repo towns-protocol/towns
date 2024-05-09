@@ -24,7 +24,7 @@ export function useHnt5685() {
             setTouchInitialLink(undefined)
             const currentUser = await notificationCurrentUser.getCurrentUserRecord()
             if (currentUser?.lastUrlTimestamp) {
-                const currentTime = performance.now()
+                const currentTime = Date.now()
                 const timeDiff = currentTime - currentUser.lastUrlTimestamp
                 if (timeDiff < 5 * SECOND_MS) {
                     // return the last URL only if it was set within the last t seconds

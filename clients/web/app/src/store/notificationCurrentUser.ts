@@ -4,7 +4,7 @@ export interface CurrentUser {
     userId: string
     databaseName: string
     lastUrl?: string
-    lastUrlTimestamp?: DOMHighResTimeStamp
+    lastUrlTimestamp?: number
 }
 
 export interface CurrentUserRecord extends CurrentUser {
@@ -37,7 +37,7 @@ export class NotificationCurrentUser extends Dexie {
     }
 
     public async setLastUrl(url: string): Promise<void> {
-        const lastUrlTimestamp = performance.now()
+        const lastUrlTimestamp = Date.now()
         await this.currentUser.update(NotificationCurrentUser.keyPath, {
             lastUrl: url,
             lastUrlTimestamp,
