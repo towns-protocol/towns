@@ -363,7 +363,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
         # WalletLink has been migrated to the Space Factory contract.
         # But XChain still refers to walletLink contract.
         # This is a duplicate of ARCHITECTCONTRACT__ADDRESS, so that XChain can still refer to WalletLink contract.
-        name      = "WALLETLINKCONTRACT__ADDRESS"
+        name      = "WALLET_LINK_CONTRACT__ADDRESS"
         valueFrom = var.system_parameters.space_factory_contract_address_parameter.arn
       },
       {
