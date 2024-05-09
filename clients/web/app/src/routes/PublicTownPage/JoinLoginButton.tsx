@@ -49,6 +49,8 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
             permission: Permission.JoinSpace,
         })
 
+    const hasSignerContext = !!signerContext
+
     useEffect(() => {
         // Reminder to remove: https://linear.app/hnt-labs/issue/HNT-6108/reminder-to-remove-consolewarn-for-hnt-6051
         console.warn('[JoinLoginButton][hnt-6051]', 'states', {
@@ -57,14 +59,14 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
             loggedInWalletAddress,
             isAuthenticated,
             connected,
-            hasSignerContext: !!signerContext,
+            hasSignerContext,
         })
     }, [
         meetsMembershipRequirements,
         loggedInWalletAddress,
         isAuthenticated,
         connected,
-        signerContext,
+        hasSignerContext,
         casablancaClient?.rpcClient.url,
     ])
 

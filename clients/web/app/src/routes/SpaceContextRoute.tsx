@@ -126,7 +126,8 @@ const useSpaceRouteMatcher = (
             pathname: location.pathname,
             search: location.search,
         }
-        return { pathname, search }
+        const scrubbedPathname = pathname.replace(/^\/\//, '/') // this can cause bug hnt-5685
+        return { pathname: scrubbedPathname, search }
     }, [location.pathname, location.search, touchInitialLink])
 
     return useMemo(() => {
@@ -212,7 +213,7 @@ export function getRouteParams(path?: string): RouteParams {
     // match for desktop devices where the channelId is in the path, but no spaceId
     const matchWithMessages = matchPath(
         {
-            path: `${PATHS.MESSAGES}/:channelId`,
+            path: `/${PATHS.MESSAGES}/:channelId/`,
         },
         path,
     )

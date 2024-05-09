@@ -1,5 +1,5 @@
-import React, { Fragment } from 'react'
-import { Route, Routes } from 'react-router'
+import React, { useEffect } from 'react'
+import { Route, Routes, useLocation } from 'react-router'
 import { PATHS } from 'routes'
 import { SpaceContextRoute } from 'routes/SpaceContextRoute'
 import { useDevice } from 'hooks/useDevice'
@@ -28,6 +28,15 @@ import { DirectMessages } from './DMRoute'
 
 export const AuthenticatedRoutes = () => {
     const { isTouch } = useDevice()
+    const location = useLocation()
+
+    useEffect(() => {
+        console.warn('[AuthenticatedRoutes][hnt-5685]', 'route', {
+            deviceType: isTouch ? 'mobile' : 'desktop',
+            locationPathname: location.pathname,
+            locationSearch: location.search,
+        })
+    }, [isTouch, location.pathname, location.search])
 
     return (
         <Routes>
@@ -148,6 +157,17 @@ const messageRoutes = (
  *  authenticated but not under `/t/:townId/*
  */
 const OutsideTownRoutes = () => {
+    const { isTouch } = useDevice()
+    const location = useLocation()
+
+    useEffect(() => {
+        console.warn('[OutsideTownRoutes][hnt-5685]', 'route', {
+            deviceType: isTouch ? 'mobile' : 'desktop',
+            locationPathname: location.pathname,
+            locationSearch: location.search,
+        })
+    }, [isTouch, location.pathname, location.search])
+
     return (
         <Routes>
             {messageRoutes}

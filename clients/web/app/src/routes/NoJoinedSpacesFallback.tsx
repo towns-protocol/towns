@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect } from 'react'
-import { useNavigate } from 'react-router'
+import { useLocation, useNavigate } from 'react-router'
 import {
     LoginStatus,
     Membership,
@@ -27,6 +27,16 @@ export const NoJoinedSpacesFallback = () => {
     })
 
     const { isTouch } = useDevice()
+    const location = useLocation()
+
+    useEffect(() => {
+        console.warn('[NoJoinedSpacesFallback][hnt-5685]', 'route', {
+            deviceType: isTouch ? 'mobile' : 'desktop',
+            locationPathname: location.pathname,
+            locationSearch: location.search,
+            spaceIdBookmark,
+        })
+    }, [isTouch, location.pathname, location.search, spaceIdBookmark])
 
     useEffect(() => {
         if (!client) {
@@ -37,10 +47,15 @@ export const NoJoinedSpacesFallback = () => {
                 spaces.find((space) => space.id === spaceIdBookmark)?.id ?? spaces[0].id
 
             if (client.getMembership(firstSpaceId) === Membership.Join) {
+                console.warn('[NoJoinedSpacesFallback][hnt-5685] Navigating to first space', {
+                    firstSpaceId,
+                    path: `/${PATHS.SPACES}/${firstSpaceId}/`,
+                    deviceType: isTouch ? 'mobile' : 'desktop',
+                })
                 navigate(`/${PATHS.SPACES}/${firstSpaceId}/`)
             }
         }
-    }, [spaces, navigate, client, spaceIdBookmark])
+    }, [spaces, navigate, client, spaceIdBookmark, isTouch])
 
     const openTownPanel = useCallback(() => {
         navigate(`/${PATHS.SPACES}/new`)

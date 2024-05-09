@@ -204,19 +204,20 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                     navigationChannel.postMessage({ path })
                 } else {
                     // update the path with specific search params
-                    path = getUrlWithParams(
+                    const url = getUrlWithParams(
                         new URL(worker.location.origin),
                         path,
                         NotificationRel.OpenWindow,
                         data.kind,
-                    ).toString()
+                    )
                     console.warn('[hnt-5685] service worker opening browser window', {
-                        path,
+                        path: url.toString(),
                         hadWindowToFocus: false,
                     })
                     // work around for hnt-5685
-                    await currentUserStore.setLastUrl(path)
-                    const window = await worker.clients.openWindow(path)
+                    const pathWithParams = url.pathname + url.search
+                    await currentUserStore.setLastUrl(pathWithParams)
+                    const window = await worker.clients.openWindow(url.toString())
                     await window?.focus()
                 }
             }),

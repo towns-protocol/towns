@@ -106,17 +106,19 @@ export const TouchHome = () => {
         permission: Permission.AddRemoveChannels,
     })
 
+    const hasSignerContext = signerContext !== undefined
+
     useEffect(() => {
         console.warn('[TouchHome][hnt-5685]', 'route', {
             spaceId: space?.id ?? '',
             loggedInWalletAddress: loggedInWalletAddress ?? '',
             loginStatus,
             isAuthenticated,
-            hasSignerContext: signerContext !== undefined,
-            locationPath: location.pathname,
-            locationParams: location.search,
+            hasSignerContext,
+            locationPathname: location.pathname,
+            locationSearch: location.search,
         })
-    }, [isAuthenticated, loggedInWalletAddress, loginStatus, signerContext, space?.id])
+    }, [isAuthenticated, loggedInWalletAddress, loginStatus, hasSignerContext, space?.id])
 
     const onFocus = useCallback(() => {
         setIsSearching(true)

@@ -14,14 +14,14 @@ export interface CurrentUserRecord extends CurrentUser {
 export class NotificationCurrentUser extends Dexie {
     private static readonly keyPath = 'currentUser'
     public readonly storeName: string
-    private currentUser!: Table<CurrentUserRecord>
+    public readonly currentUser!: Table<CurrentUserRecord>
 
     constructor() {
         const storeName = 'notification-current-user'
         super(storeName)
         this.storeName = storeName
-        this.version(3).stores({
-            currentUser: 'keyPath',
+        this.version(4).stores({
+            currentUser: 'keyPath, lastUrlTimestamp',
         })
     }
 

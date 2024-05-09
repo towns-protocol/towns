@@ -62,7 +62,7 @@ export const App = () => {
             spaceIdBookmark,
             channelBookmark,
             locationPathname: location.pathname,
-            search: location.search,
+            locationSearch: location.search,
             highPriorityStreamIds: highPriorityStreamIds.current,
         })
     }, [channelBookmark, channelId, isTouch, spaceId, spaceIdBookmark])
