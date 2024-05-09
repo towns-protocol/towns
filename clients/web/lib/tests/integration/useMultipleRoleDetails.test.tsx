@@ -89,10 +89,9 @@ describe('useMultipleRoleDetails', () => {
         fireEvent.click(createSpaceButton)
 
         // wait for space to be created
-        const spaceElement = await waitFor(
-            () => screen.getByTestId('spacesElement'),
-            TestConstants.DecaDefaultWaitForTimeout,
-        )
+        const spaceElement = await waitFor(() => screen.getByTestId('spacesElement'), {
+            timeout: TestConstants.DefaultWaitForTimeoutMS * 10,
+        })
 
         // wait for the space name to render
         await waitFor(

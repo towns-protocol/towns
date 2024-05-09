@@ -7,6 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/crypto"
+	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/protocol"
 )
 
@@ -27,6 +28,7 @@ type (
 // It uses ethclient.Client instances that are safe to use concurrently. Therefor the pool keeps a reference to each
 // client and there is no need for callers to return the obtained client back to the pool after use.
 func NewBlockchainClientPool(ctx context.Context, cfg *config.Config) (BlockchainClientPool, error) {
+	log := dlog.FromCtx(ctx)
 	clients := make(map[uint64]crypto.BlockchainClient)
 	for chainID, endpoint := range cfg.Chains {
 		if _, got := clients[chainID]; got {
@@ -35,24 +37,21 @@ func NewBlockchainClientPool(ctx context.Context, cfg *config.Config) (Blockchai
 
 		client, err := ethclient.DialContext(ctx, endpoint)
 		if err != nil {
-			return nil, AsRiverError(err, Err_BAD_CONFIG).
-				Tag("chainId", chainID).
-				Message("Unable to connect to endpoint")
+			log.Warn("Unable to dial endpoint", "chainId", chainID, "endpoint", endpoint, "err", err)
+			continue
 		}
 
 		// make sure that the endpoint points to the correct endpoint
 		fetchedChainID, err := client.ChainID(ctx)
 		if err != nil {
-			return nil, AsRiverError(err, Err_BAD_CONFIG).
-				Tag("chainId", chainID).
-				Message("Unable to connect to endpoint")
+			client.Close()
+			log.Warn("Unable to connect to endpoint", "chainId", chainID, "endpoint", endpoint, "err", err)
+			continue
 		}
 		if fetchedChainID.Uint64() != chainID {
-			return nil, RiverError(Err_BAD_CONFIG, "Invalid endpoint confirmation").
-				Tag("expChainId", chainID).
-				Tag("gotChainId", fetchedChainID).
-				Tag("url", endpoint).
-				Message("Chain points to different endpoint")
+			log.Warn("Chain points to different endpoint", "chainId", chainID, "gotChainId", fetchedChainID, "url", endpoint)
+			client.Close()
+			continue
 		}
 
 		clients[chainID] = client
