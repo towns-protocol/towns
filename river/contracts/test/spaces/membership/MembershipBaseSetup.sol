@@ -8,8 +8,13 @@ import {IERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.
 import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
 import {IPlatformRequirements} from "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
+import {IEntitlementsManager, IEntitlementsManagerBase} from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
+import {IRoles, IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
+import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 
 // libraries
+import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
+import {RuleEntitlementUtil} from "contracts/test/crosschain/RuleEntitlementUtil.sol";
 
 // contracts
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
@@ -45,6 +50,8 @@ contract MembershipBaseSetup is
   // receiver of protocol fees
   address internal feeRecipient;
 
+  address internal userSpace;
+
   function setUp() public override {
     super.setUp();
 
@@ -64,7 +71,7 @@ contract MembershipBaseSetup is
     userSpaceInfo.membership.settings.pricingModule = fixedPricingModule;
 
     vm.startPrank(founder);
-    address userSpace = Architect(spaceFactory).createSpace(userSpaceInfo);
+    userSpace = Architect(spaceFactory).createSpace(userSpaceInfo);
     vm.stopPrank();
 
     membership = MembershipFacet(userSpace);
@@ -91,6 +98,45 @@ contract MembershipBaseSetup is
   modifier givenAliceHasMintedMembership() {
     vm.startPrank(alice);
     membership.joinSpace(alice);
+    vm.stopPrank();
+    _;
+  }
+
+  modifier givenJoinspaceHasAdditionalCrosschainEntitlements() {
+    vm.startPrank(founder);
+    IEntitlementsManagerBase.Entitlement[]
+      memory entitlements = IEntitlementsManager(userSpace).getEntitlements();
+    IEntitlement ruleEntitlement = IEntitlement(entitlements[1].moduleAddress);
+
+    // IRuleEntitlements only allow one entitlement per role, so create 2 roles to add 2 rule entitlements that need to
+    // be checked for the joinSpace permission.
+    IRolesBase.CreateEntitlement[]
+      memory createEntitlements1 = new IRolesBase.CreateEntitlement[](1);
+    IRolesBase.CreateEntitlement[]
+      memory createEntitlements2 = new IRolesBase.CreateEntitlement[](1);
+
+    createEntitlements1[0] = IRolesBase.CreateEntitlement({
+      module: ruleEntitlement,
+      data: abi.encode(RuleEntitlementUtil.getMockERC20RuleData())
+    });
+    createEntitlements2[0] = IRolesBase.CreateEntitlement({
+      module: ruleEntitlement,
+      data: abi.encode(RuleEntitlementUtil.getMockERC1155RuleData())
+    });
+
+    string[] memory permissions = new string[](1);
+    permissions[0] = Permissions.JoinSpace;
+
+    IRoles(userSpace).createRole(
+      "joinspace-crosschain-multi-entitlement-1",
+      permissions,
+      createEntitlements1
+    );
+    IRoles(userSpace).createRole(
+      "joinspace-crosschain-multi-entitlement-2",
+      permissions,
+      createEntitlements2
+    );
     vm.stopPrank();
     _;
   }

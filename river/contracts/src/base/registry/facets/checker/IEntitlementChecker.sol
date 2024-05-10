@@ -15,6 +15,7 @@ interface IEntitlementCheckerBase {
     address callerAddress,
     address contractAddress,
     bytes32 transactionId,
+    uint256 roleId,
     address[] selectedNodes
   );
 }
@@ -37,6 +38,7 @@ interface IEntitlementChecker is IEntitlementCheckerBase {
   function requestEntitlementCheck(
     address callerAddress,
     bytes32 transactionId,
+    uint256 roleId,
     address[] memory nodes
   ) external;
 }

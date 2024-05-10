@@ -1767,7 +1767,7 @@ export class TownsClient
         if (!this.casablancaClient) {
             throw new Error('casablanca client is undefined')
         }
-        return await this.casablancaClient.sendChannelMessage_Edit_Text(roomId, eventId, {
+        await this.casablancaClient.sendChannelMessage_Edit_Text(roomId, eventId, {
             threadId: originalEventContent.threadId,
             threadPreview: originalEventContent.threadPreview,
             content: {

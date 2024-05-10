@@ -212,7 +212,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         }
     }
 
-    public sendKeySolicitation({
+    public async sendKeySolicitation({
         streamId,
         isNewDevice,
         missingSessionIds,
@@ -223,10 +223,10 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             isNewDevice,
             sessionIds: isNewDevice ? [] : missingSessionIds,
         })
-        return this.client.makeEventAndAddToStream(streamId, keySolicitation)
+        await this.client.makeEventAndAddToStream(streamId, keySolicitation)
     }
 
-    public sendKeyFulfillment({
+    public async sendKeyFulfillment({
         streamId,
         userAddress,
         deviceKey,
@@ -238,11 +238,11 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
             sessionIds: sessionIds,
         })
 
-        return this.client.makeEventAndAddToStream(streamId, fulfillment)
+        await this.client.makeEventAndAddToStream(streamId, fulfillment)
     }
 
-    public uploadDeviceKeys(): Promise<void> {
-        return this.client.uploadDeviceKeys()
+    public async uploadDeviceKeys(): Promise<void> {
+        await this.client.uploadDeviceKeys()
     }
 
     public onStart(): void {

@@ -26,7 +26,10 @@ export class GroupEncryption extends EncryptionAlgorithm {
         super(params)
     }
 
-    private async ensureOutboundSession(streamId: string): Promise<void> {
+    public async ensureOutboundSession(
+        streamId: string,
+        opts?: { awaitInitialShareSession: boolean },
+    ): Promise<void> {
         try {
             await this.device.getOutboundGroupSessionKey(streamId)
             return
@@ -35,7 +38,11 @@ export class GroupEncryption extends EncryptionAlgorithm {
             const sessionId = await this.device.createOutboundGroupSession(streamId)
             log(`Started new megolm session ${sessionId}`)
             // don't wait for the session to be shared
-            void this.shareSession(streamId, sessionId)
+            const promise = this.shareSession(streamId, sessionId)
+
+            if (opts?.awaitInitialShareSession === true) {
+                await promise
+            }
         }
     }
 

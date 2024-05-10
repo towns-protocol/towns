@@ -270,11 +270,11 @@ func (g *MockEntitlementGated) GetAbi() *abi.ABI {
 	return abi
 }
 
-func (g *MockEntitlementGated) RequestEntitlementCheck(opts *bind.TransactOpts, ruledata IRuleData) (*types.Transaction, error) {
+func (g *MockEntitlementGated) RequestEntitlementCheck(opts *bind.TransactOpts, roleId *big.Int, ruledata IRuleData) (*types.Transaction, error) {
 	if g.v3MockEntitlementGated != nil {
-		return g.v3MockEntitlementGated.RequestEntitlementCheck(opts, convertRuleDataToV3(ruledata))
+		return g.v3MockEntitlementGated.RequestEntitlementCheck(opts, roleId, convertRuleDataToV3(ruledata))
 	} else {
-		return g.devMockEntitlementGated.RequestEntitlementCheck(opts, convertRuleDataToDev(ruledata))
+		return g.devMockEntitlementGated.RequestEntitlementCheck(opts, roleId, convertRuleDataToDev(ruledata))
 	}
 }
 
@@ -331,11 +331,11 @@ func NewIEntitlementGated(address common.Address, backend bind.ContractBackend, 
 	}
 }
 
-func (g *IEntitlementGated) PostEntitlementCheckResult(opts *bind.TransactOpts, transactionId [32]byte, result uint8) (*types.Transaction, error) {
+func (g *IEntitlementGated) PostEntitlementCheckResult(opts *bind.TransactOpts, transactionId [32]byte, roleId *big.Int, result uint8) (*types.Transaction, error) {
 	if g.v3IEntitlementGated != nil {
-		return g.v3IEntitlementGated.PostEntitlementCheckResult(opts, transactionId, result)
+		return g.v3IEntitlementGated.PostEntitlementCheckResult(opts, transactionId, roleId, result)
 	} else {
-		return g.devIEntitlementGated.PostEntitlementCheckResult(opts, transactionId, result)
+		return g.devIEntitlementGated.PostEntitlementCheckResult(opts, transactionId, roleId, result)
 	}
 }
 
@@ -363,10 +363,10 @@ func (g *IEntitlementGated) WatchEntitlementCheckResultPosted(opts *bind.WatchOp
 	}
 }
 
-func (g *IEntitlementGated) GetRuleData(opts *bind.CallOpts, transactionId [32]byte) (*IRuleData, error) {
+func (g *IEntitlementGated) GetRuleData(opts *bind.CallOpts, transactionId [32]byte, roleId *big.Int) (*IRuleData, error) {
 	var ruleData IRuleData
 	if g.v3IEntitlementGated != nil {
-		v3RuleData, err := g.v3IEntitlementGated.GetRuleData(opts, transactionId)
+		v3RuleData, err := g.v3IEntitlementGated.GetRuleData(opts, transactionId, roleId)
 		if err != nil {
 			return nil, err
 		}
@@ -398,7 +398,7 @@ func (g *IEntitlementGated) GetRuleData(opts *bind.CallOpts, transactionId [32]b
 		}
 		return &ruleData, nil
 	} else {
-		devRuleDtata, err := g.devIEntitlementGated.GetRuleData(opts, transactionId)
+		devRuleDtata, err := g.devIEntitlementGated.GetRuleData(opts, transactionId, roleId)
 		if err != nil {
 			return nil, err
 		}
@@ -552,6 +552,7 @@ func (c *IEntitlementChecker) GetAbi() *abi.ABI {
 type IEntitlementCheckRequestEvent interface {
 	CallerAddress() common.Address
 	TransactionID() common.Hash
+	RoleId() *big.Int
 	SelectedNodes() []common.Address
 	ContractAddress() common.Address
 	Raw() interface{}
@@ -588,6 +589,13 @@ func (e *entitlementCheckRequestEvent) ContractAddress() common.Address {
 		return e.v3Inner.ContractAddress
 	}
 	return e.devInner.ContractAddress
+}
+
+func (e *entitlementCheckRequestEvent) RoleId() *big.Int {
+	if e.v3Inner != nil {
+		return e.v3Inner.RoleId
+	}
+	return e.devInner.RoleId
 }
 
 func (e *entitlementCheckRequestEvent) Raw() interface{} {

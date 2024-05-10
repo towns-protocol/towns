@@ -36,14 +36,16 @@ contract EntitlementGated is
   // the internal function validates the transactionId and the result
   function postEntitlementCheckResult(
     bytes32 transactionId,
+    uint256 roleId,
     NodeVoteStatus result
   ) external nonReentrant {
-    _postEntitlementCheckResult(transactionId, result);
+    _postEntitlementCheckResult(transactionId, roleId, result);
   }
 
   function getRuleData(
-    bytes32 transactionId
+    bytes32 transactionId,
+    uint256 roleId
   ) external view returns (IRuleEntitlement.RuleData memory) {
-    return _getRuleData(transactionId);
+    return _getRuleData(transactionId, roleId);
   }
 }

@@ -106,6 +106,19 @@ export class GroupEncryptionCrypto {
     }
 
     /**
+     * Ensure that we have an outbound group session key for the given stream
+     *
+     * @returns Promise which resolves when the event has been
+     *     created, use options to await the initial share
+     */
+    public async ensureOutboundSession(
+        streamId: string,
+        opts?: { awaitInitialShareSession: boolean },
+    ): Promise<void> {
+        return this.groupEncryption.ensureOutboundSession(streamId, opts)
+    }
+
+    /**
      * Encrypt an event using group encryption algorithm
      *
      * @returns Promise which resolves when the event has been

@@ -169,7 +169,7 @@ export abstract class BaseDecryptionExtensions {
         const logId = generateLogId(userId, userDevice.deviceKey)
         this.log = {
             debug: dlog('csb:decryption:debug', { defaultEnabled: false }).extend(logId),
-            info: dlog('csb:decryption', { defaultEnabled: true }).extend(logId),
+            info: dlog('csb:decryption').extend(logId),
             error: dlogError('csb:decryption:error').extend(logId),
         }
         this.log.debug('new DecryptionExtensions', { userDevice })

@@ -411,7 +411,7 @@ export class EncryptionDevice {
 
         const session = this.delegate.createInboundGroupSession()
         try {
-            log(`Adding group session ${streamId}|${sessionId}, session Key ${sessionKey}`)
+            log(`Adding group session ${streamId}|${sessionId}`)
             try {
                 session.import_session(sessionKey)
             } catch {

@@ -629,39 +629,43 @@ async function evaluateERC721Operation(
         provider,
     )
 
-    let entitledWallet = zeroAddress
-
-    try {
-        await Promise.any(
-            linkedWallets.map(async (wallet) => {
-                try {
-                    const result: ethers.BigNumberish = await contract.callStatic.balanceOf(wallet)
-
-                    if (
-                        ethers.BigNumber.from(result).gte(
-                            ethers.BigNumber.from(operation.threshold),
-                        )
-                    ) {
-                        entitledWallet = wallet
-                        return
-                    } else {
-                        throw new Error('zero balance for wallet')
+    const walletBalances = await Promise.all(
+        linkedWallets.map(async (wallet) => {
+            try {
+                const result: ethers.BigNumberish = await contract.callStatic.balanceOf(wallet)
+                const resultAsBigNumber = ethers.BigNumber.from(result)
+                if (!ethers.BigNumber.isBigNumber(resultAsBigNumber)) {
+                    return {
+                        wallet,
+                        balance: ethers.BigNumber.from(0),
                     }
-                } catch (error) {
-                    throw new Error('Error checking balance of contract for wallet')
                 }
-            }),
-        )
-    } catch (error) {
-        if (error instanceof AggregateError) {
-            controller.abort()
-            // no balances found for this asset in any wallet
-        } else {
-            throw error
-        }
-    }
+                return {
+                    wallet,
+                    balance: resultAsBigNumber,
+                }
+            } catch (error) {
+                return {
+                    wallet,
+                    balance: ethers.BigNumber.from(0),
+                }
+            }
+        }),
+    )
 
-    return entitledWallet
+    const walletsWithAsset = walletBalances.filter((balance) => balance.balance.gt(0))
+
+    const accumulatedBalance = walletsWithAsset.reduce(
+        (acc, el) => acc.add(el.balance),
+        ethers.BigNumber.from(0),
+    )
+
+    if (walletsWithAsset.length > 0 && accumulatedBalance.gte(operation.threshold)) {
+        return walletsWithAsset[0].wallet
+    } else {
+        controller.abort()
+        return zeroAddress
+    }
 }
 
 function findProviderFromChainId(

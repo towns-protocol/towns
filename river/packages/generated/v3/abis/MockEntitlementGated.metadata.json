@@ -34,12 +34,12 @@
       {
         "inputs": [],
         "type": "error",
-        "name": "EntitlementGated_TransactionAlreadyCompleted"
+        "name": "EntitlementGated_TransactionCheckAlreadyCompleted"
       },
       {
         "inputs": [],
         "type": "error",
-        "name": "EntitlementGated_TransactionAlreadyRegistered"
+        "name": "EntitlementGated_TransactionCheckAlreadyRegistered"
       },
       {
         "inputs": [],
@@ -145,95 +145,8 @@
         "inputs": [
           {
             "internalType": "uint256",
-            "name": "",
+            "name": "roleId",
             "type": "uint256"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function",
-        "name": "getRuleData",
-        "outputs": [
-          {
-            "internalType": "struct IRuleEntitlement.RuleData",
-            "name": "",
-            "type": "tuple",
-            "components": [
-              {
-                "internalType": "struct IRuleEntitlement.Operation[]",
-                "name": "operations",
-                "type": "tuple[]",
-                "components": [
-                  {
-                    "internalType": "enum IRuleEntitlement.CombinedOperationType",
-                    "name": "opType",
-                    "type": "uint8"
-                  },
-                  {
-                    "internalType": "uint8",
-                    "name": "index",
-                    "type": "uint8"
-                  }
-                ]
-              },
-              {
-                "internalType": "struct IRuleEntitlement.CheckOperation[]",
-                "name": "checkOperations",
-                "type": "tuple[]",
-                "components": [
-                  {
-                    "internalType": "enum IRuleEntitlement.CheckOperationType",
-                    "name": "opType",
-                    "type": "uint8"
-                  },
-                  {
-                    "internalType": "uint256",
-                    "name": "chainId",
-                    "type": "uint256"
-                  },
-                  {
-                    "internalType": "address",
-                    "name": "contractAddress",
-                    "type": "address"
-                  },
-                  {
-                    "internalType": "uint256",
-                    "name": "threshold",
-                    "type": "uint256"
-                  }
-                ]
-              },
-              {
-                "internalType": "struct IRuleEntitlement.LogicalOperation[]",
-                "name": "logicalOperations",
-                "type": "tuple[]",
-                "components": [
-                  {
-                    "internalType": "enum IRuleEntitlement.LogicalOperationType",
-                    "name": "logOpType",
-                    "type": "uint8"
-                  },
-                  {
-                    "internalType": "uint8",
-                    "name": "leftOperationIndex",
-                    "type": "uint8"
-                  },
-                  {
-                    "internalType": "uint8",
-                    "name": "rightOperationIndex",
-                    "type": "uint8"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "bytes32",
-            "name": "transactionId",
-            "type": "bytes32"
           }
         ],
         "stateMutability": "view",
@@ -323,6 +236,103 @@
             "type": "bytes32"
           },
           {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "name": "getRuleData",
+        "outputs": [
+          {
+            "internalType": "struct IRuleEntitlement.RuleData",
+            "name": "",
+            "type": "tuple",
+            "components": [
+              {
+                "internalType": "struct IRuleEntitlement.Operation[]",
+                "name": "operations",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "internalType": "enum IRuleEntitlement.CombinedOperationType",
+                    "name": "opType",
+                    "type": "uint8"
+                  },
+                  {
+                    "internalType": "uint8",
+                    "name": "index",
+                    "type": "uint8"
+                  }
+                ]
+              },
+              {
+                "internalType": "struct IRuleEntitlement.CheckOperation[]",
+                "name": "checkOperations",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "internalType": "enum IRuleEntitlement.CheckOperationType",
+                    "name": "opType",
+                    "type": "uint8"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "chainId",
+                    "type": "uint256"
+                  },
+                  {
+                    "internalType": "address",
+                    "name": "contractAddress",
+                    "type": "address"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "threshold",
+                    "type": "uint256"
+                  }
+                ]
+              },
+              {
+                "internalType": "struct IRuleEntitlement.LogicalOperation[]",
+                "name": "logicalOperations",
+                "type": "tuple[]",
+                "components": [
+                  {
+                    "internalType": "enum IRuleEntitlement.LogicalOperationType",
+                    "name": "logOpType",
+                    "type": "uint8"
+                  },
+                  {
+                    "internalType": "uint8",
+                    "name": "leftOperationIndex",
+                    "type": "uint8"
+                  },
+                  {
+                    "internalType": "uint8",
+                    "name": "rightOperationIndex",
+                    "type": "uint8"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "transactionId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          },
+          {
             "internalType": "enum IEntitlementGatedBase.NodeVoteStatus",
             "name": "result",
             "type": "uint8"
@@ -334,6 +344,11 @@
       },
       {
         "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          },
           {
             "internalType": "struct IRuleEntitlement.RuleData",
             "name": "ruleData",
@@ -458,10 +473,10 @@
   },
   "sources": {
     "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol": {
-      "keccak256": "0xab26d5f9989fd9003fe1c835530704b5e70f74fa4c2164e49001f88b8e7ea507",
+      "keccak256": "0x5c9a99c94e95a0c89b3d3310e252cd98aeafe34d87ffc0058f9b001af6f28bd1",
       "urls": [
-        "bzz-raw://bfb7f3ca25d13c83891eea9512dc20262613f4bbe3eae89acf334716fa32d45d",
-        "dweb:/ipfs/QmXWCpJuWsnjU5pLBD6gX12RcsVQdW8rY9udU1MEyyQ7ix"
+        "bzz-raw://7983b17a371e76c8681756dc10abe26f8fffd35d3d6d8773c2023f06c8600ba3",
+        "dweb:/ipfs/QmSDkTctKCTaMGYF2LZ1N9YWwDTZD75XegpPyLrP694JFf"
       ],
       "license": "MIT"
     },
@@ -562,18 +577,18 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/gated/EntitlementGated.sol": {
-      "keccak256": "0x3b86975332f1d7fcb3beb47a1494d667109fd3371a96759670a7b6375c6d389d",
+      "keccak256": "0x69b525c004a345b89f3c784df334780a2d399b3f2058183daf65862f2d095820",
       "urls": [
-        "bzz-raw://0e1481ba754a6d8d0024e931b9de45cde83a4b3d5ef794fd68070d92344d93a8",
-        "dweb:/ipfs/QmcTshktpsu88V6P9qN5fR4d5P9JEbYwfpT8FUjuL3B5UJ"
+        "bzz-raw://e927c722387563b909fd26cbd09cff0b5bc905a3c0c5c00b9c40c4d66bf19e70",
+        "dweb:/ipfs/Qmbk5XXjzLaZJSaSSjhpEm2pyB2GSj1cDPChYdJup9wStk"
       ],
       "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/gated/EntitlementGatedBase.sol": {
-      "keccak256": "0x67f10ca1ec9a634e5134f964f72e6fae2ff6d70dfb7327dd0420ba285731bf30",
+      "keccak256": "0x0aa9887cf58dd68d0270c85e2d7610080f35410b845c2227e4bd84356b7a2cb7",
       "urls": [
-        "bzz-raw://6b8874e17fdba8c996cacc3418bcee85de95a43be19448e8ed2fb1d01594dada",
-        "dweb:/ipfs/Qma2SSokZsifyPRJFHQw8hDpiaWikoh9Gko8JiwKeVj353"
+        "bzz-raw://6dbdbed895fc2a53bffa3dbc1cfd4c992a096f153e6bbb7aeb9894485e7fc1a6",
+        "dweb:/ipfs/QmZp76Gd8aL9pWbiTvLaiHv1w12yjN59PtYdMvoUCbfbH5"
       ],
       "license": "Apache-2.0"
     },
@@ -586,10 +601,10 @@
       "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/gated/IEntitlementGated.sol": {
-      "keccak256": "0x15ea9c07966d96d3155d634ec8b5f8e9a1feefc65947915ebd5e3b74511e330e",
+      "keccak256": "0x948de1018f7f78366263a40e0f8269e10941216bd03a9996edb24a6230959e74",
       "urls": [
-        "bzz-raw://6c82dd6131d7d06d1fe9e302cb567e79a47b2b8a77295ad2badf2b7bcffb545a",
-        "dweb:/ipfs/QmWSVW6tXpYS4UGcgWfXPVmB8kPBnNU2qcpz3xTcHUcr1Q"
+        "bzz-raw://dc985539ce639f39fd68723acca6424a78deac6cec3693c9d8e1084a487c83ec",
+        "dweb:/ipfs/QmQujX5rmDwhJZurp11FTiPLb7ev9swLTtdkagA8wydZiT"
       ],
       "license": "MIT"
     },
@@ -602,10 +617,10 @@
       "license": "Apache-2.0"
     },
     "contracts/test/mocks/MockEntitlementGated.sol": {
-      "keccak256": "0x5dfcf9ec4e3a3b2a2368b1e0412e8e8bc98d94986d33947a8fc3b130b2d64b15",
+      "keccak256": "0x6150ce1c80ac5a5a06b512f794eb412446e6ba9b21b9746e06d2114fd1dcac4f",
       "urls": [
-        "bzz-raw://6a57f340d9d0060cd8eda23c45ab615f8e6467ba6ea4805cdbef194d4a8de2b1",
-        "dweb:/ipfs/QmWmimrWdXxvjy9AVQxrXG3R2APn2AyHUZXeiXB3KugQRv"
+        "bzz-raw://f303850697a14ea243ec90c2a514a028e9d1c319756e85d7a5985fc259b2c37a",
+        "dweb:/ipfs/QmNuLXg5x4L8rEGMyfGdjVDQYoLKoVSZPQi2FGA7YJJSWv"
       ],
       "license": "Apache-2.0"
     },

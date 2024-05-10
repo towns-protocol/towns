@@ -47,7 +47,11 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
     Transaction storage transaction = ds.transactions[transactionId];
 
     if (transaction.hasBenSet == true) {
-      revert EntitlementGated_TransactionAlreadyRegistered();
+      for (uint256 i = 0; i < transaction.roleIds.length; i++) {
+        if (transaction.roleIds[i] == roleId) {
+          revert EntitlementGated_TransactionCheckAlreadyRegistered();
+        }
+      }
     }
 
     // if the entitlement checker has not been set, set it
@@ -57,14 +61,16 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
 
     address[] memory selectedNodes = ds.entitlementChecker.getRandomNodes(5);
 
-    transaction.hasBenSet = true;
-    transaction.clientAddress = msg.sender;
-    transaction.isCompleted = false;
-    transaction.entitlement = entitlement;
-    transaction.roleId = roleId;
+    if (!transaction.hasBenSet) {
+      transaction.hasBenSet = true;
+      transaction.entitlement = entitlement;
+      transaction.clientAddress = msg.sender;
+    }
+
+    transaction.roleIds.push(roleId);
 
     for (uint256 i = 0; i < selectedNodes.length; i++) {
-      transaction.nodeVotesArray.push(
+      transaction.nodeVotesArray[roleId].push(
         NodeVote({node: selectedNodes[i], vote: NodeVoteStatus.NOT_VOTED})
       );
     }
@@ -72,58 +78,52 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
     ds.entitlementChecker.requestEntitlementCheck(
       msg.sender,
       transactionId,
+      roleId,
       selectedNodes
     );
   }
 
   function _postEntitlementCheckResult(
     bytes32 transactionId,
+    uint256 roleId,
     NodeVoteStatus result
   ) internal {
     EntitlementGatedStorage.Layout storage ds = EntitlementGatedStorage
       .layout();
-
     Transaction storage transaction = ds.transactions[transactionId];
 
-    if (transaction.clientAddress == address(0)) {
+    if (
+      transaction.clientAddress == address(0) || transaction.hasBenSet == false
+    ) {
       revert EntitlementGated_TransactionNotRegistered();
     }
 
-    if (transaction.isCompleted) {
-      revert EntitlementGated_TransactionAlreadyCompleted();
+    if (transaction.isCompleted[roleId]) {
+      revert EntitlementGated_TransactionCheckAlreadyCompleted();
     }
 
-    if (transaction.hasBenSet == false) {
-      revert EntitlementGated_TransactionNotRegistered();
-    }
-
-    // find node in the array and update the vote, revert if node was not found
+    // Find node in the array and update the vote, revert if node was not found.
     bool found;
-
-    for (uint256 i = 0; i < transaction.nodeVotesArray.length; i++) {
-      NodeVote storage tempVote = transaction.nodeVotesArray[i];
-
-      if (tempVote.node == msg.sender) {
-        if (tempVote.vote != NodeVoteStatus.NOT_VOTED) {
-          revert EntitlementGated_NodeAlreadyVoted();
-        }
-        found = true;
-        tempVote.vote = result;
-        break;
-      }
-    }
-
-    if (found == false) {
-      revert EntitlementGated_NodeNotFound();
-    }
 
     // count the votes
     uint256 passed = 0;
     uint256 failed = 0;
 
-    for (uint256 i = 0; i < transaction.nodeVotesArray.length; i++) {
-      NodeVote storage tempVote = transaction.nodeVotesArray[i];
+    uint256 transactionNodesLength = transaction.nodeVotesArray[roleId].length;
 
+    for (uint256 i = 0; i < transactionNodesLength; i++) {
+      NodeVote storage tempVote = transaction.nodeVotesArray[roleId][i];
+
+      // Update vote if not yet voted
+      if (tempVote.node == msg.sender) {
+        if (tempVote.vote != NodeVoteStatus.NOT_VOTED) {
+          revert EntitlementGated_NodeAlreadyVoted();
+        }
+        tempVote.vote = result;
+        found = true;
+      }
+
+      // Count votes
       if (tempVote.vote == NodeVoteStatus.PASSED) {
         passed++;
       } else if (tempVote.vote == NodeVoteStatus.FAILED) {
@@ -131,15 +131,19 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
       }
     }
 
-    if (passed > transaction.nodeVotesArray.length / 2) {
-      transaction.isCompleted = true;
-      _onEntitlementCheckResultPosted(transactionId, NodeVoteStatus.PASSED);
-      emit EntitlementCheckResultPosted(transactionId, NodeVoteStatus.PASSED);
-      _removeTransaction(transactionId);
-    } else if (failed > transaction.nodeVotesArray.length / 2) {
-      transaction.isCompleted = true;
-      _onEntitlementCheckResultPosted(transactionId, NodeVoteStatus.FAILED);
-      emit EntitlementCheckResultPosted(transactionId, NodeVoteStatus.FAILED);
+    if (!found) {
+      revert EntitlementGated_NodeNotFound();
+    }
+
+    if (
+      passed > transactionNodesLength / 2 || failed > transactionNodesLength / 2
+    ) {
+      transaction.isCompleted[roleId] = true;
+      NodeVoteStatus finalStatus = passed > failed
+        ? NodeVoteStatus.PASSED
+        : NodeVoteStatus.FAILED;
+      _onEntitlementCheckResultPosted(transactionId, finalStatus);
+      emit EntitlementCheckResultPosted(transactionId, finalStatus);
       _removeTransaction(transactionId);
     }
   }
@@ -149,12 +153,16 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
       .layout();
 
     Transaction storage transaction = ds.transactions[transactionId];
-    delete transaction.nodeVotesArray;
+    for (uint256 i = 0; i < transaction.roleIds.length; i++) {
+      delete transaction.nodeVotesArray[transaction.roleIds[i]];
+    }
+    delete transaction.roleIds;
     delete ds.transactions[transactionId];
   }
 
   function _getRuleData(
-    bytes32 transactionId
+    bytes32 transactionId,
+    uint256 roleId
   ) internal view returns (IRuleEntitlement.RuleData memory) {
     EntitlementGatedStorage.Layout storage ds = EntitlementGatedStorage
       .layout();
@@ -166,9 +174,7 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
     }
 
     IRuleEntitlement re = IRuleEntitlement(address(transaction.entitlement));
-    IRuleEntitlement.RuleData memory ruleData = re.getRuleData(
-      transaction.roleId
-    );
+    IRuleEntitlement.RuleData memory ruleData = re.getRuleData(roleId);
 
     return ruleData;
   }

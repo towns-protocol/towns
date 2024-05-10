@@ -129,12 +129,14 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
   function requestEntitlementCheck(
     address callerAddress,
     bytes32 transactionId,
+    uint256 roleId,
     address[] memory nodes
   ) external {
     emit EntitlementCheckRequested(
       callerAddress,
       msg.sender,
       transactionId,
+      roleId,
       nodes
     );
   }

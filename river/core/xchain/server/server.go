@@ -7,6 +7,7 @@ import (
 	"core/xchain/entitlement"
 	"core/xchain/util"
 	"log/slog"
+	"math/big"
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -37,6 +38,7 @@ type (
 	// entitlementCheckReceipt holds the outcome of an xchain entitlement check request
 	entitlementCheckReceipt struct {
 		TransactionID common.Hash
+		RoleId        *big.Int
 		Outcome       bool
 		Event         contracts.IEntitlementCheckRequestEvent
 	}
@@ -269,10 +271,13 @@ func (x *xchain) handleEntitlementCheckRequest(
 	ctx context.Context,
 	request contracts.IEntitlementCheckRequestEvent,
 ) (*entitlementCheckReceipt, error) {
+	log := x.Log(ctx).
+		With("function", "handleEntitlementCheckRequest").
+		With("req.txid", request.TransactionID().Hex()).
+		With("roleId", request.RoleId().String())
+
 	for _, selectedNodeAddress := range request.SelectedNodes() {
 		if selectedNodeAddress == x.baseChain.Wallet.Address {
-			log := x.Log(ctx).
-				With("function", "handleEntitlementCheckRequest", "req.txid", request.TransactionID().Hex())
 			log.Info("Processing EntitlementCheckRequested")
 			outcome, err := x.process(ctx, request, x.baseChain.Client, request.CallerAddress())
 			if err != nil {
@@ -280,14 +285,14 @@ func (x *xchain) handleEntitlementCheckRequest(
 			}
 			return &entitlementCheckReceipt{
 				TransactionID: request.TransactionID(),
+				RoleId:        request.RoleId(),
 				Outcome:       outcome,
 				Event:         request,
 			}, nil
 		}
 	}
-	x.Log(ctx).Debug(
+	log.Debug(
 		"EntitlementCheckRequested not for this xchain instance",
-		"req.txid", request.TransactionID().Hex(),
 		"selectedNodes", request.SelectedNodes(),
 		"nodeAddress", x.baseChain.Wallet.Address.Hex(),
 	)
@@ -331,7 +336,7 @@ func (x *xchain) writeEntitlementCheckResults(ctx context.Context, checkResults 
 						// Ensure gas limit is at least 2_500_000 as a workaround for simulated backend issues in tests.
 						opts.GasLimit = max(opts.GasLimit, 2_500_000)
 
-						return gated.PostEntitlementCheckResult(opts, receipt.TransactionID, uint8(outcome))
+						return gated.PostEntitlementCheckResult(opts, receipt.TransactionID, receipt.RoleId, uint8(outcome))
 					},
 				)
 
@@ -339,7 +344,8 @@ func (x *xchain) writeEntitlementCheckResults(ctx context.Context, checkResults 
 				// or enough other xchain instances have already reached a quorum -> ignore these errors.
 				ce, _, _ := x.evmErrDecoder.DecodeEVMError(err)
 				if ce != nil && (ce.DecodedError.Sig == "EntitlementGated_TransactionNotRegistered()" ||
-					ce.DecodedError.Sig == "EntitlementGated_NodeAlreadyVoted()") {
+					ce.DecodedError.Sig == "EntitlementGated_NodeAlreadyVoted()" ||
+					ce.DecodedError.Sig == "EntitlementGated_TransactionCheckAlreadyCompleted()") {
 					log.Debug("Unable to submit entitlement check outcome",
 						"err", ce.DecodedError.Name,
 						"txid", receipt.TransactionID.Hex())
@@ -444,6 +450,7 @@ func (x *xchain) getLinkedWallets(ctx context.Context, wallet common.Address) ([
 func (x *xchain) getRuleData(
 	ctx context.Context,
 	transactionId [32]byte,
+	roleId *big.Int,
 	contractAddress common.Address,
 	client crypto.BlockchainClient,
 ) (*contracts.IRuleData, error) {
@@ -453,7 +460,7 @@ func (x *xchain) getRuleData(
 		return nil, x.handleContractError(log, err, "Failed to create NewEntitlementGated")
 	}
 
-	ruleData, err := gater.GetRuleData(&bind.CallOpts{Context: ctx}, transactionId)
+	ruleData, err := gater.GetRuleData(&bind.CallOpts{Context: ctx}, transactionId, roleId)
 	if err != nil {
 		return nil, x.handleContractError(log, err, "Failed to GetEncodedRuleData")
 	}
@@ -479,7 +486,7 @@ func (x *xchain) process(
 		return false, err
 	}
 
-	ruleData, err := x.getRuleData(ctx, request.TransactionID(), request.ContractAddress(), client)
+	ruleData, err := x.getRuleData(ctx, request.TransactionID(), request.RoleId(), request.ContractAddress(), client)
 	if err != nil {
 		return false, err
 	}

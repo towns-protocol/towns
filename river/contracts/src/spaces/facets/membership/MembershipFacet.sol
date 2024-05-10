@@ -108,6 +108,12 @@ contract MembershipFacet is
           if (!entitlement.isCrosschain()) {
             address[] memory users = new address[](1);
             users[0] = sender;
+            // Note: the UserEntitlement contract checks across *all* roles for an entitlement that
+            // matches the permission, so we really only need to execute this code block 1 time
+            // for all roles with a user entitlement...
+            // I BELIEVE THAT The first entitlement of the first role we encounter is actually the user entitlement
+            // created on space creation, so if we pass this check, we can be sure that the user entitlements do in
+            // fact pass for this user, and no asynchronous checks will be emitted.
             if (entitlement.isEntitled(0x0, users, JOIN_SPACE)) {
               _issueToken(transactionId);
               return;

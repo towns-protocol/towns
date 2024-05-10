@@ -31,7 +31,7 @@ var (
 
 // IEntitlementCheckerMetaData contains all meta data concerning the IEntitlementChecker contract.
 var IEntitlementCheckerMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"getNodeAtIndex\",\"inputs\":[{\"name\":\"index\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getNodeCount\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getRandomNodes\",\"inputs\":[{\"name\":\"count\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isValidNode\",\"inputs\":[{\"name\":\"node\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"registerNode\",\"inputs\":[{\"name\":\"node\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"requestEntitlementCheck\",\"inputs\":[{\"name\":\"callerAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"transactionId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"unregisterNode\",\"inputs\":[{\"name\":\"node\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"EntitlementCheckRequested\",\"inputs\":[{\"name\":\"callerAddress\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"contractAddress\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"transactionId\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"selectedNodes\",\"type\":\"address[]\",\"indexed\":false,\"internalType\":\"address[]\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"NodeRegistered\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"NodeUnregistered\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"EntitlementChecker_InsufficientNumberOfNodes\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"EntitlementChecker_InvalidNodeOperator\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"EntitlementChecker_NodeAlreadyRegistered\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"EntitlementChecker_NodeNotRegistered\",\"inputs\":[]}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"getNodeAtIndex\",\"inputs\":[{\"name\":\"index\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getNodeCount\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getRandomNodes\",\"inputs\":[{\"name\":\"count\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isValidNode\",\"inputs\":[{\"name\":\"node\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"registerNode\",\"inputs\":[{\"name\":\"node\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"requestEntitlementCheck\",\"inputs\":[{\"name\":\"callerAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"transactionId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"roleId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"unregisterNode\",\"inputs\":[{\"name\":\"node\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"EntitlementCheckRequested\",\"inputs\":[{\"name\":\"callerAddress\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"contractAddress\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"transactionId\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"roleId\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"selectedNodes\",\"type\":\"address[]\",\"indexed\":false,\"internalType\":\"address[]\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"NodeRegistered\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"NodeUnregistered\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"EntitlementChecker_InsufficientNumberOfNodes\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"EntitlementChecker_InvalidNodeOperator\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"EntitlementChecker_NodeAlreadyRegistered\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"EntitlementChecker_NodeNotRegistered\",\"inputs\":[]}]",
 }
 
 // IEntitlementCheckerABI is the input ABI used to generate the binding from.
@@ -325,25 +325,25 @@ func (_IEntitlementChecker *IEntitlementCheckerTransactorSession) RegisterNode(n
 	return _IEntitlementChecker.Contract.RegisterNode(&_IEntitlementChecker.TransactOpts, node)
 }
 
-// RequestEntitlementCheck is a paid mutator transaction binding the contract method 0xdde21cd2.
+// RequestEntitlementCheck is a paid mutator transaction binding the contract method 0x541da4e5.
 //
-// Solidity: function requestEntitlementCheck(address callerAddress, bytes32 transactionId, address[] nodes) returns()
-func (_IEntitlementChecker *IEntitlementCheckerTransactor) RequestEntitlementCheck(opts *bind.TransactOpts, callerAddress common.Address, transactionId [32]byte, nodes []common.Address) (*types.Transaction, error) {
-	return _IEntitlementChecker.contract.Transact(opts, "requestEntitlementCheck", callerAddress, transactionId, nodes)
+// Solidity: function requestEntitlementCheck(address callerAddress, bytes32 transactionId, uint256 roleId, address[] nodes) returns()
+func (_IEntitlementChecker *IEntitlementCheckerTransactor) RequestEntitlementCheck(opts *bind.TransactOpts, callerAddress common.Address, transactionId [32]byte, roleId *big.Int, nodes []common.Address) (*types.Transaction, error) {
+	return _IEntitlementChecker.contract.Transact(opts, "requestEntitlementCheck", callerAddress, transactionId, roleId, nodes)
 }
 
-// RequestEntitlementCheck is a paid mutator transaction binding the contract method 0xdde21cd2.
+// RequestEntitlementCheck is a paid mutator transaction binding the contract method 0x541da4e5.
 //
-// Solidity: function requestEntitlementCheck(address callerAddress, bytes32 transactionId, address[] nodes) returns()
-func (_IEntitlementChecker *IEntitlementCheckerSession) RequestEntitlementCheck(callerAddress common.Address, transactionId [32]byte, nodes []common.Address) (*types.Transaction, error) {
-	return _IEntitlementChecker.Contract.RequestEntitlementCheck(&_IEntitlementChecker.TransactOpts, callerAddress, transactionId, nodes)
+// Solidity: function requestEntitlementCheck(address callerAddress, bytes32 transactionId, uint256 roleId, address[] nodes) returns()
+func (_IEntitlementChecker *IEntitlementCheckerSession) RequestEntitlementCheck(callerAddress common.Address, transactionId [32]byte, roleId *big.Int, nodes []common.Address) (*types.Transaction, error) {
+	return _IEntitlementChecker.Contract.RequestEntitlementCheck(&_IEntitlementChecker.TransactOpts, callerAddress, transactionId, roleId, nodes)
 }
 
-// RequestEntitlementCheck is a paid mutator transaction binding the contract method 0xdde21cd2.
+// RequestEntitlementCheck is a paid mutator transaction binding the contract method 0x541da4e5.
 //
-// Solidity: function requestEntitlementCheck(address callerAddress, bytes32 transactionId, address[] nodes) returns()
-func (_IEntitlementChecker *IEntitlementCheckerTransactorSession) RequestEntitlementCheck(callerAddress common.Address, transactionId [32]byte, nodes []common.Address) (*types.Transaction, error) {
-	return _IEntitlementChecker.Contract.RequestEntitlementCheck(&_IEntitlementChecker.TransactOpts, callerAddress, transactionId, nodes)
+// Solidity: function requestEntitlementCheck(address callerAddress, bytes32 transactionId, uint256 roleId, address[] nodes) returns()
+func (_IEntitlementChecker *IEntitlementCheckerTransactorSession) RequestEntitlementCheck(callerAddress common.Address, transactionId [32]byte, roleId *big.Int, nodes []common.Address) (*types.Transaction, error) {
+	return _IEntitlementChecker.Contract.RequestEntitlementCheck(&_IEntitlementChecker.TransactOpts, callerAddress, transactionId, roleId, nodes)
 }
 
 // UnregisterNode is a paid mutator transaction binding the contract method 0xc5e41cf6.
@@ -439,13 +439,14 @@ type IEntitlementCheckerEntitlementCheckRequested struct {
 	CallerAddress   common.Address
 	ContractAddress common.Address
 	TransactionId   [32]byte
+	RoleId          *big.Int
 	SelectedNodes   []common.Address
 	Raw             types.Log // Blockchain specific contextual infos
 }
 
-// FilterEntitlementCheckRequested is a free log retrieval operation binding the contract event 0x02ad36fe59d6b02604c3f8d61b54de3b83ba919666c56c37109a8aa6c5a0c9dc.
+// FilterEntitlementCheckRequested is a free log retrieval operation binding the contract event 0x4675e3cc15801ffde520a3076d6ad75c0c6dbe8f23bdbea1dd45b676caffe4f3.
 //
-// Solidity: event EntitlementCheckRequested(address callerAddress, address contractAddress, bytes32 transactionId, address[] selectedNodes)
+// Solidity: event EntitlementCheckRequested(address callerAddress, address contractAddress, bytes32 transactionId, uint256 roleId, address[] selectedNodes)
 func (_IEntitlementChecker *IEntitlementCheckerFilterer) FilterEntitlementCheckRequested(opts *bind.FilterOpts) (*IEntitlementCheckerEntitlementCheckRequestedIterator, error) {
 
 	logs, sub, err := _IEntitlementChecker.contract.FilterLogs(opts, "EntitlementCheckRequested")
@@ -455,9 +456,9 @@ func (_IEntitlementChecker *IEntitlementCheckerFilterer) FilterEntitlementCheckR
 	return &IEntitlementCheckerEntitlementCheckRequestedIterator{contract: _IEntitlementChecker.contract, event: "EntitlementCheckRequested", logs: logs, sub: sub}, nil
 }
 
-// WatchEntitlementCheckRequested is a free log subscription operation binding the contract event 0x02ad36fe59d6b02604c3f8d61b54de3b83ba919666c56c37109a8aa6c5a0c9dc.
+// WatchEntitlementCheckRequested is a free log subscription operation binding the contract event 0x4675e3cc15801ffde520a3076d6ad75c0c6dbe8f23bdbea1dd45b676caffe4f3.
 //
-// Solidity: event EntitlementCheckRequested(address callerAddress, address contractAddress, bytes32 transactionId, address[] selectedNodes)
+// Solidity: event EntitlementCheckRequested(address callerAddress, address contractAddress, bytes32 transactionId, uint256 roleId, address[] selectedNodes)
 func (_IEntitlementChecker *IEntitlementCheckerFilterer) WatchEntitlementCheckRequested(opts *bind.WatchOpts, sink chan<- *IEntitlementCheckerEntitlementCheckRequested) (event.Subscription, error) {
 
 	logs, sub, err := _IEntitlementChecker.contract.WatchLogs(opts, "EntitlementCheckRequested")
@@ -492,9 +493,9 @@ func (_IEntitlementChecker *IEntitlementCheckerFilterer) WatchEntitlementCheckRe
 	}), nil
 }
 
-// ParseEntitlementCheckRequested is a log parse operation binding the contract event 0x02ad36fe59d6b02604c3f8d61b54de3b83ba919666c56c37109a8aa6c5a0c9dc.
+// ParseEntitlementCheckRequested is a log parse operation binding the contract event 0x4675e3cc15801ffde520a3076d6ad75c0c6dbe8f23bdbea1dd45b676caffe4f3.
 //
-// Solidity: event EntitlementCheckRequested(address callerAddress, address contractAddress, bytes32 transactionId, address[] selectedNodes)
+// Solidity: event EntitlementCheckRequested(address callerAddress, address contractAddress, bytes32 transactionId, uint256 roleId, address[] selectedNodes)
 func (_IEntitlementChecker *IEntitlementCheckerFilterer) ParseEntitlementCheckRequested(log types.Log) (*IEntitlementCheckerEntitlementCheckRequested, error) {
 	event := new(IEntitlementCheckerEntitlementCheckRequested)
 	if err := _IEntitlementChecker.contract.UnpackLog(event, "EntitlementCheckRequested", log); err != nil {

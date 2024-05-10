@@ -28,7 +28,7 @@ export default [
     "name": "getRuleData",
     "inputs": [
       {
-        "name": "",
+        "name": "roleId",
         "type": "uint256",
         "internalType": "uint256"
       }
@@ -118,6 +118,11 @@ export default [
         "name": "transactionId",
         "type": "bytes32",
         "internalType": "bytes32"
+      },
+      {
+        "name": "roleId",
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
     "outputs": [
@@ -207,6 +212,11 @@ export default [
         "internalType": "bytes32"
       },
       {
+        "name": "roleId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
         "name": "result",
         "type": "uint8",
         "internalType": "enum IEntitlementGatedBase.NodeVoteStatus"
@@ -219,6 +229,11 @@ export default [
     "type": "function",
     "name": "requestEntitlementCheck",
     "inputs": [
+      {
+        "name": "roleId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
       {
         "name": "ruleData",
         "type": "tuple",
@@ -377,12 +392,12 @@ export default [
   },
   {
     "type": "error",
-    "name": "EntitlementGated_TransactionAlreadyCompleted",
+    "name": "EntitlementGated_TransactionCheckAlreadyCompleted",
     "inputs": []
   },
   {
     "type": "error",
-    "name": "EntitlementGated_TransactionAlreadyRegistered",
+    "name": "EntitlementGated_TransactionCheckAlreadyRegistered",
     "inputs": []
   },
   {

@@ -27,7 +27,7 @@ const concurrencyLimit = pLimit(50)
 
 export class SyncedStreamsExtension {
     private log = dlog('csb:syncedStreamsExtension')
-    private logError = dlogError('csb:syncedStreamsExtension')
+    private logError = dlogError('csb:syncedStreamsExtension:error')
     private readonly delegate: SyncedStreamsExtensionDelegate
 
     private readonly tasks = new Array<() => Promise<void>>()
@@ -159,7 +159,7 @@ export class SyncedStreamsExtension {
                 this.streamIds.delete(streamId)
             } catch (err) {
                 this.streamCountRequiringNetworkAccess++
-                this.logError('Error initializing stream from persistence', streamId, err)
+                this.log('Error initializing stream from persistence', streamId, err)
             }
             this.emitClientStatus()
         })

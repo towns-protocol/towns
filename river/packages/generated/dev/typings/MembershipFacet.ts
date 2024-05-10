@@ -150,14 +150,14 @@ export interface MembershipFacetInterface extends utils.Interface {
     "getMembershipPrice()": FunctionFragment;
     "getMembershipPricingModule()": FunctionFragment;
     "getMembershipRenewalPrice(uint256)": FunctionFragment;
-    "getRuleData(bytes32)": FunctionFragment;
+    "getRuleData(bytes32,uint256)": FunctionFragment;
     "getSpaceFactory()": FunctionFragment;
     "isApprovedForAll(address,address)": FunctionFragment;
     "joinSpace(address)": FunctionFragment;
     "joinSpaceWithReferral(address,address,uint256)": FunctionFragment;
     "name()": FunctionFragment;
     "ownerOf(uint256)": FunctionFragment;
-    "postEntitlementCheckResult(bytes32,uint8)": FunctionFragment;
+    "postEntitlementCheckResult(bytes32,uint256,uint8)": FunctionFragment;
     "renewMembership(uint256)": FunctionFragment;
     "safeTransferFrom(address,address,uint256)": FunctionFragment;
     "safeTransferFrom(address,address,uint256,bytes)": FunctionFragment;
@@ -327,7 +327,7 @@ export interface MembershipFacetInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "getRuleData",
-    values: [PromiseOrValue<BytesLike>]
+    values: [PromiseOrValue<BytesLike>, PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "getSpaceFactory",
@@ -356,7 +356,11 @@ export interface MembershipFacetInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "postEntitlementCheckResult",
-    values: [PromiseOrValue<BytesLike>, PromiseOrValue<BigNumberish>]
+    values: [
+      PromiseOrValue<BytesLike>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "renewMembership",
@@ -1089,6 +1093,7 @@ export interface MembershipFacet extends BaseContract {
 
     getRuleData(
       transactionId: PromiseOrValue<BytesLike>,
+      roleId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<[IRuleEntitlement.RuleDataStructOutput]>;
 
@@ -1121,6 +1126,7 @@ export interface MembershipFacet extends BaseContract {
 
     postEntitlementCheckResult(
       transactionId: PromiseOrValue<BytesLike>,
+      roleId: PromiseOrValue<BigNumberish>,
       result: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
@@ -1289,6 +1295,7 @@ export interface MembershipFacet extends BaseContract {
 
   getRuleData(
     transactionId: PromiseOrValue<BytesLike>,
+    roleId: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
   ): Promise<IRuleEntitlement.RuleDataStructOutput>;
 
@@ -1321,6 +1328,7 @@ export interface MembershipFacet extends BaseContract {
 
   postEntitlementCheckResult(
     transactionId: PromiseOrValue<BytesLike>,
+    roleId: PromiseOrValue<BigNumberish>,
     result: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
@@ -1489,6 +1497,7 @@ export interface MembershipFacet extends BaseContract {
 
     getRuleData(
       transactionId: PromiseOrValue<BytesLike>,
+      roleId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<IRuleEntitlement.RuleDataStructOutput>;
 
@@ -1521,6 +1530,7 @@ export interface MembershipFacet extends BaseContract {
 
     postEntitlementCheckResult(
       transactionId: PromiseOrValue<BytesLike>,
+      roleId: PromiseOrValue<BigNumberish>,
       result: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
@@ -1922,6 +1932,7 @@ export interface MembershipFacet extends BaseContract {
 
     getRuleData(
       transactionId: PromiseOrValue<BytesLike>,
+      roleId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -1954,6 +1965,7 @@ export interface MembershipFacet extends BaseContract {
 
     postEntitlementCheckResult(
       transactionId: PromiseOrValue<BytesLike>,
+      roleId: PromiseOrValue<BigNumberish>,
       result: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
@@ -2145,6 +2157,7 @@ export interface MembershipFacet extends BaseContract {
 
     getRuleData(
       transactionId: PromiseOrValue<BytesLike>,
+      roleId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
@@ -2177,6 +2190,7 @@ export interface MembershipFacet extends BaseContract {
 
     postEntitlementCheckResult(
       transactionId: PromiseOrValue<BytesLike>,
+      roleId: PromiseOrValue<BigNumberish>,
       result: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;

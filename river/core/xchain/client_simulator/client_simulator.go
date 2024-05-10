@@ -317,7 +317,7 @@ func (cs *clientSimulator) executeCheck(ctx context.Context, ruleData *e.IRuleDa
 			if err != nil {
 				return nil, err
 			}
-			return gated.RequestEntitlementCheck(opts, *ruleData)
+			return gated.RequestEntitlementCheck(opts, big.NewInt(0), *ruleData)
 		},
 	)
 

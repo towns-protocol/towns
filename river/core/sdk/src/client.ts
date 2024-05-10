@@ -923,7 +923,7 @@ export class Client
     }
 
     async getStreamEx(streamId: string): Promise<StreamStateView> {
-        const existingRequest = this.getStreamRequests.get(streamId)
+        const existingRequest = this.getStreamExRequests.get(streamId)
         if (existingRequest) {
             this.logCall(`had existing get request for ${streamId}, returning promise`)
             return await existingRequest
@@ -1091,7 +1091,7 @@ export class Client
         body: string,
         mentions?: ChannelMessage_Post_Mention[],
         attachments: ChannelMessage_Post_Attachment[] = [],
-    ): Promise<void> {
+    ): Promise<string> {
         return this.sendChannelMessage_Text(streamId, {
             content: {
                 body,
@@ -1101,7 +1101,7 @@ export class Client
         })
     }
 
-    async sendChannelMessage(streamId: string, payload: ChannelMessage): Promise<void> {
+    async sendChannelMessage(streamId: string, payload: ChannelMessage): Promise<string> {
         const stream = this.stream(streamId)
         check(stream !== undefined, 'stream not found')
         const localId = stream.view.appendLocalEvent(payload, 'sending', this)
@@ -1140,6 +1140,8 @@ export class Client
                 localId,
                 cleartext: cleartext,
             })
+        } else {
+            throw new Error(`invalid streamId: ${streamId}`)
         }
     }
 
@@ -1148,7 +1150,7 @@ export class Client
         payload: Omit<PlainMessage<ChannelMessage_Post>, 'content'> & {
             content: PlainMessage<ChannelMessage_Post_Content_Text>
         },
-    ): Promise<void> {
+    ): Promise<string> {
         const { content, ...options } = payload
         return this.sendChannelMessage(
             streamId,
@@ -1172,7 +1174,7 @@ export class Client
         payload: Omit<PlainMessage<ChannelMessage_Post>, 'content'> & {
             content: PlainMessage<ChannelMessage_Post_Content_Image>
         },
-    ): Promise<void> {
+    ): Promise<string> {
         const { content, ...options } = payload
         return this.sendChannelMessage(
             streamId,
@@ -1196,7 +1198,7 @@ export class Client
         payload: Omit<PlainMessage<ChannelMessage_Post>, 'content'> & {
             content: PlainMessage<ChannelMessage_Post_Content_GM>
         },
-    ): Promise<void> {
+    ): Promise<string> {
         const { content, ...options } = payload
         return this.sendChannelMessage(
             streamId,
@@ -1237,7 +1239,7 @@ export class Client
     async sendChannelMessage_Reaction(
         streamId: string,
         payload: PlainMessage<ChannelMessage_Reaction>,
-    ): Promise<void> {
+    ): Promise<string> {
         return this.sendChannelMessage(
             streamId,
             new ChannelMessage({
@@ -1252,7 +1254,7 @@ export class Client
     async sendChannelMessage_Redaction(
         streamId: string,
         payload: PlainMessage<ChannelMessage_Redaction>,
-    ): Promise<void> {
+    ): Promise<string> {
         const stream = this.stream(streamId)
         if (!stream) {
             throw new Error(`stream not found: ${streamId}`)
@@ -1275,7 +1277,7 @@ export class Client
         streamId: string,
         refEventId: string,
         newPost: PlainMessage<ChannelMessage_Post>,
-    ): Promise<void> {
+    ): Promise<string> {
         return this.sendChannelMessage(
             streamId,
             new ChannelMessage({
@@ -1296,7 +1298,7 @@ export class Client
         payload: Omit<PlainMessage<ChannelMessage_Post>, 'content'> & {
             content: PlainMessage<ChannelMessage_Post_Content_Text>
         },
-    ): Promise<void> {
+    ): Promise<string> {
         const { content, ...options } = payload
         return this.sendChannelMessage_Edit(streamId, refEventId, {
             ...options,
@@ -1307,7 +1309,7 @@ export class Client
         })
     }
 
-    async redactMessage(streamId: string, eventId: string): Promise<void> {
+    async redactMessage(streamId: string, eventId: string): Promise<string> {
         const stream = this.stream(streamId)
         check(isDefined(stream), 'stream not found')
 
@@ -1334,7 +1336,7 @@ export class Client
         )
     }
 
-    async inviteUser(streamId: string | Uint8Array, userId: string): Promise<void> {
+    async inviteUser(streamId: string | Uint8Array, userId: string): Promise<string> {
         await this.initStream(streamId)
         check(isDefined(this.userStreamId))
         return this.makeEventAndAddToStream(
@@ -1348,7 +1350,7 @@ export class Client
         )
     }
 
-    async joinUser(streamId: string | Uint8Array, userId: string): Promise<void> {
+    async joinUser(streamId: string | Uint8Array, userId: string): Promise<string> {
         await this.initStream(streamId)
         check(isDefined(this.userStreamId))
         return this.makeEventAndAddToStream(
@@ -1406,7 +1408,7 @@ export class Client
         return stream
     }
 
-    async leaveStream(streamId: string | Uint8Array): Promise<void> {
+    async leaveStream(streamId: string | Uint8Array): Promise<string> {
         this.logCall('leaveStream', streamId)
         check(isDefined(this.userStreamId))
 
@@ -1435,7 +1437,7 @@ export class Client
         )
     }
 
-    async removeUser(streamId: string | Uint8Array, userId: string): Promise<void> {
+    async removeUser(streamId: string | Uint8Array, userId: string): Promise<string> {
         check(isDefined(this.userStreamId))
         this.logCall('removeUser', streamId, userId)
 
@@ -1576,7 +1578,7 @@ export class Client
     async getDevicesInStream(stream_id: string): Promise<UserDeviceCollection> {
         let stream: StreamStateView | undefined
         stream = this.stream(stream_id)?.view
-        if (!stream) {
+        if (!stream || !stream.isInitialized) {
             stream = await this.getStream(stream_id)
         }
         if (!stream) {
@@ -1627,7 +1629,8 @@ export class Client
             async (userId): Promise<{ userId: string; devices: UserDevice[] }> => {
                 const streamId = makeUserDeviceKeyStreamId(userId)
                 try {
-                    if (!forceDownload) {
+                    // also always download your own keys so you always share to your most up to date devices
+                    if (!forceDownload && userId !== this.userId) {
                         const devicesFromStore = await this.cryptoStore.getUserDevices(userId)
                         if (devicesFromStore.length > 0) {
                             return { userId, devices: devicesFromStore }
@@ -1642,6 +1645,7 @@ export class Client
                     await this.cryptoStore.saveUserDevices(userId, userDevices)
                     return { userId, devices: userDevices }
                 } catch (e) {
+                    this.logError('Error downloading user device keys', e)
                     return { userId, devices: [] }
                 }
             },
@@ -1661,7 +1665,7 @@ export class Client
         streamId: string | Uint8Array,
         payload: PlainMessage<StreamEvent>['payload'],
         options: { method?: string; localId?: string; cleartext?: string } = {},
-    ): Promise<void> {
+    ): Promise<string> {
         // TODO: filter this.logged payload for PII reasons
         this.logCall(
             'await makeEventAndAddToStream',
@@ -1680,13 +1684,14 @@ export class Client
             isDefined(prevHash),
             'no prev miniblock hash for stream ' + streamIdAsString(streamId),
         )
-        await this.makeEventWithHashAndAddToStream(
+        const { eventId } = await this.makeEventWithHashAndAddToStream(
             streamId,
             payload,
             prevHash,
             options.localId,
             options.cleartext,
         )
+        return eventId
     }
 
     async makeEventWithHashAndAddToStream(
@@ -1696,7 +1701,7 @@ export class Client
         localId?: string,
         cleartext?: string,
         retryCount?: number,
-    ): Promise<{ prevMiniblockHash: Uint8Array }> {
+    ): Promise<{ prevMiniblockHash: Uint8Array; eventId: string }> {
         const event = await makeEvent(this.signerContext, payload, prevMiniblockHash)
         const eventId = bin_toHexString(event.hash)
         if (localId) {
@@ -1750,7 +1755,7 @@ export class Client
                 throw err
             }
         }
-        return { prevMiniblockHash }
+        return { prevMiniblockHash, eventId }
     }
 
     async getStreamLastMiniblockHash(streamId: string | Uint8Array): Promise<Uint8Array> {
