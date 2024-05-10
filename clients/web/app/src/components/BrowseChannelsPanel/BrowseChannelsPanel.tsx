@@ -14,7 +14,7 @@ import { ChannelItem } from 'routes/AllChannelsList/AllChannelsList'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { useUnseenChannelIds } from 'hooks/useUnseenChannelIdsCount'
 
-export const BrowseChannelsPanel = () => {
+export const BrowseChannelsPanel = ({ onClose }: { onClose?: () => void }) => {
     const space = useSpaceData()
     const channels = useSpaceChannels()
     const [searchText, setSearchText] = React.useState('')
@@ -49,6 +49,14 @@ export const BrowseChannelsPanel = () => {
             .map((m) => m.obj)
     }, [channels, searchText])
 
+    const onOpenChannel = useCallback(
+        (channelId: string) => {
+            // Close overlay
+            onClose?.()
+        },
+        [onClose],
+    )
+
     return (
         <Panel gap label="Channels" onClosed={onClosed}>
             <Box position="sticky" top="none">
@@ -70,6 +78,7 @@ export const BrowseChannelsPanel = () => {
                                     channelNetworkId={channel.id}
                                     isJoined={myMemberships[channel.id] === Membership.Join}
                                     showDot={unseenChannelIds.current?.has(channel.id)}
+                                    onOpenChannel={onOpenChannel}
                                 />
                             </Stack>
                         </ChannelContextProvider>

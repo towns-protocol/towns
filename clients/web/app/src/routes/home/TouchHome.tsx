@@ -411,7 +411,7 @@ export const TouchHome = () => {
                     )}
                     {activeOverlay === 'browse-channels' && (
                         <ModalContainer touchTitle="Browse channels" onHide={onHideBrowseChannels}>
-                            <BrowseChannelsPanel />
+                            <BrowseChannelsPanel onClose={onHideBrowseChannels} />
                         </ModalContainer>
                     )}
                 </AnimatePresence>

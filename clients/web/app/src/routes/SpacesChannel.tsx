@@ -36,7 +36,7 @@ import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimel
 import { RichTextEditor } from '@components/RichTextPlate/PlateEditor'
 import { RegisterChannelShortcuts } from '@components/Shortcuts/RegisterChannelShortcuts'
 import { useUserList } from '@components/UserList/UserList'
-import { Box, Button, Paragraph, Stack, Text } from '@ui'
+import { Box, Button, Heading, Icon, Paragraph, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
@@ -237,9 +237,27 @@ export const SpacesChannelComponent = (props: Props) => {
             {!isTouch && <RegisterChannelShortcuts />}
             {channel && showJoinChannel ? (
                 <Box absoluteFill centerContent padding="lg">
-                    <Button key={channelId} size="button_lg" onClick={onJoinChannel}>
-                        <Text truncate>Join #{channel.label}</Text>
-                    </Button>
+                    <Box centerContent gap="md">
+                        <Box padding="md" color="gray2" background="level2" rounded="sm">
+                            <Icon type="tag" size="square_sm" />
+                        </Box>
+                        <Box centerContent gap="sm">
+                            <Heading level={3}>Join #{channel.label}</Heading>
+                            <Paragraph textAlign="center" color="gray2">
+                                You aren’t a member yet. Join to get access:
+                            </Paragraph>
+                        </Box>
+                        <Button
+                            minWidth="100"
+                            size="button_sm"
+                            rounded="sm"
+                            hoverEffect="none"
+                            tone="cta1"
+                            onClick={onJoinChannel}
+                        >
+                            Join Channel
+                        </Button>
+                    </Box>
                 </Box>
             ) : (
                 <MediaDropContextProvider

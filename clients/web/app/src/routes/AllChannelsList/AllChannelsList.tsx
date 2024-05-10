@@ -19,7 +19,7 @@ import { useDevice } from 'hooks/useDevice'
 import { useStore } from 'store/store'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useUnseenChannelIds } from 'hooks/useUnseenChannelIdsCount'
-import { useCreateLink } from 'hooks/useCreateLink'
+import { LinkParams, useCreateLink } from 'hooks/useCreateLink'
 
 export const AllChannelsList = ({
     onHideBrowseChannels,
@@ -100,6 +100,7 @@ export const ChannelItem = ({
     space,
     showDot,
     isJoined,
+    onOpenChannel,
 }: {
     name: string
     topic?: string
@@ -107,6 +108,7 @@ export const ChannelItem = ({
     space: SpaceData
     showDot?: boolean
     isJoined?: boolean
+    onOpenChannel?: (channelId: string) => void
 }) => {
     const navigate = useNavigate()
     const { client, leaveRoom } = useTownsClient()
@@ -115,6 +117,7 @@ export const ChannelItem = ({
     const { createLink } = useCreateLink()
     const groups = useMyChannels(space)
     const myJoinedChannelsInSpace = useMemo(() => groups.flatMap((c) => c.channels), [groups])
+    const { isTouch } = useDevice()
 
     useEffect(() => {
         // quick fix, leave events result in a faster rerender than the join event
@@ -201,14 +204,16 @@ export const ChannelItem = ({
     })
 
     const onOpenChannelClick = useEvent(() => {
-        const link = createLink({
+        const linkParams: LinkParams = {
             spaceId: space.id,
             channelId: channelIdentifier,
-            panel: 'browse-channels',
-        })
+            ...(isTouch ? {} : { panel: 'browse-channels' }),
+        }
+        const link = createLink(linkParams)
         if (link) {
             navigate(link)
         }
+        onOpenChannel && onOpenChannel(channelIdentifier)
     })
 
     return (

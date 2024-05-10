@@ -17,7 +17,7 @@ const profilePaths = [
 const browseChannelsPaths: Path[] = [
     {
         path: `/${PATHS.SPACES}/:spaceId/*`,
-        replace: `?panel=browse-channels`,
+        replace: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/?panel=browse-channels`,
     },
 ]
 
@@ -226,7 +226,7 @@ const linkParams = {
     },
 } as const
 
-type LinkParams = (typeof linkParams)[keyof typeof linkParams]['params']
+export type LinkParams = (typeof linkParams)[keyof typeof linkParams]['params']
 
 const getSearchPathsForParams = (linkParams: LinkParams) => {
     if ('route' in linkParams && linkParams.route === 'search') {
