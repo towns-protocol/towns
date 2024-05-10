@@ -159,9 +159,9 @@ export const RichTextBottomToolbar = (props: Props) => {
                 <input
                     multiple
                     type="file"
-                    name="image-file-input"
+                    name="file-input"
                     id={mediaInputId}
-                    accept={isTouch ? 'image/*' : '*'}
+                    accept="*"
                     style={{ display: 'none' }}
                     onChange={didSelectImages}
                 />
