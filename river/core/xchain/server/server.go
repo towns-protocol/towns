@@ -423,6 +423,19 @@ func (x *xchain) getLinkedWallets(ctx context.Context, wallet common.Address) ([
 		return []common.Address{wallet}, nil
 	}
 
+	// Make sure the root wallet is included in the returned list of linked wallets. This will not
+	// be the case when the wallet passed to the check is the root wallet.
+	containsRootWallet := false
+	for _, w := range wallets {
+		if w == rootKey {
+			containsRootWallet = true
+			break
+		}
+	}
+	if !containsRootWallet {
+		wallets = append(wallets, rootKey)
+	}
+
 	log.Debug("Linked wallets", "rootKey", rootKey.Hex(), "wallets", wallets)
 
 	return wallets, nil

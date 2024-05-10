@@ -13,28 +13,28 @@
             "type": "uint256"
           }
         ],
-        "name": "CheckOperationsLimitReaced",
-        "type": "error"
+        "type": "error",
+        "name": "CheckOperationsLimitReaced"
       },
       {
         "inputs": [],
-        "name": "Entitlement__InvalidValue",
-        "type": "error"
+        "type": "error",
+        "name": "Entitlement__InvalidValue"
       },
       {
         "inputs": [],
-        "name": "Entitlement__NotAllowed",
-        "type": "error"
+        "type": "error",
+        "name": "Entitlement__NotAllowed"
       },
       {
         "inputs": [],
-        "name": "Entitlement__NotMember",
-        "type": "error"
+        "type": "error",
+        "name": "Entitlement__NotMember"
       },
       {
         "inputs": [],
-        "name": "Entitlement__ValueAlreadyExists",
-        "type": "error"
+        "type": "error",
+        "name": "Entitlement__ValueAlreadyExists"
       },
       {
         "inputs": [
@@ -49,8 +49,8 @@
             "type": "uint8"
           }
         ],
-        "name": "InvalidCheckOperationIndex",
-        "type": "error"
+        "type": "error",
+        "name": "InvalidCheckOperationIndex"
       },
       {
         "inputs": [
@@ -65,8 +65,8 @@
             "type": "uint8"
           }
         ],
-        "name": "InvalidLeftOperationIndex",
-        "type": "error"
+        "type": "error",
+        "name": "InvalidLeftOperationIndex"
       },
       {
         "inputs": [
@@ -81,8 +81,8 @@
             "type": "uint8"
           }
         ],
-        "name": "InvalidLogicalOperationIndex",
-        "type": "error"
+        "type": "error",
+        "name": "InvalidLogicalOperationIndex"
       },
       {
         "inputs": [
@@ -92,8 +92,8 @@
             "type": "uint8"
           }
         ],
-        "name": "InvalidOperationType",
-        "type": "error"
+        "type": "error",
+        "name": "InvalidOperationType"
       },
       {
         "inputs": [
@@ -108,8 +108,8 @@
             "type": "uint8"
           }
         ],
-        "name": "InvalidRightOperationIndex",
-        "type": "error"
+        "type": "error",
+        "name": "InvalidRightOperationIndex"
       },
       {
         "inputs": [
@@ -119,8 +119,8 @@
             "type": "uint256"
           }
         ],
-        "name": "LogicalOperationLimitReached",
-        "type": "error"
+        "type": "error",
+        "name": "LogicalOperationLimitReached"
       },
       {
         "inputs": [
@@ -130,11 +130,13 @@
             "type": "uint256"
           }
         ],
-        "name": "OperationsLimitReached",
-        "type": "error"
+        "type": "error",
+        "name": "OperationsLimitReached"
       },
       {
         "inputs": [],
+        "stateMutability": "view",
+        "type": "function",
         "name": "description",
         "outputs": [
           {
@@ -142,15 +144,19 @@
             "name": "",
             "type": "string"
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
           {
+            "internalType": "struct IRuleEntitlement.RuleData",
+            "name": "data",
+            "type": "tuple",
             "components": [
               {
+                "internalType": "struct IRuleEntitlement.Operation[]",
+                "name": "operations",
+                "type": "tuple[]",
                 "components": [
                   {
                     "internalType": "enum IRuleEntitlement.CombinedOperationType",
@@ -162,12 +168,12 @@
                     "name": "index",
                     "type": "uint8"
                   }
-                ],
-                "internalType": "struct IRuleEntitlement.Operation[]",
-                "name": "operations",
-                "type": "tuple[]"
+                ]
               },
               {
+                "internalType": "struct IRuleEntitlement.CheckOperation[]",
+                "name": "checkOperations",
+                "type": "tuple[]",
                 "components": [
                   {
                     "internalType": "enum IRuleEntitlement.CheckOperationType",
@@ -189,12 +195,12 @@
                     "name": "threshold",
                     "type": "uint256"
                   }
-                ],
-                "internalType": "struct IRuleEntitlement.CheckOperation[]",
-                "name": "checkOperations",
-                "type": "tuple[]"
+                ]
               },
               {
+                "internalType": "struct IRuleEntitlement.LogicalOperation[]",
+                "name": "logicalOperations",
+                "type": "tuple[]",
                 "components": [
                   {
                     "internalType": "enum IRuleEntitlement.LogicalOperationType",
@@ -211,17 +217,13 @@
                     "name": "rightOperationIndex",
                     "type": "uint8"
                   }
-                ],
-                "internalType": "struct IRuleEntitlement.LogicalOperation[]",
-                "name": "logicalOperations",
-                "type": "tuple[]"
+                ]
               }
-            ],
-            "internalType": "struct IRuleEntitlement.RuleData",
-            "name": "data",
-            "type": "tuple"
+            ]
           }
         ],
+        "stateMutability": "pure",
+        "type": "function",
         "name": "encodeRuleData",
         "outputs": [
           {
@@ -229,9 +231,7 @@
             "name": "",
             "type": "bytes"
           }
-        ],
-        "stateMutability": "pure",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
@@ -241,9 +241,14 @@
             "type": "uint256"
           }
         ],
+        "stateMutability": "view",
+        "type": "function",
         "name": "getCheckOperations",
         "outputs": [
           {
+            "internalType": "struct IRuleEntitlement.CheckOperation[]",
+            "name": "",
+            "type": "tuple[]",
             "components": [
               {
                 "internalType": "enum IRuleEntitlement.CheckOperationType",
@@ -265,14 +270,9 @@
                 "name": "threshold",
                 "type": "uint256"
               }
-            ],
-            "internalType": "struct IRuleEntitlement.CheckOperation[]",
-            "name": "",
-            "type": "tuple[]"
+            ]
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
@@ -282,6 +282,8 @@
             "type": "uint256"
           }
         ],
+        "stateMutability": "view",
+        "type": "function",
         "name": "getEntitlementDataByRoleId",
         "outputs": [
           {
@@ -289,9 +291,7 @@
             "name": "",
             "type": "bytes"
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
@@ -301,9 +301,14 @@
             "type": "uint256"
           }
         ],
+        "stateMutability": "view",
+        "type": "function",
         "name": "getLogicalOperations",
         "outputs": [
           {
+            "internalType": "struct IRuleEntitlement.LogicalOperation[]",
+            "name": "",
+            "type": "tuple[]",
             "components": [
               {
                 "internalType": "enum IRuleEntitlement.LogicalOperationType",
@@ -320,14 +325,9 @@
                 "name": "rightOperationIndex",
                 "type": "uint8"
               }
-            ],
-            "internalType": "struct IRuleEntitlement.LogicalOperation[]",
-            "name": "",
-            "type": "tuple[]"
+            ]
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
@@ -337,9 +337,14 @@
             "type": "uint256"
           }
         ],
+        "stateMutability": "view",
+        "type": "function",
         "name": "getOperations",
         "outputs": [
           {
+            "internalType": "struct IRuleEntitlement.Operation[]",
+            "name": "",
+            "type": "tuple[]",
             "components": [
               {
                 "internalType": "enum IRuleEntitlement.CombinedOperationType",
@@ -351,14 +356,9 @@
                 "name": "index",
                 "type": "uint8"
               }
-            ],
-            "internalType": "struct IRuleEntitlement.Operation[]",
-            "name": "",
-            "type": "tuple[]"
+            ]
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
@@ -368,11 +368,19 @@
             "type": "uint256"
           }
         ],
+        "stateMutability": "view",
+        "type": "function",
         "name": "getRuleData",
         "outputs": [
           {
+            "internalType": "struct IRuleEntitlement.RuleData",
+            "name": "data",
+            "type": "tuple",
             "components": [
               {
+                "internalType": "struct IRuleEntitlement.Operation[]",
+                "name": "operations",
+                "type": "tuple[]",
                 "components": [
                   {
                     "internalType": "enum IRuleEntitlement.CombinedOperationType",
@@ -384,12 +392,12 @@
                     "name": "index",
                     "type": "uint8"
                   }
-                ],
-                "internalType": "struct IRuleEntitlement.Operation[]",
-                "name": "operations",
-                "type": "tuple[]"
+                ]
               },
               {
+                "internalType": "struct IRuleEntitlement.CheckOperation[]",
+                "name": "checkOperations",
+                "type": "tuple[]",
                 "components": [
                   {
                     "internalType": "enum IRuleEntitlement.CheckOperationType",
@@ -411,12 +419,12 @@
                     "name": "threshold",
                     "type": "uint256"
                   }
-                ],
-                "internalType": "struct IRuleEntitlement.CheckOperation[]",
-                "name": "checkOperations",
-                "type": "tuple[]"
+                ]
               },
               {
+                "internalType": "struct IRuleEntitlement.LogicalOperation[]",
+                "name": "logicalOperations",
+                "type": "tuple[]",
                 "components": [
                   {
                     "internalType": "enum IRuleEntitlement.LogicalOperationType",
@@ -433,19 +441,11 @@
                     "name": "rightOperationIndex",
                     "type": "uint8"
                   }
-                ],
-                "internalType": "struct IRuleEntitlement.LogicalOperation[]",
-                "name": "logicalOperations",
-                "type": "tuple[]"
+                ]
               }
-            ],
-            "internalType": "struct IRuleEntitlement.RuleData",
-            "name": "data",
-            "type": "tuple"
+            ]
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
@@ -455,13 +455,14 @@
             "type": "address"
           }
         ],
-        "name": "initialize",
-        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function"
+        "type": "function",
+        "name": "initialize"
       },
       {
         "inputs": [],
+        "stateMutability": "view",
+        "type": "function",
         "name": "isCrosschain",
         "outputs": [
           {
@@ -469,9 +470,7 @@
             "name": "",
             "type": "bool"
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
@@ -491,6 +490,8 @@
             "type": "bytes32"
           }
         ],
+        "stateMutability": "view",
+        "type": "function",
         "name": "isEntitled",
         "outputs": [
           {
@@ -498,12 +499,12 @@
             "name": "",
             "type": "bool"
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [],
+        "stateMutability": "view",
+        "type": "function",
         "name": "moduleType",
         "outputs": [
           {
@@ -511,12 +512,12 @@
             "name": "",
             "type": "string"
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [],
+        "stateMutability": "view",
+        "type": "function",
         "name": "name",
         "outputs": [
           {
@@ -524,9 +525,7 @@
             "name": "",
             "type": "string"
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
@@ -536,10 +535,9 @@
             "type": "uint256"
           }
         ],
-        "name": "removeEntitlement",
-        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function"
+        "type": "function",
+        "name": "removeEntitlement"
       },
       {
         "inputs": [
@@ -554,10 +552,9 @@
             "type": "bytes"
           }
         ],
-        "name": "setEntitlement",
-        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function"
+        "type": "function",
+        "name": "setEntitlement"
       }
     ],
     "devdoc": {
@@ -635,46 +632,46 @@
     }
   },
   "settings": {
-    "compilationTarget": {
-      "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol": "IRuleEntitlement"
-    },
-    "evmVersion": "paris",
-    "libraries": {},
-    "metadata": {
-      "appendCBOR": false,
-      "bytecodeHash": "none"
-    },
+    "remappings": [
+      "@openzeppelin/=lib/@openzeppelin/",
+      "@prb/math/=lib/@prb/math/src/",
+      "@prb/test/=lib/@prb/test/src/",
+      "account-abstraction/=lib/account-abstraction/contracts/",
+      "base64/=lib/base64/",
+      "ds-test/=lib/ds-test/src/",
+      "forge-std/=lib/forge-std/src/",
+      "hardhat-deploy/=lib/hardhat-deploy/"
+    ],
     "optimizer": {
       "enabled": true,
       "runs": 200
     },
-    "remappings": [
-      ":@openzeppelin/=lib/@openzeppelin/",
-      ":@prb/math/=lib/@prb/math/src/",
-      ":@prb/test/=lib/@prb/test/src/",
-      ":account-abstraction/=lib/account-abstraction/contracts/",
-      ":base64/=lib/base64/",
-      ":ds-test/=lib/ds-test/src/",
-      ":forge-std/=lib/forge-std/src/",
-      ":hardhat-deploy/=lib/hardhat-deploy/"
-    ]
+    "metadata": {
+      "bytecodeHash": "none",
+      "appendCBOR": false
+    },
+    "compilationTarget": {
+      "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol": "IRuleEntitlement"
+    },
+    "evmVersion": "paris",
+    "libraries": {}
   },
   "sources": {
     "contracts/src/spaces/entitlements/IEntitlement.sol": {
       "keccak256": "0x84f059cb6d594cbe0a70ed4a10c9b96f82d530c9dba39a5d84e466f5b046b9ca",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://68fdceef136a16c8a11e1b354119d39697029ea41db4ae4edc9ea9d68e9c12a3",
         "dweb:/ipfs/QmbCmoo6nMDou5m77JzFBPc2GBJkET5F2eWDEZaXQ5taHf"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol": {
       "keccak256": "0x795b58a2ed6205d814e01e58a4a5e88ff69401ee7540d01c4881b7b28f04cfcf",
-      "license": "MIT",
       "urls": [
         "bzz-raw://684e395bce3abedfb499ba8b2708a4f0ca9d1b1f73eb0ebc647d4cead0b8fdd1",
         "dweb:/ipfs/QmWz2Eu8UGXYskoBFtFXLBuwDrxUfYDLeQuTCeApALdf97"
-      ]
+      ],
+      "license": "MIT"
     }
   },
   "version": 1

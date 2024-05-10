@@ -552,7 +552,7 @@ func TestErc721Entitlements(t *testing.T) {
 			expectEntitlementCheckResult(require, cs, ctx, erc721Check(ChainID, contractAddress, 2), false)
 
 			// Create a set of 3 linked wallets using client simulator address.
-			_, wallet1, wallet2, wallet3 := generateLinkedWallets(ctx, require, tc.sentByRootKeyWallet, st, cs.Wallet())
+			_, wallet1, wallet2, _ := generateLinkedWallets(ctx, require, tc.sentByRootKeyWallet, st, cs.Wallet())
 
 			// Sanity check: balance of 4 across all 3 wallets should fail
 			expectEntitlementCheckResult(require, cs, ctx, erc721Check(ChainID, contractAddress, 4), false)
@@ -562,11 +562,6 @@ func TestErc721Entitlements(t *testing.T) {
 
 			// Mint 1 NFT for wallet2.
 			mintTokenForWallet(require, auth, st, erc721, wallet2, 1)
-
-			// If wallet3 is not the client simulator, mint 1 NFT for wallet3.
-			if tc.sentByRootKeyWallet {
-				mintTokenForWallet(require, auth, st, erc721, wallet3, 1)
-			}
 
 			// Accumulated balance of 4 across all 3 wallets should now pass
 			expectEntitlementCheckResult(require, cs, ctx, erc721Check(ChainID, contractAddress, 4), true)
@@ -648,7 +643,7 @@ func TestErc20Entitlements(t *testing.T) {
 			expectEntitlementCheckResult(require, cs, ctx, erc20Check(ChainID, contractAddress, 20), false)
 
 			// Create a set of 3 linked wallets using client simulator address.
-			_, wallet1, wallet2, wallet3 := generateLinkedWallets(ctx, require, tc.sentByRootKeyWallet, st, cs.Wallet())
+			_, wallet1, wallet2, _ := generateLinkedWallets(ctx, require, tc.sentByRootKeyWallet, st, cs.Wallet())
 
 			// Sanity check: balance of 30 across all 3 wallets should fail
 			expectEntitlementCheckResult(require, cs, ctx, erc20Check(ChainID, contractAddress, 30), false)
@@ -657,10 +652,6 @@ func TestErc20Entitlements(t *testing.T) {
 			mintErc20TokensForWallet(require, auth, st, erc20, wallet1, 19)
 			// Mint 1 token for wallet2.
 			mintErc20TokensForWallet(require, auth, st, erc20, wallet2, 1)
-			// If wallet3 is not the client simulator, mint 10 tokens for wallet3. Otherwise, it will already have 10 tokens.
-			if tc.sentByRootKeyWallet {
-				mintErc20TokensForWallet(require, auth, st, erc20, wallet3, 10)
-			}
 
 			// Accumulated balance of 30 across all 3 wallets should now pass
 			expectEntitlementCheckResult(require, cs, ctx, erc20Check(ChainID, contractAddress, 30), true)

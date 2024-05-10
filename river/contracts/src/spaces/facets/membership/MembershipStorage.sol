@@ -26,6 +26,7 @@ library MembershipStorage {
     mapping(uint256 => uint256) renewalPriceByTokenId;
     uint256 tokenBalance;
     mapping(bytes32 => address) pendingJoinRequests;
+    string membershipImage;
   }
 
   function layout() internal pure returns (Layout storage l) {

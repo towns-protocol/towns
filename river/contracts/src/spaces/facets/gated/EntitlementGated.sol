@@ -11,8 +11,14 @@ import {IEntitlementChecker} from "contracts/src/base/registry/facets/checker/IE
 // contracts
 import {EntitlementGatedBase} from "./EntitlementGatedBase.sol";
 import {Facet} from "contracts/src/diamond/facets/Facet.sol";
+import {ReentrancyGuard} from "contracts/src/diamond/facets/reentrancy/ReentrancyGuard.sol";
 
-contract EntitlementGated is IEntitlementGated, EntitlementGatedBase, Facet {
+contract EntitlementGated is
+  IEntitlementGated,
+  EntitlementGatedBase,
+  ReentrancyGuard,
+  Facet
+{
   function __EntitlementGated_init(
     IEntitlementChecker entitlementChecker
   ) external onlyInitializing {
@@ -31,7 +37,7 @@ contract EntitlementGated is IEntitlementGated, EntitlementGatedBase, Facet {
   function postEntitlementCheckResult(
     bytes32 transactionId,
     NodeVoteStatus result
-  ) external {
+  ) external nonReentrant {
     _postEntitlementCheckResult(transactionId, result);
   }
 
@@ -40,8 +46,4 @@ contract EntitlementGated is IEntitlementGated, EntitlementGatedBase, Facet {
   ) external view returns (IRuleEntitlement.RuleData memory) {
     return _getRuleData(transactionId);
   }
-
-  function requestEntitlementCheck(
-    IRuleEntitlement.RuleData calldata ruleData
-  ) external virtual returns (bytes32) {}
 }

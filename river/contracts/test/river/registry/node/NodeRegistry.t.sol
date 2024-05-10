@@ -44,6 +44,7 @@ contract NodeRegistryTest is RiverRegistryBaseSetup, INodeRegistryBase {
   ) external {
     vm.assume(node != address(0));
     vm.assume(nodeOperator != address(0));
+    vm.assume(nodeOperator != node);
 
     vm.prank(nodeOperator);
     vm.expectRevert(bytes(RiverRegistryErrors.BAD_AUTH));

@@ -7,179 +7,179 @@
     "abi": [
       {
         "inputs": [],
-        "name": "ApprovalCallerNotOwnerNorApproved",
-        "type": "error"
+        "type": "error",
+        "name": "ApprovalCallerNotOwnerNorApproved"
       },
       {
         "inputs": [],
-        "name": "ApprovalQueryForNonexistentToken",
-        "type": "error"
+        "type": "error",
+        "name": "ApprovalQueryForNonexistentToken"
       },
       {
         "inputs": [],
-        "name": "BalanceQueryForZeroAddress",
-        "type": "error"
+        "type": "error",
+        "name": "BalanceQueryForZeroAddress"
       },
       {
         "inputs": [],
-        "name": "InvalidQueryRange",
-        "type": "error"
+        "type": "error",
+        "name": "InvalidQueryRange"
       },
       {
         "inputs": [],
-        "name": "MintERC2309QuantityExceedsLimit",
-        "type": "error"
+        "type": "error",
+        "name": "MintERC2309QuantityExceedsLimit"
       },
       {
         "inputs": [],
-        "name": "MintToZeroAddress",
-        "type": "error"
+        "type": "error",
+        "name": "MintToZeroAddress"
       },
       {
         "inputs": [],
-        "name": "MintZeroQuantity",
-        "type": "error"
+        "type": "error",
+        "name": "MintZeroQuantity"
       },
       {
         "inputs": [],
-        "name": "OwnerQueryForNonexistentToken",
-        "type": "error"
+        "type": "error",
+        "name": "OwnerQueryForNonexistentToken"
       },
       {
         "inputs": [],
-        "name": "OwnershipNotInitializedForExtraData",
-        "type": "error"
+        "type": "error",
+        "name": "OwnershipNotInitializedForExtraData"
       },
       {
         "inputs": [],
-        "name": "TransferCallerNotOwnerNorApproved",
-        "type": "error"
+        "type": "error",
+        "name": "TransferCallerNotOwnerNorApproved"
       },
       {
         "inputs": [],
-        "name": "TransferFromIncorrectOwner",
-        "type": "error"
+        "type": "error",
+        "name": "TransferFromIncorrectOwner"
       },
       {
         "inputs": [],
-        "name": "TransferToNonERC721ReceiverImplementer",
-        "type": "error"
+        "type": "error",
+        "name": "TransferToNonERC721ReceiverImplementer"
       },
       {
         "inputs": [],
-        "name": "TransferToZeroAddress",
-        "type": "error"
+        "type": "error",
+        "name": "TransferToZeroAddress"
       },
       {
         "inputs": [],
-        "name": "URIQueryForNonexistentToken",
-        "type": "error"
+        "type": "error",
+        "name": "URIQueryForNonexistentToken"
       },
       {
-        "anonymous": false,
         "inputs": [
           {
-            "indexed": true,
             "internalType": "address",
             "name": "owner",
-            "type": "address"
+            "type": "address",
+            "indexed": true
           },
           {
-            "indexed": true,
             "internalType": "address",
             "name": "approved",
-            "type": "address"
+            "type": "address",
+            "indexed": true
           },
           {
-            "indexed": true,
             "internalType": "uint256",
             "name": "tokenId",
-            "type": "uint256"
+            "type": "uint256",
+            "indexed": true
           }
         ],
+        "type": "event",
         "name": "Approval",
-        "type": "event"
+        "anonymous": false
       },
       {
-        "anonymous": false,
         "inputs": [
           {
-            "indexed": true,
             "internalType": "address",
             "name": "owner",
-            "type": "address"
+            "type": "address",
+            "indexed": true
           },
           {
-            "indexed": true,
             "internalType": "address",
             "name": "operator",
-            "type": "address"
+            "type": "address",
+            "indexed": true
           },
           {
-            "indexed": false,
             "internalType": "bool",
             "name": "approved",
-            "type": "bool"
+            "type": "bool",
+            "indexed": false
           }
         ],
+        "type": "event",
         "name": "ApprovalForAll",
-        "type": "event"
+        "anonymous": false
       },
       {
-        "anonymous": false,
         "inputs": [
           {
-            "indexed": true,
             "internalType": "uint256",
             "name": "fromTokenId",
-            "type": "uint256"
+            "type": "uint256",
+            "indexed": true
           },
           {
-            "indexed": false,
             "internalType": "uint256",
             "name": "toTokenId",
-            "type": "uint256"
+            "type": "uint256",
+            "indexed": false
           },
           {
-            "indexed": true,
             "internalType": "address",
             "name": "from",
-            "type": "address"
+            "type": "address",
+            "indexed": true
           },
           {
-            "indexed": true,
             "internalType": "address",
             "name": "to",
-            "type": "address"
+            "type": "address",
+            "indexed": true
           }
         ],
+        "type": "event",
         "name": "ConsecutiveTransfer",
-        "type": "event"
+        "anonymous": false
       },
       {
-        "anonymous": false,
         "inputs": [
           {
-            "indexed": true,
             "internalType": "address",
             "name": "from",
-            "type": "address"
+            "type": "address",
+            "indexed": true
           },
           {
-            "indexed": true,
             "internalType": "address",
             "name": "to",
-            "type": "address"
+            "type": "address",
+            "indexed": true
           },
           {
-            "indexed": true,
             "internalType": "uint256",
             "name": "tokenId",
-            "type": "uint256"
+            "type": "uint256",
+            "indexed": true
           }
         ],
+        "type": "event",
         "name": "Transfer",
-        "type": "event"
+        "anonymous": false
       },
       {
         "inputs": [
@@ -189,9 +189,14 @@
             "type": "uint256"
           }
         ],
+        "stateMutability": "view",
+        "type": "function",
         "name": "explicitOwnershipOf",
         "outputs": [
           {
+            "internalType": "struct IERC721ABase.TokenOwnership",
+            "name": "",
+            "type": "tuple",
             "components": [
               {
                 "internalType": "address",
@@ -213,14 +218,9 @@
                 "name": "extraData",
                 "type": "uint24"
               }
-            ],
-            "internalType": "struct IERC721ABase.TokenOwnership",
-            "name": "",
-            "type": "tuple"
+            ]
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
@@ -230,9 +230,14 @@
             "type": "uint256[]"
           }
         ],
+        "stateMutability": "view",
+        "type": "function",
         "name": "explicitOwnershipsOf",
         "outputs": [
           {
+            "internalType": "struct IERC721ABase.TokenOwnership[]",
+            "name": "",
+            "type": "tuple[]",
             "components": [
               {
                 "internalType": "address",
@@ -254,14 +259,9 @@
                 "name": "extraData",
                 "type": "uint24"
               }
-            ],
-            "internalType": "struct IERC721ABase.TokenOwnership[]",
-            "name": "",
-            "type": "tuple[]"
+            ]
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
@@ -271,6 +271,8 @@
             "type": "address"
           }
         ],
+        "stateMutability": "view",
+        "type": "function",
         "name": "tokensOfOwner",
         "outputs": [
           {
@@ -278,9 +280,7 @@
             "name": "",
             "type": "uint256[]"
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
@@ -300,6 +300,8 @@
             "type": "uint256"
           }
         ],
+        "stateMutability": "view",
+        "type": "function",
         "name": "tokensOfOwnerIn",
         "outputs": [
           {
@@ -307,27 +309,10 @@
             "name": "",
             "type": "uint256[]"
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       }
     ],
     "devdoc": {
-      "details": "Interface of ERC721AQueryable.",
-      "events": {
-        "Approval(address,address,uint256)": {
-          "details": "Emitted when `owner` enables `approved` to manage the `tokenId` token."
-        },
-        "ApprovalForAll(address,address,bool)": {
-          "details": "Emitted when `owner` enables or disables (`approved`) `operator` to manage all of its assets."
-        },
-        "ConsecutiveTransfer(uint256,uint256,address,address)": {
-          "details": "Emitted when tokens in `fromTokenId` to `toTokenId` (inclusive) is transferred from `from` to `to`, as defined in the [ERC2309](https://eips.ethereum.org/EIPS/eip-2309) standard. See {_mintERC2309} for more details."
-        },
-        "Transfer(address,address,uint256)": {
-          "details": "Emitted when `tokenId` token is transferred from `from` to `to`."
-        }
-      },
       "kind": "dev",
       "methods": {
         "explicitOwnershipOf(uint256)": {
@@ -346,124 +331,52 @@
       "version": 1
     },
     "userdoc": {
-      "errors": {
-        "ApprovalCallerNotOwnerNorApproved()": [
-          {
-            "notice": "The caller must own the token or be an approved operator."
-          }
-        ],
-        "ApprovalQueryForNonexistentToken()": [
-          {
-            "notice": "The token does not exist."
-          }
-        ],
-        "BalanceQueryForZeroAddress()": [
-          {
-            "notice": "Cannot query the balance for the zero address."
-          }
-        ],
-        "InvalidQueryRange()": [
-          {
-            "notice": "Invalid query range (`start` >= `stop`)."
-          }
-        ],
-        "MintERC2309QuantityExceedsLimit()": [
-          {
-            "notice": "The `quantity` minted with ERC2309 exceeds the safety limit."
-          }
-        ],
-        "MintToZeroAddress()": [
-          {
-            "notice": "Cannot mint to the zero address."
-          }
-        ],
-        "MintZeroQuantity()": [
-          {
-            "notice": "The quantity of tokens minted must be more than zero."
-          }
-        ],
-        "OwnerQueryForNonexistentToken()": [
-          {
-            "notice": "The token does not exist."
-          }
-        ],
-        "OwnershipNotInitializedForExtraData()": [
-          {
-            "notice": "The `extraData` cannot be set on an unintialized ownership slot."
-          }
-        ],
-        "TransferCallerNotOwnerNorApproved()": [
-          {
-            "notice": "The caller must own the token or be an approved operator."
-          }
-        ],
-        "TransferFromIncorrectOwner()": [
-          {
-            "notice": "The token must be owned by `from`."
-          }
-        ],
-        "TransferToNonERC721ReceiverImplementer()": [
-          {
-            "notice": "Cannot safely transfer to a contract that does not implement the ERC721Receiver interface."
-          }
-        ],
-        "TransferToZeroAddress()": [
-          {
-            "notice": "Cannot transfer to the zero address."
-          }
-        ],
-        "URIQueryForNonexistentToken()": [
-          {
-            "notice": "The token does not exist."
-          }
-        ]
-      },
       "kind": "user",
       "methods": {},
       "version": 1
     }
   },
   "settings": {
-    "compilationTarget": {
-      "contracts/src/diamond/facets/token/ERC721A/extensions/IERC721AQueryable.sol": "IERC721AQueryable"
-    },
-    "evmVersion": "paris",
-    "libraries": {},
-    "metadata": {
-      "appendCBOR": false,
-      "bytecodeHash": "none"
-    },
+    "remappings": [
+      "@openzeppelin/=lib/@openzeppelin/",
+      "@prb/math/=lib/@prb/math/src/",
+      "@prb/test/=lib/@prb/test/src/",
+      "account-abstraction/=lib/account-abstraction/contracts/",
+      "base64/=lib/base64/",
+      "ds-test/=lib/ds-test/src/",
+      "forge-std/=lib/forge-std/src/",
+      "hardhat-deploy/=lib/hardhat-deploy/"
+    ],
     "optimizer": {
       "enabled": true,
       "runs": 200
     },
-    "remappings": [
-      ":@openzeppelin/=lib/@openzeppelin/",
-      ":@prb/math/=lib/@prb/math/src/",
-      ":@prb/test/=lib/@prb/test/src/",
-      ":account-abstraction/=lib/account-abstraction/contracts/",
-      ":base64/=lib/base64/",
-      ":ds-test/=lib/ds-test/src/",
-      ":forge-std/=lib/forge-std/src/",
-      ":hardhat-deploy/=lib/hardhat-deploy/"
-    ]
+    "metadata": {
+      "bytecodeHash": "none",
+      "appendCBOR": false
+    },
+    "compilationTarget": {
+      "contracts/src/diamond/facets/token/ERC721A/extensions/IERC721AQueryable.sol": "IERC721AQueryable"
+    },
+    "evmVersion": "paris",
+    "libraries": {}
   },
   "sources": {
     "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol": {
       "keccak256": "0xfce3dc8955c337c405c27c7741b7beff81685ed89f2e102fbad517043e20edf9",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://6c0ef999aaa971921ba4a4d2190ce5fae92fe15a34a87aac02fd081773fdbe9e",
         "dweb:/ipfs/QmUFD83GFhupZo2d3PafyK5fjqrzFRDnJHEsTGYhHakzUM"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/diamond/facets/token/ERC721A/extensions/IERC721AQueryable.sol": {
       "keccak256": "0x4f771b745db219765ea57142179c383c3650e70d117e6aaedda07faeab0a2174",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://ae401ba6b212057bb5ccaa749cd19b8f3adf81b8f8394d0b73b2b2c138da21c2",
         "dweb:/ipfs/QmSPd32GxN6L1K157yuRXvRBXPeNLa7TiKE93ouH8ccR6V"
-      ]
+      ],
+      "license": "Apache-2.0"
     }
   },
   "version": 1

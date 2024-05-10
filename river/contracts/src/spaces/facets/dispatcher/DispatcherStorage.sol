@@ -12,6 +12,11 @@ library DispatcherStorage {
   bytes32 internal constant STORAGE_SLOT =
     0x34516f6fe09a043d57f1ff579a303a7ae85314751c77b4eb1a55837604a86e00;
 
+  // transactionData {
+  //   bytes data
+  //   uint256 count
+  // }
+
   struct Layout {
     mapping(bytes32 => uint256) transactionNonce;
     mapping(bytes32 => uint256) transactionBalance;

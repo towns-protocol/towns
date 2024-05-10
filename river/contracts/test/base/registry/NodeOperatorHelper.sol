@@ -17,6 +17,8 @@ contract NodeOperatorHelper is FacetHelper {
     addSelector(NodeOperatorFacet.setOperatorStatus.selector);
     addSelector(NodeOperatorFacet.setCommissionRate.selector);
     addSelector(NodeOperatorFacet.getCommissionRate.selector);
+    addSelector(NodeOperatorFacet.setClaimAddress.selector);
+    addSelector(NodeOperatorFacet.getClaimAddress.selector);
   }
 
   function facet() public pure override returns (address) {

@@ -31,6 +31,7 @@ import { dlogger, isJest } from '@river-build/dlog'
 import { EVERYONE_ADDRESS } from '../Utils'
 import { evaluateOperationsForEntitledWallet, ruleDataToOperations } from '../entitlement'
 import { RuleEntitlementShim } from './RuleEntitlementShim'
+import { MembershipEventListenerTimeoutError } from '../error-types'
 
 const logger = dlogger('csb:SpaceDapp:debug')
 
@@ -929,21 +930,32 @@ export class SpaceDapp implements ISpaceDapp {
     public listenForMembershipEvent(
         spaceId: string,
         receiver: string,
-    ): Promise<{ issued: true; tokenId: string } | { issued: false; tokenId: undefined }> {
+    ): Promise<
+        | { issued: true; tokenId: string; error?: Error | undefined }
+        | { issued: false; tokenId: undefined; error?: Error | undefined }
+    > {
         const space = this.getSpace(spaceId)
 
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
 
-        const listener = space.Membership.listenForMembershipToken(receiver)
+        const abortController = new AbortController()
+
+        const listener = space.Membership.listenForMembershipToken(receiver, abortController)
 
         return new Promise<
-            { issued: true; tokenId: string } | { issued: false; tokenId: undefined }
+            | { issued: true; tokenId: string; error?: Error | undefined }
+            | { issued: false; tokenId: undefined; error?: Error | undefined }
         >((resolve) => {
             const timeout = setTimeout(() => {
                 logger.log('Membership mint event timed out')
-                resolve({ issued: false, tokenId: undefined })
+                abortController.abort()
+                resolve({
+                    issued: false,
+                    tokenId: undefined,
+                    error: new MembershipEventListenerTimeoutError(),
+                })
             }, 30_000)
             listener
                 .then((result) => {
@@ -952,8 +964,9 @@ export class SpaceDapp implements ISpaceDapp {
                 })
                 .catch((error) => {
                     clearTimeout(timeout)
+                    abortController.abort()
                     logger.error('Error waiting for membership mint event', error)
-                    resolve({ issued: false, tokenId: undefined })
+                    resolve({ issued: false, tokenId: undefined, error })
                 })
         })
     }
@@ -961,6 +974,10 @@ export class SpaceDapp implements ISpaceDapp {
 
 // Retry submitting the transaction N times (3 by default in jest, 0 by default elsewhere)
 // and then wait until the first confirmation of the transaction has been mined
+// works around gas estimation issues and other transient issues that are more common in running CI tests
+// so by default we only retry when running under jest
+// this wrapper unifies all of the wrapped contract calls in behvior, they don't return until
+// the transaction is confirmed
 async function wrapTransaction(
     txFn: () => Promise<ContractTransaction>,
     txnOpts?: TransactionOpts,
@@ -980,6 +997,8 @@ async function wrapTransaction(
                 const startConfirm = Date.now()
                 await confirmTransaction(tx)
                 logger.log('Transaction confirmed in', Date.now() - startConfirm)
+                // return the transaction, as it was successful
+                // the caller can wait() on it again if they want to wait for more confirmations
                 return tx
             } catch (error) {
                 retryCount++
@@ -996,15 +1015,22 @@ async function wrapTransaction(
     const confirmTransaction = async (tx: ContractTransaction) => {
         // eslint-disable-next-line no-constant-condition
         while (true) {
+            let receipt: ContractReceipt | null = null
             try {
-                const receipt = await tx.wait(0)
-                if (receipt.status === 1) {
-                    break
-                } else {
-                    throw new Error('Transaction confirmed but failed')
-                }
+                receipt = await tx.wait(0)
             } catch (error) {
+                // If the transaction receipt is not available yet, the error may be thrown
+                // We can ignore it and retry after a short delay
+                receipt = null
+            }
+            if (!receipt) {
+                // Trasnaction not minded yet, try again in 100ms
                 await new Promise((resolve) => setTimeout(resolve, 100))
+            } else if (receipt.status === 0) {
+                // Transaction failed, throw an error and the outer loop will retry
+                throw new Error('Transaction confirmed but failed')
+            } else {
+                return
             }
         }
     }

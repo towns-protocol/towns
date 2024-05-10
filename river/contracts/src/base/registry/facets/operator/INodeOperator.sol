@@ -22,7 +22,7 @@ interface INodeOperatorBase {
   error NodeOperator__AlreadyDelegated(address operator);
   error NodeOperator__NotEnoughStake();
   error NodeOperator__InvalidStakeRequirement();
-
+  error NodeOperator__ClaimAddressNotChanged();
   // =============================================================
   //                           Events
   // =============================================================
@@ -34,6 +34,10 @@ interface INodeOperatorBase {
   event OperatorCommissionChanged(
     address indexed operator,
     uint256 indexed commission
+  );
+  event OperatorClaimAddressChanged(
+    address indexed operator,
+    address indexed claimAddress
   );
 }
 
@@ -69,6 +73,13 @@ interface INodeOperator is INodeOperatorBase {
     address operator,
     NodeOperatorStatus newStatus
   ) external;
+
+  // =============================================================
+  //                           Operator Information
+  // =============================================================
+  function setClaimAddress(address claimAddress) external;
+
+  function getClaimAddress(address operator) external view returns (address);
 
   // =============================================================
   //                           Commission

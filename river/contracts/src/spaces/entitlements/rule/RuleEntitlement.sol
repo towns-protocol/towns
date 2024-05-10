@@ -112,76 +112,76 @@ contract RuleEntitlement is
     uint256 roleId,
     bytes calldata entitlementData
   ) external onlySpace {
-    if (entitlementData.length == 0) {
-      return;
-    }
     // Decode the data
     RuleData memory data = abi.decode(entitlementData, (RuleData));
 
+    if (entitlementData.length == 0 || data.operations.length == 0) {
+      return;
+    }
+
+    // Cache sender and currentTime
+    address sender = _msgSender();
+    uint256 currentTime = block.timestamp;
+
+    // Cache lengths of operations arrays to reduce state access cost
+    uint256 operationsLength = data.operations.length;
+    uint256 checkOperationsLength = data.checkOperations.length;
+    uint256 logicalOperationsLength = data.logicalOperations.length;
+
     // Step 1: Validate Operation against CheckOperation and LogicalOperation
-    for (uint256 i = 0; i < data.operations.length; i++) {
-      if (data.operations[i].opType == CombinedOperationType.CHECK) {
-        if (data.operations[i].index >= data.checkOperations.length) {
+    for (uint256 i = 0; i < operationsLength; i++) {
+      CombinedOperationType opType = data.operations[i].opType; // cache the operation type
+      uint8 index = data.operations[i].index; // cache the operation index
+
+      if (opType == CombinedOperationType.CHECK) {
+        if (index >= checkOperationsLength) {
           revert InvalidCheckOperationIndex(
-            data.operations[i].index,
-            uint8(data.checkOperations.length)
+            index,
+            uint8(checkOperationsLength)
           );
         }
-      } else if (data.operations[i].opType == CombinedOperationType.LOGICAL) {
+      } else if (opType == CombinedOperationType.LOGICAL) {
         // Use custom error in revert statement
-        if (data.operations[i].index >= data.logicalOperations.length) {
+        if (index >= logicalOperationsLength) {
           revert InvalidLogicalOperationIndex(
-            data.operations[i].index,
-            uint8(data.logicalOperations.length)
+            index,
+            uint8(logicalOperationsLength)
           );
         }
+
         // Verify the logical operations make a DAG
-        uint8 leftOperationIndex = data
-          .logicalOperations[data.operations[i].index]
-          .leftOperationIndex;
-        uint8 rightOperationIndex = data
-          .logicalOperations[data.operations[i].index]
-          .rightOperationIndex;
+        LogicalOperation memory logicalOp = data.logicalOperations[index];
+        uint8 leftOperationIndex = logicalOp.leftOperationIndex;
+        uint8 rightOperationIndex = logicalOp.rightOperationIndex;
 
         // Use custom errors in revert statements
         if (leftOperationIndex >= i) {
           revert InvalidLeftOperationIndex(leftOperationIndex, uint8(i));
         }
+
         if (rightOperationIndex >= i) {
           revert InvalidRightOperationIndex(rightOperationIndex, uint8(i));
         }
-      } else if (data.operations[i].opType == CombinedOperationType.NONE) {
-        // Intentionally left blank
-      } else {
-        revert InvalidOperationType(data.operations[i].opType);
       }
     }
 
     Entitlement storage entitlement = entitlementsByRoleId[roleId];
 
-    entitlement.grantedBy = _msgSender();
-    entitlement.grantedTime = block.timestamp;
-
-    if (data.operations.length == 0) {
-      return;
-    }
+    entitlement.grantedBy = sender;
+    entitlement.grantedTime = currentTime;
 
     // All checks passed; initialize state variables
     // Manually copy _checkOperations to checkOperations
-    for (uint256 i = 0; i < data.checkOperations.length; i++) {
-      entitlementsByRoleId[roleId].data.checkOperations.push(
-        data.checkOperations[i]
-      );
+    for (uint256 i = 0; i < checkOperationsLength; i++) {
+      entitlement.data.checkOperations.push(data.checkOperations[i]);
     }
 
-    for (uint256 i = 0; i < data.logicalOperations.length; i++) {
-      entitlementsByRoleId[roleId].data.logicalOperations.push(
-        data.logicalOperations[i]
-      );
+    for (uint256 i = 0; i < logicalOperationsLength; i++) {
+      entitlement.data.logicalOperations.push(data.logicalOperations[i]);
     }
 
-    for (uint256 i = 0; i < data.operations.length; i++) {
-      entitlementsByRoleId[roleId].data.operations.push(data.operations[i]);
+    for (uint256 i = 0; i < operationsLength; i++) {
+      entitlement.data.operations.push(data.operations[i]);
     }
   }
 

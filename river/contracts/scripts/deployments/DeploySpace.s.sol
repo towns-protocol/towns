@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 //interfaces
 import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
+import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 
 //libraries
 
@@ -15,7 +16,6 @@ import {EntitlementsManagerHelper} from "contracts/test/spaces/entitlements/Enti
 import {RolesHelper} from "contracts/test/spaces/roles/RolesHelper.sol";
 import {ChannelsHelper} from "contracts/test/spaces/channels/ChannelsHelper.sol";
 import {TokenPausableHelper} from "contracts/test/diamond/pausable/token/TokenPausableSetup.sol";
-import {MembershipHelper} from "contracts/test/spaces/membership/MembershipHelper.sol";
 import {MembershipReferralHelper} from "contracts/test/spaces/membership/MembershipReferralSetup.sol";
 import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
 
@@ -26,7 +26,6 @@ import {EntitlementsManager} from "contracts/src/spaces/facets/entitlements/Enti
 import {Channels} from "contracts/src/spaces/facets/channels/Channels.sol";
 import {Roles} from "contracts/src/spaces/facets/roles/Roles.sol";
 import {TokenPausableFacet} from "contracts/src/diamond/facets/pausable/token/TokenPausableFacet.sol";
-import {MembershipFacet} from "contracts/src/spaces/facets/membership/MembershipFacet.sol";
 import {MembershipReferralFacet} from "contracts/src/spaces/facets/membership/referral/MembershipReferralFacet.sol";
 import {Banning} from "contracts/src/spaces/facets/banning/Banning.sol";
 
@@ -38,6 +37,8 @@ import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIn
 import {DeployEntitlementGated} from "contracts/scripts/deployments/facets/DeployEntitlementGated.s.sol";
 import {DeployERC721AQueryable} from "./facets/DeployERC721AQueryable.s.sol";
 import {DeployBanning} from "contracts/scripts/deployments/facets/DeployBanning.s.sol";
+import {DeployMembershipMetadata} from "contracts/scripts/deployments/facets/DeployMembershipMetadata.s.sol";
+import {DeployMembership} from "contracts/scripts/deployments/DeployMembership.s.sol";
 import {DeployMultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.sol";
 
 contract DeploySpace is DiamondDeployer {
@@ -47,6 +48,9 @@ contract DeploySpace is DiamondDeployer {
   DeployEntitlementGated entitlementGatedHelper = new DeployEntitlementGated();
   DeployERC721AQueryable erc721aQueryableHelper = new DeployERC721AQueryable();
   DeployBanning banningHelper = new DeployBanning();
+  DeployMembership membershipHelper = new DeployMembership();
+  DeployMembershipMetadata membershipMetadataHelper =
+    new DeployMembershipMetadata();
   DeployMultiInit deployMultiInit = new DeployMultiInit();
 
   TokenOwnableHelper tokenOwnableHelper = new TokenOwnableHelper();
@@ -57,13 +61,8 @@ contract DeploySpace is DiamondDeployer {
   ChannelsHelper channelsHelper = new ChannelsHelper();
   TokenPausableHelper tokenPausableHelper = new TokenPausableHelper();
   ERC721AHelper erc721aHelper = new ERC721AHelper();
-  MembershipHelper membershipHelper = new MembershipHelper();
   MembershipReferralHelper membershipReferralHelper =
     new MembershipReferralHelper();
-
-  uint256 initDataCount = 4;
-  address[] initAddresses = new address[](initDataCount);
-  bytes[] initDatas = new bytes[](initDataCount);
 
   address ownable;
   address tokenOwnable;
@@ -79,6 +78,7 @@ contract DeploySpace is DiamondDeployer {
   address banning;
   address entitlementGated;
   address erc721aQueryable;
+  address membershipMetadata;
   address multiInit;
 
   function versionName() public pure override returns (string memory) {
@@ -94,6 +94,8 @@ contract DeploySpace is DiamondDeployer {
     introspection = introspectionHelper.deploy();
     erc721aQueryable = erc721aQueryableHelper.deploy();
     banning = banningHelper.deploy();
+    membership = membershipHelper.deploy();
+    membershipMetadata = membershipMetadataHelper.deploy();
     multiInit = deployMultiInit.deploy();
 
     vm.startBroadcast(deployerPK);
@@ -103,11 +105,11 @@ contract DeploySpace is DiamondDeployer {
     channels = address(new Channels());
     roles = address(new Roles());
     tokenPausable = address(new TokenPausableFacet());
-    membership = address(new MembershipFacet());
     membershipReferral = address(new MembershipReferralFacet());
     vm.stopBroadcast();
 
     membershipHelper.addSelectors(erc721aHelper.selectors());
+    membershipHelper.removeSelector(IERC721A.tokenURI.selector);
 
     addCut(
       tokenOwnableHelper.makeCut(tokenOwnable, IDiamond.FacetCutAction.Add)
@@ -137,6 +139,12 @@ contract DeploySpace is DiamondDeployer {
     );
     addCut(banningHelper.makeCut(banning, IDiamond.FacetCutAction.Add));
     addCut(
+      membershipMetadataHelper.makeCut(
+        membershipMetadata,
+        IDiamond.FacetCutAction.Add
+      )
+    );
+    addCut(
       entitlementGatedHelper.makeCut(membership, IDiamond.FacetCutAction.Add)
     );
     addCut(
@@ -146,19 +154,10 @@ contract DeploySpace is DiamondDeployer {
       )
     );
 
-    _resetIndex();
-
-    initAddresses[index++] = ownable;
-    initAddresses[index++] = diamondCut;
-    initAddresses[index++] = diamondLoupe;
-    initAddresses[index++] = introspection;
-
-    _resetIndex();
-
-    initDatas[index++] = ownableHelper.makeInitData(deployer);
-    initDatas[index++] = diamondCutHelper.makeInitData("");
-    initDatas[index++] = diamondLoupeHelper.makeInitData("");
-    initDatas[index++] = introspectionHelper.makeInitData("");
+    addInit(ownable, ownableHelper.makeInitData(deployer));
+    addInit(diamondCut, diamondCutHelper.makeInitData(""));
+    addInit(diamondLoupe, diamondLoupeHelper.makeInitData(""));
+    addInit(introspection, introspectionHelper.makeInitData(""));
 
     return
       Diamond.InitParams({
@@ -166,8 +165,8 @@ contract DeploySpace is DiamondDeployer {
         init: multiInit,
         initData: abi.encodeWithSelector(
           MultiInit.multiInit.selector,
-          initAddresses,
-          initDatas
+          _initAddresses,
+          _initDatas
         )
       });
   }

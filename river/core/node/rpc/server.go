@@ -159,7 +159,7 @@ func (s *Service) initInstance(mode string) {
 	s.defaultLogger = dlog.FromCtx(s.serverCtx).With(
 		"port", port,
 		"instanceId", s.instanceId,
-		"type", "stream",
+		"nodeType", "stream",
 		"mode", mode,
 	)
 	s.serverCtx = dlog.CtxWithLog(s.serverCtx, s.defaultLogger)

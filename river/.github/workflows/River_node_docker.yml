@@ -10,8 +10,8 @@ on:
     workflow_dispatch: # A build was manually requested
       inputs:
         release_version:
-          description: 'The release version to use for the image'
-          required: true
+          description: 'The release version to use for the image (optional)'
+          required: false # This is no longer required, so that we can promote existing images to `mainnet`, `testnet`, `stable` etc.
         additional_tags_csv:
           description: 'Comma separated list of tags to apply to the image (optional)'
           required: false
@@ -61,29 +61,19 @@ jobs:
               run: |
                 COMMIT_HASH=$(git describe --tags --always --dirty)
                 BRANCH=$(git rev-parse --abbrev-ref HEAD)
-                VERSION="unset"
+                TAGS=($COMMIT_HASH)
 
-                # if release version is not provided, we use the commit hash
+                # if release version is not provided, we set it to "unset"
                 if [ -z "$RELEASE_VERSION" ]; then
-                  RELEASE_VERSION=$COMMIT_HASH
-                  VERSION="dev"
+                  RELEASE_VERSION="unset"
                 else
-                  VERSION=$RELEASE_VERSION
+                  # If this is a release, we also tag the image with the release version.
+                  TAGS+=($RELEASE_VERSION)
                 fi
 
-                docker build \
-                  --build-arg GIT_SHA=${{ github.sha }} \
-                  --build-arg RELEASE_VERSION=$RELEASE_VERSION \
-                  --build-arg VER_VERSION=$VERSION \
-                  --build-arg VER_BRANCH=$BRANCH \
-                  --build-arg VER_COMMIT=$COMMIT_HASH \
-                  -t river:local-latest \
-                  . 
-
-                TAGS=($COMMIT_HASH $RELEASE_VERSION)
-
-                # If this is a push to main, we also tag the image as dev
-                if [ "$BRANCH" == "main" ] && [ "${{ github.event_name }}" == "push" ]; then
+                # If this is a push to main, we also tag the image as dev,
+                # But RELEASE_VERSION remains untouched, as `dev` is not a version, but just a tag.
+                if [ "$BRANCH" == "main" ] && [ "${{ github.event_name }}" == "push" ]; then  
                   TAGS+=(dev)
                 fi
 
@@ -95,7 +85,18 @@ jobs:
                   done
                 fi
 
-                echo "Pushing the following tags: ${TAGS[@]}"
+                echo "Building image with the following tags: ${TAGS[@]}"
+                echo "Commit hash: $COMMIT_HASH"
+                echo "Branch: $BRANCH"
+                echo "Release version: $RELEASE_VERSION"
+
+                docker build \
+                  --build-arg GIT_SHA=${{ github.sha }} \
+                  --build-arg VER_VERSION=$RELEASE_VERSION \
+                  --build-arg VER_BRANCH=$BRANCH \
+                  --build-arg VER_COMMIT=$COMMIT_HASH \
+                  -t river:local-latest \
+                  . 
 
                 for tag in "${TAGS[@]}"; do
                   docker tag river:local-latest $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:$tag

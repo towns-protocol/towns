@@ -11,7 +11,7 @@ test_contract:
 architectContract:
     address: ''
     version: ''
-walletLinkContract:
+wallet_link_contract:
     address: ''
     version: ''
 log:

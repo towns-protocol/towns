@@ -54,6 +54,7 @@ type TransactionType = ContractTransaction
 export type ContractEventListener = {
     wait: () => Promise<{
         success: boolean
+        error?: Error | undefined
         [x: string]: unknown
     }>
 }
@@ -210,5 +211,8 @@ export interface ISpaceDapp {
     listenForMembershipEvent: (
         spaceId: string,
         receiver: string,
-    ) => Promise<{ issued: true; tokenId: string } | { issued: false; tokenId: undefined }>
+    ) => Promise<
+        | { issued: true; tokenId: string; error?: Error | undefined }
+        | { issued: false; tokenId: undefined; error?: Error | undefined }
+    >
 }

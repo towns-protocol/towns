@@ -7,49 +7,50 @@
     "abi": [
       {
         "inputs": [],
-        "name": "Pausable__NotPaused",
-        "type": "error"
+        "type": "error",
+        "name": "Pausable__NotPaused"
       },
       {
         "inputs": [],
-        "name": "Pausable__Paused",
-        "type": "error"
+        "type": "error",
+        "name": "Pausable__Paused"
       },
       {
-        "anonymous": false,
         "inputs": [
           {
-            "indexed": false,
             "internalType": "address",
             "name": "account",
-            "type": "address"
+            "type": "address",
+            "indexed": false
           }
         ],
+        "type": "event",
         "name": "Paused",
-        "type": "event"
+        "anonymous": false
       },
       {
-        "anonymous": false,
         "inputs": [
           {
-            "indexed": false,
             "internalType": "address",
             "name": "account",
-            "type": "address"
+            "type": "address",
+            "indexed": false
           }
         ],
+        "type": "event",
         "name": "Unpaused",
-        "type": "event"
+        "anonymous": false
       },
       {
         "inputs": [],
-        "name": "pause",
-        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function"
+        "type": "function",
+        "name": "pause"
       },
       {
         "inputs": [],
+        "stateMutability": "view",
+        "type": "function",
         "name": "paused",
         "outputs": [
           {
@@ -57,16 +58,13 @@
             "name": "",
             "type": "bool"
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [],
-        "name": "unpause",
-        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function"
+        "type": "function",
+        "name": "unpause"
       }
     ],
     "devdoc": {
@@ -81,38 +79,38 @@
     }
   },
   "settings": {
-    "compilationTarget": {
-      "contracts/src/diamond/facets/pausable/IPausable.sol": "IPausable"
-    },
-    "evmVersion": "paris",
-    "libraries": {},
-    "metadata": {
-      "appendCBOR": false,
-      "bytecodeHash": "none"
-    },
+    "remappings": [
+      "@openzeppelin/=lib/@openzeppelin/",
+      "@prb/math/=lib/@prb/math/src/",
+      "@prb/test/=lib/@prb/test/src/",
+      "account-abstraction/=lib/account-abstraction/contracts/",
+      "base64/=lib/base64/",
+      "ds-test/=lib/ds-test/src/",
+      "forge-std/=lib/forge-std/src/",
+      "hardhat-deploy/=lib/hardhat-deploy/"
+    ],
     "optimizer": {
       "enabled": true,
       "runs": 200
     },
-    "remappings": [
-      ":@openzeppelin/=lib/@openzeppelin/",
-      ":@prb/math/=lib/@prb/math/src/",
-      ":@prb/test/=lib/@prb/test/src/",
-      ":account-abstraction/=lib/account-abstraction/contracts/",
-      ":base64/=lib/base64/",
-      ":ds-test/=lib/ds-test/src/",
-      ":forge-std/=lib/forge-std/src/",
-      ":hardhat-deploy/=lib/hardhat-deploy/"
-    ]
+    "metadata": {
+      "bytecodeHash": "none",
+      "appendCBOR": false
+    },
+    "compilationTarget": {
+      "contracts/src/diamond/facets/pausable/IPausable.sol": "IPausable"
+    },
+    "evmVersion": "paris",
+    "libraries": {}
   },
   "sources": {
     "contracts/src/diamond/facets/pausable/IPausable.sol": {
       "keccak256": "0xd5cc8d743bd12bbd23526178c11808634527c87e2f6da29dfb6aec75dab56261",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://c893da163481570ae2e00e5deae732404261cc0e7143fdc0448145810448c6b6",
         "dweb:/ipfs/QmbyUkcew8vmUXPVLDJ7GjvxMkmTqjhKZWLDYtWEPzZ2SM"
-      ]
+      ],
+      "license": "Apache-2.0"
     }
   },
   "version": 1

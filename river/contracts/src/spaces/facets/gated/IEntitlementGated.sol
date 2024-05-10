@@ -21,7 +21,8 @@ interface IEntitlementGatedBase {
     address clientAddress;
     bool isCompleted;
     NodeVote[] nodeVotesArray;
-    bytes encodedRuleData;
+    IRuleEntitlement entitlement;
+    uint256 roleId;
   }
 
   error EntitlementGated_InvalidAddress();
@@ -46,8 +47,4 @@ interface IEntitlementGated is IEntitlementGatedBase {
   function getRuleData(
     bytes32 transactionId
   ) external view returns (IRuleEntitlement.RuleData memory);
-
-  function requestEntitlementCheck(
-    IRuleEntitlement.RuleData calldata ruleData
-  ) external returns (bytes32);
 }

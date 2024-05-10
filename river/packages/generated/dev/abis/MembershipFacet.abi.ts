@@ -123,6 +123,19 @@ export default [
   },
   {
     "type": "function",
+    "name": "_getMembershipImage",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "_getMembershipPrice",
     "inputs": [
       {
@@ -328,6 +341,19 @@ export default [
         "name": "",
         "type": "uint256",
         "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getMembershipImage",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "string",
+        "internalType": "string"
       }
     ],
     "stateMutability": "view"
@@ -615,93 +641,6 @@ export default [
   },
   {
     "type": "function",
-    "name": "requestEntitlementCheck",
-    "inputs": [
-      {
-        "name": "ruleData",
-        "type": "tuple",
-        "internalType": "struct IRuleEntitlement.RuleData",
-        "components": [
-          {
-            "name": "operations",
-            "type": "tuple[]",
-            "internalType": "struct IRuleEntitlement.Operation[]",
-            "components": [
-              {
-                "name": "opType",
-                "type": "uint8",
-                "internalType": "enum IRuleEntitlement.CombinedOperationType"
-              },
-              {
-                "name": "index",
-                "type": "uint8",
-                "internalType": "uint8"
-              }
-            ]
-          },
-          {
-            "name": "checkOperations",
-            "type": "tuple[]",
-            "internalType": "struct IRuleEntitlement.CheckOperation[]",
-            "components": [
-              {
-                "name": "opType",
-                "type": "uint8",
-                "internalType": "enum IRuleEntitlement.CheckOperationType"
-              },
-              {
-                "name": "chainId",
-                "type": "uint256",
-                "internalType": "uint256"
-              },
-              {
-                "name": "contractAddress",
-                "type": "address",
-                "internalType": "address"
-              },
-              {
-                "name": "threshold",
-                "type": "uint256",
-                "internalType": "uint256"
-              }
-            ]
-          },
-          {
-            "name": "logicalOperations",
-            "type": "tuple[]",
-            "internalType": "struct IRuleEntitlement.LogicalOperation[]",
-            "components": [
-              {
-                "name": "logOpType",
-                "type": "uint8",
-                "internalType": "enum IRuleEntitlement.LogicalOperationType"
-              },
-              {
-                "name": "leftOperationIndex",
-                "type": "uint8",
-                "internalType": "uint8"
-              },
-              {
-                "name": "rightOperationIndex",
-                "type": "uint8",
-                "internalType": "uint8"
-              }
-            ]
-          }
-        ]
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      }
-    ],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
     "name": "safeTransferFrom",
     "inputs": [
       {
@@ -777,6 +716,19 @@ export default [
         "name": "newAllocation",
         "type": "uint256",
         "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setMembershipImage",
+    "inputs": [
+      {
+        "name": "newImage",
+        "type": "string",
+        "internalType": "string"
       }
     ],
     "outputs": [],

@@ -11,6 +11,7 @@ import {IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
 
 // libraries
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
+import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.sol";
 
 // contracts
 import {MembershipBase} from "./MembershipBase.sol";
@@ -55,7 +56,12 @@ contract MembershipFacet is
     if (account == address(0)) revert Membership__InvalidAddress();
     uint256 balance = _getCreatorBalance();
     if (balance == 0) revert Membership__InsufficientPayment();
-    _transferOut(_getMembershipCurrency(), address(this), account, balance);
+    CurrencyTransfer.transferCurrency(
+      _getMembershipCurrency(),
+      address(this),
+      account,
+      balance
+    );
   }
 
   // =============================================================
@@ -86,7 +92,7 @@ contract MembershipFacet is
       _makeDispatchInputSeed(keyHash, sender, _useDispatchNonce(keyHash))
     );
 
-    _captureData(transactionId, abi.encode(receiver));
+    _captureData(transactionId, abi.encode(sender, receiver));
     if (msg.value > 0) _captureValue(transactionId, msg.value);
 
     IRolesBase.Role[] memory roles = _getRolesWithPermission(
@@ -107,21 +113,12 @@ contract MembershipFacet is
               return;
             }
           } else {
-            IRuleEntitlement re = IRuleEntitlement(address(entitlement));
-            IRuleEntitlement.RuleData memory ruleData = re.getRuleData(role.id);
-
-            if (ruleData.operations.length > 0) {
-              IRuleEntitlement.CombinedOperationType opType = ruleData
-                .operations[0]
-                .opType;
-
-              if (opType != IRuleEntitlement.CombinedOperationType.NONE) {
-                // Since the operation type is not NONE, we need to handle it
-                bytes memory encodedRuleData = abi.encode(ruleData);
-                _requestEntitlementCheck(transactionId, encodedRuleData);
-                isCrosschainPending = true;
-              }
-            }
+            _requestEntitlementCheck(
+              transactionId,
+              IRuleEntitlement(address(entitlement)),
+              role.id
+            );
+            isCrosschainPending = true;
           }
         }
       }
@@ -132,7 +129,10 @@ contract MembershipFacet is
   }
 
   function _issueToken(bytes32 transactionId) internal {
-    address receiver = abi.decode(_getCapturedData(transactionId), (address));
+    (address sender, address receiver) = abi.decode(
+      _getCapturedData(transactionId),
+      (address, address)
+    );
 
     // allocate protocol and membership fees
     uint256 membershipPrice = _getMembershipPrice(_totalSupply());
@@ -146,10 +146,10 @@ contract MembershipFacet is
 
       // set renewal price for token
       _setMembershipRenewalPrice(tokenId, membershipPrice);
-      uint256 protocolFee = _collectProtocolFee(receiver, membershipPrice);
+      uint256 protocolFee = _collectProtocolFee(sender, membershipPrice);
 
       uint256 surplus = membershipPrice - protocolFee;
-      if (surplus > 0) _transferIn(receiver, surplus);
+      if (surplus > 0) _transferIn(sender, surplus);
 
       // release captured value
       _releaseCapturedValue(transactionId, membershipPrice);
@@ -189,7 +189,12 @@ contract MembershipFacet is
       if (surplus > 0) {
         // calculate referral fee from net membership price
         uint256 referralFee = _calculateReferralAmount(surplus, referralCode);
-        _transferOut(currency, receiver, referrer, referralFee);
+        CurrencyTransfer.transferCurrency(
+          currency,
+          receiver,
+          referrer,
+          referralFee
+        );
 
         // transfer remaining amount to fee recipient
         uint256 recipientFee = surplus - referralFee;
@@ -335,6 +340,17 @@ contract MembershipFacet is
   }
 
   // =============================================================
+  //                           Image
+  // =============================================================
+  function setMembershipImage(string calldata newImage) external onlyOwner {
+    _setMembershipImage(newImage);
+  }
+
+  function getMembershipImage() external view returns (string memory) {
+    return _getMembershipImage();
+  }
+
+  // =============================================================
   //                           Factory
   // =============================================================
 
@@ -352,12 +368,28 @@ contract MembershipFacet is
     bytes32 transactionId,
     IEntitlementGatedBase.NodeVoteStatus result
   ) internal override {
-    // get trasnaction from memmbership storage
     if (result == NodeVoteStatus.PASSED) {
       _issueToken(transactionId);
     } else {
-      address receiver = abi.decode(_getCapturedData(transactionId), (address));
+      (address sender, address receiver) = abi.decode(
+        _getCapturedData(transactionId),
+        (address, address)
+      );
+
       _captureData(transactionId, "");
+
+      uint256 value = _getCapturedValue(transactionId);
+
+      if (value > 0) {
+        _releaseCapturedValue(transactionId, value);
+        CurrencyTransfer.transferCurrency(
+          _getMembershipCurrency(),
+          address(this),
+          sender,
+          value
+        );
+      }
+
       emit MembershipTokenRejected(receiver);
     }
   }

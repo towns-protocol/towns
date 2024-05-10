@@ -207,6 +207,16 @@ contract NodeOperatorFacetTest is
     _;
   }
 
+  modifier givenOperatorHasSetClaimAddress(
+    address _operator,
+    address _claimAddress
+  ) {
+    vm.assume(_claimAddress != address(0));
+    vm.prank(_operator);
+    nodeOperator.setClaimAddress(_claimAddress);
+    _;
+  }
+
   // function test_setOperatorStatus_toApprovedFromMainnetDelegation(
   //   address delegator,
   //   address randomOperator
@@ -384,6 +394,30 @@ contract NodeOperatorFacetTest is
       nodeOperator.getOperatorStatus(randomOperator) ==
         NodeOperatorStatus.Exiting
     );
+  }
+
+  // =============================================================
+  //                           setOperationsAddress
+  // =============================================================
+
+  function test_revertWhen_setClaimAddressIsCalledByInvalidOperator(
+    address randomOperator,
+    address randomClaimAddress
+  ) public {
+    vm.expectRevert(BaseRegistryErrors.NodeOperator__NotRegistered.selector);
+    vm.prank(randomOperator);
+    nodeOperator.setClaimAddress(randomClaimAddress);
+  }
+
+  function test_setClaimAddress(
+    address randomOperator,
+    address randomClaimAddress
+  )
+    public
+    givenOperatorIsRegistered(randomOperator)
+    givenOperatorHasSetClaimAddress(randomOperator, randomClaimAddress)
+  {
+    assertEq(nodeOperator.getClaimAddress(randomOperator), randomClaimAddress);
   }
 
   // =============================================================

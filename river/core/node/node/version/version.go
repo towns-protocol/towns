@@ -16,3 +16,15 @@ func GetFullVersion() string {
 	}
 	return ret
 }
+
+func GetVersion() string {
+	return version
+}
+
+func GetBranch() string {
+	return branch
+}
+
+func GetCommit() string {
+	return commit
+}

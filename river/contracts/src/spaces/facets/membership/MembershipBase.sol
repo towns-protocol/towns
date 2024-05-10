@@ -93,23 +93,6 @@ abstract contract MembershipBase is IMembershipBase {
     return finalAmount;
   }
 
-  function _transferOut(
-    address currency,
-    address from,
-    address to,
-    uint256 fee
-  ) internal {
-    emit MembershipWithdrawal(to, fee);
-
-    //transfer a fee to a user
-    CurrencyTransfer.transferCurrency(
-      currency,
-      from, // from
-      to, // to
-      fee
-    );
-  }
-
   function _getCreatorBalance() internal view returns (uint256) {
     return MembershipStorage.layout().tokenBalance;
   }
@@ -255,5 +238,16 @@ abstract contract MembershipBase is IMembershipBase {
   // =============================================================
   function _getSpaceFactory() public view returns (address) {
     return MembershipStorage.layout().spaceFactory;
+  }
+
+  // =============================================================
+  //                           Image
+  // =============================================================
+  function _getMembershipImage() public view returns (string memory) {
+    return MembershipStorage.layout().membershipImage;
+  }
+
+  function _setMembershipImage(string memory image) internal {
+    MembershipStorage.layout().membershipImage = image;
   }
 }

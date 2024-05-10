@@ -130,6 +130,7 @@ export interface MembershipFacetInterface extends utils.Interface {
     "__Membership_init((string,string,uint256,uint256,uint64,address,address,uint256,address),address)": FunctionFragment;
     "_getMembershipCurrency()": FunctionFragment;
     "_getMembershipFreeAllocation()": FunctionFragment;
+    "_getMembershipImage()": FunctionFragment;
     "_getMembershipPrice(uint256)": FunctionFragment;
     "_getMembershipSupplyLimit()": FunctionFragment;
     "_getPricingModule()": FunctionFragment;
@@ -144,6 +145,7 @@ export interface MembershipFacetInterface extends utils.Interface {
     "getMembershipCurrency()": FunctionFragment;
     "getMembershipDuration()": FunctionFragment;
     "getMembershipFreeAllocation()": FunctionFragment;
+    "getMembershipImage()": FunctionFragment;
     "getMembershipLimit()": FunctionFragment;
     "getMembershipPrice()": FunctionFragment;
     "getMembershipPricingModule()": FunctionFragment;
@@ -157,11 +159,11 @@ export interface MembershipFacetInterface extends utils.Interface {
     "ownerOf(uint256)": FunctionFragment;
     "postEntitlementCheckResult(bytes32,uint8)": FunctionFragment;
     "renewMembership(uint256)": FunctionFragment;
-    "requestEntitlementCheck(((uint8,uint8)[],(uint8,uint256,address,uint256)[],(uint8,uint8,uint8)[]))": FunctionFragment;
     "safeTransferFrom(address,address,uint256)": FunctionFragment;
     "safeTransferFrom(address,address,uint256,bytes)": FunctionFragment;
     "setApprovalForAll(address,bool)": FunctionFragment;
     "setMembershipFreeAllocation(uint256)": FunctionFragment;
+    "setMembershipImage(string)": FunctionFragment;
     "setMembershipLimit(uint256)": FunctionFragment;
     "setMembershipPrice(uint256)": FunctionFragment;
     "setMembershipPricingModule(address)": FunctionFragment;
@@ -179,6 +181,7 @@ export interface MembershipFacetInterface extends utils.Interface {
       | "__Membership_init"
       | "_getMembershipCurrency"
       | "_getMembershipFreeAllocation"
+      | "_getMembershipImage"
       | "_getMembershipPrice"
       | "_getMembershipSupplyLimit"
       | "_getPricingModule"
@@ -193,6 +196,7 @@ export interface MembershipFacetInterface extends utils.Interface {
       | "getMembershipCurrency"
       | "getMembershipDuration"
       | "getMembershipFreeAllocation"
+      | "getMembershipImage"
       | "getMembershipLimit"
       | "getMembershipPrice"
       | "getMembershipPricingModule"
@@ -206,11 +210,11 @@ export interface MembershipFacetInterface extends utils.Interface {
       | "ownerOf"
       | "postEntitlementCheckResult"
       | "renewMembership"
-      | "requestEntitlementCheck"
       | "safeTransferFrom(address,address,uint256)"
       | "safeTransferFrom(address,address,uint256,bytes)"
       | "setApprovalForAll"
       | "setMembershipFreeAllocation"
+      | "setMembershipImage"
       | "setMembershipLimit"
       | "setMembershipPrice"
       | "setMembershipPricingModule"
@@ -239,6 +243,10 @@ export interface MembershipFacetInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "_getMembershipFreeAllocation",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "_getMembershipImage",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -298,6 +306,10 @@ export interface MembershipFacetInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "getMembershipImage",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "getMembershipLimit",
     values?: undefined
   ): string;
@@ -351,10 +363,6 @@ export interface MembershipFacetInterface extends utils.Interface {
     values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
-    functionFragment: "requestEntitlementCheck",
-    values: [IRuleEntitlement.RuleDataStruct]
-  ): string;
-  encodeFunctionData(
     functionFragment: "safeTransferFrom(address,address,uint256)",
     values: [
       PromiseOrValue<string>,
@@ -378,6 +386,10 @@ export interface MembershipFacetInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "setMembershipFreeAllocation",
     values: [PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setMembershipImage",
+    values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "setMembershipLimit",
@@ -434,6 +446,10 @@ export interface MembershipFacetInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "_getMembershipImage",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "_getMembershipPrice",
     data: BytesLike
   ): Result;
@@ -481,6 +497,10 @@ export interface MembershipFacetInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "getMembershipImage",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "getMembershipLimit",
     data: BytesLike
   ): Result;
@@ -524,10 +544,6 @@ export interface MembershipFacetInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "requestEntitlementCheck",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "safeTransferFrom(address,address,uint256)",
     data: BytesLike
   ): Result;
@@ -541,6 +557,10 @@ export interface MembershipFacetInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "setMembershipFreeAllocation",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setMembershipImage",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -997,6 +1017,8 @@ export interface MembershipFacet extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
+    _getMembershipImage(overrides?: CallOverrides): Promise<[string]>;
+
     _getMembershipPrice(
       totalSupply: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -1052,6 +1074,8 @@ export interface MembershipFacet extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
+    getMembershipImage(overrides?: CallOverrides): Promise<[string]>;
+
     getMembershipLimit(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     getMembershipPrice(overrides?: CallOverrides): Promise<[BigNumber]>;
@@ -1106,11 +1130,6 @@ export interface MembershipFacet extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    requestEntitlementCheck(
-      ruleData: IRuleEntitlement.RuleDataStruct,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
     "safeTransferFrom(address,address,uint256)"(
       from: PromiseOrValue<string>,
       to: PromiseOrValue<string>,
@@ -1134,6 +1153,11 @@ export interface MembershipFacet extends BaseContract {
 
     setMembershipFreeAllocation(
       newAllocation: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    setMembershipImage(
+      newImage: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -1195,6 +1219,8 @@ export interface MembershipFacet extends BaseContract {
 
   _getMembershipFreeAllocation(overrides?: CallOverrides): Promise<BigNumber>;
 
+  _getMembershipImage(overrides?: CallOverrides): Promise<string>;
+
   _getMembershipPrice(
     totalSupply: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
@@ -1247,6 +1273,8 @@ export interface MembershipFacet extends BaseContract {
   getMembershipDuration(overrides?: CallOverrides): Promise<BigNumber>;
 
   getMembershipFreeAllocation(overrides?: CallOverrides): Promise<BigNumber>;
+
+  getMembershipImage(overrides?: CallOverrides): Promise<string>;
 
   getMembershipLimit(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -1302,11 +1330,6 @@ export interface MembershipFacet extends BaseContract {
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  requestEntitlementCheck(
-    ruleData: IRuleEntitlement.RuleDataStruct,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
   "safeTransferFrom(address,address,uint256)"(
     from: PromiseOrValue<string>,
     to: PromiseOrValue<string>,
@@ -1330,6 +1353,11 @@ export interface MembershipFacet extends BaseContract {
 
   setMembershipFreeAllocation(
     newAllocation: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  setMembershipImage(
+    newImage: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -1391,6 +1419,8 @@ export interface MembershipFacet extends BaseContract {
 
     _getMembershipFreeAllocation(overrides?: CallOverrides): Promise<BigNumber>;
 
+    _getMembershipImage(overrides?: CallOverrides): Promise<string>;
+
     _getMembershipPrice(
       totalSupply: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -1443,6 +1473,8 @@ export interface MembershipFacet extends BaseContract {
     getMembershipDuration(overrides?: CallOverrides): Promise<BigNumber>;
 
     getMembershipFreeAllocation(overrides?: CallOverrides): Promise<BigNumber>;
+
+    getMembershipImage(overrides?: CallOverrides): Promise<string>;
 
     getMembershipLimit(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -1498,11 +1530,6 @@ export interface MembershipFacet extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    requestEntitlementCheck(
-      ruleData: IRuleEntitlement.RuleDataStruct,
-      overrides?: CallOverrides
-    ): Promise<string>;
-
     "safeTransferFrom(address,address,uint256)"(
       from: PromiseOrValue<string>,
       to: PromiseOrValue<string>,
@@ -1526,6 +1553,11 @@ export interface MembershipFacet extends BaseContract {
 
     setMembershipFreeAllocation(
       newAllocation: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    setMembershipImage(
+      newImage: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1820,6 +1852,8 @@ export interface MembershipFacet extends BaseContract {
 
     _getMembershipFreeAllocation(overrides?: CallOverrides): Promise<BigNumber>;
 
+    _getMembershipImage(overrides?: CallOverrides): Promise<BigNumber>;
+
     _getMembershipPrice(
       totalSupply: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -1872,6 +1906,8 @@ export interface MembershipFacet extends BaseContract {
     getMembershipDuration(overrides?: CallOverrides): Promise<BigNumber>;
 
     getMembershipFreeAllocation(overrides?: CallOverrides): Promise<BigNumber>;
+
+    getMembershipImage(overrides?: CallOverrides): Promise<BigNumber>;
 
     getMembershipLimit(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -1927,11 +1963,6 @@ export interface MembershipFacet extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    requestEntitlementCheck(
-      ruleData: IRuleEntitlement.RuleDataStruct,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
     "safeTransferFrom(address,address,uint256)"(
       from: PromiseOrValue<string>,
       to: PromiseOrValue<string>,
@@ -1955,6 +1986,11 @@ export interface MembershipFacet extends BaseContract {
 
     setMembershipFreeAllocation(
       newAllocation: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    setMembershipImage(
+      newImage: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -2021,6 +2057,10 @@ export interface MembershipFacet extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    _getMembershipImage(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     _getMembershipPrice(
       totalSupply: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -2079,6 +2119,10 @@ export interface MembershipFacet extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     getMembershipFreeAllocation(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    getMembershipImage(
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
@@ -2142,11 +2186,6 @@ export interface MembershipFacet extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    requestEntitlementCheck(
-      ruleData: IRuleEntitlement.RuleDataStruct,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
     "safeTransferFrom(address,address,uint256)"(
       from: PromiseOrValue<string>,
       to: PromiseOrValue<string>,
@@ -2170,6 +2209,11 @@ export interface MembershipFacet extends BaseContract {
 
     setMembershipFreeAllocation(
       newAllocation: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setMembershipImage(
+      newImage: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

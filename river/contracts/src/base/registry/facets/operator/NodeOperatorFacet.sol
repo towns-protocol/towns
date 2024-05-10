@@ -100,6 +100,31 @@ contract NodeOperatorFacet is INodeOperator, OwnableBase, ERC721ABase, Facet {
   }
 
   // =============================================================
+  //                           Operator Info
+  // =============================================================
+
+  /// @inheritdoc INodeOperator
+  function setClaimAddress(
+    address claimAddress
+  ) external onlyValidOperator(msg.sender) {
+    NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
+
+    address currentClaimAddress = ds.claimAddressByOperator[msg.sender];
+    if (currentClaimAddress == claimAddress) {
+      revert NodeOperator__ClaimAddressNotChanged();
+    }
+    ds.claimAddressByOperator[msg.sender] = claimAddress;
+
+    emit OperatorClaimAddressChanged(msg.sender, claimAddress);
+  }
+
+  /// @inheritdoc INodeOperator
+  function getClaimAddress(address operator) external view returns (address) {
+    NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
+    return ds.claimAddressByOperator[operator];
+  }
+
+  // =============================================================
   //                           Commission
   // =============================================================
   function setCommissionRate(

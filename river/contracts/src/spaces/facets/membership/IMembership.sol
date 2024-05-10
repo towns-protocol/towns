@@ -190,6 +190,21 @@ interface IMembership is IMembershipBase {
   function getMembershipCurrency() external view returns (address);
 
   // =============================================================
+  //                           Image
+  // =============================================================
+  /**
+   * @notice Set the membership image
+   * @param image The new membership image
+   */
+  function setMembershipImage(string calldata image) external;
+
+  /**
+   * @notice Get the membership image
+   * @return The membership image
+   */
+  function getMembershipImage() external view returns (string memory);
+
+  // =============================================================
   //                           Factory
   // =============================================================
   /**

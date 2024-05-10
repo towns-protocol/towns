@@ -41,14 +41,20 @@ export class IMembershipShim extends BaseContractShim<
 
     async listenForMembershipToken(
         receiver: string,
+        abortController?: AbortController,
     ): Promise<{ issued: true; tokenId: string } | { issued: false; tokenId: undefined }> {
-        const issuedFilter = this.read.filters['MembershipTokenIssued(address,uint256)'](receiver)
-        const rejectedFilter = this.read.filters['MembershipTokenRejected(address)'](receiver)
+        // TODO: this isn't picking up correct typed fucntion signature
+        const issuedFilter = this.read.filters['MembershipTokenIssued(address,uint256)'](
+            receiver,
+        ) as string
+        const rejectedFilter = this.read.filters['MembershipTokenRejected(address)'](
+            receiver,
+        ) as string
 
         return new Promise((resolve, reject) => {
             const issuedListener = (recipient: string, tokenId: BigNumberish) => {
-                this.read.off(issuedFilter as string, issuedListener)
-                this.read.off(rejectedFilter as string, rejectedListener)
+                this.read.off(issuedFilter, issuedListener)
+                this.read.off(rejectedFilter, rejectedListener)
 
                 if (receiver !== recipient) {
                     log.error('Received event for wrong recipient', { receiver, recipient })
@@ -58,8 +64,8 @@ export class IMembershipShim extends BaseContractShim<
             }
 
             const rejectedListener = (recipient: string) => {
-                this.read.off(issuedFilter as string, issuedListener)
-                this.read.off(rejectedFilter as string, rejectedListener)
+                this.read.off(issuedFilter, issuedListener)
+                this.read.off(rejectedFilter, rejectedListener)
                 if (receiver !== recipient) {
                     log.error('Received event for wrong recipient', { receiver, recipient })
                     reject(new Error('Received event for wrong recipient'))
@@ -67,9 +73,15 @@ export class IMembershipShim extends BaseContractShim<
                 resolve({ issued: false, tokenId: undefined })
             }
 
-            // TODO: this isn't picking up correct typed fucntion signature
-            this.read.on(issuedFilter as string, issuedListener)
-            this.read.on(rejectedFilter as string, rejectedListener)
+            this.read.on(issuedFilter, issuedListener)
+            this.read.on(rejectedFilter, rejectedListener)
+
+            if (abortController) {
+                abortController.signal.addEventListener('abort', () => {
+                    this.read.off(issuedFilter, issuedListener)
+                    this.read.off(rejectedFilter, rejectedListener)
+                })
+            }
         })
     }
 }

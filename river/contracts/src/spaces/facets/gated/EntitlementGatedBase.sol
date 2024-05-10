@@ -38,7 +38,8 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
 
   function _requestEntitlementCheck(
     bytes32 transactionId,
-    bytes memory encodedRuleData
+    IRuleEntitlement entitlement,
+    uint256 roleId
   ) internal {
     EntitlementGatedStorage.Layout storage ds = EntitlementGatedStorage
       .layout();
@@ -59,7 +60,8 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
     transaction.hasBenSet = true;
     transaction.clientAddress = msg.sender;
     transaction.isCompleted = false;
-    transaction.encodedRuleData = encodedRuleData;
+    transaction.entitlement = entitlement;
+    transaction.roleId = roleId;
 
     for (uint256 i = 0; i < selectedNodes.length; i++) {
       transaction.nodeVotesArray.push(
@@ -147,9 +149,7 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
       .layout();
 
     Transaction storage transaction = ds.transactions[transactionId];
-
     delete transaction.nodeVotesArray;
-    delete transaction.encodedRuleData;
     delete ds.transactions[transactionId];
   }
 
@@ -165,7 +165,12 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
       revert EntitlementGated_TransactionNotRegistered();
     }
 
-    return abi.decode(transaction.encodedRuleData, (IRuleEntitlement.RuleData));
+    IRuleEntitlement re = IRuleEntitlement(address(transaction.entitlement));
+    IRuleEntitlement.RuleData memory ruleData = re.getRuleData(
+      transaction.roleId
+    );
+
+    return ruleData;
   }
 
   function _onEntitlementCheckResultPosted(

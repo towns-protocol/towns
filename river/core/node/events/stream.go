@@ -127,26 +127,26 @@ func (s *streamImpl) generateMiniblockProposal(ctx context.Context, forceSnapsho
 func (s *streamImpl) ProposeNextMiniblock(ctx context.Context, forceSnapshot bool) (*MiniblockInfo, error) {
 	proposal, err := s.generateMiniblockProposal(ctx, forceSnapshot)
 
+	if err != nil {
+		return nil, AsRiverError(err).Func("Stream.ProposeNextMiniblock").
+			Message("Failed to generate miniblock proposal").
+			Tag("streamId", s.streamId)
+	}
+
 	// empty minipool, do not propose.
 	if proposal == nil {
 		return nil, nil
 	}
 
+	miniblock, err := s.constructMiniblockFromProposal(ctx, proposal)
 	if err != nil {
-		return nil, AsRiverError(
-			err,
-		).Func("Stream.ProposeNextMiniblock").
-			Message("Failed to generate miniblock proposal").
+		return nil, AsRiverError(err).Func("Stream.ProposeNextMiniblock").
+			Message("Failed to construct miniblock from proposal").
 			Tag("streamId", s.streamId)
 	}
 
-	miniblock, err := s.constructMiniblockFromProposal(ctx, proposal)
-	if err != nil {
-		return nil, AsRiverError(
-			err,
-		).Func("Stream.ProposeNextMiniblock").
-			Message("Failed to construct miniblock from proposal").
-			Tag("streamId", s.streamId)
+	if miniblock == nil {
+		return nil, nil
 	}
 
 	// Save proposal in storage
@@ -187,7 +187,7 @@ func (s *streamImpl) storeMiniblockCandidate(ctx context.Context, miniblock *Min
 		ctx,
 		s.streamId,
 		miniblock.Hash,
-		s.view.minipool.generation,
+		miniblock.Num,
 		miniblockBytes,
 	)
 }
@@ -196,6 +196,12 @@ func (s *streamImpl) storeMiniblockCandidate(ctx context.Context, miniblock *Min
 func (s *streamImpl) ApplyMiniblock(ctx context.Context, miniblock *MiniblockInfo) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	if s.view == nil {
+		if err := s.loadInternal(ctx); err != nil {
+			return err
+		}
+	}
 
 	// Lets see if this miniblock can be applied.
 	newSV, err := s.view.copyAndApplyBlock(miniblock, s.params.StreamConfig)
@@ -238,9 +244,7 @@ func (s *streamImpl) constructMiniblockFromProposal(
 ) (*MiniblockInfo, error) {
 	miniblockHeader, envelopes, err := s.MakeMiniblockHeader(ctx, proposal)
 	if err != nil {
-		return nil, AsRiverError(
-			err,
-		).Func("Stream.constructMiniblockFromProposal").
+		return nil, AsRiverError(err).Func("Stream.constructMiniblockFromProposal").
 			Message("Failed to make miniblock header").
 			Tag("streamId", s.streamId)
 	}
@@ -254,9 +258,7 @@ func (s *streamImpl) constructMiniblockFromProposal(
 		miniblockHeader.PrevMiniblockHash,
 	)
 	if err != nil {
-		return nil, AsRiverError(
-			err,
-		).Func("Stream.constructMiniblockFromProposal").
+		return nil, AsRiverError(err).Func("Stream.constructMiniblockFromProposal").
 			Message("Failed to make miniblock header event").
 			Tag("streamId", s.streamId)
 	}
@@ -386,6 +388,26 @@ func (s *streamImpl) tryGetView() StreamView {
 	}
 }
 
+func (s *streamImpl) tryCleanup(expiration time.Duration) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	expired := time.Since(s.lastAccessedTime) >= expiration
+
+	// return immediately if the view is already purged or if the mini block creation routine
+	// is running for this stream
+	if s.view == nil {
+		return false
+	}
+
+	// only unload if there is no-one is listing to this stream and there are no events in the minipool.
+	if expired && (s.receivers == nil || s.receivers.Cardinality() == 0) && s.view.minipool.events.Len() == 0 {
+		s.view = nil
+		return true
+	}
+	return false
+}
+
 // Returns
 // miniblocks: with indexes from fromIndex inclusive, to toIndex exlusive
 // terminus: true if fromIndex is 0, or if there are no more blocks because they've been garbage collected
@@ -511,7 +533,7 @@ func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncR
 
 	s.lastAccessedTime = time.Now()
 
-	if cookie.MinipoolGen == int64(s.view.minipool.generation) {
+	if cookie.MinipoolGen == s.view.minipool.generation {
 		if slot > int64(s.view.minipool.events.Len()) {
 			return RiverError(Err_BAD_SYNC_COOKIE, "Stream.Sub: bad slot")
 		}

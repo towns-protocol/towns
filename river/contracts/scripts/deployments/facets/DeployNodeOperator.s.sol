@@ -18,6 +18,8 @@ contract DeployNodeOperator is Deployer, FacetHelper {
     addSelector(NodeOperatorFacet.getOperatorStatus.selector);
     addSelector(NodeOperatorFacet.setCommissionRate.selector);
     addSelector(NodeOperatorFacet.getCommissionRate.selector);
+    addSelector(NodeOperatorFacet.setClaimAddress.selector);
+    addSelector(NodeOperatorFacet.getClaimAddress.selector);
   }
 
   function initializer() public pure override returns (bytes4) {

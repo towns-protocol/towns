@@ -89,6 +89,7 @@ export declare namespace IRuleEntitlement {
 export interface MockEntitlementGatedInterface extends utils.Interface {
   functions: {
     "__EntitlementGated_init(address)": FunctionFragment;
+    "getRuleData(uint256)": FunctionFragment;
     "getRuleData(bytes32)": FunctionFragment;
     "postEntitlementCheckResult(bytes32,uint8)": FunctionFragment;
     "requestEntitlementCheck(((uint8,uint8)[],(uint8,uint256,address,uint256)[],(uint8,uint8,uint8)[]))": FunctionFragment;
@@ -97,7 +98,8 @@ export interface MockEntitlementGatedInterface extends utils.Interface {
   getFunction(
     nameOrSignatureOrTopic:
       | "__EntitlementGated_init"
-      | "getRuleData"
+      | "getRuleData(uint256)"
+      | "getRuleData(bytes32)"
       | "postEntitlementCheckResult"
       | "requestEntitlementCheck"
   ): FunctionFragment;
@@ -107,7 +109,11 @@ export interface MockEntitlementGatedInterface extends utils.Interface {
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
-    functionFragment: "getRuleData",
+    functionFragment: "getRuleData(uint256)",
+    values: [PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getRuleData(bytes32)",
     values: [PromiseOrValue<BytesLike>]
   ): string;
   encodeFunctionData(
@@ -124,7 +130,11 @@ export interface MockEntitlementGatedInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getRuleData",
+    functionFragment: "getRuleData(uint256)",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getRuleData(bytes32)",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -223,7 +233,12 @@ export interface MockEntitlementGated extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    getRuleData(
+    "getRuleData(uint256)"(
+      arg0: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[IRuleEntitlement.RuleDataStructOutput]>;
+
+    "getRuleData(bytes32)"(
       transactionId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<[IRuleEntitlement.RuleDataStructOutput]>;
@@ -245,7 +260,12 @@ export interface MockEntitlementGated extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  getRuleData(
+  "getRuleData(uint256)"(
+    arg0: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<IRuleEntitlement.RuleDataStructOutput>;
+
+  "getRuleData(bytes32)"(
     transactionId: PromiseOrValue<BytesLike>,
     overrides?: CallOverrides
   ): Promise<IRuleEntitlement.RuleDataStructOutput>;
@@ -267,7 +287,12 @@ export interface MockEntitlementGated extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    getRuleData(
+    "getRuleData(uint256)"(
+      arg0: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<IRuleEntitlement.RuleDataStructOutput>;
+
+    "getRuleData(bytes32)"(
       transactionId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<IRuleEntitlement.RuleDataStructOutput>;
@@ -318,7 +343,12 @@ export interface MockEntitlementGated extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    getRuleData(
+    "getRuleData(uint256)"(
+      arg0: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    "getRuleData(bytes32)"(
       transactionId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -341,7 +371,12 @@ export interface MockEntitlementGated extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    getRuleData(
+    "getRuleData(uint256)"(
+      arg0: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    "getRuleData(bytes32)"(
       transactionId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;

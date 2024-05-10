@@ -7,23 +7,23 @@
     "abi": [
       {
         "inputs": [],
-        "name": "Initializable_InInitializingState",
-        "type": "error"
+        "type": "error",
+        "name": "Initializable_InInitializingState"
       },
       {
         "inputs": [],
-        "name": "Initializable_NotInInitializingState",
-        "type": "error"
+        "type": "error",
+        "name": "Initializable_NotInInitializingState"
       },
       {
         "inputs": [],
-        "name": "Introspection_AlreadySupported",
-        "type": "error"
+        "type": "error",
+        "name": "Introspection_AlreadySupported"
       },
       {
         "inputs": [],
-        "name": "Introspection_NotSupported",
-        "type": "error"
+        "type": "error",
+        "name": "Introspection_NotSupported"
       },
       {
         "inputs": [
@@ -33,13 +33,13 @@
             "type": "address"
           }
         ],
-        "name": "Ownable__NotOwner",
-        "type": "error"
+        "type": "error",
+        "name": "Ownable__NotOwner"
       },
       {
         "inputs": [],
-        "name": "Ownable__ZeroAddress",
-        "type": "error"
+        "type": "error",
+        "name": "Ownable__ZeroAddress"
       },
       {
         "inputs": [
@@ -49,79 +49,79 @@
             "type": "address"
           }
         ],
-        "name": "ProxyManager__NotContract",
-        "type": "error"
+        "type": "error",
+        "name": "ProxyManager__NotContract"
       },
       {
-        "anonymous": false,
         "inputs": [
           {
-            "indexed": false,
             "internalType": "uint32",
             "name": "version",
-            "type": "uint32"
+            "type": "uint32",
+            "indexed": false
           }
         ],
+        "type": "event",
         "name": "Initialized",
-        "type": "event"
+        "anonymous": false
       },
       {
-        "anonymous": false,
         "inputs": [
           {
-            "indexed": true,
             "internalType": "bytes4",
             "name": "interfaceId",
-            "type": "bytes4"
+            "type": "bytes4",
+            "indexed": true
           }
         ],
+        "type": "event",
         "name": "InterfaceAdded",
-        "type": "event"
+        "anonymous": false
       },
       {
-        "anonymous": false,
         "inputs": [
           {
-            "indexed": true,
             "internalType": "bytes4",
             "name": "interfaceId",
-            "type": "bytes4"
+            "type": "bytes4",
+            "indexed": true
           }
         ],
+        "type": "event",
         "name": "InterfaceRemoved",
-        "type": "event"
+        "anonymous": false
       },
       {
-        "anonymous": false,
         "inputs": [
           {
-            "indexed": true,
             "internalType": "address",
             "name": "previousOwner",
-            "type": "address"
+            "type": "address",
+            "indexed": true
           },
           {
-            "indexed": true,
             "internalType": "address",
             "name": "newOwner",
-            "type": "address"
+            "type": "address",
+            "indexed": true
           }
         ],
+        "type": "event",
         "name": "OwnershipTransferred",
-        "type": "event"
+        "anonymous": false
       },
       {
-        "anonymous": false,
         "inputs": [
           {
-            "indexed": false,
             "internalType": "address",
             "name": "implementation",
-            "type": "address"
+            "type": "address",
+            "indexed": false
           }
         ],
+        "type": "event",
         "name": "ProxyManager__ImplementationSet",
-        "type": "event"
+        "anonymous": false
       },
       {
         "inputs": [
@@ -131,10 +131,9 @@
             "type": "address"
           }
         ],
-        "name": "__ProxyManager_init",
-        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function"
+        "type": "function",
+        "name": "__ProxyManager_init"
       },
       {
         "inputs": [
@@ -144,6 +143,8 @@
             "type": "bytes4"
           }
         ],
+        "stateMutability": "view",
+        "type": "function",
         "name": "getImplementation",
         "outputs": [
           {
@@ -151,9 +152,7 @@
             "name": "",
             "type": "address"
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
@@ -163,19 +162,12 @@
             "type": "address"
           }
         ],
-        "name": "setImplementation",
-        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function"
+        "type": "function",
+        "name": "setImplementation"
       }
     ],
     "devdoc": {
-      "details": "The flow of calls goes as follows ManagedProxy -> ProxyManager -> Implementation",
-      "events": {
-        "OwnershipTransferred(address,address)": {
-          "details": "This emits when ownership of a contract changes."
-        }
-      },
       "kind": "dev",
       "methods": {
         "getImplementation(bytes4)": {
@@ -192,18 +184,9 @@
           }
         }
       },
-      "title": "ProxyManager",
       "version": 1
     },
     "userdoc": {
-      "events": {
-        "InterfaceAdded(bytes4)": {
-          "notice": "Emitted when an interface is added to the contract via `_addInterface`."
-        },
-        "InterfaceRemoved(bytes4)": {
-          "notice": "Emitted when an interface is removed from the contract via `_removeInterface`."
-        }
-      },
       "kind": "user",
       "methods": {
         "getImplementation(bytes4)": {
@@ -213,163 +196,162 @@
           "notice": "Set the implementation"
         }
       },
-      "notice": "In charge of directing calls to the correct implementation contract, in use by the ManagedProxy contract to correctly direct calls to the correct implementation contract.",
       "version": 1
     }
   },
   "settings": {
-    "compilationTarget": {
-      "contracts/src/diamond/proxy/manager/ProxyManager.sol": "ProxyManager"
-    },
-    "evmVersion": "paris",
-    "libraries": {},
-    "metadata": {
-      "appendCBOR": false,
-      "bytecodeHash": "none"
-    },
+    "remappings": [
+      "@openzeppelin/=lib/@openzeppelin/",
+      "@prb/math/=lib/@prb/math/src/",
+      "@prb/test/=lib/@prb/test/src/",
+      "account-abstraction/=lib/account-abstraction/contracts/",
+      "base64/=lib/base64/",
+      "ds-test/=lib/ds-test/src/",
+      "forge-std/=lib/forge-std/src/",
+      "hardhat-deploy/=lib/hardhat-deploy/"
+    ],
     "optimizer": {
       "enabled": true,
       "runs": 200
     },
-    "remappings": [
-      ":@openzeppelin/=lib/@openzeppelin/",
-      ":@prb/math/=lib/@prb/math/src/",
-      ":@prb/test/=lib/@prb/test/src/",
-      ":account-abstraction/=lib/account-abstraction/contracts/",
-      ":base64/=lib/base64/",
-      ":ds-test/=lib/ds-test/src/",
-      ":forge-std/=lib/forge-std/src/",
-      ":hardhat-deploy/=lib/hardhat-deploy/"
-    ]
+    "metadata": {
+      "bytecodeHash": "none",
+      "appendCBOR": false
+    },
+    "compilationTarget": {
+      "contracts/src/diamond/proxy/manager/ProxyManager.sol": "ProxyManager"
+    },
+    "evmVersion": "paris",
+    "libraries": {}
   },
   "sources": {
     "contracts/src/diamond/facets/Facet.sol": {
       "keccak256": "0xecbb7e8de0dae5bdbcbda879436335abac6808bcc2e14f1f4e9efbdc77c4e8be",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://b7b5446461a1492f16c86137ce49a699d8a3452e2174c5568b97f8d2d4bc85a7",
         "dweb:/ipfs/QmY74odf1qgTwBV3wjF12rV8TXs3DiNoMm9Pg9S8w2F4VP"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/diamond/facets/initializable/Initializable.sol": {
       "keccak256": "0xe02e99665b5acb22d5c508c3bda97c35acd2597ce0a58569a19cc12f0010da90",
-      "license": "MIT",
       "urls": [
         "bzz-raw://b586a51dbe63e8763ae0b2b3dadd5c8559f47bc8cbaa0e9fe52aaec4c3677552",
         "dweb:/ipfs/QmRtaVikg6YDwzUAtY7WV793taZgT1ZxyMB4PLAEqGBeCC"
-      ]
+      ],
+      "license": "MIT"
     },
     "contracts/src/diamond/facets/initializable/InitializableStorage.sol": {
       "keccak256": "0x5dbbdca0faf75680e1c0d425d92bdb5ce16951c0f8215a668c5144c0ffdb1b01",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://05e5ba4fcd6e3e1e819e786fce3473d5ef69763b127fe162b2e0906d6a904d09",
         "dweb:/ipfs/QmYPN5xeMoMBVT2B2FwJrDpwocNNsCuVosgg7vdYrrWNep"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/diamond/facets/introspection/IERC165.sol": {
       "keccak256": "0x243cfeefa64ba07bee887b0b03704147f9bd2f25571272a6ebca3ba684af1b00",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://1aed67ea7251fad9dbfb58a30f59f7edd81d48d7f6b193b98f957be359653361",
         "dweb:/ipfs/QmQauJL4nFMN3QDutjWezRbBjLX5GsTWt5jeLfkX4JW64T"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/diamond/facets/introspection/IntrospectionBase.sol": {
       "keccak256": "0x5f458cf292b4b7b9d9c1efd110b3b65905c7bd7e47a48090af5eb9fb7d620ddf",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://84995121aafc9124ba3a1148835dcccc1061c25a5b074b4579a83c0dd213d613",
         "dweb:/ipfs/QmPYSKEqYWasPxVRzv4TCpXVfpkahfFDEPkTLp7UAT9fKq"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/diamond/facets/introspection/IntrospectionStorage.sol": {
       "keccak256": "0x2e047e5efa9df7f3d60a8a114da39343635578b7475fcd987860eb5b87e8c758",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://a071eda8331b690b689bbbc23e6a6c227324aad90d4101c36410a06b1ca3c357",
         "dweb:/ipfs/QmTR76zN1durS5acgDZXixrkrheXvaaMqfwXrJsaGyAPkj"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/diamond/facets/loupe/IDiamondLoupe.sol": {
       "keccak256": "0xafbe8346e6043ac3f6977e9ca43603ca3bbbfc2c2962b47024cf9aa0dcb23f7f",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://7b0fd31aeddde2f351471e0fd1f5a5da20570491d5604420b283a4749838514c",
         "dweb:/ipfs/QmbuKxmTX8HC9SHNUPsraBTc6NWECwsbgmXsrpXjPqkLLi"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/diamond/facets/ownable/IERC173.sol": {
       "keccak256": "0xec6475a73e1229430edadb6fd3e32f1599ebb8af78dbbc762d54ded196e534ae",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://46e9fef226666c827f408b5d2c9061600fa5233ddf5fcbc3a2b8956d89e8a872",
         "dweb:/ipfs/Qmd6L6wtehyrD8XwKqFD7gG5hJxsBZ1ja6hGSf2dtN4XEx"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/diamond/facets/ownable/OwnableBase.sol": {
       "keccak256": "0x6dd67541350d05fa7980a6497c1e372290e363c40c765a0ce4b7795c38510762",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://3eadd97e12aff7228d28e5f9cb27dcddcf7764296d2a72ad703c3765376d50c4",
         "dweb:/ipfs/QmP5hGb6Nj64XCpG4s3sdoYR3sEt85AwDy4hcjoigNxYDa"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/diamond/facets/ownable/OwnableStorage.sol": {
       "keccak256": "0xd66cdbb7083d80cc567449a7eb4f7272c16e0ceb9f20667d8b17cf2a8432aa64",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://946997262ab993790ce79eafa7d628ae9a1123192ad5c0d85624957ce8058105",
         "dweb:/ipfs/QmdSZ7BwGZvXvt9pt8AweDqnLt61eYqVg3QfK9renfGJHZ"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/diamond/proxy/manager/IProxyManager.sol": {
       "keccak256": "0xde8f6048e58e36541aebff781fb013334e8ea2fa824d9790e629d3733944929a",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://c79d9ac525a370f6f56b229506cf2d2ffeacafbeb02d417ed34c86c75fe01650",
         "dweb:/ipfs/QmT9CReyEvK2UkcwnzwierQdWw2T7NVZPtVDLcwhyNBhSC"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/diamond/proxy/manager/ProxyManager.sol": {
       "keccak256": "0x63c7b73579e0781bec91f6fe7c0475f6d15f4ce6c08f177bcdfd3ac2d8db91c2",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://451e530fb61dac8b54ba043c18305b8ef0f902e19952401322bf053afa242613",
         "dweb:/ipfs/QmQeD5nQJZRoPhyKJE6RvzgBYpJB6FGY7tnueqo2dTvLtq"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/diamond/proxy/manager/ProxyManagerBase.sol": {
       "keccak256": "0xac5ab92217043d81e01353a8f60242880d18292ed90493161461ab3fd9b0c0c5",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://2e8933873ed8549a6568129bee694b9213fbb8c8ffa0fed50491f2d1a8f9ca0d",
         "dweb:/ipfs/QmSBUHdcCemYyk9L5WJduW4WvvMPjDS5FCzfbbhydJnGi7"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "contracts/src/diamond/proxy/manager/ProxyManagerStorage.sol": {
       "keccak256": "0xf6636a2d69631c053de5784815e9474722f371cf5466fd469071a1a206759616",
-      "license": "Apache-2.0",
       "urls": [
         "bzz-raw://57d9cce006c55697bd4a6a202e6b4d2da25f311287a2e8928502e75212c0a265",
         "dweb:/ipfs/QmQ2fmatavgTHJMKVaDW4THzmAaXaGGWVUexvGkBEatac4"
-      ]
+      ],
+      "license": "Apache-2.0"
     },
     "lib/@openzeppelin/contracts/utils/Address.sol": {
       "keccak256": "0xaf28a975a78550e45f65e559a3ad6a5ad43b9b8a37366999abd1b7084eb70721",
-      "license": "MIT",
       "urls": [
         "bzz-raw://b7bd24e224f67f65bfadf85dc2929fa965456bb2415478bd0125471b5ce35245",
         "dweb:/ipfs/QmRaydGr8BTHs1kvaZfsNU69pKzUAGFrvABn1KiRSbE51y"
-      ]
+      ],
+      "license": "MIT"
     },
     "lib/@openzeppelin/contracts/utils/introspection/IERC165.sol": {
       "keccak256": "0x4296879f55019b23e135000eb36896057e7101fb7fb859c5ef690cf14643757b",
-      "license": "MIT",
       "urls": [
         "bzz-raw://87b3541437c8c443ccd36795e56a338ed12855eec17f8da624511b8d1a7e14df",
         "dweb:/ipfs/QmeJQCtZrQjtJLr6u7ZHWeH3pBnjtLWzvRrKViAi7UZqxL"
-      ]
+      ],
+      "license": "MIT"
     }
   },
   "version": 1

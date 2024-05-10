@@ -9,6 +9,7 @@ import (
 
 	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/infra"
+	"github.com/river-build/river/core/node/node/version"
 	"github.com/river-build/river/core/node/rpc"
 
 	"github.com/spf13/cobra"
@@ -42,9 +43,8 @@ func run(cfg *config.Config) error {
 				// ^ falling back to DD_SERVICE env var
 				// profiler.WithEnv("<ENVIRONMENT>"),
 				// ^ falling back to DD_ENV env var
-				profiler.WithVersion(os.Getenv("RELEASE_VERSION")),
-				// profiler.WithTags("<KEY1>:<VALUE1>", "<KEY2>:<VALUE2>"),
-				// ^ falling back to DD_TAGS env var
+				profiler.WithVersion(version.GetFullVersion()),
+				profiler.WithTags(getDDTags()),
 				profiler.WithProfileTypes(
 					profiler.CPUProfile,
 					profiler.HeapProfile,
@@ -94,6 +94,15 @@ func run(cfg *config.Config) error {
 		fmt.Println("Profiling disabled")
 	}
 	return rpc.RunServer(ctx, cfg)
+}
+
+func getDDTags() string {
+	ddTags := os.Getenv("DD_TAGS")
+	if ddTags != "" {
+		ddTags += ","
+	}
+	ddTags += "commit:" + version.GetCommit() + ",version_slim:" + version.GetVersion() + ",branch:" + version.GetBranch()
+	return ddTags
 }
 
 func init() {

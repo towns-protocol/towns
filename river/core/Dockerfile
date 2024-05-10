@@ -62,11 +62,9 @@ USER riveruser
 
 # Environment variables setup
 ARG GIT_SHA
-ARG RELEASE_VERSION="Unreleased"
 ARG DD_GIT_REPOSITORY_URL="https://github.com/river-build/river-stage"
 
-ENV RELEASE_VERSION=${RELEASE_VERSION} \
-    DD_GIT_REPOSITORY_URL=${DD_GIT_REPOSITORY_URL} \
+ENV DD_GIT_REPOSITORY_URL=${DD_GIT_REPOSITORY_URL} \
     DD_GIT_COMMIT_SHA=${GIT_SHA}
 
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]

@@ -2,6 +2,7 @@ package events
 
 import (
 	"context"
+	"github.com/ethereum/go-ethereum/core/types"
 	"sync"
 	"time"
 
@@ -76,7 +77,7 @@ func NewStreamCache(
 
 	// TODO: setup monitor for stream updates and update records accordingly.
 
-	chainMonitor.OnBlock(func(ctx context.Context, blockNumber crypto.BlockNumber) { s.OnNewBlock(ctx) })
+	chainMonitor.OnHeader(func(ctx context.Context, _ *types.Header) { s.OnNewBlock(ctx) })
 
 	go s.cacheCleanup(ctx, params.StreamConfig.CacheExpirationPollInterval, params.StreamConfig.CacheExpiration)
 
@@ -101,14 +102,9 @@ func (s *streamCacheImpl) cacheCleanup(ctx context.Context, pollInterval time.Du
 		select {
 		case <-time.After(pollInterval):
 			s.cache.Range(func(streamID, streamVal any) bool {
-				stream := streamVal.(*streamImpl)
-				stream.mu.Lock()
-				expired := time.Since(stream.lastAccessedTime) >= expiration
-				if expired && (stream.receivers == nil || stream.receivers.Cardinality() == 0) {
-					s.cache.Delete(streamID)
-					log.Debug("stream evicted from cache", "streamId", streamID)
+				if stream := streamVal.(*streamImpl); stream.tryCleanup(expiration) {
+					log.Debug("stream view evicted from cache", "streamId", stream.streamId)
 				}
-				stream.mu.Unlock()
 				return true
 			})
 		case <-ctx.Done():

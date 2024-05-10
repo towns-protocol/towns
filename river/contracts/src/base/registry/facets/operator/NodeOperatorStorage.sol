@@ -24,6 +24,7 @@ library NodeOperatorStorage {
     EnumerableSet.AddressSet operators;
     mapping(address => NodeOperatorStatus) statusByOperator;
     mapping(address => uint256) commissionByOperator;
+    mapping(address => address) claimAddressByOperator;
   }
 
   function layout() internal pure returns (Layout storage l) {
