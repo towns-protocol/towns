@@ -251,7 +251,7 @@ export function CreateTownSubmit({
                 //////////////////////////////////////////
                 const requirements: MembershipStruct = {
                     settings: {
-                        name: 'Member',
+                        name: createSpaceInfo.name + ' - Member',
                         symbol: 'MEMBER',
                         price: priceInWei,
                         maxSupply: membershipLimit,
