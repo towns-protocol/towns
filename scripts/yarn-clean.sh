@@ -41,7 +41,7 @@ popd > /dev/null
 echo ""
 
 # remove files not tracked by git, but keep dev files
-git clean -fdx -e .DS_Store -e '.env.*' -e '.env.*.*' -e '*.yaml' -e .vscode -e '*.pem' -e '*.crt' -e '*.key' -e .keys -e *_key -e *_address -e .wrangler -e .dev.* -e test-config.json
+git clean -fdx -e .DS_Store -e '.env.*' -e '.env.*.*' -e '.envrc' -e '*.yaml' -e .vscode -e '*.pem' -e '*.crt' -e '*.key' -e .keys -e *_key -e *_address -e .wrangler -e .dev.* -e test-config.json -e infra
 
 # remove empty directories and directories that only contain .DS_Store files
 find . -type d -not -path "./.git/*" -print0 | while IFS= read -r -d '' dir; do
