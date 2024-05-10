@@ -30,14 +30,12 @@ export function Logout(): JSX.Element | null {
             }
             await logout()
             if (deletePersistenceDb && persistenceDbName && indexedDB) {
-                indexedDB.deleteDatabase(persistenceDbName)
                 const deleteRequest = indexedDB.deleteDatabase(persistenceDbName)
                 deleteRequest.onerror = function () {
                     console.error('::Error clearing IndexedDB database::' + persistenceDbName)
                 }
             }
             if (deleteCryptoDb && cryptoDbName && indexedDB) {
-                indexedDB.deleteDatabase(cryptoDbName)
                 const deleteRequest = indexedDB.deleteDatabase(cryptoDbName)
                 deleteRequest.onerror = function () {
                     console.error('::Error clearing IndexedDB database::' + cryptoDbName)
