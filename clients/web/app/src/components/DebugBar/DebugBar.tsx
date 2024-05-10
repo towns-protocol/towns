@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { ethers, providers } from 'ethers'
 import {
@@ -142,7 +142,7 @@ const FundButton = (props: FundProps & { disabled: boolean }) => {
 }
 
 const DebugModal = ({ onHide, environment }: ModalProps) => {
-    const { baseProvider: provider, baseChain } = useTownsContext()
+    const { baseProvider: provider, baseChain, signerContext, clientSingleton } = useTownsContext()
     const walletChain = baseChain
     const { logout: libLogout } = useConnectivity()
     const { logout: fullLogout } = useCombinedAuth()
@@ -150,7 +150,32 @@ const DebugModal = ({ onHide, environment }: ModalProps) => {
     const { loggedInWalletAddress } = useConnectivity()
     const { setEnvironment, clearEnvironment } = environment
 
+    const persistenceDbName = useMemo(
+        () => (signerContext ? clientSingleton?.persistenceDbName(signerContext) : undefined),
+        [clientSingleton, signerContext],
+    )
+    const cryptoDbName = useMemo(
+        () => (signerContext ? clientSingleton?.cryptoDbName(signerContext) : undefined),
+        [clientSingleton, signerContext],
+    )
+
     const switchNetwork = useAsyncSwitchNetwork()
+
+    const deleteDbs = useCallback(() => {
+        const dbs = [persistenceDbName, cryptoDbName]
+        dbs.forEach((db) => {
+            if (db) {
+                try {
+                    const deleteRequest = indexedDB.deleteDatabase(db)
+                    deleteRequest.onerror = function () {
+                        console.error('::Error clearing IndexedDB database::' + db)
+                    }
+                } catch (e) {
+                    console.error('Error deleting db', db, e)
+                }
+            }
+        })
+    }, [persistenceDbName, cryptoDbName])
 
     const onSwitchEnvironment = useCallback(
         async (env: TownsEnvironmentInfo) => {
@@ -173,7 +198,8 @@ const DebugModal = ({ onHide, environment }: ModalProps) => {
 
     const onClear = useCallback(() => {
         clearEnvironment()
-    }, [clearEnvironment])
+        deleteDbs()
+    }, [clearEnvironment, deleteDbs])
 
     return (
         <ModalContainer onHide={onHide}>
