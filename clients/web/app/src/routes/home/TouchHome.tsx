@@ -344,13 +344,13 @@ export const TouchHome = () => {
                                         {space && (
                                             <>
                                                 <ChannelList
-                                                    label="Favorites"
-                                                    channelItems={filteredFavoriteChannels}
+                                                    label="Unread"
+                                                    channelItems={filteredUnreadChannels}
                                                     space={space}
                                                 />
                                                 <ChannelList
-                                                    label="Unread"
-                                                    channelItems={filteredUnreadChannels}
+                                                    label="Favorites"
+                                                    channelItems={filteredFavoriteChannels}
                                                     space={space}
                                                 />
                                                 <ChannelList
