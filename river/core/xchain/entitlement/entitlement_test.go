@@ -59,9 +59,11 @@ var (
 	ThirtyChainlinkTokens = new(big.Int).Mul(big.NewInt(30), ChainlinkExp)
 	SixtyChainlinkTokens  = new(big.Int).Mul(big.NewInt(60), ChainlinkExp)
 
-	// This wallet has been loaded with a custom test NFT on ethereum sepolia and base sepolia, contract
-	// addresses defined below.
-	sepoliaTestNftWallet = common.HexToAddress("0x1FDBA84c2153568bc22686B88B617CF64cdb0637")
+	// These wallets have been loaded with custom test NFTs on ethereum sepolia and base sepolia, contract
+	// addresses defined below. They have the same balance of NFTs on both networks.
+	sepoliaTestNftWallet_1Token  = common.HexToAddress("0x1FDBA84c2153568bc22686B88B617CF64cdb0637")
+	sepoliaTestNftWallet_3Tokens = common.HexToAddress("0xB79Af997239A334355F60DBeD75bEDf30AcD37bD")
+	sepoliaTestNftWallet_2Tokens = common.HexToAddress("0x8cECcB1e5537040Fc63A06C88b4c1dE61880dA4d")
 	// This wallet has been kept void of nfts on all testnets.
 	sepoliaTestNoNftsWallet = examples.SepoliaChainlinkWallet
 )
@@ -98,26 +100,58 @@ var erc20FalseCheckEthereumSepolia = CheckOperation{
 	Threshold:       SixtyChainlinkTokens,
 }
 
-// These neft checks will be true or false depending on caller address.
+// These nft checks will be true or false depending on caller address.
 var nftCheckEthereumSepolia = CheckOperation{
 	OpType:          CHECK,
 	CheckType:       CheckOperationType(ERC721),
-	ChainID:         big.NewInt(11155111),
+	ChainID:         examples.EthSepoliaChainId,
 	ContractAddress: examples.EthSepoliaTestNftContract,
 	Threshold:       big.NewInt(1),
+}
+
+var nftMultiCheckEthereumSepolia = CheckOperation{
+	OpType:          CHECK,
+	CheckType:       CheckOperationType(ERC721),
+	ChainID:         examples.EthSepoliaChainId,
+	ContractAddress: examples.EthSepoliaTestNftContract,
+	Threshold:       big.NewInt(6),
+}
+
+var nftMultiCheckHighThresholdEthereumSepolia = CheckOperation{
+	OpType:          CHECK,
+	CheckType:       CheckOperationType(ERC721),
+	ChainID:         examples.EthSepoliaChainId,
+	ContractAddress: examples.EthSepoliaTestNftContract,
+	Threshold:       big.NewInt(10),
 }
 
 var nftCheckBaseSepolia = CheckOperation{
 	OpType:          CHECK,
 	CheckType:       CheckOperationType(ERC721),
-	ChainID:         big.NewInt(84532),
+	ChainID:         examples.BaseSepoliaChainId,
 	ContractAddress: examples.BaseSepoliaTestNftContract,
 	Threshold:       big.NewInt(1),
 }
 
+var nftMultiCheckBaseSepolia = CheckOperation{
+	OpType:          CHECK,
+	CheckType:       CheckOperationType(ERC721),
+	ChainID:         examples.BaseSepoliaChainId,
+	ContractAddress: examples.EthSepoliaTestNftContract,
+	Threshold:       big.NewInt(6),
+}
+
+var nftMultiCheckHighThresholdBaseSepolia = CheckOperation{
+	OpType:          CHECK,
+	CheckType:       CheckOperationType(ERC721),
+	ChainID:         examples.BaseSepoliaChainId,
+	ContractAddress: examples.EthSepoliaTestNftContract,
+	Threshold:       big.NewInt(10),
+}
+
 var chains = map[uint64]string{
-	84532:    "https://sepolia.base.org",
-	11155111: "https://ethereum-sepolia-rpc.publicnode.com",
+	examples.BaseSepoliaChainId.Uint64(): "https://sepolia.base.org",
+	examples.EthSepoliaChainId.Uint64():  "https://ethereum-sepolia-rpc.publicnode.com",
 }
 
 var cfg = &config.Config{
@@ -235,28 +269,15 @@ func areDurationsClose(d1, d2, threshold time.Duration) bool {
 
 func TestCheckOperation(t *testing.T) {
 	testCases := []struct {
-		a             Operation
-		callerAddress common.Address
-		expected      bool
-		expectedTime  int32
+		a            Operation
+		wallets      []common.Address
+		expected     bool
+		expectedTime int32
 	}{
-		{&fastTrueCheck, common.Address{}, true, fast},
-		{&slowTrueCheck, common.Address{}, true, slow},
-		{&fastFalseCheck, common.Address{}, false, fast},
-		{&slowFalseCheck, common.Address{}, false, slow},
-		// Note: these tests call out to base sepolia and ethereum sepolia, so they are not
-		// really unit tests. However, we've had deploy failures since anvil does not always
-		// behave the same as a real chain, so these tests are here to ensure that the
-		// entitlement checks work on base and ethereum mainnets, which is where they will happen
-		// in practice.
-		{&erc20TrueCheckBaseSepolia, examples.SepoliaChainlinkWallet, true, 0},
-		{&erc20FalseCheckBaseSepolia, examples.SepoliaChainlinkWallet, false, 0},
-		{&erc20TrueCheckEthereumSepolia, examples.SepoliaChainlinkWallet, true, 0},
-		{&erc20FalseCheckEthereumSepolia, examples.SepoliaChainlinkWallet, false, 0},
-		{&nftCheckEthereumSepolia, sepoliaTestNftWallet, true, 0},
-		{&nftCheckBaseSepolia, sepoliaTestNftWallet, true, 0},
-		{&nftCheckEthereumSepolia, sepoliaTestNoNftsWallet, false, 0},
-		{&nftCheckBaseSepolia, sepoliaTestNoNftsWallet, false, 0},
+		{&fastTrueCheck, []common.Address{}, true, fast},
+		{&slowTrueCheck, []common.Address{}, true, slow},
+		{&fastFalseCheck, []common.Address{}, false, fast},
+		{&slowFalseCheck, []common.Address{}, false, slow},
 	}
 
 	require.NoError(t, Init(context.Background(), cfg), "init entitlement package")
@@ -264,7 +285,7 @@ func TestCheckOperation(t *testing.T) {
 	for _, tc := range testCases {
 		startTime := time.Now() // Get the current time
 
-		result, err := evaluateOp(context.Background(), cfg, tc.a, []common.Address{tc.callerAddress})
+		result, err := evaluateOp(context.Background(), cfg, tc.a, tc.wallets)
 		elapsedTime := time.Since(startTime)
 
 		if err != nil {
@@ -273,7 +294,7 @@ func TestCheckOperation(t *testing.T) {
 		if result != tc.expected {
 			t.Errorf("evaluateCheckOperation result (%v) = %v; want %v", tc.a, result, tc.expected)
 		}
-		if tc.expectedTime != 0 && !areDurationsClose(
+		if !areDurationsClose(
 			elapsedTime,
 			time.Duration(tc.expectedTime*int32(time.Millisecond)),
 			10*time.Millisecond,
@@ -285,6 +306,67 @@ func TestCheckOperation(t *testing.T) {
 				time.Duration(tc.expectedTime),
 			)
 		}
+	}
+}
 
+func TestCheckOperation_Untimed(t *testing.T) {
+	testCases := map[string]struct {
+		a        Operation
+		wallets  []common.Address
+		expected bool
+	}{
+		// Note: these tests call out to base sepolia and ethereum sepolia, so they are not
+		// really unit tests. However, we've had deploy failures since anvil does not always
+		// behave the same as a real chain, so these tests are here to ensure that the
+		// entitlement checks work on base and ethereum mainnets, which is where they will happen
+		// in practice.
+		// ERC20 checks with single wallet
+		"ERC20 base sepolia":         {&erc20TrueCheckBaseSepolia, []common.Address{examples.SepoliaChainlinkWallet}, true},
+		"ERC20 base sepolia (false)": {&erc20FalseCheckBaseSepolia, []common.Address{examples.SepoliaChainlinkWallet}, false},
+		"ERC20 eth sepolia":          {&erc20TrueCheckEthereumSepolia, []common.Address{examples.SepoliaChainlinkWallet}, true},
+		"ERC20 eth sepolia (false)":  {&erc20FalseCheckEthereumSepolia, []common.Address{examples.SepoliaChainlinkWallet}, false},
+
+		// NFT checks with single and multiple NFTs, wallets
+		"ERC721 eth sepolia":                        {&nftCheckEthereumSepolia, []common.Address{sepoliaTestNftWallet_1Token}, true},
+		"ERC721 eth sepolia (no tokens)":            {&nftCheckEthereumSepolia, []common.Address{sepoliaTestNoNftsWallet}, false},
+		"ERC721 eth sepolia (insufficient balance)": {&nftMultiCheckEthereumSepolia, []common.Address{sepoliaTestNftWallet_1Token}, false},
+		"ERC721 multi-wallet eth sepolia": {
+			&nftMultiCheckEthereumSepolia,
+			[]common.Address{sepoliaTestNftWallet_1Token, sepoliaTestNftWallet_2Tokens, sepoliaTestNftWallet_3Tokens},
+			true,
+		},
+		"ERC721 multi-wallet eth sepolia (insufficient balance)": {
+			&nftMultiCheckHighThresholdEthereumSepolia,
+			[]common.Address{sepoliaTestNftWallet_1Token, sepoliaTestNftWallet_2Tokens, sepoliaTestNftWallet_3Tokens},
+			false,
+		},
+		"ERC721 base sepolia":                        {&nftCheckBaseSepolia, []common.Address{sepoliaTestNftWallet_1Token}, true},
+		"ERC721 base sepolia (no tokens)":            {&nftCheckBaseSepolia, []common.Address{sepoliaTestNoNftsWallet}, false},
+		"ERC721 base sepolia (insufficient balance)": {&nftMultiCheckBaseSepolia, []common.Address{sepoliaTestNftWallet_1Token}, false},
+		"ERC721 multi-wallet base sepolia": {
+			&nftMultiCheckEthereumSepolia,
+			[]common.Address{sepoliaTestNftWallet_1Token, sepoliaTestNftWallet_2Tokens, sepoliaTestNftWallet_3Tokens},
+			true,
+		},
+		"ERC721 multi-wallet base sepolia (insufficient balance)": {
+			&nftMultiCheckHighThresholdBaseSepolia,
+			[]common.Address{sepoliaTestNftWallet_1Token, sepoliaTestNftWallet_2Tokens, sepoliaTestNftWallet_3Tokens},
+			false,
+		},
+	}
+
+	require.NoError(t, Init(context.Background(), cfg), "init entitlement package")
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			result, err := evaluateOp(context.Background(), cfg, tc.a, tc.wallets)
+
+			if err != nil {
+				t.Errorf("evaluateCheckOperation error (%v) = %v; want %v", tc.a, err, nil)
+			}
+			if result != tc.expected {
+				t.Errorf("evaluateCheckOperation result (%v) = %v; want %v", tc.a, result, tc.expected)
+			}
+		})
 	}
 }

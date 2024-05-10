@@ -15,6 +15,7 @@ import {
     ruleDataToOperations,
 } from '../src/entitlement'
 import { MOCK_ADDRESS } from '../src/Utils'
+import { zeroAddress } from 'viem'
 
 function makeRandomOperation(depth: number): Operation {
     const rand = Math.random()
@@ -94,6 +95,171 @@ const slowTrueCheck: CheckOperation = {
     contractAddress: '0x1',
     threshold: 500n,
 } as const
+
+// We have a custom NFT contract deployed to both ethereum sepolia and base sepolia where we
+// can mint NFTs for testing. These are included in our unit tests because the local chain
+// stack does not always behave the same as remote chains, so our xchain tests use them. We
+// reproduce the same unit tests here to ensure parity between evaluation in xchain and the
+// client.
+// Contract addresses for the test NFT contracts.
+const SepoliaTestNftContract: `0x${string}` = '0xb088b3f2b35511A611bF2aaC13fE605d491D6C19'
+const SepoliaTestNftWallet_1Token: `0x${string}` = '0x1FDBA84c2153568bc22686B88B617CF64cdb0637'
+const SepoliaTestNftWallet_3Tokens: `0x${string}` = '0xB79Af997239A334355F60DBeD75bEDf30AcD37bD'
+const SepoliaTestNftWallet_2Tokens: `0x${string}` = '0x8cECcB1e5537040Fc63A06C88b4c1dE61880dA4d'
+
+const nftCheckEthereumSepolia: CheckOperation = {
+    opType: OperationType.CHECK,
+    checkType: CheckOperationType.ERC721,
+    chainId: 11155111n,
+    contractAddress: SepoliaTestNftContract,
+    threshold: 1n,
+} as const
+
+const nftMultiCheckEthereumSepolia: CheckOperation = {
+    opType: OperationType.CHECK,
+    checkType: CheckOperationType.ERC721,
+    chainId: 11155111n,
+    contractAddress: SepoliaTestNftContract,
+    threshold: 6n,
+} as const
+
+const nftMultiCheckHighThresholdEthereumSepolia: CheckOperation = {
+    opType: OperationType.CHECK,
+    checkType: CheckOperationType.ERC721,
+    chainId: 11155111n,
+    contractAddress: SepoliaTestNftContract,
+    threshold: 100n,
+} as const
+
+const nftCheckBaseSepolia: CheckOperation = {
+    opType: OperationType.CHECK,
+    checkType: CheckOperationType.ERC721,
+    chainId: 84532n,
+    contractAddress: SepoliaTestNftContract,
+    threshold: 1n,
+} as const
+
+const nftMultiCheckBaseSepolia: CheckOperation = {
+    opType: OperationType.CHECK,
+    checkType: CheckOperationType.ERC721,
+    chainId: 84532n,
+    contractAddress: SepoliaTestNftContract,
+    threshold: 6n,
+} as const
+
+const nftMultiCheckHighThresholdBaseSepolia: CheckOperation = {
+    opType: OperationType.CHECK,
+    checkType: CheckOperationType.ERC721,
+    chainId: 84532n,
+    contractAddress: SepoliaTestNftContract,
+    threshold: 100n,
+} as const
+
+const ethSepoliaProvider = new ethers.providers.JsonRpcProvider(
+    'https://ethereum-sepolia-rpc.publicnode.com',
+)
+const baseSepoliaProvider = new ethers.providers.JsonRpcProvider('https://sepolia.base.org')
+
+const nftCases = [
+    {
+        desc: 'base sepolia',
+        check: nftCheckBaseSepolia,
+        wallets: [SepoliaTestNftWallet_1Token],
+        provider: baseSepoliaProvider,
+        expectedResult: true,
+    },
+    {
+        desc: 'base sepolia (no tokens)',
+        check: nftCheckBaseSepolia,
+        wallets: [ethers.constants.AddressZero],
+        provider: baseSepoliaProvider,
+        expectedResult: false,
+    },
+    {
+        desc: 'base sepolia (insufficient balance)',
+        check: nftMultiCheckBaseSepolia,
+        wallets: [SepoliaTestNftWallet_1Token],
+        provider: baseSepoliaProvider,
+        expectedResult: false,
+    },
+    {
+        desc: 'base sepolia multi-wallet',
+        check: nftMultiCheckBaseSepolia,
+        wallets: [
+            SepoliaTestNftWallet_1Token,
+            SepoliaTestNftWallet_2Tokens,
+            SepoliaTestNftWallet_3Tokens,
+        ],
+        provider: baseSepoliaProvider,
+        expectedResult: true,
+    },
+    {
+        desc: 'base sepolia multi-wallet (insufficient balance)',
+        check: nftMultiCheckHighThresholdBaseSepolia,
+        wallets: [
+            SepoliaTestNftWallet_1Token,
+            SepoliaTestNftWallet_2Tokens,
+            SepoliaTestNftWallet_3Tokens,
+        ],
+        provider: baseSepoliaProvider,
+        expectedResult: false,
+    },
+
+    {
+        desc: 'eth sepolia',
+        check: nftCheckEthereumSepolia,
+        wallets: [SepoliaTestNftWallet_1Token],
+        provider: ethSepoliaProvider,
+        expectedResult: true,
+    },
+    {
+        desc: 'eth sepolia (no tokens)',
+        check: nftCheckEthereumSepolia,
+        wallets: [ethers.constants.AddressZero],
+        provider: ethSepoliaProvider,
+        expectedResult: false,
+    },
+    {
+        desc: 'eth sepolia (insufficient balance)',
+        check: nftMultiCheckEthereumSepolia,
+        wallets: [SepoliaTestNftWallet_1Token],
+        provider: baseSepoliaProvider,
+        expectedResult: false,
+    },
+    {
+        desc: 'eth sepolia multi-wallet',
+        check: nftMultiCheckEthereumSepolia,
+        wallets: [
+            SepoliaTestNftWallet_1Token,
+            SepoliaTestNftWallet_2Tokens,
+            SepoliaTestNftWallet_3Tokens,
+        ],
+        provider: baseSepoliaProvider,
+        expectedResult: true,
+    },
+    {
+        desc: 'eth sepolia multi-wallet (insufficient balance)',
+        check: nftMultiCheckHighThresholdEthereumSepolia,
+        wallets: [
+            SepoliaTestNftWallet_1Token,
+            SepoliaTestNftWallet_2Tokens,
+            SepoliaTestNftWallet_3Tokens,
+        ],
+        provider: baseSepoliaProvider,
+        expectedResult: false,
+    },
+]
+
+test.each(nftCases)('erc721Check - $desc', async (props) => {
+    const { check, wallets, provider, expectedResult } = props
+    const controller = new AbortController()
+    const result = await evaluateTree(controller, wallets, [provider], check)
+    if (expectedResult) {
+        expect(result).toBeTruthy()
+    } else {
+        expect(result).toEqual(zeroAddress)
+    }
+})
 
 /*
 ["andOperation", trueCheck, trueCheck, true],
