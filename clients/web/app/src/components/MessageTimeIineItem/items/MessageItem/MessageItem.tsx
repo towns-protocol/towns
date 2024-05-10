@@ -66,8 +66,6 @@ export const MessageItem = (props: Props) => {
 
     const onMediaClick = useCallback(
         (e: React.MouseEvent) => {
-            e.stopPropagation()
-            e.preventDefault()
             if (!event.threadParentId || event.threadParentId.length === 0) {
                 setSearchParams((params) => ({
                     ...params,
