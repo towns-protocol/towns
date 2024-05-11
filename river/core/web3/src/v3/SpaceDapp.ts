@@ -982,12 +982,10 @@ async function wrapTransaction(
     txFn: () => Promise<ContractTransaction>,
     txnOpts?: TransactionOpts,
 ): Promise<ContractTransaction> {
-    if (!txnOpts) {
-        txnOpts = isJest() ? { retryCount: 3 } : { retryCount: 0 }
-    }
-    let retryCount = 0
+    const retryLimit = txnOpts?.retryCount ?? isJest() ? 3 : 0
 
     const runTx = async () => {
+        let retryCount = 0
         // eslint-disable-next-line no-constant-condition
         while (true) {
             try {
@@ -1002,7 +1000,7 @@ async function wrapTransaction(
                 return tx
             } catch (error) {
                 retryCount++
-                if (retryCount >= (txnOpts?.retryCount ?? Infinity)) {
+                if (retryCount >= retryLimit) {
                     throw new Error('Transaction failed after retries: ' + (error as Error).message)
                 }
                 logger.error('Transaction submission failed, retrying...', { error, retryCount })
@@ -1013,24 +1011,61 @@ async function wrapTransaction(
 
     // Wait until the first confirmation of the transaction
     const confirmTransaction = async (tx: ContractTransaction) => {
+        let waitRetryCount = 0
+        let errorCount = 0
+        const start = Date.now()
         // eslint-disable-next-line no-constant-condition
         while (true) {
             let receipt: ContractReceipt | null = null
             try {
                 receipt = await tx.wait(0)
             } catch (error) {
+                if (
+                    typeof error === 'object' &&
+                    error !== null &&
+                    'code' in error &&
+                    (error as { code: unknown }).code === 'CALL_EXCEPTION'
+                ) {
+                    logger.error('Transaction failed', { tx, errorCount, error })
+                    throw new Error('Transaction confirmed but failed')
+                }
+
                 // If the transaction receipt is not available yet, the error may be thrown
                 // We can ignore it and retry after a short delay
+                errorCount++
                 receipt = null
             }
             if (!receipt) {
-                // Trasnaction not minded yet, try again in 100ms
+                // Transaction not minded yet, try again in 100ms
+                waitRetryCount++
                 await new Promise((resolve) => setTimeout(resolve, 100))
-            } else if (receipt.status === 0) {
+            } else if (receipt.status === 1) {
+                return
+            } else {
+                logger.error('Transaction failed in an unexpected way', {
+                    tx,
+                    receipt,
+                    errorCount,
+                })
                 // Transaction failed, throw an error and the outer loop will retry
                 throw new Error('Transaction confirmed but failed')
-            } else {
-                return
+            }
+            const waitRetryTime = Date.now() - start
+            // If we've been waiting for more than 2 seconds, log an error
+            // and outer loop will resubmit the transaction
+            if (waitRetryTime > 2_000) {
+                logger.error('Transaction confirmation timed out', {
+                    waitRetryTime,
+                    waitRetryCount,
+                    tx,
+                    errorCount,
+                })
+                throw new Error(
+                    'Transaction confirmation timed out after: ' +
+                        waitRetryTime +
+                        ' waitRetryCount: ' +
+                        waitRetryCount,
+                )
             }
         }
     }
