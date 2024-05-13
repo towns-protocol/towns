@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useEffect, useMemo, useRef } from 'react'
 import {
     BlockchainTransactionType,
     useIsTransactionPending,
@@ -24,6 +24,8 @@ export function BottomBarContent({
     isJoining: boolean
 }) {
     const spaceId = useSpaceIdFromPathname()
+    const { isTouch } = useDevice()
+    const footerRef = useRef<HTMLDivElement>(null)
     const { data: membershipInfo } = useReadableMembershipInfo(spaceId ?? '')
     const { totalSupply, maxSupply } = membershipInfo ?? {}
     const {
@@ -32,7 +34,19 @@ export function BottomBarContent({
         error: membershipPriceError,
     } = useMembershipPriceInWei()
 
-    const { isTouch } = useDevice()
+    useEffect(() => {
+        if (!isTouch || !footerRef.current) {
+            return
+        }
+        // Join Town button gets hidden behind Android and Safari nav bars,
+        // making it hard to click. This is a common issue when using 100vh on mobile devices
+        // native CSS solutions aren't reliable, so we're using JS to adjust the footer position
+        const footerHeight = footerRef.current.clientHeight ?? undefined
+        if (footerHeight) {
+            footerRef.current.style.top = window.innerHeight - footerHeight + 'px'
+        }
+    }, [isTouch])
+
     const percentageFilled = useMemo(() => {
         if (!totalSupply || !maxSupply) {
             return 0
@@ -49,7 +63,14 @@ export function BottomBarContent({
     }, [totalSupply, maxSupply])
     return (
         <>
-            <Stack paddingX width="100%" position="fixed" bottom="none">
+            <Stack
+                paddingX
+                width="100%"
+                position="fixed"
+                bottom="none"
+                borderTop="default"
+                ref={footerRef}
+            >
                 <BottomBarWithColWidths
                     leftColWidth={leftColWidth}
                     rightColWidth={rightColWidth}

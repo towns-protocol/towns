@@ -153,7 +153,6 @@ export const BottomBarWithColWidths = ({
             centerContent
             position="relative"
             width="100%"
-            borderTop="default"
             alignItems="center"
             paddingBottom="safeAreaInsetBottom"
             height={{
@@ -162,7 +161,7 @@ export const BottomBarWithColWidths = ({
             }}
             {...boxProps}
         >
-            <Stack absoluteFill background="level1" opacity="0.7" />
+            <Stack absoluteFill background="backdropBlur" />
             <Box
                 position="relative"
                 style={{
