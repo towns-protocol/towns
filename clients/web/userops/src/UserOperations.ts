@@ -169,6 +169,20 @@ export class UserOps {
 
     public async sendCreateSpaceOp(
         args: Parameters<SpaceDapp['createSpace']>,
+        performanceCallbacks?: {
+            getAbstractAccount: {
+                start: () => void
+                end: () => void
+            }
+            checkIfLinked: {
+                start: () => void
+                end: () => void
+            }
+            sendUserOp: {
+                start: () => void
+                end: () => void
+            }
+        },
     ): Promise<ISendUserOperationResponse> {
         if (!this.spaceDapp) {
             throw new Error('spaceDapp is required')
@@ -184,9 +198,12 @@ export class UserOps {
             },
         }
 
+        performanceCallbacks?.getAbstractAccount.start()
         const abstractAccountAddress = await this.getAbstractAccountAddress({
             rootKeyAddress: await getSignerAddress(signer),
         })
+        performanceCallbacks?.getAbstractAccount.end()
+
         if (!abstractAccountAddress) {
             throw new Error('abstractAccountAddress is required')
         }
@@ -198,20 +215,27 @@ export class UserOps {
             [spaceInfo],
         )
 
+        performanceCallbacks?.checkIfLinked.start()
         if (await this.spaceDapp.walletLink.checkIfLinked(signer, abstractAccountAddress)) {
+            performanceCallbacks?.checkIfLinked.end()
+
             const functionHashForPaymasterProxy = this.getFunctionSigHash(
                 this.spaceDapp.spaceRegistrar.SpaceArchitect.interface,
                 createSpaceFnName,
             )
 
-            return this.sendUserOp({
+            performanceCallbacks?.sendUserOp.start()
+            const op = await this.sendUserOp({
                 toAddress: this.spaceDapp.spaceRegistrar.SpaceArchitect.address,
                 callData: callDataCreateSpace,
                 signer,
                 spaceId: undefined,
                 functionHashForPaymasterProxy,
             })
+            performanceCallbacks?.sendUserOp.end()
+            return op
         }
+        performanceCallbacks?.checkIfLinked.end()
 
         // wallet isn't linked, create a user op that both links and creates the space
         const functionName = 'createSpace_linkWallet'
@@ -224,7 +248,8 @@ export class UserOps {
 
         const callDataForLinkingSmartAccount = await this.encodeDataForLinkingSmartAccount(signer)
 
-        return this.sendUserOp({
+        performanceCallbacks?.sendUserOp.start()
+        const op = await this.sendUserOp({
             toAddress: [
                 this.spaceDapp.walletLink.address,
                 this.spaceDapp.spaceRegistrar.SpaceArchitect.address,
@@ -234,6 +259,8 @@ export class UserOps {
             spaceId: undefined,
             functionHashForPaymasterProxy,
         })
+        performanceCallbacks?.sendUserOp.end()
+        return op
     }
 
     private async encodeDataForLinkingSmartAccount(rootKeySigner: ethers.Signer) {

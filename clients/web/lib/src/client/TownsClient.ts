@@ -71,6 +71,7 @@ import {
 import { BlockchainTransactionStore } from './BlockchainTransactionStore'
 import { UserOps, getTransactionHashOrUserOpHash, isUserOpResponse } from '@towns/userops'
 import AnalyticsService, { AnalyticsEvents } from '../utils/analyticsService'
+import { Events as PerformanceEvents, performanceMetrics } from '../PerformanceMetrics'
 
 /***
  * Towns Client
@@ -306,29 +307,66 @@ export class TownsClient
                 txContext.data.channelId = channelId
                 // wait until the space and channel are minted on-chain
                 // before creating the streams
+                performanceMetrics.startMeasurement(
+                    PerformanceEvents.CREATE_SPACE,
+                    'startCasablancaClient',
+                )
                 if (!this.casablancaClient && signerContext) {
                     await this.startCasablancaClient(signerContext)
                 }
+                performanceMetrics.endMeasurement(
+                    PerformanceEvents.CREATE_SPACE,
+                    'startCasablancaClient',
+                )
                 if (!this.casablancaClient) {
                     throw new Error('casablancaClient not started')
                 }
+                performanceMetrics.startMeasurement(
+                    PerformanceEvents.CREATE_SPACE,
+                    'casablancaClient.createSpace',
+                )
                 const result = await this.casablancaClient.createSpace(spaceId)
+                performanceMetrics.endMeasurement(
+                    PerformanceEvents.CREATE_SPACE,
+                    'casablancaClient.createSpace',
+                )
+                performanceMetrics.startMeasurement(
+                    PerformanceEvents.CREATE_SPACE,
+                    'casablancaClient.waitForStream',
+                )
                 await this.casablancaClient.waitForStream(spaceId)
                 this.log('[waitForCreateSpaceTransaction] Space stream created', {
                     result: result,
                     spaceId,
                 })
-
+                performanceMetrics.endMeasurement(
+                    PerformanceEvents.CREATE_SPACE,
+                    'casablancaClient.waitForStream',
+                )
                 if (defaultUsernames.length > 0) {
+                    performanceMetrics.startMeasurement(
+                        PerformanceEvents.CREATE_SPACE,
+                        'setUsername',
+                    )
                     // new space, no member, we can just set first username as default
                     await this.casablancaClient.setUsername(spaceId, defaultUsernames[0])
+                    performanceMetrics.endMeasurement(PerformanceEvents.CREATE_SPACE, 'setUsername')
                     this.log('[waitForCreateSpaceTransaction] Set default username', {
                         defaultUsername: defaultUsernames[0],
                         spaceId,
                     })
                 }
 
+                performanceMetrics.startMeasurement(
+                    PerformanceEvents.CREATE_SPACE,
+                    'createSpaceDefaultChannelRoom',
+                )
                 await this.createSpaceDefaultChannelRoom(spaceId, 'general', channelId)
+                performanceMetrics.endMeasurement(
+                    PerformanceEvents.CREATE_SPACE,
+                    'createSpaceDefaultChannelRoom',
+                    true,
+                )
                 this.log(
                     '[waitForCreateSpaceTransaction] default channel stream created',
                     channelId,
@@ -370,7 +408,44 @@ export class TownsClient
 
         try {
             if (this.isAccountAbstractionEnabled()) {
-                transaction = await this.userOps?.sendCreateSpaceOp([args, signer])
+                transaction = await this.userOps?.sendCreateSpaceOp([args, signer], {
+                    getAbstractAccount: {
+                        start: () =>
+                            performanceMetrics.startMeasurement(
+                                PerformanceEvents.CREATE_SPACE,
+                                'getAbstractAccount',
+                            ),
+                        end: () =>
+                            performanceMetrics.endMeasurement(
+                                PerformanceEvents.CREATE_SPACE,
+                                'getAbstractAccount',
+                            ),
+                    },
+                    checkIfLinked: {
+                        start: () =>
+                            performanceMetrics.startMeasurement(
+                                PerformanceEvents.CREATE_SPACE,
+                                'checkIfLinked',
+                            ),
+                        end: () =>
+                            performanceMetrics.endMeasurement(
+                                PerformanceEvents.CREATE_SPACE,
+                                'checkIfLinked',
+                            ),
+                    },
+                    sendUserOp: {
+                        start: () =>
+                            performanceMetrics.startMeasurement(
+                                PerformanceEvents.CREATE_SPACE,
+                                'sendUserOp',
+                            ),
+                        end: () =>
+                            performanceMetrics.endMeasurement(
+                                PerformanceEvents.CREATE_SPACE,
+                                'sendUserOp',
+                            ),
+                    },
+                })
             } else {
                 transaction = await this.spaceDapp.createSpace(args, signer)
             }
@@ -386,7 +461,6 @@ export class TownsClient
             transaction,
             error,
         })
-
         return {
             transaction,
             receipt: undefined,
@@ -2269,7 +2343,15 @@ export class TownsClient
         try {
             if (isUserOpResponse(transaction)) {
                 // wait for the userop event - this .wait is not the same as ethers.ContractTransaction.wait - see userop.js sendUserOperation
+                performanceMetrics.startMeasurement(
+                    PerformanceEvents.CREATE_SPACE,
+                    'waitForUserOpEvent',
+                )
                 const userOpEvent = await transaction.wait()
+                performanceMetrics.endMeasurement(
+                    PerformanceEvents.CREATE_SPACE,
+                    'waitForUserOpEvent',
+                )
 
                 if (userOpEvent) {
                     if (userOpEvent.args.success === false) {
@@ -2280,8 +2362,16 @@ export class TownsClient
                     }
 
                     // we probably don't need to wait for this transaction, but for now we can convert it to a receipt for less refactoring
+                    performanceMetrics.startMeasurement(
+                        PerformanceEvents.CREATE_SPACE,
+                        'waitForTransaction',
+                    )
                     receipt = await this.opts.baseProvider?.waitForTransaction(
                         userOpEvent.transactionHash,
+                    )
+                    performanceMetrics.endMeasurement(
+                        PerformanceEvents.CREATE_SPACE,
+                        'waitForTransaction',
                     )
                 } else {
                     throw new Error(`[_waitForBlockchainTransaction] userOpEvent is undefined`)
