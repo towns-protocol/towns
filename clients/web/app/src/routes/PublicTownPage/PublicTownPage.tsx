@@ -141,7 +141,7 @@ const Header = (props: {
                             tooltip="Report a bug"
                             tooltipOptions={{ placement: 'horizontal' }}
                             padding="line"
-                            background="level2"
+                            background="lightHover"
                             rounded="sm"
                             height="x4"
                             width="x4"
@@ -155,7 +155,12 @@ const Header = (props: {
                         ) : connected ? (
                             <LoggedUserAvatar />
                         ) : (
-                            <Button tone="level2" color="default" size="button_sm" onClick={login}>
+                            <Button
+                                tone="lightHover"
+                                color="default"
+                                size="button_sm"
+                                onClick={login}
+                            >
                                 Log In
                             </Button>
                         )}
