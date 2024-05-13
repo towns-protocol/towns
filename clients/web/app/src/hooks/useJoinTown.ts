@@ -38,6 +38,8 @@ export const useJoinTown = (spaceId: string | undefined, onSuccessfulJoin?: () =
             return
         }
         if (clientSingleton && spaceId && signer) {
+            setRecentlyMintedSpaceToken(undefined)
+
             const roomIdentifier = spaceId
             try {
                 // use client.joinRoom b/c it will throw an error, not the joinRoom wrapped in useWithCatch()

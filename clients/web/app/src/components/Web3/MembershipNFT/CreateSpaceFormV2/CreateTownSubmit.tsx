@@ -112,6 +112,7 @@ export function CreateTownSubmit({
 
     const onSubmit = useCallback(async () => {
         toast.dismiss()
+        setRecentlyMintedSpaceToken(undefined)
 
         setTransactionDetails({
             isTransacting: true,

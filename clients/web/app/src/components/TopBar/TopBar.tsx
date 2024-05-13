@@ -9,7 +9,7 @@ import { useStore } from 'store/store'
 import { NodeStatusButton } from '@components/NodeConnectionStatusPanel/ConnectionStatusButton'
 
 export const TopBar = () => {
-    const { recentlyMintedSpaceToken } = useStore()
+    const recentlyMintedSpaceToken = useStore((s) => s.recentlyMintedSpaceToken)
     const profileButtonRef = useRef<HTMLElement>(null)
 
     return (

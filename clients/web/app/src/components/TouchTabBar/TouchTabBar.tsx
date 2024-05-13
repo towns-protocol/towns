@@ -20,7 +20,7 @@ export const TouchTabBar = () => {
     const { showHasUnreadBadgeForCurrentSpace } = useShowHasUnreadBadgeForCurrentSpace()
 
     const { dmUnreadChannelIds } = useTownsContext()
-    const { recentlyMintedSpaceToken } = useStore()
+    const recentlyMintedSpaceToken = useStore((s) => s.recentlyMintedSpaceToken)
 
     const targetRef = useRef<HTMLElement>(null)
     const hasUnreadDMs = dmUnreadChannelIds.size > 0

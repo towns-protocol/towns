@@ -50,9 +50,7 @@ export const useSpaceDataStore = create<SpaceDataStore>((set) => ({
 /// returns default space if no space slug is provided
 export function useSpaceData(): SpaceData | undefined {
     const { spaceId: contextSpaceId } = useSpaceContext()
-    useSpaceRollup(contextSpaceId, `useSpaceData`)
-    const spaceDataMap = useSpaceDataStore((state) => state.spaceDataMap)
-    return contextSpaceId ? spaceDataMap?.[contextSpaceId] : undefined
+    return useSpaceDataWithId(contextSpaceId, 'useSpaceData')
 }
 
 export function useSpaceDataWithId(
@@ -60,8 +58,8 @@ export function useSpaceDataWithId(
     fromTag: string | undefined = undefined,
 ): SpaceData | undefined {
     useSpaceRollup(inSpaceId, `useSpaceDataWithId<${fromTag}>`)
-    const spaceDataMap = useSpaceDataStore((state) => state.spaceDataMap)
-    return inSpaceId ? spaceDataMap?.[inSpaceId] : undefined
+    const spaceData = useSpaceDataStore((state) => state.spaceDataMap)?.[inSpaceId ?? '']
+    return spaceData
 }
 
 export function useInvites(): InviteData[] {
@@ -260,7 +258,7 @@ export function useSpaceRollup(streamId: string | undefined, fromTag: string | u
             const channelIds = Array.from(stream.view.spaceContent.spaceChannelsMetadata.keys())
             const newSpace = rollupSpace(stream, membership, channelIds, spaceName)
             console.log(`useSpaceRollup ${fromTag}`, newSpace)
-            if (newSpace) {
+            if (newSpace && newSpace.id === stream.streamId) {
                 setSpaceData(newSpace)
             }
         }

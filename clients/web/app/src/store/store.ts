@@ -37,6 +37,10 @@ interface AppState {
 
 export const GLOBAL_STORE_NAME = 'towns/global'
 
+/**
+ * ATTENTION: This store is persisted to local storage.
+ * Make sure to skip storing anything that should only be in memory in the partialize function.
+ */
 export const useStore = create(
     persist<AppState>(
         (set, get) => ({
@@ -129,9 +133,17 @@ export const useStore = create(
             name: GLOBAL_STORE_NAME,
             version: 1,
             partialize: (state) => {
-                // probably should not save the isWindowFocused state
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const { isWindowFocused, searchTerms, getTheme, ...rest } = state
+                const {
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    isWindowFocused,
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    searchTerms,
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    getTheme,
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    recentlyMintedSpaceToken,
+                    ...rest
+                } = state
                 return rest as AppState
             },
         },
