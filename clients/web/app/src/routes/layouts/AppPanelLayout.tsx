@@ -92,9 +92,11 @@ const CentralPanelLayout = () => {
             <Allotment onChange={onSizesChange}>
                 <Allotment.Pane minSize={550}>
                     <ErrorBoundary FallbackComponent={ErrorFallbackComponent}>
-                        <Card absoluteFill>
-                            <Outlet />
-                        </Card>
+                        <Box position="absoluteFillSafeSafari">
+                            <Card width="100%" height="100%">
+                                <Outlet />
+                            </Card>
+                        </Box>
                     </ErrorBoundary>
                 </Allotment.Pane>
                 {panel && (

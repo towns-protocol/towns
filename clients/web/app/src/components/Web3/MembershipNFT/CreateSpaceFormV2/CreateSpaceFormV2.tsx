@@ -167,7 +167,7 @@ function CreateSpaceFormV2WithoutAuth() {
                 </Stack>
             )}
             <FormRender
-                absoluteFill
+                absoluteFillSafeSafari
                 horizontal
                 id="CreateSpaceFormV2"
                 schema={schema}

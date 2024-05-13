@@ -31,6 +31,7 @@ const shorthands = {
     horizontal: [{ flexDirection: 'row' }, { flexDirection: 'column' }],
     centerContent: [{ justifyContent: 'center', alignItems: 'center' }],
     absoluteFill: [{ position: 'absoluteFill' }, {}],
+    absoluteFillSafeSafari: [{ position: 'absoluteFillSafeSafari' }, {}],
     transition: [{ transition: 'default' }, { transition: 'none' }],
     hoverable: [{}, {}],
     hoverActive: [{}, {}],

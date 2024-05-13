@@ -14,6 +14,17 @@ export const blockProperties = defineProperties({
                 bottom: 0,
                 left: 0,
             },
+            /**
+             * Safari seems to have an issue with `contain: paint` when the
+             * container changes size HNT-6015
+             */
+            absoluteFillSafeSafari: {
+                position: 'absolute',
+                top: 0,
+                right: 0,
+                bottom: 0,
+                left: 0,
+            },
             absoluteCenter: {
                 position: 'absolute',
                 top: '50%',
