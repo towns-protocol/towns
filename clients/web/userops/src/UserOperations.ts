@@ -101,6 +101,10 @@ export class UserOps {
                 entryPoint: this.entryPointAddress,
                 overrideBundlerRpc: this.bundlerUrl,
             })
+            // update the userop.wait() timeout and interval
+            // .wait() will poll the entrypoint every 500 ms for 30 seconds to see if the user operation was sent
+            this.userOpClient.waitTimeoutMs = 30_000
+            this.userOpClient.waitIntervalMs = 500
         }
         return this.userOpClient
     }
