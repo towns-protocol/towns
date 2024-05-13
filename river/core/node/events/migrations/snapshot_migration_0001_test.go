@@ -1,9 +1,9 @@
 package migrations
 
 import (
-	"context"
 	"testing"
 
+	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/crypto"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/testutils"
@@ -14,7 +14,8 @@ import (
 // every insert, we need to remove duplicates
 
 func TestSnapshotMigration0001(t *testing.T) {
-	ctx := context.Background()
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
 	userWallet, _ := crypto.NewWallet(ctx)
 	spaceId := testutils.FakeStreamId(0x10) // events.STREAM_SPACE_BIN
 	channelId := testutils.MakeChannelId(spaceId)

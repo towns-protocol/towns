@@ -38,7 +38,7 @@ func TestChainMonitorBlocks(t *testing.T) {
 
 	var prev uint64
 	for i := 0; i < 5; i++ {
-		tc.Commit()
+		tc.Commit(ctx)
 		got := <-collectedBlocks
 		if prev != 0 {
 			require.Equal(prev+1, got, "unexpected block number")
@@ -195,7 +195,7 @@ func TestChainMonitorEvents(t *testing.T) {
 	// generate some blocks
 	N := 5
 	for i := 0; i < N; i++ {
-		tc.Commit()
+		tc.Commit(ctx)
 	}
 
 	receipt := <-pendingTx.Wait()

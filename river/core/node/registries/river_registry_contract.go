@@ -220,7 +220,7 @@ func (c *RiverRegistryContract) GetStreamCount(ctx context.Context, blockNum cry
 	return num.Int64(), nil
 }
 
-var zeroBytes32 = [32]byte{}
+var ZeroBytes32 = [32]byte{}
 
 func (c *RiverRegistryContract) GetAllStreams(
 	ctx context.Context,
@@ -245,7 +245,7 @@ func (c *RiverRegistryContract) GetAllStreams(
 				Message("Smart contract call failed")
 		}
 		for _, stream := range streams {
-			if stream.Id == zeroBytes32 {
+			if stream.Id == ZeroBytes32 {
 				continue
 			}
 			streamId, err := StreamIdFromHash(stream.Id)

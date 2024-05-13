@@ -34,8 +34,9 @@ import (
 )
 
 const (
-	ServerModeFull = "full"
-	ServerModeInfo = "info"
+	ServerModeFull    = "full"
+	ServerModeInfo    = "info"
+	ServerModeArchive = "archive"
 )
 
 func (s *Service) Close() {
@@ -148,6 +149,7 @@ func (s *Service) start() error {
 }
 
 func (s *Service) initInstance(mode string) {
+	s.mode = mode
 	s.instanceId = GenShortNanoid()
 	port := s.config.Port
 	if port == 0 && s.listener != nil {
@@ -163,7 +165,7 @@ func (s *Service) initInstance(mode string) {
 		"mode", mode,
 	)
 	s.serverCtx = dlog.CtxWithLog(s.serverCtx, s.defaultLogger)
-	s.defaultLogger.Info("Starting server", "config", s.config)
+	s.defaultLogger.Info("Starting server", "config", s.config, "mode", mode)
 }
 
 func (s *Service) initWallet() error {
@@ -270,10 +272,21 @@ func (s *Service) initRiverChain() error {
 
 func (s *Service) prepareStore() error {
 	switch s.config.StorageType {
-	case storage.StreamStorageTypeMemory:
-		return nil
 	case storage.StreamStorageTypePostgres:
-		schema := storage.DbSchemaNameFromAddress(s.wallet.Address.Hex())
+		var schema string
+		switch s.mode {
+		case ServerModeFull:
+			schema = storage.DbSchemaNameFromAddress(s.wallet.Address.Hex())
+		case ServerModeArchive:
+			schema = storage.DbSchemaNameForArchive(s.config.Archive.ArchiveId)
+		default:
+			return RiverError(
+				Err_BAD_CONFIG,
+				"Server mode not supported for storage",
+				"mode",
+				s.mode,
+			).Func("prepareStore")
+		}
 
 		pool, err := storage.CreateAndValidatePgxPool(s.serverCtx, &s.config.Database, schema)
 		if err != nil {
@@ -412,10 +425,6 @@ func (s *Service) initStore() error {
 	log := s.defaultLogger
 
 	switch s.config.StorageType {
-	case storage.StreamStorageTypeMemory:
-		log.Warn("Using in-memory storage")
-		s.storage = storage.NewMemStorage()
-		return nil
 	case storage.StreamStorageTypePostgres:
 		store, err := storage.NewPostgresEventStore(ctx, s.storagePoolInfo, s.instanceId, s.exitSignal)
 		if err != nil {

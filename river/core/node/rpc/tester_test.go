@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/big"
 	"net"
+	"testing"
 	"time"
 
 	"connectrpc.com/connect"
@@ -46,37 +47,48 @@ func (n *testNodeRecord) Close(ctx context.Context, dbUrl string) {
 }
 
 type serviceTester struct {
-	ctx                 context.Context
-	cancel              context.CancelFunc
-	require             *require.Assertions
-	dbUrl               string
-	btc                 *crypto.BlockchainTestContext
-	nodes               []*testNodeRecord
-	replicationFactor   int
-	stopBlockAutoMining func()
+	ctx               context.Context
+	t                 *testing.T
+	require           *require.Assertions
+	dbUrl             string
+	btc               *crypto.BlockchainTestContext
+	nodes             []*testNodeRecord
+	replicationFactor int
 }
 
-func newServiceTesterWithReplication(numNodes int, replicationFactor int, require *require.Assertions) *serviceTester {
-	st := newServiceTester(numNodes, require)
-	st.replicationFactor = replicationFactor
+func newServiceTester(t *testing.T, numNodes int) *serviceTester {
+	return newServiceTesterWithReplication(t, numNodes, 1)
+}
+
+func newServiceTesterAndStart(t *testing.T, numNodes int) *serviceTester {
+	st := newServiceTester(t, numNodes)
+	st.initNodeRecords(0, numNodes, contracts.NodeStatus_Operational)
+	st.startNodes(0, numNodes)
 	return st
 }
 
-func newServiceTester(numNodes int, require *require.Assertions) *serviceTester {
+func newServiceTesterWithReplication(t *testing.T, numNodes int, replicationFactor int) *serviceTester {
+	ctx, ctxCancel := test.NewTestContext()
+	t.Cleanup(ctxCancel)
+
+	require := require.New(t)
+
 	st := &serviceTester{
+		ctx:               ctx,
+		t:                 t,
 		require:           require,
 		dbUrl:             dbtestutils.GetTestDbUrl(),
 		nodes:             make([]*testNodeRecord, numNodes),
-		replicationFactor: 1,
+		replicationFactor: replicationFactor,
 	}
-	st.ctx, st.cancel = test.NewTestContext()
 
 	btc, err := crypto.NewBlockchainTestContext(st.ctx, numNodes)
 	require.NoError(err)
 	st.btc = btc
+	t.Cleanup(st.btc.Close)
 
 	st.btc.DeployerBlockchain.TxPool.SetOnSubmitHandler(func() {
-		st.btc.Commit()
+		st.btc.Commit(ctx)
 	})
 
 	for i := 0; i < numNodes; i++ {
@@ -94,29 +106,14 @@ func newServiceTester(numNodes int, require *require.Assertions) *serviceTester 
 		st.nodes[i].url = fmt.Sprintf("http://localhost:%d", port)
 	}
 
+	st.startAutoMining()
+
 	return st
 }
 
 func (st serviceTester) CloseNode(i int) {
 	if st.nodes[i] != nil {
 		st.nodes[i].Close(st.ctx, st.dbUrl)
-	}
-}
-
-func (st *serviceTester) Close() {
-	for _, node := range st.nodes {
-		if node != nil {
-			node.Close(st.ctx, st.dbUrl)
-		}
-	}
-	if st.stopBlockAutoMining != nil {
-		st.stopBlockAutoMining()
-	}
-	if st.btc != nil {
-		st.btc.Close()
-	}
-	if st.cancel != nil {
-		st.cancel()
 	}
 }
 
@@ -134,69 +131,65 @@ func (st *serviceTester) setNodesStatus(start, stop int, status uint8) {
 	}
 }
 
+func (st *serviceTester) startAutoMining() {
+	// creates blocks that signals the river nodes to check and create miniblocks when required.
+	if !(st.btc.IsSimulated() || (st.btc.IsAnvil() && !st.btc.AnvilAutoMineEnabled())) {
+		return
+	}
+
+	// hack to ensure that the chain always produces blocks (automining=true)
+	// commit on simulated backend with no pending txs can sometimes crash in the simulator.
+	// by having a pending tx with automining enabled we can work around that issue.
+	go func() {
+		blockPeriod := time.NewTicker(2 * time.Second)
+		chainID, err := st.btc.Client().ChainID(st.ctx)
+		if err != nil {
+			log.Fatal(err)
+		}
+		signer := types.LatestSignerForChainID(chainID)
+
+		for {
+			select {
+			case <-st.ctx.Done():
+				return
+			case <-blockPeriod.C:
+				_, _ = st.btc.DeployerBlockchain.TxPool.Submit(
+					st.ctx,
+					"noop",
+					func(opts *bind.TransactOpts) (*types.Transaction, error) {
+						gp, err := st.btc.Client().SuggestGasPrice(st.ctx)
+						if err != nil {
+							return nil, err
+						}
+						tx := types.NewTransaction(
+							opts.Nonce.Uint64(),
+							st.btc.GetDeployerWallet().Address,
+							big.NewInt(1),
+							21000,
+							gp,
+							nil,
+						)
+						return types.SignTx(tx, signer, st.btc.GetDeployerWallet().PrivateKeyStruct)
+					},
+				)
+			}
+		}
+	}()
+}
+
 type startOpts struct {
 	configUpdater func(cfg *config.Config)
 	listeners     []net.Listener
 }
 
 func (st *serviceTester) startNodes(start, stop int, opts ...startOpts) {
-	// creates blocks that signals the river nodes to check and create miniblocks when required.
-	if st.btc.IsSimulated() || (st.btc.IsAnvil() && !st.btc.AnvilAutoMineEnabled()) {
-		ctx, cancel := context.WithCancel(st.ctx)
-		done := make(chan struct{})
-		st.stopBlockAutoMining = func() {
-			cancel()
-			<-done
-		}
-
-		// hack to ensure that the chain always produces blocks (automining=true)
-		// commit on simulated backend with no pending txs can sometimes crash in the simulator.
-		// by having a pending tx with automining enabled we can work around that issue.
-		go func() {
-			blockPeriod := time.NewTicker(2 * time.Second)
-			chainID, err := st.btc.Client().ChainID(st.ctx)
-			if err != nil {
-				log.Fatal(err)
-			}
-			signer := types.LatestSignerForChainID(chainID)
-
-			for {
-				select {
-				case <-ctx.Done():
-					close(done)
-					return
-				case <-blockPeriod.C:
-					_, _ = st.btc.DeployerBlockchain.TxPool.Submit(
-						ctx,
-						"noop",
-						func(opts *bind.TransactOpts) (*types.Transaction, error) {
-							gp, err := st.btc.Client().SuggestGasPrice(ctx)
-							if err != nil {
-								return nil, err
-							}
-							tx := types.NewTransaction(
-								opts.Nonce.Uint64(),
-								st.btc.GetDeployerWallet().Address,
-								big.NewInt(1),
-								21000,
-								gp,
-								nil,
-							)
-							return types.SignTx(tx, signer, st.btc.GetDeployerWallet().PrivateKeyStruct)
-						},
-					)
-				}
-			}
-		}()
-	}
-
 	for i := start; i < stop; i++ {
 		err := st.startSingle(i, opts...)
 		st.require.NoError(err)
 	}
 }
 
-func (st *serviceTester) startSingle(i int, opts ...startOpts) error {
+func (st *serviceTester) getConfig(opts ...startOpts) *config.Config {
 	options := &startOpts{}
 	if len(opts) > 0 {
 		options = &opts[0]
@@ -231,6 +224,17 @@ func (st *serviceTester) startSingle(i int, opts ...startOpts) error {
 		options.configUpdater(cfg)
 	}
 
+	return cfg
+}
+
+func (st *serviceTester) startSingle(i int, opts ...startOpts) error {
+	options := &startOpts{}
+	if len(opts) > 0 {
+		options = &opts[0]
+	}
+
+	cfg := st.getConfig(*options)
+
 	listener := st.nodes[i].listener
 	if i < len(options.listeners) && options.listeners[i] != nil {
 		listener = options.listeners[i]
@@ -247,6 +251,11 @@ func (st *serviceTester) startSingle(i int, opts ...startOpts) error {
 	}
 	st.nodes[i].service = service
 	st.nodes[i].address = bc.Wallet.Address
+
+	st.t.Cleanup(func() {
+		st.nodes[i].Close(st.ctx, st.dbUrl)
+	})
+
 	return nil
 }
 
@@ -256,16 +265,4 @@ func (st *serviceTester) testClient(i int) protocolconnect.StreamServiceClient {
 
 func testClient(url string) protocolconnect.StreamServiceClient {
 	return protocolconnect.NewStreamServiceClient(nodes.TestHttpClientMaker(), url, connect.WithGRPCWeb())
-}
-
-func createTestServerAndClient(
-	ctx context.Context,
-	numNodes int,
-	require *require.Assertions,
-) (protocolconnect.StreamServiceClient, string, func()) {
-	st := newServiceTester(numNodes, require)
-	st.initNodeRecords(0, numNodes, contracts.NodeStatus_Operational)
-	st.startNodes(0, numNodes)
-	url := st.nodes[0].url
-	return testClient(url), url, st.Close
 }

@@ -131,10 +131,15 @@ func NewMiniblockInfoFromBytes(bytes []byte, expectedBlockNumber int64) (*Minibl
 			Func("NewMiniblockInfoFromBytes")
 	}
 
-	return NewMiniblockInfoFromProto(&pb, expectedBlockNumber)
+	return NewMiniblockInfoFromProto(&pb, NewMiniblockInfoFromProtoOpts{ExpectedBlockNumber: expectedBlockNumber})
 }
 
-func NewMiniblockInfoFromProto(pb *Miniblock, expectedBlockNumber int64) (*MiniblockInfo, error) {
+type NewMiniblockInfoFromProtoOpts struct {
+	ExpectedBlockNumber int64
+	DontParseEvents     bool
+}
+
+func NewMiniblockInfoFromProto(pb *Miniblock, opts NewMiniblockInfoFromProtoOpts) (*MiniblockInfo, error) {
 	headerEvent, err := ParseEvent(pb.Header)
 	if err != nil {
 		return nil, err
@@ -144,20 +149,22 @@ func NewMiniblockInfoFromProto(pb *Miniblock, expectedBlockNumber int64) (*Minib
 	if blockHeader == nil {
 		return nil, RiverError(Err_BAD_EVENT, "header event must be a block header")
 	}
-	if expectedBlockNumber >= 0 && blockHeader.MiniblockNum != int64(expectedBlockNumber) {
+	if opts.ExpectedBlockNumber >= 0 && blockHeader.MiniblockNum != int64(opts.ExpectedBlockNumber) {
 		return nil, RiverError(
 			Err_BAD_EVENT,
-			"block number mismatch",
 			"expected",
-			expectedBlockNumber,
+			opts.ExpectedBlockNumber,
 			"actual",
 			blockHeader.MiniblockNum,
 		)
 	}
 
-	events, err := ParseEvents(pb.Events)
-	if err != nil {
-		return nil, err
+	var events []*ParsedEvent
+	if !opts.DontParseEvents {
+		events, err = ParseEvents(pb.Events)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// TODO: add header validation, num of events, prev block hash, block num, etc

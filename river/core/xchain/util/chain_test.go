@@ -58,7 +58,7 @@ func TestStartBlockNumber(t *testing.T) {
 
 	for i := 0; i < 4; i++ {
 		<-time.After(time.Duration(1+i) * time.Second)
-		btc.Commit()
+		btc.Commit(ctx)
 
 		header, err := client.HeaderByNumber(ctx, nil)
 		require.NoError(err, "get header by number")
@@ -103,7 +103,7 @@ func TestStartBlockNumberLongChain(t *testing.T) {
 	)
 
 	for range int(util.MaxHistoricalBlockOffset) + 25 {
-		btc.Commit()
+		btc.Commit(ctx)
 		header, err := client.HeaderByNumber(ctx, nil)
 		require.NoError(err, "get header by number")
 		blocks = append(blocks, header)

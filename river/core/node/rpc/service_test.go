@@ -9,7 +9,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/contracts"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
@@ -23,6 +22,7 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/accounts"
+	"github.com/ethereum/go-ethereum/common"
 	eth_crypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
@@ -142,6 +142,30 @@ func createUser(
 	return res.Msg.Stream.NextSyncCookie, inception.Hash, nil
 }
 
+func createUserSettingsStream(
+	ctx context.Context,
+	wallet *crypto.Wallet,
+	client protocolconnect.StreamServiceClient,
+) (StreamId, *protocol.SyncCookie, []byte, error) {
+	streamdId := UserSettingStreamIdFromAddr(wallet.Address)
+	inception, err := events.MakeEnvelopeWithPayload(
+		wallet,
+		events.Make_UserSettingsPayload_Inception(streamdId, nil),
+		nil,
+	)
+	if err != nil {
+		return StreamId{}, nil, nil, err
+	}
+	res, err := client.CreateStream(ctx, connect.NewRequest(&protocol.CreateStreamRequest{
+		Events:   []*protocol.Envelope{inception},
+		StreamId: streamdId[:],
+	}))
+	if err != nil {
+		return StreamId{}, nil, nil, err
+	}
+	return streamdId, res.Msg.Stream.NextSyncCookie, inception.Hash, nil
+}
+
 func createSpace(
 	ctx context.Context,
 	wallet *crypto.Wallet,
@@ -243,10 +267,71 @@ func createChannel(
 	return reschannel.Msg.Stream.NextSyncCookie, miniblockHash, nil
 }
 
-func testMethods(t *testing.T, client protocolconnect.StreamServiceClient, url string) {
-	require := require.New(t)
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+func addUserBlockedFillerEvent(
+	ctx context.Context,
+	wallet *crypto.Wallet,
+	client protocolconnect.StreamServiceClient,
+	streamId StreamId,
+	prevMiniblockHash []byte,
+) error {
+	if prevMiniblockHash == nil {
+		resp, err := client.GetLastMiniblockHash(ctx, connect.NewRequest(&protocol.GetLastMiniblockHashRequest{
+			StreamId: streamId[:],
+		}))
+		if err != nil {
+			return err
+		}
+		prevMiniblockHash = resp.Msg.Hash
+	}
+
+	addr := crypto.GetTestAddress()
+	ev, err := events.MakeEnvelopeWithPayload(
+		wallet,
+		events.Make_UserSettingsPayload_UserBlock(
+			&protocol.UserSettingsPayload_UserBlock{
+				UserId:    addr[:],
+				IsBlocked: true,
+				EventNum:  22,
+			},
+		),
+		prevMiniblockHash,
+	)
+	if err != nil {
+		return err
+	}
+	_, err = client.AddEvent(ctx, connect.NewRequest(&protocol.AddEventRequest{
+		StreamId: streamId[:],
+		Event:    ev,
+	}))
+	return err
+}
+
+func makeMiniblock(
+	ctx context.Context,
+	client protocolconnect.StreamServiceClient,
+	streamId StreamId,
+	forceSnapshot bool,
+) ([]byte, error) {
+	resp, err := client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{
+		Debug: []string{"make_miniblock", streamId.String(), fmt.Sprintf("%t", forceSnapshot)},
+	}))
+	if err != nil {
+		return nil, err
+	}
+	if resp.Msg.Graffiti == "" {
+		return nil, nil
+	} else {
+		return common.FromHex(resp.Msg.Graffiti), nil
+	}
+}
+
+func testMethods(tester *serviceTester) {
+	testMethodsWithClient(tester, tester.testClient(0))
+}
+
+func testMethodsWithClient(tester *serviceTester, client protocolconnect.StreamServiceClient) {
+	ctx := tester.ctx
+	require := tester.require
 
 	wallet1, _ := crypto.NewWallet(ctx)
 	wallet2, _ := crypto.NewWallet(ctx)
@@ -430,17 +515,17 @@ func testMethods(t *testing.T, client protocolconnect.StreamServiceClient, url s
 		case *protocol.ChannelPayload_Message:
 			// ok
 		default:
-			t.Fatalf("expected message event, got %v", p.ChannelPayload.Content)
+			require.FailNow("expected message event, got %v", p.ChannelPayload.Content)
 		}
 	default:
-		t.Fatalf("expected channel event, got %v", payload.Payload)
+		require.FailNow("expected channel event, got %v", payload.Payload)
 	}
 }
 
-func testRiverDeviceId(t *testing.T, client protocolconnect.StreamServiceClient, url string) {
-	require := require.New(t)
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+func testRiverDeviceId(tester *serviceTester) {
+	ctx := tester.ctx
+	require := tester.require
+	client := tester.testClient(0)
 
 	wallet, _ := crypto.NewWallet(ctx)
 	deviceWallet, _ := crypto.NewWallet(ctx)
@@ -503,14 +588,10 @@ func testRiverDeviceId(t *testing.T, client protocolconnect.StreamServiceClient,
 	require.Error(err) // expected error when calling AddEvent
 }
 
-func testSyncStreams(t *testing.T, client protocolconnect.StreamServiceClient, url string) {
-	require := require.New(t)
-	/**
-	Arrange
-	*/
-	// create the test client and server
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+func testSyncStreams(tester *serviceTester) {
+	ctx := tester.ctx
+	require := tester.require
+	client := tester.testClient(0)
 
 	// create the streams for a user
 	wallet, _ := crypto.NewWallet(ctx)
@@ -579,15 +660,10 @@ func testSyncStreams(t *testing.T, client protocolconnect.StreamServiceClient, u
 	require.Equal(syncId, msg.SyncId, "expected sync id to match")
 }
 
-func testAddStreamsToSync(t *testing.T, client protocolconnect.StreamServiceClient, url string) {
-	require := require.New(t)
-	/**
-	Arrange
-	*/
-	// create the test client and server
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
-	aliceClient := client
+func testAddStreamsToSync(tester *serviceTester) {
+	ctx := tester.ctx
+	require := tester.require
+	aliceClient := tester.testClient(0)
 
 	// create alice's wallet and streams
 	aliceWallet, _ := crypto.NewWallet(ctx)
@@ -598,7 +674,7 @@ func testAddStreamsToSync(t *testing.T, client protocolconnect.StreamServiceClie
 	require.Nilf(err, "error calling createUserDeviceKeyStream: %v", err)
 
 	// create bob's client, wallet, and streams
-	bobClient := testClient(url)
+	bobClient := tester.testClient(0)
 	bobWallet, _ := crypto.NewWallet(ctx)
 	bob, _, err := createUser(ctx, bobWallet, bobClient)
 	require.Nilf(err, "error calling createUser: %v", err)
@@ -682,16 +758,11 @@ func testAddStreamsToSync(t *testing.T, client protocolconnect.StreamServiceClie
 	require.Equal(syncId, msg.SyncId, "expected sync id to match")
 }
 
-func testRemoveStreamsFromSync(t *testing.T, client protocolconnect.StreamServiceClient, url string) {
-	require := require.New(t)
-	/**
-	Arrange
-	*/
-	// create the test client and server
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+func testRemoveStreamsFromSync(tester *serviceTester) {
+	ctx := tester.ctx
+	require := tester.require
+	aliceClient := tester.testClient(0)
 	log := dlog.FromCtx(ctx)
-	aliceClient := client
 
 	// create alice's wallet and streams
 	aliceWallet, _ := crypto.NewWallet(ctx)
@@ -702,7 +773,7 @@ func testRemoveStreamsFromSync(t *testing.T, client protocolconnect.StreamServic
 	require.NoError(err)
 
 	// create bob's client, wallet, and streams
-	bobClient := testClient(url)
+	bobClient := tester.testClient(0)
 	bobWallet, _ := crypto.NewWallet(ctx)
 	bob, _, err := createUser(ctx, bobWallet, bobClient)
 	require.Nilf(err, "error calling createUser: %v", err)
@@ -837,14 +908,10 @@ OuterLoop:
 	require.NotNil(removeRes.Msg, "expected non-nil remove response")
 }
 
-type testFunc func(*testing.T, protocolconnect.StreamServiceClient, string)
+type testFunc func(*serviceTester)
 
 func run(t *testing.T, numNodes int, tf testFunc) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
-	client, url, closer := createTestServerAndClient(ctx, numNodes, require.New(t))
-	defer closer()
-	tf(t, client, url)
+	tf(newServiceTesterAndStart(t, numNodes))
 }
 
 func TestSingleAndMulti(t *testing.T) {
@@ -881,48 +948,40 @@ func TestSingleAndMulti(t *testing.T) {
 const TestStreams = 40
 
 func TestForwardingWithRetries(t *testing.T) {
-	tests := map[string]struct {
-		testStreamRequest func(t *testing.T, ctx context.Context, client protocolconnect.StreamServiceClient, streamId StreamId)
-	}{
-		"Unary request / response: GetStream": {
-			testStreamRequest: func(t *testing.T, ctx context.Context, client protocolconnect.StreamServiceClient, streamId StreamId) {
-				resp, err := client.GetStream(ctx, connect.NewRequest(&protocol.GetStreamRequest{
-					StreamId: streamId[:],
-				}))
-				require.NoError(t, err)
-				require.NotNil(t, resp)
-				require.Equal(t, streamId[:], resp.Msg.Stream.NextSyncCookie.StreamId)
-			},
+	tests := map[string]func(t *testing.T, ctx context.Context, client protocolconnect.StreamServiceClient, streamId StreamId){
+		"GetStream": func(t *testing.T, ctx context.Context, client protocolconnect.StreamServiceClient, streamId StreamId) {
+			resp, err := client.GetStream(ctx, connect.NewRequest(&protocol.GetStreamRequest{
+				StreamId: streamId[:],
+			}))
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+			require.Equal(t, streamId[:], resp.Msg.Stream.NextSyncCookie.StreamId)
 		},
-		"Streaming server response: GetStreamEx": {
-			testStreamRequest: func(t *testing.T, ctx context.Context, client protocolconnect.StreamServiceClient, streamId StreamId) {
-				resp, err := client.GetStreamEx(ctx, connect.NewRequest(&protocol.GetStreamExRequest{
-					StreamId: streamId[:],
-				}))
-				require.NoError(t, err)
+		"GetStreamEx": func(t *testing.T, ctx context.Context, client protocolconnect.StreamServiceClient, streamId StreamId) {
+			resp, err := client.GetStreamEx(ctx, connect.NewRequest(&protocol.GetStreamExRequest{
+				StreamId: streamId[:],
+			}))
+			require.NoError(t, err)
 
-				// Read messages
-				msgs := make([]*protocol.GetStreamExResponse, 0)
-				for resp.Receive() {
-					msgs = append(msgs, resp.Msg())
-				}
-				require.NoError(t, resp.Err())
-				// Expect 1 miniblock, 1 empty minipool message.
-				require.Len(t, msgs, 2)
-			},
+			// Read messages
+			msgs := make([]*protocol.GetStreamExResponse, 0)
+			for resp.Receive() {
+				msgs = append(msgs, resp.Msg())
+			}
+			require.NoError(t, resp.Err())
+			// Expect 1 miniblock, 1 empty minipool message.
+			require.Len(t, msgs, 2)
 		},
 	}
-	for testName, tc := range tests {
+	for testName, requester := range tests {
 		t.Run(testName, func(t *testing.T) {
-			ctx, cancel := test.NewTestContext()
-			defer cancel()
 			numNodes := 5
 			replicationFactor := 3
-			serviceTester := newServiceTesterWithReplication(numNodes, replicationFactor, require.New(t))
+			serviceTester := newServiceTesterWithReplication(t, numNodes, replicationFactor)
 			serviceTester.initNodeRecords(0, numNodes, contracts.NodeStatus_Operational)
 			serviceTester.startNodes(0, numNodes)
 
-			defer serviceTester.Close()
+			ctx := serviceTester.ctx
 
 			userStreamIds := make([]StreamId, 0, TestStreams)
 
@@ -956,7 +1015,7 @@ func TestForwardingWithRetries(t *testing.T) {
 
 			// All stream requests should succeed.
 			for _, streamId := range userStreamIds {
-				tc.testStreamRequest(t, ctx, client4, streamId)
+				requester(t, ctx, client4, streamId)
 			}
 		})
 	}

@@ -28,7 +28,7 @@ func TestBlockchain(t *testing.T) {
 	defer tc.Close()
 
 	owner := tc.DeployerBlockchain
-	tc.Commit()
+	tc.Commit(ctx)
 
 	bc1 := tc.GetBlockchain(ctx, 0, false)
 	defer bc1.Close()
@@ -53,7 +53,7 @@ func TestBlockchain(t *testing.T) {
 	firstBlockNum, err := tc.Client().BlockNumber(ctx)
 	require.NoError(err)
 
-	tc.Commit()
+	tc.Commit(ctx)
 
 	secondBlockNum, err := tc.Client().BlockNumber(ctx)
 	require.NoError(err)
@@ -106,7 +106,7 @@ func TestBlockchain(t *testing.T) {
 	)
 	require.NoError(err)
 
-	tc.Commit()
+	tc.Commit(ctx)
 
 	receipt := <-tx1.Wait()
 	require.Equal(uint64(1), receipt.Status)
@@ -169,7 +169,7 @@ func TestBlockchain(t *testing.T) {
 		require.NoError(err)
 	}
 
-	tc.Commit()
+	tc.Commit(ctx)
 
 	// wait for the last transaction to finish
 	<-lastPendingTx.Wait()

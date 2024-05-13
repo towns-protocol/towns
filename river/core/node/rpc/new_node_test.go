@@ -1,7 +1,7 @@
 package rpc_test
 
 import (
-	"fmt"
+	"context"
 	"testing"
 
 	"connectrpc.com/connect"
@@ -9,61 +9,54 @@ import (
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/contracts"
 	"github.com/river-build/river/core/node/crypto"
+	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/protocol"
+	"github.com/river-build/river/core/node/protocol/protocolconnect"
 	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/testutils"
 	"github.com/stretchr/testify/require"
 )
 
+func testCreate100Streams(ctx context.Context, require *require.Assertions, c protocolconnect.StreamServiceClient) []StreamId {
+	wallet, err := crypto.NewWallet(ctx)
+	require.NoError(err)
+	_, _, err = createUser(ctx, wallet, c)
+	require.NoError(err)
+	streamdIds := []StreamId{UserStreamIdFromAddr(wallet.Address)}
+	for i := 0; i < 99; i++ {
+		streamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
+		_, _, err = createSpace(ctx, wallet, c, streamId)
+		require.NoError(err)
+		streamdIds = append(streamdIds, streamId)
+	}
+	return streamdIds
+}
+
 func TestAddingNewNodes(t *testing.T) {
-	require := require.New(t)
-	tester := newServiceTester(20, require)
-	defer tester.Close()
+	tester := newServiceTester(t, 20)
 	ctx := tester.ctx
+	require := tester.require
+	log := dlog.FromCtx(ctx)
 
 	tester.initNodeRecords(0, 10, contracts.NodeStatus_Operational)
 	tester.startNodes(0, 10)
 
-	testMethods(t, tester.testClient(9), tester.nodes[9].url)
+	testMethodsWithClient(tester, tester.testClient(9))
 
 	c0 := tester.testClient(0)
-
-	// Create 100 streams
-	bobWallet, err := crypto.NewWallet(ctx)
-	require.NoError(err)
-	_, _, err = createUser(ctx, bobWallet, c0)
-	require.NoError(err)
-	var streamdIds0 []StreamId
-	for i := 0; i < 100; i++ {
-		streamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
-		_, _, err = createSpace(ctx, bobWallet, c0, streamId)
-		require.NoError(err)
-		streamdIds0 = append(streamdIds0, streamId)
-	}
+	streamdIds0 := testCreate100Streams(ctx, require, c0)
 
 	tester.initNodeRecords(10, 20, contracts.NodeStatus_NotInitialized)
 
-	testMethods(t, tester.testClient(4), tester.nodes[4].url)
+	testMethodsWithClient(tester, tester.testClient(4))
 
 	tester.startNodes(10, 20)
 	tester.setNodesStatus(10, 20, contracts.NodeStatus_Operational)
 
-	testMethods(t, tester.testClient(14), tester.nodes[14].url)
+	testMethodsWithClient(tester, tester.testClient(14))
 
 	c1 := tester.testClient(18)
-
-	// Create 100 streams
-	aliceWallet, err := crypto.NewWallet(ctx)
-	require.NoError(err)
-	_, _, err = createUser(ctx, aliceWallet, c1)
-	require.NoError(err)
-	var streamdIds1 []StreamId
-	for i := 0; i < 100; i++ {
-		streamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
-		_, _, err = createSpace(ctx, aliceWallet, c1, streamId)
-		require.NoError(err)
-		streamdIds1 = append(streamdIds1, streamId)
-	}
+	streamdIds1 := testCreate100Streams(ctx, require, c1)
 
 	newNodes := make(map[common.Address]bool)
 	for i := 10; i < 20; i++ {
@@ -85,7 +78,7 @@ func TestAddingNewNodes(t *testing.T) {
 			oldNodeCount++
 		}
 	}
-	fmt.Println("oldNodeCount", oldNodeCount, "newNodeCount", newNodeCount)
+	log.Info("Node count new streams through old client", "oldNodeCount", oldNodeCount, "newNodeCount", newNodeCount)
 	require.NotZero(newNodeCount)
 	require.NotZero(oldNodeCount)
 
@@ -105,15 +98,14 @@ func TestAddingNewNodes(t *testing.T) {
 			oldNodeCount++
 		}
 	}
-	fmt.Println("oldNodeCount", oldNodeCount, "newNodeCount", newNodeCount)
+	log.Info("Node count old streams through new client", "oldNodeCount", oldNodeCount, "newNodeCount", newNodeCount)
 	require.NotZero(oldNodeCount)
 	require.Zero(newNodeCount)
 }
 
 func TestNoRecordNoStart(t *testing.T) {
-	require := require.New(t)
-	tester := newServiceTester(1, require)
-	defer tester.Close()
+	tester := newServiceTester(t, 1)
+	require := tester.require
 
 	err := tester.startSingle(0)
 	require.Error(err)

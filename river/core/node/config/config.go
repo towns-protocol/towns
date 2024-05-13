@@ -65,8 +65,11 @@ type Config struct {
 	// If set to 0, then default value is used. To disable the timeout set to 1ms or less.
 	ShutdownTimeout time.Duration
 
-	// Graffiti is retunred in status and info requests.
+	// Graffiti is returned in status and info requests.
 	Graffiti string
+
+	// Should be set if node is run in archive mode.
+	Archive ArchiveConfig
 
 	// Feature flags
 	// Used to disable functionality for some testing setups.
@@ -185,6 +188,38 @@ type ContractConfig struct {
 	Address common.Address
 	// Version of the contract to use.
 	Version string
+}
+
+type ArchiveConfig struct {
+	// ArchiveId is the unique identifier of the archive node. Must be set for nodes in archive mode.
+	ArchiveId string
+
+	Filter FilterConfig
+
+	// Number of miniblocks to read at once from the remote node.
+	ReadMiniblcocksSize uint64
+}
+
+func (ac *ArchiveConfig) GetReadMiniblocksSize() uint64 {
+	if ac.ReadMiniblcocksSize <= 0 {
+		return 100
+	}
+	return ac.ReadMiniblcocksSize
+}
+
+type FilterConfig struct {
+	// If set, only archive streams hosted on the nodes with the specified addresses.
+	Nodes []string
+
+	// If set, only archive stream if Nodes list contains first hosting node for the stream.
+	// This may be used to archive only once copy of replicated stream
+	// if multiple archival nodes are used in conjunction.
+	FirstOnly bool
+
+	// If set, partition all stream names using hash into specified number of shards and
+	// archive only listed shards.
+	NumShards uint64
+	Shards    []uint64
 }
 
 func (cfg *StreamConfig) GetMembershipLimit(streamId shared.StreamId) int {

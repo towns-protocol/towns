@@ -35,7 +35,7 @@ func TestStreamCacheViewEviction(t *testing.T) {
 	go chainMonitor.RunWithBlockPeriod(ctx, btc.Client(), 0, 10*time.Millisecond)
 
 	btc.DeployerBlockchain.TxPool.SetOnSubmitHandler(func() {
-		btc.Commit()
+		btc.Commit(ctx)
 	})
 
 	node := btc.GetBlockchain(ctx, 0, true)
@@ -56,8 +56,11 @@ func TestStreamCacheViewEviction(t *testing.T) {
 	})
 	require.NoError(err, "instantiating river registry contract")
 
+	pg := storage.NewTestPgStore(ctx)
+	defer pg.Close()
+
 	streamCache, err := NewStreamCache(ctx, &StreamCacheParams{
-		Storage:    storage.NewMemStorage(),
+		Storage:    pg.Storage,
 		Wallet:     node.Wallet,
 		Riverchain: node,
 		Registry:   riverRegistry,
@@ -196,7 +199,7 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 	go chainMonitor.RunWithBlockPeriod(ctx, btc.Client(), 0, 10*time.Millisecond)
 
 	btc.DeployerBlockchain.TxPool.SetOnSubmitHandler(func() {
-		btc.Commit()
+		btc.Commit(ctx)
 	})
 
 	node := btc.GetBlockchain(ctx, 0, true)
@@ -217,8 +220,11 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 	})
 	require.NoError(err, "instantiating river registry contract")
 
+	pg := storage.NewTestPgStore(ctx)
+	defer pg.Close()
+
 	streamCacheParams := &StreamCacheParams{
-		Storage:    storage.NewMemStorage(),
+		Storage:    pg.Storage,
 		Wallet:     node.Wallet,
 		Riverchain: node,
 		Registry:   riverRegistry,
@@ -289,9 +295,9 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 	require.Nil(loadedStream.(*streamImpl).view, "view not unloaded")
 
 	// try to create a miniblock, pool is empty so it should not fail but also should not create a miniblock
-	created, err := streamSync.MakeMiniblock(ctx, false)
+	blockHash, err := streamSync.MakeMiniblock(ctx, false)
 	require.NoError(err, "make miniblock")
-	require.False(created, "miniblock created")
+	require.Nil(blockHash, "miniblock created")
 
 	// add event to stream with unloaded view, view should be loaded in cache and minipool must contain event
 	addEvent(t, ctx, streamCacheParams, streamSync, "payload", common.BytesToHash(genesisMiniblock.Header.Hash))
@@ -305,9 +311,9 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 	require.NotNil(loadedStream.(*streamImpl).view, "view unloaded")
 
 	// now it should be possible to create a miniblock
-	created, err = streamSync.MakeMiniblock(ctx, false)
+	blockHash, err = streamSync.MakeMiniblock(ctx, false)
 	require.NoError(err, "make miniblock")
-	require.True(created, "miniblock not created")
+	require.NotNil(blockHash, "miniblock not created")
 
 	// minipool should be empty now and view should be evicted from cache
 	time.Sleep(10 * time.Millisecond) // make sure we hit the cache expiration of 1 ms

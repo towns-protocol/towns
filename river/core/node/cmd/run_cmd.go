@@ -17,8 +17,7 @@ import (
 	"gopkg.in/DataDog/dd-trace-go.v1/profiler"
 )
 
-func run(cfg *config.Config) error {
-	ctx := context.Background() // lint:ignore context.Background() is fine here
+func runMetricsAndProfiler(ctx context.Context, cfg *config.Config) error {
 	if cfg.Metrics.Enabled {
 		go infra.StartMetricsService(ctx, cfg.Metrics)
 	}
@@ -36,8 +35,7 @@ func run(cfg *config.Config) error {
 	if cfg.PerformanceTracking.ProfilingEnabled {
 		if os.Getenv("DD_ENV") != "" {
 			fmt.Println("Starting Datadog profiler")
-			// if the DD_ENV environment variable is set, we assume that the Datadog agent is running,
-			// and start the Datadog profiler instead of pprof
+
 			err := profiler.Start(
 				// profiler.WithService("<SERVICE_NAME>"),
 				// ^ falling back to DD_SERVICE env var
@@ -62,9 +60,8 @@ func run(cfg *config.Config) error {
 			fmt.Println("Starting pprof profiler")
 			folderPath := "./profiles"
 
-			// Check if the folder already exists
 			if _, err := os.Stat(folderPath); os.IsNotExist(err) {
-				err := os.Mkdir(folderPath, 0o755) // 0755 sets permissions for the folder
+				err := os.Mkdir(folderPath, 0o755)
 				if err != nil {
 					fmt.Println("Error creating profiling folder:", err)
 					return err
@@ -72,11 +69,10 @@ func run(cfg *config.Config) error {
 			}
 
 			currentTime := time.Now()
-			// Format the date and time as a string
-			dateTimeFormat := "20060102150405" // YYYYMMDDHHMMSS
+
+			dateTimeFormat := "20060102150405"
 			formattedDateTime := currentTime.Format(dateTimeFormat)
 
-			// Create a file with the formatted date and time in the name
 			filename := fmt.Sprintf("profile_%s.prof", formattedDateTime)
 			file, err := os.Create("profiles/" + filename)
 			if err != nil {
@@ -92,6 +88,15 @@ func run(cfg *config.Config) error {
 		}
 	} else {
 		fmt.Println("Profiling disabled")
+	}
+	return nil
+}
+
+func runServer(cfg *config.Config) error {
+	ctx := context.Background() // lint:ignore context.Background() is fine here
+	err := runMetricsAndProfiler(ctx, cfg)
+	if err != nil {
+		return err
 	}
 	return rpc.RunServer(ctx, cfg)
 }
@@ -110,7 +115,7 @@ func init() {
 		Use:   "run",
 		Short: "Runs the node",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return run(cmdConfig)
+			return runServer(cmdConfig)
 		},
 	}
 

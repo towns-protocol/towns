@@ -8,7 +8,6 @@ import (
 )
 
 const (
-	StreamStorageTypeMemory   = "in-memory"
 	StreamStorageTypePostgres = "postgres"
 )
 
@@ -67,6 +66,27 @@ type StreamStorage interface {
 		candidateBlockHash common.Hash,
 		snapshotMiniblock bool,
 		envelopes [][]byte,
+	) error
+
+	// CreateStreamArchiveStorage creates a new archive storage for the given stream.
+	// Unlike regular CreateStreamStorage, only entry in es table and partition table for miniblocks are created.
+	CreateStreamArchiveStorage(
+		ctx context.Context,
+		streamId StreamId,
+	) error
+
+	// GetMaxArchivedMiniblockNumber returns the maximum miniblock number that has been archived for the given stream.
+	// If stream record is created, but no miniblocks are archived, returns -1.
+	GetMaxArchivedMiniblockNumber(ctx context.Context, streamId StreamId) (int64, error)
+
+	// WriteArchiveMiniblocks writes miniblocks to the archive storage.
+	// Miniblocks are written starting from startMiniblockNum.
+	// It checks that startMiniblockNum - 1 miniblock exists in storage.
+	WriteArchiveMiniblocks(
+		ctx context.Context,
+		streamId StreamId,
+		startMiniblockNum int64,
+		miniblocks [][]byte,
 	) error
 
 	Close(ctx context.Context)

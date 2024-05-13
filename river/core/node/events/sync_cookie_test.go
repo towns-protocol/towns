@@ -1,9 +1,9 @@
 package events
 
 import (
-	"context"
 	"testing"
 
+	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/crypto"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/shared"
@@ -13,7 +13,8 @@ import (
 )
 
 func TestEqualAndCopy(t *testing.T) {
-	ctx := context.Background()
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
 	nodeWallet1, _ := crypto.NewWallet(ctx)
 	nodeWallet2, _ := crypto.NewWallet(ctx)
 	require.True(t, SyncCookieEqual(nil, nil))

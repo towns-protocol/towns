@@ -177,9 +177,8 @@ func (ecm *chainMonitor) RunWithBlockPeriod(
 		select {
 		case <-ctx.Done():
 			log.Debug("initiate chain monitor shutdown")
-			//lint:ignore LE0000 context.Background() used correctly
-			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-			ecm.builder.stoppedCallbacks.onChainMonitorStopped(ctx)
+			ctx2, cancel := context.WithTimeout(context.WithoutCancel(ctx), time.Minute)
+			ecm.builder.stoppedCallbacks.onChainMonitorStopped(ctx2)
 			cancel()
 			log.Debug("chain monitor stopped")
 			return

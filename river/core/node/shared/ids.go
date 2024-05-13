@@ -78,6 +78,13 @@ func UserStreamIdFromAddr(addr common.Address) StreamId {
 	return b
 }
 
+func UserSettingStreamIdFromAddr(addr common.Address) StreamId {
+	var b StreamId
+	b[0] = STREAM_USER_SETTINGS_BIN
+	copy(b[1:], addr.Bytes())
+	return b
+}
+
 func UserDeviceKeyStreamIdFromAddress(addr common.Address) StreamId {
 	var b StreamId
 	b[0] = STREAM_USER_DEVICE_KEY_BIN

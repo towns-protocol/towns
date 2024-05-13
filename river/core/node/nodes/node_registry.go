@@ -153,7 +153,7 @@ func (n *nodeRegistryImpl) addNode(addr common.Address, url string, status uint8
 
 // OnNodeAdded can apply INodeRegistry::NodeAdded event against the in-memory node registry.
 func (n *nodeRegistryImpl) OnNodeAdded(ctx context.Context, event types.Log) {
-	log := dlog.Log()
+	log := dlog.FromCtx(ctx)
 
 	var e contracts.NodeRegistryV1NodeAdded
 	if err := n.contract.NodeRegistry.BoundContract().UnpackLog(&e, "NodeAdded", event); err != nil {
@@ -175,7 +175,7 @@ func (n *nodeRegistryImpl) OnNodeAdded(ctx context.Context, event types.Log) {
 
 // OnNodeRemoved can apply INodeRegistry::NodeRemoved event against the in-memory node registry.
 func (n *nodeRegistryImpl) OnNodeRemoved(ctx context.Context, event types.Log) {
-	log := dlog.Log()
+	log := dlog.FromCtx(ctx)
 
 	var e contracts.NodeRegistryV1NodeRemoved
 	if err := n.contract.NodeRegistry.BoundContract().UnpackLog(&e, "NodeRemoved", event); err != nil {
@@ -197,7 +197,7 @@ func (n *nodeRegistryImpl) OnNodeRemoved(ctx context.Context, event types.Log) {
 
 // OnNodeStatusUpdated can apply INodeRegistry::NodeStatusUpdated event against the in-memory node registry.
 func (n *nodeRegistryImpl) OnNodeStatusUpdated(ctx context.Context, event types.Log) {
-	log := dlog.Log()
+	log := dlog.FromCtx(ctx)
 
 	var e contracts.NodeRegistryV1NodeStatusUpdated
 	if err := n.contract.NodeRegistry.BoundContract().UnpackLog(&e, "NodeStatusUpdated", event); err != nil {
@@ -221,7 +221,7 @@ func (n *nodeRegistryImpl) OnNodeStatusUpdated(ctx context.Context, event types.
 
 // OnNodeUrlUpdated can apply INodeRegistry::NodeUrlUpdated events against the in-memory node registry.
 func (n *nodeRegistryImpl) OnNodeUrlUpdated(ctx context.Context, event types.Log) {
-	log := dlog.Log()
+	log := dlog.FromCtx(ctx)
 
 	var e contracts.NodeRegistryV1NodeUrlUpdated
 	if err := n.contract.NodeRegistry.BoundContract().UnpackLog(&e, "NodeUrlUpdated", event); err != nil {

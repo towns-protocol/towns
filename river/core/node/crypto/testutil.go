@@ -254,7 +254,7 @@ func NewBlockchainTestContext(ctx context.Context, numKeys int) (*BlockchainTest
 	}
 
 	// commit the river registry deployment transaction
-	if err := btc.mineBlock(); err != nil {
+	if err := btc.mineBlock(ctx); err != nil {
 		return nil, err
 	}
 
@@ -285,7 +285,7 @@ func setOnChainConfig(ctx context.Context, btc *BlockchainTestContext, riverConf
 		return err
 	}
 
-	err = btc.mineBlock()
+	err = btc.mineBlock(ctx)
 	if err != nil {
 		return err
 	}
@@ -324,10 +324,9 @@ func (c *BlockchainTestContext) SetNextBlockBaseFee(nextBlockBaseFee *big.Int) e
 	return c.EthClient.Client().Call(nil, "anvil_setNextBlockBaseFeePerGas", nextBlockBaseFee)
 }
 
-func (c *BlockchainTestContext) mineBlock() error {
+func (c *BlockchainTestContext) mineBlock(ctx context.Context) error {
 	if c.RemoteNode {
-		//lint:ignore LE0000 context.Background() used correctly
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 		defer cancel()
 
 		head, err := c.EthClient.HeaderByNumber(ctx, nil)
@@ -374,8 +373,8 @@ func (c *BlockchainTestContext) Close() {
 	}
 }
 
-func (c *BlockchainTestContext) Commit() {
-	err := c.mineBlock()
+func (c *BlockchainTestContext) Commit(ctx context.Context) {
+	err := c.mineBlock(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -457,11 +456,19 @@ func (c *BlockchainTestContext) GetBlockchain(ctx context.Context, index int, au
 	var onSubmit func()
 	if autoMine {
 		onSubmit = func() {
-			c.Commit()
+			c.Commit(ctx)
 		}
 	}
 
 	return makeTestBlockchain(ctx, wallet, c.Client(), c.ChainMonitor, c.ChainId, onSubmit)
+}
+
+func (c *BlockchainTestContext) NewWalletAndBlockchain(ctx context.Context) *Blockchain {
+	wallet, err := NewWallet(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return makeTestBlockchain(ctx, wallet, c.Client(), c.ChainMonitor, c.ChainId, nil)
 }
 
 func (c *BlockchainTestContext) InitNodeRecord(ctx context.Context, index int, url string) error {
@@ -480,7 +487,7 @@ func (c *BlockchainTestContext) InitNodeRecordEx(ctx context.Context, index int,
 		return err
 	}
 
-	err = c.mineBlock()
+	err = c.mineBlock(ctx)
 	if err != nil {
 		return err
 	}
@@ -505,7 +512,7 @@ func (c *BlockchainTestContext) UpdateNodeStatus(ctx context.Context, index int,
 		return err
 	}
 
-	err = c.mineBlock()
+	err = c.mineBlock(ctx)
 	if err != nil {
 		return err
 	}
@@ -530,7 +537,7 @@ func (c *BlockchainTestContext) UpdateNodeUrl(ctx context.Context, index int, ur
 		return err
 	}
 
-	err = c.mineBlock()
+	err = c.mineBlock(ctx)
 	if err != nil {
 		return err
 	}

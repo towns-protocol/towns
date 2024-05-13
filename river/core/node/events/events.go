@@ -373,6 +373,16 @@ func Make_UserSettingsPayload_Inception(streamId StreamId, settings *StreamSetti
 	}
 }
 
+func Make_UserSettingsPayload_UserBlock(userBlock *UserSettingsPayload_UserBlock) *StreamEvent_UserSettingsPayload {
+	return &StreamEvent_UserSettingsPayload{
+		UserSettingsPayload: &UserSettingsPayload{
+			Content: &UserSettingsPayload_UserBlock_{
+				UserBlock: userBlock,
+			},
+		},
+	}
+}
+
 func Make_MiniblockHeader(miniblockHeader *MiniblockHeader) *StreamEvent_MiniblockHeader {
 	return &StreamEvent_MiniblockHeader{
 		MiniblockHeader: miniblockHeader,

@@ -1,9 +1,9 @@
 package events
 
 import (
-	"context"
 	"testing"
 
+	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/crypto"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/shared"
@@ -118,7 +118,9 @@ func make_Space_DisplayName(
 }
 
 func TestMakeSnapshot(t *testing.T) {
-	wallet, _ := crypto.NewWallet(context.Background())
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
+	wallet, _ := crypto.NewWallet(ctx)
 	streamId := UserStreamIdFromAddr(wallet.Address)
 	inception := make_User_Inception(wallet, streamId, t)
 	snapshot, err := Make_GenisisSnapshot([]*ParsedEvent{inception})
@@ -130,7 +132,9 @@ func TestMakeSnapshot(t *testing.T) {
 }
 
 func TestUpdateSnapshot(t *testing.T) {
-	wallet, _ := crypto.NewWallet(context.Background())
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
+	wallet, _ := crypto.NewWallet(ctx)
 	streamId := UserStreamIdFromAddr(wallet.Address)
 	inception := make_User_Inception(wallet, streamId, t)
 	snapshot, err := Make_GenisisSnapshot([]*ParsedEvent{inception})
@@ -152,7 +156,9 @@ func TestUpdateSnapshot(t *testing.T) {
 }
 
 func TestCloneAndUpdateUserSnapshot(t *testing.T) {
-	wallet, _ := crypto.NewWallet(context.Background())
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
+	wallet, _ := crypto.NewWallet(ctx)
 	streamId := UserStreamIdFromAddr(wallet.Address)
 	inception := make_User_Inception(wallet, streamId, t)
 	snapshot1, err := Make_GenisisSnapshot([]*ParsedEvent{inception})
@@ -176,7 +182,9 @@ func TestCloneAndUpdateUserSnapshot(t *testing.T) {
 }
 
 func TestCloneAndUpdateSpaceSnapshot(t *testing.T) {
-	wallet, _ := crypto.NewWallet(context.Background())
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
+	wallet, _ := crypto.NewWallet(ctx)
 	streamId := UserStreamIdFromAddr(wallet.Address)
 	inception := make_Space_Inception(wallet, streamId, t)
 	snapshot1, err := Make_GenisisSnapshot([]*ParsedEvent{inception})
@@ -226,7 +234,9 @@ func TestCloneAndUpdateSpaceSnapshot(t *testing.T) {
 }
 
 func TestUpdateSnapshotFailsIfInception(t *testing.T) {
-	wallet, _ := crypto.NewWallet(context.Background())
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
+	wallet, _ := crypto.NewWallet(ctx)
 	streamId := UserStreamIdFromAddr(wallet.Address)
 	inception := make_User_Inception(wallet, streamId, t)
 	snapshot, err := Make_GenisisSnapshot([]*ParsedEvent{inception})

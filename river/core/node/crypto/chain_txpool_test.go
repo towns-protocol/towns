@@ -28,7 +28,7 @@ func TestNewTransactionPoolWithReplaceTx(t *testing.T) {
 
 	require.NoError(errTC, "unable to construct block test context")
 
-	tc.Commit()
+	tc.Commit(ctx)
 
 	txPool, err := crypto.NewTransactionPoolWithPolicies(
 		ctx, tc.Client(), tc.DeployerBlockchain.Wallet, resubmitPolicy, repricePolicy, tc.ChainMonitor)
@@ -61,7 +61,7 @@ func TestNewTransactionPoolWithReplaceTx(t *testing.T) {
 				t.Fatal("test expired before all transactions were processed")
 			case <-time.After(time.Second):
 				if tc.IsSimulated() || (tc.IsAnvil() && !tc.AnvilAutoMineEnabled()) {
-					tc.Commit()
+					tc.Commit(ctx)
 				}
 			}
 		}

@@ -147,7 +147,7 @@ func (occ *onChainConfiguration) onBlock(ctx context.Context, blockNumber BlockN
 
 func (occ *onChainConfiguration) onConfigChanged(ctx context.Context, event types.Log) {
 	var (
-		log = dlog.Log()
+		log = dlog.FromCtx(ctx)
 		e   contracts.RiverConfigV1ConfigurationChanged
 	)
 	if err := occ.contract.BoundContract().UnpackLog(&e, "ConfigurationChanged", event); err != nil {

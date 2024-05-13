@@ -29,11 +29,16 @@ type Service struct {
 	defaultLogger *slog.Logger
 	wallet        *crypto.Wallet
 	startTime     time.Time
+	mode          string
+
+	// exitSignal is used to report critical errors from background task and RPC handlers
+	// that should cause the service to stop. For example, if new instance for
+	// the same database is started, the old one should stop.
+	exitSignal chan error
 
 	// Storage
 	storagePoolInfo *storage.PgxPoolInfo
 	storage         storage.StreamStorage
-	exitSignal      chan error
 
 	// Streams
 	cache       events.StreamCache
@@ -56,6 +61,9 @@ type Service struct {
 
 	// Status string
 	status atomic.Pointer[string]
+
+	// Archiver if in archive mode
+	Archiver *Archiver
 }
 
 var (
@@ -77,4 +85,8 @@ func (s *Service) GetStatus() string {
 		return "STARTING"
 	}
 	return *status
+}
+
+func (s *Service) Storage() storage.StreamStorage {
+	return s.storage
 }

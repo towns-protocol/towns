@@ -1,7 +1,6 @@
 package contracts_test
 
 import (
-	"context"
 	"errors"
 	"math/big"
 	"net/http"
@@ -12,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/jarcoal/httpmock"
 	"github.com/river-build/river/core/node/base"
+	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/contracts"
 )
 
@@ -22,6 +22,9 @@ var (
 )
 
 func TestEVMCustomError(t *testing.T) {
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
+
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 
@@ -48,7 +51,7 @@ func TestEVMCustomError(t *testing.T) {
 		t.Fatalf("unable to dial endpoint: %v", err)
 	}
 
-	_, err = client.EstimateGas(context.Background(), ethereum.CallMsg{})
+	_, err = client.EstimateGas(ctx, ethereum.CallMsg{})
 
 	customError, stringError, err := combinedABI.DecodeEVMError(err)
 	if err != nil {
@@ -82,6 +85,9 @@ func TestEVMCustomError(t *testing.T) {
 }
 
 func TestEVMStringError(t *testing.T) {
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
+
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 
@@ -108,7 +114,7 @@ func TestEVMStringError(t *testing.T) {
 		t.Fatalf("unable to dial endpoint: %v", err)
 	}
 
-	_, err = client.EstimateGas(context.Background(), ethereum.CallMsg{})
+	_, err = client.EstimateGas(ctx, ethereum.CallMsg{})
 
 	customError, stringError, err := combinedABI.DecodeEVMError(err)
 	if err != nil {
@@ -129,6 +135,9 @@ func TestEVMStringError(t *testing.T) {
 }
 
 func TestEVMUnexpectedError(t *testing.T) {
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
+
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 
@@ -144,7 +153,7 @@ func TestEVMUnexpectedError(t *testing.T) {
 		t.Fatalf("unable to dial endpoint: %v", err)
 	}
 
-	_, err = client.EstimateGas(context.Background(), ethereum.CallMsg{})
+	_, err = client.EstimateGas(ctx, ethereum.CallMsg{})
 
 	customError, stringError, err := combinedABI.DecodeEVMError(err)
 

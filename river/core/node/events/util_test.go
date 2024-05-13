@@ -4,16 +4,13 @@ import (
 	"context"
 
 	"github.com/ethereum/go-ethereum/common"
-	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/base/test"
-	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/crypto"
 	. "github.com/river-build/river/core/node/nodes"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/registries"
 	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/storage"
-	"github.com/river-build/river/core/node/testutils/dbtestutils"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -26,8 +23,7 @@ type testContext struct {
 }
 
 type testParams struct {
-	usePostgres bool
-	replFactor  int
+	replFactor int
 }
 
 func makeTestStreamParams(p testParams) (context.Context, *testContext) {
@@ -44,33 +40,7 @@ func makeTestStreamParams(p testParams) (context.Context, *testContext) {
 
 	bc := btc.GetBlockchain(ctx, 0, true)
 
-	var streamStorage storage.StreamStorage
-	var schemaDeleter func()
-	if p.usePostgres {
-		var cfg *config.DatabaseConfig
-		var schema string
-		cfg, schema, schemaDeleter, err = dbtestutils.StartDB(ctx)
-		if err != nil {
-			panic(err)
-		}
-
-		pool, err := storage.CreateAndValidatePgxPool(ctx, cfg, schema)
-		if err != nil {
-			panic(err)
-		}
-
-		streamStorage, err = storage.NewPostgresEventStore(
-			ctx,
-			pool,
-			GenShortNanoid(),
-			make(chan error, 1),
-		)
-		if err != nil {
-			panic(err)
-		}
-	} else {
-		streamStorage = storage.NewMemStorage()
-	}
+	pg := storage.NewTestPgStore(ctx)
 
 	cfg := btc.RegistryConfig()
 	registry, err := registries.NewRiverRegistryContract(ctx, bc, &cfg)
@@ -88,7 +58,7 @@ func makeTestStreamParams(p testParams) (context.Context, *testContext) {
 	sr := NewStreamRegistry(bc.Wallet.Address, nr, registry, p.replFactor, btc.OnChainConfig)
 
 	params := &StreamCacheParams{
-		Storage:      streamStorage,
+		Storage:      pg.Storage,
 		Wallet:       bc.Wallet,
 		Riverchain:   bc,
 		Registry:     registry,
@@ -108,10 +78,7 @@ func makeTestStreamParams(p testParams) (context.Context, *testContext) {
 			streamRegistry: sr,
 			closer: func() {
 				btc.Close()
-				streamStorage.Close(ctx)
-				if schemaDeleter != nil {
-					schemaDeleter()
-				}
+				pg.Close()
 				cancel()
 			},
 		}

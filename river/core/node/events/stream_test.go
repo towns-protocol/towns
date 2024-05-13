@@ -83,7 +83,7 @@ func mbTest(
 	t *testing.T,
 	params mbTestParams,
 ) {
-	ctx, tt := makeTestStreamParams(testParams{usePostgres: true})
+	ctx, tt := makeTestStreamParams(testParams{})
 	defer tt.closer()
 	require := require.New(t)
 

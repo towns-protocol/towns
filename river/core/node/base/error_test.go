@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"connectrpc.com/connect"
+	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/protocol"
 	"github.com/stretchr/testify/assert"
@@ -13,7 +14,9 @@ import (
 )
 
 func TestRiverError(t *testing.T) {
-	log := dlog.Log()
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
+	log := dlog.FromCtx(ctx)
 
 	e := RiverError(
 		protocol.Err_INVALID_ARGUMENT,

@@ -97,7 +97,7 @@ func newServiceTester(numNodes int, require *require.Assertions) *serviceTester 
 
 	st.btc.DeployerBlockchain.TxPool.SetOnSubmitHandler(func() {
 		log.Info("Auto-mining block (deployer)")
-		st.btc.Commit()
+		st.btc.Commit(ctx)
 	})
 
 	st.deployXchainTestContracts()
@@ -148,7 +148,7 @@ func (st *serviceTester) deployXchainTestContracts() {
 	st.walletLink = walletLink
 
 	// Commit all deploys
-	st.btc.Commit()
+	st.btc.Commit(st.ctx)
 
 	log = dlog.FromCtx(st.ctx)
 	log.Info(

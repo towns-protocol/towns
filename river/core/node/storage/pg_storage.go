@@ -274,6 +274,148 @@ func (s *PostgresEventStore) createStreamStorageTx(
 	return nil
 }
 
+func (s *PostgresEventStore) CreateStreamArchiveStorage(
+	ctx context.Context,
+	streamId StreamId,
+) error {
+	return s.txRunnerWithMetrics(
+		ctx,
+		"CreateStreamArchiveStorage",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			return s.createStreamArchiveStorageTx(ctx, tx, streamId)
+		},
+		nil,
+		"streamId", streamId,
+	)
+}
+
+func (s *PostgresEventStore) createStreamArchiveStorageTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+) error {
+	tableSuffix := createTableSuffix(streamId)
+	sql := fmt.Sprintf(
+		`INSERT INTO es (stream_id, latest_snapshot_miniblock) VALUES ($1, -1);
+		CREATE TABLE miniblocks_%[1]s PARTITION OF miniblocks FOR VALUES IN ($1);`,
+		tableSuffix,
+	)
+	_, err := tx.Exec(ctx, sql, streamId)
+	if err != nil {
+		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code == pgerrcode.UniqueViolation {
+			return WrapRiverError(Err_ALREADY_EXISTS, err).Message("stream already exists")
+		}
+		return err
+	}
+	return nil
+}
+
+func (s *PostgresEventStore) GetMaxArchivedMiniblockNumber(ctx context.Context, streamId StreamId) (int64, error) {
+	var maxArchivedMiniblockNumber int64
+	err := s.txRunnerWithMetrics(
+		ctx,
+		"GetMaxArchivedMiniblockNumber",
+		pgx.ReadOnly,
+		func(ctx context.Context, tx pgx.Tx) error {
+			return s.getMaxArchivedMiniblockNumberTx(ctx, tx, streamId, &maxArchivedMiniblockNumber)
+		},
+		nil,
+		"streamId", streamId,
+	)
+	if err != nil {
+		return -1, err
+	}
+	return maxArchivedMiniblockNumber, nil
+}
+
+func (s *PostgresEventStore) getMaxArchivedMiniblockNumberTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+	maxArchivedMiniblockNumber *int64,
+) error {
+	err := tx.QueryRow(
+		ctx,
+		"SELECT COALESCE(MAX(seq_num), -1) FROM miniblocks WHERE stream_id = $1",
+		streamId,
+	).Scan(maxArchivedMiniblockNumber)
+	if err != nil {
+		return err
+	}
+	if *maxArchivedMiniblockNumber == -1 {
+		var exists bool
+		err = tx.QueryRow(
+			ctx,
+			"SELECT EXISTS(SELECT 1 FROM es WHERE stream_id = $1)",
+			streamId,
+		).Scan(&exists)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return RiverError(Err_NOT_FOUND, "stream not found in local storage", "streamId", streamId)
+		}
+	}
+	return nil
+}
+
+func (s *PostgresEventStore) WriteArchiveMiniblocks(
+	ctx context.Context,
+	streamId StreamId,
+	startMiniblockNum int64,
+	miniblocks [][]byte,
+) error {
+	return s.txRunnerWithMetrics(
+		ctx,
+		"WriteArchiveMiniblocks",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			return s.writeArchiveMiniblocksTx(ctx, tx, streamId, startMiniblockNum, miniblocks)
+		},
+		nil,
+		"streamId", streamId,
+		"startMiniblockNum", startMiniblockNum,
+		"numMiniblocks", len(miniblocks),
+	)
+}
+
+func (s *PostgresEventStore) writeArchiveMiniblocksTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+	startMiniblockNum int64,
+	miniblocks [][]byte,
+) error {
+	var lastKnownMiniblockNum int64
+	err := s.getMaxArchivedMiniblockNumberTx(ctx, tx, streamId, &lastKnownMiniblockNum)
+	if err != nil {
+		return err
+	}
+	if lastKnownMiniblockNum+1 != startMiniblockNum {
+		return RiverError(
+			Err_DB_OPERATION_FAILURE,
+			"miniblock sequence number mismatch",
+			"lastKnownMiniblockNum", lastKnownMiniblockNum,
+			"startMiniblockNum", startMiniblockNum,
+			"streamId", streamId,
+		)
+	}
+
+	for i, miniblock := range miniblocks {
+		_, err := tx.Exec(
+			ctx,
+			"INSERT INTO miniblocks (stream_id, seq_num, blockdata) VALUES ($1, $2, $3)",
+			streamId,
+			startMiniblockNum+int64(i),
+			miniblock)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (s *PostgresEventStore) ReadStreamFromLastSnapshot(
 	ctx context.Context,
 	streamId StreamId,
@@ -917,6 +1059,10 @@ func (s *PostgresEventStore) deleteStreamTx(ctx context.Context, tx pgx.Tx, stre
 
 func DbSchemaNameFromAddress(address string) string {
 	return "s" + strings.ToLower(address)
+}
+
+func DbSchemaNameForArchive(archiveId string) string {
+	return "arch" + strings.ToLower(archiveId)
 }
 
 func getDbURL(dbConfig *config.DatabaseConfig) string {

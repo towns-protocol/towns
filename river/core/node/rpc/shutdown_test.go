@@ -7,13 +7,11 @@ import (
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/contracts"
 	. "github.com/river-build/river/core/node/protocol"
-	"github.com/stretchr/testify/require"
 )
 
 func TestShutdown(t *testing.T) {
-	require := require.New(t)
-	tester := newServiceTester(1, require)
-	defer tester.Close()
+	tester := newServiceTester(t, 1)
+	require := tester.require
 
 	tester.initNodeRecords(0, 1, contracts.NodeStatus_Operational)
 	tester.startNodes(0, 1)

@@ -11,6 +11,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/ethereum/go-ethereum/common"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/events"
 	"github.com/river-build/river/core/node/infra"
@@ -87,8 +88,9 @@ func (s *Service) info(
 			log.Info("Info Debug request to make miniblock", "stream_id", streamId)
 			retryCount := 0
 			// the miniblock creation can clash with the scheduled miniblock creation, so we retry a few times
+			var hash string
 			for {
-				err := s.debugMakeMiniblock(ctx, streamId, forceSnapshot)
+				hash, err = s.debugMakeMiniblock(ctx, streamId, forceSnapshot)
 				if err != nil {
 					if retryCount < 3 {
 						log.Warn("Failed to make miniblock, retrying", "error", err)
@@ -99,7 +101,7 @@ func (s *Service) info(
 				}
 				break
 			}
-			return connect.NewResponse(&InfoResponse{}), nil
+			return connect.NewResponse(&InfoResponse{Graffiti: hash}), nil
 		} else if debug == "add_event" {
 			if len(request.Msg.Debug) < 3 {
 				return nil, RiverError(Err_DEBUG_ERROR, "add_event requires a stream id and event")
@@ -154,22 +156,22 @@ func (s *Service) info(
 	}), nil
 }
 
-func (s *Service) debugMakeMiniblock(ctx context.Context, streamId shared.StreamId, forceSnapshot string) error {
+func (s *Service) debugMakeMiniblock(ctx context.Context, streamId shared.StreamId, forceSnapshot string) (string, error) {
 	nodes, err := s.streamRegistry.GetStreamInfo(ctx, streamId)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if nodes.IsLocal() {
 		stream, _, err := s.cache.GetStream(ctx, streamId)
 		if err != nil {
-			return err
+			return "", err
 		}
 		count := 0
-		success := false
+		var hash *common.Hash
 		for {
-			success, err = stream.MakeMiniblock(ctx, forceSnapshot == "true")
-			if !success && err == nil && forceSnapshot == "true" && count < 5 {
+			hash, err = stream.MakeMiniblock(ctx, forceSnapshot == "true")
+			if hash == nil && err == nil && forceSnapshot == "true" && count < 5 {
 				// we should not retry if we are forcing a snapshot
 				count++
 				time.Sleep(100 * time.Millisecond)
@@ -178,25 +180,31 @@ func (s *Service) debugMakeMiniblock(ctx context.Context, streamId shared.Stream
 			}
 		}
 		if err != nil {
-			return err
+			return "", err
 		}
-		if !success && forceSnapshot == "true" {
-			return RiverError(Err_INTERNAL, "Failed to force snapshot")
+		if hash == nil && forceSnapshot == "true" {
+			return "", RiverError(Err_INTERNAL, "Failed to force snapshot")
 		}
-		return nil
+		if hash != nil {
+			return hash.Hex(), nil
+		} else {
+			return "", nil
+		}
+	} else {
+		resp, err := peerNodeRequestWithRetries(
+			ctx,
+			nodes,
+			s,
+			func(ctx context.Context, stub StreamServiceClient) (*connect.Response[InfoResponse], error) {
+				return stub.Info(ctx, connect.NewRequest(&InfoRequest{
+					Debug: []string{"make_miniblock", streamId.String(), forceSnapshot},
+				}))
+			},
+			-1,
+		)
+		if err != nil {
+			return "", err
+		}
+		return resp.Msg.Graffiti, nil
 	}
-
-	_, err = peerNodeRequestWithRetries(
-		ctx,
-		nodes,
-		s,
-		func(ctx context.Context, stub StreamServiceClient) (*connect.Response[InfoResponse], error) {
-			_, err := stub.Info(ctx, connect.NewRequest(&InfoRequest{
-				Debug: []string{"make_miniblock", streamId.String(), forceSnapshot},
-			}))
-			return nil, err
-		},
-		-1,
-	)
-	return err
 }

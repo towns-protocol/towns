@@ -35,7 +35,7 @@ func TestNodeEvents(t *testing.T) {
 	require.NoError(err)
 	require.Len(events, 0)
 
-	tt.Commit()
+	tt.Commit(ctx)
 
 	//
 	// Test RegisterNode
@@ -55,7 +55,7 @@ func TestNodeEvents(t *testing.T) {
 		return tt.NodeRegistry.RegisterNode(opts, crypto.GetTestAddress(), "url3", 0)
 	})
 	require.NoError(err)
-	tt.Commit()
+	tt.Commit(ctx)
 
 	num, err = bc.GetBlockNumber(ctx)
 	require.NoError(err)
@@ -88,7 +88,7 @@ func TestNodeEvents(t *testing.T) {
 	})
 	require.NoError(err)
 
-	tt.Commit()
+	tt.Commit(ctx)
 
 	num, err = bc.GetBlockNumber(ctx)
 	require.NoError(err)
@@ -110,7 +110,7 @@ func TestNodeEvents(t *testing.T) {
 	})
 	require.NoError(err)
 
-	tt.Commit()
+	tt.Commit(ctx)
 
 	num, err = bc.GetBlockNumber(ctx)
 	require.NoError(err)
@@ -132,7 +132,7 @@ func TestNodeEvents(t *testing.T) {
 	})
 	require.NoError(err)
 
-	tt.Commit()
+	tt.Commit(ctx)
 
 	num, err = bc.GetBlockNumber(ctx)
 	require.NoError(err)
@@ -154,7 +154,7 @@ func TestNodeEvents(t *testing.T) {
 	})
 	require.NoError(err)
 
-	tt.Commit()
+	tt.Commit(ctx)
 
 	num, err = bc.GetBlockNumber(ctx)
 	require.NoError(err)

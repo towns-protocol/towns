@@ -479,7 +479,12 @@ export async function evaluateOperationsForEntitledWallet(
     providers: ethers.providers.StaticJsonRpcProvider[],
 ) {
     const controller = new AbortController()
-    const result = evaluateTree(controller, linkedWallets, providers, operations[0])
+    const result = evaluateTree(
+        controller,
+        linkedWallets,
+        providers,
+        operations[operations.length - 1],
+    )
     controller.abort()
     return result
 }
@@ -514,6 +519,8 @@ export async function evaluateTree(
     }
 }
 
+// These two methods are used to create a rule data struct for an external token or NFT
+// checks for testing.
 export function createExternalTokenStruct(addresses: Address[]) {
     if (addresses.length === 0) {
         return NoopRuleData
@@ -522,6 +529,19 @@ export function createExternalTokenStruct(addresses: Address[]) {
         chainId: 1n,
         address: address,
         type: CheckOperationType.ERC20 as const,
+    }))
+    return createOperationsTree(defaultChain)
+}
+
+export function createExternalNFTStruct(addresses: Address[]) {
+    if (addresses.length === 0) {
+        return NoopRuleData
+    }
+    const defaultChain = addresses.map((address) => ({
+        // Anvil chain id
+        chainId: 31337n,
+        address: address,
+        type: CheckOperationType.ERC721 as const,
     }))
     return createOperationsTree(defaultChain)
 }

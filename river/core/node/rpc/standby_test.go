@@ -16,7 +16,6 @@ import (
 	"github.com/river-build/river/core/node/rpc/statusinfo"
 
 	. "github.com/river-build/river/core/node/protocol"
-	"github.com/stretchr/testify/require"
 )
 
 func stanbyStartOpts() startOpts {
@@ -61,9 +60,8 @@ func pollStatus(url string, expected string) bool {
 }
 
 func TestStandbySingle(t *testing.T) {
-	require := require.New(t)
-	tester := newServiceTester(1, require)
-	defer tester.Close()
+	tester := newServiceTester(t, 1)
+	require := tester.require
 
 	tester.initNodeRecords(0, 1, contracts.NodeStatus_Operational)
 	tester.startNodes(0, 1, stanbyStartOpts())
@@ -74,9 +72,8 @@ func TestStandbySingle(t *testing.T) {
 }
 
 func TestStandbyEvictionByNlbSwitch(t *testing.T) {
-	require := require.New(t)
-	tester := newServiceTester(1, require)
-	defer tester.Close()
+	tester := newServiceTester(t, 1)
+	require := tester.require
 
 	redirector := tester.nodes[0].listener
 	tester.nodes[0].listener = nil
@@ -145,9 +142,8 @@ func TestStandbyEvictionByNlbSwitch(t *testing.T) {
 }
 
 func TestStandbyEvictionByUrlUpdate(t *testing.T) {
-	require := require.New(t)
-	tester := newServiceTester(1, require)
-	defer tester.Close()
+	tester := newServiceTester(t, 1)
+	require := tester.require
 
 	firstListener := tester.nodes[0].listener
 	firstAddr := firstListener.Addr().String()

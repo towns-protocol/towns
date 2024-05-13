@@ -1,11 +1,11 @@
 package events
 
 import (
-	"context"
 	"testing"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/crypto"
 	. "github.com/river-build/river/core/node/protocol"
@@ -46,7 +46,8 @@ func parsedEvent(t *testing.T, envelope *Envelope) *ParsedEvent {
 }
 
 func TestLoad(t *testing.T) {
-	ctx := context.Background()
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
 	userWallet, _ := crypto.NewWallet(ctx)
 	nodeWallet, _ := crypto.NewWallet(ctx)
 	streamId := UserStreamIdFromAddr(userWallet.Address)

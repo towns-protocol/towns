@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/storage"
 
@@ -41,8 +42,8 @@ type SyncStream interface {
 	Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResultReceiver) error
 	Unsub(receiver SyncResultReceiver)
 
-	// Returns true if miniblock was created, false if not.
-	MakeMiniblock(ctx context.Context, forceSnapshot bool) (bool, error) // TODO: doesn't seem pertinent to SyncStream
+	// Returns pointer to a hash if miniblock was created, mil if not.
+	MakeMiniblock(ctx context.Context, forceSnapshot bool) (*common.Hash, error) // TODO: doesn't seem pertinent to SyncStream
 	ProposeNextMiniblock(ctx context.Context, forceSnapshot bool) (*MiniblockInfo, error)
 	MakeMiniblockHeader(ctx context.Context, proposal *MiniblockProposal) (*MiniblockHeader, []*ParsedEvent, error)
 	ApplyMiniblock(ctx context.Context, miniblock *MiniblockInfo) error
@@ -270,9 +271,9 @@ func (s *streamImpl) constructMiniblockFromProposal(
 // 1. Create proposal
 // 2. Update registry with candidate block metadata
 // 3. Commit proposal as current block
-func (s *streamImpl) MakeMiniblock(ctx context.Context, forceSnapshot bool) (bool, error) {
+func (s *streamImpl) MakeMiniblock(ctx context.Context, forceSnapshot bool) (*common.Hash, error) {
 	if !s.makeMiniblockMutex.TryLock() {
-		return false, nil
+		return nil, nil
 	}
 	defer s.makeMiniblockMutex.Unlock()
 
@@ -282,34 +283,35 @@ func (s *streamImpl) MakeMiniblock(ctx context.Context, forceSnapshot bool) (boo
 	miniblock, err := s.ProposeNextMiniblock(ctx, forceSnapshot)
 	if err != nil {
 		log.Error("Stream.MakeMiniblock ProposeNextMiniblock failed", "error", err, "streamId", s.streamId)
-		return false, err
+		return nil, err
 	}
 
 	// empty minipool, do not propose.
 	if miniblock == nil {
-		return false, nil
+		return nil, nil
 	}
 
 	// 2. Update registry with candidate block metadata
-	if err = s.params.Registry.SetStreamLastMiniblock(
+	err = s.params.Registry.SetStreamLastMiniblock(
 		ctx,
 		s.streamId,
 		*miniblock.headerEvent.PrevMiniblockHash,
 		miniblock.headerEvent.Hash,
 		uint64(miniblock.Num),
 		false,
-	); err != nil {
+	)
+	if err != nil {
 		log.Error("Stream.MakeMiniblock: SetStreamLastMiniblock failed", "error", err, "streamId", s.streamId)
-		return false, err
+		return nil, err
 	}
 
 	// 3. Commit proposal as current block
 	err = s.ApplyMiniblock(ctx, miniblock)
 	if err != nil {
 		log.Error("Stream.MakeMiniblock: ApplyMiniblock failed", "error", err, "streamId", s.streamId)
-		return false, err
+		return nil, err
 	}
-	return true, nil
+	return &miniblock.headerEvent.Hash, nil
 }
 
 func (s *streamImpl) initFromBlockchain(ctx context.Context) error {
