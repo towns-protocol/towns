@@ -60,14 +60,7 @@
     {
       "label": "Stage 3",
       "dependsOn": [
-        "Start Watches",
-        "App",
-        "SampleApp",
-        "UnfurlWorker",
-        "TokenWorker",
-        "GatewayWorker",
-        "StackupWorker",
-        "NotificationService",
+        "Apps and Workers",
         "Casablanca Single",
         "XChainLaunchMulti",
       ],
@@ -77,6 +70,40 @@
       },
       "problemMatcher": []
     },
+    {
+      "label": "Start Local Apps and Workers",
+      "dependsOn": [
+        "CheckVersions",
+        "FoundryUp",
+        "YarnInstall",
+        "Apps and Workers",
+      ],
+      // Mark as the default build task so cmd/ctrl+shift+b will create them
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "dependsOrder": "sequence"
+    },
+    {
+      "label": "Apps and Workers",
+      "dependsOn": [
+        "Start Watches",
+        "App",
+        "SampleApp",
+        "UnfurlWorker",
+        "TokenWorker",
+        "GatewayWorker",
+        "StackupWorker",
+        "NotificationService",
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "problemMatcher": []
+    },
+    
     {
       "label": "Start Watches",
       "dependsOn": [
