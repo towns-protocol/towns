@@ -245,7 +245,7 @@ jobs:
               working-directory: river/core/node
 
             - name: Start xchain node with entitlements
-              run: (RUN_ENV=multi ./core/xchain/launch_multi.sh &) && sleep 10
+              run: (RUN_ENV=multi ./river/core/xchain/launch_multi.sh &) && sleep 10
 
             - name: Build & Test (with entitlements)
               run: RIVER_ENV=local_multi yarn csb:turbo-no-sdk
@@ -258,6 +258,15 @@ jobs:
                   path: |
                       ./river/core/node/run_files/
                       !./river/core/node/run_files/**/bin/**
+
+            - name: Archive River XChain Logs and Settings
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: 'xchain-${{ github.job }}'
+                  path: |
+                      ./river/core/xchain/run_files/
+                      !./river/core/xchain/run_files/**/bin/**
 
             # If CI failed, we send a slack notification
             - name: Slack notification

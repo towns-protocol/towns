@@ -17,7 +17,7 @@ import {
     getContractAddress,
     isHexString,
     publicMint,
-    createExternalTokenStruct,
+    createExternalNFTStruct,
     getDynamicPricingModule,
 } from '@river-build/web3'
 import { TestConstants } from './helpers/TestConstants'
@@ -44,7 +44,6 @@ test('create space, and have user join', async () => {
     await waitFor(() => {
         const channelsMeta =
             alice.casablancaClient?.streams.get(spaceId)?.view.spaceContent.spaceChannelsMetadata
-        console.log('channelsMeta', channelsMeta)
         expect(channelsMeta).toBeDefined()
         expect(channelsMeta?.size).toBeGreaterThan(0)
         defaultChannel = Array.from(channelsMeta!.entries()).find((c) => c[1].isDefault)
@@ -144,9 +143,8 @@ test('create a space with a fixed cost that is higher than joining user balance'
     }
 })
 
-// TODO enable this once the minting function is gated by IRuleGated
-test.skip(
-    'join_space_gated_2_NFT',
+test(
+    'joinSpace gated with 2 NFTs',
     async () => {
         // create clients
         const { alice, bob, carol } = await registerAndStartClients(['alice', 'bob', 'carol'])
@@ -157,22 +155,19 @@ test.skip(
             getContractAddress('tokenB'),
         ])
 
-        const ruleData = createExternalTokenStruct([tokenA, tokenB])
+        const ruleData = createExternalNFTStruct([tokenA, tokenB])
 
         assert(isHexString(alice.walletAddress), 'alice.walletAddress is not a hex string')
         assert(isHexString(bob.walletAddress), 'bob.walletAddress is not a hex string')
         assert(isHexString(carol.walletAddress), 'carol.walletAddress is not a hex string')
-        await Promise.all([
-            await publicMint('tokenA', alice.walletAddress),
-            await publicMint('tokenB', alice.walletAddress),
 
+        await Promise.all([
+            // Mint both required tokens for Bob
             await publicMint('tokenA', bob.walletAddress),
             await publicMint('tokenB', bob.walletAddress),
             // Carol only has one of the needed tokens
             await publicMint('tokenA', carol.walletAddress),
         ])
-
-        console.log('ruleData', ruleData)
         const dynamicPricingModule = await getDynamicPricingModule(alice.spaceDapp)
 
         const membershipInfo: IArchitectBase.MembershipStruct = {
@@ -201,23 +196,19 @@ test.skip(
         const spaceId = await waitForWithRetries(() =>
             alice.createSpace(createSpaceInfo, membershipInfo),
         )
-
         assert(spaceId !== undefined, 'createSpace failed')
-
-        await alice.joinTown(spaceId, alice.wallet)
+        // Alice is the space creator and should already be a town member
         expect(alice.getRoomData(spaceId)?.id).toEqual(spaceId)
+        // Bob has both NFTs and should be able to join
         await bob.joinTown(spaceId, bob.wallet)
         expect(bob.getRoomData(spaceId)?.id).toEqual(spaceId)
-
-        await expect(carol.joinTown(spaceId, carol.wallet)).rejects.toThrow(
-            new RegExp('execution reverted'),
-        )
+        // Carol only has one of the required NFTs and should not be able to join
+        await expect(carol.joinTown(spaceId, carol.wallet)).rejects.toThrow(/execution reverted/)
     },
     120 * 1000,
 )
 
-// This test fails for now because wallet linking doesn't work properly
-test.skip('join_space_gated_2_NFT_2_wallet', async () => {
+test('joinSpace gated with 2 NFTs, wallet linking', async () => {
     // create clients
     const { alice, bob1, bob2 } = await registerAndStartClients(['alice', 'bob1', 'bob2'])
 
@@ -226,15 +217,13 @@ test.skip('join_space_gated_2_NFT_2_wallet', async () => {
         getContractAddress('tokenB'),
     ])
     // TODO: remove this struct helper - it's from river/web3 and only used in tests
-    const ruleData = createExternalTokenStruct([tokenA, tokenB])
+    const ruleData = createExternalNFTStruct([tokenA, tokenB])
 
     assert(isHexString(alice.walletAddress), 'alice.walletAddress is not a hex string')
-    assert(isHexString(bob1.walletAddress), 'bob.walletAddress is not a hex string')
-    assert(isHexString(bob2.walletAddress), 'carol.walletAddress is not a hex string')
+    assert(isHexString(bob1.walletAddress), 'bob1.walletAddress is not a hex string')
+    assert(isHexString(bob2.walletAddress), 'bob2.walletAddress is not a hex string')
     await Promise.all([
-        await publicMint('tokenA', alice.walletAddress),
-        await publicMint('tokenB', alice.walletAddress),
-
+        // Mint both required tokens for Bob, one in each wallet
         await publicMint('tokenA', bob1.walletAddress),
         await publicMint('tokenB', bob2.walletAddress),
     ])
@@ -277,11 +266,11 @@ test.skip('join_space_gated_2_NFT_2_wallet', async () => {
     const spaceId = await waitForWithRetries(() =>
         alice.createSpace(createSpaceInfo, membershipInfo),
     )
-
     assert(spaceId !== undefined, 'createSpace failed')
 
-    await alice.joinTown(spaceId, alice.wallet)
+    // Alice is the space creator and should already be a town member
     expect(alice.getRoomData(spaceId)?.id).toEqual(spaceId)
+    // Bob has both NFTs spread across his linked wallets, and should be able to join
     await bob1.joinTown(spaceId, bob1.wallet)
     expect(bob1.getRoomData(spaceId)?.id).toEqual(spaceId)
 })

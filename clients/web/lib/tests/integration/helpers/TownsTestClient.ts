@@ -30,6 +30,8 @@ import {
 import { Permission, IArchitectBase, IRuleEntitlement } from '@river-build/web3'
 import { bin_fromHexString } from '@river-build/dlog'
 
+import { foundry } from 'viem/chains'
+
 export interface TownsTestClientProps {
     eventHandlers?: TownsClientEventHandlers
     accountAbstractionConfig?: TownsOpts['accountAbstractionConfig']
@@ -76,6 +78,9 @@ export class TownsTestClient extends TownsClient {
                 riverProvider: provider.riverChainProvider,
                 eventHandlers: props?.eventHandlers,
                 accountAbstractionConfig: props?.accountAbstractionConfig,
+                supportedXChainRpcMapping: {
+                    [foundry.id]: String(foundry.rpcUrls.public.http),
+                },
                 verbose: true,
             },
             name,
@@ -130,6 +135,12 @@ export class TownsTestClient extends TownsClient {
         }
         // Something went wrong. Don't return a room identifier.
         throw new Error('createSpaceTransaction failed')
+    }
+
+    public override async getSupportedXChainIds(): Promise<number[]> {
+        const chainIds = await super.getSupportedXChainIds()
+        chainIds.push(foundry.id)
+        return chainIds
     }
 
     public override async joinTown(
