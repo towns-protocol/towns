@@ -170,7 +170,6 @@ module "river_node" {
   node_number = count.index + 1
 
   river_node_ssl_cert_secret_arn = local.transient_global_remote_state.river_node_ssl_cert_secret_arn
-  dns_name                       = "river${count.index + 1}-${var.git_pr_number}.nodes.transient"
 
   river_node_db = local.create_db_cluster ? module.river_db_cluster[0] : null
 

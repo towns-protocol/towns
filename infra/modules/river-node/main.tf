@@ -7,7 +7,9 @@ data "aws_vpc" "vpc" {
 }
 
 locals {
-  node_name = "river${var.node_number}-${terraform.workspace}"
+  node_name     = "river${var.node_number}-${terraform.workspace}"
+  node_dns_name = module.global_constants.nodes_metadata[var.node_number - 1].dns_name
+  node_url      = module.global_constants.nodes_metadata[var.node_number - 1].url
 
   rpc_https_port = var.is_transient ? (var.node_number + 10000) : 443
 
@@ -22,6 +24,7 @@ locals {
       Service     = local.service_name
       Node_Number = var.node_number
       Node_Name   = local.node_name
+      Node_Url    = local.node_url
     }
   )
 
@@ -31,10 +34,11 @@ locals {
       Service     = "dd-agent"
       Node_Number = var.node_number
       Node_Name   = local.node_name
+      Node_Url    = local.node_url
     }
   )
 
-  dd_required_tags = "env:${terraform.workspace}, node_name:${local.node_name}, node_number:${var.node_number}"
+  dd_required_tags = "env:${terraform.workspace}, node_name:${local.node_name}, node_number:${var.node_number}, node_url:${local.node_url}"
 
   total_vcpu   = var.is_transient ? 2048 : 4096
   total_memory = var.is_transient ? 4096 : 30720
@@ -610,7 +614,7 @@ resource "aws_ecs_service" "river-ecs-service" {
 resource "cloudflare_record" "nlb_cname_dns_record" {
   count   = var.is_transient == true ? 0 : 1
   zone_id = data.cloudflare_zone.zone.id
-  name    = var.dns_name
+  name    = local.node_dns_name
   value   = var.lb.lb_dns_name
   type    = "CNAME"
   ttl     = 60

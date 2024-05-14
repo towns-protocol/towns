@@ -97,16 +97,26 @@ locals {
 
   is_transient = length(regexall("transient-\\d+", terraform.workspace)) > 0
 
+  regular_river_node_dns_names = [
+    for i in range(0, local.num_nodes) : "river${i + 1}.nodes.${terraform.workspace}"
+  ]
+
+  transient_river_node_dns_names = [
+    for i in range(0, local.num_nodes) : "river-nlb-${local.transient_no}.nodes.transient"
+  ]
+
+  river_node_dns_names = local.is_transient ? local.transient_river_node_dns_names : local.regular_river_node_dns_names
+
   regular_river_node_urls = [
-    for i in range(0, local.num_nodes) : "https://river${i + 1}.nodes.${terraform.workspace}.towns.com"
+    for i in range(0, local.num_nodes) : "https://${local.regular_river_node_dns_names[i]}.towns.com"
+  ]
+
+  transient_river_node_urls = [
+    for i in range(0, local.num_nodes) : "https://${local.transient_river_node_dns_names[i]}.towns.com:${10000 + i}"
   ]
 
   # take local.transient_env_name, and parse out the number after splitting on '-'
   transient_no = local.is_transient ? (tonumber(split("-", terraform.workspace)[1])) : 0
-
-  transient_river_node_urls = [
-    for i in range(0, local.num_nodes) : "https://river-nlb-${local.transient_no}.nodes.transient.towns.com:${10000 + i}"
-  ]
 
   river_node_urls = local.is_transient ? local.transient_river_node_urls : local.regular_river_node_urls
 }
@@ -114,47 +124,58 @@ locals {
 output "nodes_metadata" {
   value = [
     {
-      address = "0xBF2Fe1D28887A0000A1541291c895a26bD7B1DdD"
-      url     = local.river_node_urls[0]
+      address  = "0xBF2Fe1D28887A0000A1541291c895a26bD7B1DdD"
+      dns_name = local.river_node_dns_names[0]
+      url      = local.river_node_urls[0]
     }
     , {
-      address = "0x43EaCe8E799497f8206E579f7CCd1EC41770d099"
-      url     = local.river_node_urls[1]
+      address  = "0x43EaCe8E799497f8206E579f7CCd1EC41770d099"
+      dns_name = local.river_node_dns_names[1]
+      url      = local.river_node_urls[1]
     }
     , {
-      address = "0x4E9baef70f7505fda609967870b8b489AF294796"
-      url     = local.river_node_urls[2]
+      address  = "0x4E9baef70f7505fda609967870b8b489AF294796"
+      dns_name = local.river_node_dns_names[2]
+      url      = local.river_node_urls[2]
     }
     , {
-      address = "0xae2Ef76C62C199BC49bB38DB99B29726bD8A8e53"
-      url     = local.river_node_urls[3]
+      address  = "0xae2Ef76C62C199BC49bB38DB99B29726bD8A8e53"
+      dns_name = local.river_node_dns_names[3]
+      url      = local.river_node_urls[3]
     }
     , {
-      address = "0xC4f042CD5aeF82DB8C089AD0CC4DD7d26B2684cB"
-      url     = local.river_node_urls[4]
+      address  = "0xC4f042CD5aeF82DB8C089AD0CC4DD7d26B2684cB"
+      dns_name = local.river_node_dns_names[4]
+      url      = local.river_node_urls[4]
     }
     , {
-      address = "0x9BB3b35BBF3FA8030cCdb31030CF78039A0d0D9b"
-      url     = local.river_node_urls[5]
+      address  = "0x9BB3b35BBF3FA8030cCdb31030CF78039A0d0D9b"
+      dns_name = local.river_node_dns_names[5]
+      url      = local.river_node_urls[5]
     },
     {
-      address = "0x582c64BA11bf70E0BaC39988Cd3Bf0b8f40BDEc4"
-      url     = local.river_node_urls[6]
+      address  = "0x582c64BA11bf70E0BaC39988Cd3Bf0b8f40BDEc4"
+      dns_name = local.river_node_dns_names[6]
+      url      = local.river_node_urls[6]
     },
     {
-      address = "0x9df6e5F15ec682ca58Df6d2a831436973f98fe60"
-      url     = local.river_node_urls[7]
+      address  = "0x9df6e5F15ec682ca58Df6d2a831436973f98fe60"
+      dns_name = local.river_node_dns_names[7]
+      url      = local.river_node_urls[7]
     }
     , {
-      address = "0xB79FaCbFC07Bff49cD2e2971305Da0DF7aCa9bF8"
-      url     = local.river_node_urls[8]
+      address  = "0xB79FaCbFC07Bff49cD2e2971305Da0DF7aCa9bF8"
+      dns_name = local.river_node_dns_names[8]
+      url      = local.river_node_urls[8]
     }
     , {
-      address = "0xA278267f396a317c5Bb583f47F7f2792Bc00D3b3"
-      url     = local.river_node_urls[9]
+      address  = "0xA278267f396a317c5Bb583f47F7f2792Bc00D3b3"
+      dns_name = local.river_node_dns_names[9]
+      url      = local.river_node_urls[9]
       }, {
-      address = "0x75b5eb02D2fE5E2F0008a05849d81526963886C2",
-      url     = local.river_node_urls[10]
+      address  = "0x75b5eb02D2fE5E2F0008a05849d81526963886C2",
+      dns_name = local.river_node_dns_names[10],
+      url      = local.river_node_urls[10]
     }
   ]
 }

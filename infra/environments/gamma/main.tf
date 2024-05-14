@@ -129,7 +129,6 @@ module "river_node" {
   node_number = count.index + 1
 
   river_node_ssl_cert_secret_arn = module.river_node_ssl_cert.river_node_ssl_cert_secret_arn
-  dns_name                       = "river${count.index + 1}.nodes.${terraform.workspace}"
 
   river_node_db = module.river_db_cluster
 
