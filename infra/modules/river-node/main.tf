@@ -660,10 +660,6 @@ module "datadog_sythetics_test" {
   ]
   options_list = {
     tick_every = 60
-    retry = {
-      count    = 2
-      interval = 300 #Sec
-    }
     monitor_options = {
       renotify_interval = 30 #Min
     }
