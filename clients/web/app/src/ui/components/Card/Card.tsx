@@ -17,7 +17,7 @@ export const Card = forwardRef<HTMLDivElement, Props>(
                 padding="xs"
                 debug={debug}
                 border={debug ? 'accent' : undefined}
-                absoluteFill={absoluteFill}
+                position={absoluteFill ? 'absoluteFillSafeSafari' : undefined}
             >
                 <SizeBox
                     grow

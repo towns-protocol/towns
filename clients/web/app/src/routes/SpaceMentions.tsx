@@ -69,8 +69,8 @@ export const SpaceMentions = () => {
                         </Stack>
                     </Stack>
                 ) : (
-                    <Stack centerContent grow absoluteFill scroll>
-                        <Stack centerContent gap="lg" minHeight="100svh" padding="lg">
+                    <Stack centerContent grow>
+                        <Stack centerContent gap="lg" padding="x8">
                             {renderContent()}
                         </Stack>
                     </Stack>

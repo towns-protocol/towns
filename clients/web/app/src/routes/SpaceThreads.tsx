@@ -87,8 +87,8 @@ export const SpaceThreads = () => {
                     </Stack>
                 </Stack>
             ) : (
-                <Stack centerContent grow scroll absoluteFill>
-                    <Stack centerContent gap="lg" minHeight="100svh" padding="lg">
+                <Stack centerContent grow>
+                    <Stack centerContent gap="lg" padding="x8">
                         <NoContent />
                     </Stack>
                 </Stack>
@@ -113,7 +113,7 @@ const NoContent = () => {
                 <Box padding="md" color="gray2" background="level2" rounded="sm">
                     <Icon type="threads" size="square_sm" />
                 </Box>
-                <Heading level={3}>No threads yet</Heading>
+                <Heading level={3}>No sthreads yet</Heading>
                 <Paragraph textAlign="center" color="gray2">
                     Threads help you keep track of conversations you engage with.
                 </Paragraph>
