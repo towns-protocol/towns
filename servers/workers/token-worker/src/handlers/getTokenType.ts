@@ -6,12 +6,16 @@ import { erc165Abi, interfaceIds } from '../abis'
  * Returns the token type for a given address
  * if 721 and 1155 fail, ERC20 is assumed
  */
-export async function getTokenType(address: string | undefined, alchemyApiKey: string) {
+export async function getTokenType(
+    address: string | undefined,
+    supportedChainIds: number[],
+    alchemyApiKey: string,
+) {
     if (!address || !isAddress(address)) {
         return
     }
 
-    const clients = generatePublicClients(alchemyApiKey)
+    const clients = generatePublicClients(supportedChainIds, alchemyApiKey)
     const readContracts = clients.map((client) => client.readContract)
 
     const erc721Config = {

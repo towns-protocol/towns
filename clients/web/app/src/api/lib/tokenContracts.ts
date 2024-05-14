@@ -10,7 +10,8 @@ import {
     NftImageMetadata,
 } from '@token-worker/types'
 import { useMemo } from 'react'
-import { Address, useConnectivity } from 'use-towns-client'
+import { Address, useConnectivity, useSupportedXChainIds } from 'use-towns-client'
+import { ethers } from 'ethers'
 import { TokenData, TokenDataWithChainId, TokenType } from '@components/Tokens/types'
 import { env } from 'utils'
 import {
@@ -86,20 +87,21 @@ const zNftMetadata: z.ZodType<GetNftMetadataResponse & GetNftOwnersResponse> = z
 // Get the tokens in a user's wallet
 export function useCollectionsForOwner({ wallet, enabled, chainId }: UseTokenContractsForAdress) {
     const nftNetwork = useNetworkForNftApi()
+    const { data: supportedChainIds } = useSupportedXChainIds()
 
     return useQuery({
         queryKey: [queryKey],
 
         queryFn: () =>
             chainId === 31337
-                ? getLocalHostTokens(wallet, nftNetwork)
-                : getTokenContractsForAddress(wallet, nftNetwork),
+                ? getLocalHostTokens(wallet, nftNetwork, supportedChainIds ?? [])
+                : getTokenContractsForAddress(wallet, nftNetwork, supportedChainIds ?? []),
 
         staleTime: 1000 * 15,
         refetchOnMount: false,
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
-        enabled,
+        enabled: enabled && Boolean(chainId) && Boolean(supportedChainIds),
     })
 }
 
@@ -122,16 +124,24 @@ export function useCollectionsForLoggedInUser() {
 
 export function useCollectionsForAddressesAcrossNetworks({
     wallets,
-    enabled,
+    enabled = true,
 }: {
     wallets: string[]
     enabled: boolean
 }) {
+    const { data: supportedXChainIds } = useSupportedXChainIds()
+
     const queries = wallets.map((wallet) => {
         return {
             queryKey: ['tokenContractsForAddress', wallet],
-            queryFn: () => getTokenContractsForAddressAcrossNetworks(wallet),
-            staleTime: 1000 * 15,
+            queryFn: () => {
+                if (!supportedXChainIds) {
+                    return []
+                }
+                return getTokenContractsForAddressAcrossNetworks(wallet, supportedXChainIds)
+            },
+            enabled: enabled && ethers.utils.isAddress(wallet) && Boolean(supportedXChainIds),
+            staleTime: 1000,
             refetchOnMount: false,
             refetchOnWindowFocus: false,
             refetchOnReconnect: false,
@@ -161,18 +171,28 @@ export function useNftMetadata(
           }
         | undefined,
 ) {
+    const { data: supportedChainIds } = useSupportedXChainIds()
     return useQuery({
         queryKey: ['getNftMetadata', info?.contractAddress],
-        queryFn: () =>
-            getNftMetadata(info?.chainId ?? 0, info?.tokenId ?? '', info?.contractAddress ?? ''),
-        enabled: !!info,
+        queryFn: () => {
+            if (!info || !supportedChainIds) {
+                return
+            }
+            return getNftMetadata(
+                info?.chainId ?? 0,
+                info?.tokenId ?? '',
+                info?.contractAddress ?? '',
+                supportedChainIds,
+            )
+        },
+        enabled: !!info && !!supportedChainIds,
     })
 }
 
-async function getLocalHostTokens(wallet: string, nftNetwork: number) {
+async function getLocalHostTokens(wallet: string, nftNetwork: number, supportedChainIds: number[]) {
     // to test with a big list of tokens, add ?mainnet to the url, or ?base_sepolia to use the base_sepolia testnet
     if (fetchMainnetTokens || fetchBaseSepolia) {
-        return getTokenContractsForAddress(wallet, nftNetwork)
+        return getTokenContractsForAddress(wallet, nftNetwork, supportedChainIds)
     }
 
     // on local, just return empty array
@@ -183,10 +203,16 @@ async function getLocalHostTokens(wallet: string, nftNetwork: number) {
     }
 }
 
-async function getTokenContractsForAddress(wallet: string, nftNetwork: number) {
+async function getTokenContractsForAddress(
+    wallet: string,
+    nftNetwork: number,
+    supportedChainIds: number[],
+) {
     const TOKENS_SERVER_URL = env.VITE_TOKEN_SERVER_URL
     // See token-worker README for more information
-    const url = `${TOKENS_SERVER_URL}/api/getCollectionsForOwner/alchemy/${nftNetwork}/${wallet}`
+    const url = `${TOKENS_SERVER_URL}/api/getCollectionsForOwner/alchemy/${nftNetwork}/${wallet}?supportedChainIds=${joinSupportedChainIds(
+        supportedChainIds,
+    )}`
     const response = await axiosClient.get(url)
     const parseResult = zSchema.safeParse(response.data)
 
@@ -201,9 +227,16 @@ async function getTokenContractsForAddress(wallet: string, nftNetwork: number) {
     return { tokens, nextPageKey }
 }
 
-async function getNftMetadata(chainId: number, tokenId: string, contractAddress: string) {
+async function getNftMetadata(
+    chainId: number,
+    tokenId: string,
+    contractAddress: string,
+    supportedChainIds: number[],
+) {
     const TOKENS_SERVER_URL = env.VITE_TOKEN_SERVER_URL
-    const url = `${TOKENS_SERVER_URL}/api/getNftMetadata/?chainId=${chainId}&tokenId=${tokenId}&contractAddress=${contractAddress}`
+    const url = `${TOKENS_SERVER_URL}/api/getNftMetadata/?chainId=${chainId}&tokenId=${tokenId}&contractAddress=${contractAddress}&supportedChainIds=${joinSupportedChainIds(
+        supportedChainIds,
+    )}`
     const response = await axiosClient.get(url)
     const parseResult = zNftMetadata.safeParse(response.data)
 
@@ -225,10 +258,15 @@ export async function mapToTokenProps(token: ContractMetadata): Promise<TokenDat
     }
 }
 
-async function getTokenContractsForAddressAcrossNetworks(wallet: string) {
+async function getTokenContractsForAddressAcrossNetworks(
+    wallet: string,
+    supportedChainIds: number[],
+) {
     const TOKENS_SERVER_URL = env.VITE_TOKEN_SERVER_URL
     // See token-worker README for more information
-    const url = `${TOKENS_SERVER_URL}/api/getCollectionsForOwnerAcrossNetworks/alchemy/${wallet}`
+    const url = `${TOKENS_SERVER_URL}/api/getCollectionsForOwnerAcrossNetworks/alchemy/${wallet}?supportedChainIds=${joinSupportedChainIds(
+        supportedChainIds,
+    )}`
     const response = await axiosClient.get(url)
     const parseResult = z.array(zCrossNetworksData).safeParse(response.data)
 
@@ -263,4 +301,8 @@ export async function mapToTokenPropsWithChainId(
             displayNft: token.displayNft ?? undefined,
         },
     }
+}
+
+function joinSupportedChainIds(supportedChainIds: number[]) {
+    return supportedChainIds.join(',')
 }

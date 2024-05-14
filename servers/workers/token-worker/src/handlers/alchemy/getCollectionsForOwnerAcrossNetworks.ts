@@ -7,7 +7,8 @@ import {
 import {
     fetchAlchemyNfts,
     generateAlchemyNftUrl,
-    supportedNftNetworks,
+    mapSupportedChainIds,
+    supportedNftNetworkMap,
     withOpenSeaImage,
 } from '../../utils'
 
@@ -19,13 +20,18 @@ export const getCollectionsForOwnerAcrossNetworks = async (
     const { params, query } = request
 
     const { wallet } = params || {}
-
+    const { supportedChainIds: supportedIdString } = query || {}
+    const supportedChainIds = mapSupportedChainIds(supportedIdString)
     try {
         const allResults: GetCollectionsForOwnerAcrossNetworksResponse[] = await Promise.all(
-            supportedNftNetworks.map(async (network) => {
+            supportedNftNetworkMap(supportedChainIds).map(async (network) => {
                 try {
                     const pageKey = query?.pageKey || ''
-                    const rpcUrl = generateAlchemyNftUrl(network.vChain.id, alchemyApiKey)
+                    const rpcUrl = generateAlchemyNftUrl(
+                        supportedChainIds,
+                        network.vChain.id,
+                        alchemyApiKey,
+                    )
                     const json = await fetchAlchemyNfts(rpcUrl, wallet, pageKey)
                     json.contracts = withOpenSeaImage(json.contracts)
 

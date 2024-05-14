@@ -1,4 +1,5 @@
 import { worker } from '../src/index'
+import { TokenType } from '../src/types'
 import { getCollectionMetadataAlchemyMock, getContractMetadataMock } from './mocks'
 
 const ALCHEMY_URL = 'https://eth-mainnet.g.alchemy.com'
@@ -22,7 +23,7 @@ describe('getCollectionMetadataAcrossNetworks()', () => {
 
         const result = await worker.fetch(
             new Request(
-                'https://fake-cloudflare-worker-url.com/api/getCollectionMetadataAcrossNetworks/alchemy?contractAddress=0x1234',
+                'https://fake-cloudflare-worker-url.com/api/getCollectionMetadataAcrossNetworks/alchemy?contractAddress=0x1234&supportedChainIds=1,84532',
             ),
             {
                 ALCHEMY_API_KEY: 'fake_key',
@@ -35,26 +36,17 @@ describe('getCollectionMetadataAcrossNetworks()', () => {
 
         expect(result.status).toBe(200)
 
+        // expect only the filtered chains passed in the query for supportedChainIds
         const expected = [
             {
                 chainId: 1,
                 data: getContractMetadataMock,
             },
             {
-                chainId: 42161,
-                data: undefined,
-            },
-            {
-                chainId: 10,
-                data: undefined,
-            },
-            {
-                chainId: 8453,
-                data: undefined,
-            },
-            {
                 chainId: 84532,
-                data: undefined,
+                data: {
+                    tokenType: TokenType.NOT_A_CONTRACT,
+                },
             },
         ]
         expect(await result.json()).toEqual(expected)

@@ -11,12 +11,15 @@ describe('getCollectionsForOwner()', () => {
     test('Returns unauthorized if not authorized request', async () => {
         const bindings = getMiniflareBindings()
         const response = await tokenDefaultExport.fetch(
-            new Request('https://fake.com/api/getCollectionsForOwner/alchemy/eth-mainnet/0x12345', {
-                method: 'GET',
-                headers: {
-                    Authorization: `Bearer wrongkey`,
+            new Request(
+                'https://fake.com/api/getCollectionsForOwner/alchemy/eth-mainnet/0x12345?supportedChainIds=1,84532',
+                {
+                    method: 'GET',
+                    headers: {
+                        Authorization: `Bearer wrongkey`,
+                    },
                 },
-            }),
+            ),
             bindings,
         )
         expect(response.status).toBe(401)
@@ -44,7 +47,9 @@ describe('getCollectionsForOwner()', () => {
             .reply(200, alchemyGetCollectionsMockPage2)
 
         const result = await worker.fetch(
-            new Request('https://fake.com/api/getCollectionsForOwner/alchemy/1/0x12345'),
+            new Request(
+                'https://fake.com/api/getCollectionsForOwner/alchemy/1/0x12345?supportedChainIds=1,84532',
+            ),
             {
                 ALCHEMY_API_KEY: 'fake_key',
                 AUTH_SECRET: 'fake_secret',

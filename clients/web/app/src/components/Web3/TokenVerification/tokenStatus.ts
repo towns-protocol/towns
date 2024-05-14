@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { isAddress } from 'ethers/lib/utils'
-import { Address, useConnectivity, useLinkedWallets } from 'use-towns-client'
+import { Address, useConnectivity, useLinkedWallets, useSupportedXChainIds } from 'use-towns-client'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 import { create } from 'zustand'
@@ -141,6 +141,8 @@ export function useWatchLinkedWalletsForToken({
 }) {
     const { data: linkedWallets } = useLinkedWallets()
     const { loggedInWalletAddress } = useConnectivity()
+    const { data: supportedXChainIds } = useSupportedXChainIds()
+
     // state for deterniming if a wallet is freshly linked in this session
     const [seenWallets, setSeenWallets] = useState<Address[] | undefined>(() => {
         if (loggedInWalletAddress && linkedWallets) {
@@ -172,10 +174,14 @@ export function useWatchLinkedWalletsForToken({
         queryFn: async () => {
             const store = currentWalletLinkingStore.getState()
             const newWallets = allWallets.filter((item) => !seenWallets?.includes(item))
+            if (!supportedXChainIds) {
+                throw new Error('missing supportedChainIds')
+            }
 
             const data = await checkWalletsForToken({
                 walletAddresses: allWallets,
                 token,
+                supportedChainIds: supportedXChainIds,
             })
 
             if (newWallets.length) {
@@ -203,20 +209,24 @@ export function useWatchLinkedWalletsForToken({
 
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
-        enabled: !!seenWallets || !!allWallets.length,
+        enabled: !!supportedXChainIds && (!!seenWallets || !!allWallets.length),
     })
 }
 
 async function checkWalletsForToken({
     walletAddresses,
     token,
+    supportedChainIds,
 }: {
     walletAddresses: Address[]
     token: ArrayElement<TokenGatingMembership['tokens']>
+    supportedChainIds: number[]
 }): Promise<TokenBalance> {
     const TOKENS_SERVER_URL = env.VITE_TOKEN_SERVER_URL
     // See token-worker README for more information
-    const url = `${TOKENS_SERVER_URL}/api/tokenBalance`
+    const url = `${TOKENS_SERVER_URL}/api/tokenBalance?supportedChainIds=${supportedChainIds.join(
+        ',',
+    )}`
 
     const response = await axiosClient.post(url, {
         wallets: walletAddresses,

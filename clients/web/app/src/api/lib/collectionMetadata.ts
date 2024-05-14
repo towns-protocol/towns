@@ -2,7 +2,7 @@ import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ContractMetadata, GetCollectionMetadataAcrossNetworksResponse } from '@token-worker/types'
 import { ethers } from 'ethers'
 import { z } from 'zod'
-import { Address } from 'use-towns-client'
+import { Address, useSupportedXChainIds } from 'use-towns-client'
 import { env } from 'utils'
 import { axiosClient } from 'api/apiClient'
 import { TokenDataWithChainId, TokenType } from '@components/Tokens/types'
@@ -35,10 +35,13 @@ const metadataAcrossNetworksSchema: z.ZodType<GetCollectionMetadataAcrossNetwork
 
 async function getCollectionMetadataAcrossNetworks(
     address: string,
+    supportedChainIds: number[],
 ): Promise<GetCollectionMetadataAcrossNetworksResponse[]> {
     const TOKENS_SERVER_URL = env.VITE_TOKEN_SERVER_URL
     // See token-worker README for more information
-    const url = `${TOKENS_SERVER_URL}/api/getCollectionMetadataAcrossNetworks/alchemy?contractAddress=${address}`
+    const url = `${TOKENS_SERVER_URL}/api/getCollectionMetadataAcrossNetworks/alchemy?contractAddress=${address}&supportedChainIds=${joinSupportedChainIds(
+        supportedChainIds,
+    )}`
     const response = await axiosClient.get(url)
     const parseResult = metadataAcrossNetworksSchema.safeParse(response.data)
 
@@ -53,10 +56,13 @@ async function getCollectionMetadataAcrossNetworks(
 async function getCollectionMetadataForChainId(
     address: string,
     nftNetwork: number,
+    supportedChainIds: number[],
 ): Promise<ContractMetadata> {
     const TOKENS_SERVER_URL = env.VITE_TOKEN_SERVER_URL
     // See token-worker README for more information
-    const url = `${TOKENS_SERVER_URL}/api/getCollectionMetadata/alchemy/${nftNetwork}?contractAddress=${address}`
+    const url = `${TOKENS_SERVER_URL}/api/getCollectionMetadata/alchemy/${nftNetwork}?contractAddress=${address}&supportedChainIds=${joinSupportedChainIds(
+        supportedChainIds,
+    )}`
     const response = await axiosClient.get(url)
     const parseResult = metadataForSingleNetworkSchema.safeParse(response.data)
 
@@ -73,25 +79,17 @@ const failedMetadataCalls = new Map<string, boolean>()
 export function useTokenMetadataAcrossNetworks(tokenAddress: string) {
     const _address = tokenAddress.toLowerCase()
     // const queryClient = useQueryClient()
+    const { data: supportedXChainIds } = useSupportedXChainIds()
 
     return useQuery({
         queryKey: [queryKeyAcrossNetworks, _address],
         queryFn: async (): Promise<TokenDataWithChainId[]> => {
-            // TODO: probably not gonna need this anymore, but if we do then we also need to update
-            // useCollectionsForOwner to return the same data structure so the query always returns the same shape
-            //
-            // // check if we've already loaded this token from fetching the user's owned tokens
-            // const collectionsForOwnerData: ReturnType<typeof useCollectionsForOwner>['data'] =
-            //     queryClient.getQueryData([ownerCollectionsQueryKey])
+            if (!supportedXChainIds) {
+                return []
+            }
 
-            // const ownerCollectionData = collectionsForOwnerData?.tokens.find(
-            //     (t) => t.contractAddress.toLowerCase() === _address,
-            // )
-            // if (ownerCollectionData) {
-            //     return ownerCollectionData
-            // }
             return mapTokensAcrossNetoworksToTokenProps(
-                await getCollectionMetadataAcrossNetworks(_address),
+                await getCollectionMetadataAcrossNetworks(_address, supportedXChainIds),
             )
         },
         retry: (failureCount, _error) => {
@@ -108,7 +106,10 @@ export function useTokenMetadataAcrossNetworks(tokenAddress: string) {
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
         staleTime: 1000 * 60 * 5,
-        enabled: ethers.utils.isAddress(_address) && !failedMetadataCalls.has(_address),
+        enabled:
+            ethers.utils.isAddress(_address) &&
+            Boolean(supportedXChainIds) &&
+            !failedMetadataCalls.has(_address),
     })
 }
 
@@ -116,6 +117,7 @@ function singleTokenQuerySetup(args: {
     tokenAddress: string
     chainId: number
     queryClient: ReturnType<typeof useQueryClient>
+    supportedChainIds: number[] | undefined
 }) {
     const { tokenAddress, chainId, queryClient } = args
     const _address = tokenAddress.toLowerCase()
@@ -123,6 +125,10 @@ function singleTokenQuerySetup(args: {
     return {
         queryKey: [singleTokenQueryKey, _address],
         queryFn: async (): Promise<TokenDataWithChainId> => {
+            if (!args.supportedChainIds) {
+                throw new Error('supportedChainIds is required')
+            }
+
             // check if the token has already been loaded from the across-networks query
             const cachedData: ReturnType<typeof useTokenMetadataAcrossNetworks>['data'] =
                 queryClient.getQueryData([queryKeyAcrossNetworks, _address])
@@ -136,7 +142,10 @@ function singleTokenQuerySetup(args: {
                 }
             }
 
-            return mapToTokenData(await getCollectionMetadataForChainId(_address, chainId), chainId)
+            return mapToTokenData(
+                await getCollectionMetadataForChainId(_address, chainId, args.supportedChainIds),
+                chainId,
+            )
         },
         retry: (failureCount: number, _error: Error) => {
             if (failureCount > 3) {
@@ -152,20 +161,30 @@ function singleTokenQuerySetup(args: {
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
         staleTime: 1_000 * 60 * 5,
-        enabled: ethers.utils.isAddress(_address) && !failedMetadataCalls.has(_address),
+        enabled:
+            ethers.utils.isAddress(_address) &&
+            !failedMetadataCalls.has(_address) &&
+            Boolean(args.supportedChainIds),
     }
 }
 
 export function useTokenMetadataForChainId(tokenAddress: string, chainId: number) {
     const queryClient = useQueryClient()
+    const { data: supportedXChainIds } = useSupportedXChainIds()
 
     return useQuery({
-        ...singleTokenQuerySetup({ tokenAddress, chainId, queryClient }),
+        ...singleTokenQuerySetup({
+            tokenAddress,
+            chainId,
+            queryClient,
+            supportedChainIds: supportedXChainIds,
+        }),
     })
 }
 
 export function useMultipleTokenMetadatasForChainIds(tokens: TokenEntitlement[] | undefined) {
     const queryClient = useQueryClient()
+    const { data: supportedXChainIds } = useSupportedXChainIds()
 
     return useQueries({
         queries: (tokens ?? []).map((token) => {
@@ -173,6 +192,7 @@ export function useMultipleTokenMetadatasForChainIds(tokens: TokenEntitlement[] 
                 tokenAddress: token.address,
                 chainId: token.chainId,
                 queryClient,
+                supportedChainIds: supportedXChainIds,
             })
             return {
                 ...querySetup,
@@ -210,4 +230,8 @@ export function mapToTokenData(token: ContractMetadata, chainId: number): TokenD
             quantity: undefined,
         },
     }
+}
+
+function joinSupportedChainIds(supportedChainIds: number[]) {
+    return supportedChainIds.join(',')
 }

@@ -9,6 +9,7 @@ type BalanceOfArgs = {
     walletAddress: Address
     token: Token
     alchemyApiKey: string
+    supportedChainIds: number[]
 }
 
 type Token = {
@@ -32,13 +33,15 @@ export async function getTokenBalance({
     token,
     walletAddresses,
     alchemyApiKey,
+    supportedChainIds,
 }: {
     token: Token
     walletAddresses: Address[]
     alchemyApiKey: string
     environment: Environment
+    supportedChainIds: number[]
 }): Promise<TokenBalance> {
-    const type = await getTokenType(token.address, alchemyApiKey)
+    const type = await getTokenType(token.address, supportedChainIds, alchemyApiKey)
 
     switch (type) {
         case TokenType.ERC1155: {
@@ -52,6 +55,7 @@ export async function getTokenBalance({
                         tokenId: _id,
                         walletAddress: addr,
                         alchemyApiKey,
+                        supportedChainIds: supportedChainIds,
                     })
 
                     if (result) {
@@ -93,6 +97,7 @@ export async function getTokenBalance({
                     token: token,
                     walletAddress: addr,
                     alchemyApiKey,
+                    supportedChainIds,
                 })
                 if (result) {
                     return result
@@ -116,6 +121,7 @@ export async function getTokenBalance({
                         token: token,
                         walletAddress: addr,
                         alchemyApiKey,
+                        supportedChainIds,
                     })
                     if (result) {
                         return result
@@ -153,10 +159,11 @@ export async function balanceOfErc1155({
     walletAddress,
     tokenId,
     alchemyApiKey,
+    supportedChainIds,
 }: BalanceOfArgs & {
     tokenId: number
 }) {
-    const clients = generatePublicClients(alchemyApiKey)
+    const clients = generatePublicClients(supportedChainIds, alchemyApiKey)
     const readContracts = clients.map((client) => client.readContract)
     const promises = readContracts.map((rc) => {
         const balance = rc({
@@ -176,8 +183,13 @@ export async function balanceOfErc1155({
     return anyOrError(promises)
 }
 
-export async function balanceOfErc721({ token, walletAddress, alchemyApiKey }: BalanceOfArgs) {
-    const clients = generatePublicClients(alchemyApiKey)
+export async function balanceOfErc721({
+    token,
+    walletAddress,
+    alchemyApiKey,
+    supportedChainIds,
+}: BalanceOfArgs) {
+    const clients = generatePublicClients(supportedChainIds, alchemyApiKey)
     const readContracts = clients.map((client) => client.readContract)
     const promises = readContracts.map(async (rc) => {
         const balance = await rc({
@@ -197,8 +209,13 @@ export async function balanceOfErc721({ token, walletAddress, alchemyApiKey }: B
     return anyOrError(promises)
 }
 
-export async function balanceOfErc20({ token, walletAddress, alchemyApiKey }: BalanceOfArgs) {
-    const clients = generatePublicClients(alchemyApiKey)
+export async function balanceOfErc20({
+    token,
+    walletAddress,
+    alchemyApiKey,
+    supportedChainIds,
+}: BalanceOfArgs) {
+    const clients = generatePublicClients(supportedChainIds, alchemyApiKey)
     const readContracts = clients.map((client) => client.readContract)
     const promises = readContracts.map((rc) => {
         const balance = rc({

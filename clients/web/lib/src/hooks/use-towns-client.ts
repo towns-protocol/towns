@@ -160,6 +160,7 @@ interface TownsClientImpl {
     getIsUsernameAvailable: (streamId: string, username: string) => Promise<boolean | undefined>
     getIsWalletRegisteredWithCasablanca: () => Promise<boolean>
     getServerVersions: () => Promise<ITownsServerVersions | undefined>
+    getSupportedXChainIds: () => Promise<number[] | undefined>
     updateUserBlock: (userId: string, isBlocked: boolean) => Promise<void>
     inviteUser: (roomId: string, userId: string) => Promise<void>
     joinRoom: (roomId: string, parentNetworkId?: string) => Promise<StreamView | undefined>
@@ -342,6 +343,7 @@ export function useTownsClient(): TownsClientImpl {
         removeLink: useWithCatch(clientSingleton?.removeLink),
         getLinkedWallets: useWithCatch(clientSingleton?.getLinkedWallets),
         waitWalletLinkTransaction: useWithCatch(clientSingleton?.waitWalletLinkTransaction),
+        getSupportedXChainIds: useWithCatch(clientSingleton?.getSupportedXChainIds),
     }
 }
 

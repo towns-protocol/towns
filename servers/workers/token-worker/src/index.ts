@@ -8,7 +8,7 @@ import { getCollectionMetadata } from './handlers/alchemy/getCollectionMetadata'
 import { router } from './router'
 import { Env, TokenProviderRequest } from './types'
 import { getCollectionsForOwner } from './handlers/alchemy/getCollectionsForOwner'
-import { generateAlchemyNftUrl } from './utils'
+import { generateAlchemyNftUrl, mapSupportedChainIds } from './utils'
 import { getCollectionsForOwnerAcrossNetworks } from './handlers/alchemy/getCollectionsForOwnerAcrossNetworks'
 import { getCollectionMetadataAcrossNetworks } from './handlers/alchemy/getCollectionMetadataAcrossNetworks'
 import { getTokenType } from './handlers/getTokenType'
@@ -27,6 +27,14 @@ const withNetwork = async (request: TokenProviderRequest, env: Env) => {
     const provider = request.params?.provider
     const chainIdStr = request.params?.network
 
+    const { query } = request
+
+    const { supportedChainIds } = query || {}
+
+    if (!supportedChainIds) {
+        return new Response('missing supportedChainIds', { status: 400 })
+    }
+
     if (!provider || !chainIdStr) {
         return new Response('missing provider or network', { status: 400 })
     }
@@ -36,7 +44,11 @@ const withNetwork = async (request: TokenProviderRequest, env: Env) => {
         case ProviderAlias.Alchemy:
             {
                 try {
-                    request.rpcUrl = generateAlchemyNftUrl(chainId, env.ALCHEMY_API_KEY)
+                    request.rpcUrl = generateAlchemyNftUrl(
+                        mapSupportedChainIds(supportedChainIds),
+                        chainId,
+                        env.ALCHEMY_API_KEY,
+                    )
                 } catch (error) {
                     return new Response(`invalid chainId:: ${chainId}`, { status: 400 })
                 }
@@ -126,8 +138,16 @@ router
         if (!address) {
             return new Response('missing address', { status: 400 })
         }
+        const supportedChainIds = request.query?.supportedChainIds
+        if (!supportedChainIds) {
+            return new Response('missing supportedChainIds', { status: 400 })
+        }
         try {
-            const tokenType = getTokenType(address, env.ALCHEMY_API_KEY)
+            const tokenType = getTokenType(
+                address,
+                mapSupportedChainIds(supportedChainIds),
+                env.ALCHEMY_API_KEY,
+            )
             return new Response(JSON.stringify({ data: tokenType }), { status: 200, headers })
         } catch (error) {
             return new Response(JSON.stringify({ error }), { status: 500, headers })
@@ -149,7 +169,13 @@ router
         const contractAddress = request.query?.contractAddress
         const tokenId = request.query?.tokenId
         const chainId = parseInt(request.query?.chainId ?? '')
+        const supportedChainIds = request.query?.supportedChainIds
         const headers = withCorsHeaders(request, env.ENVIRONMENT)
+
+        if (!supportedChainIds) {
+            return new Response('missing supportedChainIds', { status: 400 })
+        }
+
         if (!contractAddress) {
             return new Response('missing contract address', { status: 400 })
         }
@@ -164,6 +190,7 @@ router
                 chainId,
                 contractAddress,
                 tokenId,
+                mapSupportedChainIds(supportedChainIds),
                 env.ALCHEMY_API_KEY,
             )
             return new Response(JSON.stringify(metadata), { status: 200, headers })
@@ -179,6 +206,11 @@ router
         }
         const { token, wallets } = json
         const headers = withCorsHeaders(request, env.ENVIRONMENT)
+        const supportedChainIds = request.query?.supportedChainIds
+
+        if (!supportedChainIds) {
+            return new Response('missing supportedChainIds', { status: 400 })
+        }
 
         const tokenParse = tokenSchema.safeParse(token)
         if (!tokenParse.success) {
@@ -214,6 +246,7 @@ router
                 walletAddresses: _wallets,
                 alchemyApiKey: env.ALCHEMY_API_KEY,
                 environment: env.ENVIRONMENT,
+                supportedChainIds: mapSupportedChainIds(supportedChainIds),
             })
             return new Response(JSON.stringify({ data: balance }), { status: 200, headers })
         } catch (error) {

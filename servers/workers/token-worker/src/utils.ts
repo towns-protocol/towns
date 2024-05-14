@@ -1,4 +1,4 @@
-import { mainnet, arbitrum, optimism, base, baseSepolia } from 'viem/chains'
+import { mainnet, arbitrum, optimism, base, baseSepolia, polygon } from 'viem/chains'
 import {
     ContractMetadata,
     GetContractMetadataAlchemyResponse,
@@ -9,30 +9,35 @@ import { throwCustomError } from './router'
 import { createPublicClient, http } from 'viem'
 import { GetOwnersForNftResponse } from 'alchemy-sdk'
 
-export const supportedNftNetworks = [
+const nftNetworkMap = [
     { vChain: mainnet, alchemyIdentifier: 'eth-mainnet' },
     { vChain: arbitrum, alchemyIdentifier: 'arb-mainnet' },
     { vChain: optimism, alchemyIdentifier: 'opt-mainnet' },
+    { vChain: polygon, alchemyIdentifier: 'polygon-mainnet' },
     { vChain: base, alchemyIdentifier: 'base-mainnet' },
     { vChain: baseSepolia, alchemyIdentifier: 'base-sepolia' },
 ] as const
 
-export function getChainFromChainId(id: number) {
-    return supportedNftNetworks.find((n) => n.vChain.id === id)
+export function supportedNftNetworkMap(supportedChains: number[]) {
+    return nftNetworkMap.filter((n) => supportedChains.includes(n.vChain.id))
 }
 
-export function generateAlchemyNftUrl(chainId: number, apiKey: string) {
-    const chain = getChainFromChainId(chainId)
+function getChainFromChainId(supportedChains: number[], id: number) {
+    return supportedNftNetworkMap(supportedChains).find((n) => n.vChain.id === id)
+}
+
+export function generateAlchemyNftUrl(chainIds: number[], targetId: number, apiKey: string) {
+    const chain = getChainFromChainId(chainIds, targetId)
     if (!chain) {
-        throw new Error(`invalid chainId:: ${chainId}`)
+        throw new Error(`invalid chainId:: ${targetId}`)
     }
     return `https://${chain.alchemyIdentifier}.g.alchemy.com/nft/v3/${apiKey}`
 }
 
-export function generateAlchemyRpcUrl(chainId: number, apiKey: string) {
-    const chain = getChainFromChainId(chainId)
+export function generateAlchemyRpcUrl(chainIds: number[], targetId: number, apiKey: string) {
+    const chain = getChainFromChainId(chainIds, targetId)
     if (!chain) {
-        throw new Error(`invalid chainId:: ${chainId}`)
+        throw new Error(`invalid chainId:: ${targetId}`)
     }
     return `https://${chain.alchemyIdentifier}.g.alchemy.com/v2/${apiKey}`
 }
@@ -141,12 +146,19 @@ export function toContractMetadata(response: GetContractMetadataAlchemyResponse)
     }
 }
 
-export function generatePublicClients(alchemyApiKey: string) {
-    return supportedNftNetworks.map((n) => {
+export function generatePublicClients(supportedChainIds: number[], alchemyApiKey: string) {
+    return supportedNftNetworkMap(supportedChainIds).map((n) => {
         return createPublicClient({
             chain: n.vChain,
-            transport: http(generateAlchemyRpcUrl(n.vChain.id, alchemyApiKey)),
+            transport: http(generateAlchemyRpcUrl(supportedChainIds, n.vChain.id, alchemyApiKey)),
             pollingInterval: 2_000,
         })
     })
+}
+
+export function mapSupportedChainIds(chainIds: string | undefined) {
+    if (!chainIds) {
+        throw new Error('missing supportedChainIds')
+    }
+    return chainIds.split(',').map((id) => +id)
 }

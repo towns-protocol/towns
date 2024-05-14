@@ -1,9 +1,10 @@
 import { Environment, withCorsHeaders } from 'worker-common'
-import { TokenProviderRequest } from '../../types'
+import { TokenProviderRequest, TokenType } from '../../types'
 import {
     fetchAlchemyContractMetadata,
     generateAlchemyNftUrl,
-    supportedNftNetworks,
+    mapSupportedChainIds,
+    supportedNftNetworkMap,
     toContractMetadata,
 } from '../../utils'
 
@@ -14,14 +15,19 @@ export const getCollectionMetadataAcrossNetworks = async (
 ) => {
     const { query } = request
 
-    const { contractAddress } = query || {}
+    const { contractAddress, supportedChainIds: supportedIdString } = query || {}
+    const supportedChainIds = mapSupportedChainIds(supportedIdString)
 
     try {
         // get a list of the same contract across all supported networks. the client can choose priority to sort the results if multiple hits
         const allResults = await Promise.all(
-            supportedNftNetworks.map(async (network) => {
+            supportedNftNetworkMap(supportedChainIds).map(async (network) => {
                 try {
-                    const rpcUrl = generateAlchemyNftUrl(network.vChain.id, alchemyApiKey)
+                    const rpcUrl = generateAlchemyNftUrl(
+                        supportedChainIds,
+                        network.vChain.id,
+                        alchemyApiKey,
+                    )
                     const json = await fetchAlchemyContractMetadata(rpcUrl, contractAddress)
 
                     return {
@@ -31,7 +37,9 @@ export const getCollectionMetadataAcrossNetworks = async (
                 } catch (error) {
                     return {
                         chainId: network.vChain.id,
-                        data: undefined,
+                        data: {
+                            tokenType: TokenType.NOT_A_CONTRACT,
+                        },
                     }
                 }
             }),

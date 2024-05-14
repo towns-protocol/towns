@@ -22,7 +22,7 @@ describe('getCollectionMetadata()', () => {
 
         const result = await worker.fetch(
             new Request(
-                'https://fake-cloudflare-worker-url.com/api/getCollectionMetadata/alchemy/1?contractAddress=0x1234',
+                'https://fake-cloudflare-worker-url.com/api/getCollectionMetadata/alchemy/1?contractAddress=0x1234&supportedChainIds=1,84532',
             ),
             {
                 ALCHEMY_API_KEY: 'fake_key',

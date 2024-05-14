@@ -60,4 +60,5 @@ export const blockchainKeys = {
         'pricingModules',
         { chainId: chainId ?? 'waitingForChainId' },
     ],
+    supportedXChainIds: () => ['supportedXChainIds'],
 }

@@ -13,7 +13,7 @@ describe('getCollectionsForOwnerAcrossNetworks()', () => {
         const bindings = getMiniflareBindings()
         const response = await tokenDefaultExport.fetch(
             new Request(
-                'https://fake.com/api/getCollectionsForOwnerAcrossNetworks/alchemy/0x12345',
+                `https://fake.com/api/getCollectionsForOwnerAcrossNetworks/alchemy/0x12345?supportedChainIds=1,84532`,
                 {
                     method: 'GET',
                     headers: {
@@ -49,7 +49,7 @@ describe('getCollectionsForOwnerAcrossNetworks()', () => {
 
         const result = await worker.fetch(
             new Request(
-                'https://fake.com/api/getCollectionsForOwnerAcrossNetworks/alchemy/0x12345',
+                'https://fake.com/api/getCollectionsForOwnerAcrossNetworks/alchemy/0x12345?supportedChainIds=1,84532',
             ),
             {
                 ALCHEMY_API_KEY: 'fake_key',
@@ -62,6 +62,7 @@ describe('getCollectionsForOwnerAcrossNetworks()', () => {
 
         expect(result.status).toBe(200)
 
+        // expect only the filtered chains passed in the query for supportedChainIds
         const expected: GetCollectionsForOwnerAcrossNetworksResponse[] = [
             {
                 chainId: 1,
@@ -73,21 +74,6 @@ describe('getCollectionsForOwnerAcrossNetworks()', () => {
                         ...alchemyGetCollectionsMockPage2.contracts,
                     ],
                 },
-            },
-            {
-                chainId: 42161,
-                status: 'error',
-                error: {},
-            },
-            {
-                chainId: 10,
-                status: 'error',
-                error: {},
-            },
-            {
-                chainId: 8453,
-                status: 'error',
-                error: {},
             },
             {
                 chainId: 84532,
