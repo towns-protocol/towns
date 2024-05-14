@@ -6,30 +6,60 @@ import {
   } from "aws-lambda";
   import { client, v2 } from "@datadog/datadog-api-client";
   import { SecretsManager } from "@aws-sdk/client-secrets-manager";
-  import { Client, PublicClient, createPublicClient, http as httpViem, isAddress } from "viem";
+  import { PublicClient, createPublicClient, http as httpViem, isAddress } from "viem";
 
-  type WalletBalance = { 
-    walletAddress: string; 
+  type RiverNodeWalletBalance = { 
+    node: RiverNode;
     balance: number; 
     chain: string;
   };
+
+  type RiverNode = {
+    status: number;
+    url: string;
+    nodeAddress: string;
+    operator: string;
+  }
   
   const riverRegistryAbi = [
     {
       type: "function",
-      name: "getAllNodeAddresses",
+      name: "getAllNodes",
       inputs: [],
       outputs: [
         {
           name: "",
-          type: "address[]",
-          internalType: "address[]",
+          type: "tuple[]",
+          internalType: "struct Node[]",
+          components: [
+            {
+              name: "status",
+              type: "uint8",
+              internalType: "enum NodeStatus",
+            },
+            {
+              name: "url",
+              type: "string",
+              internalType: "string",
+            },
+            {
+              name: "nodeAddress",
+              type: "address",
+              internalType: "address",
+            },
+            {
+              name: "operator",
+              type: "address",
+              internalType: "address",
+            },
+          ],
         },
       ],
       stateMutability: "view",
     },
   ];
   
+  // TODO: remove all references to node nubmers after merging the node_url tagging workflow
   const KNOWN_NODES: Record<string, number> = {
     "0xBF2Fe1D28887A0000A1541291c895a26bD7B1DdD": 1,
     "0x43EaCe8E799497f8206E579f7CCd1EC41770d099": 2,
@@ -72,18 +102,19 @@ import {
       transport: httpViem(baseChainRpcUrl),
     });
   
-    const nodeAddresses = await getNodeAddresses(
+    const nodes = await getAllNodes(
       riverChainClient,
       RIVER_REGISTRY_CONTRACT_ADDRESS
     );
-    console.log(`Got node addresses`, nodeAddresses);
+
+    console.log(`Got nodes: `, nodes)
 
     console.log('Getting wallet balances for base chain')
-    const baseChainWalletBalances = await getWalletBalances(baseChainClient, nodeAddresses, 'base');
+    const baseChainWalletBalances = await getWalletBalances(baseChainClient, nodes, 'base');
     console.log(`Got base chain wallet balances`, baseChainWalletBalances);
 
     console.log('Getting wallet balances for river chain')
-    const riverChainWalletBalances = await getWalletBalances(riverChainClient, nodeAddresses, 'river');
+    const riverChainWalletBalances = await getWalletBalances(riverChainClient, nodes, 'river');
     console.log(`Got river chain wallet balances`, riverChainWalletBalances);
 
     console.log(`Posting wallet balances to Datadog`);
@@ -102,38 +133,38 @@ import {
     };
   };
   
-  async function getNodeAddresses(
+  async function getAllNodes(
     client: PublicClient,
     riverRegistryContractAddress: string
-  ) {
-    const nodeAddresses = await client.readContract({
+  ): Promise<RiverNode[]> {
+    const nodes = await client.readContract({
       abi: riverRegistryAbi,
       address: riverRegistryContractAddress as any,
-      functionName: "getAllNodeAddresses",
+      functionName: "getAllNodes",
     });
   
-    return nodeAddresses as string[];
+    return nodes as RiverNode[];
   }
 
-  async function getWalletBalance(client: PublicClient, walletAddress: string, chain: string) {
-    console.log(`Getting balance for wallet ${walletAddress}`);
-    if (!isAddress(walletAddress)) {
-        throw new Error(`Invalid wallet address: ${walletAddress}`);
+  async function getWalletBalance(client: PublicClient, node: RiverNode, chain: string): Promise<RiverNodeWalletBalance>{
+    console.log(`Getting balance for wallet ${node.nodeAddress}`);
+    if (!isAddress(node.nodeAddress)) {
+        throw new Error(`Invalid wallet address: ${node.nodeAddress}`);
     }
     const balanceBigInt = await client.getBalance({
-        address: walletAddress,
+        address: node.nodeAddress,
         blockTag: "latest",
     });
     const balanceNum = Number(balanceBigInt);
     const balance = balanceNum / 10**18;
-    console.log(`Got balance for wallet ${walletAddress}: ${balance}`);
-    return { walletAddress, balance, chain };
+    console.log(`Got balance for wallet ${node.nodeAddress}: ${balance}`);
+    return { node, balance, chain };
   }
   
-  async function getWalletBalances(client: PublicClient, walletAddresses: string[], chain: string) {
-    const waleltBalancePromises = walletAddresses.map((walletAddress) => getWalletBalance(client, walletAddress, chain));
+  async function getWalletBalances(client: PublicClient, nodes: RiverNode[], chain: string): Promise<RiverNodeWalletBalance[]> {
+    const walletBalancePromises = nodes.map((node) => getWalletBalance(client, node, chain));
     return await Promise.all(
-      waleltBalancePromises
+      walletBalancePromises
     );
   }
   
@@ -143,7 +174,7 @@ import {
     datadogApplicationKey,
     env,
   }: {
-    walletBalances: WalletBalance[];
+    walletBalances: RiverNodeWalletBalance[];
     datadogApiKey: string;
     datadogApplicationKey: string;
     env: string;
@@ -156,13 +187,19 @@ import {
       },
     });
     const timestamp = Math.floor(Date.now() / 1000);
-    const series = walletBalances.map(({ walletAddress, balance, chain }) => {
-      const tags = [`env:${env}`, `wallet_address:${walletAddress}`];
+    const series = walletBalances.map(({ node, balance, chain }) => {
+      const walletAddress = node.nodeAddress;
+      const tags = [
+        `env:${env}`, 
+        `wallet_address:${walletAddress}`,
+        `operator_address:${node.operator}`,
+        `node_url:${encodeURI(node.url)}`,
+        `chain:${chain}`
+      ];
       const nodeNumber = KNOWN_NODES[walletAddress];
       if (typeof KNOWN_NODES[walletAddress] === "number") {
         tags.push(`node_number:${nodeNumber}`);
       }
-      tags.push(`chain:${chain}`)
       return {
         metric: `river_node.wallet_balance`,
         points: [{ timestamp, value: balance }],
@@ -250,4 +287,3 @@ import {
       RIVER_REGISTRY_CONTRACT_ADDRESS,
     };
   }
-  
