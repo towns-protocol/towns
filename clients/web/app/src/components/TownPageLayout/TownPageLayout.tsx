@@ -334,6 +334,8 @@ const InformationBoxes = (props: {
             height="x12"
             minHeight="x12"
             alignItems="center"
+            overflowX="scroll"
+            scrollbars={false}
             shrink={false}
         >
             <TokenInfoBox
