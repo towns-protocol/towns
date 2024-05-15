@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"runtime/pprof"
+	"strings"
 	"time"
 
 	"github.com/river-build/river/core/node/config"
@@ -21,10 +22,22 @@ func runMetricsAndProfiler(ctx context.Context, cfg *config.Config) error {
 	if cfg.Metrics.Enabled {
 		go infra.StartMetricsService(ctx, cfg.Metrics)
 	}
+
+	// we overwrite the DD_TAGS environment variable, because this is the best way to pass them down to the tracer
+	setDDTagsEnv()
+
 	if cfg.PerformanceTracking.TracingEnabled {
-		if os.Getenv("DD_ENV") != "" {
+		if os.Getenv("DD_TAGS") != "" {
 			fmt.Println("Starting Datadog tracer")
-			tracer.Start()
+			tracer.Start(
+				tracer.WithEnv(getEnvFromDDTags()),
+				tracer.WithService("river-node"),
+				tracer.WithServiceVersion(version.GetFullVersion()),
+				// tracer.WithGlobalTag(t1, v1),
+				// tracer.WithGlobalTag(t2, v2),
+				// ..
+				// ^ falling back to DD_TAGS env var
+			)
 			defer tracer.Stop()
 		} else {
 			fmt.Println("Tracing was enabled, but DD_ENV was not set. Tracing will not be enabled.")
@@ -33,16 +46,13 @@ func runMetricsAndProfiler(ctx context.Context, cfg *config.Config) error {
 		fmt.Println("Tracing disabled")
 	}
 	if cfg.PerformanceTracking.ProfilingEnabled {
-		if os.Getenv("DD_ENV") != "" {
+		if os.Getenv("DD_TAGS") != "" {
 			fmt.Println("Starting Datadog profiler")
 
 			err := profiler.Start(
-				// profiler.WithService("<SERVICE_NAME>"),
-				// ^ falling back to DD_SERVICE env var
-				// profiler.WithEnv("<ENVIRONMENT>"),
-				// ^ falling back to DD_ENV env var
+				profiler.WithEnv(getEnvFromDDTags()),
+				profiler.WithService("river-node"),
 				profiler.WithVersion(version.GetFullVersion()),
-				profiler.WithTags(getDDTags()),
 				profiler.WithProfileTypes(
 					profiler.CPUProfile,
 					profiler.HeapProfile,
@@ -50,6 +60,8 @@ func runMetricsAndProfiler(ctx context.Context, cfg *config.Config) error {
 					profiler.MutexProfile,
 					profiler.GoroutineProfile,
 				),
+				// profiler.WithTags(setDDTags()),
+				// ^ falling back to DD_TAGS env var
 			)
 			if err != nil {
 				fmt.Println("Error starting profiling", err)
@@ -101,13 +113,28 @@ func runServer(cfg *config.Config) error {
 	return rpc.RunServer(ctx, cfg)
 }
 
-func getDDTags() string {
+// overwrites the DD_TAGS environment variable to include the commit, version and branch
+func setDDTagsEnv() {
 	ddTags := os.Getenv("DD_TAGS")
 	if ddTags != "" {
 		ddTags += ","
 	}
 	ddTags += "commit:" + version.GetCommit() + ",version_slim:" + version.GetVersion() + ",branch:" + version.GetBranch()
-	return ddTags
+	os.Setenv("DD_TAGS", ddTags)
+}
+
+func getEnvFromDDTags() string {
+	ddTags := os.Getenv("DD_TAGS")
+	if ddTags == "" {
+		return ""
+	}
+	tags := strings.Split(ddTags, ",")
+	for _, tag := range tags {
+		if strings.HasPrefix(tag, "env:") {
+			return strings.TrimPrefix(tag, "env:")
+		}
+	}
+	return ""
 }
 
 func init() {
