@@ -15,6 +15,7 @@ import {
     useMyProfile,
     useSpaceData,
     useTownsClient,
+    useTownsContext,
     useUserLookupContext,
     useWalletAddressIsBanned,
 } from 'use-towns-client'
@@ -44,6 +45,7 @@ import { ConfirmBlockModal } from '@components/ConfirmBlockModal/ConfirmBlockMod
 import { PanelButton } from '@components/Panel/PanelButton'
 import { useBlockedUsers } from 'hooks/useBlockedUsers'
 import { UserPreferences } from '@components/UserProfile/UserPreferences'
+import { useMatchingMessages } from '@components/DirectMessages/CreateDirectMessage/hooks/useMatchingMessages'
 import { clearAnonymousId, useAnalytics } from 'hooks/useAnalytics'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 
@@ -118,18 +120,25 @@ const SpaceProfileWithoutAuth = () => {
         logout()
     })
 
+    const { dmChannels } = useTownsContext()
+    const userIds = useMemo(() => [userId ?? ''], [userId])
+    const { matchingDM } = useMatchingMessages({
+        selectedUserArray: userIds,
+        dmChannels,
+    })
+
     const { createLink } = useCreateLink()
 
     const onMessageClick = useCallback(async () => {
         if (!userId) {
             return
         }
-        const streamId = await createDMChannel(userId)
+        const streamId = matchingDM ? matchingDM.id : await createDMChannel(userId)
         const link = streamId && createLink({ messageId: streamId })
         if (link) {
-            navigate(link + '?ref=profile')
+            navigate(link)
         }
-    }, [createDMChannel, createLink, navigate, userId])
+    }, [createDMChannel, createLink, matchingDM, navigate, userId])
 
     const myUser = useMyProfile()
 
