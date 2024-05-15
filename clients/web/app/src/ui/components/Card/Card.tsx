@@ -10,19 +10,30 @@ type Props = Omit<BoxProps, 'label'>
 const DEBUG = false && env.MODE === 'development'
 
 export const Card = forwardRef<HTMLDivElement, Props>(
-    ({ children, absoluteFill, debug = DEBUG, ...boxProps }, ref) => {
+    (
+        { children, absoluteFill, absoluteFillSafeSafari, position, debug = DEBUG, ...boxProps },
+        ref,
+    ) => {
         return (
             <Box
                 grow
                 padding="xs"
                 debug={debug}
                 border={debug ? 'accent' : undefined}
-                position={absoluteFill ? 'absoluteFillSafeSafari' : undefined}
+                position={
+                    position
+                        ? position
+                        : absoluteFill
+                        ? 'absoluteFill'
+                        : absoluteFillSafeSafari
+                        ? 'absoluteFillSafeSafari'
+                        : undefined
+                }
             >
                 <SizeBox
                     grow
                     elevateReadability
-                    scroll={!!absoluteFill}
+                    scroll={!!(absoluteFill || absoluteFillSafeSafari)}
                     position="relative"
                     rounded="sm"
                     boxShadow="card"

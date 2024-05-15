@@ -71,9 +71,7 @@ export const AppPanelLayout = () => {
 
                     {/* main container */}
                     <Allotment.Pane>
-                        <Box absoluteFill scroll>
-                            <CentralPanelLayout />
-                        </Box>
+                        <CentralPanelLayout />
                     </Allotment.Pane>
                 </Allotment>
             </Stack>
@@ -88,25 +86,23 @@ const CentralPanelLayout = () => {
     const panel = usePanels()
 
     return (
-        <Stack minHeight="100%">
-            <Allotment onChange={onSizesChange}>
-                <Allotment.Pane minSize={550}>
+        <Allotment onChange={onSizesChange}>
+            <Allotment.Pane minSize={550}>
+                <ErrorBoundary FallbackComponent={ErrorFallbackComponent}>
+                    <Card absoluteFillSafeSafari>
+                        <Outlet />
+                    </Card>
+                </ErrorBoundary>
+            </Allotment.Pane>
+            {panel && (
+                <Allotment.Pane minSize={300} preferredSize={sizes[1] || 450}>
                     <ErrorBoundary FallbackComponent={ErrorFallbackComponent}>
-                        <Card absoluteFill>
-                            <Outlet />
-                        </Card>
+                        {/* named outled would have been ideal here */}
+                        {panel}
                     </ErrorBoundary>
                 </Allotment.Pane>
-                {panel && (
-                    <Allotment.Pane minSize={300} preferredSize={sizes[1] || 450}>
-                        <ErrorBoundary FallbackComponent={ErrorFallbackComponent}>
-                            {/* named outled would have been ideal here */}
-                            {panel}
-                        </ErrorBoundary>
-                    </Allotment.Pane>
-                )}
-            </Allotment>
-        </Stack>
+            )}
+        </Allotment>
     )
 }
 
