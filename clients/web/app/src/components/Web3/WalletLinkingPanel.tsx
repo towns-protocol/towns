@@ -1,17 +1,15 @@
 import React, { useState } from 'react'
-import { useConnectWallet, usePrivy } from '@privy-io/react-auth'
+import { useConnectWallet } from '@privy-io/react-auth'
 import { useEmbeddedWallet, useGetEmbeddedSigner } from '@towns/privy'
 import {
     Address,
     BlockchainTransactionType,
     useConnectivity,
     useIsTransactionPending,
-    useLinkCallerToRootKey,
     useLinkEOAToRootKeyTransaction,
     useLinkedWallets,
     useUnlinkWalletTransaction,
 } from 'use-towns-client'
-import { useSearchParams } from 'react-router-dom'
 import { PrivyWrapper } from 'privy/PrivyProvider'
 import { Box, BoxProps, Button, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
 import { PanelButton } from '@components/Panel/PanelButton'
@@ -24,8 +22,6 @@ import {
     useAbstractAccountAddress,
 } from 'hooks/useAbstractAccountAddress'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
-import { useIsSmartAccountLinked } from 'hooks/useIsSmartAccountLinked'
-import { env } from 'utils'
 import { useBalance } from 'hooks/useBalance'
 import { formatEthDisplay } from './utils'
 
@@ -57,16 +53,12 @@ function WalletLinkingPanelWithoutAuth() {
         })
     const { loggedInWalletAddress } = useConnectivity()
     const { linkEOAToRootKeyTransaction } = useLinkEOAToRootKeyTransaction()
-    const { linkCallerToRootKeyTransaction } = useLinkCallerToRootKey()
     const { unlinkWalletTransaction } = useUnlinkWalletTransaction()
     const getSigner = useGetEmbeddedSigner()
 
     const onLinkEOAClick = useConnectThenLink({
         onLinkWallet: linkEOAToRootKeyTransaction,
     })
-
-    const { data: smartAccountLinked, isLoading: isSmartAccountLinkedLoading } =
-        useIsSmartAccountLinked()
 
     const { data: linkedWallets } = useLinkedWallets()
 
@@ -79,15 +71,6 @@ function WalletLinkingPanelWithoutAuth() {
         unlinkWalletTransaction(signer, addressToUnlink)
     }
 
-    async function onLinkSmartAccountClick() {
-        const signer = await getSigner()
-        if (!signer) {
-            createPrivyNotAuthenticatedNotification()
-            return
-        }
-        linkCallerToRootKeyTransaction(signer)
-    }
-
     const isWalletLinkingPending = useIsTransactionPending(BlockchainTransactionType.LinkWallet)
     const isWalletUnLinkingPending = useIsTransactionPending(BlockchainTransactionType.UnlinkWallet)
 
@@ -97,10 +80,6 @@ function WalletLinkingPanelWithoutAuth() {
 
     return (
         <Stack gap grow position="relative" overflow="auto">
-            <LinkedWallet
-                address={loggedInWalletAddress}
-                loggedInWalletAddress={loggedInWalletAddress}
-            />
             {linkedWallets?.map((a) => {
                 return (
                     <LinkedWallet
@@ -125,24 +104,6 @@ function WalletLinkingPanelWithoutAuth() {
                 <Paragraph color="default">Link new wallet</Paragraph>
             </PanelButton>
 
-            {/* TODO: remove this https://linear.app/hnt-labs/issue/HNT-5662/remove-auto-smart-account-linking-from-app  */}
-            {isSmartAccountLinkedLoading || smartAccountLinked ? null : (
-                <PanelButton
-                    cursor={
-                        isWalletLinkingPending || isWalletUnLinkingPending
-                            ? 'not-allowed'
-                            : 'pointer'
-                    }
-                    opacity={isWalletLinkingPending || isWalletUnLinkingPending ? '0.5' : 'opaque'}
-                    disabled={isWalletLinkingPending || isWalletUnLinkingPending}
-                    onClick={onLinkSmartAccountClick}
-                >
-                    <Box width="height_md" alignItems="center">
-                        <Icon type="link" size="square_sm" />
-                    </Box>
-                    <Paragraph color="default">Link Smart Account</Paragraph>
-                </PanelButton>
-            )}
             {/* {isLoadingLinkingWallet && <FullPanelOverlay text="Linking Wallet" />} */}
             {/* {isLoadingUnlinkingWallet && <FullPanelOverlay text="Unlinking Wallet" />} */}
 
@@ -221,23 +182,20 @@ export function LinkedWallet({
     onUnlinkClick?: (address: Address) => void
     height?: BoxProps['height']
 }) {
-    const [searchParams] = useSearchParams()
-    const isTownsWallet = address === loggedInWalletAddress
-    const townsBalance = useBalance({
-        address: address,
-        enabled: isTownsWallet,
-        watch: true,
-    })
-    const { data: aaAdress, isLoading: isLoadingAaAddress } = useAbstractAccountAddress({
+    const { data: aaAdress } = useAbstractAccountAddress({
         rootKeyAddress: loggedInWalletAddress,
     })
     const isAbstractAccount =
         aaAdress && isAbstractAccountAddress({ address, abstractAccountAddress: aaAdress })
 
+    const aaBalance = useBalance({
+        address: address,
+        enabled: isAbstractAccount,
+        watch: true,
+    })
+
     const isWalletLinkingPending = useIsTransactionPending(BlockchainTransactionType.LinkWallet)
     const isWalletUnLinkingPending = useIsTransactionPending(BlockchainTransactionType.UnlinkWallet)
-    const hasUnlinkParam = searchParams.get('unlinkAA') != null
-    const enableUnlinkAAOn = env.DEV && hasUnlinkParam
 
     // TODO: we have a privy wallet, and AA wallet. Probably we want to filter out the privy wallet, and only show AA wallet address. Do we need to have our own UI for AA wallet assets? Since you can't export it to MM
     return (
@@ -250,33 +208,22 @@ export function LinkedWallet({
             height={height}
         >
             <Stack gap="sm" alignItems="start">
-                <Paragraph>
-                    {isTownsWallet ? 'Towns Wallet' : 'External Wallet'}
-                    {isTownsWallet && (
-                        <>
-                            {' '}
-                            -{' '}
-                            {formatEthDisplay(
-                                Number.parseFloat(townsBalance?.data?.formatted ?? '0'),
-                            )}{' '}
-                            {townsBalance?.data?.symbol}
-                        </>
-                    )}
-                </Paragraph>
-                {/* TODO: we should retain this for development against anvil */}
-                {isTownsWallet && (
-                    <Paragraph size="sm" color="error">
-                        Deprecated
+                {isAbstractAccount && (
+                    <Paragraph>
+                        Towns Wallet -{' '}
+                        {formatEthDisplay(Number.parseFloat(aaBalance?.data?.formatted ?? '0'))}{' '}
+                        Base {aaBalance?.data?.symbol}
                     </Paragraph>
                 )}
-                <ClipboardCopy label={shortAddress(address)} clipboardContent={address} />
+
+                <ClipboardCopy
+                    color={isAbstractAccount ? 'gray2' : 'gray1'}
+                    label={shortAddress(address)}
+                    clipboardContent={address}
+                />
             </Stack>
 
-            {isTownsWallet ? (
-                <ExportWallet />
-            ) : isLoadingAaAddress ? null : isAbstractAccount && !enableUnlinkAAOn ? (
-                'AA Account'
-            ) : (
+            {!isAbstractAccount && (
                 <IconButton
                     cursor={
                         isWalletLinkingPending || isWalletUnLinkingPending
@@ -287,23 +234,11 @@ export function LinkedWallet({
                     opacity={isWalletLinkingPending || isWalletUnLinkingPending ? '0.5' : 'opaque'}
                     icon="unlink"
                     color="default"
+                    tooltip="Unlink Wallet"
                     onClick={() => onUnlinkClick?.(address)}
                 />
             )}
         </PanelButton>
-    )
-}
-
-function ExportWallet() {
-    const { exportWallet } = usePrivy()
-    const embeddedWallet = !!useEmbeddedWallet()
-    return (
-        <IconButton
-            disabled={!embeddedWallet}
-            icon="linkOutWithFrame"
-            color="default"
-            onClick={exportWallet}
-        />
     )
 }
 

@@ -1,8 +1,9 @@
 import React, { useState } from 'react'
-import { useNetworkStatus, useTownsContext } from 'use-towns-client'
+import { useMyUserId, useNetworkStatus, useTownsContext } from 'use-towns-client'
 import { Box, Button, Paragraph, Stack, Text, TextButton } from '@ui'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
+import { shortAddress } from 'workers/utils'
 
 export function BetaDebugger() {
     const [isVisible, setIsVisible] = useState(false)
@@ -11,6 +12,7 @@ export function BetaDebugger() {
     const { errorMessage, clearSiteData } = useClearSiteData()
     const { clientStatus } = useTownsContext()
     const { isOffline } = useNetworkStatus()
+    const userId = useMyUserId()
 
     return (
         <>
@@ -35,6 +37,10 @@ export function BetaDebugger() {
                 <Stack horizontal gap="xs" color="gray1" fontSize="sm" alignItems="center">
                     <Paragraph size="sm">App Version:</Paragraph>
                     <ClipboardCopy clipboardContent={APP_COMMIT_HASH} label={APP_COMMIT_HASH} />
+                </Stack>
+                <Stack horizontal gap="xs" color="gray1" fontSize="sm" alignItems="center">
+                    <Paragraph size="sm">User ID:</Paragraph>
+                    <ClipboardCopy clipboardContent={userId} label={shortAddress(userId ?? '')} />
                 </Stack>
                 <Box padding="sm">
                     <TextButton tone="level3" color="negative" onClick={show}>
