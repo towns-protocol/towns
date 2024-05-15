@@ -82,6 +82,10 @@ export class PushNotificationClient {
         }
 
         const spaceId = options.parentSpaceId ?? ''
+        if (!spaceId) {
+            // mention, @channel and replyTo require the spaceId
+            return
+        }
         const postRequests: Promise<void>[] = []
         let userMentions: Mention[] = []
         if (
