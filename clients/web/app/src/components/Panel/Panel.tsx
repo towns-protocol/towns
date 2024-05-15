@@ -37,6 +37,12 @@ export const Panel = (props: Props) => {
     const { isTouch } = useDevice()
 
     const context = useMemo(() => {
+        console.log('[Panel][hnt-5685]', 'context', {
+            isPanelContext: true,
+            isRootPanel: props.isRootPanel,
+            stackId: props.stackId ?? DEFAULT_CONTEXT.stackId,
+            parentRoute: props.parentRoute,
+        })
         return {
             isPanelContext: true,
             isRootPanel: props.isRootPanel,

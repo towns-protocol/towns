@@ -1,7 +1,7 @@
 import capitalize from 'lodash/capitalize'
 import React, { useEffect, useMemo } from 'react'
 import { Outlet, useMatch } from 'react-router'
-import { matchPath, useLocation } from 'react-router-dom'
+import { matchPath, useLocation, useSearchParams } from 'react-router-dom'
 import { Channel, SpaceContextProvider, SpaceData, useTownsContext } from 'use-towns-client'
 import { PATHS } from 'routes'
 import { useStore } from 'store/store'
@@ -9,7 +9,7 @@ import { useSetDocTitle } from 'hooks/useDocTitle'
 import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
 import { APP_NAME } from 'data/constants'
 import { useDevice } from 'hooks/useDevice'
-import { PathInfo, useHnt5685 } from 'hooks/useHnt5685'
+import { useHnt5685 } from 'hooks/useHnt5685'
 
 export interface RouteParams {
     spaceId?: string
@@ -40,8 +40,7 @@ const SpaceContext = () => {
     const setTownRouteBookmark = useStore((s) => s.setTownRouteBookmark)
 
     const setTitle = useSetDocTitle()
-    const touchInitialLink = useHnt5685()
-    const path = useSpaceRouteMatcher(space, touchInitialLink)
+    const path = useSpaceRouteMatcher(space)
     const spaceName = space?.name || chainSpace?.name
 
     useEffect(() => {
@@ -114,21 +113,44 @@ export interface RouteInfo {
     channel?: Channel
 }
 
-const useSpaceRouteMatcher = (
-    space: SpaceData | undefined,
-    touchInitialLink?: PathInfo,
-): RouteInfo | undefined => {
+const useSpaceRouteMatcher = (space: SpaceData | undefined): RouteInfo | undefined => {
     const location = useLocation()
     const { isTouch } = useDevice()
+    const { touchInitialLink } = useHnt5685()
 
     const pathInfo = useMemo(() => {
-        const { pathname, search } = touchInitialLink ?? {
-            pathname: location.pathname,
-            search: location.search,
-        }
+        const { pathname, search } = touchInitialLink
+            ? {
+                  pathname: touchInitialLink.pathname,
+                  search: location.search,
+              }
+            : {
+                  pathname: location.pathname,
+                  search: location.search,
+              }
         const scrubbedPathname = pathname.replace(/^\/\//, '/') // this can cause bug hnt-5685
         return { pathname: scrubbedPathname, search }
     }, [location.pathname, location.search, touchInitialLink])
+
+    const [search] = useSearchParams()
+
+    useEffect(() => {
+        console.log('[hnt-5685][useSpaceRouteMatcher]', {
+            locationPathname: location.pathname,
+            locationSearch: location.search,
+            pathInfoPathname: pathInfo.pathname,
+            pathInfoSearch: pathInfo.search,
+            touchInitialLinkPathname: touchInitialLink?.pathname ?? 'undefined',
+            touchInitialLinkSearch: touchInitialLink?.search ?? 'undefined',
+        })
+    }, [
+        location.pathname,
+        location.search,
+        pathInfo.pathname,
+        pathInfo.search,
+        touchInitialLink?.pathname,
+        touchInitialLink?.search,
+    ])
 
     return useMemo(() => {
         const channelPath = matchPath(
@@ -162,6 +184,11 @@ const useSpaceRouteMatcher = (
                     // handle the special case for Touch devices where the spaceId is inserted into the path
                     const { spaceId, channelId } = getRouteParams(pathInfo.pathname)
                     let spaceIdBookmark = spaceId
+                    // handle the special case for Touch devices where
+                    // the navigation stack is different between HOME and MESSAGES
+                    const params = new URLSearchParams(search)
+                    params.set('stackId', 'direct-messages')
+                    const searchWithDmStackId = `?${params.toString()}`
                     // if the pathname does not have a spaceId, get it from the current space
                     // if that is also unavailable, get it from the bookmark store
                     if (!spaceIdBookmark) {
@@ -170,6 +197,10 @@ const useSpaceRouteMatcher = (
                     }
                     if (spaceIdBookmark && channelId) {
                         pathInfo.pathname = `/${SPACES}/${spaceIdBookmark}/${MESSAGES}/${channelId}`
+                        pathInfo.search = searchWithDmStackId
+                    } else if (spaceIdBookmark) {
+                        pathInfo.pathname = `/${SPACES}/${spaceIdBookmark}/${MESSAGES}`
+                        pathInfo.search = searchWithDmStackId
                     }
                 }
                 return {
@@ -193,7 +224,7 @@ const useSpaceRouteMatcher = (
                     : ({ type: 'notfound', ...pathInfo } as const)
             }
         }
-    }, [isTouch, pathInfo, space])
+    }, [isTouch, pathInfo, search, space])
 }
 
 export function getRouteParams(path?: string): RouteParams {

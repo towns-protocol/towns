@@ -21,6 +21,7 @@ import { BlockchainTxNotifier } from '@components/Web3/BlockchainTxNotifier'
 import { SyncNotificationSettings } from '@components/SyncNotificationSettings/SyncNotificationSettings'
 import { MonitorJoinFlow } from 'routes/PublicTownPage/MontiorJoinFlow'
 import { getRouteParams } from 'routes/SpaceContextRoute'
+import { useHnt5685 } from 'hooks/useHnt5685'
 
 FontLoader.init()
 
@@ -43,6 +44,7 @@ export const App = () => {
         : undefined
     const didSetHighpriorityStreamIds = useRef<boolean>(false)
     const { spaceId, channelId } = useMemo(() => getRouteParams(channelBookmark), [channelBookmark])
+    const { shouldNavigateToBookmark, navigateAndResetTouchLink } = useHnt5685()
 
     useEffect(() => {
         if (didSetHighpriorityStreamIds.current) {
@@ -59,13 +61,14 @@ export const App = () => {
         // Reminder to remove: https://linear.app/hnt-labs/issue/HNT-6068/remove-consolewarn-from-the-harmony-app-after-verifying-hnt-5685-is
         console.warn('[App][hnt-5685]', 'route', {
             deviceType: isTouch ? 'mobile' : 'desktop',
+            shouldNavigateToBookmark,
             spaceIdBookmark,
             channelBookmark,
             locationPathname: location.pathname,
             locationSearch: location.search,
             highPriorityStreamIds: highPriorityStreamIds.current,
         })
-    }, [channelBookmark, channelId, isTouch, spaceId, spaceIdBookmark])
+    }, [channelBookmark, channelId, isTouch, shouldNavigateToBookmark, spaceId, spaceIdBookmark])
 
     useWindowListener()
 
@@ -93,6 +96,14 @@ export const App = () => {
         }
         return supported
     }, [environment.baseChain.id])
+
+    useEffect(() => {
+        // workaround for bug
+        // https://linear.app/hnt-labs/issue/HNT-5685/notifications-for-mobile-pwa-arent-deep-linking-for-me-when-the-app-is
+        if (shouldNavigateToBookmark && channelBookmark) {
+            navigateAndResetTouchLink(channelBookmark)
+        }
+    }, [channelBookmark, navigateAndResetTouchLink, shouldNavigateToBookmark])
 
     return (
         <TownsContextProvider

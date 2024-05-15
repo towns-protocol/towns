@@ -13,6 +13,7 @@ export const DirectMessagesPanel = () => {
     const { createLink } = useCreateLink()
     const onDisplayCreate = useCallback(() => {
         const link = createLink({ messageId: 'new' })
+        console.log('[hnt-5685][DirectMessagesPanel]', 'route', { link })
         if (link) {
             navigate(`${link}?stackId=${PanelStack.DIRECT_MESSAGES}`)
         }
