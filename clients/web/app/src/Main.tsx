@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react'
+import React, { Suspense, useEffect } from 'react'
 import { BrowserRouter, useLocation } from 'react-router-dom'
 import { debug } from 'debug'
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
@@ -7,6 +7,7 @@ import { ZLayerProvider } from '@ui'
 import { useRootTheme } from 'hooks/useRootTheme'
 import { WelcomeLayout } from 'routes/layouts/WelcomeLayout'
 import { usePeriodicUpdates } from 'hooks/usePeriodicUpdates'
+import { useAnalytics } from 'hooks/useAnalytics'
 
 const App = React.lazy(() => import('App'))
 
@@ -26,6 +27,20 @@ export const Main = () => {
         ammendHTMLBody: true,
         useDefaultOSTheme: true,
     })
+
+    const { analytics, anonymousId } = useAnalytics()
+    useEffect(() => {
+        analytics?.identify(
+            anonymousId,
+            {
+                anonymousId,
+            },
+            () => {
+                console.log('[analytics] anonymousId', anonymousId)
+            },
+        )
+    }, [analytics, anonymousId])
+
     usePeriodicUpdates()
 
     return (

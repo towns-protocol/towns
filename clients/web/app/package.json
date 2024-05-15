@@ -43,6 +43,7 @@
         "@river-build/generated": "workspace:^",
         "@river-build/proto": "workspace:^",
         "@river-build/web3": "workspace:^",
+        "@rudderstack/analytics-js": "^3.1.0",
         "@tanstack/query-async-storage-persister": "^5.20.1",
         "@tanstack/react-query": "^5.20.1",
         "@tanstack/react-query-devtools": "^5.20.1",

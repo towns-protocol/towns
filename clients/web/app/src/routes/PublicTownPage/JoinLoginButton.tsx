@@ -13,6 +13,7 @@ import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { TokenVerification } from '@components/Web3/TokenVerification/TokenVerification'
 import { useErrorToast } from 'hooks/useErrorToast'
+import { useAnalytics } from 'hooks/useAnalytics'
 import { useConnectedStatus } from './useConnectedStatus'
 import { usePublicPageLoginFlow } from './usePublicPageLoginFlow'
 
@@ -51,6 +52,8 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
 
     const hasSignerContext = !!signerContext
 
+    const { analytics } = useAnalytics()
+
     useEffect(() => {
         // Reminder to remove: https://linear.app/hnt-labs/issue/HNT-6108/reminder-to-remove-consolewarn-for-hnt-6051
         console.warn('[JoinLoginButton][hnt-6051]', 'states', {
@@ -74,6 +77,17 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
         if (isJoining) {
             return
         }
+
+        analytics?.track(
+            'Joined space',
+            {
+                spaceId,
+            },
+            () => {
+                console.log('[analytics][JoinLoginButton] clicked join space')
+            },
+        )
+
         preventJoinUseEffect.current = true
         startPublicPageloginFlow()
         if (meetsMembershipRequirements) {
@@ -84,11 +98,27 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
             // show asset verification modal
             showAssetModal()
         }
-    }, [isJoining, meetsMembershipRequirements, joinSpace, startPublicPageloginFlow])
+    }, [
+        isJoining,
+        analytics,
+        spaceId,
+        startPublicPageloginFlow,
+        meetsMembershipRequirements,
+        joinSpace,
+    ])
 
     const onLoginClick = useCallback(() => {
+        analytics?.track(
+            'Clicked Login',
+            {
+                spaceId,
+            },
+            () => {
+                console.log('[analytics][JoinLoginButton] clicked login')
+            },
+        )
         startPublicPageloginFlow()
-    }, [startPublicPageloginFlow])
+    }, [analytics, spaceId, startPublicPageloginFlow])
 
     useErrorToast({ errorMessage: isNoFundsError ? undefined : errorMessage })
 

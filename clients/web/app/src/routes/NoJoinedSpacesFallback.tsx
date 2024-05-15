@@ -12,6 +12,8 @@ import { Button, Heading, Icon, Stack, Text } from '@ui'
 
 import { useDevice } from 'hooks/useDevice'
 import { useStore } from 'store/store'
+import { replaceOAuthParameters, useAnalytics } from 'hooks/useAnalytics'
+import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { WelcomeLayout } from './layouts/WelcomeLayout'
 
 export const NoJoinedSpacesFallback = () => {
@@ -28,6 +30,11 @@ export const NoJoinedSpacesFallback = () => {
 
     const { isTouch } = useDevice()
     const location = useLocation()
+    const { loggedInWalletAddress } = useConnectivity()
+    const { analytics, anonymousId, pseudoId, setPseudoId } = useAnalytics()
+    const { data: abstractAccountAddress } = useAbstractAccountAddress({
+        rootKeyAddress: loggedInWalletAddress,
+    })
 
     useEffect(() => {
         console.warn('[NoJoinedSpacesFallback][hnt-5685]', 'route', {
@@ -37,6 +44,47 @@ export const NoJoinedSpacesFallback = () => {
             spaceIdBookmark,
         })
     }, [isTouch, location.pathname, location.search, spaceIdBookmark])
+
+    useEffect(() => {
+        if (pseudoId === undefined && loggedInWalletAddress && abstractAccountAddress) {
+            const pId = setPseudoId(loggedInWalletAddress)
+            analytics?.identify(
+                pId,
+                {
+                    abstractAccountAddress,
+                    anonymousId,
+                    loggedInWalletAddress,
+                    pseudoId: pId,
+                },
+                () => {
+                    console.log('[analytics][NoJoinedSpacesFallback] identify logged in user')
+                },
+            )
+        }
+    }, [
+        abstractAccountAddress,
+        analytics,
+        anonymousId,
+        loggedInWalletAddress,
+        pseudoId,
+        setPseudoId,
+    ])
+
+    useEffect(() => {
+        analytics?.page(
+            'home-page',
+            'No Joined Spaces Fallback',
+            {
+                path: '*',
+                locationPathname: location.pathname,
+                locationSearch: replaceOAuthParameters(location.search),
+                anonymousId,
+            },
+            () => {
+                console.log('[analytics] No Joined Spaces Fallback')
+            },
+        )
+    }, [analytics, anonymousId, location.pathname, location.search])
 
     useEffect(() => {
         if (!client) {

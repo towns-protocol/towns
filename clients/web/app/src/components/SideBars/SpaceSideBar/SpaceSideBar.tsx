@@ -26,6 +26,7 @@ import { useDevice } from 'hooks/useDevice'
 import { useUnseenChannelIds } from 'hooks/useUnseenChannelIdsCount'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { OffscreenMarker, OffscreenPill } from '@components/OffscreenPill/OffscreenPill'
+import { useAnalytics } from 'hooks/useAnalytics'
 import * as styles from './SpaceSideBar.css'
 import { SpaceSideBarHeader } from './SpaceSideBarHeader'
 import { SidebarLoadingAnimation } from './SpaceSideBarLoading'
@@ -47,10 +48,14 @@ export const SpaceSideBar = (props: Props) => {
     const scrollRef = useRef<HTMLDivElement>(null)
 
     const unreadThreadsCount = useSpaceThreadRootsUnreadCount()
+    const { analytics } = useAnalytics()
 
     const [isCreateChannelModalVisible, setCreateChannelModalVisible] = useState(false)
     const onHideCreateChannel = useEvent(() => setCreateChannelModalVisible(false))
     const onShowCreateChannel = useEvent(() => {
+        analytics?.track('Opened create channel modal', { spaceId: space.id }, () => {
+            console.log('[analytics] Opened create channel modal')
+        })
         openPanel(CHANNEL_INFO_PARAMS.CREATE_CHANNEL)
     })
 

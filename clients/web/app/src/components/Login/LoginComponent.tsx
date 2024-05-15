@@ -8,6 +8,7 @@ import { Box, FancyButton } from '@ui'
 import { useErrorToast } from 'hooks/useErrorToast'
 import { mapToErrorMessage } from '@components/Web3/utils'
 import { useStore } from 'store/store'
+import { useAnalytics } from 'hooks/useAnalytics'
 import { LINKED_RESOURCE } from '../../data/rel'
 
 type LoginComponentProps = {
@@ -34,6 +35,7 @@ function LoginComponent({
     const state = useStore.getState()
     const spaceIdBookmark = state.spaceIdBookmark
     const channelBookmark = spaceIdBookmark ? state.townRouteBookmarks[spaceIdBookmark] : undefined
+    const { analytics } = useAnalytics()
 
     const rel = useMemo(() => {
         return searchParams.get(LINKED_RESOURCE) ?? ''
@@ -79,9 +81,14 @@ function LoginComponent({
         if (!privyReady || isBusy) {
             return
         }
+        if (!onLoginClick) {
+            analytics?.track('Clicked Login', {}, () => {
+                console.log('[analytics][LoginComponent] clicked login')
+            })
+        }
         await onLoginClick?.()
         await login()
-    }, [onLoginClick, isBusy, login, privyReady])
+    }, [privyReady, isBusy, onLoginClick, login, analytics])
 
     useErrorToast({
         errorMessage,

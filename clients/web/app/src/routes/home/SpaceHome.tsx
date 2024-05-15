@@ -6,6 +6,8 @@ import { useSearchParams } from 'react-router-dom'
 import { PATHS } from 'routes'
 import { useStore } from 'store/store'
 import { useDevice } from 'hooks/useDevice'
+import { replaceOAuthParameters, useAnalytics } from 'hooks/useAnalytics'
+import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { LINKED_RESOURCE } from '../../data/rel'
 
 export const SpaceHome = () => {
@@ -15,10 +17,15 @@ export const SpaceHome = () => {
     const { signerContext } = useTownsContext()
     const spaceId = space?.id
     const navigate = useNavigate()
+    const { analytics, anonymousId, pseudoId, setPseudoId } = useAnalytics()
     const channels = useMemo(
         () => space?.channelGroups.flatMap((g) => g.channels),
         [space?.channelGroups],
     )
+
+    const { data: abstractAccountAddress } = useAbstractAccountAddress({
+        rootKeyAddress: loggedInWalletAddress,
+    })
 
     let bookmarkedRoute = useStore((s) => (spaceId ? s.townRouteBookmarks[spaceId] : undefined))
 
@@ -55,6 +62,48 @@ export const SpaceHome = () => {
         rel,
         isTouch,
     ])
+
+    useEffect(() => {
+        if (pseudoId === undefined && loggedInWalletAddress && abstractAccountAddress) {
+            const pId = setPseudoId(loggedInWalletAddress)
+            analytics?.identify(
+                pId,
+                {
+                    abstractAccountAddress,
+                    anonymousId,
+                    loggedInWalletAddress,
+                    pseudoId: pId,
+                },
+                () => {
+                    console.log('[analytics][SpaceHome] identify logged in user')
+                },
+            )
+        }
+    }, [
+        abstractAccountAddress,
+        analytics,
+        anonymousId,
+        loggedInWalletAddress,
+        pseudoId,
+        setPseudoId,
+    ])
+
+    useEffect(() => {
+        analytics?.page(
+            'home-page',
+            'Home',
+            {
+                path: `${PATHS.SPACES}/${spaceId}`,
+                spaceId,
+                locationPathname: location.pathname,
+                locationSearch: replaceOAuthParameters(location.search),
+                anonymousId,
+            },
+            () => {
+                console.log('[analytics] Home')
+            },
+        )
+    }, [analytics, anonymousId, spaceId])
 
     useEffect(() => {
         // TODO: this hijacks invite routes if you leave and then rejoin a space with an invite link.

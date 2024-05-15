@@ -44,6 +44,7 @@ import { ConfirmBlockModal } from '@components/ConfirmBlockModal/ConfirmBlockMod
 import { PanelButton } from '@components/Panel/PanelButton'
 import { useBlockedUsers } from 'hooks/useBlockedUsers'
 import { UserPreferences } from '@components/UserProfile/UserPreferences'
+import { clearAnonymousId, useAnalytics } from 'hooks/useAnalytics'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 
 export const SpaceProfilePanel = () => {
@@ -70,6 +71,7 @@ const SpaceProfileWithoutAuth = () => {
     const isAccountAbstractionEnabled = client?.isAccountAbstractionEnabled()
     const [search] = useSearchParams()
     const space = useSpaceData()
+    const { analytics } = useAnalytics()
 
     const cameFromSpaceInfoPanel = search.get('spaceInfo') !== null
     const [searchParams] = useSearchParams()
@@ -103,6 +105,16 @@ const SpaceProfileWithoutAuth = () => {
     const { loggedInWalletAddress } = useConnectivity()
 
     const onLogoutClick = useEvent(() => {
+        analytics?.track(
+            'Clicked Logged Out',
+            {
+                userId: loggedInWalletAddress,
+            },
+            () => {
+                console.log('[analytics] clicked logged out')
+            },
+        )
+        clearAnonymousId()
         logout()
     })
 

@@ -42,6 +42,7 @@ import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { useDevice } from 'hooks/useDevice'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
+import { useAnalytics } from 'hooks/useAnalytics'
 import { mapToErrorMessage } from '../utils'
 
 type Props = {
@@ -81,6 +82,7 @@ export const CreateChannelForm = (props: Props) => {
     const { loggedInWalletAddress } = useConnectivity()
 
     const { isTouch } = useDevice()
+    const { analytics } = useAnalytics()
 
     const {
         createChannelTransaction,
@@ -209,9 +211,19 @@ export const CreateChannelForm = (props: Props) => {
                     createPrivyNotAuthenticatedNotification()
                     return
                 }
+
                 const txResult = await createChannelTransaction(channelInfo, signer)
                 console.log('[CreateChannelForm]', 'createChannelTransaction result', txResult)
                 if (txResult?.status === TransactionStatus.Success) {
+                    analytics?.track(
+                        'Created channel',
+                        {
+                            parentSpaceId: props.spaceId,
+                        },
+                        () => {
+                            console.log('[analytics] created channel')
+                        },
+                    )
                     invalidateQuery()
                     const channelId = txResult.data
                     if (channelId) {

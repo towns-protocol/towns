@@ -1,5 +1,5 @@
 import debug from 'debug'
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Link } from 'react-router-dom'
 import { useConnectivity, useContractSpaceInfo, useMyProfile } from 'use-towns-client'
@@ -24,6 +24,7 @@ import { ErrorReportForm } from '@components/ErrorReport/ErrorReport'
 import { atoms } from 'ui/styles/atoms.css'
 import { darkTheme } from 'ui/styles/vars.css'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
+import { useAnalytics } from 'hooks/useAnalytics'
 import { WelcomeLayout } from '../layouts/WelcomeLayout'
 import { BottomBarContent } from './BottomBarContent'
 import { useConnectedStatus } from './useConnectedStatus'
@@ -41,6 +42,22 @@ const PublicTownPageWithoutAuth = (props: { isPreview?: boolean; onClosePreview?
 
     const className = clsx([darkTheme, atoms({ color: 'default' })])
     const isJoining = !!usePublicPageLoginFlow().joiningSpace
+
+    const { analytics, anonymousId } = useAnalytics()
+
+    useEffect(() => {
+        analytics?.page(
+            'home-page',
+            'Public Town Page',
+            {
+                spaceId: spaceId ?? 'unknown',
+                anonymousId,
+            },
+            () => {
+                console.log('[analytics] Public Town Page')
+            },
+        )
+    }, [analytics, anonymousId, spaceId])
 
     return spaceInfo ? (
         <>

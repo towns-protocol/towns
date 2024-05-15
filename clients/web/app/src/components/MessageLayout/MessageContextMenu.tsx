@@ -10,6 +10,7 @@ import { ShortcutTooltip } from '@components/Shortcuts/ShortcutTooltip'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
 import { getLinkToMessage } from 'utils/getLinkToMessage'
+import { useAnalytics } from 'hooks/useAnalytics'
 import { useCreateUnreadMarker } from './hooks/useCreateUnreadMarker'
 import { DeleteMessagePrompt } from './DeleteMessagePrompt'
 
@@ -41,6 +42,7 @@ export const MessageContextMenu = (props: Props) => {
     const [copiedText, copy] = useCopyToClipboard()
     const hasCopied = !!copiedText
     const { loggedInWalletAddress } = useConnectivity()
+    const { analytics } = useAnalytics()
 
     const { hasPermission: canRedact } = useHasPermission({
         spaceId: spaceId ?? '',
@@ -58,9 +60,12 @@ export const MessageContextMenu = (props: Props) => {
                 console.error('no emoji id')
                 return
             }
+            analytics?.track('Reacted', { spaceId, channelId, emojiId: data.id }, () => {
+                console.log('[analytics] reaction')
+            })
             sendReaction(channelId, eventId, data.id)
         },
-        [channelId, eventId, sendReaction],
+        [analytics, channelId, eventId, sendReaction, spaceId],
     )
     const ref = useRef<HTMLDivElement>(null)
 

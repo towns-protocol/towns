@@ -47,6 +47,7 @@ import { ReplyContextProvider } from '@components/ReplyToMessageContext/ReplyToM
 import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
 import { useBlockedUsers } from 'hooks/useBlockedUsers'
 import { TouchPanelContext } from '@components/Panel/Panel'
+import { useAnalytics } from 'hooks/useAnalytics'
 
 type Props = {
     onTouchClose?: () => void
@@ -107,6 +108,7 @@ export const SpacesChannelComponent = (props: Props) => {
     const myMembership = useMyMembership(channelId)
 
     const { timeline: channelMessages } = useChannelTimeline()
+    const { analytics } = useAnalytics()
 
     const onSend = useCallback(
         (value: string, options: SendMessageOptions | undefined) => {
@@ -118,6 +120,19 @@ export const SpacesChannelComponent = (props: Props) => {
             if (!valid) {
                 return
             }
+
+            analytics?.track(
+                'Posted message',
+                {
+                    spaceId,
+                    channelId,
+                    threadId,
+                    messageType: options?.messageType,
+                },
+                () => {
+                    console.log('[analytics] sendMessage')
+                },
+            )
 
             // TODO: need to pass participants to sendReply in case of thread ?
             const optionsWithThreadId = replyToEventId
@@ -137,7 +152,7 @@ export const SpacesChannelComponent = (props: Props) => {
                 setReplyToEventId?.(null)
             }
         },
-        [channelId, replyToEventId, spaceId, sendMessage, setReplyToEventId],
+        [channelId, analytics, spaceId, threadId, replyToEventId, sendMessage, setReplyToEventId],
     )
 
     useEffect(() => {

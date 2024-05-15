@@ -7944,6 +7944,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@rudderstack/analytics-js@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "@rudderstack/analytics-js@npm:3.1.0"
+  checksum: e3247c2cf9bbb5822477db28f173498e4c9f10d6a2b51525a8238f15038e468e5ba57de3330ef9efbe585ed87ebf6d223c7764770051c4eec014e37c27a6cde4
+  languageName: node
+  linkType: hard
+
 "@rushstack/eslint-patch@npm:^1.1.0":
   version: 1.2.0
   resolution: "@rushstack/eslint-patch@npm:1.2.0"
@@ -18273,6 +18280,7 @@ __metadata:
     "@river-build/generated": "workspace:^"
     "@river-build/proto": "workspace:^"
     "@river-build/web3": "workspace:^"
+    "@rudderstack/analytics-js": ^3.1.0
     "@tanstack/query-async-storage-persister": ^5.20.1
     "@tanstack/react-query": ^5.20.1
     "@tanstack/react-query-devtools": ^5.20.1

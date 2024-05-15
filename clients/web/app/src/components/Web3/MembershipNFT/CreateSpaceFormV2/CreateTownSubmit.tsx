@@ -23,6 +23,7 @@ import { FailedUploadAfterSpaceCreation } from '@components/Notifications/Failed
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { convertTokenTypeToOperationType } from '@components/Tokens/utils'
 import { useStore } from 'store/store'
+import { useAnalytics } from 'hooks/useAnalytics'
 import { PanelType, TransactionDetails } from './types'
 import {
     CreateSpaceFormV2SchemaType,
@@ -54,6 +55,7 @@ export function CreateTownSubmit({
     const { data, isLoading, error, createSpaceTransactionWithRole } = useCreateSpaceTransaction()
 
     const navigate = useNavigate()
+    const { analytics } = useAnalytics()
 
     const hasError = useMemo(() => {
         return Boolean(error && error.name !== 'ACTION_REJECTED')
@@ -118,6 +120,7 @@ export function CreateTownSubmit({
             isTransacting: true,
             townAddress: undefined,
         })
+
         form.handleSubmit(
             async (values) => {
                 const { spaceName, membershipCost, membershipLimit, tokensGatingMembership } =
@@ -313,6 +316,25 @@ export function CreateTownSubmit({
                     const newPath = `/${PATHS.SPACES}/${result.data.spaceId}/${PATHS.CHANNELS}/${result.data.channelId}`
                     const networkId = result.data.spaceId
 
+                    analytics?.track(
+                        'Created Space',
+                        {
+                            spaceName: createSpaceInfo.name,
+                            everyone: isEveryone,
+                            pricingModule: isFixedPricing ? 'fixed' : 'dynamic',
+                            priceInWei: priceInWei.toString(),
+                            tokensGatingMembership: tokensGatingMembership.map((t) => ({
+                                address: t.address,
+                                chainId: t.chainId,
+                                tokenType: t.type,
+                                quantity: t.quantity,
+                            })),
+                        },
+                        () => {
+                            console.log('[analytics] created space')
+                        },
+                    )
+
                     if (values.spaceIconUrl && values.spaceIconFile) {
                         const { setLoadedResource } = useImageStore.getState()
                         const { spaceIconUrl, spaceIconFile } = values
@@ -368,12 +390,13 @@ export function CreateTownSubmit({
         form,
         getSigner,
         spaceDapp,
-        uploadImage,
-        uploadSpaceIdentity,
         membershipPricingType,
+        analytics,
         setPanelType,
         createSpaceTransactionWithRole,
+        uploadSpaceIdentity,
         setRecentlyMintedSpaceToken,
+        uploadImage,
         navigate,
     ])
 

@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import React, { forwardRef } from 'react'
 import { useInvites, useSpaceContext, useTownsContext } from 'use-towns-client'
+import { useEvent } from 'react-use-event-hook'
 import { ActionNavItem } from '@components/NavItem/ActionNavItem'
 import { SpaceNavItem } from '@components/NavItem/SpaceNavItem'
 import { RegisterMainShortcuts } from '@components/Shortcuts/RegisterMainShortcuts'
@@ -8,6 +9,7 @@ import { useDevice } from 'hooks/useDevice'
 import { PATHS } from 'routes'
 import { Box, Card, Dot, Icon } from '@ui'
 import { NavItem } from '@components/NavItem/_NavItem'
+import { useAnalytics } from 'hooks/useAnalytics'
 
 export const MainSideBar = () => {
     const { isTouch } = useDevice()
@@ -15,6 +17,13 @@ export const MainSideBar = () => {
     const { spaceId } = useSpaceContext()
     const invites = useInvites()
     const { dmUnreadChannelIds } = useTownsContext()
+    const { analytics } = useAnalytics()
+
+    const onShowCreateSpace = useEvent(() => {
+        analytics?.track('Clicked Create Space', {}, () => {
+            console.log('[analytics] clicked Create Space')
+        })
+    })
 
     return (
         <Card scroll absoluteFill width="x8">
@@ -64,6 +73,7 @@ export const MainSideBar = () => {
                         placement: 'horizontal',
                         immediate: true,
                     }}
+                    onClick={onShowCreateSpace}
                 />
             </TransitionItem>
             {invites.map((m) => (

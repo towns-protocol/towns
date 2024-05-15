@@ -105,6 +105,9 @@ const envSchema = z.object({
 
     VITE_ADDRESS_FOR_MAINNET_TOKENS_DEV: z.string().optional(),
     VITE_ENABLE_SLATE_PREVIEW: boolish.default(true),
+    // Analytics keys
+    VITE_RUDDERSTACK_DATA_PLANE_URL: z.string().url().optional(),
+    VITE_RUDDERSTACK_WRITE_KEY: z.string().optional(),
 })
 
 const parsed = envSchema.safeParse(import.meta.env)
@@ -125,6 +128,10 @@ const rawEnv = parsed.data
 //         // "gamma", "alpha", "beta".
 //     }
 // }
+
+export function isTest() {
+    return Boolean(process.env.JEST_WORKER_ID)
+}
 
 export const env = {
     ...rawEnv,

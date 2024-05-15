@@ -20,6 +20,7 @@ import { atoms } from 'ui/styles/atoms.css'
 import { useDevice } from 'hooks/useDevice'
 import { Panel } from '@components/Panel/Panel'
 import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDropContext'
+import { useAnalytics } from 'hooks/useAnalytics'
 
 type Props = {
     messageId: string
@@ -39,8 +40,21 @@ export const MessageThreadPanel = (props: Props) => {
     }, [messages, parentMessage])
 
     const { sendReply } = useSendReply(messageId)
+    const { analytics } = useAnalytics()
 
     const onSend = (value: string, options: SendMessageOptions | undefined) => {
+        analytics?.track(
+            'Posted message in thread',
+            {
+                spaceId,
+                channelId,
+                threadId: messageId,
+                messageType: options?.messageType,
+            },
+            () => {
+                console.log('[analytics] sendReply')
+            },
+        )
         sendReply(value, channelId, options, parent?.userIds)
     }
     const { users } = useUserLookupContext()

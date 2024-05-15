@@ -69,6 +69,8 @@ import { BrowseChannelsPanel } from '@components/BrowseChannelsPanel/BrowseChann
 import { useUnseenChannelIds } from 'hooks/useUnseenChannelIdsCount'
 import { usePanels } from 'routes/layouts/hooks/usePanels'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
+import { replaceOAuthParameters, useAnalytics } from 'hooks/useAnalytics'
+import { PATHS } from 'routes'
 import { ChannelItem } from '../AllChannelsList/AllChannelsList'
 import { TouchTabBarLayout } from '../layouts/TouchTabBarLayout'
 
@@ -99,6 +101,12 @@ export const TouchHome = () => {
     }, [memberIds, usersMap])
 
     const { unseenChannelIds, markChannelsAsSeen } = useUnseenChannelIds()
+    const spaceId = space?.id ?? ''
+    const hasSignerContext = signerContext !== undefined
+
+    const { data: abstractAccountAddress } = useAbstractAccountAddress({
+        rootKeyAddress: loggedInWalletAddress,
+    })
 
     const { hasPermission: canCreateChannel } = useHasPermission({
         spaceId: space?.id,
@@ -106,11 +114,11 @@ export const TouchHome = () => {
         permission: Permission.AddRemoveChannels,
     })
 
-    const hasSignerContext = signerContext !== undefined
+    const { analytics, anonymousId, pseudoId, setPseudoId } = useAnalytics()
 
     useEffect(() => {
         console.warn('[TouchHome][hnt-5685]', 'route', {
-            spaceId: space?.id ?? '',
+            spaceId,
             loggedInWalletAddress: loggedInWalletAddress ?? '',
             loginStatus,
             isAuthenticated,
@@ -118,7 +126,49 @@ export const TouchHome = () => {
             locationPathname: location.pathname,
             locationSearch: location.search,
         })
-    }, [isAuthenticated, loggedInWalletAddress, loginStatus, hasSignerContext, space?.id])
+    }, [isAuthenticated, loggedInWalletAddress, loginStatus, hasSignerContext, spaceId])
+
+    useEffect(() => {
+        if (pseudoId === undefined && loggedInWalletAddress && abstractAccountAddress) {
+            const pId = setPseudoId(loggedInWalletAddress)
+            analytics?.identify(
+                pId,
+                {
+                    abstractAccountAddress,
+                    anonymousId,
+                    loggedInWalletAddress,
+                    pseudoId: pId,
+                },
+                () => {
+                    console.log('[analytics][TouchHome] identify logged in user')
+                },
+            )
+        }
+    }, [
+        abstractAccountAddress,
+        analytics,
+        anonymousId,
+        loggedInWalletAddress,
+        pseudoId,
+        setPseudoId,
+    ])
+
+    useEffect(() => {
+        analytics?.page(
+            'authenticated-page',
+            'Home',
+            {
+                path: `${PATHS.SPACES}/${spaceId}`,
+                spaceId,
+                locationPathname: location.pathname,
+                locationSearch: replaceOAuthParameters(location.search),
+                anonymousId,
+            },
+            () => {
+                console.log('[analytics] Home')
+            },
+        )
+    }, [analytics, anonymousId, spaceId])
 
     const onFocus = useCallback(() => {
         setIsSearching(true)
