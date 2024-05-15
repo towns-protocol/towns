@@ -126,6 +126,7 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
         // if widnow has join param and user is authenticated and has an embedded wallet
         if (
             !preventJoinUseEffect.current &&
+            !isLoadingMeetsMembership &&
             !!joiningSpace &&
             signerContext &&
             isAuthenticated &&
@@ -134,7 +135,15 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
             preventJoinUseEffect.current = true
             onJoinClick()
         }
-    }, [isAuthenticated, connected, onJoinClick, joiningSpace, client, signerContext])
+    }, [
+        isAuthenticated,
+        connected,
+        onJoinClick,
+        joiningSpace,
+        client,
+        signerContext,
+        isLoadingMeetsMembership,
+    ])
 
     if (isPreview) {
         return
