@@ -9,7 +9,7 @@ import {
     isCombinedResultItem,
 } from '@components/SearchBar/types'
 import { useIndexMessages } from 'hooks/useIndexMessages'
-import { useStore } from 'store/store'
+import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { useMiniSearch } from './useMiniSearch'
 import { useSortedChannels } from './useSortedChannels'
 // import { useOramaSearch } from './hooks/useOramaSearch'
@@ -19,6 +19,7 @@ export const useSearch = (searchTerms: string) => {
     const { messages: indexedMessages, dmMessages: indexedDMMessages } = useIndexMessages()
 
     const { channelItems, dmItems } = useSortedChannels({ spaceId: '' })
+    const { closePanel, openPanel, isPanelOpen } = usePanelActions()
 
     const indexedChannels = useMemo<ChannelEventDocument[]>(
         () =>
@@ -60,10 +61,13 @@ export const useSearch = (searchTerms: string) => {
         [users],
     )
 
-    const setSidePanel = useStore((state) => state.setSidePanel)
     const openBugReport = useCallback(() => {
-        setSidePanel('bugReport')
-    }, [setSidePanel])
+        if (isPanelOpen('bug-report')) {
+            closePanel()
+        } else {
+            openPanel('bug-report')
+        }
+    }, [closePanel, isPanelOpen, openPanel])
 
     const indexedActions = useMemo<ActionEventDocument[]>(
         () => [
