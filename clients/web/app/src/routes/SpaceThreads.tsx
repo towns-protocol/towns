@@ -113,7 +113,7 @@ const NoContent = () => {
                 <Box padding="md" color="gray2" background="level2" rounded="sm">
                     <Icon type="threads" size="square_sm" />
                 </Box>
-                <Heading level={3}>No sthreads yet</Heading>
+                <Heading level={3}>No threads yet</Heading>
                 <Paragraph textAlign="center" color="gray2">
                     Threads help you keep track of conversations you engage with.
                 </Paragraph>
