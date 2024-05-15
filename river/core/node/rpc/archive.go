@@ -107,16 +107,16 @@ func StartServerInArchiveMode(
 	return streamService, nil
 }
 
-func RunArchive(ctx context.Context, cfg *config.Config) error {
+func RunArchive(ctx context.Context, cfg *config.Config, once bool) error {
 	log := dlog.FromCtx(ctx)
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	service, error := StartServerInArchiveMode(ctx, cfg, nil, nil)
-	if error != nil {
-		log.Error("Failed to start server", "error", error)
-		return error
+	service, err := StartServerInArchiveMode(ctx, cfg, nil, nil)
+	if err != nil {
+		log.Error("Failed to start server", "error", err)
+		return err
 	}
 	defer service.Close()
 
@@ -128,5 +128,15 @@ func RunArchive(ctx context.Context, cfg *config.Config) error {
 		service.exitSignal <- nil
 	}()
 
-	return <-service.exitSignal
+	if once {
+		go func() {
+			service.Archiver.WaitForStart()
+			service.Archiver.WaitForTasks()
+			service.exitSignal <- nil
+		}()
+	}
+
+	err = <-service.exitSignal
+	log.Info("Archiver stats", "stats", service.Archiver.GetStats())
+	return err
 }

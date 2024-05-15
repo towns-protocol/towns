@@ -7604,6 +7604,7 @@ __metadata:
   resolution: "@river-build/stress@workspace:river/core/stress"
   dependencies:
     "@babel/node": ^7.23.9
+    "@bufbuild/protobuf": ^1.4.1
     "@jest/globals": ^29.6.2
     "@river-build/dlog": "workspace:^"
     "@river-build/encryption": "workspace:^"

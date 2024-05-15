@@ -49,9 +49,21 @@ type Archiver struct {
 	// set to done when archiver has started
 	startedWG sync.WaitGroup
 
-	streamCount     atomic.Uint64
-	successOpsCount atomic.Uint64
-	failedOpsCount  atomic.Uint64
+	streamsExamined     atomic.Uint64
+	streamsCreated      atomic.Uint64
+	streamsUpToDate     atomic.Uint64
+	successOpsCount     atomic.Uint64
+	failedOpsCount      atomic.Uint64
+	miniblocksProcessed atomic.Uint64
+}
+
+type ArchiverStats struct {
+	StreamsExamined     uint64
+	StreamsCreated      uint64
+	StreamsUpToDate     uint64
+	SuccessOpsCount     uint64
+	FailedOpsCount      uint64
+	MiniblocksProcessed uint64
 }
 
 type archiveTask struct {
@@ -96,7 +108,7 @@ func (a *Archiver) ArchiveStream(ctx context.Context, streamWithId *contracts.St
 			},
 		)
 		if !loaded {
-			a.streamCount.Add(1)
+			a.streamsExamined.Add(1)
 		}
 	}
 
@@ -108,7 +120,15 @@ func (a *Archiver) ArchiveStream(ctx context.Context, streamWithId *contracts.St
 
 	numBlocksInContract := streamWithId.Stream.LastMiniblockNum + 1
 	if stream.numBlocksInContract > numBlocksInContract {
-		log.Info("Skipping old update out of order", "streamId", streamId, "mbSeenBefore", stream.numBlocksInContract, "mbGotInTask", numBlocksInContract)
+		log.Info(
+			"Skipping old update out of order",
+			"streamId",
+			streamId,
+			"mbSeenBefore",
+			stream.numBlocksInContract,
+			"mbGotInTask",
+			numBlocksInContract,
+		)
 		return nil
 	}
 	stream.numBlocksInContract = numBlocksInContract
@@ -120,6 +140,7 @@ func (a *Archiver) ArchiveStream(ctx context.Context, streamWithId *contracts.St
 			if err != nil {
 				return err
 			}
+			a.streamsCreated.Add(1)
 		} else if err != nil {
 			return err
 		} else {
@@ -128,9 +149,18 @@ func (a *Archiver) ArchiveStream(ctx context.Context, streamWithId *contracts.St
 		stream.loadedFromDb = true
 	}
 
-	log.Debug("Archiving stream", "streamId", streamId, "numBlocksInDb", stream.numBlocksInDb, "numBlocksInContract", stream.numBlocksInContract)
+	log.Debug(
+		"Archiving stream",
+		"streamId",
+		streamId,
+		"numBlocksInDb",
+		stream.numBlocksInDb,
+		"numBlocksInContract",
+		stream.numBlocksInContract,
+	)
 
 	if stream.numBlocksInDb >= stream.numBlocksInContract {
+		a.streamsUpToDate.Add(1)
 		return nil
 	}
 
@@ -190,6 +220,7 @@ func (a *Archiver) ArchiveStream(ctx context.Context, streamWithId *contracts.St
 			return err
 		}
 		stream.numBlocksInDb += uint64(len(serialized))
+		a.miniblocksProcessed.Add(uint64(len(serialized)))
 	}
 	return nil
 }
@@ -227,7 +258,11 @@ func (a *Archiver) startImpl(ctx context.Context) error {
 	var err error
 	var streams []contracts.StreamWithId
 	for i := int64(0); !lastPage; i += pageSize {
-		streams, lastPage, err = a.contract.StreamRegistry.GetPaginatedStreams(callOpts, big.NewInt(i), big.NewInt(i+pageSize))
+		streams, lastPage, err = a.contract.StreamRegistry.GetPaginatedStreams(
+			callOpts,
+			big.NewInt(i),
+			big.NewInt(i+pageSize),
+		)
 		if err != nil {
 			return WrapRiverError(
 				Err_CANNOT_CALL_CONTRACT,
@@ -261,8 +296,15 @@ func (a *Archiver) WaitForStart() {
 	a.startedWG.Wait()
 }
 
-func (a *Archiver) GetStats() (uint64, uint64, uint64) {
-	return a.streamCount.Load(), a.successOpsCount.Load(), a.failedOpsCount.Load()
+func (a *Archiver) GetStats() *ArchiverStats {
+	return &ArchiverStats{
+		StreamsExamined:     a.streamsExamined.Load(),
+		StreamsCreated:      a.streamsCreated.Load(),
+		StreamsUpToDate:     a.streamsUpToDate.Load(),
+		SuccessOpsCount:     a.successOpsCount.Load(),
+		FailedOpsCount:      a.failedOpsCount.Load(),
+		MiniblocksProcessed: a.miniblocksProcessed.Load(),
+	}
 }
 
 func (a *Archiver) worker(ctx context.Context) {

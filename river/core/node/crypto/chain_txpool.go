@@ -159,7 +159,7 @@ func NewTransactionPoolWithPolicies(
 		signerFn:      signerFn,
 	}
 
-	chainMonitor.OnHeader(txPool.OnHead)
+	chainMonitor.OnBlock(txPool.OnBlock)
 
 	return txPool, nil
 }
@@ -275,7 +275,7 @@ func (r *transactionPool) Submit(
 	return pendingTx, nil
 }
 
-func (r *transactionPool) OnHead(ctx context.Context, head *types.Header) {
+func (r *transactionPool) OnBlock(ctx context.Context, blockNumber BlockNumber) {
 	log := dlog.FromCtx(ctx).With("chain", r.chainID)
 
 	if !r.mu.TryLock() {
@@ -335,8 +335,17 @@ func (r *transactionPool) OnHead(ctx context.Context, head *types.Header) {
 		}
 	}
 
+	var head *types.Header
 	// replace transactions that are eligible for it
 	for pendingTx := r.firstPendingTx; pendingTx != nil; pendingTx = pendingTx.next {
+		if head == nil {
+			// replace transactions that are eligible for it
+			head, err = r.client.HeaderByNumber(ctx, blockNumber.AsBigInt())
+			if err != nil {
+				log.Error("unable to retrieve chain head", "err", err)
+				return
+			}
+		}
 		if r.replacePolicy.Eligible(head, pendingTx.lastSubmit, pendingTx.tx) {
 			pendingTx.txOpts.GasPrice, pendingTx.txOpts.GasFeeCap, pendingTx.txOpts.GasTipCap = r.pricePolicy.Reprice(
 				head, pendingTx.tx)

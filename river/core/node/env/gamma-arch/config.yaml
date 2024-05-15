@@ -1,0 +1,41 @@
+# For running server in archive mode ('archive' command)
+port: 4040
+useHttps: false
+
+# Blockchain configuration
+baseChain:
+    chainId: 84532
+    networkUrl: 'https://nexus-rpc-worker-test-beta.towns.com/84532?key=NOT_SET'
+    blockTimeMs: 2000
+riverChain:
+    chainId: 6524490
+    networkUrl: 'https://devnet.rpc.river.build'
+    blockTimeMs: 2000
+
+# Base contracts
+architectContract:
+    address: '0x968696BC59431Ef085441641f550C8e2Eaca8BEd'
+
+# River contracts
+registryContract:
+    address: '0xf18E98D36A6bd1aDb52F776aCc191E69B491c070'
+
+log:
+    file: ''
+    level: info
+    console: true
+    noColor: false
+    format: text
+
+database:
+    url: postgres://postgres:postgres@localhost:5433/river?sslmode=disable&pool_max_conns=1000
+    database: ''
+    user: ''
+    password: ''
+    port: ''
+    extra: ''
+    host: ''
+storageType: postgres
+
+archive:
+    archiveId: 'ArchLocalGamma'

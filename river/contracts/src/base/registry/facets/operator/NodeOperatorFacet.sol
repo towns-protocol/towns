@@ -134,6 +134,7 @@ contract NodeOperatorFacet is INodeOperator, OwnableBase, ERC721ABase, Facet {
 
     if (!ds.operators.contains(msg.sender))
       revert NodeOperator__NotRegistered();
+    if (rate > 100) revert NodeOperator__InvalidCommissionRate();
     ds.commissionByOperator[msg.sender] = rate;
     emit OperatorCommissionChanged(msg.sender, rate);
   }

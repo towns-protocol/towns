@@ -19,6 +19,14 @@ struct StreamWithId {
   Stream stream;
 }
 
+struct SetMiniblock {
+  bytes32 streamId;
+  bytes32 prevMiniBlockHash;
+  bytes32 lastMiniblockHash;
+  uint64 lastMiniblockNum;
+  bool isSealed;
+}
+
 enum NodeStatus {
   NotInitialized, // Initial entry, node is not contacted in any way
   RemoteOnly, // Node proxies data, does not store any data

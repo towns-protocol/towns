@@ -23,6 +23,7 @@ interface INodeOperatorBase {
   error NodeOperator__NotEnoughStake();
   error NodeOperator__InvalidStakeRequirement();
   error NodeOperator__ClaimAddressNotChanged();
+  error NodeOperator__InvalidCommissionRate();
   // =============================================================
   //                           Events
   // =============================================================

@@ -345,14 +345,6 @@ describe('streamRpcClient', () => {
         expect(err!.toString()).toContain('[unknown] error requested through Info request')
     })
 
-    test('panic', async () => {
-        const client = await makeTestRpcClient()
-        expect(client).toBeDefined()
-        await expect(client.info({ debug: ['panic'] })).rejects.toThrow(
-            '[unknown] TypeError: fetch failed',
-        )
-    })
-
     test('charlieUsesRegularOldWallet', async () => {
         const wallet = ethers.Wallet.createRandom()
         const charliesContext = await makeUserContextFromWallet(wallet)

@@ -1,28 +1,17 @@
 import 'fake-indexeddb/auto' // used to mock indexdb in dexie, don't remove
-import os from 'os'
 import { isDecryptedEvent, makeRiverConfig } from '@river/sdk'
 import { dlogger } from '@river-build/dlog'
 import { InfoRequest } from '@river-build/proto'
 import { EncryptionDelegate } from '@river-build/encryption'
-import { makeConnection } from './connection'
-import { makeStressClient } from './stressClient'
-import { expect } from './expect'
+import { makeConnection } from './utils/connection'
+import { makeStressClient } from './utils/stressClient'
+import { expect } from './utils/expect'
+import { printSystemInfo } from './utils/utils'
+import { waitFor } from './utils/waitFor'
 
-const logger = dlogger('csb:stress:run')
+const logger = dlogger('stress:index')
 const config = makeRiverConfig()
 logger.info('config', config)
-
-function printSystemInfo() {
-    logger.log('System Info:', {
-        OperatingSystem: `${os.type()} ${os.release()}`,
-        SystemUptime: `${os.uptime()} seconds`,
-        TotalMemory: `${os.totalmem() / 1024 / 1024} MB`,
-        FreeMemory: `${os.freemem() / 1024 / 1024} MB`,
-        CPUCount: `${os.cpus().length}`,
-        CPUModel: `${os.cpus()[0].model}`,
-        CPUSpeed: `${os.cpus()[0].speed} MHz`,
-    })
-}
 
 async function spamInfo(count: number) {
     const connection = await makeConnection(config)
@@ -32,30 +21,20 @@ async function spamInfo(count: number) {
         const info = await rpcClient.info(new InfoRequest({}), {
             timeoutMs: 10000,
         })
-        printSystemInfo()
+        printSystemInfo(logger)
         logger.log(`info ${i}`, info)
-    }
-}
-
-async function waitFor(condition: () => boolean, timeoutMs = 10000) {
-    const start = Date.now()
-    while (!condition()) {
-        if (Date.now() - start > timeoutMs) {
-            throw new Error('timeout')
-        }
-        await new Promise((resolve) => setTimeout(resolve, 100))
     }
 }
 
 export async function sendAMessage() {
     logger.log('=======================send a message - start =======================')
-    const bob = await makeStressClient(config)
+    const bob = await makeStressClient(config, 0)
     await bob.fundWallet()
     const { spaceId, defaultChannelId } = await bob.createSpace("bob's space")
     await bob.sendMessage(defaultChannelId, 'hello')
 
     logger.log('=======================send a message - alice =======================')
-    const alice = await makeStressClient(config)
+    const alice = await makeStressClient(config, 1)
     await alice.fundWallet()
     await alice.joinSpace(spaceId)
     logger.log('=======================send a message - alice join space =======================')
@@ -124,7 +103,7 @@ async function encryptDecrypt() {
     bobAccount.free()
 }
 
-printSystemInfo()
+printSystemInfo(logger)
 
 await spamInfo(1)
 await encryptDecrypt()

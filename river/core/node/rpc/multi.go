@@ -46,7 +46,13 @@ func formatDurationToSeconds(d time.Duration) string {
 	}
 }
 
-func getHttpStatus(ctx context.Context, baseUrl string, result *statusinfo.HttpResult, client *http.Client, wg *sync.WaitGroup) {
+func getHttpStatus(
+	ctx context.Context,
+	baseUrl string,
+	result *statusinfo.HttpResult,
+	client *http.Client,
+	wg *sync.WaitGroup,
+) {
 	log := dlog.FromCtx(ctx)
 	defer wg.Done()
 

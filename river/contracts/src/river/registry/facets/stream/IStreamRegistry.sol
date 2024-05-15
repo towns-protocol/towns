@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {Stream, StreamWithId} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
+import {Stream, StreamWithId, SetMiniblock} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
 
 // libraries
 
@@ -24,6 +24,13 @@ interface IStreamRegistry {
     bytes32 lastMiniblockHash,
     uint64 lastMiniblockNum,
     bool isSealed
+  );
+
+  event StreamLastMiniblockUpdateFailed(
+    bytes32 streamId,
+    bytes32 lastMiniblockHash,
+    uint64 lastMiniblockNum,
+    string reason
   );
 
   event StreamPlacementUpdated(
@@ -60,6 +67,10 @@ interface IStreamRegistry {
     bytes32 lastMiniblockHash,
     uint64 lastMiniblockNum,
     bool isSealed
+  ) external;
+
+  function setStreamLastMiniblockBatch(
+    SetMiniblock[] calldata miniblocks
   ) external;
 
   function placeStreamOnNode(bytes32 streamId, address nodeAddress) external;

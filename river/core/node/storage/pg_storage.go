@@ -5,6 +5,7 @@ import (
 	"embed"
 	"encoding/hex"
 	"fmt"
+	"log/slog"
 	"os"
 	"strings"
 	"time"
@@ -53,8 +54,9 @@ const (
 var dbCalls = infra.NewSuccessMetrics(infra.DB_CALLS_CATEGORY, nil)
 
 type txRunnerOpts struct {
-	disableCompareUUID bool
-	streaming          bool
+	disableCompareUUID  bool
+	streaming           bool
+	skipLoggingNotFound bool
 }
 
 func rollbackTx(ctx context.Context, tx pgx.Tx) {
@@ -187,7 +189,11 @@ func (s *PostgresEventStore) txRunner(
 				}
 				log.Warn("pg.txRunner: transaction failed", "name", name, "pgErr", pgErr)
 			} else {
-				log.Warn("pg.txRunner: transaction failed", "name", name, "err", err)
+				level := slog.LevelWarn
+				if opts != nil && opts.skipLoggingNotFound && AsRiverError(err).Code == Err_NOT_FOUND {
+					level = slog.LevelDebug
+				}
+				log.Log(ctx, level, "pg.txRunner: transaction failed", "name", name, "err", err)
 			}
 			return WrapRiverError(
 				Err_DB_OPERATION_FAILURE,
@@ -320,7 +326,7 @@ func (s *PostgresEventStore) GetMaxArchivedMiniblockNumber(ctx context.Context, 
 		func(ctx context.Context, tx pgx.Tx) error {
 			return s.getMaxArchivedMiniblockNumberTx(ctx, tx, streamId, &maxArchivedMiniblockNumber)
 		},
-		nil,
+		&txRunnerOpts{skipLoggingNotFound: true},
 		"streamId", streamId,
 	)
 	if err != nil {

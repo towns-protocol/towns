@@ -17,7 +17,10 @@ import (
 type Entitlements interface {
 	IsEntitledToChannel(opts *bind.CallOpts, channelId [32]byte, user common.Address, permission string) (bool, error)
 	IsEntitledToSpace(opts *bind.CallOpts, user common.Address, permission string) (bool, error)
-	GetEntitlementDataByPermission(opts *bind.CallOpts, permission string) ([]base.IEntitlementsManagerEntitlementData, error)
+	GetEntitlementDataByPermission(
+		opts *bind.CallOpts,
+		permission string,
+	) ([]base.IEntitlementsManagerEntitlementData, error)
 }
 type entitlementsProxy struct {
 	contract *base.EntitlementsManager
@@ -28,7 +31,10 @@ type entitlementsProxy struct {
 var (
 	isEntitledToChannelCalls             = infra.NewSuccessMetrics("is_entitled_to_channel_calls", contractCalls)
 	isEntitledToSpaceCalls               = infra.NewSuccessMetrics("is_entitled_to_space_calls", contractCalls)
-	getEntitlementDataByPermissionsCalls = infra.NewSuccessMetrics("get_entitlement_data_by_permissions_calls", contractCalls)
+	getEntitlementDataByPermissionsCalls = infra.NewSuccessMetrics(
+		"get_entitlement_data_by_permissions_calls",
+		contractCalls,
+	)
 )
 
 func NewEntitlements(
@@ -142,7 +148,10 @@ func (proxy *entitlementsProxy) IsEntitledToSpace(
 	return result, nil
 }
 
-func (proxy *entitlementsProxy) GetEntitlementDataByPermission(opts *bind.CallOpts, permission string) ([]base.IEntitlementsManagerEntitlementData, error) {
+func (proxy *entitlementsProxy) GetEntitlementDataByPermission(
+	opts *bind.CallOpts,
+	permission string,
+) ([]base.IEntitlementsManagerEntitlementData, error) {
 	log := dlog.FromCtx(proxy.ctx)
 	start := time.Now()
 	defer infra.StoreExecutionTimeMetrics("GetEntitlementDataByPermissions", infra.CONTRACT_CALLS_CATEGORY, start)
@@ -166,5 +175,4 @@ func (proxy *entitlementsProxy) GetEntitlementDataByPermission(opts *bind.CallOp
 		time.Since(start).Milliseconds(),
 	)
 	return result, nil
-
 }

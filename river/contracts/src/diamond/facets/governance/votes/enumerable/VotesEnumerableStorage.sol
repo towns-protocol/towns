@@ -14,6 +14,8 @@ library VotesEnumerableStorage {
 
   struct Layout {
     EnumerableSet.AddressSet delegators;
+    mapping(address => EnumerableSet.AddressSet) delegatorsByDelegatee;
+    mapping(address => uint256) delegationTimeForDelegator;
   }
 
   function layout() internal pure returns (Layout storage l) {

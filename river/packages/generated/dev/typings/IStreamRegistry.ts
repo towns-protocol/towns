@@ -59,6 +59,28 @@ export type StreamWithIdStructOutput = [string, StreamStructOutput] & {
   stream: StreamStructOutput;
 };
 
+export type SetMiniblockStruct = {
+  streamId: PromiseOrValue<BytesLike>;
+  prevMiniBlockHash: PromiseOrValue<BytesLike>;
+  lastMiniblockHash: PromiseOrValue<BytesLike>;
+  lastMiniblockNum: PromiseOrValue<BigNumberish>;
+  isSealed: PromiseOrValue<boolean>;
+};
+
+export type SetMiniblockStructOutput = [
+  string,
+  string,
+  string,
+  BigNumber,
+  boolean
+] & {
+  streamId: string;
+  prevMiniBlockHash: string;
+  lastMiniblockHash: string;
+  lastMiniblockNum: BigNumber;
+  isSealed: boolean;
+};
+
 export interface IStreamRegistryInterface extends utils.Interface {
   functions: {
     "allocateStream(bytes32,address[],bytes32,bytes)": FunctionFragment;
@@ -73,6 +95,7 @@ export interface IStreamRegistryInterface extends utils.Interface {
     "placeStreamOnNode(bytes32,address)": FunctionFragment;
     "removeStreamFromNode(bytes32,address)": FunctionFragment;
     "setStreamLastMiniblock(bytes32,bytes32,bytes32,uint64,bool)": FunctionFragment;
+    "setStreamLastMiniblockBatch((bytes32,bytes32,bytes32,uint64,bool)[])": FunctionFragment;
   };
 
   getFunction(
@@ -89,6 +112,7 @@ export interface IStreamRegistryInterface extends utils.Interface {
       | "placeStreamOnNode"
       | "removeStreamFromNode"
       | "setStreamLastMiniblock"
+      | "setStreamLastMiniblockBatch"
   ): FunctionFragment;
 
   encodeFunctionData(
@@ -150,6 +174,10 @@ export interface IStreamRegistryInterface extends utils.Interface {
       PromiseOrValue<boolean>
     ]
   ): string;
+  encodeFunctionData(
+    functionFragment: "setStreamLastMiniblockBatch",
+    values: [SetMiniblockStruct[]]
+  ): string;
 
   decodeFunctionResult(
     functionFragment: "allocateStream",
@@ -196,14 +224,22 @@ export interface IStreamRegistryInterface extends utils.Interface {
     functionFragment: "setStreamLastMiniblock",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "setStreamLastMiniblockBatch",
+    data: BytesLike
+  ): Result;
 
   events: {
     "StreamAllocated(bytes32,address[],bytes32,bytes)": EventFragment;
+    "StreamLastMiniblockUpdateFailed(bytes32,bytes32,uint64,string)": EventFragment;
     "StreamLastMiniblockUpdated(bytes32,bytes32,uint64,bool)": EventFragment;
     "StreamPlacementUpdated(bytes32,address,bool)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "StreamAllocated"): EventFragment;
+  getEvent(
+    nameOrSignatureOrTopic: "StreamLastMiniblockUpdateFailed"
+  ): EventFragment;
   getEvent(nameOrSignatureOrTopic: "StreamLastMiniblockUpdated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "StreamPlacementUpdated"): EventFragment;
 }
@@ -220,6 +256,20 @@ export type StreamAllocatedEvent = TypedEvent<
 >;
 
 export type StreamAllocatedEventFilter = TypedEventFilter<StreamAllocatedEvent>;
+
+export interface StreamLastMiniblockUpdateFailedEventObject {
+  streamId: string;
+  lastMiniblockHash: string;
+  lastMiniblockNum: BigNumber;
+  reason: string;
+}
+export type StreamLastMiniblockUpdateFailedEvent = TypedEvent<
+  [string, string, BigNumber, string],
+  StreamLastMiniblockUpdateFailedEventObject
+>;
+
+export type StreamLastMiniblockUpdateFailedEventFilter =
+  TypedEventFilter<StreamLastMiniblockUpdateFailedEvent>;
 
 export interface StreamLastMiniblockUpdatedEventObject {
   streamId: string;
@@ -337,6 +387,11 @@ export interface IStreamRegistry extends BaseContract {
       isSealed: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
+
+    setStreamLastMiniblockBatch(
+      miniblocks: SetMiniblockStruct[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
   };
 
   allocateStream(
@@ -397,6 +452,11 @@ export interface IStreamRegistry extends BaseContract {
     lastMiniblockHash: PromiseOrValue<BytesLike>,
     lastMiniblockNum: PromiseOrValue<BigNumberish>,
     isSealed: PromiseOrValue<boolean>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  setStreamLastMiniblockBatch(
+    miniblocks: SetMiniblockStruct[],
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -463,6 +523,11 @@ export interface IStreamRegistry extends BaseContract {
       isSealed: PromiseOrValue<boolean>,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    setStreamLastMiniblockBatch(
+      miniblocks: SetMiniblockStruct[],
+      overrides?: CallOverrides
+    ): Promise<void>;
   };
 
   filters: {
@@ -478,6 +543,19 @@ export interface IStreamRegistry extends BaseContract {
       genesisMiniblockHash?: null,
       genesisMiniblock?: null
     ): StreamAllocatedEventFilter;
+
+    "StreamLastMiniblockUpdateFailed(bytes32,bytes32,uint64,string)"(
+      streamId?: null,
+      lastMiniblockHash?: null,
+      lastMiniblockNum?: null,
+      reason?: null
+    ): StreamLastMiniblockUpdateFailedEventFilter;
+    StreamLastMiniblockUpdateFailed(
+      streamId?: null,
+      lastMiniblockHash?: null,
+      lastMiniblockNum?: null,
+      reason?: null
+    ): StreamLastMiniblockUpdateFailedEventFilter;
 
     "StreamLastMiniblockUpdated(bytes32,bytes32,uint64,bool)"(
       streamId?: null,
@@ -565,6 +643,11 @@ export interface IStreamRegistry extends BaseContract {
       isSealed: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
+
+    setStreamLastMiniblockBatch(
+      miniblocks: SetMiniblockStruct[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
   };
 
   populateTransaction: {
@@ -626,6 +709,11 @@ export interface IStreamRegistry extends BaseContract {
       lastMiniblockHash: PromiseOrValue<BytesLike>,
       lastMiniblockNum: PromiseOrValue<BigNumberish>,
       isSealed: PromiseOrValue<boolean>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setStreamLastMiniblockBatch(
+      miniblocks: SetMiniblockStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };

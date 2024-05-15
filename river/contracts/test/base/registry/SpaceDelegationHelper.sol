@@ -15,6 +15,7 @@ contract SpaceDelegationHelper is FacetHelper {
     addSelector(SpaceDelegationFacet.removeSpaceDelegation.selector);
     addSelector(SpaceDelegationFacet.getSpaceDelegation.selector);
     addSelector(SpaceDelegationFacet.getSpaceDelegationsByOperator.selector);
+    addSelector(SpaceDelegationFacet.setRiverToken.selector);
   }
 
   function facet() public pure override returns (address) {
@@ -26,6 +27,6 @@ contract SpaceDelegationHelper is FacetHelper {
   }
 
   function initializer() public pure override returns (bytes4) {
-    return "";
+    return SpaceDelegationFacet.__SpaceDelegation_init.selector;
   }
 }

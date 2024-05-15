@@ -4,6 +4,8 @@ import {
     makeSpaceStreamId,
     makeDefaultChannelStreamId,
     isDefined,
+    makeUserStreamId,
+    streamIdAsBytes,
 } from '@river/sdk'
 import { Connection, makeConnection } from './connection'
 import { CryptoStore, EntitlementsDelegate } from '@river-build/encryption'
@@ -15,12 +17,16 @@ import {
     SpaceDapp,
     getDynamicPricingModule,
 } from '@river-build/web3'
-import { dlogger } from '@river-build/dlog'
+import { dlogger, shortenHexString } from '@river-build/dlog'
+import { Wallet } from 'ethers'
+import { PlainMessage } from '@bufbuild/protobuf'
+import { ChannelMessage_Post_Attachment, ChannelMessage_Post_Mention } from '@river-build/proto'
+import { waitFor } from './waitFor'
 
-const logger = dlogger('csb:stress:stressClient')
+const logger = dlogger('stress:stressClient')
 
-export async function makeStressClient(config: RiverConfig, inConnection?: Connection) {
-    const connection = inConnection ?? (await makeConnection(config))
+export async function makeStressClient(config: RiverConfig, clientIndex: number, wallet?: Wallet) {
+    const connection = await makeConnection(config, wallet)
     const cryptoDb = new CryptoStore(`crypto-${connection.userId}`, connection.userId)
     const spaceDapp = new SpaceDapp(connection.config.base.chainConfig, connection.baseProvider)
     const delegate = {
@@ -47,19 +53,54 @@ export async function makeStressClient(config: RiverConfig, inConnection?: Conne
         cryptoDb,
         delegate,
     )
-    return new StressClient(config, connection, spaceDapp, streamsClient)
+    return new StressClient(config, clientIndex, connection, spaceDapp, streamsClient)
 }
 
 export class StressClient {
     constructor(
         public config: RiverConfig,
+        public clientIndex: number,
         public connection: Connection,
         public spaceDapp: SpaceDapp,
         public streamsClient: StreamsClient,
     ) {}
 
+    get logId(): string {
+        return `client${this.clientIndex}:${shortenHexString(this.connection.userId)}`
+    }
+
     async fundWallet() {
         await this.connection.baseProvider.fundWallet()
+    }
+
+    async waitFor<T>(
+        condition: () => T | Promise<T>,
+        opts?: {
+            interval?: number
+            timeoutMs?: number
+            logId?: string
+        },
+    ) {
+        opts = opts ?? {}
+        opts.logId = opts.logId ? `${opts.logId}:${this.logId}` : this.logId
+        return waitFor(condition, opts)
+    }
+
+    async userExists(inUserId?: string): Promise<boolean> {
+        const userId = inUserId ?? this.connection.userId
+        const userStreamId = makeUserStreamId(userId)
+        const response = await this.streamsClient.rpcClient.getStream({
+            streamId: streamIdAsBytes(userStreamId),
+            optional: true,
+        })
+        return response.stream !== undefined
+    }
+
+    async isMemberOf(streamId: string, inUserId?: string): Promise<boolean> {
+        const userId = inUserId ?? this.connection.userId
+        const stream = this.streamsClient.stream(streamId)
+        const streamStateView = stream?.view ?? (await this.streamsClient.getStream(streamId))
+        return streamStateView.userIsEntitledToKeyExchange(userId)
     }
 
     async createSpace(spaceName: string) {
@@ -116,17 +157,47 @@ export class StressClient {
         this.streamsClient.startSync()
     }
 
-    async sendMessage(channelId: string, message: string) {
-        await this.streamsClient.sendMessage(channelId, message)
+    async sendMessage(
+        channelId: string,
+        message: string,
+        options?: {
+            threadId?: string
+            replyId?: string
+            mentions?: PlainMessage<ChannelMessage_Post_Mention>[]
+            attachments?: PlainMessage<ChannelMessage_Post_Attachment>[]
+        },
+    ) {
+        const eventId = await this.streamsClient.sendChannelMessage_Text(channelId, {
+            threadId: options?.threadId,
+            threadPreview: options?.threadId ? '🙉' : undefined,
+            replyId: options?.replyId,
+            replyPreview: options?.replyId ? '🙈' : undefined,
+            content: {
+                body: message,
+                mentions: options?.mentions ?? [],
+                attachments: [],
+            },
+        })
+        return eventId
     }
 
-    async joinSpace(spaceId: string) {
-        const { issued } = await this.spaceDapp.joinSpace(
-            spaceId,
-            this.connection.wallet.address,
-            this.connection.baseProvider.wallet,
-        )
-        logger.log('joinSpace transaction', issued)
+    async sendReaction(channelId: string, refEventId: string, reaction: string) {
+        const eventId = await this.streamsClient.sendChannelMessage_Reaction(channelId, {
+            reaction,
+            refEventId,
+        })
+        return eventId
+    }
+
+    async joinSpace(spaceId: string, opts?: { skipMintMembership?: boolean }) {
+        if (opts?.skipMintMembership !== true) {
+            const { issued } = await this.spaceDapp.joinSpace(
+                spaceId,
+                this.connection.wallet.address,
+                this.connection.baseProvider.wallet,
+            )
+            logger.log('joinSpace transaction', issued)
+        }
         await this.startStreamsClient()
         await this.streamsClient.joinStream(spaceId)
         await this.streamsClient.joinStream(makeDefaultChannelStreamId(spaceId))

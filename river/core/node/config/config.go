@@ -76,6 +76,7 @@ type Config struct {
 
 	// Disable base chain contract usage.
 	DisableBaseChain bool
+	EnableTestAPIs   bool
 }
 
 type NetworkConfig struct {

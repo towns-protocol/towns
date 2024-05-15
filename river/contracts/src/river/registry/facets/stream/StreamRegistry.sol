@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IStreamRegistry} from "./IStreamRegistry.sol";
-import {Stream, StreamWithId} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
+import {Stream, StreamWithId, SetMiniblock} from "contracts/src/river/registry/libraries/RegistryStorage.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -139,6 +139,77 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
       lastMiniblockNum,
       isSealed
     );
+  }
+
+  function setStreamLastMiniblockBatch(
+    SetMiniblock[] calldata miniblocks
+  ) external onlyNode(msg.sender) {
+    for (uint256 i = 0; i < miniblocks.length; ++i) {
+      SetMiniblock calldata miniblock = miniblocks[i];
+
+      if (!ds.streams.contains(miniblock.streamId)) {
+        emit StreamLastMiniblockUpdateFailed(
+          miniblock.streamId,
+          miniblock.lastMiniblockHash,
+          miniblock.lastMiniblockNum,
+          RiverRegistryErrors.NOT_FOUND
+        );
+        continue;
+      }
+
+      Stream storage stream = ds.streamById[miniblock.streamId];
+
+      // TODO: this check is relaxed until storing of candidate miniblocks is
+      // implemented on river node side. Currently, if there is a failure
+      // to commit during mb production, contract and local storage
+      // get out of sync.
+      // This relaxation allows to get back in sync again.
+      // // Check if the stream is already sealed using bitwise AND
+      // if ((stream.flags & StreamFlags.SEALED) != 0)
+      //   emit StreamLastMiniblockUpdateFailed(
+      //     miniblock.streamId,
+      //     miniblock.lastMiniblockHash,
+      //     miniblock.lastMiniblockNum,
+      //     miniblock.isSealed,
+      //     RiverRegistryErrors.STREAM_SEALED);
+      //   continue
+      // }
+
+      // // Validate that the lastMiniblockNum is the next expected miniblock
+      // if (
+      //   stream.lastMiniblockNum + 1 != lastMiniblockNum ||
+      //   stream.lastMiniblockHash != prevMiniBlockHash
+      // ) {
+      //   emit StreamLastMiniblockUpdateFailed(
+      //     miniblock.streamId,
+      //     miniblock.lastMiniblockHash,
+      //     miniblock.lastMiniblockNum,
+      //     miniblock.isSealed,
+      //     RiverRegistryErrors.BAD_ARG);
+      //   continue;
+      // }
+
+      // Update the stream information
+      stream.lastMiniblockHash = miniblock.lastMiniblockHash;
+      stream.lastMiniblockNum = miniblock.lastMiniblockNum;
+
+      // Set the sealed flag if requested
+      if (miniblock.isSealed) {
+        stream.flags |= StreamFlags.SEALED;
+      }
+
+      // Delete genesis miniblock bytes if the stream is moving beyond genesis
+      if (miniblock.lastMiniblockNum == 1) {
+        delete ds.genesisMiniblockByStreamId[miniblock.streamId];
+      }
+
+      emit StreamLastMiniblockUpdated(
+        miniblock.streamId,
+        miniblock.lastMiniblockHash,
+        miniblock.lastMiniblockNum,
+        miniblock.isSealed
+      );
+    }
   }
 
   function placeStreamOnNode(

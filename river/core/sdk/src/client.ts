@@ -1590,7 +1590,12 @@ export class Client
             `Encrypting for users (shouldEncryptForInvitedMembers:`,
             members.map((u) => `${u} (${MembershipOp[MembershipOp.SO_JOIN]})`),
         )
-        return await this.downloadUserDeviceInfo(members)
+        const info = await this.downloadUserDeviceInfo(members)
+        this.logCall(
+            'keys: ',
+            Object.keys(info).map((key) => `${key} (${info[key].length})`),
+        )
+        return info
     }
 
     async downloadNewInboxMessages(): Promise<void> {

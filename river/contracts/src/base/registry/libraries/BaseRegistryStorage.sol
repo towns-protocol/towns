@@ -7,14 +7,7 @@ import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {BaseRegistryErrors} from "./BaseRegistryErrors.sol";
-
-// structs
-enum NodeOperatorStatus {
-  Exiting,
-  Standby,
-  Approved,
-  Active
-}
+import {NodeOperatorStatus} from "../facets/operator/NodeOperatorStorage.sol";
 
 struct AppStorage {
   // Operator Mappings
@@ -27,6 +20,13 @@ struct AppStorage {
   address spaceOwnerRegistry;
   address riverToken;
   address mainnetDelegation;
+  // Comission
+  mapping(address operator => uint256) commissionByOperator;
+  // Distribution
+  mapping(address operator => uint256) distributionByOperator;
+  mapping(address delegator => uint256) distributionByDelegator;
+  mapping(address space => uint256) spaceDelegationTime;
+  mapping(address operator => address[]) delegatorsByOperator;
 }
 
 library BaseRegistryStorage {

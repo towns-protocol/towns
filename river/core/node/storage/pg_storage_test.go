@@ -114,7 +114,7 @@ func TestPostgresAcquireConnections(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			require := require.New(t)
 
-			//dbUrl := strings.Replace(testDatabaseUrl, "pool_max_conns=1000", "pool_max_conns=10", 1)
+			// dbUrl := strings.Replace(testDatabaseUrl, "pool_max_conns=1000", "pool_max_conns=10", 1)
 			ctx, pgEventStore, testParams := setupTest()
 			defer testParams.closer()
 

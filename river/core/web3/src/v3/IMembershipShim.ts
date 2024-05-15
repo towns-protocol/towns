@@ -43,7 +43,7 @@ export class IMembershipShim extends BaseContractShim<
         receiver: string,
         abortController?: AbortController,
     ): Promise<{ issued: true; tokenId: string } | { issued: false; tokenId: undefined }> {
-        // TODO: this isn't picking up correct typed fucntion signature
+        // TODO: this isn't picking up correct typed fucntion signature, treating as string
         const issuedFilter = this.read.filters['MembershipTokenIssued(address,uint256)'](
             receiver,
         ) as string
@@ -51,37 +51,42 @@ export class IMembershipShim extends BaseContractShim<
             receiver,
         ) as string
 
-        return new Promise((resolve, reject) => {
-            const issuedListener = (recipient: string, tokenId: BigNumberish) => {
+        return new Promise<
+            { issued: true; tokenId: string } | { issued: false; tokenId: undefined }
+        >((resolve, _reject) => {
+            const cleanup = () => {
                 this.read.off(issuedFilter, issuedListener)
                 this.read.off(rejectedFilter, rejectedListener)
-
-                if (receiver !== recipient) {
-                    log.error('Received event for wrong recipient', { receiver, recipient })
-                    reject(new Error('Received event for wrong recipient'))
+                abortController?.signal.removeEventListener('abort', onAbort)
+            }
+            const onAbort = () => {
+                cleanup()
+                resolve({ issued: false, tokenId: undefined })
+            }
+            const issuedListener = (recipient: string, tokenId: BigNumberish) => {
+                if (receiver === recipient) {
+                    log.log('MembershipTokenIssued', { receiver, recipient, tokenId })
+                    cleanup()
+                    resolve({ issued: true, tokenId: BigNumber.from(tokenId).toString() })
+                } else {
+                    // This techincally should never happen, but we should log it
+                    log.log('MembershipTokenIssued mismatch', { receiver, recipient, tokenId })
                 }
-                resolve({ issued: true, tokenId: BigNumber.from(tokenId).toString() })
             }
 
             const rejectedListener = (recipient: string) => {
-                this.read.off(issuedFilter, issuedListener)
-                this.read.off(rejectedFilter, rejectedListener)
-                if (receiver !== recipient) {
-                    log.error('Received event for wrong recipient', { receiver, recipient })
-                    reject(new Error('Received event for wrong recipient'))
+                if (receiver === recipient) {
+                    cleanup()
+                    resolve({ issued: false, tokenId: undefined })
+                } else {
+                    // This techincally should never happen, but we should log it
+                    log.log('MembershipTokenIssued mismatch', { receiver, recipient })
                 }
-                resolve({ issued: false, tokenId: undefined })
             }
 
             this.read.on(issuedFilter, issuedListener)
             this.read.on(rejectedFilter, rejectedListener)
-
-            if (abortController) {
-                abortController.signal.addEventListener('abort', () => {
-                    this.read.off(issuedFilter, issuedListener)
-                    this.read.off(rejectedFilter, rejectedListener)
-                })
-            }
+            abortController?.signal.addEventListener('abort', onAbort)
         })
     }
 }

@@ -7,14 +7,14 @@
     "scripts": {
         "build": "tsc",
         "lint": "eslint . --ext .ts",
-        "my-node": "NODE_TLS_REJECT_UNAUTHORIZED=0 DEBUG='csb:*' DEBUG_DEPTH='10' node -r ../../scripts/node-no-warn.js --experimental-loader ./custom-loader.mjs",
+        "my-node": "node -r ../../scripts/node-no-warn.js --experimental-loader ./custom-loader.mjs",
         "my-jest": "NODE_TLS_REJECT_UNAUTHORIZED=0 DEBUG='csb:*' DEBUG_DEPTH='10' yarn node -r ../../scripts/node-no-warn.js --experimental-vm-modules $(yarn bin jest)",
         "test": "RIVER_ENV=local_single_ne yarn my-jest",
-        "start-local": "RIVER_ENV=local_single yarn my-node ./dist/index.js",
-        "start-gamma": "RIVER_ENV=gamma yarn my-node ./dist/index.js"
+        "start": "yarn my-node ./dist/start.js"
     },
     "dependencies": {
         "@babel/node": "^7.23.9",
+        "@bufbuild/protobuf": "^1.4.1",
         "@river-build/dlog": "workspace:^",
         "@river-build/encryption": "workspace:^",
         "@river-build/proto": "workspace:^",

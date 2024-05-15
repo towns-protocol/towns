@@ -19,11 +19,12 @@ import {SpaceHelper} from "contracts/test/spaces/SpaceHelper.sol";
 import {RuleEntitlement} from "contracts/src/spaces/entitlements/rule/RuleEntitlement.sol";
 
 import {SpaceOwner} from "contracts/src/spaces/facets/owner/SpaceOwner.sol";
+import {SpaceDelegationFacet} from "contracts/src/base/registry/facets/delegation/SpaceDelegationFacet.sol";
 
 // deployments
 import {DeploySpaceFactory} from "contracts/scripts/deployments/DeploySpaceFactory.s.sol";
 import {DeployRiverBase} from "contracts/scripts/deployments/DeployRiverBase.s.sol";
-import {DeployMainnetDelegation} from "contracts/scripts/deployments/DeployMainnetDelegation.s.sol";
+import {DeployBaseRegistry} from "contracts/scripts/deployments/DeployBaseRegistry.s.sol";
 
 /*
  * @notice - This is the base setup to start testing the entire suite of contracts
@@ -32,8 +33,7 @@ import {DeployMainnetDelegation} from "contracts/scripts/deployments/DeployMainn
 contract BaseSetup is TestUtils, SpaceHelper {
   DeploySpaceFactory internal deploySpaceFactory = new DeploySpaceFactory();
   DeployRiverBase internal deployRiverToken = new DeployRiverBase();
-  DeployMainnetDelegation internal deployMainnetDelegation =
-    new DeployMainnetDelegation();
+  DeployBaseRegistry internal deployBaseRegistry = new DeployBaseRegistry();
 
   address internal deployer;
   address internal founder;
@@ -50,6 +50,7 @@ contract BaseSetup is TestUtils, SpaceHelper {
   address internal riverToken;
   address internal bridge;
   address internal association;
+  address internal nodeOperator;
 
   address internal mainnetDelegation;
 
@@ -59,7 +60,6 @@ contract BaseSetup is TestUtils, SpaceHelper {
   IEntitlementChecker internal entitlementChecker;
   IImplementationRegistry internal implementationRegistry;
   IWalletLink internal walletLink;
-  INodeOperator internal nodeOperator;
 
   // @notice - This function is called before each test function
   // @dev - It will create a new diamond contract and set the spaceFactory variable to the address of the "diamond" variable
@@ -69,9 +69,6 @@ contract BaseSetup is TestUtils, SpaceHelper {
     // River Token
     riverToken = deployRiverToken.deploy();
     bridge = deployRiverToken.bridgeBase();
-
-    // Mainnet Delegation
-    mainnetDelegation = deployMainnetDelegation.deploy();
 
     // Space Factory Diamond
     spaceFactory = deploySpaceFactory.deploy();
@@ -89,7 +86,12 @@ contract BaseSetup is TestUtils, SpaceHelper {
     // Base Registry Diamond
     baseRegistry = deploySpaceFactory.baseRegistry();
     entitlementChecker = IEntitlementChecker(baseRegistry);
-    nodeOperator = INodeOperator(baseRegistry);
+
+    nodeOperator = deployBaseRegistry.deploy();
+    mainnetDelegation = nodeOperator;
+
+    vm.startPrank(deployer);
+    SpaceDelegationFacet(nodeOperator).setRiverToken(riverToken);
 
     // create a new space
     founder = _randomAddress();

@@ -17,6 +17,7 @@ interface IMainnetDelegationBase {
   struct Delegation {
     address operator;
     uint256 quantity;
+    address delegator;
   }
 
   // =============================================================

@@ -6,11 +6,13 @@ import (
 	"sync"
 	"testing"
 
+	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/nodes"
+	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/protocol/protocolconnect"
 	"github.com/river-build/river/core/node/registries"
 	"github.com/river-build/river/core/node/storage"
@@ -32,6 +34,7 @@ func fillUserSettingsStreamWithData(
 	optionalHashBytes []byte,
 ) ([]byte, error) {
 	var err error
+	lastKnownMB := int64(0)
 	for i := 0; i < numMBs; i++ {
 		for j := 0; j < numEventsPerMB; j++ {
 			err = addUserBlockedFillerEvent(ctx, wallet, client, streamId, optionalHashBytes)
@@ -39,7 +42,7 @@ func fillUserSettingsStreamWithData(
 				return nil, err
 			}
 		}
-		optionalHashBytes, err = makeMiniblock(ctx, client, streamId, false)
+		optionalHashBytes, lastKnownMB, err = makeMiniblock(ctx, client, streamId, false, lastKnownMB)
 		if err != nil {
 			return nil, err
 		}
@@ -116,7 +119,13 @@ func TestArchiveOneStream(t *testing.T) {
 	require.NoError(err)
 
 	var nodeRegistry nodes.NodeRegistry
-	nodeRegistry, err = nodes.LoadNodeRegistry(ctx, registryContract, common.Address{}, bc.InitialBlockNum, chainMonitor)
+	nodeRegistry, err = nodes.LoadNodeRegistry(
+		ctx,
+		registryContract,
+		common.Address{},
+		bc.InitialBlockNum,
+		chainMonitor,
+	)
 	require.NoError(err)
 
 	dbCfg, schema, schemaDeleter, err := dbtestutils.StartDB(ctx)
@@ -161,7 +170,7 @@ func TestArchiveOneStream(t *testing.T) {
 	err = addUserBlockedFillerEvent(ctx, wallet, client, streamId, streamRecord.LastMiniblockHash[:])
 	require.NoError(err)
 
-	hashBytes, err := makeMiniblock(ctx, client, streamId, false)
+	hashBytes, _, err := makeMiniblock(ctx, client, streamId, false, 0)
 	require.NoError(err)
 
 	streamRecord, err = registryContract.StreamRegistry.GetStream(callOpts, streamId)
@@ -202,8 +211,7 @@ func TestArchiveOneStream(t *testing.T) {
 	require.NoError(err)
 	require.Equal(int64(streamRecord.LastMiniblockNum), num)
 
-	streamCount, _, _ := arch.GetStats()
-	require.Equal(uint64(1), streamCount)
+	require.Equal(uint64(1), arch.GetStats().StreamsExamined)
 }
 
 func TestArchive100Streams(t *testing.T) {
@@ -238,10 +246,10 @@ func TestArchive100Streams(t *testing.T) {
 	serverCancel()
 	arch.Archiver.WaitForWorkers()
 
-	streamCount, succeed, failed := arch.Archiver.GetStats()
-	require.Equal(uint64(100), streamCount)
-	require.GreaterOrEqual(succeed, uint64(100))
-	require.Zero(failed)
+	stats := arch.Archiver.GetStats()
+	require.Equal(uint64(100), stats.StreamsExamined)
+	require.GreaterOrEqual(stats.SuccessOpsCount, uint64(100))
+	require.Zero(stats.FailedOpsCount)
 }
 
 func TestArchive100StreamsWithData(t *testing.T) {
@@ -269,28 +277,23 @@ func TestArchive100StreamsWithData(t *testing.T) {
 
 	arch.Archiver.WaitForTasks()
 
-	//client := tester.testClient(5)
+	client := tester.testClient(5)
 	for _, streamId := range streamIds {
-		// TODO: fix non-determinism in MakeMiniblock (never was intended for test usage)
-		// and then re-enable this part
-		// num, err := arch.Storage().GetMaxArchivedMiniblockNumber(ctx, streamId)
-		// require.NoError(err)
-
-		// resp, err := client.GetLastMiniblockHash(ctx, connect.NewRequest(&GetLastMiniblockHashRequest{
-		// 	StreamId: streamId[:],
-		// }))
-		// require.NoError(err)
-		// require.Equal(num, resp.Msg.MiniblockNum)
 		num, err := arch.Storage().GetMaxArchivedMiniblockNumber(ctx, streamId)
 		require.NoError(err)
-		require.GreaterOrEqual(num, int64(5))
+
+		resp, err := client.GetLastMiniblockHash(ctx, connect.NewRequest(&GetLastMiniblockHashRequest{
+			StreamId: streamId[:],
+		}))
+		require.NoError(err)
+		require.Equal(num, resp.Msg.MiniblockNum)
 	}
 
 	serverCancel()
 	arch.Archiver.WaitForWorkers()
 
-	streamCount, succeed, failed := arch.Archiver.GetStats()
-	require.Equal(uint64(100), streamCount)
-	require.GreaterOrEqual(succeed, uint64(100))
-	require.Zero(failed)
+	stats := arch.Archiver.GetStats()
+	require.Equal(uint64(100), stats.StreamsExamined)
+	require.GreaterOrEqual(stats.SuccessOpsCount, uint64(100))
+	require.Zero(stats.FailedOpsCount)
 }

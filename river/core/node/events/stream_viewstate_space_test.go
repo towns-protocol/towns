@@ -251,7 +251,7 @@ func TestSpaceViewState(t *testing.T) {
 	spaceViewStateTest_CheckUserJoined(t, view1.(JoinableStreamView), user2Wallet, true)
 	spaceViewStateTest_CheckUserJoined(t, view1.(JoinableStreamView), user3Wallet, true)
 	// make a miniblock
-	_, err = stream.MakeMiniblock(ctx, false)
+	_, _, err = stream.TestMakeMiniblock(ctx, false, -1)
 	require.NoError(t, err)
 	// check that we have 2 blocks
 	require.Equal(t, 2, len(stream.view.blocks))
@@ -324,7 +324,7 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 	channelStream := cStream.(*streamImpl)
 	joinChannel_T(t, userWallet, ctx, channelStream, []string{alice, bob, carol})
 	// make a miniblock
-	_, err = channelStream.MakeMiniblock(ctx, false)
+	_, _, err = channelStream.TestMakeMiniblock(ctx, false, -1)
 	require.NoError(t, err)
 	// get the miniblock's last snapshot and convert it into bytes
 	miniblocks := channelStream.view.MiniblocksFromLastSnapshot()
@@ -383,7 +383,7 @@ func TestChannelViewState_RemainingMembers(t *testing.T) {
 	// bob leaves the channel
 	leaveChannel_T(t, userWallet, ctx, channelStream, []string{bob})
 	// make a miniblock
-	_, err = channelStream.MakeMiniblock(ctx, false)
+	_, _, err = channelStream.TestMakeMiniblock(ctx, false, -1)
 	require.NoError(t, err)
 	// get the miniblock's last snapshot and convert it into bytes
 	miniblocks := channelStream.view.MiniblocksFromLastSnapshot()

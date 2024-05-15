@@ -80,7 +80,6 @@ func (sc *SpaceContractV3) IsMember(
 		return false, err
 	}
 	isMember, err := spaceAsErc271.BalanceOf(nil, user)
-
 	if err != nil {
 		return false, err
 	}
@@ -106,8 +105,10 @@ func (sc *SpaceContractV3) IsEntitledToSpace(
 	return isEntitled, err
 }
 
-var parsedABI abi.ABI
-var once sync.Once
+var (
+	parsedABI abi.ABI
+	once      sync.Once
+)
 
 func getABI() (abi.ABI, error) {
 	var err error
@@ -140,14 +141,12 @@ func (sc *SpaceContractV3) GetSpaceEntitlementsForPermission(
 	}
 
 	spaceAsIerc5313, err := ierc5313.NewIerc5313(space.address, sc.backend)
-
 	if err != nil {
 		log.Warn("Failed to get spaceAsIerc5313", "space_id", spaceId, "error", err)
 		return nil, EMPTY_ADDRESS, err
 	}
 
 	owner, err := spaceAsIerc5313.Owner(nil)
-
 	if err != nil {
 		log.Warn("Failed to get owner", "space_id", spaceId, "error", err)
 		return nil, EMPTY_ADDRESS, err
@@ -157,7 +156,17 @@ func (sc *SpaceContractV3) GetSpaceEntitlementsForPermission(
 		nil,
 		permission.String(),
 	)
-	log.Info("Got entitlement data", "err", err, "entitlement_data", entitlementData, "space_id", spaceId, "permission", permission.String())
+	log.Info(
+		"Got entitlement data",
+		"err",
+		err,
+		"entitlement_data",
+		entitlementData,
+		"space_id",
+		spaceId,
+		"permission",
+		permission.String(),
+	)
 	if err != nil {
 		return nil, EMPTY_ADDRESS, err
 	}
@@ -178,7 +187,17 @@ func (sc *SpaceContractV3) GetSpaceEntitlementsForPermission(
 
 			unpackedData, err := parsedABI.Unpack("getRuleData", entitlement.EntitlementData)
 			if err != nil {
-				log.Warn("Failed to unpack rule data", "error", err, "entitlement", entitlement, "entitlement_data", entitlement.EntitlementData, "len(entitlement.EntitlementData)", len(entitlement.EntitlementData))
+				log.Warn(
+					"Failed to unpack rule data",
+					"error",
+					err,
+					"entitlement",
+					entitlement,
+					"entitlement_data",
+					entitlement.EntitlementData,
+					"len(entitlement.EntitlementData)",
+					len(entitlement.EntitlementData),
+				)
 			}
 
 			if len(unpackedData) > 0 {
@@ -190,7 +209,15 @@ func (sc *SpaceContractV3) GetSpaceEntitlementsForPermission(
 
 				err = json.Unmarshal(jsonData, &ruleData)
 				if err != nil {
-					log.Warn("Failed to unmarshal JSON to struct", "error", err, "jsonData", jsonData, "ruleData", ruleData)
+					log.Warn(
+						"Failed to unmarshal JSON to struct",
+						"error",
+						err,
+						"jsonData",
+						jsonData,
+						"ruleData",
+						ruleData,
+					)
 				}
 			} else {
 				log.Warn("No data unpacked", "unpackedData", unpackedData)
@@ -200,7 +227,7 @@ func (sc *SpaceContractV3) GetSpaceEntitlementsForPermission(
 
 		} else if entitlement.EntitlementType == "UserEntitlement" {
 			entitlements[i].entitlementType = entitlement.EntitlementType
-			var abiDef = `[{"name":"getAddresses","outputs":[{"type":"address[]","name":"out"}],"constant":true,"payable":false,"type":"function"}]`
+			abiDef := `[{"name":"getAddresses","outputs":[{"type":"address[]","name":"out"}],"constant":true,"payable":false,"type":"function"}]`
 
 			// Parse the ABI definition
 			parsedABI, err := abi.JSON(strings.NewReader(abiDef))
@@ -219,7 +246,15 @@ func (sc *SpaceContractV3) GetSpaceEntitlementsForPermission(
 		}
 	}
 
-	log.Info("Returning entitlements", "entitlements", entitlements, "space_id", spaceId, "permission", permission.String())
+	log.Info(
+		"Returning entitlements",
+		"entitlements",
+		entitlements,
+		"space_id",
+		spaceId,
+		"permission",
+		permission.String(),
+	)
 
 	return entitlements, owner, nil
 }

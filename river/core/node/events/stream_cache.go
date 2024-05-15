@@ -2,12 +2,12 @@ package events
 
 import (
 	"context"
-	"github.com/ethereum/go-ethereum/core/types"
 	"sync"
 	"time"
 
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/config"
+	"github.com/river-build/river/core/node/contracts"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/nodes"
@@ -15,6 +15,12 @@ import (
 	"github.com/river-build/river/core/node/registries"
 	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/storage"
+)
+
+const (
+	// MiniblockCandidateBatchSize keep track the max number of new miniblocks that are registered in the StreamRegistry
+	// in a single transaction.
+	MiniblockCandidateBatchSize = 50
 )
 
 type StreamCacheParams struct {
@@ -43,6 +49,11 @@ type streamCacheImpl struct {
 
 	// New miniblock production in triggered when there is new block on River chain.
 	onNewBlockMutex sync.Mutex
+
+	// registerMiniBlocksBatched is a feature gate that when set to true new mini-blocks are registered with a batched
+	// transaction instead of one by one. This can be deleted once the StreamRegistry facet is updated to allow for
+	// batch registrations.
+	registerMiniBlocksBatched bool
 }
 
 var _ StreamCache = (*streamCacheImpl)(nil)
@@ -54,7 +65,8 @@ func NewStreamCache(
 	chainMonitor crypto.ChainMonitor,
 ) (*streamCacheImpl, error) {
 	s := &streamCacheImpl{
-		params: params,
+		params:                    params,
+		registerMiniBlocksBatched: false,
 	}
 
 	streams, err := params.Registry.GetAllStreams(ctx, appliedBlockNum)
@@ -77,7 +89,7 @@ func NewStreamCache(
 
 	// TODO: setup monitor for stream updates and update records accordingly.
 
-	chainMonitor.OnHeader(func(ctx context.Context, _ *types.Header) { s.OnNewBlock(ctx) })
+	chainMonitor.OnBlock(func(ctx context.Context, _ crypto.BlockNumber) { s.OnNewBlock(ctx) })
 
 	go s.cacheCleanup(ctx, params.StreamConfig.CacheExpirationPollInterval, params.StreamConfig.CacheExpiration)
 
@@ -244,8 +256,15 @@ func (s *streamCacheImpl) GetLoadedViews(ctx context.Context) []StreamView {
 	return result
 }
 
+// OnNewBlock loops over streams and determines if it needs to produce a new mini block.
+// For every stream that is eligible to produce a new mini block it creates a new mini block candidate.
+// It bundles candidates in a batch.
+// If the batch is full it submits the batch to the RiverRegistry#stream facet for registration and parses the resulting
+// logs to determine which mini block candidate was registered and which are not. For each registered mini block
+// candidate it applies the candidate to the stream.
 func (s *streamCacheImpl) OnNewBlock(ctx context.Context) {
 	log := dlog.FromCtx(ctx)
+
 	// Log at level below debug, otherwise it's too chatty.
 	log.Log(ctx, -8, "OnNewBlock: ENTER producing new miniblocks")
 
@@ -253,21 +272,126 @@ func (s *streamCacheImpl) OnNewBlock(ctx context.Context) {
 	if !s.onNewBlockMutex.TryLock() {
 		return
 	}
-	defer s.onNewBlockMutex.Unlock()
+
+	// don't block the chain monitor
+	go func() {
+		defer s.onNewBlockMutex.Unlock()
+
+		// switch over to batch commits when StreamRegistry facet is updated to allow batch sets
+		if s.registerMiniBlocksBatched {
+			s.onNewBlockBatch(ctx)
+		} else {
+			s.onNewBlockSingle(ctx)
+		}
+
+		// Log at level below debug, otherwise it's too chatty.
+		log.Log(ctx, -8, "onNewBlock: EXIT produced new miniblocks")
+	}()
+}
+
+// s.onNewBlockMutex must be claimed
+func (s *streamCacheImpl) onNewBlockSingle(ctx context.Context) {
+	s.cache.Range(func(key, value interface{}) bool {
+		stream := value.(*streamImpl)
+		if stream.canCreateMiniblock() {
+			// TODO: use worker pool here?
+			go stream.MakeMiniblock(ctx)
+		}
+		return true
+	})
+}
+
+// s.onNewBlockMutex must be claimed
+func (s *streamCacheImpl) onNewBlockBatch(ctx context.Context) {
+	var (
+		log        = dlog.FromCtx(ctx)
+		candidates = make(map[StreamId]*MiniblockInfo)
+		tasks      sync.WaitGroup
+	)
 
 	s.cache.Range(func(key, value interface{}) bool {
 		stream := value.(*streamImpl)
 		if stream.canCreateMiniblock() {
-			go func() {
-				_, err := stream.MakeMiniblock(ctx, false)
-				if err != nil {
-					log.Error("onNewBlock: Error creating miniblock", "streamId", stream.streamId, "err", err)
-				}
-			}()
+			candidate, err := stream.ProposeNextMiniblock(ctx, false)
+			if err != nil {
+				log.Error("onNewBlock: Error creating new miniblock proposal",
+					"streamId", stream.streamId, "err", err)
+				return true
+			}
+
+			if candidate == nil {
+				log.Debug("onNewBlock: No miniblock to produce", "streamId", stream.streamId)
+				return true
+			}
+
+			candidates[stream.streamId] = candidate
+
+			if len(candidates) == MiniblockCandidateBatchSize {
+				tasks.Add(1)
+				go func(c map[StreamId]*MiniblockInfo) {
+					if err := s.processMiniblockProposalBatch(ctx, c); err != nil {
+						log.Error("onNewBlock: Error processing miniblock proposal batch", "err", err)
+					}
+					tasks.Done()
+				}(candidates)
+
+				candidates = make(map[StreamId]*MiniblockInfo)
+			}
 		}
 		return true
 	})
 
+	if err := s.processMiniblockProposalBatch(ctx, candidates); err != nil {
+		log.Error("onNewBlock: Error processing miniblock proposal batch", "err", err)
+	}
+
+	tasks.Wait()
+
 	// Log at level below debug, otherwise it's too chatty.
 	log.Log(ctx, -8, "onNewBlock: EXIT produced new miniblocks")
+}
+
+func (s *streamCacheImpl) processMiniblockProposalBatch(
+	ctx context.Context,
+	candidates map[StreamId]*MiniblockInfo,
+) error {
+	if len(candidates) == 0 {
+		return nil
+	}
+
+	var (
+		log        = dlog.FromCtx(ctx)
+		miniblocks = make([]contracts.SetMiniblock, 0, len(candidates))
+	)
+
+	for streamID, candidate := range candidates {
+		miniblocks = append(miniblocks, contracts.SetMiniblock{
+			StreamId:          streamID,
+			PrevMiniBlockHash: *candidate.headerEvent.PrevMiniblockHash,
+			LastMiniblockHash: candidate.headerEvent.Hash,
+			LastMiniblockNum:  uint64(candidate.Num),
+			IsSealed:          false,
+		})
+	}
+
+	success, _, err := s.params.Registry.SetStreamLastMiniblockBatch(ctx, miniblocks)
+	if err != nil {
+		log.Error("SetStreamLastMiniblockBatch failed", "err", err)
+		return err
+	}
+
+	for _, streamSetInRegistry := range success {
+		if raw, ok := s.cache.Load(streamSetInRegistry); ok {
+			if err := raw.(*streamImpl).ApplyMiniblock(ctx, candidates[streamSetInRegistry]); err != nil {
+				log.Error("onNewBlock: Error applying miniblock",
+					"streamId", raw.(*streamImpl).streamId, "err", err)
+			} else {
+				log.Debug("onNewBlock: Applied miniblock",
+					"streamId", raw.(*streamImpl).streamId,
+					"miniblock#", candidates[streamSetInRegistry].Num)
+			}
+		}
+	}
+
+	return nil
 }

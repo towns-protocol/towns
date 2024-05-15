@@ -29,7 +29,11 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
     }
 
     ds.delegatorsByOperator[operator].add(delegator);
-    ds.delegationByDelegator[delegator] = Delegation(operator, quantity);
+    ds.delegationByDelegator[delegator] = Delegation(
+      operator,
+      quantity,
+      delegator
+    );
     emit DelegationSet(delegator, operator, quantity);
   }
 
@@ -73,13 +77,10 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
     address operator
   ) internal view returns (uint256) {
     uint256 stake = 0;
-
     Delegation[] memory delegations = _getDelegationsByOperator(operator);
-
     for (uint256 i = 0; i < delegations.length; i++) {
       stake += delegations[i].quantity;
     }
-
     return stake;
   }
 }

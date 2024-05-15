@@ -114,13 +114,24 @@ func (p *printer) writeString(s string) {
 	_, _ = io.WriteString(p, s)
 }
 
-func (p *printer) printInline(v reflect.Value, x interface{}, showType bool, color []byte) {
+func (p *printer) printInline(v reflect.Value, x any, showType bool, color []byte) {
 	OpenColor(p.Writer, color)
 	if showType {
 		p.writeString(v.Type().String())
 		fmt.Fprintf(p, "(%#v)", x)
 	} else {
 		fmt.Fprintf(p, "%#v", x)
+	}
+	CloseColor(p.Writer, color)
+}
+
+func (p *printer) printIntInline(v reflect.Value, x any, showType bool, color []byte) {
+	OpenColor(p.Writer, color)
+	if showType {
+		p.writeString(v.Type().String())
+		fmt.Fprintf(p, "(%d)", x)
+	} else {
+		fmt.Fprintf(p, "%d", x)
 	}
 	CloseColor(p.Writer, color)
 }
@@ -185,15 +196,18 @@ func (p *printer) printValue(v reflect.Value, showType, quote bool, key bool) {
 
 	case reflect.Int64:
 		if v.Type() != durationType {
-			p.printInline(v, v.Int(), showType, p.opts.Colors[ColorMap_Int])
+			p.printIntInline(v, v.Int(), showType, p.opts.Colors[ColorMap_Int])
 		} else {
 			p.fmtString(v.Interface().(time.Duration).String(), false, false)
 		}
 
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32:
-		p.printInline(v, v.Int(), showType, p.opts.Colors[ColorMap_Int])
+		p.printIntInline(v, v.Int(), showType, p.opts.Colors[ColorMap_Int])
 
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		p.printIntInline(v, v.Uint(), showType, p.opts.Colors[ColorMap_Int])
+
+	case reflect.Uintptr:
 		p.printInline(v, v.Uint(), showType, p.opts.Colors[ColorMap_Int])
 
 	case reflect.Float32, reflect.Float64:

@@ -152,10 +152,10 @@ contract River is
     } else {
       if (!_lockEnabled(account)) _enableLock(account);
     }
-
+    address currentDelegatee = delegates(account);
     super._delegate(account, delegatee);
 
-    _setDelegators(account, delegatee);
+    _setDelegators(account, delegatee, currentDelegatee);
   }
 
   // =============================================================

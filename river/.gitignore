@@ -56,9 +56,6 @@ broadcast/
 out/
 turbo-*.log
 
-# siwe-worker bundle
-servers/workers/siwe-worker/worker/bundle.js
-
 # profiling files
 *.prof
 
@@ -77,3 +74,5 @@ core/node/run_files/*
 go.work.sum
 core/local_stream_node_logs/dev.log
 core/local_xchain_node_logs/dev.log
+
+/packages/stress-testing/.env

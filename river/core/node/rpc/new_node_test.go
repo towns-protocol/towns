@@ -17,7 +17,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func testCreate100Streams(ctx context.Context, require *require.Assertions, c protocolconnect.StreamServiceClient) []StreamId {
+func testCreate100Streams(
+	ctx context.Context,
+	require *require.Assertions,
+	c protocolconnect.StreamServiceClient,
+) []StreamId {
 	wallet, err := crypto.NewWallet(ctx)
 	require.NoError(err)
 	_, _, err = createUser(ctx, wallet, c)

@@ -1051,9 +1051,9 @@ async function wrapTransaction(
                 throw new Error('Transaction confirmed but failed')
             }
             const waitRetryTime = Date.now() - start
-            // If we've been waiting for more than 2 seconds, log an error
+            // If we've been waiting for more than 20 seconds, log an error
             // and outer loop will resubmit the transaction
-            if (waitRetryTime > 2_000) {
+            if (waitRetryTime > 20_000) {
                 logger.error('Transaction confirmation timed out', {
                     waitRetryTime,
                     waitRetryCount,

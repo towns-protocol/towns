@@ -2,8 +2,6 @@ package registries
 
 import (
 	"context"
-	"math/big"
-
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -16,6 +14,11 @@ import (
 	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/shared"
+	"math/big"
+)
+
+var (
+	streamRegistryABI, _ = contracts.StreamRegistryV1MetaData.GetAbi()
 )
 
 // Convinience wrapper for the IRiverRegistryV1 interface (abigen exports it as RiverRegistryV1)
@@ -29,6 +32,7 @@ type RiverRegistryContract struct {
 	Abi              *abi.ABI
 	NodeEventTopics  [][]common.Hash
 	EventInfo        map[common.Hash]*EventInfo
+	errDecoder       *contracts.EvmErrorDecoder
 }
 
 type EventInfo struct {
@@ -106,6 +110,8 @@ func NewRiverRegistryContract(
 				LogError(log)
 	}
 
+	errDecoder, _ := contracts.NewEVMErrorDecoder(contracts.StreamRegistryV1MetaData)
+
 	return &RiverRegistryContract{
 		OperatorRegistry: operatorRegistry,
 		NodeRegistry:     nodeRegistry,
@@ -116,6 +122,7 @@ func NewRiverRegistryContract(
 		Abi:              abi,
 		NodeEventTopics:  [][]common.Hash{nodeEventSigs},
 		EventInfo:        eventInfo,
+		errDecoder:       errDecoder,
 	}, nil
 }
 
@@ -257,6 +264,116 @@ func (c *RiverRegistryContract) GetAllStreams(
 	}
 
 	return ret, nil
+}
+
+// SetStreamLastMiniblockBatch sets the given block proposal in the RiverRegistry#StreamRegistry facet as the new
+// latest block. It returns the streamId's for which the proposed block was set successful as the latest block, failed
+// or an error in case the transaction could not be submitted or failed.
+func (c *RiverRegistryContract) SetStreamLastMiniblockBatch(
+	ctx context.Context, mbs []contracts.SetMiniblock) ([]StreamId, []StreamId, error) {
+	var (
+		log     = dlog.FromCtx(ctx)
+		success []StreamId
+		failed  []StreamId
+	)
+
+	tx, err := c.Blockchain.TxPool.Submit(ctx, "SetStreamLastMiniblockBatch",
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			return c.StreamRegistry.SetStreamLastMiniblockBatch(opts, mbs)
+		})
+
+	if err != nil {
+		ce, se, err := c.errDecoder.DecodeEVMError(err)
+		switch {
+		case ce != nil:
+			return nil, nil, AsRiverError(ce, Err_CANNOT_CALL_CONTRACT).Func("SetStreamLastMiniblockBatch")
+		case se != nil:
+			return nil, nil, AsRiverError(se, Err_CANNOT_CALL_CONTRACT).Func("SetStreamLastMiniblockBatch")
+		default:
+			return nil, nil, AsRiverError(err, Err_CANNOT_CALL_CONTRACT).Func("SetStreamLastMiniblockBatch")
+		}
+	}
+
+	receipt := <-tx.Wait()
+
+	if receipt != nil && receipt.Status == crypto.TransactionResultSuccess {
+		for _, l := range receipt.Logs {
+			if len(l.Topics) != 1 {
+				continue
+			}
+
+			event, _ := streamRegistryABI.EventByID(l.Topics[0])
+			if event == nil {
+				continue
+			}
+
+			switch event.Name {
+			case "StreamLastMiniblockUpdated":
+				args, err := event.Inputs.Unpack(l.Data)
+				if err != nil || len(args) != 4 {
+					log.Error("Unable to unpack StreamLastMiniblockUpdated event", "err", err)
+					continue
+				}
+
+				var (
+					streamID          = args[0].([32]byte)
+					lastMiniBlockHash = args[1].([32]byte)
+					lastMiniBlockNum  = args[2].(uint64)
+					isSealed          = args[3].(bool)
+				)
+
+				log.Info(
+					"RiverRegistryContract: set stream last miniblock",
+					"name", "SetStreamLastMiniblockBatch",
+					"streamId", streamID,
+					"lastMiniBlockHash", lastMiniBlockHash,
+					"lastMiniBlockNum", lastMiniBlockNum,
+					"isSealed", isSealed,
+					"txHash", receipt.TxHash,
+				)
+
+				success = append(success, streamID)
+
+			case "StreamLastMiniblockUpdateFailed":
+				args, err := event.Inputs.Unpack(l.Data)
+				if err != nil || len(args) != 4 {
+					log.Error("Unable to unpack StreamLastMiniblockUpdateFailed event", "err", err)
+					continue
+				}
+
+				var (
+					streamID          = args[0].([32]byte)
+					lastMiniBlockHash = args[1].([32]byte)
+					lastMiniBlockNum  = args[2].(uint64)
+					reason            = args[3].(string)
+				)
+
+				log.Error(
+					"RiverRegistryContract: set stream last miniblock failed",
+					"name", "SetStreamLastMiniblockBatch",
+					"streamId", streamID,
+					"lastMiniBlockHash", lastMiniBlockHash,
+					"lastMiniBlockNum", lastMiniBlockNum,
+					"txHash", receipt.TxHash,
+					"reason", reason,
+				)
+
+				failed = append(failed, streamID)
+
+			default:
+				log.Error("Unexpected event on RiverRegistry::SetStreamLastMiniblockBatch", "event", event.Name)
+			}
+		}
+
+		return success, failed, nil
+	}
+
+	if receipt != nil && receipt.Status != crypto.TransactionResultSuccess {
+		return nil, nil, RiverError(Err_ERR_UNSPECIFIED, "Set stream last mini block transaction failed").
+			Tag("tx", receipt.TxHash.Hex()).
+			Func("SetStreamLastMiniblockBatch")
+	}
+	return nil, nil, RiverError(Err_ERR_UNSPECIFIED, "SetStreamLastMiniblockBatch transaction result unknown")
 }
 
 func (c *RiverRegistryContract) SetStreamLastMiniblock(

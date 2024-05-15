@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strconv"
 	"testing"
 
 	"github.com/river-build/river/core/node/contracts"
@@ -311,18 +312,28 @@ func makeMiniblock(
 	client protocolconnect.StreamServiceClient,
 	streamId StreamId,
 	forceSnapshot bool,
-) ([]byte, error) {
+	lastKnownMiniblockNum int64,
+) ([]byte, int64, error) {
 	resp, err := client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{
-		Debug: []string{"make_miniblock", streamId.String(), fmt.Sprintf("%t", forceSnapshot)},
+		Debug: []string{
+			"make_miniblock",
+			streamId.String(),
+			fmt.Sprintf("%t", forceSnapshot),
+			fmt.Sprintf("%d", lastKnownMiniblockNum),
+		},
 	}))
 	if err != nil {
-		return nil, err
+		return nil, -1, err
 	}
-	if resp.Msg.Graffiti == "" {
-		return nil, nil
-	} else {
-		return common.FromHex(resp.Msg.Graffiti), nil
+	var hashBytes []byte
+	if resp.Msg.Graffiti != "" {
+		hashBytes = common.FromHex(resp.Msg.Graffiti)
 	}
+	num := int64(-1)
+	if resp.Msg.Version != "" {
+		num, _ = strconv.ParseInt(resp.Msg.Version, 10, 64)
+	}
+	return hashBytes, num, nil
 }
 
 func testMethods(tester *serviceTester) {
@@ -431,16 +442,9 @@ func testMethodsWithClient(tester *serviceTester, client protocolconnect.StreamS
 	)
 	require.NoError(err)
 
-	_, err = client.Info(
-		ctx,
-		connect.NewRequest(&protocol.InfoRequest{Debug: []string{"make_miniblock", channelId.String(), "false"}}),
-	)
+	_, newMbNum, err := makeMiniblock(ctx, client, channelId, false, 0)
 	require.NoError(err)
-
-	_, err = client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{
-		Debug: []string{"make_miniblock", channelId.String(), "false"},
-	}))
-	require.NoError(err)
+	require.Greater(newMbNum, int64(0))
 
 	message, err := events.MakeEnvelopeWithPayload(
 		wallet2,
@@ -460,16 +464,9 @@ func testMethodsWithClient(tester *serviceTester, client protocolconnect.StreamS
 	)
 	require.NoError(err)
 
-	_, err = client.Info(
-		ctx,
-		connect.NewRequest(&protocol.InfoRequest{Debug: []string{"make_miniblock", channelId.String(), "false"}}),
-	)
+	_, newMbNum2, err := makeMiniblock(ctx, client, channelId, false, 0)
 	require.NoError(err)
-
-	_, err = client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{
-		Debug: []string{"make_miniblock", channelId.String(), "false"},
-	}))
-	require.NoError(err)
+	require.Greater(newMbNum2, newMbNum)
 
 	_, err = client.GetMiniblocks(ctx, connect.NewRequest(&protocol.GetMiniblocksRequest{
 		StreamId:      channelId[:],
@@ -915,6 +912,8 @@ func run(t *testing.T, numNodes int, tf testFunc) {
 }
 
 func TestSingleAndMulti(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name string
 		test testFunc
@@ -927,6 +926,7 @@ func TestSingleAndMulti(t *testing.T) {
 	}
 
 	t.Run("single", func(t *testing.T) {
+		t.Parallel()
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
 				run(t, 1, tt.test)
@@ -935,6 +935,7 @@ func TestSingleAndMulti(t *testing.T) {
 	})
 
 	t.Run("multi", func(t *testing.T) {
+		t.Parallel()
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
 				run(t, 10, tt.test)
@@ -948,6 +949,8 @@ func TestSingleAndMulti(t *testing.T) {
 const TestStreams = 40
 
 func TestForwardingWithRetries(t *testing.T) {
+	t.Parallel()
+
 	tests := map[string]func(t *testing.T, ctx context.Context, client protocolconnect.StreamServiceClient, streamId StreamId){
 		"GetStream": func(t *testing.T, ctx context.Context, client protocolconnect.StreamServiceClient, streamId StreamId) {
 			resp, err := client.GetStream(ctx, connect.NewRequest(&protocol.GetStreamRequest{
@@ -973,6 +976,7 @@ func TestForwardingWithRetries(t *testing.T) {
 			require.Len(t, msgs, 2)
 		},
 	}
+
 	for testName, requester := range tests {
 		t.Run(testName, func(t *testing.T) {
 			numNodes := 5

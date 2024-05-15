@@ -114,7 +114,10 @@ func MakeRemoteStreamView(resp *GetStreamResponse) (*streamViewImpl, error) {
 	lastMiniblockNumber := int64(-2)
 	snapshotIndex := 0
 	for i, binMiniblock := range resp.Stream.Miniblocks {
-		miniblock, err := NewMiniblockInfoFromProto(binMiniblock, NewMiniblockInfoFromProtoOpts{ExpectedBlockNumber: lastMiniblockNumber + 1})
+		miniblock, err := NewMiniblockInfoFromProto(
+			binMiniblock,
+			NewMiniblockInfoFromProtoOpts{ExpectedBlockNumber: lastMiniblockNumber + 1},
+		)
 		if err != nil {
 			return nil, err
 		}

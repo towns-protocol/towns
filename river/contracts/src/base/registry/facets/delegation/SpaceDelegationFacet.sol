@@ -13,30 +13,40 @@ import {BaseRegistryErrors} from "contracts/src/base/registry/libraries/BaseRegi
 // contracts
 import {BaseRegistryModifiers} from "contracts/src/base/registry/libraries/BaseRegistryStorage.sol";
 import {OwnableBase} from "contracts/src/diamond/facets/ownable/OwnableBase.sol";
+import {Facet} from "contracts/src/diamond/facets/Facet.sol";
 
 contract SpaceDelegationFacet is
   ISpaceDelegation,
   OwnableBase,
-  BaseRegistryModifiers
+  BaseRegistryModifiers,
+  Facet
 {
   using EnumerableSet for EnumerableSet.AddressSet;
+
+  function __SpaceDelegation_init() external onlyInitializing {}
 
   function addSpaceDelegation(
     address space,
     address operator
-  ) external onlySpaceOwner(space) onlyValidOperator(operator) {
+  ) external onlySpaceOwner(space) {
     if (space == address(0))
       revert BaseRegistryErrors.NodeOperator__InvalidAddress();
     if (operator == address(0))
       revert BaseRegistryErrors.NodeOperator__InvalidAddress();
-
     address currentOperator = ds.operatorBySpace[space];
 
     if (currentOperator != address(0) && currentOperator == operator)
       revert BaseRegistryErrors.NodeOperator__AlreadyDelegated(currentOperator);
 
+    //remove the space from the current operator
+    ds.spacesByOperator[currentOperator].remove(space);
+
+    //overwrite the operator for this space
     ds.operatorBySpace[space] = operator;
+
+    //add the space to this new operator array
     ds.spacesByOperator[operator].add(space);
+    ds.spaceDelegationTime[space] = block.timestamp;
 
     emit SpaceDelegatedToOperator(space, operator);
   }

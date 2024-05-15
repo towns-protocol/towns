@@ -278,24 +278,44 @@ func (scr *entitlementCacheResult) IsAllowed() bool {
 
 // If entitlements are found for the permissions, they are returned and the allowed flag is set true so the results may be cached.
 // If the call fails or the space is not found, the allowed flag is set to false so the negative caching time applies.
-func (ca *chainAuth) getSpaceEntitlementsForPermissionUncached(ctx context.Context, args *ChainAuthArgs) (CacheResult, error) {
+func (ca *chainAuth) getSpaceEntitlementsForPermissionUncached(
+	ctx context.Context,
+	args *ChainAuthArgs,
+) (CacheResult, error) {
 	log := dlog.FromCtx(ctx)
-	entitlementData, owner, err := ca.spaceContract.GetSpaceEntitlementsForPermission(ctx, args.spaceId, args.permission)
+	entitlementData, owner, err := ca.spaceContract.GetSpaceEntitlementsForPermission(
+		ctx,
+		args.spaceId,
+		args.permission,
+	)
 
 	log.Debug("getSpaceEntitlementsForPermissionUncached", "args", args, "entitlementData", entitlementData)
 	if err != nil {
-		return &entitlementCacheResult{allowed: false}, AsRiverError(err).Func("getSpaceEntitlementsForPermision").Message("Failed to get space entitlements")
+		return &entitlementCacheResult{
+				allowed: false,
+			}, AsRiverError(
+				err,
+			).Func("getSpaceEntitlementsForPermision").
+				Message("Failed to get space entitlements")
 	}
 	return &entitlementCacheResult{allowed: true, entitlementData: entitlementData, owner: owner}, nil
-
 }
 
 func (ca *chainAuth) isEntitledToSpaceUncached(ctx context.Context, args *ChainAuthArgs) (CacheResult, error) {
 	log := dlog.FromCtx(ctx)
 	log.Debug("isEntitledToSpaceUncached", "args", args)
-	result, cacheHit, err := ca.entitlementManagerCache.executeUsingCache(ctx, args, ca.getSpaceEntitlementsForPermissionUncached)
+	result, cacheHit, err := ca.entitlementManagerCache.executeUsingCache(
+		ctx,
+		args,
+		ca.getSpaceEntitlementsForPermissionUncached,
+	)
 	if err != nil {
-		return &boolCacheResult{allowed: false}, AsRiverError(err).Func("isEntitledToSpace").Message("Failed to get space entitlements")
+		return &boolCacheResult{
+				allowed: false,
+			}, AsRiverError(
+				err,
+			).Func("isEntitledToSpace").
+				Message("Failed to get space entitlements")
 	}
 
 	if cacheHit {
@@ -316,8 +336,7 @@ func (ca *chainAuth) isEntitledToSpaceUncached(ctx context.Context, args *ChainA
 	for _, entitlement := range entitlementData.entitlementData {
 		log.Debug("entitlement", "entitlement", entitlement)
 		if entitlement.entitlementType == "RuleEntitlement" {
-			//TODO implement rule entitlment
-
+			// TODO implement rule entitlment
 		} else if entitlement.entitlementType == "UserEntitlement" {
 			for _, user := range entitlement.userEntitlement {
 				if user == everyone {
@@ -355,7 +374,6 @@ func (ca *chainAuth) isEntitledToSpace(ctx context.Context, args *ChainAuthArgs)
 }
 
 func (ca *chainAuth) isEntitledToChannelUncached(ctx context.Context, args *ChainAuthArgs) (CacheResult, error) {
-
 	allowed, err := ca.spaceContract.IsEntitledToChannel(
 		ctx,
 		args.spaceId,
@@ -409,7 +427,13 @@ func (ca *chainAuth) getLinkedWallets(ctx context.Context, rootKey common.Addres
 	return wallets, nil
 }
 
-func (ca *chainAuth) checkMembership(ctx context.Context, address common.Address, spaceId shared.StreamId, results chan<- bool, wg *sync.WaitGroup) {
+func (ca *chainAuth) checkMembership(
+	ctx context.Context,
+	address common.Address,
+	spaceId shared.StreamId,
+	results chan<- bool,
+	wg *sync.WaitGroup,
+) {
 	log := dlog.FromCtx(ctx)
 	defer wg.Done()
 	isMember, err := ca.spaceContract.IsMember(ctx, spaceId, address)

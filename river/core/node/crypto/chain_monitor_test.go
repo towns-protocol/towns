@@ -187,9 +187,13 @@ func TestChainMonitorEvents(t *testing.T) {
 
 	collectedBlocksCount.Store(0)
 
-	pendingTx, err := owner.TxPool.Submit(ctx, "RegisterNode", func(opts *bind.TransactOpts) (*types.Transaction, error) {
-		return tc.NodeRegistry.RegisterNode(opts, addrs[0], urls[0], contracts.NodeStatus_NotInitialized)
-	})
+	pendingTx, err := owner.TxPool.Submit(
+		ctx,
+		"RegisterNode",
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			return tc.NodeRegistry.RegisterNode(opts, addrs[0], urls[0], contracts.NodeStatus_NotInitialized)
+		},
+	)
 	require.NoError(err)
 
 	// generate some blocks

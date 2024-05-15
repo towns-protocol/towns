@@ -16,8 +16,8 @@ import { check, dlog, dlogError } from '@river-build/dlog'
 import { genShortId, streamIdAsString } from './id'
 import { getEnvVar, isBaseUrlIncluded, isIConnectError } from './utils'
 
-const logInfo = dlog('csb:rpc:info', { defaultEnabled: true })
-const logCallsHistogram = dlog('csb:rpc:histogram', { defaultEnabled: true })
+const logInfo = dlog('csb:rpc:info')
+const logCallsHistogram = dlog('csb:rpc:histogram')
 const logCalls = dlog('csb:rpc:calls')
 const logProtos = dlog('csb:rpc:protos')
 const logError = dlogError('csb:rpc:error')

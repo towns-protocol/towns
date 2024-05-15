@@ -19,6 +19,7 @@ contract StreamRegistryHelper is FacetHelper {
     addSelector(IStreamRegistry.getStreamByIndex.selector);
     addSelector(IStreamRegistry.getStreamWithGenesis.selector);
     addSelector(IStreamRegistry.setStreamLastMiniblock.selector);
+    addSelector(IStreamRegistry.setStreamLastMiniblockBatch.selector);
     addSelector(IStreamRegistry.placeStreamOnNode.selector);
     addSelector(IStreamRegistry.getStreamCount.selector);
     addSelector(IStreamRegistry.getAllStreamIds.selector);

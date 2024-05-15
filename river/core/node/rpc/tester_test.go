@@ -68,6 +68,8 @@ func newServiceTesterAndStart(t *testing.T, numNodes int) *serviceTester {
 }
 
 func newServiceTesterWithReplication(t *testing.T, numNodes int, replicationFactor int) *serviceTester {
+	t.Parallel()
+
 	ctx, ctxCancel := test.NewTestContext()
 	t.Cleanup(ctxCancel)
 

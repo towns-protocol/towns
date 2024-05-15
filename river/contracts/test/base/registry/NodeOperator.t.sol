@@ -64,7 +64,7 @@ contract NodeOperatorFacetTest is
     emit OperatorRegistered(_operator);
     emit OperatorRegistered(_operator);
     vm.prank(_operator);
-    nodeOperator.registerOperator();
+    operator.registerOperator();
     _;
   }
 
@@ -75,15 +75,14 @@ contract NodeOperatorFacetTest is
       BaseRegistryErrors.NodeOperator__AlreadyRegistered.selector
     );
     vm.prank(randomOperator);
-    nodeOperator.registerOperator();
+    operator.registerOperator();
   }
 
   function test_registerOperatorWithValidAddress(
     address randomOperator
   ) public givenOperatorIsRegistered(randomOperator) {
     assertTrue(
-      nodeOperator.getOperatorStatus(randomOperator) ==
-        NodeOperatorStatus.Standby
+      operator.getOperatorStatus(randomOperator) == NodeOperatorStatus.Standby
     );
   }
 
@@ -110,13 +109,13 @@ contract NodeOperatorFacetTest is
   function test_revertWhen_isOperatorWithInvalidOperator(
     address randomOperator
   ) external {
-    assertFalse(nodeOperator.isOperator(randomOperator));
+    assertFalse(operator.isOperator(randomOperator));
   }
 
   function test_isOperatorWithValidOperator(
     address randomOperator
   ) public givenOperatorIsRegistered(randomOperator) {
-    assertTrue(nodeOperator.isOperator(randomOperator));
+    assertTrue(operator.isOperator(randomOperator));
   }
 
   // =============================================================
@@ -132,7 +131,7 @@ contract NodeOperatorFacetTest is
     vm.expectRevert(
       abi.encodeWithSelector(Ownable__NotOwner.selector, randomOwner)
     );
-    nodeOperator.setOperatorStatus(randomOperator, NodeOperatorStatus.Approved);
+    operator.setOperatorStatus(randomOperator, NodeOperatorStatus.Approved);
   }
 
   modifier whenCalledByDeployer() {
@@ -145,7 +144,7 @@ contract NodeOperatorFacetTest is
     whenCalledByDeployer
   {
     vm.expectRevert(BaseRegistryErrors.NodeOperator__InvalidAddress.selector);
-    nodeOperator.setOperatorStatus(address(0), NodeOperatorStatus.Approved);
+    operator.setOperatorStatus(address(0), NodeOperatorStatus.Approved);
   }
 
   function test_revert_setOperatorStatus_withNotRegistered(
@@ -153,7 +152,7 @@ contract NodeOperatorFacetTest is
   ) public whenCalledByDeployer {
     vm.assume(notRegisteredOperator != address(0));
     vm.expectRevert(BaseRegistryErrors.NodeOperator__NotRegistered.selector);
-    nodeOperator.setOperatorStatus(
+    operator.setOperatorStatus(
       notRegisteredOperator,
       NodeOperatorStatus.Approved
     );
@@ -163,7 +162,7 @@ contract NodeOperatorFacetTest is
     address randomOperator
   ) public givenOperatorIsRegistered(randomOperator) whenCalledByDeployer {
     vm.expectRevert(BaseRegistryErrors.NodeOperator__StatusNotChanged.selector);
-    nodeOperator.setOperatorStatus(randomOperator, NodeOperatorStatus.Standby);
+    operator.setOperatorStatus(randomOperator, NodeOperatorStatus.Standby);
   }
 
   function test_revertWhen_setOperatorStatusFromStandbyToExiting(
@@ -172,7 +171,7 @@ contract NodeOperatorFacetTest is
     vm.expectRevert(
       BaseRegistryErrors.NodeOperator__InvalidStatusTransition.selector
     );
-    nodeOperator.setOperatorStatus(randomOperator, NodeOperatorStatus.Exiting);
+    operator.setOperatorStatus(randomOperator, NodeOperatorStatus.Exiting);
   }
 
   // function test_revertWhen_setOperatorStatusFromStandbyToApprovedWithNoStake(
@@ -189,7 +188,7 @@ contract NodeOperatorFacetTest is
     vm.prank(deployer);
     vm.expectEmit();
     emit OperatorStatusChanged(_operator, _newStatus);
-    nodeOperator.setOperatorStatus(_operator, _newStatus);
+    operator.setOperatorStatus(_operator, _newStatus);
     _;
   }
 
@@ -213,7 +212,7 @@ contract NodeOperatorFacetTest is
   ) {
     vm.assume(_claimAddress != address(0));
     vm.prank(_operator);
-    nodeOperator.setClaimAddress(_claimAddress);
+    operator.setClaimAddress(_claimAddress);
     _;
   }
 
@@ -253,8 +252,7 @@ contract NodeOperatorFacetTest is
     )
   {
     assertTrue(
-      nodeOperator.getOperatorStatus(randomOperator) ==
-        NodeOperatorStatus.Approved
+      operator.getOperatorStatus(randomOperator) == NodeOperatorStatus.Approved
     );
   }
 
@@ -276,7 +274,7 @@ contract NodeOperatorFacetTest is
     vm.expectRevert(
       BaseRegistryErrors.NodeOperator__InvalidStatusTransition.selector
     );
-    nodeOperator.setOperatorStatus(randomOperator, NodeOperatorStatus.Standby);
+    operator.setOperatorStatus(randomOperator, NodeOperatorStatus.Standby);
   }
 
   function test_revertWhen_setOperatorStatusIsCalledFromExitingToApproved(
@@ -301,7 +299,7 @@ contract NodeOperatorFacetTest is
     vm.expectRevert(
       BaseRegistryErrors.NodeOperator__InvalidStatusTransition.selector
     );
-    nodeOperator.setOperatorStatus(randomOperator, NodeOperatorStatus.Approved);
+    operator.setOperatorStatus(randomOperator, NodeOperatorStatus.Approved);
   }
 
   function test_setOperatorStatus_toExiting(
@@ -323,8 +321,7 @@ contract NodeOperatorFacetTest is
     )
   {
     assertTrue(
-      nodeOperator.getOperatorStatus(randomOperator) ==
-        NodeOperatorStatus.Exiting
+      operator.getOperatorStatus(randomOperator) == NodeOperatorStatus.Exiting
     );
 
     // assertEq(totalApprovedOperators, 0);
@@ -338,8 +335,7 @@ contract NodeOperatorFacetTest is
     address randomOperator
   ) public {
     assertTrue(
-      nodeOperator.getOperatorStatus(randomOperator) ==
-        NodeOperatorStatus.Exiting
+      operator.getOperatorStatus(randomOperator) == NodeOperatorStatus.Exiting
     );
   }
 
@@ -347,8 +343,7 @@ contract NodeOperatorFacetTest is
     address randomOperator
   ) public givenOperatorIsRegistered(randomOperator) {
     assertTrue(
-      nodeOperator.getOperatorStatus(randomOperator) ==
-        NodeOperatorStatus.Standby
+      operator.getOperatorStatus(randomOperator) == NodeOperatorStatus.Standby
     );
   }
 
@@ -367,8 +362,7 @@ contract NodeOperatorFacetTest is
     )
   {
     assertTrue(
-      nodeOperator.getOperatorStatus(randomOperator) ==
-        NodeOperatorStatus.Approved
+      operator.getOperatorStatus(randomOperator) == NodeOperatorStatus.Approved
     );
   }
 
@@ -391,8 +385,7 @@ contract NodeOperatorFacetTest is
     )
   {
     assertTrue(
-      nodeOperator.getOperatorStatus(randomOperator) ==
-        NodeOperatorStatus.Exiting
+      operator.getOperatorStatus(randomOperator) == NodeOperatorStatus.Exiting
     );
   }
 
@@ -406,7 +399,7 @@ contract NodeOperatorFacetTest is
   ) public {
     vm.expectRevert(BaseRegistryErrors.NodeOperator__NotRegistered.selector);
     vm.prank(randomOperator);
-    nodeOperator.setClaimAddress(randomClaimAddress);
+    operator.setClaimAddress(randomClaimAddress);
   }
 
   function test_setClaimAddress(
@@ -417,7 +410,7 @@ contract NodeOperatorFacetTest is
     givenOperatorIsRegistered(randomOperator)
     givenOperatorHasSetClaimAddress(randomOperator, randomClaimAddress)
   {
-    assertEq(nodeOperator.getClaimAddress(randomOperator), randomClaimAddress);
+    assertEq(operator.getClaimAddress(randomOperator), randomClaimAddress);
   }
 
   // =============================================================
@@ -428,11 +421,12 @@ contract NodeOperatorFacetTest is
     uint256 rate
   ) external givenOperatorIsRegistered(randomOperator) {
     vm.prank(randomOperator);
-    vm.expectEmit(address(nodeOperator));
+    vm.expectEmit(address(operator));
+    vm.assume(rate <= 100);
     emit OperatorCommissionChanged(randomOperator, rate);
-    nodeOperator.setCommissionRate(rate);
+    operator.setCommissionRate(rate);
 
-    assertEq(nodeOperator.getCommissionRate(randomOperator), rate);
+    assertEq(operator.getCommissionRate(randomOperator), rate);
   }
 
   function test_revertWhen_setCommissionRateIsCalledByInvalidOperator(
@@ -441,7 +435,7 @@ contract NodeOperatorFacetTest is
   ) external {
     vm.expectRevert(BaseRegistryErrors.NodeOperator__NotRegistered.selector);
     vm.prank(randomOperator);
-    nodeOperator.setCommissionRate(rate);
+    operator.setCommissionRate(rate);
   }
 
   // =============================================================
@@ -550,7 +544,7 @@ contract NodeOperatorFacetTest is
     for (uint256 i = 0; i < totalOperators; i++) {
       address operatorAddress = erc721.ownerOf(i);
 
-      NodeOperatorStatus currentStatus = nodeOperator.getOperatorStatus(
+      NodeOperatorStatus currentStatus = operator.getOperatorStatus(
         operatorAddress
       );
 
