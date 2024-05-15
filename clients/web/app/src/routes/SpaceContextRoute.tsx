@@ -116,41 +116,17 @@ export interface RouteInfo {
 const useSpaceRouteMatcher = (space: SpaceData | undefined): RouteInfo | undefined => {
     const location = useLocation()
     const { isTouch } = useDevice()
-    const { touchInitialLink } = useHnt5685()
+    const touchInitialLink = useHnt5685()
+    const [search] = useSearchParams()
 
     const pathInfo = useMemo(() => {
-        const { pathname, search } = touchInitialLink
-            ? {
-                  pathname: touchInitialLink.pathname,
-                  search: location.search,
-              }
-            : {
-                  pathname: location.pathname,
-                  search: location.search,
-              }
+        const { pathname, search } = touchInitialLink ?? {
+            pathname: location.pathname,
+            search: location.search,
+        }
         const scrubbedPathname = pathname.replace(/^\/\//, '/') // this can cause bug hnt-5685
         return { pathname: scrubbedPathname, search }
     }, [location.pathname, location.search, touchInitialLink])
-
-    const [search] = useSearchParams()
-
-    useEffect(() => {
-        console.log('[hnt-5685][useSpaceRouteMatcher]', {
-            locationPathname: location.pathname,
-            locationSearch: location.search,
-            pathInfoPathname: pathInfo.pathname,
-            pathInfoSearch: pathInfo.search,
-            touchInitialLinkPathname: touchInitialLink?.pathname ?? 'undefined',
-            touchInitialLinkSearch: touchInitialLink?.search ?? 'undefined',
-        })
-    }, [
-        location.pathname,
-        location.search,
-        pathInfo.pathname,
-        pathInfo.search,
-        touchInitialLink?.pathname,
-        touchInitialLink?.search,
-    ])
 
     return useMemo(() => {
         const channelPath = matchPath(

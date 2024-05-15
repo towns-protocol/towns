@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { NotificationCurrentUser } from 'store/notificationCurrentUser'
 import { SECOND_MS } from 'data/constants'
@@ -18,25 +18,16 @@ export function useHnt5685() {
     const [touchInitialLink, setTouchInitialLink] = useState<PathInfo | undefined>(undefined)
     const { isTouch } = useDevice()
     const location = useLocation()
-    const navigate = useNavigate()
-
-    const shouldNavigateToBookmark = useMemo(() => {
-        return isTouch && touchInitialLink !== undefined
-    }, [isTouch, touchInitialLink])
-
-    const navigateAndResetTouchLink = useCallback(
-        (pathname: string) => {
-            if (shouldNavigateToBookmark) {
-                navigate(pathname)
-                setTouchInitialLink(undefined)
-            }
-        },
-        [navigate, shouldNavigateToBookmark],
-    )
 
     const currentUser = useLiveQuery(async () => {
         if (notificationCurrentUser) {
-            const cu = await notificationCurrentUser.getCurrentUserRecord()
+            // trigger a re-render when the lastUrlTimestamp is updated
+            // and within the last t seconds
+            const timeDiff = Date.now() - 10 * SECOND_MS
+            const cu = await notificationCurrentUser.currentUser
+                .where('lastUrlTimestamp')
+                .above(timeDiff)
+                .first()
             return cu
         }
     }, [])
@@ -44,11 +35,7 @@ export function useHnt5685() {
     useEffect(() => {
         const getUrlFromNotificationCurrentUser = async (): Promise<void> => {
             setTouchInitialLink(undefined)
-            // trigger a re-render when the lastUrlTimestamp is updated
-            // and within the last t seconds
-            const timeNow = Date.now()
-            const cutOffTime = timeNow - 3 * SECOND_MS
-            if (currentUser?.lastUrlTimestamp && currentUser?.lastUrlTimestamp > cutOffTime) {
+            if (currentUser?.lastUrlTimestamp) {
                 // return the last URL only if it was set within the last t seconds
                 // to workaround hnt-5685
                 const urlFromNotification = currentUser?.lastUrl
@@ -59,8 +46,6 @@ export function useHnt5685() {
                         locationSearch: location.search,
                         storeUrlPathname: url.pathname,
                         storeUrlSearch: url.search,
-                        timeNow,
-                        isWithinCutOffTime: currentUser.lastUrlTimestamp > cutOffTime,
                         lastUrlTimestamp: currentUser.lastUrlTimestamp,
                         deviceType: isTouch ? 'mobile' : 'desktop',
                     })
@@ -83,11 +68,5 @@ export function useHnt5685() {
         location.search,
     ])
 
-    return useMemo(() => {
-        return {
-            touchInitialLink,
-            navigateAndResetTouchLink,
-            shouldNavigateToBookmark,
-        }
-    }, [navigateAndResetTouchLink, shouldNavigateToBookmark, touchInitialLink])
+    return touchInitialLink
 }
