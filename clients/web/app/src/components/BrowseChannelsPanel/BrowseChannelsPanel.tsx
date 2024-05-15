@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react'
+import React, { useCallback, useEffect, useMemo } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import {
     ChannelContextProvider,
@@ -19,16 +19,14 @@ export const BrowseChannelsPanel = ({ onClose }: { onClose?: () => void }) => {
     const channels = useSpaceChannels()
     const [searchText, setSearchText] = React.useState('')
 
-    const { unseenChannelIds: _unseenChannelIds, markChannelsAsSeen } = useUnseenChannelIds()
-    // Store a ref to unseen channel ids, while simultaneously marking them as seen
-    // to suppress any unseen indicators in other parts of the app
-    const unseenChannelIds = useRef<Set<string> | undefined>(undefined)
+    const { unseenChannelIds, markChannelsAsSeen } = useUnseenChannelIds()
+
     useEffect(() => {
-        if (!unseenChannelIds.current && _unseenChannelIds.size > 0) {
-            unseenChannelIds.current = _unseenChannelIds
+        return () => {
             markChannelsAsSeen()
         }
-    }, [_unseenChannelIds, markChannelsAsSeen])
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
     const myMemberships = useMyMemberships()
 
@@ -77,7 +75,7 @@ export const BrowseChannelsPanel = ({ onClose }: { onClose?: () => void }) => {
                                     topic={channel.topic}
                                     channelNetworkId={channel.id}
                                     isJoined={myMemberships[channel.id] === Membership.Join}
-                                    showDot={unseenChannelIds.current?.has(channel.id)}
+                                    showDot={unseenChannelIds?.has(channel.id)}
                                     onOpenChannel={onOpenChannel}
                                 />
                             </Stack>
