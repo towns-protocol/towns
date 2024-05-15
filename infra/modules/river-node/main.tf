@@ -21,24 +21,20 @@ locals {
   river_node_tags = merge(
     module.global_constants.tags,
     {
-      Service     = local.service_name
-      Node_Number = var.node_number
-      Node_Name   = local.node_name
-      Node_Url    = local.node_url
+      Service  = local.service_name
+      Node_Url = local.node_url
     }
   )
 
   dd_agent_tags = merge(
     module.global_constants.tags,
     {
-      Service     = "dd-agent"
-      Node_Number = var.node_number
-      Node_Name   = local.node_name
-      Node_Url    = local.node_url
+      Service  = "dd-agent"
+      Node_Url = local.node_url
     }
   )
 
-  dd_required_tags = "env:${terraform.workspace}, node_name:${local.node_name}, node_number:${var.node_number}, node_url:${local.node_url}"
+  dd_required_tags = "env:${terraform.workspace}, node_url:${local.node_url}"
 
   total_vcpu   = var.is_transient ? 2048 : 4096
   total_memory = var.is_transient ? 4096 : 30720
@@ -445,14 +441,6 @@ resource "aws_ecs_task_definition" "river-fargate" {
       {
         name  = "LOG__NOCOLOR",
         value = "true"
-      },
-      {
-        name  = "DD_SERVICE",
-        value = local.service_name
-      },
-      {
-        name  = "DD_ENV"
-        value = terraform.workspace
       },
       {
         name  = "DD_TAGS",
