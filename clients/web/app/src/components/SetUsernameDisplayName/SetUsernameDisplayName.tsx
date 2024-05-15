@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { LookupUser, useMyUserId, useTownsClient, useUserLookupContext } from 'use-towns-client'
 import { useParams } from 'react-router'
+import noop from 'lodash/noop'
 import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
 import { Box, Button, Divider, IconButton, Stack, Text, TextButton, TextField } from '@ui'
 import { validateUsername } from '@components/SetUsernameForm/validateUsername'
@@ -143,6 +144,16 @@ export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties
         )
     }, [user, dirtyDisplayName, dirtyUsername])
 
+    const saveOnEnter = useCallback(
+        (event: React.KeyboardEvent) => {
+            if (event.key === 'Enter' && !saveButtonDisabled) {
+                event.preventDefault()
+                onSave()
+            }
+        },
+        [onSave, saveButtonDisabled],
+    )
+
     const titlePrefix = useMemo(() => {
         switch (titleProperties.kind) {
             case 'space':
@@ -173,6 +184,7 @@ export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties
                         error={displayNameErrorMessage}
                         placeholder="Enter display name"
                         maxLength={32}
+                        onKeyDown={saveOnEnter}
                         onChange={onDisplayNameChange}
                     />
                     {user && user.ensAddress && (
@@ -185,6 +197,7 @@ export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties
                         error={usernameErrorMessage}
                         maxLength={16}
                         placeholder="Enter username"
+                        onKeyDown={saveOnEnter}
                         onChange={onUsernameChange}
                     />
                 </>
@@ -254,8 +267,9 @@ const EditableInputField = (props: {
     error?: string
     maxLength: number
     onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
+    onKeyDown?: (e: React.KeyboardEvent) => void
 }) => {
-    const { title, value, placeholder, error, maxLength, onChange } = props
+    const { title, value, placeholder, error, maxLength, onChange, onKeyDown } = props
     const charsRemaining = maxLength - value.length
     const [isEditing, setIsEditing] = useState<boolean>(false)
     const editingStateChanged = useCallback(
@@ -280,9 +294,10 @@ const EditableInputField = (props: {
                         height="height_lg"
                         paddingX="sm"
                         placeholder={placeholder}
-                        // need to manually override paddingright for the chars remaining to fit
+                        // need to manually override paddingRight for the chars remaining to fit
                         style={{ paddingRight: '20px' }}
                         autoCorrect="off"
+                        onKeyDown={onKeyDown || noop}
                         onChange={onChange}
                         onFocus={() => editingStateChanged(true)}
                         onBlur={() => editingStateChanged(false)}
