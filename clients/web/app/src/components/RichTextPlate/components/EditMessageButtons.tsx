@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect } from 'react'
-import { Button, Icon, Stack } from '@ui'
+import { Button, Stack } from '@ui'
+import { MotionIconButton } from 'ui/components/Motion/MotionComponents'
 import { useDevice } from 'hooks/useDevice'
 
 export const EditMessageButtons = (props: {
@@ -66,14 +67,28 @@ export const EditMessageButtons = (props: {
                     </Button>
                 </>
             ) : isTouch ? (
-                <Icon
-                    type={disabled ? 'touchSendDisabled' : 'touchSendEnabled'}
+                <MotionIconButton
+                    whileHover={
+                        disabled
+                            ? {}
+                            : {
+                                  opacity: 0.8,
+                              }
+                    }
+                    icon={disabled ? 'touchSendDisabled' : 'touchSendEnabled'}
                     size="square_lg"
                     onMouseDown={disabled ? props.onCancel : props.onSave}
                 />
             ) : (
-                <Icon
-                    type={disabled ? 'touchSendDisabled' : 'touchSendEnabled'}
+                <MotionIconButton
+                    whileHover={
+                        disabled
+                            ? {}
+                            : {
+                                  opacity: 0.8,
+                              }
+                    }
+                    icon={disabled ? 'touchSendDisabled' : 'touchSendEnabled'}
                     size="square_md"
                     onMouseDown={disabled ? undefined : props.onSave}
                 />
