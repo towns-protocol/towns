@@ -43,7 +43,7 @@ export const InformationBox = (props: Props) => {
             ) : (
                 <>
                     <Box centerContent height="x4">
-                        <Text size="sm" color="gray2">
+                        <Text size="sm" color="gray1">
                             {props.title}
                         </Text>
                     </Box>
@@ -51,7 +51,7 @@ export const InformationBox = (props: Props) => {
                         {props.centerContent}
                     </Box>
                     <Box centerContent height="x4">
-                        <Text size="sm" color="gray2">
+                        <Text size="sm" color="gray1">
                             {props.subtitle}
                         </Text>
                     </Box>
