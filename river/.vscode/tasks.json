@@ -184,7 +184,7 @@
     {
       "label": "Casablanca-No-Entitlements",
       "type": "shell",
-      "command": "yarn run --top-level csb:start:no-entitlements -r",
+      "command": "sleep 5 && yarn run --top-level csb:start:no-entitlements -r",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {

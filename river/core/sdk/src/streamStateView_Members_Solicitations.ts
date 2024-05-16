@@ -36,7 +36,7 @@ export class StreamStateView_Members_Solicitations {
             deviceKey: solicitation.deviceKey,
             fallbackKey: solicitation.fallbackKey,
             isNewDevice: solicitation.isNewDevice,
-            sessionIds: [...solicitation.sessionIds],
+            sessionIds: [...solicitation.sessionIds.sort()],
         })
 
         encryptionEmitter?.emit(
@@ -62,7 +62,7 @@ export class StreamStateView_Members_Solicitations {
             deviceKey: prev.deviceKey,
             fallbackKey: prev.fallbackKey,
             isNewDevice: false,
-            sessionIds: [...removeCommon(prev.sessionIds, fulfillment.sessionIds)],
+            sessionIds: [...removeCommon(prev.sessionIds, fulfillment.sessionIds.sort())],
         }
         user.solicitations[index] = newEvent
         encryptionEmitter?.emit(

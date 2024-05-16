@@ -12,6 +12,7 @@ import {
     makeUserDeviceKeyStreamId,
     makeUserInboxStreamId,
     makeUniqueChannelStreamId,
+    addressFromUserId,
 } from './id'
 import {
     makeDonePromise,
@@ -39,6 +40,7 @@ import {
     DecryptedTimelineEvent,
     make_ChannelPayload_Message,
     make_MemberPayload_KeyFulfillment,
+    make_MemberPayload_KeySolicitation,
 } from './types'
 import { SignerContext } from './signerContext'
 
@@ -311,14 +313,49 @@ describe('clientTest', () => {
         await expect(bobsClient.initializeUser()).toResolve()
         bobsClient.startSync()
         expect(bobsClient.userSettingsStreamId).toBeDefined()
-        const ping = make_MemberPayload_KeyFulfillment({
+
+        // fulfillment without matching solicitation should fail
+        let payload = make_MemberPayload_KeyFulfillment({
             deviceKey: 'foo',
             userAddress: makeRandomUserAddress(),
             sessionIds: ['bar'],
         })
         await expect(
-            bobsClient.makeEventAndAddToStream(bobsClient.userSettingsStreamId!, ping),
+            bobsClient.makeEventAndAddToStream(bobsClient.userSettingsStreamId!, payload),
+        ).rejects.toThrow('INVALID_ARGUMENT')
+
+        // solicitation with no keys should fail
+        payload = make_MemberPayload_KeySolicitation({
+            deviceKey: 'foo',
+            sessionIds: [],
+            fallbackKey: 'baz',
+            isNewDevice: false,
+        })
+        await expect(
+            bobsClient.makeEventAndAddToStream(bobsClient.userSettingsStreamId!, payload),
+        ).rejects.toThrow('INVALID_ARGUMENT')
+
+        // solicitation for isNewDevice should resolve
+        payload = make_MemberPayload_KeySolicitation({
+            deviceKey: 'foo',
+            sessionIds: [],
+            fallbackKey: 'baz',
+            isNewDevice: true,
+        })
+        await expect(
+            bobsClient.makeEventAndAddToStream(bobsClient.userSettingsStreamId!, payload),
         ).toResolve()
+
+        // fulfillment should resolve
+        payload = make_MemberPayload_KeyFulfillment({
+            deviceKey: 'foo',
+            userAddress: addressFromUserId(bobsClient.userId),
+            sessionIds: [],
+        })
+        await expect(
+            bobsClient.makeEventAndAddToStream(bobsClient.userSettingsStreamId!, payload),
+        ).toResolve()
+
         await waitFor(() => {
             const lastEvent = bobsClient.streams
                 .get(bobsClient.userSettingsStreamId!)
@@ -332,6 +369,16 @@ describe('clientTest', () => {
             )
             expect(lastEvent?.remoteEvent?.event.payload.value.content.value.deviceKey).toBe('foo')
         })
+
+        // fulfillment with empty session ids should now fail
+        payload = make_MemberPayload_KeyFulfillment({
+            deviceKey: 'foo',
+            userAddress: addressFromUserId(bobsClient.userId),
+            sessionIds: [],
+        })
+        await expect(
+            bobsClient.makeEventAndAddToStream(bobsClient.userSettingsStreamId!, payload),
+        ).rejects.toThrow('INVALID_ARGUMENT')
     })
 
     test('bobCreatesUnamedSpaceAndStream', async () => {

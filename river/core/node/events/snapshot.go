@@ -431,35 +431,14 @@ func update_Snapshot_Member(
 		if err != nil {
 			return err
 		}
-		// if solicitation exists for this device key, remove it by shifting the slice
-		i := 0
-		for _, event := range member.Solicitations {
-			if event.DeviceKey != content.KeySolicitation.DeviceKey {
-				member.Solicitations[i] = event
-				i++
-			}
-		}
-		// sort the event keys in the new event
-		event := content.KeySolicitation
-		event.SessionIds = sort.StringSlice(event.SessionIds)
-		// append it
-		MAX_DEVICES := 10
-		startIndex := max(0, i-MAX_DEVICES)
-		member.Solicitations = append(member.Solicitations[startIndex:i], event)
+		applyKeySolicitation(member, content.KeySolicitation)
 		return nil
 	case *MemberPayload_KeyFulfillment_:
-		member, err := findMember(snapshot.Joined, creatorAddress)
+		member, err := findMember(snapshot.Joined, content.KeyFulfillment.UserAddress)
 		if err != nil {
 			return err
 		}
-		// clear out any fulfilled session ids for the device key
-		for _, event := range member.Solicitations {
-			if event.DeviceKey == content.KeyFulfillment.DeviceKey {
-				event.SessionIds = removeCommon(event.SessionIds, content.KeyFulfillment.SessionIds)
-				event.IsNewDevice = false
-				break
-			}
-		}
+		applyKeyFulfillment(member, content.KeyFulfillment)
 		return nil
 	case *MemberPayload_DisplayName:
 		member, err := findMember(snapshot.Joined, creatorAddress)
@@ -703,4 +682,38 @@ func insertUserBlock(
 			return userBlocks.UserId
 		},
 	)
+}
+
+func applyKeySolicitation(member *MemberPayload_Snapshot_Member, keySolicitation *MemberPayload_KeySolicitation) {
+	if member != nil {
+		// if solicitation exists for this device key, remove it by shifting the slice
+		i := 0
+		for _, event := range member.Solicitations {
+			if event.DeviceKey != keySolicitation.DeviceKey {
+				member.Solicitations[i] = event
+				i++
+			}
+		}
+		// sort the event keys in the new event
+		event := keySolicitation
+		event.SessionIds = sort.StringSlice(event.SessionIds)
+		// append it
+		MAX_DEVICES := 10
+		startIndex := max(0, i-MAX_DEVICES)
+		member.Solicitations = append(member.Solicitations[startIndex:i], event)
+	}
+}
+
+func applyKeyFulfillment(member *MemberPayload_Snapshot_Member, keyFulfillment *MemberPayload_KeyFulfillment) {
+	if member != nil {
+
+		// clear out any fulfilled session ids for the device key
+		for _, event := range member.Solicitations {
+			if event.DeviceKey == keyFulfillment.DeviceKey {
+				event.SessionIds = removeCommon(event.SessionIds, sort.StringSlice(keyFulfillment.SessionIds))
+				event.IsNewDevice = false
+				break
+			}
+		}
+	}
 }

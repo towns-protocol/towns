@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"log/slog"
+	"sort"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -58,6 +59,16 @@ type aeEnsAddressRules struct {
 type aeNftRules struct {
 	params *aeParams
 	nft    *MemberPayload_Nft
+}
+
+type aeKeySolicitationRules struct {
+	params       *aeParams
+	solicitation *MemberPayload_KeySolicitation
+}
+
+type aeKeyFulfillmentRules struct {
+	params      *aeParams
+	fulfillment *MemberPayload_KeyFulfillment
 }
 
 /*
@@ -366,11 +377,21 @@ func (params *aeParams) canAddMemberPayload(payload *StreamEvent_MemberPayload) 
 				fail(RiverError(Err_INVALID_ARGUMENT, "invalid stream id for membership payload", "streamId", ru.params.streamView.StreamId()))
 		}
 	case *MemberPayload_KeySolicitation_:
+		ru := &aeKeySolicitationRules{
+			params:       params,
+			solicitation: content.KeySolicitation,
+		}
 		return aeBuilder().
-			checkOneOf(params.creatorIsMember)
+			checkOneOf(params.creatorIsMember).
+			check(ru.validKeySolicitation)
 	case *MemberPayload_KeyFulfillment_:
+		ru := &aeKeyFulfillmentRules{
+			params:      params,
+			fulfillment: content.KeyFulfillment,
+		}
 		return aeBuilder().
-			checkOneOf(params.creatorIsMember)
+			checkOneOf(params.creatorIsMember).
+			check(ru.validKeyFulfillment)
 	case *MemberPayload_DisplayName:
 		return aeBuilder().
 			check(params.creatorIsMember)
@@ -1064,6 +1085,45 @@ func (ru *aeMediaPayloadChunkRules) canAddMediaChunk() (bool, error) {
 	return true, nil
 }
 
+func (ru *aeKeySolicitationRules) validKeySolicitation() (bool, error) {
+	// key solicitations are allowed if they are not empty, or if they are empty and isNewDevice is true and there is no existing device key
+	if ru.solicitation == nil {
+		return false, RiverError(Err_INVALID_ARGUMENT, "event is not a key solicitation event")
+	}
+
+	if !ru.solicitation.IsNewDevice && len(ru.solicitation.SessionIds) == 0 {
+		return false, RiverError(Err_INVALID_ARGUMENT, "session ids are required for existing devices")
+	}
+
+	return true, nil
+}
+
+func (ru *aeKeyFulfillmentRules) validKeyFulfillment() (bool, error) {
+
+	if ru.fulfillment == nil {
+		return false, RiverError(Err_INVALID_ARGUMENT, "event is not a key fulfillment event")
+	}
+	userAddress := ru.fulfillment.UserAddress
+	solicitations, err := ru.params.streamView.(events.JoinableStreamView).GetKeySolicitations(userAddress)
+	if err != nil {
+		return false, err
+	}
+
+	// loop over solicitations, see if the device key exists
+	for _, solicitation := range solicitations {
+		if solicitation.DeviceKey == ru.fulfillment.DeviceKey {
+			if solicitation.IsNewDevice {
+				return true, nil
+			}
+			if hasCommon(solicitation.SessionIds, sort.StringSlice(ru.fulfillment.SessionIds)) {
+				return true, nil
+			}
+			return false, RiverError(Err_INVALID_ARGUMENT, "solicitation with common session ids not found")
+		}
+	}
+	return false, RiverError(Err_INVALID_ARGUMENT, "solicitation with matching device key not found")
+}
+
 func (ru *aeEnsAddressRules) validEnsAddress() (bool, error) {
 	if ru.address == nil {
 		return false, RiverError(Err_INVALID_ARGUMENT, "event is not an ENS address event")
@@ -1112,4 +1172,20 @@ func (params *aeParams) isValidNode(addressOrId []byte) bool {
 
 func (params *aeParams) log() *slog.Logger {
 	return dlog.FromCtx(params.ctx)
+}
+
+func hasCommon(x, y []string) bool {
+	i, j := 0, 0
+
+	for i < len(x) && j < len(y) {
+		if x[i] < y[j] {
+			i++
+		} else if x[i] > y[j] {
+			j++
+		} else {
+			return true
+		}
+	}
+
+	return false
 }
