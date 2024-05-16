@@ -8,7 +8,6 @@ import { TownsTestClient } from '../integration/helpers/TownsTestClient'
 import { CreateSpaceInfo } from '../../src/types/towns-types'
 import { ethers } from 'ethers'
 import { TownsOpts } from '../../src/client/TownsClientTypes'
-import { paymasterProxyMiddleware } from '@towns/userops'
 import { TestConstants } from '../integration/helpers/TestConstants'
 import { Address } from '../../src/types/web3-types'
 import { sleep } from '../../src/utils/towns-utils'
@@ -86,10 +85,8 @@ export function getAccountAbstractionConfig() {
         bundlerUrl: process.env.AA_BUNDLER_URL,
         paymasterProxyUrl: process.env.AA_PAYMASTER_PROXY_URL,
         aaRpcUrl: process.env.AA_RPC_URL,
-        paymasterMiddleware: paymasterProxyMiddleware({
-            paymasterProxyAuthSecret: process.env.AA_PAYMASTER_PROXY_AUTH_SECRET,
-            skipConfirmation: true,
-        }),
+        paymasterProxyAuthSecret: process.env.AA_PAYMASTER_PROXY_AUTH_SECRET,
+        skipTransactionConfirmation: true,
         // entryPointAddress: process.env.ENTRY_POINT_ADDRESS, // omitted, using stackup default
         // factoryAddress: process.env.FACTORY_ADDRESS, // omitted, using stackup default
     }

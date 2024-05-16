@@ -18,9 +18,11 @@ import { userOpsStore } from './userOpsStore'
 // TODO: we can probably add these via @account-abrstraction/contracts if preferred
 import { EntryPoint__factory, SimpleAccountFactory__factory } from 'userop/dist/typechain'
 import { ERC4337 } from 'userop/dist/constants'
-import { CodeException } from './errors'
+import { CodeException, errorToCodeException, isPreverificationGasTooLowError } from './errors'
 import { UserOperationEventEvent } from 'userop/dist/typechain/EntryPoint'
 import { EVERYONE_ADDRESS } from './utils'
+import { preverificationGasMultiplier, promptUser, signUserOpHash } from './middlewares'
+import { paymasterProxyMiddleware } from './paymasterProxyMiddleware'
 
 export class UserOps {
     private bundlerUrl: string
@@ -30,7 +32,8 @@ export class UserOps {
     private entryPointAddress: string | undefined
     // defaults to Stackup's deployed factory
     private factoryAddress: string | undefined
-    private paymasterMiddleware: UserOpsConfig['paymasterMiddleware']
+    private paymasterProxyAuthSecret: string | undefined
+    private skipTransactionConfirmation: boolean
     private userOpClient: UseropClient | undefined
     protected spaceDapp: ISpaceDapp | undefined
 
@@ -40,8 +43,9 @@ export class UserOps {
         this.paymasterProxyUrl = config.paymasterProxyUrl
         this.entryPointAddress = config.entryPointAddress ?? ERC4337.EntryPoint
         this.factoryAddress = config.factoryAddress ?? ERC4337.SimpleAccount.Factory
-        this.paymasterMiddleware = config.paymasterMiddleware
+        this.paymasterProxyAuthSecret = config.paymasterProxyAuthSecret
         this.spaceDapp = config.spaceDapp
+        this.skipTransactionConfirmation = config.skipTransactionConfirmation
     }
 
     public async getAbstractAccountAddress({
@@ -114,6 +118,7 @@ export class UserOps {
             // a function signature hash to pass to paymaster proxy - this is just the function name for now
             functionHashForPaymasterProxy: string
             spaceId: string | undefined
+            retryCount?: number
         },
     ): Promise<ISendUserOperationResponse> {
         const { toAddress, callData, value } = args
@@ -126,24 +131,6 @@ export class UserOps {
         if (!callData) {
             throw new Error('callData is required')
         }
-        // local bundler and no paymaster needs to estimate gas
-        // MAYBE WE DON'T NEED THIS WITH SKANDHA BUNDLER
-        // if (this.chainId === 31337) {
-        //     const { preVerificationGas, callGasLimit, verificationGasLimit } =
-        //         await estimateGasForLocalBundler({
-        //             target: toAddress,
-        //             provider: new ethers.providers.JsonRpcProvider(this.rpcUrl),
-        //             entryPointAddress: this.entryPointAddress ?? '',
-        //             sender: builder.getSender(),
-        //             callData,
-        //             factoryAddress: this.factoryAddress ?? '',
-        //             signer,
-        //         })
-
-        //     builder.setPreVerificationGas(preVerificationGas)
-        //     builder.setCallGasLimit(callGasLimit)
-        //     builder.setVerificationGasLimit(verificationGasLimit)
-        // }
 
         let userOp: Presets.Builder.SimpleAccount
         if (Array.isArray(toAddress)) {
@@ -162,9 +149,86 @@ export class UserOps {
         }
 
         const userOpClient = await this.getUserOpClient()
-        return userOpClient.sendUserOperation(userOp, {
-            onBuild: (op) => console.log('Signed UserOperation:', op),
-        })
+
+        // We get back preverification gas too low errors sometimes
+        // - for pm sponsored ops, pretty much all we can do is retry. The paymaster is going to do its own esitamtes and provide a sig. We can't change it or the sig will be invalid
+        // - for non-pm sponsored ops, we can up the preverification gas and retry
+        let preverificationGasMultiplierValue = 1
+
+        // 1 - estimate preverification gas. don't think this has any impact on paymaster's gas estimation, but we can pass it along just in case it does
+        userOp.useMiddleware(async (ctx) =>
+            preverificationGasMultiplier(preverificationGasMultiplierValue)(ctx),
+        )
+        // 2 - pass user op with new gas data to paymaster.
+        // Unclear if pm_sponsorUserOperation called in paymaster uses any incoming estimate when estimating sponsored gas
+        // paymaster returns preverification gas and we assign it to the user operation.
+        // The userop fields can no longer be manipulated or else the paymaster sig will be invalid
+        if (this.paymasterProxyUrl && this.paymasterProxyAuthSecret) {
+            userOp.useMiddleware(async (ctx) =>
+                paymasterProxyMiddleware({
+                    rootKeyAddress: await args.signer.getAddress(),
+                    userOpContext: ctx,
+                    paymasterProxyAuthSecret: this.paymasterProxyAuthSecret,
+                    paymasterProxyUrl: this.paymasterProxyUrl,
+                    functionHashForPaymasterProxy: args.functionHashForPaymasterProxy,
+                    townId: args.spaceId, // can or should i rename this to space id?
+                }),
+            )
+        }
+
+        // 3 - prompt user if the paymaster rejected. recalculate preverification gas
+        userOp.useMiddleware(async (ctx) =>
+            promptUser(preverificationGasMultiplierValue)(ctx, {
+                provider: this.spaceDapp?.provider,
+                config: this.spaceDapp?.config,
+                rpcUrl: this.aaRpcUrl,
+                bundlerUrl: this.bundlerUrl,
+                skipConfirmation: this.skipTransactionConfirmation,
+                townId: args.spaceId,
+            }),
+        )
+
+        // 4 - sign the user operation
+        userOp.useMiddleware(async (ctx) => signUserOpHash(ctx, args.signer))
+
+        async function sendUserOperationWithRetry() {
+            let attempt = 0
+            let shouldTry = true
+            let _error: CodeException | undefined = undefined
+            while (shouldTry && attempt < (args.retryCount ?? 3)) {
+                try {
+                    const res = await userOpClient.sendUserOperation(userOp, {
+                        onBuild: (op) => {
+                            console.log('[UserOperations] Signed UserOperation:', op)
+                        },
+                    })
+                    console.log('[UserOperations] userOpHash:', res.userOpHash)
+                    return res
+                } catch (error) {
+                    _error = errorToCodeException(error)
+                    // so far observed bundler errors for both paid and free ops seem to be b/c of preverification gas
+                    // may need to handle additional errors in the future
+                    // for now, only retrying the known preverification gas error
+                    // https://docs.stackup.sh/docs/bundler-errors
+                    if (isPreverificationGasTooLowError(error)) {
+                        preverificationGasMultiplierValue++
+                        await new Promise((resolve) => setTimeout(resolve, 500))
+                        // this is a paid op. just retry until the user dismisses
+                        if (userOp.getPaymasterAndData() === '0x') {
+                            continue
+                        }
+
+                        attempt++
+                        continue
+                    } else {
+                        shouldTry = false
+                    }
+                }
+            }
+            throw _error
+        }
+
+        return sendUserOperationWithRetry()
     }
 
     public async sendCreateSpaceOp(
@@ -1059,18 +1123,10 @@ export class UserOps {
             overrideBundlerRpc: this.bundlerUrl,
             // salt?: BigNumberish;
             // nonceKey?: number;
-            paymasterMiddleware: async (ctx) =>
-                this.paymasterMiddleware?.({
-                    rootKeyAddress: await args.signer.getAddress(),
-                    userOpContext: ctx,
-                    bundlerUrl: this.bundlerUrl,
-                    provider: this.spaceDapp!.provider,
-                    config: this.spaceDapp!.config,
-                    aaRpcUrl: this.aaRpcUrl,
-                    paymasterProxyUrl: this.paymasterProxyUrl,
-                    functionHashForPaymasterProxy: args.functionHashForPaymasterProxy,
-                    townId: args.spaceId, // can or should i rename this to space id?
-                }),
+            paymasterMiddleware: async () => {
+                // this is moved to sendUserOp but passing an empty function here so
+                // that userop does not estimate the gas, which we do in other middleware
+            },
         })
     }
 

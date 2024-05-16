@@ -1,6 +1,5 @@
 import { ISpaceDapp } from 'use-towns-client/src/types/web3-types'
 import { TestUserOps } from './TestUserOps'
-import { paymasterProxyMiddleware } from '../src/paymasterProxyMiddleware'
 import { ethers } from 'ethers'
 import {
     Address,
@@ -36,9 +35,8 @@ export const UserOps = ({ spaceDapp }: { spaceDapp: ISpaceDapp }) => {
         aaRpcUrl: process.env.AA_RPC_URL!,
         entryPointAddress: process.env.AA_ENTRY_POINT_ADDRESS,
         factoryAddress: process.env.AA_FACTORY_ADDRESS,
-        paymasterMiddleware: paymasterProxyMiddleware({
-            paymasterProxyAuthSecret: process.env.AA_PAYMASTER_PROXY_AUTH_SECRET!,
-        }),
+        paymasterProxyAuthSecret: process.env.AA_PAYMASTER_PROXY_AUTH_SECRET!,
+        skipTransactionConfirmation: true,
     })
 }
 

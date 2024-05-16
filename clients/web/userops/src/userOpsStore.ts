@@ -13,17 +13,20 @@ export type UserOpGas = {
 export const userOpsStore = create<{
     currOpGas: UserOpGas | undefined
     smartAccountAddress: Address | undefined
+    retryType: 'preVerification' | undefined
     confirm: () => void
     deny: () => void
     clear: () => void
 }>((set) => ({
     currOpGas: undefined,
     smartAccountAddress: undefined,
+    retryType: undefined,
     confirm: () => {},
     deny: () => {},
     clear: () =>
         set({
             currOpGas: undefined,
+            retryType: undefined,
             confirm: () => {},
             deny: () => {},
         }),

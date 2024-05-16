@@ -1,5 +1,4 @@
 import { BaseChainConfig, SpaceDapp } from '@river-build/web3'
-import { IUserOperationMiddlewareCtx } from 'userop'
 import { ethers } from 'ethers'
 
 export type AccountAbstractionConfig = Omit<UserOpsConfig, 'chainId' | 'provider' | 'config'>
@@ -22,17 +21,8 @@ export type UserOpsConfig = {
     paymasterProxyUrl?: string
     entryPointAddress?: string
     factoryAddress?: string
-    paymasterMiddleware?: (
-        args: {
-            userOpContext: IUserOperationMiddlewareCtx
-            rootKeyAddress: string
-            functionHashForPaymasterProxy: string | undefined
-            townId: string | undefined
-        } & Pick<
-            UserOpsConfig,
-            'bundlerUrl' | 'aaRpcUrl' | 'provider' | 'config' | 'paymasterProxyUrl'
-        >,
-    ) => Promise<void>
+    paymasterProxyAuthSecret?: string
+    skipTransactionConfirmation: boolean
 }
 
 export type UserOpParams = {

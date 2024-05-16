@@ -3,6 +3,7 @@ import { userOpsStore } from '@towns/userops'
 import { BigNumber, utils } from 'ethers'
 
 import { useMembershipInfo } from 'use-towns-client'
+import { useShallow } from 'zustand/react/shallow'
 import { Box, Button, Heading, Icon, IconButton, Text } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
@@ -46,7 +47,15 @@ function UserOpTxModalContent({
     membershipPriceError,
     endPublicPageLoginFlow,
 }: Props & { endPublicPageLoginFlow: () => void }) {
-    const { currOpGas, confirm, deny, smartAccountAddress } = userOpsStore()
+    const { currOpGas, confirm, deny, smartAccountAddress, retryType } = userOpsStore(
+        useShallow((s) => ({
+            currOpGas: s.currOpGas,
+            confirm: s.confirm,
+            deny: s.deny,
+            smartAccountAddress: s.smartAccountAddress,
+            retryType: s.retryType,
+        })),
+    )
 
     const {
         data: isSmartAccountDeployed,
@@ -219,6 +228,24 @@ function UserOpTxModalContent({
                         )}
                     </Box>
                 </Box>
+                {retryType === 'preVerification' && (
+                    <Box
+                        horizontal
+                        padding
+                        gap
+                        centerContent
+                        rounded="sm"
+                        background="level2"
+                        width="100%"
+                    >
+                        <Icon type="alert" color="error" />
+                        <Text color="error">
+                            Preverification gas was too low. Would you like to try this transaction
+                            again?
+                        </Text>
+                    </Box>
+                )}
+
                 {bottomContent()}
             </Box>
         </>

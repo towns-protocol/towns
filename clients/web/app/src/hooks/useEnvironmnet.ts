@@ -11,7 +11,7 @@ import {
 } from '@river-build/web3'
 import { check } from '@river-build/dlog'
 import { isDefined } from '@river/sdk'
-import { AccountAbstractionConfig, paymasterProxyMiddleware } from '@towns/userops'
+import { AccountAbstractionConfig } from '@towns/userops'
 import { env } from 'utils'
 import {
     getCustomBaseChain,
@@ -80,9 +80,8 @@ function makeEnvironments(): TownsEnvironmentInfo[] {
                       paymasterProxyUrl: env.VITE_AA_PAYMASTER_PROXY_URL,
                       entryPointAddress: env.VITE_AA_ENTRY_POINT_ADDRESS,
                       factoryAddress: env.VITE_AA_FACTORY_ADDRESS,
-                      paymasterMiddleware: paymasterProxyMiddleware({
-                          paymasterProxyAuthSecret: env.VITE_AUTH_WORKER_HEADER_SECRET,
-                      }),
+                      paymasterProxyAuthSecret: env.VITE_AUTH_WORKER_HEADER_SECRET,
+                      skipTransactionConfirmation: false,
                   }
                 : undefined,
         } satisfies TownsEnvironmentInfo)
@@ -125,9 +124,8 @@ function makeEnvironments(): TownsEnvironmentInfo[] {
                       paymasterProxyUrl: env.VITE_AA_PAYMASTER_PROXY_URL,
                       entryPointAddress: env.VITE_AA_ENTRY_POINT_ADDRESS,
                       factoryAddress: env.VITE_AA_FACTORY_ADDRESS,
-                      paymasterMiddleware: paymasterProxyMiddleware({
-                          paymasterProxyAuthSecret: env.VITE_AUTH_WORKER_HEADER_SECRET,
-                      }),
+                      paymasterProxyAuthSecret: env.VITE_AUTH_WORKER_HEADER_SECRET,
+                      skipTransactionConfirmation: false,
                   }
                 : undefined,
         } satisfies TownsEnvironmentInfo)
