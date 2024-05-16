@@ -2,7 +2,7 @@ import { createIssue } from './linear-graphql/createIssue'
 import { fileUpload } from './linear-graphql/fileUpload'
 import { LinearConfig } from './linear-graphql/linearConfig'
 import { saveLogFile } from './linear-graphql/saveLogFile'
-import { Uploaded, uploadLogFile } from './linear-graphql/uploadLogFile'
+import { Uploaded, uploadFile } from './linear-graphql/uploadLogFile'
 
 interface CreateLinearIssueInput {
     config: LinearConfig
@@ -11,6 +11,7 @@ interface CreateLinearIssueInput {
     email: string
     comments: string
     logJson: string
+    attachments?: File[]
 }
 
 export async function createLinearIssue({
@@ -20,9 +21,16 @@ export async function createLinearIssue({
     email,
     comments,
     logJson,
+    attachments,
 }: CreateLinearIssueInput) {
-    // Upload logs
-    const { filename: logFilename, logUrl } = await uploadFileToLinear({ config, id, logJson })
+    const hasAttachments = attachments && attachments.length > 0
+    const uploadAttachments = attachments?.map((file) => uploadFileToLinear({ config, file })) || []
+
+    // Upload attachments and log file
+    const uploads = hasAttachments
+        ? [uploadLogToLinear({ config, id, logJson }), ...uploadAttachments]
+        : [uploadLogToLinear({ config, id, logJson })]
+    const [log, ...uploadedAttachments] = await Promise.all(uploads)
 
     // Create issue
     await createIssue({
@@ -31,45 +39,56 @@ export async function createLinearIssue({
         email,
         comments,
         id,
-        logFilename,
-        logUrl,
+        logFilename: log.filename,
+        logUrl: log.fileUrl,
+        attachments: uploadedAttachments,
     })
 }
 
-interface UploadFileToLinearInput {
+interface UploadLogToLinearInput {
     config: LinearConfig
     id: string
     logJson: string
 }
 
-async function uploadFileToLinear({
-    config,
-    id,
-    logJson,
-}: UploadFileToLinearInput): Promise<Uploaded> {
-    const { filename, contentType, size, content } = saveLogFile({ id, logJson })
-    const { success, uploadFile, error, httpStatusCode } = await fileUpload({
+interface UploadFileToLinearInput {
+    config: LinearConfig
+    file: File
+}
+
+async function uploadFileToLinear({ config, file }: UploadFileToLinearInput) {
+    const { success, error, response, httpStatusCode } = await fileUpload({
         config,
-        payload: { filename, contentType, size },
+        payload: { filename: file.name, contentType: file.type, size: file.size },
     })
     // failed to get the upload url
     if (!success) {
         console.error('[uploadFileToLinear] Failed to get upload url:', {
-            filename,
+            filename: file.name,
             httpStatusCode,
             error,
         })
         return {
-            filename,
-            logUrl: undefined,
+            filename: file.name,
+            fileUrl: undefined,
             storageFilename: undefined,
         }
     }
 
     // got the upload url. now upload the file
-    return uploadLogFile({
-        filename,
-        uploadFile: uploadFile,
-        content,
+    return uploadFile({
+        filename: file.name,
+        uploadFile: response,
+        content: file,
     })
+}
+
+async function uploadLogToLinear({
+    config,
+    id,
+    logJson,
+}: UploadLogToLinearInput): Promise<Uploaded> {
+    const logFile = saveLogFile({ id, logJson })
+
+    return uploadFileToLinear({ config, file: logFile })
 }

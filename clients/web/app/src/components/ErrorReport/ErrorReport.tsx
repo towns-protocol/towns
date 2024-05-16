@@ -1,10 +1,11 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { z } from 'zod'
 import { datadogRum } from '@datadog/browser-rum'
 import { useMutation } from '@tanstack/react-query'
 import { toast } from 'react-hot-toast/headless'
 import { useShallow } from 'zustand/react/shallow'
+import { Controller, UseFormReturn, useWatch } from 'react-hook-form'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import {
     Box,
@@ -28,6 +29,10 @@ import { BetaDebugger } from 'BetaDebugger'
 import { useRequestShakePermissions } from '@components/BugReportButton/ShakeToReport'
 import { useDevice } from 'hooks/useDevice'
 import { PanelButton } from '@components/Panel/PanelButton'
+import { UploadInput } from 'ui/components/Form/Upload'
+import { FieldOutline } from 'ui/components/_internal/Field/FieldOutline/FieldOutline'
+import { srOnlyClass } from 'ui/styles/globals/utils.css'
+import * as fieldStyles from '../../ui/components/_internal/Field/Field.css'
 import { BugSubmittedToast } from './BugSubmittedToast'
 
 const FormStateKeys = {
@@ -35,6 +40,7 @@ const FormStateKeys = {
     email: 'email',
     comments: 'comments',
     logs: 'logs',
+    attachments: 'attachments',
 } as const
 
 type FormState = {
@@ -42,6 +48,7 @@ type FormState = {
     [FormStateKeys.email]: string
     [FormStateKeys.comments]: string
     [FormStateKeys.logs]: string
+    [FormStateKeys.attachments]: File[]
 }
 
 const schema = z.object({
@@ -51,17 +58,27 @@ const schema = z.object({
         z.string().email('Please enter a valid email address.'),
     ]),
     [FormStateKeys.comments]: z.string().min(1, 'Please enter a description.'),
+    [FormStateKeys.attachments]: z.array(z.instanceof(File)).optional(),
 })
 
 const defaultValues = {
     [FormStateKeys.name]: '',
     [FormStateKeys.email]: '',
     [FormStateKeys.comments]: '',
+    [FormStateKeys.attachments]: [],
 }
 
 async function postCustomErrorToDatadog(data: FormState, id: string, logs: string) {
+    const dataWithoutFile = {
+        ...data,
+        attachments: data[FormStateKeys.attachments].map((file) => ({
+            name: file.name,
+            size: file.size,
+            type: file.type,
+        })),
+    }
     datadogRum.addAction('user-feedback-custom-error', {
-        data,
+        dataWithoutFile,
         logs,
         id,
         timestamp: Date.now().toString(),
@@ -102,12 +119,23 @@ async function postCustomError(data: FormState) {
     data.comments += `\n\nUser Agent:  + ${navigator.userAgent}`
     data.comments += `\n\nDevice Type: ${deviceType}`
     data.comments += `\n\nPWA: ${PWAflag}`
-    data.logs = logs
 
     const uuid = crypto.randomUUID()
-    const postCustom = await axiosClient.post(url, {
-        ...data,
-        id: uuid,
+
+    const formData = new FormData()
+
+    formData.append('name', data.name)
+    formData.append('email', data.email)
+    formData.append('comments', data.comments)
+    formData.append('id', uuid)
+    formData.append('logs', logs)
+
+    for (const attachment of data.attachments) {
+        formData.append(`attachment[]`, attachment)
+    }
+
+    const postCustom = await axiosClient.post(url, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
     })
     postCustomErrorToDatadog(data, uuid, logs)
     return postCustom
@@ -141,7 +169,9 @@ export const ErrorReportModal = (props: { minimal?: boolean }) => {
 
 export const ErrorReportForm = (props: { onHide?: () => void }) => {
     const { onHide } = props
+    const inputRef = useRef<HTMLInputElement>(null)
     const [success, setSuccess] = useState(false)
+    const [isDragging, setIsDragging] = useState(false)
     const [errorMessage, setErrorMessage] = useState('')
     const { mutate: doCustomError, isPending: isLoading } = useMutation({
         mutationFn: postCustomError,
@@ -217,94 +247,183 @@ export const ErrorReportForm = (props: { onHide?: () => void }) => {
                 })
             }}
         >
-            {({ register, formState }) => (
-                <Stack gap grow>
-                    <MotionBox layout="position">
-                        <TextField
-                            autoFocus
-                            background="level2"
-                            placeholder="Name"
-                            tone={formState.errors[FormStateKeys.name] ? 'error' : 'neutral'}
-                            message={
-                                <ErrorMessage
-                                    preventSpace
-                                    errors={formState.errors}
-                                    fieldName={FormStateKeys.name}
-                                />
-                            }
-                            {...register(FormStateKeys.name)}
-                        />
-                    </MotionBox>
-                    <MotionBox layout="position">
-                        <TextField
-                            background="level2"
-                            placeholder="Email (optional)"
-                            tone={formState.errors[FormStateKeys.email] ? 'error' : 'neutral'}
-                            message={
-                                <ErrorMessage
-                                    preventSpace
-                                    errors={formState.errors}
-                                    fieldName={FormStateKeys.email}
-                                />
-                            }
-                            {...register(FormStateKeys.email)}
-                        />
-                    </MotionBox>
-                    <MotionBox layout="position">
-                        <TextArea
-                            paddingY="md"
-                            background="level2"
-                            placeholder="Please describe your issue"
-                            height="150"
-                            maxLength={400}
-                            tone={formState.errors[FormStateKeys.comments] ? 'error' : 'neutral'}
-                            message={
-                                <ErrorMessage
-                                    preventSpace
-                                    errors={formState.errors}
-                                    fieldName={FormStateKeys.comments}
-                                />
-                            }
-                            {...register(FormStateKeys.comments)}
-                        />
-                    </MotionBox>
-                    {isTouch && (
-                        <PanelButton onClick={onActivateShake}>
-                            <Box width="height_md" alignItems="center">
-                                <Icon
-                                    type={permissionStatus === 'granted' ? 'shakeOff' : 'shake'}
-                                    size="square_sm"
-                                />
-                            </Box>
-                            {permissionStatus === 'granted' ? (
-                                <Paragraph color="gray1">Disable Shake to Report</Paragraph>
-                            ) : (
-                                <Paragraph color="gray1">Enable Shake to Report</Paragraph>
-                            )}
-                        </PanelButton>
-                    )}
-                    <DebugInfo />
-                    {errorMessage && (
-                        <Stack paddingBottom="sm">
-                            <Text color="error">{errorMessage}</Text>
-                        </Stack>
-                    )}
+            {(_form) => {
+                const form = _form as unknown as UseFormReturn<FormState>
+                const { register, control, formState } = form
 
-                    <Box grow />
-                    <Stack horizontal gap justifyContent="end">
-                        <Button
-                            grow
-                            tone="cta1"
-                            type="submit"
-                            ref={submitButtonRef}
-                            disabled={isLoading}
-                        >
-                            {isLoading && <ButtonSpinner />}
-                            Submit
-                        </Button>
+                return (
+                    <Stack gap grow>
+                        <MotionBox layout="position">
+                            <TextField
+                                autoFocus
+                                background="level2"
+                                placeholder="Name"
+                                tone={formState.errors[FormStateKeys.name] ? 'error' : 'neutral'}
+                                message={
+                                    <ErrorMessage
+                                        preventSpace
+                                        errors={formState.errors}
+                                        fieldName={FormStateKeys.name}
+                                    />
+                                }
+                                {...register(FormStateKeys.name)}
+                            />
+                        </MotionBox>
+                        <MotionBox layout="position">
+                            <TextField
+                                background="level2"
+                                placeholder="Email (optional)"
+                                tone={formState.errors[FormStateKeys.email] ? 'error' : 'neutral'}
+                                message={
+                                    <ErrorMessage
+                                        preventSpace
+                                        errors={formState.errors}
+                                        fieldName={FormStateKeys.email}
+                                    />
+                                }
+                                {...register(FormStateKeys.email)}
+                            />
+                        </MotionBox>
+                        <MotionBox layout="position">
+                            <TextArea
+                                paddingY="md"
+                                background="level2"
+                                placeholder="Please describe your issue"
+                                height="150"
+                                maxLength={400}
+                                tone={
+                                    formState.errors[FormStateKeys.comments] ? 'error' : 'neutral'
+                                }
+                                message={
+                                    <ErrorMessage
+                                        preventSpace
+                                        errors={formState.errors}
+                                        fieldName={FormStateKeys.comments}
+                                    />
+                                }
+                                {...register(FormStateKeys.comments)}
+                            />
+                        </MotionBox>
+
+                        <PreviewFiles form={form} />
+
+                        <MotionBox layout="position">
+                            <PanelButton
+                                type="button"
+                                onDragEnter={() => {
+                                    setIsDragging(true)
+                                }}
+                                onDragOver={(e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    setIsDragging(true)
+                                }}
+                                onDragLeave={(e) => {
+                                    e.preventDefault()
+                                    setIsDragging(false)
+                                }}
+                                onDrop={(e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    setIsDragging(false)
+                                    const files = Array.from(e.dataTransfer.files)
+                                    // dont add duplicates
+                                    const newFiles = files.filter(
+                                        (f) =>
+                                            !form
+                                                .getValues(FormStateKeys.attachments)
+                                                .some((af) => af.name === f.name),
+                                    )
+                                    if (newFiles.length > 0) {
+                                        form.setValue(
+                                            FormStateKeys.attachments,
+                                            form
+                                                .getValues(FormStateKeys.attachments)
+                                                .concat(newFiles),
+                                        )
+                                    }
+                                }}
+                                onClick={() => {
+                                    inputRef.current?.click()
+                                }}
+                            >
+                                <Box width="height_md" alignItems="center">
+                                    <Icon type="attachment" size="square_sm" />
+                                </Box>
+                                <Paragraph color="gray1">
+                                    {isDragging ? 'Drop file here' : 'Upload a file'}
+                                </Paragraph>
+
+                                <Controller
+                                    control={control}
+                                    name={FormStateKeys.attachments}
+                                    render={({ field: { value, onChange, name } }) => (
+                                        <>
+                                            <UploadInput
+                                                className={[fieldStyles.field, srOnlyClass]}
+                                                ref={inputRef}
+                                                name={name}
+                                                register={register}
+                                                onChange={(e) => {
+                                                    const file = e.target?.files?.[0]
+                                                    if (
+                                                        !file ||
+                                                        value.some((f) => f.name === file.name)
+                                                    ) {
+                                                        return onChange(value)
+                                                    }
+                                                    return onChange([...value, file])
+                                                }}
+                                            />
+                                            <ErrorMessage
+                                                preventSpace
+                                                errors={formState.errors}
+                                                fieldName={FormStateKeys.attachments}
+                                            />
+                                            <FieldOutline tone="accent" rounded="sm" />
+                                        </>
+                                    )}
+                                />
+                            </PanelButton>
+                        </MotionBox>
+                        {isTouch && (
+                            <PanelButton onClick={onActivateShake}>
+                                <Box width="height_md" alignItems="center">
+                                    <Icon
+                                        type={permissionStatus === 'granted' ? 'shakeOff' : 'shake'}
+                                        size="square_sm"
+                                    />
+                                </Box>
+                                {permissionStatus === 'granted' ? (
+                                    <Paragraph color="gray1">Disable Shake to Report</Paragraph>
+                                ) : (
+                                    <Paragraph color="gray1">Enable Shake to Report</Paragraph>
+                                )}
+                            </PanelButton>
+                        )}
+                        <DebugInfo />
+                        {errorMessage && (
+                            <Stack paddingBottom="sm">
+                                <Text color="error">{errorMessage}</Text>
+                            </Stack>
+                        )}
+
+                        <Box grow />
+                        <Stack horizontal gap justifyContent="end">
+                            <Button
+                                grow
+                                tone="cta1"
+                                type="submit"
+                                ref={submitButtonRef}
+                                disabled={isLoading}
+                            >
+                                {isLoading && <ButtonSpinner />}
+                                Submit
+                            </Button>
+                        </Stack>
                     </Stack>
-                </Stack>
-            )}
+                )
+            }}
         </FormRender>
     )
 }
@@ -336,5 +455,76 @@ const DebugInfo = () => {
                 </Box>
             )}
         </Box>
+    )
+}
+
+const UploadedImage = ({ file, form }: { file: File; form: UseFormReturn<FormState> }) => {
+    const imageSrc = useMemo(() => {
+        const isImage = file.type.startsWith('image/')
+        if (isImage) {
+            return URL.createObjectURL(file)
+        }
+    }, [file])
+
+    return (
+        <MotionBox layout="position">
+            <Box
+                horizontal
+                padding
+                transition
+                height="x6"
+                rounded="sm"
+                background="level2"
+                justifyContent="spaceBetween"
+                alignItems="center"
+                gap="sm"
+            >
+                <Box horizontal gap="sm" alignItems="center" overflow="hidden">
+                    {imageSrc ? (
+                        <Box
+                            display="block"
+                            as="img"
+                            minWidth="x4"
+                            square="square_lg"
+                            alignItems="center"
+                            rounded="sm"
+                            objectFit="cover"
+                            src={imageSrc}
+                        />
+                    ) : (
+                        <Icon type="attachment" size="square_sm" color="gray2" />
+                    )}
+                    <Text noWrap truncate color="default">
+                        {file.name}
+                    </Text>
+                </Box>
+                <Icon
+                    type="close"
+                    size="square_xs"
+                    color="gray2"
+                    cursor="pointer"
+                    onClick={() => {
+                        form.setValue(
+                            FormStateKeys.attachments,
+                            form
+                                .getValues(FormStateKeys.attachments)
+                                .filter((f) => f.name !== file.name),
+                        )
+                    }}
+                />
+            </Box>
+        </MotionBox>
+    )
+}
+
+const PreviewFiles = ({ form }: { form: UseFormReturn<FormState> }) => {
+    const fields = useWatch({ control: form.control })
+
+    return (
+        <>
+            {fields[FormStateKeys.attachments]?.map((file: File) => (
+                <UploadedImage key={file.name} file={file} form={form} />
+            ))}
+        </>
     )
 }

@@ -1,4 +1,5 @@
 import { LinearConfig } from './linearConfig'
+import { Uploaded } from './uploadLogFile'
 
 interface IssueCreateInput {
     config: LinearConfig
@@ -8,6 +9,7 @@ interface IssueCreateInput {
     email?: string
     logFilename?: string
     logUrl?: string
+    attachments?: Uploaded[]
 }
 
 export async function createIssue({
@@ -18,6 +20,7 @@ export async function createIssue({
     id,
     logFilename,
     logUrl,
+    attachments,
 }: IssueCreateInput): Promise<void> {
     const mutation = `
 mutation CreateIssue($issueTitle: String!, $issueDescription: String!){
@@ -42,11 +45,16 @@ mutation CreateIssue($issueTitle: String!, $issueDescription: String!){
             : issueTitleRaw
 
     const logInfo = logFilename && logUrl ? `Logs: [${logFilename}](${logUrl})` : ''
+    const attachmentInfo = attachments
+        ?.map((attachment) => `![${attachment.filename}](${attachment.fileUrl})`)
+        .join('\n')
     const issueDescription = [
         `**Name**: ${name}`,
         `**Email**: ${email}`,
         '### User Feedback:',
         comments,
+        '### Attachments:',
+        attachmentInfo,
         '### Logs:',
         logInfo,
     ].join('\n\n')

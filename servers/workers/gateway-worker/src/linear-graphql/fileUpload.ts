@@ -2,7 +2,7 @@ import { LinearConfig } from './linearConfig'
 
 export type Header = Record<string, string>
 
-export interface UploadFile {
+export interface UploadFileResponse {
     assetUrl: string
     uploadUrl: string
     filename: string
@@ -16,7 +16,7 @@ interface FileUploadInput {
 }
 
 interface FileUploadOutput {
-    uploadFile: UploadFile
+    response: UploadFileResponse
     success: boolean
     httpStatusCode?: number
     error?: unknown
@@ -83,7 +83,7 @@ fileUpload(filename: $filename, size: $size, contentType: $contentType) {
             rateLimitedErrors: headers,
         })
         return {
-            uploadFile: {
+            response: {
                 assetUrl: '',
                 uploadUrl: '',
                 filename: '',
@@ -99,13 +99,13 @@ fileUpload(filename: $filename, size: $size, contentType: $contentType) {
     const fileUploadOutput = (await res.json()) as {
         data: {
             fileUpload: {
-                uploadFile: UploadFile
+                uploadFile: UploadFileResponse
             }
         }
     }
     const uploadFile = fileUploadOutput.data.fileUpload.uploadFile
     return {
-        uploadFile,
+        response: uploadFile,
         success: true,
     }
 }

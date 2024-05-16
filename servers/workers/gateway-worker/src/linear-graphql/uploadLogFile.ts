@@ -1,18 +1,18 @@
-import { UploadFile } from './fileUpload'
+import { UploadFileResponse } from './fileUpload'
 
 export interface Upload {
     filename: string
-    uploadFile: UploadFile
+    uploadFile: UploadFileResponse
     content: File | Buffer
 }
 
 export interface Uploaded {
     filename: string
     storageFilename: string | undefined
-    logUrl: string | undefined
+    fileUrl: string | undefined
 }
 
-export async function uploadLogFile({ filename, uploadFile, content }: Upload): Promise<Uploaded> {
+export async function uploadFile({ filename, uploadFile, content }: Upload): Promise<Uploaded> {
     console.log('[uploadLogFile] Uploading file', {
         filename,
         assetUrl: uploadFile.assetUrl,
@@ -41,7 +41,7 @@ export async function uploadLogFile({ filename, uploadFile, content }: Upload): 
         return {
             filename,
             storageFilename: uploadFile.filename,
-            logUrl: uploadFile.assetUrl,
+            fileUrl: uploadFile.assetUrl,
         }
     } else {
         console.error('[uploadLogFile] Failed to upload file', {
@@ -54,7 +54,7 @@ export async function uploadLogFile({ filename, uploadFile, content }: Upload): 
         return {
             filename,
             storageFilename: undefined,
-            logUrl: undefined,
+            fileUrl: undefined,
         }
     }
 }

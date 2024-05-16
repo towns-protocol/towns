@@ -410,10 +410,16 @@ router.get('/space/:id/identity', async (request: WorkerRequest, env) => {
 })
 
 router.post('/user-feedback', async (request: WorkerRequest, env) => {
-    const requestBody = JSON.parse(JSON.stringify(await request.json()))
-    console.log('requestBody.name:', requestBody.name)
-    console.log('requestBody.email:', requestBody.email)
-    console.log('requestBody.comments:', requestBody.comments)
+    const formData = await request.formData()
+    const requestBody = {
+        id: formData.get('id') as string,
+        name: formData.get('name') as string,
+        email: formData.get('email') as string,
+        comments: formData.get('comments') as string,
+        logJson: formData.get('logs') as string,
+        attachments: formData.getAll('attachment[]') as File[],
+    }
+
     const linearConfig = {
         apiKey: env.LINEAR_API_KEY,
         teamId: env.LINEAR_TEAM_ID,
@@ -423,11 +429,7 @@ router.post('/user-feedback', async (request: WorkerRequest, env) => {
     const promises = [
         createLinearIssue({
             config: linearConfig,
-            id: requestBody.id,
-            name: requestBody.name,
-            email: requestBody.email,
-            comments: requestBody.comments,
-            logJson: requestBody.logs,
+            ...requestBody,
         }),
         sendSnsTopic(
             {
