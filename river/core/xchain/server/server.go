@@ -411,15 +411,20 @@ func (x *xchain) writeEntitlementCheckResults(ctx context.Context, checkResults 
 			log.Warn("entitlement check response failed to post",
 				"gasUsed", receipt.GasUsed,
 				"gasEstimate", task.gasEstimate,
-				"tx", receipt.TxHash.Hex(), "tx.success", receipt.Status == crypto.TransactionResultSuccess,
-				"xchain.req.txid", task.outcome.TransactionID, "xchain.req.outcome", task.outcome.Outcome,
+				"tx.hash", task.ptx.TransactionHash(),
+				"tx.success", receipt.Status == crypto.TransactionResultSuccess,
+				"xchain.req.txid", task.outcome.TransactionID,
+				"xchain.req.outcome", task.outcome.Outcome,
 				"gatedContract", task.outcome.Event.ContractAddress())
 			entitlementCheckProcessed.FailInc()
 		} else {
 			log.Info("entitlement check response posted",
-				"gasUsed", receipt.GasUsed, "gasEstimate", task.gasEstimate,
-				"tx", receipt.TxHash.Hex(), "tx.success", receipt.Status == crypto.TransactionResultSuccess,
-				"xchain.req.txid", task.outcome.TransactionID, "xchain.req.outcome", task.outcome.Outcome,
+				"gasUsed", receipt.GasUsed,
+				"gasEstimate", task.gasEstimate,
+				"tx.hash", task.ptx.TransactionHash(),
+				"tx.success", receipt.Status == crypto.TransactionResultSuccess,
+				"xchain.req.txid", task.outcome.TransactionID,
+				"xchain.req.outcome", task.outcome.Outcome,
 				"gatedContract", task.outcome.Event.ContractAddress())
 			entitlementCheckProcessed.PassInc()
 		}

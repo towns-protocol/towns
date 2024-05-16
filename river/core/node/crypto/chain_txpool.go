@@ -25,6 +25,9 @@ type (
 	TransactionPoolPendingTransaction interface {
 		// Wait till the transaction is included in the chain and the receipt is available.
 		Wait() <-chan *types.Receipt
+		// TransactionHash returns the hash of the transaction that was executed on the chain.
+		// This is not always reliably populated on the transaction receipt.
+		TransactionHash() common.Hash
 	}
 
 	// CreateTransaction expects the function to create a transaction with the received transaction options.
@@ -67,6 +70,9 @@ type (
 		lastSubmit time.Time
 		// listener waits on this channel for the transaction receipt
 		listener chan *types.Receipt
+		// The hash of the transaction that was executed on the chain. This is only set on the
+		// receipt by geth nodes and is not always available.
+		executedHash common.Hash
 	}
 
 	transactionPool struct {
@@ -169,6 +175,10 @@ func NewTransactionPoolWithPolicies(
 
 func (tx *txPoolPendingTransaction) Wait() <-chan *types.Receipt {
 	return tx.listener
+}
+
+func (tx *txPoolPendingTransaction) TransactionHash() common.Hash {
+	return tx.executedHash
 }
 
 // caller is expected to hold a lock on r.mu
@@ -328,7 +338,7 @@ func (r *transactionPool) OnBlock(ctx context.Context, blockNumber BlockNumber) 
 				if r.lastPendingTx.tx.Nonce() == pendingTx.tx.Nonce() {
 					r.lastPendingTx = nil
 				}
-
+				r.firstPendingTx.executedHash = txHash
 				r.firstPendingTx.listener <- receipt
 				r.firstPendingTx, pendingTx.next = r.firstPendingTx.next, nil
 
