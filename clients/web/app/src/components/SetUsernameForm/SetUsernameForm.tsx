@@ -2,7 +2,7 @@ import React, { FormEvent, useCallback, useEffect, useMemo, useRef, useState } f
 import { SpaceData, useMyDefaultUsernames, useTownsClient } from 'use-towns-client'
 import { AnimatePresence } from 'framer-motion'
 import { ModalContainer } from '@components/Modals/ModalContainer'
-import { Box, Button, MotionText, Stack, Text, TextField } from '@ui'
+import { Box, Button, IconButton, MotionText, Stack, Text, TextField } from '@ui'
 import { useSetUsername } from 'hooks/useSetUsername'
 import { validateUsername } from './validateUsername'
 
@@ -10,8 +10,14 @@ export type Props = {
     spaceData: SpaceData
 }
 
-export const SetUsernameForm = (props: Props) => {
-    const { spaceData } = props
+export const SetUsernameFormWithClose = (props: Props) => {
+    const [showModal, setShowModal] = useState<boolean>(true)
+    const hide = () => setShowModal(false)
+    return showModal && <SetUsernameForm onHide={hide} {...props} />
+}
+
+export const SetUsernameForm = (props: Props & { onHide: () => void }) => {
+    const { spaceData, onHide } = props
     const defaultUsernames = useMyDefaultUsernames()
     const { getIsUsernameAvailable } = useTownsClient()
     const { setUsername } = useSetUsername()
@@ -90,7 +96,8 @@ export const SetUsernameForm = (props: Props) => {
     }
 
     return (
-        <ModalContainer onHide={() => {}}>
+        <ModalContainer onHide={onHide}>
+            <IconButton icon="close" onClick={onHide} />
             <Stack gap padding>
                 <Text size="md" textAlign="center" fontWeight="strong">
                     Welcome to

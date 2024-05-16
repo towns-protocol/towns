@@ -4,7 +4,7 @@ import { Membership, useSpaceData, useSpaceDataStore, useTownsContext } from 'us
 import AnalyticsService, { AnalyticsEvents } from 'use-towns-client/dist/utils/analyticsService'
 import isEqual from 'lodash/isEqual'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
-import { SetUsernameForm } from '@components/SetUsernameForm/SetUsernameForm'
+import { SetUsernameFormWithClose } from '@components/SetUsernameForm/SetUsernameForm'
 import { useUsernameConfirmed } from 'hooks/useUsernameConfirmed'
 import { PublicTownPage } from './PublicTownPage/PublicTownPage'
 import { AppSkeletonView } from './layouts/WelcomeLayout'
@@ -108,7 +108,7 @@ export const ValidateMembership = () => {
     return (
         <>
             <Outlet />
-            {!usernameConfirmed && <SetUsernameForm spaceData={space} />}
+            {!usernameConfirmed && <SetUsernameFormWithClose spaceData={space} />}
         </>
     )
 }
