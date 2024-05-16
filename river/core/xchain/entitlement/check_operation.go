@@ -14,6 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/infra"
 )
 
 var (
@@ -36,17 +37,22 @@ func evaluateCheckOperation(
 	linkedWallets []common.Address,
 ) (bool, error) {
 	switch op.CheckType {
-	case CheckOperationType(MOCK):
+	case MOCK:
+		defer infra.StoreExecutionTimeMetrics("evaluateMockOperation", infra.CONTRACT_CALLS_CATEGORY, time.Now())
 		return evaluateMockOperation(ctx, op)
-	case CheckOperationType(ISENTITLED):
+	case ISENTITLED:
+		defer infra.StoreExecutionTimeMetrics("evaluateIsEntitledOperation", infra.CONTRACT_CALLS_CATEGORY, time.Now())
 		return evaluateIsEntitledOperation(ctx, cfg, op, linkedWallets)
-	case CheckOperationType(ERC20):
+	case ERC20:
+		defer infra.StoreExecutionTimeMetrics("evaluateErc20Operation", infra.CONTRACT_CALLS_CATEGORY, time.Now())
 		return evaluateErc20Operation(ctx, cfg, op, linkedWallets)
-	case CheckOperationType(ERC721):
+	case ERC721:
+		defer infra.StoreExecutionTimeMetrics("evaluateErc721Operation", infra.CONTRACT_CALLS_CATEGORY, time.Now())
 		return evaluateErc721Operation(ctx, cfg, op, linkedWallets)
-	case CheckOperationType(ERC1155):
+	case ERC1155:
+		defer infra.StoreExecutionTimeMetrics("evaluateErc1155Operation", infra.CONTRACT_CALLS_CATEGORY, time.Now())
 		return evaluateErc1155Operation(ctx, op)
-	case CheckOperationType(NONE):
+	case CheckNONE:
 		fallthrough
 	default:
 		return false, fmt.Errorf("unknown operation")

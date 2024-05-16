@@ -172,7 +172,7 @@ func (ecm *chainMonitor) RunWithBlockPeriod(
 	log.Debug("chain monitor started", "blockPeriod", blockPeriod, "fromBlock", initialBlock)
 
 	for {
-		log.Debug("chain monitor iteration", "pollInterval", pollInterval)
+		// log.Debug("chain monitor iteration", "pollInterval", pollInterval)
 
 		select {
 		case <-ctx.Done():
@@ -216,7 +216,7 @@ func (ecm *chainMonitor) RunWithBlockPeriod(
 			query := ecm.builder.Query()
 			query.FromBlock, query.ToBlock = fromBlock, toBlock
 
-			log.Debug("chain monitor block range", "from", query.FromBlock, "to", query.ToBlock)
+			// log.Debug("chain monitor block range", "from", query.FromBlock, "to", query.ToBlock)
 
 			if len(ecm.builder.blockCallbacks) > 0 {
 				for i := query.FromBlock.Uint64(); i <= query.ToBlock.Uint64(); i++ {

@@ -27,6 +27,7 @@ struct AppStorage {
   mapping(address delegator => uint256) distributionByDelegator;
   mapping(address space => uint256) spaceDelegationTime;
   mapping(address operator => address[]) delegatorsByOperator;
+  uint256 weeklyDistributionAmount;
 }
 
 library BaseRegistryStorage {

@@ -14,6 +14,8 @@ contract RewardsDistributionHelper is FacetHelper {
     addSelector(RewardsDistribution.getClaimableAmount.selector);
     addSelector(RewardsDistribution.claim.selector);
     addSelector(RewardsDistribution.distributeRewards.selector);
+    addSelector(RewardsDistribution.setWeeklyDistributionAmount.selector);
+    addSelector(RewardsDistribution.getWeeklyDistributionAmount.selector);
   }
 
   function facet() public pure override returns (address) {

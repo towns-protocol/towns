@@ -19,7 +19,27 @@ import (
 	node_contracts "github.com/river-build/river/core/node/contracts"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/infra"
 	. "github.com/river-build/river/core/node/protocol"
+)
+
+var (
+	// contractReads is the root for contract reads/event decode operations.
+	contractReads = infra.NewSuccessMetrics(infra.CONTRACT_CALLS_CATEGORY, nil)
+	// contractWrites is the root for transactions sent by xchain.
+	contractWrites = infra.NewSuccessMetrics(infra.CONTRACT_WRITES_CATEGORY, nil)
+	// entitlementCheckRequested keeps track how many entitlement check requests are read and decoded from Base.
+	entitlementCheckRequested = infra.NewSuccessMetrics("entitlement_checks_requested", nil)
+	// entitlementCheckProcessed keeps track how many entitlement check requests are processed.
+	// Failures are expected when other xchain instances have already reached a quorum and the request was dropped on
+	// Base.
+	entitlementCheckProcessed = infra.NewSuccessMetrics("entitlement_checks_processed", nil)
+	// entitlementCheckTx keeps tracks how many times an entitlement check result transaction was sent to Base.
+	entitlementCheckTx = infra.NewSuccessMetrics("entitlement_checks", contractWrites)
+
+	getRootKeyForWalletCalls = infra.NewSuccessMetrics("get_root_key_for_wallet", contractReads)
+	getWalletsByRootKeyCalls = infra.NewSuccessMetrics("get_wallets_by_root_key", contractReads)
+	getRuleDataCalls         = infra.NewSuccessMetrics("get_rule_data", contractReads)
 )
 
 type (
@@ -45,8 +65,9 @@ type (
 
 	// pending task to write the entitlement check outcome to base
 	inprogress struct {
-		ptx     crypto.TransactionPoolPendingTransaction
-		outcome *entitlementCheckReceipt
+		ptx         crypto.TransactionPoolPendingTransaction
+		gasEstimate uint64
+		outcome     *entitlementCheckReceipt
 	}
 )
 
@@ -216,6 +237,13 @@ func (x *xchain) Run(ctx context.Context) {
 		"nodeAddress", x.baseChain.Wallet.Address.Hex(),
 	)
 
+	if x.config.Metrics.Enabled {
+		// node and xchain are run in the same docker container and share the same config key for the metrics port.
+		// to prevent both processes claiming the same port we decided to increment the port by 1 for xchain.
+		x.config.Metrics.Port += 1
+		go infra.StartMetricsService(ctx, x.config.Metrics)
+	}
+
 	// register callback for Base EntitlementCheckRequested events
 	x.baseChain.ChainMonitor.OnContractWithTopicsEvent(
 		entitlementAddress,
@@ -240,6 +268,7 @@ func (x *xchain) onEntitlementCheckRequested(
 
 	// try to decode the EntitlementCheckRequested event
 	if err := x.checkerContract.UnpackLog(entitlementCheckRequest.Raw(), "EntitlementCheckRequested", event); err != nil {
+		entitlementCheckRequested.FailInc()
 		log.Error("Unable to decode EntitlementCheckRequested event", "err", err)
 		return
 	}
@@ -249,11 +278,13 @@ func (x *xchain) onEntitlementCheckRequested(
 	// process the entitlement request and post the result to entitlementCheckResults
 	outcome, err := x.handleEntitlementCheckRequest(ctx, entitlementCheckRequest)
 	if err != nil {
+		entitlementCheckRequested.FailInc()
 		log.Error("Entitlement check failed to process",
 			"err", err, "xchain.req.txid", entitlementCheckRequest.TransactionID().Hex())
 		return
 	}
 	if outcome != nil { // request was not intended for this xchain instance.
+		entitlementCheckRequested.PassInc()
 		log.Info(
 			"Queueing check result for post",
 			"transactionId",
@@ -321,22 +352,29 @@ func (x *xchain) writeEntitlementCheckResults(ctx context.Context, checkResults 
 					outcome = contracts.NodeVoteStatus__PASSED
 				}
 
+				createPostResultTx := func(opts *bind.TransactOpts) (*types.Transaction, error) {
+					gated, err := contracts.NewIEntitlementGated(
+						receipt.Event.ContractAddress(),
+						x.baseChain.Client,
+						x.config.GetContractVersion(),
+					)
+					if err != nil {
+						return nil, err
+					}
+					return gated.PostEntitlementCheckResult(opts, receipt.TransactionID, receipt.RoleId, uint8(outcome))
+				}
+				gasEstimate, err := x.baseChain.TxPool.EstimateGas(ctx, createPostResultTx)
+				if err != nil {
+					log.Warn("Failed to estimate gas for PostEntitlementCheckResult (entitlement check complete?)", "err", err)
+				}
+
 				pendingTx, err := x.baseChain.TxPool.Submit(
 					ctx,
 					"PostEntitlementCheckResult",
 					func(opts *bind.TransactOpts) (*types.Transaction, error) {
-						gated, err := contracts.NewIEntitlementGated(
-							receipt.Event.ContractAddress(),
-							x.baseChain.Client,
-							x.config.GetContractVersion(),
-						)
-						if err != nil {
-							return nil, err
-						}
 						// Ensure gas limit is at least 2_500_000 as a workaround for simulated backend issues in tests.
 						opts.GasLimit = max(opts.GasLimit, 2_500_000)
-
-						return gated.PostEntitlementCheckResult(opts, receipt.TransactionID, receipt.RoleId, uint8(outcome))
+						return createPostResultTx(opts)
 					},
 				)
 
@@ -353,10 +391,11 @@ func (x *xchain) writeEntitlementCheckResults(ctx context.Context, checkResults 
 				}
 
 				if err != nil {
+					entitlementCheckTx.FailInc()
 					x.handleContractError(log, err, "Failed to submit transaction for xchain request")
 					continue
 				}
-				pending <- &inprogress{pendingTx, receipt}
+				pending <- &inprogress{pendingTx, gasEstimate, receipt}
 			}
 		}
 	}()
@@ -364,18 +403,25 @@ func (x *xchain) writeEntitlementCheckResults(ctx context.Context, checkResults 
 	// wait until all transactions are processed before returning
 	for task := range pending {
 		receipt := <-task.ptx.Wait() // Base transaction receipt
+
+		entitlementCheckTx.PassInc()
 		if receipt.Status == go_eth_types.ReceiptStatusFailed {
 			// it is possible that other xchain instances have already reached a quorum and our transaction was simply
-			// too late and failed because of that. Therefor this can be an expected error.
+			// too late and failed because of that. Therefore this can be an expected error.
 			log.Warn("entitlement check response failed to post",
+				"gasUsed", receipt.GasUsed,
+				"gasEstimate", task.gasEstimate,
 				"tx", receipt.TxHash.Hex(), "tx.success", receipt.Status == crypto.TransactionResultSuccess,
 				"xchain.req.txid", task.outcome.TransactionID, "xchain.req.outcome", task.outcome.Outcome,
 				"gatedContract", task.outcome.Event.ContractAddress())
+			entitlementCheckProcessed.FailInc()
 		} else {
 			log.Info("entitlement check response posted",
+				"gasUsed", receipt.GasUsed, "gasEstimate", task.gasEstimate,
 				"tx", receipt.TxHash.Hex(), "tx.success", receipt.Status == crypto.TransactionResultSuccess,
 				"xchain.req.txid", task.outcome.TransactionID, "xchain.req.outcome", task.outcome.Outcome,
 				"gatedContract", task.outcome.Event.ContractAddress())
+			entitlementCheckProcessed.PassInc()
 		}
 	}
 }
@@ -408,10 +454,14 @@ func (x *xchain) getLinkedWallets(ctx context.Context, wallet common.Address) ([
 		return nil, x.handleContractError(log, err, "Failed to create IWalletLink")
 	}
 
+	start := time.Now()
 	rootKey, err := iWalletLink.GetRootKeyForWallet(&bind.CallOpts{Context: ctx}, wallet)
+	infra.StoreExecutionTimeMetrics("GetRootKeyForWallet", infra.CONTRACT_CALLS_CATEGORY, start)
 	if err != nil {
+		getRootKeyForWalletCalls.FailInc()
 		return nil, x.handleContractError(log, err, "Failed to GetRootKeyForWallet")
 	}
+	getRootKeyForWalletCalls.PassInc()
 
 	var zero common.Address
 	if rootKey == zero {
@@ -419,10 +469,14 @@ func (x *xchain) getLinkedWallets(ctx context.Context, wallet common.Address) ([
 		rootKey = wallet
 	}
 
+	start = time.Now()
 	wallets, err := iWalletLink.GetWalletsByRootKey(&bind.CallOpts{Context: ctx}, rootKey)
+	infra.StoreExecutionTimeMetrics("GetWalletsByRootKey", infra.CONTRACT_CALLS_CATEGORY, start)
 	if err != nil {
+		getWalletsByRootKeyCalls.FailInc()
 		return nil, x.handleContractError(log, err, "Failed to GetWalletsByRootKey")
 	}
+	getWalletsByRootKeyCalls.PassInc()
 
 	if len(wallets) == 0 {
 		log.Debug("No linked wallets found", "rootKey", rootKey.Hex())
@@ -460,10 +514,14 @@ func (x *xchain) getRuleData(
 		return nil, x.handleContractError(log, err, "Failed to create NewEntitlementGated")
 	}
 
+	defer infra.StoreExecutionTimeMetrics("GetRuleData", infra.CONTRACT_CALLS_CATEGORY, time.Now())
+
 	ruleData, err := gater.GetRuleData(&bind.CallOpts{Context: ctx}, transactionId, roleId)
 	if err != nil {
+		getRuleDataCalls.FailInc()
 		return nil, x.handleContractError(log, err, "Failed to GetEncodedRuleData")
 	}
+	getRuleDataCalls.PassInc()
 	return ruleData, nil
 }
 

@@ -60,30 +60,47 @@ contract RewardsDistribution is
     );
   }
 
-  function distributeRewards(uint256 amount) external onlyOwner {
+  function distributeRewards(address operator) external onlyOwner {
     address[] memory activeOperators = _getActiveOperators();
     uint256 totalActiveOperators = activeOperators.length;
 
     if (totalActiveOperators == 0)
       revert RewardsDistribution_NoActiveOperators();
 
-    uint256 amountPerOperator = amount / totalActiveOperators;
-
+    bool isActiveOperator = false;
     for (uint256 i = 0; i < totalActiveOperators; i++) {
-      address operator = activeOperators[i];
-      NodeOperatorStorage.Layout storage nos = NodeOperatorStorage.layout();
-      uint256 commission = nos.commissionByOperator[operator];
-
-      uint256 operatorClaimAmount = (commission * amountPerOperator) / 100; // Assuming commission is a percentage
-      uint256 delegatorClaimAmount = amountPerOperator - operatorClaimAmount;
-
-      address operatorClaimAddress = nos.claimAddressByOperator[operator];
-      ds.distributionByOperator[operatorClaimAddress] += operatorClaimAmount;
-
-      _calculateDelegatorDistribution(operator, delegatorClaimAmount);
+      if (operator == activeOperators[i]) {
+        isActiveOperator = true;
+        break;
+      }
     }
 
-    emit RewardsDistributed(amount);
+    if (!isActiveOperator) revert RewardsDistribution_InvalidOperator();
+
+    uint256 amountPerOperator = ds.weeklyDistributionAmount /
+      totalActiveOperators;
+
+    //calculate how much the operator should receive
+    NodeOperatorStorage.Layout storage nos = NodeOperatorStorage.layout();
+    uint256 commission = nos.commissionByOperator[operator];
+    uint256 operatorClaimAmount = (commission * amountPerOperator) / 100;
+
+    //set that amount to the operator
+    address operatorClaimAddress = nos.claimAddressByOperator[operator];
+    ds.distributionByOperator[operatorClaimAddress] += operatorClaimAmount;
+    emit RewardsDistributed(operator, operatorClaimAmount);
+
+    //distribute the remainder across the delgators to this operator
+    uint256 delegatorClaimAmount = amountPerOperator - operatorClaimAmount;
+    _calculateDelegatorDistribution(operator, delegatorClaimAmount);
+  }
+
+  function setWeeklyDistributionAmount(uint256 amount) external onlyOwner {
+    ds.weeklyDistributionAmount = amount;
+  }
+
+  function getWeeklyDistributionAmount() public view returns (uint256) {
+    return ds.weeklyDistributionAmount;
   }
 
   // =============================================================
@@ -161,7 +178,7 @@ contract RewardsDistribution is
     }
   }
 
-  function _getActiveOperators() internal view returns (address[] memory) {
+  function _getActiveOperators() public view returns (address[] memory) {
     uint256 totalOperators = _totalSupply();
     uint256 totalActiveOperators = 0;
 

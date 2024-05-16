@@ -24,9 +24,10 @@ type SuccessMetrics struct {
 }
 
 const (
-	RPC_CATEGORY            = "rpc"
-	DB_CALLS_CATEGORY       = "db_calls"
-	CONTRACT_CALLS_CATEGORY = "contract_calls"
+	RPC_CATEGORY             = "rpc"
+	DB_CALLS_CATEGORY        = "db_calls"
+	CONTRACT_CALLS_CATEGORY  = "contract_calls"
+	CONTRACT_WRITES_CATEGORY = "contract_writes"
 )
 
 var registry = prometheus.DefaultRegisterer

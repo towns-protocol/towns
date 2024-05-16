@@ -37,6 +37,9 @@ type (
 		// when necessary.
 		Submit(ctx context.Context, name string, createTx CreateTransaction) (TransactionPoolPendingTransaction, error)
 
+		// EstimateGas estimates the gas usage of the transaction that would be created by createTx.
+		EstimateGas(ctx context.Context, createTx CreateTransaction) (uint64, error)
+
 		// SetOnSubmitHandler is called each time a transaction was sent to the chain
 		SetOnSubmitHandler(func())
 
@@ -194,6 +197,27 @@ func (r *transactionPool) LastReplacementTransactionUnix() int64 {
 
 func (r *transactionPool) SetOnSubmitHandler(handler func()) {
 	r.onSubmitHandler = handler
+}
+
+func (r *transactionPool) EstimateGas(ctx context.Context, createTx CreateTransaction) (uint64, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	opts := &bind.TransactOpts{
+		From:    r.wallet.Address,
+		Nonce:   new(big.Int).SetUint64(0),
+		Signer:  r.signerFn,
+		Context: ctx,
+		NoSend:  true,
+	}
+
+	tx, err := createTx(opts)
+	log := dlog.FromCtx(ctx)
+	if err != nil {
+		log.Debug("Estimating gas for transaction failed", "err", err)
+		return 0, err
+	}
+	return tx.Gas(), nil
 }
 
 func (r *transactionPool) Submit(

@@ -38,7 +38,7 @@ func runMetricsAndProfiler(ctx context.Context, cfg *config.Config) error {
 				// ..
 				// ^ falling back to DD_TAGS env var
 			)
-			defer tracer.Stop()
+			//defer tracer.Stop()
 		} else {
 			fmt.Println("Tracing was enabled, but DD_ENV was not set. Tracing will not be enabled.")
 		}
@@ -67,7 +67,7 @@ func runMetricsAndProfiler(ctx context.Context, cfg *config.Config) error {
 				fmt.Println("Error starting profiling", err)
 				return err
 			}
-			defer profiler.Stop()
+			//defer profiler.Stop()
 		} else {
 			fmt.Println("Starting pprof profiler")
 			folderPath := "./profiles"
@@ -96,7 +96,7 @@ func runMetricsAndProfiler(ctx context.Context, cfg *config.Config) error {
 				fmt.Println("Error starting profiling", err)
 				return err
 			}
-			defer pprof.StopCPUProfile()
+			//defer pprof.StopCPUProfile()
 		}
 	} else {
 		fmt.Println("Profiling disabled")

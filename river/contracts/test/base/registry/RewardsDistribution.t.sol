@@ -119,6 +119,8 @@ contract RewardsDistributionTest is
       exDelegationsPerUser
     );
 
+    setupOperators(tOperators);
+    setupUsersAndDelegation(tUsers, tDelegations);
     verifyUsersRewards(exDistributionAmount, tUsers, tOperators, tDelegations);
 
     verifyUserRewardsAgainstExpected(
@@ -141,17 +143,16 @@ contract RewardsDistributionTest is
       exDelegationsPerSpaceUser
     );
 
-    //need to break these two functions up to avoid stack too deep error
-    performSpaceDelegationSetup(
-      exDistributionAmount,
-      tUsers,
+    setupOperators(tOperators);
+    setupUsersAndDelegation(tUsers, tDelegations);
+    setupSpaceDelegation(
       tOperators,
       tSpaceUsers,
       tSpaces,
-      tDelegations,
       tSpaceUserDelegations,
       exDelegationsPerSpace
     );
+
     verifySpaceUsersRewards(
       exDistributionAmount,
       tSpaceUsers,
@@ -179,14 +180,9 @@ contract RewardsDistributionTest is
       tOperators
     );
 
-    performMainnetDelegationSetup(
-      exDistributionAmount,
-      tUsers,
-      tOperators,
-      tMainnetUsers,
-      tDelegations,
-      tMainnetUserDelegations
-    );
+    setupOperators(tOperators);
+    setupUsersAndDelegation(tUsers, tDelegations);
+    setupMainnetDelegation(tMainnetUsers, tMainnetUserDelegations);
 
     verifyMainnetUsersRewards(
       exDistributionAmount,
@@ -206,12 +202,11 @@ contract RewardsDistributionTest is
       exCommissionsPerOperator,
       exDelegationsPerUser
     );
-    performOperatorRewardsSetup(
-      exDistributionAmount,
-      tUsers,
-      tOperators,
-      tDelegations
-    );
+
+    setupOperators(tOperators);
+    setupUsersAndDelegation(tUsers, tDelegations);
+    setupOperatorClaimAddress(tOperators);
+
     verifyOperatorsRewards(exDistributionAmount, tOperators);
 
     verifyOperatorRewardsAgainstExpected(tOperators, exExpectedOperatorAmounts);
@@ -241,6 +236,9 @@ contract RewardsDistributionTest is
       commissionsPerOperator,
       delegationsPerUser
     );
+
+    setupOperators(tOperators);
+    setupUsersAndDelegation(tUsers, tDelegations);
 
     verifyUsersRewards(distributionAmount, tUsers, tOperators, tDelegations);
   }
@@ -282,14 +280,9 @@ contract RewardsDistributionTest is
       tOperators
     );
 
-    performMainnetDelegationSetup(
-      distributionAmount,
-      tUsers,
-      tOperators,
-      tMainnetUsers,
-      tDelegations,
-      tMainnetUserDelegations
-    );
+    setupOperators(tOperators);
+    setupUsersAndDelegation(tUsers, tDelegations);
+    setupMainnetDelegation(tMainnetUsers, tMainnetUserDelegations);
 
     verifyMainnetUsersRewards(
       distributionAmount,
@@ -346,13 +339,13 @@ contract RewardsDistributionTest is
       delegationsPerSpaceUser
     );
 
-    performSpaceDelegationSetup(
-      distributionAmount,
-      tUsers,
+    setupOperators(tOperators);
+    setupUsersAndDelegation(tUsers, tDelegations);
+
+    setupSpaceDelegation(
       tOperators,
       tSpaceUsers,
       tSpaces,
-      tDelegations,
       tSpaceUserDelegations,
       delegationsPerSpace
     );
@@ -394,18 +387,64 @@ contract RewardsDistributionTest is
       delegationsPerUser
     );
 
-    performOperatorRewardsSetup(
-      distributionAmount,
-      tUsers,
-      tOperators,
-      tDelegations
-    );
+    setupOperators(tOperators);
+    setupOperatorClaimAddress(tOperators);
     verifyOperatorsRewards(distributionAmount, tOperators);
   }
 
   // =============================================================
   //                           Assertions
   // =============================================================
+
+  function setupOperators(
+    Entity[] memory operators
+  )
+    internal
+    givenOperatorsHaveRegistered(operators)
+    givenOperatorsHaveCommissionRates(operators)
+    givenOperatorsHaveBeenApproved(operators)
+  {}
+
+  function setupUsersAndDelegation(
+    Entity[] memory users,
+    Delegation[] memory delegations
+  )
+    internal
+    givenUsersHaveBridgedTokens(users)
+    givenUsersHaveDelegatedToOperators(delegations)
+  {}
+
+  function setupSpaceDelegation(
+    Entity[] memory operators,
+    Entity[] memory spaceUsers,
+    Entity[] memory spaces,
+    Delegation[] memory spaceDelegations,
+    uint256[] memory spaceDelegationsPerSpace
+  )
+    internal
+    givenUsersHaveBridgedTokens(spaceUsers)
+    givenUsersHaveDelegatedToOperators(spaceDelegations)
+    givenSpacesHavePointedToOperators(
+      operators,
+      spaces,
+      spaceDelegationsPerSpace
+    )
+  {}
+
+  function setupMainnetDelegation(
+    Entity[] memory mainnetUsers,
+    Delegation[] memory mainnetUserDelegations
+  )
+    internal
+    givenMainnetUsersHaveDelegatedToOperators(
+      mainnetUsers,
+      mainnetUserDelegations
+    )
+  {}
+
+  function setupOperatorClaimAddress(
+    Entity[] memory operators
+  ) internal givenOperatorsHaveSetClaimAddresses(operators) {}
 
   function verifyUsersRewards(
     uint256 distributionAmount,
@@ -414,12 +453,8 @@ contract RewardsDistributionTest is
     Delegation[] memory delegations
   )
     internal
-    givenUsersHaveBridgedTokens(users)
-    givenOperatorsHaveRegistered(operators)
-    givenOperatorsHaveCommissionRates(operators)
-    givenUsersHaveDelegatedToOperators(delegations)
-    givenOperatorsHaveBeenApproved(operators)
-    givenFundsHaveBeenDisbursed(distributionAmount)
+    givenWeeklyDistributionAmountHasBeenSet(distributionAmount)
+    givenFundsHaveBeenDisbursed(operators, distributionAmount)
   {
     for (uint256 i = 0; i < users.length; i++) {
       uint256 reward = rewardsDistributionFacet.getClaimableAmount(
@@ -439,31 +474,6 @@ contract RewardsDistributionTest is
     }
   }
 
-  function performSpaceDelegationSetup(
-    uint256 distributionAmount,
-    Entity[] memory users,
-    Entity[] memory operators,
-    Entity[] memory spaceUsers,
-    Entity[] memory spaces,
-    Delegation[] memory delegations,
-    Delegation[] memory spaceDelegations,
-    uint256[] memory spaceDelegationsPerSpace
-  )
-    internal
-    givenUsersHaveBridgedTokens(users)
-    givenUsersHaveBridgedTokens(spaceUsers)
-    givenOperatorsHaveRegistered(operators)
-    givenOperatorsHaveCommissionRates(operators)
-    givenUsersHaveDelegatedToOperators(delegations)
-    givenUsersHaveDelegatedToOperators(spaceDelegations)
-    givenSpacesHavePointedToOperators(
-      operators,
-      spaces,
-      spaceDelegationsPerSpace
-    )
-    givenOperatorsHaveBeenApproved(operators)
-  {}
-
   function verifySpaceUsersRewards(
     uint256 distributionAmount,
     Entity[] memory spaceUsers,
@@ -472,7 +482,11 @@ contract RewardsDistributionTest is
     Delegation[] memory delegations,
     Delegation[] memory spaceUserDelegations,
     uint256[] memory spaceDelegationsPerSpace
-  ) internal givenFundsHaveBeenDisbursed(distributionAmount) {
+  )
+    internal
+    givenWeeklyDistributionAmountHasBeenSet(distributionAmount)
+    givenFundsHaveBeenDisbursed(operators, distributionAmount)
+  {
     for (uint256 i = 0; i < spaceUsers.length; i++) {
       uint256 reward = rewardsDistributionFacet.getClaimableAmount(
         spaceUsers[i].addr
@@ -495,33 +509,17 @@ contract RewardsDistributionTest is
     }
   }
 
-  function performMainnetDelegationSetup(
-    uint256 distributionAmount,
-    Entity[] memory users,
-    Entity[] memory operators,
-    Entity[] memory mainnetUsers,
-    Delegation[] memory delegations,
-    Delegation[] memory mainnetUserDelegations
-  )
-    internal
-    givenUsersHaveBridgedTokens(users)
-    givenOperatorsHaveRegistered(operators)
-    givenOperatorsHaveCommissionRates(operators)
-    givenUsersHaveDelegatedToOperators(delegations)
-    givenMainnetUsersHaveDelegatedToOperators(
-      mainnetUsers,
-      mainnetUserDelegations
-    )
-    givenOperatorsHaveBeenApproved(operators)
-  {}
-
   function verifyMainnetUsersRewards(
     uint256 distributionAmount,
     Entity[] memory operators,
     Entity[] memory mainnetUsers,
     Delegation[] memory delegations,
     Delegation[] memory mainnetUserDelegations
-  ) internal givenFundsHaveBeenDisbursed(distributionAmount) {
+  )
+    internal
+    givenWeeklyDistributionAmountHasBeenSet(distributionAmount)
+    givenFundsHaveBeenDisbursed(operators, distributionAmount)
+  {
     for (uint256 i = 0; i < mainnetUsers.length; i++) {
       uint256 reward = rewardsDistributionFacet.getClaimableAmount(
         mainnetUsers[i].addr
@@ -553,25 +551,14 @@ contract RewardsDistributionTest is
     }
   }
 
-  function performOperatorRewardsSetup(
-    uint256 distributionAmount,
-    Entity[] memory users,
-    Entity[] memory operators,
-    Delegation[] memory delegations
-  )
-    internal
-    givenUsersHaveBridgedTokens(users)
-    givenOperatorsHaveRegistered(operators)
-    givenOperatorsHaveCommissionRates(operators)
-    givenUsersHaveDelegatedToOperators(delegations)
-    givenOperatorsHaveSetClaimAddresses(operators)
-    givenOperatorsHaveBeenApproved(operators)
-  {}
-
   function verifyOperatorsRewards(
     uint256 distributionAmount,
     Entity[] memory operators
-  ) internal givenFundsHaveBeenDisbursed(distributionAmount) {
+  )
+    internal
+    givenWeeklyDistributionAmountHasBeenSet(distributionAmount)
+    givenFundsHaveBeenDisbursed(operators, distributionAmount)
+  {
     for (uint256 i = 0; i < operators.length; i++) {
       uint256 reward = rewardsDistributionFacet.getClaimableAmount(
         operator.getClaimAddress(operators[i].addr)
@@ -1344,11 +1331,26 @@ contract RewardsDistributionTest is
     _;
   }
 
-  modifier givenFundsHaveBeenDisbursed(uint256 amount) {
-    vm.expectEmit();
-    emit IRewardsDistribution.RewardsDistributed(amount);
+  modifier givenWeeklyDistributionAmountHasBeenSet(uint256 amount) {
     vm.prank(deployer);
-    rewardsDistributionFacet.distributeRewards(amount);
+    rewardsDistributionFacet.setWeeklyDistributionAmount(amount);
+    _;
+  }
+
+  modifier givenFundsHaveBeenDisbursed(
+    Entity[] memory operators,
+    uint256 amount
+  ) {
+    uint256 operatorAmount = amount / operators.length;
+    for (uint256 i = 0; i < operators.length; i++) {
+      vm.expectEmit();
+      emit IRewardsDistribution.RewardsDistributed(
+        operators[i].addr,
+        (operatorAmount * operators[i].amount) / 100
+      );
+      vm.prank(deployer);
+      rewardsDistributionFacet.distributeRewards(operators[i].addr);
+    }
     _;
   }
 }
