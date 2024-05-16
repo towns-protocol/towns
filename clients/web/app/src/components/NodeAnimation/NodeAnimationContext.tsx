@@ -1,4 +1,5 @@
 import { createContext } from 'react'
+import { NodeData } from '@components/NodeConnectionStatusPanel/hooks/useNodeData'
 
 export const DEFAULT_CONFIG = {
     animate: true as boolean,
@@ -7,6 +8,8 @@ export const DEFAULT_CONFIG = {
     darkMode: true as boolean,
     nodeUrl: '' as string | undefined,
     radius: 110,
+    backgroundColorString: '#000000' as string,
+    nodeConnections: [] as NodeData[],
 } as const
 
 export const NodeAnimationContext = createContext(DEFAULT_CONFIG)

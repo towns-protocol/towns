@@ -6,9 +6,8 @@ import {
 import { Panel } from '@components/Panel/Panel'
 import { Box } from '@ui'
 import { useStore } from 'store/store'
-
 import { NodeAnimationLoader } from '@components/NodeAnimation/NodeAnimationLoader'
-
+import { Figma } from 'ui/styles/palette'
 import { ConnectionStatusBanner } from './ConnectionStatusBanner'
 import { NodeStatusPill } from './NodeStatusPill'
 import { useConnectionStatus } from './hooks/useConnectionStatus'
@@ -16,10 +15,22 @@ import { useNodeData } from './hooks/useNodeData'
 
 export const NodeStatusPanel = () => {
     const darkMode = useStore((state) => state.getTheme() === 'dark')
+    const backgroundColorString = useMemo(
+        () => (darkMode ? Figma.DarkMode.Level3 : Figma.LightMode.Level3),
+        [darkMode],
+    )
     const { connectionStatus, nodeUrl } = useConnectionStatus()
+    const nodeConnections = useNodeData(nodeUrl)
     const config = useMemo(
-        () => ({ ...DEFAULT_CONFIG, animateNodes: false, nodeUrl, darkMode }),
-        [darkMode, nodeUrl],
+        () => ({
+            ...DEFAULT_CONFIG,
+            animateNodes: false,
+            nodeUrl,
+            darkMode,
+            backgroundColorString,
+            nodeConnections,
+        }),
+        [backgroundColorString, darkMode, nodeConnections, nodeUrl],
     )
 
     const nodes = useNodeData(nodeUrl)
@@ -36,6 +47,7 @@ export const NodeStatusPanel = () => {
             <Box centerContent ref={ref}>
                 <Box width="300" height="300" />
                 <Box
+                    centerContent
                     width="300"
                     height="300"
                     position="absolute"
@@ -47,7 +59,7 @@ export const NodeStatusPanel = () => {
                     }}
                 >
                     <NodeAnimationContext.Provider value={config}>
-                        <NodeAnimationLoader />
+                        <NodeAnimationLoader minWidth="300" />
                     </NodeAnimationContext.Provider>
                 </Box>
             </Box>

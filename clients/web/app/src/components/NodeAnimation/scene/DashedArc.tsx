@@ -1,9 +1,10 @@
 import { Billboard, Line, Ring } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
-import React, { useRef, useState } from 'react'
+import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react'
 import { ColorRepresentation, Group, Object3D, Vector3 } from 'three'
 import { Line2 } from 'three-stdlib'
 import { notUndefined } from 'ui/utils/utils'
+import { SECOND_MS } from 'data/constants'
 import { slerp } from './utils/globeUtils'
 
 export const DashedArc = (props: {
@@ -49,38 +50,22 @@ export const DashedArc = (props: {
 
         lines.forEach((l) => {
             if (l) {
-                l.geometry.setPositions(points.flatMap((p) => p.toArray()))
-                l.computeLineDistances()
+                l.geometry?.setPositions(points.flatMap((p) => p.toArray()))
+                l?.computeLineDistances()
             }
         })
     })
 
-    if (!o1 || !o2) {
-        return <></>
-    }
-
     return (
         <>
-            <Line
-                dashed
-                transparent
+            <DashLine
                 color={color}
-                opacity={0.25}
                 points={points}
-                lineWidth={1}
-                dashScale={20}
-                depthTest={false}
                 ref={lineTransparentRef}
+                opacity={0.25}
+                depthTest={false}
             />
-            <Line
-                dashed
-                transparent
-                color={color}
-                points={points}
-                lineWidth={1}
-                dashScale={20}
-                ref={lineOpaqueRef}
-            />
+            <DashLine color={color} points={points} ref={lineOpaqueRef} opacity={1} />
 
             <group>
                 <Billboard ref={ringRef}>
@@ -108,3 +93,39 @@ export const DashedArc = (props: {
         </>
     )
 }
+
+type DashLineProps = {
+    color: ColorRepresentation
+    points: Vector3[]
+    opacity: number
+    depthTest?: boolean
+}
+
+const DashLine = forwardRef<Line2, DashLineProps>((props, ref) => {
+    const { color, points, opacity, depthTest = true } = props
+    const innerRef = useRef<Line2>(null)
+    useImperativeHandle(ref, () => innerRef.current!, [])
+
+    const [startTime] = useState(() => Date.now())
+    useFrame(() => {
+        const material = innerRef.current?.material
+        if (material) {
+            material.opacity =
+                Math.max(0, Math.min(1, (Date.now() - startTime) / (SECOND_MS * 1) - 2)) * opacity
+        }
+    })
+
+    return (
+        <Line
+            dashed
+            transparent
+            color={color}
+            dashScale={20}
+            depthTest={depthTest}
+            lineWidth={1}
+            opacity={opacity}
+            points={points}
+            ref={innerRef}
+        />
+    )
+})

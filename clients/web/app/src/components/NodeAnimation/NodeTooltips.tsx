@@ -73,12 +73,14 @@ const NodeTooltip = forwardRef<HTMLDivElement, { nodeData: NodeData }>(({ nodeDa
             </Paragraph>
             <Paragraph truncate size="xs">
                 <span className={atoms({ color: 'gray1' })}>Health</span>{' '}
-                {nodeData.data.grpc.elapsed} gRPC &bull; {nodeData.data.http20.elapsed} HTTP/2
+                {nodeData.data?.grpc?.elapsed} gRPC &bull; {nodeData.data?.http20?.elapsed} HTTP/2
             </Paragraph>
-            <Paragraph truncate size="xs">
-                <span className={atoms({ color: 'gray1' })}>Uptime</span>{' '}
-                {formatUptime(new Date(nodeData.data.grpc.start_time))}
-            </Paragraph>
+            {nodeData.data?.grpc?.start_time && (
+                <Paragraph truncate size="xs">
+                    <span className={atoms({ color: 'gray1' })}>Uptime</span>{' '}
+                    {formatUptime(new Date(nodeData.data?.grpc?.start_time))}
+                </Paragraph>
+            )}
         </Box>
     )
 })

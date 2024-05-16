@@ -12,7 +12,7 @@ type Props = {
 } & BoxProps
 
 export const NodeStatusPill = ({ nodeData, contentBefore, ...boxProps }: Props) => {
-    const nodeStatus = NodeStatus[nodeData.data.record.status]
+    const nodeStatus = NodeStatus[nodeData.status]
 
     const [isToggled, setIsToggled] = useState(false)
 
@@ -46,7 +46,7 @@ export const NodeStatusPill = ({ nodeData, contentBefore, ...boxProps }: Props) 
                                 background={nodeStatus.background}
                                 tooltip={nodeStatus.description}
                             >
-                                <Paragraph size="sm">{nodeData.data.record.status_text}</Paragraph>
+                                <Paragraph size="sm">{nodeData.statusText}</Paragraph>
                             </Box>
                         </Box>
                     )}
@@ -55,29 +55,31 @@ export const NodeStatusPill = ({ nodeData, contentBefore, ...boxProps }: Props) 
                     </Box>
                 </Stack>
 
-                <InfoRow
-                    label="Health"
-                    value={
-                        <>
-                            {nodeData.data.grpc.elapsed} gRPC &bull; {nodeData.data.http20.elapsed}{' '}
-                            HTTP/2
-                        </>
-                    }
-                />
+                {
+                    <InfoRow
+                        label="Health"
+                        value={
+                            <>
+                                {nodeData.data?.grpc?.elapsed || 0} gRPC &bull;{' '}
+                                {nodeData.data?.http20?.elapsed || 0} HTTP/2
+                            </>
+                        }
+                    />
+                }
                 {isToggled && (
                     <>
                         <InfoRow
                             label="Uptime"
-                            value={formatUptime(new Date(nodeData.data.grpc.start_time))}
+                            value={formatUptime(new Date(nodeData.data?.grpc?.start_time ?? 0))}
                         />
-                        <InfoRow label="Version" value={nodeData.data.grpc.version} />
+                        <InfoRow label="Version" value={nodeData.data?.grpc?.version ?? 0} />
                         <InfoRow
                             label="Address"
                             value={
                                 <ClipboardCopy
                                     color="gray1"
-                                    label={shortAddress(nodeData.data.record.address)}
-                                    clipboardContent={nodeData.data.record.address}
+                                    label={shortAddress(nodeData.operatorAddress)}
+                                    clipboardContent={nodeData.operatorAddress}
                                 />
                             }
                         />
@@ -86,8 +88,8 @@ export const NodeStatusPill = ({ nodeData, contentBefore, ...boxProps }: Props) 
                             value={
                                 <ClipboardCopy
                                     color="gray1"
-                                    label={shortAddress(nodeData.data.record.operator)}
-                                    clipboardContent={nodeData.data.record.operator}
+                                    label={shortAddress(nodeData.operator)}
+                                    clipboardContent={nodeData.operator}
                                 />
                             }
                         />

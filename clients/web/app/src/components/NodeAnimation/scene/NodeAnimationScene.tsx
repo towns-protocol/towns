@@ -5,7 +5,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } 
 import { useDrag } from 'react-use-gesture'
 import { Color, Euler, Object3D } from 'three'
 import seedrandom from 'seedrandom'
-import { NodeData, useNodeData } from '../../NodeConnectionStatusPanel/hooks/useNodeData'
+import { NodeData } from '../../NodeConnectionStatusPanel/hooks/useNodeData'
 import { NodeAnimationContext } from '../NodeAnimationContext'
 import { GradientRing } from './GradientRing'
 import { HomeDot } from './HomeDot'
@@ -13,8 +13,17 @@ import { DashedArc } from './DashedArc'
 import { useGlobeTexture } from './hooks/useGlobeTexture'
 import { createNoise } from './utils/quickNoise'
 import { NodeTooltips } from '../NodeTooltips'
+import { SparklingDots } from './SparklingDots'
 
-export const NodeAnimationScene = () => {
+export type NodeAnimationSceneProps = {
+    showNodeTooltips?: boolean
+    showArc?: boolean
+    showSparklingDots?: boolean
+    animateIntro?: boolean
+}
+
+export const NodeAnimationScene = (props: NodeAnimationSceneProps) => {
+    const { showNodeTooltips = true } = props
     const [{ noise, mapSize }] = useState(() => ({
         noise: createNoise(seedrandom('towns2')),
         mapSize: [200, 100] as [number, number],
@@ -44,27 +53,32 @@ export const NodeAnimationScene = () => {
                     mapSize={mapSize}
                     onNodeHover={onNodeHover}
                     onHover={onHover}
+                    {...props}
                 />
             </Canvas>
 
-            <NodeTooltips hoveredNode={hoveredNode} containerRef={containerRef} />
+            {showNodeTooltips && (
+                <NodeTooltips hoveredNode={hoveredNode} containerRef={containerRef} />
+            )}
         </>
     )
 }
 
-const GlobeScene = (props: {
-    noise: ReturnType<typeof createNoise>
-    mapSize: [number, number]
-    onNodeHover: (node: NodeData | null) => void
-    onHover: (hovered: boolean) => void
-}) => {
-    const { nodeUrl } = useContext(NodeAnimationContext)
+const GlobeScene = (
+    props: {
+        noise: ReturnType<typeof createNoise>
+        mapSize: [number, number]
+        onNodeHover: (node: NodeData | null) => void
+        onHover: (hovered: boolean) => void
+    } & NodeAnimationSceneProps,
+) => {
+    const { nodeUrl, nodeConnections } = useContext(NodeAnimationContext)
     const { mapSize, noise } = props
+    const { showArc = true, showSparklingDots = false, animateIntro = false } = props
     const { canvas, homePoint, relevantPoints } = useGlobeTexture(noise, mapSize)
     const { darkMode } = useContext(NodeAnimationContext)
 
     const globeRef = useRef<Object3D>(null)
-    const nodeConnections = useNodeData(nodeUrl)
 
     const nodes = useMemo(() => {
         return nodeConnections.map((n, index) => ({
@@ -92,6 +106,17 @@ const GlobeScene = (props: {
         y: 0,
         z: 7,
     }))
+
+    const [introSpring, setIntroSpring] = useSpring(() => ({
+        intro: 0,
+        config: { mass: 1, tension: 20, friction: 5 },
+    }))
+
+    useEffect(() => {
+        setIntroSpring({
+            intro: 1,
+        })
+    }, [setIntroSpring])
 
     const [worldSpring, setWorldSpring] = useSpring(() => ({
         rotationX: 0,
@@ -187,6 +212,7 @@ const GlobeScene = (props: {
                 {...bindDrag()}
                 rotation-y={worldSpring.rotationY}
                 rotation-x={worldSpring.rotationX}
+                position-y={introSpring.intro.to((o) => (animateIntro ? (1 - o) * 1 : 0))}
             >
                 <object3D ref={globeRef} rotation-y={-0.1}>
                     {homePoint && (
@@ -198,23 +224,22 @@ const GlobeScene = (props: {
                             }}
                         />
                     )}
-                    {darkMode ? (
-                        relevantPoints.map((dot) => <HomeDot key={dot.id} dot={dot} />)
-                    ) : (
-                        <></>
-                    )}
+                    {showSparklingDots ? <SparklingDots dots={relevantPoints} /> : <></>}
                     <mesh onPointerEnter={onPointerEnter} onPointerLeave={onPointerLeave}>
                         <sphereGeometry args={[2, 120, 60]} />
-                        <meshPhysicalMaterial
+                        <animated.meshPhysicalMaterial
+                            transparent={introSpring.intro.to((o) => o < 1)}
                             roughness={darkMode ? 1 : 0.5}
-                            transparent={!darkMode}
+                            opacity={introSpring.intro}
                         >
                             <canvasTexture attach="map" image={canvas} />
-                        </meshPhysicalMaterial>
+                        </animated.meshPhysicalMaterial>
                     </mesh>
                 </object3D>
             </animated.object3D>
-            <DashedArc positions={positions} color={connectedNode?.color ?? 0xffffff} />
+            {showArc && (
+                <DashedArc positions={positions} color={connectedNode?.color ?? 0xffffff} />
+            )}
         </>
     )
 }

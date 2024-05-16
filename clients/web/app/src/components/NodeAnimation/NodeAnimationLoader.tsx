@@ -1,20 +1,29 @@
 import React, { Suspense } from 'react'
-
-import { Box } from '@ui'
+import { Box, BoxProps } from '@ui'
 import { shimmerClass } from 'ui/styles/globals/shimmer.css'
+import { NodeAnimationSceneProps } from './scene/NodeAnimationScene'
 
-const NodeStatusAnimation = React.lazy(() =>
+const NodeAnimationScene = React.lazy(() =>
     import('./scene/NodeAnimationScene').then((module) => ({
         default: module.NodeAnimationScene,
     })),
 )
 
-export const NodeAnimationLoader = () => {
+export const NodeAnimationLoader = (
+    props: {
+        skipPlaceholder?: boolean
+        minWidth?: BoxProps['minWidth']
+        maxWidth?: BoxProps['maxWidth']
+    } & NodeAnimationSceneProps & { children?: React.ReactNode },
+) => {
+    const { skipPlaceholder, children, minWidth, maxWidth, ...sceneProps } = props
+    const boxProps = { minWidth, maxWidth }
     return (
-        <Box width="100%" aspectRatio="1/1" position="relative" maxWidth="300">
-            <Suspense fallback={<LoadingPlaceholder />}>
-                <NodeStatusAnimation />
+        <Box aspectRatio="1/1" position="relative" width="100%" {...boxProps}>
+            <Suspense fallback={skipPlaceholder ? <></> : <LoadingPlaceholder />}>
+                <NodeAnimationScene {...sceneProps} />
             </Suspense>
+            {children}
         </Box>
     )
 }

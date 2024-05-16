@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { Color } from 'three'
 import { SECOND_MS } from 'data/constants'
 
-const colors = [
+export const NODE_COLORS = [
     '#1DDCF2',
     '#AFDD79',
     '#FED83D',
@@ -16,7 +16,20 @@ const colors = [
     '#DBDE54',
 ]
 
-export type NodeData = ReturnType<typeof useNodeData>[0]
+export type NodeData = {
+    id: string
+    index: number
+    nodeUrl: string
+    statusText: string
+    status: number
+
+    operator: string
+    operatorAddress: string
+    operatorIndex: number
+    data: Partial<NodeStatusSchema['nodes'][0]>
+    color: Color
+    operatorColor: Color
+}
 
 export const useNodeData = (connectedNode: string | undefined) => {
     const { data } = useQuery<NodeStatusSchema>({
@@ -41,20 +54,26 @@ export const useNodeData = (connectedNode: string | undefined) => {
                     nodeUrl: n.record.url,
                     statusText: n.record.status_text,
                     status: n.record.status,
+                    operatorAddress: n.record.address,
                     operator: n.record.operator,
                     operatorIndex,
                     data: n,
                     color: new Color(
-                        colors[Math.floor((i * colors.length) / data.nodes.length) % colors.length],
+                        NODE_COLORS[
+                            Math.floor((i * NODE_COLORS.length) / data.nodes.length) %
+                                NODE_COLORS.length
+                        ],
                     ),
-                    operatorColor: new Color(colors[(3 + operatorIndex) % colors.length]),
-                }
+                    operatorColor: new Color(NODE_COLORS[(3 + operatorIndex) % NODE_COLORS.length]),
+                } satisfies NodeData
             }) ?? []
         ).sort((a) => (a.nodeUrl === connectedNode ? -1 : 1))
     }, [connectedNode, data?.nodes])
 
     return nodeConnections
 }
+
+export const toNodeDataArray = (nodes: NodeStatusSchema['nodes']) => {}
 
 export type NodeStatusSchema = z.infer<typeof nodeStatusSchema>
 

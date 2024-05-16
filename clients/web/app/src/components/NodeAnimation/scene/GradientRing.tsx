@@ -1,9 +1,11 @@
 import { Billboard, Line, LineProps, RoundedBox } from '@react-three/drei'
 import { Object3DProps, useFrame } from '@react-three/fiber'
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Line2, LineSegments2 } from 'three-stdlib'
 import { Color, Object3D, Vector3 } from 'three'
+import { animated, useSpring } from '@react-spring/three'
 import { NodeData } from '@components/NodeConnectionStatusPanel/hooks/useNodeData'
+import { NodeAnimationContext } from '../NodeAnimationContext'
 
 type Props = {
     nodes: NodeData[]
@@ -24,8 +26,12 @@ type NodeRef = {
     el?: Object3D | null
 }
 
+const tempColor = new Color()
+
 export const GradientRing = (props: Props) => {
     const { animating, positions, nodes, radius = 2.5, connectedNode, ...restProps } = props
+    const { backgroundColorString } = useContext(NodeAnimationContext)
+    const backgroundColor = useMemo(() => new Color(backgroundColorString), [backgroundColorString])
 
     const ref = useRef<Object3D>(null)
     const gradientRef = useRef(null)
@@ -48,8 +54,12 @@ export const GradientRing = (props: Props) => {
                 linePoints: Array.from({ length: numPoints }).map((_, i) =>
                     positionFromOffset(i / (numPoints - 1), new Vector3()),
                 ),
-                vertexColors: Array.from({ length: numPoints }).map((_, i) => new Color(0xffffff)),
-                bufferColors: Array.from({ length: numPoints * 3 }).map((_, i) => 0),
+                vertexColors: Array.from({ length: numPoints }).map(
+                    (_, i) => new Color(backgroundColor),
+                ),
+                bufferColors: Array.from({ length: numPoints })
+                    .map((_, i) => backgroundColor)
+                    .flatMap((c) => [c.r, c.g, c.b]),
             } as const),
     )
 
@@ -88,11 +98,13 @@ export const GradientRing = (props: Props) => {
 
     const prevDelta = useRef(0)
     const prevDate = useRef(Date.now())
+    const fadeIn = useRef(0)
 
     const updateAnimation = useCallback(() => {
         const dn = Date.now()
         prevDelta.current += dn - prevDate.current
         prevDate.current = dn
+        fadeIn.current += 0.001
 
         const r = prevDelta.current > 1000
         const sp = 0.001 + Math.random() * 0.004
@@ -100,6 +112,7 @@ export const GradientRing = (props: Props) => {
         if (r) {
             prevDelta.current = 0
         }
+
         const dof = ((Math.random() * 1) / nodePositions.length) * 0.8
 
         nodePositions.forEach((node, i) => {
@@ -145,14 +158,27 @@ export const GradientRing = (props: Props) => {
             })
 
             vertexColors.forEach((c, i) => {
-                bufferColors[i * 3] = c.r
-                bufferColors[i * 3 + 1] = c.g
-                bufferColors[i * 3 + 2] = c.b
+                tempColor.lerpColors(
+                    backgroundColor,
+                    c,
+                    Math.min(1, Math.max(0, fadeIn.current * 1.5 - 0.2)),
+                )
+                bufferColors[i * 3 + 0] = tempColor.r
+                bufferColors[i * 3 + 1] = tempColor.g
+                bufferColors[i * 3 + 2] = tempColor.b
             })
 
             g.geometry.setColors(bufferColors, 3)
         }
-    }, [bufferColors, nodePositions, nodes, positionFromOffset, sortedColors, vertexColors])
+    }, [
+        backgroundColor,
+        bufferColors,
+        nodePositions,
+        nodes,
+        positionFromOffset,
+        sortedColors,
+        vertexColors,
+    ])
 
     useFrame((a, d) => {
         if (!animating) {
@@ -184,7 +210,7 @@ export const GradientRing = (props: Props) => {
         setHoveredNode((n) => (n === node ? null : n))
     }, [])
 
-    return nodes.length ? (
+    return (
         <object3D {...restProps} ref={ref}>
             <group>
                 <Line
@@ -195,10 +221,11 @@ export const GradientRing = (props: Props) => {
                 />
             </group>
             <group>
-                {nodes.map((node, i) =>
+                {nodes.map((node, i, arr) =>
                     nodePositions[i] ? (
                         <CircleNode
                             key={node.id}
+                            index={arr.length - i}
                             node={node}
                             nodePosition={nodePositions[i]}
                             selected={node === connectedNode}
@@ -209,19 +236,18 @@ export const GradientRing = (props: Props) => {
                 )}
             </group>
         </object3D>
-    ) : (
-        <></>
     )
 }
 
 const CircleNode = (props: {
     node: NodeData
+    index: number
     nodePosition: NodeRef
     onHover: (node: NodeData) => void
     onLeave: (node: NodeData) => void
     selected?: boolean
 }) => {
-    const { node, nodePosition } = props
+    const { node, index, nodePosition } = props
 
     const onPointerEnter = useCallback(() => {
         props.onHover(node)
@@ -231,6 +257,22 @@ const CircleNode = (props: {
         props.onLeave(node)
     }, [node, props])
 
+    const [introSpring, setIntroSpring] = useSpring(() => ({
+        intro: 0,
+        config: { mass: 1, tension: 70, friction: 20 },
+    }))
+
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            setIntroSpring({
+                intro: 1,
+            })
+        }, 50 * index + 1000)
+        return () => {
+            clearTimeout(timeout)
+        }
+    }, [index, setIntroSpring])
+
     return (
         <object3D
             ref={(e) => {
@@ -239,7 +281,7 @@ const CircleNode = (props: {
             onPointerEnter={onPointerEnter}
             onPointerLeave={onPointerLeave}
         >
-            <pointLight color={node.color} intensity={1} />
+            <animated.pointLight color={node.color} intensity={introSpring.intro} />
 
             <mesh>
                 <sphereGeometry args={[0.08 * 3, 4]} />
@@ -248,29 +290,37 @@ const CircleNode = (props: {
 
             <Billboard>
                 {props.selected && (
-                    <RoundedBox
+                    <AnimatedRoundedBox
                         args={[0.1, 0.1, 0.05]}
                         radius={0.03}
                         rotation-z={Math.PI / 4}
                         bevelSegments={2}
                     >
-                        <meshPhongMaterial
+                        <animated.meshPhongMaterial
                             transparent
                             color={node.color}
-                            opacity={0.5}
+                            opacity={introSpring.intro.to([0, 1], [0, 0.5])}
                             depthTest={false}
                         />
-                    </RoundedBox>
+                    </AnimatedRoundedBox>
                 )}
-                <RoundedBox
+                <AnimatedRoundedBox
                     args={[0.15, 0.15, 0.05]}
                     radius={0.03}
                     rotation-z={Math.PI / 4}
                     bevelSegments={2}
+                    scale-x={introSpring.intro.to([0, 1], [0, 1])}
+                    scale-y={introSpring.intro.to([0, 1], [0, 1])}
                 >
-                    <meshBasicMaterial color={node.color} />
-                </RoundedBox>
+                    <animated.meshBasicMaterial
+                        transparent
+                        color={node.color}
+                        opacity={introSpring.intro.to([0, 1], [0, 1])}
+                    />
+                </AnimatedRoundedBox>
             </Billboard>
         </object3D>
     )
 }
+
+const AnimatedRoundedBox = animated(RoundedBox)

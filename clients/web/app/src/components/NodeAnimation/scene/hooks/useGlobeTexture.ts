@@ -45,7 +45,7 @@ export const useGlobeTexture = (
                 return acc
             }, [] as { id: string; index: number; color: string; value: number; xy: [number, number] }[])
             .sort((a, b) => Math.random() - 0.5)
-            .slice(0, 300)
+            .slice(0, 1000)
     }, [textureData])
 
     const update = useCallback(() => {
