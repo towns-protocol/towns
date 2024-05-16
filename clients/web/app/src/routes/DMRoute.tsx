@@ -98,32 +98,48 @@ const useTouchRedirect = ({ isTouch }: { isTouch: boolean }) => {
     const hasRedirectedRef = useRef(false)
     const { spaces } = useTownsContext()
     const storeState = useStore.getState()
-    const spaceStreamId = storeState.spaceIdBookmark ?? spaces[0]?.id
+    const spaceStreamId = storeState.spaceIdBookmark || spaces[0]?.id
 
     const needsRedirect = isTouch && isDesktopRoute
     const canRedirect = !hasRedirectedRef.current && !!spaceStreamId
     const [searchParams] = useSearchParams()
 
     useEffect(() => {
+        console.log('[hnt-5685][useTouchRedirect]', 'states', {
+            ssSpaceIdBookmark: storeState.spaceIdBookmark,
+            spaces: spaces.map((s) => s.id),
+            needsRedirect,
+            canRedirect,
+        })
         if (needsRedirect && canRedirect) {
             hasRedirectedRef.current = true
             const messageSegment = channelId ? `${channelId}/` : ''
             const threadSegment = replyId ? `${PATHS.REPLIES}/${replyId}` : ''
-            console.log('[hnt-5685][useTouchRedirect]', 'redirect', {
+            console.log('[hnt-5685][useTouchRedirect]', 'redirected', {
                 path: `/${PATHS.SPACES}/${spaceStreamId}/${PATHS.MESSAGES}/${messageSegment}${threadSegment}`,
                 stackId: searchParams.get('stackId') ?? '',
             })
         }
-    }, [canRedirect, channelId, needsRedirect, replyId, searchParams, spaceStreamId])
+    }, [
+        canRedirect,
+        channelId,
+        needsRedirect,
+        replyId,
+        searchParams,
+        spaceStreamId,
+        spaces,
+        storeState.spaceIdBookmark,
+    ])
 
     useEffect(() => {
         if (needsRedirect && canRedirect) {
             hasRedirectedRef.current = true
             const messageSegment = channelId ? `${channelId}/` : ''
             const threadSegment = replyId ? `${PATHS.REPLIES}/${replyId}` : ''
-            navigate(
-                `/${PATHS.SPACES}/${spaceStreamId}/${PATHS.MESSAGES}/${messageSegment}${threadSegment}`,
-            )
+            navigate({
+                pathname: `/${PATHS.SPACES}/${spaceStreamId}/${PATHS.MESSAGES}/${messageSegment}${threadSegment}`,
+                search: searchParams.toString(),
+            })
         }
-    }, [canRedirect, channelId, spaceStreamId, navigate, needsRedirect, replyId])
+    }, [canRedirect, channelId, spaceStreamId, navigate, needsRedirect, replyId, searchParams])
 }

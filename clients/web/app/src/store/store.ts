@@ -67,7 +67,7 @@ export const useStore = create(
             setTownRouteBookmark: (spaceId, route) => {
                 set((state) => ({
                     // also set the spaceIdBookmark when setting the town route
-                    spaceIdBookmark: spaceId,
+                    spaceIdBookmark: spaceId ? spaceId : state.spaceIdBookmark,
                     townRouteBookmarks: { ...state.townRouteBookmarks, [spaceId]: route },
                 }))
             },
