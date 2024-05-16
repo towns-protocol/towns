@@ -24,7 +24,11 @@ import { getRouteParams } from 'routes/SpaceContextRoute'
 
 FontLoader.init()
 
-const DEFAULT_TIMELINE_FILTER = new Set([ZTEvent.Fulfillment, ZTEvent.KeySolicitation]) // we don't need to see these in the ui
+const DEFAULT_TIMELINE_FILTER = new Set([
+    ZTEvent.Fulfillment,
+    ZTEvent.KeySolicitation,
+    ZTEvent.MiniblockHeader,
+]) // we don't need to see these in the ui
 
 export const App = () => {
     const _envornmentId = useRef<string | undefined>(undefined)

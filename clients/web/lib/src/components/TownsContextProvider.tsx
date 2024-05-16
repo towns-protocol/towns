@@ -196,7 +196,9 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
     const dynamicTimelineFilter = useTimelineFilter((state) => state.eventFilter)
     useCasablancaTimelines(
         casablancaClient,
-        dynamicTimelineFilter ?? timelineFilter,
+        dynamicTimelineFilter && dynamicTimelineFilter.size > 0
+            ? dynamicTimelineFilter
+            : timelineFilter,
         props.streamFilter,
     )
     useHookLogger()
