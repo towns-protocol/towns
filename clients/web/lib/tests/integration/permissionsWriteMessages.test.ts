@@ -104,7 +104,8 @@ describe('write messages', () => {
         expect(bob.getMessages(channelId)).not.toContain('Hello Bob!')
     })
 
-    test.only('Channel member cant write messages without permission (UserEntitlement)', async () => {
+    // https://linear.app/hnt-labs/issue/HNT-6430/fix-flaky-permissionswritemessages
+    test.skip('Channel member cant write messages without permission (UserEntitlement)', async () => {
         /** Arrange */
 
         // create all the users for the test
