@@ -185,14 +185,14 @@ export const ErrorReportForm = (props: { onHide?: () => void }) => {
         })),
     )
 
-    const { requestPermission, revokePermission, permissionStatus } = useRequestShakePermissions()
+    const { requestPermission, revokePermission, enabled } = useRequestShakePermissions()
     const onActivateShake = useCallback(() => {
-        if (permissionStatus === 'granted') {
+        if (enabled) {
             revokePermission()
         } else {
             requestPermission()
         }
-    }, [permissionStatus, requestPermission, revokePermission])
+    }, [enabled, requestPermission, revokePermission])
 
     const submitButtonRef = useRef<HTMLButtonElement>(null)
 
@@ -387,14 +387,11 @@ export const ErrorReportForm = (props: { onHide?: () => void }) => {
                             </PanelButton>
                         </MotionBox>
                         {isTouch && (
-                            <PanelButton onClick={onActivateShake}>
+                            <PanelButton type="button" onClick={onActivateShake}>
                                 <Box width="height_md" alignItems="center">
-                                    <Icon
-                                        type={permissionStatus === 'granted' ? 'shakeOff' : 'shake'}
-                                        size="square_sm"
-                                    />
+                                    <Icon type={enabled ? 'shakeOff' : 'shake'} size="square_sm" />
                                 </Box>
-                                {permissionStatus === 'granted' ? (
+                                {enabled ? (
                                     <Paragraph color="gray1">Disable Shake to Report</Paragraph>
                                 ) : (
                                     <Paragraph color="gray1">Enable Shake to Report</Paragraph>

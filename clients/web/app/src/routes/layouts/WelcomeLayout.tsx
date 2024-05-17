@@ -5,7 +5,10 @@ import { Box, MotionBox, Paragraph, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { TimelineShimmer } from '@components/Shimmer'
 import { ModalContainer } from '@components/Modals/ModalContainer'
+import { ShakeToReport } from '@components/BugReportButton/ShakeToReport'
+import { BugReportPanel } from 'routes/BugReportPanel'
 import { AppPanelLayoutSkeleton } from './AppPanelLayoutSkeleton'
+import { usePanelActions } from './hooks/usePanelActions'
 
 export const WelcomeLayout = (props: { children?: React.ReactNode; debugText?: string }) => {
     AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.Welcome)
@@ -34,13 +37,22 @@ export const WelcomeLayout = (props: { children?: React.ReactNode; debugText?: s
 
 export const AppSkeletonView = (props: { progress?: number }) => {
     const { isTouch } = useDevice()
+    const { isPanelOpen } = usePanelActions()
+    const isBugReportOpen = isPanelOpen('bug-report')
     return (
         <>
-            {isTouch ? <TimelineShimmer /> : <AppPanelLayoutSkeleton />}
-            {props.progress !== undefined && (
-                <ModalContainer minWidth="200" onHide={() => {}}>
-                    {<WelcomeProgressBar progress={props.progress} />}
-                </ModalContainer>
+            <ShakeToReport />
+            {isBugReportOpen ? (
+                <BugReportPanel />
+            ) : (
+                <>
+                    {isTouch ? <TimelineShimmer /> : <AppPanelLayoutSkeleton />}
+                    {props.progress !== undefined && (
+                        <ModalContainer minWidth="200" onHide={() => {}}>
+                            {<WelcomeProgressBar progress={props.progress} />}
+                        </ModalContainer>
+                    )}
+                </>
             )}
         </>
     )

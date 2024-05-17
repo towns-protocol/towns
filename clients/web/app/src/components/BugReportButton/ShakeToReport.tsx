@@ -1,30 +1,26 @@
 import React, { useCallback, useEffect } from 'react'
 import { create } from 'zustand'
-import { SECOND_MS } from 'data/constants'
-import { useStore } from 'store/store'
+import { createJSONStorage, persist } from 'zustand/middleware'
+import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 
 export const ShakeToReport = () => {
-    const { sidePanel, setSidePanel } = useStore(({ sidePanel, setSidePanel }) => ({
-        sidePanel,
-        setSidePanel,
-    }))
+    const { openPanel, isPanelOpen } = usePanelActions()
 
-    useCheckPermission()
+    const openBugReport = useCallback(() => {
+        if (isPanelOpen('bug-report')) {
+            return
+        }
+        openPanel('bug-report')
+    }, [isPanelOpen, openPanel])
 
-    useShakeDetection(
-        useCallback(() => {
-            if (sidePanel !== 'bugReport') {
-                setSidePanel('bugReport')
-            }
-        }, [setSidePanel, sidePanel]),
-    )
+    useShakeDetection(openBugReport)
     return <></>
 }
 
 const useShakeDetection = (onShake: () => void) => {
-    const permissionStatus = useShakeStore((state) => state.permissionStatus)
+    const enabled = useShakeStore((state) => state.enabled)
     useEffect(() => {
-        if (permissionStatus !== 'granted') {
+        if (!enabled) {
             return
         }
         const lastAcceleration = { x: 0, y: 0, z: 0 }
@@ -54,7 +50,7 @@ const useShakeDetection = (onShake: () => void) => {
         return () => {
             window.removeEventListener('devicemotion', onDeviceMotion)
         }
-    }, [onShake, permissionStatus])
+    }, [enabled, onShake])
 }
 
 const isAcceleration = (
@@ -79,74 +75,51 @@ const isShake = (dx: number, dy: number, dz: number, threshold: number): boolean
     )
 }
 
-const useCheckPermission = () => {
-    const { permissionStatus, setPermissionStatus } = useShakeStore(
-        ({ permissionStatus, setPermissionStatus }) => ({
-            permissionStatus,
-            setPermissionStatus,
-        }),
-    )
-    useEffect(() => {
-        if (permissionStatus === 'checking') {
-            const onDeviceMotion = (e: DeviceMotionEvent) => {
-                setPermissionStatus('granted')
-            }
-            window.addEventListener('devicemotion', onDeviceMotion)
-            return () => {
-                window.removeEventListener('devicemotion', onDeviceMotion)
-            }
-        }
-    }, [permissionStatus, setPermissionStatus])
-
-    useEffect(() => {
-        if (permissionStatus === 'checking') {
-            const timeout = setTimeout(() => {
-                setPermissionStatus('denied')
-            }, SECOND_MS * 10)
-            return () => {
-                clearTimeout(timeout)
-            }
-        }
-    }, [permissionStatus, setPermissionStatus])
-
-    useEffect(() => {
-        console.log('status', permissionStatus)
-    }, [permissionStatus])
-}
-
 interface DeviceOrientationEventiOS extends DeviceOrientationEvent {
-    requestPermission?: () => Promise<'granted' | 'denied'>
+    requestPermission?: () => Promise<'granted' | 'denied' | 'default'>
 }
 
 const isDeviceOrientationEventiOS = (event: unknown): event is DeviceOrientationEventiOS =>
     typeof (event as DeviceOrientationEventiOS)?.requestPermission === 'function'
 
 export const useRequestShakePermissions = () => {
-    const { permissionStatus, setPermissionStatus } = useShakeStore(
-        ({ permissionStatus, setPermissionStatus }) => ({ permissionStatus, setPermissionStatus }),
-    )
+    const { enabled, setEnabled } = useShakeStore(({ enabled, setEnabled }) => ({
+        enabled,
+        setEnabled,
+    }))
     const requestPermission = useCallback(async () => {
         if (isDeviceOrientationEventiOS(DeviceOrientationEvent)) {
             const response = await DeviceOrientationEvent.requestPermission?.()
-            if (response == 'granted' || response == 'denied') {
-                setPermissionStatus(response)
+            if (response === 'granted') {
+                setEnabled(true)
+            } else {
+                setEnabled(false)
             }
+        } else {
+            // Android does not require permission
+            setEnabled(true)
         }
-    }, [setPermissionStatus])
+    }, [setEnabled])
 
     const revokePermission = useCallback(() => {
-        setPermissionStatus('denied')
-    }, [setPermissionStatus])
+        setEnabled(false)
+    }, [setEnabled])
 
-    return { permissionStatus, requestPermission, revokePermission }
+    return { enabled, requestPermission, revokePermission }
 }
 
-export const useShakeStore = create<{
-    permissionStatus: 'checking' | 'denied' | 'granted'
-    setPermissionStatus: (permissionStatus: 'checking' | 'denied' | 'granted') => void
-}>((set) => ({
-    permissionStatus: 'checking',
-    setPermissionStatus: (permissionStatus) => {
-        set({ permissionStatus })
-    },
-}))
+export const useShakeStore = create(
+    persist<{
+        enabled: boolean
+        setEnabled: (enabled: boolean) => void
+    }>(
+        (set) => ({
+            enabled: false,
+            setEnabled: (enabled: boolean) => set({ enabled }),
+        }),
+        {
+            name: 'shake-to-report',
+            storage: createJSONStorage(() => localStorage),
+        },
+    ),
+)
