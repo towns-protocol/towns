@@ -2,7 +2,7 @@ import './../utils/envs.mock'
 import { Environment } from 'worker-common/src/environment'
 import { isAllowedOrigin } from './cors'
 
-const PRODUCTION_ENVS: Environment[] = ['production', 'staging', 'staging-beta', 'production-beta']
+const PRODUCTION_ENVS: Environment[] = ['production', 'omega']
 const DEVELOPMENT_ENVS: Environment[] = ['development', 'test-beta']
 
 describe('isAllowedOrigin', () => {
@@ -38,6 +38,7 @@ describe('isAllowedOrigin', () => {
             'https://harmony-web-pr-*.onrender.com',
             'https://river1-staging.towns.com',
             'https://app.gamma.towns.com',
+            'https://app.towns.com',
         ]
 
         allowedOrigins.forEach((origin) => {

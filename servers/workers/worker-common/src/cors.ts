@@ -2,6 +2,7 @@ import { Environment } from './environment'
 
 export function getAllowedOrigins(env: Environment): string[] {
     switch (env) {
+        // todo: test-beta should reflect name of logical app environment, gamma
         case 'test-beta':
         case 'development':
             /*
@@ -9,6 +10,7 @@ export function getAllowedOrigins(env: Environment): string[] {
             */
             return [
                 'https://app-test.towns.com',
+                'https://app.towns.com',
                 'https://app-test-beta.towns.com',
                 'https://app.gamma.towns.com',
                 'https://harmony-web-pr-*.onrender.com',
@@ -20,6 +22,13 @@ export function getAllowedOrigins(env: Environment): string[] {
                 'https://river1-test-beta.towns.com',
                 'https://*.nodes.gamma.towns.com',
                 'https://test-harmony-web-pr-*.onrender.com',
+            ]
+        case 'omega':
+            return [
+                'https://app.towns.com',
+                'https://harmony-web-pr-*.onrender.com',
+                'http://localhost:3000',
+                'https://localhost:3000',
             ]
         default:
             return []

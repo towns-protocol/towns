@@ -1,5 +1,5 @@
 import { Chain } from 'viem'
-import { baseSepolia, foundry } from 'wagmi/chains'
+import { base, baseSepolia, foundry } from 'wagmi/chains'
 import { addRpcUrlOverrideToChain } from '@privy-io/react-auth'
 import { IChainConfig } from 'use-towns-client'
 import { env } from 'utils'
@@ -10,6 +10,10 @@ const foundryClone: Chain = structuredClone(foundry)
 const baseSepoliaClone: Chain = env.VITE_BASE_SEPOLIA_RPC_URL
     ? _makeBaseChain(baseSepolia, env.VITE_BASE_SEPOLIA_RPC_URL, env.VITE_BASE_SEPOLIA_WS_URL)
     : baseSepolia
+
+const baseClone: Chain = env.VITE_BASE_CHAIN_RPC_URL
+    ? _makeBaseChain(base, env.VITE_BASE_CHAIN_RPC_URL, env.VITE_BASE_CHAIN_WS_URL)
+    : base
 
 const anvilRiverChain: IChainConfig = {
     chainId: 31338,
@@ -23,11 +27,19 @@ const testnetRiverChain: IChainConfig = {
     rpcUrl: env.VITE_RIVER_TESTNET_RPC_URL ?? 'https://devnet.rpc.river.build',
 }
 
+const mainnetRiverChain: IChainConfig = {
+    chainId: 550,
+    name: 'mainnet_river_chain',
+    rpcUrl: env.VITE_RIVER_CHAIN_RPC_URL ?? 'https://mainnet.rpc.river.build',
+}
+
 export const getCustomBaseChain = (chainId: number): Chain => {
     if (chainId === foundryClone.id) {
         return foundryClone
     } else if (chainId === baseSepoliaClone.id) {
         return baseSepoliaClone
+    } else if (chainId === baseClone.id) {
+        return baseClone
     } else {
         throw new Error(`unsupported custom base chain id: ${chainId}`)
     }
@@ -38,6 +50,8 @@ export function makeBaseChain(chainId: number, rpcUrl: string, wsUrl?: string): 
         return _makeBaseChain(foundry, rpcUrl, wsUrl)
     } else if (chainId === baseSepolia.id) {
         return _makeBaseChain(baseSepolia, rpcUrl, wsUrl)
+    } else if (chainId === base.id) {
+        return _makeBaseChain(base, rpcUrl, wsUrl)
     } else {
         // aellis - i am not sure if we can just call wagmi "defineChain" here with the chain id and a custom name
         // throwing until i can test it
@@ -79,6 +93,8 @@ export const getCustomRiverChain = (chainId: number): IChainConfig => {
         return anvilRiverChain
     } else if (chainId === testnetRiverChain.chainId) {
         return testnetRiverChain
+    } else if (chainId === mainnetRiverChain.chainId) {
+        return mainnetRiverChain
     } else {
         throw new Error(`unsupported custom river chain id: ${chainId}`)
     }

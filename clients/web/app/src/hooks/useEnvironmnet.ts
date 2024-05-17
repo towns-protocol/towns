@@ -35,6 +35,8 @@ export interface TownsEnvironmentInfo {
 function makeEnvironments(): TownsEnvironmentInfo[] {
     const retVal: TownsEnvironmentInfo[] = []
     // first grab the config from the env, this will be the default if it exists
+    // note: use this var to support transient environments otherwise use
+    // VITE_RIVER_DEFAULT_ENV
     if (env.VITE_RIVER_ENV) {
         // if we define VITE_RIVER_ENV, we should define all the other river env vars
         check(isDefined(env.VITE_BASE_CHAIN_RPC_URL), 'Missing VITE_BASE_CHAIN_RPC_URL')
@@ -86,7 +88,7 @@ function makeEnvironments(): TownsEnvironmentInfo[] {
                 : undefined,
         } satisfies TownsEnvironmentInfo)
     }
-    // add the debug environments
+    // add the web3 environments
     for (const riverEnv of getWeb3Deployments()) {
         const deployment = getWeb3Deployment(riverEnv)
         // don't add the default env
@@ -104,9 +106,9 @@ function makeEnvironments(): TownsEnvironmentInfo[] {
         if (!riverChain) {
             continue
         }
-        // account abstraction only works on gamma, add some tech debt to figure out
+        // account abstraction only works on gamma or omega, add some tech debt to figure out
         // how to support it elsewhere
-        const supportsAA = riverEnv === 'gamma'
+        const supportsAA = riverEnv === 'gamma' || riverEnv === 'omega'
         // add the env
         retVal.push({
             id: riverEnv,

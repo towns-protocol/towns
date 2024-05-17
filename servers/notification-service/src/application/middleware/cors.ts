@@ -25,6 +25,7 @@ export function isAllowedOrigin(origin: string | undefined, environment: Environ
     const corsOrigin = getOriginForCors(origin, environment)
     switch (environment) {
         case 'production':
+        case 'omega':
         case 'development':
         case 'test-beta':
         case 'test': {
