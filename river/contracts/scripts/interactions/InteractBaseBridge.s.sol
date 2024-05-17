@@ -51,13 +51,14 @@ contract InteractBaseBridge is Interaction {
 
     address riverOnSepolia = 0x40eF1bb984503bb5Adef041A88a4F9180e8586f9;
     address riverOnBaseSepolia = 0xDaF401580d509117738bF1F38D2CD4ABAEd3c2c5;
+    uint256 tokensToDeposit = 1 ether;
 
     vm.startBroadcast(pk);
-    IERC20(riverOnSepolia).approve(l1StandardBridge, 2 ether);
+    IERC20(riverOnSepolia).approve(l1StandardBridge, tokensToDeposit);
     IL1StandardBridge(l1StandardBridge).depositERC20({
       _l1Token: riverOnSepolia,
       _l2Token: riverOnBaseSepolia,
-      _amount: 2 ether,
+      _amount: tokensToDeposit,
       _minGasLimit: 100000,
       _extraData: ""
     });

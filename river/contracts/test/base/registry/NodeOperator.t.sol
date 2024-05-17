@@ -5,11 +5,10 @@ pragma solidity ^0.8.23;
 import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {IERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {INodeOperator, INodeOperatorBase} from "contracts/src/base/registry/facets/operator/INodeOperator.sol";
-import {ISpaceDelegation} from "contracts/src/base/registry/facets/delegation/ISpaceDelegation.sol";
+import {ISpaceDelegationBase} from "contracts/src/base/registry/facets/delegation/ISpaceDelegation.sol";
 import {INodeOperatorBase} from "contracts/src/base/registry/facets/operator/INodeOperator.sol";
 
 // libraries
-import {BaseRegistryErrors} from "contracts/src/base/registry/libraries/BaseRegistryErrors.sol";
 
 // structs
 import {NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
@@ -24,7 +23,7 @@ import {River} from "contracts/src/tokens/river/base/River.sol";
 contract NodeOperatorFacetTest is
   BaseSetup,
   INodeOperatorBase,
-  ISpaceDelegation,
+  ISpaceDelegationBase,
   IOwnableBase,
   IERC721ABase
 {
@@ -42,11 +41,11 @@ contract NodeOperatorFacetTest is
   function setUp() public override {
     super.setUp();
 
-    ownable = OwnableFacet(address(nodeOperator));
-    introspection = IntrospectionFacet(address(nodeOperator));
-    erc721 = ERC721A(address(nodeOperator));
+    ownable = OwnableFacet(address(baseRegistry));
+    introspection = IntrospectionFacet(address(baseRegistry));
+    erc721 = ERC721A(address(baseRegistry));
     riverFacet = River(riverToken);
-    operator = INodeOperator(address(nodeOperator));
+    operator = INodeOperator(address(baseRegistry));
   }
 
   function test_initialization() public {
@@ -71,9 +70,7 @@ contract NodeOperatorFacetTest is
   function test_revertWhen_registerOperatorWithAlreadyRegisteredOperator(
     address randomOperator
   ) public givenOperatorIsRegistered(randomOperator) {
-    vm.expectRevert(
-      BaseRegistryErrors.NodeOperator__AlreadyRegistered.selector
-    );
+    vm.expectRevert(NodeOperator__AlreadyRegistered.selector);
     vm.prank(randomOperator);
     operator.registerOperator();
   }
@@ -85,23 +82,6 @@ contract NodeOperatorFacetTest is
       operator.getOperatorStatus(randomOperator) == NodeOperatorStatus.Standby
     );
   }
-
-  // function test_registerMultipleOperators(
-  //   address[] memory randomOperators
-  // ) public {
-  //   for (uint256 i = 0; i < randomOperators.length; i++) {
-  //     vm.assume(randomOperators[i] != address(0));
-  //     vm.assume(!operator.isOperator(randomOperators[i]));
-
-  //     vm.prank(randomOperators[i]);
-  //     nodeOperator.registerOperator();
-  //     assertEq(erc721.balanceOf(randomOperators[i]), 1);
-  //     assertTrue(
-  //       nodeOperator.getOperatorStatus(randomOperators[i]) ==
-  //         NodeOperatorStatus.Standby
-  //     );
-  //   }
-  // }
 
   // =============================================================
   //                           isOperator
@@ -143,7 +123,7 @@ contract NodeOperatorFacetTest is
     public
     whenCalledByDeployer
   {
-    vm.expectRevert(BaseRegistryErrors.NodeOperator__InvalidAddress.selector);
+    vm.expectRevert(NodeOperator__InvalidAddress.selector);
     operator.setOperatorStatus(address(0), NodeOperatorStatus.Approved);
   }
 
@@ -151,7 +131,7 @@ contract NodeOperatorFacetTest is
     address notRegisteredOperator
   ) public whenCalledByDeployer {
     vm.assume(notRegisteredOperator != address(0));
-    vm.expectRevert(BaseRegistryErrors.NodeOperator__NotRegistered.selector);
+    vm.expectRevert(NodeOperator__NotRegistered.selector);
     operator.setOperatorStatus(
       notRegisteredOperator,
       NodeOperatorStatus.Approved
@@ -161,23 +141,21 @@ contract NodeOperatorFacetTest is
   function test_revertWhen_setOperatorStatusWithStatusNotChanged(
     address randomOperator
   ) public givenOperatorIsRegistered(randomOperator) whenCalledByDeployer {
-    vm.expectRevert(BaseRegistryErrors.NodeOperator__StatusNotChanged.selector);
+    vm.expectRevert(NodeOperator__StatusNotChanged.selector);
     operator.setOperatorStatus(randomOperator, NodeOperatorStatus.Standby);
   }
 
   function test_revertWhen_setOperatorStatusFromStandbyToExiting(
     address randomOperator
   ) public givenOperatorIsRegistered(randomOperator) whenCalledByDeployer {
-    vm.expectRevert(
-      BaseRegistryErrors.NodeOperator__InvalidStatusTransition.selector
-    );
+    vm.expectRevert(NodeOperator__InvalidStatusTransition.selector);
     operator.setOperatorStatus(randomOperator, NodeOperatorStatus.Exiting);
   }
 
   // function test_revertWhen_setOperatorStatusFromStandbyToApprovedWithNoStake(
   //   address randomOperator
   // ) public givenOperatorIsRegistered(randomOperator) whenCalledByDeployer {
-  //   vm.expectRevert(BaseRegistryErrors.NodeOperator__NotEnoughStake.selector);
+  //   vm.expectRevert(NodeOperator__NotEnoughStake.selector);
   //   nodeOperator.setOperatorStatus(randomOperator, NodeOperatorStatus.Approved);
   // }
 
@@ -271,9 +249,7 @@ contract NodeOperatorFacetTest is
     )
   {
     vm.prank(deployer);
-    vm.expectRevert(
-      BaseRegistryErrors.NodeOperator__InvalidStatusTransition.selector
-    );
+    vm.expectRevert(NodeOperator__InvalidStatusTransition.selector);
     operator.setOperatorStatus(randomOperator, NodeOperatorStatus.Standby);
   }
 
@@ -296,9 +272,7 @@ contract NodeOperatorFacetTest is
     )
   {
     vm.prank(deployer);
-    vm.expectRevert(
-      BaseRegistryErrors.NodeOperator__InvalidStatusTransition.selector
-    );
+    vm.expectRevert(NodeOperator__InvalidStatusTransition.selector);
     operator.setOperatorStatus(randomOperator, NodeOperatorStatus.Approved);
   }
 
@@ -397,7 +371,7 @@ contract NodeOperatorFacetTest is
     address randomOperator,
     address randomClaimAddress
   ) public {
-    vm.expectRevert(BaseRegistryErrors.NodeOperator__NotRegistered.selector);
+    vm.expectRevert(NodeOperator__NotRegistered.selector);
     vm.prank(randomOperator);
     operator.setClaimAddress(randomClaimAddress);
   }
@@ -433,7 +407,7 @@ contract NodeOperatorFacetTest is
     address randomOperator,
     uint256 rate
   ) external {
-    vm.expectRevert(BaseRegistryErrors.NodeOperator__NotRegistered.selector);
+    vm.expectRevert(NodeOperator__NotRegistered.selector);
     vm.prank(randomOperator);
     operator.setCommissionRate(rate);
   }
@@ -444,14 +418,14 @@ contract NodeOperatorFacetTest is
   // function test_revertWhen_addSpaceDelegationIsCalledWithZeroSpaceAddress(
   //   address randomOperator
   // ) public givenOperatorIsRegistered(randomOperator) {
-  //   vm.expectRevert(BaseRegistryErrors.NodeOperator__InvalidAddress.selector);
+  //   vm.expectRevert(NodeOperator__InvalidAddress.selector);
   //   nodeOperator.addSpaceDelegation(address(0), randomOperator);
   // }
 
   // function test_revertWhen_addSpaceDelegationIsCalledWithZeroOperatorAddress()
   //   public
   // {
-  //   vm.expectRevert(BaseRegistryErrors.NodeOperator__InvalidAddress.selector);
+  //   vm.expectRevert(NodeOperator__InvalidAddress.selector);
   //   nodeOperator.addSpaceDelegation(space, address(0));
   // }
 
@@ -462,7 +436,7 @@ contract NodeOperatorFacetTest is
   //   vm.assume(randomUser != address(0));
 
   //   vm.prank(randomUser);
-  //   vm.expectRevert(BaseRegistryErrors.NodeOperator__InvalidSpace.selector);
+  //   vm.expectRevert(NodeOperator__InvalidSpace.selector);
   //   nodeOperator.addSpaceDelegation(space, randomOperator);
   // }
 
@@ -470,7 +444,7 @@ contract NodeOperatorFacetTest is
   //   address randomOperator
   // ) public {
   //   vm.assume(randomOperator != address(0));
-  //   vm.expectRevert(BaseRegistryErrors.NodeOperator__NotRegistered.selector);
+  //   vm.expectRevert(NodeOperator__NotRegistered.selector);
   //   nodeOperator.addSpaceDelegation(space, randomOperator);
   // }
 
@@ -492,7 +466,7 @@ contract NodeOperatorFacetTest is
   //   vm.prank(founder);
   //   vm.expectRevert(
   //     abi.encodeWithSelector(
-  //       BaseRegistryErrors.NodeOperator__AlreadyDelegated.selector,
+  //       NodeOperator__AlreadyDelegated.selector,
   //       randomOperator
   //     )
   //   );

@@ -7,11 +7,13 @@ import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.
 import {IEntitlementChecker} from "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
 import {IImplementationRegistry} from "contracts/src/factory/facets/registry/IImplementationRegistry.sol";
 import {IWalletLink} from "contracts/src/factory/facets/wallet-link/IWalletLink.sol";
-import {INodeOperator} from "contracts/src/base/registry/facets/operator/INodeOperator.sol";
+import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
+import {IMainnetDelegation} from "contracts/src/tokens/river/base/delegation/IMainnetDelegation.sol";
 
 // libraries
 
 // contracts
+import {MockMessenger} from "contracts/test/mocks/MockMessenger.sol";
 
 // deployments
 import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
@@ -19,11 +21,12 @@ import {SpaceHelper} from "contracts/test/spaces/SpaceHelper.sol";
 import {RuleEntitlement} from "contracts/src/spaces/entitlements/rule/RuleEntitlement.sol";
 
 import {SpaceOwner} from "contracts/src/spaces/facets/owner/SpaceOwner.sol";
-import {SpaceDelegationFacet} from "contracts/src/base/registry/facets/delegation/SpaceDelegationFacet.sol";
+import {ISpaceDelegation} from "contracts/src/base/registry/facets/delegation/ISpaceDelegation.sol";
 
 // deployments
 import {DeploySpaceFactory} from "contracts/scripts/deployments/DeploySpaceFactory.s.sol";
 import {DeployRiverBase} from "contracts/scripts/deployments/DeployRiverBase.s.sol";
+import {DeployProxyDelegation} from "contracts/scripts/deployments/DeployProxyDelegation.s.sol";
 import {DeployBaseRegistry} from "contracts/scripts/deployments/DeployBaseRegistry.s.sol";
 
 /*
@@ -31,9 +34,11 @@ import {DeployBaseRegistry} from "contracts/scripts/deployments/DeployBaseRegist
  * @dev - This contract is inherited by all other test contracts, it will create one diamond contract which represent the factory contract that creates all spaces
  */
 contract BaseSetup is TestUtils, SpaceHelper {
-  DeploySpaceFactory internal deploySpaceFactory = new DeploySpaceFactory();
-  DeployRiverBase internal deployRiverToken = new DeployRiverBase();
   DeployBaseRegistry internal deployBaseRegistry = new DeployBaseRegistry();
+  DeploySpaceFactory internal deploySpaceFactory = new DeploySpaceFactory();
+  DeployRiverBase internal deployRiverTokenBase = new DeployRiverBase();
+  DeployProxyDelegation internal deployProxyDelegation =
+    new DeployProxyDelegation();
 
   address internal deployer;
   address internal founder;
@@ -50,9 +55,12 @@ contract BaseSetup is TestUtils, SpaceHelper {
   address internal riverToken;
   address internal bridge;
   address internal association;
+  address internal vault;
   address internal nodeOperator;
 
-  address internal mainnetDelegation;
+  address internal mainnetProxyDelegation;
+  address internal claimers;
+  address internal mainnetRiverToken;
 
   address internal pricingModule;
   address internal fixedPricingModule;
@@ -60,19 +68,31 @@ contract BaseSetup is TestUtils, SpaceHelper {
   IEntitlementChecker internal entitlementChecker;
   IImplementationRegistry internal implementationRegistry;
   IWalletLink internal walletLink;
+  MockMessenger internal messenger;
 
   // @notice - This function is called before each test function
   // @dev - It will create a new diamond contract and set the spaceFactory variable to the address of the "diamond" variable
   function setUp() public virtual {
     deployer = getDeployer();
 
-    // River Token
-    riverToken = deployRiverToken.deploy();
-    bridge = deployRiverToken.bridgeBase();
+    // Base Registry
+    baseRegistry = deployBaseRegistry.deploy();
+    entitlementChecker = IEntitlementChecker(baseRegistry);
+    nodeOperator = baseRegistry;
+
+    // Mainnet
+    messenger = MockMessenger(deployBaseRegistry.messenger());
+    deployProxyDelegation.setDependencies({
+      mainnetDelegation_: baseRegistry,
+      messenger_: address(messenger)
+    });
+    mainnetProxyDelegation = deployProxyDelegation.deploy();
+    mainnetRiverToken = deployProxyDelegation.riverToken();
+    vault = deployProxyDelegation.vault();
+    claimers = deployProxyDelegation.claimers();
 
     // Space Factory Diamond
     spaceFactory = deploySpaceFactory.deploy();
-
     userEntitlement = deploySpaceFactory.userEntitlement();
     ruleEntitlement = deploySpaceFactory.ruleEntitlement();
     spaceOwner = deploySpaceFactory.spaceOwner();
@@ -81,17 +101,18 @@ contract BaseSetup is TestUtils, SpaceHelper {
     walletLink = IWalletLink(spaceFactory);
     implementationRegistry = IImplementationRegistry(spaceFactory);
 
-    deploySpaceFactory.postDeploy(deployer, spaceFactory);
-
     // Base Registry Diamond
-    baseRegistry = deploySpaceFactory.baseRegistry();
-    entitlementChecker = IEntitlementChecker(baseRegistry);
+    riverToken = deployRiverTokenBase.deploy();
+    bridge = deployRiverTokenBase.bridgeBase();
 
-    nodeOperator = deployBaseRegistry.deploy();
-    mainnetDelegation = nodeOperator;
-
+    // POST DEPLOY
     vm.startPrank(deployer);
-    SpaceDelegationFacet(nodeOperator).setRiverToken(riverToken);
+    ISpaceOwner(spaceOwner).setFactory(spaceFactory);
+    IImplementationRegistry(spaceFactory).addImplementation(baseRegistry);
+    ISpaceDelegation(baseRegistry).setRiverToken(riverToken);
+    IMainnetDelegation(baseRegistry).setProxyDelegation(mainnetProxyDelegation);
+    MockMessenger(messenger).setXDomainMessageSender(mainnetProxyDelegation);
+    vm.stopPrank();
 
     // create a new space
     founder = _randomAddress();

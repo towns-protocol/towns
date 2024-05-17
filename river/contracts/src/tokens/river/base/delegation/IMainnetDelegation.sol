@@ -39,6 +39,8 @@ interface IMainnetDelegationBase {
   error InvalidQuantity(uint256 quantity);
   error DelegationAlreadySet(address delegator, address operator);
   error DelegationNotSet();
+  error InvalidClaimer(address claimer);
+  error InvalidOwner(address owner);
 }
 
 interface IMainnetDelegation is IMainnetDelegationBase {
@@ -53,12 +55,6 @@ interface IMainnetDelegation is IMainnetDelegationBase {
     address operator,
     uint256 quantity
   ) external;
-
-  /**
-   * @notice Remove delegation of a delegator
-   * @param delegator The delegator address
-   */
-  function removeDelegation(address delegator) external;
 
   /**
    * @notice Get delegation of a delegator
@@ -86,4 +82,19 @@ interface IMainnetDelegation is IMainnetDelegationBase {
   function getDelegatedStakeByOperator(
     address operator
   ) external view returns (uint256);
+
+  /**
+   * @notice Set authorized claimer
+   * @param owner The owner address
+   * @param claimer The claimer address
+   */
+  function setAuthorizedClaimer(address owner, address claimer) external;
+
+  /**
+   * @notice Get authorized claimer
+   * @param owner The owner address
+   */
+  function getAuthorizedClaimer(address owner) external view returns (address);
+
+  function setProxyDelegation(address proxyDelegation) external;
 }

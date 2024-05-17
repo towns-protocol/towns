@@ -74,6 +74,43 @@ func NewCounter(name string, help string) prometheus.Counter {
 	return counter
 }
 
+func NewCounterVec(name string, help string, labels ...string) *prometheus.CounterVec {
+	counter := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: name,
+		Help: help,
+	}, labels)
+	err := registry.Register(counter)
+	if err != nil {
+		panic(err)
+	}
+	return counter
+}
+
+func NewGaugeVec(name string, help string, labels ...string) *prometheus.GaugeVec {
+	gauge := prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: name,
+		Help: help,
+	}, labels)
+	err := registry.Register(gauge)
+	if err != nil {
+		panic(err)
+	}
+	return gauge
+}
+
+func NewHistogram(name string, help string, buckets []float64, labels ...string) *prometheus.HistogramVec {
+	histogram := prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name:    name,
+		Help:    help,
+		Buckets: buckets,
+	}, labels)
+	err := registry.Register(histogram)
+	if err != nil {
+		panic(err)
+	}
+	return histogram
+}
+
 /* Increment pass counter for this metric and its parent. */
 func (m *SuccessMetrics) PassInc() {
 	args := []string{m.Name, "pass"}

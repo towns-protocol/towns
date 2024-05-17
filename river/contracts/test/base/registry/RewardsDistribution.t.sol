@@ -6,8 +6,8 @@ import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {IERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
 import {INodeOperator} from "contracts/src/base/registry/facets/operator/INodeOperator.sol";
-import {ISpaceDelegation} from "contracts/src/base/registry/facets/delegation/ISpaceDelegation.sol";
-import {IRewardsDistribution} from "contracts/src/base/registry/facets/distribution/IRewardsDistribution.sol";
+import {ISpaceDelegationBase} from "contracts/src/base/registry/facets/delegation/ISpaceDelegation.sol";
+import {IRewardsDistributionBase} from "contracts/src/base/registry/facets/distribution/IRewardsDistribution.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
@@ -16,10 +16,9 @@ import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {IMainnetDelegationBase} from "contracts/src/tokens/river/base/delegation/IMainnetDelegation.sol";
 
 // libraries
-import {BaseRegistryErrors} from "contracts/src/base/registry/libraries/BaseRegistryErrors.sol";
 
 // structs
-import {NodeOperatorStatus} from "contracts/src/base/registry/libraries/BaseRegistryStorage.sol";
+import {NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 
 // contracts
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
@@ -35,7 +34,8 @@ import {INodeOperatorBase} from "contracts/src/base/registry/facets/operator/INo
 
 contract RewardsDistributionTest is
   BaseSetup,
-  ISpaceDelegation,
+  IRewardsDistributionBase,
+  ISpaceDelegationBase,
   IOwnableBase,
   IERC721ABase
 {
@@ -89,10 +89,12 @@ contract RewardsDistributionTest is
     introspection = IntrospectionFacet(nodeOperator);
     erc721 = ERC721A(nodeOperator);
     riverFacet = River(riverToken);
-    mainnetDelegationFacet = MainnetDelegation(mainnetDelegation);
+    mainnetDelegationFacet = MainnetDelegation(baseRegistry);
     rewardsDistributionFacet = RewardsDistribution(nodeOperator);
     spaceDelegationFacet = SpaceDelegationFacet(nodeOperator);
     spaceOwnerFacet = SpaceOwner(spaceFactory);
+
+    messenger.setXDomainMessageSender(mainnetProxyDelegation);
 
     cleanupData();
   }
@@ -1182,7 +1184,7 @@ contract RewardsDistributionTest is
     vm.assume(space != address(0));
     vm.assume(operatorAddr != address(0));
     vm.expectEmit();
-    emit ISpaceDelegation.SpaceDelegatedToOperator(space, operatorAddr);
+    emit SpaceDelegatedToOperator(space, operatorAddr);
     // address owner = spaceOwnerFacet.ownerOf(spaceOwnerFacet.getSpace(space));
     vm.prank(IERC173(space).owner());
     spaceDelegationFacet.addSpaceDelegation(space, operatorAddr);
@@ -1200,7 +1202,8 @@ contract RewardsDistributionTest is
       operatorAddr,
       user.amount
     );
-    vm.prank(deployer);
+
+    vm.prank(address(messenger));
     mainnetDelegationFacet.setDelegation(user.addr, operatorAddr, user.amount);
   }
 
@@ -1344,7 +1347,7 @@ contract RewardsDistributionTest is
     uint256 operatorAmount = amount / operators.length;
     for (uint256 i = 0; i < operators.length; i++) {
       vm.expectEmit();
-      emit IRewardsDistribution.RewardsDistributed(
+      emit RewardsDistributed(
         operators[i].addr,
         (operatorAmount * operators[i].amount) / 100
       );

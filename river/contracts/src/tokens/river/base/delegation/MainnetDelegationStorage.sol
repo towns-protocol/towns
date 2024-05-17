@@ -3,6 +3,8 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IMainnetDelegationBase} from "./IMainnetDelegation.sol";
+import {IProxyDelegation} from "contracts/src/tokens/river/mainnet/delegation/IProxyDelegation.sol";
+import {ICrossDomainMessenger} from "contracts/src/tokens/river/mainnet/delegation/ICrossDomainMessenger.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -17,6 +19,9 @@ library MainnetDelegationStorage {
   struct Layout {
     mapping(address operator => EnumerableSet.AddressSet) delegatorsByOperator;
     mapping(address delegator => IMainnetDelegationBase.Delegation delegation) delegationByDelegator;
+    mapping(address => address) authorizedClaimers;
+    IProxyDelegation proxyDelegation;
+    ICrossDomainMessenger messenger;
   }
 
   function layout() internal pure returns (Layout storage s) {

@@ -2,15 +2,15 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {NodeOperatorStatus} from "contracts/src/base/registry/libraries/BaseRegistryStorage.sol";
 import {IVotesEnumerable} from "contracts/src/diamond/facets/governance/votes/enumerable/IVotesEnumerable.sol"; // make this into interface
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IRewardsDistribution} from "contracts/src/base/registry/facets/distribution/IRewardsDistribution.sol";
-import {IMainnetDelegation} from "contracts/src/tokens/river/base/delegation/IMainnetDelegation.sol";
 import {MainnetDelegationBase} from "contracts/src/tokens/river/base/delegation/MainnetDelegationBase.sol";
 import {OwnableBase} from "contracts/src/diamond/facets/ownable/OwnableBase.sol";
 import {NodeOperatorStorage, NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
+import {RewardsDistributionStorage} from "contracts/src/base/registry/facets/distribution/RewardsDistributionStorage.sol";
+import {SpaceDelegationStorage} from "contracts/src/base/registry/facets/delegation/SpaceDelegationStorage.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -18,12 +18,10 @@ import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.s
 
 // contracts
 import {Facet} from "contracts/src/diamond/facets/Facet.sol";
-import {BaseRegistryModifiers} from "contracts/src/base/registry/libraries/BaseRegistryStorage.sol";
 import {ERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol";
 
 contract RewardsDistribution is
   IRewardsDistribution,
-  BaseRegistryModifiers,
   ERC721ABase,
   MainnetDelegationBase,
   OwnableBase,
@@ -36,6 +34,8 @@ contract RewardsDistribution is
   }
 
   function getClaimableAmount(address addr) public view returns (uint256) {
+    RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage
+      .layout();
     uint256 delegatorAmount = ds.distributionByDelegator[addr];
     uint256 operatorAmount = ds.distributionByOperator[addr];
     return delegatorAmount + operatorAmount;
@@ -46,14 +46,19 @@ contract RewardsDistribution is
 
     if (amount == 0) revert RewardsDistribution_NoRewardsToClaim();
 
-    if (IERC20(ds.riverToken).balanceOf(address(this)) < amount)
+    SpaceDelegationStorage.Layout storage sd = SpaceDelegationStorage.layout();
+
+    if (IERC20(sd.riverToken).balanceOf(address(this)) < amount)
       revert RewardsDistribution_InsufficientRewardBalance();
+
+    RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage
+      .layout();
 
     ds.distributionByDelegator[msg.sender] = 0;
     ds.distributionByOperator[msg.sender] = 0;
 
     CurrencyTransfer.transferCurrency(
-      ds.riverToken,
+      sd.riverToken,
       address(this),
       msg.sender,
       amount
@@ -77,11 +82,16 @@ contract RewardsDistribution is
 
     if (!isActiveOperator) revert RewardsDistribution_InvalidOperator();
 
+    RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage
+      .layout();
+    NodeOperatorStorage.Layout storage nos = NodeOperatorStorage.layout();
+    SpaceDelegationStorage.Layout storage sd = SpaceDelegationStorage.layout();
+
     uint256 amountPerOperator = ds.weeklyDistributionAmount /
       totalActiveOperators;
 
     //calculate how much the operator should receive
-    NodeOperatorStorage.Layout storage nos = NodeOperatorStorage.layout();
+
     uint256 commission = nos.commissionByOperator[operator];
     uint256 operatorClaimAmount = (commission * amountPerOperator) / 100;
 
@@ -92,15 +102,15 @@ contract RewardsDistribution is
 
     //distribute the remainder across the delgators to this operator
     uint256 delegatorClaimAmount = amountPerOperator - operatorClaimAmount;
-    _calculateDelegatorDistribution(operator, delegatorClaimAmount);
+    _calculateDelegatorDistribution(sd, operator, delegatorClaimAmount);
   }
 
   function setWeeklyDistributionAmount(uint256 amount) external onlyOwner {
-    ds.weeklyDistributionAmount = amount;
+    RewardsDistributionStorage.layout().weeklyDistributionAmount = amount;
   }
 
   function getWeeklyDistributionAmount() public view returns (uint256) {
-    return ds.weeklyDistributionAmount;
+    return RewardsDistributionStorage.layout().weeklyDistributionAmount;
   }
 
   // =============================================================
@@ -108,21 +118,20 @@ contract RewardsDistribution is
   // =============================================================
 
   function _calculateDelegatorDistribution(
+    SpaceDelegationStorage.Layout storage sd,
     address operator,
     uint256 delegatorsClaimAmount
   ) internal {
-    address[] memory delegators = IVotesEnumerable(ds.riverToken)
+    address[] memory delegators = IVotesEnumerable(sd.riverToken)
       .getDelegatorsByDelegatee(operator);
 
-    address[] memory spaceDelegators = ds.spacesByOperator[operator].values();
+    address[] memory spaceDelegators = sd.spacesByOperator[operator].values();
     uint256 spaceDelegatorsLen = spaceDelegators.length;
 
     uint256 totalLength = delegators.length;
     for (uint256 i = 0; i < spaceDelegatorsLen; i++) {
-      address spaceDelegator = spaceDelegators[i];
-
-      totalLength += IVotesEnumerable(ds.riverToken)
-        .getDelegatorsByDelegatee(spaceDelegator)
+      totalLength += IVotesEnumerable(sd.riverToken)
+        .getDelegatorsByDelegatee(spaceDelegators[i])
         .length;
     }
 
@@ -139,35 +148,36 @@ contract RewardsDistribution is
     // Copy elements from the first array
     for (uint256 i = 0; i < delegators.length; i++) {
       combinedDelegators[count++] = delegators[i];
-      totalDelegation += IERC20(ds.riverToken).balanceOf(delegators[i]);
+      totalDelegation += IERC20(sd.riverToken).balanceOf(delegators[i]);
     }
 
     // Copy elements from the second array
     for (uint256 i = 0; i < spaceDelegatorsLen; i++) {
-      address spaceDelegator = spaceDelegators[i];
       address[] memory spaceDelegatorDelegators = IVotesEnumerable(
-        ds.riverToken
-      ).getDelegatorsByDelegatee(spaceDelegator);
+        sd.riverToken
+      ).getDelegatorsByDelegatee(spaceDelegators[i]);
 
       for (uint256 j = 0; j < spaceDelegatorDelegators.length; j++) {
         combinedDelegators[count++] = spaceDelegatorDelegators[j];
-        totalDelegation += IERC20(ds.riverToken).balanceOf(
+        totalDelegation += IERC20(sd.riverToken).balanceOf(
           spaceDelegatorDelegators[j]
         );
       }
     }
 
     for (uint256 i = 0; i < mainnetDelegations.length; i++) {
-      address mainnetDelegator = mainnetDelegations[i].delegator;
-      combinedDelegators[count++] = mainnetDelegator;
+      combinedDelegators[count++] = mainnetDelegations[i].delegator;
       totalDelegation += mainnetDelegations[i].quantity;
     }
 
     uint256 delegatorsLen = combinedDelegators.length;
+    RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage
+      .layout();
+
     for (uint256 i = 0; i < delegatorsLen; i++) {
       address delegator = combinedDelegators[i];
 
-      uint256 amount = IERC20(ds.riverToken).balanceOf(delegator);
+      uint256 amount = IERC20(sd.riverToken).balanceOf(delegator);
       //if this user has no token delegated, then we assume that they are a mainnet delegation
       if (amount == 0) {
         amount = _getDelegationByDelegator(delegator).quantity;
@@ -178,7 +188,7 @@ contract RewardsDistribution is
     }
   }
 
-  function _getActiveOperators() public view returns (address[] memory) {
+  function _getActiveOperators() internal view returns (address[] memory) {
     uint256 totalOperators = _totalSupply();
     uint256 totalActiveOperators = 0;
 
@@ -205,10 +215,13 @@ contract RewardsDistribution is
   function _getOperatorDelegatee(
     address delegator
   ) internal view returns (address) {
+    SpaceDelegationStorage.Layout storage sd = SpaceDelegationStorage.layout();
+
     // get the delegatee that the delegator is voting for
-    address delegatee = IVotes(ds.riverToken).delegates(delegator);
+    address delegatee = IVotes(SpaceDelegationStorage.layout().riverToken)
+      .delegates(delegator);
     // if the delegatee is a space, get the operator that the space is delegating to
-    address spaceDelegatee = ds.operatorBySpace[delegatee];
+    address spaceDelegatee = sd.operatorBySpace[delegatee];
     address actualOperator = spaceDelegatee != address(0)
       ? spaceDelegatee
       : delegatee;

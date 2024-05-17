@@ -3,6 +3,8 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IMainnetDelegationBase} from "./IMainnetDelegation.sol";
+import {IProxyDelegation} from "contracts/src/tokens/river/mainnet/delegation/IProxyDelegation.sol";
+import {ICrossDomainMessenger} from "contracts/src/tokens/river/mainnet/delegation/ICrossDomainMessenger.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -21,32 +23,21 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
     MainnetDelegationStorage.Layout storage ds = MainnetDelegationStorage
       .layout();
 
-    if (delegator == address(0)) revert InvalidDelegator(delegator);
-    if (operator == address(0)) revert InvalidOperator(operator);
-    if (quantity == 0) revert InvalidQuantity(quantity);
-    if (ds.delegationByDelegator[delegator].operator != address(0)) {
-      revert DelegationAlreadySet(delegator, operator);
+    if (operator == address(0)) {
+      Delegation memory delegation = ds.delegationByDelegator[delegator];
+      delete delegation.operator;
+      delete delegation.quantity;
+      ds.delegatorsByOperator[delegation.operator].remove(delegator);
+      emit DelegationRemoved(delegator);
+    } else {
+      ds.delegatorsByOperator[operator].add(delegator);
+      ds.delegationByDelegator[delegator] = Delegation(
+        operator,
+        quantity,
+        delegator
+      );
+      emit DelegationSet(delegator, operator, quantity);
     }
-
-    ds.delegatorsByOperator[operator].add(delegator);
-    ds.delegationByDelegator[delegator] = Delegation(
-      operator,
-      quantity,
-      delegator
-    );
-    emit DelegationSet(delegator, operator, quantity);
-  }
-
-  function _removeDelegation(address delegator) internal {
-    MainnetDelegationStorage.Layout storage ds = MainnetDelegationStorage
-      .layout();
-    Delegation memory delegation = ds.delegationByDelegator[delegator];
-
-    if (delegation.operator == address(0)) revert DelegationNotSet();
-
-    ds.delegatorsByOperator[delegation.operator].remove(delegator);
-    delete ds.delegationByDelegator[delegator];
-    emit DelegationRemoved(delegator);
   }
 
   function _getDelegationByDelegator(
@@ -82,5 +73,31 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
       stake += delegations[i].quantity;
     }
     return stake;
+  }
+
+  function _setAuthorizedClaimer(address owner, address claimer) internal {
+    MainnetDelegationStorage.layout().authorizedClaimers[owner] = claimer;
+  }
+
+  function _getAuthorizedClaimer(
+    address owner
+  ) internal view returns (address) {
+    return MainnetDelegationStorage.layout().authorizedClaimers[owner];
+  }
+
+  function _setProxyDelegation(IProxyDelegation proxyDelegation) internal {
+    MainnetDelegationStorage.layout().proxyDelegation = proxyDelegation;
+  }
+
+  function _getProxyDelegation() internal view returns (IProxyDelegation) {
+    return MainnetDelegationStorage.layout().proxyDelegation;
+  }
+
+  function _setMessenger(ICrossDomainMessenger messenger) internal {
+    MainnetDelegationStorage.layout().messenger = messenger;
+  }
+
+  function _getMessenger() internal view returns (ICrossDomainMessenger) {
+    return MainnetDelegationStorage.layout().messenger;
   }
 }

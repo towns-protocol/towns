@@ -12,15 +12,22 @@ import {MainnetDelegation} from "contracts/src/tokens/river/base/delegation/Main
 
 contract DeployMainnetDelegation is FacetHelper, Deployer {
   constructor() {
+    addSelector(MainnetDelegation.setProxyDelegation.selector);
     addSelector(MainnetDelegation.setDelegation.selector);
-    addSelector(MainnetDelegation.removeDelegation.selector);
     addSelector(MainnetDelegation.getDelegationByDelegator.selector);
     addSelector(MainnetDelegation.getDelegationsByOperator.selector);
     addSelector(MainnetDelegation.getDelegatedStakeByOperator.selector);
+    addSelector(MainnetDelegation.setAuthorizedClaimer.selector);
+    addSelector(MainnetDelegation.getAuthorizedClaimer.selector);
   }
 
   function initializer() public pure override returns (bytes4) {
     return MainnetDelegation.__MainnetDelegation_init.selector;
+  }
+
+  function makeInitData(address messenger) public pure returns (bytes memory) {
+    return abi.encodeWithSelector(initializer(), messenger);
+    // 0xfdf649b20000000000000000000000004200000000000000000000000000000000000007 // Base Sepolia
   }
 
   function versionName() public pure override returns (string memory) {

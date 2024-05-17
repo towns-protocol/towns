@@ -8,7 +8,32 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/infra"
+)
+
+var (
+	chainBaseFee = infra.NewGaugeVec(
+		"chain_monitor_base_fee_wei", "Current EIP-1559 base fee as obtained from the block header",
+		"chain_id",
+	)
+	chainMonitorHeadBlock = infra.NewGaugeVec(
+		"chain_monitor_head_block", "Latest block available for the chain monitor",
+		"chain_id",
+	)
+	chainMonitorProcessedBlock = infra.NewGaugeVec(
+		"chain_monitor_processed_block", "Latest block processed by the chain monitor",
+		"chain_id",
+	)
+	chainMonitorRecvEvents = infra.NewCounterVec(
+		"chain_monitor_received_events", "Chain monitor total received events",
+		"chain_id",
+	)
+	chainMonitorPollCounter = infra.NewCounterVec(
+		"chain_monitor_pollcounter", "How many times the chain monitor poll loop has run",
+		"chain_id",
+	)
 )
 
 type (
@@ -29,9 +54,9 @@ type (
 		OnBlock(cb OnChainNewBlock)
 		// OnAllEvents matches all events for all contracts, e.g. all chain events.
 		OnAllEvents(cb OnChainEventCallback)
-		// Contract matches all events created by the contract on the given address.
+		// OnContractEvent matches all events created by the contract on the given address.
 		OnContractEvent(addr common.Address, cb OnChainEventCallback)
-		// ContractWithTopics matches events created by the contract on the given
+		// OnContractWithTopicsEvent matches events created by the contract on the given
 		OnContractWithTopicsEvent(addr common.Address, topics [][]common.Hash, cb OnChainEventCallback)
 		// OnStopped calls cb after the chain monitor stopped monitoring the chain
 		OnStopped(cb OnChainMonitorStoppedCallback)
@@ -148,8 +173,7 @@ func (ecm *chainMonitor) OnStopped(cb OnChainMonitorStoppedCallback) {
 //
 // It will finish when the given ctx is cancelled.
 //
-// It will start monitoring from the given
-// initialBlock block number. TODO: clarify if this is inclusive or exclusive.
+// It will start monitoring from the given initialBlock block number (inclusive).
 //
 // Callbacks are called in the order they were added and
 // aren't called concurrently to ensure that events are processed in the order
@@ -161,18 +185,35 @@ func (ecm *chainMonitor) RunWithBlockPeriod(
 	blockPeriod time.Duration,
 ) {
 	var (
-		log           = dlog.FromCtx(ctx)
-		one           = big.NewInt(1)
-		fromBlock     = initialBlock.AsBigInt()
-		lastProcessed *big.Int
-		pollInterval  = time.Duration(0)
-		poll          = NewChainMonitorPollIntervalCalculator(blockPeriod, 30*time.Second)
+		log                   = dlog.FromCtx(ctx)
+		one                   = big.NewInt(1)
+		fromBlock             = initialBlock.AsBigInt()
+		lastProcessed         *big.Int
+		pollInterval          = time.Duration(0)
+		poll                  = NewChainMonitorPollIntervalCalculator(blockPeriod, 30*time.Second)
+		baseFeeGauge          prometheus.Gauge
+		headBlockGauge        prometheus.Gauge
+		processedBlockGauge   prometheus.Gauge
+		receivedEventsCounter prometheus.Counter
+		pollIntervalCounter   prometheus.Counter
 	)
+
+	if chainID := loadChainID(ctx, client); chainID != nil {
+		baseFeeGauge = chainBaseFee.With(prometheus.Labels{"chain_id": chainID.String()})
+		headBlockGauge = chainMonitorHeadBlock.With(prometheus.Labels{"chain_id": chainID.String()})
+		processedBlockGauge = chainMonitorProcessedBlock.With(prometheus.Labels{"chain_id": chainID.String()})
+		receivedEventsCounter = chainMonitorRecvEvents.With(prometheus.Labels{"chain_id": chainID.String()})
+		pollIntervalCounter = chainMonitorPollCounter.With(prometheus.Labels{"chain_id": chainID.String()})
+	} else {
+		return
+	}
 
 	log.Debug("chain monitor started", "blockPeriod", blockPeriod, "fromBlock", initialBlock)
 
 	for {
 		// log.Debug("chain monitor iteration", "pollInterval", pollInterval)
+
+		pollIntervalCounter.Inc()
 
 		select {
 		case <-ctx.Done():
@@ -190,6 +231,12 @@ func (ecm *chainMonitor) RunWithBlockPeriod(
 				log.Warn("chain monitor is unable to retrieve chain head", "error", err)
 				pollInterval = poll.Interval(time.Since(start), false, true)
 				continue
+			}
+
+			headBlockGauge.Set(float64(head.Number.Uint64()))
+			if head.BaseFee != nil {
+				baseFee, _ := head.BaseFee.Float64()
+				baseFeeGauge.Set(baseFee)
 			}
 
 			if lastProcessed != nil && lastProcessed.Cmp(head.Number) >= 0 { // no new block
@@ -232,6 +279,7 @@ func (ecm *chainMonitor) RunWithBlockPeriod(
 					ecm.muBuilder.Unlock()
 					continue
 				}
+				receivedEventsCounter.Add(float64(len(collectedLogs)))
 			}
 
 			if len(ecm.builder.headerCallbacks) > 0 {
@@ -269,6 +317,8 @@ func (ecm *chainMonitor) RunWithBlockPeriod(
 			fromBlock = new(big.Int).Add(query.ToBlock, one)
 			pollInterval = poll.Interval(time.Since(start), moreBlocksAvailable, false)
 			lastProcessed = toBlock
+
+			processedBlockGauge.Set(float64(lastProcessed.Uint64()))
 		}
 	}
 }

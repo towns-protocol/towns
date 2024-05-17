@@ -4,7 +4,6 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IDiamond} from "contracts/src/diamond/IDiamond.sol";
 import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
-import {IImplementationRegistry} from "./../../src/factory/facets/registry/IImplementationRegistry.sol";
 
 // helpers
 import {DiamondDeployer} from "../common/DiamondDeployer.s.sol";
@@ -44,8 +43,6 @@ import {DeployFixedPricing} from "contracts/scripts/deployments/DeployFixedPrici
 import {DeployPricingModules} from "contracts/scripts/deployments/facets/DeployPricingModules.s.sol";
 import {DeployImplementationRegistry} from "contracts/scripts/deployments/facets/DeployImplementationRegistry.s.sol";
 
-import {DeployBaseRegistry} from "contracts/scripts/deployments/DeployBaseRegistry.s.sol";
-
 contract DeploySpaceFactory is DiamondDeployer {
   // diamond helpers
   DeployOwnable ownableHelper = new DeployOwnable();
@@ -68,7 +65,6 @@ contract DeploySpaceFactory is DiamondDeployer {
   DeployRuleEntitlement deployRuleEntitlement = new DeployRuleEntitlement();
   DeployTieredLogPricing deployTieredLogPricing = new DeployTieredLogPricing();
   DeployFixedPricing deployFixedPricing = new DeployFixedPricing();
-  DeployBaseRegistry deployBaseRegistry = new DeployBaseRegistry();
 
   // helpers
   PausableHelper pausableHelper = new PausableHelper();
@@ -96,7 +92,6 @@ contract DeploySpaceFactory is DiamondDeployer {
   address public userEntitlement;
   address public ruleEntitlement;
   address public spaceOwner;
-  address public baseRegistry;
 
   address public tieredLogPricing;
   address public fixedPricing;
@@ -127,9 +122,6 @@ contract DeploySpaceFactory is DiamondDeployer {
     address[] memory pricingModules = new address[](2);
     pricingModules[0] = tieredLogPricing;
     pricingModules[1] = fixedPricing;
-
-    // space operations
-    baseRegistry = deployBaseRegistry.deploy();
 
     // diamond facets
     ownable = ownableHelper.deploy();
@@ -239,10 +231,9 @@ contract DeploySpaceFactory is DiamondDeployer {
       });
   }
 
-  function postDeploy(address deployer, address spaceFactory) public override {
-    vm.startBroadcast(deployer);
-    ISpaceOwner(spaceOwner).setFactory(spaceFactory);
-    IImplementationRegistry(spaceFactory).addImplementation(baseRegistry);
-    vm.stopBroadcast();
-  }
+  // function postDeploy(address deployer, address spaceFactory) public override {
+  //   vm.startBroadcast(deployer);
+  //   ISpaceOwner(spaceOwner).setFactory(spaceFactory);
+  //   vm.stopBroadcast();
+  // }
 }

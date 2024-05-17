@@ -2,6 +2,8 @@ package registries
 
 import (
 	"context"
+	"math/big"
+
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -14,7 +16,6 @@ import (
 	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/shared"
-	"math/big"
 )
 
 var (
@@ -24,15 +25,23 @@ var (
 // Convinience wrapper for the IRiverRegistryV1 interface (abigen exports it as RiverRegistryV1)
 type RiverRegistryContract struct {
 	OperatorRegistry *contracts.OperatorRegistryV1
-	NodeRegistry     *contracts.NodeRegistryV1
-	StreamRegistry   *contracts.StreamRegistryV1
-	Blockchain       *crypto.Blockchain
-	Address          common.Address
-	Addresses        []common.Address
-	Abi              *abi.ABI
-	NodeEventTopics  [][]common.Hash
-	EventInfo        map[common.Hash]*EventInfo
-	errDecoder       *contracts.EvmErrorDecoder
+
+	NodeRegistry    *contracts.NodeRegistryV1
+	NodeRegistryAbi *abi.ABI
+	NodeEventTopics [][]common.Hash
+	NodeEventInfo   map[common.Hash]*EventInfo
+
+	StreamRegistry    *contracts.StreamRegistryV1
+	StreamRegistryAbi *abi.ABI
+	StreamEventTopics [][]common.Hash
+	StreamEventInfo   map[common.Hash]*EventInfo
+
+	Blockchain *crypto.Blockchain
+
+	Address   common.Address
+	Addresses []common.Address
+
+	errDecoder *contracts.EvmErrorDecoder
 }
 
 type EventInfo struct {
@@ -40,13 +49,61 @@ type EventInfo struct {
 	Maker func() any
 }
 
+func initContract[T any](
+	ctx context.Context,
+	maker func(address common.Address, backend bind.ContractBackend) (*T, error),
+	address common.Address,
+	backend bind.ContractBackend,
+	metadata *bind.MetaData,
+	events []*EventInfo,
+) (
+	*T,
+	*abi.ABI,
+	[][]common.Hash,
+	map[common.Hash]*EventInfo,
+	error,
+) {
+	log := dlog.FromCtx(ctx)
+
+	contract, err := maker(address, backend)
+	if err != nil {
+		return nil, nil, nil, nil, AsRiverError(err, Err_BAD_CONFIG).
+			Message("Failed to initialize registry contract").
+			Tags("address", address).
+			Func("NewRiverRegistryContract").
+			LogError(log)
+	}
+
+	abi, err := metadata.GetAbi()
+	if err != nil {
+		return nil, nil, nil, nil, AsRiverError(err, Err_INTERNAL).
+			Message("Failed to parse ABI").
+			Func("NewRiverRegistryContract").
+			LogError(log)
+	}
+
+	if len(events) <= 0 {
+		return contract, abi, nil, nil, nil
+	}
+
+	var eventSigs []common.Hash
+	eventInfo := make(map[common.Hash]*EventInfo)
+	for _, e := range events {
+		ev, ok := abi.Events[e.Name]
+		if !ok {
+			return nil, nil, nil, nil, RiverError(Err_INTERNAL, "Event not found in ABI", "event", e).Func("NewRiverRegistryContract").LogError(log)
+		}
+		eventSigs = append(eventSigs, ev.ID)
+		eventInfo[ev.ID] = e
+	}
+	return contract, abi, [][]common.Hash{eventSigs}, eventInfo, nil
+}
+
 func NewRiverRegistryContract(
 	ctx context.Context,
 	blockchain *crypto.Blockchain,
 	cfg *config.ContractConfig,
 ) (*RiverRegistryContract, error) {
-	log := dlog.FromCtx(ctx)
-
 	if cfg.Version != "" {
 		return nil, RiverError(
 			Err_BAD_CONFIG,
@@ -56,74 +113,64 @@ func NewRiverRegistryContract(
 		).Func("NewRiverRegistryContract")
 	}
 
-	abi, err := contracts.NodeRegistryV1MetaData.GetAbi()
+	c := &RiverRegistryContract{
+		Blockchain: blockchain,
+		Address:    cfg.Address,
+		Addresses:  []common.Address{cfg.Address},
+	}
+
+	var err error
+	c.OperatorRegistry, _, _, _, err = initContract(
+		ctx,
+		contracts.NewOperatorRegistryV1,
+		cfg.Address,
+		blockchain.Client,
+		contracts.OperatorRegistryV1MetaData,
+		nil,
+	)
 	if err != nil {
-		return nil,
-			AsRiverError(err, Err_INTERNAL).
-				Message("Failed to parse ABI").
-				Func("NewRiverRegistryContract")
-	}
-	var nodeEventSigs []common.Hash
-	eventInfo := make(map[common.Hash]*EventInfo)
-	for _, e := range []*EventInfo{
-		{"NodeAdded", func() any { return new(contracts.NodeRegistryV1NodeAdded) }},
-		{"NodeRemoved", func() any { return new(contracts.NodeRegistryV1NodeRemoved) }},
-		{"NodeStatusUpdated", func() any { return new(contracts.NodeRegistryV1NodeStatusUpdated) }},
-		{"NodeUrlUpdated", func() any { return new(contracts.NodeRegistryV1NodeUrlUpdated) }},
-	} {
-		ev, ok := abi.Events[e.Name]
-		if !ok {
-			return nil,
-				RiverError(Err_INTERNAL, "Event not found in ABI", "event", e).Func("NewRiverRegistryContract")
-		}
-		nodeEventSigs = append(nodeEventSigs, ev.ID)
-		eventInfo[ev.ID] = e
+		return nil, err
 	}
 
-	streamRegistry, err := contracts.NewStreamRegistryV1(cfg.Address, blockchain.Client)
+	c.NodeRegistry, c.NodeRegistryAbi, c.NodeEventTopics, c.NodeEventInfo, err = initContract(
+		ctx,
+		contracts.NewNodeRegistryV1,
+		cfg.Address,
+		blockchain.Client,
+		contracts.NodeRegistryV1MetaData,
+		[]*EventInfo{
+			{"NodeAdded", func() any { return new(contracts.NodeRegistryV1NodeAdded) }},
+			{"NodeRemoved", func() any { return new(contracts.NodeRegistryV1NodeRemoved) }},
+			{"NodeStatusUpdated", func() any { return new(contracts.NodeRegistryV1NodeStatusUpdated) }},
+			{"NodeUrlUpdated", func() any { return new(contracts.NodeRegistryV1NodeUrlUpdated) }},
+		},
+	)
 	if err != nil {
-		return nil,
-			AsRiverError(err, Err_BAD_CONFIG).
-				Message("Failed to initialize registry contract").
-				Tags("address", cfg.Address, "version", cfg.Version).
-				Func("NewRiverRegistryContract").
-				LogError(log)
+		return nil, err
 	}
 
-	operatorRegistry, err := contracts.NewOperatorRegistryV1(cfg.Address, blockchain.Client)
+	c.StreamRegistry, c.StreamRegistryAbi, c.StreamEventTopics, c.StreamEventInfo, err = initContract(
+		ctx,
+		contracts.NewStreamRegistryV1,
+		cfg.Address,
+		blockchain.Client,
+		contracts.StreamRegistryV1MetaData,
+		[]*EventInfo{
+			{contracts.Event_StreamAllocated, func() any { return new(contracts.StreamRegistryV1StreamAllocated) }},
+			{contracts.Event_StreamLastMiniblockUpdated, func() any { return new(contracts.StreamRegistryV1StreamLastMiniblockUpdated) }},
+			{contracts.Event_StreamPlacementUpdated, func() any { return new(contracts.StreamRegistryV1StreamPlacementUpdated) }},
+		},
+	)
 	if err != nil {
-		return nil,
-			AsRiverError(err, Err_BAD_CONFIG).
-				Message("Failed to initialize registry contract").
-				Tags("address", cfg.Address, "version", cfg.Version).
-				Func("NewRiverRegistryContract").
-				LogError(log)
+		return nil, err
 	}
 
-	nodeRegistry, err := contracts.NewNodeRegistryV1(cfg.Address, blockchain.Client)
+	c.errDecoder, err = contracts.NewEVMErrorDecoder(contracts.StreamRegistryV1MetaData)
 	if err != nil {
-		return nil,
-			AsRiverError(err, Err_BAD_CONFIG).
-				Message("Failed to initialize registry contract").
-				Tags("address", cfg.Address, "version", cfg.Version).
-				Func("NewRiverRegistryContract").
-				LogError(log)
+		return nil, err
 	}
 
-	errDecoder, _ := contracts.NewEVMErrorDecoder(contracts.StreamRegistryV1MetaData)
-
-	return &RiverRegistryContract{
-		OperatorRegistry: operatorRegistry,
-		NodeRegistry:     nodeRegistry,
-		StreamRegistry:   streamRegistry,
-		Blockchain:       blockchain,
-		Address:          cfg.Address,
-		Addresses:        []common.Address{cfg.Address},
-		Abi:              abi,
-		NodeEventTopics:  [][]common.Hash{nodeEventSigs},
-		EventInfo:        eventInfo,
-		errDecoder:       errDecoder,
-	}, nil
+	return c, nil
 }
 
 func (c *RiverRegistryContract) AllocateStream(
@@ -478,23 +525,66 @@ func (c *RiverRegistryContract) GetNodeEventsForBlock(ctx context.Context, block
 	}
 	var ret []any
 	for _, log := range logs {
-		if len(log.Topics) == 0 {
-			return nil, RiverError(Err_INTERNAL, "Empty topics in log", "log", log).Func("GetNodeEventsForBlock")
-		}
-		eventInfo, ok := c.EventInfo[log.Topics[0]]
-		if !ok {
-			return nil, RiverError(Err_INTERNAL, "Event not found", "id", log.Topics[0]).Func("GetNodeEventsForBlock")
-		}
-		ee := eventInfo.Maker()
-		err = c.NodeRegistry.BoundContract().UnpackLog(ee, eventInfo.Name, log)
+		ee, err := c.ParseEvent(ctx, c.NodeRegistry.BoundContract(), c.NodeEventInfo, log)
 		if err != nil {
-			return nil, WrapRiverError(
-				Err_CANNOT_CALL_CONTRACT,
-				err,
-			).Func("GetNodeEventsForBlock").
-				Message("UnpackLog failed")
+			return nil, err
 		}
 		ret = append(ret, ee)
 	}
 	return ret, nil
+}
+func (c *RiverRegistryContract) ParseEvent(
+	ctx context.Context,
+	boundContract *bind.BoundContract,
+	info map[common.Hash]*EventInfo,
+	log types.Log,
+) (any, error) {
+	if len(log.Topics) == 0 {
+		return nil, RiverError(Err_INTERNAL, "Empty topics in log", "log", log).Func("ParseEvent")
+	}
+	eventInfo, ok := info[log.Topics[0]]
+	if !ok {
+		return nil, RiverError(Err_INTERNAL, "Event not found", "id", log.Topics[0]).Func("ParseEvent")
+	}
+	ee := eventInfo.Maker()
+	err := boundContract.UnpackLog(ee, eventInfo.Name, log)
+	if err != nil {
+		return nil, WrapRiverError(
+			Err_CANNOT_CALL_CONTRACT,
+			err,
+		).Func("ParseEvent").
+			Message("UnpackLog failed")
+	}
+	return ee, nil
+}
+
+func (c *RiverRegistryContract) OnStreamEvent(
+	ctx context.Context,
+	startBlockNumInclusive crypto.BlockNumber,
+	allocated func(ctx context.Context, event *contracts.StreamRegistryV1StreamAllocated),
+	lastMiniblockUpdated func(ctx context.Context, event *contracts.StreamRegistryV1StreamLastMiniblockUpdated),
+	placementUpdated func(ctx context.Context, event *contracts.StreamRegistryV1StreamPlacementUpdated),
+) error {
+	// TODO: modify ChainMonitor to accept block number in each subscription call
+	c.Blockchain.ChainMonitor.OnContractWithTopicsEvent(
+		c.Address,
+		c.StreamEventTopics,
+		func(ctx context.Context, log types.Log) {
+			parsed, err := c.ParseEvent(ctx, c.StreamRegistry.BoundContract(), c.StreamEventInfo, log)
+			if err != nil {
+				dlog.FromCtx(ctx).Error("Failed to parse event", "err", err, "log", log)
+				return
+			}
+			switch e := parsed.(type) {
+			case *contracts.StreamRegistryV1StreamAllocated:
+				allocated(ctx, e)
+			case *contracts.StreamRegistryV1StreamLastMiniblockUpdated:
+				lastMiniblockUpdated(ctx, e)
+			case *contracts.StreamRegistryV1StreamPlacementUpdated:
+				placementUpdated(ctx, e)
+			default:
+				dlog.FromCtx(ctx).Error("Unknown event type", "event", e)
+			}
+		})
+	return nil
 }

@@ -45,11 +45,16 @@ cast rpc evm_setAutomine true --rpc-url $BASE_ANVIL_RPC_URL
 cast rpc evm_setAutomine true --rpc-url $RIVER_ANVIL_RPC_URL
 
 # Space Architect
+make clear-anvil-deployments
+make deploy-base-anvil type=contract contract=DeployBaseRegistry
+make deploy-base-anvil type=contract contract=DeployProxyDelegation
+make deploy-base-anvil type=contract contract=DeployRiverBase
 make deploy-base-anvil type=contract contract=DeploySpaceFactory
+make interact-base-anvil type=contract contract=InteractPostDeploy
+
+# Utils
 make deploy-base-anvil type=contract contract=DeployMember
 make deploy-base-anvil type=contract contract=DeployMockNFT
-
-# Entitlement Checker
 make deploy-base-anvil type=contract contract=DeployEntitlementGatedExample
 make deploy-base-anvil type=contract contract=DeployCustomEntitlementExample
 

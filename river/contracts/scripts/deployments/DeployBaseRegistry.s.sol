@@ -9,20 +9,13 @@ import {DiamondDeployer} from "../common/DiamondDeployer.s.sol";
 import {Diamond} from "contracts/src/diamond/Diamond.sol";
 
 // helpers
-import {NodeOperatorHelper} from "contracts/test/base/registry/NodeOperatorHelper.sol";
-import {RewardsDistributionHelper} from "contracts/test/base/registry/RewardsDistributionHelper.sol";
-import {SpaceDelegationHelper} from "contracts/test/base/registry/SpaceDelegationHelper.sol";
 import {OwnableHelper} from "contracts/test/diamond/ownable/OwnableSetup.sol";
 import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
 import {IntrospectionHelper} from "contracts/test/diamond/introspection/IntrospectionSetup.sol";
-import {MainnetDelegationHelper} from "contracts/test/tokens/delegation/MainnetDelegationHelper.sol";
 
 // facets
 import {MainnetDelegation} from "contracts/src/tokens/river/base/delegation/MainnetDelegation.sol";
 import {ERC721ANonTransferable} from "contracts/src/diamond/facets/token/ERC721A/ERC721ANonTransferable.sol";
-import {NodeOperatorFacet} from "contracts/src/base/registry/facets/operator/NodeOperatorFacet.sol";
-import {SpaceDelegationFacet} from "contracts/src/base/registry/facets/delegation/SpaceDelegationFacet.sol";
-import {RewardsDistribution} from "contracts/src/base/registry/facets/distribution/RewardsDistribution.sol";
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
 // deployers
@@ -35,11 +28,13 @@ import {DeployMainnetDelegation} from "contracts/scripts/deployments/facets/Depl
 import {DeployEntitlementChecker} from "contracts/scripts/deployments/facets/DeployEntitlementChecker.s.sol";
 import {DeployNodeOperator} from "contracts/scripts/deployments/facets/DeployNodeOperator.s.sol";
 import {DeployMetadata} from "contracts/scripts/deployments/facets/DeployMetadata.s.sol";
+import {DeploySpaceDelegation} from "contracts/scripts/deployments/facets/DeploySpaceDelegation.s.sol";
+import {DeployRewardsDistribution} from "contracts/scripts/deployments/facets/DeployRewardsDistribution.s.sol";
+
+import {MockMessenger} from "contracts/test/mocks/MockMessenger.sol";
 
 contract DeployBaseRegistry is DiamondDeployer {
-  RewardsDistributionHelper distributionHelper =
-    new RewardsDistributionHelper();
-  SpaceDelegationHelper spaceDelegationHelper = new SpaceDelegationHelper();
+  // SpaceDelegationHelper spaceDelegationHelper = new SpaceDelegationHelper();
   ERC721AHelper erc721aHelper = new ERC721AHelper();
 
   // deployments
@@ -53,6 +48,9 @@ contract DeployBaseRegistry is DiamondDeployer {
   DeployEntitlementChecker checkerHelper = new DeployEntitlementChecker();
   DeployMetadata metadataHelper = new DeployMetadata();
   DeployNodeOperator operatorHelper = new DeployNodeOperator();
+  DeploySpaceDelegation spaceDelegationHelper = new DeploySpaceDelegation();
+  DeployRewardsDistribution distributionHelper =
+    new DeployRewardsDistribution();
 
   address multiInit;
   address diamondCut;
@@ -67,6 +65,7 @@ contract DeployBaseRegistry is DiamondDeployer {
   address distribution;
   address spaceDelegation;
   address mainnetDelegation;
+  address public messenger;
 
   function versionName() public pure override returns (string memory) {
     return "baseRegistry";
@@ -84,13 +83,21 @@ contract DeployBaseRegistry is DiamondDeployer {
     metadata = metadataHelper.deploy();
     entitlementChecker = checkerHelper.deploy();
     operator = operatorHelper.deploy();
+    distribution = distributionHelper.deploy();
+    mainnetDelegation = mainnetDelegationHelper.deploy();
+
+    spaceDelegation = spaceDelegationHelper.deploy();
 
     vm.startBroadcast(deployerPK);
     nft = address(new ERC721ANonTransferable());
-    distribution = address(new RewardsDistribution());
-    spaceDelegation = address(new SpaceDelegationFacet());
-    mainnetDelegation = address(new MainnetDelegation());
     vm.stopBroadcast();
+
+    if (isAnvil() || isTesting()) {
+      vm.broadcast(deployerPK);
+      messenger = address(new MockMessenger());
+    } else {
+      messenger = _getMessenger();
+    }
 
     addFacet(
       cutHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
@@ -132,6 +139,7 @@ contract DeployBaseRegistry is DiamondDeployer {
       entitlementChecker,
       checkerHelper.makeInitData("")
     );
+    // New facets
     addFacet(
       distributionHelper.makeCut(distribution, IDiamond.FacetCutAction.Add),
       distribution,
@@ -143,7 +151,7 @@ contract DeployBaseRegistry is DiamondDeployer {
         IDiamond.FacetCutAction.Add
       ),
       spaceDelegation,
-      spaceDelegationHelper.makeInitData("")
+      spaceDelegationHelper.makeInitData(address(0))
     );
     addFacet(
       mainnetDelegationHelper.makeCut(
@@ -151,7 +159,7 @@ contract DeployBaseRegistry is DiamondDeployer {
         IDiamond.FacetCutAction.Add
       ),
       mainnetDelegation,
-      mainnetDelegationHelper.makeInitData("")
+      mainnetDelegationHelper.makeInitData(messenger)
     );
 
     return
@@ -164,5 +172,20 @@ contract DeployBaseRegistry is DiamondDeployer {
           _initDatas
         )
       });
+  }
+
+  function _getMessenger() internal view returns (address) {
+    // Base or Base (Sepolia)
+    if (block.chainid == 8453 || block.chainid == 84532) {
+      return 0x4200000000000000000000000000000000000007;
+    } else if (block.chainid == 1) {
+      // Mainnet
+      return 0x866E82a600A1414e583f7F13623F1aC5d58b0Afa;
+    } else if (block.chainid == 11155111) {
+      // Sepolia
+      return 0xC34855F4De64F1840e5686e64278da901e261f20;
+    } else {
+      revert("DeployBaseRegistry: Invalid network");
+    }
   }
 }

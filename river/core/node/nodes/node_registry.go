@@ -84,22 +84,22 @@ func LoadNodeRegistry(
 
 	chainMonitor.OnContractWithTopicsEvent(
 		contract.Address,
-		[][]common.Hash{{contract.Abi.Events["NodeAdded"].ID}},
+		[][]common.Hash{{contract.NodeRegistryAbi.Events["NodeAdded"].ID}},
 		ret.OnNodeAdded,
 	)
 	chainMonitor.OnContractWithTopicsEvent(
 		contract.Address,
-		[][]common.Hash{{contract.Abi.Events["NodeRemoved"].ID}},
+		[][]common.Hash{{contract.NodeRegistryAbi.Events["NodeRemoved"].ID}},
 		ret.OnNodeRemoved,
 	)
 	chainMonitor.OnContractWithTopicsEvent(
 		contract.Address,
-		[][]common.Hash{{contract.Abi.Events["NodeStatusUpdated"].ID}},
+		[][]common.Hash{{contract.NodeRegistryAbi.Events["NodeStatusUpdated"].ID}},
 		ret.OnNodeStatusUpdated,
 	)
 	chainMonitor.OnContractWithTopicsEvent(
 		contract.Address,
-		[][]common.Hash{{contract.Abi.Events["NodeUrlUpdated"].ID}},
+		[][]common.Hash{{contract.NodeRegistryAbi.Events["NodeUrlUpdated"].ID}},
 		ret.OnNodeUrlUpdated,
 	)
 

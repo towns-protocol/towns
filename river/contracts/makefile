@@ -22,17 +22,17 @@ lint :; yarn solhint "{scripts,src,test/**/*.sol}"
 
 anvil :; anvil -m 'test test test test test test test test test test test junk'
 
+clear-anvil-deployments :; rm -rf deployments/base_anvil deployments/river_anvil
+
 # ===========================
 # 				Base Anvil
 # ===========================
 deploy-base-anvil:;
 	@echo "Deploying $(contract)..."
-	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 \
-	forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} \
-	--ffi --rpc-url base_anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast
+	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ffi --rpc-url base_anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast
 
 interact-base-anvil :;
-	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url base_anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast
+	@SAVE_DEPLOYMENTS=1 forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url base_anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast
 
 # ===========================
 # 				River Anvil
