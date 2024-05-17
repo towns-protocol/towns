@@ -92,7 +92,6 @@ function mockPrivyApiResponse(): PrivyApiResponse {
 }
 
 export function createPrivSearchRequest(requestObj: PrivySearchRequest, env: Env): RequestInit {
-    console.log(env.PRIVY_APP_ID, env.PRIVY_APP_KEY)
     const init = {
         body: JSON.stringify(requestObj),
         method: 'POST',

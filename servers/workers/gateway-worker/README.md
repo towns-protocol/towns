@@ -1,7 +1,6 @@
 # gateway-worker
 
-The following Worker exposes a lightweight HTTP router and uses
-service bindings to communicate with other workers, namely siwe-worker to perform authorization. The gateway currently exposes two endpoints to store and retrieve space icons though more can be added in the future. Cloudflare Images is used as a proxy to store and perform image manipulation on-the-fly, such as resizing / polish.
+The following Worker exposes a lightweight HTTP router. The gateway currently exposes two endpoints to store and retrieve space icons though more can be added in the future. Cloudflare Images is used as a proxy to store and perform image manipulation on-the-fly, such as resizing / polish.
 
 ## Dependencies
 

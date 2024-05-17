@@ -36,7 +36,6 @@ LINEAR_GRAPHQL_URL = "https://api.linear.app/graphql"
 # LINEAR_API_KEY
 # for local development, you can add these in .dev.vars
 # 
-# Not necessary - SKIP_SIWE - if true, skip siwe auth, useful if you are debugging locally via curl, etc.
 #
 # For production, you can add these in the Cloudflare dashboard or run
 # `echo <VALUE> | wrangler secret put <NAME>` for each of these
@@ -45,47 +44,15 @@ LINEAR_GRAPHQL_URL = "https://api.linear.app/graphql"
 # OR
 # Run `echo <VALUE> | wrangler secret put <NAME>` for each of these
 
-# production routes
-# yarn publish:prod
-[env.production]
-routes = [{ pattern = "gateway-worker.towns.com", custom_domain = true }]
-vars = { ENVIRONMENT = "production", CF_API = "https://api.cloudflare.com/client/v4/accounts", ACCOUNT_ID = "9840f8a36a817b103e00e29a0e2bad6f" } # [vars] access, not secrets
-services = [
-    { binding = "authz", service = "siwe-worker-production", environment = "production" },
-]
-# created with wrangler kv:namespace create "USER" --env production
-# created with wrangler kv:namespace create "SPACE" --env production
-kv_namespaces = [
-    { binding = "USER", id = "8b1f2abcf4ca4e56855b7d3774d23612" },
-    { binding = "SPACE", id = "4f0bf1efdb164939bca166cb4b65b1a0" },
-]
-
-# BETA below
-# production routes
-# yarn publish:prod-beta
-[env.production-beta]
-routes = [{ pattern = "gateway-worker-beta.towns.com", custom_domain = true }]
-vars = { ENVIRONMENT = "production-beta", CF_API = "https://api.cloudflare.com/client/v4/accounts", ACCOUNT_ID = "9840f8a36a817b103e00e29a0e2bad6f" } # [vars] access, not secrets
-services = [
-    { binding = "authz", service = "siwe-worker-production-beta", environment = "production" },
-]
-# created with wrangler kv:namespace create "USER" --env production-beta
-# created with wrangler kv:namespace create "SPACE" --env production-beta
-kv_namespaces = [
-    { binding = "USER", id = "b1e29926fc4b45eeba497f687f17a7af" },
-    { binding = "SPACE", id = "948104f695b84f17aebbb885860ba69a" },
-]
 
 # test routes
-# yarn publish:test-beta
+# CF_ENV=test-beta yarn publish
 [env.test-beta]
 routes = [
     { pattern = "gateway-worker-test-beta.towns.com", custom_domain = true },
 ]
-vars = { ENVIRONMENT = "test-beta", SKIP_SIWE = true, CF_API = "https://api.cloudflare.com/client/v4/accounts", ACCOUNT_ID = "9840f8a36a817b103e00e29a0e2bad6f", LINEAR_TEAM_ID = "2de99085-cb4a-4fd2-89c7-a892c91c0383", LINEAR_USER_FEEDBACK_PROJECT_ID = "56801874-57ba-42e7-a9ae-5052b27500eb", LINEAR_GRAPHQL_URL = "https://api.linear.app/graphql" } # [vars] access, not secrets
-services = [
-    { binding = "authz", service = "siwe-worker-test-beta", environment = "production" },
-]
+vars = { ENVIRONMENT = "test-beta", CF_API = "https://api.cloudflare.com/client/v4/accounts", ACCOUNT_ID = "9840f8a36a817b103e00e29a0e2bad6f", LINEAR_TEAM_ID = "2de99085-cb4a-4fd2-89c7-a892c91c0383", LINEAR_USER_FEEDBACK_PROJECT_ID = "56801874-57ba-42e7-a9ae-5052b27500eb", LINEAR_GRAPHQL_URL = "https://api.linear.app/graphql" } # [vars] access, not secrets
+
 # created with wrangler kv:namespace create "USER" --env test-beta
 # created with wrangler kv:namespace create "SPACE" --env test-beta
 kv_namespaces = [
@@ -93,20 +60,15 @@ kv_namespaces = [
     { binding = "SPACE", id = "46e3556d43984c3fa028c3553794e740" },
 ]
 
+# omega routes
+# CF_ENV=omega yarn publish
+[env.omega]
+routes = [{ pattern = "gateway-worker.towns.com", custom_domain = true }]
+vars = { ENVIRONMENT = "omega", CF_API = "https://api.cloudflare.com/client/v4/accounts", ACCOUNT_ID = "9840f8a36a817b103e00e29a0e2bad6f", LINEAR_TEAM_ID = "2de99085-cb4a-4fd2-89c7-a892c91c0383", LINEAR_USER_FEEDBACK_PROJECT_ID = "56801874-57ba-42e7-a9ae-5052b27500eb", LINEAR_GRAPHQL_URL = "https://api.linear.app/graphql" } # [vars] access, not secrets
 
-# staging routes
-# yarn publish:staging-beta
-[env.staging-beta]
-routes = [
-    { pattern = "gateway-worker-staging-beta.towns.com", custom_domain = true },
-]
-vars = { ENVIRONMENT = "staging-beta", SKIP_SIWE = true, CF_API = "https://api.cloudflare.com/client/v4/accounts", ACCOUNT_ID = "9840f8a36a817b103e00e29a0e2bad6f" } # [vars] access, not secrets
-services = [
-    { binding = "authz", service = "siwe-worker-staging-beta", environment = "production" },
-]
-# created with wrangler kv:namespace create "USER" --env staging-beta
-# created with wrangler kv:namespace create "SPACE" --env staging-beta
+# created with wrangler kv:namespace create "USER" --env test-beta
+# created with wrangler kv:namespace create "SPACE" --env test-beta
 kv_namespaces = [
-    { binding = "USER", id = "adfe0b0755cd487c8c2622647fdcfc8d" },
-    { binding = "SPACE", id = "8231a83c3bf745b698711dd6a6f9b7cd" },
+    { binding = "USER", id = "689271de8bd34ebba01977f358dd2192" },
+    { binding = "SPACE", id = "8f4405e70be64bc88c2d4c050d220b6a" },
 ]

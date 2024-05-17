@@ -50,8 +50,9 @@ router.get('/space-icon-bypass/:id', async (request: WorkerRequest, env) => {
         const response = await fetch(newRequest)
         return response
     } catch (error) {
+        console.error(error)
         return new Response(JSON.stringify({ error: (error as Error).message }), {
-            status: 500,
+            status: 400,
         })
     }
 })
@@ -95,56 +96,18 @@ router.get('/space-icon/:id+', async (request: WorkerRequest, env) => {
         newResponse.headers.set('Cache-Control', 'public, no-cache')
         return newResponse
     } catch (error) {
+        console.error(error)
         return new Response(JSON.stringify({ error: (error as Error).message }), {
-            status: 500,
+            status: 400,
         })
     }
 })
 
 router.post('/space-icon/:id', async (request: WorkerRequest, env) => {
     // spaceId is <id>:node1.towns.com
-    // should include full node name b/c the siwe-worker requires it to verify space ownership
     const spaceId = request.params?.id
     const copyRequest: Request = request.clone()
     const formData = await copyRequest.formData()
-
-    // set SKIP_SIWE in .dev.vars for local dev if you don't want to use siwe-worker
-    if (!env.SKIP_SIWE) {
-        const cookie = await handleCookie(request.clone())
-        console.log(`cookie: ${cookie}`)
-        const encodedCookie = Buffer.from(cookie, 'base64')
-        const decodedCookie = encodedCookie.toString('utf8')
-        const [signature, message] = decodedCookie.split('__@@__')
-
-        if (!signature || !message) {
-            return invalidCookieResponse()
-        }
-
-        const newBody = {
-            signature,
-            message,
-            spaceId,
-        }
-        const newRequestInit = {
-            method: 'POST',
-            body: JSON.stringify(newBody),
-        }
-
-        let authResponse
-        const newRequest = new Request(new Request(request.clone(), newRequestInit))
-
-        // 3.6.23 - local workers don't support service bindings so we need to fetch to from local siwe-worker
-        if (env.ENVIRONMENT === 'development') {
-            authResponse = await fetchLocalAuthz(newRequest, newRequestInit)
-        } else {
-            // Use a Service binding to fetch to another worker
-            authResponse = await env.authz.fetch(newRequest)
-        }
-        if (authResponse.status !== 200) {
-            console.log(`authResponse: ${JSON.stringify(authResponse)}`)
-            return authResponse
-        }
-    }
 
     const formId: FormDataEntryValue | null = formData.get('id')
     if ((formId as string) !== spaceId) {
@@ -153,53 +116,24 @@ router.post('/space-icon/:id', async (request: WorkerRequest, env) => {
         })
     }
 
-    const destinationURL = new URL([env.CF_API, env.ACCOUNT_ID, 'images/v1', spaceId].join('/'))
-    // upsert
-    const getUrl = new URL([IMAGE_DELIVERY_SERVICE, env.IMAGE_HASH, spaceId, 'public'].join('/'))
-    return await upsertImage(getUrl, destinationURL, request, env)
+    try {
+        const destinationURL = new URL([env.CF_API, env.ACCOUNT_ID, 'images/v1', spaceId].join('/'))
+        // upsert
+        const getUrl = new URL(
+            [IMAGE_DELIVERY_SERVICE, env.IMAGE_HASH, spaceId, 'public'].join('/'),
+        )
+        return await upsertImage(getUrl, destinationURL, request, env)
+    } catch (error) {
+        console.error(error)
+        return new Response(JSON.stringify({ error: (error as Error).message }), {
+            status: 400,
+        })
+    }
 })
 
 router.post('/user/:id/avatar', async (request: WorkerRequest, env) => {
     // user id is equivalent to wallet address of the form 0x83..
     const userId = request.params?.id
-    // TODO: remove this before merging JOHN
-    if (!env.SKIP_SIWE) {
-        const cookie = await handleCookie(request.clone())
-        console.log(`cookie: ${cookie}`)
-        const encodedCookie = Buffer.from(cookie, 'base64')
-        const decodedCookie = encodedCookie.toString('utf8')
-        const [signature, message] = decodedCookie.split('__@@__')
-
-        if (!signature || !message) {
-            return invalidCookieResponse()
-        }
-
-        const newBody = {
-            signature,
-            message,
-            userId,
-        }
-        const newRequestInit = {
-            method: 'POST',
-            body: JSON.stringify(newBody),
-        }
-
-        let authResponse
-        const newRequest = new Request(new Request(request.clone(), newRequestInit))
-
-        // 3.6.23 - local workers don't support service bindings so we need to fetch to from local siwe-worker
-        if (env.ENVIRONMENT === 'development') {
-            authResponse = await fetchLocalAuthz(newRequest, newRequestInit)
-        } else {
-            // Use a Service binding to fetch to another worker
-            authResponse = await env.authz.fetch(newRequest)
-        }
-        if (authResponse.status !== 200) {
-            console.log(`authResponse: ${JSON.stringify(authResponse)}`)
-            return authResponse
-        }
-    }
-
     const copyRequest: Request = request.clone()
     const formData = await copyRequest.formData()
     const formId: FormDataEntryValue | null = formData.get('id')
@@ -209,10 +143,17 @@ router.post('/user/:id/avatar', async (request: WorkerRequest, env) => {
         })
     }
 
-    const destinationURL = new URL([env.CF_API, env.ACCOUNT_ID, 'images/v1', userId].join('/'))
-    // upsert
-    const getUrl = new URL([IMAGE_DELIVERY_SERVICE, env.IMAGE_HASH, userId, 'public'].join('/'))
-    return await upsertImage(getUrl, destinationURL, request, env)
+    try {
+        const destinationURL = new URL([env.CF_API, env.ACCOUNT_ID, 'images/v1', userId].join('/'))
+        // upsert
+        const getUrl = new URL([IMAGE_DELIVERY_SERVICE, env.IMAGE_HASH, userId, 'public'].join('/'))
+        return await upsertImage(getUrl, destinationURL, request, env)
+    } catch (error) {
+        console.error(error)
+        return new Response(JSON.stringify({ error: (error as Error).message }), {
+            status: 400,
+        })
+    }
 })
 
 // /user/<user_id>/avatar/<IMAGE_OPTIONS>
@@ -230,12 +171,12 @@ router.get('/user/:id/avatar', async (request: WorkerRequest, env) => {
     if (userId === undefined) {
         return new Response('userId error', { status: 400 })
     }
-    // redirect url
-    const destinationURL = new URL(
-        [IMAGE_DELIVERY_SERVICE, env.IMAGE_HASH, userId, 'public'].join('/'),
-    )
-    const newRequest: Request = new Request(destinationURL, new Request(request.clone()))
     try {
+        // redirect url
+        const destinationURL = new URL(
+            [IMAGE_DELIVERY_SERVICE, env.IMAGE_HASH, userId, 'public'].join('/'),
+        )
+        const newRequest: Request = new Request(destinationURL, new Request(request.clone()))
         // cache this fetch for max of CACHE_TTL seconds before revalidation
         const response = await fetch(newRequest, { cf: { cacheTtl: CACHE_TTL } })
         // clone response so it's no longer immutable
@@ -246,8 +187,9 @@ router.get('/user/:id/avatar', async (request: WorkerRequest, env) => {
         newResponse.headers.set('Cache-Control', 'public, no-cache')
         return newResponse
     } catch (error) {
+        console.error(error)
         return new Response(JSON.stringify({ error: (error as Error).message }), {
-            status: 500,
+            status: 400,
         })
     }
 })
@@ -255,43 +197,6 @@ router.get('/user/:id/avatar', async (request: WorkerRequest, env) => {
 router.post('/user/:id/bio', async (request: WorkerRequest, env) => {
     // user id is equivalent to wallet address of the form 0x83..
     const userId = request.params?.id
-
-    if (!env.SKIP_SIWE) {
-        const cookie = await handleCookie(request.clone())
-        console.log(`cookie: ${cookie}`)
-        const encodedCookie = Buffer.from(cookie, 'base64')
-        const decodedCookie = encodedCookie.toString('utf8')
-        const [signature, message] = decodedCookie.split('__@@__')
-
-        if (!signature || !message) {
-            return invalidCookieResponse()
-        }
-
-        const newBody = {
-            signature,
-            message,
-            userId,
-        }
-        const newRequestInit = {
-            method: 'POST',
-            body: JSON.stringify(newBody),
-        }
-
-        let authResponse
-        const newRequest = new Request(new Request(request.clone(), newRequestInit))
-
-        // 3.6.23 - local workers don't support service bindings so we need to fetch to from local siwe-worker
-        if (env.ENVIRONMENT === 'development') {
-            authResponse = await fetchLocalAuthz(newRequest, newRequestInit)
-        } else {
-            // Use a Service binding to fetch to another worker
-            authResponse = await env.authz.fetch(newRequest)
-        }
-        if (authResponse.status !== 200) {
-            console.log(`authResponse: ${JSON.stringify(authResponse)}`)
-            return authResponse
-        }
-    }
 
     const copyRequest: Request = request.clone()
     const contentType = copyRequest.headers.get('content-type')
@@ -311,8 +216,9 @@ router.post('/user/:id/bio', async (request: WorkerRequest, env) => {
     try {
         await env.USER.put(userId, requestBody)
     } catch (error) {
+        console.error(error)
         return new Response(JSON.stringify({ error: (error as Error).message }), {
-            status: 500,
+            status: 400,
         })
     }
     return new Response('ok', { status: 200 })
@@ -330,43 +236,6 @@ router.get('/user/:id/bio', async (request: WorkerRequest, env) => {
 
 router.post('/space/:id/identity', async (request: WorkerRequest, env) => {
     const spaceId = request.params?.id
-
-    if (!env.SKIP_SIWE) {
-        const cookie = await handleCookie(request.clone())
-        console.log(`cookie: ${cookie}`)
-        const encodedCookie = Buffer.from(cookie, 'base64')
-        const decodedCookie = encodedCookie.toString('utf8')
-        const [signature, message] = decodedCookie.split('__@@__')
-
-        if (!signature || !message) {
-            return invalidCookieResponse()
-        }
-
-        const newBody = {
-            signature,
-            message,
-            spaceId,
-        }
-        const newRequestInit = {
-            method: 'POST',
-            body: JSON.stringify(newBody),
-        }
-
-        let authResponse
-        const newRequest = new Request(new Request(request.clone(), newRequestInit))
-
-        // 3.6.23 - local workers don't support service bindings so we need to fetch to from local siwe-worker
-        if (env.ENVIRONMENT === 'development') {
-            authResponse = await fetchLocalAuthz(newRequest, newRequestInit)
-        } else {
-            // Use a Service binding to fetch to another worker
-            authResponse = await env.authz.fetch(newRequest)
-        }
-        if (authResponse.status !== 200) {
-            console.log(`authResponse: ${JSON.stringify(authResponse)}`)
-            return authResponse
-        }
-    }
 
     const copyRequest: Request = request.clone()
     const contentType = copyRequest.headers.get('content-type')
@@ -393,8 +262,9 @@ router.post('/space/:id/identity', async (request: WorkerRequest, env) => {
     try {
         await env.SPACE.put(spaceId, requestBody)
     } catch (error) {
+        console.error(error)
         return new Response(JSON.stringify({ error: (error as Error).message }), {
-            status: 500,
+            status: 400,
         })
     }
     return new Response('ok', { status: 200 })
@@ -450,7 +320,7 @@ router.post('/user-feedback', async (request: WorkerRequest, env) => {
     } catch (error) {
         console.error(error)
         return new Response(JSON.stringify({ error: (error as Error).message }), {
-            status: 500,
+            status: 400,
         })
     }
 })

@@ -69,6 +69,6 @@ describe('http router', () => {
         expect(result.status).toBe(400)
 
         const text = await result.text()
-        expect(text).toContain('invalid cookie')
+        expect(text).toContain('Invalid URL')
     })
 })

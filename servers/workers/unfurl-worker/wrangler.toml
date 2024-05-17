@@ -28,32 +28,16 @@ ENVIRONMENT = "development"
 # OR
 # Run `echo <VALUE> | wrangler secret put <NAME>` for each of these
 
-# production routes
-# yarn publish:prod
-[env.production]
-routes = [{ pattern = "unfurl-worker.towns.com", custom_domain = true }]
-vars = { ENVIRONMENT = "production" }
-
-
-# Beta
-# production routes
-# yarn publish:prod-beta
-[env.production-beta]
-routes = [{ pattern = "unfurl-worker-beta.towns.com", custom_domain = true }]
-vars = { ENVIRONMENT = "production-beta" }
-
 # test routes
-# yarn publish:test-beta
+# CF_ENV=test-beta yarn publish
 [env.test-beta]
 routes = [
     { pattern = "unfurl-worker-test-beta.towns.com", custom_domain = true },
 ]
 vars = { ENVIRONMENT = "test-beta" }
 
-# staging routes
-# yarn publish:staging-beta
-[env.staging-beta]
-routes = [
-    { pattern = "unfurl-worker-staging-beta.towns.com", custom_domain = true },
-]
-vars = { ENVIRONMENT = "staging-beta" }
+# omega routes
+# CF_ENV=omega yarn publish
+[env.omega]
+routes = [{ pattern = "unfurl-worker.towns.com", custom_domain = true }]
+vars = { ENVIRONMENT = "omega" }
