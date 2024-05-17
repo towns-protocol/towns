@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import {
+    Channel,
     ChannelContextProvider,
     Membership,
     useMyMemberships,
@@ -41,11 +42,24 @@ export const BrowseChannelsPanel = ({ onClose }: { onClose?: () => void }) => {
         markChannelsAsSeen()
     })
 
-    const filteredChannels = useMemo(() => {
+    type ChannelWithUnseenStatus = Channel & { unseen: boolean }
+
+    const filteredChannels: ChannelWithUnseenStatus[] = useMemo(() => {
         return fuzzysort
             .go(searchText, channels, { keys: ['label', 'search'], all: true })
-            .map((m) => m.obj)
-    }, [channels, searchText])
+            .map((m) => {
+                return { ...m.obj, unseen: unseenChannelIds?.has(m.obj.id) }
+            })
+            .sort((a, b) => {
+                if (a.unseen && !b.unseen) {
+                    return -1
+                }
+                if (!a.unseen && b.unseen) {
+                    return 1
+                }
+                return a.label.localeCompare(b.label)
+            })
+    }, [channels, searchText, unseenChannelIds])
 
     const onOpenChannel = useCallback(
         (channelId: string) => {
@@ -75,7 +89,7 @@ export const BrowseChannelsPanel = ({ onClose }: { onClose?: () => void }) => {
                                     topic={channel.topic}
                                     channelNetworkId={channel.id}
                                     isJoined={myMemberships[channel.id] === Membership.Join}
-                                    showDot={unseenChannelIds?.has(channel.id)}
+                                    showDot={channel.unseen}
                                     onOpenChannel={onOpenChannel}
                                 />
                             </Stack>
