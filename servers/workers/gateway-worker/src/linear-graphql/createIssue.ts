@@ -46,8 +46,13 @@ mutation CreateIssue($issueTitle: String!, $issueDescription: String!){
 
     const logInfo = logFilename && logUrl ? `Logs: [${logFilename}](${logUrl})` : ''
     const attachmentInfo = attachments
-        ?.map((attachment) => `![${attachment.filename}](${attachment.fileUrl})`)
+        ?.map((attachment) =>
+            attachment.contentType?.includes('image')
+                ? `![${attachment.filename}](${attachment.fileUrl})`
+                : `[${attachment.filename}](${attachment.fileUrl})`,
+        )
         .join('\n')
+
     const issueDescription = [
         `**Name**: ${name}`,
         `**Email**: ${email}`,

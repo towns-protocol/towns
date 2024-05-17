@@ -56,7 +56,7 @@ interface UploadFileToLinearInput {
     file: File
 }
 
-async function uploadFileToLinear({ config, file }: UploadFileToLinearInput) {
+async function uploadFileToLinear({ config, file }: UploadFileToLinearInput): Promise<Uploaded> {
     const { success, error, response, httpStatusCode } = await fileUpload({
         config,
         payload: { filename: file.name, contentType: file.type, size: file.size },
@@ -72,6 +72,7 @@ async function uploadFileToLinear({ config, file }: UploadFileToLinearInput) {
             filename: file.name,
             fileUrl: undefined,
             storageFilename: undefined,
+            contentType: undefined,
         }
     }
 

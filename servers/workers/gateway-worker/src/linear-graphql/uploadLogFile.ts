@@ -10,6 +10,7 @@ export interface Uploaded {
     filename: string
     storageFilename: string | undefined
     fileUrl: string | undefined
+    contentType: string | undefined
 }
 
 export async function uploadFile({ filename, uploadFile, content }: Upload): Promise<Uploaded> {
@@ -42,6 +43,7 @@ export async function uploadFile({ filename, uploadFile, content }: Upload): Pro
             filename,
             storageFilename: uploadFile.filename,
             fileUrl: uploadFile.assetUrl,
+            contentType: uploadFile.contentType,
         }
     } else {
         console.error('[uploadLogFile] Failed to upload file', {
@@ -55,6 +57,7 @@ export async function uploadFile({ filename, uploadFile, content }: Upload): Pro
             filename,
             storageFilename: undefined,
             fileUrl: undefined,
+            contentType: undefined,
         }
     }
 }
