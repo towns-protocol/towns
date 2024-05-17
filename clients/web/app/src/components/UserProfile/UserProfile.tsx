@@ -161,7 +161,7 @@ export const UserProfile = (props: Props) => {
                             </>
                         ) : (
                             <Text fontWeight="medium" fontSize="sm">
-                                NFT Profile Picture
+                                Add NFT Profile Picture
                             </Text>
                         )}
 
