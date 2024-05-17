@@ -136,45 +136,47 @@ export const UserProfile = (props: Props) => {
                     )}
                 </FormRender>
 
-                <Stack
-                    horizontal
-                    grow
-                    hoverable
-                    gap="sm"
-                    paddingX="sm"
-                    paddingY="xs"
-                    rounded="full"
-                    background="level2"
-                    width="100%"
-                    alignItems="center"
-                    cursor="pointer"
-                    tooltip={<VerifiedOnChainAssetTooltip userId={userId} />}
-                    onClick={() => setShowNftProfilePicture(true)}
-                >
-                    <Icon type="verifiedEnsName" size="square_sm" />
-                    {resolvedNft ? (
-                        <>
-                            <Text size="sm" fontWeight="medium">
-                                {resolvedNft.title}
+                {(resolvedNft || canEdit) && (
+                    <Stack
+                        horizontal
+                        grow
+                        hoverable
+                        gap="sm"
+                        paddingX="sm"
+                        paddingY="xs"
+                        rounded="full"
+                        background="level2"
+                        width="100%"
+                        alignItems="center"
+                        cursor="pointer"
+                        tooltip={<VerifiedOnChainAssetTooltip userId={userId} />}
+                        onClick={() => setShowNftProfilePicture(true)}
+                    >
+                        <Icon type="verifiedEnsName" size="square_sm" />
+                        {resolvedNft ? (
+                            <>
+                                <Text size="sm" fontWeight="medium">
+                                    {resolvedNft.title}
+                                </Text>
+                            </>
+                        ) : (
+                            <Text fontWeight="medium" fontSize="sm">
+                                NFT Profile Picture
                             </Text>
-                        </>
-                    ) : (
-                        <Text fontWeight="medium" fontSize="sm">
-                            NFT Profile Picture
-                        </Text>
-                    )}
+                        )}
 
-                    <Box grow />
+                        <Box grow />
 
-                    {canEdit && user?.nft && (
-                        <IconButton
-                            icon="close"
-                            size="square_xs"
-                            color="default"
-                            onClick={onClearNft}
-                        />
-                    )}
-                </Stack>
+                        {canEdit && user?.nft && (
+                            <IconButton
+                                icon="close"
+                                size="square_xs"
+                                color="default"
+                                onClick={onClearNft}
+                            />
+                        )}
+                    </Stack>
+                )}
             </Stack>
 
             {canEdit ? (
