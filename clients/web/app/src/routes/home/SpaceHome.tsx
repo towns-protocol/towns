@@ -27,12 +27,22 @@ export const SpaceHome = () => {
         rootKeyAddress: loggedInWalletAddress,
     })
 
-    let bookmarkedRoute = useStore((s) => (spaceId ? s.townRouteBookmarks[spaceId] : undefined))
-
-    // verify the stored route matches the current URL scheme
-    bookmarkedRoute = matchPath(`${PATHS.SPACES}/${space?.id}/*`, bookmarkedRoute ?? '')
-        ? bookmarkedRoute
-        : undefined
+    const { bookmarkedRoute, storeBookmarkedSpaceId, storeBookmarkedRoute } = useStore((s) => {
+        const storeBookmarkedSpaceId = s.spaceIdBookmark
+        const storeBookmarkedRoute = storeBookmarkedSpaceId
+            ? s.townRouteBookmarks[storeBookmarkedSpaceId]
+            : undefined
+        let bookmarkedRoute = spaceId ? s.townRouteBookmarks[spaceId] : undefined
+        // verify the stored route matches the current URL scheme
+        bookmarkedRoute = matchPath(`${PATHS.SPACES}/${spaceId}/*`, bookmarkedRoute ?? '')
+            ? bookmarkedRoute
+            : undefined
+        return {
+            bookmarkedRoute,
+            storeBookmarkedSpaceId,
+            storeBookmarkedRoute,
+        }
+    })
 
     const [searchParams] = useSearchParams()
     const rel = useMemo(() => {
@@ -42,6 +52,8 @@ export const SpaceHome = () => {
     useEffect(() => {
         console.warn('[SpaceHome][hnt-5685]', 'route', {
             bookmarkedRoute,
+            storeBookmarkedSpaceId: storeBookmarkedSpaceId ?? 'undefined',
+            storeBookmarkedRoute: storeBookmarkedRoute ?? 'undefined',
             rel,
             spaceId: space?.id ?? '',
             isAuthenticated,
@@ -61,6 +73,8 @@ export const SpaceHome = () => {
         space?.id,
         rel,
         isTouch,
+        storeBookmarkedSpaceId,
+        storeBookmarkedRoute,
     ])
 
     useEffect(() => {

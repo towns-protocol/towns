@@ -104,6 +104,17 @@ export const TouchHome = () => {
     const spaceId = space?.id ?? ''
     const hasSignerContext = signerContext !== undefined
 
+    const { storeBookmarkedSpaceId, storeBookmarkedRoute } = useStore((s) => {
+        const storeBookmarkedSpaceId = s.spaceIdBookmark
+        const storeBookmarkedRoute = storeBookmarkedSpaceId
+            ? s.townRouteBookmarks[storeBookmarkedSpaceId]
+            : undefined
+        return {
+            storeBookmarkedSpaceId,
+            storeBookmarkedRoute,
+        }
+    })
+
     const { data: abstractAccountAddress } = useAbstractAccountAddress({
         rootKeyAddress: loggedInWalletAddress,
     })
@@ -125,8 +136,18 @@ export const TouchHome = () => {
             hasSignerContext,
             locationPathname: location.pathname,
             locationSearch: location.search,
+            storeBookmarkedRoute: storeBookmarkedRoute ?? 'undefined',
+            storeBookmarkedSpaceId: storeBookmarkedSpaceId ?? 'undefined',
         })
-    }, [isAuthenticated, loggedInWalletAddress, loginStatus, hasSignerContext, spaceId])
+    }, [
+        isAuthenticated,
+        loggedInWalletAddress,
+        loginStatus,
+        hasSignerContext,
+        spaceId,
+        storeBookmarkedRoute,
+        storeBookmarkedSpaceId,
+    ])
 
     useEffect(() => {
         if (pseudoId === undefined && loggedInWalletAddress && abstractAccountAddress) {
