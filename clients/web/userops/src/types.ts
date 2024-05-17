@@ -22,7 +22,7 @@ export type UserOpsConfig = {
     entryPointAddress?: string
     factoryAddress?: string
     paymasterProxyAuthSecret?: string
-    skipTransactionConfirmation: boolean
+    skipPromptUserOnPMRejectedOp: boolean
 }
 
 export type UserOpParams = {

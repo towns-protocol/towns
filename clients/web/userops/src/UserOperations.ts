@@ -33,7 +33,7 @@ export class UserOps {
     // defaults to Stackup's deployed factory
     private factoryAddress: string | undefined
     private paymasterProxyAuthSecret: string | undefined
-    private skipTransactionConfirmation: boolean
+    private skipPromptUserOnPMRejectedOp = false
     private userOpClient: UseropClient | undefined
     protected spaceDapp: ISpaceDapp | undefined
 
@@ -45,7 +45,7 @@ export class UserOps {
         this.factoryAddress = config.factoryAddress ?? ERC4337.SimpleAccount.Factory
         this.paymasterProxyAuthSecret = config.paymasterProxyAuthSecret
         this.spaceDapp = config.spaceDapp
-        this.skipTransactionConfirmation = config.skipTransactionConfirmation
+        this.skipPromptUserOnPMRejectedOp = config.skipPromptUserOnPMRejectedOp
     }
 
     public async getAbstractAccountAddress({
@@ -177,16 +177,17 @@ export class UserOps {
         }
 
         // 3 - prompt user if the paymaster rejected. recalculate preverification gas
-        userOp.useMiddleware(async (ctx) =>
-            promptUser(preverificationGasMultiplierValue)(ctx, {
-                provider: this.spaceDapp?.provider,
-                config: this.spaceDapp?.config,
-                rpcUrl: this.aaRpcUrl,
-                bundlerUrl: this.bundlerUrl,
-                skipConfirmation: this.skipTransactionConfirmation,
-                townId: args.spaceId,
-            }),
-        )
+        if (!this.skipPromptUserOnPMRejectedOp) {
+            userOp.useMiddleware(async (ctx) =>
+                promptUser(preverificationGasMultiplierValue)(ctx, {
+                    provider: this.spaceDapp?.provider,
+                    config: this.spaceDapp?.config,
+                    rpcUrl: this.aaRpcUrl,
+                    bundlerUrl: this.bundlerUrl,
+                    townId: args.spaceId,
+                }),
+            )
+        }
 
         // 4 - sign the user operation
         userOp.useMiddleware(async (ctx) => signUserOpHash(ctx, args.signer))

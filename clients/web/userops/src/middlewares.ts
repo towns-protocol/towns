@@ -48,14 +48,12 @@ export function promptUser(multiplier: number) {
             config,
             rpcUrl,
             bundlerUrl,
-            skipConfirmation,
             townId,
         }: {
             provider: ethers.providers.Provider | undefined
             config: BaseChainConfig | undefined
             rpcUrl: string
             bundlerUrl: string
-            skipConfirmation: boolean
             townId: string | undefined
         },
     ) {
@@ -144,12 +142,8 @@ export function promptUser(multiplier: number) {
         }
 
         async function waitForConfirmOrDeny() {
-            // get the estimate even if skipConfirmation is true
             // b/c it will throw an error we can parse
             const estimate = await fallbackEstimate()
-            if (skipConfirmation) {
-                return
-            }
             await new Promise((resolve, reject) => {
                 userOpsStore.setState({
                     currOpGas: estimate,

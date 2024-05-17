@@ -86,7 +86,7 @@ export function getAccountAbstractionConfig() {
         paymasterProxyUrl: process.env.AA_PAYMASTER_PROXY_URL,
         aaRpcUrl: process.env.AA_RPC_URL,
         paymasterProxyAuthSecret: process.env.AA_PAYMASTER_PROXY_AUTH_SECRET,
-        skipTransactionConfirmation: true,
+        skipPromptUserOnPMRejectedOp: true,
         // entryPointAddress: process.env.ENTRY_POINT_ADDRESS, // omitted, using stackup default
         // factoryAddress: process.env.FACTORY_ADDRESS, // omitted, using stackup default
     }

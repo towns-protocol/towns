@@ -36,7 +36,7 @@ export const UserOps = ({ spaceDapp }: { spaceDapp: ISpaceDapp }) => {
         entryPointAddress: process.env.AA_ENTRY_POINT_ADDRESS,
         factoryAddress: process.env.AA_FACTORY_ADDRESS,
         paymasterProxyAuthSecret: process.env.AA_PAYMASTER_PROXY_AUTH_SECRET!,
-        skipTransactionConfirmation: true,
+        skipPromptUserOnPMRejectedOp: true,
     })
 }
 

@@ -81,7 +81,7 @@ function makeEnvironments(): TownsEnvironmentInfo[] {
                       entryPointAddress: env.VITE_AA_ENTRY_POINT_ADDRESS,
                       factoryAddress: env.VITE_AA_FACTORY_ADDRESS,
                       paymasterProxyAuthSecret: env.VITE_AUTH_WORKER_HEADER_SECRET,
-                      skipTransactionConfirmation: false,
+                      skipPromptUserOnPMRejectedOp: false,
                   }
                 : undefined,
         } satisfies TownsEnvironmentInfo)
@@ -125,7 +125,7 @@ function makeEnvironments(): TownsEnvironmentInfo[] {
                       entryPointAddress: env.VITE_AA_ENTRY_POINT_ADDRESS,
                       factoryAddress: env.VITE_AA_FACTORY_ADDRESS,
                       paymasterProxyAuthSecret: env.VITE_AUTH_WORKER_HEADER_SECRET,
-                      skipTransactionConfirmation: false,
+                      skipPromptUserOnPMRejectedOp: false,
                   }
                 : undefined,
         } satisfies TownsEnvironmentInfo)
