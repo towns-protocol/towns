@@ -73,10 +73,10 @@ const zNftMetadata: z.ZodType<GetNftMetadataResponse & GetNftOwnersResponse> = z
     owners: z.array(z.string()),
     media: z.array(
         z.object({
-            thumbnail: z.string(),
+            thumbnail: z.string().or(z.undefined()),
             gateway: z.string(),
-            format: z.string(),
-            bytes: z.number(),
+            format: z.string().or(z.undefined()),
+            bytes: z.number().or(z.undefined()),
         }),
     ),
     metadata: z.object({ image: z.string().nullable().optional() }),

@@ -18,7 +18,6 @@ import {
 } from './Avatar.css'
 import { Icon, IconProps } from '../../ui/components/Icon'
 import { MotionBox } from '../../ui/components/Motion/MotionComponents'
-const MAX_NFT_IMAGE_SIZE = 1_000_000
 
 type Props = {
     src?: string
@@ -73,10 +72,23 @@ export const AvatarWithoutDot = forwardRef<HTMLElement, Props & { dot?: boolean 
     })
     const _imageVariant = imageVariant ?? 'thumbnail100'
     const resolvedNft = useResolveNft({ walletAddress: userId ?? '', info: user?.nft })
-    const nftUrl =
-        resolvedNft?.image && resolvedNft.image.bytes < MAX_NFT_IMAGE_SIZE
-            ? resolvedNft.image.gateway
-            : resolvedNft?.image?.thumbnail
+    const nftUrl = useMemo(() => {
+        if (!resolvedNft) {
+            return
+        }
+
+        if (resolvedNft.image.thumbnail) {
+            return resolvedNft.image.thumbnail
+        }
+        // we had this check for bytes size, but what should we do if payload has no bytes?
+        // if (resolvedNft.image.bytes && resolvedNft.image.bytes < MAX_NFT_IMAGE_SIZE) {
+        //         return resolvedNft.image.gateway
+        // }
+        // there could be no bytes
+        if (resolvedNft.image.gateway) {
+            return resolvedNft.image.gateway
+        }
+    }, [resolvedNft])
 
     const { imageSrc, resourceId } = useAvatarImageSrc({
         imageVariant: _imageVariant,

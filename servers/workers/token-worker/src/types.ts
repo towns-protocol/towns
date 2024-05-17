@@ -96,7 +96,12 @@ export type GetNftOwnersResponse = {
 }
 
 export type GetNftMetadataResponse = {
-    media: { thumbnail: string; gateway: string; format: string; bytes: number }[]
+    media: {
+        thumbnail?: string | undefined
+        gateway: string
+        format?: string | undefined
+        bytes?: number | undefined
+    }[]
     title?: string | null
     description?: string | null
 }
