@@ -35,6 +35,7 @@ const SpaceContext = () => {
     const { casablancaClient } = useTownsContext()
     const { serverSpace: space, chainSpace } = useContractAndServerSpaceData()
     const { isTouch } = useDevice()
+    const location = useLocation()
 
     const spaceSlug = space?.id ?? ''
     const setTownRouteBookmark = useStore((s) => s.setTownRouteBookmark)
@@ -44,16 +45,27 @@ const SpaceContext = () => {
     const spaceName = space?.name || chainSpace?.name
 
     useEffect(() => {
-        const locationPathname = path?.pathname ?? ''
-        const locationSearch = path?.search ?? ''
         console.warn('[SpaceContextRoute][hnt-5685]', 'route', {
             rpcClient: casablancaClient?.rpcClient.url ?? '',
-            locationPathname,
-            locationSearch,
+            routeMatcherPathname: path?.pathname ?? '',
+            routeMatcherSearch: path?.search ?? '',
+            locationPathname: location.pathname,
+            locationSearch: location.search,
             path: path ?? '',
             spaceSlug,
             deviceType: isTouch ? 'mobile' : 'desktop',
         })
+    }, [
+        casablancaClient?.rpcClient.url,
+        isTouch,
+        location.pathname,
+        location.search,
+        path,
+        spaceSlug,
+    ])
+
+    useEffect(() => {
+        const locationPathname = path?.pathname ?? ''
         if (
             !path ||
             (path.type !== 'messages' && !spaceSlug) ||
@@ -74,7 +86,7 @@ const SpaceContext = () => {
             // reset bookmark in case the route isn't referenced above
             setTownRouteBookmark(spaceSlug, '')
         }
-    }, [casablancaClient?.rpcClient.url, isTouch, path, setTownRouteBookmark, spaceSlug])
+    }, [path, setTownRouteBookmark, spaceSlug])
 
     const title = useMemo(() => {
         if (!path) {

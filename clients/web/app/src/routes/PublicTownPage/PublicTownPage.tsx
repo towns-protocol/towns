@@ -1,6 +1,6 @@
 import debug from 'debug'
 import React, { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useLocation, useNavigate } from 'react-router'
 import { Link } from 'react-router-dom'
 import { useConnectivity, useContractSpaceInfo, useMyProfile } from 'use-towns-client'
 import { Allotment } from 'allotment'
@@ -25,6 +25,7 @@ import { atoms } from 'ui/styles/atoms.css'
 import { darkTheme } from 'ui/styles/vars.css'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { useAnalytics } from 'hooks/useAnalytics'
+import { useDevice } from 'hooks/useDevice'
 import { WelcomeLayout } from '../layouts/WelcomeLayout'
 import { BottomBarContent } from './BottomBarContent'
 import { useConnectedStatus } from './useConnectedStatus'
@@ -44,6 +45,16 @@ const PublicTownPageWithoutAuth = (props: { isPreview?: boolean; onClosePreview?
     const isJoining = !!usePublicPageLoginFlow().joiningSpace
 
     const { analytics, anonymousId } = useAnalytics()
+    const { isTouch } = useDevice()
+    const location = useLocation()
+
+    useEffect(() => {
+        console.warn('[PublicTownPage][hnt-5685]', 'route', {
+            deviceType: isTouch ? 'mobile' : 'desktop',
+            locationPathname: location.pathname,
+            locationSearch: location.search,
+        })
+    }, [isTouch, location.pathname, location.search])
 
     useEffect(() => {
         analytics?.page(
