@@ -11,10 +11,3 @@ export class WalletNotLinkedError extends Error {
         this.name = 'SpaceDappWalletLinkLinkDoesNotExist'
     }
 }
-
-export class MembershipEventListenerTimeoutError extends Error {
-    constructor(message?: string) {
-        super(message ?? 'Membership event listener timed out')
-        this.name = 'MembershipEventListenerTimeoutError'
-    }
-}

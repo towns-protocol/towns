@@ -1,6 +1,7 @@
 package nodes_test
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -19,27 +20,38 @@ var (
 
 func TestStreamNodes(t *testing.T) {
 	tests := map[string]struct {
-		hasLocal bool
+		hasLocal   bool
+		localFirst bool
 	}{
-		"nodes are local": {
+		"LastLocal": {
 			hasLocal: true,
 		},
-		"nodes are not local": {
+		"FirstLocal": {
+			hasLocal:   true,
+			localFirst: true,
+		},
+		"NoLocal": {
 			hasLocal: false,
 		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			nodeAddrs := remotes
+			var nodeAddrs []common.Address
 			if tc.hasLocal {
-				nodeAddrs = append(remotes, local)
+				if tc.localFirst {
+					nodeAddrs = append([]common.Address{local}, remotes...)
+				} else {
+					nodeAddrs = append(slices.Clone(remotes), local)
+				}
+			} else {
+				nodeAddrs = slices.Clone(remotes)
 			}
 			streamNodes := nodes.NewStreamNodes(
 				nodeAddrs,
 				local,
 			)
 			require.Equal(t, tc.hasLocal, streamNodes.IsLocal())
-			require.Equal(t, tc.hasLocal, streamNodes.LocalIsLeader())
+			require.Equal(t, tc.localFirst, streamNodes.LocalIsLeader())
 			require.ElementsMatch(t, nodeAddrs, streamNodes.GetNodes())
 			require.ElementsMatch(
 				t,
@@ -88,7 +100,7 @@ func TestStreamNodes(t *testing.T) {
 			// Multiple calls to advance with the same current sticky node should not advance
 			// the sticky peer. Local should continue to be considered the leader even as internal
 			// node ordering changes.
-			require.Equal(t, tc.hasLocal, streamNodes.LocalIsLeader())
+			require.Equal(t, tc.localFirst, streamNodes.LocalIsLeader())
 			require.Equal(t, stickyPeer4, streamNodes.AdvanceStickyPeer(stickyPeer3))
 			require.Equal(t, stickyPeer4, streamNodes.AdvanceStickyPeer(stickyPeer3))
 		})

@@ -1101,10 +1101,17 @@ export class Client
         })
     }
 
-    async sendChannelMessage(streamId: string, payload: ChannelMessage): Promise<string> {
+    async sendChannelMessage(
+        streamId: string,
+        payload: ChannelMessage,
+        beforeAddEventCB?: Promise<void>,
+    ): Promise<string> {
         const stream = this.stream(streamId)
         check(stream !== undefined, 'stream not found')
         const localId = stream.view.appendLocalEvent(payload, 'sending', this)
+        if (beforeAddEventCB) {
+            await beforeAddEventCB
+        }
         return this.makeAndSendChannelMessageEvent(streamId, payload, localId)
     }
 
@@ -1150,6 +1157,7 @@ export class Client
         payload: Omit<PlainMessage<ChannelMessage_Post>, 'content'> & {
             content: PlainMessage<ChannelMessage_Post_Content_Text>
         },
+        beforeAddEventCB?: Promise<void>,
     ): Promise<string> {
         const { content, ...options } = payload
         return this.sendChannelMessage(
@@ -1166,6 +1174,7 @@ export class Client
                     },
                 },
             }),
+            beforeAddEventCB,
         )
     }
 
@@ -1174,6 +1183,7 @@ export class Client
         payload: Omit<PlainMessage<ChannelMessage_Post>, 'content'> & {
             content: PlainMessage<ChannelMessage_Post_Content_Image>
         },
+        beforeAddEventCB?: Promise<void>,
     ): Promise<string> {
         const { content, ...options } = payload
         return this.sendChannelMessage(
@@ -1190,6 +1200,7 @@ export class Client
                     },
                 },
             }),
+            beforeAddEventCB,
         )
     }
 
@@ -1198,6 +1209,7 @@ export class Client
         payload: Omit<PlainMessage<ChannelMessage_Post>, 'content'> & {
             content: PlainMessage<ChannelMessage_Post_Content_GM>
         },
+        beforeAddEventCB?: Promise<void>,
     ): Promise<string> {
         const { content, ...options } = payload
         return this.sendChannelMessage(
@@ -1214,6 +1226,7 @@ export class Client
                     },
                 },
             }),
+            beforeAddEventCB,
         )
     }
 

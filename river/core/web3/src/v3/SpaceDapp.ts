@@ -31,7 +31,6 @@ import { dlogger, isJest } from '@river-build/dlog'
 import { EVERYONE_ADDRESS } from '../Utils'
 import { evaluateOperationsForEntitledWallet, ruleDataToOperations } from '../entitlement'
 import { RuleEntitlementShim } from './RuleEntitlementShim'
-import { MembershipEventListenerTimeoutError } from '../error-types'
 
 const logger = dlogger('csb:SpaceDapp:debug')
 
@@ -930,6 +929,7 @@ export class SpaceDapp implements ISpaceDapp {
     public listenForMembershipEvent(
         spaceId: string,
         receiver: string,
+        abortController?: AbortController,
     ): Promise<
         | { issued: true; tokenId: string; error?: Error | undefined }
         | { issued: false; tokenId: undefined; error?: Error | undefined }
@@ -940,35 +940,7 @@ export class SpaceDapp implements ISpaceDapp {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
 
-        const abortController = new AbortController()
-
-        const listener = space.Membership.listenForMembershipToken(receiver, abortController)
-
-        return new Promise<
-            | { issued: true; tokenId: string; error?: Error | undefined }
-            | { issued: false; tokenId: undefined; error?: Error | undefined }
-        >((resolve) => {
-            const timeout = setTimeout(() => {
-                logger.log('Membership mint event timed out')
-                abortController.abort()
-                resolve({
-                    issued: false,
-                    tokenId: undefined,
-                    error: new MembershipEventListenerTimeoutError(),
-                })
-            }, 30_000)
-            listener
-                .then((result) => {
-                    clearTimeout(timeout)
-                    resolve(result)
-                })
-                .catch((error) => {
-                    clearTimeout(timeout)
-                    abortController.abort()
-                    logger.error('Error waiting for membership mint event', error)
-                    resolve({ issued: false, tokenId: undefined, error })
-                })
-        })
+        return space.Membership.listenForMembershipToken(receiver, abortController)
     }
 }
 

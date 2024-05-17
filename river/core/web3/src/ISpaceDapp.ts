@@ -211,8 +211,6 @@ export interface ISpaceDapp {
     listenForMembershipEvent: (
         spaceId: string,
         receiver: string,
-    ) => Promise<
-        | { issued: true; tokenId: string; error?: Error | undefined }
-        | { issued: false; tokenId: undefined; error?: Error | undefined }
-    >
+        abortController?: AbortController,
+    ) => Promise<{ issued: true; tokenId: string } | { issued: false; tokenId: undefined }>
 }

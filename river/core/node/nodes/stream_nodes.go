@@ -1,7 +1,6 @@
 package nodes
 
 import (
-	"bytes"
 	"math/rand"
 	"slices"
 	"sync"
@@ -21,141 +20,149 @@ type StreamNodes interface {
 
 	GetStickyPeer() common.Address
 	AdvanceStickyPeer(currentPeer common.Address) common.Address
+
+	Update(n common.Address, isAdded bool) error
 }
 
-// Contains stream node addresses.
-// if local node is present,
-// returns addresses of all nodes or only remote nodes.
 type streamNodesImpl struct {
-	// used to synchronize reads/writes to below fields
-	mu              sync.RWMutex
-	nodes           []common.Address
-	localNode       common.Address
-	localNodeIndex  int
-	localIsLeader   bool
+	mu sync.RWMutex
+
+	// nodes contains all streams nodes in the same order as in contract.
+	nodes     []common.Address
+	localNode common.Address
+	isLocal   bool
+
+	// remotes are all nodes except the local node.
+	// remotes are shuffled to avoid the same node being selected as the sticky peer.
+	remotes         []common.Address
 	stickyPeerIndex int
 }
 
 var _ StreamNodes = (*streamNodesImpl)(nil)
 
-func localIsLeader(nodes []common.Address, localNode common.Address) bool {
-	// Sort the nodes to determine if the local node is the leader. We consider the leader to be the lexically
-	// first node in the list.
-	slices.SortFunc(nodes, func(i, j common.Address) int {
-		return bytes.Compare(i[:], j[:])
-	})
-	localNodeIndex := slices.IndexFunc(nodes, func(i common.Address) bool {
-		return bytes.Equal(i[:], localNode[:])
-	})
-	return localNodeIndex == 0
-}
-
 func NewStreamNodes(nodes []common.Address, localNode common.Address) StreamNodes {
 	streamNodes := &streamNodesImpl{
-		nodes:         nodes,
-		localNode:     localNode,
-		localIsLeader: localIsLeader(nodes, localNode),
+		localNode: localNode,
 	}
-	streamNodes.shuffle()
+	streamNodes.resetNoLock(nodes)
 	return streamNodes
 }
 
-// shuffle randomly shuffles the ordering of nodes and resets the sticky peer to the first remote in the new list.
-// shuffle performs writes but has no locking. It is expected to be called on initialization or from a write-protected method.
-func (s *streamNodesImpl) shuffle() {
-	rand.Shuffle(len(s.nodes), func(i, j int) { s.nodes[i], s.nodes[j] = s.nodes[j], s.nodes[i] })
+func (s *streamNodesImpl) resetNoLock(nodes []common.Address) {
+	var lastStickyAddr common.Address
+	if s.stickyPeerIndex < len(s.remotes) {
+		lastStickyAddr = s.remotes[s.stickyPeerIndex]
+	}
 
-	s.localNodeIndex = slices.IndexFunc(s.nodes, func(i common.Address) bool {
-		return bytes.Equal(i[:], s.localNode[:])
-	})
+	s.nodes = slices.Clone(nodes)
 
-	s.stickyPeerIndex = 0
-	if s.stickyPeerIndex == s.localNodeIndex {
-		s.stickyPeerIndex++
+	localIndex := slices.Index(nodes, s.localNode)
+
+	if localIndex >= 0 {
+		s.isLocal = true
+		s.remotes = slices.Concat(nodes[:localIndex], nodes[localIndex+1:])
+	} else {
+		s.isLocal = false
+		s.remotes = slices.Clone(nodes)
+	}
+
+	rand.Shuffle(len(s.remotes), func(i, j int) { s.remotes[i], s.remotes[j] = s.remotes[j], s.remotes[i] })
+
+	if lastStickyAddr == (common.Address{}) {
+		s.stickyPeerIndex = 0
+	} else {
+		s.stickyPeerIndex = slices.Index(s.remotes, lastStickyAddr)
+		if s.stickyPeerIndex < 0 {
+			s.stickyPeerIndex = 0
+		}
 	}
 }
 
 func (s *streamNodesImpl) IsLocal() bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-
-	return s.localNodeIndex >= 0
+	return s.isLocal
 }
 
-func (s *streamNodesImpl) GetLocal() (common.Address, error) {
-	if !s.IsLocal() {
-		return common.Address{}, RiverError(Err_INTERNAL, "Expected nodes to be local")
-	} else {
-		return s.nodes[s.localNodeIndex], nil
-	}
-}
-
-// LocalAndFirst is used for fake leader election currently.
+// LocalIsLeader is used for fake leader election currently.
 func (s *streamNodesImpl) LocalIsLeader() bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-
-	return s.localIsLeader
+	return len(s.nodes) > 0 && s.nodes[0] == s.localNode
 }
 
 func (s *streamNodesImpl) GetNodes() []common.Address {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-
 	return slices.Clone(s.nodes)
 }
 
 func (s *streamNodesImpl) GetRemotes() []common.Address {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-
-	if s.localNodeIndex >= 0 {
-		nodesCopy := slices.Clone(s.nodes)
-		return slices.Delete(nodesCopy, s.localNodeIndex, s.localNodeIndex+1)
-	} else {
-		return slices.Clone(s.nodes)
-	}
+	return slices.Clone(s.remotes)
 }
 
 func (s *streamNodesImpl) GetStickyPeer() common.Address {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-
-	return s.nodes[s.stickyPeerIndex]
+	if len(s.remotes) > 0 {
+		return s.remotes[s.stickyPeerIndex]
+	} else {
+		return common.Address{}
+	}
 }
 
 func (s *streamNodesImpl) AdvanceStickyPeer(currentPeer common.Address) common.Address {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if len(s.remotes) == 0 {
+		return common.Address{}
+	}
+
 	// If the node has already been advanced, ignore the call to advance and return the current sticky
 	// peer. Many concurrent requests may fail and try to advance the node at the same time, but we only
 	// want to advance once.
-	if s.nodes[s.stickyPeerIndex] != currentPeer {
-		return s.nodes[s.stickyPeerIndex]
+	if s.remotes[s.stickyPeerIndex] != currentPeer {
+		return s.remotes[s.stickyPeerIndex]
 	}
 
-	// Advance sticky peer
 	s.stickyPeerIndex++
-	if s.stickyPeerIndex == s.localNodeIndex {
-		s.stickyPeerIndex++
-	}
 
 	// If we've visited all nodes, shuffle
-	if s.stickyPeerIndex >= len(s.nodes) {
-		s.shuffle()
+	if s.stickyPeerIndex >= len(s.remotes) {
+		rand.Shuffle(len(s.remotes), func(i, j int) { s.remotes[i], s.remotes[j] = s.remotes[j], s.remotes[i] })
+		s.stickyPeerIndex = 0
 	}
 
-	return s.nodes[s.stickyPeerIndex]
+	return s.remotes[s.stickyPeerIndex]
 }
 
 func (s *streamNodesImpl) NumRemotes() int {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
+	return len(s.remotes)
+}
 
-	if s.localNodeIndex >= 0 {
-		return len(s.nodes) - 1
+func (s *streamNodesImpl) Update(n common.Address, isAdded bool) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	var newNodes []common.Address
+	if isAdded {
+		if slices.Contains(s.nodes, n) {
+			return RiverError(Err_INTERNAL, "StreamNodes.Update(add): node already exists in stream nodes", "nodes", s.nodes, "node", n)
+		}
+		newNodes = append(s.nodes, n)
 	} else {
-		return len(s.nodes)
+		index := slices.Index(s.nodes, n)
+		if index < 0 {
+			return RiverError(Err_INTERNAL, "StreamNodes.Update(delete): node does not exist in stream nodes", "nodes", s.nodes, "node", n)
+		}
+		newNodes = slices.Concat(s.nodes[:index], s.nodes[index+1:])
 	}
+
+	s.resetNoLock(newNodes)
+	return nil
 }
