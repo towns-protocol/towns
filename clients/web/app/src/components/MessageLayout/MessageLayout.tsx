@@ -18,6 +18,7 @@ import { ZRoomMessageRedactedEvent } from '@components/MessageTimeline/util/getE
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { useResolveEnsName } from 'api/lib/ensNames'
+import { useResolveNft } from 'hooks/useNfts'
 import { MessageContextMenu } from './MessageContextMenu'
 import { MessageModalSheet } from './MessageModalSheet'
 import { SendStatus, SendStatusIndicator } from './SendStatusIndicator'
@@ -311,12 +312,13 @@ const UserName = ({ user }: { user?: LookupUser }) => {
         userId: user?.userId,
         ensAddress: user?.ensAddress,
     })
+    const resolvedNft = useResolveNft({ walletAddress: user?.userId || '', info: user?.nft })
 
-    if (resolvedEnsName) {
+    if (resolvedEnsName || resolvedNft) {
         return (
             <Stack horizontal gap="xs" alignItems="center">
                 <Text truncate fontWeight="strong" color="default" as="span">
-                    {resolvedEnsName}
+                    {resolvedEnsName || name}
                 </Text>
                 <Icon type="verifiedEnsName" size="square_sm" color="gray2" />
             </Stack>
