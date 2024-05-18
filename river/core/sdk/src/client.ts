@@ -1104,13 +1104,13 @@ export class Client
     async sendChannelMessage(
         streamId: string,
         payload: ChannelMessage,
-        beforeAddEventCB?: Promise<void>,
+        opts: { beforeSendEventHook?: Promise<void> } = {},
     ): Promise<string> {
         const stream = this.stream(streamId)
         check(stream !== undefined, 'stream not found')
         const localId = stream.view.appendLocalEvent(payload, 'sending', this)
-        if (beforeAddEventCB) {
-            await beforeAddEventCB
+        if (opts?.beforeSendEventHook) {
+            await opts?.beforeSendEventHook
         }
         return this.makeAndSendChannelMessageEvent(streamId, payload, localId)
     }
@@ -1157,7 +1157,7 @@ export class Client
         payload: Omit<PlainMessage<ChannelMessage_Post>, 'content'> & {
             content: PlainMessage<ChannelMessage_Post_Content_Text>
         },
-        beforeAddEventCB?: Promise<void>,
+        opts: { beforeSendEventHook?: Promise<void> } = {},
     ): Promise<string> {
         const { content, ...options } = payload
         return this.sendChannelMessage(
@@ -1174,7 +1174,7 @@ export class Client
                     },
                 },
             }),
-            beforeAddEventCB,
+            opts,
         )
     }
 
@@ -1183,7 +1183,7 @@ export class Client
         payload: Omit<PlainMessage<ChannelMessage_Post>, 'content'> & {
             content: PlainMessage<ChannelMessage_Post_Content_Image>
         },
-        beforeAddEventCB?: Promise<void>,
+        opts: { beforeSendEventHook?: Promise<void> } = {},
     ): Promise<string> {
         const { content, ...options } = payload
         return this.sendChannelMessage(
@@ -1200,7 +1200,7 @@ export class Client
                     },
                 },
             }),
-            beforeAddEventCB,
+            opts,
         )
     }
 
@@ -1209,7 +1209,7 @@ export class Client
         payload: Omit<PlainMessage<ChannelMessage_Post>, 'content'> & {
             content: PlainMessage<ChannelMessage_Post_Content_GM>
         },
-        beforeAddEventCB?: Promise<void>,
+        opts: { beforeSendEventHook?: Promise<void> } = {},
     ): Promise<string> {
         const { content, ...options } = payload
         return this.sendChannelMessage(
@@ -1226,7 +1226,7 @@ export class Client
                     },
                 },
             }),
-            beforeAddEventCB,
+            opts,
         )
     }
 
@@ -1252,6 +1252,7 @@ export class Client
     async sendChannelMessage_Reaction(
         streamId: string,
         payload: PlainMessage<ChannelMessage_Reaction>,
+        opts: { beforeSendEventHook?: Promise<void> } = {},
     ): Promise<string> {
         return this.sendChannelMessage(
             streamId,
@@ -1261,6 +1262,7 @@ export class Client
                     value: new ChannelMessage_Reaction(payload),
                 },
             }),
+            opts,
         )
     }
 

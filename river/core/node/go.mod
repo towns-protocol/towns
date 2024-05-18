@@ -17,11 +17,12 @@ require (
 	github.com/matoous/go-nanoid v1.5.0
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/prometheus/client_golang v1.16.0
+	github.com/river-build/river/core/xchain v0.0.0-00010101000000-000000000000
 	github.com/rogpeppe/go-internal v1.11.0
 	github.com/rs/cors v1.9.0
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	golang.org/x/crypto v0.21.0
 	golang.org/x/exp v0.0.0-20240205201215-2c58cdc269a3
 	golang.org/x/net v0.21.0
@@ -34,8 +35,7 @@ require (
 
 require (
 	github.com/google/uuid v1.4.0 // indirect
-	github.com/river-build/river/core/xchain v0.0.0-00010101000000-000000000000 // indirect
-	github.com/stretchr/objx v0.5.1 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 )
 
 require (

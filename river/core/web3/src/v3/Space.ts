@@ -185,12 +185,28 @@ export class Space {
         }
     }
 
+    public async getChannelMetadata(channelNetworkId: string): Promise<ChannelMetadata | null> {
+        const channelId = channelNetworkId.startsWith('0x')
+            ? channelNetworkId
+            : `0x${channelNetworkId}`
+        const channelInfo = await this.Channels.read.getChannel(channelId)
+        const metadata = this.parseChannelMetadataJSON(channelInfo.metadata)
+        return {
+            name: metadata.name,
+            channelNetworkId: channelInfo.id.replace('0x', ''),
+            description: metadata.description,
+            disabled: channelInfo.disabled,
+        }
+    }
+
     public async getChannels(): Promise<ChannelMetadata[]> {
         const channels: ChannelMetadata[] = []
         const getOutput = await this.Channels.read.getChannels()
         for (const o of getOutput) {
+            const metadata = this.parseChannelMetadataJSON(o.metadata)
             channels.push({
-                name: o.metadata,
+                name: metadata.name,
+                description: metadata.description,
                 channelNetworkId: o.id.replace('0x', ''),
                 disabled: o.disabled,
             })

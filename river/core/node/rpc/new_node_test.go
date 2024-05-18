@@ -21,17 +21,24 @@ func testCreate100Streams(
 	ctx context.Context,
 	require *require.Assertions,
 	c protocolconnect.StreamServiceClient,
+	streamSettings *StreamSettings,
 ) []StreamId {
 	wallet, err := crypto.NewWallet(ctx)
 	require.NoError(err)
-	_, _, err = createUser(ctx, wallet, c)
+	_, _, err = createUser(ctx, wallet, c, streamSettings)
 	require.NoError(err)
 	streamdIds := []StreamId{UserStreamIdFromAddr(wallet.Address)}
 	for i := 0; i < 99; i++ {
 		streamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
-		_, _, err = createSpace(ctx, wallet, c, streamId)
+		_, _, err = createSpace(ctx, wallet, c, streamId, streamSettings)
 		require.NoError(err)
 		streamdIds = append(streamdIds, streamId)
+	}
+	if streamSettings != nil && streamSettings.DisableMiniblockCreation {
+		for _, streamId := range streamdIds {
+			_, _, err := makeMiniblock(ctx, c, streamId, false, -1)
+			require.NoError(err)
+		}
 	}
 	return streamdIds
 }
@@ -48,7 +55,7 @@ func TestAddingNewNodes(t *testing.T) {
 	testMethodsWithClient(tester, tester.testClient(9))
 
 	c0 := tester.testClient(0)
-	streamdIds0 := testCreate100Streams(ctx, require, c0)
+	streamdIds0 := testCreate100Streams(ctx, require, c0, nil)
 
 	tester.initNodeRecords(10, 20, contracts.NodeStatus_NotInitialized)
 
@@ -60,7 +67,7 @@ func TestAddingNewNodes(t *testing.T) {
 	testMethodsWithClient(tester, tester.testClient(14))
 
 	c1 := tester.testClient(18)
-	streamdIds1 := testCreate100Streams(ctx, require, c1)
+	streamdIds1 := testCreate100Streams(ctx, require, c1, nil)
 
 	newNodes := make(map[common.Address]bool)
 	for i := 10; i < 20; i++ {

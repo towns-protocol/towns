@@ -74,7 +74,7 @@ func createUserSettingsStreamsWithData(
 			}
 			wallets[i] = wallet
 
-			streamId, _, _, err := createUserSettingsStream(ctx, wallet, client)
+			streamId, _, _, err := createUserSettingsStream(ctx, wallet, client, &StreamSettings{DisableMiniblockCreation: true})
 			if err != nil {
 				errChan <- err
 				return
@@ -105,7 +105,7 @@ func TestArchiveOneStream(t *testing.T) {
 	client := tester.testClient(0)
 	wallet, err := crypto.NewWallet(ctx)
 	require.NoError(err)
-	streamId, _, _, err := createUserSettingsStream(ctx, wallet, client)
+	streamId, _, _, err := createUserSettingsStream(ctx, wallet, client, &StreamSettings{DisableMiniblockCreation: true})
 	require.NoError(err)
 
 	archiveCfg := tester.getConfig()
@@ -220,7 +220,7 @@ func TestArchive100Streams(t *testing.T) {
 	require := tester.require
 
 	// Create 100 streams
-	streamIds := testCreate100Streams(ctx, require, tester.testClient(0))
+	streamIds := testCreate100Streams(ctx, require, tester.testClient(0), &StreamSettings{DisableMiniblockCreation: true})
 
 	archiveCfg := tester.getConfig()
 	archiveCfg.Archive.ArchiveId = "arch" + GenShortNanoid()

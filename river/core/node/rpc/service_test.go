@@ -54,14 +54,12 @@ func createUserDeviceKeyStream(
 	ctx context.Context,
 	wallet *crypto.Wallet,
 	client protocolconnect.StreamServiceClient,
+	streamSettings *protocol.StreamSettings,
 ) (*protocol.SyncCookie, []byte, error) {
 	userDeviceKeyStreamId := UserDeviceKeyStreamIdFromAddress(wallet.Address)
 	inception, err := events.MakeEnvelopeWithPayload(
 		wallet,
-		events.Make_UserDeviceKeyPayload_Inception(
-			userDeviceKeyStreamId,
-			nil,
-		),
+		events.Make_UserDeviceKeyPayload_Inception(userDeviceKeyStreamId, streamSettings),
 		nil,
 	)
 	if err != nil {
@@ -120,13 +118,14 @@ func createUser(
 	ctx context.Context,
 	wallet *crypto.Wallet,
 	client protocolconnect.StreamServiceClient,
+	streamSettings *protocol.StreamSettings,
 ) (*protocol.SyncCookie, []byte, error) {
 	userStreamId := UserStreamIdFromAddr(wallet.Address)
 	inception, err := events.MakeEnvelopeWithPayload(
 		wallet,
 		events.Make_UserPayload_Inception(
 			userStreamId,
-			nil,
+			streamSettings,
 		),
 		nil,
 	)
@@ -147,11 +146,12 @@ func createUserSettingsStream(
 	ctx context.Context,
 	wallet *crypto.Wallet,
 	client protocolconnect.StreamServiceClient,
+	streamSettings *protocol.StreamSettings,
 ) (StreamId, *protocol.SyncCookie, []byte, error) {
 	streamdId := UserSettingStreamIdFromAddr(wallet.Address)
 	inception, err := events.MakeEnvelopeWithPayload(
 		wallet,
-		events.Make_UserSettingsPayload_Inception(streamdId, nil),
+		events.Make_UserSettingsPayload_Inception(streamdId, streamSettings),
 		nil,
 	)
 	if err != nil {
@@ -172,13 +172,11 @@ func createSpace(
 	wallet *crypto.Wallet,
 	client protocolconnect.StreamServiceClient,
 	spaceStreamId StreamId,
+	streamSettings *protocol.StreamSettings,
 ) (*protocol.SyncCookie, []byte, error) {
 	space, err := events.MakeEnvelopeWithPayload(
 		wallet,
-		events.Make_SpacePayload_Inception(
-			spaceStreamId,
-			nil,
-		),
+		events.Make_SpacePayload_Inception(spaceStreamId, streamSettings),
 		nil,
 	)
 	if err != nil {
@@ -374,11 +372,11 @@ func testMethodsWithClient(tester *serviceTester, client protocolconnect.StreamS
 	require.Error(err)
 
 	// create user stream for user 1
-	res, _, err := createUser(ctx, wallet1, client)
+	res, _, err := createUser(ctx, wallet1, client, nil)
 	require.NoError(err)
 	require.NotNil(res, "nil sync cookie")
 
-	_, _, err = createUserDeviceKeyStream(ctx, wallet1, client)
+	_, _, err = createUserDeviceKeyStream(ctx, wallet1, client, nil)
 	require.NoError(err)
 
 	// get stream optional should now return not nil
@@ -390,16 +388,16 @@ func testMethodsWithClient(tester *serviceTester, client protocolconnect.StreamS
 	require.NotNil(resp.Msg, "expected user stream to not exist")
 
 	// create user stream for user 2
-	resuser, _, err := createUser(ctx, wallet2, client)
+	resuser, _, err := createUser(ctx, wallet2, client, nil)
 	require.NoError(err)
 	require.NotNil(resuser, "nil sync cookie")
 
-	_, _, err = createUserDeviceKeyStream(ctx, wallet2, client)
+	_, _, err = createUserDeviceKeyStream(ctx, wallet2, client, nil)
 	require.NoError(err)
 
 	// create space
 	spaceId := testutils.FakeStreamId(STREAM_SPACE_BIN)
-	resspace, _, err := createSpace(ctx, wallet1, client, spaceId)
+	resspace, _, err := createSpace(ctx, wallet1, client, spaceId, nil)
 	require.NoError(err)
 	require.NotNil(resspace, "nil sync cookie")
 
@@ -527,15 +525,15 @@ func testRiverDeviceId(tester *serviceTester) {
 	wallet, _ := crypto.NewWallet(ctx)
 	deviceWallet, _ := crypto.NewWallet(ctx)
 
-	resuser, _, err := createUser(ctx, wallet, client)
+	resuser, _, err := createUser(ctx, wallet, client, nil)
 	require.NoError(err)
 	require.NotNil(resuser)
 
-	_, _, err = createUserDeviceKeyStream(ctx, wallet, client)
+	_, _, err = createUserDeviceKeyStream(ctx, wallet, client, nil)
 	require.NoError(err)
 
 	spaceId := testutils.FakeStreamId(STREAM_SPACE_BIN)
-	space, _, err := createSpace(ctx, wallet, client, spaceId)
+	space, _, err := createSpace(ctx, wallet, client, spaceId, nil)
 	require.NoError(err)
 	require.NotNil(space)
 
@@ -592,13 +590,13 @@ func testSyncStreams(tester *serviceTester) {
 
 	// create the streams for a user
 	wallet, _ := crypto.NewWallet(ctx)
-	_, _, err := createUser(ctx, wallet, client)
+	_, _, err := createUser(ctx, wallet, client, nil)
 	require.Nilf(err, "error calling createUser: %v", err)
-	_, _, err = createUserDeviceKeyStream(ctx, wallet, client)
+	_, _, err = createUserDeviceKeyStream(ctx, wallet, client, nil)
 	require.Nilf(err, "error calling createUserDeviceKeyStream: %v", err)
 	// create space
 	spaceId := testutils.FakeStreamId(STREAM_SPACE_BIN)
-	space1, _, err := createSpace(ctx, wallet, client, spaceId)
+	space1, _, err := createSpace(ctx, wallet, client, spaceId, nil)
 	require.Nilf(err, "error calling createSpace: %v", err)
 	require.NotNil(space1, "nil sync cookie")
 	// create channel
@@ -664,23 +662,23 @@ func testAddStreamsToSync(tester *serviceTester) {
 
 	// create alice's wallet and streams
 	aliceWallet, _ := crypto.NewWallet(ctx)
-	alice, _, err := createUser(ctx, aliceWallet, aliceClient)
+	alice, _, err := createUser(ctx, aliceWallet, aliceClient, nil)
 	require.Nilf(err, "error calling createUser: %v", err)
 	require.NotNil(alice, "nil sync cookie for alice")
-	_, _, err = createUserDeviceKeyStream(ctx, aliceWallet, aliceClient)
+	_, _, err = createUserDeviceKeyStream(ctx, aliceWallet, aliceClient, nil)
 	require.Nilf(err, "error calling createUserDeviceKeyStream: %v", err)
 
 	// create bob's client, wallet, and streams
 	bobClient := tester.testClient(0)
 	bobWallet, _ := crypto.NewWallet(ctx)
-	bob, _, err := createUser(ctx, bobWallet, bobClient)
+	bob, _, err := createUser(ctx, bobWallet, bobClient, nil)
 	require.Nilf(err, "error calling createUser: %v", err)
 	require.NotNil(bob, "nil sync cookie for bob")
-	_, _, err = createUserDeviceKeyStream(ctx, bobWallet, bobClient)
+	_, _, err = createUserDeviceKeyStream(ctx, bobWallet, bobClient, nil)
 	require.Nilf(err, "error calling createUserDeviceKeyStream: %v", err)
 	// alice creates a space
 	spaceId := testutils.FakeStreamId(STREAM_SPACE_BIN)
-	space1, _, err := createSpace(ctx, aliceWallet, aliceClient, spaceId)
+	space1, _, err := createSpace(ctx, aliceWallet, aliceClient, spaceId, nil)
 	require.Nilf(err, "error calling createSpace: %v", err)
 	require.NotNil(space1, "nil sync cookie")
 	// alice creates a channel
@@ -763,23 +761,23 @@ func testRemoveStreamsFromSync(tester *serviceTester) {
 
 	// create alice's wallet and streams
 	aliceWallet, _ := crypto.NewWallet(ctx)
-	alice, _, err := createUser(ctx, aliceWallet, aliceClient)
+	alice, _, err := createUser(ctx, aliceWallet, aliceClient, nil)
 	require.Nilf(err, "error calling createUser: %v", err)
 	require.NotNil(alice, "nil sync cookie for alice")
-	_, _, err = createUserDeviceKeyStream(ctx, aliceWallet, aliceClient)
+	_, _, err = createUserDeviceKeyStream(ctx, aliceWallet, aliceClient, nil)
 	require.NoError(err)
 
 	// create bob's client, wallet, and streams
 	bobClient := tester.testClient(0)
 	bobWallet, _ := crypto.NewWallet(ctx)
-	bob, _, err := createUser(ctx, bobWallet, bobClient)
+	bob, _, err := createUser(ctx, bobWallet, bobClient, nil)
 	require.Nilf(err, "error calling createUser: %v", err)
 	require.NotNil(bob, "nil sync cookie for bob")
-	_, _, err = createUserDeviceKeyStream(ctx, bobWallet, bobClient)
+	_, _, err = createUserDeviceKeyStream(ctx, bobWallet, bobClient, nil)
 	require.Nilf(err, "error calling createUserDeviceKeyStream: %v", err)
 	// alice creates a space
 	spaceId := testutils.FakeStreamId(STREAM_SPACE_BIN)
-	space1, _, err := createSpace(ctx, aliceWallet, aliceClient, spaceId)
+	space1, _, err := createSpace(ctx, aliceWallet, aliceClient, spaceId, nil)
 	require.Nilf(err, "error calling createSpace: %v", err)
 	require.NotNil(space1, "nil sync cookie")
 	// alice creates a channel
@@ -1000,7 +998,7 @@ func TestForwardingWithRetries(t *testing.T) {
 				wallet, err := crypto.NewWallet(ctx)
 				require.NoError(t, err)
 
-				res, _, err := createUser(ctx, wallet, client0)
+				res, _, err := createUser(ctx, wallet, client0, nil)
 				streamId := UserStreamIdFromAddr(wallet.Address)
 				require.NoError(t, err)
 				require.NotNil(t, res, "nil sync cookie")
