@@ -1,6 +1,6 @@
 import { AnimatePresence } from 'framer-motion'
 import fuzzysort from 'fuzzysort'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useOutlet } from 'react-router'
 import {
     Address,
@@ -96,6 +96,8 @@ export const TouchHome = () => {
     const isLoadingChannels = space?.isLoadingChannels ?? true
     const { memberIds } = useSpaceMembers()
     const { usersMap } = useUserLookupContext()
+    const navigate = useNavigate()
+    const visitedBookmark = useRef<string>()
     const members = useMemo(() => {
         return memberIds.map((userId) => usersMap[userId]).filter(notUndefined)
     }, [memberIds, usersMap])
@@ -138,6 +140,7 @@ export const TouchHome = () => {
             locationSearch: location.search,
             storeBookmarkedRoute: storeBookmarkedRoute ?? 'undefined',
             storeBookmarkedSpaceId: storeBookmarkedSpaceId ?? 'undefined',
+            visitedBookmark: visitedBookmark.current ?? 'undefined',
         })
     }, [
         isAuthenticated,
@@ -316,6 +319,20 @@ export const TouchHome = () => {
     const openCreateChannelPanel = useCallback(() => {
         openPanel('create-channel')
     }, [openPanel])
+
+    useEffect(() => {
+        if (visitedBookmark.current) {
+            return
+        }
+        if (storeBookmarkedSpaceId && storeBookmarkedRoute) {
+            visitedBookmark.current = storeBookmarkedRoute
+            console.log('[TouchHome][hnt-5685]', 'visited bookmark', {
+                storeBookmarkedSpaceId,
+                storeBookmarkedRoute,
+            })
+            navigate(storeBookmarkedRoute)
+        }
+    }, [navigate, storeBookmarkedRoute, storeBookmarkedSpaceId])
 
     return (
         <ErrorBoundary FallbackComponent={ErrorFallbackComponent}>
