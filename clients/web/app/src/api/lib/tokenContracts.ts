@@ -185,6 +185,7 @@ export function useNftMetadata(
                 supportedChainIds,
             )
         },
+        staleTime: 1000 * 60 * 5,
         enabled: !!info && !!supportedChainIds,
     })
 }
