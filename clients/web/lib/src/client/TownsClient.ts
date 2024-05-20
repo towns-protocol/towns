@@ -72,6 +72,7 @@ import { BlockchainTransactionStore } from './BlockchainTransactionStore'
 import { UserOps, getTransactionHashOrUserOpHash, isUserOpResponse } from '@towns/userops'
 import AnalyticsService, { AnalyticsEvents } from '../utils/analyticsService'
 import { Events as PerformanceEvents, performanceMetrics } from '../PerformanceMetrics'
+import { waitForTimeoutOrMembership } from '../utils/waitForTimeoutOrMembershipEvent'
 
 /***
  * Towns Client
@@ -1616,6 +1617,8 @@ export class TownsClient
                   }
             >
 
+            const abortController = new AbortController()
+
             if (this.isAccountAbstractionEnabled()) {
                 // i.e. when a non gated town is joined
                 // recipients should always be the smart account address
@@ -1628,12 +1631,22 @@ export class TownsClient
                 if (!recipient) {
                     throw new Error('Abstract account address not found')
                 }
-                membershipListener = this.spaceDapp.listenForMembershipEvent(spaceId, recipient)
+                membershipListener = this.spaceDapp.listenForMembershipEvent(
+                    spaceId,
+                    recipient,
+                    abortController,
+                )
                 transaction = await this.userOps?.sendJoinSpaceOp([spaceId, recipient, signer])
             } else {
                 // joinSpace when called directly sets up the membershipListener
                 membershipListener = this.spaceDapp.joinSpace(spaceId, entitledWallet, signer)
             }
+
+            const membershipOrTimeout = waitForTimeoutOrMembership({
+                hashOrUserOpHash: getTransactionHashOrUserOpHash(transaction),
+                membershipListener,
+                abortController,
+            })
 
             continueStoreTx({
                 hashOrUserOpHash: getTransactionHashOrUserOpHash(transaction),
@@ -1643,7 +1656,7 @@ export class TownsClient
                         success: boolean
                         [x: string]: unknown
                     }> => {
-                        const { issued, tokenId } = await membershipListener
+                        const { issued, tokenId } = await membershipOrTimeout
                         return {
                             success: issued,
                             tokenId,
@@ -1659,8 +1672,14 @@ export class TownsClient
                     transaction,
                 },
             )
-            const { issued, tokenId } = await membershipListener
+
+            const { issued, tokenId, error } = await membershipOrTimeout
+
             this.log('[mintMembershipTransaction] membershipListener result', issued, tokenId)
+
+            if (error) {
+                throw error
+            }
 
             if (!issued) {
                 throw new MembershipRejectedError()
