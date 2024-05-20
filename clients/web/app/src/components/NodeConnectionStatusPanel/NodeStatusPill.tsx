@@ -5,13 +5,20 @@ import { formatUptime } from 'utils/formatDates'
 import { shortAddress } from 'workers/utils'
 import { SVGDot } from './SVGDot'
 import { NodeData } from './hooks/useNodeData'
+import { ConnectionStatusBanner } from './ConnectionStatusBanner'
 
 type Props = {
     nodeData: NodeData
     contentBefore?: JSX.Element
+    connectionStatus?: 'disconnected' | 'syncing' | 'synced' | undefined
 } & BoxProps
 
-export const NodeStatusPill = ({ nodeData, contentBefore, ...boxProps }: Props) => {
+export const NodeStatusPill = ({
+    nodeData,
+    contentBefore,
+    connectionStatus,
+    ...boxProps
+}: Props) => {
     const nodeStatus = NodeStatus[nodeData.status]
 
     const [isToggled, setIsToggled] = useState(false)
@@ -20,9 +27,16 @@ export const NodeStatusPill = ({ nodeData, contentBefore, ...boxProps }: Props) 
         setIsToggled(!isToggled)
     }, [isToggled])
 
+    const backgroundColor =
+        connectionStatus === 'disconnected' || connectionStatus === 'syncing'
+            ? 'negativeSubtle'
+            : connectionStatus === 'synced'
+            ? 'positiveSubtle'
+            : 'level2'
+
     return (
-        <Box padding gap="sm" rounded="sm" background="level2" {...boxProps}>
-            {contentBefore}
+        <Box padding gap="sm" rounded="sm" background={backgroundColor} {...boxProps}>
+            {connectionStatus && <ConnectionStatusBanner status={connectionStatus} />}
             <Stack gap="sm">
                 <Stack
                     horizontal
@@ -30,7 +44,7 @@ export const NodeStatusPill = ({ nodeData, contentBefore, ...boxProps }: Props) 
                     gap="sm"
                     style={{ color: `#${nodeData.color.getHexString()}` }}
                 >
-                    <Box minWidth="x1">
+                    <Box minWidth="x1" paddingRight="xs">
                         <SVGDot />
                     </Box>
 

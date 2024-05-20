@@ -8,7 +8,6 @@ import { Box } from '@ui'
 import { useStore } from 'store/store'
 import { NodeAnimationLoader } from '@components/NodeAnimation/NodeAnimationLoader'
 import { Figma } from 'ui/styles/palette'
-import { ConnectionStatusBanner } from './ConnectionStatusBanner'
 import { NodeStatusPill } from './NodeStatusPill'
 import { useConnectionStatus } from './hooks/useConnectionStatus'
 import { useNodeData } from './hooks/useNodeData'
@@ -69,13 +68,7 @@ export const NodeStatusPanel = () => {
                         <NodeStatusPill
                             nodeData={n}
                             key={n.id}
-                            contentBefore={
-                                n.nodeUrl === nodeUrl ? (
-                                    <Box>
-                                        <ConnectionStatusBanner status={connectionStatus} />
-                                    </Box>
-                                ) : undefined
-                            }
+                            connectionStatus={n.nodeUrl === nodeUrl ? connectionStatus : undefined}
                             boxShadow={n.nodeUrl === nodeUrl ? 'panel' : undefined}
                         />
                     ))

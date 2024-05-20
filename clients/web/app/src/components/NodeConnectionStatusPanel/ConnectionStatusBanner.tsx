@@ -8,33 +8,22 @@ type Props = {
 export const ConnectionStatusBanner = ({ status }: Props) => {
     return status === 'synced' ? (
         <Banner>
-            <Icon type="check" color="positive" size="square_xs" />
+            <Icon type="check" color="positive" size="square_xs" insetLeft="xxs" />
             <Text truncate>Connected to node and message streams synced.</Text>
         </Banner>
     ) : status === 'syncing' ? (
         <Banner>
-            <Icon type="alert" color="positive" size="square_xs" />
+            <Icon type="alert" color="positive" size="square_xs" insetLeft="xxs" />
             <Text truncate>Retrieving keys and decrypting messages</Text>
         </Banner>
     ) : (
-        <Banner background="negativeSubtle">
-            <Icon type="alert" color="negative" size="square_xs" />
+        <Banner>
+            <Icon type="alert" color="negative" size="square_xs" insetLeft="xxs" />
             <Text truncate>Disconnected</Text>
         </Banner>
     )
 }
 
 const Banner = (props: BoxProps) => (
-    <Box>
-        <Box
-            grow
-            horizontal
-            padding
-            gap="sm"
-            rounded="sm"
-            background="positiveSubtle"
-            alignItems="center"
-            {...props}
-        />
-    </Box>
+    <Box grow horizontal gap="sm" rounded="sm" alignItems="center" paddingBottom="xs" {...props} />
 )
