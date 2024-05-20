@@ -47,20 +47,14 @@ fi
 export CF_ENV=$ENVIRONMENT
 
 GATEWAY_WORKER_PATH="servers/workers/gateway-worker"
-SIWE_WORKER_PATH="servers/workers/siwe-worker"
 TOKEN_WORKER_PATH="servers/workers/token-worker"
 UNFURL_WORKER_PATH="servers/workers/unfurl-worker"
-JWT_WORKER_PATH="servers/workers/jwt-worker"
-RPC_PROXY_WORKER_PATH="servers/workers/nexus-rpc-worker"
 STACKUP_WORKER_PATH="servers/workers/stackup-worker"
 
 declare -a WORKER_PATHS=(
-    $JWT_WORKER_PATH
-    $SIWE_WORKER_PATH
     $TOKEN_WORKER_PATH
     $UNFURL_WORKER_PATH
     $GATEWAY_WORKER_PATH
-    $RPC_PROXY_WORKER_PATH
     $STACKUP_WORKER_PATH
 )
 
