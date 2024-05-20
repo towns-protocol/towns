@@ -26,7 +26,6 @@ import {
 import {
     make_ChannelPayload_Inception,
     make_ChannelPayload_Message,
-    make_fake_encryptedData,
     make_MemberPayload_Membership2,
     make_SpacePayload_Inception,
     make_UserPayload_Inception,
@@ -105,13 +104,11 @@ describe('streamRpcClient using v2 sync', () => {
         // alice creates a channel
         const channelIdStr = makeUniqueChannelStreamId(spaceIdStr)
         const channelId = streamIdToBytes(channelIdStr)
-        const channelProperties = 'Alices channel properties'
         const channelInceptionEvent = await makeEvent(
             alicesContext,
             make_ChannelPayload_Inception({
                 streamId: channelId,
                 spaceId: spaceId,
-                channelProperties: make_fake_encryptedData(channelProperties),
             }),
         )
         const event = await makeEvent(
@@ -205,13 +202,11 @@ describe('streamRpcClient using v2 sync', () => {
         // alice creates a channel
         const channelIdStr = makeUniqueChannelStreamId(spaceIdStr)
         const channelId = streamIdToBytes(channelIdStr)
-        const channelProperties = 'Alices channel properties'
         const channelInceptionEvent = await makeEvent(
             alicesContext,
             make_ChannelPayload_Inception({
                 streamId: channelId,
                 spaceId: spaceId,
-                channelProperties: make_fake_encryptedData(channelProperties),
             }),
         )
         let event = await makeEvent(
@@ -477,14 +472,12 @@ describe('streamRpcClient', () => {
         // Bob creates channel
         const channelIdStr = makeUniqueChannelStreamId(spaceIdStr)
         const channelId = streamIdToBytes(channelIdStr)
-        const channelProperties = 'Bobs channel properties'
 
         const channelInceptionEvent = await makeEvent(
             bobsContext,
             make_ChannelPayload_Inception({
                 streamId: channelId,
                 spaceId: spaceId,
-                channelProperties: make_fake_encryptedData(channelProperties),
             }),
         )
         let event = await makeEvent(
@@ -818,12 +811,10 @@ describe('streamRpcClient', () => {
 
         const channelIdStr = makeUniqueChannelStreamId(spacedStreamIdStr)
         const channelId = streamIdToBytes(channelIdStr)
-        const channelProperties = 'Bobs channel properties'
 
         const channelEvents = await makeEvents(bobsContext, [
             make_ChannelPayload_Inception({
                 streamId: channelId,
-                channelProperties: make_fake_encryptedData(channelProperties),
                 spaceId: spacedStreamId,
             }),
             make_MemberPayload_Membership2({
@@ -842,13 +833,11 @@ describe('streamRpcClient', () => {
         log('Bob fails to create channel with badly chained initial events, hash empty')
         const channelId2Str = makeUniqueChannelStreamId(spacedStreamIdStr)
         const channelId2 = streamIdToBytes(channelId2Str)
-        const channelProperties2 = 'Bobs channel properties 2'
         const channelEvent2_0 = await makeEvent(
             bobsContext,
             make_ChannelPayload_Inception({
                 streamId: channelId2,
                 spaceId: spacedStreamId,
-                channelProperties: make_fake_encryptedData(channelProperties2),
             }),
         )
 
@@ -952,13 +941,11 @@ describe('streamRpcClient', () => {
 
         const channelIdStr = makeUniqueChannelStreamId(spacedStreamIdStr)
         const channelId = streamIdToBytes(channelIdStr)
-        const channelProperties = 'Bobs channel properties'
 
         const channelEvents = await makeEvents(bobsContext, [
             make_ChannelPayload_Inception({
                 streamId: channelId,
                 spaceId: spacedStreamId,
-                channelProperties: make_fake_encryptedData(channelProperties),
             }),
             make_MemberPayload_Membership2({
                 userId: bobsUserId,

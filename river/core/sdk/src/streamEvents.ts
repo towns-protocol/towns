@@ -1,5 +1,4 @@
 import {
-    ChannelProperties,
     SnapshotCaseType,
     FullyReadMarker,
     UserInboxPayload_GroupEncryptionSessions,
@@ -58,16 +57,8 @@ export type StreamStateEvents = {
     userInvitedToStream: (streamId: string) => void
     userLeftStream: (streamId: string) => void
     userStreamMembershipChanged: (streamId: string) => void
-    spaceChannelCreated: (
-        spaceId: string,
-        channelId: string,
-        channelProperties: ChannelProperties,
-    ) => void
-    spaceChannelUpdated: (
-        spaceId: string,
-        channelId: string,
-        channelProperties: ChannelProperties,
-    ) => void
+    spaceChannelCreated: (spaceId: string, channelId: string) => void
+    spaceChannelUpdated: (spaceId: string, channelId: string) => void
     spaceChannelDeleted: (spaceId: string, channelId: string) => void
     fullyReadMarkersUpdated: (
         channelId: string,

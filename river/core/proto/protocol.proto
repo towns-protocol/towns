@@ -218,11 +218,10 @@ message SpacePayload {
     }
 
     message Channel {
-        reserved 5;
+        reserved 4, 5;
         ChannelOp op = 1;
         bytes channel_id = 2;
         EventRef origin_event = 3;
-        EncryptedData channel_properties = 4;
     }
 
     oneof content {
@@ -241,14 +240,9 @@ message ChannelPayload {
     }
     
     message Inception {
-        reserved 6;
+        reserved 4, 6;
         bytes stream_id = 1;
         bytes space_id = 3;
-        /**
-        * channel_properties and is_default be used to 
-        * create associated with that channel in the space stream
-        */
-        EncryptedData channel_properties = 4;
         StreamSettings settings = 5;
     }
 

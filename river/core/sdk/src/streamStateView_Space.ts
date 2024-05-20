@@ -2,9 +2,7 @@ import TypedEmitter from 'typed-emitter'
 import { ConfirmedTimelineEvent, RemoteTimelineEvent } from './types'
 import {
     ChannelOp,
-    ChannelProperties,
     Err,
-    EncryptedData,
     Snapshot,
     SpacePayload,
     SpacePayload_Channel,
@@ -14,12 +12,10 @@ import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './strea
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { DecryptedContent } from './encryptedContentTypes'
 import { check, throwWithCode } from '@river-build/dlog'
-import { isDefined, logNever } from './check'
+import { logNever } from './check'
 import { isDefaultChannelId, streamIdAsString } from './id'
 
 export type ParsedChannelProperties = {
-    name?: string
-    topic?: string
     isDefault: boolean
     updatedAtHash: string
 }
@@ -100,18 +96,15 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
         payload: SpacePayload_Channel,
         stateEmitter?: TypedEmitter<StreamStateEvents>,
     ): void {
-        const { op, channelId: channelIdBytes, channelProperties } = payload
+        const { op, channelId: channelIdBytes } = payload
         const channelId = streamIdAsString(channelIdBytes)
         switch (op) {
             case ChannelOp.CO_CREATED: {
-                const props = this.decryptChannelProps(channelProperties)
                 this.spaceChannelsMetadata.set(channelId, {
-                    name: props.name,
-                    topic: props.topic,
                     isDefault: isDefaultChannelId(channelId),
                     updatedAtHash: eventHash,
                 })
-                stateEmitter?.emit('spaceChannelCreated', this.streamId, channelId, props)
+                stateEmitter?.emit('spaceChannelCreated', this.streamId, channelId)
                 break
             }
             case ChannelOp.CO_DELETED:
@@ -120,28 +113,16 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
                 }
                 break
             case ChannelOp.CO_UPDATED: {
-                const props = this.decryptChannelProps(channelProperties)
                 this.spaceChannelsMetadata.set(channelId, {
-                    name: props.name,
-                    topic: props.topic,
                     isDefault: isDefaultChannelId(channelId),
                     updatedAtHash: eventHash,
                 })
-                stateEmitter?.emit('spaceChannelUpdated', this.streamId, channelId, props)
+                stateEmitter?.emit('spaceChannelUpdated', this.streamId, channelId)
                 break
             }
             default:
                 throwWithCode(`Unknown channel ${op}`, Err.STREAM_BAD_EVENT)
         }
-    }
-
-    private decryptChannelProps(encryptedData: EncryptedData | undefined): ChannelProperties {
-        //TODO: We need to support decryption once encryption is enabled for Channel EncryptedData events
-        let channelProperties = ChannelProperties.fromJsonString(encryptedData?.ciphertext ?? '')
-        if (!isDefined(channelProperties)) {
-            channelProperties = new ChannelProperties()
-        }
-        return channelProperties
     }
 
     onDecryptedContent(

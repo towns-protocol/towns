@@ -88,14 +88,12 @@ export const bobTalksToHimself = async (
 
     const channelIdStr = makeUniqueChannelStreamId(spacedStreamIdStr)
     const channelId = streamIdToBytes(channelIdStr)
-    const channelProperties = 'Bobs channel properties'
 
     const channelInceptionEvent = await makeEvent(
         bobsContext,
         make_ChannelPayload_Inception({
             streamId: channelId,
             spaceId: spacedStreamId,
-            channelProperties: { ...TEST_ENCRYPTED_MESSAGE_PROPS, ciphertext: channelProperties },
         }),
     )
     const channelJoinEvent = await makeEvent(
@@ -127,7 +125,6 @@ export const bobTalksToHimself = async (
     )
     expect(channelCreatePayload).toBeDefined()
     expect(channelCreatePayload?.channelId).toEqual(channelId)
-    expect(channelCreatePayload?.channelProperties?.ciphertext).toEqual(channelProperties)
 
     await maybeFlush()
 

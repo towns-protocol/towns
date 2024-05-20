@@ -93,7 +93,6 @@ import {
     StreamTimelineEvent,
     make_UserInboxPayload_Ack,
     make_UserInboxPayload_Inception,
-    make_fake_encryptedData,
     make_UserDeviceKeyPayload_EncryptionDevice,
     make_UserInboxPayload_GroupEncryptionSessions,
     ParsedStreamResponse,
@@ -530,9 +529,6 @@ export class Client
             make_ChannelPayload_Inception({
                 streamId: channelId,
                 spaceId: streamIdAsBytes(spaceId),
-                channelProperties: make_fake_encryptedData(
-                    make_ChannelProperties(channelName, channelTopic).toJsonString(),
-                ),
                 settings: streamSettings,
             }),
         )
@@ -691,20 +687,18 @@ export class Client
     async updateChannel(
         spaceId: string | Uint8Array,
         channelId: string | Uint8Array,
-        channelName: string,
-        channelTopic: string,
+        unused1: string,
+        unused2: string,
     ) {
-        this.logCall('updateChannel', channelId, spaceId, channelName, channelTopic)
+        this.logCall('updateChannel', channelId, spaceId, unused1, unused2)
         assert(isSpaceStreamId(spaceId), 'spaceId must be a valid streamId')
         assert(isChannelStreamId(channelId), 'channelId must be a valid streamId')
-        const channelProps = make_ChannelProperties(channelName, channelTopic).toJsonString()
 
         return this.makeEventAndAddToStream(
             spaceId, // we send events to the stream of the space where updated channel belongs to
             make_SpacePayload_Channel({
                 op: ChannelOp.CO_UPDATED,
                 channelId: streamIdAsBytes(channelId),
-                channelProperties: make_fake_encryptedData(channelProps),
             }),
             { method: 'updateChannel' },
         )

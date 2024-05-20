@@ -382,16 +382,6 @@ export const make_ChannelMessage_Redaction = (
     })
 }
 
-// !!! todo don't ship this !!! https://linear.app/hnt-labs/issue/HNT-3935/remove-calls-to-make-fake-encrypteddata
-export const make_fake_encryptedData = (ciphertext: string): PlainMessage<EncryptedData> => {
-    return {
-        ciphertext,
-        sessionId: '',
-        algorithm: '',
-        senderKey: '',
-    }
-}
-
 export const make_ChannelProperties = (
     channelName: string,
     channelTopic: string,

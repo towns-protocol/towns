@@ -21,7 +21,6 @@ import {
     getChannelPayload,
     getUserPayload_Membership,
     make_ChannelPayload_Inception,
-    make_fake_encryptedData,
     make_MemberPayload_Membership2,
     make_SpacePayload_Inception,
     make_UserPayload_Inception,
@@ -95,14 +94,12 @@ describe('workflows', () => {
         log('Bob created space, about to create channel')
         const channelIdStr = makeUniqueChannelStreamId(spacedStreamIdStr)
         const channelId = streamIdToBytes(channelIdStr)
-        const channelProperties = 'Bobs channel properties'
 
         const channelInceptionEvent = await makeEvent(
             bobsContext,
             make_ChannelPayload_Inception({
                 streamId: channelId,
                 spaceId: spacedStreamId,
-                channelProperties: make_fake_encryptedData(channelProperties),
             }),
         )
         const channelJoinEvent = await makeEvent(
