@@ -351,6 +351,10 @@ resource "aws_ecs_task_definition" "river-fargate" {
       containerPort = 8081
       hostPort      = 8081
       protocol      = "tcp"
+      }, {
+      containerPort = 8082
+      hostPort      = 8082
+      protocol      = "tcp"
     }]
 
     cpu    = local.river_node_cpu
@@ -400,7 +404,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
     dockerLabels = {
       "com.datadoghq.ad.check_names"  = "[\"openmetrics\"]",
       "com.datadoghq.ad.init_configs" = "[{}]",
-      "com.datadoghq.ad.instances"    = "[{\"openmetrics_endpoint\": \"http://localhost:8081/metrics\", \"namespace\": \"river_node\", \"metrics\": [\".*\"], \"collect_counters_with_distributions\": true}]"
+      "com.datadoghq.ad.instances"    = "[{\"openmetrics_endpoint\": \"http://localhost:8081/metrics\", \"namespace\": \"river_node\", \"metrics\": [\".*\"], \"collect_counters_with_distributions\": true}, {\"openmetrics_endpoint\": \"http://localhost:8082/metrics\", \"namespace\": \"xchain_node\", \"metrics\": [\".*\"], \"collect_counters_with_distributions\": true} ]"
     }
 
     environment = concat([
