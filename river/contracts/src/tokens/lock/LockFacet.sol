@@ -12,12 +12,8 @@ import {Facet} from "contracts/src/diamond/facets/Facet.sol";
 
 abstract contract LockFacet is ILock, LockBase, Facet {
   function __LockFacet_init(uint256 cooldown) external onlyInitializing {
-    __LockFacet_init_unchained(cooldown);
-  }
-
-  function __LockFacet_init_unchained(uint256 cooldown) internal {
+    __LockBase_init(cooldown);
     _addInterface(type(ILock).interfaceId);
-    _setDefaultCooldown(cooldown);
   }
 
   /// @inheritdoc ILock

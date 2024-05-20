@@ -9,6 +9,8 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import {IERC5805} from "@openzeppelin/contracts/interfaces/IERC5805.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {ILock} from "contracts/src/tokens/lock/ILock.sol";
 
 // libraries
 import {Nonces} from "@openzeppelin/contracts/utils/Nonces.sol";
@@ -19,18 +21,19 @@ import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20P
 import {ERC20Votes} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 
 import {VotesEnumerable} from "contracts/src/diamond/facets/governance/votes/enumerable/VotesEnumerable.sol";
-import {IntrospectionFacet} from "contracts/src/diamond/facets/introspection/IntrospectionFacet.sol";
-import {LockFacet} from "contracts/src/tokens/lock/LockFacet.sol";
+import {IntrospectionBase} from "contracts/src/diamond/facets/introspection/IntrospectionBase.sol";
+import {LockBase} from "contracts/src/tokens/lock/LockBase.sol";
 
 contract River is
   IOptimismMintableERC20,
   ILegacyMintableERC20,
   ISemver,
+  ILock,
   ERC20Permit,
   ERC20Votes,
   VotesEnumerable,
-  LockFacet,
-  IntrospectionFacet
+  IntrospectionBase,
+  LockBase
 {
   // =============================================================
   //                           Errors
@@ -66,7 +69,7 @@ contract River is
     address _remoteToken
   ) ERC20Permit("River") ERC20("River", "RVR") {
     __IntrospectionBase_init();
-    __LockFacet_init_unchained(30 days);
+    __LockBase_init(30 days);
 
     // add interface
     _addInterface(type(IERC20).interfaceId);
@@ -76,6 +79,7 @@ contract River is
     _addInterface(type(IOptimismMintableERC20).interfaceId);
     _addInterface(type(ILegacyMintableERC20).interfaceId);
     _addInterface(type(ISemver).interfaceId);
+    _addInterface(type(ILock).interfaceId);
 
     // set the bridge
     BRIDGE = _bridge;
@@ -131,7 +135,7 @@ contract River is
   }
 
   // =============================================================
-  //                           Overrides
+  //                           Votes
   // =============================================================
   /// @notice Clock used for flagging checkpoints, overriden to implement timestamp based
   /// checkpoints (and voting).
@@ -148,6 +152,45 @@ contract River is
     address owner
   ) public view virtual override(ERC20Permit, Nonces) returns (uint256) {
     return super.nonces(owner);
+  }
+
+  // =============================================================
+  //                           Locking
+  // =============================================================
+
+  /// @inheritdoc ILock
+  function isLockEnabled(address account) external view virtual returns (bool) {
+    return _lockEnabled(account);
+  }
+
+  function lockCooldown(
+    address account
+  ) external view virtual returns (uint256) {
+    return _lockCooldown(account);
+  }
+
+  /// @inheritdoc ILock
+  function enableLock(address account) external virtual onlyAllowed {
+    _enableLock(account);
+  }
+
+  /// @inheritdoc ILock
+  function disableLock(address account) external virtual onlyAllowed {
+    _disableLock(account);
+  }
+
+  /// @inheritdoc ILock
+  function setLockCooldown(uint256 cooldown) external virtual onlyAllowed {
+    _setDefaultCooldown(cooldown);
+  }
+
+  // =============================================================
+  //                           IERC165
+  // =============================================================
+
+  /// @inheritdoc IERC165
+  function supportsInterface(bytes4 interfaceId) public view returns (bool) {
+    return _supportsInterface(interfaceId);
   }
 
   // =============================================================

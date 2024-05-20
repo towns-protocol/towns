@@ -8,6 +8,10 @@ import {ILockBase} from "./ILock.sol";
 import {LockStorage} from "./LockStorage.sol";
 
 abstract contract LockBase is ILockBase {
+  function __LockBase_init(uint256 cooldown) internal {
+    _setDefaultCooldown(cooldown);
+  }
+
   modifier onlyAllowed() {
     if (!_canLock()) revert LockNotAuthorized();
     _;

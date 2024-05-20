@@ -7,6 +7,7 @@ import {IERC5805} from "@openzeppelin/contracts/interfaces/IERC5805.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {ILock} from "contracts/src/tokens/lock/ILock.sol";
 
 // libraries
 import {Nonces} from "@openzeppelin/contracts/utils/Nonces.sol";
@@ -60,7 +61,7 @@ contract River is
     RiverConfig memory config
   ) ERC20Permit("River") Ownable(config.owner) ERC20("River", "RVR") {
     __IntrospectionBase_init();
-    __LockFacet_init_unchained(0 days);
+    __LockBase_init(0 days);
 
     // add interface
     _addInterface(type(IRiver).interfaceId);
@@ -68,6 +69,7 @@ contract River is
     _addInterface(type(IERC20).interfaceId);
     _addInterface(type(IERC20Metadata).interfaceId);
     _addInterface(type(IERC20Permit).interfaceId);
+    _addInterface(type(ILock).interfaceId);
 
     // mint to vault
     _mint(config.vault, INITIAL_SUPPLY);
