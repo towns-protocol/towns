@@ -137,7 +137,7 @@ fi
 MAINTREE_REPO="herenotthere/harmony"
 # Subtree details
 SUBTREE_PREFIX="river"
-SUBTREE_REPO="https://github.com/river-build/river-stage"
+SUBTREE_REPO="https://github.com/river-build/river"
 
 
 if [[ -z "$SUBTREE_BRANCH" ]]; then
