@@ -66,7 +66,7 @@ func NewStreamCache(
 ) (*streamCacheImpl, error) {
 	s := &streamCacheImpl{
 		params:                    params,
-		registerMiniBlocksBatched: false,
+		registerMiniBlocksBatched: true,
 	}
 
 	streams, err := params.Registry.GetAllStreams(ctx, appliedBlockNum)

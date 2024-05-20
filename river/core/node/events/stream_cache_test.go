@@ -26,10 +26,9 @@ func TestStreamCacheViewEviction(t *testing.T) {
 		testStreamCacheViewEviction(t, false)
 	})
 
-	// TODO: tests timeout on CI quite often, need to be stabilized.
-	// t.Run("BatchBlockRegistration", func(t *testing.T) {
-	// 	testStreamCacheViewEviction(t, true)
-	// })
+	t.Run("BatchBlockRegistration", func(t *testing.T) {
+		testStreamCacheViewEviction(t, true)
+	})
 }
 
 func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
@@ -37,15 +36,13 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 		testCacheEvictionWithFilledMiniBlockPool(t, false)
 	})
 
-	// TODO: tests timeout on CI quite often, need to be stabilized.
-	// t.Run("BatchBlockRegistration", func(t *testing.T) {
-	// 	testCacheEvictionWithFilledMiniBlockPool(t, true)
-	// })
+	t.Run("BatchBlockRegistration", func(t *testing.T) {
+		testCacheEvictionWithFilledMiniBlockPool(t, true)
+	})
 }
 
 // TestStreamMiniblockBatchProduction ensures that all mini-blocks are registered when mini-blocks are registered in
 // batches.
-// TODO: tests timeout on CI quite often, need to be stabilized.
 func DisabledTestStreamMiniblockBatchProduction(t *testing.T) {
 	t.Run("SingleBlockRegistration", func(t *testing.T) {
 		testStreamMiniblockBatchProduction(t, false)
