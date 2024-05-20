@@ -11,6 +11,7 @@ import React, {
 import { useInView } from 'react-intersection-observer'
 import { Outlet, useLocation, useParams } from 'react-router'
 import {
+    Channel,
     ChannelContextProvider,
     Membership,
     MessageType,
@@ -242,7 +243,9 @@ export const SpacesChannelComponent = (props: Props) => {
         [onLoadMore],
     )
 
-    const showJoinChannel = myMembership && myMembership !== Membership.Join && !isDmOrGDM
+    const showJoinChannel =
+        ((myMembership && myMembership !== Membership.Join) || !myMembership) && !isDmOrGDM
+
     const showDMAcceptInvitation = myMembership === Membership.Invite && isDmOrGDM
 
     const triggerClose = useContext(TouchPanelContext)?.triggerPanelClose
@@ -251,29 +254,13 @@ export const SpacesChannelComponent = (props: Props) => {
         <>
             {!isTouch && <RegisterChannelShortcuts />}
             {channel && showJoinChannel ? (
-                <Box absoluteFill centerContent padding="lg">
-                    <Box centerContent gap="md">
-                        <Box padding="md" color="gray2" background="level2" rounded="sm">
-                            <Icon type="tag" size="square_sm" />
-                        </Box>
-                        <Box centerContent gap="sm">
-                            <Heading level={3}>Join #{channel.label}</Heading>
-                            <Paragraph textAlign="center" color="gray2">
-                                You aren’t a member yet. Join to get access:
-                            </Paragraph>
-                        </Box>
-                        <Button
-                            minWidth="100"
-                            size="button_sm"
-                            rounded="sm"
-                            hoverEffect="none"
-                            tone="cta1"
-                            onClick={onJoinChannel}
-                        >
-                            Join Channel
-                        </Button>
-                    </Box>
-                </Box>
+                <UnjoinedChannelComponent
+                    channel={channel}
+                    spaceId={spaceId}
+                    triggerClose={triggerClose}
+                    hideHeader={props.hideHeader}
+                    onJoinChannel={onJoinChannel}
+                />
             ) : (
                 <MediaDropContextProvider
                     key={channelId}
@@ -367,6 +354,51 @@ export const SpacesChannelComponent = (props: Props) => {
                     </Stack>
                 </Stack>
             )}
+        </>
+    )
+}
+
+const UnjoinedChannelComponent = ({
+    channel,
+    hideHeader,
+    spaceId,
+    triggerClose,
+    onJoinChannel,
+}: {
+    channel: Channel
+    hideHeader?: boolean
+    spaceId?: string
+    triggerClose?: () => void
+    onJoinChannel: () => void
+}) => {
+    return (
+        <>
+            {channel && !hideHeader && (
+                <ChannelHeader channel={channel} spaceId={spaceId} onTouchClose={triggerClose} />
+            )}
+            <Box absoluteFill centerContent padding="lg">
+                <Box centerContent gap="md">
+                    <Box padding="md" color="gray2" background="level2" rounded="sm">
+                        <Icon type="tag" size="square_sm" />
+                    </Box>
+                    <Box centerContent gap="sm">
+                        <Heading level={3}>Join #{channel.label}</Heading>
+                        <Paragraph textAlign="center" color="gray2">
+                            You aren’t a member yet. Join to get access:
+                        </Paragraph>
+                    </Box>
+                    <Button
+                        minWidth="100"
+                        size="button_sm"
+                        rounded="sm"
+                        hoverEffect="none"
+                        tone="cta1"
+                        onClick={onJoinChannel}
+                    >
+                        Join Channel
+                    </Button>
+                </Box>
+            </Box>
         </>
     )
 }

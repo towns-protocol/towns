@@ -37,6 +37,9 @@ export const CopySpaceLink = (
 
     const closeHandleRef = useRef<undefined | (() => void)>()
 
+    const streamText = channelId ? 'channel' : 'town'
+    const copyText = !copyDisplay ? `Copy ${streamText} link` : 'Copied!'
+
     return (
         <Box horizontal>
             <Box
@@ -44,9 +47,7 @@ export const CopySpaceLink = (
                 cursor="pointer"
                 tooltip={
                     <Tooltip horizontal alignItems="center" gap="sm">
-                        <Paragraph size="sm">
-                            {!copyDisplay ? 'Copy town link' : 'Copied!'}
-                        </Paragraph>
+                        <Paragraph size="sm">{copyText}</Paragraph>
                         {copyDisplay && (
                             <Icon
                                 type="check"

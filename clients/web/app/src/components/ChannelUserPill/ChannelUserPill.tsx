@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useMemo } from 'react'
-import { ZTEvent, useChannelMembers } from 'use-towns-client'
+import { ZTEvent } from 'use-towns-client'
 import { uniq } from 'lodash'
 import { Box, Paragraph, Stack } from '@ui'
 import { CopySpaceLink } from '@components/CopySpaceLink/CopySpaceLink'
@@ -7,10 +7,11 @@ import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimel
 import { Avatar } from '@components/Avatar/Avatar'
 import { CHANNEL_INFO_PARAMS } from 'routes'
 import { PanelLink } from '@components/Panel/PanelLink'
+import { useChannelHeaderMembers } from 'hooks/useChannelHeaderMembers'
 
 export const ChannelUsersPill = (props: { spaceId: string | undefined; channelId: string }) => {
     const { spaceId, channelId } = props
-    const { memberIds } = useChannelMembers()
+    const memberIds = useChannelHeaderMembers(channelId)
     const timelineContext = useContext(MessageTimelineContext)
 
     const lastInteractedUniqueUserIds = useMemo(() => {
@@ -65,7 +66,7 @@ export const ChannelUsersPill = (props: { spaceId: string | undefined; channelId
                         <Avatar key={userId} size="avatar_xs" userId={userId} />
                     ))}
                 </Stack>
-                <Paragraph size="sm">{memberIds.length}</Paragraph>
+                <Paragraph size="sm">{memberIds.length > 0 && memberIds.length}</Paragraph>
             </PanelLink>
 
             {spaceId && (

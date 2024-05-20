@@ -26,6 +26,7 @@ import { AnimatedLoaderGradient } from '@components/AnimatedLoaderGradient/Anima
 import { FavoriteChannelButtonTouch } from '@components/FavoriteChannelButton/FavoriteChannelButton'
 import { useFavoriteChannels } from 'hooks/useFavoriteChannels'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
+import { useChannelHeaderMembers } from 'hooks/useChannelHeaderMembers'
 
 type Props = {
     channel: Channel
@@ -37,7 +38,15 @@ export const ChannelHeader = (props: Props) => {
     const { isTouch } = useDevice()
     const { upToDate } = useStreamUpToDate(props.channel.id)
     const { clientStatus } = useTownsContext()
-    const showLoadingIndicator = !upToDate || !clientStatus.streamSyncActive
+    const channelMembers = useChannelMembers()
+    const myUserId = useMyUserId()
+    const isUserChannelMember = useMemo(
+        () => (myUserId ? channelMembers.memberIds.includes(myUserId) : false),
+        [channelMembers.memberIds, myUserId],
+    )
+    const showLoadingIndicator =
+        (!upToDate || !clientStatus.streamSyncActive) && isUserChannelMember
+
     return isTouch ? (
         <TouchChannelHeader {...props} showLoadingIndicator={showLoadingIndicator} />
     ) : (
@@ -153,7 +162,7 @@ const GDMTitleContent = (props: { roomIdentifier: string }) => {
 const TouchChannelHeader = (props: Props & { showLoadingIndicator: boolean }) => {
     const { channel, onTouchClose, showLoadingIndicator } = props
     const spaceId = useSpaceIdFromPathname()
-    const { memberIds } = useChannelMembers()
+    const memberIds = useChannelHeaderMembers(channel.id)
     const { favoriteChannelIds } = useFavoriteChannels()
     const { displayNotificationBanner, requestPushPermission, denyPushPermission } =
         usePushNotifications()
@@ -166,6 +175,8 @@ const TouchChannelHeader = (props: Props & { showLoadingIndicator: boolean }) =>
     const isFavorite = favoriteChannelIds.has(channel.id)
     const isMuted = channelIsMuted || spaceIsMuted
     const infoButtonPressed = useChannelInfoButton(channelType, channel.id)
+
+    const showMembersCount = memberIds.length > 0
 
     return (
         <Stack gap="sm">
@@ -210,8 +221,16 @@ const TouchChannelHeader = (props: Props & { showLoadingIndicator: boolean }) =>
                             </Stack>
 
                             <Paragraph truncate color="gray2" size="sm">
-                                {`${memberIds.length} member${memberIds.length > 1 ? `s` : ``}`}
-                                {channel.topic ? ` · ${channel.topic.toLocaleLowerCase()}` : ``}
+                                {showMembersCount && (
+                                    <>
+                                        {`${memberIds.length} member${
+                                            memberIds.length > 1 ? `s` : ``
+                                        }`}
+                                        {channel.topic
+                                            ? ` · ${channel.topic.toLocaleLowerCase()}`
+                                            : ``}
+                                    </>
+                                )}
                             </Paragraph>
                         </>
                     ) : (
