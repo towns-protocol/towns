@@ -7,11 +7,11 @@ import { useShallow } from 'zustand/react/shallow'
 import { Box, Button, Heading, Icon, IconButton, Text } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
-import { ModalContainer } from '@components/Modals/ModalContainer'
 import { isTouch } from 'hooks/useDevice'
 import { useIsSmartAccountDeployed } from 'hooks/useIsSmartAccountDeployed'
 import { useBalance } from 'hooks/useBalance'
 import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
+import { AboveAppProgressModalContainer } from '@components/AppProgressOverlay/AboveAppProgress/AboveAppProgress'
 import { formatEthDisplay } from '../utils'
 import { CopyWalletAddressButton } from '../TokenVerification/Buttons'
 
@@ -29,15 +29,16 @@ export function UserOpTxModal(props: Props) {
         return null
     }
     return (
-        <ModalContainer
+        <AboveAppProgressModalContainer
             minWidth="auto"
+            background="none"
             onHide={() => {
                 endPublicPageLoginFlow()
                 deny?.()
             }}
         >
             <UserOpTxModalContent {...props} endPublicPageLoginFlow={endPublicPageLoginFlow} />
-        </ModalContainer>
+        </AboveAppProgressModalContainer>
     )
 }
 

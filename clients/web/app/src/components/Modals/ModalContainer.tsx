@@ -7,7 +7,7 @@ import { useSafeEscapeKeyCancellation } from 'hooks/useSafeEscapeKeyCancellation
 import { TouchPanelNavigationBar } from '@components/TouchPanelNavigationBar/TouchPanelNavigationBar'
 import { transitions } from 'ui/transitions/transitions'
 
-type Props = {
+export type ModalContainerProps = {
     children: React.ReactNode
     onHide: () => void
     minWidth?: BoxProps['minWidth']
@@ -17,10 +17,13 @@ type Props = {
     rightBarButton?: React.ReactNode
     padding?: BoxProps['padding']
     border?: BoxProps['border']
+    rootLayer?: HTMLElement
+    background?: BoxProps['background']
 }
 
-export const ModalContainer = (props: Props) => {
-    const root = useZLayerContext().rootLayerRef?.current
+export const ModalContainer = (props: ModalContainerProps) => {
+    const zLayerRoot = useZLayerContext().rootLayerRef?.current
+    const root = props.rootLayer ?? zLayerRoot
     const { isTouch } = useDevice()
     const { onHide, touchTitle, rightBarButton } = props
 
@@ -34,6 +37,7 @@ export const ModalContainer = (props: Props) => {
             <TouchFullScreenModalContainer
                 title={touchTitle}
                 rightBarButton={rightBarButton}
+                background={props.background}
                 onHide={onHide}
             >
                 {props.children}
@@ -50,6 +54,7 @@ type TouchFullScreenModalContainerProps = {
     title: string
     onHide: () => void
     rightBarButton?: React.ReactNode
+    background?: BoxProps['background']
 }
 
 const TouchFullScreenModalContainer = (props: TouchFullScreenModalContainerProps) => {
@@ -74,13 +79,13 @@ const TouchFullScreenModalContainer = (props: TouchFullScreenModalContainerProps
                     animate={{ x: '0%', opacity: 1 }}
                     exit={{ x: '100%', opacity: 0 }}
                     transition={transitions.panel}
-                    background="level1"
+                    background={props.background ?? 'level1'}
                     pointerEvents="auto"
                     zIndex="tooltips"
                 >
                     {/* this box makes sure the UI below doesn't bleed through while spring animating */}
                     <Box
-                        background="level1"
+                        background={props.background ?? 'level1'}
                         style={{ position: 'absolute', right: -100, top: 0, bottom: 0, width: 100 }}
                     />
                     <Stack height="100%">
@@ -100,7 +105,7 @@ const TouchFullScreenModalContainer = (props: TouchFullScreenModalContainerProps
     )
 }
 
-export const CenteredModalContainer = (props: Props) => {
+export const CenteredModalContainer = (props: ModalContainerProps) => {
     const { isTouch } = useDevice()
     const minWidth: BoxProps['minWidth'] = props.minWidth
         ? props.minWidth
@@ -116,7 +121,7 @@ export const CenteredModalContainer = (props: Props) => {
             <MotionBox
                 absoluteFill
                 cursor="crosshair"
-                style={{ background: `rgba(0,0,0,0.3)`, backdropFilter: `blur(4px)` }}
+                background={props.background ?? 'modalContainer'}
                 pointerEvents="auto"
                 transition={{
                     type: 'spring',

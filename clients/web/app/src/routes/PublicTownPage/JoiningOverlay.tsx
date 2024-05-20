@@ -26,7 +26,7 @@ export function JoiningOverlay() {
         }
         if (currOpGas) {
             // currOpGas means the confirmation tx modal is up
-            return AppProgressState.None
+            return AppProgressState.Joining
         }
         if (isJoining) {
             return AppProgressState.Joining

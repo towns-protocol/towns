@@ -11,6 +11,7 @@ import { AppProgressOverlay } from '@components/AppProgressOverlay/AppProgressOv
 import { AppProgressState } from '@components/AppProgressOverlay/AppProgressState'
 import { WelcomeLayout } from 'routes/layouts/WelcomeLayout'
 import { AppProgressOverlayTrigger } from '@components/AppProgressOverlay/AppProgressOverlayTrigger'
+import { AboveAppProgressOverlay } from '@components/AppProgressOverlay/AboveAppProgress/AboveAppProgress'
 
 const App = React.lazy(() => import('App'))
 
@@ -70,6 +71,7 @@ export const Main = () => {
                     </Suspense>
                 </DebugRouter>
                 <AppProgressOverlay debug />
+                <AboveAppProgressOverlay />
             </BrowserRouter>
         </ErrorBoundary>
     )

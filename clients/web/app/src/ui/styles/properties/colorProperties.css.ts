@@ -281,6 +281,10 @@ export const colorProperties = defineProperties({
                     '--background': vars.color.tone.negative,
                 },
             },
+            modalContainer: {
+                background: 'rgba(0,0,0,0.3)',
+                backgdropFilter: 'blur(4px)',
+            },
         },
         color: {
             ...vars.color.foreground,

@@ -10,10 +10,10 @@ import { Box, BoxProps, FancyButton, Icon, IconProps, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { useJoinTown } from 'hooks/useJoinTown'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
-import { ModalContainer } from '@components/Modals/ModalContainer'
 import { TokenVerification } from '@components/Web3/TokenVerification/TokenVerification'
 import { useErrorToast } from 'hooks/useErrorToast'
 import { useAnalytics } from 'hooks/useAnalytics'
+import { AboveAppProgressModalContainer } from '@components/AppProgressOverlay/AboveAppProgress/AboveAppProgress'
 import { useConnectedStatus } from './useConnectedStatus'
 import { usePublicPageLoginFlow } from './usePublicPageLoginFlow'
 
@@ -194,9 +194,14 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
             {content()}
 
             {spaceId && assetModal && (
-                <ModalContainer padding="none" minWidth="350" onHide={hideAssetModal}>
+                <AboveAppProgressModalContainer
+                    padding="none"
+                    minWidth="350"
+                    background="none"
+                    onHide={hideAssetModal}
+                >
                     <TokenVerification spaceId={spaceId} onHide={hideAssetModal} />
-                </ModalContainer>
+                </AboveAppProgressModalContainer>
             )}
         </>
     )
