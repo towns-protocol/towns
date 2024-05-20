@@ -8,7 +8,8 @@ import { useDevice } from 'hooks/useDevice'
 import { PATHS } from 'routes'
 import { useStore } from 'store/store'
 import { PanelContext, PanelStack } from '@components/Panel/PanelContext'
-import { WelcomeLayout } from './layouts/WelcomeLayout'
+import { AppProgressState } from '@components/AppProgressOverlay/AppProgressState'
+import { AppProgressOverlayTrigger } from '@components/AppProgressOverlay/AppProgressOverlayTrigger'
 
 export const DirectMessages = () => {
     const { isTouch } = useDevice()
@@ -35,7 +36,12 @@ export const DirectMessages = () => {
     }, [isTouch, location.search, searchParams, stackId])
 
     if (isTouch && !spaceSlug) {
-        return <WelcomeLayout debugText="TOUCH MESSAGE REDIRECT" />
+        return (
+            <AppProgressOverlayTrigger
+                progressState={AppProgressState.LoggingIn}
+                debugSource="DM route !spaceSlug"
+            />
+        )
     }
 
     if (isTouch) {

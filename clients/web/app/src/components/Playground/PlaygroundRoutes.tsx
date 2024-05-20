@@ -11,7 +11,7 @@ import { PageTransactionButton } from './pages/PageTransactionButton'
 import { PageButtons } from './pages/PageButtons'
 import { PageText } from './pages/PageText'
 import { Playground } from './Playground'
-import { PageNodeVisualization } from './pages/PageNodeVisualization'
+import { PageProgressOverlay } from './pages/PageProgressOverlay'
 
 export const PlaygroundRoutes = () => {
     return (
@@ -25,7 +25,7 @@ export const PlaygroundRoutes = () => {
                 <Route path="colors" element={<PageColors />} />
                 <Route path="tooltips" element={<PageTooltips />} />
                 <Route path="buttons" element={<PageButtons />} />
-                <Route path="nodeviz" element={<PageNodeVisualization />} />
+                <Route path="nodeviz" element={<PageProgressOverlay />} />
                 {env.DEV && <Route path="upload" element={<UploadImageDebugger />} />}
             </Route>
         </Routes>

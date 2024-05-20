@@ -1,4 +1,4 @@
-import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FormProvider, UseFormReturn, useFormContext } from 'react-hook-form'
 import { ethers } from 'ethers'
 
@@ -40,14 +40,14 @@ import { ModalContainer } from '@components/Modals/ModalContainer'
 import { ErrorReportForm } from '@components/ErrorReport/ErrorReport'
 import { InformationBox } from '@components/TownPageLayout/InformationBox'
 import { TokenInfoBox } from '@components/TownPageLayout/TokenInfoBox'
+import { AppProgressOverlayTrigger } from '@components/AppProgressOverlay/AppProgressOverlayTrigger'
+import { AppProgressState } from '@components/AppProgressOverlay/AppProgressState'
 import { CreateSpaceFormV2SchemaType, schema } from './CreateSpaceFormV2.schema'
 import { AvatarPlaceholder } from '../AvatarPlaceholder'
 import { PanelType, TransactionDetails } from './types'
 import { PanelContent } from './PanelContents'
 import { CreateTownSubmit } from './CreateTownSubmit'
 import { BottomBarWithColWidths } from '../BottomBar'
-
-const LazyCreateSpaceMintAnimation = React.lazy(() => import('./CreateSpaceMintAnimation'))
 
 type Member = {
     address: ReturnType<typeof useConnectivity>['loggedInWalletAddress']
@@ -624,9 +624,10 @@ function CreateSpaceFormV2WithoutAuth() {
                 }}
             </FormRender>
             {transactionDetails.isTransacting ? (
-                <Suspense fallback={<></>}>
-                    <LazyCreateSpaceMintAnimation />
-                </Suspense>
+                <AppProgressOverlayTrigger
+                    progressState={AppProgressState.CreatingSpace}
+                    debugSource="Create Space Form"
+                />
             ) : (
                 <></>
             )}

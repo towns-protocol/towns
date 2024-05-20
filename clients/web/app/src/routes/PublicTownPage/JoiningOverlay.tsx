@@ -5,8 +5,8 @@ import {
     useConnectivity,
     useIsTransactionPending,
 } from 'use-towns-client'
-import { Box } from '@ui'
-import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
+import { AppProgressState } from '@components/AppProgressOverlay/AppProgressState'
+import { AppProgressOverlayTrigger } from '@components/AppProgressOverlay/AppProgressOverlayTrigger'
 
 // 1. logging in
 // 2. joining - animation
@@ -19,40 +19,32 @@ export function JoiningOverlay() {
     const { isAuthenticated } = useConnectivity()
     const { currOpGas } = userOpsStore()
     const isJoining = useIsTransactionPending(BlockchainTransactionType.JoinSpace)
-    function content() {
+
+    function getAppProressState() {
         if (!isAuthenticated) {
-            return (
-                <>
-                    <ButtonSpinner /> Logging In...
-                </>
-            )
+            return AppProgressState.LoggingIn
         }
         if (currOpGas) {
             // currOpGas means the confirmation tx modal is up
-            return null
+            return AppProgressState.None
         }
         if (isJoining) {
-            return (
-                <>
-                    <ButtonSpinner /> Joining...
-                </>
-            )
+            return AppProgressState.Joining
         }
         if (isAuthenticated && !isJoining) {
             // time between post-authentication and joining - isAuthenticated && !isJoining - what to put here?
-            return (
-                <>
-                    <ButtonSpinner /> Joining...
-                </>
-            )
+            return AppProgressState.Joining
         }
-        return null
+
+        return AppProgressState.Joining
     }
+    console.log('[app progress] JoiningOverlay', { isAuthenticated, currOpGas, isJoining })
 
     // probably want to delay this a sec to allow privy iframe to show up
     return (
-        <Box absoluteFill centerContent gap background="level2">
-            {content()}
-        </Box>
+        <AppProgressOverlayTrigger
+            progressState={getAppProressState()}
+            debugSource="joining overlay"
+        />
     )
 }

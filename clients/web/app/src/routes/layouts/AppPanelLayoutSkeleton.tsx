@@ -3,6 +3,7 @@ import React from 'react'
 import { SpaceSidebarLoadingPlaceholder } from '@components/SideBars/SpaceSideBar/SpaceSideBarLoading'
 import { Box, Stack } from '@ui'
 import { LogoSingleLetter } from '@components/Logo/Logo'
+import { FadeInBox } from '@components/Transitions'
 
 export const AppPanelLayoutSkeleton = () => {
     return (
@@ -11,28 +12,28 @@ export const AppPanelLayoutSkeleton = () => {
             <Allotment>
                 {/* left-side side-bar goes here */}
                 <Allotment.Pane minSize={64 + 8} maxSize={64 + 8} preferredSize={65}>
-                    <Box absoluteFill padding="xs">
+                    <FadeInBox absoluteFill padding="xs" delay={0.1} preset="fadeup">
                         <Box elevateReadability grow rounded="sm" />
-                    </Box>
+                    </FadeInBox>
                 </Allotment.Pane>
 
                 {/* channel side-bar goes here */}
                 <Allotment.Pane visible minSize={180} maxSize={320} preferredSize={320}>
-                    <Box absoluteFill padding="xs">
+                    <FadeInBox absoluteFill padding="xs" delay={0.2} preset="fadeup">
                         <Box grow overflow="hidden" rounded="sm">
                             <SpaceSidebarLoadingPlaceholder />
                         </Box>
-                    </Box>
+                    </FadeInBox>
                 </Allotment.Pane>
 
                 {/* main container */}
                 <Allotment.Pane>
-                    <Box absoluteFill padding="xs">
+                    <FadeInBox absoluteFill padding="xs" delay={0.3} preset="fadeup">
                         <Box grow rounded="sm" overflow="hidden">
                             <Box background="level2" height="x6" />
                             <Box elevateReadability grow />
                         </Box>
-                    </Box>
+                    </FadeInBox>
                 </Allotment.Pane>
             </Allotment>
         </Box>
@@ -41,7 +42,7 @@ export const AppPanelLayoutSkeleton = () => {
 
 const TopBarSkeleton = () => {
     return (
-        <Box padding="xs">
+        <FadeInBox padding="xs">
             <Stack horizontal elevateReadability minHeight="x6" rounded="sm">
                 <Box centerContent width="x8">
                     <a href="https://towns.com" rel=", noopener noreferrer" target="_blank">
@@ -53,6 +54,6 @@ const TopBarSkeleton = () => {
                 </Box>
                 <Box width="x5" />
             </Stack>
-        </Box>
+        </FadeInBox>
     )
 }

@@ -37,7 +37,12 @@ const ChannelHeaderMobileShimmer = () => (
 )
 
 export const TimelineShimmer = (props: { children?: React.ReactNode }) => (
-    <Box grow data-testid="timeline-shimmer" paddingTop="safeAreaInsetBottom">
+    <Box
+        grow
+        absoluteFillSafeSafari
+        data-testid="timeline-shimmer"
+        paddingTop="safeAreaInsetBottom"
+    >
         <Stack
             grow
             justifyContent="end"

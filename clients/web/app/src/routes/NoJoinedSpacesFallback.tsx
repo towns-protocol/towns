@@ -14,7 +14,8 @@ import { useDevice } from 'hooks/useDevice'
 import { useStore } from 'store/store'
 import { replaceOAuthParameters, useAnalytics } from 'hooks/useAnalytics'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
-import { WelcomeLayout } from './layouts/WelcomeLayout'
+import { AppProgressState } from '@components/AppProgressOverlay/AppProgressState'
+import { AppProgressOverlayTrigger } from '@components/AppProgressOverlay/AppProgressOverlayTrigger'
 
 export const NoJoinedSpacesFallback = () => {
     const navigate = useNavigate()
@@ -116,42 +117,28 @@ export const NoJoinedSpacesFallback = () => {
     // }
 
     if (spaces.length) {
-        return isTouch ? <WelcomeLayout debugText="no joined space fallback" /> : <></>
-    } else if (loginStatus === LoginStatus.LoggingIn) {
+        console.log('[app progress] no joined spaces fallback: no spaces')
         return (
-            <Stack
-                centerContent
-                data-testid="space-home-fallback-content"
-                paddingX="lg"
-                height="100%"
-            >
-                <Stack centerContent gap="x4">
-                    <Icon padding="md" size="square_xl" type="home" background="level2" />
-                    <Stack centerContent gap>
-                        <Text textAlign="center" color="gray2">
-                            Logging In
-                        </Text>
-                    </Stack>
-                </Stack>
-            </Stack>
+            <AppProgressOverlayTrigger
+                progressState={AppProgressState.LoggingIn}
+                debugSource="no-joined-spaces spaces.length"
+            />
+        )
+    } else if (loginStatus === LoginStatus.LoggingIn) {
+        console.log('[app progress] no joined spaces fallback: logging in')
+        return (
+            <AppProgressOverlayTrigger
+                progressState={AppProgressState.LoggingIn}
+                debugSource="no-joined-spaces login"
+            />
         )
     } else if (loginStatus === LoginStatus.LoggedIn && !clientStatus.isLocalDataLoaded) {
+        console.log('[app progress] no joined spaces fallback: InitializingWorkspace')
         return (
-            <Stack
-                centerContent
-                data-testid="space-home-fallback-content"
-                paddingX="lg"
-                height="100%"
-            >
-                <Stack centerContent gap="x4">
-                    <Icon padding="md" size="square_xl" type="home" background="level2" />
-                    <Stack centerContent gap>
-                        <Text textAlign="center" color="gray2">
-                            Loading...
-                        </Text>
-                    </Stack>
-                </Stack>
-            </Stack>
+            <AppProgressOverlayTrigger
+                progressState={AppProgressState.InitializingWorkspace}
+                debugSource="no-joined-spaces data not loaded"
+            />
         )
     } else {
         return (

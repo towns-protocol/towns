@@ -25,7 +25,7 @@ export const SetupAnimation = (props: Props) => {
     const dummyNodes = useDummyNodes()
     const nodeUrl = dummyNodes[1].nodeUrl
     const backgroundColorString = useMemo(
-        () => (darkMode ? Figma.DarkMode.Level1 : Figma.LightMode.Level1),
+        () => (darkMode ? 'hsla(255, 9%, 16%, 1)' : Figma.LightMode.Level1),
         [darkMode],
     )
 
@@ -61,7 +61,7 @@ export const SetupAnimation = (props: Props) => {
     return (
         <Stack gap centerContent>
             <NodeAnimationContext.Provider value={config}>
-                <NodeAnimationLoader skipPlaceholder maxWidth="250" />
+                <NodeAnimationLoader skipPlaceholder animateIntro maxWidth="250" />
             </NodeAnimationContext.Provider>
             <RotatingText texts={rotateText} />
         </Stack>

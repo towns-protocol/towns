@@ -6,8 +6,9 @@ import isEqual from 'lodash/isEqual'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { SetUsernameFormWithClose } from '@components/SetUsernameForm/SetUsernameForm'
 import { useUsernameConfirmed } from 'hooks/useUsernameConfirmed'
+import { AppProgressState } from '@components/AppProgressOverlay/AppProgressState'
+import { AppProgressOverlayTrigger } from '@components/AppProgressOverlay/AppProgressOverlayTrigger'
 import { PublicTownPage } from './PublicTownPage/PublicTownPage'
-import { AppSkeletonView } from './layouts/WelcomeLayout'
 import { usePublicPageLoginFlow } from './PublicTownPage/usePublicPageLoginFlow'
 
 //  Aims to give the best experience to the most common user flow: a user who is a member of a space and loading the app.
@@ -83,12 +84,22 @@ export const ValidateMembership = () => {
             AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.PublicTownPage)
             return _PublicTownPage
         }
-
-        return <AppSkeletonView />
+        return (
+            <AppProgressOverlayTrigger
+                progressState={AppProgressState.LoggingIn}
+                debugSource="validateMembership space === undefined"
+            />
+        )
     }
 
     if (!space.hasLoadedMemberships) {
-        return <AppSkeletonView />
+        // previously login state here but we might as well show loading
+        return (
+            <AppProgressOverlayTrigger
+                progressState={AppProgressState.InitializingWorkspace}
+                debugSource="validateMembership hasLoadedMemberships === false"
+            />
+        )
     }
 
     const isMember = space.membership === Membership.Join
@@ -102,7 +113,15 @@ export const ValidateMembership = () => {
 
     if (!isRemoteDataLoaded || !isLocalDataLoaded) {
         AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.WelcomeLayoutLoadLocalData)
-        return <SkeletonWithProgress isLocalDataLoaded={isLocalDataLoaded} />
+        return (
+            <>
+                {/* <Outlet /> <- we can add the app in the background underneath the progress */}
+                <AppProgressOverlayTrigger
+                    progressState={AppProgressState.InitializingWorkspace}
+                    debugSource="!isRemoteDataLoaded || !isLocalDataLoaded"
+                />
+            </>
+        )
     }
 
     return (
@@ -111,12 +130,6 @@ export const ValidateMembership = () => {
             {!usernameConfirmed && <SetUsernameFormWithClose spaceData={space} />}
         </>
     )
-}
-
-function SkeletonWithProgress({ isLocalDataLoaded }: { isLocalDataLoaded: boolean }) {
-    const { clientStatus } = useTownsContext()
-
-    return <AppSkeletonView progress={isLocalDataLoaded ? clientStatus.progress : undefined} />
 }
 
 function useDataLoaded() {

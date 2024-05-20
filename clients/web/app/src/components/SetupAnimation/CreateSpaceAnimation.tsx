@@ -45,7 +45,7 @@ export const CreateSpaceAnimation = () => {
                 <NodeAnimationContext.Provider value={config}>
                     <NodeAnimationLoader skipPlaceholder showSparklingDots maxWidth="250" />
                 </NodeAnimationContext.Provider>
-                <Steps steps={steps} step={1} />
+                <Steps steps={steps} step={0} />
                 <Disclaimer />
             </Stack>
         </Stack>

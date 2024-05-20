@@ -20,7 +20,7 @@ export const WelcomeRoute = React.memo(() => {
 
     return (
         <PrivyWrapper>
-            <WelcomeLayout debugText="welcome route">
+            <WelcomeLayout>
                 <Suspense>
                     <LoginComponent />
                 </Suspense>

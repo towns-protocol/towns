@@ -6,9 +6,9 @@ import { useDevice } from 'hooks/useDevice'
 import { WelcomeRoute } from 'routes/Welcome'
 import { mobileAppClass } from 'ui/styles/globals/utils.css'
 import { PATHS } from 'routes'
-import { PublicTownPage } from 'routes/PublicTownPage/PublicTownPage'
 import { AuthenticatedRoutes } from 'routes/AuthenticatedRoutes'
 import { PlaygroundLazy } from '@components/Playground/PlaygroundLazy'
+import { PublicTownPage } from 'routes/PublicTownPage/PublicTownPage'
 
 export const AllRoutes = () => {
     const { isAuthenticated } = useConnectivity()

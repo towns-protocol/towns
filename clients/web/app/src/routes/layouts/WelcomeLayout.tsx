@@ -1,14 +1,7 @@
 import React from 'react'
 import AnalyticsService, { AnalyticsEvents } from 'use-towns-client/dist/utils/analyticsService'
 import { TransitionLogo } from '@components/Logo/Logo'
-import { Box, MotionBox, Paragraph, Stack, Text } from '@ui'
-import { useDevice } from 'hooks/useDevice'
-import { TimelineShimmer } from '@components/Shimmer'
-import { ModalContainer } from '@components/Modals/ModalContainer'
-import { ShakeToReport } from '@components/BugReportButton/ShakeToReport'
-import { BugReportPanel } from 'routes/BugReportPanel'
-import { AppPanelLayoutSkeleton } from './AppPanelLayoutSkeleton'
-import { usePanelActions } from './hooks/usePanelActions'
+import { Box, Paragraph, Stack } from '@ui'
 
 export const WelcomeLayout = (props: { children?: React.ReactNode; debugText?: string }) => {
     AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.Welcome)
@@ -32,54 +25,5 @@ export const WelcomeLayout = (props: { children?: React.ReactNode; debugText?: s
                 </Box>
             )}
         </>
-    )
-}
-
-export const AppSkeletonView = (props: { progress?: number }) => {
-    const { isTouch } = useDevice()
-    const { isPanelOpen } = usePanelActions()
-    const isBugReportOpen = isPanelOpen('bug-report')
-    return (
-        <>
-            <ShakeToReport />
-            {isBugReportOpen ? (
-                <BugReportPanel />
-            ) : (
-                <>
-                    {isTouch ? <TimelineShimmer /> : <AppPanelLayoutSkeleton />}
-                    {props.progress !== undefined && (
-                        <ModalContainer minWidth="200" onHide={() => {}}>
-                            {<WelcomeProgressBar progress={props.progress} />}
-                        </ModalContainer>
-                    )}
-                </>
-            )}
-        </>
-    )
-}
-
-const WelcomeProgressBar = (props: { progress: number }) => {
-    const { progress } = props
-    return (
-        <Stack gap centerContent>
-            <Text color="default" size="md" fontWeight="medium">
-                Setting up local workspace
-            </Text>
-            <Box border="textDefault" height="x1" rounded="xs" overflow="hidden" width="200">
-                <MotionBox
-                    width="100%"
-                    height="100%"
-                    background="inverted"
-                    initial={{
-                        scaleX: 0,
-                        originX: 0,
-                    }}
-                    animate={{
-                        scaleX: progress,
-                    }}
-                    transition={{ duration: 0.1 }}
-                />
-            </Box>
-        </Stack>
     )
 }

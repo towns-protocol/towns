@@ -16,6 +16,10 @@ export const radio = style({
     height: vars.dims.input.input_sm,
     borderRadius: '100%',
     selectors: {
+        '&:before': {
+            content: '',
+            display: 'none!important',
+        },
         '&:after': {
             content: '',
             display: 'block !important',

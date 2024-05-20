@@ -228,7 +228,7 @@ const GlobeScene = (
                     <mesh onPointerEnter={onPointerEnter} onPointerLeave={onPointerLeave}>
                         <sphereGeometry args={[2, 120, 60]} />
                         <animated.meshPhysicalMaterial
-                            transparent={introSpring.intro.to((o) => o < 1)}
+                            transparent={!darkMode || introSpring.intro.to((o) => o < 1)}
                             roughness={darkMode ? 1 : 0.5}
                             opacity={introSpring.intro}
                         >

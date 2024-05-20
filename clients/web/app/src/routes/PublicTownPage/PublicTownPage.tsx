@@ -1,32 +1,33 @@
+import { Allotment } from 'allotment'
+import { clsx } from 'clsx'
 import debug from 'debug'
 import React, { useCallback, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { Link } from 'react-router-dom'
 import { useConnectivity, useContractSpaceInfo, useMyProfile } from 'use-towns-client'
-import { Allotment } from 'allotment'
-import { clsx } from 'clsx'
-import { PrivyWrapper } from 'privy/PrivyProvider'
+import { AppProgressState } from '@components/AppProgressOverlay/AppProgressState'
 import { Avatar } from '@components/Avatar/Avatar'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
+import { ErrorReportForm } from '@components/ErrorReport/ErrorReport'
 import { LogoSingleLetter } from '@components/Logo/Logo'
 import { ModalContainer } from '@components/Modals/ModalContainer'
+import { MainSideBar } from '@components/SideBars'
 import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackground'
 import { TownPageActivity } from '@components/TownPageLayout/TownPageActivity'
 import { TownPageLayout } from '@components/TownPageLayout/TownPageLayout'
 import { FadeInBox } from '@components/Transitions'
 import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
 import { Box, BoxProps, Button, Heading, Icon, IconButton, Paragraph, Stack } from '@ui'
-import { useCombinedAuth } from 'privy/useCombinedAuth'
-import { shortAddress } from 'ui/utils/utils'
-import { MainSideBar } from '@components/SideBars'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
-import { ErrorReportForm } from '@components/ErrorReport/ErrorReport'
-import { atoms } from 'ui/styles/atoms.css'
-import { darkTheme } from 'ui/styles/vars.css'
-import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { useAnalytics } from 'hooks/useAnalytics'
 import { useDevice } from 'hooks/useDevice'
-import { WelcomeLayout } from '../layouts/WelcomeLayout'
+import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
+import { PrivyWrapper } from 'privy/PrivyProvider'
+import { useCombinedAuth } from 'privy/useCombinedAuth'
+import { atoms } from 'ui/styles/atoms.css'
+import { darkTheme } from 'ui/styles/vars.css'
+import { shortAddress } from 'ui/utils/utils'
+import { AppProgressOverlayTrigger } from '@components/AppProgressOverlay/AppProgressOverlayTrigger'
 import { BottomBarContent } from './BottomBarContent'
 import { useConnectedStatus } from './useConnectedStatus'
 import { usePublicPageLoginFlow } from './usePublicPageLoginFlow'
@@ -101,7 +102,10 @@ const PublicTownPageWithoutAuth = (props: { isPreview?: boolean; onClosePreview?
             </Box>
         </>
     ) : isLoading ? (
-        <WelcomeLayout debugText="fetching town data" />
+        <AppProgressOverlayTrigger
+            progressState={AppProgressState.LoggingIn}
+            debugSource="public town page isLoading"
+        />
     ) : connected ? (
         <Stack horizontal absoluteFill>
             <Allotment>

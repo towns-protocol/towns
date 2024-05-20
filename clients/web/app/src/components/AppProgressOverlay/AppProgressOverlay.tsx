@@ -1,0 +1,99 @@
+import { AnimatePresence } from 'framer-motion'
+import React, { useEffect, useMemo } from 'react'
+import { matchPath, useLocation } from 'react-router'
+import { TransitionLogo } from '@components/Logo/Logo'
+import { CreateSpaceAnimation } from '@components/SetupAnimation/CreateSpaceAnimation'
+import { SetupAnimation } from '@components/SetupAnimation/SetupAnimation'
+import { MotionStack } from '@ui'
+import { useStore } from 'store/store'
+import { AppOverlayDebugger } from './AppOverlayDebugger'
+import { AppProgressState } from './AppProgressState'
+import { AppSkeletonView } from './AppSkeletonView'
+import { useKeepLoginStateWhileAuth } from './hooks/useKeepLoginStateWhileAuth'
+import { useAppProgressStore } from './store/appProgressStore'
+
+export const AppProgressOverlay = (props: { debug?: boolean }) => {
+    const spaceIdBookmark = useStore((s) => s.spaceIdBookmark)
+    const spaceId =
+        matchPath('/t/:spaceId/*', useLocation().pathname)?.params.spaceId || spaceIdBookmark
+
+    const { appProgressOverlay, isOptimisticInitialized } = useAppProgressStore(
+        ({ appProgressOverlay, optimisticInitializedSpaces }) => ({
+            appProgressOverlay,
+            isOptimisticInitialized: optimisticInitializedSpaces.some((id) => id === spaceId),
+        }),
+    )
+
+    useKeepLoginStateWhileAuth()
+
+    useEffect(() => {
+        console.log('[app progress] overlay:', appProgressOverlay)
+    }, [appProgressOverlay])
+
+    const content = useAppOverlayContent(appProgressOverlay, isOptimisticInitialized)
+
+    return (
+        <AnimatePresence>
+            {appProgressOverlay !== AppProgressState.None ? (
+                <TransitionContainer key="overlay">
+                    <AnimatePresence mode="wait">{content}</AnimatePresence>
+                    {props.debug && <AppOverlayDebugger debugText={appProgressOverlay} />}
+                </TransitionContainer>
+            ) : (
+                <></>
+            )}
+        </AnimatePresence>
+    )
+}
+
+export const useAppOverlayContent = (state: AppProgressState, isOptimisticInitialized: boolean) => {
+    return useMemo(() => {
+        if (state === AppProgressState.LoadingAssets) {
+            return <TransitionLogo key="logo" />
+        }
+        if (
+            state === AppProgressState.LoggingIn ||
+            state === AppProgressState.InitializingWorkspace
+        ) {
+            return isOptimisticInitialized ? (
+                // we think we have already initialized the space, show the
+                // skeleton instead of risking a flash of the setup animation
+                <AppSkeletonView />
+            ) : (
+                <SetupAnimation mode={AppProgressState.InitializingWorkspace} />
+            )
+        }
+
+        if (state === AppProgressState.Joining) {
+            return <SetupAnimation mode={AppProgressState.Joining} />
+        }
+
+        if (state === AppProgressState.CreatingSpace) {
+            return <CreateSpaceAnimation />
+        }
+
+        return <TransitionLogo key="logo" />
+    }, [state, isOptimisticInitialized])
+}
+
+const TransitionContainer = (props: { children: React.ReactNode }) => {
+    const transition = useMemo(() => {
+        return {
+            exit: {
+                opacity: 0,
+                transition: { duration: 0.4, delay: 0.2 },
+            },
+        }
+    }, [])
+    return (
+        <MotionStack
+            centerContent
+            absoluteFill
+            background="level1"
+            {...transition}
+            border
+            height="100vh"
+            {...props}
+        />
+    )
+}
