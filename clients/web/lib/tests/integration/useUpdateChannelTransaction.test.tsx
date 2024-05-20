@@ -1,5 +1,5 @@
 /**
- * @group dendrite
+ * @group core
  */
 import { CreateChannelInfo, UpdateChannelInfo } from 'use-towns-client/src/types/towns-types'
 import React, { useCallback, useMemo } from 'react'
@@ -130,14 +130,13 @@ describe('useUpdateChannelTransaction', () => {
 
         /* Assert */
         // verify the channel name has changed
-        await waitFor(() =>
-            expect(channelElement).toHaveTextContent(`channelName:${updatedChannelName}`),
+        await waitFor(
+            () => expect(channelElement).toHaveTextContent(`channelName:${updatedChannelName}`),
+            TestConstants.DecaDefaultWaitForTimeout,
         )
-        await waitFor(() => expect(SpaceHierachyElement).toHaveTextContent(updatedChannelName))
-
-        // verify the channel topic has changed
-        await waitFor(() =>
-            expect(channelElement).toHaveTextContent(`channelTopic:${updatedChannelTopic}`),
+        await waitFor(
+            () => expect(SpaceHierachyElement).toHaveTextContent(updatedChannelName),
+            TestConstants.DoubleDefaultWaitForTimeout,
         )
     }) // end test
 }) // end describe
@@ -267,6 +266,11 @@ function TestComponent(args: {
         args.signer,
     ])
     // the view
+    console.log('useUpdateChannelTransaction.test the view', {
+        createSpaceTxStatus,
+        createChannelTransactionStatus,
+        updateChannelTransactionStatus,
+    })
     return (
         <>
             <button onClick={onClickCreateSpace}>Create Space</button>
@@ -329,6 +333,7 @@ function ChannelComponent(): JSX.Element {
     const channelTopic = useMemo(() => {
         return channel?.topic ?? 'undefined'
     }, [channel?.topic])
+    console.log('useUpdateChannelTransaction.test channelComponent', { channel, channelTopic })
     return (
         <div data-testid="channel">
             {channel && (

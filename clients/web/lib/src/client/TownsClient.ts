@@ -711,21 +711,12 @@ export class TownsClient
         if (updateChannelInfo.channelId === undefined) {
             throw new Error('updateChannel: channelId is undefined')
         }
-        const channelProperties = this.casablancaClient.streams
-            .get(updateChannelInfo.parentSpaceId)
-            ?.view.spaceContent.spaceChannelsMetadata.get(updateChannelInfo.channelId)
-
-        this.log('[updateChannelRoom] channelProperties', {
-            prev: channelProperties,
-            new: updateChannelInfo,
-        })
-
         // update to updated info if it's defined, otherwise update to the current info
         await this.casablancaClient.updateChannel(
             updateChannelInfo.parentSpaceId,
             updateChannelInfo.channelId,
-            updateChannelInfo.updatedChannelName ?? channelProperties?.name ?? '',
-            updateChannelInfo.updatedChannelTopic ?? channelProperties?.topic ?? '',
+            '',
+            '',
         )
     }
 
@@ -2381,6 +2372,7 @@ export class TownsClient
             }
 
             if (receipt?.status === 1) {
+                this.log('receipt', receipt)
                 return createTransactionContext({
                     status: TransactionStatus.Success,
                     transaction,

@@ -8,8 +8,8 @@ import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
 export function useChannelData(): ChannelData {
     const { channelId, spaceId } = useChannelContext()
     const space = useSpaceData()
-    const room = useRoom(channelId)
 
+    const room = useRoom(channelId)
     const channelGroup = useMemo(
         () => space?.channelGroups.find((g) => g.channels.find((c) => c.id === channelId)),
         [space?.channelGroups, channelId],

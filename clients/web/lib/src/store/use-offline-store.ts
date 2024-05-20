@@ -1,4 +1,4 @@
-import { SpaceInfo } from '@river-build/web3'
+import { ChannelMetadata, SpaceInfo } from '@river-build/web3'
 import isEqual from 'lodash/isEqual'
 import { create, StateCreator } from 'zustand'
 import { createJSONStorage, persist, PersistOptions } from 'zustand/middleware'
@@ -7,6 +7,11 @@ export type OfflineUser = {
     userId: string
     username: string
     displayName: string | undefined
+}
+
+export type OfflineChannelMetadata = {
+    channel: ChannelMetadata
+    updatedAtHash: string
 }
 
 // map <spaceId/networkId, SpaceInfo>
@@ -23,6 +28,8 @@ export type OfflineUserBioMap = Record<string, string>
 export type OfflineStates = {
     offlineSpaceInfoMap: OfflineSpaceInfoMap
     setOfflineSpaceInfo: (spaceInfo: SpaceInfo) => void
+    offlineChannelMetadataMap: Record<string, OfflineChannelMetadata>
+    setOfflineChannelInfo: (channel: OfflineChannelMetadata) => void
     offlineUserMap: OfflineUserMap
     setOfflineUser: (key: string, offlineUser: OfflineUser) => void
     offlineWalletAddressMap: OfflineWalletAddressMap
@@ -56,6 +63,26 @@ export const useOfflineStore = create<OfflineStates>(
                         offlineSpaceInfoMap: {
                             ...state.offlineSpaceInfoMap,
                             [spaceInfo.networkId]: spaceInfo,
+                        },
+                    }
+                })
+            },
+            offlineChannelMetadataMap: {},
+            setOfflineChannelInfo(value) {
+                set((state) => {
+                    if (
+                        isEqual(
+                            state.offlineChannelMetadataMap[value.channel.channelNetworkId],
+                            value,
+                        )
+                    ) {
+                        return state
+                    }
+                    return {
+                        ...state,
+                        offlineChannelMetadataMap: {
+                            ...state.offlineChannelMetadataMap,
+                            [value.channel.channelNetworkId]: value,
                         },
                     }
                 })
