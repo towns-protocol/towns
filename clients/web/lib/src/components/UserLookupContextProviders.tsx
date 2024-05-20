@@ -43,6 +43,7 @@ export const SpaceContextUserLookupProvider = (props: { children: React.ReactNod
         return allSpaceUsers.map((member) => {
             const user = {
                 ...member,
+                ensAddress: parentContextUsersMap?.[member.userId]?.ensAddress,
                 memberOf: parentContextUsersMap?.[member.userId]?.memberOf,
             }
             const prev = usersCache.current[user.userId]
@@ -115,6 +116,7 @@ export const DMChannelContextUserLookupProvider = (props: {
         }
         return room.members.map((member) => ({
             ...member,
+            ensAddress: parentContext?.usersMap[member.userId]?.ensAddress,
             memberOf: parentContext?.usersMap[member.userId]?.memberOf,
         }))
     }, [room, parentContext?.usersMap])
@@ -125,6 +127,7 @@ export const DMChannelContextUserLookupProvider = (props: {
         }
         return Object.values(room.membersMap).map((member) => ({
             ...member,
+            ensAddress: parentContext?.usersMap[member.userId]?.ensAddress,
             memberOf: parentContext?.usersMap[member.userId]?.memberOf,
         }))
     }, [room, parentContext?.usersMap])
