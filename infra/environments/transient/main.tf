@@ -180,12 +180,12 @@ module "river_node" {
   private_subnets = local.transient_global_remote_state.vpc.private_subnets
   vpc_id          = local.transient_global_remote_state.vpc.vpc_id
 
-  log_level                       = var.river_node_log_level
-  base_chain_id                   = local.base_chain_id
-  base_chain_network_url_override = module.base_anvil_service[0].network_url
+  log_level                             = var.river_node_log_level
+  base_chain_id                         = local.base_chain_id
+  base_chain_rpc_url_plaintext_override = module.base_anvil_service[0].network_url
 
-  river_chain_id                   = local.river_chain_id
-  river_chain_network_url_override = module.river_anvil_service[0].network_url
+  river_chain_id                         = local.river_chain_id
+  river_chain_rpc_url_plaintext_override = module.river_anvil_service[0].network_url
 
   ecs_cluster = {
     id   = local.transient_global_remote_state.river_ecs_cluster.id

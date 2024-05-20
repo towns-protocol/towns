@@ -57,14 +57,26 @@ variable "river_chain_id" {
   type        = string
 }
 
-variable "base_chain_network_url_override" {
-  description = "(optional) The base chain network url override"
+variable "base_chain_rpc_url_secret_arn" {
+  description = "The secret ARN for the base chain rpc url"
   type        = any
   default     = null
 }
 
-variable "river_chain_network_url_override" {
-  description = "(optional) The river chain network url override"
+variable "river_chain_rpc_url_secret_arn" {
+  description = "The secret ARN for the river chain rpc url"
+  type        = any
+  default     = null
+}
+
+variable "base_chain_rpc_url_plaintext_override" {
+  description = "(optional) The base chain rpc url override"
+  type        = any
+  default     = null
+}
+
+variable "river_chain_rpc_url_plaintext_override" {
+  description = "(optional) The river chain rpc url override"
   type        = any
   default     = null
 }

@@ -46,12 +46,20 @@ output "pgadmin_google_oauth2_config_secret" {
   value = aws_secretsmanager_secret.pgadmin_google_oauth2_config
 }
 
-output "base_chain_network_url_secret" {
-  value = aws_secretsmanager_secret.base_chain_network_url_secret
+output "river_sepolia_rpc_url_secret" {
+  value = aws_secretsmanager_secret.river_sepolia_rpc_url_secret
 }
 
-output "river_chain_network_url_secret" {
-  value = aws_secretsmanager_secret.river_chain_network_url_secret
+output "river_mainnet_rpc_url_secret" {
+  value = aws_secretsmanager_secret.river_mainnet_rpc_url_secret
+}
+
+output "base_sepolia_rpc_url_secret" {
+  value = aws_secretsmanager_secret.base_sepolia_rpc_url_secret
+}
+
+output "base_mainnet_rpc_url_secret" {
+  value = aws_secretsmanager_secret.base_mainnet_rpc_url_secret
 }
 
 output "river_node_acme_account_secret" {

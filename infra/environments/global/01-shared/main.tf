@@ -131,26 +131,6 @@ resource "aws_secretsmanager_secret_version" "pgadmin_google_oauth2_config" {
   secret_string = "DUMMY"
 }
 
-resource "aws_secretsmanager_secret" "base_chain_network_url_secret" {
-  name        = "base-chain-network-url"
-  description = "Base chain network url"
-}
-
-resource "aws_secretsmanager_secret_version" "base_chain_network_url_secret" {
-  secret_id     = aws_secretsmanager_secret.base_chain_network_url_secret.id
-  secret_string = "DUMMY"
-}
-
-resource "aws_secretsmanager_secret" "river_chain_network_url_secret" {
-  name        = "river-chain-network-url"
-  description = "River chain network url"
-}
-
-resource "aws_secretsmanager_secret_version" "river_chain_network_url_secret" {
-  secret_id     = aws_secretsmanager_secret.river_chain_network_url_secret.id
-  secret_string = "DUMMY"
-}
-
 resource "aws_secretsmanager_secret" "notification_service_db_password_secret" {
   name        = "notification-service-db-password"
   description = "Notification service db password"
@@ -159,6 +139,26 @@ resource "aws_secretsmanager_secret" "notification_service_db_password_secret" {
 resource "aws_secretsmanager_secret_version" "notification_service_db_password_secret" {
   secret_id     = aws_secretsmanager_secret.notification_service_db_password_secret.id
   secret_string = "DUMMY"
+}
+
+resource "aws_secretsmanager_secret" "river_sepolia_rpc_url_secret" {
+  name        = "river-sepolia-rpc-url"
+  description = "River Sepolia RPC URL"
+}
+
+resource "aws_secretsmanager_secret" "river_mainnet_rpc_url_secret" {
+  name        = "river-mainnet-rpc-url"
+  description = "River Mainnet RPC URL"
+}
+
+resource "aws_secretsmanager_secret" "base_sepolia_rpc_url_secret" {
+  name        = "base-sepolia-rpc-url"
+  description = "Base Sepolia RPC URL"
+}
+
+resource "aws_secretsmanager_secret" "base_mainnet_rpc_url_secret" {
+  name        = "base-mainnet-rpc-url"
+  description = "Base Mainnet RPC URL"
 }
 
 module "river_node_credentials" {

@@ -239,8 +239,10 @@ resource "aws_iam_role_policy" "river_node_credentials" {
           "${local.shared_credentials.db_password.arn}",
           "${local.shared_credentials.wallet_private_key.arn}",
           "${local.global_remote_state.river_global_dd_agent_api_key.arn}",
-          "${local.global_remote_state.base_chain_network_url_secret.arn}",
-          "${local.global_remote_state.river_chain_network_url_secret.arn}",
+          "${local.global_remote_state.river_sepolia_rpc_url_secret.arn}",
+          "${local.global_remote_state.river_mainnet_rpc_url_secret.arn}",
+          "${local.global_remote_state.base_sepolia_rpc_url_secret.arn}",
+          "${local.global_remote_state.base_mainnet_rpc_url_secret.arn}",
           "${var.river_node_ssl_cert_secret_arn}"
         ]
       },
@@ -285,24 +287,24 @@ locals {
   // we conditionally create these arrays. an empty array, when concatted, does nothing.
   // this is how we conditionally add secrets and env vars to the task definition.
 
-  base_chain_default_td_secret_config = var.base_chain_network_url_override == null ? [{
+  base_chain_default_td_secret_config = var.base_chain_rpc_url_plaintext_override == null ? [{
     name      = "BASECHAIN__NETWORKURL"
-    valueFrom = local.global_remote_state.base_chain_network_url_secret.arn
+    valueFrom = var.base_chain_rpc_url_secret_arn
   }] : []
 
-  base_chain_override_td_env_config = var.base_chain_network_url_override == null ? [] : [{
+  base_chain_override_td_env_config = var.base_chain_rpc_url_plaintext_override == null ? [] : [{
     name  = "BASECHAIN__NETWORKURL"
-    value = var.base_chain_network_url_override
+    value = var.base_chain_rpc_url_plaintext_override
   }]
 
-  river_chain_default_td_secret_config = var.river_chain_network_url_override == null ? [{
+  river_chain_default_td_secret_config = var.river_chain_rpc_url_plaintext_override == null ? [{
     name      = "RIVERCHAIN__NETWORKURL"
-    valueFrom = local.global_remote_state.river_chain_network_url_secret.arn
+    valueFrom = var.river_chain_rpc_url_secret_arn
   }] : []
 
-  river_chain_override_td_env_config = var.river_chain_network_url_override == null ? [] : [{
+  river_chain_override_td_env_config = var.river_chain_rpc_url_plaintext_override == null ? [] : [{
     name  = "RIVERCHAIN__NETWORKURL"
-    value = var.river_chain_network_url_override
+    value = var.river_chain_rpc_url_plaintext_override
   }]
 
   river_node_image_name = var.is_transient ? "public.ecr.aws/l8h0l2e6/river-node:transient-${var.git_pr_number}-latest" : "public.ecr.aws/h5v6m2x1/river:dev"

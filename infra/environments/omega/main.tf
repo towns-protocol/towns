@@ -40,18 +40,18 @@ module "vpc" {
   source = "terraform-aws-modules/vpc/aws"
 
   name = "river-vpc-${terraform.workspace}"
-  cidr = "10.0.0.0/16"
+  cidr = "10.4.0.0/16"
 
   azs = ["us-east-1a", "us-east-1b"]
 
   # num ips in subnet = 2^(32 - 19) = 2^13 = 8192
-  public_subnets = ["10.0.0.0/19", "10.0.32.0/19"]
+  public_subnets = ["10.4.0.0/19", "10.4.32.0/19"]
 
   # num ips in subnet = 2^(32 - 18) = 2^14 = 16384
-  private_subnets = ["10.0.64.0/18", "10.0.128.0/18"]
+  private_subnets = ["10.4.64.0/18", "10.4.128.0/18"]
 
   # num ips in subnet = 2^(32 - 22) = 2^10 = 1024
-  database_subnets = ["10.0.192.0/22", "10.0.196.0/22"]
+  database_subnets = ["10.4.192.0/22", "10.4.196.0/22"]
 
   enable_vpn_gateway     = false
   enable_nat_gateway     = true
@@ -63,17 +63,11 @@ module "vpc" {
   enable_dns_hostnames = true
 }
 
-
 module "river_alb" {
   source = "../../modules/river-alb"
 
   subnets = module.vpc.public_subnets
   vpc_id  = module.vpc.vpc_id
-}
-
-resource "aws_ecs_cluster" "river_ecs_cluster" {
-  name = "${terraform.workspace}-river-ecs-cluster"
-  tags = module.global_constants.tags
 }
 
 module "river_db_cluster" {
@@ -82,11 +76,9 @@ module "river_db_cluster" {
   vpc_id           = module.vpc.vpc_id
 }
 
-module "river_node_ssl_cert" {
-  source                       = "../../modules/river-node-ssl-cert"
-  subnet_ids                   = module.vpc.private_subnets
-  common_name                  = "*.nodes.${terraform.workspace}.towns.com"
-  challenge_dns_record_fq_name = "_acme-challenge.nodes.${terraform.workspace}.towns.com"
+resource "aws_ecs_cluster" "river_ecs_cluster" {
+  name = "${terraform.workspace}-river-ecs-cluster"
+  tags = module.global_constants.tags
 }
 
 module "pgadmin" {
@@ -106,49 +98,11 @@ module "pgadmin" {
 }
 
 locals {
-  num_nodes           = 11
   global_remote_state = module.global_constants.global_remote_state.outputs
 }
 
 module "system_parameters" {
   source = "../../modules/river-system-parameters"
-}
-
-module "river_nlb" {
-  source  = "../../modules/river-nlb"
-  count   = local.num_nodes
-  subnets = module.vpc.public_subnets
-  vpc_id  = module.vpc.vpc_id
-  nlb_id  = tostring(count.index + 1)
-}
-
-module "river_node" {
-  source      = "../../modules/river-node"
-  count       = local.num_nodes
-  node_number = count.index + 1
-
-  river_node_ssl_cert_secret_arn = module.river_node_ssl_cert.river_node_ssl_cert_secret_arn
-
-  river_node_db = module.river_db_cluster
-
-  public_subnets  = module.vpc.public_subnets
-  private_subnets = module.vpc.private_subnets
-  vpc_id          = module.vpc.vpc_id
-
-  system_parameters = module.system_parameters
-
-  base_chain_rpc_url_secret_arn  = local.global_remote_state.base_sepolia_rpc_url_secret.arn
-  river_chain_rpc_url_secret_arn = local.global_remote_state.river_sepolia_rpc_url_secret.arn
-
-  base_chain_id  = 84532
-  river_chain_id = 6524490
-
-  ecs_cluster = {
-    id   = aws_ecs_cluster.river_ecs_cluster.id
-    name = aws_ecs_cluster.river_ecs_cluster.name
-  }
-
-  lb = module.river_nlb[count.index]
 }
 
 module "notification_service" {
@@ -169,40 +123,26 @@ module "notification_service" {
   vapid_key_secret_arn     = local.global_remote_state.notification_vapid_key_secret.arn
   apns_auth_key_secret_arn = local.global_remote_state.notification_apns_auth_key_secret.arn
 
-  # TODO: check with brian & team to see who runs this account
   vapid_subject = "mailto:support@towns.com"
 
-  river_node_db  = module.river_db_cluster
-  river_node_url = module.global_constants.nodes_metadata[0].url
+  river_node_db = module.river_db_cluster
+
+  # TODO: use an actual node url once we're up on mainnet
+  river_node_url = ""
 }
 
 module "eth_balance_monitor" {
   source = "../../modules/eth-balance-monitor"
 
-  subnet_ids                      = module.vpc.private_subnets
+  subnet_ids = module.vpc.private_subnets
+
+  # TODO: make sure this is dynamically pulled from ssm, and not hardcoded in terraform
   river_registry_contract_address = module.system_parameters.river_registry_contract_address_parameter.value
 
-  base_chain_rpc_url_secret_arn  = local.global_remote_state.base_sepolia_rpc_url_secret.arn
-  river_chain_rpc_url_secret_arn = local.global_remote_state.river_sepolia_rpc_url_secret.arn
+  # TODO: acquire actual rpc urls and place them in the secrets
+  base_chain_rpc_url_secret_arn  = local.global_remote_state.base_mainnet_rpc_url_secret.arn
+  river_chain_rpc_url_secret_arn = local.global_remote_state.river_mainnet_rpc_url_secret.arn
 }
 
-
-data "cloudflare_zone" "zone" {
-  name = module.global_constants.primary_hosted_zone_name
-}
-
-resource "cloudflare_record" "app_dns" {
-  zone_id = data.cloudflare_zone.zone.id
-  name    = "app.${terraform.workspace}"
-  value   = "gamma-rw7y.onrender.com"
-  type    = "CNAME"
-  ttl     = 60
-}
-
-resource "cloudflare_record" "sample_app_dns" {
-  zone_id = data.cloudflare_zone.zone.id
-  name    = "sample-app.${terraform.workspace}"
-  value   = "sample-gamma.onrender.com"
-  type    = "CNAME"
-  ttl     = 60
-}
+# TODO: setup uptime monitors for mainnet nodes
+# TODO: standardize wallet balance alerts for gamma, and reuse them for mainnet in terraform
