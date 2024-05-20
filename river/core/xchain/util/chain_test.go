@@ -42,7 +42,7 @@ func TestStartBlockNumber(t *testing.T) {
 	ctx, cancel := test.NewTestContext()
 	defer cancel()
 
-	btc, err := crypto.NewBlockchainTestContext(ctx, 0)
+	btc, err := crypto.NewBlockchainTestContext(ctx, 0, false)
 	require.NoError(err, "instantiate blockchain test context")
 	defer btc.Close()
 
@@ -92,7 +92,7 @@ func TestStartBlockNumberLongChain(t *testing.T) {
 	ctx, cancel := test.NewTestContext()
 	defer cancel()
 
-	btc, err := crypto.NewBlockchainTestContext(ctx, 0)
+	btc, err := crypto.NewBlockchainTestContext(ctx, 0, false)
 	require.NoError(err, "instantiate blockchain test context")
 	defer btc.Close()
 

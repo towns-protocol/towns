@@ -1,6 +1,8 @@
 import { dlogger } from '@river-build/dlog'
 import { StressClient } from '../../utils/stressClient'
 import { ChatConfig } from './types'
+import { getSystemInfo } from '../../utils/systemInfo'
+import { channelMessagePostWhere } from '../../utils/timeline'
 
 export async function sumarizeChat(client: StressClient, cfg: ChatConfig) {
     const logger = dlogger('stress:sumarizeChat')
@@ -12,25 +14,14 @@ export async function sumarizeChat(client: StressClient, cfg: ChatConfig) {
     const message = await client.waitFor(
         () =>
             defaultChannel.view.timeline.find(
-                (event) =>
-                    (event.decryptedContent?.kind === 'channelMessage' &&
-                        event.decryptedContent?.content.payload.case === 'post' &&
-                        event.decryptedContent?.content.payload.value.content.case === 'text' &&
-                        event.decryptedContent?.content.payload.value.content.value.body.includes(
-                            cfg.sessionId,
-                        )) ||
-                    (event.localEvent?.channelMessage?.payload.case === 'post' &&
-                        event.localEvent?.channelMessage?.payload.value.content.case === 'text' &&
-                        event.localEvent?.channelMessage?.payload.value.content.value.body.includes(
-                            cfg.sessionId,
-                        )),
+                channelMessagePostWhere((value) => value.body.includes(cfg.sessionId)),
             ),
         { interval: 1000, timeoutMs: cfg.waitForChannelDecryptionTimeoutMs },
     )
 
     await client.sendMessage(
         announceChannelId,
-        `Ending stress test containerIndex: ${cfg.containerIndex} processIndex: ${cfg.processIndex}`,
+        `c${cfg.containerIndex}p${cfg.processIndex} Done freeMemory: ${getSystemInfo().FreeMemory}`,
         { threadId: message.hashStr },
     )
 }

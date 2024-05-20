@@ -2,7 +2,9 @@ import { Wallet } from 'ethers'
 
 export interface ChatConfig {
     containerIndex: number
+    containerCount: number
     processIndex: number
+    processesPerContainer: number
     clientsCount: number
     clientsPerProcess: number
     duration: number

@@ -23,16 +23,16 @@ func TestBlockchain(t *testing.T) {
 	require := require.New(t)
 	assert := assert.New(t)
 
-	tc, err := NewBlockchainTestContext(ctx, 2)
+	tc, err := NewBlockchainTestContext(ctx, 2, false)
 	require.NoError(err)
 	defer tc.Close()
 
 	owner := tc.DeployerBlockchain
 	tc.Commit(ctx)
 
-	bc1 := tc.GetBlockchain(ctx, 0, false)
+	bc1 := tc.GetBlockchain(ctx, 0)
 	defer bc1.Close()
-	bc2 := tc.GetBlockchain(ctx, 1, false)
+	bc2 := tc.GetBlockchain(ctx, 1)
 	defer bc2.Close()
 
 	nodeAddr1 := bc1.Wallet.Address

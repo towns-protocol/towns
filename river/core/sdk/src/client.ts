@@ -742,7 +742,7 @@ export class Client
             this.userSettingsStreamId,
             make_UserSettingsPayload_FullyReadMarkers({
                 streamId: streamIdAsBytes(channelId),
-                content: make_fake_encryptedData(fullyReadMarkersContent.toJsonString()),
+                content: { data: fullyReadMarkersContent.toJsonString() },
             }),
             { method: 'sendFullyReadMarker' },
         )

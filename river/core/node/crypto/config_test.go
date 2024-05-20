@@ -66,7 +66,7 @@ func TestSetOnChain(t *testing.T) {
 	)
 	defer cancel()
 
-	tc, err := NewBlockchainTestContext(ctx, 1)
+	tc, err := NewBlockchainTestContext(ctx, 1, false)
 	require.NoError(err)
 	defer tc.Close()
 

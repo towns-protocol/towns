@@ -1,10 +1,10 @@
 import {
-    EncryptedData,
     FullyReadMarker,
     FullyReadMarkers,
     Snapshot,
     UserSettingsPayload,
     UserSettingsPayload_FullyReadMarkers,
+    UserSettingsPayload_MarkerContent,
     UserSettingsPayload_Snapshot,
     UserSettingsPayload_Snapshot_UserBlocks,
     UserSettingsPayload_Snapshot_UserBlocks_Block,
@@ -24,7 +24,7 @@ const log = dlog('csb:stream')
 export class StreamStateView_UserSettings extends StreamStateView_AbstractContent {
     readonly streamId: string
     readonly settings = new Map<string, string>()
-    readonly fullyReadMarkersSrc = new Map<string, EncryptedData>()
+    readonly fullyReadMarkersSrc = new Map<string, UserSettingsPayload_MarkerContent>()
     readonly fullyReadMarkers = new Map<string, Record<string, FullyReadMarker>>()
     readonly userBlocks: Record<string, UserSettingsPayload_Snapshot_UserBlocks> = {}
 
@@ -106,7 +106,7 @@ export class StreamStateView_UserSettings extends StreamStateView_AbstractConten
         const streamId = streamIdFromBytes(payload.streamId)
         this.fullyReadMarkersSrc.set(streamId, content)
         const fullyReadMarkersContent = toPlainMessage(
-            FullyReadMarkers.fromJsonString(content.ciphertext),
+            FullyReadMarkers.fromJsonString(content.data),
         )
 
         this.fullyReadMarkers.set(streamId, fullyReadMarkersContent.markers)

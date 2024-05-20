@@ -920,7 +920,7 @@ func TestSingleAndMulti(t *testing.T) {
 		{"testRiverDeviceId", testRiverDeviceId},
 		{"testSyncStreams", testSyncStreams},
 		{"testAddStreamsToSync", testAddStreamsToSync},
-		{"testRemoveStreamsFromSync", testRemoveStreamsFromSync},
+			{"testRemoveStreamsFromSync", testRemoveStreamsFromSync},
 	}
 
 	t.Run("single", func(t *testing.T) {

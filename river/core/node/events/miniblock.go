@@ -93,7 +93,7 @@ type MiniblockInfo struct {
 	Num         int64
 	headerEvent *ParsedEvent
 	events      []*ParsedEvent
-	proto       *Miniblock
+	Proto       *Miniblock
 }
 
 func (b *MiniblockInfo) header() *MiniblockHeader {
@@ -132,6 +132,18 @@ func NewMiniblockInfoFromBytes(bytes []byte, expectedBlockNumber int64) (*Minibl
 	}
 
 	return NewMiniblockInfoFromProto(&pb, NewMiniblockInfoFromProtoOpts{ExpectedBlockNumber: expectedBlockNumber})
+}
+
+func NewMiniblockInfoFromBytesWithOpts(bytes []byte, opts NewMiniblockInfoFromProtoOpts) (*MiniblockInfo, error) {
+	var pb Miniblock
+	err := proto.Unmarshal(bytes, &pb)
+	if err != nil {
+		return nil, AsRiverError(err, Err_INVALID_ARGUMENT).
+			Message("Failed to decode miniblock from bytes").
+			Func("NewMiniblockInfoFromBytes")
+	}
+
+	return NewMiniblockInfoFromProto(&pb, opts)
 }
 
 type NewMiniblockInfoFromProtoOpts struct {
@@ -174,7 +186,7 @@ func NewMiniblockInfoFromProto(pb *Miniblock, opts NewMiniblockInfoFromProtoOpts
 		Num:         blockHeader.MiniblockNum,
 		headerEvent: headerEvent,
 		events:      events,
-		proto:       pb,
+		Proto:       pb,
 	}, nil
 }
 
@@ -193,7 +205,7 @@ func NewMiniblockInfoFromParsed(headerEvent *ParsedEvent, events []*ParsedEvent)
 		Num:         headerEvent.Event.GetMiniblockHeader().MiniblockNum,
 		headerEvent: headerEvent,
 		events:      events,
-		proto: &Miniblock{
+		Proto: &Miniblock{
 			Header: headerEvent.Envelope,
 			Events: envelopes,
 		},
@@ -201,7 +213,7 @@ func NewMiniblockInfoFromParsed(headerEvent *ParsedEvent, events []*ParsedEvent)
 }
 
 func (b *MiniblockInfo) ToBytes() ([]byte, error) {
-	serialized, err := proto.Marshal(b.proto)
+	serialized, err := proto.Marshal(b.Proto)
 	if err == nil {
 		return serialized, nil
 	}

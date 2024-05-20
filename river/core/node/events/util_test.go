@@ -28,7 +28,7 @@ type testParams struct {
 
 func makeTestStreamParams(p testParams) (context.Context, *testContext) {
 	ctx, cancel := test.NewTestContext()
-	btc, err := crypto.NewBlockchainTestContext(ctx, 1)
+	btc, err := crypto.NewBlockchainTestContext(ctx, 1, true)
 	if err != nil {
 		panic(err)
 	}
@@ -38,7 +38,7 @@ func makeTestStreamParams(p testParams) (context.Context, *testContext) {
 		panic(err)
 	}
 
-	bc := btc.GetBlockchain(ctx, 0, true)
+	bc := btc.GetBlockchain(ctx, 0)
 
 	pg := storage.NewTestPgStore(ctx)
 
@@ -87,7 +87,7 @@ func makeTestStreamParams(p testParams) (context.Context, *testContext) {
 func makeTestStreamCache(p testParams) (context.Context, *testContext) {
 	ctx, testContext := makeTestStreamParams(p)
 
-	bc := testContext.bcTest.GetBlockchain(ctx, 0, true)
+	bc := testContext.bcTest.GetBlockchain(ctx, 0)
 
 	blockNumber, err := bc.GetBlockNumber(ctx)
 	if err != nil {

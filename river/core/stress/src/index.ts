@@ -6,7 +6,7 @@ import { EncryptionDelegate } from '@river-build/encryption'
 import { makeConnection } from './utils/connection'
 import { makeStressClient } from './utils/stressClient'
 import { expect } from './utils/expect'
-import { printSystemInfo } from './utils/utils'
+import { printSystemInfo } from './utils/systemInfo'
 import { waitFor } from './utils/waitFor'
 
 const logger = dlogger('stress:index')

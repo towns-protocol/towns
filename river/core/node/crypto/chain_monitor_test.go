@@ -23,7 +23,7 @@ func TestChainMonitorBlocks(t *testing.T) {
 	ctx, cancel := test.NewTestContext()
 	defer cancel()
 
-	tc, err := crypto.NewBlockchainTestContext(ctx, 1)
+	tc, err := crypto.NewBlockchainTestContext(ctx, 1, false)
 	require.NoError(err)
 	defer tc.Close()
 
@@ -137,7 +137,7 @@ func TestChainMonitorEvents(t *testing.T) {
 	require := require.New(t)
 	ctx, cancel := test.NewTestContext()
 
-	tc, err := crypto.NewBlockchainTestContext(ctx, 1)
+	tc, err := crypto.NewBlockchainTestContext(ctx, 1, false)
 	require.NoError(err)
 	defer tc.Close()
 

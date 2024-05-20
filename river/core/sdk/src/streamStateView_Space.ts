@@ -21,6 +21,7 @@ export type ParsedChannelProperties = {
     name?: string
     topic?: string
     isDefault: boolean
+    updatedAtHash: string
 }
 
 export class StreamStateView_Space extends StreamStateView_AbstractContent {
@@ -33,6 +34,7 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
     }
 
     applySnapshot(
+        eventHash: string,
         snapshot: Snapshot,
         content: SpacePayload_Snapshot,
         _cleartexts: Record<string, string> | undefined,
@@ -40,7 +42,7 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
     ): void {
         // loop over content.channels, update space channels metadata
         for (const payload of content.channels) {
-            this.addSpacePayload_Channel(payload, undefined)
+            this.addSpacePayload_Channel(eventHash, payload, undefined)
         }
     }
 
@@ -84,7 +86,7 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
             case 'inception':
                 break
             case 'channel':
-                this.addSpacePayload_Channel(payload.content.value, stateEmitter)
+                this.addSpacePayload_Channel(event.hashStr, payload.content.value, stateEmitter)
                 break
             case undefined:
                 break
@@ -94,6 +96,7 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
     }
 
     private addSpacePayload_Channel(
+        eventHash: string,
         payload: SpacePayload_Channel,
         stateEmitter?: TypedEmitter<StreamStateEvents>,
     ): void {
@@ -106,6 +109,7 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
                     name: props.name,
                     topic: props.topic,
                     isDefault: isDefaultChannelId(channelId),
+                    updatedAtHash: eventHash,
                 })
                 stateEmitter?.emit('spaceChannelCreated', this.streamId, channelId, props)
                 break
@@ -121,6 +125,7 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
                     name: props.name,
                     topic: props.topic,
                     isDefault: isDefaultChannelId(channelId),
+                    updatedAtHash: eventHash,
                 })
                 stateEmitter?.emit('spaceChannelUpdated', this.streamId, channelId, props)
                 break

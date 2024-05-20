@@ -39,8 +39,12 @@ function getChatConfig(): ChatConfig {
     check(isSet(process.env.SPACE_ID), 'process.env.SPACE_ID')
     check(isSet(process.env.CHANNEL_IDS), 'process.env.CHANNEL_IDS')
     check(isSet(process.env.CONTAINER_INDEX), 'process.env.CONTAINER_INDEX')
+    check(isSet(process.env.CONTAINER_COUNT), 'process.env.CONTAINER_COUNT')
+    check(isSet(process.env.PROCESSES_PER_CONTAINER), 'process.env.PROCESSES_PER_CONTAINER')
     const duration = getStressDuration()
     const containerIndex = parseInt(process.env.CONTAINER_INDEX)
+    const containerCount = parseInt(process.env.CONTAINER_COUNT)
+    const processesPerContainer = parseInt(process.env.PROCESSES_PER_CONTAINER)
     const clientsCount = parseInt(process.env.CLIENTS_COUNT)
     const clientsPerProcess = parseInt(process.env.CLIENTS_PER_PROCESS)
     const clientStartIndex = processIndex * clientsPerProcess
@@ -57,7 +61,9 @@ function getChatConfig(): ChatConfig {
     }
     return {
         containerIndex,
+        containerCount,
         processIndex,
+        processesPerContainer,
         clientsCount,
         clientsPerProcess,
         duration,
@@ -139,9 +145,31 @@ async function startStressChat() {
     logger.log('done')
 }
 
+async function setupChat() {
+    logger.log('setupChat')
+    const client = await makeStressClient(config, 0, getRootWallet().wallet)
+    // make a space
+    const { spaceId } = await client.createSpace('stress test space')
+    // make an announce channel
+    const announceChannelId = await client.createChannel(spaceId, 'stress anouncements')
+    // make two channels
+    const stress1Channelid = await client.createChannel(spaceId, 'stress1')
+    const stress2Channelid = await client.createChannel(spaceId, 'stress2')
+    // log all the deets
+    logger.log(
+        `SPACE_ID=${spaceId} ANNOUNCE_CHANNEL_ID=${announceChannelId} CHANNEL_IDS=${stress1Channelid},${stress2Channelid}`,
+    )
+    logger.log('join at', `http://localhost:3000/t/${spaceId}/?invite`)
+    logger.log('or', `http://localhost:3001/spaces/${spaceId}/?invite`)
+    logger.log('done')
+}
+
 switch (getStressMode()) {
     case 'chat':
         await startStressChat()
+        break
+    case 'setup_chat':
+        await setupChat()
         break
     default:
         throw new Error('unknown stress mode')

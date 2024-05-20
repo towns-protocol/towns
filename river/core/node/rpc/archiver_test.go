@@ -5,23 +5,23 @@ import (
 	"net"
 	"sync"
 	"testing"
+	"time"
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/crypto"
+	"github.com/river-build/river/core/node/events"
 	"github.com/river-build/river/core/node/nodes"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/protocol/protocolconnect"
 	"github.com/river-build/river/core/node/registries"
-	"github.com/river-build/river/core/node/storage"
-	"github.com/river-build/river/core/node/testutils/dbtestutils"
-
-	"github.com/river-build/river/core/node/contracts"
-
 	"github.com/river-build/river/core/node/rpc"
 	. "github.com/river-build/river/core/node/shared"
+	"github.com/river-build/river/core/node/storage"
+	"github.com/river-build/river/core/node/testutils/dbtestutils"
+	"github.com/stretchr/testify/assert"
 )
 
 func fillUserSettingsStreamWithData(
@@ -32,22 +32,22 @@ func fillUserSettingsStreamWithData(
 	numMBs int,
 	numEventsPerMB int,
 	optionalHashBytes []byte,
-) ([]byte, error) {
+) ([]byte, int64, error) {
 	var err error
 	lastKnownMB := int64(0)
 	for i := 0; i < numMBs; i++ {
 		for j := 0; j < numEventsPerMB; j++ {
 			err = addUserBlockedFillerEvent(ctx, wallet, client, streamId, optionalHashBytes)
 			if err != nil {
-				return nil, err
+				return nil, -1, err
 			}
 		}
 		optionalHashBytes, lastKnownMB, err = makeMiniblock(ctx, client, streamId, false, lastKnownMB)
 		if err != nil {
-			return nil, err
+			return nil, -1, err
 		}
 	}
-	return optionalHashBytes, nil
+	return optionalHashBytes, lastKnownMB, nil
 }
 
 func createUserSettingsStreamsWithData(
@@ -81,7 +81,7 @@ func createUserSettingsStreamsWithData(
 			}
 			streamIds[i] = streamId
 
-			_, err = fillUserSettingsStreamWithData(ctx, streamId, wallet, client, numMBs, numEventsPerMB, nil)
+			_, _, err = fillUserSettingsStreamWithData(ctx, streamId, wallet, client, numMBs, numEventsPerMB, nil)
 			if err != nil {
 				errChan <- err
 				return
@@ -94,6 +94,108 @@ func createUserSettingsStreamsWithData(
 		return nil, nil, <-errChan
 	}
 	return wallets, streamIds, nil
+}
+
+func compareStreamMiniblocks(
+	t *testing.T,
+	ctx context.Context,
+	streamId StreamId,
+	storage storage.StreamStorage,
+	client protocolconnect.StreamServiceClient,
+) error {
+	maxMB, err := storage.GetMaxArchivedMiniblockNumber(ctx, streamId)
+	if err != nil {
+		return err
+	}
+
+	numResp, err := client.GetLastMiniblockHash(ctx, connect.NewRequest(&GetLastMiniblockHashRequest{
+		StreamId: streamId[:],
+	}))
+	if err != nil {
+		return err
+	}
+
+	if numResp.Msg.MiniblockNum != maxMB {
+		return RiverError(
+			Err_INTERNAL,
+			"Remote mb num is not the same as local",
+			"streamId", streamId,
+			"localMB", maxMB,
+			"remoteMB", numResp.Msg.MiniblockNum,
+		)
+	}
+
+	miniblocks, err := storage.ReadMiniblocks(ctx, streamId, 0, maxMB+1)
+	if err != nil {
+		return err
+	}
+
+	mbResp, err := client.GetMiniblocks(ctx, connect.NewRequest(&GetMiniblocksRequest{
+		StreamId:      streamId[:],
+		FromInclusive: 0,
+		ToExclusive:   numResp.Msg.MiniblockNum + 1,
+	}))
+	if err != nil {
+		return err
+	}
+
+	if len(mbResp.Msg.Miniblocks) != len(miniblocks) {
+		return RiverError(
+			Err_INTERNAL,
+			"Read different num of mbs remotly and locally",
+			"streamId", streamId,
+			"localMB len", len(miniblocks),
+			"remoteMB len", len(mbResp.Msg.Miniblocks),
+		)
+	}
+
+	for i, mb := range miniblocks {
+		info, err := events.NewMiniblockInfoFromBytesWithOpts(
+			mb,
+			events.NewMiniblockInfoFromProtoOpts{
+				ExpectedBlockNumber: int64(i),
+				DontParseEvents:     true,
+			},
+		)
+		if err != nil {
+			return err
+		}
+		if !assert.EqualExportedValues(t, info.Proto, mbResp.Msg.Miniblocks[i]) {
+			return RiverError(
+				Err_INTERNAL,
+				"Miniblocks are not the same",
+				"streamId", streamId,
+				"mbNum", i,
+			)
+		}
+	}
+	return nil
+}
+
+func compareStreamsMiniblocks(
+	t *testing.T,
+	ctx context.Context,
+	streamId []StreamId,
+	storage storage.StreamStorage,
+	client protocolconnect.StreamServiceClient,
+) error {
+	errs := make(chan error, len(streamId))
+	var wg sync.WaitGroup
+	for _, id := range streamId {
+		wg.Add(1)
+		go func(streamId StreamId) {
+			defer wg.Done()
+			err := compareStreamMiniblocks(t, ctx, streamId, storage, client)
+			if err != nil {
+				errs <- err
+			}
+		}(id)
+	}
+	wg.Wait()
+	if len(errs) > 0 {
+		return <-errs
+	}
+	return nil
 }
 
 func TestArchiveOneStream(t *testing.T) {
@@ -155,10 +257,7 @@ func TestArchiveOneStream(t *testing.T) {
 
 	err = arch.ArchiveStream(
 		ctx,
-		&contracts.StreamWithId{
-			Id:     streamId,
-			Stream: streamRecord,
-		},
+		rpc.NewArchiveStream(streamId, &streamRecord.Nodes, streamRecord.LastMiniblockNum),
 	)
 	require.NoError(err)
 
@@ -179,10 +278,7 @@ func TestArchiveOneStream(t *testing.T) {
 
 	err = arch.ArchiveStream(
 		ctx,
-		&contracts.StreamWithId{
-			Id:     streamId,
-			Stream: streamRecord,
-		},
+		rpc.NewArchiveStream(streamId, &streamRecord.Nodes, streamRecord.LastMiniblockNum),
 	)
 	require.NoError(err)
 
@@ -191,7 +287,7 @@ func TestArchiveOneStream(t *testing.T) {
 	require.Equal(int64(1), num)
 
 	// Test pagination: create at least 10 miniblocks.
-	_, err = fillUserSettingsStreamWithData(ctx, streamId, wallet, client, 10, 5, hashBytes)
+	_, _, err = fillUserSettingsStreamWithData(ctx, streamId, wallet, client, 10, 5, hashBytes)
 	require.NoError(err)
 
 	streamRecord, err = registryContract.StreamRegistry.GetStream(callOpts, streamId)
@@ -200,10 +296,7 @@ func TestArchiveOneStream(t *testing.T) {
 
 	err = arch.ArchiveStream(
 		ctx,
-		&contracts.StreamWithId{
-			Id:     streamId,
-			Stream: streamRecord,
-		},
+		rpc.NewArchiveStream(streamId, &streamRecord.Nodes, streamRecord.LastMiniblockNum),
 	)
 	require.NoError(err)
 
@@ -211,7 +304,7 @@ func TestArchiveOneStream(t *testing.T) {
 	require.NoError(err)
 	require.Equal(int64(streamRecord.LastMiniblockNum), num)
 
-	require.Equal(uint64(1), arch.GetStats().StreamsExamined)
+	require.NoError(compareStreamMiniblocks(t, ctx, streamId, streamStorage, client))
 }
 
 func TestArchive100Streams(t *testing.T) {
@@ -230,7 +323,7 @@ func TestArchive100Streams(t *testing.T) {
 
 	archiverBC := tester.btc.NewWalletAndBlockchain(ctx)
 	serverCtx, serverCancel := context.WithCancel(ctx)
-	arch, err := rpc.StartServerInArchiveMode(serverCtx, archiveCfg, archiverBC, listener)
+	arch, err := rpc.StartServerInArchiveMode(serverCtx, archiveCfg, archiverBC, listener, true)
 	require.NoError(err)
 
 	arch.Archiver.WaitForStart()
@@ -238,10 +331,7 @@ func TestArchive100Streams(t *testing.T) {
 
 	arch.Archiver.WaitForTasks()
 
-	for _, streamId := range streamIds {
-		_, err := arch.Storage().GetMaxArchivedMiniblockNumber(ctx, streamId)
-		require.NoError(err)
-	}
+	require.NoError(compareStreamsMiniblocks(t, ctx, streamIds, arch.Storage(), tester.testClient(3)))
 
 	serverCancel()
 	arch.Archiver.WaitForWorkers()
@@ -269,7 +359,7 @@ func TestArchive100StreamsWithData(t *testing.T) {
 
 	archiverBC := tester.btc.NewWalletAndBlockchain(ctx)
 	serverCtx, serverCancel := context.WithCancel(ctx)
-	arch, err := rpc.StartServerInArchiveMode(serverCtx, archiveCfg, archiverBC, listener)
+	arch, err := rpc.StartServerInArchiveMode(serverCtx, archiveCfg, archiverBC, listener, true)
 	require.NoError(err)
 
 	arch.Archiver.WaitForStart()
@@ -277,17 +367,7 @@ func TestArchive100StreamsWithData(t *testing.T) {
 
 	arch.Archiver.WaitForTasks()
 
-	client := tester.testClient(5)
-	for _, streamId := range streamIds {
-		num, err := arch.Storage().GetMaxArchivedMiniblockNumber(ctx, streamId)
-		require.NoError(err)
-
-		resp, err := client.GetLastMiniblockHash(ctx, connect.NewRequest(&GetLastMiniblockHashRequest{
-			StreamId: streamId[:],
-		}))
-		require.NoError(err)
-		require.Equal(num, resp.Msg.MiniblockNum)
-	}
+	require.NoError(compareStreamsMiniblocks(t, ctx, streamIds, arch.Storage(), tester.testClient(5)))
 
 	serverCancel()
 	arch.Archiver.WaitForWorkers()
@@ -295,5 +375,82 @@ func TestArchive100StreamsWithData(t *testing.T) {
 	stats := arch.Archiver.GetStats()
 	require.Equal(uint64(100), stats.StreamsExamined)
 	require.GreaterOrEqual(stats.SuccessOpsCount, uint64(100))
+	require.Zero(stats.FailedOpsCount)
+}
+
+func TestArchiveContinuous(t *testing.T) {
+	tester := newServiceTesterAndStart(t, 1)
+	ctx := tester.ctx
+	require := tester.require
+
+	client := tester.testClient(0)
+	wallet, err := crypto.NewWallet(ctx)
+	require.NoError(err)
+	streamId, _, _, err := createUserSettingsStream(ctx, wallet, client, &StreamSettings{DisableMiniblockCreation: true})
+	require.NoError(err)
+
+	archiveCfg := tester.getConfig()
+	archiveCfg.Archive.ArchiveId = "arch" + GenShortNanoid()
+	archiveCfg.Archive.ReadMiniblcocksSize = 3
+
+	listener, err := net.Listen("tcp", "localhost:0")
+	require.NoError(err)
+
+	archiverBC := tester.btc.NewWalletAndBlockchain(ctx)
+	serverCtx, serverCancel := context.WithCancel(ctx)
+	arch, err := rpc.StartServerInArchiveMode(serverCtx, archiveCfg, archiverBC, listener, false)
+	require.NoError(err)
+
+	arch.Archiver.WaitForStart()
+	require.Len(arch.ExitSignal(), 0)
+
+	require.EventuallyWithT(
+		func(c *assert.CollectT) {
+			num, err := arch.Storage().GetMaxArchivedMiniblockNumber(ctx, streamId)
+			assert.NoError(c, err)
+			assert.Zero(c, num)
+		},
+		5*time.Second,
+		10*time.Millisecond,
+	)
+
+	_, lastMBNum, err := fillUserSettingsStreamWithData(ctx, streamId, wallet, client, 10, 5, nil)
+	require.NoError(err)
+
+	require.EventuallyWithT(
+		func(c *assert.CollectT) {
+			num, err := arch.Storage().GetMaxArchivedMiniblockNumber(ctx, streamId)
+			assert.NoError(c, err)
+			assert.Equal(c, lastMBNum, num)
+		},
+		5*time.Second,
+		10*time.Millisecond,
+	)
+
+	client2 := tester.testClient(0)
+	wallet2, err := crypto.NewWallet(ctx)
+	require.NoError(err)
+	streamId2, _, _, err := createUserSettingsStream(ctx, wallet2, client2, &StreamSettings{DisableMiniblockCreation: true})
+	require.NoError(err)
+	_, lastMBNum2, err := fillUserSettingsStreamWithData(ctx, streamId2, wallet2, client2, 10, 5, nil)
+	require.NoError(err)
+
+	require.EventuallyWithT(
+		func(c *assert.CollectT) {
+			num, err := arch.Storage().GetMaxArchivedMiniblockNumber(ctx, streamId2)
+			assert.NoError(c, err)
+			assert.Equal(c, lastMBNum2, num)
+		},
+		5*time.Second,
+		10*time.Millisecond,
+	)
+
+	require.NoError(compareStreamsMiniblocks(t, ctx, []StreamId{streamId, streamId2}, arch.Storage(), client))
+
+	serverCancel()
+	arch.Archiver.WaitForWorkers()
+
+	stats := arch.Archiver.GetStats()
+	require.Equal(uint64(2), stats.StreamsExamined)
 	require.Zero(stats.FailedOpsCount)
 }

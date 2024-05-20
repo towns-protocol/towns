@@ -22,12 +22,12 @@ func TestNodeEvents(t *testing.T) {
 	require := require.New(t)
 	ctx, cancel := test.NewTestContext()
 	defer cancel()
-	tt, err := crypto.NewBlockchainTestContext(ctx, 1)
+	tt, err := crypto.NewBlockchainTestContext(ctx, 1, false)
 	require.NoError(err)
 
 	owner := tt.DeployerBlockchain
 
-	bc := tt.GetBlockchain(ctx, 0, false)
+	bc := tt.GetBlockchain(ctx, 0)
 
 	rr, err := NewRiverRegistryContract(ctx, bc, &config.ContractConfig{Address: tt.RiverRegistryAddress})
 	require.NoError(err)
@@ -185,16 +185,16 @@ func TestStreamEvents(t *testing.T) {
 	defer cancel()
 	require := require.New(t)
 
-	tc, err := crypto.NewBlockchainTestContext(ctx, 2)
+	tc, err := crypto.NewBlockchainTestContext(ctx, 2, true)
 	require.NoError(err)
 	defer tc.Close()
 
 	owner := tc.DeployerBlockchain
 	tc.Commit(ctx)
 
-	bc1 := tc.GetBlockchain(ctx, 0, true)
+	bc1 := tc.GetBlockchain(ctx, 0)
 	defer bc1.Close()
-	bc2 := tc.GetBlockchain(ctx, 1, true)
+	bc2 := tc.GetBlockchain(ctx, 1)
 	defer bc2.Close()
 
 	nodeAddr1 := bc1.Wallet.Address

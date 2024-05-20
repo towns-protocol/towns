@@ -21,7 +21,7 @@ func TestNewTransactionPoolWithReplaceTx(t *testing.T) {
 		ctx, cancel    = test.NewTestContext()
 		resubmitPolicy = crypto.NewTransactionPoolDeadlinePolicy(250 * time.Millisecond)
 		repricePolicy  = crypto.NewDefaultTransactionPricePolicy(0, 15_000_000_000, 0)
-		tc, errTC      = crypto.NewBlockchainTestContext(ctx, 1)
+		tc, errTC      = crypto.NewBlockchainTestContext(ctx, 1, false)
 		pendingTxs     []crypto.TransactionPoolPendingTransaction
 	)
 	defer cancel()

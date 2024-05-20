@@ -1,5 +1,5 @@
 import { dlogger } from '@river-build/dlog'
-import { printSystemInfo } from './utils/utils'
+import { printSystemInfo } from './utils/systemInfo'
 
 const logger = dlogger('stress:test')
 

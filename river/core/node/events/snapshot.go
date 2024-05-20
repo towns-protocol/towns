@@ -706,7 +706,6 @@ func applyKeySolicitation(member *MemberPayload_Snapshot_Member, keySolicitation
 
 func applyKeyFulfillment(member *MemberPayload_Snapshot_Member, keyFulfillment *MemberPayload_KeyFulfillment) {
 	if member != nil {
-
 		// clear out any fulfilled session ids for the device key
 		for _, event := range member.Solicitations {
 			if event.DeviceKey == keyFulfillment.DeviceKey {

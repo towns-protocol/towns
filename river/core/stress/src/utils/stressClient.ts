@@ -6,6 +6,7 @@ import {
     isDefined,
     makeUserStreamId,
     streamIdAsBytes,
+    makeUniqueChannelStreamId,
 } from '@river/sdk'
 import { Connection, makeConnection } from './connection'
 import { CryptoStore, EntitlementsDelegate } from '@river-build/encryption'
@@ -147,6 +148,22 @@ export class StressClient {
         await this.streamsClient.createSpace(spaceId)
         await this.streamsClient.createChannel(spaceId, 'general', '', defaultChannelId)
         return { spaceId, defaultChannelId }
+    }
+
+    async createChannel(spaceId: string, channelName: string) {
+        const channelId = makeUniqueChannelStreamId(spaceId)
+        const roles = await this.spaceDapp.getRoles(spaceId)
+        const tx = await this.spaceDapp.createChannel(
+            spaceId,
+            channelName,
+            channelId,
+            roles.filter((role) => role.name !== 'Owner').map((role) => role.roleId),
+            this.connection.baseProvider.wallet,
+        )
+        const receipt = await tx.wait()
+        logger.log('createChannel receipt', receipt)
+        await this.streamsClient.createChannel(spaceId, channelName, '', channelId)
+        return channelId
     }
 
     async startStreamsClient() {

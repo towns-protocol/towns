@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -21,15 +22,25 @@ import (
 	"github.com/river-build/river/core/node/storage"
 )
 
-type archiveStream struct {
+type ArchiveStream struct {
 	streamId            StreamId
 	nodes               nodes.StreamNodes
-	numBlocksInContract uint64
+	numBlocksInContract atomic.Int64
+	numBlocksInDb       atomic.Int64 // -1 means not loaded
 
-	loadedFromDb  bool
-	numBlocksInDb uint64
-
+	// Mutex is used so only one archive operation is performed at a time.
 	mu sync.Mutex
+}
+
+func NewArchiveStream(streamId StreamId, nn *[]common.Address, lastKnownMiniblock uint64) *ArchiveStream {
+	stream := &ArchiveStream{
+		streamId: streamId,
+		nodes:    nodes.NewStreamNodes(*nn, common.Address{}),
+	}
+	stream.numBlocksInContract.Store(int64(lastKnownMiniblock + 1))
+	stream.numBlocksInDb.Store(-1)
+
+	return stream
 }
 
 type Archiver struct {
@@ -38,7 +49,7 @@ type Archiver struct {
 	nodeRegistry nodes.NodeRegistry
 	storage      storage.StreamStorage
 
-	tasks     chan *archiveTask
+	tasks     chan StreamId
 	workersWG sync.WaitGroup
 
 	// tasksWG is used in single run mode: it archives everything there is to archive and exits
@@ -66,10 +77,6 @@ type ArchiverStats struct {
 	MiniblocksProcessed uint64
 }
 
-type archiveTask struct {
-	stream *contracts.StreamWithId
-}
-
 func NewArchiver(
 	config *config.ArchiveConfig,
 	contract *registries.RiverRegistryContract,
@@ -81,85 +88,79 @@ func NewArchiver(
 		contract:     contract,
 		nodeRegistry: nodeRegistry,
 		storage:      storage,
-		tasks:        make(chan *archiveTask, 10000), // TODO: setting
+		tasks:        make(chan StreamId, 100000), // TODO: setting
 	}
 	a.startedWG.Add(1)
 	return a
 }
 
-// TODO: add block number to reject older updates
-func (a *Archiver) ArchiveStream(ctx context.Context, streamWithId *contracts.StreamWithId) error {
+func (a *Archiver) addNewStream(ctx context.Context, streamId StreamId, nn *[]common.Address, lastKnownMiniblock uint64) {
+	_, loaded := a.streams.Load(streamId)
+	if loaded {
+		// TODO: Double notificaion, shouldn't happen.
+		dlog.FromCtx(ctx).Error("Stream already exists in archiver map", "streamId", streamId, "lastKnownMiniblock", lastKnownMiniblock)
+		return
+	}
+
+	a.streams.Store(streamId, NewArchiveStream(streamId, nn, lastKnownMiniblock))
+
+	a.tasks <- streamId
+
+	a.streamsExamined.Add(1)
+}
+
+func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) error {
 	log := dlog.FromCtx(ctx)
 
-	streamId, err := StreamIdFromHash(streamWithId.Id)
-	if err != nil {
-		return err
-	}
-
-	record, ok := a.streams.Load(streamId)
-	if !ok {
-		var loaded bool
-		record, loaded = a.streams.LoadOrStore(
-			streamId,
-			&archiveStream{
-				streamId:            streamId,
-				nodes:               nodes.NewStreamNodes(streamWithId.Stream.Nodes, common.Address{}),
-				numBlocksInContract: streamWithId.Stream.LastMiniblockNum + 1,
-			},
-		)
-		if !loaded {
-			a.streamsExamined.Add(1)
-		}
-	}
-
-	stream := record.(*archiveStream)
-
-	// TODO: TryLock and reschedule task
-	stream.mu.Lock()
-	defer stream.mu.Unlock()
-
-	numBlocksInContract := streamWithId.Stream.LastMiniblockNum + 1
-	if stream.numBlocksInContract > numBlocksInContract {
-		log.Info(
-			"Skipping old update out of order",
-			"streamId",
-			streamId,
-			"mbSeenBefore",
-			stream.numBlocksInContract,
-			"mbGotInTask",
-			numBlocksInContract,
-		)
+	if !stream.mu.TryLock() {
+		// Reschedule with delay.
+		streamId := stream.streamId
+		time.AfterFunc(time.Second, func() {
+			a.tasks <- streamId
+		})
 		return nil
 	}
-	stream.numBlocksInContract = numBlocksInContract
+	defer stream.mu.Unlock()
 
-	if !stream.loadedFromDb {
-		maxBlockNum, err := a.storage.GetMaxArchivedMiniblockNumber(ctx, streamId)
+	mbsInDb := stream.numBlocksInDb.Load()
+
+	// Check if stream info was loaded from db.
+	if mbsInDb <= -1 {
+		maxBlockNum, err := a.storage.GetMaxArchivedMiniblockNumber(ctx, stream.streamId)
 		if err != nil && AsRiverError(err).Code == Err_NOT_FOUND {
-			err = a.storage.CreateStreamArchiveStorage(ctx, streamId)
+			err = a.storage.CreateStreamArchiveStorage(ctx, stream.streamId)
 			if err != nil {
 				return err
 			}
 			a.streamsCreated.Add(1)
+
+			mbsInDb = 0
+			stream.numBlocksInDb.Store(mbsInDb)
 		} else if err != nil {
 			return err
 		} else {
-			stream.numBlocksInDb = uint64(maxBlockNum + 1)
+			mbsInDb = maxBlockNum + 1
+			stream.numBlocksInDb.Store(mbsInDb)
 		}
-		stream.loadedFromDb = true
+	}
+
+	
+	mbsInContract := stream.numBlocksInContract.Load()
+	if mbsInDb >= mbsInContract {
+		return nil
 	}
 
 	log.Debug(
 		"Archiving stream",
 		"streamId",
-		streamId,
+		stream.streamId,
 		"numBlocksInDb",
-		stream.numBlocksInDb,
+		mbsInDb,
 		"numBlocksInContract",
-		stream.numBlocksInContract,
+		mbsInContract,
 	)
 
-	if stream.numBlocksInDb >= stream.numBlocksInContract {
+	if mbsInDb >= mbsInContract {
 		a.streamsUpToDate.Add(1)
 		return nil
 	}
@@ -171,14 +172,14 @@ func (a *Archiver) ArchiveStream(ctx context.Context, streamWithId *contracts.St
 		return err
 	}
 
-	for stream.numBlocksInDb < stream.numBlocksInContract {
-		toBlock := min(stream.numBlocksInDb+a.config.GetReadMiniblocksSize(), stream.numBlocksInContract)
+	for mbsInDb < mbsInContract {
+		toBlock := min(mbsInDb+int64(a.config.GetReadMiniblocksSize()), mbsInContract)
 		resp, err := stub.GetMiniblocks(
 			ctx,
 			connect.NewRequest(&GetMiniblocksRequest{
 				StreamId:      stream.streamId[:],
-				FromInclusive: int64(stream.numBlocksInDb),
-				ToExclusive:   int64(toBlock),
+				FromInclusive: mbsInDb,
+				ToExclusive:   toBlock,
 			}),
 		)
 		if err != nil {
@@ -188,7 +189,18 @@ func (a *Archiver) ArchiveStream(ctx context.Context, streamWithId *contracts.St
 
 		msg := resp.Msg
 		if len(msg.Miniblocks) == 0 {
-			return RiverError(Err_INTERNAL, "GetMiniblocks returned empty miniblocks", "streamId", stream.streamId)
+			log.Info(
+				"ArchiveStream: GetMiniblocks returned empty miniblocks, remote storage is not up-to-date with contract yet", 
+				"streamId", stream.streamId,
+				"fromInclusive", mbsInDb,
+				"toExclusive", toBlock,
+			)
+			// Reschedule with delay.
+			streamId := stream.streamId
+			time.AfterFunc(time.Second, func() {
+				a.tasks <- streamId
+			})
+			return nil
 		}
 
 		// Validate miniblocks are sequential.
@@ -199,7 +211,7 @@ func (a *Archiver) ArchiveStream(ctx context.Context, streamWithId *contracts.St
 			info, err := events.NewMiniblockInfoFromProto(
 				mb,
 				events.NewMiniblockInfoFromProtoOpts{
-					ExpectedBlockNumber: int64(i) + int64(stream.numBlocksInDb),
+					ExpectedBlockNumber: int64(i) + mbsInDb,
 					DontParseEvents:     true,
 				},
 			)
@@ -213,29 +225,32 @@ func (a *Archiver) ArchiveStream(ctx context.Context, streamWithId *contracts.St
 			serialized = append(serialized, bb)
 		}
 
-		log.Debug("Writing miniblocks to storage", "streamId", streamId, "numBlocks", len(serialized))
+		log.Debug("Writing miniblocks to storage", "streamId", stream.streamId, "numBlocks", len(serialized))
 
-		err = a.storage.WriteArchiveMiniblocks(ctx, streamId, int64(stream.numBlocksInDb), serialized)
+		err = a.storage.WriteArchiveMiniblocks(ctx, stream.streamId, mbsInDb, serialized)
 		if err != nil {
 			return err
 		}
-		stream.numBlocksInDb += uint64(len(serialized))
+		mbsInDb += int64(len(serialized))
+		stream.numBlocksInDb.Store(mbsInDb)
+
 		a.miniblocksProcessed.Add(uint64(len(serialized)))
 	}
 	return nil
 }
 
-func (a *Archiver) Start(ctx context.Context, exitSignal chan<- error) {
+func (a *Archiver) Start(ctx context.Context, once bool, exitSignal chan<- error) {
 	defer a.startedWG.Done()
-	err := a.startImpl(ctx)
+	err := a.startImpl(ctx, once)
 	if err != nil {
 		exitSignal <- err
 	}
 }
 
-func (a *Archiver) startImpl(ctx context.Context) error {
-	// TODO: run mode setting, for now it's always single run
-	a.tasksWG = &sync.WaitGroup{}
+func (a *Archiver) startImpl(ctx context.Context, once bool) error {
+	if once {
+		a.tasksWG = &sync.WaitGroup{}
+	}
 
 	// TODO: setting
 	const numWorkers = 20
@@ -274,20 +289,63 @@ func (a *Archiver) startImpl(ctx context.Context) error {
 			if stream.Id == registries.ZeroBytes32 {
 				continue
 			}
-			a.tasks <- &archiveTask{stream: &stream}
 			if a.tasksWG != nil {
 				a.tasksWG.Add(1)
 			}
+			a.addNewStream(ctx, stream.Id, &stream.Stream.Nodes, stream.Stream.LastMiniblockNum)
+		}
+	}
+
+	if !once {
+		err = a.contract.OnStreamEvent(
+			ctx,
+			blockNum+1,
+			a.onStreamAllocated,
+			a.onStreamLastMiniblockUpdated,
+			a.onStreamPlacementUpdated,
+		)
+		if err != nil {
+			return err
 		}
 	}
 
 	return nil
 }
 
+func (a *Archiver) onStreamAllocated(ctx context.Context, event *contracts.StreamRegistryV1StreamAllocated) {
+	id := StreamId(event.StreamId)
+	a.addNewStream(ctx, id, &event.Nodes, 0)
+	a.tasks <- id
+}
+
+func (a *Archiver) onStreamPlacementUpdated(ctx context.Context, event *contracts.StreamRegistryV1StreamPlacementUpdated) {
+	id := StreamId(event.StreamId)
+	record, loaded := a.streams.Load(id)
+	if !loaded {
+		dlog.FromCtx(ctx).Error("onStreamPlacementUpdated: Stream not found in map", "streamId", id)
+		return
+	}
+	stream := record.(*ArchiveStream)
+	_ = stream.nodes.Update(event.NodeAddress, event.IsAdded)
+}
+
+func (a *Archiver) onStreamLastMiniblockUpdated(ctx context.Context, event *contracts.StreamRegistryV1StreamLastMiniblockUpdated) {
+	id := StreamId(event.StreamId)
+	record, loaded := a.streams.Load(id)
+	if !loaded {
+		dlog.FromCtx(ctx).Error("onStreamLastMiniblockUpdated: Stream not found in map", "streamId", id)
+		return
+	}
+	stream := record.(*ArchiveStream)
+	stream.numBlocksInContract.Store(int64(event.LastMiniblockNum + 1))
+	a.tasks <- id
+}
+
 func (a *Archiver) WaitForWorkers() {
 	a.workersWG.Wait()
 }
 
+// Waiting for tasks is only possible if archiver is started in "once" mode.
 func (a *Archiver) WaitForTasks() {
 	a.tasksWG.Wait()
 }
@@ -316,10 +374,15 @@ func (a *Archiver) worker(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			return
-		case task := <-a.tasks:
-			err := a.ArchiveStream(ctx, task.stream)
+		case streamId := <-a.tasks:
+			record, loaded := a.streams.Load(streamId)
+			if !loaded {
+				log.Error("archiver.worker: Stream not found in map", "streamId", streamId)
+				continue
+			}
+			err := a.ArchiveStream(ctx, record.(*ArchiveStream))
 			if err != nil {
-				log.Error("archiver.worker: Failed to archive stream", "error", err)
+				log.Error("archiver.worker: Failed to archive stream", "error", err, "streamId", streamId)
 				a.failedOpsCount.Add(1)
 			} else {
 				a.successOpsCount.Add(1)

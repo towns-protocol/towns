@@ -84,14 +84,10 @@ func newServiceTesterWithReplication(t *testing.T, numNodes int, replicationFact
 		replicationFactor: replicationFactor,
 	}
 
-	btc, err := crypto.NewBlockchainTestContext(st.ctx, numNodes)
+	btc, err := crypto.NewBlockchainTestContext(st.ctx, numNodes, true)
 	require.NoError(err)
 	st.btc = btc
 	t.Cleanup(st.btc.Close)
-
-	st.btc.DeployerBlockchain.TxPool.SetOnSubmitHandler(func() {
-		st.btc.Commit(ctx)
-	})
 
 	for i := 0; i < numNodes; i++ {
 		st.nodes[i] = &testNodeRecord{}
@@ -242,7 +238,7 @@ func (st *serviceTester) startSingle(i int, opts ...startOpts) error {
 		listener = options.listeners[i]
 	}
 
-	bc := st.btc.GetBlockchain(st.ctx, i, true)
+	bc := st.btc.GetBlockchain(st.ctx, i)
 	service, err := rpc.StartServer(st.ctx, cfg, bc, listener)
 	if err != nil {
 		if service != nil {

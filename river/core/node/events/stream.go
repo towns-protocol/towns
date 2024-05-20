@@ -479,7 +479,7 @@ func (s *streamImpl) GetMiniblocks(
 		if i == 0 {
 			startMiniblockNumber = miniblock.header().MiniblockNum
 		}
-		miniblocks[i] = miniblock.proto
+		miniblocks[i] = miniblock.Proto
 	}
 
 	terminus := fromInclusive == 0

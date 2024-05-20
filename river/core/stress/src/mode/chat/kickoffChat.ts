@@ -1,5 +1,5 @@
 import { StressClient } from '../../utils/stressClient'
-import { getSystemInfo } from '../../utils/utils'
+import { getSystemInfo } from '../../utils/systemInfo'
 import { BigNumber } from 'ethers'
 import { ChatConfig } from './types'
 import { check, dlogger } from '@river-build/dlog'
@@ -27,7 +27,7 @@ export async function kickoffChat(rootClient: StressClient, cfg: ChatConfig) {
     logger.log('send message')
     const eventId = await rootClient.sendMessage(
         announceChannelId,
-        `hello, we're starting the stress test now!, sessionId: ${sessionId}`,
+        `hello, we're starting the stress test now!, containers: ${cfg.containerCount} ppc: ${cfg.processesPerContainer} clients: ${cfg.clientsCount} sessionId: ${sessionId}`,
     )
 
     const initialStats = JSON.stringify(

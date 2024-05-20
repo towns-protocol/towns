@@ -18,9 +18,7 @@ import (
 	. "github.com/river-build/river/core/node/shared"
 )
 
-var (
-	streamRegistryABI, _ = contracts.StreamRegistryV1MetaData.GetAbi()
-)
+var streamRegistryABI, _ = contracts.StreamRegistryV1MetaData.GetAbi()
 
 // Convinience wrapper for the IRiverRegistryV1 interface (abigen exports it as RiverRegistryV1)
 type RiverRegistryContract struct {
@@ -317,7 +315,8 @@ func (c *RiverRegistryContract) GetAllStreams(
 // latest block. It returns the streamId's for which the proposed block was set successful as the latest block, failed
 // or an error in case the transaction could not be submitted or failed.
 func (c *RiverRegistryContract) SetStreamLastMiniblockBatch(
-	ctx context.Context, mbs []contracts.SetMiniblock) ([]StreamId, []StreamId, error) {
+	ctx context.Context, mbs []contracts.SetMiniblock,
+) ([]StreamId, []StreamId, error) {
 	var (
 		log     = dlog.FromCtx(ctx)
 		success []StreamId
@@ -328,7 +327,6 @@ func (c *RiverRegistryContract) SetStreamLastMiniblockBatch(
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
 			return c.StreamRegistry.SetStreamLastMiniblockBatch(opts, mbs)
 		})
-
 	if err != nil {
 		ce, se, err := c.errDecoder.DecodeEVMError(err)
 		switch {
@@ -533,6 +531,7 @@ func (c *RiverRegistryContract) GetNodeEventsForBlock(ctx context.Context, block
 	}
 	return ret, nil
 }
+
 func (c *RiverRegistryContract) ParseEvent(
 	ctx context.Context,
 	boundContract *bind.BoundContract,

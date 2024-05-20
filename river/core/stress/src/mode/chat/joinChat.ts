@@ -2,6 +2,8 @@ import { StressClient } from '../../utils/stressClient'
 import { ChatConfig } from './types'
 import { dlogger } from '@river-build/dlog'
 import { getRandomEmoji } from '../../utils/emoji'
+import { getSystemInfo } from '../../utils/systemInfo'
+import { channelMessagePostWhere } from '../../utils/timeline'
 
 export async function joinChat(client: StressClient, cfg: ChatConfig) {
     const logger = dlogger(`stress:joinChat:${client.logId}}`)
@@ -34,18 +36,7 @@ export async function joinChat(client: StressClient, cfg: ChatConfig) {
     const message = await client.waitFor(
         () =>
             defaultChannel.view.timeline.find(
-                (event) =>
-                    (event.decryptedContent?.kind === 'channelMessage' &&
-                        event.decryptedContent?.content.payload.case === 'post' &&
-                        event.decryptedContent?.content.payload.value.content.case === 'text' &&
-                        event.decryptedContent?.content.payload.value.content.value.body.includes(
-                            cfg.sessionId,
-                        )) ||
-                    (event.localEvent?.channelMessage?.payload.case === 'post' &&
-                        event.localEvent?.channelMessage?.payload.value.content.case === 'text' &&
-                        event.localEvent?.channelMessage?.payload.value.content.value.body.includes(
-                            cfg.sessionId,
-                        )),
+                channelMessagePostWhere((value) => value.body.includes(cfg.sessionId)),
             ),
         { interval: 1000, timeoutMs: cfg.waitForChannelDecryptionTimeoutMs },
     )
@@ -58,7 +49,9 @@ export async function joinChat(client: StressClient, cfg: ChatConfig) {
         logger.log('check in with root client')
         await client.sendMessage(
             announceChannelId,
-            `Starting stress test containerIndex: ${cfg.containerIndex} processIndex: ${cfg.processIndex}`,
+            `c${cfg.containerIndex}p${cfg.processIndex} Starting up! freeMemory: ${
+                getSystemInfo().FreeMemory
+            }`,
             { threadId: message.hashStr },
         )
     }

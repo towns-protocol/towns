@@ -3,9 +3,10 @@ package crypto
 import (
 	"context"
 	"encoding/hex"
-	"github.com/ethereum/go-ethereum/params"
 	"math/big"
 	"time"
+
+	"github.com/ethereum/go-ethereum/params"
 
 	eth_crypto "github.com/ethereum/go-ethereum/crypto"
 )

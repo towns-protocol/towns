@@ -420,9 +420,13 @@ message UserSettingsPayload {
         StreamSettings settings = 2;
     }
 
+    message MarkerContent {
+        string data = 1;
+    }
+
     message FullyReadMarkers {
         bytes stream_id = 1;
-        EncryptedData content = 2;
+        MarkerContent content = 2;
     }
 
     message UserBlock {

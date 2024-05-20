@@ -85,9 +85,6 @@ type (
 		// EstimateGas estimates the gas usage of the transaction that would be created by createTx.
 		EstimateGas(ctx context.Context, createTx CreateTransaction) (uint64, error)
 
-		// SetOnSubmitHandler is called each time a transaction was sent to the chain
-		SetOnSubmitHandler(func())
-
 		// ProcessedTransactionsCount returns the number of transactions that have been processed
 		ProcessedTransactionsCount() int64
 
@@ -142,10 +139,9 @@ type (
 		walletBalance                prometheus.Gauge
 
 		// mu protects the remaining fields
-		mu              sync.Mutex
-		firstPendingTx  *txPoolPendingTransaction
-		lastPendingTx   *txPoolPendingTransaction
-		onSubmitHandler func()
+		mu             sync.Mutex
+		firstPendingTx *txPoolPendingTransaction
+		lastPendingTx  *txPoolPendingTransaction
 	}
 )
 
@@ -275,10 +271,6 @@ func (r *transactionPool) LastReplacementTransactionUnix() int64 {
 	return r.lastReplacementSent.Load()
 }
 
-func (r *transactionPool) SetOnSubmitHandler(handler func()) {
-	r.onSubmitHandler = handler
-}
-
 func (r *transactionPool) EstimateGas(ctx context.Context, createTx CreateTransaction) (uint64, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -349,7 +341,7 @@ func (r *transactionPool) Submit(
 	r.transactionGasCap.With(prometheus.Labels{"replacement": "false"}).Set(gasCap)
 	r.transactionGasTip.With(prometheus.Labels{"replacement": "false"}).Set(tipCap)
 
-	log.Info(
+	log.Debug(
 		"TxPool: Transaction SENT",
 		"txHash", tx.Hash(),
 		"chain", r.chainID,
@@ -382,10 +374,6 @@ func (r *transactionPool) Submit(
 
 	r.pendingTxCount.Add(1)
 
-	if r.onSubmitHandler != nil {
-		r.onSubmitHandler()
-	}
-
 	return pendingTx, nil
 }
 
@@ -408,10 +396,11 @@ func (r *transactionPool) OnHeader(ctx context.Context, _ *types.Header) {
 func (r *transactionPool) OnBlock(ctx context.Context, blockNumber BlockNumber) {
 	log := dlog.FromCtx(ctx).With("chain", r.chainID)
 
-	if !r.mu.TryLock() {
-		log.Debug("unable to claim tx pool lock")
-		return
-	}
+	r.mu.Lock()
+	// if !r.mu.TryLock() {
+	// 	log.Debug("unable to claim tx pool lock")
+	// 	return
+	// }
 	defer r.mu.Unlock()
 
 	if r.firstPendingTx == nil {
@@ -447,7 +436,7 @@ func (r *transactionPool) OnBlock(ctx context.Context, blockNumber BlockNumber) 
 				r.transactionsProcessed.With(prometheus.Labels{"status": status}).Inc()
 				r.transactionsPending.Add(-1)
 
-				log.Info(
+				log.Debug(
 					"TxPool: Transaction DONE",
 					"txHash", txHash,
 					"chain", r.chainID,
@@ -498,7 +487,7 @@ func (r *transactionPool) OnBlock(ctx context.Context, blockNumber BlockNumber) 
 			}
 
 			if err := r.client.SendTransaction(ctx, tx); err == nil {
-				log.Info(
+				log.Debug(
 					"TxPool: Transaction REPLACED",
 					"old", pendingTx.tx.Hash(),
 					"txHash", tx.Hash(),

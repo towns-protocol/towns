@@ -461,7 +461,7 @@ func (r *streamViewImpl) MinipoolEnvelopes() []*Envelope {
 func (r *streamViewImpl) MiniblocksFromLastSnapshot() []*Miniblock {
 	miniblocks := make([]*Miniblock, 0, len(r.blocks)-r.snapshotIndex)
 	for i := r.snapshotIndex; i < len(r.blocks); i++ {
-		miniblocks = append(miniblocks, r.blocks[i].proto)
+		miniblocks = append(miniblocks, r.blocks[i].Proto)
 	}
 	return miniblocks
 }

@@ -41,9 +41,9 @@ func init() {
 	_, isDebugCallStack = os.LookupEnv("RIVER_DEBUG_CALLSTACK")
 }
 
-func formatCallstack() string {
+func FormatCallstack(skip int) string {
 	pc := make([]uintptr, 32)
-	n := runtime.Callers(3, pc)
+	n := runtime.Callers(skip, pc)
 	if n == 0 {
 		return ""
 	}
@@ -78,7 +78,7 @@ func RiverError(code protocol.Err, msg string, tags ...any) *RiverErrorImpl {
 		_ = e.Tags(tags...)
 	}
 	if isDebugCallStack {
-		_ = e.Tag("callstack", formatCallstack())
+		_ = e.Tag("callstack", FormatCallstack(3))
 	}
 	return e
 }

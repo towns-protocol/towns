@@ -813,7 +813,7 @@ jobs:
               working-directory: core
 
             - name: Run node tests
-              run: go test -timeout 20m  --race ./...
+              run: go test -race -timeout 12m ./...
               working-directory: core/node
 
     XChain_Node:

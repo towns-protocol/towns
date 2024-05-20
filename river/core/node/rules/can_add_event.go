@@ -235,7 +235,8 @@ func (params *aeParams) canAddSpacePayload(payload *StreamEvent_SpacePayload) ru
 		}
 		if content.Channel.Op == ChannelOp_CO_UPDATED {
 			return aeBuilder().
-				check(params.creatorIsMember)
+				check(params.creatorIsMember).
+				check(ru.validSpaceChannelOp)
 		} else {
 			return aeBuilder().
 				check(params.creatorIsValidNode).
@@ -1099,7 +1100,6 @@ func (ru *aeKeySolicitationRules) validKeySolicitation() (bool, error) {
 }
 
 func (ru *aeKeyFulfillmentRules) validKeyFulfillment() (bool, error) {
-
 	if ru.fulfillment == nil {
 		return false, RiverError(Err_INVALID_ARGUMENT, "event is not a key fulfillment event")
 	}

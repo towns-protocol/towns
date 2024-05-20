@@ -190,6 +190,7 @@ export class StreamStateView {
     }
 
     private applySnapshot(
+        eventHash: string,
         inSnapshot: Snapshot,
         cleartexts: Record<string, string> | undefined,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
@@ -199,6 +200,7 @@ export class StreamStateView {
         switch (snapshot.content.case) {
             case 'spaceContent':
                 this.spaceContent.applySnapshot(
+                    eventHash,
                     snapshot,
                     snapshot.content.value,
                     cleartexts,
@@ -529,7 +531,7 @@ export class StreamStateView {
         check(miniblocks.length > 0, `Stream has no miniblocks ${this.streamId}`, Err.STREAM_EMPTY)
         // parse the blocks
         // initialize from snapshot data, this gets all memberships and channel data, etc
-        this.applySnapshot(snapshot, cleartexts, emitter)
+        this.applySnapshot(bin_toHexString(miniblocks[0].hash), snapshot, cleartexts, emitter)
         // initialize from miniblocks, the first minblock is the snapshot block, it's events are accounted for
         const block0Events = miniblocks[0].events.map((parsedEvent, i) => {
             const eventNum = miniblocks[0].header.eventNumOffset + BigInt(i)

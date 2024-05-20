@@ -91,14 +91,9 @@ func newServiceTester(numNodes int, require *require.Assertions) *serviceTester 
 		nodes:   make([]*testNodeRecord, numNodes),
 	}
 
-	btc, err := node_crypto.NewBlockchainTestContext(ctx, numNodes+1)
+	btc, err := node_crypto.NewBlockchainTestContext(ctx, numNodes+1, true)
 	require.NoError(err)
 	st.btc = btc
-
-	st.btc.DeployerBlockchain.TxPool.SetOnSubmitHandler(func() {
-		log.Info("Auto-mining block (deployer)")
-		st.btc.Commit(ctx)
-	})
 
 	st.deployXchainTestContracts()
 	return st
@@ -173,7 +168,7 @@ func (st *serviceTester) AssertNoEVMError(err error) {
 }
 
 func (st *serviceTester) ClientSimulatorBlockchain() *node_crypto.Blockchain {
-	return st.btc.GetBlockchain(st.ctx, len(st.nodes), true)
+	return st.btc.GetBlockchain(st.ctx, len(st.nodes))
 }
 
 func (st *serviceTester) Close() {
@@ -236,7 +231,7 @@ func (st *serviceTester) Start(t *testing.T) {
 
 	for i := 0; i < len(st.nodes); i++ {
 		st.nodes[i] = &testNodeRecord{}
-		bc := st.btc.GetBlockchain(st.ctx, i, true)
+		bc := st.btc.GetBlockchain(st.ctx, i)
 
 		// register node
 		pendingTx, err := bc.TxPool.Submit(ctx, "RegisterNode", func(opts *bind.TransactOpts) (*types.Transaction, error) {
