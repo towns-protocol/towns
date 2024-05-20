@@ -302,12 +302,7 @@ function CreateSpaceFormV2WithoutAuth() {
                                             width="100%"
                                         >
                                             {/* left col */}
-                                            <Stack
-                                                grow
-                                                position="relative"
-                                                zIndex="above"
-                                                ref={leftColRef}
-                                            >
+                                            <Stack grow position="relative" ref={leftColRef}>
                                                 <Stack gap="x4">
                                                     {/* image when panel open */}
                                                     {!_isTouch && panelType && (
