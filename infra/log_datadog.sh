@@ -27,7 +27,8 @@ function sendto_datadog()
 {
     RUN_TYPE=$1
     LOG_MESSAGE=$2
-    JSON_PAYLOAD="{\"ddsource\": \"log_datadog\", \"hostname\": \"$ENV\" , \"service\": \"terraform\", \"status\": \"$TF_ACTION_TYPE\", \"ddtags\": \"environment:$ENV, run_type:$RUN_TYPE, tf_run_type:$TF_ACTION_TYPE\", \"message\": \"$LOG_MESSAGE\"}"
+    TF_STATUS=$3
+    JSON_PAYLOAD="{\"ddsource\": \"log_datadog\", \"hostname\": \"$ENV\" , \"service\": \"terraform\", \"status\": \"$TF_STATUS\", \"ddtags\": \"environment:$ENV, run_type:$RUN_TYPE, tf_run_type:$TF_ACTION_TYPE\", \"message\": \"$LOG_MESSAGE\"}"
     DATADOG_URL="https://http-intake.logs.datadoghq.com/v1/input"
     echo "Sending metrics to Datadog"
     RESPONSE_CODE=$(curl -o /dev/null -sw '%{http_code}' -X POST -H "Content-type: application/json" -H "DD-API-KEY: $TF_VAR_datadog_api_key" -d "$JSON_PAYLOAD" "$DATADOG_URL")
@@ -47,4 +48,5 @@ fi
 current_date_time=$(date "+%Y-%m-%d %H:%M:%S")
 log_message="$LOG_MESSAGE: $current_date_time"
 run_type=$(determine_runtype)
-sendto_datadog "$run_type" "$log_message"
+status="${TF_STATUS:-info}"
+sendto_datadog "$run_type" "$log_message" "$status"

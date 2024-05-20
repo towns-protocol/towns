@@ -116,7 +116,7 @@ jobs:
               uses: foundry-rs/foundry-toolchain@v1
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
-            
+
             - uses: actions/setup-node@v4
               with:
                   node-version: '20'
@@ -124,7 +124,7 @@ jobs:
 
             - name: Install node dependencies
               run: yarn install --immutable
-            
+
             - name: Print versions
               run: ./river/scripts/print-versions.sh
 
@@ -154,6 +154,16 @@ jobs:
                       }
               env:
                   SLACK_WEBHOOK_URL: ${{ secrets.SLACK_TRANSIENT_CD_WORKFLOW_WEBHOOK_URL }}
+
+            - name: Data dog logging
+              if: failure()
+              working-directory: ./infra
+              env:
+                ENV: 'transient-${{ github.event.pull_request.number}}'
+                TF_ACTION_TYPE: "Provision"
+                TF_STATUS: "ERROR"
+                LOG_MESSAGE: "Provision step failed for ${{ github.event.pull_request.number}} PR"
+              run: "./log_datadog.sh"
 
     river_node_docker:
         uses: './.github/workflows/River_node_docker.yml'

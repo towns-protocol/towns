@@ -85,3 +85,13 @@ jobs:
                       }
               env:
                   SLACK_WEBHOOK_URL: ${{ secrets.SLACK_CD_WORKFLOW_WEBHOOK_URL }}
+
+            - name: Data dog logging
+              if: failure()
+              working-directory: ./infra
+              env:
+                ENV: 'transient-${{ github.event.pull_request.number}}'
+                TF_ACTION_TYPE: "Deprovision"
+                TF_STATUS: "ERROR"
+                LOG_MESSAGE: "Deprovision step failed for ${{ github.event.pull_request.number}} PR"
+              run: "./log_datadog.sh"
