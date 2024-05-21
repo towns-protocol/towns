@@ -31,7 +31,7 @@ export const blockchainKeys = {
         QuerKeysEnum.ThenByRoleIds,
         roleId,
     ],
-    spaceInfo: (spaceId: string) => ['spaceInfo', QuerKeysEnum.FirstBySpaceIds, spaceId],
+    spaceInfo: (spaceId: string) => ['spaceInfo', QuerKeysEnum.FirstBySpaceIds, spaceId] as const,
     channelInfo: (channelId: string, updatedAtHash: string) => [
         'channelInfo',
         'channelId',

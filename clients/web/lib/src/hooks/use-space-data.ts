@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Channel, InviteData, Membership, SpaceData, toMembership } from '../types/towns-types'
 import { useTownsContext } from '../components/TownsContextProvider'
 import { useSpaceContext } from '../components/SpaceContextProvider'
@@ -144,7 +144,7 @@ function channelInfoQueryConfig({
     }
 }
 
-function spaceInfoQueryConfig({
+function spaceInfoWithChannelsQueryConfig({
     spaceId,
     spaceDapp,
     initialData,
@@ -161,7 +161,7 @@ function spaceInfoQueryConfig({
             spaceDapp: ISpaceDapp | undefined,
             client: CasablancaClient | undefined,
             spaceId: string | undefined,
-        ) => {
+        ): Promise<SpaceInfo | undefined> => {
             if (!spaceDapp || !spaceId || spaceId.length === 0 || !client) {
                 return undefined
             }
@@ -303,7 +303,7 @@ export function useContractSpaceInfos(opts: TownsOpts, client?: CasablancaClient
 
     const queryData = useQueries({
         queries: spaceIds.map((id) => {
-            const queryConfig = spaceInfoQueryConfig({
+            const queryConfig = spaceInfoWithChannelsQueryConfig({
                 spaceId: id,
                 spaceDapp,
                 initialData: offlineSpaceInfoMap[id],
@@ -349,7 +349,7 @@ export const useContractSpaceInfo = (
     })
     const { casablancaClient: client } = useTownsContext()
 
-    const queryConfig = spaceInfoQueryConfig({
+    const queryConfig = spaceInfoWithChannelsQueryConfig({
         spaceId: spaceId ?? '',
         spaceDapp,
         initialData: spaceId ? offlineSpaceInfoMap[spaceId] : undefined,
@@ -375,6 +375,52 @@ export const useContractSpaceInfo = (
     return useMemo(() => {
         return { data: spaceInfo, isLoading: isLoading, error: error }
     }, [spaceInfo, isLoading, error])
+}
+
+/**
+ * a hook to grab space data without any of the channels or side effects that require client
+ * b/c it should use the same query key and return the same data in the query fn, it's typed to match useContractSpaceInfos
+ * @param spaceId
+ * @returns
+ */
+export function useContractSpaceInfoWithoutClient(spaceId: string | undefined) {
+    const offlineSpaceInfoMap = useOfflineStore((s) => s.offlineSpaceInfoMap)
+
+    const { baseProvider: provider, baseConfig: config } = useTownsContext()
+    const spaceDapp = useSpaceDapp({
+        config,
+        provider,
+    })
+
+    const queryFn = useCallback(async (): ReturnType<
+        ReturnType<typeof spaceInfoWithChannelsQueryConfig>['queryFn']
+    > => {
+        if (!spaceDapp || !spaceId || spaceId.length === 0) {
+            return undefined
+        }
+        const spaceInfo: SpaceInfo | undefined = await spaceDapp.getSpaceInfo(spaceId)
+        console.log(`useContractSpaceInfo: ${spaceId}`, { spaceInfo })
+        // if we don't have a spaceInfo from network for some reasons, return the cached one
+        if (!spaceInfo) {
+            return useOfflineStore.getState().offlineSpaceInfoMap[spaceId]
+        }
+        return spaceInfo
+    }, [spaceDapp, spaceId])
+
+    return useQuery(
+        blockchainKeys.spaceInfo(spaceId ?? '') satisfies ReturnType<
+            typeof spaceInfoWithChannelsQueryConfig
+        >['queryKey'],
+        queryFn,
+        {
+            initialData: spaceId ? offlineSpaceInfoMap[spaceId] : undefined,
+            enabled: !!spaceId && !!spaceDapp,
+            refetchOnMount: false,
+            refetchOnWindowFocus: false,
+            refetchOnReconnect: false,
+            staleTime: defaultStaleTime,
+        },
+    )
 }
 
 export function useSpaceRollup(streamId: string | undefined, fromTag: string | undefined) {

@@ -58,6 +58,7 @@ export {
     useInvites,
     useInviteData,
     useContractSpaceInfo,
+    useContractSpaceInfoWithoutClient,
 } from './hooks/use-space-data'
 export { useSpaceDapp } from './hooks/use-space-dapp'
 export { useSpaceId } from './hooks/use-space-id'

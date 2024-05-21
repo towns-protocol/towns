@@ -4,7 +4,7 @@ import debug from 'debug'
 import React, { useCallback, useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { Link } from 'react-router-dom'
-import { useConnectivity, useContractSpaceInfo, useMyProfile } from 'use-towns-client'
+import { useConnectivity, useContractSpaceInfoWithoutClient, useMyProfile } from 'use-towns-client'
 import { AppProgressState } from '@components/AppProgressOverlay/AppProgressState'
 import { Avatar } from '@components/Avatar/Avatar'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
@@ -40,7 +40,7 @@ const PublicTownPageWithoutAuth = (props: { isPreview?: boolean; onClosePreview?
     const spaceId = useSpaceIdFromPathname()
     const { connected, isLoading: isLoadingConnected } = useConnectedStatus()
 
-    const { data: spaceInfo, isLoading } = useContractSpaceInfo(spaceId)
+    const { data: spaceInfo, isLoading } = useContractSpaceInfoWithoutClient(spaceId)
 
     const className = clsx([darkTheme, atoms({ color: 'default' })])
     const isJoining = !!usePublicPageLoginFlow().joiningSpace
