@@ -8,7 +8,7 @@ For each contract being deployed, we create a script that will:
 2. implements a `contractName()` and `__deploy()` function
 
 ```solidity
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
 import { Deployer } from "./common/Deployer.s.sol";
@@ -113,7 +113,7 @@ SAVE_DEPLOYMENTS=1 make deploy-goerli contract=UpgradeSpaceImpl
 # How to deploy predeterministic contracts?
 
 ```
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
 //interfaces

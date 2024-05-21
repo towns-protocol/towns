@@ -51,9 +51,10 @@ function getChatConfig(): ChatConfig {
     const clientEndIndex = clientStartIndex + clientsPerProcess
     const spaceId = process.env.SPACE_ID
     const channelIds = process.env.CHANNEL_IDS.split(',')
-    const announceChannelId = process.env.ANNOUNCE_CHANNEL_ID
-        ? process.env.ANNOUNCE_CHANNEL_ID
-        : makeDefaultChannelStreamId(spaceId)
+    const announceChannelId =
+        process.env.ANNOUNCE_CHANNEL_ID && process.env.ANNOUNCE_CHANNEL_ID.length > 0
+            ? process.env.ANNOUNCE_CHANNEL_ID
+            : makeDefaultChannelStreamId(spaceId)
     const allWallets = generateWalletsFromSeed(getRootWallet().mnemonic, 0, clientsCount)
     const wallets = allWallets.slice(clientStartIndex, clientEndIndex)
     if (clientStartIndex >= clientEndIndex) {
@@ -140,7 +141,7 @@ async function startStressChat() {
     await Promise.all(clients.map((client) => chitChat(client, chatConfig)))
 
     logger.log('sumarizeChat')
-    await sumarizeChat(clients[0], chatConfig)
+    await sumarizeChat(clients, chatConfig)
 
     logger.log('done')
 }

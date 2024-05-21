@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
 // interfaces
@@ -26,7 +26,9 @@ contract NodeOperatorFacet is INodeOperator, OwnableBase, ERC721ABase, Facet {
   // =============================================================
 
   /// @inheritdoc INodeOperator
-  function registerOperator() external {
+  function registerOperator(address claimer) external {
+    if (claimer == address(0)) revert NodeOperator__InvalidAddress();
+
     NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
 
     if (ds.operators.contains(msg.sender))
@@ -36,6 +38,8 @@ contract NodeOperatorFacet is INodeOperator, OwnableBase, ERC721ABase, Facet {
 
     ds.operators.add(msg.sender);
     ds.statusByOperator[msg.sender] = NodeOperatorStatus.Standby;
+    ds.claimerByOperator[msg.sender] = claimer;
+    ds.operatorsByClaimer[claimer].add(msg.sender);
 
     emit OperatorRegistered(msg.sender);
   }
@@ -104,34 +108,42 @@ contract NodeOperatorFacet is INodeOperator, OwnableBase, ERC721ABase, Facet {
   // =============================================================
 
   /// @inheritdoc INodeOperator
-  function setClaimAddress(
-    address claimAddress
-  ) external onlyValidOperator(msg.sender) {
+  function setClaimAddressForOperator(
+    address claimer,
+    address operator
+  ) external onlyClaimer(msg.sender, operator) {
     NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
 
-    address currentClaimAddress = ds.claimAddressByOperator[msg.sender];
-    if (currentClaimAddress == claimAddress) {
+    if (!ds.operators.contains(operator)) revert NodeOperator__NotRegistered();
+
+    address currentClaimer = ds.claimerByOperator[operator];
+
+    if (currentClaimer == claimer) {
       revert NodeOperator__ClaimAddressNotChanged();
     }
-    ds.claimAddressByOperator[msg.sender] = claimAddress;
 
-    emit OperatorClaimAddressChanged(msg.sender, claimAddress);
+    if (ds.operatorsByClaimer[currentClaimer].contains(operator)) {
+      ds.operatorsByClaimer[currentClaimer].remove(operator);
+    }
+
+    ds.claimerByOperator[operator] = claimer;
+    ds.operatorsByClaimer[claimer].add(operator);
+
+    emit OperatorClaimAddressChanged(operator, claimer);
   }
 
   /// @inheritdoc INodeOperator
-  function getClaimAddress(address operator) external view returns (address) {
-    NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
-    return ds.claimAddressByOperator[operator];
+  function getClaimAddressForOperator(
+    address operator
+  ) external view returns (address) {
+    return NodeOperatorStorage.layout().claimerByOperator[operator];
   }
 
   // =============================================================
   //                           Commission
   // =============================================================
-  function setCommissionRate(
-    uint256 rate
-  ) external onlyValidOperator(msg.sender) {
+  function setCommissionRate(uint256 rate) external {
     NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
-
     if (!ds.operators.contains(msg.sender))
       revert NodeOperator__NotRegistered();
     if (rate > 100) revert NodeOperator__InvalidCommissionRate();
@@ -147,11 +159,13 @@ contract NodeOperatorFacet is INodeOperator, OwnableBase, ERC721ABase, Facet {
   // =============================================================
   //                           Modifiers
   // =============================================================
-  modifier onlyValidOperator(address operator) {
+
+  // only an existing claimer for that operator can call this function
+  modifier onlyClaimer(address claimer, address operator) {
     NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
 
-    if (ds.statusByOperator[operator] == NodeOperatorStatus.Exiting) {
-      revert NodeOperator__NotRegistered();
+    if (!ds.operatorsByClaimer[claimer].contains(operator)) {
+      revert NodeOperator__NotClaimer();
     }
     _;
   }

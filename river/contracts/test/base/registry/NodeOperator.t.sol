@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
 // interfaces
@@ -63,7 +63,7 @@ contract NodeOperatorFacetTest is
     emit OperatorRegistered(_operator);
     emit OperatorRegistered(_operator);
     vm.prank(_operator);
-    operator.registerOperator();
+    operator.registerOperator(_operator);
     _;
   }
 
@@ -72,7 +72,7 @@ contract NodeOperatorFacetTest is
   ) public givenOperatorIsRegistered(randomOperator) {
     vm.expectRevert(NodeOperator__AlreadyRegistered.selector);
     vm.prank(randomOperator);
-    operator.registerOperator();
+    operator.registerOperator(randomOperator);
   }
 
   function test_registerOperatorWithValidAddress(
@@ -189,8 +189,10 @@ contract NodeOperatorFacetTest is
     address _claimAddress
   ) {
     vm.assume(_claimAddress != address(0));
+    vm.assume(_operator != address(0));
+    vm.assume(_operator != _claimAddress);
     vm.prank(_operator);
-    operator.setClaimAddress(_claimAddress);
+    operator.setClaimAddressForOperator(_claimAddress, _operator);
     _;
   }
 
@@ -369,22 +371,25 @@ contract NodeOperatorFacetTest is
 
   function test_revertWhen_setClaimAddressIsCalledByInvalidOperator(
     address randomOperator,
-    address randomClaimAddress
+    address randomClaimer
   ) public {
-    vm.expectRevert(NodeOperator__NotRegistered.selector);
-    vm.prank(randomOperator);
-    operator.setClaimAddress(randomClaimAddress);
+    vm.expectRevert(NodeOperator__NotClaimer.selector);
+    vm.prank(randomClaimer);
+    operator.setClaimAddressForOperator(randomClaimer, randomOperator);
   }
 
   function test_setClaimAddress(
     address randomOperator,
-    address randomClaimAddress
+    address randomClaimer
   )
     public
     givenOperatorIsRegistered(randomOperator)
-    givenOperatorHasSetClaimAddress(randomOperator, randomClaimAddress)
+    givenOperatorHasSetClaimAddress(randomOperator, randomClaimer)
   {
-    assertEq(operator.getClaimAddress(randomOperator), randomClaimAddress);
+    assertEq(
+      operator.getClaimAddressForOperator(randomOperator),
+      randomClaimer
+    );
   }
 
   // =============================================================

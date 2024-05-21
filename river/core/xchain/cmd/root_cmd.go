@@ -1,10 +1,11 @@
 package cmd
 
 import (
-	"core/xchain/config"
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/river-build/river/core/xchain/config"
 
 	sconfig "github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/infra"

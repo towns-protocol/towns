@@ -1,6 +1,5 @@
 go 1.22.2
 
 use (
-	./core/node
-	./core/xchain
+	./core
 )

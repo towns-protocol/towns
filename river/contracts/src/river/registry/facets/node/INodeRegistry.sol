@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
 import {NodeStatus, Node} from "contracts/src/river/registry/libraries/RegistryStorage.sol";

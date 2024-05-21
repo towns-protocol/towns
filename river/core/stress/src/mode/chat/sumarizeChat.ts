@@ -1,27 +1,51 @@
-import { dlogger } from '@river-build/dlog'
+import { check, dlogger, shortenHexString } from '@river-build/dlog'
 import { StressClient } from '../../utils/stressClient'
 import { ChatConfig } from './types'
 import { getSystemInfo } from '../../utils/systemInfo'
 import { channelMessagePostWhere } from '../../utils/timeline'
+import { isDefined } from '@river/sdk'
+import { makeCodeBlock } from '../../utils/messages'
 
-export async function sumarizeChat(client: StressClient, cfg: ChatConfig) {
+export async function sumarizeChat(localClients: StressClient[], cfg: ChatConfig) {
     const logger = dlogger('stress:sumarizeChat')
-
-    logger.log('sumarizeChat', client.connection.userId)
-    const announceChannelId = cfg.announceChannelId
-    const defaultChannel = await client.streamsClient.waitForStream(announceChannelId)
-    // find the message in the default channel that contains the session id, emoji it
-    const message = await client.waitFor(
-        () =>
-            defaultChannel.view.timeline.find(
-                channelMessagePostWhere((value) => value.body.includes(cfg.sessionId)),
-            ),
-        { interval: 1000, timeoutMs: cfg.waitForChannelDecryptionTimeoutMs },
+    const processLeadClient = localClients[0]
+    logger.log('sumarizeChat', processLeadClient.connection.userId)
+    const defaultChannel = processLeadClient.streamsClient.stream(cfg.announceChannelId)
+    check(isDefined(defaultChannel), 'defaultChannel not found')
+    // find the message in the default channel that contains the session id, this should already be there decrypted
+    const message = defaultChannel.view.timeline.find(
+        channelMessagePostWhere((value) => value.body.includes(cfg.sessionId)),
     )
+    check(isDefined(message), 'message not found')
 
-    await client.sendMessage(
-        announceChannelId,
-        `c${cfg.containerIndex}p${cfg.processIndex} Done freeMemory: ${getSystemInfo().FreeMemory}`,
-        { threadId: message.hashStr },
-    )
+    const checkinCounts: Record<string, Record<string, number>> = {}
+
+    // loop over clients and do summaries
+    for (const client of localClients) {
+        for (const channelId of cfg.channelIds) {
+            // for each channel, count the number of joinChat checkins we got (look for sessionId)
+            const messages = client.streamsClient.stream(channelId)?.view.timeline
+            const checkInMesssages =
+                messages?.filter(
+                    channelMessagePostWhere((value) => value.body.includes(cfg.sessionId)),
+                ) ?? []
+
+            const key = shortenHexString(channelId)
+            checkinCounts[key] = {
+                ...checkinCounts[key],
+                [checkInMesssages.length.toString()]: checkInMesssages.length,
+            }
+        }
+    }
+
+    const summary = {
+        containerIndex: cfg.containerIndex,
+        processIndex: cfg.processIndex,
+        freeMemory: getSystemInfo().FreeMemory,
+        checkinCounts,
+    }
+
+    await processLeadClient.sendMessage(cfg.announceChannelId, `Done ${makeCodeBlock(summary)}`, {
+        threadId: message.hashStr,
+    })
 }

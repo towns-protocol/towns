@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
 // interfaces
@@ -19,9 +19,10 @@ library MainnetDelegationStorage {
   struct Layout {
     mapping(address operator => EnumerableSet.AddressSet) delegatorsByOperator;
     mapping(address delegator => IMainnetDelegationBase.Delegation delegation) delegationByDelegator;
-    mapping(address => address) authorizedClaimers;
+    mapping(address delegator => address claimer) claimerByDelegator;
     IProxyDelegation proxyDelegation;
     ICrossDomainMessenger messenger;
+    mapping(address claimer => EnumerableSet.AddressSet delegators) delegatorsByAuthorizedClaimer;
   }
 
   function layout() internal pure returns (Layout storage s) {

@@ -1,9 +1,10 @@
 package util_test
 
 import (
-	"core/xchain/util"
 	"testing"
 	"time"
+
+	"github.com/river-build/river/core/xchain/util"
 
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/river-build/river/core/node/base/test"

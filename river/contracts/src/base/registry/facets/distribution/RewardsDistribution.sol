@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
 // interfaces
@@ -96,7 +96,7 @@ contract RewardsDistribution is
     uint256 operatorClaimAmount = (commission * amountPerOperator) / 100;
 
     //set that amount to the operator
-    address operatorClaimAddress = nos.claimAddressByOperator[operator];
+    address operatorClaimAddress = nos.claimerByOperator[operator];
     ds.distributionByOperator[operatorClaimAddress] += operatorClaimAmount;
     emit RewardsDistributed(operator, operatorClaimAmount);
 

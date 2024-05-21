@@ -2,7 +2,8 @@ package main
 
 import (
 	"context"
-	"core/xchain/cmd"
+
+	"github.com/river-build/river/core/xchain/cmd"
 
 	"github.com/river-build/river/core/node/dlog"
 )

@@ -2,11 +2,12 @@ package cmd
 
 import (
 	"context"
-	"core/xchain/server"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
+
+	"github.com/river-build/river/core/xchain/server"
 
 	"github.com/spf13/cobra"
 )

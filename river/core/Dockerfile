@@ -9,32 +9,31 @@ ARG VER_VERSION=version_unset
 ARG VER_BRANCH=branch_unset
 ARG VER_COMMIT=commit_unset
 
-# Build node_app
+# Prepare build environment
+WORKDIR /build
+COPY node node
+COPY xchain xchain
+COPY go.* .
+RUN go mod download
+
+# Build stream_node
 WORKDIR /build/node
-COPY node/go.* /build/node/node/
-COPY xchain/ /build/node/xchain/
-RUN cd node && go mod download
-COPY node/ /build/node/node
-RUN cd node && go build \
+RUN go build \
     -trimpath \
     -o /bin/stream_node \
     -ldflags="-X github.com/river-build/river/core/node/node/version.version=$VER_VERSION -X github.com/river-build/river/core/node/node/version.branch=$VER_BRANCH -X github.com/river-build/river/core/node/node/version.commit=$VER_COMMIT" \
     ./node
 
-# Build xchain_app
+# Build xchain_node
 WORKDIR /build/xchain
-COPY xchain/go.* /build/xchain/xchain/
-COPY node/ /build/xchain/node/
-RUN cd xchain && go mod download
-COPY xchain/ /build/xchain/xchain/
-RUN cd xchain && go build -trimpath -o /bin/xchain_node ./node
+RUN go build -trimpath -o /bin/xchain_node ./node
 
 # Final stage
 FROM alpine:latest
 LABEL org.opencontainers.image.title="River Node" \
     org.opencontainers.image.description="River Node reference implementation, written in Go" \
-    org.opencontainers.image.source="https://github.com/river-build/river-stage" \
-    org.opencontainers.image.licenses="Apache-2.0"
+    org.opencontainers.image.source="https://github.com/river-build/river" \
+    org.opencontainers.image.licenses="MIT"
 
 # Install dependencies
 RUN apk add --no-cache libcap supervisor && \
@@ -47,8 +46,8 @@ COPY --from=builder /bin/xchain_node /usr/bin/xchain_node
 # Use setcap to allow the web server binary to bind to privileged ports
 RUN setcap 'cap_net_bind_service=+ep' /usr/bin/stream_node
 
-COPY --from=builder /build/node/node/default_config.yaml /riveruser/stream_node/config/config.yaml
-COPY --from=builder /build/xchain/xchain/default_config.yaml /riveruser/xchain_node/config/config.yaml
+COPY --from=builder /build/node/default_config.yaml /riveruser/stream_node/config/config.yaml
+COPY --from=builder /build/xchain/default_config.yaml /riveruser/xchain_node/config/config.yaml
 
 RUN mkdir -p /riveruser/stream_node/logs
 RUN mkdir -p /riveruser/xchain_node/logs
@@ -62,7 +61,7 @@ USER riveruser
 
 # Environment variables setup
 ARG GIT_SHA
-ARG DD_GIT_REPOSITORY_URL="https://github.com/river-build/river-stage"
+ARG DD_GIT_REPOSITORY_URL="https://github.com/river-build/river"
 
 ENV DD_GIT_REPOSITORY_URL=${DD_GIT_REPOSITORY_URL} \
     DD_GIT_COMMIT_SHA=${GIT_SHA}

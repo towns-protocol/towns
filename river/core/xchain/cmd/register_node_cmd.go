@@ -3,11 +3,12 @@ package cmd
 import (
 	"bufio"
 	"context"
-	"core/xchain/contracts"
-	"core/xchain/util"
 	"fmt"
 	"os"
 	"time"
+
+	"github.com/river-build/river/core/xchain/contracts"
+	"github.com/river-build/river/core/xchain/util"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"

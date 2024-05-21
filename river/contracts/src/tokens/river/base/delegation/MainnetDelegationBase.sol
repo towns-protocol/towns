@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
 // interfaces
@@ -75,14 +75,32 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
     return stake;
   }
 
-  function _setAuthorizedClaimer(address owner, address claimer) internal {
-    MainnetDelegationStorage.layout().authorizedClaimers[owner] = claimer;
+  function _setAuthorizedClaimer(address delegator, address claimer) internal {
+    MainnetDelegationStorage.Layout storage ds = MainnetDelegationStorage
+      .layout();
+
+    address currentClaimer = ds.claimerByDelegator[delegator];
+
+    if (ds.delegatorsByAuthorizedClaimer[currentClaimer].contains(delegator)) {
+      ds.delegatorsByAuthorizedClaimer[currentClaimer].remove(delegator);
+    }
+
+    ds.claimerByDelegator[delegator] = claimer;
+    ds.delegatorsByAuthorizedClaimer[claimer].add(delegator);
+  }
+
+  function _getDelegatorsByAuthorizedClaimer(
+    address claimer
+  ) internal view returns (address[] memory) {
+    MainnetDelegationStorage.Layout storage ds = MainnetDelegationStorage
+      .layout();
+    return ds.delegatorsByAuthorizedClaimer[claimer].values();
   }
 
   function _getAuthorizedClaimer(
     address owner
   ) internal view returns (address) {
-    return MainnetDelegationStorage.layout().authorizedClaimers[owner];
+    return MainnetDelegationStorage.layout().claimerByDelegator[owner];
   }
 
   function _setProxyDelegation(IProxyDelegation proxyDelegation) internal {

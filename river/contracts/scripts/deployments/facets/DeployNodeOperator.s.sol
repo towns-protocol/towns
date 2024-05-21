@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
 //interfaces
@@ -18,8 +18,8 @@ contract DeployNodeOperator is Deployer, FacetHelper {
     addSelector(NodeOperatorFacet.getOperatorStatus.selector);
     addSelector(NodeOperatorFacet.setCommissionRate.selector);
     addSelector(NodeOperatorFacet.getCommissionRate.selector);
-    addSelector(NodeOperatorFacet.setClaimAddress.selector);
-    addSelector(NodeOperatorFacet.getClaimAddress.selector);
+    addSelector(NodeOperatorFacet.setClaimAddressForOperator.selector);
+    addSelector(NodeOperatorFacet.getClaimAddressForOperator.selector);
   }
 
   function initializer() public pure override returns (bytes4) {

@@ -19,6 +19,7 @@ echo "stress/scripts/localhost_chat.sh"
 
 export SPACE_ID="${SPACE_ID}"
 export CHANNEL_IDS="${CHANNEL_IDS}"
+export ANNOUNCE_CHANNEL_ID="${ANNOUNCE_CHANNEL_ID:-}"
 
 export RIVER_ENV="${RIVER_ENV:-local_single}"
 export STRESS_MODE="${STRESS_MODE:-chat}"

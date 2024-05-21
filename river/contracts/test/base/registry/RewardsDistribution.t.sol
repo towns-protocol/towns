@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
 // interfaces
@@ -563,7 +563,7 @@ contract RewardsDistributionTest is
   {
     for (uint256 i = 0; i < operators.length; i++) {
       uint256 reward = rewardsDistributionFacet.getClaimableAmount(
-        operator.getClaimAddress(operators[i].addr)
+        operator.getClaimAddressForOperator(operators[i].addr)
       );
 
       uint256 expectedReward = _calculateExpectedOperatorReward(
@@ -601,7 +601,7 @@ contract RewardsDistributionTest is
   ) internal {
     for (uint256 i = 0; i < operators.length; i++) {
       uint256 reward = rewardsDistributionFacet.getClaimableAmount(
-        operator.getClaimAddress(operators[i].addr)
+        operator.getClaimAddressForOperator(operators[i].addr)
       );
 
       assertEq(
@@ -1133,7 +1133,7 @@ contract RewardsDistributionTest is
     vm.expectEmit();
     emit INodeOperatorBase.OperatorRegistered(operatorAddr);
     vm.prank(operatorAddr);
-    operator.registerOperator();
+    operator.registerOperator(operatorAddr);
   }
 
   function setOperatorCommissionRate(
@@ -1157,7 +1157,7 @@ contract RewardsDistributionTest is
     vm.expectEmit();
     emit INodeOperatorBase.OperatorClaimAddressChanged(operatorAddr, claimAddr);
     vm.prank(operatorAddr);
-    operator.setClaimAddress(claimAddr);
+    operator.setClaimAddressForOperator(claimAddr, operatorAddr);
   }
 
   function delegateToOperator(address user, address operatorAddr) internal {

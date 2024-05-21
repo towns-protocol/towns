@@ -4,6 +4,7 @@ import { dlogger } from '@river-build/dlog'
 import { getRandomEmoji } from '../../utils/emoji'
 import { getSystemInfo } from '../../utils/systemInfo'
 import { channelMessagePostWhere } from '../../utils/timeline'
+import { makeSillyMessage } from '../../utils/messages'
 
 export async function joinChat(client: StressClient, cfg: ChatConfig) {
     const logger = dlogger(`stress:joinChat:${client.logId}}`)
@@ -71,10 +72,11 @@ export async function joinChat(client: StressClient, cfg: ChatConfig) {
         ) {
             await client.streamsClient.joinStream(channelId)
             await client.streamsClient.waitForStream(channelId)
-            await client.sendMessage(channelId, `I'm in! ${cfg.sessionId}`)
-        } else {
-            await client.sendMessage(channelId, `Let's go! ${cfg.sessionId}`)
         }
+        await client.sendMessage(
+            channelId,
+            `${makeSillyMessage({ maxWords: 2 })}! ${cfg.sessionId}`,
+        )
     }
 
     logger.log('done')

@@ -3,6 +3,7 @@ import { getSystemInfo } from '../../utils/systemInfo'
 import { BigNumber } from 'ethers'
 import { ChatConfig } from './types'
 import { check, dlogger } from '@river-build/dlog'
+import { makeCodeBlock } from '../../utils/messages'
 
 const logger = dlogger('stress:kickoffChat')
 
@@ -30,24 +31,19 @@ export async function kickoffChat(rootClient: StressClient, cfg: ChatConfig) {
         `hello, we're starting the stress test now!, containers: ${cfg.containerCount} ppc: ${cfg.processesPerContainer} clients: ${cfg.clientsCount} sessionId: ${sessionId}`,
     )
 
-    const initialStats = JSON.stringify(
-        {
-            timeToShareKeys: shareKeysDuration + 'ms',
-            walletBalance: balance.toString(),
-            testDuration: cfg.duration,
-            clientsCount: cfg.clientsCount,
-        },
-        null,
-        2,
-    )
-
-    const systemInfo = JSON.stringify(getSystemInfo(), null, 2)
-    const ticks = '```'
+    const initialStats = {
+        timeToShareKeys: shareKeysDuration + 'ms',
+        walletBalance: balance.toString(),
+        testDuration: cfg.duration,
+        clientsCount: cfg.clientsCount,
+    }
 
     logger.log('start thread')
     await rootClient.sendMessage(
         announceChannelId,
-        `System Info:<br>\n ${ticks}\n ${systemInfo}\n ${ticks}\n Initial Stats:<br>\n ${ticks}\n ${initialStats}\n ${ticks}\n`,
+        `System Info: ${makeCodeBlock(getSystemInfo())} Initial Stats: ${makeCodeBlock(
+            initialStats,
+        )}`,
         { threadId: eventId },
     )
 

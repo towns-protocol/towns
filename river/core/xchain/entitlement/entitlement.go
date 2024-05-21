@@ -2,13 +2,14 @@ package entitlement
 
 import (
 	"context"
-	"core/xchain/config"
 	"errors"
 	"fmt"
 	"math/big"
 	"sync"
 
-	er "core/xchain/contracts"
+	"github.com/river-build/river/core/xchain/config"
+
+	er "github.com/river-build/river/core/xchain/contracts"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/river-build/river/core/node/dlog"

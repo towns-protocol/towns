@@ -3,12 +3,13 @@ package cmd
 import (
 	"bufio"
 	"context"
-	xc "core/xchain/client_simulator"
-	"core/xchain/util"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
+
+	xc "github.com/river-build/river/core/xchain/client_simulator"
+	"github.com/river-build/river/core/xchain/util"
 
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/spf13/cobra"

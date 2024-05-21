@@ -26,7 +26,7 @@ test:
 	go test -v ./...
 
 integration_tests:
-	go test -timeout 10m core/xchain/server -v -tags integration
+	go test -timeout 10m ./server -v -tags integration
 
 # The `vet` target runs go vet to examine Go source code and reports suspicious constructs.
 vet:
