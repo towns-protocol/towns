@@ -106,7 +106,7 @@ export const AvatarWithoutDot = forwardRef<HTMLElement, Props & { dot?: boolean 
     return (
         <_Avatar
             key={imageSrc}
-            resourceId={nftUrl ? nftUrl : resourceId ? resourceId + '_' + _imageVariant : undefined}
+            resourceId={resourceId ? resourceId + '_' + (nftUrl ?? _imageVariant) : undefined}
             src={nftUrl ?? src ?? imageSrc}
             {...rest}
             ref={ref}
