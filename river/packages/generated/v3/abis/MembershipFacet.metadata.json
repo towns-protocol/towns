@@ -2456,10 +2456,10 @@
       "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/roles/RolesBase.sol": {
-      "keccak256": "0x2ef137dec4a5390009fd931e34fdbb4a742c96b68b40f5c152cec8cf2809ed6f",
+      "keccak256": "0x65d29ae38b7471242b4c54003a4e7d5d44050c25630d159f60bcc287589d0275",
       "urls": [
-        "bzz-raw://3cb29b4a780742a30ba3af5719f77a4a65ea55ebbdc3ccd9c93c86573f20c7df",
-        "dweb:/ipfs/QmdvPJydLCcEwCB3xk5VpET8X2GfrxC3NBUD5G6C8a9aW8"
+        "bzz-raw://c467728b199eb942af586768092dc094d949239a18735278c776124190b4df23",
+        "dweb:/ipfs/Qmao9SQM9h582BNosWmQLjounxi2YinVmTQDxRzPdKguek"
       ],
       "license": "Apache-2.0"
     },

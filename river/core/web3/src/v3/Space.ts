@@ -30,6 +30,7 @@ import { RuleEntitlementShim } from './RuleEntitlementShim'
 import { IRuleEntitlement } from '.'
 import { IBanningShim } from './IBanningShim'
 import { IERC721AQueryableShim } from './IERC721AQueryableShim'
+import { IEntitlementDataQueryableShim } from './IEntitlementDataQueryableShim'
 import { ContractVersion } from '../IStaticContractsInfo'
 
 interface AddressToEntitlement {
@@ -60,6 +61,7 @@ export class Space {
     private readonly membership: IMembershipShim
     private readonly banning: IBanningShim
     private readonly erc721AQueryable: IERC721AQueryableShim
+    private readonly entitlementDataQueryable: IEntitlementDataQueryableShim
 
     constructor({ address, version, spaceId, provider, spaceOwnerAddress }: SpaceConstructorArgs) {
         this.address = address
@@ -76,6 +78,11 @@ export class Space {
         this.membership = new IMembershipShim(address, version, provider)
         this.banning = new IBanningShim(address, version, provider)
         this.erc721AQueryable = new IERC721AQueryableShim(address, version, provider)
+        this.entitlementDataQueryable = new IEntitlementDataQueryableShim(
+            address,
+            version,
+            provider,
+        )
     }
 
     public get Address(): string {
@@ -124,6 +131,10 @@ export class Space {
 
     public get ERC721AQueryable(): IERC721AQueryableShim {
         return this.erc721AQueryable
+    }
+
+    public get EntitlementDataQueryable(): IEntitlementDataQueryableShim {
+        return this.entitlementDataQueryable
     }
 
     public getSpaceInfo(): Promise<ISpaceOwnerBase.SpaceStruct> {

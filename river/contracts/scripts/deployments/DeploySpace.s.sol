@@ -39,6 +39,7 @@ import {DeployERC721AQueryable} from "./facets/DeployERC721AQueryable.s.sol";
 import {DeployBanning} from "contracts/scripts/deployments/facets/DeployBanning.s.sol";
 import {DeployMembershipMetadata} from "contracts/scripts/deployments/facets/DeployMembershipMetadata.s.sol";
 import {DeployMembership} from "contracts/scripts/deployments/DeployMembership.s.sol";
+import {DeployEntitlementDataQueryable} from "./facets/DeployEntitlementDataQueryable.s.sol";
 import {DeployMultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.sol";
 
 contract DeploySpace is DiamondDeployer {
@@ -51,6 +52,8 @@ contract DeploySpace is DiamondDeployer {
   DeployMembership membershipHelper = new DeployMembership();
   DeployMembershipMetadata membershipMetadataHelper =
     new DeployMembershipMetadata();
+  DeployEntitlementDataQueryable entitlementDataQueryableHelper =
+    new DeployEntitlementDataQueryable();
   DeployMultiInit deployMultiInit = new DeployMultiInit();
 
   TokenOwnableHelper tokenOwnableHelper = new TokenOwnableHelper();
@@ -79,6 +82,7 @@ contract DeploySpace is DiamondDeployer {
   address entitlementGated;
   address erc721aQueryable;
   address membershipMetadata;
+  address entitlementDataQueryable;
   address multiInit;
 
   function versionName() public pure override returns (string memory) {
@@ -96,6 +100,7 @@ contract DeploySpace is DiamondDeployer {
     banning = banningHelper.deploy();
     membership = membershipHelper.deploy();
     membershipMetadata = membershipMetadataHelper.deploy();
+    entitlementDataQueryable = entitlementDataQueryableHelper.deploy();
     multiInit = deployMultiInit.deploy();
 
     vm.startBroadcast(deployerPK);
@@ -150,6 +155,12 @@ contract DeploySpace is DiamondDeployer {
     addCut(
       erc721aQueryableHelper.makeCut(
         erc721aQueryable,
+        IDiamond.FacetCutAction.Add
+      )
+    );
+    addCut(
+      entitlementDataQueryableHelper.makeCut(
+        entitlementDataQueryable,
         IDiamond.FacetCutAction.Add
       )
     );

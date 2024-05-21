@@ -472,6 +472,46 @@ const _abi = [
     stateMutability: "nonpayable",
   },
   {
+    type: "function",
+    name: "setStreamLastMiniblockBatch",
+    inputs: [
+      {
+        name: "miniblocks",
+        type: "tuple[]",
+        internalType: "struct SetMiniblock[]",
+        components: [
+          {
+            name: "streamId",
+            type: "bytes32",
+            internalType: "bytes32",
+          },
+          {
+            name: "prevMiniBlockHash",
+            type: "bytes32",
+            internalType: "bytes32",
+          },
+          {
+            name: "lastMiniblockHash",
+            type: "bytes32",
+            internalType: "bytes32",
+          },
+          {
+            name: "lastMiniblockNum",
+            type: "uint64",
+            internalType: "uint64",
+          },
+          {
+            name: "isSealed",
+            type: "bool",
+            internalType: "bool",
+          },
+        ],
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
     type: "event",
     name: "StreamAllocated",
     inputs: [
@@ -498,6 +538,37 @@ const _abi = [
         type: "bytes",
         indexed: false,
         internalType: "bytes",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "StreamLastMiniblockUpdateFailed",
+    inputs: [
+      {
+        name: "streamId",
+        type: "bytes32",
+        indexed: false,
+        internalType: "bytes32",
+      },
+      {
+        name: "lastMiniblockHash",
+        type: "bytes32",
+        indexed: false,
+        internalType: "bytes32",
+      },
+      {
+        name: "lastMiniblockNum",
+        type: "uint64",
+        indexed: false,
+        internalType: "uint64",
+      },
+      {
+        name: "reason",
+        type: "string",
+        indexed: false,
+        internalType: "string",
       },
     ],
     anonymous: false,

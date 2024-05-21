@@ -33,7 +33,7 @@ contract NodeOperatorFacetTest is
   ERC721A internal erc721;
   INodeOperator internal operator;
 
-  uint256 internal stakeRequirement = 1000;
+  uint256 internal stakeRequirement = 10 ether;
 
   // =============================================================
   //                           Initialization

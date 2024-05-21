@@ -362,6 +362,8 @@ func (s *streamCacheImpl) processMiniblockProposalBatch(
 	var (
 		log        = dlog.FromCtx(ctx)
 		miniblocks = make([]contracts.SetMiniblock, 0, len(candidates))
+		success    []StreamId
+		err        error
 	)
 
 	for streamID, candidate := range candidates {
@@ -374,10 +376,21 @@ func (s *streamCacheImpl) processMiniblockProposalBatch(
 		})
 	}
 
-	success, _, err := s.params.Registry.SetStreamLastMiniblockBatch(ctx, miniblocks)
-	if err != nil {
-		log.Error("SetStreamLastMiniblockBatch failed", "err", err)
-		return err
+	// SetStreamLastMiniblock is more efficient when registering a single block
+	if len(miniblocks) == 1 {
+		mb := miniblocks[0]
+		if err = s.params.Registry.SetStreamLastMiniblock(
+			ctx, mb.StreamId, mb.PrevMiniBlockHash, mb.LastMiniblockHash, mb.LastMiniblockNum, false); err != nil {
+			log.Error("SetStreamLastMiniblock failed", "err", err)
+			return err
+		}
+		success = append(success, mb.StreamId)
+	} else {
+		success, _, err = s.params.Registry.SetStreamLastMiniblockBatch(ctx, miniblocks)
+		if err != nil {
+			log.Error("SetStreamLastMiniblockBatch failed", "err", err)
+			return err
+		}
 	}
 
 	for _, streamSetInRegistry := range success {

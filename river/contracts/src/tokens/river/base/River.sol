@@ -19,6 +19,7 @@ import {Nonces} from "@openzeppelin/contracts/utils/Nonces.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import {ERC20Votes} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {VotesEnumerable} from "contracts/src/diamond/facets/governance/votes/enumerable/VotesEnumerable.sol";
 import {IntrospectionBase} from "contracts/src/diamond/facets/introspection/IntrospectionBase.sol";
@@ -31,6 +32,7 @@ contract River is
   ILock,
   ERC20Permit,
   ERC20Votes,
+  Ownable,
   VotesEnumerable,
   IntrospectionBase,
   LockBase
@@ -40,6 +42,12 @@ contract River is
   // =============================================================
   error River__TransferLockEnabled();
   error River__DelegateeSameAsCurrent();
+  error River__InvalidTokenAmount();
+
+  // =============================================================
+  //                           Events
+  // =============================================================
+  event TokenThresholdSet(uint256 threshold);
 
   // =============================================================
   //                           Constants
@@ -55,6 +63,11 @@ contract River is
   address public immutable BRIDGE;
 
   // =============================================================
+  //                           Variables
+  // =============================================================
+  uint256 public MIN_TOKEN_THRESHOLD = 10 ether;
+
+  // =============================================================
   //                           Modifiers
   // =============================================================
 
@@ -67,7 +80,7 @@ contract River is
   constructor(
     address _bridge,
     address _remoteToken
-  ) ERC20Permit("River") ERC20("River", "RVR") {
+  ) ERC20Permit("River") ERC20("River", "RVR") Ownable(msg.sender) {
     __IntrospectionBase_init();
     __LockBase_init(30 days);
 
@@ -170,17 +183,13 @@ contract River is
   }
 
   /// @inheritdoc ILock
-  function enableLock(address account) external virtual onlyAllowed {
-    _enableLock(account);
-  }
+  function enableLock(address account) external virtual {}
 
   /// @inheritdoc ILock
-  function disableLock(address account) external virtual onlyAllowed {
-    _disableLock(account);
-  }
+  function disableLock(address account) external virtual {}
 
   /// @inheritdoc ILock
-  function setLockCooldown(uint256 cooldown) external virtual onlyAllowed {
+  function setLockCooldown(uint256 cooldown) external virtual onlyOwner {
     _setDefaultCooldown(cooldown);
   }
 
@@ -191,6 +200,15 @@ contract River is
   /// @inheritdoc IERC165
   function supportsInterface(bytes4 interfaceId) public view returns (bool) {
     return _supportsInterface(interfaceId);
+  }
+
+  // =============================================================
+  //                           Token
+  // =============================================================
+  function setTokenThreshold(uint256 threshold) external onlyOwner {
+    if (threshold > totalSupply()) revert River__InvalidTokenAmount();
+    MIN_TOKEN_THRESHOLD = threshold;
+    emit TokenThresholdSet(threshold);
   }
 
   // =============================================================
@@ -218,8 +236,8 @@ contract River is
   }
 
   /// @dev Hook that gets called before any external enable and disable lock function
-  function _canLock() internal pure override returns (bool) {
-    return false;
+  function _canLock() internal view override returns (bool) {
+    return msg.sender == owner();
   }
 
   function _delegate(
@@ -228,6 +246,10 @@ contract River is
   ) internal virtual override {
     // revert if the delegatee is the same as the current delegatee
     if (delegates(account) == delegatee) revert River__DelegateeSameAsCurrent();
+
+    // revert if the balance is below the threshold
+    if (balanceOf(account) < MIN_TOKEN_THRESHOLD)
+      revert River__InvalidTokenAmount();
 
     // if the delegatee is the zero address, initialize disable lock
     if (delegatee == address(0)) {

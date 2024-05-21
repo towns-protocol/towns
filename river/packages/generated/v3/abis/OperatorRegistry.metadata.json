@@ -315,10 +315,10 @@
       "license": "Apache-2.0"
     },
     "contracts/src/river/registry/libraries/RegistryStorage.sol": {
-      "keccak256": "0xb365ca80cf19bebeee5c5512b1982e660d0d31043f8bb4864f26e02ec70a117b",
+      "keccak256": "0x63c17d46ed41fb58a08d84b2159db6ab7a19a4e1e1e636129b7cdd5f3d83c51c",
       "urls": [
-        "bzz-raw://f2ddea5237c67ec769cf0da7f8da4131979ed34f9c2ad0495c87b65b1ea88e01",
-        "dweb:/ipfs/QmQBy2AnbwwTopyCrdcW9cSYPaLpmXRqswxUv5dWYbza1q"
+        "bzz-raw://7633256f01d2ffea41292d8f0b259d6f33a61ef362026d649a3e6955f53eec4c",
+        "dweb:/ipfs/QmSYCB6CWCjQMqVeSG7yqy72tr7SkPSRkfzpz6FnK33XqZ"
       ],
       "license": "Apache-2.0"
     },

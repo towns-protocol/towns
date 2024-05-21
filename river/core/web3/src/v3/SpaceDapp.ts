@@ -295,9 +295,8 @@ export class SpaceDapp implements ISpaceDapp {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
 
-        const entitlementData = await space.Entitlements.read.getEntitlementDataByPermission(
-            permission,
-        )
+        const entitlementData =
+            await space.EntitlementDataQueryable.read.getEntitlementDataByPermission(permission)
 
         type EntitlementData = {
             entitlementType: EntitlementModuleType

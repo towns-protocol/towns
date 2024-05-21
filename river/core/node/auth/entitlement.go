@@ -20,12 +20,13 @@ type Entitlements interface {
 	GetEntitlementDataByPermission(
 		opts *bind.CallOpts,
 		permission string,
-	) ([]base.IEntitlementsManagerEntitlementData, error)
+	) ([]base.IEntitlementDataQueryableBaseEntitlementData, error)
 }
 type entitlementsProxy struct {
-	contract *base.EntitlementsManager
-	address  common.Address
-	ctx      context.Context
+	managerContract *base.EntitlementsManager
+	queryContract   *base.EntitlementDataQueryable
+	address         common.Address
+	ctx             context.Context
 }
 
 var (
@@ -43,19 +44,29 @@ func NewEntitlements(
 	address common.Address,
 	backend bind.ContractBackend,
 ) (Entitlements, error) {
-	c, err := base.NewEntitlementsManager(address, backend)
+	managerContract, err := base.NewEntitlementsManager(address, backend)
 	if err != nil {
 		return nil, WrapRiverError(
 			Err_CANNOT_CONNECT,
 			err,
-		).Tags("address", address, "version", version).
+		).Tags("address", address, "version", version, "contract", "EntitlementsManager").
+			Func("NewEntitlements").
+			Message("Failed to initialize contract")
+	}
+	queryContract, err := base.NewEntitlementDataQueryable(address, backend)
+	if err != nil {
+		return nil, WrapRiverError(
+			Err_CANNOT_CONNECT,
+			err,
+		).Tags("address", address, "version", version, "contract", "EntitlementDataQueryable").
 			Func("NewEntitlements").
 			Message("Failed to initialize contract")
 	}
 	return &entitlementsProxy{
-		contract: c,
-		address:  address,
-		ctx:      ctx,
+		managerContract: managerContract,
+		queryContract:   queryContract,
+		address:         address,
+		ctx:             ctx,
 	}, nil
 }
 
@@ -79,7 +90,7 @@ func (proxy *entitlementsProxy) IsEntitledToChannel(
 		"address",
 		proxy.address,
 	)
-	result, err := proxy.contract.IsEntitledToChannel(opts, channelId, user, permission)
+	result, err := proxy.managerContract.IsEntitledToChannel(opts, channelId, user, permission)
 	if err != nil {
 		isEntitledToChannelCalls.FailInc()
 		log.Error(
@@ -125,7 +136,7 @@ func (proxy *entitlementsProxy) IsEntitledToSpace(
 	start := time.Now()
 	defer infra.StoreExecutionTimeMetrics("IsEntitledToSpace", infra.CONTRACT_CALLS_CATEGORY, start)
 	log.Debug("IsEntitledToSpace", "user", user, "permission", permission, "address", proxy.address)
-	result, err := proxy.contract.IsEntitledToSpace(opts, user, permission)
+	result, err := proxy.managerContract.IsEntitledToSpace(opts, user, permission)
 	if err != nil {
 		isEntitledToSpaceCalls.FailInc()
 		log.Error("IsEntitledToSpace", "user", user, "permission", permission, "address", proxy.address, "error", err)
@@ -151,12 +162,12 @@ func (proxy *entitlementsProxy) IsEntitledToSpace(
 func (proxy *entitlementsProxy) GetEntitlementDataByPermission(
 	opts *bind.CallOpts,
 	permission string,
-) ([]base.IEntitlementsManagerEntitlementData, error) {
+) ([]base.IEntitlementDataQueryableBaseEntitlementData, error) {
 	log := dlog.FromCtx(proxy.ctx)
 	start := time.Now()
 	defer infra.StoreExecutionTimeMetrics("GetEntitlementDataByPermissions", infra.CONTRACT_CALLS_CATEGORY, start)
 	log.Debug("GetEntitlementDataByPermissions", "permission", permission, "address", proxy.address)
-	result, err := proxy.contract.GetEntitlementDataByPermission(opts, permission)
+	result, err := proxy.queryContract.GetEntitlementDataByPermission(opts, permission)
 	if err != nil {
 		getEntitlementDataByPermissionsCalls.FailInc()
 		log.Error("GetEntitlementDataByPermissions", "permission", permission, "address", proxy.address, "error", err)

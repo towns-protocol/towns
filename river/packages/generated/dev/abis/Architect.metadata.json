@@ -919,11 +919,11 @@
       ]
     },
     "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol": {
-      "keccak256": "0x5ee898213dcafa00f673f6563b55606fe402f04fe7f5629b82c8c5ebb1c53be2",
+      "keccak256": "0x3be8ab93ad7f1417c0b0f6aa3f74dca36034464085d40fd2e94f3b31ff5be03d",
       "license": "MIT",
       "urls": [
-        "bzz-raw://a61570c3e8f9755429d66029b8e7055d4f85f38a107b50c5bd5bf5acefd44ec5",
-        "dweb:/ipfs/QmTMA1F8nc3RD5fRSrHC1QhCYCQ37C3JgP3iVyRskNNd4W"
+        "bzz-raw://4e97436fca686896a1ffc56dd64f58997775bef504e0568c62ba4d103a99939c",
+        "dweb:/ipfs/QmWn5wvuuEFDhnqXJcJVb69ndDmhUMXWdUGYKR2VBfLsEw"
       ]
     },
     "contracts/src/spaces/facets/gated/EntitlementGatedBase.sol": {

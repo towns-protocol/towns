@@ -189,41 +189,6 @@
       {
         "inputs": [],
         "type": "error",
-        "name": "Roles__EntitlementAlreadyExists"
-      },
-      {
-        "inputs": [],
-        "type": "error",
-        "name": "Roles__EntitlementDoesNotExist"
-      },
-      {
-        "inputs": [],
-        "type": "error",
-        "name": "Roles__InvalidEntitlementAddress"
-      },
-      {
-        "inputs": [],
-        "type": "error",
-        "name": "Roles__InvalidPermission"
-      },
-      {
-        "inputs": [],
-        "type": "error",
-        "name": "Roles__PermissionAlreadyExists"
-      },
-      {
-        "inputs": [],
-        "type": "error",
-        "name": "Roles__PermissionDoesNotExist"
-      },
-      {
-        "inputs": [],
-        "type": "error",
-        "name": "Roles__RoleDoesNotExist"
-      },
-      {
-        "inputs": [],
-        "type": "error",
         "name": "TransferCallerNotOwnerNorApproved"
       },
       {
@@ -419,63 +384,6 @@
       {
         "inputs": [
           {
-            "internalType": "address",
-            "name": "creator",
-            "type": "address",
-            "indexed": true
-          },
-          {
-            "internalType": "uint256",
-            "name": "roleId",
-            "type": "uint256",
-            "indexed": true
-          }
-        ],
-        "type": "event",
-        "name": "RoleCreated",
-        "anonymous": false
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "address",
-            "name": "remover",
-            "type": "address",
-            "indexed": true
-          },
-          {
-            "internalType": "uint256",
-            "name": "roleId",
-            "type": "uint256",
-            "indexed": true
-          }
-        ],
-        "type": "event",
-        "name": "RoleRemoved",
-        "anonymous": false
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "address",
-            "name": "updater",
-            "type": "address",
-            "indexed": true
-          },
-          {
-            "internalType": "uint256",
-            "name": "roleId",
-            "type": "uint256",
-            "indexed": true
-          }
-        ],
-        "type": "event",
-        "name": "RoleUpdated",
-        "anonymous": false
-      },
-      {
-        "inputs": [
-          {
             "internalType": "uint256",
             "name": "tokenId",
             "type": "uint256",
@@ -609,37 +517,6 @@
                 "internalType": "bool",
                 "name": "isImmutable",
                 "type": "bool"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "string",
-            "name": "permission",
-            "type": "string"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function",
-        "name": "getEntitlementDataByPermission",
-        "outputs": [
-          {
-            "internalType": "struct IEntitlementsManager.EntitlementData[]",
-            "name": "",
-            "type": "tuple[]",
-            "components": [
-              {
-                "internalType": "string",
-                "name": "entitlementType",
-                "type": "string"
-              },
-              {
-                "internalType": "bytes",
-                "name": "entitlementData",
-                "type": "bytes"
               }
             ]
           }
@@ -981,22 +858,6 @@
       ],
       "license": "Apache-2.0"
     },
-    "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol": {
-      "keccak256": "0x795b58a2ed6205d814e01e58a4a5e88ff69401ee7540d01c4881b7b28f04cfcf",
-      "urls": [
-        "bzz-raw://684e395bce3abedfb499ba8b2708a4f0ca9d1b1f73eb0ebc647d4cead0b8fdd1",
-        "dweb:/ipfs/QmWz2Eu8UGXYskoBFtFXLBuwDrxUfYDLeQuTCeApALdf97"
-      ],
-      "license": "MIT"
-    },
-    "contracts/src/spaces/entitlements/user/IUserEntitlement.sol": {
-      "keccak256": "0x96fef5ebaa7e9e79c77c887d9053ae06dc91cf1301f33db652e6ac811b3b5cc5",
-      "urls": [
-        "bzz-raw://6cff649b95f65c9e3ecfa7dfa3b1c7b524ec7244eb5223c55674a4679eb8e7bf",
-        "dweb:/ipfs/QmQy5sXRywRWB3aM58TCp5Xw5b258Y5PfDM8RasDznAPzA"
-      ],
-      "license": "Apache-2.0"
-    },
     "contracts/src/spaces/facets/Entitled.sol": {
       "keccak256": "0x60df2d441d103a23e8ff1fa5815399bf58dc25b19030de56c15cf9a84393c62c",
       "urls": [
@@ -1029,22 +890,6 @@
       ],
       "license": "Apache-2.0"
     },
-    "contracts/src/spaces/facets/channels/ChannelService.sol": {
-      "keccak256": "0x5459092e3b26770de949b6ce3021e3582b62602cf3a419a695da19aa1810eab7",
-      "urls": [
-        "bzz-raw://d80a0bc5adf516cfda380ac0bc966e2f430b395b78b5aa756adc3ef0a28ae1b9",
-        "dweb:/ipfs/QmW2RvEFxrhFt5gxBK2Ay5BS1BgXAv37sipBPSxYBt1vfi"
-      ],
-      "license": "Apache-2.0"
-    },
-    "contracts/src/spaces/facets/channels/ChannelStorage.sol": {
-      "keccak256": "0x2c56c47bf36e703f0703ea1f2a27db2406b17d2a173d24bde6efbbfc4bab301f",
-      "urls": [
-        "bzz-raw://0030cd42de4b20ddb33284bec5065fa4d1edb817ac7f667f845881cb66a2a3b7",
-        "dweb:/ipfs/QmNg6DmtqbHn4QMiMzu4yAr8G5G19HZSJ6dRteeGArsnzS"
-      ],
-      "license": "Apache-2.0"
-    },
     "contracts/src/spaces/facets/delegation/WalletLinkProxyBase.sol": {
       "keccak256": "0xac57b39cf710166b1c2dc1f0c7bf58fb813ceb047312b346a01e31df615c14f2",
       "urls": [
@@ -1062,10 +907,10 @@
       "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/entitlements/EntitlementsManager.sol": {
-      "keccak256": "0x5121b9ebb57a7c98594a52360044b5a5105d3ffbc86d717e25f8e5957f6b221a",
+      "keccak256": "0x6f8dc7de582840ebb848aac12ef145b8c7ec36a704dc79ba706a41f73eb721c0",
       "urls": [
-        "bzz-raw://dd65322faa757c44c93eeb7dd68fc208d11b4a2068d8c1241d657d447d98be92",
-        "dweb:/ipfs/Qmeu61gEnz8o26AwnpWnTKhoM2mBDygyimYpbuSjDbsDyb"
+        "bzz-raw://68075eb92eb218ac55169c67d8794d72329d2fad919ea370fca0b7554b6d9cef",
+        "dweb:/ipfs/QmbsvYgZqZNL3abyimn9K8srDrukFsGFAmKVfBNfvesU3U"
       ],
       "license": "Apache-2.0"
     },
@@ -1094,10 +939,10 @@
       "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol": {
-      "keccak256": "0x1c3cff6f7a35610df492abc39a62ba704e408d43477ba2e34833197c2956e9d3",
+      "keccak256": "0x34a60558a6f78d2681dec157ca65a784a5c0b9d7a754ac9795c1a4554ddd4cd6",
       "urls": [
-        "bzz-raw://c5d5f08c5bc196e6166678b39d415da12c285d9bee3584d5e200bbf0c5ea911d",
-        "dweb:/ipfs/QmdYkU6kzHFw7KFYAdvxiwHK7hWCrz3E3pwiCjWZ97PVGx"
+        "bzz-raw://9d10e1bf1a7d5fe3edc54f2a6fc634f4b84d68c294958947d47706b4a22f16b1",
+        "dweb:/ipfs/QmSezMoHki3UawNg8dkTFAMSqLijw6bdgNVSh3tfyis5Y8"
       ],
       "license": "Apache-2.0"
     },
@@ -1106,46 +951,6 @@
       "urls": [
         "bzz-raw://db45fd461b1779362a58059bfa92f215f6e7df5f360aeb6319ac0e14433469ee",
         "dweb:/ipfs/QmQfk5dXU8xL9PGPZcgNAtMQxitVT76X176e4PWJCej4v5"
-      ],
-      "license": "Apache-2.0"
-    },
-    "contracts/src/spaces/facets/roles/IRoles.sol": {
-      "keccak256": "0x1c1c7dba102545ff4d555c1f6aa677cd75b089869d6ea3a7c1f447ffeaca3b1d",
-      "urls": [
-        "bzz-raw://923b68b8b6eb7711d91c602d7c43861aef6ee67d5198ba27d41790b4f2753ab8",
-        "dweb:/ipfs/QmdzeevayVP8ZRT85sbWCVi2QUuBKiNmZHQjGRWC43Rx6N"
-      ],
-      "license": "Apache-2.0"
-    },
-    "contracts/src/spaces/facets/roles/RolesBase.sol": {
-      "keccak256": "0x2ef137dec4a5390009fd931e34fdbb4a742c96b68b40f5c152cec8cf2809ed6f",
-      "urls": [
-        "bzz-raw://3cb29b4a780742a30ba3af5719f77a4a65ea55ebbdc3ccd9c93c86573f20c7df",
-        "dweb:/ipfs/QmdvPJydLCcEwCB3xk5VpET8X2GfrxC3NBUD5G6C8a9aW8"
-      ],
-      "license": "Apache-2.0"
-    },
-    "contracts/src/spaces/facets/roles/RolesStorage.sol": {
-      "keccak256": "0x40f288a613e35cbc02aceb1d23f89af888f65538853f61cc1fcd25901b9bc4af",
-      "urls": [
-        "bzz-raw://396b5e157c9a29adc94edc5d234f416a44e6e7c4588b1aaa0587bb04018705e9",
-        "dweb:/ipfs/QmWDCQz555WbvZw7XxfkybE5dPfouc6rKxU5Zu1Gsuz1Zr"
-      ],
-      "license": "Apache-2.0"
-    },
-    "contracts/src/utils/StringSet.sol": {
-      "keccak256": "0x3c9d29fdec8d96b627600dc69aa8e164c992162028d877df89c062da32b6e319",
-      "urls": [
-        "bzz-raw://ab4f8ad17edac234b55f2c5b5a45a2956d82d0b64f70e04350edd879d2f0d1e6",
-        "dweb:/ipfs/QmeqwedjAGMjfgizTjspVi5eEojEe8S1ezJFLFafPcfAjK"
-      ],
-      "license": "Apache-2.0"
-    },
-    "contracts/src/utils/Validator.sol": {
-      "keccak256": "0xb8d6d023395c2611e308cb09606dc9e49dce0d985a75f20572aeed590d738f50",
-      "urls": [
-        "bzz-raw://144807c8826c643f74c48e3589243ac4b05dffd0a00b861b75ce46451224be64",
-        "dweb:/ipfs/QmazGzxM9owCyKTV1cY46PiMHXdApYJR221Lm9YMcn7J72"
       ],
       "license": "Apache-2.0"
     },

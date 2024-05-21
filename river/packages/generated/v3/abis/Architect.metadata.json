@@ -904,10 +904,10 @@
       "license": "Apache-2.0"
     },
     "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol": {
-      "keccak256": "0x1c3cff6f7a35610df492abc39a62ba704e408d43477ba2e34833197c2956e9d3",
+      "keccak256": "0x34a60558a6f78d2681dec157ca65a784a5c0b9d7a754ac9795c1a4554ddd4cd6",
       "urls": [
-        "bzz-raw://c5d5f08c5bc196e6166678b39d415da12c285d9bee3584d5e200bbf0c5ea911d",
-        "dweb:/ipfs/QmdYkU6kzHFw7KFYAdvxiwHK7hWCrz3E3pwiCjWZ97PVGx"
+        "bzz-raw://9d10e1bf1a7d5fe3edc54f2a6fc634f4b84d68c294958947d47706b4a22f16b1",
+        "dweb:/ipfs/QmSezMoHki3UawNg8dkTFAMSqLijw6bdgNVSh3tfyis5Y8"
       ],
       "license": "Apache-2.0"
     },

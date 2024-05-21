@@ -1,0 +1,123 @@
+{
+  "compiler": {
+    "version": "0.8.24+commit.e11b9ed9"
+  },
+  "language": "Solidity",
+  "output": {
+    "abi": [
+      {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "channelId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "string",
+            "name": "permission",
+            "type": "string"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "name": "getChannelEntitlementDataByPermission",
+        "outputs": [
+          {
+            "internalType": "struct IEntitlementDataQueryableBase.EntitlementData[]",
+            "name": "",
+            "type": "tuple[]",
+            "components": [
+              {
+                "internalType": "string",
+                "name": "entitlementType",
+                "type": "string"
+              },
+              {
+                "internalType": "bytes",
+                "name": "entitlementData",
+                "type": "bytes"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "permission",
+            "type": "string"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "name": "getEntitlementDataByPermission",
+        "outputs": [
+          {
+            "internalType": "struct IEntitlementDataQueryableBase.EntitlementData[]",
+            "name": "",
+            "type": "tuple[]",
+            "components": [
+              {
+                "internalType": "string",
+                "name": "entitlementType",
+                "type": "string"
+              },
+              {
+                "internalType": "bytes",
+                "name": "entitlementData",
+                "type": "bytes"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "devdoc": {
+      "kind": "dev",
+      "methods": {},
+      "version": 1
+    },
+    "userdoc": {
+      "kind": "user",
+      "methods": {},
+      "version": 1
+    }
+  },
+  "settings": {
+    "remappings": [
+      "@openzeppelin/=lib/@openzeppelin/",
+      "@prb/math/=lib/@prb/math/src/",
+      "@prb/test/=lib/@prb/test/src/",
+      "account-abstraction/=lib/account-abstraction/contracts/",
+      "base64/=lib/base64/",
+      "ds-test/=lib/ds-test/src/",
+      "forge-std/=lib/forge-std/src/",
+      "hardhat-deploy/=lib/hardhat-deploy/"
+    ],
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "metadata": {
+      "bytecodeHash": "none",
+      "appendCBOR": false
+    },
+    "compilationTarget": {
+      "contracts/src/spaces/facets/entitlements/extensions/IEntitlementDataQueryable.sol": "IEntitlementDataQueryable"
+    },
+    "evmVersion": "paris",
+    "libraries": {}
+  },
+  "sources": {
+    "contracts/src/spaces/facets/entitlements/extensions/IEntitlementDataQueryable.sol": {
+      "keccak256": "0x072afda780b5b937feeed6b13c169e589a802878a8ea667931c8c61d15686163",
+      "urls": [
+        "bzz-raw://82e2508fff6dfd9bb8a8fdb0b2b2ecb629c3286dda66f984a459f76415873313",
+        "dweb:/ipfs/QmSJZ963tKdeX3wErZ93kf4r2caMs1hwJ66xbXFvXhC5v4"
+      ],
+      "license": "Apache-2.0"
+    }
+  },
+  "version": 1
+}

@@ -99,13 +99,13 @@ abstract contract RolesBase is IRolesBase {
     uint256[] memory matchedRoleIds = new uint256[](roleIdLen);
     uint256 count = 0;
 
-    bytes32 reqeustedPermission = keccak256(bytes(permission));
+    bytes32 requestedPermission = keccak256(bytes(permission));
 
     // First pass to find roles with the permission and capture their IDs
     for (uint256 i = 0; i < roleIdLen; i++) {
       (, , string[] memory permissions, ) = _getRole(roleIds[i]);
       for (uint256 j = 0; j < permissions.length; j++) {
-        if (keccak256(bytes(permissions[j])) == reqeustedPermission) {
+        if (keccak256(bytes(permissions[j])) == requestedPermission) {
           matchedRoleIds[count] = roleIds[i];
           count++;
           break;
@@ -345,9 +345,11 @@ abstract contract RolesBase is IRolesBase {
       IEntitlement[] memory entitlements
     )
   {
-    name = RolesStorage.layout().roleById[roleId].name;
-    isImmutable = RolesStorage.layout().roleById[roleId].isImmutable;
-    permissions = RolesStorage.layout().roleById[roleId].permissions.values();
+    RolesStorage.Layout storage rs = RolesStorage.layout();
+
+    name = rs.roleById[roleId].name;
+    isImmutable = rs.roleById[roleId].isImmutable;
+    permissions = rs.roleById[roleId].permissions.values();
     entitlements = _getEntitlementsByRole(roleId);
   }
 
