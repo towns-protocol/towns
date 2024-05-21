@@ -27,7 +27,7 @@ export function ChannelRoleSettings(props: Props): JSX.Element {
                     for (const r of spaceRoles) {
                         initialRoles[r.name] = {
                             name: r.name,
-                            isSelected: false,
+                            isSelected: true,
                         }
                     }
                 }
@@ -61,7 +61,14 @@ export function ChannelRoleSettings(props: Props): JSX.Element {
             for (const r in roles) {
                 checkBoxes.push(
                     <div key={r}>
-                        <input key={r} type="checkbox" name={r} value={r} onChange={onChangeRole} />
+                        <input
+                            key={r}
+                            type="checkbox"
+                            name={r}
+                            value={r}
+                            checked={roles[r].isSelected}
+                            onChange={onChangeRole}
+                        />
                         <label>{r}</label>
                     </div>,
                 )
