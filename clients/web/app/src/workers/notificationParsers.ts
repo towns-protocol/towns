@@ -222,13 +222,21 @@ export function pathFromAppNotification(notification: NotificationContent) {
                 encodeURIComponent(notification.channelId),
             ].join('/')
         case AppNotificationType.ReplyTo:
+            if (notification.threadId) {
+                return [
+                    PATHS.SPACES,
+                    encodeURIComponent(notification.spaceId),
+                    PATHS.CHANNELS,
+                    encodeURIComponent(notification.channelId),
+                    PATHS.REPLIES,
+                    encodeURIComponent(notification.threadId),
+                ].join('/')
+            }
             return [
                 PATHS.SPACES,
                 encodeURIComponent(notification.spaceId),
                 PATHS.CHANNELS,
                 encodeURIComponent(notification.channelId),
-                PATHS.REPLIES,
-                encodeURIComponent(notification.threadId),
             ].join('/')
         default:
             return '/'
