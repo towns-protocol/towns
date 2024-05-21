@@ -8,24 +8,28 @@ export const rolePermissionDescriptions: {
 } = {
     [Permission.Read]: {
         name: 'Read messages',
-        description: 'Allows members to read messages.',
+        description: 'Allow members to read messages.',
     },
     [Permission.Write]: {
         name: 'Send messages',
-        description: 'Allows members to send messages.',
+        description: 'Allow members to send messages.',
     },
     [Permission.AddRemoveChannels]: {
         name: 'Manage channels',
-        description: 'Allows members to create, edit or delete channels.',
+        description: 'Allow members to create, edit or delete channels.',
+    },
+    [Permission.Redact]: {
+        name: 'Remove messages',
+        description: 'Allow members to remove messages.',
     },
     [Permission.Ban]: {
         name: 'Ban members',
-        description: 'Allows members to ban other members.',
+        description: 'Allow members to ban other members.',
     },
     [Permission.ModifySpaceSettings]: {
         name: 'Modify town settings',
         description:
-            'Allows members to modify the town settings. Change town image, name, topic, and other settings such as permissions and roles.',
+            'Allow members to modify the town settings. Change town image, name, topic, and other settings such as permissions and roles.',
     },
 } as const
 
