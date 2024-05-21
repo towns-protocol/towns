@@ -7,9 +7,10 @@ on:
                 description: 'Environment name'
                 required: true
                 type: string
+                default: gamma
 
 concurrency:
-    group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.node_number }}
+    group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.environment_name }}
     cancel-in-progress: false
 
 env:

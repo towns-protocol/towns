@@ -22,32 +22,26 @@ variable "tags" {
   default     = {}
 }
 
-variable "river_node_url" {
-  description = "river node url to pass as environment details"
+variable "base_chain_rpc_url_secret_arn" {
+  description = "base chain rpc url secret arn"
   type        = string
 }
 
-variable "base_chain_rpc_url_override" {
-  description = "base chain rpc url"
-  type        = string
-  default     = null
-}
-
-variable "redis_url" {
-  description = "redis endpoint to pass as an environment details"
+variable "river_chain_rpc_url_secret_arn" {
+  description = "river chain rpc url secret arn"
   type        = string
 }
 
-variable "num_followers" {
-  description = "number of follower nodes"
+variable "container_index" {
+  description = "Index of the stress test container"
   type        = number
 }
 
-variable "num_follower_containers" {
-  type = number
+variable "stress_test_wallet_mnemonic_secret_arn" {
+  description = "ARN of the secret containing the stress test wallet mnemonic"
+  type        = string
 }
 
-variable "loadtest_duration" {
-  description = "number of follower nodes"
-  type        = number
+variable "system_parameters" {
+  type = any
 }

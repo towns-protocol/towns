@@ -69,7 +69,7 @@ resource "aws_iam_policy" "river_system_parameters_policy" {
           aws_ssm_parameter.space_factory_contract_address.arn,
           aws_ssm_parameter.river_registry_contract_address.arn,
           aws_ssm_parameter.entitlement_checker_contract_address.arn,
-          aws_ssm_parameter.space_owner_contract_address.arn,
+          aws_ssm_parameter.space_owner_contract_address.arn
         ]
       },
     ]

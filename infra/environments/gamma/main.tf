@@ -186,6 +186,17 @@ module "eth_balance_monitor" {
   river_chain_rpc_url_secret_arn = local.global_remote_state.river_sepolia_rpc_url_secret.arn
 }
 
+module "stress_tests" {
+  source = "../../modules/stress-tests"
+
+  vpc_id          = module.vpc.vpc_id
+  private_subnets = module.vpc.private_subnets
+  public_subnets  = module.vpc.public_subnets
+
+  base_chain_rpc_url_secret_arn  = local.global_remote_state.base_sepolia_rpc_url_secret.arn
+  river_chain_rpc_url_secret_arn = local.global_remote_state.river_sepolia_rpc_url_secret.arn
+}
+
 
 data "cloudflare_zone" "zone" {
   name = module.global_constants.primary_hosted_zone_name

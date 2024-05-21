@@ -39,7 +39,7 @@ function stop_all_services() {
 }
 
 function main() {
-    local cluster_name="loadtest-cluster-${ENVIRONMENT_NAME}"
+    local cluster_name="stress-test-cluster-${ENVIRONMENT_NAME}"
     echo "cluster name: $cluster_name"
 
     local cluster_arn=$(get_ecs_cluster_arn $cluster_name)

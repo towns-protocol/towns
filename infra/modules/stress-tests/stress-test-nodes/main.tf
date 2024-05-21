@@ -1,25 +1,16 @@
+
 locals {
-  container_name      = "loadtest-follower"
-  name                = "${local.container_name}-${var.container_id}-${terraform.workspace}"
+  service_name        = "stress-test-node"
+  name                = "${local.service_name}-${terraform.workspace}-${var.container_index}"
   global_remote_state = module.global_constants.global_remote_state.outputs
 
   custom_tags = merge(
     var.tags,
     {
-      Service      = local.container_name,
-      Container_Id = var.container_id
+      Service         = local.service_name,
+      Container_Index = var.container_index
     }
   )
-
-  base_chain_default_td_secret_config = var.base_chain_rpc_url_override == null ? [{
-    name      = "BASE_CHAIN_RPC_URL"
-    valueFrom = local.global_remote_state.base_chain_network_url_secret.arn
-  }] : []
-
-  base_chain_override_td_env_config = var.base_chain_rpc_url_override == null ? [] : [{
-    name  = "BASE_CHAIN_RPC_URL"
-    value = var.base_chain_rpc_url_override
-  }]
 }
 
 module "global_constants" {
@@ -43,8 +34,10 @@ resource "aws_cloudwatch_log_subscription_filter" "log_group_filter" {
 }
 
 resource "aws_iam_role" "ecs_task_execution_role" {
-  name                = "${local.name}-ecsTaskExecutionRole"
-  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"]
+  name = "${local.name}-ecsTaskExecutionRole"
+  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
+    var.system_parameters.river_system_parameters_policy.arn
+  ]
   assume_role_policy = jsonencode({
     "Version" : "2012-10-17",
     "Statement" : [
@@ -76,9 +69,9 @@ resource "aws_iam_role_policy" "secrets" {
         ],
         "Effect": "Allow",
         "Resource": [
-          "${local.global_remote_state.base_chain_network_url_secret.arn}",
-          "${local.global_remote_state.stress_test_wallet_seed_phrase_secret.arn}",
-          "${local.global_remote_state.stress_test_wallet_private_key_secret.arn}"
+          "${var.base_chain_rpc_url_secret_arn}",
+          "${var.river_chain_rpc_url_secret_arn}",
+          "${var.stress_test_wallet_mnemonic_secret_arn}"
         ]
       }
     ]
@@ -108,7 +101,7 @@ resource "aws_ecs_task_definition" "task_definition" {
   pid_mode = null
 
   container_definitions = jsonencode([{
-    name  = local.container_name
+    name  = local.service_name
     image = "public.ecr.aws/h5v6m2x1/river-stress-test-node:latest"
 
     essential = true
@@ -118,82 +111,73 @@ resource "aws_ecs_task_definition" "task_definition" {
       protocol      = "tcp"
     }]
 
-    cpu    = 8192
-    memory = 16384
+    cpu    = 2048
+    memory = 4096
 
-    secrets = concat([
+    secrets = [
       {
-        name      = "SEED_PHRASE",
-        valueFrom = local.global_remote_state.stress_test_wallet_seed_phrase_secret.arn
+        name      = "BASE_CHAIN_RPC_URL"
+        valueFrom = var.base_chain_rpc_url_secret_arn
       },
       {
-        name      = "PRIVATE_KEY",
-        valueFrom = local.global_remote_state.stress_test_wallet_private_key_secret.arn
+        name      = "RIVER_CHAIN_RPC_URL"
+        valueFrom = var.river_chain_rpc_url_secret_arn
+      },
+      {
+        name      = "MNEMONIC",
+        valueFrom = var.stress_test_wallet_mnemonic_secret_arn
+      },
+      {
+        name      = "SESSION_ID",
+        valueFrom = var.system_parameters.stress_test_session_id_parameter.arn
+      },
+      {
+        name      = "CLIENTS_COUNT",
+        valueFrom = var.system_parameters.stress_test_clients_count_parameter.arn
+      },
+      {
+        name      = "CONTAINER_COUNT",
+        valueFrom = var.system_parameters.stress_test_container_count_parameter.arn
+      },
+      {
+        name      = "PROCESSES_PER_CONTAINER",
+        valueFrom = var.system_parameters.stress_test_processes_per_container_parameter.arn
+      },
+      {
+        name      = "STRESS_DURATION",
+        valueFrom = var.system_parameters.stress_test_stress_duration_parameter.arn
       }
-      ],
-      local.base_chain_default_td_secret_config
-    )
+    ]
 
-    environment = concat([
+    environment = [
       {
-        name  = "MODE",
-        value = "follower"
+        name  = "STRESS_MODE",
+        value = "chat"
       },
       {
-        name  = "RIVER_NODE_URL",
-        value = var.river_node_url
+        name  = "RIVER_ENV",
+        value = terraform.workspace
       },
       {
-        name  = "CHANNEL_SAMPLING_RATE",
-        value = "100"
+        # TODO: make this a variable so we can reuse this module for other environments
+        name  = "SPACE_ID",
+        value = "10a38bcf15ab6b94d404c201dee9f67c6428c0ecb10000000000000000000000"
       },
       {
-        name  = "LOAD_TEST_DURATION_MS",
-        value = tostring(var.loadtest_duration)
+        # TODO: make this a variable so we can reuse this module for other environments
+        name  = "ANNOUNCE_CHANNEL_ID",
+        value = "20a38bcf15ab6b94d404c201dee9f67c6428c0ecb1a166f49d6787eb5dd4e1b1"
       },
       {
-        name  = "MAX_MSG_DELAY_MS",
-        value = "10000"
+        # TODO: make this a variable so we can reuse this module for other environments
+        name  = "CHANNEL_IDS",
+        value = "20a38bcf15ab6b94d404c201dee9f67c6428c0ecb14c8601d7f529814cebe12c,20a38bcf15ab6b94d404c201dee9f67c6428c0ecb1826ef52f48e2e904844cff"
       },
       {
-        name  = "JOIN_FACTOR",
-        value = "5"
-      },
-      {
-        name  = "NUM_CLIENTS_PER_PROCESS",
-        value = tostring(var.num_clients_per_process)
-      },
-      {
-        name  = "REDIS_HOST",
-        value = var.redis_url
-      },
-      {
-        name  = "REDIS_PORT",
-        value = "6379"
-      },
-      {
-        name  = "DEBUG",
-        value = "csb:test:stress:run*"
-      },
-      {
-        name  = "MOCK_PERSISTENCE_STORE",
-        value = "true"
-      },
-      {
-        name  = "PROCESSES_PER_CONTAINER",
-        value = tostring(var.num_processes_per_container)
-      },
-      {
-        name  = "CONTAINER_ID",
-        value = tostring(var.container_id)
-      },
-      {
-        name  = "IS_FORKED_ANVIL",
-        value = var.is_forked_anvil ? "true" : "false"
+        name  = "CONTAINER_INDEX",
+        value = tostring(var.container_index)
       }
-      ],
-      local.base_chain_override_td_env_config
-    )
+    ]
 
     logConfiguration = {
       logDriver = "awslogs"
@@ -208,11 +192,11 @@ resource "aws_ecs_task_definition" "task_definition" {
   tags = local.custom_tags
 }
 
-module "follower_ecs_sg" {
+module "stress_node_ecs_sg" {
   source = "terraform-aws-modules/security-group/aws"
 
   name        = "${local.name}_sg"
-  description = "Security group for follower ECS task"
+  description = "Security group for the stress test node ECS Task"
   vpc_id      = var.vpc_id
 
   // TODO - Need to check later if ingress to security group require or a particular CIDR range
@@ -230,7 +214,7 @@ module "follower_ecs_sg" {
   egress_rules       = ["all-all"]
 }
 
-resource "aws_ecs_service" "follower_ecs_service" {
+resource "aws_ecs_service" "stress_test_ecs_service" {
   name                               = "${local.name}-service"
   cluster                            = var.ecs_cluster.id
   task_definition                    = aws_ecs_task_definition.task_definition.arn
@@ -246,7 +230,7 @@ resource "aws_ecs_service" "follower_ecs_service" {
   }
 
   network_configuration {
-    security_groups  = [module.follower_ecs_sg.security_group_id]
+    security_groups  = [module.stress_node_ecs_sg.security_group_id]
     subnets          = var.subnets
     assign_public_ip = false
   }

@@ -6,28 +6,32 @@ function check_env() {
         echo "ENVIRONMENT_NAME is not set. Exiting."
         exit 1
     fi
+
+    if [ -z "$CONTAINER_COUNT" ]; then
+        echo "CONTAINER_COUNT is not set. Exiting."
+        exit 1
+    fi
+
+    if [ -z "$CLIENTS_COUNT" ]; then
+        echo "CLIENTS_COUNT is not set. Exiting."
+        exit 1
+    fi
+
+    if [ -z "$PROCESSES_PER_CONTAINER" ]; then
+        echo "PROCESSES_PER_CONTAINER is not set. Exiting."
+        exit 1
+    fi
+
+    if [ -z "$STRESS_DURATION" ]; then
+        echo "STRESS_DURATION is not set. Exiting."
+        exit 1
+    fi
 }
 
 function get_ecs_cluster_arn() {
     local cluster_name=$1
     local cluster_arn=$(aws ecs list-clusters | jq -r ".clusterArns[] | select(. | contains(\"$cluster_name\"))")
     echo $cluster_arn
-}
-
-function leader_task_exist() {
-    local cluster_name="loadtest-cluster-${ENVIRONMENT_NAME}"
-    local service_name="loadtest-leader-${ENVIRONMENT_NAME}-service"
-    echo "logic to check if leader task is up and running"
-    leader_task_arns=$(aws ecs list-tasks --cluster $cluster_name --service-name $service_name --query 'taskArns' --output text)
-    leader_status=$(aws ecs describe-tasks --cluster $cluster_name --tasks $leader_task_arns --query 'tasks[0].lastStatus' --output text)
-    echo $leader_status
-    if [[ "$leader_status" == "RUNNING" ]]; then
-        echo "leader task up and running"
-        return 1    #return false to exit
-    else
-        echo "leader task not up and running"
-        return 0    #return true to wait more
-    fi
 }
 
 function start_service() {
@@ -62,36 +66,96 @@ function stop_all_services() {
     echo "stopped all tasks in cluster: $cluster_arn"
 }
 
-function start_load_test() {
-    # 5 minutes
-    local hacky_wait_time=300
-    local cluster_name="loadtest-cluster-${ENVIRONMENT_NAME}"
-    local leader_task_def="loadtest-leader-${ENVIRONMENT_NAME}-fargate"
+function set_system_parameters() {
+    set_session_id
+    set_clients_count
+    set_container_count
+    set_processes_per_container
+    set_stress_duration
+}
 
-    #get the total number of follower from leader task def env variables
-    leader_task_def_arn=$(aws ecs list-task-definitions --family-prefix $leader_task_def --status ACTIVE --output text | awk '{print $2}')
-    num_follower_containers=$(aws ecs describe-task-definition --task-definition $leader_task_def_arn | jq -r '.taskDefinition.containerDefinitions[].environment[] | select(.name == "NUM_FOLLOWER_CONTAINERS").value')
+function set_stress_duration() {
+    local ssm_parameter_store_name="stress-test-stress-duration-${ENVIRONMENT_NAME}"
 
-    # starting leader service
-    start_service "loadtest-leader-${ENVIRONMENT_NAME}-service" $cluster_name
+    # store the stress duration in the SSM parameter store
+    aws ssm put-parameter --name $ssm_parameter_store_name --value $STRESS_DURATION --type String --overwrite
+}
 
-    echo "waiting for 5 minutes before starting the followers"
-    sleep $hacky_wait_time
+function set_processes_per_container() {
+    local ssm_parameter_store_name="stress-test-processes-per-container-${ENVIRONMENT_NAME}"
 
-    #Logic to wait for leader task up and running
+    # store the processes per container in the SSM parameter store
+    aws ssm put-parameter --name $ssm_parameter_store_name --value $PROCESSES_PER_CONTAINER --type String --overwrite
+}
 
-    echo "starting the follower services"
+function set_clients_count() {
+    local ssm_parameter_store_name="stress-test-clients-count-${ENVIRONMENT_NAME}"
 
-    #Starting the follower services
-    for i in $(seq 1 $num_follower_containers); do
-        start_service "loadtest-follower-${i}-${ENVIRONMENT_NAME}-service" $cluster_name
+    # store the client count in the SSM parameter store
+    aws ssm put-parameter --name $ssm_parameter_store_name --value $CLIENTS_COUNT --type String --overwrite
+}
+
+function set_container_count() {
+    local ssm_parameter_store_name="stress-test-container-count-${ENVIRONMENT_NAME}"
+
+    # store the container count in the SSM parameter store
+    aws ssm put-parameter --name $ssm_parameter_store_name --value $CONTAINER_COUNT --type String --overwrite
+}
+
+function set_session_id() {
+    local ssm_parameter_store_name="stress-test-session-id-${ENVIRONMENT_NAME}"
+
+    # create a session_id variable by putting today's date and time in the format of YYYY-MM-DD-HH:MM:SS
+    local sesion_id=$(date +"%Y-%m-%d-%H:%M:%S")
+
+    echo "session_id: $sesion_id"
+
+    # store the session_id in the SSM parameter store
+    aws ssm put-parameter --name $ssm_parameter_store_name --value $sesion_id --type String --overwrite
+}
+
+function start_via_services() {
+    local loop_end=$(expr $CONTAINER_COUNT - 1)
+
+    #Starting the stress test nodes by updating the service desired count
+    for i in $(seq 0 $loop_end); do
+        start_service "stress-test-node-${ENVIRONMENT_NAME}-${i}-service" $cluster_name
+    done
+}
+
+function start_via_tasks() {
+    local loop_end=$(expr $CONTAINER_COUNT - 1)
+
+    #Starting the stress test nodes by running the task directly
+    for i in $(seq 0 $loop_end); do
+        task_def_family="stress-test-node-${ENVIRONMENT_NAME}-${i}-fargate"
+
+        # get the task definition arn
+        task_def_arn=$(aws ecs list-task-definitions --family-prefix $task_def_family --status ACTIVE --output text | awk '{print $2}')
+
+        # run the task
+        aws ecs run-task --cluster $cluster_name --task-definition $task_def_arn > /dev/null
     done
 
-    echo "load test started"
+}
+
+function start_stress_test() {
+    local cluster_name="stress-test-cluster-${ENVIRONMENT_NAME}"
+    local reference_task_def="stress-test-node-gamma-0-fargate"
+
+    #get the total number of containers from the env vars of the reference task definition
+    reference_task_def_arn=$(aws ecs list-task-definitions --family-prefix $reference_task_def --status ACTIVE --output text | awk '{print $2}')
+
+    echo "starting stress test nodes with ${CONTAINER_COUNT} containers"
+
+    # start_via_tasks
+    start_via_services
+
+    echo "stress tests started"
 }
 
 function main() {
-    local cluster_name="loadtest-cluster-${ENVIRONMENT_NAME}"
+    local cluster_name="stress-test-cluster-${ENVIRONMENT_NAME}"
     echo "cluster name: $cluster_name"
 
     local cluster_arn=$(get_ecs_cluster_arn $cluster_name)
@@ -101,8 +165,9 @@ function main() {
         exit 1
     fi
 
+    set_system_parameters
     stop_all_services $cluster_arn
-    start_load_test
+    start_stress_test
 }
 
 check_env

@@ -7,9 +7,32 @@ on:
                 description: 'Environment name'
                 required: true
                 type: string
+                default: gamma
+            clients_count:
+                description: 'Clients count'
+                required: true
+                type: number
+                default: 40
+            processes_per_container:
+                description: 'Processes per container'
+                required: true
+                type: number
+                default: 2
+            container_count:
+                description: 'Container count'
+                required: true
+                type: number
+                default: 10
+            stress_duration:
+                description: 'Stress test duration (seconds)'
+                required: true
+                type: number
+                default: 300
+            
+
 
 concurrency:
-    group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.node_number }}
+    group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.environment_name }}
     cancel-in-progress: false
 
 env:
@@ -37,7 +60,11 @@ jobs:
 
             - name: Run ECS Cluster Tasks
               env:
-                  ENVIRONMENT_NAME: ${{ inputs.environment_name }}
+                ENVIRONMENT_NAME: ${{ inputs.environment_name }}
+                CLIENTS_COUNT: ${{ inputs.clients_count }}
+                PROCESSES_PER_CONTAINER: ${{ inputs.processes_per_container }}
+                CONTAINER_COUNT: ${{ inputs.container_count }}
+                STRESS_DURATION: ${{ inputs.stress_duration }}
               run: ./scripts/run-river-stress-tests.sh
 
             # If action failed, we send a slack notification
