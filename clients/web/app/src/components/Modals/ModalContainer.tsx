@@ -1,11 +1,13 @@
 import { AnimatePresence } from 'framer-motion'
-import React, { useCallback, useEffect } from 'react'
+import React, { useCallback, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
+import Sheet from 'react-modal-sheet'
 import { Box, BoxProps, MotionBox, Stack, useZLayerContext } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { useSafeEscapeKeyCancellation } from 'hooks/useSafeEscapeKeyCancellation'
 import { TouchPanelNavigationBar } from '@components/TouchPanelNavigationBar/TouchPanelNavigationBar'
 import { transitions } from 'ui/transitions/transitions'
+import { modalSheetClass } from 'ui/styles/globals/sheet.css'
 
 export type ModalContainerProps = {
     children: React.ReactNode
@@ -19,34 +21,62 @@ export type ModalContainerProps = {
     border?: BoxProps['border']
     rootLayer?: HTMLElement
     background?: BoxProps['background']
+    asSheet?: boolean
 }
 
 export const ModalContainer = (props: ModalContainerProps) => {
     const zLayerRoot = useZLayerContext().rootLayerRef?.current
     const root = props.rootLayer ?? zLayerRoot
     const { isTouch } = useDevice()
-    const { onHide, touchTitle, rightBarButton } = props
+    const { onHide, touchTitle, rightBarButton, asSheet, background, children } = props
+
+    const content = useMemo(() => {
+        if (isTouch) {
+            if (touchTitle) {
+                ;<TouchFullScreenModalContainer
+                    title={touchTitle}
+                    rightBarButton={rightBarButton}
+                    background={background}
+                    onHide={onHide}
+                >
+                    {children}
+                </TouchFullScreenModalContainer>
+            }
+            if (asSheet) {
+                return (
+                    <Sheet
+                        isOpen
+                        detent="content-height"
+                        className={modalSheetClass}
+                        onClose={onHide}
+                    >
+                        <Sheet.Container>
+                            <Sheet.Header />
+                            <Sheet.Content>
+                                <Stack
+                                    paddingX="sm"
+                                    paddingBottom="lg"
+                                    alignContent="start"
+                                    gap="sm"
+                                >
+                                    {children}
+                                </Stack>
+                            </Sheet.Content>
+                        </Sheet.Container>
+                        <Sheet.Backdrop onTap={onHide} />
+                    </Sheet>
+                )
+            }
+        }
+        return <CenteredModalContainer {...props} />
+    }, [asSheet, background, children, isTouch, onHide, props, rightBarButton, touchTitle])
 
     if (!root) {
         console.error(`no root context declared for use of modal`)
         return null
     }
 
-    return createPortal(
-        isTouch && touchTitle ? (
-            <TouchFullScreenModalContainer
-                title={touchTitle}
-                rightBarButton={rightBarButton}
-                background={props.background}
-                onHide={onHide}
-            >
-                {props.children}
-            </TouchFullScreenModalContainer>
-        ) : (
-            <CenteredModalContainer {...props} />
-        ),
-        root,
-    )
+    return createPortal(content, root)
 }
 
 type TouchFullScreenModalContainerProps = {

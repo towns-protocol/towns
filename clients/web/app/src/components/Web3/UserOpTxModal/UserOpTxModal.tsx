@@ -7,7 +7,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { Box, Button, Heading, Icon, IconButton, Text } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
-import { isTouch } from 'hooks/useDevice'
+import { isTouch, useDevice } from 'hooks/useDevice'
 import { useIsSmartAccountDeployed } from 'hooks/useIsSmartAccountDeployed'
 import { useBalance } from 'hooks/useBalance'
 import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
@@ -24,14 +24,16 @@ type Props = {
 export function UserOpTxModal(props: Props) {
     const { currOpGas, deny } = userOpsStore()
     const { end: endPublicPageLoginFlow } = usePublicPageLoginFlow()
+    const { isTouch } = useDevice()
 
     if (!currOpGas) {
         return null
     }
     return (
         <AboveAppProgressModalContainer
+            asSheet={isTouch}
             minWidth="auto"
-            background="none"
+            background={isTouch ? undefined : 'none'}
             onHide={() => {
                 endPublicPageLoginFlow()
                 deny?.()
