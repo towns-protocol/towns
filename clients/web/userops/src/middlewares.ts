@@ -179,6 +179,8 @@ export const estimateUserOperationGas = async (
     const est = (await provider.send('eth_estimateUserOperationGas', [
         OpToJSON(ctx.op),
         ctx.entryPoint,
+        // make sure to include stateOverrides for users w/o funds!
+        ctx.stateOverrides,
     ])) as GasEstimate
 
     return est
