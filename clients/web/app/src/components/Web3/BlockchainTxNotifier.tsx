@@ -70,7 +70,7 @@ export function BlockchainTxNotifier() {
                     generateToast({
                         tx,
                         pendingMessage: `Updating ${roleName} role...`,
-                        successMessage: `${roleName} role updated!`,
+                        successMessage: `${roleName} role updated! Any permission changes may take up to 15 minutes to reflect.`,
                     })
                     break
                 }
