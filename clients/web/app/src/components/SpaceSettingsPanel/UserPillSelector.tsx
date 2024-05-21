@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { firstBy } from 'thenby'
-import { Address, useUserLookupContext } from 'use-towns-client'
+import { Address, LookupUserMap, useOfflineStore, useUserLookupContext } from 'use-towns-client'
 import { isAddress } from 'ethers/lib/utils'
 import { Avatar } from '@components/Avatar/Avatar'
 import { Box, Icon, IconButton, Paragraph, Text } from '@ui'
@@ -98,51 +98,6 @@ export const UserPillSelector = (props: Props) => {
         [],
     )
 
-    const pillRenderer = useCallback(
-        (params: { key: string; onDelete: (customKey?: string) => void }) => (
-            <Box
-                horizontal
-                gap="sm"
-                paddingX="sm"
-                paddingY="xs"
-                background="level3"
-                rounded="md"
-                alignItems="center"
-                data-testid={`user-pill-selector-pill-${params.key}`}
-            >
-                {isEveryoneAddress(params.key) ? (
-                    <Avatar size="avatar_xs" icon="people" iconSize="square_xs" />
-                ) : (
-                    <Avatar size="avatar_xs" userId={params.key} />
-                )}
-
-                {usersMap[params.key] && getPrettyDisplayName(usersMap[params.key])}
-                <Box
-                    whiteSpace="nowrap"
-                    tooltip={isEveryoneAddress(params.key) ? 'All wallet addresses' : params.key}
-                    fontSize="sm"
-                    color={isEveryoneAddress(params.key) ? 'default' : 'gray2'}
-                >
-                    {isEveryoneAddress(params.key) ? (
-                        <Text>Everyone</Text>
-                    ) : (
-                        shortAddress(params.key)
-                    )}
-                </Box>
-
-                <IconButton
-                    data-testid={`user-pill-delete-${params.key}`}
-                    icon="close"
-                    size="square_xs"
-                    onClick={() => {
-                        params.onDelete()
-                    }}
-                />
-            </Box>
-        ),
-        [usersMap],
-    )
-
     return (
         <PillSelector
             hideResultsWhenNotActive
@@ -155,7 +110,9 @@ export const UserPillSelector = (props: Props) => {
             label="Suggested"
             placeholder={!numSelected ? 'Search people' : numSelected === 1 ? 'Add people...' : ''}
             optionRenderer={optionRenderer}
-            pillRenderer={pillRenderer}
+            pillRenderer={(p) => (
+                <PillRenderer address={p.key} usersMap={usersMap} onDelete={p.onDelete} />
+            )}
             optionSorter={optionSorter}
             getOptionKey={(o) => o.abstractAccountAddress}
             emptySelectionElement={(props) => <EmptySelectionElement {...props} />}
@@ -164,6 +121,61 @@ export const UserPillSelector = (props: Props) => {
             // onConfirm={props.onConfirm}
             // onPreviewChange={props.onUserPreviewChange}
         />
+    )
+}
+
+function PillRenderer(params: {
+    address: string
+    usersMap: LookupUserMap
+    onDelete: (customKey?: string) => void
+}) {
+    const { address, usersMap, onDelete } = params
+    const offlineWalletAddressMap = useOfflineStore((state) => state.offlineWalletAddressMap)
+
+    // need to get root key address b/c avatar and username are based on root key address/userId
+    const rootKeyAddress = Object.keys(offlineWalletAddressMap).find(
+        (key) => offlineWalletAddressMap[key] === address,
+    )
+    const everyone = isEveryoneAddress(address)
+
+    return (
+        <Box
+            horizontal
+            gap="sm"
+            paddingX="sm"
+            paddingY="xs"
+            background="level3"
+            rounded="md"
+            alignItems="center"
+            data-testid={`user-pill-selector-pill-${rootKeyAddress}`}
+        >
+            {everyone ? (
+                <Avatar size="avatar_xs" icon="people" iconSize="square_xs" />
+            ) : (
+                <Avatar size="avatar_xs" userId={rootKeyAddress} />
+            )}
+
+            {rootKeyAddress &&
+                usersMap[rootKeyAddress] &&
+                getPrettyDisplayName(usersMap[rootKeyAddress])}
+            <Box
+                whiteSpace="nowrap"
+                tooltip={everyone ? 'All wallet addresses' : rootKeyAddress}
+                fontSize="sm"
+                color={everyone ? 'default' : 'gray2'}
+            >
+                {everyone ? <Text>Everyone</Text> : rootKeyAddress && shortAddress(rootKeyAddress)}
+            </Box>
+
+            <IconButton
+                data-testid={`user-pill-delete-${rootKeyAddress}`}
+                icon="close"
+                size="square_xs"
+                onClick={() => {
+                    onDelete()
+                }}
+            />
+        </Box>
     )
 }
 
