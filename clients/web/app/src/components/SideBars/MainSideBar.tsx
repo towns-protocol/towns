@@ -20,8 +20,8 @@ export const MainSideBar = () => {
     const { analytics } = useAnalytics()
 
     const onShowCreateSpace = useEvent(() => {
-        analytics?.track('Clicked Create Space', {}, () => {
-            console.log('[analytics] clicked Create Space')
+        analytics?.track('clicked new town', {}, () => {
+            console.log('[analytics] clicked new town')
         })
     })
 

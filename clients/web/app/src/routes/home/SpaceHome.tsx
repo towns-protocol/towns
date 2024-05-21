@@ -7,7 +7,6 @@ import { PATHS } from 'routes'
 import { useStore } from 'store/store'
 import { useDevice } from 'hooks/useDevice'
 import { replaceOAuthParameters, useAnalytics } from 'hooks/useAnalytics'
-import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { LINKED_RESOURCE } from '../../data/rel'
 
 export const SpaceHome = () => {
@@ -17,15 +16,11 @@ export const SpaceHome = () => {
     const { signerContext } = useTownsContext()
     const spaceId = space?.id
     const navigate = useNavigate()
-    const { analytics, anonymousId, pseudoId, setPseudoId } = useAnalytics()
+    const { analytics, anonymousId } = useAnalytics()
     const channels = useMemo(
         () => space?.channelGroups.flatMap((g) => g.channels),
         [space?.channelGroups],
     )
-
-    const { data: abstractAccountAddress } = useAbstractAccountAddress({
-        rootKeyAddress: loggedInWalletAddress,
-    })
 
     const { bookmarkedRoute, storeBookmarkedSpaceId, storeBookmarkedRoute } = useStore((s) => {
         const storeBookmarkedSpaceId = s.spaceIdBookmark
@@ -78,34 +73,9 @@ export const SpaceHome = () => {
     ])
 
     useEffect(() => {
-        if (pseudoId === undefined && loggedInWalletAddress && abstractAccountAddress) {
-            const pId = setPseudoId(loggedInWalletAddress)
-            analytics?.identify(
-                pId,
-                {
-                    abstractAccountAddress,
-                    anonymousId,
-                    loggedInWalletAddress,
-                    pseudoId: pId,
-                },
-                () => {
-                    console.log('[analytics][SpaceHome] identify logged in user')
-                },
-            )
-        }
-    }, [
-        abstractAccountAddress,
-        analytics,
-        anonymousId,
-        loggedInWalletAddress,
-        pseudoId,
-        setPseudoId,
-    ])
-
-    useEffect(() => {
         analytics?.page(
             'home-page',
-            'Home',
+            'home page',
             {
                 path: `${PATHS.SPACES}/${spaceId}`,
                 spaceId,
@@ -114,7 +84,7 @@ export const SpaceHome = () => {
                 anonymousId,
             },
             () => {
-                console.log('[analytics] Home')
+                console.log('[analytics] home page')
             },
         )
     }, [analytics, anonymousId, spaceId])

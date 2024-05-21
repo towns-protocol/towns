@@ -60,13 +60,13 @@ const PublicTownPageWithoutAuth = (props: { isPreview?: boolean; onClosePreview?
     useEffect(() => {
         analytics?.page(
             'home-page',
-            'Public Town Page',
+            'public town page',
             {
                 spaceId: spaceId ?? 'unknown',
                 anonymousId,
             },
             () => {
-                console.log('[analytics] Public Town Page')
+                console.log('[analytics] public town page')
             },
         )
     }, [analytics, anonymousId, spaceId])
@@ -152,6 +152,14 @@ const Header = (props: {
         setIsShowingBugReport(false)
     }, [setIsShowingBugReport])
     const { login } = useCombinedAuth()
+    const { analytics } = useAnalytics()
+
+    const onClickLogin = useCallback(() => {
+        analytics?.track('clicked login', {}, () => {
+            console.log('[analytics][PublicTownPage] clicked login')
+        })
+        login()
+    }, [analytics, login])
 
     return (
         <Box horizontal centerContent width="100%">
@@ -191,7 +199,7 @@ const Header = (props: {
                                 tone="lightHover"
                                 color="default"
                                 size="button_sm"
-                                onClick={login}
+                                onClick={onClickLogin}
                             >
                                 Log In
                             </Button>

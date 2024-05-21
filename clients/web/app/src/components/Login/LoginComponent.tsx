@@ -82,7 +82,7 @@ function LoginComponent({
             return
         }
         if (!onLoginClick) {
-            analytics?.track('Clicked Login', {}, () => {
+            analytics?.track('clicked login', {}, () => {
                 console.log('[analytics][LoginComponent] clicked login')
             })
         }

@@ -11,7 +11,6 @@ import { TableCell } from '@components/TableCell/TableCell'
 import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
 import { getLinkToMessage } from 'utils/getLinkToMessage'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
-import { useAnalytics } from 'hooks/useAnalytics'
 import { DeleteMessagePrompt } from './DeleteMessagePrompt'
 
 type Props = {
@@ -37,7 +36,6 @@ const emojis: { id: string; native: string }[] = [
 export const MessageModalSheet = (props: Props) => {
     const timelineContext = useContext(MessageTimelineContext)
     const mountPoint = useZLayerContext().rootLayerRef?.current ?? undefined
-    const { analytics } = useAnalytics()
 
     const {
         onClose,
@@ -132,22 +130,10 @@ export const MessageModalSheet = (props: Props) => {
                 console.error('no event id')
                 return
             }
-            analytics?.track(
-                'Sent Emoji',
-                {
-                    spaceId,
-                    channelId,
-                    eventId,
-                    emoji: id,
-                },
-                () => {
-                    console.log('[analytics] reaction')
-                },
-            )
             sendReaction(channelId, eventId, id)
             onClose()
         },
-        [channelId, eventId, analytics, spaceId, sendReaction, onClose],
+        [channelId, eventId, sendReaction, onClose],
     )
 
     const onSelectEmoji = useCallback(

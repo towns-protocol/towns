@@ -215,18 +215,19 @@ export const CreateChannelForm = (props: Props) => {
                 const txResult = await createChannelTransaction(channelInfo, signer)
                 console.log('[CreateChannelForm]', 'createChannelTransaction result', txResult)
                 if (txResult?.status === TransactionStatus.Success) {
-                    analytics?.track(
-                        'Created channel',
-                        {
-                            parentSpaceId: props.spaceId,
-                        },
-                        () => {
-                            console.log('[analytics] created channel')
-                        },
-                    )
                     invalidateQuery()
                     const channelId = txResult.data
                     if (channelId) {
+                        analytics?.track(
+                            'created channel',
+                            {
+                                parentSpaceId: props.spaceId,
+                                channelId,
+                            },
+                            () => {
+                                console.log('[analytics] created channel')
+                            },
+                        )
                         toast.custom((t) => {
                             return (
                                 <ChannelCreatedToast

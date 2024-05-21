@@ -53,8 +53,8 @@ export const SpaceSideBar = (props: Props) => {
     const [isCreateChannelModalVisible, setCreateChannelModalVisible] = useState(false)
     const onHideCreateChannel = useEvent(() => setCreateChannelModalVisible(false))
     const onShowCreateChannel = useEvent(() => {
-        analytics?.track('Opened create channel modal', { spaceId: space.id }, () => {
-            console.log('[analytics] Opened create channel modal')
+        analytics?.track('clicked new channel', { spaceId: space.id }, () => {
+            console.log('[analytics] clicked new channel')
         })
         openPanel(CHANNEL_INFO_PARAMS.CREATE_CHANNEL)
     })

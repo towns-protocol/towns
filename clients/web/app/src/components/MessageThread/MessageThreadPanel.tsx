@@ -44,15 +44,15 @@ export const MessageThreadPanel = (props: Props) => {
 
     const onSend = (value: string, options: SendMessageOptions | undefined) => {
         analytics?.track(
-            'Posted message in thread',
+            'posted message',
             {
                 spaceId,
                 channelId,
-                threadId: messageId,
+                isThread: true,
                 messageType: options?.messageType,
             },
             () => {
-                console.log('[analytics] sendReply')
+                console.log('[analytics] posted message (thread)')
             },
         )
         sendReply(value, channelId, options, parent?.userIds)

@@ -317,7 +317,7 @@ export function CreateTownSubmit({
                     const networkId = result.data.spaceId
 
                     analytics?.track(
-                        'Created Space',
+                        'created town',
                         {
                             spaceName: createSpaceInfo.name,
                             everyone: isEveryone,
@@ -331,7 +331,7 @@ export function CreateTownSubmit({
                             })),
                         },
                         () => {
-                            console.log('[analytics] created space')
+                            console.log('[analytics] created town')
                         },
                     )
 

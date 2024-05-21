@@ -79,12 +79,12 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
         }
 
         analytics?.track(
-            'Joined space',
+            'clicked join town',
             {
                 spaceId,
             },
             () => {
-                console.log('[analytics][JoinLoginButton] clicked join space')
+                console.log('[analytics][JoinLoginButton] clicked join town')
             },
         )
 
@@ -109,12 +109,12 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
 
     const onLoginClick = useCallback(() => {
         analytics?.track(
-            'Clicked Login',
+            'clicked join town',
             {
                 spaceId,
             },
             () => {
-                console.log('[analytics][JoinLoginButton] clicked login')
+                console.log('[analytics][JoinLoginButton] clicked join town')
             },
         )
         startPublicPageloginFlow()

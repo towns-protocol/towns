@@ -1,11 +1,18 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Outlet } from 'react-router'
-import { Membership, useSpaceData, useSpaceDataStore, useTownsContext } from 'use-towns-client'
+import {
+    Membership,
+    useMyUserId,
+    useSpaceData,
+    useSpaceDataStore,
+    useTownsContext,
+} from 'use-towns-client'
 import AnalyticsService, { AnalyticsEvents } from 'use-towns-client/dist/utils/analyticsService'
 import isEqual from 'lodash/isEqual'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { SetUsernameFormWithClose } from '@components/SetUsernameForm/SetUsernameForm'
 import { useUsernameConfirmed } from 'hooks/useUsernameConfirmed'
+import { useAnalytics } from 'hooks/useAnalytics'
 import { AppProgressState } from '@components/AppProgressOverlay/AppProgressState'
 import { AppProgressOverlayTrigger } from '@components/AppProgressOverlay/AppProgressOverlayTrigger'
 import { PublicTownPage } from './PublicTownPage/PublicTownPage'
@@ -33,6 +40,8 @@ export const ValidateMembership = () => {
     const { joiningSpace: isJoining } = usePublicPageLoginFlow()
     const [_PublicTownPage] = useState(<PublicTownPage />)
     const spaceDataIds = useSpaceDataIds()
+    const { analytics, anonymousId, pseudoId, setPseudoId } = useAnalytics()
+    const userId = useMyUserId()
 
     useEffect(() => {
         console.log('ValidateMembership', spaceIdFromPathname, {
@@ -57,6 +66,22 @@ export const ValidateMembership = () => {
         spaceIdFromPathname,
         usernameConfirmed,
     ])
+
+    useEffect(() => {
+        if (pseudoId === undefined && userId) {
+            const pId = setPseudoId(userId)
+            analytics?.identify(
+                pId,
+                {
+                    anonymousId,
+                    pseudoId: pId,
+                },
+                () => {
+                    console.log('[analytics][ValidateMembership] identify logged in user')
+                },
+            )
+        }
+    }, [analytics, anonymousId, pseudoId, setPseudoId, userId])
 
     if (!spaceIdFromPathname) {
         return <Outlet />

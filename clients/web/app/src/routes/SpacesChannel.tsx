@@ -123,15 +123,15 @@ export const SpacesChannelComponent = (props: Props) => {
             }
 
             analytics?.track(
-                'Posted message',
+                'posted message',
                 {
                     spaceId,
                     channelId,
-                    threadId,
+                    isThread: !!threadId,
                     messageType: options?.messageType,
                 },
                 () => {
-                    console.log('[analytics] sendMessage')
+                    console.log('[analytics] posted message')
                 },
             )
 

@@ -13,7 +13,6 @@ import { Button, Heading, Icon, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { useStore } from 'store/store'
 import { replaceOAuthParameters, useAnalytics } from 'hooks/useAnalytics'
-import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { AppProgressState } from '@components/AppProgressOverlay/AppProgressState'
 import { AppProgressOverlayTrigger } from '@components/AppProgressOverlay/AppProgressOverlayTrigger'
 
@@ -31,11 +30,7 @@ export const NoJoinedSpacesFallback = () => {
 
     const { isTouch } = useDevice()
     const location = useLocation()
-    const { loggedInWalletAddress } = useConnectivity()
-    const { analytics, anonymousId, pseudoId, setPseudoId } = useAnalytics()
-    const { data: abstractAccountAddress } = useAbstractAccountAddress({
-        rootKeyAddress: loggedInWalletAddress,
-    })
+    const { analytics, anonymousId } = useAnalytics()
 
     useEffect(() => {
         console.warn('[NoJoinedSpacesFallback][hnt-5685]', 'route', {
@@ -47,34 +42,9 @@ export const NoJoinedSpacesFallback = () => {
     }, [isTouch, location.pathname, location.search, spaceIdBookmark])
 
     useEffect(() => {
-        if (pseudoId === undefined && loggedInWalletAddress && abstractAccountAddress) {
-            const pId = setPseudoId(loggedInWalletAddress)
-            analytics?.identify(
-                pId,
-                {
-                    abstractAccountAddress,
-                    anonymousId,
-                    loggedInWalletAddress,
-                    pseudoId: pId,
-                },
-                () => {
-                    console.log('[analytics][NoJoinedSpacesFallback] identify logged in user')
-                },
-            )
-        }
-    }, [
-        abstractAccountAddress,
-        analytics,
-        anonymousId,
-        loggedInWalletAddress,
-        pseudoId,
-        setPseudoId,
-    ])
-
-    useEffect(() => {
         analytics?.page(
             'home-page',
-            'No Joined Spaces Fallback',
+            'no joined towns page',
             {
                 path: '*',
                 locationPathname: location.pathname,
@@ -82,7 +52,7 @@ export const NoJoinedSpacesFallback = () => {
                 anonymousId,
             },
             () => {
-                console.log('[analytics] No Joined Spaces Fallback')
+                console.log('[analytics] no joined towns page')
             },
         )
     }, [analytics, anonymousId, location.pathname, location.search])

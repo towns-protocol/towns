@@ -108,12 +108,12 @@ const SpaceProfileWithoutAuth = () => {
 
     const onLogoutClick = useEvent(() => {
         analytics?.track(
-            'Clicked Logged Out',
+            'clicked logout',
             {
                 userId: loggedInWalletAddress,
             },
             () => {
-                console.log('[analytics] clicked logged out')
+                console.log('[analytics] clicked logout')
             },
         )
         clearAnonymousId()

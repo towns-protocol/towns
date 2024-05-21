@@ -117,17 +117,13 @@ export const TouchHome = () => {
         }
     })
 
-    const { data: abstractAccountAddress } = useAbstractAccountAddress({
-        rootKeyAddress: loggedInWalletAddress,
-    })
-
     const { hasPermission: canCreateChannel } = useHasPermission({
         spaceId: space?.id,
         walletAddress: loggedInWalletAddress ?? '',
         permission: Permission.AddRemoveChannels,
     })
 
-    const { analytics, anonymousId, pseudoId, setPseudoId } = useAnalytics()
+    const { analytics, anonymousId } = useAnalytics()
 
     useEffect(() => {
         console.warn('[TouchHome][hnt-5685]', 'route', {
@@ -153,34 +149,9 @@ export const TouchHome = () => {
     ])
 
     useEffect(() => {
-        if (pseudoId === undefined && loggedInWalletAddress && abstractAccountAddress) {
-            const pId = setPseudoId(loggedInWalletAddress)
-            analytics?.identify(
-                pId,
-                {
-                    abstractAccountAddress,
-                    anonymousId,
-                    loggedInWalletAddress,
-                    pseudoId: pId,
-                },
-                () => {
-                    console.log('[analytics][TouchHome] identify logged in user')
-                },
-            )
-        }
-    }, [
-        abstractAccountAddress,
-        analytics,
-        anonymousId,
-        loggedInWalletAddress,
-        pseudoId,
-        setPseudoId,
-    ])
-
-    useEffect(() => {
         analytics?.page(
-            'authenticated-page',
-            'Home',
+            'home-page',
+            'home page',
             {
                 path: `${PATHS.SPACES}/${spaceId}`,
                 spaceId,
@@ -189,7 +160,7 @@ export const TouchHome = () => {
                 anonymousId,
             },
             () => {
-                console.log('[analytics] Home')
+                console.log('[analytics] home page')
             },
         )
     }, [analytics, anonymousId, spaceId])
