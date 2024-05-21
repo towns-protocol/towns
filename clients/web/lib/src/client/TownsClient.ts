@@ -1706,9 +1706,10 @@ export class TownsClient
      * sendMessage
      *************************************************/
     public async sendMessage(roomId: string, message: string, options?: SendMessageOptions) {
+        let beforeSendEventHook: Promise<void> | undefined
         if (this.pushNotificationClient && options) {
             const messageIsEmpty = message.trim() === ''
-            await this.pushNotificationClient.sendNotificationTagIfAny(
+            beforeSendEventHook = this.pushNotificationClient.sendNotificationTagIfAny(
                 roomId,
                 messageIsEmpty,
                 options,
@@ -1736,42 +1737,54 @@ export class TownsClient
                                 return new ChannelMessage_Post_Mention(x)
                             }
                         }) ?? []
-                    await this.casablancaClient.sendChannelMessage_Text(roomId, {
+                    await this.casablancaClient.sendChannelMessage_Text(
+                        roomId,
+                        {
+                            threadId: options?.threadId,
+                            threadPreview: options?.threadPreview,
+                            replyId: options?.replyId,
+                            replyPreview: options?.replyPreview,
+                            content: {
+                                body: message,
+                                mentions,
+                                attachments: transformAttachments(options?.attachments),
+                            },
+                        },
+                        { beforeSendEventHook },
+                    )
+                }
+                break
+            case MessageType.Image:
+                await this.casablancaClient.sendChannelMessage_Image(
+                    roomId,
+                    {
                         threadId: options?.threadId,
                         threadPreview: options?.threadPreview,
                         replyId: options?.replyId,
                         replyPreview: options?.replyPreview,
                         content: {
-                            body: message,
-                            mentions,
-                            attachments: transformAttachments(options?.attachments),
+                            title: message,
+                            info: options?.info,
+                            thumbnail: options?.thumbnail,
                         },
-                    })
-                }
-                break
-            case MessageType.Image:
-                await this.casablancaClient.sendChannelMessage_Image(roomId, {
-                    threadId: options?.threadId,
-                    threadPreview: options?.threadPreview,
-                    replyId: options?.replyId,
-                    replyPreview: options?.replyPreview,
-                    content: {
-                        title: message,
-                        info: options?.info,
-                        thumbnail: options?.thumbnail,
                     },
-                })
+                    { beforeSendEventHook },
+                )
                 break
             case MessageType.GM:
-                await this.casablancaClient.sendChannelMessage_GM(roomId, {
-                    threadId: options?.threadId,
-                    threadPreview: options?.threadPreview,
-                    replyId: options?.replyId,
-                    replyPreview: options?.replyPreview,
-                    content: {
-                        typeUrl: message,
+                await this.casablancaClient.sendChannelMessage_GM(
+                    roomId,
+                    {
+                        threadId: options?.threadId,
+                        threadPreview: options?.threadPreview,
+                        replyId: options?.replyId,
+                        replyPreview: options?.replyPreview,
+                        content: {
+                            typeUrl: message,
+                        },
                     },
-                })
+                    { beforeSendEventHook },
+                )
                 break
             default:
                 staticAssertNever(options)
