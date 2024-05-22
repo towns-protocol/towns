@@ -24,7 +24,7 @@ contract Migration_2024_05_07 is Interaction {
 
   IDiamond.FacetCut[] cuts;
 
-  function __interact(uint256 pk, address) public override {
+  function __interact(address deployer) public override {
     address spaceManager = getDeployment("spaceFactory");
 
     address space = spaceHelper.deploy();
@@ -34,7 +34,7 @@ contract Migration_2024_05_07 is Interaction {
       architectHelper.makeCut(architect, IDiamond.FacetCutAction.Replace)
     );
 
-    vm.startBroadcast(pk);
+    vm.startBroadcast(deployer);
     IDiamondCut(spaceManager).diamondCut({
       facetCuts: cuts,
       init: address(0),

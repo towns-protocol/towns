@@ -47,7 +47,7 @@ COPY --from=builder /bin/xchain_node /usr/bin/xchain_node
 RUN setcap 'cap_net_bind_service=+ep' /usr/bin/stream_node
 
 COPY --from=builder /build/node/default_config.yaml /riveruser/stream_node/config/config.yaml
-COPY --from=builder /build/xchain/default_config.yaml /riveruser/xchain_node/config/config.yaml
+COPY --from=builder /build/node/default_config.yaml /riveruser/xchain_node/config/config.yaml
 
 RUN mkdir -p /riveruser/stream_node/logs
 RUN mkdir -p /riveruser/xchain_node/logs

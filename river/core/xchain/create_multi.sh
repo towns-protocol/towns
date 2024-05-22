@@ -42,12 +42,12 @@ cd "$(dirname "$0")"
 : ${RUN_ENV:?}
 : ${RIVER_ENV:?} 
 
-BASE_CHAIN_URL="ws://localhost:8545"
-BASE_REGISTRY_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/base/addresses/baseRegistry.json)
-SPACE_FACTORY_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/base/addresses/spaceFactory.json)
-ENTITLEMENT_TEST_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/base/addresses/entitlementGatedExample.json)
-CUSTOM_ENTITLEMENT_TEST_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/base/addresses/customEntitlementExample.json)
-BASE_CHAIN_ID=31337
+: ${SPACE_FACTORY_ADDRESS:?}
+: ${BASE_REGISTRY_ADDRESS:?}
+: ${RIVER_REGISTRY_ADDRESS:?}
+
+export ENTITLEMENT_TEST_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/base/addresses/entitlementGatedExample.json)
+export CUSTOM_ENTITLEMENT_TEST_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/base/addresses/customEntitlementExample.json)
 
 make
 
@@ -56,8 +56,6 @@ N=5
 
 # Base directory for the instances
 BASE_DIR="./run_files/${RUN_ENV}"
-
-
 
 mkdir -p "${BASE_DIR}"
 
@@ -76,7 +74,8 @@ do
 
     # Copy node binary and config template
     cp "./bin/xchain_node" "${INSTANCE_DIR}/bin"
-    cp default_config.yaml "${INSTANCE_DIR}/config/config.yaml"
+    # Using the shared default_config.yaml with the node
+    cp ../node/default_config.yaml "${INSTANCE_DIR}/config/config.yaml"
 
     # Substitute METRIC_PORT and create config.yaml
     METRICS_PORT=$((9080 + i))
@@ -84,18 +83,10 @@ do
     echo "Creating instance_${i}"
     
     yq eval ".metrics.port = \"$METRICS_PORT\"" -i "${INSTANCE_DIR}/config/config.yaml"
-    yq eval ".entitlement_contract.url = \"$BASE_CHAIN_URL\"" -i "${INSTANCE_DIR}/config/config.yaml"
-    yq eval ".entitlement_contract.address = \"$BASE_REGISTRY_ADDRESS\"" -i "${INSTANCE_DIR}/config/config.yaml"
-    yq eval ".entitlement_contract.chainId = \"$BASE_CHAIN_ID\"" -i "${INSTANCE_DIR}/config/config.yaml"
-    yq eval ".wallet_link_contract.url = \"$BASE_CHAIN_URL\"" -i "${INSTANCE_DIR}/config/config.yaml"
-    yq eval ".wallet_link_contract.address = \"$SPACE_FACTORY_ADDRESS\"" -i "${INSTANCE_DIR}/config/config.yaml"
-    yq eval ".wallet_link_contract.chainId = \"$BASE_CHAIN_ID\"" -i "${INSTANCE_DIR}/config/config.yaml"
-    yq eval ".test_contract.url = \"$BASE_CHAIN_URL\"" -i "${INSTANCE_DIR}/config/config.yaml"
-    yq eval ".test_contract.address = \"$ENTITLEMENT_TEST_ADDRESS\"" -i "${INSTANCE_DIR}/config/config.yaml"
-    yq eval ".test_contract.chainId = \"$BASE_CHAIN_ID\"" -i "${INSTANCE_DIR}/config/config.yaml"
-    yq eval ".test_custom_entitlement_contract.url = \"$BASE_CHAIN_URL\"" -i "${INSTANCE_DIR}/config/config.yaml"
-    yq eval ".test_custom_entitlement_contract.address = \"$CUSTOM_ENTITLEMENT_TEST_ADDRESS\"" -i "${INSTANCE_DIR}/config/config.yaml"
-    yq eval ".test_custom_entitlement_contract.chainId = \"$BASE_CHAIN_ID\"" -i "${INSTANCE_DIR}/config/config.yaml"
+    yq eval ".entitlement_contract.address = strenv(BASE_REGISTRY_ADDRESS)" -i "${INSTANCE_DIR}/config/config.yaml"
+    yq eval ".test_contract.address = strenv(ENTITLEMENT_TEST_ADDRESS)" -i "${INSTANCE_DIR}/config/config.yaml"
+    yq eval ".architectContract.address = strenv(SPACE_FACTORY_ADDRESS)" -i "${INSTANCE_DIR}/config/config.yaml"
+    yq eval ".registryContract.address = strenv(RIVER_REGISTRY_ADDRESS)" -i "${INSTANCE_DIR}/config/config.yaml"
 
     yq eval ".log.level = \"debug\"" -i "${INSTANCE_DIR}/config/config.yaml"
     

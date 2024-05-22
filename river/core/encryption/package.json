@@ -17,7 +17,7 @@
         "watch": "tsc --watch"
     },
     "dependencies": {
-        "@bufbuild/protobuf": "^1.4.1",
+        "@bufbuild/protobuf": "^1.9.0",
         "@ethereumjs/util": "^8.0.1",
         "@matrix-org/olm": "^3.2.15",
         "@river-build/dlog": "workspace:^",

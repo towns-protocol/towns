@@ -58,10 +58,11 @@ if [ "$CONFIG" == "true" ]; then
     ../../scripts/deploy-contracts.sh
 
     SPACE_FACTORY_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/base/addresses/spaceFactory.json)
-    WALLET_LINK_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/base/addresses/walletLink.json)
+    BASE_REGISTRY_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/base/addresses/baseRegistry.json)
     RIVER_REGISTRY_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/river/addresses/riverRegistry.json)    
+
     export SPACE_FACTORY_ADDRESS
-    export WALLET_LINK_ADDRESS
+    export BASE_REGISTRY_ADDRESS
     export RIVER_REGISTRY_ADDRESS
 
     source ../../contracts/.env.localhost

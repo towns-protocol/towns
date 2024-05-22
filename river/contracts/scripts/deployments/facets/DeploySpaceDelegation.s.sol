@@ -31,11 +31,8 @@ contract DeploySpaceDelegation is Deployer, FacetHelper {
     return "spaceDelegationFacet";
   }
 
-  function __deploy(
-    uint256 deployerPK,
-    address
-  ) public override returns (address) {
-    vm.startBroadcast(deployerPK);
+  function __deploy(address deployer) public override returns (address) {
+    vm.startBroadcast(deployer);
     SpaceDelegationFacet spaceDelegationFacet = new SpaceDelegationFacet();
     vm.stopBroadcast();
     return address(spaceDelegationFacet);

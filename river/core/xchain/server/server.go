@@ -6,7 +6,7 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/river-build/river/core/xchain/config"
+	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/xchain/contracts"
 	"github.com/river-build/river/core/xchain/entitlement"
 	"github.com/river-build/river/core/xchain/util"
@@ -464,6 +464,7 @@ func (x *xchain) getLinkedWallets(ctx context.Context, wallet common.Address) ([
 	rootKey, err := iWalletLink.GetRootKeyForWallet(&bind.CallOpts{Context: ctx}, wallet)
 	infra.StoreExecutionTimeMetrics("GetRootKeyForWallet", infra.CONTRACT_CALLS_CATEGORY, start)
 	if err != nil {
+		log.Error("Failed to GetRootKeyForWallet", "err", err, "wallet", wallet.Hex(), "walletLinkContract", x.config.GetWalletLinkContractAddress())
 		getRootKeyForWalletCalls.FailInc()
 		return nil, x.handleContractError(log, err, "Failed to GetRootKeyForWallet")
 	}

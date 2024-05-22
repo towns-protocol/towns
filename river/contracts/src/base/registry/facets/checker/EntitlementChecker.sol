@@ -7,6 +7,7 @@ import {IEntitlementChecker} from "./IEntitlementChecker.sol";
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {EntitlementCheckerStorage} from "./EntitlementCheckerStorage.sol";
+import {NodeOperatorStorage} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 
 // contracts
 import {Facet} from "contracts/src/diamond/facets/Facet.sol";
@@ -31,6 +32,15 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
     if (layout.operatorByNode[node] != operator) {
       revert EntitlementChecker_InvalidNodeOperator();
     }
+    _;
+  }
+
+  modifier onlyRegisteredOperator() {
+    NodeOperatorStorage.Layout storage nodeOperatorLayout = NodeOperatorStorage
+      .layout();
+
+    if (!nodeOperatorLayout.operators.contains(msg.sender))
+      revert EntitlementChecker_InvalidOperator();
     _;
   }
 

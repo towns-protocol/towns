@@ -263,7 +263,7 @@ contract MainnetDelegationTest is
   //   assertEq(quantity, delegationResult.quantity);
   // }
 
-  // function test_getDelegationsByOperator(
+  // function test_getMainnetDelegationsByOperator(
   //   address delegator,
   //   address operator,
   //   uint256 quantity

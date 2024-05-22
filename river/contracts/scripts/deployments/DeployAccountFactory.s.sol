@@ -15,15 +15,12 @@ contract DeployAccountFactory is Deployer {
     return "accountFactory";
   }
 
-  function __deploy(
-    uint256 deployerPK,
-    address
-  ) public override returns (address) {
+  function __deploy(address deployer) public override returns (address) {
     if (!isAnvil()) revert("not supported");
 
     address entrypoint = getDeployment("entrypoint");
 
-    bytes32 salt = bytes32(uint256(deployerPK));
+    bytes32 salt = bytes32(uint256(1));
     bytes32 initCodeHash = hashInitCode(
       type(SimpleAccountFactory).creationCode,
       abi.encode(entrypoint)
@@ -31,7 +28,7 @@ contract DeployAccountFactory is Deployer {
 
     address soonToBe = computeCreate2Address(salt, initCodeHash);
 
-    vm.broadcast(deployerPK);
+    vm.broadcast(deployer);
     SimpleAccountFactory factory = new SimpleAccountFactory{salt: salt}(
       EntryPoint(payable(entrypoint))
     );

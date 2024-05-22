@@ -9,6 +9,7 @@ import {IImplementationRegistry} from "contracts/src/factory/facets/registry/IIm
 import {IWalletLink} from "contracts/src/factory/facets/wallet-link/IWalletLink.sol";
 import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
 import {IMainnetDelegation} from "contracts/src/tokens/river/base/delegation/IMainnetDelegation.sol";
+import {INodeOperator} from "contracts/src/base/registry/facets/operator/INodeOperator.sol";
 
 // libraries
 
@@ -56,7 +57,6 @@ contract BaseSetup is TestUtils, SpaceHelper {
   address internal bridge;
   address internal association;
   address internal vault;
-  address internal nodeOperator;
 
   address internal mainnetProxyDelegation;
   address internal claimers;
@@ -78,7 +78,6 @@ contract BaseSetup is TestUtils, SpaceHelper {
     // Base Registry
     baseRegistry = deployBaseRegistry.deploy();
     entitlementChecker = IEntitlementChecker(baseRegistry);
-    nodeOperator = baseRegistry;
 
     // Mainnet
     messenger = MockMessenger(deployBaseRegistry.messenger());
@@ -141,8 +140,10 @@ contract BaseSetup is TestUtils, SpaceHelper {
     nodes = new address[](10);
     for (uint256 i = 0; i < 10; i++) {
       nodes[i] = _randomAddress();
-      vm.prank(nodes[i]);
+      vm.startPrank(nodes[i]);
+      // INodeOperator(baseRegistry).registerOperator(nodes[i]);
       entitlementChecker.registerNode(nodes[i]);
+      vm.stopPrank();
     }
   }
 }

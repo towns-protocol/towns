@@ -83,17 +83,11 @@ func makeTestChannelStream(
 	userId string,
 	channelStreamId StreamId,
 	spaceSpaceId StreamId,
-	channelProperties *protocol.EncryptedData,
 	streamSettings *protocol.StreamSettings,
 ) ([]*ParsedEvent, *protocol.Miniblock) {
 	if streamSettings == nil {
 		streamSettings = &protocol.StreamSettings{
 			DisableMiniblockCreation: true,
-		}
-	}
-	if channelProperties == nil {
-		channelProperties = &protocol.EncryptedData{
-			Ciphertext: "encrypted text supposed to be here",
 		}
 	}
 	inception := makeEnvelopeWithPayload_T(
@@ -102,7 +96,6 @@ func makeTestChannelStream(
 		Make_ChannelPayload_Inception(
 			channelStreamId,
 			spaceSpaceId,
-			channelProperties,
 			streamSettings,
 		),
 		nil,
@@ -319,7 +312,7 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 	spaceStream := sStream.(*streamImpl)
 	joinSpace_T(t, userWallet, ctx, spaceStream, []string{bob, carol})
 	// create a channel stream and add the members
-	_, mb = makeTestChannelStream(t, userWallet, alice, channelStreamId, spaceStreamId, nil, nil)
+	_, mb = makeTestChannelStream(t, userWallet, alice, channelStreamId, spaceStreamId, nil)
 	cStream, _, _ := tt.createStream(ctx, channelStreamId, mb)
 	channelStream := cStream.(*streamImpl)
 	joinChannel_T(t, userWallet, ctx, channelStream, []string{alice, bob, carol})
@@ -375,7 +368,7 @@ func TestChannelViewState_RemainingMembers(t *testing.T) {
 	spaceStream := sStream.(*streamImpl)
 	joinSpace_T(t, userWallet, ctx, spaceStream, []string{bob, carol})
 	// create a channel stream and add the members
-	_, mb = makeTestChannelStream(t, userWallet, alice, channelStreamId, spaceStreamId, nil, nil)
+	_, mb = makeTestChannelStream(t, userWallet, alice, channelStreamId, spaceStreamId, nil)
 	cStream, _, err := tt.createStream(ctx, channelStreamId, mb)
 	require.NoError(t, err)
 	channelStream := cStream.(*streamImpl)

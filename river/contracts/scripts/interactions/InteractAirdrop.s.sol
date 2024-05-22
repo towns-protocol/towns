@@ -10,7 +10,7 @@ import {Interaction} from "../common/Interaction.s.sol";
 import {Airdrop} from "contracts/src/utils/Airdrop.sol";
 
 contract InteractAirdrop is Interaction {
-  function __interact(uint256 pk, address) public override {
+  function __interact(address deployer) public override {
     address airdrop = getDeployment("airdrop");
 
     uint256 totalAccounts = 20;
@@ -73,7 +73,7 @@ contract InteractAirdrop is Interaction {
       totalValue += amounts[i];
     }
 
-    vm.startBroadcast(pk);
+    vm.startBroadcast(deployer);
     Airdrop(airdrop).airdropETH{value: totalValue}(addresses, amounts);
   }
 }

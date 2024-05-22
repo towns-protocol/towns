@@ -27,6 +27,10 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
       Delegation memory delegation = ds.delegationByDelegator[delegator];
       delete delegation.operator;
       delete delegation.quantity;
+      delete delegation.delegationTime;
+      delete delegation.delegator;
+
+      delete ds.delegationByDelegator[delegator];
       ds.delegatorsByOperator[delegation.operator].remove(delegator);
       emit DelegationRemoved(delegator);
     } else {
@@ -34,7 +38,8 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
       ds.delegationByDelegator[delegator] = Delegation(
         operator,
         quantity,
-        delegator
+        delegator,
+        block.timestamp
       );
       emit DelegationSet(delegator, operator, quantity);
     }
@@ -46,7 +51,7 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
     return MainnetDelegationStorage.layout().delegationByDelegator[delegator];
   }
 
-  function _getDelegationsByOperator(
+  function _getMainnetDelegationsByOperator(
     address operator
   ) internal view returns (Delegation[] memory) {
     MainnetDelegationStorage.Layout storage ds = MainnetDelegationStorage
@@ -68,7 +73,9 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
     address operator
   ) internal view returns (uint256) {
     uint256 stake = 0;
-    Delegation[] memory delegations = _getDelegationsByOperator(operator);
+    Delegation[] memory delegations = _getMainnetDelegationsByOperator(
+      operator
+    );
     for (uint256 i = 0; i < delegations.length; i++) {
       stake += delegations[i].quantity;
     }

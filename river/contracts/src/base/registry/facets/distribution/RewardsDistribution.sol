@@ -168,26 +168,24 @@ contract RewardsDistribution is
     uint256 delegatorsClaimAmount
   ) internal {
     //Get all the RVR delegators from the Base token
-    address[] memory delegators = IVotesEnumerable(sd.riverToken)
-      .getDelegatorsByDelegatee(operator);
+    address[] memory delegators = _getValidDelegators(sd, operator);
 
     //Get all the spaces delegating to this operator
-    address[] memory spaceDelegators = sd.spacesByOperator[operator].values();
-    uint256 spaceDelegatorsLen = spaceDelegators.length;
+    address[] memory delegatingSpaces = _getValidDelegatingSpaces(sd, operator);
+    uint256 spaceDelegatorsLen = delegatingSpaces.length;
 
     uint256 totalLength = delegators.length;
 
     //get all the delegators delegating to those spaces
     for (uint256 i = 0; i < spaceDelegatorsLen; i++) {
-      totalLength += IVotesEnumerable(sd.riverToken)
-        .getDelegatorsByDelegatee(spaceDelegators[i])
-        .length;
+      totalLength += _getValidDelegators(sd, delegatingSpaces[i]).length;
     }
 
     //get all the delegators delegating to the operator on the mainnet
-    Delegation[] memory mainnetDelegations = _getDelegationsByOperator(
-      operator
-    );
+    Delegation[]
+      memory mainnetDelegations = _getValidMainnetDelegationsByOperator(
+        operator
+      );
     totalLength += mainnetDelegations.length;
 
     //build new array to hold all individual user delegators
@@ -210,7 +208,7 @@ contract RewardsDistribution is
       //get all the spaces delegating to this operator
       address[] memory spaceDelegatorDelegators = IVotesEnumerable(
         sd.riverToken
-      ).getDelegatorsByDelegatee(spaceDelegators[i]);
+      ).getDelegatorsByDelegatee(delegatingSpaces[i]);
 
       //for each space, get all the users delegating to it
       for (uint256 j = 0; j < spaceDelegatorDelegators.length; j++) {
@@ -259,7 +257,10 @@ contract RewardsDistribution is
       NodeOperatorStorage.Layout storage nos = NodeOperatorStorage.layout();
       NodeOperatorStatus currentStatus = nos.statusByOperator[operator];
 
-      if (currentStatus == NodeOperatorStatus.Approved) {
+      if (
+        currentStatus == NodeOperatorStatus.Approved &&
+        _isActiveSinceLastCycle(nos.approvalTimeByOperator[operator])
+      ) {
         expectedOperators[i] = operator;
         totalActiveOperators++;
       }
@@ -272,14 +273,71 @@ contract RewardsDistribution is
     return expectedOperators;
   }
 
+  function _getValidDelegators(
+    SpaceDelegationStorage.Layout storage sd,
+    address operator
+  ) internal view returns (address[] memory) {
+    address[] memory delegators = IVotesEnumerable(sd.riverToken)
+      .getDelegatorsByDelegatee(operator);
+    address[] memory validDelegators = new address[](delegators.length);
+    for (uint256 i = 0; i < delegators.length; i++) {
+      if (
+        _isActiveSinceLastCycle(
+          IVotesEnumerable(sd.riverToken).getDelegationTimeForDelegator(
+            delegators[i]
+          )
+        )
+      ) {
+        validDelegators[i] = delegators[i];
+      }
+    }
+    return validDelegators;
+  }
+
+  function _getValidDelegatingSpaces(
+    SpaceDelegationStorage.Layout storage sd,
+    address operator
+  ) internal view returns (address[] memory) {
+    address[] memory delegatingSpaces = sd.spacesByOperator[operator].values();
+    address[] memory validDelegatingSpaces = new address[](
+      delegatingSpaces.length
+    );
+    for (uint256 i = 0; i < delegatingSpaces.length; i++) {
+      if (
+        _isActiveSinceLastCycle(sd.spaceDelegationTime[delegatingSpaces[i]])
+      ) {
+        validDelegatingSpaces[i] = delegatingSpaces[i];
+      }
+    }
+    return validDelegatingSpaces;
+  }
+
+  function _getValidMainnetDelegationsByOperator(
+    address operator
+  ) internal view returns (Delegation[] memory) {
+    //get all the delegators delegating to the operator on the mainnet
+    Delegation[] memory mainnetDelegations = _getMainnetDelegationsByOperator(
+      operator
+    );
+    Delegation[] memory validMainnetDelegations = new Delegation[](
+      mainnetDelegations.length
+    );
+    for (uint256 i = 0; i < mainnetDelegations.length; i++) {
+      if (_isActiveSinceLastCycle(mainnetDelegations[i].delegationTime)) {
+        validMainnetDelegations[i] = mainnetDelegations[i];
+      }
+    }
+
+    return validMainnetDelegations;
+  }
+
   function _getOperatorDelegatee(
     address delegator
   ) internal view returns (address) {
     SpaceDelegationStorage.Layout storage sd = SpaceDelegationStorage.layout();
 
     // get the delegatee that the delegator is voting for
-    address delegatee = IVotes(SpaceDelegationStorage.layout().riverToken)
-      .delegates(delegator);
+    address delegatee = IVotes(sd.riverToken).delegates(delegator);
     // if the delegatee is a space, get the operator that the space is delegating to
     address spaceDelegatee = sd.operatorBySpace[delegatee];
     address actualOperator = spaceDelegatee != address(0)
@@ -289,8 +347,8 @@ contract RewardsDistribution is
   }
 
   function _isActiveSinceLastCycle(
-    uint256 delegationTime
+    uint256 startTime
   ) internal view returns (bool) {
-    return delegationTime < (block.timestamp - 7 days);
+    return startTime < (block.timestamp - 7 days);
   }
 }

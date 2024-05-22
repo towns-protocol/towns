@@ -26,7 +26,7 @@ export STRESS_MODE="${STRESS_MODE:-chat}"
 export STRESS_DURATION="${STRESS_DURATION:-120}"
 export SESSION_ID="${SESSION_ID:-$(uuidgen)}"
 
-export CLIENTS_PER_PROCESS="${CLIENTS_PER_PROCESS:-5}"
+export PROCESSES_PER_CONTAINER="${PROCESSES_PER_CONTAINER:-4}"
 export CLIENTS_COUNT="${CLIENTS_COUNT:-20}"
 
 export MNEMONIC="toy alien remain valid print employ age multiply claim student story aware" 

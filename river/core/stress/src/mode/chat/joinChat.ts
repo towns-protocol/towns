@@ -52,7 +52,7 @@ export async function joinChat(client: StressClient, cfg: ChatConfig) {
             announceChannelId,
             `c${cfg.containerIndex}p${cfg.processIndex} Starting up! freeMemory: ${
                 getSystemInfo().FreeMemory
-            }`,
+            } clientStart:${cfg.localClients.startIndex} ${cfg.localClients.endIndex}`,
             { threadId: message.hashStr },
         )
     }

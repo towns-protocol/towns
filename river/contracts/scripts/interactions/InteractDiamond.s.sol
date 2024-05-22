@@ -21,7 +21,7 @@ contract InteractDiamond is Interaction {
   DeployMetadata metadataHelper = new DeployMetadata();
   DeployMultiInit multiInitHelper = new DeployMultiInit();
 
-  function __interact(uint256, address) public view override {
+  function __interact(address) public view override {
     address baseRegistry = 0x08cC41b782F27d62995056a4EF2fCBAe0d3c266F;
     console.log(_bytes32ToString(MetadataFacet(baseRegistry).contractType()));
   }

@@ -18,13 +18,10 @@ contract DeployRiverBase is Deployer, IRiverBase {
     return "river";
   }
 
-  function __deploy(
-    uint256 deployerPK,
-    address
-  ) public override returns (address) {
+  function __deploy(address deployer) public override returns (address) {
     l1Token = _getToken();
 
-    vm.broadcast(deployerPK);
+    vm.broadcast(deployer);
     return address(new River({_bridge: bridgeBase, _remoteToken: l1Token}));
   }
 

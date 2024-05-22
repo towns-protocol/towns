@@ -18,6 +18,7 @@ interface IMainnetDelegationBase {
     address operator;
     uint256 quantity;
     address delegator;
+    uint256 delegationTime;
   }
 
   // =============================================================
@@ -70,7 +71,7 @@ interface IMainnetDelegation is IMainnetDelegationBase {
    * @param operator The operator address
    * @return Delegation delegation struct
    */
-  function getDelegationsByOperator(
+  function getMainnetDelegationsByOperator(
     address operator
   ) external view returns (Delegation[] memory);
 

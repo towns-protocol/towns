@@ -12,9 +12,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/xchain/client_simulator"
 	xc_common "github.com/river-build/river/core/xchain/common"
-	"github.com/river-build/river/core/xchain/config"
 	"github.com/river-build/river/core/xchain/contracts"
 	test_contracts "github.com/river-build/river/core/xchain/contracts/test"
 	"github.com/river-build/river/core/xchain/entitlement"
@@ -258,17 +258,17 @@ func (st *serviceTester) Config() *config.Config {
 		BaseChain:    node_config.ChainConfig{},
 		RiverChain:   node_config.ChainConfig{},
 		ChainsString: fmt.Sprintf("%d:%s", ChainID, BaseRpcEndpoint),
-		TestingContract: config.ContractConfig{
-			Address: st.mockEntitlementGatedAddress.String(),
+		TestEntitlementContract: config.ContractConfig{
+			Address: st.mockEntitlementGatedAddress,
 		},
 		EntitlementContract: config.ContractConfig{
-			Address: st.entitlementCheckerAddress.String(),
+			Address: st.entitlementCheckerAddress,
 		},
-		WalletLinkContract: config.ContractConfig{
-			Address: st.walletLinkingAddress.String(),
+		ArchitectContract: config.ContractConfig{
+			Address: st.walletLinkingAddress,
 		},
 		TestCustomEntitlementContract: config.ContractConfig{
-			Address: st.mockCustomEntitlementAddress.String(),
+			Address: st.mockCustomEntitlementAddress,
 		},
 		Log: infra.LogConfig{
 			NoColor: true,
@@ -447,10 +447,11 @@ func expectEntitlementCheckResult(
 	require *require.Assertions,
 	cs client_simulator.ClientSimulator,
 	ctx context.Context,
+	cfg *config.Config,
 	data contracts.IRuleData,
 	expected bool,
 ) {
-	result, err := cs.EvaluateRuleData(ctx, data)
+	result, err := cs.EvaluateRuleData(ctx, cfg, data)
 	require.NoError(err)
 	require.Equal(expected, result)
 }
@@ -527,7 +528,8 @@ func TestErc721Entitlements(t *testing.T) {
 			st.Start(t)
 
 			bc := st.ClientSimulatorBlockchain()
-			cs, err := client_simulator.New(ctx, st.Config(), bc, bc.Wallet)
+			cfg := st.Config()
+			cs, err := client_simulator.New(ctx, cfg, bc, bc.Wallet)
 			require.NoError(err)
 			cs.Start(ctx)
 			defer cs.Stop()
@@ -536,22 +538,22 @@ func TestErc721Entitlements(t *testing.T) {
 			auth, contractAddress, erc721 := deployMockErc721Contract(require, st)
 
 			// Expect no NFT minted for the client simulator wallet
-			expectEntitlementCheckResult(require, cs, ctx, erc721Check(ChainID, contractAddress, 1), false)
+			expectEntitlementCheckResult(require, cs, ctx, cfg, erc721Check(ChainID, contractAddress, 1), false)
 
 			// Mint an NFT for client simulator wallet.
 			mintTokenForWallet(require, auth, st, erc721, cs.Wallet(), 1)
 
 			// Check if the wallet a 1 balance of the NFT - should pass
-			expectEntitlementCheckResult(require, cs, ctx, erc721Check(ChainID, contractAddress, 1), true)
+			expectEntitlementCheckResult(require, cs, ctx, cfg, erc721Check(ChainID, contractAddress, 1), true)
 
 			// Checking for balance of 2 should fail
-			expectEntitlementCheckResult(require, cs, ctx, erc721Check(ChainID, contractAddress, 2), false)
+			expectEntitlementCheckResult(require, cs, ctx, cfg, erc721Check(ChainID, contractAddress, 2), false)
 
 			// Create a set of 3 linked wallets using client simulator address.
 			_, wallet1, wallet2, _ := generateLinkedWallets(ctx, require, tc.sentByRootKeyWallet, st, cs.Wallet())
 
 			// Sanity check: balance of 4 across all 3 wallets should fail
-			expectEntitlementCheckResult(require, cs, ctx, erc721Check(ChainID, contractAddress, 4), false)
+			expectEntitlementCheckResult(require, cs, ctx, cfg, erc721Check(ChainID, contractAddress, 4), false)
 
 			// Mint 2 NFTs for wallet1.
 			mintTokenForWallet(require, auth, st, erc721, wallet1, 2)
@@ -560,7 +562,7 @@ func TestErc721Entitlements(t *testing.T) {
 			mintTokenForWallet(require, auth, st, erc721, wallet2, 1)
 
 			// Accumulated balance of 4 across all 3 wallets should now pass
-			expectEntitlementCheckResult(require, cs, ctx, erc721Check(ChainID, contractAddress, 4), true)
+			expectEntitlementCheckResult(require, cs, ctx, cfg, erc721Check(ChainID, contractAddress, 4), true)
 		})
 	}
 }
@@ -617,8 +619,9 @@ func TestErc20Entitlements(t *testing.T) {
 			defer st.Close()
 			st.Start(t)
 
+			cfg := st.Config()
 			bc := st.ClientSimulatorBlockchain()
-			cs, err := client_simulator.New(ctx, st.Config(), bc, bc.Wallet)
+			cs, err := client_simulator.New(ctx, cfg, bc, bc.Wallet)
 			require.NoError(err)
 			cs.Start(ctx)
 			defer cs.Stop()
@@ -627,22 +630,22 @@ func TestErc20Entitlements(t *testing.T) {
 			auth, contractAddress, erc20 := deployMockErc20Contract(require, st)
 
 			// Check for balance of 1 should fail, as this wallet has no coins.
-			expectEntitlementCheckResult(require, cs, ctx, erc20Check(ChainID, contractAddress, 1), false)
+			expectEntitlementCheckResult(require, cs, ctx, cfg, erc20Check(ChainID, contractAddress, 1), false)
 
 			// Mint 10 tokens for the client simulator wallet.
 			mintErc20TokensForWallet(require, auth, st, erc20, cs.Wallet(), 10)
 
 			// Check for balance of 10 should pass.
-			expectEntitlementCheckResult(require, cs, ctx, erc20Check(ChainID, contractAddress, 10), true)
+			expectEntitlementCheckResult(require, cs, ctx, cfg, erc20Check(ChainID, contractAddress, 10), true)
 
 			// Checking for balance of 20 should fail
-			expectEntitlementCheckResult(require, cs, ctx, erc20Check(ChainID, contractAddress, 20), false)
+			expectEntitlementCheckResult(require, cs, ctx, cfg, erc20Check(ChainID, contractAddress, 20), false)
 
 			// Create a set of 3 linked wallets using client simulator address.
 			_, wallet1, wallet2, _ := generateLinkedWallets(ctx, require, tc.sentByRootKeyWallet, st, cs.Wallet())
 
 			// Sanity check: balance of 30 across all 3 wallets should fail
-			expectEntitlementCheckResult(require, cs, ctx, erc20Check(ChainID, contractAddress, 30), false)
+			expectEntitlementCheckResult(require, cs, ctx, cfg, erc20Check(ChainID, contractAddress, 30), false)
 
 			// Mint 19 tokens for wallet1.
 			mintErc20TokensForWallet(require, auth, st, erc20, wallet1, 19)
@@ -650,7 +653,7 @@ func TestErc20Entitlements(t *testing.T) {
 			mintErc20TokensForWallet(require, auth, st, erc20, wallet2, 1)
 
 			// Accumulated balance of 30 across all 3 wallets should now pass
-			expectEntitlementCheckResult(require, cs, ctx, erc20Check(ChainID, contractAddress, 30), true)
+			expectEntitlementCheckResult(require, cs, ctx, cfg, erc20Check(ChainID, contractAddress, 30), true)
 		})
 	}
 }
@@ -717,23 +720,26 @@ func TestCustomEntitlements(t *testing.T) {
 			defer st.Close()
 			st.Start(t)
 
+			cfg := st.Config()
 			bc := st.ClientSimulatorBlockchain()
-			cs, err := client_simulator.New(ctx, st.Config(), bc, bc.Wallet)
+			cs, err := client_simulator.New(ctx, cfg, bc, bc.Wallet)
 			require.NoError(err)
 			cs.Start(ctx)
 			defer cs.Stop()
 
 			// Deploy mock custom entitlement contract to anvil chain
 			auth, contractAddress, customEntitlement := deployMockCustomEntitlement(require, st)
+			t.Log("Deployed custom entitlement contract", contractAddress.Hex(), ChainID)
 
 			// Initially the check should fail.
 			customCheck := customEntitlementCheck(ChainID, contractAddress)
-			expectEntitlementCheckResult(require, cs, ctx, customCheck, false)
+			t.Log("Checking entitlement for client simulator wallet", customCheck)
+			expectEntitlementCheckResult(require, cs, ctx, cfg, customCheck, false)
 
 			toggleEntitlement(require, auth, customEntitlement, cs.Wallet(), true)
 
 			// Check should now succeed.
-			expectEntitlementCheckResult(require, cs, ctx, customCheck, true)
+			expectEntitlementCheckResult(require, cs, ctx, cfg, customCheck, true)
 
 			// Untoggle entitlement for client simulator wallet
 			toggleEntitlement(require, auth, customEntitlement, cs.Wallet(), false)
@@ -743,13 +749,13 @@ func TestCustomEntitlements(t *testing.T) {
 
 			for _, wallet := range []*node_crypto.Wallet{wallet1, wallet2, wallet3} {
 				// Check should fail for all wallets.
-				expectEntitlementCheckResult(require, cs, ctx, customCheck, false)
+				expectEntitlementCheckResult(require, cs, ctx, cfg, customCheck, false)
 
 				// Toggle entitlement for a particular linked wallet
 				toggleEntitlement(require, auth, customEntitlement, wallet, true)
 
 				// Check should now succeed for the wallet.
-				expectEntitlementCheckResult(require, cs, ctx, customCheck, true)
+				expectEntitlementCheckResult(require, cs, ctx, cfg, customCheck, true)
 
 				// Untoggle entitlement for the wallet
 				toggleEntitlement(require, auth, customEntitlement, wallet, false)

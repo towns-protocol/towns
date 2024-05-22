@@ -14,11 +14,8 @@ contract DeployStreamRegistry is Deployer {
     return "streamRegistryFacet";
   }
 
-  function __deploy(
-    uint256 deployerPK,
-    address
-  ) public override returns (address) {
-    vm.startBroadcast(deployerPK);
+  function __deploy(address deployer) public override returns (address) {
+    vm.startBroadcast(deployer);
     StreamRegistry streamRegistryFacet = new StreamRegistry();
     vm.stopBroadcast();
     return address(streamRegistryFacet);

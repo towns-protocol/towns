@@ -19,8 +19,8 @@
         "test:ci:load-tests-s3": "RIVER_ENV=local_single_ne yarn my-jest --group=load-tests-s3 --testTimeout=1180000",
         "test:ci:load-tests-s3.1": "RIVER_ENV=local_single_ne yarn my-jest --group=load-tests-3.1 --testTimeout=1180000",
         "test:ci:load-tests-s4.1": "RIVER_ENV=local_single_ne yarn my-jest --group=load-tests-s4.1 --testTimeout=1180000",
-        "test:ci:multi:ne": "RIVER_ENV=local_multi_ne yarn my-jest --group=main",
         "test:ci:multi:ent": "RIVER_ENV=local_multi yarn my-jest --group=with-entitilements",
+        "test:ci:multi:ne": "RIVER_ENV=local_multi_ne yarn my-jest --group=main",
         "test:ci:stress-test-follower": "RIVER_ENV=local_single_ne yarn my-jest --group=stress-test-follower --testTimeout=180000000 --detectOpenHandles --runInBand",
         "test:ci:stress-test-leader": "RIVER_ENV=local_single_ne yarn my-jest --group=stress-test-leader --testTimeout=180000000 --detectOpenHandles --runInBand",
         "test:ci:synthetic:all": "RIVER_ENV=local_single_ne yarn my-jest --group=synthetic",
@@ -31,9 +31,9 @@
         "watch": "tsc --watch"
     },
     "dependencies": {
-        "@bufbuild/protobuf": "^1.4.1",
-        "@connectrpc/connect": "^1.3.0",
-        "@connectrpc/connect-web": "^1.3.0",
+        "@bufbuild/protobuf": "^1.9.0",
+        "@connectrpc/connect": "^1.4.0",
+        "@connectrpc/connect-web": "^1.4.0",
         "@datadog/browser-rum": "^5.8.0",
         "@ethereumjs/util": "^8.0.1",
         "@river-build/dlog": "workspace:^",

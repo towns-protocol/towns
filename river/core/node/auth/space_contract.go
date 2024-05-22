@@ -3,15 +3,14 @@ package auth
 import (
 	"context"
 
-	v3 "github.com/river-build/river/core/xchain/contracts/v3"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/river-build/river/core/node/shared"
+	"github.com/river-build/river/core/xchain/contracts"
 )
 
 type SpaceEntitlements struct {
 	entitlementType string
-	ruleEntitlement v3.IRuleEntitlementRuleData
+	ruleEntitlement *contracts.IRuleData
 	userEntitlement []common.Address
 }
 

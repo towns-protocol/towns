@@ -189,11 +189,8 @@ contract NodeRegistryTest is RiverRegistryBaseSetup, INodeRegistryBase {
     assertEq(updated.url, "new-url");
   }
 
-  function test_revertWhen_updateNodeUrlInvalidOperator(
-    address nodeOperator,
-    address node
-  ) external {
-    vm.prank(nodeOperator);
+  function test_revertWhen_updateNodeUrlInvalidOperator(address node) external {
+    vm.prank(_randomAddress());
     vm.expectRevert(bytes(RiverRegistryErrors.BAD_AUTH));
     nodeRegistry.updateNodeUrl(node, url);
   }

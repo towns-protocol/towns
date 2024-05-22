@@ -22,11 +22,8 @@ contract DeployERC721AQueryable is FacetHelper, Deployer {
     return "erc721AQueryableFacet";
   }
 
-  function __deploy(
-    uint256 deployerPK,
-    address
-  ) public override returns (address) {
-    vm.startBroadcast(deployerPK);
+  function __deploy(address deployer) public override returns (address) {
+    vm.startBroadcast(deployer);
     ERC721AQueryable facet = new ERC721AQueryable();
     vm.stopBroadcast();
     return address(facet);

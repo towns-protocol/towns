@@ -32,6 +32,7 @@ import { IBanningShim } from './IBanningShim'
 import { IERC721AQueryableShim } from './IERC721AQueryableShim'
 import { IEntitlementDataQueryableShim } from './IEntitlementDataQueryableShim'
 import { ContractVersion } from '../IStaticContractsInfo'
+import { parseChannelMetadataJSON } from '../Utils'
 
 interface AddressToEntitlement {
     [address: string]: EntitlementShim
@@ -163,20 +164,6 @@ export class Space {
         }
     }
 
-    private parseChannelMetadataJSON(metadataStr: string): { name: string; description: string } {
-        try {
-            return JSON.parse(metadataStr) as {
-                name: string
-                description: string
-            }
-        } catch (error) {
-            return {
-                name: metadataStr,
-                description: '',
-            }
-        }
-    }
-
     public async getChannel(channelNetworkId: string): Promise<ChannelDetails | null> {
         // get most of the channel details except the roles which
         // require a separate call to get each role's details
@@ -185,7 +172,7 @@ export class Space {
             : `0x${channelNetworkId}`
         const channelInfo = await this.Channels.read.getChannel(channelId)
         const roles = await this.getChannelRoleEntitlements(channelInfo)
-        const metadata = this.parseChannelMetadataJSON(channelInfo.metadata)
+        const metadata = parseChannelMetadataJSON(channelInfo.metadata)
         return {
             spaceNetworkId: this.spaceId,
             channelNetworkId: channelNetworkId.replace('0x', ''),
@@ -201,7 +188,7 @@ export class Space {
             ? channelNetworkId
             : `0x${channelNetworkId}`
         const channelInfo = await this.Channels.read.getChannel(channelId)
-        const metadata = this.parseChannelMetadataJSON(channelInfo.metadata)
+        const metadata = parseChannelMetadataJSON(channelInfo.metadata)
         return {
             name: metadata.name,
             channelNetworkId: channelInfo.id.replace('0x', ''),
@@ -214,7 +201,7 @@ export class Space {
         const channels: ChannelMetadata[] = []
         const getOutput = await this.Channels.read.getChannels()
         for (const o of getOutput) {
-            const metadata = this.parseChannelMetadataJSON(o.metadata)
+            const metadata = parseChannelMetadataJSON(o.metadata)
             channels.push({
                 name: metadata.name,
                 description: metadata.description,
@@ -400,7 +387,7 @@ export class Space {
         // add the channel to the list if it is not already added
         for (const c of allChannels) {
             if (!channelMetadatas.has(c.id) && isRoleIdInArray(c.roleIds, roleId)) {
-                const metadata = this.parseChannelMetadataJSON(c.metadata)
+                const metadata = parseChannelMetadataJSON(c.metadata)
                 channelMetadatas.set(c.id, {
                     channelNetworkId: c.id.replace('0x', ''),
                     name: metadata.name,

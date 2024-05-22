@@ -10,7 +10,7 @@ import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/Messa
 
 // contracts
 import {Test, Vm} from "forge-std/Test.sol";
-import {DeployWalletLink} from "contracts/scripts/deployments/DeployWalletLink.s.sol";
+import {DeployWalletLink} from "contracts/scripts/deployments/facets/DeployWalletLink.s.sol";
 import {Nonces} from "contracts/src/diamond/utils/Nonces.sol";
 
 contract WalletLinkTest is IWalletLinkBase, Test {

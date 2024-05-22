@@ -60,7 +60,7 @@ interact-river :;
 
 test-river :;
 	@forge build
-	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --fork-url river --private-key ${BASE_PRIVATE_KEY}
+	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --fork-url river --private-key ${TESTNET_PRIVATE_KEY}
 
 verify-river :;
 	@echo "Verifying $(address)..."
@@ -71,15 +71,19 @@ verify-river :;
 # ===========================
 deploy-base-sepolia :;
 	@echo "Deploying $(contract)..."
-	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ffi --rpc-url base_sepolia --private-key ${BASE_PRIVATE_KEY} --broadcast --verify --verifier blockscout --verifier-url ${BLOCKSCOUT_SEPOLIA_URL}
+	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ffi --rpc-url base_sepolia --private-key ${TESTNET_PRIVATE_KEY} --broadcast --verify --verifier blockscout --verifier-url ${BLOCKSCOUT_SEPOLIA_URL}
+
+deploy-ledger-base-sepolia :;
+	@echo "Deploying $(contract)..."
+	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ledger --hd-paths "m/44'/60'/1'/0/0" --sender ${PRODUCTION_ADDRESS} --ffi --rpc-url base_sepolia --broadcast --verify --verifier blockscout --verifier-url ${BLOCKSCOUT_SEPOLIA_URL}
 
 interact-base-sepolia :;
 	@echo "Interacting through $(contract)..."
-	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url base_sepolia --private-key ${BASE_PRIVATE_KEY} --broadcast --verify --verifier-url ${BASESCAN_SEPOLIA_URL} --etherscan-api-key ${BASESCAN_API_KEY}
+	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url base_sepolia --private-key ${TESTNET_PRIVATE_KEY} --broadcast --verify --verifier-url ${BASESCAN_SEPOLIA_URL} --etherscan-api-key ${BASESCAN_API_KEY}
 
 test-base-sepolia :;
 	@echo "Testing $(contract)..."
-	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --fork-url base_sepolia --private-key ${BASE_PRIVATE_KEY}
+	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --fork-url base_sepolia --private-key ${TESTNET_PRIVATE_KEY}
 
 verify-basescan-base-sepolia :;
 	@forge verify-contract ${address} ${contract} --chain-id 84532 --verifier-url ${BASESCAN_SEPOLIA_URL} --etherscan-api-key ${BASESCAN_API_KEY}
@@ -93,14 +97,17 @@ verify-blockscout-base-sepolia :;
 
 deploy-base :;
 	@echo "Deploying $(contract)..."
-	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ffi --rpc-url base --private-key ${BASE_PRIVATE_KEY} --verifier-url ${BASESCAN_URL} --etherscan-api-key ${BASESCAN_API_KEY} --broadcast --verify -vvvv
+	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ledger --hd-paths "m/44'/60'/1'/0/0" --sender ${PRODUCTION_ADDRESS} --ffi --rpc-url base --verifier-url ${BASESCAN_URL} --etherscan-api-key ${BASESCAN_API_KEY} --broadcast --verify -vvvv
 
 interact-base :;
 	@echo "Interacting through $(contract)..."
-	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url base --private-key ${BASE_PRIVATE_KEY} --broadcast
+	@forge script scripts/interactions/${contract}.s.sol:${contract} --ledger --hd-paths "m/44'/60'/1'/0/0" --sender ${PRODUCTION_ADDRESS} --ffi --rpc-url base --broadcast
 
 verify-base :;
-	@forge verify-contract ${address} ${contract} --verifier-url ${BASESCAN_URL} -e ${BASESCAN_API_KEY}
+	@forge verify-contract ${address} ${contract} --chain-id 8453 --verifier-url ${BASESCAN_URL} -e ${BASESCAN_API_KEY}
+
+verify-blockscout-base :;
+	@forge verify-contract ${address} ${contract} --chain-id 8453 --verifier blockscout --verifier-url ${BLOCKSCOUT_BASE_URL}
 
 # ===========================
 # 				Sepolia
@@ -108,7 +115,7 @@ verify-base :;
 
 deploy-sepolia :;
 	@echo "Deploying $(contract)..."
-	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ffi --rpc-url sepolia --private-key ${BASE_PRIVATE_KEY} --broadcast --verify -vvvv
+	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ffi --rpc-url sepolia --private-key ${TESTNET_PRIVATE_KEY} --broadcast --verify -vvvv
 
 verify-etherscan-sepolia :;
 	@forge verify-contract ${address} ${contract} --chain sepolia --verifier-url ${ETHERSCAN_SEPOLIA_URL} --etherscan-api-key ${ETHERSCAN_API_KEY}
@@ -118,14 +125,14 @@ verify-sepolia :;
 
 interact-sepolia :;
 	@echo "Interacting through $(contract)..."
-	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url sepolia --private-key ${BASE_PRIVATE_KEY} --broadcast
+	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url sepolia --private-key ${TESTNET_PRIVATE_KEY} --broadcast --legacy
 
 # ===========================
 # 				Mainnet
 # ===========================
 
 deploy-mainnet :;
-	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ffi --rpc-url mainnet --private-key ${BASE_PRIVATE_KEY} --broadcast --verify -vvvv
+	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ffi --rpc-url mainnet --private-key ${TESTNET_PRIVATE_KEY} --broadcast --verify -vvvv
 
 verify-mainnet :;
 	@forge verify-contract ${address} ${contract} --chain mainnet

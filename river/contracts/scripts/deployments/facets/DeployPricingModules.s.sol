@@ -32,11 +32,8 @@ contract DeployPricingModules is FacetHelper, Deployer {
     return "pricingModulesFacet";
   }
 
-  function __deploy(
-    uint256 deployerPK,
-    address
-  ) public override returns (address) {
-    vm.startBroadcast(deployerPK);
+  function __deploy(address deployer) public override returns (address) {
+    vm.startBroadcast(deployer);
     PricingModulesFacet pricingModules = new PricingModulesFacet();
     vm.stopBroadcast();
     return address(pricingModules);

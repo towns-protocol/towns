@@ -2622,58 +2622,58 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@bufbuild/buf-darwin-arm64@npm:1.27.2":
-  version: 1.27.2
-  resolution: "@bufbuild/buf-darwin-arm64@npm:1.27.2"
+"@bufbuild/buf-darwin-arm64@npm:1.32.1":
+  version: 1.32.1
+  resolution: "@bufbuild/buf-darwin-arm64@npm:1.32.1"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"@bufbuild/buf-darwin-x64@npm:1.27.2":
-  version: 1.27.2
-  resolution: "@bufbuild/buf-darwin-x64@npm:1.27.2"
+"@bufbuild/buf-darwin-x64@npm:1.32.1":
+  version: 1.32.1
+  resolution: "@bufbuild/buf-darwin-x64@npm:1.32.1"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
 
-"@bufbuild/buf-linux-aarch64@npm:1.27.2":
-  version: 1.27.2
-  resolution: "@bufbuild/buf-linux-aarch64@npm:1.27.2"
+"@bufbuild/buf-linux-aarch64@npm:1.32.1":
+  version: 1.32.1
+  resolution: "@bufbuild/buf-linux-aarch64@npm:1.32.1"
   conditions: os=linux & cpu=arm64
   languageName: node
   linkType: hard
 
-"@bufbuild/buf-linux-x64@npm:1.27.2":
-  version: 1.27.2
-  resolution: "@bufbuild/buf-linux-x64@npm:1.27.2"
+"@bufbuild/buf-linux-x64@npm:1.32.1":
+  version: 1.32.1
+  resolution: "@bufbuild/buf-linux-x64@npm:1.32.1"
   conditions: os=linux & cpu=x64
   languageName: node
   linkType: hard
 
-"@bufbuild/buf-win32-arm64@npm:1.27.2":
-  version: 1.27.2
-  resolution: "@bufbuild/buf-win32-arm64@npm:1.27.2"
+"@bufbuild/buf-win32-arm64@npm:1.32.1":
+  version: 1.32.1
+  resolution: "@bufbuild/buf-win32-arm64@npm:1.32.1"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
 
-"@bufbuild/buf-win32-x64@npm:1.27.2":
-  version: 1.27.2
-  resolution: "@bufbuild/buf-win32-x64@npm:1.27.2"
+"@bufbuild/buf-win32-x64@npm:1.32.1":
+  version: 1.32.1
+  resolution: "@bufbuild/buf-win32-x64@npm:1.32.1"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
 
-"@bufbuild/buf@npm:^1.27.2":
-  version: 1.27.2
-  resolution: "@bufbuild/buf@npm:1.27.2"
+"@bufbuild/buf@npm:^1.32.0":
+  version: 1.32.1
+  resolution: "@bufbuild/buf@npm:1.32.1"
   dependencies:
-    "@bufbuild/buf-darwin-arm64": 1.27.2
-    "@bufbuild/buf-darwin-x64": 1.27.2
-    "@bufbuild/buf-linux-aarch64": 1.27.2
-    "@bufbuild/buf-linux-x64": 1.27.2
-    "@bufbuild/buf-win32-arm64": 1.27.2
-    "@bufbuild/buf-win32-x64": 1.27.2
+    "@bufbuild/buf-darwin-arm64": 1.32.1
+    "@bufbuild/buf-darwin-x64": 1.32.1
+    "@bufbuild/buf-linux-aarch64": 1.32.1
+    "@bufbuild/buf-linux-x64": 1.32.1
+    "@bufbuild/buf-win32-arm64": 1.32.1
+    "@bufbuild/buf-win32-x64": 1.32.1
   dependenciesMeta:
     "@bufbuild/buf-darwin-arm64":
       optional: true
@@ -2691,41 +2691,42 @@ __metadata:
     buf: bin/buf
     protoc-gen-buf-breaking: bin/protoc-gen-buf-breaking
     protoc-gen-buf-lint: bin/protoc-gen-buf-lint
-  checksum: f1eed0d0ca5b836f98e03d332a4e070988b69a7f51cc99c203aa583d82bd8012942e73941a0cde0be13f72dfe6f9aa29aaa5dc4e465599d1fd28e9a70e3f9b64
+  checksum: 067822595bca77563f42f9059d74d88232158f436925919ba9d2567e7d3a55efb41bcd905da152b91616bb6f2d4910ec568a316a0a48d2a34967ac73c9f7d438
   languageName: node
   linkType: hard
 
-"@bufbuild/protobuf@npm:1.4.1, @bufbuild/protobuf@npm:^1.3.3, @bufbuild/protobuf@npm:^1.4.1":
-  version: 1.4.1
-  resolution: "@bufbuild/protobuf@npm:1.4.1"
-  checksum: c42c29dd70e580b19b32a94ab7cde9f86f2540554dd2fa7a8f9af9909534c3ad6c06980b16e5453530934f744076ab2870e2b0d31d3ed567b399b901ecf9fa51
+"@bufbuild/protobuf@npm:1.9.0, @bufbuild/protobuf@npm:^1.7.2, @bufbuild/protobuf@npm:^1.9.0":
+  version: 1.9.0
+  resolution: "@bufbuild/protobuf@npm:1.9.0"
+  checksum: 2e276d3cf1367683e04a85fbb6fd361e29ec91cba0b6ab9dc3e2bfbbd886c7f781036ffcbabeb352951344a2004b93dbba2f2fdb5731c6e6967b36c804a22a8e
   languageName: node
   linkType: hard
 
-"@bufbuild/protoc-gen-es@npm:^1.4.1":
-  version: 1.4.1
-  resolution: "@bufbuild/protoc-gen-es@npm:1.4.1"
+"@bufbuild/protoc-gen-es@npm:^1.9.0":
+  version: 1.9.0
+  resolution: "@bufbuild/protoc-gen-es@npm:1.9.0"
   dependencies:
-    "@bufbuild/protoplugin": 1.4.1
+    "@bufbuild/protobuf": ^1.9.0
+    "@bufbuild/protoplugin": 1.9.0
   peerDependencies:
-    "@bufbuild/protobuf": 1.4.1
+    "@bufbuild/protobuf": 1.9.0
   peerDependenciesMeta:
     "@bufbuild/protobuf":
       optional: true
   bin:
     protoc-gen-es: bin/protoc-gen-es
-  checksum: 712029aa3628bc5ebf3686565c22e409b43804f05774a3d4c4bbab4e14b164e927d79ce2695dd066c397651b72240ff67fd10b35437b06653498bdb3490cc4c9
+  checksum: 81dced21c0015ed6f889f48a0ae93adb92404325b134be586c0d4d71e112bc0a607698897b394d80d4d02d43c045c4f2ee6d562cf8aa95aa3bb0c147f4a73438
   languageName: node
   linkType: hard
 
-"@bufbuild/protoplugin@npm:1.4.1, @bufbuild/protoplugin@npm:^1.3.3":
-  version: 1.4.1
-  resolution: "@bufbuild/protoplugin@npm:1.4.1"
+"@bufbuild/protoplugin@npm:1.9.0, @bufbuild/protoplugin@npm:^1.7.2":
+  version: 1.9.0
+  resolution: "@bufbuild/protoplugin@npm:1.9.0"
   dependencies:
-    "@bufbuild/protobuf": 1.4.1
+    "@bufbuild/protobuf": 1.9.0
     "@typescript/vfs": ^1.4.0
     typescript: 4.5.2
-  checksum: 5104ed8b261788b05cd60c275df2d8bf5d9dc5b1f1847bef7adc4a18b3821d4e8a3f10d06149106c888844f41e49a202d7dfb2db0bc3399271b6a9eb8b542d4a
+  checksum: 12fd0a740049f12373b31ef8b4b4c99624b277177b691fd19fb458a7a79ddb652d17fe6d4856c5bdefae25ddb277c819810da79cd516b5b67bc3db9049981bbf
   languageName: node
   linkType: hard
 
@@ -2850,34 +2851,34 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@connectrpc/connect-web@npm:^1.3.0":
-  version: 1.3.0
-  resolution: "@connectrpc/connect-web@npm:1.3.0"
+"@connectrpc/connect-web@npm:^1.4.0":
+  version: 1.4.0
+  resolution: "@connectrpc/connect-web@npm:1.4.0"
   peerDependencies:
     "@bufbuild/protobuf": ^1.4.2
-    "@connectrpc/connect": 1.3.0
-  checksum: 085dcf01cfe652849dd5c046acdeb9baa578add4a58d35643c162e8eccd5203021451b49bfb3d66c69d1e65759ef25727b6b64ee62ea017a040097c3535d214a
+    "@connectrpc/connect": 1.4.0
+  checksum: bf53f5cdd0be69be1cdebf7d7e01f74936f83b410fb26d7f515284771290e6c24f5701e6144ea600805fa2e39d5255ef009210f7b1c35f1dade60005e231b022
   languageName: node
   linkType: hard
 
-"@connectrpc/connect@npm:^1.3.0":
-  version: 1.3.0
-  resolution: "@connectrpc/connect@npm:1.3.0"
+"@connectrpc/connect@npm:^1.4.0":
+  version: 1.4.0
+  resolution: "@connectrpc/connect@npm:1.4.0"
   peerDependencies:
     "@bufbuild/protobuf": ^1.4.2
-  checksum: a68bfffedd817a7db3563c00e5efc5eb510cc00a93c722d81fa1f52b71a96300d7175b0c0710a9d2ef2e8aaabee36921c90470a80343e7a9fbccffd3cc83f868
+  checksum: 388145ea90b3216f133b34d96a47dfd0273dfa12c4b4963c7223cf45bdcbf8b3490ab234dda34fd42a7112ad9f51f22efc013f3183744a3f2ae65b825917b870
   languageName: node
   linkType: hard
 
-"@connectrpc/protoc-gen-connect-es@npm:^1.1.2":
-  version: 1.1.3
-  resolution: "@connectrpc/protoc-gen-connect-es@npm:1.1.3"
+"@connectrpc/protoc-gen-connect-es@npm:^1.4.0":
+  version: 1.4.0
+  resolution: "@connectrpc/protoc-gen-connect-es@npm:1.4.0"
   dependencies:
-    "@bufbuild/protobuf": ^1.3.3
-    "@bufbuild/protoplugin": ^1.3.3
+    "@bufbuild/protobuf": ^1.7.2
+    "@bufbuild/protoplugin": ^1.7.2
   peerDependencies:
-    "@bufbuild/protoc-gen-es": ^1.3.3
-    "@connectrpc/connect": 1.1.3
+    "@bufbuild/protoc-gen-es": ^1.7.2
+    "@connectrpc/connect": 1.4.0
   peerDependenciesMeta:
     "@bufbuild/protoc-gen-es":
       optional: true
@@ -2885,7 +2886,7 @@ __metadata:
       optional: true
   bin:
     protoc-gen-connect-es: bin/protoc-gen-connect-es
-  checksum: 282aa1343459c20d21a5fc7dd885ee8c9b0865b918efc26e86795b304122dfea63eb35d51e0ea6d1893db769c830b00a51dff238fe5bbe43eeb46ae58e1c67fb
+  checksum: 90d91a0bdcb8e1ed6d012b5df2ca6d9b41113f2ac252bcb59eec7378a8f490bba3f5c38f2f32901d34fb9d58d635a20b79125abf0b411c77eb4d732f87f944fe
   languageName: node
   linkType: hard
 
@@ -7520,7 +7521,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@river-build/dlog@workspace:river/core/dlog"
   dependencies:
-    "@bufbuild/protobuf": ^1.4.1
+    "@bufbuild/protobuf": ^1.9.0
     "@river-build/proto": "workspace:^"
     "@types/jest": ^29.5.3
     "@typescript-eslint/eslint-plugin": ^6.10.0
@@ -7544,7 +7545,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@river-build/encryption@workspace:river/core/encryption"
   dependencies:
-    "@bufbuild/protobuf": ^1.4.1
+    "@bufbuild/protobuf": ^1.9.0
     "@ethereumjs/util": ^8.0.1
     "@matrix-org/olm": ^3.2.15
     "@river-build/dlog": "workspace:^"
@@ -7583,12 +7584,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@river-build/proto@workspace:river/core/proto"
   dependencies:
-    "@bufbuild/buf": ^1.27.2
-    "@bufbuild/protobuf": ^1.4.1
-    "@bufbuild/protoc-gen-es": ^1.4.1
-    "@connectrpc/connect": ^1.3.0
-    "@connectrpc/connect-web": ^1.3.0
-    "@connectrpc/protoc-gen-connect-es": ^1.1.2
+    "@bufbuild/buf": ^1.32.0
+    "@bufbuild/protobuf": ^1.9.0
+    "@bufbuild/protoc-gen-es": ^1.9.0
+    "@connectrpc/connect": ^1.4.0
+    "@connectrpc/connect-web": ^1.4.0
+    "@connectrpc/protoc-gen-connect-es": ^1.4.0
     "@types/jest": ^29.5.3
     jest: ^29.6.2
     jest-extended: ^4.0.1
@@ -7604,7 +7605,7 @@ __metadata:
   resolution: "@river-build/stress@workspace:river/core/stress"
   dependencies:
     "@babel/node": ^7.23.9
-    "@bufbuild/protobuf": ^1.4.1
+    "@bufbuild/protobuf": ^1.9.0
     "@jest/globals": ^29.6.2
     "@river-build/dlog": "workspace:^"
     "@river-build/encryption": "workspace:^"
@@ -7710,9 +7711,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@river/sdk@workspace:river/core/sdk"
   dependencies:
-    "@bufbuild/protobuf": ^1.4.1
-    "@connectrpc/connect": ^1.3.0
-    "@connectrpc/connect-web": ^1.3.0
+    "@bufbuild/protobuf": ^1.9.0
+    "@connectrpc/connect": ^1.4.0
+    "@connectrpc/connect-web": ^1.4.0
     "@datadog/browser-rum": ^5.8.0
     "@ethereumjs/util": ^8.0.1
     "@jest/globals": ^29.6.2
@@ -23479,9 +23480,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "notification-service@workspace:servers/notification-service"
   dependencies:
-    "@bufbuild/protobuf": ^1.4.1
-    "@connectrpc/connect": ^1.3.0
-    "@connectrpc/connect-web": ^1.3.0
+    "@bufbuild/protobuf": ^1.9.0
+    "@connectrpc/connect": ^1.4.0
+    "@connectrpc/connect-web": ^1.4.0
     "@parse/node-apn": ^6.0.1
     "@prisma/client": ^5.10.0
     "@river-build/proto": "workspace:^"

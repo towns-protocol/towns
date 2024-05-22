@@ -183,10 +183,10 @@ contract River is
   }
 
   /// @inheritdoc ILock
-  function enableLock(address account) external virtual {}
+  function enableLock(address account) external virtual onlyOwner {}
 
   /// @inheritdoc ILock
-  function disableLock(address account) external virtual {}
+  function disableLock(address account) external virtual onlyOwner {}
 
   /// @inheritdoc ILock
   function setLockCooldown(uint256 cooldown) external virtual onlyOwner {

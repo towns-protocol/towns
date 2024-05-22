@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/river-build/river/core/xchain/config"
+	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/xchain/examples"
 
 	"github.com/stretchr/testify/require"

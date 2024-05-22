@@ -32,7 +32,7 @@ export DEBUG_DEPTH="${DEBUG_DEPTH:-10}"
 # stride 
 export CONTAINER_INDEX="${CONTAINER_INDEX:-0}"
 export CONTAINER_COUNT="${CONTAINER_COUNT:-1}"
-export CLIENTS_PER_PROCESS="${CLIENTS_PER_PROCESS:-1}"
+export PROCESSES_PER_CONTAINER="${PROCESSES_PER_CONTAINER:-1}"
 export CLIENTS_COUNT="${CLIENTS_COUNT:-10}"
 
 # optional deployment environment variables, all required if pointed to a custom deployment
@@ -45,8 +45,8 @@ export CONTRACT_VERSION="${CONTRACT_VERSION:-}" # not required if using deployme
 
 # validation
 # if clients per process is greater than clients count, exit
-if [ $CLIENTS_PER_PROCESS -gt $CLIENTS_COUNT ]; then
-  echo "CLIENTS_PER_PROCESS cannot be greater than CLIENTS_COUNT"
+if [ $PROCESSES_PER_CONTAINER -eq 0 ]; then
+  echo "PROCESSES_PER_CONTAINER should be gte 0"
   exit 1
 fi
 if [ $CONTAINER_COUNT -gt $CLIENTS_COUNT ]; then
@@ -56,8 +56,15 @@ fi
 
 # calculate number of clients per container
 export CLIENTS_PER_CONTAINER=$((CLIENTS_COUNT / CONTAINER_COUNT))
+
+# hopefully this is mod 0
+if [ $PROCESSES_PER_CONTAINER -gt $CLIENTS_PER_CONTAINER ]; then
+  echo "CLIENTS_PER_PROCESS cannot be greater than PROCESSES_PER_CONTAINER"
+  exit 1
+fi
+
 # calculate number of processes
-export PROCESSES_PER_CONTAINER=$((CLIENTS_PER_CONTAINER / CLIENTS_PER_PROCESS))
+export CLIENTS_PER_PROCESS=$((CLIENTS_PER_CONTAINER / PROCESSES_PER_CONTAINER))
 # calculate the start index for this container
 export PROCESS_START_INDEX=$((CONTAINER_INDEX * PROCESSES_PER_CONTAINER))
 # calculate the end index for this container
@@ -72,6 +79,11 @@ echo "CLIENTS_PER_CONTAINER: $CLIENTS_PER_CONTAINER"
 echo "PROCESSES_PER_CONTAINER: $PROCESSES_PER_CONTAINER"
 echo "PROCESS_START_INDEX: $PROCESS_START_INDEX"
 echo "PROCESS_END_INDEX: $PROCESS_END_INDEX"
+
+if [ $((CONTAINER_COUNT * PROCESSES_PER_CONTAINER * CLIENTS_PER_PROCESS)) -ne $CLIENTS_COUNT ]; then
+  echo "container count * processes per container * clients per process should equal clients count"
+  exit 1
+fi
 
 yarn build
 

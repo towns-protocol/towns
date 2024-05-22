@@ -7,10 +7,16 @@ import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
 // libraries
 
 // helpers
-import {FacetHelper, FacetTest} from "contracts/test/diamond/Facet.t.sol";
+import {FacetTest} from "contracts/test/diamond/Facet.t.sol";
 import {OwnablePendingFacet} from "contracts/src/diamond/facets/ownable/pending/OwnablePendingFacet.sol";
+import {DeployOwnablePendingFacet} from "contracts/scripts/deployments/facets/DeployOwnablePendingFacet.s.sol";
+
+import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
 abstract contract OwnablePendingSetup is FacetTest {
+  DeployOwnablePendingFacet internal ownableHelper =
+    new DeployOwnablePendingFacet();
+
   OwnablePendingFacet internal ownable;
 
   function setUp() public override {
@@ -23,45 +29,25 @@ abstract contract OwnablePendingSetup is FacetTest {
     override
     returns (Diamond.InitParams memory)
   {
-    OwnablePendingHelper ownableHelper = new OwnablePendingHelper();
+    MultiInit multiInit = new MultiInit();
 
-    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
-    cuts[0] = ownableHelper.makeCut(IDiamond.FacetCutAction.Add);
+    address ownablePending = ownableHelper.deploy();
+
+    addFacet(
+      ownableHelper.makeCut(ownablePending, IDiamond.FacetCutAction.Add),
+      ownablePending,
+      ownableHelper.makeInitData(deployer)
+    );
 
     return
       Diamond.InitParams({
-        baseFacets: cuts,
-        init: ownableHelper.facet(),
-        initData: ownableHelper.makeInitData(deployer)
+        baseFacets: baseFacets(),
+        init: address(multiInit),
+        initData: abi.encodeWithSelector(
+          MultiInit.multiInit.selector,
+          _initAddresses,
+          _initDatas
+        )
       });
-  }
-}
-
-contract OwnablePendingHelper is FacetHelper {
-  OwnablePendingFacet internal ownablePending;
-
-  constructor() {
-    ownablePending = new OwnablePendingFacet();
-  }
-
-  function facet() public view override returns (address) {
-    return address(ownablePending);
-  }
-
-  function selectors() public view override returns (bytes4[] memory) {
-    bytes4[] memory selectors_ = new bytes4[](4);
-    selectors_[0] = ownablePending.pendingOwner.selector;
-    selectors_[1] = ownablePending.acceptOwnership.selector;
-    selectors_[2] = ownablePending.transferOwnership.selector;
-    selectors_[3] = ownablePending.owner.selector;
-    return selectors_;
-  }
-
-  function initializer() public pure override returns (bytes4) {
-    return OwnablePendingFacet.__OwnablePending_init.selector;
-  }
-
-  function makeInitData(address owner) public pure returns (bytes memory) {
-    return abi.encodeWithSelector(initializer(), owner);
   }
 }

@@ -7,7 +7,7 @@ import (
 	"math/big"
 	"sync"
 
-	"github.com/river-build/river/core/xchain/config"
+	"github.com/river-build/river/core/node/config"
 
 	er "github.com/river-build/river/core/xchain/contracts"
 
@@ -22,7 +22,7 @@ func EvaluateRuleData(
 	ruleData *er.IRuleData,
 ) (bool, error) {
 	log := dlog.FromCtx(ctx)
-	log.Debug("Evaluating rule data", "ruleData", ruleData)
+	log.Info("Evaluating rule data", "ruleData", ruleData)
 	opTree, err := getOperationTree(ctx, ruleData)
 	if err != nil {
 		return false, err

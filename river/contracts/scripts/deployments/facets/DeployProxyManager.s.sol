@@ -35,11 +35,8 @@ contract DeployProxyManager is Deployer, FacetHelper {
     return "proxyManagerFacet";
   }
 
-  function __deploy(
-    uint256 deployerPK,
-    address
-  ) public override returns (address) {
-    vm.startBroadcast(deployerPK);
+  function __deploy(address deployer) public override returns (address) {
+    vm.startBroadcast(deployer);
     ProxyManager facet = new ProxyManager();
     vm.stopBroadcast();
     return address(facet);

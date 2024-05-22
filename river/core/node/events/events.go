@@ -165,7 +165,6 @@ func Make_MemberPayload_DisplayName(displayName *EncryptedData) *StreamEvent_Mem
 func Make_ChannelPayload_Inception(
 	streamId StreamId,
 	spaceId StreamId,
-	channelProperties *EncryptedData,
 	settings *StreamSettings,
 ) *StreamEvent_ChannelPayload {
 	return &StreamEvent_ChannelPayload{
@@ -174,7 +173,6 @@ func Make_ChannelPayload_Inception(
 				Inception: &ChannelPayload_Inception{
 					StreamId:          streamId[:],
 					SpaceId:           spaceId[:],
-					ChannelProperties: channelProperties,
 					Settings:          settings,
 				},
 			},
@@ -285,7 +283,6 @@ func Make_SpacePayload_Membership(op MembershipOp, userId string, initiatorId st
 func Make_SpacePayload_Channel(
 	op ChannelOp,
 	channelId StreamId,
-	channelProperties *EncryptedData,
 	originEvent *EventRef,
 ) *StreamEvent_SpacePayload {
 	return &StreamEvent_SpacePayload{
@@ -295,7 +292,6 @@ func Make_SpacePayload_Channel(
 					Op:                op,
 					ChannelId:         channelId[:],
 					OriginEvent:       originEvent,
-					ChannelProperties: channelProperties,
 				},
 			},
 		},

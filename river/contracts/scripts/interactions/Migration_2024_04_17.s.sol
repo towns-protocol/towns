@@ -18,7 +18,7 @@ import {DeployMultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.s
 import {DeployArchitect} from "contracts/scripts/deployments/facets/DeployArchitect.s.sol";
 import {DeployImplementationRegistry} from "contracts/scripts/deployments/facets/DeployImplementationRegistry.s.sol";
 import {DeployMetadata} from "contracts/scripts/deployments/facets/DeployMetadata.s.sol";
-import {DeployWalletLink} from "contracts/scripts/deployments/DeployWalletLink.s.sol";
+import {DeployWalletLink} from "contracts/scripts/deployments/facets/DeployWalletLink.s.sol";
 import {DeploySpace} from "contracts/scripts/deployments/DeploySpace.s.sol";
 
 // debuggging
@@ -43,7 +43,7 @@ contract Migration_2024_04_17 is Interaction {
   address[] factoryAddresses;
   bytes[] factoryDatas;
 
-  function __interact(uint256 pk, address) public override {
+  function __interact(address deployer) public override {
     address multiInit = multiInitHelper.deploy();
 
     // Space Operations
@@ -91,7 +91,7 @@ contract Migration_2024_04_17 is Interaction {
     factoryDatas.push(walletLinkHelper.makeInitData(""));
 
     // Update the Diamond
-    vm.startBroadcast(pk);
+    vm.startBroadcast(deployer);
     IDiamondCut(spaceManager).diamondCut({
       facetCuts: factoryCuts,
       init: multiInit,
@@ -104,7 +104,7 @@ contract Migration_2024_04_17 is Interaction {
     address space = spaceHelper.deploy();
 
     // Update the Space Implementation on the Space Factory
-    vm.startBroadcast(pk);
+    vm.startBroadcast(deployer);
     IProxyManager(spaceManager).setImplementation(space);
     vm.stopBroadcast();
 

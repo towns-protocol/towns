@@ -6,6 +6,7 @@ interface IEntitlementCheckerBase {
   error EntitlementChecker_NodeNotRegistered();
   error EntitlementChecker_InsufficientNumberOfNodes();
   error EntitlementChecker_InvalidNodeOperator();
+  error EntitlementChecker_InvalidOperator();
 
   // Events
   event NodeRegistered(address indexed nodeAddress);

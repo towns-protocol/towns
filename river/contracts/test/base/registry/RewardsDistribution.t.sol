@@ -84,14 +84,14 @@ contract RewardsDistributionTest is
   function setUp() public override {
     super.setUp();
 
-    operator = NodeOperatorFacet(nodeOperator);
-    ownable = OwnableFacet(nodeOperator);
-    introspection = IntrospectionFacet(nodeOperator);
-    erc721 = ERC721A(nodeOperator);
+    operator = NodeOperatorFacet(baseRegistry);
+    ownable = OwnableFacet(baseRegistry);
+    introspection = IntrospectionFacet(baseRegistry);
+    erc721 = ERC721A(baseRegistry);
     riverFacet = River(riverToken);
     mainnetDelegationFacet = MainnetDelegation(baseRegistry);
-    rewardsDistributionFacet = RewardsDistribution(nodeOperator);
-    spaceDelegationFacet = SpaceDelegationFacet(nodeOperator);
+    rewardsDistributionFacet = RewardsDistribution(baseRegistry);
+    spaceDelegationFacet = SpaceDelegationFacet(baseRegistry);
     spaceOwnerFacet = SpaceOwner(spaceFactory);
 
     messenger.setXDomainMessageSender(mainnetProxyDelegation);
@@ -479,6 +479,7 @@ contract RewardsDistributionTest is
   )
     internal
     givenWeeklyDistributionAmountHasBeenSet(distributionAmount)
+    givenOneWeekHasElapsed
     givenFundsHaveBeenDisbursed(operators, distributionAmount)
     givenTokensHaveBeenSentToDistributionContract(distributionAmount)
   {
@@ -515,6 +516,7 @@ contract RewardsDistributionTest is
   )
     internal
     givenWeeklyDistributionAmountHasBeenSet(distributionAmount)
+    givenOneWeekHasElapsed
     givenFundsHaveBeenDisbursed(operators, distributionAmount)
   {
     for (uint256 i = 0; i < users.length; i++) {
@@ -546,6 +548,7 @@ contract RewardsDistributionTest is
   )
     internal
     givenWeeklyDistributionAmountHasBeenSet(distributionAmount)
+    givenOneWeekHasElapsed
     givenFundsHaveBeenDisbursed(operators, distributionAmount)
   {
     for (uint256 i = 0; i < spaceUsers.length; i++) {
@@ -579,6 +582,7 @@ contract RewardsDistributionTest is
   )
     internal
     givenWeeklyDistributionAmountHasBeenSet(distributionAmount)
+    givenOneWeekHasElapsed
     givenFundsHaveBeenDisbursed(operators, distributionAmount)
   {
     for (uint256 i = 0; i < mainnetUsers.length; i++) {
@@ -618,6 +622,7 @@ contract RewardsDistributionTest is
   )
     internal
     givenWeeklyDistributionAmountHasBeenSet(distributionAmount)
+    givenOneWeekHasElapsed
     givenFundsHaveBeenDisbursed(operators, distributionAmount)
   {
     for (uint256 i = 0; i < operators.length; i++) {
@@ -1190,6 +1195,12 @@ contract RewardsDistributionTest is
   function sendTokensToContract(address dist, uint256 amount) internal {
     vm.assume(dist != address(0));
     vm.prank(bridge);
+    vm.expectEmit();
+    emit IERC20.Transfer(
+      address(0x0),
+      address(rewardsDistributionFacet),
+      amount
+    );
     riverFacet.mint(dist, amount);
   }
 
@@ -1405,6 +1416,11 @@ contract RewardsDistributionTest is
     _;
   }
 
+  modifier givenOneWeekHasElapsed() {
+    vm.warp(block.timestamp + 8 days);
+    _;
+  }
+
   modifier givenFundsHaveBeenDisbursed(
     Entity[] memory operators,
     uint256 amount
@@ -1423,12 +1439,6 @@ contract RewardsDistributionTest is
   }
 
   modifier givenTokensHaveBeenSentToDistributionContract(uint256 amount) {
-    // vm.expectEmit();
-    // emit IERC20.Transfer(
-    //   address(riverFacet),
-    //   address(rewardsDistributionFacet),
-    //   amount
-    // );
     sendTokensToContract(address(rewardsDistributionFacet), amount);
     _;
   }

@@ -72,10 +72,10 @@ contract MainnetDelegation is
   }
 
   /// @inheritdoc IMainnetDelegation
-  function getDelegationsByOperator(
+  function getMainnetDelegationsByOperator(
     address operator
   ) external view returns (Delegation[] memory) {
-    return _getDelegationsByOperator(operator);
+    return _getMainnetDelegationsByOperator(operator);
   }
 
   /// @inheritdoc IMainnetDelegation

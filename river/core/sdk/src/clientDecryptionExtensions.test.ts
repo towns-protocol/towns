@@ -59,7 +59,7 @@ describe('ClientDecryptionExtensions', () => {
                 const messages = getDecryptedChannelMessages(stream)
                 expect(messages).toEqual(bodys)
             },
-            { timeoutMS: 10000 },
+            { timeoutMS: 15000 },
         )
     }
 
@@ -190,7 +190,7 @@ describe('ClientDecryptionExtensions', () => {
         const channel1StreamId = makeUniqueChannelStreamId(spaceId)
         const channel2StreamId = makeUniqueChannelStreamId(spaceId)
         await bob1.createChannel(spaceId, 'channel1', '', channel1StreamId)
-        await bob1.createChannel(spaceId, 'channel1', '', channel2StreamId)
+        await bob1.createChannel(spaceId, 'channel2', '', channel2StreamId)
         await sendMessage(bob1, channel1StreamId, 'hello channel 1')
         await sendMessage(bob1, channel2StreamId, 'hello channel 2')
 

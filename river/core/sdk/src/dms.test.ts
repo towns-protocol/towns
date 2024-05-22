@@ -50,11 +50,14 @@ describe('dmsTests', () => {
         })
 
         await expect(alicesClient.leaveStream(streamId)).toResolve()
-        await waitFor(() => {
-            expect(stream.view.getMembers().membership.joinedUsers).toEqual(
-                new Set([bobsClient.userId]),
-            )
-        })
+        await waitFor(
+            () => {
+                expect(stream.view.getMembers().membership.joinedUsers).toEqual(
+                    new Set([bobsClient.userId]),
+                )
+            },
+            { timeoutMS: 15000 },
+        )
     })
 
     test('clientsCanSendMessages', async () => {

@@ -2,11 +2,21 @@ package config
 
 import (
 	"encoding/hex"
+	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	infra "github.com/river-build/river/core/node/infra/config"
 	"github.com/river-build/river/core/node/shared"
+)
+
+type ContractVersion string
+
+const (
+	VersionDev ContractVersion = "dev"
+	VersionV3  ContractVersion = "v3"
 )
 
 type TLSConfig struct {
@@ -76,7 +86,18 @@ type Config struct {
 
 	// Disable base chain contract usage.
 	DisableBaseChain bool
-	EnableTestAPIs   bool
+
+	// xChain configuration
+	ChainsString                  string            `mapstructure:"chains"`
+	Chains                        map[uint64]string `mapstructure:"-"` // This is a derived field
+	EntitlementContract           ContractConfig    `mapstructure:"entitlement_contract"`
+	contractVersion               ContractVersion   `mapstructure:"contract_version"`
+	TestEntitlementContract       ContractConfig    `mapstructure:"test_contract"`
+	TestCustomEntitlementContract ContractConfig    `mapstructure:"test_custom_entitlement_contract"`
+
+	// History indicates how far back xchain must look for entitlement check requests after start
+	History        time.Duration
+	EnableTestAPIs bool
 }
 
 type NetworkConfig struct {
@@ -238,4 +259,49 @@ func (c *Config) GetGraffiti() string {
 		return "River Node welcomes you!"
 	}
 	return c.Graffiti
+}
+
+func (c *Config) GetContractVersion() ContractVersion {
+	if c.contractVersion == VersionV3 {
+		return VersionV3
+	} else {
+		return VersionDev
+	}
+}
+
+func (c *Config) GetEntitlementContractAddress() common.Address {
+	return c.EntitlementContract.Address
+}
+
+func (c *Config) GetWalletLinkContractAddress() common.Address {
+	return c.ArchitectContract.Address
+}
+
+func (c *Config) GetTestEntitlementContractAddress() common.Address {
+	return c.TestEntitlementContract.Address
+}
+
+func (c *Config) GetTestCustomEntitlementContractAddress() common.Address {
+	return c.TestCustomEntitlementContract.Address
+}
+
+func (c *Config) Init() {
+	c.parseChains()
+}
+
+func (c *Config) parseChains() {
+	chainUrls := make(map[uint64]string)
+	chainPairs := strings.Split(c.ChainsString, ",")
+	for _, pair := range chainPairs {
+		parts := strings.SplitN(pair, ":", 2) // Use SplitN to split into exactly two parts
+		if len(parts) == 2 {
+			chainID, err := strconv.Atoi(parts[0])
+			if err != nil {
+				fmt.Printf("Error converting chainID to int: %v\n", err)
+				continue
+			}
+			chainUrls[uint64(chainID)] = parts[1]
+		}
+	}
+	c.Chains = chainUrls
 }

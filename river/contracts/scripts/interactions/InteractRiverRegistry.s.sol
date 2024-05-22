@@ -18,14 +18,14 @@ contract InteractRiverRegistry is Interaction {
 
   Node[] nodes;
 
-  function __interact(uint256 pk, address) public override {
+  function __interact(address deployer) public override {
     address registry = getDeployment("riverRegistry");
     _addInitialNodes();
 
     uint numNodes = vm.envOr("NUM_NODES", uint(10));
 
     for (uint256 i = 0; i < numNodes; i++) {
-      vm.broadcast(pk);
+      vm.broadcast(deployer);
 
       NodeRegistry(registry).registerNode(
         nodes[i].nodeAddress,

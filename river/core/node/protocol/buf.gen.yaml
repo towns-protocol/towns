@@ -1,8 +1,10 @@
-version: v1
+version: v2
 plugins:
-    - name: go
-      out: .
+    - remote: buf.build/protocolbuffers/go:v1.34.1
+      out: core/node/protocol
       opt: paths=source_relative
-    - name: connect-go
-      out: .
+    - remote: buf.build/connectrpc/go:v1.16.2
+      out: core/node/protocol
       opt: paths=source_relative
+inputs:
+    - directory: protocol

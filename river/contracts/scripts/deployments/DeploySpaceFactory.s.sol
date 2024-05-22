@@ -13,13 +13,9 @@ import {Diamond} from "contracts/src/diamond/Diamond.sol";
 
 import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
 import {ProxyManager} from "contracts/src/diamond/proxy/manager/ProxyManager.sol";
-import {PausableFacet} from "contracts/src/diamond/facets/pausable/PausableFacet.sol";
-import {PlatformRequirementsFacet} from "contracts/src/factory/facets/platform/requirements/PlatformRequirementsFacet.sol";
-import {PrepayFacet} from "contracts/src/factory/facets/prepay/PrepayFacet.sol";
 
 // space helpers
-import {PausableHelper} from "contracts/test/diamond/pausable/PausableSetup.sol";
-import {PlatformRequirementsHelper} from "contracts/test/spaces/platform/requirements/PlatformRequirementsHelper.sol";
+
 import {PrepayHelper} from "contracts/test/spaces/prepay/PrepayHelper.sol";
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
@@ -37,11 +33,14 @@ import {DeployMultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.s
 import {DeploySpace} from "contracts/scripts/deployments/DeploySpace.s.sol";
 import {DeploySpaceOwner} from "contracts/scripts/deployments/DeploySpaceOwner.s.sol";
 import {DeployRuleEntitlement} from "contracts/scripts/deployments/DeployRuleEntitlement.s.sol";
-import {DeployWalletLink} from "contracts/scripts/deployments/DeployWalletLink.s.sol";
+import {DeployWalletLink} from "contracts/scripts/deployments/facets/DeployWalletLink.s.sol";
 import {DeployTieredLogPricing} from "contracts/scripts/deployments/DeployTieredLogPricing.s.sol";
 import {DeployFixedPricing} from "contracts/scripts/deployments/DeployFixedPricing.s.sol";
 import {DeployPricingModules} from "contracts/scripts/deployments/facets/DeployPricingModules.s.sol";
 import {DeployImplementationRegistry} from "contracts/scripts/deployments/facets/DeployImplementationRegistry.s.sol";
+import {DeployPausable} from "contracts/scripts/deployments/facets/DeployPausable.s.sol";
+import {DeployPlatformRequirements} from "./facets/DeployPlatformRequirements.s.sol";
+import {DeployPrepay} from "contracts/scripts/deployments/facets/DeployPrepay.s.sol";
 
 contract DeploySpaceFactory is DiamondDeployer {
   // diamond helpers
@@ -50,12 +49,14 @@ contract DeploySpaceFactory is DiamondDeployer {
   DeployDiamondLoupe diamondLoupeHelper = new DeployDiamondLoupe();
   DeployIntrospection introspectionHelper = new DeployIntrospection();
   DeployMetadata metadataHelper = new DeployMetadata();
+
   DeployArchitect architectHelper = new DeployArchitect();
   DeployPricingModules pricingModulesHelper = new DeployPricingModules();
   DeployImplementationRegistry registryHelper =
     new DeployImplementationRegistry();
   DeployWalletLink walletLinkHelper = new DeployWalletLink();
   DeployProxyManager proxyManagerHelper = new DeployProxyManager();
+  DeployPausable pausableHelper = new DeployPausable();
   DeployMultiInit deployMultiInit = new DeployMultiInit();
 
   // dependencies
@@ -65,12 +66,11 @@ contract DeploySpaceFactory is DiamondDeployer {
   DeployRuleEntitlement deployRuleEntitlement = new DeployRuleEntitlement();
   DeployTieredLogPricing deployTieredLogPricing = new DeployTieredLogPricing();
   DeployFixedPricing deployFixedPricing = new DeployFixedPricing();
+  DeployPlatformRequirements platformReqsHelper =
+    new DeployPlatformRequirements();
+  DeployPrepay prepayHelper = new DeployPrepay();
 
   // helpers
-  PausableHelper pausableHelper = new PausableHelper();
-  PlatformRequirementsHelper platformReqsHelper =
-    new PlatformRequirementsHelper();
-  PrepayHelper prepayHelper = new PrepayHelper();
 
   // diamond addresses
   address ownable;
@@ -101,7 +101,6 @@ contract DeploySpaceFactory is DiamondDeployer {
   }
 
   function diamondInitParams(
-    uint256 deployerPK,
     address deployer
   ) public override returns (Diamond.InitParams memory) {
     address multiInit = deployMultiInit.deploy();
@@ -129,16 +128,15 @@ contract DeploySpaceFactory is DiamondDeployer {
     diamondLoupe = diamondLoupeHelper.deploy();
     introspection = introspectionHelper.deploy();
     metadata = metadataHelper.deploy();
+
     architect = architectHelper.deploy();
     registry = registryHelper.deploy();
     walletLink = walletLinkHelper.deploy();
     proxyManager = proxyManagerHelper.deploy();
 
-    vm.startBroadcast(deployerPK);
-    pausable = address(new PausableFacet());
-    platformReqs = address(new PlatformRequirementsFacet());
-    prepay = address(new PrepayFacet());
-    vm.stopBroadcast();
+    pausable = pausableHelper.deploy();
+    platformReqs = platformReqsHelper.deploy();
+    prepay = prepayHelper.deploy();
 
     addFacet(
       diamondCutHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add),

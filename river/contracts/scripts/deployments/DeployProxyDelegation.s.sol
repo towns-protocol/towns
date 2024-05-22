@@ -43,17 +43,14 @@ contract DeployProxyDelegation is Deployer {
     messenger = messenger_;
   }
 
-  function __deploy(
-    uint256 deployerPK,
-    address
-  ) public override returns (address) {
+  function __deploy(address deployer) public override returns (address) {
     riverToken = riverHelper.deploy();
     vault = riverHelper.vault();
     claimers = claimersHelper.deploy();
 
     if (messenger == address(0)) {
       if (isAnvil() || isTesting()) {
-        vm.broadcast(deployerPK);
+        vm.broadcast(deployer);
         messenger = address(new MockMessenger());
       } else {
         messenger = _getMessenger();
@@ -64,7 +61,7 @@ contract DeployProxyDelegation is Deployer {
       mainnetDelegation = _getMainnetDelegation();
     }
 
-    vm.broadcast(deployerPK);
+    vm.broadcast(deployer);
     return
       address(
         new ProxyDelegation(riverToken, claimers, messenger, mainnetDelegation)

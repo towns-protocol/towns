@@ -219,14 +219,11 @@ func createChannel(
 	channelStreamId StreamId,
 	streamSettings *protocol.StreamSettings,
 ) (*protocol.SyncCookie, []byte, error) {
-	var channelProperties protocol.EncryptedData
-	channelProperties.Ciphertext = "encrypted text supposed to be here"
 	channel, err := events.MakeEnvelopeWithPayload(
 		wallet,
 		events.Make_ChannelPayload_Inception(
 			channelStreamId,
 			spaceId,
-			&channelProperties,
 			streamSettings,
 		),
 		nil,

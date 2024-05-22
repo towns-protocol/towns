@@ -26,6 +26,7 @@ library NodeOperatorStorage {
     mapping(address => uint256) commissionByOperator;
     mapping(address => address) claimerByOperator;
     mapping(address => EnumerableSet.AddressSet) operatorsByClaimer;
+    mapping(address operator => uint256 approvalTime) approvalTimeByOperator;
   }
 
   function layout() internal pure returns (Layout storage l) {

@@ -72,6 +72,7 @@ contract SpaceDelegationFacet is ISpaceDelegation, OwnableBase, Facet {
 
     ds.operatorBySpace[space] = address(0);
     ds.spacesByOperator[operator].remove(space);
+    ds.spaceDelegationTime[space] = 0;
 
     emit SpaceDelegatedToOperator(space, address(0));
   }

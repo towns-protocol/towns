@@ -19,7 +19,7 @@ import (
 
 type csParams struct {
 	ctx                 context.Context
-	cfg                 *config.StreamConfig
+	cfg                 *config.Config
 	streamId            shared.StreamId
 	parsedEvents        []*events.ParsedEvent
 	inceptionPayload    IsInceptionPayload
@@ -100,7 +100,7 @@ type csUserInboxRules struct {
 */
 func CanCreateStream(
 	ctx context.Context,
-	cfg *config.StreamConfig,
+	cfg *config.Config,
 	currentTime time.Time,
 	streamId shared.StreamId,
 	parsedEvents []*events.ParsedEvent,
@@ -472,7 +472,6 @@ func (ru *csChannelRules) derivedChannelSpaceParentEvent() (*DerivedEvent, error
 	payload := events.Make_SpacePayload_Channel(
 		ChannelOp_CO_CREATED,
 		channelId,
-		ru.inception.ChannelProperties,
 		&EventRef{
 			StreamId:  ru.inception.StreamId,
 			Hash:      ru.params.parsedEvents[0].Envelope.Hash,
@@ -511,10 +510,10 @@ func (ru *csMediaRules) checkMediaInceptionPayload() error {
 	if len(ru.inception.ChannelId) == 0 {
 		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "channel id must not be empty for media stream")
 	}
-	if ru.inception.ChunkCount > int32(ru.params.cfg.Media.MaxChunkCount) {
+	if ru.inception.ChunkCount > int32(ru.params.cfg.Stream.Media.MaxChunkCount) {
 		return RiverError(
 			Err_BAD_STREAM_CREATION_PARAMS,
-			fmt.Sprintf("chunk count must be less than or equal to %d", ru.params.cfg.Media.MaxChunkCount),
+			fmt.Sprintf("chunk count must be less than or equal to %d", ru.params.cfg.Stream.Media.MaxChunkCount),
 		)
 	}
 
@@ -669,7 +668,7 @@ func (ru *csGdmChannelRules) checkGDMPayloads() error {
 
 	// GDM memberships cannot exceed the configured limit. the first event is the inception event
 	// and is subtracted from the parsed events count.
-	membershipLimit := ru.params.cfg.GetMembershipLimit(ru.params.streamId)
+	membershipLimit := ru.params.cfg.Stream.GetMembershipLimit(ru.params.streamId)
 	if len(ru.params.parsedEvents)-1 > membershipLimit {
 		return RiverError(
 			Err_INVALID_ARGUMENT,

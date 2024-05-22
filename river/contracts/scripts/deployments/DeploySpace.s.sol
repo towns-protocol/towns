@@ -10,21 +10,12 @@ import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol"
 //contracts
 import {DiamondDeployer} from "../common/DiamondDeployer.s.sol";
 
-import {OwnablePendingHelper} from "contracts/test/diamond/ownable/pending/OwnablePendingSetup.sol";
-import {TokenOwnableHelper} from "contracts/test/diamond/ownable/token/TokenOwnableSetup.sol";
-import {EntitlementsManagerHelper} from "contracts/test/spaces/entitlements/EntitlementsManagerHelper.sol";
-import {RolesHelper} from "contracts/test/spaces/roles/RolesHelper.sol";
-import {ChannelsHelper} from "contracts/test/spaces/channels/ChannelsHelper.sol";
 import {TokenPausableHelper} from "contracts/test/diamond/pausable/token/TokenPausableSetup.sol";
 import {MembershipReferralHelper} from "contracts/test/spaces/membership/MembershipReferralSetup.sol";
 import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
 
 // Facets
-import {OwnablePendingFacet} from "contracts/src/diamond/facets/ownable/pending/OwnablePendingFacet.sol";
-import {TokenOwnableFacet} from "contracts/src/diamond/facets/ownable/token/TokenOwnableFacet.sol";
-import {EntitlementsManager} from "contracts/src/spaces/facets/entitlements/EntitlementsManager.sol";
-import {Channels} from "contracts/src/spaces/facets/channels/Channels.sol";
-import {Roles} from "contracts/src/spaces/facets/roles/Roles.sol";
+
 import {TokenPausableFacet} from "contracts/src/diamond/facets/pausable/token/TokenPausableFacet.sol";
 import {MembershipReferralFacet} from "contracts/src/spaces/facets/membership/referral/MembershipReferralFacet.sol";
 import {Banning} from "contracts/src/spaces/facets/banning/Banning.sol";
@@ -40,6 +31,13 @@ import {DeployBanning} from "contracts/scripts/deployments/facets/DeployBanning.
 import {DeployMembershipMetadata} from "contracts/scripts/deployments/facets/DeployMembershipMetadata.s.sol";
 import {DeployMembership} from "contracts/scripts/deployments/DeployMembership.s.sol";
 import {DeployEntitlementDataQueryable} from "./facets/DeployEntitlementDataQueryable.s.sol";
+import {DeployOwnablePendingFacet} from "contracts/scripts/deployments/facets/DeployOwnablePendingFacet.s.sol";
+import {DeployTokenOwnable} from "./facets/DeployTokenOwnable.s.sol";
+import {DeployEntitlementsManager} from "contracts/scripts/deployments/facets/DeployEntitlementsManager.s.sol";
+import {DeployRoles} from "contracts/scripts/deployments/facets/DeployRoles.s.sol";
+import {DeployChannels} from "contracts/scripts/deployments/facets/DeployChannels.s.sol";
+import {DeployTokenPausable} from "contracts/scripts/deployments/facets/DeployTokenPausable.s.sol";
+import {DeployMembershipReferral} from "contracts/scripts/deployments/facets/DeployMembershipReferral.s.sol";
 import {DeployMultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.sol";
 
 contract DeploySpace is DiamondDeployer {
@@ -54,20 +52,21 @@ contract DeploySpace is DiamondDeployer {
     new DeployMembershipMetadata();
   DeployEntitlementDataQueryable entitlementDataQueryableHelper =
     new DeployEntitlementDataQueryable();
+  DeployOwnablePendingFacet ownablePendingHelper =
+    new DeployOwnablePendingFacet();
+  DeployTokenOwnable tokenOwnableHelper = new DeployTokenOwnable();
+  DeployEntitlementsManager entitlementsHelper =
+    new DeployEntitlementsManager();
+
+  DeployRoles rolesHelper = new DeployRoles();
+  DeployChannels channelsHelper = new DeployChannels();
+  DeployTokenPausable tokenPausableHelper = new DeployTokenPausable();
+  DeployMembershipReferral membershipReferralHelper =
+    new DeployMembershipReferral();
   DeployMultiInit deployMultiInit = new DeployMultiInit();
 
-  TokenOwnableHelper tokenOwnableHelper = new TokenOwnableHelper();
-  OwnablePendingHelper ownableHelper = new OwnablePendingHelper();
-  EntitlementsManagerHelper entitlementsHelper =
-    new EntitlementsManagerHelper();
-  RolesHelper rolesHelper = new RolesHelper();
-  ChannelsHelper channelsHelper = new ChannelsHelper();
-  TokenPausableHelper tokenPausableHelper = new TokenPausableHelper();
   ERC721AHelper erc721aHelper = new ERC721AHelper();
-  MembershipReferralHelper membershipReferralHelper =
-    new MembershipReferralHelper();
 
-  address ownable;
   address tokenOwnable;
   address diamondCut;
   address diamondLoupe;
@@ -83,6 +82,7 @@ contract DeploySpace is DiamondDeployer {
   address erc721aQueryable;
   address membershipMetadata;
   address entitlementDataQueryable;
+  address ownablePending;
   address multiInit;
 
   function versionName() public pure override returns (string memory) {
@@ -90,7 +90,6 @@ contract DeploySpace is DiamondDeployer {
   }
 
   function diamondInitParams(
-    uint256 deployerPK,
     address deployer
   ) public override returns (Diamond.InitParams memory) {
     diamondCut = diamondCutHelper.deploy();
@@ -101,17 +100,14 @@ contract DeploySpace is DiamondDeployer {
     membership = membershipHelper.deploy();
     membershipMetadata = membershipMetadataHelper.deploy();
     entitlementDataQueryable = entitlementDataQueryableHelper.deploy();
+    ownablePending = ownablePendingHelper.deploy();
+    tokenOwnable = tokenOwnableHelper.deploy();
+    entitlements = entitlementsHelper.deploy();
+    roles = rolesHelper.deploy();
+    channels = channelsHelper.deploy();
+    tokenPausable = tokenPausableHelper.deploy();
+    membershipReferral = membershipReferralHelper.deploy();
     multiInit = deployMultiInit.deploy();
-
-    vm.startBroadcast(deployerPK);
-    ownable = address(new OwnablePendingFacet());
-    tokenOwnable = address(new TokenOwnableFacet());
-    entitlements = address(new EntitlementsManager());
-    channels = address(new Channels());
-    roles = address(new Roles());
-    tokenPausable = address(new TokenPausableFacet());
-    membershipReferral = address(new MembershipReferralFacet());
-    vm.stopBroadcast();
 
     membershipHelper.addSelectors(erc721aHelper.selectors());
     membershipHelper.removeSelector(IERC721A.tokenURI.selector);
@@ -165,7 +161,7 @@ contract DeploySpace is DiamondDeployer {
       )
     );
 
-    addInit(ownable, ownableHelper.makeInitData(deployer));
+    addInit(ownablePending, ownablePendingHelper.makeInitData(deployer));
     addInit(diamondCut, diamondCutHelper.makeInitData(""));
     addInit(diamondLoupe, diamondLoupeHelper.makeInitData(""));
     addInit(introspection, introspectionHelper.makeInitData(""));

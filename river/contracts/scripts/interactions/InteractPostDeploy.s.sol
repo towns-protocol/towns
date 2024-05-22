@@ -26,18 +26,18 @@ contract InteractPostDeploy is Interaction {
   DeployRiverBase deployRiverBaseToken = new DeployRiverBase();
   DeployProxyDelegation deployProxyDelegation = new DeployProxyDelegation();
 
-  function __interact(uint256 pk, address) public override {
+  function __interact(address deployer) public override {
     address spaceOwner = deploySpaceOwner.deploy();
     address spaceFactory = deploySpaceFactory.deploy();
     address baseRegistry = deployBaseRegistry.deploy();
     address riverBaseToken = deployRiverBaseToken.deploy();
-    address mainnetProxyDelegation = deployProxyDelegation.deploy();
+    // address mainnetProxyDelegation = deployProxyDelegation.deploy();
 
-    vm.startBroadcast(pk);
+    vm.startBroadcast(deployer);
     ISpaceOwner(spaceOwner).setFactory(spaceFactory);
     IImplementationRegistry(spaceFactory).addImplementation(baseRegistry);
     SpaceDelegationFacet(baseRegistry).setRiverToken(riverBaseToken);
-    IMainnetDelegation(baseRegistry).setProxyDelegation(mainnetProxyDelegation);
+    // IMainnetDelegation(baseRegistry).setProxyDelegation(mainnetProxyDelegation);
     vm.stopBroadcast();
   }
 }

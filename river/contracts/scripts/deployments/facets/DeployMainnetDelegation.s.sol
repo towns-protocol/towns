@@ -15,7 +15,7 @@ contract DeployMainnetDelegation is FacetHelper, Deployer {
     addSelector(MainnetDelegation.setProxyDelegation.selector);
     addSelector(MainnetDelegation.setDelegation.selector);
     addSelector(MainnetDelegation.getDelegationByDelegator.selector);
-    addSelector(MainnetDelegation.getDelegationsByOperator.selector);
+    addSelector(MainnetDelegation.getMainnetDelegationsByOperator.selector);
     addSelector(MainnetDelegation.getDelegatedStakeByOperator.selector);
     addSelector(MainnetDelegation.setAuthorizedClaimer.selector);
     addSelector(MainnetDelegation.getAuthorizedClaimer.selector);
@@ -34,11 +34,8 @@ contract DeployMainnetDelegation is FacetHelper, Deployer {
     return "mainnetDelegation";
   }
 
-  function __deploy(
-    uint256 deployerPK,
-    address
-  ) public override returns (address) {
-    vm.startBroadcast(deployerPK);
+  function __deploy(address deployer) public override returns (address) {
+    vm.startBroadcast(deployer);
     MainnetDelegation facet = new MainnetDelegation();
     vm.stopBroadcast();
     return address(facet);

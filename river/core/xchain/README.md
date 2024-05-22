@@ -116,7 +116,7 @@ This XChain Node resides in a monorepo and interfaces with the `EntitlementCheck
    ./create_multi.sh
    ```
 
-   This will create five instance configurations in `./core/xchain/instance_1-5` using the template in `./core/xchain/config-template.yaml`.
+   This will create five instance configurations in `./core/xchain/instance_1-5` using the template in `./core/node/config-template.yaml`.
 
 1. **Launch Multiple Instances:**
    ```bash

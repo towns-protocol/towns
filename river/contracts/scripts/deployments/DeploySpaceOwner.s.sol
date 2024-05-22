@@ -48,7 +48,6 @@ contract DeploySpaceOwner is DiamondDeployer {
   }
 
   function diamondInitParams(
-    uint256 pk,
     address deployer
   ) public override returns (Diamond.InitParams memory) {
     address diamondCut = diamondCutHelper.deploy();
@@ -58,7 +57,7 @@ contract DeploySpaceOwner is DiamondDeployer {
     address metadata = metadataHelper.deploy();
     address multiInit = multiInitHelper.deploy();
 
-    vm.startBroadcast(pk);
+    vm.startBroadcast(deployer);
     address spaceOwner = address(new SpaceOwner());
     address guardian = address(new GuardianFacet());
     vm.stopBroadcast();

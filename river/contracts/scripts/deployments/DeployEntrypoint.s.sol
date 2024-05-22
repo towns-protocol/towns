@@ -14,16 +14,13 @@ contract DeployEntrypoint is Deployer {
     return "entrypoint";
   }
 
-  function __deploy(
-    uint256 deployerPK,
-    address
-  ) public override returns (address) {
+  function __deploy(address deployer) public override returns (address) {
     if (!isAnvil()) revert("not supported");
 
-    bytes32 salt = bytes32(uint256(deployerPK));
+    bytes32 salt = bytes32(uint256(1));
     bytes32 initCodeHash = hashInitCode(type(EntryPoint).creationCode);
     address soonToBe = computeCreate2Address(salt, initCodeHash);
-    vm.broadcast(deployerPK);
+    vm.broadcast(deployer);
     EntryPoint entrypoint = new EntryPoint{salt: salt}();
     require(address(entrypoint) == soonToBe, "address mismatch");
     return address(entrypoint);

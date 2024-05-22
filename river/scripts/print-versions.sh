@@ -11,7 +11,7 @@ function print_version() {
     else
         local version=$($binary $version_arg 2>/dev/null)
         echo "$binary version:"
-        echo "  $version"
+        echo "  $version        $(which $binary)"
     fi
 }
 
@@ -25,3 +25,4 @@ print_version "protoc" "--version"
 print_version "buf" "--version"
 print_version "rustc" "--version"
 print_version "cargo" "--version"
+print_version "buf" "--version"

@@ -20,11 +20,11 @@ import {console} from "forge-std/console.sol";
 contract Migration_2024_05_01 is Interaction {
   DeploySpace spaceHelper = new DeploySpace();
 
-  function __interact(uint256 pk, address) public override {
+  function __interact(address deployer) public override {
     address spaceManager = getDeployment("spaceFactory");
     address space = spaceHelper.deploy();
 
-    vm.startBroadcast(pk);
+    vm.startBroadcast(deployer);
     IProxyManager(spaceManager).setImplementation(space);
     vm.stopBroadcast();
 

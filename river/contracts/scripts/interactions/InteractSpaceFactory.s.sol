@@ -29,7 +29,7 @@ contract InteractSpaceFactory is Interaction {
 
   IDiamond.FacetCut[] cuts;
 
-  function __interact(uint256 deployerPk, address) public override {
+  function __interact(address deployer) public override {
     address spaceFactory = getDeployment("spaceFactory");
 
     // deploy rule entitlement
@@ -37,7 +37,7 @@ contract InteractSpaceFactory is Interaction {
     address space = spaceHelper.deploy();
     address architect = architectHelper.deploy();
 
-    vm.startBroadcast(deployerPk);
+    vm.startBroadcast(deployer);
     IArchitect(spaceFactory).setSpaceArchitectImplementations(
       ISpaceOwner(getDeployment("spaceOwner")),
       IUserEntitlement(getDeployment("userEntitlement")),
@@ -50,7 +50,7 @@ contract InteractSpaceFactory is Interaction {
     );
 
     // upgrade architect facet
-    vm.startBroadcast(deployerPk);
+    vm.startBroadcast(deployer);
     IDiamondCut(spaceFactory).diamondCut({
       facetCuts: cuts,
       init: address(0),

@@ -64,7 +64,6 @@ contract DeployRiverRegistry is DiamondDeployer {
   }
 
   function diamondInitParams(
-    uint256 deployerPK,
     address deployer
   ) public override returns (Diamond.InitParams memory) {
     diamondCut = cutHelper.deploy();
@@ -77,7 +76,7 @@ contract DeployRiverRegistry is DiamondDeployer {
     operators[0] = deployer;
     configManagers[0] = deployer;
 
-    vm.startBroadcast(deployerPK);
+    vm.startBroadcast(deployer);
 
     nodeRegistry = address(new NodeRegistry());
     streamRegistry = address(new StreamRegistry());
