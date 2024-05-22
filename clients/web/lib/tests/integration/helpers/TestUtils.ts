@@ -16,7 +16,6 @@ import {
     getFixedPricingModule,
 } from '@river-build/web3'
 import { makeRiverConfig } from '@river/sdk'
-import { log } from 'console'
 
 export const EVERYONE_ADDRESS = '0x0000000000000000000000000000000000000001'
 
@@ -143,26 +142,14 @@ export async function createTestSpaceGatedByTownsNfts(
             ruleData: NoopRuleData,
         },
     }
+    if (!createSpaceInfo) {
+        createSpaceInfo = {
+            name: client.makeUniqueName(),
+        }
+    }
 
-    const spaceId = await waitForWithRetries(
-        () => {
-            if (!createSpaceInfo) {
-                createSpaceInfo = {
-                    name: client.makeUniqueName(),
-                }
-            }
-            try {
-                return client.createSpace(createSpaceInfo, membershipInfo)
-            } catch (e) {
-                log('createSpace error', e)
-                throw e
-            }
-        },
-        {
-            intervalMs: 1000 * 5,
-            timeoutMs: 1000 * 60,
-        },
-    )
+    const spaceId = await client.createSpace(createSpaceInfo, membershipInfo)
+
     if (!spaceId) {
         throw new Error('createTestSpaceGatedByTownsNfts failed : spaceId is undefined')
     }
@@ -208,21 +195,12 @@ export async function createTestSpaceGatedByTownNft(
             ruleData: NoopRuleData,
         },
     }
-
-    const streamId = await waitForWithRetries(
-        () => {
-            if (!createSpaceInfo) {
-                createSpaceInfo = {
-                    name: client.makeUniqueName(),
-                }
-            }
-            return client.createSpace(createSpaceInfo, membershipInfo)
-        },
-        {
-            intervalMs: 1000 * 5,
-            timeoutMs: 1000 * 60,
-        },
-    )
+    if (!createSpaceInfo) {
+        createSpaceInfo = {
+            name: client.makeUniqueName(),
+        }
+    }
+    const streamId = await client.createSpace(createSpaceInfo, membershipInfo)
     if (!streamId) {
         throw new Error('createTestSpaceGatedByTownNft failed : streamId is undefined')
     }
@@ -268,21 +246,12 @@ export async function createPaidTestSpaceGatedByTownNft(
             ruleData: NoopRuleData,
         },
     }
-
-    const streamId = await waitForWithRetries(
-        () => {
-            if (!createSpaceInfo) {
-                createSpaceInfo = {
-                    name: client.makeUniqueName(),
-                }
-            }
-            return client.createSpace(createSpaceInfo, membershipInfo)
-        },
-        {
-            intervalMs: 1000 * 5,
-            timeoutMs: 1000 * 60,
-        },
-    )
+    if (!createSpaceInfo) {
+        createSpaceInfo = {
+            name: client.makeUniqueName(),
+        }
+    }
+    const streamId = await client.createSpace(createSpaceInfo, membershipInfo)
     if (!streamId) {
         throw new Error('createPaidTestSpaceGatedByTownNft failed : streamId is undefined')
     }
@@ -306,9 +275,7 @@ export async function createTestChannelWithSpaceRoles(
         }
     }
 
-    const streamId = await waitForWithRetries(() =>
-        client.createChannel(createChannelInfo, client.provider.wallet),
-    )
+    const streamId = await client.createChannel(createChannelInfo, client.provider.wallet)
     if (!streamId) {
         throw new Error('createTestChannelWithSpaceRoles failed : streamId is undefined')
     }

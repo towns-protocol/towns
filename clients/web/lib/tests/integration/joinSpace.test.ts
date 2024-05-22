@@ -6,7 +6,6 @@ import {
     registerAndStartClients,
     registerAndStartClient,
     createTestSpaceGatedByTownsNfts,
-    waitForWithRetries,
     createTestSpaceGatedByTownNft,
     createPaidTestSpaceGatedByTownNft,
 } from './helpers/TestUtils'
@@ -193,9 +192,7 @@ test(
         const createSpaceInfo = {
             name: alice.makeUniqueName(),
         }
-        const spaceId = await waitForWithRetries(() =>
-            alice.createSpace(createSpaceInfo, membershipInfo),
-        )
+        const spaceId = await alice.createSpace(createSpaceInfo, membershipInfo)
         assert(spaceId !== undefined, 'createSpace failed')
         // Alice is the space creator and should already be a town member
         expect(alice.getRoomData(spaceId)?.id).toEqual(spaceId)
@@ -263,9 +260,8 @@ test('joinSpace gated with 2 NFTs, wallet linking', async () => {
     const createSpaceInfo = {
         name: alice.makeUniqueName(),
     }
-    const spaceId = await waitForWithRetries(() =>
-        alice.createSpace(createSpaceInfo, membershipInfo),
-    )
+    const spaceId = await alice.createSpace(createSpaceInfo, membershipInfo)
+
     assert(spaceId !== undefined, 'createSpace failed')
 
     // Alice is the space creator and should already be a town member
