@@ -2,7 +2,7 @@ import { BundlerJsonRpcProvider, IUserOperation, IUserOperationMiddlewareCtx } f
 import { ethers, BigNumberish } from 'ethers'
 import { userOpsStore } from './userOpsStore'
 import { CodeException } from './errors'
-import { BaseChainConfig, createSpaceDapp } from '@river-build/web3'
+import { BaseChainConfig, ISpaceDapp } from '@river-build/web3'
 
 function increaseByPercentage({
     gas,
@@ -40,7 +40,7 @@ export async function signUserOpHash(ctx: IUserOperationMiddlewareCtx, signer: e
     ctx.op.signature = await signer.signMessage(ethers.utils.arrayify(ctx.getUserOpHash()))
 }
 
-export function promptUser(multiplier: number) {
+export function promptUser(multiplier: number, spaceDapp: ISpaceDapp | undefined) {
     return async function (
         ctx: IUserOperationMiddlewareCtx,
         {
@@ -64,7 +64,6 @@ export function promptUser(multiplier: number) {
 
         async function fallbackEstimate() {
             if (provider && config) {
-                const spaceDapp = createSpaceDapp(provider, config)
                 try {
                     // this is a new estimate because at this point the paymaster would have rejected our operation
                     // and we need an estimate to display to the user and to submit to the bundler
@@ -123,9 +122,9 @@ export function promptUser(multiplier: number) {
                     let spaceDappError: Error | undefined
                     // better logs
                     if (townId) {
-                        spaceDappError = await spaceDapp.parseSpaceError(townId, exception)
+                        spaceDappError = await spaceDapp?.parseSpaceError(townId, exception)
                     } else {
-                        spaceDappError = spaceDapp.parseSpaceFactoryError(exception)
+                        spaceDappError = spaceDapp?.parseSpaceFactoryError(exception)
                     }
 
                     console.error(

@@ -179,7 +179,7 @@ export class UserOps {
         // 3 - prompt user if the paymaster rejected. recalculate preverification gas
         if (!this.skipPromptUserOnPMRejectedOp) {
             userOp.useMiddleware(async (ctx) =>
-                promptUser(preverificationGasMultiplierValue)(ctx, {
+                promptUser(preverificationGasMultiplierValue, this.spaceDapp)(ctx, {
                     provider: this.spaceDapp?.provider,
                     config: this.spaceDapp?.config,
                     rpcUrl: this.aaRpcUrl,
