@@ -201,21 +201,6 @@ export const MessageModalSheet = (props: Props) => {
                             </Stack>
                             <Divider />
                             <Stack paddingX="sm" gap="sm">
-                                {canEdit && (
-                                    <TableCell
-                                        iconType="edit"
-                                        text="Edit Message"
-                                        onClick={onEditClick}
-                                    />
-                                )}
-                                {canReply && (
-                                    <TableCell
-                                        iconType="reply"
-                                        text="Reply"
-                                        onClick={onThreadClick}
-                                    />
-                                )}
-
                                 {canReact && (
                                     <TableCell
                                         iconType="emojiAdd"
@@ -223,6 +208,18 @@ export const MessageModalSheet = (props: Props) => {
                                         onClick={onEmojiClick}
                                     />
                                 )}
+                                {canReply && (
+                                    <TableCell
+                                        iconType="reply"
+                                        text={canReplyInline ? 'Direct Reply' : 'Reply in Thread'}
+                                        onClick={onThreadClick}
+                                    />
+                                )}
+                                <TableCell
+                                    iconType="messageUnread"
+                                    text="Mark as Unread"
+                                    onClick={onMarkAsUnreadClick}
+                                />
                                 <TableCell
                                     iconType="link"
                                     text="Copy Link"
@@ -235,11 +232,13 @@ export const MessageModalSheet = (props: Props) => {
                                         onClick={onCopyClick}
                                     />
                                 )}
-                                <TableCell
-                                    iconType="messageUnread"
-                                    text="Mark as Unread"
-                                    onClick={onMarkAsUnreadClick}
-                                />
+                                {canEdit && (
+                                    <TableCell
+                                        iconType="edit"
+                                        text="Edit Message"
+                                        onClick={onEditClick}
+                                    />
+                                )}
                                 {canEdit && (
                                     <TableCell
                                         isError

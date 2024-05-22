@@ -65,6 +65,10 @@ export const Shortcuts = {
             keys: 'Meta+Shift+K',
             description: 'Create new message',
         },
+        DirectReply: {
+            keys: 'R',
+            description: 'Direct Reply',
+        },
     },
     Messages: {
         EditMessage: {
@@ -75,9 +79,9 @@ export const Shortcuts = {
             keys: 'Backspace',
             description: 'Delete message',
         },
-        ReplyToMessage: {
+        ReplyInThread: {
             keys: 'R',
-            description: 'Reply to message',
+            description: 'Reply in Thread',
         },
         ReactToMessage: {
             keys: 'Meta+E',
