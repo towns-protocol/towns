@@ -103,8 +103,8 @@ const Disclaimer = () => (
         </Box>
         <Box grow>
             <Paragraph color="gray2" size="sm">
-                This might take a bit longer than expected. Please stay on this page so tou
-                don&apos;t lose your progress
+                This might take a bit longer than expected. Please stay on this page so you
+                don&apos;t lose your progress.
             </Paragraph>
         </Box>
     </Box>
