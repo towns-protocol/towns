@@ -12,6 +12,7 @@ import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
 import { getLinkToMessage } from 'utils/getLinkToMessage'
 import { useAnalytics } from 'hooks/useAnalytics'
+import { useRouteParams } from 'hooks/useRouteParams'
 import { ShortcutAction, ShortcutActions } from 'data/shortcuts'
 import { ShortcutKeys } from '@components/Shortcuts/ShortcutKeys'
 import { useCreateUnreadMarker } from './hooks/useCreateUnreadMarker'
@@ -46,6 +47,7 @@ export const MessageContextMenu = (props: Props) => {
     const hasCopied = !!copiedText
     const { loggedInWalletAddress } = useConnectivity()
     const { analytics } = useAnalytics()
+    const { threadId } = useRouteParams()
 
     const { hasPermission: canRedact } = useHasPermission({
         spaceId: spaceId ?? '',
@@ -66,9 +68,9 @@ export const MessageContextMenu = (props: Props) => {
             analytics?.track('reacted with emoji', { spaceId, channelId, emojiId: data.id }, () => {
                 console.log('[analytics] reacted with emoji')
             })
-            sendReaction(channelId, eventId, data.id)
+            sendReaction(channelId, eventId, data.id, threadId)
         },
-        [analytics, channelId, eventId, sendReaction, spaceId],
+        [analytics, channelId, eventId, sendReaction, spaceId, threadId],
     )
     const ref = useRef<HTMLDivElement>(null)
 

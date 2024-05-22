@@ -57,6 +57,7 @@ export async function upsertNotificationTags(
         tag: NotificationKind | NotificationAttachmentKind
         spaceId: string
         userIds: string[]
+        threadId?: string
     },
     res: Response,
 ) {
@@ -64,26 +65,42 @@ export async function upsertNotificationTags(
         ChannelId: data.channelId,
         Tag: data.tag,
         SpaceId: data.spaceId,
+        ThreadId: data.threadId,
     }
+    const upserts: Promise<unknown>[] = []
     for (const UserId of data.userIds) {
-        try {
-            await database.notificationTag.upsert({
+        upserts.push(
+            database.notificationTag.upsert({
                 where: {
                     ChannelId_UserId: {
                         ChannelId: tagData.ChannelId,
                         UserId: UserId,
                     },
                 },
-                update: { Tag: tagData.Tag },
+                update: { Tag: tagData.Tag, ThreadId: tagData.ThreadId },
                 create: {
                     ...tagData,
                     UserId,
                 },
+            }),
+        )
+    }
+
+    let hasError = false
+    let userIndex = 0
+    const results = await Promise.allSettled(upserts)
+    for (const result of results) {
+        if (result.status === 'rejected' && result.reason instanceof Error) {
+            logger.error('Failed to upsert notification tag', {
+                reason: result.reason.message,
+                userId: data.userIds[userIndex],
             })
-        } catch (error) {
-            logger.error(error)
-            return res.status(StatusCodes.UNPROCESSABLE_ENTITY).json({ error: 'Invalid data' })
+            hasError = true
         }
+        userIndex++
+    }
+    if (hasError) {
+        return res.status(StatusCodes.UNPROCESSABLE_ENTITY).json({ error: 'Invalid data' })
     }
     return res.status(StatusCodes.OK).json(data)
 }

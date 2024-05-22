@@ -112,7 +112,7 @@ const useTouchRedirect = ({ isTouch }: { isTouch: boolean }) => {
 
     useEffect(() => {
         console.log('[hnt-5685][useTouchRedirect]', 'states', {
-            ssSpaceIdBookmark: storeState.spaceIdBookmark,
+            storeSpaceIdBookmark: storeState.spaceIdBookmark,
             spaces: spaces.map((s) => s.id),
             needsRedirect,
             canRedirect,

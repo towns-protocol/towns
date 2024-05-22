@@ -189,7 +189,12 @@ interface TownsClientImpl {
     sendMessage: (roomId: string, message: string, options?: SendMessageOptions) => Promise<void>
     adminRedactMessage: (roomId: string, eventId: string) => Promise<void>
     retrySendMessage: (roomId: string, localEventId: string) => Promise<void>
-    sendReaction: (roomId: string, eventId: string, reaction: string) => Promise<void>
+    sendReaction: (
+        roomId: string,
+        eventId: string,
+        reaction: string,
+        threadId?: string,
+    ) => Promise<void>
     sendMediaPayload: (
         streamId: string,
         data: Uint8Array,

@@ -19,6 +19,7 @@ export const notificationContentMessageSchema = z.object({
     spaceId: z.string(),
     channelId: z.string(),
     senderId: z.string(),
+    threadId: z.string().optional(),
     attachmentOnly: z.nativeEnum(NotificationAttachmentKind).optional(),
     reaction: z.boolean().optional(),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -1806,7 +1806,12 @@ export class TownsClient
     /************************************************
      * sendReaction
      *************************************************/
-    public async sendReaction(roomId: string, eventId: string, reaction: string): Promise<void> {
+    public async sendReaction(
+        roomId: string,
+        eventId: string,
+        reaction: string,
+        threadId?: string,
+    ): Promise<void> {
         if (!this.casablancaClient) {
             throw new Error('Casablanca client not initialized')
         }
@@ -1822,6 +1827,7 @@ export class TownsClient
             await this.pushNotificationClient.sendUserReactionToNotificationService(
                 roomId,
                 creatorUserId,
+                threadId,
             )
         }
         await this.casablancaClient.sendChannelMessage_Reaction(roomId, {

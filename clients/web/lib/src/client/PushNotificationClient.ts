@@ -225,11 +225,16 @@ export class PushNotificationClient {
         }
     }
 
-    public async sendUserReactionToNotificationService(channelId: string, creatorUserId: string) {
+    public async sendUserReactionToNotificationService(
+        channelId: string,
+        creatorUserId: string,
+        threadId?: string,
+    ): Promise<void> {
         const headers = this.createHttpHeaders()
         const body = this.createReactionNotificationParams({
             channelId,
             userId: creatorUserId,
+            threadId,
         })
         const url = `${this.options.url}/api/tag/reaction`
         console.log('PUSH: sending reaction tag to Notification Service ...', url, body)
@@ -321,13 +326,16 @@ export class PushNotificationClient {
     private createReactionNotificationParams({
         channelId,
         userId,
+        threadId,
     }: {
         channelId: string
         userId: string
+        threadId?: string
     }): ReactionRequestParams {
         const params: ReactionRequestParams = {
             channelId,
             userId,
+            threadId,
         }
         return params
     }

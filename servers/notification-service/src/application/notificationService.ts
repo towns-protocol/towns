@@ -26,10 +26,16 @@ const logger = createLogger('notificationService')
 export interface NotifyUser {
     userId: string
     kind: NotificationKind | NotificationAttachmentKind
+    threadId?: string
 }
 
 export interface NotifyUsers {
     [userId: string]: NotifyUser
+}
+
+interface ReactionTag {
+    userId: string
+    threadId?: string
 }
 
 export class NotificationService {
@@ -71,11 +77,14 @@ export class NotificationService {
                 .filter((taggedUser) => taggedUser.Tag === NotificationKind.ReplyTo.toString())
                 .map((user) => user.UserId),
         )
-        const reactionUsersTagged = new Set(
-            taggedUsers
-                .filter((taggedUser) => taggedUser.Tag === NotificationKind.Reaction.toString())
-                .map((user) => user.UserId),
-        )
+        const reactionUsersTagged: ReactionTag[] = taggedUsers
+            .filter((taggedUser) => taggedUser.Tag === NotificationKind.Reaction.toString())
+            .map((user) => {
+                return {
+                    userId: user.UserId,
+                    threadId: user.ThreadId ?? undefined,
+                }
+            })
         const attachmentUsersTagged = taggedUsers.filter((taggedUser) =>
             Object.values(NotificationAttachmentKind).includes(
                 taggedUser.Tag as NotificationAttachmentKind,
@@ -136,7 +145,7 @@ export class NotificationService {
                 isAttachmentNotifyChannel ||
                 metionUsersTagged.has(userId) ||
                 replyToUsersTagged.has(userId) ||
-                reactionUsersTagged.has(userId) ||
+                reactionUsersTagged.some((u) => u.userId === userId) ||
                 attachmentUsersTagged.some((user) => user.UserId === userId)
 
             const isSenderUserBlocked = (
@@ -161,11 +170,13 @@ export class NotificationService {
                 continue
             }
 
-            if (reactionUsersTagged.size > 0) {
-                if (reactionUsersTagged.has(userId)) {
+            if (reactionUsersTagged.length > 0) {
+                const reactionTag = reactionUsersTagged.find((u) => u.userId === userId)
+                if (reactionTag) {
                     recipients[userId] = {
                         userId,
                         kind: NotificationKind.Reaction,
+                        threadId: reactionTag.threadId,
                     }
                 }
             } else if (metionUsersTagged.has(userId)) {
@@ -235,6 +246,8 @@ export class NotificationService {
                     kind = NotificationKind.DirectMessage
                 } else if (isChannelStreamId(payload.content.channelId)) {
                     kind = NotificationKind.ReplyTo
+                    const replyToContent = payload.content as NotificationContentMessageSchema
+                    replyToContent.threadId = n.threadId
                 }
                 payload.content.reaction = true
             }

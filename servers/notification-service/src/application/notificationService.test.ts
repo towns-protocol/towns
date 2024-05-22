@@ -83,18 +83,21 @@ describe('NotificationService', () => {
                             Tag: NotificationKind.Mention,
                             SpaceId: 'space123',
                             ChannelId: 'channel123',
+                            ThreadId: null,
                         },
                         {
                             UserId: 'user2',
                             Tag: NotificationKind.Mention,
                             SpaceId: 'space123',
                             ChannelId: 'channel123',
+                            ThreadId: null,
                         },
                         {
                             UserId: 'user3',
                             Tag: NotificationKind.Mention,
                             SpaceId: 'space123',
                             ChannelId: 'channel123',
+                            ThreadId: null,
                         },
                     ],
                 }
@@ -249,18 +252,21 @@ describe('NotificationService', () => {
                             Tag: NotificationKind.ReplyTo.toString(),
                             SpaceId: 'space123',
                             ChannelId: 'channel123',
+                            ThreadId: null,
                         },
                         {
                             UserId: 'user2',
                             Tag: NotificationKind.ReplyTo.toString(),
                             SpaceId: 'space123',
                             ChannelId: 'channel123',
+                            ThreadId: null,
                         },
                         {
                             UserId: 'user3',
                             Tag: NotificationKind.ReplyTo.toString(),
                             SpaceId: 'space123',
                             ChannelId: 'channel123',
+                            ThreadId: null,
                         },
                     ],
                 }
@@ -414,18 +420,21 @@ describe('NotificationService', () => {
                             Tag: NotificationKind.DirectMessage,
                             SpaceId: 'space123',
                             ChannelId: 'channel123',
+                            ThreadId: null,
                         },
                         {
                             UserId: 'user2',
                             Tag: NotificationKind.DirectMessage,
                             SpaceId: 'space123',
                             ChannelId: 'channel123',
+                            ThreadId: null,
                         },
                         {
                             UserId: 'user3',
                             Tag: NotificationKind.DirectMessage.toString(),
                             SpaceId: 'space123',
                             ChannelId: 'channel123',
+                            ThreadId: null,
                         },
                     ],
                 }
@@ -556,6 +565,7 @@ describe('NotificationService', () => {
                         Tag: NotificationKind.AtChannel,
                         SpaceId: 'space123',
                         ChannelId: 'channel123',
+                        ThreadId: null,
                     },
                 ]
 
@@ -595,6 +605,7 @@ describe('NotificationService', () => {
                         Tag: NotificationAttachmentKind.File,
                         SpaceId: 'space123',
                         ChannelId: channelId,
+                        ThreadId: null,
                     },
                 ]
 
@@ -631,12 +642,14 @@ describe('NotificationService', () => {
                         Tag: NotificationAttachmentKind.Image,
                         SpaceId: 'space123',
                         ChannelId: channelId,
+                        ThreadId: null,
                     },
                     {
                         UserId: 'user3',
                         Tag: NotificationAttachmentKind.Image,
                         SpaceId: 'space123',
                         ChannelId: channelId,
+                        ThreadId: null,
                     },
                 ]
 
@@ -675,6 +688,7 @@ describe('NotificationService', () => {
                         Tag: NotificationAttachmentKind.Image,
                         SpaceId: 'space123',
                         ChannelId: channelId,
+                        ThreadId: null,
                     },
                 ]
 
@@ -714,6 +728,7 @@ describe('NotificationService', () => {
                         Tag: NotificationKind.Reaction,
                         SpaceId: 'space123',
                         ChannelId: 'channel123',
+                        ThreadId: null,
                     },
                 ]
 

@@ -37,6 +37,7 @@ export type AppNotificationReplyTo = {
         kind: AppNotificationType.ReplyTo
         spaceId: string
         channelId: string
+        threadId?: string
         senderId: string
         event: StreamEvent
         attachmentOnly?: NotificationAttachmentKind
@@ -89,7 +90,7 @@ export type NotificationReplyTo = {
     threadId: string
     title: string
     body: string
-    refEventId?: string
+    threadId?: string
 }
 
 export type NotificationDM = {

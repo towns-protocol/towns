@@ -47,4 +47,5 @@ export const tagAttachmentSchema = z.object({
 export const tagReactionSchema = z.object({
     channelId: z.string(),
     userId: z.string(),
+    threadId: z.string().optional(),
 })

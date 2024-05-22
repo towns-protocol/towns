@@ -14,6 +14,7 @@ import { useHnt5685 } from 'hooks/useHnt5685'
 export interface RouteParams {
     spaceId?: string
     channelId?: string
+    threadId?: string
 }
 
 const createSpaceTitle = (spaceName?: string, childLabel?: string) => {
@@ -229,6 +230,13 @@ export function getRouteParams(path?: string): RouteParams {
         },
         path,
     )
+    // match for full spaceId, channelId, threadId in the path
+    const matchWithSpaceChannelThread = matchPath(
+        {
+            path: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/${PATHS.REPLIES}/:threadId/`,
+        },
+        path,
+    )
     // match for desktop devices where the channelId is in the path, but no spaceId
     const matchWithMessages = matchPath(
         {
@@ -245,6 +253,7 @@ export function getRouteParams(path?: string): RouteParams {
     )
     let spaceId: string | undefined
     let channelId: string | undefined
+    let threadId: string | undefined
     if (matchWithSpace?.params.spaceId) {
         spaceId = matchWithSpace.params.spaceId
     }
@@ -254,6 +263,8 @@ export function getRouteParams(path?: string): RouteParams {
         channelId = matchWithMessages.params.channelId
     } else if (matchWithSpaceMessages?.params.channelId) {
         channelId = matchWithSpaceMessages.params.channelId
+    } else if (matchWithSpaceChannelThread?.params.threadId) {
+        threadId = matchWithSpaceChannelThread.params.threadId
     }
-    return { spaceId, channelId }
+    return { spaceId, channelId, threadId }
 }

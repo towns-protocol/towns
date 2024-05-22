@@ -11,6 +11,7 @@ import { TableCell } from '@components/TableCell/TableCell'
 import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
 import { getLinkToMessage } from 'utils/getLinkToMessage'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
+import { useRouteParams } from 'hooks/useRouteParams'
 import { DeleteMessagePrompt } from './DeleteMessagePrompt'
 
 type Props = {
@@ -50,6 +51,7 @@ export const MessageModalSheet = (props: Props) => {
     } = props
     const [isHidden, setIsHidden] = React.useState(false)
     const { redactEvent, sendReaction, sendReadReceipt } = useTownsClient()
+    const { threadId } = useRouteParams()
 
     const [isOpen, setIsOpen] = useState(false)
     useEffect(() => {
@@ -130,10 +132,10 @@ export const MessageModalSheet = (props: Props) => {
                 console.error('no event id')
                 return
             }
-            sendReaction(channelId, eventId, id)
+            sendReaction(channelId, eventId, id, threadId)
             onClose()
         },
-        [channelId, eventId, sendReaction, onClose],
+        [channelId, eventId, sendReaction, threadId, onClose],
     )
 
     const onSelectEmoji = useCallback(

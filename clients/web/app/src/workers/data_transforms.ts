@@ -24,6 +24,7 @@ interface Message {
     ciphertext?: string
     senderKey?: string
     sessionId?: string
+    refEventId?: string
 }
 
 export function getEncryptedData(data: unknown): EncryptedData {
@@ -46,6 +47,7 @@ export function getEncryptedData(data: unknown): EncryptedData {
             senderKey: message.senderKey,
             ciphertext: message.ciphertext,
             sessionId: message.sessionId,
+            refEventId: message.refEventId,
         })
     }
 

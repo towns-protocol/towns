@@ -20,6 +20,7 @@ const payloadMessage = z.object({
     event: z.unknown(),
     attachmentOnly: z.nativeEnum(NotificationAttachmentKind).optional(),
     reaction: z.boolean().optional(),
+    threadId: z.string().optional(),
 })
 
 const payloadDm = z.object({
@@ -86,6 +87,7 @@ const payloadSchema = z
                         spaceId: data.content.spaceId ?? '',
                         channelId: data.content.channelId,
                         senderId: data.content.senderId,
+                        threadId: data.content.threadId,
                         event: data.content.event as StreamEvent,
                         attachmentOnly: data.content.attachmentOnly,
                         reaction: data.content.reaction,

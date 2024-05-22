@@ -449,20 +449,33 @@ function generateReplyToTitle(
     }
 }
 
-function generateReplyToMessage(
-    spaceId: string,
-    townName: string | undefined,
-    channelId: string,
-    channelName: string | undefined,
-    sender: string | undefined,
-    plaintext: PlaintextDetails | undefined,
-    attachmentKind?: NotificationAttachmentKind,
-    reaction?: boolean,
-): NotificationReplyTo {
-    const title = generateReplyToTitle(sender, townName, channelName)
+interface ReplyToMessageInput {
+    spaceId: string
+    townName: string | undefined
+    channelId: string
+    channelName: string | undefined
+    senderName: string | undefined
+    plaintext: PlaintextDetails | undefined
+    attachmentKind?: NotificationAttachmentKind
+    reaction?: boolean
+    threadId?: string
+}
+
+function generateReplyToMessage({
+    spaceId,
+    townName,
+    channelId,
+    channelName,
+    senderName,
+    plaintext,
+    attachmentKind,
+    reaction,
+    threadId,
+}: ReplyToMessageInput): NotificationReplyTo {
+    const title = generateReplyToTitle(senderName, townName, channelName)
     let body = plaintext?.body
     if (reaction) {
-        const senderText = stringHasValue(sender) ? `@${sender}` : 'Someone'
+        const senderText = stringHasValue(senderName) ? `@${senderName}` : 'Someone'
 
         const reactionEmoji = emoji.get(plaintext?.reaction ?? '')
         let reactText = 'reacted'
@@ -479,14 +492,14 @@ function generateReplyToMessage(
         body = generateAttachmentBody(attachmentKind)
     } else if (!body) {
         switch (true) {
-            case stringHasValue(channelName) && stringHasValue(sender):
-                body = `@${sender} replied to a thread in #${channelName} that you're participating in`
+            case stringHasValue(channelName) && stringHasValue(senderName):
+                body = `@${senderName} replied to a thread in #${channelName} that you're participating in`
                 break
-            case stringHasValue(channelName) && !stringHasValue(sender):
+            case stringHasValue(channelName) && !stringHasValue(senderName):
                 body = `A thread in #${channelName} that you're participating in has a new reply`
                 break
-            case !stringHasValue(channelName) && stringHasValue(sender):
-                body = `@${sender} replied to a thread that you're a part of in ${townName}`
+            case !stringHasValue(channelName) && stringHasValue(senderName):
+                body = `@${senderName} replied to a thread that you're a part of in ${townName}`
                 break
             default:
                 body = `A thread you're a part of in ${townName} has a new reply`
@@ -497,7 +510,7 @@ function generateReplyToMessage(
         kind: AppNotificationType.ReplyTo,
         spaceId,
         channelId,
-        threadId: plaintext?.threadId ?? '',
+        threadId: plaintext?.threadId ? plaintext.threadId : threadId ?? '',
         title,
         body,
     }
@@ -608,16 +621,17 @@ async function getNotificationContent(
                 plaintext,
             )
         case AppNotificationType.ReplyTo:
-            return generateReplyToMessage(
-                notification.content.spaceId,
+            return generateReplyToMessage({
+                spaceId: notification.content.spaceId,
                 townName,
-                notification.content.channelId,
+                channelId: notification.content.channelId,
                 channelName,
                 senderName,
                 plaintext,
-                notification.content.attachmentOnly,
-                notification.content.reaction,
-            )
+                attachmentKind: notification.content.attachmentOnly,
+                reaction: notification.content.reaction,
+                threadId: notification.content.threadId,
+            })
 
         default:
             return undefined
@@ -656,7 +670,7 @@ async function tryDecryptEvent(
         try {
             log('tryDecryptEvent', event)
             plaintext = await decrypt(userId, databaseName, channelId, encryptedData)
-            log(`decrypt returns "${plaintext}"`)
+            log('decrypted plaintext', plaintext)
             return plaintext
         } catch (error) {
             logError('error decrypting', error)
@@ -672,12 +686,12 @@ async function tryDecryptEvent(
         if (plaintext) {
             plaintext.refEventId = encryptedData.refEventId
             plaintext.body = htmlToText(plaintext.body)
-            log('plaintext', { plaintext: plaintext.body })
+            log('plaintext', { plaintext: plaintext.body, refEventId: plaintext.refEventId })
         }
     } catch (error) {
         logError('error decrypting event', error)
     }
 
-    log(`tryDecryptEvent result: "${plaintext}"`)
+    log('tryDecryptEvent result:', plaintext)
     return plaintext
 }
