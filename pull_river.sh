@@ -293,7 +293,7 @@ confirmContinue "Subtree pull complete. Would you like to continue?"
 if ! git diff main --quiet --cached; then
 
     SUBTREE_MERGE_MESSAGE="$(RIVER_ALLOW_COMMIT=true git commit --dry-run)"
-    RIVER_ALLOW_COMMIT=true git commit -m "git subtree pull --prefix=${SUBTREE_PREFIX} ${SUBTREE_REPO} ${SUBTREE_BRANCH} --squash" -m "$SUBTREE_MERGE_MESSAGE"
+    RIVER_ALLOW_COMMIT=true git commit -m "./pull_river.sh --prefix=${SUBTREE_PREFIX} ${SUBTREE_REPO} ${SUBTREE_BRANCH} --squash" -m "$SUBTREE_MERGE_MESSAGE"
     echo "Subtree changes committed."
 
     # Run yarn, commit new yarn.lock, and check for build breakages
