@@ -6,6 +6,14 @@ import * as Lib from 'use-towns-client'
 import { TestApp } from 'test/testUtils'
 import { AppPanelLayout } from './AppPanelLayout'
 
+vi.mock('zustand', async (importOriginal) => {
+    const actual = (await vi.importActual('zustand')) as typeof import('zustand')
+    return {
+        ...actual,
+        createStore: actual.createStore,
+    }
+})
+
 const Wrapper = () => {
     return (
         <TestApp>

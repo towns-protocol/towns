@@ -27,7 +27,7 @@ import {
     makeSignerContext,
     userIdFromAddress,
 } from '@river/sdk'
-import { Permission, IArchitectBase, IRuleEntitlement } from '@river-build/web3'
+import { Permission, IArchitectBase, IRuleEntitlement, createSpaceDapp } from '@river-build/web3'
 import { bin_fromHexString } from '@river-build/dlog'
 
 import { foundry } from 'viem/chains'
@@ -66,6 +66,7 @@ export class TownsTestClient extends TownsClient {
 
     constructor(name: string, props?: TownsTestClientProps, wallet?: ethers.Wallet) {
         const provider = new TownsTestWeb3Provider(wallet)
+        const spaceDapp = createSpaceDapp(provider, provider.config.base.chainConfig)
         // super
         super(
             {
@@ -83,6 +84,7 @@ export class TownsTestClient extends TownsClient {
                 },
                 verbose: true,
             },
+            spaceDapp,
             name,
         )
         this.props = props

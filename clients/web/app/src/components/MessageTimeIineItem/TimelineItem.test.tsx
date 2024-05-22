@@ -22,6 +22,14 @@ interface MessageContent {
     body: string
 }
 
+vi.mock('zustand', async (importOriginal) => {
+    const actual = (await vi.importActual('zustand')) as typeof import('zustand')
+    return {
+        ...actual,
+        createStore: actual.createStore,
+    }
+})
+
 vi.mock('use-towns-client', async () => {
     return {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

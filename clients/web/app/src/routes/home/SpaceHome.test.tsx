@@ -14,6 +14,14 @@ vi.mock('react-router', async () => {
     }
 })
 
+vi.mock('zustand', async (importOriginal) => {
+    const actual = (await vi.importActual('zustand')) as typeof import('zustand')
+    return {
+        ...actual,
+        createStore: actual.createStore,
+    }
+})
+
 const mockSpaceData: Lib.SpaceData = {
     id: 'some-stream-id',
     name: 'test space',

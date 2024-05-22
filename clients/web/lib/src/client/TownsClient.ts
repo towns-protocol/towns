@@ -61,13 +61,7 @@ import {
     TransactionOrUserOperation,
     Address,
 } from '../types/web3-types'
-import {
-    createSpaceDapp,
-    IArchitectBase,
-    Permission,
-    SpaceInfo,
-    ISpaceDapp,
-} from '@river-build/web3'
+import { IArchitectBase, Permission, SpaceInfo, ISpaceDapp } from '@river-build/web3'
 import { BlockchainTransactionStore } from './BlockchainTransactionStore'
 import { UserOps, getTransactionHashOrUserOpHash, isUserOpResponse } from '@towns/userops'
 import AnalyticsService, { AnalyticsEvents } from '../utils/analyticsService'
@@ -105,13 +99,13 @@ export class TownsClient
     private userOps: UserOps | undefined = undefined
     private supportedXChainIds: number[] | undefined
 
-    constructor(opts: TownsOpts, name?: string) {
+    constructor(opts: TownsOpts, spaceDapp: ISpaceDapp, name?: string) {
         super()
         this.opts = opts
         this.name = name || Math.random().toString(36).substring(7)
         console.log('~~~ new TownsClient ~~~', this.name, this.opts)
         AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.ClientWrapperCreated)
-        this.spaceDapp = createSpaceDapp(opts.baseProvider, opts.baseConfig)
+        this.spaceDapp = spaceDapp
 
         if (opts.accountAbstractionConfig?.aaRpcUrl) {
             this.userOps = new UserOps({

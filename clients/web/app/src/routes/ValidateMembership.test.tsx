@@ -11,6 +11,14 @@ import { ValidateMembership } from './ValidateMembership'
 
 const ValidSpaceContent = () => <>Valid space content</>
 
+vi.mock('zustand', async (importOriginal) => {
+    const actual = (await vi.importActual('zustand')) as typeof import('zustand')
+    return {
+        ...actual,
+        createStore: actual.createStore,
+    }
+})
+
 vi.mock('use-towns-client', async () => {
     const actual = (await vi.importActual('use-towns-client')) as typeof Lib
 

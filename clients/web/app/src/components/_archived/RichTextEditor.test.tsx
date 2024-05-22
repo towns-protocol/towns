@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import { describe, expect, test, vi } from 'vitest'
 import React from 'react'
 import { UserLookupContext } from 'use-towns-client/dist/components/UserLookupContext'
 import {
@@ -9,7 +10,6 @@ import {
     makeProviderFromChain,
     makeProviderFromConfig,
 } from 'use-towns-client'
-import { describe, expect, test } from 'vitest'
 import { getCustomBaseChain, getCustomRiverChain } from 'customChains'
 import { RichTextEditor } from './RichTextEditor'
 
@@ -17,6 +17,14 @@ const environmentId = 'gamma'
 const web3Deployment = getWeb3Deployment(environmentId)
 const baseChain = getCustomBaseChain(web3Deployment.base.chainId)!
 const riverChain = getCustomRiverChain(web3Deployment.river.chainId)!
+
+vi.mock('zustand', async (importOriginal) => {
+    const actual = (await vi.importActual('zustand')) as typeof import('zustand')
+    return {
+        ...actual,
+        createStore: actual.createStore,
+    }
+})
 
 const Wrapper = (props: { children: React.ReactElement }) => {
     return (

@@ -15,6 +15,7 @@ import TypedEmitter from 'typed-emitter'
 import { staticAssertNever } from '../utils/towns-utils'
 import AnalyticsService, { AnalyticsEvents } from '../utils/analyticsService'
 import { useNetworkStatus } from './use-network-status'
+import { useSpaceDapp } from './use-space-dapp'
 
 export const useTownsClientListener = (opts: TownsOpts) => {
     const { setLoginStatus: setCasablancaLoginStatus, setLoginError: setCasablancaLoginError } =
@@ -25,9 +26,10 @@ export const useTownsClientListener = (opts: TownsOpts) => {
     const [signerContext, setSignerContext] = useState<SignerContext>()
     const clientSingleton = useRef<ClientStateMachine>()
     const { isOffline } = useNetworkStatus()
+    const spaceDapp = useSpaceDapp({ provider: opts.baseProvider, config: opts.baseConfig })
 
     if (!clientSingleton.current) {
-        const townsClient = new TownsClient(opts)
+        const townsClient = new TownsClient(opts, spaceDapp)
         clientSingleton.current = new ClientStateMachine(townsClient)
     }
 
