@@ -58,6 +58,7 @@ export const UserProfile = (props: Props) => {
     const { usersMap } = useUserLookupContext()
     const user = userId ? usersMap[userId] : undefined
     const [showNftProfilePicture, setShowNftProfilePicture] = useState(false)
+    const [isRemovingNft, setIsRemovingNft] = useState(false)
 
     const { setNft } = useSetNftProfilePicture()
     const streamId = useCurrentStreamID()
@@ -68,12 +69,21 @@ export const UserProfile = (props: Props) => {
             }
             event.stopPropagation()
             event.preventDefault()
+            setIsRemovingNft(true)
             setNft(streamId, '', 0, '')
         },
         [setNft, streamId],
     )
     const resolvedNft = useResolveNft({ walletAddress: userId ?? '', info: user?.nft })
     const { mutateAsync: mutateAsyncBio } = useSetUserBio(abstractAccountAddress)
+
+    const hasNftProfilePicture = useMemo(() => !!user?.nft, [user?.nft])
+
+    useEffect(() => {
+        if (!hasNftProfilePicture) {
+            setIsRemovingNft(false)
+        }
+    }, [hasNftProfilePicture])
 
     const resourceId = useMemo(() => {
         return abstractAccountAddress ?? ''
@@ -167,13 +177,21 @@ export const UserProfile = (props: Props) => {
 
                         <Box grow />
 
-                        {canEdit && user?.nft && (
-                            <IconButton
-                                icon="close"
-                                size="square_xs"
-                                color="default"
-                                onClick={onClearNft}
-                            />
+                        {canEdit && hasNftProfilePicture ? (
+                            isRemovingNft ? (
+                                <Box padding="xs">
+                                    <ButtonSpinner square="square_xs" />
+                                </Box>
+                            ) : (
+                                <IconButton
+                                    icon="close"
+                                    size="square_xs"
+                                    color="default"
+                                    onClick={onClearNft}
+                                />
+                            )
+                        ) : (
+                            <></>
                         )}
                     </Stack>
                 )}
