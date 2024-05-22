@@ -8,10 +8,12 @@ const PRIVY_OAUTH_STATE = 'privy_oauth_state'
 
 export function usePublicPageLoginFlow() {
     const spaceId = useSpaceIdFromPathname()
-    const { joiningSpace, setJoiningSpace, clear } = publicPageLoginStore(
+    const { joiningSpace, setJoiningSpace, setJoinStep, joinStep, clear } = publicPageLoginStore(
         useShallow((s) => ({
             joiningSpace: s.joiningSpace,
+            joinStep: s.joinStep,
             setJoiningSpace: s.setJoiningSpace,
+            setJoinStep: s.setJoinStep,
             clear: s.clear,
         })),
     )
@@ -28,8 +30,10 @@ export function usePublicPageLoginFlow() {
             start,
             end: clear,
             joiningSpace,
+            joinStep,
+            setJoinStep,
         }),
-        [start, clear, joiningSpace],
+        [start, clear, joiningSpace, joinStep, setJoinStep],
     )
 }
 
@@ -55,11 +59,22 @@ function updateQueryStringValueWithoutNavigation(queryKey: string, queryValue: s
     window.history.replaceState(null, '', newUrl)
 }
 
+export enum JoinStep {
+    None,
+    JoinedTown,
+    JoinedDefaultChannel,
+    Done,
+}
+
 const publicPageLoginStore = create<{
     joiningSpace: string | undefined
+    joinStep: JoinStep
+    setJoinStep: (step: JoinStep) => void
     setJoiningSpace: (isJoining: string) => void
     clear: () => void
 }>((set) => ({
+    joinStep: JoinStep.None,
+    setJoinStep: (joinStep) => set({ joinStep }),
     joiningSpace:
         // check privy oauth state also to prevent getting into join flow if user refreshes in the middle of the flow
         params.has(PRIVY_OAUTH_STATE) && params.has(JOIN)
@@ -73,6 +88,7 @@ const publicPageLoginStore = create<{
         updateQueryStringValueWithoutNavigation(JOIN, '')
         set({
             joiningSpace: undefined,
+            joinStep: JoinStep.None,
         })
     },
 }))

@@ -25,7 +25,7 @@ export const PlaygroundRoutes = () => {
                 <Route path="colors" element={<PageColors />} />
                 <Route path="tooltips" element={<PageTooltips />} />
                 <Route path="buttons" element={<PageButtons />} />
-                <Route path="nodeviz" element={<PageProgressOverlay />} />
+                <Route path="overlays" element={<PageProgressOverlay />} />
                 {env.DEV && <Route path="upload" element={<UploadImageDebugger />} />}
             </Route>
         </Routes>

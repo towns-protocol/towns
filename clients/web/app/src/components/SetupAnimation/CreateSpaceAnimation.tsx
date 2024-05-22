@@ -7,8 +7,9 @@ import { NodeAnimationLoader } from '@components/NodeAnimation/NodeAnimationLoad
 import { Box, Icon, Paragraph, Stack } from '@ui'
 import { useStore } from 'store/store'
 import { Figma } from 'ui/styles/palette'
-import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
+
 import { useDummyNodes } from './hooks/useDummyNodes'
+import { SetupChecklist } from './SetupChecklist'
 
 export const CreateSpaceAnimation = () => {
     const darkMode = useStore((state) => state.getTheme() === 'dark')
@@ -45,56 +46,12 @@ export const CreateSpaceAnimation = () => {
                 <NodeAnimationContext.Provider value={config}>
                     <NodeAnimationLoader skipPlaceholder showSparklingDots maxWidth="250" />
                 </NodeAnimationContext.Provider>
-                <Steps steps={steps} step={0} />
+                <SetupChecklist steps={steps} step={0} />
                 <Disclaimer />
             </Stack>
         </Stack>
     )
 }
-
-const Steps = (props: { steps: string[]; step: number }) => {
-    return (
-        <Stack gap="sm" width="100%" padding="sm">
-            {props.steps.map((step, index) => (
-                <Step
-                    key={step}
-                    step={step}
-                    state={index === props.step ? 'progress' : index < props.step ? 'done' : 'todo'}
-                />
-            ))}
-        </Stack>
-    )
-}
-
-const Step = (props: { step: string; state: 'progress' | 'done' | 'todo' }) => {
-    return (
-        <Stack horizontal gap padding="sm">
-            <Box centerContent width="x4">
-                {props.state === 'done' ? (
-                    <Checkmark />
-                ) : props.state === 'progress' ? (
-                    <ButtonSpinner />
-                ) : (
-                    '•'
-                )}
-            </Box>
-            <Box justifyContent="center">
-                <Paragraph
-                    color={props.state === 'todo' ? 'gray2' : 'default'}
-                    fontWeight={props.state === 'done' ? 'strong' : 'normal'}
-                >
-                    {props.step}
-                </Paragraph>
-            </Box>
-        </Stack>
-    )
-}
-
-const Checkmark = () => (
-    <Box centerContent width="x3" aspectRatio="1/1" borderRadius="full" background="positive">
-        <Icon type="check" size="square_xs" />
-    </Box>
-)
 
 const Disclaimer = () => (
     <Box horizontal padding gap background="level2" rounded="xs">

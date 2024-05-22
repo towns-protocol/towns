@@ -51,10 +51,17 @@ export const useAppOverlayContent = (state: AppProgressState, isOptimisticInitia
         if (state === AppProgressState.LoadingAssets) {
             return <TransitionLogo key="logo" />
         }
-        if (
-            state === AppProgressState.LoggingIn ||
-            state === AppProgressState.InitializingWorkspace
-        ) {
+        if (state === AppProgressState.LoggingIn) {
+            return isOptimisticInitialized ? (
+                // we think we have already initialized the space, show the
+                // skeleton instead of risking a flash of the setup animation
+                <AppSkeletonView />
+            ) : (
+                <TransitionLogo key="logo" />
+            )
+        }
+
+        if (state === AppProgressState.InitializingWorkspace) {
             return isOptimisticInitialized ? (
                 // we think we have already initialized the space, show the
                 // skeleton instead of risking a flash of the setup animation
@@ -91,7 +98,6 @@ const TransitionContainer = (props: { children: React.ReactNode }) => {
             absoluteFill
             background="level1"
             {...transition}
-            border
             height="100vh"
             {...props}
         />

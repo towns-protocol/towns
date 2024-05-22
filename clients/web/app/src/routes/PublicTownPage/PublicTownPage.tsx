@@ -58,6 +58,12 @@ const PublicTownPageWithoutAuth = (props: { isPreview?: boolean; onClosePreview?
     }, [isTouch, location.pathname, location.search])
 
     useEffect(() => {
+        return () => {
+            console.log('[app progress] public town page unmounting')
+        }
+    }, [])
+
+    useEffect(() => {
         analytics?.page(
             'home-page',
             'public town page',

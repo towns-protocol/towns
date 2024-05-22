@@ -62,6 +62,7 @@ import { convertRuleDataToTokenFormSchema } from '@components/Tokens/utils'
 import { TokenImage } from '@components/Tokens/TokenSelector/TokenImage'
 import { useTokenMetadataForChainId } from 'api/lib/collectionMetadata'
 import { NetworkName } from '@components/Tokens/TokenSelector/NetworkName'
+import { useAppProgressStore } from '@components/AppProgressOverlay/store/appProgressStore'
 import { AllChannelsList } from './AllChannelsList/AllChannelsList'
 import { PublicTownPage } from './PublicTownPage/PublicTownPage'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
@@ -292,15 +293,23 @@ export const SpaceInfo = () => {
         setActiveModal('confirm-leave')
     }, [setActiveModal])
 
+    const setOptimisticSpaceInitialized = useAppProgressStore(
+        (state) => state.setOptimisticSpaceInitialized,
+    )
     const leaveTown = useCallback(async () => {
         if (!spaceID) {
             return
         }
+
         await leaveRoom(spaceID)
+
+        // clean up
+        setOptimisticSpaceInitialized(spaceID, false)
+
         setTimeout(() => {
             navigate('/')
         }, 1000)
-    }, [leaveRoom, navigate, spaceID])
+    }, [leaveRoom, navigate, setOptimisticSpaceInitialized, spaceID])
 
     const onEditSpaceNameClick = useCallback(() => {
         setActiveModal(CHANNEL_INFO_PARAMS.EDIT_MEMBERSHIP)
