@@ -91,7 +91,11 @@ export const AuthenticatedRoutes = () => {
                                     <Route path="*" element={<TownRoutes />} />
                                 </Route>
                             </Route>
-                            <Route path="*" element={<OutsideTownRoutes />} />
+                            <Route element={<TouchHome />}>
+                                <Route path="me" element={<SpaceProfilePanel />} />
+                                {/* catch all */}
+                                <Route path="*" element={<NoJoinedSpacesFallback />} />
+                            </Route>
                         </Route>
                     </>
                 ) : (
@@ -173,7 +177,7 @@ const OutsideTownRoutes = () => {
             {messageRoutes}
             {/* catch all */}
             <Route path="*" element={<NoJoinedSpacesFallback />}>
-                <Route path="me" element={<SpaceProfilePanel />} />,
+                <Route path="me" element={<SpaceProfilePanel />} />
             </Route>
         </Routes>
     )

@@ -33,17 +33,14 @@ export const TouchTabBar = () => {
         return createLink({ route: 'messages' })
     }, [createLink])
 
-    if (!space) {
-        return null
-    }
-
     return (
         <Box borderTop background="level2" paddingBottom="safeAreaInsetBottom">
             {recentlyMintedSpaceToken && (
                 <MintAnimation targetRef={targetRef} info={recentlyMintedSpaceToken} />
             )}
-            <Stack horizontal width="100%" background="level2" display="flex" paddingY="sm">
+            <Stack horizontal width="100%" background="level2" paddingY="sm" alignContent="end">
                 <TabBarItem
+                    disabled={!space}
                     title="Home"
                     icon={(highlighted: boolean) => (
                         <Box>
@@ -53,43 +50,42 @@ export const TouchTabBar = () => {
                                 inset="xxs"
                                 width="toolbar_icon"
                                 height="toolbar_icon"
-                                spaceId={space?.id}
-                                firstLetterOfSpaceName={space?.name[0]}
+                                spaceId={space?.id ?? ''}
+                                firstLetterOfSpaceName={space?.name[0] ?? ''}
                                 overrideBorderRadius="sm"
                                 variant={ImageVariants.thumbnail50}
                                 fadeIn={false}
                             />
+
                             {showHasUnreadBadgeForCurrentSpace && <Dot position="topRight" />}
                         </Box>
                     )}
-                    to={`/${PATHS.SPACES}/${space.id}`}
+                    to={`/${PATHS.SPACES}/${space?.id}`}
                     scrollToTopId={TouchScrollToTopScrollId.HomeTabScrollId}
                     highlightPattern={`${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/*`}
                 />
 
-                {messageLink && (
-                    <TabBarItem
-                        title="DMs"
-                        icon={() => (
-                            <Box>
-                                <Icon type="inbox" size="toolbar_icon" padding="xxs" />
-                                {hasUnreadDMs && <Dot position="topRight" />}
-                            </Box>
-                        )}
-                        to={`${messageLink}?stackId=${PanelStack.DIRECT_MESSAGES}`}
-                        scrollToTopId={TouchScrollToTopScrollId.SearchTabScrollId}
-                        onPressTwice={() => {
-                            document
-                                .getElementById(TouchScrollToTopScrollId.SearchTabInputId)
-                                ?.focus()
-                        }}
-                    />
-                )}
+                <TabBarItem
+                    disabled={!space}
+                    title="DMs"
+                    icon={() => (
+                        <Box>
+                            <Icon type="inbox" size="toolbar_icon" padding="xxs" />
+                            {hasUnreadDMs && <Dot position="topRight" />}
+                        </Box>
+                    )}
+                    to={`${messageLink}?stackId=${PanelStack.DIRECT_MESSAGES}`}
+                    scrollToTopId={TouchScrollToTopScrollId.SearchTabScrollId}
+                    onPressTwice={() => {
+                        document.getElementById(TouchScrollToTopScrollId.SearchTabInputId)?.focus()
+                    }}
+                />
 
                 <TabBarItem
+                    disabled={!space}
                     title="Search"
                     icon={() => <Icon type="search" size="toolbar_icon" />}
-                    to={`/${PATHS.SPACES}/${space.id}/${PATHS.SEARCH}`}
+                    to={`/${PATHS.SPACES}/${space?.id}/${PATHS.SEARCH}`}
                     scrollToTopId={TouchScrollToTopScrollId.SearchTabScrollId}
                     onPressTwice={() => {
                         document.getElementById(TouchScrollToTopScrollId.SearchTabInputId)?.focus()
@@ -104,7 +100,7 @@ export const TouchTabBar = () => {
                         </Box>
                     )}
                     scrollToTopId={TouchScrollToTopScrollId.ProfileTabScrollId}
-                    to={`/${PATHS.SPACES}/${space.id}/${PATHS.PROFILE}/me`}
+                    to={space ? `/${PATHS.SPACES}/${space?.id}/${PATHS.PROFILE}/me` : `/me`}
                     ref={targetRef}
                 />
             </Stack>
@@ -120,6 +116,7 @@ type TabBarItemProps = {
     scrollToTopId: TouchScrollToTopScrollId
     icon: (highlighted: boolean) => React.ReactNode
     onPressTwice?: () => void
+    disabled?: boolean
 }
 
 const TabBarItem = forwardRef<HTMLElement, TabBarItemProps>((props, ref) => {
@@ -161,10 +158,11 @@ const TabBarItem = forwardRef<HTMLElement, TabBarItemProps>((props, ref) => {
             alignItems="center"
             color={isHighlighted ? 'default' : 'gray2'}
             gap="xs"
-            onClick={onClick}
+            style={{ opacity: props.disabled ? 0.5 : undefined }}
+            onClick={!props.disabled ? onClick : undefined}
         >
             <Box centerContent height="height_md" width="height_md" position="relative" ref={ref}>
-                {icon(isHighlighted)}
+                {icon(isHighlighted && !props.disabled)}
             </Box>
             <Text fontSize="xs" fontWeight="strong">
                 {title}

@@ -82,14 +82,16 @@ export const TouchLayoutHeader = (props: Props) => {
                 )}
                 <NodeStatusButton />
                 <BugReportButton />
-                <IconButton
-                    icon="info"
-                    color="default"
-                    size="square_md"
-                    padding="xs"
-                    background="none"
-                    onClick={onTokenClick}
-                />
+                {space && (
+                    <IconButton
+                        icon="info"
+                        color="default"
+                        size="square_md"
+                        padding="xs"
+                        background="none"
+                        onClick={onTokenClick}
+                    />
+                )}
             </Stack>
         </Box>
     )
