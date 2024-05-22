@@ -20,7 +20,7 @@ river/yarn.lock
 /artifacts
 .DS_Store
 coverage.json
-
+.idea/
 
 /docs
 

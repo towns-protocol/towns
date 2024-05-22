@@ -9,6 +9,7 @@ import {
 import { MessageType } from '../types/towns-types'
 import { useFullyReadMarkerStore } from '../store/use-fully-read-marker-store'
 import { useEffect, useMemo, useState } from 'react'
+import { markdownToPlainText } from '../utils/markdownToPlainText'
 
 export type MostRecentMessageInfo_OneOf =
     | MostRecentMessageInfoMedia
@@ -112,11 +113,12 @@ function toMostRecentMessageInfo(
     }
 
     switch (content.content?.msgType) {
-        case MessageType.Text:
+        case MessageType.Text: {
             return {
                 kind: 'text',
-                text: content.body,
+                text: markdownToPlainText(content.body),
             }
+        }
         case MessageType.Image:
             return {
                 kind: 'media',

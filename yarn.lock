@@ -21452,6 +21452,24 @@ __metadata:
   languageName: node
   linkType: hard
 
+"marked-plaintify@npm:^1.0.1":
+  version: 1.0.1
+  resolution: "marked-plaintify@npm:1.0.1"
+  peerDependencies:
+    marked: ">=7.0.0"
+  checksum: ad309b4396dc190c50cc35217248fa5cb07fd9927552aa3bf9044fe1772c005beeac0dac0d955ed5f07dbbf064993045ef91103d6fa3a0d15db0eb603a3b30f5
+  languageName: node
+  linkType: hard
+
+"marked@npm:^12.0.2":
+  version: 12.0.2
+  resolution: "marked@npm:12.0.2"
+  bin:
+    marked: bin/marked.js
+  checksum: 966422e2ba519294aa657bacb2e51784e4b641c1c8f15bdf9315878993c4ea09fe0d00ba2da761e443a3c52cc285c452644fd107ab0f356669bd5aac08d5c0bd
+  languageName: node
+  linkType: hard
+
 "match-all@npm:^1.2.6":
   version: 1.2.6
   resolution: "match-all@npm:1.2.6"
@@ -29545,6 +29563,8 @@ __metadata:
     jest-runner-groups: ^2.2.0
     json-bigint: ^1.0.0
     lodash: ^4.17.21
+    marked: ^12.0.2
+    marked-plaintify: ^1.0.1
     node-emoji: ^1.11.0
     pino: ^8.17.1
     react: ^18.2.0
