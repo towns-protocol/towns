@@ -93,9 +93,7 @@ export const LargeUploadImageTemplate = <T extends FieldValues>(props: Props<T>)
 
     return (
         <Box position="relative" data-testid="upload-image-container">
-            <Box className={isPending ? loadingStyles : ''} onClick={onClick}>
-                {children}
-            </Box>
+            <Box className={isPending ? loadingStyles : ''}>{children}</Box>
 
             {isPending && (
                 <>
@@ -143,6 +141,12 @@ export const LargeUploadImageTemplate = <T extends FieldValues>(props: Props<T>)
                             border={noImage ? 'none' : 'strongLevel1'}
                             padding="md"
                             cursor="pointer"
+                            pointerEvents="all"
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                e.preventDefault()
+                                onClick()
+                            }}
                         >
                             <Icon
                                 type="camera"
