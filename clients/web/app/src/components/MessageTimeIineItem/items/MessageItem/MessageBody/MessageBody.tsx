@@ -94,11 +94,10 @@ const useHideAttachementLinks = (body: string, attachedLinks: string[]) => {
         if (!attachedLinks?.length) {
             return body
         }
-        if (attachedLinks.length === 1) {
-            const link = attachedLinks[0]
-            return body.trim().startsWith(link) || body.trim().endsWith(link)
-                ? body.replace(link, '')
-                : body
+        const link = attachedLinks?.[0]
+        if (link?.match(/^https:\/\/[a-z.]+\.towns\.com\//i)) {
+            // body is a single markdown link to the attachment
+            return body === `[${link}](${link})` ? '' : body
         }
         return body
     }, [attachedLinks, body])
