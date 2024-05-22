@@ -449,14 +449,19 @@ const NftProfilePicture = (props: { onHide: () => void; userId: string; currentN
     const [selectedNft, setSelectedNft] = useState<Nft | undefined>(currentNft)
     const [pendingSaveNft, setPendingSaveNft] = useState<Nft | undefined>(undefined)
 
-    useEffect(() => {
-        if (
+    const isNftSaved = useMemo(
+        () =>
             currentNft?.contractAddress &&
-            currentNft?.contractAddress == pendingSaveNft?.contractAddress
-        ) {
+            currentNft?.contractAddress == pendingSaveNft?.contractAddress,
+        [currentNft?.contractAddress, pendingSaveNft?.contractAddress],
+    )
+
+    useEffect(() => {
+        if (isNftSaved) {
             setPendingSaveNft(undefined)
+            onHide()
         }
-    }, [currentNft, pendingSaveNft])
+    }, [isNftSaved, onHide, pendingSaveNft])
 
     const displayableNfts = useMemo(() => {
         if (!nfts) {
@@ -482,7 +487,7 @@ const NftProfilePicture = (props: { onHide: () => void; userId: string; currentN
         }
         setNft(streamId, selectedNft.tokenId, selectedNft.chainId, selectedNft.contractAddress)
         setPendingSaveNft(selectedNft)
-    }, [setNft, streamId, selectedNft])
+    }, [selectedNft, streamId, setNft])
 
     const onSelectNft = useCallback(
         (nft: { tokenId: string; contractAddress: string; chainId: number }) => {
@@ -496,9 +501,7 @@ const NftProfilePicture = (props: { onHide: () => void; userId: string; currentN
 
     const saveInProgress = !!pendingSaveNft
     const saveButtonEnabled =
-        !saveInProgress &&
-        selectedNft?.contractAddress != currentNft?.contractAddress &&
-        selectedNft?.tokenId != currentNft?.tokenId
+        !saveInProgress && !isNftSaved && selectedNft?.tokenId != currentNft?.tokenId
     const { openPanel } = usePanelActions()
     const onViewLinkedWalletsClick = useCallback(() => {
         openPanel(CHANNEL_INFO_PARAMS.WALLETS)

@@ -385,9 +385,11 @@ const EnsDisplayNameModal = (props: { currentEnsName?: string; onHide: () => voi
         if (!streamId) {
             return
         }
-        void setEnsName(streamId, selectedWallet)
         setPendingWallet(selectedWallet)
-    }, [setEnsName, streamId, selectedWallet])
+        setEnsName(streamId, selectedWallet).then(() => {
+            onHide()
+        })
+    }, [streamId, selectedWallet, setEnsName, onHide])
 
     const saveInProgress = pendingWallet != currentEnsName
     const saveButtonEnabled = !saveInProgress && selectedWallet != currentEnsName
