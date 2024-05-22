@@ -154,9 +154,10 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
         const value = [
             ...channelItems.filter(
                 (c) =>
-                    (c.unread && joinedChannels.has(c.id)) ||
-                    c.channel.id === persistUnreadId ||
-                    prevUnreads.current.includes(c.id),
+                    ((c.unread && joinedChannels.has(c.id)) ||
+                        c.channel.id === persistUnreadId ||
+                        prevUnreads.current.includes(c.id)) &&
+                    !c.muted,
             ),
             ...dmItems.filter(
                 (c) =>
