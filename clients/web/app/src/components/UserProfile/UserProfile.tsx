@@ -446,6 +446,7 @@ const NftProfilePicture = (props: { onHide: () => void; userId: string; currentN
     const { nfts, isFetching } = useNfts(userId)
     const { setNft } = useSetNftProfilePicture()
     const streamId = useCurrentStreamID()
+    const { openPanel } = usePanelActions()
     const [selectedNft, setSelectedNft] = useState<Nft | undefined>(currentNft)
     const [pendingSaveNft, setPendingSaveNft] = useState<Nft | undefined>(undefined)
 
@@ -502,10 +503,11 @@ const NftProfilePicture = (props: { onHide: () => void; userId: string; currentN
     const saveInProgress = !!pendingSaveNft
     const saveButtonEnabled =
         !saveInProgress && !isNftSaved && selectedNft?.tokenId != currentNft?.tokenId
-    const { openPanel } = usePanelActions()
+
     const onViewLinkedWalletsClick = useCallback(() => {
+        onHide()
         openPanel(CHANNEL_INFO_PARAMS.WALLETS)
-    }, [openPanel])
+    }, [onHide, openPanel])
 
     const hasNfts = displayableNfts.length > 0 && !isFetching
 

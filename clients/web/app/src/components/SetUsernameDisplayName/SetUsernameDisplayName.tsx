@@ -399,8 +399,9 @@ const EnsDisplayNameModal = (props: { currentEnsName?: string; onHide: () => voi
     const saveButtonEnabled = !saveInProgress && selectedWallet != currentEnsName
 
     const onViewLinkedWalletsClick = useCallback(() => {
+        onHide()
         openPanel(CHANNEL_INFO_PARAMS.WALLETS)
-    }, [openPanel])
+    }, [onHide, openPanel])
 
     const hasEnsName = ensNames.length > 0 && !isFetching
 
