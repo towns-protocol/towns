@@ -1,6 +1,5 @@
-import React, { useCallback, useContext, useRef } from 'react'
+import React, { useCallback, useContext, useMemo, useRef } from 'react'
 import { Permission, useConnectivity, useHasPermission, useTownsClient } from 'use-towns-client'
-import { isDefined } from '@river/sdk'
 import { EmojiPickerButton } from '@components/EmojiPickerButton'
 import { Box, BoxProps, IconButton, IconName, MotionStack, Paragraph, Stack } from '@ui'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
@@ -167,6 +166,33 @@ export const MessageContextMenu = (props: Props) => {
         setDeletePrompt('adminRedaction')
     }, [setDeletePrompt])
 
+    const submenuItems = useMemo(() => {
+        const submenuItems = []
+        if (props.canEdit) {
+            submenuItems.push({
+                key: 'edit',
+                disabled: !props.canEdit,
+                icon: 'edit',
+                text: 'Edit message',
+                shortcutAction: 'EditMessage' as const,
+                onClick: onEditClick,
+            } as const)
+        }
+
+        if (props.canEdit || (canRedact && spaceId)) {
+            submenuItems.push({
+                key: 'delete',
+                icon: 'delete',
+                text: 'Delete message',
+                color: 'error',
+                shortcutAction: 'DeleteMessage' as const,
+                onClick: props.canEdit ? onDeleteClick : onAdminRedact,
+            } as const)
+        }
+
+        return submenuItems
+    }, [canRedact, onAdminRedact, onDeleteClick, onEditClick, props.canEdit, spaceId])
+
     return (
         <MotionStack pointerEvents="auto" position="topRight" {...animation} ref={ref}>
             {/* extra space for hover */}
@@ -193,6 +219,7 @@ export const MessageContextMenu = (props: Props) => {
                             onSelectEmoji={onSelectEmoji}
                         />
                     )}
+
                     {props.canReply && (
                         <IconButton
                             icon="reply"
@@ -214,6 +241,7 @@ export const MessageContextMenu = (props: Props) => {
                         size="square_sm"
                         onClick={onMarkAsUnreadClick}
                     />
+
                     <IconButton
                         color={hasCopied ? 'positive' : 'gray2'}
                         tooltip={
@@ -224,43 +252,14 @@ export const MessageContextMenu = (props: Props) => {
                         onClick={onCopyLinkToMessage}
                     />
 
-                    {(props.canEdit || (canRedact && spaceId)) && (
+                    {submenuItems.length > 0 && (
                         <IconButton
                             icon="more"
                             size="square_sm"
                             tooltipOptions={{
                                 trigger: 'click',
                             }}
-                            tooltip={
-                                <Box paddingRight="x4" paddingY="sm" inset="xs" pointerEvents="all">
-                                    <Submenu
-                                        items={[
-                                            props.canEdit
-                                                ? ({
-                                                      key: 'edit',
-                                                      disabled: !props.canEdit,
-                                                      icon: 'edit',
-                                                      text: 'Edit message',
-                                                      shortcutAction: 'EditMessage' as const,
-                                                      onClick: onEditClick,
-                                                  } as const)
-                                                : undefined,
-                                            props.canEdit || (canRedact && spaceId)
-                                                ? ({
-                                                      key: 'delete',
-                                                      icon: 'delete',
-                                                      text: 'Delete message',
-                                                      color: 'error',
-                                                      shortcutAction: 'DeleteMessage' as const,
-                                                      onClick: props.canEdit
-                                                          ? onDeleteClick
-                                                          : onAdminRedact,
-                                                  } as const)
-                                                : undefined,
-                                        ].filter(isDefined)}
-                                    />
-                                </Box>
-                            }
+                            tooltip={<Submenu items={submenuItems} />}
                         />
                     )}
                 </Stack>
@@ -291,40 +290,42 @@ const Submenu = (props: {
 }) => {
     const numItems = props.items.length
     return (
-        <Box background="level2" rounded="md" boxShadow="card">
-            {props.items.map((item, i) => {
-                const isFirst = i === 0
-                const isLast = i === numItems - 1
-                return (
-                    <Stack
-                        horizontal
-                        hoverable
-                        key={item.key}
-                        cursor="pointer"
-                        background="level2"
-                        gap="sm"
-                        alignItems="center"
-                        padding="md"
-                        paddingBottom={!isLast ? 'sm' : 'md'}
-                        paddingTop={isFirst ? 'md' : 'sm'}
-                        roundedTop={isFirst ? 'md' : 'none'}
-                        roundedBottom={isLast ? 'md' : 'none'}
-                        color={item.color}
-                        onClick={item.onClick}
-                    >
-                        <IconButton background="level3" icon={item.icon} color={item.color} />
-                        <Paragraph>{item.text}</Paragraph>
-                        <Box grow horizontal justifyContent="end">
-                            {item.shortcutAction && ShortcutActions[item.shortcutAction] && (
-                                <ShortcutKeys
-                                    keys={ShortcutActions[item.shortcutAction].keys as string}
-                                    size="sm"
-                                />
-                            )}
-                        </Box>
-                    </Stack>
-                )
-            })}
+        <Box paddingRight="x4" paddingY="sm" inset="xs" pointerEvents="all">
+            <Box background="level2" rounded="md" boxShadow="card">
+                {props.items.map((item, i) => {
+                    const isFirst = i === 0
+                    const isLast = i === numItems - 1
+                    return (
+                        <Stack
+                            horizontal
+                            hoverable
+                            key={item.key}
+                            cursor="pointer"
+                            background="level2"
+                            gap="sm"
+                            alignItems="center"
+                            padding="md"
+                            paddingBottom={!isLast ? 'sm' : 'md'}
+                            paddingTop={isFirst ? 'md' : 'sm'}
+                            roundedTop={isFirst ? 'md' : 'none'}
+                            roundedBottom={isLast ? 'md' : 'none'}
+                            color={item.color}
+                            onClick={item.onClick}
+                        >
+                            <IconButton background="level3" icon={item.icon} color={item.color} />
+                            <Paragraph>{item.text}</Paragraph>
+                            <Box grow horizontal justifyContent="end">
+                                {item.shortcutAction && ShortcutActions[item.shortcutAction] && (
+                                    <ShortcutKeys
+                                        keys={ShortcutActions[item.shortcutAction].keys as string}
+                                        size="sm"
+                                    />
+                                )}
+                            </Box>
+                        </Stack>
+                    )
+                })}
+            </Box>
         </Box>
     )
 }
