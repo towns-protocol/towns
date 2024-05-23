@@ -192,7 +192,7 @@ export class UserOps {
         // 4 - sign the user operation
         userOp.useMiddleware(async (ctx) => signUserOpHash(ctx, args.signer))
 
-        async function sendUserOperationWithRetry() {
+        const sendUserOperationWithRetry = async () => {
             let attempt = 0
             let shouldTry = true
             let _error: CodeException | undefined = undefined
@@ -215,7 +215,10 @@ export class UserOps {
                         preverificationGasMultiplierValue++
                         await new Promise((resolve) => setTimeout(resolve, 500))
                         // this is a paid op. just retry until the user dismisses
-                        if (userOp.getPaymasterAndData() === '0x') {
+                        if (
+                            userOp.getPaymasterAndData() === '0x' &&
+                            !this.skipPromptUserOnPMRejectedOp
+                        ) {
                             continue
                         }
 
