@@ -106,6 +106,8 @@ const envSchema = z.object({
     VITE_ADDRESS_FOR_MAINNET_TOKENS_DEV: z.string().optional(),
     VITE_ENABLE_SLATE_PREVIEW: boolish.default(true),
     // Analytics keys
+    VITE_RUDDERSTACK_API_CONFIG_URL: z.string().url().optional(),
+    VITE_RUDDERSTACK_CDN_SDK_URL: z.string().url().optional(),
     VITE_RUDDERSTACK_DATA_PLANE_URL: z.string().url().optional(),
     VITE_RUDDERSTACK_WRITE_KEY: z.string().optional(),
 })

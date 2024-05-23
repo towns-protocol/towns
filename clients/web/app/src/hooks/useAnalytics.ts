@@ -12,8 +12,10 @@ export function useAnalytics() {
     const anonymousId = useMemo(() => getAnonymousId(), [])
     const writeKey = env.VITE_RUDDERSTACK_WRITE_KEY
     const dataPlaneUrl = env.VITE_RUDDERSTACK_DATA_PLANE_URL
+    const destSDKBaseURL = env.VITE_RUDDERSTACK_CDN_SDK_URL
+    const configUrl = env.VITE_RUDDERSTACK_API_CONFIG_URL
     const isProd = !env.DEV && !isTest()
-    const isAnalyticsConfigured = writeKey && dataPlaneUrl
+    const isAnalyticsConfigured = writeKey && dataPlaneUrl && destSDKBaseURL && configUrl
 
     const _setPseudoId = useCallback((userId: string) => {
         const pseudoId = getPseudoId(userId)
@@ -29,6 +31,8 @@ export function useAnalytics() {
                 const analyticsInstance = new RudderAnalytics()
                 analyticsInstance.load(writeKey, dataPlaneUrl, {
                     useBeacon: true,
+                    destSDKBaseURL,
+                    configUrl,
                 })
                 analyticsInstance.ready(() => {
                     console.log('[analytics] Analytics is ready!')
@@ -37,7 +41,15 @@ export function useAnalytics() {
                 setAnalytics(analyticsInstance)
             }
         }
-    }, [analytics, dataPlaneUrl, isAnalyticsConfigured, isProd, writeKey])
+    }, [
+        analytics,
+        configUrl,
+        dataPlaneUrl,
+        destSDKBaseURL,
+        isAnalyticsConfigured,
+        isProd,
+        writeKey,
+    ])
 
     return {
         analytics,
