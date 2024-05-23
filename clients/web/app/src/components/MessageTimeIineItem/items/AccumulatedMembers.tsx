@@ -1,6 +1,5 @@
-import React, { useMemo } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import uniqBy from 'lodash/uniqBy'
-import { Link } from 'react-router-dom'
 import { firstBy } from 'thenby'
 import { Address, LookupUserMap, Membership, useUserLookupContext } from 'use-towns-client'
 import { Box, Paragraph, Stack, Tooltip } from '@ui'
@@ -10,6 +9,7 @@ import { AvatarStack } from 'routes/AvatarStack'
 import { getNameListFromUsers } from '@components/UserList/UserList'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { AccumulatedRoomMemberRenderEvent } from '../../MessageTimeline/util/getEventsByDate'
 
 type Props = {
@@ -180,16 +180,22 @@ const UserNameLink = (props: UserNameLinkProps) => {
         },
     )
 
+    const { openPanel } = usePanelActions()
+
+    const onClick = useCallback(() => {
+        openPanel('profile', { profileId: abstractAccountAddress })
+    }, [abstractAccountAddress, openPanel])
+
     return (
-        <Link to={`profile/${abstractAccountAddress}`}>
-            <Box
-                as="span"
-                color="default"
-                display="inline"
-                tooltip={<ProfileHoverCard userId={userId} />}
-            >
-                {userDisplayName}
-            </Box>
-        </Link>
+        <Box
+            as="span"
+            color="default"
+            display="inline"
+            tooltip={<ProfileHoverCard userId={userId} />}
+            cursor="pointer"
+            onClick={onClick}
+        >
+            {userDisplayName}
+        </Box>
     )
 }

@@ -1,14 +1,13 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
+import React, { useCallback } from 'react'
 import { AnimatePresence, LayoutGroup } from 'framer-motion'
 import { Address } from 'use-towns-client'
-import { useCreateLink } from 'hooks/useCreateLink'
 import { useDevice } from 'hooks/useDevice'
 import { avatarSizes } from 'components/Avatar/avatarProperties.css'
 import { ProfileHoverCard } from 'components/ProfileHoverCard/ProfileHoverCard'
 import { Avatar } from 'components/Avatar/Avatar'
 import { Box, Stack } from '@ui'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 
 type Props = {
     users: {
@@ -55,14 +54,19 @@ export const AvatarStack = (props: Props) => {
 }
 
 function AvatarLink(props: { userId: string; index: number; size: Props['size'] }) {
-    const { createLink } = useCreateLink()
     const { userId, index, size } = props
     const { data: abstractAccountAddress } = useAbstractAccountAddress({
         rootKeyAddress: userId as Address,
     })
+    const { openPanel } = usePanelActions()
+
+    const onClick = useCallback(() => {
+        openPanel('profile', { profileId: abstractAccountAddress })
+    }, [abstractAccountAddress, openPanel])
+
     return (
-        <Link key={userId} to={createLink({ profileId: abstractAccountAddress }) ?? ''}>
+        <Box cursor="pointer" onClick={onClick}>
             <Avatar stacked={index > 0} userId={userId} size={size} />
-        </Link>
+        </Box>
     )
 }
