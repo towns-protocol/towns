@@ -6,9 +6,19 @@ on:
     push:
         branches:
             - main
+            - omega
         paths:
             - 'servers/notification-service/**'
     workflow_dispatch:
+        inputs:
+            environment_name:
+                description: 'Environment name'
+                required: true
+                type: choice
+                options:
+                    - 'gamma'
+                    - 'omega'
+                default: 'gamma'
 
 env:
     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_CD_WORKFLOW_WEBHOOK_URL }}
@@ -24,6 +34,27 @@ jobs:
             packages: write
 
         steps:
+            - name: Set Environment Variables
+              env:
+                BRANCH_NAME: ${{ github.ref }}
+                ENVIRONMENT_NAME_INPUT: ${{ github.event.inputs.environment_name }}
+              run: |
+                # if ENVIROMENT_NAME_INPUT is set, set ENV_NAME to it.
+                # else if branch is main, set ENV_NAME to gamma.
+                # else if branch is omega, set ENV_NAME to omega.
+                # else  (branch is neither), exit with error.
+
+                if [ -n "$ENVIRONMENT_NAME_INPUT" ]; then
+                  echo "ENV_NAME=$ENVIRONMENT_NAME_INPUT" >> $GITHUB_ENV
+                elif [ $BRANCH_NAME = "refs/heads/main" ]; then
+                  echo "ENV_NAME=gamma" >> $GITHUB_ENV
+                elif [ $BRANCH_NAME = "refs/heads/omega" ]; then
+                  echo "ENV_NAME=omega" >> $GITHUB_ENV
+                else
+                  echo "Error: Branch name is not main or omega. Exiting."
+                  exit 1
+                fi
+
             - name: Checkout
               uses: actions/checkout@v4
 
@@ -56,7 +87,7 @@ jobs:
                 AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
                 AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                 AWS_REGION: us-east-1
-                ENVIRONMENT_NAME: gamma
+                ENVIRONMENT_NAME: ${{ env.ENV_NAME }}
 
             # If action failed, we send a slack notification
             - name: Slack notification

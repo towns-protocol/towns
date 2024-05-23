@@ -4,10 +4,20 @@ on:
     push:
         branches:
             - main
+            - omega
         paths:
             - 'servers/workers/**'
             - 'river/**'
     workflow_dispatch:
+        inputs:
+            environment_name:
+                description: 'Environment name'
+                required: true
+                type: choice
+                options:
+                    - 'test-beta'
+                    - 'omega'
+                default: 'test-beta'
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
@@ -18,15 +28,32 @@ jobs:
         name: Deploy CF Workers
         runs-on: ubuntu-latest
 
-        env:
-            # Even though our primary env is gamma, we're still using the test-beta workers.
-            ENV_NAME: test-beta
-
         permissions:
             contents: write
             packages: write
 
         steps:
+            - name: Set Environment Variables
+              env:
+                BRANCH_NAME: ${{ github.ref }}
+                ENVIRONMENT_NAME_INPUT: ${{ github.event.inputs.environment_name }}
+              run: |
+                # if ENVIROMENT_NAME_INPUT is set, set ENV_NAME to it.
+                # else if branch is main, set ENV_NAME to test-beta.
+                # else if branch is omega, set ENV_NAME to omega.
+                # else  (branch is neither), exit with error.
+
+                if [ -n "$ENVIRONMENT_NAME_INPUT" ]; then
+                  echo "ENV_NAME=$ENVIRONMENT_NAME_INPUT" >> $GITHUB_ENV
+                elif [ $BRANCH_NAME = "refs/heads/main" ]; then
+                  echo "ENV_NAME=test-beta" >> $GITHUB_ENV
+                elif [ $BRANCH_NAME = "refs/heads/omega" ]; then
+                  echo "ENV_NAME=omega" >> $GITHUB_ENV
+                else
+                  echo "Error: Branch name is not main or omega. Exiting."
+                  exit 1
+                fi
+
             - name: Checkout
               uses: actions/checkout@v4
 
