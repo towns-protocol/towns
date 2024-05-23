@@ -97,7 +97,7 @@ describe('update role', () => {
         try {
             receipt = await transaction.wait()
         } catch (e) {
-            const error = await alice.spaceDapp.parseSpaceError(spaceNetworkId, e)
+            const error = alice.spaceDapp.parseSpaceError(spaceNetworkId, e)
             console.error(error)
             // fail the test.
             throw e
@@ -176,7 +176,7 @@ describe('update role', () => {
 
             receipt = await transaction.wait()
         } catch (e) {
-            const error = await alice.spaceDapp.parseSpaceError(spaceNetworkId, e)
+            const error = alice.spaceDapp.parseSpaceError(spaceNetworkId, e)
             console.error(error)
             // fail the test.
             throw e
@@ -271,7 +271,7 @@ describe('update role', () => {
 
             receipt = await transaction.wait()
         } catch (e) {
-            const error = await alice.spaceDapp.parseSpaceError(spaceNetworkId, e)
+            const error = alice.spaceDapp.parseSpaceError(spaceNetworkId, e)
             console.error(e, error)
             // fail the test.
             throw e

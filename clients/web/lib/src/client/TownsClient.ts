@@ -581,7 +581,7 @@ export class TownsClient
             this.log(`[createChannelTransaction] transaction created` /*, transaction*/)
         } catch (err) {
             console.error('[createChannelTransaction] error', err)
-            error = await this.getDecodedErrorForSpace(createChannelInfo.parentSpaceId, err)
+            error = this.getDecodedErrorForSpace(createChannelInfo.parentSpaceId, err)
         }
 
         continueStoreTx({
@@ -616,7 +616,7 @@ export class TownsClient
         }
 
         if (txnContext.error) {
-            txnContext.error = await this.getDecodedErrorForSpace(
+            txnContext.error = this.getDecodedErrorForSpace(
                 createChannelInfo.parentSpaceId,
                 txnContext.error,
             )
@@ -672,7 +672,7 @@ export class TownsClient
             }
         } catch (err) {
             console.error('[updateChannelTransaction]', err)
-            error = await this.spaceDapp.parseSpaceError(updateChannelInfo.parentSpaceId, err)
+            error = this.spaceDapp.parseSpaceError(updateChannelInfo.parentSpaceId, err)
         }
 
         continueStoreTx({
@@ -959,7 +959,7 @@ export class TownsClient
 
             this.log(`[createRoleTransaction] transaction created` /*, transaction*/)
         } catch (err) {
-            error = await this.spaceDapp.parseSpaceError(spaceNetworkId, err)
+            error = this.spaceDapp.parseSpaceError(spaceNetworkId, err)
         }
 
         continueStoreTx({
@@ -1038,7 +1038,7 @@ export class TownsClient
             )
             this.log(`[addRoleToChannelTransaction] transaction created` /*, transaction*/)
         } catch (err) {
-            error = await this.spaceDapp.parseSpaceError(spaceNetworkId, err)
+            error = this.spaceDapp.parseSpaceError(spaceNetworkId, err)
         }
 
         return {
@@ -1075,7 +1075,7 @@ export class TownsClient
             }
             this.log(`[updateSpaceNameTransaction] transaction created` /*, transaction*/)
         } catch (err) {
-            error = await this.spaceDapp.parseSpaceError(spaceNetworkId, err)
+            error = this.spaceDapp.parseSpaceError(spaceNetworkId, err)
         }
 
         continueStoreTx({
@@ -1126,7 +1126,7 @@ export class TownsClient
 
             this.log(`[updateRoleTransaction] transaction created` /*, transaction*/)
         } catch (err) {
-            error = await this.spaceDapp.parseSpaceError(spaceId, err)
+            error = this.spaceDapp.parseSpaceError(spaceId, err)
         }
         // todo: add necessary contextual data
         continueStoreTx({
@@ -1189,7 +1189,7 @@ export class TownsClient
 
             this.log(`[updateRoleTransaction] transaction created` /*, transaction*/)
         } catch (err) {
-            error = await this.spaceDapp.parseSpaceError(spaceNetworkId, err)
+            error = this.spaceDapp.parseSpaceError(spaceNetworkId, err)
         }
         // todo: add necessary contextual data
         continueStoreTx({
@@ -1263,7 +1263,7 @@ export class TownsClient
             }
             this.log(`[banTransaction] transaction created`)
         } catch (err) {
-            error = await this.spaceDapp.parseSpaceError(spaceId, err)
+            error = this.spaceDapp.parseSpaceError(spaceId, err)
         }
 
         continueStoreTx({
@@ -1315,7 +1315,7 @@ export class TownsClient
             }
             this.log(`[unbanTransaction] transaction created`)
         } catch (err) {
-            error = await this.spaceDapp.parseSpaceError(spaceId, err)
+            error = this.spaceDapp.parseSpaceError(spaceId, err)
         }
 
         continueStoreTx({
@@ -1373,7 +1373,7 @@ export class TownsClient
             }
             this.log(`[deleteRoleTransaction] transaction created` /*, transaction*/)
         } catch (err) {
-            error = await this.spaceDapp.parseSpaceError(spaceNetworkId, err)
+            error = this.spaceDapp.parseSpaceError(spaceNetworkId, err)
         }
 
         continueStoreTx({
@@ -1415,7 +1415,7 @@ export class TownsClient
             transaction = await this.spaceDapp.setSpaceAccess(spaceNetworkId, disabled, signer)
             receipt = await transaction.wait()
         } catch (err) {
-            const decodedError = await this.getDecodedErrorForSpace(spaceNetworkId, err)
+            const decodedError = this.getDecodedErrorForSpace(spaceNetworkId, err)
             console.error('[setSpaceAccess] failed', decodedError)
             throw decodedError
         } finally {
@@ -1687,7 +1687,7 @@ export class TownsClient
             if (error instanceof MembershipRejectedError) {
                 decodeError = error
             } else {
-                decodeError = await this.getDecodedErrorForSpace(spaceId, error)
+                decodeError = this.getDecodedErrorForSpace(spaceId, error)
             }
             console.error('[mintMembershipAndJoinRoom] failed', decodeError)
             continueStoreTx({
@@ -2302,10 +2302,10 @@ export class TownsClient
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private async getDecodedErrorForSpace(spaceId: string, error: any): Promise<Error> {
+    private getDecodedErrorForSpace(spaceId: string, error: any): Error {
         try {
             // parseSpaceError needs to be rewritten to return actual errors
-            const fakeError = await this.spaceDapp.parseSpaceError(spaceId, error)
+            const fakeError = this.spaceDapp.parseSpaceError(spaceId, error)
             const realError = new Error(fakeError.message)
             realError.name = fakeError.name
             if ('code' in error) {

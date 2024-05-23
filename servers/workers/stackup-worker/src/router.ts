@@ -639,12 +639,12 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
             if (spaceDapp) {
                 if (townId) {
                     if (functionHash === 'editMembershipSettings') {
-                        spaceDappError = await spaceDapp.parseSpaceError(townId, json.error)
+                        spaceDappError = spaceDapp.parseSpaceError(townId, json.error)
                         if (spaceDappError.name === UNKNOWN_ERROR) {
                             spaceDappError = spaceDapp.parsePrepayError(json.error)
                         }
                     } else {
-                        spaceDappError = await spaceDapp.parseSpaceError(townId, json.error)
+                        spaceDappError = spaceDapp.parseSpaceError(townId, json.error)
                     }
                 } else {
                     spaceDappError = spaceDapp.parseSpaceFactoryError(json.error)

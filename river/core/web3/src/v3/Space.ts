@@ -69,6 +69,9 @@ export class Space {
         this.spaceId = spaceId
         this.version = version
         this.provider = provider
+        //
+        // If you add a new contract shim, make sure to add it in getAllShims()
+        //
         this.channel = new IChannelShim(address, version, provider)
         this.entitlements = new IEntitlementsShim(address, version, provider)
         this.multicall = new IMulticallShim(address, version, provider)
@@ -84,6 +87,22 @@ export class Space {
             version,
             provider,
         )
+    }
+
+    private getAllShims() {
+        return [
+            this.channel,
+            this.entitlements,
+            this.multicall,
+            this.ownable,
+            this.pausable,
+            this.roles,
+            this.spaceOwner,
+            this.membership,
+            this.banning,
+            this.erc721AQueryable,
+            this.entitlementDataQueryable,
+        ] as const
     }
 
     public get Address(): string {
@@ -255,18 +274,14 @@ export class Space {
 
     public parseError(error: unknown): Error {
         // try each of the contracts to see who can give the best error message
-        let err = this.channel.parseError(error)
-        for (const contract of [
-            this.entitlements,
-            this.multicall,
-            this.ownable,
-            this.pausable,
-            this.roles,
-            this.spaceOwner,
-            this.membership,
-            this.banning,
-            this.channel,
-        ]) {
+        const shims = this.getAllShims()
+        const first = shims[0]
+        const rest = shims.slice(1)
+        let err = first.parseError(error)
+        if (err?.name !== UNKNOWN_ERROR) {
+            return err
+        }
+        for (const contract of rest) {
             err = contract.parseError(error)
             if (err?.name !== UNKNOWN_ERROR) {
                 return err
@@ -276,17 +291,11 @@ export class Space {
     }
 
     public parseLog(log: ethers.providers.Log): ethers.utils.LogDescription {
-        const operations = [
-            () => this.channel.parseLog(log),
-            () => this.pausable.parseLog(log),
-            () => this.entitlements.parseLog(log),
-            () => this.roles.parseLog(log),
-            () => this.membership.parseLog(log),
-        ]
+        const shims = this.getAllShims()
 
-        for (const operation of operations) {
+        for (const contract of shims) {
             try {
-                return operation()
+                return contract.parseLog(log)
             } catch (error) {
                 // ignore, throw error if none match
             }

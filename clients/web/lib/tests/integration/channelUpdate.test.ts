@@ -77,7 +77,7 @@ describe('channel update', () => {
             )
             receipt = await transaction.wait()
         } catch (e) {
-            const error = await alice.spaceDapp.parseSpaceError(spaceId, e)
+            const error = alice.spaceDapp.parseSpaceError(spaceId, e)
             console.error(error)
             // fail the test.
             throw e
@@ -162,7 +162,7 @@ describe('channel update', () => {
             )
             receipt = await transaction.wait()
         } catch (e) {
-            const error = await alice.spaceDapp.parseSpaceError(spaceId, e)
+            const error = alice.spaceDapp.parseSpaceError(spaceId, e)
             console.error(error)
             // fail the test.
             throw e

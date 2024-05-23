@@ -14,6 +14,10 @@ export class PricingModules {
         )
     }
 
+    public parseError(error: unknown): Error {
+        return this.pricingShim.parseError(error)
+    }
+
     public async listPricingModules(): Promise<PricingModuleStruct[]> {
         return this.pricingShim.read.listPricingModules()
     }

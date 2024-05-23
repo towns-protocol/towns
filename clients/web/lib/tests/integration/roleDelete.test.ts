@@ -98,7 +98,7 @@ describe('delete role', () => {
             receipt = await transaction.wait()
         } catch (e) {
             // unexpected error. fail the test.
-            const error = await alice.spaceDapp.parseSpaceError(spaceId, e)
+            const error = alice.spaceDapp.parseSpaceError(spaceId, e)
             console.error(error)
             throw error
         }
@@ -221,7 +221,7 @@ describe('delete role', () => {
             receipt = await transaction.wait()
         } catch (e) {
             // unexpected error. fail the test.
-            const error = await alice.spaceDapp.parseSpaceError(spaceId, e)
+            const error = alice.spaceDapp.parseSpaceError(spaceId, e)
             console.error(error)
             throw error
         }
@@ -324,7 +324,7 @@ describe('delete role', () => {
             receipt = await transaction.wait()
         } catch (e) {
             // unexpected error. fail the test.
-            const error = await alice.spaceDapp.parseSpaceError(spaceId, e)
+            const error = alice.spaceDapp.parseSpaceError(spaceId, e)
             console.error(error)
             throw error
         }

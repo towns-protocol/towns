@@ -157,7 +157,7 @@ export class BlockchainTransactionStore extends (EventEmitter as new () => Typed
 
                     const parsedError = isWalletLink
                         ? this.spaceDapp.getWalletLink().parseError(error)
-                        : await this.spaceDapp.parseSpaceError(streamId ?? '', error as Error)
+                        : this.spaceDapp.parseSpaceError(streamId ?? '', error as Error)
 
                     this.updateTransaction({
                         ...tx,
