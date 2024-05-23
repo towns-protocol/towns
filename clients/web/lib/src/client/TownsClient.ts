@@ -190,7 +190,10 @@ export class TownsClient
     /************************************************
      * startCasablancaClient
      *************************************************/
-    public async startCasablancaClient(context: SignerContext): Promise<CasablancaClient> {
+    public async startCasablancaClient(
+        context: SignerContext,
+        metadata?: { spaceId: string },
+    ): Promise<CasablancaClient> {
         this.log('startCasablancaClient', context)
         if (this.casablancaClient) {
             throw new Error('already started casablancaClient')
@@ -223,7 +226,7 @@ export class TownsClient
         )
         this.casablancaClient.setMaxListeners(100)
 
-        await this.casablancaClient.initializeUser()
+        await this.casablancaClient.initializeUser(metadata)
 
         this._eventHandlers?.onRegister?.({
             userId: this.casablancaClient.userId,
@@ -307,7 +310,7 @@ export class TownsClient
                     'startCasablancaClient',
                 )
                 if (!this.casablancaClient && signerContext) {
-                    await this.startCasablancaClient(signerContext)
+                    await this.startCasablancaClient(signerContext, { spaceId })
                 }
                 performanceMetrics.endMeasurement(
                     PerformanceEvents.CREATE_SPACE,
@@ -1499,7 +1502,7 @@ export class TownsClient
 
         const joinRiverRoom = async () => {
             if (!this.casablancaClient && signerContext) {
-                await this.startCasablancaClient(signerContext)
+                await this.startCasablancaClient(signerContext, { spaceId })
             }
             const room = await this.joinRoom(spaceId)
             this.log('[joinTown] room', room)

@@ -610,6 +610,7 @@ message GetStreamExResponse {
 message CreateStreamRequest {
     repeated Envelope events = 1;
     bytes stream_id = 2; // stream_id should match the stream_id in the inception payload of the first event
+    map<string, bytes> metadata = 3;
  }
 
 message CreateStreamResponse {

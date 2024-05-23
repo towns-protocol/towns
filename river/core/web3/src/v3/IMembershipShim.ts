@@ -39,10 +39,23 @@ export class IMembershipShim extends BaseContractShim<
         return balance > 0
     }
 
+    // If the caller doesn't provide an abort controller, create one and set a timeout
+    // to abort the call after 20 seconds.
     async listenForMembershipToken(
         receiver: string,
-        abortController?: AbortController,
+        providedAbortController?: AbortController,
     ): Promise<{ issued: true; tokenId: string } | { issued: false; tokenId: undefined }> {
+        //
+        const timeoutController = providedAbortController ? undefined : new AbortController()
+
+        const abortTimeout = providedAbortController
+            ? undefined
+            : setTimeout(() => {
+                  log.error('joinSpace timeout')
+                  timeoutController?.abort()
+              }, 20_000)
+
+        const abortController = providedAbortController ?? timeoutController!
         // TODO: this isn't picking up correct typed fucntion signature, treating as string
         const issuedFilter = this.read.filters['MembershipTokenIssued(address,uint256)'](
             receiver,
@@ -57,7 +70,8 @@ export class IMembershipShim extends BaseContractShim<
             const cleanup = () => {
                 this.read.off(issuedFilter, issuedListener)
                 this.read.off(rejectedFilter, rejectedListener)
-                abortController?.signal.removeEventListener('abort', onAbort)
+                abortController.signal.removeEventListener('abort', onAbort)
+                clearTimeout(abortTimeout)
             }
             const onAbort = () => {
                 cleanup()
@@ -86,7 +100,7 @@ export class IMembershipShim extends BaseContractShim<
 
             this.read.on(issuedFilter, issuedListener)
             this.read.on(rejectedFilter, rejectedListener)
-            abortController?.signal.addEventListener('abort', onAbort)
+            abortController.signal.addEventListener('abort', onAbort)
         })
     }
 }

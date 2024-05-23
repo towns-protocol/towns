@@ -62,13 +62,6 @@ async function setupWalletsAndContexts() {
         makeTestClient({ context: bobsContext }),
     ])
 
-    await Promise.all([
-        expect(alice.initializeUser()).toResolve(),
-        expect(bob.initializeUser()).toResolve(),
-    ])
-    bob.startSync()
-    alice.startSync()
-
     return {
         alice,
         bob,
@@ -108,8 +101,6 @@ describe('spaceWithEntitlements', () => {
         // create a user stream
         const bob = await makeTestClient({ context: bobsContext })
         const bobsUserStreamId = makeUserStreamId(bob.userId)
-        await expect(bob.initializeUser()).toResolve()
-        bob.startSync()
 
         const pricingModules = await bobSpaceDapp.listPricingModules()
         const dynamicPricingModule = getDynamicPricingModule(pricingModules)
@@ -156,6 +147,8 @@ describe('spaceWithEntitlements', () => {
         const spaceId = makeSpaceStreamId(spaceAddress!)
         const channelId = makeDefaultChannelStreamId(spaceAddress!)
         // then on the river node
+        await bob.initializeUser({ spaceId })
+        bob.startSync()
         const returnVal = await bob.createSpace(spaceId)
         expect(returnVal.streamId).toEqual(spaceId)
         // Now there must be "joined space" event in the user stream.
@@ -196,8 +189,6 @@ describe('spaceWithEntitlements', () => {
         const alice = await makeTestClient({
             context: alicesContext,
         })
-        await alice.initializeUser()
-        alice.startSync()
         log('Alice created user, about to join space', { alicesUserId: alice.userId })
 
         const aliceProvider = new LocalhostWeb3Provider(baseConfig.rpcUrl, alicesWallet)
@@ -215,6 +206,9 @@ describe('spaceWithEntitlements', () => {
             aliceProvider.wallet,
         )
         expect(issued).toBe(true)
+
+        await alice.initializeUser({ spaceId })
+        alice.startSync()
 
         await expect(alice.joinStream(spaceId)).toResolve()
         await expect(alice.joinStream(channelId)).toResolve()
@@ -344,6 +338,8 @@ describe('spaceWithEntitlements', () => {
         const spaceId = makeSpaceStreamId(spaceAddress!)
         const channelId = makeDefaultChannelStreamId(spaceAddress!)
 
+        await bob.initializeUser({ spaceId })
+        bob.startSync()
         const returnVal = await bob.createSpace(spaceId)
         expect(returnVal.streamId).toEqual(spaceId)
         // Now there must be "joined space" event in the user stream.
@@ -403,6 +399,9 @@ describe('spaceWithEntitlements', () => {
         )
         expect(issued).toBe(true)
         log('Alice joined space and has a MembershipNFT', tokenId, Date.now() - aliceJoinStart)
+
+        await alice.initializeUser({ spaceId })
+        alice.startSync()
 
         await expect(alice.joinStream(spaceId)).toResolve()
         await expect(alice.joinStream(channelId)).toResolve()
@@ -505,6 +504,9 @@ describe('spaceWithEntitlements', () => {
         expect(spaceAddress).toBeDefined()
         const spaceId = makeSpaceStreamId(spaceAddress!)
         const channelId = makeDefaultChannelStreamId(spaceAddress!)
+
+        await bob.initializeUser({ spaceId })
+        bob.startSync()
 
         const returnVal = await bob.createSpace(spaceId)
         expect(returnVal.streamId).toEqual(spaceId)
@@ -667,6 +669,8 @@ describe('spaceWithEntitlements', () => {
         const spaceId = makeSpaceStreamId(spaceAddress!)
         const channelId = makeDefaultChannelStreamId(spaceAddress!)
 
+        await bob.initializeUser({ spaceId })
+        bob.startSync()
         const returnVal = await bob.createSpace(spaceId)
         expect(returnVal.streamId).toEqual(spaceId)
         // Now there must be "joined space" event in the user stream.
@@ -727,6 +731,8 @@ describe('spaceWithEntitlements', () => {
         expect(issued).toBe(true)
         log('Alice joined space and has a MembershipNFT', tokenId, Date.now() - aliceJoinStart)
 
+        await alice.initializeUser({ spaceId })
+        alice.startSync()
         await expect(alice.joinStream(spaceId)).toResolve()
         await expect(alice.joinStream(channelId)).toResolve()
 
@@ -844,6 +850,8 @@ describe('spaceWithEntitlements', () => {
         const spaceId = makeSpaceStreamId(spaceAddress!)
         const channelId = makeDefaultChannelStreamId(spaceAddress!)
 
+        await bob.initializeUser({ spaceId })
+        bob.startSync()
         const returnVal = await bob.createSpace(spaceId)
         expect(returnVal.streamId).toEqual(spaceId)
         // Now there must be "joined space" event in the user stream.
@@ -1003,6 +1011,8 @@ describe('spaceWithEntitlements', () => {
         const spaceId = makeSpaceStreamId(spaceAddress!)
         const channelId = makeDefaultChannelStreamId(spaceAddress!)
 
+        await bob.initializeUser({ spaceId })
+        bob.startSync()
         const returnVal = await bob.createSpace(spaceId)
         expect(returnVal.streamId).toEqual(spaceId)
         // Now there must be "joined space" event in the user stream.
@@ -1063,6 +1073,8 @@ describe('spaceWithEntitlements', () => {
         expect(issued).toBe(true)
         log('Alice joined space and has a MembershipNFT', tokenId, Date.now() - aliceJoinStart)
 
+        await alice.initializeUser({ spaceId })
+        alice.startSync()
         await expect(alice.joinStream(spaceId)).toResolve()
         await expect(alice.joinStream(channelId)).toResolve()
 
@@ -1194,6 +1206,8 @@ describe('spaceWithEntitlements', () => {
         const spaceId = makeSpaceStreamId(spaceAddress!)
         const channelId = makeDefaultChannelStreamId(spaceAddress!)
 
+        await bob.initializeUser({ spaceId })
+        bob.startSync()
         const returnVal = await bob.createSpace(spaceId)
         expect(returnVal.streamId).toEqual(spaceId)
         // Now there must be "joined space" event in the user stream.
@@ -1254,6 +1268,8 @@ describe('spaceWithEntitlements', () => {
         expect(issued).toBe(true)
         log('Alice joined space and has a MembershipNFT', tokenId, Date.now() - aliceJoinStart)
 
+        await alice.initializeUser({ spaceId })
+        alice.startSync()
         await expect(alice.joinStream(spaceId)).toResolve()
         await expect(alice.joinStream(channelId)).toResolve()
 

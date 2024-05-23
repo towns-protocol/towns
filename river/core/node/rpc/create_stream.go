@@ -56,7 +56,7 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 
 	log.Debug("createStream", "parsedEvents", parsedEvents)
 
-	csRules, err := rules.CanCreateStream(ctx, s.config, time.Now(), streamId, parsedEvents)
+	csRules, err := rules.CanCreateStream(ctx, s.config, time.Now(), streamId, parsedEvents, req.Metadata)
 	if err != nil {
 		return nil, err
 	}

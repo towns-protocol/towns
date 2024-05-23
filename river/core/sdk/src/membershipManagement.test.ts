@@ -4,8 +4,13 @@
  */
 
 import { dlog } from '@river-build/dlog'
-import { makeUserContextFromWallet, makeTestClient, getDynamicPricingModule } from './util.test'
-import { isValidStreamId, makeDefaultChannelStreamId, makeSpaceStreamId } from './id'
+import { makeUserContextFromWallet, getDynamicPricingModule } from './util.test'
+import {
+    isValidStreamId,
+    makeDefaultChannelStreamId,
+    makeSpaceStreamId,
+    userIdFromAddress,
+} from './id'
 import { ethers } from 'ethers'
 import {
     LocalhostWeb3Provider,
@@ -32,10 +37,6 @@ describe('membershipManagement', () => {
         const spaceDapp = createSpaceDapp(bobProvider, baseConfig.chainConfig)
 
         // create a user stream
-        const bob = await makeTestClient({ context: bobsContext })
-        await expect(bob.initializeUser()).toResolve()
-        bob.startSync()
-
         const pricingModules = await spaceDapp.listPricingModules()
         const dynamicPricingModule = getDynamicPricingModule(pricingModules)
         expect(dynamicPricingModule).toBeDefined()
@@ -51,7 +52,7 @@ describe('membershipManagement', () => {
                 maxSupply: 1000,
                 duration: 0,
                 currency: ETH_ADDRESS,
-                feeRecipient: bob.userId,
+                feeRecipient: userIdFromAddress(bobsContext.creatorAddress),
                 freeAllocation: 0,
                 pricingModule: dynamicPricingModule!.module,
             },
@@ -96,7 +97,5 @@ describe('membershipManagement', () => {
             const result = await spaceDapp.joinSpace(spaceId, wallet.address, bobProvider.wallet)
             log('minted membership', result)
         }
-
-        await bob.stopSync()
     })
 })

@@ -47,8 +47,6 @@ describe('withEntitlements', () => {
         // create a user stream
         const bob = await makeTestClient({ context: bobsContext })
         const bobsUserStreamId = makeUserStreamId(bob.userId)
-        await expect(bob.initializeUser()).toResolve()
-        bob.startSync()
 
         const pricingModules = await spaceDapp.listPricingModules()
         const dynamicPricingModule = getDynamicPricingModule(pricingModules)
@@ -97,6 +95,8 @@ describe('withEntitlements', () => {
         const channelId = makeDefaultChannelStreamId(spaceAddress!)
         expect(isValidStreamId(channelId)).toBe(true)
         // then on the river node
+        await expect(bob.initializeUser({ spaceId })).toResolve()
+        bob.startSync()
         const returnVal = await bob.createSpace(spaceId)
         expect(returnVal.streamId).toEqual(spaceId)
         // Now there must be "joined space" event in the user stream.
@@ -135,11 +135,16 @@ describe('withEntitlements', () => {
         const alicesContext = await makeUserContextFromWallet(alicesWallet)
         const aliceProvider = new LocalhostWeb3Provider(baseConfig.rpcUrl, alicesWallet)
         await aliceProvider.fundWallet()
+        const alice_test = await makeTestClient({
+            context: alicesContext,
+        })
+        // verify that alice is blocked from initializing user until she joins the space
+        await expect(alice_test.initializeUser()).rejects.toThrow('BAD_STREAM_CREATION_PARAMS')
+        // make a client
         const alice = await makeTestClient({
             context: alicesContext,
         })
-        await alice.initializeUser()
-        alice.startSync()
+
         log('Alice created user, about to join space', { alicesUserId: alice.userId })
 
         // first join the space on chain
@@ -153,6 +158,8 @@ describe('withEntitlements', () => {
         log('transaction receipt for alice joining space', issued, tokenId)
         expect(issued).toBe(true)
 
+        await alice.initializeUser({ spaceId })
+        alice.startSync()
         await expect(alice.joinStream(spaceId)).toResolve()
         await expect(alice.joinStream(channelId)).toResolve()
 

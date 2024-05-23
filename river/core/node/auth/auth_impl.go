@@ -49,6 +49,14 @@ func NewChainAuthArgsForChannel(
 	}
 }
 
+func NewChainAuthArgsForIsSpaceMember(spaceId shared.StreamId, userId string) *ChainAuthArgs {
+	return &ChainAuthArgs{
+		kind:      chainAuthKindIsSpaceMember,
+		spaceId:   spaceId,
+		principal: common.HexToAddress(userId),
+	}
+}
+
 type chainAuthKind int
 
 const (
@@ -56,6 +64,7 @@ const (
 	chainAuthKindChannel
 	chainAuthKindSpaceEnabled
 	chainAuthKindChannelEnabled
+	chainAuthKindIsSpaceMember
 )
 
 type ChainAuthArgs struct {
@@ -215,6 +224,9 @@ func (ca *chainAuth) isWalletEntitled(ctx context.Context, cfg *config.Config, a
 	} else if args.kind == chainAuthKindChannel {
 		log.Debug("isWalletEntitled", "kind", "channel", "args", args)
 		return ca.isEntitledToChannel(ctx, cfg, args)
+	} else if args.kind == chainAuthKindIsSpaceMember {
+		log.Debug("isWalletEntitled", "kind", "isSpaceMember", "args", args)
+		return true, nil // is space member is checked by the calling code in checkEntitlement
 	} else {
 		return false, RiverError(Err_INTERNAL, "Unknown chain auth kind").Func("isWalletEntitled")
 	}
@@ -502,7 +514,7 @@ func (ca *chainAuth) checkEntitlement(ctx context.Context, cfg *config.Config, a
 	ctx, cancel := context.WithTimeout(ctx, time.Millisecond*time.Duration(ca.contractCallsTimeoutMs))
 	defer cancel()
 
-	if args.kind == chainAuthKindSpace {
+	if args.kind == chainAuthKindSpace || args.kind == chainAuthKindIsSpaceMember {
 		err := ca.checkSpaceEnabled(ctx, cfg, args.spaceId)
 		if err != nil {
 			return &boolCacheResult{allowed: false}, nil

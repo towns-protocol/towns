@@ -41,7 +41,6 @@ describe('casablanca', () => {
         const cryptoStore = RiverDbManager.getCryptoDb('abc')
         const entitlementsDelegate = new MockEntitlementsDelegate()
         const client = new CasablancaClient(context, rpcClient, cryptoStore, entitlementsDelegate)
-        await client.initializeUser()
         log('Finished', client)
     })
 

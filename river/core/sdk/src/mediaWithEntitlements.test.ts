@@ -37,9 +37,6 @@ describe('mediaWithEntitlements', () => {
         bobContext = await makeUserContextFromWallet(bobWallet)
         bobClient = await makeTestClient({ context: bobContext })
 
-        await bobClient.initializeUser()
-        bobClient.startSync()
-
         aliceWallet = ethers.Wallet.createRandom()
         aliceContext = await makeUserContextFromWallet(aliceWallet)
         aliceClient = await makeTestClient({
@@ -100,9 +97,29 @@ describe('mediaWithEntitlements', () => {
         expect(spaceAddress).toBeDefined()
         const spaceStreamId = makeSpaceStreamId(spaceAddress!)
         const channelId = makeDefaultChannelStreamId(spaceAddress!)
+        // join alice to the space so she can start up a client
 
+        await bobClient.initializeUser({ spaceId: spaceStreamId })
+        bobClient.startSync()
         await bobClient.createSpace(spaceStreamId)
         await bobClient.createChannel(spaceStreamId, 'Channel', 'Topic', channelId)
+
+        // create a second space and join alice so she can start up a client
+        const transaction2 = await spaceDapp.createSpace(
+            {
+                spaceName: 'space2',
+                spaceMetadata: 'bobs-space2-metadata',
+                channelName: 'general2', // default channel name
+                membership: membershipInfo,
+            },
+            provider.wallet,
+        )
+        const receipt2 = await transaction2.wait()
+        log('transaction2 receipt', receipt2)
+        const space2Address = spaceDapp.getSpaceAddress(receipt)
+        expect(space2Address).toBeDefined()
+        const space2Id = makeSpaceStreamId(space2Address!)
+        await spaceDapp.joinSpace(space2Id, aliceClient.userId, provider.wallet)
 
         /**
          * Real test starts here
@@ -111,7 +128,7 @@ describe('mediaWithEntitlements', () => {
         await expect(bobClient.createMediaStream(channelId, spaceStreamId, 10)).toResolve()
         await bobClient.stop()
 
-        await aliceClient.initializeUser()
+        await aliceClient.initializeUser({ spaceId: space2Id })
         aliceClient.startSync()
 
         // Alice is NOT a member of the channel is prevented from creating a media stream

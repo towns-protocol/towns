@@ -294,7 +294,14 @@ export class Client
         this.syncedStreamsExtensions.setStreamIds(streamIds)
     }
 
-    async initializeUser(): Promise<void> {
+    async initializeUser(newUserMetadata?: { spaceId: Uint8Array | string }): Promise<void> {
+        const metadata = newUserMetadata
+            ? {
+                  ...newUserMetadata,
+                  spaceId: streamIdAsBytes(newUserMetadata.spaceId),
+              }
+            : undefined
+
         const initializeUserStartTime = performance.now()
         this.logCall('initializeUser', this.userId)
         assert(this.userStreamId === undefined, 'already initialized')
@@ -302,13 +309,12 @@ export class Client
 
         check(isDefined(this.decryptionExtensions), 'decryptionExtensions must be defined')
         check(isDefined(this.syncedStreamsExtensions), 'syncedStreamsExtensions must be defined')
-        // todo as part of HNT-2826 we should check/create all these streamson the node
 
         await Promise.all([
-            this.initUserStream(),
-            this.initUserInboxStream(),
-            this.initUserDeviceKeyStream(),
-            this.initUserSettingsStream(),
+            this.initUserStream(metadata),
+            this.initUserInboxStream(metadata),
+            this.initUserDeviceKeyStream(metadata),
+            this.initUserSettingsStream(metadata),
         ])
         await this.initUserJoinedStreams()
 
@@ -321,46 +327,46 @@ export class Client
         })
     }
 
-    private async initUserStream() {
+    private async initUserStream(metadata: { spaceId: Uint8Array } | undefined) {
         this.userStreamId = makeUserStreamId(this.userId)
         const userStream = this.createSyncedStream(this.userStreamId)
         if (!(await userStream.initializeFromPersistence())) {
             const response =
                 (await this.getUserStream(this.userStreamId)) ??
-                (await this.createUserStream(this.userStreamId))
+                (await this.createUserStream(this.userStreamId, metadata))
             await userStream.initializeFromResponse(response)
         }
     }
 
-    private async initUserInboxStream() {
+    private async initUserInboxStream(metadata?: { spaceId: Uint8Array }) {
         this.userInboxStreamId = makeUserInboxStreamId(this.userId)
         const userInboxStream = this.createSyncedStream(this.userInboxStreamId)
         if (!(await userInboxStream.initializeFromPersistence())) {
             const response =
                 (await this.getUserStream(this.userInboxStreamId)) ??
-                (await this.createUserInboxStream(this.userInboxStreamId))
+                (await this.createUserInboxStream(this.userInboxStreamId, metadata))
             await userInboxStream.initializeFromResponse(response)
         }
     }
 
-    private async initUserDeviceKeyStream() {
+    private async initUserDeviceKeyStream(metadata?: { spaceId: Uint8Array }) {
         this.userDeviceKeyStreamId = makeUserDeviceKeyStreamId(this.userId)
         const userDeviceKeyStream = this.createSyncedStream(this.userDeviceKeyStreamId)
         if (!(await userDeviceKeyStream.initializeFromPersistence())) {
             const response =
                 (await this.getUserStream(this.userDeviceKeyStreamId)) ??
-                (await this.createUserDeviceKeyStream(this.userDeviceKeyStreamId))
+                (await this.createUserDeviceKeyStream(this.userDeviceKeyStreamId, metadata))
             await userDeviceKeyStream.initializeFromResponse(response)
         }
     }
 
-    private async initUserSettingsStream() {
+    private async initUserSettingsStream(metadata?: { spaceId: Uint8Array }) {
         this.userSettingsStreamId = makeUserSettingsStreamId(this.userId)
         const userSettingsStream = this.createSyncedStream(this.userSettingsStreamId)
         if (!(await userSettingsStream.initializeFromPersistence())) {
             const response =
                 (await this.getUserStream(this.userSettingsStreamId)) ??
-                (await this.createUserSettingsStream(this.userSettingsStreamId))
+                (await this.createUserSettingsStream(this.userSettingsStreamId, metadata))
             await userSettingsStream.initializeFromResponse(response)
         }
     }
@@ -381,6 +387,7 @@ export class Client
 
     private async createUserStream(
         userStreamId: string | Uint8Array,
+        metadata: { spaceId: Uint8Array } | undefined,
     ): Promise<ParsedStreamResponse> {
         const userEvents = [
             await makeEvent(
@@ -393,12 +400,14 @@ export class Client
         const response = await this.rpcClient.createStream({
             events: userEvents,
             streamId: streamIdAsBytes(userStreamId),
+            metadata: metadata ?? {},
         })
         return unpackStream(response.stream)
     }
 
     private async createUserDeviceKeyStream(
         userDeviceKeyStreamId: string | Uint8Array,
+        metadata: { spaceId: Uint8Array } | undefined,
     ): Promise<ParsedStreamResponse> {
         const userDeviceKeyEvents = [
             await makeEvent(
@@ -412,12 +421,14 @@ export class Client
         const response = await this.rpcClient.createStream({
             events: userDeviceKeyEvents,
             streamId: streamIdAsBytes(userDeviceKeyStreamId),
+            metadata: metadata ?? {},
         })
         return unpackStream(response.stream)
     }
 
     private async createUserInboxStream(
         userInboxStreamId: string | Uint8Array,
+        metadata: { spaceId: Uint8Array } | undefined,
     ): Promise<ParsedStreamResponse> {
         const userInboxEvents = [
             await makeEvent(
@@ -431,12 +442,14 @@ export class Client
         const response = await this.rpcClient.createStream({
             events: userInboxEvents,
             streamId: streamIdAsBytes(userInboxStreamId),
+            metadata: metadata ?? {},
         })
         return unpackStream(response.stream)
     }
 
     private async createUserSettingsStream(
         inUserSettingsStreamId: string | Uint8Array,
+        metadata: { spaceId: Uint8Array } | undefined,
     ): Promise<ParsedStreamResponse> {
         const userSettingsStreamId = streamIdAsBytes(inUserSettingsStreamId)
         const userSettingsEvents = [
@@ -451,13 +464,17 @@ export class Client
         const response = await this.rpcClient.createStream({
             events: userSettingsEvents,
             streamId: userSettingsStreamId,
+            metadata: metadata ?? {},
         })
         return unpackStream(response.stream)
     }
 
     private async createStreamAndSync(
-        request: PlainMessage<CreateStreamRequest>,
+        request: Omit<PlainMessage<CreateStreamRequest>, 'metadata'> & {
+            metadata?: Record<string, Uint8Array>
+        },
     ): Promise<{ streamId: string }> {
+        request.metadata = request.metadata ?? {}
         const streamId = streamIdAsString(request.streamId)
         try {
             this.creatingStreamIds.add(streamId)
@@ -507,7 +524,10 @@ export class Client
                 initiatorId: this.userId,
             }),
         )
-        return this.createStreamAndSync({ events: [inceptionEvent, joinEvent], streamId: spaceId })
+        return this.createStreamAndSync({
+            events: [inceptionEvent, joinEvent],
+            streamId: spaceId,
+        })
     }
 
     async createChannel(
