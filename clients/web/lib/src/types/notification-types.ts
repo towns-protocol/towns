@@ -11,6 +11,7 @@ export interface MentionUsersRequestParams {
     spaceId: string
     channelId: string
     userIds: string[]
+    threadId?: string
 }
 
 export interface ReplyToUsersRequestParams {
@@ -22,6 +23,7 @@ export interface ReplyToUsersRequestParams {
 export interface AtChannelRequestParams {
     spaceId: string
     channelId: string
+    threadId?: string
 }
 
 export interface ReactionRequestParams {

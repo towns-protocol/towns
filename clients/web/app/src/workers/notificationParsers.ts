@@ -16,11 +16,11 @@ const payloadMessage = z.object({
     ]),
     spaceId: z.string(),
     channelId: z.string(),
+    threadId: z.string().optional(),
     senderId: z.string(),
     event: z.unknown(),
     attachmentOnly: z.nativeEnum(NotificationAttachmentKind).optional(),
     reaction: z.boolean().optional(),
-    threadId: z.string().optional(),
 })
 
 const payloadDm = z.object({
@@ -64,6 +64,7 @@ const payloadSchema = z
                         kind: AppNotificationType.NewMessage,
                         spaceId: data.content.spaceId ?? '',
                         channelId: data.content.channelId,
+                        threadId: data.content.threadId,
                         senderId: data.content.senderId,
                         event: data.content.event as StreamEvent,
                     },
@@ -75,6 +76,7 @@ const payloadSchema = z
                         kind: AppNotificationType.Mention,
                         spaceId: data.content.spaceId ?? '',
                         channelId: data.content.channelId,
+                        threadId: data.content.threadId,
                         senderId: data.content.senderId,
                         event: data.content.event as StreamEvent,
                     },
@@ -151,6 +153,7 @@ const plaintextSchema = z
                     kind: AppNotificationType.NewMessage,
                     spaceId: data.spaceId,
                     channelId: data.channelId,
+                    threadId: data.threadId,
                     title: data.title,
                     body: data.body,
                 }
@@ -200,6 +203,16 @@ export function pathFromAppNotification(notification: NotificationContent) {
         case AppNotificationType.DirectMessage:
             return [PATHS.MESSAGES, encodeURIComponent(notification.channelId)].join('/') + '/'
         case AppNotificationType.NewMessage:
+            if (notification.threadId) {
+                return [
+                    PATHS.SPACES,
+                    encodeURIComponent(notification.spaceId),
+                    PATHS.CHANNELS,
+                    encodeURIComponent(notification.channelId),
+                    PATHS.REPLIES,
+                    encodeURIComponent(notification.threadId),
+                ].join('/')
+            }
             return [
                 PATHS.SPACES,
                 encodeURIComponent(notification.spaceId),

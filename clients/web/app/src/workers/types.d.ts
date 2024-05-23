@@ -14,6 +14,7 @@ export type AppNotificationMessage = {
         kind: AppNotificationType.NewMessage
         spaceId: string
         channelId: string
+        threadId?: string
         senderId: string
         event: StreamEvent
         attachmentOnly?: NotificationAttachmentKind
@@ -26,6 +27,7 @@ export type AppNotificationMention = {
         kind: AppNotificationType.Mention
         spaceId: string
         channelId: string
+        threadId?: string
         senderId: string
         event: StreamEvent
     }
@@ -68,6 +70,7 @@ export type NotificationNewMessage = {
     kind: AppNotificationType.NewMessage
     spaceId: string
     channelId: string
+    threadId?: string
     title: string
     body: string
     refEventId?: string

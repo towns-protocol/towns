@@ -45,6 +45,7 @@ export class PushNotificationClient {
             options?.messageType === MessageType.Text && 'attachments' in options && messageIsEmpty
 
         const isThreadWithParticipants = isThreadIdOptions(options) && options.threadParticipants
+        const threadId = isThreadWithParticipants ? options.threadId : undefined
         const isDMorGDMorChannelWithThread =
             isDMChannelStreamId(channelId) ||
             isGDMChannelStreamId(channelId) ||
@@ -96,11 +97,18 @@ export class PushNotificationClient {
             userMentions = options.mentions.filter((mention) => !mention.atChannel)
             console.log('PUSH: sendNotificationTagIfAny', { channelMentions, userMentions })
             if (channelMentions.length > 0) {
-                postRequests.push(this.sendAtChannelToNotificationService(spaceId, channelId))
+                postRequests.push(
+                    this.sendAtChannelToNotificationService(spaceId, channelId, threadId),
+                )
             }
             if (userMentions.length > 0) {
                 postRequests.push(
-                    this.sendUserMentionToNotificationService(spaceId, channelId, userMentions),
+                    this.sendUserMentionToNotificationService(
+                        spaceId,
+                        channelId,
+                        userMentions,
+                        threadId,
+                    ),
                 )
             }
         }
@@ -181,12 +189,14 @@ export class PushNotificationClient {
         spaceId: string,
         channelId: string,
         mentions: Mention[],
+        threadId?: string,
     ): Promise<void> {
         const headers = this.createHttpHeaders()
         const body = this.createUserMentionNotificationParams({
             spaceId,
             channelId,
             mentions,
+            threadId,
         })
         const url = `${this.options.url}/api/tag/mention-users`
         console.log('PUSH: sending @userMention tag to Notification Service ...', url, body)
@@ -205,11 +215,13 @@ export class PushNotificationClient {
     private async sendAtChannelToNotificationService(
         spaceId: string,
         channelId: string,
+        threadId?: string,
     ): Promise<void> {
         const headers = this.createHttpHeaders()
         const body = this.createAtChannelNotificationParams({
             spaceId,
             channelId,
+            threadId,
         })
         const url = `${this.options.url}/api/tag/at-channel`
         console.log('PUSH: sending @channel tag to Notification Service ...', url, body)
@@ -254,16 +266,19 @@ export class PushNotificationClient {
         spaceId,
         channelId,
         mentions,
+        threadId,
     }: {
         spaceId: string
         channelId: string
         mentions: Mention[]
+        threadId?: string
     }): MentionUsersRequestParams {
         const userIds = mentions.map((mention) => mention.userId)
         const params: MentionUsersRequestParams = {
             spaceId,
             channelId,
             userIds,
+            threadId,
         }
         return params
     }
@@ -271,13 +286,16 @@ export class PushNotificationClient {
     private createAtChannelNotificationParams({
         spaceId,
         channelId,
+        threadId,
     }: {
         spaceId: string
         channelId: string
+        threadId?: string
     }): AtChannelRequestParams {
         const params: AtChannelRequestParams = {
             spaceId,
             channelId,
+            threadId,
         }
         return params
     }

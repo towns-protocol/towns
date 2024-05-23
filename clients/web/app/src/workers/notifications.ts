@@ -225,46 +225,49 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
     })
 }
 
-function generateNewNotificationMessage(
-    spaceId: string,
-    townName: string | undefined,
-    channelId: string,
-    channelName: string | undefined,
-    sender: string | undefined,
-    plaintext: PlaintextDetails | undefined,
-): NotificationNewMessage {
+function generateNewNotificationMessage({
+    spaceId,
+    townName,
+    channelId,
+    threadId,
+    channelName,
+    senderName,
+    plaintext,
+}: {
+    spaceId: string
+    townName: string | undefined
+    channelId: string
+    threadId: string | undefined
+    channelName: string | undefined
+    senderName: string | undefined
+    plaintext: PlaintextDetails | undefined
+}): NotificationNewMessage {
+    const title = generateMentionTitle(senderName, townName, channelName)
     let body = plaintext?.body
+    threadId = plaintext?.threadId ? plaintext.threadId : threadId ?? ''
     if (!body) {
         switch (true) {
-            case stringHasValue(channelName) && stringHasValue(sender):
-                body = `@${sender} posted a new message in #${channelName}`
+            case stringHasValue(channelName) && stringHasValue(senderName):
+                body = `@${senderName} posted a new message in #${channelName}`
                 break
-            case stringHasValue(channelName) && !stringHasValue(sender):
+            case stringHasValue(channelName) && !stringHasValue(senderName):
                 body = `There's a new message in #${channelName}`
                 break
-            case !stringHasValue(channelName) && stringHasValue(sender):
-                body = `@${sender} posted a new message in ${townName}`
+            case !stringHasValue(channelName) && stringHasValue(senderName):
+                body = `@${senderName} posted a new message in ${townName}`
                 break
             default:
                 body = `There's a new message in ${townName}`
                 break
         }
     }
-    if (townName) {
-        return {
-            kind: AppNotificationType.NewMessage,
-            spaceId,
-            channelId,
-            title: townName,
-            body,
-        }
-    }
     return {
         kind: AppNotificationType.NewMessage,
         spaceId,
         channelId,
-        title: '',
-        body: '',
+        threadId,
+        title,
+        body,
     }
 }
 
@@ -390,26 +393,36 @@ function generateMentionTitle(
     }
 }
 
-function generateMentionedMessage(
-    spaceId: string,
-    townName: string | undefined,
-    channelId: string,
-    channelName: string | undefined,
-    sender: string | undefined,
-    plaintext: PlaintextDetails | undefined,
-): NotificationMention {
-    const title = generateMentionTitle(sender, townName, channelName)
+function generateMentionedMessage({
+    spaceId,
+    townName,
+    channelId,
+    threadId,
+    channelName,
+    senderName,
+    plaintext,
+}: {
+    spaceId: string
+    townName: string | undefined
+    channelId: string
+    channelName: string | undefined
+    threadId: string | undefined
+    senderName: string | undefined
+    plaintext: PlaintextDetails | undefined
+}): NotificationMention {
+    const title = generateMentionTitle(senderName, townName, channelName)
     let body = plaintext?.body
+    threadId = plaintext?.threadId ? plaintext.threadId : threadId ?? ''
     if (!body) {
         switch (true) {
-            case stringHasValue(channelName) && stringHasValue(sender):
-                body = `@${sender} mentioned you in #${channelName}`
+            case stringHasValue(channelName) && stringHasValue(senderName):
+                body = `@${senderName} mentioned you in #${channelName}`
                 break
-            case stringHasValue(channelName) && !stringHasValue(sender):
+            case stringHasValue(channelName) && !stringHasValue(senderName):
                 body = `You got mentioned in #${channelName}`
                 break
-            case !stringHasValue(channelName) && stringHasValue(sender):
-                body = `@${sender} mentioned you in ${townName}`
+            case !stringHasValue(channelName) && stringHasValue(senderName):
+                body = `@${senderName} mentioned you in ${townName}`
                 break
             default:
                 body = `You got mentioned in ${townName}`
@@ -420,7 +433,7 @@ function generateMentionedMessage(
         kind: AppNotificationType.Mention,
         spaceId,
         channelId,
-        threadId: plaintext?.threadId,
+        threadId,
         title,
         body,
     }
@@ -474,6 +487,7 @@ function generateReplyToMessage({
 }: ReplyToMessageInput): NotificationReplyTo {
     const title = generateReplyToTitle(senderName, townName, channelName)
     let body = plaintext?.body
+    threadId = plaintext?.threadId ? plaintext.threadId : threadId ?? ''
     if (reaction) {
         const senderText = stringHasValue(senderName) ? `@${senderName}` : 'Someone'
 
@@ -510,7 +524,7 @@ function generateReplyToMessage({
         kind: AppNotificationType.ReplyTo,
         spaceId,
         channelId,
-        threadId: plaintext?.threadId ? plaintext.threadId : threadId ?? '',
+        threadId,
         title,
         body,
     }
@@ -603,23 +617,25 @@ async function getNotificationContent(
                 notification.content.reaction,
             )
         case AppNotificationType.NewMessage:
-            return generateNewNotificationMessage(
-                notification.content.spaceId,
+            return generateNewNotificationMessage({
+                spaceId: notification.content.spaceId,
                 townName,
-                notification.content.channelId,
+                channelId: notification.content.channelId,
+                threadId: notification.content.threadId,
                 channelName,
                 senderName,
                 plaintext,
-            )
+            })
         case AppNotificationType.Mention:
-            return generateMentionedMessage(
-                notification.content.spaceId,
+            return generateMentionedMessage({
+                spaceId: notification.content.spaceId,
                 townName,
-                notification.content.channelId,
+                channelId: notification.content.channelId,
+                threadId: notification.content.threadId,
                 channelName,
                 senderName,
                 plaintext,
-            )
+            })
         case AppNotificationType.ReplyTo:
             return generateReplyToMessage({
                 spaceId: notification.content.spaceId,

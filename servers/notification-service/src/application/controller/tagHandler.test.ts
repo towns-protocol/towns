@@ -73,6 +73,44 @@ describe('tagMentionUsersHandler', () => {
         })
     })
 
+    it('should tag mention users (with threadId)', async () => {
+        req = {
+            body: {
+                channelId: 'channel123',
+                userIds: ['user1', 'user2', 'user3'],
+                threadId: 'thread123',
+            },
+        } as unknown as Request
+        const tagData = {
+            ChannelId: req.body.channelId,
+            Tag: NotificationKind.Mention,
+            SpaceId: req.body.spaceId,
+            ThreadId: 'thread123',
+        }
+
+        await tagMentionUsersHandler(req, res)
+
+        expect(database.notificationTag.upsert).toHaveBeenCalled()
+        for (const UserId of req.body.userIds) {
+            expect(database.notificationTag.upsert).toHaveBeenCalledWith({
+                where: {
+                    ChannelId_UserId: {
+                        ChannelId: tagData.ChannelId,
+                        UserId,
+                    },
+                },
+                update: { Tag: tagData.Tag, ThreadId: tagData.ThreadId },
+                create: { ...tagData, UserId },
+            })
+        }
+
+        expect(res.status).toHaveBeenCalledWith(StatusCodes.OK)
+        expect(res.json).toHaveBeenCalledWith({
+            ...req.body,
+            tag: NotificationKind.Mention,
+        })
+    })
+
     it('should tag @channel', async () => {
         req = {
             body: {

@@ -24,6 +24,7 @@ export const tagMentionUsersSchema = z.object({
     spaceId: z.string(),
     channelId: z.string().min(1),
     userIds: z.array(z.string()),
+    threadId: z.string().optional(),
 })
 
 export const tagReplyUserSchema = z.object({
@@ -35,6 +36,7 @@ export const tagReplyUserSchema = z.object({
 export const tagAtChannelSchema = z.object({
     spaceId: z.string(),
     channelId: z.string().min(1),
+    threadId: z.string().optional(),
 })
 
 export const tagAttachmentSchema = z.object({

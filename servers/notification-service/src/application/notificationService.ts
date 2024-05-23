@@ -33,7 +33,7 @@ export interface NotifyUsers {
     [userId: string]: NotifyUser
 }
 
-interface ReactionTag {
+interface TaggedUserWithThreadId {
     userId: string
     threadId?: string
 }
@@ -67,17 +67,20 @@ export class NotificationService {
             )
         }
 
-        const metionUsersTagged = new Set(
-            taggedUsers
-                .filter((taggedUser) => taggedUser.Tag === NotificationKind.Mention.toString())
-                .map((user) => user.UserId),
-        )
+        const metionUsersTagged: TaggedUserWithThreadId[] = taggedUsers
+            .filter((taggedUser) => taggedUser.Tag === NotificationKind.Mention.toString())
+            .map((user) => {
+                return {
+                    userId: user.UserId,
+                    threadId: user.ThreadId ?? undefined,
+                }
+            })
         const replyToUsersTagged = new Set(
             taggedUsers
                 .filter((taggedUser) => taggedUser.Tag === NotificationKind.ReplyTo.toString())
                 .map((user) => user.UserId),
         )
-        const reactionUsersTagged: ReactionTag[] = taggedUsers
+        const reactionUsersTagged: TaggedUserWithThreadId[] = taggedUsers
             .filter((taggedUser) => taggedUser.Tag === NotificationKind.Reaction.toString())
             .map((user) => {
                 return {
@@ -107,7 +110,7 @@ export class NotificationService {
         )
 
         let mutedMentionUsers = new Set()
-        if (metionUsersTagged.size > 0) {
+        if (metionUsersTagged.length > 0) {
             mutedMentionUsers = new Set(
                 (await UserSettingsTables.getUserMutedInMention(notificationData.users)).map(
                     (user) => user.UserId,
@@ -139,11 +142,12 @@ export class NotificationService {
                 continue
             }
 
+            const isMentionedUser = metionUsersTagged.some((u) => u.userId === userId)
             const isUserTagged =
                 isDMorGDM ||
                 isAtChannel ||
                 isAttachmentNotifyChannel ||
-                metionUsersTagged.has(userId) ||
+                isMentionedUser ||
                 replyToUsersTagged.has(userId) ||
                 reactionUsersTagged.some((u) => u.userId === userId) ||
                 attachmentUsersTagged.some((user) => user.UserId === userId)
@@ -152,8 +156,7 @@ export class NotificationService {
                 await UserSettingsTables.getBlockedUsersBy(userId)
             ).includes(notificationData.sender)
 
-            const isUserMutedForMention =
-                metionUsersTagged.has(userId) && mutedMentionUsers.has(userId)
+            const isUserMutedForMention = isMentionedUser && mutedMentionUsers.has(userId)
             const isUserMutedForReplyTo =
                 (attachmentReplyToUsers.size > 0 || replyToUsersTagged.has(userId)) &&
                 mutedReplyToUsers.has(userId)
@@ -179,10 +182,11 @@ export class NotificationService {
                         threadId: reactionTag.threadId,
                     }
                 }
-            } else if (metionUsersTagged.has(userId)) {
+            } else if (isMentionedUser) {
                 recipients[userId] = {
                     userId,
                     kind: NotificationKind.Mention,
+                    threadId: metionUsersTagged.find((u) => u.userId === userId)?.threadId,
                 }
             } else if (replyToUsersTagged.has(userId)) {
                 recipients[userId] = {
