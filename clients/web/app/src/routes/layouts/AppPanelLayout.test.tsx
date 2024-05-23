@@ -29,6 +29,15 @@ beforeAll(() => {
 })
 
 describe('<AppPanelLayout />', () => {
+    beforeEach(() => {
+        vi.mock('hooks/useUnseenChannelIdsCount', () => ({
+            useUnseenChannelIds: () => ({
+                unseenChannelIds: new Set([]),
+                markChannelsAsSeen: jest.fn(),
+            }),
+        }))
+    })
+
     test('renders SpaceSideBar when a server space exists', async () => {
         vi.spyOn(Lib, 'useSpaceData').mockImplementation(() => {
             return {
