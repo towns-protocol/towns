@@ -400,7 +400,7 @@ export class Client
         const response = await this.rpcClient.createStream({
             events: userEvents,
             streamId: streamIdAsBytes(userStreamId),
-            metadata: metadata ?? {},
+            metadata: metadata,
         })
         return unpackStream(response.stream)
     }
@@ -421,7 +421,7 @@ export class Client
         const response = await this.rpcClient.createStream({
             events: userDeviceKeyEvents,
             streamId: streamIdAsBytes(userDeviceKeyStreamId),
-            metadata: metadata ?? {},
+            metadata: metadata,
         })
         return unpackStream(response.stream)
     }
@@ -442,7 +442,7 @@ export class Client
         const response = await this.rpcClient.createStream({
             events: userInboxEvents,
             streamId: streamIdAsBytes(userInboxStreamId),
-            metadata: metadata ?? {},
+            metadata: metadata,
         })
         return unpackStream(response.stream)
     }
@@ -464,7 +464,7 @@ export class Client
         const response = await this.rpcClient.createStream({
             events: userSettingsEvents,
             streamId: userSettingsStreamId,
-            metadata: metadata ?? {},
+            metadata: metadata,
         })
         return unpackStream(response.stream)
     }
