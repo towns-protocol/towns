@@ -33,14 +33,16 @@ export const ModalContainer = (props: ModalContainerProps) => {
     const content = useMemo(() => {
         if (isTouch) {
             if (touchTitle) {
-                ;<TouchFullScreenModalContainer
-                    title={touchTitle}
-                    rightBarButton={rightBarButton}
-                    background={background}
-                    onHide={onHide}
-                >
-                    {children}
-                </TouchFullScreenModalContainer>
+                return (
+                    <TouchFullScreenModalContainer
+                        title={touchTitle}
+                        rightBarButton={rightBarButton}
+                        background={background}
+                        onHide={onHide}
+                    >
+                        {children}
+                    </TouchFullScreenModalContainer>
+                )
             }
             if (asSheet) {
                 return (
