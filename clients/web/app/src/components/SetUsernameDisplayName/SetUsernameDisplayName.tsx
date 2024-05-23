@@ -27,7 +27,13 @@ export const useCurrentStreamID = () => {
 }
 
 const validateDisplayName = (displayName: string) => {
-    return displayName.length < 33
+    if (displayName.endsWith('.eth')) {
+        return { valid: false, message: 'Display name cannot end with .eth' }
+    }
+    if (displayName.length > 32) {
+        return { valid: false, message: 'Your display name must be between 1 and 32 characters' }
+    }
+    return { valid: true }
 }
 
 type TitleProperties = DMTitleProperties | GDMTitleProperties | SpaceTitleProperties
@@ -92,7 +98,7 @@ export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties
         if (dirtyUsername !== user?.username && validateUsername(dirtyUsername)) {
             await setUsername(streamId, dirtyUsername)
         }
-        if (dirtyDisplayName !== user?.displayName && validateDisplayName(dirtyDisplayName)) {
+        if (dirtyDisplayName !== user?.displayName && validateDisplayName(dirtyDisplayName).valid) {
             await setDisplayName(streamId, dirtyDisplayName)
         }
         setShowEditFields(false)
@@ -129,18 +135,16 @@ export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties
         return 'Your username must be between 1 and 16 characters and can only contain letters, numbers, and underscores.'
     }, [dirtyUsername, usernameAvailable, user])
 
-    const displayNameErrorMessage = useMemo(() => {
-        if (validateDisplayName(dirtyDisplayName)) {
-            return undefined
-        }
-        return 'Your display name must be between 1 and 32 characters'
-    }, [dirtyDisplayName])
+    const displayNameErrorMessage = useMemo(
+        () => validateDisplayName(dirtyDisplayName).message,
+        [dirtyDisplayName],
+    )
 
     const saveButtonDisabled = useMemo(() => {
         return (
             (user?.displayName === dirtyDisplayName && user?.username === dirtyUsername) ||
             !validateUsername(dirtyUsername) ||
-            !validateDisplayName(dirtyDisplayName)
+            !validateDisplayName(dirtyDisplayName).valid
         )
     }, [user, dirtyDisplayName, dirtyUsername])
 

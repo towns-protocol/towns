@@ -13,14 +13,17 @@ export function getPrettyDisplayName(user: UserWithDisplayName | undefined): str
     return _getPrettyDisplayName(name, user?.username, user?.userId)
 }
 
+// .eth is only allowed for verified ens names
+const removeDotEth = (name: string) => name.replace(/\.eth$/, '')
+
 export const _getPrettyDisplayName = memoize(
     (name?: string, username?: string, userId?: string) => {
         if (name && name.length > 0) {
-            return name
+            return removeDotEth(name)
         }
 
         if (username && username.length > 0) {
-            return username
+            return removeDotEth(username)
         }
 
         if (userId) {
