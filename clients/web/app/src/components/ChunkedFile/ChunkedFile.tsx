@@ -62,7 +62,7 @@ const ChunkedFileDownload = (
     const { filename, mimetype, onDownloadClicked } = props
 
     const size = useSizeContext()
-    const reducedWidth = size.lessThan(350)
+    const reducedWidth = size.lessThan(370)
 
     return (
         <Stack
@@ -74,12 +74,12 @@ const ChunkedFileDownload = (
             pointerEvents="auto"
             cursor="pointer"
             alignItems="center"
-            maxWidth={reducedWidth ? '250' : '300'}
+            maxWidth={reducedWidth ? '200' : '300'}
             tooltip={filename}
             onClick={onDownloadClicked}
         >
             <Icon type="file" size="square_md" color="gray2" />
-            <Stack gap="sm" overflow="hidden">
+            <Stack gap="sm" overflow="hidden" minHeight="x5" justifyContent="center">
                 <Text truncate fontWeight="medium" color="default" size="md">
                     {filename}
                 </Text>
