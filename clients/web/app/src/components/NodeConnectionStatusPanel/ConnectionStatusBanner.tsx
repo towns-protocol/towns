@@ -1,9 +1,10 @@
 import React from 'react'
-import { Box, BoxProps, Icon, Text } from '@ui'
+import { FadeInBox } from '@components/Transitions'
+import { Icon, Text } from '@ui'
 
 type Props = {
     status: 'disconnected' | 'syncing' | 'synced'
-} & BoxProps
+}
 
 export const ConnectionStatusBanner = ({ status }: Props) => {
     return status === 'synced' ? (
@@ -13,7 +14,7 @@ export const ConnectionStatusBanner = ({ status }: Props) => {
         </Banner>
     ) : status === 'syncing' ? (
         <Banner>
-            <Icon type="alert" color="positive" size="square_xs" insetLeft="xxs" />
+            <Icon type="alert" color="negative" size="square_xs" insetLeft="xxs" />
             <Text truncate>Retrieving keys and decrypting messages</Text>
         </Banner>
     ) : (
@@ -24,6 +25,8 @@ export const ConnectionStatusBanner = ({ status }: Props) => {
     )
 }
 
-const Banner = (props: BoxProps) => (
-    <Box grow horizontal gap="sm" rounded="sm" alignItems="center" paddingBottom="xs" {...props} />
+const Banner = (props: { children: React.ReactNode }) => (
+    <FadeInBox grow horizontal gap="sm" rounded="sm" alignItems="center" paddingBottom="xs">
+        {props.children}
+    </FadeInBox>
 )

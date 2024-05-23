@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react'
+import { AnimatePresence } from 'framer-motion'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { Box, BoxProps, IconButton, Paragraph, Stack } from '@ui'
 import { formatUptime } from 'utils/formatDates'
@@ -36,7 +37,11 @@ export const NodeStatusPill = ({
 
     return (
         <Box padding gap="sm" rounded="sm" background={backgroundColor} {...boxProps}>
-            {connectionStatus && <ConnectionStatusBanner status={connectionStatus} />}
+            <AnimatePresence mode="wait">
+                {connectionStatus && (
+                    <ConnectionStatusBanner status={connectionStatus} key={connectionStatus} />
+                )}
+            </AnimatePresence>
             <Stack gap="sm">
                 <Stack
                     horizontal
