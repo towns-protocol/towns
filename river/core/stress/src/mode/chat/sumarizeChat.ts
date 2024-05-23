@@ -25,15 +25,17 @@ export async function sumarizeChat(localClients: StressClient[], cfg: ChatConfig
         for (const channelId of cfg.channelIds) {
             // for each channel, count the number of joinChat checkins we got (look for sessionId)
             const messages = client.streamsClient.stream(channelId)?.view.timeline
+
             const checkInMesssages =
                 messages?.filter(
                     channelMessagePostWhere((value) => value.body.includes(cfg.sessionId)),
                 ) ?? []
 
             const key = shortenHexString(channelId)
+            const count = checkinCounts[key]?.[checkInMesssages.length.toString()] ?? 0
             checkinCounts[key] = {
                 ...checkinCounts[key],
-                [checkInMesssages.length.toString()]: checkInMesssages.length,
+                [checkInMesssages.length.toString()]: count + 1,
             }
         }
     }
@@ -48,4 +50,6 @@ export async function sumarizeChat(localClients: StressClient[], cfg: ChatConfig
     await processLeadClient.sendMessage(cfg.announceChannelId, `Done ${makeCodeBlock(summary)}`, {
         threadId: message.hashStr,
     })
+
+    return summary
 }

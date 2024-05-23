@@ -90,7 +90,7 @@ async function startRootClient(
         if (!isMember) {
             await client.joinSpace(spaceId)
         } else {
-            await client.startStreamsClient()
+            await client.startStreamsClient({ spaceId })
         }
     }
 

@@ -6,3 +6,7 @@ export const expect = (a: any) => ({
         throw new Error(`expected ${a} to equal ${b}`)
     },
 })
+
+export function isSet(value: string | undefined | null): value is string {
+    return value !== undefined && value !== null && value.length > 0
+}

@@ -7,7 +7,7 @@ describe('wallets.test.ts', () => {
     test('generates wallets from seed phrase', () => {
         // Example usage:
         const seedPhrase = 'test test test test test test test test test test test junk'
-        const wallets = generateWalletsFromSeed(seedPhrase, 0, 2)
+        const wallets = generateWalletsFromSeed(seedPhrase, 0, 3)
         logger.log(
             'wallets',
             wallets.map((w) => ({ address: w.address, privateKey: w.privateKey })),

@@ -11,9 +11,6 @@ export async function waitFor<T>(
     const start = Date.now()
     let result: T | undefined = undefined
     while (!result) {
-        if (Date.now() - start > timeoutMs) {
-            throw new Error(`${opts?.logId ?? ''} timeout after ${timeoutMs}ms`)
-        }
         const retVal = condition()
         if (retVal && retVal instanceof Promise) {
             result = await retVal
@@ -21,7 +18,11 @@ export async function waitFor<T>(
             result = retVal
         }
         if (!result) {
-            await new Promise((resolve) => setTimeout(resolve, interval))
+            if (Date.now() - start > timeoutMs) {
+                throw new Error(`${opts?.logId ?? ''} timeout after ${timeoutMs}ms`)
+            } else {
+                await new Promise((resolve) => setTimeout(resolve, interval))
+            }
         }
     }
     return result

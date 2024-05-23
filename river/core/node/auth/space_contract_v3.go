@@ -76,10 +76,10 @@ func (sc *SpaceContractV3) IsMember(
 	}
 
 	spaceAsErc271, err := erc721.NewErc721(space.address, sc.backend)
-
-	if err != nil || space == nil {
+	if err != nil {
 		return false, err
 	}
+
 	isMember, err := spaceAsErc271.BalanceOf(nil, user)
 	if err != nil {
 		return false, err

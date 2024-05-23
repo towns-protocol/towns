@@ -6,7 +6,7 @@ import { makeSillyMessage } from '../../utils/messages'
 export async function chitChat(client: StressClient, cfg: ChatConfig) {
     const logger = dlogger(`stress:chitchat:${client.logId}`)
     // for cfg.duration seconds, randomly every 1-5 seconds, send a message to one of cfg.channelIds
-    const end = cfg.startedAtMs + cfg.duration * 1000
+    const end = Date.now() + cfg.duration * 1000
     const channelIds = cfg.channelIds
     const randomChannel = () => channelIds[Math.floor(Math.random() * channelIds.length)]
     // wait at least 1 second between messages across all clients

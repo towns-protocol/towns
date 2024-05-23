@@ -96,7 +96,7 @@ async function startFollowerClient(
         if (!isMember) {
             await client.joinSpace(spaceId, { skipMintMembership: true })
         } else {
-            await client.startStreamsClient()
+            await client.startStreamsClient({ spaceId })
         }
     }
 

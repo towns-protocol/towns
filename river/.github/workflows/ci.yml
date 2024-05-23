@@ -549,6 +549,9 @@ jobs:
             - name: Run River Tests (with entitlements)
               run: yarn workspace @river/sdk run test:ci:with-entitlements
 
+            - name: Run Stress Test Suite (with entitlements)
+              run: yarn workspace @river-build/stress run test:ci:with-entitlements
+
             - name: Archive River Node Logs and Settings
               if: always()
               uses: actions/upload-artifact@v4
