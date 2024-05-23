@@ -1,6 +1,7 @@
 import React, { PropsWithChildren } from 'react'
 import { AT_CHANNEL_MENTION } from 'use-towns-client'
-import { BoxProps, Text } from '@ui'
+import { Text } from '@ui'
+import { TextProps } from 'ui/components/Text/Text'
 
 export const ComboBoxTrailingContent = ({
     userId,
@@ -9,20 +10,18 @@ export const ComboBoxTrailingContent = ({
     if (isChannelMember) {
         return null
     }
-    const textConfig: { text: string; color: BoxProps['color'] } = {
+    const textConfig: { text: string; color: TextProps['color'] } = {
         text: '',
         color: 'gray2',
     }
 
     switch (userId) {
         case AT_CHANNEL_MENTION:
-            textConfig.text = 'Notify everyone in this channel'
-            textConfig.color = 'gray2'
+            textConfig.text = 'Notify everyone in channel'
             break
 
         default:
             textConfig.text = 'Not in channel'
-            textConfig.color = 'error'
     }
 
     return (

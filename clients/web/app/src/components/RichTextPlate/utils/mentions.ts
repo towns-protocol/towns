@@ -1,6 +1,7 @@
 import { ELEMENT_MENTION } from '@udecode/plate-mention'
+import { TComboboxItem } from '@udecode/plate-combobox'
 import { Mention } from 'use-towns-client'
-import { TUserMentionElement } from './ComboboxTypes'
+import { ComboboxTypes, TUserMentionElement, TUserWithChannel } from './ComboboxTypes'
 
 /**
  * @desc Recursively go through the nodes to extract all the `Mention` nodes
@@ -23,4 +24,21 @@ const recursivelyGetNameAndId = (node: TUserMentionElement, mentions: Mention[])
             atChannel: (node as TUserMentionElement).atChannel,
         })
     }
+}
+
+export const userMentionFilter = (query: string) => (item: TComboboxItem<TUserWithChannel>) =>
+    [item.data.username, item.data.displayName]
+        .join(' ')
+        .toLowerCase()
+        .includes(query.toLowerCase())
+
+export const getUsernameForMention = <T extends TUserWithChannel>(
+    comboboxType: ComboboxTypes,
+    item: TComboboxItem<T>,
+): string | undefined => {
+    if (comboboxType !== ComboboxTypes.userMention || item.data.atChannel) {
+        return undefined
+    }
+
+    return item.data.username ? `@${item.data.username}` : undefined
 }

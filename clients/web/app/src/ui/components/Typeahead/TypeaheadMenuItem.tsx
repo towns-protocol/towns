@@ -13,9 +13,10 @@ export const TypeaheadMenuItem = <T extends MenuOption>(props: {
     option: T
     Icon?: JSX.Element
     name?: string
+    secondaryText?: string
     trailingContent?: JSX.Element
 }) => {
-    const { index, isLast, isSelected, onClick, onMouseEnter, option } = props
+    const { index, secondaryText, isLast, isSelected, onClick, onMouseEnter, option } = props
 
     return (
         <Stack
@@ -33,6 +34,7 @@ export const TypeaheadMenuItem = <T extends MenuOption>(props: {
             aria-selected={isSelected}
             id={'typeahead-item-' + index}
             cursor="pointer"
+            alignItems="center"
             onMouseEnter={onMouseEnter}
             onClick={onClick}
         >
@@ -41,9 +43,12 @@ export const TypeaheadMenuItem = <T extends MenuOption>(props: {
                     {props.Icon}
                 </Box>
             )}
-            <Box justifyContent="center">
-                <Text truncate>{props.name}</Text>
-            </Box>
+            <Text>{props.name}</Text>
+            {secondaryText && (
+                <Text truncate color="gray2">
+                    {secondaryText}
+                </Text>
+            )}
 
             {props.trailingContent && (
                 <>

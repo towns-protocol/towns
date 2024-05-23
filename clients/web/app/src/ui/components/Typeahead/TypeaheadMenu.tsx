@@ -2,6 +2,7 @@ import React from 'react'
 import { createPortal } from 'react-dom'
 import { VirtualRef } from '@udecode/plate-floating'
 import {
+    TYPEAHEAD_POPUP_ID,
     TypeaheadPositionResult,
     getTypeaheadPosition,
 } from '@components/RichTextPlate/utils/helpers'
@@ -31,10 +32,12 @@ export const TypeaheadMenu = ({
                 position="absolute"
                 rounded="sm"
                 minWidth="250"
+                maxWidth="90vw"
                 maxHeight="200"
                 as="ul"
                 paddingY="xs"
                 background="level2"
+                id={TYPEAHEAD_POPUP_ID}
                 style={{
                     ...(position ? position : {}),
                 }}
@@ -62,7 +65,7 @@ export const TypeaheadMenuAnchored = ({
         if (!typeaheadRef.current) {
             return
         }
-        setPosition(getTypeaheadPosition(targetRef))
+        setPosition(getTypeaheadPosition(targetRef, typeaheadRef.current))
     }, [targetRef, setPosition])
 
     return createPortal(

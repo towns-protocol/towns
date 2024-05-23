@@ -34,6 +34,7 @@ import { RichTextPlaceholder } from './components/RichTextEditorPlaceholder'
 import { toMD } from './utils/toMD'
 import { RememberInputPlugin } from './plugins/RememberInputPlugin'
 import { deserializeMd } from './utils/deserializeMD'
+import { userMentionFilter } from './utils/mentions'
 import { AtChannelUser, ComboboxTypes, TUserWithChannel } from './utils/ComboboxTypes'
 import { EditorFallback } from './components/EditorFallback'
 import { MentionCombobox } from './components/plate-ui/MentionCombobox'
@@ -397,6 +398,7 @@ const PlateEditorWithoutBoundary = ({
                                 id={ComboboxTypes.userMention}
                                 items={userMentions}
                                 currentUser={props.userId}
+                                filter={userMentionFilter}
                             />
                             <MentionCombobox<Channel>
                                 pluginKey={ELEMENT_MENTION_CHANNEL}

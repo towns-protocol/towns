@@ -8,6 +8,7 @@ import { VirtualRef } from '@udecode/plate-floating'
 import { MOCK_EMOJI } from './ComboboxTypes'
 
 export const BREAK_TAG = '<br>'
+export const TYPEAHEAD_POPUP_ID = 'typeaheadPopup'
 
 export const isCodeBlockElement = (editor: PlateEditor) =>
     isType(editor, getBlockAbove(editor)?.[0], ELEMENT_CODE_LINE)
@@ -49,13 +50,19 @@ export type TypeaheadPositionResult = {
     right?: string
 }
 
-export const getTypeaheadPosition = (targetRef: VirtualRef): TypeaheadPositionResult => {
+export const getTypeaheadPosition = (
+    targetRef: VirtualRef,
+    typeaheadRef: HTMLDivElement,
+): TypeaheadPositionResult => {
     if (!targetRef.current) {
         return {}
     }
+
     const { left, bottom } = targetRef.current.getBoundingClientRect()
-    const SAFETY_PAD = 50
-    const MAX_TYPEAHEAD_SIZE = 250
+    const SAFETY_PAD = 5
+    const MAX_TYPEAHEAD_SIZE =
+        typeaheadRef.querySelector(`#${TYPEAHEAD_POPUP_ID}`)?.clientWidth ?? 350
+
     // Check if the typeahead will overflow the right or left side of the screen
     const isRightOverflow = left + SAFETY_PAD + MAX_TYPEAHEAD_SIZE >= window.innerWidth - SAFETY_PAD
     const isLeftOverflow = left - SAFETY_PAD - MAX_TYPEAHEAD_SIZE < 0
@@ -74,7 +81,7 @@ export const getTypeaheadPosition = (targetRef: VirtualRef): TypeaheadPositionRe
         if (isRightOverflow) {
             absPosition.right = SAFETY_PAD + 'px'
         } else {
-            absPosition.left = `${left - SAFETY_PAD / 2.5}px`
+            absPosition.left = `${left - SAFETY_PAD}px`
         }
     }
     return absPosition

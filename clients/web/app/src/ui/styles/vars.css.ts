@@ -198,6 +198,7 @@ const root = createGlobalTheme(':root', {
             '25vw': `25vw`,
             '50vw': `50vw`,
             '75vw': `75vw`,
+            '90vw': `90vw`,
             '10vh': `10vh`,
             '25vh': `25vh`,
             '50vh': `50vh`,

@@ -26,6 +26,7 @@ import isEqual from 'lodash/isEqual'
 import React, { memo, useCallback, useEffect } from 'react'
 import { TypeaheadMenuAnchored, TypeaheadMenuItem } from '@ui'
 import { search } from '@components/RichText/plugins/EmojiShortcutPlugin'
+import { getUsernameForMention } from '../../utils/mentions'
 import { ComboboxTypes, TMentionComboboxTypes, TUserWithChannel } from '../../utils/ComboboxTypes'
 import { getFilteredItemsWithoutMockEmoji } from '../../utils/helpers'
 import { ComboboxIcon } from './ComboboxIcon'
@@ -90,6 +91,10 @@ export const ComboboxItem = withRef<
                     setRefElement: () => ref,
                 }}
                 name={item.text + (currentUser === item.key ? ` (you)` : '')}
+                secondaryText={getUsernameForMention<TUserWithChannel>(
+                    comboboxType,
+                    item as TComboboxItem<TUserWithChannel>,
+                )}
                 Icon={<ComboboxIcon item={item.data} comboboxType={comboboxType} />}
                 trailingContent={
                     comboboxType === ComboboxTypes.userMention && (
