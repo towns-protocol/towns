@@ -2,8 +2,8 @@ import { ethers } from 'ethers'
 import { Environment, isErrorType } from 'worker-common'
 import { createJsonProvider as createProvider } from './provider'
 import { Env } from '.'
-import { ContractName, EventName, FunctionName } from './types'
-import { BaseSepoliaContracts } from './contractsMap'
+import { ContractName, EventName, FunctionName, Networks } from './types'
+import { BaseMainnetContracts, BaseSepoliaContracts } from './contractsMap'
 
 interface ContractDetails {
     address: string
@@ -21,13 +21,16 @@ interface LogFilterResult {
 
 type filterArgType = string | number | null
 const BaseSepoliaBlocksPerDay = 43200 // at 2s blocks
+const BaseMainnetBlocksPerDay = 43200 // at 2s blocks
 
-const NetworkContracts = new Map<string, Map<string, ContractDetails>>([
+const NetworkContracts = new Map<Networks, Map<ContractName, ContractDetails>>([
     ['base_sepolia', BaseSepoliaContracts],
+    ['base', BaseMainnetContracts],
 ])
 
 export const NetworkBlocksPerDay = new Map<Environment, number>([
     ['test-beta', BaseSepoliaBlocksPerDay],
+    ['omega', BaseMainnetBlocksPerDay],
 ])
 
 // map of contract method to emitted event name
@@ -60,7 +63,7 @@ export const EventByMethod = new Map<keyof typeof FunctionName, keyof typeof Eve
 ])
 
 function createContract(
-    network: string,
+    network: Networks,
     contractName: ContractName,
     provider: ethers.providers.Provider,
 ): ethers.Contract | null {
@@ -81,7 +84,7 @@ function createContract(
     return new ethers.Contract(contractDetails.address, contractDetails.abi, provider)
 }
 
-export function contractAddress(network: string, contractName: ContractName): string | null {
+export function contractAddress(network: Networks, contractName: ContractName): string | null {
     const networkContracts = NetworkContracts.get(network)
     if (!networkContracts) {
         console.error(`Unknown network: ${network}`)
@@ -138,7 +141,7 @@ export function createFilterWrapper(
 // with a fixed lookback window based on blockNumber offset
 export async function runLogQuery(
     environment: Environment,
-    network: string,
+    network: Networks,
     env: Env,
     contractName: ContractName, // diamond contract emitting event
     eventName: EventName, // name of event to filter on

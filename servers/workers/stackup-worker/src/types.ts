@@ -238,3 +238,11 @@ const FunctionHash = {
 } as const
 
 type FunctionHash = (typeof FunctionHash)[keyof typeof FunctionHash]
+
+export const Networks = {
+    anvil: 'anvil',
+    base_sepolia: 'base_sepolia',
+    base: 'base',
+} as const
+
+export type Networks = (typeof Networks)[keyof typeof Networks]

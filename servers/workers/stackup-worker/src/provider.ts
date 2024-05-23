@@ -2,6 +2,7 @@ import { ISpaceDapp, createSpaceDapp, getWeb3Deployment } from '@river-build/web
 import { ethers } from 'ethers'
 import { Environment } from 'worker-common'
 import { Env } from './index'
+import { Networks } from './types'
 
 const LOCALHOST_RPC_URL = 'http://127.0.0.1:8545'
 const BASE_SEPOLIA_RPC_URL = 'https://base-sepolia.g.alchemy.com/v2/'
@@ -13,7 +14,7 @@ const providerMap = new Map<Environment, string>([
     ['omega', `${BASE_RPC_URL}`],
 ])
 
-export const networkMap = new Map<Environment, string>([
+export const networkMap = new Map<Environment, Networks>([
     ['development', 'anvil'],
     ['test-beta', 'base_sepolia'],
     ['omega', 'base'],
