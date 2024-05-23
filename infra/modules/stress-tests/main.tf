@@ -62,6 +62,17 @@ module "stress-test-system-parameters" {
   source = "./stress-test-parameters"
 }
 
+module "stress_node_ecs_sg" {
+  source = "terraform-aws-modules/security-group/aws"
+
+  name        = "stress-test-node-ecs-sg-${terraform.workspace}"
+  description = "Security group for the stress test node ECS Task"
+  vpc_id      = var.vpc_id
+
+  egress_cidr_blocks = ["0.0.0.0/0"]
+  egress_rules       = ["all-all"]
+}
+
 module "stress-test-nodes" {
   source = "./stress-test-nodes"
 
@@ -73,6 +84,8 @@ module "stress-test-nodes" {
   ecs_cluster                    = aws_ecs_cluster.stress_test_cluster
   base_chain_rpc_url_secret_arn  = var.base_chain_rpc_url_secret_arn
   river_chain_rpc_url_secret_arn = var.river_chain_rpc_url_secret_arn
+
+  security_group_id = module.stress_node_ecs_sg.security_group_id
 
   container_index = count.index
 

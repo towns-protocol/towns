@@ -45,3 +45,8 @@ variable "stress_test_wallet_mnemonic_secret_arn" {
 variable "system_parameters" {
   type = any
 }
+
+variable "security_group_id" {
+  description = "The security group id for ECS tasks"
+  type        = string
+}

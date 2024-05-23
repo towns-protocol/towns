@@ -1,5 +1,6 @@
 #!/bin/bash
 set -eo pipefail
+set -x
 
 function check_env() {
     if [ -z "$ENVIRONMENT_NAME" ]; then
@@ -26,6 +27,34 @@ function check_env() {
         echo "STRESS_DURATION is not set. Exiting."
         exit 1
     fi
+
+    if [ -z "$ECS_MODE" ]; then
+        echo "ECS_MODE is not set. Exiting."
+        exit 1
+    fi
+}
+
+function get_vpc_id() {
+    if [[ $ENVIRONMENT_NAME == *"transient"* ]]; then
+        vpc_name="river-vpc-transient-global"
+    else
+        vpc_name="river-vpc-$ENVIRONMENT_NAME"
+    fi
+    vpc_id=$(aws ec2 describe-vpcs --filters Name=tag:Name,Values=$vpc_name --query "Vpcs[].VpcId" --output text)
+    echo $vpc_id
+}
+
+function get_subnet_ids() {
+    vpc_id=$(get_vpc_id)
+    subnet_ids=$(aws ec2 describe-subnets \
+    --filter Name=vpc-id,Values=$vpc_id \
+    --query "Subnets[?Tags[?Key=='Name' && contains(Value, 'private')]].SubnetId" | jq '.' | tr -d '[],"')
+    echo $subnet_ids
+}
+
+function get_security_group_id() {
+    local security_group_id=$(aws ec2 describe-security-groups --filters "Name=tag:Name,Values=stress-test-node-ecs-sg-${ENVIRONMENT_NAME}" --query 'SecurityGroups[*].[GroupId]' --output text)
+    echo $security_group_id
 }
 
 function get_ecs_cluster_arn() {
@@ -37,17 +66,17 @@ function get_ecs_cluster_arn() {
 function start_service() {
     local service_name=$1
     local cluster_arn=$2
-    echo "starting service: $service_name"
+    # echo "starting service: $service_name"
     aws ecs update-service --service $service_name --cluster $cluster_arn --desired-count 1 > /dev/null
-    echo "started service: $service_name"
+    # echo "started service: $service_name"
 }
 
 function stop_service() {
     local service_name=$1
     local cluster_arn=$2
-    echo "stopping service: $service_name"
+    # echo "stopping service: $service_name"
     aws ecs update-service --service $service_name --cluster $cluster_arn --desired-count 0 > /dev/null
-    echo "stopped service: $service_name"
+    # echo "stopped service: $service_name"
 }
 
 function stop_all_services() {
@@ -115,6 +144,8 @@ function set_session_id() {
 }
 
 function start_via_services() {
+    echo "starting via services"
+
     local loop_end=$(expr $CONTAINER_COUNT - 1)
 
     #Starting the stress test nodes by updating the service desired count
@@ -124,17 +155,33 @@ function start_via_services() {
 }
 
 function start_via_tasks() {
+    echo "starting via tasks"
+
     local loop_end=$(expr $CONTAINER_COUNT - 1)
+
+    subnet_ids=$(get_subnet_ids)
+    security_group_id=$(get_security_group_id)
+
+    task_def_family="stress-test-node-${ENVIRONMENT_NAME}-${i}-fargate"
+
+    # get the task definition arn
+    task_def_arn=$(aws ecs list-task-definitions --family-prefix $task_def_family --status ACTIVE --output text | awk '{print $2}')
+    subnet_ids_arg_list=$(echo $subnet_ids | tr ' ' ',')
+
+    echo "starting task: $task_def_arn" >&2
+    echo "subnet_ids: $subnet_ids" >&2
+    echo "security_group_id: $security_group_id" >&2
+
 
     #Starting the stress test nodes by running the task directly
     for i in $(seq 0 $loop_end); do
-        task_def_family="stress-test-node-${ENVIRONMENT_NAME}-${i}-fargate"
-
-        # get the task definition arn
-        task_def_arn=$(aws ecs list-task-definitions --family-prefix $task_def_family --status ACTIVE --output text | awk '{print $2}')
-
         # run the task
-        aws ecs run-task --cluster $cluster_name --task-definition $task_def_arn > /dev/null
+        aws ecs run-task \
+            --cluster $cluster_name \
+            --task-definition $task_def_arn \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[$subnet_ids_arg_list],securityGroups=[$security_group_id]}" \
+            --enable-execute-command > /dev/null
     done
 
 }
@@ -147,9 +194,12 @@ function start_stress_test() {
     reference_task_def_arn=$(aws ecs list-task-definitions --family-prefix $reference_task_def --status ACTIVE --output text | awk '{print $2}')
 
     echo "starting stress test nodes with ${CONTAINER_COUNT} containers"
-
-    # start_via_tasks
-    start_via_services
+    
+    if [ "$ECS_MODE" == "service" ]; then
+        start_via_services
+    else
+        start_via_tasks
+    fi
 
     echo "stress tests started"
 }

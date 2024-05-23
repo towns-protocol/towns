@@ -28,7 +28,14 @@ on:
                 required: true
                 type: number
                 default: 300
-            
+            ecs_mode:
+                description: 'ECS mode'
+                type: choice
+                options:
+                    - 'task'
+                    - 'service'
+                default: 'task'
+                required: true
 
 
 concurrency:
@@ -65,6 +72,7 @@ jobs:
                 PROCESSES_PER_CONTAINER: ${{ inputs.processes_per_container }}
                 CONTAINER_COUNT: ${{ inputs.container_count }}
                 STRESS_DURATION: ${{ inputs.stress_duration }}
+                ECS_MODE: ${{ inputs.ecs_mode }}
               run: ./scripts/run-river-stress-tests.sh
 
             # If action failed, we send a slack notification

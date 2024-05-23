@@ -192,28 +192,6 @@ resource "aws_ecs_task_definition" "task_definition" {
   tags = local.custom_tags
 }
 
-module "stress_node_ecs_sg" {
-  source = "terraform-aws-modules/security-group/aws"
-
-  name        = "${local.name}_sg"
-  description = "Security group for the stress test node ECS Task"
-  vpc_id      = var.vpc_id
-
-  // TODO - Need to check later if ingress to security group require or a particular CIDR range
-  ingress_with_cidr_blocks = [
-    {
-      from_port   = 80
-      to_port     = 80
-      protocol    = "tcp"
-      description = "Allowing access from VPC CIDR range for now"
-      cidr_blocks = data.aws_vpc.vpc.cidr_block
-    },
-  ]
-
-  egress_cidr_blocks = ["0.0.0.0/0"]
-  egress_rules       = ["all-all"]
-}
-
 resource "aws_ecs_service" "stress_test_ecs_service" {
   name                               = "${local.name}-service"
   cluster                            = var.ecs_cluster.id
@@ -230,7 +208,7 @@ resource "aws_ecs_service" "stress_test_ecs_service" {
   }
 
   network_configuration {
-    security_groups  = [module.stress_node_ecs_sg.security_group_id]
+    security_groups  = [var.security_group_id]
     subnets          = var.subnets
     assign_public_ip = false
   }
