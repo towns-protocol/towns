@@ -47,24 +47,26 @@ interact-river-anvil :;
 	@echo "Interacting through $(contract)..."
 	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url river_anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast
 
+# ================================== TESTNETS ==================================
+
 # ===========================
-# 				River
+# 			River Testnet
 # ===========================
-deploy-river :;
+deploy-river-testnet :;
 	@echo "Deploying $(contract)..."
-	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ffi --rpc-url river --private-key ${RIVER_PRIVATE_KEY} --verifier blockscout --verifier-url ${RIVERSCAN_URL} --broadcast --verify
+	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ffi --rpc-url river_devnet --private-key ${RIVER_PRIVATE_KEY} --verifier blockscout --verifier-url ${RIVERSCAN_DEVNET_URL} --broadcast --verify
 
-interact-river :;
+interact-river-testnet :;
 	@echo "Interacting through $(contract)..."
-	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url river --private-key ${RIVER_PRIVATE_KEY} --broadcast
+	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url river_devnet --private-key ${RIVER_PRIVATE_KEY} --broadcast
 
-test-river :;
+test-river-testnet :;
 	@forge build
-	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --fork-url river --private-key ${TESTNET_PRIVATE_KEY}
+	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --fork-url river_devnet --private-key ${TESTNET_PRIVATE_KEY}
 
-verify-river :;
+verify-river-testnet :;
 	@echo "Verifying $(address)..."
-	@forge verify-contract ${address} ${contract} --chain river
+	@forge verify-contract ${address} ${contract} --chain river_devnet
 
 # ===========================
 # 				 Base Sepolia
@@ -92,24 +94,6 @@ verify-blockscout-base-sepolia :;
 	@forge verify-contract ${address} ${contract} --chain-id 84532 --verifier blockscout --verifier-url ${BLOCKSCOUT_SEPOLIA_URL}
 
 # ===========================
-# 				 		Base
-# ===========================
-
-deploy-base :;
-	@echo "Deploying $(contract)..."
-	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ledger --hd-paths "m/44'/60'/1'/0/0" --sender ${PRODUCTION_ADDRESS} --ffi --rpc-url base --verifier-url ${BASESCAN_URL} --etherscan-api-key ${BASESCAN_API_KEY} --broadcast --verify -vvvv
-
-interact-base :;
-	@echo "Interacting through $(contract)..."
-	@forge script scripts/interactions/${contract}.s.sol:${contract} --ledger --hd-paths "m/44'/60'/1'/0/0" --sender ${PRODUCTION_ADDRESS} --ffi --rpc-url base --broadcast
-
-verify-base :;
-	@forge verify-contract ${address} ${contract} --chain-id 8453 --verifier-url ${BASESCAN_URL} -e ${BASESCAN_API_KEY}
-
-verify-blockscout-base :;
-	@forge verify-contract ${address} ${contract} --chain-id 8453 --verifier blockscout --verifier-url ${BLOCKSCOUT_BASE_URL}
-
-# ===========================
 # 				Sepolia
 # ===========================
 
@@ -126,6 +110,33 @@ verify-sepolia :;
 interact-sepolia :;
 	@echo "Interacting through $(contract)..."
 	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url sepolia --private-key ${TESTNET_PRIVATE_KEY} --broadcast --legacy
+
+# ================================== PRODUCTION ==================================
+
+# ===========================
+# 				 	River
+# ===========================
+deploy-river :;
+	@echo "Deploying $(contract)..."
+	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ledger --hd-paths "m/44'/60'/1'/0/0" --sender ${PRODUCTION_ADDRESS} --ffi --rpc-url river --verifier blockscout --verifier-url ${RIVERSCAN_URL} --broadcast --verify -vvvv
+
+# ===========================
+# 				 		Base
+# ===========================
+
+deploy-base :;
+	@echo "Deploying $(contract)..."
+	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ledger --hd-paths "m/44'/60'/1'/0/0" --sender ${PRODUCTION_ADDRESS} --ffi --rpc-url base --verifier-url ${BASESCAN_URL} --etherscan-api-key ${BASESCAN_API_KEY} --broadcast --verify -vvvv
+
+interact-base :;
+	@echo "Interacting through $(contract)..."
+	@forge script scripts/interactions/${contract}.s.sol:${contract} --ledger --hd-paths "m/44'/60'/1'/0/0" --sender ${PRODUCTION_ADDRESS} --ffi --rpc-url base --broadcast
+
+verify-base :;
+	@forge verify-contract ${address} ${contract} --chain-id base --verifier-url ${BASESCAN_URL} -e ${BASESCAN_API_KEY}
+
+verify-blockscout-base :;
+	@forge verify-contract ${address} ${contract} --chain-id base --verifier blockscout --verifier-url ${BLOCKSCOUT_BASE_URL}
 
 # ===========================
 # 				Mainnet

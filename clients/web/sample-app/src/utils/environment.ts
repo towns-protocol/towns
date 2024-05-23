@@ -1,4 +1,4 @@
-import { Chain, baseSepolia, foundry } from 'wagmi/chains'
+import { Chain, base, baseSepolia, foundry } from 'wagmi/chains'
 import {
     BaseChainConfig,
     IChainConfig,
@@ -17,6 +17,12 @@ const riverChain: IChainConfig = {
     chainId: 6524490,
     name: 'river_chain',
     rpcUrl: 'https://devnet.rpc.river.build/',
+}
+
+const mainnetRiverChain: IChainConfig = {
+    chainId: 550,
+    name: 'mainnet_river_chain',
+    rpcUrl: import.meta.env.VITE_RIVER_CHAIN_RPC_URL ?? 'https://mainnet.rpc.river.build',
 }
 
 const baseSepoliaClone: Chain = import.meta.env.VITE_BASE_SEPOLIA_RPC_URL
@@ -40,12 +46,35 @@ const baseSepoliaClone: Chain = import.meta.env.VITE_BASE_SEPOLIA_RPC_URL
       }
     : baseSepolia
 
+const baseClone: Chain = import.meta.env.VITE_BASE_RPC_URL
+    ? {
+          ...base,
+          rpcUrls: {
+              ...base.rpcUrls,
+              default: {
+                  http: [import.meta.env.VITE_BASE_RPC_URL],
+                  webSocket: import.meta.env.VITE_BASE_WS_URL
+                      ? [import.meta.env.VITE_BASE_WS_URL]
+                      : undefined,
+              },
+              public: {
+                  http: [import.meta.env.VITE_BASE_RPC_URL],
+                  webSocket: import.meta.env.VITE_BASE_WS_URL
+                      ? [import.meta.env.VITE_BASE_WS_URL]
+                      : undefined,
+              },
+          },
+      }
+    : base
+
 function getBaseChainFromId(chainId: number): Chain {
     switch (chainId) {
         case foundry.id:
             return foundry
         case baseSepoliaClone.id:
             return baseSepoliaClone
+        case baseClone.id:
+            return baseClone
         default:
             throw new Error(`Unknown chain id ${chainId}`)
     }
@@ -57,6 +86,8 @@ function getRiverChainFromId(chainId: number): IChainConfig {
             return anvilRiverChain
         case riverChain.chainId:
             return riverChain
+        case mainnetRiverChain.chainId:
+            return mainnetRiverChain
         default:
             throw new Error(`Unknown chain id ${chainId}`)
     }

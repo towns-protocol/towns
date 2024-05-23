@@ -26,12 +26,14 @@ extra_output_files = ["metadata", "abi", "bin"]
 sepolia = { key = "${ETHERSCAN_API_KEY}" }
 base_sepolia = { key = "${BLOCKSCOUT_SEPOLIA_API_KEY}", url = "${BLOCKSCOUT_SEPOLIA_URL}" }
 base = { key = "${BASESCAN_API_KEY}", url = "${BASESCAN_URL}" }
+river_devnet = { key = "${RIVERSCAN_API_KEY}", url = "${RIVERSCAN_DEVNET_URL}" }
 river = { key = "${RIVERSCAN_API_KEY}", url = "${RIVERSCAN_URL}" }
 mainnet = { key = "${ETHERSCAN_API_KEY}" }
 
 [rpc_endpoints]
 base_anvil = "${BASE_ANVIL_RPC_URL}"
 river_anvil = "${RIVER_ANVIL_RPC_URL}"
+river_devnet = "${RIVER_DEVNET_RPC_URL}"
 river = "${RIVER_RPC_URL}"
 sepolia = "${SEPOLIA_RPC_URL}"
 base_sepolia = "${BASE_SEPOLIA_RPC_URL}"

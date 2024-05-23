@@ -15,6 +15,14 @@ contract DeployBase is DeployHelpers, Script {
   constructor() {
     // set up chains
     setChain(
+      "river",
+      ChainData({
+        name: "river",
+        chainId: 550,
+        rpcUrl: "https://mainnet.rpc.river.build/http"
+      })
+    );
+    setChain(
       "river_anvil",
       ChainData({
         name: "river_anvil",
@@ -23,9 +31,9 @@ contract DeployBase is DeployHelpers, Script {
       })
     );
     setChain(
-      "river",
+      "river_devnet",
       ChainData({
-        name: "river",
+        name: "river_devnet",
         chainId: 6524490,
         rpcUrl: "https://devnet.rpc.river.build"
       })
