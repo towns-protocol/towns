@@ -52,12 +52,15 @@ export const RichTextBottomToolbar = (props: Props) => {
 
     const onSelectEmoji = useCallback(
         (data: EmojiPickerSelection) => {
-            editor.insertNode({
-                type: ELEMENT_MENTION_EMOJI,
-                children: [{ text: '' }],
-                emoji: { name: data.name, emoji: data.native },
-                value: data.native,
-            } as TEmojiMentionElement)
+            editor.insertNodes([
+                {
+                    type: ELEMENT_MENTION_EMOJI,
+                    children: [{ text: '' }],
+                    emoji: { name: data.name, emoji: data.native },
+                    value: data.native,
+                } as TEmojiMentionElement,
+                { text: ' ' },
+            ])
             focusEditor(editor, getEndPoint(editor, []))
         },
         [editor],

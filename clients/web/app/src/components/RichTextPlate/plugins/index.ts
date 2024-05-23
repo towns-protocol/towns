@@ -84,6 +84,7 @@ const PlatePlugins = createPlugins(
         createEmojiPlugin({
             options: {
                 id: ComboboxTypes.emojiMention,
+                insertSpaceAfterMention: true,
             },
         }),
         createChannelPlugin({
