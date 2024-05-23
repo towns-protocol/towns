@@ -104,8 +104,12 @@ export const ValidateMembership = () => {
     // space can take some time to sync on load
     // we need to wait for the space to be ready
     if (!client || space === undefined) {
-        // if user has loaded other spaces, but not this space, it indicates they've not joined this space
-        if (spaceDataIds && !spaceDataIds.includes(spaceIdFromPathname)) {
+        if (
+            // user has no spaces, alternatively they aren't loaded yet
+            typeof spaceDataIds === 'undefined' ||
+            // if user has loaded other spaces, but not this space, it indicates they've not joined this space
+            (spaceDataIds && !spaceDataIds.includes(spaceIdFromPathname))
+        ) {
             AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.PublicTownPage)
             return _PublicTownPage
         }
