@@ -38,7 +38,6 @@ export const TRANSACTION_LIMIT_DEFAULTS_PER_DAY = {
     linkWallet: 10,
     updateSpaceInfo: 10,
     banUnban: 10,
-    prepayMembership: 10,
 }
 
 /* Verifies if a user can create a town
@@ -73,27 +72,28 @@ export async function verifyCreateSpace(
         }
         const townFactoryAddress = contractAddress(network, 'SpaceFactory')
         // check that quota has not been breached on-chain
-        const queryResult = await runLogQuery(
-            params.env.ENVIRONMENT,
+        const queryResult = await runLogQuery({
+            environment: params.env.ENVIRONMENT,
             network,
-            params.env,
-            'SpaceOwner',
-            'Transfer',
-            [townFactoryAddress, params.senderAddress],
-            createFilterWrapper,
-            NetworkBlocksPerDay.get(params.env.ENVIRONMENT) ?? undefined,
-        )
+            env: params.env,
+            contractName: 'SpaceOwner',
+            eventName: 'Transfer',
+            eventArgs: [townFactoryAddress, params.senderAddress],
+            createFilterFunc: createFilterWrapper,
+            blockLookbackNum: NetworkBlocksPerDay.get(params.env.ENVIRONMENT) ?? undefined,
+            townId: undefined,
+        })
         if (!queryResult || !queryResult.events) {
             return { verified: false, error: 'Unable to queryFilter for create town' }
         }
 
-        if (
-            queryResult.events.length >=
-            limitOrSkipLimitVerification(params.env, TRANSACTION_LIMIT_DEFAULTS_PER_DAY.createSpace)
-        ) {
+        const limit =
+            params.env.LIMIT_CREATE_SPACE ?? TRANSACTION_LIMIT_DEFAULTS_PER_DAY.createSpace
+
+        if (queryResult.events.length >= limitOrSkipLimitVerification(params.env, limit)) {
             return { verified: false, error: 'user has reached max mints' }
         }
-        return { verified: true, maxActionsPerDay: TRANSACTION_LIMIT_DEFAULTS_PER_DAY.createSpace }
+        return { verified: true, maxActionsPerDay: limit }
     } catch (error) {
         return {
             verified: false,
@@ -244,18 +244,21 @@ export async function verifyUseTown(
             )
         }
 
+        const contractName = mapSpaceContractTransactionNameToContractName(params.transactionName)
+
         // check that quota has not been breached on-chain
-        const queryResult = await runLogQuery(
-            params.env.ENVIRONMENT,
+        const queryResult = await runLogQuery({
+            environment: params.env.ENVIRONMENT,
             network,
-            params.env,
-            mapTransactionNameToContractName(params.transactionName),
+            env: params.env,
+            contractName: contractName,
             eventName,
             // all we case about is conditioning the log query on msg.sender, which is AA
-            [params.senderAddress, null],
-            createFilterWrapper,
-            NetworkBlocksPerDay.get(params.env.ENVIRONMENT) ?? undefined,
-        )
+            eventArgs: [params.senderAddress, null],
+            createFilterFunc: createFilterWrapper,
+            blockLookbackNum: NetworkBlocksPerDay.get(params.env.ENVIRONMENT) ?? undefined,
+            townId: params.townId,
+        })
         if (!queryResult || !queryResult.events) {
             return { verified: false, error: 'Unable to queryFilter for use town' }
         }
@@ -265,22 +268,28 @@ export async function verifyUseTown(
             case 'createChannel':
             case 'updateChannel':
             case 'removeChannel':
-                maxActionsPerDay = TRANSACTION_LIMIT_DEFAULTS_PER_DAY.channelCreate
+                maxActionsPerDay =
+                    params.env.LIMIT_CHANNEL_CREATE ??
+                    TRANSACTION_LIMIT_DEFAULTS_PER_DAY.channelCreate
                 break
             case 'createRole':
             case 'removeRole':
             case 'updateRole':
             case 'removeRoleFromChannel':
             case 'addRoleToChannel':
-                maxActionsPerDay = TRANSACTION_LIMIT_DEFAULTS_PER_DAY.roleSet
+                maxActionsPerDay =
+                    params.env.LIMIT_ROLE_SET ?? TRANSACTION_LIMIT_DEFAULTS_PER_DAY.roleSet
                 break
             case 'removeEntitlementModule':
             case 'addEntitlementModule':
-                maxActionsPerDay = TRANSACTION_LIMIT_DEFAULTS_PER_DAY.entitlementSet
+                maxActionsPerDay =
+                    params.env.LIMIT_ENTITLEMENT_SET ??
+                    TRANSACTION_LIMIT_DEFAULTS_PER_DAY.entitlementSet
                 break
             case 'ban':
             case 'unban':
-                maxActionsPerDay = TRANSACTION_LIMIT_DEFAULTS_PER_DAY.banUnban
+                maxActionsPerDay =
+                    params.env.LIMIT_BAN_UNBAN ?? TRANSACTION_LIMIT_DEFAULTS_PER_DAY.banUnban
                 break
             default:
                 maxActionsPerDay = null
@@ -307,7 +316,7 @@ export async function verifyUseTown(
 }
 
 export async function verifyUpdateSpaceInfo(
-    params: ITownTransactionParams & { transactionName: FunctionName },
+    params: ITownTransactionParams,
 ): Promise<IVerificationResult> {
     const spaceDapp = await createSpaceDappForNetwork(params.env)
     if (!spaceDapp) {
@@ -340,41 +349,30 @@ export async function verifyUpdateSpaceInfo(
             throw new Error(`Unknown environment network: ${params.env.ENVIRONMENT}`)
         }
 
-        const eventName = EventByMethod.get(params.transactionName)
+        const eventName = EventByMethod.get('updateSpaceInfo')
         if (!eventName) {
-            throw new Error(
-                `Unknown transactionName for usage transactions: ${params.transactionName}`,
-            )
+            throw new Error(`Unknown transactionName for usage transactions: 'updateSpaceInfo'`)
         }
 
         // check that quota has not been breached on-chain
-        const queryResult = await runLogQuery(
-            params.env.ENVIRONMENT,
+        const queryResult = await runLogQuery({
+            environment: params.env.ENVIRONMENT,
             network,
-            params.env,
-            mapTransactionNameToContractName(params.transactionName),
+            env: params.env,
+            contractName: 'SpaceOwner',
             eventName,
-            // TODO: should be spaceInfo.address but SpaceOwner__UpdateSpace(town_address) says its indexed but its not? This only passes with null
-            [null],
-            createFilterWrapper,
-            NetworkBlocksPerDay.get(params.env.ENVIRONMENT) ?? undefined,
-        )
+            eventArgs: [spaceInfo.address],
+            createFilterFunc: createFilterWrapper,
+            blockLookbackNum: NetworkBlocksPerDay.get(params.env.ENVIRONMENT) ?? undefined,
+            townId: undefined,
+        })
         if (!queryResult || !queryResult.events) {
             return { verified: false, error: 'Unable to queryFilter for update space' }
         }
 
-        let maxActionsPerDay: number | null = null
-        switch (params.transactionName) {
-            case 'updateSpaceInfo':
-                maxActionsPerDay = TRANSACTION_LIMIT_DEFAULTS_PER_DAY.updateSpaceInfo
-                break
-            default:
-                maxActionsPerDay = null
-                break
-        }
-        if (!maxActionsPerDay) {
-            return { verified: false, error: `transaction not supported ${params.transactionName}` }
-        }
+        const maxActionsPerDay =
+            params.env.LIMIT_UPDATE_SPACE_INFO ?? TRANSACTION_LIMIT_DEFAULTS_PER_DAY.updateSpaceInfo
+
         if (
             queryResult.events.length >= limitOrSkipLimitVerification(params.env, maxActionsPerDay)
         ) {
@@ -392,10 +390,8 @@ export async function verifyUpdateSpaceInfo(
     }
 }
 
-function mapTransactionNameToContractName(transactionName: FunctionName): ContractName {
+function mapSpaceContractTransactionNameToContractName(transactionName: FunctionName) {
     switch (transactionName) {
-        case 'updateSpaceInfo':
-            return 'SpaceOwner'
         case 'createChannel':
         case 'updateChannel':
         case 'removeChannel':
@@ -452,35 +448,38 @@ export async function verifyLinkWallet(
             // no event to filter on ATM
             return {
                 verified: true,
-                maxActionsPerDay: TRANSACTION_LIMIT_DEFAULTS_PER_DAY.linkWallet,
+                maxActionsPerDay:
+                    params.env.LIMIT_LINK_WALLET ?? TRANSACTION_LIMIT_DEFAULTS_PER_DAY.linkWallet,
             }
         }
 
         switch (params.functionHash) {
             case 'linkWalletToRootKey':
                 // linking EOAs
-                queryResult = await runLogQuery(
-                    params.env.ENVIRONMENT,
+                queryResult = await runLogQuery({
+                    environment: params.env.ENVIRONMENT,
                     network,
-                    params.env,
-                    'WalletLink',
-                    'LinkWalletToRootKey',
-                    [null, params.rootKeyAddress],
-                    createFilterWrapper,
-                    NetworkBlocksPerDay.get(params.env.ENVIRONMENT) ?? undefined,
-                )
+                    env: params.env,
+                    contractName: 'WalletLink',
+                    eventName: 'LinkWalletToRootKey',
+                    eventArgs: [null, params.rootKeyAddress],
+                    createFilterFunc: createFilterWrapper,
+                    blockLookbackNum: NetworkBlocksPerDay.get(params.env.ENVIRONMENT) ?? undefined,
+                    townId: undefined,
+                })
                 break
             case 'removeLink':
-                queryResult = await runLogQuery(
-                    params.env.ENVIRONMENT,
+                queryResult = await runLogQuery({
+                    environment: params.env.ENVIRONMENT,
                     network,
-                    params.env,
-                    'WalletLink',
-                    'RemoveLink',
-                    [null, params.rootKeyAddress],
-                    createFilterWrapper,
-                    NetworkBlocksPerDay.get(params.env.ENVIRONMENT) ?? undefined,
-                )
+                    env: params.env,
+                    contractName: 'WalletLink',
+                    eventName: 'RemoveLink',
+                    eventArgs: [null, params.rootKeyAddress],
+                    createFilterFunc: createFilterWrapper,
+                    blockLookbackNum: NetworkBlocksPerDay.get(params.env.ENVIRONMENT) ?? undefined,
+                    townId: undefined,
+                })
                 break
             default:
                 throw new Error('Unknown functionHash for wallet linking')
@@ -490,13 +489,12 @@ export async function verifyLinkWallet(
             return { verified: false, error: 'Unable to queryFilter for wallet linking' }
         }
 
-        if (
-            queryResult.events.length >=
-            limitOrSkipLimitVerification(params.env, TRANSACTION_LIMIT_DEFAULTS_PER_DAY.linkWallet)
-        ) {
+        const limit = params.env.LIMIT_LINK_WALLET ?? TRANSACTION_LIMIT_DEFAULTS_PER_DAY.linkWallet
+
+        if (queryResult.events.length >= limitOrSkipLimitVerification(params.env, limit)) {
             return { verified: false, error: 'user has reached max wallet links for the day' }
         }
-        return { verified: true, maxActionsPerDay: TRANSACTION_LIMIT_DEFAULTS_PER_DAY.linkWallet }
+        return { verified: true, maxActionsPerDay: limit }
     } catch (error) {
         return {
             verified: false,
@@ -505,139 +503,65 @@ export async function verifyLinkWallet(
     }
 }
 
-export async function verifyPrepaid(params: ITownTransactionParams): Promise<IVerificationResult> {
-    const spaceDapp = await createSpaceDappForNetwork(params.env)
-    if (!spaceDapp) {
-        return { verified: false, error: 'Unable to create SpaceDapp' }
-    }
+// https://linear.app/hnt-labs/issue/HNT-5985/imembershipsol-events-should-have-msgsender
+// export async function verifyMembershipChecks(
+//     params: ITownTransactionParams & {
+//         eventName: 'MembershipLimitUpdated' | 'MembershipPriceUpdated'
+//     },
+// ): Promise<IVerificationResult> {
+//     const spaceDapp = await createSpaceDappForNetwork(params.env)
+//     if (!spaceDapp) {
+//         return { verified: false, error: 'Unable to create SpaceDapp' }
+//     }
 
-    try {
-        // check for restrictive rule which requires whitelist overrides for user address
-        const verification = await checkLinkKVOverrides(params.rootKeyAddress, params.env)
-        if (verification !== null) {
-            if (verification.verified === false) {
-                return { verified: false, error: verification.error }
-            }
-        }
-        // check max quota not exhausted
-        const network = networkMap.get(params.env.ENVIRONMENT)
-        if (!network) {
-            throw new Error(`Unknown environment network: ${params.env.ENVIRONMENT}`)
-        }
+//     try {
+//         // check for restrictive rule which requires whitelist overrides for user address
+//         const verification = await checkLinkKVOverrides(params.rootKeyAddress, params.env)
+//         if (verification !== null) {
+//             if (verification.verified === false) {
+//                 return { verified: false, error: verification.error }
+//             }
+//         }
+//         // check max quota not exhausted
+//         const network = networkMap.get(params.env.ENVIRONMENT)
+//         if (!network) {
+//             throw new Error(`Unknown environment network: ${params.env.ENVIRONMENT}`)
+//         }
 
-        const space = spaceDapp.getSpace(params.townId)
-        if (!space) {
-            return { verified: false, error: 'Unable to get space for prepay membership' }
-        }
+//         const space = spaceDapp.getSpace(params.townId)
+//         if (!space) {
+//             return { verified: false, error: 'Unable to get space for prepay membership' }
+//         }
 
-        const queryResult = await runLogQuery(
-            params.env.ENVIRONMENT,
-            network,
-            params.env,
-            'Prepay',
-            'PrepayBase__Prepaid',
-            [space.Membership.address, null],
-            createFilterWrapper,
-            NetworkBlocksPerDay.get(params.env.ENVIRONMENT) ?? undefined,
-        )
+//         const queryResult = await runLogQuery({
+//             environment: params.env.ENVIRONMENT,
+//             network,
+//             env: params.env,
+//             contractName: 'Membership',
+//             eventName: params.eventName,
+//             // TODO: these events should be indexed by sender
+//             // https://linear.app/hnt-labs/issue/HNT-5985/imembershipsol-events-should-have-msgsender
+//             eventArgs: [params.senderAddress, null],
+//             createFilterFunc: createFilterWrapper,
+//             blockLookbackNum: NetworkBlocksPerDay.get(params.env.ENVIRONMENT) ?? undefined,
+//             townId: params.townId,
+//         })
 
-        if (!queryResult || !queryResult.events) {
-            return { verified: false, error: 'Unable to queryFilter for prepay memberships' }
-        }
+//         if (!queryResult || !queryResult.events) {
+//             return { verified: false, error: 'Unable to queryFilter for prepay memberships' }
+//         }
 
-        if (
-            queryResult.events.length >=
-            limitOrSkipLimitVerification(
-                params.env,
-                TRANSACTION_LIMIT_DEFAULTS_PER_DAY.prepayMembership,
-            )
-        ) {
-            return {
-                verified: false,
-                error: 'user has reached max prepay membership operations for the day',
-            }
-        }
-        return {
-            verified: true,
-            maxActionsPerDay: TRANSACTION_LIMIT_DEFAULTS_PER_DAY.prepayMembership,
-        }
-    } catch (error) {
-        return {
-            verified: false,
-            error: isErrorType(error) ? error?.message : 'Unkown error',
-        }
-    }
-}
-
-export async function verifyMembershipChecks(
-    params: ITownTransactionParams & {
-        eventName: 'MembershipLimitUpdated' | 'MembershipPriceUpdated'
-    },
-): Promise<IVerificationResult> {
-    const spaceDapp = await createSpaceDappForNetwork(params.env)
-    if (!spaceDapp) {
-        return { verified: false, error: 'Unable to create SpaceDapp' }
-    }
-
-    try {
-        // check for restrictive rule which requires whitelist overrides for user address
-        const verification = await checkLinkKVOverrides(params.rootKeyAddress, params.env)
-        if (verification !== null) {
-            if (verification.verified === false) {
-                return { verified: false, error: verification.error }
-            }
-        }
-        // check max quota not exhausted
-        const network = networkMap.get(params.env.ENVIRONMENT)
-        if (!network) {
-            throw new Error(`Unknown environment network: ${params.env.ENVIRONMENT}`)
-        }
-
-        const space = spaceDapp.getSpace(params.townId)
-        if (!space) {
-            return { verified: false, error: 'Unable to get space for prepay membership' }
-        }
-
-        const queryResult = await runLogQuery(
-            params.env.ENVIRONMENT,
-            network,
-            params.env,
-            'Membership',
-            params.eventName,
-            // TODO: these events should be indexed by sender
-            // https://linear.app/hnt-labs/issue/HNT-5985/imembershipsol-events-should-have-msgsender
-            [params.senderAddress, null],
-            createFilterWrapper,
-            NetworkBlocksPerDay.get(params.env.ENVIRONMENT) ?? undefined,
-        )
-
-        if (!queryResult || !queryResult.events) {
-            return { verified: false, error: 'Unable to queryFilter for prepay memberships' }
-        }
-
-        if (
-            queryResult.events.length >=
-            limitOrSkipLimitVerification(
-                params.env,
-                TRANSACTION_LIMIT_DEFAULTS_PER_DAY.prepayMembership,
-            )
-        ) {
-            return {
-                verified: false,
-                error: 'user has reached max prepay membership operations for the day',
-            }
-        }
-        return {
-            verified: true,
-            maxActionsPerDay: TRANSACTION_LIMIT_DEFAULTS_PER_DAY.prepayMembership,
-        }
-    } catch (error) {
-        return {
-            verified: false,
-            error: isErrorType(error) ? error?.message : 'Unkown error',
-        }
-    }
-}
+//         return {
+//             verified: true,
+//             maxActionsPerDay: ,
+//         }
+//     } catch (error) {
+//         return {
+//             verified: false,
+//             error: isErrorType(error) ? error?.message : 'Unkown error',
+//         }
+//     }
+// }
 
 function isSkipLimitVerification(env: Env): boolean {
     return env.SKIP_LIMIT_VERIFICATION === 'true'

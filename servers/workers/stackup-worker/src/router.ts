@@ -16,10 +16,8 @@ import {
     verifyCreateSpace,
     verifyJoinTown,
     verifyLinkWallet,
-    verifyPrepaid,
     verifyUpdateSpaceInfo,
     verifyUseTown,
-    verifyMembershipChecks,
 } from './useropVerification'
 
 import { isErrorType, Environment } from 'worker-common'
@@ -64,16 +62,17 @@ router.post('/api/transaction-limits', async (request: WorkerRequest, env: Env) 
                     return null
                 }
                 const townFactoryAddress = contractAddress(network, 'SpaceFactory')
-                const queryResult = await runLogQuery(
-                    environment as Environment,
+                const queryResult = await runLogQuery({
+                    environment,
                     network,
                     env,
-                    'SpaceOwner', // contract name
-                    'Transfer', // event name
-                    [townFactoryAddress, rootAddress], // event args
-                    createFilterWrapper,
+                    contractName: 'SpaceOwner',
+                    eventName: 'Transfer',
+                    eventArgs: [townFactoryAddress, rootAddress],
+                    createFilterFunc: createFilterWrapper,
                     blockLookbackNum,
-                )
+                    townId: undefined,
+                })
                 if (!queryResult) {
                     return new Response(toJson({ error: 'Internal Service Error' }), {
                         status: 500,
@@ -359,7 +358,6 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
                         senderAddress: userOperation.sender,
                         townId: townId,
                         env,
-                        transactionName: functionHash,
                     })
                     if (!verification.verified) {
                         return new Response(

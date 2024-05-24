@@ -41,11 +41,20 @@ jobs:
               # https://linear.app/hnt-labs/issue/HNT-4569/change-paymaster-address-to-entrypoint-address-in-paymaster-proxy
               run: PORT=8787 yarn dev:local --var PAYMASTER_ADDRESS:0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789 SKIP_LIMIT_VERIFICATION:true STACKUP_API_TOKEN:${{ secrets.STACKUP_TEST_API_TOKEN }} PRIVY_APP_KEY:${{ secrets.PRIVY_APP_KEY }} PRIVY_APP_ID:clml5fp7s013vmf0fnkabuaiw ALCHEMY_API_KEY:${{ secrets.ALCHEMY_API_KEY }} AUTH_SECRET:foo ENVIRONMENT:test-beta &
 
+            - name: Spin up stackup worker with strict limits
+              working-directory: ./servers/workers/stackup-worker
+              # PAYMASTER_ADDRESS is actually the entrypoint address and we need to change the name of this env var
+              # https://linear.app/hnt-labs/issue/HNT-4569/change-paymaster-address-to-entrypoint-address-in-paymaster-proxy
+              run: PORT=8989 yarn dev:local --var LIMIT_CREATE_SPACE:1 LIMIT_ROLE_SET:1 LIMIT_ENTITLEMENT_SET:1 LIMIT_CHANNEL_CREATE:1 LIMIT_LINK_WALLET:1 LIMIT_UPDATE_SPACE_INFO:1 LIMIT_BAN_UNBAN:1 SKIP_PRIVY_VERIFICATION:true PAYMASTER_ADDRESS:0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789 STACKUP_API_TOKEN:${{ secrets.STACKUP_TEST_API_TOKEN }} PRIVY_APP_KEY:${{ secrets.PRIVY_APP_KEY }} PRIVY_APP_ID:clml5fp7s013vmf0fnkabuaiw ALCHEMY_API_KEY:${{ secrets.ALCHEMY_API_KEY }} AUTH_SECRET:foo ENVIRONMENT:test-beta &
+
             - name: Wait for first stackup worker to be up on 8686
               run: yarn worker:wait:stackup
 
             - name: Wait for second stackup worker to be up on 8787
               run: PORT=8787 yarn worker:wait:stackup
+
+            - name: Wait for thrid stackup worker to be up on 8989
+              run: PORT=8989 yarn worker:wait:stackup
 
             # #### Disabled b/c of error connecting to node
             # ConnectError: [failed_precondition] CreateStream: createStreamImpl: (62:DOWNSTREAM_NETWORK_ERROR) unavailable: URL "stream.river-testnet.nodes.unit410.com/river.NodeToNode/AllocateStream" missing scheme: use http:// or https:// (unlike grpc-go) 
@@ -106,6 +115,18 @@ jobs:
 
               working-directory: ./clients/web/userops
               run: yarn test:userops:privy-wallet
+
+            - name: Run @towns/userop package tests with max daily limits of 1 (SpaceDapp/base-sepolia)
+              timeout-minutes: 20
+              env:
+                AA_PAYMASTER_PROXY_URL: http://127.0.0.1:8989
+                AA_PAYMASTER_PROXY_AUTH_SECRET: Zm9v
+                AA_RPC_URL: ${{ secrets.AA_RPC_URL }}
+                AA_BUNDLER_URL: ${{ secrets.AA_BUNDLER_URL }}
+                RIVER_ENV: gamma
+
+              working-directory: ./clients/web/userops
+              run: yarn test:userops:paymaster-limits
 
             # If failed, we send a slack notification
             - name: Slack notification

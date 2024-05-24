@@ -30,6 +30,14 @@ export interface Env extends AuthEnv {
     SKIP_LIMIT_VERIFICATION: string
     REFUSE_ALL_OPS: string
     SKIP_PRIVY_VERIFICATION: string
+
+    LIMIT_CREATE_SPACE?: number
+    LIMIT_ROLE_SET?: number
+    LIMIT_ENTITLEMENT_SET?: number
+    LIMIT_CHANNEL_CREATE?: number
+    LIMIT_LINK_WALLET?: number
+    LIMIT_UPDATE_SPACE_INFO?: number
+    LIMIT_BAN_UNBAN?: number
 }
 
 export default {

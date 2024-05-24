@@ -3,11 +3,17 @@ import { Environment, isErrorType } from 'worker-common'
 import { createJsonProvider as createProvider } from './provider'
 import { Env } from '.'
 import { ContractName, EventName, FunctionName, Networks } from './types'
-import { BaseMainnetContracts, BaseSepoliaContracts } from './contractsMap'
+import {
+    BaseMainnetContracts,
+    BaseSepoliaContracts,
+    isSpaceSpecificContract,
+    spaceSpecificContracts,
+} from './contractsMap'
+import { SpaceAddressFromSpaceId } from '@river-build/web3'
 
 interface ContractDetails {
-    address: string
-    abi: ethers.ContractInterface | undefined
+    address: string | undefined
+    abi: ethers.ContractInterface
 }
 
 interface LogFilterResult {
@@ -62,10 +68,11 @@ export const EventByMethod = new Map<keyof typeof FunctionName, keyof typeof Eve
     ['setMembershipPrice', 'MembershipPriceUpdated'],
 ])
 
-function createContract(
+function createContract<CN extends ContractName>(
     network: Networks,
-    contractName: ContractName,
+    contractName: CN,
     provider: ethers.providers.Provider,
+    townId: CN extends (typeof spaceSpecificContracts)[number] ? string : undefined,
 ): ethers.Contract | null {
     const networkContracts = NetworkContracts.get(network)
     if (!networkContracts) {
@@ -81,7 +88,24 @@ function createContract(
         console.error(`Unknown contract abi: ${contractName}`)
         return null
     }
-    return new ethers.Contract(contractDetails.address, contractDetails.abi, provider)
+
+    if (isSpaceSpecificContract(contractName)) {
+        if (!townId) {
+            console.error(`Missing townId for space specific contract: ${contractName}`)
+            return null
+        }
+        const spaceAddress = SpaceAddressFromSpaceId(townId)
+        return new ethers.Contract(spaceAddress, contractDetails.abi, provider)
+    } else {
+        if (!contractDetails.address) {
+            console.error(
+                `No contract address for this contract mapping. Should this be the space's contract address?: ${contractName}`,
+            )
+            return null
+        }
+
+        return new ethers.Contract(contractDetails.address, contractDetails.abi, provider)
+    }
 }
 
 export function contractAddress(network: Networks, contractName: ContractName): string | null {
@@ -93,6 +117,12 @@ export function contractAddress(network: Networks, contractName: ContractName): 
     const contractDetails = networkContracts.get(contractName)
     if (!contractDetails) {
         console.error(`Unknown contract: ${contractName}`)
+        return null
+    }
+    if (!contractDetails.address) {
+        console.error(
+            `No contract address for this contract mapping. Should this be the space's contract address?: ${contractName}`,
+        )
         return null
     }
     return contractDetails.address
@@ -139,17 +169,31 @@ export function createFilterWrapper(
 
 // Run a log query using queryFilter interface on a contract
 // with a fixed lookback window based on blockNumber offset
-export async function runLogQuery(
-    environment: Environment,
-    network: Networks,
-    env: Env,
-    contractName: ContractName, // diamond contract emitting event
-    eventName: EventName, // name of event to filter on
-    eventArgs: filterArgType[], // args to pass into event filter
-    createFilterFunc: FilterFunctionType,
-    blockLookbackNum?: number,
-    provider?: ethers.providers.StaticJsonRpcProvider,
-): Promise<LogFilterResult | null> {
+export async function runLogQuery<CN extends ContractName>(args: {
+    environment: Environment
+    network: Networks
+    env: Env
+    contractName: CN // diamond contract emitting event
+    eventName: EventName // name of event to filter on
+    eventArgs: filterArgType[] // args to pass into event filter
+    createFilterFunc: FilterFunctionType
+    blockLookbackNum?: number
+    provider?: ethers.providers.StaticJsonRpcProvider
+    townId: CN extends (typeof spaceSpecificContracts)[number] ? string : undefined
+}): Promise<LogFilterResult | null> {
+    const {
+        environment,
+        network,
+        env,
+        contractName,
+        eventName,
+        eventArgs,
+        createFilterFunc,
+        blockLookbackNum,
+        provider,
+        townId,
+    } = args
+
     let rpcProvider: ethers.providers.StaticJsonRpcProvider | undefined = provider
     if (!rpcProvider) {
         console.log(`creating provider for environment ${environment}`)
@@ -160,7 +204,7 @@ export async function runLogQuery(
         return null
     }
 
-    const contract = createContract(network, contractName, rpcProvider)
+    const contract = createContract(network, contractName, rpcProvider, townId)
     if (!contract) {
         console.error(`Unable to create contract: ${contract}`)
         return null

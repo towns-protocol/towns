@@ -6,6 +6,7 @@ export default defineConfig({
         globals: true,
         setupFiles: ['./vitest.setup.ts', 'dotenv/config'],
         testTimeout: 180_000,
+        environment: 'jsdom',
         poolOptions: {
             threads: {
                 // run single test at a time - alchemy rpc rate limits (test account), avoid multiple concurrent useroperations from same user (privy runs)

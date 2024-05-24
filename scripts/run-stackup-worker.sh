@@ -18,12 +18,16 @@ EOF
 # Initialize variables
 SKIP_PRIVY_VERIFICATION="true"
 OUTPUT_TO_FILE="false"
+PAYMASTER_LIMIT="false"
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
         -p | --privy )  
             SKIP_PRIVY_VERIFICATION="false"
+            ;;
+        -l | --limit )  
+            PAYMASTER_LIMIT="true"
             ;;
         -o | --output )  
             OUTPUT_TO_FILE="true"
@@ -92,7 +96,16 @@ echo "PRIVY_APP_KEY: ${PRIVY_APP_KEY}"
 echo "ALCHEMY_API_KEY: ${ALCHEMY_API_KEY}"
 
 # Define the yarn command without output redirection
-stackup_command="cd ./servers/workers/stackup-worker && yarn dev:local --var PAYMASTER_ADDRESS:0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789 SKIP_LIMIT_VERIFICATION:true SKIP_PRIVY_VERIFICATION:$SKIP_PRIVY_VERIFICATION STACKUP_API_TOKEN:$STACKUP_API_TOKEN PRIVY_APP_KEY:$PRIVY_APP_KEY PRIVY_APP_ID:clml5fp7s013vmf0fnkabuaiw ALCHEMY_API_KEY:$ALCHEMY_API_KEY AUTH_SECRET:foo ENVIRONMENT:test-beta"
+stackup_command="cd ./servers/workers/stackup-worker && yarn dev:local --var PAYMASTER_ADDRESS:0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789 STACKUP_API_TOKEN:$STACKUP_API_TOKEN PRIVY_APP_KEY:$PRIVY_APP_KEY PRIVY_APP_ID:clml5fp7s013vmf0fnkabuaiw ALCHEMY_API_KEY:$ALCHEMY_API_KEY AUTH_SECRET:foo ENVIRONMENT:test-beta"
+
+# Only allow 1 of each tx type to be processed, additional should reject
+if [ "$PAYMASTER_LIMIT" = "true" ]; then
+    echo "Running stackup worker with limits on paymaster."
+    stackup_command="$stackup_command LIMIT_CREATE_SPACE:1 LIMIT_ROLE_SET:1 LIMIT_ENTITLEMENT_SET:1 LIMIT_CHANNEL_CREATE:1 LIMIT_LINK_WALLET:1 LIMIT_UPDATE_SPACE_INFO:1 LIMIT_BAN_UNBAN:1"
+else
+    echo "Running stackup worker without limits on paymaster."
+    stackup_command="$stackup_command SKIP_LIMIT_VERIFICATION:true SKIP_PRIVY_VERIFICATION:$SKIP_PRIVY_VERIFICATION "
+fi
 
 # Run the command either in the background or in the foreground based on user's choice
 if [ "$OUTPUT_TO_FILE" = "true" ]; then
