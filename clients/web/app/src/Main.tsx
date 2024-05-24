@@ -70,7 +70,7 @@ export const Main = () => {
                         </ZLayerProvider>
                     </Suspense>
                 </DebugRouter>
-                <AppProgressOverlay debug />
+                <AppProgressOverlay />
                 <AboveAppProgressOverlay />
             </BrowserRouter>
         </ErrorBoundary>

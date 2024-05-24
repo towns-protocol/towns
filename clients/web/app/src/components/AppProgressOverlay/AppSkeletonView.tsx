@@ -1,9 +1,9 @@
 import React from 'react'
-import { TimelineShimmer } from '@components/Shimmer'
+import { TouchHomeSkeleton } from 'routes/layouts/TouchHomeSkeleton'
 import { useDevice } from 'hooks/useDevice'
 import { AppPanelLayoutSkeleton } from 'routes/layouts/AppPanelLayoutSkeleton'
 
 export const AppSkeletonView = () => {
     const { isTouch } = useDevice()
-    return isTouch ? <TimelineShimmer /> : <AppPanelLayoutSkeleton />
+    return isTouch ? <TouchHomeSkeleton /> : <AppPanelLayoutSkeleton />
 }

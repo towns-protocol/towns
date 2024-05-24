@@ -15,6 +15,8 @@ import { useUsernameConfirmed } from 'hooks/useUsernameConfirmed'
 import { useAnalytics } from 'hooks/useAnalytics'
 import { AppProgressState } from '@components/AppProgressOverlay/AppProgressState'
 import { AppProgressOverlayTrigger } from '@components/AppProgressOverlay/AppProgressOverlayTrigger'
+import { useAppProgressStore } from '@components/AppProgressOverlay/store/appProgressStore'
+import { SECOND_MS } from 'data/constants'
 import { PublicTownPage } from './PublicTownPage/PublicTownPage'
 import { usePublicPageLoginFlow } from './PublicTownPage/usePublicPageLoginFlow'
 
@@ -83,6 +85,8 @@ export const ValidateMembership = () => {
         }
     }, [analytics, anonymousId, pseudoId, setPseudoId, userId])
 
+    const deferPublicPage = useDeferPublicPage({ spaceId: spaceIdFromPathname })
+
     if (!spaceIdFromPathname) {
         return <Outlet />
     }
@@ -106,13 +110,15 @@ export const ValidateMembership = () => {
     if (!client || space === undefined) {
         if (
             // user has no spaces, alternatively they aren't loaded yet
-            typeof spaceDataIds === 'undefined' ||
-            // if user has loaded other spaces, but not this space, it indicates they've not joined this space
-            (spaceDataIds && !spaceDataIds.includes(spaceIdFromPathname))
+            (typeof spaceDataIds === 'undefined' ||
+                // if user has loaded other spaces, but not this space, it indicates they've not joined this space
+                (spaceDataIds && !spaceDataIds.includes(spaceIdFromPathname))) &&
+            !deferPublicPage
         ) {
             AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.PublicTownPage)
             return _PublicTownPage
         }
+
         return (
             <AppProgressOverlayTrigger
                 progressState={AppProgressState.LoggingIn}
@@ -133,7 +139,7 @@ export const ValidateMembership = () => {
 
     const isMember = space.membership === Membership.Join
 
-    if (!isMember) {
+    if (!isMember && !deferPublicPage) {
         AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.PublicTownPage)
         return _PublicTownPage
     }
@@ -159,6 +165,36 @@ export const ValidateMembership = () => {
             {!usernameConfirmed && <SetUsernameFormWithClose spaceData={space} />}
         </>
     )
+}
+
+function useDeferPublicPage({ spaceId }: { spaceId: string | undefined }) {
+    const [startupTime] = useState(() => Date.now())
+    const [isPastTimeout, setPastTimeout] = useState(false)
+    const optimisticKnownSpace = useAppProgressStore((s) =>
+        s.optimisticInitializedSpaces.some((id) => id === spaceId),
+    )
+    useEffect(() => {
+        if (!optimisticKnownSpace) {
+            // we only want to defer the public page if we're optimistic that we've initialized the space
+            return
+        }
+        // the timer is a safety net incase the optimisic assumption is
+        // wrong (i.e the user has left and rejoined, got banned etc.)
+        if (!isPastTimeout) {
+            const timeLeft = Math.max(0, startupTime + SECOND_MS * 5 - Date.now())
+            if (timeLeft === 0) {
+                return
+            }
+            const timeout = setTimeout(() => {
+                setPastTimeout(true)
+            }, timeLeft)
+            return () => {
+                clearTimeout(timeout)
+            }
+        }
+    }, [isPastTimeout, optimisticKnownSpace, startupTime])
+
+    return optimisticKnownSpace && !isPastTimeout
 }
 
 function useDataLoaded() {

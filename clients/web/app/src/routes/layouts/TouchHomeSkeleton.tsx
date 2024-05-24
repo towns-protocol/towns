@@ -1,47 +1,14 @@
 import React from 'react'
 import { Box, Stack } from '@ui'
 import { shimmerClass, shimmerGradientTopClass } from 'ui/styles/globals/shimmer.css'
-import { useDevice } from 'hooks/useDevice'
 
-export const ChannelHeaderShimmer = () =>
-    useDevice().isTouch ? <ChannelHeaderMobileShimmer /> : <ChannelHeaderDesktopShimmer />
-
-const ChannelHeaderDesktopShimmer = () => (
-    <Box
-        horizontal
-        borderBottom
-        height="x8"
-        padding="lg"
-        gap="lg"
-        alignItems="center"
-        justifyContent="spaceBetween"
-    >
-        <Box height="x4" width="200" className={shimmerClass} rounded="xs" />
-        <Box height="x4" width="100" className={shimmerClass} rounded="xs" />
-    </Box>
-)
-
-const ChannelHeaderMobileShimmer = () => (
-    <Box
-        horizontal
-        borderBottom
-        padding
-        gap="lg"
-        height="x8"
-        alignItems="center"
-        justifyContent="start"
-    >
-        <Box square="square_lg" className={shimmerClass} rounded="xs" />
-        <Box grow height="x2" className={shimmerClass} rounded="xs" />
-    </Box>
-)
-
-export const TimelineShimmer = (props: { children?: React.ReactNode }) => (
+export const TouchHomeSkeleton = (props: { children?: React.ReactNode }) => (
     <Box
         grow
         absoluteFillSafeSafari
         data-testid="timeline-shimmer"
         paddingTop="safeAreaInsetBottom"
+        background="level1"
     >
         <Stack
             grow

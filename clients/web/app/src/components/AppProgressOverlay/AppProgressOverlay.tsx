@@ -27,16 +27,20 @@ export const AppProgressOverlay = (props: { debug?: boolean }) => {
     useKeepLoginStateWhileAuth()
 
     useEffect(() => {
+        console.log('[app progress] initialized')
+    }, [])
+
+    useEffect(() => {
         console.log('[app progress] overlay:', appProgressOverlay)
     }, [appProgressOverlay])
 
     const content = useAppOverlayContent(appProgressOverlay, isOptimisticInitialized)
 
     return (
-        <AnimatePresence>
+        <AnimatePresence mode="sync">
             {appProgressOverlay !== AppProgressState.None ? (
-                <TransitionContainer key="overlay">
-                    <AnimatePresence mode="wait">{content}</AnimatePresence>
+                <TransitionContainer key={content.key}>
+                    {content.element}
                     {props.debug && <AppOverlayDebugger debugText={appProgressOverlay} />}
                 </TransitionContainer>
             ) : (
@@ -46,40 +50,42 @@ export const AppProgressOverlay = (props: { debug?: boolean }) => {
     )
 }
 
-export const useAppOverlayContent = (state: AppProgressState, isOptimisticInitialized: boolean) => {
+export const useAppOverlayContent = (
+    state: AppProgressState,
+    isOptimisticInitialized: boolean,
+): { key: 'logo' | 'skeleton' | 'animation'; element: JSX.Element } => {
     return useMemo(() => {
         if (state === AppProgressState.LoadingAssets) {
-            return <TransitionLogo key="logo" />
+            return { key: 'logo', element: <TransitionLogo key="logo" /> }
         }
         if (state === AppProgressState.LoggingIn) {
-            return isOptimisticInitialized ? (
-                // we think we have already initialized the space, show the
-                // skeleton instead of risking a flash of the setup animation
-                <AppSkeletonView />
-            ) : (
-                <TransitionLogo key="logo" />
-            )
+            return isOptimisticInitialized
+                ? // we think we have already initialized the space, show the
+                  // skeleton instead of risking a flash of the setup animation
+                  { key: 'skeleton', element: <AppSkeletonView /> }
+                : { key: 'logo', element: <TransitionLogo key="logo" /> }
         }
 
         if (state === AppProgressState.InitializingWorkspace) {
-            return isOptimisticInitialized ? (
-                // we think we have already initialized the space, show the
-                // skeleton instead of risking a flash of the setup animation
-                <AppSkeletonView />
-            ) : (
-                <SetupAnimation mode={AppProgressState.InitializingWorkspace} />
-            )
+            return isOptimisticInitialized
+                ? // we think we have already initialized the space, show the
+                  // skeleton instead of risking a flash of the setup animation
+                  { key: 'skeleton', element: <AppSkeletonView /> }
+                : {
+                      key: 'animation',
+                      element: <SetupAnimation mode={AppProgressState.InitializingWorkspace} />,
+                  }
         }
 
         if (state === AppProgressState.Joining) {
-            return <SetupAnimation mode={AppProgressState.Joining} />
+            return { key: 'animation', element: <SetupAnimation mode={AppProgressState.Joining} /> }
         }
 
         if (state === AppProgressState.CreatingSpace) {
-            return <CreateSpaceAnimation />
+            return { key: 'animation', element: <CreateSpaceAnimation /> }
         }
 
-        return <TransitionLogo key="logo" />
+        return { key: 'logo', element: <TransitionLogo key="logo" /> }
     }, [state, isOptimisticInitialized])
 }
 
@@ -96,7 +102,7 @@ const TransitionContainer = (props: { children: React.ReactNode }) => {
         <MotionStack
             centerContent
             absoluteFill
-            background="level1"
+            // background="level1"
             {...transition}
             height="100vh"
             {...props}

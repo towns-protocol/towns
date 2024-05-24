@@ -30,17 +30,17 @@ export const SpaceSidebarLoadingPlaceholder = () => (
                 justifyContent="start"
                 gap="lg"
             >
-                <Stack gap="lg" paddingTop="md">
+                <Stack gap="lg">
                     <Box rounded="md" width="100" height="100" className={shimmerClass} />
                 </Stack>{' '}
-                <Box height="x2" width="150" className={shimmerClass} borderRadius="xs" />
+                <Box minHeight="x2" width="150" className={shimmerClass} borderRadius="xs" />
                 <Stack gap="sm" width="100%">
                     <Box
                         horizontal
                         grow
                         width="100%"
                         borderRadius="lg"
-                        height="height_lg"
+                        height="x4"
                         className={shimmerClass}
                     />
                     <Box
@@ -48,7 +48,7 @@ export const SpaceSidebarLoadingPlaceholder = () => (
                         grow
                         width="100%"
                         borderRadius="lg"
-                        height="height_lg"
+                        height="x4"
                         className={shimmerClass}
                     />
                 </Stack>
@@ -99,10 +99,10 @@ const FakeChannel = () => {
             initial={{ y: 5 }}
             animate={{ y: 0 }}
             transition={{ duration: 0.5, delay: 0.5 }}
-            paddingX="md"
+            paddingX="sm"
             paddingY="md"
             alignItems="center"
-            height="x7"
+            height="x6"
         >
             <MotionBox
                 initial={{
@@ -111,7 +111,7 @@ const FakeChannel = () => {
                 animate={{
                     scale: 1,
                 }}
-                square="square_lg"
+                square="square_md"
                 background="level3"
                 borderRadius="sm"
                 className={shimmerClass}

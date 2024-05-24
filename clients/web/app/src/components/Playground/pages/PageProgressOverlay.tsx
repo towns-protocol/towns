@@ -9,7 +9,7 @@ export const PageProgressOverlay = () => {
     return (
         <Box absoluteFill>
             <Box absoluteFill centerContent background="level1">
-                {useAppOverlayContent(mode, false)}
+                {useAppOverlayContent(mode, false).element}
             </Box>
             <Box padding alignItems="start" justifyContent="center" gap="sm" flexGrow="x1">
                 <Box padding gap background="level2" rounded="sm" zIndex="above">
