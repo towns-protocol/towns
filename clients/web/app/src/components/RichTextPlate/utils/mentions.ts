@@ -1,6 +1,6 @@
 import { ELEMENT_MENTION } from '@udecode/plate-mention'
 import { TComboboxItem } from '@udecode/plate-combobox'
-import { Mention } from 'use-towns-client'
+import { Channel, Mention } from 'use-towns-client'
 import { ComboboxTypes, TUserMentionElement, TUserWithChannel } from './ComboboxTypes'
 
 /**
@@ -31,6 +31,9 @@ export const userMentionFilter = (query: string) => (item: TComboboxItem<TUserWi
         .join(' ')
         .toLowerCase()
         .includes(query.toLowerCase())
+
+export const channelMentionFilter = (query: string) => (item: TComboboxItem<Channel>) =>
+    item.data.label.toLowerCase().includes(query.toLowerCase())
 
 export const getUsernameForMention = <T extends TUserWithChannel>(
     comboboxType: ComboboxTypes,
