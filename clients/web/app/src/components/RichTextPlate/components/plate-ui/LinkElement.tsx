@@ -28,12 +28,7 @@ export const LinkWithoutPlate = ({
 
     if (messageLink && messageLink.type === 'same-channel-message') {
         return (
-            <Box
-                as="a"
-                className={link}
-                display="inline-block"
-                onClick={() => messageLink.focusMessage()}
-            >
+            <Box as="a" className={link} onClick={messageLink.focusMessage}>
                 {children}
             </Box>
         )
@@ -45,13 +40,7 @@ export const LinkWithoutPlate = ({
         )
     } else {
         return (
-            <Box
-                as="a"
-                href={messageLink.link}
-                target="_blank"
-                className={link}
-                display="inline-block"
-            >
+            <Box as="a" href={messageLink.link} target="_blank" className={link}>
                 {children}
             </Box>
         )

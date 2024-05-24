@@ -41,6 +41,7 @@ export const link = style([
     }),
     {
         overflowWrap: 'anywhere',
+        display: 'inline',
     },
 ])
 
