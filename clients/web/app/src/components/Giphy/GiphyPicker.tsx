@@ -4,7 +4,9 @@ import React from 'react'
 import {
     MessageType,
     SendImageMessageOptions,
+    SendMessageOptions,
     useChannelId,
+    useTimelineThread,
     useTownsClient,
 } from 'use-towns-client'
 import { Spinner } from '@components/Spinner'
@@ -54,6 +56,7 @@ export const GiphyPickerCard = (props: GiphyPickerCardProps) => {
 
     const isInReplyThread = !!props.threadId
     const channelId = useChannelId()
+    const { parent } = useTimelineThread(channelId, threadId)
     const gutterWidth = baseline * 0.75
 
     // small hack with "-2px" on mobile to get rid of horizontal scrollbar
@@ -83,8 +86,9 @@ export const GiphyPickerCard = (props: GiphyPickerCardProps) => {
         // slack serves the downsized image so that should suffice for us too
         const downsized = gifData.images.downsized
         const ogImage = gifData.images.original
-        const messageContent = {
+        const messageContent: SendMessageOptions = {
             threadId: isInReplyThread ? threadId : undefined,
+            threadParticipants: parent?.userIds,
             threadPreview: threadPreview,
             messageType: MessageType.Image,
             info: {
