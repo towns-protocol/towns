@@ -103,7 +103,7 @@ export const RichTextBottomToolbar = (props: Props) => {
                             icon="text"
                             alignSelf="start"
                             active={false}
-                            onClick={onFormattingButtonClicked}
+                            onMouseDown={onFormattingButtonClicked}
                         />
                     )}
                     {!isEditing && (
