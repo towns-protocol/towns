@@ -7,6 +7,7 @@ export const axiosClient = axios.create({
         'Content-Type': 'application/json',
         Authorization: `Bearer ${env.VITE_AUTH_WORKER_HEADER_SECRET}`,
     },
+    withCredentials: true,
 })
 
 export const errorHasInvalidCookieResponseHeader = (error: unknown) => {
