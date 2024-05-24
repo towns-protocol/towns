@@ -58,7 +58,7 @@ func (s *Service) startArchiveMode(once bool) error {
 		time.Duration(s.riverChain.Config.BlockTimeMs)*time.Millisecond,
 	)
 
-	s.registerDebugHandlers()
+	s.registerDebugHandlers(s.config.EnableDebugEndpoints)
 
 	s.SetStatus("OK")
 

@@ -56,22 +56,24 @@ type httpMux interface {
 	Handle(pattern string, handler http.Handler)
 }
 
-func (s *Service) registerDebugHandlers() {
+func (s *Service) registerDebugHandlers(enableDebugEndpoints bool) {
 	mux := s.mux
 	handler := debugHandler{}
 	mux.HandleFunc("/debug", handler.ServeHTTP)
-
-	handler.Handle(mux, "/debug/cache", &cacheHandler{cache: s.cache})
-	handler.Handle(mux, "/debug/txpool", &txpoolHandler{riverTxPool: s.riverChain.TxPool})
-	handler.HandleFunc(mux, "/debug/memory", MemoryHandler)
 	handler.HandleFunc(mux, "/debug/multi", s.handleDebugMulti)
 	handler.HandleFunc(mux, "/debug/multi/json", s.handleDebugMultiJson)
-	handler.HandleFunc(mux, "/debug/pprof/", pprof.Index)
-	mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
-	mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
-	mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
-	mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
-	handler.HandleFunc(mux, "/debug/stacks", HandleStacksHandler)
+
+	if enableDebugEndpoints {
+		handler.Handle(mux, "/debug/cache", &cacheHandler{cache: s.cache})
+		handler.Handle(mux, "/debug/txpool", &txpoolHandler{riverTxPool: s.riverChain.TxPool})
+		handler.HandleFunc(mux, "/debug/memory", MemoryHandler)
+		handler.HandleFunc(mux, "/debug/pprof/", pprof.Index)
+		mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+		mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
+		mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+		mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
+		handler.HandleFunc(mux, "/debug/stacks", HandleStacksHandler)
+	}
 }
 
 func HandleStacksHandler(w http.ResponseWriter, r *http.Request) {

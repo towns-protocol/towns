@@ -102,3 +102,5 @@ network:
 
 # Debug feature flags.
 disableBaseChain: <DISABLE_BASE_CHAIN>
+
+enableDebugEndpoints: <ENABLE_DEBUG_ENDPOINTS>

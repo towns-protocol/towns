@@ -98,6 +98,9 @@ type Config struct {
 	// History indicates how far back xchain must look for entitlement check requests after start
 	History        time.Duration
 	EnableTestAPIs bool
+
+	// Enables go profiler, gc and so on enpoints on /debug
+	EnableDebugEndpoints bool
 }
 
 type NetworkConfig struct {

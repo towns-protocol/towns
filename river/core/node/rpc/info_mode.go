@@ -44,7 +44,7 @@ func (s *Service) startInfoMode() error {
 		time.Duration(s.riverChain.Config.BlockTimeMs)*time.Millisecond,
 	)
 
-	s.registerDebugHandlers()
+	s.registerDebugHandlers(s.config.EnableDebugEndpoints)
 
 	s.SetStatus("OK")
 

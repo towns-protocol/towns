@@ -11,6 +11,7 @@ BLOCK_TIME_MS=${BLOCK_TIME_MS:-2000}
 INSTANCE_DIR="${RUN_BASE}/${INSTANCE}"
 TEMPLATE_FILE="./config-template.yaml"
 OUTPUT_FILE="${INSTANCE_DIR}/config/config.yaml"
+ENABLE_DEBUG_ENDPOINTS=true
 
 # Ensure the directory for the output file exists
 mkdir -p "$INSTANCE_DIR/config"

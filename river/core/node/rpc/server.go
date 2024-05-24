@@ -493,7 +493,7 @@ func (s *Service) initHandlers() {
 	nodeServicePattern, nodeServiceHandler := protocolconnect.NewNodeToNodeHandler(s, interceptors)
 	s.mux.Handle(nodeServicePattern, nodeServiceHandler)
 
-	s.registerDebugHandlers()
+	s.registerDebugHandlers(s.config.EnableDebugEndpoints)
 }
 
 // StartServer starts the server with the given configuration.
