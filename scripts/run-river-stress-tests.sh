@@ -162,20 +162,23 @@ function start_via_tasks() {
     subnet_ids=$(get_subnet_ids)
     security_group_id=$(get_security_group_id)
 
-    task_def_family="stress-test-node-${ENVIRONMENT_NAME}-${i}-fargate"
 
-    # get the task definition arn
-    task_def_arn=$(aws ecs list-task-definitions --family-prefix $task_def_family --status ACTIVE --output text | awk '{print $2}')
     subnet_ids_arg_list=$(echo $subnet_ids | tr ' ' ',')
 
-    echo "starting task: $task_def_arn" >&2
-    echo "subnet_ids: $subnet_ids" >&2
-    echo "security_group_id: $security_group_id" >&2
 
 
     #Starting the stress test nodes by running the task directly
     for i in $(seq 0 $loop_end); do
         # run the task
+        task_def_family="stress-test-node-${ENVIRONMENT_NAME}-${i}-fargate"
+
+        # get the task definition arn
+        task_def_arn=$(aws ecs list-task-definitions --family-prefix $task_def_family --status ACTIVE --output text | awk '{print $2}')
+
+        echo "starting task: $task_def_arn" >&2
+        echo "subnet_ids: $subnet_ids" >&2
+        echo "security_group_id: $security_group_id" >&2
+
         aws ecs run-task \
             --cluster $cluster_name \
             --task-definition $task_def_arn \
