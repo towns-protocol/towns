@@ -183,7 +183,6 @@ module "post_provision_config" {
   source = "../../modules/post-provision-config"
 
   river_node_number                       = var.node_number
-  river_node_name                         = local.node_name
   subnet_ids                              = var.private_subnets
   river_node_wallet_credentials_arn       = local.shared_credentials.wallet_private_key.arn
   river_db_cluster_master_user_secret_arn = var.river_node_db.root_user_secret_arn
@@ -191,7 +190,6 @@ module "post_provision_config" {
   rds_cluster_resource_id                 = var.river_node_db.rds_aurora_postgresql.cluster_resource_id
   vpc_id                                  = var.vpc_id
   security_group_id                       = aws_security_group.post_provision_config_lambda_function_sg.id
-  base_chain_id                           = var.base_chain_id
 }
 
 locals {
@@ -404,7 +402,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
     dockerLabels = {
       "com.datadoghq.ad.check_names"  = "[\"openmetrics\"]",
       "com.datadoghq.ad.init_configs" = "[{}]",
-      "com.datadoghq.ad.instances"    = "[{\"openmetrics_endpoint\": \"http://localhost:8081/metrics\", \"namespace\": \"river_node\", \"metrics\": [\".*\"], \"collect_counters_with_distributions\": true}, {\"openmetrics_endpoint\": \"http://localhost:8082/metrics\", \"namespace\": \"xchain_node\", \"metrics\": [\".*\"], \"collect_counters_with_distributions\": true} ]"
+      "com.datadoghq.ad.instances"    = "[{\"openmetrics_endpoint\": \"http://localhost:8081/metrics\", \"namespace\": \"river_node\", \"metrics\": [\".*\"], \"collect_counters_with_distributions\": true}, {\"openmetrics_endpoint\": \"http://localhost:8082/metrics\", \"namespace\": \"xchain_node\", \"metrics\": [\".*\"], \"collect_counters_with_distributions\": true}]"
     }
 
     environment = concat([

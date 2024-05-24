@@ -3,13 +3,14 @@ module "global_constants" {
 }
 
 locals {
+  name = "post-provision-config-${var.river_node_number}-${terraform.workspace}"
+
   post_provision_config_lambda_s3_object = module.global_constants.global_remote_state.outputs.post_provision_config_lambda_s3_object
   tags = merge(
     module.global_constants.tags,
     {
       Service     = "post-provision-config-lambda"
       Node_Number = var.river_node_number
-      Node_Name   = var.river_node_name
     }
   )
   global_remote_state = module.global_constants.global_remote_state.outputs
@@ -19,7 +20,7 @@ locals {
 module "post_provision_config_lambda_function" {
   source                 = "terraform-aws-modules/lambda/aws"
   version                = "7.2.0"
-  function_name          = "${var.river_node_name}-post-provision-config"
+  function_name          = "${local.name}-lambda"
   description            = "Lambda function to configure the infra after provisioning"
   handler                = "index.handler"
   runtime                = "nodejs20.x"
@@ -66,7 +67,6 @@ module "post_provision_config_lambda_function" {
       USER         = "notification_service"
       PASSWORD_ARN = local.global_remote_state.notification_service_db_password_secret.arn
     })
-    HOME_CHAIN_ID                           = var.base_chain_id
     RIVER_NODE_WALLET_CREDENTIALS_ARN       = var.river_node_wallet_credentials_arn
     RIVER_DB_CLUSTER_MASTER_USER_SECRET_ARN = var.river_db_cluster_master_user_secret_arn
   }
@@ -104,7 +104,7 @@ module "post_provision_config_lambda_function" {
 
 
 resource "aws_cloudwatch_log_subscription_filter" "log_group_filter" {
-  name            = "${var.river_node_name}-post-provision-config"
+  name            = "${local.name}-log-group-filter"
   log_group_name  = module.post_provision_config_lambda_function.lambda_cloudwatch_log_group_name
   filter_pattern  = ""
   destination_arn = module.global_constants.datadug_forwarder_stack_lambda.arn

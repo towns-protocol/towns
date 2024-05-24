@@ -1,11 +1,9 @@
 const {SecretsManagerClient, GetSecretValueCommand, PutSecretValueCommand} = require('@aws-sdk/client-secrets-manager')
-const {Signer} = require('@aws-sdk/rds-signer')
 const {Client} = require('pg');
 const crypto = require('crypto');
 
-const Wallet = require('ethereumjs-wallet');
 const EthereumUtil = require('ethereumjs-util');
-
+const Wallet = require('ethereumjs-wallet');
 
 function generatePassword(length = 12) {
   return crypto.randomBytes(length).toString('base64').slice(0, length);

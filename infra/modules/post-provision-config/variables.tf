@@ -1,12 +1,3 @@
-variable "river_node_name" {
-  description = "The name of the river node"
-  type        = string
-  validation {
-    condition     = var.river_node_name != ""
-    error_message = "The river node name cannot be empty."
-  }
-}
-
 variable "river_node_number" {
   description = "The number assigned to the node. i.e 1 for river-1.nodes.gamma.towns.com"
   type        = number
@@ -77,9 +68,4 @@ variable "river_db_cluster_master_user_secret_arn" {
     condition     = var.river_db_cluster_master_user_secret_arn != ""
     error_message = "The river db cluster master user secret arn cannot be empty."
   }
-}
-
-variable "base_chain_id" {
-  description = "The base chain id"
-  type        = string
 }

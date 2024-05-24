@@ -188,6 +188,7 @@ locals {
 }
 
 data "null_data_source" "wait_for_npm_dependecies_exporter" {
+  depends_on = [null_resource.lambda_npm_dependencies]
   inputs = {
     lambda_dependency_id = null_resource.lambda_npm_dependencies.id
     source_dir           = local.source_dir
@@ -195,6 +196,7 @@ data "null_data_source" "wait_for_npm_dependecies_exporter" {
 }
 
 data "archive_file" "build_zip_lambda" {
+  depends_on  = [null_resource.lambda_npm_dependencies]
   output_path = "${path.root}/${local.lambda_zip_file_name}"
   source_dir  = local.source_dir
   type        = "zip"

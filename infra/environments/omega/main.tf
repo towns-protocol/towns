@@ -71,9 +71,10 @@ module "river_alb" {
 }
 
 module "river_db_cluster" {
-  source           = "../../modules/river-db-cluster"
-  database_subnets = module.vpc.database_subnets
-  vpc_id           = module.vpc.vpc_id
+  source                    = "../../modules/river-db-cluster"
+  database_subnets          = module.vpc.database_subnets
+  vpc_id                    = module.vpc.vpc_id
+  pgadmin_security_group_id = module.pgadmin.security_group_id
 }
 
 resource "aws_ecs_cluster" "river_ecs_cluster" {
@@ -99,6 +100,54 @@ module "pgadmin" {
 
 locals {
   global_remote_state = module.global_constants.global_remote_state.outputs
+  shared_credentials  = local.global_remote_state.river_node_credentials_secret[0]
+
+  # we don't have river nodes on omega, but post-provision config lambda needs a node number
+  fake_river_node_number = 1
+  river_user_db_config = {
+    host         = module.river_db_cluster.rds_aurora_postgresql.cluster_endpoint
+    port         = "5432"
+    database     = "river"
+    user         = "river${local.fake_river_node_number}"
+    password_arn = local.shared_credentials.db_password.arn
+  }
+}
+
+
+resource "aws_security_group" "post_provision_config_lambda_function_sg" {
+  name        = "post_provision_config_lambda_function_sg_${terraform.workspace}"
+  description = "Security group for the lambda function to configure the infra after provisioning"
+  vpc_id      = module.vpc.vpc_id
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_security_group_rule" "allow_post_provision_config_lambda_inbound_to_db" {
+  type      = "ingress"
+  from_port = 5432
+  to_port   = 5432
+  protocol  = "tcp"
+
+  security_group_id        = module.river_db_cluster.rds_aurora_postgresql.security_group_id
+  source_security_group_id = aws_security_group.post_provision_config_lambda_function_sg.id
+}
+
+module "post_provision_config" {
+  source = "../../modules/post-provision-config"
+
+  river_node_number                       = local.fake_river_node_number
+  subnet_ids                              = module.vpc.private_subnets
+  river_node_wallet_credentials_arn       = local.shared_credentials.wallet_private_key.arn
+  river_db_cluster_master_user_secret_arn = module.river_db_cluster.root_user_secret_arn
+  river_user_db_config                    = local.river_user_db_config
+  rds_cluster_resource_id                 = module.river_db_cluster.rds_aurora_postgresql.cluster_resource_id
+  vpc_id                                  = module.vpc.vpc_id
+  security_group_id                       = aws_security_group.post_provision_config_lambda_function_sg.id
 }
 
 module "system_parameters" {
@@ -136,10 +185,8 @@ module "eth_balance_monitor" {
 
   subnet_ids = module.vpc.private_subnets
 
-  # TODO: make sure this is dynamically pulled from ssm, and not hardcoded in terraform
   river_registry_contract_address = module.system_parameters.river_registry_contract_address_parameter.value
 
-  # TODO: acquire actual rpc urls and place them in the secrets
   base_chain_rpc_url_secret_arn  = local.global_remote_state.base_mainnet_rpc_url_secret.arn
   river_chain_rpc_url_secret_arn = local.global_remote_state.river_mainnet_rpc_url_secret.arn
 }
