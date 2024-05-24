@@ -1,5 +1,5 @@
-FROM python:3.11-alpine
-
+# FROM python:3.11-alpine
+FROM public.ecr.aws/l8h0l2e6/hnt-infra:latest
 ENV TERRAFORM_VERSION=1.6.3
 
 # Update package list and install packages
