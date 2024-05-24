@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useMemo, useRef } from 'react'
-import { Outlet, useLocation, useNavigate, useOutlet, useParams } from 'react-router'
+import { Outlet, useNavigate, useOutlet, useParams } from 'react-router'
 import { useTownsContext } from 'use-towns-client'
 import { useSearchParams } from 'react-router-dom'
 import { DirectMessagesPanel } from '@components/DirectMessages/DirectMessages'
@@ -14,7 +14,6 @@ import { AppProgressOverlayTrigger } from '@components/AppProgressOverlay/AppPro
 export const DirectMessages = () => {
     const { isTouch } = useDevice()
 
-    const location = useLocation()
     const [searchParams] = useSearchParams()
     const outlet = useOutlet()
     const panelContext = useContext(PanelContext)
@@ -24,16 +23,6 @@ export const DirectMessages = () => {
     useTouchRedirect({ isTouch })
 
     const searchParamsStackId = useMemo(() => searchParams.get('stackId'), [searchParams])
-
-    useEffect(() => {
-        console.log('[hnt-5685][DirectMessages]', 'route', {
-            deviceType: isTouch ? 'mobile' : 'desktop',
-            searchParams: searchParams.toString(),
-            locationSearch: location.search,
-            searchParamsStackId: searchParams.get('stackId') ?? '',
-            panelContextStackId: stackId ?? '',
-        })
-    }, [isTouch, location.search, searchParams, stackId])
 
     if (isTouch && !spaceSlug) {
         return (
@@ -49,13 +38,6 @@ export const DirectMessages = () => {
             stackId === PanelStack.DIRECT_MESSAGES ||
             searchParamsStackId === PanelStack.DIRECT_MESSAGES
         ) {
-            console.log('[hnt-5685][DirectMessages] before DirectMessagesPanel', 'route', {
-                deviceType: isTouch ? 'mobile' : 'desktop',
-                searchParams: searchParams.toString(),
-                locationSearch: location.search,
-                searchParamsStackId: searchParams.get('stackId') ?? '',
-                panelContextStackId: stackId ?? '',
-            })
             if (panelContext && searchParamsStackId === PanelStack.DIRECT_MESSAGES) {
                 panelContext.stackId = PanelStack.DIRECT_MESSAGES
             }
@@ -111,7 +93,7 @@ const useTouchRedirect = ({ isTouch }: { isTouch: boolean }) => {
     const [searchParams] = useSearchParams()
 
     useEffect(() => {
-        console.log('[hnt-5685][useTouchRedirect]', 'states', {
+        console.log('[useTouchRedirect][route]', 'route', {
             storeSpaceIdBookmark: storeState.spaceIdBookmark,
             spaces: spaces.map((s) => s.id),
             needsRedirect,
@@ -121,7 +103,7 @@ const useTouchRedirect = ({ isTouch }: { isTouch: boolean }) => {
             hasRedirectedRef.current = true
             const messageSegment = channelId ? `${channelId}/` : ''
             const threadSegment = replyId ? `${PATHS.REPLIES}/${replyId}` : ''
-            console.log('[hnt-5685][useTouchRedirect]', 'redirected', {
+            console.log('[useTouchRedirect][route]', 'redirected', {
                 path: `/${PATHS.SPACES}/${spaceStreamId}/${PATHS.MESSAGES}/${messageSegment}${threadSegment}`,
                 stackId: searchParams.get('stackId') ?? '',
             })

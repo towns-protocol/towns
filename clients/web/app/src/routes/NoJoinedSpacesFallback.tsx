@@ -22,7 +22,6 @@ export const NoJoinedSpacesFallback = () => {
     const { client } = useTownsClient()
     const { loginStatus } = useConnectivity()
     const { clientStatus } = useTownsContext()
-    //const spaceDataMap = useSpaceDataStore((s) => s.spaceDataMap)
 
     const spaceIdBookmark = useStore((s) => {
         return s.spaceIdBookmark
@@ -33,7 +32,7 @@ export const NoJoinedSpacesFallback = () => {
     const { analytics, anonymousId } = useAnalytics()
 
     useEffect(() => {
-        console.warn('[NoJoinedSpacesFallback][hnt-5685]', 'route', {
+        console.log('[NoJoinedSpacesFallback][route]', 'route', {
             deviceType: isTouch ? 'mobile' : 'desktop',
             locationPathname: location.pathname,
             locationSearch: location.search,
@@ -66,7 +65,7 @@ export const NoJoinedSpacesFallback = () => {
                 spaces.find((space) => space.id === spaceIdBookmark)?.id ?? spaces[0].id
 
             if (client.getMembership(firstSpaceId) === Membership.Join) {
-                console.warn('[NoJoinedSpacesFallback][hnt-5685] Navigating to first space', {
+                console.log('[NoJoinedSpacesFallback][route] Navigating to first space', {
                     firstSpaceId,
                     path: `/${PATHS.SPACES}/${firstSpaceId}/`,
                     deviceType: isTouch ? 'mobile' : 'desktop',

@@ -168,13 +168,9 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
             worker.clients.matchAll({ type: 'window' }).then(async (clientsArr) => {
                 const data = notificationContentFromEvent(event.notification.data)
                 if (!data) {
-                    console.error(
-                        '[hnt-5685] worker could not parse notification data',
-                        'notificationData',
-                        {
-                            data: event.notification.data ?? 'undefined',
-                        },
-                    )
+                    logError('worker could not parse notification data', 'notificationData', {
+                        data: event.notification.data ?? 'undefined',
+                    })
                     return
                 }
 
@@ -192,7 +188,7 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                         NotificationRel.BroadcastChannel,
                         data.kind,
                     )
-                    console.warn('[hnt-5685] service worker posting message to broadcast channel', {
+                    log('[route] service worker posting message to broadcast channel', {
                         path,
                         hadWindowToFocus: true,
                     })
@@ -210,7 +206,7 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                         NotificationRel.OpenWindow,
                         data.kind,
                     )
-                    console.warn('[hnt-5685] service worker opening browser window', {
+                    log('[route]] service worker opening browser window', {
                         path: url.toString(),
                         hadWindowToFocus: false,
                     })

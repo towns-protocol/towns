@@ -41,10 +41,10 @@ export function useHnt5685() {
                 const urlFromNotification = currentUser?.lastUrl
                 if (urlFromNotification) {
                     const url = new URL(urlFromNotification, window.location.origin)
-                    console.warn('[useHnt5685][hnt-5685] setTouchInitialLink', 'route', {
+                    console.log('[useHnt5685][route] setTouchInitialLink', 'route', {
                         locationPathname: location.pathname,
-                        locationSearch: location.search,
                         storeUrlPathname: url.pathname,
+                        locationSearch: location.search,
                         storeUrlSearch: url.search,
                         lastUrlTimestamp: currentUser.lastUrlTimestamp,
                         deviceType: isTouch ? 'mobile' : 'desktop',

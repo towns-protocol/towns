@@ -52,21 +52,6 @@ export const App = () => {
         highPriorityStreamIds.current = [channelId, spaceId].filter(isDefined)
     }, [channelId, spaceId])
 
-    useEffect(() => {
-        // DataDog is configured to only log warnings and errors. This is a warning
-        // to track and verify that the routing code works after the fix. Will be removed
-        // after verification.
-        // Reminder to remove: https://linear.app/hnt-labs/issue/HNT-6068/remove-consolewarn-from-the-harmony-app-after-verifying-hnt-5685-is
-        console.warn('[App][hnt-5685]', 'route', {
-            deviceType: isTouch ? 'mobile' : 'desktop',
-            spaceIdBookmark,
-            channelBookmark,
-            locationPathname: location.pathname,
-            locationSearch: location.search,
-            highPriorityStreamIds: highPriorityStreamIds.current,
-        })
-    }, [channelBookmark, channelId, isTouch, spaceId, spaceIdBookmark])
-
     useWindowListener()
 
     const environment = useEnvironment()

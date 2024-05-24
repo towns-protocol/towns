@@ -50,7 +50,7 @@ const PublicTownPageWithoutAuth = (props: { isPreview?: boolean; onClosePreview?
     const location = useLocation()
 
     useEffect(() => {
-        console.warn('[PublicTownPage][hnt-5685]', 'route', {
+        console.log('[PublicTownPage][route]', 'route', {
             deviceType: isTouch ? 'mobile' : 'desktop',
             locationPathname: location.pathname,
             locationSearch: location.search,

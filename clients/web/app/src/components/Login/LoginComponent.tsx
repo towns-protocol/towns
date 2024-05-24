@@ -1,15 +1,11 @@
-import React, { useCallback, useEffect, useMemo } from 'react'
+import React, { useCallback } from 'react'
 import { LoginStatus, useConnectivity } from 'use-towns-client'
 import { usePrivy } from '@privy-io/react-auth'
-import { useLocation } from 'react-router'
-import { useSearchParams } from 'react-router-dom'
 import { useCombinedAuth } from 'privy/useCombinedAuth'
 import { Box, FancyButton } from '@ui'
 import { useErrorToast } from 'hooks/useErrorToast'
 import { mapToErrorMessage } from '@components/Web3/utils'
-import { useStore } from 'store/store'
 import { useAnalytics } from 'hooks/useAnalytics'
-import { LINKED_RESOURCE } from '../../data/rel'
 
 type LoginComponentProps = {
     text?: string
@@ -30,39 +26,7 @@ function LoginComponent({
 
     const isBusy = libLoginStatus === LoginStatus.LoggingIn || isAutoLoggingInToRiver
 
-    const location = useLocation()
-    const [searchParams] = useSearchParams()
-    const state = useStore.getState()
-    const spaceIdBookmark = state.spaceIdBookmark
-    const channelBookmark = spaceIdBookmark ? state.townRouteBookmarks[spaceIdBookmark] : undefined
     const { analytics } = useAnalytics()
-
-    const rel = useMemo(() => {
-        return searchParams.get(LINKED_RESOURCE) ?? ''
-    }, [searchParams])
-
-    useEffect(() => {
-        // Reminder to remove: https://linear.app/hnt-labs/issue/HNT-6068/remove-consolewarn-from-the-harmony-app-after-verifying-hnt-5685-is
-        console.warn('[LoginComponent][hnt-5685]', 'route', {
-            rel,
-            locationPath: location.pathname,
-            locationParams: location.search,
-            spaceIdBookmark,
-            channelBookmark,
-            libLoginStatus,
-            privyReady,
-            isAutoLoggingInToRiver,
-        })
-    }, [
-        channelBookmark,
-        isAutoLoggingInToRiver,
-        libLoginStatus,
-        location.pathname,
-        location.search,
-        privyReady,
-        spaceIdBookmark,
-        rel,
-    ])
 
     const loginContent = () => {
         if (isAutoLoggingInToRiver) {

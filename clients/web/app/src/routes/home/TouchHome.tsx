@@ -18,7 +18,6 @@ import {
     useSpaceMembers,
     useSpaceThreadRootsUnreadCount,
     useSpaceUnreadThreadMentions,
-    useTownsContext,
     useUserLookupContext,
 } from 'use-towns-client'
 import { Avatar } from '@components/Avatar/Avatar'
@@ -88,8 +87,7 @@ type Overlay = undefined | 'main-panel' | 'create-channel' | 'browse-channels'
 
 export const TouchHome = () => {
     const space = useSpaceData()
-    const { isAuthenticated, loggedInWalletAddress, loginStatus } = useConnectivity()
-    const { signerContext } = useTownsContext()
+    const { loggedInWalletAddress, loginStatus } = useConnectivity()
     const [isSearching, setIsSearching] = useState<boolean>(false)
     const [searchString, setSearchString] = useState<string>('')
     const [caretVisible, setCaretVisible] = useState<boolean>(false)
@@ -104,7 +102,6 @@ export const TouchHome = () => {
 
     const { unseenChannelIds, markChannelsAsSeen } = useUnseenChannelIds()
     const spaceId = space?.id ?? ''
-    const hasSignerContext = signerContext !== undefined
 
     const { storeBookmarkedSpaceId, storeBookmarkedRoute } = useStore((s) => {
         const storeBookmarkedSpaceId = s.spaceIdBookmark
@@ -126,27 +123,15 @@ export const TouchHome = () => {
     const { analytics, anonymousId } = useAnalytics()
 
     useEffect(() => {
-        console.warn('[TouchHome][hnt-5685]', 'route', {
-            spaceId,
-            loggedInWalletAddress: loggedInWalletAddress ?? '',
+        console.log('[TouchHome][route]', 'route', {
             loginStatus,
-            isAuthenticated,
-            hasSignerContext,
+            spaceId,
             locationPathname: location.pathname,
-            locationSearch: location.search,
             storeBookmarkedRoute: storeBookmarkedRoute ?? 'undefined',
+            locationSearch: location.search,
             storeBookmarkedSpaceId: storeBookmarkedSpaceId ?? 'undefined',
-            visitedBookmark: visitedBookmark.current ?? 'undefined',
         })
-    }, [
-        isAuthenticated,
-        loggedInWalletAddress,
-        loginStatus,
-        hasSignerContext,
-        spaceId,
-        storeBookmarkedRoute,
-        storeBookmarkedSpaceId,
-    ])
+    }, [loginStatus, spaceId, storeBookmarkedRoute, storeBookmarkedSpaceId])
 
     useEffect(() => {
         analytics?.page(
@@ -297,7 +282,7 @@ export const TouchHome = () => {
         }
         if (storeBookmarkedSpaceId && storeBookmarkedRoute) {
             visitedBookmark.current = storeBookmarkedRoute
-            console.log('[TouchHome][hnt-5685]', 'visited bookmark', {
+            console.log('[TouchHome][route]]', 'visited bookmark', {
                 storeBookmarkedSpaceId,
                 storeBookmarkedRoute,
             })

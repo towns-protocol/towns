@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react'
-import { Outlet, Route, Routes, useLocation } from 'react-router'
+import React from 'react'
+import { Outlet, Route, Routes } from 'react-router'
 import { useConnectivity } from 'use-towns-client'
 import { Box, Stack } from '@ui'
 import { useDevice } from 'hooks/useDevice'
@@ -12,17 +12,6 @@ import { PublicTownPage } from 'routes/PublicTownPage/PublicTownPage'
 
 export const AllRoutes = () => {
     const { isAuthenticated } = useConnectivity()
-    const { isTouch } = useDevice()
-    const location = useLocation()
-
-    useEffect(() => {
-        console.warn('[AllRoutes][hnt-5685]', 'route', {
-            deviceType: isTouch ? 'mobile' : 'desktop',
-            isAuthenticated,
-            locationPathname: location.pathname,
-            locationSearch: location.search,
-        })
-    }, [isAuthenticated, isTouch, location.pathname, location.search])
 
     return (
         <>

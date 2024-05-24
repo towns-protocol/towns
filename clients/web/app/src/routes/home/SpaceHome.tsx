@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo } from 'react'
 
 import { matchPath, useNavigate } from 'react-router'
-import { Membership, useConnectivity, useSpaceData, useTownsContext } from 'use-towns-client'
+import { Membership, useConnectivity, useSpaceData } from 'use-towns-client'
 import { useSearchParams } from 'react-router-dom'
 import { PATHS } from 'routes'
 import { useStore } from 'store/store'
@@ -12,8 +12,7 @@ import { LINKED_RESOURCE } from '../../data/rel'
 export const SpaceHome = () => {
     const space = useSpaceData()
     const { isTouch } = useDevice()
-    const { isAuthenticated, loggedInWalletAddress, loginStatus } = useConnectivity()
-    const { signerContext } = useTownsContext()
+    const { loginStatus } = useConnectivity()
     const spaceId = space?.id
     const navigate = useNavigate()
     const { analytics, anonymousId } = useAnalytics()
@@ -45,26 +44,20 @@ export const SpaceHome = () => {
     }, [searchParams])
 
     useEffect(() => {
-        console.warn('[SpaceHome][hnt-5685]', 'route', {
-            bookmarkedRoute,
-            storeBookmarkedSpaceId: storeBookmarkedSpaceId ?? 'undefined',
-            storeBookmarkedRoute: storeBookmarkedRoute ?? 'undefined',
-            rel,
-            spaceId: space?.id ?? '',
-            isAuthenticated,
-            loggedInWalletAddress: loggedInWalletAddress ?? '',
-            loginStatus,
-            hasSignerContext: signerContext !== undefined,
+        console.log('[SpaceHome][route]', 'route', {
             locationPath: location.pathname,
+            bookmarkedRoute,
+            storeBookmarkedRoute: storeBookmarkedRoute ?? 'undefined',
+            spaceId: space?.id ?? '',
+            storeBookmarkedSpaceId: storeBookmarkedSpaceId ?? 'undefined',
+            rel,
+            loginStatus,
             locationParams: location.search,
             deviceType: isTouch ? 'mobile' : 'desktop',
         })
     }, [
         bookmarkedRoute,
-        isAuthenticated,
-        loggedInWalletAddress,
         loginStatus,
-        signerContext,
         space?.id,
         rel,
         isTouch,

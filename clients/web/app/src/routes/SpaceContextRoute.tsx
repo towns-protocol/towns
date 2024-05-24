@@ -46,14 +46,14 @@ const SpaceContext = () => {
     const spaceName = space?.name || chainSpace?.name
 
     useEffect(() => {
-        console.warn('[SpaceContextRoute][hnt-5685]', 'route', {
-            rpcClient: casablancaClient?.rpcClient.url ?? '',
+        console.log('[SpaceContextRoute][route]', 'route', {
+            spaceSlug,
             routeMatcherPathname: path?.pathname ?? '',
-            routeMatcherSearch: path?.search ?? '',
             locationPathname: location.pathname,
+            routeMatcherSearch: path?.search ?? '',
             locationSearch: location.search,
             path: path ?? '',
-            spaceSlug,
+            rpcClient: casablancaClient?.rpcClient.url ?? '',
             deviceType: isTouch ? 'mobile' : 'desktop',
         })
     }, [
