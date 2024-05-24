@@ -110,7 +110,7 @@ export function BottomBarContent({
                             )}
                         </Stack>
                     }
-                    rightColContent={<JoinLoginButton spaceId={spaceId} />}
+                    rightColContent={rightColWidth > 0 && <JoinLoginButton spaceId={spaceId} />}
                 />
             </Stack>
             {isJoining && <JoiningOverlay />}

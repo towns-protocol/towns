@@ -267,7 +267,7 @@ const Header = (props: {
                 {name}
             </Heading>
             {motto && <Text color="gray2">{motto}</Text>}
-            <Stack horizontal>
+            <Stack horizontal height="x4">
                 {userId && (
                     <AvatarTextHorizontal
                         userId={userId}
@@ -337,6 +337,7 @@ const InformationBoxes = (props: {
             overflowX="scroll"
             scrollbars={false}
             shrink={false}
+            layout="position"
         >
             <TokenInfoBox
                 title="For"

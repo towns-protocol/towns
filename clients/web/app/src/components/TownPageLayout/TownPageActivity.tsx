@@ -1,13 +1,13 @@
 import { AnimatePresence, animate } from 'framer-motion'
 import React, { useEffect, useMemo, useRef } from 'react'
 import { useContractSpaceInfo } from 'use-towns-client'
-import { Spinner } from '@components/Spinner'
 import { FadeInBox } from '@components/Transitions'
 import { Box, Icon, IconName, Paragraph, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { shortAddress } from 'ui/utils/utils'
 import { AvatarWithoutDot } from '@components/Avatar/Avatar'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
+import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { useFetchUnauthenticatedActivity } from './useFetchUnauthenticatedActivity'
 
 export const TownPageActivity = (props: { townId: string }) => {
@@ -135,7 +135,7 @@ export const TownPageActivity = (props: { townId: string }) => {
                         <Text strong size="md">
                             Activity
                         </Text>
-                        {isLoading && <Spinner height="height_sm" />}
+                        {isLoading && <ButtonSpinner height="height_sm" />}
                     </Stack>
 
                     {activities.map((a, i) => (

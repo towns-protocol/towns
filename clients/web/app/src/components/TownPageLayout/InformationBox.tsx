@@ -23,6 +23,7 @@ export const InformationBox = (props: Props) => {
     return (
         <MotionStack
             centerContent
+            layoutScroll
             rounded="md"
             height="x12"
             width="x12"
