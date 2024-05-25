@@ -136,6 +136,7 @@ async function postCustomError(data: FormState) {
 
     const postCustom = await axiosClient.post(url, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
+        withCredentials: true,
     })
     postCustomErrorToDatadog(data, uuid, logs)
     return postCustom
