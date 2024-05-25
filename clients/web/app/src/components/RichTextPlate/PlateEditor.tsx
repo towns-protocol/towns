@@ -17,6 +17,8 @@ import { isEditorEmpty as PlateIsEditorEmpty } from '@udecode/slate-utils'
 import { focusEditor } from '@udecode/slate-react'
 import { TComboboxItemWithData } from '@udecode/plate-combobox'
 import { ELEMENT_PARAGRAPH } from '@udecode/plate-paragraph'
+import every from 'lodash/every'
+import isEqual from 'lodash/isEqual'
 import { useMediaDropContext } from '@components/MediaDropContext/MediaDropContext'
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { Box, BoxProps, Stack } from '@ui'
@@ -30,6 +32,7 @@ import {
 } from '@components/EmbeddedMessageAttachement/EditorAttachmentPreview'
 import { useInlineReplyAttchmentPreview } from '@components/EmbeddedMessageAttachement/hooks/useInlineReplyAttchmentPreview'
 import { useInputStore } from 'store/store'
+import { getChannelNames, getMentionIds, getUserIds } from './utils/helpers'
 import { RichTextPlaceholder } from './components/RichTextEditorPlaceholder'
 import { toMD } from './utils/toMD'
 import { RememberInputPlugin } from './plugins/RememberInputPlugin'
@@ -76,24 +79,6 @@ const EMPTY_NODE: TElement = {
     id: '1',
     type: ELEMENT_PARAGRAPH,
     children: [{ text: '' }],
-}
-export const RichTextEditor = (props: Props) => {
-    useEffect(() => {
-        if (window.townsMeasureFlag && props.editable) {
-            if (props.editable) {
-                const durationTillEditable = Date.now() - window.townsAppStartTime
-                window.townsMeasureFlag = false
-                datadogRum.addAction('SendMessageEditable', {
-                    durationTillEditable: durationTillEditable,
-                })
-            }
-        }
-    }, [props.editable])
-    return (
-        <ErrorBoundary FallbackComponent={EditorFallback}>
-            <PlateEditorWithoutBoundary {...props} />
-        </ErrorBoundary>
-    )
 }
 
 const PlateEditorWithoutBoundary = ({
@@ -452,5 +437,43 @@ const PlateEditorWithoutBoundary = ({
                 </Plate>
             </Stack>
         </>
+    )
+}
+
+const arePropsEqual = (prevProps: Props, nextProps: Props) => {
+    return every(
+        [
+            isEqual(prevProps.editable, nextProps.editable),
+            isEqual(prevProps.displayButtons, nextProps.displayButtons),
+            isEqual(prevProps.placeholder, nextProps.placeholder),
+            isEqual(prevProps.initialValue, nextProps.initialValue),
+            isEqual(prevProps.threadId, nextProps.threadId),
+            isEqual(prevProps.threadPreview, nextProps.threadPreview),
+            isEqual(prevProps.isFullWidthOnTouch, nextProps.isFullWidthOnTouch),
+            isEqual(getChannelNames(prevProps.channels), getChannelNames(nextProps.channels)),
+            isEqual(getUserIds(prevProps.users), getUserIds(nextProps.users)),
+            isEqual(getMentionIds(prevProps.mentions), getMentionIds(nextProps.mentions)),
+        ],
+        true,
+    )
+}
+const MemoizedPlateEditor = React.memo(PlateEditorWithoutBoundary, arePropsEqual)
+
+export const RichTextEditor = (props: Props) => {
+    useEffect(() => {
+        if (window.townsMeasureFlag && props.editable) {
+            if (props.editable) {
+                const durationTillEditable = Date.now() - window.townsAppStartTime
+                window.townsMeasureFlag = false
+                datadogRum.addAction('SendMessageEditable', {
+                    durationTillEditable: durationTillEditable,
+                })
+            }
+        }
+    }, [props.editable])
+    return (
+        <ErrorBoundary FallbackComponent={EditorFallback}>
+            <MemoizedPlateEditor {...props} />
+        </ErrorBoundary>
     )
 }

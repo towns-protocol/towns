@@ -16,6 +16,7 @@ import remarkTransformUserAndChannels from './remark/remarkTransformUserAndChann
 import remarkPreserveListContent from './remark/remarkPreserveListContent'
 import remarkRemoveHeadings from './remark/remarkRemoveHeadings'
 import remarkDecodeHTMLCodeBlocks from './remark/remarkDecodeHTMLCodeBlocks'
+import { getChannelNames } from './helpers'
 
 type MarkdownRendererProps = React.PropsWithChildren<{
     components: Partial<Components>
@@ -80,9 +81,6 @@ const MarkdownRenderer = ({
         passNode: true,
     })
 }
-
-const getChannelNames = (channels?: Channel[]): string =>
-    (channels || []).map((c) => c.label).join('')
 
 /**
  * Compare props to determine if the component should re-render.

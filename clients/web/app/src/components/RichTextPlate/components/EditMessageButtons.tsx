@@ -77,7 +77,7 @@ export const EditMessageButtons = (props: {
                     }
                     icon={disabled ? 'touchSendDisabled' : 'touchSendEnabled'}
                     size="square_lg"
-                    onMouseDown={disabled ? props.onCancel : props.onSave}
+                    onMouseDown={disabled ? cancelButtonPressed : saveButtonPressed}
                 />
             ) : (
                 <MotionIconButton
@@ -90,7 +90,7 @@ export const EditMessageButtons = (props: {
                     }
                     icon={disabled ? 'touchSendDisabled' : 'touchSendEnabled'}
                     size="square_md"
-                    onMouseDown={disabled ? undefined : props.onSave}
+                    onMouseDown={disabled ? undefined : saveButtonPressed}
                 />
             )}
         </Stack>

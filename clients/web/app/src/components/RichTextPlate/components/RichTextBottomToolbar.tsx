@@ -2,7 +2,7 @@ import React, { useCallback, useEffect } from 'react'
 import { focusEditor } from '@udecode/slate-react'
 import { getEndPoint } from '@udecode/slate'
 import { getSelectionText } from '@udecode/slate-utils'
-import { useEditorRef, useEditorSelector } from '@udecode/plate-common'
+import { useEditorRef, useEditorSelector, useEventEditorSelectors } from '@udecode/plate-common'
 import { GiphyEntryDesktop, GiphyEntryTouch } from '@components/Giphy/GiphyEntry'
 import { EmojiPickerButton, EmojiPickerButtonTouch } from '@components/EmojiPickerButton'
 import { useDevice } from 'hooks/useDevice'
@@ -137,7 +137,11 @@ export const RichTextBottomToolbar = (props: Props) => {
                         />
                     ) : null}
 
-                    <EmojiPickerButton parentFocused={isFocused} onSelectEmoji={onSelectEmoji} />
+                    <EmojiPickerButton
+                        key="emoji-non-touch"
+                        parentFocused={useEventEditorSelectors.focus() === editor.id && isFocused}
+                        onSelectEmoji={onSelectEmoji}
+                    />
                 </>
             )}
 
