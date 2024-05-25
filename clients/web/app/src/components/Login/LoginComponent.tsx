@@ -46,13 +46,19 @@ function LoginComponent({
             return
         }
         if (!onLoginClick) {
-            analytics?.track('clicked login', {}, () => {
-                console.log('[analytics][LoginComponent] clicked login')
-            })
+            analytics?.track(
+                'clicked login',
+                {
+                    buttonText: text,
+                },
+                () => {
+                    console.log('[analytics][LoginComponent] clicked login')
+                },
+            )
         }
         await onLoginClick?.()
         await login()
-    }, [privyReady, isBusy, onLoginClick, login, analytics])
+    }, [privyReady, isBusy, onLoginClick, login, analytics, text])
 
     useErrorToast({
         errorMessage,

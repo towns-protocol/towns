@@ -207,6 +207,15 @@ export const CreateChannelForm = (props: Props) => {
                     parentSpaceId: props.spaceId,
                     roleIds: roleIds.map((roleId) => Number(roleId)),
                 }
+
+                const traits = {
+                    parentSpaceId: props.spaceId,
+                    numberOfRoles: rolesWithDetails.length,
+                }
+                analytics?.track('submitting create channel form', traits, () => {
+                    console.log('[analytics] submitting create channel form', traits)
+                })
+
                 if (!signer) {
                     createPrivyNotAuthenticatedNotification()
                     return

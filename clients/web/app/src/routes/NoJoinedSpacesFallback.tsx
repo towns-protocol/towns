@@ -76,8 +76,11 @@ export const NoJoinedSpacesFallback = () => {
     }, [spaces, navigate, client, spaceIdBookmark, isTouch])
 
     const openTownPanel = useCallback(() => {
+        analytics?.track('clicked create a town', {}, () => {
+            console.log('[analytics] clicked create a town')
+        })
         navigate(`/${PATHS.SPACES}/new`)
-    }, [navigate])
+    }, [analytics, navigate])
 
     // need to default spaceHierarchies to undefined and check for it here
     // to prevent flash on load

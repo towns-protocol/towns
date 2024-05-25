@@ -132,6 +132,10 @@ export function CreateTownSubmit({
                     // TODO: defaultChannelName?
                 }
 
+                analytics?.track('submitting create town form', {}, () => {
+                    console.log('[analytics] submitting create town form')
+                })
+
                 const signer = await getSigner()
                 if (!signer) {
                     createPrivyNotAuthenticatedNotification()
@@ -297,6 +301,15 @@ export function CreateTownSubmit({
                     const errorMessage = result?.error && mapToErrorMessage(result.error)
 
                     if (errorMessage) {
+                        analytics?.track(
+                            'error creating town',
+                            {
+                                error: errorMessage,
+                            },
+                            () => {
+                                console.log('[analytics] error creating town:', errorMessage)
+                            },
+                        )
                         toast.custom(
                             (t) => (
                                 <TransactionErrorNotification

@@ -18,7 +18,7 @@ export const WelcomeRoute = React.memo(() => {
                 anonymousId,
             },
             () => {
-                console.log('[analytics] no joined towns page')
+                console.log('[analytics] welcome page')
             },
         )
     }, [analytics, anonymousId, location.pathname, location.search])
