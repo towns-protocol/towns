@@ -62,6 +62,9 @@ export const SpaceSideBar = (props: Props) => {
     const { openPanel } = usePanelActions()
 
     const onShowBrowseChannels = useEvent(() => {
+        analytics?.track('clicked browse channels', { spaceId: space.id }, () => {
+            console.log('[analytics] clicked browse channels', { spaceId: space.id })
+        })
         openPanel(CHANNEL_INFO_PARAMS.BROWSE_CHANNELS)
     })
 

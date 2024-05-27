@@ -20,6 +20,7 @@ import { useStore } from 'store/store'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useUnseenChannelIds } from 'hooks/useUnseenChannelIdsCount'
 import { LinkParams, useCreateLink } from 'hooks/useCreateLink'
+import { useAnalytics } from 'hooks/useAnalytics'
 
 export const AllChannelsList = ({
     onHideBrowseChannels,
@@ -118,6 +119,7 @@ export const ChannelItem = ({
     const groups = useMyChannels(space)
     const myJoinedChannelsInSpace = useMemo(() => groups.flatMap((c) => c.channels), [groups])
     const { isTouch } = useDevice()
+    const { analytics } = useAnalytics()
 
     useEffect(() => {
         // quick fix, leave events result in a faster rerender than the join event
@@ -140,6 +142,15 @@ export const ChannelItem = ({
     const onJoinClick = useEvent(async () => {
         setSyncingSpace(true)
         setJoinFailed(false)
+
+        const tracked = {
+            spaceId: space.id,
+            channelId: channelIdentifier,
+            isJoined: isJoined ? 'leave' : 'join',
+        }
+        analytics?.track('clicked join / leave channel', tracked, () => {
+            console.log('[analytics] track', 'clicked join / leave channel', tracked)
+        })
 
         const flatChannels = space.channelGroups.flatMap((g) => g.channels)
         const joinedChannels = flatChannels.filter((flatChannel) =>

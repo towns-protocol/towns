@@ -242,10 +242,32 @@ export const TouchHome = () => {
         setActiveOverlay('main-panel')
     }, [])
 
+    const onShowBrowseChannels = useCallback(() => {
+        analytics?.track(
+            'clicked browse channels',
+            {
+                spaceId: space?.id,
+            },
+            () => {
+                console.log('clicked browse channels', { spaceId: space?.id })
+            },
+        )
+        setActiveOverlay('browse-channels')
+    }, [analytics, space?.id])
+
     const onHideBrowseChannels = useCallback(() => {
+        analytics?.track(
+            'closed panel',
+            {
+                panel: 'browse-channels',
+            },
+            () => {
+                console.log('[analytics] closed panel', { panel: 'browse-channels' })
+            },
+        )
         markChannelsAsSeen()
         onHideOverlay()
-    }, [onHideOverlay, markChannelsAsSeen])
+    }, [analytics, markChannelsAsSeen, onHideOverlay])
 
     const { imageSrc } = useImageSource(space?.id ?? '', ImageVariants.thumbnail300)
 
@@ -402,9 +424,7 @@ export const TouchHome = () => {
                                                     />
                                                     <BrowseChannelRow
                                                         badgeCount={unseenChannelIds.size}
-                                                        onClick={() =>
-                                                            setActiveOverlay('browse-channels')
-                                                        }
+                                                        onClick={onShowBrowseChannels}
                                                     />
                                                     {canCreateChannel && (
                                                         <CreateChannelRow

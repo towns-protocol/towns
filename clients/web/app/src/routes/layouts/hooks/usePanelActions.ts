@@ -50,12 +50,12 @@ export const usePanelActions = () => {
                 const panel = searchParams.get('panel')
                 if (panel && analytics) {
                     analytics.track(
-                        'close panel',
+                        'closed panel',
                         {
                             panel,
                         },
                         () => {
-                            console.log('[analytics] close panel', panel)
+                            console.log('[analytics] closed panel', panel)
                         },
                     )
                 }

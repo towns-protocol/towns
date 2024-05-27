@@ -1,11 +1,26 @@
-import React, { useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import { Button, Heading, Paragraph } from '@ui'
 import { AllChannelsList } from 'routes/AllChannelsList/AllChannelsList'
+import { useAnalytics } from 'hooks/useAnalytics'
 import { ModalContainer } from './Modals/ModalContainer'
 
 export const NoJoinedChannelsFallback = () => {
     const [isVisible, setIsVisible] = useState(false)
-    const show = () => setIsVisible(true)
+    const { analytics } = useAnalytics()
+
+    const show = useCallback(() => {
+        analytics?.track(
+            'clicked browse channels',
+            {
+                spaceId: 'no space id',
+            },
+            () => {
+                console.log('clicked browse channels (no space id)')
+            },
+        )
+        setIsVisible(true)
+    }, [analytics])
+
     const hide = () => setIsVisible(false)
 
     return (
