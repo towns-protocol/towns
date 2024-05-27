@@ -131,7 +131,7 @@ export const SpacesChannelComponent = (props: Props) => {
                     messageType: options?.messageType,
                 },
                 () => {
-                    console.log('[analytics] posted message')
+                    console.log('[analytics] posted message', options?.messageType)
                 },
             )
 

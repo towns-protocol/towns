@@ -52,7 +52,7 @@ export const MessageThreadPanel = (props: Props) => {
                 messageType: options?.messageType,
             },
             () => {
-                console.log('[analytics] posted message (thread)')
+                console.log('[analytics] posted message (thread)', options?.messageType)
             },
         )
         sendReply(value, channelId, options, parent?.userIds)

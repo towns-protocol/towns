@@ -64,9 +64,19 @@ export const MessageContextMenu = (props: Props) => {
                 console.error('no emoji id')
                 return
             }
-            analytics?.track('reacted with emoji', { spaceId, channelId, emojiId: data.id }, () => {
-                console.log('[analytics] reacted with emoji')
-            })
+            analytics?.track(
+                'posted message',
+                {
+                    spaceId,
+                    channelId,
+                    isThread: !!threadId,
+                    messageType: 'emoji reaction',
+                    emojiId: data.id,
+                },
+                () => {
+                    console.log('[analytics] posted message (emoji reaction)')
+                },
+            )
             sendReaction(channelId, eventId, data.id, threadId)
         },
         [analytics, channelId, eventId, sendReaction, spaceId, threadId],
