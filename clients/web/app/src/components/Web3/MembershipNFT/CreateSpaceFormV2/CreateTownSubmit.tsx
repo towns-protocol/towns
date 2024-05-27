@@ -328,25 +328,22 @@ export function CreateTownSubmit({
                 if (result?.data && result.data.spaceId && result.data.channelId) {
                     const newPath = `/${PATHS.SPACES}/${result.data.spaceId}/${PATHS.CHANNELS}/${result.data.channelId}`
                     const networkId = result.data.spaceId
-
-                    analytics?.track(
-                        'created town',
-                        {
-                            spaceName: createSpaceInfo.name,
-                            everyone: isEveryone,
-                            pricingModule: isFixedPricing ? 'fixed' : 'dynamic',
-                            priceInWei: priceInWei.toString(),
-                            tokensGatingMembership: tokensGatingMembership.map((t) => ({
-                                address: t.address,
-                                chainId: t.chainId,
-                                tokenType: t.type,
-                                quantity: t.quantity,
-                            })),
-                        },
-                        () => {
-                            console.log('[analytics] created town')
-                        },
-                    )
+                    const tracked = {
+                        spaceName: createSpaceInfo.name,
+                        spaceId: result.data.spaceId,
+                        everyone: isEveryone,
+                        pricingModule: isFixedPricing ? 'fixed' : 'dynamic',
+                        priceInWei: priceInWei.toString(),
+                        tokensGatingMembership: tokensGatingMembership.map((t) => ({
+                            address: t.address,
+                            chainId: t.chainId,
+                            tokenType: t.type,
+                            quantity: t.quantity,
+                        })),
+                    }
+                    analytics?.track('created town', tracked, () => {
+                        console.log('[analytics] created town', tracked)
+                    })
 
                     if (values.spaceIconUrl && values.spaceIconFile) {
                         const { setLoadedResource } = useImageStore.getState()
