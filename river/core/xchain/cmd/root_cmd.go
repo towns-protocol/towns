@@ -8,7 +8,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/river-build/river/core/node/config"
 
-	"github.com/river-build/river/core/node/infra"
+	node_cmd "github.com/river-build/river/core/node/cmd"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -85,7 +85,7 @@ func initConfigAndLog() {
 		}
 
 		loadedCfg = &configStruct
-		infra.InitLogFromConfig(&loadedCfg.Log)
+		node_cmd.InitLogFromConfig(&loadedCfg.Log)
 	} else {
 		fmt.Println("No config file specified")
 	}

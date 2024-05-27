@@ -1,12 +1,12 @@
-package infra
+package cmd
 
 import (
 	"fmt"
 	"log/slog"
 	"os"
 
+	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/dlog"
-	config "github.com/river-build/river/core/node/infra/config"
 )
 
 var (

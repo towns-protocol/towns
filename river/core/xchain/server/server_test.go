@@ -29,7 +29,6 @@ import (
 	node_contracts "github.com/river-build/river/core/node/contracts"
 	node_crypto "github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
-	infra "github.com/river-build/river/core/node/infra/config"
 	"github.com/stretchr/testify/require"
 )
 
@@ -270,7 +269,7 @@ func (st *serviceTester) Config() *config.Config {
 		TestCustomEntitlementContract: config.ContractConfig{
 			Address: st.mockCustomEntitlementAddress,
 		},
-		Log: infra.LogConfig{
+		Log: config.LogConfig{
 			NoColor: true,
 		},
 	}

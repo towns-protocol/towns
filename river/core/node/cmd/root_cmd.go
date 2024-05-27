@@ -8,7 +8,6 @@ import (
 	"github.com/mitchellh/mapstructure"
 
 	"github.com/river-build/river/core/node/config"
-	"github.com/river-build/river/core/node/infra"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -92,7 +91,7 @@ func initConfigAndLog() {
 
 		// If loaded successfully, set the global config
 		cmdConfig = &configStruct
-		infra.InitLogFromConfig(&cmdConfig.Log)
+		InitLogFromConfig(&cmdConfig.Log)
 	} else {
 		fmt.Println("No config file specified")
 	}

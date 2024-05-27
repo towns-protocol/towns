@@ -1,0 +1,29 @@
+# For running server in info mode ('info' command)
+port: 4040
+useHttps: false
+
+# Blockchain configuration
+baseChain:
+    chainId: 84532
+    networkUrl: 'https://nexus-rpc-worker-test-beta.towns.com/84532?key=NOT_SET'
+    blockTimeMs: 2000
+riverChain:
+    chainId: 550
+    networkUrl: 'https://mainnet.rpc.river.build'
+    blockTimeMs: 2000
+
+# Base contracts TODO: not set yet
+architectContract:
+    address: '0x0000000000000000000000000000000000000000'
+
+# River contracts
+registryContract:
+    address: '0x1298c03Fde548dc433a452573E36A713b38A0404'
+
+# Disable logging
+log:
+    file: ''
+    level: info
+    console: true
+    noColor: false
+    format: text

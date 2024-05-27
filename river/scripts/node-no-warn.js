@@ -12,8 +12,9 @@ var localRiverCA = path.join(os.homedir(), 'river-ca-cert.pem')
 
 if (!fs.existsSync(localRiverCA)) {
     console.log('CA does not exist, did you forget to run ../scripts/register-ca.sh')
+} else {
+    process.env.NODE_EXTRA_CA_CERTS = localRiverCA
 }
-process.env.NODE_EXTRA_CA_CERTS = localRiverCA
 
 // Increase max listeners from 10 to 100 to avoid warnings for legitimate use cases.
 require('events').setMaxListeners(100)

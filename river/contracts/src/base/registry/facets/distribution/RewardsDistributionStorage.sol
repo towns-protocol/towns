@@ -16,7 +16,8 @@ library RewardsDistributionStorage {
     mapping(address operator => uint256) distributionByOperator;
     mapping(address delegator => uint256) distributionByDelegator;
     mapping(address operator => address[]) delegatorsByOperator;
-    uint256 weeklyDistributionAmount;
+    uint256 periodDistributionAmount;
+    uint256 activePeriodLength;
   }
 
   function layout() internal pure returns (Layout storage s) {

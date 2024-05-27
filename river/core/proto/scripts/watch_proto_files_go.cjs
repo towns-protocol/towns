@@ -4,6 +4,7 @@ const debounce = require("lodash.debounce");
 
 const currentDirectory = process.cwd();
 const toolsDirectory = process.cwd() + "/../node/protocol_extensions";
+const protocolDirectory = process.cwd() + "/../../protocol";
 const buildCommand = "cd ../node && go generate -v -x protocol/gen.go";
 
 const handleFileChange = debounce((eventType, filename) => {
@@ -32,7 +33,15 @@ const watcher2 = fs.watch(toolsDirectory, (eventType, filename) => {
   }
 });
 
-console.log(`Watching ${currentDirectory} && ${toolsDirectory} for changes...`);
+const watcher3 = fs.watch(protocolDirectory, (eventType, filename) => {
+  if (filename.endsWith(".proto")) {
+    handleFileChange(eventType, filename);
+  }
+});
+
+console.log(
+  `Watching ${currentDirectory} && ${toolsDirectory} && ${protocolDirectory} for changes...`,
+);
 
 // To close the watcher when you're done
 // watcher.close();

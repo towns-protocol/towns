@@ -350,36 +350,36 @@ func (s *streamCacheImpl) processMiniblockProposalBatch(
 
 	miniblocks := make([]contracts.SetMiniblock, 0, len(candidates))
 	proposals := map[StreamId]*MiniblockInfo{}
-	for _, s := range candidates {
+	for _, c := range candidates {
 		// Test also creates miniblocks on demand.
 		// Miniblock production code is going to be hardened to be able to handle multiple concurrent calls.
 		// But this is not the case yet, to make tests stable do not attempt to create miniblock if
 		// another one is already in progress.
-		if !s.makeMiniblockMutex.TryLock() {
+		if !c.makeMiniblockMutex.TryLock() {
 			continue
 		}
-		defer s.makeMiniblockMutex.Unlock()
+		defer c.makeMiniblockMutex.Unlock()
 
-		proposal, err := s.ProposeNextMiniblock(ctx, false)
+		proposal, err := c.ProposeNextMiniblock(ctx, false)
 		if err != nil {
-			log.Error("processMiniblockProposalBatch: Error creating new miniblock proposal", "streamId", s.streamId, "err", err)
+			log.Error("processMiniblockProposalBatch: Error creating new miniblock proposal", "streamId", c.streamId, "err", err)
 			continue
 		}
 		if proposal == nil {
-			log.Debug("processMiniblockProposalBatch: No miniblock to produce", "streamId", s.streamId)
+			log.Debug("processMiniblockProposalBatch: No miniblock to produce", "streamId", c.streamId)
 			continue
 		}
 		miniblocks = append(
 			miniblocks,
 			contracts.SetMiniblock{
-				StreamId:          s.streamId,
+				StreamId:          c.streamId,
 				PrevMiniBlockHash: *proposal.headerEvent.PrevMiniblockHash,
 				LastMiniblockHash: proposal.headerEvent.Hash,
 				LastMiniblockNum:  uint64(proposal.Num),
 				IsSealed:          false,
 			},
 		)
-		proposals[s.streamId] = proposal
+		proposals[c.streamId] = proposal
 	}
 
 	if len(miniblocks) == 0 {

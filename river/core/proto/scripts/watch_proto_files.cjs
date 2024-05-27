@@ -3,6 +3,7 @@ const { exec } = require("child_process");
 const debounce = require("lodash.debounce");
 
 const currentDirectory = process.cwd();
+const protocolDirectory = process.cwd() + "/../../protocol";
 const buildCommand = "yarn build";
 
 const handleFileChange = debounce((eventType, filename) => {
@@ -25,7 +26,15 @@ const watcher = fs.watch(currentDirectory, (eventType, filename) => {
   }
 });
 
-console.log(`Watching ${currentDirectory} for changes...`);
+const watcher2 = fs.watch(protocolDirectory, (eventType, filename) => {
+  if (filename.endsWith(".proto")) {
+    handleFileChange(eventType, filename);
+  }
+});
+
+console.log(
+  `Watching ${currentDirectory} and ${protocolDirectory} for changes...`,
+);
 
 // To close the watcher when you're done
 // watcher.close();

@@ -38,4 +38,5 @@ database:
 storageType: postgres
 
 archive:
-    archiveId: 'ArchLocalGamma'
+    archiveId: 'ArchLocalGamma3'
+    printStatsPeriod: 10s

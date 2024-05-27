@@ -21,7 +21,11 @@ interface IRewardsDistribution is IRewardsDistributionBase {
 
   function distributeRewards(address operator) external;
 
-  function setWeeklyDistributionAmount(uint256 amount) external;
+  function setPeriodDistributionAmount(uint256 amount) external;
 
-  function getWeeklyDistributionAmount() external view returns (uint256);
+  function getPeriodDistributionAmount() external view returns (uint256);
+
+  function setActivePeriodLength(uint256 length) external;
+
+  function getActivePeriodLength() external view returns (uint256);
 }

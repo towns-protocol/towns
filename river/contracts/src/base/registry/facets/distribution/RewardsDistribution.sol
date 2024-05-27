@@ -124,7 +124,7 @@ contract RewardsDistribution is
     SpaceDelegationStorage.Layout storage sd = SpaceDelegationStorage.layout();
 
     //Rewards are distributed equally amongst all active node operators
-    uint256 amountPerOperator = ds.weeklyDistributionAmount /
+    uint256 amountPerOperator = ds.periodDistributionAmount /
       totalActiveOperators;
 
     uint256 operatorClaimAmount = _calculateOperatorDistribution(
@@ -140,12 +140,20 @@ contract RewardsDistribution is
     _distributeDelegatorsRewards(sd, operator, delegatorClaimAmount);
   }
 
-  function setWeeklyDistributionAmount(uint256 amount) external onlyOwner {
-    RewardsDistributionStorage.layout().weeklyDistributionAmount = amount;
+  function setPeriodDistributionAmount(uint256 amount) external onlyOwner {
+    RewardsDistributionStorage.layout().periodDistributionAmount = amount;
   }
 
-  function getWeeklyDistributionAmount() public view returns (uint256) {
-    return RewardsDistributionStorage.layout().weeklyDistributionAmount;
+  function getPeriodDistributionAmount() public view returns (uint256) {
+    return RewardsDistributionStorage.layout().periodDistributionAmount;
+  }
+
+  function setActivePeriodLength(uint256 length) external onlyOwner {
+    RewardsDistributionStorage.layout().activePeriodLength = length;
+  }
+
+  function getActivePeriodLength() public view returns (uint256) {
+    return RewardsDistributionStorage.layout().activePeriodLength;
   }
 
   // =============================================================
@@ -258,7 +266,7 @@ contract RewardsDistribution is
       NodeOperatorStatus currentStatus = nos.statusByOperator[operator];
 
       if (
-        currentStatus == NodeOperatorStatus.Approved &&
+        currentStatus == NodeOperatorStatus.Active &&
         _isActiveSinceLastCycle(nos.approvalTimeByOperator[operator])
       ) {
         expectedOperators[i] = operator;
@@ -349,6 +357,6 @@ contract RewardsDistribution is
   function _isActiveSinceLastCycle(
     uint256 startTime
   ) internal view returns (bool) {
-    return startTime < (block.timestamp - 7 days);
+    return startTime < (block.timestamp - getActivePeriodLength());
   }
 }

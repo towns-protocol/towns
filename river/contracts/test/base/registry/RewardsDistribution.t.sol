@@ -52,6 +52,7 @@ contract RewardsDistributionTest is
   //example test values with expected results
   uint256 exDistributionAmount;
   uint256 exTotalSpaces;
+  uint256 exActivePeriodLength;
   uint256[] exAmountsPerUser;
   uint256[] exCommissionsPerOperator;
   uint256[] exDelegationsPerUser;
@@ -123,6 +124,7 @@ contract RewardsDistributionTest is
 
     setupOperators(tOperators);
     setupUsersAndDelegation(tUsers, tDelegations);
+    setupDistributionInformation(exDistributionAmount, exActivePeriodLength);
     verifyUsersRewards(exDistributionAmount, tUsers, tOperators, tDelegations);
 
     verifyUserRewardsAgainstExpected(
@@ -141,6 +143,7 @@ contract RewardsDistributionTest is
 
     setupOperators(tOperators);
     setupUsersAndDelegation(tUsers, tDelegations);
+    setupDistributionInformation(exDistributionAmount, exActivePeriodLength);
 
     verifyUsersRewardsClaimAction(
       exDistributionAmount,
@@ -177,7 +180,7 @@ contract RewardsDistributionTest is
       tSpaceUserDelegations,
       exDelegationsPerSpace
     );
-
+    setupDistributionInformation(exDistributionAmount, exActivePeriodLength);
     verifySpaceUsersRewards(
       exDistributionAmount,
       tSpaceUsers,
@@ -208,6 +211,7 @@ contract RewardsDistributionTest is
     setupOperators(tOperators);
     setupUsersAndDelegation(tUsers, tDelegations);
     setupMainnetDelegation(tMainnetUsers, tMainnetUserDelegations);
+    setupDistributionInformation(exDistributionAmount, exActivePeriodLength);
 
     verifyMainnetUsersRewards(
       exDistributionAmount,
@@ -264,7 +268,7 @@ contract RewardsDistributionTest is
 
     setupOperators(tOperators);
     setupUsersAndDelegation(tUsers, tDelegations);
-
+    setupDistributionInformation(distributionAmount, exActivePeriodLength);
     verifyUsersRewards(distributionAmount, tUsers, tOperators, tDelegations);
   }
 
@@ -308,6 +312,7 @@ contract RewardsDistributionTest is
     setupOperators(tOperators);
     setupUsersAndDelegation(tUsers, tDelegations);
     setupMainnetDelegation(tMainnetUsers, tMainnetUserDelegations);
+    setupDistributionInformation(distributionAmount, exActivePeriodLength);
 
     verifyMainnetUsersRewards(
       distributionAmount,
@@ -374,6 +379,7 @@ contract RewardsDistributionTest is
       tSpaceUserDelegations,
       delegationsPerSpace
     );
+    setupDistributionInformation(distributionAmount, exActivePeriodLength);
 
     verifySpaceUsersRewards(
       distributionAmount,
@@ -427,7 +433,7 @@ contract RewardsDistributionTest is
     internal
     givenOperatorsHaveRegistered(operators)
     givenOperatorsHaveCommissionRates(operators)
-    givenOperatorsHaveBeenApproved(operators)
+    givenOperatorsAreActive(operators)
   {}
 
   function setupUsersAndDelegation(
@@ -471,6 +477,16 @@ contract RewardsDistributionTest is
     Entity[] memory operators
   ) internal givenOperatorsHaveSetClaimAddresses(operators) {}
 
+  function setupDistributionInformation(
+    uint256 distributionAmount,
+    uint256 activePeriodLength
+  )
+    internal
+    givenPeriodDistributionAmountHasBeenSet(distributionAmount)
+    givenActivePeriodLengthHasBeenSet(exActivePeriodLength)
+    givenActivePeriodLengthHasElapsed(exActivePeriodLength)
+  {}
+
   function verifyUsersRewardsClaimAction(
     uint256 distributionAmount,
     Entity[] memory users,
@@ -478,8 +494,6 @@ contract RewardsDistributionTest is
     Delegation[] memory delegations
   )
     internal
-    givenWeeklyDistributionAmountHasBeenSet(distributionAmount)
-    givenOneWeekHasElapsed
     givenFundsHaveBeenDisbursed(operators, distributionAmount)
     givenTokensHaveBeenSentToDistributionContract(distributionAmount)
   {
@@ -513,12 +527,7 @@ contract RewardsDistributionTest is
     Entity[] memory users,
     Entity[] memory operators,
     Delegation[] memory delegations
-  )
-    internal
-    givenWeeklyDistributionAmountHasBeenSet(distributionAmount)
-    givenOneWeekHasElapsed
-    givenFundsHaveBeenDisbursed(operators, distributionAmount)
-  {
+  ) internal givenFundsHaveBeenDisbursed(operators, distributionAmount) {
     for (uint256 i = 0; i < users.length; i++) {
       uint256 reward = rewardsDistributionFacet.getClaimableAmount(
         users[i].addr
@@ -545,29 +554,19 @@ contract RewardsDistributionTest is
     Delegation[] memory delegations,
     Delegation[] memory spaceUserDelegations,
     uint256[] memory spaceDelegationsPerSpace
-  )
-    internal
-    givenWeeklyDistributionAmountHasBeenSet(distributionAmount)
-    givenOneWeekHasElapsed
-    givenFundsHaveBeenDisbursed(operators, distributionAmount)
-  {
+  ) internal givenFundsHaveBeenDisbursed(operators, distributionAmount) {
     for (uint256 i = 0; i < spaceUsers.length; i++) {
-      uint256 reward = rewardsDistributionFacet.getClaimableAmount(
-        spaceUsers[i].addr
-      );
-      uint256 expectedReward = _calculateExpectedSpaceUserReward(
-        spaceUsers[i].addr,
-        distributionAmount,
-        operators,
-        spaces,
-        delegations,
-        spaceUserDelegations,
-        spaceDelegationsPerSpace
-      );
-
       assertEq(
-        reward,
-        expectedReward,
+        rewardsDistributionFacet.getClaimableAmount(spaceUsers[i].addr),
+        _calculateExpectedSpaceUserReward(
+          spaceUsers[i].addr,
+          distributionAmount,
+          operators,
+          spaces,
+          delegations,
+          spaceUserDelegations,
+          spaceDelegationsPerSpace
+        ),
         "User Reward does not match expected reward"
       );
     }
@@ -579,40 +578,30 @@ contract RewardsDistributionTest is
     Entity[] memory mainnetUsers,
     Delegation[] memory delegations,
     Delegation[] memory mainnetUserDelegations
-  )
-    internal
-    givenWeeklyDistributionAmountHasBeenSet(distributionAmount)
-    givenOneWeekHasElapsed
-    givenFundsHaveBeenDisbursed(operators, distributionAmount)
-  {
+  ) internal givenFundsHaveBeenDisbursed(operators, distributionAmount) {
     for (uint256 i = 0; i < mainnetUsers.length; i++) {
       uint256 reward = rewardsDistributionFacet.getClaimableAmount(
         mainnetUsers[i].addr
       );
-      address operatorAddr;
 
       //find operator this user is delegating to:
       for (uint256 j = 0; j < mainnetUserDelegations.length; j++) {
         if (mainnetUserDelegations[j].user == mainnetUsers[i].addr) {
-          operatorAddr = mainnetUserDelegations[j].operator;
-          break;
+          assertEq(
+            reward,
+            _calculateExpectedMainnetUserReward(
+              mainnetUsers[i].addr,
+              mainnetUserDelegations[j].operator,
+              distributionAmount,
+              operators,
+              mainnetUsers,
+              delegations,
+              mainnetUserDelegations
+            ),
+            "User Reward does not match expected reward"
+          );
         }
       }
-
-      uint256 expectedReward = _calculateExpectedMainnetUserReward(
-        mainnetUsers[i].addr,
-        operatorAddr,
-        distributionAmount,
-        operators,
-        mainnetUsers,
-        delegations,
-        mainnetUserDelegations
-      );
-      assertEq(
-        reward,
-        expectedReward,
-        "User Reward does not match expected reward"
-      );
     }
   }
 
@@ -621,8 +610,8 @@ contract RewardsDistributionTest is
     Entity[] memory operators
   )
     internal
-    givenWeeklyDistributionAmountHasBeenSet(distributionAmount)
-    givenOneWeekHasElapsed
+    givenActivePeriodLengthHasElapsed(exActivePeriodLength)
+    givenPeriodDistributionAmountHasBeenSet(distributionAmount)
     givenFundsHaveBeenDisbursed(operators, distributionAmount)
   {
     for (uint256 i = 0; i < operators.length; i++) {
@@ -1008,6 +997,7 @@ contract RewardsDistributionTest is
   //used to test specific results given known input
   function initExTestValsWithResults() internal {
     exDistributionAmount = 999 * 1e18;
+    exActivePeriodLength = 14 days;
 
     exAmountsPerUser.push(1000 * 1e18);
     exAmountsPerUser.push(2000 * 1e18);
@@ -1398,26 +1388,34 @@ contract RewardsDistributionTest is
     _;
   }
 
-  modifier givenOperatorHasBeenApproved(address _operator) {
+  modifier givenOperatorIsActive(address _operator) {
     setOperatorStatus(_operator, NodeOperatorStatus.Approved);
+    setOperatorStatus(_operator, NodeOperatorStatus.Active);
     _;
   }
 
-  modifier givenOperatorsHaveBeenApproved(Entity[] memory operators) {
+  modifier givenOperatorsAreActive(Entity[] memory operators) {
     for (uint256 i = 0; i < operators.length; i++) {
       setOperatorStatus(operators[i].addr, NodeOperatorStatus.Approved);
+      setOperatorStatus(operators[i].addr, NodeOperatorStatus.Active);
     }
     _;
   }
 
-  modifier givenWeeklyDistributionAmountHasBeenSet(uint256 amount) {
+  modifier givenPeriodDistributionAmountHasBeenSet(uint256 amount) {
     vm.prank(deployer);
-    rewardsDistributionFacet.setWeeklyDistributionAmount(amount);
+    rewardsDistributionFacet.setPeriodDistributionAmount(amount);
     _;
   }
 
-  modifier givenOneWeekHasElapsed() {
-    vm.warp(block.timestamp + 8 days);
+  modifier givenActivePeriodLengthHasBeenSet(uint256 length) {
+    vm.prank(deployer);
+    rewardsDistributionFacet.setActivePeriodLength(length);
+    _;
+  }
+
+  modifier givenActivePeriodLengthHasElapsed(uint256 activePeriodLength) {
+    vm.warp(block.timestamp + activePeriodLength + 1 days);
     _;
   }
 

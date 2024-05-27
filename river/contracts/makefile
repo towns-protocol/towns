@@ -120,6 +120,10 @@ deploy-river :;
 	@echo "Deploying $(contract)..."
 	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ledger --hd-paths "m/44'/60'/1'/0/0" --sender ${PRODUCTION_ADDRESS} --ffi --rpc-url river --verifier blockscout --verifier-url ${RIVERSCAN_URL} --broadcast --verify -vvvv
 
+interact-river :;
+	@echo "Interacting through $(contract)..."
+	@forge script scripts/interactions/${contract}.s.sol:${contract} --ledger --hd-paths "m/44'/60'/1'/0/0" --sender ${PRODUCTION_ADDRESS} --ffi --rpc-url river --broadcast
+
 # ===========================
 # 				 		Base
 # ===========================
