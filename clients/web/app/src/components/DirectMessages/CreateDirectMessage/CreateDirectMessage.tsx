@@ -177,6 +177,7 @@ export const CreateDirectMessage = (props: Props) => {
     const onCreateNew = useCallback(() => {
         const tracked = {
             numberOfSelectedUsers: numSelectedUsers,
+            totalParticipants: numSelectedUsers + 1,
             dmType: numSelectedUsers === 1 ? 'direct' : numSelectedUsers > 1 ? 'group' : 'invalid',
         }
         console.log('[analytics] confirmed create direct message', tracked)
@@ -230,6 +231,7 @@ export const CreateDirectMessage = (props: Props) => {
         } else {
             const tracked = {
                 numberOfSelectedUsers: numSelectedUsers,
+                totalParticipants: numSelectedUsers + 1,
                 dmType:
                     numSelectedUsers === 1 ? 'direct' : numSelectedUsers > 1 ? 'group' : 'invalid',
             }

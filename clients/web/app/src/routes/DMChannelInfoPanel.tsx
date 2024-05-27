@@ -27,6 +27,7 @@ import {
 import { PanelButton } from '@components/Panel/PanelButton'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { useAnalytics } from 'hooks/useAnalytics'
 import { ChannelMembersModal } from './SpaceChannelDirectoryPanel'
 import { GDMChannelPermissionsModal } from './GDMChannelPermissions'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
@@ -49,6 +50,7 @@ export const DMChannelInfo = (props: { channelId?: string; data?: DMChannelIdent
     >(undefined)
     const { leaveRoom } = useTownsClient()
     const { isTouch } = useDevice()
+    const { analytics } = useAnalytics()
 
     const { channelSlug } = useParams()
     const { memberIds } = useMembers(channelId)
@@ -65,20 +67,44 @@ export const DMChannelInfo = (props: { channelId?: string; data?: DMChannelIdent
     const { createLink } = useCreateLink()
 
     const onLeaveClick = useCallback(() => {
+        const tracked = {
+            channelId,
+            numberOfMembers: memberIds.length,
+        }
+        analytics?.track('clicked_leave_group', tracked, () => {
+            console.log('[analytics] clicked leave group', tracked)
+        })
         setActiveModal('confirm-leave')
-    }, [setActiveModal])
+    }, [analytics, channelId, memberIds.length])
 
     const onLeaveConfirm = useCallback(async () => {
         if (!channelId) {
             return
         }
+        const tracked = {
+            channelId,
+            numberOfRemainingMembers: memberIds.length - 1,
+        }
+        analytics?.track('confirmed_leave_group', tracked, () => {
+            console.log('[analytics] confirmed leave group', tracked)
+        })
         await leaveRoom(channelId)
         setActiveModal(undefined)
         const link = createLink({ route: 'messages' })
         if (link) {
             navigate(link)
         }
-    }, [channelId, createLink, leaveRoom, navigate])
+    }, [analytics, channelId, createLink, leaveRoom, memberIds.length, navigate])
+
+    const onLeaveCancel = useCallback(() => {
+        const tracked = {
+            channelId,
+        }
+        analytics?.track('canceled leave group', tracked, () => {
+            console.log('[analytics] canceled leave group', tracked)
+        })
+        setActiveModal(undefined)
+    }, [analytics, channelId])
 
     const { openPanel } = usePanelActions()
     const onMembersClick = useCallback(() => {
@@ -190,7 +216,7 @@ export const DMChannelInfo = (props: { channelId?: string; data?: DMChannelIdent
                     <ConfirmLeaveModal
                         text="Leave group?"
                         onConfirm={onLeaveConfirm}
-                        onCancel={() => setActiveModal(undefined)}
+                        onCancel={onLeaveCancel}
                     />
                 )}
                 {activeModal === 'members' && (
