@@ -19,6 +19,7 @@ import { useCreateLink } from 'hooks/useCreateLink'
 import { useDevice } from 'hooks/useDevice'
 import { SpacesChannelComponent } from 'routes/SpacesChannel'
 import { PanelContext, PanelStack } from '@components/Panel/PanelContext'
+import { useAnalytics } from 'hooks/useAnalytics'
 import { ChannelPlaceholder } from './ChannelPlaceholder'
 import { MessageDropDown } from './MessageDropDown'
 import { UserOption, UserPillSelector } from './UserPillSelector'
@@ -52,6 +53,7 @@ export const CreateDirectMessage = (props: Props) => {
     const { onDirectMessageCreated } = props
 
     const { isTouch } = useDevice()
+    const { analytics } = useAnalytics()
     const navigate = useNavigate()
     const { createLink } = useCreateLink()
     const { usersMap } = useUserLookupContext()
@@ -80,6 +82,17 @@ export const CreateDirectMessage = (props: Props) => {
     useEffect(() => {
         const onKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
+                analytics?.track(
+                    'escape key pressed',
+                    {
+                        panel: PanelStack.DIRECT_MESSAGES,
+                    },
+                    () => {
+                        console.log('[analytics] escape key pressed', {
+                            panel: PanelStack.DIRECT_MESSAGES,
+                        })
+                    },
+                )
                 navigate(-1)
             }
         }
@@ -87,7 +100,7 @@ export const CreateDirectMessage = (props: Props) => {
         return () => {
             window.removeEventListener('keydown', onKeyDown)
         }
-    }, [navigate])
+    }, [analytics, navigate])
 
     const stackId = useContext(PanelContext)?.stackId
 
@@ -161,6 +174,15 @@ export const CreateDirectMessage = (props: Props) => {
         [isTouch, matchingDM, matchingGDM.length, numSelectedUsers, selectedUsers, usersMap],
     )
 
+    const onCreateNew = useCallback(() => {
+        const tracked = {
+            numberOfSelectedUsers: numSelectedUsers,
+            dmType: numSelectedUsers === 1 ? 'direct' : numSelectedUsers > 1 ? 'group' : 'invalid',
+        }
+        console.log('[analytics] confirmed create direct message', tracked)
+        onSubmit()
+    }, [numSelectedUsers, onSubmit])
+
     const emptySelectionElement = useCallback(
         ({ searchTerm }: { searchTerm: string }) => {
             return searchTerm?.length && !inclusiveMatches?.length ? (
@@ -181,7 +203,7 @@ export const CreateDirectMessage = (props: Props) => {
                 <MessageDropDown
                     createNewCTA={createCTA}
                     channels={inclusiveMatches}
-                    onCreateNew={onSubmit}
+                    onCreateNew={onCreateNew}
                     onSelectChannel={onSelectChannel}
                     onFocusChange={(channel: DMChannelIdentifier) => setChannelPreview(channel)}
                 />
@@ -189,7 +211,7 @@ export const CreateDirectMessage = (props: Props) => {
                 <></>
             )
         },
-        [createCTA, inclusiveMatches, numSelectedUsers, onSubmit, onSelectChannel],
+        [inclusiveMatches, numSelectedUsers, createCTA, onCreateNew, onSelectChannel],
     )
 
     const [channelPreview, setChannelPreview] = useState<DMChannelIdentifier | undefined>(undefined)
@@ -206,9 +228,17 @@ export const CreateDirectMessage = (props: Props) => {
         if (channelPreview) {
             onSelectChannel(channelPreview.id)
         } else {
+            const tracked = {
+                numberOfSelectedUsers: numSelectedUsers,
+                dmType:
+                    numSelectedUsers === 1 ? 'direct' : numSelectedUsers > 1 ? 'group' : 'invalid',
+            }
+            analytics?.track('confirmed create direct message', tracked, () => {
+                console.log('[analytics] confirmed create direct message', tracked)
+            })
             onSubmit()
         }
-    }, [channelPreview, onSelectChannel, onSubmit])
+    }, [analytics, channelPreview, numSelectedUsers, onSelectChannel, onSubmit])
 
     const preview =
         channelPreview?.id || (numSelectedUsers === 0 ? userChannelPreview?.id : undefined)
