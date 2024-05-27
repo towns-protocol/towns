@@ -29,7 +29,7 @@ export const NoJoinedSpacesFallback = () => {
 
     const { isTouch } = useDevice()
     const location = useLocation()
-    const { analytics, anonymousId } = useAnalytics()
+    const { analytics } = useAnalytics()
 
     useEffect(() => {
         console.log('[NoJoinedSpacesFallback][route]', 'route', {
@@ -48,13 +48,12 @@ export const NoJoinedSpacesFallback = () => {
                 path: '*',
                 locationPathname: location.pathname,
                 locationSearch: replaceOAuthParameters(location.search),
-                anonymousId,
             },
             () => {
                 console.log('[analytics] no joined towns page')
             },
         )
-    }, [analytics, anonymousId, location.pathname, location.search])
+    }, [analytics, location.pathname, location.search])
 
     useEffect(() => {
         if (!client) {

@@ -15,7 +15,7 @@ export const SpaceHome = () => {
     const { loginStatus } = useConnectivity()
     const spaceId = space?.id
     const navigate = useNavigate()
-    const { analytics, anonymousId } = useAnalytics()
+    const { analytics } = useAnalytics()
     const channels = useMemo(
         () => space?.channelGroups.flatMap((g) => g.channels),
         [space?.channelGroups],
@@ -74,13 +74,13 @@ export const SpaceHome = () => {
                 spaceId,
                 locationPathname: location.pathname,
                 locationSearch: replaceOAuthParameters(location.search),
-                anonymousId,
+                anonymousId: analytics.anonymousId,
             },
             () => {
                 console.log('[analytics] home page')
             },
         )
-    }, [analytics, anonymousId, spaceId])
+    }, [analytics, spaceId])
 
     useEffect(() => {
         // TODO: this hijacks invite routes if you leave and then rejoin a space with an invite link.

@@ -8,20 +8,20 @@ const LoginComponent = React.lazy(() => import('@components/Login/LoginComponent
 
 export const WelcomeRoute = React.memo(() => {
     const location = useLocation()
-    const { analytics, anonymousId } = useAnalytics()
+    const { analytics } = useAnalytics()
 
     useEffect(() => {
         analytics?.page(
             'home-page',
             'welcome page',
             {
-                anonymousId,
+                anonymousId: analytics.anonymousId,
             },
             () => {
                 console.log('[analytics] welcome page')
             },
         )
-    }, [analytics, anonymousId, location.pathname, location.search])
+    }, [analytics, location.pathname, location.search])
 
     return (
         <PrivyWrapper>

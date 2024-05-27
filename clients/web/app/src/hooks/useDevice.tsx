@@ -7,14 +7,18 @@ export function isTouch() {
     return device.type === 'mobile' || device.type === 'tablet'
 }
 
-function isIOS() {
+export function isIOS() {
     const os = UserAgentInstance.getOS()
     return os.name === 'iOS'
 }
 
-function isAndroid() {
+export function isAndroid() {
     const os = UserAgentInstance.getOS()
     return os.name === 'Android'
+}
+
+export function isPWA() {
+    return matchMedia !== undefined && matchMedia('(display-mode: standalone)').matches
 }
 
 export function useDevice() {
@@ -22,6 +26,6 @@ export function useDevice() {
         isTouch: isTouch(),
         isIOS: isIOS,
         isAndroid: isAndroid,
-        isPWA: matchMedia !== undefined && matchMedia('(display-mode: standalone)').matches,
+        isPWA: isPWA(),
     }
 }

@@ -45,7 +45,7 @@ const PublicTownPageWithoutAuth = (props: { isPreview?: boolean; onClosePreview?
     const className = clsx([darkTheme, atoms({ color: 'default' })])
     const isJoining = !!usePublicPageLoginFlow().joiningSpace
 
-    const { analytics, anonymousId } = useAnalytics()
+    const { analytics } = useAnalytics()
     const { isTouch } = useDevice()
     const location = useLocation()
 
@@ -69,13 +69,13 @@ const PublicTownPageWithoutAuth = (props: { isPreview?: boolean; onClosePreview?
             'public town page',
             {
                 spaceId: spaceId ?? 'unknown',
-                anonymousId,
+                anonymousId: analytics.anonymousId,
             },
             () => {
                 console.log('[analytics] public town page')
             },
         )
-    }, [analytics, anonymousId, spaceId])
+    }, [analytics, spaceId])
 
     return spaceInfo ? (
         <>

@@ -42,7 +42,7 @@ export const ValidateMembership = () => {
     const { joiningSpace: isJoining } = usePublicPageLoginFlow()
     const [_PublicTownPage] = useState(<PublicTownPage />)
     const spaceDataIds = useSpaceDataIds()
-    const { analytics, anonymousId, pseudoId, setPseudoId } = useAnalytics()
+    const { analytics } = useAnalytics()
     const userId = useMyUserId()
 
     useEffect(() => {
@@ -70,20 +70,24 @@ export const ValidateMembership = () => {
     ])
 
     useEffect(() => {
-        if (pseudoId === undefined && userId) {
-            const pId = setPseudoId(userId)
+        if (analytics && analytics.pseudoId === undefined && userId) {
+            const pId = analytics.setPseudoId(userId)
             analytics?.identify(
                 pId,
                 {
-                    anonymousId,
+                    anonymousId: analytics.anonymousId,
                     pseudoId: pId,
                 },
                 () => {
-                    console.log('[analytics][ValidateMembership] identify logged in user')
+                    console.log(
+                        '[analytics][ValidateMembership] identify logged in user',
+                        pId,
+                        analytics.commoneProperties,
+                    )
                 },
             )
         }
-    }, [analytics, anonymousId, pseudoId, setPseudoId, userId])
+    }, [analytics, userId])
 
     const deferPublicPage = useDeferPublicPage({ spaceId: spaceIdFromPathname })
 

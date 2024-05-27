@@ -119,7 +119,7 @@ export const TouchHome = () => {
         permission: Permission.AddRemoveChannels,
     })
 
-    const { analytics, anonymousId } = useAnalytics()
+    const { analytics } = useAnalytics()
 
     useEffect(() => {
         console.log('[TouchHome][route]', 'route', {
@@ -147,13 +147,13 @@ export const TouchHome = () => {
                 spaceId,
                 locationPathname: location.pathname,
                 locationSearch: replaceOAuthParameters(location.search),
-                anonymousId,
+                anonymousId: analytics.anonymousId,
             },
             () => {
                 console.log('[analytics] home page')
             },
         )
-    }, [analytics, anonymousId, spaceId])
+    }, [analytics, spaceId])
 
     const onFocus = useCallback(() => {
         setIsSearching(true)

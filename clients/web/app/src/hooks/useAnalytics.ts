@@ -1,61 +1,118 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { RudderAnalytics } from '@rudderstack/analytics-js'
+import {
+    ApiCallback,
+    ApiObject,
+    ApiOptions,
+    IdentifyTraits,
+    RudderAnalytics,
+} from '@rudderstack/analytics-js'
+import { useEffect, useState } from 'react'
 import { keccak256 } from 'ethers/lib/utils'
 import { env, isTest } from 'utils'
+import { isAndroid, isIOS, isPWA } from './useDevice'
 
 const ANOYNOMOUS_ID = 'analytics-anonymousId'
+const isProd = !env.DEV && !isTest()
+
+export class Analytics {
+    private static instance: Analytics
+    private _pseudoId: string | undefined
+    private readonly analytics: RudderAnalytics
+    public readonly commoneProperties: ApiObject
+
+    private constructor(analytics: RudderAnalytics) {
+        this.analytics = analytics
+        this.commoneProperties = getCommonAnalyticsProperties()
+    }
+
+    public static getInstance(): Analytics | undefined {
+        if (!isProd) {
+            return
+        }
+
+        if (!Analytics.instance) {
+            const writeKey = env.VITE_RUDDERSTACK_WRITE_KEY
+            const dataPlaneUrl = env.VITE_RUDDERSTACK_DATA_PLANE_URL
+            const destSDKBaseURL = env.VITE_RUDDERSTACK_CDN_SDK_URL
+            const configUrl = env.VITE_RUDDERSTACK_API_CONFIG_URL
+            const isAnalyticsConfigured = writeKey && dataPlaneUrl && destSDKBaseURL && configUrl
+
+            if (!isAnalyticsConfigured) {
+                console.warn('[analytics] Analytics is not enabled in production!')
+                return
+            }
+
+            const analyticsInstance = new RudderAnalytics()
+            analyticsInstance.load(writeKey, dataPlaneUrl, {
+                useBeacon: true,
+                destSDKBaseURL,
+                configUrl,
+            })
+            analyticsInstance.ready(() => {
+                console.log('[analytics] Analytics is ready!')
+            })
+            Analytics.instance = new Analytics(analyticsInstance)
+        }
+
+        return Analytics.instance
+    }
+
+    public get anonymousId() {
+        return getAnonymousId()
+    }
+
+    public get pseudoId(): string | undefined {
+        return this._pseudoId
+    }
+
+    public setPseudoId(userId: string): string {
+        this._pseudoId = getPseudoId(userId)
+        return this._pseudoId
+    }
+
+    public identify(userId: string, traits?: IdentifyTraits | ApiOptions, callback?: ApiCallback) {
+        this.analytics.identify(userId, traits, callback)
+    }
+
+    public page(category?: string, name?: string, properties?: ApiObject, callback?: ApiCallback) {
+        this.analytics.page(
+            category,
+            name,
+            {
+                ...properties,
+                ...this.commoneProperties,
+            },
+            callback,
+        )
+    }
+
+    public track(event: string, properties?: ApiObject, callback?: ApiCallback) {
+        this.analytics.track(
+            event,
+            {
+                ...properties,
+                ...this.commoneProperties,
+            },
+            callback,
+        )
+    }
+}
 
 export function useAnalytics() {
-    const [analytics, setAnalytics] = useState<RudderAnalytics>()
-    const [pseudoId, setPseudoId] = useState<string | undefined>()
-
-    const anonymousId = useMemo(() => getAnonymousId(), [])
-    const writeKey = env.VITE_RUDDERSTACK_WRITE_KEY
-    const dataPlaneUrl = env.VITE_RUDDERSTACK_DATA_PLANE_URL
-    const destSDKBaseURL = env.VITE_RUDDERSTACK_CDN_SDK_URL
-    const configUrl = env.VITE_RUDDERSTACK_API_CONFIG_URL
-    const isProd = !env.DEV && !isTest()
-    const isAnalyticsConfigured = writeKey && dataPlaneUrl && destSDKBaseURL && configUrl
-
-    const _setPseudoId = useCallback((userId: string) => {
-        const pseudoId = getPseudoId(userId)
-        setPseudoId(pseudoId)
-        return pseudoId
-    }, [])
+    const [analytics, setAnalytics] = useState<Analytics>()
 
     useEffect(() => {
         if (isProd) {
-            if (!isAnalyticsConfigured) {
-                console.warn('[analytics] Analytics is not enabled in production!')
-            } else if (isAnalyticsConfigured && !analytics) {
-                const analyticsInstance = new RudderAnalytics()
-                analyticsInstance.load(writeKey, dataPlaneUrl, {
-                    useBeacon: true,
-                    destSDKBaseURL,
-                    configUrl,
-                })
-                analyticsInstance.ready(() => {
-                    console.log('[analytics] Analytics is ready!')
-                })
-
-                setAnalytics(analyticsInstance)
+            if (!analytics) {
+                const analyticsInstance = Analytics.getInstance()
+                if (analyticsInstance) {
+                    setAnalytics(analyticsInstance)
+                }
             }
         }
-    }, [
-        analytics,
-        configUrl,
-        dataPlaneUrl,
-        destSDKBaseURL,
-        isAnalyticsConfigured,
-        isProd,
-        writeKey,
-    ])
+    }, [analytics])
 
     return {
         analytics,
-        anonymousId,
-        pseudoId,
-        setPseudoId: _setPseudoId,
     } as const
 }
 
@@ -90,4 +147,13 @@ export function replaceOAuthParameters(searchParamsString: string) {
     }
 
     return params.toString()
+}
+
+function getCommonAnalyticsProperties(): ApiObject {
+    const device = isIOS() ? 'ios' : isAndroid() ? 'android' : 'desktop'
+    const platform = isPWA() ? 'pwa' : 'browser'
+    return {
+        device,
+        platform,
+    }
 }

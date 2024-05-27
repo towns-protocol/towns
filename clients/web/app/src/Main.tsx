@@ -32,18 +32,18 @@ export const Main = () => {
         useDefaultOSTheme: true,
     })
 
-    const { analytics, anonymousId } = useAnalytics()
+    const { analytics } = useAnalytics()
     useEffect(() => {
         analytics?.identify(
-            anonymousId,
+            analytics.anonymousId,
             {
-                anonymousId,
+                anonymousId: analytics.anonymousId,
             },
             () => {
-                console.log('[analytics] anonymousId', anonymousId)
+                console.log('[analytics] anonymousId', analytics.anonymousId)
             },
         )
-    }, [analytics, anonymousId])
+    }, [analytics])
 
     usePeriodicUpdates()
 
