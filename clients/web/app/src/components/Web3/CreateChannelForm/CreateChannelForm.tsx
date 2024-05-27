@@ -1,5 +1,6 @@
 import {
     Permission,
+    RoleDetails,
     SignerUndefinedError,
     TransactionStatus,
     WalletDoesNotMatchSignedInAccountError,
@@ -14,6 +15,7 @@ import { useNavigate } from 'react-router'
 import { z } from 'zod'
 import { useGetEmbeddedSigner } from '@towns/privy'
 import { Toast, toast } from 'react-hot-toast/headless'
+import { ApiObject } from '@rudderstack/analytics-js/*'
 import { PrivyWrapper } from 'privy/PrivyProvider'
 import {
     Box,
@@ -55,18 +57,21 @@ const FormStateKeys = {
     name: 'name',
     topic: 'topic',
     roleIds: 'roleIds',
+    rolesWithDetails: 'rolesWithDetails',
 } as const
 
 type FormState = {
     [FormStateKeys.name]: string
     [FormStateKeys.topic]: string
     [FormStateKeys.roleIds]: string[]
+    [FormStateKeys.rolesWithDetails]: RoleDetails[]
 }
 
 const schema = z.object({
     [FormStateKeys.name]: z.string().min(2, 'Channel names must have at least 2 characters'),
     [FormStateKeys.topic]: z.string(),
     [FormStateKeys.roleIds]: z.string().array().nonempty('Please select at least one role'),
+    [FormStateKeys.rolesWithDetails]: z.any().array().optional(),
 })
 
 export const CreateChannelForm = (props: Props) => {
@@ -191,6 +196,7 @@ export const CreateChannelForm = (props: Props) => {
         [FormStateKeys.roleIds]: firstRoleIDWithReadPermission
             ? [firstRoleIDWithReadPermission]
             : [],
+        [FormStateKeys.rolesWithDetails]: rolesWithDetails ?? [],
     }
     const getSigner = useGetEmbeddedSigner()
 
@@ -199,21 +205,48 @@ export const CreateChannelForm = (props: Props) => {
             schema={schema}
             defaultValues={defaultValues}
             mode="onChange"
-            onSubmit={async ({ name, topic, roleIds }) => {
+            onSubmit={async ({ name, topic, roleIds, rolesWithDetails }) => {
                 const signer = await getSigner()
+                const _roleIds = roleIds.map((roleId) => Number(roleId))
                 const channelInfo = {
                     name: name,
                     topic: topic,
                     parentSpaceId: props.spaceId,
-                    roleIds: roleIds.map((roleId) => Number(roleId)),
+                    roleIds: _roleIds,
                 }
-
-                const traits = {
+                const _rolesWithDetails =
+                    (_roleIds
+                        .map((roleId): ApiObject | undefined => {
+                            const r = rolesWithDetails?.find((role) => role.id === roleId)
+                            if (r) {
+                                const { ruleData } = r
+                                const tokens =
+                                    ruleData?.checkOperations?.map((op) => {
+                                        return {
+                                            chainId: op.chainId,
+                                            contractAddress: op.contractAddress,
+                                            opType: op.opType,
+                                            threshold: op.threshold,
+                                        } as ApiObject
+                                    }) ?? []
+                                return {
+                                    id: r.id,
+                                    name: r.name,
+                                    permissions: r.permissions,
+                                    users: r.users,
+                                    tokens,
+                                }
+                            }
+                            return undefined
+                        })
+                        .filter((r) => r !== undefined) as ApiObject[]) ?? []
+                const tracked = {
+                    channelName: name,
                     parentSpaceId: props.spaceId,
-                    numberOfRoles: rolesWithDetails.length,
+                    rolesWithDetails: _rolesWithDetails,
                 }
-                analytics?.track('submitting create channel form', traits, () => {
-                    console.log('[analytics] submitting create channel form', traits)
+                analytics?.track('submitting create channel form', tracked, () => {
+                    console.log('[analytics] submitting create channel form', tracked)
                 })
 
                 if (!signer) {
@@ -226,17 +259,14 @@ export const CreateChannelForm = (props: Props) => {
                 if (txResult?.status === TransactionStatus.Success) {
                     invalidateQuery()
                     const channelId = txResult.data
+                    const trackCreated = {
+                        ...tracked,
+                        channelId,
+                    }
                     if (channelId) {
-                        analytics?.track(
-                            'created channel',
-                            {
-                                parentSpaceId: props.spaceId,
-                                channelId,
-                            },
-                            () => {
-                                console.log('[analytics] created channel')
-                            },
-                        )
+                        analytics?.track('created channel', trackCreated, () => {
+                            console.log('[analytics] created channel', trackCreated)
+                        })
                         toast.custom((t) => {
                             return (
                                 <ChannelCreatedToast
