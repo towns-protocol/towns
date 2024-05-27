@@ -27,6 +27,7 @@ import { FavoriteChannelButtonTouch } from '@components/FavoriteChannelButton/Fa
 import { useFavoriteChannels } from 'hooks/useFavoriteChannels'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { useChannelHeaderMembers } from 'hooks/useChannelHeaderMembers'
+import { useAnalytics } from 'hooks/useAnalytics'
 
 type Props = {
     channel: Channel
@@ -59,6 +60,7 @@ const DesktopChannelHeader = (props: Props & { showLoadingIndicator: boolean }) 
     const { displayNotificationBanner, requestPushPermission, denyPushPermission } =
         usePushNotifications()
     const topic = useRoom(channel.id)?.topic
+    const { analytics } = useAnalytics()
 
     const { channelIsMuted, spaceIsMuted } = useMuteSettings({
         spaceId: spaceId,
@@ -67,6 +69,28 @@ const DesktopChannelHeader = (props: Props & { showLoadingIndicator: boolean }) 
     const isMuted = channelIsMuted || spaceIsMuted
     const channelType = useChannelType(channel.id)
     const onInfoPressed = useChannelInfoButton(channelType, channel.id)
+
+    const onClickRequestPermission = useCallback(() => {
+        const tracked = {
+            spaceId,
+            channelId: channel.id,
+        }
+        analytics?.track('clicked request notifications permission', tracked, () => {
+            console.log('[analytics] clicked request notifications permission', tracked)
+        })
+        requestPushPermission()
+    }, [analytics, channel.id, requestPushPermission, spaceId])
+
+    const onClickDenyPermission = useCallback(() => {
+        const tracked = {
+            spaceId,
+            channelId: channel.id,
+        }
+        analytics?.track('clicked deny notifications permission', tracked, () => {
+            console.log('[analytics] clicked deny notifications permission', tracked)
+        })
+        denyPushPermission()
+    }, [analytics, channel.id, denyPushPermission, spaceId])
 
     return (
         <>
@@ -111,10 +135,10 @@ const DesktopChannelHeader = (props: Props & { showLoadingIndicator: boolean }) 
                         Turn on notifications for threads, mentions and DMs?
                     </Text>
                     <Box grow />
-                    <Button size="button_sm" tone="cta1" onClick={requestPushPermission}>
+                    <Button size="button_sm" tone="cta1" onClick={onClickRequestPermission}>
                         Enable
                     </Button>
-                    <Button size="button_sm" tone="level2" onClick={denyPushPermission}>
+                    <Button size="button_sm" tone="level2" onClick={onClickDenyPermission}>
                         No thanks
                     </Button>
                 </Stack>
@@ -166,6 +190,7 @@ const TouchChannelHeader = (props: Props & { showLoadingIndicator: boolean }) =>
     const { favoriteChannelIds } = useFavoriteChannels()
     const { displayNotificationBanner, requestPushPermission, denyPushPermission } =
         usePushNotifications()
+    const { analytics } = useAnalytics()
     const channelType = useChannelType(channel.id)
     const { channelIsMuted, spaceIsMuted } = useMuteSettings({
         spaceId: spaceId,
@@ -177,6 +202,28 @@ const TouchChannelHeader = (props: Props & { showLoadingIndicator: boolean }) =>
     const infoButtonPressed = useChannelInfoButton(channelType, channel.id)
 
     const showMembersCount = memberIds.length > 0
+
+    const onClickRequestPermission = useCallback(() => {
+        const tracked = {
+            spaceId,
+            channelId: channel.id,
+        }
+        analytics?.track('clicked request notifications permission', tracked, () => {
+            console.log('[analytics] clicked request notifications permission', tracked)
+        })
+        requestPushPermission()
+    }, [analytics, channel.id, requestPushPermission, spaceId])
+
+    const onClickDenyPermission = useCallback(() => {
+        const tracked = {
+            spaceId,
+            channelId: channel.id,
+        }
+        analytics?.track('clicked deny notifications permission', tracked, () => {
+            console.log('[analytics] clicked deny notifications permission', tracked)
+        })
+        denyPushPermission()
+    }, [analytics, channel.id, denyPushPermission, spaceId])
 
     return (
         <Stack gap="sm">
@@ -260,11 +307,11 @@ const TouchChannelHeader = (props: Props & { showLoadingIndicator: boolean }) =>
                             Turn on notifications for threads, mentions and DMs?
                         </Text>
                         <Stack horizontal gap width="100%">
-                            <Button size="button_sm" tone="level3" onClick={denyPushPermission}>
+                            <Button size="button_sm" tone="level3" onClick={onClickDenyPermission}>
                                 No thanks
                             </Button>
 
-                            <Button size="button_sm" tone="cta1" onClick={requestPushPermission}>
+                            <Button size="button_sm" tone="cta1" onClick={onClickRequestPermission}>
                                 Enable
                             </Button>
                         </Stack>

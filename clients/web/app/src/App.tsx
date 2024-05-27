@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useRef } from 'react'
 import { LOCALHOST_CHAIN_ID, TownsContextProvider, ZTEvent } from 'use-towns-client'
 import { Helmet } from 'react-helmet'
 import { isDefined } from '@river/sdk'
+import { useSearchParams } from 'react-router-dom'
 import { Notifications } from '@components/Notifications/Notifications'
 import { useDevice } from 'hooks/useDevice'
 import { ENVIRONMENTS, useEnvironment } from 'hooks/useEnvironmnet'
@@ -21,6 +22,8 @@ import { BlockchainTxNotifier } from '@components/Web3/BlockchainTxNotifier'
 import { SyncNotificationSettings } from '@components/SyncNotificationSettings/SyncNotificationSettings'
 import { MonitorJoinFlow } from 'routes/PublicTownPage/MontiorJoinFlow'
 import { getRouteParams } from 'routes/SpaceContextRoute'
+import { LINKED_RESOURCE, NotificationRel } from 'data/rel'
+import { useAnalytics } from 'hooks/useAnalytics'
 
 FontLoader.init()
 
@@ -43,6 +46,25 @@ export const App = () => {
         : undefined
     const didSetHighpriorityStreamIds = useRef<boolean>(false)
     const { spaceId, channelId } = useMemo(() => getRouteParams(channelBookmark), [channelBookmark])
+
+    const [searchParams] = useSearchParams()
+    const rel = useMemo(() => {
+        return searchParams.get(LINKED_RESOURCE) ?? ''
+    }, [searchParams])
+    const { analytics } = useAnalytics()
+
+    useEffect(() => {
+        if (Object.values(NotificationRel).includes(rel as NotificationRel)) {
+            const tracked = {
+                spaceId,
+                channelId,
+                rel,
+            }
+            analytics?.track('clicked_notification', tracked, () => {
+                console.log('[analytics][App][route] clicked notification', tracked)
+            })
+        }
+    }, [analytics, channelId, rel, spaceId])
 
     useEffect(() => {
         if (didSetHighpriorityStreamIds.current) {

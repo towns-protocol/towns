@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { matchRoutes, useLocation, useNavigate } from 'react-router'
 import { useSearchParams } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
@@ -210,6 +210,27 @@ const SpaceProfileWithoutAuth = () => {
 
     const isUserBlocked = useBlockedUsers()
     const isBlocked: boolean = isUserBlocked(userId)
+
+    useEffect(() => {
+        if (
+            isCurrentUser &&
+            (simplifiedPermissionState === 'soft-denied' ||
+                simplifiedPermissionState === 'hard-denied')
+        ) {
+            analytics?.page(
+                'toast',
+                'toast shown to enable notifications',
+                {
+                    spaceId: space?.id ?? 'undefined',
+                },
+                () => {
+                    console.log('[analytics] toast shown to enable notifications', {
+                        spaceId: space?.id ?? 'undefined',
+                    })
+                },
+            )
+        }
+    }, [analytics, isCurrentUser, simplifiedPermissionState, space?.id])
 
     if (isLoadingRootKey) {
         return (
