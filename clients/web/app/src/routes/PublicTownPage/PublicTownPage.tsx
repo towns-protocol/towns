@@ -1,9 +1,9 @@
 import { Allotment } from 'allotment'
 import { clsx } from 'clsx'
 import debug from 'debug'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useConnectivity, useContractSpaceInfoWithoutClient, useMyProfile } from 'use-towns-client'
 import { AppProgressState } from '@components/AppProgressOverlay/AppProgressState'
 import { Avatar } from '@components/Avatar/Avatar'
@@ -48,6 +48,18 @@ const PublicTownPageWithoutAuth = (props: { isPreview?: boolean; onClosePreview?
     const { analytics } = useAnalytics()
     const { isTouch } = useDevice()
     const location = useLocation()
+    const [searchParams] = useSearchParams()
+    const { isInvite, joinSpaceId, oauthProvider } = useMemo(() => {
+        const inviteValues = searchParams.get('invite')
+        const isInvite = inviteValues !== undefined
+        const joinSpaceId = searchParams.get('join')
+        const oauthProvider = searchParams.get('privy_oauth_provider')
+        return {
+            isInvite,
+            joinSpaceId,
+            oauthProvider,
+        }
+    }, [searchParams])
 
     useEffect(() => {
         console.log('[PublicTownPage][route]', 'route', {
@@ -64,18 +76,21 @@ const PublicTownPageWithoutAuth = (props: { isPreview?: boolean; onClosePreview?
     }, [])
 
     useEffect(() => {
-        analytics?.page(
-            'home-page',
-            'public town page',
-            {
-                spaceId: spaceId ?? 'unknown',
-                anonymousId: analytics.anonymousId,
-            },
-            () => {
-                console.log('[analytics] public town page')
-            },
-        )
-    }, [analytics, spaceId])
+        const anonymousId = analytics?.anonymousId
+        const tracked = {
+            joinSpaceId,
+            anonymousId,
+            isInvite,
+            oauthProvider,
+        }
+        analytics?.page('home-page', 'public town page', tracked, () => {
+            console.log('[analytics] public town page', tracked)
+        })
+    }, [analytics, isInvite, joinSpaceId, oauthProvider, spaceId])
+
+    useEffect(() => {
+        console.log('[analytics]')
+    }, [])
 
     return spaceInfo ? (
         <>
