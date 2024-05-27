@@ -10,7 +10,11 @@ import {
     KeySolicitationData,
     UserDevice,
 } from '@river-build/encryption'
-import { EncryptedData, UserInboxPayload_GroupEncryptionSessions } from '@river-build/proto'
+import {
+    AddEventResponse_Error,
+    EncryptedData,
+    UserInboxPayload_GroupEncryptionSessions,
+} from '@river-build/proto'
 import { make_MemberPayload_KeyFulfillment, make_MemberPayload_KeySolicitation } from './types'
 
 import { Client } from './client'
@@ -231,14 +235,17 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         userAddress,
         deviceKey,
         sessionIds,
-    }: KeyFulfilmentData): Promise<void> {
+    }: KeyFulfilmentData): Promise<{ error?: AddEventResponse_Error }> {
         const fulfillment = make_MemberPayload_KeyFulfillment({
             userAddress: userAddress,
             deviceKey: deviceKey,
             sessionIds: sessionIds,
         })
 
-        await this.client.makeEventAndAddToStream(streamId, fulfillment)
+        const { error } = await this.client.makeEventAndAddToStream(streamId, fulfillment, {
+            optional: true,
+        })
+        return { error }
     }
 
     public async uploadDeviceKeys(): Promise<void> {

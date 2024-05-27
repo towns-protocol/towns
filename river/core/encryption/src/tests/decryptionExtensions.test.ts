@@ -11,7 +11,11 @@ import {
     KeySolicitationData,
     makeSessionKeys,
 } from '../decryptionExtensions'
-import { EncryptedData, UserInboxPayload_GroupEncryptionSessions } from '@river-build/proto'
+import {
+    AddEventResponse_Error,
+    EncryptedData,
+    UserInboxPayload_GroupEncryptionSessions,
+} from '@river-build/proto'
 import { GroupEncryptionSession, UserDevice, UserDeviceCollection } from '../olmLib'
 import { bin_fromHexString, bin_toHexString, dlog } from '@river-build/dlog'
 
@@ -280,9 +284,11 @@ class MockDecryptionExtensions extends BaseDecryptionExtensions {
         return Promise.resolve()
     }
 
-    public sendKeyFulfillment(args: KeyFulfilmentData): Promise<void> {
+    public sendKeyFulfillment(
+        args: KeyFulfilmentData,
+    ): Promise<{ error?: AddEventResponse_Error }> {
         log('sendKeyFulfillment', args)
-        return Promise.resolve()
+        return Promise.resolve({})
     }
 
     public encryptAndShareGroupSessions(args: GroupSessionsData): Promise<void> {
@@ -405,8 +411,10 @@ class MockGroupEncryptionClient
         return Promise.resolve()
     }
 
-    public sendKeyFulfillment(_args: KeyFulfilmentData): Promise<void> {
-        return Promise.resolve()
+    public sendKeyFulfillment(
+        _args: KeyFulfilmentData,
+    ): Promise<{ error?: AddEventResponse_Error }> {
+        return Promise.resolve({})
     }
 
     public uploadDeviceKeys(): Promise<void> {

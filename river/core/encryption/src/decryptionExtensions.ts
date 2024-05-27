@@ -1,6 +1,7 @@
 import TypedEmitter from 'typed-emitter'
 import { Permission } from '@river-build/web3'
 import {
+    AddEventResponse_Error,
     EncryptedData,
     SessionKeys,
     UserInboxPayload_GroupEncryptionSessions,
@@ -196,7 +197,9 @@ export abstract class BaseDecryptionExtensions {
     public abstract isUserInboxStreamUpToDate(upToDateStreams: Set<string>): boolean
     public abstract onDecryptionError(item: EncryptedContentItem, err: DecryptionSessionError): void
     public abstract sendKeySolicitation(args: KeySolicitationData): Promise<void>
-    public abstract sendKeyFulfillment(args: KeyFulfilmentData): Promise<void>
+    public abstract sendKeyFulfillment(
+        args: KeyFulfilmentData,
+    ): Promise<{ error?: AddEventResponse_Error }>
     public abstract encryptAndShareGroupSessions(args: GroupSessionsData): Promise<void>
     public abstract shouldPauseTicking(): boolean
     /**
@@ -661,7 +664,7 @@ export abstract class BaseDecryptionExtensions {
 
     /**
      * processKeySolicitation
-     * process incoming key solicitations and send keys and key fulfilments
+     * process incoming key solicitations and send keys and key fulfillments
      */
     private async processKeySolicitation(item: KeySolicitationItem): Promise<void> {
         this.log.debug('processing key solicitation', item.streamId, item)
@@ -710,18 +713,20 @@ export abstract class BaseDecryptionExtensions {
             return
         }
 
-        await this.sendKeyFulfillment({
+        const { error } = await this.sendKeyFulfillment({
             streamId,
             userAddress: item.fromUserAddress,
             deviceKey: item.solicitation.deviceKey,
             sessionIds: item.solicitation.isNewDevice ? [] : sessions.map((x) => x.sessionId),
         })
 
-        await this.encryptAndShareGroupSessions({
-            streamId,
-            item,
-            sessions,
-        })
+        if (!error) {
+            await this.encryptAndShareGroupSessions({
+                streamId,
+                item,
+                sessions,
+            })
+        }
     }
 
     /**

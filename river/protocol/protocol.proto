@@ -653,9 +653,17 @@ message GetLastMiniblockHashResponse {
 message AddEventRequest {
     bytes stream_id = 1;
     Envelope event = 2;
+    bool optional = 3; // if true, response will contain non nil error if event didn't pass validation
 }
 
-message AddEventResponse {}
+message AddEventResponse {
+    message Error {
+        Err code = 1;
+        string msg = 2;
+        repeated string funcs = 3;
+    }
+    Error error = 1; // only set if AddEventRequest.optional is true
+}
 
 message SyncStreamsRequest {
     repeated SyncCookie sync_pos = 1;

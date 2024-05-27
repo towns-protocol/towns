@@ -578,6 +578,21 @@ func testRiverDeviceId(tester *serviceTester) {
 		),
 	)
 	require.Error(err) // expected error when calling AddEvent
+
+	// send it optionally
+	resp, err := client.AddEvent(
+		ctx,
+		connect.NewRequest(
+			&protocol.AddEventRequest{
+				StreamId: channelId[:],
+				Event:    msg,
+				Optional: true,
+			},
+		),
+	)
+	require.NoError(err) // expected error when calling AddEvent
+	require.NotNil(resp.Msg.Error, "expected error")
+
 }
 
 func testSyncStreams(tester *serviceTester) {
@@ -917,7 +932,7 @@ func TestSingleAndMulti(t *testing.T) {
 		{"testRiverDeviceId", testRiverDeviceId},
 		{"testSyncStreams", testSyncStreams},
 		{"testAddStreamsToSync", testAddStreamsToSync},
-			{"testRemoveStreamsFromSync", testRemoveStreamsFromSync},
+		{"testRemoveStreamsFromSync", testRemoveStreamsFromSync},
 	}
 
 	t.Run("single", func(t *testing.T) {

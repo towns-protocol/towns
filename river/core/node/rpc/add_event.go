@@ -40,12 +40,24 @@ func (s *Service) localAddEvent(
 	log.Debug("localAddEvent", "parsedEvent", parsedEvent)
 
 	err = s.addParsedEvent(ctx, streamId, parsedEvent, nodes)
-	if err == nil {
+	if err != nil && req.Msg.Optional {
+		// aellis 5/2024 - we only want to wrap errors from canAddEvent,
+		// currently this is catching all errors, which is not ideal
 		addEventRequests.PassInc()
-		return connect.NewResponse(&AddEventResponse{}), nil
-	} else {
+		riverError := AsRiverError(err).Func("localAddEvent")
+		return connect.NewResponse(&AddEventResponse{
+			Error: &AddEventResponse_Error{
+				Code:  riverError.Code,
+				Msg:   riverError.Msg,
+				Funcs: riverError.Funcs,
+			},
+		}), nil
+	} else if err != nil {
 		addEventRequests.FailInc()
 		return nil, AsRiverError(err).Func("localAddEvent")
+	} else {
+		addEventRequests.PassInc()
+		return connect.NewResponse(&AddEventResponse{}), nil
 	}
 }
 
