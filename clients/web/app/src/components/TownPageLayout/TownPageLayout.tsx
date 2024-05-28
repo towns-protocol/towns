@@ -220,10 +220,13 @@ function useColumnWidths({
     const [widths, setWidths] = useState<[number, number]>([0, 0])
     const observer = useMemo(
         () =>
-            new ResizeObserver(([left, right]) => {
-                setWidths([left?.contentRect.width, right?.contentRect.width])
+            new ResizeObserver(() => {
+                setWidths((s) => [
+                    leftColRef.current?.getBoundingClientRect().width ?? s[0],
+                    rightColRef.current?.getBoundingClientRect().width ?? s[1],
+                ])
             }),
-        [],
+        [leftColRef, rightColRef],
     )
     useLayoutEffect(() => {
         if (leftColRef.current) {
