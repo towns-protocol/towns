@@ -416,7 +416,7 @@ const Bio = (props: { bio?: string }) => {
     const canExpand = bio && bio.length > MAX_LENGTH && !isExpanded
 
     return bio ? (
-        <Box maxWidth={isTouch ? '100%' : '75%'}>
+        <Box display="inline-block" style={{ maxWidth: isTouch ? '100%' : '55ch' }}>
             <Paragraph size="lg">
                 {shortenedBio}
                 {canExpand && (
