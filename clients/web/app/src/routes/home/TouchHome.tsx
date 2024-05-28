@@ -1,6 +1,6 @@
 import { AnimatePresence } from 'framer-motion'
 import fuzzysort from 'fuzzysort'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useOutlet } from 'react-router'
 import {
     Address,
@@ -95,13 +95,14 @@ export const TouchHome = () => {
     const { memberIds } = useSpaceMembers()
     const { usersMap } = useUserLookupContext()
     const navigate = useNavigate()
+    const visitedBookmark = useRef<string>()
     const members = useMemo(() => {
         return memberIds.map((userId) => usersMap[userId]).filter(notUndefined)
     }, [memberIds, usersMap])
 
     const { unseenChannelIds, markChannelsAsSeen } = useUnseenChannelIds()
     const spaceId = space?.id ?? ''
-    // the zustand values are used to navigate to the bookmarked route
+
     const { storeBookmarkedSpaceId, storeBookmarkedRoute } = useStore((s) => {
         const storeBookmarkedSpaceId = s.spaceIdBookmark
         const storeBookmarkedRoute = storeBookmarkedSpaceId
@@ -124,19 +125,13 @@ export const TouchHome = () => {
     useEffect(() => {
         console.log('[TouchHome][route]', 'route', {
             loginStatus,
+            spaceId,
             locationPathname: location.pathname,
             storeBookmarkedRoute: storeBookmarkedRoute ?? 'undefined',
-            spaceId,
-            storeBookmarkedSpaceId: storeBookmarkedSpaceId ?? 'undefined',
             locationSearch: location.search,
+            storeBookmarkedSpaceId: storeBookmarkedSpaceId ?? 'undefined',
         })
-        if (storeBookmarkedRoute) {
-            console.log('[TouchHome][hnt-5685]', 'visited bookmark', {
-                storeBookmarkedRoute,
-            })
-            navigate(storeBookmarkedRoute)
-        }
-    }, [loginStatus, navigate, spaceId, storeBookmarkedRoute, storeBookmarkedSpaceId])
+    }, [loginStatus, spaceId, storeBookmarkedRoute, storeBookmarkedSpaceId])
 
     useEffect(() => {
         analytics?.page(
@@ -302,6 +297,20 @@ export const TouchHome = () => {
     const openCreateChannelPanel = useCallback(() => {
         openPanel('create-channel')
     }, [openPanel])
+
+    useEffect(() => {
+        if (visitedBookmark.current) {
+            return
+        }
+        if (storeBookmarkedSpaceId && storeBookmarkedRoute) {
+            visitedBookmark.current = storeBookmarkedRoute
+            console.log('[TouchHome][route]]', 'visited bookmark', {
+                storeBookmarkedSpaceId,
+                storeBookmarkedRoute,
+            })
+            navigate(storeBookmarkedRoute)
+        }
+    }, [navigate, storeBookmarkedRoute, storeBookmarkedSpaceId])
 
     return (
         <ErrorBoundary FallbackComponent={ErrorFallbackComponent}>
