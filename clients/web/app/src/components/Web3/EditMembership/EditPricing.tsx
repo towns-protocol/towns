@@ -77,7 +77,7 @@ export function EditPricing({
                     name="membershipPricingType"
                     value="dynamic"
                     title="Dynamic"
-                    description="Free for the first 100 members, then increase from ..."
+                    description="Free for the first 100 members, then logarithmically increasing price."
                     onClick={() => onDynamicClick(formProps)}
                     {...formProps}
                 />
