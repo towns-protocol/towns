@@ -96,7 +96,7 @@ const PublicTownPageWithoutAuth = (props: { isPreview?: boolean; onClosePreview?
         <>
             <AbsoluteBackground networkId={spaceInfo.networkId} />
 
-            <Box absoluteFill height="100vh" bottom="none" className={className}>
+            <Box absoluteFill height="100dvh" bottom="none" className={className}>
                 <TownPageLayout
                     headerContent={
                         <Header
