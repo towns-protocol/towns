@@ -102,7 +102,7 @@ const TransitionContainer = (props: { children: React.ReactNode }) => {
         <MotionStack
             centerContent
             absoluteFill
-            // background="level1"
+            background="level1"
             {...transition}
             height="100vh"
             {...props}
