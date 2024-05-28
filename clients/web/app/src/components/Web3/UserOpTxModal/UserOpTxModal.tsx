@@ -77,10 +77,12 @@ function UserOpTxModalContent({
     const totalCost = gasCost.add(BigNumber.from(membershipPrice ?? 0))
 
     const gasInEth = utils.formatEther(gasCost)
+    const gasInEthFixedTo8 = parseFloat(gasInEth).toFixed(8)
     const membershipInEth = membershipPrice ? utils.formatEther(membershipPrice) : undefined
     const totalInEth = utils.formatEther(totalCost.toBigInt())
-    const totalInEthFixed = parseFloat(totalInEth).toFixed(5)
-    const displayTotalEthPrice = totalInEthFixed === '0.00000' ? '< 0.00001' : totalInEthFixed
+    const totalInEthFixedTo5 = parseFloat(totalInEth).toFixed(5)
+    const totalInEthFixedTo8 = parseFloat(totalInEth).toFixed(8)
+    const displayTotalEthPrice = totalInEthFixedTo5 === '0.00000' ? '< 0.00001' : totalInEthFixedTo5
 
     const { data: balanceData, isLoading: isLoadingBalance } = useBalance({
         address: smartAccountAddress,
@@ -175,7 +177,7 @@ function UserOpTxModalContent({
                                 (estimated)
                             </Text>
                         </Text>
-                        <Text> {gasInEth + ' ETH'}</Text>
+                        <Text> {gasInEthFixedTo8 + ' ETH'}</Text>
                     </Box>
                     {isLoadingMembershipPrice ? <ButtonSpinner /> : null}
                     {membershipPrice ? (
@@ -199,7 +201,7 @@ function UserOpTxModalContent({
                         justifyContent="spaceBetween"
                     >
                         <Text strong>Total</Text>
-                        <Text strong> {totalInEth + ' ETH'}</Text>
+                        <Text strong> {totalInEthFixedTo8 + ' ETH'}</Text>
                     </Box>
                 </Box>
                 <Box color="default" background="level3" rounded="sm" width="100%" gap="md">
