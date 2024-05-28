@@ -15,7 +15,7 @@ import { TokenSelection } from './TokenSelection'
 type Props = {
     isValidationError: boolean
     initialSelection?: TokenDataWithChainId[]
-    inputContainerRef?: React.RefObject<HTMLDivElement>
+    inputRef?: React.RefObject<HTMLInputElement>
     onSelectionChange: (args: { tokens: TokenDataWithChainId[] }) => void
     allowedTokenTypes?: TokenType[]
     allowedNetworks?: number[]
@@ -146,6 +146,7 @@ export function TokenSelector(props: Props) {
                 border={isValidationError || anyResultIsERC1155OrERC20 ? 'negative' : 'default'}
             >
                 <TextField
+                    ref={props.inputRef}
                     data-testid="token-selector-input"
                     background="level3"
                     value={textFieldValue}

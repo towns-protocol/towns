@@ -16,7 +16,7 @@ export function EditGating() {
     const setValue = formProps.setValue
     const getValues = formProps.getValues
     const isValid = !Object.values(formProps.formState.errors).length
-    const fieldRefOverride = useRef<HTMLInputElement>(null)
+    const inputRef = useRef<HTMLInputElement>(null)
     const [tokenFieldKey, setTokenFieldKey] = useState(0)
 
     const onEveryoneClick = useCallback(
@@ -38,7 +38,7 @@ export function EditGating() {
             formProps.setValue('membershipType', 'tokenHolders', {
                 shouldValidate: true,
             })
-            fieldRefOverride.current?.focus()
+            inputRef.current?.focus()
         },
         [],
     )
@@ -109,6 +109,7 @@ export function EditGating() {
                                             undefined
                                         }
                                         initialSelection={initialTokensData}
+                                        inputRef={inputRef}
                                         onSelectionChange={onSelectedTokensChange}
                                     />
                                 </Stack>
