@@ -20,16 +20,17 @@ export const membershipSettingsSchema = z
         // membershipDuration: z.number(), TODO contract updates
         // membershipGasFeePayer: z.nativeEnum(MembershipGasFeePayer), TODO contract updates
         membershipCurrency: z.string(),
-        membershipLimit: z.coerce.number({
-            errorMap: (err, ctx) => {
-                if (err.code === 'invalid_type') {
-                    return { message: 'Please enter a number.' }
-                }
-                return {
-                    message: 'Please enter a number.',
-                }
-            },
-        }),
+        membershipLimit: z.coerce
+            .number({
+                errorMap: (err, ctx) => {
+                    return {
+                        message: 'Please enter a number',
+                    }
+                },
+            })
+            .min(1, {
+                message: 'Please enter a number greater than 0',
+            }),
         membershipPricingType: z.union([
             z.literal('dynamic', {
                 errorMap: (_err, _ctx) => {
