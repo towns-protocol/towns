@@ -414,6 +414,7 @@ export function CreateTownSubmit({
         onSubmit,
         disabled:
             isLoading ||
+            !form.formState.isDirty ||
             Object.keys(form.formState.errors).length > 0 ||
             membershipCostValue === '' ||
             (membershipPricingType === 'fixed' && Number(membershipCostValue) === 0),
