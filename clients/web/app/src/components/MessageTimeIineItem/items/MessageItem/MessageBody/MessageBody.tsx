@@ -1,12 +1,10 @@
 import React, { useCallback, useMemo } from 'react'
 import { Channel, EventStatus, RoomMember, RoomMessageEvent, TimelineEvent } from 'use-towns-client'
 import { RichTextPreview as PlateRichTextPreview } from '@components/RichTextPlate/RichTextPreview'
-import { RichTextPreview } from '@components/RichText/RichTextPreview'
 import { getMessageBody } from 'utils/ztevent_util'
-import { MessageStatusAnnotation } from '@components/RichText/hooks/useInitialConfig'
 import { useDevice } from 'hooks/useDevice'
 import { Box, Icon, Stack, TextButton } from '@ui'
-import { env } from 'utils'
+import { MessageStatusAnnotation } from '../MessageStatusAnnotation'
 
 type Props = {
     event: TimelineEvent
@@ -50,11 +48,10 @@ export const MessageBody = ({
         statusAnnotation = 'not-sent' as const
     }
 
-    const MessagePreview = env.VITE_ENABLE_SLATE_PREVIEW ? PlateRichTextPreview : RichTextPreview
     return (
         <>
             {body && (
-                <MessagePreview
+                <PlateRichTextPreview
                     content={body}
                     statusAnnotation={statusAnnotation}
                     users={members}

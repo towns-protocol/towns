@@ -9,9 +9,7 @@ import {
 } from 'use-towns-client'
 import { formatDistance } from 'date-fns'
 import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
-import { RichTextPreview } from '@components/RichText/RichTextPreview'
-import { RichTextPreview as PlateRichTextPreview } from '@components/RichTextPlate/RichTextPreview'
-import { env } from 'utils'
+import { RichTextPreview } from '@components/RichTextPlate/RichTextPreview'
 import { Box, BoxProps, Stack, Text } from '@ui'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { PATHS } from 'routes'
@@ -114,8 +112,6 @@ export const SearchMessagesResultItem = (
           })}`
         : undefined
 
-    const MessagePreview = env.VITE_ENABLE_SLATE_PREVIEW ? PlateRichTextPreview : RichTextPreview
-
     const item = (
         <Box horizontal grow gap="sm">
             {isMessageSearch ? (
@@ -129,7 +125,7 @@ export const SearchMessagesResultItem = (
             )}
             <Box grow gap="paragraph">
                 <Stack>
-                    <MessagePreview
+                    <RichTextPreview
                         key={props.highligtTerms?.join('')}
                         highlightTerms={props.highligtTerms}
                         users={users}

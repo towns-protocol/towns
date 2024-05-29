@@ -1,8 +1,22 @@
-import { MenuOption } from '@lexical/react/LexicalTypeaheadMenuPlugin'
-import React from 'react'
+import React, { MutableRefObject } from 'react'
 import { Stack } from 'ui/components/Stack/Stack'
 import { Box } from 'ui/components/Box/Box'
 import { Text } from 'ui/components/Text/Text'
+
+export class MenuOption {
+    key: string
+    ref?: MutableRefObject<HTMLElement | null>
+
+    constructor(key: string) {
+        this.key = key
+        this.ref = { current: null }
+        this.setRefElement = this.setRefElement.bind(this)
+    }
+
+    setRefElement(element: HTMLElement | null) {
+        this.ref = { current: element }
+    }
+}
 
 export const TypeaheadMenuItem = <T extends MenuOption>(props: {
     index: number

@@ -24,8 +24,8 @@ import { toDOMNode } from '@udecode/slate-react'
 import every from 'lodash/every'
 import isEqual from 'lodash/isEqual'
 import React, { memo, useCallback, useEffect } from 'react'
+import fuzzysort from 'fuzzysort'
 import { TypeaheadMenuAnchored, TypeaheadMenuItem } from '@ui'
-import { search } from '@components/RichText/plugins/EmojiShortcutPlugin'
 import { getUsernameForMention } from '../../utils/mentions'
 import { ComboboxTypes, TMentionComboboxTypes, TUserWithChannel } from '../../utils/ComboboxTypes'
 import { getFilteredItemsWithoutMockEmoji } from '../../utils/helpers'
@@ -275,3 +275,39 @@ export const ComboboxContentMemoized = memo(
     ComboboxContent,
     arePropsEqualComboboxContent,
 ) as typeof ComboboxContent
+
+let emojiCache: Array<{
+    name: string
+    emoji: string
+    keyword: string
+}>
+
+const search = async function (string: string) {
+    const { emojis } = await import('data/emojis')
+
+    // prepare the data once, search on []keywords and name.
+    emojiCache =
+        emojiCache ??
+        Object.values(emojis).map((emoji) => {
+            const keywords = emoji.keywords
+                .map((word) => word.replace(/[^a-zA-Z0-9-_\s]/gi, ''))
+                .join(',')
+            return { emoji: emoji.default, keywords: keywords, name: emoji.name }
+        })
+
+    return fuzzysort
+        .go(string, emojiCache, {
+            keys: ['name', 'keywords'],
+            all: false,
+            limit: 5,
+            // Don't return matches with a score lower than -150
+            threshold: -150,
+            // Give a higher score if string matches "name" as opposed to "keyword"
+            scoreFn: (match) =>
+                Math.max(match[0] ? match[0].score : -151, match[1] ? match[1].score - 50 : -151),
+        })
+        .map((r) => ({
+            name: r.obj.name,
+            emoji: r.obj.emoji,
+        }))
+}

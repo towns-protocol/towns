@@ -1,10 +1,8 @@
 import { randNumber, randParagraph, randUuid, seed } from '@ngneat/falso'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { RichTextPreview } from '@components/RichText/RichTextPreview'
-import { RichTextPreview as PlateRichTextPreview } from '@components/RichTextPlate/RichTextPreview'
+import { RichTextPreview } from '@components/RichTextPlate/RichTextPreview'
 import { Box, Button, Paragraph, Stack, Toggle } from '@ui'
 import { VList } from 'ui/components/VList2/VList'
-import { env } from 'utils'
 import { ExampleMessage } from './ExampleMessage'
 import { createMessageList, randId } from './helpers/createMessages'
 
@@ -177,9 +175,7 @@ const TestItem = React.memo(
         updateMessage: (id: string, key: 'content' | 'uid') => void
     }) => {
         const { data } = props
-        const MessagePreview = env.VITE_ENABLE_SLATE_PREVIEW
-            ? PlateRichTextPreview
-            : RichTextPreview
+
         return (
             <Stack horizontal background="level1">
                 <Stack style={{ background: data.color }} width="x1" shrink={false} />
@@ -200,7 +196,7 @@ const TestItem = React.memo(
                             <Paragraph size="sm" color="cta2">
                                 {data.id}
                             </Paragraph>
-                            <MessagePreview content={data.message} />
+                            <RichTextPreview content={data.message} />
                         </Stack>
                     </ExampleMessage>
                 </Stack>

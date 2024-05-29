@@ -5,8 +5,8 @@ import { isDefined } from '@river/sdk'
 import { Attachment } from 'use-towns-client'
 import { Box, Heading, Icon, Stack } from '@ui'
 import { useDevice } from 'hooks/useDevice'
-import { FileUploadFailedToast } from '@components/RichText/FileUploadFailedToast'
 import { isMediaMimeType } from 'utils/isMediaMimeType'
+import { FileUploadFailedToast } from '@components/FileUploadFailedToast/FileUploadFailedToast'
 import { useUploadAttachment } from './useUploadAttachment'
 
 type FileUploadFileContent = {

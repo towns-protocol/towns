@@ -1,6 +1,6 @@
 import React from 'react'
-import { richText } from '@components/RichText/RichTextEditor.css'
 import { Badge, Box, Grid, Heading, Paragraph, Stack } from '@ui'
+import { richText } from '@components/RichTextPlate/RichTextEditor.css'
 import { Container } from '../components/PlaygroundContainer'
 
 export const PageText = () => (

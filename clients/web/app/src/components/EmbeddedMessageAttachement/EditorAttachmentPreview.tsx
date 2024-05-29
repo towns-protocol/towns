@@ -7,13 +7,11 @@ import {
 } from 'use-towns-client'
 import React, { useCallback } from 'react'
 import { Box, IconButton, Paragraph, Stack, Text } from '@ui'
-import { RichTextPreview } from '@components/RichText/RichTextPreview'
-import { RichTextPreview as PlateRichTextPreview } from '@components/RichTextPlate/RichTextPreview'
-import { env } from 'utils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { MessageAttachments } from '@components/MessageAttachments/MessageAttachments'
 import { MessageAttachmentsContext } from '@components/MessageAttachments/MessageAttachmentsContext'
 import { FadeInBox } from '@components/Transitions'
+import { RichTextPreview } from '@components/RichTextPlate/RichTextPreview'
 
 type MessageAttachmentPreviewProps = {
     attachment: EmbeddedMessageAttachment
@@ -72,7 +70,7 @@ export const EditorAttachmentPreview = (props: {
     onRemoveClick: () => void
 }) => {
     const messageAbstract = getShortTextFromMarkdown(props.body)
-    const MessagePreview = env.VITE_ENABLE_SLATE_PREVIEW ? PlateRichTextPreview : RichTextPreview
+
     return (
         <FadeInBox
             horizontal
@@ -89,7 +87,7 @@ export const EditorAttachmentPreview = (props: {
                     &#39;s message:
                 </Paragraph>
                 {messageAbstract && (
-                    <MessagePreview content={messageAbstract} mentions={props.mentions} />
+                    <RichTextPreview content={messageAbstract} mentions={props.mentions} />
                 )}
                 {props.attachments?.length ? (
                     <Box>
