@@ -3,8 +3,8 @@ package events
 import (
 	"bytes"
 	"slices"
-	"sort"
 
+	"google.golang.org/protobuf/proto"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/events/migrations"
 	. "github.com/river-build/river/core/node/protocol"
@@ -694,9 +694,9 @@ func applyKeySolicitation(member *MemberPayload_Snapshot_Member, keySolicitation
 				i++
 			}
 		}
-		// sort the event keys in the new event
-		event := keySolicitation
-		event.SessionIds = sort.StringSlice(event.SessionIds)
+		// clone to avoid data race
+		event := proto.Clone(keySolicitation).(*MemberPayload_KeySolicitation)
+
 		// append it
 		MAX_DEVICES := 10
 		startIndex := max(0, i-MAX_DEVICES)
@@ -709,7 +709,7 @@ func applyKeyFulfillment(member *MemberPayload_Snapshot_Member, keyFulfillment *
 		// clear out any fulfilled session ids for the device key
 		for _, event := range member.Solicitations {
 			if event.DeviceKey == keyFulfillment.DeviceKey {
-				event.SessionIds = removeCommon(event.SessionIds, sort.StringSlice(keyFulfillment.SessionIds))
+				event.SessionIds = removeCommon(event.SessionIds, keyFulfillment.SessionIds)
 				event.IsNewDevice = false
 				break
 			}

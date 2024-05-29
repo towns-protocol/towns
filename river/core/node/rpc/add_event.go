@@ -48,7 +48,7 @@ func (s *Service) localAddEvent(
 		return connect.NewResponse(&AddEventResponse{
 			Error: &AddEventResponse_Error{
 				Code:  riverError.Code,
-				Msg:   riverError.Msg,
+				Msg:   riverError.Error(),
 				Funcs: riverError.Funcs,
 			},
 		}), nil

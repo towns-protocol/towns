@@ -378,7 +378,7 @@ describe('clientTest', () => {
         })
         await expect(
             bobsClient.makeEventAndAddToStream(bobsClient.userSettingsStreamId!, payload),
-        ).rejects.toThrow('INVALID_ARGUMENT')
+        ).rejects.toThrow('DUPLICATE_EVENT')
     })
 
     test('bobCreatesUnamedSpaceAndStream', async () => {

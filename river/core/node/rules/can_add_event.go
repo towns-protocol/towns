@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"log/slog"
-	"sort"
+	"slices"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -1096,6 +1096,10 @@ func (ru *aeKeySolicitationRules) validKeySolicitation() (bool, error) {
 		return false, RiverError(Err_INVALID_ARGUMENT, "session ids are required for existing devices")
 	}
 
+	if !slices.IsSorted(ru.solicitation.SessionIds) {
+		return false, RiverError(Err_INVALID_ARGUMENT, "session ids must be sorted")
+	}
+
 	return true, nil
 }
 
@@ -1109,16 +1113,20 @@ func (ru *aeKeyFulfillmentRules) validKeyFulfillment() (bool, error) {
 		return false, err
 	}
 
+	if len(ru.fulfillment.SessionIds) > 0 && !slices.IsSorted(ru.fulfillment.SessionIds) {
+		return false, RiverError(Err_INVALID_ARGUMENT, "session ids are required")
+	}
+
 	// loop over solicitations, see if the device key exists
 	for _, solicitation := range solicitations {
 		if solicitation.DeviceKey == ru.fulfillment.DeviceKey {
 			if solicitation.IsNewDevice {
 				return true, nil
 			}
-			if hasCommon(solicitation.SessionIds, sort.StringSlice(ru.fulfillment.SessionIds)) {
+			if hasCommon(solicitation.SessionIds, ru.fulfillment.SessionIds) {
 				return true, nil
 			}
-			return false, RiverError(Err_INVALID_ARGUMENT, "solicitation with common session ids not found")
+			return false, RiverError(Err_DUPLICATE_EVENT, "solicitation with common session ids not found")
 		}
 	}
 	return false, RiverError(Err_INVALID_ARGUMENT, "solicitation with matching device key not found")
