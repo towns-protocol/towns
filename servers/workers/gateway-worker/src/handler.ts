@@ -11,7 +11,6 @@ const IMAGE_OPTIONS_REGEX = '(=|,)+'
 const DEFAULT_OPTIONS = 'width=1920,fit=scale-down'
 export const IMAGE_DELIVERY_SERVICE = 'https://imagedelivery.net'
 const CACHE_TTL = 5
-const BIO_MAX_SIZE = 280
 const MOTTO_MAX_SIZE = 40
 
 const USER_FEEDBACK_TOPIC_ARN = 'arn:aws:sns:us-east-1:211286738967:user-feedback'
@@ -206,6 +205,8 @@ router.post('/user/:id/bio', async (request: WorkerRequest, env) => {
         })
     }
     const requestBody = JSON.stringify(await copyRequest.json())
+    const BIO_MAX_SIZE = 280
+
     // validate bio length
     if (!validateLength(JSON.parse(requestBody).bio, BIO_MAX_SIZE)) {
         return new Response(
@@ -245,6 +246,8 @@ router.post('/space/:id/identity', async (request: WorkerRequest, env) => {
         })
     }
     const requestBody = JSON.stringify(await copyRequest.json())
+    const BIO_MAX_SIZE = 500
+
     // validate bio length
     if (!validateLength(JSON.parse(requestBody).bio, BIO_MAX_SIZE)) {
         return new Response(
