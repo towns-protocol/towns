@@ -176,9 +176,15 @@ const Header = (props: {
     const { analytics } = useAnalytics()
 
     const onClickLogin = useCallback(() => {
-        analytics?.track('clicked login', {}, () => {
-            console.log('[analytics][PublicTownPage] clicked login')
-        })
+        analytics?.track(
+            'clicked login',
+            {
+                buttonText: 'Log In',
+            },
+            () => {
+                console.log('[analytics][PublicTownPage] clicked login')
+            },
+        )
         login()
     }, [analytics, login])
 

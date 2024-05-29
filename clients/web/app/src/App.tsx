@@ -60,7 +60,7 @@ export const App = () => {
                 channelId,
                 rel,
             }
-            analytics?.track('clicked_notification', tracked, () => {
+            analytics?.track('clicked notification', tracked, () => {
                 console.log('[analytics][App][route] clicked notification', tracked)
             })
         }

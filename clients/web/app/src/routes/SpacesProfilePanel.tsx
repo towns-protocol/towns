@@ -110,7 +110,7 @@ const SpaceProfileWithoutAuth = () => {
         analytics?.track(
             'clicked logout',
             {
-                userId: loggedInWalletAddress,
+                psuedoId: analytics?.pseudoId,
             },
             () => {
                 console.log('[analytics] clicked logout')

@@ -71,7 +71,7 @@ export const DMChannelInfo = (props: { channelId?: string; data?: DMChannelIdent
             channelId,
             numberOfMembers: memberIds.length,
         }
-        analytics?.track('clicked_leave_group', tracked, () => {
+        analytics?.track('clicked leave group', tracked, () => {
             console.log('[analytics] clicked leave group', tracked)
         })
         setActiveModal('confirm-leave')
@@ -85,7 +85,7 @@ export const DMChannelInfo = (props: { channelId?: string; data?: DMChannelIdent
             channelId,
             numberOfRemainingMembers: memberIds.length - 1,
         }
-        analytics?.track('confirmed_leave_group', tracked, () => {
+        analytics?.track('confirmed leave group', tracked, () => {
             console.log('[analytics] confirmed leave group', tracked)
         })
         await leaveRoom(channelId)
