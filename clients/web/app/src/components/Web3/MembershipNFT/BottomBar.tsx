@@ -147,6 +147,7 @@ export const BottomBarWithColWidths = ({
     rightColContent: React.ReactNode
     leftColContent: React.ReactNode
 } & BoxProps) => {
+    const isTouch = useDevice().isTouch
     return (
         <Stack
             horizontal
@@ -163,9 +164,10 @@ export const BottomBarWithColWidths = ({
         >
             <Stack absoluteFill background="backdropBlur" />
             <Box
+                grow={isTouch}
                 position="relative"
                 style={{
-                    width: leftColWidth,
+                    width: isTouch ? undefined : leftColWidth,
                 }}
             >
                 {leftColContent}
@@ -174,7 +176,7 @@ export const BottomBarWithColWidths = ({
             <Box
                 position="relative"
                 style={{
-                    width: rightColWidth,
+                    width: isTouch ? undefined : rightColWidth,
                 }}
             >
                 {rightColContent}
