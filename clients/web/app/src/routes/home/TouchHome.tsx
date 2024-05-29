@@ -533,7 +533,7 @@ const ChannelList = React.memo(
                     name={c.channel.label}
                     unread={c.unread}
                     mentionCount={c.mentionCount}
-                    muted={false}
+                    muted={c.muted}
                 />
             ) : (
                 <Box paddingY="sm" paddingX="md" key={c.id}>
@@ -617,7 +617,6 @@ export const TouchChannelResultRow = (props: {
                 <Box grow />
                 {muted && <Icon type="muteActive" color="gray2" size="square_xs" />}
                 {mentionCount > 0 && <Badge value={mentionCount}>{mentionCount}</Badge>}
-                <SearchResultItemIcon type="arrowRight" background="inherit" color="gray2" />
             </NavItemContent>
         </NavItem>
     )
@@ -654,7 +653,6 @@ export const TouchUserResultRow = (props: { member: RoomMember }) => {
                     </Text>
                 </Stack>
                 <Box grow />
-                <SearchResultItemIcon type="arrowRight" background="inherit" />
             </NavItemContent>
         </NavItem>
     )
@@ -702,7 +700,6 @@ const SearchForTermRow = (props: { searchString: string }) => {
                         &quot;
                     </Paragraph>
                 </Stack>
-                <SearchResultItemIcon type="arrowRight" background="inherit" />
             </Box>
         </Box>
     )
@@ -746,7 +743,6 @@ export const TouchGenericResultRow = (props: {
                 {(props?.badgeCount ?? 0) > 0 && (
                     <Badge value={props.badgeCount}>{props.badgeCount}</Badge>
                 )}
-                <SearchResultItemIcon type="arrowRight" background="inherit" />
             </NavItemContent>
         </NavItem>
     )

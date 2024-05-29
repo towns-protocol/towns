@@ -44,14 +44,16 @@ export const ChannelNavItem = (props: Props) => {
     return (
         <>
             <NavItem to={link} id={id} exact={false} paddingY="xxs" minHeight="x5">
-                <Icon
-                    type="tag"
-                    padding="line"
-                    background="level2"
-                    color={showUnread ? 'default' : 'gray2'}
-                    size="square_lg"
-                />
                 <Stack horizontal width="100%" gap="sm" alignItems="center">
+                    <Box>
+                        <Icon
+                            type="tag"
+                            padding="line"
+                            background="level2"
+                            color={showUnread ? 'default' : 'gray2'}
+                            size="square_lg"
+                        />
+                    </Box>
                     <ButtonText
                         strong={showUnread}
                         color={showUnread ? 'default' : isHighlight ? 'default' : undefined}
@@ -59,16 +61,16 @@ export const ChannelNavItem = (props: Props) => {
                         {channel.label}
                     </ButtonText>
                     <Box grow />
-                </Stack>
-                <Stack horizontal grow gap justifyContent="end">
                     <FavoriteChannelButton
                         isUnreadSection={isUnreadSection}
                         channelId={channel.id}
                         favorite={favorite}
                     />
 
-                    {isMuted && <Icon size="square_xs" type="muteActive" color="gray2" />}
-                    {!!mentionCount && <Badge value={mentionCount}>{mentionCount}</Badge>}
+                    <Box>
+                        {isMuted && <Icon size="square_xs" type="muteActive" color="gray2" />}
+                        {!!mentionCount && <Badge value={mentionCount}>{mentionCount}</Badge>}
+                    </Box>
                 </Stack>
             </NavItem>
         </>

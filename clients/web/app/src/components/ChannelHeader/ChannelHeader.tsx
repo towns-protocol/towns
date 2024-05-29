@@ -254,16 +254,19 @@ const TouchChannelHeader = (props: Props & { showLoadingIndicator: boolean }) =>
                     hoverable
                     gap="sm"
                     whileTap={{ opacity: '0.7' }}
+                    paddingRight="sm"
                     onClick={infoButtonPressed}
                 >
                     {channelType === 'channel' ? (
                         <>
                             <Stack horizontal gap="sm" alignContent="center">
-                                <Paragraph truncate strong color="default" size="lg">
+                                <Paragraph truncate strong color="default" size="md">
                                     #{channel.label}
                                 </Paragraph>
                                 {isMuted && (
-                                    <Icon type="muteActive" size="square_xxs" color="gray2" />
+                                    <Box>
+                                        <Icon type="muteActive" size="square_xs" color="gray2" />
+                                    </Box>
                                 )}
                             </Stack>
 
@@ -287,7 +290,7 @@ const TouchChannelHeader = (props: Props & { showLoadingIndicator: boolean }) =>
                             ) : (
                                 <GDMTitleContent roomIdentifier={channel.id} />
                             )}
-                            {isMuted && <Icon type="muteActive" size="square_xxs" color="gray2" />}
+                            {isMuted && <Icon type="muteActive" size="square_xs" color="gray2" />}
                         </Stack>
                     )}
                 </MotionStack>
