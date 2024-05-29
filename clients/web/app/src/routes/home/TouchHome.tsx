@@ -1,7 +1,7 @@
 import { AnimatePresence } from 'framer-motion'
 import fuzzysort from 'fuzzysort'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useOutlet } from 'react-router'
+import { useLocation, useNavigate, useOutlet } from 'react-router'
 import {
     Address,
     ChannelContextProvider,
@@ -99,6 +99,7 @@ export const TouchHome = () => {
     const members = useMemo(() => {
         return memberIds.map((userId) => usersMap[userId]).filter(notUndefined)
     }, [memberIds, usersMap])
+    const { state: locationState } = useLocation()
 
     const { unseenChannelIds, markChannelsAsSeen } = useUnseenChannelIds()
     const spaceId = space?.id ?? ''
@@ -302,6 +303,11 @@ export const TouchHome = () => {
         if (visitedBookmark.current) {
             return
         }
+        if (locationState?.fromCreateTown) {
+            locationState.fromCreateTown = undefined
+            return
+        }
+
         if (storeBookmarkedSpaceId && storeBookmarkedRoute) {
             visitedBookmark.current = storeBookmarkedRoute
             console.log('[TouchHome][route]]', 'visited bookmark', {
@@ -310,7 +316,7 @@ export const TouchHome = () => {
             })
             navigate(storeBookmarkedRoute)
         }
-    }, [navigate, storeBookmarkedRoute, storeBookmarkedSpaceId])
+    }, [locationState, navigate, storeBookmarkedRoute, storeBookmarkedSpaceId])
 
     return (
         <ErrorBoundary FallbackComponent={ErrorFallbackComponent}>

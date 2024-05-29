@@ -383,7 +383,9 @@ export function CreateTownSubmit({
                     setRecentlyMintedSpaceToken({ spaceId: networkId, isOwner: true })
 
                     setTimeout(() => {
-                        navigate(newPath)
+                        navigate(newPath, {
+                            state: { fromCreateTown: true },
+                        })
                     }, timeoutDuration)
                 }
             },
