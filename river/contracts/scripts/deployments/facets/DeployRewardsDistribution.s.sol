@@ -19,6 +19,7 @@ contract DeployRewardsDistribution is Deployer, FacetHelper {
     addSelector(RewardsDistribution.getPeriodDistributionAmount.selector);
     addSelector(RewardsDistribution.setActivePeriodLength.selector);
     addSelector(RewardsDistribution.getActivePeriodLength.selector);
+    addSelector(RewardsDistribution.getActiveOperators.selector);
   }
 
   function initializer() public pure override returns (bytes4) {

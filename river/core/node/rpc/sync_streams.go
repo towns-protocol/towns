@@ -200,9 +200,7 @@ func (s *syncHandlerImpl) handleSyncRequest(
 	}
 	log := dlog.FromCtx(sub.ctx)
 
-	defer func() {
-		s.removeSubscription(sub.ctx, sub.syncId)
-	}()
+	defer s.removeSubscription(sub.ctx, sub.syncId)
 
 	localCookies, remoteCookies := getLocalAndRemoteCookies(s.wallet.Address, req.Msg.SyncPos)
 
@@ -317,10 +315,10 @@ func getLocalAndRemoteCookies(
 	localCookies = make([]*SyncCookie, 0, 8)
 	remoteCookies = make(map[common.Address][]*SyncCookie)
 	for _, cookie := range syncCookies {
-		if bytes.Equal(cookie.NodeAddress[:], localWalletAddr[:]) {
+		if bytes.Equal(cookie.NodeAddress, localWalletAddr[:]) {
 			localCookies = append(localCookies, cookie)
 		} else {
-			remoteAddr := common.BytesToAddress(cookie.NodeAddress[:])
+			remoteAddr := common.BytesToAddress(cookie.NodeAddress)
 			if remoteCookies[remoteAddr] == nil {
 				remoteCookies[remoteAddr] = make([]*SyncCookie, 0, 8)
 			}
@@ -419,7 +417,7 @@ func (s *syncHandlerImpl) addLocalStreamToSync(
 		return nil
 	}
 
-	streamSub, _, err := s.cache.GetStream(ctx, cookieStreamId)
+	streamSub, err := s.cache.GetSyncStream(ctx, cookieStreamId)
 	if err != nil {
 		log.Info(
 			"SyncStreams:SyncHandlerV2.addLocalStreamToSync: failed to get stream",
@@ -628,9 +626,7 @@ func (s *syncHandlerImpl) addSubscription(
 ) (*syncSubscriptionImpl, error) {
 	log := dlog.FromCtx(ctx)
 	s.mu.Lock()
-	defer func() {
-		s.mu.Unlock()
-	}()
+	defer s.mu.Unlock()
 
 	if s.syncIdToSubscription == nil {
 		s.syncIdToSubscription = make(map[string]*syncSubscriptionImpl)

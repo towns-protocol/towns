@@ -31,6 +31,7 @@ import {MainnetDelegation} from "contracts/src/tokens/river/base/delegation/Main
 import {RewardsDistribution} from "contracts/src/base/registry/facets/distribution/RewardsDistribution.sol";
 import {SpaceDelegationFacet} from "contracts/src/base/registry/facets/delegation/SpaceDelegationFacet.sol";
 import {INodeOperatorBase} from "contracts/src/base/registry/facets/operator/INodeOperator.sol";
+import {console} from "forge-std/console.sol";
 
 contract RewardsDistributionTest is
   BaseSetup,
@@ -113,6 +114,64 @@ contract RewardsDistributionTest is
   // =============================================================
   //                           Tests
   // =============================================================
+
+  function test_getActiveOperators() public {
+    _createEntitiesForTest(
+      exAmountsPerUser,
+      exCommissionsPerOperator,
+      exDelegationsPerUser
+    );
+
+    setupOperators(tOperators);
+    setupDistributionInformation(exDistributionAmount, exActivePeriodLength);
+
+    assertEq(
+      rewardsDistributionFacet.getActiveOperators().length,
+      tOperators.length,
+      "Active Operators length does not match expected length"
+    );
+    for (
+      uint256 i = 0;
+      i < rewardsDistributionFacet.getActiveOperators().length;
+      i++
+    ) {
+      bool found = false;
+      for (uint256 j = 0; j < tOperators.length; j++) {
+        if (
+          rewardsDistributionFacet.getActiveOperators()[i] == tOperators[j].addr
+        ) {
+          found = true;
+          break;
+        }
+      }
+      assertEq(found, true, "Operator not found in active operators");
+    }
+  }
+
+  function test_subsetActiveOperators() public {
+    setupOperators(tOperators);
+    assertEq(
+      rewardsDistributionFacet.getActiveOperators().length,
+      tOperators.length,
+      "Active Operators length does not match expected length"
+    );
+    for (uint256 i = 0; i < tOperators.length; i++) {
+      setOperatorStatus(tOperators[i].addr, NodeOperatorStatus.Approved);
+    }
+    assertEq(
+      rewardsDistributionFacet.getActiveOperators().length,
+      0,
+      "Approved Operators length does not match expected length"
+    );
+    for (uint256 i = 0; i < tOperators.length / 2; i++) {
+      setOperatorStatus(tOperators[i].addr, NodeOperatorStatus.Active);
+    }
+    assertEq(
+      rewardsDistributionFacet.getActiveOperators().length,
+      tOperators.length / 2,
+      "Active Operators length does not match expected length"
+    );
+  }
 
   //specific test case of users delegating to operators
   function test_exUserRewards() public {

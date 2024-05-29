@@ -81,7 +81,7 @@ func (s *Service) newEventReceived(
 		return nil, err
 	}
 
-	stream, _, err := s.cache.GetStream(ctx, streamId)
+	stream, err := s.cache.GetSyncStream(ctx, streamId)
 	if err != nil {
 		return nil, err
 	}

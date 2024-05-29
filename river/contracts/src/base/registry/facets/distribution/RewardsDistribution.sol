@@ -156,6 +156,10 @@ contract RewardsDistribution is
     return RewardsDistributionStorage.layout().activePeriodLength;
   }
 
+  function getActiveOperators() public view returns (address[] memory) {
+    return _getActiveOperators();
+  }
+
   // =============================================================
   //                           Internal
   // =============================================================
@@ -269,7 +273,7 @@ contract RewardsDistribution is
         currentStatus == NodeOperatorStatus.Active &&
         _isActiveSinceLastCycle(nos.approvalTimeByOperator[operator])
       ) {
-        expectedOperators[i] = operator;
+        expectedOperators[totalActiveOperators] = operator;
         totalActiveOperators++;
       }
     }

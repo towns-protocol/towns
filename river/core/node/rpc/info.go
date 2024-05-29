@@ -129,7 +129,7 @@ func (s *Service) debugInfoMakeMiniblock(
 		return nil, err
 	}
 	if nodes.IsLocal() {
-		stream, _, err := s.cache.GetStream(ctx, streamId)
+		stream, err := s.cache.GetSyncStream(ctx, streamId)
 		if err != nil {
 			return nil, err
 		}

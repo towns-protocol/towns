@@ -97,7 +97,7 @@ contract NodeOperatorFacet is INodeOperator, OwnableBase, ERC721ABase, Facet {
     ) {
       revert NodeOperator__InvalidStatusTransition();
     }
-    if (newStatus == NodeOperatorStatus.Approved) {
+    if (newStatus == NodeOperatorStatus.Active) {
       ds.approvalTimeByOperator[operator] = block.timestamp;
     } else {
       ds.approvalTimeByOperator[operator] = 0;

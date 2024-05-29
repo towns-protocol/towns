@@ -120,7 +120,6 @@ func (s *streamImpl) loadInternal(ctx context.Context) error {
 		if AsRiverError(err).Code == Err_NOT_FOUND {
 			return s.initFromBlockchain(ctx)
 		}
-
 		return err
 	}
 
@@ -436,20 +435,21 @@ func (s *streamImpl) tryGetView() StreamView {
 	}
 }
 
+// tryCleanup unloads its internal view when s haven't got activity within the given expiration period.
+// It returns true when the view is unloaded
 func (s *streamImpl) tryCleanup(expiration time.Duration) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	expired := time.Since(s.lastAccessedTime) >= expiration
-
-	// return immediately if the view is already purged or if the mini block creation routine
-	// is running for this stream
+	// return immediately if the view is already purged or if the mini block creation routine is running for this stream
 	if s.view == nil {
-		return false
+		return true
 	}
 
-	// only unload if there is no-one is listing to this stream and there are no events in the minipool.
-	if expired && (s.receivers == nil || s.receivers.Cardinality() == 0) && s.view.minipool.events.Len() == 0 {
+	expired := time.Since(s.lastAccessedTime) >= expiration
+
+	// unload if there is no activity within expiration
+	if expired && s.view.minipool.events.Len() == 0 {
 		s.view = nil
 		return true
 	}
@@ -676,6 +676,7 @@ func (s *streamImpl) ForceFlush(ctx context.Context) {
 func (s *streamImpl) canCreateMiniblock() bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
+
 	// Loaded, has events in minipool, fake leader and periodic miniblock creation is not disabled in test settings.
 	return s.view != nil &&
 		s.view.minipool.events.Len() > 0 &&

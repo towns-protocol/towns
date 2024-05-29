@@ -28,4 +28,6 @@ interface IRewardsDistribution is IRewardsDistributionBase {
   function setActivePeriodLength(uint256 length) external;
 
   function getActivePeriodLength() external view returns (uint256);
+
+  function getActiveOperators() external view returns (address[] memory);
 }
