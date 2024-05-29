@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { FullyReadMarker } from '@river-build/proto'
 import { create } from 'zustand'
 import { useLocation } from 'react-router'
@@ -44,7 +44,7 @@ export const useFocusItem = (
               },
     )
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         const isForced = storeFocus.type === 'forced'
         setFocusItem({
             key: storeFocus.id,
@@ -60,7 +60,7 @@ export const useFocusItem = (
         last.item.event.sender.id === userId &&
         last.item.event.isLocalPending
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         setFocusItem({
             key: lastKey,
             align: 'end' as const,
@@ -70,7 +70,7 @@ export const useFocusItem = (
 
     const fullyreadMarkerFocusedOnceRef = useRef(false)
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         if (fullyreadMarker?.isUnread && !fullyreadMarkerFocusedOnceRef.current) {
             fullyreadMarkerFocusedOnceRef.current = true
             setFocusItem({
@@ -83,7 +83,7 @@ export const useFocusItem = (
         }
     }, [fullyreadMarker])
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         if (highlightId) {
             setFocusItem({
                 key: highlightId,

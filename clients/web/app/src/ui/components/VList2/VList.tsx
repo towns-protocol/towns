@@ -118,10 +118,11 @@ export function VList<T>(props: Props<T>) {
     const [isIdle, setIsIdle] = useState(true)
     const isIdleRef = useUpdatedRef(isIdle)
     const [list, setList] = useState(props.list)
+    const distanceFromBottomRef = useRef(0)
 
     // ----------------------------------------------------------- memoize props
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         if (isIdle && props.list !== list) {
             // only pull in new content when idle, this removes a lot of friction
             log(`lazy update list`)
@@ -224,9 +225,21 @@ export function VList<T>(props: Props<T>) {
 
     const viewportHeightRef = useRef(0)
 
+    let prevContentHeight = containerRef.current?.clientHeight
+
     const getScrollY = useEvent(() => {
         if (!containerRef.current) {
             return 0
+        }
+
+        // prevents an issue caused by container resizing - scroll may occur
+        // implicitely if the container grows in height. The scroll event being
+        // triggered before the resize observer we save this value here
+        // for later issue
+        if (prevContentHeight === containerRef.current.clientHeight) {
+            const c = containerRef.current
+            distanceFromBottomRef.current = c.scrollHeight - c.clientHeight - c.scrollTop
+            prevContentHeight = containerRef.current.clientHeight
         }
 
         const vh = viewportHeightRef.current
@@ -774,7 +787,7 @@ export function VList<T>(props: Props<T>) {
             if (typeof height !== 'undefined' && vh !== height) {
                 log(`resizeObserver() ${vh} -> ${height}`)
                 viewportHeightRef.current = height
-                anchorDiffRef.current += height - vh
+                anchorDiffRef.current += Math.min(distanceFromBottomRef.current, height - vh)
                 realignImperatively()
             }
         })
@@ -863,7 +876,7 @@ export function VList<T>(props: Props<T>) {
                     updateCacheItem(cache.el, cache.heightRef, cache.key, itemIndex)
                 } else {
                     // throw new Error(`resizeHandler::item not found`)
-                    warn(`esizeHandler::item not founds ${key}`)
+                    warn(`resizeHandler::item not founds ${key}`)
                 }
             })
 

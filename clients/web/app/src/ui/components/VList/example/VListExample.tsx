@@ -1,5 +1,6 @@
 import { randNumber, randParagraph, randUuid, seed } from '@ngneat/falso'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { useHotkeys } from 'react-hotkeys-hook'
 import { RichTextPreview } from '@components/RichTextPlate/RichTextPreview'
 import { Box, Button, Paragraph, Stack, Toggle } from '@ui'
 import { VList } from 'ui/components/VList2/VList'
@@ -97,19 +98,23 @@ export const VListExample = () => {
     }, [list, reset])
 
     return (
-        <Stack gap height="800">
-            <VList
-                focusItem={focus}
-                getItemKey={(item) => item.id}
-                align="bottom"
-                debug={isDebug}
-                key={`${reset}`}
-                list={list}
-                overscan={1}
-                estimateHeight={(s) => 100}
-                itemRenderer={(data) => <TestItem data={data} updateMessage={updateMessage} />}
-            />
-            <Stack padding gap background="level2" borderRadius="xs">
+        <Stack absoluteFillSafeSafari>
+            <Stack grow border="accent" position="relative">
+                <VList
+                    focusItem={focus}
+                    getItemKey={(item) => item.id}
+                    align="bottom"
+                    debug={isDebug}
+                    key={`${reset}`}
+                    list={list}
+                    overscan={1}
+                    estimateHeight={(s) => 100}
+                    itemRenderer={(data) => <TestItem data={data} updateMessage={updateMessage} />}
+                />
+            </Stack>
+            {isDebug && <BoxDebugger />}
+
+            <Stack padding gap background="level3" borderRadius="xs">
                 <Stack gap horizontal justifyContent="spaceBetween">
                     <Stack horizontal gap>
                         <Button animate={false} onClick={onPrependClick}>
@@ -204,3 +209,15 @@ const TestItem = React.memo(
         )
     },
 )
+const BoxDebugger = () => {
+    const [isToggled, setIsToggled] = React.useState(false)
+    useHotkeys(
+        'b',
+        () => {
+            setIsToggled((prev) => !prev)
+        },
+        [],
+        { enabled: true },
+    )
+    return isToggled ? <Box background="accent" width="100%" height="200" /> : <></>
+}
