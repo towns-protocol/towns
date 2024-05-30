@@ -17,7 +17,6 @@ export const MessageDropDown = (props: Props) => {
     const { channels, createNewCTA, onSelectChannel, onFocusChange, onCreateNew } = props
     const listRef = React.useRef<HTMLDivElement>(null)
 
-    const extraIncrement = createNewCTA ? 1 : 0
     const [focusedIndex, setFocusedIndex] = useState(0)
     const { isTouch } = useDevice()
 
@@ -34,15 +33,11 @@ export const MessageDropDown = (props: Props) => {
             }
             switch (e.key) {
                 case 'ArrowUp': {
-                    setFocusedIndex(
-                        (i) =>
-                            (channels.length + extraIncrement + i - 1) %
-                            (channels.length + extraIncrement),
-                    )
+                    setFocusedIndex((i) => Math.max(0, i - 1))
                     break
                 }
                 case 'ArrowDown': {
-                    setFocusedIndex((i) => (i + 1) % (channels.length + extraIncrement))
+                    setFocusedIndex((i) => Math.min(i + 1, channels.length))
                     break
                 }
             }
@@ -51,14 +46,14 @@ export const MessageDropDown = (props: Props) => {
         return () => {
             window.removeEventListener('keydown', onKeyDown)
         }
-    }, [channels, extraIncrement, focusedIndex, onCreateNew, onSelectChannel])
+    }, [channels, focusedIndex, onCreateNew, onSelectChannel])
 
     useEffect(() => {
         listRef.current?.querySelectorAll('[data-list-item]').item(focusedIndex)?.scrollIntoView({
             block: 'end',
         })
-        onFocusChange(channels[focusedIndex - extraIncrement])
-    }, [channels, extraIncrement, focusedIndex, onFocusChange])
+        onFocusChange(channels[focusedIndex])
+    }, [channels, focusedIndex, onFocusChange])
 
     if (!props.channels?.length && !createNewCTA) {
         return <></>
@@ -76,19 +71,6 @@ export const MessageDropDown = (props: Props) => {
             boxShadow="card"
             ref={listRef}
         >
-            {createNewCTA && (
-                <ContainerItem
-                    height="x6"
-                    alignItems="center"
-                    gap="sm"
-                    key="create-new"
-                    background={focusedIndex === 0 ? 'level3' : 'level2'}
-                    data-list-item="0"
-                    onClick={props.onCreateNew}
-                >
-                    {createNewCTA}
-                </ContainerItem>
-            )}
             {props.channels.length > 0 && (
                 <>
                     <Box paddingTop="sm">
@@ -102,10 +84,8 @@ export const MessageDropDown = (props: Props) => {
                         {props.channels?.sort(firstBy((c) => c.userIds.length)).map((c, index) => (
                             <ContainerItem
                                 key={c.id}
-                                data-list-item={`${index + extraIncrement}`}
-                                background={
-                                    index + extraIncrement === focusedIndex ? 'level2' : 'level1'
-                                }
+                                data-list-item={index}
+                                background={index === focusedIndex ? 'level2' : 'level1'}
                                 onClick={() => props.onSelectChannel(c?.id)}
                             >
                                 <DirectMessageRowContent channel={c} unread={false} />
@@ -113,6 +93,19 @@ export const MessageDropDown = (props: Props) => {
                         ))}
                     </Stack>
                 </>
+            )}
+            {createNewCTA && (
+                <ContainerItem
+                    height="x6"
+                    alignItems="center"
+                    gap="sm"
+                    key="create-new"
+                    background={focusedIndex === props.channels.length ? 'level3' : 'level2'}
+                    data-list-item={props.channels.length}
+                    onClick={props.onCreateNew}
+                >
+                    {createNewCTA}
+                </ContainerItem>
             )}
         </Box>
     )
