@@ -5,25 +5,39 @@ import {
     Envelope,
     StreamEvent,
     ChannelMessage,
+    MembershipOp,
     SnapshotCaseType,
     SyncStreamsResponse,
     SyncOp,
 } from '@river-build/proto'
 import { PlainMessage } from '@bufbuild/protobuf'
+import { StreamStateView } from './streamStateView'
 import { Client } from './client'
-import { genId, makeSpaceStreamId, userIdFromAddress } from './id'
+import {
+    genId,
+    makeSpaceStreamId,
+    makeDefaultChannelStreamId,
+    makeUserStreamId,
+    userIdFromAddress,
+} from './id'
 import { ParsedEvent, DecryptedTimelineEvent } from './types'
 import { getPublicKey, utils } from 'ethereum-cryptography/secp256k1'
 import { EntitlementsDelegate } from '@river-build/encryption'
 import { bin_fromHexString, check, dlog } from '@river-build/dlog'
-import { ethers } from 'ethers'
+import { ethers, ContractTransaction } from 'ethers'
 import { RiverDbManager } from './riverDbManager'
 import { StreamRpcClientType, makeStreamRpcClient } from './makeStreamRpcClient'
 import assert from 'assert'
 import _ from 'lodash'
 import { MockEntitlementsDelegate } from './utils'
 import { SignerContext, makeSignerContext } from './signerContext'
-import { LocalhostWeb3Provider, PricingModuleStruct, createRiverRegistry } from '@river-build/web3'
+import {
+    IArchitectBase,
+    ISpaceDapp,
+    LocalhostWeb3Provider,
+    PricingModuleStruct,
+    createRiverRegistry,
+} from '@river-build/web3'
 import { makeRiverChainConfig } from './riverConfig'
 
 const log = dlog('csb:test:util')
@@ -240,6 +254,139 @@ export const lastEventFiltered = <T extends (a: ParsedEvent) => any>(
         return true
     })
     return ret
+}
+
+// createSpaceAndDefaultChannel creates a space and default channel for a given
+// client, on the spaceDapp and the stream node. It creates a user stream, joins
+// the user to the space, and starts syncing the client.
+export async function createSpaceAndDefaultChannel(
+    client: Client,
+    spaceDapp: ISpaceDapp,
+    wallet: ethers.Wallet,
+    name: string,
+    membership: IArchitectBase.MembershipStruct,
+): Promise<{
+    spaceId: string
+    defaultChannelId: string
+    userStreamView: StreamStateView
+}> {
+    const transaction = await spaceDapp.createSpace(
+        {
+            spaceName: `${name}-space`,
+            spaceMetadata: `${name}-space-metadata`,
+            channelName: 'general',
+            membership,
+        },
+        wallet,
+    )
+    const receipt = await transaction.wait()
+    expect(receipt.status).toEqual(1)
+    const spaceAddress = spaceDapp.getSpaceAddress(receipt)
+    expect(spaceAddress).toBeDefined()
+
+    const spaceId = makeSpaceStreamId(spaceAddress!)
+    const channelId = makeDefaultChannelStreamId(spaceAddress!)
+
+    await client.initializeUser({ spaceId })
+    client.startSync()
+
+    const userStreamId = makeUserStreamId(client.userId)
+    const userStreamView = client.stream(userStreamId)!.view
+    expect(userStreamView).toBeDefined()
+
+    const returnVal = await client.createSpace(spaceId)
+    expect(returnVal.streamId).toEqual(spaceId)
+    expect(userStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBeTrue()
+
+    const channelReturnVal = await client.createChannel(
+        spaceId,
+        'general',
+        `${name} general channel properties`,
+        channelId,
+    )
+    expect(channelReturnVal.streamId).toEqual(channelId)
+    expect(userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN)).toBeTrue()
+
+    return {
+        spaceId,
+        defaultChannelId: channelId,
+        userStreamView,
+    }
+}
+
+// createUserStreamAndSyncClient creates a user stream for a given client that
+// uses a newly created space as the hint for the user stream, since the stream
+// node will not allow the creation of a user stream without a space id.
+export async function createUserStreamAndSyncClient(
+    client: Client,
+    spaceDapp: ISpaceDapp,
+    name: string,
+    membershipInfo: IArchitectBase.MembershipStruct,
+    wallet: ethers.Wallet,
+) {
+    const transaction = await spaceDapp.createSpace(
+        {
+            spaceName: `${name}-space`,
+            spaceMetadata: `${name}-space-metadata`,
+            channelName: 'general',
+            membership: membershipInfo,
+        },
+        wallet,
+    )
+    const receipt = await transaction.wait()
+    expect(receipt.status).toEqual(1)
+    const spaceAddress = spaceDapp.getSpaceAddress(receipt)
+    expect(spaceAddress).toBeDefined()
+
+    const spaceId = makeSpaceStreamId(spaceAddress!)
+    await client.initializeUser({ spaceId })
+}
+
+export async function expectUserCanJoin(
+    spaceId: string,
+    channelId: string,
+    name: string,
+    client: Client,
+    spaceDapp: ISpaceDapp,
+    address: string,
+    wallet: ethers.Wallet,
+) {
+    const joinStart = Date.now()
+    const { issued } = await spaceDapp.joinSpace(spaceId, address, wallet)
+    expect(issued).toBeTrue()
+    log(`${name} joined space ${spaceId}`, Date.now() - joinStart)
+
+    await client.initializeUser({ spaceId })
+    client.startSync()
+
+    await expect(client.joinStream(spaceId)).toResolve()
+    await expect(client.joinStream(channelId)).toResolve()
+
+    const userStreamView = client.stream(client.userStreamId!)!.view
+    await waitFor(() => {
+        expect(userStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBeTrue()
+        expect(userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN)).toBeTrue()
+    })
+}
+
+// Hint: pass in the wallets attached to the providers.
+export async function linkWallets(
+    rootSpaceDapp: ISpaceDapp,
+    rootWallet: ethers.Wallet,
+    linkedWallet: ethers.Wallet,
+) {
+    const walletLink = rootSpaceDapp.getWalletLink()
+    let txn: ContractTransaction | undefined
+    try {
+        txn = await walletLink.linkWalletToRootKey(rootWallet, linkedWallet)
+    } catch (err: any) {
+        const parsedError = walletLink.parseError(err)
+        log('linkWallets error', parsedError)
+    }
+
+    expect(txn).toBeDefined()
+    const receipt = await txn?.wait()
+    expect(receipt!.status).toEqual(1)
 }
 
 export function waitFor<T>(

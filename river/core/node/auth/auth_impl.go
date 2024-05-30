@@ -20,6 +20,26 @@ import (
 )
 
 type ChainAuth interface {
+	/*
+		IsEntitled algorithm
+		====================
+		1. If this check has been recently performed, return the cached result.
+		2. Validate that the space or channel is enabled, depending on whether the request is for a space or channel.
+		   This computation is cached and if a cached result is available, it is used.
+		   If the space or channel is disabled, return false.
+		3. All linked wallets for the principal are retrieved.
+		4. All linked wallets are checked for space membership. If any are not a space member, the permission check fails.
+		5. If the number of linked wallets exceeds the limit, the permission check fails.
+		6A. For spaces, the space entitlements are retrieved and checked against all linked wallets.
+			1. If the owner of the space is in the linked wallets, the permission check passes.
+			2. If the space has a rule entitlement, the rule is evaluated against the linked wallets. If it passes,
+			   the permission check passes.
+			3. If the space has a user entitlement, all linked wallets are checked against the user entitlement. If any
+			   linked wallets are in the user entitlement, the permission check passes.
+			4. If none of the above checks pass, the permission check fails.
+		6B. For channels, the space contract method `IsEntitledToChannel` is called for each linked wallet. If any of the
+			linked wallets are entitled to the channel, the permission check passes. Otherwise, it fails.
+	*/
 	IsEntitled(ctx context.Context, cfg *config.Config, args *ChainAuthArgs) error
 }
 
@@ -401,7 +421,6 @@ func (ca *chainAuth) isEntitledToSpaceUncached(
 		log.Debug("entitlement", "entitlement", ent)
 		if ent.entitlementType == "RuleEntitlement" {
 			re := ent.ruleEntitlement
-			log.Debug("RuleEntitlement", "ruleEntitlement", re)
 			result, err := entitlement.EvaluateRuleData(ctx, cfg, wallets, re)
 			if err != nil {
 				return &boolCacheResult{allowed: false}, AsRiverError(err).Func("isEntitledToSpace")
@@ -414,13 +433,18 @@ func (ca *chainAuth) isEntitledToSpaceUncached(
 				continue
 			}
 		} else if ent.entitlementType == "UserEntitlement" {
+			log.Debug("UserEntitlement", "userEntitlement", ent)
 			for _, user := range ent.userEntitlement {
 				if user == everyone {
 					log.Debug("everyone is entitled to space", "spaceId", args.spaceId)
 					return &boolCacheResult{allowed: true}, nil
-				} else if user == args.principal {
-					log.Debug("user is entitled to space", "spaceId", args.spaceId, "userId", args.principal)
-					return &boolCacheResult{allowed: true}, nil
+				} else {
+					for _, wallet := range wallets {
+						if user == wallet {
+							log.Debug("user is entitled to space", "spaceId", args.spaceId, "userId", wallet, "principal", args.principal)
+							return &boolCacheResult{allowed: true}, nil
+						}
+					}
 				}
 			}
 		} else {

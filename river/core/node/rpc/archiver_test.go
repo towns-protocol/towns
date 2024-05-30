@@ -2,7 +2,9 @@ package rpc_test
 
 import (
 	"context"
+	"io"
 	"net"
+	"net/http"
 	"sync"
 	"testing"
 	"time"
@@ -22,6 +24,7 @@ import (
 	"github.com/river-build/river/core/node/storage"
 	"github.com/river-build/river/core/node/testutils/dbtestutils"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func fillUserSettingsStreamWithData(
@@ -378,6 +381,15 @@ func TestArchive100StreamsWithData(t *testing.T) {
 	require.Zero(stats.FailedOpsCount)
 }
 
+func httpGet(t *testing.T, url string) string {
+	resp, err := http.Get(url)
+	require.NoError(t, err)
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	return string(body)
+}
+
 func TestArchiveContinuous(t *testing.T) {
 	tester := newServiceTesterAndStart(t, 1)
 	ctx := tester.ctx
@@ -403,6 +415,9 @@ func TestArchiveContinuous(t *testing.T) {
 
 	arch.Archiver.WaitForStart()
 	require.Len(arch.ExitSignal(), 0)
+
+	status := httpGet(t, "http://"+listener.Addr().String()+"/status")
+	require.Contains(status, "OK")
 
 	require.EventuallyWithT(
 		func(c *assert.CollectT) {

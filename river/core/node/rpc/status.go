@@ -13,10 +13,14 @@ import (
 )
 
 func (s *Service) getStatusReponse() *statusinfo.StatusResponse {
+	var addr string
+	if s.wallet != nil {
+		addr = s.wallet.Address.Hex()
+	}
 	return &statusinfo.StatusResponse{
 		Status:     s.GetStatus(),
 		InstanceId: s.instanceId,
-		Address:    s.wallet.Address.Hex(),
+		Address:    addr,
 		Version:    version.GetFullVersion(),
 		StartTime:  s.startTime.UTC().Format(time.RFC3339),
 		Uptime:     time.Since(s.startTime).String(),
