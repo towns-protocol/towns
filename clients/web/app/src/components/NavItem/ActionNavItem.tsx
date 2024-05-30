@@ -7,7 +7,7 @@ import { NavItem } from './_NavItem'
 type Props = {
     id?: string
     badge?: React.ReactNode
-    label: React.ReactNode
+    label?: React.ReactNode
     link?: string
     icon?: IconName | React.ReactNode
     highlight?: boolean
@@ -57,15 +57,19 @@ export const ActionNavItem = (props: Props) => {
                 />
             )) ||
                 icon}
-            <ButtonText
-                fontWeight={isHighlight ? 'strong' : undefined}
-                color={isHighlight ? 'default' : undefined}
-            >
-                {label}
-            </ButtonText>
-            <Stack horizontal grow justifyContent="end">
-                {badge}
-            </Stack>
+            {!!label && (
+                <ButtonText
+                    fontWeight={isHighlight ? 'strong' : undefined}
+                    color={isHighlight ? 'default' : undefined}
+                >
+                    {label}
+                </ButtonText>
+            )}
+            {!!badge && (
+                <Stack horizontal grow justifyContent="end">
+                    {badge}
+                </Stack>
+            )}
             {children}
         </NavItem>
     )

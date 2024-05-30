@@ -52,6 +52,7 @@ export const ChannelNavItem = (props: Props) => {
                             background="level2"
                             color={showUnread ? 'default' : 'gray2'}
                             size="square_lg"
+                            shrink={false}
                         />
                     </Box>
                     <ButtonText
