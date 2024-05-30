@@ -4,7 +4,7 @@ import { matchPath, useLocation } from 'react-router'
 import { TransitionLogo } from '@components/Logo/Logo'
 import { CreateSpaceAnimation } from '@components/SetupAnimation/CreateSpaceAnimation'
 import { SetupAnimation } from '@components/SetupAnimation/SetupAnimation'
-import { MotionStack } from '@ui'
+import { BoxProps, MotionStack } from '@ui'
 import { useStore } from 'store/store'
 import { AppOverlayDebugger } from './AppOverlayDebugger'
 import { AppProgressState } from './AppProgressState'
@@ -43,9 +43,7 @@ export const AppProgressOverlay = (props: { debug?: boolean }) => {
                     {content.element}
                     {props.debug && <AppOverlayDebugger debugText={appProgressOverlay} />}
                 </TransitionContainer>
-            ) : (
-                <></>
-            )}
+            ) : null}
         </AnimatePresence>
     )
 }
@@ -62,7 +60,7 @@ export const useAppOverlayContent = (
             return isOptimisticInitialized
                 ? // we think we have already initialized the space, show the
                   // skeleton instead of risking a flash of the setup animation
-                  { key: 'skeleton', element: <AppSkeletonView /> }
+                  { key: 'skeleton', element: <AppSkeletonView key="skeleton" /> }
                 : { key: 'logo', element: <TransitionLogo key="logo" /> }
         }
 
@@ -70,34 +68,44 @@ export const useAppOverlayContent = (
             return isOptimisticInitialized
                 ? // we think we have already initialized the space, show the
                   // skeleton instead of risking a flash of the setup animation
-                  { key: 'skeleton', element: <AppSkeletonView /> }
+                  { key: 'skeleton', element: <AppSkeletonView key="skeleton" /> }
                 : {
                       key: 'animation',
-                      element: <SetupAnimation mode={AppProgressState.InitializingWorkspace} />,
+                      element: (
+                          <SetupAnimation
+                              mode={AppProgressState.InitializingWorkspace}
+                              key="animation"
+                          />
+                      ),
                   }
         }
 
         if (state === AppProgressState.Joining) {
-            return { key: 'animation', element: <SetupAnimation mode={AppProgressState.Joining} /> }
+            return {
+                key: 'animation',
+                element: <SetupAnimation mode={AppProgressState.Joining} key="animation" />,
+            }
         }
 
         if (state === AppProgressState.CreatingSpace) {
-            return { key: 'animation', element: <CreateSpaceAnimation /> }
+            return { key: 'animation', element: <CreateSpaceAnimation key="create" /> }
         }
 
         return { key: 'logo', element: <TransitionLogo key="logo" /> }
     }, [state, isOptimisticInitialized])
 }
 
-const TransitionContainer = (props: { children: React.ReactNode }) => {
-    const transition = useMemo(() => {
-        return {
-            exit: {
-                opacity: 0,
-                transition: { duration: 0.4, delay: 0.2 },
-            },
-        }
-    }, [])
+const transition = {
+    exit: {
+        opacity: 0,
+        transitionEnd: {
+            display: 'none',
+        },
+        transition: { duration: 0.4, delay: 0.2 },
+    },
+} as const
+
+export const TransitionContainer = (props: Pick<BoxProps, 'children' | 'background'>) => {
     return (
         <MotionStack
             centerContent
