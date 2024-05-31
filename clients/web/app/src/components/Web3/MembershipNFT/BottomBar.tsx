@@ -162,7 +162,7 @@ export const BottomBarWithColWidths = ({
             }}
             {...boxProps}
         >
-            <Stack absoluteFill background="backdropBlur" />
+            <Stack absoluteFill />
             <Box
                 grow={isTouch}
                 position="relative"

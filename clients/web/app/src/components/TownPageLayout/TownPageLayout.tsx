@@ -126,7 +126,7 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                         tablet: 'md',
                     }}
                 >
-                    <Stack gap="lg" ref={leftColRef}>
+                    <Stack gap="x4" ref={leftColRef}>
                         <Stack horizontal gap="sm" alignContent="start">
                             {isTouch && (
                                 <InteractiveTownsToken
@@ -265,12 +265,14 @@ const Header = (props: {
     })
 
     return (
-        <Stack gap width="100%" paddingTop={isTouch ? 'sm' : 'none'}>
-            <Heading level={2} style={{ textTransform: 'none' }}>
-                {name}
-            </Heading>
-            {motto && <Text color="gray2">{motto}</Text>}
-            <Stack horizontal height="x4">
+        <Stack gap width="100%" justifyContent="spaceBetween" paddingTop={isTouch ? 'sm' : 'none'}>
+            <Stack gap>
+                <Heading level={2} style={{ textTransform: 'none' }}>
+                    {name}
+                </Heading>
+                {motto && <Text color="gray2">{motto}</Text>}
+            </Stack>
+            <Stack horizontal justifySelf="end" height="x4">
                 {userId && (
                     <AvatarTextHorizontal
                         userId={userId}
@@ -316,6 +318,7 @@ const InformationBoxes = (props: {
         tokensGatingMembership,
         membershipPricingModule,
     } = props
+    const { isTouch } = useDevice()
     const onAddressClick = useEvent(() => {
         window.open(`${baseScanUrl(chainId)}/address/${address}`, '_blank', 'noopener,noreferrer')
     })
@@ -341,6 +344,11 @@ const InformationBoxes = (props: {
             scrollbars={false}
             shrink={false}
             layout="position"
+            style={{
+                paddingLeft: isTouch ? vars.space['lg'] : 'none',
+                marginLeft: isTouch ? vars.space['-lg'] : 'none',
+                marginRight: isTouch ? vars.space['-lg'] : 'none',
+            }}
         >
             <TokenInfoBox
                 title="For"

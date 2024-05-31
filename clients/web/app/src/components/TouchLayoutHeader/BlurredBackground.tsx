@@ -14,23 +14,42 @@ type Props = {
 export const BlurredBackground = (props: Props) => {
     const { imageSrc, height, blur, initial, animate } = props
     return (
-        <MotionBox
-            layout
-            position="absolute"
-            top="none"
-            left="none"
-            right="none"
-            height={height ?? '100%'}
-            pointerEvents="none"
-            initial={initial}
-            animate={animate}
-            key={imageSrc}
-            transition={{ duration: 0.7 }}
-            className={styles.blurredBackgroundStyle}
-            style={{
-                backgroundImage: `url(${imageSrc})`,
-                filter: blur ? `blur(${blur}px)` : 'initial',
-            }}
-        />
+        <>
+            <MotionBox
+                layout
+                position="absolute"
+                top="none"
+                left="none"
+                right="none"
+                height={height ?? '100%'}
+                pointerEvents="none"
+                initial={initial}
+                className={styles.blurredBackgroundStyle}
+                zIndex="above"
+                background="level1"
+                opacity="0.8"
+                animate={animate}
+                transition={{ duration: 0.7 }}
+            />
+            <MotionBox
+                layout
+                position="absolute"
+                top="none"
+                left="none"
+                right="none"
+                zIndex="below"
+                height={height ?? '100%'}
+                pointerEvents="none"
+                initial={initial}
+                className={styles.blurredBackgroundStyle}
+                style={{
+                    backgroundImage: `url(${imageSrc})`,
+                    filter: blur ? `blur(${blur}px)` : 'initial',
+                }}
+                animate={animate}
+                key={imageSrc}
+                transition={{ duration: 0.7 }}
+            />
+        </>
     )
 }

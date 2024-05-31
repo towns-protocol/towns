@@ -190,11 +190,9 @@ const Header = (props: {
 
     return (
         <Box horizontal centerContent width="100%">
-            <Stack horizontal width="100%" paddingY="md" gap="md" paddingRight="md">
+            <Stack horizontal width="100%" paddingY="md" gap="md">
                 <Link to="/">
-                    <Box centerContent width="x8">
-                        <LogoSingleLetter />
-                    </Box>
+                    <LogoSingleLetter />
                 </Link>
                 <Box grow />
                 {isPreview ? (

@@ -151,24 +151,21 @@ export const colorProperties = defineProperties({
             },
 
             backdropBlur: {
-                vars: {
-                    '--bg-opacity': '0.5',
-                },
                 WebkitBackdropFilter: 'blur(10px)',
                 backdropFilter: 'blur(10px)',
                 selectors: {
                     [`${darkTheme} &`]: {
-                        background: vars.color.background.level1,
+                        background: vars.color.background.level1Transparent,
                         color: vars.color.overlay.black,
                         vars: {
-                            '--background': vars.color.background.level1,
+                            '--background': vars.color.background.level1Transparent,
                         },
                     },
                     [`${lightTheme} &`]: {
-                        background: vars.color.background.level1,
+                        background: vars.color.background.level1Transparent,
                         color: vars.color.overlay.black,
                         vars: {
-                            '--background': vars.color.background.level1,
+                            '--background': vars.color.background.level1Transparent,
                         },
                     },
                 },

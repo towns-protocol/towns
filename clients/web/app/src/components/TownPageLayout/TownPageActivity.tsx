@@ -96,7 +96,7 @@ export const TownPageActivity = (props: { townId: string }) => {
 
     return (
         <AnimatePresence>
-            <Stack gap="lg">
+            <Stack gap="x4">
                 {!!members && members.length > 0 && (
                     <FadeInBox
                         horizontal

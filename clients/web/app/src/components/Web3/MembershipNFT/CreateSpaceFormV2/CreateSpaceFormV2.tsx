@@ -527,7 +527,11 @@ function CreateSpaceFormV2WithoutAuth() {
                                                 </CreateTownSubmit>
                                             </Stack>
                                         ) : (
-                                            <Stack width="100%" borderTop="default">
+                                            <Stack
+                                                width="100%"
+                                                borderTop="default"
+                                                background="backdropBlur"
+                                            >
                                                 <BottomBarWithColWidths
                                                     gap="x20"
                                                     leftColWidth={leftColWidth}

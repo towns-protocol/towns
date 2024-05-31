@@ -69,6 +69,7 @@ export function BottomBarContent({
                 position="fixed"
                 bottom="none"
                 borderTop="default"
+                background="backdropBlur"
                 ref={footerRef}
             >
                 <BottomBarWithColWidths
