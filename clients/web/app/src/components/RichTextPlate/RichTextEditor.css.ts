@@ -27,6 +27,15 @@ export const contentEditablePWA = style([
     },
 ])
 
+export const formattingToolbarTouch = style([
+    atoms({
+        background: 'level2',
+        position: 'absolute',
+        zIndex: 'above',
+        bottom: 'sm',
+    }),
+])
+
 export const root = style({})
 
 export const paragraph = style({

@@ -351,7 +351,7 @@ const PlateEditorWithoutBoundary = ({
                                 threadId={props.threadId}
                                 threadPreview={props.threadPreview}
                                 showFormattingToolbar={isFormattingToolbarOpen}
-                                canShowInlineToolbar={!isTouch && !isFormattingToolbarOpen}
+                                setIsFormattingToolbarOpen={setIsFormattingToolbarOpen}
                                 key="editor"
                             />
 

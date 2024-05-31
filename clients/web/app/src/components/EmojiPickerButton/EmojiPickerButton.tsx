@@ -97,6 +97,15 @@ export const EmojiPickerButtonTouch = (props: {
     const { showButton, onSelectEmoji } = props
     const [sheetVisible, setSheetVisible] = useState<boolean>(false)
 
+    const onOpenSheet: React.MouseEventHandler = useCallback(
+        (e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            setSheetVisible(true)
+        },
+        [setSheetVisible],
+    )
+
     const onCloseSheet = useCallback(() => {
         setSheetVisible(false)
     }, [setSheetVisible])
@@ -110,7 +119,7 @@ export const EmojiPickerButtonTouch = (props: {
                     exit={{ opacity: 0 }}
                     icon="emoji"
                     alignSelf="start"
-                    onClick={() => setSheetVisible(true)}
+                    onMouseDown={onOpenSheet}
                 />
             )}
             {sheetVisible && (

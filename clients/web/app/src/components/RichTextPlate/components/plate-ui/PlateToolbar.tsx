@@ -8,10 +8,11 @@ import { focusEditor } from '@udecode/slate-react'
 import { MARK_BOLD, MARK_CODE, MARK_ITALIC, MARK_STRIKETHROUGH } from '@udecode/plate-basic-marks'
 import { upsertLink } from '@udecode/plate-link'
 import { ListStyleType } from '@udecode/plate-indent-list'
-import { Box, BoxProps, DividerEditorToolbar, MotionBox, Stack } from '@ui'
+import { Box, BoxProps, DividerEditorToolbar, IconButton, MotionBox, Stack } from '@ui'
 import { GiphyEntryDesktop } from '@components/Giphy/GiphyEntry'
 import { useDevice } from 'hooks/useDevice'
 import { ShortcutTooltip } from '@components/Shortcuts/ShortcutTooltip'
+import { formattingToolbarTouch } from '../../RichTextEditor.css'
 import { ListToolbarButton } from './ListToolbarButton'
 import { AddLinkModal } from './LinkModal'
 import { MarkToolbarButton } from './MarkToolbarButton'
@@ -29,9 +30,13 @@ type Props = {
     attemptingToSend?: boolean
     rounded?: BoxProps['rounded']
     showFormattingToolbar: boolean
-    canShowInlineToolbar: boolean
+    setIsFormattingToolbarOpen: (isFormattingToolbarOpen: boolean) => void
 } & ComponentProps<typeof GiphyEntryDesktop>
-export const PlateToolbar = ({ showFormattingToolbar, focused }: Props) => {
+export const PlateToolbar = ({
+    showFormattingToolbar,
+    setIsFormattingToolbarOpen,
+    focused,
+}: Props) => {
     const [linkLinkModal, setLinkModal] = useState(false)
     const { isTouch } = useDevice()
     const editor = useEditorRef()
@@ -85,7 +90,11 @@ export const PlateToolbar = ({ showFormattingToolbar, focused }: Props) => {
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
                     >
-                        <Box paddingTop="sm" paddingX="sm">
+                        <Box
+                            paddingTop="sm"
+                            paddingX="sm"
+                            className={isTouch ? formattingToolbarTouch : undefined}
+                        >
                             <Stack
                                 horizontal
                                 overflowX="scroll"
@@ -96,6 +105,13 @@ export const PlateToolbar = ({ showFormattingToolbar, focused }: Props) => {
                                 zIndex="tooltips"
                                 onPointerDown={onToolbarPointerDown}
                             >
+                                {isTouch && (
+                                    <IconButton
+                                        opaque
+                                        icon="close"
+                                        onClick={() => setIsFormattingToolbarOpen(false)}
+                                    />
+                                )}
                                 <MarkToolbarButton
                                     nodeType={MARK_BOLD}
                                     icon="bold"
