@@ -95,10 +95,14 @@ func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*stre
 		minipoolEvents.Set(parsed.Hash, parsed)
 	}
 
+	lastBlockHeader := miniblocks[len(miniblocks)-1].header()
+	generation := lastBlockHeader.MiniblockNum + 1
+	eventNumOffset := lastBlockHeader.EventNumOffset + int64(len(lastBlockHeader.EventHashes)) + 1 // plus one for header
+
 	return &streamViewImpl{
 		streamId:      streamId,
 		blocks:        miniblocks,
-		minipool:      newMiniPoolInstance(minipoolEvents, miniblocks[len(miniblocks)-1].header().MiniblockNum+1),
+		minipool:      newMiniPoolInstance(minipoolEvents, generation, eventNumOffset),
 		snapshot:      snapshot,
 		snapshotIndex: snapshotIndex,
 	}, nil
@@ -146,10 +150,14 @@ func MakeRemoteStreamView(resp *GetStreamResponse) (*streamViewImpl, error) {
 		minipoolEvents.Set(parsed.Hash, parsed)
 	}
 
+	lastBlockHeader := miniblocks[len(miniblocks)-1].header()
+	generation := lastBlockHeader.MiniblockNum + 1
+	eventNumOffset := lastBlockHeader.EventNumOffset + int64(len(lastBlockHeader.EventHashes)) + 1 // plus one for header
+
 	return &streamViewImpl{
 		streamId:      streamId,
 		blocks:        miniblocks,
-		minipool:      newMiniPoolInstance(minipoolEvents, lastMiniblockNumber+1),
+		minipool:      newMiniPoolInstance(minipoolEvents, generation, eventNumOffset),
 		snapshot:      snapshot,
 		snapshotIndex: snapshotIndex,
 	}, nil
@@ -363,10 +371,13 @@ func (r *streamViewImpl) copyAndApplyBlock(
 		snapshotIndex = r.snapshotIndex
 	}
 
+	generation := header.MiniblockNum + 1
+	eventNumOffset := header.EventNumOffset + int64(len(header.EventHashes)) + 1 // plus one for header
+
 	return &streamViewImpl{
 		streamId:      r.streamId,
 		blocks:        append(r.blocks[startIndex:], miniblock),
-		minipool:      newMiniPoolInstance(minipoolEvents, header.MiniblockNum+1),
+		minipool:      newMiniPoolInstance(minipoolEvents, generation, eventNumOffset),
 		snapshot:      snapshot,
 		snapshotIndex: snapshotIndex,
 	}, nil
@@ -418,7 +429,7 @@ func (r *streamViewImpl) indexOfMiniblockWithNum(mininblockNum int64) (int, erro
 }
 
 // iterate over events starting at startBlock including events in the minipool
-func (r *streamViewImpl) forEachEvent(startBlock int, op func(e *ParsedEvent) (bool, error)) error {
+func (r *streamViewImpl) forEachEvent(startBlock int, op func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error)) error {
 	if startBlock < 0 || startBlock > len(r.blocks) {
 		return RiverError(Err_INVALID_ARGUMENT, "iterateEvents: bad startBlock", "startBlock", startBlock)
 	}
@@ -451,7 +462,7 @@ func (r *streamViewImpl) LastEvent() *ParsedEvent {
 
 func (r *streamViewImpl) MinipoolEnvelopes() []*Envelope {
 	envelopes := make([]*Envelope, 0, len(r.minipool.events.Values))
-	_ = r.minipool.forEachEvent(func(e *ParsedEvent) (bool, error) {
+	_ = r.minipool.forEachEvent(func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error) {
 		envelopes = append(envelopes, e.Envelope)
 		return true, nil
 	})

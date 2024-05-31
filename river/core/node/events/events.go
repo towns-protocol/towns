@@ -171,9 +171,9 @@ func Make_ChannelPayload_Inception(
 		ChannelPayload: &ChannelPayload{
 			Content: &ChannelPayload_Inception_{
 				Inception: &ChannelPayload_Inception{
-					StreamId:          streamId[:],
-					SpaceId:           spaceId[:],
-					Settings:          settings,
+					StreamId: streamId[:],
+					SpaceId:  spaceId[:],
+					Settings: settings,
 				},
 			},
 		},
@@ -280,18 +280,18 @@ func Make_SpacePayload_Membership(op MembershipOp, userId string, initiatorId st
 	return Make_MemberPayload_Membership(op, userAddress, initiatorAddress, nil)
 }
 
-func Make_SpacePayload_Channel(
+func Make_SpacePayload_ChannelUpdate(
 	op ChannelOp,
 	channelId StreamId,
 	originEvent *EventRef,
 ) *StreamEvent_SpacePayload {
 	return &StreamEvent_SpacePayload{
 		SpacePayload: &SpacePayload{
-			Content: &SpacePayload_Channel_{
-				Channel: &SpacePayload_Channel{
-					Op:                op,
-					ChannelId:         channelId[:],
-					OriginEvent:       originEvent,
+			Content: &SpacePayload_Channel{
+				Channel: &SpacePayload_ChannelUpdate{
+					Op:          op,
+					ChannelId:   channelId[:],
+					OriginEvent: originEvent,
 				},
 			},
 		},

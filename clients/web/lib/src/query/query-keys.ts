@@ -32,12 +32,12 @@ export const blockchainKeys = {
         roleId,
     ],
     spaceInfo: (spaceId: string) => ['spaceInfo', QuerKeysEnum.FirstBySpaceIds, spaceId] as const,
-    channelInfo: (channelId: string, updatedAtHash: string) => [
+    channelInfo: (channelId: string, updatedAtKey: string) => [
         'channelInfo',
         'channelId',
         channelId,
-        'updatedAtHash',
-        updatedAtHash,
+        'updatedAtKey',
+        updatedAtKey,
     ],
     // optional roledIds allow for passing only spaceId to get all multipleRoleDetails queries for this space
     multipleRoleDetails: (spaceId: string, roleIds?: number[]) => {

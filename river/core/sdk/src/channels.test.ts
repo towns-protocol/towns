@@ -39,10 +39,10 @@ describe('channelsTests', () => {
         const channelId = makeUniqueChannelStreamId(spaceId)
         await expect(bobsClient.createChannel(spaceId, 'Channel', 'Topic', channelId)).toResolve()
         await bobsClient.sendMessage(channelId, 'Very bad message!')
-        const stream = await bobsClient.waitForStream(channelId)
+        const channelStream = await bobsClient.waitForStream(channelId)
         let eventId: string | undefined
         await waitFor(() => {
-            const event = stream.view.timeline.find(
+            const event = channelStream.view.timeline.find(
                 (e) =>
                     getChannelMessagePayload(e.localEvent?.channelMessage) === 'Very bad message!',
             )
@@ -50,12 +50,12 @@ describe('channelsTests', () => {
             eventId = event?.hashStr
         })
 
-        expect(stream).toBeDefined()
+        expect(channelStream).toBeDefined()
         expect(eventId).toBeDefined()
 
         await expect(bobsClient.redactMessage(channelId, eventId!)).toResolve()
         await waitFor(() => {
-            const event = stream.view.timeline.find(
+            const event = channelStream.view.timeline.find(
                 (e) =>
                     e.remoteEvent?.event.payload.case === 'channelPayload' &&
                     e.remoteEvent.event.payload.value.content.case === 'redaction' &&

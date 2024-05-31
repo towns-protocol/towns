@@ -14,7 +14,7 @@ import {
 import { StreamRpcClientType } from './makeStreamRpcClient'
 import { makeEvent, unpackStream, unpackStreamEnvelopes } from './sign'
 import {
-    getChannelPayload,
+    getChannelUpdatePayload,
     getMessagePayload,
     make_ChannelPayload_Inception,
     make_ChannelPayload_Message,
@@ -174,7 +174,7 @@ const createNewChannelAndPostHello = async (
     const spaceResponse = await bob.getStream({ streamId: spacedStreamId })
     const channelCreatePayload = lastEventFiltered(
         await unpackStreamEnvelopes(spaceResponse.stream!),
-        getChannelPayload,
+        getChannelUpdatePayload,
     )
     expect(channelCreatePayload).toBeDefined()
     expect(channelCreatePayload?.channelId).toEqual(channelId)

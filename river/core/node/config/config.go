@@ -221,7 +221,7 @@ type ArchiveConfig struct {
 	Filter FilterConfig
 
 	// Number of miniblocks to read at once from the remote node.
-	ReadMiniblcocksSize uint64
+	ReadMiniblocksSize uint64
 
 	DisablePrintStats bool
 	PrintStatsPeriod  time.Duration // If 0, default to 1 minute.
@@ -250,10 +250,10 @@ type MetricsConfig struct {
 }
 
 func (ac *ArchiveConfig) GetReadMiniblocksSize() uint64 {
-	if ac.ReadMiniblcocksSize <= 0 {
+	if ac.ReadMiniblocksSize <= 0 {
 		return 100
 	}
-	return ac.ReadMiniblcocksSize
+	return ac.ReadMiniblocksSize
 }
 
 func (ac *ArchiveConfig) GetPrintStatsPeriod() time.Duration {

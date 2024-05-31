@@ -108,14 +108,17 @@ func (b *MiniblockInfo) lastEvent() *ParsedEvent {
 	}
 }
 
-func (b *MiniblockInfo) forEachEvent(op func(e *ParsedEvent) (bool, error)) error {
+func (b *MiniblockInfo) forEachEvent(op func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error)) error {
+	blockNum := b.header().MiniblockNum
+	eventNum := b.header().EventNumOffset
 	for _, event := range b.events {
-		c, err := op(event)
+		c, err := op(event, blockNum, eventNum)
+		eventNum++
 		if !c {
 			return err
 		}
 	}
-	c, err := op(b.headerEvent)
+	c, err := op(b.headerEvent, blockNum, eventNum)
 	if !c {
 		return err
 	}

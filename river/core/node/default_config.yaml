@@ -123,4 +123,14 @@ test_contract:
     address: ''
     version: '3'
 
+archive:
+    archiveId: ''
+    # filter: ''
+    # readMiniblocksSize: ''
+    # disablePrintStats: ''
+    printStatsPeriod: '10s'
+    # taskQueueSize: ''
+    # workerPoolSize: ''
+    # streamsContractCallPageSize: ''
+
 enableDebugEndpoints: false

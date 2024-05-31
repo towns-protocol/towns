@@ -40,7 +40,7 @@ func TestInceptionPayload(t *testing.T) {
 	assert.Nil(t, (&StreamEvent{
 		Payload: &StreamEvent_SpacePayload{
 			SpacePayload: &SpacePayload{
-				Content: &SpacePayload_Channel_{},
+				Content: &SpacePayload_Channel{},
 			},
 		},
 	}).GetInceptionPayload())
@@ -48,8 +48,8 @@ func TestInceptionPayload(t *testing.T) {
 	spaceMembership := StreamEvent{
 		Payload: &StreamEvent_SpacePayload{
 			SpacePayload: &SpacePayload{
-				Content: &SpacePayload_Channel_{
-					Channel: &SpacePayload_Channel{},
+				Content: &SpacePayload_Channel{
+					Channel: &SpacePayload_ChannelUpdate{},
 				},
 			},
 		},

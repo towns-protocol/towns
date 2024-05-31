@@ -8,29 +8,34 @@ import (
 type eventMap = *OrderedMap[common.Hash, *ParsedEvent]
 
 type minipoolInstance struct {
-	events     eventMap
-	generation int64
+	events         eventMap
+	generation     int64
+	eventNumOffset int64
 }
 
-func newMiniPoolInstance(events eventMap, generation int64) *minipoolInstance {
+func newMiniPoolInstance(events eventMap, generation int64, eventNumOffset int64) *minipoolInstance {
 	return &minipoolInstance{
-		events:     events,
-		generation: generation,
+		events:         events,
+		generation:     generation,
+		eventNumOffset: eventNumOffset,
 	}
 }
 
 func (m *minipoolInstance) copyAndAddEvent(event *ParsedEvent) *minipoolInstance {
 	m = &minipoolInstance{
-		events:     m.events.Copy(1),
-		generation: m.generation,
+		events:         m.events.Copy(1),
+		generation:     m.generation,
+		eventNumOffset: m.eventNumOffset,
 	}
 	m.events.Set(event.Hash, event)
 	return m
 }
 
-func (m *minipoolInstance) forEachEvent(op func(e *ParsedEvent) (bool, error)) error {
+func (m *minipoolInstance) forEachEvent(op func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error)) error {
+	eventNum := m.eventNumOffset
 	for _, e := range m.events.Values {
-		cont, err := op(e)
+		cont, err := op(e, m.generation, eventNum)
+		eventNum++
 		if !cont {
 			return err
 		}

@@ -9,7 +9,7 @@ import {
     ChannelProperties,
     ChannelPayload_Inception,
     UserSettingsPayload_Inception,
-    SpacePayload_Channel,
+    SpacePayload_ChannelUpdate,
     EncryptedData,
     UserPayload_UserMembership,
     UserSettingsPayload_UserBlock,
@@ -575,8 +575,8 @@ export const make_UserDeviceKeyPayload_EncryptionDevice = (
     }
 }
 
-export const make_SpacePayload_Channel = (
-    value: PlainMessage<SpacePayload_Channel>,
+export const make_SpacePayload_ChannelUpdate = (
+    value: PlainMessage<SpacePayload_ChannelUpdate>,
 ): PlainMessage<StreamEvent>['payload'] => {
     return {
         case: 'spacePayload',
@@ -606,9 +606,9 @@ export const getUserPayload_Membership = (
     return undefined
 }
 
-export const getChannelPayload = (
+export const getChannelUpdatePayload = (
     event: ParsedEvent | StreamEvent | undefined,
-): SpacePayload_Channel | undefined => {
+): SpacePayload_ChannelUpdate | undefined => {
     if (!isDefined(event)) {
         return undefined
     }

@@ -11,7 +11,7 @@ export type OfflineUser = {
 
 export type OfflineChannelMetadata = {
     channel: ChannelMetadata
-    updatedAtHash: string
+    updatedAtKey: string
 }
 
 // map <spaceId/networkId, SpaceInfo>

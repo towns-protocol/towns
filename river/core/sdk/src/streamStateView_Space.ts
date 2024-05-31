@@ -5,7 +5,8 @@ import {
     Err,
     Snapshot,
     SpacePayload,
-    SpacePayload_Channel,
+    SpacePayload_ChannelUpdate,
+    SpacePayload_ChannelMetadata,
     SpacePayload_Snapshot,
 } from '@river-build/proto'
 import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './streamEvents'
@@ -17,7 +18,7 @@ import { isDefaultChannelId, streamIdAsString } from './id'
 
 export type ParsedChannelProperties = {
     isDefault: boolean
-    updatedAtHash: string
+    updatedAtEventNum: bigint
 }
 
 export class StreamStateView_Space extends StreamStateView_AbstractContent {
@@ -38,7 +39,7 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
     ): void {
         // loop over content.channels, update space channels metadata
         for (const payload of content.channels) {
-            this.addSpacePayload_Channel(eventHash, payload, undefined)
+            this.addSpacePayload_Channel(eventHash, payload, payload.updatedAtEventNum, undefined)
         }
     }
 
@@ -82,7 +83,12 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
             case 'inception':
                 break
             case 'channel':
-                this.addSpacePayload_Channel(event.hashStr, payload.content.value, stateEmitter)
+                this.addSpacePayload_Channel(
+                    event.hashStr,
+                    payload.content.value,
+                    event.eventNum,
+                    stateEmitter,
+                )
                 break
             case undefined:
                 break
@@ -93,7 +99,8 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
 
     private addSpacePayload_Channel(
         eventHash: string,
-        payload: SpacePayload_Channel,
+        payload: SpacePayload_ChannelMetadata | SpacePayload_ChannelUpdate,
+        updatedAtEventNum: bigint,
         stateEmitter?: TypedEmitter<StreamStateEvents>,
     ): void {
         const { op, channelId: channelIdBytes } = payload
@@ -102,7 +109,7 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
             case ChannelOp.CO_CREATED: {
                 this.spaceChannelsMetadata.set(channelId, {
                     isDefault: isDefaultChannelId(channelId),
-                    updatedAtHash: eventHash,
+                    updatedAtEventNum,
                 })
                 stateEmitter?.emit('spaceChannelCreated', this.streamId, channelId)
                 break
@@ -115,7 +122,7 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
             case ChannelOp.CO_UPDATED: {
                 this.spaceChannelsMetadata.set(channelId, {
                     isDefault: isDefaultChannelId(channelId),
-                    updatedAtHash: eventHash,
+                    updatedAtEventNum,
                 })
                 stateEmitter?.emit('spaceChannelUpdated', this.streamId, channelId)
                 break

@@ -18,7 +18,7 @@ import {
     userIdFromAddress,
 } from './id'
 import {
-    getChannelPayload,
+    getChannelUpdatePayload,
     make_ChannelPayload_Inception,
     make_ChannelPayload_Message,
     make_MemberPayload_Membership2,
@@ -121,7 +121,7 @@ export const bobTalksToHimself = async (
     const spaceResponse = await bob.getStream({ streamId: spacedStreamId })
     const channelCreatePayload = lastEventFiltered(
         await unpackStreamEnvelopes(spaceResponse.stream!),
-        getChannelPayload,
+        getChannelUpdatePayload,
     )
     expect(channelCreatePayload).toBeDefined()
     expect(channelCreatePayload?.channelId).toEqual(channelId)

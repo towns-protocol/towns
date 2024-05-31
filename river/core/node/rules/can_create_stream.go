@@ -472,7 +472,7 @@ func (ru *csChannelRules) derivedChannelSpaceParentEvent() (*DerivedEvent, error
 		return nil, err
 	}
 
-	payload := events.Make_SpacePayload_Channel(
+	payload := events.Make_SpacePayload_ChannelUpdate(
 		ChannelOp_CO_CREATED,
 		channelId,
 		&EventRef{

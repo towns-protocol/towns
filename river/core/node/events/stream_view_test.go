@@ -108,8 +108,11 @@ func TestLoad(t *testing.T) {
 	miniEnvelopes := view.MinipoolEnvelopes()
 	assert.Equal(t, 0, len(miniEnvelopes))
 
+	count1 := 0
 	newEnvelopesHashes := make([]common.Hash, 0)
-	_ = view.forEachEvent(0, func(e *ParsedEvent) (bool, error) {
+	_ = view.forEachEvent(0, func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error) {
+		assert.Equal(t, int64(count1), eventNum)
+		count1++
 		newEnvelopesHashes = append(newEnvelopesHashes, e.Hash)
 		return true, nil
 	})
@@ -196,16 +199,22 @@ func TestLoad(t *testing.T) {
 	miniblockHeader, envelopes, _ := view.makeMiniblockHeader(ctx, proposal)
 	assert.NotNil(t, miniblockHeader.Snapshot)
 
-	// check count
-	count := 0
-	err = view.forEachEvent(0, func(e *ParsedEvent) (bool, error) {
-		count++
+	// check count2
+	count2 := 0
+	err = view.forEachEvent(0, func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error) {
+		assert.Equal(t, int64(count2), eventNum)
+		if count2 < 3 {
+			assert.Equal(t, int64(0), minibockNum)
+		} else {
+			assert.Equal(t, int64(1), minibockNum)
+		}
+		count2++
 		return true, nil
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, int64(3), miniblockHeader.EventNumOffset) // 3 events in the genisis miniblock
 	assert.Equal(t, 2, len(miniblockHeader.EventHashes))      // 2 join events added in test
-	assert.Equal(t, 5, count)                                 // we should iterate over all of them
+	assert.Equal(t, 5, count2)                                // we should iterate over all of them
 	// test copy and apply block
 	// how many blocks do we currently have?
 	assert.Equal(t, len(view.blocks), 1)

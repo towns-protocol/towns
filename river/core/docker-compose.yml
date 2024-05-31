@@ -14,6 +14,8 @@ services:
             - DATABASE__PASSWORD=postgres
             - DATABASE__EXTRA=?sslmode=disable&pool_max_conns=1000
             - DATABASE__HOST=host.docker.internal
+            - RUN_MODE=archive
+            - ARCHIVE__ARCHIVEID=1
             - DATABASE__PORT=5433
             - LOG__FORMAT=json
             - LOG__NOCOLOR=true
@@ -28,7 +30,6 @@ services:
             - USEBLOCKCHAINSTREAMREGISTRY=true
             - BASECHAIN__NETWORKURL=http://host.docker.internal:8545
             - RIVERCHAIN__NETWORKURL=http://host.docker.internal:8546
-            - WALLETPRIVATEKEY=51e02cbb807a535b05ae02f15cc3cbf73950e61d6dde55b3a77ad2be8815147c
             - ARCHITECTCONTRACT__ADDRESS=0x2552FcE4D398492E4fd063e6aA77186e5c6d0EF1
             - REGISTRYCONTRACT__ADDRESS=0x531Faa70a60e151d20395E0E4ce9A32FB767Ca00
             - ENTITLEMENT_CONTRACT__ADDRESS=0x2bdCC0de6bE1f7D2ee689a0342D76F52E8EFABa3

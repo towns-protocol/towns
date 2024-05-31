@@ -62,7 +62,7 @@ func (r *streamViewImpl) GetUserMembership(streamId shared.StreamId) (Membership
 		retValue = membership.Op
 	}
 
-	updateFn := func(e *ParsedEvent) (bool, error) {
+	updateFn := func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error) {
 		switch payload := e.Event.Payload.(type) {
 		case *StreamEvent_UserPayload:
 			switch payload := payload.UserPayload.Content.(type) {

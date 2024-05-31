@@ -81,7 +81,7 @@ import {
     make_MemberPayload_Membership2,
     make_SpacePayload_Inception,
     make_UserPayload_Inception,
-    make_SpacePayload_Channel,
+    make_SpacePayload_ChannelUpdate,
     make_UserSettingsPayload_FullyReadMarkers,
     make_UserSettingsPayload_UserBlock,
     make_UserSettingsPayload_Inception,
@@ -717,7 +717,7 @@ export class Client
 
         return this.makeEventAndAddToStream(
             spaceId, // we send events to the stream of the space where updated channel belongs to
-            make_SpacePayload_Channel({
+            make_SpacePayload_ChannelUpdate({
                 op: ChannelOp.CO_UPDATED,
                 channelId: streamIdAsBytes(channelId),
             }),

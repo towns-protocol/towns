@@ -30,7 +30,7 @@ func (r *streamViewImpl) GetChannelMembers() (*mapset.Set[string], error) {
 		members.Add(userId)
 	}
 
-	updateFn := func(e *ParsedEvent) (bool, error) {
+	updateFn := func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error) {
 		switch payload := e.Event.Payload.(type) {
 		case *protocol.StreamEvent_MemberPayload:
 			switch payload := payload.MemberPayload.Content.(type) {
@@ -67,7 +67,7 @@ func (r *streamViewImpl) GetMembership(userAddress []byte) (protocol.MembershipO
 		retValue = protocol.MembershipOp_SO_JOIN
 	}
 
-	updateFn := func(e *ParsedEvent) (bool, error) {
+	updateFn := func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error) {
 		switch payload := e.Event.Payload.(type) {
 		case *protocol.StreamEvent_MemberPayload:
 			switch payload := payload.MemberPayload.Content.(type) {
@@ -101,7 +101,7 @@ func (r *streamViewImpl) GetKeySolicitations(userAddress []byte) ([]*protocol.Me
 		member = proto.Clone(member).(*protocol.MemberPayload_Snapshot_Member)
 	}
 
-	updateFn := func(e *ParsedEvent) (bool, error) {
+	updateFn := func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error) {
 		switch payload := e.Event.Payload.(type) {
 		case *protocol.StreamEvent_MemberPayload:
 			switch payload := payload.MemberPayload.Content.(type) {

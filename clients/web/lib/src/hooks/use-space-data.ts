@@ -81,27 +81,27 @@ export const useInviteData = (slug: string | undefined) => {
 function channelInfoQueryConfig({
     spaceId,
     channelId,
-    updatedAtHash,
+    updatedAtKey,
     spaceDapp,
     initialData,
     enabled = true,
 }: {
     spaceId: string
     channelId: string
-    updatedAtHash: string
+    updatedAtKey: string
     spaceDapp: ISpaceDapp | undefined
     initialData: OfflineChannelMetadata | undefined
     enabled?: boolean | undefined
 }) {
     const needsUpdate =
-        enabled && !!spaceId && !!spaceDapp && initialData?.updatedAtHash !== updatedAtHash // we fetch these in the space query, only fetch if not defined
+        enabled && !!spaceId && !!spaceDapp && initialData?.updatedAtKey !== updatedAtKey // we fetch these in the space query, only fetch if not defined
     return {
-        queryKey: blockchainKeys.channelInfo(channelId ?? '', updatedAtHash ?? ''),
+        queryKey: blockchainKeys.channelInfo(channelId ?? '', updatedAtKey ?? ''),
         queryFn: async (
             spaceDapp: ISpaceDapp | undefined,
             spaceId: string | undefined,
             channelId: string | undefined,
-            updatedAtHash: string | undefined,
+            updatedAtKey: string | undefined,
         ) => {
             if (
                 !spaceDapp ||
@@ -109,8 +109,8 @@ function channelInfoQueryConfig({
                 spaceId.length === 0 ||
                 !channelId ||
                 channelId.length === 0 ||
-                !updatedAtHash ||
-                updatedAtHash.length === 0
+                !updatedAtKey ||
+                updatedAtKey.length === 0
             ) {
                 return undefined
             }
@@ -122,15 +122,15 @@ function channelInfoQueryConfig({
             const channel = await space.getChannelMetadata(channelId)
 
             console.log(
-                `channelInfoQueryConfig spaceDapp.getChannelMetadata: ${spaceId}/${channelId} at: ${updatedAtHash}`,
+                `channelInfoQueryConfig spaceDapp.getChannelMetadata: ${spaceId}/${channelId} at: ${updatedAtKey}`,
                 { channel },
             )
             if (channel) {
                 useOfflineStore
                     .getState()
-                    .setOfflineChannelInfo({ channel, updatedAtHash: updatedAtHash })
+                    .setOfflineChannelInfo({ channel, updatedAtKey: updatedAtKey })
             }
-            return { channel, updatedAtHash }
+            return { channel, updatedAtKey }
         },
         options: {
             enabled: needsUpdate,
@@ -171,14 +171,14 @@ function spaceInfoWithChannelsQueryConfig({
             if (!spaceInfo) {
                 return useOfflineStore.getState().offlineSpaceInfoMap[spaceId]
             }
-            const now = Date.now()
             const channelData = client.streams.get(spaceId)?.view.spaceContent.spaceChannelsMetadata
             const channels = await spaceDapp.getChannels(spaceId)
             channels.forEach((channel: ChannelMetadata) => {
-                const hash = channelData?.get(channel.channelNetworkId)?.updatedAtHash ?? `${now}`
+                const key =
+                    channelData?.get(channel.channelNetworkId)?.updatedAtEventNum.toString() ?? '0'
                 useOfflineStore.getState().setOfflineChannelInfo({
                     channel,
-                    updatedAtHash: hash,
+                    updatedAtKey: key,
                 })
             })
             useOfflineStore.getState().setOfflineSpaceInfo(spaceInfo)
@@ -197,11 +197,10 @@ function spaceInfoWithChannelsQueryConfig({
 
 export function useChannelMetadata(
     spaceId: string | undefined,
-    channels: { id: string; updatedAtHash: string }[],
+    channels: { id: string; updatedAtKey: string }[],
 ) {
     const { baseProvider: provider, baseConfig: config, client } = useTownsContext()
     const spaceDapp = useSpaceDapp({ config, provider })
-    const offlineChannelInfoMap = useOfflineStore((s) => s.offlineChannelMetadataMap)
 
     //console.log('offline channels', offlineChannelInfoMap)
     const isEnabled = spaceDapp && channels.length > 0 && !!client
@@ -212,9 +211,9 @@ export function useChannelMetadata(
                   const queryConfig = channelInfoQueryConfig({
                       spaceId: spaceId,
                       channelId: channel.id,
-                      updatedAtHash: channel.updatedAtHash,
+                      updatedAtKey: channel.updatedAtKey,
                       spaceDapp,
-                      initialData: offlineChannelInfoMap[channel.id],
+                      initialData: useOfflineStore.getState().offlineChannelMetadataMap[channel.id],
                       enabled: isEnabled,
                   })
                   return {
@@ -224,10 +223,10 @@ export function useChannelMetadata(
                               spaceDapp,
                               spaceId,
                               channel.id,
-                              channel.updatedAtHash,
+                              channel.updatedAtKey,
                           )
                           console.log(
-                              `useChannelMetadata query: ${spaceId}/${channel.id} at: ${channel.updatedAtHash}`,
+                              `useChannelMetadata query: ${spaceId}/${channel.id} at: ${channel.updatedAtKey}`,
                           )
                           return res
                       },
@@ -245,17 +244,32 @@ export function useChannelMetadata(
     })
 
     const channelMetaData = queryData.data.length > 0 ? queryData.data : EMPTY_CHANNEL_METADATA
-    return useMemo(() => {
+    const channelMetadataMap = useMemo(() => {
         return channelMetaData.reduce((acc, cur) => {
             if (!!cur && !!cur.channel && !!cur.channel.channelNetworkId) {
                 acc[cur.channel.channelNetworkId] = {
                     channel: cur.channel,
-                    updatedAtHash: cur.updatedAtHash,
+                    updatedAtKey: cur.updatedAtKey,
                 }
             }
             return acc
         }, {} as Record<string, OfflineChannelMetadata>)
     }, [channelMetaData])
+    const retVal = useMemo(() => {
+        return channels.reduce((acc, cur) => {
+            const channel = channelMetadataMap[cur.id]
+            if (channel) {
+                acc[cur.id] = channel
+            } else {
+                const offChannel = useOfflineStore.getState().offlineChannelMetadataMap[cur.id]
+                if (offChannel) {
+                    acc[cur.id] = offChannel
+                }
+            }
+            return acc
+        }, {} as Record<string, OfflineChannelMetadata>)
+    }, [channels, channelMetadataMap])
+    return retVal
 }
 
 export function useContractSpaceInfos(opts: TownsOpts, client?: CasablancaClient) {
@@ -430,7 +444,7 @@ export function useSpaceRollup(streamId: string | undefined, fromTag: string | u
     const userStream = useCasablancaStream(casablancaClient?.userStreamId)
     const { setSpaceData } = useSpaceDataStore()
 
-    const [spaceChannels, setSpaceChannels] = useState<{ id: string; updatedAtHash: string }[]>(
+    const [spaceChannels, setSpaceChannels] = useState<{ id: string; updatedAtKey: string }[]>(
         mapSpaceChannels(stream),
     )
     const channelMetadata = useChannelMetadata(streamId, spaceChannels)
@@ -533,7 +547,7 @@ export function useSpaceRollup(streamId: string | undefined, fromTag: string | u
 function rollupSpace(
     stream: Stream,
     membership: Membership,
-    spaceChannels: { id: string; updatedAtHash: string }[],
+    spaceChannels: { id: string; updatedAtKey: string }[],
     channelMetadata: Record<string, OfflineChannelMetadata>,
     spaceName?: string,
 ): SpaceData | undefined {
@@ -575,8 +589,10 @@ const mapSpaceChannels = (stream?: Stream) => {
     return channelIds.map((id) => {
         return {
             id,
-            updatedAtHash:
-                stream?.view.spaceContent.spaceChannelsMetadata.get(id)?.updatedAtHash ?? '',
+            updatedAtKey:
+                stream?.view.spaceContent.spaceChannelsMetadata
+                    .get(id)
+                    ?.updatedAtEventNum.toString() ?? '',
         }
     })
 }

@@ -209,7 +209,7 @@ message SpacePayload {
         // inception
         Inception inception = 1;
         // channels: sorted by channel_id
-        repeated Channel channels = 2;
+        repeated ChannelMetadata channels = 2;
     }
     
     message Inception {
@@ -217,7 +217,15 @@ message SpacePayload {
         StreamSettings settings = 2;
     }
 
-    message Channel {
+    message ChannelMetadata {
+        reserved 4, 5;
+        ChannelOp op = 1;
+        bytes channel_id = 2;
+        EventRef origin_event = 3;
+        int64 updated_at_event_num = 6;
+    }
+
+    message ChannelUpdate {
         reserved 4, 5;
         ChannelOp op = 1;
         bytes channel_id = 2;
@@ -226,7 +234,7 @@ message SpacePayload {
 
     oneof content {
         Inception inception = 1;
-        Channel channel = 2;
+        ChannelUpdate channel = 2;
     }
 }
 

@@ -18,7 +18,7 @@ import {
     userIdFromAddress,
 } from './id'
 import {
-    getChannelPayload,
+    getChannelUpdatePayload,
     getUserPayload_Membership,
     make_ChannelPayload_Inception,
     make_MemberPayload_Membership2,
@@ -132,7 +132,7 @@ describe('workflows', () => {
         expect(spaceResponse.stream).toBeDefined()
         const channelCreatePayload = lastEventFiltered(
             await unpackStreamEnvelopes(spaceResponse.stream!),
-            getChannelPayload,
+            getChannelUpdatePayload,
         )
         expect(channelCreatePayload).toBeDefined()
         expect(channelCreatePayload?.channelId).toEqual(channelId)

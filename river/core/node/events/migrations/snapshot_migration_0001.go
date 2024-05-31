@@ -26,7 +26,7 @@ func snapshot_migration_0001(iSnapshot *Snapshot) *Snapshot {
 		if snapshot.SpaceContent != nil {
 			snapshot.SpaceContent.Channels = slices.CompactFunc(
 				snapshot.SpaceContent.Channels,
-				func(i, j *SpacePayload_Channel) bool {
+				func(i, j *SpacePayload_ChannelMetadata) bool {
 					return bytes.Equal(i.ChannelId, j.ChannelId)
 				},
 			)

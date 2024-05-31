@@ -157,11 +157,11 @@ func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent, miniblockNum int64
 	iSnapshot = migrations.MigrateSnapshot(iSnapshot)
 	switch payload := event.Event.Payload.(type) {
 	case *StreamEvent_SpacePayload:
-		return update_Snapshot_Space(iSnapshot, payload.SpacePayload, eventNum, event.Hash.Bytes())
+		return update_Snapshot_Space(iSnapshot, payload.SpacePayload, eventNum)
 	case *StreamEvent_ChannelPayload:
 		return update_Snapshot_Channel(iSnapshot, payload.ChannelPayload)
 	case *StreamEvent_DmChannelPayload:
-		return update_Snapshot_DmChannel(iSnapshot, payload.DmChannelPayload, miniblockNum, event.Hash.Bytes())
+		return update_Snapshot_DmChannel(iSnapshot, payload.DmChannelPayload)
 	case *StreamEvent_GdmChannelPayload:
 		return update_Snapshot_GdmChannel(iSnapshot, payload.GdmChannelPayload, miniblockNum, event.Hash.Bytes())
 	case *StreamEvent_UserPayload:
@@ -181,7 +181,7 @@ func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent, miniblockNum int64
 	}
 }
 
-func update_Snapshot_Space(iSnapshot *Snapshot, spacePayload *SpacePayload, eventNum int64, eventHash []byte) error {
+func update_Snapshot_Space(iSnapshot *Snapshot, spacePayload *SpacePayload, eventNum int64) error {
 	snapshot := iSnapshot.Content.(*Snapshot_SpaceContent)
 	if snapshot == nil {
 		return RiverError(Err_INVALID_ARGUMENT, "blockheader snapshot is not a space snapshot")
@@ -189,8 +189,14 @@ func update_Snapshot_Space(iSnapshot *Snapshot, spacePayload *SpacePayload, even
 	switch content := spacePayload.Content.(type) {
 	case *SpacePayload_Inception_:
 		return RiverError(Err_INVALID_ARGUMENT, "cannot update blockheader with inception event")
-	case *SpacePayload_Channel_:
-		snapshot.SpaceContent.Channels = insertChannel(snapshot.SpaceContent.Channels, content.Channel)
+	case *SpacePayload_Channel:
+		channel := &SpacePayload_ChannelMetadata{
+			ChannelId:         content.Channel.ChannelId,
+			Op:                content.Channel.Op,
+			OriginEvent:       content.Channel.OriginEvent,
+			UpdatedAtEventNum: eventNum,
+		}
+		snapshot.SpaceContent.Channels = insertChannel(snapshot.SpaceContent.Channels, channel)
 		return nil
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown space payload type %T", spacePayload.Content)
@@ -216,8 +222,6 @@ func update_Snapshot_Channel(iSnapshot *Snapshot, channelPayload *ChannelPayload
 func update_Snapshot_DmChannel(
 	iSnapshot *Snapshot,
 	dmChannelPayload *DmChannelPayload,
-	eventNum int64,
-	eventHash []byte,
 ) error {
 	snapshot := iSnapshot.Content.(*Snapshot_DmChannelContent)
 	if snapshot == nil {
@@ -533,24 +537,24 @@ func removeSorted[T any, K any](elements []*T, key K, cmp func(K, K) int, keyFn 
 	return elements
 }
 
-func findChannel(channels []*SpacePayload_Channel, channelId []byte) (*SpacePayload_Channel, error) {
+func findChannel(channels []*SpacePayload_ChannelMetadata, channelId []byte) (*SpacePayload_ChannelMetadata, error) {
 	return findSorted(
 		channels,
 		channelId,
 		bytes.Compare,
-		func(channel *SpacePayload_Channel) []byte {
+		func(channel *SpacePayload_ChannelMetadata) []byte {
 			return channel.ChannelId
 		},
 	)
 }
 
-func insertChannel(channels []*SpacePayload_Channel, newChannels ...*SpacePayload_Channel) []*SpacePayload_Channel {
+func insertChannel(channels []*SpacePayload_ChannelMetadata, newChannels ...*SpacePayload_ChannelMetadata) []*SpacePayload_ChannelMetadata {
 	for _, channel := range newChannels {
 		channels = insertSorted(
 			channels,
 			channel,
 			bytes.Compare,
-			func(channel *SpacePayload_Channel) []byte {
+			func(channel *SpacePayload_ChannelMetadata) []byte {
 				return channel.ChannelId
 			},
 		)

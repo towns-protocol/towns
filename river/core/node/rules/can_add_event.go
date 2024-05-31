@@ -43,7 +43,7 @@ type aeUserMembershipActionRules struct {
 
 type aeSpaceChannelRules struct {
 	params        *aeParams
-	channelUpdate *SpacePayload_Channel
+	channelUpdate *SpacePayload_ChannelUpdate
 }
 
 type aeMediaPayloadChunkRules struct {
@@ -228,7 +228,7 @@ func (params *aeParams) canAddSpacePayload(payload *StreamEvent_SpacePayload) ru
 	case *SpacePayload_Inception_:
 		return aeBuilder().
 			fail(invalidContentType(content))
-	case *SpacePayload_Channel_:
+	case *SpacePayload_Channel:
 		ru := &aeSpaceChannelRules{
 			params:        params,
 			channelUpdate: content.Channel,

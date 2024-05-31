@@ -41,7 +41,7 @@ func TestSnapshotMigration0001(t *testing.T) {
 	badSpaceChannel := &Snapshot{
 		Content: &Snapshot_SpaceContent{
 			SpaceContent: &SpacePayload_Snapshot{
-				Channels: []*SpacePayload_Channel{
+				Channels: []*SpacePayload_ChannelMetadata{
 					{
 						ChannelId: channelId[:],
 					},

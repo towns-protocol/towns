@@ -9,6 +9,8 @@ ARG VER_VERSION=version_unset
 ARG VER_BRANCH=branch_unset
 ARG VER_COMMIT=commit_unset
 
+ARG RUN_MODE=full
+
 # Prepare build environment
 WORKDIR /build
 COPY node node
@@ -39,7 +41,9 @@ LABEL org.opencontainers.image.title="River Node" \
 RUN apk add --no-cache libcap supervisor && \
     adduser -D riveruser
 
-COPY supervisord.conf /etc/supervisord.conf
+COPY run.sh /etc/run.sh
+COPY full_node.supervisord.conf /etc/full_node.supervisord.conf
+COPY archive_node.supervisord.conf /etc/archive_node.supervisord.conf
 COPY --from=builder /bin/stream_node /usr/bin/stream_node
 COPY --from=builder /bin/xchain_node /usr/bin/xchain_node
 
@@ -66,4 +70,4 @@ ARG DD_GIT_REPOSITORY_URL="https://github.com/river-build/river"
 ENV DD_GIT_REPOSITORY_URL=${DD_GIT_REPOSITORY_URL} \
     DD_GIT_COMMIT_SHA=${GIT_SHA}
 
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
+CMD ["sh", "/etc/run.sh"]
