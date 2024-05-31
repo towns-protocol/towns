@@ -93,5 +93,5 @@ jobs:
                 ENV: 'transient-${{ github.event.pull_request.number}}'
                 TF_ACTION_TYPE: "Deprovision"
                 TF_STATUS: "ERROR"
-                LOG_MESSAGE: "Deprovision step failed for ${{ github.event.pull_request.number}} PR"
+                LOG_MESSAGE: "Deprovision step failed for ${{ github.event.pull_request.number}} PR (https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
               run: "./log_datadog.sh"
