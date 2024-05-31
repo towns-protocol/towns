@@ -151,13 +151,15 @@ export const ValidateMembership = () => {
     AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.IsMember)
 
     if (!isRemoteDataLoaded || !isLocalDataLoaded) {
-        AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.WelcomeLayoutLoadLocalData)
+        AnalyticsService.getInstance().trackEventOnce(
+            `AnalyticsEvents.WelcomeLayoutLoadLocalData: isRemoteDataLoaded === ${isRemoteDataLoaded}, isLocalDataLoaded === ${isLocalDataLoaded}`,
+        )
         return (
             <>
                 {/* <Outlet /> <- we can add the app in the background underneath the progress */}
                 <AppProgressOverlayTrigger
                     progressState={AppProgressState.InitializingWorkspace}
-                    debugSource="!isRemoteDataLoaded || !isLocalDataLoaded"
+                    debugSource={`isRemoteDataLoaded === ${isRemoteDataLoaded}, isLocalDataLoaded === ${isLocalDataLoaded}`}
                 />
             </>
         )
