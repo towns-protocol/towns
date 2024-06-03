@@ -35,9 +35,9 @@ interface DebouncedEffectProps {
 const log = debug('app:notification-settings')
 log.enabled = localStorage.getItem('debug')?.includes('app:notification-settings') ?? false
 
-export function useNotificationSettings(
-    onSettingsUpdated?: (settings: SaveUserSettingsSchema['userSettings']) => void,
-) {
+export type UserSettings = SaveUserSettingsSchema['userSettings']
+
+export function useNotificationSettings(onSettingsUpdated?: (args: UserSettings) => void) {
     const {
         dmChannels: tcDmChannels,
         rooms: tcRooms,

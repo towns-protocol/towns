@@ -1,18 +1,25 @@
-import React, { useEffect } from 'react'
+import React, { useCallback, useEffect } from 'react'
 
 import { Mute } from '@notification-service/types'
 import isEqual from 'lodash/isEqual'
-import { useNotificationSettings } from 'hooks/useNotificationSettings'
+import { dlogger } from '@river-build/dlog'
+import { UserSettings, useNotificationSettings } from 'hooks/useNotificationSettings'
 import { useStore } from 'store/store'
 import { useSaveNotificationSettings } from 'api/lib/notificationSettings'
 
+const log = dlogger('app:SyncNotificationSettings')
+
 export const SyncNotificationSettings = () => {
     const { mutate: mutateNotificationSettings } = useSaveNotificationSettings()
-    const { spaceSettings, channelSettings } = useNotificationSettings((userSettings) => {
-        mutateNotificationSettings({
-            userSettings,
-        })
-    })
+    const onUserSettingsChanged = useCallback(
+        (userSettings: UserSettings) => {
+            mutateNotificationSettings({
+                userSettings,
+            })
+        },
+        [mutateNotificationSettings],
+    )
+    const { spaceSettings, channelSettings } = useNotificationSettings(onUserSettingsChanged)
 
     // cache the muted channel ids locally
     useEffect(() => {
@@ -40,6 +47,7 @@ export const SyncNotificationSettings = () => {
             if (isEqual(mutedChannelIds, prev['mutedChannelIds'])) {
                 return prev
             }
+            log.info('mutedChannelIds changed', mutedChannelIds)
             return { ...prev, ['mutedChannelIds']: mutedChannelIds }
         })
     }, [channelSettings, spaceSettings])

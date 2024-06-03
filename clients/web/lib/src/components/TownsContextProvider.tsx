@@ -9,7 +9,7 @@ import { useCasablancaSpaceHierarchies } from '../hooks/TownsContext/useCasablan
 import { useTownsClientListener } from '../hooks/use-towns-client-listener'
 import { Room, SpaceHierarchies, SpaceItem } from '../types/towns-types'
 import { QueryProvider } from './QueryProvider'
-import { Client as CasablancaClient, ClientInitStatus, SignerContext } from '@river/sdk'
+import { Client as CasablancaClient, SignerContext } from '@river/sdk'
 import { useCasablancaTimelines } from '../hooks/TownsContext/useCasablancaTimelines'
 import { useCasablancaRooms } from '../hooks/TownsContext/useCasablancaRooms'
 import { useCasablancaDMs } from '../hooks/CasablancClient/useCasablancaDMs'
@@ -49,7 +49,7 @@ export interface ITownsContext {
     spaceHierarchies: SpaceHierarchies
     dmChannels: DMChannelIdentifier[]
     dmUnreadChannelIds: Set<string> // dmChannelId -> set of channelIds with unreads
-    clientStatus: ClientInitStatus & { streamSyncActive: boolean }
+    clientStatus: ReturnType<typeof useClientInitStatus>
     blockedUserIds: Set<string>
 }
 
@@ -176,7 +176,7 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
         useTownsClientListener(townsOpts)
     useSpacesIds(casablancaClient)
     useContentAwareTimelineDiffCasablanca(casablancaClient)
-    const { clientStatus } = useClientInitStatus(casablancaClient)
+    const clientStatus = useClientInitStatus(casablancaClient)
     const { spaces } = useSpaces(townsOpts, casablancaClient)
     const { channels: dmChannels } = useCasablancaDMs(casablancaClient)
     const spaceHierarchies = useCasablancaSpaceHierarchies(casablancaClient)

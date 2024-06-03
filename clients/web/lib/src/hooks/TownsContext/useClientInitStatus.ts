@@ -1,15 +1,12 @@
 import { Client as CasablancaClient, ClientInitStatus } from '@river/sdk'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export function useClientInitStatus(client?: CasablancaClient) {
-    const [clientStatus, setClientStatus] = useState<
-        ClientInitStatus & { streamSyncActive: boolean }
-    >({
+    const [clientStatus, setClientStatus] = useState(() => ({
         isLocalDataLoaded: false,
         isRemoteDataLoaded: false,
-        progress: 0,
         streamSyncActive: false,
-    })
+    }))
 
     useEffect(() => {
         if (!client) {
@@ -17,17 +14,35 @@ export function useClientInitStatus(client?: CasablancaClient) {
         }
 
         const updateStreamSyncActive = (active: boolean) => {
-            setClientStatus((prev) => ({
-                ...prev,
-                streamSyncActive: active,
-            }))
+            setClientStatus((prev) => {
+                if (prev.streamSyncActive === active) {
+                    return prev
+                } else {
+                    return {
+                        ...prev,
+                        streamSyncActive: active,
+                    }
+                }
+            })
         }
 
         const updateClientInitStatus = (status: ClientInitStatus) => {
-            setClientStatus((prev) => ({
-                ...status,
-                streamSyncActive: prev.streamSyncActive,
-            }))
+            // This code intentionally ignore the progress field
+            // to reduce the number of re-renders
+            setClientStatus((prev) => {
+                if (
+                    status.isLocalDataLoaded === prev.isLocalDataLoaded &&
+                    status.isRemoteDataLoaded === prev.isRemoteDataLoaded
+                ) {
+                    return prev
+                } else {
+                    return {
+                        isLocalDataLoaded: status.isLocalDataLoaded,
+                        isRemoteDataLoaded: status.isRemoteDataLoaded,
+                        streamSyncActive: prev.streamSyncActive,
+                    }
+                }
+            })
         }
 
         updateClientInitStatus(client.clientInitStatus)
@@ -39,11 +54,7 @@ export function useClientInitStatus(client?: CasablancaClient) {
             client.off('streamSyncActive', updateStreamSyncActive)
             client.off('clientInitStatusUpdated', updateClientInitStatus)
         }
-    }, [client, setClientStatus])
-    return useMemo(
-        () => ({
-            clientStatus,
-        }),
-        [clientStatus],
-    )
+    }, [client])
+
+    return clientStatus
 }
