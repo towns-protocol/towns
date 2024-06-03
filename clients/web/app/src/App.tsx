@@ -22,7 +22,12 @@ import { BlockchainTxNotifier } from '@components/Web3/BlockchainTxNotifier'
 import { SyncNotificationSettings } from '@components/SyncNotificationSettings/SyncNotificationSettings'
 import { MonitorJoinFlow } from 'routes/PublicTownPage/MontiorJoinFlow'
 import { getRouteParams } from 'routes/SpaceContextRoute'
-import { LINKED_RESOURCE, NotificationRel } from 'data/rel'
+import {
+    LINKED_NOTIFICATION_KIND,
+    LINKED_NOTIFICATION_NAME,
+    LINKED_NOTIFICATION_REL_ENTRY,
+    LINKED_RESOURCE,
+} from 'data/rel'
 import { useAnalytics } from 'hooks/useAnalytics'
 
 FontLoader.init()
@@ -46,25 +51,7 @@ export const App = () => {
         : undefined
     const didSetHighpriorityStreamIds = useRef<boolean>(false)
     const { spaceId, channelId } = useMemo(() => getRouteParams(channelBookmark), [channelBookmark])
-
     const [searchParams] = useSearchParams()
-    const rel = useMemo(() => {
-        return searchParams.get(LINKED_RESOURCE) ?? ''
-    }, [searchParams])
-    const { analytics } = useAnalytics()
-
-    useEffect(() => {
-        if (Object.values(NotificationRel).includes(rel as NotificationRel)) {
-            const tracked = {
-                spaceId,
-                channelId,
-                rel,
-            }
-            analytics?.track('clicked notification', tracked, () => {
-                console.log('[analytics][App][route] clicked notification', tracked)
-            })
-        }
-    }, [analytics, channelId, rel, spaceId])
 
     useEffect(() => {
         if (didSetHighpriorityStreamIds.current) {
@@ -100,6 +87,30 @@ export const App = () => {
         }
         return supported
     }, [environment.baseChain.id])
+
+    const { rel, notificationEntry, notificationKind } = useMemo(() => {
+        return {
+            rel: searchParams.get(LINKED_RESOURCE) ?? '',
+            notificationEntry: searchParams.get(LINKED_NOTIFICATION_REL_ENTRY),
+            notificationKind: searchParams.get(LINKED_NOTIFICATION_KIND),
+        }
+    }, [searchParams])
+    const { analytics } = useAnalytics()
+
+    useEffect(() => {
+        if (rel.includes(LINKED_NOTIFICATION_NAME)) {
+            const tracked = {
+                spaceId,
+                channelId,
+                rel,
+                notificationEntry,
+                notificationKind,
+            }
+            analytics?.track('clicked notification', tracked, () => {
+                console.log('[analytics][App][route] clicked notification', tracked)
+            })
+        }
+    }, [analytics, channelId, notificationEntry, notificationKind, rel, spaceId])
 
     return (
         <TownsContextProvider

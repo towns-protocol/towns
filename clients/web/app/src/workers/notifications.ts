@@ -27,7 +27,7 @@ import { CurrentUser, NotificationCurrentUser } from '../store/notificationCurre
 import { NotificationStore } from '../store/notificationStore'
 import { env } from '../utils/environment'
 import { getEncryptedData, htmlToText } from './data_transforms'
-import { NotificationRel, getPathnameWithParams, getUrlWithParams } from '../data/rel'
+import { NotificationRelEntry, getPathnameWithParams, getUrlWithParams } from '../data/rel'
 
 const MIDDLE_DOT = '\u00B7'
 const log = dlog('sw:push')
@@ -185,7 +185,7 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                     path = getPathnameWithParams(
                         new URL(worker.location.origin),
                         path,
-                        NotificationRel.BroadcastChannel,
+                        NotificationRelEntry.BroadcastChannel,
                         data.kind,
                     )
                     log('[route] service worker posting message to broadcast channel', {
@@ -203,7 +203,7 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                     const url = getUrlWithParams(
                         new URL(worker.location.origin),
                         path,
-                        NotificationRel.OpenWindow,
+                        NotificationRelEntry.OpenWindow,
                         data.kind,
                     )
                     log('[route]] service worker opening browser window', {

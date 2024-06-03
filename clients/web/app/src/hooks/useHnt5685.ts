@@ -5,9 +5,10 @@ import { NotificationCurrentUser } from 'store/notificationCurrentUser'
 import { SECOND_MS } from 'data/constants'
 import { useDevice } from './useDevice'
 
-export interface PathInfo {
-    pathname: string
+export interface NotificationRouteInfo {
+    notificationDeepLink: string
     search: string
+    notificaitonTimestamp: number
 }
 
 // https://linear.app/hnt-labs/issue/HNT-5685/notifications-for-mobile-pwa-arent-deep-linking-for-me-when-the-app-is
@@ -15,7 +16,9 @@ export function useHnt5685() {
     const [notificationCurrentUser] = useState<NotificationCurrentUser>(
         new NotificationCurrentUser(),
     )
-    const [touchInitialLink, setTouchInitialLink] = useState<PathInfo | undefined>(undefined)
+    const [notificationRouteInfo, setNotificationRouteInfo] = useState<
+        NotificationRouteInfo | undefined
+    >(undefined)
     const { isTouch } = useDevice()
     const location = useLocation()
 
@@ -34,26 +37,23 @@ export function useHnt5685() {
 
     useEffect(() => {
         const getUrlFromNotificationCurrentUser = async (): Promise<void> => {
-            setTouchInitialLink(undefined)
-            if (currentUser?.lastUrlTimestamp) {
-                // return the last URL only if it was set within the last t seconds
-                // to workaround hnt-5685
-                const urlFromNotification = currentUser?.lastUrl
-                if (urlFromNotification) {
-                    const url = new URL(urlFromNotification, window.location.origin)
-                    console.log('[useHnt5685][route] setTouchInitialLink', 'route', {
-                        locationPathname: location.pathname,
-                        storeUrlPathname: url.pathname,
-                        locationSearch: location.search,
-                        storeUrlSearch: url.search,
-                        lastUrlTimestamp: currentUser.lastUrlTimestamp,
-                        deviceType: isTouch ? 'mobile' : 'desktop',
-                    })
-                    setTouchInitialLink({
-                        pathname: url.pathname,
-                        search: url.search,
-                    })
-                }
+            setNotificationRouteInfo(undefined)
+            const urlFromNotification = currentUser?.lastUrl
+            if (urlFromNotification && currentUser?.lastUrlTimestamp) {
+                const url = new URL(urlFromNotification, window.location.origin)
+                console.log('[useHnt5685][route] setNotificationRouteInfo', 'route', {
+                    locationPathname: location.pathname,
+                    storeUrlPathname: url.pathname,
+                    locationSearch: location.search,
+                    storeUrlSearch: url.search,
+                    lastUrlTimestamp: currentUser.lastUrlTimestamp,
+                    deviceType: isTouch ? 'mobile' : 'desktop',
+                })
+                setNotificationRouteInfo({
+                    notificationDeepLink: url.pathname,
+                    search: url.search,
+                    notificaitonTimestamp: currentUser.lastUrlTimestamp,
+                })
             }
         }
 
@@ -68,5 +68,5 @@ export function useHnt5685() {
         location.search,
     ])
 
-    return touchInitialLink
+    return notificationRouteInfo
 }

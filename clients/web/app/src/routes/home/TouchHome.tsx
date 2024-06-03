@@ -1,6 +1,6 @@
 import { AnimatePresence } from 'framer-motion'
 import fuzzysort from 'fuzzysort'
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useOutlet } from 'react-router'
 import {
     Address,
@@ -94,7 +94,6 @@ export const TouchHome = () => {
     const { memberIds } = useSpaceMembers()
     const { usersMap } = useUserLookupContext()
     const navigate = useNavigate()
-    const visitedBookmark = useRef<string>()
     const members = useMemo(() => {
         return memberIds.map((userId) => usersMap[userId]).filter(notUndefined)
     }, [memberIds, usersMap])
@@ -103,7 +102,7 @@ export const TouchHome = () => {
     const { unseenChannelIds, markChannelsAsSeen } = useUnseenChannelIds()
     const spaceId = space?.id ?? ''
 
-    const { storeBookmarkedSpaceId, storeBookmarkedRoute } = useStore((s) => {
+    const { storeBookmarkedSpaceId, storeBookmarkedRoute, notificationRoute } = useStore((s) => {
         const storeBookmarkedSpaceId = s.spaceIdBookmark
         const storeBookmarkedRoute = storeBookmarkedSpaceId
             ? s.townRouteBookmarks[storeBookmarkedSpaceId]
@@ -111,6 +110,7 @@ export const TouchHome = () => {
         return {
             storeBookmarkedSpaceId,
             storeBookmarkedRoute,
+            notificationRoute: s.notificationRoute,
         }
     })
 
@@ -126,10 +126,10 @@ export const TouchHome = () => {
         console.log('[TouchHome][route]', 'route', {
             loginStatus,
             spaceId,
+            storeBookmarkedSpaceId: storeBookmarkedSpaceId ?? 'undefined',
             locationPathname: location.pathname,
             storeBookmarkedRoute: storeBookmarkedRoute ?? 'undefined',
             locationSearch: location.search,
-            storeBookmarkedSpaceId: storeBookmarkedSpaceId ?? 'undefined',
         })
     }, [loginStatus, spaceId, storeBookmarkedRoute, storeBookmarkedSpaceId])
 
@@ -296,23 +296,18 @@ export const TouchHome = () => {
     }, [openPanel])
 
     useEffect(() => {
-        if (visitedBookmark.current) {
-            return
+        if (locationState?.fromNotification) {
+            console.log('[TouchHome][route]]', 'navigating to notification route', {
+                notificationRoute,
+            })
+            navigate(notificationRoute ?? storeBookmarkedRoute ?? '/')
         }
+
         if (locationState?.fromCreateTown) {
             locationState.fromCreateTown = undefined
             return
         }
-
-        if (storeBookmarkedSpaceId && storeBookmarkedRoute) {
-            visitedBookmark.current = storeBookmarkedRoute
-            console.log('[TouchHome][route]]', 'visited bookmark', {
-                storeBookmarkedSpaceId,
-                storeBookmarkedRoute,
-            })
-            navigate(storeBookmarkedRoute)
-        }
-    }, [locationState, navigate, storeBookmarkedRoute, storeBookmarkedSpaceId])
+    }, [locationState, navigate, notificationRoute, storeBookmarkedRoute, storeBookmarkedSpaceId])
 
     return (
         <ErrorBoundary FallbackComponent={ErrorFallbackComponent}>

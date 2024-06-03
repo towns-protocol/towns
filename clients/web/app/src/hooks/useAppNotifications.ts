@@ -4,7 +4,7 @@ import { WEB_PUSH_NAVIGATION_CHANNEL } from 'workers/types.d'
 import { useDevice } from './useDevice'
 
 // print as warn to debug hnt-5685
-const log = console.warn
+const log = console.log
 
 export const useAppNotifications = () => {
     const navigate = useNavigate()
@@ -19,7 +19,9 @@ export const useAppNotifications = () => {
                 deviceType,
                 url: path,
             })
-            navigate(path)
+            navigate(path, {
+                state: { fromNotification: true },
+            })
         }
 
         return () => {

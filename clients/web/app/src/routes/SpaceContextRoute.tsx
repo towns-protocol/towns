@@ -39,7 +39,12 @@ const SpaceContext = () => {
     const location = useLocation()
 
     const spaceSlug = space?.id ?? ''
-    const setTownRouteBookmark = useStore((s) => s.setTownRouteBookmark)
+    const { setTownRouteBookmark, setNotificationRoute } = useStore((s) => {
+        return {
+            setTownRouteBookmark: s.setTownRouteBookmark,
+            setNotificationRoute: s.setNotificationRoute,
+        }
+    })
 
     const setTitle = useSetDocTitle()
     const path = useSpaceRouteMatcher(space)
@@ -49,10 +54,11 @@ const SpaceContext = () => {
         console.log('[SpaceContextRoute][route]', 'route', {
             spaceSlug,
             routeMatcherPathname: path?.pathname ?? '',
+            routeMatcherNotificationDeepLink: path?.notificationDeepLink ?? '',
             locationPathname: location.pathname,
             routeMatcherSearch: path?.search ?? '',
             locationSearch: location.search,
-            path: path ?? '',
+            pathType: path?.type ?? '',
             rpcClient: casablancaClient?.rpcClient.url ?? '',
             deviceType: isTouch ? 'mobile' : 'desktop',
         })
@@ -61,33 +67,35 @@ const SpaceContext = () => {
         isTouch,
         location.pathname,
         location.search,
-        path,
+        path?.type,
+        path?.notificationDeepLink,
+        path?.pathname,
+        path?.search,
         spaceSlug,
     ])
 
     useEffect(() => {
-        const locationPathname = path?.pathname ?? ''
-        if (
-            !path ||
-            (path.type !== 'messages' && !spaceSlug) ||
-            path.type === 'home' ||
-            path.type === 'settings'
-        ) {
+        if (!path || !spaceSlug || path.type === 'home' || path.type === 'settings') {
             return
         }
-        if (path.type === 'messages') {
-            setTownRouteBookmark(spaceSlug, locationPathname)
-        } else if (spaceSlug && path.type === 'channel') {
-            // bookmark channel and known routes
-            setTownRouteBookmark(spaceSlug, locationPathname)
-        } else if (spaceSlug && path.type === 'generic') {
-            // bookmark known routes (threads,mentions,etc)
-            setTownRouteBookmark(spaceSlug, locationPathname)
+        if (spaceSlug && path.type === 'channel') {
+            // bookmark root / for mobile
+            // bookmark channel path for desktop
+            const route = isTouch ? '/' : path.pathname
+            console.log('[SpaceContextRoute][route] setTownRouteBookmark', route)
+            setTownRouteBookmark(spaceSlug, route)
         } else if (spaceSlug) {
             // reset bookmark in case the route isn't referenced above
+            console.log('[SpaceContextRoute][route] setTownRouteBookmark', 'reset')
             setTownRouteBookmark(spaceSlug, '')
         }
-    }, [path, setTownRouteBookmark, spaceSlug])
+    }, [isTouch, location.pathname, path, setTownRouteBookmark, spaceSlug])
+
+    useEffect(() => {
+        if (path?.notificationDeepLink) {
+            setNotificationRoute(path.notificationDeepLink)
+        }
+    }, [path?.notificationDeepLink, setNotificationRoute])
 
     const title = useMemo(() => {
         if (!path) {
@@ -124,30 +132,32 @@ export interface RouteInfo {
     search: string
     name?: string
     channel?: Channel
+    notificationDeepLink?: string
+    notificationTimestamp?: number
 }
 
 const useSpaceRouteMatcher = (space: SpaceData | undefined): RouteInfo | undefined => {
     const location = useLocation()
     const { isTouch } = useDevice()
-    const touchInitialLink = useHnt5685()
+    const notificationRouteInfo = useHnt5685()
     const [search] = useSearchParams()
 
-    const pathInfo = useMemo(() => {
-        const { pathname, search } = touchInitialLink ?? {
-            pathname: location.pathname,
+    const routeInfo = useMemo(() => {
+        const scrubbedPathname = location.pathname.replace(/^\/\//, '/') // this can cause bug hnt-5685
+        return {
+            pathname: scrubbedPathname,
             search: location.search,
+            notificationDeepLink: notificationRouteInfo?.notificationDeepLink,
         }
-        const scrubbedPathname = pathname.replace(/^\/\//, '/') // this can cause bug hnt-5685
-        return { pathname: scrubbedPathname, search }
-    }, [location.pathname, location.search, touchInitialLink])
+    }, [location.pathname, location.search, notificationRouteInfo])
 
     return useMemo(() => {
         const channelPath = matchPath(
             `${SPACES}/:spaceSlug/${CHANNELS}/:channelId`,
-            pathInfo.pathname,
+            routeInfo.pathname,
         )
-        const childSpacePath = matchPath(`${SPACES}/:spaceSlug/:child/*`, pathInfo.pathname)
-        const homeSpacePath = matchPath(`${SPACES}/:spaceSlug/`, pathInfo.pathname)
+        const childSpacePath = matchPath(`${SPACES}/:spaceSlug/:child/*`, routeInfo.pathname)
+        const homeSpacePath = matchPath(`${SPACES}/:spaceSlug/`, routeInfo.pathname)
 
         const paramsChannelId = channelPath?.params.channelId
         const paramsChild = childSpacePath?.params.child
@@ -159,19 +169,19 @@ const useSpaceRouteMatcher = (space: SpaceData | undefined): RouteInfo | undefin
                 return {
                     type: 'channel',
                     channel,
-                    ...pathInfo,
+                    ...routeInfo,
                 } as const
             }
         } else {
-            if (pathInfo.search.includes('invite')) {
+            if (routeInfo.search.includes('invite')) {
                 return {
                     type: 'invite',
-                    ...pathInfo,
+                    ...routeInfo,
                 } as const
-            } else if (pathInfo.pathname.includes(MESSAGES)) {
+            } else if (routeInfo.pathname.includes(MESSAGES)) {
                 if (isTouch) {
                     // handle the special case for Touch devices where the spaceId is inserted into the path
-                    const { spaceId, channelId } = getRouteParams(pathInfo.pathname)
+                    const { spaceId, channelId } = getRouteParams(routeInfo.pathname)
                     let spaceIdBookmark = spaceId
                     // handle the special case for Touch devices where
                     // the navigation stack is different between HOME and MESSAGES
@@ -184,36 +194,38 @@ const useSpaceRouteMatcher = (space: SpaceData | undefined): RouteInfo | undefin
                         const spaceIdFromStore = useStore.getState().spaceIdBookmark
                         spaceIdBookmark = space ? space.id : spaceIdFromStore
                     }
-                    if (spaceIdBookmark && channelId) {
-                        pathInfo.pathname = `/${SPACES}/${spaceIdBookmark}/${MESSAGES}/${channelId}`
-                        pathInfo.search = searchWithDmStackId
-                    } else if (spaceIdBookmark) {
-                        pathInfo.pathname = `/${SPACES}/${spaceIdBookmark}/${MESSAGES}`
-                        pathInfo.search = searchWithDmStackId
+                    if (spaceIdBookmark) {
+                        routeInfo.pathname = `/${SPACES}/${spaceIdBookmark}`
+                        routeInfo.search = searchWithDmStackId
+                        if (channelId) {
+                            routeInfo.notificationDeepLink = `/${SPACES}/${spaceIdBookmark}/${MESSAGES}/${channelId}`
+                        } else {
+                            routeInfo.notificationDeepLink = `/${SPACES}/${spaceIdBookmark}/${MESSAGES}`
+                        }
                     }
                 }
                 return {
                     type: 'messages',
-                    ...pathInfo,
+                    ...routeInfo,
                 } as const
-            } else if (pathInfo.pathname.includes(SETTINGS)) {
+            } else if (routeInfo.pathname.includes(SETTINGS)) {
                 return {
                     type: 'settings',
-                    ...pathInfo,
+                    ...routeInfo,
                 } as const
             } else {
                 return paramsChild
                     ? ({
                           type: 'generic',
                           name: paramsChild,
-                          ...pathInfo,
+                          ...routeInfo,
                       } as const)
                     : homeSpacePath
-                    ? ({ type: 'home', ...pathInfo } as const)
-                    : ({ type: 'notfound', ...pathInfo } as const)
+                    ? ({ type: 'home', ...routeInfo } as const)
+                    : ({ type: 'notfound', ...routeInfo } as const)
             }
         }
-    }, [isTouch, pathInfo, search, space])
+    }, [isTouch, routeInfo, search, space])
 }
 
 export function getRouteParams(path?: string): RouteParams {
@@ -258,12 +270,15 @@ export function getRouteParams(path?: string): RouteParams {
         spaceId = matchWithSpace.params.spaceId
     }
     if (matchWithSpace?.params.channelId) {
+        spaceId = matchWithSpace.params.spaceId
         channelId = matchWithSpace.params.channelId
     } else if (matchWithMessages?.params.channelId) {
         channelId = matchWithMessages.params.channelId
     } else if (matchWithSpaceMessages?.params.channelId) {
         channelId = matchWithSpaceMessages.params.channelId
     } else if (matchWithSpaceChannelThread?.params.threadId) {
+        spaceId = matchWithSpaceChannelThread.params.spaceId
+        channelId = matchWithSpaceChannelThread.params.channelId
         threadId = matchWithSpaceChannelThread.params.threadId
     }
     return { spaceId, channelId, threadId }

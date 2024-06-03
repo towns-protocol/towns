@@ -7,7 +7,11 @@ import { PATHS } from 'routes'
 import { useStore } from 'store/store'
 import { useDevice } from 'hooks/useDevice'
 import { useAnalytics } from 'hooks/useAnalytics'
-import { LINKED_RESOURCE } from '../../data/rel'
+import {
+    LINKED_NOTIFICATION_KIND,
+    LINKED_NOTIFICATION_REL_ENTRY,
+    LINKED_RESOURCE,
+} from '../../data/rel'
 
 export const SpaceHome = () => {
     const space = useSpaceData()
@@ -39,8 +43,12 @@ export const SpaceHome = () => {
     })
 
     const [searchParams] = useSearchParams()
-    const rel = useMemo(() => {
-        return searchParams.get(LINKED_RESOURCE) ?? ''
+    const { rel, notificationEntry, notificationKind } = useMemo(() => {
+        return {
+            rel: searchParams.get(LINKED_RESOURCE) ?? '',
+            notificationEntry: searchParams.get(LINKED_NOTIFICATION_REL_ENTRY),
+            notificationKind: searchParams.get(LINKED_NOTIFICATION_KIND),
+        }
     }, [searchParams])
 
     useEffect(() => {
@@ -51,6 +59,8 @@ export const SpaceHome = () => {
             spaceId: space?.id ?? '',
             storeBookmarkedSpaceId: storeBookmarkedSpaceId ?? 'undefined',
             rel,
+            notificationEntry,
+            notificationKind,
             loginStatus,
             locationParams: location.search,
             deviceType: isTouch ? 'mobile' : 'desktop',
@@ -63,6 +73,8 @@ export const SpaceHome = () => {
         isTouch,
         storeBookmarkedSpaceId,
         storeBookmarkedRoute,
+        notificationEntry,
+        notificationKind,
     ])
 
     useEffect(() => {
