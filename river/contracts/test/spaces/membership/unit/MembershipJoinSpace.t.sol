@@ -7,13 +7,10 @@ import {MembershipBaseSetup} from "../MembershipBaseSetup.sol";
 //interfaces
 import {IEntitlementGated} from "contracts/src/spaces/facets/gated/IEntitlementGated.sol";
 import {IEntitlementGatedBase} from "contracts/src/spaces/facets/gated/IEntitlementGated.sol";
-import {IEntitlementChecker, IEntitlementCheckerBase} from "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
-import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
-import {RuleEntitlementUtil} from "contracts/test/crosschain/RuleEntitlementUtil.sol";
+import {IEntitlementCheckerBase} from "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
 
 //libraries
 import {Vm} from "forge-std/Test.sol";
-import {console2} from "forge-std/console2.sol";
 
 //contracts
 
@@ -206,7 +203,7 @@ contract MembershipJoinSpace is
     bool resultPosted = false;
     bool tokenEmitted = false;
     Vm.Log[] memory resultLogs = vm.getRecordedLogs(); // Retrieve the recorded logs
-    for (uint l = 0; l < resultLogs.length; l++) {
+    for (uint256 l; l < resultLogs.length; l++) {
       if (resultLogs[l].topics[0] == RESULT_POSTED) {
         resultPosted = true;
       } else if (resultLogs[l].topics[0] == TOKEN_EMITTED) {
@@ -356,7 +353,7 @@ contract MembershipJoinSpace is
 
       if (k == 2) {
         Vm.Log[] memory resultLogs = vm.getRecordedLogs(); // Retrieve the recorded logs
-        for (uint l = 0; l < resultLogs.length; l++) {
+        for (uint l; l < resultLogs.length; l++) {
           if (resultLogs[l].topics[0] == RESULT_POSTED) {
             checkRequestedMatched = true;
           }

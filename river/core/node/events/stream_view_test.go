@@ -1,43 +1,20 @@
 package events
 
 import (
-	"testing"
-	"time"
-
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/river-build/river/core/node/base/test"
-	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/crypto"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/storage"
-
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
+	"testing"
+	"time"
 )
-
-var recencyConstraintsConfig_t = config.RecencyConstraintsConfig{
-	Generations: 5,
-	AgeSeconds:  11,
-}
-
-var (
-	minEventsPerSnapshotDefault    = 20
-	minEventsPerSnapshotUserStream = 2
-)
-
-var streamConfig_t = config.StreamConfig{
-	Media: config.MediaStreamConfig{
-		MaxChunkCount: 100,
-		MaxChunkSize:  1000000,
-	},
-	RecencyConstraints: config.RecencyConstraintsConfig{
-		AgeSeconds:  11,
-		Generations: 5,
-	},
-	DefaultMinEventsPerSnapshot: minEventsPerSnapshotDefault,
-	MinEventsPerSnapshot:        map[string]int{},
-}
 
 func parsedEvent(t *testing.T, envelope *Envelope) *ParsedEvent {
 	parsed, err := ParseEvent(envelope)
@@ -139,20 +116,44 @@ func TestLoad(t *testing.T) {
 	// Check minipool, should be empty
 	assert.Equal(t, 0, len(view.minipool.events.Values))
 
+	btc, err := crypto.NewBlockchainTestContext(ctx, 0, true)
+	require.NoError(t, err)
+
 	// check for invalid config
-	num := view.getMinEventsPerSnapshot(&config.StreamConfig{})
+	num, err := btc.OnChainConfig.GetMinEventsPerSnapshot(0x00)
+	require.NoError(t, err)
 	assert.Equal(t, num, 100) // hard coded default
 
 	// check snapshot generation
-	num = view.getMinEventsPerSnapshot(&streamConfig_t)
-	assert.Equal(t, minEventsPerSnapshotDefault, num)
-	assert.Equal(t, false, view.shouldSnapshot(&streamConfig_t))
+	assert.Equal(t, false, view.shouldSnapshot(ctx, btc.OnChainConfig))
+
+	setStreamMinEventsPerSnapshot := func(key crypto.ChainKey, value int) {
+		blockNumber := btc.BlockNum(ctx)
+		require.NoError(t, err)
+
+		pendingTx, err := btc.DeployerBlockchain.TxPool.Submit(
+			ctx, "SetConfiguration", func(opts *bind.TransactOpts) (*types.Transaction, error) {
+				v := crypto.ABIEncodeInt64(int64(value))
+				return btc.Configuration.SetConfiguration(opts, key.ID(), blockNumber.AsUint64(), v)
+			})
+		require.NoError(t, err)
+		receipt := <-pendingTx.Wait()
+		require.Equal(t, crypto.TransactionResultSuccess, receipt.Status)
+
+		// wait for chain monitor to pick up the new configuration setting and apply them
+		for {
+			currentSetting, err := btc.OnChainConfig.GetInt(key)
+			require.NoError(t, err)
+			if currentSetting == value {
+				return
+			}
+			time.Sleep(10 * time.Millisecond)
+		}
+	}
 
 	// check per stream snapshot generation
-	streamConfig_t.MinEventsPerSnapshot[STREAM_USER_PREFIX] = 2
-	num = view.getMinEventsPerSnapshot(&streamConfig_t)
-	assert.Equal(t, minEventsPerSnapshotUserStream, num)
-	assert.Equal(t, false, view.shouldSnapshot(&streamConfig_t))
+	setStreamMinEventsPerSnapshot(crypto.StreamMinEventsPerSnapshotUserConfigKey, 2)
+	assert.Equal(t, false, view.shouldSnapshot(ctx, btc.OnChainConfig))
 
 	blockHash := view.LastBlock().Hash
 
@@ -164,16 +165,16 @@ func TestLoad(t *testing.T) {
 	)
 	assert.NoError(t, err)
 	nextEvent := parsedEvent(t, join2)
-	err = view.ValidateNextEvent(ctx, &recencyConstraintsConfig_t, nextEvent, time.Now())
+	err = view.ValidateNextEvent(ctx, btc.OnChainConfig, nextEvent, time.Now())
 	assert.NoError(t, err)
 	view, err = view.copyAndAddEvent(nextEvent)
 	assert.NoError(t, err)
 
 	// with one new event, we shouldn't snapshot yet
-	assert.Equal(t, false, view.shouldSnapshot(&streamConfig_t))
+	assert.Equal(t, false, view.shouldSnapshot(ctx, btc.OnChainConfig))
 
 	// and miniblocks should have nil snapshots
-	proposal, _ := view.ProposeNextMiniblock(ctx, &streamConfig_t, false)
+	proposal, _ := view.ProposeNextMiniblock(ctx, btc.OnChainConfig, false)
 	miniblockHeader, _, _ = view.makeMiniblockHeader(ctx, proposal)
 	assert.Nil(t, miniblockHeader.Snapshot)
 
@@ -186,16 +187,17 @@ func TestLoad(t *testing.T) {
 	assert.NoError(t, err)
 	nextEvent = parsedEvent(t, join3)
 	assert.NoError(t, err)
-	err = view.ValidateNextEvent(ctx, &recencyConstraintsConfig_t, nextEvent, time.Now())
+	err = view.ValidateNextEvent(ctx, btc.OnChainConfig, nextEvent, time.Now())
 	assert.NoError(t, err)
 	view, err = view.copyAndAddEvent(nextEvent)
 	assert.NoError(t, err)
 	// with two new events, we should snapshot
-	assert.Equal(t, true, view.shouldSnapshot(&streamConfig_t))
+	assert.Equal(t, true, view.shouldSnapshot(ctx, btc.OnChainConfig))
 	assert.Equal(t, 1, len(view.blocks))
 	assert.Equal(t, 2, len(view.blocks[0].events))
 	// and miniblocks should have non - nil snapshots
-	proposal, _ = view.ProposeNextMiniblock(ctx, &streamConfig_t, false)
+
+	proposal, _ = view.ProposeNextMiniblock(ctx, btc.OnChainConfig, false)
 	miniblockHeader, envelopes, _ := view.makeMiniblockHeader(ctx, proposal)
 	assert.NotNil(t, miniblockHeader.Snapshot)
 
@@ -215,6 +217,7 @@ func TestLoad(t *testing.T) {
 	assert.Equal(t, int64(3), miniblockHeader.EventNumOffset) // 3 events in the genisis miniblock
 	assert.Equal(t, 2, len(miniblockHeader.EventHashes))      // 2 join events added in test
 	assert.Equal(t, 5, count2)                                // we should iterate over all of them
+
 	// test copy and apply block
 	// how many blocks do we currently have?
 	assert.Equal(t, len(view.blocks), 1)
@@ -228,21 +231,30 @@ func TestLoad(t *testing.T) {
 	miniblock, err := NewMiniblockInfoFromParsed(miniblockHeaderEvent, envelopes)
 	assert.NoError(t, err)
 	// with 5 generations (5 blocks kept in memory)
-	newSV1, err := view.copyAndApplyBlock(miniblock, &config.StreamConfig{
-		RecencyConstraints: config.RecencyConstraintsConfig{
-			Generations: 5,
-			AgeSeconds:  11,
-		},
-	})
+	newSV1, err := view.copyAndApplyBlock(miniblock, btc.OnChainConfig)
 	assert.NoError(t, err)
 	assert.Equal(t, len(newSV1.blocks), 2) // we should have both blocks in memory
-	// with 0 generations (0 in memory block history)
-	newSV2, err := view.copyAndApplyBlock(miniblock, &config.StreamConfig{
-		RecencyConstraints: config.RecencyConstraintsConfig{
-			Generations: 0,
-			AgeSeconds:  11,
-		},
+
+	pendingTx, err := btc.DeployerBlockchain.TxPool.Submit(ctx, "SetConfiguration", func(opts *bind.TransactOpts) (*types.Transaction, error) {
+		blockNum := btc.BlockNum(ctx)
+		return btc.Configuration.SetConfiguration(
+			opts, crypto.StreamRecencyConstraintsGenerationsConfigKey.ID(), blockNum.AsUint64(), crypto.ABIEncodeInt64(int64(0)))
 	})
+	require.NoError(t, err)
+	receipt := <-pendingTx.Wait()
+	require.Equal(t, crypto.TransactionResultSuccess, receipt.Status)
+	// wait for the chain monitor to apply the config change in the on chain configuration
+	for {
+		val, err := btc.OnChainConfig.GetInt(crypto.StreamRecencyConstraintsGenerationsConfigKey)
+		require.NoError(t, err)
+		if val == 0 {
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	// with 0 generations (0 in memory block history)
+	newSV2, err := view.copyAndApplyBlock(miniblock, btc.OnChainConfig)
 	assert.NoError(t, err)
 	assert.Equal(t, len(newSV2.blocks), 1) // we should only have the latest block in memory
 	// add an event with an old hash
@@ -254,17 +266,19 @@ func TestLoad(t *testing.T) {
 	assert.NoError(t, err)
 	nextEvent = parsedEvent(t, join4)
 	assert.NoError(t, err)
-	err = newSV1.ValidateNextEvent(ctx, &recencyConstraintsConfig_t, nextEvent, time.Now())
+	err = newSV1.ValidateNextEvent(ctx, btc.OnChainConfig, nextEvent, time.Now())
 	assert.NoError(t, err)
 	_, err = newSV1.copyAndAddEvent(nextEvent)
 	assert.NoError(t, err)
 	// wait 1 second
 	time.Sleep(1 * time.Second)
 	// try with tighter recency constraints
-	err = newSV1.ValidateNextEvent(ctx, &config.RecencyConstraintsConfig{
-		Generations: 5,
-		AgeSeconds:  1,
-	}, nextEvent, time.Now())
+	setOnChainStreamConfig(ctx, btc, testParams{
+		recencyConstraintsGenerations: 5,
+		recencyConstraintsAgeSec:      1,
+	})
+
+	err = newSV1.ValidateNextEvent(ctx, btc.OnChainConfig, nextEvent, time.Now())
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "BAD_PREV_MINIBLOCK_HASH")
 }

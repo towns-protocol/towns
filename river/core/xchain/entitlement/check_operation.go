@@ -4,10 +4,9 @@ import (
 	"context"
 	"fmt"
 	"math/big"
-	"sync"
 	"time"
 
-	"github.com/river-build/river/core/node/config"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/river-build/river/core/xchain/bindings/erc20"
 	"github.com/river-build/river/core/xchain/bindings/erc721"
 	"github.com/river-build/river/core/xchain/contracts"
@@ -15,44 +14,26 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/river-build/river/core/node/dlog"
-	"github.com/river-build/river/core/node/infra"
 )
 
-var (
-	clientsOnce sync.Once
-	clients     BlockchainClientPool
-)
-
-func Init(ctx context.Context, cfg *config.Config) error {
-	var err error
-	clientsOnce.Do(func() {
-		clients, err = NewBlockchainClientPool(ctx, cfg)
-	})
-	return err
-}
-
-func evaluateCheckOperation(
+func (e *Evaluator) evaluateCheckOperation(
 	ctx context.Context,
-	cfg *config.Config,
 	op *CheckOperation,
 	linkedWallets []common.Address,
 ) (bool, error) {
+	defer prometheus.NewTimer(e.evalHistrogram.WithLabelValues(op.CheckType.String())).ObserveDuration()
+
 	switch op.CheckType {
 	case MOCK:
-		defer infra.StoreExecutionTimeMetrics("evaluateMockOperation", infra.CONTRACT_CALLS_CATEGORY, time.Now())
-		return evaluateMockOperation(ctx, op)
+		return e.evaluateMockOperation(ctx, op)
 	case ISENTITLED:
-		defer infra.StoreExecutionTimeMetrics("evaluateIsEntitledOperation", infra.CONTRACT_CALLS_CATEGORY, time.Now())
-		return evaluateIsEntitledOperation(ctx, cfg, op, linkedWallets)
+		return e.evaluateIsEntitledOperation(ctx, op, linkedWallets)
 	case ERC20:
-		defer infra.StoreExecutionTimeMetrics("evaluateErc20Operation", infra.CONTRACT_CALLS_CATEGORY, time.Now())
-		return evaluateErc20Operation(ctx, cfg, op, linkedWallets)
+		return e.evaluateErc20Operation(ctx, op, linkedWallets)
 	case ERC721:
-		defer infra.StoreExecutionTimeMetrics("evaluateErc721Operation", infra.CONTRACT_CALLS_CATEGORY, time.Now())
-		return evaluateErc721Operation(ctx, cfg, op, linkedWallets)
+		return e.evaluateErc721Operation(ctx, op, linkedWallets)
 	case ERC1155:
-		defer infra.StoreExecutionTimeMetrics("evaluateErc1155Operation", infra.CONTRACT_CALLS_CATEGORY, time.Now())
-		return evaluateErc1155Operation(ctx, op)
+		return e.evaluateErc1155Operation(ctx, op)
 	case CheckNONE:
 		fallthrough
 	default:
@@ -60,7 +41,7 @@ func evaluateCheckOperation(
 	}
 }
 
-func evaluateMockOperation(ctx context.Context,
+func (e *Evaluator) evaluateMockOperation(ctx context.Context,
 	op *CheckOperation,
 ) (bool, error) {
 	delay := int(op.Threshold.Int64())
@@ -80,14 +61,13 @@ func evaluateMockOperation(ctx context.Context,
 	}
 }
 
-func evaluateIsEntitledOperation(
+func (e *Evaluator) evaluateIsEntitledOperation(
 	ctx context.Context,
-	cfg *config.Config,
 	op *CheckOperation,
 	linkedWallets []common.Address,
 ) (bool, error) {
 	log := dlog.FromCtx(ctx).With("function", "evaluateErc20Operation")
-	client, err := clients.Get(op.ChainID.Uint64())
+	client, err := e.clients.Get(op.ChainID.Uint64())
 	if err != nil {
 		log.Error("Chain ID not found", "chainID", op.ChainID)
 		return false, fmt.Errorf("evaluateErc20Operation: Chain ID %v not found", op.ChainID)
@@ -96,7 +76,7 @@ func evaluateIsEntitledOperation(
 	customEntitlementChecker, err := contracts.NewICustomEntitlement(
 		op.ContractAddress,
 		client,
-		cfg.GetContractVersion(),
+		e.contractVersion,
 	)
 	if err != nil {
 		log.Error("Failed to instantiate a CustomEntitlement contract from supplied contract address",
@@ -130,14 +110,14 @@ func evaluateIsEntitledOperation(
 	return false, nil
 }
 
-func evaluateErc20Operation(
+func (e *Evaluator) evaluateErc20Operation(
 	ctx context.Context,
-	cfg *config.Config,
+
 	op *CheckOperation,
 	linkedWallets []common.Address,
 ) (bool, error) {
 	log := dlog.FromCtx(ctx).With("function", "evaluateErc20Operation")
-	client, err := clients.Get(op.ChainID.Uint64())
+	client, err := e.clients.Get(op.ChainID.Uint64())
 	if err != nil {
 		log.Error("Chain ID not found", "chainID", op.ChainID)
 		return false, fmt.Errorf("evaluateErc20Operation: Chain ID %v not found", op.ChainID)
@@ -184,15 +164,15 @@ func evaluateErc20Operation(
 	return false, nil
 }
 
-func evaluateErc721Operation(
+func (e *Evaluator) evaluateErc721Operation(
 	ctx context.Context,
-	cfg *config.Config,
+
 	op *CheckOperation,
 	linkedWallets []common.Address,
 ) (bool, error) {
 	log := dlog.FromCtx(ctx).With("function", "evaluateErc721Operation")
 
-	client, err := clients.Get(op.ChainID.Uint64())
+	client, err := e.clients.Get(op.ChainID.Uint64())
 	if err != nil {
 		log.Error("Chain ID not found", "chainID", op.ChainID)
 		return false, fmt.Errorf("evaluateErc20Operation: Chain ID %v not found", op.ChainID)
@@ -236,7 +216,7 @@ func evaluateErc721Operation(
 	return false, err
 }
 
-func evaluateErc1155Operation(ctx context.Context,
+func (e *Evaluator) evaluateErc1155Operation(ctx context.Context,
 	op *CheckOperation,
 ) (bool, error) {
 	return false, fmt.Errorf("ERC1155 not implemented")

@@ -8,6 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/river-build/river/core/node/auth"
 	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/crypto"
@@ -17,9 +18,8 @@ import (
 	. "github.com/river-build/river/core/node/protocol/protocolconnect"
 	"github.com/river-build/river/core/node/registries"
 	"github.com/river-build/river/core/node/storage"
+	"github.com/river-build/river/core/xchain/entitlement"
 )
-
-var serviceRequests = infra.NewSuccessMetrics(infra.RPC_CATEGORY, nil)
 
 type Service struct {
 	// Context and config
@@ -49,10 +49,13 @@ type Service struct {
 	registryContract *registries.RiverRegistryContract
 	nodeRegistry     nodes.NodeRegistry
 	streamRegistry   nodes.StreamRegistry
-	onChainConfig    crypto.OnChainConfiguration
+	chainConfig      crypto.OnChainConfiguration
 
 	// Base chain
 	chainAuth auth.ChainAuth
+
+	// Entitlements
+	entitlementEvaluator *entitlement.Evaluator
 
 	// Network
 	listener   net.Listener
@@ -62,8 +65,12 @@ type Service struct {
 	// Status string
 	status atomic.Pointer[string]
 
-	// Archiver if in archive mode
+	// Archiver is not nil if running in archive mode
 	Archiver *Archiver
+
+	// Metrics
+	metrics     *infra.Metrics
+	rpcDuration *prometheus.HistogramVec
 }
 
 var (

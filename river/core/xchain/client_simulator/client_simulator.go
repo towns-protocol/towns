@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/river-build/river/core/node/config"
+	"github.com/river-build/river/core/node/infra"
 	"github.com/river-build/river/core/xchain/contracts"
 	"github.com/river-build/river/core/xchain/entitlement"
 	"github.com/river-build/river/core/xchain/examples"
@@ -240,10 +241,11 @@ func New(
 		checkerContract = bind.NewBoundContract(cfg.GetEntitlementContractAddress(), *checker.GetAbi(), nil, nil, nil)
 	)
 
+	metrics := infra.NewMetrics("xchain", "simulator")
 	var ownsChain bool
 	if baseChain == nil {
 		ownsChain = true
-		baseChain, err = node_crypto.NewBlockchain(ctx, &cfg.BaseChain, wallet)
+		baseChain, err = node_crypto.NewBlockchain(ctx, &cfg.BaseChain, wallet, metrics)
 		if err != nil {
 			return nil, err
 		}
@@ -252,6 +254,7 @@ func New(
 			baseChain.Client,
 			baseChain.InitialBlockNum,
 			time.Duration(cfg.BaseChain.BlockTimeMs)*time.Millisecond,
+			metrics,
 		)
 	}
 

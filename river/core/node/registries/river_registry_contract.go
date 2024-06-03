@@ -89,7 +89,13 @@ func initContract[T any](
 	for _, e := range events {
 		ev, ok := abi.Events[e.Name]
 		if !ok {
-			return nil, nil, nil, nil, RiverError(Err_INTERNAL, "Event not found in ABI", "event", e).Func("NewRiverRegistryContract").LogError(log)
+			return nil, nil, nil, nil, RiverError(
+				Err_INTERNAL,
+				"Event not found in ABI",
+				"event",
+				e,
+			).Func("NewRiverRegistryContract").
+				LogError(log)
 		}
 		eventSigs = append(eventSigs, ev.ID)
 		eventInfo[ev.ID] = e
@@ -155,8 +161,14 @@ func NewRiverRegistryContract(
 		contracts.StreamRegistryV1MetaData,
 		[]*EventInfo{
 			{contracts.Event_StreamAllocated, func() any { return new(contracts.StreamRegistryV1StreamAllocated) }},
-			{contracts.Event_StreamLastMiniblockUpdated, func() any { return new(contracts.StreamRegistryV1StreamLastMiniblockUpdated) }},
-			{contracts.Event_StreamPlacementUpdated, func() any { return new(contracts.StreamRegistryV1StreamPlacementUpdated) }},
+			{
+				contracts.Event_StreamLastMiniblockUpdated,
+				func() any { return new(contracts.StreamRegistryV1StreamLastMiniblockUpdated) },
+			},
+			{
+				contracts.Event_StreamPlacementUpdated,
+				func() any { return new(contracts.StreamRegistryV1StreamPlacementUpdated) },
+			},
 		},
 	)
 	if err != nil {

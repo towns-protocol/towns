@@ -4,6 +4,7 @@ import (
 	"context"
 
 	. "github.com/river-build/river/core/node/base"
+	"github.com/river-build/river/core/node/infra"
 	"github.com/river-build/river/core/node/testutils/dbtestutils"
 )
 
@@ -30,6 +31,7 @@ func NewTestPgStore(ctx context.Context) *TestPgStore {
 		pool,
 		GenShortNanoid(),
 		exitChan,
+		infra.NewMetricsFactory("", ""),
 	)
 	if err != nil {
 		panic(err)

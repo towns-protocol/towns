@@ -5,28 +5,11 @@ import (
 
 	"connectrpc.com/connect"
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/infra"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/shared"
 )
 
-var getStreamRequests = infra.NewSuccessMetrics("get_stream_requests", serviceRequests)
-
 func (s *Service) localGetStream(
-	ctx context.Context,
-	req *connect.Request[GetStreamRequest],
-) (*connect.Response[GetStreamResponse], error) {
-	res, err := s.getStream(ctx, req)
-	if err != nil {
-		getStreamRequests.FailInc()
-		return nil, err
-	}
-
-	getStreamRequests.PassInc()
-	return res, nil
-}
-
-func (s *Service) getStream(
 	ctx context.Context,
 	req *connect.Request[GetStreamRequest],
 ) (*connect.Response[GetStreamResponse], error) {

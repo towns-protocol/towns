@@ -2,17 +2,16 @@ package events
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/river-build/river/core/node/infra"
-
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/contracts"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/node/infra"
 	. "github.com/river-build/river/core/node/nodes"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/registries"
@@ -26,23 +25,12 @@ const (
 	MiniblockCandidateBatchSize = 50
 )
 
-var (
-	streamCacheSizeGauge = infra.NewGaugeVec(
-		"stream_cache_size", "Number of streams in stream cache",
-		"chain_id", "address",
-	)
-	streamCacheUnloadedGauge = infra.NewGaugeVec(
-		"stream_cache_unloaded", "Number of unloaded streams in stream cache",
-		"chain_id", "address",
-	)
-)
-
 type StreamCacheParams struct {
-	Storage      storage.StreamStorage
-	Wallet       *crypto.Wallet
-	Riverchain   *crypto.Blockchain
-	Registry     *registries.RiverRegistryContract
-	StreamConfig *config.StreamConfig
+	Storage     storage.StreamStorage
+	Wallet      *crypto.Wallet
+	RiverChain  *crypto.Blockchain
+	Registry    *registries.RiverRegistryContract
+	ChainConfig crypto.OnChainConfiguration
 }
 
 type StreamCache interface {
@@ -70,6 +58,8 @@ type streamCacheImpl struct {
 	// batch registrations.
 	registerMiniBlocksBatched bool
 
+	chainConfig crypto.OnChainConfiguration
+
 	streamCacheSizeGauge     prometheus.Gauge
 	streamCacheUnloadedGauge prometheus.Gauge
 }
@@ -81,18 +71,26 @@ func NewStreamCache(
 	params *StreamCacheParams,
 	appliedBlockNum crypto.BlockNumber,
 	chainMonitor crypto.ChainMonitor,
+	metrics infra.MetricsFactory,
 ) (*streamCacheImpl, error) {
 	s := &streamCacheImpl{
 		params:                    params,
 		registerMiniBlocksBatched: true,
-		streamCacheSizeGauge: streamCacheSizeGauge.With(prometheus.Labels{
-			"chain_id": params.Riverchain.ChainId.String(),
-			"address":  params.Wallet.Address.String(),
-		}),
-		streamCacheUnloadedGauge: streamCacheUnloadedGauge.With(prometheus.Labels{
-			"chain_id": params.Riverchain.ChainId.String(),
-			"address":  params.Wallet.Address.String(),
-		}),
+		streamCacheSizeGauge: metrics.NewGaugeVecEx(
+			"stream_cache_size", "Number of streams in stream cache",
+			"chain_id", "address",
+		).WithLabelValues(
+			params.RiverChain.ChainId.String(),
+			params.Wallet.Address.String(),
+		),
+		streamCacheUnloadedGauge: metrics.NewGaugeVecEx(
+			"stream_cache_unloaded", "Number of unloaded streams in stream cache",
+			"chain_id", "address",
+		).WithLabelValues(
+			params.RiverChain.ChainId.String(),
+			params.Wallet.Address.String(),
+		),
+		chainConfig: params.ChainConfig,
 	}
 
 	streams, err := params.Registry.GetAllStreams(ctx, appliedBlockNum)
@@ -117,46 +115,52 @@ func NewStreamCache(
 
 	chainMonitor.OnBlock(func(ctx context.Context, _ crypto.BlockNumber) { s.OnNewBlock(ctx) })
 
-	go s.cacheCleanup(ctx, params.StreamConfig.CacheExpirationPollInterval, params.StreamConfig.CacheExpiration)
+	go s.runCacheCleanup(ctx)
 
 	return s, nil
 }
 
-// polls the cache every pollInterval and evicts streams from the cache that have not been accessed in expiration.
-func (s *streamCacheImpl) cacheCleanup(ctx context.Context, pollInterval time.Duration, expiration time.Duration) {
+func (s *streamCacheImpl) runCacheCleanup(ctx context.Context) {
 	log := dlog.FromCtx(ctx)
 
-	if expiration <= 0 {
-		log.Warn("stream cache cache cleanup disabled", "expiration", expiration)
-		return
-	}
-	if pollInterval <= 0 {
-		pollInterval = expiration / 10
-	}
-
-	log.Debug("stream cache cache cleanup", "expiration", expiration, "poll", pollInterval)
-
 	for {
+		expirationEnabled, pollInterval := s.cleanupPollInterval(ctx)
 		select {
 		case <-time.After(pollInterval):
-			totalStreamsCount := 0
-			unloadedStreamsCount := 0
-			// TODO: add data structure that supports to loop over streams that have their view loaded instead of
-			// looping over all streams.
-			s.cache.Range(func(streamID, streamVal any) bool {
-				totalStreamsCount++
-				if stream := streamVal.(*streamImpl); stream.tryCleanup(expiration) {
-					unloadedStreamsCount++
-					log.Debug("stream view is unloaded from cache", "streamId", stream.streamId)
-				}
-				return true
-			})
-			s.streamCacheSizeGauge.Set(float64(totalStreamsCount))
-			s.streamCacheUnloadedGauge.Set(float64(unloadedStreamsCount))
+			expiration := s.cleanupStreamExpirationInterval(ctx)
+			s.cacheCleanup(ctx, expirationEnabled, expiration)
 		case <-ctx.Done():
 			log.Debug("stream cache cache cleanup shutdown")
 			return
 		}
+	}
+}
+
+func (s *streamCacheImpl) cacheCleanup(ctx context.Context, enabled bool, expiration time.Duration) {
+	var (
+		log                  = dlog.FromCtx(ctx)
+		totalStreamsCount    = 0
+		unloadedStreamsCount = 0
+	)
+
+	// TODO: add data structure that supports to loop over streams that have their view loaded instead of
+	// looping over all streams.
+	s.cache.Range(func(streamID, streamVal any) bool {
+		totalStreamsCount++
+		if enabled {
+			if stream := streamVal.(*streamImpl); stream.tryCleanup(expiration) {
+				unloadedStreamsCount++
+				log.Debug("stream view is unloaded from cache", "streamId", stream.streamId)
+			}
+		}
+		return true
+	})
+
+	s.streamCacheSizeGauge.Set(float64(totalStreamsCount))
+	if enabled {
+		s.streamCacheUnloadedGauge.Set(float64(unloadedStreamsCount))
+	} else {
+		s.streamCacheUnloadedGauge.Set(float64(-1))
 	}
 }
 
@@ -476,4 +480,61 @@ func (s *streamCacheImpl) processMiniblockProposalBatch(
 			log.Error("processMiniblockProposalBatch: Error applying miniblock", "streamId", streamId, "err", err)
 		}
 	}
+}
+
+func (s *streamCacheImpl) cleanupPollInterval(ctx context.Context) (bool, time.Duration) {
+	var (
+		log          = dlog.FromCtx(ctx)
+		rivErr       *RiverErrorImpl
+		defaultValue = time.Duration(
+			crypto.StreamCacheExpirationPollIntervalMsConfigKey.DefaultAsInt64()) * time.Millisecond
+	)
+
+	if s.chainConfig == nil {
+		return true, defaultValue
+	}
+
+	pollMs, err := s.chainConfig.GetInt64(crypto.StreamCacheExpirationPollIntervalMsConfigKey)
+	if err == nil && pollMs > 0 {
+		return true, time.Duration(pollMs) * time.Millisecond
+	}
+	if err == nil { // disabled by configuration, poll every minute to get configuration changes
+		log.Debug("stream cache cleanup disabled")
+		return false, time.Minute
+	}
+
+	if errors.As(err, &rivErr) && rivErr.Code == Err_NOT_FOUND {
+		log.Debug("stream cache poll interval not configured, use default")
+		return true, defaultValue
+	}
+
+	log.Error("unable to retrieve stream cache poll interval, use default", "err", err)
+	return true, defaultValue
+}
+
+func (s *streamCacheImpl) cleanupStreamExpirationInterval(ctx context.Context) time.Duration {
+	var (
+		log          = dlog.FromCtx(ctx)
+		rivErr       *RiverErrorImpl
+		defaultValue = time.Duration(crypto.StreamCacheExpirationMsConfigKey.DefaultAsInt64()) * time.Millisecond
+	)
+
+	if s.chainConfig == nil {
+		return defaultValue
+	}
+
+	expirationMs, err := s.chainConfig.GetUint64(crypto.StreamCacheExpirationMsConfigKey)
+	if err == nil && expirationMs > 0 {
+		return time.Duration(expirationMs) * time.Millisecond
+	} else if err == nil { // disabled by using a very high expiration interval
+		return 5 * 365 * 24 * time.Hour
+	}
+
+	if errors.As(err, &rivErr) && rivErr.Code == Err_NOT_FOUND {
+		log.Debug("stream cache expiration not configured, use default")
+		return defaultValue
+	}
+
+	log.Error("unable to retrieve stream cache expiration, use default", "err", err)
+	return defaultValue
 }

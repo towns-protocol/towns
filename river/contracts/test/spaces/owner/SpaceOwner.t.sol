@@ -17,7 +17,7 @@ contract SpaceOwnerTest is ISpaceOwnerBase, IOwnableBase, BaseSetup {
   string internal name = "Awesome Space";
   string internal uri = "ipfs://space-name";
 
-  SpaceOwner spaceOwnerToken;
+  SpaceOwner internal spaceOwnerToken;
 
   function setUp() public override {
     super.setUp();

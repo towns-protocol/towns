@@ -8,6 +8,7 @@ import (
 	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/contracts"
 	"github.com/river-build/river/core/node/crypto"
+	"github.com/river-build/river/core/node/infra"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/registries"
 	. "github.com/river-build/river/core/node/shared"
@@ -17,7 +18,7 @@ import (
 
 func srdump(cfg *config.Config, countOnly bool) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
-	blockchain, err := crypto.NewBlockchain(ctx, &cfg.RiverChain, nil)
+	blockchain, err := crypto.NewBlockchain(ctx, &cfg.RiverChain, nil, infra.NewMetrics("river", "cmdline"))
 	if err != nil {
 		return err
 	}
@@ -68,7 +69,7 @@ func srdump(cfg *config.Config, countOnly bool) error {
 func srstream(cfg *config.Config, streamId string) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
 
-	blockchain, err := crypto.NewBlockchain(ctx, &cfg.RiverChain, nil)
+	blockchain, err := crypto.NewBlockchain(ctx, &cfg.RiverChain, nil, infra.NewMetrics("river", "cmdline"))
 	if err != nil {
 		return err
 	}
@@ -102,7 +103,7 @@ func srstream(cfg *config.Config, streamId string) error {
 func nodesdump(cfg *config.Config) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
 
-	blockchain, err := crypto.NewBlockchain(ctx, &cfg.RiverChain, nil)
+	blockchain, err := crypto.NewBlockchain(ctx, &cfg.RiverChain, nil, infra.NewMetrics("river", "cmdline"))
 	if err != nil {
 		return err
 	}

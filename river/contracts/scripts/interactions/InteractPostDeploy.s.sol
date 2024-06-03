@@ -17,27 +17,28 @@ import {DeploySpaceOwner} from "contracts/scripts/deployments/DeploySpaceOwner.s
 import {DeploySpaceFactory} from "contracts/scripts/deployments/DeploySpaceFactory.s.sol";
 import {DeployBaseRegistry} from "contracts/scripts/deployments/DeployBaseRegistry.s.sol";
 import {DeployRiverBase} from "contracts/scripts/deployments/DeployRiverBase.s.sol";
-import {DeployProxyDelegation} from "contracts/scripts/deployments/DeployProxyDelegation.s.sol";
+import {DeployProxyBatchDelegation} from "contracts/scripts/deployments/DeployProxyBatchDelegation.s.sol";
 
 contract InteractPostDeploy is Interaction {
   DeploySpaceOwner deploySpaceOwner = new DeploySpaceOwner();
   DeploySpaceFactory deploySpaceFactory = new DeploySpaceFactory();
   DeployBaseRegistry deployBaseRegistry = new DeployBaseRegistry();
   DeployRiverBase deployRiverBaseToken = new DeployRiverBase();
-  DeployProxyDelegation deployProxyDelegation = new DeployProxyDelegation();
+  DeployProxyBatchDelegation deployProxyDelegation =
+    new DeployProxyBatchDelegation();
 
   function __interact(address deployer) public override {
     address spaceOwner = deploySpaceOwner.deploy();
     address spaceFactory = deploySpaceFactory.deploy();
     address baseRegistry = deployBaseRegistry.deploy();
     address riverBaseToken = deployRiverBaseToken.deploy();
-    // address mainnetProxyDelegation = deployProxyDelegation.deploy();
+    address mainnetProxyDelegation = deployProxyDelegation.deploy();
 
     vm.startBroadcast(deployer);
     ISpaceOwner(spaceOwner).setFactory(spaceFactory);
     IImplementationRegistry(spaceFactory).addImplementation(baseRegistry);
     SpaceDelegationFacet(baseRegistry).setRiverToken(riverBaseToken);
-    // IMainnetDelegation(baseRegistry).setProxyDelegation(mainnetProxyDelegation);
+    IMainnetDelegation(baseRegistry).setProxyDelegation(mainnetProxyDelegation);
     vm.stopBroadcast();
   }
 }

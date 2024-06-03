@@ -8,7 +8,7 @@ import {ICrossDomainMessenger} from "./../../src/tokens/river/mainnet/delegation
 
 // contracts
 
-contract MockMessenger is ICrossDomainMessenger {
+contract MockMessenger {
   address internal sender;
 
   function xDomainMessageSender() external view returns (address) {

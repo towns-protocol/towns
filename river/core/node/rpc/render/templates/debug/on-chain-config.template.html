@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>On-chain-configuration</title>
+    <meta charset="utf-8" />
+  </head>
+  <body>
+    <p>Current block: {{.Config.CurrentBlockNumber}}</p>
+    <table border="1">
+      <thead>
+        <tr>
+          <th>Key</th>
+          <th>Active on block</th>
+          <th>Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{ range $key, $values := .Config.Settings }} {{ range $i, $value :=
+        $values }}
+        <tr>
+          <td>{{ $key }}</td>
+          <td>{{ $value.ActiveBlockNumber }}</td>
+          <td>{{ $value.Value }}</td>
+        </tr>
+        {{end}} {{end}}
+      </tbody>
+    </table>
+  </body>
+</html>

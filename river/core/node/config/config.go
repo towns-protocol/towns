@@ -1,14 +1,12 @@
 package config
 
 import (
-	"encoding/hex"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/river-build/river/core/node/shared"
 )
 
 type ContractVersion string
@@ -55,9 +53,6 @@ type Config struct {
 	// Metrics
 	Metrics             MetricsConfig
 	PerformanceTracking PerformanceTrackingConfig
-
-	// Stream configuration
-	Stream StreamConfig
 
 	// Network configuration
 	Network NetworkConfig
@@ -183,30 +178,6 @@ type PerformanceTrackingConfig struct {
 	TracingEnabled   bool
 }
 
-type StreamConfig struct {
-	Media                       MediaStreamConfig
-	StreamMembershipLimits      map[string]int
-	RecencyConstraints          RecencyConstraintsConfig
-	ReplicationFactor           int
-	DefaultMinEventsPerSnapshot int
-	MinEventsPerSnapshot        map[string]int
-	// CacheExpiration is the interval (secs) after streams with no activity in the cache are expired and evicted
-	CacheExpiration time.Duration
-	// CacheExpirationPollIntervalSec is the interval to check for inactive streams in the cache
-	// (default=CacheExpiration/10)
-	CacheExpirationPollInterval time.Duration
-}
-
-type MediaStreamConfig struct {
-	MaxChunkCount int
-	MaxChunkSize  int
-}
-
-type RecencyConstraintsConfig struct {
-	AgeSeconds  int
-	Generations int
-}
-
 type ContractConfig struct {
 	// Address of the contract
 	Address common.Address
@@ -300,16 +271,6 @@ type FilterConfig struct {
 	// archive only listed shards.
 	NumShards uint64
 	Shards    []uint64
-}
-
-func (cfg *StreamConfig) GetMembershipLimit(streamId shared.StreamId) int {
-	if cfg.StreamMembershipLimits != nil {
-		streamPrefix := hex.EncodeToString(streamId[:1])
-		if value, ok := cfg.StreamMembershipLimits[streamPrefix]; ok {
-			return value
-		}
-	}
-	return 0
 }
 
 func (c *Config) GetGraffiti() string {

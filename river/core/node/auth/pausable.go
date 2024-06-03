@@ -7,7 +7,6 @@ import (
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/contracts/base"
 	"github.com/river-build/river/core/node/dlog"
-	"github.com/river-build/river/core/node/infra"
 	. "github.com/river-build/river/core/node/protocol"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -23,8 +22,6 @@ type pausableProxy struct {
 	contract Pausable
 	ctx      context.Context
 }
-
-var pausedCalls = infra.NewSuccessMetrics("paused_calls", contractCalls)
 
 func NewPausable(
 	ctx context.Context,
@@ -53,15 +50,12 @@ func NewPausable(
 func (proxy *pausableProxy) Paused(callOpts *bind.CallOpts) (bool, error) {
 	log := dlog.FromCtx(proxy.ctx)
 	start := time.Now()
-	defer infra.StoreExecutionTimeMetrics("Paused", infra.CONTRACT_CALLS_CATEGORY, start)
 	log.Debug("Paused", "address", proxy.address)
 	result, err := proxy.contract.Paused(callOpts)
 	if err != nil {
-		pausedCalls.FailInc()
 		log.Error("Paused", "address", proxy.address, "error", err)
 		return false, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err)
 	}
-	pausedCalls.PassInc()
 	log.Debug("Paused", "address", proxy.address, "result", result, "duration", time.Since(start).Milliseconds())
 	return result, nil
 }

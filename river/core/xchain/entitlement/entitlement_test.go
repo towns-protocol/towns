@@ -7,9 +7,8 @@ import (
 	"time"
 
 	"github.com/river-build/river/core/node/config"
+	"github.com/river-build/river/core/node/infra"
 	"github.com/river-build/river/core/xchain/examples"
-
-	"github.com/stretchr/testify/require"
 
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -159,6 +158,17 @@ var cfg = &config.Config{
 	Chains: chains,
 }
 
+var evaluator *Evaluator
+
+func TestMain(m *testing.M) {
+	var err error
+	evaluator, err = NewEvaluatorFromConfig(context.Background(), cfg, infra.NewMetricsFactory("", ""))
+	if err != nil {
+		panic(err)
+	}
+	m.Run()
+}
+
 func TestAndOperation(t *testing.T) {
 	testCases := []struct {
 		a            Operation
@@ -191,7 +201,7 @@ func TestAndOperation(t *testing.T) {
 
 		callerAddress := common.Address{}
 
-		result, error := evaluateOp(context.Background(), cfg, tree, []common.Address{callerAddress})
+		result, error := evaluator.evaluateOp(context.Background(), tree, []common.Address{callerAddress})
 		elapsedTime := time.Since(startTime)
 		if error != nil {
 			t.Errorf("evaluateAndOperation(%v) = %v; want %v", idx, error, nil)
@@ -241,7 +251,7 @@ func TestOrOperation(t *testing.T) {
 
 		callerAddress := common.Address{}
 
-		result, error := evaluateOp(context.Background(), cfg, tree, []common.Address{callerAddress})
+		result, error := evaluator.evaluateOp(context.Background(), tree, []common.Address{callerAddress})
 		elapsedTime := time.Since(startTime)
 		if error != nil {
 			t.Errorf("evaluateOrOperation(%v) = %v; want %v", idx, error, nil)
@@ -281,12 +291,10 @@ func TestCheckOperation(t *testing.T) {
 		{&slowFalseCheck, []common.Address{}, false, slow},
 	}
 
-	require.NoError(t, Init(context.Background(), cfg), "init entitlement package")
-
 	for _, tc := range testCases {
 		startTime := time.Now() // Get the current time
 
-		result, err := evaluateOp(context.Background(), cfg, tc.a, tc.wallets)
+		result, err := evaluator.evaluateOp(context.Background(), tc.a, tc.wallets)
 		elapsedTime := time.Since(startTime)
 
 		if err != nil {
@@ -356,11 +364,9 @@ func TestCheckOperation_Untimed(t *testing.T) {
 		},
 	}
 
-	require.NoError(t, Init(context.Background(), cfg), "init entitlement package")
-
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			result, err := evaluateOp(context.Background(), cfg, tc.a, tc.wallets)
+			result, err := evaluator.evaluateOp(context.Background(), tc.a, tc.wallets)
 
 			if err != nil {
 				t.Errorf("evaluateCheckOperation error (%v) = %v; want %v", tc.a, err, nil)

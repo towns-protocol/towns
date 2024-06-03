@@ -3,7 +3,6 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IMainnetDelegationBase} from "./IMainnetDelegation.sol";
-import {IProxyDelegation} from "contracts/src/tokens/river/mainnet/delegation/IProxyDelegation.sol";
 import {ICrossDomainMessenger} from "contracts/src/tokens/river/mainnet/delegation/ICrossDomainMessenger.sol";
 
 // libraries
@@ -14,6 +13,47 @@ import {MainnetDelegationStorage} from "./MainnetDelegationStorage.sol";
 
 abstract contract MainnetDelegationBase is IMainnetDelegationBase {
   using EnumerableSet for EnumerableSet.AddressSet;
+
+  function _replaceDelegation(
+    address delegator,
+    address claimer,
+    address operator,
+    uint256 quantity
+  ) internal {
+    MainnetDelegationStorage.Layout storage ds = MainnetDelegationStorage
+      .layout();
+    Delegation storage delegation = ds.delegationByDelegator[delegator];
+    address currentClaimer = ds.claimerByDelegator[delegator];
+
+    // Remove the current delegation if it exists
+    if (delegation.operator != address(0)) {
+      ds.delegatorsByOperator[delegation.operator].remove(delegator);
+
+      if (
+        ds.delegatorsByAuthorizedClaimer[currentClaimer].contains(delegator)
+      ) {
+        ds.delegatorsByAuthorizedClaimer[currentClaimer].remove(delegator);
+      }
+    }
+
+    // Set the new delegation
+    ds.delegatorsByOperator[operator].add(delegator);
+    ds.delegationByDelegator[delegator] = Delegation(
+      operator,
+      quantity,
+      delegator,
+      block.timestamp
+    );
+
+    // Update the claimer if it has changed
+    if (claimer != currentClaimer) {
+      if (currentClaimer != address(0)) {
+        ds.delegatorsByAuthorizedClaimer[currentClaimer].remove(delegator);
+      }
+      ds.claimerByDelegator[delegator] = claimer;
+      ds.delegatorsByAuthorizedClaimer[claimer].add(delegator);
+    }
+  }
 
   function _setDelegation(
     address delegator,
@@ -110,11 +150,11 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
     return MainnetDelegationStorage.layout().claimerByDelegator[owner];
   }
 
-  function _setProxyDelegation(IProxyDelegation proxyDelegation) internal {
+  function _setProxyDelegation(address proxyDelegation) internal {
     MainnetDelegationStorage.layout().proxyDelegation = proxyDelegation;
   }
 
-  function _getProxyDelegation() internal view returns (IProxyDelegation) {
+  function _getProxyDelegation() internal view returns (address) {
     return MainnetDelegationStorage.layout().proxyDelegation;
   }
 

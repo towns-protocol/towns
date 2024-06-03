@@ -27,9 +27,11 @@ import {Validator__InvalidStringLength, Validator__InvalidByteLength} from "cont
 import {MockUserEntitlement} from "contracts/test/mocks/MockUserEntitlement.sol";
 
 contract RolesTest is BaseSetup, IRolesBase, IEntitlementBase {
-  function getRandomAddresses(uint N) internal view returns (address[] memory) {
+  function getRandomAddresses(
+    uint256 N
+  ) internal view returns (address[] memory) {
     address[] memory data = new address[](N);
-    for (uint i = 0; i < N; i++) {
+    for (uint256 i = 0; i < N; i++) {
       data[i] = _randomAddress();
     }
     return data;

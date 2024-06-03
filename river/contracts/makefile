@@ -99,7 +99,7 @@ verify-blockscout-base-sepolia :;
 
 deploy-sepolia :;
 	@echo "Deploying $(contract)..."
-	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ffi --rpc-url sepolia --private-key ${TESTNET_PRIVATE_KEY} --broadcast --verify -vvvv
+	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ffi --rpc-url sepolia --private-key ${TESTNET_PRIVATE_KEY} --broadcast --verify --legacy -vvvv
 
 verify-etherscan-sepolia :;
 	@forge verify-contract ${address} ${contract} --chain sepolia --verifier-url ${ETHERSCAN_SEPOLIA_URL} --etherscan-api-key ${ETHERSCAN_API_KEY}
@@ -147,7 +147,7 @@ verify-blockscout-base :;
 # ===========================
 
 deploy-mainnet :;
-	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ffi --rpc-url mainnet --private-key ${TESTNET_PRIVATE_KEY} --broadcast --verify -vvvv
+	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ledger --hd-paths "m/44'/60'/1'/0/0" --sender ${PRODUCTION_ADDRESS} --ffi --rpc-url mainnet --broadcast --verify --legacy -vvvv
 
 verify-mainnet :;
 	@forge verify-contract ${address} ${contract} --chain mainnet

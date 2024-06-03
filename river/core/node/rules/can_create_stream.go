@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/river-build/river/core/node/crypto"
 	"log/slog"
 	"time"
 
@@ -18,15 +19,17 @@ import (
 )
 
 type csParams struct {
-	ctx                 context.Context
-	cfg                 *config.Config
-	streamId            shared.StreamId
-	parsedEvents        []*events.ParsedEvent
-	requestMetadata     map[string][]byte
-	inceptionPayload    IsInceptionPayload
-	creatorAddress      []byte
-	creatorUserId       string
-	creatorUserStreamId shared.StreamId
+	ctx                   context.Context
+	cfg                   *config.Config
+	maxChunkCount         int
+	streamMembershipLimit int
+	streamId              shared.StreamId
+	parsedEvents          []*events.ParsedEvent
+	requestMetadata       map[string][]byte
+	inceptionPayload      IsInceptionPayload
+	creatorAddress        []byte
+	creatorUserId         string
+	creatorUserStreamId   shared.StreamId
 }
 
 type csSpaceRules struct {
@@ -102,6 +105,7 @@ type csUserInboxRules struct {
 func CanCreateStream(
 	ctx context.Context,
 	cfg *config.Config,
+	chainConfig crypto.OnChainConfiguration,
 	currentTime time.Time,
 	streamId shared.StreamId,
 	parsedEvents []*events.ParsedEvent,
@@ -159,16 +163,28 @@ func CanCreateStream(
 		)
 	}
 
+	maxChunkCount, err := chainConfig.GetInt(crypto.StreamMediaMaxChunkCountConfigKey)
+	if err != nil {
+		return nil, err
+	}
+
+	streamMembershipLimit, err := chainConfig.GetStreamMembershipLimit(streamId.Type())
+	if err != nil {
+		return nil, err
+	}
+
 	r := &csParams{
-		ctx:                 ctx,
-		cfg:                 cfg,
-		streamId:            streamId,
-		parsedEvents:        parsedEvents,
-		requestMetadata:     requestMetadata,
-		inceptionPayload:    inceptionPayload,
-		creatorAddress:      creatorAddress,
-		creatorUserId:       creatorUserId,
-		creatorUserStreamId: creatorUserStreamId,
+		ctx:                   ctx,
+		cfg:                   cfg,
+		maxChunkCount:         maxChunkCount,
+		streamMembershipLimit: streamMembershipLimit,
+		streamId:              streamId,
+		parsedEvents:          parsedEvents,
+		requestMetadata:       requestMetadata,
+		inceptionPayload:      inceptionPayload,
+		creatorAddress:        creatorAddress,
+		creatorUserId:         creatorUserId,
+		creatorUserStreamId:   creatorUserStreamId,
 	}
 
 	builder := r.canCreateStream()
@@ -513,10 +529,10 @@ func (ru *csMediaRules) checkMediaInceptionPayload() error {
 	if len(ru.inception.ChannelId) == 0 {
 		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "channel id must not be empty for media stream")
 	}
-	if ru.inception.ChunkCount > int32(ru.params.cfg.Stream.Media.MaxChunkCount) {
+	if ru.inception.ChunkCount > int32(ru.params.maxChunkCount) {
 		return RiverError(
 			Err_BAD_STREAM_CREATION_PARAMS,
-			fmt.Sprintf("chunk count must be less than or equal to %d", ru.params.cfg.Stream.Media.MaxChunkCount),
+			fmt.Sprintf("chunk count must be less than or equal to %d", ru.params.maxChunkCount),
 		)
 	}
 
@@ -702,13 +718,12 @@ func (ru *csGdmChannelRules) checkGDMPayloads() error {
 
 	// GDM memberships cannot exceed the configured limit. the first event is the inception event
 	// and is subtracted from the parsed events count.
-	membershipLimit := ru.params.cfg.Stream.GetMembershipLimit(ru.params.streamId)
-	if len(ru.params.parsedEvents)-1 > membershipLimit {
+	if len(ru.params.parsedEvents)-1 > ru.params.streamMembershipLimit {
 		return RiverError(
 			Err_INVALID_ARGUMENT,
 			"membership limit reached",
 			"membershipLimit",
-			membershipLimit)
+			ru.params.streamMembershipLimit)
 	}
 
 	// check the first join

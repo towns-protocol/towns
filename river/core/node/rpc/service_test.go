@@ -592,7 +592,6 @@ func testRiverDeviceId(tester *serviceTester) {
 	)
 	require.NoError(err) // expected error when calling AddEvent
 	require.NotNil(resp.Msg.Error, "expected error")
-
 }
 
 func testSyncStreams(tester *serviceTester) {

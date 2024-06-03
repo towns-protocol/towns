@@ -12,6 +12,7 @@ import (
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/config"
+	"github.com/river-build/river/core/node/infra"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/testutils"
@@ -60,6 +61,7 @@ func setupTestWithMigration(
 		pool,
 		instanceId,
 		exitSignal,
+		infra.NewMetricsFactory("", ""),
 		migrations,
 	)
 	if err != nil {
@@ -570,6 +572,7 @@ func TestExitIfSecondStorageCreated(t *testing.T) {
 		pool,
 		instanceId2,
 		exitSignal2,
+		infra.NewMetricsFactory("", ""),
 		migrationsDir,
 	)
 	require.NoError(err)

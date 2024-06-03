@@ -27,7 +27,7 @@ import {ISpaceDelegation} from "contracts/src/base/registry/facets/delegation/IS
 // deployments
 import {DeploySpaceFactory} from "contracts/scripts/deployments/DeploySpaceFactory.s.sol";
 import {DeployRiverBase} from "contracts/scripts/deployments/DeployRiverBase.s.sol";
-import {DeployProxyDelegation} from "contracts/scripts/deployments/DeployProxyDelegation.s.sol";
+import {DeployProxyBatchDelegation} from "contracts/scripts/deployments/DeployProxyBatchDelegation.s.sol";
 import {DeployBaseRegistry} from "contracts/scripts/deployments/DeployBaseRegistry.s.sol";
 
 /*
@@ -38,8 +38,8 @@ contract BaseSetup is TestUtils, SpaceHelper {
   DeployBaseRegistry internal deployBaseRegistry = new DeployBaseRegistry();
   DeploySpaceFactory internal deploySpaceFactory = new DeploySpaceFactory();
   DeployRiverBase internal deployRiverTokenBase = new DeployRiverBase();
-  DeployProxyDelegation internal deployProxyDelegation =
-    new DeployProxyDelegation();
+  DeployProxyBatchDelegation internal deployProxyBatchDelegation =
+    new DeployProxyBatchDelegation();
 
   address internal deployer;
   address internal founder;
@@ -81,14 +81,14 @@ contract BaseSetup is TestUtils, SpaceHelper {
 
     // Mainnet
     messenger = MockMessenger(deployBaseRegistry.messenger());
-    deployProxyDelegation.setDependencies({
+    deployProxyBatchDelegation.setDependencies({
       mainnetDelegation_: baseRegistry,
       messenger_: address(messenger)
     });
-    mainnetProxyDelegation = deployProxyDelegation.deploy();
-    mainnetRiverToken = deployProxyDelegation.riverToken();
-    vault = deployProxyDelegation.vault();
-    claimers = deployProxyDelegation.claimers();
+    mainnetProxyDelegation = deployProxyBatchDelegation.deploy();
+    mainnetRiverToken = deployProxyBatchDelegation.riverToken();
+    vault = deployProxyBatchDelegation.vault();
+    claimers = deployProxyBatchDelegation.claimers();
 
     // Space Factory Diamond
     spaceFactory = deploySpaceFactory.deploy();

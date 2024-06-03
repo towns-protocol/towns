@@ -7336,6 +7336,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@river-build/proto-source@workspace:^, @river-build/proto-source@workspace:river/protocol":
+  version: 0.0.0-use.local
+  resolution: "@river-build/proto-source@workspace:river/protocol"
+  languageName: unknown
+  linkType: soft
+
 "@river-build/proto@workspace:^, @river-build/proto@workspace:river/core/proto":
   version: 0.0.0-use.local
   resolution: "@river-build/proto@workspace:river/core/proto"
@@ -7346,6 +7352,7 @@ __metadata:
     "@connectrpc/connect": ^1.4.0
     "@connectrpc/connect-web": ^1.4.0
     "@connectrpc/protoc-gen-connect-es": ^1.4.0
+    "@river-build/proto-source": "workspace:^"
     "@types/jest": ^29.5.3
     jest: ^29.6.2
     jest-extended: ^4.0.1

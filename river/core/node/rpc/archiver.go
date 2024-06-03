@@ -100,11 +100,17 @@ func NewArchiver(
 	return a
 }
 
-func (a *Archiver) addNewStream(ctx context.Context, streamId StreamId, nn *[]common.Address, lastKnownMiniblock uint64) {
+func (a *Archiver) addNewStream(
+	ctx context.Context,
+	streamId StreamId,
+	nn *[]common.Address,
+	lastKnownMiniblock uint64,
+) {
 	_, loaded := a.streams.Load(streamId)
 	if loaded {
 		// TODO: Double notificaion, shouldn't happen.
-		dlog.FromCtx(ctx).Error("Stream already exists in archiver map", "streamId", streamId, "lastKnownMiniblock", lastKnownMiniblock)
+		dlog.FromCtx(ctx).
+			Error("Stream already exists in archiver map", "streamId", streamId, "lastKnownMiniblock", lastKnownMiniblock)
 		return
 	}
 
@@ -196,9 +202,12 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) err
 		if len(msg.Miniblocks) == 0 {
 			log.Info(
 				"ArchiveStream: GetMiniblocks returned empty miniblocks, remote storage is not up-to-date with contract yet",
-				"streamId", stream.streamId,
-				"fromInclusive", mbsInDb,
-				"toExclusive", toBlock,
+				"streamId",
+				stream.streamId,
+				"fromInclusive",
+				mbsInDb,
+				"toExclusive",
+				toBlock,
 			)
 			// Reschedule with delay.
 			streamId := stream.streamId
@@ -324,8 +333,12 @@ func (a *Archiver) onStreamAllocated(ctx context.Context, event *contracts.Strea
 	a.tasks <- id
 }
 
-func (a *Archiver) onStreamPlacementUpdated(ctx context.Context, event *contracts.StreamRegistryV1StreamPlacementUpdated) {
+func (a *Archiver) onStreamPlacementUpdated(
+	ctx context.Context,
+	event *contracts.StreamRegistryV1StreamPlacementUpdated,
+) {
 	a.streamPlacementUpdated.Add(1)
+
 	id := StreamId(event.StreamId)
 	record, loaded := a.streams.Load(id)
 	if !loaded {
@@ -336,8 +349,12 @@ func (a *Archiver) onStreamPlacementUpdated(ctx context.Context, event *contract
 	_ = stream.nodes.Update(event.NodeAddress, event.IsAdded)
 }
 
-func (a *Archiver) onStreamLastMiniblockUpdated(ctx context.Context, event *contracts.StreamRegistryV1StreamLastMiniblockUpdated) {
+func (a *Archiver) onStreamLastMiniblockUpdated(
+	ctx context.Context,
+	event *contracts.StreamRegistryV1StreamLastMiniblockUpdated,
+) {
 	a.streamLastMiniblockUpdated.Add(1)
+
 	id := StreamId(event.StreamId)
 	record, loaded := a.streams.Load(id)
 	if !loaded {

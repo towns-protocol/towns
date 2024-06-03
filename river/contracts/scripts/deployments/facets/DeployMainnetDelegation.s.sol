@@ -19,6 +19,9 @@ contract DeployMainnetDelegation is FacetHelper, Deployer {
     addSelector(MainnetDelegation.getDelegatedStakeByOperator.selector);
     addSelector(MainnetDelegation.setAuthorizedClaimer.selector);
     addSelector(MainnetDelegation.getAuthorizedClaimer.selector);
+    addSelector(MainnetDelegation.setBatchDelegation.selector);
+    addSelector(MainnetDelegation.getProxyDelegation.selector);
+    addSelector(MainnetDelegation.getMessenger.selector);
   }
 
   function initializer() public pure override returns (bytes4) {

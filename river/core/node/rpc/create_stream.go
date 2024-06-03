@@ -9,7 +9,6 @@ import (
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/events"
-	"github.com/river-build/river/core/node/infra"
 	. "github.com/river-build/river/core/node/nodes"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/rules"
@@ -19,18 +18,14 @@ import (
 	"connectrpc.com/connect"
 )
 
-var createStreamRequests = infra.NewSuccessMetrics("create_stream_requests", serviceRequests)
-
 func (s *Service) createStreamImpl(
 	ctx context.Context,
 	req *connect.Request[CreateStreamRequest],
 ) (*connect.Response[CreateStreamResponse], error) {
 	stream, err := s.createStream(ctx, req.Msg)
 	if err != nil {
-		createStreamRequests.FailInc()
 		return nil, AsRiverError(err).Func("createStreamImpl")
 	}
-	createStreamRequests.PassInc()
 	resMsg := &CreateStreamResponse{
 		Stream: stream,
 	}
@@ -56,7 +51,7 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 
 	log.Debug("createStream", "parsedEvents", parsedEvents)
 
-	csRules, err := rules.CanCreateStream(ctx, s.config, time.Now(), streamId, parsedEvents, req.Metadata)
+	csRules, err := rules.CanCreateStream(ctx, s.config, s.chainConfig, time.Now(), streamId, parsedEvents, req.Metadata)
 	if err != nil {
 		return nil, err
 	}

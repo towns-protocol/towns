@@ -4,7 +4,6 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IMainnetDelegation} from "contracts/src/tokens/river/base/delegation/IMainnetDelegation.sol";
 import {ICrossDomainMessenger} from "contracts/src/tokens/river/mainnet/delegation/ICrossDomainMessenger.sol";
-import {IProxyDelegation} from "contracts/src/tokens/river/mainnet/delegation/IProxyDelegation.sol";
 
 // libraries
 
@@ -48,11 +47,41 @@ contract MainnetDelegation is
   }
 
   // =============================================================
+  //                           Getters
+  // =============================================================
+  function getMessenger() external view returns (address) {
+    return address(_getMessenger());
+  }
+
+  function getProxyDelegation() external view returns (address) {
+    return address(_getProxyDelegation());
+  }
+
+  // =============================================================
+  //                           Batch Delegation
+  // =============================================================
+  function setBatchDelegation(
+    address[] calldata delegators,
+    address[] calldata delegates,
+    address[] calldata claimers,
+    uint256[] calldata quantities
+  ) external onlyCrossDomainMessenger {
+    uint256 delegatorsLen = delegators.length;
+    for (uint256 i; i < delegatorsLen; i++) {
+      _replaceDelegation(
+        delegators[i],
+        claimers[i],
+        delegates[i],
+        quantities[i]
+      );
+    }
+  }
+
+  // =============================================================
   //                           Delegation
   // =============================================================
-
   function setProxyDelegation(address proxyDelegation) external onlyOwner {
-    _setProxyDelegation(IProxyDelegation(proxyDelegation));
+    _setProxyDelegation(proxyDelegation);
   }
 
   /// @inheritdoc IMainnetDelegation

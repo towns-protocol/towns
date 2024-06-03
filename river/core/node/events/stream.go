@@ -3,6 +3,7 @@ package events
 import (
 	"bytes"
 	"context"
+	"github.com/river-build/river/core/node/crypto"
 	"sync"
 	"time"
 
@@ -111,10 +112,17 @@ func (s *streamImpl) loadInternal(ctx context.Context) error {
 	if s.view != nil {
 		return nil
 	}
+
+	streamRecencyConstraintsGenerations, err :=
+		s.params.ChainConfig.GetInt(crypto.StreamRecencyConstraintsGenerationsConfigKey)
+	if err != nil {
+		return err
+	}
+
 	streamData, err := s.params.Storage.ReadStreamFromLastSnapshot(
 		ctx,
 		s.streamId,
-		max(0, s.params.StreamConfig.RecencyConstraints.Generations-1),
+		max(0, streamRecencyConstraintsGenerations-1),
 	)
 	if err != nil {
 		if AsRiverError(err).Code == Err_NOT_FOUND {
@@ -141,7 +149,7 @@ func (s *streamImpl) generateMiniblockProposal(ctx context.Context, forceSnapsho
 		return nil, nil
 	}
 
-	return s.view.ProposeNextMiniblock(ctx, s.params.StreamConfig, forceSnapshot)
+	return s.view.ProposeNextMiniblock(ctx, s.params.ChainConfig, forceSnapshot)
 }
 
 func (s *streamImpl) ProposeNextMiniblock(ctx context.Context, forceSnapshot bool) (*MiniblockInfo, error) {
@@ -223,7 +231,7 @@ func (s *streamImpl) ApplyMiniblock(ctx context.Context, miniblock *MiniblockInf
 	}
 
 	// Lets see if this miniblock can be applied.
-	newSV, err := s.view.copyAndApplyBlock(miniblock, s.params.StreamConfig)
+	newSV, err := s.view.copyAndApplyBlock(miniblock, s.params.ChainConfig)
 	if err != nil {
 		return err
 	}

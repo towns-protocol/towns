@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"slices"
 
-	"google.golang.org/protobuf/proto"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/events/migrations"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/shared"
+	"google.golang.org/protobuf/proto"
 )
 
 func Make_GenisisSnapshot(events []*ParsedEvent) (*Snapshot, error) {
@@ -548,7 +548,10 @@ func findChannel(channels []*SpacePayload_ChannelMetadata, channelId []byte) (*S
 	)
 }
 
-func insertChannel(channels []*SpacePayload_ChannelMetadata, newChannels ...*SpacePayload_ChannelMetadata) []*SpacePayload_ChannelMetadata {
+func insertChannel(
+	channels []*SpacePayload_ChannelMetadata,
+	newChannels ...*SpacePayload_ChannelMetadata,
+) []*SpacePayload_ChannelMetadata {
 	for _, channel := range newChannels {
 		channels = insertSorted(
 			channels,

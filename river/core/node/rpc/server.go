@@ -22,6 +22,7 @@ import (
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/events"
+	"github.com/river-build/river/core/node/infra"
 	"github.com/river-build/river/core/node/nodes"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/protocol/protocolconnect"
@@ -92,6 +93,11 @@ func (s *Service) start() error {
 		return AsRiverError(err).Message("Failed to init wallet").LogError(s.defaultLogger)
 	}
 
+	err = s.initEntitlements()
+	if err != nil {
+		return AsRiverError(err).Message("Failed to init entitlements").LogError(s.defaultLogger)
+	}
+
 	err = s.initBaseChain()
 	if err != nil {
 		return AsRiverError(err).Message("Failed to init base chain").LogError(s.defaultLogger)
@@ -129,15 +135,12 @@ func (s *Service) start() error {
 		return AsRiverError(err).Message("Failed to init cache and sync").LogError(s.defaultLogger)
 	}
 
-	if err = entitlement.Init(s.serverCtx, s.config); err != nil {
-		return AsRiverError(err).Message("Failed to init entitlement").LogError(s.defaultLogger)
-	}
-
 	go s.riverChain.ChainMonitor.RunWithBlockPeriod(
 		s.serverCtx,
 		s.riverChain.Client,
 		s.riverChain.InitialBlockNum,
 		time.Duration(s.riverChain.Config.BlockTimeMs)*time.Millisecond,
+		s.metrics,
 	)
 
 	s.initHandlers()
@@ -171,6 +174,19 @@ func (s *Service) initInstance(mode string) {
 	)
 	s.serverCtx = dlog.CtxWithLog(s.serverCtx, s.defaultLogger)
 	s.defaultLogger.Info("Starting server", "config", s.config, "mode", mode)
+
+	subsystem := mode
+	if mode == ServerModeFull {
+		subsystem = "stream"
+	}
+	s.metrics = infra.NewMetrics("river", subsystem)
+	s.metrics.StartMetricsServer(s.serverCtx, s.config.Metrics)
+	s.rpcDuration = s.metrics.NewHistogramVecEx(
+		"rpc_duration_seconds",
+		"RPC duration in seconds",
+		infra.DefaultDurationBucketsSeconds,
+		"method",
+	)
 }
 
 func (s *Service) initWallet() error {
@@ -209,7 +225,7 @@ func (s *Service) initBaseChain() error {
 	cfg := s.config
 
 	if !s.config.DisableBaseChain {
-		baseChain, err := crypto.NewBlockchain(ctx, &s.config.BaseChain, nil)
+		baseChain, err := crypto.NewBlockchain(ctx, &s.config.BaseChain, nil, s.metrics)
 		if err != nil {
 			return err
 		}
@@ -217,9 +233,11 @@ func (s *Service) initBaseChain() error {
 		chainAuth, err := auth.NewChainAuth(
 			ctx,
 			baseChain,
+			s.entitlementEvaluator,
 			&cfg.ArchitectContract,
 			cfg.BaseChain.LinkedWalletsLimit,
 			cfg.BaseChain.ContractCallsTimeoutMs,
+			s.metrics,
 		)
 		if err != nil {
 			return err
@@ -237,7 +255,7 @@ func (s *Service) initRiverChain() error {
 	ctx := s.serverCtx
 	var err error
 	if s.riverChain == nil {
-		s.riverChain, err = crypto.NewBlockchain(ctx, &s.config.RiverChain, s.wallet)
+		s.riverChain, err = crypto.NewBlockchain(ctx, &s.config.RiverChain, s.wallet, s.metrics)
 		if err != nil {
 			return err
 		}
@@ -258,7 +276,7 @@ func (s *Service) initRiverChain() error {
 		return err
 	}
 
-	s.onChainConfig, err = crypto.NewOnChainConfig(
+	s.chainConfig, err = crypto.NewOnChainConfig(
 		ctx, s.riverChain.Client, s.registryContract.Address, s.riverChain.InitialBlockNum, s.riverChain.ChainMonitor)
 	if err != nil {
 		return err
@@ -268,8 +286,7 @@ func (s *Service) initRiverChain() error {
 		walletAddress,
 		s.nodeRegistry,
 		s.registryContract,
-		s.config.Stream.ReplicationFactor,
-		s.onChainConfig,
+		s.chainConfig,
 	)
 
 	return nil
@@ -425,13 +442,22 @@ func (s *Service) serveH2C() {
 	}
 }
 
+func (s *Service) initEntitlements() error {
+	var err error
+	s.entitlementEvaluator, err = entitlement.NewEvaluatorFromConfig(s.serverCtx, s.config, s.metrics)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *Service) initStore() error {
 	ctx := s.serverCtx
 	log := s.defaultLogger
 
 	switch s.config.StorageType {
 	case storage.StreamStorageTypePostgres:
-		store, err := storage.NewPostgresEventStore(ctx, s.storagePoolInfo, s.instanceId, s.exitSignal)
+		store, err := storage.NewPostgresEventStore(ctx, s.storagePoolInfo, s.instanceId, s.exitSignal, s.metrics)
 		if err != nil {
 			return err
 		}
@@ -459,14 +485,15 @@ func (s *Service) initCacheAndSync() error {
 	s.cache, err = events.NewStreamCache(
 		s.serverCtx,
 		&events.StreamCacheParams{
-			Storage:      s.storage,
-			Wallet:       s.wallet,
-			Riverchain:   s.riverChain,
-			Registry:     s.registryContract,
-			StreamConfig: &s.config.Stream,
+			Storage:     s.storage,
+			Wallet:      s.wallet,
+			RiverChain:  s.riverChain,
+			Registry:    s.registryContract,
+			ChainConfig: s.chainConfig,
 		},
 		s.riverChain.InitialBlockNum,
 		s.riverChain.ChainMonitor,
+		s.metrics,
 	)
 	if err != nil {
 		return err
@@ -484,14 +511,14 @@ func (s *Service) initCacheAndSync() error {
 
 func (s *Service) initHandlers() {
 	interceptors := connect.WithInterceptors(
-		NewMetricsInterceptor(),
+		s.NewMetricsInterceptor(),
 		NewTimeoutInterceptor(s.config.Network.RequestTimeout),
 	)
 	streamServicePattern, streamServiceHandler := protocolconnect.NewStreamServiceHandler(s, interceptors)
-	s.mux.Handle(streamServicePattern, newHttpHandler(streamServiceHandler, s.defaultLogger))
+	s.mux.Handle(streamServicePattern, newHttpHandler(streamServiceHandler, s.defaultLogger, s.metrics))
 
 	nodeServicePattern, nodeServiceHandler := protocolconnect.NewNodeToNodeHandler(s, interceptors)
-	s.mux.Handle(nodeServicePattern, nodeServiceHandler)
+	s.mux.Handle(nodeServicePattern, newHttpHandler(nodeServiceHandler, s.defaultLogger, s.metrics))
 
 	s.registerDebugHandlers(s.config.EnableDebugEndpoints)
 }

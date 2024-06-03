@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/crypto"
+	"github.com/river-build/river/core/node/infra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -31,7 +32,14 @@ func TestNewTransactionPoolWithReplaceTx(t *testing.T) {
 	tc.Commit(ctx)
 
 	txPool, err := crypto.NewTransactionPoolWithPolicies(
-		ctx, tc.Client(), tc.DeployerBlockchain.Wallet, resubmitPolicy, repricePolicy, tc.ChainMonitor)
+		ctx,
+		tc.Client(),
+		tc.DeployerBlockchain.Wallet,
+		resubmitPolicy,
+		repricePolicy,
+		tc.ChainMonitor,
+		infra.NewMetrics("", ""),
+	)
 	require.NoError(err, "unable to construct transaction pool")
 
 	for i := 0; i < N; i++ {

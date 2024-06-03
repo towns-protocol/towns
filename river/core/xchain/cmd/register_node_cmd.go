@@ -14,6 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	node_contracts "github.com/river-build/river/core/node/contracts"
 	"github.com/river-build/river/core/node/crypto"
+	"github.com/river-build/river/core/node/infra"
 	"github.com/spf13/cobra"
 )
 
@@ -80,7 +81,8 @@ func registerImpl(operatorKeyfile string, userConfirmationMessage string, regist
 		return nil
 	}
 
-	baseChain, err := crypto.NewBlockchain(ctx, &loadedCfg.BaseChain, operatorWallet)
+	metrics := infra.NewMetrics("xchain", "cmdline")
+	baseChain, err := crypto.NewBlockchain(ctx, &loadedCfg.BaseChain, operatorWallet, metrics)
 	if err != nil {
 		return fmt.Errorf("unable to instantiate base chain client: %s", err)
 	}
@@ -89,6 +91,7 @@ func registerImpl(operatorKeyfile string, userConfirmationMessage string, regist
 		baseChain.Client,
 		0,
 		time.Duration(loadedCfg.BaseChain.BlockTimeMs)*time.Millisecond,
+		metrics,
 	)
 
 	checker, err := contracts.NewIEntitlementChecker(

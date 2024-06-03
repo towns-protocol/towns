@@ -13,14 +13,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/dlog"
-	"github.com/river-build/river/core/node/infra"
 	"github.com/river-build/river/core/node/node/version"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/protocol/protocolconnect"
 	"github.com/river-build/river/core/node/shared"
 )
-
-var infoRequests = infra.NewSuccessMetrics("info_requests", serviceRequests)
 
 func (s *Service) Info(
 	ctx context.Context,
@@ -33,12 +30,10 @@ func (s *Service) Info(
 	res, err := s.info(ctx, log, req)
 	if err != nil {
 		log.Warn("Info ERROR", "error", err)
-		infoRequests.FailInc()
 		return nil, err
 	}
 
 	log.Debug("Info LEAVE", "response", res.Msg)
-	infoRequests.PassInc()
 	return res, nil
 }
 

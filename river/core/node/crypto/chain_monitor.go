@@ -13,29 +13,6 @@ import (
 	"github.com/river-build/river/core/node/infra"
 )
 
-var (
-	chainBaseFee = infra.NewGaugeVec(
-		"chain_monitor_base_fee_wei", "Current EIP-1559 base fee as obtained from the block header",
-		"chain_id",
-	)
-	chainMonitorHeadBlock = infra.NewGaugeVec(
-		"chain_monitor_head_block", "Latest block available for the chain monitor",
-		"chain_id",
-	)
-	chainMonitorProcessedBlock = infra.NewGaugeVec(
-		"chain_monitor_processed_block", "Latest block processed by the chain monitor",
-		"chain_id",
-	)
-	chainMonitorRecvEvents = infra.NewCounterVec(
-		"chain_monitor_received_events", "Chain monitor total received events",
-		"chain_id",
-	)
-	chainMonitorPollCounter = infra.NewCounterVec(
-		"chain_monitor_pollcounter", "How many times the chain monitor poll loop has run",
-		"chain_id",
-	)
-)
-
 type (
 	// ChainMonitor monitors the EVM chain for new blocks and/or events.
 	ChainMonitor interface {
@@ -46,6 +23,7 @@ type (
 			client BlockchainClient,
 			initialBlock BlockNumber,
 			blockPeriod time.Duration,
+			metrics infra.MetricsFactory,
 		)
 		// OnHeader adds a callback that is when a new header is received.
 		// Note: it is not guaranteed to be called for every new header!
@@ -183,7 +161,31 @@ func (ecm *chainMonitor) RunWithBlockPeriod(
 	client BlockchainClient,
 	initialBlock BlockNumber,
 	blockPeriod time.Duration,
+	metrics infra.MetricsFactory,
 ) {
+	var (
+		chainBaseFee = metrics.NewGaugeVecEx(
+			"chain_monitor_base_fee_wei", "Current EIP-1559 base fee as obtained from the block header",
+			"chain_id",
+		)
+		chainMonitorHeadBlock = metrics.NewGaugeVecEx(
+			"chain_monitor_head_block", "Latest block available for the chain monitor",
+			"chain_id",
+		)
+		chainMonitorProcessedBlock = metrics.NewGaugeVecEx(
+			"chain_monitor_processed_block", "Latest block processed by the chain monitor",
+			"chain_id",
+		)
+		chainMonitorRecvEvents = metrics.NewCounterVecEx(
+			"chain_monitor_received_events", "Chain monitor total received events",
+			"chain_id",
+		)
+		chainMonitorPollCounter = metrics.NewCounterVecEx(
+			"chain_monitor_pollcounter", "How many times the chain monitor poll loop has run",
+			"chain_id",
+		)
+	)
+
 	var (
 		log                   = dlog.FromCtx(ctx)
 		one                   = big.NewInt(1)
@@ -199,11 +201,12 @@ func (ecm *chainMonitor) RunWithBlockPeriod(
 	)
 
 	if chainID := loadChainID(ctx, client); chainID != nil {
-		baseFeeGauge = chainBaseFee.With(prometheus.Labels{"chain_id": chainID.String()})
-		headBlockGauge = chainMonitorHeadBlock.With(prometheus.Labels{"chain_id": chainID.String()})
-		processedBlockGauge = chainMonitorProcessedBlock.With(prometheus.Labels{"chain_id": chainID.String()})
-		receivedEventsCounter = chainMonitorRecvEvents.With(prometheus.Labels{"chain_id": chainID.String()})
-		pollIntervalCounter = chainMonitorPollCounter.With(prometheus.Labels{"chain_id": chainID.String()})
+		curryLabels := prometheus.Labels{"chain_id": chainID.String()}
+		baseFeeGauge = chainBaseFee.With(curryLabels)
+		headBlockGauge = chainMonitorHeadBlock.With(curryLabels)
+		processedBlockGauge = chainMonitorProcessedBlock.With(curryLabels)
+		receivedEventsCounter = chainMonitorRecvEvents.With(curryLabels)
+		pollIntervalCounter = chainMonitorPollCounter.With(curryLabels)
 	} else {
 		return
 	}

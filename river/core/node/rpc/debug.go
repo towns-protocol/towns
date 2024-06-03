@@ -66,6 +66,7 @@ func (s *Service) registerDebugHandlers(enableDebugEndpoints bool) {
 	if enableDebugEndpoints {
 		handler.Handle(mux, "/debug/cache", &cacheHandler{cache: s.cache})
 		handler.Handle(mux, "/debug/txpool", &txpoolHandler{riverTxPool: s.riverChain.TxPool})
+		handler.Handle(mux, "/debug/config", &onChainConfigHandler{onChainConfig: s.chainConfig})
 		handler.HandleFunc(mux, "/debug/memory", MemoryHandler)
 		handler.HandleFunc(mux, "/debug/pprof/", pprof.Index)
 		mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
@@ -100,6 +101,36 @@ func HandleStacksHandler(w http.ResponseWriter, r *http.Request) {
 	output, err := render.Execute(&reply)
 	if err != nil {
 		dlog.FromCtx(ctx).Error("unable to render stack data", "err", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(output.Bytes())
+}
+
+type onChainConfigHandler struct {
+	onChainConfig crypto.OnChainConfiguration
+}
+
+func (h *onChainConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	var (
+		ctx   = r.Context()
+		reply render.OnChainConfigData
+		err   error
+	)
+
+	reply.Config, err = h.onChainConfig.All()
+	if err != nil {
+		dlog.FromCtx(ctx).Error("unable to obtain on-chain-config data", "err", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	output, err := render.Execute(&reply)
+	if err != nil {
+		dlog.FromCtx(ctx).Error("unable to render on-chain-config data", "err", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}

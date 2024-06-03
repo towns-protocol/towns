@@ -5,6 +5,8 @@ import (
 	"hash/fnv"
 	"sync"
 
+	"github.com/river-build/river/core/node/dlog"
+
 	"github.com/ethereum/go-ethereum/common"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/contracts"
@@ -42,16 +44,11 @@ func NewStreamRegistry(
 	localNodeAddress common.Address,
 	nodeRegistry NodeRegistry,
 	contract *registries.RiverRegistryContract,
-	replFactor int,
 	onChainConfig crypto.OnChainConfiguration,
 ) *streamRegistryImpl {
-	if replFactor < 1 {
-		replFactor = 1
-	}
 	return &streamRegistryImpl{
 		localNodeAddress: localNodeAddress,
 		nodeRegistry:     nodeRegistry,
-		replFactor:       replFactor,
 		onChainConfig:    onChainConfig,
 		contract:         contract,
 	}
@@ -93,7 +90,6 @@ func (sr *streamRegistryImpl) AllocateStream(
 
 func (sr *streamRegistryImpl) chooseStreamNodes(ctx context.Context, streamId StreamId) ([]common.Address, error) {
 	allNodes := sr.nodeRegistry.GetAllNodes()
-
 	nodes := make([]*NodeRecord, 0, len(allNodes))
 
 	for _, n := range allNodes {
@@ -102,23 +98,28 @@ func (sr *streamRegistryImpl) chooseStreamNodes(ctx context.Context, streamId St
 		}
 	}
 
-	// TODO: switch to on-chain configuration
-	// replFactor, err := sr.onChainConfig.GetUint64(crypto.StreamReplicationFactorKey)
+	replFactor, err := sr.onChainConfig.GetInt(crypto.StreamReplicationFactorConfigKey)
+	if err != nil {
+		// TODO: disable fallback to stream repl factor from file/env config if setting could not be read from chain config
+		dlog.FromCtx(ctx).Warn("Unable to load stream replication factor from on-chain config", "err", err)
+		replFactor = sr.replFactor
+		// return nil, err
+	}
 
-	if len(nodes) < sr.replFactor {
+	if len(nodes) < replFactor {
 		return nil, RiverError(
 			Err_BAD_CONFIG,
 			"replication factor is greater than number of operational nodes",
 			"replication_factor",
-			sr.replFactor,
+			replFactor,
 			"num_nodes",
 			len(nodes),
 		)
 	}
 
 	h := fnv.New64a()
-	addrs := make([]common.Address, sr.replFactor)
-	for i := 0; i < sr.replFactor; i++ {
+	addrs := make([]common.Address, replFactor)
+	for i := 0; i < replFactor; i++ {
 		h.Write(streamId[:])
 		index := i + int(h.Sum64()%uint64(len(nodes)-i))
 		tt := nodes[index]

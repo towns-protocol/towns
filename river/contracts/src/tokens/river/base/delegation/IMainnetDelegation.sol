@@ -46,6 +46,20 @@ interface IMainnetDelegationBase {
 
 interface IMainnetDelegation is IMainnetDelegationBase {
   /**
+   * @notice Set batch cross-chain delegation
+   * @param delegators The delegator address
+   * @param delegates The address the delegator is delegating to
+   * @param claimers The address the delegator is allowing to claim
+   * @param quantities The quantity to delegate
+   */
+  function setBatchDelegation(
+    address[] calldata delegators,
+    address[] calldata delegates,
+    address[] calldata claimers,
+    uint256[] calldata quantities
+  ) external;
+
+  /**
    * @notice Set delegation of a delegator to a operator
    * @param delegator The delegator address
    * @param operator The operator address to delegate to

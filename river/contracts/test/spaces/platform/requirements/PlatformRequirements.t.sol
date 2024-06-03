@@ -18,7 +18,7 @@ contract PlatformRequirementsTest is
   IPlatformRequirementsBase,
   IOwnableBase
 {
-  PlatformRequirementsFacet platformReqs;
+  PlatformRequirementsFacet internal platformReqs;
 
   function setUp() public override {
     super.setUp();

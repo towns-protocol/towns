@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	. "github.com/river-build/river/core/node/base"
+	"github.com/river-build/river/core/node/infra"
 
 	"github.com/stretchr/testify/require"
 )
@@ -28,6 +29,7 @@ func TestMigrateExistingDb(t *testing.T) {
 		pool,
 		instanceId2,
 		exitSignal2,
+		infra.NewMetricsFactory("", ""),
 		migrationsDir,
 	)
 	require.NoError(err)

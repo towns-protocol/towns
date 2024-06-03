@@ -9,14 +9,11 @@ import (
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/events"
-	"github.com/river-build/river/core/node/infra"
 	. "github.com/river-build/river/core/node/nodes"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/rules"
 	. "github.com/river-build/river/core/node/shared"
 )
-
-var addEventRequests = infra.NewSuccessMetrics("add_event_requests", serviceRequests)
 
 func (s *Service) localAddEvent(
 	ctx context.Context,
@@ -27,13 +24,11 @@ func (s *Service) localAddEvent(
 
 	streamId, err := StreamIdFromBytes(req.Msg.StreamId)
 	if err != nil {
-		addEventRequests.FailInc()
 		return nil, AsRiverError(err).Func("localAddEvent")
 	}
 
 	parsedEvent, err := ParseEvent(req.Msg.Event)
 	if err != nil {
-		addEventRequests.FailInc()
 		return nil, AsRiverError(err).Func("localAddEvent")
 	}
 
@@ -43,7 +38,6 @@ func (s *Service) localAddEvent(
 	if err != nil && req.Msg.Optional {
 		// aellis 5/2024 - we only want to wrap errors from canAddEvent,
 		// currently this is catching all errors, which is not ideal
-		addEventRequests.PassInc()
 		riverError := AsRiverError(err).Func("localAddEvent")
 		return connect.NewResponse(&AddEventResponse{
 			Error: &AddEventResponse_Error{
@@ -53,10 +47,8 @@ func (s *Service) localAddEvent(
 			},
 		}), nil
 	} else if err != nil {
-		addEventRequests.FailInc()
 		return nil, AsRiverError(err).Func("localAddEvent")
 	} else {
-		addEventRequests.PassInc()
 		return connect.NewResponse(&AddEventResponse{}), nil
 	}
 }
@@ -74,7 +66,7 @@ func (s *Service) addParsedEvent(
 
 	canAddEvent, chainAuthArgs, requiredParentEvent, err := rules.CanAddEvent(
 		ctx,
-		&s.config.Stream,
+		s.chainConfig,
 		s.nodeRegistry.GetValidNodeAddresses(),
 		time.Now(),
 		parsedEvent,

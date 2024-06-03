@@ -7,7 +7,6 @@ import (
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/contracts/base"
 	"github.com/river-build/river/core/node/dlog"
-	"github.com/river-build/river/core/node/infra"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/shared"
 
@@ -18,8 +17,6 @@ import (
 type Channels interface {
 	IsDisabled(opts *bind.CallOpts, channelId shared.StreamId) (bool, error)
 }
-
-var getChannelCalls = infra.NewSuccessMetrics("get_channel_calls", contractCalls)
 
 func NewChannels(
 	ctx context.Context,
@@ -55,17 +52,14 @@ var _ Channels = (*channelsProxy)(nil)
 func (p *channelsProxy) IsDisabled(opts *bind.CallOpts, channelId shared.StreamId) (bool, error) {
 	log := dlog.FromCtx(p.ctx)
 	start := time.Now()
-	defer infra.StoreExecutionTimeMetrics("IsDisabled", infra.CONTRACT_CALLS_CATEGORY, start)
 	log.Debug("IsDisabled", "channelId", channelId)
 
 	ch, err := p.contract.GetChannel(opts, channelId)
 	if err != nil {
-		getChannelCalls.FailInc()
 		log.Error("IsDisabled", "channelId", channelId, "error", err)
 		return false, err
 	}
 
-	getChannelCalls.PassInc()
 	log.Debug("IsDisabled", "channelId", channelId, "result", ch.Disabled, "duration", time.Since(start).Milliseconds())
 	return ch.Disabled, nil
 }

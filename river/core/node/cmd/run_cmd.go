@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/river-build/river/core/node/config"
-	"github.com/river-build/river/core/node/infra"
 	"github.com/river-build/river/core/node/node/version"
 	"github.com/river-build/river/core/node/rpc"
 
@@ -19,10 +18,6 @@ import (
 )
 
 func runMetricsAndProfiler(ctx context.Context, cfg *config.Config) error {
-	if cfg.Metrics.Enabled {
-		go infra.StartMetricsService(ctx, cfg.Metrics)
-	}
-
 	// we overwrite the DD_TAGS environment variable, because this is the best way to pass them down to the tracer
 	setDDTagsEnv()
 

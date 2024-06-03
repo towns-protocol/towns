@@ -152,7 +152,14 @@ func (s *streamNodesImpl) Update(n common.Address, isAdded bool) error {
 	var newNodes []common.Address
 	if isAdded {
 		if slices.Contains(s.nodes, n) {
-			return RiverError(Err_INTERNAL, "StreamNodes.Update(add): node already exists in stream nodes", "nodes", s.nodes, "node", n)
+			return RiverError(
+				Err_INTERNAL,
+				"StreamNodes.Update(add): node already exists in stream nodes",
+				"nodes",
+				s.nodes,
+				"node",
+				n,
+			)
 		}
 		newNodes = append(s.nodes, n)
 	} else {

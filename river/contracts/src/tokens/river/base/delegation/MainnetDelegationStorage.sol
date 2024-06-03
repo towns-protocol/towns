@@ -20,9 +20,10 @@ library MainnetDelegationStorage {
     mapping(address operator => EnumerableSet.AddressSet) delegatorsByOperator;
     mapping(address delegator => IMainnetDelegationBase.Delegation delegation) delegationByDelegator;
     mapping(address delegator => address claimer) claimerByDelegator;
-    IProxyDelegation proxyDelegation;
+    IProxyDelegation deprecatedproxyDelegation; // Do not use this, use proxyDelegation
     ICrossDomainMessenger messenger;
     mapping(address claimer => EnumerableSet.AddressSet delegators) delegatorsByAuthorizedClaimer;
+    address proxyDelegation;
   }
 
   function layout() internal pure returns (Layout storage s) {

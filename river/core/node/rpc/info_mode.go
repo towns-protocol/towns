@@ -42,6 +42,7 @@ func (s *Service) startInfoMode() error {
 		s.riverChain.Client,
 		s.riverChain.InitialBlockNum,
 		time.Duration(s.riverChain.Config.BlockTimeMs)*time.Millisecond,
+		s.metrics,
 	)
 
 	s.registerDebugHandlers(s.config.EnableDebugEndpoints)

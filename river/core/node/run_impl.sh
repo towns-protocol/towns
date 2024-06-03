@@ -16,7 +16,6 @@ export RPC_PORT="${RPC_PORT:-5170}"
 export DISABLE_BASE_CHAIN="${DISABLE_BASE_CHAIN:-false}"
 export RIVER_ENV="local_${RUN_ENV}"
 
-
 [ -z "${BLOCK_TIME_MS+x}" ] && BLOCK_TIME_MS=$(( ${RIVER_BLOCK_TIME:-1} * 1000 ))
 export BLOCK_TIME_MS
 
@@ -66,6 +65,8 @@ if [ "$CONFIG" == "true" ]; then
     export RIVER_REGISTRY_ADDRESS
 
     source ../../contracts/.env.localhost
+
+    ../../scripts/set-riverchain-config.sh
 
     for ((i=0; i<NUM_INSTANCES; i++)); do
         printf -v INSTANCE "%02d" $i

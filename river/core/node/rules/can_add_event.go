@@ -3,6 +3,7 @@ package rules
 import (
 	"bytes"
 	"context"
+	"github.com/river-build/river/core/node/crypto"
 	"log/slog"
 	"slices"
 	"time"
@@ -10,7 +11,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/river-build/river/core/node/auth"
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/events"
 	. "github.com/river-build/river/core/node/protocol"
@@ -18,12 +18,14 @@ import (
 )
 
 type aeParams struct {
-	ctx                context.Context
-	cfg                *config.StreamConfig
-	validNodeAddresses []common.Address
-	currentTime        time.Time
-	streamView         events.StreamView
-	parsedEvent        *events.ParsedEvent
+	ctx                   context.Context
+	cfg                   crypto.OnChainConfiguration
+	mediaMaxChunkSize     int
+	streamMembershipLimit int
+	validNodeAddresses    []common.Address
+	currentTime           time.Time
+	streamView            events.StreamView
+	parsedEvent           *events.ParsedEvent
 }
 
 type aeMembershipRules struct {
@@ -99,7 +101,7 @@ type aeKeyFulfillmentRules struct {
 */
 func CanAddEvent(
 	ctx context.Context,
-	cfg *config.StreamConfig,
+	chainConfig crypto.OnChainConfiguration,
 	validNodeAddresses []common.Address,
 	currentTime time.Time,
 	parsedEvent *events.ParsedEvent,
@@ -122,7 +124,7 @@ func CanAddEvent(
 		return false, nil, nil, RiverError(Err_INVALID_ARGUMENT, "event has no prevMiniblockHash")
 	}
 	// check preceding miniblock hash
-	err := streamView.ValidateNextEvent(ctx, &cfg.RecencyConstraints, parsedEvent, currentTime)
+	err := streamView.ValidateNextEvent(ctx, chainConfig, parsedEvent, currentTime)
 	if err != nil {
 		return false, nil, nil, err
 	}
@@ -132,13 +134,25 @@ func CanAddEvent(
 		return false, nil, nil, err
 	}
 
+	mediaMaxChunkSize, err := chainConfig.GetInt(crypto.StreamMediaMaxChunkSizeConfigKey)
+	if err != nil {
+		return false, nil, nil, err
+	}
+
+	streamMembershipLimit, err := chainConfig.GetStreamMembershipLimit(streamView.StreamId().Type())
+	if err != nil {
+		return false, nil, nil, err
+	}
+
 	ru := &aeParams{
-		ctx:                ctx,
-		cfg:                cfg,
-		validNodeAddresses: validNodeAddresses,
-		currentTime:        currentTime,
-		parsedEvent:        parsedEvent,
-		streamView:         streamView,
+		ctx:                   ctx,
+		cfg:                   chainConfig,
+		mediaMaxChunkSize:     mediaMaxChunkSize,
+		streamMembershipLimit: streamMembershipLimit,
+		validNodeAddresses:    validNodeAddresses,
+		currentTime:           currentTime,
+		parsedEvent:           parsedEvent,
+		streamView:            streamView,
 	}
 	builder := ru.canAddEvent()
 	ru.log().Debug("CanAddEvent", "builder", builder)
@@ -484,13 +498,12 @@ func (ru *aeMembershipRules) validMembershipLimit() (bool, error) {
 		if err != nil {
 			return false, err
 		}
-		membershipLimit := ru.params.cfg.GetMembershipLimit(*ru.params.streamView.StreamId())
-		if membershipLimit > 0 && (*members).Cardinality() >= membershipLimit {
+		if ru.params.streamMembershipLimit > 0 && (*members).Cardinality() >= ru.params.streamMembershipLimit {
 			return false, RiverError(
 				Err_INVALID_ARGUMENT,
 				"membership limit reached",
 				"membershipLimit",
-				membershipLimit)
+				ru.params.streamMembershipLimit)
 		}
 	}
 	return true, nil
@@ -1075,12 +1088,12 @@ func (ru *aeMediaPayloadChunkRules) canAddMediaChunk() (bool, error) {
 		return false, RiverError(Err_INVALID_ARGUMENT, "chunk index out of bounds")
 	}
 
-	if len(chunk.Data) > ru.params.cfg.Media.MaxChunkSize {
+	if len(chunk.Data) > ru.params.mediaMaxChunkSize {
 		return false, RiverError(
 			Err_INVALID_ARGUMENT,
 			"chunk size must be less than or equal to",
 			"cfg.Media.MaxChunkSize",
-			ru.params.cfg.Media.MaxChunkSize)
+			ru.params.mediaMaxChunkSize)
 	}
 
 	return true, nil

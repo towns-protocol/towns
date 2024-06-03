@@ -31,7 +31,9 @@ func (m *minipoolInstance) copyAndAddEvent(event *ParsedEvent) *minipoolInstance
 	return m
 }
 
-func (m *minipoolInstance) forEachEvent(op func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error)) error {
+func (m *minipoolInstance) forEachEvent(
+	op func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error),
+) error {
 	eventNum := m.eventNumOffset
 	for _, e := range m.events.Values {
 		cont, err := op(e, m.generation, eventNum)

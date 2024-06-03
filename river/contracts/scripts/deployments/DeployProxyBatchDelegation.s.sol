@@ -7,23 +7,19 @@ pragma solidity ^0.8.23;
 
 //contracts
 import {Deployer} from "../common/Deployer.s.sol";
-import {ProxyDelegation} from "contracts/src/tokens/river/mainnet/delegation/ProxyDelegation.sol";
+import {ProxyBatchDelegation} from "contracts/src/tokens/river/mainnet/delegation/ProxyBatchDelegation.sol";
 
 // deployments
 import {DeployRiverMainnet} from "./DeployRiverMainnet.s.sol";
 import {DeployAuthorizedClaimers} from "./DeployAuthorizedClaimers.s.sol";
-import {DeployBaseRegistry} from "contracts/scripts/deployments/DeployBaseRegistry.s.sol";
 
 import {MockMessenger} from "contracts/test/mocks/MockMessenger.sol";
 
-contract DeployProxyDelegation is Deployer {
+contract DeployProxyBatchDelegation is Deployer {
   // Mainnet
   DeployRiverMainnet internal riverHelper = new DeployRiverMainnet();
   DeployAuthorizedClaimers internal claimersHelper =
     new DeployAuthorizedClaimers();
-
-  // Base
-  DeployBaseRegistry internal deployBaseRegistry = new DeployBaseRegistry();
 
   address public riverToken;
   address public claimers;
@@ -32,7 +28,7 @@ contract DeployProxyDelegation is Deployer {
   address public vault;
 
   function versionName() public pure override returns (string memory) {
-    return "proxyDelegation";
+    return "proxyBatchDelegation";
   }
 
   function setDependencies(
@@ -53,7 +49,7 @@ contract DeployProxyDelegation is Deployer {
         vm.broadcast(deployer);
         messenger = address(new MockMessenger());
       } else {
-        messenger = _getMessenger();
+        messenger = getMessenger();
       }
     }
 
@@ -64,7 +60,12 @@ contract DeployProxyDelegation is Deployer {
     vm.broadcast(deployer);
     return
       address(
-        new ProxyDelegation(riverToken, claimers, messenger, mainnetDelegation)
+        new ProxyBatchDelegation(
+          riverToken,
+          claimers,
+          messenger,
+          mainnetDelegation
+        )
       );
   }
 
@@ -74,10 +75,15 @@ contract DeployProxyDelegation is Deployer {
       return 0x08cC41b782F27d62995056a4EF2fCBAe0d3c266F;
     }
 
+    if (block.chainid == 1) {
+      // Base Registry contract on Base
+      return 0x7c0422b31401C936172C897802CF0373B35B7698;
+    }
+
     return getDeployment("baseRegistry");
   }
 
-  function _getMessenger() internal view returns (address) {
+  function getMessenger() public view returns (address) {
     // Base or Base (Sepolia)
     if (block.chainid == 8453 || block.chainid == 84532) {
       return 0x4200000000000000000000000000000000000007;
