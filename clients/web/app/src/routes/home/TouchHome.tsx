@@ -68,8 +68,7 @@ import { BrowseChannelsPanel } from '@components/BrowseChannelsPanel/BrowseChann
 import { useUnseenChannelIds } from 'hooks/useUnseenChannelIdsCount'
 import { usePanels } from 'routes/layouts/hooks/usePanels'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
-import { replaceOAuthParameters, useAnalytics } from 'hooks/useAnalytics'
-import { PATHS } from 'routes'
+import { useAnalytics } from 'hooks/useAnalytics'
 import { ChannelItem } from '../AllChannelsList/AllChannelsList'
 import { TouchTabBarLayout } from '../layouts/TouchTabBarLayout'
 
@@ -139,10 +138,7 @@ export const TouchHome = () => {
             'home-page',
             'home page',
             {
-                path: `${PATHS.SPACES}/${spaceId}`,
                 spaceId,
-                locationPathname: location.pathname,
-                locationSearch: replaceOAuthParameters(location.search),
                 anonymousId: analytics.anonymousId,
             },
             () => {

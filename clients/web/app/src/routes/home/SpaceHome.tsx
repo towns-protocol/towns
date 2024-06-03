@@ -6,7 +6,7 @@ import { useSearchParams } from 'react-router-dom'
 import { PATHS } from 'routes'
 import { useStore } from 'store/store'
 import { useDevice } from 'hooks/useDevice'
-import { replaceOAuthParameters, useAnalytics } from 'hooks/useAnalytics'
+import { useAnalytics } from 'hooks/useAnalytics'
 import { LINKED_RESOURCE } from '../../data/rel'
 
 export const SpaceHome = () => {
@@ -70,10 +70,7 @@ export const SpaceHome = () => {
             'home-page',
             'home page',
             {
-                path: `${PATHS.SPACES}/${spaceId}`,
                 spaceId,
-                locationPathname: location.pathname,
-                locationSearch: replaceOAuthParameters(location.search),
                 anonymousId: analytics.anonymousId,
             },
             () => {

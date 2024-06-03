@@ -12,7 +12,7 @@ import { Button, Heading, Icon, Stack, Text } from '@ui'
 
 import { useDevice } from 'hooks/useDevice'
 import { useStore } from 'store/store'
-import { replaceOAuthParameters, useAnalytics } from 'hooks/useAnalytics'
+import { useAnalytics } from 'hooks/useAnalytics'
 import { AppProgressState } from '@components/AppProgressOverlay/AppProgressState'
 import { AppProgressOverlayTrigger } from '@components/AppProgressOverlay/AppProgressOverlayTrigger'
 
@@ -41,18 +41,9 @@ export const NoJoinedSpacesFallback = () => {
     }, [isTouch, location.pathname, location.search, spaceIdBookmark])
 
     useEffect(() => {
-        analytics?.page(
-            'home-page',
-            'no joined towns page',
-            {
-                path: '*',
-                locationPathname: location.pathname,
-                locationSearch: replaceOAuthParameters(location.search),
-            },
-            () => {
-                console.log('[analytics] no joined towns page')
-            },
-        )
+        analytics?.page('home-page', 'no joined towns page', {}, () => {
+            console.log('[analytics] no joined towns page')
+        })
     }, [analytics, location.pathname, location.search])
 
     useEffect(() => {
