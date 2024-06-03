@@ -15,13 +15,11 @@
         "typescript": "^5.1.6"
     },
     "peerDependencies": {
-        "@privy-io/react-auth": "^1.59.7",
-        "@privy-io/wagmi-connector": "^0.1.13",
+        "@privy-io/react-auth": "^1.66.1",
         "@types/react": "^18.2.11",
         "@types/react-dom": "^18.2.4",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
-        "use-towns-client": "workspace:^",
-        "wagmi": "^1.4.12"
+        "use-towns-client": "workspace:^"
     }
 }
