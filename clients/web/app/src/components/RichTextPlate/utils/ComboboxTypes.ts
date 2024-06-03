@@ -28,6 +28,10 @@ export enum ComboboxTypes {
     emojiMention = 'emojiMention',
 }
 
+export function isComboboxType(value: string): value is ComboboxTypes {
+    return Object.values(ComboboxTypes).includes(value as ComboboxTypes)
+}
+
 export type TUserMention = RoomMember & { atChannel?: boolean } // | { atRole?: number }
 export type TUserNameId = { displayName: string; userId: string }
 

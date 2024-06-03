@@ -87,8 +87,9 @@ router.get('/space-icon/:id+', async (request: WorkerRequest, env) => {
     try {
         // cache this fetch for max of CACHE_TTL seconds before revalidation
         const response = await fetch(newRequest, { cf: { cacheTtl: CACHE_TTL } })
+        const buffer = await response.arrayBuffer()
         // clone response so it's no longer immutable
-        const newResponse = new Response(response.body, response)
+        const newResponse = new Response(buffer, response)
         // cache on client, but prefer revalidation when served
         // https://developers.cloudflare.com/cache/about/cache-control/#revalidation
         newResponse.headers.delete('Cache-Control')
@@ -108,8 +109,8 @@ router.post('/space-icon/:id', async (request: WorkerRequest, env) => {
     const copyRequest: Request = request.clone()
     const formData = await copyRequest.formData()
 
-    const formId: FormDataEntryValue | null = formData.get('id')
-    if ((formId as string) !== spaceId) {
+    const formId = formData.get('id')
+    if (formId !== spaceId) {
         return new Response(JSON.stringify({ error: 'id mismatch' }), {
             status: 400,
         })
@@ -135,14 +136,15 @@ router.post('/user/:id/avatar', async (request: WorkerRequest, env) => {
     const userId = request.params?.id
     const copyRequest: Request = request.clone()
     const formData = await copyRequest.formData()
-    const formId: FormDataEntryValue | null = formData.get('id')
-    if ((formId as string) !== userId) {
+    const formId = formData.get('id')
+    if (formId !== userId) {
         return new Response(JSON.stringify({ error: 'id mismatch' }), {
             status: 400,
         })
     }
 
     try {
+        console.log('env', env)
         const destinationURL = new URL([env.CF_API, env.ACCOUNT_ID, 'images/v1', userId].join('/'))
         // upsert
         const getUrl = new URL([IMAGE_DELIVERY_SERVICE, env.IMAGE_HASH, userId, 'public'].join('/'))
@@ -175,11 +177,12 @@ router.get('/user/:id/avatar', async (request: WorkerRequest, env) => {
         const destinationURL = new URL(
             [IMAGE_DELIVERY_SERVICE, env.IMAGE_HASH, userId, 'public'].join('/'),
         )
-        const newRequest: Request = new Request(destinationURL, new Request(request.clone()))
+        const newRequest = new Request(destinationURL, request.clone())
         // cache this fetch for max of CACHE_TTL seconds before revalidation
         const response = await fetch(newRequest, { cf: { cacheTtl: CACHE_TTL } })
         // clone response so it's no longer immutable
-        const newResponse = new Response(response.body, response)
+        const buffer = await response.arrayBuffer()
+        const newResponse = new Response(buffer, response)
         // cache on client, but prefer revalidation when served
         // https://developers.cloudflare.com/cache/about/cache-control/#revalidation
         newResponse.headers.delete('Cache-Control')
@@ -290,7 +293,7 @@ router.post('/user-feedback', async (request: WorkerRequest, env) => {
         email: formData.get('email') as string,
         comments: formData.get('comments') as string,
         logJson: formData.get('logs') as string,
-        attachments: formData.getAll('attachment[]') as File[],
+        attachments: formData.getAll('attachment[]') as unknown as File[], // Unclear if this is correct
     }
 
     const linearConfig = {

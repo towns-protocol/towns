@@ -24,7 +24,7 @@ import { TMentionComboboxTypes } from '../../utils/ComboboxTypes'
 const onSelectedItemWithRangeFix =
     (key: string): ComboboxProps<TMentionComboboxTypes>['onSelectItem'] =>
     (editor, item) => {
-        const { targetRange }: { targetRange: TRange } = comboboxSelectors.state()
+        const { targetRange }: { targetRange: TRange | null } = comboboxSelectors.state()
         if (!targetRange) {
             return
         }

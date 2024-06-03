@@ -84,7 +84,7 @@ export const fetchAlchemyNfts = async (
             )
         }
 
-        return response.json()
+        return (await response.json()) as GetContractsForOwnerAlchemyResponse
     } catch (error) {
         throw throwCustomError(JSON.stringify(error), (error as unknown as { code: number })?.code)
     }
@@ -101,7 +101,7 @@ export const fetchAlchemyContractMetadata = async (
             response.status,
         )
     }
-    return response.json()
+    return (await response.json()) as GetContractMetadataAlchemyResponse
 }
 
 export const fetchAlchemyNftOwners = async (
@@ -117,7 +117,7 @@ export const fetchAlchemyNftOwners = async (
             response.status,
         )
     }
-    return response.json()
+    return (await response.json()) as GetOwnersForNftResponse
 }
 
 export const fetchAlchemyNftMetadata = async (
@@ -133,7 +133,7 @@ export const fetchAlchemyNftMetadata = async (
             response.status,
         )
     }
-    return response.json()
+    return (await response.json()) as GetNftMetadataResponse
 }
 
 export function toContractMetadata(response: GetContractMetadataAlchemyResponse): ContractMetadata {

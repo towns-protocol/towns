@@ -51,6 +51,8 @@ const GIPHY_URL = {
     host: 'https://giphy.com',
     path: '/gifs/mlb-baseball-playoffs-astros-rlO48a7OCYB3SIpndR',
 }
+
+//https://linear.app/xxx/issue/xxx-817
 const NO_CONTENT_URL = {
     host: 'https://linear.app',
     path: '/xxx/issue/xxx-817',
@@ -88,6 +90,7 @@ describe('unfurl handler', () => {
         interceptResponseWithMock(GIPHY_URL.host, GIPHY_URL.path, giphyMock)
         interceptResponseWithMock(IMGUR_URL.host, IMGUR_URL.path, imgurMock, 'HEAD')
         interceptResponseWithMock(IMGUR_URL.host, IMGUR_URL.path, imgurMock)
+        interceptResponseWithMock(NO_CONTENT_URL.host, NO_CONTENT_URL.path, noContentMock, 'HEAD')
         interceptResponseWithMock(NO_CONTENT_URL.host, NO_CONTENT_URL.path, noContentMock)
         interceptResponseWithMock(
             IMAGE_TYPE_URL.host,

@@ -27,7 +27,12 @@ import React, { memo, useCallback, useEffect } from 'react'
 import fuzzysort from 'fuzzysort'
 import { TypeaheadMenuAnchored, TypeaheadMenuItem } from '@ui'
 import { getUsernameForMention } from '../../utils/mentions'
-import { ComboboxTypes, TMentionComboboxTypes, TUserWithChannel } from '../../utils/ComboboxTypes'
+import {
+    ComboboxTypes,
+    TMentionComboboxTypes,
+    TUserWithChannel,
+    isComboboxType,
+} from '../../utils/ComboboxTypes'
 import { getFilteredItemsWithoutMockEmoji } from '../../utils/helpers'
 import { ComboboxIcon } from './ComboboxIcon'
 import { ComboBoxTrailingContent } from './ComboboxTrailingContent'
@@ -142,6 +147,14 @@ export const ComboboxContent = <T extends TMentionComboboxTypes>(
         return null
     }
 
+    if (!activeId) {
+        return null
+    }
+
+    if (!isComboboxType(activeId)) {
+        return null
+    }
+
     return (
         <TypeaheadMenuAnchored
             targetRef={inputRef}
@@ -211,6 +224,10 @@ const Combobox = <T extends TMentionComboboxTypes>({
 
     useEffect(() => {
         if (activeId !== ComboboxTypes.emojiMention) {
+            return
+        }
+
+        if (!query) {
             return
         }
 

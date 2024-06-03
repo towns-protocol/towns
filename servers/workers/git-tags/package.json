@@ -6,17 +6,16 @@
     "license": "MIT OR Apache-2.0",
     "scripts": {
         "deploy": "wrangler deploy",
-        "start": "wrangler dev",
-        "test": "vitest"
+        "start": "wrangler dev"
     },
     "dependencies": {
         "@river-build/generated": "workspace:^",
         "zod": "^3.21.4"
     },
     "devDependencies": {
-        "miniflare": "^3.20230710.0",
+        "miniflare": "^3.20240524.1",
         "vitest": "^1.1.1",
         "vitest-environment-miniflare": "^2.14.1",
-        "wrangler": "^3.2.0"
+        "wrangler": "^3.58.0"
     }
 }

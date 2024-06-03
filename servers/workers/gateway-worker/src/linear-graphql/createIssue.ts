@@ -82,5 +82,5 @@ mutation CreateIssue($issueTitle: String!, $issueDescription: String!){
         },
         body: graphql,
     })
-    console.log('Issue create response', res.status, res.statusText, await res.text())
+    console.log('Issue create response', res)
 }

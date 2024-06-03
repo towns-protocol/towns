@@ -71,7 +71,7 @@
         "solidity-docgen": "^0.6.0-beta.29",
         "syncpack": "^10.7.3",
         "ts-node": "^10.9.1",
-        "turbo": "^1.12.2",
+        "turbo": "^1.13.3",
         "typechain": "^8.1.1",
         "typescript": "^5.1.6",
         "wait-on": "^7.0.1"

@@ -74,33 +74,28 @@ async function handleRawImage(url: string): Promise<UnfurlData> {
 
 export async function formattedUnfurlJSData(url: string): Promise<UnfurlData | null> {
     let data: UnfurlData | null = null
-    try {
-        const query = await fetch(url, { method: 'HEAD' })
-        if (query.headers.get('content-type')?.startsWith('image/')) {
-            data = await handleRawImage(url)
+    const query = await fetch(url, { method: 'HEAD' })
+    if (query.headers.get('content-type')?.startsWith('image/')) {
+        data = await handleRawImage(url)
+    } else {
+        const result = await unfurl(url)
+        if (result) {
+            data = handleUnfurlJSResult(url, result)
         } else {
-            const result = await unfurl(url)
-            if (result) {
-                data = handleUnfurlJSResult(url, result)
-            } else {
-                console.warn(`formattedUnfurlJSData: no result for ${url}`)
-            }
+            console.warn(`formattedUnfurlJSData: no result for ${url}`)
+        }
 
-            // if we didn't parse a description or image, nothing to show
-            if (data && !data.description && !data.image) {
-                data = null
-            }
-            if (data?.image?.url && (!data.image.width || !data.image.height)) {
-                try {
-                    data.image = (await handleRawImage(data.image.url)).image
-                } catch {
-                    // do nothing
-                }
+        // if we didn't parse a description or image, nothing to show
+        if (data && !data.description && !data.image) {
+            data = null
+        }
+        if (data?.image?.url && (!data.image.width || !data.image.height)) {
+            try {
+                data.image = (await handleRawImage(data.image.url)).image
+            } catch {
+                // do nothing
             }
         }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-        throw Error(error)
     }
     return data
 }
