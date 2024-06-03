@@ -13,7 +13,7 @@
         "build": {
             // note: output globs are relative to each package's `package.json`
             // (and not the monorepo root
-            "outputs": ["build/**", "out/**"],
+            "outputs": ["dist/**", "build/**", "out/**"],
             "cache": true,
             "dependsOn": ["^build"]
         },
