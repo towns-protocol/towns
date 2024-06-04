@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-DEPLOYMENT_TIMEOUT=600s # 10 minutes
+DEPLOYMENT_TIMEOUT=1200s # 20 minutes
 
 function main() {
     check_env
