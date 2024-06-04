@@ -3,6 +3,7 @@ import { useMemo } from 'react'
 import { z } from 'zod'
 import { Color } from 'three'
 import { SECOND_MS } from 'data/constants'
+import { useEnvironment } from 'hooks/useEnvironmnet'
 
 export const NODE_COLORS = [
     '#1DDCF2',
@@ -32,12 +33,17 @@ export type NodeData = {
 }
 
 export const useNodeData = (connectedNode: string | undefined) => {
+    const { id } = useEnvironment()
+    const nodeUrl = useMemo(() => {
+        if (id === 'omega') {
+            return `https://framework-1.nodes.towns-u4.com/debug/multi/json`
+        }
+        return `https://river1.nodes.gamma.towns.com/debug/multi/json`
+    }, [id])
     const { data } = useQuery<NodeStatusSchema>({
         queryKey: ['nodeStatus'],
         queryFn: () => {
-            return fetch('https://river1.nodes.gamma.towns.com/debug/multi/json').then((res) =>
-                res.json(),
-            )
+            return fetch(nodeUrl).then((res) => res.json())
         },
         refetchInterval: SECOND_MS * 30,
     })
