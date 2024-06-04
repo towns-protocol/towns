@@ -4,11 +4,15 @@ import {
     useChannelId,
     useChannelMembers,
     useTownsClient,
+    useUserLookupContext,
 } from 'use-towns-client'
+import { Toast, toast as headlessToast } from 'react-hot-toast/headless'
+import { isGDMChannelStreamId } from '@river/sdk'
 import { Panel } from '@components/Panel/Panel'
-import { Box, Button, Stack } from '@ui'
+import { Box, Button, Icon, IconButton, Stack, Text } from '@ui'
 import { InviteUserList } from '@components/InviteUserList/InviteUserList'
 import { ModalContainer } from '@components/Modals/ModalContainer'
+import { getNameListFromUsers } from '@components/UserList/UserList'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 
 const ChannelInvite = (props: { onClose?: () => void }) => {
@@ -25,6 +29,9 @@ const ChannelInvite = (props: { onClose?: () => void }) => {
         for (const userId of userIds) {
             await inviteUser(channel, userId)
         }
+        headlessToast.custom((t) => (
+            <InviteSuccessToast toast={t} channelId={channel} userIds={userIds} />
+        ))
         if (props.onClose) {
             // only for touch / modal
             props.onClose()
@@ -84,5 +91,44 @@ export const ChannelInviteModal = (props: { onHide: () => void }) => {
         <ModalContainer touchTitle="Add Members" onHide={onHide}>
             <ChannelInvite onClose={onHide} />
         </ModalContainer>
+    )
+}
+
+const InviteSuccessToast = ({
+    toast,
+    channelId,
+    userIds,
+}: {
+    userIds: string[]
+    channelId: string
+    toast: Toast
+}) => {
+    const channelDisplayName = useMemo(
+        () => (isGDMChannelStreamId(channelId) ? 'this group' : 'this channel'),
+        [channelId],
+    )
+    const { usersMap } = useUserLookupContext()
+
+    const message = useMemo(() => {
+        const users = userIds.map((u) => usersMap[u])
+        const usersNameList = getNameListFromUsers(users)
+        return `${usersNameList} has been added to ${channelDisplayName}`
+    }, [channelDisplayName, userIds, usersMap])
+
+    return (
+        <Box
+            horizontal
+            gap
+            width={userIds.length >= 2 ? '400' : '300'}
+            justifyContent="spaceBetween"
+        >
+            <Box horizontal gap>
+                <Icon type="personAdd" />
+                <Box>
+                    <Text size="sm">{message}</Text>
+                </Box>
+            </Box>
+            <IconButton icon="close" onClick={() => headlessToast.dismiss(toast.id)} />
+        </Box>
     )
 }
