@@ -499,19 +499,26 @@ async function findOrCreateRiverReadOnlyUserDBConfig() {
 exports.handler = async (event, context, callback) => {
   try {
     // find or create the wallet private key, and use it to configure the db schema
-    const privateKey = await findOrCreateWalletPrivateKey()
-    const wallet = generateFromPrivateKey(privateKey);
-    const address = wallet.getAddressString();
 
     const riverUserDBConfig = await findOrCreateRiverUserDBConfig();
     const masterUserCredentials = await getMasterUserCredentials();
     const riverReadOnlyUserDBConfig = await findOrCreateRiverReadOnlyUserDBConfig();
     const notificationServiceUserDbConfig = await findOrCreateNotificationServiceUserDbConfig();
 
-    console.log('node wallet address: ', address)
+
+    let riverNodeSchemaName; 
+    
+    if (process.env.RUN_MODE === 'full') {
+      const privateKey = await findOrCreateWalletPrivateKey()
+      const wallet = generateFromPrivateKey(privateKey);
+      const address = wallet.getAddressString();
+      riverNodeSchemaName = `s${address.toLowerCase()}`
+    } else if (process.env.RUN_MODE === 'archive') {
+      const archiveId = process.env.ARCHIVE_ID.toLowerCase()
+      riverNodeSchemaName = `arch${archiveId}`
+    }
 
     await createRiverNodeDbUser({
-      address,
       riverUserDBConfig,
       masterUserCredentials,
     });
@@ -521,11 +528,10 @@ exports.handler = async (event, context, callback) => {
       masterUserCredentials,
     });
 
-    const schemaName = `s${address.toLowerCase()}`
     // need to create the schema before creating the read only user,
     // because the read only user needs to maintain read access to the schema
     await createSchema({
-      schemaName,
+      schemaName: riverNodeSchemaName,
       dbConfig: riverUserDBConfig,
     });
 
@@ -535,7 +541,7 @@ exports.handler = async (event, context, callback) => {
     });
 
     await createReadOnlyDbUser({
-      schemaName,
+      schemaName: riverNodeSchemaName,
       riverReadOnlyUserDBConfig,
       masterUserCredentials,
     });

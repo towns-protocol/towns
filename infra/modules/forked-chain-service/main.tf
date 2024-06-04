@@ -12,7 +12,7 @@ locals {
   service_name        = "${var.chain_name}-fork"
   name                = "${local.service_name}-${terraform.workspace}"
   global_remote_state = module.global_constants.global_remote_state.outputs
-  nodes               = module.global_constants.nodes_metadata
+  nodes               = module.global_constants.full_nodes
 
   synthetic_transactions_leader_wallet_address = "0x7cab8F39f7FF0CDceB18881526caA33613C1Bc1E"
 

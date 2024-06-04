@@ -9,9 +9,9 @@ variable "git_pr_number" {
   default     = null
 }
 
-variable "node_number" {
-  description = "The number assigned to the node. i.e 1 for river1.nodes.gamma.towns.com"
-  type        = number
+variable "node_metadata" {
+  description = "Object containing details such as node_name, node_number, node_address, etc."
+  type        = any
 }
 
 variable "ecs_cluster" {

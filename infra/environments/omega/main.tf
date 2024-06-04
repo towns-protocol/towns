@@ -140,7 +140,7 @@ resource "aws_security_group_rule" "allow_post_provision_config_lambda_inbound_t
 module "post_provision_config" {
   source = "../../modules/post-provision-config"
 
-  river_node_number                       = local.fake_river_node_number
+  node_metadata                           = module.global_constants.archive_nodes[0]
   subnet_ids                              = module.vpc.private_subnets
   river_node_wallet_credentials_arn       = local.shared_credentials.wallet_private_key.arn
   river_db_cluster_master_user_secret_arn = module.river_db_cluster.root_user_secret_arn
@@ -176,8 +176,7 @@ module "notification_service" {
 
   river_node_db = module.river_db_cluster
 
-  # TODO: use an actual node url once we're up on mainnet
-  river_node_url = ""
+  river_node_url = "https://hnt-labs-1.staking.production.figment.io"
 }
 
 module "eth_balance_monitor" {

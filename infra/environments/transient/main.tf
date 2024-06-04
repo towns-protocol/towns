@@ -165,9 +165,10 @@ module "river_nlb" {
 }
 
 module "river_node" {
-  source      = "../../modules/river-node"
-  count       = var.num_nodes
-  node_number = count.index + 1
+  source = "../../modules/river-node"
+  count  = var.num_nodes
+
+  node_metadata = module.global_constants.full_nodes[count.index]
 
   river_node_ssl_cert_secret_arn = local.transient_global_remote_state.river_node_ssl_cert_secret_arn
 

@@ -1,6 +1,5 @@
-variable "river_node_number" {
-  description = "The number assigned to the node. i.e 1 for river-1.nodes.gamma.towns.com"
-  type        = number
+variable "node_metadata" {
+  type = any
 }
 
 variable "vpc_id" {

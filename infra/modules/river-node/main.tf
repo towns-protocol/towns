@@ -7,22 +7,26 @@ data "aws_vpc" "vpc" {
 }
 
 locals {
-  node_name     = "river${var.node_number}-${terraform.workspace}"
-  node_dns_name = module.global_constants.nodes_metadata[var.node_number - 1].dns_name
-  node_url      = module.global_constants.nodes_metadata[var.node_number - 1].url
+  node_name     = var.node_metadata.node_name
+  node_number   = var.node_metadata.node_number
+  node_dns_name = var.node_metadata.dns_name
+  node_url      = var.node_metadata.url
+  run_mode      = var.node_metadata.run_mode
+  archive_id    = local.run_mode == "archive" ? var.node_metadata.node_number : ""
 
-  rpc_https_port = var.is_transient ? (var.node_number + 10000) : 443
+  rpc_https_port = var.is_transient ? (local.node_number + 10000) : 443
 
   service_name        = "river-node"
   global_remote_state = module.global_constants.global_remote_state.outputs
 
-  shared_credentials = local.global_remote_state.river_node_credentials_secret[var.node_number - 1]
+  shared_credentials = local.global_remote_state.river_node_credentials_secret[local.node_number - 1]
 
   river_node_tags = merge(
     module.global_constants.tags,
     {
       Service  = local.service_name
       Node_Url = local.node_url
+      Run_Mode = local.run_mode
     }
   )
 
@@ -182,7 +186,7 @@ resource "aws_security_group" "post_provision_config_lambda_function_sg" {
 module "post_provision_config" {
   source = "../../modules/post-provision-config"
 
-  river_node_number                       = var.node_number
+  node_metadata                           = var.node_metadata
   subnet_ids                              = var.private_subnets
   river_node_wallet_credentials_arn       = local.shared_credentials.wallet_private_key.arn
   river_db_cluster_master_user_secret_arn = var.river_node_db.root_user_secret_arn
@@ -274,11 +278,12 @@ resource "aws_iam_role_policy" "river_node_credentials" {
 }
 
 locals {
+  db_user_prefix = local.run_mode == "full" ? "river" : "archive"
   river_user_db_config = {
     host         = var.river_node_db.rds_aurora_postgresql.cluster_endpoint
     port         = "5432"
     database     = "river"
-    user         = "river${var.node_number}"
+    user         = "${local.db_user_prefix}${local.node_number}"
     password_arn = local.shared_credentials.db_password.arn
   }
 
@@ -306,6 +311,17 @@ locals {
   }]
 
   river_node_image_name = var.is_transient ? "public.ecr.aws/l8h0l2e6/river-node:transient-${var.git_pr_number}-latest" : "public.ecr.aws/h5v6m2x1/river:dev"
+
+  archive_mode_additional_td_env_config = local.run_mode == "archive" ? [{
+    name  = "ARCHIVE__ARCHIVEID"
+    value = local.archive_id
+  }] : []
+
+  wallet_private_key_td_secret_config = local.run_mode == "full" ? [
+    {
+      name      = "WALLETPRIVATEKEY"
+      valueFrom = local.shared_credentials.wallet_private_key.arn
+  }] : []
 }
 
 data "cloudflare_zone" "zone" {
@@ -382,10 +398,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
         name      = "DATABASE__PASSWORD",
         valueFrom = local.shared_credentials.db_password.arn
       },
-      {
-        name      = "WALLETPRIVATEKEY"
-        valueFrom = local.shared_credentials.wallet_private_key.arn
-      },
+
       {
         name      = "TLSCONFIG__CERT",
         valueFrom = "${var.river_node_ssl_cert_secret_arn}:cert::"
@@ -396,7 +409,8 @@ resource "aws_ecs_task_definition" "river-fargate" {
       }
       ],
       local.base_chain_default_td_secret_config,
-      local.river_chain_default_td_secret_config
+      local.river_chain_default_td_secret_config,
+      local.wallet_private_key_td_secret_config
     )
 
     dockerLabels = {
@@ -406,6 +420,10 @@ resource "aws_ecs_task_definition" "river-fargate" {
     }
 
     environment = concat([
+      {
+        name  = "RUN_MODE",
+        value = local.run_mode
+      },
       {
         name  = "BASECHAIN__CHAINID",
         value = var.base_chain_id
@@ -451,8 +469,10 @@ resource "aws_ecs_task_definition" "river-fargate" {
         value = local.dd_required_tags
       },
       {
+        # TODO: check with serge if this can be set to false on archive nodes
+        # TODO: try again with the new version of the archive node
         name  = "STANDBYONSTART",
-        value = "true"
+        value = local.run_mode == "archive" ? "false" : "true"
       },
       {
         name  = "PERFORMANCETRACKING__PROFILINGENABLED",
@@ -492,7 +512,8 @@ resource "aws_ecs_task_definition" "river-fargate" {
       },
       ],
       local.base_chain_override_td_env_config,
-      local.river_chain_override_td_env_config
+      local.river_chain_override_td_env_config,
+      local.archive_mode_additional_td_env_config
     )
 
     logConfiguration = {
@@ -555,8 +576,8 @@ resource "aws_ecs_service" "river-ecs-service" {
   cluster                            = var.ecs_cluster.id
   task_definition                    = aws_ecs_task_definition.river-fargate.arn
   desired_count                      = 1
-  deployment_minimum_healthy_percent = 100
-  deployment_maximum_percent         = 200
+  deployment_minimum_healthy_percent = local.run_mode == "archive" ? 0 : 100
+  deployment_maximum_percent         = local.run_mode == "archive" ? 100 : 200
 
   # do not attempt to create the service before the lambda runs
   depends_on = [
@@ -610,9 +631,6 @@ resource "cloudflare_record" "nlb_cname_dns_record" {
   value   = var.lb.lb_dns_name
   type    = "CNAME"
   ttl     = 60
-  lifecycle {
-    ignore_changes = all
-  }
 }
 
 // MONITORING //
@@ -629,12 +647,15 @@ module "datadog_sythetics_test" {
   subtype = "http"
   enabled = !var.is_transient
 
+  # TODO: set to 1
+  count = local.run_mode == "archive" ? 0 : 1
+
   locations = ["aws:us-west-1"]
-  tags      = ["created_by:terraform", "env:${terraform.workspace}", "node_number:${var.node_number}"]
+  tags      = ["created_by:terraform", "env:${terraform.workspace}", "node_url:${local.node_url}"]
   message   = local.datadog_monitor_slack_mention
   request_definition = {
     method = "GET"
-    url    = "${module.global_constants.nodes_metadata[var.node_number - 1].url}/status"
+    url    = "${local.node_url}/status"
   }
   assertions = [
     {
@@ -679,6 +700,7 @@ resource "aws_lb_listener" "transient_lb_listener" {
   }
 }
 
+# TODO: find the best way to handle archive node health checks
 resource "aws_lb_target_group" "river_node_target_group" {
   name        = "${local.node_name}-tg"
   port        = local.rpc_https_port

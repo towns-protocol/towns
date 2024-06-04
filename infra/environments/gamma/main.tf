@@ -106,7 +106,8 @@ module "pgadmin" {
 }
 
 locals {
-  num_nodes           = 11
+  num_full_nodes      = 11
+  num_archive_nodes   = 1
   global_remote_state = module.global_constants.global_remote_state.outputs
 }
 
@@ -116,16 +117,17 @@ module "system_parameters" {
 
 module "river_nlb" {
   source  = "../../modules/river-nlb"
-  count   = local.num_nodes
+  count   = local.num_full_nodes
   subnets = module.vpc.public_subnets
   vpc_id  = module.vpc.vpc_id
   nlb_id  = tostring(count.index + 1)
 }
 
 module "river_node" {
-  source      = "../../modules/river-node"
-  count       = local.num_nodes
-  node_number = count.index + 1
+  source = "../../modules/river-node"
+  count  = local.num_full_nodes
+
+  node_metadata = module.global_constants.full_nodes[count.index]
 
   river_node_ssl_cert_secret_arn = module.river_node_ssl_cert.river_node_ssl_cert_secret_arn
 
@@ -151,6 +153,45 @@ module "river_node" {
   lb = module.river_nlb[count.index]
 }
 
+
+module "archive_node_nlb" {
+  source  = "../../modules/river-nlb"
+  count   = local.num_archive_nodes
+  subnets = module.vpc.public_subnets
+  vpc_id  = module.vpc.vpc_id
+  nlb_id  = "archive-${tostring(count.index + 1)}"
+}
+
+module "archive_node" {
+  source = "../../modules/river-node"
+  count  = local.num_archive_nodes
+
+  node_metadata = module.global_constants.archive_nodes[count.index]
+
+  river_node_ssl_cert_secret_arn = module.river_node_ssl_cert.river_node_ssl_cert_secret_arn
+
+  river_node_db = module.river_db_cluster
+
+  public_subnets  = module.vpc.public_subnets
+  private_subnets = module.vpc.private_subnets
+  vpc_id          = module.vpc.vpc_id
+
+  system_parameters = module.system_parameters
+
+  base_chain_rpc_url_secret_arn  = local.global_remote_state.base_sepolia_rpc_url_secret.arn
+  river_chain_rpc_url_secret_arn = local.global_remote_state.river_sepolia_rpc_url_secret.arn
+
+  base_chain_id  = 84532
+  river_chain_id = 6524490
+
+  ecs_cluster = {
+    id   = aws_ecs_cluster.river_ecs_cluster.id
+    name = aws_ecs_cluster.river_ecs_cluster.name
+  }
+
+  lb = module.archive_node_nlb[count.index]
+}
+
 module "notification_service" {
   source = "../../modules/notification-service"
 
@@ -173,7 +214,7 @@ module "notification_service" {
   vapid_subject = "mailto:support@towns.com"
 
   river_node_db  = module.river_db_cluster
-  river_node_url = module.global_constants.nodes_metadata[0].url
+  river_node_url = module.global_constants.full_nodes[0].url
 }
 
 module "eth_balance_monitor" {

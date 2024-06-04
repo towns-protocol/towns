@@ -116,6 +116,11 @@ resource "aws_cloudwatch_log_subscription_filter" "log_group_filter" {
   destination_arn = module.global_constants.datadug_forwarder_stack_lambda.arn
 }
 
+resource "aws_secretsmanager_secret" "push_notification_auth_token_secret" {
+  name = "push-notification-auth-token-${terraform.workspace}"
+  tags = module.global_constants.tags
+}
+
 resource "aws_iam_role_policy" "iam_policy" {
   name = "${local.local_name}-iam-policy"
   role = aws_iam_role.ecs_task_execution_role.id
@@ -132,7 +137,7 @@ resource "aws_iam_role_policy" "iam_policy" {
         "Resource": [
           "${var.vapid_key_secret_arn}",
           "${var.apns_auth_key_secret_arn}",
-          "${local.global_remote_state.river_global_push_notification_auth_token.arn}",
+          "${aws_secretsmanager_secret.push_notification_auth_token_secret.arn}",
           "${local.global_remote_state.notification_service_db_password_secret.arn}"
         ]
       }
@@ -216,7 +221,7 @@ resource "aws_ecs_task_definition" "fargate_task_definition" {
     secrets = [
       {
         name      = "AUTH_SECRET",
-        valueFrom = local.global_remote_state.river_global_push_notification_auth_token.arn
+        valueFrom = aws_secretsmanager_secret.push_notification_auth_token_secret.arn
       },
       {
         name      = "DB_PASSWORD",

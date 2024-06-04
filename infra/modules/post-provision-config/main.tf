@@ -3,14 +3,20 @@ module "global_constants" {
 }
 
 locals {
-  name = "post-provision-config-${var.river_node_number}-${terraform.workspace}"
+  node_name  = var.node_metadata.node_name
+  node_url   = var.node_metadata.url
+  run_mode   = var.node_metadata.run_mode
+  archive_id = local.run_mode == "archive" ? var.node_metadata.node_number : ""
+
+  name = "post-provision-config-${local.node_name}"
 
   post_provision_config_lambda_s3_object = module.global_constants.global_remote_state.outputs.post_provision_config_lambda_s3_object
   tags = merge(
     module.global_constants.tags,
     {
-      Service     = "post-provision-config-lambda"
-      Node_Number = var.river_node_number
+      Service  = "post-provision-config-lambda"
+      Node_Url = local.node_url
+      Run_Mode = local.run_mode
     }
   )
   global_remote_state = module.global_constants.global_remote_state.outputs
@@ -69,6 +75,8 @@ module "post_provision_config_lambda_function" {
     })
     RIVER_NODE_WALLET_CREDENTIALS_ARN       = var.river_node_wallet_credentials_arn
     RIVER_DB_CLUSTER_MASTER_USER_SECRET_ARN = var.river_db_cluster_master_user_secret_arn
+    RUN_MODE                                = local.run_mode
+    ARCHIVE_ID                              = local.archive_id
   }
 
   policy_json = <<-EOT

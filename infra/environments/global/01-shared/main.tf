@@ -91,16 +91,6 @@ resource "aws_secretsmanager_secret_version" "hnt_dockerhub_access_key" {
 EOF
 }
 
-resource "aws_secretsmanager_secret" "river_global_push_notification_auth_token" {
-  name = "river-global-push-notification-auth-token"
-  tags = module.global_constants.tags
-}
-
-resource "aws_secretsmanager_secret_version" "river_global_push_notification_auth_token" {
-  secret_id     = aws_secretsmanager_secret.river_global_push_notification_auth_token.id
-  secret_string = "DUMMY"
-}
-
 resource "aws_secretsmanager_secret" "river_global_dd_agent_api_key" {
   name = "river-global-datadog-agent-api-key"
   tags = module.global_constants.tags
