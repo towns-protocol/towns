@@ -143,6 +143,9 @@ const messageRoutes = (
     <Route path={PATHS.MESSAGES} element={<DirectMessages />}>
         <Route path="new" element={<CreateMessagePanel />}>
             <Route path=":channelSlug" element={<DirectMessageThread />} />
+            <Route path="draft">
+                <Route path=":noStreamUserId" element={<CreateMessagePanel />} />
+            </Route>
         </Route>
         <Route path=":channelSlug" element={<DirectMessageThread />} />
     </Route>

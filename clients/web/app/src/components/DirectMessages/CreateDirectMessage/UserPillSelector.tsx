@@ -11,6 +11,7 @@ import { lookupUserNameSearchString } from 'hooks/useSearch'
 import { PillSelector } from './PillSelector'
 
 type Props = {
+    disabled?: boolean
     onSelectionChange: (users: Set<string>) => void
     emptySelectionElement?: (params: { searchTerm: string }) => JSX.Element
     onConfirm: () => void
@@ -18,6 +19,7 @@ type Props = {
 }
 
 export const UserPillSelector = (props: Props) => {
+    const { disabled = false } = props
     const { users: _users, usersMap } = useUserLookupContext()
     const recentUsers = useRecentUsers()
 
@@ -133,6 +135,7 @@ export const UserPillSelector = (props: Props) => {
                 {/* needed to cover backdrop */}
                 <Box zIndex="layer">
                     <PillSelector
+                        hideResultsWhenNotActive={disabled}
                         options={users}
                         keys={['search']}
                         label={labelElement}

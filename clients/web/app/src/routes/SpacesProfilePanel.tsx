@@ -15,7 +15,7 @@ import {
     useMyProfile,
     useSpaceData,
     useTownsClient,
-    useTownsContext,
+    // useTownsContext,
     useUserLookupContext,
     useWalletAddressIsBanned,
 } from 'use-towns-client'
@@ -45,7 +45,7 @@ import { ConfirmBlockModal } from '@components/ConfirmBlockModal/ConfirmBlockMod
 import { PanelButton } from '@components/Panel/PanelButton'
 import { useBlockedUsers } from 'hooks/useBlockedUsers'
 import { UserPreferences } from '@components/UserProfile/UserPreferences'
-import { useMatchingMessages } from '@components/DirectMessages/CreateDirectMessage/hooks/useMatchingMessages'
+// import { useMatchingMessages } from '@components/DirectMessages/CreateDirectMessage/hooks/useMatchingMessages'
 import { clearAnonymousId, useAnalytics } from 'hooks/useAnalytics'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 
@@ -92,7 +92,7 @@ const SpaceProfileWithoutAuth = () => {
         return profileIdFromPath === 'me' ? profileIdFromPath : rootKeyAddress
     }, [isAccountAbstractionEnabled, profileIdFromPath, rootKeyAddress])
 
-    const { createDMChannel } = useTownsClient()
+    // const { createDMChannel } = useTownsClient()
     const [modal, setModal] = useState<ModalType | undefined>(undefined)
 
     const { requestPushPermission, simplifiedPermissionState } = usePushNotifications()
@@ -120,12 +120,8 @@ const SpaceProfileWithoutAuth = () => {
         logout()
     })
 
-    const { dmChannels } = useTownsContext()
-    const userIds = useMemo(() => [userId ?? ''], [userId])
-    const { matchingDM } = useMatchingMessages({
-        selectedUserArray: userIds,
-        dmChannels,
-    })
+    // const { dmChannels } = useTownsContext()
+    // const userIds = useMemo(() => [userId ?? ''], [userId])
 
     const { createLink } = useCreateLink()
 
@@ -133,12 +129,12 @@ const SpaceProfileWithoutAuth = () => {
         if (!userId) {
             return
         }
-        const streamId = matchingDM ? matchingDM.id : await createDMChannel(userId)
-        const link = streamId && createLink({ messageId: streamId })
+        // const streamId = matchingDM ? matchingDM.id : await createDMChannel(userId)
+        const link = /*streamId && */ createLink({ draftMessageUserId: userId })
         if (link) {
             navigate(link)
         }
-    }, [createDMChannel, createLink, matchingDM, navigate, userId])
+    }, [createLink, navigate, userId])
 
     const myUser = useMyProfile()
 

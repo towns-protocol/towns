@@ -60,6 +60,7 @@ type Props = {
     autoFocus?: boolean
     editable?: boolean
     editing?: boolean
+    disabledSend?: boolean
     placeholder?: string
     initialValue?: string
     displayButtons?: 'always' | 'on-focus'
@@ -84,6 +85,7 @@ const EMPTY_NODE: TElement = {
 const PlateEditorWithoutBoundary = ({
     editing: isEditing,
     editable = true,
+    disabledSend = false,
     placeholder = 'Write something ...',
     tabIndex,
     onSend,
@@ -275,7 +277,7 @@ const PlateEditorWithoutBoundary = ({
 
     const handleSendOnEnter: React.KeyboardEventHandler = useCallback(
         async (event) => {
-            if (!editorRef.current || isTouch) {
+            if (!editorRef.current || isTouch || disabledSend || disabled) {
                 return
             }
 
@@ -283,12 +285,12 @@ const PlateEditorWithoutBoundary = ({
             if (key === 'Enter' && !shiftKey) {
                 event.preventDefault()
                 const { message, mentions } = await toMD(editorRef.current)
-                if (!disabled && ((message && message.trim().length > 0) || files.length > 0)) {
+                if ((message && message.trim().length > 0) || files.length > 0) {
                     await onSendCb(message, mentions)
                 }
             }
         },
-        [onSendCb, isTouch, disabled, files.length],
+        [onSendCb, isTouch, disabled, disabledSend, files.length],
     )
 
     const fileCount = files.length
@@ -297,7 +299,7 @@ const PlateEditorWithoutBoundary = ({
     const sendButtons = (
         <SendMarkdownPlugin
             displayButtons={displayButtons ?? 'on-focus'}
-            disabled={disabled}
+            disabled={disabled || disabledSend}
             focused={focused}
             isEditing={isEditing ?? false}
             hasImage={fileCount > 0}
@@ -444,6 +446,7 @@ const arePropsEqual = (prevProps: Props, nextProps: Props) => {
     return every(
         [
             isEqual(prevProps.editable, nextProps.editable),
+            isEqual(prevProps.disabledSend, nextProps.disabledSend),
             isEqual(prevProps.displayButtons, nextProps.displayButtons),
             isEqual(prevProps.placeholder, nextProps.placeholder),
             isEqual(prevProps.initialValue, nextProps.initialValue),

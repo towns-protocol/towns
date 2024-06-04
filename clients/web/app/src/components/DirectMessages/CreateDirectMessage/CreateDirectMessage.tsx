@@ -1,6 +1,6 @@
 import { AnimatePresence } from 'framer-motion'
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { Outlet, useNavigate } from 'react-router'
+import { Outlet, useNavigate, useParams } from 'react-router'
 import {
     ChannelContextProvider,
     DMChannelContextUserLookupProvider,
@@ -53,6 +53,7 @@ export const CreateDirectMessage = (props: Props) => {
     const { onDirectMessageCreated } = props
 
     const { isTouch } = useDevice()
+    const { noStreamUserId } = useParams()
     const { analytics } = useAnalytics()
     const navigate = useNavigate()
     const { createLink } = useCreateLink()
@@ -63,7 +64,7 @@ export const CreateDirectMessage = (props: Props) => {
     const [selectedUsers, setSelectedIds] = useState(() => new Set<string>())
     const selectedUserArray = useMemo(() => Array.from(selectedUsers), [selectedUsers])
     const numSelectedUsers = selectedUserArray.length
-
+    const isDraft = !!noStreamUserId
     const { inclusiveMatches, matchingDM, matchingGDM } = useMatchingMessages({
         selectedUserArray,
         dmChannels,
@@ -72,6 +73,7 @@ export const CreateDirectMessage = (props: Props) => {
     const { onSubmit, isSubmitting } = useCreateDirectMessage({
         selectedIdsArray: selectedUserArray,
         matchingChannel: inclusiveMatches.length === 1 ? inclusiveMatches[0] : undefined,
+        fromDraft: true,
         onDirectMessageCreated,
     })
 
@@ -96,11 +98,15 @@ export const CreateDirectMessage = (props: Props) => {
                 navigate(-1)
             }
         }
+
+        if (isDraft) {
+            setSelectedIds(new Set<string>([noStreamUserId]))
+        }
         window.addEventListener('keydown', onKeyDown)
         return () => {
             window.removeEventListener('keydown', onKeyDown)
         }
-    }, [analytics, navigate])
+    }, [analytics, navigate, isDraft, noStreamUserId, setSelectedIds])
 
     const stackId = useContext(PanelContext)?.stackId
 
@@ -121,7 +127,7 @@ export const CreateDirectMessage = (props: Props) => {
     // preview a channel when selecting first user from dropdown
     const [userPreview, setUserPreview] = useState<string | undefined>(undefined)
 
-    // preview a channel when seleting from message dropdown
+    // preview a channel when selecting from message dropdown
     const [userChannelPreview, setUserChannelPreview] = useState<DMChannelIdentifier | undefined>()
 
     const onUserPreviewChange = (user: LookupUser | undefined) => {
@@ -254,17 +260,22 @@ export const CreateDirectMessage = (props: Props) => {
                 onConfirm()
             }
         }
-        window.addEventListener('click', onClickScreen)
+
+        if (isDraft) {
+            onConfirm()
+        } else {
+            window.addEventListener('click', onClickScreen)
+        }
         return () => {
             window.removeEventListener('click', onClickScreen)
         }
-    }, [onConfirm, onSelectChannel, preview])
+    }, [onConfirm, onSelectChannel, isDraft, preview])
 
     const animationKey = [channelPreview?.id].join()
 
     return (
         <Stack grow position="relative">
-            {!isTouch && numSelectedUsers && (
+            {!isTouch && (numSelectedUsers || isDraft) && (
                 <Box grow ref={channelContainerRef}>
                     <AnimatePresence mode="sync">
                         <MotionBox
@@ -287,6 +298,7 @@ export const CreateDirectMessage = (props: Props) => {
                                 </DMChannelContextUserLookupProvider>
                             ) : (
                                 <ChannelPlaceholder
+                                    autoFocus={isDraft}
                                     userIds={
                                         selectedUserArray?.length
                                             ? selectedUserArray
@@ -311,28 +323,31 @@ export const CreateDirectMessage = (props: Props) => {
                 </Box>
             )}
 
-            <ZLayerBox>
-                <UserPillSelector
-                    emptySelectionElement={emptySelectionElement}
-                    onSelectionChange={onSelectionChange}
-                    onConfirm={onConfirm}
-                    onUserPreviewChange={onUserPreviewChange}
-                />
-            </ZLayerBox>
-            <AnimatePresence>
-                {isSubmitting && (
-                    <FadeInBox absoluteFill cursor="progress">
-                        <Box
-                            centerContent
-                            width="100%"
-                            height="100%"
-                            pointerEvents="none"
-                            background="level1"
-                            style={{ opacity: 0.5 }}
-                        />
-                    </FadeInBox>
-                )}
-            </AnimatePresence>
+            {!isDraft && (
+                <ZLayerBox>
+                    <UserPillSelector
+                        emptySelectionElement={emptySelectionElement}
+                        disabled={isSubmitting}
+                        onSelectionChange={onSelectionChange}
+                        onConfirm={onConfirm}
+                        onUserPreviewChange={onUserPreviewChange}
+                    />
+                    <AnimatePresence>
+                        {isSubmitting && !isDraft && (
+                            <FadeInBox absoluteFill>
+                                <Box
+                                    centerContent
+                                    width="100%"
+                                    height="x8"
+                                    pointerEvents="none"
+                                    background="level1"
+                                    style={{ opacity: 0.5 }}
+                                />
+                            </FadeInBox>
+                        )}
+                    </AnimatePresence>
+                </ZLayerBox>
+            )}
         </Stack>
     )
 }

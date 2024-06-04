@@ -4,10 +4,15 @@ import { DMChannelIntro } from '@components/ChannelIntro'
 import { RichTextEditor } from '@components/RichTextPlate/PlateEditor'
 import { useUserList } from '@components/UserList/UserList'
 import { Box } from '@ui'
+import { getDraftDMStorageId } from 'utils'
 
-export const ChannelPlaceholder = (props: { userIds: string[] }) => {
+type Props = {
+    userIds: string[]
+    autoFocus?: boolean
+}
+export const ChannelPlaceholder = ({ userIds: _userIds, autoFocus = false }: Props) => {
     const myUserId = useMyUserId()
-    const userIds = props.userIds.filter((u) => u !== myUserId)
+    const userIds = _userIds.filter((u) => u !== myUserId)
     const userList = useUserList({ excludeSelf: true, userIds }).join('')
     return (
         <ChannelContextProvider channelId="">
@@ -15,7 +20,9 @@ export const ChannelPlaceholder = (props: { userIds: string[] }) => {
                 <DMChannelIntro userIds={userIds} />
                 <Box paddingX="md">
                     <RichTextEditor
-                        editable={false}
+                        disabledSend
+                        autoFocus={autoFocus}
+                        storageId={getDraftDMStorageId(_userIds)}
                         channels={[]}
                         users={[]}
                         placeholder={`Send a message to ${userList}`}

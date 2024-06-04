@@ -8,11 +8,12 @@ import { useCreateLink } from 'hooks/useCreateLink'
 type Params = {
     selectedIdsArray: string[]
     matchingChannel: DMChannelIdentifier | undefined
+    fromDraft?: boolean
     onDirectMessageCreated?: () => void
 }
 
 export const useCreateDirectMessage = (params: Params) => {
-    const { selectedIdsArray, matchingChannel, onDirectMessageCreated } = params
+    const { selectedIdsArray, matchingChannel, onDirectMessageCreated, fromDraft = false } = params
 
     const [isSubmitting, setIsSubmitting] = useState(false)
     const isSubmittingRef = useRef(isSubmitting)
@@ -47,7 +48,7 @@ export const useCreateDirectMessage = (params: Params) => {
             const link = createLink({ messageId: matchingChannel.id })
             if (link) {
                 onDirectMessageCreated?.()
-                navigate(link + linkRef)
+                navigate(link + linkRef, { state: { fromDraft } })
             }
             return
         }
@@ -67,7 +68,7 @@ export const useCreateDirectMessage = (params: Params) => {
                 if (link) {
                     console.log('create dm: navigating', link)
                     onDirectMessageCreated?.()
-                    navigate(link + linkRef)
+                    navigate(link + linkRef, { state: { fromDraft } })
                 }
             } else {
                 console.error('create dm: failed creating stream')
@@ -84,7 +85,7 @@ export const useCreateDirectMessage = (params: Params) => {
                 if (link) {
                     console.log('create gm: navigating', link)
                     onDirectMessageCreated?.()
-                    navigate(link)
+                    navigate(link, { state: { fromDraft } })
                 }
             } else {
                 setErrorMessage('failed to create gm stream')
@@ -92,6 +93,7 @@ export const useCreateDirectMessage = (params: Params) => {
             setIsSubmitting(false)
         }
     }, [
+        fromDraft,
         createDMChannel,
         createGDMChannel,
         createLink,

@@ -49,6 +49,7 @@ import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyTo
 import { useBlockedUsers } from 'hooks/useBlockedUsers'
 import { TouchPanelContext } from '@components/Panel/Panel'
 import { useAnalytics } from 'hooks/useAnalytics'
+import { getDraftDMStorageId } from 'utils'
 
 type Props = {
     onTouchClose?: () => void
@@ -202,7 +203,6 @@ export const SpacesChannelComponent = (props: Props) => {
     )?.isChannelWritable
 
     const { counterParty, data } = useDMData(channelId)
-
     const userIds = useMemo(
         () => (data?.isGroup ? data.userIds : [counterParty].filter(notUndefined)),
         [counterParty, data?.isGroup, data?.userIds],
@@ -320,7 +320,11 @@ export const SpacesChannelComponent = (props: Props) => {
                                         background={isChannelWritable ? 'level2' : 'level1'}
                                         displayButtons={isTouch ? 'on-focus' : 'always'}
                                         key={`${channelId}-${isChannelWritable ? '' : '-readonly'}`}
-                                        storageId={channel.id}
+                                        storageId={
+                                            location.state?.fromDraft
+                                                ? getDraftDMStorageId(data?.userIds)
+                                                : channel.id
+                                        }
                                         autoFocus={
                                             !hasThreadOpen && !isTouch && !props.preventAutoFocus
                                         }

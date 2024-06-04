@@ -1,3 +1,4 @@
+import sortBy from 'lodash/sortBy'
 export * from './environment'
 export * from './debug'
 
@@ -49,3 +50,6 @@ export function findLocalStorageKeys(pattern: RegExp | string): string[] {
 
     return matchingKeys
 }
+
+export const getDraftDMStorageId = (userIds?: string[]) =>
+    `draft-dm-input-${sortBy(userIds || []).join('-')}`
