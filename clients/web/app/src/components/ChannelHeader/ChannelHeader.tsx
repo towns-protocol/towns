@@ -124,7 +124,7 @@ const DesktopChannelHeader = (props: Props & { showLoadingIndicator: boolean }) 
                 </Stack>
                 {topic && <Paragraph color="gray2">{topic}</Paragraph>}
                 <Stack grow />
-                {channelType === 'channel' && (
+                {channelType !== 'dm' && (
                     <ChannelUsersPill channelId={channel.id} spaceId={spaceId} />
                 )}
             </CardHeader>
