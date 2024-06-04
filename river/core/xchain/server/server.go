@@ -8,6 +8,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/river-build/river/core/node/config"
+	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/xchain/contracts"
 	"github.com/river-build/river/core/xchain/entitlement"
 	"github.com/river-build/river/core/xchain/util"
@@ -22,7 +23,6 @@ import (
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/infra"
-	. "github.com/river-build/river/core/node/protocol"
 )
 
 type (
@@ -170,7 +170,12 @@ func New(
 	}
 
 	entCounter := metrics.NewStatusCounterVecEx("entitlement_checks", "Counters for entitelement check ops", "op")
-	contractCounter := metrics.NewStatusCounterVecEx("contract_calls", "Contract calls fro entitlement checks", "op", "name")
+	contractCounter := metrics.NewStatusCounterVecEx(
+		"contract_calls",
+		"Contract calls fro entitlement checks",
+		"op",
+		"name",
+	)
 	x := &xchain{
 		workerID:        workerID,
 		checker:         checker,
@@ -184,11 +189,24 @@ func New(
 		metrics:                   metrics,
 		entitlementCheckRequested: entCounter.MustCurryWith(map[string]string{"op": "requested"}),
 		entitlementCheckProcessed: entCounter.MustCurryWith(map[string]string{"op": "processed"}),
-		entitlementCheckTx:        contractCounter.MustCurryWith(map[string]string{"op": "write", "name": "entitlement_check_tx"}),
-		getRootKeyForWalletCalls:  contractCounter.MustCurryWith(map[string]string{"op": "read", "name": "get_root_key_for_wallet"}),
-		getWalletsByRootKeyCalls:  contractCounter.MustCurryWith(map[string]string{"op": "read", "name": "get_wallets_by_root_key"}),
-		getRuleDataCalls:          contractCounter.MustCurryWith(map[string]string{"op": "read", "name": "get_rule_data"}),
-		callDurations:             metrics.NewHistogramVecEx("call_duration_seconds", "Durations of contract calls", infra.DefaultDurationBucketsSeconds, "op"),
+		entitlementCheckTx: contractCounter.MustCurryWith(
+			map[string]string{"op": "write", "name": "entitlement_check_tx"},
+		),
+		getRootKeyForWalletCalls: contractCounter.MustCurryWith(
+			map[string]string{"op": "read", "name": "get_root_key_for_wallet"},
+		),
+		getWalletsByRootKeyCalls: contractCounter.MustCurryWith(
+			map[string]string{"op": "read", "name": "get_wallets_by_root_key"},
+		),
+		getRuleDataCalls: contractCounter.MustCurryWith(
+			map[string]string{"op": "read", "name": "get_rule_data"},
+		),
+		callDurations: metrics.NewHistogramVecEx(
+			"call_duration_seconds",
+			"Durations of contract calls",
+			infra.DefaultDurationBucketsSeconds,
+			"op",
+		),
 	}
 
 	isRegistered, err := x.isRegistered(ctx)
@@ -375,7 +393,11 @@ func (x *xchain) writeEntitlementCheckResults(ctx context.Context, checkResults 
 				}
 				gasEstimate, err := x.baseChain.TxPool.EstimateGas(ctx, createPostResultTx)
 				if err != nil {
-					log.Warn("Failed to estimate gas for PostEntitlementCheckResult (entitlement check complete?)", "err", err)
+					log.Warn(
+						"Failed to estimate gas for PostEntitlementCheckResult (entitlement check complete?)",
+						"err",
+						err,
+					)
 				}
 
 				pendingTx, err := x.baseChain.TxPool.Submit(
@@ -469,51 +491,27 @@ func (x *xchain) getLinkedWallets(ctx context.Context, wallet common.Address) ([
 		return nil, x.handleContractError(log, err, "Failed to create IWalletLink")
 	}
 
-	timer := prometheus.NewTimer(x.callDurations.WithLabelValues("GetRootKeyForWallet"))
-	rootKey, err := iWalletLink.GetRootKeyForWallet(&bind.CallOpts{Context: ctx}, wallet)
-	timer.ObserveDuration()
+	wrapped := entitlement.NewWrappedWalletLink(iWalletLink)
+	wallets, err := entitlement.GetLinkedWallets(
+		ctx,
+		wallet,
+		wrapped,
+		x.callDurations,
+		x.getRootKeyForWalletCalls,
+		x.getWalletsByRootKeyCalls,
+	)
 	if err != nil {
-		log.Error("Failed to GetRootKeyForWallet", "err", err, "wallet", wallet.Hex(), "walletLinkContract", x.config.GetWalletLinkContractAddress())
-		x.getRootKeyForWalletCalls.IncFail()
-		return nil, x.handleContractError(log, err, "Failed to GetRootKeyForWallet")
+		log.Error(
+			"Failed to get linked wallets",
+			"err",
+			err,
+			"wallet",
+			wallet.Hex(),
+			"walletLinkContract",
+			x.config.GetWalletLinkContractAddress(),
+		)
+		return nil, x.handleContractError(log, err, "Failed to get linked wallets")
 	}
-	x.getRootKeyForWalletCalls.IncPass()
-
-	var zero common.Address
-	if rootKey == zero {
-		log.Debug("Wallet not linked to any root key, trying as root key", "wallet", wallet.Hex())
-		rootKey = wallet
-	}
-
-	timer = prometheus.NewTimer(x.callDurations.WithLabelValues("GetWalletsByRootKey"))
-	wallets, err := iWalletLink.GetWalletsByRootKey(&bind.CallOpts{Context: ctx}, rootKey)
-	timer.ObserveDuration()
-	if err != nil {
-		x.getWalletsByRootKeyCalls.IncFail()
-		return nil, x.handleContractError(log, err, "Failed to GetWalletsByRootKey")
-	}
-	x.getWalletsByRootKeyCalls.IncPass()
-
-	if len(wallets) == 0 {
-		log.Debug("No linked wallets found", "rootKey", rootKey.Hex())
-		return []common.Address{wallet}, nil
-	}
-
-	// Make sure the root wallet is included in the returned list of linked wallets. This will not
-	// be the case when the wallet passed to the check is the root wallet.
-	containsRootWallet := false
-	for _, w := range wallets {
-		if w == rootKey {
-			containsRootWallet = true
-			break
-		}
-	}
-	if !containsRootWallet {
-		wallets = append(wallets, rootKey)
-	}
-
-	log.Debug("Linked wallets", "rootKey", rootKey.Hex(), "wallets", wallets)
-
 	return wallets, nil
 }
 

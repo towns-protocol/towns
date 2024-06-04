@@ -103,4 +103,6 @@ network:
 # Debug feature flags.
 disableBaseChain: <DISABLE_BASE_CHAIN>
 
+chains: '31337:http://localhost:8545,31338:http://localhost:8546,84532:https://sepolia.base.org,11155111:https://ethereum-sepolia-rpc.publicnode.com'
+
 enableDebugEndpoints: <ENABLE_DEBUG_ENDPOINTS>

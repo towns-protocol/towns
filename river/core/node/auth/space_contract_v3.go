@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	. "github.com/river-build/river/core/node/base"
+	"github.com/river-build/river/core/node/contracts/base"
 	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/protocol"
 
@@ -26,6 +27,7 @@ import (
 type Space struct {
 	address      common.Address
 	entitlements Entitlements
+	banning      Banning
 	pausable     Pausable
 	channels     map[shared.StreamId]Channels
 	channelsLock sync.Mutex
@@ -33,6 +35,7 @@ type Space struct {
 
 type SpaceContractV3 struct {
 	architect  Architect
+	chainCfg   *config.ChainConfig
 	version    string
 	backend    bind.ContractBackend
 	spaces     map[shared.StreamId]*Space
@@ -44,6 +47,7 @@ var EMPTY_ADDRESS = common.Address{}
 func NewSpaceContractV3(
 	ctx context.Context,
 	architectCfg *config.ContractConfig,
+	chainCfg *config.ChainConfig,
 	backend bind.ContractBackend,
 	// walletLinkingCfg *config.ContractConfig,
 ) (SpaceContract, error) {
@@ -54,6 +58,7 @@ func NewSpaceContractV3(
 
 	spaceContract := &SpaceContractV3{
 		architect: architect,
+		chainCfg:  chainCfg,
 		version:   architectCfg.Version,
 		backend:   backend,
 		spaces:    make(map[shared.StreamId]*Space),
@@ -116,59 +121,12 @@ func getABI() (abi.ABI, error) {
 	return parsedABI, err
 }
 
-/**
- * GetSpaceEntitlementsForPermission returns the entitlements for the given permission.
- * The entitlements are returned as a list of SpaceEntitlements.
- * Each SpaceEntitlements object contains the entitlement type and the entitlement data.
- * The entitlement data is either a RuleEntitlement or a UserEntitlement.
- * The RuleEntitlement contains the rule data.
- * The UserEntitlement contains the list of user addresses.
- * The owner of the space is also returned.
- */
-func (sc *SpaceContractV3) GetSpaceEntitlementsForPermission(
+func (sc *SpaceContractV3) marshalEntitlements(
 	ctx context.Context,
-	spaceId shared.StreamId,
-	permission Permission,
-) ([]SpaceEntitlements, common.Address, error) {
+	entitlementData []base.IEntitlementDataQueryableBaseEntitlementData,
+) ([]Entitlement, error) {
 	log := dlog.FromCtx(ctx)
-	// get the space entitlements and check if user is entitled.
-	space, err := sc.getSpace(ctx, spaceId)
-	if err != nil || space == nil {
-		log.Warn("Failed to get space", "space_id", spaceId, "error", err)
-		return nil, EMPTY_ADDRESS, err
-	}
-
-	spaceAsIerc5313, err := ierc5313.NewIerc5313(space.address, sc.backend)
-	if err != nil {
-		log.Warn("Failed to get spaceAsIerc5313", "space_id", spaceId, "error", err)
-		return nil, EMPTY_ADDRESS, err
-	}
-
-	owner, err := spaceAsIerc5313.Owner(nil)
-	if err != nil {
-		log.Warn("Failed to get owner", "space_id", spaceId, "error", err)
-		return nil, EMPTY_ADDRESS, err
-	}
-
-	entitlementData, err := space.entitlements.GetEntitlementDataByPermission(
-		nil,
-		permission.String(),
-	)
-	log.Info(
-		"Got entitlement data",
-		"err",
-		err,
-		"entitlement_data",
-		entitlementData,
-		"space_id",
-		spaceId,
-		"permission",
-		permission.String(),
-	)
-	if err != nil {
-		return nil, EMPTY_ADDRESS, err
-	}
-	entitlements := make([]SpaceEntitlements, len(entitlementData))
+	entitlements := make([]Entitlement, len(entitlementData))
 
 	for i, entitlement := range entitlementData {
 		if entitlement.EntitlementType == "RuleEntitlement" {
@@ -178,7 +136,7 @@ func (sc *SpaceContractV3) GetSpaceEntitlementsForPermission(
 			parsedABI, err := getABI()
 			if err != nil {
 				log.Error("Failed to parse ABI", "error", err)
-				return nil, EMPTY_ADDRESS, err
+				return nil, err
 			}
 
 			var ruleData contracts.IRuleData
@@ -230,18 +188,157 @@ func (sc *SpaceContractV3) GetSpaceEntitlementsForPermission(
 			// Parse the ABI definition
 			parsedABI, err := abi.JSON(strings.NewReader(abiDef))
 			if err != nil {
-				return nil, EMPTY_ADDRESS, err
+				return nil, err
 			}
 			var addresses []common.Address
 			// Unpack the data
 			err = parsedABI.UnpackIntoInterface(&addresses, "getAddresses", entitlement.EntitlementData)
 			if err != nil {
-				return nil, EMPTY_ADDRESS, err
+				return nil, err
 			}
 			entitlements[i].userEntitlement = addresses
 		} else {
-			return nil, EMPTY_ADDRESS, RiverError(Err_UNKNOWN, "Invalid entitlement type").Tag("entitlement_type", entitlement.EntitlementType)
+			return nil, RiverError(Err_UNKNOWN, "Invalid entitlement type").Tag("entitlement_type", entitlement.EntitlementType)
 		}
+	}
+	return entitlements, nil
+}
+
+func (sc *SpaceContractV3) IsBanned(
+	ctx context.Context,
+	spaceId shared.StreamId,
+	linkedWallets []common.Address,
+) (bool, error) {
+	log := dlog.FromCtx(ctx).With("function", "SpaceContractV3.IsBanned")
+	space, err := sc.getSpace(ctx, spaceId)
+	if err != nil || space == nil {
+		log.Warn("Failed to get space", "space_id", spaceId, "error", err)
+		return false, err
+	}
+	return space.banning.IsBanned(ctx, linkedWallets)
+}
+
+/**
+ * GetChannelEntitlementsForPermission returns the entitlements for the given permission for a channel.
+ * The entitlements are returned as a list of `Entitlement`s.
+ * Each Entitlement object contains the entitlement type and the entitlement data.
+ * The entitlement data is either a RuleEntitlement or a UserEntitlement.
+ * The RuleEntitlement contains the rule data.
+ * The UserEntitlement contains the list of user addresses.
+ */
+func (sc *SpaceContractV3) GetChannelEntitlementsForPermission(
+	ctx context.Context,
+	spaceId shared.StreamId,
+	channelId shared.StreamId,
+	permission Permission,
+) ([]Entitlement, common.Address, error) {
+	log := dlog.FromCtx(ctx)
+	// get the channel entitlements and check if user is entitled.
+	space, err := sc.getSpace(ctx, spaceId)
+	if err != nil || space == nil {
+		log.Warn("Failed to get space", "space_id", spaceId, "error", err)
+		return nil, EMPTY_ADDRESS, err
+	}
+
+	// get owner address - owner has all permissions
+	spaceAsIerc5313, err := ierc5313.NewIerc5313(space.address, sc.backend)
+	if err != nil {
+		log.Warn("Failed to get spaceAsIerc5313", "space_id", spaceId, "error", err)
+		return nil, EMPTY_ADDRESS, err
+	}
+
+	owner, err := spaceAsIerc5313.Owner(nil)
+	if err != nil {
+		log.Warn("Failed to get owner", "space_id", spaceId, "error", err)
+		return nil, EMPTY_ADDRESS, err
+	}
+
+	entitlementData, err := space.entitlements.GetChannelEntitlementDataByPermission(
+		nil,
+		channelId,
+		permission.String(),
+	)
+	log.Info(
+		"Got channel entitlement data",
+		"err",
+		err,
+		"entitlement_data",
+		entitlementData,
+		"space_id",
+		spaceId,
+		"channel_id",
+		channelId,
+		"permission",
+		permission.String(),
+	)
+	if err != nil {
+		return nil, EMPTY_ADDRESS, err
+	}
+
+	entitlements, err := sc.marshalEntitlements(ctx, entitlementData)
+	if err != nil {
+		return nil, EMPTY_ADDRESS, err
+	}
+
+	return entitlements, owner, nil
+}
+
+/**
+ * GetSpaceEntitlementsForPermission returns the entitlements for the given permission.
+ * The entitlements are returned as a list of `Entitlement`s.
+ * Each Entitlement object contains the entitlement type and the entitlement data.
+ * The entitlement data is either a RuleEntitlement or a UserEntitlement.
+ * The RuleEntitlement contains the rule data.
+ * The UserEntitlement contains the list of user addresses.
+ * The owner of the space is also returned.
+ */
+func (sc *SpaceContractV3) GetSpaceEntitlementsForPermission(
+	ctx context.Context,
+	spaceId shared.StreamId,
+	permission Permission,
+) ([]Entitlement, common.Address, error) {
+	log := dlog.FromCtx(ctx)
+	// get the space entitlements and check if user is entitled.
+	space, err := sc.getSpace(ctx, spaceId)
+	if err != nil || space == nil {
+		log.Warn("Failed to get space", "space_id", spaceId, "error", err)
+		return nil, EMPTY_ADDRESS, err
+	}
+
+	spaceAsIerc5313, err := ierc5313.NewIerc5313(space.address, sc.backend)
+	if err != nil {
+		log.Warn("Failed to get spaceAsIerc5313", "space_id", spaceId, "error", err)
+		return nil, EMPTY_ADDRESS, err
+	}
+
+	owner, err := spaceAsIerc5313.Owner(nil)
+	if err != nil {
+		log.Warn("Failed to get owner", "space_id", spaceId, "error", err)
+		return nil, EMPTY_ADDRESS, err
+	}
+
+	entitlementData, err := space.entitlements.GetEntitlementDataByPermission(
+		nil,
+		permission.String(),
+	)
+	log.Info(
+		"Got entitlement data",
+		"err",
+		err,
+		"entitlement_data",
+		entitlementData,
+		"space_id",
+		spaceId,
+		"permission",
+		permission.String(),
+	)
+	if err != nil {
+		return nil, EMPTY_ADDRESS, err
+	}
+
+	entitlements, err := sc.marshalEntitlements(ctx, entitlementData)
+	if err != nil {
+		return nil, EMPTY_ADDRESS, err
 	}
 
 	log.Info(
@@ -319,10 +416,16 @@ func (sc *SpaceContractV3) getSpace(ctx context.Context, spaceId shared.StreamId
 		if err != nil {
 			return nil, err
 		}
+		banning, err := NewBanning(ctx, sc.chainCfg, sc.version, address, sc.backend)
+		if err != nil {
+			return nil, err
+		}
+
 		// cache the space
 		sc.spaces[spaceId] = &Space{
 			address:      address,
 			entitlements: entitlements,
+			banning:      banning,
 			pausable:     pausable,
 			channels:     make(map[shared.StreamId]Channels),
 		}

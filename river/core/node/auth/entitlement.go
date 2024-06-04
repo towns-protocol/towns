@@ -20,6 +20,11 @@ type Entitlements interface {
 		opts *bind.CallOpts,
 		permission string,
 	) ([]base.IEntitlementDataQueryableBaseEntitlementData, error)
+	GetChannelEntitlementDataByPermission(
+		opts *bind.CallOpts,
+		channelId [32]byte,
+		permission string,
+	) ([]base.IEntitlementDataQueryableBaseEntitlementData, error)
 }
 type entitlementsProxy struct {
 	managerContract *base.EntitlementsManager
@@ -128,6 +133,53 @@ func (proxy *entitlementsProxy) IsEntitledToSpace(
 		"IsEntitledToSpace",
 		"user",
 		user,
+		"permission",
+		permission,
+		"address",
+		proxy.address,
+		"result",
+		result,
+		"duration",
+		time.Since(start).Milliseconds(),
+	)
+	return result, nil
+}
+
+func (proxy *entitlementsProxy) GetChannelEntitlementDataByPermission(
+	opts *bind.CallOpts,
+	channelId [32]byte,
+	permission string,
+) ([]base.IEntitlementDataQueryableBaseEntitlementData, error) {
+	log := dlog.FromCtx(proxy.ctx)
+	start := time.Now()
+	log.Debug(
+		"GetChannelEntitlementDataByPermissions",
+		"channelId",
+		channelId,
+		"permission",
+		permission,
+		"address",
+		proxy.address,
+	)
+	result, err := proxy.queryContract.GetChannelEntitlementDataByPermission(opts, channelId, permission)
+	if err != nil {
+		log.Error(
+			"GetChannelEntitlementDataByPermissions",
+			"channelId",
+			channelId,
+			"permission",
+			permission,
+			"address",
+			proxy.address,
+			"error",
+			err,
+		)
+		return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err)
+	}
+	log.Debug(
+		"GetChannelEntitlementDataByPermissions",
+		"channelId",
+		channelId,
 		"permission",
 		permission,
 		"address",

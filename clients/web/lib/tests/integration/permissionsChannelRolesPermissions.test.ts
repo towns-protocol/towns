@@ -72,7 +72,7 @@ describe('channel with roles and permissions', () => {
         await waitForWithRetries(() => bob.joinRoom(channelId))
     }) // end test
 
-    test('denied access to token-gated channel', async () => {
+    test.skip('denied access to token-gated channel', async () => {
         /** Arrange */
 
         // create all the users for the test

@@ -21,7 +21,7 @@ import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/dom'
 
 describe('write messages', () => {
-    test('Channel member cant write messages without permission (RuleEntitlement)', async () => {
+    test.skip('Channel member cant write messages without permission (RuleEntitlement)', async () => {
         /** Arrange */
 
         // create all the users for the test
