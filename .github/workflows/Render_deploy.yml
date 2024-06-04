@@ -1,0 +1,77 @@
+name: "Render_deploy"
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment_name:
+        description: "Environment name"
+        required: true
+        type: choice
+        options:
+          - "gamma"
+          - "omega"
+        default: "gamma"
+
+#   push: TODO: uncomment after merging to main and running tests.
+#     branches:
+#       - main
+#       - omega
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy to Render
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Environment Variables
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+              echo "ENVIRONMENT_NAME=${{ github.event.inputs.environment_name }}" >> $GITHUB_ENV
+          elif [ "${{ github.event_name }}" == "push" ]; then
+            # If the branch is omega, we deploy to omega environment
+            if [ "${{ github.ref }}" == "refs/heads/omega" ]; then
+                echo "ENVIRONMENT_NAME=omega" >> $GITHUB_ENV
+            elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
+                echo "ENVIRONMENT_NAME=gamma" >> $GITHUB_ENV
+            fi
+          fi
+
+          # set the HARMONY_WEB_WEBHOOK_URL based on environment name
+          if [ "${{ env.ENVIRONMENT_NAME }}" == "gamma" ]; then
+              echo "HARMONY_WEB_WEBHOOK_URL=${{ secrets.HARMONY_WEB_WEBHOOK_URL_GAMMA }}" >> $GITHUB_ENV
+          elif [ "${{ env.ENVIRONMENT_NAME }}" == "omega" ]; then
+              echo "HARMONY_WEB_WEBHOOK_URL=${{ secrets.HARMONY_WEB_WEBHOOK_URL_OMEGA }}" >> $GITHUB_ENV
+          fi
+
+          # set the HARMONY_WEB_SERVICE_ID based on environment name
+            if [ "${{ env.ENVIRONMENT_NAME }}" == "gamma" ]; then
+                echo "HARMONY_WEB_SERVICE_ID=${{ secrets.HARMONY_WEB_SERVICE_ID_GAMMA }}" >> $GITHUB_ENV
+            elif [ "${{ env.ENVIRONMENT_NAME }}" == "omega" ]; then
+                echo "HARMONY_WEB_SERVICE_ID=${{ secrets.HARMONY_WEB_SERVICE_ID_OMEGA }}" >> $GITHUB_ENV
+            fi
+
+      - name: Deploy Render Web App
+        run: ./scripts/deploy-harmony-web.sh
+
+      # If CI failed, we send a slack notification
+      - name: Alert notification
+        uses: slackapi/slack-github-action@v1.24.0
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_ALERT_WEBHOOK_URL || secrets.SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL }}
+        with:
+          payload: |
+            {
+                "step": "Deploy Render Web App",
+                "environment": "${{ env.ENVIRONMENT_NAME }}",
+                "branch": "${{ github.ref }}",
+                "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                "commit": "${{ github.sha }}",
+                "actor": "${{ github.actor }}"
+            }
