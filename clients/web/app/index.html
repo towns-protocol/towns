@@ -62,6 +62,21 @@
         }
       }
     </style>
+    <script>
+      window.onload = function () {
+        var host = window.location.hostname;
+        var favicon = document.querySelector(
+          'link[rel="icon"][href="/favicon.png"]',
+        );
+        if (favicon) {
+          if (host === "app.gamma.towns.com") {
+            favicon.href = "/favicon-blue.png";
+          } else if (host === "localhost") {
+            favicon.href = "/favicon-green.png";
+          }
+        }
+      };
+    </script>
   </head>
   <body>
     <div id="root"></div>
