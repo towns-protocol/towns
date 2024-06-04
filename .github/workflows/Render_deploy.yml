@@ -37,9 +37,9 @@ jobs:
           elif [ "${{ github.event_name }}" == "push" ]; then
             # If the branch is omega, we deploy to omega environment
             if [ "${{ github.ref }}" == "refs/heads/omega" ]; then
-                ENVIRONMENT_NAME=omega"
+                ENVIRONMENT_NAME="omega"
             elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
-                ENVIRONMENT_NAME=gamma"
+                ENVIRONMENT_NAME="gamma"
             else
                 echo "Environment name not set"
                 exit 1
