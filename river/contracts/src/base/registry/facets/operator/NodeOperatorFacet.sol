@@ -154,13 +154,14 @@ contract NodeOperatorFacet is INodeOperator, OwnableBase, ERC721ABase, Facet {
   // =============================================================
   //                           Commission
   // =============================================================
-  function setCommissionRate(uint256 rate) external {
+  function setCommissionRate(uint256 rateBps) external {
     NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
     if (!ds.operators.contains(msg.sender))
       revert NodeOperator__NotRegistered();
-    if (rate > 100) revert NodeOperator__InvalidCommissionRate();
-    ds.commissionByOperator[msg.sender] = rate;
-    emit OperatorCommissionChanged(msg.sender, rate);
+    if (rateBps > 10000) revert NodeOperator__InvalidCommissionRate();
+
+    ds.commissionByOperator[msg.sender] = rateBps;
+    emit OperatorCommissionChanged(msg.sender, rateBps);
   }
 
   function getCommissionRate(address operator) external view returns (uint256) {

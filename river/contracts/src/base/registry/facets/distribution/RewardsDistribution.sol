@@ -170,7 +170,7 @@ contract RewardsDistribution is
   ) internal view returns (uint256) {
     NodeOperatorStorage.Layout storage nos = NodeOperatorStorage.layout();
     uint256 commission = nos.commissionByOperator[operator];
-    uint256 operatorClaimAmount = (commission * amountPerOperator) / 100;
+    uint256 operatorClaimAmount = (commission * amountPerOperator) / 10000;
     return operatorClaimAmount;
   }
 

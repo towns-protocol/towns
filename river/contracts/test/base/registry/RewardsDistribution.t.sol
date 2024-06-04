@@ -837,7 +837,7 @@ contract RewardsDistributionTest is
     uint256 commission,
     uint256 operatorShare
   ) internal pure returns (uint256) {
-    uint256 operatorReward = (operatorShare * commission) / 100;
+    uint256 operatorReward = (operatorShare * commission) / 10000;
     return operatorReward;
   }
 
@@ -959,7 +959,7 @@ contract RewardsDistributionTest is
   ) internal view returns (uint256[] memory) {
     uint256[] memory commissionsPerOperator = new uint256[](totalOperators);
     for (uint256 i = 0; i < totalOperators; i++) {
-      uint256 commission = _generateRandom(0, 100);
+      uint256 commission = _generateRandom(0, 10000);
       commissionsPerOperator[i] = commission;
     }
     return commissionsPerOperator;
@@ -1063,9 +1063,9 @@ contract RewardsDistributionTest is
     exAmountsPerUser.push(3000 * 1e18);
     exAmountsPerUser.push(4000 * 1e18);
 
-    exCommissionsPerOperator.push(10);
-    exCommissionsPerOperator.push(15);
-    exCommissionsPerOperator.push(20);
+    exCommissionsPerOperator.push(1000);
+    exCommissionsPerOperator.push(1500);
+    exCommissionsPerOperator.push(2000);
 
     exDelegationsPerUser.push(0);
     exDelegationsPerUser.push(0);
@@ -1266,7 +1266,7 @@ contract RewardsDistributionTest is
     uint256 commission
   ) internal {
     vm.assume(operatorAddr != address(0));
-    vm.assume(0 <= commission && commission <= 100);
+    vm.assume(0 <= commission && commission <= 10000);
     vm.expectEmit();
     emit INodeOperatorBase.OperatorCommissionChanged(operatorAddr, commission);
     vm.prank(operatorAddr);
@@ -1487,7 +1487,7 @@ contract RewardsDistributionTest is
       vm.expectEmit();
       emit RewardsDistributed(
         operators[i].addr,
-        (operatorAmount * operators[i].amount) / 100
+        (operatorAmount * operators[i].amount) / 10000
       );
       vm.prank(deployer);
       rewardsDistributionFacet.distributeRewards(operators[i].addr);
