@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-DEPLOYMENT_TIMEOUT=600 # 10 minutes
+DEPLOYMENT_TIMEOUT=600s # 10 minutes
 
 function main() {
     check_env
 
-    if ! ( timeout $DEPLOYMENT_TIMEOUT $(deploy_and_wait) ); then
+    if ! ( timeout $DEPLOYMENT_TIMEOUT bash -c 'deploy_and_wait' ); then
         echo "Deployment failed to complete in time" >&2
         exit 1
     fi
@@ -38,6 +38,8 @@ function deploy_harmony_web() {
 
     echo $deploy_id
 }
+# we need to "export -f" these functions to make them available to the `timeout` command
+export -f deploy_harmony_web 
 
 function get_deployment_status() {
     local deploy_id=$1
@@ -53,8 +55,12 @@ function get_deployment_status() {
 
     deploy_status=$(echo $render_response | jq -r '.status')
 
+    echo "Deployment status: $deploy_status" >&2
+
     echo $deploy_status
 }
+# we need to "export -f" these functions to make them available to the `timeout` command
+export -f get_deployment_status 
 
 function deploy_and_wait() {
     deploy_id=$(deploy_harmony_web)
@@ -62,18 +68,24 @@ function deploy_and_wait() {
 
     while true; do
         status=$(get_deployment_status $deploy_id)
-        if [ "$status" == "build_in_progress" ]; then
-            echo "Build in progress..." >&2
-        else
+        if [ "$status" != "build_in_progress" ]; then
             break
         fi
         sleep 10
     done
 
-    if [ "$status" != "live" ]; then
-        echo "Deployment failed. Status: $status" >&2
+    if [ "$status" == "canceled" ]; then
+        echo "Deployment was canceled." >&2
+        exit 0
+    elif [ "$status" == "live" ]; then
+        echo "Deployment was successful." >&2
+        exit 0
+    else
+        echo "Deployment failed." >&2
         exit 1
     fi
 }
+# we need to "export -f" these functions to make them available to the `timeout` command
+export -f deploy_and_wait
 
 main
