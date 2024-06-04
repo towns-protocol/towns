@@ -323,10 +323,6 @@ export const getEventsByDate = (
                     })
                 }
             } else if (isRoomMember(event) && channelType !== 'dm') {
-                if (channelType === 'gdm' && event.content.membership === Membership.Join) {
-                    return result
-                }
-
                 let accumulatedEvents = renderEvents.find(
                     (e) =>
                         e.type === RenderEventType.AccumulatedRoomMembers &&
@@ -347,11 +343,6 @@ export const getEventsByDate = (
                     renderEvents.push(accumulatedEvents)
                 }
 
-                renderEvents.forEach((e) => {
-                    if (e.type === RenderEventType.AccumulatedRoomMembers) {
-                        e.events = e.events.filter((e) => e.content.userId !== event.content.userId)
-                    }
-                })
                 renderEvents.sort((a) =>
                     a.type === RenderEventType.AccumulatedRoomMembers
                         ? a.membershipType === Membership.Invite

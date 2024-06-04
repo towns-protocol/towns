@@ -473,6 +473,7 @@ export const MessageTimeline = (props: Props) => {
                             highlight={r.key === props.highlightId}
                             userId={userId}
                             channelName={channelName}
+                            channelType={channelType}
                             channelEncrypted={isChannelEncrypted}
                         />
                     )
@@ -493,6 +494,7 @@ export const MessageTimeline = (props: Props) => {
         },
         [
             channelName,
+            channelType,
             fullyReadMarker,
             isChannelEncrypted,
             isTouch,

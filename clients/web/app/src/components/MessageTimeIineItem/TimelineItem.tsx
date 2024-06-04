@@ -1,5 +1,6 @@
 import React from 'react'
 import { staticAssertNever } from 'use-towns-client'
+import { useChannelType } from 'hooks/useChannelType'
 import { AccumulatedRoomMemberEvent } from './items/AccumulatedMembers'
 import { TimelineChannelCreateEvent } from './items/ChannelCreated'
 import { TimelineGenericEvent } from './items/GenericItem'
@@ -17,8 +18,16 @@ export const MessageTimelineItem = React.memo(
         channelName?: string
         channelEncrypted?: boolean
         userId?: string
+        channelType?: ReturnType<typeof useChannelType>
     }) => {
-        const { itemData, channelEncrypted, highlight: isHighlight, channelName, userId } = props
+        const {
+            itemData,
+            channelType,
+            channelEncrypted,
+            highlight: isHighlight,
+            channelName,
+            userId,
+        } = props
 
         switch (itemData.type) {
             case RenderEventType.EncryptedMessage:
@@ -34,6 +43,7 @@ export const MessageTimelineItem = React.memo(
                     <AccumulatedRoomMemberEvent
                         event={itemData}
                         key={itemData.key}
+                        channelType={channelType}
                         channelEncrypted={channelEncrypted}
                         channelName={channelName}
                         userId={userId}

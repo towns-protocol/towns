@@ -1,27 +1,22 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useMemo } from 'react'
 import uniqBy from 'lodash/uniqBy'
 import { firstBy } from 'thenby'
-import { Address, LookupUserMap, Membership, useUserLookupContext } from 'use-towns-client'
-import { Box, Paragraph, Stack, Tooltip } from '@ui'
+import { Membership, useUserLookupContext } from 'use-towns-client'
+import { Paragraph, Stack, Tooltip } from '@ui'
 import { notUndefined } from 'ui/utils/utils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { AvatarStack } from 'routes/AvatarStack'
-import { getNameListFromUsers } from '@components/UserList/UserList'
-import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
-import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
-import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
+import { UserList } from '@components/UserList/UserList'
+import { useChannelType } from 'hooks/useChannelType'
+import { UserWithTooltip } from '@components/ChannelIntro/UserWithTooltip'
 import { AccumulatedRoomMemberRenderEvent } from '../../MessageTimeline/util/getEventsByDate'
 
 type Props = {
     event: AccumulatedRoomMemberRenderEvent
     channelName?: string
+    channelType?: ReturnType<typeof useChannelType>
     channelEncrypted?: boolean
     userId?: string
-}
-
-type UserNameLinkProps = {
-    userId: string
-    usersMap: LookupUserMap
 }
 
 const Verbs = {
@@ -30,12 +25,15 @@ const Verbs = {
     [Membership.Invite]: 'received an invitation to join',
 } as const
 
-export const AccumulatedRoomMemberEvent = (props: Props) => {
+export const AccumulatedRoomMemberEvent = ({ channelType = 'channel', ...props }: Props) => {
     const { usersMap } = useUserLookupContext()
     const { event, channelName, userId, channelEncrypted: isChannelEncrypted } = props
 
-    const isAddedEvent = event.membershipType === Membership.Invite
+    const isAddedEvent =
+        event.membershipType === Membership.Invite ||
+        (channelType === 'gdm' && event.membershipType === Membership.Join)
 
+    const isGDMRemovedEvent = channelType === 'gdm' && event.membershipType === Membership.Leave
     const avatarUsers = useMemo(
         () =>
             uniqBy(
@@ -44,8 +42,10 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
                     userId: e.content.userId,
                 })),
                 (e) => e.userId,
-            ).filter(({ userId: _userId }) => isAddedEvent || userId !== _userId),
-        [event.events, isAddedEvent, userId],
+            ).filter(({ userId: _userId }) =>
+                isAddedEvent || isGDMRemovedEvent ? userId !== _userId : true,
+            ),
+        [event.events, isGDMRemovedEvent, isAddedEvent, userId],
     )
 
     const message = useMemo(() => {
@@ -60,15 +60,31 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
         }
 
         // in GDMs we display 'X added Y,Z and others' instead of invites and joins
-        if (isAddedEvent) {
+        if (isAddedEvent || isGDMRemovedEvent) {
             const senderId = event.events[0]?.sender.id
             const sender = usersMap[senderId]
 
             const senderDisplayName = senderId === userId ? 'You' : getPrettyDisplayName(sender)
 
             const users = event.events.map((e) => usersMap[e.content.userId])
-            const list = getNameListFromUsers(users, userId)
-            return `${senderDisplayName} added ${list}`
+
+            return (
+                <>
+                    {senderDisplayName} {isGDMRemovedEvent ? 'removed ' : 'added '}
+                    <UserList
+                        excludeSelf
+                        userIds={users.map((u) => u.userId).filter((uid) => uid !== senderId)}
+                        myUserId={senderId}
+                        renderUser={(props) => (
+                            <UserWithTooltip
+                                userId={props.userId}
+                                usersMap={usersMap}
+                                key={props.userId}
+                            />
+                        )}
+                    />
+                </>
+            )
         }
 
         const verb = channelName
@@ -87,7 +103,7 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
                         return index === 0 ? 'You' : 'you'
                     }
                     return (
-                        <UserNameLink
+                        <UserWithTooltip
                             key={e.content.userId}
                             userId={e.content.userId}
                             usersMap={usersMap}
@@ -99,6 +115,7 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
         )
         return names
     }, [
+        isGDMRemovedEvent,
         channelName,
         event.events,
         event.membershipType,
@@ -163,39 +180,5 @@ const getNameListFromArray = (names: React.ReactNode[], verb: string, maxLength 
                 {originalNames.length - 1} others
             </Stack>
         </>
-    )
-}
-
-const UserNameLink = (props: UserNameLinkProps) => {
-    const { userId, usersMap } = props
-
-    const { data: abstractAccountAddress } = useAbstractAccountAddress({
-        rootKeyAddress: userId as Address,
-    })
-
-    const userDisplayName = getPrettyDisplayName(
-        usersMap[userId] ?? {
-            abstractAccountAddress,
-            displayName: '',
-        },
-    )
-
-    const { openPanel } = usePanelActions()
-
-    const onClick = useCallback(() => {
-        openPanel('profile', { profileId: abstractAccountAddress })
-    }, [abstractAccountAddress, openPanel])
-
-    return (
-        <Box
-            as="span"
-            color="default"
-            display="inline"
-            tooltip={<ProfileHoverCard userId={userId} />}
-            cursor="pointer"
-            onClick={onClick}
-        >
-            {userDisplayName}
-        </Box>
     )
 }

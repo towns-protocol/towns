@@ -1,13 +1,12 @@
 import React, { useMemo } from 'react'
-import { Link } from 'react-router-dom'
 import { useDMData, useMyUserId } from 'use-towns-client'
 import { AvatarGroup } from '@components/DirectMessages/GroupDMIcon'
-import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
 import { UserList } from '@components/UserList/UserList'
 import { Box, Icon, Paragraph, Stack, Text } from '@ui'
 import { useChannelType } from 'hooks/useChannelType'
 import { notUndefined } from 'ui/utils/utils'
 import { Avatar } from '@components/Avatar/Avatar'
+import { UserWithTooltip } from './UserWithTooltip'
 
 type Props = {
     roomIdentifier: string
@@ -132,15 +131,3 @@ const ChannelGDMIntro = (props: { userIds: string[] | undefined }) => {
         </Stack>
     )
 }
-
-const UserWithTooltip = ({ displayName, userId }: { displayName: string; userId: string }) => (
-    <Box
-        color="default"
-        display="inline"
-        key={userId}
-        fontWeight="medium"
-        tooltip={<ProfileHoverCard userId={userId} />}
-    >
-        <Link to={`profile/${userId}`}>{displayName}</Link>
-    </Box>
-)
