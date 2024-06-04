@@ -1,4 +1,6 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import useResizeObserver from '@react-hook/resize-observer'
+import debounce from 'lodash/debounce'
 import { useChunkedMedia } from 'use-towns-client'
 import { useDownloadFile } from 'use-towns-client/dist/hooks/use-chunked-media'
 import { Box, Button, Icon, IconButton, Stack, Text } from '@ui'
@@ -96,27 +98,61 @@ const ChunkedFileDownload = (
     )
 }
 
+const getClosestEventDiv = (element: React.RefObject<HTMLDivElement>) =>
+    element.current?.closest('[id^="event-"]') as HTMLDivElement
+
 const ChunkedMedia = (
     props: Props & {
         onDownloadClicked: (event: React.MouseEvent<Element, MouseEvent>) => Promise<void>
     },
 ) => {
-    const { width, height, thumbnail, onClick, onDownloadClicked } = props
+    const { width, height, filename, thumbnail, onClick, onDownloadClicked } = props
     const [thumbnailURL, setThumbnailURL] = useState<string | undefined>(undefined)
     const { objectURL } = useChunkedMedia(props)
     const { isTouch } = useDevice()
+    const containerRef = useRef<HTMLDivElement>(null)
+    const [displayHeight, setDisplayHeight] = useState(0)
 
-    const multiplier = isTouch ? 0.7 : 1
-    const MAX_HEIGHT = 280 * multiplier
-
-    const calculatedHeight = useMemo(() => {
-        const imageRatio = width / height
-        if (imageRatio > 3) {
-            return MAX_HEIGHT / imageRatio
-        } else {
-            return MAX_HEIGHT
+    const calculateDimensions = useCallback(() => {
+        if (!containerRef.current) {
+            return
         }
-    }, [width, height, MAX_HEIGHT])
+
+        const multiplier = isTouch ? 0.7 : 1
+        // By default, the image thumbnail will have a maximum height of 280px * MULTIPLIER
+        const MAX_HEIGHT = 280 * multiplier
+
+        // Get the element that is the closest ancestor of the current element that has an ID that starts with 'event-'
+        // We do not use containerRef.current here because the containerRef is the parent of the image thumbnail and it
+        // does not resize along with window because it has a fixed height set
+        const containerWidth =
+            (getClosestEventDiv(containerRef).getBoundingClientRect().width ?? 350) - 100
+        // Calculate the height of the image thumbnail based on the available container width
+        const heightBasedOnContainerWidth = (height / width) * containerWidth
+        // Calculate the width of the image thumbnail based on the defined MAX_HEIGHT above
+        const widthBasedOnMaxHeight = (width / height) * MAX_HEIGHT
+
+        // First preference is to use the MAX_HEIGHT, but if the width of the image thumbnail is going to be larger
+        // than the container width, then use the height based on the container width
+        if (widthBasedOnMaxHeight > containerWidth) {
+            setDisplayHeight(heightBasedOnContainerWidth)
+        } else {
+            setDisplayHeight(MAX_HEIGHT)
+        }
+    }, [width, height, isTouch, setDisplayHeight])
+
+    const debouncedCalc = useMemo(() => debounce(calculateDimensions, 300), [calculateDimensions])
+
+    // Recalculate the dimensions when the container is resized
+    useResizeObserver(getClosestEventDiv(containerRef), debouncedCalc)
+
+    useEffect(() => {
+        if (!containerRef.current) {
+            return
+        }
+
+        debouncedCalc()
+    }, [debouncedCalc])
 
     useEffect(() => {
         if (thumbnail) {
@@ -165,29 +201,22 @@ const ChunkedMedia = (
     ) : (
         <Box
             position="relative"
+            ref={containerRef}
             cursor={onClick ? 'zoom-in' : undefined}
             style={{
-                height: calculatedHeight,
-                maxWidth: '75%',
-                aspectRatio: `${width} / ${height}`,
+                height: displayHeight,
+                filter: applyBlur ? 'blur(10px) brightness(80%)' : undefined,
             }}
             rounded="sm"
             overflow="hidden"
             onPointerEnter={isTouch ? undefined : onPointerEnter}
             onPointerLeave={isTouch ? undefined : onPointerLeave}
+            onClick={isTouch ? undefined : onClick}
         >
-            <Box
-                role="image"
-                style={{
-                    width: '100%',
-                    height: '100%',
-                    backgroundImage: `url(${src}`,
-                    backgroundPosition: 'center',
-                    backgroundSize: 'cover',
-                    backgroundRepeat: 'no-repeat',
-                    filter: applyBlur ? 'blur(10px) brightness(80%)' : undefined,
-                }}
-                onClick={isTouch ? undefined : onClick}
+            <img
+                src={src}
+                alt={filename}
+                style={{ minWidth: '100%', height: '100%', objectFit: 'cover' }}
             />
             {isHovering && (
                 <Box position="bottomRight" padding="sm">
