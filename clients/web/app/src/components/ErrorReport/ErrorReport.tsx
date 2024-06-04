@@ -168,8 +168,8 @@ export const ErrorReportModal = (props: { minimal?: boolean }) => {
     )
 }
 
-export const ErrorReportForm = (props: { onHide?: () => void }) => {
-    const { onHide } = props
+export const ErrorReportForm = (props: { onHide?: () => void; asSheet?: boolean }) => {
+    const { onHide, asSheet } = props
     const inputRef = useRef<HTMLInputElement>(null)
     const [success, setSuccess] = useState(false)
     const [isDragging, setIsDragging] = useState(false)
@@ -253,161 +253,178 @@ export const ErrorReportForm = (props: { onHide?: () => void }) => {
                 const { register, control, formState } = form
 
                 return (
-                    <Stack gap grow>
-                        <MotionBox layout="position">
-                            <TextField
-                                autoFocus
-                                background="level2"
-                                placeholder="Name"
-                                tone={formState.errors[FormStateKeys.name] ? 'error' : 'neutral'}
-                                message={
-                                    <ErrorMessage
-                                        preventSpace
-                                        errors={formState.errors}
-                                        fieldName={FormStateKeys.name}
-                                    />
-                                }
-                                {...register(FormStateKeys.name)}
-                            />
-                        </MotionBox>
-                        <MotionBox layout="position">
-                            <TextField
-                                background="level2"
-                                placeholder="Email (optional)"
-                                tone={formState.errors[FormStateKeys.email] ? 'error' : 'neutral'}
-                                message={
-                                    <ErrorMessage
-                                        preventSpace
-                                        errors={formState.errors}
-                                        fieldName={FormStateKeys.email}
-                                    />
-                                }
-                                {...register(FormStateKeys.email)}
-                            />
-                        </MotionBox>
-                        <MotionBox layout="position">
-                            <TextArea
-                                paddingY="md"
-                                background="level2"
-                                placeholder="Please describe your issue"
-                                height="150"
-                                maxLength={400}
-                                tone={
-                                    formState.errors[FormStateKeys.comments] ? 'error' : 'neutral'
-                                }
-                                message={
-                                    <ErrorMessage
-                                        preventSpace
-                                        errors={formState.errors}
-                                        fieldName={FormStateKeys.comments}
-                                    />
-                                }
-                                {...register(FormStateKeys.comments)}
-                            />
-                        </MotionBox>
-
-                        <PreviewFiles form={form} />
-
-                        <MotionBox layout="position">
-                            <PanelButton
-                                type="button"
-                                onDragEnter={() => {
-                                    setIsDragging(true)
-                                }}
-                                onDragOver={(e) => {
-                                    e.preventDefault()
-                                    e.stopPropagation()
-                                    setIsDragging(true)
-                                }}
-                                onDragLeave={(e) => {
-                                    e.preventDefault()
-                                    setIsDragging(false)
-                                }}
-                                onDrop={(e) => {
-                                    e.preventDefault()
-                                    e.stopPropagation()
-                                    setIsDragging(false)
-                                    const files = Array.from(e.dataTransfer.files)
-                                    // dont add duplicates
-                                    const newFiles = files.filter(
-                                        (f) =>
-                                            !form
-                                                .getValues(FormStateKeys.attachments)
-                                                .some((af) => af.name === f.name),
-                                    )
-                                    if (newFiles.length > 0) {
-                                        form.setValue(
-                                            FormStateKeys.attachments,
-                                            form
-                                                .getValues(FormStateKeys.attachments)
-                                                .concat(newFiles),
-                                        )
+                    <>
+                        <Stack
+                            gap
+                            grow
+                            scroll={asSheet}
+                            scrollbars={asSheet}
+                            maxHeight={asSheet ? '50vh' : 'auto'}
+                        >
+                            <MotionBox layout="position">
+                                <TextField
+                                    autoFocus
+                                    background="level2"
+                                    placeholder="Name"
+                                    tone={
+                                        formState.errors[FormStateKeys.name] ? 'error' : 'neutral'
                                     }
-                                }}
-                                onClick={() => {
-                                    inputRef.current?.click()
-                                }}
-                            >
-                                <Box width="height_md" alignItems="center">
-                                    <Icon type="attachment" size="square_sm" />
-                                </Box>
-                                <Paragraph color="gray1">
-                                    {isDragging ? 'Drop file here' : 'Upload a file'}
-                                </Paragraph>
-
-                                <Controller
-                                    control={control}
-                                    name={FormStateKeys.attachments}
-                                    render={({ field: { value, onChange, name } }) => (
-                                        <>
-                                            <UploadInput
-                                                className={[fieldStyles.field, srOnlyClass]}
-                                                ref={inputRef}
-                                                name={name}
-                                                register={register}
-                                                onChange={(e) => {
-                                                    const file = e.target?.files?.[0]
-                                                    if (
-                                                        !file ||
-                                                        value.some((f) => f.name === file.name)
-                                                    ) {
-                                                        return onChange(value)
-                                                    }
-                                                    return onChange([...value, file])
-                                                }}
-                                            />
-                                            <ErrorMessage
-                                                preventSpace
-                                                errors={formState.errors}
-                                                fieldName={FormStateKeys.attachments}
-                                            />
-                                            <FieldOutline tone="accent" rounded="sm" />
-                                        </>
-                                    )}
+                                    message={
+                                        <ErrorMessage
+                                            preventSpace
+                                            errors={formState.errors}
+                                            fieldName={FormStateKeys.name}
+                                        />
+                                    }
+                                    {...register(FormStateKeys.name)}
                                 />
-                            </PanelButton>
-                        </MotionBox>
-                        {isTouch && (
-                            <PanelButton type="button" onClick={onActivateShake}>
-                                <Box width="height_md" alignItems="center">
-                                    <Icon type={enabled ? 'shakeOff' : 'shake'} size="square_sm" />
-                                </Box>
-                                {enabled ? (
-                                    <Paragraph color="gray1">Disable Shake to Report</Paragraph>
-                                ) : (
-                                    <Paragraph color="gray1">Enable Shake to Report</Paragraph>
-                                )}
-                            </PanelButton>
-                        )}
-                        <DebugInfo />
-                        {errorMessage && (
-                            <Stack paddingBottom="sm">
-                                <Text color="error">{errorMessage}</Text>
-                            </Stack>
-                        )}
+                            </MotionBox>
+                            <MotionBox layout="position">
+                                <TextField
+                                    background="level2"
+                                    placeholder="Email (optional)"
+                                    tone={
+                                        formState.errors[FormStateKeys.email] ? 'error' : 'neutral'
+                                    }
+                                    message={
+                                        <ErrorMessage
+                                            preventSpace
+                                            errors={formState.errors}
+                                            fieldName={FormStateKeys.email}
+                                        />
+                                    }
+                                    {...register(FormStateKeys.email)}
+                                />
+                            </MotionBox>
+                            <MotionBox layout="position">
+                                <TextArea
+                                    paddingY="md"
+                                    background="level2"
+                                    placeholder="Please describe your issue"
+                                    height="150"
+                                    maxLength={400}
+                                    tone={
+                                        formState.errors[FormStateKeys.comments]
+                                            ? 'error'
+                                            : 'neutral'
+                                    }
+                                    message={
+                                        <ErrorMessage
+                                            preventSpace
+                                            errors={formState.errors}
+                                            fieldName={FormStateKeys.comments}
+                                        />
+                                    }
+                                    {...register(FormStateKeys.comments)}
+                                />
+                            </MotionBox>
 
-                        <Box grow />
-                        <Stack horizontal gap justifyContent="end">
+                            <PreviewFiles form={form} />
+
+                            <MotionBox layout="position">
+                                <PanelButton
+                                    type="button"
+                                    onDragEnter={() => {
+                                        setIsDragging(true)
+                                    }}
+                                    onDragOver={(e) => {
+                                        e.preventDefault()
+                                        e.stopPropagation()
+                                        setIsDragging(true)
+                                    }}
+                                    onDragLeave={(e) => {
+                                        e.preventDefault()
+                                        setIsDragging(false)
+                                    }}
+                                    onDrop={(e) => {
+                                        e.preventDefault()
+                                        e.stopPropagation()
+                                        setIsDragging(false)
+                                        const files = Array.from(e.dataTransfer.files)
+                                        // dont add duplicates
+                                        const newFiles = files.filter(
+                                            (f) =>
+                                                !form
+                                                    .getValues(FormStateKeys.attachments)
+                                                    .some((af) => af.name === f.name),
+                                        )
+                                        if (newFiles.length > 0) {
+                                            form.setValue(
+                                                FormStateKeys.attachments,
+                                                form
+                                                    .getValues(FormStateKeys.attachments)
+                                                    .concat(newFiles),
+                                            )
+                                        }
+                                    }}
+                                    onClick={() => {
+                                        inputRef.current?.click()
+                                    }}
+                                >
+                                    <Box width="height_md" alignItems="center">
+                                        <Icon type="attachment" size="square_sm" />
+                                    </Box>
+                                    <Paragraph color="gray1">
+                                        {isDragging ? 'Drop file here' : 'Upload a file'}
+                                    </Paragraph>
+
+                                    <Controller
+                                        control={control}
+                                        name={FormStateKeys.attachments}
+                                        render={({ field: { value, onChange, name } }) => (
+                                            <>
+                                                <UploadInput
+                                                    className={[fieldStyles.field, srOnlyClass]}
+                                                    ref={inputRef}
+                                                    name={name}
+                                                    register={register}
+                                                    onChange={(e) => {
+                                                        const file = e.target?.files?.[0]
+                                                        if (
+                                                            !file ||
+                                                            value.some((f) => f.name === file.name)
+                                                        ) {
+                                                            return onChange(value)
+                                                        }
+                                                        return onChange([...value, file])
+                                                    }}
+                                                />
+                                                <ErrorMessage
+                                                    preventSpace
+                                                    errors={formState.errors}
+                                                    fieldName={FormStateKeys.attachments}
+                                                />
+                                                <FieldOutline tone="accent" rounded="sm" />
+                                            </>
+                                        )}
+                                    />
+                                </PanelButton>
+                            </MotionBox>
+                            {isTouch && (
+                                <PanelButton type="button" onClick={onActivateShake}>
+                                    <Box width="height_md" alignItems="center">
+                                        <Icon
+                                            type={enabled ? 'shakeOff' : 'shake'}
+                                            size="square_sm"
+                                        />
+                                    </Box>
+                                    {enabled ? (
+                                        <Paragraph color="gray1">Disable Shake to Report</Paragraph>
+                                    ) : (
+                                        <Paragraph color="gray1">Enable Shake to Report</Paragraph>
+                                    )}
+                                </PanelButton>
+                            )}
+                            <DebugInfo />
+                            {errorMessage && (
+                                <Stack paddingBottom="sm">
+                                    <Text color="error">{errorMessage}</Text>
+                                </Stack>
+                            )}
+
+                            <Box grow />
+                        </Stack>
+                        <Stack horizontal gap paddingTop="sm" justifyContent="end">
                             <Button
                                 grow
                                 tone="cta1"
@@ -419,7 +436,7 @@ export const ErrorReportForm = (props: { onHide?: () => void }) => {
                                 Submit
                             </Button>
                         </Stack>
-                    </Stack>
+                    </>
                 )
             }}
         </FormRender>

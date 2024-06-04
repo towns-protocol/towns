@@ -17,7 +17,7 @@ import { TownPageActivity } from '@components/TownPageLayout/TownPageActivity'
 import { TownPageLayout } from '@components/TownPageLayout/TownPageLayout'
 import { FadeInBox } from '@components/Transitions'
 import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
-import { Box, BoxProps, Button, Heading, Icon, IconButton, Paragraph, Stack } from '@ui'
+import { Box, BoxProps, Button, Heading, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { useAnalytics } from 'hooks/useAnalytics'
 import { useDevice } from 'hooks/useDevice'
@@ -174,6 +174,7 @@ const Header = (props: {
     }, [setIsShowingBugReport])
     const { login } = useCombinedAuth()
     const { analytics } = useAnalytics()
+    const { isTouch } = useDevice()
 
     const onClickLogin = useCallback(() => {
         analytics?.track(
@@ -233,8 +234,22 @@ const Header = (props: {
                 )}
             </Stack>
             {isShowingBugReport && (
-                <ModalContainer onHide={onHideBugReport}>
-                    <ErrorReportForm onHide={onHideBugReport} />
+                <ModalContainer asSheet onHide={onHideBugReport}>
+                    {!isTouch && (
+                        <Box position="relative">
+                            <IconButton
+                                position="topRight"
+                                icon="close"
+                                onClick={onHideBugReport}
+                            />
+                        </Box>
+                    )}
+                    <Stack gap alignItems="center" paddingY="lg">
+                        <Text size="lg" fontWeight="strong" color="default">
+                            Bug Report
+                        </Text>
+                    </Stack>
+                    <ErrorReportForm asSheet onHide={onHideBugReport} />
                 </ModalContainer>
             )}
         </Box>
