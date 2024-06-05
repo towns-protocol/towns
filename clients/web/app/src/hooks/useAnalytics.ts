@@ -7,6 +7,7 @@ import {
 } from '@rudderstack/analytics-js'
 import { useEffect, useState } from 'react'
 import { keccak256 } from 'ethers/lib/utils'
+import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
 import { env, isTest } from 'utils'
 import { isAndroid, isIOS, isPWA } from './useDevice'
 
@@ -147,6 +148,14 @@ export function replaceOAuthParameters(searchParamsString: string) {
     }
 
     return params.toString()
+}
+
+export function getChannelType(channelId: string) {
+    return isDMChannelStreamId(channelId)
+        ? 'dm'
+        : isGDMChannelStreamId('gdm')
+        ? isChannelStreamId('channel')
+        : 'unknown'
 }
 
 function getCommonAnalyticsProperties(): ApiObject {

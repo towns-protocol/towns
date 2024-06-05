@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import {
     SendMessageOptions,
     useChannelContext,
@@ -20,7 +20,7 @@ import { atoms } from 'ui/styles/atoms.css'
 import { useDevice } from 'hooks/useDevice'
 import { Panel } from '@components/Panel/Panel'
 import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDropContext'
-import { useAnalytics } from 'hooks/useAnalytics'
+import { getChannelType, useAnalytics } from 'hooks/useAnalytics'
 
 type Props = {
     messageId: string
@@ -42,21 +42,22 @@ export const MessageThreadPanel = (props: Props) => {
     const { sendReply } = useSendReply(messageId)
     const { analytics } = useAnalytics()
 
-    const onSend = (value: string, options: SendMessageOptions | undefined) => {
-        analytics?.track(
-            'posted message',
-            {
+    const onSend = useCallback(
+        (value: string, options: SendMessageOptions | undefined) => {
+            const tracked = {
                 spaceId,
                 channelId,
+                channelType: getChannelType(channelId),
                 isThread: true,
                 messageType: options?.messageType,
-            },
-            () => {
-                console.log('[analytics] posted message (thread)', options?.messageType)
-            },
-        )
-        sendReply(value, channelId, options, parent?.userIds)
-    }
+            }
+            analytics?.track('posted message', tracked, () => {
+                console.log('[analytics] posted message (thread)', tracked)
+            })
+            sendReply(value, channelId, options, parent?.userIds)
+        },
+        [analytics, channelId, parent?.userIds, sendReply, spaceId],
+    )
     const { users } = useUserLookupContext()
 
     const userId = useMyProfile()?.userId

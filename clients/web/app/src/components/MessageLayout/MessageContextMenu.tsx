@@ -10,7 +10,7 @@ import { ShortcutTooltip } from '@components/Shortcuts/ShortcutTooltip'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
 import { getLinkToMessage } from 'utils/getLinkToMessage'
-import { useAnalytics } from 'hooks/useAnalytics'
+import { getChannelType, useAnalytics } from 'hooks/useAnalytics'
 import { useRouteParams } from 'hooks/useRouteParams'
 import { ShortcutAction, ShortcutActions } from 'data/shortcuts'
 import { ShortcutKeys } from '@components/Shortcuts/ShortcutKeys'
@@ -64,19 +64,17 @@ export const MessageContextMenu = (props: Props) => {
                 console.error('no emoji id')
                 return
             }
-            analytics?.track(
-                'posted message',
-                {
-                    spaceId,
-                    channelId,
-                    isThread: !!threadId,
-                    messageType: 'emoji reaction',
-                    emojiId: data.id,
-                },
-                () => {
-                    console.log('[analytics] posted message (emoji reaction)')
-                },
-            )
+            const tracked = {
+                spaceId,
+                channelId,
+                channelType: getChannelType(channelId),
+                isThread: !!threadId,
+                messageType: 'emoji reaction',
+                emojiId: data.id,
+            }
+            analytics?.track('posted message', tracked, () => {
+                console.log('[analytics] posted message (emoji reaction)', tracked)
+            })
             sendReaction(channelId, eventId, data.id, threadId)
         },
         [analytics, channelId, eventId, sendReaction, spaceId, threadId],

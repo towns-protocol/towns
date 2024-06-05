@@ -48,7 +48,7 @@ import { ReplyContextProvider } from '@components/ReplyToMessageContext/ReplyToM
 import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
 import { useBlockedUsers } from 'hooks/useBlockedUsers'
 import { TouchPanelContext } from '@components/Panel/Panel'
-import { useAnalytics } from 'hooks/useAnalytics'
+import { getChannelType, useAnalytics } from 'hooks/useAnalytics'
 import { getDraftDMStorageId } from 'utils'
 
 type Props = {
@@ -123,18 +123,16 @@ export const SpacesChannelComponent = (props: Props) => {
                 return
             }
 
-            analytics?.track(
-                'posted message',
-                {
-                    spaceId,
-                    channelId,
-                    isThread: !!threadId,
-                    messageType: options?.messageType,
-                },
-                () => {
-                    console.log('[analytics] posted message', options?.messageType)
-                },
-            )
+            const tracked = {
+                spaceId,
+                channelId,
+                channelType: getChannelType(channelId),
+                isThread: !!threadId,
+                messageType: options?.messageType,
+            }
+            analytics?.track('posted message', tracked, () => {
+                console.log('[analytics] posted message', tracked)
+            })
 
             // TODO: need to pass participants to sendReply in case of thread ?
             const optionsWithThreadId = replyToEventId
