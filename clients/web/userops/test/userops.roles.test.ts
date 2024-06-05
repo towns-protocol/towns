@@ -1,4 +1,4 @@
-import { LocalhostWeb3Provider, NoopRuleData } from '@river-build/web3'
+import { EVERYONE_ADDRESS, LocalhostWeb3Provider, NoopRuleData } from '@river-build/web3'
 import { Permission } from '@river-build/web3'
 import {
     createSpaceDappAndUserops,
@@ -37,7 +37,7 @@ test('can create, update, and delete a role with user ops', async () => {
         spaceId,
         ROLE_NAME,
         [],
-        [],
+        [EVERYONE_ADDRESS],
         NoopRuleData,
         alice.wallet,
     ])
@@ -58,7 +58,7 @@ test('can create, update, and delete a role with user ops', async () => {
             roleId: role!.roleId,
             roleName: NEW_ROLE_NAME,
             permissions: [Permission.Read, Permission.Write],
-            users: [],
+            users: [EVERYONE_ADDRESS],
             ruleData: NoopRuleData,
         },
         alice.wallet,

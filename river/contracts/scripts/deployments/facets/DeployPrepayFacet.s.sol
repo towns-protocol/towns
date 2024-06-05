@@ -10,7 +10,7 @@ import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {PrepayFacet} from "contracts/src/factory/facets/prepay/PrepayFacet.sol";
 
-contract DeployPrepay is FacetHelper, Deployer {
+contract DeployPrepayFacet is FacetHelper, Deployer {
   constructor() {
     addSelector(PrepayFacet.prepayMembership.selector);
     addSelector(PrepayFacet.prepaidMembershipSupply.selector);

@@ -679,7 +679,7 @@ export class UserOps {
     public async sendCreateRoleOp(
         args: Parameters<SpaceDapp['createRole']>,
     ): Promise<ISendUserOperationResponse> {
-        const [spaceId, roleName, permissions, tokens, users, signer] = args
+        const [spaceId, roleName, permissions, users, ruleData, signer] = args
 
         if (!this.spaceDapp) {
             throw new Error('spaceDapp is required')
@@ -696,7 +696,7 @@ export class UserOps {
             functionName,
         )
 
-        const entitlements = await createEntitlementStruct(space, tokens, users)
+        const entitlements = await createEntitlementStruct(space, users, ruleData)
 
         const callData = await space.Roles.encodeFunctionData(functionName, [
             roleName,
@@ -786,7 +786,7 @@ export class UserOps {
             throw new Error('spaceDapp is required')
         }
 
-        const updatedEntitlemets = await this.spaceDapp.createUpdatedEntitlements(
+        const updatedEntitlements = await this.spaceDapp.createUpdatedEntitlements(
             space,
             updateRoleParams,
         )
@@ -795,7 +795,7 @@ export class UserOps {
             updateRoleParams.roleId,
             updateRoleParams.roleName,
             updateRoleParams.permissions,
-            updatedEntitlemets,
+            updatedEntitlements,
         ])
 
         return { functionHashForPaymasterProxy, callData }

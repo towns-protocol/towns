@@ -40,7 +40,7 @@ import {DeployPricingModules} from "contracts/scripts/deployments/facets/DeployP
 import {DeployImplementationRegistry} from "contracts/scripts/deployments/facets/DeployImplementationRegistry.s.sol";
 import {DeployPausable} from "contracts/scripts/deployments/facets/DeployPausable.s.sol";
 import {DeployPlatformRequirements} from "./facets/DeployPlatformRequirements.s.sol";
-import {DeployPrepay} from "contracts/scripts/deployments/facets/DeployPrepay.s.sol";
+import {DeployPrepayFacet} from "contracts/scripts/deployments/facets/DeployPrepayFacet.s.sol";
 
 contract DeploySpaceFactory is DiamondDeployer {
   // diamond helpers
@@ -68,7 +68,7 @@ contract DeploySpaceFactory is DiamondDeployer {
   DeployFixedPricing deployFixedPricing = new DeployFixedPricing();
   DeployPlatformRequirements platformReqsHelper =
     new DeployPlatformRequirements();
-  DeployPrepay prepayHelper = new DeployPrepay();
+  DeployPrepayFacet prepayHelper = new DeployPrepayFacet();
 
   // helpers
 

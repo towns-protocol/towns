@@ -35,11 +35,6 @@ contract PrepayFacet is
     if (supply == 0) revert PrepayBase__InvalidAmount();
     if (membership == address(0)) revert PrepayBase__InvalidAddress();
 
-    // validate membership contract address
-    if (!IERC165(membership).supportsInterface(type(IMembership).interfaceId)) {
-      revert PrepayBase__InvalidMembership();
-    }
-
     // validate caller is owner
     if (IERC173(membership).owner() != msg.sender) {
       revert PrepayBase__InvalidAddress();

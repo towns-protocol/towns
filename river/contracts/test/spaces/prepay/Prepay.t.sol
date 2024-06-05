@@ -14,7 +14,10 @@ import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 import {PrepayFacet} from "contracts/src/factory/facets/prepay/PrepayFacet.sol";
 import {MembershipFacet} from "contracts/src/spaces/facets/membership/MembershipFacet.sol";
 
-contract PrepayTest is BaseSetup {
+import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
+import {IPrepayBase} from "contracts/src/factory/facets/prepay/IPrepay.sol";
+
+contract PrepayTest is BaseSetup, IPrepayBase, IMembershipBase {
   Architect public architect;
   PrepayFacet public prepay;
 
@@ -22,6 +25,26 @@ contract PrepayTest is BaseSetup {
     super.setUp();
     prepay = PrepayFacet(spaceFactory);
     architect = Architect(spaceFactory);
+  }
+
+  function test_prepayMembership_revertWhen_invalidAmount() external {
+    vm.expectRevert(PrepayBase__InvalidAmount.selector);
+    prepay.prepayMembership(everyoneSpace, 0);
+  }
+
+  function test_prepayMembership_revertWhen_invalidAddress() external {
+    vm.expectRevert(PrepayBase__InvalidAddress.selector);
+    prepay.prepayMembership(address(0), 1);
+  }
+
+  function test_prepayMembership_revertWhen_notOwner() external {
+    address alice = _randomAddress();
+
+    uint256 membershipFee = prepay.calculateMembershipPrepayFee(1);
+
+    vm.expectRevert(PrepayBase__InvalidAddress.selector);
+    hoax(alice, membershipFee);
+    prepay.prepayMembership{value: membershipFee}(everyoneSpace, 1);
   }
 
   function test_prepayMembership() external {
@@ -42,13 +65,15 @@ contract PrepayTest is BaseSetup {
 
     // bob will not since our free allocation changed, so now he has to pay
     vm.prank(bob);
-    vm.expectRevert();
+    vm.expectRevert(Membership__InsufficientPayment.selector);
     membership.joinSpace(bob);
+
+    uint256 membershipFee = prepay.calculateMembershipPrepayFee(1);
 
     // founder prepays
     vm.prank(founder);
-    vm.deal(founder, 1 ether);
-    prepay.prepayMembership{value: 1 ether}(address(membership), 1);
+    vm.deal(founder, membershipFee);
+    prepay.prepayMembership{value: membershipFee}(address(membership), 1);
 
     uint256 supply = prepay.prepaidMembershipSupply(address(membership));
     assertEq(supply, membership.totalSupply() + 1);
@@ -59,7 +84,7 @@ contract PrepayTest is BaseSetup {
 
     // charlie can't join since no more prepaid supply
     vm.prank(charlie);
-    vm.expectRevert();
+    vm.expectRevert(Membership__InsufficientPayment.selector);
     membership.joinSpace(charlie);
   }
 }
