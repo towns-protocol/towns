@@ -114,11 +114,10 @@ async function postCustomError(data: FormState) {
         formData.append(`attachment[]`, attachment)
     }
 
-    const postCustom = await axiosClient.post(url, formData, {
+    return axiosClient.post(url, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
         withCredentials: true,
     })
-    return postCustom
 }
 
 export const ErrorReportModal = (props: { minimal?: boolean }) => {
@@ -155,6 +154,8 @@ export const ErrorReportForm = (props: { onHide?: () => void; asSheet?: boolean 
     const [errorMessage, setErrorMessage] = useState('')
     const { mutate: doCustomError, isPending: isLoading } = useMutation({
         mutationFn: postCustomError,
+        retry: 4, // retry N times
+        retryDelay: (attempt) => Math.min(attempt > 1 ? 2 ** attempt * 1000 : 1000, 8 * 1000), // exponential backoff
     })
     const { isTouch } = useDevice()
 
@@ -212,6 +213,7 @@ export const ErrorReportForm = (props: { onHide?: () => void; asSheet?: boolean 
             schema={schema}
             id="error-report-form"
             onSubmit={(data) => {
+                setErrorMessage('')
                 setBugReportCredentials({ name: data.name, email: data.email })
                 doCustomError(data, {
                     onSuccess: () => {
@@ -222,7 +224,7 @@ export const ErrorReportForm = (props: { onHide?: () => void; asSheet?: boolean 
                         setErrorMessage(
                             `There was an error while submitting your feedback. Please try again later.`,
                         )
-                        console.error('[ErrorReport] Error submitting feedback', error)
+                        console.error('[ErrorReport] Error submitting feedback', 'error', error)
                     },
                 })
             }}
