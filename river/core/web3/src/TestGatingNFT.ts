@@ -188,6 +188,5 @@ export async function publicMint(nftName: string, toAddress: `0x${string}`) {
         account,
     })
 
-    const receipt = await client.waitForTransactionReceipt({ hash: nftReceipt })
-    expect(receipt.status).toBe('success')
+    await client.waitForTransactionReceipt({ hash: nftReceipt })
 }

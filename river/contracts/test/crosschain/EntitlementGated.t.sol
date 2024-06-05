@@ -18,35 +18,35 @@ import {RuleEntitlementUtil} from "./RuleEntitlementUtil.sol";
 import {EntitlementChecker} from "contracts/src/base/registry/facets/checker/EntitlementChecker.sol";
 import {MockEntitlementGated} from "contracts/test/mocks/MockEntitlementGated.sol";
 
+import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
+
 contract EntitlementGatedTest is
-  TestUtils,
+  BaseSetup,
   IEntitlementGatedBase,
   IEntitlementCheckerBase
 {
-  IEntitlementChecker public checker;
   MockEntitlementGated public gated;
 
-  mapping(address => string) public nodeKeys;
+  function setUp() public override {
+    super.setUp();
+    _registerOperators();
+    _registerNodes();
 
-  function setUp() external {
-    checker = new EntitlementChecker();
-    gated = new MockEntitlementGated(checker);
+    gated = new MockEntitlementGated(entitlementChecker);
   }
 
   // =============================================================
   //                  Request Entitlement Check
   // =============================================================
   function test_requestEntitlementCheck() external {
-    _registerNodes();
-
     vm.prank(address(gated));
-    address[] memory nodes = checker.getRandomNodes(5);
+    address[] memory nodes = entitlementChecker.getRandomNodes(5);
 
     bytes32 transactionHash = keccak256(
       abi.encodePacked(tx.origin, block.number)
     );
 
-    vm.expectEmit(address(checker));
+    vm.expectEmit(address(entitlementChecker));
     emit EntitlementCheckRequested(
       address(this),
       address(gated),
@@ -63,9 +63,9 @@ contract EntitlementGatedTest is
     assertEq(realRequestId, transactionHash);
   }
 
-  function test_requestEntitlementCheck_revert_alreadyRegistered() external {
-    _registerNodes();
-
+  function test_requestEntitlementCheck_revertWhen_alreadyRegistered()
+    external
+  {
     gated.requestEntitlementCheck(
       0,
       RuleEntitlementUtil.getMockERC721RuleData()
@@ -84,10 +84,8 @@ contract EntitlementGatedTest is
   //                 Post Entitlement Check Result
   // =============================================================
   function test_postEntitlementCheckResult_passing() external {
-    _registerNodes();
-
     vm.prank(address(gated));
-    address[] memory nodes = checker.getRandomNodes(5);
+    address[] memory nodes = entitlementChecker.getRandomNodes(5);
     bytes32 requestId = gated.requestEntitlementCheck(
       0,
       RuleEntitlementUtil.getMockERC721RuleData()
@@ -97,10 +95,8 @@ contract EntitlementGatedTest is
   }
 
   function test_postEntitlementCheckResult_failing() external {
-    _registerNodes();
-
     vm.prank(address(gated));
-    address[] memory nodes = checker.getRandomNodes(5);
+    address[] memory nodes = entitlementChecker.getRandomNodes(5);
 
     bytes32 requestId = gated.requestEntitlementCheck(
       0,
@@ -121,9 +117,8 @@ contract EntitlementGatedTest is
   }
 
   function test_postEntitlementCheckResult_revert_nodeAlreadyVoted() external {
-    _registerNodes();
     vm.prank(address(gated));
-    address[] memory nodes = checker.getRandomNodes(5);
+    address[] memory nodes = entitlementChecker.getRandomNodes(5);
 
     bytes32 requestId = gated.requestEntitlementCheck(
       0,
@@ -139,8 +134,6 @@ contract EntitlementGatedTest is
   }
 
   function test_postEntitlementCheckResult_revert_nodeNotFound() external {
-    _registerNodes();
-
     bytes32 requestId = gated.requestEntitlementCheck(
       0,
       RuleEntitlementUtil.getMockERC721RuleData()
@@ -204,7 +197,6 @@ contract EntitlementGatedTest is
   }
 
   function test_getEncodedRuleData() external {
-    _registerNodes();
     bytes32 requestId = gated.requestEntitlementCheck(
       0,
       RuleEntitlementUtil.getMockERC721RuleData()
@@ -218,9 +210,8 @@ contract EntitlementGatedTest is
   // =============================================================
 
   function test_deleteTransaction() external {
-    _registerNodes();
     vm.prank(address(gated));
-    address[] memory nodes = checker.getRandomNodes(5);
+    address[] memory nodes = entitlementChecker.getRandomNodes(5);
 
     bytes32 requestId = gated.requestEntitlementCheck(
       0,
@@ -270,18 +261,5 @@ contract EntitlementGatedTest is
 
       vm.stopPrank();
     }
-  }
-
-  function _registerNodes() internal {
-    for (uint256 i = 0; i < 25; i++) {
-      address node = _randomAddress();
-      nodeKeys[node] = string(abi.encodePacked("node", vm.toString(i)));
-
-      vm.prank(node);
-      checker.registerNode(node);
-    }
-
-    uint256 len = checker.getNodeCount();
-    assertEq(len, 25);
   }
 }

@@ -77,6 +77,9 @@ contract MembershipBaseSetup is
     membership = MembershipFacet(userSpace);
     referrals = MembershipReferralFacet(userSpace);
     platformReqs = IPlatformRequirements(spaceFactory);
+
+    _registerOperators();
+    _registerNodes();
   }
 
   modifier givenMembershipHasPrice() {

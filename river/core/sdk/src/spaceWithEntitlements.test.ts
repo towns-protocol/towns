@@ -5,111 +5,89 @@
 
 import {
     getDynamicPricingModule,
-    everyoneMembershipStruct,
+    makeTestClient,
+    makeUserContextFromWallet,
     waitFor,
     createUserStreamAndSyncClient,
     createSpaceAndDefaultChannel,
     expectUserCanJoin,
-    setupWalletsAndContexts,
     linkWallets,
-    getNftRuleData,
-    twoNftRuleData,
 } from './util.test'
+import { Client } from './client'
 import { dlog } from '@river-build/dlog'
 import { MembershipOp } from '@river-build/proto'
+import { ethers } from 'ethers'
 import {
     CheckOperationType,
     ETH_ADDRESS,
+    LocalhostWeb3Provider,
     LogicalOperationType,
     MembershipStruct,
     NoopRuleData,
     Operation,
     OperationType,
     Permission,
+    createSpaceDapp,
     getContractAddress,
     publicMint,
     treeToRuleData,
-    IRuleEntitlement,
+    ISpaceDapp,
 } from '@river-build/web3'
+import { makeBaseChainConfig } from './riverConfig'
 
 const log = dlog('csb:test:spaceWithEntitlements')
 
-// Users need to be mapped from 'alice', 'bob', etc to their wallet addresses,
-// because the wallets are created within this helper method.
-async function createTownWithRequirements(requirements: {
-    everyone: boolean
-    users: string[]
-    ruleData: IRuleEntitlement.RuleDataStruct
-}) {
-    const {
-        alice,
-        bob,
-        aliceSpaceDapp,
-        bobSpaceDapp,
-        carolSpaceDapp,
-        aliceProvider,
-        bobProvider,
-        carolProvider,
-        alicesWallet,
-        bobsWallet,
-        carolsWallet,
-    } = await setupWalletsAndContexts()
+async function setupWalletsAndContexts() {
+    const baseConfig = makeBaseChainConfig()
 
-    const pricingModules = await bobSpaceDapp.listPricingModules()
-    const dynamicPricingModule = getDynamicPricingModule(pricingModules)
-    expect(dynamicPricingModule).toBeDefined()
+    const [alicesWallet, bobsWallet, carolsWallet] = await Promise.all([
+        ethers.Wallet.createRandom(),
+        ethers.Wallet.createRandom(),
+        ethers.Wallet.createRandom(),
+    ])
 
-    const userNameToWallet: Record<string, string> = {
-        alice: alicesWallet.address,
-        bob: bobsWallet.address,
-        carol: carolsWallet.address,
-    }
-    requirements.users = requirements.users.map((user) => userNameToWallet[user])
+    const [alicesContext, bobsContext] = await Promise.all([
+        makeUserContextFromWallet(alicesWallet),
+        makeUserContextFromWallet(bobsWallet),
+    ])
 
-    const membershipInfo: MembershipStruct = {
-        settings: {
-            name: 'Everyone',
-            symbol: 'MEMBER',
-            price: 0,
-            maxSupply: 1000,
-            duration: 0,
-            currency: ETH_ADDRESS,
-            feeRecipient: bob.userId,
-            freeAllocation: 0,
-            pricingModule: dynamicPricingModule!.module,
-        },
-        permissions: [Permission.Read, Permission.Write],
-        requirements,
-    }
+    const aliceProvider = new LocalhostWeb3Provider(baseConfig.rpcUrl, alicesWallet)
+    const bobProvider = new LocalhostWeb3Provider(baseConfig.rpcUrl, bobsWallet)
+    const carolProvider = new LocalhostWeb3Provider(baseConfig.rpcUrl, carolsWallet)
 
-    // This helper method validates that the owner can join the space and default channel.
-    const {
-        spaceId,
-        defaultChannelId: channelId,
-        userStreamView: bobUserStreamView,
-    } = await createSpaceAndDefaultChannel(
-        bob,
-        bobSpaceDapp,
-        bobProvider.wallet,
-        'bobs',
-        membershipInfo,
-    )
+    await Promise.all([
+        aliceProvider.fundWallet(),
+        bobProvider.fundWallet(),
+        carolProvider.fundWallet(),
+    ])
+
+    const bobSpaceDapp = createSpaceDapp(bobProvider, baseConfig.chainConfig)
+    const aliceSpaceDapp = createSpaceDapp(aliceProvider, baseConfig.chainConfig)
+    const carolSpaceDapp = createSpaceDapp(carolProvider, baseConfig.chainConfig)
+
+    // create a user
+    const [alice, bob] = await Promise.all([
+        makeTestClient({
+            context: alicesContext,
+        }),
+        makeTestClient({ context: bobsContext }),
+    ])
 
     return {
         alice,
         bob,
-        aliceSpaceDapp,
-        bobSpaceDapp,
-        carolSpaceDapp,
-        aliceProvider,
-        bobProvider,
-        carolProvider,
         alicesWallet,
         bobsWallet,
+        alicesContext,
+        bobsContext,
+        aliceProvider,
+        bobProvider,
+        aliceSpaceDapp,
+        bobSpaceDapp,
+        // Return a third wallet / provider for wallet linking
         carolsWallet,
-        spaceId,
-        channelId,
-        bobUserStreamView,
+        carolProvider,
+        carolSpaceDapp,
     }
 }
 
@@ -126,20 +104,67 @@ describe('spaceWithEntitlements', () => {
     // Banning with entitlements — users need permission to ban other users.
     test('ownerCanBanOtherUsers', async () => {
         log('start ownerCanBanOtherUsers')
+        // set up the web3 provider and spacedap
+        const baseConfig = makeBaseChainConfig()
+
+        const bobsWallet = ethers.Wallet.createRandom()
+        const bobsContext = await makeUserContextFromWallet(bobsWallet)
+        const bobProvider = new LocalhostWeb3Provider(baseConfig.rpcUrl, bobsWallet)
+        await bobProvider.fundWallet()
+        const bobSpaceDapp = createSpaceDapp(bobProvider, baseConfig.chainConfig)
+
+        // create a user stream
+        const bob = await makeTestClient({ context: bobsContext })
+
+        const pricingModules = await bobSpaceDapp.listPricingModules()
+        const dynamicPricingModule = getDynamicPricingModule(pricingModules)
+        expect(dynamicPricingModule).toBeDefined()
+
+        // create a space stream,
+        log('Bob created user, about to create space')
+        // first on the blockchain
+        const membershipInfo: MembershipStruct = {
+            settings: {
+                name: 'Everyone',
+                symbol: 'MEMBER',
+                price: 0,
+                maxSupply: 1000,
+                duration: 0,
+                currency: ETH_ADDRESS,
+                feeRecipient: bob.userId,
+                freeAllocation: 0,
+                pricingModule: dynamicPricingModule!.module,
+            },
+            permissions: [Permission.Read, Permission.Write],
+            requirements: {
+                everyone: true,
+                users: [],
+                ruleData: NoopRuleData,
+            },
+        }
         const {
-            alice,
-            bob,
-            aliceSpaceDapp,
-            aliceProvider,
-            alicesWallet,
             spaceId,
-            channelId,
-            bobUserStreamView,
-        } = await createTownWithRequirements({
-            everyone: true,
-            users: [],
-            ruleData: NoopRuleData,
+            defaultChannelId: channelId,
+            userStreamView: bobUserStreamView,
+        } = await createSpaceAndDefaultChannel(
+            bob,
+            bobSpaceDapp,
+            bobProvider.wallet,
+            'bobs',
+            membershipInfo,
+        )
+
+        // join alice
+        const alicesWallet = ethers.Wallet.createRandom()
+        const alicesContext = await makeUserContextFromWallet(alicesWallet)
+        const alice = await makeTestClient({
+            context: alicesContext,
         })
+
+        const aliceProvider = new LocalhostWeb3Provider(baseConfig.rpcUrl, alicesWallet)
+        await aliceProvider.fundWallet()
+
+        const aliceSpaceDapp = createSpaceDapp(aliceProvider, baseConfig.chainConfig)
 
         // await expect(alice.joinStream(spaceId)).rejects.toThrow() // todo
 
@@ -189,12 +214,56 @@ describe('spaceWithEntitlements', () => {
     })
 
     test('userEntitlementPass', async () => {
-        const { alice, bob, aliceSpaceDapp, aliceProvider, alicesWallet, spaceId, channelId } =
-            await createTownWithRequirements({
+        const createAliceAndBobStart = Date.now()
+        const {
+            alice,
+            bob,
+            alicesWallet,
+            aliceProvider,
+            bobProvider,
+            aliceSpaceDapp,
+            bobSpaceDapp,
+        } = await setupWalletsAndContexts()
+
+        log('createAliceAndBobStart took', Date.now() - createAliceAndBobStart)
+
+        const listPricingModulesStart = Date.now()
+        const pricingModules = await bobSpaceDapp.listPricingModules()
+        const dynamicPricingModule = getDynamicPricingModule(pricingModules)
+        expect(dynamicPricingModule).toBeDefined()
+
+        log('listPricingModules took', Date.now() - listPricingModulesStart)
+
+        // create a space stream,
+        log('Bob created user, about to create space')
+        // first on the blockchain
+        const membershipInfo: MembershipStruct = {
+            settings: {
+                name: 'Everyone',
+                symbol: 'MEMBER',
+                price: 0,
+                maxSupply: 1000,
+                duration: 0,
+                currency: ETH_ADDRESS,
+                feeRecipient: bob.userId,
+                freeAllocation: 0,
+                pricingModule: dynamicPricingModule!.module,
+            },
+            permissions: [Permission.Read, Permission.Write],
+            requirements: {
                 everyone: false,
-                users: ['alice'],
+                users: [alicesWallet.address],
                 ruleData: NoopRuleData,
-            })
+            },
+        }
+
+        const { spaceId, defaultChannelId: channelId } = await createSpaceAndDefaultChannel(
+            bob,
+            bobSpaceDapp,
+            bobProvider.wallet,
+            'bobs',
+            membershipInfo,
+        )
 
         await expectUserCanJoin(
             spaceId,
@@ -214,28 +283,64 @@ describe('spaceWithEntitlements', () => {
     })
 
     test('userEntitlementFail', async () => {
-        const { alice, bob, aliceSpaceDapp, alicesWallet, aliceProvider, spaceId } =
-            await createTownWithRequirements({
-                everyone: false,
-                users: ['carol'], // not alice!
-                ruleData: NoopRuleData,
-            })
+        const createAliceAndBobStart = Date.now()
+        const {
+            alice,
+            bob,
+            aliceProvider,
+            bobProvider,
+            aliceSpaceDapp,
+            bobSpaceDapp,
+            carolsWallet,
+        } = await setupWalletsAndContexts()
 
-        // Alice cannot join the space in the contract.
-        const { issued } = await aliceSpaceDapp.joinSpace(
-            spaceId,
-            alicesWallet.address,
-            aliceProvider.wallet,
+        log('createAliceAndBobStart took', Date.now() - createAliceAndBobStart)
+
+        const listPricingModulesStart = Date.now()
+        const pricingModules = await bobSpaceDapp.listPricingModules()
+        const dynamicPricingModule = getDynamicPricingModule(pricingModules)
+        expect(dynamicPricingModule).toBeDefined()
+
+        log('listPricingModules took', Date.now() - listPricingModulesStart)
+
+        // create a space stream,
+        log('Bob created user, about to create space')
+        // first on the blockchain
+        const membershipInfo: MembershipStruct = {
+            settings: {
+                name: 'Everyone',
+                symbol: 'MEMBER',
+                price: 0,
+                maxSupply: 1000,
+                duration: 0,
+                currency: ETH_ADDRESS,
+                feeRecipient: bob.userId,
+                freeAllocation: 0,
+                pricingModule: dynamicPricingModule!.module,
+            },
+            permissions: [Permission.Read, Permission.Write],
+            requirements: {
+                everyone: false,
+                users: [carolsWallet.address], // Alice not whitelisted
+                ruleData: NoopRuleData,
+            },
+        }
+
+        const { spaceId } = await createSpaceAndDefaultChannel(
+            bob,
+            bobSpaceDapp,
+            bobProvider.wallet,
+            'bobs',
+            membershipInfo,
         )
-        expect(issued).toBe(false)
 
         // Have alice create a user stream attached to her own space.
-        // Then she will attempt to join the space from the client, which should also fail.
+        // Then she will attempt to join the space from the client, which should fail.
         await createUserStreamAndSyncClient(
             alice,
             aliceSpaceDapp,
             'alice',
-            await everyoneMembershipStruct(aliceSpaceDapp, alice),
+            membershipInfo,
             aliceProvider.wallet,
         )
 
@@ -249,36 +354,73 @@ describe('spaceWithEntitlements', () => {
         log('Done', Date.now() - doneStart)
     })
 
-    // This test is commented out as the membership joinSpace does not check linked wallets
-    // against the user entitlement.
-    test.skip('userEntitlementPass - join as root, linked wallet whitelisted', async () => {
+    test('userEntitlementPass - join as root, linked wallet whitelisted', async () => {
+        const createAliceAndBobStart = Date.now()
         const {
             alice,
             bob,
-            aliceSpaceDapp,
-            alicesWallet,
             aliceProvider,
+            bobProvider,
+            aliceSpaceDapp,
+            bobSpaceDapp,
+            carolsWallet,
             carolProvider,
-            spaceId,
-            channelId,
-        } = await createTownWithRequirements({
-            everyone: false,
-            users: ['carol'], // not alice!
-            ruleData: NoopRuleData,
-        })
+        } = await setupWalletsAndContexts()
+
+        log('createAliceAndBobStart took', Date.now() - createAliceAndBobStart)
+
+        const listPricingModulesStart = Date.now()
+        const pricingModules = await bobSpaceDapp.listPricingModules()
+        const dynamicPricingModule = getDynamicPricingModule(pricingModules)
+        expect(dynamicPricingModule).toBeDefined()
+
+        log('listPricingModules took', Date.now() - listPricingModulesStart)
+
+        // create a space stream,
+        log('Bob created user, about to create space')
+        // first on the blockchain
+        const membershipInfo: MembershipStruct = {
+            settings: {
+                name: 'Everyone',
+                symbol: 'MEMBER',
+                price: 0,
+                maxSupply: 1000,
+                duration: 0,
+                currency: ETH_ADDRESS,
+                feeRecipient: bob.userId,
+                freeAllocation: 0,
+                pricingModule: dynamicPricingModule!.module,
+            },
+            permissions: [Permission.Read, Permission.Write],
+            requirements: {
+                everyone: false,
+                users: [carolsWallet.address], // Alice not whitelisted
+                ruleData: NoopRuleData,
+            },
+        }
+
+        const { spaceId } = await createSpaceAndDefaultChannel(
+            bob,
+            bobSpaceDapp,
+            bobProvider.wallet,
+            'bobs',
+            membershipInfo,
+        )
+
         await linkWallets(aliceSpaceDapp, aliceProvider.wallet, carolProvider.wallet)
 
-        // Alice should be able to join the space on the stream node.
-        log('Alice should be able to join space', spaceId)
-        await expectUserCanJoin(
-            spaceId,
-            channelId,
-            'alice',
+        // Have alice create a user stream attached to her own space.
+        // Then she will attempt to join the space from the client, which should fail.
+        await createUserStreamAndSyncClient(
             alice,
             aliceSpaceDapp,
-            alicesWallet.address,
+            'alice',
+            membershipInfo,
             aliceProvider.wallet,
         )
+
+        // Alice cannot join the space on the stream node.
+        await expect(alice.joinStream(spaceId)).rejects.toThrow(/PERMISSION_DENIED/)
 
         // Kill the clients
         const doneStart = Date.now()
@@ -287,38 +429,74 @@ describe('spaceWithEntitlements', () => {
         log('Done', Date.now() - doneStart)
     })
 
-    // This test is commented out as the membership joinSpace does not check linked wallets
-    // against the user entitlement.
-    test.skip('userEntitlementPass - join as linked wallet, root wallet whitelisted', async () => {
+    test('userEntitlementPass - join as linked wallet, root wallet whitelisted', async () => {
+        const createAliceAndBobStart = Date.now()
         const {
             alice,
             bob,
-            aliceSpaceDapp,
-            carolSpaceDapp,
             aliceProvider,
-            alicesWallet,
+            bobProvider,
+            aliceSpaceDapp,
+            bobSpaceDapp,
+            carolsWallet,
             carolProvider,
-            spaceId,
-            channelId,
-        } = await createTownWithRequirements({
-            everyone: false,
-            users: ['carol'], // not alice!
-            ruleData: NoopRuleData,
-        })
+            carolSpaceDapp,
+        } = await setupWalletsAndContexts()
+
+        log('createAliceAndBobStart took', Date.now() - createAliceAndBobStart)
+
+        const listPricingModulesStart = Date.now()
+        const pricingModules = await bobSpaceDapp.listPricingModules()
+        const dynamicPricingModule = getDynamicPricingModule(pricingModules)
+        expect(dynamicPricingModule).toBeDefined()
+
+        log('listPricingModules took', Date.now() - listPricingModulesStart)
+
+        // create a space stream,
+        log('Bob created user, about to create space')
+        // first on the blockchain
+        const membershipInfo: MembershipStruct = {
+            settings: {
+                name: 'Everyone',
+                symbol: 'MEMBER',
+                price: 0,
+                maxSupply: 1000,
+                duration: 0,
+                currency: ETH_ADDRESS,
+                feeRecipient: bob.userId,
+                freeAllocation: 0,
+                pricingModule: dynamicPricingModule!.module,
+            },
+            permissions: [Permission.Read, Permission.Write],
+            requirements: {
+                everyone: false,
+                users: [carolsWallet.address], // Alice not whitelisted
+                ruleData: NoopRuleData,
+            },
+        }
+
+        const { spaceId } = await createSpaceAndDefaultChannel(
+            bob,
+            bobSpaceDapp,
+            bobProvider.wallet,
+            'bobs',
+            membershipInfo,
+        )
 
         await linkWallets(carolSpaceDapp, carolProvider.wallet, aliceProvider.wallet)
 
-        // Alice should be able to join the space on the stream node.
-        log('Alice should be able to join space', spaceId)
-        await expectUserCanJoin(
-            spaceId,
-            channelId,
-            'alice',
+        // Have alice create a user stream attached to her own space.
+        // Then she will attempt to join the space from the client, which should fail.
+        await createUserStreamAndSyncClient(
             alice,
             aliceSpaceDapp,
-            alicesWallet.address,
+            'alice',
+            membershipInfo,
             aliceProvider.wallet,
         )
+
+        // Alice cannot join the space on the stream node.
+        await expect(alice.joinStream(spaceId)).rejects.toThrow(/PERMISSION_DENIED/)
 
         // Kill the clients
         const doneStart = Date.now()
@@ -328,21 +506,70 @@ describe('spaceWithEntitlements', () => {
     })
 
     test('oneNftGateJoinPass - join as root, asset in linked wallet', async () => {
+        const createAliceAndBobStart = Date.now()
+
         const {
             alice,
             bob,
-            aliceSpaceDapp,
-            aliceProvider,
             alicesWallet,
-            carolsWallet,
+            aliceProvider,
+            bobProvider,
+            aliceSpaceDapp,
+            bobSpaceDapp,
             carolProvider,
-            spaceId,
-            channelId,
-        } = await createTownWithRequirements({
-            everyone: false,
-            users: [],
-            ruleData: getNftRuleData(testNft1Address as `0x${string}`),
-        })
+            carolsWallet,
+        } = await setupWalletsAndContexts()
+
+        log('createAliceAndBobStart took', Date.now() - createAliceAndBobStart)
+
+        const listPricingModulesStart = Date.now()
+        const pricingModules = await bobSpaceDapp.listPricingModules()
+        const dynamicPricingModule = getDynamicPricingModule(pricingModules)
+        expect(dynamicPricingModule).toBeDefined()
+
+        log('listPricingModules took', Date.now() - listPricingModulesStart)
+
+        // create a space stream,
+        log('Bob created user, about to create space')
+        // first on the blockchain
+        const membershipInfo: MembershipStruct = {
+            settings: {
+                name: 'Everyone',
+                symbol: 'MEMBER',
+                price: 0,
+                maxSupply: 1000,
+                duration: 0,
+                currency: ETH_ADDRESS,
+                feeRecipient: bob.userId,
+                freeAllocation: 0,
+                pricingModule: dynamicPricingModule!.module,
+            },
+            permissions: [Permission.Read, Permission.Write],
+            requirements: {
+                everyone: false,
+                users: [],
+                ruleData: {
+                    operations: [{ opType: OperationType.CHECK, index: 0 }],
+                    checkOperations: [
+                        {
+                            opType: CheckOperationType.ERC721,
+                            chainId: 31337n,
+                            contractAddress: testNft1Address,
+                            threshold: 1n,
+                        },
+                    ],
+                    logicalOperations: [],
+                },
+            },
+        }
+
+        const { spaceId, defaultChannelId: channelId } = await createSpaceAndDefaultChannel(
+            bob,
+            bobSpaceDapp,
+            bobProvider.wallet,
+            'bobs',
+            membershipInfo,
+        )
 
         await linkWallets(aliceSpaceDapp, aliceProvider.wallet, carolProvider.wallet)
 
@@ -368,22 +595,71 @@ describe('spaceWithEntitlements', () => {
     })
 
     test('oneNftGateJoinPass - join as linked wallet, asset in root wallet', async () => {
+        const createAliceAndBobStart = Date.now()
+
         const {
             alice,
             bob,
-            aliceSpaceDapp,
-            aliceProvider,
             alicesWallet,
-            carolsWallet,
+            aliceProvider,
+            bobProvider,
+            aliceSpaceDapp,
+            bobSpaceDapp,
             carolProvider,
+            carolsWallet,
             carolSpaceDapp,
-            spaceId,
-            channelId,
-        } = await createTownWithRequirements({
-            everyone: false,
-            users: [],
-            ruleData: getNftRuleData(testNft1Address as `0x${string}`),
-        })
+        } = await setupWalletsAndContexts()
+
+        log('createAliceAndBobStart took', Date.now() - createAliceAndBobStart)
+
+        const listPricingModulesStart = Date.now()
+        const pricingModules = await bobSpaceDapp.listPricingModules()
+        const dynamicPricingModule = getDynamicPricingModule(pricingModules)
+        expect(dynamicPricingModule).toBeDefined()
+
+        log('listPricingModules took', Date.now() - listPricingModulesStart)
+
+        // create a space stream,
+        log('Bob created user, about to create space')
+        // first on the blockchain
+        const membershipInfo: MembershipStruct = {
+            settings: {
+                name: 'Everyone',
+                symbol: 'MEMBER',
+                price: 0,
+                maxSupply: 1000,
+                duration: 0,
+                currency: ETH_ADDRESS,
+                feeRecipient: bob.userId,
+                freeAllocation: 0,
+                pricingModule: dynamicPricingModule!.module,
+            },
+            permissions: [Permission.Read, Permission.Write],
+            requirements: {
+                everyone: false,
+                users: [],
+                ruleData: {
+                    operations: [{ opType: OperationType.CHECK, index: 0 }],
+                    checkOperations: [
+                        {
+                            opType: CheckOperationType.ERC721,
+                            chainId: 31337n,
+                            contractAddress: testNft1Address,
+                            threshold: 1n,
+                        },
+                    ],
+                    logicalOperations: [],
+                },
+            },
+        }
+
+        const { spaceId, defaultChannelId: channelId } = await createSpaceAndDefaultChannel(
+            bob,
+            bobSpaceDapp,
+            bobProvider.wallet,
+            'bobs',
+            membershipInfo,
+        )
 
         log("Joining alice's wallet as a linked wallet to carols root wallet")
         await linkWallets(carolSpaceDapp, carolProvider.wallet, aliceProvider.wallet)
@@ -411,12 +687,68 @@ describe('spaceWithEntitlements', () => {
     })
 
     test('oneNftGateJoinPass', async () => {
-        const { alice, bob, aliceSpaceDapp, aliceProvider, alicesWallet, spaceId, channelId } =
-            await createTownWithRequirements({
+        const createAliceAndBobStart = Date.now()
+
+        const {
+            alice,
+            bob,
+            alicesWallet,
+            aliceProvider,
+            bobProvider,
+            aliceSpaceDapp,
+            bobSpaceDapp,
+        } = await setupWalletsAndContexts()
+
+        log('createAliceAndBobStart took', Date.now() - createAliceAndBobStart)
+
+        const listPricingModulesStart = Date.now()
+        const pricingModules = await bobSpaceDapp.listPricingModules()
+        const dynamicPricingModule = getDynamicPricingModule(pricingModules)
+        expect(dynamicPricingModule).toBeDefined()
+
+        log('listPricingModules took', Date.now() - listPricingModulesStart)
+
+        // create a space stream,
+        log('Bob created user, about to create space')
+        // first on the blockchain
+        const membershipInfo: MembershipStruct = {
+            settings: {
+                name: 'Everyone',
+                symbol: 'MEMBER',
+                price: 0,
+                maxSupply: 1000,
+                duration: 0,
+                currency: ETH_ADDRESS,
+                feeRecipient: bob.userId,
+                freeAllocation: 0,
+                pricingModule: dynamicPricingModule!.module,
+            },
+            permissions: [Permission.Read, Permission.Write],
+            requirements: {
                 everyone: false,
                 users: [],
-                ruleData: getNftRuleData(testNft1Address as `0x${string}`),
-            })
+                ruleData: {
+                    operations: [{ opType: OperationType.CHECK, index: 0 }],
+                    checkOperations: [
+                        {
+                            opType: CheckOperationType.ERC721,
+                            chainId: 31337n,
+                            contractAddress: testNft1Address,
+                            threshold: 1n,
+                        },
+                    ],
+                    logicalOperations: [],
+                },
+            },
+        }
+
+        const { spaceId, defaultChannelId: channelId } = await createSpaceAndDefaultChannel(
+            bob,
+            bobSpaceDapp,
+            bobProvider.wallet,
+            'bobs',
+            membershipInfo,
+        )
 
         // join alice
         log('Minting an NFT for alice')
@@ -440,20 +772,86 @@ describe('spaceWithEntitlements', () => {
     })
 
     test('oneNftGateJoinFail', async () => {
-        const { alice, bob, aliceSpaceDapp, aliceProvider, alicesWallet, spaceId } =
-            await createTownWithRequirements({
+        const createAliceAndBobStart = Date.now()
+
+        const {
+            alice,
+            bob,
+            alicesWallet,
+            aliceProvider,
+            bobProvider,
+            aliceSpaceDapp,
+            bobSpaceDapp,
+        } = await setupWalletsAndContexts()
+
+        log('createAliceAndBobStart took', Date.now() - createAliceAndBobStart)
+        log('aliceWallet', alicesWallet.address)
+
+        const listPricingModulesStart = Date.now()
+        const pricingModules = await bobSpaceDapp.listPricingModules()
+        const dynamicPricingModule = getDynamicPricingModule(pricingModules)
+        expect(dynamicPricingModule).toBeDefined()
+
+        log('listPricingModules took', Date.now() - listPricingModulesStart)
+
+        // create a space stream,
+        log('Bob created user, about to create space')
+        // first on the blockchain
+        const membershipInfo: MembershipStruct = {
+            settings: {
+                name: 'Everyone',
+                symbol: 'MEMBER',
+                price: 0,
+                maxSupply: 1000,
+                duration: 0,
+                currency: ETH_ADDRESS,
+                feeRecipient: bob.userId,
+                freeAllocation: 0,
+                pricingModule: dynamicPricingModule!.module,
+            },
+            permissions: [Permission.Read, Permission.Write],
+            requirements: {
                 everyone: false,
                 users: [],
-                ruleData: getNftRuleData(testNft1Address as `0x${string}`),
-            })
+                ruleData: {
+                    operations: [{ opType: OperationType.CHECK, index: 0 }],
+                    checkOperations: [
+                        {
+                            opType: CheckOperationType.ERC721,
+                            chainId: 31337n,
+                            contractAddress: testNft1Address,
+                            threshold: 1n,
+                        },
+                    ],
+                    logicalOperations: [],
+                },
+            },
+        }
+        log('transaction start bob creating space')
+        const { spaceId } = await createSpaceAndDefaultChannel(
+            bob,
+            bobSpaceDapp,
+            bobProvider.wallet,
+            'bobs',
+            membershipInfo,
+        )
 
-        log('Alice about to attempt to join space', { alicesUserId: alice.userId })
+        log('Alice about to join space', { alicesUserId: alice.userId })
+
+        // first join the space on chain
+        const aliceJoinStart = Date.now()
+        log('transaction start Alice joining space')
+
         const { issued } = await aliceSpaceDapp.joinSpace(
             spaceId,
             alicesWallet.address,
             aliceProvider.wallet,
         )
         expect(issued).toBe(false)
+        log(
+            'Alice correctly failed to join space and has a MembershipNFT',
+            Date.now() - aliceJoinStart,
+        )
 
         // Have alice create a user stream attached to her own space.
         // Then she will attempt to join the space from the client, which should fail.
@@ -461,7 +859,7 @@ describe('spaceWithEntitlements', () => {
             alice,
             aliceSpaceDapp,
             'alice',
-            await everyoneMembershipStruct(aliceSpaceDapp, alice),
+            membershipInfo,
             aliceProvider.wallet,
         )
 
@@ -474,15 +872,84 @@ describe('spaceWithEntitlements', () => {
     })
 
     test('twoNftGateJoinPass', async () => {
-        const { alice, bob, aliceSpaceDapp, aliceProvider, alicesWallet, spaceId, channelId } =
-            await createTownWithRequirements({
-                everyone: false,
-                users: [],
-                ruleData: twoNftRuleData(testNft1Address, testNft2Address),
-            })
+        const createAliceAndBobStart = Date.now()
+
+        const {
+            alice,
+            bob,
+            alicesWallet,
+            aliceProvider,
+            bobProvider,
+            aliceSpaceDapp,
+            bobSpaceDapp,
+        } = await setupWalletsAndContexts()
 
         const aliceMintTx1 = publicMint('TestNFT1', alicesWallet.address as `0x${string}`)
         const aliceMintTx2 = publicMint('TestNFT2', alicesWallet.address as `0x${string}`)
+
+        log('createAliceAndBobStart took', Date.now() - createAliceAndBobStart)
+
+        const listPricingModulesStart = Date.now()
+        const pricingModules = await bobSpaceDapp.listPricingModules()
+        const dynamicPricingModule = getDynamicPricingModule(pricingModules)
+        expect(dynamicPricingModule).toBeDefined()
+
+        log('listPricingModules took', Date.now() - listPricingModulesStart)
+
+        const leftOperation: Operation = {
+            opType: OperationType.CHECK,
+            checkType: CheckOperationType.ERC721,
+            chainId: 31337n,
+            contractAddress: testNft1Address as `0x${string}`,
+            threshold: 1n,
+        }
+
+        const rightOperation: Operation = {
+            opType: OperationType.CHECK,
+            checkType: CheckOperationType.ERC721,
+            chainId: 31337n,
+            contractAddress: testNft2Address as `0x${string}`,
+            threshold: 1n,
+        }
+        const root: Operation = {
+            opType: OperationType.LOGICAL,
+            logicalType: LogicalOperationType.AND,
+            leftOperation,
+            rightOperation,
+        }
+
+        const ruleData = treeToRuleData(root)
+
+        // create a space stream,
+        log('Bob created user, about to create space')
+        // first on the blockchain
+        const membershipInfo: MembershipStruct = {
+            settings: {
+                name: 'Everyone',
+                symbol: 'MEMBER',
+                price: 0,
+                maxSupply: 1000,
+                duration: 0,
+                currency: ETH_ADDRESS,
+                feeRecipient: bob.userId,
+                freeAllocation: 0,
+                pricingModule: dynamicPricingModule!.module,
+            },
+            permissions: [Permission.Read, Permission.Write],
+            requirements: {
+                everyone: false,
+                users: [],
+                ruleData,
+            },
+        }
+        log('transaction start bob creating space')
+        const { spaceId, defaultChannelId: channelId } = await createSpaceAndDefaultChannel(
+            bob,
+            bobSpaceDapp,
+            bobProvider.wallet,
+            'bobs',
+            membershipInfo,
+        )
 
         log('Minting nfts for alice')
         await Promise.all([aliceMintTx1, aliceMintTx2])
@@ -506,28 +973,88 @@ describe('spaceWithEntitlements', () => {
     })
 
     test('twoNftGateJoinPass - acrossLinkedWallets', async () => {
+        const createAliceAndBobStart = Date.now()
+
         const {
             alice,
             bob,
-            aliceSpaceDapp,
-            aliceProvider,
-            carolProvider,
             alicesWallet,
+            aliceProvider,
+            bobProvider,
+            aliceSpaceDapp,
+            bobSpaceDapp,
+            carolProvider,
             carolsWallet,
-            spaceId,
-            channelId,
-        } = await createTownWithRequirements({
-            everyone: false,
-            users: [],
-            ruleData: twoNftRuleData(testNft1Address, testNft2Address),
-        })
+        } = await setupWalletsAndContexts()
 
         const aliceMintTx1 = publicMint('TestNFT1', alicesWallet.address as `0x${string}`)
         const carolMintTx2 = publicMint('TestNFT2', carolsWallet.address as `0x${string}`)
 
+        log('createAliceAndBobStart took', Date.now() - createAliceAndBobStart)
+
+        const listPricingModulesStart = Date.now()
+        const pricingModules = await bobSpaceDapp.listPricingModules()
+        const dynamicPricingModule = getDynamicPricingModule(pricingModules)
+        expect(dynamicPricingModule).toBeDefined()
+
+        log('listPricingModules took', Date.now() - listPricingModulesStart)
+
+        const leftOperation: Operation = {
+            opType: OperationType.CHECK,
+            checkType: CheckOperationType.ERC721,
+            chainId: 31337n,
+            contractAddress: testNft1Address as `0x${string}`,
+            threshold: 1n,
+        }
+
+        const rightOperation: Operation = {
+            opType: OperationType.CHECK,
+            checkType: CheckOperationType.ERC721,
+            chainId: 31337n,
+            contractAddress: testNft2Address as `0x${string}`,
+            threshold: 1n,
+        }
+        const root: Operation = {
+            opType: OperationType.LOGICAL,
+            logicalType: LogicalOperationType.AND,
+            leftOperation,
+            rightOperation,
+        }
+
+        const ruleData = treeToRuleData(root)
+
+        // create a space stream,
+        log('Bob created user, about to create space')
+        // first on the blockchain
+        const membershipInfo: MembershipStruct = {
+            settings: {
+                name: 'Everyone',
+                symbol: 'MEMBER',
+                price: 0,
+                maxSupply: 1000,
+                duration: 0,
+                currency: ETH_ADDRESS,
+                feeRecipient: bob.userId,
+                freeAllocation: 0,
+                pricingModule: dynamicPricingModule!.module,
+            },
+            permissions: [Permission.Read, Permission.Write],
+            requirements: {
+                everyone: false,
+                users: [],
+                ruleData,
+            },
+        }
+        const { spaceId, defaultChannelId: channelId } = await createSpaceAndDefaultChannel(
+            bob,
+            bobSpaceDapp,
+            bobProvider.wallet,
+            'bobs',
+            membershipInfo,
+        )
+
         log('Minting nfts for alice and carol')
         await Promise.all([aliceMintTx1, carolMintTx2])
-
         log("linking carols wallet to alice's wallet")
         await linkWallets(aliceSpaceDapp, aliceProvider.wallet, carolProvider.wallet)
 
@@ -549,13 +1076,89 @@ describe('spaceWithEntitlements', () => {
         log('Done', Date.now() - doneStart)
     })
 
-    test('twoNftGateJoinFail', async () => {
-        const { alice, bob, aliceSpaceDapp, aliceProvider, alicesWallet, spaceId } =
-            await createTownWithRequirements({
+    async function twoNftMembershipInfo(
+        spaceDapp: ISpaceDapp,
+        client: Client,
+        nft1Address: string,
+        nft2Address: string,
+        logOpType: LogicalOperationType.AND | LogicalOperationType.OR = LogicalOperationType.AND,
+    ): Promise<MembershipStruct> {
+        const pricingModules = await spaceDapp.listPricingModules()
+        const dynamicPricingModule = getDynamicPricingModule(pricingModules)
+        expect(dynamicPricingModule).toBeDefined()
+
+        const leftOperation: Operation = {
+            opType: OperationType.CHECK,
+            checkType: CheckOperationType.ERC721,
+            chainId: 31337n,
+            contractAddress: nft1Address as `0x${string}`,
+            threshold: 1n,
+        }
+
+        const rightOperation: Operation = {
+            opType: OperationType.CHECK,
+            checkType: CheckOperationType.ERC721,
+            chainId: 31337n,
+            contractAddress: nft2Address as `0x${string}`,
+            threshold: 1n,
+        }
+        const root: Operation = {
+            opType: OperationType.LOGICAL,
+            logicalType: logOpType,
+            leftOperation,
+            rightOperation,
+        }
+
+        const ruleData = treeToRuleData(root)
+
+        return {
+            settings: {
+                name: 'Everyone',
+                symbol: 'MEMBER',
+                price: 0,
+                maxSupply: 1000,
+                duration: 0,
+                currency: ETH_ADDRESS,
+                feeRecipient: client.userId,
+                freeAllocation: 0,
+                pricingModule: dynamicPricingModule!.module,
+            },
+            permissions: [Permission.Read, Permission.Write],
+            requirements: {
                 everyone: false,
                 users: [],
-                ruleData: twoNftRuleData(testNft1Address, testNft2Address),
-            })
+                ruleData,
+            },
+        }
+    }
+
+    test('twoNftGateJoinFail', async () => {
+        const createAliceAndBobStart = Date.now()
+        const {
+            alice,
+            bob,
+            alicesWallet,
+            aliceProvider,
+            bobProvider,
+            aliceSpaceDapp,
+            bobSpaceDapp,
+        } = await setupWalletsAndContexts()
+        log('createAliceAndBobStart took', Date.now() - createAliceAndBobStart)
+
+        const membershipInfo = await twoNftMembershipInfo(
+            bobSpaceDapp,
+            bob,
+            testNft1Address,
+            testNft2Address,
+        )
+
+        const { spaceId } = await createSpaceAndDefaultChannel(
+            bob,
+            bobSpaceDapp,
+            bobProvider.wallet,
+            'bob',
+            membershipInfo,
+        )
 
         // join alice
         log('Minting an NFT for alice')
@@ -578,11 +1181,11 @@ describe('spaceWithEntitlements', () => {
             alice,
             aliceSpaceDapp,
             'alice',
-            await everyoneMembershipStruct(aliceSpaceDapp, alice),
+            membershipInfo,
             aliceProvider.wallet,
         )
         // Alice cannot join the space on the stream node.
-        await expect(alice.joinStream(spaceId)).rejects.toThrow(/7:PERMISSION_DENIED/)
+        await expect(alice.joinStream(spaceId)).rejects.toThrow('PERMISSION_DENIED')
 
         // kill the clients
         await bob.stopSync()
@@ -590,12 +1193,34 @@ describe('spaceWithEntitlements', () => {
     })
 
     test('OrOfTwoNftGateJoinPass', async () => {
-        const { alice, bob, aliceSpaceDapp, aliceProvider, alicesWallet, spaceId, channelId } =
-            await createTownWithRequirements({
-                everyone: false,
-                users: [],
-                ruleData: twoNftRuleData(testNft1Address, testNft2Address, LogicalOperationType.OR),
-            })
+        const createAliceAndBobStart = Date.now()
+
+        const {
+            alice,
+            bob,
+            alicesWallet,
+            aliceProvider,
+            bobProvider,
+            aliceSpaceDapp,
+            bobSpaceDapp,
+        } = await setupWalletsAndContexts()
+        log('createAliceAndBobStart took', Date.now() - createAliceAndBobStart)
+
+        const membershipInfo = await twoNftMembershipInfo(
+            bobSpaceDapp,
+            bob,
+            testNft1Address,
+            testNft2Address,
+            LogicalOperationType.OR,
+        )
+
+        const { spaceId, defaultChannelId: channelId } = await createSpaceAndDefaultChannel(
+            bob,
+            bobSpaceDapp,
+            bobProvider.wallet,
+            'bobs',
+            membershipInfo,
+        )
 
         // join alice
         log('Minting an NFT for alice')
@@ -621,6 +1246,30 @@ describe('spaceWithEntitlements', () => {
     })
 
     test('orOfTwoNftOrOneNftGateJoinPass', async () => {
+        const createAliceAndBobStart = Date.now()
+
+        const {
+            alice,
+            bob,
+            alicesWallet,
+            aliceProvider,
+            bobProvider,
+            aliceSpaceDapp,
+            bobSpaceDapp,
+        } = await setupWalletsAndContexts()
+
+        const aliceMintTx1 = publicMint('TestNFT1', alicesWallet.address as `0x${string}`)
+        const aliceMintTx2 = publicMint('TestNFT2', alicesWallet.address as `0x${string}`)
+
+        log('createAliceAndBobStart took', Date.now() - createAliceAndBobStart)
+
+        const listPricingModulesStart = Date.now()
+        const pricingModules = await bobSpaceDapp.listPricingModules()
+        const dynamicPricingModule = getDynamicPricingModule(pricingModules)
+        expect(dynamicPricingModule).toBeDefined()
+
+        log('listPricingModules took', Date.now() - listPricingModulesStart)
+
         const leftOperation: Operation = {
             opType: OperationType.CHECK,
             checkType: CheckOperationType.ERC721,
@@ -657,16 +1306,38 @@ describe('spaceWithEntitlements', () => {
         }
 
         const ruleData = treeToRuleData(root)
-        const { alice, bob, aliceSpaceDapp, aliceProvider, alicesWallet, spaceId, channelId } =
-            await createTownWithRequirements({
+
+        // create a space stream,
+        log('Bob created user, about to create space', ruleData, ruleData)
+        // first on the blockchain
+        const membershipInfo: MembershipStruct = {
+            settings: {
+                name: 'Everyone',
+                symbol: 'MEMBER',
+                price: 0,
+                maxSupply: 1000,
+                duration: 0,
+                currency: ETH_ADDRESS,
+                feeRecipient: bob.userId,
+                freeAllocation: 0,
+                pricingModule: dynamicPricingModule!.module,
+            },
+            permissions: [Permission.Read, Permission.Write],
+            requirements: {
                 everyone: false,
                 users: [],
                 ruleData,
-            })
+            },
+        }
+        const { spaceId, defaultChannelId: channelId } = await createSpaceAndDefaultChannel(
+            bob,
+            bobSpaceDapp,
+            bobProvider.wallet,
+            'bob',
+            membershipInfo,
+        )
 
         log("Mint Alice's NFTs")
-        const aliceMintTx1 = publicMint('TestNFT1', alicesWallet.address as `0x${string}`)
-        const aliceMintTx2 = publicMint('TestNFT2', alicesWallet.address as `0x${string}`)
         await Promise.all([aliceMintTx1, aliceMintTx2])
 
         log('expect alice can join space')

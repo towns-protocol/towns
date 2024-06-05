@@ -64,7 +64,7 @@
         "Casablanca DebugApp",
         "Casablanca",
         "Casablanca-No-Entitlements",
-        "XChainLaunchMulti",
+        "XChain-Single",
       ],
       "group": {
         "kind": "build",
@@ -284,9 +284,19 @@
       }
     },
     {
-      "label": "XChainLaunchMulti",
+      "label": "XChain-Single",
       "type": "shell",
       "command": "sleep 1 && RUN_ENV=single ./core/xchain/launch_multi.sh",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "xchain"
+      }
+    },
+    {
+      "label": "XChain-Multi",
+      "type": "shell",
+      "command": "sleep 1 && RUN_ENV=multi ./core/xchain/launch_multi.sh",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {

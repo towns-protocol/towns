@@ -2,115 +2,123 @@
 pragma solidity ^0.8.23;
 
 // utils
-import {TestUtils} from "contracts/test/utils/TestUtils.sol";
+import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 
 //interfaces
-import {IEntitlementChecker, IEntitlementCheckerBase} from "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
+import {IEntitlementCheckerBase} from "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
 
 //libraries
 
 //contracts
 import {EntitlementChecker} from "contracts/src/base/registry/facets/checker/EntitlementChecker.sol";
 
-// debuggging
-import {console} from "forge-std/console.sol";
+contract EntitlementCheckerTest is BaseSetup, IEntitlementCheckerBase {
+  function setUp() public override {
+    super.setUp();
+    _registerOperators();
+    _registerNodes();
+  }
 
-contract EntitlementCheckerTest is TestUtils, IEntitlementCheckerBase {
-  IEntitlementChecker public checker;
+  // =============================================================
+  //                           Modifiers
+  // =============================================================
+  modifier givenOperatorIsRegistered(address operator) {
+    vm.assume(operator != address(0));
+    vm.assume(!nodeOperator.isOperator(operator));
 
-  mapping(address => string) public nodeKeys;
+    vm.prank(operator);
+    nodeOperator.registerOperator(operator);
+    _;
+  }
 
-  function setUp() external {
-    checker = new EntitlementChecker();
+  modifier givenNodeIsRegistered(address operator, address node) {
+    vm.assume(node != address(0));
+    vm.assume(!entitlementChecker.isValidNode(node));
+
+    vm.prank(operator);
+    vm.expectEmit(address(nodeOperator));
+    emit NodeRegistered(node);
+    entitlementChecker.registerNode(node);
+    _;
+  }
+
+  modifier givenNodeIsNotRegistered(address operator, address node) {
+    vm.prank(operator);
+    vm.expectEmit(address(entitlementChecker));
+    emit NodeUnregistered(node);
+    entitlementChecker.unregisterNode(node);
+    _;
   }
 
   // =============================================================
   //                           Register
   // =============================================================
 
-  function test_registerNode() external {
-    address node = _randomAddress();
-
-    vm.prank(node);
-    vm.expectEmit(true, true, true, true);
-    emit NodeRegistered(node);
-    checker.registerNode(node);
-
-    assertEq(checker.getNodeCount(), 1);
+  function test_registerNode(
+    address operator,
+    address node
+  )
+    external
+    givenOperatorIsRegistered(operator)
+    givenNodeIsRegistered(operator, node)
+  {
+    assertTrue(entitlementChecker.isValidNode(node));
   }
 
-  function test_registerNode_revert_nodeAlreadyRegistered() external {
-    address node = _randomAddress();
-
-    vm.prank(node);
-    checker.registerNode(node);
-
-    vm.prank(node);
+  function test_registerNode_revertWhen_nodeAlreadyRegistered(
+    address operator,
+    address node
+  )
+    external
+    givenOperatorIsRegistered(operator)
+    givenNodeIsRegistered(operator, node)
+  {
+    vm.prank(operator);
     vm.expectRevert(EntitlementChecker_NodeAlreadyRegistered.selector);
-    checker.registerNode(node);
+    entitlementChecker.registerNode(node);
   }
 
   // =============================================================
   //                           Unregister
   // =============================================================
-  function test_unregisterNode() external {
-    address node = _randomAddress();
-
-    vm.prank(node);
-    checker.registerNode(node);
-
-    vm.prank(node);
-    vm.expectEmit(true, true, true, true);
-    emit NodeUnregistered(node);
-    checker.unregisterNode(node);
-
-    assertEq(checker.getNodeCount(), 0);
+  function test_unregisterNode(
+    address operator,
+    address node
+  )
+    external
+    givenOperatorIsRegistered(operator)
+    givenNodeIsRegistered(operator, node)
+    givenNodeIsNotRegistered(operator, node)
+  {
+    assertFalse(entitlementChecker.isValidNode(node));
   }
 
-  function test_unregisterNode_revert_nodeNotRegistered() external {
-    address node = _randomAddress();
-
-    vm.prank(node);
-    vm.expectRevert(EntitlementChecker_NodeNotRegistered.selector);
-    checker.unregisterNode(node);
+  function test_unregisterNode_revert_nodeNotRegistered(
+    address operator,
+    address node
+  ) external givenOperatorIsRegistered(operator) {
+    vm.prank(operator);
+    vm.expectRevert(EntitlementChecker_InvalidNodeOperator.selector);
+    entitlementChecker.unregisterNode(node);
   }
 
   // =============================================================
   //                        Random Nodes
   // =============================================================
   function test_getRandomNodes() external {
-    _registerNodes();
-
-    address[] memory nodes = checker.getRandomNodes(5);
+    address[] memory nodes = entitlementChecker.getRandomNodes(5);
+    uint256 nodeLen = nodes.length;
 
     // validate no nodes are repeating
-    for (uint256 i = 0; i < nodes.length; i++) {
-      for (uint256 j = i + 1; j < nodes.length; j++) {
+    for (uint256 i = 0; i < nodeLen; i++) {
+      for (uint256 j = i + 1; j < nodeLen; j++) {
         assertNotEq(nodes[i], nodes[j]);
       }
     }
-
-    assertEq(nodes.length, 5);
   }
 
   function test_getRandomNodes_revert_insufficientNumberOfNodes() external {
     vm.expectRevert(EntitlementChecker_InsufficientNumberOfNodes.selector);
-    checker.getRandomNodes(26);
-  }
-
-  // =============================================================
-  //                           Internal
-  // =============================================================
-  function _registerNodes() internal {
-    for (uint256 i = 0; i < 10; i++) {
-      address node = _randomAddress();
-      nodeKeys[node] = string(abi.encodePacked("node", vm.toString(i)));
-
-      vm.prank(node);
-      checker.registerNode(node);
-    }
-
-    uint256 len = checker.getNodeCount();
-    assertEq(len, 10);
+    entitlementChecker.getRandomNodes(26);
   }
 }

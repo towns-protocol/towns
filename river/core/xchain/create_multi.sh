@@ -48,8 +48,23 @@ cd "$(dirname "$0")"
 
 export ENTITLEMENT_TEST_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/base/addresses/entitlementGatedExample.json)
 export CUSTOM_ENTITLEMENT_TEST_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/base/addresses/customEntitlementExample.json)
+export BASE_REGISTRY_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/base/addresses/baseRegistry.json)
 
 make
+
+source ../../contracts/.env.localhost
+OPERATOR_ADDRESS=$(cast wallet addr $LOCAL_PRIVATE_KEY)
+
+echo "Registration of operator $OPERATOR_ADDRESS in base registry at address $BASE_REGISTRY_ADDRESS"
+# register operator
+cast send \
+    --rpc-url http://127.0.0.1:8545 \
+    --private-key $LOCAL_PRIVATE_KEY \
+    $BASE_REGISTRY_ADDRESS \
+    "registerOperator(address)" \
+    $OPERATOR_ADDRESS \
+    2 > /dev/null
+
 
 # Number of instances
 N=5
@@ -58,6 +73,7 @@ N=5
 BASE_DIR="./run_files/${RUN_ENV}"
 
 mkdir -p "${BASE_DIR}"
+
 
 # Loop to create N instances in parallel
 for (( i=1; i<=N; i++ ))
@@ -94,11 +110,20 @@ do
     # Run each process with 'generate_key' argument
     "./bin/xchain_node" genkey
 
+      NODE_ADDRESS=$(cat wallet/node_address)
+
+      echo "Registration of node $NODE_ADDRESS in base registry at address $BASE_REGISTRY_ADDRESS"
+      cast send \
+        --rpc-url http://127.0.0.1:8545 \
+        --private-key $LOCAL_PRIVATE_KEY \
+        $BASE_REGISTRY_ADDRESS \
+        "registerNode(address)" \
+        $NODE_ADDRESS \
+        2 > /dev/null
+
     popd
-  ) &
+  )
 done
 
-# Wait for all background processes to finish
-wait
 
 echo "All instances created."

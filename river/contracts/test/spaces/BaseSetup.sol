@@ -41,6 +41,9 @@ contract BaseSetup is TestUtils, SpaceHelper {
   DeployProxyBatchDelegation internal deployProxyBatchDelegation =
     new DeployProxyBatchDelegation();
 
+  address[] internal operators;
+  address[] internal nodes;
+
   address internal deployer;
   address internal founder;
   address internal space;
@@ -50,7 +53,6 @@ contract BaseSetup is TestUtils, SpaceHelper {
   address internal userEntitlement;
   address internal ruleEntitlement;
   address internal spaceOwner;
-  address[] internal nodes;
 
   address internal baseRegistry;
   address internal riverToken;
@@ -68,6 +70,8 @@ contract BaseSetup is TestUtils, SpaceHelper {
   IEntitlementChecker internal entitlementChecker;
   IImplementationRegistry internal implementationRegistry;
   IWalletLink internal walletLink;
+  INodeOperator internal nodeOperator;
+
   MockMessenger internal messenger;
 
   // @notice - This function is called before each test function
@@ -75,9 +79,12 @@ contract BaseSetup is TestUtils, SpaceHelper {
   function setUp() public virtual {
     deployer = getDeployer();
 
+    operators = _createAccounts(10);
+
     // Base Registry
     baseRegistry = deployBaseRegistry.deploy();
     entitlementChecker = IEntitlementChecker(baseRegistry);
+    nodeOperator = INodeOperator(baseRegistry);
 
     // Mainnet
     messenger = MockMessenger(deployBaseRegistry.messenger());
@@ -133,15 +140,23 @@ contract BaseSetup is TestUtils, SpaceHelper {
     everyoneSpace = Architect(spaceFactory).createSpace(everyoneSpaceInfo);
     vm.stopPrank();
 
-    _registerNodes();
+    // _registerOperators();
+    // _registerNodes();
+  }
+
+  function _registerOperators() internal {
+    for (uint256 i = 0; i < operators.length; i++) {
+      vm.prank(operators[i]);
+      nodeOperator.registerOperator(operators[i]);
+    }
   }
 
   function _registerNodes() internal {
-    nodes = new address[](10);
-    for (uint256 i = 0; i < 10; i++) {
+    nodes = new address[](operators.length);
+
+    for (uint256 i = 0; i < operators.length; i++) {
       nodes[i] = _randomAddress();
-      vm.startPrank(nodes[i]);
-      // INodeOperator(baseRegistry).registerOperator(nodes[i]);
+      vm.startPrank(operators[i]);
       entitlementChecker.registerNode(nodes[i]);
       vm.stopPrank();
     }

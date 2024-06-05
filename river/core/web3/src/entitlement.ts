@@ -91,7 +91,7 @@ export const NoopOperation: NoOperation = {
 }
 
 export const NoopRuleData = {
-    operations: [],
+    operations: [NoopOperation],
     checkOperations: [],
     logicalOperations: [],
 }

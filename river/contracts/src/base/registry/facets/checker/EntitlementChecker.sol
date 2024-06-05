@@ -53,7 +53,7 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
    * @param node The address of the node to register
    * @dev Only valid operators can register a node
    */
-  function registerNode(address node) external {
+  function registerNode(address node) external onlyRegisteredOperator {
     EntitlementCheckerStorage.Layout storage layout = EntitlementCheckerStorage
       .layout();
 
@@ -71,7 +71,9 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
    * @param node The address of the node to unregister
    * @dev Only the operator of the node can unregister it
    */
-  function unregisterNode(address node) external {
+  function unregisterNode(
+    address node
+  ) external onlyNodeOperator(node, msg.sender) {
     EntitlementCheckerStorage.Layout storage layout = EntitlementCheckerStorage
       .layout();
 
