@@ -68,10 +68,10 @@ export const ChannelNavItem = (props: Props) => {
                         favorite={favorite}
                     />
 
-                    <Box>
+                    <Stack horizontal gap="sm" alignItems="center">
                         {isMuted && <Icon size="square_xs" type="muteActive" color="gray2" />}
                         {!!mentionCount && <Badge value={mentionCount}>{mentionCount}</Badge>}
-                    </Box>
+                    </Stack>
                 </Stack>
             </NavItem>
         </>
