@@ -1341,12 +1341,17 @@ export class TownsClient
 
     public async walletAddressIsBanned(spaceId: string, walletAddress: string): Promise<boolean> {
         const wallets = (await this.getLinkedWallets(walletAddress)).concat(walletAddress)
-        for (const walletAddress of wallets) {
-            if (await this.spaceDapp.walletAddressIsBanned(spaceId, walletAddress)) {
-                return true
-            }
+        const promises = wallets.map((walletAddress) => {
+            return this.spaceDapp
+                .walletAddressIsBanned(spaceId, walletAddress)
+                .then((result) => (result === true ? Promise.resolve(true) : Promise.reject(false)))
+        })
+        try {
+            await Promise.any(promises)
+            return true
+        } catch {
+            return false
         }
-        return false
     }
 
     public async deleteRoleTransaction(
