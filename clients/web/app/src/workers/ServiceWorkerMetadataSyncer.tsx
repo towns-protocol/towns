@@ -211,7 +211,12 @@ function SpacesAndChannelsMetadata({
             const changedChannels = channels.filter(
                 (channel) =>
                     !cachedChannels.some((c) => c.id === channel.id) ||
-                    cachedChannels.some((c) => c.id === channel.id && c.name !== channel.label),
+                    cachedChannels.some(
+                        (c) =>
+                            c.id === channel.id &&
+                            c.name !== channel.label &&
+                            channel.label !== c.id, // ignore the channel id as label (could happen if cache is cleared)
+                    ),
             )
 
             if (changedChannels.length) {

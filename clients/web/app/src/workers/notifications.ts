@@ -556,6 +556,9 @@ async function getNotificationContent(
         townName = space?.name
         dmChannelName = dmChannel?.name
         channelName = channel?.name
+        if (channelName === notification.content.channelId) {
+            channelName = undefined // make sure notification doesn't show the channel id as channel name
+        }
         // transform the sender name to the shortened version
         senderName = getShortenedName(sender?.name)
 
