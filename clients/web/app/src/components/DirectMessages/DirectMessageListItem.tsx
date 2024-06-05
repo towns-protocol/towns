@@ -6,12 +6,13 @@ import {
     useDMLatestMessage,
     useMyUserId,
     useUser,
+    useUserLookupContext,
 } from 'use-towns-client'
 import { MostRecentMessageInfo_OneOf } from 'use-towns-client/dist/hooks/use-dm-latest-message'
 import { Avatar } from '@components/Avatar/Avatar'
 import { TimelineEncryptedContent } from '@components/EncryptedContent/EncryptedMessageBody'
 import { UserList } from '@components/UserList/UserList'
-import { Box, BoxProps, MotionBox, Paragraph, Stack, Text } from '@ui'
+import { Box, BoxProps, Icon, MotionBox, Paragraph, Stack, Text } from '@ui'
 import { notUndefined } from 'ui/utils/utils'
 import { formatShortDate } from 'utils/formatDates'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
@@ -190,23 +191,106 @@ export const DirectMessageIcon = (props: {
     )
 }
 
+const getMessageDisplayName = (user: LookupUser, myUserId: string | undefined) =>
+    user.userId === myUserId ? 'You' : getPrettyDisplayName(user)
+
 const LastDirectMessageContent = (props: {
     info: undefined | MostRecentMessageInfo_OneOf
     latestUser: undefined | LookupUser
     myUserId: undefined | string
 }) => {
     const { myUserId, info, latestUser } = props
+    const { usersMap } = useUserLookupContext()
+
+    const authorDisplayName = useMemo(
+        () => (latestUser ? getMessageDisplayName(latestUser, myUserId) : ''),
+        [latestUser, myUserId],
+    )
 
     switch (info?.kind) {
-        case 'media':
-            return '📷'
+        case 'image': {
+            const { images } = info
+            return (
+                <Box horizontal gap="xs">
+                    {authorDisplayName && <Text size="sm">{authorDisplayName}:</Text>}
+                    <Box horizontal gap="xxs">
+                        <Icon type="camera" size="square_xs" />
+                        <Text size="sm">
+                            {images && images.length > 1 ? `${images.length} photos` : 'Photo'}
+                        </Text>
+                    </Box>
+                </Box>
+            )
+        }
+        case 'attachment': {
+            const { attachments } = info
+
+            let filename = 'file'
+            if (attachments && attachments.length > 0) {
+                const file = attachments?.[0]
+                if (file.type === 'chunked_media' || file.type === 'embedded_media') {
+                    filename = file.info.filename
+                }
+            }
+
+            return (
+                <Box horizontal gap="xs">
+                    {authorDisplayName && <Text size="sm">{authorDisplayName}:</Text>}
+                    <Box horizontal gap="xxs">
+                        <Icon type="file" size="square_xs" />
+                        <Text size="sm">
+                            {attachments && attachments.length > 1
+                                ? `${attachments.length} files`
+                                : filename}
+                        </Text>
+                    </Box>
+                </Box>
+            )
+        }
+        case 'gif': {
+            return (
+                <Box horizontal gap="xs">
+                    {authorDisplayName && <Text size="sm">{authorDisplayName}:</Text>}
+                    <Box horizontal gap="xxs">
+                        <Icon type="gif" size="square_xs" />
+                        <Text size="sm">Gif</Text>
+                    </Box>
+                </Box>
+            )
+        }
+        case 'dm_created': {
+            const creator = usersMap[info.creatorId]
+            const displayName = getMessageDisplayName(creator, myUserId)
+            return `${displayName} created this DM`
+        }
+        case 'gdm_created': {
+            const creator = usersMap[info.creatorId]
+            const displayName = getMessageDisplayName(creator, myUserId)
+            return `${displayName} created this group`
+        }
+        case 'member_added': {
+            const user = usersMap[info.userId]
+            const displayName = getMessageDisplayName(user, myUserId)
+            // TODO: HNT-6766 show who added the user: `X added Y to this group`
+            return `${displayName} got added to this group`
+        }
+        case 'member_left': {
+            const user = usersMap[info.userId]
+            const displayName = getMessageDisplayName(user, myUserId)
+            // TODO:
+            return `${displayName} left this group`
+        }
+        // TODO: HNT-6766
+        // member_removed: X removed Y from this group
+        case 'member_invited': {
+            const user = usersMap[info.userId]
+            const displayName = getMessageDisplayName(user, myUserId)
+            return `${displayName} got invited to this group`
+        }
+
         case 'text': {
             const unescapedText = htmlToText(info.text)
-            return latestUser
-                ? `${
-                      myUserId === latestUser.userId ? 'you' : getPrettyDisplayName(latestUser)
-                  }: ${unescapedText}`
-                : unescapedText
+            return authorDisplayName ? `${authorDisplayName}: ${unescapedText}` : unescapedText
         }
         case 'encrypted':
             return (
@@ -217,7 +301,6 @@ const LastDirectMessageContent = (props: {
                     />
                 </Box>
             )
-
         default:
             return (
                 <Box horizontal>

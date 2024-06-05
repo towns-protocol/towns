@@ -1,25 +1,43 @@
 import { useTimeline } from './use-timeline'
 import {
+    Attachment,
     RoomMessageEncryptedEvent,
     TimelineEvent,
     TimelineEvent_OneOf,
     ZTEvent,
 } from '../types/timeline-types'
 
-import { MessageType } from '../types/towns-types'
+import { Membership, MessageType } from '../types/towns-types'
 import { useFullyReadMarkerStore } from '../store/use-fully-read-marker-store'
 import { useEffect, useMemo, useState } from 'react'
 import { markdownToPlainText } from '../utils/markdownToPlainText'
+import { isMediaMimeType } from '../utils/isMediaMimeType'
 
 export type MostRecentMessageInfo_OneOf =
-    | MostRecentMessageInfoMedia
+    | MostRecentMessageInfoImage
+    | MostRecentMessageInfoAttachment
     | MostRecentMessageInfoText
     | MostRecentMessageEncrypted
+    | MostRecentMessageInfoGif
+    | MostRecentMemberAdded
+    | MostRecentMemberLeft
+    | MostRecentGDMCreated
+    | MostRecentDMCreated
+    | MostRecentMemberInvited
 
-export interface MostRecentMessageInfoMedia {
-    kind: 'media'
+export interface MostRecentMessageInfoImage {
+    kind: 'image'
+    images?: Attachment[]
 }
 
+export interface MostRecentMessageInfoAttachment {
+    kind: 'attachment'
+    attachments: Attachment[]
+}
+
+export interface MostRecentMessageInfoGif {
+    kind: 'gif'
+}
 export interface MostRecentMessageInfoText {
     kind: 'text'
     text: string
@@ -28,6 +46,31 @@ export interface MostRecentMessageInfoText {
 export interface MostRecentMessageEncrypted {
     kind: 'encrypted'
     content: RoomMessageEncryptedEvent
+}
+
+export interface MostRecentMemberAdded {
+    kind: 'member_added'
+    userId: string
+}
+
+export interface MostRecentMemberLeft {
+    kind: 'member_left'
+    userId: string
+}
+
+export interface MostRecentMemberInvited {
+    kind: 'member_invited'
+    userId: string
+}
+
+export interface MostRecentGDMCreated {
+    kind: 'gdm_created'
+    creatorId: string
+}
+
+export interface MostRecentDMCreated {
+    kind: 'dm_created'
+    creatorId: string
 }
 
 type LatestMessageInfo = {
@@ -108,21 +151,99 @@ function toMostRecentMessageInfo(
             content,
         }
     }
+
+    if (content?.kind === ZTEvent.RoomCreate) {
+        if (content.type === 'dmChannelPayload') {
+            return {
+                kind: 'dm_created',
+                creatorId: content.creator,
+            }
+        }
+        if (content.type === 'gdmChannelPayload') {
+            return {
+                kind: 'gdm_created',
+                creatorId: content.creator,
+            }
+        }
+    }
+
+    if (content?.kind === ZTEvent.RoomMember) {
+        if (content.membership === Membership.Join) {
+            return {
+                kind: 'member_added',
+                userId: content.userId,
+            }
+        }
+        if (content.membership === Membership.Leave) {
+            return {
+                kind: 'member_left',
+                userId: content.userId,
+            }
+        }
+        if (content.membership === Membership.Invite) {
+            return {
+                kind: 'member_invited',
+                userId: content.userId,
+            }
+        }
+    }
     if (content?.kind !== ZTEvent.RoomMessage) {
         return undefined
     }
 
-    switch (content.content?.msgType) {
+    if (!content.content) {
+        return undefined
+    }
+    switch (content.content.msgType) {
         case MessageType.Text: {
+            if (content.attachments && content.attachments.length > 0) {
+                const hasEmbeddedMedia = content.attachments.some(
+                    (attachment) => attachment.type === 'embedded_media',
+                )
+                if (hasEmbeddedMedia) {
+                    return
+                }
+
+                const images = content.attachments.filter((attachment) => {
+                    const isGif =
+                        attachment.type === 'chunked_media' &&
+                        attachment.info.mimetype === 'image/gif'
+                    const hasMedia =
+                        attachment.type === 'chunked_media' &&
+                        isMediaMimeType(attachment.info.mimetype)
+                    return (!isGif && hasMedia) || attachment.type === 'image'
+                })
+                const hasImages = images.length > 0
+
+                if (hasImages) {
+                    return {
+                        kind: 'image',
+                        images,
+                    }
+                }
+                return {
+                    kind: 'attachment',
+                    attachments: content.attachments,
+                }
+            }
+
             return {
                 kind: 'text',
                 text: markdownToPlainText(content.body),
             }
         }
-        case MessageType.Image:
-            return {
-                kind: 'media',
+        case MessageType.Image: {
+            const isGif = content.content.info?.mimetype === 'image/gif'
+            if (isGif) {
+                return {
+                    kind: 'gif',
+                }
             }
+            return {
+                kind: 'image',
+                images: [],
+            }
+        }
         default:
             return undefined
     }
