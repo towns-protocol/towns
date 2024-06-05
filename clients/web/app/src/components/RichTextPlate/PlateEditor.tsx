@@ -336,7 +336,7 @@ const PlateEditorWithoutBoundary = ({
             </Box>
             <Stack background={background} rounded={{ default: 'sm', touch: 'none' }}>
                 <Plate
-                    plugins={PlatePlugins}
+                    plugins={PlatePlugins()}
                     editorRef={editorRef}
                     initialValue={initialValue}
                     key={`plate-${storageId}`}

@@ -14,8 +14,11 @@ export const ParagraphElement = withRef<typeof PlateElement>(
     },
 )
 
-export const ParagraphWithoutPlate = ({ children }: React.PropsWithChildren) => (
-    <Text as="p" className={paragraph}>
+export const ParagraphWithoutPlate = React.forwardRef<
+    HTMLParagraphElement,
+    React.PropsWithChildren
+>(({ children }, ref) => (
+    <Text as="p" className={paragraph} ref={ref}>
         {children}
     </Text>
-)
+))

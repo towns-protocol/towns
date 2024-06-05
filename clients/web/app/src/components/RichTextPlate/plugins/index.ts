@@ -1,4 +1,5 @@
 import { withProps } from '@udecode/cn'
+import memoize from 'lodash/memoize'
 import { Channel } from 'use-towns-client'
 import { PlateLeaf, createPlugins } from '@udecode/plate-common'
 import { ELEMENT_PARAGRAPH, createParagraphPlugin } from '@udecode/plate-paragraph'
@@ -181,4 +182,6 @@ const PlatePlugins = createPlugins(
     },
 )
 
-export default PlatePlugins
+const memoizedPlatePlugins = memoize(() => PlatePlugins)
+
+export default memoizedPlatePlugins

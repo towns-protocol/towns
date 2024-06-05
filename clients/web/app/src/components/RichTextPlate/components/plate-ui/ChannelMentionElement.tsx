@@ -21,6 +21,7 @@ export const ChannelMentionElement = withRef<
             className={mentionChannelInput}
             data-slate-value={element.value}
             contentEditable={false}
+            as="span"
             onClick={getHandler(onClick, element)}
             {...props}
         >

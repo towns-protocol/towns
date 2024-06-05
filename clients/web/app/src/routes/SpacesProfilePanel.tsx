@@ -15,7 +15,6 @@ import {
     useMyProfile,
     useSpaceData,
     useTownsClient,
-    // useTownsContext,
     useUserLookupContext,
     useWalletAddressIsBanned,
 } from 'use-towns-client'
@@ -92,7 +91,6 @@ const SpaceProfileWithoutAuth = () => {
         return profileIdFromPath === 'me' ? profileIdFromPath : rootKeyAddress
     }, [isAccountAbstractionEnabled, profileIdFromPath, rootKeyAddress])
 
-    // const { createDMChannel } = useTownsClient()
     const [modal, setModal] = useState<ModalType | undefined>(undefined)
 
     const { requestPushPermission, simplifiedPermissionState } = usePushNotifications()
@@ -120,17 +118,13 @@ const SpaceProfileWithoutAuth = () => {
         logout()
     })
 
-    // const { dmChannels } = useTownsContext()
-    // const userIds = useMemo(() => [userId ?? ''], [userId])
-
     const { createLink } = useCreateLink()
 
     const onMessageClick = useCallback(async () => {
         if (!userId) {
             return
         }
-        // const streamId = matchingDM ? matchingDM.id : await createDMChannel(userId)
-        const link = /*streamId && */ createLink({ draftMessageUserId: userId })
+        const link = createLink({ draftMessageUserId: userId })
         if (link) {
             navigate(link)
         }

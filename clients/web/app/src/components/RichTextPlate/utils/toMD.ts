@@ -12,7 +12,6 @@ export const toMD = (editor: PlateEditor): Promise<{ message: string; mentions: 
                     .map((child) => serialize(child))
                     .join('\n')
                     .trim()
-                console.log('*** Plate -> MD', markdown, editor.children)
                 resolve({
                     message: markdown,
                     mentions: getMentions(editor.children as TUserMentionElement[]),

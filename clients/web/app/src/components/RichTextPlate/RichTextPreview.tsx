@@ -2,7 +2,6 @@ import React, { ClassAttributes, useCallback, useMemo } from 'react'
 import { ELEMENT_MENTION } from '@udecode/plate-mention'
 import { clsx } from 'clsx'
 import { Channel, OTWMention, RoomMember } from 'use-towns-client'
-import { Components } from 'hast-util-to-jsx-runtime'
 import { Box } from '@ui'
 import { MessageStatusAnnotation } from '@components/MessageTimeIineItem/items/MessageItem/MessageStatusAnnotation'
 import { CodeBlockElement } from './components/plate-ui/CodeBlockElement'
@@ -70,7 +69,7 @@ export const RichTextPreview = React.memo(
             )
         }, [content])
 
-        const memoizedComponents: Partial<Components> = useMemo(
+        const memoizedComponents = useMemo(
             () => ({
                 ul: (props: React.PropsWithChildren<ClassAttributes<HTMLUListElement>>) => (
                     <ListElement variant="ul">{props.children}</ListElement>
@@ -134,6 +133,8 @@ export const RichTextPreview = React.memo(
                     })}
                 >
                     <MarkdownToJSX
+                        // eslint-disable-next-line
+                        // @ts-ignore
                         components={memoizedComponents}
                         channels={channels}
                         mentions={mentions}

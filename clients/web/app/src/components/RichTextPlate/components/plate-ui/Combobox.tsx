@@ -9,7 +9,6 @@ import {
     useActiveComboboxStore,
     useComboboxContentState,
     useComboboxControls,
-    useComboboxItem,
     useComboboxSelectors,
 } from '@udecode/plate-combobox'
 import {
@@ -67,13 +66,6 @@ export const ComboboxItem = withRef<
         },
         ref,
     ) => {
-        const { props } = useComboboxItem<TMentionComboboxTypes>({
-            item,
-            index,
-            combobox,
-            onRenderItem,
-        })
-
         const onClick = useCallback(() => {
             onSelectItem?.(editor, item)
         }, [onSelectItem, editor, item])
@@ -85,16 +77,10 @@ export const ComboboxItem = withRef<
         return (
             <TypeaheadMenuItem
                 ref={ref}
-                {...props}
-                {...rest}
                 index={index}
                 isSelected={isHighlighted}
                 isLast={isLast}
                 key={item.key}
-                option={{
-                    ...item.data,
-                    setRefElement: () => ref,
-                }}
                 name={item.text + (currentUser === item.key ? ` (you)` : '')}
                 secondaryText={getUsernameForMention<TUserWithChannel>(
                     comboboxType,
@@ -102,12 +88,12 @@ export const ComboboxItem = withRef<
                 )}
                 Icon={<ComboboxIcon item={item.data} comboboxType={comboboxType} />}
                 trailingContent={
-                    comboboxType === ComboboxTypes.userMention && (
+                    comboboxType === ComboboxTypes.userMention ? (
                         <ComboBoxTrailingContent
                             userId={(item.data as TUserWithChannel).userId}
                             isChannelMember={(item.data as TUserWithChannel).isChannelMember}
                         />
-                    )
+                    ) : undefined
                 }
                 onClick={onClick}
                 onMouseEnter={onMouseEnter}

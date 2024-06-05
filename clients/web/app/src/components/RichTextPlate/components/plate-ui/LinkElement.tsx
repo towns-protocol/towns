@@ -20,29 +20,29 @@ export const LinkElement = withRef<typeof PlateElement>(
     },
 )
 
-export const LinkWithoutPlate = ({
-    children,
-    href,
-}: React.PropsWithChildren<{ children?: unknown; href?: string }>) => {
+export const LinkWithoutPlate = React.forwardRef<
+    HTMLAnchorElement,
+    React.PropsWithChildren<{ children?: unknown; href?: string }>
+>(({ children, href }, ref) => {
     const messageLink = useMessageLink(href)
 
     if (messageLink && messageLink.type === 'same-channel-message') {
         return (
-            <Box as="a" className={link} onClick={messageLink.focusMessage}>
+            <Box as="a" ref={ref} className={link} onClick={messageLink.focusMessage}>
                 {children}
             </Box>
         )
     } else if (messageLink.type === 'internal-link') {
         return (
-            <Link to={messageLink.path} className={link}>
+            <Link ref={ref} to={messageLink.path} className={link}>
                 {children}
             </Link>
         )
     } else {
         return (
-            <Box as="a" href={messageLink.link} target="_blank" className={link}>
+            <Box as="a" ref={ref} href={messageLink.link} target="_blank" className={link}>
                 {children}
             </Box>
         )
     }
-}
+})
