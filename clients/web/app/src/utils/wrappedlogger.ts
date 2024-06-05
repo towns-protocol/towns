@@ -55,7 +55,7 @@ export class BufferedLogger {
         let str = '[\n'
         for (let i = 0; i < this.buffer.length && str.length < limit; i++) {
             const delimiter = i === this.buffer.length - 1 ? '' : ',\n'
-            str = str.concat('  ', stringify(this.buffer[i]), delimiter)
+            str = str.concat('  ', stringify(this.buffer[i], stringifyReplacer), delimiter)
         }
         str = str.concat('\n]')
         return str
@@ -69,6 +69,13 @@ export class BufferedLogger {
             error: this.error.bind(this),
         }
     }
+}
+
+function stringifyReplacer(key: string, value: unknown) {
+    if (typeof value === 'bigint') {
+        return value.toString()
+    }
+    return value
 }
 
 export const bufferedLogger = new BufferedLogger(400)
