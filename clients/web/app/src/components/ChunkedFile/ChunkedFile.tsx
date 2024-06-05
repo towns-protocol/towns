@@ -3,11 +3,13 @@ import useResizeObserver from '@react-hook/resize-observer'
 import debounce from 'lodash/debounce'
 import { useChunkedMedia } from 'use-towns-client'
 import { useDownloadFile } from 'use-towns-client/dist/hooks/use-chunked-media'
+import { useMutation } from '@tanstack/react-query'
 import { Box, Button, Icon, IconButton, Stack, Text } from '@ui'
 import { isMediaMimeType } from 'utils/isMediaMimeType'
 import { useDevice } from 'hooks/useDevice'
 import { useIsMessageAttachementContext } from '@components/MessageAttachments/hooks/useIsMessageAttachementContext'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
+import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 
 type Props = {
     streamId: string
@@ -24,44 +26,75 @@ type Props = {
 export const ChunkedFile = (props: Props) => {
     const { filename } = props
     const { downloadFile } = useDownloadFile(props)
-    const onDownloadClicked = useCallback(
-        async (event: React.MouseEvent) => {
-            event.preventDefault()
-            event.stopPropagation()
-            const objectURL = await downloadFile()
-            if (!objectURL) {
-                return
+    const {
+        mutateAsync,
+        isPending,
+        isSuccess,
+        data: objectUrl,
+    } = useMutation({
+        mutationFn: async () => {
+            const objectUrl = await downloadFile()
+            if (!objectUrl) {
+                return Promise.reject()
             }
+            return objectUrl
+        },
+    })
 
-            // based on https://pqina.nl/blog/how-to-prompt-the-user-to-download-a-file-instead-of-navigating-to-it/
+    useEffect(() => {
+        let timeout: NodeJS.Timeout | undefined
+        // based on https://pqina.nl/blog/how-to-prompt-the-user-to-download-a-file-instead-of-navigating-to-it/
+        if (isSuccess && objectUrl) {
+            console.log('[ChunkedFile][route] downloading file', objectUrl)
             const link = document.createElement('a')
             link.style.display = 'none'
-            link.href = objectURL
+            link.href = objectUrl
             link.download = filename
 
             document.body.appendChild(link)
             link.click()
-            setTimeout(() => {
+            timeout = setTimeout(() => {
                 URL.revokeObjectURL(link.href)
                 link.parentNode?.removeChild(link)
             }, 0)
+        }
+
+        return () => {
+            if (timeout) {
+                clearTimeout(timeout)
+            }
+        }
+    }, [filename, isSuccess, objectUrl])
+
+    const onDownloadClicked = useCallback(
+        async (event: React.MouseEvent) => {
+            event.preventDefault()
+            event.stopPropagation()
+            mutateAsync()
         },
-        [downloadFile, filename],
+        [mutateAsync],
     )
 
     if (isMediaMimeType(props.mimetype)) {
         return <ChunkedMedia {...props} onDownloadClicked={onDownloadClicked} />
     } else {
-        return <ChunkedFileDownload {...props} onDownloadClicked={onDownloadClicked} />
+        return (
+            <ChunkedFileDownload
+                {...props}
+                isDownloading={isPending}
+                onDownloadClicked={onDownloadClicked}
+            />
+        )
     }
 }
 
 const ChunkedFileDownload = (
     props: Props & {
         onDownloadClicked: (event: React.MouseEvent<Element, MouseEvent>) => Promise<void>
+        isDownloading: boolean
     },
 ) => {
-    const { filename, mimetype, onDownloadClicked } = props
+    const { filename, mimetype, isDownloading, onDownloadClicked } = props
 
     const size = useSizeContext()
     const reducedWidth = size.lessThan(370)
@@ -78,7 +111,7 @@ const ChunkedFileDownload = (
             alignItems="center"
             maxWidth={reducedWidth ? '200' : '300'}
             tooltip={filename}
-            onClick={onDownloadClicked}
+            onClick={isDownloading ? undefined : onDownloadClicked}
         >
             <Icon type="file" size="square_md" color="gray2" />
             <Stack gap="sm" overflow="hidden" minHeight="x5" justifyContent="center">
@@ -92,7 +125,11 @@ const ChunkedFileDownload = (
                 )}
             </Stack>
             <Button tone="level2" color="gray2" border="level3" size="button_sm" rounded="sm">
-                <Icon type="download" color="gray2" size="square_sm" />
+                {isDownloading ? (
+                    <ButtonSpinner color="gray2" square="square_sm" />
+                ) : (
+                    <Icon type="download" color="gray2" size="square_sm" />
+                )}
             </Button>
         </Stack>
     )
