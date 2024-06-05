@@ -45,6 +45,7 @@ export const ModalContainer = (props: ModalContainerProps) => {
                 )
             }
             if (asSheet) {
+                // TODO: looks like the sheet start animation (moving from bottom to top) is not working
                 return (
                     <Sheet
                         isOpen

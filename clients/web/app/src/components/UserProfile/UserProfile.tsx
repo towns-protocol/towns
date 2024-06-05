@@ -512,12 +512,14 @@ const NftProfilePicture = (props: { onHide: () => void; userId: string; currentN
     const hasNfts = displayableNfts.length > 0 && !isFetching
 
     return (
-        <ModalContainer onHide={onHide}>
-            <Stack width="100%" maxHeight="400" maxWidth={isTouch ? '100%' : '600'} gap="sm">
+        <ModalContainer asSheet onHide={onHide}>
+            {!isTouch && (
                 <Box position="relative">
                     <IconButton position="topRight" icon="close" onClick={onHide} />
                 </Box>
-                <Stack gap alignItems="center" paddingTop="lg">
+            )}
+            <Stack gap paddingTop={isTouch ? 'md' : 'lg'}>
+                <Stack gap alignItems="center">
                     <Text size="lg" fontWeight="strong" color="default">
                         NFT Profile Picture
                     </Text>
@@ -536,7 +538,15 @@ const NftProfilePicture = (props: { onHide: () => void; userId: string; currentN
                         </Text>
                     </Box>
                 )}
-                <Stack horizontal centerContent scroll flexWrap="wrap" width="100%">
+                <Stack
+                    horizontal
+                    centerContent
+                    scrollbars
+                    scroll
+                    flexWrap="wrap"
+                    width="100%"
+                    maxHeight={isTouch ? '50vh' : '300'}
+                >
                     {displayableNfts.map((nft) => (
                         <Box
                             padding
@@ -568,34 +578,34 @@ const NftProfilePicture = (props: { onHide: () => void; userId: string; currentN
                         </Box>
                     ))}
                 </Stack>
-            </Stack>
-            <Stack gap shrink={false}>
-                {hasNfts && (
-                    <>
-                        <Button
-                            tone={saveButtonEnabled ? 'cta1' : 'level2'}
-                            width="100%"
-                            disabled={!saveButtonEnabled}
-                            onClick={saveNft}
-                        >
-                            {pendingSaveNft ? <ButtonSpinner /> : 'Set as Profile Picture'}
-                        </Button>
-                        <Stack horizontal gap="sm">
-                            <Divider />
-                            <Text shrink={false} color="gray2" fontSize="sm">
-                                Add more verified NFT profile pictures:
-                            </Text>
-                            <Divider />
-                        </Stack>
-                    </>
-                )}
-                <Button
-                    tone={hasNfts ? 'level2' : 'cta1'}
-                    width="100%"
-                    onClick={onViewLinkedWalletsClick}
-                >
-                    Link a Wallet
-                </Button>
+                <Stack gap shrink={false}>
+                    {hasNfts && (
+                        <>
+                            <Button
+                                tone={saveButtonEnabled ? 'cta1' : 'level2'}
+                                width="100%"
+                                disabled={!saveButtonEnabled}
+                                onClick={saveNft}
+                            >
+                                {pendingSaveNft ? <ButtonSpinner /> : 'Set as Profile Picture'}
+                            </Button>
+                            <Stack horizontal gap="sm">
+                                <Divider />
+                                <Text shrink={false} color="gray2" fontSize="sm">
+                                    Add more verified NFT profile pictures:
+                                </Text>
+                                <Divider />
+                            </Stack>
+                        </>
+                    )}
+                    <Button
+                        tone={hasNfts ? 'level2' : 'cta1'}
+                        width="100%"
+                        onClick={onViewLinkedWalletsClick}
+                    >
+                        Link a Wallet
+                    </Button>
+                </Stack>
             </Stack>
         </ModalContainer>
     )

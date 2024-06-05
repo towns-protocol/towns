@@ -15,6 +15,7 @@ import { useSetEnsName } from 'hooks/useSetEnsName'
 import { EnsBadge } from '@components/EnsBadge/EnsBadge'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { CHANNEL_INFO_PARAMS } from 'routes'
+import { useDevice } from 'hooks/useDevice'
 
 export const useCurrentStreamID = () => {
     const { spaceSlug, channelSlug } = useParams()
@@ -362,6 +363,7 @@ const UsernameDisplayNameEncryptedContent = (props: { user: LookupUser }) => {
     )
 }
 
+// TODO: use mask to show that there's more data on the scroll
 const EnsDisplayNameModal = (props: { currentEnsName?: string; onHide: () => void }) => {
     const { onHide, currentEnsName: currentEnsName } = props
     const { ensNames, isFetching } = useEnsNames()
@@ -370,6 +372,7 @@ const EnsDisplayNameModal = (props: { currentEnsName?: string; onHide: () => voi
     const { openPanel } = usePanelActions()
     const [selectedWallet, setSelectedWallet] = useState<string | undefined>(currentEnsName)
     const [pendingWallet, setPendingWallet] = useState<string | undefined>(undefined)
+    const { isTouch } = useDevice()
 
     useEffect(() => {
         setPendingWallet(currentEnsName)
@@ -406,15 +409,19 @@ const EnsDisplayNameModal = (props: { currentEnsName?: string; onHide: () => voi
     const hasEnsName = ensNames.length > 0 && !isFetching
 
     return (
-        <ModalContainer minWidth="350" onHide={onHide}>
-            <Box position="relative">
-                <IconButton position="topRight" icon="close" onClick={onHide} />
-            </Box>
+        <ModalContainer asSheet minWidth="350" onHide={onHide}>
+            {!isTouch && (
+                <Box position="relative">
+                    <IconButton position="topRight" icon="close" onClick={onHide} />
+                </Box>
+            )}
             <Stack gap alignItems="center" paddingTop="lg">
                 <Text size="lg" fontWeight="strong" color="default">
                     Set ENS Display Name
                 </Text>
+            </Stack>
 
+            <Stack gap alignItems="center" paddingTop="lg">
                 {ensNames.length === 0 && isFetching && <ButtonSpinner />}
                 {!hasEnsName && (
                     <Box grow centerContent padding>
@@ -443,7 +450,9 @@ const EnsDisplayNameModal = (props: { currentEnsName?: string; onHide: () => voi
                         />
                     </Stack>
                 )}
+            </Stack>
 
+            <Stack gap shrink={false} paddingTop="sm">
                 {hasEnsName && (
                     <>
                         <Button
