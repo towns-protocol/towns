@@ -9,6 +9,7 @@ import {
     RoomMember,
     SendTextMessageOptions,
     UnfurledLinkAttachment,
+    useChannelId,
     useChannelMembers,
     useNetworkStatus,
 } from 'use-towns-client'
@@ -19,6 +20,7 @@ import { TComboboxItemWithData } from '@udecode/plate-combobox'
 import { ELEMENT_PARAGRAPH } from '@udecode/plate-paragraph'
 import every from 'lodash/every'
 import isEqual from 'lodash/isEqual'
+import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
 import { useMediaDropContext } from '@components/MediaDropContext/MediaDropContext'
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { Box, BoxProps, Stack } from '@ui'
@@ -130,10 +132,16 @@ const PlateEditorWithoutBoundary = ({
     const setInput = useInputStore((state) => state.setChannelmessageInput)
 
     const { memberIds: _memberIds } = useChannelMembers()
+    const channelId = useChannelId()
     const memberIds = useMemo(() => new Set(_memberIds), [_memberIds])
 
+    const isDMorGDM = useMemo(
+        () => isDMChannelStreamId(channelId) || isGDMChannelStreamId(channelId),
+        [channelId],
+    )
+
     const userMentions: TComboboxItemWithData<TUserWithChannel>[] = useMemo(() => {
-        return [AtChannelUser]
+        return (isDMorGDM ? [] : [AtChannelUser])
             .concat(users)
             .map((user) => ({
                 text: getPrettyDisplayName(user),
@@ -141,7 +149,7 @@ const PlateEditorWithoutBoundary = ({
                 data: { ...user, isChannelMember: memberIds.has(user.userId) },
             }))
             .filter(notUndefined)
-    }, [users, memberIds])
+    }, [isDMorGDM, users, memberIds])
 
     const channelMentions: TComboboxItemWithData<Channel>[] = useMemo(() => {
         return channels
