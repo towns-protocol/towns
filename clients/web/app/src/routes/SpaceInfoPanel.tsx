@@ -84,11 +84,12 @@ export const SpaceInfoPanel = () => {
 export const SpaceInfo = () => {
     const space = useSpaceData()
     const { isTouch } = useDevice()
-    const [searchParams, setSearchParams] = useSearchParams()
+    const [searchParams] = useSearchParams()
     // touch handles roles panel with modals
     const isRolesPanel = !isTouch && searchParams.get(CHANNEL_INFO_PARAMS.ROLES) != null
     const isSpaceSettingsPanel =
         !isTouch && searchParams.get(CHANNEL_INFO_PARAMS.SPACE_SETTINGS_NAVIGATION) != null
+    const isBannedUsersPanel = !isTouch && searchParams.get(CHANNEL_INFO_PARAMS.BANNED) != null
     const { leaveRoom } = useTownsClient()
     const channels = useSpaceChannels()
     const { loggedInWalletAddress } = useConnectivity()
@@ -285,8 +286,12 @@ export const SpaceInfo = () => {
     })
 
     const onBannedUsersClick = useEvent(() => {
-        searchParams.set(CHANNEL_INFO_PARAMS.BANNED, '')
-        setSearchParams(searchParams)
+        if (!isBannedUsersPanel) {
+            openPanel(CHANNEL_INFO_PARAMS.BANNED)
+            if (isTouch) {
+                setActiveModal(CHANNEL_INFO_PARAMS.BANNED)
+            }
+        }
     })
 
     const onLeaveClick = useCallback(() => {

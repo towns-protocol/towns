@@ -23,6 +23,7 @@ import { EditMembershipSettingsPanel } from '@components/SpaceSettingsPanel/Edit
 import { SpaceSettingsNavigationPanel } from '@components/SpaceSettingsPanel/SpaceSettingsNavigationPanel'
 import { EditPrepaidPanel } from '@components/SpaceSettingsPanel/EditPrepaidPanel'
 import { NodeStatusPanel } from '@components/NodeConnectionStatusPanel/ConnectionStatusPanel'
+import { SpaceBannedUsers } from 'routes/SpaceBannedUsers'
 
 export const usePanels = () => {
     const [searchParams] = useSearchParams()
@@ -58,6 +59,9 @@ export const usePanels = () => {
         }
         case CHANNEL_INFO_PARAMS.BUG_REPORT: {
             return <BugReportPanel />
+        }
+        case CHANNEL_INFO_PARAMS.BANNED: {
+            return <SpaceBannedUsers />
         }
         case CHANNEL_INFO_PARAMS.BROWSE_CHANNELS: {
             return <BrowseChannelsPanel />
