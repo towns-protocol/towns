@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { z } from 'zod'
-import { datadogRum } from '@datadog/browser-rum'
 import { useMutation } from '@tanstack/react-query'
 import { toast } from 'react-hot-toast/headless'
 import { useShallow } from 'zustand/react/shallow'
@@ -68,25 +67,6 @@ const defaultValues = {
     [FormStateKeys.attachments]: [],
 }
 
-async function postCustomErrorToDatadog(data: FormState, id: string, logs: string) {
-    const dataWithoutFile = {
-        ...data,
-        attachments: data[FormStateKeys.attachments].map((file) => ({
-            name: file.name,
-            size: file.size,
-            type: file.type,
-        })),
-    }
-    datadogRum.addAction('user-feedback-custom-error', {
-        dataWithoutFile,
-        logs,
-        id,
-        timestamp: Date.now().toString(),
-        location: window.location.href,
-        fingerprint: [data.email, Date.now().toString(), id],
-    })
-}
-
 async function postCustomError(data: FormState) {
     const GATEWAY_SERVER_URL = env.VITE_GATEWAY_URL
     const url = `${GATEWAY_SERVER_URL}/user-feedback`
@@ -138,7 +118,6 @@ async function postCustomError(data: FormState) {
         headers: { 'Content-Type': 'multipart/form-data' },
         withCredentials: true,
     })
-    postCustomErrorToDatadog(data, uuid, logs)
     return postCustom
 }
 
