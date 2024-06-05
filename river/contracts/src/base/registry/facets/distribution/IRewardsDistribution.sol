@@ -30,4 +30,10 @@ interface IRewardsDistribution is IRewardsDistributionBase {
   function getActivePeriodLength() external view returns (uint256);
 
   function getActiveOperators() external view returns (address[] memory);
+
+  function setWithdrawalRecipient(address recipient) external;
+
+  function getWithdrawalRecipient() external view returns (address);
+
+  function withdraw() external;
 }

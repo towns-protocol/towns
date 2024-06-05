@@ -521,27 +521,35 @@ export async function evaluateTree(
 
 // These two methods are used to create a rule data struct for an external token or NFT
 // checks for testing.
-export function createExternalTokenStruct(addresses: Address[]) {
+export function createExternalTokenStruct(
+    addresses: Address[],
+    checkOptions?: Partial<Omit<ContractCheckOperation, 'address'>>,
+) {
     if (addresses.length === 0) {
         return NoopRuleData
     }
     const defaultChain = addresses.map((address) => ({
-        chainId: 1n,
+        chainId: checkOptions?.chainId ?? 1n,
         address: address,
-        type: CheckOperationType.ERC20 as const,
+        type: checkOptions?.type ?? (CheckOperationType.ERC20 as const),
+        threshold: checkOptions?.threshold ?? BigInt(1),
     }))
     return createOperationsTree(defaultChain)
 }
 
-export function createExternalNFTStruct(addresses: Address[]) {
+export function createExternalNFTStruct(
+    addresses: Address[],
+    checkOptions?: Partial<Omit<ContractCheckOperation, 'address'>>,
+) {
     if (addresses.length === 0) {
         return NoopRuleData
     }
     const defaultChain = addresses.map((address) => ({
         // Anvil chain id
-        chainId: 31337n,
+        chainId: checkOptions?.chainId ?? 31337n,
         address: address,
-        type: CheckOperationType.ERC721 as const,
+        type: checkOptions?.type ?? (CheckOperationType.ERC721 as const),
+        threshold: checkOptions?.threshold ?? BigInt(1),
     }))
     return createOperationsTree(defaultChain)
 }

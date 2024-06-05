@@ -160,6 +160,27 @@ contract RewardsDistribution is
     return _getActiveOperators();
   }
 
+  function setWithdrawalRecipient(address recipient) external onlyOwner {
+    RewardsDistributionStorage.layout().withdrawalRecipient = recipient;
+  }
+
+  function getWithdrawalRecipient() public view returns (address) {
+    return RewardsDistributionStorage.layout().withdrawalRecipient;
+  }
+
+  function withdraw() external onlyOwner {
+    RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage
+      .layout();
+    CurrencyTransfer.transferCurrency(
+      SpaceDelegationStorage.layout().riverToken,
+      address(this),
+      RewardsDistributionStorage.layout().withdrawalRecipient,
+      IERC20(SpaceDelegationStorage.layout().riverToken).balanceOf(
+        address(this)
+      )
+    );
+  }
+
   // =============================================================
   //                           Internal
   // =============================================================
@@ -292,6 +313,7 @@ contract RewardsDistribution is
     address[] memory delegators = IVotesEnumerable(sd.riverToken)
       .getDelegatorsByDelegatee(operator);
     address[] memory validDelegators = new address[](delegators.length);
+    uint256 activeDelegators = 0;
     for (uint256 i = 0; i < delegators.length; i++) {
       if (
         _isActiveSinceLastCycle(
@@ -300,7 +322,8 @@ contract RewardsDistribution is
           )
         )
       ) {
-        validDelegators[i] = delegators[i];
+        validDelegators[activeDelegators] = delegators[i];
+        activeDelegators++;
       }
     }
     return validDelegators;

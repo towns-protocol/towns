@@ -123,6 +123,11 @@ import { SignerContext } from './signerContext'
 
 type ClientEvents = StreamEvents & DecryptionEvents
 
+type SendChannelMessageOptions = {
+    beforeSendEventHook?: Promise<void>
+    onLocalEventAppended?: (localId: string) => void
+}
+
 export class Client
     extends (EventEmitter as new () => TypedEmitter<ClientEvents>)
     implements IGroupEncryptionClient
@@ -1119,11 +1124,12 @@ export class Client
     async sendChannelMessage(
         streamId: string,
         payload: ChannelMessage,
-        opts: { beforeSendEventHook?: Promise<void> } = {},
+        opts?: SendChannelMessageOptions,
     ): Promise<{ eventId: string }> {
         const stream = this.stream(streamId)
         check(stream !== undefined, 'stream not found')
         const localId = stream.view.appendLocalEvent(payload, 'sending', this)
+        opts?.onLocalEventAppended?.(localId)
         if (opts?.beforeSendEventHook) {
             await opts?.beforeSendEventHook
         }
@@ -1172,7 +1178,7 @@ export class Client
         payload: Omit<PlainMessage<ChannelMessage_Post>, 'content'> & {
             content: PlainMessage<ChannelMessage_Post_Content_Text>
         },
-        opts: { beforeSendEventHook?: Promise<void> } = {},
+        opts?: SendChannelMessageOptions,
     ): Promise<{ eventId: string }> {
         const { content, ...options } = payload
         return this.sendChannelMessage(
@@ -1198,7 +1204,7 @@ export class Client
         payload: Omit<PlainMessage<ChannelMessage_Post>, 'content'> & {
             content: PlainMessage<ChannelMessage_Post_Content_Image>
         },
-        opts: { beforeSendEventHook?: Promise<void> } = {},
+        opts?: SendChannelMessageOptions,
     ): Promise<{ eventId: string }> {
         const { content, ...options } = payload
         return this.sendChannelMessage(
@@ -1224,7 +1230,7 @@ export class Client
         payload: Omit<PlainMessage<ChannelMessage_Post>, 'content'> & {
             content: PlainMessage<ChannelMessage_Post_Content_GM>
         },
-        opts: { beforeSendEventHook?: Promise<void> } = {},
+        opts?: SendChannelMessageOptions,
     ): Promise<{ eventId: string }> {
         const { content, ...options } = payload
         return this.sendChannelMessage(
@@ -1261,7 +1267,7 @@ export class Client
     async sendChannelMessage_Reaction(
         streamId: string,
         payload: PlainMessage<ChannelMessage_Reaction>,
-        opts: { beforeSendEventHook?: Promise<void> } = {},
+        opts?: SendChannelMessageOptions,
     ): Promise<{ eventId: string }> {
         return this.sendChannelMessage(
             streamId,

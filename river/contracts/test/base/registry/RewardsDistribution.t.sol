@@ -14,8 +14,7 @@ import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
 import {SpaceOwner} from "contracts/src/spaces/facets/owner/SpaceOwner.sol";
 import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {IMainnetDelegationBase} from "contracts/src/tokens/river/base/delegation/IMainnetDelegation.sol";
-
-// libraries
+import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 
 // structs
 import {NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
@@ -114,6 +113,45 @@ contract RewardsDistributionTest is
   // =============================================================
   //                           Tests
   // =============================================================
+
+  function test_withdrawalRecipient() public {
+    address recipient = address(0x123);
+
+    vm.expectRevert();
+
+    rewardsDistributionFacet.setWithdrawalRecipient(recipient);
+
+    vm.prank(deployer);
+    rewardsDistributionFacet.setWithdrawalRecipient(recipient);
+    assertEq(
+      rewardsDistributionFacet.getWithdrawalRecipient(),
+      recipient,
+      "Withdrawal recipient does not match expected recipient"
+    );
+  }
+
+  function test_withdraw() public {
+    address recipient = address(0x123);
+
+    uint256 amount = 1200 * 1e18;
+    sendTokensToContract(address(rewardsDistributionFacet), amount);
+
+    vm.prank(msg.sender);
+    vm.expectRevert(
+      abi.encodeWithSelector(Ownable__NotOwner.selector, msg.sender)
+    );
+    rewardsDistributionFacet.withdraw();
+
+    vm.prank(deployer);
+    rewardsDistributionFacet.setWithdrawalRecipient(recipient);
+    vm.prank(deployer);
+    rewardsDistributionFacet.withdraw();
+    assertEq(
+      IERC20(riverFacet).balanceOf(recipient),
+      amount,
+      "Withdrawn amount does not match expected amount"
+    );
+  }
 
   function test_getActiveOperators() public {
     _createEntitiesForTest(
