@@ -62,7 +62,7 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@v4
-            
+
             - name: Debug Log
               run: |
                 echo "Deploying to environment: ${{ inputs.environment_name }}"
@@ -82,17 +82,17 @@ jobs:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
               run: |
-                # Don't run the check for transient environments. 
+                # Don't run the check for transient environments.
                 if grep -q "transient" <<< "${{ inputs.docker_image_tag }}"; then
                     echo "Transient deploy detected. Not running image checks."
                 elif ! docker manifest inspect public.ecr.aws/h5v6m2x1/river:${{ inputs.docker_image_tag }} > /dev/null 2>&1; then
                     echo "Docker image with the tag=${{ inputs.docker_image_tag }} does not exist. No need to deploy river."
                     exit 1 # fail the job, this is an error, don't call this with a image that doesn't exist
-                else 
+                else
                     echo "Docker image with the tag=${{ inputs.docker_image_tag }} exists. Continue with the deployment."
                 fi
 
-            # Send a slack notification before deploying if the environment is gamma 
+            # Send a slack notification before deploying if the environment is gamma
             - name: Info notification
               if: ${{ inputs.environment_name == 'gamma' }}
               uses: slackapi/slack-github-action@v1.24.0
@@ -141,7 +141,7 @@ jobs:
                   NODE_NUMBER: ${{ matrix.iteration }}
                   PUBLIC_ECR_URL: ${{ inputs.public_ecr_url }}
               run: ./scripts/create-and-deploy-river-task-definition.sh
-              
+
 
     on_failure:
         name: On Failure
@@ -149,7 +149,7 @@ jobs:
 
         needs: [pre_deploy, deploy]
 
-        if: failure() && inputs.environment_name == 'gamma' 
+        if: failure() && inputs.environment_name == 'gamma'
 
         permissions:
             contents: read
@@ -172,14 +172,25 @@ jobs:
                           "actor": "${{ github.actor }}"
                       }
 
+            - name: Data dog logging
+              working-directory: ./infra
+              env:
+                ENV: '${{ inputs.environment_name }}'
+                TF_ACTION_TYPE: "Riverdeploy"
+                TF_STATUS: "ERROR"
+                LOG_MESSAGE: "River deploy to ECS failed for ${{ github.ref }} branch (https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+                TF_VAR_datadog_api_key: ${{ secrets.TF_VAR_datadog_api_key }}
+                TF_VAR_datadog_app_key: ${{ secrets.TF_VAR_datadog_app_key }}
+              run: "./log_datadog.sh"
+
     on_success:
         name: On Success
         runs-on: ubuntu-latest
 
         needs: [pre_deploy, deploy]
-        
+
         if: success() && inputs.environment_name == 'gamma'
-        
+
         permissions:
             contents: read
             packages: read
