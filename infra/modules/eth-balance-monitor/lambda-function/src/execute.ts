@@ -41,4 +41,5 @@ export async function execute(config: Config) {
     })
 
     await datadogMetrics.postWalletBalances(walletBalances)
+    await datadogMetrics.postNodeStatusList(nodes)
 }
