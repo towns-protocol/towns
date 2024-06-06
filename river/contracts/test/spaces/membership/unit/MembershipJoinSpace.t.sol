@@ -8,16 +8,19 @@ import {MembershipBaseSetup} from "../MembershipBaseSetup.sol";
 import {IEntitlementGated} from "contracts/src/spaces/facets/gated/IEntitlementGated.sol";
 import {IEntitlementGatedBase} from "contracts/src/spaces/facets/gated/IEntitlementGated.sol";
 import {IEntitlementCheckerBase} from "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
+import {IWalletLink, IWalletLinkBase} from "contracts/src/factory/facets/wallet-link/IWalletLink.sol";
+import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 //libraries
-import {Vm} from "forge-std/Test.sol";
+import {Vm, Test} from "forge-std/Test.sol";
 
 //contracts
 
 contract MembershipJoinSpace is
   MembershipBaseSetup,
   IEntitlementCheckerBase,
-  IEntitlementGatedBase
+  IEntitlementGatedBase,
+  IWalletLinkBase
 {
   bytes32 constant CHECK_REQUESTED =
     keccak256(
@@ -74,6 +77,68 @@ contract MembershipJoinSpace is
     bytes32 transactionId;
     uint256 roleId;
     address[] selectedNodes;
+  }
+
+  function _signMessage(
+    uint256 privateKey,
+    bytes32 message
+  ) internal pure returns (bytes memory) {
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+      privateKey,
+      MessageHashUtils.toEthSignedMessageHash(message)
+    );
+    return abi.encodePacked(r, s, v);
+  }
+
+  function test_joinSpaceWithUserEntitlement_passes() external {
+    vm.prank(alice);
+    membership.joinSpace(alice);
+    assertEq(membership.balanceOf(alice), 1);
+  }
+
+  function test_joinSpaceWithRootWalletUserEntitlement_passes() external {
+    IWalletLink wl = IWalletLink(spaceFactory);
+    Vm.Wallet memory daveWallet = vm.createWallet("dave");
+
+    uint256 nonce = walletLink.getLatestNonceForRootKey(daveWallet.addr);
+    bytes32 messageHash = keccak256(abi.encode(daveWallet.addr, nonce));
+    bytes memory signature = _signMessage(aliceWallet.privateKey, messageHash);
+
+    vm.startPrank(daveWallet.addr);
+    vm.expectEmit(address(wl));
+    emit LinkWalletToRootKey(daveWallet.addr, aliceWallet.addr);
+    walletLink.linkCallerToRootKey(
+      LinkedWallet(aliceWallet.addr, signature),
+      nonce
+    );
+
+    membership.joinSpace(daveWallet.addr);
+    assertEq(membership.balanceOf(daveWallet.addr), 1);
+  }
+
+  function test_joinSpaceWithLinkedWalletUserEntitlement_passes() external {
+    IWalletLink wl = IWalletLink(spaceFactory);
+    Vm.Wallet memory emilyWallet = vm.createWallet("emily");
+
+    uint256 nonce = walletLink.getLatestNonceForRootKey(aliceWallet.addr);
+    bytes32 messageHash = keccak256(abi.encode(aliceWallet.addr, nonce));
+    bytes memory signature = _signMessage(emilyWallet.privateKey, messageHash);
+
+    vm.startPrank(alice);
+    vm.expectEmit(address(wl));
+    emit IWalletLinkBase.LinkWalletToRootKey(
+      aliceWallet.addr,
+      emilyWallet.addr
+    );
+    walletLink.linkCallerToRootKey(
+      IWalletLinkBase.LinkedWallet(emilyWallet.addr, signature),
+      nonce
+    );
+    vm.stopPrank();
+
+    vm.prank(emilyWallet.addr);
+    membership.joinSpace(emilyWallet.addr);
+    assertEq(membership.balanceOf(emilyWallet.addr), 1);
   }
 
   function test_joinSpace_multipleCrosschainEntitlementChecks_finalPasses()

@@ -19,6 +19,8 @@ import {RuleEntitlementUtil} from "contracts/test/crosschain/RuleEntitlementUtil
 // contracts
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 
+import {Vm} from "forge-std/Test.sol";
+
 import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
 import {MembershipFacet} from "contracts/src/spaces/facets/membership/MembershipFacet.sol";
 import {MembershipReferralFacet} from "contracts/src/spaces/facets/membership/referral/MembershipReferralFacet.sol";
@@ -41,10 +43,14 @@ contract MembershipBaseSetup is
   IPlatformRequirements internal platformReqs;
 
   // entitled user
+  Vm.Wallet aliceWallet;
+  Vm.Wallet charlieWallet;
+
   address internal alice;
   address internal charlie;
 
   // non-entitled user
+  Vm.Wallet bobWallet;
   address internal bob;
 
   // receiver of protocol fees
@@ -55,9 +61,13 @@ contract MembershipBaseSetup is
   function setUp() public override {
     super.setUp();
 
-    alice = _randomAddress();
-    bob = _randomAddress();
-    charlie = _randomAddress();
+    aliceWallet = vm.createWallet("alice");
+    charlieWallet = vm.createWallet("charlie");
+    bobWallet = vm.createWallet("bob");
+
+    alice = aliceWallet.addr;
+    bob = bobWallet.addr;
+    charlie = charlieWallet.addr;
     feeRecipient = founder;
 
     address[] memory allowedUsers = new address[](2);
@@ -94,6 +104,7 @@ contract MembershipBaseSetup is
     vm.startPrank(alice);
     vm.deal(alice, MEMBERSHIP_PRICE);
     membership.joinSpace{value: MEMBERSHIP_PRICE}(alice);
+    assertEq(membership.balanceOf(alice), 1);
     vm.stopPrank();
     _;
   }

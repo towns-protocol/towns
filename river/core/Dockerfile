@@ -9,8 +9,6 @@ ARG VER_VERSION=version_unset
 ARG VER_BRANCH=branch_unset
 ARG VER_COMMIT=commit_unset
 
-ARG RUN_MODE=full
-
 # Prepare build environment
 WORKDIR /build
 COPY node node

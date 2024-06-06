@@ -251,7 +251,7 @@ describe('spaceWithEntitlements', () => {
 
     // This test is commented out as the membership joinSpace does not check linked wallets
     // against the user entitlement.
-    test.skip('userEntitlementPass - join as root, linked wallet whitelisted', async () => {
+    test('userEntitlementPass - join as root, linked wallet whitelisted', async () => {
         const {
             alice,
             bob,
@@ -289,7 +289,7 @@ describe('spaceWithEntitlements', () => {
 
     // This test is commented out as the membership joinSpace does not check linked wallets
     // against the user entitlement.
-    test.skip('userEntitlementPass - join as linked wallet, root wallet whitelisted', async () => {
+    test('userEntitlementPass - join as linked wallet, root wallet whitelisted', async () => {
         const {
             alice,
             bob,

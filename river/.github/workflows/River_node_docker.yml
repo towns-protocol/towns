@@ -63,9 +63,9 @@ jobs:
                 BRANCH=$(git rev-parse --abbrev-ref HEAD)
                 TAGS=($COMMIT_HASH)
 
-                # if release version is not provided, we set it to "unset"
+                # if release version is not provided, we set it to "river"
                 if [ -z "$RELEASE_VERSION" ]; then
-                  RELEASE_VERSION="unset"
+                  RELEASE_VERSION="river"
                 else
                   # If this is a release, we also tag the image with the release version.
                   TAGS+=($RELEASE_VERSION)

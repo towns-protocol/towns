@@ -160,6 +160,14 @@ contract NodeOperatorFacet is INodeOperator, OwnableBase, ERC721ABase, Facet {
       revert NodeOperator__NotRegistered();
     if (rateBps > 10000) revert NodeOperator__InvalidCommissionRate();
 
+    //only allow raising the commission if operator is in standby status
+    if (
+      rateBps > ds.commissionByOperator[msg.sender] &&
+      ds.statusByOperator[msg.sender] != NodeOperatorStatus.Standby
+    ) {
+      revert NodeOperator__InvalidCommissionRate();
+    }
+
     ds.commissionByOperator[msg.sender] = rateBps;
     emit OperatorCommissionChanged(msg.sender, rateBps);
   }
