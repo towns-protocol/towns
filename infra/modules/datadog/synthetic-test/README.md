@@ -1,4 +1,5 @@
 # Usage
+
 ```hcl
 module "datadog_sythetics_test" {
   source = "../../modules/datadog/synthetic-test"
