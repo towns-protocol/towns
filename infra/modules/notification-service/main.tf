@@ -276,7 +276,7 @@ resource "aws_ecs_task_definition" "fargate_task_definition" {
       },
       {
         name  = "APNS_TOWNS_APP_IDENTIFIER",
-        value = "com.towns.internal"
+        value = var.apns_towns_app_identifier
       }
     ]
 

@@ -53,6 +53,10 @@ variable "apns_auth_key_secret_arn" {
   type        = string
 }
 
+variable "apns_towns_app_identifier" {
+  type = string
+}
+
 variable "vapid_subject" {
   type = string
 }
