@@ -43,7 +43,7 @@ export const ChannelInfo = () => {
         spaceId: spaceData?.id ?? '',
         channelId: channel?.id,
         walletAddress: loggedInWalletAddress ?? '',
-        permission: Permission.ModifySpaceSettings,
+        permission: Permission.AddRemoveChannels,
     })
     const navigate = useNavigate()
     const { leaveRoom } = useTownsClient()
