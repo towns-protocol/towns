@@ -1708,19 +1708,30 @@ export class TownsClient
      * sendMessage
      *************************************************/
     public async sendMessage(roomId: string, message: string, options?: SendMessageOptions) {
-        let beforeSendEventHook: Promise<void> | undefined
-        if (this.pushNotificationClient && options) {
-            const messageIsEmpty = message.trim() === ''
-            beforeSendEventHook = this.pushNotificationClient.sendNotificationTagIfAny(
-                roomId,
-                messageIsEmpty,
-                options,
-            )
-        }
-
         if (!this.casablancaClient) {
             throw new Error('Casablanca client not initialized')
         }
+
+        const beforeSendEventHooks: Promise<void>[] = []
+
+        if (this.pushNotificationClient && options) {
+            const messageIsEmpty = message.trim() === ''
+            beforeSendEventHooks.push(
+                this.pushNotificationClient.sendNotificationTagIfAny(
+                    roomId,
+                    messageIsEmpty,
+                    options,
+                ),
+            )
+        }
+
+        if (options?.beforeSendEventHook) {
+            beforeSendEventHooks.push(options.beforeSendEventHook)
+        }
+
+        const beforeSendEventHook = beforeSendEventHooks.length
+            ? Promise.all(beforeSendEventHooks).then(() => undefined)
+            : undefined
 
         switch (options?.messageType) {
             case undefined:
@@ -1752,7 +1763,10 @@ export class TownsClient
                                 attachments: transformAttachments(options?.attachments),
                             },
                         },
-                        { beforeSendEventHook },
+                        {
+                            beforeSendEventHook,
+                            onLocalEventAppended: options?.onLocalEventAppended,
+                        },
                     )
                 }
                 break

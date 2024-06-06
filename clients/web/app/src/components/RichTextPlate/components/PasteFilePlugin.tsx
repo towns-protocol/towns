@@ -1,16 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { Box, IconButton, MotionBox, Stack, Text } from '@ui'
-import { FileUpload, useMediaDropContext } from '@components/MediaDropContext/MediaDropContext'
+import { useMediaDropContext } from '@components/MediaDropContext/MediaDropContext'
 import { isMediaMimeType } from 'utils/isMediaMimeType'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
+import { FileUpload } from '@components/MediaDropContext/mediaDropTypes'
 
 export const PasteFilePlugin = ({
     editableContainerRef,
 }: {
     editableContainerRef: React.RefObject<HTMLDivElement>
 }) => {
-    const { files, addFiles, removeFile, isUploadingFiles } = useMediaDropContext()
+    const { files, addFiles, removeFile } = useMediaDropContext()
 
     useEffect(() => {
         if (!editableContainerRef.current || !addFiles) {
@@ -48,9 +49,9 @@ export const PasteFilePlugin = ({
                             <PastedFile
                                 key={imageFile.id}
                                 {...imageFile}
-                                sending={isUploadingFiles}
+                                waitingToSend
+                                sending={false}
                                 removeFile={removeFile}
-                                waitingToSend={index !== 0 && isUploadingFiles}
                             />
                         )
                     })}
@@ -66,7 +67,7 @@ type PastedFileProps = FileUpload & {
     removeFile?: (id: string) => void
 }
 
-const PastedFile = (props: PastedFileProps) => {
+export const PastedFile = (props: PastedFileProps) => {
     const { id, content, removeFile, sending, waitingToSend } = props
 
     const info = useMemo(() => {
@@ -112,10 +113,9 @@ const PastedFile = (props: PastedFileProps) => {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             position="relative"
-            layout="position"
         >
             {showImagePreview ? (
-                <Box
+                <MotionBox
                     role="img"
                     width="100"
                     height="100"
@@ -127,7 +127,9 @@ const PastedFile = (props: PastedFileProps) => {
                         backgroundRepeat: 'no-repeat',
                     }}
                     rounded="sm"
-                    opacity={waitingToSend || sending ? '0.5' : 'opaque'}
+                    animate={{
+                        opacity: props.progress < 1 || waitingToSend ? 0.5 : 1,
+                    }}
                 />
             ) : (
                 <Box padding paddingRight="lg" border="level3" rounded="sm">
@@ -141,7 +143,7 @@ const PastedFile = (props: PastedFileProps) => {
                 <Box position="absoluteCenter" overflow="hidden">
                     <ButtonSpinner />
                 </Box>
-            ) : (
+            ) : waitingToSend ? (
                 <IconButton
                     icon="close"
                     color="default"
@@ -150,6 +152,8 @@ const PastedFile = (props: PastedFileProps) => {
                     tooltipOptions={{ immediate: true }}
                     onClick={() => removeFile?.(id)}
                 />
+            ) : (
+                <></>
             )}
         </MotionBox>
     )

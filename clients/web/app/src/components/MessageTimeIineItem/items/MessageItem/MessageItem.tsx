@@ -8,6 +8,7 @@ import {
     useTownsClient,
 } from 'use-towns-client'
 import { useSearchParams } from 'react-router-dom'
+import { AnimatePresence } from 'framer-motion'
 import {
     MessageLayout,
     MessageLayoutProps,
@@ -15,7 +16,7 @@ import {
 } from '@components/MessageLayout/MessageLayout'
 import { RatioedBackgroundImage } from '@components/RatioedBackgroundImage'
 import { useDevice } from 'hooks/useDevice'
-import { TooltipRenderer } from '@ui'
+import { Box, TooltipRenderer } from '@ui'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
 import { QUERY_PARAMS } from 'routes'
 import { SendStatus } from '@components/MessageLayout/SendStatusIndicator'
@@ -38,6 +39,9 @@ import {
 } from '@components/MessageTimeline/util/getEventsByDate'
 import { TimelineEncryptedContent } from '@components/EncryptedContent/EncryptedMessageBody'
 import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
+import { useUploadStore } from '@components/MediaDropContext/uploadStore'
+import { PastedFile } from '@components/RichTextPlate/components/PasteFilePlugin'
+import { FileUpload } from '@components/MediaDropContext/mediaDropTypes'
 import { TimelineMessageEditor } from '../MessageEditor'
 import { MessageBody } from './MessageBody/MessageBody'
 import { QuotedMessage } from './QuotedMessage'
@@ -88,6 +92,10 @@ export const MessageItem = (props: Props) => {
         }
         client.retrySendMessage(timelineContext.channelId, event.localEventId)
     }, [client, timelineContext, event.localEventId])
+
+    const messageUploads = useUploadStore((state) =>
+        event.localEventId ? state.uploads[event.localEventId]?.uploads : undefined,
+    )
 
     const attachedLinks = useMemo(() => {
         return (
@@ -207,12 +215,35 @@ export const MessageItem = (props: Props) => {
                                 tooltip={<ProfileHoverCard userId={hoveredMentionUserId} />}
                             />
                         )}
+
+                        {!!messageUploads?.length && <MessageUploads uploads={messageUploads} />}
                     </>
                 )
             ) : (
                 <>not a message</>
             )}
         </MessageWrapper>
+    )
+}
+
+const MessageUploads = (props: { uploads: FileUpload[] }) => {
+    const { uploads } = props
+
+    return (
+        <Box gap horizontal>
+            <AnimatePresence>
+                {uploads.map((u) => (
+                    <PastedFile
+                        sending={u.progress < 1}
+                        id={u.id}
+                        key={u.id}
+                        content={u.content}
+                        progress={u.progress}
+                        waitingToSend={false}
+                    />
+                ))}
+            </AnimatePresence>
+        </Box>
     )
 }
 
@@ -289,7 +320,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
         <MessageLayout
             avatarSize="avatar_x4"
             editing={isEditing}
-            id={`event-${event.eventId}`}
+            id={`event-${event.localEventId ?? event.eventId}`}
             highlight={props.highlight}
             selectable={selectable}
             userId={userId}

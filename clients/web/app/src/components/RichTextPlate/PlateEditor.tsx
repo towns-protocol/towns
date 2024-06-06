@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Plate, PlateEditor, TElement, resetEditor } from '@udecode/plate-common'
 import {
+    Attachment,
     Channel,
     EmbeddedMessageAttachment,
     Mention,
@@ -104,7 +105,7 @@ const PlateEditorWithoutBoundary = ({
 
     const { isTouch } = useDevice()
     const { isOffline } = useNetworkStatus()
-    const { uploadFiles, files, isUploadingFiles } = useMediaDropContext()
+    const { uploadFiles, files } = useMediaDropContext()
     const { inlineReplyPreview, onCancelInlineReply } = useInlineReplyAttchmentPreview()
     const [isSendingMessage, setIsSendingMessage] = useState(false)
 
@@ -253,32 +254,50 @@ const PlateEditorWithoutBoundary = ({
 
     const onSendCb = useCallback(
         async (message: string, mentions: Mention[]) => {
-            if (isUploadingFiles) {
+            if (!onSend) {
                 return
             }
+
             setIsSendingMessage(true)
 
-            const attachments = files.length > 0 ? (await uploadFiles?.()) ?? [] : []
+            const attachments: Attachment[] = []
             attachments.push(...embeddedMessageAttachments)
             attachments.push(...unfurledLinkAttachments)
 
-            const options: SendTextMessageOptions = { messageType: MessageType.Text }
+            const options: SendTextMessageOptions = {
+                messageType: MessageType.Text,
+            }
+
             if (mentions.length > 0) {
                 options.mentions = mentions
             }
+
             if (attachments.length > 0) {
                 options.attachments = attachments
             }
-            onSend?.(message, options)
+
+            if (uploadFiles && files?.length > 0) {
+                // used to defer the send event until the files are uploaded
+                const deferredRef: { resolve?: () => void } = {}
+                options.beforeSendEventHook = new Promise((resolve) => {
+                    deferredRef.resolve = resolve
+                })
+                // callback invoked when the local event has been added to the stream
+                options.onLocalEventAppended = async (localId: string) => {
+                    await uploadFiles(localId)
+                    deferredRef.resolve?.()
+                }
+            }
+
+            onSend(message, options)
             resetEditorAfterSend()
         },
         [
-            files.length,
-            uploadFiles,
+            onSend,
             embeddedMessageAttachments,
             unfurledLinkAttachments,
-            onSend,
-            isUploadingFiles,
+            uploadFiles,
+            files?.length,
             resetEditorAfterSend,
         ],
     )

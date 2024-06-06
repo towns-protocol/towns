@@ -156,7 +156,14 @@ export interface ThreadIdOptions {
     threadParticipants?: Set<string>
 }
 
-export type SendTextMessageOptions = ThreadIdOptions & {
+interface SendHooksOptions {
+    onLocalEventAppended?: (localId: string) => void
+    beforeSendEventHook?: Promise<void>
+}
+
+type SendMessageOptionsBase = SendHooksOptions & SpaceIdOptions & ThreadIdOptions
+
+export type SendTextMessageOptions = SendMessageOptionsBase & {
     messageType?: MessageType.Text
     mentions?: Mention[]
     attachments?: Attachment[]
@@ -168,11 +175,11 @@ export interface Mention {
     atChannel?: boolean
 }
 
-export type SendGMOptions = ThreadIdOptions & {
+export type SendGMOptions = SendMessageOptionsBase & {
     messageType: MessageType.GM
 }
 
-export type SendImageMessageOptions = ThreadIdOptions & {
+export type SendImageMessageOptions = SendMessageOptionsBase & {
     messageType: MessageType.Image
     info: {
         url: string
@@ -198,12 +205,7 @@ export interface SpaceIdOptions {
     parentSpaceId?: string
 }
 
-export type SendMessageOptionsBase =
-    | SendTextMessageOptions
-    | SendGMOptions
-    | SendImageMessageOptions
-
-export type SendMessageOptions = SendMessageOptionsBase & SpaceIdOptions
+export type SendMessageOptions = SendTextMessageOptions | SendGMOptions | SendImageMessageOptions
 
 export function isMentionedTextMessageOptions(
     options: SendMessageOptions,

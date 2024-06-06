@@ -1,42 +1,24 @@
+import { uniqueId } from 'lodash'
 import React, { createContext, useCallback, useContext, useState } from 'react'
 import { toast } from 'react-hot-toast/headless'
-import { uniqueId } from 'lodash'
-import { isDefined } from '@river/sdk'
-import { Attachment } from 'use-towns-client'
-import { Box, Heading, Icon, Stack } from '@ui'
 import { useDevice } from 'hooks/useDevice'
-import { isMediaMimeType } from 'utils/isMediaMimeType'
 import { FileUploadFailedToast } from '@components/FileUploadFailedToast/FileUploadFailedToast'
-import { useUploadAttachment } from './useUploadAttachment'
-
-type FileUploadFileContent = {
-    kind: 'file'
-    file: File
-}
-
-type FileUploadAttachmentContent = {
-    kind: 'attachment'
-    attachment: Attachment
-}
-
-export type FileUpload = {
-    id: string
-    content: FileUploadFileContent | FileUploadAttachmentContent
-    progress: number
-}
+import { Box, Heading, Icon, Stack } from '@ui'
+import { isMediaMimeType } from 'utils/isMediaMimeType'
+import { FileUpload, FileUploadFileContent } from './mediaDropTypes'
+import { useUploadToMessage } from './useUploadToMessage'
 
 const MediaDropContext = createContext<{
     files: FileUpload[]
     channelId: string
     eventId?: string
-    isUploadingFiles: boolean
+    clearFiles?: () => void
     removeFile?: (id: string) => void
-    uploadFiles?: () => Promise<Attachment[]>
+    uploadFiles?: (messageId: string) => Promise<void>
     addFiles?: (files: File[]) => void
 }>({
     files: [],
     channelId: '',
-    isUploadingFiles: false,
 })
 
 export const useMediaDropContext = () => {
@@ -57,47 +39,24 @@ export const MediaDropContextProvider = ({
     const { channelId, spaceId, disableDrop } = props
     const [isDragging, setIsDragging] = useState(false)
 
-    const [isUploadingFiles, setIsUploadingFiles] = useState(false)
-    const [files, setFiles] = useState<FileUpload[]>([])
-    const { uploadAttachment } = useUploadAttachment()
-
     const { isTouch } = useDevice()
 
-    const uploadFiles = useCallback(async () => {
-        setIsUploadingFiles(true)
-        const uploads = [...files]
-        for (const file of uploads) {
-            if (file.content.kind === 'attachment') {
-                continue
+    // files ready to upload
+    const [files, setFiles] = useState<FileUpload<FileUploadFileContent>[]>([])
+
+    const { uploadToMessage } = useUploadToMessage()
+
+    const uploadFiles = useCallback(
+        (messageId: string) => {
+            if (!channelId) {
+                throw new Error('missing spaceId or channelId')
             }
-            const attachment = await uploadAttachment(
-                channelId,
-                spaceId,
-                file.content.file,
-                (progress) => {
-                    const index = uploads.findIndex((f) => f.id === file.id)
-                    if (index > -1) {
-                        uploads[index].progress = progress
-                    }
-                    setFiles([...uploads])
-                },
-            )
-            const index = uploads.findIndex((f) => f.id === file.id)
-            if (index > -1) {
-                uploads[index].content = {
-                    kind: 'attachment',
-                    attachment: attachment,
-                }
-                uploads[index].progress = 1
-            }
-            setFiles([...uploads])
-        }
-        setFiles([])
-        setIsUploadingFiles(false)
-        return uploads
-            .map((f) => (f.content.kind === 'attachment' ? f.content.attachment : undefined))
-            .filter(isDefined)
-    }, [files, uploadAttachment, channelId, spaceId])
+            const result = uploadToMessage({ files, spaceId, channelId, messageId })
+            setFiles([])
+            return result
+        },
+        [channelId, files, spaceId, uploadToMessage],
+    )
 
     const removeFile = useCallback(
         (id: string) => {
@@ -106,9 +65,13 @@ export const MediaDropContextProvider = ({
         [files, setFiles],
     )
 
+    const clearFiles = useCallback(() => {
+        setFiles([])
+    }, [])
+
     const addFiles = useCallback(
         (addedFiles: File[]) => {
-            const filteredFiles: FileUpload[] = files
+            const filteredFiles: FileUpload<FileUploadFileContent>[] = files
             const MAX_IMAGE_COUNT = 8
             for (const file of addedFiles) {
                 if (filteredFiles.length >= MAX_IMAGE_COUNT) {
@@ -182,9 +145,9 @@ export const MediaDropContextProvider = ({
                 addFiles: addFiles,
                 channelId: props.channelId,
                 eventId: props.eventId,
+                clearFiles: clearFiles,
                 removeFile: removeFile,
                 uploadFiles: uploadFiles,
-                isUploadingFiles: isUploadingFiles,
             }}
         >
             <Box display="contents" onDragEnter={isTouch ? undefined : onDragEnter}>

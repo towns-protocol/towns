@@ -42,6 +42,7 @@ export const MessageBody = ({
     )
 
     let statusAnnotation: MessageStatusAnnotation | undefined = undefined
+
     if (eventContent.editsEventId !== undefined) {
         statusAnnotation = 'edited' as const
     } else if (event.status === EventStatus.NOT_SENT) {

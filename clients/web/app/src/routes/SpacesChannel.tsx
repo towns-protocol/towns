@@ -14,7 +14,6 @@ import {
     Channel,
     ChannelContextProvider,
     Membership,
-    MessageType,
     SendMessageOptions,
     useChannelData,
     useChannelTimeline,
@@ -114,12 +113,7 @@ export const SpacesChannelComponent = (props: Props) => {
 
     const onSend = useCallback(
         (value: string, options: SendMessageOptions | undefined) => {
-            const valid =
-                channelId &&
-                (value.length > 0 ||
-                    (options?.messageType === MessageType.Text && options.attachments?.length))
-
-            if (!valid) {
+            if (!channelId) {
                 return
             }
 
