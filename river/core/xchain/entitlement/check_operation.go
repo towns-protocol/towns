@@ -26,6 +26,23 @@ func (e *Evaluator) evaluateCheckOperation(
 	switch op.CheckType {
 	case MOCK:
 		return e.evaluateMockOperation(ctx, op)
+	case CheckNONE:
+		return false, fmt.Errorf("unknown operation")
+	}
+
+	// Sanity checks
+	log := dlog.FromCtx(ctx).With("function", "evaluateCheckOperation")
+	if op.ChainID == nil {
+		log.Info("Chain ID is nil")
+		return false, fmt.Errorf("evaluateCheckOperation: Chain ID is nil")
+	}
+	zeroAddress := common.Address{}
+	if op.ContractAddress == zeroAddress {
+		log.Info("Contract address is nil")
+		return false, fmt.Errorf("evaluateCheckOperation: Contract address is nil")
+	}
+
+	switch op.CheckType {
 	case ISENTITLED:
 		return e.evaluateIsEntitledOperation(ctx, op, linkedWallets)
 	case ERC20:
@@ -34,8 +51,6 @@ func (e *Evaluator) evaluateCheckOperation(
 		return e.evaluateErc721Operation(ctx, op, linkedWallets)
 	case ERC1155:
 		return e.evaluateErc1155Operation(ctx, op)
-	case CheckNONE:
-		fallthrough
 	default:
 		return false, fmt.Errorf("unknown operation")
 	}
@@ -66,11 +81,11 @@ func (e *Evaluator) evaluateIsEntitledOperation(
 	op *CheckOperation,
 	linkedWallets []common.Address,
 ) (bool, error) {
-	log := dlog.FromCtx(ctx).With("function", "evaluateErc20Operation")
+	log := dlog.FromCtx(ctx).With("function", "evaluateIsEntitledOperation")
 	client, err := e.clients.Get(op.ChainID.Uint64())
 	if err != nil {
 		log.Error("Chain ID not found", "chainID", op.ChainID)
-		return false, fmt.Errorf("evaluateErc20Operation: Chain ID %v not found", op.ChainID)
+		return false, fmt.Errorf("evaluateIsEntitledOperation: Chain ID %v not found", op.ChainID)
 	}
 
 	customEntitlementChecker, err := contracts.NewICustomEntitlement(
@@ -175,7 +190,7 @@ func (e *Evaluator) evaluateErc721Operation(
 	client, err := e.clients.Get(op.ChainID.Uint64())
 	if err != nil {
 		log.Error("Chain ID not found", "chainID", op.ChainID)
-		return false, fmt.Errorf("evaluateErc20Operation: Chain ID %v not found", op.ChainID)
+		return false, fmt.Errorf("evaluateErc721Operation: Chain ID %v not found", op.ChainID)
 	}
 
 	nft, err := erc721.NewErc721Caller(op.ContractAddress, client)

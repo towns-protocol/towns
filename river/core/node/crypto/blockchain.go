@@ -2,15 +2,14 @@ package crypto
 
 import (
 	"context"
-	"math/big"
-
+	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/ethclient"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/infra"
 	. "github.com/river-build/river/core/node/protocol"
-
-	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/ethclient"
+	"math/big"
+	"time"
 )
 
 // BlockchainClient is an interface that covers common functionality
@@ -71,7 +70,7 @@ func NewBlockchain(
 			Func("NewBlockchain")
 	}
 
-	return NewBlockchainWithClient(ctx, cfg, wallet, client, client, NewChainMonitor(), metrics)
+	return NewBlockchainWithClient(ctx, cfg, wallet, client, client, metrics)
 }
 
 func NewBlockchainWithClient(
@@ -80,7 +79,6 @@ func NewBlockchainWithClient(
 	wallet *Wallet,
 	client BlockchainClient,
 	clientCloser Closable,
-	chainMonitor ChainMonitor,
 	metrics infra.MetricsFactory,
 ) (*Blockchain, error) {
 	if cfg.BlockTimeMs <= 0 {
@@ -94,7 +92,7 @@ func NewBlockchainWithClient(
 			Func("NewBlockchainWithClient")
 	}
 
-	if chainId.Uint64() != uint64(cfg.ChainId) {
+	if chainId.Uint64() != cfg.ChainId {
 		return nil, RiverError(Err_BAD_CONFIG, "Chain id mismatch",
 			"configured", cfg.ChainId,
 			"providerChainId", chainId.Uint64()).Func("NewBlockchainWithClient")
@@ -110,14 +108,24 @@ func NewBlockchainWithClient(
 	}
 	initialBlockNum := BlockNumber(blockNum)
 
+	monitor := NewChainMonitor()
+
 	bc := &Blockchain{
 		ChainId:         big.NewInt(int64(cfg.ChainId)),
 		Client:          client,
 		ClientCloser:    clientCloser,
 		Config:          cfg,
 		InitialBlockNum: initialBlockNum,
-		ChainMonitor:    chainMonitor,
+		ChainMonitor:    monitor,
 	}
+
+	go monitor.RunWithBlockPeriod(
+		ctx,
+		client,
+		initialBlockNum,
+		time.Duration(cfg.BlockTimeMs)*time.Millisecond,
+		metrics,
+	)
 
 	if wallet != nil {
 		bc.Wallet = wallet

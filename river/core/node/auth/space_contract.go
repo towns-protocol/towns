@@ -8,7 +8,7 @@ import (
 	"github.com/river-build/river/core/xchain/contracts"
 )
 
-type SpaceEntitlements struct {
+type Entitlement struct {
 	entitlementType string
 	ruleEntitlement *contracts.IRuleData
 	userEntitlement []common.Address
@@ -38,10 +38,21 @@ type SpaceContract interface {
 		ctx context.Context,
 		spaceId shared.StreamId,
 		permission Permission,
-	) ([]SpaceEntitlements, common.Address, error)
+	) ([]Entitlement, common.Address, error)
+	GetChannelEntitlementsForPermission(
+		ctx context.Context,
+		spaceId shared.StreamId,
+		channelId shared.StreamId,
+		permission Permission,
+	) ([]Entitlement, common.Address, error)
 	IsMember(
 		ctx context.Context,
 		spaceId shared.StreamId,
 		user common.Address,
+	) (bool, error)
+	IsBanned(
+		ctx context.Context,
+		spaceId shared.StreamId,
+		linkedWallets []common.Address,
 	) (bool, error)
 }

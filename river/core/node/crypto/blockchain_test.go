@@ -1,6 +1,8 @@
 package crypto
 
 import (
+	"context"
+	"github.com/river-build/river/core/node/contracts"
 	"math/big"
 	"testing"
 
@@ -196,4 +198,58 @@ func TestBlockchain(t *testing.T) {
 	}
 	require.True(lastPageSeen)
 	require.Equal(allIds, seenIds, "allIds: %v, seenIds: %v", allIds, seenIds)
+}
+
+func TestBlockchainMultiMonitor(t *testing.T) {
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
+	require := require.New(t)
+	assert := assert.New(t)
+
+	tc, err := NewBlockchainTestContext(ctx, 3, true)
+	require.NoError(err)
+	defer tc.Close()
+
+	abi, err := contracts.NodeRegistryV1MetaData.GetAbi()
+	require.NoError(err, "node registry abi")
+
+	var (
+		deployer        = tc.DeployerBlockchain
+		node            = tc.GetBlockchain(ctx, 0)
+		chain0          = tc.GetBlockchain(ctx, 1)
+		chain1          = tc.GetBlockchain(ctx, 2)
+		collectedEvents = make(chan types.Log, 10)
+		nodeAddedTopic  = abi.Events["NodeAdded"].ID
+		bindLogCallback = func(ctx context.Context, log types.Log) { collectedEvents <- log }
+	)
+
+	tc.Commit(ctx)
+
+	// ensure that all chain monitor capture the node added event
+	deployer.ChainMonitor.OnContractWithTopicsEvent(
+		tc.RiverRegistryAddress, [][]common.Hash{{nodeAddedTopic}}, bindLogCallback)
+	chain0.ChainMonitor.OnContractWithTopicsEvent(
+		tc.RiverRegistryAddress, [][]common.Hash{{nodeAddedTopic}}, bindLogCallback)
+	chain1.ChainMonitor.OnContractWithTopicsEvent(
+		tc.RiverRegistryAddress, [][]common.Hash{{nodeAddedTopic}}, bindLogCallback)
+
+	// register node that triggers the above registered callbacks
+	pendingTx, err := deployer.TxPool.Submit(ctx, "", func(opts *bind.TransactOpts) (*types.Transaction, error) {
+		return tc.NodeRegistry.RegisterNode(
+			opts, node.Wallet.Address,
+			"http://TestBlockchainMultiMonitor.test",
+			contracts.NodeStatus_NotInitialized)
+	})
+
+	require.NoError(err, "submit RegisterNode tx")
+	receipt := <-pendingTx.Wait()
+	require.Equal(TransactionResultSuccess, receipt.Status, "RegisterNode tx failed")
+
+	// make sure that all chain monitor received the event
+	for i := 0; i < 3; i++ {
+		event := <-collectedEvents
+		assert.Equal(nodeAddedTopic, event.Topics[0], "unexpected event")
+	}
+
+	require.Equal(0, len(collectedEvents), "more pending events than expected")
 }

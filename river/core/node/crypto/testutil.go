@@ -64,7 +64,6 @@ type BlockchainTestContext struct {
 	Configuration        *contracts.RiverConfigV1
 	ChainId              *big.Int
 	DeployerBlockchain   *Blockchain
-	ChainMonitor         ChainMonitor
 }
 
 func initSimulated(ctx context.Context, numKeys int) ([]*Wallet, *simulated.Backend, error) {
@@ -192,34 +191,14 @@ func NewBlockchainTestContext(ctx context.Context, numKeys int, mineOnTx bool) (
 	// Add one for deployer
 	numKeys += 1
 
-	var wallets []*Wallet
-	var backend *simulated.Backend
-	var ethClient *ethclient.Client
+	wallets, backend, ethClient, isRemote, err := initChainContext(ctx, numKeys)
+	if err != nil {
+		return nil, err
+	}
+
 	var client BlockchainClient
-	var err error
-
-	remoteNodeURL := os.Getenv("RIVER_REMOTE_NODE_URL")
-	remoteFundAccount := os.Getenv("RIVER_REMOTE_NODE_FUND_PRIVATE_KEY")
-	anvilUrl := os.Getenv("RIVER_TEST_ANVIL_URL")
-
-	remoteNode := remoteNodeURL != "" && remoteFundAccount != ""
-	if remoteNode {
-		wallets, ethClient, err = initRemoteNode(ctx, remoteNodeURL, remoteFundAccount, numKeys)
-		if err != nil {
-			return nil, err
-		}
-		client = ethClient
-	} else if anvilUrl != "" {
-		wallets, ethClient, err = initAnvil(ctx, anvilUrl, numKeys)
-		if err != nil {
-			return nil, err
-		}
-		client = ethClient
-	} else {
-		wallets, backend, err = initSimulated(ctx, numKeys)
-		if err != nil {
-			return nil, err
-		}
+	client = ethClient
+	if backend != nil {
 		client = backend.Client()
 	}
 
@@ -231,10 +210,10 @@ func NewBlockchainTestContext(ctx context.Context, numKeys int, mineOnTx bool) (
 	btc := &BlockchainTestContext{
 		Backend:    backend,
 		EthClient:  ethClient,
-		RemoteNode: remoteNode,
-
-		Wallets: wallets,
-		ChainId: chainId,
+		RemoteNode: isRemote,
+		Wallets:    wallets,
+		ChainId:    chainId,
+		BcClient:   client,
 	}
 
 	if mineOnTx {
@@ -277,15 +256,7 @@ func NewBlockchainTestContext(ctx context.Context, numKeys int, mineOnTx bool) (
 	}
 
 	// Add deployer as operator so it can register nodes
-	btc.ChainMonitor = NewChainMonitor()
-	btc.DeployerBlockchain = makeTestBlockchain(ctx, wallets[len(wallets)-1], client, btc.ChainMonitor, chainId)
-	go btc.ChainMonitor.RunWithBlockPeriod(
-		ctx,
-		client,
-		btc.DeployerBlockchain.InitialBlockNum,
-		10*time.Millisecond,
-		infra.NewMetrics("", ""),
-	)
+	btc.DeployerBlockchain = makeTestBlockchain(ctx, wallets[len(wallets)-1], client)
 
 	// commit the river registry deployment transaction
 	if !mineOnTx {
@@ -294,7 +265,7 @@ func NewBlockchainTestContext(ctx context.Context, numKeys int, mineOnTx bool) (
 		}
 	}
 
-	if err = setOnChainConfig(ctx, btc); err != nil {
+	if err = setDefaultOnChainConfig(ctx, btc); err != nil {
 		return nil, err
 	}
 
@@ -308,7 +279,31 @@ func NewBlockchainTestContext(ctx context.Context, numKeys int, mineOnTx bool) (
 	return btc, nil
 }
 
-func setOnChainConfig(ctx context.Context, btc *BlockchainTestContext) error {
+func initChainContext(ctx context.Context, numKeys int) ([]*Wallet, *simulated.Backend, *ethclient.Client, bool, error) {
+	var (
+		remoteNodeURL     = os.Getenv("RIVER_REMOTE_NODE_URL")
+		remoteFundAccount = os.Getenv("RIVER_REMOTE_NODE_FUND_PRIVATE_KEY")
+		anvilUrl          = os.Getenv("RIVER_TEST_ANVIL_URL")
+		remoteNode        = remoteNodeURL != "" && remoteFundAccount != ""
+	)
+
+	if remoteNode {
+		wallets, client, err := initRemoteNode(ctx, remoteNodeURL, remoteFundAccount, numKeys)
+		return wallets, nil, client, true, err
+	} else if anvilUrl != "" {
+		wallets, client, err := initAnvil(ctx, anvilUrl, numKeys)
+		return wallets, nil, client, false, err
+	}
+
+	wallets, backend, err := initSimulated(ctx, numKeys)
+	if err != nil {
+		return nil, nil, nil, false, err
+	}
+
+	return wallets, backend, nil, false, nil
+}
+
+func setDefaultOnChainConfig(ctx context.Context, btc *BlockchainTestContext) error {
 	var pendingTransactions []TransactionPoolPendingTransaction
 	for _, key := range configKeyIDToKey {
 		pendingTx, err := btc.DeployerBlockchain.TxPool.Submit(ctx, "SetConfiguration",
@@ -449,25 +444,27 @@ func makeTestBlockchain(
 	ctx context.Context,
 	wallet *Wallet,
 	client BlockchainClient,
-	chainMonitor ChainMonitor,
-	chainId *big.Int,
 ) *Blockchain {
+	chainID, err := client.ChainID(ctx)
+	if err != nil {
+		panic(err)
+	}
 	bc, err := NewBlockchainWithClient(
 		ctx,
 		&config.ChainConfig{
-			ChainId:         chainId.Uint64(),
+			ChainId:         chainID.Uint64(),
 			BlockTimeMs:     100,
 			TransactionPool: config.TransactionPoolConfig{}, // use defaults
 		},
 		wallet,
 		client,
 		nil,
-		chainMonitor,
 		infra.NewMetrics("", ""),
 	)
 	if err != nil {
 		panic(err)
 	}
+
 	return bc
 }
 
@@ -475,7 +472,7 @@ func (c *BlockchainTestContext) GetBlockchain(ctx context.Context, index int) *B
 	if index >= len(c.Wallets) {
 		return nil
 	}
-	return makeTestBlockchain(ctx, c.Wallets[index], c.Client(), c.ChainMonitor, c.ChainId)
+	return makeTestBlockchain(ctx, c.Wallets[index], c.Client())
 }
 
 func (c *BlockchainTestContext) NewWalletAndBlockchain(ctx context.Context) *Blockchain {
@@ -483,7 +480,7 @@ func (c *BlockchainTestContext) NewWalletAndBlockchain(ctx context.Context) *Blo
 	if err != nil {
 		panic(err)
 	}
-	return makeTestBlockchain(ctx, wallet, c.Client(), c.ChainMonitor, c.ChainId)
+	return makeTestBlockchain(ctx, wallet, c.Client())
 }
 
 func (c *BlockchainTestContext) InitNodeRecord(ctx context.Context, index int, url string) error {

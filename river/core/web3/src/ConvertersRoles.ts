@@ -42,7 +42,7 @@ export async function createEntitlementStruct<Space extends SpaceV3>(
         entitlements.push(userEntitlement)
     }
 
-    if (ruleData) {
+    if (ruleData.operations.length > 0) {
         const ruleEntitlement: EntitlementStruct = createRuleEntitlementStruct(
             ruleEntitlementAddress as `0x{string}`,
             ruleData,

@@ -37,7 +37,7 @@ func TestNewTransactionPoolWithReplaceTx(t *testing.T) {
 		tc.DeployerBlockchain.Wallet,
 		resubmitPolicy,
 		repricePolicy,
-		tc.ChainMonitor,
+		tc.DeployerBlockchain.ChainMonitor,
 		infra.NewMetrics("", ""),
 	)
 	require.NoError(err, "unable to construct transaction pool")

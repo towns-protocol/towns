@@ -98,7 +98,8 @@ func TestLoadConfiguration(t *testing.T) {
 	}
 
 	// load on chain-config and ensure that the missing keys are loaded with their default values
-	cfg, err := NewOnChainConfig(ctx, btc.Client(), btc.RiverRegistryAddress, btc.BlockNum(ctx), btc.ChainMonitor)
+	cfg, err := NewOnChainConfig(
+		ctx, btc.Client(), btc.RiverRegistryAddress, btc.BlockNum(ctx), btc.DeployerBlockchain.ChainMonitor)
 	require.NoError(err, "unable to construct on-chain config")
 
 	for _, key := range configKeyIDToKey {

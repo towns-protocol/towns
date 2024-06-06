@@ -228,7 +228,6 @@ func TestArchiveOneStream(t *testing.T) {
 	archiveCfg.Archive.ArchiveId = "arch" + GenShortNanoid()
 	archiveCfg.Archive.ReadMiniblocksSize = 3
 
-	chainMonitor := tester.btc.ChainMonitor
 	bc := tester.btc.NewWalletAndBlockchain(ctx)
 
 	registryContract, err := registries.NewRiverRegistryContract(ctx, bc, &archiveCfg.RegistryContract)
@@ -240,7 +239,7 @@ func TestArchiveOneStream(t *testing.T) {
 		registryContract,
 		common.Address{},
 		bc.InitialBlockNum,
-		chainMonitor,
+		bc.ChainMonitor,
 	)
 	require.NoError(err)
 

@@ -169,7 +169,8 @@ func (a *AndOperation) SetRightOperation(right Operation) {
 }
 
 func getOperationTree(ctx context.Context,
-	ruleData *er.IRuleData) (Operation, error) {
+	ruleData *er.IRuleData,
+) (Operation, error) {
 	log := dlog.FromCtx(ctx)
 	decodedOperations := []Operation{}
 	log.Debug("Decoding operations", "ruleData", ruleData)

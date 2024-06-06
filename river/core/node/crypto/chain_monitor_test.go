@@ -34,7 +34,7 @@ func TestChainMonitorBlocks(t *testing.T) {
 		}
 	)
 
-	tc.ChainMonitor.OnBlock(onBlockCallback)
+	tc.DeployerBlockchain.ChainMonitor.OnBlock(onBlockCallback)
 
 	var prev uint64
 	for i := 0; i < 5; i++ {
@@ -175,10 +175,10 @@ func TestChainMonitorEvents(t *testing.T) {
 		addrs = []common.Address{tc.Wallets[0].Address}
 	)
 
-	tc.ChainMonitor.OnBlock(onBlockCallback)
-	tc.ChainMonitor.OnAllEvents(allEventCallback)
-	tc.ChainMonitor.OnContractEvent(tc.RiverRegistryAddress, contractEventCallback)
-	tc.ChainMonitor.OnContractWithTopicsEvent(
+	tc.DeployerBlockchain.ChainMonitor.OnBlock(onBlockCallback)
+	tc.DeployerBlockchain.ChainMonitor.OnAllEvents(allEventCallback)
+	tc.DeployerBlockchain.ChainMonitor.OnContractEvent(tc.RiverRegistryAddress, contractEventCallback)
+	tc.DeployerBlockchain.ChainMonitor.OnContractWithTopicsEvent(
 		tc.RiverRegistryAddress,
 		[][]common.Hash{{nodeRegistryABI.Events["NodeAdded"].ID}},
 		contractWithTopicsEventCallback,
