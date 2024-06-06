@@ -129,14 +129,14 @@ function PillRenderer(params: {
     usersMap: LookupUserMap
     onDelete: (customKey?: string) => void
 }) {
-    const { address, usersMap, onDelete } = params
+    const { address: aaAddress, usersMap, onDelete } = params
     const offlineWalletAddressMap = useOfflineStore((state) => state.offlineWalletAddressMap)
 
-    // need to get root key address b/c avatar and username are based on root key address/userId
+    // need to get root key for avatar and username
     const rootKeyAddress = Object.keys(offlineWalletAddressMap).find(
-        (key) => offlineWalletAddressMap[key] === address,
+        (key) => offlineWalletAddressMap[key] === aaAddress,
     )
-    const everyone = isEveryoneAddress(address)
+    const everyone = isEveryoneAddress(aaAddress)
 
     return (
         <Box
@@ -147,7 +147,7 @@ function PillRenderer(params: {
             background="level3"
             rounded="md"
             alignItems="center"
-            data-testid={`user-pill-selector-pill-${rootKeyAddress}`}
+            data-testid={`user-pill-selector-pill-${aaAddress}`}
         >
             {everyone ? (
                 <Avatar size="avatar_xs" icon="people" iconSize="square_xs" />
@@ -160,15 +160,15 @@ function PillRenderer(params: {
                 getPrettyDisplayName(usersMap[rootKeyAddress])}
             <Box
                 whiteSpace="nowrap"
-                tooltip={everyone ? 'All wallet addresses' : rootKeyAddress}
+                tooltip={everyone ? 'All wallet addresses' : aaAddress}
                 fontSize="sm"
                 color={everyone ? 'default' : 'gray2'}
             >
-                {everyone ? <Text>Everyone</Text> : rootKeyAddress && shortAddress(rootKeyAddress)}
+                {everyone ? <Text>Everyone</Text> : aaAddress && shortAddress(aaAddress)}
             </Box>
 
             <IconButton
-                data-testid={`user-pill-delete-${rootKeyAddress}`}
+                data-testid={`user-pill-delete-${aaAddress}`}
                 icon="close"
                 size="square_xs"
                 onClick={() => {
