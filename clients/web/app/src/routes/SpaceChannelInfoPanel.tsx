@@ -41,7 +41,6 @@ export const ChannelInfo = () => {
     const { loggedInWalletAddress } = useConnectivity()
     const { hasPermission: canEditChannel } = useHasPermission({
         spaceId: spaceData?.id ?? '',
-        channelId: channel?.id,
         walletAddress: loggedInWalletAddress ?? '',
         permission: Permission.AddRemoveChannels,
     })
