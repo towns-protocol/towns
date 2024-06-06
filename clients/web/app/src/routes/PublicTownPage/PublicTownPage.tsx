@@ -29,7 +29,6 @@ import { darkTheme } from 'ui/styles/vars.css'
 import { shortAddress } from 'ui/utils/utils'
 import { AppProgressOverlayTrigger } from '@components/AppProgressOverlay/AppProgressOverlayTrigger'
 import { BottomBarContent } from './BottomBarContent'
-import { useConnectedStatus } from './useConnectedStatus'
 import { usePublicPageLoginFlow } from './usePublicPageLoginFlow'
 
 const log = debug('app:public-town')
@@ -38,7 +37,7 @@ log.enabled = true
 const PublicTownPageWithoutAuth = (props: { isPreview?: boolean; onClosePreview?: () => void }) => {
     const { isPreview = false, onClosePreview } = props
     const spaceId = useSpaceIdFromPathname()
-    const { connected, isLoading: isLoadingConnected } = useConnectedStatus()
+    const { isConnected: connected } = useCombinedAuth()
 
     const { data: spaceInfo, isLoading } = useContractSpaceInfoWithoutClient(spaceId)
 
@@ -98,14 +97,7 @@ const PublicTownPageWithoutAuth = (props: { isPreview?: boolean; onClosePreview?
 
             <Box absoluteFill height="100dvh" bottom="none" className={className}>
                 <TownPageLayout
-                    headerContent={
-                        <Header
-                            connected={connected}
-                            isLoadingConnected={isLoadingConnected}
-                            isPreview={isPreview}
-                            onClosePreview={onClosePreview}
-                        />
-                    }
+                    headerContent={<Header isPreview={isPreview} onClosePreview={onClosePreview} />}
                     bottomContent={({ leftColWidth, rightColWidth }) => (
                         <BottomBarContent
                             isJoining={isJoining}
@@ -157,13 +149,9 @@ export const PublicTownPage = React.memo(
     },
 )
 
-const Header = (props: {
-    connected: boolean
-    isLoadingConnected: boolean
-    isPreview: boolean
-    onClosePreview?: () => void
-}) => {
-    const { connected, isLoadingConnected, isPreview, onClosePreview } = props
+const Header = (props: { isPreview: boolean; onClosePreview?: () => void }) => {
+    const { isAuthenticated } = useConnectivity()
+    const { isPreview, onClosePreview } = props
     const [isShowingBugReport, setIsShowingBugReport] = useState(false)
     const onShowBugReport = useCallback(() => {
         setIsShowingBugReport(true)
@@ -216,9 +204,7 @@ const Header = (props: {
                             <Icon size="square_sm" type="bug" color="default" />
                         </Box>
 
-                        {isLoadingConnected ? (
-                            <Box width="x4" aspectRatio="1/1" />
-                        ) : connected ? (
+                        {isAuthenticated ? (
                             <LoggedUserAvatar />
                         ) : (
                             <Button
@@ -276,15 +262,9 @@ const MessageBox = ({ children, ...boxProps }: BoxProps) => (
 
 const LoggedUserAvatar = () => {
     const profileUser = useMyProfile()
-    // Other authed routes are behind isAuthenticatedAndConnected
-    // but b/c this page is for both public and authed users, there are edge cases where a user might have profile data
-    // but some other condition for them to be authed is not met (like the signer is not set)
-    // so we should check for this too to avoid misleading UI
-    const { isConnected } = useCombinedAuth()
     const { isAuthenticated } = useConnectivity()
-    const isAuthenticatedAndConnected = isConnected && isAuthenticated
 
-    if (!isAuthenticatedAndConnected || !profileUser) {
+    if (!isAuthenticated || !profileUser) {
         return
     }
 

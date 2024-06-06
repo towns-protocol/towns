@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Permission, useConnectivity, useHasPermission, useTownsClient } from 'use-towns-client'
+import { useGetEmbeddedSigner } from '@towns/privy'
 import { Box, BoxProps, FancyButton, Icon, IconProps, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { useJoinTown } from 'hooks/useJoinTown'
@@ -8,7 +9,8 @@ import { TokenVerification } from '@components/Web3/TokenVerification/TokenVerif
 import { useErrorToast } from 'hooks/useErrorToast'
 import { useAnalytics } from 'hooks/useAnalytics'
 import { AboveAppProgressModalContainer } from '@components/AppProgressOverlay/AboveAppProgress/AboveAppProgress'
-import { useConnectedStatus } from './useConnectedStatus'
+import { useCombinedAuth } from 'privy/useCombinedAuth'
+import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { usePublicPageLoginFlow } from './usePublicPageLoginFlow'
 
 const LoginComponent = React.lazy(() => import('@components/Login/LoginComponent'))
@@ -17,7 +19,9 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
     const isPreview = false
     const { client, signerContext } = useTownsClient()
     const { isAuthenticated, loggedInWalletAddress } = useConnectivity()
-    const { connected, isLoading: isLoadingConnected } = useConnectedStatus()
+    const { isConnected: connected } = useCombinedAuth()
+    const getSigner = useGetEmbeddedSigner()
+
     const {
         start: startPublicPageloginFlow,
         joiningSpace,
@@ -49,6 +53,12 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
         if (isJoining) {
             return
         }
+        const signer = await getSigner()
+
+        if (!signer) {
+            createPrivyNotAuthenticatedNotification()
+            return
+        }
 
         analytics?.track(
             'clicked join town',
@@ -72,6 +82,7 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
         }
     }, [
         isJoining,
+        getSigner,
         analytics,
         spaceId,
         startPublicPageloginFlow,
@@ -130,35 +141,23 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
             )
         }
 
-        if (isLoadingConnected) {
-            return <LoadingStatusMessage spinner background="lightHover" message="Loading wallet" />
-        }
-
-        if (connected) {
-            if (isLoadingMeetsMembership) {
-                return (
-                    <LoadingStatusMessage
-                        spinner
-                        background="level3"
-                        message="Checking requirements"
-                    />
-                )
-            }
-
+        if (isLoadingMeetsMembership) {
             return (
-                <FancyButton
-                    cta
-                    type="button"
-                    disabled={isJoining}
-                    spinner={isJoining}
-                    onClick={onJoinClick}
-                >
-                    Join
-                </FancyButton>
+                <LoadingStatusMessage spinner background="level3" message="Checking requirements" />
             )
         }
 
-        return <ButtonSpinner />
+        return (
+            <FancyButton
+                cta
+                type="button"
+                disabled={isJoining}
+                spinner={isJoining}
+                onClick={onJoinClick}
+            >
+                Join
+            </FancyButton>
+        )
     }
 
     return (
