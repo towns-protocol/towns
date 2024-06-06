@@ -19,11 +19,21 @@ function check_env() {
         echo "ERROR: The NODE_NUMBER env var is required"
         exit 1
     fi
+
+    if [ -z "$RUN_MODE" ]; then
+        echo "ERROR: The RUN_MODE env var is required"
+        exit 1
+    fi
 }
 
 function set_env() {
     # Set the environment variables
-    export NODE_NAME="river${NODE_NUMBER}"
+    if [ "$RUN_MODE" == "archive" ]; then
+        export NODE_NAME="archive${NODE_NUMBER}"
+    else
+        export NODE_NAME="river${NODE_NUMBER}"
+    fi
+
     export TASK_DEFINITION_FAMILY="${NODE_NAME}-${ENVIRONMENT_NAME}-fargate"
     export CURRENT_TASK_DEFINITION_FILENAME="$( pwd )/current-task-definition.json"
     export NEW_TASK_DEFINITION_FILENAME="$( pwd )/new-task-definition.json"

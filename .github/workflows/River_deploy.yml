@@ -12,7 +12,15 @@ on:
                 description: 'Docker image tag to deploy'
                 required: true
                 default: 'dev'
-            auto_deploy_node_numbers_json:
+            run_mode:
+                description: 'Run mode'
+                required: true
+                type: choice
+                options:
+                    - full
+                    - archive
+                default: 'full'
+            node_numbers:
                 description: 'JSON array of node numbers to deploy to'
                 type: string
                 default: '[1,2,3,4,5,6,7,8,9,10,11]'
@@ -27,7 +35,12 @@ on:
                 description: 'Docker image tag to deploy'
                 required: true
                 type: string
-            auto_deploy_node_numbers_json:
+            run_mode:
+                description: 'Run mode'
+                required: false
+                default: 'full'
+                type: string
+            node_numbers:
                 description: 'JSON array of node numbers to deploy to'
                 type: string
                 default: '[-1]'
@@ -35,6 +48,7 @@ on:
                 description: 'Public ECR URL'
                 required: false
                 type: string
+
         secrets:
             AWS_ACCESS_KEY_ID:
                 description: 'AWS access key id'
@@ -67,7 +81,7 @@ jobs:
               run: |
                 echo "Deploying to environment: ${{ inputs.environment_name }}"
                 echo "with image tag: ${{ inputs.docker_image_tag }}"
-                echo "to nodes: ${{ inputs.auto_deploy_node_numbers_json }}"
+                echo "to nodes: ${{ inputs.node_numbers }}"
                 echo "using public ECR URL: ${{ inputs.public_ecr_url }}"
 
             - name: Configure AWS credentials
@@ -101,7 +115,7 @@ jobs:
               with:
                   payload: |
                       {
-                          "message": "Begin deployment with image tag: ${{ inputs.docker_image_tag  }} for nodes: ${{ inputs.auto_deploy_node_numbers_json }}",
+                          "message": "Begin deployment with image tag: ${{ inputs.docker_image_tag  }} for nodes: ${{ inputs.node_numbers }}",
                           "environment": "${{ inputs.environment_name }}",
                           "branch": "${{ github.ref }}",
                           "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
@@ -120,7 +134,7 @@ jobs:
 
         strategy:
             matrix:
-                iteration: ${{ fromJson(inputs.auto_deploy_node_numbers_json) }}
+                iteration: ${{ fromJson(inputs.node_numbers) }}
             fail-fast: false
 
         steps:
@@ -140,6 +154,7 @@ jobs:
                   DOCKER_IMAGE_TAG: ${{ inputs.docker_image_tag }}
                   NODE_NUMBER: ${{ matrix.iteration }}
                   PUBLIC_ECR_URL: ${{ inputs.public_ecr_url }}
+                  RUN_MODE: ${{ inputs.run_mode }}
               run: ./scripts/create-and-deploy-river-task-definition.sh
 
 
@@ -203,7 +218,7 @@ jobs:
               with:
                 payload: |
                     {
-                        "message": "Deploy job ran successfully for docker tag: ${{ inputs.docker_image_tag }} on nodes: ${{ inputs.auto_deploy_node_numbers_json }}",
+                        "message": "Deploy job ran successfully for docker tag: ${{ inputs.docker_image_tag }} on nodes: ${{ inputs.node_numbers }}",
                         "environment": "${{ inputs.environment_name }}",
                         "branch": "${{ github.ref }}",
                         "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",

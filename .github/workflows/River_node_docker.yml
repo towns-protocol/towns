@@ -19,7 +19,7 @@ on:
                 description: 'Docker image tag'
                 required: true
                 default: 'latest'
-            auto_deploy_node_numbers_json:
+            node_numbers:
                 description: 'JSON array of node numbers to deploy to'
                 type: string
                 default: '[-1]'
@@ -42,7 +42,7 @@ on:
                 description: 'Docker image tag'
                 type: string
                 required: true
-            auto_deploy_node_numbers_json:
+            node_numbers:
                 description: 'JSON array of node numbers to deploy to'
                 type: string
                 default: '[-1]'
@@ -67,7 +67,7 @@ jobs:
             environment_name: ${{ steps.compute_env_name_and_latest_tag.outputs.environment_name }}
             latest_tag_name: ${{ steps.compute_env_name_and_latest_tag.outputs.latest_tag_name }}
             release_version: ${{ steps.set_release_version.outputs.release_version }}
-            auto_deploy_node_numbers_json: ${{ steps.compute_env_name_and_latest_tag.outputs.auto_deploy_node_numbers_json }}
+            node_numbers: ${{ steps.compute_env_name_and_latest_tag.outputs.node_numbers }}
 
         steps:
             - name: Checkout
@@ -88,11 +88,11 @@ jobs:
                   if [ "${{ env.IS_PUSH }}" == "true" ]; then
                       echo "::set-output name=environment_name::gamma"
                       echo "::set-output name=latest_tag_name::latest"
-                      echo "::set-output name=auto_deploy_node_numbers_json::[1,2,3,4,5,6,7,8,9,10,11]"
+                      echo "::set-output name=node_numbers::[1,2,3,4,5,6,7,8,9,10,11]"
                   elif [ "${{ env.IS_INPUT_DRIVEN }}" == "true" ]; then
                       echo "::set-output name=environment_name::${{ inputs.environment_name }}"
                       echo "::set-output name=latest_tag_name::${{ inputs.docker_image_tag }}"
-                      echo "::set-output name=auto_deploy_node_numbers_json::${{ inputs.auto_deploy_node_numbers_json }}"
+                      echo "::set-output name=node_numbers::${{ inputs.node_numbers }}"
                   else
                       echo "::error::Unhandled event type"
                       exit 1
