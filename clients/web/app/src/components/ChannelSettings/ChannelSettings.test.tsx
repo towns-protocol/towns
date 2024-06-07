@@ -66,7 +66,6 @@ vi.mock('use-towns-client', async () => {
                 name: 'some channel',
                 membership: 'join',
                 members: [],
-                membersMap: {},
                 topic: 'channel topic',
                 isDefault: false,
             }

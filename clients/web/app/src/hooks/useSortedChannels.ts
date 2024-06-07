@@ -2,14 +2,12 @@ import { useMemo, useRef } from 'react'
 import {
     Channel,
     DMChannelIdentifier,
-    LookupUserMap,
-    RoomMember,
     useMyChannels,
     useSpaceDataWithId,
     useSpaceMembers,
     useSpaceMentions,
     useTownsContext,
-    useUserLookupContext,
+    useUserLookupStore,
 } from 'use-towns-client'
 import { isEqual } from 'lodash'
 import { useMutedStreamIds } from 'api/lib/notificationSettings'
@@ -51,7 +49,7 @@ export type MixedChannelMenuItem = ChannelMenuItem | DMChannelMenuItem
  * maps channel and dm data to a unified format for use in the channel menu
  */
 export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
-    const { spaceUnreadChannelIds, dmUnreadChannelIds, dmChannels, rooms } = useTownsContext()
+    const { spaceUnreadChannelIds, dmUnreadChannelIds, dmChannels } = useTownsContext()
     const mentions = useSpaceMentions()
     const channels = useSpaceChannels()
     const { memberIds } = useSpaceMembers()
@@ -99,20 +97,18 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
     // - - - - - - - - - - - - - - - - - - - - - - - - - collect and map all dms
 
     const dmItemsRef = useRef<DMChannelMenuItem[]>([])
-    const globalUserMap = useUserLookupContext()?.usersMap
 
     const dmItems = useMemo(() => {
-        const spaceMembers = spaceId ? rooms[spaceId]?.members : undefined
         const value = Array.from(dmChannels)
             .filter((c) => !c.left && (!spaceId || c.userIds.every((m) => memberIds.includes(m))))
             .map((channel) => {
-                const roomMembers = rooms[channel.id]?.members
                 return {
                     type: 'dm',
                     id: channel.id,
                     label: channel.properties?.name ?? '',
                     search: channel.userIds
-                        .map((u) => mapMember(globalUserMap, spaceMembers, roomMembers, u))
+                        // build search names imperatively
+                        .map((u) => namesFromUserId(u, { spaceId, channelId: channel.id }))
                         .join(),
                     channel,
                     unread: dmUnreadChannelIds.has(channel.id),
@@ -126,16 +122,7 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
         dmItemsRef.current = isEqual(value, dmItemsRef.current) ? dmItemsRef.current : value
 
         return dmItemsRef.current
-    }, [
-        dmChannels,
-        dmUnreadChannelIds,
-        globalUserMap,
-        memberIds,
-        rooms,
-        spaceId,
-        favoriteChannelIds,
-        mutedStreamIds,
-    ])
+    }, [dmChannels, dmUnreadChannelIds, memberIds, spaceId, favoriteChannelIds, mutedStreamIds])
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -275,26 +262,31 @@ export const useJoinedChannels = (spaceId: string | undefined) => {
     }
 }
 
-const mapMember = (
-    globalUserMap: LookupUserMap,
-    spaceMembers: RoomMember[] | undefined,
-    roomMembers: RoomMember[] | undefined,
+const namesFromUserId = (
     userId: string,
+    { spaceId, channelId }: { spaceId?: string; channelId?: string },
 ) => {
-    const member = spaceMembers?.find((m) => m.userId === userId)
-    const roomMember = roomMembers?.find((m) => m.userId === userId)
+    const { allUsers, spaceUsers, channelUsers } = useUserLookupStore.getState()
 
-    const result =
-        member || globalUserMap[userId]
-            ? [
-                  roomMember?.displayName ||
-                      member?.displayName ||
-                      globalUserMap[userId]?.displayName,
-                  roomMember?.username || member?.username || globalUserMap[userId]?.username,
-              ]
-                  .filter(Boolean)
-                  .join()
-            : ``
+    const displayName =
+        channelUsers[channelId ?? '']?.[userId]?.displayName ||
+        (spaceId
+            ? spaceUsers[spaceId ?? '']?.[userId]?.displayName
+            : // match all users when searching outside a space
+              Object.values(allUsers[userId] ?? [])
+                  .filter((s) => s.displayName)
+                  .map((s) => s.displayName)
+                  .join())
 
-    return result
+    const userName =
+        channelUsers[channelId ?? '']?.[userId]?.userName ||
+        (spaceId
+            ? spaceUsers[spaceId ?? '']?.[userId]?.userName
+            : // match all users when searching outside a space
+              Object.values(allUsers[userId] ?? [])
+                  .filter((s) => s.userName)
+                  .map((s) => s.userName)
+                  .join())
+
+    return [displayName, userName].filter(Boolean).join(' ')
 }

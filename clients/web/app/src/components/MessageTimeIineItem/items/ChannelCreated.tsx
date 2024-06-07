@@ -9,9 +9,9 @@ export const TimelineChannelCreateEvent = (props: {
     channelName?: string
 }) => {
     const { event, channelName } = props
-    const { usersMap } = useUserLookupContext()
+    const { lookupUser } = useUserLookupContext()
     const user = useMyProfile()
-    const creator = usersMap[event.content.creator]
+    const creator = lookupUser(event.content.creator)
 
     const name = creator
         ? creator.userId === user?.userId

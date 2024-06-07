@@ -1,11 +1,4 @@
 import React from 'react'
-import { LookupUser, LookupUserMap } from 'types/user-lookup'
-
-export type UserLookupContextType = {
-    streamId?: string
-    spaceId?: string
-    users: LookupUser[]
-    usersMap: LookupUserMap
-}
+import { UserLookupContextType } from 'types/user-lookup'
 
 export const UserLookupContext = React.createContext<UserLookupContextType | null>(null)

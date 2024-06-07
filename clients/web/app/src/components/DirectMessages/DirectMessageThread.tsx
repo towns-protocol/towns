@@ -14,10 +14,7 @@ export const DirectMessageThread = () => {
     return channelSlug ? (
         <Stack height="100%" width="100%">
             <SpaceContextProvider spaceId={undefined}>
-                <DMChannelContextUserLookupProvider
-                    fallbackToParentContext
-                    channelId={channelSlug ?? ''}
-                >
+                <DMChannelContextUserLookupProvider channelId={channelSlug ?? ''}>
                     {isTouch ? (
                         <SpacesChannelAnimated channelId={channelSlug} />
                     ) : (

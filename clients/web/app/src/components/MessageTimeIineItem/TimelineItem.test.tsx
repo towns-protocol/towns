@@ -94,8 +94,7 @@ const Wrapper = ({ messageContent }: { messageContent: MessageContent }) => {
                     handleReaction: () => null,
                     sendReadReceipt: () => new Promise(() => null),
                     type: MessageTimelineType.Channel,
-                    members: [],
-                    membersMap: {},
+                    memberIds: [],
                 }}
             >
                 <MessageTimelineItem itemData={generateMessageRenderEvent(messageContent)} />

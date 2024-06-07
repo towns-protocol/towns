@@ -2,7 +2,7 @@ import { Value } from '@udecode/plate-common'
 import markdown from 'remark-parse'
 import remarkGfm from 'remark-gfm'
 import { unified } from 'unified'
-import { Channel, OTWMention, RoomMember } from 'use-towns-client'
+import { Channel, OTWMention, useUserLookupContext } from 'use-towns-client'
 import remarkDecodeHTMLCodeBlocks from './remark/remarkDecodeHTMLCodeBlocks'
 import remarkSlate from './remark/plugin'
 import remarkTransformUserAndChannels from './remark/remarkTransformUserAndChannels'
@@ -20,7 +20,7 @@ export const deserializeMd = <V extends Value>(
     data: string,
     channels: Channel[] = [],
     mentions: OTWMention[] = [],
-    users: RoomMember[] = [],
+    lookupUser?: ReturnType<typeof useUserLookupContext>['lookupUser'],
 ): V => {
     const tree = unified()
         .use(markdown)
@@ -28,7 +28,7 @@ export const deserializeMd = <V extends Value>(
         .use(remarkRemoveHeadings)
         .use(remarkDecodeHTMLCodeBlocks)
         .use(remarkSlate)
-        .use(remarkTransformUserAndChannels(channels, mentions, users))
+        .use(remarkTransformUserAndChannels(channels, mentions, lookupUser))
         .processSync(data)
 
     return tree.result as V

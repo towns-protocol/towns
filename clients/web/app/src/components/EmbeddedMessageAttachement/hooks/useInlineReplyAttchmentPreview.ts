@@ -26,15 +26,15 @@ export const useInlineReplyAttchmentPreview = (params?: { onNewInlineReply?: () 
         }
     })
 
-    const { usersMap } = useUserLookupContext()
+    const { lookupUser } = useUserLookupContext()
     const inlineReply = useMemo(() => {
         if (parentEvent) {
             return {
                 ...parentEvent,
-                displayName: getPrettyDisplayName(usersMap[parentEvent.event.sender.id]),
+                displayName: getPrettyDisplayName(lookupUser(parentEvent.event.sender.id)),
             }
         }
-    }, [parentEvent, usersMap])
+    }, [lookupUser, parentEvent])
 
     const onNewInlineReplyRef = useRef(params?.onNewInlineReply)
     onNewInlineReplyRef.current = params?.onNewInlineReply

@@ -22,7 +22,7 @@ export const MessageAttachmentPreview = (props: MessageAttachmentPreviewProps) =
     const { attachment, onRemove } = props
     const roomMessageEvent = attachment.roomMessageEvent
 
-    const { usersMap } = useUserLookupContext()
+    const { lookupUser } = useUserLookupContext()
 
     const onRemoveClick = useCallback(() => {
         onRemove(attachment.id)
@@ -32,7 +32,7 @@ export const MessageAttachmentPreview = (props: MessageAttachmentPreviewProps) =
         return
     }
 
-    const displayName = getPrettyDisplayName(usersMap[attachment.info.userId])
+    const displayName = getPrettyDisplayName(lookupUser(attachment.info.userId))
 
     return (
         <MessageAttachmentsContext.Provider value={{ isMessageAttachementContext: true }}>

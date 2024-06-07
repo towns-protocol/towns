@@ -21,8 +21,8 @@ import {
     useDMData,
     useMyMembership,
     useMyProfile,
+    useSpaceMembers,
     useTownsClient,
-    useUserLookupContext,
 } from 'use-towns-client'
 import { useHotkeys } from 'react-hotkeys-hook'
 import debug from 'debug'
@@ -179,8 +179,6 @@ export const SpacesChannelComponent = (props: Props) => {
             : undefined
     }, [channelMessages, location.hash])
 
-    const { users } = useUserLookupContext()
-
     const { loggedInWalletAddress } = useConnectivity()
     const userId = useMyProfile()?.userId
 
@@ -242,6 +240,8 @@ export const SpacesChannelComponent = (props: Props) => {
 
     const triggerClose = useContext(TouchPanelContext)?.triggerPanelClose
 
+    const { memberIds } = useSpaceMembers()
+
     return (
         <>
             {!isTouch && <RegisterChannelShortcuts />}
@@ -268,7 +268,7 @@ export const SpacesChannelComponent = (props: Props) => {
                         events={channelMessages}
                         isChannelWritable={isChannelWritable}
                     >
-                        {channel && !props.hideHeader && (
+                        {spaceId && channel && !props.hideHeader && (
                             <ChannelHeader
                                 channel={channel}
                                 spaceId={spaceId}
@@ -323,8 +323,8 @@ export const SpacesChannelComponent = (props: Props) => {
                                         initialValue=""
                                         placeholder={placeholder}
                                         channels={channels}
-                                        users={users}
                                         userId={userId}
+                                        memberIds={memberIds}
                                         onSend={onSend}
                                     />
                                 )}
@@ -369,7 +369,7 @@ const UnjoinedChannelComponent = ({
 }) => {
     return (
         <>
-            {channel && !hideHeader && (
+            {spaceId && channel && !hideHeader && (
                 <ChannelHeader channel={channel} spaceId={spaceId} onTouchClose={triggerClose} />
             )}
             <Box absoluteFill centerContent padding="lg">

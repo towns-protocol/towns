@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import {
     Address,
-    RoomMember,
     useChannelData,
     useChannelMembers,
     useMyUserId,
@@ -93,7 +92,6 @@ const ChannelMembers = (props: {
 }) => {
     const { canAddMembers, onRemoveMember } = props
     const { memberIds } = useChannelMembers()
-    const { usersMap } = useUserLookupContext()
     const myUserId = useMyUserId()
 
     const { openPanel } = usePanelActions()
@@ -113,7 +111,7 @@ const ChannelMembers = (props: {
             {memberIds.map((userId) => (
                 <ChannelMemberRow
                     key={userId}
-                    user={usersMap[userId]}
+                    userId={userId}
                     onRemoveMember={userId === myUserId ? undefined : onRemoveMember}
                 />
             ))}
@@ -227,28 +225,29 @@ const AddMemberRow = (props: { onClick: () => void }) => {
 }
 
 type ChannelMemberRowProps = {
-    user: RoomMember
+    userId: string
     onRemoveMember?: (userId: string) => void
 }
 
 const ChannelMemberRow = (props: ChannelMemberRowProps) => {
-    const { user, onRemoveMember } = props
+    const { userId, onRemoveMember } = props
     const [isHeaderHovering, setIsHeaderHovering] = useState(false)
+    const { lookupUser } = useUserLookupContext()
+    const user = lookupUser(userId)
     const { data: abstractAccountAddress } = useAbstractAccountAddress({
-        rootKeyAddress: props.user.userId as Address | undefined,
+        rootKeyAddress: userId as Address | undefined,
     })
     const { openPanel } = usePanelActions()
     const { isTouch } = useDevice()
     const onClick = useCallback(() => {
         if (isTouch) {
-            onRemoveMember?.(user.userId)
+            onRemoveMember?.(userId)
         } else {
             openPanel(CHANNEL_INFO_PARAMS.PROFILE, { profileId: abstractAccountAddress })
         }
-    }, [isTouch, onRemoveMember, user.userId, openPanel, abstractAccountAddress])
+    }, [isTouch, onRemoveMember, userId, openPanel, abstractAccountAddress])
 
-    const { usersMap } = useUserLookupContext()
-    const globalUser = usersMap[user.userId] ?? user
+    const globalUser = lookupUser(userId) ?? user
 
     const onPointerEnter = useCallback(() => {
         setIsHeaderHovering(true)
@@ -262,10 +261,10 @@ const ChannelMemberRow = (props: ChannelMemberRowProps) => {
             event.preventDefault()
             event.stopPropagation()
             if (onRemoveMember) {
-                onRemoveMember(user.userId)
+                onRemoveMember(userId)
             }
         },
-        [onRemoveMember, user.userId],
+        [onRemoveMember, userId],
     )
 
     if (!abstractAccountAddress) {
@@ -287,9 +286,9 @@ const ChannelMemberRow = (props: ChannelMemberRowProps) => {
             <Stack horizontal height="height_lg" gap="md" width="100%">
                 <Box
                     centerContent
-                    tooltip={!isTouch ? <ProfileHoverCard userId={user.userId} /> : undefined}
+                    tooltip={!isTouch ? <ProfileHoverCard userId={userId} /> : undefined}
                 >
-                    <Avatar userId={user.userId} size="avatar_x4" />
+                    <Avatar userId={userId} size="avatar_x4" />
                 </Box>
                 <Stack grow gap="paragraph" overflow="hidden">
                     <Paragraph truncate color="default">
@@ -332,8 +331,8 @@ const ConfirmRemoveMemberModal = (props: ConfirmRemoveMemberModalProps) => {
 const ConfirmRemoveMemberModalContent = (props: ConfirmRemoveMemberModalProps) => {
     const { onConfirm, onCancel } = props
     const { userId } = props
-    const { usersMap } = useUserLookupContext()
-    const user = usersMap[userId]
+    const { lookupUser } = useUserLookupContext()
+    const user = lookupUser(userId)
 
     if (!user) {
         return null

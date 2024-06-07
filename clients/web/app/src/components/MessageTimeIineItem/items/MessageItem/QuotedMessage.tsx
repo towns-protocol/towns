@@ -1,5 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+import { useUserLookupContext } from 'use-towns-client'
 import { AvatarWithoutDot } from '@components/Avatar/Avatar'
 import { Box, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
@@ -21,6 +22,7 @@ export const QuotedMessage = (props: Props) => {
     const timelineContext = useTimelineContext()
     const { createLink } = useCreateLink()
     const event = timelineContext.events.find((e) => e.eventId === eventId)
+    const { lookupUser } = useUserLookupContext()
 
     if (!event) {
         return <Box>Quoted message not found</Box>
@@ -28,7 +30,7 @@ export const QuotedMessage = (props: Props) => {
         return <Box>No preview available</Box>
     }
 
-    const displayName = getPrettyDisplayName(timelineContext?.membersMap[event.sender.id])
+    const displayName = getPrettyDisplayName(lookupUser(event.sender.id))
 
     const threadLink =
         createLink({

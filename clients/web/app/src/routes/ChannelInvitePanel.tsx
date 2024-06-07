@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import {
-    GlobalContextUserLookupProvider,
     useChannelId,
     useChannelMembers,
     useTownsClient,
@@ -13,6 +12,7 @@ import { Box, Button, Icon, IconButton, Stack, Text } from '@ui'
 import { InviteUserList } from '@components/InviteUserList/InviteUserList'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { getNameListFromUsers } from '@components/UserList/UserList'
+import { notUndefined } from 'ui/utils/utils'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 
 const ChannelInvite = (props: { onClose?: () => void }) => {
@@ -78,9 +78,7 @@ export const ChannelInvitePanel = () => {
                 </Stack>
             }
         >
-            <GlobalContextUserLookupProvider>
-                <ChannelInvite />
-            </GlobalContextUserLookupProvider>
+            <ChannelInvite />
         </Panel>
     )
 }
@@ -107,13 +105,13 @@ const InviteSuccessToast = ({
         () => (isGDMChannelStreamId(channelId) ? 'this group' : 'this channel'),
         [channelId],
     )
-    const { usersMap } = useUserLookupContext()
+    const { lookupUser } = useUserLookupContext()
 
     const message = useMemo(() => {
-        const users = userIds.map((u) => usersMap[u])
-        const usersNameList = getNameListFromUsers(users)
+        const users = userIds.map((u) => lookupUser(u)).filter(notUndefined)
+        const usersNameList = getNameListFromUsers(lookupUser, users)
         return `${usersNameList} has been added to ${channelDisplayName}`
-    }, [channelDisplayName, userIds, usersMap])
+    }, [channelDisplayName, lookupUser, userIds])
 
     return (
         <Box

@@ -52,11 +52,11 @@ export const IsolatedMessageItem = (
 
     const content = getIsRoomMessageContent(result.event)
 
-    const { usersMap, users } = useUserLookupContext()
+    const { lookupUser } = useUserLookupContext()
     const channels = useSpaceChannels()
     const dmChannels = useDmChannels()
 
-    const sender = usersMap[result.event.sender.id]
+    const sender = lookupUser(result.event.sender.id)
     const ref = React.useRef<HTMLAnchorElement>(null)
 
     const link = useMemo(() => {
@@ -117,7 +117,6 @@ export const IsolatedMessageItem = (
                 <RichTextPreview
                     key={props.highligtTerms?.join('')}
                     highlightTerms={props.highligtTerms}
-                    users={users}
                     mentions={content.mentions}
                     channels={[...channels, ...dmChannels]}
                     content={getMessageBody(result.event.eventId, content)}

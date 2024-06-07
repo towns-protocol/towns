@@ -1,19 +1,22 @@
 import {
-    GlobalContextUserLookupProvider,
+    LookupUser,
     SpaceContextProvider,
     SpaceData,
     useMyProfile,
     useSpaceDataWithId,
     useTownsContext,
-    useUserLookupContext,
+    useUserLookupStore,
 } from 'use-towns-client'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
 import debug from 'debug'
 import { CurrentUser, NotificationCurrentUser } from 'store/notificationCurrentUser'
+import { notUndefined } from 'ui/utils/utils'
 import { NotificationStore } from '../store/notificationStore'
-import { User } from './types.d'
+import { User } from './types'
 import { preferredUsername } from './utils'
+// import { User } from './types.d'
+// import { preferredUsername } from './utils'
 
 const log = debug('sw:push:')
 
@@ -74,7 +77,7 @@ export function ServiceWorkerMetadataSyncer() {
     }, [cryptoStoreDatabaseName, currentUser, myProfile?.userId])
 
     return (
-        <GlobalContextUserLookupProvider>
+        <>
             {/* wait for the notification store to be opened before processing metadata for notification */}
             {store ? <UsersMetadata store={store} /> : null}
             {store ? <DmMetadata store={store} /> : null}
@@ -85,17 +88,19 @@ export function ServiceWorkerMetadataSyncer() {
                       </SpaceContextProvider>
                   ))
                 : null}
-        </GlobalContextUserLookupProvider>
+        </>
     )
 }
 
+// TODO: mimic the previous version, needs refactoring in a separate PR (SW to
+// fetch from same store)
 function UsersMetadata({ store }: { store: NotificationStore }) {
-    const members = useUserLookupContext()
+    const { allUsers } = useUserLookupStore()
 
     const setUsers = useCallback(
-        async (membersMap: { [userId: string]: User | undefined }) => {
+        async (users: LookupUser[]) => {
             const cachedUsers = await store.getUsers()
-            const changedNames = Object.values(membersMap)
+            const changedNames = users
                 .filter(
                     (member) =>
                         member &&
@@ -110,17 +115,22 @@ function UsersMetadata({ store }: { store: NotificationStore }) {
                     name: preferredUsername(u),
                 }))
                 await store.users.bulkPut(usersToUpdate)
-                log('added users to the notification cache', 'memberMap:', membersMap)
+                log('added users to the notification cache', 'usersToUpdate:', usersToUpdate)
             }
         },
         [store],
     )
 
     useEffect(() => {
-        if (members.usersMap) {
-            void setUsers(members.usersMap)
-        }
-    }, [members.usersMap, setUsers])
+        const users = Object.entries(allUsers)
+            .map(([userId, spaces]) => {
+                return Object.values(spaces).find((user) => {
+                    return user.displayName || user.username
+                }) as LookupUser | undefined
+            })
+            .filter(notUndefined)
+        void setUsers(users)
+    }, [allUsers, setUsers])
 
     return null
 }

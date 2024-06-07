@@ -5,8 +5,8 @@ import {
     useChannelData,
     useConnectivity,
     useMyProfile,
+    useSpaceMembers,
     useTimelineThread,
-    useUserLookupContext,
 } from 'use-towns-client'
 import { useLocation } from 'react-router'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
@@ -39,6 +39,8 @@ export const MessageThreadPanel = (props: Props) => {
         return parentMessage ? [parentMessage, ...messages] : messages
     }, [messages, parentMessage])
 
+    const { memberIds } = useSpaceMembers()
+
     const { sendReply } = useSendReply(messageId)
     const { analytics } = useAnalytics()
 
@@ -58,7 +60,6 @@ export const MessageThreadPanel = (props: Props) => {
         },
         [analytics, channelId, parent?.userIds, sendReply, spaceId],
     )
-    const { users } = useUserLookupContext()
 
     const userId = useMyProfile()?.userId
     const { loggedInWalletAddress } = useConnectivity()
@@ -143,7 +144,7 @@ export const MessageThreadPanel = (props: Props) => {
                             storageId={`${channelId}-${messageId}`}
                             threadId={messageId}
                             channels={channels}
-                            users={users}
+                            memberIds={memberIds}
                             background="level2"
                             userId={userId}
                             onSend={onSend}

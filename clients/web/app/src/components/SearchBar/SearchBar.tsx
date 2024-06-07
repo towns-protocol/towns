@@ -3,9 +3,9 @@ import { matchPath, useLocation } from 'react-router'
 import {
     useSpaceData,
     useSpaceId,
+    useSpaceMembers,
     useTimelineStore,
     useTownsContext,
-    useUserLookupContext,
 } from 'use-towns-client'
 import { AnimatePresence } from 'framer-motion'
 import { Box, Divider, Paragraph, Stack, TextField } from '@ui'
@@ -150,7 +150,7 @@ const SearchResults = (props: { onHide: () => void; searchResults: CombinedResul
     const dmChannels = useDmChannels()
     const { dmChannels: dmChannelIds } = useTownsContext()
 
-    const { users: members } = useUserLookupContext()
+    const members = useSpaceMembers()
     const { threadsStats } = useTimelineStore(({ threadsStats }) => ({
         threadsStats,
     }))

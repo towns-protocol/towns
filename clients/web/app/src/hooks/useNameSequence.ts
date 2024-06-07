@@ -17,13 +17,13 @@ const commaAndSequence = (arrLength: number, index: number) => {
 }
 
 export const useNameSequence = (users: Record<string, { eventId: string }>) => {
-    const { usersMap } = useUserLookupContext()
+    const { lookupUser } = useUserLookupContext()
     const displayName = useMyProfile()?.displayName
 
     return useMemo(() => {
         return Array.from(Object.keys(users))
             .map((u) => {
-                const name = getPrettyDisplayName(usersMap[u])
+                const name = getPrettyDisplayName(lookupUser(u))
                 if (!name) {
                     return undefined
                 } else if (name === displayName) {
@@ -37,5 +37,5 @@ export const useNameSequence = (users: Record<string, { eventId: string }>) => {
             .reduce((str, name, index, arr) => {
                 return `${str} ${name}${commaAndSequence(arr.length, index)}`
             }, '')
-    }, [displayName, usersMap, users])
+    }, [users, lookupUser, displayName])
 }

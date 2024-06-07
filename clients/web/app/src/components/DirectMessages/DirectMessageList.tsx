@@ -35,7 +35,6 @@ export const DirectMessageList = () => {
                     dmChannelIds.map((channel) => {
                         return (
                             <DMChannelContextUserLookupProvider
-                                fallbackToParentContext
                                 key={channel.id}
                                 channelId={channel.id}
                             >

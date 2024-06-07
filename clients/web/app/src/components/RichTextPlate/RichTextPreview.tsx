@@ -1,7 +1,7 @@
 import React, { ClassAttributes, useCallback, useMemo } from 'react'
 import { ELEMENT_MENTION } from '@udecode/plate-mention'
 import { clsx } from 'clsx'
-import { Channel, OTWMention, RoomMember } from 'use-towns-client'
+import { Channel, OTWMention, useUserLookupContext } from 'use-towns-client'
 import { Box } from '@ui'
 import { MessageStatusAnnotation } from '@components/MessageTimeIineItem/items/MessageItem/MessageStatusAnnotation'
 import { CodeBlockElement } from './components/plate-ui/CodeBlockElement'
@@ -24,8 +24,6 @@ const fieldClassName = clsx([fieldStyles.field, richText])
 interface RichTextPreviewProps {
     content: string
     statusAnnotation?: MessageStatusAnnotation
-    // Contains the current list of users in the space
-    users?: RoomMember[]
     // Contains the list of mentions in the message we're currently previewing.
     // The users may not be in the space any more or their names may have changed
     mentions?: OTWMention[]
@@ -39,26 +37,27 @@ export const RichTextPreview = React.memo(
     ({
         content,
         statusAnnotation,
-        users = [],
         mentions = [],
         channels,
         onMentionClick,
         onMentionHover,
     }: RichTextPreviewProps) => {
         const ref = React.useRef<HTMLElement>(null)
+
+        const { lookupUser } = useUserLookupContext()
+
         const _onMentionHover = useCallback(
             (element?: HTMLElement, userId?: string) => {
                 if (!onMentionHover) {
                     return
                 }
                 if (userId && element) {
-                    const member = users?.find((m) => m.userId === userId)
-                    onMentionHover(element, member?.userId)
+                    onMentionHover(element, userId)
                 } else {
                     onMentionHover(undefined, undefined)
                 }
             },
-            [users, onMentionHover],
+            [onMentionHover],
         )
 
         const isSingleEmoji = useMemo(() => {
@@ -138,7 +137,7 @@ export const RichTextPreview = React.memo(
                         components={memoizedComponents}
                         channels={channels}
                         mentions={mentions}
-                        users={users}
+                        lookupUser={lookupUser}
                     >
                         {content}
                     </MarkdownToJSX>

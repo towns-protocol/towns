@@ -1,6 +1,12 @@
 import React, { CSSProperties, useCallback, useMemo, useState } from 'react'
 import { firstBy } from 'thenby'
-import { LookupUser, useMyUserId, useUserLookupContext } from 'use-towns-client'
+import {
+    LookupUser,
+    useMyUserId,
+    useSpaceId,
+    useSpaceMembersWithFallback,
+    useUserLookupContext,
+} from 'use-towns-client'
 import { Avatar } from '@components/Avatar/Avatar'
 import { Box, Button, IconButton, Paragraph, Stack, Text } from '@ui'
 import { useRecentUsers } from 'hooks/useRecentUsers'
@@ -8,6 +14,7 @@ import { useGetUserBio } from 'hooks/useUserBio'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useDevice } from 'hooks/useDevice'
 import { lookupUserNameSearchString } from 'hooks/useSearch'
+import { notUndefined } from 'ui/utils/utils'
 import { PillSelector } from './PillSelector'
 
 type Props = {
@@ -20,7 +27,7 @@ type Props = {
 
 export const UserPillSelector = (props: Props) => {
     const { disabled = false } = props
-    const { users: _users, usersMap } = useUserLookupContext()
+    const { lookupUser } = useUserLookupContext()
     const recentUsers = useRecentUsers()
 
     // -------------------------------------------------------------------------
@@ -40,16 +47,21 @@ export const UserPillSelector = (props: Props) => {
     // -------------------------------------------------------------------------
 
     const userId = useMyUserId()
+    const spaceId = useSpaceId()
+    const { memberIds } = useSpaceMembersWithFallback(spaceId)
+
     const users = useMemo(() => {
         return (
-            _users
+            memberIds
+                .map((m) => lookupUser(m))
+                .filter(notUndefined)
                 // only allow selecting self if selection is empty
                 .filter((u) => numSelected === 0 || u.userId !== userId)
                 .map((user: LookupUser) => {
                     return { ...user, search: lookupUserNameSearchString(user) }
                 }) as LookupUser[]
         )
-    }, [_users, numSelected, userId])
+    }, [lookupUser, memberIds, numSelected, userId])
 
     // -------------------------------------------------------------------------
 
@@ -57,10 +69,10 @@ export const UserPillSelector = (props: Props) => {
         (options: LookupUser[]) =>
             [...options].sort(
                 firstBy<LookupUser>((u) => [...recentUsers].reverse().indexOf(u.userId), -1).thenBy(
-                    (id) => usersMap[id]?.displayName,
+                    (id) => lookupUser(id.userId)?.displayName,
                 ),
             ),
-        [recentUsers, usersMap],
+        [lookupUser, recentUsers],
     )
 
     const optionRenderer = useCallback(
@@ -93,12 +105,12 @@ export const UserPillSelector = (props: Props) => {
             >
                 <Avatar size="avatar_xs" userId={params.key} />
                 <Paragraph whiteSpace="nowrap">
-                    {getPrettyDisplayName(usersMap[params.key])}
+                    {getPrettyDisplayName(lookupUser(params.key))}
                 </Paragraph>
                 <IconButton icon="close" size="square_xs" onClick={() => params.onDelete()} />
             </Box>
         ),
-        [usersMap],
+        [lookupUser],
     )
 
     const showSuggestions = numSelected < 2
@@ -109,7 +121,7 @@ export const UserPillSelector = (props: Props) => {
         isTouch && numSelected === 1 ? (
             <Box>
                 <Button onClick={props.onConfirm}>
-                    Message {getPrettyDisplayName(usersMap[selectedIdsArray?.[0]])}
+                    Message {getPrettyDisplayName(lookupUser(selectedIdsArray?.[0]))}
                 </Button>
             </Box>
         ) : undefined

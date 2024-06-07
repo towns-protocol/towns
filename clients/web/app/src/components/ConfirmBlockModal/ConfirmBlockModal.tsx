@@ -10,9 +10,9 @@ export const ConfirmBlockModal = (props: {
     userId: string
 }) => {
     const { onConfirm, onCancel, userId } = props
-    const { usersMap } = useUserLookupContext()
+    const { lookupUser } = useUserLookupContext()
 
-    const globalUser = usersMap[userId]
+    const globalUser = lookupUser(userId)
 
     const title = useMemo(() => {
         const name = getPrettyDisplayName(globalUser)

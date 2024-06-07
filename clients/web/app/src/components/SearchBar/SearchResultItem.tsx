@@ -1,12 +1,6 @@
 import React, { useCallback, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import {
-    Channel,
-    DMChannelIdentifier,
-    RoomMember,
-    useMyProfile,
-    useTownsClient,
-} from 'use-towns-client'
+import { Channel, DMChannelIdentifier, useMyProfile, useTownsClient } from 'use-towns-client'
 import { ThreadStatsMap } from 'use-towns-client/dist/store/use-timeline-store'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { Box, BoxProps, Icon, Paragraph } from '@ui'
@@ -27,7 +21,6 @@ export const ResultItem = (
         misc: {
             channels: Channel[]
             dmChannelIds: DMChannelIdentifier[]
-            members: RoomMember[]
             threadsStats: ThreadStatsMap
             spaceId: string | undefined
         }
@@ -197,7 +190,7 @@ const MessageResultItem = (props: {
     event: ZRoomMessageEvent
     highlightedTerms?: string[]
     channelId: string
-    misc: { members: RoomMember[]; channels: Channel[]; threadsStats: ThreadStatsMap }
+    misc: { channels: Channel[]; threadsStats: ThreadStatsMap }
     isolatedLayout?: boolean
 }) => {
     const { event, misc, isolatedLayout } = props

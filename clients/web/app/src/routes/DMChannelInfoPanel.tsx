@@ -54,10 +54,10 @@ export const DMChannelInfo = (props: { channelId?: string; data?: DMChannelIdent
 
     const { channelSlug } = useParams()
     const { memberIds } = useMembers(channelId)
-    const { usersMap } = useUserLookupContext()
+    const { lookupUser } = useUserLookupContext()
     const members = useMemo(
-        () => memberIds.map((userId) => usersMap[userId]),
-        [memberIds, usersMap],
+        () => memberIds.map((userId) => lookupUser(userId)),
+        [lookupUser, memberIds],
     )
 
     const myUserId = useMyUserId()
@@ -124,11 +124,11 @@ export const DMChannelInfo = (props: { channelId?: string; data?: DMChannelIdent
     // }, [navigate, isTouch])
 
     const membersExcludingSelf = useMemo(() => {
-        return members.filter((member) => isDefined(member) && member.userId !== myUserId)
+        return members.filter(isDefined).filter((member) => member.userId !== myUserId)
     }, [members, myUserId])
 
     const memberNamesExludingSelf = useMemo(() => {
-        return membersExcludingSelf.map((m) => m.userId)
+        return membersExcludingSelf.map((m) => m?.userId).filter(isDefined)
     }, [membersExcludingSelf])
 
     const membersText = useUserList({ userIds: memberNamesExludingSelf, excludeSelf: true }).join(
@@ -156,10 +156,7 @@ export const DMChannelInfo = (props: { channelId?: string; data?: DMChannelIdent
 
     return (
         <>
-            <DMChannelContextUserLookupProvider
-                fallbackToParentContext
-                channelId={channelSlug ?? ''}
-            >
+            <DMChannelContextUserLookupProvider channelId={channelSlug ?? ''}>
                 <Stack gap>
                     {usernameProperties && (
                         <SetUsernameDisplayName titleProperties={usernameProperties} />
@@ -184,7 +181,7 @@ export const DMChannelInfo = (props: { channelId?: string; data?: DMChannelIdent
                     ) : (
                         <>
                             {membersExcludingSelf.map((member) => (
-                                <ProfilePanelButton key={member.userId} member={member} />
+                                <ProfilePanelButton key={member?.userId} member={member} />
                             ))}
                         </>
                     )}

@@ -86,8 +86,7 @@ export interface Room {
     id: string
     name: string
     membership: string
-    members: RoomMember[]
-    membersMap: { [userId: string]: RoomMember }
+    members: string[]
     inviter?: string
     isSpaceRoom: boolean
     topic?: string

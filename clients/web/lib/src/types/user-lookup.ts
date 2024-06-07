@@ -1,12 +1,8 @@
 import { Nft, RoomMember } from './towns-types'
 
-export type LookupUserMap = { [key: string]: LookupUser }
-
 export type UserLookupContextType = {
     spaceId?: string
-    streamId?: string
-    users: LookupUser[]
-    usersMap: LookupUserMap
+    channelId?: string
 }
 
 export type LookupUser = {
@@ -16,7 +12,6 @@ export type LookupUser = {
     usernameEncrypted: boolean
     displayName: string
     displayNameEncrypted: boolean
-    avatarUrl?: string
     ensAddress?: string
     memberOf?: MemberOf
     nft?: Nft

@@ -1,11 +1,5 @@
 import React, { useCallback, useMemo } from 'react'
-import {
-    useSpaceData,
-    useSpaceId,
-    useTimelineStore,
-    useTownsContext,
-    useUserLookupContext,
-} from 'use-towns-client'
+import { useSpaceData, useSpaceId, useTimelineStore, useTownsContext } from 'use-towns-client'
 import { ResultItem } from '@components/SearchBar/SearchResultItem'
 import { TouchScrollToTopScrollId } from '@components/TouchTabBar/TouchScrollToTopScrollId'
 import { Box, Icon, IconButton, Paragraph, Stack, TextField } from '@ui'
@@ -62,8 +56,6 @@ export const TouchSearchTab = () => {
     const dmChannels = useDmChannels()
     const { dmChannels: dmChannelIds } = useTownsContext()
 
-    const { users: members } = useUserLookupContext()
-
     const { threadsStats } = useTimelineStore(({ threadsStats }) => ({
         threadsStats,
     }))
@@ -72,11 +64,10 @@ export const TouchSearchTab = () => {
         () => ({
             channels: [...channels, ...dmChannels],
             dmChannelIds,
-            members,
             threadsStats,
             spaceId,
         }),
-        [channels, dmChannels, dmChannelIds, members, spaceId, threadsStats],
+        [channels, dmChannels, dmChannelIds, spaceId, threadsStats],
     )
     const onScroll = useCallback(() => {
         if (document.activeElement instanceof HTMLElement) {

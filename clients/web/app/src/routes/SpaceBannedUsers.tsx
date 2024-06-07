@@ -126,8 +126,8 @@ const BannedUserRow = (props: {
     disabled: boolean
 }) => {
     const { userId, unbanClicked, disabled, transactionInProgress } = props
-    const { usersMap } = useUserLookupContext()
-    const globalUser = usersMap[userId]
+    const { lookupUser } = useUserLookupContext()
+    const globalUser = lookupUser(userId)
     const { isTouch } = useDevice()
     const { data: abstractAccountAddress } = useAbstractAccountAddress({
         rootKeyAddress: userId as Address | undefined,

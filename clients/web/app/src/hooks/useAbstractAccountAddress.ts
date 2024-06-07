@@ -8,6 +8,7 @@ import {
     staleTime24Hours,
     useOfflineStore,
     useSpaceDapp,
+    useSpaceMembers,
     useTownsContext,
     useUserLookupContext,
 } from 'use-towns-client'
@@ -124,22 +125,24 @@ export function useGetAbstractAccountAddressAsync() {
 export type LookupUserWithAbstractAccountAddress = LookupUser & {
     abstractAccountAddress: Address
 }
-
+// TODO: we should move this into zustand - with lookupUser as a selector this
+// won't
 export function useLookupUsersWithAbstractAccountAddress() {
     const { baseChain } = useEnvironment()
     const chainId = baseChain.id
     const userOpsInstance = useUserOpsInstance()
-    const { users: _users } = useUserLookupContext()
+    const { memberIds } = useSpaceMembers()
     const { offlineWalletAddressMap, setOfflineWalletAddress } = useOfflineStore()
 
+    const { lookupUser } = useUserLookupContext()
+
     return useQueries({
-        queries: _users.map((user) => {
-            const uId = user.userId
-            const cachedAddress = offlineWalletAddressMap[uId] as Address | undefined
+        queries: memberIds.map((userId) => {
+            const cachedAddress = offlineWalletAddressMap[userId] as Address | undefined
             return {
                 ...querySetup({
                     chainId,
-                    rootKeyAddress: uId,
+                    rootKeyAddress: userId as `0x${string}` | undefined,
                     userOpsInstance,
                     cachedAddress,
                     setOfflineWalletAddress,
@@ -150,10 +153,10 @@ export function useLookupUsersWithAbstractAccountAddress() {
             return {
                 data: results
                     .map((r, i): LookupUserWithAbstractAccountAddress => {
-                        const user = _users[i]
+                        const user = lookupUser(memberIds[i], true)
                         return {
                             ...user,
-                            abstractAccountAddress: r.data,
+                            abstractAccountAddress: r.data as `0x${string}`,
                         }
                     })
                     .filter(

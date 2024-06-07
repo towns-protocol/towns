@@ -13,11 +13,11 @@ export type Props = {
 }
 
 export const RoomProperties = (props: Props) => {
-    const { usersMap } = useUserLookupContext()
+    const { lookupUser } = useUserLookupContext()
     const { event, userId } = props
     const creator = event.sender.id
     const groupName = event.content.properties.name
-    const creatorUser = usersMap[creator]
+    const creatorUser = lookupUser(creator)
     const name = getPrettyDisplayName(creatorUser)
 
     if (!creatorUser) {

@@ -5,7 +5,7 @@ import { PlateEditor, findNode, getBlockAbove, isBlock, setElements } from '@ude
 import { isType } from '@udecode/plate-utils'
 import { TComboboxItemBase } from '@udecode/plate-combobox'
 import { VirtualRef } from '@udecode/plate-floating'
-import { Channel, OTWMention, RoomMember } from 'use-towns-client'
+import { Channel, OTWMention } from 'use-towns-client'
 import { MOCK_EMOJI } from './ComboboxTypes'
 
 export const BREAK_TAG = '<br>'
@@ -90,9 +90,6 @@ export const getTypeaheadPosition = (
 
 export const getChannelNames = (channels?: Channel[]): string =>
     (channels || []).map((c) => c.label).join('')
-
-export const getUserIds = (users?: RoomMember[]): string =>
-    (users || []).map((u) => u.userId).join('')
 
 export const getMentionIds = (mentions?: OTWMention[]): string =>
     (mentions || []).map((u) => u.displayName).join('')

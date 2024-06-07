@@ -18,7 +18,6 @@ import { useDMUnreads } from '../hooks/TownsContext/useDMUnreads'
 import { useTimelineFilter } from '../store/use-timeline-filter'
 import { ZTEvent } from '../types/timeline-types'
 import { useClientInitStatus } from '../hooks/TownsContext/useClientInitStatus'
-import { GlobalContextUserLookupProvider } from './UserLookupContextProviders'
 import { TownsOpts } from '../client/TownsClientTypes'
 import { Chain } from 'viem/chains'
 import { IChainConfig, TProvider } from '../types/web3-types'
@@ -26,6 +25,7 @@ import { SnapshotCaseType } from '@river-build/proto'
 import { makeProviderFromChain, makeProviderFromConfig } from '../utils/provider-utils'
 import { BaseChainConfig, RiverChainConfig } from '@river-build/web3'
 import { AccountAbstractionConfig } from '@towns/userops'
+import { useUserLookupUpdater } from '../hooks/use-user-lookup-updater'
 
 export type InitialSyncSortPredicate = (a: string, b: string) => number
 
@@ -181,6 +181,7 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
     const { channels: dmChannels } = useCasablancaDMs(casablancaClient)
     const spaceHierarchies = useCasablancaSpaceHierarchies(casablancaClient)
     const blockedUserIds = useBlockedUsers(casablancaClient)
+    useUserLookupUpdater(townsOpts, casablancaClient)
 
     const { spaceUnreads, spaceMentions, spaceUnreadChannelIds } = useSpaceUnreads({
         client,
@@ -229,7 +230,7 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
                 signerContext,
             }}
         >
-            <GlobalContextUserLookupProvider>{props.children}</GlobalContextUserLookupProvider>
+            {props.children}
         </TownsContext.Provider>
     )
 }

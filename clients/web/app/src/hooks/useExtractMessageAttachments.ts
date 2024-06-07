@@ -63,13 +63,15 @@ export const useExtractExternalLinkAttachments = (params: { text: string }) => {
 }
 
 const useCreateStaticInfo = () => {
-    const { usersMap } = useUserLookupContext()
+    const { lookupUser } = useUserLookupContext()
     const { spaces } = useTownsContext()
 
     const createStaticInfo = useCallback(
         ({ spaceId, userId }: { spaceId: string; channelId: string; userId: string }) => {
             const spaceName = spaces.find((s) => s.id === spaceId)?.name
-            const user = spaceId ? (usersMap[userId] as LookupUser)?.memberOf?.[spaceId] : undefined
+            const user = spaceId
+                ? (lookupUser(userId) as LookupUser)?.memberOf?.[spaceId]
+                : undefined
 
             return {
                 spaceName,
@@ -77,7 +79,7 @@ const useCreateStaticInfo = () => {
                 displayName: user?.displayName,
             }
         },
-        [spaces, usersMap],
+        [lookupUser, spaces],
     )
     return { createStaticInfo }
 }

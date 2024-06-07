@@ -7,8 +7,8 @@ import { vars } from 'ui/styles/vars.css'
 
 export const VerifiedOnChainAssetTooltip = (props: { userId: string | undefined }) => {
     const { userId } = props
-    const { usersMap } = useUserLookupContext()
-    const user = userId ? usersMap[userId] : undefined
+    const { lookupUser } = useUserLookupContext()
+    const user = userId ? lookupUser(userId) : undefined
     const { resolvedEnsName } = useResolveEnsName({ userId: userId, ensAddress: user?.ensAddress })
     const resolvedNft = useResolveNft({ walletAddress: userId ?? '', info: user?.nft })
 

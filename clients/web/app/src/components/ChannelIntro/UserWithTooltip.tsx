@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react'
-import { Address, LookupUserMap } from 'use-towns-client'
+import { Address, LookupUserFn } from 'use-towns-client'
 import { Box } from '@ui'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
@@ -9,7 +9,7 @@ import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 type UserWithTooltipProps = {
     userId: string
     displayName?: string
-    usersMap?: LookupUserMap
+    lookupUser?: LookupUserFn
 }
 
 /**
@@ -18,21 +18,21 @@ type UserWithTooltipProps = {
  *
  */
 export const UserWithTooltip = (props: UserWithTooltipProps) => {
-    const { userId, displayName, usersMap } = props
+    const { userId, displayName, lookupUser } = props
     const { openPanel } = usePanelActions()
     const { data: abstractAccountAddress } = useAbstractAccountAddress({
         rootKeyAddress: userId as Address,
     })
 
     let userDisplayName = displayName
-    if (!userDisplayName && usersMap) {
+    if (!userDisplayName && lookupUser) {
         userDisplayName = getPrettyDisplayName(
-            usersMap[userId] ?? {
-                abstractAccountAddress,
+            lookupUser(userId) ?? {
+                userId: abstractAccountAddress as string,
                 displayName: '',
             },
         )
-    } else if (!userDisplayName && !usersMap) {
+    } else if (!userDisplayName) {
         userDisplayName = userId
     }
 

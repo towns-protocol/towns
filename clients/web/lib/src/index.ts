@@ -63,7 +63,7 @@ export {
 } from './hooks/use-space-data'
 export { useSpaceDapp } from './hooks/use-space-dapp'
 export { useSpaceId } from './hooks/use-space-id'
-export { useSpaceMembers } from './hooks/use-space-members'
+export { useSpaceMembers, useSpaceMembersWithFallback } from './hooks/use-space-members'
 export { useSpaceMentions, useSpaceUnreadThreadMentions } from './hooks/use-space-mentions'
 export { useSpaceNotificationCounts } from './hooks/use-space-notification-counts'
 export { useSpaceUnread } from './hooks/use-space-unread'

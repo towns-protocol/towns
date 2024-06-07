@@ -28,11 +28,7 @@ export const CondensedChannelNavItem = (props: {
     const { unreadCount } = useDMLatestMessage(channel.id)
     const myUserId = useMyUserId()
     return (
-        <DMChannelContextUserLookupProvider
-            fallbackToParentContext
-            key={channel.id}
-            channelId={channel.id}
-        >
+        <DMChannelContextUserLookupProvider key={channel.id} channelId={channel.id}>
             <ActionNavItem
                 badge={
                     <Stack horizontal gap="sm">

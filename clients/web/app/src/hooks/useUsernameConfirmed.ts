@@ -3,12 +3,12 @@ import { useMemo } from 'react'
 
 export const useUsernameConfirmed = () => {
     const myUserId = useMyUserId()
-    const { usersMap } = useUserLookupContext()
+    const { lookupUser } = useUserLookupContext()
 
     return useMemo(() => {
-        if (!myUserId || !usersMap[myUserId]) {
+        if (!myUserId || !lookupUser(myUserId)) {
             return { confirmed: true }
         }
-        return { confirmed: usersMap[myUserId].usernameConfirmed }
-    }, [myUserId, usersMap])
+        return { confirmed: lookupUser(myUserId)?.usernameConfirmed }
+    }, [lookupUser, myUserId])
 }

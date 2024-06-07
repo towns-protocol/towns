@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { Address, RoomMember, useSpaceMembers, useUserLookupContext } from 'use-towns-client'
+import { Address, useSpaceMembers, useUserLookupContext } from 'use-towns-client'
+import { isDefined } from '@river/sdk'
 import { shortAddress } from 'ui/utils/utils'
 import { Box, CardLabel, Grid, Paragraph, Stack } from '@ui'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
@@ -17,10 +18,10 @@ type Props = {
 }
 
 export const MembersPage = (props: Props) => {
-    const { usersMap } = useUserLookupContext()
+    const { lookupUser } = useUserLookupContext()
     const members = useMemo(
-        () => props.memberIds.map((userId) => usersMap[userId]),
-        [props.memberIds, usersMap],
+        () => props.memberIds.map((userId) => lookupUser(userId)).filter(isDefined),
+        [lookupUser, props.memberIds],
     )
     return members?.length ? (
         <Stack height="100%">
@@ -28,8 +29,8 @@ export const MembersPage = (props: Props) => {
 
             <Stack grow overflowY="scroll">
                 <Grid columnMinSize="180px">
-                    {members.map((member) => (
-                        <GridProfile member={member} key={member.userId} />
+                    {props.memberIds.map((userId) => (
+                        <GridProfile userId={userId} key={userId} />
                     ))}
                 </Grid>
             </Stack>
@@ -41,14 +42,12 @@ export const MembersPage = (props: Props) => {
 
 export const MembersPageTouchModal = (props: { onHide: () => void }) => {
     const { memberIds } = useSpaceMembers()
-    const { usersMap } = useUserLookupContext()
-    const members = memberIds.map((m) => usersMap[m])
     return (
         <ModalContainer touchTitle="Members" onHide={props.onHide}>
             <Stack grow>
                 <Grid columnMinSize="130px">
-                    {members.map((member) => (
-                        <GridProfile member={member} key={member.userId} />
+                    {memberIds.map((userId) => (
+                        <GridProfile userId={userId} key={userId} />
                     ))}
                 </Grid>
             </Stack>
@@ -56,13 +55,15 @@ export const MembersPageTouchModal = (props: { onHide: () => void }) => {
     )
 }
 
-const GridProfile = ({ member }: { member: RoomMember }) => {
+const GridProfile = ({ userId }: { userId: string }) => {
     const { data: abstractAccountAddress } = useAbstractAccountAddress({
-        rootKeyAddress: member.userId as Address | undefined,
+        rootKeyAddress: userId as Address | undefined,
     })
+    const { lookupUser } = useUserLookupContext()
     const { createLink } = useCreateLink()
     const link = createLink({ profileId: abstractAccountAddress })
     const { isTouch } = useDevice()
+    const user = lookupUser(userId)
 
     return (
         <LinkedContainer to={link}>
@@ -71,7 +72,7 @@ const GridProfile = ({ member }: { member: RoomMember }) => {
                 gap
                 padding
                 background="level1"
-                tooltip={!isTouch ? <ProfileHoverCard userId={member.userId} /> : undefined}
+                tooltip={!isTouch ? <ProfileHoverCard userId={userId} /> : undefined}
             >
                 <Stack
                     gap
@@ -84,14 +85,14 @@ const GridProfile = ({ member }: { member: RoomMember }) => {
                     <Box position="relative">
                         <Avatar
                             size="avatar_x15"
-                            userId={member.userId ?? ''}
+                            userId={userId ?? ''}
                             imageVariant="thumbnail300"
                         />
                     </Box>
 
-                    <Box tooltip={getPrettyDisplayName(member)} maxWidth="100%">
+                    <Box tooltip={getPrettyDisplayName(user)} maxWidth="100%">
                         <Paragraph truncate textAlign="center">
-                            {getPrettyDisplayName(member)}
+                            {getPrettyDisplayName(user)}
                         </Paragraph>
                     </Box>
                 </Stack>

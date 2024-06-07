@@ -2,7 +2,7 @@ import { Transformer } from 'unified'
 import isEmpty from 'lodash/isEmpty'
 import pick from 'lodash/pick'
 import { findAndReplace } from 'mdast-util-find-and-replace'
-import { Channel, OTWMention, RoomMember } from 'use-towns-client'
+import { Channel, OTWMention, useUserLookupContext } from 'use-towns-client'
 import { ELEMENT_MENTION } from '@udecode/plate-mention'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { ELEMENT_MENTION_CHANNEL } from '../../plugins/createChannelPlugin'
@@ -22,7 +22,7 @@ const userNameWithoutAt = (name: string) => name.replace(/^@/, '')
  * @param channelList - List of channels in the current space
  * @param mentions - List of mentions attached to message event, which means how many users are actually mentioned in
  * the message and their details DURING the time of message creation
- * @param users - List of users in the current space
+ * @param lookupUser - a method to looup user by userId
  *
  * @description 1. add special mention for `@channel` because the data type returned from backend has no
  * displayName/userId for it
@@ -37,7 +37,11 @@ const userNameWithoutAt = (name: string) => name.replace(/^@/, '')
  * @see TUserMention
  */
 const remarkTransformUserAndChannels =
-    (channelList: Channel[], mentions: OTWMention[] = [], users: RoomMember[] = []) =>
+    (
+        channelList: Channel[],
+        mentions: OTWMention[] = [],
+        lookupUser?: ReturnType<typeof useUserLookupContext>['lookupUser'],
+    ) =>
     () => {
         const mentionsWithChannel = [
             pick(AtChannelUser, 'userId', 'displayName') as OTWMention,
@@ -59,7 +63,7 @@ const remarkTransformUserAndChannels =
         const USER_NAME_ID_MAP = mentionsWithChannel.reduce((acc, user) => {
             if (user.userId) {
                 const mentionDisplayName = userNameWithoutAt(user.displayName)
-                const member = users.find((m) => m.userId === user.userId)
+                const member = lookupUser?.(user.userId)
                 acc[mentionDisplayName] = {
                     ...user,
                     displayName: !isEmpty(member?.displayName)

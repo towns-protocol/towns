@@ -92,11 +92,11 @@ export const TouchHome = () => {
     const [caretVisible, setCaretVisible] = useState<boolean>(false)
     const isLoadingChannels = space?.isLoadingChannels
     const { memberIds } = useSpaceMembers()
-    const { usersMap } = useUserLookupContext()
+    const { lookupUser } = useUserLookupContext()
     const navigate = useNavigate()
     const members = useMemo(() => {
-        return memberIds.map((userId) => usersMap[userId]).filter(notUndefined)
-    }, [memberIds, usersMap])
+        return memberIds.map((userId) => lookupUser(userId)).filter(notUndefined)
+    }, [lookupUser, memberIds])
     const { state: locationState } = useLocation()
 
     const { unseenChannelIds, markChannelsAsSeen } = useUnseenChannelIds()
@@ -560,7 +560,7 @@ const DirectMessageItem = (props: { dm: DMChannelMenuItem; unread: boolean }) =>
     const { dm, unread } = props
     const { unreadCount } = useDMLatestMessage(dm.id)
     return (
-        <DMChannelContextUserLookupProvider fallbackToParentContext key={dm.id} channelId={dm.id}>
+        <DMChannelContextUserLookupProvider key={dm.id} channelId={dm.id}>
             <TouchChannelResultRow
                 key={dm.id}
                 itemLink={{ messageId: dm.id }}

@@ -24,7 +24,7 @@ export const ChannelPlaceholder = ({ userIds: _userIds, autoFocus = false }: Pro
                         autoFocus={autoFocus}
                         storageId={getDraftDMStorageId(_userIds)}
                         channels={[]}
-                        users={[]}
+                        memberIds={[]}
                         placeholder={`Send a message to ${userList}`}
                     />
                 </Box>

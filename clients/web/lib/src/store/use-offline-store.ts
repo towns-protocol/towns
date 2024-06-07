@@ -30,8 +30,6 @@ export type OfflineStates = {
     setOfflineSpaceInfo: (spaceInfo: SpaceInfo) => void
     offlineChannelMetadataMap: Record<string, OfflineChannelMetadata>
     setOfflineChannelInfo: (channel: OfflineChannelMetadata) => void
-    offlineUserMap: OfflineUserMap
-    setOfflineUser: (key: string, offlineUser: OfflineUser) => void
     offlineWalletAddressMap: OfflineWalletAddressMap
     setOfflineWalletAddress: (userId: string, abstractAccountAddress: string) => void
     offlineUserBioMap: OfflineUserBioMap
@@ -87,21 +85,6 @@ export const useOfflineStore = create<OfflineStates>(
                     }
                 })
             },
-            offlineUserMap: {},
-            setOfflineUser: (key: string, offlineUser: OfflineUser) =>
-                set((state) => {
-                    if (isEqual(state.offlineUserMap[key], offlineUser)) {
-                        return state
-                    }
-                    return {
-                        ...state,
-                        offlineUserMap: {
-                            ...state.offlineUserMap,
-                            [key]: offlineUser,
-                        },
-                    }
-                }),
-
             offlineWalletAddressMap: {},
             setOfflineWalletAddress: (userId: string, abstractAccountAddress: string) =>
                 set((state) => {

@@ -90,7 +90,6 @@ export const useUserLookupStore = createWithEqualityFn<UserLookupStore>()(
                         if (!state.channelUsers[channelId]) {
                             state.channelUsers[channelId] = {}
                         }
-
                         state.channelUsers[channelId][userId] = {
                             ...user,
                             memberOf,

@@ -6,7 +6,6 @@ import { useLocation, useNavigate } from 'react-router'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useConnectivity, useContractSpaceInfoWithoutClient, useMyProfile } from 'use-towns-client'
 import { AppProgressState } from '@components/AppProgressOverlay/AppProgressState'
-import { Avatar } from '@components/Avatar/Avatar'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { ErrorReportForm } from '@components/ErrorReport/ErrorReport'
 import { LogoSingleLetter } from '@components/Logo/Logo'
@@ -28,6 +27,7 @@ import { atoms } from 'ui/styles/atoms.css'
 import { darkTheme } from 'ui/styles/vars.css'
 import { shortAddress } from 'ui/utils/utils'
 import { AppProgressOverlayTrigger } from '@components/AppProgressOverlay/AppProgressOverlayTrigger'
+import { Avatar } from '@components/Avatar/Avatar'
 import { BottomBarContent } from './BottomBarContent'
 import { usePublicPageLoginFlow } from './usePublicPageLoginFlow'
 
@@ -279,7 +279,7 @@ const LoggedUserAvatar = () => {
                 align: 'end',
             }}
         >
-            <Avatar size="avatar_x4" userId={profileUser.userId} src={profileUser.avatarUrl} />
+            <Avatar size="avatar_x4" userId={profileUser.userId} />
         </Box>
     )
 }

@@ -1,6 +1,5 @@
 import React, { useCallback } from 'react'
 import { useNavigate } from 'react-router'
-import { GlobalContextUserLookupProvider } from 'use-towns-client'
 import { BoxProps, IconButton, IconName } from '@ui'
 import { useShortcut } from 'hooks/useShortcut'
 import { useCreateLink } from 'hooks/useCreateLink'
@@ -38,9 +37,7 @@ const MessageListPanel = ({ onNavAction }: { onNavAction: () => void }) => {
             rightBarButton={<PanelHeaderButton icon="compose" onClick={onNavAction} />}
             padding="sm"
         >
-            <GlobalContextUserLookupProvider>
-                <DirectMessageList />
-            </GlobalContextUserLookupProvider>
+            <DirectMessageList />
         </Panel>
     )
 }

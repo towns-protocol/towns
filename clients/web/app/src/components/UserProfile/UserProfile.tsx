@@ -55,8 +55,8 @@ enum InputId {
 export const UserProfile = (props: Props) => {
     const { userId, canEdit, center, info, userBio, abstractAccountAddress } = props
     const spaceData = useSpaceData()
-    const { usersMap } = useUserLookupContext()
-    const user = userId ? usersMap[userId] : undefined
+    const { lookupUser } = useUserLookupContext()
+    const user = userId ? lookupUser(userId) : undefined
     const [showNftProfilePicture, setShowNftProfilePicture] = useState(false)
     const [isRemovingNft, setIsRemovingNft] = useState(false)
 

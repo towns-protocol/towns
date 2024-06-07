@@ -60,9 +60,9 @@ describe('userProfileHooks', () => {
         const TestUserProfile = ({ signer }: { signer: TSigner }) => {
             const { setDisplayName, setAvatarUrl } = useTownsClient()
             const myProfile = useMyProfile()
-            const { usersMap } = useUserLookupContext()
+            const { lookupUser } = useUserLookupContext()
             const userId = alice.getUserId()
-            const alicesMemberInfo = userId ? usersMap[userId] : undefined
+            const alicesMemberInfo = userId ? lookupUser(userId) : undefined
             const { timeline } = useChannelTimeline()
             const roomMessages = timeline.filter((x) => x.content?.kind === ZTEvent.RoomMessage)
             const onClickSetProfileInfo = useCallback(() => {

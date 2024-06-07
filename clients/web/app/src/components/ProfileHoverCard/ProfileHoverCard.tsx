@@ -17,8 +17,8 @@ type Props = {
 export const ProfileHoverCard = (props: Props) => {
     const { userId } = props
 
-    const { usersMap } = useUserLookupContext()
-    const user = usersMap[userId]
+    const { lookupUser } = useUserLookupContext()
+    const user = lookupUser(userId)
     const { data: abstractAccountAddress } = useAbstractAccountAddress({
         rootKeyAddress: userId as Address | undefined,
     })

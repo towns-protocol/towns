@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { firstBy } from 'thenby'
-import { Address, LookupUserMap, useOfflineStore, useUserLookupContext } from 'use-towns-client'
+import { Address, LookupUser, useOfflineStore, useUserLookupContext } from 'use-towns-client'
 import { isAddress } from 'ethers/lib/utils'
 import { Avatar } from '@components/Avatar/Avatar'
 import { Box, Icon, IconButton, Paragraph, Text } from '@ui'
@@ -37,7 +37,7 @@ const everyoneUser: LookupUserWithAbstractAccountAddress = {
 
 export const UserPillSelector = (props: Props) => {
     const { onSelectionChange: onSelectionChangeProp, isValidationError } = props
-    const { usersMap } = useUserLookupContext()
+    const { lookupUser } = useUserLookupContext()
     const { data: _users, isLoading } = useLookupUsersWithAbstractAccountAddress()
     const { isTouch } = useDevice()
 
@@ -70,9 +70,9 @@ export const UserPillSelector = (props: Props) => {
                 firstBy<LookupUserWithAbstractAccountAddress>(
                     (u) => [...recentUsers].reverse().indexOf(u.userId),
                     -1,
-                ).thenBy((id) => usersMap[id]?.displayName),
+                ).thenBy((id) => lookupUser(id.userId)?.displayName),
             ),
-        [recentUsers, usersMap],
+        [recentUsers, lookupUser],
     )
 
     const optionRenderer = useCallback(
@@ -111,7 +111,7 @@ export const UserPillSelector = (props: Props) => {
             placeholder={!numSelected ? 'Search people' : numSelected === 1 ? 'Add people...' : ''}
             optionRenderer={optionRenderer}
             pillRenderer={(p) => (
-                <PillRenderer address={p.key} usersMap={usersMap} onDelete={p.onDelete} />
+                <PillRenderer address={p.key} lookupUser={lookupUser} onDelete={p.onDelete} />
             )}
             optionSorter={optionSorter}
             getOptionKey={(o) => o.abstractAccountAddress}
@@ -126,10 +126,10 @@ export const UserPillSelector = (props: Props) => {
 
 function PillRenderer(params: {
     address: string
-    usersMap: LookupUserMap
+    lookupUser: (userId: string) => LookupUser | undefined
     onDelete: (customKey?: string) => void
 }) {
-    const { address: aaAddress, usersMap, onDelete } = params
+    const { address: aaAddress, lookupUser, onDelete } = params
     const offlineWalletAddressMap = useOfflineStore((state) => state.offlineWalletAddressMap)
 
     // need to get root key for avatar and username
@@ -137,6 +137,8 @@ function PillRenderer(params: {
         (key) => offlineWalletAddressMap[key] === aaAddress,
     )
     const everyone = isEveryoneAddress(aaAddress)
+
+    const rootKeyUser = rootKeyAddress ? lookupUser(rootKeyAddress) : undefined
 
     return (
         <Box
@@ -155,9 +157,7 @@ function PillRenderer(params: {
                 <Avatar size="avatar_xs" userId={rootKeyAddress} />
             )}
 
-            {rootKeyAddress &&
-                usersMap[rootKeyAddress] &&
-                getPrettyDisplayName(usersMap[rootKeyAddress])}
+            {rootKeyAddress && rootKeyUser && getPrettyDisplayName(rootKeyUser)}
             <Box
                 whiteSpace="nowrap"
                 tooltip={everyone ? 'All wallet addresses' : aaAddress}

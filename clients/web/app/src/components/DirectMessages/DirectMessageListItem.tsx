@@ -192,8 +192,8 @@ export const DirectMessageIcon = (props: {
     )
 }
 
-const getMessageDisplayName = (user: LookupUser, myUserId: string | undefined) =>
-    user.userId === myUserId ? 'You' : getPrettyDisplayName(user)
+const getMessageDisplayName = (user: LookupUser | undefined, myUserId: string | undefined) =>
+    user?.userId === myUserId ? 'You' : getPrettyDisplayName(user)
 
 const LastDirectMessageContent = (props: {
     info: undefined | MostRecentMessageInfo_OneOf
@@ -202,7 +202,7 @@ const LastDirectMessageContent = (props: {
     channel: DMChannelIdentifier
 }) => {
     const { myUserId, info, latestUser, channel } = props
-    const { usersMap } = useUserLookupContext()
+    const { lookupUser } = useUserLookupContext()
 
     const authorDisplayName = useMemo(
         () => (latestUser ? getMessageDisplayName(latestUser, myUserId) : ''),
@@ -264,12 +264,12 @@ const LastDirectMessageContent = (props: {
             return `You created this DM`
         }
         case 'gdm_created': {
-            const creator = usersMap[info.creatorId]
+            const creator = lookupUser(info.creatorId)
             const displayName = getMessageDisplayName(creator, myUserId)
             return `${displayName} created this group`
         }
         case 'member_added': {
-            const user = usersMap[info.userId]
+            const user = lookupUser(info.userId)
             const displayName = getMessageDisplayName(user, myUserId)
             // Since the DM created event is done first, and then the member added event
             // we need to check if its a DM, if so, we want to show the dm_created message
@@ -278,7 +278,7 @@ const LastDirectMessageContent = (props: {
                 : `You started a new DM`
         }
         case 'member_left': {
-            const user = usersMap[info.userId]
+            const user = lookupUser(info.userId)
             const displayName = getMessageDisplayName(user, myUserId)
             // TODO: HNT-6766 - show who left the group: `X left Y`
             return channel.isGroup
@@ -288,7 +288,7 @@ const LastDirectMessageContent = (props: {
         // TODO: HNT-6766 - add new case:
         // case 'member_removed': X removed Y from this group
         case 'member_invited': {
-            const user = usersMap[info.userId]
+            const user = lookupUser(info.userId)
             const displayName = getMessageDisplayName(user, myUserId)
             return `${displayName} got invited to this group`
         }

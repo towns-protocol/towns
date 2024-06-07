@@ -1,6 +1,11 @@
 import { useCallback, useMemo } from 'react'
 import { firstBy } from 'thenby'
-import { LookupUser, useUserLookupContext } from 'use-towns-client'
+import {
+    LookupUser,
+    useSpaceId,
+    useSpaceMembersWithFallback,
+    useUserLookupContext,
+} from 'use-towns-client'
 import {
     ActionEventDocument,
     ChannelEventDocument,
@@ -10,12 +15,22 @@ import {
 } from '@components/SearchBar/types'
 import { useIndexMessages } from 'hooks/useIndexMessages'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
+import { notUndefined } from 'ui/utils/utils'
 import { useMiniSearch } from './useMiniSearch'
 import { useSortedChannels } from './useSortedChannels'
 // import { useOramaSearch } from './hooks/useOramaSearch'
 
 export const useSearch = (searchTerms: string) => {
-    const { users } = useUserLookupContext()
+    const spaceId = useSpaceId()
+
+    const { memberIds } = useSpaceMembersWithFallback(spaceId)
+    const { lookupUser } = useUserLookupContext()
+
+    const users = useMemo(
+        () => memberIds.map((m) => lookupUser(m)).filter(notUndefined),
+        [lookupUser, memberIds],
+    )
+
     const { messages: indexedMessages, dmMessages: indexedDMMessages } = useIndexMessages()
 
     const { channelItems, dmItems } = useSortedChannels({ spaceId: '' })

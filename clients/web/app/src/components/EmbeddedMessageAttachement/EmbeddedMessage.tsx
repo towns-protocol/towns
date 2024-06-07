@@ -29,8 +29,8 @@ export const EmbeddedMessage = (props: {
             : undefined
 
     const channel = useRoom(attachment.info.channelId)
-    const { usersMap } = useUserLookupContext()
-    const user = usersMap[attachment.info.userId]
+    const { lookupUser } = useUserLookupContext()
+    const user = lookupUser(attachment.info.userId)
 
     const { createLink } = useCreateLink()
     const userTooltip = user ? <ProfileHoverCard userId={attachment.info.userId} /> : undefined

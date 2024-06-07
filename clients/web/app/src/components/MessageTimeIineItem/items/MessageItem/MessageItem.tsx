@@ -6,6 +6,7 @@ import {
     ZTEvent,
     staticAssertNever,
     useTownsClient,
+    useUserLookupContext,
 } from 'use-towns-client'
 import { useSearchParams } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
@@ -109,15 +110,8 @@ export const MessageItem = (props: Props) => {
         return <></>
     }
 
-    const {
-        channels,
-        members,
-        channelId,
-        spaceId,
-        onMentionClick,
-        timelineActions,
-        messageRepliesMap,
-    } = timelineContext
+    const { channels, channelId, spaceId, onMentionClick, timelineActions, messageRepliesMap } =
+        timelineContext
 
     const isMessage = itemData.type === RenderEventType.Message
     const isEncryptedMessage = itemData.type === RenderEventType.EncryptedMessage
@@ -180,7 +174,6 @@ export const MessageItem = (props: Props) => {
                                 attachedLinks={attachedLinks}
                                 eventContent={event.content}
                                 event={event}
-                                members={members}
                                 channels={channels}
                             />
                         )}
@@ -198,7 +191,6 @@ export const MessageItem = (props: Props) => {
                             attachedLinks={attachedLinks}
                             eventContent={event.content}
                             event={event}
-                            members={members}
                             channels={channels}
                             onMentionClick={onMentionClick}
                             onMentionHover={(ref, userId) => {
@@ -262,11 +254,11 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
     const { sender } = event
     const timelineContext = useTimelineContext()
     const { isTouch } = useDevice()
+    const { lookupUser } = useUserLookupContext()
 
     const body = event.content?.kind === ZTEvent.RoomMessage ? event.content.body : undefined
 
     const {
-        membersMap,
         userId,
         channelId,
         spaceId,
@@ -277,7 +269,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
         threadParentId,
     } = timelineContext
 
-    const user = membersMap[sender.id]
+    const user = lookupUser(sender.id)
 
     const isOwn = event.content?.kind == ZTEvent.RoomMessage && sender.id === userId
 

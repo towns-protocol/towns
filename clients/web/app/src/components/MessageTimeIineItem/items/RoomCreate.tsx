@@ -15,12 +15,12 @@ type Props = {
 }
 
 export const RoomCreate = (props: Props) => {
-    const { usersMap } = useUserLookupContext()
+    const { lookupUser } = useUserLookupContext()
     const { event, channelName, userId } = props
 
     const creator = event.content.creator
 
-    const creatorUser = usersMap[creator]
+    const creatorUser = lookupUser(creator)
     const name = getPrettyDisplayName(creatorUser)
     const groupName = channelName ? `#${channelName}` : `this group`
 

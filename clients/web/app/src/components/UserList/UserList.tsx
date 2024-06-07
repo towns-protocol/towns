@@ -1,6 +1,6 @@
 import React, { useMemo, useRef } from 'react'
 import { firstBy } from 'thenby'
-import { RoomMember, useUserLookupContext } from 'use-towns-client'
+import { LookupUser, LookupUserFn, useUserLookupContext } from 'use-towns-client'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 
 type UserName = {
@@ -27,15 +27,15 @@ export const useUserList = (params: Props) => {
     const stableRenderRef = useRef(params.renderUser)
     const renderUser = (stableRenderRef.current = params.renderUser)
 
-    const { usersMap } = useUserLookupContext()
+    const { lookupUser } = useUserLookupContext()
     const members = useMemo(() => {
         return (userIds.length || !myUserId ? userIds : [myUserId]).map((u) => {
             return {
                 userId: u,
-                displayName: getPrettyDisplayName(usersMap[u] ?? { name: u }),
+                displayName: getPrettyDisplayName(lookupUser(u) ?? { userId: u, displayName: '' }),
             }
         })
-    }, [userIds, myUserId, usersMap])
+    }, [userIds, myUserId, lookupUser])
 
     const fragments = useMemo(() => {
         if (userIds.length === 0 && !myUserId) {
@@ -82,7 +82,8 @@ const SORT_CURRENT_USER = {
  *
  */
 export const getNameListFromUsers = (
-    users: RoomMember[],
+    lookupUser: LookupUserFn,
+    users: LookupUser[],
     currentUserId?: string,
     options: {
         maxNames?: number
@@ -94,11 +95,11 @@ export const getNameListFromUsers = (
     const mappedUsers = users
         .slice()
         .sort(
-            firstBy((u: RoomMember) =>
+            firstBy((u: LookupUser) =>
                 u?.userId === currentUserId ? SORT_CURRENT_USER[sortCurrentUser] : 0,
-            ).thenBy((u: RoomMember) => u?.displayName, -1),
+            ).thenBy((u: LookupUser) => u?.displayName, -1),
         )
-        .map((u?: RoomMember) => (u?.userId === currentUserId ? 'you' : getPrettyDisplayName(u)))
+        .map((u?: LookupUser) => (u?.userId === currentUserId ? 'you' : getPrettyDisplayName(u)))
 
     const truncateUsers =
         mappedUsers.length > maxNames

@@ -20,7 +20,7 @@ export const RepliesButton = (props: Props) => {
     const { threadStats, eventId } = props
     const { replyEventIds } = threadStats
 
-    const { usersMap } = useUserLookupContext()
+    const { lookupUser } = useUserLookupContext()
 
     const spaceId = useSpaceId()
     const channelId = useChannelId()
@@ -28,9 +28,9 @@ export const RepliesButton = (props: Props) => {
     const users = useMemo(
         () =>
             Array.from(threadStats.userIds)
-                .map((u) => usersMap[u])
+                .map((u) => lookupUser(u))
                 .filter(notUndefined),
-        [usersMap, threadStats.userIds],
+        [threadStats.userIds, lookupUser],
     )
 
     const isUnread = useFullyReadMarker(channelId, eventId)?.isUnread

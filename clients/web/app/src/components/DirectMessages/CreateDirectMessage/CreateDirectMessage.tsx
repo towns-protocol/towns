@@ -57,7 +57,7 @@ export const CreateDirectMessage = (props: Props) => {
     const { analytics } = useAnalytics()
     const navigate = useNavigate()
     const { createLink } = useCreateLink()
-    const { usersMap } = useUserLookupContext()
+    const { lookupUser } = useUserLookupContext()
 
     const { dmChannels } = useTownsContext()
 
@@ -140,16 +140,17 @@ export const CreateDirectMessage = (props: Props) => {
             setUserChannelPreview(matchingChannel)
         }
     }
+    const firstUser = useMemo(
+        () => lookupUser(selectedUsers.values().next().value),
+        [lookupUser, selectedUsers],
+    )
 
     const createCTA = useMemo(
         () =>
-            !numSelectedUsers ? undefined : numSelectedUsers === 1 ? (
+            !numSelectedUsers ? undefined : numSelectedUsers === 1 && firstUser ? (
                 matchingDM ? undefined : (
                     <Stack horizontal grow gap="sm" alignItems="center">
-                        <UserOption
-                            user={usersMap[Array.from(selectedUsers).at(0)]}
-                            selected={false}
-                        />
+                        <UserOption user={firstUser} selected={false} />
                     </Stack>
                 )
             ) : isTouch ? (
@@ -177,7 +178,7 @@ export const CreateDirectMessage = (props: Props) => {
                     </Paragraph>
                 </Stack>
             ),
-        [isTouch, matchingDM, matchingGDM.length, numSelectedUsers, selectedUsers, usersMap],
+        [firstUser, isTouch, matchingDM, matchingGDM.length, numSelectedUsers, selectedUsers],
     )
 
     const onCreateNew = useCallback(() => {
@@ -288,10 +289,7 @@ export const CreateDirectMessage = (props: Props) => {
                             transition={{ duration: 0.3, delay: 0, ease: 'easeInOut' }}
                         >
                             {preview ? (
-                                <DMChannelContextUserLookupProvider
-                                    fallbackToParentContext
-                                    channelId={preview}
-                                >
+                                <DMChannelContextUserLookupProvider channelId={preview}>
                                     <ChannelContextProvider channelId={preview}>
                                         <SpacesChannelComponent hideHeader preventAutoFocus />
                                     </ChannelContextProvider>

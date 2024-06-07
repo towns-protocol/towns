@@ -3,10 +3,10 @@ import {
     Channel,
     TimelineEvent,
     useMyProfile,
+    useSpaceMembers,
     useTimelineReactions,
     useTimelineThreadStats,
     useTownsClient,
-    useUserLookupContext,
 } from 'use-towns-client'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast/headless'
@@ -16,7 +16,6 @@ import { Box } from '@ui'
 import { useHandleReaction } from 'hooks/useReactions'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useCreateLink } from 'hooks/useCreateLink'
-import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useGetAbstractAccountAddressAsync } from 'hooks/useAbstractAccountAddress'
 import { ErrorNotification } from '@components/Notifications/ErrorNotifcation'
 import { useTimelineMessageEditing } from './hooks/useTimelineMessageEditing'
@@ -42,8 +41,7 @@ export const MessageTimelineContext = createContext<{
     timelineActions: ReturnType<typeof useTimelineMessageEditing>
     handleReaction: ReturnType<typeof useHandleReaction>
     sendReadReceipt: ReturnType<typeof useTownsClient>['sendReadReceipt']
-    membersMap: ReturnType<typeof useUserLookupContext>['usersMap']
-    members: ReturnType<typeof useUserLookupContext>['users']
+    memberIds: string[]
     onMentionClick?: (mentionName: string) => void
 } | null>(null)
 
@@ -77,23 +75,20 @@ export const MessageTimelineWrapper = (props: {
     const handleReaction = useHandleReaction(channelId)
     const isChannelEncrypted = true
 
-    const { usersMap, users: members } = useUserLookupContext()
+    const { memberIds } = useSpaceMembers()
     const getAbstractAccountAddress = useGetAbstractAccountAddressAsync()
 
     const navigate = useNavigate()
     const { createLink } = useCreateLink()
 
     const onMentionClick = useCallback(
-        async (mentionName: string) => {
-            const profileId = members?.find(
-                (m) => getPrettyDisplayName(m) === mentionName.trim(),
-            )?.userId
-            if (!profileId) {
+        async (userId: string) => {
+            if (!userId) {
                 return
             }
             try {
                 const abstractAccountAddress = await getAbstractAccountAddress({
-                    rootKeyAddress: profileId,
+                    rootKeyAddress: userId as `0x${string}`,
                 })
                 const link = createLink({ profileId: abstractAccountAddress })
                 if (link) {
@@ -111,7 +106,7 @@ export const MessageTimelineWrapper = (props: {
                 })
             }
         },
-        [createLink, getAbstractAccountAddress, members, navigate],
+        [createLink, getAbstractAccountAddress, navigate],
     )
 
     const value = useMemo(() => {
@@ -131,8 +126,7 @@ export const MessageTimelineWrapper = (props: {
             handleReaction,
             sendReadReceipt,
             type,
-            members,
-            membersMap: usersMap,
+            memberIds,
         }
     }, [
         userId,
@@ -150,8 +144,7 @@ export const MessageTimelineWrapper = (props: {
         handleReaction,
         sendReadReceipt,
         type,
-        members,
-        usersMap,
+        memberIds,
     ])
 
     return (

@@ -34,7 +34,7 @@ import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 
 type Props = {
     channel: Channel
-    spaceId: string | undefined
+    spaceId: string
     onTouchClose?: () => void
 }
 
@@ -42,11 +42,11 @@ export const ChannelHeader = (props: Props) => {
     const { isTouch } = useDevice()
     const { upToDate } = useStreamUpToDate(props.channel.id)
     const { clientStatus } = useTownsContext()
-    const channelMembers = useChannelMembers()
     const myUserId = useMyUserId()
+    const { memberIds } = useChannelMembers()
     const isUserChannelMember = useMemo(
-        () => (myUserId ? channelMembers.memberIds.includes(myUserId) : false),
-        [channelMembers.memberIds, myUserId],
+        () => (myUserId ? memberIds.includes(myUserId) : false),
+        [memberIds, myUserId],
     )
     const showLoadingIndicator =
         (!upToDate || !clientStatus.streamSyncActive) && isUserChannelMember
@@ -332,16 +332,16 @@ const useChannelInfoButton = (type: CHANNEL_INFO_PARAMS_VALUES, channelId: strin
     const [searchParams] = useSearchParams()
     const { openPanel } = usePanelActions()
 
-    const { members } = useMembers(channelId)
+    const { memberIds } = useMembers(channelId)
     const myUserId = useMyUserId()
 
     const friendDM = useMemo(() => {
-        const isPersonalSpace = members.length === 1
-        return isPersonalSpace ? members[0] : members.find((m) => m.userId !== myUserId)
-    }, [members, myUserId])
+        const isPersonalSpace = memberIds.length === 1
+        return isPersonalSpace ? memberIds[0] : memberIds.find((u) => u !== myUserId)
+    }, [memberIds, myUserId])
 
     const { data: abstractAccountAddress } = useAbstractAccountAddress({
-        rootKeyAddress: friendDM?.userId as Address | undefined,
+        rootKeyAddress: friendDM as Address | undefined,
     })
 
     return useCallback(() => {

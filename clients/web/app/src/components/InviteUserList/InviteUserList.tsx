@@ -1,8 +1,8 @@
 import { AnimatePresence } from 'framer-motion'
 import fuzzysort from 'fuzzysort'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { firstBy } from 'thenby'
-import { useMyUserId, useUser, useUserLookupContext } from 'use-towns-client'
+import { LookupUser, useMyUserId, useUser, useUserLookupStore } from 'use-towns-client'
 import { Avatar } from '@components/Avatar/Avatar'
 import { FadeInBox } from '@components/Transitions'
 import {
@@ -39,7 +39,8 @@ export const InviteUserList = (props: {
 }) => {
     const { onSelectionChange, hiddenUserIds = new Set(), isMultiSelect = false } = props
     const [searchTerm, setSearchTerm] = useState('')
-    const { users, usersMap } = useUserLookupContext()
+    const { allUsers } = useUserLookupStore()
+    const usersList = useMemo(() => Object.values(allUsers).flatMap((m) => m), [allUsers])
     const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set<string>())
     const userId = useMyUserId()
     const { isTouch } = useDevice()
@@ -62,28 +63,27 @@ export const InviteUserList = (props: {
         [isMultiSelect, selectedUserIds.size],
     )
 
-    const filteredUserIds = fuzzysort
-        .go(searchTerm, users, {
-            keys: ['displayName', 'username'],
-            all: true,
-        })
-        .map((r) => r.obj.userId)
-        .sort(
-            firstBy<string>((id) => (usersMap[id]?.displayName?.startsWith(`0x`) ? 1 : -1)).thenBy(
-                (id) => usersMap[id]?.displayName,
-            ),
-        )
-        .filter((id) => (!isMultiSelect || id !== userId) && !hiddenUserIds.has(id))
-        .slice(0, 25)
+    const filteredUserIds = useMemo(() => {
+        return fuzzysort
+            .go(searchTerm, usersList, {
+                keys: ['displayName', 'username'],
+                all: true,
+            })
+            .map((result) => result.obj) // Assuming `result.obj` contains the user object
+            .sort(
+                firstBy<LookupUser>((user) =>
+                    user?.displayName?.startsWith('0x') ? 1 : -1,
+                ).thenBy((user) => user?.displayName),
+            )
+            .filter(
+                (user) =>
+                    (!isMultiSelect || user.userId !== userId) && !hiddenUserIds.has(user.userId),
+            )
+            .slice(0, 25)
+    }, [hiddenUserIds, isMultiSelect, searchTerm, userId, usersList])
 
     const recentUsers = usePersistOrder(
         useRecentUsers(userId).filter((id) => !hiddenUserIds.has(id)),
-    )
-
-    const allUsers = usePersistOrder(
-        users
-            .map((u) => u.userId)
-            .filter((id) => !hiddenUserIds.has(id) && !recentUsers.includes(id)),
     )
 
     useEffect(() => {
@@ -130,7 +130,7 @@ export const InviteUserList = (props: {
 
     const buttonListLength = isMultiSelect ? 0 : 1
     const priorityListLength = priorityList.length + buttonListLength
-    const totalListLength = priorityList.length + allUsers.length + buttonListLength
+    const totalListLength = priorityList.length + usersList.length + buttonListLength
 
     useEffect(() => {
         const onKeyDown = (e: KeyboardEvent) => {
@@ -155,7 +155,7 @@ export const InviteUserList = (props: {
         return () => {
             window.removeEventListener('keydown', onKeyDown)
         }
-    }, [activeIndex, allUsers.length, props, priorityList.length, totalListLength])
+    }, [activeIndex, usersList.length, props, priorityList.length, totalListLength])
 
     const layout = isSettled ? 'position' : undefined
 
@@ -253,8 +253,8 @@ export const InviteUserList = (props: {
                             </Box>
                         )}
                         {(searchTerm
-                            ? allUsers.filter((u) => filteredUserIds.includes(u))
-                            : allUsers
+                            ? usersList.filter((u) => filteredUserIds.includes(u))
+                            : usersList
                         ).map((id, index) => (
                             <Participant
                                 key={id}

@@ -4,7 +4,7 @@ import {
     RoomMessageEvent,
     SendTextMessageOptions,
     useMyProfile,
-    useUserLookupContext,
+    useSpaceMembers,
 } from 'use-towns-client'
 import { createPortal } from 'react-dom'
 import { Box, Stack, useZLayerContext } from '@ui'
@@ -45,7 +45,7 @@ export const TimelineMessageEditor = (props: Props) => {
         timelineActions?.onCancelEditingMessage?.()
     }, [timelineActions])
 
-    const { users: members } = useUserLookupContext()
+    const { memberIds } = useSpaceMembers()
     const userId = useMyProfile()?.userId
     const channels = useSpaceChannels()
 
@@ -65,7 +65,7 @@ export const TimelineMessageEditor = (props: Props) => {
                     displayButtons="always"
                     initialValue={initialValue}
                     channels={channels}
-                    users={members}
+                    memberIds={memberIds}
                     mentions={eventContent.mentions}
                     userId={userId}
                     onSend={onSend}
@@ -88,7 +88,7 @@ export const TimelineMessageEditor = (props: Props) => {
                     displayButtons="always"
                     initialValue={initialValue}
                     channels={channels}
-                    users={members}
+                    memberIds={memberIds}
                     mentions={eventContent.mentions}
                     userId={userId}
                     onSend={onSend}

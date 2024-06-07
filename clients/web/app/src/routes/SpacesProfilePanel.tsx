@@ -5,7 +5,6 @@ import { useEvent } from 'react-use-event-hook'
 import {
     Address,
     BlockchainTransactionType,
-    LookupUser,
     Permission,
     SpaceData,
     useConnectivity,
@@ -132,7 +131,7 @@ const SpaceProfileWithoutAuth = () => {
 
     const myUser = useMyProfile()
 
-    const { usersMap } = useUserLookupContext()
+    const { lookupUser } = useUserLookupContext()
     const location = useLocation()
     const isMeRoute = matchRoutes([{ path: '/me' }], location) || profileIdFromPath === 'me'
 
@@ -154,7 +153,7 @@ const SpaceProfileWithoutAuth = () => {
         }
     })
 
-    const user: LookupUser | undefined = useMemo(() => {
+    const user = useMemo(() => {
         if (isMeRoute) {
             return {
                 ...myUser,
@@ -163,9 +162,9 @@ const SpaceProfileWithoutAuth = () => {
             }
         }
         if (userId) {
-            return usersMap[userId]
+            return lookupUser(userId)
         }
-    }, [isMeRoute, userId, myUser, usersMap])
+    }, [isMeRoute, userId, myUser, lookupUser])
 
     const isValid = !!user
 

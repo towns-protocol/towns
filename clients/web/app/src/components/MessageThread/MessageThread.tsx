@@ -8,6 +8,7 @@ import {
     ZTEvent,
     useConnectivity,
     useMyProfile,
+    useSpaceMembers,
     useTimelineThread,
     useUserLookupContext,
 } from 'use-towns-client'
@@ -65,7 +66,7 @@ export const MessageThread = (props: {
     const showGallery = galleryThreadId === parentId || galleryId === parentId
 
     const messages = useThrottledValue(unthrottledMessages, 1000)
-    const { usersMap } = useUserLookupContext()
+    const { lookupUser } = useUserLookupContext()
 
     const { sendReply } = useSendReply(parentId, parentMessage?.fallbackContent)
 
@@ -87,10 +88,10 @@ export const MessageThread = (props: {
             .filter((id) => id)
 
         return userIds.reduce((users, id) => {
-            users[id] = usersMap[id]
+            users[id] = lookupUser(id)
             return users
-        }, {} as { [key: string]: LookupUser })
-    }, [messagesWithParent, usersMap])
+        }, {} as { [key: string]: LookupUser | undefined })
+    }, [lookupUser, messagesWithParent])
 
     const usernames = useMemo(() => {
         const names = Object.values(involvedUsers)
@@ -112,7 +113,7 @@ export const MessageThread = (props: {
             : undefined
     }, [involvedUsers, profile?.userId])
 
-    const { users } = useUserLookupContext()
+    const { memberIds } = useSpaceMembers()
     const userId = useMyProfile()?.userId
     const { loggedInWalletAddress } = useConnectivity()
 
@@ -162,7 +163,7 @@ export const MessageThread = (props: {
                                 autoFocus={false}
                                 placeholder="Reply..."
                                 channels={channels}
-                                users={users}
+                                memberIds={memberIds}
                                 userId={userId}
                                 onSend={onSend}
                             />

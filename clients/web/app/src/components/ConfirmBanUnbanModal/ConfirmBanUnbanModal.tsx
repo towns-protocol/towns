@@ -11,10 +11,10 @@ export const ConfirmBanUnbanModal = (props: {
     userId: string
 }) => {
     const { onConfirm, onCancel, userId, ban } = props
-    const { usersMap } = useUserLookupContext()
+    const { lookupUser } = useUserLookupContext()
     const spaceData = useSpaceData()
 
-    const globalUser = usersMap[userId]
+    const globalUser = lookupUser(userId)
 
     const title = useMemo(() => {
         if (!globalUser || !spaceData) {

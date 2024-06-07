@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useMemo } from 'react'
-import { SpaceContextUserLookupProvider } from './UserLookupContextProviders'
+import { UserLookupContext } from './UserLookupContext'
 
 export interface ISpaceContext {
     spaceId?: string
@@ -13,10 +13,7 @@ export const SpaceContext = createContext<ISpaceContext | undefined>(undefined)
  */
 export function useSpaceContext(): ISpaceContext {
     const spaceContext = useContext<ISpaceContext | undefined>(SpaceContext)
-    if (!spaceContext) {
-        throw new Error('useSpaceContext must be used in a SpaceContextProvider')
-    }
-    return spaceContext
+    return useMemo(() => spaceContext ?? {}, [spaceContext])
 }
 
 interface Props {
@@ -25,18 +22,10 @@ interface Props {
 }
 
 export function SpaceContextProvider(props: Props): JSX.Element {
-    // in a very safe way, memoize all space context parameters
-    const spaceId = useMemo(() => (props.spaceId ? props.spaceId : undefined), [props.spaceId])
-    const spaceContext: ISpaceContext = useMemo(
-        () => ({
-            spaceId: spaceId,
-        }),
-        [spaceId],
-    )
-
+    const { spaceId, children } = props
     return (
-        <SpaceContext.Provider value={spaceContext}>
-            <SpaceContextUserLookupProvider>{props.children}</SpaceContextUserLookupProvider>
+        <SpaceContext.Provider value={{ spaceId }}>
+            <UserLookupContext.Provider value={{ spaceId }}>{children}</UserLookupContext.Provider>
         </SpaceContext.Provider>
     )
 }

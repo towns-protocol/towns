@@ -25,9 +25,9 @@ const Verbs = {
     [Membership.Invite]: 'received an invitation to join',
 } as const
 
-export const AccumulatedRoomMemberEvent = ({ channelType = 'channel', ...props }: Props) => {
-    const { usersMap } = useUserLookupContext()
-    const { event, channelName, userId, channelEncrypted: isChannelEncrypted } = props
+export const AccumulatedRoomMemberEvent = (props: Props) => {
+    const { lookupUser } = useUserLookupContext()
+    const { event, channelName, channelType, userId, channelEncrypted: isChannelEncrypted } = props
 
     const isAddedEvent =
         event.membershipType === Membership.Invite ||
@@ -62,23 +62,26 @@ export const AccumulatedRoomMemberEvent = ({ channelType = 'channel', ...props }
         // in GDMs we display 'X added Y,Z and others' instead of invites and joins
         if (isAddedEvent || isGDMRemovedEvent) {
             const senderId = event.events[0]?.sender.id
-            const sender = usersMap[senderId]
+            const sender = lookupUser(senderId)
 
             const senderDisplayName = senderId === userId ? 'You' : getPrettyDisplayName(sender)
 
-            const users = event.events.map((e) => usersMap[e.content.userId])
+            const users = event.events.map((e) => lookupUser(e.content.userId))
 
             return (
                 <>
                     {senderDisplayName} {isGDMRemovedEvent ? 'removed ' : 'added '}
                     <UserList
                         excludeSelf
-                        userIds={users.map((u) => u.userId).filter((uid) => uid !== senderId)}
+                        userIds={users
+                            .map((u) => u?.userId)
+                            .filter((uid) => uid !== senderId)
+                            .filter(notUndefined)}
                         myUserId={senderId}
                         renderUser={(props) => (
                             <UserWithTooltip
                                 userId={props.userId}
-                                usersMap={usersMap}
+                                lookupUser={lookupUser}
                                 key={props.userId}
                             />
                         )}
@@ -106,7 +109,7 @@ export const AccumulatedRoomMemberEvent = ({ channelType = 'channel', ...props }
                         <UserWithTooltip
                             key={e.content.userId}
                             userId={e.content.userId}
-                            usersMap={usersMap}
+                            lookupUser={lookupUser}
                         />
                     )
                 })
@@ -121,8 +124,8 @@ export const AccumulatedRoomMemberEvent = ({ channelType = 'channel', ...props }
         event.membershipType,
         isAddedEvent,
         isChannelEncrypted,
+        lookupUser,
         userId,
-        usersMap,
     ])
 
     return (

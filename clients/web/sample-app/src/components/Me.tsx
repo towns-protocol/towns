@@ -13,9 +13,6 @@ export const Me = () => {
                 My Display Name: <strong>{myProfile?.displayName ?? 'unset'}</strong>
             </p>
             <p>
-                My Avatar Url: <strong>{myProfile?.avatarUrl ?? 'unset'}</strong>
-            </p>
-            <p>
                 My User ID: <strong>{userId}</strong>
             </p>
             <p>

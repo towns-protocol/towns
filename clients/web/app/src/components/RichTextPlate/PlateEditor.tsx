@@ -7,12 +7,12 @@ import {
     Mention,
     MessageType,
     OTWMention,
-    RoomMember,
     SendTextMessageOptions,
     UnfurledLinkAttachment,
     useChannelId,
     useChannelMembers,
     useNetworkStatus,
+    useUserLookupContext,
 } from 'use-towns-client'
 import { datadogRum } from '@datadog/browser-rum'
 import { isEditorEmpty as PlateIsEditorEmpty } from '@udecode/slate-utils'
@@ -35,7 +35,7 @@ import {
 } from '@components/EmbeddedMessageAttachement/EditorAttachmentPreview'
 import { useInlineReplyAttchmentPreview } from '@components/EmbeddedMessageAttachement/hooks/useInlineReplyAttchmentPreview'
 import { useInputStore } from 'store/store'
-import { getChannelNames, getMentionIds, getUserIds } from './utils/helpers'
+import { getChannelNames, getMentionIds } from './utils/helpers'
 import { RichTextPlaceholder } from './components/RichTextEditorPlaceholder'
 import { toMD } from './utils/toMD'
 import { RememberInputPlugin } from './plugins/RememberInputPlugin'
@@ -73,7 +73,7 @@ type Props = {
     threadId?: string // only used for giphy plugin
     threadPreview?: string
     channels: Channel[]
-    users: RoomMember[]
+    memberIds: string[]
     mentions?: OTWMention[]
     userId?: string
     isFullWidthOnTouch?: boolean
@@ -96,7 +96,6 @@ const PlateEditorWithoutBoundary = ({
     displayButtons,
     channels,
     mentions,
-    users,
     initialValue: _initialValue,
     ...props
 }: Props) => {
@@ -134,7 +133,10 @@ const PlateEditorWithoutBoundary = ({
 
     const { memberIds: _memberIds } = useChannelMembers()
     const channelId = useChannelId()
-    const memberIds = useMemo(() => new Set(_memberIds), [_memberIds])
+    const memberIds = useMemo(() => new Set(_memberIds.map((m) => m)), [_memberIds])
+
+    const { lookupUser } = useUserLookupContext()
+    const users = _memberIds.map((userId) => lookupUser(userId)).filter(notUndefined)
 
     const isDMorGDM = useMemo(
         () => isDMChannelStreamId(channelId) || isGDMChannelStreamId(channelId),
@@ -150,7 +152,7 @@ const PlateEditorWithoutBoundary = ({
                 data: { ...user, isChannelMember: memberIds.has(user.userId) },
             }))
             .filter(notUndefined)
-    }, [isDMorGDM, users, memberIds])
+    }, [isDMorGDM, memberIds, users])
 
     const channelMentions: TComboboxItemWithData<Channel>[] = useMemo(() => {
         return channels
@@ -165,13 +167,13 @@ const PlateEditorWithoutBoundary = ({
     const initialValue = useMemo(() => {
         if (!_initialValue) {
             if (editable && valueFromStore && valueFromStore.trim().length > 0) {
-                return deserializeMd(valueFromStore, channels, mentions, users)
+                return deserializeMd(valueFromStore, channels, mentions, lookupUser)
             } else {
                 return [{ ...EMPTY_NODE }]
             }
         }
-        return deserializeMd(_initialValue, channels, mentions, users)
-    }, [_initialValue, editable, valueFromStore, channels, mentions, users])
+        return deserializeMd(_initialValue, channels, mentions, lookupUser)
+    }, [_initialValue, channels, mentions, lookupUser, editable, valueFromStore])
 
     const onFocusChange = useCallback(
         (focus: boolean) => {
@@ -489,7 +491,7 @@ const arePropsEqual = (prevProps: Props, nextProps: Props) => {
             isEqual(prevProps.threadPreview, nextProps.threadPreview),
             isEqual(prevProps.isFullWidthOnTouch, nextProps.isFullWidthOnTouch),
             isEqual(getChannelNames(prevProps.channels), getChannelNames(nextProps.channels)),
-            isEqual(getUserIds(prevProps.users), getUserIds(nextProps.users)),
+            isEqual(prevProps.memberIds, nextProps.memberIds),
             isEqual(getMentionIds(prevProps.mentions), getMentionIds(nextProps.mentions)),
         ],
         true,

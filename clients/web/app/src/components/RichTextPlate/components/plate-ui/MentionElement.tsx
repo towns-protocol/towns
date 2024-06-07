@@ -59,11 +59,11 @@ export const MentionElementWithoutPlate = ({
     }, [onMentionHover])
 
     const handleClick = useCallback(() => {
-        if (!onMentionClick || !value) {
+        if (!onMentionClick || !userId) {
             return
         }
-        onMentionClick(value.slice(1))
-    }, [onMentionClick, value])
+        onMentionClick(userId)
+    }, [onMentionClick, userId])
 
     return (
         <Box
@@ -72,6 +72,7 @@ export const MentionElementWithoutPlate = ({
             className={mentionInput}
             ref={ref}
             data-mention-username={value}
+            data-mention-userid={userId}
             onClick={handleClick}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}

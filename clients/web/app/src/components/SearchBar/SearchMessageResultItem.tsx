@@ -56,10 +56,10 @@ export const SearchMessagesResultItem = (
     const spaceSlug = useSpaceId() ?? ''
     const content = getIsRoomMessageContent(result.event)
 
-    const { users, usersMap } = useUserLookupContext()
+    const { lookupUser } = useUserLookupContext()
 
     const channels = useSpaceChannels()
-    const sender = usersMap[result.event.sender.id]
+    const sender = lookupUser(result.event.sender.id)
     const ref = React.useRef<HTMLAnchorElement>(null)
 
     const displayName = getPrettyDisplayName(sender)
@@ -128,7 +128,6 @@ export const SearchMessagesResultItem = (
                     <RichTextPreview
                         key={props.highligtTerms?.join('')}
                         highlightTerms={props.highligtTerms}
-                        users={users}
                         mentions={content.mentions}
                         channels={channels}
                         content={getMessageBody(result.event.eventId, content)}

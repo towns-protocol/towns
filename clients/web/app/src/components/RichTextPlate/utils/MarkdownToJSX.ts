@@ -6,7 +6,7 @@ import { VFile } from 'vfile'
 import { ELEMENT_LIC } from '@udecode/plate-list'
 import { ELEMENT_MENTION } from '@udecode/plate-mention'
 import remarkRehype, { Options } from 'remark-rehype'
-import { Channel, OTWMention, RoomMember } from 'use-towns-client'
+import { Channel, OTWMention, useUserLookupContext } from 'use-towns-client'
 import markdown from 'remark-parse'
 import remarkGfm from 'remark-gfm'
 import { unified } from 'unified'
@@ -22,7 +22,7 @@ type MarkdownRendererProps = React.PropsWithChildren<{
     components: Partial<Components>
     channels?: Channel[]
     mentions?: OTWMention[]
-    users?: RoomMember[]
+    lookupUser: ReturnType<typeof useUserLookupContext>['lookupUser']
 }>
 
 /**
@@ -36,7 +36,7 @@ const MarkdownRenderer = ({
     components,
     channels = [],
     mentions = [],
-    users = [],
+    lookupUser,
     children,
 }: MarkdownRendererProps) => {
     if (!children) {
@@ -50,7 +50,7 @@ const MarkdownRenderer = ({
         .use(remarkPreserveListContent)
         .use(remarkRemoveHeadings)
         .use(remarkDecodeHTMLCodeBlocks)
-        .use(remarkTransformUserAndChannels(channels, mentions, users))
+        .use(remarkTransformUserAndChannels(channels, mentions, lookupUser))
         .use(remarkRehype, {
             passThrough: [ELEMENT_LIC, ELEMENT_MENTION, ELEMENT_MENTION_CHANNEL],
             handlers: {

@@ -58,8 +58,8 @@ export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties
     const [showEditFields, setShowEditFields] = useState<boolean>(false)
     const streamId = useCurrentStreamID()
     const myUserId = useMyUserId()
-    const { usersMap } = useUserLookupContext()
-    const user = myUserId ? usersMap[myUserId] : undefined
+    const { lookupUser } = useUserLookupContext()
+    const user = myUserId ? lookupUser(myUserId) : undefined
 
     const { setUsername } = useSetUsername()
     const { setDisplayName } = useTownsClient()
