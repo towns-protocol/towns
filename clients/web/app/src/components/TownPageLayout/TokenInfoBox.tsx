@@ -40,7 +40,7 @@ export const TokenInfoBox = ({
                                         position="absolute"
                                         top="none"
                                         style={{
-                                            zIndex: +vars.zIndex.ui - index ?? 1,
+                                            zIndex: +vars.zIndex.ui - index || 1,
                                             transform: `translateX(${
                                                 -(tokensGatingMembership.length * 5) / 2
                                             }px)`,
