@@ -10,7 +10,6 @@ import {
     useMultipleRoleDetails,
 } from 'use-towns-client'
 import React, { useCallback, useEffect, useMemo } from 'react'
-import { Link } from 'react-router-dom'
 import { useNavigate } from 'react-router'
 import { z } from 'zod'
 import { useGetEmbeddedSigner } from '@towns/privy'
@@ -45,6 +44,7 @@ import { createPrivyNotAuthenticatedNotification } from '@components/Notificatio
 import { useDevice } from 'hooks/useDevice'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useAnalytics } from 'hooks/useAnalytics'
+import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { mapToErrorMessage } from '../utils'
 
 type Props = {
@@ -96,6 +96,12 @@ export const CreateChannelForm = (props: Props) => {
         transactionHash,
         data: channelId,
     } = useCreateChannelTransaction()
+
+    const { openPanel } = usePanelActions()
+
+    const onCreateNewRole = useCallback(() => {
+        openPanel('roles')
+    }, [openPanel])
 
     useEffect(() => {
         console.log(
@@ -369,14 +375,10 @@ export const CreateChannelForm = (props: Props) => {
 
                             {canEditRoles && (
                                 <Box flexDirection="row" justifyContent="start" paddingTop="sm">
-                                    <Link
-                                        to={`/${PATHS.SPACES}/${props.spaceId}/${PATHS.SETTINGS}`}
-                                    >
-                                        <Button onClick={onHide}>
-                                            <Icon type="plus" size="square_sm" />
-                                            Create a new role
-                                        </Button>
-                                    </Link>
+                                    <Button onClick={onCreateNewRole}>
+                                        <Icon type="plus" size="square_sm" />
+                                        Create a new role
+                                    </Button>
                                 </Box>
                             )}
 
