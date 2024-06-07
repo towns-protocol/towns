@@ -15,6 +15,7 @@ export * from './components/UserLookupContextProviders'
 
 export { LoginStatus } from './hooks/login'
 export type * from './types/user-lookup'
+export type { LookupUserFn } from './hooks/use-user-lookup-context'
 export { useUserLookupContext } from './hooks/use-user-lookup-context'
 export { useCasablancaCredentials } from './hooks/use-casablanca-credentials'
 export { useChannelData } from './hooks/use-channel-data'
@@ -125,6 +126,7 @@ export {
     signMessageAbortController,
     signMessageAbortListener,
 } from './client/SignMessageAbortController'
+export { useUserLookupStore } from './store/use-user-lookup-store'
 
 export * from './types/error-types'
 export * from './utils/towns-utils'

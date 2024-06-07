@@ -24,7 +24,7 @@ export type LookupUser = {
 
 export type MemberOf = {
     [spaceId: string]: {
-        spaceId: string
+        spaceId?: string
         userId: string
         username: string
         displayName: string

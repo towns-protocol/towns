@@ -2,6 +2,11 @@ import { LookupUser, LookupUserMap } from '../types/user-lookup'
 import { UserLookupContext } from '../components/UserLookupContext'
 import React from 'react'
 
+export type LookupUserFn = {
+    (userId: string, allowDefault?: false): LookupUser | undefined
+    (userId: string, allowDefault?: true): LookupUser
+}
+
 export type UserLookupContextType = {
     streamId?: string
     spaceId?: string

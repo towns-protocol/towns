@@ -1,4 +1,4 @@
-import { create } from 'zustand'
+import { createWithEqualityFn } from 'zustand/traditional'
 import {
     MessageReactions,
     RedactedEvent,
@@ -50,7 +50,7 @@ export type TimelineStore = TimelineStoreStates & {
     setState: TimelineStoreInterface
 }
 
-export const useTimelineStore = create<TimelineStore>((set) => ({
+export const useTimelineStore = createWithEqualityFn<TimelineStore>((set) => ({
     timelines: {},
     replacedEvents: {},
     pendingReplacedEvents: {},

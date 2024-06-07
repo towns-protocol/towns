@@ -212,7 +212,8 @@ const mergeNames = ({ user, spaceId, offlineUserMap }: MergeNamesParams) => {
                 !spaceId
                     ? 0
                     : Math.sign(
-                          spaceCompare(a.spaceId, spaceId) - spaceCompare(b.spaceId, spaceId),
+                          spaceCompare(a.spaceId ?? '', spaceId) -
+                              spaceCompare(b.spaceId ?? '', spaceId),
                       ),
             )
 
@@ -231,7 +232,8 @@ const mergeNames = ({ user, spaceId, offlineUserMap }: MergeNamesParams) => {
                 !spaceId
                     ? 0
                     : Math.sign(
-                          spaceCompare(a.spaceId, spaceId) - spaceCompare(b.spaceId, spaceId),
+                          spaceCompare(a.spaceId ?? '', spaceId) -
+                              spaceCompare(b.spaceId ?? '', spaceId),
                       ),
             )
         if (matches.length > 0) {

@@ -28045,6 +28045,7 @@ __metadata:
     "@typescript-eslint/parser": ^6.10.0
     bullmq: ^4.10.0
     debug: ^4.3.4
+    dexie: ^3.2.4
     dotenv: ^16.3.1
     eslint: ^8.53.0
     eslint-plugin-lodash: ^7.4.0

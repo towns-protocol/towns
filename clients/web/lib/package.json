@@ -37,6 +37,7 @@
         "@towns/userops": "workspace:^",
         "@types/node-emoji": "^1.8.2",
         "debug": "^4.3.4",
+        "dexie": "^3.2.4",
         "ethers": "^5.7.2",
         "http-status-codes": "^2.2.0",
         "json-bigint": "^1.0.0",
