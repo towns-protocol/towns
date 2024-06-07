@@ -105,6 +105,7 @@ export const DirectMessageRowContent = (props: {
                                 info={latest?.info}
                                 latestUser={latestUser}
                                 myUserId={myUserId}
+                                channel={channel}
                             />
                         </Text>
                     </Text>
@@ -198,8 +199,9 @@ const LastDirectMessageContent = (props: {
     info: undefined | MostRecentMessageInfo_OneOf
     latestUser: undefined | LookupUser
     myUserId: undefined | string
+    channel: DMChannelIdentifier
 }) => {
-    const { myUserId, info, latestUser } = props
+    const { myUserId, info, latestUser, channel } = props
     const { usersMap } = useUserLookupContext()
 
     const authorDisplayName = useMemo(
@@ -259,9 +261,7 @@ const LastDirectMessageContent = (props: {
             )
         }
         case 'dm_created': {
-            const creator = usersMap[info.creatorId]
-            const displayName = getMessageDisplayName(creator, myUserId)
-            return `${displayName} created this DM`
+            return `You created this DM`
         }
         case 'gdm_created': {
             const creator = usersMap[info.creatorId]
@@ -271,17 +271,22 @@ const LastDirectMessageContent = (props: {
         case 'member_added': {
             const user = usersMap[info.userId]
             const displayName = getMessageDisplayName(user, myUserId)
-            // TODO: HNT-6766 show who added the user: `X added Y to this group`
-            return `${displayName} got added to this group`
+            // Since the DM created event is done first, and then the member added event
+            // we need to check if its a DM, if so, we want to show the dm_created message
+            return channel.isGroup
+                ? `${displayName} got added to this group`
+                : `You started a new DM`
         }
         case 'member_left': {
             const user = usersMap[info.userId]
             const displayName = getMessageDisplayName(user, myUserId)
-            // TODO:
-            return `${displayName} left this group`
+            // TODO: HNT-6766 - show who left the group: `X left Y`
+            return channel.isGroup
+                ? `${displayName} left this group`
+                : `${displayName} left this DM`
         }
-        // TODO: HNT-6766
-        // member_removed: X removed Y from this group
+        // TODO: HNT-6766 - add new case:
+        // case 'member_removed': X removed Y from this group
         case 'member_invited': {
             const user = usersMap[info.userId]
             const displayName = getMessageDisplayName(user, myUserId)
