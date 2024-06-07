@@ -17,6 +17,7 @@ contract Banning is IBanning, BanningBase, ERC721ABase, Entitled, Facet {
   function ban(uint256 tokenId) external {
     _validatePermission(Permissions.ModifyBanning);
     if (!_exists(tokenId)) revert Banning__InvalidTokenId(tokenId);
+    if (_ownerOf(tokenId) == _owner()) revert Banning__CannotBanOwner();
     if (_ownerOf(tokenId) == msg.sender) revert Banning__CannotBanSelf();
     if (_isBanned(tokenId)) revert Banning__AlreadyBanned(tokenId);
     _ban(tokenId);

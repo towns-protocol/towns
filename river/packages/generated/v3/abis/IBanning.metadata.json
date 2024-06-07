@@ -19,6 +19,11 @@
       {
         "inputs": [],
         "type": "error",
+        "name": "Banning__CannotBanOwner"
+      },
+      {
+        "inputs": [],
+        "type": "error",
         "name": "Banning__CannotBanSelf"
       },
       {
@@ -176,12 +181,12 @@
   },
   "sources": {
     "contracts/src/spaces/facets/banning/IBanning.sol": {
-      "keccak256": "0x1983a3e375f4dd8a21be759a637b85ed5e416ca8fc7109153986eb2d4b08a505",
+      "keccak256": "0x350ec182a95a86a41335979cd7212132858c5cfcd366602b2f6cd0ec0694b63e",
       "urls": [
-        "bzz-raw://1f5f5a54e4cbaca9e10cc174ba73f5f80b0875d097084a9ebc6b259b2c4c1419",
-        "dweb:/ipfs/QmQSfNhhRNkiHeG1XXWVYhQtvuPRyrv72gxuARgsgupjn6"
+        "bzz-raw://ecb4ad0c5a1086c38448b3e279733f33edc0cc39648368e5cb43dfff139ff7e8",
+        "dweb:/ipfs/QmWYfYE8Haqk9kBRxmLijfQSfqbfxf7LB3wQ24d3pG5PE3"
       ],
-      "license": "Apache-2.0"
+      "license": "MIT"
     }
   },
   "version": 1

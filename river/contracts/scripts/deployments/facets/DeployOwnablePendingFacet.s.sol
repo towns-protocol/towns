@@ -12,9 +12,9 @@ import {OwnablePendingFacet} from "./../../../src/diamond/facets/ownable/pending
 
 contract DeployOwnablePendingFacet is FacetHelper, Deployer {
   constructor() {
-    addSelector(OwnablePendingFacet.transferOwnership.selector);
+    addSelector(OwnablePendingFacet.startTransferOwnership.selector);
     addSelector(OwnablePendingFacet.acceptOwnership.selector);
-    addSelector(OwnablePendingFacet.owner.selector);
+    addSelector(OwnablePendingFacet.currentOwner.selector);
     addSelector(OwnablePendingFacet.pendingOwner.selector);
   }
 

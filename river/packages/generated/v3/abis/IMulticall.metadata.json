@@ -76,12 +76,12 @@
   },
   "sources": {
     "contracts/src/diamond/utils/multicall/IMulticall.sol": {
-      "keccak256": "0x0f1a1884b290dc829323fa6d01e0dedc785ff582e9dbffd52e44e6f2fc7beff6",
+      "keccak256": "0x6dc9ea0a61c25be2ccf2812ae27c4044d2471b113862f242ef5d11fba1167ec1",
       "urls": [
-        "bzz-raw://1ce824d7f2b31f53a807bf6d6d7e9d0eaaf2d81b75fa316cda616e29cb4669a9",
-        "dweb:/ipfs/QmWyiRtGKtX6Kfng8Az2ujKDZdqjnfwxMuD1rQEZz6aki5"
+        "bzz-raw://31d7c5626cb8817e9a638b42dac9d19eafdbb5e7db50a54a667bf9a8e469e0e8",
+        "dweb:/ipfs/Qmex9vaHpj8wPwG31Rvft9oXtdLeK1JRCrzgGSVMqszRGZ"
       ],
-      "license": "Apache-2.0"
+      "license": "MIT"
     }
   },
   "version": 1

@@ -76,12 +76,12 @@
   },
   "sources": {
     "contracts/src/spaces/entitlements/ICustomEntitlement.sol": {
-      "keccak256": "0xbb879f5fd547f6f93c898ae5d4fc5c6a738123ddac530b6a7267da9307f3e08d",
+      "keccak256": "0x228e49e82d252c14776d6230e33ca144f3356d691aa38f361b3e8c9581e1d746",
       "urls": [
-        "bzz-raw://39e90fc649d84e0ccb48b067ea61d0a5564051d69b0f1dd59d13689625632e05",
-        "dweb:/ipfs/QmQAB6ASqGYURyoQuPqf1SaahZtfnAEyr9me3cM3iCLT1K"
+        "bzz-raw://ad378879fbd8021da9861042be4249ad532646156352e444f177a3b941252e7a",
+        "dweb:/ipfs/QmWcF7qipqDSwMDATBtwNDoyJtzA9zNsHzWwYwWf2rJqcc"
       ],
-      "license": "Apache-2.0"
+      "license": "MIT"
     }
   },
   "version": 1

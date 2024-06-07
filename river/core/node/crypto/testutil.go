@@ -13,7 +13,6 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -68,14 +67,14 @@ type BlockchainTestContext struct {
 
 func initSimulated(ctx context.Context, numKeys int) ([]*Wallet, *simulated.Backend, error) {
 	wallets := make([]*Wallet, numKeys)
-	genesisAlloc := map[common.Address]core.GenesisAccount{}
+	genesisAlloc := map[common.Address]types.Account{}
 	var err error
 	for i := 0; i < numKeys; i++ {
 		wallets[i], err = NewWallet(ctx)
 		if err != nil {
 			return nil, nil, err
 		}
-		genesisAlloc[wallets[i].Address] = core.GenesisAccount{Balance: Eth_100}
+		genesisAlloc[wallets[i].Address] = types.Account{Balance: Eth_100}
 	}
 
 	backend := simulated.NewBackend(genesisAlloc, simulated.WithBlockGasLimit(30_000_000))

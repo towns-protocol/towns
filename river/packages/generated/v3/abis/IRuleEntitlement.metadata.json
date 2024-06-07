@@ -658,12 +658,12 @@
   },
   "sources": {
     "contracts/src/spaces/entitlements/IEntitlement.sol": {
-      "keccak256": "0x84f059cb6d594cbe0a70ed4a10c9b96f82d530c9dba39a5d84e466f5b046b9ca",
+      "keccak256": "0x81712a4b9127000ba341966d99395917dcb4b1305eadeddd1e1ad4e562587fdd",
       "urls": [
-        "bzz-raw://68fdceef136a16c8a11e1b354119d39697029ea41db4ae4edc9ea9d68e9c12a3",
-        "dweb:/ipfs/QmbCmoo6nMDou5m77JzFBPc2GBJkET5F2eWDEZaXQ5taHf"
+        "bzz-raw://df0fcc9d7ed7489786684f5fa8375b277146969021f96f6a9feb81cb39176eca",
+        "dweb:/ipfs/QmbxXXeXe6AzXUL8cSoABMx2E2QbRAK2uJXd8TRnDuKSJ8"
       ],
-      "license": "Apache-2.0"
+      "license": "MIT"
     },
     "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol": {
       "keccak256": "0x795b58a2ed6205d814e01e58a4a5e88ff69401ee7540d01c4881b7b28f04cfcf",

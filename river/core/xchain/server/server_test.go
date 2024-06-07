@@ -96,11 +96,20 @@ func newServiceTester(numNodes int, require *require.Assertions) *serviceTester 
 	st.btc = btc
 
 	st.deployXchainTestContracts()
+
 	return st
 }
 
 func (st *serviceTester) deployXchainTestContracts() {
-	log := dlog.FromCtx(st.ctx)
+
+	var (
+		log                   = dlog.FromCtx(st.ctx)
+		approvedNodeOperators []common.Address
+	)
+	for _, w := range st.btc.Wallets {
+		approvedNodeOperators = append(approvedNodeOperators, w.Address)
+	}
+
 	log.Info("Deploying contracts")
 	client := st.btc.DeployerBlockchain.Client
 
@@ -110,8 +119,8 @@ func (st *serviceTester) deployXchainTestContracts() {
 	auth, err := bind.NewKeyedTransactorWithChainID(st.btc.DeployerBlockchain.Wallet.PrivateKeyStruct, chainId)
 	st.require.NoError(err)
 
-	// Deploy the entitlement checker
-	addr, _, _, err := contracts.DeployEntitlementChecker(auth, client, st.Config().GetContractVersion())
+	// Deploy the mock entitlement checker
+	addr, _, _, err := contracts.DeployMockEntitlementChecker(auth, client, approvedNodeOperators, st.Config().GetContractVersion())
 	st.require.NoError(err)
 
 	st.entitlementCheckerAddress = addr

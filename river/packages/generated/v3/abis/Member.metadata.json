@@ -904,12 +904,12 @@
   },
   "sources": {
     "contracts/src/tokens/Member.sol": {
-      "keccak256": "0x6ab0be5b468d6392088351134a124c49fc7d7a8935d623b1e7ff791eba990c40",
+      "keccak256": "0x6d526790c3b29609e31419fe00df4b0e02802284d4290c9bbdea6e70caaa2135",
       "urls": [
-        "bzz-raw://23c9bba8929a167e27ec1e7e01c7eb60bc4add047125f1a23b16eabcdb798c43",
-        "dweb:/ipfs/Qmf5K6F7tg7xczvqGnb2bdXdBUDamwXHpYP8d45CSF2owA"
+        "bzz-raw://c769445e606c4afdb9a99ddf64eb79f21bf1f5a73271136e23a8153f4d6f4cdd",
+        "dweb:/ipfs/QmV827xXZB1okfTgWeTAMHFRx6UixPbthkpCmd55KymS4L"
       ],
-      "license": "Apache-2.0"
+      "license": "MIT"
     },
     "lib/@openzeppelin/contracts/access/Ownable.sol": {
       "keccak256": "0xff6d0bb2e285473e5311d9d3caacb525ae3538a80758c10649a4d61029b017bb",

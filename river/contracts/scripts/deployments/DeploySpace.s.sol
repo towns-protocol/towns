@@ -16,8 +16,6 @@ import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
 
 // Facets
 
-import {TokenPausableFacet} from "contracts/src/diamond/facets/pausable/token/TokenPausableFacet.sol";
-import {MembershipReferralFacet} from "contracts/src/spaces/facets/membership/referral/MembershipReferralFacet.sol";
 import {Banning} from "contracts/src/spaces/facets/banning/Banning.sol";
 
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
@@ -159,6 +157,9 @@ contract DeploySpace is DiamondDeployer {
         entitlementDataQueryable,
         IDiamond.FacetCutAction.Add
       )
+    );
+    addCut(
+      ownablePendingHelper.makeCut(ownablePending, IDiamond.FacetCutAction.Add)
     );
 
     addInit(ownablePending, ownablePendingHelper.makeInitData(deployer));

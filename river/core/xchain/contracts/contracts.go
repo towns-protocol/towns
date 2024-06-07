@@ -148,6 +148,21 @@ func DeployEntitlementChecker(auth *bind.TransactOpts, backend bind.ContractBack
 	}
 }
 
+type MockEntitlementChecker struct {
+	v3MockEntitlementChecker  *v3.MockEntitlementChecker
+	devMockEntitlementChecker *dev.MockEntitlementChecker
+}
+
+func DeployMockEntitlementChecker(auth *bind.TransactOpts, backend bind.ContractBackend, approvedOperators []common.Address, version config.ContractVersion) (common.Address, *types.Transaction, *MockEntitlementChecker, error) {
+	if version == "v3" {
+		address, tx, v3Checker, err := v3.DeployMockEntitlementChecker(auth, backend, approvedOperators)
+		return address, tx, &MockEntitlementChecker{v3MockEntitlementChecker: v3Checker}, err
+	} else {
+		address, tx, devChecker, err := dev.DeployMockEntitlementChecker(auth, backend, approvedOperators)
+		return address, tx, &MockEntitlementChecker{devMockEntitlementChecker: devChecker}, err
+	}
+}
+
 type IRuleData struct {
 	Operations        []IRuleEntitlementOperation
 	CheckOperations   []IRuleEntitlementCheckOperation

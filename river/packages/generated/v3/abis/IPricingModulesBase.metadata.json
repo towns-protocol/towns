@@ -94,12 +94,12 @@
   },
   "sources": {
     "contracts/src/factory/facets/architect/pricing/IPricingModules.sol": {
-      "keccak256": "0xbfe90223b87a2fa178024ec2b94dc45a8950b707d76dc54e6743439e8fc0d73e",
+      "keccak256": "0xa45fcd2bb5037c0b9b80bb02a3a4bd00fa99598a8d9e0a5ee2dff7a04c670171",
       "urls": [
-        "bzz-raw://73bfdc19b81b36d3c8d7aaa0c6d2701d54b8eeb0613e4c0f6184d1d9e2189716",
-        "dweb:/ipfs/QmSqZaPpb4A3AtjqE4cRXXjre9fQ87fv8P7ycsKmpC4NHU"
+        "bzz-raw://15f95100f32791a9aa2e3cc47fb9cd58542e9250834bfc38756012cc4baaa786",
+        "dweb:/ipfs/QmYGPF6HQLoq5bCgMYW1AyT2Vz1H12Lt8LDdmzTadN5Ppm"
       ],
-      "license": "Apache-2.0"
+      "license": "MIT"
     }
   },
   "version": 1

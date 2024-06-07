@@ -98,20 +98,20 @@
   },
   "sources": {
     "contracts/src/spaces/entitlements/ICustomEntitlement.sol": {
-      "keccak256": "0xbb879f5fd547f6f93c898ae5d4fc5c6a738123ddac530b6a7267da9307f3e08d",
+      "keccak256": "0x228e49e82d252c14776d6230e33ca144f3356d691aa38f361b3e8c9581e1d746",
       "urls": [
-        "bzz-raw://39e90fc649d84e0ccb48b067ea61d0a5564051d69b0f1dd59d13689625632e05",
-        "dweb:/ipfs/QmQAB6ASqGYURyoQuPqf1SaahZtfnAEyr9me3cM3iCLT1K"
+        "bzz-raw://ad378879fbd8021da9861042be4249ad532646156352e444f177a3b941252e7a",
+        "dweb:/ipfs/QmWcF7qipqDSwMDATBtwNDoyJtzA9zNsHzWwYwWf2rJqcc"
       ],
-      "license": "Apache-2.0"
+      "license": "MIT"
     },
     "contracts/test/mocks/MockCustomEntitlement.sol": {
-      "keccak256": "0x58f8e47c0a04408aa3704e92a04711e19a943f0c9d404cb15458e09292d31025",
+      "keccak256": "0x6afb663aa6c5f6403a9b9f833f79e5cc87f594e8bca8f91e5d69d835242655e2",
       "urls": [
-        "bzz-raw://f39f963d26cb282f9491cb0ab4c7708d320427dbd74953b8abf455318f3ee8b8",
-        "dweb:/ipfs/QmQyi2udFz4fpBvpuUSNmgpArs9KED5aMuu9H78ZWpUULB"
+        "bzz-raw://0addd74396a3583bc3e6fd38977d84e06a98093567038ce067f505784cd7e38c",
+        "dweb:/ipfs/Qma5CE3NqVK9cEczjwhtdGgtUr1P4qgGpa9DMh6druciyx"
       ],
-      "license": "Apache-2.0"
+      "license": "MIT"
     }
   },
   "version": 1

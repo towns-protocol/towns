@@ -116,6 +116,11 @@ const _abi = [
   },
   {
     type: "error",
+    name: "Banning__CannotBanOwner",
+    inputs: [],
+  },
+  {
+    type: "error",
     name: "Banning__CannotBanSelf",
     inputs: [],
   },

@@ -9,30 +9,30 @@ pragma solidity ^0.8.23;
 import {OwnablePendingSetup} from "./OwnablePendingSetup.sol";
 
 contract OwnablePendingTest is OwnablePendingSetup {
-  function test_owner() external {
-    assertEq(ownable.owner(), deployer);
+  function test_currentOwner() external {
+    assertEq(ownable.currentOwner(), deployer);
   }
 
   function test_transferOwnership() external {
     address newOwner = _randomAddress();
 
     vm.prank(deployer);
-    ownable.transferOwnership(newOwner);
+    ownable.startTransferOwnership(newOwner);
 
     assertEq(ownable.pendingOwner(), newOwner);
-    assertEq(ownable.owner(), deployer);
+    assertEq(ownable.currentOwner(), deployer);
   }
 
   function test_acceptOwnership() external {
     address newOwner = _randomAddress();
 
     vm.prank(deployer);
-    ownable.transferOwnership(newOwner);
+    ownable.startTransferOwnership(newOwner);
 
     vm.prank(newOwner);
     ownable.acceptOwnership();
 
     assertEq(ownable.pendingOwner(), address(0));
-    assertEq(ownable.owner(), newOwner);
+    assertEq(ownable.currentOwner(), newOwner);
   }
 }

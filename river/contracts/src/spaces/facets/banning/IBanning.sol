@@ -15,6 +15,7 @@ interface IBanningBase {
   error Banning__AlreadyBanned(uint256 tokenId);
   error Banning__NotBanned(uint256 tokenId);
   error Banning__CannotBanSelf();
+  error Banning__CannotBanOwner();
 
   // =============================================================
   //                           Events

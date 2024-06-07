@@ -69,6 +69,7 @@ generate_go IWalletLink i_wallet_link
 # Contracts
 generate_go MockCustomEntitlement mock_custom_entitlement
 generate_go MockEntitlementGated mock_entitlement_gated
+generate_go MockEntitlementChecker mock_entitlement_checker
 generate_go EntitlementChecker entitlement_checker
 generate_go WalletLink wallet_link
 

@@ -11,7 +11,7 @@ import {Interaction} from "../common/Interaction.s.sol";
 
 contract InteractTransferOwnership is Interaction {
   function __interact(address deployer) public override {
-    address registry = getDeployment("riverRegistry");
+    address registry = getDeployment("space");
     address newOwner = 0x63217D4c321CC02Ed306cB3843309184D347667B;
 
     vm.startBroadcast(deployer);

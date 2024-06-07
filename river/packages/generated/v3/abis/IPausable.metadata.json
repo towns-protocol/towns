@@ -105,12 +105,12 @@
   },
   "sources": {
     "contracts/src/diamond/facets/pausable/IPausable.sol": {
-      "keccak256": "0xd5cc8d743bd12bbd23526178c11808634527c87e2f6da29dfb6aec75dab56261",
+      "keccak256": "0x3df1579165cc634718d4619e0760ea3c492b2766c2e42328208a38457e103ca1",
       "urls": [
-        "bzz-raw://c893da163481570ae2e00e5deae732404261cc0e7143fdc0448145810448c6b6",
-        "dweb:/ipfs/QmbyUkcew8vmUXPVLDJ7GjvxMkmTqjhKZWLDYtWEPzZ2SM"
+        "bzz-raw://1c6d3f4e3a3437075fb09c4875cfbf640af5cdc50c31b64e77ff5678dc1a8684",
+        "dweb:/ipfs/QmNSnSYZrtNLdQqidpGR6ujbhuxhSr6LJEQBc3pCu6MNNJ"
       ],
-      "license": "Apache-2.0"
+      "license": "MIT"
     }
   },
   "version": 1

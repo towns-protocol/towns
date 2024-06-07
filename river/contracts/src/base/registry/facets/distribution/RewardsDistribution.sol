@@ -169,8 +169,6 @@ contract RewardsDistribution is
   }
 
   function withdraw() external onlyOwner {
-    RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage
-      .layout();
     CurrencyTransfer.transferCurrency(
       SpaceDelegationStorage.layout().riverToken,
       address(this),

@@ -43,12 +43,12 @@
   },
   "sources": {
     "contracts/src/spaces/facets/entitlements/extensions/IEntitlementDataQueryable.sol": {
-      "keccak256": "0x072afda780b5b937feeed6b13c169e589a802878a8ea667931c8c61d15686163",
+      "keccak256": "0x7b43371418a8298bf582580bc884d3a319c812cd89fae988af19a1935c92c497",
       "urls": [
-        "bzz-raw://82e2508fff6dfd9bb8a8fdb0b2b2ecb629c3286dda66f984a459f76415873313",
-        "dweb:/ipfs/QmSJZ963tKdeX3wErZ93kf4r2caMs1hwJ66xbXFvXhC5v4"
+        "bzz-raw://f2fd3c564fc93121ea8be125da9d87df2807d53efece4cfb46776eb19caa46c2",
+        "dweb:/ipfs/QmW8r4i8e9SRkDWC14Fvdwrc9RgTX9FJ49ymfhd6a5DVNR"
       ],
-      "license": "Apache-2.0"
+      "license": "MIT"
     }
   },
   "version": 1

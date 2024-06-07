@@ -3,10 +3,11 @@ package rules
 import (
 	"bytes"
 	"context"
-	"github.com/river-build/river/core/node/crypto"
 	"log/slog"
 	"slices"
 	"time"
+
+	"github.com/river-build/river/core/node/crypto"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/river-build/river/core/node/auth"
@@ -196,7 +197,7 @@ func (params *aeParams) canAddChannelPayload(payload *StreamEvent_ChannelPayload
 	case *ChannelPayload_Message:
 		return aeBuilder().
 			check(params.creatorIsMember).
-			requireChainAuth(params.channelMessageEntitlements)
+			requireChainAuth(params.channelMessageWriteEntitlements)
 	case *ChannelPayload_Redaction_:
 		return aeBuilder().check(params.creatorIsMember).
 			requireChainAuth(params.redactChannelMessageEntitlements)
@@ -275,7 +276,7 @@ func (params *aeParams) canAddUserPayload(payload *StreamEvent_UserPayload) rule
 		}
 		return aeBuilder().
 			checkOneOf(params.creatorIsMember, params.creatorIsValidNode).
-			check(ru.validUserMembershipTransistion).
+			check(ru.validUserMembershipTransition).
 			requireParentEvent(ru.parentEventForUserMembership)
 	case *UserPayload_UserMembershipAction_:
 		ru := &aeUserMembershipActionRules{
@@ -367,25 +368,25 @@ func (params *aeParams) canAddMemberPayload(payload *StreamEvent_MemberPayload) 
 		if shared.ValidSpaceStreamId(ru.params.streamView.StreamId()) {
 			return aeBuilder().
 				check(ru.validMembershipPayload).
-				check(ru.validMembershipTransistionForSpace).
+				check(ru.validMembershipTransitionForSpace).
 				check(ru.validMembershipLimit).
 				requireChainAuth(ru.spaceMembershipEntitlements)
 		} else if shared.ValidChannelStreamId(ru.params.streamView.StreamId()) {
 			return aeBuilder().
 				check(ru.validMembershipPayload).
-				check(ru.validMembershipTransistionForChannel).
+				check(ru.validMembershipTransitionForChannel).
 				check(ru.validMembershipLimit).
 				requireChainAuth(ru.channelMembershipEntitlements).
 				requireParentEvent(ru.requireStreamParentMembership)
 		} else if shared.ValidDMChannelStreamId(ru.params.streamView.StreamId()) {
 			return aeBuilder().
 				check(ru.validMembershipPayload).
-				check(ru.validMembershipTransistionForDM).
+				check(ru.validMembershipTransitionForDM).
 				check(ru.validMembershipLimit)
 		} else if shared.ValidGDMChannelStreamId(ru.params.streamView.StreamId()) {
 			return aeBuilder().
 				check(ru.validMembershipPayload).
-				check(ru.validMembershipTransistionForGDM).
+				check(ru.validMembershipTransitionForGDM).
 				check(ru.validMembershipLimit)
 		} else {
 			return aeBuilder().
@@ -509,7 +510,7 @@ func (ru *aeMembershipRules) validMembershipLimit() (bool, error) {
 	return true, nil
 }
 
-func (ru *aeMembershipRules) validMembershipTransistion() (bool, error) {
+func (ru *aeMembershipRules) validMembershipTransition() (bool, error) {
 	if ru.membership == nil {
 		return false, RiverError(Err_INVALID_ARGUMENT, "membership is nil")
 	}
@@ -553,26 +554,26 @@ func (ru *aeMembershipRules) validMembershipTransistion() (bool, error) {
 	}
 }
 
-func (ru *aeMembershipRules) validMembershipTransistionForSpace() (bool, error) {
+func (ru *aeMembershipRules) validMembershipTransitionForSpace() (bool, error) {
 	canAdd, err := ru.params.creatorIsValidNode()
 	if !canAdd || err != nil {
 		return canAdd, err
 	}
 
-	canAdd, err = ru.validMembershipTransistion()
+	canAdd, err = ru.validMembershipTransition()
 	if !canAdd || err != nil {
 		return canAdd, err
 	}
 	return true, nil
 }
 
-func (ru *aeMembershipRules) validMembershipTransistionForChannel() (bool, error) {
+func (ru *aeMembershipRules) validMembershipTransitionForChannel() (bool, error) {
 	canAdd, err := ru.params.creatorIsValidNode()
 	if !canAdd || err != nil {
 		return canAdd, err
 	}
 
-	canAdd, err = ru.validMembershipTransistion()
+	canAdd, err = ru.validMembershipTransition()
 	if !canAdd || err != nil {
 		return canAdd, err
 	}
@@ -581,13 +582,13 @@ func (ru *aeMembershipRules) validMembershipTransistionForChannel() (bool, error
 }
 
 // / GDMs and DMs don't have blockchain entitlements so we need to run extra checks
-func (ru *aeMembershipRules) validMembershipTransistionForDM() (bool, error) {
+func (ru *aeMembershipRules) validMembershipTransitionForDM() (bool, error) {
 	canAdd, err := ru.params.creatorIsValidNode()
 	if !canAdd || err != nil {
 		return canAdd, err
 	}
 
-	canAdd, err = ru.validMembershipTransistion()
+	canAdd, err = ru.validMembershipTransition()
 	if !canAdd || err != nil {
 		return canAdd, err
 	}
@@ -629,13 +630,13 @@ func (ru *aeMembershipRules) validMembershipTransistionForDM() (bool, error) {
 }
 
 // / GDMs and DMs don't have blockchain entitlements so we need to run extra checks
-func (ru *aeMembershipRules) validMembershipTransistionForGDM() (bool, error) {
+func (ru *aeMembershipRules) validMembershipTransitionForGDM() (bool, error) {
 	canAdd, err := ru.params.creatorIsValidNode()
 	if !canAdd || err != nil {
 		return canAdd, err
 	}
 
-	canAdd, err = ru.validMembershipTransistion()
+	canAdd, err = ru.validMembershipTransition()
 	if !canAdd || err != nil {
 		return canAdd, err
 	}
@@ -738,7 +739,7 @@ func (ru *aeMembershipRules) requireStreamParentMembership() (*RequiredParentEve
 	}, nil
 }
 
-func (ru *aeUserMembershipRules) validUserMembershipTransistion() (bool, error) {
+func (ru *aeUserMembershipRules) validUserMembershipTransition() (bool, error) {
 	if ru.userMembership == nil {
 		return false, RiverError(Err_INVALID_ARGUMENT, "membership is nil")
 	}
@@ -897,7 +898,7 @@ func (ru *aeMembershipRules) channelMembershipEntitlements() (*auth.ChainAuthArg
 	return chainAuthArgs, nil
 }
 
-func (params *aeParams) channelMessageEntitlements() (*auth.ChainAuthArgs, error) {
+func (params *aeParams) channelMessageWriteEntitlements() (*auth.ChainAuthArgs, error) {
 	userId, err := shared.AddressHex(params.parsedEvent.Event.CreatorAddress)
 	if err != nil {
 		return nil, err
