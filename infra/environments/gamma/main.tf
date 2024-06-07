@@ -207,7 +207,6 @@ module "notification_service" {
   subnets = module.vpc.private_subnets
   vpc_id  = module.vpc.vpc_id
 
-  vapid_key_secret_arn      = local.global_remote_state.notification_vapid_key_secret.arn
   apns_auth_key_secret_arn  = local.global_remote_state.notification_apns_auth_key_secret.arn
   apns_towns_app_identifier = "com.towns.internal"
 

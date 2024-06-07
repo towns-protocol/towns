@@ -43,11 +43,6 @@ variable "is_transient" {
   default     = false
 }
 
-variable "vapid_key_secret_arn" {
-  description = "The arn of the vapid key secret"
-  type        = string
-}
-
 variable "apns_auth_key_secret_arn" {
   description = "The arn of the apns auth key secret"
   type        = string

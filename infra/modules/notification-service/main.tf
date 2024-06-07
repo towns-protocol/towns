@@ -121,6 +121,11 @@ resource "aws_secretsmanager_secret" "push_notification_auth_token_secret" {
   tags = module.global_constants.tags
 }
 
+resource "aws_secretsmanager_secret" "notification_vapid_key" {
+  name        = "notifications-vapid-keypair-${terraform.workspace}"
+  description = "Key-pair for notification service"
+}
+
 resource "aws_iam_role_policy" "iam_policy" {
   name = "${local.local_name}-iam-policy"
   role = aws_iam_role.ecs_task_execution_role.id
@@ -135,7 +140,7 @@ resource "aws_iam_role_policy" "iam_policy" {
         ],
         "Effect": "Allow",
         "Resource": [
-          "${var.vapid_key_secret_arn}",
+          "${aws_secretsmanager_secret.notification_vapid_key.arn}",
           "${var.apns_auth_key_secret_arn}",
           "${aws_secretsmanager_secret.push_notification_auth_token_secret.arn}",
           "${local.global_remote_state.notification_service_db_password_secret.arn}"
@@ -229,11 +234,11 @@ resource "aws_ecs_task_definition" "fargate_task_definition" {
       },
       {
         name      = "VAPID_PUBLIC_KEY",
-        valueFrom = "${var.vapid_key_secret_arn}:publicKey::"
+        valueFrom = "${aws_secretsmanager_secret.notification_vapid_key.arn}:publicKey::"
       },
       {
         name      = "VAPID_PRIVATE_KEY",
-        valueFrom = "${var.vapid_key_secret_arn}:privateKey::"
+        valueFrom = "${aws_secretsmanager_secret.notification_vapid_key.arn}:privateKey::"
       },
       {
         name      = "APNS_AUTH_KEY",

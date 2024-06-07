@@ -60,3 +60,5 @@ servers/workers/*/dist/*
 bin/gen-bindings-remove-struct
 
 go.work.sum
+
+.keys
