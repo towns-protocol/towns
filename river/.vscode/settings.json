@@ -3,13 +3,13 @@
     "source.fixAll.eslint": "explicit"
   },
   "eslint.workingDirectories": [
-    "./core/debug-app",
-    "./core/dlog",
-    "./core/encryption",
-    "./core/proto",
-    "./core/sdk",
-    "./core/stress",
-    "./core/web3",
+    "./packages/debug-app",
+    "./packages/dlog",
+    "./packages/encryption",
+    "./packages/proto",
+    "./packages/sdk",
+    "./packages/stress",
+    "./packages/web3",
   ],
   "[solidity]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"

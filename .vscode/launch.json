@@ -18,7 +18,7 @@
       "env": { "NODE_ENV": "development", "NODE_TLS_REJECT_UNAUTHORIZED": "0" },
       "program": "${workspaceFolder}/node_modules/.bin/jest",
       "runtimeArgs": ["--experimental-vm-modules", "--experimental-wasm-modules"],
-      "args": ["${file}", "--config", "${workspaceFolder}/river/core/encryption/jest.config.ts", "-i", "--no-cache", "--forceExit"],
+      "args": ["${file}", "--config", "${workspaceFolder}/river/packages/encryption/jest.config.ts", "-i", "--no-cache", "--forceExit"],
       "console": "integratedTerminal",
     },
     {
@@ -28,7 +28,7 @@
       "env": { "NODE_ENV": "development", "NODE_TLS_REJECT_UNAUTHORIZED": "0", "RIVER_ENV": "local_multi", "DEBUG": "csb:*,test:*", "DEBUG_DEPTH":"10" },
       "program": "${workspaceFolder}/node_modules/.bin/jest",
       "runtimeArgs": ["--experimental-vm-modules", "--experimental-wasm-modules"],
-      "args": ["${file}", "--config", "${workspaceFolder}/river/core/sdk/jest.config.ts", "-i", "--no-cache", "--forceExit"],
+      "args": ["${file}", "--config", "${workspaceFolder}/river/packages/sdk/jest.config.ts", "-i", "--no-cache", "--forceExit"],
       "console": "integratedTerminal",
     },
     {
@@ -38,7 +38,7 @@
       "env": { "NODE_ENV": "development", "NODE_TLS_REJECT_UNAUTHORIZED": "0", "RIVER_ENV": "local_single_ne", "DEBUG": "csb:*,test:*", "DEBUG_DEPTH":"10" },
       "program": "${workspaceFolder}/node_modules/.bin/jest",
       "runtimeArgs": ["--experimental-vm-modules", "--experimental-wasm-modules"],
-      "args": ["${file}", "--config", "${workspaceFolder}/river/core/sdk/jest.config.ts", "-i", "--no-cache", "--forceExit"],
+      "args": ["${file}", "--config", "${workspaceFolder}/river/packages/sdk/jest.config.ts", "-i", "--no-cache", "--forceExit"],
       "console": "integratedTerminal",
     },
     {
@@ -48,7 +48,7 @@
       "env": { "NODE_ENV": "development", "NODE_TLS_REJECT_UNAUTHORIZED": "0", "RIVER_ENV": "local_single", "DEBUG": "csb:*,test:*", "DEBUG_DEPTH":"10" },
       "program": "${workspaceFolder}/node_modules/.bin/jest",
       "runtimeArgs": ["--experimental-vm-modules", "--experimental-wasm-modules"],
-      "args": ["${file}", "--config", "${workspaceFolder}/river/core/sdk/jest.config.ts", "-i", "--no-cache", "--forceExit"],
+      "args": ["${file}", "--config", "${workspaceFolder}/river/packages/sdk/jest.config.ts", "-i", "--no-cache", "--forceExit"],
       "console": "integratedTerminal",
     },
     {

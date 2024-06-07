@@ -3,12 +3,12 @@
     "source.fixAll.eslint": "explicit"
   },
   "eslint.workingDirectories": [
-    "./river/core/debug-app",
-    "./river/core/dlog",
-    "./river/core/encryption",
-    "./river/core/proto",
-    "./river/core/sdk",
-    "./river/core/web3",
+    "./river/packages/debug-app",
+    "./river/packages/dlog",
+    "./river/packages/encryption",
+    "./river/packages/proto",
+    "./river/packages/sdk",
+    "./river/packages/web3",
     "./clients/web/app",
     "./clients/web/lib",
     "./clients/web/privy",

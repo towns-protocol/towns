@@ -156,7 +156,6 @@
     "workspaces": [
         "clients/web/*",
         "clients/governance-ui",
-        "river/core/*",
         "river/protocol",
         "river/contracts",
         "river/packages/*",

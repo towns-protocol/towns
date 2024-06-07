@@ -119,12 +119,12 @@ yarn csb:build
 # Array of commands from the VS Code tasks
 commands=(
     "watch_lib:cd clients/web/lib && yarn watch"
-    "watch_sdk:cd river/core/sdk && yarn watch"
-    "watch_encryption:cd river/core/encryption && yarn watch"
-    "watch_dlog:cd river/core/dlog && yarn watch"
+    "watch_sdk:cd river/packages/sdk && yarn watch"
+    "watch_encryption:cd river/packages/encryption && yarn watch"
+    "watch_dlog:cd river/packages/dlog && yarn watch"
     "watch_worker:cd servers/workers/worker-common && yarn watch"
-    "watch_proto:cd river/core/proto && yarn watch"
-    "watch_web3:cd river/core/web3 && yarn watch"
+    "watch_proto:cd river/packages/proto && yarn watch"
+    "watch_web3:cd river/packages/web3 && yarn watch"
     "app:cd clients/web/app && yarn dev"
     "sample_app:cd clients/web/sample-app && yarn dev"
     "worker_unfurl:cd servers/workers/unfurl-worker && yarn dev:local"

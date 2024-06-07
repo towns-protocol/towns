@@ -362,7 +362,7 @@
     {
       "label": "WatchCasablancaSdk",
       "type": "shell",
-      "command": "cd core/sdk && yarn watch",
+      "command": "cd packages/sdk && yarn watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -372,7 +372,7 @@
     {
       "label": "WatchCasablancaEncryption",
       "type": "shell",
-      "command": "cd core/encryption && yarn watch",
+      "command": "cd packages/encryption && yarn watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -382,7 +382,7 @@
     {
       "label": "WatchCasablancaDlog",
       "type": "shell",
-      "command": "cd core/dlog && yarn watch",
+      "command": "cd packages/dlog && yarn watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -392,7 +392,7 @@
     {
       "label": "WatchCasablancaProto",
       "type": "shell",
-      "command": "cd core/proto && yarn watch",
+      "command": "cd packages/proto && yarn watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -402,7 +402,7 @@
     {
       "label": "WatchCasablancaWeb3",
       "type": "shell",
-      "command": "cd core/web3 && yarn watch",
+      "command": "cd packages/web3 && yarn watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -412,7 +412,7 @@
     {
       "label": "WatchCasablancaProto_Go",
       "type": "shell",
-      "command": "cd core/proto && yarn watch:go",
+      "command": "cd packages/proto && yarn watch:go",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -422,7 +422,7 @@
     {
       "label": "Casablanca DebugApp",
       "type": "shell",
-      "command": "./scripts/wait-for-core.sh && cd core/debug-app && yarn dev",
+      "command": "./scripts/wait-for-core.sh && cd packages/debug-app && yarn dev",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {

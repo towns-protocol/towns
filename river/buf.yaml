@@ -1,7 +1,7 @@
 version: v2
 modules:
     - path: protocol
-    - path: core/proto
+    - path: packages/proto
 breaking:
     use:
         - FILE

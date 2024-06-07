@@ -125,13 +125,13 @@ yarn csb:build
 
 # Array of commands from the VS Code tasks
 commands=(
-    "watch_sdk:cd core/sdk && yarn watch"
-    "watch_encryption:cd core/encryption && yarn watch"
-    "watch_dlog:cd core/dlog && yarn watch"
-    "watch_proto:cd core/proto && yarn watch"
-    "watch_web3:cd core/web3 && yarn watch"
-    "watch_go:cd core/proto && yarn watch:go"
-    "debug_app:cd core/debug-app && yarn dev"
+    "watch_sdk:cd packages/sdk && yarn watch"
+    "watch_encryption:cd packages/encryption && yarn watch"
+    "watch_dlog:cd packages/dlog && yarn watch"
+    "watch_proto:cd packages/proto && yarn watch"
+    "watch_web3:cd packages/web3 && yarn watch"
+    "watch_go:cd protocol && yarn watch:go"
+    "debug_app:cd packages/debug-app && yarn dev"
     "core_single:./core/node/run_single.sh -r"
     "core_single_ne:./core/node/run_single.sh -r --de"
     "core_multi:./core/node/run_multi.sh -r"

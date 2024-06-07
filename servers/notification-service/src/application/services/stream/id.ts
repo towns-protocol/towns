@@ -1,6 +1,6 @@
 import { streamIdAsString } from './utils'
 
-// Original list of StreamPrefix is in river/core/sdk/src/id.ts
+// Original list of StreamPrefix is in river/packages/sdk/src/id.ts
 export enum StreamPrefix {
     Channel = '20',
     DM = '88',

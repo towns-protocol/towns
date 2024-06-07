@@ -26,7 +26,7 @@ function cleanup() {
 
 
 function main() {
-    ./core/stress/scripts/start.sh @
+    ./packages/stress/scripts/start.sh @
 }
 
 # trap cleanup on exit to ensure child processes are killed

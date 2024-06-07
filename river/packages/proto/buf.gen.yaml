@@ -1,11 +1,11 @@
 version: v2
 plugins:
     - local: protoc-gen-es
-      out: core/proto/src/gen
+      out: packages/proto/src/gen
       opt: target=ts
     - local: protoc-gen-connect-es
-      out: core/proto/src/gen
+      out: packages/proto/src/gen
       opt: target=ts
 inputs:
     - directory: protocol
-    - directory: core/proto
+    - directory: packages/proto

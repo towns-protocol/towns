@@ -372,7 +372,7 @@
     {
       "label": "WatchCasablancaSdk",
       "type": "shell",
-      "command": "cd river/core/sdk && yarn watch",
+      "command": "cd river/packages/sdk && yarn watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -382,7 +382,7 @@
     {
       "label": "WatchCasablancaEncryption",
       "type": "shell",
-      "command": "cd river/core/encryption && yarn watch",
+      "command": "cd river/packages/encryption && yarn watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -392,7 +392,7 @@
     {
       "label": "WatchCasablancaDlog",
       "type": "shell",
-      "command": "cd river/core/dlog && yarn watch",
+      "command": "cd river/packages/dlog && yarn watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -412,7 +412,7 @@
     {
       "label": "WatchCasablancaProto",
       "type": "shell",
-      "command": "cd river/core/proto && yarn watch",
+      "command": "cd river/packages/proto && yarn watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -422,7 +422,7 @@
     {
       "label": "WatchCasablancaWeb3",
       "type": "shell",
-      "command": "cd river/core/web3 && yarn watch",
+      "command": "cd river/packages/web3 && yarn watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -432,7 +432,7 @@
     {
       "label": "WatchCasablancaProto_Go",
       "type": "shell",
-      "command": "cd river/core/proto && yarn watch:go",
+      "command": "cd river/packages/proto && yarn watch:go",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -462,7 +462,7 @@
     {
       "label": "Casablanca DebugApp",
       "type": "shell",
-      "command": "./river/scripts/wait-for-core.sh && cd river/core/debug-app && yarn dev",
+      "command": "./river/scripts/wait-for-core.sh && cd river/packages/debug-app && yarn dev",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {

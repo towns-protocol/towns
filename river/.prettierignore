@@ -17,10 +17,13 @@ servers/workers/**/.keys/*
 core/**/gen/*
 core/**/coverage/*
 core/**/run_files/*
+packages/**/gen/*
+packages/**/coverage/*
+packages/**/run_files/*
 core/node/.mockery.yaml
 core/node/auth/contracts/*.json
 core/node/registries/contracts/*.json
-core/encryption-pkg/turbo.json
+packages/encryption-pkg/turbo.json
 contracts/cache/*
 contracts/deployments/*
 contracts/addresses/*
@@ -44,4 +47,4 @@ yarn.lock
 
 packages/generated/*
 
-core/proto/src/protocol_*.ts
+packages/proto/src/protocol_*.ts

@@ -26,8 +26,10 @@
 ##
 
 /core/ @sergekh2
+/packages/ @sergekh2
+/protocol/ @sergekh2
 /.github/ @mechanical-turk
 /infra @mechanical-turk
 turbo.json @mechanical-turk
 /contracts/src/node-network @mechanical-turk
-/core/sdk/src/stream* @erikolsson
+/packages/sdk/src/stream* @erikolsson

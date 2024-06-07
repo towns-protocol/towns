@@ -31,8 +31,8 @@ abi/
 
 clients/web/app/storybook-static
 
-core/**/dist/
-core/proto/src/gen/*
+packages/**/dist/
+packages/proto/src/gen/*
 
 contracts/deployments/localhost/
 contracts/cache

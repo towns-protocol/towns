@@ -4,7 +4,7 @@ This is a reference for the terraform implementation of the stress tests
 
 ## Environment variables
 
-    see variables in core/stress/scripts/start.sh
+    see variables in packages/stress/scripts/start.sh
 
 ## Local development
 

@@ -6904,9 +6904,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@river-build/dlog@workspace:^, @river-build/dlog@workspace:river/core/dlog":
+"@river-build/dlog@workspace:^, @river-build/dlog@workspace:river/packages/dlog":
   version: 0.0.0-use.local
-  resolution: "@river-build/dlog@workspace:river/core/dlog"
+  resolution: "@river-build/dlog@workspace:river/packages/dlog"
   dependencies:
     "@bufbuild/protobuf": ^1.9.0
     "@river-build/proto": "workspace:^"
@@ -6928,9 +6928,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@river-build/encryption@workspace:^, @river-build/encryption@workspace:river/core/encryption":
+"@river-build/encryption@workspace:^, @river-build/encryption@workspace:river/packages/encryption":
   version: 0.0.0-use.local
-  resolution: "@river-build/encryption@workspace:river/core/encryption"
+  resolution: "@river-build/encryption@workspace:river/packages/encryption"
   dependencies:
     "@bufbuild/protobuf": ^1.9.0
     "@ethereumjs/util": ^8.0.1
@@ -6973,9 +6973,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@river-build/proto@workspace:^, @river-build/proto@workspace:river/core/proto":
+"@river-build/proto@workspace:^, @river-build/proto@workspace:river/packages/proto":
   version: 0.0.0-use.local
-  resolution: "@river-build/proto@workspace:river/core/proto"
+  resolution: "@river-build/proto@workspace:river/packages/proto"
   dependencies:
     "@bufbuild/buf": ^1.32.0
     "@bufbuild/protobuf": ^1.9.0
@@ -6994,9 +6994,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@river-build/stress@workspace:river/core/stress":
+"@river-build/stress@workspace:river/packages/stress":
   version: 0.0.0-use.local
-  resolution: "@river-build/stress@workspace:river/core/stress"
+  resolution: "@river-build/stress@workspace:river/packages/stress"
   dependencies:
     "@babel/node": ^7.23.9
     "@bufbuild/protobuf": ^1.9.0
@@ -7034,9 +7034,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@river-build/web3@workspace:^, @river-build/web3@workspace:river/core/web3":
+"@river-build/web3@workspace:^, @river-build/web3@workspace:river/packages/web3":
   version: 0.0.0-use.local
-  resolution: "@river-build/web3@workspace:river/core/web3"
+  resolution: "@river-build/web3@workspace:river/packages/web3"
   dependencies:
     "@river-build/dlog": "workspace:^"
     "@river-build/generated": "workspace:^"
@@ -7084,9 +7084,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@river/debug-app@workspace:river/core/debug-app":
+"@river/debug-app@workspace:river/packages/debug-app":
   version: 0.0.0-use.local
-  resolution: "@river/debug-app@workspace:river/core/debug-app"
+  resolution: "@river/debug-app@workspace:river/packages/debug-app"
   dependencies:
     "@river/sdk": "workspace:^"
     "@vanilla-extract/vite-plugin": ^4.0.4
@@ -7101,9 +7101,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@river/sdk@workspace:^, @river/sdk@workspace:river/core/sdk":
+"@river/sdk@workspace:^, @river/sdk@workspace:river/packages/sdk":
   version: 0.0.0-use.local
-  resolution: "@river/sdk@workspace:river/core/sdk"
+  resolution: "@river/sdk@workspace:river/packages/sdk"
   dependencies:
     "@bufbuild/protobuf": ^1.9.0
     "@connectrpc/connect": ^1.4.0
