@@ -388,9 +388,9 @@ if ! git diff main --quiet --cached; then
 
     echo "Deploying river..."
 
-    gh workflow run River_deploy.yml -f docker_image_tag="${SHORT_HASH}" -f run_mode="full" node_numbers="[1,2,3,4,5,6,7,8,9,10,11]"
+    gh workflow run River_deploy.yml -f docker_image_tag="${SHORT_HASH}" -f run_mode="full" -f node_numbers="[1,2,3,4,5,6,7,8,9,10,11]"
 
-    gh workflow run River_deploy.yml -f docker_image_tag="${SHORT_HASH}" -f run_mode="archive" node_numbers="[1]"
+    gh workflow run River_deploy.yml -f docker_image_tag="${SHORT_HASH}" -f run_mode="archive" -f node_numbers="[1]"
 
     play_success_sound
 else
