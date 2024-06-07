@@ -3,6 +3,8 @@
 set -x
 set -eo pipefail
 
+DEPLOYMENT_TIMEOUT=720 # 12 minutes
+
 function check_env() {
     # Validate the arguments
     if [ -z "$ENVIRONMENT_NAME" ]; then
@@ -98,7 +100,7 @@ function deploy_river_task_definition() {
         --task-definition=${TASK_DEFINITION_ARN} > /dev/null \
         --enable-execute-command
 
-    if ! ( timeout 600 aws ecs wait services-stable --cluster="${CLUSTER_NAME}" --services="${SERVICE_NAME}" ); then
+    if ! ( timeout $DEPLOYMENT_TIMEOUT aws ecs wait services-stable --cluster="${CLUSTER_NAME}" --services="${SERVICE_NAME}" ); then
         echo "Service failed to stabilize in time"
         exit 1
     fi        
