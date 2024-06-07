@@ -599,7 +599,7 @@ function CreateSpaceFormV2WithoutAuth() {
                             {/* Panel */}
                             {panelType && (
                                 <PanelWrapper panelType={panelType}>
-                                    <PanelContent onClick={() => setPanelType(undefined)}>
+                                    <PanelContent onClosed={() => setPanelType(undefined)}>
                                         <Stack height="x16">
                                             <CreateTownSubmit
                                                 setPanelType={setPanelType}
