@@ -382,7 +382,7 @@ export const SpaceInfo = () => {
                                 {space?.name ?? ''}
                             </Paragraph>
                             <Box grow />
-                            {canEdit && !isTouch && (
+                            {canEdit && (
                                 <TextButton onClick={onEditSpaceNameClick}>Edit</TextButton>
                             )}
                         </Stack>
