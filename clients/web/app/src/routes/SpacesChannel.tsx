@@ -268,7 +268,7 @@ export const SpacesChannelComponent = (props: Props) => {
                         events={channelMessages}
                         isChannelWritable={isChannelWritable}
                     >
-                        {spaceId && channel && !props.hideHeader && (
+                        {channel && !props.hideHeader && (
                             <ChannelHeader
                                 channel={channel}
                                 spaceId={spaceId}
@@ -369,7 +369,7 @@ const UnjoinedChannelComponent = ({
 }) => {
     return (
         <>
-            {spaceId && channel && !hideHeader && (
+            {channel && !hideHeader && (
                 <ChannelHeader channel={channel} spaceId={spaceId} onTouchClose={triggerClose} />
             )}
             <Box absoluteFill centerContent padding="lg">

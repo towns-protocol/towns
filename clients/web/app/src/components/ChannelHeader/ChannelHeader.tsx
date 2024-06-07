@@ -34,7 +34,7 @@ import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 
 type Props = {
     channel: Channel
-    spaceId: string
+    spaceId: string | undefined
     onTouchClose?: () => void
 }
 
