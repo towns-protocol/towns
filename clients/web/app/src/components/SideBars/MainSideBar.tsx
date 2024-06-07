@@ -1,7 +1,14 @@
-import { motion } from 'framer-motion'
-import React, { forwardRef } from 'react'
-import { useInvites, useSpaceContext, useTownsContext } from 'use-towns-client'
+import { Reorder, motion } from 'framer-motion'
+import React, { forwardRef, useCallback, useEffect, useState } from 'react'
+import {
+    SpaceItem,
+    useInvites,
+    useMyUserId,
+    useSpaceContext,
+    useTownsContext,
+} from 'use-towns-client'
 import { useEvent } from 'react-use-event-hook'
+import { useNavigate } from 'react-router'
 import { ActionNavItem } from '@components/NavItem/ActionNavItem'
 import { SpaceNavItem } from '@components/NavItem/SpaceNavItem'
 import { RegisterMainShortcuts } from '@components/Shortcuts/RegisterMainShortcuts'
@@ -10,6 +17,7 @@ import { PATHS } from 'routes'
 import { Box, Card, Dot, Icon } from '@ui'
 import { NavItem } from '@components/NavItem/_NavItem'
 import { useAnalytics } from 'hooks/useAnalytics'
+import { useUserStore } from 'store/userSettingsStore'
 
 export const MainSideBar = () => {
     const { isTouch } = useDevice()
@@ -49,19 +57,7 @@ export const MainSideBar = () => {
                     {dmUnreadChannelIds.size > 0 && <Dot position="topRight" />}
                 </Box>
             </NavItem>
-
-            {spaces.map((s) => (
-                <TransitionItem key={s.id}>
-                    <SpaceNavItem
-                        exact={false}
-                        forceMatch={s.id === spaceId}
-                        id={s.id}
-                        name={s.name}
-                        avatar={s.avatarSrc}
-                        pinned={false}
-                    />
-                </TransitionItem>
-            ))}
+            <SpaceList spaces={spaces} spaceId={spaceId} />
             <TransitionItem key="new">
                 <ActionNavItem
                     id={`${PATHS.SPACES}/new`}
@@ -87,6 +83,80 @@ export const MainSideBar = () => {
                 </TransitionItem>
             ))}
         </Card>
+    )
+}
+
+export const SpaceList = (props: {
+    spaces: SpaceItem[]
+    spaceId?: string
+    onSelectSpace?: (spaceId: string) => void
+}) => {
+    const { spaces, spaceId } = props
+    const userId = useMyUserId()
+
+    const [setPersistedOrderedSpaces, persistedOrderedSpaces] = useUserStore((s) => [
+        s.setOrderedSpaces,
+        (userId && s.users[userId]?.orderedSpaces) || [],
+    ])
+
+    const [isDragging, setIsDragging] = useState(false)
+    const navigate = useNavigate()
+    const onSelectItem = useCallback(
+        (id: string) => {
+            if (!isDragging) {
+                navigate(`/${PATHS.SPACES}/${id}/`)
+                props.onSelectSpace?.(id)
+            }
+        },
+        [isDragging, navigate, props],
+    )
+
+    const [orderedSpaces, onReorder] = useState(() =>
+        persistedOrderedSpaces?.length ? persistedOrderedSpaces : spaces.map((s) => s.id),
+    )
+
+    useEffect(() => {
+        if (userId) {
+            setPersistedOrderedSpaces(userId, orderedSpaces)
+        }
+    }, [orderedSpaces, setPersistedOrderedSpaces, userId])
+
+    const handleDragStart = () => {
+        setIsDragging(true)
+    }
+
+    const handleDragEnd = () => {
+        setIsDragging(false)
+    }
+
+    return (
+        <Reorder.Group axis="y" values={orderedSpaces} onReorder={onReorder}>
+            {spaces
+                .slice()
+                .sort((a, b) =>
+                    Math.sign(orderedSpaces.indexOf(a.id) - orderedSpaces.indexOf(b.id)),
+                )
+                .map((s) => (
+                    <Reorder.Item
+                        key={s.id}
+                        value={s.id}
+                        onClick={() => onSelectItem(s.id)}
+                        onDragStart={handleDragStart}
+                        onDragEnd={handleDragEnd}
+                    >
+                        <TransitionItem key={s.id}>
+                            <SpaceNavItem
+                                exact={false}
+                                forceMatch={s.id === spaceId}
+                                id={s.id}
+                                name={s.name}
+                                avatar={s.avatarSrc}
+                                pinned={false}
+                            />
+                        </TransitionItem>
+                    </Reorder.Item>
+                ))}
+        </Reorder.Group>
     )
 }
 

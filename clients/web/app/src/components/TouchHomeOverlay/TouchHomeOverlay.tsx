@@ -3,10 +3,10 @@ import { useConnectivity, useSpaceContext, useTownsContext } from 'use-towns-cli
 import { useNavigate } from 'react-router'
 import { shortAddress } from 'ui/utils/utils'
 import { Box, IconButton, MotionBox, MotionStack, Stack, Text } from '@ui'
-import { SpaceNavItem } from '@components/NavItem/SpaceNavItem'
 import { transitions } from 'ui/transitions/transitions'
 import { PATHS } from 'routes'
 import { ActionNavItem } from '@components/NavItem/ActionNavItem'
+import { SpaceList } from '@components/SideBars/MainSideBar'
 
 type Props = {
     onClose: () => void
@@ -71,18 +71,7 @@ export const TouchHomeOverlay = (props: Props) => {
                 </Stack>
                 <Box grow scroll>
                     <Box minHeight="forceScroll">
-                        {spaces.map((s) => (
-                            <SpaceNavItem
-                                key={s.id}
-                                exact={false}
-                                forceMatch={s.id === spaceId}
-                                id={s.id}
-                                name={s.name}
-                                avatar={s.avatarSrc}
-                                pinned={false}
-                                onClick={onClose}
-                            />
-                        ))}
+                        <SpaceList spaces={spaces} spaceId={spaceId} onSelectSpace={onClose} />
 
                         <ActionNavItem
                             id={`${PATHS.SPACES}/new`}

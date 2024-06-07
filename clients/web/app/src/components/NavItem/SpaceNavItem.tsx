@@ -1,12 +1,11 @@
 import React from 'react'
 import { useSpaceNotificationCounts } from 'use-towns-client'
-import { PATHS } from 'routes'
-import { Badge, Box, ButtonText, Dot, Icon } from '@ui'
-import { IconName } from 'ui/components/Icon'
-import { useSizeContext } from 'ui/hooks/useSizeContext'
 import { SpaceIcon } from '@components/SpaceIcon'
+import { Badge, Box, ButtonText, Dot, Icon } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { useShowHasUnreadBadgeForSpaceId } from 'hooks/useSpaceUnreadsIgnoreMuted'
+import { IconName } from 'ui/components/Icon'
+import { useSizeContext } from 'ui/hooks/useSizeContext'
 import { NavItem } from './_NavItem'
 
 type Props = {
@@ -27,7 +26,7 @@ type Props = {
 }
 
 export const SpaceNavItem = (props: Props) => {
-    const { id, forceMatch, highlight, exact, icon, name, pinned, isInvite, onClick } = props
+    const { id, forceMatch, highlight, exact, icon, name, pinned, isInvite } = props
     const { isTouch } = useDevice()
     const notificationCounts = useSpaceNotificationCounts(id)
     const mentions = notificationCounts.mentions
@@ -39,17 +38,16 @@ export const SpaceNavItem = (props: Props) => {
     return (
         <NavItem
             id={id}
-            to={isInvite ? `/invites/${id}/` : `/${PATHS.SPACES}/${id}/`}
             exact={exact}
             forceMatch={forceMatch}
             activeBackground={isTouch ? 'level2' : 'level3'}
             highlight={highlight}
+            cursor="pointer"
             tooltip={isTouch ? undefined : props.name}
             tooltipOptions={{
                 placement: 'horizontal',
                 immediate: true,
             }}
-            onClick={onClick}
         >
             <Box position="relative">
                 <SpaceIcon

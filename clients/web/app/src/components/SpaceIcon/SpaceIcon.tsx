@@ -54,6 +54,7 @@ export const SpaceIcon = (props: Props) => {
                 {!imageError && (
                     <AnimatePresence mode="wait">
                         <MotionBox
+                            pointerEvents="none"
                             as="img"
                             src={overrideSrc ?? imageSrc}
                             fit="full"
