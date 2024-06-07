@@ -25,7 +25,6 @@ export const BlurredBackground = (props: Props) => {
                 pointerEvents="none"
                 initial={initial}
                 className={styles.blurredBackgroundStyle}
-                zIndex="above"
                 background="level1"
                 opacity="0.8"
                 animate={animate}
