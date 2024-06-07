@@ -37,7 +37,10 @@ export function useCasablancaDMs(casablancaClient?: CasablancaClient): {
                                 MembershipOp.SO_LEAVE,
                             ),
                             userIds: Array.from(stream.view.dmChannelContent.participants())
-                                .filter((memberUserId) => memberUserId !== userId)
+                                .filter(
+                                    (memberUserId, index, numParticipants) =>
+                                        memberUserId !== userId || numParticipants.length === 1,
+                                )
                                 .sort((a, b) => a.localeCompare(b)),
                             lastEventCreatedAtEpochMs:
                                 stream.view.dmChannelContent.lastEventCreatedAtEpochMs,

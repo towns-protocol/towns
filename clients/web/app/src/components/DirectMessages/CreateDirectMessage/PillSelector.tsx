@@ -150,10 +150,14 @@ export const PillSelector = <T,>(props: Props<T>) => {
         }
     }, [])
 
+    const { onPreviewChange } = props
+    const onPreviewChangeRef = useRef(onPreviewChange)
+    onPreviewChangeRef.current = onPreviewChange
+
     useEffect(() => {
         const previewItem = searchItems[focusIndex]
-        props.onPreviewChange?.(previewItem)
-    }, [focusIndex, props, searchItems])
+        onPreviewChangeRef.current?.(previewItem)
+    }, [focusIndex, searchItems])
 
     prevSearchItems.current = searchItems
 
