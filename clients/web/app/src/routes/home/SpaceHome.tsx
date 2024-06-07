@@ -13,6 +13,8 @@ import {
     LINKED_RESOURCE,
 } from '../../data/rel'
 
+const DEFAULT_CHANNEL_NAME = 'general'
+
 export const SpaceHome = () => {
     const space = useSpaceData()
     const { isTouch } = useDevice()
@@ -114,7 +116,8 @@ export const SpaceHome = () => {
 
         if (space?.membership === Membership.Join) {
             let route: string
-            const firstChannelId = channels?.at(0)?.id
+            const firstChannelId =
+                channels?.find((c) => c.label === DEFAULT_CHANNEL_NAME)?.id ?? channels?.at(0)?.id
 
             if (!firstChannelId) {
                 // the worst case is that user is navigated to the threads page,

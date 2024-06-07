@@ -50,6 +50,10 @@ export const App = () => {
         ? state.townRouteBookmarks[spaceIdBookmark]
         : undefined
     const didSetHighpriorityStreamIds = useRef<boolean>(false)
+
+    // FIXME: this is not great, we don't directly use bookmarks for mobile, we should
+    // have a channel history stack with the latest 2-5 channels instead
+    // independent to bookmarks
     const { spaceId, channelId } = useMemo(() => getRouteParams(channelBookmark), [channelBookmark])
     const [searchParams] = useSearchParams()
 

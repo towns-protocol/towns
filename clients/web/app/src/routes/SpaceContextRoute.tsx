@@ -85,9 +85,18 @@ const SpaceContext = () => {
             console.log('[SpaceContextRoute][route] setTownRouteBookmark', route)
             setTownRouteBookmark(spaceSlug, route)
         } else if (spaceSlug) {
-            // reset bookmark in case the route isn't referenced above
-            console.log('[SpaceContextRoute][route] setTownRouteBookmark', 'reset')
-            setTownRouteBookmark(spaceSlug, '')
+            if (path.type === 'generic' && !isTouch) {
+                // bookmark generic path for desktop (e.g. threads)
+                // TODO: we shouldn't have to worry about bookmarking for mobile
+                // but seems like there's some logic in place using bookmarks
+                // for optimizing streams
+                console.log('[SpaceContextRoute][route] setTownRouteBookmark', path.pathname)
+                setTownRouteBookmark(spaceSlug, path.pathname)
+            } else {
+                // reset bookmark in case the route isn't referenced above
+                console.log('[SpaceContextRoute][route] setTownRouteBookmark', 'reset')
+                setTownRouteBookmark(spaceSlug, '')
+            }
         }
     }, [isTouch, location.pathname, path, setTownRouteBookmark, spaceSlug])
 
