@@ -338,6 +338,20 @@ const PlateEditorWithoutBoundary = ({
         />
     )
 
+    const plateFormattingToolbar = (
+        <PlateToolbar
+            readOnly={!editable}
+            focused={focused || !isEditorEmpty}
+            editing={isEditing}
+            background={background}
+            attemptingToSend={isAttemptingSend}
+            threadId={props.threadId}
+            threadPreview={props.threadPreview}
+            showFormattingToolbar={isFormattingToolbarOpen}
+            setIsFormattingToolbarOpen={setIsFormattingToolbarOpen}
+            key="editor"
+        />
+    )
     return (
         <>
             <Box position="relative">
@@ -361,7 +375,11 @@ const PlateEditorWithoutBoundary = ({
                     )}
                 </Box>
             </Box>
-            <Stack background={background} rounded={{ default: 'sm', touch: 'none' }}>
+            <Stack
+                background={background}
+                data-testid="parent-stack"
+                rounded={{ default: 'sm', touch: 'none' }}
+            >
                 <Plate
                     plugins={PlatePlugins()}
                     editorRef={editorRef}
@@ -369,60 +387,46 @@ const PlateEditorWithoutBoundary = ({
                     key={`plate-${storageId}`}
                     onChange={onChange}
                 >
+                    {!isTouch && plateFormattingToolbar}
                     <Stack horizontal width="100%" paddingRight="sm" alignItems="end">
-                        <Box grow width="100%">
-                            <PlateToolbar
+                        <Box grow paddingX="md" position="relative" ref={editableContainerRef}>
+                            <Editor
                                 readOnly={!editable}
-                                focused={focused || !isEditorEmpty}
-                                editing={isEditing}
-                                background={background}
-                                attemptingToSend={isAttemptingSend}
-                                threadId={props.threadId}
-                                threadPreview={props.threadPreview}
-                                showFormattingToolbar={isFormattingToolbarOpen}
-                                setIsFormattingToolbarOpen={setIsFormattingToolbarOpen}
-                                key="editor"
-                            />
-
-                            <Box paddingX="md" position="relative" ref={editableContainerRef}>
-                                <Editor
-                                    readOnly={!editable}
-                                    autoFocus={autoFocus}
-                                    tabIndex={tabIndex}
-                                    disabled={isSendingMessage}
-                                    isTouch={isTouch}
-                                    handleSendOnEnter={handleSendOnEnter}
-                                    onFocus={onFocus}
-                                    onBlur={onBlur}
-                                />
-                                {isEditorEmpty &&
-                                    (!valueFromStore || valueFromStore.trim().length === 0) && (
-                                        <RichTextPlaceholder placeholder={placeholder} />
-                                    )}
-                            </Box>
-                            <OnFocusPlugin
                                 autoFocus={autoFocus}
-                                editorRef={editorRef}
-                                onFocusChange={onFocusChange}
+                                tabIndex={tabIndex}
+                                disabled={isSendingMessage}
+                                isTouch={isTouch}
+                                handleSendOnEnter={handleSendOnEnter}
+                                onFocus={onFocus}
+                                onBlur={onBlur}
                             />
-                            <CaptureTownsLinkPlugin onUpdate={onMessageLinksUpdated} />
-                            <CaptureExternalLinkPlugin onUpdate={onUnfurledLinksUpdated} />
-                            <EmojiPlugin />
-                            <MentionCombobox<TUserWithChannel>
-                                id={ComboboxTypes.userMention}
-                                items={userMentions}
-                                currentUser={props.userId}
-                                filter={userMentionFilter}
-                            />
-                            <MentionCombobox<Channel>
-                                pluginKey={ELEMENT_MENTION_CHANNEL}
-                                id={ComboboxTypes.channelMention}
-                                items={channelMentions}
-                                filter={channelMentionFilter}
-                            />
-                            <OfflineIndicator attemptingToSend={isAttemptingSend} />
-                            <RememberInputPlugin storageId={storageId} />
+                            {isEditorEmpty &&
+                                (!valueFromStore || valueFromStore.trim().length === 0) && (
+                                    <RichTextPlaceholder placeholder={placeholder} />
+                                )}
                         </Box>
+                        <OnFocusPlugin
+                            autoFocus={autoFocus}
+                            editorRef={editorRef}
+                            onFocusChange={onFocusChange}
+                        />
+                        <CaptureTownsLinkPlugin onUpdate={onMessageLinksUpdated} />
+                        <CaptureExternalLinkPlugin onUpdate={onUnfurledLinksUpdated} />
+                        <EmojiPlugin />
+                        <MentionCombobox<TUserWithChannel>
+                            id={ComboboxTypes.userMention}
+                            items={userMentions}
+                            currentUser={props.userId}
+                            filter={userMentionFilter}
+                        />{' '}
+                        <MentionCombobox<Channel>
+                            pluginKey={ELEMENT_MENTION_CHANNEL}
+                            id={ComboboxTypes.channelMention}
+                            items={channelMentions}
+                            filter={channelMentionFilter}
+                        />
+                        <OfflineIndicator attemptingToSend={isAttemptingSend} />
+                        <RememberInputPlugin storageId={storageId} />
                         {!isEditing && sendButtons}
                     </Stack>
                     {unfurledLinkAttachments.length > 0 && (
@@ -439,6 +443,7 @@ const PlateEditorWithoutBoundary = ({
                     <Box paddingX="md" paddingBottom="sm">
                         <PasteFilePlugin editableContainerRef={editableContainerRef} />
                     </Box>
+                    {isTouch && plateFormattingToolbar}
                     <Stack
                         gap
                         shrink
@@ -454,7 +459,10 @@ const PlateEditorWithoutBoundary = ({
                             threadId={props.threadId}
                             threadPreview={props.threadPreview}
                             visible={
-                                !isTouch || focused || !isEditorEmpty || isFormattingToolbarOpen
+                                (isTouch &&
+                                    !isFormattingToolbarOpen &&
+                                    (focused || !isEditorEmpty)) ||
+                                (!isTouch && (focused || !isEditorEmpty))
                             }
                             isFormattingToolbarOpen={isFormattingToolbarOpen}
                             setIsFormattingToolbarOpen={setIsFormattingToolbarOpen}

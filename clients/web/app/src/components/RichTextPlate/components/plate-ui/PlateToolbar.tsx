@@ -12,7 +12,6 @@ import { Box, BoxProps, DividerEditorToolbar, IconButton, MotionBox, Stack } fro
 import { GiphyEntryDesktop } from '@components/Giphy/GiphyEntry'
 import { useDevice } from 'hooks/useDevice'
 import { ShortcutTooltip } from '@components/Shortcuts/ShortcutTooltip'
-import { formattingToolbarTouch } from '../../RichTextEditor.css'
 import { ListToolbarButton } from './ListToolbarButton'
 import { AddLinkModal } from './LinkModal'
 import { MarkToolbarButton } from './MarkToolbarButton'
@@ -44,6 +43,15 @@ export const PlateToolbar = ({
     const onToolbarPointerDown = useCallback((e: React.PointerEvent) => {
         e.preventDefault()
     }, [])
+
+    const closeFormattingToolbar = useCallback(
+        (e: React.TouchEvent) => {
+            e.stopPropagation()
+            e.preventDefault()
+            setIsFormattingToolbarOpen(false)
+        },
+        [setIsFormattingToolbarOpen],
+    )
 
     const onLinkClick = useEvent(() => {
         if (isTouch) {
@@ -90,11 +98,7 @@ export const PlateToolbar = ({
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
                     >
-                        <Box
-                            paddingTop="sm"
-                            paddingX="sm"
-                            className={isTouch ? formattingToolbarTouch : undefined}
-                        >
+                        <Box paddingTop="sm" paddingX="sm">
                             <Stack
                                 horizontal
                                 overflowX="scroll"
@@ -109,7 +113,7 @@ export const PlateToolbar = ({
                                     <IconButton
                                         opaque
                                         icon="close"
-                                        onClick={() => setIsFormattingToolbarOpen(false)}
+                                        onTouchStart={closeFormattingToolbar}
                                     />
                                 )}
                                 <MarkToolbarButton
