@@ -12,6 +12,20 @@ import { bin_toHexString } from '@river-build/dlog'
 import { userMetadata_EnsAddresses } from './userMetadata_EnsAddresses'
 import { userMetadata_Nft } from './userMetadata_Nft'
 
+export type UserInfo = {
+    username: string
+    usernameConfirmed: boolean
+    usernameEncrypted: boolean
+    displayName: string
+    displayNameEncrypted: boolean
+    ensAddress?: string
+    nft?: {
+        chainId: number
+        tokenId: string
+        contractAddress: string
+    }
+}
+
 export class StreamStateView_UserMetadata {
     readonly usernames: UserMetadata_Usernames
     readonly displayNames: UserMetadata_DisplayNames
@@ -163,19 +177,7 @@ export class StreamStateView_UserMetadata {
         this.usernames.onDecryptedContent(eventId, content, emitter)
     }
 
-    userInfo(userId: string): {
-        username: string
-        usernameConfirmed: boolean
-        usernameEncrypted: boolean
-        displayName: string
-        displayNameEncrypted: boolean
-        ensAddress?: string
-        nft?: {
-            chainId: number
-            tokenId: string
-            contractAddress: string
-        }
-    } {
+    userInfo(userId: string): UserInfo {
         const usernameInfo = this.usernames.info(userId)
         const displayNameInfo = this.displayNames.info(userId)
         const ensAddress = this.ensAddresses.info(userId)
