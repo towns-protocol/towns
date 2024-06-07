@@ -1,8 +1,10 @@
 import React, { useCallback, useMemo } from 'react'
 import {
+    Address,
     Channel,
     useChannelMembers,
     useDMData,
+    useMembers,
     useMyUserId,
     useRoom,
     useStreamUpToDate,
@@ -21,13 +23,14 @@ import { usePushNotifications } from 'hooks/usePushNotifications'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { AvatarGroup } from '@components/DirectMessages/GroupDMIcon'
 import { Avatar } from '@components/Avatar/Avatar'
-import type { CHANNEL_INFO_PARAMS_VALUES } from 'routes'
+import { type CHANNEL_INFO_PARAMS_VALUES } from 'routes'
 import { AnimatedLoaderGradient } from '@components/AnimatedLoaderGradient/AnimatedLoaderGradient'
 import { FavoriteChannelButtonTouch } from '@components/FavoriteChannelButton/FavoriteChannelButton'
 import { useFavoriteChannels } from 'hooks/useFavoriteChannels'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { useChannelHeaderMembers } from 'hooks/useChannelHeaderMembers'
 import { useAnalytics } from 'hooks/useAnalytics'
+import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 
 type Props = {
     channel: Channel
@@ -328,7 +331,24 @@ const TouchChannelHeader = (props: Props & { showLoadingIndicator: boolean }) =>
 const useChannelInfoButton = (type: CHANNEL_INFO_PARAMS_VALUES, channelId: string) => {
     const [searchParams] = useSearchParams()
     const { openPanel } = usePanelActions()
+
+    const { members } = useMembers(channelId)
+    const myUserId = useMyUserId()
+
+    const friendDM = useMemo(() => {
+        const isPersonalSpace = members.length === 1
+        return isPersonalSpace ? members[0] : members.find((m) => m.userId !== myUserId)
+    }, [members, myUserId])
+
+    const { data: abstractAccountAddress } = useAbstractAccountAddress({
+        rootKeyAddress: friendDM?.userId as Address | undefined,
+    })
+
     return useCallback(() => {
-        openPanel(type, { channelId, stackId: searchParams.get('stackId') ?? '' })
-    }, [channelId, openPanel, searchParams, type])
+        if (type === 'dm' && abstractAccountAddress) {
+            openPanel('profile', { profileId: abstractAccountAddress })
+        } else {
+            openPanel(type, { channelId, stackId: searchParams.get('stackId') ?? '' })
+        }
+    }, [abstractAccountAddress, channelId, openPanel, searchParams, type])
 }
