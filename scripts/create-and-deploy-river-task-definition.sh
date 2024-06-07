@@ -100,11 +100,22 @@ function deploy_river_task_definition() {
         --task-definition=${TASK_DEFINITION_ARN} > /dev/null \
         --enable-execute-command
 
-    if ! ( timeout $DEPLOYMENT_TIMEOUT aws ecs wait services-stable --cluster="${CLUSTER_NAME}" --services="${SERVICE_NAME}" ); then
+    if ! ( timeout $DEPLOYMENT_TIMEOUT bash -c wait_services_stable ); then
         echo "Service failed to stabilize in time"
         exit 1
     fi        
 }
+
+function wait_services_stable() {
+    # this function times out after 10 minutes regardless of the status of the service.
+    # so we should keep running "aws ecs wait services-stable" until the service is stable:
+
+    while ! ( aws ecs wait services-stable --cluster ${CLUSTER_NAME} --services ${SERVICE_NAME} ); do
+        echo "Waiting for service to stabilize..."
+        
+    done
+}
+export -f wait_services_stable
 
 function main() {
     check_env
