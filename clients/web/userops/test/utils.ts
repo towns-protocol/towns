@@ -214,10 +214,12 @@ export const createSpaceDappAndUserops = (provider: ethers.providers.StaticJsonR
 export const waitForOpAndTx = async (
     op: ISendUserOperationResponse,
     provider: ethers.providers.StaticJsonRpcProvider,
+    action?: string,
 ) => {
-    const createSpaceOpReceipt = await op.wait()
-    expect(createSpaceOpReceipt?.transactionHash).toBeDefined()
-    const txReceipt = await provider.waitForTransaction(createSpaceOpReceipt!.transactionHash)
+    console.log('debug:op', op, action)
+    const receipt = await op.wait()
+    expect(receipt?.transactionHash).toBeDefined()
+    const txReceipt = await provider.waitForTransaction(receipt!.transactionHash)
     expect(txReceipt?.status).toBe(1)
     return txReceipt
 }
