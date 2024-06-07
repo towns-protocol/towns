@@ -12,6 +12,7 @@ import { Avatar } from '@components/Avatar/Avatar'
 import { MintAnimation } from '@components/MintAnimation/MintAnimation'
 import { useStore } from 'store/store'
 import { PanelStack } from '@components/Panel/PanelContext'
+import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { TouchScrollToTopScrollId } from './TouchScrollToTopScrollId'
 
 export const TouchTabBar = () => {
@@ -121,6 +122,8 @@ type TabBarItemProps = {
 
 const TabBarItem = forwardRef<HTMLElement, TabBarItemProps>((props, ref) => {
     const { title, icon, to, scrollToTopId, onPressTwice } = props
+    const { closePanel } = usePanelActions()
+
     const location = useLocation()
 
     const resolved = useResolvedPath(to)
@@ -143,6 +146,7 @@ const TabBarItem = forwardRef<HTMLElement, TabBarItemProps>((props, ref) => {
     const onClick = useCallback(() => {
         if (location.pathname === to) {
             if (onPressTwice) {
+                closePanel()
                 onPressTwice()
             }
             const element = document.getElementById(scrollToTopId)
@@ -150,7 +154,7 @@ const TabBarItem = forwardRef<HTMLElement, TabBarItemProps>((props, ref) => {
             return
         }
         navigate(to)
-    }, [location.pathname, to, navigate, onPressTwice, scrollToTopId])
+    }, [location.pathname, to, navigate, onPressTwice, scrollToTopId, closePanel])
 
     return (
         <Stack
