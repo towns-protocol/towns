@@ -4,6 +4,18 @@ import { useMemo } from 'react'
 import { notUndefined } from 'ui/utils/utils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 
+const commaAndSequence = (arrLength: number, index: number) => {
+    if (arrLength <= 1 || index === arrLength - 1) {
+        return ''
+    }
+
+    if (index === arrLength - 2) {
+        return `${arrLength > 2 ? ',' : ''} and `
+    }
+
+    return ', '
+}
+
 export const useNameSequence = (users: Record<string, { eventId: string }>) => {
     const { usersMap } = useUserLookupContext()
     const displayName = useMyProfile()?.displayName
@@ -23,15 +35,7 @@ export const useNameSequence = (users: Record<string, { eventId: string }>) => {
             .filter(notUndefined)
             .sort(firstBy((a) => a !== 'You'))
             .reduce((str, name, index, arr) => {
-                return `${str} ${name}${
-                    // nothing to add for single names or last name
-                    arr.length <= 1 || index === arr.length - 1
-                        ? ``
-                        : // "and" for next to last
-                        index === arr.length - 2
-                        ? `, and `
-                        : `, `
-                }`
+                return `${str} ${name}${commaAndSequence(arr.length, index)}`
             }, '')
     }, [displayName, usersMap, users])
 }
