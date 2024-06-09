@@ -157,6 +157,17 @@ jobs:
                   RUN_MODE: ${{ inputs.run_mode }}
               run: ./scripts/create-and-deploy-river-task-definition.sh
 
+            - name: Data dog logging
+              if: failure()
+              working-directory: ./infra
+              env:
+                ENV: '${{ inputs.environment_name }}'
+                TF_ACTION_TYPE: "Riverdeploy"
+                TF_STATUS: "ERROR"
+                LOG_MESSAGE: "River deploy to ECS failed for ${{ github.ref }} branch (https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+                TF_VAR_datadog_api_key: ${{ secrets.TF_VAR_datadog_api_key }}
+                TF_VAR_datadog_app_key: ${{ secrets.TF_VAR_datadog_app_key }}
+              run: "./log_datadog.sh"
 
     on_failure:
         name: On Failure
@@ -186,17 +197,6 @@ jobs:
                           "commit": "${{ github.sha }}",
                           "actor": "${{ github.actor }}"
                       }
-
-            - name: Data dog logging
-              working-directory: ./infra
-              env:
-                ENV: '${{ inputs.environment_name }}'
-                TF_ACTION_TYPE: "Riverdeploy"
-                TF_STATUS: "ERROR"
-                LOG_MESSAGE: "River deploy to ECS failed for ${{ github.ref }} branch (https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-                TF_VAR_datadog_api_key: ${{ secrets.TF_VAR_datadog_api_key }}
-                TF_VAR_datadog_app_key: ${{ secrets.TF_VAR_datadog_app_key }}
-              run: "./log_datadog.sh"
 
     on_success:
         name: On Success
