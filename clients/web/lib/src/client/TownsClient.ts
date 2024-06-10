@@ -567,6 +567,7 @@ export class TownsClient
         const args = [
             createChannelInfo.parentSpaceId,
             createChannelInfo.name,
+            createChannelInfo.topic ?? '',
             roomId,
             createChannelInfo.roleIds,
             signer,

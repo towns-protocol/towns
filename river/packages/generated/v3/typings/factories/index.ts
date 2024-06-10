@@ -26,6 +26,7 @@ export { MembershipFacet__factory } from "./MembershipFacet__factory";
 export { MockERC721A__factory } from "./MockERC721A__factory";
 export { MockEntitlementGated__factory } from "./MockEntitlementGated__factory";
 export { OwnableFacet__factory } from "./OwnableFacet__factory";
+export { PlatformRequirementsFacet__factory } from "./PlatformRequirementsFacet__factory";
 export { PrepayFacet__factory } from "./PrepayFacet__factory";
 export { TokenPausableFacet__factory } from "./TokenPausableFacet__factory";
 export { UserEntitlement__factory } from "./UserEntitlement__factory";

@@ -156,6 +156,7 @@ export class StressClient {
         const tx = await this.spaceDapp.createChannel(
             spaceId,
             channelName,
+            '',
             channelId,
             roles.filter((role) => role.name !== 'Owner').map((role) => role.roleId),
             this.connection.baseProvider.wallet,

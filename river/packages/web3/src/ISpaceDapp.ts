@@ -92,6 +92,7 @@ export interface ISpaceDapp {
     createChannel: (
         spaceId: string,
         channelName: string,
+        channelDescription: string,
         channelNetworkId: string,
         roleIds: number[],
         signer: SignerType,

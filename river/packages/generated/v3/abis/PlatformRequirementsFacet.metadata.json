@@ -1,0 +1,621 @@
+{
+  "compiler": {
+    "version": "0.8.24+commit.e11b9ed9"
+  },
+  "language": "Solidity",
+  "output": {
+    "abi": [
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "Initializable_InInitializingState"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "Initializable_NotInInitializingState"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "Introspection_AlreadySupported"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "Introspection_NotSupported"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "type": "error",
+        "name": "Ownable__NotOwner"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "Ownable__ZeroAddress"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "Platform__InvalidFeeRecipient"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "Platform__InvalidMembershipBps"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "Platform__InvalidMembershipDuration"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "Platform__InvalidMembershipMintLimit"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint32",
+            "name": "version",
+            "type": "uint32",
+            "indexed": false
+          }
+        ],
+        "type": "event",
+        "name": "Initialized",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes4",
+            "name": "interfaceId",
+            "type": "bytes4",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "InterfaceAdded",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes4",
+            "name": "interfaceId",
+            "type": "bytes4",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "InterfaceRemoved",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "previousOwner",
+            "type": "address",
+            "indexed": true
+          },
+          {
+            "internalType": "address",
+            "name": "newOwner",
+            "type": "address",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "OwnershipTransferred",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "recipient",
+            "type": "address",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "PlatformFeeRecipientSet",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint16",
+            "name": "bps",
+            "type": "uint16",
+            "indexed": false
+          }
+        ],
+        "type": "event",
+        "name": "PlatformMembershipBpsSet",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "duration",
+            "type": "uint256",
+            "indexed": false
+          }
+        ],
+        "type": "event",
+        "name": "PlatformMembershipDurationSet",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "fee",
+            "type": "uint256",
+            "indexed": false
+          }
+        ],
+        "type": "event",
+        "name": "PlatformMembershipFeeSet",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "limit",
+            "type": "uint256",
+            "indexed": false
+          }
+        ],
+        "type": "event",
+        "name": "PlatformMembershipMintLimitSet",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "feeRecipient",
+            "type": "address"
+          },
+          {
+            "internalType": "uint16",
+            "name": "membershipBps",
+            "type": "uint16"
+          },
+          {
+            "internalType": "uint256",
+            "name": "membershipFee",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "membershipMintLimit",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint64",
+            "name": "membershipDuration",
+            "type": "uint64"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function",
+        "name": "__PlatformRequirements_init"
+      },
+      {
+        "inputs": [],
+        "stateMutability": "pure",
+        "type": "function",
+        "name": "getDenominator",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ]
+      },
+      {
+        "inputs": [],
+        "stateMutability": "view",
+        "type": "function",
+        "name": "getFeeRecipient",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ]
+      },
+      {
+        "inputs": [],
+        "stateMutability": "view",
+        "type": "function",
+        "name": "getMembershipBps",
+        "outputs": [
+          {
+            "internalType": "uint16",
+            "name": "",
+            "type": "uint16"
+          }
+        ]
+      },
+      {
+        "inputs": [],
+        "stateMutability": "view",
+        "type": "function",
+        "name": "getMembershipDuration",
+        "outputs": [
+          {
+            "internalType": "uint64",
+            "name": "",
+            "type": "uint64"
+          }
+        ]
+      },
+      {
+        "inputs": [],
+        "stateMutability": "view",
+        "type": "function",
+        "name": "getMembershipFee",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ]
+      },
+      {
+        "inputs": [],
+        "stateMutability": "view",
+        "type": "function",
+        "name": "getMembershipMintLimit",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ]
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "recipient",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function",
+        "name": "setFeeRecipient"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint16",
+            "name": "bps",
+            "type": "uint16"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function",
+        "name": "setMembershipBps"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint64",
+            "name": "duration",
+            "type": "uint64"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function",
+        "name": "setMembershipDuration"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "fee",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function",
+        "name": "setMembershipFee"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "limit",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function",
+        "name": "setMembershipMintLimit"
+      }
+    ],
+    "devdoc": {
+      "kind": "dev",
+      "methods": {
+        "getDenominator()": {
+          "details": "This is the denominator used for calculating fees",
+          "returns": {
+            "_0": "The denominator"
+          }
+        },
+        "getFeeRecipient()": {
+          "returns": {
+            "_0": "The address of the fee recipient"
+          }
+        },
+        "getMembershipBps()": {
+          "details": "This is the basis points that will be charged for a membership",
+          "returns": {
+            "_0": "The membership basis points"
+          }
+        },
+        "getMembershipDuration()": {
+          "details": "This is the duration of a membership in seconds",
+          "returns": {
+            "_0": "The membership duration"
+          }
+        },
+        "getMembershipFee()": {
+          "details": "This is the flat fee that will be charged for a membership",
+          "returns": {
+            "_0": "The membership fee"
+          }
+        },
+        "getMembershipMintLimit()": {
+          "details": "This is the maximum number of free memberships that can be minted per space",
+          "returns": {
+            "_0": "The membership mint limit"
+          }
+        },
+        "setFeeRecipient(address)": {
+          "details": "This is the address that will receive the platform fees",
+          "params": {
+            "recipient": "The address of the fee recipient"
+          }
+        },
+        "setMembershipBps(uint16)": {
+          "params": {
+            "bps": "The membership basis points"
+          }
+        },
+        "setMembershipDuration(uint64)": {
+          "params": {
+            "duration": "The membership duration"
+          }
+        },
+        "setMembershipFee(uint256)": {
+          "params": {
+            "fee": "The membership fee"
+          }
+        },
+        "setMembershipMintLimit(uint256)": {
+          "params": {
+            "limit": "The membership mint limit"
+          }
+        }
+      },
+      "version": 1
+    },
+    "userdoc": {
+      "kind": "user",
+      "methods": {
+        "getDenominator()": {
+          "notice": "Get the denominator"
+        },
+        "getFeeRecipient()": {
+          "notice": "Get the fee recipient address"
+        },
+        "getMembershipBps()": {
+          "notice": "Get the membership basis points"
+        },
+        "getMembershipDuration()": {
+          "notice": "Get the membership duration"
+        },
+        "getMembershipFee()": {
+          "notice": "Get the membership flat fee"
+        },
+        "getMembershipMintLimit()": {
+          "notice": "Get the membership mint limit"
+        },
+        "setFeeRecipient(address)": {
+          "notice": "Set the fee recipient address"
+        },
+        "setMembershipBps(uint16)": {
+          "notice": "Set the membership basis points"
+        },
+        "setMembershipDuration(uint64)": {
+          "notice": "Set the membership duration"
+        },
+        "setMembershipFee(uint256)": {
+          "notice": "Set the membership flat fee"
+        },
+        "setMembershipMintLimit(uint256)": {
+          "notice": "Set the membership mint limit"
+        }
+      },
+      "version": 1
+    }
+  },
+  "settings": {
+    "remappings": [
+      "@openzeppelin/=lib/@openzeppelin/",
+      "@prb/math/=lib/@prb/math/src/",
+      "@prb/test/=lib/@prb/test/src/",
+      "account-abstraction/=lib/account-abstraction/contracts/",
+      "base64/=lib/base64/",
+      "ds-test/=lib/ds-test/src/",
+      "forge-std/=lib/forge-std/src/",
+      "hardhat-deploy/=lib/hardhat-deploy/"
+    ],
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "metadata": {
+      "bytecodeHash": "none",
+      "appendCBOR": false
+    },
+    "compilationTarget": {
+      "contracts/src/factory/facets/platform/requirements/PlatformRequirementsFacet.sol": "PlatformRequirementsFacet"
+    },
+    "evmVersion": "paris",
+    "libraries": {}
+  },
+  "sources": {
+    "contracts/src/diamond/facets/Facet.sol": {
+      "keccak256": "0x931702541a5e4a2756665e53baf1b04aa0418d5a9c635e519058905e21ae0c57",
+      "urls": [
+        "bzz-raw://b785043acac69be2d2545bc4492b2c08b6e931a53737f8508baf3f98c8743863",
+        "dweb:/ipfs/QmeLzqURWDmXHJftmMXRsywdJw96CNDB9DQmgTpG1woYvc"
+      ],
+      "license": "MIT"
+    },
+    "contracts/src/diamond/facets/initializable/Initializable.sol": {
+      "keccak256": "0xe02e99665b5acb22d5c508c3bda97c35acd2597ce0a58569a19cc12f0010da90",
+      "urls": [
+        "bzz-raw://b586a51dbe63e8763ae0b2b3dadd5c8559f47bc8cbaa0e9fe52aaec4c3677552",
+        "dweb:/ipfs/QmRtaVikg6YDwzUAtY7WV793taZgT1ZxyMB4PLAEqGBeCC"
+      ],
+      "license": "MIT"
+    },
+    "contracts/src/diamond/facets/initializable/InitializableStorage.sol": {
+      "keccak256": "0xf8170e6977d685c218f65185478fbb9916e64f63aab1dcd195056438466f458a",
+      "urls": [
+        "bzz-raw://83ea3cf77f012eef93d10593e3beded36b449611063fd8dfbdb44e4346f87eb4",
+        "dweb:/ipfs/QmVasL7QnxXEmiUsLJzpfig8717zLUhZfyQxiBbFGDEVVg"
+      ],
+      "license": "MIT"
+    },
+    "contracts/src/diamond/facets/introspection/IERC165.sol": {
+      "keccak256": "0x486758ee326820b0dd468c6a7a90fda8d67d48d3114792c587cee0e8417b366b",
+      "urls": [
+        "bzz-raw://b695090abcec8c2d487d73961265030fa4f64ecd84f6d80b85c6c7d4d9142ea0",
+        "dweb:/ipfs/QmQTKuV2WEoy6vTCRxL39zEqubLUf9NhoC2BGB19CiYqRq"
+      ],
+      "license": "MIT"
+    },
+    "contracts/src/diamond/facets/introspection/IntrospectionBase.sol": {
+      "keccak256": "0x93ac0d2f738615e69dbcfd5fa6ac5840ec48329ac92094605638bcf2abd6708f",
+      "urls": [
+        "bzz-raw://fbcb2cd0e47b6ef39bec6cbdeedf6e292e8849d4e25f4bb6c72ee574446b02f1",
+        "dweb:/ipfs/QmcDwxFALaQBLbsGsjdttkQkE48PdKWq43XY7f34MxqZSw"
+      ],
+      "license": "MIT"
+    },
+    "contracts/src/diamond/facets/introspection/IntrospectionStorage.sol": {
+      "keccak256": "0x306f41ef86bc5050a28c1dbf855d3f6f623be4aebc0a0f96474dae85979f7763",
+      "urls": [
+        "bzz-raw://dbad6f8e6685690ae75f6c9066972a45400b45307245feab8990af18a4c38e91",
+        "dweb:/ipfs/QmcTUqiSL1z2nwokpNNsXQkjVTaFdFJiM2exguZpPDDXEM"
+      ],
+      "license": "MIT"
+    },
+    "contracts/src/diamond/facets/ownable/IERC173.sol": {
+      "keccak256": "0x677cebaa56ee33950d04ba5baef02188da026beb7cf669bdf580410cb1f1c303",
+      "urls": [
+        "bzz-raw://d5be56219a4ab8d9709db7ffb74c73ee1be268b8f77308ef7a72d8f2820fb30b",
+        "dweb:/ipfs/QmeTuAZMwRf3uRHMtHEd7M7LvGyRAEmoCikF4Pb6dCAKXd"
+      ],
+      "license": "MIT"
+    },
+    "contracts/src/diamond/facets/ownable/OwnableBase.sol": {
+      "keccak256": "0x272abaecc104d5f23d77a623cf1548620d24b0f447eb2a12144e27561ff489f2",
+      "urls": [
+        "bzz-raw://fcb8c20ff7346bdc5dba82e6680cc0ea64087460a12153e3b6c3416f6addf875",
+        "dweb:/ipfs/QmfEEufJBzudSDekQteQkb3CzmnzUPT3GDhNgVpHNC9xaf"
+      ],
+      "license": "MIT"
+    },
+    "contracts/src/diamond/facets/ownable/OwnableStorage.sol": {
+      "keccak256": "0xda650482ce08c04110366cb01408aaabd01383d9c504b7cacfb2674aae688dcd",
+      "urls": [
+        "bzz-raw://694f42ffb353fccaa1eadf91dee3a3cee7253e3f357bcba2b175fd7be701e27e",
+        "dweb:/ipfs/QmPxxVerATSYrNLp7snnSvNVsbLPm1wzHULhBbtR333eik"
+      ],
+      "license": "MIT"
+    },
+    "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol": {
+      "keccak256": "0x56025c407721579ac96a4db2b7f429a9a7a8edb18c8de9548eb012d717951065",
+      "urls": [
+        "bzz-raw://40fe6f856eb4e6b7cd01cbb164e328d0d83857bd2ce0a2b0474948688b33e953",
+        "dweb:/ipfs/QmPJJGEhrjsQpw4maBHkXXqCq5uAQTsAoifc58UrUXnCFV"
+      ],
+      "license": "MIT"
+    },
+    "contracts/src/factory/facets/platform/requirements/PlatformRequirementsBase.sol": {
+      "keccak256": "0x718c650f6f988d2308468282e837c1d639edc15325a1620a1a16e6fdfc01f274",
+      "urls": [
+        "bzz-raw://a395cffbe5908641d9333d0727afd4cf19e0b0a49ed614650a7d0fbd7fc17838",
+        "dweb:/ipfs/QmTMZD1q1XdwwifLoeZMX1SY3s8rM8fbc8wcE4psQ4DtF4"
+      ],
+      "license": "MIT"
+    },
+    "contracts/src/factory/facets/platform/requirements/PlatformRequirementsFacet.sol": {
+      "keccak256": "0x61269b6b7ca0532237b5cabfcb821ffc78087729988affc5bf3e071750a9ccca",
+      "urls": [
+        "bzz-raw://3328436b6aaa66dfcf4dc9f0db58f07d6ac5124aaf62083a0d2ee775c657411e",
+        "dweb:/ipfs/QmP9xhjBYEDXZ56ENDs4LCD9Y45zVJK9xssemiV2QVUDXX"
+      ],
+      "license": "MIT"
+    },
+    "contracts/src/factory/facets/platform/requirements/PlatformRequirementsStorage.sol": {
+      "keccak256": "0x0b895b7b41a8832c0821b4dbf05c111e24fb16ad0950cd89d460ccc17931f5e3",
+      "urls": [
+        "bzz-raw://5afc9bdadab6c2c90fc735baf5dd76ed9aecbcd11c81fb6cb575cb46a573f6db",
+        "dweb:/ipfs/QmZi8UMCVzGizNS7uEYqAP7cVbjBtpA6rogGi95WaaHkrC"
+      ],
+      "license": "MIT"
+    },
+    "contracts/src/utils/libraries/BasisPoints.sol": {
+      "keccak256": "0xfaa5790726afc20e29f2a00e67693a59ae85a045beaa95f8f58bcbcef01ed87b",
+      "urls": [
+        "bzz-raw://a2da5e15739fc7093ea7b935c6542f7c01d9c33843a3d1a1d8895db404f8160e",
+        "dweb:/ipfs/QmYVUkSh3QX7u9rnKfqLeb9Rh8tko5Q3Gpry6KnhTRF58L"
+      ],
+      "license": "MIT"
+    },
+    "lib/@openzeppelin/contracts/utils/Address.sol": {
+      "keccak256": "0xaf28a975a78550e45f65e559a3ad6a5ad43b9b8a37366999abd1b7084eb70721",
+      "urls": [
+        "bzz-raw://b7bd24e224f67f65bfadf85dc2929fa965456bb2415478bd0125471b5ce35245",
+        "dweb:/ipfs/QmRaydGr8BTHs1kvaZfsNU69pKzUAGFrvABn1KiRSbE51y"
+      ],
+      "license": "MIT"
+    },
+    "lib/@openzeppelin/contracts/utils/introspection/IERC165.sol": {
+      "keccak256": "0x4296879f55019b23e135000eb36896057e7101fb7fb859c5ef690cf14643757b",
+      "urls": [
+        "bzz-raw://87b3541437c8c443ccd36795e56a338ed12855eec17f8da624511b8d1a7e14df",
+        "dweb:/ipfs/QmeJQCtZrQjtJLr6u7ZHWeH3pBnjtLWzvRrKViAi7UZqxL"
+      ],
+      "license": "MIT"
+    }
+  },
+  "version": 1
+}

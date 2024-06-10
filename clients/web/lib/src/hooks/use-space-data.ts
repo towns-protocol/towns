@@ -571,7 +571,7 @@ function rollupSpace(
                                 label: channelMetadata[c.id]?.channel.name ?? c.id,
                                 private: false,
                                 highlight: false,
-                                topic: '',
+                                topic: channelMetadata[c.id]?.channel.description ?? '',
                             } satisfies Channel),
                     ),
             },

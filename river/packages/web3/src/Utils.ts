@@ -80,6 +80,16 @@ export const findDynamicPricingModule = (pricingModules: PricingModuleStruct[]) 
 export const findFixedPricingModule = (pricingModules: PricingModuleStruct[]) =>
     pricingModules.find((module) => module.name === FIXED_PRICING)
 
+export function stringifyChannelMetadataJSON({
+    name,
+    description,
+}: {
+    name: string
+    description: string
+}): string {
+    return JSON.stringify({ name, description })
+}
+
 export function parseChannelMetadataJSON(metadataStr: string): {
     name: string
     description: string

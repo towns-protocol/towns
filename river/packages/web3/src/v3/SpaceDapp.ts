@@ -27,9 +27,10 @@ import { IRuleEntitlement, UNKNOWN_ERROR, UserEntitlementShim } from './index'
 import { PricingModules } from './PricingModules'
 import { IPrepayShim } from './IPrepayShim'
 import { dlogger, isJest } from '@river-build/dlog'
-import { EVERYONE_ADDRESS } from '../Utils'
+import { EVERYONE_ADDRESS, stringifyChannelMetadataJSON } from '../Utils'
 import { evaluateOperationsForEntitledWallet, ruleDataToOperations } from '../entitlement'
 import { RuleEntitlementShim } from './RuleEntitlementShim'
+import { PlatformRequirements } from './PlatformRequirements'
 
 const logger = dlogger('csb:SpaceDapp:debug')
 
@@ -40,6 +41,7 @@ export class SpaceDapp implements ISpaceDapp {
     public readonly pricingModules: PricingModules
     public readonly walletLink: WalletLink
     public readonly prepay: IPrepayShim
+    public readonly platformRequirements: PlatformRequirements
 
     constructor(config: BaseChainConfig, provider: ethers.providers.Provider) {
         this.config = config
@@ -48,6 +50,11 @@ export class SpaceDapp implements ISpaceDapp {
         this.walletLink = new WalletLink(config, provider)
         this.pricingModules = new PricingModules(config, provider)
         this.prepay = new IPrepayShim(
+            config.addresses.spaceFactory,
+            config.contractVersion,
+            provider,
+        )
+        this.platformRequirements = new PlatformRequirements(
             config.addresses.spaceFactory,
             config.contractVersion,
             provider,
@@ -149,6 +156,7 @@ export class SpaceDapp implements ISpaceDapp {
     public async createChannel(
         spaceId: string,
         channelName: string,
+        channelDescription: string,
         channelNetworkId: string,
         roleIds: number[],
         signer: ethers.Signer,
@@ -162,7 +170,15 @@ export class SpaceDapp implements ISpaceDapp {
             ? channelNetworkId
             : `0x${channelNetworkId}`
         return wrapTransaction(
-            () => space.Channels.write(signer).createChannel(channelId, channelName, roleIds),
+            () =>
+                space.Channels.write(signer).createChannel(
+                    channelId,
+                    stringifyChannelMetadataJSON({
+                        name: channelName,
+                        description: channelDescription,
+                    }),
+                    roleIds,
+                ),
             txnOpts,
         )
     }
@@ -532,7 +548,10 @@ export class SpaceDapp implements ISpaceDapp {
         encodedCallData.push(
             space.Channels.interface.encodeFunctionData('updateChannel', [
                 params.channelId.startsWith('0x') ? params.channelId : `0x${params.channelId}`,
-                params.channelName,
+                stringifyChannelMetadataJSON({
+                    name: params.channelName,
+                    description: params.channelDescription,
+                }),
                 params.disabled ?? false, // default to false
             ]),
         )

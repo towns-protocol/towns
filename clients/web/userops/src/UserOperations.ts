@@ -9,6 +9,7 @@ import {
     findDynamicPricingModule,
     findFixedPricingModule,
     NoopRuleData,
+    stringifyChannelMetadataJSON,
 } from '@river-build/web3'
 import { ethers } from 'ethers'
 import isEqual from 'lodash/isEqual'
@@ -601,7 +602,7 @@ export class UserOps {
         if (!this.spaceDapp) {
             throw new Error('spaceDapp is required')
         }
-        const [spaceId, channelName, channelNetworkId, roleIds, signer] = args
+        const [spaceId, channelName, channelDescription, channelNetworkId, roleIds, signer] = args
         const channelId = channelNetworkId.startsWith('0x')
             ? channelNetworkId
             : `0x${channelNetworkId}`
@@ -621,7 +622,10 @@ export class UserOps {
 
         const callData = await space.Channels.encodeFunctionData(functionName, [
             channelId,
-            channelName,
+            stringifyChannelMetadataJSON({
+                name: channelName,
+                description: channelDescription,
+            }),
             roleIds,
         ])
 

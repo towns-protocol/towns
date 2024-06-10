@@ -712,7 +712,7 @@ export async function createChannel(
 
     const channelId = makeUniqueChannelStreamId(spaceId)
     try {
-        txn = await spaceDapp.createChannel(spaceId, channelName, channelId, roleIds, signer)
+        txn = await spaceDapp.createChannel(spaceId, channelName, '', channelId, roleIds, signer)
     } catch (err) {
         error = spaceDapp.parseSpaceError(spaceId, err)
         return { channelId: undefined, error }

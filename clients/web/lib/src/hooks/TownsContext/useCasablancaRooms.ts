@@ -185,6 +185,7 @@ function toCasablancaRoom(
     }
 
     const name = offlineChannelInfoMap[streamId]?.channel.name ?? streamId
+    const description = offlineChannelInfoMap[streamId]?.channel.description
 
     return {
         id: streamId,
@@ -193,7 +194,7 @@ function toCasablancaRoom(
         members: Array.from(stream.view.getMembers().membership.joinedUsers),
         inviter: undefined,
         isSpaceRoom: isSpaceStreamId(streamId),
-        topic: undefined,
+        topic: description,
         isDefault: isDefault,
     }
 }

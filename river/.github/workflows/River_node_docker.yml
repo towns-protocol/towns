@@ -50,6 +50,7 @@ jobs:
                 registry-type: 'public'
 
             - name: Build and push image to Amazon ECR
+              id: build-image
               env:
                 ECR_REGISTRY: ${{ steps.login-aws-ecr.outputs.registry }}
                 #This can be custom alias once requested to aws and approved for public repo
@@ -98,10 +99,36 @@ jobs:
                   -t river:local-latest \
                   . 
 
+                echo "::set-output name=tag_valid::false"
                 for tag in "${TAGS[@]}"; do
+                  if [ "$tag" == "mainnet" ] || [ "$tag" == "testnet" ]; then
+                    echo "::set-output name=tag_valid::true"
+                    echo "::set-output name=tag_value::$tag"
+                  fi
                   docker tag river:local-latest $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:$tag
                   docker push $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:$tag
                 done
+
+            - name: Create new release tag
+              if: ${{ success() && steps.build-image.outputs.tag_valid == 'true' }}
+              id: create-tag
+              run: |
+                new_tag=$(./scripts/create-new-release-tag.sh ${{ steps.build-image.outputs.tag_value }})
+                echo "::set-output name=new_tag::$new_tag"
+
+            - name: Push tag
+              if: ${{ success() && steps.build-image.outputs.tag_valid == 'true' }}
+              uses: actions/github-script@v4
+              with:
+                github-token: ${{ secrets.GITHUB_TOKEN }}
+                script: |
+                  const response = await github.git.createRef({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    ref: 'refs/tags/' + '${{ steps.create-tag.outputs.new_tag }}',
+                    sha: context.sha
+                  })
+                  console.log(response)
 
             # If action failed, we send a slack notification
             - name: Slack notification
