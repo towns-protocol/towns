@@ -336,7 +336,7 @@ export class NotificationService {
             }
 
             // all other errors
-            logger.info('failed to send notification', { result })
+            logger.error('failed to send notification', { result })
         }
         return notificationsSentCount
     }
