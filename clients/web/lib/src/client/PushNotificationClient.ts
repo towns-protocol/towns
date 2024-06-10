@@ -79,6 +79,7 @@ export class PushNotificationClient {
                 options.parentSpaceId,
                 channelId,
                 userIds,
+                threadId,
             )
         }
 
@@ -138,6 +139,7 @@ export class PushNotificationClient {
         spaceId: string | undefined,
         channelId: string,
         userIds: Set<string>,
+        threadId?: string,
     ) {
         const headers = this.createHttpHeaders()
         const body = this.createAttachmentNotificationParams({
@@ -145,6 +147,7 @@ export class PushNotificationClient {
             channelId,
             tag,
             userIds,
+            threadId,
         })
         const url = `${this.options.url}/api/tag/attachment`
         console.log('PUSH: sending attachment tag to Push Notification Worker ...', url, body)
@@ -305,17 +308,20 @@ export class PushNotificationClient {
         channelId,
         tag,
         userIds,
+        threadId,
     }: {
         spaceId?: string
         channelId: string
         tag: NotificationAttachmentKind
         userIds: Set<string>
+        threadId?: string
     }): AttachmentTagRequestParams {
         const params: AttachmentTagRequestParams = {
             spaceId,
             channelId,
             tag,
             userIds: Array.from(userIds),
+            threadId,
         }
         return params
     }

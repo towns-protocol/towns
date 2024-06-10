@@ -201,6 +201,7 @@ export class NotificationService {
                 recipients[userId] = {
                     userId,
                     kind: attachmentUsersTagged[0].Tag as NotificationAttachmentKind,
+                    threadId: attachmentUsersTagged[0].ThreadId ?? undefined,
                 }
             } else {
                 recipients[userId] = {
@@ -238,6 +239,7 @@ export class NotificationService {
                     kind = NotificationKind.DirectMessage
                 } else if (isChannelStreamId(payload.content.channelId)) {
                     kind = NotificationKind.ReplyTo
+                    ;(payload.content as NotificationContentMessageSchema).threadId = n.threadId
                 }
                 payload.content.event = {}
             }

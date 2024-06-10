@@ -90,7 +90,6 @@ export type NotificationReplyTo = {
     kind: AppNotificationType.ReplyTo
     spaceId: string
     channelId: string
-    threadId: string
     title: string
     body: string
     threadId?: string

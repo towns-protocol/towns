@@ -37,4 +37,5 @@ export interface AttachmentTagRequestParams {
     channelId: string
     tag: NotificationAttachmentKind
     userIds: string[]
+    threadId?: string
 }

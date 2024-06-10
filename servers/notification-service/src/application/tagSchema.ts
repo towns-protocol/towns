@@ -44,6 +44,7 @@ export const tagAttachmentSchema = z.object({
     channelId: z.string(),
     tag: z.nativeEnum(NotificationAttachmentKind),
     userIds: z.array(z.string()),
+    threadId: z.string().optional(),
 })
 
 export const tagReactionSchema = z.object({
