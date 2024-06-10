@@ -33,7 +33,7 @@ export const TimelineMessageEditor = (props: Props) => {
     const onSend = useCallback(
         (value: string, options: SendTextMessageOptions | undefined) => {
             if (options) {
-                options.attachments = [...(attachments ?? []), ...(options.attachments ?? [])]
+                options.attachments = mergeAttachments(attachments, options.attachments)
             }
             editChannelEvent({ eventId, value }, eventContent, options)
             timelineActions?.onCancelEditingMessage?.()
@@ -128,4 +128,17 @@ export const TouchEditMessageWrapper = (props: {
         </Box>,
         root,
     )
+}
+
+const mergeAttachments = (prevAttachments: Attachment[] = [], attachmments: Attachment[] = []) => {
+    // remove duplicates from the new attachments
+    attachmments = attachmments.filter(
+        (a) =>
+            !(
+                (a.type === 'embedded_message' || a.type === 'unfurled_link') &&
+                prevAttachments?.some((p) => p.type === 'embedded_message' && p.url === a.url)
+            ),
+    )
+    // concat the new attachments with the previous ones
+    return prevAttachments.concat(attachmments)
 }
