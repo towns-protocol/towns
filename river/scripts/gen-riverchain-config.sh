@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-# write data to stdout that is required to set on-chain configuration through the River Gnosis management vault.
+# write data to stdout that is required to set on-chain configuration through the SetConfig function on the config facet.
 # dump_config_uint256_payload <key:string> <blockNum-effective:uint64> <value:uint256>
 function dump_config_uint256_payload() {
   local key="$(cast keccak "$(echo "$1" | tr "[:upper:]" "[:lower:]")")"
@@ -22,5 +22,5 @@ dump_config_uint256_payload "stream.minEventsPerSnapshot.a8" 0 10
 dump_config_uint256_payload "stream.minEventsPerSnapshot.ad" 0 10
 dump_config_uint256_payload "stream.cacheExpirationMs" 0 300000            # 5m
 dump_config_uint256_payload "stream.cacheExpirationPollIntervalMs" 0 30000 # 30s
-dump_config_uint256_payload "media.streamMembershipLimits.77" 0 6
+dump_config_uint256_payload "media.streamMembershipLimits.77" 0 48
 dump_config_uint256_payload "media.streamMembershipLimits.88" 0 2

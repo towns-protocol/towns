@@ -10,7 +10,7 @@ import (
 )
 
 func TestServerShutdown(t *testing.T) {
-	tester := newServiceTesterAndStart(t, 1)
+	tester := newServiceTester(t, serviceTesterOpts{numNodes: 1, start: true})
 	ctx := tester.ctx
 	require := tester.require
 	log := dlog.FromCtx(ctx)

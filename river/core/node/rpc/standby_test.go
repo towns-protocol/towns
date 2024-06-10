@@ -60,7 +60,7 @@ func pollStatus(url string, expected string) bool {
 }
 
 func TestStandbySingle(t *testing.T) {
-	tester := newServiceTester(t, 1)
+	tester := newServiceTester(t, serviceTesterOpts{numNodes: 1})
 	require := tester.require
 
 	tester.initNodeRecords(0, 1, contracts.NodeStatus_Operational)
@@ -72,7 +72,7 @@ func TestStandbySingle(t *testing.T) {
 }
 
 func TestStandbyEvictionByNlbSwitch(t *testing.T) {
-	tester := newServiceTester(t, 1)
+	tester := newServiceTester(t, serviceTesterOpts{numNodes: 1})
 	require := tester.require
 
 	redirector := tester.nodes[0].listener
@@ -142,7 +142,7 @@ func TestStandbyEvictionByNlbSwitch(t *testing.T) {
 }
 
 func TestStandbyEvictionByUrlUpdate(t *testing.T) {
-	tester := newServiceTester(t, 1)
+	tester := newServiceTester(t, serviceTesterOpts{numNodes: 1})
 	require := tester.require
 
 	firstListener := tester.nodes[0].listener

@@ -47,28 +47,31 @@ func (n *testNodeRecord) Close(ctx context.Context, dbUrl string) {
 }
 
 type serviceTester struct {
-	ctx               context.Context
-	t                 *testing.T
-	require           *require.Assertions
-	dbUrl             string
-	btc               *crypto.BlockchainTestContext
-	nodes             []*testNodeRecord
+	ctx     context.Context
+	t       *testing.T
+	require *require.Assertions
+	dbUrl   string
+	btc     *crypto.BlockchainTestContext
+	nodes   []*testNodeRecord
+	opts    serviceTesterOpts
+}
+
+type serviceTesterOpts struct {
+	numNodes          int
 	replicationFactor int
+	start             bool
 }
 
-func newServiceTester(t *testing.T, numNodes int) *serviceTester {
-	return newServiceTesterWithReplication(t, numNodes, 1)
-}
-
-func newServiceTesterAndStart(t *testing.T, numNodes int) *serviceTester {
-	st := newServiceTester(t, numNodes)
-	st.initNodeRecords(0, numNodes, contracts.NodeStatus_Operational)
-	st.startNodes(0, numNodes)
-	return st
-}
-
-func newServiceTesterWithReplication(t *testing.T, numNodes int, replicationFactor int) *serviceTester {
+func newServiceTester(t *testing.T, opts serviceTesterOpts) *serviceTester {
 	t.Parallel()
+
+	if opts.numNodes <= 0 {
+		panic("numNodes must be greater than 0")
+	}
+
+	if opts.replicationFactor <= 0 {
+		opts.replicationFactor = 1
+	}
 
 	ctx, ctxCancel := test.NewTestContext()
 	t.Cleanup(ctxCancel)
@@ -76,20 +79,20 @@ func newServiceTesterWithReplication(t *testing.T, numNodes int, replicationFact
 	require := require.New(t)
 
 	st := &serviceTester{
-		ctx:               ctx,
-		t:                 t,
-		require:           require,
-		dbUrl:             dbtestutils.GetTestDbUrl(),
-		nodes:             make([]*testNodeRecord, numNodes),
-		replicationFactor: replicationFactor,
+		ctx:     ctx,
+		t:       t,
+		require: require,
+		dbUrl:   dbtestutils.GetTestDbUrl(),
+		nodes:   make([]*testNodeRecord, opts.numNodes),
+		opts:    opts,
 	}
 
-	btc, err := crypto.NewBlockchainTestContext(st.ctx, numNodes, true)
+	btc, err := crypto.NewBlockchainTestContext(st.ctx, opts.numNodes, true)
 	require.NoError(err)
 	st.btc = btc
 	t.Cleanup(st.btc.Close)
 
-	for i := 0; i < numNodes; i++ {
+	for i := 0; i < opts.numNodes; i++ {
 		st.nodes[i] = &testNodeRecord{}
 
 		// This is a hack to get the port number of the listener
@@ -107,18 +110,23 @@ func newServiceTesterWithReplication(t *testing.T, numNodes int, replicationFact
 	st.startAutoMining()
 
 	pendingTx, err := st.btc.DeployerBlockchain.TxPool.Submit(ctx, "SetReplicationFactor",
-		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+		func(opt *bind.TransactOpts) (*types.Transaction, error) {
 			return btc.Configuration.SetConfiguration(
-				opts,
+				opt,
 				crypto.StreamReplicationFactorConfigKey.ID(),
 				0,
-				crypto.ABIEncodeUint64(uint64(replicationFactor)),
+				crypto.ABIEncodeUint64(uint64(opts.replicationFactor)),
 			)
 		})
 
 	require.NoError(err, "unable to set stream replication factor")
 	receipt := <-pendingTx.Wait()
 	require.Equal(crypto.TransactionResultSuccess, receipt.Status, "set stream replication factor tx failed")
+
+	if opts.start {
+		st.initNodeRecords(0, opts.numNodes, contracts.NodeStatus_Operational)
+		st.startNodes(0, opts.numNodes)
+	}
 
 	return st
 }

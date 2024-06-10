@@ -5,16 +5,12 @@ import (
 	"testing"
 
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/contracts"
 	. "github.com/river-build/river/core/node/protocol"
 )
 
 func TestShutdown(t *testing.T) {
-	tester := newServiceTester(t, 1)
+	tester := newServiceTester(t, serviceTesterOpts{numNodes: 1, start: true})
 	require := tester.require
-
-	tester.initNodeRecords(0, 1, contracts.NodeStatus_Operational)
-	tester.startNodes(0, 1)
 
 	first := tester.nodes[0].service
 

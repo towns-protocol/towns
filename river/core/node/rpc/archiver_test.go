@@ -208,7 +208,7 @@ func compareStreamsMiniblocks(
 }
 
 func TestArchiveOneStream(t *testing.T) {
-	tester := newServiceTesterAndStart(t, 1)
+	tester := newServiceTester(t, serviceTesterOpts{numNodes: 1, start: true})
 	ctx := tester.ctx
 	require := tester.require
 
@@ -322,7 +322,7 @@ func TestArchiveOneStream(t *testing.T) {
 }
 
 func TestArchive100Streams(t *testing.T) {
-	tester := newServiceTesterAndStart(t, 10)
+	tester := newServiceTester(t, serviceTesterOpts{numNodes: 10, start: true})
 	ctx := tester.ctx
 	require := tester.require
 
@@ -362,7 +362,7 @@ func TestArchive100Streams(t *testing.T) {
 }
 
 func TestArchive100StreamsWithData(t *testing.T) {
-	tester := newServiceTesterAndStart(t, 10)
+	tester := newServiceTester(t, serviceTesterOpts{numNodes: 10, start: true})
 	ctx := tester.ctx
 	require := tester.require
 
@@ -407,7 +407,7 @@ func httpGet(t *testing.T, url string) string {
 }
 
 func TestArchiveContinuous(t *testing.T) {
-	tester := newServiceTesterAndStart(t, 1)
+	tester := newServiceTester(t, serviceTesterOpts{numNodes: 1, start: true})
 	ctx := tester.ctx
 	require := tester.require
 

@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/river-build/river/core/node/contracts"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/events"
@@ -917,7 +916,7 @@ OuterLoop:
 type testFunc func(*serviceTester)
 
 func run(t *testing.T, numNodes int, tf testFunc) {
-	tf(newServiceTesterAndStart(t, numNodes))
+	tf(newServiceTester(t, serviceTesterOpts{numNodes: numNodes, start: true}))
 }
 
 func TestSingleAndMulti(t *testing.T) {
@@ -988,11 +987,7 @@ func TestForwardingWithRetries(t *testing.T) {
 
 	for testName, requester := range tests {
 		t.Run(testName, func(t *testing.T) {
-			numNodes := 5
-			replicationFactor := 3
-			serviceTester := newServiceTesterWithReplication(t, numNodes, replicationFactor)
-			serviceTester.initNodeRecords(0, numNodes, contracts.NodeStatus_Operational)
-			serviceTester.startNodes(0, numNodes)
+			serviceTester := newServiceTester(t, serviceTesterOpts{numNodes: 5, replicationFactor: 3, start: true})
 
 			ctx := serviceTester.ctx
 

@@ -44,7 +44,7 @@ func testCreate100Streams(
 }
 
 func TestAddingNewNodes(t *testing.T) {
-	tester := newServiceTester(t, 20)
+	tester := newServiceTester(t, serviceTesterOpts{numNodes: 20})
 	ctx := tester.ctx
 	require := tester.require
 	log := dlog.FromCtx(ctx)
@@ -115,7 +115,7 @@ func TestAddingNewNodes(t *testing.T) {
 }
 
 func TestNoRecordNoStart(t *testing.T) {
-	tester := newServiceTester(t, 1)
+	tester := newServiceTester(t, serviceTesterOpts{numNodes: 1})
 	require := tester.require
 
 	err := tester.startSingle(0)

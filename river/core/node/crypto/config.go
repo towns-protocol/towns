@@ -49,7 +49,7 @@ var (
 	StreamCacheExpirationPollIntervalMsConfigKey = newChainKeyImpl(
 		"stream.cacheExpirationPollIntervalMs", uint64Type, 30000)
 	MediaStreamMembershipLimitsGDMConfigKey = newChainKeyImpl(
-		"media.streamMembershipLimits.77", uint64Type, 6)
+		"media.streamMembershipLimits.77", uint64Type, 48)
 	MediaStreamMembershipLimitsDMConfigKey = newChainKeyImpl(
 		"media.streamMembershipLimits.88", uint64Type, 2)
 

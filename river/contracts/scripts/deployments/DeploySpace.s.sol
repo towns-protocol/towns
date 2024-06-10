@@ -27,7 +27,7 @@ import {DeployEntitlementGated} from "contracts/scripts/deployments/facets/Deplo
 import {DeployERC721AQueryable} from "./facets/DeployERC721AQueryable.s.sol";
 import {DeployBanning} from "contracts/scripts/deployments/facets/DeployBanning.s.sol";
 import {DeployMembershipMetadata} from "contracts/scripts/deployments/facets/DeployMembershipMetadata.s.sol";
-import {DeployMembership} from "contracts/scripts/deployments/DeployMembership.s.sol";
+import {DeployMembership} from "contracts/scripts/deployments/facets/DeployMembership.s.sol";
 import {DeployEntitlementDataQueryable} from "./facets/DeployEntitlementDataQueryable.s.sol";
 import {DeployOwnablePendingFacet} from "contracts/scripts/deployments/facets/DeployOwnablePendingFacet.s.sol";
 import {DeployTokenOwnable} from "./facets/DeployTokenOwnable.s.sol";
@@ -39,6 +39,9 @@ import {DeployMembershipReferral} from "contracts/scripts/deployments/facets/Dep
 import {DeployMultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.sol";
 
 contract DeploySpace is DiamondDeployer {
+  address internal constant GOVERNANCE_ADDRESS =
+    0x63217D4c321CC02Ed306cB3843309184D347667B;
+
   DeployDiamondCut diamondCutHelper = new DeployDiamondCut();
   DeployDiamondLoupe diamondLoupeHelper = new DeployDiamondLoupe();
   DeployIntrospection introspectionHelper = new DeployIntrospection();
@@ -88,7 +91,7 @@ contract DeploySpace is DiamondDeployer {
   }
 
   function diamondInitParams(
-    address deployer
+    address
   ) public override returns (Diamond.InitParams memory) {
     diamondCut = diamondCutHelper.deploy();
     diamondLoupe = diamondLoupeHelper.deploy();
@@ -162,7 +165,10 @@ contract DeploySpace is DiamondDeployer {
       ownablePendingHelper.makeCut(ownablePending, IDiamond.FacetCutAction.Add)
     );
 
-    addInit(ownablePending, ownablePendingHelper.makeInitData(deployer));
+    addInit(
+      ownablePending,
+      ownablePendingHelper.makeInitData(GOVERNANCE_ADDRESS)
+    );
     addInit(diamondCut, diamondCutHelper.makeInitData(""));
     addInit(diamondLoupe, diamondLoupeHelper.makeInitData(""));
     addInit(introspection, introspectionHelper.makeInitData(""));

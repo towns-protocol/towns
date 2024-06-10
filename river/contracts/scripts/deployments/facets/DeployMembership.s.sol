@@ -7,7 +7,7 @@ import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.so
 //libraries
 
 //contracts
-import {Deployer} from "../common/Deployer.s.sol";
+import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {MembershipFacet} from "contracts/src/spaces/facets/membership/MembershipFacet.sol";
 import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
 
