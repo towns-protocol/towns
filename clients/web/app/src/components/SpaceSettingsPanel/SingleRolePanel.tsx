@@ -180,7 +180,7 @@ export function SingleRolePanelWithoutAuth() {
                                                 />
 
                                                 {/* TODO: re-enable once xchain is working with role permissions */}
-                                                {/* {isDefaultMembershipRole ? null : (
+                                                {isDefaultMembershipRole ? null : (
                                                     // TODO: there are no tokens for the default membership role, what should we do?
                                                     // <Stack gap>
                                                     //     <Text>Digital Asset Requirement</Text>
@@ -194,7 +194,7 @@ export function SingleRolePanelWithoutAuth() {
                                                     >
                                                         <TokenSearch isCreateRole={isCreateRole} />
                                                     </Stack>
-                                                )} */}
+                                                )}
 
                                                 {!isDefaultMembershipRole && (
                                                     <Stack position="relative" zIndex="tooltips">
