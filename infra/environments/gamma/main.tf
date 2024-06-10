@@ -109,6 +109,8 @@ locals {
   num_full_nodes      = 11
   num_archive_nodes   = 1
   global_remote_state = module.global_constants.global_remote_state.outputs
+  base_chain_id       = 84532
+  river_chain_id      = 6524490
 }
 
 module "system_parameters" {
@@ -142,8 +144,8 @@ module "river_node" {
   base_chain_rpc_url_secret_arn  = local.global_remote_state.base_sepolia_rpc_url_secret.arn
   river_chain_rpc_url_secret_arn = local.global_remote_state.river_sepolia_rpc_url_secret.arn
 
-  base_chain_id  = 84532
-  river_chain_id = 6524490
+  base_chain_id  = local.base_chain_id
+  river_chain_id = local.river_chain_id
 
   ecs_cluster = {
     id   = aws_ecs_cluster.river_ecs_cluster.id
@@ -181,8 +183,8 @@ module "archive_node" {
   base_chain_rpc_url_secret_arn  = local.global_remote_state.base_sepolia_rpc_url_secret.arn
   river_chain_rpc_url_secret_arn = local.global_remote_state.river_sepolia_rpc_url_secret.arn
 
-  base_chain_id  = 84532
-  river_chain_id = 6524490
+  base_chain_id  = local.base_chain_id
+  river_chain_id = local.river_chain_id
 
   ecs_cluster = {
     id   = aws_ecs_cluster.river_ecs_cluster.id

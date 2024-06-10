@@ -310,7 +310,9 @@ locals {
     value = var.river_chain_rpc_url_plaintext_override
   }]
 
-  river_node_image_name = var.is_transient ? "public.ecr.aws/l8h0l2e6/river-node:transient-${var.git_pr_number}-latest" : "public.ecr.aws/h5v6m2x1/river:dev"
+  regular_docker_image_name   = "public.ecr.aws/h5v6m2x1/river:${var.docker_image_tag}"
+  transient_docker_image_name = var.is_transient ? "public.ecr.aws/l8h0l2e6/river-node:transient-${var.git_pr_number}-latest" : ""
+  river_node_image_name       = var.is_transient ? local.transient_docker_image_name : local.regular_docker_image_name
 
   archive_mode_additional_td_env_config = local.run_mode == "archive" ? [{
     name  = "ARCHIVE__ARCHIVEID"
@@ -647,9 +649,6 @@ module "datadog_sythetics_test" {
   subtype = "http"
   enabled = !var.is_transient
 
-  # TODO: set to 1
-  count = local.run_mode == "archive" ? 0 : 1
-
   locations = ["aws:us-west-1"]
   tags      = ["created_by:terraform", "env:${terraform.workspace}", "node_url:${local.node_url}"]
   message   = local.datadog_monitor_slack_mention
@@ -700,7 +699,6 @@ resource "aws_lb_listener" "transient_lb_listener" {
   }
 }
 
-# TODO: find the best way to handle archive node health checks
 resource "aws_lb_target_group" "river_node_target_group" {
   name        = "${local.node_name}-tg"
   port        = local.rpc_https_port
@@ -713,7 +711,6 @@ resource "aws_lb_target_group" "river_node_target_group" {
   deregistration_delay = 300
 
   health_check {
-    // TODO: use the proper healthcheck endpoint here
     path                = "/status"
     protocol            = "HTTPS"
     port                = local.rpc_https_port

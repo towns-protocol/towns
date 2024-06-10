@@ -94,7 +94,7 @@ output "alb_reserved_num_rules" {
 
 locals {
   num_full_nodes    = 11
-  num_archive_nodes = 1
+  num_archive_nodes = 2
 
   is_transient = length(regexall("transient-\\d+", terraform.workspace)) > 0
 

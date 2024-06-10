@@ -14,6 +14,12 @@ variable "node_metadata" {
   type        = any
 }
 
+variable "docker_image_tag" {
+  description = "The docker image tag for the river node"
+  type        = string
+  default     = "dev"
+}
+
 variable "ecs_cluster" {
   description = "Name and id of the ecs cluster"
   type = object({

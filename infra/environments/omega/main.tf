@@ -77,6 +77,13 @@ module "river_db_cluster" {
   pgadmin_security_group_id = module.pgadmin.security_group_id
 }
 
+module "river_node_ssl_cert" {
+  source                       = "../../modules/river-node-ssl-cert"
+  subnet_ids                   = module.vpc.private_subnets
+  common_name                  = "*.nodes.${terraform.workspace}.towns.com"
+  challenge_dns_record_fq_name = "_acme-challenge.nodes.${terraform.workspace}.towns.com"
+}
+
 resource "aws_ecs_cluster" "river_ecs_cluster" {
   name = "${terraform.workspace}-river-ecs-cluster"
   tags = module.global_constants.tags
@@ -137,21 +144,54 @@ resource "aws_security_group_rule" "allow_post_provision_config_lambda_inbound_t
   source_security_group_id = aws_security_group.post_provision_config_lambda_function_sg.id
 }
 
-module "post_provision_config" {
-  source = "../../modules/post-provision-config"
-
-  node_metadata                           = module.global_constants.archive_nodes[0]
-  subnet_ids                              = module.vpc.private_subnets
-  river_node_wallet_credentials_arn       = local.shared_credentials.wallet_private_key.arn
-  river_db_cluster_master_user_secret_arn = module.river_db_cluster.root_user_secret_arn
-  river_user_db_config                    = local.river_user_db_config
-  rds_cluster_resource_id                 = module.river_db_cluster.rds_aurora_postgresql.cluster_resource_id
-  vpc_id                                  = module.vpc.vpc_id
-  security_group_id                       = aws_security_group.post_provision_config_lambda_function_sg.id
-}
-
 module "system_parameters" {
   source = "../../modules/river-system-parameters"
+}
+
+locals {
+  num_archive_nodes = 2
+  base_chain_id     = 8453
+  river_chain_id    = 550
+}
+
+module "archive_node_nlb" {
+  source  = "../../modules/river-nlb"
+  count   = local.num_archive_nodes
+  subnets = module.vpc.public_subnets
+  vpc_id  = module.vpc.vpc_id
+  nlb_id  = "archive-${tostring(count.index + 1)}"
+}
+
+module "archive_node" {
+  source = "../../modules/river-node"
+  count  = local.num_archive_nodes
+
+  docker_image_tag = "mainnet"
+
+  node_metadata = module.global_constants.archive_nodes[count.index]
+
+  river_node_ssl_cert_secret_arn = module.river_node_ssl_cert.river_node_ssl_cert_secret_arn
+
+  river_node_db = module.river_db_cluster
+
+  public_subnets  = module.vpc.public_subnets
+  private_subnets = module.vpc.private_subnets
+  vpc_id          = module.vpc.vpc_id
+
+  system_parameters = module.system_parameters
+
+  base_chain_rpc_url_secret_arn  = local.global_remote_state.base_mainnet_rpc_url_secret.arn
+  river_chain_rpc_url_secret_arn = local.global_remote_state.river_mainnet_rpc_url_secret.arn
+
+  base_chain_id  = local.base_chain_id
+  river_chain_id = local.river_chain_id
+
+  ecs_cluster = {
+    id   = aws_ecs_cluster.river_ecs_cluster.id
+    name = aws_ecs_cluster.river_ecs_cluster.name
+  }
+
+  lb = module.archive_node_nlb[count.index]
 }
 
 module "notification_service" {
