@@ -488,6 +488,9 @@ func (s *settingValue) Uint64() (uint64, error) {
 	if s == nil {
 		return 0, RiverError(Err_NOT_FOUND, "Missing on-chain configuration setting")
 	}
+	if v, ok := s.Value.(int); ok && v >= 0 {
+		return uint64(v), nil
+	}
 	if v, ok := s.Value.(uint64); ok {
 		return v, nil
 	}
@@ -503,6 +506,9 @@ func (s *settingValue) Uint64() (uint64, error) {
 func (s *settingValue) Int64() (int64, error) {
 	if s == nil {
 		return 0, RiverError(Err_NOT_FOUND, "Missing on-chain configuration setting")
+	}
+	if v, ok := s.Value.(int); ok {
+		return int64(v), nil
 	}
 	if v, ok := s.Value.(int64); ok {
 		return v, nil
@@ -549,9 +555,12 @@ func (ck chainKeyImpl) DefaultAsInt64() int64 {
 		return int64(v)
 	case int64:
 		return v
-	default:
-		panic(fmt.Sprintf("Unable to retrieve default value for chain key %s as int64", ck.name))
+	case uint64:
+		if v < math.MaxInt64 {
+			return int64(v)
+		}
 	}
+	panic(fmt.Sprintf("Unable to retrieve default value for chain key %s as int64", ck.name))
 }
 
 func newChainKeyImpl(key string, typ abi.Type, defaultValue any) chainKeyImpl {
