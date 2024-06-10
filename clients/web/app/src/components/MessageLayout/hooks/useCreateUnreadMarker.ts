@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
 import { TimelineEvent, useFullyReadMarker, useMyUserId } from 'use-towns-client'
+import { markAsUnreadStore } from '@components/MessageTimeline/hooks/usePersistedUnreadMarkers'
 
 export const useCreateUnreadMarker = (params: {
     eventId: string
@@ -14,6 +15,9 @@ export const useCreateUnreadMarker = (params: {
     const createUnreadMarker = useCallback(() => {
         const eventIndex = timeline?.findIndex((e) => e.eventId === eventId)
         if (eventIndex && eventIndex >= 0 && marker && timeline) {
+            markAsUnreadStore.setState((s) => {
+                return { manualUnreads: s.manualUnreads.add(eventId) }
+            })
             const mentions = timeline
                 .slice(eventIndex)
                 .filter(
