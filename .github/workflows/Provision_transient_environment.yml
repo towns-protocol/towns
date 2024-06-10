@@ -1,5 +1,5 @@
 env:
-  FOUNDRY_VERSION: nightly
+    FOUNDRY_VERSION: nightly
 
 name: Provision Transient Environment
 on:
@@ -62,7 +62,6 @@ jobs:
                       core.setOutput('skip_river_node_continuous_deploys', skipRiverNodeContinuousDeploys);
                       core.setOutput('has_stress_test_infra', has_stress_test_infra);
 
-
     provision_transient_environment:
         needs: check_labels
         permissions: write-all
@@ -90,19 +89,19 @@ jobs:
             - name: Configure AWS credentials
               uses: aws-actions/configure-aws-credentials@v4
               with:
-                aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-                aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-                aws-region: us-east-1
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: us-east-1
 
             - name: Add Workflow level Provision lock
               working-directory: ./infra
-              run:  ./provision_flag_lock.sh add_lock
+              run: ./provision_flag_lock.sh add_lock
 
             - name: Login to Amazon ECR
               id: login-aws-ecr
               uses: aws-actions/amazon-ecr-login@v2
               with:
-                registry-type: 'public'
+                  registry-type: 'public'
 
             - name: Terraform init
               working-directory: ./infra
@@ -132,12 +131,12 @@ jobs:
               env:
                   TRANSIENT_ID: ${{ github.event.pull_request.number }}
                   NUM_NODES: ${{ needs.check_labels.outputs.num_nodes }}
-              run: "./scripts/transient-contracts.sh"
+              run: './scripts/transient-contracts.sh'
 
             - name: Clear Workflow level Provision lock
               if: always()
               working-directory: ./infra
-              run:  ./provision_flag_lock.sh clear_lock
+              run: ./provision_flag_lock.sh clear_lock
 
             - name: Slack notification
               if: failure()
@@ -159,11 +158,11 @@ jobs:
               if: failure()
               working-directory: ./infra
               env:
-                ENV: 'transient-${{ github.event.pull_request.number}}'
-                TF_ACTION_TYPE: "Provision"
-                TF_STATUS: "ERROR"
-                LOG_MESSAGE: "Provision step failed for ${{ github.event.pull_request.number}} PR (https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-              run: "./log_datadog.sh"
+                  ENV: 'transient-${{ github.event.pull_request.number}}'
+                  TF_ACTION_TYPE: 'Provision'
+                  TF_STATUS: 'ERROR'
+                  LOG_MESSAGE: 'Provision step failed for ${{ github.event.pull_request.number}} PR (https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})'
+              run: './log_datadog.sh'
 
     river_node_docker:
         uses: './.github/workflows/River_node_docker.yml'

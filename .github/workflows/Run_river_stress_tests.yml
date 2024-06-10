@@ -37,7 +37,6 @@ on:
                 default: 'task'
                 required: true
 
-
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.environment_name }}
     cancel-in-progress: false
@@ -67,12 +66,12 @@ jobs:
 
             - name: Run ECS Cluster Tasks
               env:
-                ENVIRONMENT_NAME: ${{ inputs.environment_name }}
-                CLIENTS_COUNT: ${{ inputs.clients_count }}
-                PROCESSES_PER_CONTAINER: ${{ inputs.processes_per_container }}
-                CONTAINER_COUNT: ${{ inputs.container_count }}
-                STRESS_DURATION: ${{ inputs.stress_duration }}
-                ECS_MODE: ${{ inputs.ecs_mode }}
+                  ENVIRONMENT_NAME: ${{ inputs.environment_name }}
+                  CLIENTS_COUNT: ${{ inputs.clients_count }}
+                  PROCESSES_PER_CONTAINER: ${{ inputs.processes_per_container }}
+                  CONTAINER_COUNT: ${{ inputs.container_count }}
+                  STRESS_DURATION: ${{ inputs.stress_duration }}
+                  ECS_MODE: ${{ inputs.ecs_mode }}
               run: ./scripts/run-river-stress-tests.sh
 
             # If action failed, we send a slack notification
@@ -94,10 +93,10 @@ jobs:
               if: failure()
               working-directory: ./infra
               env:
-                ENV: '${{ inputs.environment_name }}'
-                TF_ACTION_TYPE: "Stresstest"
-                TF_STATUS: "ERROR"
-                LOG_MESSAGE: "Stress test failed for ${{ github.ref }} (https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-                TF_VAR_datadog_api_key: ${{ secrets.TF_VAR_datadog_api_key }}
-                TF_VAR_datadog_app_key: ${{ secrets.TF_VAR_datadog_app_key }}
-              run: "./log_datadog.sh"
+                  ENV: '${{ inputs.environment_name }}'
+                  TF_ACTION_TYPE: 'Stresstest'
+                  TF_STATUS: 'ERROR'
+                  LOG_MESSAGE: 'Stress test failed for ${{ github.ref }} (https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})'
+                  TF_VAR_datadog_api_key: ${{ secrets.TF_VAR_datadog_api_key }}
+                  TF_VAR_datadog_app_key: ${{ secrets.TF_VAR_datadog_app_key }}
+              run: './log_datadog.sh'

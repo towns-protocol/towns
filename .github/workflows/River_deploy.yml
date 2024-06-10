@@ -79,10 +79,10 @@ jobs:
 
             - name: Debug Log
               run: |
-                echo "Deploying to environment: ${{ inputs.environment_name }}"
-                echo "with image tag: ${{ inputs.docker_image_tag }}"
-                echo "to nodes: ${{ inputs.node_numbers }}"
-                echo "using public ECR URL: ${{ inputs.public_ecr_url }}"
+                  echo "Deploying to environment: ${{ inputs.environment_name }}"
+                  echo "with image tag: ${{ inputs.docker_image_tag }}"
+                  echo "to nodes: ${{ inputs.node_numbers }}"
+                  echo "using public ECR URL: ${{ inputs.public_ecr_url }}"
 
             - name: Configure AWS credentials
               uses: aws-actions/configure-aws-credentials@v4
@@ -93,18 +93,18 @@ jobs:
 
             - name: Check if image exists
               env:
-                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
               run: |
-                # Don't run the check for transient environments.
-                if grep -q "transient" <<< "${{ inputs.docker_image_tag }}"; then
-                    echo "Transient deploy detected. Not running image checks."
-                elif ! docker manifest inspect public.ecr.aws/h5v6m2x1/river:${{ inputs.docker_image_tag }} > /dev/null 2>&1; then
-                    echo "Docker image with the tag=${{ inputs.docker_image_tag }} does not exist. No need to deploy river."
-                    exit 1 # fail the job, this is an error, don't call this with a image that doesn't exist
-                else
-                    echo "Docker image with the tag=${{ inputs.docker_image_tag }} exists. Continue with the deployment."
-                fi
+                  # Don't run the check for transient environments.
+                  if grep -q "transient" <<< "${{ inputs.docker_image_tag }}"; then
+                      echo "Transient deploy detected. Not running image checks."
+                  elif ! docker manifest inspect public.ecr.aws/h5v6m2x1/river:${{ inputs.docker_image_tag }} > /dev/null 2>&1; then
+                      echo "Docker image with the tag=${{ inputs.docker_image_tag }} does not exist. No need to deploy river."
+                      exit 1 # fail the job, this is an error, don't call this with a image that doesn't exist
+                  else
+                      echo "Docker image with the tag=${{ inputs.docker_image_tag }} exists. Continue with the deployment."
+                  fi
 
             # Send a slack notification before deploying if the environment is gamma
             - name: Info notification
@@ -161,13 +161,13 @@ jobs:
               if: failure()
               working-directory: ./infra
               env:
-                ENV: '${{ inputs.environment_name }}'
-                TF_ACTION_TYPE: "Riverdeploy"
-                TF_STATUS: "ERROR"
-                LOG_MESSAGE: "River deploy to ECS failed for ${{ github.ref }} branch (https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-                TF_VAR_datadog_api_key: ${{ secrets.TF_VAR_datadog_api_key }}
-                TF_VAR_datadog_app_key: ${{ secrets.TF_VAR_datadog_app_key }}
-              run: "./log_datadog.sh"
+                  ENV: '${{ inputs.environment_name }}'
+                  TF_ACTION_TYPE: 'Riverdeploy'
+                  TF_STATUS: 'ERROR'
+                  LOG_MESSAGE: 'River deploy to ECS failed for ${{ github.ref }} branch (https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})'
+                  TF_VAR_datadog_api_key: ${{ secrets.TF_VAR_datadog_api_key }}
+                  TF_VAR_datadog_app_key: ${{ secrets.TF_VAR_datadog_app_key }}
+              run: './log_datadog.sh'
 
     on_failure:
         name: On Failure
@@ -216,12 +216,12 @@ jobs:
               env:
                   SLACK_WEBHOOK_URL: ${{ secrets.SLACK_CD_INFO_WORKFLOW_WEBHOOK_URL }}
               with:
-                payload: |
-                    {
-                        "message": "Deploy job ran successfully for docker tag: ${{ inputs.docker_image_tag }} on nodes: ${{ inputs.node_numbers }}",
-                        "environment": "${{ inputs.environment_name }}",
-                        "branch": "${{ github.ref }}",
-                        "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
-                        "commit": "${{ github.sha }}",
-                        "actor": "${{ github.actor }}"
-                    }
+                  payload: |
+                      {
+                          "message": "Deploy job ran successfully for docker tag: ${{ inputs.docker_image_tag }} on nodes: ${{ inputs.node_numbers }}",
+                          "environment": "${{ inputs.environment_name }}",
+                          "branch": "${{ github.ref }}",
+                          "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                          "commit": "${{ github.sha }}",
+                          "actor": "${{ github.actor }}"
+                      }

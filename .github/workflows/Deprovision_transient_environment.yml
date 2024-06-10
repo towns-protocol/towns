@@ -4,7 +4,7 @@ on:
     # https://github.com/orgs/community/discussions/26657
     pull_request_target:
         types:
-          - closed
+            - closed
 
     workflow_dispatch:
         inputs:
@@ -44,20 +44,20 @@ jobs:
             - name: Configure AWS credentials
               uses: aws-actions/configure-aws-credentials@v4
               with:
-                aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-                aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-                aws-region: us-east-1
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: us-east-1
 
             # Check Workflow level Provision lock and wait till provision complete
             - name: Check Provision lock
               working-directory: ./infra
-              run:  ./github_lock_wait.sh
+              run: ./github_lock_wait.sh
 
             - name: Login to Amazon ECR
               id: login-aws-ecr
               uses: aws-actions/amazon-ecr-login@v2
               with:
-                registry-type: 'public'
+                  registry-type: 'public'
 
             - name: Terraform init
               working-directory: ./infra
@@ -90,8 +90,8 @@ jobs:
               if: failure()
               working-directory: ./infra
               env:
-                ENV: 'transient-${{ github.event.pull_request.number}}'
-                TF_ACTION_TYPE: "Deprovision"
-                TF_STATUS: "ERROR"
-                LOG_MESSAGE: "Deprovision step failed for ${{ github.event.pull_request.number}} PR (https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-              run: "./log_datadog.sh"
+                  ENV: 'transient-${{ github.event.pull_request.number}}'
+                  TF_ACTION_TYPE: 'Deprovision'
+                  TF_STATUS: 'ERROR'
+                  LOG_MESSAGE: 'Deprovision step failed for ${{ github.event.pull_request.number}} PR (https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})'
+              run: './log_datadog.sh'

@@ -90,7 +90,7 @@ jobs:
             - name: Setup tmate session
               uses: mxschmitt/action-tmate@v3
               if: contains(github.event.pull_request.labels.*.name, 'ssh')
-              
+
             - name: Start and configure blockchains
               run: ./river/scripts/bc-all-start.sh
 
@@ -207,7 +207,7 @@ jobs:
             - name: Setup tmate session
               uses: mxschmitt/action-tmate@v3
               if: contains(github.event.pull_request.labels.*.name, 'ssh')
-              
+
             - name: Start and configure blockchains
               run: ./river/scripts/bc-all-start.sh
 
@@ -227,7 +227,7 @@ jobs:
 
             - name: Set up Custom CA Certificate for Node.js
               run: |
-                echo "NODE_EXTRA_CA_CERTS=$HOME/river-ca-cert.pem" >> $GITHUB_ENV
+                  echo "NODE_EXTRA_CA_CERTS=$HOME/river-ca-cert.pem" >> $GITHUB_ENV
 
             - name: Run multiple nodes
               run: |

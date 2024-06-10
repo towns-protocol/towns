@@ -21,7 +21,7 @@ on:
 jobs:
     run_synthetic_tests:
         runs-on:
-          group: synthetic-test-runners
+            group: synthetic-test-runners
 
         timeout-minutes: 240
         services:
@@ -31,8 +31,8 @@ jobs:
                     - '6379:6379'
 
         env:
-          ENVIRONMENT_NAME: ${{inputs.environment_name || 'gamma' }}
-          DEBUG: csb:test:synthetic
+            ENVIRONMENT_NAME: ${{inputs.environment_name || 'gamma' }}
+            DEBUG: csb:test:synthetic
 
         steps:
             - name: Checkout code
@@ -65,7 +65,7 @@ jobs:
 
             - name: Set up Custom CA Certificate for Node.js
               run: |
-                echo "NODE_EXTRA_CA_CERTS=$HOME/river-ca-cert.pem" >> $GITHUB_ENV
+                  echo "NODE_EXTRA_CA_CERTS=$HOME/river-ca-cert.pem" >> $GITHUB_ENV
 
             - name: Run Synthetic Test
               run: yarn test:ci:synthetic:all
@@ -74,12 +74,12 @@ jobs:
             - name: Set Slack message
               if: failure()
               run: |
-                if [ $ENVIRONMENT_NAME == 'gamma' ]; then
-                  SLACK_MESSAGE="Synthetic Test Failure ${{ vars.GOALIE_SLACK_GROUP_ID }}"
-                else
-                  SLACK_MESSAGE="Synthetic Test Failure"
-                fi
-                echo "SLACK_MESSAGE=$SLACK_MESSAGE" >> $GITHUB_ENV
+                  if [ $ENVIRONMENT_NAME == 'gamma' ]; then
+                    SLACK_MESSAGE="Synthetic Test Failure ${{ vars.GOALIE_SLACK_GROUP_ID }}"
+                  else
+                    SLACK_MESSAGE="Synthetic Test Failure"
+                  fi
+                  echo "SLACK_MESSAGE=$SLACK_MESSAGE" >> $GITHUB_ENV
 
             # If failed, we send a slack notification
             - name: Slack notification

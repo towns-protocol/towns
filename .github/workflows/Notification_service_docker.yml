@@ -36,24 +36,24 @@ jobs:
         steps:
             - name: Set Environment Variables
               env:
-                BRANCH_NAME: ${{ github.ref }}
-                ENVIRONMENT_NAME_INPUT: ${{ github.event.inputs.environment_name }}
+                  BRANCH_NAME: ${{ github.ref }}
+                  ENVIRONMENT_NAME_INPUT: ${{ github.event.inputs.environment_name }}
               run: |
-                # if ENVIROMENT_NAME_INPUT is set, set ENV_NAME to it.
-                # else if branch is main, set ENV_NAME to gamma.
-                # else if branch is omega, set ENV_NAME to omega.
-                # else  (branch is neither), exit with error.
+                  # if ENVIROMENT_NAME_INPUT is set, set ENV_NAME to it.
+                  # else if branch is main, set ENV_NAME to gamma.
+                  # else if branch is omega, set ENV_NAME to omega.
+                  # else  (branch is neither), exit with error.
 
-                if [ -n "$ENVIRONMENT_NAME_INPUT" ]; then
-                  echo "ENV_NAME=$ENVIRONMENT_NAME_INPUT" >> $GITHUB_ENV
-                elif [ $BRANCH_NAME = "refs/heads/main" ]; then
-                  echo "ENV_NAME=gamma" >> $GITHUB_ENV
-                elif [ $BRANCH_NAME = "refs/heads/omega" ]; then
-                  echo "ENV_NAME=omega" >> $GITHUB_ENV
-                else
-                  echo "Error: Branch name is not main or omega. Exiting."
-                  exit 1
-                fi
+                  if [ -n "$ENVIRONMENT_NAME_INPUT" ]; then
+                    echo "ENV_NAME=$ENVIRONMENT_NAME_INPUT" >> $GITHUB_ENV
+                  elif [ $BRANCH_NAME = "refs/heads/main" ]; then
+                    echo "ENV_NAME=gamma" >> $GITHUB_ENV
+                  elif [ $BRANCH_NAME = "refs/heads/omega" ]; then
+                    echo "ENV_NAME=omega" >> $GITHUB_ENV
+                  else
+                    echo "Error: Branch name is not main or omega. Exiting."
+                    exit 1
+                  fi
 
             - name: Checkout
               uses: actions/checkout@v4
@@ -61,33 +61,33 @@ jobs:
             - name: Setup AWS Credentials
               uses: aws-actions/configure-aws-credentials@v4
               with:
-                aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-                aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-                aws-region: us-east-1
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: us-east-1
 
             - name: Login to Amazon ECR
               id: login-aws-ecr
               uses: aws-actions/amazon-ecr-login@v2
               with:
-                registry-type: 'public'
+                  registry-type: 'public'
 
             - name: Build and push docker image to Amazon ECR
               env:
-                ECR_REGISTRY: ${{ steps.login-aws-ecr.outputs.registry }}
-                #This can be custom alias once requested to aws and approved for public repo
-                REGISTRY_ALIAS: l8h0l2e6
-                ECR_REPOSITORY: notification-service
+                  ECR_REGISTRY: ${{ steps.login-aws-ecr.outputs.registry }}
+                  #This can be custom alias once requested to aws and approved for public repo
+                  REGISTRY_ALIAS: l8h0l2e6
+                  ECR_REPOSITORY: notification-service
               run: |
-                docker build -t $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:latest . -f ./servers/notification-service/Dockerfile
-                docker push $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:latest
+                  docker build -t $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:latest . -f ./servers/notification-service/Dockerfile
+                  docker push $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:latest
 
             - name: Deploy to ECS
               run: './scripts/deploy-latest-notification-service.sh'
               env:
-                AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-                AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-                AWS_REGION: us-east-1
-                ENVIRONMENT_NAME: ${{ env.ENV_NAME }}
+                  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  AWS_REGION: us-east-1
+                  ENVIRONMENT_NAME: ${{ env.ENV_NAME }}
 
             # If action failed, we send a slack notification
             - name: Slack notification
