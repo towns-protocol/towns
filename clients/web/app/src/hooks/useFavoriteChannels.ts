@@ -16,5 +16,12 @@ export const useFavoriteChannels = () => {
         },
         [_favoriteChannelIds, setFavoriteChannelIds],
     )
-    return { favoriteChannelIds: _favoriteChannelIds, toggleFavoriteChannelId }
+    const unfavoriteChannelId = useCallback(
+        (channelId: string) => {
+            _favoriteChannelIds.delete(channelId)
+            setFavoriteChannelIds(Array.from(_favoriteChannelIds))
+        },
+        [_favoriteChannelIds, setFavoriteChannelIds],
+    )
+    return { favoriteChannelIds: _favoriteChannelIds, toggleFavoriteChannelId, unfavoriteChannelId }
 }

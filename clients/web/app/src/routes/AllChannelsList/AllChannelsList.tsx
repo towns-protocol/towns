@@ -21,6 +21,7 @@ import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useUnseenChannelIds } from 'hooks/useUnseenChannelIdsCount'
 import { LinkParams, useCreateLink } from 'hooks/useCreateLink'
 import { useAnalytics } from 'hooks/useAnalytics'
+import { useLeaveChannel } from 'hooks/useLeaveChannel'
 
 export const AllChannelsList = ({
     onHideBrowseChannels,
@@ -112,7 +113,8 @@ export const ChannelItem = ({
     onOpenChannel?: (channelId: string) => void
 }) => {
     const navigate = useNavigate()
-    const { client, leaveRoom } = useTownsClient()
+    const { client } = useTownsClient()
+    const { leaveChannel } = useLeaveChannel()
     const channelIdentifier = channelNetworkId
     const currentChannelId = useChannelIdFromPathname()
     const { createLink } = useCreateLink()
@@ -160,7 +162,7 @@ export const ChannelItem = ({
         const indexOfThisChannel = flatChannels.findIndex((c) => c.id === channelIdentifier)
 
         if (isJoined) {
-            await leaveRoom(channelIdentifier, space.id)
+            await leaveChannel(channelIdentifier, space.id)
             if (currentChannelId === channelIdentifier) {
                 // leaving the last channel
                 if (joinedChannels.length === 1) {

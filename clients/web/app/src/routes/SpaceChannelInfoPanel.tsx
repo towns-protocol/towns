@@ -9,7 +9,6 @@ import {
     useHasPermission,
     useRoom,
     useSpaceData,
-    useTownsClient,
 } from 'use-towns-client'
 
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
@@ -24,6 +23,7 @@ import {
 import { PanelButton } from '@components/Panel/PanelButton'
 import { Panel } from '@components/Panel/Panel'
 
+import { useLeaveChannel } from 'hooks/useLeaveChannel'
 import { ChannelMembersModal } from './SpaceChannelDirectoryPanel'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 
@@ -45,7 +45,7 @@ export const ChannelInfo = () => {
         permission: Permission.AddRemoveChannels,
     })
     const navigate = useNavigate()
-    const { leaveRoom } = useTownsClient()
+    const { leaveChannel } = useLeaveChannel()
 
     const isEncrypted = channel !== undefined
     const room = useRoom(channel?.id)
@@ -55,7 +55,7 @@ export const ChannelInfo = () => {
         if (!channel || !spaceData) {
             return
         }
-        await leaveRoom(channel.id, spaceData.id)
+        await leaveChannel(channel.id, spaceData.id)
         navigate(`/${PATHS.SPACES}/${spaceData?.id}`)
     })
 
