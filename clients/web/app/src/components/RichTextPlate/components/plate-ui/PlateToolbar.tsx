@@ -1,5 +1,5 @@
 import React, { ComponentProps, useCallback, useState } from 'react'
-import { AnimatePresence } from 'framer-motion'
+import { AnimationProps } from 'framer-motion'
 import linkifyit from 'linkify-it'
 import { useEvent } from 'react-use-event-hook'
 import { useEditorRef } from '@udecode/plate-common'
@@ -69,6 +69,22 @@ export const PlateToolbar = ({
         }
     })
 
+    const toolbarAnimationProps = useCallback(() => {
+        if (isTouch) {
+            return {
+                initial: { opacity: 0, width: 0 },
+                animate: { opacity: 1, width: 'auto' },
+                exit: { opacity: 0, width: 0, transition: { duration: 0 } },
+            } as AnimationProps
+        } else {
+            return {
+                initial: { opacity: 0, height: 0 },
+                animate: { opacity: 1, height: 'auto' },
+                exit: { opacity: 0, height: 0 },
+            } as AnimationProps
+        }
+    }, [isTouch])
+
     const onSaveLink = useEvent((text: string) => {
         const parsedLink = linkify.match(text)?.[0]
         if (!parsedLink) {
@@ -90,75 +106,64 @@ export const PlateToolbar = ({
 
     return (
         <>
-            <AnimatePresence>
-                {showFormattingToolbar && (
-                    <MotionBox
-                        overflow="hidden"
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                    >
-                        <Box paddingTop="sm" paddingX="sm">
-                            <Stack
-                                horizontal
-                                overflowX="scroll"
-                                gap={isTouch ? 'sm' : 'xs'}
-                                pointerEvents="auto"
-                                width="100%"
-                                opacity={focused ? 'opaque' : '0.4'}
-                                zIndex="tooltips"
-                                onPointerDown={onToolbarPointerDown}
-                            >
-                                {isTouch && (
-                                    <IconButton
-                                        opaque
-                                        icon="close"
-                                        onTouchStart={closeFormattingToolbar}
-                                    />
-                                )}
-                                <MarkToolbarButton
-                                    nodeType={MARK_BOLD}
-                                    icon="bold"
-                                    tooltip={ShortcutTooltip({ action: 'BoldText' })}
+            {showFormattingToolbar && (
+                <MotionBox overflow="hidden" {...toolbarAnimationProps()}>
+                    <Box paddingTop={isTouch ? 'none' : 'sm'} paddingX="sm">
+                        <Stack
+                            horizontal
+                            overflowX="scroll"
+                            gap={isTouch ? 'sm' : 'xs'}
+                            pointerEvents="auto"
+                            width="100%"
+                            opacity={focused ? 'opaque' : '0.4'}
+                            zIndex="tooltips"
+                            onPointerDown={onToolbarPointerDown}
+                        >
+                            {isTouch && (
+                                <IconButton
+                                    opaque
+                                    icon="close"
+                                    onTouchStart={closeFormattingToolbar}
                                 />
-                                <MarkToolbarButton
-                                    nodeType={MARK_ITALIC}
-                                    icon="italic"
-                                    tooltip={ShortcutTooltip({ action: 'ItalicText' })}
-                                />
-                                <MarkToolbarButton
-                                    nodeType={MARK_STRIKETHROUGH}
-                                    icon="strikethrough"
-                                    tooltip="Strikethrough"
-                                />
-                                <LinkToolbarButton onClick={onLinkClick} />
-                                <DividerEditorToolbar />
-                                <ListToolbarButton
-                                    nodeType={ListStyleType.Decimal}
-                                    icon="numberedlist"
-                                    tooltip="Ordered list"
-                                    editor={editor}
-                                />
-                                <ListToolbarButton
-                                    nodeType={ListStyleType.Disc}
-                                    icon="bulletedlist"
-                                    tooltip="Bulleted list"
-                                    editor={editor}
-                                />
-                                <DividerEditorToolbar />
-                                <BlockQuoteToolbarButton />
-                                <DividerEditorToolbar />
-                                <MarkToolbarButton
-                                    nodeType={MARK_CODE}
-                                    icon="code"
-                                    tooltip="Code"
-                                />
-                                <CodeBlockToolbarButton />
-                            </Stack>
-                        </Box>
-                    </MotionBox>
-                )}
-            </AnimatePresence>
+                            )}
+                            <MarkToolbarButton
+                                nodeType={MARK_BOLD}
+                                icon="bold"
+                                tooltip={ShortcutTooltip({ action: 'BoldText' })}
+                            />
+                            <MarkToolbarButton
+                                nodeType={MARK_ITALIC}
+                                icon="italic"
+                                tooltip={ShortcutTooltip({ action: 'ItalicText' })}
+                            />
+                            <MarkToolbarButton
+                                nodeType={MARK_STRIKETHROUGH}
+                                icon="strikethrough"
+                                tooltip="Strikethrough"
+                            />
+                            <LinkToolbarButton onClick={onLinkClick} />
+                            <DividerEditorToolbar />
+                            <ListToolbarButton
+                                nodeType={ListStyleType.Decimal}
+                                icon="numberedlist"
+                                tooltip="Ordered list"
+                                editor={editor}
+                            />
+                            <ListToolbarButton
+                                nodeType={ListStyleType.Disc}
+                                icon="bulletedlist"
+                                tooltip="Bulleted list"
+                                editor={editor}
+                            />
+                            <DividerEditorToolbar />
+                            <BlockQuoteToolbarButton />
+                            <DividerEditorToolbar />
+                            <MarkToolbarButton nodeType={MARK_CODE} icon="code" tooltip="Code" />
+                            <CodeBlockToolbarButton />
+                        </Stack>
+                    </Box>
+                </MotionBox>
+            )}
             {linkLinkModal && <AddLinkModal onHide={onHideModal} onSaveLink={onSaveLink} />}
         </>
     )
