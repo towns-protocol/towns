@@ -137,11 +137,13 @@ export const PlateToolbar = ({
                                     nodeType={ListStyleType.Decimal}
                                     icon="numberedlist"
                                     tooltip="Ordered list"
+                                    editor={editor}
                                 />
                                 <ListToolbarButton
                                     nodeType={ListStyleType.Disc}
                                     icon="bulletedlist"
                                     tooltip="Bulleted list"
+                                    editor={editor}
                                 />
                                 <DividerEditorToolbar />
                                 <BlockQuoteToolbarButton />
