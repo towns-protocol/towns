@@ -508,7 +508,7 @@ func (s *streamCacheImpl) cleanupPollInterval(ctx context.Context) (bool, time.D
 		return true, defaultValue
 	}
 
-	log.Error("unable to retrieve stream cache poll interval, use default", "err", err)
+	log.Debug("unable to retrieve stream cache poll interval, use default", "err", err)
 	return true, defaultValue
 }
 

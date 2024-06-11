@@ -211,9 +211,6 @@ func NewOnChainConfig(
 	// load default settings for config settings that have no active value at the current block height.
 	cfg.loadMissing(ctx, appliedBlockNum.AsUint64())
 
-	// print configuration
-	cfg.log(ctx)
-
 	// on block sets the current block number that is used to determine the active configuration setting.
 	chainMonitor.OnBlock(cfg.onBlock)
 
@@ -270,7 +267,7 @@ func (occ *onChainConfiguration) loadMissing(ctx context.Context, activeBlock ui
 			continue
 		}
 
-		log.Warn(
+		log.Debug(
 			"OnChainConfiguration: missing config setting on chain, use default",
 			"key", key.Name(),
 			"default", key.defaultValue,
@@ -278,22 +275,6 @@ func (occ *onChainConfiguration) loadMissing(ctx context.Context, activeBlock ui
 		)
 
 		occ.settings.Set(key, activeBlock, key.defaultValue)
-	}
-}
-
-// log prints the loaded configuration
-func (occ *onChainConfiguration) log(ctx context.Context) {
-	log := dlog.FromCtx(ctx)
-	for keyID, settings := range occ.settings.s {
-		if key, ok := configKeyIDToKey[keyID]; ok {
-			for _, setting := range settings {
-				log.Info("chain config setting",
-					"key", key.Name(),
-					"activeBlock", setting.ActiveFromBlockNumber,
-					"value", setting.Value,
-				)
-			}
-		}
 	}
 }
 
@@ -416,7 +397,10 @@ func (occ *onChainConfiguration) All() (*AllSettings, error) {
 }
 
 func (ocs *onChainSettings) Remove(key chainKeyImpl, activeOnBlockNumber uint64) {
-	keyID := key.ID()
+	var (
+		log   = dlog.Log()
+		keyID = key.ID()
+	)
 
 	ocs.mu.Lock()
 	defer ocs.mu.Unlock()
@@ -425,6 +409,7 @@ func (ocs *onChainSettings) Remove(key chainKeyImpl, activeOnBlockNumber uint64)
 		if v.ActiveFromBlockNumber == activeOnBlockNumber {
 			ocs.s[keyID][len(ocs.s[keyID])-1], ocs.s[keyID][i] = ocs.s[keyID][i], ocs.s[keyID][len(ocs.s[keyID])-1]
 			ocs.s[keyID] = ocs.s[keyID][:len(ocs.s[keyID])-1]
+			log.Info("dropped chain config", "key", key.Name(), "activationBlock", activeOnBlockNumber)
 			return
 		}
 	}
@@ -433,7 +418,10 @@ func (ocs *onChainSettings) Remove(key chainKeyImpl, activeOnBlockNumber uint64)
 // Set the given value to the settings identified by the given key for the
 // given block number.
 func (ocs *onChainSettings) Set(key chainKeyImpl, activeOnBlockNumber uint64, value any) {
-	keyID := key.ID()
+	var (
+		keyID = key.ID()
+		log   = dlog.Log()
+	)
 
 	ocs.mu.Lock()
 	defer ocs.mu.Unlock()
@@ -446,6 +434,8 @@ func (ocs *onChainSettings) Set(key chainKeyImpl, activeOnBlockNumber uint64, va
 				ActiveFromBlockNumber: activeOnBlockNumber,
 				Value:                 value,
 			}
+			log.Info("set chain config",
+				"key", key.Name(), "activationBlock", activeOnBlockNumber, "value", value)
 			return
 		}
 	}
@@ -454,6 +444,7 @@ func (ocs *onChainSettings) Set(key chainKeyImpl, activeOnBlockNumber uint64, va
 		ActiveFromBlockNumber: activeOnBlockNumber,
 		Value:                 value,
 	})
+	log.Info("set chain config", "key", key.Name(), "activationBlock", activeOnBlockNumber, "value", value)
 
 	sort.Sort(byBlockNumber(ocs.s[keyID]))
 }
