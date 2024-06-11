@@ -153,8 +153,10 @@ export function replaceOAuthParameters(searchParamsString: string) {
 export function getChannelType(channelId: string) {
     return isDMChannelStreamId(channelId)
         ? 'dm'
-        : isGDMChannelStreamId('gdm')
-        ? isChannelStreamId('channel')
+        : isGDMChannelStreamId(channelId)
+        ? 'gdm'
+        : isChannelStreamId(channelId)
+        ? 'channel'
         : 'unknown'
 }
 
