@@ -68,4 +68,5 @@ export const blockchainKeys = {
         { chainId: chainId ?? 'waitingForChainId' },
     ],
     supportedXChainIds: () => ['supportedXChainIds'],
+    minimumMembershipPrice: () => ['minimumMembershipPrice'],
 }

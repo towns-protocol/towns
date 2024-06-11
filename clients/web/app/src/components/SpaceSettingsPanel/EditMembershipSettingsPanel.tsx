@@ -31,11 +31,11 @@ import {
 } from '@components/Tokens/utils'
 import { PrivyWrapper } from 'privy/PrivyProvider'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
-import { MIN_FIXED_COST_OF_MEMBERSHIP_IN_ETH } from '@components/Web3/MembershipNFT/CreateSpaceFormV2/CreateSpaceFormV2.schema'
 import { FullPanelOverlay } from '@components/Web3/WalletLinkingPanel'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { EVERYONE_ADDRESS } from 'utils'
+import { usePlatformMembershipFeeInEth } from 'hooks/usePlatformMembershipFeeInEth'
 import { EditMembershipSchemaType, editMembershipSchema } from './editMembershipSchema'
 
 export const EDIT_MEMBERSHIP_SETTINGS_PANEL = 'editMembershipSettings'
@@ -256,6 +256,8 @@ function SubmitButton({
 
     const isSubmittedRef = React.useRef(false)
 
+    const { data: minimumMmebershipPrice } = usePlatformMembershipFeeInEth()
+
     const onValid = useEvent(async (data: EditMembershipSchemaType) => {
         if (
             !spaceId ||
@@ -305,12 +307,13 @@ function SubmitButton({
         const isFixedPricing = watchAllFields.membershipPricingType === 'fixed'
 
         if (
+            minimumMmebershipPrice !== undefined &&
             isFixedPricing &&
-            priceInWei.lt(ethers.utils.parseEther(MIN_FIXED_COST_OF_MEMBERSHIP_IN_ETH.toString()))
+            priceInWei.lt(ethers.utils.parseEther(minimumMmebershipPrice))
         ) {
             setError('membershipPricingType', {
                 type: 'manual',
-                message: `Fixed price must be at least ${MIN_FIXED_COST_OF_MEMBERSHIP_IN_ETH} ETH`,
+                message: `Fixed price must be at least ${minimumMmebershipPrice} ETH`,
             })
             return
         }

@@ -24,11 +24,9 @@ import { createPrivyNotAuthenticatedNotification } from '@components/Notificatio
 import { convertTokenTypeToOperationType } from '@components/Tokens/utils'
 import { useStore } from 'store/store'
 import { useAnalytics } from 'hooks/useAnalytics'
+import { usePlatformMembershipFeeInEth } from 'hooks/usePlatformMembershipFeeInEth'
 import { PanelType, TransactionDetails } from './types'
-import {
-    CreateSpaceFormV2SchemaType,
-    MIN_FIXED_COST_OF_MEMBERSHIP_IN_ETH,
-} from './CreateSpaceFormV2.schema'
+import { CreateSpaceFormV2SchemaType } from './CreateSpaceFormV2.schema'
 import { mapToErrorMessage } from '../../utils'
 
 export function CreateTownSubmit({
@@ -49,6 +47,8 @@ export function CreateTownSubmit({
         'membershipCost',
         'membershipPricingType',
     ])
+
+    const { data: minimumMmebershipPrice } = usePlatformMembershipFeeInEth()
 
     // use the hook props instead of BlockchainStore/BlockchainTxNotifier
     // b/c creating a space does a lot of things on river and we want to wait for those too, not just for the tx
@@ -195,14 +195,13 @@ export function CreateTownSubmit({
                 const isFixedPricing = membershipPricingType === 'fixed'
 
                 if (
+                    minimumMmebershipPrice !== undefined &&
                     isFixedPricing &&
-                    priceInWei.lt(
-                        ethers.utils.parseEther(MIN_FIXED_COST_OF_MEMBERSHIP_IN_ETH.toString()),
-                    )
+                    priceInWei.lt(ethers.utils.parseEther(minimumMmebershipPrice))
                 ) {
                     form.setError('membershipPricingType', {
                         type: 'manual',
-                        message: `Fixed price must be at least ${MIN_FIXED_COST_OF_MEMBERSHIP_IN_ETH} ETH`,
+                        message: `Fixed price must be at least ${minimumMmebershipPrice} ETH`,
                     })
                     setPanelType(PanelType.all)
                     setTransactionDetails({
@@ -398,16 +397,17 @@ export function CreateTownSubmit({
             },
         )()
     }, [
+        setRecentlyMintedSpaceToken,
         setTransactionDetails,
         form,
+        analytics,
         getSigner,
         spaceDapp,
         membershipPricingType,
-        analytics,
+        minimumMmebershipPrice,
         setPanelType,
         createSpaceTransactionWithRole,
         uploadSpaceIdentity,
-        setRecentlyMintedSpaceToken,
         uploadImage,
         navigate,
     ])

@@ -2,10 +2,8 @@ import React, { ChangeEvent, useCallback } from 'react'
 import { UseFormReturn, useFormContext } from 'react-hook-form'
 import { ErrorMessage, RadioCard, Stack, TextField } from '@ui'
 import { FadeInBox } from '@components/Transitions'
-import {
-    MIN_FIXED_COST_OF_MEMBERSHIP_IN_ETH,
-    MembershipSettingsSchemaType,
-} from '../MembershipNFT/CreateSpaceFormV2/CreateSpaceFormV2.schema'
+import { usePlatformMembershipFeeInEth } from 'hooks/usePlatformMembershipFeeInEth'
+import { MembershipSettingsSchemaType } from '../MembershipNFT/CreateSpaceFormV2/CreateSpaceFormV2.schema'
 
 export function EditPricing({
     // currently, a space cannot switch from fixed to dynamic pricing
@@ -14,6 +12,8 @@ export function EditPricing({
     enableDynamicPricing?: boolean
 }) {
     const { formState, setValue, watch, trigger } = useFormContext<MembershipSettingsSchemaType>()
+    const { data: minimumMmebershipPrice, isLoading: isLoadingMinMembershipPrice } =
+        usePlatformMembershipFeeInEth()
 
     const formProps = useFormContext<MembershipSettingsSchemaType>()
 
@@ -60,15 +60,18 @@ export function EditPricing({
         })
     }, [])
 
-    const onFixedClick = useCallback((formProps: UseFormReturn<MembershipSettingsSchemaType>) => {
-        if (formProps.getValues('membershipPricingType') === 'fixed') {
-            return
-        }
-        formProps.setValue('membershipPricingType', 'fixed')
-        formProps.setValue('membershipCost', MIN_FIXED_COST_OF_MEMBERSHIP_IN_ETH.toString(), {
-            shouldValidate: true,
-        })
-    }, [])
+    const onFixedClick = useCallback(
+        (formProps: UseFormReturn<MembershipSettingsSchemaType>) => {
+            if (formProps.getValues('membershipPricingType') === 'fixed') {
+                return
+            }
+            formProps.setValue('membershipPricingType', 'fixed')
+            formProps.setValue('membershipCost', minimumMmebershipPrice ?? '', {
+                shouldValidate: true,
+            })
+        },
+        [minimumMmebershipPrice],
+    )
 
     return (
         <Stack gap="sm" rounded="md">
@@ -101,6 +104,7 @@ export function EditPricing({
                                 background="level3"
                                 autoComplete="one-time-code"
                                 {...regiserTextFieldResult}
+                                disabled={isLoadingMinMembershipPrice}
                                 border={
                                     formProps.formState.errors['membershipCost']
                                         ? 'negative'
