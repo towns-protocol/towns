@@ -6944,7 +6944,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ^6.10.0
     "@typescript-eslint/parser": ^6.10.0
     debug: ^4.3.4
-    dexie: ^3.2.4
+    dexie: ^4.0.7
     eslint: ^8.53.0
     eslint-import-resolver-typescript: ^3.5.5
     eslint-plugin-import: ^2.27.5
@@ -7128,7 +7128,7 @@ __metadata:
     browser-or-node: ^2.1.1
     bullmq: ^4.10.0
     debug: ^4.3.4
-    dexie: ^3.2.4
+    dexie: ^4.0.7
     eslint: ^8.53.0
     eslint-import-resolver-typescript: ^3.5.5
     eslint-plugin-import: ^2.27.5
@@ -13652,10 +13652,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dexie@npm:^3.2.4":
-  version: 3.2.7
-  resolution: "dexie@npm:3.2.7"
-  checksum: 257504ed23cea2e5ed5c18a17a031c0a44aff70c5b3d6a63536b544cec9027c4c492a608165d5e7a44a104570c92dec2aa59c7bcec0c65f52000f979e1193dfd
+"dexie@npm:^4.0.7":
+  version: 4.0.7
+  resolution: "dexie@npm:4.0.7"
+  checksum: 4cc0bf7b86c1a50b6502b04d7fee4a79eaa69e6f6c6dc1b91b56fb6827fc51c04b9c11ba87c582d94df2387d1a8d1775139a27b259c02746d754ddb1baa86f5f
   languageName: node
   linkType: hard
 
@@ -17152,7 +17152,7 @@ __metadata:
     cmdk: ^0.2.1
     date-fns: ^2.29.3
     debug: ^4.3.4
-    dexie: ^3.2.4
+    dexie: ^4.0.7
     dexie-react-hooks: ^1.1.7
     emoji-mart: ^5.6.0
     eslint: ^8.53.0
@@ -28045,7 +28045,7 @@ __metadata:
     "@typescript-eslint/parser": ^6.10.0
     bullmq: ^4.10.0
     debug: ^4.3.4
-    dexie: ^3.2.4
+    dexie: ^4.0.7
     dotenv: ^16.3.1
     eslint: ^8.53.0
     eslint-plugin-lodash: ^7.4.0

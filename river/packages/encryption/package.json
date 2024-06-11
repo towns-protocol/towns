@@ -24,7 +24,7 @@
         "@river-build/proto": "workspace:^",
         "@river-build/web3": "workspace:^",
         "debug": "^4.3.4",
-        "dexie": "^3.2.4",
+        "dexie": "^4.0.7",
         "ethers": "^5.7.2",
         "nanoid": "^4.0.0",
         "typed-emitter": "^2.1.0"

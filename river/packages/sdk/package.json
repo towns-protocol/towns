@@ -43,7 +43,7 @@
         "axios": "^1.2.6",
         "browser-or-node": "^2.1.1",
         "debug": "^4.3.4",
-        "dexie": "^3.2.4",
+        "dexie": "^4.0.7",
         "ethereum-cryptography": "^1.2.0",
         "ethers": "^5.7.2",
         "lodash": "^4.17.21",
