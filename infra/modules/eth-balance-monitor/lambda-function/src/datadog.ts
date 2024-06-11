@@ -1,7 +1,8 @@
 import { client, v2 } from '@datadog/datadog-api-client'
-import { RiverNodeWalletBalance } from './river-node-wallet-balance'
 import { MetricSeries } from '@datadog/datadog-api-client/dist/packages/datadog-api-client-v2'
 import { RiverNode } from './river-node'
+import { RiverNodeWalletBalance } from './wallet-balance'
+import { RiverNodePingResults } from './ping'
 
 export class DatadogMetrics {
     private readonly apiKey: string
@@ -78,6 +79,34 @@ export class DatadogMetrics {
             return {
                 metric: `river_node.status`,
                 points: [{ timestamp: this.timestamp, value: node.status }],
+                tags,
+            }
+        })
+        console.log('Series:', JSON.stringify(series, null, 2))
+        return this.postSeries(series)
+    }
+
+    public async postNodePingResults(pingNodeResults: RiverNodePingResults) {
+        console.log('Posting node ping results to Datadog:')
+
+        const series = pingNodeResults.map(({ ping, node }) => {
+            const tags = [
+                `env:${this.env}`,
+                `wallet_address:${node.nodeAddress}`,
+                `operator_address:${node.operator}`,
+                `node_url:${encodeURI(node.url)}`,
+            ]
+
+            const value = ping.kind === 'success' ? 1 : 0
+
+            if (ping.kind === 'success') {
+                tags.push(`status:${ping.response.status}`)
+                tags.push(`version:${ping.response.version}`)
+            }
+
+            return {
+                metric: `river_node.ping_success`,
+                points: [{ timestamp: this.timestamp, value }],
                 tags,
             }
         })

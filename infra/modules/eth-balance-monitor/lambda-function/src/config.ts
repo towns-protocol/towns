@@ -1,5 +1,6 @@
 import { SecretsManager } from '@aws-sdk/client-secrets-manager'
 import { isAddress } from 'viem'
+import { Unpromisify } from './utils'
 
 function getEnvVars() {
     const {
@@ -92,8 +93,6 @@ export async function getConfig() {
         riverRegistryContractAddress: RIVER_REGISTRY_CONTRACT_ADDRESS,
     }
 }
-
-type Unpromisify<T> = T extends Promise<infer U> ? U : T
 
 // Exporting the config type by unpromisifying the return type of getConfig
 export type Config = Unpromisify<ReturnType<typeof getConfig>>

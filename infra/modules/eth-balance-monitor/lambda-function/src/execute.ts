@@ -3,6 +3,7 @@ import { Config } from './config'
 import { DatadogMetrics } from './datadog'
 import { RiverRegistry } from './river-registry'
 import { getWalletBalances } from './wallet-balance'
+import { Ping } from './ping'
 
 // This is the main internal execution logic for the lambda. We separete it to help with development and testing.
 // It accepts a Config object, which the lambda puts together from environment variables and AWS Secrets Manager.
@@ -40,6 +41,11 @@ export async function execute(config: Config) {
         env: environment,
     })
 
+    const ping = new Ping(nodes)
+
+    const nodePingResults = await ping.pingNodes()
+
     await datadogMetrics.postWalletBalances(walletBalances)
     await datadogMetrics.postNodeStatusList(nodes)
+    await datadogMetrics.postNodePingResults(nodePingResults)
 }

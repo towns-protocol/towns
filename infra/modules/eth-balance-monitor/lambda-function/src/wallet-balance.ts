@@ -1,6 +1,11 @@
 import { PublicClient, isAddress } from 'viem'
 import { RiverNode } from './river-node'
-import { RiverNodeWalletBalance } from './river-node-wallet-balance'
+
+export interface RiverNodeWalletBalance {
+    node: RiverNode
+    balance: number
+    chain: string
+}
 
 export async function getWalletBalance(
     client: PublicClient,
