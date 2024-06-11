@@ -300,7 +300,7 @@ const Header = (props: {
 
 const InformationBoxes = (props: {
     imageSrc?: string
-    price?: string | number
+    price?: string
     duration?: number
     address?: `0x${string}`
     chainId: number
@@ -332,6 +332,7 @@ const InformationBoxes = (props: {
 
     const durationTexts = useMemo(() => durationTitleSubtitle(duration), [duration])
     const _tokens = useMemo(() => tokensGatingMembership?.tokens ?? [], [tokensGatingMembership])
+    const precisionMultiplier = 1_0_0_0_0_0_0
 
     return (
         <MotionStack
@@ -362,7 +363,10 @@ const InformationBoxes = (props: {
                 placeholder={!price}
                 centerContent={
                     <Text size="lg" fontWeight="strong">
-                        {price}
+                        {price
+                            ? Math.round(parseFloat(price) * precisionMultiplier) /
+                              precisionMultiplier
+                            : undefined}
                     </Text>
                 }
                 subtitle={
