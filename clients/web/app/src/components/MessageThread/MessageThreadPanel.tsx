@@ -56,9 +56,13 @@ export const MessageThreadPanel = (props: Props) => {
             analytics?.track('posted message', tracked, () => {
                 console.log('[analytics] posted message (thread)', tracked)
             })
-            sendReply(value, channelId, options, parent?.userIds)
+            const userIds = parent?.userIds ?? new Set<string>()
+            if (parent?.parentEvent) {
+                userIds.add(parent.parentEvent.sender.id)
+            }
+            sendReply(value, channelId, options, userIds)
         },
-        [analytics, channelId, parent?.userIds, sendReply, spaceId],
+        [analytics, channelId, parent, sendReply, spaceId],
     )
 
     const userId = useMyProfile()?.userId

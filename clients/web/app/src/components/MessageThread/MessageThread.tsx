@@ -71,7 +71,11 @@ export const MessageThread = (props: {
     const { sendReply } = useSendReply(parentId, parentMessage?.fallbackContent)
 
     const onSend = (value: string, options: SendMessageOptions | undefined) => {
-        sendReply(value, channelId, options, parent?.userIds)
+        const userIds = parent?.userIds ?? new Set<string>()
+        if (parent?.parentEvent) {
+            userIds.add(parent.parentEvent.sender.id)
+        }
+        sendReply(value, channelId, options, userIds)
     }
 
     const profile = useMyProfile()
