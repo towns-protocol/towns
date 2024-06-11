@@ -398,7 +398,7 @@ func (occ *onChainConfiguration) All() (*AllSettings, error) {
 
 func (ocs *onChainSettings) Remove(key chainKeyImpl, activeOnBlockNumber uint64) {
 	var (
-		log   = dlog.FromCtx(context.Background())
+		log   = dlog.FromCtx(context.Background()) // lint:ignore context.Background() is fine here
 		keyID = key.ID()
 	)
 
@@ -419,7 +419,7 @@ func (ocs *onChainSettings) Remove(key chainKeyImpl, activeOnBlockNumber uint64)
 // given block number.
 func (ocs *onChainSettings) Set(key chainKeyImpl, activeOnBlockNumber uint64, value any) {
 	var (
-		log   = dlog.FromCtx(context.Background())
+		log   = dlog.FromCtx(context.Background()) // lint:ignore context.Background() is fine here
 		keyID = key.ID()
 	)
 
