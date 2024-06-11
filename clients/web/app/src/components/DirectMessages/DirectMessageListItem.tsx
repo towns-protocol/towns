@@ -83,31 +83,29 @@ export const DirectMessageRowContent = (props: {
                         )}
                     </Box>
                 </Stack>
-                <Stack horizontal>
-                    {/* truncated message body */}
-                    <Text>
-                        {/* nested text hack to get cap-size vertical margins right */}
-                        <Text
-                            color={unread ? 'default' : 'gray2'}
-                            size="sm"
-                            style={{
-                                // todo: experiment with this, may not keep
-                                // and if we keep it will move into the Text component
-                                padding: '4px 0',
-                                WebkitLineClamp: 2,
-                                WebkitBoxOrient: 'vertical',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                display: '-webkit-box',
-                            }}
-                        >
-                            <LastDirectMessageContent
-                                info={latest?.info}
-                                latestUser={latestUser}
-                                myUserId={myUserId}
-                                channel={channel}
-                            />
-                        </Text>
+                <Stack horizontal style={{ maxHeight: 38 }}>
+                    <Text
+                        color={unread ? 'default' : 'gray2'}
+                        size="sm"
+                        style={{
+                            // todo: experiment with this, may not keep
+                            // and if we keep it will move into the Text component
+                            paddingTop: '4px',
+                            paddingBottom: '5px',
+                            marginBottom: '-4px',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            display: '-webkit-box',
+                        }}
+                    >
+                        <LastDirectMessageContent
+                            info={latest?.info}
+                            latestUser={latestUser}
+                            myUserId={myUserId}
+                            channel={channel}
+                        />
                     </Text>
                     {/* date on the right */}
                     {unread && (
