@@ -398,7 +398,7 @@ func (occ *onChainConfiguration) All() (*AllSettings, error) {
 
 func (ocs *onChainSettings) Remove(key chainKeyImpl, activeOnBlockNumber uint64) {
 	var (
-		log   = dlog.Log()
+		log   = dlog.FromCtx(context.Background())
 		keyID = key.ID()
 	)
 
@@ -419,8 +419,8 @@ func (ocs *onChainSettings) Remove(key chainKeyImpl, activeOnBlockNumber uint64)
 // given block number.
 func (ocs *onChainSettings) Set(key chainKeyImpl, activeOnBlockNumber uint64, value any) {
 	var (
+		log   = dlog.FromCtx(context.Background())
 		keyID = key.ID()
-		log   = dlog.Log()
 	)
 
 	ocs.mu.Lock()
