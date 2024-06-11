@@ -68,6 +68,7 @@ const defaultValues = {
 }
 
 async function postCustomError(data: FormState) {
+    const ENV = env.VITE_RIVER_ENV ?? env.VITE_RIVER_DEFAULT_ENV ?? 'localhost'
     const GATEWAY_SERVER_URL = env.VITE_GATEWAY_URL
     const url = `${GATEWAY_SERVER_URL}/user-feedback`
     // generate a uuid for the custom error
@@ -95,6 +96,7 @@ async function postCustomError(data: FormState) {
         deviceType = 'Device type: Laptop/Desktop'
     }
 
+    data.comments += `\n\nEnvironment: ${ENV}`
     data.comments += `\n\nVersion: ${env.VITE_APP_RELEASE_VERSION}`
     data.comments += `\n\nUser Agent:  + ${navigator.userAgent}`
     data.comments += `\n\nDevice Type: ${deviceType}`
@@ -103,7 +105,7 @@ async function postCustomError(data: FormState) {
     const uuid = crypto.randomUUID()
 
     const formData = new FormData()
-
+    formData.append('env', ENV)
     formData.append('name', data.name)
     formData.append('email', data.email)
     formData.append('comments', data.comments)

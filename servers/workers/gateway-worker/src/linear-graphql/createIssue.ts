@@ -3,6 +3,7 @@ import { Uploaded } from './uploadLogFile'
 
 interface IssueCreateInput {
     config: LinearConfig
+    env: string
     name: string
     comments: string
     id: string
@@ -13,6 +14,7 @@ interface IssueCreateInput {
 }
 
 export async function createIssue({
+    env,
     config,
     comments,
     name,
@@ -38,7 +40,7 @@ mutation CreateIssue($issueTitle: String!, $issueDescription: String!){
 }
 `
     const issueTitleCutoff = 80
-    const issueTitleRaw = `[User Feedback] ${comments}`
+    const issueTitleRaw = `[${env}][User Feedback] ${comments}`
     const issueTitle =
         issueTitleRaw.length > issueTitleCutoff
             ? issueTitleRaw.substring(0, issueTitleCutoff) + '...'

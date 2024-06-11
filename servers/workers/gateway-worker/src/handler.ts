@@ -288,6 +288,7 @@ router.get('/space/:id/identity', async (request: WorkerRequest, env) => {
 router.post('/user-feedback', async (request: WorkerRequest, env) => {
     const formData = await request.formData()
     const requestBody = {
+        env: formData.get('env') as string,
         id: formData.get('id') as string,
         name: formData.get('name') as string,
         email: formData.get('email') as string,

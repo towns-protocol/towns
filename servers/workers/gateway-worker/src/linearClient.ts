@@ -5,6 +5,7 @@ import { saveLogFile } from './linear-graphql/saveLogFile'
 import { Uploaded, uploadFile } from './linear-graphql/uploadLogFile'
 
 interface CreateLinearIssueInput {
+    env: string
     config: LinearConfig
     id: string
     name: string
@@ -15,6 +16,7 @@ interface CreateLinearIssueInput {
 }
 
 export async function createLinearIssue({
+    env,
     config,
     id,
     name,
@@ -34,6 +36,7 @@ export async function createLinearIssue({
 
     // Create issue
     await createIssue({
+        env,
         config,
         name,
         email,
