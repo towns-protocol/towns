@@ -13,11 +13,11 @@ type UseConnectivtyReturnValue = ReturnType<typeof useConnectivity>
 
 export function useAutoLoginToRiverIfEmbeddedWallet({
     riverLogin,
-    riverLoginError,
+    riverAuthError,
     isRiverAuthencticated,
 }: {
     riverLogin: UseConnectivtyReturnValue['login']
-    riverLoginError: UseConnectivtyReturnValue['loginError']
+    riverAuthError: UseConnectivtyReturnValue['authError']
     isRiverAuthencticated: UseConnectivtyReturnValue['isAuthenticated']
 }) {
     const getSigner = useGetEmbeddedSigner()
@@ -120,11 +120,11 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
     })
 
     useEffect(() => {
-        if (riverLoginError) {
+        if (riverAuthError) {
             send('NO_SIGNER')
             endPublicPageLoginFlow()
         }
-    }, [riverLoginError, send, endPublicPageLoginFlow])
+    }, [riverAuthError, send, endPublicPageLoginFlow])
 
     const resetAutoLoginState = useCallback(() => {
         send('RESET')

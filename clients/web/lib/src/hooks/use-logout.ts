@@ -2,18 +2,18 @@ import { useTownsContext } from '../components/TownsContextProvider'
 import { useCallback } from 'react'
 import { useCredentialStore } from '../store/use-credential-store'
 import { useCasablancaStore } from '../store/use-casablanca-store'
-import { LoginStatus } from './login'
+import { AuthStatus } from './login'
 
 export const useLogout = () => {
     const { environmentId } = useTownsContext()
-    const { setLoginStatus } = useCasablancaStore()
+    const { setAuthStatus } = useCasablancaStore()
     const { setCasablancaCredentials } = useCredentialStore()
 
     const { client } = useTownsContext()
 
     return useCallback(
         async function (): Promise<void> {
-            setLoginStatus(LoginStatus.LoggingOut)
+            setAuthStatus(AuthStatus.DisconnectingFromRiver)
             if (client) {
                 try {
                     await client.logout()
@@ -25,11 +25,11 @@ export const useLogout = () => {
                 }
             }
 
-            setLoginStatus(LoginStatus.LoggedOut)
+            setAuthStatus(AuthStatus.None)
             if (environmentId) {
                 setCasablancaCredentials(environmentId, null)
             }
         },
-        [setLoginStatus, client, environmentId, setCasablancaCredentials],
+        [setAuthStatus, client, environmentId, setCasablancaCredentials],
     )
 }

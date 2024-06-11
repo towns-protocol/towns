@@ -7,12 +7,8 @@ const loginMsgToSign = `Click to sign in and accept the Towns Terms of Service.`
 export const registerWalletMsgToSign = `Click to register and accept the Towns Terms of Service.`
 
 export function useConnectivity() {
-    const casablancaCredentials = useCasablancaCredentials()
-
-    const isAuthenticated = casablancaCredentials.isAuthenticated
-    const loginStatus = casablancaCredentials.loginStatus
-    const loginError = casablancaCredentials.loginError
-    const loggedInWalletAddress = casablancaCredentials.loggedInWalletAddress
+    const { isAuthenticated, authStatus, authError, loggedInWalletAddress } =
+        useCasablancaCredentials()
 
     const {
         loginWithWalletToCasablanca,
@@ -50,7 +46,7 @@ export function useConnectivity() {
         getIsWalletRegistered,
         loggedInWalletAddress,
         isAuthenticated, // authenticated with River node or not
-        loginStatus,
-        loginError,
+        authStatus,
+        authError,
     }
 }

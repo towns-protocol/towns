@@ -8,7 +8,7 @@ import {
     userIdFromAddress,
 } from '@river/sdk'
 import { useEffect } from 'react'
-import { LoginStatus, makeProviderFromConfig, useConnectivity } from 'use-towns-client'
+import { AuthStatus, makeProviderFromConfig, useConnectivity } from 'use-towns-client'
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { useShallow } from 'zustand/react/shallow'
@@ -80,7 +80,7 @@ const useFetchStore = create(
 )
 
 export const useFetchUnauthenticatedActivity = (townId: string) => {
-    const { loginStatus } = useConnectivity()
+    const { authStatus } = useConnectivity()
     const {
         isLoading,
         members,
@@ -105,7 +105,7 @@ export const useFetchUnauthenticatedActivity = (townId: string) => {
 
     const { riverChainConfig, riverChain } = useEnvironment()
     useEffect(() => {
-        if (!riverChainConfig || loginStatus === LoginStatus.LoggingIn) {
+        if (!riverChainConfig || authStatus === AuthStatus.EvaluatingCredentials) {
             return
         }
         const abortController = new AbortController()
@@ -208,7 +208,7 @@ export const useFetchUnauthenticatedActivity = (townId: string) => {
             abortController.abort()
         }
     }, [
-        loginStatus,
+        authStatus,
         riverChain,
         riverChainConfig,
         setChannelStats,

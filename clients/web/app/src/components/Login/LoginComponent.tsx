@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react'
-import { LoginStatus, useConnectivity } from 'use-towns-client'
+import { AuthStatus, useConnectivity } from 'use-towns-client'
 import { usePrivy } from '@privy-io/react-auth'
 import { useCombinedAuth } from 'privy/useCombinedAuth'
 import { Box, FancyButton } from '@ui'
@@ -20,11 +20,11 @@ function LoginComponent({
 }: LoginComponentProps) {
     const { ready: privyReady } = usePrivy()
     const { login, isAutoLoggingInToRiver } = useCombinedAuth()
-    const { loginError, loginStatus: libLoginStatus } = useConnectivity()
+    const { authError, authStatus: libAuthStatus } = useConnectivity()
 
-    const errorMessage = loginError ? mapToErrorMessage(loginError) : undefined
+    const errorMessage = authError ? mapToErrorMessage(authError) : undefined
 
-    const isBusy = libLoginStatus === LoginStatus.LoggingIn || isAutoLoggingInToRiver
+    const isBusy = libAuthStatus === AuthStatus.EvaluatingCredentials || isAutoLoggingInToRiver
 
     const { analytics } = useAnalytics()
 
@@ -35,7 +35,7 @@ function LoginComponent({
         // on app load user starts in a logging in state.
         // The goal is to never show this button in that state.
         // but in case this component appears, just let the spinner show
-        if (LoginStatus.LoggingIn === libLoginStatus) {
+        if (AuthStatus.EvaluatingCredentials === libAuthStatus) {
             return ''
         }
         return text
@@ -65,7 +65,7 @@ function LoginComponent({
         contextMessage: 'There was an error logging in, please try again.',
     })
 
-    if (LoginStatus.LoggingIn === libLoginStatus) {
+    if (AuthStatus.EvaluatingCredentials === libAuthStatus) {
         return <></>
     }
 

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import {
-    LoginStatus,
+    AuthStatus,
     Membership,
     useConnectivity,
     useTownsClient,
@@ -20,7 +20,7 @@ export const NoJoinedSpacesFallback = () => {
     const navigate = useNavigate()
     const { spaces } = useTownsContext()
     const { client } = useTownsClient()
-    const { loginStatus } = useConnectivity()
+    const { authStatus } = useConnectivity()
     const { clientStatus } = useTownsContext()
 
     const spaceIdBookmark = useStore((s) => {
@@ -86,7 +86,7 @@ export const NoJoinedSpacesFallback = () => {
                 debugSource="no-joined-spaces spaces.length"
             />
         )
-    } else if (loginStatus === LoginStatus.LoggingIn) {
+    } else if (authStatus === AuthStatus.EvaluatingCredentials) {
         console.log('[app progress] no joined spaces fallback: logging in')
         return (
             <AppProgressOverlayTrigger
@@ -94,7 +94,7 @@ export const NoJoinedSpacesFallback = () => {
                 debugSource="no-joined-spaces login"
             />
         )
-    } else if (loginStatus === LoginStatus.LoggedIn && !clientStatus.isLocalDataLoaded) {
+    } else if (authStatus === AuthStatus.ConnectedToRiver && !clientStatus.isLocalDataLoaded) {
         console.log('[app progress] no joined spaces fallback: InitializingWorkspace')
         return (
             <AppProgressOverlayTrigger

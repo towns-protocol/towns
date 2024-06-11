@@ -86,7 +86,7 @@ type Overlay = undefined | 'main-panel' | 'create-channel' | 'browse-channels'
 
 export const TouchHome = () => {
     const space = useSpaceData()
-    const { loggedInWalletAddress, loginStatus } = useConnectivity()
+    const { loggedInWalletAddress, authStatus } = useConnectivity()
     const [isSearching, setIsSearching] = useState<boolean>(false)
     const [searchString, setSearchString] = useState<string>('')
     const [caretVisible, setCaretVisible] = useState<boolean>(false)
@@ -124,14 +124,14 @@ export const TouchHome = () => {
 
     useEffect(() => {
         console.log('[TouchHome][route]', 'route', {
-            loginStatus,
+            authStatus,
             spaceId,
             storeBookmarkedSpaceId: storeBookmarkedSpaceId ?? 'undefined',
             locationPathname: location.pathname,
             storeBookmarkedRoute: storeBookmarkedRoute ?? 'undefined',
             locationSearch: location.search,
         })
-    }, [loginStatus, spaceId, storeBookmarkedRoute, storeBookmarkedSpaceId])
+    }, [authStatus, spaceId, storeBookmarkedRoute, storeBookmarkedSpaceId])
 
     useEffect(() => {
         analytics?.page(

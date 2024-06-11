@@ -3,7 +3,7 @@ import { useCallback } from 'react'
 import { credentialsFromSignerContext, useCredentialStore } from '../store/use-credential-store'
 import { useTownsContext } from '../components/TownsContextProvider'
 import { useCasablancaStore } from '../store/use-casablanca-store'
-import { LoginStatus } from './login'
+import { AuthStatus } from './login'
 import { TSigner, Address } from '../types/web3-types'
 import { SignerUndefinedError } from '../types/error-types'
 import { makeSignerContext } from '@river/sdk'
@@ -11,7 +11,7 @@ import { makeSignerContext } from '@river/sdk'
 export function useCasablancaWalletSignIn() {
     const { environmentId } = useTownsContext()
     const { setCasablancaCredentials } = useCredentialStore()
-    const { setLoginError, setLoginStatus } = useCasablancaStore()
+    const { setAuthError, setAuthStatus } = useCasablancaStore()
 
     const getIsWalletRegisteredWithCasablanca = useCallback(async () => {
         // currently we don't need to register? you can just login with your wallet
@@ -37,17 +37,17 @@ export function useCasablancaWalletSignIn() {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (e: any) {
                 console.error('loginWithWalletToCasablanca error', e)
-                setLoginError({
+                setAuthError({
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                     code: e?.code ?? 0,
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/restrict-template-expressions
                     message: e?.message ?? `${e}`,
                     error: e as Error,
                 })
-                setLoginStatus(LoginStatus.LoggedOut)
+                setAuthStatus(AuthStatus.None)
             }
         },
-        [environmentId, setCasablancaCredentials, setLoginError, setLoginStatus],
+        [environmentId, setAuthError, setAuthStatus, setCasablancaCredentials],
     )
 
     const registerWalletWithCasablanca = useCallback(

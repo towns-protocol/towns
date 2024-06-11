@@ -53,14 +53,14 @@ function useCombinedAuthContext(): CombinedAuthContext {
         logout: riverLogout,
         loggedInWalletAddress,
         isAuthenticated: riverIsAuthenticated,
-        loginError,
+        authError,
     } = useConnectivity()
     const { logout: privyLogout } = usePrivy()
 
     const { isAutoLoggingInToRiver, loginToRiverAfterPrivy, resetAutoLoginState } =
         useAutoLoginToRiverIfEmbeddedWallet({
             riverLogin,
-            riverLoginError: loginError,
+            riverAuthError: authError,
             isRiverAuthencticated: riverIsAuthenticated,
         })
 

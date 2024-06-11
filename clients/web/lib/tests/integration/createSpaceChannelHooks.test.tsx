@@ -18,6 +18,7 @@ import { TestConstants } from './helpers/TestConstants'
 import { NoopRuleData, getDynamicPricingModule } from '@river-build/web3'
 import { useTownsClient } from '../../src/hooks/use-towns-client'
 import { ethers } from 'ethers'
+import { AuthStatus } from '../../src/hooks/login'
 
 /// regression, channels weren't showing in sidebar after they were created
 describe('createSpaceChannelHooks', () => {
@@ -130,7 +131,7 @@ describe('createSpaceChannelHooks', () => {
         )
         // get our test elements
         const clientRunning = screen.getByTestId('clientRunning')
-        const loginStatus = screen.getByTestId('loginStatus')
+        const authStatus = screen.getByTestId('authStatus')
         const spaceData = screen.getByTestId('spaceData')
         const channelGroups = screen.getByTestId('channelGroups')
         const createSpace = screen.getByRole('button', {
@@ -142,7 +143,7 @@ describe('createSpaceChannelHooks', () => {
         const leaveChannel = screen.getByRole('button', {
             name: 'leaveChannel',
         })
-        await waitFor(() => expect(loginStatus).toHaveTextContent('Authenticated'))
+        await waitFor(() => expect(authStatus).toHaveTextContent(AuthStatus.Credentialed))
         await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
         //
         // create a space

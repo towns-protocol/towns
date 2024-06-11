@@ -13,10 +13,7 @@ import { useUpdateRoleTransaction } from '../../../src/hooks/use-update-role-tra
 import { useUpdateSpaceNameTransaction } from '../../../src/hooks/use-update-space-name-transaction'
 
 export const RegisterWallet = ({ signer }: { signer: TSigner }) => {
-    const riverCridentials = useCasablancaCredentials()
-    const loginStatus = riverCridentials.loginStatus
-    const loginError = riverCridentials.loginError
-    const userId = riverCridentials.userId
+    const { userId, authError, authStatus } = useCasablancaCredentials()
 
     const { clientRunning, registerWalletWithCasablanca } = useTownsClient()
     const registeringWallet = useRef(false)
@@ -37,17 +34,15 @@ export const RegisterWallet = ({ signer }: { signer: TSigner }) => {
             <div data-testid="isConnected">{isConnected.toString()}</div>
             <div data-testid="registeredWallet">{String(registeredWallet)}</div>
             <div data-testid="userId">{userId}</div>
-            <div data-testid="loginStatus">{loginStatus}</div>
-            <div data-testid="loginError">{loginError?.message ?? ''}</div>
+            <div data-testid="authStatus">{authStatus}</div>
+            <div data-testid="authError">{authError?.message ?? ''}</div>
             <div data-testid="clientRunning">{clientRunning ? 'true' : 'false'}</div>
         </>
     )
 }
 
 export const LoginWithWallet = ({ signer }: { signer: TSigner }) => {
-    const riverCridentials = useCasablancaCredentials()
-    const loginStatus = riverCridentials.loginStatus
-    const loginError = riverCridentials.loginError
+    const { authStatus, authError } = useCasablancaCredentials()
     const { clientRunning, loginWithWalletToCasablanca } = useTownsClient()
     const logingInWithWallet = useRef(false)
     const isConnected = Boolean(signer.provider)
@@ -64,8 +59,8 @@ export const LoginWithWallet = ({ signer }: { signer: TSigner }) => {
     return (
         <>
             <div data-testid="isConnected">{isConnected.toString()}</div>
-            <div data-testid="loginStatus">{loginStatus}</div>
-            <div data-testid="loginError">{loginError?.message ?? ''}</div>
+            <div data-testid="authStatus">{authStatus}</div>
+            <div data-testid="authError">{authError?.message ?? ''}</div>
             <div data-testid="clientRunning">{clientRunning ? 'true' : 'false'}</div>
         </>
     )

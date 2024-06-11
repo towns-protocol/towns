@@ -9,7 +9,7 @@ import {
     Theme,
     Typography,
 } from '@mui/material'
-import { LoginStatus, useCasablancaStore, useConnectivity, useTownsClient } from 'use-towns-client'
+import { AuthStatus, useCasablancaStore, useConnectivity, useTownsClient } from 'use-towns-client'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { makeStyles } from '@mui/styles'
@@ -24,7 +24,7 @@ const loginMsgToSign = `Click to sign in and accept the Harmony Terms of Service
 export function Login(): JSX.Element {
     const styles = useStyles()
     const [showError, setShowError] = useState<string | undefined>(undefined)
-    const { loginError: casablancaLoginError } = useCasablancaStore()
+    const { authError: casabalancaAuthError } = useCasablancaStore()
     const { authenticated: privyAuthenticated } = usePrivy()
 
     const onCloseAlert = useCallback(function () {
@@ -32,12 +32,12 @@ export function Login(): JSX.Element {
     }, [])
 
     useEffect(() => {
-        if (casablancaLoginError?.message) {
-            setShowError(casablancaLoginError.message)
+        if (casabalancaAuthError?.message) {
+            setShowError(casabalancaAuthError.message)
         } else {
             setShowError('')
         }
-    }, [casablancaLoginError])
+    }, [casabalancaAuthError])
 
     return (
         <div className={styles.container}>
@@ -61,7 +61,7 @@ export function Login(): JSX.Element {
 
 function NetworkInfo() {
     const { loginWithWalletToCasablanca } = useTownsClient()
-    const { loginStatus: casablancaLoginStatus } = useCasablancaStore()
+    const { authStatus: casablancaAuthStatus } = useCasablancaStore()
     const { id: environmentId } = useEnvironment()
     const { isAuthenticated } = useConnectivity()
     const getSigner = useGetEmbeddedSigner()
@@ -75,9 +75,9 @@ function NetworkInfo() {
     )
 
     const casablancaButton = useMemo(() => {
-        if (casablancaLoginStatus === LoginStatus.LoggingIn) {
+        if (casablancaAuthStatus === AuthStatus.EvaluatingCredentials) {
             return <CircularProgress size={56} />
-        } else if (casablancaLoginStatus === LoginStatus.LoggedOut || !isAuthenticated) {
+        } else if (casablancaAuthStatus === AuthStatus.None || !isAuthenticated) {
             return (
                 <ChainSwitchingButton
                     variant="contained"
@@ -91,11 +91,11 @@ function NetworkInfo() {
         } else {
             return (
                 <Typography variant="h6" component="span">
-                    Casablanca Login Status: {casablancaLoginStatus}
+                    Casablanca Login Status: {casablancaAuthStatus}
                 </Typography>
             )
         }
-    }, [casablancaLoginStatus, isAuthenticated, onLoginCasablanca])
+    }, [casablancaAuthStatus, isAuthenticated, onLoginCasablanca])
 
     //{`Remote Url: ${(casablancaUrl ?? '').substring(0, 50)}`}
     return (
@@ -136,26 +136,26 @@ function PrivyInfo() {
         //logout: riverLogout,
         loggedInWalletAddress,
         isAuthenticated: riverIsAuthenticated,
-        loginError,
-        loginStatus: riverLoginStatus,
+        authError: riverAuthError,
+        authStatus: riverAuthStatus,
     } = useConnectivity()
 
     useEffect(() => {
         console.log('Login.tsx::useConnectivity', {
             privyReady,
             privyAuthenticated,
-            riverLoginStatus,
+            riverAuthStatus,
             loggedInWalletAddress,
             riverIsAuthenticated,
-            loginError,
+            riverAuthError,
         })
     }, [
         loggedInWalletAddress,
-        loginError,
         privyAuthenticated,
         privyReady,
+        riverAuthError,
+        riverAuthStatus,
         riverIsAuthenticated,
-        riverLoginStatus,
     ])
 
     if (!privyReady) {

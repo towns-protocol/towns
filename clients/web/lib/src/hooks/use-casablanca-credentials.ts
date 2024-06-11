@@ -11,7 +11,7 @@ export function useCasablancaCredentials() {
     const credentials = useCredentialStore(
         (state) => state.casablancaCredentialsMap[environmentId ?? ''] ?? undefined,
     )
-    const { loginStatus, loginError } = useCasablancaStore()
+    const { authStatus, authError } = useCasablancaStore()
     const isAuthenticated = credentials?.delegateSig !== undefined
     return {
         //Our flow assumes that userId can be empty in some cases, so we need to handle it
@@ -20,8 +20,8 @@ export function useCasablancaCredentials() {
             : credentials?.creatorAddress,
         loggedInWalletAddress: credentials?.loggedInWalletAddress,
         isAuthenticated,
-        loginStatus,
-        loginError,
+        authStatus,
+        authError,
     }
 }
 

@@ -7,7 +7,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { TownsTestApp } from './helpers/TownsTestApp'
 import { useMyProfile } from '../../src/hooks/use-my-profile'
 import { RegisterWallet } from './helpers/TestComponents'
-import { LoginStatus } from '../../src/hooks/login'
+import { AuthStatus } from '../../src/hooks/login'
 import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
 import { TestConstants } from './helpers/TestConstants'
 
@@ -39,8 +39,8 @@ describe('userProfileOnboardingHooks', () => {
             TestConstants.DoubleDefaultWaitForTimeout,
         )
         const myProfileName = screen.getByTestId('myProfileName')
-        const loginStatus = screen.getByTestId('loginStatus')
-        await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.Authenticated))
+        const authStatus = screen.getByTestId('authStatus')
+        await waitFor(() => expect(authStatus).toHaveTextContent(AuthStatus.Credentialed))
 
         // verify alice userid is rendering
         await waitFor(() => expect(myProfileName).toHaveTextContent(aliceProvider.wallet.address))

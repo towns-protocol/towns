@@ -11,7 +11,7 @@ import {
 } from './helpers/TestUtils'
 import { render, screen, waitFor } from '@testing-library/react'
 
-import { LoginStatus } from '../../src/hooks/login'
+import { AuthStatus } from '../../src/hooks/login'
 import { Permission } from '@river-build/web3'
 import React from 'react'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
@@ -88,10 +88,10 @@ describe('spaceHierarchyHooks', () => {
             </TownsTestApp>,
         )
         // gather our test elements
-        const loginStatus = screen.getByTestId('loginStatus')
+        const authStatus = screen.getByTestId('authStatus')
         const spaceChildCount = screen.getByTestId('spaceChildCount')
         // wait for registration
-        await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn))
+        await waitFor(() => expect(authStatus).toHaveTextContent(AuthStatus.ConnectedToRiver))
         // expect the initial space child count to include the channel bob created and the default channel
         await waitFor(
             () => expect(spaceChildCount).toHaveTextContent('2'),

@@ -11,7 +11,7 @@ import { LoginWithWallet } from './helpers/TestComponents'
 import { fireEvent, render, screen, waitFor, act } from '@testing-library/react'
 import { TownsTestApp } from './helpers/TownsTestApp'
 import { createTestSpaceGatedByTownNft, registerAndStartClients } from './helpers/TestUtils'
-import { LoginStatus } from '../../src/hooks/login'
+import { AuthStatus } from '../../src/hooks/login'
 import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
 import { useTownsClient } from '../../src/hooks/use-towns-client'
 import { sleep } from '../../src/utils/towns-utils'
@@ -72,12 +72,12 @@ describe('signInFromGlobalStorageHooks', () => {
         )
         // get our test elements
         const isConnected = screen.getByTestId('isConnected')
-        const loginStatus = screen.getByTestId('loginStatus')
+        const authStatus = screen.getByTestId('authStatus')
         const dbs = await indexedDB.databases()
         // one for casablanca crypto, one for persistent storage, one for user-lookups
         expect(dbs.length).toEqual(3)
         await waitFor(() => expect(isConnected).toHaveTextContent(true.toString()))
-        await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn))
+        await waitFor(() => expect(authStatus).toHaveTextContent(AuthStatus.ConnectedToRiver))
     }) // end test
 
     test('Stage 2 test reading prior auth objects and logged in state from localStorage', async () => {
@@ -113,13 +113,13 @@ describe('signInFromGlobalStorageHooks', () => {
             const isConnected = Boolean(dummyProvider.wallet.provider)
             const { delegateSig } =
                 useCredentialStore().casablancaCredentialsMap[environmentId ?? ''] ?? {}
-            const { loginStatus, loginError } = useCasablancaStore()
+            const { authStatus, authError } = useCasablancaStore()
             const { logout } = useTownsClient()
 
             return (
                 <>
-                    <div data-testid="loginStatus">{loginStatus}</div>
-                    <div data-testid="loginError">{loginError?.message ?? ''}</div>
+                    <div data-testid="authStatus">{authStatus}</div>
+                    <div data-testid="authError">{authError?.message ?? ''}</div>
                     <div data-testid="isConnected">{isConnected.toString()}</div>
                     <div data-testid="delegateSig">{delegateSig}</div>
                     <button data-testid="logout" onClick={() => void logout()}>
@@ -136,7 +136,7 @@ describe('signInFromGlobalStorageHooks', () => {
             </TownsTestApp>,
         )
         const isConnected = screen.getByTestId('isConnected')
-        const loginStatus = screen.getByTestId('loginStatus')
+        const authStatus = screen.getByTestId('authStatus')
         const delegateSig = screen.getByTestId('delegateSig')
         const logoutButton = screen.getByRole('button', {
             name: 'logout',
@@ -148,10 +148,10 @@ describe('signInFromGlobalStorageHooks', () => {
                 credentialStore.state.casablancaCredentialsMap[environmentId].delegateSig,
             ),
         )
-        await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn))
+        await waitFor(() => expect(authStatus).toHaveTextContent(AuthStatus.ConnectedToRiver))
         // logout
         fireEvent.click(logoutButton)
-        await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedOut))
+        await waitFor(() => expect(authStatus).toHaveTextContent(AuthStatus.None))
     })
     test('Stage 4 test stores are cleared after logout', async () => {
         console.log('$$$$ #4 test stores are cleared after logout')
@@ -165,13 +165,13 @@ describe('signInFromGlobalStorageHooks', () => {
         // build a view for alice to render
         const TestComponent = () => {
             const isConnected = Boolean(dummyProvider.wallet.provider)
-            const { loginStatus, loginError } = useCasablancaStore()
-            console.log('$$$$ loginStatus', { isConnected, loginStatus })
+            const { authStatus, authError } = useCasablancaStore()
+            console.log('$$$$ authStatus', { isConnected, authStatus })
             const { casablancaCredentialsMap } = useCredentialStore()
             return (
                 <>
-                    <div data-testid="loginStatus">{loginStatus}</div>
-                    <div data-testid="loginError">{loginError?.message ?? ''}</div>
+                    <div data-testid="authStatus">{authStatus}</div>
+                    <div data-testid="authError">{authError?.message ?? ''}</div>
                     <div data-testid="isConnected">{isConnected.toString()}</div>
                     <div data-testid="casablancaCredentialsMap">
                         {JSON.stringify(casablancaCredentialsMap)}
@@ -187,13 +187,13 @@ describe('signInFromGlobalStorageHooks', () => {
             </TownsTestApp>,
         )
         const isConnected = screen.getByTestId('isConnected')
-        const loginStatus = screen.getByTestId('loginStatus')
+        const authStatus = screen.getByTestId('authStatus')
 
         await waitFor(() => expect(isConnected).toHaveTextContent(true.toString()))
         // give it a little time
         await sleep(1000)
         // check that alice does not get logged back in
-        await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedOut))
+        await waitFor(() => expect(authStatus).toHaveTextContent(AuthStatus.None))
         console.log('$$$$ stage 4 done')
     })
     test('Stage 5 test logging back in after logout should have a different deviceId', async () => {
@@ -205,9 +205,9 @@ describe('signInFromGlobalStorageHooks', () => {
         )
         // get our test elements
         const isConnected = screen.getByTestId('isConnected')
-        const loginStatus = screen.getByTestId('loginStatus')
+        const authStatus = screen.getByTestId('authStatus')
         await waitFor(() => expect(isConnected).toHaveTextContent(true.toString()))
-        await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn))
+        await waitFor(() => expect(authStatus).toHaveTextContent(AuthStatus.ConnectedToRiver))
 
         const dbs = await indexedDB.databases()
         // should not create an additional db, one for persistent storage

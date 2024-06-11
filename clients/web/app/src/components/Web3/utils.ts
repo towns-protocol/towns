@@ -37,7 +37,7 @@ export function formatEthDisplay(num: number) {
 const walletLinkError = new WalletAlreadyLinkedError()
 const walletNotLinkedError = new WalletNotLinkedError()
 
-type AuthError = ReturnType<(typeof useCasablancaStore)['getState']>['loginError']
+type AuthError = ReturnType<(typeof useCasablancaStore)['getState']>['authError']
 type ErrorTypes = Error | AuthError
 
 export function mapToErrorMessage(error: ErrorTypes | undefined) {

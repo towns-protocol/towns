@@ -1,7 +1,7 @@
 import { MutableRefObject, useEffect, useRef, useState } from 'react'
 import { Client as CasablancaClient, SignerContext } from '@river/sdk'
 import { check } from '@river-build/dlog'
-import { LoginStatus } from './login'
+import { AuthStatus } from './login'
 import { TownsClient } from '../client/TownsClient'
 import { TownsOpts } from '../client/TownsClientTypes'
 import {
@@ -18,7 +18,7 @@ import { useNetworkStatus } from './use-network-status'
 import { useSpaceDapp } from './use-space-dapp'
 
 export const useTownsClientListener = (opts: TownsOpts) => {
-    const { setLoginStatus: setCasablancaLoginStatus, setLoginError: setCasablancaLoginError } =
+    const { setAuthStatus: setCasablancaAuthStatus, setAuthError: setCasablancaAuthError } =
         useCasablancaStore()
     const { casablancaCredentialsMap, clearCasablancaCredentials } = useCredentialStore()
     const casablancaCredentials = casablancaCredentialsMap[opts.environmentId ?? '']
@@ -53,7 +53,7 @@ export const useTownsClientListener = (opts: TownsOpts) => {
 
         const onStateMachineUpdated = (state: States) => {
             setCasablancaClient(state.casablancaClient)
-            setCasablancaLoginStatus(state.loginStatus)
+            setCasablancaAuthStatus(state.authStatus)
             setSignerContext(state.signerContext)
         }
 
@@ -71,7 +71,7 @@ export const useTownsClientListener = (opts: TownsOpts) => {
                 message: string
                 error: Error
             }
-            setCasablancaLoginError({
+            setCasablancaAuthError({
                 code: _error?.code ?? 0,
                 message: _error?.message ?? `${JSON.stringify(e)}`,
                 error: e as Error,
@@ -92,9 +92,9 @@ export const useTownsClientListener = (opts: TownsOpts) => {
         casablancaCredentials,
         opts.environmentId,
         setCasablancaClient,
-        setCasablancaLoginStatus,
         clearCasablancaCredentials,
-        setCasablancaLoginError,
+        setCasablancaAuthError,
+        setCasablancaAuthStatus,
     ])
 
     return {
@@ -105,8 +105,8 @@ export const useTownsClientListener = (opts: TownsOpts) => {
     }
 }
 
-class LoggedIn {
-    readonly loginStatus = LoginStatus.LoggedIn
+class ConnectedToRiver {
+    readonly authStatus = AuthStatus.ConnectedToRiver
     constructor(
         readonly credentials: CasablancaCredentials,
         readonly casablancaClient: CasablancaClient,
@@ -114,15 +114,15 @@ class LoggedIn {
     ) {}
 }
 
-class LoggedOut {
-    readonly loginStatus = LoginStatus.LoggedOut
+class None {
+    readonly authStatus = AuthStatus.None
     readonly credentials = undefined
     readonly signerContext = undefined
     readonly casablancaClient = undefined
 }
 
-class Authenticated {
-    readonly loginStatus = LoginStatus.Authenticated
+class Credentialed {
+    readonly authStatus = AuthStatus.Credentialed
     readonly casablancaClient = undefined
     constructor(
         readonly credentials: CasablancaCredentials,
@@ -130,34 +130,34 @@ class Authenticated {
     ) {}
 }
 
-class LoggingIn {
-    readonly loginStatus = LoginStatus.LoggingIn
+class EvaluatingCredentials {
+    readonly authStatus = AuthStatus.EvaluatingCredentials
     readonly casablancaClient = undefined
     readonly signerContext = undefined
     constructor(readonly credentials: CasablancaCredentials) {}
 }
 
-class LoggingOut {
-    readonly loginStatus = LoginStatus.LoggingOut
+class DisconnectingFromRiver {
+    readonly authStatus = AuthStatus.DisconnectingFromRiver
     readonly credentials = undefined
     readonly signerContext = undefined
     constructor(readonly casablancaClient: CasablancaClient) {}
 }
 
 class Deauthenticating {
-    readonly loginStatus = LoginStatus.Deauthenticating
+    readonly authStatus = AuthStatus.Deauthenticating
     readonly casablancaClient = undefined
     readonly credentials = undefined
     readonly signerContext = undefined
 }
 
 type Next = { credentials?: CasablancaCredentials }
-type Transitions = LoggingIn | LoggingOut | Deauthenticating
-type Situations = LoggedIn | LoggedOut | Authenticated
+type Transitions = EvaluatingCredentials | DisconnectingFromRiver | Deauthenticating
+type Situations = ConnectedToRiver | None | Credentialed
 type States = Transitions | Situations
 
 function isSituation(state: States): state is Situations {
-    return state.loginStatus === LoginStatus.LoggedIn || state.loginStatus === LoginStatus.LoggedOut
+    return state.authStatus === AuthStatus.ConnectedToRiver || state.authStatus === AuthStatus.None
 }
 
 type ClientStateMachineEvents = {
@@ -167,7 +167,7 @@ type ClientStateMachineEvents = {
 }
 
 class ClientStateMachine extends (EventEmitter as new () => TypedEmitter<ClientStateMachineEvents>) {
-    state: States = new LoggedOut()
+    state: States = new None()
     client: TownsClient
     private next: Next = {}
 
@@ -186,8 +186,12 @@ class ClientStateMachine extends (EventEmitter as new () => TypedEmitter<ClientS
     }
 
     private updateClient(client: CasablancaClient) {
-        if (this.state instanceof Authenticated) {
-            this.state = new LoggedIn(this.state.credentials, client, this.state.signerContext)
+        if (this.state instanceof Credentialed) {
+            this.state = new ConnectedToRiver(
+                this.state.credentials,
+                client,
+                this.state.signerContext,
+            )
             this.emit('onStateUpdated', this.state)
         }
     }
@@ -216,16 +220,16 @@ class ClientStateMachine extends (EventEmitter as new () => TypedEmitter<ClientS
         currentSituation: Situations,
         transition: Transitions,
     ): Promise<Situations> {
-        switch (transition.loginStatus) {
-            case LoginStatus.LoggingOut:
-                check(currentSituation instanceof LoggedIn)
+        switch (transition.authStatus) {
+            case AuthStatus.DisconnectingFromRiver:
+                check(currentSituation instanceof ConnectedToRiver)
                 await this.client.stopCasablancaClient()
-                return new LoggedOut()
-            case LoginStatus.Deauthenticating:
-                check(currentSituation instanceof Authenticated)
-                return new LoggedOut()
-            case LoginStatus.LoggingIn: {
-                check(currentSituation instanceof LoggedOut)
+                return new None()
+            case AuthStatus.Deauthenticating:
+                check(currentSituation instanceof Credentialed)
+                return new None()
+            case AuthStatus.EvaluatingCredentials: {
+                check(currentSituation instanceof None)
                 AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.LoggingIn)
                 this.emit('onErrorUpdated', undefined)
                 const { credentials } = transition
@@ -256,11 +260,11 @@ async function logInWithRetries(
             const isRegistered = await unauthedClient.userWithAddressExists(context.creatorAddress)
             if (!isRegistered) {
                 console.log("**user authenticated, hasn't joined a space")
-                return new Authenticated(credentials, context)
+                return new Credentialed(credentials, context)
             } else {
                 console.log('**user authenticated, starting casablanca client')
                 const casablancaClient = await client.startCasablancaClient(context)
-                return new LoggedIn(credentials, casablancaClient, context)
+                return new ConnectedToRiver(credentials, casablancaClient, context)
             }
         } catch (e) {
             retryCount++
@@ -277,7 +281,7 @@ async function logInWithRetries(
             if (retryCount >= MAX_RETRY_COUNT) {
                 emitter.emit('onClearCredentials', credentials)
                 emitter.emit('onErrorUpdated', e as Error)
-                return new LoggedOut()
+                return new None()
             } else {
                 const retryDelay = getRetryDelay(retryCount)
                 console.log('******* retrying', { retryDelay, retryCount })
@@ -294,19 +298,19 @@ function getRetryDelay(retryCount: number) {
 }
 
 function getTransition(current: Situations, next: Next): Transitions | undefined {
-    switch (current.loginStatus) {
-        case LoginStatus.LoggedOut:
+    switch (current.authStatus) {
+        case AuthStatus.None:
             if (next.credentials !== undefined) {
-                return new LoggingIn(next.credentials)
+                return new EvaluatingCredentials(next.credentials)
             }
             break
-        case LoginStatus.LoggedIn:
+        case AuthStatus.ConnectedToRiver:
             AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.LoggedIn)
             if (next.credentials !== current.credentials) {
-                return new LoggingOut(current.casablancaClient)
+                return new DisconnectingFromRiver(current.casablancaClient)
             }
             break
-        case LoginStatus.Authenticated:
+        case AuthStatus.Credentialed:
             if (next.credentials != current.credentials) {
                 return new Deauthenticating()
             }
@@ -320,8 +324,8 @@ function getTransition(current: Situations, next: Next): Transitions | undefined
 function logTick(client: TownsClient, situation: Situations, transition?: Transitions) {
     console.log('$$$ tick update', {
         client: client.name,
-        current: situation.loginStatus,
-        transition: transition?.loginStatus,
+        current: situation.authStatus,
+        transition: transition?.authStatus,
     })
 }
 

@@ -13,7 +13,7 @@ export {
 export type { DMChannelIdentifier } from './types/dm-channel-identifier'
 export * from './components/UserLookupContextProviders'
 
-export { LoginStatus } from './hooks/login'
+export { AuthStatus } from './hooks/login'
 export type * from './types/user-lookup'
 export type { LookupUserFn } from './hooks/use-user-lookup-context'
 export { useUserLookupContext } from './hooks/use-user-lookup-context'

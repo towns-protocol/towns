@@ -10,7 +10,7 @@ import {
 } from './helpers/TestUtils'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
-import { LoginStatus } from '../../src/hooks/login'
+import { AuthStatus } from '../../src/hooks/login'
 import { useMyProfile } from '../../src/hooks/use-my-profile'
 import { Permission } from '@river-build/web3'
 import React, { useCallback, useEffect } from 'react'
@@ -122,14 +122,14 @@ describe('useSpaceDataHook', () => {
             </TownsTestApp>,
         )
         // gather our test elements
-        const loginStatus = screen.getByTestId('loginStatus')
+        const authStatus = screen.getByTestId('authStatus')
         const clientRunning = screen.getByTestId('clientRunning')
         const joinButton = screen.getByText('Join room button')
         const spaceMembership = screen.getByTestId('spaceMembership')
         const userIdContent = screen.getByTestId('userIdContent')
 
         // wait for registration
-        await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.Authenticated))
+        await waitFor(() => expect(authStatus).toHaveTextContent(AuthStatus.Credentialed))
         // sanity check, we need to be logged in as alice
         await waitFor(() => expect(userIdContent).toHaveTextContent(aliceUserId))
         // extra sanity check, need client running

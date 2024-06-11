@@ -42,7 +42,7 @@ export const CreateSpaceForm = (props: Props) => {
     const chainName = chain.name
     const { loggedInWalletAddress } = useConnectivity()
     const { chain: walletChain } = useNetwork()
-    const { loginStatus: casablancaLoginStatus } = useCasablancaStore()
+    const { authStatus: casablancaAuthStatus } = useCasablancaStore()
     const { spaceDapp } = useTownsClient()
     const getSigner = useGetEmbeddedSigner()
 
@@ -211,7 +211,7 @@ export const CreateSpaceForm = (props: Props) => {
                 {walletChain ? `${walletChain.name} (${walletChain.id})` : 'Not connected'}
             </Typography>
             <Typography noWrap variant="body1" component="div" sx={spacingStyle}>
-                Casablanca: {casablancaLoginStatus}
+                Casablanca: {casablancaAuthStatus}
             </Typography>
             <Box display="grid">
                 <Box

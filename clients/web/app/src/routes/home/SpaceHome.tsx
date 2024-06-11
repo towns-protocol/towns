@@ -18,7 +18,7 @@ const DEFAULT_CHANNEL_NAME = 'general'
 export const SpaceHome = () => {
     const space = useSpaceData()
     const { isTouch } = useDevice()
-    const { loginStatus } = useConnectivity()
+    const { authStatus } = useConnectivity()
     const spaceId = space?.id
     const navigate = useNavigate()
     const { analytics } = useAnalytics()
@@ -63,13 +63,13 @@ export const SpaceHome = () => {
             rel,
             notificationEntry,
             notificationKind,
-            loginStatus,
+            authStatus,
             locationParams: location.search,
             deviceType: isTouch ? 'mobile' : 'desktop',
         })
     }, [
         bookmarkedRoute,
-        loginStatus,
+        authStatus,
         space?.id,
         rel,
         isTouch,
