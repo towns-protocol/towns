@@ -28,12 +28,17 @@ const Verbs = {
 export const AccumulatedRoomMemberEvent = (props: Props) => {
     const { lookupUser } = useUserLookupContext()
     const { event, channelName, channelType, userId, channelEncrypted: isChannelEncrypted } = props
+    const senderId = event.events[0]?.sender?.id
+    const eventUserId = event.events[0]?.content?.userId
 
     const isAddedEvent =
         event.membershipType === Membership.Invite ||
         (channelType === 'gdm' && event.membershipType === Membership.Join)
 
-    const isGDMRemovedEvent = channelType === 'gdm' && event.membershipType === Membership.Leave
+    const isGDMRemovedEvent =
+        channelType === 'gdm' &&
+        event.membershipType === Membership.Leave &&
+        senderId !== eventUserId // If X leaves a GDM on their own, we show `X left`
     const avatarUsers = useMemo(
         () =>
             uniqBy(
@@ -61,7 +66,6 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
 
         // in GDMs we display 'X added Y,Z and others' instead of invites and joins
         if (isAddedEvent || isGDMRemovedEvent) {
-            const senderId = event.events[0]?.sender.id
             const sender = lookupUser(senderId)
 
             const senderDisplayName = senderId === userId ? 'You' : getPrettyDisplayName(sender)
@@ -90,12 +94,16 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
             )
         }
 
-        const verb = channelName
+        let verb = channelName
             ? `${Verbs[event.membershipType]} #${channelName}${
                   includesUser && isChannelEncrypted ? ', an end-to-end encrypted channel' : ''
               }`
             : // chats
               `${Verbs[event.membershipType]}`
+
+        if (channelType === 'gdm' && event.membershipType === Membership.Leave) {
+            verb += ' this group'
+        }
 
         const names = getNameListFromArray(
             event.events
@@ -118,6 +126,8 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
         )
         return names
     }, [
+        channelType,
+        senderId,
         isGDMRemovedEvent,
         channelName,
         event.events,
