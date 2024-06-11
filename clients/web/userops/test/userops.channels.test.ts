@@ -38,6 +38,7 @@ test('can create and update channel', async () => {
     const createChannelOp = await userOps.sendCreateChannelOp([
         spaceId,
         TEST_CHANNEL_NAME,
+        'channel description',
         makeUniqueChannelStreamId(spaceId),
         // roleIds
         [],
@@ -155,6 +156,7 @@ test("can create a channel when roles is gated by user's smart account", async (
     const createChannelOp = await userOps.sendCreateChannelOp([
         spaceId,
         TEST_CHANNEL_NAME,
+        'channel description',
         makeUniqueChannelStreamId(spaceId),
         // roleIds
         [newRole!.roleId],

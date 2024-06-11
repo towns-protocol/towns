@@ -132,6 +132,7 @@ test('will reject each userop if beyond the limit', async () => {
     const createChannelOp = await userOps.sendCreateChannelOp([
         spaceId,
         'test',
+        'channel description',
         makeUniqueChannelStreamId(spaceId),
         // roleIds
         [],
@@ -145,6 +146,7 @@ test('will reject each userop if beyond the limit', async () => {
         userOps.sendCreateChannelOp([
             spaceId,
             'test',
+            'channel description',
             makeUniqueChannelStreamId(spaceId),
             // roleIds
             [],
