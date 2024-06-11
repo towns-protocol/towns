@@ -89,6 +89,7 @@ func (d AvailableDebugHandlersData) TemplateName() string {
 }
 
 type InfoIndexData struct {
+	Status     int
 	StatusJson string
 }
 

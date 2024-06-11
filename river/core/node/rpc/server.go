@@ -225,14 +225,15 @@ func (s *Service) initBaseChain() error {
 	cfg := s.config
 
 	if !s.config.DisableBaseChain {
-		baseChain, err := crypto.NewBlockchain(ctx, &s.config.BaseChain, nil, s.metrics)
+		var err error
+		s.baseChain, err = crypto.NewBlockchain(ctx, &s.config.BaseChain, nil, s.metrics)
 		if err != nil {
 			return err
 		}
 
 		chainAuth, err := auth.NewChainAuth(
 			ctx,
-			baseChain,
+			s.baseChain,
 			s.entitlementEvaluator,
 			&cfg.ArchitectContract,
 			cfg.BaseChain.LinkedWalletsLimit,

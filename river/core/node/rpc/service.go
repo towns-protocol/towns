@@ -52,6 +52,7 @@ type Service struct {
 	chainConfig      crypto.OnChainConfiguration
 
 	// Base chain
+	baseChain *crypto.Blockchain
 	chainAuth auth.ChainAuth
 
 	// Entitlements

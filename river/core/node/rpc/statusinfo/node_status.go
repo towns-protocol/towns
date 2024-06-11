@@ -2,14 +2,23 @@ package statusinfo
 
 import "encoding/json"
 
+type BlockchainPing struct {
+	Result  string `json:"result"`
+	ChainId uint64 `json:"chain_id"`
+	Block   uint64 `json:"block,omitempty"`
+	Latency string `json:"latency"`
+}
+
 type StatusResponse struct {
-	Status     string `json:"status"`
-	InstanceId string `json:"instance_id"`
-	Address    string `json:"address"`
-	Version    string `json:"version"`
-	StartTime  string `json:"start_time"`
-	Uptime     string `json:"uptime"`
-	Graffiti   string `json:"graffiti,omitempty"`
+	Status     string          `json:"status"`
+	InstanceId string          `json:"instance_id"`
+	Address    string          `json:"address"`
+	Version    string          `json:"version"`
+	StartTime  string          `json:"start_time"`
+	Uptime     string          `json:"uptime"`
+	Graffiti   string          `json:"graffiti,omitempty"`
+	River      *BlockchainPing `json:"river,omitempty"`
+	Base       *BlockchainPing `json:"base,omitempty"`
 }
 
 func StatusResponseFromJson(data []byte) (StatusResponse, error) {

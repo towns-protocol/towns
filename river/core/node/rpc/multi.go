@@ -74,7 +74,7 @@ func getHttpStatus(
 		},
 	})
 
-	url := baseUrl + "/status"
+	url := baseUrl + "/status?blockchain=1"
 	req, err := http.NewRequestWithContext(traceCtx, "GET", url, nil)
 	req.Header.Set("Accept", "application/json")
 	if err != nil {
