@@ -165,12 +165,7 @@ function UserOpTxModalContent({
                 </Box>
                 <Heading level={2}>{displayTotalEthPrice + ' ETH'}</Heading>
                 <Box padding background="level3" rounded="sm" width="100%" gap="md" color="default">
-                    <Box
-                        horizontal={!_isTouch}
-                        gap={_isTouch ? 'sm' : undefined}
-                        width="100%"
-                        justifyContent="spaceBetween"
-                    >
+                    <Box horizontal width="100%" justifyContent="spaceBetween">
                         <Text>
                             Gas{' '}
                             <Text color="gray2" as="span" display="inline">
@@ -181,20 +176,14 @@ function UserOpTxModalContent({
                     </Box>
                     {isLoadingMembershipPrice ? <ButtonSpinner /> : null}
                     {membershipPrice ? (
-                        <Box
-                            horizontal={!_isTouch}
-                            gap={_isTouch ? 'sm' : undefined}
-                            width="100%"
-                            justifyContent="spaceBetween"
-                        >
+                        <Box horizontal width="100%" justifyContent="spaceBetween">
                             <Text>Membership </Text>
                             <Text> {membershipInEth + ' ETH'}</Text>
                         </Box>
                     ) : null}
 
                     <Box
-                        horizontal={!_isTouch}
-                        gap={_isTouch ? 'sm' : undefined}
+                        horizontal
                         paddingTop="md"
                         borderTop="level4"
                         width="100%"
@@ -205,13 +194,7 @@ function UserOpTxModalContent({
                     </Box>
                 </Box>
                 <Box color="default" background="level3" rounded="sm" width="100%" gap="md">
-                    <Box
-                        padding
-                        horizontal={!_isTouch}
-                        gap={_isTouch ? 'sm' : undefined}
-                        justifyContent="spaceBetween"
-                        alignItems="center"
-                    >
+                    <Box padding horizontal justifyContent="spaceBetween" alignItems="center">
                         <Box horizontal gap="sm">
                             <Box position="relative" width="x3">
                                 <Icon position="absoluteCenter" type="wallet" />{' '}
