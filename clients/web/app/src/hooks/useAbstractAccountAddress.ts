@@ -153,7 +153,7 @@ export function useLookupUsersWithAbstractAccountAddress() {
             return {
                 data: results
                     .map((r, i): LookupUserWithAbstractAccountAddress => {
-                        const user = lookupUser(memberIds[i], true)
+                        const user = lookupUser(memberIds[i])
                         return {
                             ...user,
                             abstractAccountAddress: r.data as `0x${string}`,

@@ -1,14 +1,15 @@
-import { useMyUserId, useUserLookupContext } from 'use-towns-client'
-import { useMemo } from 'react'
+import { useMyUserId, useSpaceId, useUserLookupStore } from 'use-towns-client'
 
 export const useUsernameConfirmed = () => {
-    const myUserId = useMyUserId()
-    const { lookupUser } = useUserLookupContext()
+    const userId = useMyUserId()
+    const spaceId = useSpaceId()
 
-    return useMemo(() => {
-        if (!myUserId || !lookupUser(myUserId)) {
-            return { confirmed: true }
-        }
-        return { confirmed: lookupUser(myUserId)?.usernameConfirmed }
-    }, [lookupUser, myUserId])
+    const usernameConfirmed = useUserLookupStore(({ spaceUsers }) =>
+        spaceId && userId ? spaceUsers[spaceId]?.[userId]?.usernameConfirmed : undefined,
+    )
+
+    return (
+        // prevent setting username while user isn't yet loaded
+        usernameConfirmed ?? true
+    )
 }

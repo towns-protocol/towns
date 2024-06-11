@@ -4,10 +4,7 @@ import { useUserLookupStore } from '../store/use-user-lookup-store'
 import React, { useCallback } from 'react'
 import memoize from 'lodash/memoize'
 
-export type LookupUserFn = {
-    (userId: string, allowDefault?: false): LookupUser | undefined
-    (userId: string, allowDefault?: true): LookupUser
-}
+export type LookupUserFn = (userId: string) => LookupUser
 
 export const useUserLookupContext = () => {
     const context = React.useContext(UserLookupContext)
@@ -16,13 +13,13 @@ export const useUserLookupContext = () => {
 
     const { lookupUser: genericLookupUser } = useUserLookupStore()
 
-    const lookupUser = useCallback(
-        (userId: string, allowDefault?: boolean) =>
+    const lookupUser: LookupUserFn = useCallback(
+        (userId: string) =>
             genericLookupUser(userId, spaceId, channelId) ??
             // if user is not found and `allowUknown` set return a stable unknown user
-            (allowDefault ? getStableDefault(userId) : undefined),
+            getStableDefault(userId),
         [genericLookupUser, spaceId, channelId],
-    ) as LookupUserFn
+    )
 
     return {
         lookupUser,
@@ -30,15 +27,15 @@ export const useUserLookupContext = () => {
 }
 
 const getStableDefault = memoize(
-    (userId: string): LookupUser => {
-        return {
-            userId,
-            username: userId,
-            usernameConfirmed: true,
-            usernameEncrypted: false,
-            displayName: 'Unknown User',
-            displayNameEncrypted: false,
-        }
-    },
+    (userId: string): LookupUser => ({
+        // note: pretty user and display names will be generated from userId
+        // via getPrettyDisplayName
+        userId,
+        username: '',
+        usernameConfirmed: false,
+        usernameEncrypted: false,
+        displayName: '',
+        displayNameEncrypted: false,
+    }),
     (userId) => userId,
 )

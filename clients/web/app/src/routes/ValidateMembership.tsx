@@ -38,7 +38,7 @@ export const ValidateMembership = () => {
     const { client, signerContext } = useTownsContext()
     const { isLocalDataLoaded, isRemoteDataLoaded } = useDataLoaded()
     const spaceIdFromPathname = useSpaceIdFromPathname()
-    const { confirmed: usernameConfirmed } = useUsernameConfirmed()
+    const usernameConfirmed = useUsernameConfirmed()
     const { joiningSpace: isJoining } = usePublicPageLoginFlow()
     const [_PublicTownPage] = useState(<PublicTownPage />)
     const spaceDataIds = useSpaceDataIds()

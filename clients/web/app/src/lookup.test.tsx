@@ -19,12 +19,12 @@ const Wrapper = (props: { children: JSX.Element }) => {
     return <TestApp>{props.children}</TestApp>
 }
 
-const UserComponent = (props: { userId: string; allowUnknown?: boolean }) => {
+const UserComponent = (props: { userId: string }) => {
     const { userId } = props
     const { lookupUser } = Lib.useUserLookupContext()
 
     // silly but for testing only
-    const user = props.allowUnknown ? lookupUser(userId, true) : lookupUser(userId)
+    const user = lookupUser(userId)
     return (
         <div>
             {user ? (
@@ -151,27 +151,20 @@ describe('setting and updating a username', () => {
 })
 
 describe('stable unknown lookup', () => {
-    test('renders nothing for unknown users', async () => {
+    test('renders no userId', async () => {
         setupDefaultUserNames()
-        render(<UserComponent userId="0x6666" />)
-        const userText = screen.queryByText('0x6666')
-        expect(screen.getByTestId('not-found')).toBeInTheDocument()
-        expect(userText).not.toBeInTheDocument()
-    })
-
-    test('renders userId for unknown users if allowUnknown flag is present', async () => {
-        setupDefaultUserNames()
-        render(<UserComponent allowUnknown userId="0x6666" />)
+        render(<UserComponent userId="0x6666666666666666666666666666666666666666" />)
+        //
         expect(screen.getByTestId('user-card')).toBeInTheDocument()
-        expect(screen.getByText('0x6666')).toBeInTheDocument()
+        expect(screen.getByText('0x666...666')).toBeInTheDocument()
     })
 
     test('memoize unknown users', async () => {
         const { result } = renderHook(() => Lib.useUserLookupContext())
         act(() => {
-            const user1 = result.current.lookupUser('0xnobody', true)
-            const user2 = result.current.lookupUser('0xnobody', true)
-            const user3 = result.current.lookupUser('0xanother', true)
+            const user1 = result.current.lookupUser('0xnobody')
+            const user2 = result.current.lookupUser('0xnobody')
+            const user3 = result.current.lookupUser('0xanother')
             expect(user1).toBe(user2)
             expect(user1).not.toBe(user3)
         })
