@@ -16,6 +16,7 @@ import { EnsBadge } from '@components/EnsBadge/EnsBadge'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { CHANNEL_INFO_PARAMS } from 'routes'
 import { useDevice } from 'hooks/useDevice'
+import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 
 export const useCurrentStreamID = () => {
     const { spaceSlug, channelSlug } = useParams()
@@ -342,7 +343,7 @@ const UsernameDisplayNameContent = (props: { user: LookupUser }) => {
         <>
             {!user.displayNameEncrypted && user.displayName.length > 0 && (
                 <Text color="default" fontWeight="strong">
-                    {user.displayName}
+                    {getPrettyDisplayName(user)}
                 </Text>
             )}
             {!user.usernameEncrypted && <Text color="default">@{user.username}</Text>}

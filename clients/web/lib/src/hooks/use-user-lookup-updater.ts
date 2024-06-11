@@ -12,6 +12,7 @@ import { useEffect, useCallback, useRef } from 'react'
 import { dlogger } from '@river-build/dlog'
 import { SnapshotCaseType } from '@river-build/proto'
 import { TownsOpts } from '../client/TownsClientTypes'
+import { useSpaceEnsLookup } from './use-ens-lookup'
 
 const dlog = dlogger('csb:hooks:user-lookup-updater')
 
@@ -37,7 +38,7 @@ const meaningfulInfo = (maybeInfo?: UserInfo): maybeInfo is UserInfo => {
     )
 }
 
-const createUserLookup = (userId: string, info: UserInfo): LookupUser =>
+const createUserLookup = (userId: string, info: UserInfo, ensName?: string): LookupUser =>
     ({
         userId: userId,
         username: info.username,
@@ -47,10 +48,12 @@ const createUserLookup = (userId: string, info: UserInfo): LookupUser =>
         displayNameEncrypted: info.displayNameEncrypted,
         ensAddress: info.ensAddress,
         nft: info.nft,
+        ensName,
     } as const)
 
 export const useUserLookupUpdater = (townsOpts: TownsOpts, client?: CasablancaClient) => {
     const { setUser } = useUserLookupStore()
+    const { getEnsFromAddress } = useSpaceEnsLookup()
 
     const onStreamMetadataUpdated = useCallback(
         (streamId: string, userId: string) => {
@@ -60,7 +63,8 @@ export const useUserLookupUpdater = (townsOpts: TownsOpts, client?: CasablancaCl
                 const metadata = stream?.view.getUserMetadata()
                 const info = metadata?.userInfo(userId)
                 if (meaningfulInfo(info)) {
-                    const lookupUser = createUserLookup(userId, info)
+                    const ensName = getEnsFromAddress(info?.ensAddress)
+                    const lookupUser = createUserLookup(userId, info, ensName)
                     setUser(userId, lookupUser, streamId)
                 }
             } else if (isChannelStreamId(streamId)) {
@@ -70,7 +74,8 @@ export const useUserLookupUpdater = (townsOpts: TownsOpts, client?: CasablancaCl
                 if (meaningfulInfo(info)) {
                     const channelId = streamId
                     const spaceId = stream?.view.getContent().getStreamParentId()
-                    const lookupUser = createUserLookup(userId, info)
+                    const ensName = getEnsFromAddress(info?.ensAddress)
+                    const lookupUser = createUserLookup(userId, info, ensName)
                     setUser(userId, lookupUser, spaceId, channelId)
                 }
             } else if (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)) {
@@ -78,13 +83,13 @@ export const useUserLookupUpdater = (townsOpts: TownsOpts, client?: CasablancaCl
                 const metadata = stream?.view.getUserMetadata()
                 const info = metadata?.userInfo(userId)
                 if (meaningfulInfo(info)) {
-                    const lookupUser = createUserLookup(userId, info)
-
+                    const ensName = getEnsFromAddress(info?.ensAddress)
+                    const lookupUser = createUserLookup(userId, info, ensName)
                     setUser(userId, lookupUser, undefined, streamId)
                 }
             }
         },
-        [client?.streams, setUser],
+        [client?.streams, getEnsFromAddress, setUser],
     )
 
     const onStreamInitialized = useCallback(
@@ -100,7 +105,8 @@ export const useUserLookupUpdater = (townsOpts: TownsOpts, client?: CasablancaCl
             for (const userId of stream.view.getMembers().participants() ?? []) {
                 const info = metadata.userInfo(userId)
                 if (meaningfulInfo(info)) {
-                    const lookupUser = createUserLookup(userId, info)
+                    const ens = getEnsFromAddress(info?.ensAddress)
+                    const lookupUser = createUserLookup(userId, info, ens)
 
                     switch (contentKind) {
                         case SnapshotCaseTypeValues.spaceContent:
@@ -121,7 +127,7 @@ export const useUserLookupUpdater = (townsOpts: TownsOpts, client?: CasablancaCl
                 }
             }
         },
-        [client?.streams, setUser],
+        [client?.streams, getEnsFromAddress, setUser],
     )
 
     const oldClient = useRef(client)

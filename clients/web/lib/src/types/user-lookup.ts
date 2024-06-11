@@ -14,6 +14,7 @@ export type LookupUser = {
     displayNameEncrypted: boolean
     ensAddress?: string
     memberOf?: MemberOf
+    ensName?: string
     nft?: Nft
 }
 
@@ -31,5 +32,4 @@ export type MemberOf = {
 
 export type KnownUser = RoomMember & {
     memberOf: MemberOf
-    ensAddress?: string
 }

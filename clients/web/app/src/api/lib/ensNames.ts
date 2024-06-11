@@ -42,7 +42,7 @@ export function useResolveEnsName({
     const { data: linkedWallets } = useLinkedWalletsForWallet({ walletAddress: userId })
     const linkedEnsWallet = linkedWallets?.find((x) => x === ensAddress)
     const { data: ensName, isLoading } = useQuery({
-        queryKey: ['ensNames', linkedEnsWallet],
+        queryKey: ['ensName', linkedEnsWallet],
         queryFn: () => publicClient.getEnsName({ address: linkedEnsWallet as `0x${string}` }),
         enabled: !!linkedEnsWallet,
     })

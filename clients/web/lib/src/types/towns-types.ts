@@ -107,6 +107,7 @@ export interface RoomMember {
     avatarUrl?: string
     ensAddress?: string
     nft?: Nft
+    ensName?: string
 }
 
 export interface Nft {
