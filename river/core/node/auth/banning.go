@@ -104,6 +104,11 @@ func NewBanning(
 		return nil, err
 	}
 
+	tokenContract, err := baseContracts.NewErc721aQueryable(spaceAddress, backend)
+	if err != nil {
+		return nil, err
+	}
+
 	// Default to 2s
 	negativeCacheTTL := 2 * time.Second
 	if cfg.NegativeEntitlementCacheTTLSeconds > 0 {
@@ -112,6 +117,7 @@ func NewBanning(
 
 	return &banning{
 		contract:           contract,
+		tokenContract:      tokenContract,
 		spaceAddress:       spaceAddress,
 		bannedAddressCache: NewBannedAddressCache(negativeCacheTTL),
 	}, nil

@@ -169,6 +169,26 @@ describe('channelsWithEntitlements', () => {
         log('Done', Date.now() - doneStart)
     })
 
+    test('banned user cannot join', async () => {
+        const { alice, alicesWallet, bob, bobSpaceDapp, bobProvider, spaceId, channelId } =
+            await setupChannelWithCustomRole(['alice'], NoopRuleData)
+
+        const tx = await bobSpaceDapp.banWalletAddress(
+            spaceId,
+            alicesWallet.address,
+            bobProvider.wallet,
+        )
+        await tx.wait()
+
+        await expect(alice.joinStream(channelId!)).rejects.toThrow(/7:PERMISSION_DENIED/)
+
+        const doneStart = Date.now()
+        // kill the clients
+        await bob.stopSync()
+        await alice.stopSync()
+        log('Done', Date.now() - doneStart)
+    })
+
     test('userEntitlementPass - join as root, linked wallet whitelisted', async () => {
         const { alice, aliceSpaceDapp, aliceProvider, carolProvider, bob, channelId } =
             await setupChannelWithCustomRole(['carol'], NoopRuleData)
