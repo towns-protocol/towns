@@ -26,7 +26,7 @@ import { bufferedLogger } from 'utils/wrappedlogger'
 import { useStore } from 'store/store'
 import { BetaDebugger } from 'BetaDebugger'
 import { useRequestShakePermissions } from '@components/BugReportButton/ShakeToReport'
-import { useDevice } from 'hooks/useDevice'
+import { getBrowserName, useDevice } from 'hooks/useDevice'
 import { PanelButton } from '@components/Panel/PanelButton'
 import { UploadInput } from 'ui/components/Form/Upload'
 import { FieldOutline } from 'ui/components/_internal/Field/FieldOutline/FieldOutline'
@@ -85,22 +85,21 @@ async function postCustomError(data: FormState) {
     const userAgent = navigator.userAgent.toLowerCase()
 
     if (userAgent.includes('android')) {
-        deviceType = 'Device type: Android'
+        deviceType = 'Android'
     } else if (
         userAgent.includes('iphone') ||
         userAgent.includes('ipad') ||
         userAgent.includes('ipod')
     ) {
-        deviceType = 'Device type: iOS'
+        deviceType = 'iOS'
     } else {
-        deviceType = 'Device type: Laptop/Desktop'
+        deviceType = 'Laptop/Desktop'
     }
 
-    data.comments += `\n\nEnvironment: ${ENV}`
-    data.comments += `\n\nVersion: ${env.VITE_APP_RELEASE_VERSION}`
-    data.comments += `\n\nUser Agent:  + ${navigator.userAgent}`
-    data.comments += `\n\nDevice Type: ${deviceType}`
-    data.comments += `\n\nPWA: ${PWAflag}`
+    let deviceInfo = `\n* Version: ${env.VITE_APP_RELEASE_VERSION}\n`
+    deviceInfo += `* Browser: ${getBrowserName() ?? navigator.userAgent}\n`
+    deviceInfo += `* Device Type: ${deviceType}\n`
+    deviceInfo += `* PWA: ${PWAflag}`
 
     const uuid = crypto.randomUUID()
 
@@ -108,6 +107,7 @@ async function postCustomError(data: FormState) {
     formData.append('env', ENV)
     formData.append('name', data.name)
     formData.append('email', data.email)
+    formData.append('deviceInfo', deviceInfo)
     formData.append('comments', data.comments)
     formData.append('id', uuid)
     formData.append('logs', logs)

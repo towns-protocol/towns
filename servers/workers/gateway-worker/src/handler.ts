@@ -289,6 +289,7 @@ router.post('/user-feedback', async (request: WorkerRequest, env) => {
     const formData = await request.formData()
     const requestBody = {
         env: formData.get('env') as string,
+        deviceInfo: formData.get('deviceInfo') as string,
         id: formData.get('id') as string,
         name: formData.get('name') as string,
         email: formData.get('email') as string,

@@ -3,6 +3,7 @@ import { Uploaded } from './uploadLogFile'
 
 interface IssueCreateInput {
     config: LinearConfig
+    deviceInfo: string
     env: string
     name: string
     comments: string
@@ -14,8 +15,9 @@ interface IssueCreateInput {
 }
 
 export async function createIssue({
-    env,
     config,
+    deviceInfo,
+    env,
     comments,
     name,
     email,
@@ -46,7 +48,7 @@ mutation CreateIssue($issueTitle: String!, $issueDescription: String!){
             ? issueTitleRaw.substring(0, issueTitleCutoff) + '...'
             : issueTitleRaw
 
-    const logInfo = logFilename && logUrl ? `Logs: [${logFilename}](${logUrl})` : ''
+    const logInfo = logFilename && logUrl ? `* [${logFilename}](${logUrl})` : ''
     const attachmentInfo = attachments
         ?.map((attachment) =>
             attachment.contentType?.includes('image')
@@ -58,6 +60,8 @@ mutation CreateIssue($issueTitle: String!, $issueDescription: String!){
     const issueDescription = [
         `**Name**: ${name}`,
         `**Email**: ${email}`,
+        `**Device Info**:`,
+        deviceInfo,
         '### User Feedback:',
         comments,
         '### Attachments:',

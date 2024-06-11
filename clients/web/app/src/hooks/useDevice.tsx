@@ -21,6 +21,11 @@ export function isPWA() {
     return matchMedia !== undefined && matchMedia('(display-mode: standalone)').matches
 }
 
+export function getBrowserName() {
+    const browser = UserAgentInstance.getBrowser()
+    return browser.name
+}
+
 export function useDevice() {
     return {
         isTouch: isTouch(),
