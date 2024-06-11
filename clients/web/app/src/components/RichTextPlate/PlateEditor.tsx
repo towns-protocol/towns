@@ -427,10 +427,11 @@ const PlateEditorWithoutBoundary = ({
                             items={channelMentions}
                             filter={channelMentionFilter}
                         />
-                        <OfflineIndicator attemptingToSend={isAttemptingSend} />
+                        {!isTouch && <OfflineIndicator attemptingToSend={isAttemptingSend} />}
                         <RememberInputPlugin storageId={storageId} />
                         {!isEditing && sendButtons}
                     </Stack>
+                    {isTouch && <OfflineIndicator attemptingToSend={isAttemptingSend} />}
                     {unfurledLinkAttachments.length > 0 && (
                         <Box horizontal gap padding flexWrap="wrap" width="100%">
                             {unfurledLinkAttachments.map((attachment) => (
