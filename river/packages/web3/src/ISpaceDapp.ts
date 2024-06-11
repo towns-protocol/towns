@@ -17,6 +17,7 @@ import { IRolesBase, Space, SpaceRegistrar, IRuleEntitlement } from './v3'
 import { PricingModules } from './v3/PricingModules'
 import { IPrepayShim } from './v3/IPrepayShim'
 import { BaseChainConfig } from './IStaticContractsInfo'
+import { PlatformRequirements } from './v3/PlatformRequirements'
 
 export type SignerType = ethers.Signer
 
@@ -66,6 +67,7 @@ export interface ISpaceDapp {
     readonly walletLink: WalletLinkV3
     readonly pricingModules: PricingModules
     readonly prepay: IPrepayShim
+    readonly platformRequirements: PlatformRequirements
     addRoleToChannel: (
         spaceId: string,
         channelNetworkId: string,

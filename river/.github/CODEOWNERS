@@ -22,12 +22,18 @@
 ## intentions and respond with care and consideration.
 ##
 ## To see reviews that are waiting for your attention,
-## please visit: https://github.com/HereNotThere/harmony/pulls?q=is%3Apr+is%3Aopen+user-review-requested%3A%40me
+## please visit: https://github.com/river-build/river/pulls?q=is%3Apr+is%3Aopen+user-review-requested%3A%40me
 ##
 
 /core/ @sergekh2
 /packages/ @sergekh2
 /protocol/ @sergekh2
+/core/node/events @texuf
+/core/node/protocol @texuf
+/core/node/protocol_extensions @texuf
+/core/node/rules @texuf
+/packages/ @texuf
+/protocol/ @texuf
 /.github/ @mechanical-turk
 /infra @mechanical-turk
 turbo.json @mechanical-turk

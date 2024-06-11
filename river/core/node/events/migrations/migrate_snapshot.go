@@ -6,7 +6,7 @@ import (
 
 type migrationFunc func(*Snapshot) *Snapshot
 
-// should be kept in sync with core/sdk/src/migrations/migrate_snapshot.ts
+// should be kept in sync with packages/sdk/src/migrations/migrate_snapshot.ts
 var MIGRATIONS = []migrationFunc{
 	snapshot_migration_0000,
 	snapshot_migration_0001,
