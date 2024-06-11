@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react'
 import { keccak256 } from 'ethers/lib/utils'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
 import { env, isTest } from 'utils'
-import { isAndroid, isIOS, isPWA } from './useDevice'
+import { getBrowserName, isAndroid, isIOS, isPWA } from './useDevice'
 
 const ANOYNOMOUS_ID = 'analytics-anonymousId'
 const isProd = !env.DEV && !isTest()
@@ -164,6 +164,7 @@ function getCommonAnalyticsProperties(): ApiObject {
     const device = isIOS() ? 'ios' : isAndroid() ? 'android' : 'desktop'
     const platform = isPWA() ? 'pwa' : 'browser'
     return {
+        browserName: getBrowserName(),
         device,
         platform,
     }
