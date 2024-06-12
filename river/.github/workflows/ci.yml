@@ -85,7 +85,7 @@ jobs:
 
             - name: Print versions
               run: ./scripts/print-versions.sh
-          
+
             # Start an ssh session with tmate if the PR has the 'ssh' label
             - name: Setup tmate session
               uses: mxschmitt/action-tmate@v3
@@ -135,9 +135,9 @@ jobs:
             - name: Staticcheck River Node
               uses: dominikh/staticcheck-action@v1
               with:
-                version: latest
-                working-directory: core/node
-                install-go: false
+                  version: latest
+                  working-directory: core/node
+                  install-go: false
 
             # - name: Terraform Lint
             #   run: make lint
@@ -225,7 +225,7 @@ jobs:
 
             - name: Print versions
               run: ./scripts/print-versions.sh
-          
+
             # Start an ssh session with tmate if the PR has the 'ssh' label
             - name: Setup tmate session
               uses: mxschmitt/action-tmate@v3
@@ -258,17 +258,17 @@ jobs:
 
             - name: Check SSL directories and environment variables
               run: |
-                echo "Listing /etc/ssl/certs..."
-                ls -l /etc/ssl/certs || echo "/etc/ssl/certs not found"
+                  echo "Listing /etc/ssl/certs..."
+                  ls -l /etc/ssl/certs || echo "/etc/ssl/certs not found"
 
-                echo "Listing /system/etc/security/cacerts..."
-                ls -l /system/etc/security/cacerts || echo "/system/etc/security/cacerts not found"
+                  echo "Listing /system/etc/security/cacerts..."
+                  ls -l /system/etc/security/cacerts || echo "/system/etc/security/cacerts not found"
 
-                echo "Checking SSL_CERT_FILE environment variable..."
-                echo "SSL_CERT_FILE=$SSL_CERT_FILE"
+                  echo "Checking SSL_CERT_FILE environment variable..."
+                  echo "SSL_CERT_FILE=$SSL_CERT_FILE"
 
-                echo "Checking SSL_CERT_DIR environment variable..."
-                echo "SSL_CERT_DIR=$SSL_CERT_DIR"
+                  echo "Checking SSL_CERT_DIR environment variable..."
+                  echo "SSL_CERT_DIR=$SSL_CERT_DIR"
 
             - name: Run node (without entitlements)
               run: ./core/node/run_single.sh --de &
@@ -370,7 +370,7 @@ jobs:
 
             - name: Print versions
               run: ./scripts/print-versions.sh
-          
+
             # Start an ssh session with tmate if the PR has the 'ssh' label
             - name: Setup tmate session
               uses: mxschmitt/action-tmate@v3
@@ -403,7 +403,7 @@ jobs:
 
             - name: Set up Custom CA Certificate for Node.js
               run: |
-                echo "NODE_EXTRA_CA_CERTS=$HOME/river-ca-cert.pem" >> $GITHUB_ENV
+                  echo "NODE_EXTRA_CA_CERTS=$HOME/river-ca-cert.pem" >> $GITHUB_ENV
 
             - name: Run multiple nodes
               run: |
@@ -664,14 +664,13 @@ jobs:
                   POSTGRES_PASSWORD: postgres
                   PGPASSWORD: postgres
 
-
             - name: Setup River CA for testing certificates
               run: ./scripts/register-ca.sh
               working-directory: core
 
             - name: Set up Custom CA Certificate for Node.js
               run: |
-                echo "NODE_EXTRA_CA_CERTS=$HOME/river-ca-cert.pem" >> $GITHUB_ENV
+                  echo "NODE_EXTRA_CA_CERTS=$HOME/river-ca-cert.pem" >> $GITHUB_ENV
 
             - name: Run multiple nodes
               run: |
@@ -682,7 +681,7 @@ jobs:
 
             - name: Start xchain node with entitlements
               run: (RUN_ENV=multi ./core/xchain/launch_multi.sh &) && sleep 10
-    
+
             - name: Build & Test (with entitlements)
               run: yarn csb:turbo-no-sdk
 
@@ -887,48 +886,48 @@ jobs:
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_client_noentitlements
         runs-on: ubuntu-latest-8-cores
         timeout-minutes: 30
-        
+
         steps:
             - name: Cancel previous runs
               if: github.event_name != 'schedule'
               uses: styfle/cancel-workflow-action@0.12.1
               with:
                   access_token: ${{ github.token }}
-                
+
             - name: Checkout code
               uses: actions/checkout@v4
-        
+
             - name: Git submodules
               run: git submodule update --init --recursive
-        
+
             - name: Setup Go
               uses: actions/setup-go@v5
               with:
                   go-version-file: 'go.work'
                   cache-dependency-path: '**/*.sum'
-        
+
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
-        
+
             - uses: actions/setup-node@v4
               with:
                   node-version: '20'
                   cache: 'yarn'
-        
+
             - name: Install node dependencies
               run: yarn install --immutable
-        
+
             - name: Print versions
               run: ./scripts/print-versions.sh
-        
+
             - name: Start Local Basechain
               run: ./scripts/start-local-basechain.sh &
-              
+
             - name: Print Yarn package versions
               run: yarn info --name-only --all
-        
+
             - name: Maintain Turbo cache
               uses: actions/cache@v4
               with:
@@ -943,7 +942,16 @@ jobs:
 
     Slack_Notification:
         # NOTE: We should make sure that new jobs get added here
-        needs: [Common_CI, Client_NoEntitlements, Multinode, Client_Entitlements, Multinode_Ent, Node, XChain_Node]
+        needs:
+            [
+                Common_CI,
+                Client_NoEntitlements,
+                Multinode,
+                Client_Entitlements,
+                Multinode_Ent,
+                Node,
+                XChain_Node,
+            ]
         if: failure()
         runs-on: ubuntu-latest
         steps:
@@ -951,10 +959,10 @@ jobs:
               if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
               uses: rtCamp/action-slack-notify@v2
               env:
-                SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
-                SLACK_TITLE: 'Failure'
-                SLACK_USERNAME: 'CI'
-                SLACK_ICON_EMOJI: ':boom:'
-                SLACK_COLOR: '#FF0000'
-                SLACK_MESSAGE: 'CI Failure on ${{ github.repository }} ${{ vars.GOALIE_SLACK_GROUP_ID}}'
-                SLACK_LINK_NAMES: true
+                  SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
+                  SLACK_TITLE: 'Failure'
+                  SLACK_USERNAME: 'CI'
+                  SLACK_ICON_EMOJI: ':boom:'
+                  SLACK_COLOR: '#FF0000'
+                  SLACK_MESSAGE: 'CI Failure on ${{ github.repository }} ${{ vars.GOALIE_SLACK_GROUP_ID}}'
+                  SLACK_LINK_NAMES: true

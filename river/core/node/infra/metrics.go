@@ -66,12 +66,8 @@ func (m *Metrics) StartMetricsServer(ctx context.Context, config config.MetricsC
 
 	mux.Handle("/metrics", metricsHandler)
 
-	iface := config.Interface
-	if iface == "" {
-		iface = "localhost"
-	}
 	m.httpServer = &http.Server{
-		Addr:    fmt.Sprintf("%s:%d", iface, config.Port),
+		Addr:    fmt.Sprintf("%s:%d", config.Interface, config.Port),
 		Handler: mux,
 	}
 

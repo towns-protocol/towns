@@ -3,7 +3,9 @@ import { foundry } from 'viem/chains'
 
 import MockERC721a from './MockERC721A'
 
-import { keccak256 } from 'viem/utils'
+import { keccak256, parseEther } from 'viem/utils'
+import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
+
 import { dlogger } from '@river-build/dlog'
 
 const logger = dlogger('csb:TestGatingNFT')
@@ -94,19 +96,25 @@ export async function getContractAddress(nftName: string): Promise<`0x${string}`
         if (!nftContracts.has(nftName)) {
             while (retryCount++ < 5) {
                 try {
+                    const privateKey = generatePrivateKey()
+                    const throwawayAccount = privateKeyToAccount(privateKey)
                     const client = createTestClient({
                         chain: foundry,
                         mode: 'anvil',
                         transport: http(),
+                        account: throwawayAccount,
                     })
                         .extend(publicActions)
                         .extend(walletActions)
 
-                    const account = (await client.getAddresses())[0]
+                    await client.setBalance({
+                        address: throwawayAccount.address,
+                        value: parseEther('1'),
+                    })
 
                     const hash = await client.deployContract({
                         abi: MockERC721a.abi,
-                        account,
+                        account: throwawayAccount,
                         bytecode: MockERC721a.bytecode.object,
                     })
 
@@ -166,27 +174,34 @@ export async function getTestGatingNFTContractAddress(): Promise<`0x${string}`> 
 }
 
 export async function publicMint(nftName: string, toAddress: `0x${string}`) {
+    const privateKey = generatePrivateKey()
+    const throwawayAccount = privateKeyToAccount(privateKey)
     const client = createTestClient({
         chain: foundry,
         mode: 'anvil',
         transport: http(),
+        account: throwawayAccount,
     })
         .extend(publicActions)
         .extend(walletActions)
 
+    await client.setBalance({
+        address: throwawayAccount.address,
+        value: parseEther('1'),
+    })
+
     const contractAddress = await getContractAddress(nftName)
 
     logger.log('minting', contractAddress, toAddress)
-
-    const account = (await client.getAddresses())[0]
 
     const nftReceipt = await client.writeContract({
         address: contractAddress,
         abi: MockERC721a.abi,
         functionName: 'mint',
         args: [toAddress, 1n],
-        account,
+        account: throwawayAccount,
     })
+    logger.log('minted', nftReceipt)
 
     const receipt = await client.waitForTransactionReceipt({ hash: nftReceipt })
     expect(receipt.status).toBe('success')

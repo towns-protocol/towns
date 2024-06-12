@@ -8,13 +8,13 @@ on:
             - main
 
     workflow_dispatch: # A build was manually requested
-      inputs:
-        release_version:
-          description: 'The release version to use for the image (optional)'
-          required: false # This is no longer required, so that we can promote existing images to `mainnet`, `testnet`, `stable` etc.
-        additional_tags_csv:
-          description: 'Comma separated list of tags to apply to the image (optional)'
-          required: false
+        inputs:
+            release_version:
+                description: 'The release version to use for the image (optional)'
+                required: false # This is no longer required, so that we can promote existing images to `mainnet`, `testnet`, `stable` etc.
+            additional_tags_csv:
+                description: 'Comma separated list of tags to apply to the image (optional)'
+                required: false
 
 env:
     DOCKER_NAMESPACE: herenotthere
@@ -39,96 +39,96 @@ jobs:
             - name: Setup AWS Credentials
               uses: aws-actions/configure-aws-credentials@v4
               with:
-                aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-                aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-                aws-region: us-east-1
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: us-east-1
 
             - name: Login to Amazon ECR
               id: login-aws-ecr
               uses: aws-actions/amazon-ecr-login@v2
               with:
-                registry-type: 'public'
+                  registry-type: 'public'
 
             - name: Build and push image to Amazon ECR
               id: build-image
               env:
-                ECR_REGISTRY: ${{ steps.login-aws-ecr.outputs.registry }}
-                #This can be custom alias once requested to aws and approved for public repo
-                REGISTRY_ALIAS: h5v6m2x1
-                ECR_REPOSITORY: river
-                RELEASE_VERSION: ${{ inputs.release_version }}
-                ADDITIONAL_TAGS: ${{ inputs.additional_tags_csv }}
+                  ECR_REGISTRY: ${{ steps.login-aws-ecr.outputs.registry }}
+                  #This can be custom alias once requested to aws and approved for public repo
+                  REGISTRY_ALIAS: h5v6m2x1
+                  ECR_REPOSITORY: river
+                  RELEASE_VERSION: ${{ inputs.release_version }}
+                  ADDITIONAL_TAGS: ${{ inputs.additional_tags_csv }}
               working-directory: ./core
               run: |
-                COMMIT_HASH=$(git describe --tags --always --dirty)
-                BRANCH=$(git rev-parse --abbrev-ref HEAD)
-                TAGS=($COMMIT_HASH)
+                  COMMIT_HASH=$(git describe --tags --always --dirty)
+                  BRANCH=$(git rev-parse --abbrev-ref HEAD)
+                  TAGS=($COMMIT_HASH)
 
-                # if release version is not provided, we set it to "river"
-                if [ -z "$RELEASE_VERSION" ]; then
-                  RELEASE_VERSION="river"
-                else
-                  # If this is a release, we also tag the image with the release version.
-                  TAGS+=($RELEASE_VERSION)
-                fi
-
-                # If this is a push to main, we also tag the image as dev,
-                # But RELEASE_VERSION remains untouched, as `dev` is not a version, but just a tag.
-                if [ "$BRANCH" == "main" ] && [ "${{ github.event_name }}" == "push" ]; then  
-                  TAGS+=(dev)
-                fi
-
-                # Add additional tags if provided
-                if [ -n "$ADDITIONAL_TAGS" ]; then
-                  IFS=',' read -ra ADDITIONAL_TAGS_ARRAY <<< "$ADDITIONAL_TAGS"
-                  for tag in "${ADDITIONAL_TAGS_ARRAY[@]}"; do
-                    TAGS+=($tag)
-                  done
-                fi
-
-                echo "Building image with the following tags: ${TAGS[@]}"
-                echo "Commit hash: $COMMIT_HASH"
-                echo "Branch: $BRANCH"
-                echo "Release version: $RELEASE_VERSION"
-
-                docker build \
-                  --build-arg GIT_SHA=${{ github.sha }} \
-                  --build-arg VER_VERSION=$RELEASE_VERSION \
-                  --build-arg VER_BRANCH=$BRANCH \
-                  --build-arg VER_COMMIT=$COMMIT_HASH \
-                  -t river:local-latest \
-                  . 
-
-                echo "::set-output name=tag_valid::false"
-                for tag in "${TAGS[@]}"; do
-                  if [ "$tag" == "mainnet" ] || [ "$tag" == "testnet" ]; then
-                    echo "::set-output name=tag_valid::true"
-                    echo "::set-output name=tag_value::$tag"
+                  # if release version is not provided, we set it to "river"
+                  if [ -z "$RELEASE_VERSION" ]; then
+                    RELEASE_VERSION="river"
+                  else
+                    # If this is a release, we also tag the image with the release version.
+                    TAGS+=($RELEASE_VERSION)
                   fi
-                  docker tag river:local-latest $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:$tag
-                  docker push $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:$tag
-                done
+
+                  # If this is a push to main, we also tag the image as dev,
+                  # But RELEASE_VERSION remains untouched, as `dev` is not a version, but just a tag.
+                  if [ "$BRANCH" == "main" ] && [ "${{ github.event_name }}" == "push" ]; then  
+                    TAGS+=(dev)
+                  fi
+
+                  # Add additional tags if provided
+                  if [ -n "$ADDITIONAL_TAGS" ]; then
+                    IFS=',' read -ra ADDITIONAL_TAGS_ARRAY <<< "$ADDITIONAL_TAGS"
+                    for tag in "${ADDITIONAL_TAGS_ARRAY[@]}"; do
+                      TAGS+=($tag)
+                    done
+                  fi
+
+                  echo "Building image with the following tags: ${TAGS[@]}"
+                  echo "Commit hash: $COMMIT_HASH"
+                  echo "Branch: $BRANCH"
+                  echo "Release version: $RELEASE_VERSION"
+
+                  docker build \
+                    --build-arg GIT_SHA=${{ github.sha }} \
+                    --build-arg VER_VERSION=$RELEASE_VERSION \
+                    --build-arg VER_BRANCH=$BRANCH \
+                    --build-arg VER_COMMIT=$COMMIT_HASH \
+                    -t river:local-latest \
+                    . 
+
+                  echo "::set-output name=tag_valid::false"
+                  for tag in "${TAGS[@]}"; do
+                    if [ "$tag" == "mainnet" ] || [ "$tag" == "testnet" ]; then
+                      echo "::set-output name=tag_valid::true"
+                      echo "::set-output name=tag_value::$tag"
+                    fi
+                    docker tag river:local-latest $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:$tag
+                    docker push $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:$tag
+                  done
 
             - name: Create new release tag
               if: ${{ success() && steps.build-image.outputs.tag_valid == 'true' }}
               id: create-tag
               run: |
-                new_tag=$(./scripts/create-new-release-tag.sh ${{ steps.build-image.outputs.tag_value }})
-                echo "::set-output name=new_tag::$new_tag"
+                  new_tag=$(./scripts/create-new-release-tag.sh ${{ steps.build-image.outputs.tag_value }})
+                  echo "::set-output name=new_tag::$new_tag"
 
             - name: Push tag
               if: ${{ success() && steps.build-image.outputs.tag_valid == 'true' }}
               uses: actions/github-script@v4
               with:
-                github-token: ${{ secrets.GITHUB_TOKEN }}
-                script: |
-                  const response = await github.git.createRef({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    ref: 'refs/tags/' + '${{ steps.create-tag.outputs.new_tag }}',
-                    sha: context.sha
-                  })
-                  console.log(response)
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  script: |
+                      const response = await github.git.createRef({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        ref: 'refs/tags/' + '${{ steps.create-tag.outputs.new_tag }}',
+                        sha: context.sha
+                      })
+                      console.log(response)
 
             # If action failed, we send a slack notification
             - name: Slack notification
