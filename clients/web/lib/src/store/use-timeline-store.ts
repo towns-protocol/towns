@@ -69,7 +69,11 @@ function makeTimelineStoreInterface(
     setState: (fn: (prevState: TimelineStoreStates) => TimelineStoreStates) => void,
 ): TimelineStoreInterface {
     const initializeStream = (userId: string, roomId: string) => {
-        const aggregated = toStatsAndReactions([], userId)
+        const aggregated = {
+            threadStats: {} as Record<string, ThreadStats>,
+            threads: {} as Record<string, TimelineEvent[]>,
+            reactions: {} as Record<string, MessageReactions>,
+        }
 
         setState((state) => ({
             timelines: { ...state.timelines, [roomId]: [] },
@@ -508,41 +512,6 @@ function makeRedactionEvent(redactionAction: TimelineEvent): TimelineEvent {
         fallbackContent: getFallbackContent('', newContent),
         isRedacted: true,
     }
-}
-
-function toStatsAndReactions(timeline: TimelineEvent[], userId: string) {
-    return timeline.reduce<{
-        threadStats: Record<string, ThreadStats>
-        threads: Record<string, TimelineEvent[]>
-        reactions: Record<string, MessageReactions>
-    }>(
-        (acc, m) => {
-            if (m.threadParentId) {
-                acc.threadStats[m.threadParentId] = addThreadStat(
-                    m,
-                    m.threadParentId,
-                    acc.threadStats[m.threadParentId],
-                    timeline,
-                    userId,
-                )
-                const thread = acc.threads[m.threadParentId] ?? []
-                thread.push(m)
-                acc.threads[m.threadParentId] = thread
-            }
-            if (m.reactionParentId) {
-                acc.reactions[m.reactionParentId] = addReaction(
-                    m,
-                    acc.reactions[m.reactionParentId],
-                )
-            }
-            return acc
-        },
-        {
-            threadStats: {} as Record<string, ThreadStats>,
-            threads: {} as Record<string, TimelineEvent[]>,
-            reactions: {} as Record<string, MessageReactions>,
-        },
-    )
 }
 
 function addThreadStats(
