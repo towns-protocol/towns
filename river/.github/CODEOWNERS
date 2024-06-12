@@ -25,17 +25,26 @@
 ## please visit: https://github.com/river-build/river/pulls?q=is%3Apr+is%3Aopen+user-review-requested%3A%40me
 ##
 
-/core/ @sergekh2
-/packages/ @sergekh2
-/protocol/ @sergekh2
-/core/node/events @texuf
-/core/node/protocol @texuf
-/core/node/protocol_extensions @texuf
-/core/node/rules @texuf
-/packages/ @texuf
-/protocol/ @texuf
 /.github/ @mechanical-turk
-/infra @mechanical-turk
+/.github/CODEOWNERS @brianathere @sergekh2 @texuf
+/.vscode/ @texuf
+/.yarn/ @brianathere
+/assets/ @texuf
+/contracts/ @pfives @giuseppecrj @brianathere
+/contracts/src/node-network/ @mechanical-turk
+/core/ @sergekh2
+/core/node/ @bas-vk
+/core/node/events/ @texuf
+/core/node/protocol/ @texuf
+/core/node/protocol_extensions/ @texuf
+/core/node/rules/ @texuf
+/core/xchain/ @bas-vk @clemire @brianathere
+/infra/ @mechanical-turk
+/packages/ @sergekh2 @texuf
+/packages/addresses/ @giuseppecrj
+/packages/generated/ @giuseppecrj
+/packages/sdk/ @erikolsson
+/protocol/ @sergekh2 @texuf
+/scripts/ @texuf
 turbo.json @mechanical-turk
-/contracts/src/node-network @mechanical-turk
-/packages/sdk/src/stream* @erikolsson
+/*.* @brianathere @texuf

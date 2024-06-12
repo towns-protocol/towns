@@ -132,6 +132,11 @@ export const makeDefaultChannelStreamId = (spaceContractAddressOrId: string): st
     return makeStreamId(StreamPrefix.Channel, spaceContractAddressOrId + '0'.repeat(22))
 }
 
+export const spaceIdFromChannelId = (channelId: string): string => {
+    check(isChannelStreamId(channelId), 'Invalid channel id: ' + channelId)
+    return makeStreamId(StreamPrefix.Space, channelId.slice(2, 42) + '0'.repeat(22))
+}
+
 export const isDefaultChannelId = (streamId: string): boolean => {
     const prefix = streamId.slice(0, 2) as StreamPrefix
     if (prefix !== StreamPrefix.Channel) {

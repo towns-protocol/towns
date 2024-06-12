@@ -41,19 +41,10 @@ This XChain Node resides in a monorepo and interfaces with the `EntitlementCheck
 
 ## Installation and Deployment
 
-1. **Clone the Monorepo:**
+1. **Run Start Dev to configure and start servers:**
 
    ```bash
-   git clone https://github.com/HereNotThere/harmony.git
-   ```
-
-2. **Navigate to Monorepo:**
-   ```bash
-   cd harmony
-   ```
-3. **Deploy Contracts:**
-   ```bash
-   ./scripts/deploy-entitlement-checker.sh
+   ../../scripts/start_dev.sh
    ```
 
 ---
@@ -107,20 +98,6 @@ This XChain Node resides in a monorepo and interfaces with the `EntitlementCheck
 
    ```bash
    ./scripts/start_dev.sh
-   ```
-
-1. **Create Multi-Instance Configs:**
-
-   ```bash
-   export RIVER_ENV="local_single"
-   ./create_multi.sh
-   ```
-
-   This will create five instance configurations in `./core/xchain/instance_1-5` using the template in `./core/node/config-template.yaml`.
-
-1. **Launch Multiple Instances:**
-   ```bash
-   ./launch-multi.sh
    ```
 
 ---

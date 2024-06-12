@@ -56,6 +56,6 @@ func TestInceptionPayload(t *testing.T) {
 	}
 	// pro tip, if you cast nil to an interface type, it's still nil
 	assert.Nil(t, spaceMembership.GetInceptionPayload())
-	// but it's not equal to nil! this is a test to make sure we don't regress see: https://github.com/HereNotThere/harmony/pull/2808
+	// but it's not equal to nil! 
 	assert.True(t, spaceMembership.GetInceptionPayload() == nil)
 }
