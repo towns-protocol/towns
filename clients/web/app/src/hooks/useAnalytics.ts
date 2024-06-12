@@ -5,7 +5,7 @@ import {
     IdentifyTraits,
     RudderAnalytics,
 } from '@rudderstack/analytics-js'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { keccak256 } from 'ethers/lib/utils'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
 import { env, isTest } from 'utils'
@@ -99,8 +99,9 @@ export class Analytics {
 }
 
 export function useAnalytics() {
-    const [analytics, setAnalytics] = useState<Analytics>()
+    const [analytics /*, setAnalytics*/] = useState<Analytics>()
 
+    /*
     useEffect(() => {
         if (isProd) {
             if (!analytics) {
@@ -111,6 +112,7 @@ export function useAnalytics() {
             }
         }
     }, [analytics])
+    */
 
     return {
         analytics,
