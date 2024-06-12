@@ -38,7 +38,9 @@ export function EditGating() {
             formProps.setValue('membershipType', 'tokenHolders', {
                 shouldValidate: true,
             })
-            inputRef.current?.focus()
+            if (formProps.getValues('membershipType') === 'everyone') {
+                inputRef.current?.focus()
+            }
         },
         [],
     )
