@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTownsContext } from '../components/TownsContextProvider'
 import { Membership, toMembership } from '../types/towns-types'
 import { useCasablancaStream } from './CasablancClient/useCasablancaStream'
+import { Stream } from '@river/sdk'
 
 /**
  * useMyMembership is different than useMembership in that it uses the userStream to determine the membership
@@ -13,32 +14,37 @@ import { useCasablancaStream } from './CasablancClient/useCasablancaStream'
 export function useMyMembership(streamId?: string): Membership {
     const { casablancaClient } = useTownsContext()
     const userStream = useCasablancaStream(casablancaClient?.userStreamId)
-    const [membership, setMembership] = useState<Membership>(Membership.None)
+
+    const [membership, setMembership] = useState<Membership>(() =>
+        getMembership(userStream, streamId),
+    )
 
     useEffect(() => {
         if (!userStream || !streamId) {
             return
         }
-        const updateMember = () => {
-            const membershipOp = userStream.view.userContent.streamMemberships[streamId]?.op
-            const membership = toMembership(membershipOp)
-            setMembership(membership)
+
+        const updateMembership = () => {
+            setMembership(getMembership(userStream, streamId))
         }
 
-        updateMember()
+        updateMembership()
 
-        const onUserStreamUpdate = (_streamId: string) => {
-            updateMember()
-        }
-
-        userStream.on('userStreamMembershipChanged', onUserStreamUpdate)
-        userStream.on('streamInitialized', onUserStreamUpdate)
+        userStream.on('userStreamMembershipChanged', updateMembership)
+        userStream.on('streamInitialized', updateMembership)
 
         return () => {
-            userStream.off('userStreamMembershipChanged', onUserStreamUpdate)
-            userStream.off('streamInitialized', onUserStreamUpdate)
+            userStream.off('userStreamMembershipChanged', updateMembership)
+            userStream.off('streamInitialized', updateMembership)
         }
     }, [streamId, userStream])
 
     return membership
+}
+
+const getMembership = (userStream: Stream | undefined, streamId: string | undefined) => {
+    const membershipOp = streamId
+        ? userStream?.view.userContent.streamMemberships[streamId]?.op
+        : undefined
+    return toMembership(membershipOp) || Membership.None
 }
