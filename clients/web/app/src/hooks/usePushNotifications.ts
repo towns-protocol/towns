@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import { useStore } from 'store/store'
 import { env } from '../utils/environment'
-import { useDevice } from './useDevice'
+import { isMacOS, isSafari, useDevice } from './useDevice'
 const ENABLE_PUSH_NOTIFICATIONS = env.VITE_PUSH_NOTIFICATION_ENABLED
 
 export const usePushNotifications = () => {
@@ -30,6 +30,7 @@ export const usePushNotifications = () => {
     const displayNotificationBanner =
         (ENABLE_PUSH_NOTIFICATIONS || isPWA) &&
         simplifiedPermissionState === 'default' &&
+        !(isSafari() && isMacOS() && isPWA) &&
         notificationsSupported()
 
     return {

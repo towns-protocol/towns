@@ -12,6 +12,16 @@ export function isIOS() {
     return os.name === 'iOS'
 }
 
+export function isMacOS() {
+    const os = UserAgentInstance.getOS()
+    return os.name === 'Mac OS'
+}
+
+export function isSafari() {
+    const browser = UserAgentInstance.getBrowser()
+    return browser.name === 'Safari'
+}
+
 export function isAndroid() {
     const os = UserAgentInstance.getOS()
     return os.name === 'Android'
