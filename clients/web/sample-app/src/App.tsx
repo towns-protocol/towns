@@ -79,7 +79,6 @@ const AppContent = () => {
     return (
         <ThemeProvider theme={theme}>
             <TownsContextProvider
-                enableSpaceRootUnreads
                 environmentId={environmentId}
                 baseChain={baseChain}
                 baseConfig={baseChainConfig}

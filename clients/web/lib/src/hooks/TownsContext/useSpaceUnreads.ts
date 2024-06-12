@@ -1,40 +1,33 @@
 import { useEffect, useState } from 'react'
 import { FullyReadMarker } from '@river-build/proto'
 import { TownsClient } from '../../client/TownsClient'
-import { SpaceHierarchies } from '../../types/towns-types'
 import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store'
 import { ThreadStatsMap, useTimelineStore } from '../../store/use-timeline-store'
-import { useSpaceIdStore } from './useSpaceIds'
 import isEqual from 'lodash/isEqual'
+import debounce from 'lodash/debounce'
+import { isChannelStreamId, spaceIdFromChannelId } from '@river/sdk'
+import { useSpaceIdStore } from './useSpaceIds'
 
 export function useSpaceUnreads({
     client,
-    spaceHierarchies,
-    enableSpaceRootUnreads: bShowSpaceRootUnreads,
     mutedChannelIds,
 }: {
     client: TownsClient | undefined
-    spaceHierarchies: SpaceHierarchies
-    enableSpaceRootUnreads: boolean
     mutedChannelIds?: string[]
 }) {
-    const { spaceIds } = useSpaceIdStore()
-
     const [state, setState] = useState<{
         spaceUnreads: Record<string, boolean>
         spaceMentions: Record<string, number>
         spaceUnreadChannelIds: Record<string, Set<string>>
     }>({ spaceUnreads: {}, spaceMentions: {}, spaceUnreadChannelIds: {} })
 
-    const threadsStats = useTimelineStore((state) => state.threadsStats)
+    const { spaceIds } = useSpaceIdStore()
 
     useEffect(() => {
         if (!client) {
             return
         }
 
-        // gets run every time spaceIds changes
-        // console.log("USE SPACE UNREADS::running effect");
         const updateState = (
             spaceId: string,
             hasUnread: boolean,
@@ -77,50 +70,64 @@ export function useSpaceUnreads({
 
         const runUpdate = () => {
             const markers = useFullyReadMarkerStore.getState().markers
-            // note, okay using timeline store without listening to it because I'm
-            // mostly certian it's impossible to update the isParticipating without
-            // also updating the fullyReadMarkers
-            spaceIds.forEach((spaceId) => {
-                let hasUnread = false
-                let mentionCount = 0
-                const unreadChannelIds = new Set<string>()
-                // easy case: if the space has a fully read marker, then it's not unread
-                if (bShowSpaceRootUnreads && markers[spaceId]?.isUnread === true) {
-                    hasUnread = true
-                    mentionCount += markers[spaceId].mentions
-                }
-                // next, check the channels & threads
-                const childIds = new Set(spaceHierarchies[spaceId]?.channels.map((x) => x.id) ?? [])
-                // count all channels and threads we're patricipating in
-                Object.values(markers).forEach((marker) => {
-                    if (
-                        marker.isUnread &&
-                        isParticipatingThread(marker, threadsStats) &&
-                        childIds.has(marker.channelId)
-                    ) {
-                        const isMuted = mutedChannelIds?.includes(marker.channelId)
-                        if (!isMuted) {
-                            mentionCount += marker.mentions
-                            hasUnread = true
-                            // dismiss threads when marking channels as unread
-                            if (!marker.threadParentId) {
-                                unreadChannelIds.add(marker.channelId)
+            const threadsStats = useTimelineStore.getState().threadsStats
+
+            const results: Record<
+                string,
+                { isUnread: boolean; mentions: number; unreadChannelIds: Set<string> }
+            > = {}
+
+            // we have lots of markers! loop over the markers just once and build up the state
+            // we should transition updating on a delta of markers
+            Object.values(markers).forEach((marker) => {
+                // only process channel markers
+                if (isChannelStreamId(marker.channelId)) {
+                    const spaceId = spaceIdFromChannelId(marker.channelId)
+                    // only return the unreads from spaceIds in the spaceId store
+                    if (spaceIds.includes(spaceId)) {
+                        if (!results[spaceId]) {
+                            results[spaceId] = {
+                                isUnread: false,
+                                mentions: 0,
+                                unreadChannelIds: new Set(),
+                            }
+                        }
+                        if (marker.isUnread && isParticipatingThread(marker, threadsStats)) {
+                            const isMuted = mutedChannelIds?.includes(marker.channelId)
+                            if (!isMuted) {
+                                results[spaceId].mentions += marker.mentions
+                                results[spaceId].isUnread = true
+                                // dismiss threads when marking channels as unread
+                                if (!marker.threadParentId) {
+                                    results[spaceId].unreadChannelIds.add(marker.channelId)
+                                }
                             }
                         }
                     }
-                })
-
-                updateState(spaceId, hasUnread, mentionCount, unreadChannelIds)
+                }
             })
+
+            Object.entries(results).forEach(
+                ([spaceId, { isUnread, mentions, unreadChannelIds }]) => {
+                    updateState(spaceId, isUnread, mentions, unreadChannelIds)
+                },
+            )
         }
 
-        runUpdate()
+        const debouncedRunUpdate1 = debounce(runUpdate, 250)
+        const debouncedRunUpdate2 = debounce(runUpdate, 3000)
 
-        const fullyReadUnsub = useFullyReadMarkerStore.subscribe(runUpdate)
+        debouncedRunUpdate1()
+
+        const fullyReadUnsub = useFullyReadMarkerStore.subscribe(debouncedRunUpdate1)
+        const threadStatsUnsub = useTimelineStore.subscribe(debouncedRunUpdate2)
         return () => {
+            debouncedRunUpdate1.cancel()
+            debouncedRunUpdate2.cancel()
             fullyReadUnsub()
+            threadStatsUnsub()
         }
-    }, [client, spaceIds, spaceHierarchies, bShowSpaceRootUnreads, threadsStats, mutedChannelIds])
+    }, [client, mutedChannelIds, spaceIds])
 
     return state
 }

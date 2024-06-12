@@ -72,7 +72,6 @@ interface TownsContextProviderProps {
     baseChain: Chain
     riverConfig: RiverChainConfig
     riverChain: IChainConfig
-    enableSpaceRootUnreads?: boolean
     timelineFilter?: Set<ZTEvent>
     streamFilter?: Set<SnapshotCaseType>
     children: JSX.Element
@@ -115,7 +114,6 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
         baseChain,
         riverConfig,
         riverChain,
-        enableSpaceRootUnreads = false,
         timelineFilter,
         mutedChannelIds,
     } = props
@@ -185,8 +183,6 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
 
     const { spaceUnreads, spaceMentions, spaceUnreadChannelIds } = useSpaceUnreads({
         client,
-        spaceHierarchies,
-        enableSpaceRootUnreads,
         mutedChannelIds,
     })
 
