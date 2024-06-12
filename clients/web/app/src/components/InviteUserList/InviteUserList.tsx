@@ -2,7 +2,13 @@ import { AnimatePresence } from 'framer-motion'
 import fuzzysort from 'fuzzysort'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { firstBy } from 'thenby'
-import { LookupUser, useMyUserId, useUser, useUserLookupStore } from 'use-towns-client'
+import {
+    LookupUser,
+    useMyUserId,
+    useSpaceMembersWithFallback,
+    useUser,
+    useUserLookupContext,
+} from 'use-towns-client'
 import { Avatar } from '@components/Avatar/Avatar'
 import { FadeInBox } from '@components/Transitions'
 import {
@@ -39,8 +45,10 @@ export const InviteUserList = (props: {
 }) => {
     const { onSelectionChange, hiddenUserIds = new Set(), isMultiSelect = false } = props
     const [searchTerm, setSearchTerm] = useState('')
-    const { allUsers } = useUserLookupStore()
-    const usersList = useMemo(() => Object.values(allUsers).flatMap((m) => m), [allUsers])
+
+    const { lookupUser } = useUserLookupContext()
+    const { memberIds } = useSpaceMembersWithFallback()
+
     const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set<string>())
     const userId = useMyUserId()
     const { isTouch } = useDevice()
@@ -64,6 +72,8 @@ export const InviteUserList = (props: {
     )
 
     const filteredUserIds = useMemo(() => {
+        const usersList = memberIds.map(lookupUser)
+        console.log({ usersList })
         return fuzzysort
             .go(searchTerm, usersList, {
                 keys: ['displayName', 'username'],
@@ -71,16 +81,16 @@ export const InviteUserList = (props: {
             })
             .map((result) => result.obj) // Assuming `result.obj` contains the user object
             .sort(
-                firstBy<LookupUser>((user) =>
-                    user?.displayName?.startsWith('0x') ? 1 : -1,
-                ).thenBy((user) => user?.displayName),
+                firstBy<LookupUser>((u) => (u.displayName?.startsWith('0x') ? 1 : -1)).thenBy(
+                    (u) => u.displayName,
+                ),
             )
-            .filter(
-                (user) =>
-                    (!isMultiSelect || user.userId !== userId) && !hiddenUserIds.has(user.userId),
-            )
+            .map((u) => u.userId)
+            .filter((u) => (!isMultiSelect || u !== userId) && !hiddenUserIds.has(u))
             .slice(0, 25)
-    }, [hiddenUserIds, isMultiSelect, searchTerm, userId, usersList])
+    }, [hiddenUserIds, isMultiSelect, lookupUser, memberIds, searchTerm, userId])
+
+    console.log({ filteredUserIds })
 
     const recentUsers = usePersistOrder(
         useRecentUsers(userId).filter((id) => !hiddenUserIds.has(id)),
@@ -130,7 +140,7 @@ export const InviteUserList = (props: {
 
     const buttonListLength = isMultiSelect ? 0 : 1
     const priorityListLength = priorityList.length + buttonListLength
-    const totalListLength = priorityList.length + usersList.length + buttonListLength
+    const totalListLength = priorityList.length + memberIds.length + buttonListLength
 
     useEffect(() => {
         const onKeyDown = (e: KeyboardEvent) => {
@@ -155,7 +165,7 @@ export const InviteUserList = (props: {
         return () => {
             window.removeEventListener('keydown', onKeyDown)
         }
-    }, [activeIndex, usersList.length, props, priorityList.length, totalListLength])
+    }, [activeIndex, memberIds.length, props, priorityList.length, totalListLength])
 
     const layout = isSettled ? 'position' : undefined
 
@@ -253,15 +263,15 @@ export const InviteUserList = (props: {
                             </Box>
                         )}
                         {(searchTerm
-                            ? usersList.filter((u) => filteredUserIds.includes(u))
-                            : usersList
-                        ).map((id, index) => (
+                            ? memberIds.filter((u) => filteredUserIds.includes(u))
+                            : memberIds
+                        ).map((u, index) => (
                             <Participant
-                                key={id}
+                                key={u}
                                 id={`search-item-${priorityListLength + index}`}
                                 isHighlighted={priorityListLength + index === activeIndex}
-                                userId={id}
-                                selected={selectedUserIds.has(id)}
+                                userId={u}
+                                selected={selectedUserIds.has(u)}
                                 isCheckbox={isMultiSelect}
                                 layout={layout}
                                 onToggle={toggleMember}
