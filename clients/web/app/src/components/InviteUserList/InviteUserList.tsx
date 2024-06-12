@@ -73,7 +73,6 @@ export const InviteUserList = (props: {
 
     const filteredUserIds = useMemo(() => {
         const usersList = memberIds.map(lookupUser)
-        console.log({ usersList })
         return fuzzysort
             .go(searchTerm, usersList, {
                 keys: ['displayName', 'username'],
