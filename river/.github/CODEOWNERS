@@ -25,26 +25,29 @@
 ## please visit: https://github.com/river-build/river/pulls?q=is%3Apr+is%3Aopen+user-review-requested%3A%40me
 ##
 
+# Order is important; the last matching pattern takes the most
+# precedence. 
+
+/*.* @brianathere @texuf
 /.github/ @mechanical-turk
 /.github/CODEOWNERS @brianathere @sergekh2 @texuf
 /.vscode/ @texuf
 /.yarn/ @brianathere
 /assets/ @texuf
-/contracts/ @pfives @giuseppecrj @brianathere
-/contracts/src/node-network/ @mechanical-turk
+/contracts/ @pfives @giuseppecrj @brianathere @jterzis
+/contracts/src/node-network/ @pfives @giuseppecrj @mechanical-turk
 /core/ @sergekh2
-/core/node/ @bas-vk
-/core/node/events/ @texuf
-/core/node/protocol/ @texuf
-/core/node/protocol_extensions/ @texuf
-/core/node/rules/ @texuf
-/core/xchain/ @bas-vk @clemire @brianathere
+/core/node/ @sergekh2 @bas-vk
+/core/node/events/ @sergekh2 @texuf
+/core/node/protocol/ @sergekh2 @texuf
+/core/node/protocol_extensions/ @sergekh2 @texuf
+/core/node/rules/ @sergekh2 @texuf
+/core/xchain/ @sergekh2 @bas-vk @clemire @brianathere
 /infra/ @mechanical-turk
 /packages/ @sergekh2 @texuf
-/packages/addresses/ @giuseppecrj
-/packages/generated/ @giuseppecrj
-/packages/sdk/ @erikolsson
+/packages/addresses/ @sergekh2 @texuf @giuseppecrj
+/packages/generated/ @sergekh2 @texuf @giuseppecrj
+/packages/sdk/ @sergekh2 @texuf @erikolsson
 /protocol/ @sergekh2 @texuf
 /scripts/ @texuf
 turbo.json @mechanical-turk
-/*.* @brianathere @texuf

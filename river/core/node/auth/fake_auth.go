@@ -15,6 +15,6 @@ type fakeChainAuth struct{}
 
 var _ ChainAuth = (*fakeChainAuth)(nil)
 
-func (a *fakeChainAuth) IsEntitled(ctx context.Context, cfg *config.Config, args *ChainAuthArgs) error {
-	return nil
+func (a *fakeChainAuth) IsEntitled(ctx context.Context, cfg *config.Config, args *ChainAuthArgs) (bool, error) {
+	return true, nil
 }

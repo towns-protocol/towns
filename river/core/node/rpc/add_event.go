@@ -78,9 +78,17 @@ func (s *Service) addParsedEvent(
 	}
 
 	if chainAuthArgs != nil {
-		err := s.chainAuth.IsEntitled(ctx, s.config, chainAuthArgs)
+		isEntitled, err := s.chainAuth.IsEntitled(ctx, s.config, chainAuthArgs)
 		if err != nil {
 			return err
+		}
+		if !isEntitled {
+			return RiverError(
+				Err_PERMISSION_DENIED,
+				"IsEntitled failed",
+				"chainAuthArgs",
+				chainAuthArgs.String(),
+			).Func("addParsedEvent")
 		}
 	}
 

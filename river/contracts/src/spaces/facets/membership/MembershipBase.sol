@@ -115,11 +115,11 @@ abstract contract MembershipBase is IMembershipBase {
       revert Membership__InvalidPricingModule();
   }
 
-  function _setPricingModule(address newPricingModule) public {
+  function _setPricingModule(address newPricingModule) internal {
     MembershipStorage.layout().pricingModule = newPricingModule;
   }
 
-  function _getPricingModule() public view returns (address) {
+  function _getPricingModule() internal view returns (address) {
     return MembershipStorage.layout().pricingModule;
   }
 
@@ -135,7 +135,7 @@ abstract contract MembershipBase is IMembershipBase {
   /// @dev Makes it virtual to allow other pricing strategies
   function _getMembershipPrice(
     uint256 totalSupply
-  ) public view virtual returns (uint256) {
+  ) internal view virtual returns (uint256) {
     MembershipStorage.Layout storage ds = MembershipStorage.layout();
 
     // get free allocation
@@ -192,13 +192,13 @@ abstract contract MembershipBase is IMembershipBase {
     ) revert Membership__InvalidFreeAllocation();
   }
 
-  function _setMembershipFreeAllocation(uint256 newAllocation) public {
+  function _setMembershipFreeAllocation(uint256 newAllocation) internal {
     MembershipStorage.Layout storage ds = MembershipStorage.layout();
     ds.freeAllocation = newAllocation;
     emit MembershipFreeAllocationUpdated(newAllocation);
   }
 
-  function _getMembershipFreeAllocation() public view returns (uint256) {
+  function _getMembershipFreeAllocation() internal view returns (uint256) {
     MembershipStorage.Layout storage ds = MembershipStorage.layout();
 
     uint256 freeAllocation = ds.freeAllocation;
@@ -218,32 +218,32 @@ abstract contract MembershipBase is IMembershipBase {
     if (newLimit < totalSupply) revert Membership__InvalidMaxSupply();
   }
 
-  function _setMembershipSupplyLimit(uint256 newLimit) public {
+  function _setMembershipSupplyLimit(uint256 newLimit) internal {
     MembershipStorage.layout().membershipMaxSupply = newLimit;
   }
 
-  function _getMembershipSupplyLimit() public view returns (uint256) {
+  function _getMembershipSupplyLimit() internal view returns (uint256) {
     return MembershipStorage.layout().membershipMaxSupply;
   }
 
   // =============================================================
   //                           Currency
   // =============================================================
-  function _getMembershipCurrency() public view returns (address) {
+  function _getMembershipCurrency() internal view returns (address) {
     return MembershipStorage.layout().membershipCurrency;
   }
 
   // =============================================================
   //                           Factory
   // =============================================================
-  function _getSpaceFactory() public view returns (address) {
+  function _getSpaceFactory() internal view returns (address) {
     return MembershipStorage.layout().spaceFactory;
   }
 
   // =============================================================
   //                           Image
   // =============================================================
-  function _getMembershipImage() public view returns (string memory) {
+  function _getMembershipImage() internal view returns (string memory) {
     return MembershipStorage.layout().membershipImage;
   }
 

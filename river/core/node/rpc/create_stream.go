@@ -51,7 +51,15 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 
 	log.Debug("createStream", "parsedEvents", parsedEvents)
 
-	csRules, err := rules.CanCreateStream(ctx, s.config, s.chainConfig, time.Now(), streamId, parsedEvents, req.Metadata)
+	csRules, err := rules.CanCreateStream(
+		ctx,
+		s.config,
+		s.chainConfig,
+		time.Now(),
+		streamId,
+		parsedEvents,
+		req.Metadata,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -102,10 +110,19 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 
 	// check entitlements
 	if csRules.ChainAuth != nil {
-		err := s.chainAuth.IsEntitled(ctx, s.config, csRules.ChainAuth)
+		isEntitled, err := s.chainAuth.IsEntitled(ctx, s.config, csRules.ChainAuth)
 		if err != nil {
 			return nil, err
 		}
+		if !isEntitled {
+			return nil, RiverError(
+				Err_PERMISSION_DENIED,
+				"IsEntitled failed",
+				"chainAuthArgs",
+				csRules.ChainAuth.String(),
+			).Func("createStream")
+		}
+
 	}
 
 	// create the stream

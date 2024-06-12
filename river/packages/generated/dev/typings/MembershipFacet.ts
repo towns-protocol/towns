@@ -128,16 +128,6 @@ export interface MembershipFacetInterface extends utils.Interface {
     "__ERC721A_init(string,string)": FunctionFragment;
     "__EntitlementGated_init(address)": FunctionFragment;
     "__Membership_init((string,string,uint256,uint256,uint64,address,address,uint256,address),address)": FunctionFragment;
-    "_getMembershipCurrency()": FunctionFragment;
-    "_getMembershipFreeAllocation()": FunctionFragment;
-    "_getMembershipImage()": FunctionFragment;
-    "_getMembershipPrice(uint256)": FunctionFragment;
-    "_getMembershipSupplyLimit()": FunctionFragment;
-    "_getPricingModule()": FunctionFragment;
-    "_getSpaceFactory()": FunctionFragment;
-    "_setMembershipFreeAllocation(uint256)": FunctionFragment;
-    "_setMembershipSupplyLimit(uint256)": FunctionFragment;
-    "_setPricingModule(address)": FunctionFragment;
     "approve(address,uint256)": FunctionFragment;
     "balanceOf(address)": FunctionFragment;
     "expiresAt(uint256)": FunctionFragment;
@@ -179,16 +169,6 @@ export interface MembershipFacetInterface extends utils.Interface {
       | "__ERC721A_init"
       | "__EntitlementGated_init"
       | "__Membership_init"
-      | "_getMembershipCurrency"
-      | "_getMembershipFreeAllocation"
-      | "_getMembershipImage"
-      | "_getMembershipPrice"
-      | "_getMembershipSupplyLimit"
-      | "_getPricingModule"
-      | "_getSpaceFactory"
-      | "_setMembershipFreeAllocation"
-      | "_setMembershipSupplyLimit"
-      | "_setPricingModule"
       | "approve"
       | "balanceOf"
       | "expiresAt"
@@ -236,46 +216,6 @@ export interface MembershipFacetInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "__Membership_init",
     values: [IMembershipBase.MembershipStruct, PromiseOrValue<string>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "_getMembershipCurrency",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "_getMembershipFreeAllocation",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "_getMembershipImage",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "_getMembershipPrice",
-    values: [PromiseOrValue<BigNumberish>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "_getMembershipSupplyLimit",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "_getPricingModule",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "_getSpaceFactory",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "_setMembershipFreeAllocation",
-    values: [PromiseOrValue<BigNumberish>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "_setMembershipSupplyLimit",
-    values: [PromiseOrValue<BigNumberish>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "_setPricingModule",
-    values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "approve",
@@ -439,46 +379,6 @@ export interface MembershipFacetInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "__Membership_init",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "_getMembershipCurrency",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "_getMembershipFreeAllocation",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "_getMembershipImage",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "_getMembershipPrice",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "_getMembershipSupplyLimit",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "_getPricingModule",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "_getSpaceFactory",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "_setMembershipFreeAllocation",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "_setMembershipSupplyLimit",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "_setPricingModule",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
@@ -1015,40 +915,6 @@ export interface MembershipFacet extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    _getMembershipCurrency(overrides?: CallOverrides): Promise<[string]>;
-
-    _getMembershipFreeAllocation(
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    _getMembershipImage(overrides?: CallOverrides): Promise<[string]>;
-
-    _getMembershipPrice(
-      totalSupply: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    _getMembershipSupplyLimit(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    _getPricingModule(overrides?: CallOverrides): Promise<[string]>;
-
-    _getSpaceFactory(overrides?: CallOverrides): Promise<[string]>;
-
-    _setMembershipFreeAllocation(
-      newAllocation: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    _setMembershipSupplyLimit(
-      newLimit: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    _setPricingModule(
-      newPricingModule: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
     approve(
       to: PromiseOrValue<string>,
       tokenId: PromiseOrValue<BigNumberish>,
@@ -1221,38 +1087,6 @@ export interface MembershipFacet extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  _getMembershipCurrency(overrides?: CallOverrides): Promise<string>;
-
-  _getMembershipFreeAllocation(overrides?: CallOverrides): Promise<BigNumber>;
-
-  _getMembershipImage(overrides?: CallOverrides): Promise<string>;
-
-  _getMembershipPrice(
-    totalSupply: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  _getMembershipSupplyLimit(overrides?: CallOverrides): Promise<BigNumber>;
-
-  _getPricingModule(overrides?: CallOverrides): Promise<string>;
-
-  _getSpaceFactory(overrides?: CallOverrides): Promise<string>;
-
-  _setMembershipFreeAllocation(
-    newAllocation: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  _setMembershipSupplyLimit(
-    newLimit: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  _setPricingModule(
-    newPricingModule: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
   approve(
     to: PromiseOrValue<string>,
     tokenId: PromiseOrValue<BigNumberish>,
@@ -1420,38 +1254,6 @@ export interface MembershipFacet extends BaseContract {
     __Membership_init(
       info: IMembershipBase.MembershipStruct,
       spaceFactory: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    _getMembershipCurrency(overrides?: CallOverrides): Promise<string>;
-
-    _getMembershipFreeAllocation(overrides?: CallOverrides): Promise<BigNumber>;
-
-    _getMembershipImage(overrides?: CallOverrides): Promise<string>;
-
-    _getMembershipPrice(
-      totalSupply: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    _getMembershipSupplyLimit(overrides?: CallOverrides): Promise<BigNumber>;
-
-    _getPricingModule(overrides?: CallOverrides): Promise<string>;
-
-    _getSpaceFactory(overrides?: CallOverrides): Promise<string>;
-
-    _setMembershipFreeAllocation(
-      newAllocation: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    _setMembershipSupplyLimit(
-      newLimit: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    _setPricingModule(
-      newPricingModule: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1858,38 +1660,6 @@ export interface MembershipFacet extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    _getMembershipCurrency(overrides?: CallOverrides): Promise<BigNumber>;
-
-    _getMembershipFreeAllocation(overrides?: CallOverrides): Promise<BigNumber>;
-
-    _getMembershipImage(overrides?: CallOverrides): Promise<BigNumber>;
-
-    _getMembershipPrice(
-      totalSupply: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    _getMembershipSupplyLimit(overrides?: CallOverrides): Promise<BigNumber>;
-
-    _getPricingModule(overrides?: CallOverrides): Promise<BigNumber>;
-
-    _getSpaceFactory(overrides?: CallOverrides): Promise<BigNumber>;
-
-    _setMembershipFreeAllocation(
-      newAllocation: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    _setMembershipSupplyLimit(
-      newLimit: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    _setPricingModule(
-      newPricingModule: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
     approve(
       to: PromiseOrValue<string>,
       tokenId: PromiseOrValue<BigNumberish>,
@@ -2058,46 +1828,6 @@ export interface MembershipFacet extends BaseContract {
     __Membership_init(
       info: IMembershipBase.MembershipStruct,
       spaceFactory: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    _getMembershipCurrency(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    _getMembershipFreeAllocation(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    _getMembershipImage(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    _getMembershipPrice(
-      totalSupply: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    _getMembershipSupplyLimit(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    _getPricingModule(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    _getSpaceFactory(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    _setMembershipFreeAllocation(
-      newAllocation: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    _setMembershipSupplyLimit(
-      newLimit: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    _setPricingModule(
-      newPricingModule: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

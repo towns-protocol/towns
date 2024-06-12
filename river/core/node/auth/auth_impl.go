@@ -41,7 +41,7 @@ type ChainAuth interface {
 		6B. For channels, the space contract method `IsEntitledToChannel` is called for each linked wallet. If any of the
 			linked wallets are entitled to the channel, the permission check passes. Otherwise, it fails.
 	*/
-	IsEntitled(ctx context.Context, cfg *config.Config, args *ChainAuthArgs) error
+	IsEntitled(ctx context.Context, cfg *config.Config, args *ChainAuthArgs) (bool, error)
 }
 
 var everyone = common.HexToAddress("0x1") // This represents an Ethereum address of "0x1"
@@ -95,6 +95,18 @@ type ChainAuthArgs struct {
 	principal     common.Address
 	permission    Permission
 	linkedWallets string // a serialized list of linked wallets to comply with the cache key constraints
+}
+
+func (args *ChainAuthArgs) String() string {
+	return fmt.Sprintf(
+		"ChainAuthArgs{kind: %d, spaceId: %s, channelId: %s, principal: %s, permission: %s, linkedWallets: %s}",
+		args.kind,
+		args.spaceId,
+		args.channelId,
+		args.principal.Hex(),
+		args.permission,
+		args.linkedWallets,
+	)
 }
 
 func (args *ChainAuthArgs) withLinkedWallets(linkedWallets []common.Address) *ChainAuthArgs {
@@ -218,7 +230,7 @@ func NewChainAuth(
 	}, nil
 }
 
-func (ca *chainAuth) IsEntitled(ctx context.Context, cfg *config.Config, args *ChainAuthArgs) error {
+func (ca *chainAuth) IsEntitled(ctx context.Context, cfg *config.Config, args *ChainAuthArgs) (bool, error) {
 	// TODO: counter for cache hits here?
 	result, _, err := ca.entitlementCache.executeUsingCache(
 		ctx,
@@ -227,23 +239,9 @@ func (ca *chainAuth) IsEntitled(ctx context.Context, cfg *config.Config, args *C
 		ca.checkEntitlement,
 	)
 	if err != nil {
-		return AsRiverError(err).Func("IsEntitled")
+		return false, AsRiverError(err).Func("IsEntitled")
 	}
-	if !result.IsAllowed() {
-		return RiverError(
-			Err_PERMISSION_DENIED,
-			"IsEntitled failed",
-			"spaceId",
-			args.spaceId,
-			"channelId",
-			args.channelId,
-			"userId",
-			args.principal,
-			"permission",
-			args.permission.String(),
-		).Func("IsAllowed")
-	}
-	return nil
+	return result.IsAllowed(), nil
 }
 
 func (ca *chainAuth) areLinkedWalletsEntitled(
