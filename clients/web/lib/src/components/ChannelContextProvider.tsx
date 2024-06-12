@@ -25,15 +25,8 @@ interface Props {
 }
 
 export function ChannelContextProvider(props: Props): JSX.Element {
-    // console.log('~~~~~ Channel Context ~~~~~~', props.channelId)
+    const { channelId } = props
     const spaceId = useSpaceId()
-    // convert the room identifier
-    const channelId: string = useMemo(() => {
-        if (typeof props.channelId === 'string') {
-            return props.channelId
-        }
-        return props.channelId
-    }, [props.channelId])
 
     const channelContext: IChannelContext = useMemo(
         () => ({
