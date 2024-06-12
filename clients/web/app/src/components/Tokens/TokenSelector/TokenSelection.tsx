@@ -73,7 +73,13 @@ export function TokenSelection(
                     background="level3"
                     alignItems="center"
                 >
-                    <Text>QTY: {quantity}</Text>
+                    <Text
+                        size={{
+                            mobile: 'sm',
+                        }}
+                    >
+                        QTY: {quantity}
+                    </Text>
                 </Box>
                 <IconButton
                     data-testid="token-pill-delete"

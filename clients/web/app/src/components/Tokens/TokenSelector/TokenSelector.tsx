@@ -123,6 +123,8 @@ export function TokenSelector(props: Props) {
         setTokenEditor(token)
     }, [])
 
+    const _isTouch = isTouch()
+
     useClickedOrFocusedOutside(containerRef, {
         onOutside: () => {
             setTextFieldValue('')
@@ -224,7 +226,8 @@ export function TokenSelector(props: Props) {
 
             {tokenEditor && (
                 <ModalContainer
-                    minWidth={isTouch() ? '100%' : '400'}
+                    asSheet={_isTouch}
+                    minWidth={_isTouch ? '100%' : '400'}
                     onHide={() => setTokenEditor(undefined)}
                 >
                     <TokenEditor

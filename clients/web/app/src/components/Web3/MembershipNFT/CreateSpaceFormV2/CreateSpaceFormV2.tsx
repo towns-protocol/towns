@@ -343,6 +343,7 @@ function CreateSpaceFormV2WithoutAuth() {
                                                         alignItems="start"
                                                         gap="sm"
                                                         overflow="auto"
+                                                        zIndex="layer"
                                                     >
                                                         <TokenInfoBox
                                                             tokensGatingMembership={
