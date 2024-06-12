@@ -12,7 +12,6 @@ export const MAX_LENGTH_SPACE_NAME = 32
 export const MAX_LENGTH_SPACE_BIO = 240
 
 const membershipTypeErrorMessage = 'Please choose who can join your town.'
-export const membershipCostError = `Only towns with a fixed cost of more than 1 ETH can set a limit of more than 1000. Read more about River's ecosystem here`
 
 export const membershipSettingsSchema = z
     .object({
@@ -90,14 +89,6 @@ export const membershipSettingsSchema = z
                     path: ['membershipCost'],
                 })
             }
-        }
-
-        if (data['membershipLimit'] > 1000 && membershipCostAsNumber < 1) {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: membershipCostError,
-                path: ['membershipCost'],
-            })
         }
 
         if (data['membershipType'] === 'tokenHolders') {
