@@ -204,17 +204,19 @@ const UnfurledLinkAttachmentContainer = (props: UnfurledLinkAttachment) => {
                 </Box>
             )}
             {props.description && (
-                <Text
-                    size="sm"
-                    color="gray2"
-                    style={{
-                        display: '-webkit-box',
-                        WebkitLineClamp: 5,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                    }}
-                >
-                    {props.description}
+                <Text>
+                    <Text
+                        size="sm"
+                        color="gray2"
+                        style={{
+                            display: '-webkit-box',
+                            WebkitLineClamp: 5,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                        }}
+                    >
+                        {props.description}
+                    </Text>
                 </Text>
             )}
             <Box hoverable color={{ hover: 'cta2', default: 'gray2' }} maxWidth="100%">
