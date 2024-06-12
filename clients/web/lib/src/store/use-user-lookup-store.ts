@@ -129,7 +129,6 @@ export const useUserLookupStore = createWithEqualityFn<UserLookupStore>()(
                     return fallback
                 }
 
-                dlog.info('lookupUser not found', userId, spaceId, channelId, state)
                 return undefined
             },
         })),
