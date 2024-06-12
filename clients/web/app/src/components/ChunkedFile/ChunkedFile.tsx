@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import useResizeObserver from '@react-hook/resize-observer'
 import debounce from 'lodash/debounce'
 import { useChunkedMedia } from 'use-towns-client'
@@ -182,6 +182,10 @@ const ChunkedMedia = (
 
     // Recalculate the dimensions when the container is resized
     useResizeObserver(getClosestEventDiv(containerRef), debouncedCalc)
+
+    useLayoutEffect(() => {
+        calculateDimensions()
+    }, [calculateDimensions])
 
     useEffect(() => {
         if (!containerRef.current) {
