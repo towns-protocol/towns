@@ -130,15 +130,15 @@ export const TouchEditMessageWrapper = (props: {
     )
 }
 
-const mergeAttachments = (prevAttachments: Attachment[] = [], attachmments: Attachment[] = []) => {
+const mergeAttachments = (prevAttachments: Attachment[] = [], attachments: Attachment[] = []) => {
     // remove duplicates from the new attachments
-    attachmments = attachmments.filter(
+    attachments = attachments.filter(
         (a) =>
             !(
                 (a.type === 'embedded_message' || a.type === 'unfurled_link') &&
-                prevAttachments?.some((p) => p.type === 'embedded_message' && p.url === a.url)
+                prevAttachments?.some((p) => p.type === a.type && p.url === a.url)
             ),
     )
     // concat the new attachments with the previous ones
-    return prevAttachments.concat(attachmments)
+    return prevAttachments.concat(attachments)
 }
