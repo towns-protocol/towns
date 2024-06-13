@@ -61,8 +61,12 @@ export const EditMessageButtons = (props: {
             event.stopPropagation()
             if (isTouch) {
                 dispatchMockEnterEvent()
+                onSave?.()
+            } else {
+                // For desktop, we don't need to invoke onSave(), because we listen to 'Enter' key event in PlateEditor.tsx
+                // Calling onSave() here will send the message twice
+                dispatchMockEnterEvent()
             }
-            onSave?.()
         },
         [onSave, isTouch],
     )
