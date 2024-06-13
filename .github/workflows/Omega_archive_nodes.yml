@@ -1,0 +1,26 @@
+name: 'Omega_archive_deploy'
+
+on:
+    push:
+        branches:
+            - omega
+    workflow_dispatch:
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    river_node_continuous_deploys:
+        uses: './.github/workflows/River_deploy.yml'
+        secrets:
+            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            SLACK_ALERT_WEBHOOK_URL: ${{ secrets.SLACK_TRANSIENT_CD_WORKFLOW_WEBHOOK_URL }}
+        permissions: write-all
+
+        with:
+            environment_name: 'omega'
+            docker_image_tag: 'mainnet'
+            node_numbers: '[1,2]'
+            run_mode: 'archive'
