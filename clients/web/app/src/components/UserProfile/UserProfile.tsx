@@ -513,7 +513,7 @@ const NftProfilePicture = (props: { onHide: () => void; userId: string; currentN
     const hasNfts = displayableNfts.length > 0 && !isFetching
 
     return (
-        <ModalContainer asSheet onHide={onHide}>
+        <ModalContainer asSheet maxWidth="600" onHide={onHide}>
             {!isTouch && (
                 <Box position="relative">
                     <IconButton position="topRight" icon="close" onClick={onHide} />

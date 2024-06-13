@@ -13,6 +13,7 @@ export type ModalContainerProps = {
     children: React.ReactNode
     onHide: () => void
     minWidth?: BoxProps['minWidth']
+    maxWidth?: BoxProps['maxWidth']
     stableTopAlignment?: boolean
     /** with touchTitle present, the modal will be presented full screen on touch screens */
     touchTitle?: string
@@ -140,12 +141,20 @@ const TouchFullScreenModalContainer = (props: TouchFullScreenModalContainerProps
 
 export const CenteredModalContainer = (props: ModalContainerProps) => {
     const { isTouch } = useDevice()
-    const minWidth: BoxProps['minWidth'] = props.minWidth
-        ? props.minWidth
-        : isTouch
-        ? '100%'
-        : '600'
     const { onHide } = props
+    const minWidth: BoxProps['minWidth'] = useMemo(() => {
+        if (props.maxWidth) {
+            return props.maxWidth
+        }
+        if (props.minWidth) {
+            return props.minWidth
+        }
+        if (isTouch) {
+            return '100%'
+        } else {
+            return '600'
+        }
+    }, [isTouch, props.maxWidth, props.minWidth])
 
     useSafeEscapeKeyCancellation({ onEscape: onHide, capture: true })
 
@@ -189,8 +198,18 @@ export const CenteredModalContainer = (props: ModalContainerProps) => {
                     rounded="md"
                     background="level1"
                     minWidth={minWidth}
+                    maxWidth={props.maxWidth}
                     pointerEvents="auto"
-                    style={{ maxWidth: `calc(100vw - 100px)`, maxHeight: `calc(100vh - 32px)` }}
+                    style={
+                        props.maxWidth
+                            ? {
+                                  maxHeight: `calc(100vh - 32px)`,
+                              }
+                            : {
+                                  maxHeight: `calc(100vh - 32px)`,
+                                  maxWidth: `calc(100vw - 100px)`,
+                              }
+                    }
                     transition={{
                         type: 'spring',
                         damping: 50,

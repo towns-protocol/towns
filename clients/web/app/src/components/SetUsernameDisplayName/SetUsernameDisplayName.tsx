@@ -410,7 +410,7 @@ const EnsDisplayNameModal = (props: { currentEnsName?: string; onHide: () => voi
     const hasEnsName = ensNames.length > 0 && !isFetching
 
     return (
-        <ModalContainer asSheet minWidth="350" onHide={onHide}>
+        <ModalContainer asSheet maxWidth="400" onHide={onHide}>
             {!isTouch && (
                 <Box position="relative">
                     <IconButton position="topRight" icon="close" onClick={onHide} />
@@ -423,17 +423,8 @@ const EnsDisplayNameModal = (props: { currentEnsName?: string; onHide: () => voi
             </Stack>
 
             <Stack gap alignItems="center" paddingTop="lg">
-                {ensNames.length === 0 && isFetching && <ButtonSpinner />}
-                {!hasEnsName && (
-                    <Box grow centerContent padding>
-                        <Text color="gray2" textAlign="center">
-                            No ENS names were found in your wallets. <br />
-                            Link a new name to set a verified ENS as your display name:
-                        </Text>
-                    </Box>
-                )}
-                {ensNames.length > 0 && (
-                    <Stack scroll alignContent="start" width="100%" maxHeight="300" gap="sm">
+                {hasEnsName ? (
+                    <Stack scroll alignContent="start" width="100%" gap="sm">
                         {ensNames.map((ensName) => (
                             <WalletRow
                                 key={ensName.wallet}
@@ -450,6 +441,16 @@ const EnsDisplayNameModal = (props: { currentEnsName?: string; onHide: () => voi
                             onSelectWallet={() => onSelectWallet(undefined)}
                         />
                     </Stack>
+                ) : (
+                    <>
+                        {!hasEnsName && <ButtonSpinner />}
+                        <Box grow centerContent padding>
+                            <Text color="gray2" textAlign="center">
+                                No ENS names were found in your wallets. <br />
+                                Link a new name to set a verified ENS as your display name:
+                            </Text>
+                        </Box>
+                    </>
                 )}
             </Stack>
 
