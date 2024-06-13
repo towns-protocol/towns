@@ -45,6 +45,8 @@ export type DMChannelMenuItem = {
 
 export type MixedChannelMenuItem = ChannelMenuItem | DMChannelMenuItem
 
+const STICKY_UNREADS = false
+
 /**
  * maps channel and dm data to a unified format for use in the channel menu
  */
@@ -143,14 +145,14 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
                 (c) =>
                     ((c.unread && joinedChannels.has(c.id)) ||
                         c.channel.id === persistUnreadId ||
-                        prevUnreads.current.includes(c.id)) &&
+                        (STICKY_UNREADS && prevUnreads.current.includes(c.id))) &&
                     !c.muted,
             ),
             ...dmItems.filter(
                 (c) =>
                     c.unread ||
                     c.channel.id === persistUnreadId ||
-                    prevUnreads.current.includes(c.channel.id),
+                    (STICKY_UNREADS && prevUnreads.current.includes(c.channel.id)),
             ),
         ].sort((a, b) => Math.sign(b.latestMs - a.latestMs))
 
