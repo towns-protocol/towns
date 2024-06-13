@@ -90,6 +90,13 @@ export function BlockchainTxNotifier() {
                     })
                     break
                 }
+                case BlockchainTransactionType.EditChannel:
+                    generateToast({
+                        tx,
+                        pendingMessage: 'Updating channel...',
+                        successMessage: 'Channel updated!',
+                    })
+                    break
                 default:
                     break
             }

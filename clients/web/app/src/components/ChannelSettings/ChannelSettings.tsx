@@ -11,11 +11,10 @@ import {
     useSpaceId,
     useUpdateChannelTransaction,
 } from 'use-towns-client'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { useGetEmbeddedSigner } from '@towns/privy'
-import { FieldValues, UseFormReset } from 'react-hook-form'
 import { ChannelNameRegExp, isForbiddenError, isRejectionError } from 'ui/utils/utils'
-import { Box, ErrorMessage, FancyButton, FormRender, Stack, TextField } from '@ui'
+import { Box, Button, ErrorMessage, FormRender, Stack, TextField } from '@ui'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
 import { useAllRoleDetails } from 'hooks/useAllRoleDetails'
@@ -25,20 +24,33 @@ import { createPrivyNotAuthenticatedNotification } from '@components/Notificatio
 import { Panel } from '@components/Panel/Panel'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { PrivyWrapper } from 'privy/PrivyProvider'
+import { ModalContainer } from '@components/Modals/ModalContainer'
+import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
+import { CHANNEL_INFO_PARAMS } from 'routes'
+import { FullPanelOverlay } from '@components/Web3/WalletLinkingPanel'
 import { FormState, FormStateKeys, emptyDefaultValues, schema } from './formConfig'
 import { RoleCheckboxProps, RolesSection, getCheckedValuesForRoleIdsField } from './RolesSection'
 
 type ChannelSettingsFormProps = {
     spaceId: string
     channelId: string
+    editType: 'metadata' | 'roles' | 'all'
+    onSuccess?: () => void
 }
 
+/**
+ * This form is used in both a modal and a panel. Depending on the editType, it will render different fields.
+ * There is only a single contract method to update the channel, which requires both metadata (name, description) and roles as parameters.
+ * So that's why this is a single form that collects all this data as default values and sends it to the contract, even if the UI only shows a subset of the fields.
+ */
 export function ChannelSettingsForm({
     spaceId,
     channelId,
+    editType,
     preventCloseMessage,
+    onSuccess,
 }: ChannelSettingsFormProps & {
-    preventCloseMessage: string | undefined
+    preventCloseMessage?: string
 }): JSX.Element {
     const room = useRoom(channelId)
     console.log('[ChannelSettingsModal] room', room)
@@ -65,7 +77,6 @@ export function ChannelSettingsForm({
             return {
                 [FormStateKeys.name]: room.name,
                 [FormStateKeys.description]: room.topic,
-                // default values for this field are monitored and reset within RolesSection
                 [FormStateKeys.roleIds]: getCheckedValuesForRoleIdsField(rolesWithDetails ?? []),
             }
         }
@@ -125,9 +136,18 @@ export function ChannelSettingsForm({
             console.log('[ChannelSettingsModal] txResult', txResult)
             if (txResult?.status === TransactionStatus.Success) {
                 invalidateQuery()
+                onSuccess?.()
             }
         },
-        [channelId, invalidateQuery, spaceId, hasPendingTx, updateChannelTransaction, getSigner],
+        [
+            getSigner,
+            hasPendingTx,
+            spaceId,
+            channelId,
+            updateChannelTransaction,
+            invalidateQuery,
+            onSuccess,
+        ],
     )
 
     const onNameKeyDown = useCallback(async (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -189,95 +209,105 @@ export function ChannelSettingsForm({
         [channelNames],
     )
 
+    if (!rolesWithDetails) {
+        return (
+            <Stack minHeight="200">
+                <ButtonSpinner />
+            </Stack>
+        )
+    }
+
     return (
-        <Stack gap="lg">
+        <Stack grow gap="lg">
             <FormRender<FormState>
+                grow
                 schema={schema}
                 defaultValues={defaultValues}
                 mode="onChange"
                 onSubmit={onSubmit}
             >
-                {({ register, formState, setValue, setError, resetField, reset }) => {
+                {({ register, formState, setValue, setError, resetField, watch }) => {
                     const { onChange: onNameChange, ...restOfNameProps } = register(
                         FormStateKeys.name,
                     )
+                    const isDisabled = hasPendingTx || !formState.isDirty || !formState.isValid
+                    watch()
 
                     return (
-                        <Stack>
-                            <AutoResetFormStateComponent
-                                reset={reset}
-                                defaultValues={defaultValues}
-                            />
-                            <Stack>
-                                <TextField
-                                    autoFocus
-                                    background="level2"
-                                    label="Name"
-                                    placeholder="Name your channel"
-                                    maxLength={30}
-                                    message={
-                                        <ErrorMessage
-                                            errors={formState.errors}
-                                            fieldName={FormStateKeys.name}
+                        <Stack grow>
+                            {(editType === 'metadata' || editType === 'all') && (
+                                <>
+                                    <Stack>
+                                        <TextField
+                                            autoFocus
+                                            background="level2"
+                                            label="Name"
+                                            placeholder="Name your channel"
+                                            maxLength={30}
+                                            message={
+                                                <ErrorMessage
+                                                    errors={formState.errors}
+                                                    fieldName={FormStateKeys.name}
+                                                />
+                                            }
+                                            disabled={hasPendingTx}
+                                            onKeyDown={onNameKeyDown}
+                                            onChange={(
+                                                event: React.ChangeEvent<HTMLInputElement>,
+                                            ) => {
+                                                const name = event.target.value
+                                                    .toLowerCase()
+                                                    .replaceAll(' ', '-')
+                                                if (!channelNameAvailable(name)) {
+                                                    setError(FormStateKeys.name, {
+                                                        message:
+                                                            'This channel name is already taken',
+                                                    })
+                                                    return
+                                                }
+                                                onNameChange(event)
+                                                setValue(FormStateKeys.name, name)
+                                            }}
+                                            {...restOfNameProps}
                                         />
-                                    }
-                                    disabled={hasPendingTx}
-                                    onKeyDown={onNameKeyDown}
-                                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                                        const name = event.target.value
-                                            .toLowerCase()
-                                            .replaceAll(' ', '-')
-                                        if (!channelNameAvailable(name)) {
-                                            setError(FormStateKeys.name, {
-                                                message: 'This channel name is already taken',
-                                            })
-                                            return
-                                        }
-                                        onNameChange(event)
-                                        setValue(FormStateKeys.name, name)
-                                    }}
-                                    {...restOfNameProps}
-                                />
-                            </Stack>
+                                    </Stack>
 
-                            <Stack paddingTop="sm">
-                                <TextField
-                                    background="level2"
-                                    label="Description"
-                                    placeholder="Describe what this channel is about"
-                                    maxLength={255}
-                                    message={
-                                        <ErrorMessage
-                                            errors={formState.errors}
-                                            fieldName={FormStateKeys.description}
+                                    <Stack paddingTop="sm">
+                                        <TextField
+                                            background="level2"
+                                            label="Description"
+                                            placeholder="Describe what this channel is about"
+                                            maxLength={255}
+                                            message={
+                                                <ErrorMessage
+                                                    errors={formState.errors}
+                                                    fieldName={FormStateKeys.description}
+                                                />
+                                            }
+                                            disabled={hasPendingTx}
+                                            {...register(FormStateKeys.description)}
                                         />
-                                    }
-                                    disabled={hasPendingTx}
-                                    {...register(FormStateKeys.description)}
-                                />
-                            </Stack>
+                                    </Stack>
+                                </>
+                            )}
 
-                            <Stack gap="sm" maxHeight="50vh" overflow="auto">
-                                {!rolesWithDetails ? (
-                                    <Box gap paddingY="lg">
-                                        <ButtonSpinner />
-                                    </Box>
-                                ) : (
+                            {(editType === 'roles' || editType === 'all') && (
+                                <Stack grow gap="sm">
                                     <RolesSection
                                         rolesWithDetails={rolesWithDetails}
                                         resetField={resetField}
                                         spaceId={spaceId}
                                         register={register}
                                     />
-                                )}
 
-                                <ErrorMessage
-                                    errors={formState.errors}
-                                    fieldName={FormStateKeys.roleIds}
-                                />
+                                    <ErrorMessage
+                                        errors={formState.errors}
+                                        fieldName={FormStateKeys.roleIds}
+                                    />
 
-                                {errorBox}
-                            </Stack>
+                                    {errorBox}
+                                </Stack>
+                            )}
 
                             {preventCloseMessage && (
                                 <Box centerContent paddingY="md">
@@ -287,17 +317,15 @@ export function ChannelSettingsForm({
                                     />
                                 </Box>
                             )}
-                            <Box padding position="bottomLeft" right="none" gap="sm">
-                                <FancyButton
-                                    cta={formState.isDirty && formState.isValid}
+                            <Box gap="sm">
+                                <Button
                                     type="submit"
-                                    disabled={
-                                        hasPendingTx || !formState.isDirty || !formState.isValid
-                                    }
-                                    spinner={hasPendingTx}
+                                    tone={isDisabled ? 'level2' : 'cta1'}
+                                    disabled={isDisabled}
                                 >
                                     {hasPendingTx ? 'Saving' : 'Save Channel'}
-                                </FancyButton>
+                                    {hasPendingTx && <ButtonSpinner />}
+                                </Button>
                             </Box>
                         </Stack>
                     )
@@ -307,28 +335,54 @@ export function ChannelSettingsForm({
     )
 }
 
-const AutoResetFormStateComponent = (props: {
-    reset: UseFormReset<FieldValues>
-    defaultValues: FormState
-}) => {
-    const { reset, defaultValues } = props
-    useEffect(() => {
-        reset(defaultValues)
-    }, [defaultValues, reset])
-    return <></>
-}
-
 export const ChannelSettingsPanel = React.memo(() => {
+    const { openPanel } = usePanelActions()
+    const hasPendingTx = useIsTransactionPending(BlockchainTransactionType.EditChannel)
+
     return (
         <PrivyWrapper>
-            <ChannelSettingsWithoutAuth />
+            <Panel label="Edit Channel Permissions">
+                <Form
+                    editType="roles"
+                    onSuccess={() => openPanel(CHANNEL_INFO_PARAMS.CHANNEL_INFO)}
+                />
+                {hasPendingTx && <FullPanelOverlay />}
+            </Panel>
         </PrivyWrapper>
     )
 })
 
-const ChannelSettingsWithoutAuth = () => {
+const Form = ({
+    transactionMessage,
+    editType,
+    onSuccess,
+}: {
+    transactionMessage?: string
+    editType: 'roles' | 'metadata'
+    onSuccess?: () => void
+}) => {
     const spaceId = useSpaceId()
     const channelId = useChannelId()
+
+    return spaceId && channelId ? (
+        <>
+            <Stack grow>
+                <ChannelSettingsForm
+                    editType={editType}
+                    spaceId={spaceId}
+                    preventCloseMessage={transactionMessage}
+                    channelId={channelId}
+                    onSuccess={onSuccess}
+                />
+            </Stack>
+            <UserOpTxModal />
+        </>
+    ) : (
+        <></>
+    )
+}
+
+export const ChannelSettingsModal = ({ onHide }: { onHide: () => void }) => {
     const [transactionMessage, setTransactionMessage] = useState<string | undefined>()
     const hasPendingTx = useIsTransactionPending(BlockchainTransactionType.EditChannel)
 
@@ -337,20 +391,12 @@ const ChannelSettingsWithoutAuth = () => {
             setTransactionMessage('Please wait for the transaction to complete.')
             return
         }
-    }, [hasPendingTx])
+        onHide()
+    }, [hasPendingTx, onHide])
 
-    return spaceId && channelId ? (
-        <Panel label="Edit channel" onClosed={_onHide}>
-            <Stack>
-                <ChannelSettingsForm
-                    spaceId={spaceId}
-                    preventCloseMessage={transactionMessage}
-                    channelId={channelId}
-                />
-            </Stack>
-            <UserOpTxModal />
-        </Panel>
-    ) : (
-        <></>
+    return (
+        <ModalContainer onHide={_onHide}>
+            <Form transactionMessage={transactionMessage} editType="metadata" onSuccess={_onHide} />
+        </ModalContainer>
     )
 }

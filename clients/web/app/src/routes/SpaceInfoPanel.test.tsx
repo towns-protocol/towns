@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import 'fake-indexeddb/auto'
 import React from 'react'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 // eslint-disable-next-line no-restricted-imports
 import * as Lib from 'use-towns-client'
@@ -255,10 +255,11 @@ describe('<SpaceHome />', () => {
         })
 
         render(<Wrapper roomIdentifier={roomIdentifier} />)
-        const editButton = await screen.findByTestId('edit-description-button')
+        const container = await screen.findByTestId('about-section')
+        const editButton = await within(container).findByTestId('edit-button')
         fireEvent.click(editButton)
-        const saveButton = await screen.findByTestId('save-button')
-        const textArea = await screen.findByTestId('edit-description-textarea')
+        const saveButton = await within(container).findByTestId('save-button')
+        const textArea = await within(container).findByTestId('edit-text-area')
         fireEvent.change(textArea, { target: { value: 'new description' } })
         fireEvent.click(saveButton)
 

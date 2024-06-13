@@ -11,8 +11,8 @@ import {
     useSpaceData,
 } from 'use-towns-client'
 
-import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
-import { Icon, Paragraph, Stack } from '@ui'
+import { usePrefetchMultipleRoleDetails } from 'use-towns-client/dist/hooks/use-role-details'
+import { Box, Icon, Paragraph, Stack, TextButton } from '@ui'
 import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'
 import { useDevice } from 'hooks/useDevice'
 import {
@@ -24,14 +24,22 @@ import { PanelButton } from '@components/Panel/PanelButton'
 import { Panel } from '@components/Panel/Panel'
 
 import { useLeaveChannel } from 'hooks/useLeaveChannel'
+import { EditSpaceName } from '@components/Panel/EditSpaceName'
+import { ChannelSettingsModal } from '@components/ChannelSettings/ChannelSettings'
+import { PrivyWrapper } from 'privy/PrivyProvider'
+import { useContractRoles } from 'hooks/useContractRoles'
 import { ChannelMembersModal } from './SpaceChannelDirectoryPanel'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 
-export const ChannelInfoPanel = () => (
-    <Panel modalPresentable label="Channel Info">
-        <ChannelInfo />
-    </Panel>
-)
+export const ChannelInfoPanel = React.memo(() => {
+    return (
+        <PrivyWrapper>
+            <Panel modalPresentable label="Channel Info">
+                <ChannelInfo />
+            </Panel>
+        </PrivyWrapper>
+    )
+})
 
 export const ChannelInfo = () => {
     const { channel } = useChannelData()
@@ -46,6 +54,10 @@ export const ChannelInfo = () => {
     })
     const navigate = useNavigate()
     const { leaveChannel } = useLeaveChannel()
+
+    const { data: roles } = useContractRoles(spaceData?.id)
+    const roledIds = useMemo(() => roles?.map((r) => r.roleId) ?? [], [roles])
+    usePrefetchMultipleRoleDetails(spaceData?.id, roledIds)
 
     const isEncrypted = channel !== undefined
     const room = useRoom(channel?.id)
@@ -70,11 +82,15 @@ export const ChannelInfo = () => {
     }, [isTouch, openPanel])
 
     const onShowChannelSettingsPopup = useEvent(() => {
-        openPanel(CHANNEL_INFO_PARAMS.EDIT_CHANNEL)
+        setActiveModal('settings')
     })
 
     const onHideChannelSettingsPopup = useEvent(() => {
         setActiveModal(undefined)
+    })
+
+    const onOpenChannelSettingsPanel = useEvent(() => {
+        openPanel(CHANNEL_INFO_PARAMS.EDIT_CHANNEL)
     })
 
     const { mutate: mutateNotificationSettings, isPending: isSettingNotification } =
@@ -99,25 +115,36 @@ export const ChannelInfo = () => {
     const info = useMemo(
         () => [
             {
-                title: 'Description',
-                content: `${room?.topic ?? 'No description'}`,
-            },
-            {
                 title: 'Encryption',
                 content: `This channel ${isEncrypted ? `is` : `is not`} end-to-end encrypted`,
             },
         ],
-        [isEncrypted, room?.topic],
+        [isEncrypted],
     )
 
     return (
         <>
             <Stack gap>
                 <Stack gap padding background="level2" rounded="sm">
-                    <Paragraph strong size="lg">
-                        #{channel?.label}
-                    </Paragraph>
-                    <ClipboardCopy label={channel?.id ?? ''} />
+                    <EditSpaceName
+                        canEdit={canEditChannel}
+                        name={`#${channel?.label}`}
+                        address={channel?.id ?? ''}
+                        onEdit={onShowChannelSettingsPopup}
+                    />
+                </Stack>
+
+                <Stack gap padding background="level2" rounded="sm">
+                    <Stack horizontal alignItems="center" width="100%">
+                        <Paragraph strong truncate color="default">
+                            {'Description'}
+                        </Paragraph>
+                        <Box grow />
+                        {canEditChannel && (
+                            <TextButton onClick={onShowChannelSettingsPopup}>Edit</TextButton>
+                        )}
+                    </Stack>
+                    <Paragraph color="gray2">{room?.topic ?? 'No description'}</Paragraph>
                 </Stack>
                 {!!info?.length &&
                     info.map((n) => (
@@ -163,9 +190,9 @@ export const ChannelInfo = () => {
                 )}
 
                 {canEditChannel && (
-                    <PanelButton onClick={onShowChannelSettingsPopup}>
+                    <PanelButton onClick={onOpenChannelSettingsPanel}>
                         <Icon type="edit" size="square_sm" color="gray2" />
-                        <Paragraph color="default">Edit channel</Paragraph>
+                        <Paragraph color="default">Edit channel permissions</Paragraph>
                     </PanelButton>
                 )}
                 <PanelButton tone="negative" onClick={onLeaveClick}>
@@ -176,6 +203,9 @@ export const ChannelInfo = () => {
 
             {activeModal === 'members' && (
                 <ChannelMembersModal onHide={onHideChannelSettingsPopup} />
+            )}
+            {activeModal === 'settings' && spaceData && channel && (
+                <ChannelSettingsModal onHide={onHideChannelSettingsPopup} />
             )}
         </>
     )

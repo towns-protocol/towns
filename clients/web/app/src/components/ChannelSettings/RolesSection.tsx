@@ -1,8 +1,11 @@
 import React, { useEffect } from 'react'
 import { FieldValues, UseFormRegister, UseFormReturn } from 'react-hook-form'
 import { RoleDetails } from 'use-towns-client'
-import { Box, Checkbox, Text } from '@ui'
+import { Box, Checkbox, Icon, Text } from '@ui'
 import { TokenCheckboxLabel } from '@components/Tokens/TokenCheckboxLabel'
+import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
+import { CHANNEL_INFO_PARAMS } from 'routes'
+import { PanelButton } from '@components/Panel/PanelButton'
 import { FormStateKeys } from './formConfig'
 
 export interface RoleCheckboxProps extends RoleDetails {
@@ -21,6 +24,7 @@ export function RolesSection(props: {
     resetField: UseFormReturn['resetField']
 }) {
     const { rolesWithDetails, resetField, register, spaceId } = props
+    const { openPanel } = usePanelActions()
 
     useEffect(() => {
         resetField(FormStateKeys.roleIds, {
@@ -43,6 +47,9 @@ export function RolesSection(props: {
                     />
                 )
             })}
+            <PanelButton onClick={() => openPanel(CHANNEL_INFO_PARAMS.ROLES)}>
+                <Icon type="plus" /> Create new role
+            </PanelButton>
         </>
     )
 }

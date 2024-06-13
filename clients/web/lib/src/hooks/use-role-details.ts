@@ -1,10 +1,11 @@
-import { useQuery, useQueryClient } from '../query/queryClient'
+import { defaultStaleTime, useQuery, useQueryClient } from '../query/queryClient'
 
 import { blockchainKeys } from '../query/query-keys'
-import { useCallback } from 'react'
+import { useCallback, useEffect } from 'react'
 import { useSpaceDapp } from './use-space-dapp'
 import { RoleDetails } from '../types/web3-types'
 import { useTownsContext } from '../components/TownsContextProvider'
+import { ISpaceDapp } from '@river-build/web3'
 /**
  * Convience function to get space role details.
  */
@@ -57,6 +58,19 @@ export function useRoleDetails(
     }
 }
 
+async function getRoles(spaceId: string, roleIds: number[], spaceDapp: ISpaceDapp) {
+    if (!spaceDapp) {
+        return []
+    }
+
+    const getRolePromises: Promise<RoleDetails | null>[] = []
+    for (const roleId of roleIds) {
+        getRolePromises.push(spaceDapp.getRole(spaceId, roleId))
+    }
+    const roles = await Promise.all(getRolePromises)
+    return roles.filter((role) => role !== null) as RoleDetails[]
+}
+
 export function useMultipleRoleDetails(spaceId: string, roleIds: number[]) {
     const queryClient = useQueryClient()
     const { baseProvider: provider, baseConfig: config } = useTownsContext()
@@ -67,29 +81,12 @@ export function useMultipleRoleDetails(spaceId: string, roleIds: number[]) {
     })
     const isEnabled = spaceDapp && spaceId.length > 0 && roleIds.length > 0
 
-    const getRoles = useCallback(
-        async function (): Promise<RoleDetails[]> {
-            if (!spaceDapp) {
-                return []
-            }
-
-            const getRolePromises: Promise<RoleDetails | null>[] = []
-            for (const roleId of roleIds) {
-                getRolePromises.push(spaceDapp.getRole(spaceId, roleId))
-            }
-            const roles = await Promise.all(getRolePromises)
-            return roles.filter((role) => role !== null) as RoleDetails[]
-        },
-        [spaceDapp, roleIds, spaceId],
-    )
-
     const queryData = useQuery<RoleDetails[]>(
         blockchainKeys.multipleRoleDetails(spaceId, roleIds),
-        getRoles,
+        () => getRoles(spaceId, roleIds, spaceDapp),
         // options for the query.
         {
             enabled: isEnabled,
-            refetchOnMount: true,
         },
     )
 
@@ -106,4 +103,28 @@ export function useMultipleRoleDetails(spaceId: string, roleIds: number[]) {
         isLoading: queryData.isLoading,
         invalidateQuery,
     }
+}
+
+export const usePrefetchMultipleRoleDetails = (spaceId: string | undefined, roleIds: number[]) => {
+    const queryClient = useQueryClient()
+    const { baseProvider: provider, baseConfig: config } = useTownsContext()
+
+    const spaceDapp = useSpaceDapp({
+        config,
+        provider,
+    })
+
+    useEffect(() => {
+        async function prefetch() {
+            if (!spaceId) {
+                return
+            }
+            await queryClient.prefetchQuery({
+                queryKey: blockchainKeys.multipleRoleDetails(spaceId, roleIds),
+                queryFn: () => getRoles(spaceId, roleIds, spaceDapp),
+                staleTime: defaultStaleTime,
+            })
+        }
+        void prefetch()
+    }, [queryClient, spaceId, roleIds, spaceDapp])
 }

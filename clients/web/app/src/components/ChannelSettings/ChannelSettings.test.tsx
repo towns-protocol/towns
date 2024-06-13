@@ -29,6 +29,7 @@ const Wrapper = () => {
                 <button onClick={() => setShowForm((state) => !state)}>Show form</button>
                 {showForm && (
                     <ChannelSettingsForm
+                        editType="all"
                         spaceId={spaceRoomIdentifier}
                         channelId={channelRoomIdentifier}
                         preventCloseMessage="Dummy close message"

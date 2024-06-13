@@ -18,7 +18,6 @@ import {
     useUser,
 } from 'use-towns-client'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
-import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { MembersPageTouchModal } from '@components/MembersPage/MembersPage'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { InvalidCookieNotification } from '@components/Notifications/InvalidCookieNotification'
@@ -26,17 +25,7 @@ import { PanelButton } from '@components/Panel/PanelButton'
 import { InteractiveSpaceIcon } from '@components/SpaceIcon'
 import { SpaceNameModal } from '@components/SpaceNameModal/SpaceNameModal'
 import { LargeUploadImageTemplate } from '@components/UploadImage/LargeUploadImageTemplate'
-import {
-    Box,
-    BoxProps,
-    FormRender,
-    Icon,
-    IconButton,
-    Paragraph,
-    Stack,
-    Text,
-    TextButton,
-} from '@ui'
+import { Box, BoxProps, FormRender, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
 import { errorHasInvalidCookieResponseHeader } from 'api/apiClient'
 import {
     toggleMuteSetting,
@@ -47,7 +36,6 @@ import { useDevice } from 'hooks/useDevice'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useGetSpaceIdentity, useSetSpaceIdentity } from 'hooks/useSpaceIdentity'
 import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'
-import { TextArea } from 'ui/components/TextArea/TextArea'
 import { getInviteUrl, shortAddress } from 'ui/utils/utils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { ConfirmLeaveModal } from '@components/ConfirmLeaveModal/ConfirmLeaveModal'
@@ -63,6 +51,8 @@ import { TokenImage } from '@components/Tokens/TokenSelector/TokenImage'
 import { useTokenMetadataForChainId } from 'api/lib/collectionMetadata'
 import { NetworkName } from '@components/Tokens/TokenSelector/NetworkName'
 import { useAppProgressStore } from '@components/AppProgressOverlay/store/appProgressStore'
+import { EditTextArea } from '@components/Panel/EditTextArea'
+import { EditSpaceName } from '@components/Panel/EditSpaceName'
 import { AllChannelsList } from './AllChannelsList/AllChannelsList'
 import { PublicTownPage } from './PublicTownPage/PublicTownPage'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
@@ -376,180 +366,70 @@ export const SpaceInfo = () => {
                     onClick={onEditSpaceSettingsClick}
                 />
                 <MdGap>
-                    <Stack gap>
-                        <Stack horizontal alignItems="center" width="100%">
-                            <Paragraph strong truncate size="lg" color="default">
-                                {space?.name ?? ''}
-                            </Paragraph>
-                            <Box grow />
-                            {canEdit && (
-                                <TextButton onClick={onEditSpaceNameClick}>Edit</TextButton>
-                            )}
-                        </Stack>
-                        {address && (
-                            <ClipboardCopy
-                                label={shortAddress(address)}
-                                clipboardContent={address}
-                            />
-                        )}
-                    </Stack>
+                    <EditSpaceName
+                        canEdit={canEdit}
+                        name={space?.name}
+                        address={address}
+                        onEdit={onEditSpaceNameClick}
+                    />
                 </MdGap>
-
-                {(canEdit || spaceIdentity) && (
-                    <MdGap data-testid="motto-section">
-                        <>
-                            <Box horizontal justifyContent="spaceBetween" alignItems="center">
-                                <Paragraph strong color="default">
-                                    Town Motto
-                                </Paragraph>{' '}
-                                {canEdit &&
-                                    (isEditMotto ? (
-                                        <Box horizontal gap="sm">
-                                            <TextButton
-                                                disabled={isSettingSpaceIdentity}
-                                                onClick={onCancelMotto}
-                                            >
-                                                Cancel
-                                            </TextButton>
-                                            <Box horizontal gap>
-                                                <TextButton
-                                                    disabled={isSettingSpaceIdentity}
-                                                    color="default"
-                                                    data-testid="save-button-motto"
-                                                    onClick={onSaveMotto}
-                                                >
-                                                    Save
-                                                </TextButton>
-                                                {isSettingSpaceIdentity && <ButtonSpinner />}
-                                            </Box>
-                                        </Box>
-                                    ) : (
-                                        <TextButton
-                                            data-testid="edit-motto-button"
-                                            onClick={onEditMotto}
-                                        >
-                                            Edit
-                                        </TextButton>
-                                    ))}
-                            </Box>
-                            {!isLoadingSpaceIdentity &&
-                                (isEditMotto ? (
-                                    <>
-                                        <TextArea
-                                            data-testid="edit-motto-textarea"
-                                            ref={mottoTextAreaRef}
-                                            paddingY="md"
-                                            background="level2"
-                                            defaultValue={spaceIdentity?.motto}
-                                            height="x2"
-                                            maxLength={32}
-                                            style={{ paddingRight: '2.5rem' }}
-                                        />
-                                        {editErrorMessage && (
-                                            <Text color="negative" size="sm">
-                                                {editErrorMessage}
-                                            </Text>
-                                        )}
-                                    </>
-                                ) : (
-                                    <Paragraph color="gray2">
-                                        {spaceIdentity
-                                            ? spaceIdentity.motto
-                                            : 'Click "edit" to add a motto'}
-                                    </Paragraph>
-                                ))}
-                        </>
+                {(canEdit || spaceIdentity?.motto) && (
+                    <MdGap data-testId="motto-section">
+                        <EditTextArea
+                            label="Town Motto"
+                            canEdit={canEdit}
+                            isEditing={isEditMotto}
+                            isSetting={isSettingSpaceIdentity}
+                            isLoading={isLoadingSpaceIdentity}
+                            defaultValue={spaceIdentity?.motto}
+                            errorMessage={editErrorMessage}
+                            maxLength={32}
+                            height="x2"
+                            ref={mottoTextAreaRef}
+                            notExistYetText='Click "edit" to add a motto.'
+                            onSave={onSaveMotto}
+                            onEdit={onEditMotto}
+                            onCancel={onCancelMotto}
+                        />
                     </MdGap>
                 )}
-
-                {(canEdit || spaceIdentity) && (
-                    <MdGap data-testid="about-section">
-                        <>
-                            <Box horizontal justifyContent="spaceBetween" alignItems="center">
-                                <Paragraph strong color="default">
-                                    About
-                                </Paragraph>{' '}
-                                {canEdit &&
-                                    (isEditBio ? (
-                                        <Box horizontal gap="sm">
-                                            <TextButton
-                                                disabled={isSettingSpaceIdentity}
-                                                onClick={onCancelBio}
-                                            >
-                                                Cancel
-                                            </TextButton>
-                                            <Box horizontal gap>
-                                                <TextButton
-                                                    disabled={isSettingSpaceIdentity}
-                                                    color="default"
-                                                    data-testid="save-button"
-                                                    onClick={onSave}
-                                                >
-                                                    Save
-                                                </TextButton>
-                                                {isSettingSpaceIdentity && <ButtonSpinner />}
-                                            </Box>
-                                        </Box>
-                                    ) : (
-                                        <TextButton
-                                            data-testid="edit-description-button"
-                                            onClick={onEditBio}
-                                        >
-                                            Edit
-                                        </TextButton>
-                                    ))}
-                            </Box>
-                            {!isLoadingSpaceIdentity &&
-                                (isEditBio ? (
-                                    <>
-                                        <TextArea
-                                            data-testid="edit-description-textarea"
-                                            ref={bioTextAreaRef}
-                                            paddingY="md"
-                                            background="level2"
-                                            defaultValue={spaceIdentity?.bio}
-                                            height="150"
-                                            maxLength={400}
-                                            style={{ paddingRight: '2.5rem' }}
-                                        />
-                                        {editErrorMessage && (
-                                            <Text color="negative" size="sm">
-                                                {editErrorMessage}
-                                            </Text>
-                                        )}
-                                    </>
-                                ) : (
-                                    <Paragraph color="gray2">
-                                        {spaceIdentity
-                                            ? spaceIdentity.bio
-                                            : 'Click "edit" to add a description'}
-                                    </Paragraph>
-                                ))}
-                        </>
+                {(canEdit || spaceIdentity?.bio) && (
+                    <MdGap data-testId="about-section">
+                        <EditTextArea
+                            label="About"
+                            canEdit={canEdit}
+                            isEditing={isEditBio}
+                            isSetting={isSettingSpaceIdentity}
+                            isLoading={isLoadingSpaceIdentity}
+                            defaultValue={spaceIdentity?.bio}
+                            errorMessage={editErrorMessage}
+                            notExistYetText='Click "edit" to add a description.'
+                            maxLength={400}
+                            height="150"
+                            ref={bioTextAreaRef}
+                            onSave={onSave}
+                            onEdit={onEditBio}
+                            onCancel={onCancelBio}
+                        />
                     </MdGap>
                 )}
-
                 {!!owner && <TownOwnerButton owner={owner} address={address} />}
-
                 <PanelButton disabled={isSettingNotification} onClick={onShowTownPreview}>
                     <Icon type="search" size="square_sm" color="gray2" />
                     <Paragraph color="default">Preview</Paragraph>
                 </PanelButton>
-
                 {canEdit && (
                     <PanelButton onClick={onEditSpaceSettingsClick}>
                         <Icon type="treasury" size="square_sm" color="gray2" />
                         <Paragraph color="default">Edit Membership Settings</Paragraph>
                     </PanelButton>
                 )}
-
                 <PanelButton onClick={onMembersClick}>
                     <Icon type="people" size="square_sm" color="gray2" />
                     <Paragraph color="default">
                         {`${memberIds.length} member${memberIds.length > 1 ? `s` : ``}`}
                     </Paragraph>
                 </PanelButton>
-
                 {space?.name && (
                     <PanelButton disabled={isSettingNotification} onClick={onToggleSpaceMuted}>
                         <Icon
@@ -562,25 +442,21 @@ export const SpaceInfo = () => {
                         </Paragraph>
                     </PanelButton>
                 )}
-
                 <PanelButton disabled={channels.length === 0} onClick={onShowBrowseChannels}>
                     <Icon type="tag" size="square_sm" color="gray2" />
                     <Paragraph color="default" fontWeight="medium">
                         {`${channels.length} channel${channels.length != 1 ? `s` : ``}`}
                     </Paragraph>
                 </PanelButton>
-
                 {canEdit && (
                     <PanelButton onClick={onManageRolesClick}>
                         <Icon type="personEdit" size="square_sm" color="gray2" />
                         <Paragraph color="default">Manage Roles</Paragraph>
                     </PanelButton>
                 )}
-
                 {canBan && (
                     <BannedUsersPanelButton spaceId={spaceID} onClick={onBannedUsersClick} />
                 )}
-
                 <PanelButton tone="negative" onClick={onLeaveClick}>
                     <Icon type="logout" size="square_sm" />
                     <Paragraph color="error">Leave {space?.name}</Paragraph>
