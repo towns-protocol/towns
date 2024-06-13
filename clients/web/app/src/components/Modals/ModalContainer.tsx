@@ -1,7 +1,7 @@
 import { AnimatePresence } from 'framer-motion'
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
-import Sheet from 'react-modal-sheet'
+import { Sheet } from 'react-modal-sheet'
 import { Box, BoxProps, MotionBox, Stack, useZLayerContext } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { useSafeEscapeKeyCancellation } from 'hooks/useSafeEscapeKeyCancellation'
@@ -57,14 +57,16 @@ export const ModalContainer = (props: ModalContainerProps) => {
                         <Sheet.Container>
                             <Sheet.Header />
                             <Sheet.Content>
-                                <Stack
-                                    paddingX="sm"
-                                    paddingBottom="lg"
-                                    alignContent="start"
-                                    gap="sm"
-                                >
-                                    {children}
-                                </Stack>
+                                <Sheet.Scroller>
+                                    <Stack
+                                        paddingX="sm"
+                                        paddingBottom="lg"
+                                        alignContent="start"
+                                        gap="sm"
+                                    >
+                                        {children}
+                                    </Stack>
+                                </Sheet.Scroller>
                             </Sheet.Content>
                         </Sheet.Container>
                         <Sheet.Backdrop onTap={onHide} />

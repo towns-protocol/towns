@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react'
-import Sheet from 'react-modal-sheet'
+import { Sheet } from 'react-modal-sheet'
 import { useTownsClient } from 'use-towns-client'
 import { useCreateUnreadMarker } from '@components/MessageLayout/hooks/useCreateUnreadMarker'
 import { modalSheetClass } from 'ui/styles/globals/sheet.css'
@@ -175,82 +175,86 @@ export const MessageModalSheet = (props: Props) => {
                 <Sheet.Container>
                     <Sheet.Header />
                     <Sheet.Content>
-                        <Stack paddingBottom="lg" alignContent="start" gap="sm">
-                            <Stack
-                                horizontal
-                                paddingX="md"
-                                paddingBottom="sm"
-                                justifyContent="spaceBetween"
-                                width="100%"
-                                alignItems="center"
-                            >
-                                {emojis.map((e) => (
-                                    <EmojiButton
-                                        key={e.id}
-                                        id={e.id}
-                                        native={e.native}
-                                        onClick={sendEmoji}
-                                    />
-                                ))}
-                                <Button
-                                    aspectRatio="square"
-                                    size="button_rounded_md"
-                                    tone="level2"
-                                    onClick={onEmojiClick}
+                        <Sheet.Scroller>
+                            <Stack paddingBottom="lg" alignContent="start" gap="sm">
+                                <Stack
+                                    horizontal
+                                    paddingX="md"
+                                    paddingBottom="sm"
+                                    justifyContent="spaceBetween"
+                                    width="100%"
+                                    alignItems="center"
                                 >
-                                    <Icon type="emojiAdd" onClick={onEmojiClick} />
-                                </Button>
-                            </Stack>
-                            <Divider />
-                            <Stack paddingX="sm" gap="sm">
-                                {canReact && (
-                                    <TableCell
-                                        iconType="emojiAdd"
-                                        text="Add Reaction"
+                                    {emojis.map((e) => (
+                                        <EmojiButton
+                                            key={e.id}
+                                            id={e.id}
+                                            native={e.native}
+                                            onClick={sendEmoji}
+                                        />
+                                    ))}
+                                    <Button
+                                        aspectRatio="square"
+                                        size="button_rounded_md"
+                                        tone="level2"
                                         onClick={onEmojiClick}
-                                    />
-                                )}
-                                {canReply && (
+                                    >
+                                        <Icon type="emojiAdd" onClick={onEmojiClick} />
+                                    </Button>
+                                </Stack>
+                                <Divider />
+                                <Stack paddingX="sm" gap="sm">
+                                    {canReact && (
+                                        <TableCell
+                                            iconType="emojiAdd"
+                                            text="Add Reaction"
+                                            onClick={onEmojiClick}
+                                        />
+                                    )}
+                                    {canReply && (
+                                        <TableCell
+                                            iconType="reply"
+                                            text={
+                                                canReplyInline ? 'Direct Reply' : 'Reply in Thread'
+                                            }
+                                            onClick={onThreadClick}
+                                        />
+                                    )}
                                     <TableCell
-                                        iconType="reply"
-                                        text={canReplyInline ? 'Direct Reply' : 'Reply in Thread'}
-                                        onClick={onThreadClick}
+                                        iconType="messageUnread"
+                                        text="Mark as Unread"
+                                        onClick={onMarkAsUnreadClick}
                                     />
-                                )}
-                                <TableCell
-                                    iconType="messageUnread"
-                                    text="Mark as Unread"
-                                    onClick={onMarkAsUnreadClick}
-                                />
-                                <TableCell
-                                    iconType="link"
-                                    text="Copy Link"
-                                    onClick={onCopyLinkToMessage}
-                                />
-                                {messageBody && (
                                     <TableCell
-                                        iconType="copy"
-                                        text="Copy Text"
-                                        onClick={onCopyClick}
+                                        iconType="link"
+                                        text="Copy Link"
+                                        onClick={onCopyLinkToMessage}
                                     />
-                                )}
-                                {canEdit && (
-                                    <TableCell
-                                        iconType="edit"
-                                        text="Edit Message"
-                                        onClick={onEditClick}
-                                    />
-                                )}
-                                {canEdit && (
-                                    <TableCell
-                                        isError
-                                        iconType="delete"
-                                        text="Delete Message"
-                                        onClick={onDeleteClick}
-                                    />
-                                )}
+                                    {messageBody && (
+                                        <TableCell
+                                            iconType="copy"
+                                            text="Copy Text"
+                                            onClick={onCopyClick}
+                                        />
+                                    )}
+                                    {canEdit && (
+                                        <TableCell
+                                            iconType="edit"
+                                            text="Edit Message"
+                                            onClick={onEditClick}
+                                        />
+                                    )}
+                                    {canEdit && (
+                                        <TableCell
+                                            isError
+                                            iconType="delete"
+                                            text="Delete Message"
+                                            onClick={onDeleteClick}
+                                        />
+                                    )}
+                                </Stack>
                             </Stack>
-                        </Stack>
+                        </Sheet.Scroller>
                     </Sheet.Content>
                 </Sheet.Container>
                 <Sheet.Backdrop onTap={closeSheet} />

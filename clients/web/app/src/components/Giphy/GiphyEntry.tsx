@@ -1,5 +1,5 @@
 import React, { ComponentProps, useCallback, useRef } from 'react'
-import Sheet from 'react-modal-sheet'
+import { Sheet } from 'react-modal-sheet'
 import { Box, IconButton, useZLayerContext } from '@ui'
 import { useShortcut } from 'hooks/useShortcut'
 import { MotionIconButton } from 'ui/components/Motion/MotionComponents'
@@ -52,9 +52,15 @@ export const GiphySheet = (props: Props & { showButton: boolean }) => {
                 <Sheet.Container>
                     <Sheet.Header />
                     <Sheet.Content>
-                        <Box maxHeight="100svh" overflow="auto" paddingBottom="safeAreaInsetBottom">
-                            <GiphyPickerCard {...props} closeCard={onCardClose} />
-                        </Box>
+                        <Sheet.Scroller>
+                            <Box
+                                maxHeight="100svh"
+                                overflow="auto"
+                                paddingBottom="safeAreaInsetBottom"
+                            >
+                                <GiphyPickerCard {...props} closeCard={onCardClose} />
+                            </Box>
+                        </Sheet.Scroller>
                     </Sheet.Content>
                 </Sheet.Container>
                 <Sheet.Backdrop onTap={onCardClose} />

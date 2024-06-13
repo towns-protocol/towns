@@ -8,7 +8,7 @@ import {
     useUserLookupContext,
 } from 'use-towns-client'
 import { isGDMChannelStreamId } from '@river/sdk'
-import Sheet from 'react-modal-sheet'
+import { Sheet } from 'react-modal-sheet'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { Box, Button, Icon, Paragraph, Stack, Text } from '@ui'
 import { atoms } from 'ui/styles/atoms.css'
@@ -380,14 +380,16 @@ const UserModal = (props: { onClose: () => void; onRemoveMemberClicked: () => vo
             <Sheet.Container>
                 <Sheet.Header />
                 <Sheet.Content>
-                    <Stack paddingX="sm" paddingBottom="lg" alignContent="start" gap="sm">
-                        <TableCell
-                            isError
-                            iconType="minus"
-                            text="Remove from Group"
-                            onClick={onRemoveMemberClicked}
-                        />
-                    </Stack>
+                    <Sheet.Scroller>
+                        <Stack paddingX="sm" paddingBottom="lg" alignContent="start" gap="sm">
+                            <TableCell
+                                isError
+                                iconType="minus"
+                                text="Remove from Group"
+                                onClick={onRemoveMemberClicked}
+                            />
+                        </Stack>
+                    </Sheet.Scroller>
                 </Sheet.Content>
             </Sheet.Container>
             <Sheet.Backdrop onTap={closeSheet} />

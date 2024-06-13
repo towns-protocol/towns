@@ -1,5 +1,5 @@
 import React, { ContextType, createContext, useCallback, useEffect, useMemo, useState } from 'react'
-import Sheet from 'react-modal-sheet'
+import { Sheet } from 'react-modal-sheet'
 import { AnimatePresence } from 'framer-motion'
 import { useSearchParams } from 'react-router-dom'
 import { modalSheetClass } from 'ui/styles/globals/sheet.css'
@@ -144,14 +144,11 @@ const TouchPanel = (props: Props) => {
             <Sheet.Container>
                 <Sheet.Header />
                 <Sheet.Content>
-                    <Box
-                        paddingX
-                        maxHeight="100svh"
-                        overflow="auto"
-                        paddingBottom="safeAreaInsetBottom"
-                    >
-                        {props.children}
-                    </Box>
+                    <Sheet.Scroller>
+                        <Box paddingX maxHeight="100svh" paddingBottom="safeAreaInsetBottom">
+                            {props.children}
+                        </Box>
+                    </Sheet.Scroller>
                 </Sheet.Content>
             </Sheet.Container>
             <Sheet.Backdrop onTap={onSheetBack} />
