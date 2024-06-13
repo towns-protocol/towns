@@ -58,6 +58,19 @@ contract MainnetDelegation is
   }
 
   // =============================================================
+  //                  Batch Authorized Claimers
+  // =============================================================
+  function setBatchAuthorizedClaimers(
+    address[] calldata delegators,
+    address[] calldata claimers
+  ) external onlyCrossDomainMessenger {
+    uint256 delegatorsLen = delegators.length;
+    for (uint256 i; i < delegatorsLen; i++) {
+      _setAuthorizedClaimer(delegators[i], claimers[i]);
+    }
+  }
+
+  // =============================================================
   //                           Batch Delegation
   // =============================================================
   function setBatchDelegation(

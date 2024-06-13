@@ -5,9 +5,15 @@ import (
 
 	. "github.com/river-build/river/core/node/base"
 	. "github.com/river-build/river/core/node/protocol"
+	"github.com/river-build/river/core/node/shared"
 )
 
 /** shared code for the rule builders */
+
+type DerivedEvent struct {
+	Payload  IsStreamEvent_Payload
+	StreamId shared.StreamId
+}
 
 func unknownPayloadType(payload any) error {
 	return RiverError(Err_INVALID_ARGUMENT, "unknown payload type %T", payload)

@@ -61,6 +61,7 @@ log:
 # Metrics
 metrics:
     enabled: false
+    interface: ''
     port: null
 performanceTracking:
     profilingEnabled: false

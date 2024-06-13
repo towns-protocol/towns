@@ -64,7 +64,7 @@ func (s *Service) addParsedEvent(
 		return err
 	}
 
-	canAddEvent, chainAuthArgs, requiredParentEvent, err := rules.CanAddEvent(
+	canAddEvent, chainAuthArgs, sideEffects, err := rules.CanAddEvent(
 		ctx,
 		s.chainConfig,
 		s.nodeRegistry.GetValidNodeAddresses(),
@@ -83,6 +83,16 @@ func (s *Service) addParsedEvent(
 			return err
 		}
 		if !isEntitled {
+			if sideEffects.OnChainAuthFailure != nil {
+				err := s.addEventPayload(
+					ctx,
+					sideEffects.OnChainAuthFailure.StreamId,
+					sideEffects.OnChainAuthFailure.Payload,
+				)
+				if err != nil {
+					return err
+				}
+			}
 			return RiverError(
 				Err_PERMISSION_DENIED,
 				"IsEntitled failed",
@@ -92,8 +102,8 @@ func (s *Service) addParsedEvent(
 		}
 	}
 
-	if requiredParentEvent != nil {
-		err := s.addEventPayload(ctx, requiredParentEvent.StreamId, requiredParentEvent.Payload)
+	if sideEffects.RequiredParentEvent != nil {
+		err := s.addEventPayload(ctx, sideEffects.RequiredParentEvent.StreamId, sideEffects.RequiredParentEvent.Payload)
 		if err != nil {
 			return err
 		}

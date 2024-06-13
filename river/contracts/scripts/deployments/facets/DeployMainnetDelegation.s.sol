@@ -20,6 +20,7 @@ contract DeployMainnetDelegation is FacetHelper, Deployer {
     addSelector(MainnetDelegation.setAuthorizedClaimer.selector);
     addSelector(MainnetDelegation.getAuthorizedClaimer.selector);
     addSelector(MainnetDelegation.setBatchDelegation.selector);
+    addSelector(MainnetDelegation.setBatchAuthorizedClaimers.selector);
     addSelector(MainnetDelegation.getProxyDelegation.selector);
     addSelector(MainnetDelegation.getMessenger.selector);
   }

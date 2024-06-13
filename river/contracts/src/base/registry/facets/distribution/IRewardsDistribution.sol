@@ -15,9 +15,23 @@ interface IRewardsDistributionBase {
 }
 
 interface IRewardsDistribution is IRewardsDistributionBase {
-  function getClaimableAmount(address addr) external view returns (uint256);
+  function getClaimableAmountForOperator(
+    address addr
+  ) external view returns (uint256);
 
-  function claim() external;
+  function getClaimableAmountForAuthorizedClaimer(
+    address addr
+  ) external view returns (uint256);
+
+  function getClaimableAmountForDelegator(
+    address addr
+  ) external view returns (uint256);
+
+  function operatorClaim() external;
+
+  function mainnetClaim() external;
+
+  function delegatorClaim() external;
 
   function distributeRewards(address operator) external;
 

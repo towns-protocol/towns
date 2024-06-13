@@ -60,6 +60,16 @@ interface IMainnetDelegation is IMainnetDelegationBase {
   ) external;
 
   /**
+   * @notice Set batch authorized claimers
+   * @param delegators The delegator address
+   * @param claimers The address the delegator is allowing to claim
+   */
+  function setBatchAuthorizedClaimers(
+    address[] calldata delegators,
+    address[] calldata claimers
+  ) external;
+
+  /**
    * @notice Set delegation of a delegator to a operator
    * @param delegator The delegator address
    * @param operator The operator address to delegate to

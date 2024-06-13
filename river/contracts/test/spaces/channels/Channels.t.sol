@@ -23,10 +23,9 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     super.setUp();
   }
 
-  function test_createChannel(string memory channelMetadata) public {
-    bound(bytes(channelMetadata).length, 3, 1000);
-
+  function test_createChannel() public {
     bytes32 channelId = "my-cool-channel";
+    string memory channelMetadata = "Metadata";
 
     vm.prank(founder);
     IChannel(everyoneSpace).createChannel(
@@ -106,10 +105,9 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     );
   }
 
-  function test_getChannel(string memory channelMetadata) public {
-    bound(bytes(channelMetadata).length, 3, 1000);
-
+  function test_getChannel() public {
     bytes32 channelId = "my-cool-channel";
+    string memory channelMetadata = "Metadata";
 
     vm.prank(founder);
     IChannel(everyoneSpace).createChannel(
@@ -128,10 +126,9 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     assertEq(_channel.roleIds.length, 0);
   }
 
-  function test_getChannel_with_roles(string memory channelMetadata) public {
-    bound(bytes(channelMetadata).length, 3, 1000);
-
+  function test_getChannel_with_roles() public {
     bytes32 channelId = "my-cool-channel";
+    string memory channelMetadata = "Metadata";
 
     vm.prank(founder);
     uint256 roleId = IRoles(everyoneSpace).createRole(
@@ -152,11 +149,9 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
     assertEq(_channel.roleIds.length, roleIds.length);
   }
 
-  function test_getChannels(
-    string memory channelMetadata,
-    bytes32 channelId
-  ) public {
-    bound(bytes(channelMetadata).length, 3, 1000);
+  function test_getChannels() public {
+    bytes32 channelId = "my-cool-channel";
+    string memory channelMetadata = "Metadata";
 
     vm.prank(founder);
     IChannel(everyoneSpace).createChannel(

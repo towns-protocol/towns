@@ -44,7 +44,7 @@ contract PrepayFacet is
     uint256 cost = _calculateFee(supply);
 
     // validate payment covers membership fee
-    if (msg.value < cost) revert PrepayBase__InvalidAmount();
+    if (msg.value != cost) revert PrepayBase__InvalidAmount();
 
     // calculate new total supply
     uint256 newSupply = IERC721A(membership).totalSupply() + supply;

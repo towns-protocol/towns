@@ -12,8 +12,14 @@ import {RewardsDistribution} from "contracts/src/base/registry/facets/distributi
 
 contract DeployRewardsDistribution is Deployer, FacetHelper {
   constructor() {
-    addSelector(RewardsDistribution.getClaimableAmount.selector);
-    addSelector(RewardsDistribution.claim.selector);
+    addSelector(RewardsDistribution.getClaimableAmountForOperator.selector);
+    addSelector(RewardsDistribution.getClaimableAmountForDelegator.selector);
+    addSelector(
+      RewardsDistribution.getClaimableAmountForAuthorizedClaimer.selector
+    );
+    addSelector(RewardsDistribution.operatorClaim.selector);
+    addSelector(RewardsDistribution.delegatorClaim.selector);
+    addSelector(RewardsDistribution.mainnetClaim.selector);
     addSelector(RewardsDistribution.distributeRewards.selector);
     addSelector(RewardsDistribution.setPeriodDistributionAmount.selector);
     addSelector(RewardsDistribution.getPeriodDistributionAmount.selector);

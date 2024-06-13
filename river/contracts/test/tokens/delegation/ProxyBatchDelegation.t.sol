@@ -68,6 +68,29 @@ contract ProxyBatchDelegationTest is BaseSetup, IMainnetDelegationBase {
     _;
   }
 
+  function test_sendAuthorizedClaimers()
+    external
+    givenUsersHaveTokens
+    givenUsersHaveDelegatedTokens
+  {
+    address randomUser = _getRandomValue(_users);
+    address randomClaimer = _getRandomValue(_claimers);
+
+    // Have random user authorize a claimer on mainnet
+    vm.prank(randomUser);
+    authorizedClaimers.authorizeClaimer(randomClaimer);
+
+    // Send values across the bridge to base
+    vm.prank(_randomAddress());
+    proxyDelegation.sendAuthorizedClaimers();
+
+    // Check if the claimer is the same on both sides
+    assertEq(
+      authorizedClaimers.getAuthorizedClaimer(randomUser),
+      delegation.getAuthorizedClaimer(randomUser)
+    );
+  }
+
   function test_sendDelegations()
     external
     givenUsersHaveTokens

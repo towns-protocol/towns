@@ -85,9 +85,7 @@ type aeKeyFulfillmentRules struct {
 
   - @return chainAuthArgs *auth.ChainAuthArgs // on chain requirements for adding an event to the stream
 
-  - @return requiredParentEvent *RequiredParentEvent // event that must exist in the stream before the event can be added
-    // required parent events must be replayable - meaning that in the case of a no-op, the can_add_event function should return false, nil, nil, nil to indicate
-    // that the event cannot be added to the stream, but there is no error
+  - @return sideEffects *AddEventSideEffects // side effects that need to be executed before adding the event to the stream or on failures
 
   - @return error // if adding result would result in invalid state
 
@@ -107,7 +105,7 @@ func CanAddEvent(
 	currentTime time.Time,
 	parsedEvent *events.ParsedEvent,
 	streamView events.StreamView,
-) (bool, *auth.ChainAuthArgs, *RequiredParentEvent, error) {
+) (bool, *auth.ChainAuthArgs, *AddEventSideEffects, error) {
 	if parsedEvent.Event.DelegateExpiryEpochMs > 0 &&
 		isPastExpiry(currentTime, parsedEvent.Event.DelegateExpiryEpochMs) {
 		return false, nil, nil, RiverError(
@@ -709,7 +707,7 @@ func (ru *aeMembershipRules) validMembershipTransitionForGDM() (bool, error) {
 	}
 }
 
-func (ru *aeMembershipRules) requireStreamParentMembership() (*RequiredParentEvent, error) {
+func (ru *aeMembershipRules) requireStreamParentMembership() (*DerivedEvent, error) {
 	if ru.membership == nil {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "membership is nil")
 	}
@@ -733,7 +731,7 @@ func (ru *aeMembershipRules) requireStreamParentMembership() (*RequiredParentEve
 		return nil, err
 	}
 	// for joins and invites, require space membership
-	return &RequiredParentEvent{
+	return &DerivedEvent{
 		Payload:  events.Make_UserPayload_Membership(MembershipOp_SO_JOIN, *streamParentId, &initiatorId, nil),
 		StreamId: userStreamId,
 	}, nil
@@ -786,7 +784,7 @@ func (ru *aeUserMembershipRules) validUserMembershipTransition() (bool, error) {
 }
 
 // / user membership triggers membership events on space, channel, dm, gdm streams
-func (ru *aeUserMembershipRules) parentEventForUserMembership() (*RequiredParentEvent, error) {
+func (ru *aeUserMembershipRules) parentEventForUserMembership() (*DerivedEvent, error) {
 	if ru.userMembership == nil {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "event is not a user membership event")
 	}
@@ -812,7 +810,7 @@ func (ru *aeUserMembershipRules) parentEventForUserMembership() (*RequiredParent
 		initiatorAddress = creatorAddress
 	}
 
-	return &RequiredParentEvent{
+	return &DerivedEvent{
 		Payload: events.Make_MemberPayload_Membership(
 			userMembership.Op,
 			userAddress.Bytes(),
@@ -824,7 +822,7 @@ func (ru *aeUserMembershipRules) parentEventForUserMembership() (*RequiredParent
 }
 
 // / user actions perform user membership events on other user's streams
-func (ru *aeUserMembershipActionRules) parentEventForUserMembershipAction() (*RequiredParentEvent, error) {
+func (ru *aeUserMembershipActionRules) parentEventForUserMembershipAction() (*DerivedEvent, error) {
 	if ru.action == nil {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "event is not a user membership action event")
 	}
@@ -842,7 +840,7 @@ func (ru *aeUserMembershipActionRules) parentEventForUserMembershipAction() (*Re
 	if err != nil {
 		return nil, err
 	}
-	return &RequiredParentEvent{
+	return &DerivedEvent{
 		Payload:  payload,
 		StreamId: toUserStreamId,
 	}, nil

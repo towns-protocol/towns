@@ -132,6 +132,9 @@ deploy-base :;
 	@echo "Deploying $(contract)..."
 	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ledger --hd-paths "m/44'/60'/1'/0/0" --sender ${PRODUCTION_ADDRESS} --ffi --rpc-url base --verifier-url ${BASESCAN_URL} --etherscan-api-key ${BASESCAN_API_KEY} --broadcast --verify -vvvv
 
+test-base :;
+	@forge test --fork-url base --mc ${contract} -vvvv
+
 interact-base :;
 	@echo "Interacting through $(contract)..."
 	@forge script scripts/interactions/${contract}.s.sol:${contract} --ledger --hd-paths "m/44'/60'/1'/0/0" --sender ${PRODUCTION_ADDRESS} --ffi --rpc-url base --broadcast
@@ -151,3 +154,6 @@ deploy-mainnet :;
 
 verify-mainnet :;
 	@forge verify-contract ${address} ${contract} --chain mainnet
+
+test-mainnet :;
+	@forge test --fork-url mainnet --mc ${contract} -vvvv

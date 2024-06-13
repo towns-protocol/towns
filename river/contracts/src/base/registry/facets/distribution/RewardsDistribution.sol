@@ -33,36 +33,100 @@ contract RewardsDistribution is
     _addInterface(type(IRewardsDistribution).interfaceId);
   }
 
-  function getClaimableAmount(address claimer) public view returns (uint256) {
+  function getClaimableAmountForOperator(
+    address operator
+  ) public view returns (uint256) {
     RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage
       .layout();
+    return ds.distributionByOperator[operator];
+  }
 
-    uint256 totalClaimableAmount = 0;
+  function getClaimableAmountForDelegator(
+    address delegator
+  ) public view returns (uint256) {
+    RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage
+      .layout();
+    return ds.distributionByDelegator[delegator];
+  }
 
+  function getClaimableAmountForAuthorizedClaimer(
+    address claimer
+  ) public view returns (uint256) {
+    RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage
+      .layout();
     address[] memory delegatorsForClaimer = _getDelegatorsByAuthorizedClaimer(
       claimer
     );
+    uint256 totalClaimableAmount = 0;
     for (uint256 i = 0; i < delegatorsForClaimer.length; i++) {
       totalClaimableAmount += ds.distributionByDelegator[
         delegatorsForClaimer[i]
       ];
     }
-
-    NodeOperatorStorage.Layout storage nos = NodeOperatorStorage.layout();
-    address[] memory operatorsForClaimer = nos
-      .operatorsByClaimer[claimer]
-      .values();
-    for (uint256 i = 0; i < operatorsForClaimer.length; i++) {
-      totalClaimableAmount += ds.distributionByOperator[operatorsForClaimer[i]];
-    }
-
-    totalClaimableAmount += ds.distributionByDelegator[claimer];
-
     return totalClaimableAmount;
   }
 
-  function claim() external {
-    uint256 amount = getClaimableAmount(msg.sender);
+  function operatorClaim() external {
+    RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage
+      .layout();
+
+    NodeOperatorStorage.Layout storage nos = NodeOperatorStorage.layout();
+    address[] memory operatorsForClaimer = nos
+      .operatorsByClaimer[msg.sender]
+      .values();
+
+    uint256 amount = 0;
+    for (uint256 i = 0; i < operatorsForClaimer.length; i++) {
+      amount += getClaimableAmountForOperator(operatorsForClaimer[i]);
+
+      ds.distributionByOperator[operatorsForClaimer[i]] = 0;
+    }
+
+    if (amount == 0) revert RewardsDistribution_NoRewardsToClaim();
+
+    SpaceDelegationStorage.Layout storage sd = SpaceDelegationStorage.layout();
+    if (IERC20(sd.riverToken).balanceOf(address(this)) < amount)
+      revert RewardsDistribution_InsufficientRewardBalance();
+
+    CurrencyTransfer.transferCurrency(
+      sd.riverToken,
+      address(this),
+      msg.sender,
+      amount
+    );
+  }
+
+  function mainnetClaim() external {
+    RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage
+      .layout();
+    address[] memory delegatorsForClaimer = _getDelegatorsByAuthorizedClaimer(
+      msg.sender
+    );
+    uint256 totalClaimableAmount = 0;
+    for (uint256 i = 0; i < delegatorsForClaimer.length; i++) {
+      totalClaimableAmount += ds.distributionByDelegator[
+        delegatorsForClaimer[i]
+      ];
+      ds.distributionByDelegator[delegatorsForClaimer[i]] = 0;
+    }
+
+    if (totalClaimableAmount == 0)
+      revert RewardsDistribution_NoRewardsToClaim();
+
+    SpaceDelegationStorage.Layout storage sd = SpaceDelegationStorage.layout();
+    if (IERC20(sd.riverToken).balanceOf(address(this)) < totalClaimableAmount)
+      revert RewardsDistribution_InsufficientRewardBalance();
+
+    CurrencyTransfer.transferCurrency(
+      sd.riverToken,
+      address(this),
+      msg.sender,
+      totalClaimableAmount
+    );
+  }
+
+  function delegatorClaim() external {
+    uint256 amount = getClaimableAmountForDelegator(msg.sender);
     if (amount == 0) revert RewardsDistribution_NoRewardsToClaim();
 
     SpaceDelegationStorage.Layout storage sd = SpaceDelegationStorage.layout();
@@ -72,26 +136,7 @@ contract RewardsDistribution is
     RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage
       .layout();
 
-    //clear all this claimers own rewards
     ds.distributionByDelegator[msg.sender] = 0;
-    ds.distributionByOperator[msg.sender] = 0;
-
-    //clear all the delegators rewards for this claimer
-    address[] memory delegatorsForClaimer = _getDelegatorsByAuthorizedClaimer(
-      msg.sender
-    );
-    for (uint256 i = 0; i < delegatorsForClaimer.length; i++) {
-      ds.distributionByDelegator[delegatorsForClaimer[i]] = 0;
-    }
-
-    //clear all the opeartor rewards for this claimer
-    NodeOperatorStorage.Layout storage nos = NodeOperatorStorage.layout();
-    address[] memory operatorsForClaimer = nos
-      .operatorsByClaimer[msg.sender]
-      .values();
-    for (uint256 i = 0; i < operatorsForClaimer.length; i++) {
-      ds.distributionByOperator[operatorsForClaimer[i]] = 0;
-    }
 
     CurrencyTransfer.transferCurrency(
       sd.riverToken,
@@ -237,9 +282,10 @@ contract RewardsDistribution is
     // Copy elements from the space delegators
     for (uint256 i = 0; i < spaceDelegatorsLen; i++) {
       //get all the spaces delegating to this operator
-      address[] memory spaceDelegatorDelegators = IVotesEnumerable(
-        sd.riverToken
-      ).getDelegatorsByDelegatee(delegatingSpaces[i]);
+      address[] memory spaceDelegatorDelegators = _getValidDelegators(
+        sd,
+        delegatingSpaces[i]
+      );
 
       //for each space, get all the users delegating to it
       for (uint256 j = 0; j < spaceDelegatorDelegators.length; j++) {
@@ -257,23 +303,67 @@ contract RewardsDistribution is
       totalDelegation += mainnetDelegations[i].quantity;
     }
 
+    //allocate the rewards to the delegators
+    _allocateDelegatorRewards(
+      sd,
+      combinedDelegators,
+      operator,
+      totalDelegation,
+      delegatorsClaimAmount
+    );
+  }
+
+  function _allocateDelegatorRewards(
+    SpaceDelegationStorage.Layout storage sd,
+    address[] memory combinedDelegators,
+    address operator,
+    uint256 totalDelegation,
+    uint256 delegatorsClaimAmount
+  ) internal {
     uint256 delegatorsLen = combinedDelegators.length;
 
     RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage
       .layout();
 
+    address[] memory seenAddresses = new address[](delegatorsLen);
     for (uint256 i = 0; i < delegatorsLen; i++) {
-      address delegator = combinedDelegators[i];
-
-      //all the delegations are done on the Base token except the mainnet delegations
-      uint256 amount = IERC20(sd.riverToken).balanceOf(delegator);
-      //if this user has no token delegated, then we assume that they are a mainnet delegation
-      if (amount == 0) {
-        amount = _getDelegationByDelegator(delegator).quantity;
+      //check if this address has already been distributed since it could be in here twice
+      //from a Base and Mainnet delegation and the calculation already takes both into account
+      bool seen;
+      for (uint256 j = 0; j < seenAddresses.length; j++) {
+        if (seenAddresses[j] == combinedDelegators[i]) {
+          seen = true;
+          break;
+        }
       }
+      if (seen == true) {
+        continue;
+      }
+
+      uint256 amount = 0;
+      //check if this user is delegating to the operator on Base
+      if (IVotes(sd.riverToken).delegates(combinedDelegators[i]) == operator) {
+        amount = IERC20(sd.riverToken).balanceOf(combinedDelegators[i]);
+      }
+      //check if this user is delegating to the operator on the Spaces
+      address spaceDelegatee = sd.operatorBySpace[
+        IVotes(sd.riverToken).delegates(combinedDelegators[i])
+      ];
+      if (spaceDelegatee == operator) {
+        amount += IERC20(sd.riverToken).balanceOf(combinedDelegators[i]);
+      }
+      //check if this user is delegating to the operator on the mainnet
+      if (
+        _getDelegationByDelegator(combinedDelegators[i]).operator == operator
+      ) {
+        amount += _getDelegationByDelegator(combinedDelegators[i]).quantity;
+      }
+
+      seenAddresses[i] = combinedDelegators[i];
+
       uint256 delegatorProRata = (amount * delegatorsClaimAmount) /
         totalDelegation;
-      ds.distributionByDelegator[delegator] += delegatorProRata;
+      ds.distributionByDelegator[combinedDelegators[i]] += delegatorProRata;
     }
   }
 

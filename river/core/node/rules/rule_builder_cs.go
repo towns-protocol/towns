@@ -16,11 +16,6 @@ type CreateStreamRules struct {
 	DerivedEvents       []*DerivedEvent
 }
 
-type DerivedEvent struct {
-	Payload  IsStreamEvent_Payload
-	StreamId shared.StreamId
-}
-
 type ruleBuilderCS interface {
 	check(fn ...func() error) ruleBuilderCS
 	checkOneOf(fns ...func() error) ruleBuilderCS
