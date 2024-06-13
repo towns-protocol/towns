@@ -1,41 +1,40 @@
 import React, { useMemo } from 'react'
-import { LookupUser, useMyUserId, useTownsContext } from 'use-towns-client'
+import { useMemberOf, useMyUserId, useTownsContext } from 'use-towns-client'
 import { Box, Stack, Text } from '@ui'
 import { notUndefined } from 'ui/utils/utils'
 import { SpaceIcon } from '@components/SpaceIcon'
 import { ImageVariants } from '@components/UploadImage/useImageSource'
 
-export const MutualTowns = (props: { user: LookupUser }) => {
+export const MutualTowns = (props: { userId: string | undefined }) => {
+    const { userId } = props
     const myUserId = useMyUserId()
-    const { user } = props
+    const memberOf = useMemberOf(userId)
     const { spaces } = useTownsContext()
-    const memberOf = useMemo(() => {
-        const memberOfIds = Object.keys(user?.memberOf ?? [])
-        return memberOfIds?.length
-            ? memberOfIds.map((spaceId) => spaces.find((f) => f.id === spaceId))
-            : undefined
-    }, [spaces, user])
+
+    const mutualTowns = useMemo(() => {
+        return spaces.filter((s) => (memberOf ? s.id in memberOf : false))
+    }, [memberOf, spaces])
 
     const membersText = () => {
-        if (memberOf && memberOf.length > 1) {
-            if (user.userId === myUserId) {
-                return `Member of ${memberOf.length} towns`
+        if (mutualTowns && mutualTowns.length > 1) {
+            if (userId === myUserId) {
+                return `Member of ${mutualTowns.length} towns`
             }
-            return `${memberOf.length} mutual towns`
-        } else if (memberOf && memberOf.length === 1) {
-            return `Member of ${memberOf[0]?.name}`
+            return `${mutualTowns.length} mutual towns`
+        } else if (mutualTowns && mutualTowns.length === 1) {
+            return `Member of ${mutualTowns[0]?.name}`
         } else {
             return ''
         }
     }
 
-    if (!memberOf) {
+    if (!mutualTowns) {
         return null
     }
 
     return (
         <Stack horizontal gap="xs" alignItems="center" width="100%">
-            {memberOf.filter(notUndefined).map((s) => (
+            {mutualTowns.filter(notUndefined).map((s) => (
                 <React.Fragment key={s.id}>
                     <Box insetLeft="sm" paddingLeft="xs">
                         <SpaceIcon

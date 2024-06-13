@@ -55,7 +55,7 @@ export const ProfileHoverCard = (props: Props) => {
                 </Stack>
                 {user && (
                     <Stack horizontal gap="xs" color="gray1" alignItems="center" paddingX="sm">
-                        <MutualTowns user={user} />
+                        <MutualTowns userId={user.userId} />
                     </Stack>
                 )}
                 {userBio && (

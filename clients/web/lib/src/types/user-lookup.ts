@@ -1,4 +1,4 @@
-import { Nft, RoomMember } from './towns-types'
+import { Nft } from './towns-types'
 
 export type UserLookupContextType = {
     spaceId?: string
@@ -13,23 +13,6 @@ export type LookupUser = {
     displayName: string
     displayNameEncrypted: boolean
     ensAddress?: string
-    memberOf?: MemberOf
     ensName?: string
     nft?: Nft
-}
-
-export type MemberOf = {
-    [spaceId: string]: {
-        spaceId?: string
-        userId: string
-        username: string
-        displayName: string
-        avatarUrl?: string
-        ensAddress?: string
-        nft?: Nft
-    }
-}
-
-export type KnownUser = RoomMember & {
-    memberOf: MemberOf
 }

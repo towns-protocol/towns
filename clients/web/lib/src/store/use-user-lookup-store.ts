@@ -48,6 +48,7 @@ const debouncedSave = debounce(
 const userLookupStorage: PersistStorage<UserLookupStoreData> = {
     async getItem(name: string) {
         const item = await db.table<UserLookupStore, string>('userLookup').get({ key: name })
+
         return {
             state: item ?? {
                 spaceUsers: {},
@@ -80,11 +81,9 @@ export const useUserLookupStore = createWithEqualityFn<UserLookupStore>()(
                             state.allUsers[userId] = {}
                         }
                         if (!state.allUsers[userId][spaceId]) {
-                            state.allUsers[userId][spaceId] = user
+                            state.allUsers[userId][spaceId] = { ...user }
                         }
                     }
-
-                    const memberOf = state.allUsers[userId]
 
                     if (channelId) {
                         if (!state.channelUsers[channelId]) {
@@ -92,7 +91,6 @@ export const useUserLookupStore = createWithEqualityFn<UserLookupStore>()(
                         }
                         state.channelUsers[channelId][userId] = {
                             ...user,
-                            memberOf,
                         }
                     }
 
@@ -102,31 +100,25 @@ export const useUserLookupStore = createWithEqualityFn<UserLookupStore>()(
                         }
                         state.spaceUsers[spaceId][userId] = {
                             ...user,
-                            memberOf,
                         }
 
-                        state.fallbackUserLookups[userId] = { ...user, memberOf }
+                        state.fallbackUserLookups[userId] = { ...user }
                     }
                 })
             },
             lookupUser: (userId, spaceId, channelId) => {
                 const state = get()
 
-                if (
-                    channelId &&
-                    state.channelUsers[channelId] &&
-                    state.channelUsers[channelId][userId]
-                ) {
-                    const channelSpecific = state.channelUsers[channelId][userId]
-                    return { ...channelSpecific, memberOf: state.allUsers[userId] }
+                if (channelId && state.channelUsers[channelId]?.[userId]) {
+                    return state.channelUsers[channelId][userId]
                 }
+
                 if (spaceId && state.spaceUsers[spaceId] && state.spaceUsers[spaceId][userId]) {
-                    const spaceSpecific = state.spaceUsers[spaceId][userId]
-                    return spaceSpecific
+                    return state.spaceUsers[spaceId][userId]
                 }
+
                 if (state.fallbackUserLookups[userId]) {
-                    const fallback = state.fallbackUserLookups[userId]
-                    return fallback
+                    return state.fallbackUserLookups[userId]
                 }
 
                 return undefined
@@ -136,7 +128,20 @@ export const useUserLookupStore = createWithEqualityFn<UserLookupStore>()(
             name: 'user-lookup-store',
             //storage: createJSONStorage(() => userLookupStorage),
             storage: userLookupStorage,
-            onRehydrateStorage: () => (_state) => {
+            onRehydrateStorage: () => (state) => {
+                // instead of storing allUsers we can build it from spaceUsers
+                for (const spaceId in state?.spaceUsers) {
+                    for (const userId in state.spaceUsers[spaceId]) {
+                        if (!state.allUsers[userId]) {
+                            state.allUsers[userId] = {}
+                        }
+                        if (!state.allUsers[userId][spaceId]) {
+                            state.allUsers[userId][spaceId] = {
+                                ...state.spaceUsers[spaceId][userId],
+                            }
+                        }
+                    }
+                }
                 dlog.info('rehydration complete')
             },
         },

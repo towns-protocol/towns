@@ -1,4 +1,4 @@
-import { Nft, useSpaceData, useUserLookupContext } from 'use-towns-client'
+import { Nft, useMemberOf, useSpaceData, useUserLookupContext } from 'use-towns-client'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { toast } from 'react-hot-toast/headless'
@@ -54,6 +54,7 @@ enum InputId {
 
 export const UserProfile = (props: Props) => {
     const { userId, canEdit, center, info, userBio, abstractAccountAddress } = props
+    const memberOf = useMemberOf(userId)
     const spaceData = useSpaceData()
     const { lookupUser } = useUserLookupContext()
     const user = userId ? lookupUser(userId) : undefined
@@ -224,7 +225,7 @@ export const UserProfile = (props: Props) => {
                 </Stack>
             )}
 
-            {user && user.memberOf && (
+            {memberOf && (
                 <Stack
                     horizontal
                     gap
@@ -234,7 +235,7 @@ export const UserProfile = (props: Props) => {
                     rounded="sm"
                     alignItems="center"
                 >
-                    <MutualTowns user={user} />
+                    <MutualTowns userId={userId} />
                 </Stack>
             )}
 

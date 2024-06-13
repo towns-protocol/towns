@@ -1,10 +1,4 @@
-import {
-    LookupUser,
-    ZTEvent,
-    useTimelineStore,
-    useTownsContext,
-    useUserLookupContext,
-} from 'use-towns-client'
+import { ZTEvent, useTimelineStore, useTownsContext, useUserLookupStore } from 'use-towns-client'
 import { isEqual } from 'lodash'
 import { useCallback } from 'react'
 import { notUndefined } from 'ui/utils/utils'
@@ -63,15 +57,13 @@ export const useExtractExternalLinkAttachments = (params: { text: string }) => {
 }
 
 const useCreateStaticInfo = () => {
-    const { lookupUser } = useUserLookupContext()
     const { spaces } = useTownsContext()
 
     const createStaticInfo = useCallback(
         ({ spaceId, userId }: { spaceId: string; channelId: string; userId: string }) => {
             const spaceName = spaces.find((s) => s.id === spaceId)?.name
-            const user = spaceId
-                ? (lookupUser(userId) as LookupUser)?.memberOf?.[spaceId]
-                : undefined
+            const spaceUser = useUserLookupStore.getState().spaceUsers[spaceId]?.[userId]
+            const user = spaceId ? spaceUser : undefined
 
             return {
                 spaceName,
@@ -79,7 +71,7 @@ const useCreateStaticInfo = () => {
                 displayName: user?.displayName,
             }
         },
-        [lookupUser, spaces],
+        [spaces],
     )
     return { createStaticInfo }
 }

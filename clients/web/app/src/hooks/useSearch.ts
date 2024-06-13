@@ -5,6 +5,7 @@ import {
     useSpaceId,
     useSpaceMembersWithFallback,
     useUserLookupContext,
+    useUserLookupStore,
 } from 'use-towns-client'
 import {
     ActionEventDocument,
@@ -132,8 +133,10 @@ export const useSearch = (searchTerms: string) => {
 
 export function lookupUserNameSearchString(user: LookupUser) {
     // Users may have different names in different spaces, and we want to search all of them.
-    // The easiest way is to just concatenate all the names into a single string.
-    return Object.values(user.memberOf ?? {})
+    // The easiest way is to just concatenate all the names into a single
+    // string.
+    const memberOf = useUserLookupStore.getState().allUsers[user.userId]
+    return Object.values(memberOf ?? {})
         .flatMap((info) => [info.displayName, info.username])
         .join(' ')
         .trim()
