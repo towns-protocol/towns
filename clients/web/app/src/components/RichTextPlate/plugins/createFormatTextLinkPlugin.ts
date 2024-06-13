@@ -1,6 +1,6 @@
 import { createPluginFactory } from '@udecode/plate-common'
 import linkifyit from 'linkify-it'
-import { deserializeMd } from '../../utils/deserializeMD'
+import { deserializeMd } from '../utils/deserializeMD'
 const linkify = linkifyit()
 
 export const KEY_FORMAT_TEXT_LINK = 'KEY_FORMAT_TEXT_LINK'

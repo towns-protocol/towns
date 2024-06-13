@@ -6,7 +6,7 @@ import { VFile } from 'vfile'
 import { ELEMENT_LIC } from '@udecode/plate-list'
 import { ELEMENT_MENTION } from '@udecode/plate-mention'
 import remarkRehype, { Options } from 'remark-rehype'
-import { Channel, OTWMention, useUserLookupContext } from 'use-towns-client'
+import { Channel, useUserLookupContext } from 'use-towns-client'
 import markdown from 'remark-parse'
 import remarkGfm from 'remark-gfm'
 import { unified } from 'unified'
@@ -17,11 +17,12 @@ import remarkPreserveListContent from './remark/remarkPreserveListContent'
 import remarkRemoveHeadings from './remark/remarkRemoveHeadings'
 import remarkDecodeHTMLCodeBlocks from './remark/remarkDecodeHTMLCodeBlocks'
 import { getChannelNames } from './helpers'
+import { TUserIDNameMap } from './ComboboxTypes'
 
 type MarkdownRendererProps = React.PropsWithChildren<{
     components: Partial<Components>
     channels?: Channel[]
-    mentions?: OTWMention[]
+    mentions?: TUserIDNameMap
     lookupUser: ReturnType<typeof useUserLookupContext>['lookupUser']
 }>
 
@@ -35,7 +36,7 @@ type MarkdownRendererProps = React.PropsWithChildren<{
 const MarkdownRenderer = ({
     components,
     channels = [],
-    mentions = [],
+    mentions = {},
     lookupUser,
     children,
 }: MarkdownRendererProps) => {
@@ -84,10 +85,11 @@ const MarkdownRenderer = ({
 
 /**
  * Compare props to determine if the component should re-render.
- * Given that a lot of transformation is happening here, we want to be
+ * Given that a lot of transformation is happening here, and this component
+ * is rendered multiple times in the timeline we want to be
  * as conservative as possible before re-rendering
  *
- * Unless the MD content or channel list has changed, we don't want to re-render
+ * Unless the MD content or channel/user list has changed, we don't want to re-render
  */
 const arePropsEqual = (
     prevProps: MarkdownRendererProps,

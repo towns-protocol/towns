@@ -7,6 +7,7 @@ import {
 import { TDescendant } from '@udecode/plate-common'
 import { TMentionElement } from '@udecode/plate-mention'
 
+export type TUserIDNameMap = { [key: RoomMember['displayName']]: RoomMember['userId'] }
 export type TMentionEmoji = { name: string; emoji: string }
 export type TUserWithChannel = RoomMember & { isChannelMember: boolean } & { atChannel?: boolean }
 export type TMentionComboboxTypes = Channel | TUserWithChannel | TMentionEmoji

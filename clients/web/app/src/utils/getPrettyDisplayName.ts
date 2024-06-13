@@ -1,7 +1,7 @@
 import { memoize } from 'lodash'
 import { shortAddress } from 'ui/utils/utils'
 
-interface UserWithDisplayName {
+export interface UserWithDisplayName {
     userId: string
     displayName: string
     username?: string

@@ -22,7 +22,7 @@ import get from 'lodash/get'
 import { isType } from '@udecode/plate-utils'
 import { TComboboxItemBase } from '@udecode/plate-combobox'
 import { VirtualRef } from '@udecode/plate-floating'
-import { Channel, OTWMention } from 'use-towns-client'
+import { Channel } from 'use-towns-client'
 import { MOCK_EMOJI } from './ComboboxTypes'
 
 export const BREAK_TAG = '<br>'
@@ -108,7 +108,7 @@ export const getTypeaheadPosition = (
 export const getChannelNames = (channels?: Channel[]): string =>
     (channels || []).map((c) => c.label).join('')
 
-export const getMentionIds = (mentions?: OTWMention[]): string =>
+export const getMentionIds = (mentions?: { displayName: string }[]): string =>
     (mentions || []).map((u) => u.displayName).join('')
 
 /**

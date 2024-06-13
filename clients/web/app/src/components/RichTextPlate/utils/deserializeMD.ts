@@ -2,11 +2,12 @@ import { Value } from '@udecode/plate-common'
 import markdown from 'remark-parse'
 import remarkGfm from 'remark-gfm'
 import { unified } from 'unified'
-import { Channel, OTWMention, useUserLookupContext } from 'use-towns-client'
+import { Channel, useUserLookupContext } from 'use-towns-client'
 import remarkDecodeHTMLCodeBlocks from './remark/remarkDecodeHTMLCodeBlocks'
 import remarkSlate from './remark/plugin'
 import remarkTransformUserAndChannels from './remark/remarkTransformUserAndChannels'
 import remarkRemoveHeadings from './remark/remarkRemoveHeadings'
+import { TUserIDNameMap } from './ComboboxTypes'
 
 /**
  * Deserialize content from Markdown format to Slate format.
@@ -19,7 +20,7 @@ import remarkRemoveHeadings from './remark/remarkRemoveHeadings'
 export const deserializeMd = <V extends Value>(
     data: string,
     channels: Channel[] = [],
-    mentions: OTWMention[] = [],
+    userIDNameMap: TUserIDNameMap = {},
     lookupUser?: ReturnType<typeof useUserLookupContext>['lookupUser'],
 ): V => {
     const tree = unified()
@@ -28,7 +29,7 @@ export const deserializeMd = <V extends Value>(
         .use(remarkRemoveHeadings)
         .use(remarkDecodeHTMLCodeBlocks)
         .use(remarkSlate)
-        .use(remarkTransformUserAndChannels(channels, mentions, lookupUser))
+        .use(remarkTransformUserAndChannels(channels, userIDNameMap, lookupUser))
         .processSync(data)
 
     return tree.result as V

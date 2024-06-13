@@ -1,12 +1,19 @@
 import { Transformer } from 'unified'
 import isEmpty from 'lodash/isEmpty'
 import pick from 'lodash/pick'
+import each from 'lodash/each'
+import { EElementOrText, Value } from '@udecode/plate-common'
 import { findAndReplace } from 'mdast-util-find-and-replace'
-import { Channel, OTWMention, useUserLookupContext } from 'use-towns-client'
+import { Channel, useUserLookupContext } from 'use-towns-client'
 import { ELEMENT_MENTION } from '@udecode/plate-mention'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { ELEMENT_MENTION_CHANNEL } from '../../plugins/createChannelPlugin'
-import { AtChannelUser, TChannelMentionElement, TUserMentionElement } from '../ComboboxTypes'
+import {
+    AtChannelUser,
+    TChannelMentionElement,
+    TUserIDNameMap,
+    TUserMentionElement,
+} from '../ComboboxTypes'
 
 const SPACE_NODE = {
     type: 'text',
@@ -14,15 +21,15 @@ const SPACE_NODE = {
 }
 
 const userNameWithoutAt = (name: string) => name.replace(/^@/, '')
-
+export type PasteTransformer = (fragment: EElementOrText<Value>[]) => EElementOrText<Value>[]
 /**
  * Find #channel and @user in Markdown AST and convert them to
  * `TChannelMentionElement` or `TUserMentionElement` respectively.
  *
  * @param channelList - List of channels in the current space
- * @param mentions - List of mentions attached to message event, which means how many users are actually mentioned in
+ * @param userIDNameMap - List of mentions attached to message event, which means how many users are actually mentioned in
  * the message and their details DURING the time of message creation
- * @param lookupUser - a method to looup user by userId
+ * @param lookupUser - a method to lookup user by userId
  *
  * @description 1. add special mention for `@channel` because the data type returned from backend has no
  * displayName/userId for it
@@ -36,17 +43,24 @@ const userNameWithoutAt = (name: string) => name.replace(/^@/, '')
  * @see TChannelMentionElement
  * @see TUserMention
  */
-const remarkTransformUserAndChannels =
-    (
-        channelList: Channel[],
-        mentions: OTWMention[] = [],
-        lookupUser?: ReturnType<typeof useUserLookupContext>['lookupUser'],
-    ) =>
-    () => {
-        const mentionsWithChannel = [
-            pick(AtChannelUser, 'userId', 'displayName') as OTWMention,
-        ].concat(mentions)
+function remarkTransformUserAndChannels(
+    channelList: Channel[],
+    userIDNameMap: TUserIDNameMap,
+    lookupUser?: ReturnType<typeof useUserLookupContext>['lookupUser'],
+): (onPaste?: boolean) => Transformer
 
+function remarkTransformUserAndChannels(
+    channelList: Channel[],
+    userIDNameMap: TUserIDNameMap,
+    lookupUser?: ReturnType<typeof useUserLookupContext>['lookupUser'],
+): (onPaste?: boolean) => PasteTransformer
+
+function remarkTransformUserAndChannels(
+    channelList: Channel[],
+    userIDNameMap: TUserIDNameMap = {},
+    lookupUser?: ReturnType<typeof useUserLookupContext>['lookupUser'],
+) {
+    return function (onPaste?: boolean) {
         const CHANNEL_TRIGGER = '#'
         const CHANNEL_NAME_REGEX = '[\\da-z][-\\da-z_]{0,50}'
         const CHANNEL_ELEMENT_REGEX = new RegExp(
@@ -54,25 +68,29 @@ const remarkTransformUserAndChannels =
             'gi',
         )
 
+        const userIdList = Object.values(userIDNameMap)
         const USER_TRIGGER = '@'
-        const USER_NAME_REGEX = mentionsWithChannel
-            .map((user) =>
-                userNameWithoutAt(user.displayName).replace(/[/\-\\^$*+?.()|[\]{}]/g, '\\$&'),
+        const USER_NAME_REGEX = userIdList
+            .concat(AtChannelUser.displayName)
+            .map((userDisplayName) =>
+                userNameWithoutAt(userDisplayName).replace(/[/\-\\^$*+?.()|[\]{}]/g, '\\$&'),
             )
             .join('|')
-        const USER_NAME_ID_MAP = mentionsWithChannel.reduce((acc, user) => {
-            if (user.userId) {
-                const mentionDisplayName = userNameWithoutAt(user.displayName)
-                const member = lookupUser?.(user.userId)
-                acc[mentionDisplayName] = {
-                    ...user,
-                    displayName: !isEmpty(member?.displayName)
-                        ? getPrettyDisplayName(member)
-                        : mentionDisplayName,
-                }
+
+        const userIdNameCurrent = {
+            [AtChannelUser.displayName]: pick(AtChannelUser, 'userId', 'displayName'),
+        }
+
+        each(userIDNameMap, (displayName, userId) => {
+            const mentionDisplayName = userNameWithoutAt(displayName)
+            const member = lookupUser?.(userId)
+            userIdNameCurrent[mentionDisplayName] = {
+                userId,
+                displayName: !isEmpty(member?.displayName)
+                    ? getPrettyDisplayName(member)
+                    : mentionDisplayName,
             }
-            return acc
-        }, {} as Record<string, OTWMention>)
+        })
 
         const USER_ELEMENT_REGEX = new RegExp(
             `(${USER_TRIGGER}(${USER_NAME_REGEX})(?=\\s|[^a-z0-9_-]|$))`,
@@ -88,7 +106,7 @@ const remarkTransformUserAndChannels =
                 })
             }
             const userName = value.split(USER_TRIGGER)[1]
-            const user = USER_NAME_ID_MAP[userName]
+            const user = userIdNameCurrent[userName]
 
             if (!user) {
                 return [
@@ -142,6 +160,39 @@ const remarkTransformUserAndChannels =
             ]
         }
 
+        type SanitizeFragmentType = {
+            (mentionFragment: ReturnType<typeof transformChannel>): EElementOrText<Value>
+            (mentionFragment: ReturnType<typeof transformUser>): EElementOrText<Value>
+        }
+        const sanitizeFragment: SanitizeFragmentType = (mentionFragment) => {
+            if (mentionFragment.length === 1) {
+                return { text: mentionFragment[0].value }
+            }
+
+            return mentionFragment.filter(
+                (f) => f.type === ELEMENT_MENTION || f.type === ELEMENT_MENTION_CHANNEL,
+            )[0] as EElementOrText<Value>
+        }
+
+        const recursivelyTransformMentions = (fragment: EElementOrText<Value>) => {
+            if (Array.isArray(fragment.children)) {
+                fragment.children = fragment.children.map(recursivelyTransformMentions)
+            }
+
+            if (!isEmpty(fragment.text) && typeof fragment.text === 'string') {
+                if (fragment.text.match(USER_ELEMENT_REGEX)) {
+                    fragment = sanitizeFragment(transformUser(fragment.text, ''))
+                }
+            }
+
+            return fragment
+        }
+
+        /**
+         * Transformer to find and replace user and channel mentions in the markdown AST using UnifiedJS
+         * This is used to convert mentions in Timeline preview and during initial load of the editor from local storage
+         * Called from `deserializeMd` in `utils/deserializeMD.ts` and `MarkdownToJSX` in `components/MarkdownToJSX.tsx`
+         */
         const transformer: Transformer = (tree, _file) => {
             // eslint-disable-next-line
             // @ts-ignore
@@ -151,7 +202,20 @@ const remarkTransformUserAndChannels =
             ])
         }
 
-        return transformer
+        /**
+         * Transformer to find and replace user and channel mentions in the Plate JS paste fragment manually
+         * This is used to convert mentions when copied from other sources and pasted in the editor
+         * Called from `createPasteMentionsPlugin` in `plugins/createPasteMentionsPlugin.ts`
+         */
+        const pasteTransformer: PasteTransformer = (fragment) => {
+            if (!Array.isArray(fragment)) {
+                return fragment
+            }
+            return fragment.map(recursivelyTransformMentions)
+        }
+
+        return onPaste ? pasteTransformer : transformer
     }
+}
 
 export default remarkTransformUserAndChannels

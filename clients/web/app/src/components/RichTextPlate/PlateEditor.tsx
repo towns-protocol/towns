@@ -40,15 +40,20 @@ import { RichTextPlaceholder } from './components/RichTextEditorPlaceholder'
 import { toMD } from './utils/toMD'
 import { RememberInputPlugin } from './plugins/RememberInputPlugin'
 import { deserializeMd } from './utils/deserializeMD'
-import { channelMentionFilter, userMentionFilter } from './utils/mentions'
-import { AtChannelUser, ComboboxTypes, TUserWithChannel } from './utils/ComboboxTypes'
+import { channelMentionFilter, getUserIdNameMap, userMentionFilter } from './utils/mentions'
+import {
+    AtChannelUser,
+    ComboboxTypes,
+    TUserIDNameMap,
+    TUserWithChannel,
+} from './utils/ComboboxTypes'
 import { EditorFallback } from './components/EditorFallback'
 import { MentionCombobox } from './components/plate-ui/MentionCombobox'
 import { Editor } from './components/plate-ui/Editor'
 import { PlateToolbar } from './components/plate-ui/PlateToolbar'
 import { RichTextBottomToolbar } from './components/RichTextBottomToolbar'
 import { SendMarkdownPlugin } from './components/SendMarkdownPlugin'
-import PlatePlugins from './plugins'
+import platePlugins from './plugins'
 import { ELEMENT_MENTION_CHANNEL } from './plugins/createChannelPlugin'
 import { EmojiPlugin } from './plugins/emoji/EmojiPlugin'
 import { OnFocusPlugin } from './plugins/OnFocusPlugin'
@@ -164,16 +169,22 @@ const PlateEditorWithoutBoundary = ({
             .filter(notUndefined)
     }, [channels])
 
+    const userIdNameMap: TUserIDNameMap = useMemo(() => {
+        return getUserIdNameMap(users)
+    }, [users])
+
     const initialValue = useMemo(() => {
         if (!_initialValue) {
+            // restore draft
             if (editable && valueFromStore && valueFromStore.trim().length > 0) {
-                return deserializeMd(valueFromStore, channels, mentions, lookupUser)
+                return deserializeMd(valueFromStore, channels, userIdNameMap, lookupUser)
             } else {
                 return [{ ...EMPTY_NODE }]
             }
         }
-        return deserializeMd(_initialValue, channels, mentions, lookupUser)
-    }, [_initialValue, channels, mentions, lookupUser, editable, valueFromStore])
+        // Editing a message
+        return deserializeMd(_initialValue, channels, userIdNameMap, lookupUser)
+    }, [_initialValue, channels, userIdNameMap, lookupUser, editable, valueFromStore])
 
     const onFocusChange = useCallback(
         (focus: boolean) => {
@@ -383,7 +394,8 @@ const PlateEditorWithoutBoundary = ({
                 rounded={{ default: 'sm', touch: 'none' }}
             >
                 <Plate
-                    plugins={PlatePlugins()}
+                    normalizeInitialValue
+                    plugins={platePlugins(channels, userIdNameMap, lookupUser)}
                     editorRef={editorRef}
                     initialValue={initialValue}
                     key={`plate-${storageId}`}

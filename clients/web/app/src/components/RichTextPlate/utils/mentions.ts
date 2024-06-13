@@ -1,7 +1,13 @@
 import { ELEMENT_MENTION } from '@udecode/plate-mention'
 import { TComboboxItem } from '@udecode/plate-combobox'
 import { Channel, Mention } from 'use-towns-client'
-import { ComboboxTypes, TUserMentionElement, TUserWithChannel } from './ComboboxTypes'
+import { UserWithDisplayName, getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import {
+    ComboboxTypes,
+    TUserIDNameMap,
+    TUserMentionElement,
+    TUserWithChannel,
+} from './ComboboxTypes'
 
 /**
  * @desc Recursively go through the nodes to extract all the `Mention` nodes
@@ -44,4 +50,19 @@ export const getUsernameForMention = <T extends TUserWithChannel>(
     }
 
     return item.data.username ? `@${item.data.username}` : undefined
+}
+
+export const getUserIdNameMap = (
+    users: (Omit<UserWithDisplayName, 'userId'> & { userId?: string })[],
+): TUserIDNameMap => {
+    if (!Array.isArray(users)) {
+        return {}
+    }
+    const map: TUserIDNameMap = {}
+    users.forEach((user) => {
+        if (user.userId) {
+            map[user.userId] = getPrettyDisplayName(user as UserWithDisplayName)
+        }
+    })
+    return map
 }
