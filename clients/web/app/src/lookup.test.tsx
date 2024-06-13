@@ -44,7 +44,7 @@ const UserComponent = (props: { userId: string }) => {
 const setupDefaultUserNames = () => {
     const { result } = renderHook(() => Lib.useUserLookupStore())
     act(() => {
-        result.current.setUser(
+        result.current.setSpaceUser(
             '0x1234',
             {
                 userId: '0x1234',
@@ -58,7 +58,6 @@ const setupDefaultUserNames = () => {
                 nft: undefined,
             },
             'spaceId',
-            'channelId',
         )
     })
 }
@@ -84,7 +83,7 @@ describe('setting and updating a username', () => {
 
         const { result } = renderHook(() => Lib.useUserLookupStore())
         act(() => {
-            result.current.setUser(
+            result.current.setSpaceUser(
                 '0x1234',
                 {
                     userId: '0x1234',
@@ -98,7 +97,6 @@ describe('setting and updating a username', () => {
                     nft: undefined,
                 },
                 'spaceId',
-                'channelId',
             )
         })
 
@@ -107,7 +105,7 @@ describe('setting and updating a username', () => {
         })
 
         act(() => {
-            result.current.setUser(
+            result.current.setSpaceUser(
                 '0x1234',
                 {
                     userId: '0x1234',
@@ -121,7 +119,6 @@ describe('setting and updating a username', () => {
                     nft: undefined,
                 },
                 'spaceId',
-                'channelId',
             )
         })
 
@@ -130,7 +127,7 @@ describe('setting and updating a username', () => {
         })
 
         act(() => {
-            result.current.setUser(
+            result.current.setSpaceUser(
                 '0x000',
                 {
                     userId: '0x1234',
@@ -144,7 +141,6 @@ describe('setting and updating a username', () => {
                     nft: undefined,
                 },
                 'spaceId',
-                'channelId',
             )
         })
     })

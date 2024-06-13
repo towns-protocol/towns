@@ -1,7 +1,6 @@
 import {
     Client as CasablancaClient,
     UserInfo,
-    isChannelStreamId,
     isDMChannelStreamId,
     isGDMChannelStreamId,
     isSpaceStreamId,
@@ -29,12 +28,14 @@ const SnapshotCaseTypeValues = {
 } as const
 
 const meaningfulInfo = (maybeInfo?: UserInfo): maybeInfo is UserInfo => {
+    return !!(maybeInfo && maybeInfo.username !== '')
+}
+
+const isUserInfo = (maybeInfo?: UserInfo): maybeInfo is UserInfo => {
     return !!(
-        maybeInfo &&
-        (maybeInfo.username !== '' ||
-            maybeInfo.displayName !== '' ||
-            maybeInfo.ensAddress ||
-            maybeInfo.nft)
+        !!maybeInfo &&
+        typeof maybeInfo.username === 'string' &&
+        typeof maybeInfo.displayName === 'string'
     )
 }
 
@@ -52,7 +53,7 @@ const createUserLookup = (userId: string, info: UserInfo, ensName?: string): Loo
     } as const)
 
 export const useUserLookupUpdater = (townsOpts: TownsOpts, client?: CasablancaClient) => {
-    const { setUser } = useUserLookupStore()
+    const { setSpaceUser, setChannelUser } = useUserLookupStore()
     const { getEnsFromAddress } = useSpaceEnsLookup()
 
     const onStreamMetadataUpdated = useCallback(
@@ -62,21 +63,10 @@ export const useUserLookupUpdater = (townsOpts: TownsOpts, client?: CasablancaCl
                 const stream = client?.streams.get(streamId)
                 const metadata = stream?.view.getUserMetadata()
                 const info = metadata?.userInfo(userId)
-                if (meaningfulInfo(info)) {
+                if (isUserInfo(info)) {
                     const ensName = getEnsFromAddress(info?.ensAddress)
                     const lookupUser = createUserLookup(userId, info, ensName)
-                    setUser(userId, lookupUser, streamId)
-                }
-            } else if (isChannelStreamId(streamId)) {
-                const stream = client?.streams.get(streamId)
-                const metadata = stream?.view.getUserMetadata()
-                const info = metadata?.userInfo(userId)
-                if (meaningfulInfo(info)) {
-                    const channelId = streamId
-                    const spaceId = stream?.view.getContent().getStreamParentId()
-                    const ensName = getEnsFromAddress(info?.ensAddress)
-                    const lookupUser = createUserLookup(userId, info, ensName)
-                    setUser(userId, lookupUser, spaceId, channelId)
+                    setSpaceUser(userId, lookupUser, streamId)
                 }
             } else if (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)) {
                 const stream = client?.streams.get(streamId)
@@ -85,11 +75,11 @@ export const useUserLookupUpdater = (townsOpts: TownsOpts, client?: CasablancaCl
                 if (meaningfulInfo(info)) {
                     const ensName = getEnsFromAddress(info?.ensAddress)
                     const lookupUser = createUserLookup(userId, info, ensName)
-                    setUser(userId, lookupUser, undefined, streamId)
+                    setChannelUser(userId, lookupUser, streamId)
                 }
             }
         },
-        [client?.streams, getEnsFromAddress, setUser],
+        [client?.streams, getEnsFromAddress, setChannelUser, setSpaceUser],
     )
 
     const onStreamInitialized = useCallback(
@@ -104,30 +94,26 @@ export const useUserLookupUpdater = (townsOpts: TownsOpts, client?: CasablancaCl
 
             for (const userId of stream.view.getMembers().participants() ?? []) {
                 const info = metadata.userInfo(userId)
-                if (meaningfulInfo(info)) {
+                if (isUserInfo(info)) {
                     const ens = getEnsFromAddress(info?.ensAddress)
                     const lookupUser = createUserLookup(userId, info, ens)
 
                     switch (contentKind) {
                         case SnapshotCaseTypeValues.spaceContent:
-                            setUser(userId, lookupUser, streamId)
+                            setSpaceUser(userId, lookupUser, streamId)
                             break
-                        case SnapshotCaseTypeValues.channelContent:
-                            {
-                                const channelId = streamId
-                                const spaceId = stream.view.getContent().getStreamParentId()
-                                setUser(userId, lookupUser, spaceId, channelId)
-                            }
-                            break
+
                         case SnapshotCaseTypeValues.dmChannelContent:
                         case SnapshotCaseTypeValues.gdmChannelContent:
-                            setUser(userId, lookupUser, undefined, streamId)
+                            if (meaningfulInfo(info)) {
+                                setChannelUser(userId, lookupUser, streamId)
+                            }
                             break
                     }
                 }
             }
         },
-        [client?.streams, getEnsFromAddress, setUser],
+        [client?.streams, getEnsFromAddress, setChannelUser, setSpaceUser],
     )
 
     const oldClient = useRef(client)

@@ -15,7 +15,8 @@ type UserLookupStore = {
     channelUsers: Record<string, Record<string, LookupUser>> // for DM and GDM channels
     fallbackUserLookups: Record<string, LookupUser>
     allUsers: Record<string, Record<string, LookupUser>>
-    setUser: (userId: string, user: LookupUser, spaceId?: string, channelId?: string) => void
+    setSpaceUser: (userId: string, user: LookupUser, channelId?: string) => void
+    setChannelUser: (userId: string, user: LookupUser, spaceId?: string) => void
     lookupUser: (userId: string, spaceId?: string, channelId?: string) => LookupUser | undefined
 }
 
@@ -74,7 +75,7 @@ export const useUserLookupStore = createWithEqualityFn<UserLookupStore>()(
             channelUsers: {},
             fallbackUserLookups: {},
             allUsers: {},
-            setUser: (userId, user, spaceId, channelId) => {
+            setSpaceUser: (userId, user, spaceId) => {
                 set((state) => {
                     if (spaceId) {
                         if (!state.allUsers[userId]) {
@@ -83,8 +84,20 @@ export const useUserLookupStore = createWithEqualityFn<UserLookupStore>()(
                         if (!state.allUsers[userId][spaceId]) {
                             state.allUsers[userId][spaceId] = { ...user }
                         }
+                        if (!state.spaceUsers[spaceId]) {
+                            state.spaceUsers[spaceId] = {}
+                        }
+                        state.spaceUsers[spaceId][userId] = {
+                            ...user,
+                        }
+                        state.fallbackUserLookups[userId] = {
+                            ...user,
+                        }
                     }
-
+                })
+            },
+            setChannelUser: (userId, user, channelId) => {
+                set((state) => {
                     if (channelId) {
                         if (!state.channelUsers[channelId]) {
                             state.channelUsers[channelId] = {}
@@ -92,17 +105,6 @@ export const useUserLookupStore = createWithEqualityFn<UserLookupStore>()(
                         state.channelUsers[channelId][userId] = {
                             ...user,
                         }
-                    }
-
-                    if (spaceId) {
-                        if (!state.spaceUsers[spaceId]) {
-                            state.spaceUsers[spaceId] = {}
-                        }
-                        state.spaceUsers[spaceId][userId] = {
-                            ...user,
-                        }
-
-                        state.fallbackUserLookups[userId] = { ...user }
                     }
                 })
             },
