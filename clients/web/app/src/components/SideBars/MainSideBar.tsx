@@ -57,7 +57,6 @@ export const MainSideBar = () => {
                     {dmUnreadChannelIds.size > 0 && <Dot position="topRight" />}
                 </Box>
             </NavItem>
-            <SpaceList spaces={spaces} spaceId={spaceId} />
             <TransitionItem key="new">
                 <ActionNavItem
                     id={`${PATHS.SPACES}/new`}
@@ -71,6 +70,9 @@ export const MainSideBar = () => {
                     onClick={onShowCreateSpace}
                 />
             </TransitionItem>
+
+            <SpaceList spaces={spaces} spaceId={spaceId} />
+
             {invites.map((m) => (
                 <TransitionItem key={m.id}>
                     <SpaceNavItem
@@ -121,6 +123,13 @@ export const SpaceList = (props: {
         }
     }, [orderedSpaces, setPersistedOrderedSpaces, userId])
 
+    useEffect(() => {
+        onReorder((prev) => {
+            const newSpaces = spaces.filter((s) => !prev.includes(s.id))
+            return [...prev, ...newSpaces.map((s) => s.id)]
+        })
+    }, [spaces])
+
     const handleDragStart = () => {
         setIsDragging(true)
     }
@@ -128,6 +137,8 @@ export const SpaceList = (props: {
     const handleDragEnd = () => {
         setIsDragging(false)
     }
+
+    const { isTouch } = useDevice()
 
     return (
         <Reorder.Group axis="y" values={orderedSpaces} onReorder={onReorder}>
@@ -140,7 +151,9 @@ export const SpaceList = (props: {
                     <Reorder.Item
                         key={s.id}
                         value={s.id}
-                        onClick={() => onSelectItem(s.id)}
+                        style={{ touchAction: 'none' }}
+                        onTap={isTouch ? () => onSelectItem(s.id) : undefined}
+                        onClick={isTouch ? undefined : () => onSelectItem(s.id)}
                         onDragStart={handleDragStart}
                         onDragEnd={handleDragEnd}
                     >
@@ -152,6 +165,7 @@ export const SpaceList = (props: {
                                 name={s.name}
                                 avatar={s.avatarSrc}
                                 pinned={false}
+                                isDragging={isDragging}
                             />
                         </TransitionItem>
                     </Reorder.Item>

@@ -27,6 +27,7 @@ export type TooltipOptions = {
     removeOnClick?: boolean
     closeHandleRef?: MutableRefObject<undefined | (() => void)>
     alignRef?: RefObject<HTMLElement>
+    disabled?: boolean
 }
 
 type Props = TooltipOptions & {
@@ -126,18 +127,21 @@ export const TooltipRenderer = (props: Props) => {
         <>
             {children &&
                 children({
-                    triggerProps:
-                        trigger === Trigger.hover
-                            ? {
-                                  ref: triggerRef,
-                                  onMouseEnter,
-                                  onMouseLeave,
-                                  onMouseUp: removeOnClick ? onMouseLeave : undefined,
-                              }
-                            : {
-                                  ref: triggerRef,
-                                  onMouseUp: onMouseClick,
-                              },
+                    triggerProps: props.disabled
+                        ? {
+                              ref: triggerRef,
+                          }
+                        : trigger === Trigger.hover
+                        ? {
+                              ref: triggerRef,
+                              onMouseEnter,
+                              onMouseLeave,
+                              onMouseUp: removeOnClick ? onMouseLeave : undefined,
+                          }
+                        : {
+                              ref: triggerRef,
+                              onMouseUp: onMouseClick,
+                          },
                 })}
 
             {keepAlive &&
@@ -145,7 +149,7 @@ export const TooltipRenderer = (props: Props) => {
                 render &&
                 createPortal(
                     <AnimatePresence>
-                        {active ? (
+                        {active && !props.disabled ? (
                             <TooltipPositioner
                                 align={align}
                                 containerRef={containerRef}

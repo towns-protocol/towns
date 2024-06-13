@@ -22,6 +22,7 @@ type Props = {
     onSettings?: (id: string) => void
     exact?: boolean
     isInvite?: boolean
+    isDragging?: boolean
     onClick?: () => void
 }
 
@@ -43,10 +44,12 @@ export const SpaceNavItem = (props: Props) => {
             activeBackground={isTouch ? 'level2' : 'level3'}
             highlight={highlight}
             cursor="pointer"
+            style={{ touchAction: 'none' }}
             tooltip={isTouch ? undefined : props.name}
             tooltipOptions={{
                 placement: 'horizontal',
                 immediate: true,
+                disabled: isTouch || props.isDragging,
             }}
         >
             <Box position="relative">
