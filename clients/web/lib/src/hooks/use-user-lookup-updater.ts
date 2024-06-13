@@ -29,7 +29,13 @@ const SnapshotCaseTypeValues = {
 } as const
 
 const meaningfulInfo = (maybeInfo?: UserInfo): maybeInfo is UserInfo => {
-    return !!(typeof maybeInfo?.username !== 'undefined')
+    return !!(
+        maybeInfo &&
+        (maybeInfo.username !== '' ||
+            maybeInfo.displayName !== '' ||
+            maybeInfo.ensAddress ||
+            maybeInfo.nft)
+    )
 }
 
 const createUserLookup = (userId: string, info: UserInfo, ensName?: string): LookupUser =>
