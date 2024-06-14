@@ -14,6 +14,7 @@ contract DeployEntitlementChecker is Deployer, FacetHelper {
     addSelector(EntitlementChecker.getNodeAtIndex.selector);
     addSelector(EntitlementChecker.getRandomNodes.selector);
     addSelector(EntitlementChecker.requestEntitlementCheck.selector);
+    addSelector(EntitlementChecker.getNodesByOperator.selector);
   }
 
   function initializer() public pure override returns (bytes4) {

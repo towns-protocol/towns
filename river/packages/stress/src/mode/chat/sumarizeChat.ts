@@ -6,10 +6,14 @@ import { channelMessagePostWhere } from '../../utils/timeline'
 import { isDefined } from '@river/sdk'
 import { makeCodeBlock } from '../../utils/messages'
 
-export async function sumarizeChat(localClients: StressClient[], cfg: ChatConfig) {
+export async function sumarizeChat(
+    localClients: StressClient[],
+    cfg: ChatConfig,
+    errors: unknown[],
+) {
     const logger = dlogger('stress:sumarizeChat')
     const processLeadClient = localClients[0]
-    logger.log('sumarizeChat', processLeadClient.connection.userId)
+    logger.log('sumarizeChat', processLeadClient.userId)
     const defaultChannel = processLeadClient.streamsClient.stream(cfg.announceChannelId)
     check(isDefined(defaultChannel), 'defaultChannel not found')
     // find the message in the default channel that contains the session id, this should already be there decrypted
@@ -45,6 +49,7 @@ export async function sumarizeChat(localClients: StressClient[], cfg: ChatConfig
         processIndex: cfg.processIndex,
         freeMemory: getSystemInfo().FreeMemory,
         checkinCounts,
+        errors,
     }
 
     await processLeadClient.sendMessage(cfg.announceChannelId, `Done ${makeCodeBlock(summary)}`, {

@@ -104,17 +104,46 @@ export async function startStressChat(opts: {
         await kickoffChat(clients[0], chatConfig)
     }
 
+    const PARALLEL_UPDATES = 4
+    const errors: unknown[] = []
+
     logger.log('kickoffChat')
-    await Promise.all(clients.map((client) => joinChat(client, chatConfig)))
+    for (let i = 0; i < clients.length; i += PARALLEL_UPDATES) {
+        const span = clients.slice(i, i + PARALLEL_UPDATES)
+        const results = await Promise.allSettled(span.map((client) => joinChat(client, chatConfig)))
+        results.forEach((r, index) => {
+            if (r.status === 'rejected') {
+                logger.error(`${span[index].logId} error calling joinChat`, r.reason)
+                errors.push(r.reason)
+            }
+        })
+    }
 
     logger.log('updateProfile')
-    await Promise.all(clients.map((client) => updateProfile(client, chatConfig)))
+    for (let i = 0; i < clients.length; i += PARALLEL_UPDATES) {
+        const span = clients.slice(i, i + PARALLEL_UPDATES)
+        const results = await Promise.allSettled(
+            span.map((client) => updateProfile(client, chatConfig)),
+        )
+        results.forEach((r, index) => {
+            if (r.status === 'rejected') {
+                logger.error(`${span[index].logId} error calling updateProfile`, r.reason)
+                errors.push(r.reason)
+            }
+        })
+    }
 
     logger.log('chitChat')
-    await Promise.all(clients.map((client) => chitChat(client, chatConfig)))
+    const results = await Promise.allSettled(clients.map((client) => chitChat(client, chatConfig)))
+    results.forEach((r, index) => {
+        if (r.status === 'rejected') {
+            logger.error(`${clients[index].logId} error calling chitChat`, r.reason)
+            errors.push(r.reason)
+        }
+    })
 
     logger.log('sumarizeChat')
-    const summary = await sumarizeChat(clients, chatConfig)
+    const summary = await sumarizeChat(clients, chatConfig, errors)
 
     logger.log('done', { summary })
 

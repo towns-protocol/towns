@@ -7,11 +7,14 @@ import {
     makeUserStreamId,
     streamIdAsBytes,
     makeUniqueChannelStreamId,
+    SignerContext,
+    StreamRpcClient,
 } from '@river/sdk'
-import { Connection, makeConnection } from './connection'
+import { makeConnection } from './connection'
 import { CryptoStore, EntitlementsDelegate } from '@river-build/encryption'
 import {
     ETH_ADDRESS,
+    LocalhostWeb3Provider,
     MembershipStruct,
     NoopRuleData,
     Permission,
@@ -26,10 +29,15 @@ import { waitFor } from './waitFor'
 
 const logger = dlogger('stress:stressClient')
 
-export async function makeStressClient(config: RiverConfig, clientIndex: number, wallet?: Wallet) {
-    const connection = await makeConnection(config, wallet)
-    const cryptoDb = new CryptoStore(`crypto-${connection.userId}`, connection.userId)
-    const spaceDapp = new SpaceDapp(connection.config.base.chainConfig, connection.baseProvider)
+export async function makeStressClient(
+    config: RiverConfig,
+    clientIndex: number,
+    inWallet?: Wallet,
+) {
+    const { userId, delegateWallet, signerContext, baseProvider, riverProvider, rpcClient } =
+        await makeConnection(config, inWallet)
+    const cryptoDb = new CryptoStore(`crypto-${userId}`, userId)
+    const spaceDapp = new SpaceDapp(config.base.chainConfig, baseProvider)
     const delegate = {
         isEntitled: async (
             spaceId: string | undefined,
@@ -48,30 +56,41 @@ export async function makeStressClient(config: RiverConfig, clientIndex: number,
             }
         },
     } satisfies EntitlementsDelegate
-    const streamsClient = new StreamsClient(
-        connection.signerContext,
-        connection.rpcClient,
-        cryptoDb,
-        delegate,
+    const streamsClient = new StreamsClient(signerContext, rpcClient, cryptoDb, delegate)
+    return new StressClient(
+        config,
+        clientIndex,
+        userId,
+        delegateWallet,
+        signerContext,
+        baseProvider,
+        riverProvider,
+        rpcClient,
+        spaceDapp,
+        streamsClient,
     )
-    return new StressClient(config, clientIndex, connection, spaceDapp, streamsClient)
 }
 
 export class StressClient {
     constructor(
         public config: RiverConfig,
         public clientIndex: number,
-        public connection: Connection,
+        public userId: string,
+        public delegateWallet: Wallet,
+        public signerContext: SignerContext,
+        public baseProvider: LocalhostWeb3Provider,
+        public riverProvider: LocalhostWeb3Provider,
+        public rpcClient: StreamRpcClient,
         public spaceDapp: SpaceDapp,
         public streamsClient: StreamsClient,
     ) {}
 
     get logId(): string {
-        return `client${this.clientIndex}:${shortenHexString(this.connection.userId)}`
+        return `client${this.clientIndex}:${shortenHexString(this.userId)}`
     }
 
     async fundWallet() {
-        await this.connection.baseProvider.fundWallet()
+        await this.baseProvider.fundWallet()
     }
 
     async waitFor<T>(
@@ -88,7 +107,7 @@ export class StressClient {
     }
 
     async userExists(inUserId?: string): Promise<boolean> {
-        const userId = inUserId ?? this.connection.userId
+        const userId = inUserId ?? this.userId
         const userStreamId = makeUserStreamId(userId)
         const response = await this.streamsClient.rpcClient.getStream({
             streamId: streamIdAsBytes(userStreamId),
@@ -98,7 +117,7 @@ export class StressClient {
     }
 
     async isMemberOf(streamId: string, inUserId?: string): Promise<boolean> {
-        const userId = inUserId ?? this.connection.userId
+        const userId = inUserId ?? this.userId
         const stream = this.streamsClient.stream(streamId)
         const streamStateView = stream?.view ?? (await this.streamsClient.getStream(streamId))
         return streamStateView.userIsEntitledToKeyExchange(userId)
@@ -114,7 +133,7 @@ export class StressClient {
                 maxSupply: 1000,
                 duration: 0,
                 currency: ETH_ADDRESS,
-                feeRecipient: this.connection.userId,
+                feeRecipient: this.userId,
                 freeAllocation: 0,
                 pricingModule: dynamicPricingModule.module,
             },
@@ -132,7 +151,7 @@ export class StressClient {
                 channelName: 'general', // default channel name
                 membership: membershipInfo,
             },
-            this.connection.baseProvider.wallet,
+            this.baseProvider.wallet,
         )
         const receipt = await transaction.wait()
         logger.log('transaction receipt', receipt)
@@ -159,7 +178,7 @@ export class StressClient {
             '',
             channelId,
             roles.filter((role) => role.name !== 'Owner').map((role) => role.roleId),
-            this.connection.baseProvider.wallet,
+            this.baseProvider.wallet,
         )
         const receipt = await tx.wait()
         logger.log('createChannel receipt', receipt)
@@ -211,8 +230,8 @@ export class StressClient {
         if (opts?.skipMintMembership !== true) {
             const { issued } = await this.spaceDapp.joinSpace(
                 spaceId,
-                this.connection.wallet.address,
-                this.connection.baseProvider.wallet,
+                this.userId,
+                this.baseProvider.wallet,
             )
             logger.log('joinSpace transaction', issued)
         }

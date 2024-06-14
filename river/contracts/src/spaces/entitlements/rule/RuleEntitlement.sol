@@ -186,7 +186,7 @@ contract RuleEntitlement is
   }
 
   // @inheritdoc IEntitlement
-  function removeEntitlement(uint256 roleId) external {
+  function removeEntitlement(uint256 roleId) external onlySpace {
     Entitlement memory entitlement = entitlementsByRoleId[roleId];
     if (entitlement.grantedBy == address(0)) {
       revert Entitlement__InvalidValue();

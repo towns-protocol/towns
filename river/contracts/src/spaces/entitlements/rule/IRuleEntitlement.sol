@@ -12,7 +12,7 @@
  * As new LogicalOperation nodes are added, they can only reference existing nodes in the 'operations' array,
  * ensuring a valid post-order tree structure.
  */
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.24;
 
 import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 

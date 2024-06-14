@@ -7,6 +7,7 @@ interface IEntitlementCheckerBase {
   error EntitlementChecker_InsufficientNumberOfNodes();
   error EntitlementChecker_InvalidNodeOperator();
   error EntitlementChecker_InvalidOperator();
+  error EntitlementChecker_OperatorNotActive();
 
   // Events
   event NodeRegistered(address indexed nodeAddress);
@@ -42,4 +43,8 @@ interface IEntitlementChecker is IEntitlementCheckerBase {
     uint256 roleId,
     address[] memory nodes
   ) external;
+
+  function getNodesByOperator(
+    address operator
+  ) external view returns (address[] memory);
 }

@@ -343,6 +343,44 @@ contract RewardsDistributionTest is
     // verifyUserRewardsAgainstExpected(tUsers, exExpectedUserAmounts);
   }
 
+  function test_exTotalDelegation() public {
+    _createEntitiesForTest(
+      exAmountsPerUser,
+      exCommissionsPerOperator,
+      exDelegationsPerUser
+    );
+
+    _createMainnetEntitesForTest(
+      exAmountsPerUser,
+      exDelegationsPerUser,
+      tOperators
+    );
+
+    _createSpaceEntitiesForTest(
+      exTotalSpaces,
+      exAmountsPerSpaceUser,
+      exDelegationsPerSpaceUser
+    );
+
+    setupOperators(tOperators);
+    setupUsersAndDelegation(tUsers, tDelegations);
+    setupMainnetDelegation(tMainnetUsers, tMainnetUserDelegations);
+    setupSpaceDelegation(
+      tOperators,
+      tSpaceUsers,
+      tSpaces,
+      tSpaceUserDelegations,
+      exDelegationsPerSpace
+    );
+
+    for (uint i = 0; i < tOperators.length; i++) {
+      assertEq(
+        _calculateTotalDelegation(tOperators[i].addr),
+        spaceDelegationFacet.getTotalDelegation(tOperators[i].addr)
+      );
+    }
+  }
+
   //specific test case for operators
   function test_exOperatorRewards() public {
     _createEntitiesForTest(
@@ -971,6 +1009,34 @@ contract RewardsDistributionTest is
     return operatorReward;
   }
 
+  function _calculateTotalDelegation(
+    address operatorAddr
+  ) internal view returns (uint256) {
+    uint256 totalDelegation = 0;
+    for (uint i = 0; i < tDelegations.length; i++) {
+      if (tDelegations[i].operator == operatorAddr) {
+        totalDelegation += tUsers[i].amount;
+      }
+    }
+
+    for (uint i = 0; i < tMainnetUserDelegations.length; i++) {
+      if (tMainnetUserDelegations[i].operator == operatorAddr) {
+        totalDelegation += tMainnetUsers[i].amount;
+      }
+    }
+
+    for (uint i = 0; i < tSpaceUserDelegations.length; i++) {
+      if (
+        spaceDelegationFacet.getSpaceDelegation(
+          tSpaceUserDelegations[i].operator
+        ) == operatorAddr
+      ) {
+        totalDelegation += tSpaceUsers[i].amount;
+      }
+    }
+    return totalDelegation;
+  }
+
   // =============================================================
   //                           Utilities
   // =============================================================
@@ -1047,7 +1113,7 @@ contract RewardsDistributionTest is
     for (uint256 i = 0; i < delegations.length; i++) {
       Delegation memory spaceUserDelegation = Delegation({
         user: delegations[i].user,
-        operator: delegations[i].operator
+        operator: delegations[i].operator //space
       });
       tSpaceUserDelegations.push(spaceUserDelegation);
     }

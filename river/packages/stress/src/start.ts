@@ -6,10 +6,11 @@ import { Wallet } from 'ethers'
 import { isSet } from './utils/expect'
 import { setupChat, startStressChat } from './mode/chat/root_chat'
 
+check(isSet(process.env.RIVER_ENV), 'process.env.RIVER_ENV')
 check(isSet(process.env.PROCESS_INDEX), 'process.env.PROCESS_INDEX')
 const processIndex = parseInt(process.env.PROCESS_INDEX)
 
-const config = makeRiverConfig()
+const config = makeRiverConfig(process.env.RIVER_ENV)
 const logger = dlogger(`stress:run:${processIndex}`)
 logger.log('======================= run =======================')
 

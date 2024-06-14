@@ -45,7 +45,10 @@ export class StreamStateView_Channel extends StreamStateView_AbstractContent {
             case 'inception':
                 break
             case 'message':
-                this.reachedRenderableContent = true
+                // if we have a refEventId it means we're a reaction or thread message
+                if (!payload.content.value.refEventId) {
+                    this.reachedRenderableContent = true
+                }
                 this.decryptEvent(
                     'channelMessage',
                     event,
@@ -75,7 +78,9 @@ export class StreamStateView_Channel extends StreamStateView_AbstractContent {
             case 'inception':
                 break
             case 'message':
-                this.reachedRenderableContent = true
+                if (!payload.content.value.refEventId) {
+                    this.reachedRenderableContent = true
+                }
                 this.decryptEvent(
                     'channelMessage',
                     event,

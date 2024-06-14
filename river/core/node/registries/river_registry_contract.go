@@ -199,7 +199,7 @@ func (c *RiverRegistryContract) AllocateStream(
 			tx, err := c.StreamRegistry.AllocateStream(
 				opts, streamId, addresses, genesisMiniblockHash, genesisMiniblock)
 			if err == nil {
-				log.Info(
+				log.Debug(
 					"RiverRegistryContract: prepared transaction",
 					"name", "AllocateStream",
 					"streamId", streamId,
@@ -379,7 +379,7 @@ func (c *RiverRegistryContract) SetStreamLastMiniblockBatch(
 					isSealed          = args[3].(bool)
 				)
 
-				log.Info(
+				log.Debug(
 					"RiverRegistryContract: set stream last miniblock",
 					"name", "SetStreamLastMiniblockBatch",
 					"streamId", streamID,
@@ -450,7 +450,7 @@ func (c *RiverRegistryContract) SetStreamLastMiniblock(
 			tx, err := c.StreamRegistry.SetStreamLastMiniblock(
 				opts, streamId, prevMiniblockHash, lastMiniblockHash, lastMiniblockNum, isSealed)
 			if err == nil {
-				log.Info(
+				log.Debug(
 					"RiverRegistryContract: prepared transaction",
 					"name", "SetStreamLastMiniblock",
 					"streamId", streamId,

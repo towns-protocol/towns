@@ -341,7 +341,7 @@ func (sc *SpaceContractV3) GetSpaceEntitlementsForPermission(
 		return nil, EMPTY_ADDRESS, err
 	}
 
-	log.Info(
+	log.Debug(
 		"Returning entitlements",
 		"entitlements",
 		entitlements,

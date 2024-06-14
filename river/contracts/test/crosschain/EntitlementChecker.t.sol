@@ -6,6 +6,7 @@ import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 
 //interfaces
 import {IEntitlementCheckerBase} from "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
+import {NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 
 //libraries
 
@@ -28,6 +29,12 @@ contract EntitlementCheckerTest is BaseSetup, IEntitlementCheckerBase {
 
     vm.prank(operator);
     nodeOperator.registerOperator(operator);
+    _;
+  }
+
+  modifier givenOperatorIsApproved(address operator) {
+    vm.prank(deployer);
+    nodeOperator.setOperatorStatus(operator, NodeOperatorStatus.Approved);
     _;
   }
 
@@ -60,6 +67,7 @@ contract EntitlementCheckerTest is BaseSetup, IEntitlementCheckerBase {
   )
     external
     givenOperatorIsRegistered(operator)
+    givenOperatorIsApproved(operator)
     givenNodeIsRegistered(operator, node)
   {
     assertTrue(entitlementChecker.isValidNode(node));
@@ -71,6 +79,7 @@ contract EntitlementCheckerTest is BaseSetup, IEntitlementCheckerBase {
   )
     external
     givenOperatorIsRegistered(operator)
+    givenOperatorIsApproved(operator)
     givenNodeIsRegistered(operator, node)
   {
     vm.prank(operator);
@@ -87,6 +96,7 @@ contract EntitlementCheckerTest is BaseSetup, IEntitlementCheckerBase {
   )
     external
     givenOperatorIsRegistered(operator)
+    givenOperatorIsApproved(operator)
     givenNodeIsRegistered(operator, node)
     givenNodeIsNotRegistered(operator, node)
   {
@@ -96,7 +106,11 @@ contract EntitlementCheckerTest is BaseSetup, IEntitlementCheckerBase {
   function test_unregisterNode_revert_nodeNotRegistered(
     address operator,
     address node
-  ) external givenOperatorIsRegistered(operator) {
+  )
+    external
+    givenOperatorIsRegistered(operator)
+    givenOperatorIsApproved(operator)
+  {
     vm.prank(operator);
     vm.expectRevert(EntitlementChecker_InvalidNodeOperator.selector);
     entitlementChecker.unregisterNode(node);
@@ -120,5 +134,27 @@ contract EntitlementCheckerTest is BaseSetup, IEntitlementCheckerBase {
   function test_getRandomNodes_revert_insufficientNumberOfNodes() external {
     vm.expectRevert(EntitlementChecker_InsufficientNumberOfNodes.selector);
     entitlementChecker.getRandomNodes(26);
+  }
+
+  // =============================================================
+  //                        Nodes by Operator
+  // =============================================================
+
+  function test_getNodesByOperator() external {
+    for (uint256 i = 0; i < operators.length; i++) {
+      uint256 totalNodes = 0;
+
+      address[] memory nodes = entitlementChecker.getNodesByOperator(
+        operators[i]
+      );
+      uint256 nodeLen = nodes.length;
+
+      for (uint256 j = 0; j < nodeLen; j++) {
+        vm.prank(operators[i]);
+        assertTrue(entitlementChecker.isValidNode(nodes[j]));
+        totalNodes++;
+      }
+      assertEq(totalNodes, nodes.length);
+    }
   }
 }

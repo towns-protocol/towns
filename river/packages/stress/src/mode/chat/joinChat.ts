@@ -11,34 +11,44 @@ export async function joinChat(client: StressClient, cfg: ChatConfig) {
     // is user a member of all the channels?
     // is user a member of the space?
     // does user exist on the stream node?
-    // does user have membership nft?
-    logger.log('joinChat', client.connection.userId)
 
+    logger.log('joinChat', client.userId)
+
+    // wait for the user to have a membership nft
     await client.waitFor(
-        () =>
-            client.spaceDapp.hasSpaceMembership(
-                cfg.spaceId,
-                client.connection.baseProvider.wallet.address,
-            ),
+        () => client.spaceDapp.hasSpaceMembership(cfg.spaceId, client.baseProvider.wallet.address),
         {
             interval: 1000 + Math.random() * 1000,
             timeoutMs: cfg.waitForSpaceMembershipTimeoutMs,
         },
     )
-    logger.log('start client')
+
+    logger.log(`start client #${client.clientIndex}`)
 
     const announceChannelId = cfg.announceChannelId
+    // start up the client
     await startFollowerClient(client, cfg.spaceId, announceChannelId)
 
-    logger.log('find root message')
-
-    const defaultChannel = await client.streamsClient.waitForStream(announceChannelId)
-    // find the message in the default channel that contains the session id, emoji it
+    const announceChannel = await client.streamsClient.waitForStream(announceChannelId)
+    let count = 0
     const message = await client.waitFor(
-        () =>
-            defaultChannel.view.timeline.find(
+        () => {
+            if (count % 3 === 0) {
+                const cms = announceChannel.view.timeline.filter(
+                    (v) =>
+                        v.remoteEvent?.event.payload.case === 'channelPayload' &&
+                        v.remoteEvent?.event.payload.value?.content.case === 'message',
+                )
+                const decryptedCount = cms.filter((v) => v.decryptedContent).length
+                logger.log(
+                    `waiting for root message #${client.clientIndex} ${decryptedCount}/${cms.length}`,
+                )
+            }
+            count++
+            return announceChannel.view.timeline.find(
                 channelMessagePostWhere((value) => value.body.includes(cfg.sessionId)),
-            ),
+            )
+        },
         { interval: 1000, timeoutMs: cfg.waitForChannelDecryptionTimeoutMs },
     )
 
@@ -82,11 +92,11 @@ export async function joinChat(client: StressClient, cfg: ChatConfig) {
     logger.log('done')
 }
 
-// cruft we need to do for root user
+// cruft we need to do for process leader
 async function startFollowerClient(
     client: StressClient,
     spaceId: string,
-    defaultChannelId: string,
+    announceChannelId: string,
 ) {
     const userExists = await client.userExists()
     if (!userExists) {
@@ -100,9 +110,9 @@ async function startFollowerClient(
         }
     }
 
-    const isChannelMember = await client.isMemberOf(defaultChannelId)
+    const isChannelMember = await client.isMemberOf(announceChannelId)
     if (!isChannelMember) {
-        await client.streamsClient.joinStream(defaultChannelId)
+        await client.streamsClient.joinStream(announceChannelId)
     }
-    return defaultChannelId
+    return announceChannelId
 }

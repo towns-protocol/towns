@@ -10,6 +10,7 @@
         "my-jest": "NODE_TLS_REJECT_UNAUTHORIZED=0 yarn node -r ../../scripts/node-no-warn.js --experimental-vm-modules $(yarn bin jest)",
         "my-node": "node -r ../../scripts/node-no-warn.js --experimental-loader ./custom-loader.mjs",
         "start": "yarn my-node ./dist/start.js",
+        "demo": "yarn my-node ./dist/demo.js",
         "test:ci:with-entitlements": "RIVER_ENV=local_single PROCESS_INDEX=0  DEBUG='stress:*,csb:enc*,csb:dec*' DEBUG_DEPTH='10' yarn my-jest"
     },
     "dependencies": {

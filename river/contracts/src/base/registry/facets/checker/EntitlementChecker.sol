@@ -7,7 +7,7 @@ import {IEntitlementChecker} from "./IEntitlementChecker.sol";
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {EntitlementCheckerStorage} from "./EntitlementCheckerStorage.sol";
-import {NodeOperatorStorage} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
+import {NodeOperatorStorage, NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 
 // contracts
 import {Facet} from "contracts/src/diamond/facets/Facet.sol";
@@ -35,13 +35,20 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
     _;
   }
 
-  modifier onlyRegisteredOperator() {
+  modifier onlyRegisteredApprovedOperator() {
     NodeOperatorStorage.Layout storage nodeOperatorLayout = NodeOperatorStorage
       .layout();
 
     if (!nodeOperatorLayout.operators.contains(msg.sender))
       revert EntitlementChecker_InvalidOperator();
     _;
+
+    if (
+      nodeOperatorLayout.statusByOperator[msg.sender] !=
+      NodeOperatorStatus.Approved
+    ) {
+      revert EntitlementChecker_OperatorNotActive();
+    }
   }
 
   // =============================================================
@@ -53,7 +60,7 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
    * @param node The address of the node to register
    * @dev Only valid operators can register a node
    */
-  function registerNode(address node) external onlyRegisteredOperator {
+  function registerNode(address node) external onlyRegisteredApprovedOperator {
     EntitlementCheckerStorage.Layout storage layout = EntitlementCheckerStorage
       .layout();
 
@@ -151,6 +158,37 @@ contract EntitlementChecker is IEntitlementChecker, Facet {
       roleId,
       nodes
     );
+  }
+
+  /**
+   * @notice Get the nodes registered by an operator
+   * @param operator The address of the operator
+   * @return An array of node addresses
+   */
+  function getNodesByOperator(
+    address operator
+  ) external view returns (address[] memory) {
+    EntitlementCheckerStorage.Layout storage layout = EntitlementCheckerStorage
+      .layout();
+    uint256 totalNodeCount = layout.nodes.length();
+    uint256 nodeCount = 0;
+    for (uint256 i = 0; i < totalNodeCount; i++) {
+      address node = layout.nodes.at(i);
+      if (layout.operatorByNode[node] == operator) {
+        nodeCount++;
+      }
+    }
+    address[] memory nodes = new address[](nodeCount);
+    uint256 j = 0;
+    for (uint256 i = 0; i < totalNodeCount; i++) {
+      address node = layout.nodes.at(i);
+      if (layout.operatorByNode[node] == operator) {
+        nodes[j] = node;
+        j++;
+      }
+    }
+
+    return nodes;
   }
 
   // =============================================================

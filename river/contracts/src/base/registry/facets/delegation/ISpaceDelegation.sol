@@ -50,4 +50,6 @@ interface ISpaceDelegation is ISpaceDelegationBase {
   ) external view returns (address[] memory);
 
   function riverToken() external view returns (address);
+
+  function getTotalDelegation(address operator) external view returns (uint256);
 }

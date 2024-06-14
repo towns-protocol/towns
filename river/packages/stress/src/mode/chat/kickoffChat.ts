@@ -8,10 +8,10 @@ import { makeCodeBlock } from '../../utils/messages'
 const logger = dlogger('stress:kickoffChat')
 
 export async function kickoffChat(rootClient: StressClient, cfg: ChatConfig) {
-    logger.log('kickoffChat', rootClient.connection.userId)
+    logger.log('kickoffChat', rootClient.userId)
     check(rootClient.clientIndex === 0, 'rootClient.clientIndex === 0')
     const { spaceId, sessionId } = cfg
-    const balance = await rootClient.connection.baseProvider.wallet.getBalance()
+    const balance = await rootClient.baseProvider.wallet.getBalance()
     const announceChannelId = cfg.announceChannelId
     logger.log('start client')
     await startRootClient(rootClient, balance, spaceId, announceChannelId)
@@ -62,7 +62,7 @@ export async function kickoffChat(rootClient: StressClient, cfg: ChatConfig) {
             const result = await rootClient.spaceDapp.joinSpace(
                 spaceId,
                 wallet.address,
-                rootClient.connection.baseProvider.wallet,
+                rootClient.baseProvider.wallet,
             )
             logger.log('minted membership', result)
             // sleep for > 1 second

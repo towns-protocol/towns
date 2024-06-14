@@ -94,8 +94,8 @@ export function makeBaseChainConfig(environmentId?: string) {
 
 export type RiverConfig = ReturnType<typeof makeRiverConfig>
 
-export function makeRiverConfig() {
-    const environmentId = getEnvironmentId()
+export function makeRiverConfig(inEnvironmentId?: string) {
+    const environmentId = inEnvironmentId ?? getEnvironmentId()
     const config = {
         environmentId,
         base: makeBaseChainConfig(environmentId),

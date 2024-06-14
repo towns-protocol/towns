@@ -1,6 +1,9 @@
 package events
 
 import (
+	"testing"
+	"time"
+
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -12,8 +15,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
-	"testing"
-	"time"
 )
 
 func parsedEvent(t *testing.T, envelope *Envelope) *ParsedEvent {
@@ -270,8 +271,8 @@ func TestLoad(t *testing.T) {
 	assert.NoError(t, err)
 	_, err = newSV1.copyAndAddEvent(nextEvent)
 	assert.NoError(t, err)
-	// wait 1 second
-	time.Sleep(1 * time.Second)
+	// wait 2 second
+	time.Sleep(2 * time.Second)
 	// try with tighter recency constraints
 	setOnChainStreamConfig(ctx, btc, testParams{
 		recencyConstraintsGenerations: 5,

@@ -23,8 +23,11 @@ import (
 )
 
 var (
+	// StreamMediaMaxChunkCountConfigKey defines the maximum number chunks of data a media stream can contain.
 	StreamMediaMaxChunkCountConfigKey = newChainKeyImpl(
-		"stream.media.maxChunkCount", uint64Type, 10)
+		"stream.media.maxChunkCount", uint64Type, 50)
+	// StreamMediaMaxChunkSizeConfigKey defines the maximum size of a data chunk that is allowed to be added to a media
+	// stream in a single event.
 	StreamMediaMaxChunkSizeConfigKey = newChainKeyImpl(
 		"stream.media.maxChunkSize", uint64Type, 500000)
 	StreamRecencyConstraintsAgeSecConfigKey = newChainKeyImpl(

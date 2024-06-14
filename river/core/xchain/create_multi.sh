@@ -65,6 +65,15 @@ cast send \
     $OPERATOR_ADDRESS \
     2 > /dev/null
 
+# set operator to approved
+cast send \
+    --rpc-url http://127.0.0.1:8545 \
+    --private-key $TESTNET_PRIVATE_KEY \
+    $BASE_REGISTRY_ADDRESS \
+    "setOperatorStatus(address,uint8)" \
+    $OPERATOR_ADDRESS \
+    2 \
+    2 > /dev/null
 
 # Number of instances
 N=5

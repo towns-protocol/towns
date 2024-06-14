@@ -2,10 +2,13 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+
 import {ISpaceDelegation} from "contracts/src/base/registry/facets/delegation/ISpaceDelegation.sol";
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import {IMainnetDelegation} from "contracts/src/tokens/river/base/delegation/IMainnetDelegation.sol";
 import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IVotesEnumerable} from "contracts/src/diamond/facets/governance/votes/enumerable/IVotesEnumerable.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -51,7 +54,6 @@ contract SpaceDelegationFacet is ISpaceDelegation, OwnableBase, Facet {
 
     //overwrite the operator for this space
     ds.operatorBySpace[space] = operator;
-
     //add the space to this new operator array
     ds.spacesByOperator[operator].add(space);
     ds.spaceDelegationTime[space] = block.timestamp;
@@ -123,8 +125,10 @@ contract SpaceDelegationFacet is ISpaceDelegation, OwnableBase, Facet {
   // =============================================================
   //                           Stake
   // =============================================================
-  function calculateStake(address operator) external view returns (uint256) {
-    return _calculateStake(operator);
+  function getTotalDelegation(
+    address operator
+  ) external view returns (uint256) {
+    return _getTotalDelegation(operator);
   }
 
   function setStakeRequirement(uint256 newRequirement) external onlyOwner {
@@ -138,28 +142,43 @@ contract SpaceDelegationFacet is ISpaceDelegation, OwnableBase, Facet {
     return SpaceDelegationStorage.layout().stakeRequirement;
   }
 
-  function _calculateStake(address operator) internal view returns (uint256) {
+  function _getTotalDelegation(
+    address operator
+  ) internal view returns (uint256) {
     SpaceDelegationStorage.Layout storage ds = SpaceDelegationStorage.layout();
-
     if (ds.riverToken == address(0)) return 0;
-    if (ds.mainnetDelegation == address(0)) return 0;
 
-    // if it's in the same diamond, we should just do a getter
-    uint256 delegatedStake = IMainnetDelegation(ds.mainnetDelegation)
+    if (ds.mainnetDelegation == address(0)) return 0;
+    uint256 delegation = 0;
+    //get the delegation from the base delegation
+    address[] memory baseDelegators = IVotesEnumerable(ds.riverToken)
+      .getDelegatorsByDelegatee(operator);
+    for (uint256 i = 0; i < baseDelegators.length; i++) {
+      delegation += IERC20(ds.riverToken).balanceOf(baseDelegators[i]);
+    }
+
+    // get the delegation from the mainnet delegation
+    delegation += IMainnetDelegation(ds.mainnetDelegation)
       .getDelegatedStakeByOperator(operator);
-    uint256 stake = IVotes(ds.riverToken).getVotes(operator);
 
     address[] memory spaces = ds.spacesByOperator[operator].values();
 
     for (uint256 i = 0; i < spaces.length; ) {
-      stake += IVotes(ds.riverToken).getVotes(spaces[i]);
+      address[] memory usersDelegatingToSpace = IVotesEnumerable(ds.riverToken)
+        .getDelegatorsByDelegatee(spaces[i]);
+
+      for (uint256 j = 0; j < usersDelegatingToSpace.length; j++) {
+        delegation += IERC20(ds.riverToken).balanceOf(
+          usersDelegatingToSpace[j]
+        );
+      }
 
       unchecked {
         i++;
       }
     }
 
-    return stake + delegatedStake;
+    return delegation;
   }
 
   function _isValidSpaceOwner(address space) internal view returns (bool) {

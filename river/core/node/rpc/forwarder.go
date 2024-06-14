@@ -141,7 +141,7 @@ func (s *Service) CreateStream(
 	req *connect.Request[CreateStreamRequest],
 ) (*connect.Response[CreateStreamResponse], error) {
 	ctx, log := ctxAndLogForRequest(ctx, req)
-	log.Info("CreateStream REQUEST", "streamId", req.Msg.StreamId)
+	log.Debug("CreateStream REQUEST", "streamId", req.Msg.StreamId)
 	r, e := s.createStreamImpl(ctx, req)
 	if e != nil {
 		return nil, AsRiverError(
@@ -161,7 +161,7 @@ func (s *Service) CreateStream(
 			firstMiniblockHash = s.GetMiniblocks()[0].GetHeader().GetHash()
 		}
 	}
-	log.Info("CreateStream SUCCESS",
+	log.Debug("CreateStream SUCCESS",
 		"streamId", req.Msg.StreamId,
 		"numMiniblocks", numMiniblocks,
 		"numEvents", numEvents,
