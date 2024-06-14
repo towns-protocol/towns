@@ -27,6 +27,7 @@ import { useThrottledValue } from 'hooks/useThrottledValue'
 import { FullScreenMedia } from '@components/FullScreenMedia/FullScreenMedia'
 import { QUERY_PARAMS } from 'routes'
 import { useCreateLink } from 'hooks/useCreateLink'
+import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDropContext'
 
 export const MessageThread = (props: {
     userId: string
@@ -145,33 +146,41 @@ export const MessageThread = (props: {
 
                         {usernames && <Paragraph color="gray2">{usernames}</Paragraph>}
                     </Box>
-                    <Stack elevate={!isTouch} rounded="md" boxShadow="none">
-                        <MessageTimeline
-                            collapsed
-                            displayAsSimpleList
-                            align="top"
-                            groupByUser={false}
-                        />
-                        <Box
-                            paddingTop="none"
-                            paddingBottom="md"
-                            paddingX={{ default: 'md', touch: 'none' }}
-                        >
-                            <RichTextEditor
-                                key={`${parentId}-${isChannelWritable ? '' : '-readonly'}`}
-                                editable={!!isChannelWritable}
-                                threadId={parentId}
-                                displayButtons={isTouch ? 'on-focus' : 'always'}
-                                threadPreview={parentMessage?.fallbackContent}
-                                storageId={`${channelId}-${parentId}`}
-                                autoFocus={false}
-                                placeholder="Reply..."
-                                channels={channels}
-                                memberIds={memberIds}
-                                userId={userId}
-                                onSend={onSend}
+                    <Stack
+                        elevate={!isTouch}
+                        rounded="md"
+                        boxShadow="none"
+                        position="relative"
+                        overflow="hidden"
+                    >
+                        <MediaDropContextProvider title="" channelId={channelId} spaceId={spaceId}>
+                            <MessageTimeline
+                                collapsed
+                                displayAsSimpleList
+                                align="top"
+                                groupByUser={false}
                             />
-                        </Box>
+                            <Box
+                                paddingTop="none"
+                                paddingBottom="md"
+                                paddingX={{ default: 'md', touch: 'none' }}
+                            >
+                                <RichTextEditor
+                                    key={`${parentId}-${isChannelWritable ? '' : '-readonly'}`}
+                                    editable={!!isChannelWritable}
+                                    threadId={parentId}
+                                    displayButtons={isTouch ? 'on-focus' : 'always'}
+                                    threadPreview={parentMessage?.fallbackContent}
+                                    storageId={`${channelId}-${parentId}`}
+                                    autoFocus={false}
+                                    placeholder="Reply..."
+                                    channels={channels}
+                                    memberIds={memberIds}
+                                    userId={userId}
+                                    onSend={onSend}
+                                />
+                            </Box>
+                        </MediaDropContextProvider>
                     </Stack>
                 </Stack>
                 {showGallery && <FullScreenMedia events={messagesWithParent} threadId={parentId} />}

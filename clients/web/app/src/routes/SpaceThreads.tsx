@@ -15,7 +15,6 @@ import { useHasJoinedChannels } from 'hooks/useHasJoinedChannels'
 import { NoJoinedChannelsFallback } from '@components/NoJoinedChannelsFallback'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { TouchScrollToTopScrollId } from '@components/TouchTabBar/TouchScrollToTopScrollId'
-import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDropContext'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 
 function sortThreads(threads: ThreadResult[]) {
@@ -63,24 +62,17 @@ export const SpaceThreads = () => {
                                     key={thread.parentId}
                                     channelId={channel.id}
                                 >
-                                    <MediaDropContextProvider
-                                        disableDrop
-                                        title=""
-                                        channelId={channel.id}
-                                        spaceId={spaceId}
-                                    >
-                                        <>
-                                            <MessageThread
-                                                userId={userId}
-                                                parentId={thread.parentId}
-                                                channelId={channel.id}
-                                                channelLabel={channel.label}
-                                                spaceId={spaceId}
-                                                spaceChannels={spaceChannels}
-                                            />
-                                            {isTouch && index < threads.length - 1 && <Divider />}
-                                        </>
-                                    </MediaDropContextProvider>
+                                    <>
+                                        <MessageThread
+                                            userId={userId}
+                                            parentId={thread.parentId}
+                                            channelId={channel.id}
+                                            channelLabel={channel.label}
+                                            spaceId={spaceId}
+                                            spaceChannels={spaceChannels}
+                                        />
+                                        {isTouch && index < threads.length - 1 && <Divider />}
+                                    </>
                                 </ChannelContextProvider>
                             )
                         })}
