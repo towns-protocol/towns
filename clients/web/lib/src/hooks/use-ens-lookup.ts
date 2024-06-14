@@ -1,15 +1,20 @@
 import { staleTime24Hours, useQueries, useQueryClient } from '../query/queryClient'
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { GetEnsNameReturnType, createPublicClient, http, isAddress } from 'viem'
 import { mainnet } from 'viem/chains'
 import { useUserLookupStore } from '../store/use-user-lookup-store'
+import { TownsOpts } from 'client/TownsClientTypes'
 
-const publicClient = createPublicClient({ chain: mainnet, transport: http() })
-
-export const useSpaceEnsLookup = () => {
+export const useSpaceEnsLookup = ({ ethMainnetRpcUrl }: Pick<TownsOpts, 'ethMainnetRpcUrl'>) => {
     const { spaceUsers } = useUserLookupStore()
-
     const qc = useQueryClient()
+    const [publicClient] = useState(() =>
+        createPublicClient({
+            chain: mainnet,
+            transport: ethMainnetRpcUrl ? http(ethMainnetRpcUrl) : http(),
+        }),
+    )
+
     const ensQueries = useMemo(() => {
         const allSpacesUsers = Object.values(spaceUsers)
         const allEnsAddress = new Set(
@@ -31,7 +36,7 @@ export const useSpaceEnsLookup = () => {
             })
         }
         return queries
-    }, [spaceUsers])
+    }, [publicClient, spaceUsers])
 
     useQueries({
         queries: ensQueries,

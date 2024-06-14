@@ -84,6 +84,7 @@ interface TownsContextProviderProps {
     supportedXChainRpcMapping?: {
         [chainId: number]: string
     }
+    ethMainnetRpcUrl?: string
 }
 
 export function TownsContextProvider({
@@ -154,6 +155,7 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
             accountAbstractionConfig: props.accountAbstractionConfig,
             highPriorityStreamIds: props.highPriorityStreamIds,
             supportedXChainRpcMapping: props.supportedXChainRpcMapping,
+            ethMainnetRpcUrl: props.ethMainnetRpcUrl,
         } satisfies TownsOpts
     }, [
         baseChain.id,
@@ -161,6 +163,7 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
         baseProvider,
         environmentId,
         props.accountAbstractionConfig,
+        props.ethMainnetRpcUrl,
         props.highPriorityStreamIds,
         props.pushNotificationAuthToken,
         props.pushNotificationWorkerUrl,

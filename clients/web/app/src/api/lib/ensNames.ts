@@ -3,7 +3,13 @@ import { createPublicClient, http } from 'viem'
 import { mainnet } from 'viem/chains'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { useLinkedWallets, useLinkedWalletsForWallet } from 'use-towns-client'
-const publicClient = createPublicClient({ chain: mainnet, transport: http() })
+import { env } from 'utils'
+
+const ethMainnetRpcUrl = env.VITE_XCHAIN_ETHEREUM_RPC_URL
+const publicClient = createPublicClient({
+    chain: mainnet,
+    transport: ethMainnetRpcUrl ? http(ethMainnetRpcUrl) : http(),
+})
 
 export function useEnsNames() {
     const { data: linkedWallets, isLoading: isLoadingWallets } = useLinkedWallets()
@@ -40,6 +46,7 @@ export function useResolveEnsName({
     ensAddress: string | undefined
 }) {
     const { data: linkedWallets } = useLinkedWalletsForWallet({ walletAddress: userId })
+
     const linkedEnsWallet = linkedWallets?.find((x) => x === ensAddress)
     const { data: ensName, isLoading } = useQuery({
         queryKey: ['ensName', linkedEnsWallet],

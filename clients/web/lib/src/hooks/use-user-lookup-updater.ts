@@ -53,8 +53,9 @@ const createUserLookup = (userId: string, info: UserInfo, ensName?: string): Loo
     } as const)
 
 export const useUserLookupUpdater = (townsOpts: TownsOpts, client?: CasablancaClient) => {
+    const { ethMainnetRpcUrl } = townsOpts
     const { setSpaceUser, setChannelUser } = useUserLookupStore()
-    const { getEnsFromAddress } = useSpaceEnsLookup()
+    const { getEnsFromAddress } = useSpaceEnsLookup({ ethMainnetRpcUrl })
 
     const onStreamMetadataUpdated = useCallback(
         (streamId: string, userId: string) => {

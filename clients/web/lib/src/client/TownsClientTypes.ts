@@ -22,6 +22,7 @@ export interface TownsOpts {
     verbose?: boolean
     accountAbstractionConfig?: AccountAbstractionConfig
     highPriorityStreamIds?: string[]
+    ethMainnetRpcUrl?: string
 }
 
 export interface SpaceIdentifier {

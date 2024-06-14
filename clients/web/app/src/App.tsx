@@ -130,6 +130,7 @@ export const App = () => {
             accountAbstractionConfig={environment.accountAbstractionConfig}
             highPriorityStreamIds={highPriorityStreamIds.current}
             supportedXChainRpcMapping={supportedXChainRpcMapping}
+            ethMainnetRpcUrl={env.VITE_XCHAIN_ETHEREUM_RPC_URL}
         >
             <>
                 <FaviconBadge />
