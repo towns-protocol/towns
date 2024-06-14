@@ -73,7 +73,9 @@ describe('setting and updating a username', () => {
         setupDefaultUserNames()
         render(
             <Wrapper>
-                <UserComponent userId="0x1234" />
+                <Lib.SpaceContextProvider spaceId="spaceId">
+                    <UserComponent userId="0x1234" />
+                </Lib.SpaceContextProvider>
             </Wrapper>,
         )
 

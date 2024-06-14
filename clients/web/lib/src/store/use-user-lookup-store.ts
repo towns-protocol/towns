@@ -90,8 +90,14 @@ export const useUserLookupStore = createWithEqualityFn<UserLookupStore>()(
                         state.spaceUsers[spaceId][userId] = {
                             ...user,
                         }
-                        state.fallbackUserLookups[userId] = {
-                            ...user,
+                        if (
+                            typeof user?.username === 'string' &&
+                            user.username.length > 0 &&
+                            !state.fallbackUserLookups[userId]?.username
+                        ) {
+                            state.fallbackUserLookups[userId] = {
+                                ...user,
+                            }
                         }
                     }
                 })
