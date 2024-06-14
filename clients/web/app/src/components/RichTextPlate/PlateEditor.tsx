@@ -78,8 +78,8 @@ type Props = {
     threadId?: string // only used for giphy plugin
     threadPreview?: string
     channels: Channel[]
-    memberIds: string[]
-    mentions?: OTWMention[]
+    memberIds: string[] // List of all users in the space, regardless of whether they are in the channel
+    mentions?: OTWMention[] // Used during editing - list of mentions in an existing message
     userId?: string
     isFullWidthOnTouch?: boolean
 } & Pick<BoxProps, 'background'>
@@ -101,6 +101,7 @@ const PlateEditorWithoutBoundary = ({
     displayButtons,
     channels,
     mentions,
+    memberIds: spaceMemberIds,
     initialValue: _initialValue,
     ...props
 }: Props) => {
@@ -136,13 +137,16 @@ const PlateEditorWithoutBoundary = ({
     const valueFromStore = storageId ? userInput : undefined
     const setInput = useInputStore((state) => state.setChannelmessageInput)
 
-    const { memberIds: _memberIds } = useChannelMembers()
-    const channelId = useChannelId()
-    const memberIds = useMemo(() => new Set(_memberIds.map((m) => m)), [_memberIds])
+    const { memberIds: channelMemberIds } = useChannelMembers()
 
     const { lookupUser } = useUserLookupContext()
-    const users = _memberIds.map((userId) => lookupUser(userId)).filter(notUndefined)
 
+    const spaceMembers = useMemo(
+        () => spaceMemberIds.map((userId) => lookupUser(userId)).filter(notUndefined),
+        [spaceMemberIds, lookupUser],
+    )
+
+    const channelId = useChannelId()
     const isDMorGDM = useMemo(
         () => isDMChannelStreamId(channelId) || isGDMChannelStreamId(channelId),
         [channelId],
@@ -150,14 +154,14 @@ const PlateEditorWithoutBoundary = ({
 
     const userMentions: TComboboxItemWithData<TUserWithChannel>[] = useMemo(() => {
         return (isDMorGDM ? [] : [AtChannelUser])
-            .concat(users)
+            .concat(spaceMembers)
             .map((user) => ({
                 text: getPrettyDisplayName(user),
                 key: user.userId,
-                data: { ...user, isChannelMember: memberIds.has(user.userId) },
+                data: { ...user, isChannelMember: channelMemberIds.includes(user.userId) },
             }))
             .filter(notUndefined)
-    }, [isDMorGDM, memberIds, users])
+    }, [isDMorGDM, channelMemberIds, spaceMembers])
 
     const channelMentions: TComboboxItemWithData<Channel>[] = useMemo(() => {
         return channels
@@ -170,8 +174,8 @@ const PlateEditorWithoutBoundary = ({
     }, [channels])
 
     const userIdNameMap: TUserIDNameMap = useMemo(() => {
-        return getUserIdNameMap(users)
-    }, [users])
+        return getUserIdNameMap(spaceMembers)
+    }, [spaceMembers])
 
     const initialValue = useMemo(() => {
         if (!_initialValue) {
