@@ -45,7 +45,16 @@ export const useJoinTown = (spaceId: string | undefined, onSuccessfulJoin?: () =
                 // use client.joinRoom b/c it will throw an error, not the joinRoom wrapped in useWithCatch()
                 // we can keep this notEntitled state in the interm to catch some weird errors/states just in case
                 // but the entitled check should already happen in the UI, and never show a join button if not entitled
-                const result = await clientSingleton.joinTown(roomIdentifier, signer, signerContext)
+                const result = await clientSingleton.joinTown(
+                    roomIdentifier,
+                    signer,
+                    signerContext,
+                    (status) => {
+                        if (status === 'membership-minted') {
+                            setRecentlyMintedSpaceToken({ spaceId: spaceId, isOwner: false })
+                        }
+                    },
+                )
 
                 if (!result) {
                     endPublicPageLoginFlow()
@@ -55,7 +64,6 @@ export const useJoinTown = (spaceId: string | undefined, onSuccessfulJoin?: () =
                         notEntitled: true,
                     })
                 } else {
-                    setRecentlyMintedSpaceToken({ spaceId: spaceId, isOwner: false })
                     onSuccessfulJoin?.()
                 }
             } catch (error) {

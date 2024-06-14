@@ -141,3 +141,13 @@ export function logTxnResult(name: string, txn: TransactionContext<unknown>) {
         console.error(`[${name}]`, 'Failed', txn.error, txn)
     }
 }
+
+export enum JoinFlowStatus {
+    JoiningRoom = 'joining-room',
+    JoiningDefaultChannel = 'joining-default-channel',
+    VerifyingMembership = 'verifying-membership',
+    AlreadyMember = 'already-member',
+    MintingMembership = 'minting-membership',
+    MembershipMinted = 'membership-minted',
+    Error = 'error',
+}

@@ -33,6 +33,7 @@ import {
     createTransactionContext,
     logTxnResult,
     BanUnbanWalletTransactionContext,
+    JoinFlowStatus,
 } from './TownsClientTypes'
 import {
     CreateChannelInfo,
@@ -1509,7 +1510,12 @@ export class TownsClient
      * - mints membership if needed
      * - joins the space
      *************************************************/
-    public async joinTown(spaceId: string, signer: ethers.Signer, signerContext?: SignerContext) {
+    public async joinTown(
+        spaceId: string,
+        signer: ethers.Signer,
+        signerContext?: SignerContext,
+        onJoinFlowStatus?: (update: JoinFlowStatus) => void,
+    ) {
         if (!this.casablancaClient && !signerContext) {
             throw new Error('Casablanca client not initialized, pass signer context')
         }
@@ -1520,6 +1526,7 @@ export class TownsClient
             if (!this.casablancaClient && signerContext) {
                 await this.startCasablancaClient(signerContext, { spaceId })
             }
+            onJoinFlowStatus?.(JoinFlowStatus.JoiningRoom)
             const room = await this.joinRoom(spaceId)
             this.log('[joinTown] room', room)
             // join the default channels
@@ -1527,6 +1534,7 @@ export class TownsClient
             if (spaceContent) {
                 for (const [key, value] of spaceContent.spaceChannelsMetadata.entries()) {
                     if (value.isDefault) {
+                        onJoinFlowStatus?.(JoinFlowStatus.JoiningDefaultChannel)
                         this.log('[joinTown] joining default channel', key)
                         await this.joinRoom(key, undefined, {
                             skipWaitForMiniblockConfirmation: true,
@@ -1545,7 +1553,9 @@ export class TownsClient
                 .concat(this.spaceDapp.hasSpaceMembership(spaceId, userId))
             const results = await Promise.all(allPromises)
             if (results.some((result) => result)) {
+                onJoinFlowStatus?.(JoinFlowStatus.AlreadyMember)
                 this.log('[joinTown] already have member nft')
+
                 const room = await joinRiverRoom()
                 return room
             }
@@ -1562,8 +1572,10 @@ export class TownsClient
 
         try {
             this.log('[joinTown] minting membership')
+            onJoinFlowStatus?.(JoinFlowStatus.MintingMembership)
             await this.mintMembershipTransaction(spaceId, signer)
             this.log('[joinTown] minted membership')
+            onJoinFlowStatus?.(JoinFlowStatus.MembershipMinted)
         } catch (error: unknown) {
             if (
                 error &&
