@@ -1,314 +1,201 @@
-import { Mute, SaveUserSettingsSchema } from '@notification-service/types'
-
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { useMyProfile, useTownsContext } from 'use-towns-client'
+import { useCallback } from 'react'
+import { Mute, PatchUserSettingsSchema, SaveUserSettingsSchema } from '@notification-service/types'
+import { useMyUserId } from 'use-towns-client'
+import { dlogger } from '@river-build/dlog'
 import {
-    isChannelStreamId,
-    isDMChannelStreamId,
-    isGDMChannelStreamId,
-    isSpaceStreamId,
-} from '@river/sdk'
-import { isEqual } from 'lodash'
-import { debug } from 'debug'
-import { useGetNotificationSettings } from 'api/lib/notificationSettings'
-import { SECOND_MS } from 'data/constants'
+    createDefaultUserSettings,
+    useGetNotificationSettings,
+    usePatchNotificationSettings,
+    useSaveNotificationSettings,
+} from 'api/lib/notificationSettings'
 
-type UserSettingsSpace = SaveUserSettingsSchema['userSettings']['spaceSettings'][0]
-type UserSettingsChannel = SaveUserSettingsSchema['userSettings']['channelSettings'][0]
-
-interface SpaceSettings {
-    [spaceId: string]: UserSettingsSpace
-}
-
-interface ChannelSettings {
-    [channelId: string]: UserSettingsChannel
-}
-
-interface DebouncedEffectProps {
-    compareFn: (a: unknown, b: unknown) => boolean
-    newValue: unknown
-    currentValue: unknown
-    onChange: (value: unknown) => void
-}
-
-// add localStoreage.debug=app:notification-settings to enable logging
-const log = debug('app:notification-settings')
-log.enabled = localStorage.getItem('debug')?.includes('app:notification-settings') ?? false
+const log = dlogger('app:useNotificationSettings')
 
 export type UserSettings = SaveUserSettingsSchema['userSettings']
 
-export function useNotificationSettings(onSettingsUpdated?: (args: UserSettings) => void) {
-    const {
-        dmChannels: tcDmChannels,
-        rooms: tcRooms,
-        spaceHierarchies: tcSpaceHierarchies,
-        blockedUserIds: tcBlockedUserIds,
-    } = useTownsContext()
-    const userId = useMyProfile()?.userId
-    const { data, isLoading } = useGetNotificationSettings()
-    const [settingsUpdated, setSettingsUpdated] = useState(false)
-    const [rooms, setRooms] = useState(tcRooms)
-    const [dmChannels, setDmChannels] = useState(tcDmChannels)
-    const [spaceHierarchies, setSpaceHierarchies] = useState(tcSpaceHierarchies)
-    const [blockedUserIds, setBlockedUserIds] = useState(tcBlockedUserIds)
-
-    const debounceTimeout = useRef<NodeJS.Timeout | undefined>(undefined)
-    const onSettingsUpdatedTimeout = useRef<NodeJS.Timeout | undefined>(undefined)
-
-    function useDebouncedEffect(props: DebouncedEffectProps) {
-        useEffect(() => {
-            if (!props.compareFn(props.newValue, props.currentValue)) {
-                if (debounceTimeout.current) {
-                    clearTimeout(debounceTimeout.current)
-                }
-
-                debounceTimeout.current = setTimeout(() => {
-                    props.onChange(props.newValue)
-                }, SECOND_MS)
-            }
-            return () => {
-                if (debounceTimeout.current) {
-                    clearTimeout(debounceTimeout.current)
-                }
-            }
-        }, [props])
-    }
-
-    function onTownsContextDataChange() {
-        setRooms(tcRooms)
-        setDmChannels(tcDmChannels)
-        setSpaceHierarchies(tcSpaceHierarchies)
-        setBlockedUserIds(tcBlockedUserIds)
-    }
-
-    useDebouncedEffect({
-        compareFn: isEqual,
-        newValue: tcRooms,
-        currentValue: rooms,
-        onChange: onTownsContextDataChange,
-    })
-    useDebouncedEffect({
-        compareFn: isEqual,
-        newValue: tcDmChannels,
-        currentValue: dmChannels,
-        onChange: onTownsContextDataChange,
-    })
-    useDebouncedEffect({
-        compareFn: isEqual,
-        newValue: tcSpaceHierarchies,
-        currentValue: spaceHierarchies,
-        onChange: onTownsContextDataChange,
-    })
-    useDebouncedEffect({
-        compareFn: isEqual,
-        newValue: tcBlockedUserIds,
-        currentValue: blockedUserIds,
-        onChange: onTownsContextDataChange,
-    })
-
-    useEffect(() => {
-        if (isLoading || !isEqual(tcBlockedUserIds, blockedUserIds)) {
-            return
-        }
-        if (!isEqual(blockedUserIds, new Set<string>(data?.blockedUsers))) {
-            setSettingsUpdated(true)
-        }
-    }, [blockedUserIds, tcBlockedUserIds, data?.blockedUsers, isLoading])
-
-    const savedSpaceSettings = useMemo(() => {
-        let spaceSettings: SpaceSettings | undefined = undefined
-        if (!isLoading && data?.spaceSettings) {
-            spaceSettings = {}
-            for (const s of data.spaceSettings) {
-                if (isSpaceStreamId(s.spaceId) && rooms[s.spaceId]) {
-                    spaceSettings[s.spaceId] = s
-                }
-            }
-        }
-        return spaceSettings
-    }, [data?.spaceSettings, rooms, isLoading])
-
-    const savedChannelSettings = useMemo(() => {
-        let channelSettings: ChannelSettings | undefined = undefined
-        if (!isLoading && data?.channelSettings) {
-            channelSettings = {}
-            for (const c of data.channelSettings) {
-                if (isSupportedNotificationChannel(c.channelId) && rooms[c.channelId]) {
-                    channelSettings[c.channelId] = c
-                }
-            }
-        }
-        return channelSettings
-    }, [data?.channelSettings, rooms, isLoading])
-
-    const removedSpaceSettings = useMemo(() => {
-        let removedSpaceSettings: string[] = []
-        if (savedSpaceSettings) {
-            removedSpaceSettings = Object.keys(savedSpaceSettings).filter(
-                (s) => !spaceHierarchies[s],
-            )
-        }
-        return removedSpaceSettings.length > 0 ? removedSpaceSettings : undefined
-    }, [savedSpaceSettings, spaceHierarchies])
-
-    const removedChannelSettings = useMemo(() => {
-        let removedChannelSettings: string[] = []
-        if (savedChannelSettings) {
-            removedChannelSettings = Object.keys(savedChannelSettings).filter(
-                (c) => !rooms[c] && !dmChannels.find((dm) => dm.id === c),
-            )
-        }
-        return removedChannelSettings.length > 0 ? removedChannelSettings : undefined
-    }, [dmChannels, rooms, savedChannelSettings])
-
-    const updatedSpaceSettings = useMemo(() => {
-        let settingsIsUpdated = false
-
-        let spaceSettings = savedSpaceSettings
-        if (spaceSettings === undefined) {
-            return spaceSettings
-        }
-        // add any missing space settings from the space hierarchies
-        for (const s of Object.keys(spaceHierarchies)) {
-            if (isSpaceStreamId(s)) {
-                spaceSettings = spaceSettings ?? {}
-                if (!spaceSettings[s]) {
-                    settingsIsUpdated = true
-                    // create a new copy
-                    spaceSettings = { ...spaceSettings }
-                    spaceSettings[s] = {
-                        spaceId: s,
-                        spaceMute: Mute.Default,
-                    }
-                }
-            }
-        }
-        if (spaceSettings && removedSpaceSettings) {
-            for (const s of removedSpaceSettings) {
-                settingsIsUpdated = true
-                delete spaceSettings[s]
-            }
-        }
-        if (settingsIsUpdated) {
-            setSettingsUpdated(true)
-        }
-        return spaceSettings
-    }, [removedSpaceSettings, savedSpaceSettings, spaceHierarchies])
-
-    const updatedChannelSettings = useMemo(() => {
-        let channelSettings = savedChannelSettings
-        if (channelSettings === undefined) {
-            return channelSettings
-        }
-
-        let settingsIsUpdated = false
-        // add any missing channel settings from the space hierarchies
-        for (const s of Object.keys(spaceHierarchies)) {
-            const space = spaceHierarchies[s]
-            const channels = space.channels
-            for (const c of channels) {
-                if (isSupportedNotificationChannel(c.id)) {
-                    channelSettings = channelSettings ?? {}
-                    if (!channelSettings[c.id]) {
-                        settingsIsUpdated = true
-                        // create a new copy
-                        channelSettings = { ...channelSettings }
-                        channelSettings[c.id] = {
-                            channelId: c.id,
-                            spaceId: s,
-                            channelMute: Mute.Default,
-                        }
-                    }
-                }
-            }
-        }
-        // add any missing dm channel settings
-        for (const dm of dmChannels) {
-            channelSettings = channelSettings ?? {}
-            if (!channelSettings[dm.id]) {
-                settingsIsUpdated = true
-                // create a new copy
-                channelSettings = { ...channelSettings }
-                channelSettings[dm.id] = {
-                    channelId: dm.id,
-                    spaceId: '',
-                    channelMute: Mute.Default,
-                }
-            }
-        }
-        if (channelSettings && removedChannelSettings) {
-            for (const c of removedChannelSettings) {
-                settingsIsUpdated = true
-                delete channelSettings[c]
-            }
-        }
-        if (settingsIsUpdated) {
-            setSettingsUpdated(true)
-        }
-
-        return channelSettings
-    }, [dmChannels, removedChannelSettings, savedChannelSettings, spaceHierarchies])
-
-    useEffect(() => {
-        if (
-            settingsUpdated &&
-            updatedSpaceSettings &&
-            updatedChannelSettings &&
-            userId &&
-            onSettingsUpdated
-        ) {
-            if (onSettingsUpdatedTimeout.current) {
-                clearTimeout(onSettingsUpdatedTimeout.current)
-            }
-
-            onSettingsUpdatedTimeout.current = setTimeout(() => {
-                const userSettings: SaveUserSettingsSchema['userSettings'] = {
-                    userId,
-                    directMessage: data?.directMessage ?? true,
-                    mention: data?.mention ?? true,
-                    replyTo: data?.replyTo ?? true,
-                    spaceSettings: updatedSpaceSettings ? Object.values(updatedSpaceSettings) : [],
-                    channelSettings: updatedChannelSettings
-                        ? Object.values(updatedChannelSettings)
-                        : [],
-                    blockedUsers: Array.from(blockedUserIds),
-                }
-                log('useNotificationSettings', 'userSettings', userSettings)
-                onSettingsUpdated(userSettings)
-                setSettingsUpdated(false)
-            }, SECOND_MS)
-
-            return () => {
-                if (onSettingsUpdatedTimeout.current) {
-                    clearTimeout(onSettingsUpdatedTimeout.current)
-                }
-            }
-        }
-    }, [
-        blockedUserIds,
-        data,
-        onSettingsUpdated,
-        settingsUpdated,
-        updatedChannelSettings,
-        updatedSpaceSettings,
-        userId,
-    ])
-
-    return {
-        settingsUpdated,
-        directMessage: data?.directMessage ?? true,
-        mention: data?.mention ?? true,
-        replyTo: data?.replyTo ?? true,
-        spaceSettings: updatedSpaceSettings,
-        channelSettings: updatedChannelSettings,
-        isLoading,
-    }
+export interface AddChannelNotificationSettings {
+    channelId: string
+    spaceId?: string
 }
 
-function isSupportedNotificationChannel(streamId: string): boolean {
-    return (
-        isDMChannelStreamId(streamId) ||
-        isGDMChannelStreamId(streamId) ||
-        isChannelStreamId(streamId)
+export function useNotificationSettings() {
+    const myUserId = useMyUserId()
+    const {
+        data,
+        isLoading: isLoadingNotificationSettings,
+        error: getNotificationSettingsError,
+    } = useGetNotificationSettings()
+    const notificationSettings: UserSettings | undefined = data
+    const { blockedUsers, channelSettings, directMessage, mention, replyTo, spaceSettings } =
+        notificationSettings || {}
+    const { mutate: updateNotificationSettings, mutateAsync: updateNotificationSettingsAsync } =
+        usePatchNotificationSettings()
+    const {
+        mutate: replaceAllNotificationSettings,
+        mutateAsync: replaceAllNotificationSettingsAsync,
+    } = useSaveNotificationSettings()
+
+    const addUserNotificationSettings = useCallback(async () => {
+        if (!myUserId) {
+            return
+        }
+        const newSettings = {
+            userSettings: createDefaultUserSettings(myUserId),
+        }
+        await replaceAllNotificationSettingsAsync(newSettings)
+        log.info('created user notification settings', newSettings)
+        return newSettings
+    }, [myUserId, replaceAllNotificationSettingsAsync])
+
+    const addTownNotificationSettings = useCallback(
+        async (spaceId: string) => {
+            if (myUserId && spaceSettings) {
+                const isNewSpace = !spaceSettings.some((s) => s.spaceId === spaceId)
+                const newSpaceSettings =
+                    isNewSpace && spaceId
+                        ? [
+                              ...spaceSettings,
+                              {
+                                  spaceId,
+                                  spaceMute: Mute.Default,
+                              },
+                          ]
+                        : undefined
+                if (newSpaceSettings) {
+                    const newSettings: PatchUserSettingsSchema = {
+                        userSettings: {
+                            userId: myUserId,
+                            spaceSettings: newSpaceSettings,
+                        },
+                    }
+                    await updateNotificationSettingsAsync(newSettings)
+                    log.info('added town notification settings', newSettings)
+                }
+            }
+        },
+        [myUserId, updateNotificationSettingsAsync, spaceSettings],
     )
+
+    const addChannelNotificationSettings = useCallback(
+        async ({ channelId, spaceId = '' }: AddChannelNotificationSettings) => {
+            if (myUserId && spaceSettings && channelSettings) {
+                const isNewSpace = !spaceSettings.some((s) => s.spaceId === spaceId)
+                const newSpaceSettings =
+                    isNewSpace && spaceId
+                        ? [
+                              ...spaceSettings,
+                              {
+                                  spaceId,
+                                  spaceMute: Mute.Default,
+                              },
+                          ]
+                        : undefined
+                const isNewChannel = !channelSettings.some((c) => c.channelId === channelId)
+                const newChannelSettings = isNewChannel
+                    ? [...channelSettings, { channelId, spaceId, channelMute: Mute.Default }]
+                    : undefined
+                if (newSpaceSettings || newChannelSettings) {
+                    const newSettings: PatchUserSettingsSchema = {
+                        userSettings: {
+                            userId: myUserId,
+                        },
+                    }
+                    if (newSpaceSettings) {
+                        newSettings.userSettings.spaceSettings = newSpaceSettings
+                    }
+                    if (newChannelSettings) {
+                        newSettings.userSettings.channelSettings = newChannelSettings
+                    }
+                    await updateNotificationSettingsAsync(newSettings)
+                    log.info('added channel notification settings', newSettings)
+                }
+            }
+        },
+        [channelSettings, myUserId, updateNotificationSettingsAsync, spaceSettings],
+    )
+
+    const addDmGdmNotificationSettings = useCallback(
+        async (channelId: string) => {
+            if (myUserId && channelSettings) {
+                const isNewDmOrGdm = !channelSettings.some((c) => c.channelId === channelId)
+                const newChannelSettings = isNewDmOrGdm
+                    ? {
+                          channelId,
+                          spaceId: '',
+                          channelMute: Mute.Default,
+                      }
+                    : undefined
+                if (newChannelSettings) {
+                    const newDmSettings: PatchUserSettingsSchema = {
+                        userSettings: {
+                            userId: myUserId,
+                            channelSettings: [...channelSettings, newChannelSettings],
+                        },
+                    }
+                    await updateNotificationSettingsAsync(newDmSettings)
+                    log.info('added DM/GDM notification settings', newDmSettings)
+                }
+            }
+        },
+        [channelSettings, myUserId, updateNotificationSettingsAsync],
+    )
+
+    const removeTownNotificationSettings = useCallback(
+        async (spaceId: string) => {
+            if (myUserId && spaceSettings) {
+                const changedSpaceSettings = spaceSettings.filter((s) => s.spaceId !== spaceId)
+                const changedChannelSettings = channelSettings?.filter((c) => c.spaceId !== spaceId)
+                const changedTownSettings: PatchUserSettingsSchema = {
+                    userSettings: {
+                        userId: myUserId,
+                        spaceSettings: changedSpaceSettings,
+                        channelSettings: changedChannelSettings,
+                    },
+                }
+                await updateNotificationSettingsAsync(changedTownSettings)
+                log.info('removed town notification settings', changedTownSettings)
+            }
+        },
+        [channelSettings, myUserId, spaceSettings, updateNotificationSettingsAsync],
+    )
+
+    const removeChannelNotificationSettings = useCallback(
+        async (channelId: string) => {
+            if (myUserId && channelSettings) {
+                const changedChannelSettings = channelSettings.filter(
+                    (c) => c.channelId !== channelId,
+                )
+                const changedChannelSettingsSchema: PatchUserSettingsSchema = {
+                    userSettings: {
+                        userId: myUserId,
+                        channelSettings: changedChannelSettings,
+                    },
+                }
+                await updateNotificationSettingsAsync(changedChannelSettingsSchema)
+                log.info('removed channel notification settings', changedChannelSettingsSchema)
+            }
+        },
+        [channelSettings, myUserId, updateNotificationSettingsAsync],
+    )
+
+    return {
+        blockedUsers,
+        channelSettings,
+        directMessage: directMessage ?? true,
+        getNotificationSettingsError,
+        isLoadingNotificationSettings,
+        mention: mention ?? true,
+        replyTo: replyTo ?? true,
+        spaceSettings,
+        addDmGdmNotificationSettings,
+        addChannelNotificationSettings,
+        addTownNotificationSettings,
+        addUserNotificationSettings,
+        updateNotificationSettings,
+        updateNotificationSettingsAsync,
+        replaceAllNotificationSettings,
+        replaceAllNotificationSettingsAsync,
+        removeChannelNotificationSettings,
+        removeTownNotificationSettings,
+    }
 }

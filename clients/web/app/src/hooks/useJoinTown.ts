@@ -89,9 +89,9 @@ export const useJoinTown = (spaceId: string | undefined, onSuccessfulJoin?: () =
         getSigner,
         clientSingleton,
         spaceId,
+        setRecentlyMintedSpaceToken,
         signerContext,
         endPublicPageLoginFlow,
-        setRecentlyMintedSpaceToken,
         onSuccessfulJoin,
     ])
 

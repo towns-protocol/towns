@@ -11,6 +11,7 @@ import { useAnalytics } from 'hooks/useAnalytics'
 import { AboveAppProgressModalContainer } from '@components/AppProgressOverlay/AboveAppProgress/AboveAppProgress'
 import { useCombinedAuth } from 'privy/useCombinedAuth'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
+import { useNotificationSettings } from 'hooks/useNotificationSettings'
 import { usePublicPageLoginFlow } from './usePublicPageLoginFlow'
 
 const LoginComponent = React.lazy(() => import('@components/Login/LoginComponent'))
@@ -37,6 +38,7 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
         endPublicPageLoginFlow()
         setAssetModal(false)
     }
+    const { addTownNotificationSettings } = useNotificationSettings()
 
     const preventJoinUseEffect = useRef(false)
 
@@ -75,6 +77,7 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
         if (meetsMembershipRequirements) {
             setIsJoining(true)
             await joinSpace()
+            spaceId && (await addTownNotificationSettings(spaceId))
             setIsJoining(false)
         } else {
             // show asset verification modal
@@ -88,6 +91,7 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
         startPublicPageloginFlow,
         meetsMembershipRequirements,
         joinSpace,
+        addTownNotificationSettings,
     ])
 
     const onLoginClick = useCallback(() => {

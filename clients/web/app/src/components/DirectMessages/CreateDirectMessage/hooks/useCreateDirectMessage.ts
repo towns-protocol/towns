@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom'
 import { DMChannelIdentifier, useTownsClient } from 'use-towns-client'
 import { useErrorToast } from 'hooks/useErrorToast'
 import { useCreateLink } from 'hooks/useCreateLink'
+import { useNotificationSettings } from 'hooks/useNotificationSettings'
 
 type Params = {
     selectedIdsArray: string[]
@@ -25,6 +26,7 @@ export const useCreateDirectMessage = (params: Params) => {
     const navigate = useNavigate()
 
     const [search] = useSearchParams()
+    const { addDmGdmNotificationSettings } = useNotificationSettings()
 
     useErrorToast({
         errorMessage,
@@ -48,6 +50,8 @@ export const useCreateDirectMessage = (params: Params) => {
             const link = createLink({ messageId: matchingChannel.id })
             if (link) {
                 onDirectMessageCreated?.()
+                await addDmGdmNotificationSettings(matchingChannel.id)
+                console.log('add dm notification settings', matchingChannel.id)
                 navigate(link + linkRef, { state: { fromDraft } })
             }
             return
@@ -69,6 +73,8 @@ export const useCreateDirectMessage = (params: Params) => {
                     console.log('create dm: navigating', link)
                     onDirectMessageCreated?.()
                     navigate(link + linkRef, { state: { fromDraft } })
+                    await addDmGdmNotificationSettings(streamId)
+                    console.log('add dm notification settings', streamId)
                 }
             } else {
                 console.error('create dm: failed creating stream')
@@ -86,6 +92,8 @@ export const useCreateDirectMessage = (params: Params) => {
                     console.log('create gm: navigating', link)
                     onDirectMessageCreated?.()
                     navigate(link, { state: { fromDraft } })
+                    await addDmGdmNotificationSettings(streamId)
+                    console.log('add gdm notification settings', streamId)
                 }
             } else {
                 setErrorMessage('failed to create gm stream')
@@ -93,15 +101,16 @@ export const useCreateDirectMessage = (params: Params) => {
             setIsSubmitting(false)
         }
     }, [
+        selectedIdsArray,
+        matchingChannel,
+        createLink,
+        onDirectMessageCreated,
+        addDmGdmNotificationSettings,
+        navigate,
+        linkRef,
         fromDraft,
         createDMChannel,
         createGDMChannel,
-        createLink,
-        matchingChannel,
-        linkRef,
-        navigate,
-        onDirectMessageCreated,
-        selectedIdsArray,
     ])
     return { onSubmit, isSubmitting }
 }

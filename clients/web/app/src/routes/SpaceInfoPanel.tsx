@@ -53,6 +53,7 @@ import { NetworkName } from '@components/Tokens/TokenSelector/NetworkName'
 import { useAppProgressStore } from '@components/AppProgressOverlay/store/appProgressStore'
 import { EditTextArea } from '@components/Panel/EditTextArea'
 import { EditSpaceName } from '@components/Panel/EditSpaceName'
+import { useNotificationSettings } from 'hooks/useNotificationSettings'
 import { AllChannelsList } from './AllChannelsList/AllChannelsList'
 import { PublicTownPage } from './PublicTownPage/PublicTownPage'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
@@ -110,6 +111,7 @@ export const SpaceInfo = () => {
     )
 
     const { mutate, isPending: isSettingSpaceIdentity } = useSetSpaceIdentity(space?.id)
+    const { removeTownNotificationSettings } = useNotificationSettings()
 
     const { memberIds } = useSpaceMembers()
     const [activeModal, setActiveModal] = useState<
@@ -297,6 +299,7 @@ export const SpaceInfo = () => {
         }
 
         await leaveRoom(spaceID)
+        await removeTownNotificationSettings(spaceID)
 
         // clean up
         setOptimisticSpaceInitialized(spaceID, false)
@@ -304,7 +307,13 @@ export const SpaceInfo = () => {
         setTimeout(() => {
             navigate('/')
         }, 1000)
-    }, [leaveRoom, navigate, setOptimisticSpaceInitialized, spaceID])
+    }, [
+        leaveRoom,
+        navigate,
+        removeTownNotificationSettings,
+        setOptimisticSpaceInitialized,
+        spaceID,
+    ])
 
     const onEditSpaceNameClick = useCallback(() => {
         setActiveModal(CHANNEL_INFO_PARAMS.EDIT_MEMBERSHIP)

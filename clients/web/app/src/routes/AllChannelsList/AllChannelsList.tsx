@@ -22,6 +22,7 @@ import { useUnseenChannelIds } from 'hooks/useUnseenChannelIdsCount'
 import { LinkParams, useCreateLink } from 'hooks/useCreateLink'
 import { useAnalytics } from 'hooks/useAnalytics'
 import { useLeaveChannel } from 'hooks/useLeaveChannel'
+import { useNotificationSettings } from 'hooks/useNotificationSettings'
 
 export const AllChannelsList = ({
     onHideBrowseChannels,
@@ -122,6 +123,8 @@ export const ChannelItem = ({
     const myJoinedChannelsInSpace = useMemo(() => groups.flatMap((c) => c.channels), [groups])
     const { isTouch } = useDevice()
     const { analytics } = useAnalytics()
+    const { addChannelNotificationSettings, removeChannelNotificationSettings } =
+        useNotificationSettings()
 
     useEffect(() => {
         // quick fix, leave events result in a faster rerender than the join event
@@ -163,6 +166,7 @@ export const ChannelItem = ({
 
         if (isJoined) {
             await leaveChannel(channelIdentifier, space.id)
+            await removeChannelNotificationSettings(channelIdentifier)
             if (currentChannelId === channelIdentifier) {
                 // leaving the last channel
                 if (joinedChannels.length === 1) {
@@ -201,6 +205,10 @@ export const ChannelItem = ({
                     console.error('[AllChannelsList]', 'cannot join channel', room)
                     throw new Error('cannot join channel')
                 }
+                await addChannelNotificationSettings({
+                    channelId: channelIdentifier,
+                    spaceId: space.id,
+                })
                 console.log('[AllChannelsList]', 'joined room', 'room', room)
             } catch (e) {
                 console.warn(

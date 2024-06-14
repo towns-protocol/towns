@@ -24,6 +24,7 @@ import { createPrivyNotAuthenticatedNotification } from '@components/Notificatio
 import { convertTokenTypeToOperationType } from '@components/Tokens/utils'
 import { useStore } from 'store/store'
 import { useAnalytics } from 'hooks/useAnalytics'
+import { useNotificationSettings } from 'hooks/useNotificationSettings'
 import { usePlatformMembershipFeeInEth } from 'hooks/usePlatformMembershipFeeInEth'
 import { PanelType, TransactionDetails } from './types'
 import { CreateSpaceFormV2SchemaType } from './CreateSpaceFormV2.schema'
@@ -48,6 +49,7 @@ export function CreateTownSubmit({
         'membershipPricingType',
     ])
 
+    const { addChannelNotificationSettings } = useNotificationSettings()
     const { data: minimumMmebershipPrice } = usePlatformMembershipFeeInEth()
 
     // use the hook props instead of BlockchainStore/BlockchainTxNotifier
@@ -381,6 +383,12 @@ export function CreateTownSubmit({
 
                     setRecentlyMintedSpaceToken({ spaceId: networkId, isOwner: true })
 
+                    // update the notification settings for the newly created space and channel
+                    await addChannelNotificationSettings({
+                        channelId: result.data.channelId,
+                        spaceId: result.data.spaceId,
+                    })
+
                     setTimeout(() => {
                         navigate(newPath, {
                             state: { fromCreateTown: true },
@@ -408,6 +416,7 @@ export function CreateTownSubmit({
         setPanelType,
         createSpaceTransactionWithRole,
         uploadSpaceIdentity,
+        addChannelNotificationSettings,
         uploadImage,
         navigate,
     ])

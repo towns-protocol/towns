@@ -49,6 +49,7 @@ import { useBlockedUsers } from 'hooks/useBlockedUsers'
 import { TouchPanelContext } from '@components/Panel/Panel'
 import { getChannelType, useAnalytics } from 'hooks/useAnalytics'
 import { getDraftDMStorageId } from 'utils'
+import { useNotificationSettings } from 'hooks/useNotificationSettings'
 
 type Props = {
     onTouchClose?: () => void
@@ -110,6 +111,16 @@ export const SpacesChannelComponent = (props: Props) => {
 
     const { timeline: channelMessages } = useChannelTimeline()
     const { analytics } = useAnalytics()
+    const { channelSettings, addChannelNotificationSettings } = useNotificationSettings()
+
+    useEffect(() => {
+        if (channelId && !channelSettings?.some((c) => c.channelId === channelId)) {
+            addChannelNotificationSettings({
+                channelId,
+                spaceId,
+            })
+        }
+    }, [addChannelNotificationSettings, channelId, channelSettings, spaceId])
 
     const onSend = useCallback(
         (value: string, options: SendMessageOptions | undefined) => {

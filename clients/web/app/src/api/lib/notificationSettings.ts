@@ -14,13 +14,13 @@ import { axiosClient } from 'api/apiClient'
 import { MINUTE_MS } from 'data/constants'
 
 const PUSH_WORKER_URL = env.VITE_WEB_PUSH_WORKER_URL
-export const notificationSettingsQueryKeys = {
-    getSettings: (userId: string | undefined) => ['getSettings', userId],
-}
-
 // add localStoreage.debug=app:notification-settings to enable logging
 const log = debug('app:notification-settings')
 log.enabled = localStorage.getItem('debug')?.includes('app:notification-settings') ?? false
+
+export const notificationSettingsQueryKeys = {
+    getSettings: (userId: string | undefined) => ['getSettings', userId],
+}
 
 type UserSettings = SaveUserSettingsSchema['userSettings']
 const zSettingsData: z.ZodType<UserSettings> = z.object({
@@ -44,13 +44,8 @@ const zSettingsData: z.ZodType<UserSettings> = z.object({
     blockedUsers: z.array(z.string()),
 })
 
-async function getSettings({ userId }: Partial<GetUserSettingsSchema>): Promise<UserSettings> {
-    const url = `${PUSH_WORKER_URL}/api/get-notification-settings`
-    if (!userId) {
-        throw new Error('userId is required')
-    }
-
-    let userSettings: UserSettings = {
+export function createDefaultUserSettings(userId: string): UserSettings {
+    return {
         userId,
         channelSettings: [],
         spaceSettings: [],
@@ -59,28 +54,26 @@ async function getSettings({ userId }: Partial<GetUserSettingsSchema>): Promise<
         directMessage: true,
         blockedUsers: [],
     }
-    try {
-        log('[getSettings] fetching settings', userId)
-        const response = await axiosClient.post(url, {
-            userId,
-        })
-        const parseResult = zSettingsData.safeParse(response.data)
+}
 
-        if (!parseResult.success) {
-            console.error('[getSettings] error parsing settings', parseResult.error)
-            throw new Error(
-                `Error parsing GetSettingsRequestParams in ${url}:: ${parseResult.error}`,
-            )
-        }
-
-        userSettings = parseResult.data
-        log('[getSettings] settings fetched', userSettings)
-    } catch (error) {
-        console.error('[getSettings] error', error)
-        // if the user's settings is not found, create a new one
-        log('[getSettings] creating new settings')
-        await saveUserNotificationSettings({ userSettings })
+async function getSettings({ userId }: Partial<GetUserSettingsSchema>): Promise<UserSettings> {
+    const url = `${PUSH_WORKER_URL}/api/get-notification-settings`
+    if (!userId) {
+        throw new Error('userId is required')
     }
+
+    let userSettings = createDefaultUserSettings(userId)
+    const response = await axiosClient.post(url, {
+        userId,
+    })
+    const parseResult = zSettingsData.safeParse(response.data)
+
+    if (!parseResult.success) {
+        console.error('[getSettings] error parsing settings', parseResult.error)
+        throw new Error(`Error parsing GetSettingsRequestParams in ${url}:: ${parseResult.error}`)
+    }
+
+    userSettings = parseResult.data
     return userSettings
 }
 
@@ -139,7 +132,7 @@ export function useGetNotificationSettings() {
     })
 }
 
-export async function saveUserNotificationSettings({ userSettings }: SaveUserSettingsSchema) {
+async function saveUserNotificationSettings({ userSettings }: SaveUserSettingsSchema) {
     const url = `${PUSH_WORKER_URL}/api/notification-settings`
     const response = await axiosClient.put(url, {
         userSettings,

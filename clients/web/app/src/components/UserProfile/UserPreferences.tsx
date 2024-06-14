@@ -19,7 +19,8 @@ enum NotificationSettingKey {
 
 export function UserPreferences() {
     const userId = useMyProfile()?.userId
-    const { isLoading, directMessage, replyTo, mention } = useNotificationSettings()
+    const { isLoadingNotificationSettings, directMessage, replyTo, mention } =
+        useNotificationSettings()
     const { mutate: mutateNotificationSettings } = usePatchNotificationSettings()
 
     const [whoCanDM, setWhoCanDM] = React.useState<DMOptions>(DMOptions.ONLY_IN_TOWNS)
@@ -69,7 +70,7 @@ export function UserPreferences() {
         },
     ]
 
-    if (isLoading) {
+    if (isLoadingNotificationSettings) {
         return (
             <Box centerContent paddingTop="md">
                 <Spinner />
