@@ -81,6 +81,7 @@ export const App = () => {
     const supportedXChainRpcMapping = useMemo(() => {
         const supported: { [x: number]: string } = {
             1: env.VITE_XCHAIN_ETHEREUM_RPC_URL,
+            8453: env.VITE_BASE_CHAIN_RPC_URL ?? 'https://mainnet.base.org',
             137: env.VITE_XCHAIN_POLYGON_RPC_URL,
             42161: env.VITE_XCHAIN_ARBITRUM_RPC_URL,
             10: env.VITE_XCHAIN_OPTIMISM_RPC_URL,

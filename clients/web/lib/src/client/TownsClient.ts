@@ -829,10 +829,10 @@ export class TownsClient
         return Promise.any(allPromises).catch(() => false)
     }
 
+    // this is eventually going to be read from river
     public async getSupportedXChainIds(): Promise<number[]> {
-        // this should eventually be provided by river
-        // the below assumes a gamma env running on base-sepolia
         if (!this.supportedXChainIds) {
+            // always supporting mainnet ids regardless of environment
             this.supportedXChainIds = await Promise.resolve([
                 // ethereum
                 1,
@@ -842,10 +842,15 @@ export class TownsClient
                 42161,
                 // optimism
                 10,
-                // base-sepolia
-                84532,
+                // base
+                8453,
             ])
         }
+        // if we're not on base mainnet, add the current chain id
+        if (!this.supportedXChainIds.includes(this.opts.baseChainId)) {
+            this.supportedXChainIds.push(this.opts.baseChainId)
+        }
+
         return this.supportedXChainIds
     }
 
@@ -860,7 +865,12 @@ export class TownsClient
             .filter(([chainId, rpcUrl]) => isDefined(rpcUrl) && xChainIds.includes(+chainId))
             .map(([, rpcUrl]) => rpcUrl)
 
-        return filteredByRiverSupported.concat(this.opts.baseProvider.connection.url)
+        // if we're not on base mainnet, add the current network rpc url
+        if (!filteredByRiverSupported.includes(this.opts.baseProvider.connection.url)) {
+            filteredByRiverSupported.push(this.opts.baseProvider.connection.url)
+        }
+
+        return filteredByRiverSupported
     }
 
     private async isEntitledToJoinSpace(spaceId: string | undefined, rootKey: string) {
