@@ -15,8 +15,8 @@ type UserLookupStore = {
     channelUsers: Record<string, Record<string, LookupUser>> // for DM and GDM channels
     fallbackUserLookups: Record<string, LookupUser>
     allUsers: Record<string, Record<string, LookupUser>>
-    setSpaceUser: (userId: string, user: LookupUser, channelId?: string) => void
-    setChannelUser: (userId: string, user: LookupUser, spaceId?: string) => void
+    setSpaceUser: (userId: string, user: LookupUser, spaceId?: string) => void
+    setChannelUser: (userId: string, user: LookupUser, channelId?: string) => void
     lookupUser: (userId: string, spaceId?: string, channelId?: string) => LookupUser | undefined
 }
 
@@ -27,7 +27,8 @@ type OmitFunctions<T> = {
 
 type UserLookupStoreData = Pick<UserLookupStore, OmitFunctions<UserLookupStore>>
 
-const db = new Dexie('UserLookupDB')
+const db = new Dexie('userlookup')
+
 db.version(1).stores({
     userLookup: 'key,spaceUsers,channelUsers,fallbackUserLookups',
 })
