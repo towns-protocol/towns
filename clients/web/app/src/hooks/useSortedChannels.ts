@@ -188,7 +188,7 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
                     !c.unread &&
                     joinedChannels.has(c.id) &&
                     persistUnreadId !== c.id &&
-                    !prevUnreads.current.includes(c.id) &&
+                    (!STICKY_UNREADS || !prevUnreads.current.includes(c.id)) &&
                     !c.favorite,
             ),
         ]
@@ -201,14 +201,14 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
                     c.favorite &&
                     !c.unread &&
                     persistUnreadId !== c.id &&
-                    !prevUnreads.current.includes(c.id),
+                    (!STICKY_UNREADS || !prevUnreads.current.includes(c.id)),
             ),
             ...dmItems.filter(
                 (c) =>
                     c.favorite &&
                     !c.unread &&
                     persistUnreadId !== c.id &&
-                    !prevUnreads.current.includes(c.id),
+                    (!STICKY_UNREADS || !prevUnreads.current.includes(c.id)),
             ),
         ]
     }, [channelItems, dmItems, persistUnreadId])
@@ -222,7 +222,7 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
                 (c) =>
                     !c.unread &&
                     persistUnreadId !== c.id &&
-                    !prevUnreads.current.includes(c.id) &&
+                    (!STICKY_UNREADS || !prevUnreads.current.includes(c.id)) &&
                     !c.favorite,
             ),
         ].sort((a, b) => Math.sign(b.latestMs - a.latestMs))
