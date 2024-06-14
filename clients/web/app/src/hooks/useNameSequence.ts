@@ -10,7 +10,7 @@ const commaAndSequence = (arrLength: number, index: number) => {
     }
 
     if (index === arrLength - 2) {
-        return `${arrLength > 2 ? ',' : ''} and `
+        return ' and '
     }
 
     return ', '
