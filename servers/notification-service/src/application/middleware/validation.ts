@@ -4,7 +4,7 @@ import { z, ZodError } from 'zod'
 
 import { StatusCodes } from 'http-status-codes'
 
-export function validateSchema(schema: z.ZodObject<any, any>) {
+export function validateSchema(schema: z.ZodObject<any, any> | z.ZodArray<any, any>) {
     return (req: Request, res: Response, next: NextFunction) => {
         try {
             schema.parse(req.body)

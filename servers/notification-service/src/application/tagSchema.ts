@@ -52,3 +52,15 @@ export const tagReactionSchema = z.object({
     userId: z.string(),
     threadId: z.string().optional(),
 })
+
+export const tagSchema = z.array(
+    z.object({
+        spaceId: z.string().optional(),
+        channelId: z.string(),
+        threadId: z.string().optional(),
+        tag: z.nativeEnum({ ...NotificationKind, ...NotificationAttachmentKind }),
+        userIds: z.array(z.string()).default([]),
+    }),
+)
+
+export type TagSchema = z.infer<typeof tagSchema>

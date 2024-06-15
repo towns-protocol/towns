@@ -12,6 +12,7 @@ import {
     AttachmentTagRequestParams,
     MentionUsersRequestParams,
     NotificationAttachmentKind,
+    NotificationKind,
     ReactionRequestParams,
     ReplyToUsersRequestParams,
 } from '../types/notification-types'
@@ -36,6 +37,7 @@ export class PushNotificationClient {
         options: SendMessageOptions,
     ): Promise<void> {
         console.log('PUSH: sendNotificationTagIfAny', options)
+        const tags: TagParams[] = []
 
         // GiphyPickerCard sendMessage in this format and the GIF's title as message
         const messageIsImageGif =
@@ -74,21 +76,26 @@ export class PushNotificationClient {
             }
             console.log('PUSH: sendNotificationTagIfAny', { attachmentKind, userIds })
 
-            return await this.sendAttachmentNotificationTag(
-                attachmentKind,
-                options.parentSpaceId,
-                channelId,
-                userIds,
-                threadId,
+            tags.push(
+                this.createAttachmentNotificationParams({
+                    spaceId: options.parentSpaceId,
+                    tag: attachmentKind,
+                    channelId,
+                    userIds,
+                    threadId,
+                }),
             )
         }
 
         const spaceId = options.parentSpaceId ?? ''
         if (!spaceId) {
+            if (tags.length > 0) {
+                return this.sendNotificationTag(tags)
+            }
+
             // mention, @channel and replyTo require the spaceId
             return
         }
-        const postRequests: Promise<void>[] = []
         let userMentions: Mention[] = []
         if (
             isMentionedTextMessageOptions(options) &&
@@ -98,18 +105,22 @@ export class PushNotificationClient {
             userMentions = options.mentions.filter((mention) => !mention.atChannel)
             console.log('PUSH: sendNotificationTagIfAny', { channelMentions, userMentions })
             if (channelMentions.length > 0) {
-                postRequests.push(
-                    this.sendAtChannelToNotificationService(spaceId, channelId, threadId),
+                tags.push(
+                    this.createAtChannelNotificationParams({
+                        spaceId,
+                        channelId,
+                        threadId,
+                    }),
                 )
             }
             if (userMentions.length > 0) {
-                postRequests.push(
-                    this.sendUserMentionToNotificationService(
+                tags.push(
+                    this.createUserMentionNotificationParams({
+                        mentions: userMentions,
                         spaceId,
                         channelId,
-                        userMentions,
                         threadId,
-                    ),
+                    }),
                 )
             }
         }
@@ -125,118 +136,34 @@ export class PushNotificationClient {
             })
             //console.log('sendNotificationTagIfAny', { threadParticipants })
             if (threadParticipants.size > 0) {
-                postRequests.push(
-                    this.sendThreadNotificationToWorker(spaceId, channelId, threadParticipants),
+                tags.push(
+                    this.createReplyToNotificationParams({
+                        participants: threadParticipants,
+                        spaceId,
+                        channelId,
+                    }),
                 )
             }
         }
 
-        await Promise.all(postRequests)
-    }
-
-    private async sendAttachmentNotificationTag(
-        tag: NotificationAttachmentKind,
-        spaceId: string | undefined,
-        channelId: string,
-        userIds: Set<string>,
-        threadId?: string,
-    ) {
-        const headers = this.createHttpHeaders()
-        const body = this.createAttachmentNotificationParams({
-            spaceId,
-            channelId,
-            tag,
-            userIds,
-            threadId,
-        })
-        const url = `${this.options.url}/api/tag/attachment`
-        console.log('PUSH: sending attachment tag to Push Notification Worker ...', url, body)
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers,
-                body: JSON.stringify(body),
-            })
-            console.log('PUSH: sent attachment tag to Push Notification Worker', response.status)
-        } catch (error) {
-            console.error('PUSH: error sending attachment tag to Push Notification Worker', error)
+        if (tags.length > 0) {
+            return this.sendNotificationTag(tags)
         }
     }
 
-    private async sendThreadNotificationToWorker(
-        spaceId: string,
-        channelId: string,
-        participants: Set<string>,
-    ): Promise<void> {
+    private async sendNotificationTag(tags: TagParams[]): Promise<void> {
         const headers = this.createHttpHeaders()
-        const body = this.createReplyToNotificationParams({
-            spaceId,
-            channelId,
-            participants,
-        })
-        const url = `${this.options.url}/api/tag/reply-to-users`
-        console.log('PUSH: sending reply_to tags to Push Notification Worker ...', url, body)
+        const url = `${this.options.url}/api/tag`
+        console.log('PUSH: sending tags to Push Notification Worker ...', url, tags)
         try {
             const response = await fetch(url, {
                 method: 'POST',
                 headers,
-                body: JSON.stringify(body),
+                body: JSON.stringify(tags),
             })
-            console.log('PUSH: sent reply_to tags to Push Notification Worker', response.status)
+            console.log('PUSH: sent tags to Push Notification Worker', response.status)
         } catch (error) {
-            console.error('PUSH: error sending reply_to tags to Push Notification Worker', error)
-        }
-    }
-
-    private async sendUserMentionToNotificationService(
-        spaceId: string,
-        channelId: string,
-        mentions: Mention[],
-        threadId?: string,
-    ): Promise<void> {
-        const headers = this.createHttpHeaders()
-        const body = this.createUserMentionNotificationParams({
-            spaceId,
-            channelId,
-            mentions,
-            threadId,
-        })
-        const url = `${this.options.url}/api/tag/mention-users`
-        console.log('PUSH: sending @userMention tag to Notification Service ...', url, body)
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers,
-                body: JSON.stringify(body),
-            })
-            console.log('PUSH: sent @userMention tag to Notification Service', response.status)
-        } catch (error) {
-            console.error('PUSH: error sending @userMention tag to Notification Service', error)
-        }
-    }
-
-    private async sendAtChannelToNotificationService(
-        spaceId: string,
-        channelId: string,
-        threadId?: string,
-    ): Promise<void> {
-        const headers = this.createHttpHeaders()
-        const body = this.createAtChannelNotificationParams({
-            spaceId,
-            channelId,
-            threadId,
-        })
-        const url = `${this.options.url}/api/tag/at-channel`
-        console.log('PUSH: sending @channel tag to Notification Service ...', url, body)
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers,
-                body: JSON.stringify(body),
-            })
-            console.log('PUSH: sent @channel tag to Notification Service', response.status)
-        } catch (error) {
-            console.error('PUSH: error sending @channel tag to Notification Service', error)
+            console.error('PUSH: error sending tags to Push Notification Worker', error)
         }
     }
 
@@ -246,12 +173,14 @@ export class PushNotificationClient {
         threadId?: string,
     ): Promise<void> {
         const headers = this.createHttpHeaders()
-        const body = this.createReactionNotificationParams({
-            channelId,
-            userId: creatorUserId,
-            threadId,
-        })
-        const url = `${this.options.url}/api/tag/reaction`
+        const body = [
+            this.createReactionNotificationParams({
+                channelId,
+                userId: creatorUserId,
+                threadId,
+            }),
+        ]
+        const url = `${this.options.url}/api/tag`
         console.log('PUSH: sending reaction tag to Notification Service ...', url, body)
         try {
             const response = await fetch(url, {
@@ -282,6 +211,7 @@ export class PushNotificationClient {
             channelId,
             userIds,
             threadId,
+            tag: NotificationKind.Mention,
         }
         return params
     }
@@ -299,6 +229,8 @@ export class PushNotificationClient {
             spaceId,
             channelId,
             threadId,
+            tag: NotificationKind.AtChannel,
+            userIds: [NotificationKind.AtChannel],
         }
         return params
     }
@@ -343,6 +275,7 @@ export class PushNotificationClient {
             spaceId,
             channelId,
             userIds,
+            tag: NotificationKind.ReplyTo,
         }
         return params
     }
@@ -358,8 +291,9 @@ export class PushNotificationClient {
     }): ReactionRequestParams {
         const params: ReactionRequestParams = {
             channelId,
-            userId,
+            userIds: [userId],
             threadId,
+            tag: NotificationKind.Reaction,
         }
         return params
     }
@@ -373,3 +307,10 @@ export class PushNotificationClient {
         return headers
     }
 }
+
+type TagParams =
+    | AtChannelRequestParams
+    | AttachmentTagRequestParams
+    | MentionUsersRequestParams
+    | ReplyToUsersRequestParams
+    | ReactionRequestParams

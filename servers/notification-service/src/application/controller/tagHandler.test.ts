@@ -4,13 +4,9 @@ import { Request, Response } from 'express'
 
 import { StatusCodes } from 'http-status-codes'
 import { database } from '../prisma'
-import {
-    tagAtChannelHandler,
-    tagAttachmentHandler,
-    tagMentionUsersHandler,
-    tagReactionHandler,
-} from './tagHandler'
+import { tagHandler } from './tagHandler'
 import { NotificationAttachmentKind, NotificationKind } from '../tagSchema'
+import { logger } from '../logger'
 
 jest.mock('./../prisma', () => ({
     database: {
@@ -20,17 +16,20 @@ jest.mock('./../prisma', () => ({
     },
 }))
 
-describe('tagMentionUsersHandler', () => {
+describe('tagHandler', () => {
     let req: Request
     let res: Response
 
     beforeEach(() => {
         req = {
-            body: {
-                channelId: 'channel123',
-                spaceId: 'space123',
-                userIds: ['user1', 'user2', 'user3'],
-            },
+            body: [
+                {
+                    channelId: 'channel123',
+                    spaceId: 'space123',
+                    userIds: ['user1', 'user2', 'user3'],
+                    tag: NotificationKind.Mention,
+                },
+            ],
         } as unknown as Request
 
         res = {
@@ -45,15 +44,15 @@ describe('tagMentionUsersHandler', () => {
 
     it('should tag mention users', async () => {
         const tagData = {
-            ChannelId: req.body.channelId,
+            ChannelId: req.body[0].channelId,
             Tag: NotificationKind.Mention,
-            SpaceId: req.body.spaceId,
+            SpaceId: req.body[0].spaceId,
         }
 
-        await tagMentionUsersHandler(req, res)
+        await tagHandler(req, res)
 
         expect(database.notificationTag.upsert).toHaveBeenCalled()
-        for (const UserId of req.body.userIds) {
+        for (const UserId of req.body[0].userIds) {
             expect(database.notificationTag.upsert).toHaveBeenCalledWith({
                 where: {
                     ChannelId_UserId: {
@@ -67,31 +66,31 @@ describe('tagMentionUsersHandler', () => {
         }
 
         expect(res.status).toHaveBeenCalledWith(StatusCodes.OK)
-        expect(res.json).toHaveBeenCalledWith({
-            ...req.body,
-            tag: NotificationKind.Mention,
-        })
+        expect(res.json).toHaveBeenCalledWith(req.body)
     })
 
     it('should tag mention users (with threadId)', async () => {
         req = {
-            body: {
-                channelId: 'channel123',
-                userIds: ['user1', 'user2', 'user3'],
-                threadId: 'thread123',
-            },
+            body: [
+                {
+                    channelId: 'channel123',
+                    userIds: ['user1', 'user2', 'user3'],
+                    threadId: 'thread123',
+                    tag: NotificationKind.Mention,
+                },
+            ],
         } as unknown as Request
         const tagData = {
-            ChannelId: req.body.channelId,
+            ChannelId: req.body[0].channelId,
             Tag: NotificationKind.Mention,
-            SpaceId: req.body.spaceId,
+            SpaceId: req.body[0].spaceId,
             ThreadId: 'thread123',
         }
 
-        await tagMentionUsersHandler(req, res)
+        await tagHandler(req, res)
 
         expect(database.notificationTag.upsert).toHaveBeenCalled()
-        for (const UserId of req.body.userIds) {
+        for (const UserId of req.body[0].userIds) {
             expect(database.notificationTag.upsert).toHaveBeenCalledWith({
                 where: {
                     ChannelId_UserId: {
@@ -105,29 +104,28 @@ describe('tagMentionUsersHandler', () => {
         }
 
         expect(res.status).toHaveBeenCalledWith(StatusCodes.OK)
-        expect(res.json).toHaveBeenCalledWith({
-            ...req.body,
-            tag: NotificationKind.Mention,
-        })
+        expect(res.json).toHaveBeenCalledWith(req.body)
     })
 
     it('should tag @channel', async () => {
         req = {
-            body: {
-                channelId: 'channel123',
-                spaceId: 'space123',
-            },
+            body: [
+                {
+                    channelId: 'channel123',
+                    spaceId: 'space123',
+                    tag: NotificationKind.AtChannel,
+                },
+            ],
         } as unknown as Request
         const tagData = {
-            ChannelId: req.body.channelId,
+            ChannelId: req.body[0].channelId,
             Tag: NotificationKind.AtChannel,
-            SpaceId: req.body.spaceId,
+            SpaceId: req.body[0].spaceId,
             UserId: NotificationKind.AtChannel,
         }
 
-        await tagAtChannelHandler(req, res)
+        await tagHandler(req, res)
 
-        expect(database.notificationTag.upsert).toHaveBeenCalled()
         expect(database.notificationTag.upsert).toHaveBeenCalledWith({
             where: {
                 ChannelId_UserId: {
@@ -140,30 +138,28 @@ describe('tagMentionUsersHandler', () => {
         })
 
         expect(res.status).toHaveBeenCalledWith(StatusCodes.OK)
-        expect(res.json).toHaveBeenCalledWith({
-            ...req.body,
-            tag: NotificationKind.AtChannel,
-            userIds: [NotificationKind.AtChannel],
-        })
+        expect(res.json).toHaveBeenCalledWith(req.body)
     })
 
     it('should tag attachment only', async () => {
         req = {
-            body: {
-                channelId: 'channel123',
-                spaceId: 'space123',
-                tag: NotificationAttachmentKind.File,
-                userIds: ['user1'],
-            },
+            body: [
+                {
+                    channelId: 'channel123',
+                    spaceId: 'space123',
+                    tag: NotificationAttachmentKind.File,
+                    userIds: ['user1'],
+                },
+            ],
         } as unknown as Request
         const tagData = {
-            ChannelId: req.body.channelId,
+            ChannelId: req.body[0].channelId,
             Tag: NotificationAttachmentKind.File,
-            SpaceId: req.body.spaceId,
+            SpaceId: req.body[0].spaceId,
             UserId: 'user1',
         }
 
-        await tagAttachmentHandler(req, res)
+        await tagHandler(req, res)
 
         expect(database.notificationTag.upsert).toHaveBeenCalled()
         expect(database.notificationTag.upsert).toHaveBeenCalledWith({
@@ -178,27 +174,28 @@ describe('tagMentionUsersHandler', () => {
         })
 
         expect(res.status).toHaveBeenCalledWith(StatusCodes.OK)
-        expect(res.json).toHaveBeenCalledWith({
-            ...req.body,
-            userIds: [tagData.UserId],
-        })
+        expect(res.json).toHaveBeenCalledWith(req.body)
     })
 
     it('should tag reaction', async () => {
         req = {
-            body: {
-                channelId: 'channel123',
-                userId: 'user1',
-            },
+            body: [
+                {
+                    channelId: 'channel123',
+                    userIds: ['user1'],
+                    tag: NotificationKind.Reaction,
+                },
+            ],
         } as unknown as Request
         const tagData = {
-            ChannelId: req.body.channelId,
+            ChannelId: req.body[0].channelId,
             Tag: NotificationKind.Reaction,
             SpaceId: undefined,
-            UserId: req.body.userId,
+            ThreadId: undefined,
+            UserId: req.body[0].userIds[0],
         }
 
-        await tagReactionHandler(req, res)
+        await tagHandler(req, res)
 
         expect(database.notificationTag.upsert).toHaveBeenCalledWith({
             where: {
@@ -212,31 +209,29 @@ describe('tagMentionUsersHandler', () => {
         })
 
         expect(res.status).toHaveBeenCalledWith(StatusCodes.OK)
-        expect(res.json).toHaveBeenCalledWith({
-            ...req.body,
-            tag: NotificationKind.Reaction,
-            userIds: [req.body.userId],
-            threadId: req.body.threadId,
-        })
+        expect(res.json).toHaveBeenCalledWith(req.body)
     })
 
     it('should tag reaction (with threadId)', async () => {
         req = {
-            body: {
-                channelId: 'channel123',
-                userId: 'user1',
-                threadId: 'thread123',
-            },
+            body: [
+                {
+                    channelId: 'channel123',
+                    userIds: ['user1'],
+                    threadId: 'thread123',
+                    tag: NotificationKind.Reaction,
+                },
+            ],
         } as unknown as Request
         const tagData = {
-            ChannelId: req.body.channelId,
+            ChannelId: req.body[0].channelId,
             Tag: NotificationKind.Reaction,
             SpaceId: undefined,
-            UserId: req.body.userId,
-            ThreadId: req.body.threadId,
+            UserId: req.body[0].userIds[0],
+            ThreadId: req.body[0].threadId,
         }
 
-        await tagReactionHandler(req, res)
+        await tagHandler(req, res)
 
         expect(database.notificationTag.upsert).toHaveBeenCalledWith({
             where: {
@@ -247,26 +242,45 @@ describe('tagMentionUsersHandler', () => {
             },
             update: {
                 Tag: tagData.Tag,
-                ThreadId: req.body.threadId,
+                ThreadId: req.body[0].threadId,
             },
             create: { ...tagData },
         })
 
         expect(res.status).toHaveBeenCalledWith(StatusCodes.OK)
-        expect(res.json).toHaveBeenCalledWith({
-            ...req.body,
-            tag: NotificationKind.Reaction,
-            userIds: [req.body.userId],
-            threadId: req.body.threadId,
-        })
+        expect(res.json).toHaveBeenCalledWith(req.body)
+    })
+
+    it('should tag multiple tags', async () => {
+        req = {
+            body: [
+                {
+                    channelId: 'channel123',
+                    spaceId: 'space123',
+                    userIds: ['user1', 'user2', 'user3'],
+                    tag: NotificationKind.Mention,
+                },
+                {
+                    channelId: 'channel123',
+                    spaceId: 'space123',
+                    tag: NotificationKind.AtChannel,
+                },
+            ],
+        } as unknown as Request
+
+        await tagHandler(req, res)
+
+        expect(database.notificationTag.upsert).toHaveBeenCalledTimes(4)
+        expect(res.status).toHaveBeenCalledWith(StatusCodes.OK)
+        expect(res.json).toHaveBeenCalledWith(req.body)
     })
 
     it('should handle error and return UNPROCESSABLE ENTITY (422) status', async () => {
         const error = new Error('Invalid data')
-        jest.spyOn(console, 'error').mockImplementation(() => {})
+        jest.spyOn(logger, 'error').mockImplementation(() => logger)
         ;(database.notificationTag.upsert as jest.Mock).mockRejectedValue(error)
 
-        await tagMentionUsersHandler(req, res)
+        await tagHandler(req, res)
 
         expect(res.status).toHaveBeenCalledWith(StatusCodes.UNPROCESSABLE_ENTITY)
         expect(res.json).toHaveBeenCalledWith({ error: 'Invalid data' })
