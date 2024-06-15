@@ -15,8 +15,6 @@ import { notUndefined } from 'ui/utils/utils'
 import { NotificationStore } from '../store/notificationStore'
 import { User } from './types'
 import { preferredUsername } from './utils'
-// import { User } from './types.d'
-// import { preferredUsername } from './utils'
 
 const log = debug('sw:push:')
 
@@ -51,20 +49,18 @@ export function ServiceWorkerMetadataSyncer() {
             const currentUserId = myProfile.userId
             try {
                 const currentRecord = await currentUser.getCurrentUserRecord()
-                const updatedRecord: CurrentUser = {
-                    userId: currentUserId,
-                    databaseName: cryptoStoreDatabaseName,
+                if (currentRecord?.userId !== currentUserId) {
+                    const updatedRecord: CurrentUser = {
+                        userId: currentUserId,
+                        databaseName: cryptoStoreDatabaseName,
+                        lastUrlTimestamp: 0,
+                    }
+                    await currentUser.setCurrentUserRecord(updatedRecord)
+                    log('set currentUser', updatedRecord)
                 }
-                if (currentRecord?.userId === currentUserId) {
-                    // retain the last URL and timestamp
-                    updatedRecord.lastUrl = currentRecord.lastUrl
-                    updatedRecord.lastUrlTimestamp = currentRecord.lastUrlTimestamp
-                }
-                await currentUser.setCurrentUserRecord(updatedRecord)
                 if (!cancelled) {
                     // open the notification cache for this user
                     setStore(new NotificationStore(currentUserId))
-                    log('set currentUser', updatedRecord)
                 }
             } catch (error) {
                 console.error('sw:push: error setting my userId', error)

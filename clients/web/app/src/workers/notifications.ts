@@ -51,7 +51,7 @@ async function getCurrentUser(): Promise<CurrentUser> {
             userId: '',
             databaseName: '',
             lastUrl: undefined,
-            lastUrlTimestamp: undefined,
+            lastUrlTimestamp: 0,
         }
     )
 }

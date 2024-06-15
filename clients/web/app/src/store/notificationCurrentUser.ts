@@ -3,8 +3,8 @@ import Dexie, { Table } from 'dexie'
 export interface CurrentUser {
     userId: string
     databaseName: string
+    lastUrlTimestamp: number
     lastUrl?: string
-    lastUrlTimestamp?: number
 }
 
 export interface CurrentUserRecord extends CurrentUser {
@@ -20,7 +20,7 @@ export class NotificationCurrentUser extends Dexie {
         const storeName = 'notification-current-user'
         super(storeName)
         this.storeName = storeName
-        this.version(4).stores({
+        this.version(5).stores({
             currentUser: 'keyPath, lastUrlTimestamp',
         })
     }
