@@ -59,6 +59,9 @@ on:
             SLACK_ALERT_WEBHOOK_URL:
                 description: 'Slack webhook url for alerts'
                 required: true
+            TF_VAR_datadog_api_key:
+                description: 'Data dog api key to log the failure in datadog'
+                required: true
 
 concurrency:
     group: ${{ github.workflow }}-${{ inputs.environment_name }}-${{ inputs.run_mode}}
@@ -166,7 +169,6 @@ jobs:
                   TF_STATUS: 'ERROR'
                   LOG_MESSAGE: 'River deploy to ECS failed for ${{ github.ref }} branch (https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})'
                   TF_VAR_datadog_api_key: ${{ secrets.TF_VAR_datadog_api_key }}
-                  TF_VAR_datadog_app_key: ${{ secrets.TF_VAR_datadog_app_key }}
               run: './log_datadog.sh'
 
     on_failure:

@@ -17,6 +17,7 @@ jobs:
             AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
             AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
             SLACK_ALERT_WEBHOOK_URL: ${{ secrets.SLACK_TRANSIENT_CD_WORKFLOW_WEBHOOK_URL }}
+            TF_VAR_datadog_api_key: ${{ secrets.TF_VAR_datadog_api_key }}
         permissions: write-all
 
         with:
