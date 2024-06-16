@@ -18,7 +18,7 @@ const fontConfig = {
         lineHeight: 19 / 15,
         // a bit arbitrary trying to find a compromise for big/small + mobile
         // webkit (hnt-1690) - need to integrate capssize the right way at some point
-
+        systemFallback: 'sans-serif',
         fontMetrics: {
             ascent: 1150,
             descent: -350,
@@ -29,6 +29,7 @@ const fontConfig = {
     },
     MarketingFont: {
         lineHeight: 62 / 56,
+        systemFallback: 'sans-serif',
         fontMetrics: {
             ascent: 800,
             descent: -165,
@@ -51,6 +52,7 @@ export const FontFamilyClass = Object.fromEntries(
 
 type FontFamilySetting = {
     fontFamily: string
+    systemFallback: string
     styles?: { [key: string]: string }
     src?: string
     fontDescription?: {
@@ -71,6 +73,7 @@ const generatedFontFamilySettings = getTypedEntries(fontConfig).reduce(
 
         keep[fontName] = {
             fontFamily: fontName,
+            systemFallback: value.systemFallback,
             targets: [],
             capSize: {
                 // we just need the proportion

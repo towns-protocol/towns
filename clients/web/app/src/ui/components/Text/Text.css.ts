@@ -108,7 +108,7 @@ fontSettings.forEach((font) => {
     if (fontStyle) {
         font.targets.forEach((e) => {
             globalStyle(`${boxClass} ${e}`, {
-                fontFamily: font.fontFamily,
+                fontFamily: [font.fontFamily, font.systemFallback ?? 'sans-serif'].join(', '),
                 ...(font.styles ? font.styles : {}),
             })
             globalStyle(`${boxClass} ${e}`, fontStyle.baseProperties)
