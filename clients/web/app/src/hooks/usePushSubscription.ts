@@ -101,6 +101,11 @@ async function deletePushSubscription(userId: string) {
 }
 
 async function unsubscribePushSubscription() {
+    if (!navigator.serviceWorker.controller) {
+        console.info('PUSH: skipping unsubscribe, no service worker controller')
+        return
+    }
+
     try {
         const registration = await navigator.serviceWorker.ready
         const subscription = await registration.pushManager.getSubscription()
