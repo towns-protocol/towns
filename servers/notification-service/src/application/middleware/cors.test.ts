@@ -32,13 +32,13 @@ describe('isAllowedOrigin', () => {
             'https://alpha.towns.com',
             'https://beta.towns.com',
             'https://app.towns.com',
+            'https://fast-app.towns.com',
             'https://app-beta.towns.com',
             'https://app-staging.towns.com',
             'https://app-staging-beta.towns.com',
             'https://harmony-web-pr-*.onrender.com',
             'https://river1-staging.towns.com',
             'https://app.gamma.towns.com',
-            'https://app.towns.com',
         ]
 
         allowedOrigins.forEach((origin) => {

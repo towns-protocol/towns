@@ -11,6 +11,7 @@ export function getAllowedOrigins(env: Environment): string[] {
             return [
                 'https://app-test.towns.com',
                 'https://app.towns.com',
+                'https://fast-app.towns.com',
                 'https://app-test-beta.towns.com',
                 'https://app.gamma.towns.com',
                 'https://harmony-web-pr-*.onrender.com',
@@ -26,6 +27,7 @@ export function getAllowedOrigins(env: Environment): string[] {
         case 'omega':
             return [
                 'https://app.towns.com',
+                'https://fast-app.towns.com',
                 'https://harmony-web-pr-*.onrender.com',
                 'http://localhost:3000',
                 'https://localhost:3000',
