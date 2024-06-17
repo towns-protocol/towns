@@ -427,6 +427,10 @@ resource "aws_ecs_task_definition" "river-fargate" {
         value = local.run_mode
       },
       {
+        name  = "ENABLEDEBUGENDPOINTS",
+        value = var.enable_debug_endpoints == true ? "true" : "false"
+      },
+      {
         name  = "BASECHAIN__CHAINID",
         value = var.base_chain_id
       },

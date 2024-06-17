@@ -9,6 +9,12 @@ variable "git_pr_number" {
   default     = null
 }
 
+variable "enable_debug_endpoints" {
+  description = "Whether or not to enable debug endpoints"
+  type        = bool
+  default     = false
+}
+
 variable "node_metadata" {
   description = "Object containing details such as node_name, node_number, node_address, etc."
   type        = any

@@ -131,6 +131,8 @@ module "river_node" {
 
   node_metadata = module.global_constants.full_nodes[count.index]
 
+  enable_debug_endpoints = true
+
   river_node_ssl_cert_secret_arn = module.river_node_ssl_cert.river_node_ssl_cert_secret_arn
 
   river_node_db = module.river_db_cluster
@@ -169,6 +171,8 @@ module "archive_node" {
   count  = local.num_archive_nodes
 
   node_metadata = module.global_constants.archive_nodes[count.index]
+
+  enable_debug_endpoints = true
 
   river_node_ssl_cert_secret_arn = module.river_node_ssl_cert.river_node_ssl_cert_secret_arn
 
