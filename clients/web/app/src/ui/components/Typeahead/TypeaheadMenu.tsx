@@ -1,5 +1,6 @@
-import React from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
+import { isHotkey } from '@udecode/plate-common'
 import { VirtualRef } from '@udecode/plate-floating'
 import {
     TYPEAHEAD_POPUP_ID,
@@ -38,6 +39,7 @@ export const TypeaheadMenu = ({
                 paddingY="xs"
                 background="level2"
                 id={TYPEAHEAD_POPUP_ID}
+                tabIndex={0}
                 style={{
                     ...(position ? position : {}),
                 }}
@@ -50,23 +52,52 @@ export const TypeaheadMenu = ({
 
 interface TypeaheadMenuPortalProps extends TypeaheadMenuProps {
     targetRef: VirtualRef
+    noScroll?: boolean
     portalKey: string
 }
 
 export const TypeaheadMenuAnchored = ({
     targetRef,
     portalKey,
+    noScroll,
     ...props
 }: TypeaheadMenuPortalProps) => {
-    const typeaheadRef = React.useRef<HTMLDivElement>(null)
+    const typeaheadRef = useRef<HTMLDivElement>(null)
     const [position, setPosition] = React.useState<TypeaheadPositionResult>({})
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (!typeaheadRef.current) {
             return
         }
         setPosition(getTypeaheadPosition(targetRef, typeaheadRef.current))
     }, [targetRef, setPosition])
+
+    const onKeyDown = useCallback(
+        (e: KeyboardEvent) => {
+            if (noScroll) {
+                return
+            }
+            if (isHotkey('down', e) || isHotkey('up', e)) {
+                setTimeout(() => {
+                    const highlightedItem = typeaheadRef.current?.querySelector(
+                        `ul li[aria-selected="true"]`,
+                    ) as HTMLLIElement
+                    if (highlightedItem) {
+                        highlightedItem.scrollIntoView({
+                            block: 'nearest',
+                        })
+                    }
+                }, 0)
+            }
+        },
+        [noScroll],
+    )
+
+    useEffect(() => {
+        document.addEventListener('keydown', onKeyDown)
+
+        return () => document.removeEventListener('keydown', onKeyDown)
+    }, [onKeyDown])
 
     return createPortal(
         <Box ref={typeaheadRef}>

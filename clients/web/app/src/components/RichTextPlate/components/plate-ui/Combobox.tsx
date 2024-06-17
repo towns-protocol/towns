@@ -147,6 +147,7 @@ export const ComboboxContent = <T extends TMentionComboboxTypes>(
             portalKey={`${query}_${activeId}`}
             zIndex="tooltips"
             outerBorder={false}
+            noScroll={getFilteredItemsWithoutMockEmoji(filteredItems || []).length <= 5}
         >
             {Component ? Component({ store: activeComboboxStore }) : null}
 

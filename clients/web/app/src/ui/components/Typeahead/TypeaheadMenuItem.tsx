@@ -16,7 +16,7 @@ type TypeaheadMenuItemProps = {
 }
 export const TypeaheadMenuItem = React.forwardRef<HTMLDivElement, TypeaheadMenuItemProps>(
     (props, ref) => {
-        const { index, secondaryText, isLast, isSelected, onClick, onMouseEnter } = props
+        const { secondaryText, isLast, isSelected, onClick, onMouseEnter } = props
 
         return (
             <Stack
@@ -31,7 +31,6 @@ export const TypeaheadMenuItem = React.forwardRef<HTMLDivElement, TypeaheadMenuI
                 ref={ref}
                 role="option"
                 aria-selected={isSelected}
-                id={'typeahead-item-' + index}
                 cursor="pointer"
                 alignItems="center"
                 onMouseEnter={onMouseEnter}
