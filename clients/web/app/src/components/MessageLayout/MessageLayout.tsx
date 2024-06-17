@@ -17,7 +17,6 @@ import { useFocused } from 'hooks/useFocused'
 import { ZRoomMessageRedactedEvent } from '@components/MessageTimeline/util/getEventsByDate'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
-import { useResolveEnsName } from 'api/lib/ensNames'
 import { useResolveNft } from 'hooks/useNfts'
 import { MessageContextMenu } from './MessageContextMenu'
 import { MessageModalSheet } from './MessageModalSheet'
@@ -308,26 +307,20 @@ export const MessageLayout = (props: Props) => {
 
 const UserName = ({ user }: { user?: LookupUser }) => {
     const name = user ? getPrettyDisplayName(user) : ''
-    const { resolvedEnsName } = useResolveEnsName({
-        userId: user?.userId,
-        ensAddress: user?.ensAddress,
-    })
+
     const resolvedNft = useResolveNft({ walletAddress: user?.userId || '', info: user?.nft })
 
-    if (resolvedEnsName || resolvedNft) {
-        return (
-            <Stack horizontal gap="xs" alignItems="center">
-                <Text truncate fontWeight="strong" color="default" as="span">
-                    {resolvedEnsName || name}
-                </Text>
-                <Icon type="verifiedEnsName" size="square_sm" color="gray2" />
-            </Stack>
-        )
-    }
     return (
-        <Text truncate fontWeight="strong" color="default" as="span">
-            {name}&nbsp;
-        </Text>
+        <Stack horizontal gap="xs" alignItems="center">
+            <Text truncate fontWeight="strong" color="default" as="span">
+                {name}&nbsp;
+            </Text>
+            {user?.ensName || resolvedNft ? (
+                <Icon type="verifiedEnsName" size="square_sm" color="gray2" />
+            ) : (
+                <></>
+            )}
+        </Stack>
     )
 }
 
