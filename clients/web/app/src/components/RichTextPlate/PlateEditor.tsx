@@ -15,7 +15,6 @@ import {
     useUserLookupContext,
 } from 'use-towns-client'
 import { datadogRum } from '@datadog/browser-rum'
-import { isEditorEmpty as PlateIsEditorEmpty } from '@udecode/slate-utils'
 import { focusEditor } from '@udecode/slate-react'
 import { TComboboxItemWithData } from '@udecode/plate-combobox'
 import { ELEMENT_PARAGRAPH } from '@udecode/plate-paragraph'
@@ -36,6 +35,7 @@ import {
 } from '@components/EmbeddedMessageAttachement/EditorAttachmentPreview'
 import { useInlineReplyAttchmentPreview } from '@components/EmbeddedMessageAttachement/hooks/useInlineReplyAttchmentPreview'
 import { useInputStore } from 'store/store'
+import { toPlainText } from './utils/toPlainText'
 import { getChannelNames, getMentionIds } from './utils/helpers'
 import { RichTextPlaceholder } from './components/RichTextEditorPlaceholder'
 import { toMD } from './utils/toMD'
@@ -116,8 +116,8 @@ const PlateEditorWithoutBoundary = ({
     const [isSendingMessage, setIsSendingMessage] = useState(false)
 
     const [focused, setFocused] = useState(false)
+    const [editorText, setEditorText] = useState('')
     const [isEditorEmpty, setIsEditorEmpty] = useState(true)
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [isAttemptingSend, setIsAttemptingSend] = useState(false)
     const [isFormattingToolbarOpen, setIsFormattingToolbarOpen] = useState(false)
     const [embeddedMessageAttachments, setEmbeddedMessageAttachments] = useState<
@@ -232,12 +232,14 @@ const PlateEditorWithoutBoundary = ({
 
     const onChange = useCallback(() => {
         if (editorRef.current) {
-            const isEmpty = PlateIsEditorEmpty(editorRef.current)
-            if (isEmpty !== isEditorEmpty) {
-                setIsEditorEmpty(isEmpty)
+            const text = toPlainText(editorRef.current.children)
+            setEditorText(text)
+            const currentTextEmpty = text.trim().length === 0
+            if (currentTextEmpty !== isEditorEmpty) {
+                setIsEditorEmpty(currentTextEmpty)
             }
         }
-    }, [isEditorEmpty])
+    }, [setEditorText, setIsEditorEmpty, isEditorEmpty])
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const onSendAttemptWhileDisabled = useCallback(() => {
@@ -336,12 +338,12 @@ const PlateEditorWithoutBoundary = ({
             if (key === 'Enter' && !shiftKey) {
                 event.preventDefault()
                 const { message, mentions } = await toMD(editorRef.current)
-                if ((message && message.trim().length > 0) || files.length > 0) {
+                if (editorText.length > 0 || files.length > 0) {
                     await onSendCb(message, mentions)
                 }
             }
         },
-        [onSendCb, isTouch, disabled, disabledSend, files.length],
+        [onSendCb, editorText, isTouch, disabled, disabledSend, files.length],
     )
 
     const fileCount = files.length
@@ -425,7 +427,7 @@ const PlateEditorWithoutBoundary = ({
                                 onFocus={onFocus}
                                 onBlur={onBlur}
                             />
-                            {isEditorEmpty &&
+                            {editorText.length === 0 &&
                                 (!valueFromStore || valueFromStore.trim().length === 0) && (
                                     <RichTextPlaceholder placeholder={placeholder} />
                                 )}

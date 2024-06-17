@@ -32,6 +32,7 @@ export const createEmojiPlugin = createPluginFactory<MentionPlugin>({
         createMentionNode: (item) => ({
             value: item.key,
             emoji: { name: item.text, emoji: item.key },
+            children: [{ text: item.key }],
         }),
     },
     plugins: [

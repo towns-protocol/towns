@@ -105,6 +105,7 @@ const platePlugins = (
                     createMentionNode: (item: TComboboxItemWithData<Channel>) => ({
                         value: '#' + item.text,
                         channel: item.data,
+                        children: [{ text: '#' + item.text }],
                     }),
                 },
             }),
@@ -117,6 +118,7 @@ const platePlugins = (
                         value: '@' + item.text,
                         userId: item.key,
                         atChannel: (item as TComboboxItemWithData<TUserMention>).data.atChannel,
+                        children: [{ text: '@' + item.text }],
                     }),
                 },
             }),

@@ -123,7 +123,7 @@ function remarkTransformUserAndChannels(
                     userId: user.userId,
                     value: USER_TRIGGER + user.displayName,
                     type: ELEMENT_MENTION,
-                    children: [{ text: '' }],
+                    children: [{ text: USER_TRIGGER + user.displayName }],
                 } as TUserMentionElement,
                 { ...SPACE_NODE },
             ]
@@ -154,7 +154,7 @@ function remarkTransformUserAndChannels(
                     type: ELEMENT_MENTION_CHANNEL,
                     channel,
                     value,
-                    children: [{ text: '' }],
+                    children: [{ text: value }],
                 } as TChannelMentionElement,
                 { ...SPACE_NODE },
             ]
