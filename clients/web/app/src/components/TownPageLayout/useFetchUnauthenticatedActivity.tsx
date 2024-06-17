@@ -323,34 +323,34 @@ async function withAbort<T>(
     promise: () => Promise<T>,
     controllerIn: AbortController,
 ): Promise<T | undefined> {
-    const controller = new AbortController()
-    const exception = new Error(`withAbort: Aborted ${promise.toString()}`)
+    return new Promise<T>((resolve, reject) => {
+        const controller = new AbortController()
 
-    const wrappedAbort = () => {
-        controller.abort()
-    }
-
-    const internalAbort = () => {
-        console.warn(`Aborting ${promise.toString()}`)
-        throw exception
-    }
-
-    controllerIn.signal.addEventListener('abort', wrappedAbort)
-    controller.signal.addEventListener('abort', internalAbort)
-    try {
-        const result = await promise()
-        return result
-    } catch (error) {
-        if (error === exception) {
-            console.warn('Aborted')
-            return undefined
-        } else {
-            throw error
+        const wrappedAbort = () => {
+            controller.abort()
         }
-    } finally {
-        controllerIn.signal.removeEventListener('abort', wrappedAbort)
-        controller.signal.removeEventListener('abort', internalAbort)
-    }
+
+        const internalAbort = () => {
+            console.warn(`Aborting ${promise.toString()}`)
+            reject(undefined)
+        }
+
+        controllerIn.signal.addEventListener('abort', wrappedAbort)
+
+        controller.signal.addEventListener('abort', internalAbort)
+
+        promise()
+            .then(resolve)
+            .catch((error) => {
+                if (error !== undefined) {
+                    reject(error)
+                }
+            })
+            .finally(() => {
+                controllerIn.signal.removeEventListener('abort', wrappedAbort)
+                controller.signal.removeEventListener('abort', internalAbort)
+            })
+    })
 }
 
 function getLatestCreatedChannels(createdChannelEvents: StreamTimelineEvent[]) {
