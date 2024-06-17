@@ -6,6 +6,7 @@ import { useEmbeddedWallet, useGetEmbeddedSigner } from '@towns/privy'
 import { clearEmbeddedWalletStorage } from '@towns/privy/EmbeddedSignerContext'
 import { ErrorNotification } from '@components/Notifications/ErrorNotifcation'
 import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
+import { useUnsubscribeNotification } from 'hooks/usePushSubscription'
 import { useAutoLoginToRiverIfEmbeddedWallet } from './useAutoLoginToRiverIfEmbeddedWallet'
 
 type CombinedAuthContext = {
@@ -56,6 +57,7 @@ function useCombinedAuthContext(): CombinedAuthContext {
         authError,
     } = useConnectivity()
     const { logout: privyLogout } = usePrivy()
+    const unsubscribeNotification = useUnsubscribeNotification()
 
     const { isAutoLoggingInToRiver, loginToRiverAfterPrivy, resetAutoLoginState } =
         useAutoLoginToRiverIfEmbeddedWallet({
@@ -92,7 +94,8 @@ function useCombinedAuthContext(): CombinedAuthContext {
         await privyLogout()
         clearEmbeddedWalletStorage()
         resetAutoLoginState()
-    }, [riverLogout, privyLogout, resetAutoLoginState])
+        await unsubscribeNotification()
+    }, [privyLogout, resetAutoLoginState, unsubscribeNotification, riverLogout])
 
     return useMemo(
         () => ({

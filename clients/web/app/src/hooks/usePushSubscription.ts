@@ -1,12 +1,12 @@
-import { useEffect } from 'react'
-import { useMyProfile } from 'use-towns-client'
+import { useCallback, useEffect } from 'react'
+import { useMyUserId } from 'use-towns-client'
 import { axiosClient } from 'api/apiClient'
 import { env } from 'utils/environment'
 import { notificationsSupported } from './usePushNotifications'
 
 export const usePushSubscription = () => {
     const notificationsStatus = notificationsSupported() ? Notification.permission : undefined
-    const userId = useMyProfile()?.userId
+    const userId = useMyUserId()
 
     useEffect(() => {
         const abortController = new AbortController()
@@ -77,6 +77,52 @@ async function getOrRegisterPushSubscription() {
         console.error('PUSH: failed to get subscription', e)
     }
     return undefined
+}
+
+async function deletePushSubscription(userId: string) {
+    console.log('PUSH: delete push subscription')
+    const subscription = await getOrRegisterPushSubscription()
+    if (!subscription) {
+        return
+    }
+
+    const data = { subscriptionObject: subscription.toJSON(), userId: userId }
+    const url = env.VITE_WEB_PUSH_WORKER_URL
+    if (!url) {
+        console.error('PUSH: env.VITE_WEB_PUSH_WORKER_URL not set')
+        return
+    }
+    try {
+        await axiosClient.post(`${url}/api/remove-subscription`, data)
+        console.log('PUSH: deleted push subscription')
+    } catch (e) {
+        console.error('PUSH: failed to delete push subscription', e)
+    }
+}
+
+async function unsubscribePushSubscription() {
+    try {
+        const registration = await navigator.serviceWorker.ready
+        const subscription = await registration.pushManager.getSubscription()
+        if (subscription) {
+            await subscription.unsubscribe()
+        }
+    } catch (e) {
+        console.error('PUSH: failed to unsubscribe', e)
+    }
+}
+
+export const useUnsubscribeNotification = () => {
+    const userId = useMyUserId()
+
+    const unsubscribeNotification = useCallback(async () => {
+        if (userId) {
+            await deletePushSubscription(userId)
+        }
+        await unsubscribePushSubscription()
+    }, [userId])
+
+    return unsubscribeNotification
 }
 
 function urlB64ToUint8Array(base64String: string) {
