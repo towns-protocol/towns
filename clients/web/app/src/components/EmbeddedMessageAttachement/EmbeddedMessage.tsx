@@ -115,7 +115,14 @@ export const EmbeddedMessage = (props: {
                     {props.attachmentChildren}
                 </Box>
 
-                <Stack horizontal gap="sm" color="gray2" alignItems="center" fontSize="sm">
+                <Stack
+                    horizontal
+                    gap="sm"
+                    color="gray2"
+                    alignItems="center"
+                    fontSize="sm"
+                    flexWrap="wrap"
+                >
                     {isKnownChannel && channelName ? (
                         <>
                             <Text size={{ desktop: 'sm', mobile: 'xs' }} whiteSpace="nowrap">
