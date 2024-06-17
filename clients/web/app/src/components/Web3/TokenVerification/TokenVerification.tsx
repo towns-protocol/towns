@@ -9,7 +9,7 @@ import {
     useUnlinkWalletTransaction,
 } from 'use-towns-client'
 import { useGetEmbeddedSigner } from '@towns/privy'
-import { Button, Grid, Icon, IconButton, MotionBox, Stack, Text } from '@ui'
+import { Button, Grid, Icon, IconButton, MotionBox, Paragraph, Stack, Text } from '@ui'
 import { useErrorToast } from 'hooks/useErrorToast'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { isTouch } from 'hooks/useDevice'
@@ -17,6 +17,7 @@ import { useJoinTown } from 'hooks/useJoinTown'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { TokenGatingMembership, useTokensGatingMembership } from 'hooks/useTokensGatingMembership'
+import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { FullPanelOverlay, LinkedWallet, useConnectThenLink } from '../WalletLinkingPanel'
 import { mapToErrorMessage } from '../utils'
 import { currentWalletLinkingStore, useTokenBalances } from './tokenStatus'
@@ -29,6 +30,9 @@ export function TokenVerification({ onHide, spaceId }: { spaceId: string; onHide
     const tokensLength = tokensGatingMembership?.tokens.length ?? 0
     const maxWidth = tokensLength > 2 ? 'auto' : '400'
     const getSigner = useGetEmbeddedSigner()
+    const { data: aaAdress } = useAbstractAccountAddress({
+        rootKeyAddress: loggedInWalletAddress,
+    })
 
     const {
         isLoading: isLoadingUnlinkingWallet,
@@ -61,19 +65,24 @@ export function TokenVerification({ onHide, spaceId }: { spaceId: string; onHide
                 <Text color="gray1">{`To join this town, you need to prove ownership of the following digital asset(s):`}</Text>
 
                 <Content tokensGatingMembership={tokensGatingMembership}>
+                    {linkedWallets?.length ? <Paragraph strong>Linked Wallets</Paragraph> : null}
                     {linkedWallets !== undefined &&
-                        linkedWallets.map((a) => {
-                            return (
-                                <Stack width="100%" key={a}>
-                                    <LinkedWallet
-                                        height="x7"
-                                        address={a as Address}
-                                        loggedInWalletAddress={loggedInWalletAddress ?? '0x'}
-                                        onUnlinkClick={onUnlinkClick}
-                                    />
-                                </Stack>
-                            )
-                        })}
+                        linkedWallets
+                            // exclude showing the aaAdress in the list of linked wallets for digital asset requirement
+                            // we don't want users sending assets here
+                            .filter((a) => a !== aaAdress)
+                            .map((a) => {
+                                return (
+                                    <Stack width="100%" key={a}>
+                                        <LinkedWallet
+                                            height="x7"
+                                            address={a as Address}
+                                            loggedInWalletAddress={loggedInWalletAddress ?? '0x'}
+                                            onUnlinkClick={onUnlinkClick}
+                                        />
+                                    </Stack>
+                                )
+                            })}
                 </Content>
 
                 {isLoadingUnlinkingWallet && <FullPanelOverlay text="Unlinking Wallet" />}
