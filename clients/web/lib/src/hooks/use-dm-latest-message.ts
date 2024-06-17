@@ -197,7 +197,15 @@ function toMostRecentMessageInfo(
     switch (content.content.msgType) {
         case MessageType.Text: {
             const hasUnfurledLink = content.attachments?.some((x) => x.type === 'unfurled_link')
-            if (!hasUnfurledLink && content.attachments && content.attachments.length > 0) {
+            const isEmbeddedMessage = content.attachments?.some(
+                (attachment) => attachment.type === 'embedded_message',
+            )
+            if (
+                !isEmbeddedMessage &&
+                !hasUnfurledLink &&
+                content.attachments &&
+                content.attachments.length > 0
+            ) {
                 const hasEmbeddedMedia = content.attachments.some(
                     (attachment) => attachment.type === 'embedded_media',
                 )
