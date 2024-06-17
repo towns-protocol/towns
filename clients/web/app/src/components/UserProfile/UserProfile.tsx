@@ -2,7 +2,7 @@ import { Nft, useMemberOf, useSpaceData, useUserLookupContext } from 'use-towns-
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { toast } from 'react-hot-toast/headless'
-import { isDefined } from '@river/sdk'
+import { isDMChannelStreamId, isDefined, isGDMChannelStreamId } from '@river/sdk'
 import {
     Box,
     Button,
@@ -152,9 +152,9 @@ export const UserProfile = (props: Props) => {
                         horizontal
                         grow
                         hoverable
+                        paddingX
+                        paddingY="sm"
                         gap="sm"
-                        paddingX="sm"
-                        paddingY="xs"
                         rounded="full"
                         background="level2"
                         width="100%"
@@ -197,13 +197,16 @@ export const UserProfile = (props: Props) => {
                     </Stack>
                 )}
             </Stack>
-
             {canEdit ? (
                 <>
-                    {spaceData && (
-                        <SetUsernameDisplayName
-                            titleProperties={{ kind: 'space', spaceName: spaceData.name }}
-                        />
+                    {streamId && isGDMChannelStreamId(streamId) ? (
+                        <SetUsernameDisplayName streamId={streamId} />
+                    ) : streamId && isDMChannelStreamId(streamId) ? (
+                        <SetUsernameDisplayName streamId={streamId} />
+                    ) : spaceData ? (
+                        <SetUsernameDisplayName streamId={spaceData.id} />
+                    ) : (
+                        <></>
                     )}
                 </>
             ) : (

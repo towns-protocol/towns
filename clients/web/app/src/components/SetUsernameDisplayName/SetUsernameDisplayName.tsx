@@ -1,6 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { LookupUser, useMyUserId, useTownsClient, useUserLookupContext } from 'use-towns-client'
-import { useParams } from 'react-router'
+import {
+    LookupUser,
+    useMyUserId,
+    useSpaceData,
+    useTownsClient,
+    useUserLookupStore,
+} from 'use-towns-client'
 import noop from 'lodash/noop'
 import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
 import { Box, Button, Divider, IconButton, Stack, Text, TextButton, TextField } from '@ui'
@@ -17,15 +22,16 @@ import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { CHANNEL_INFO_PARAMS } from 'routes'
 import { useDevice } from 'hooks/useDevice'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { useRouteParams } from 'hooks/useRouteParams'
 
 export const useCurrentStreamID = () => {
-    const { spaceSlug, channelSlug } = useParams()
-    if (channelSlug) {
-        if (isDMChannelStreamId(channelSlug) || isGDMChannelStreamId(channelSlug)) {
-            return channelSlug
+    const { spaceId, channelId } = useRouteParams()
+    if (channelId) {
+        if (isDMChannelStreamId(channelId) || isGDMChannelStreamId(channelId)) {
+            return channelId
         }
     }
-    return spaceSlug
+    return spaceId
 }
 
 const validateDisplayName = (displayName: string) => {
@@ -38,29 +44,26 @@ const validateDisplayName = (displayName: string) => {
     return { valid: true }
 }
 
-type TitleProperties = DMTitleProperties | GDMTitleProperties | SpaceTitleProperties
+export const SetUsernameDisplayName = (props: { streamId: string }) => {
+    const { streamId } = props
 
-export type DMTitleProperties = {
-    kind: 'dm'
-    counterPartyName: string
-}
+    const streamType = useMemo(
+        () =>
+            isDMChannelStreamId(streamId) ? 'dm' : isGDMChannelStreamId(streamId) ? 'gdm' : 'space',
+        [streamId],
+    )
 
-export type GDMTitleProperties = {
-    kind: 'gdm'
-}
-
-export type SpaceTitleProperties = {
-    kind: 'space'
-    spaceName: string
-}
-
-export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties }) => {
-    const { titleProperties } = props
     const [showEditFields, setShowEditFields] = useState<boolean>(false)
-    const streamId = useCurrentStreamID()
+
     const myUserId = useMyUserId()
-    const { lookupUser } = useUserLookupContext()
-    const user = myUserId ? lookupUser(myUserId) : undefined
+
+    const user = useUserLookupStore((s) =>
+        streamId && myUserId
+            ? streamType === 'dm' || streamType === 'gdm'
+                ? s.channelUsers[streamId]?.[myUserId]
+                : s.spaceUsers[streamId]?.[myUserId]
+            : undefined,
+    )
 
     const { setUsername } = useSetUsername()
     const { setDisplayName } = useTownsClient()
@@ -160,30 +163,60 @@ export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties
         [onSave, saveButtonDisabled],
     )
 
+    /**
+     * saving this in case we actually need it - I think "in this DM" is enough
+     */
+
+    // const { memberIds } = useMembers(streamId)
+    // const dmCounterPartyName = useMemo(() => {
+    //     if (isDMChannelStreamId(streamId)) {
+    //         const counterPartyId =
+    //             memberIds.find((m) => m !== myUserId) ??
+    //             /* last option, you can be in a dm with yourself */
+    //             memberIds[0]
+    //         if (counterPartyId) {
+    //             return useUserLookupStore.getState().channelUsers[streamId]?.[counterPartyId]
+    //         }
+    //     }
+    //     return ''
+    // }, [memberIds, myUserId, streamId])
+
+    const spaceData = useSpaceData()
+
+    const spaceName = spaceData?.id === streamId ? spaceData?.name : undefined
+
     const titlePrefix = useMemo(() => {
-        switch (titleProperties.kind) {
+        switch (streamType) {
             case 'space':
-                return `In ${titleProperties.spaceName}`
+                return `In ${spaceName ?? 'this space'}`
             case 'dm':
-                return `In this DM with ${titleProperties.counterPartyName}`
+                return `In this DM`
             case 'gdm':
                 return `In this group`
         }
-    }, [titleProperties])
-
-    if (!user) {
-        return null
-    }
+    }, [spaceName, streamType])
 
     return (
-        <Stack padding gap="sm" background="level2" rounded="sm">
-            <Box paddingBottom="sm">
-                <Text size="sm" color="gray2">
-                    {titlePrefix}, you appear as:
-                </Text>
-            </Box>
+        <Stack padding gap="paragraph" background="level2" rounded="sm">
+            {user || !showEditFields ? (
+                <Box horizontal justifyContent="spaceBetween" alignItems="end">
+                    <Text size="sm" color="gray2">
+                        {user ? (
+                            <>{titlePrefix}, you appear as:</>
+                        ) : (
+                            <>{titlePrefix}, you don&apos;t have a specific username</>
+                        )}
+                    </Text>
+                    {user && !showEditFields && (
+                        <TextButton onClick={() => setShowEditFields(true)}>Edit</TextButton>
+                    )}
+                </Box>
+            ) : (
+                <></>
+            )}
+
             {showEditFields ? (
-                <>
+                <Stack gap paddingTop="xs">
                     <EditableInputField
                         title="Display name"
                         value={dirtyDisplayName}
@@ -206,33 +239,44 @@ export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties
                         onKeyDown={saveOnEnter}
                         onChange={onUsernameChange}
                     />
+                </Stack>
+            ) : user ? (
+                <>
+                    {user && user.ensAddress && (
+                        <EnsBadge userId={user.userId} ensAddress={user.ensAddress} />
+                    )}
+                    {user ? <UsernameDisplayNameContent user={user} /> : <></>}
+                    {user ? <UsernameDisplayNameEncryptedContent user={user} /> : <></>}
                 </>
             ) : (
-                <>
-                    <Stack horizontal>
-                        <Stack gap="sm">
-                            {user && user.ensAddress && (
-                                <EnsBadge userId={user.userId} ensAddress={user.ensAddress} />
-                            )}
-                            <UsernameDisplayNameContent user={user} />
-                        </Stack>
-                        <Box grow />
-                        <TextButton onClick={() => setShowEditFields(true)}>Edit</TextButton>
-                    </Stack>
-                    <UsernameDisplayNameEncryptedContent user={user} />
-                </>
+                <></>
             )}
-            <Stack horizontal gap="sm">
-                <Button
-                    tone="level3"
-                    size="button_sm"
-                    width="auto"
-                    color="default"
-                    onClick={onSetEnsNameClicked}
-                >
-                    {user?.ensAddress ? 'Edit ENS Display Name' : 'Add ENS Display Name'}
-                </Button>
-            </Stack>
+            {!showEditFields && (
+                <Stack horizontal gap="sm" paddingTop="xs">
+                    {!user && (
+                        <Button
+                            tone="level3"
+                            size="button_sm"
+                            width="auto"
+                            color="default"
+                            onClick={() => {
+                                setShowEditFields(true)
+                            }}
+                        >
+                            Add username
+                        </Button>
+                    )}
+                    <Button
+                        tone="level3"
+                        size="button_sm"
+                        width="auto"
+                        color="default"
+                        onClick={onSetEnsNameClicked}
+                    >
+                        {user?.ensAddress ? 'Edit ENS Display Name' : 'Add ENS Display Name'}
+                    </Button>
+                </Stack>
+            )}
             {showEditFields && (
                 <Stack horizontal>
                     <Box grow />
@@ -258,6 +302,7 @@ export const SetUsernameDisplayName = (props: { titleProperties: TitleProperties
             )}
             {isShowingEnsDisplayNameForm && (
                 <EnsDisplayNameModal
+                    streamId={streamId}
                     currentEnsName={user?.ensAddress}
                     onHide={() => setShowinEnsDisplayNameForm(false)}
                 />
@@ -287,7 +332,7 @@ const EditableInputField = (props: {
 
     const charLimitExceeded = charsRemaining < 0
     return (
-        <Stack gap="sm">
+        <Stack gap="paragraph">
             <Text color="default" fontSize="sm" fontWeight="medium">
                 {title}
             </Text>
@@ -342,11 +387,11 @@ const UsernameDisplayNameContent = (props: { user: LookupUser }) => {
     ) : (
         <>
             {!user.displayNameEncrypted && user.displayName.length > 0 && (
-                <Text color="default" fontWeight="strong">
+                <Text color="default" fontSize="lg" fontWeight="strong">
                     {getPrettyDisplayName(user)}
                 </Text>
             )}
-            {!user.usernameEncrypted && <Text color="default">@{user.username}</Text>}
+            {!user.usernameEncrypted && <Text color="gray2">@{user.username}</Text>}
         </>
     )
 }
@@ -365,11 +410,14 @@ const UsernameDisplayNameEncryptedContent = (props: { user: LookupUser }) => {
 }
 
 // TODO: use mask to show that there's more data on the scroll
-const EnsDisplayNameModal = (props: { currentEnsName?: string; onHide: () => void }) => {
-    const { onHide, currentEnsName: currentEnsName } = props
+const EnsDisplayNameModal = (props: {
+    streamId: string
+    currentEnsName?: string
+    onHide: () => void
+}) => {
+    const { streamId, onHide, currentEnsName: currentEnsName } = props
     const { ensNames, isFetching } = useEnsNames()
     const { setEnsName } = useSetEnsName()
-    const streamId = useCurrentStreamID()
     const { openPanel } = usePanelActions()
     const [selectedWallet, setSelectedWallet] = useState<string | undefined>(currentEnsName)
     const [pendingWallet, setPendingWallet] = useState<string | undefined>(undefined)

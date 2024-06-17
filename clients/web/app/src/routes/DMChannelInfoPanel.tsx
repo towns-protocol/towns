@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { useNavigate } from 'react-router'
 import {
     Address,
     DMChannelContextUserLookupProvider,
@@ -19,11 +19,7 @@ import { useDevice } from 'hooks/useDevice'
 import { CHANNEL_INFO_PARAMS } from 'routes'
 import { useUserList } from '@components/UserList/UserList'
 import { useCreateLink } from 'hooks/useCreateLink'
-import {
-    DMTitleProperties,
-    GDMTitleProperties,
-    SetUsernameDisplayName,
-} from '@components/SetUsernameDisplayName/SetUsernameDisplayName'
+import { SetUsernameDisplayName } from '@components/SetUsernameDisplayName/SetUsernameDisplayName'
 import { PanelButton } from '@components/Panel/PanelButton'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
@@ -52,7 +48,6 @@ export const DMChannelInfo = (props: { channelId?: string; data?: DMChannelIdent
     const { isTouch } = useDevice()
     const { analytics } = useAnalytics()
 
-    const { channelSlug } = useParams()
     const { memberIds } = useMembers(channelId)
     const { lookupUser } = useUserLookupContext()
     const members = useMemo(
@@ -136,31 +131,13 @@ export const DMChannelInfo = (props: { channelId?: string; data?: DMChannelIdent
     )
     const memberCount = members.length ?? 0
 
-    const usernameProperties = useMemo(() => {
-        if (!data) {
-            return undefined
-        }
-        if (data.isGroup) {
-            return {
-                kind: 'gdm',
-            } satisfies GDMTitleProperties
-        } else {
-            return {
-                kind: 'dm',
-                counterPartyName: membersText,
-            } satisfies DMTitleProperties
-        }
-    }, [data, membersText])
-
     const isGDM = data?.isGroup ?? false
 
     return (
         <>
-            <DMChannelContextUserLookupProvider channelId={channelSlug ?? ''}>
+            <DMChannelContextUserLookupProvider channelId={channelId ?? ''}>
                 <Stack gap>
-                    {usernameProperties && (
-                        <SetUsernameDisplayName titleProperties={usernameProperties} />
-                    )}
+                    {channelId && <SetUsernameDisplayName streamId={channelId} />}
                     {isGDM ? (
                         <>
                             {memberNamesExludingSelf.length > 0 && (
@@ -185,7 +162,6 @@ export const DMChannelInfo = (props: { channelId?: string; data?: DMChannelIdent
                             ))}
                         </>
                     )}
-
                     {isGDM && (
                         <PanelButton onClick={onMembersClick}>
                             <Icon type="people" size="square_sm" color="gray2" />
