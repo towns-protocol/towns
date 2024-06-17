@@ -9,6 +9,8 @@ import { PATHS } from 'routes'
 import { AuthenticatedRoutes } from 'routes/AuthenticatedRoutes'
 import { PlaygroundLazy } from '@components/Playground/PlaygroundLazy'
 import { PublicTownPage } from 'routes/PublicTownPage/PublicTownPage'
+import { env } from 'utils'
+import { DebugRoute } from '@components/DebugBar/DebugBar'
 
 export const AllRoutes = () => {
     const { isAuthenticated } = useConnectivity()
@@ -35,6 +37,7 @@ export const AllRoutes = () => {
                     </Route>
 
                     <Route path="/playground/*" element={<PlaygroundLazy />} />
+                    {env.DEV && <Route path="/env" element={<DebugRoute />} />}
                 </Route>
             </Routes>
         </>

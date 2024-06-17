@@ -12,13 +12,19 @@ import { debug } from 'debug'
 import { isAddress } from 'ethers/lib/utils'
 import { usePrivy } from '@privy-io/react-auth'
 import { useEmbeddedWallet } from '@towns/privy'
+import { useNavigate } from 'react-router'
 import { PrivyWrapper } from 'privy/PrivyProvider'
 import { Box, Button, Divider, Stack, Text, TextField } from '@ui'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { shortAddress } from 'ui/utils/utils'
 import { isTouch } from 'hooks/useDevice'
 
-import { ENVIRONMENTS, TownsEnvironmentInfo, UseEnvironmentReturn } from 'hooks/useEnvironmnet'
+import {
+    ENVIRONMENTS,
+    TownsEnvironmentInfo,
+    UseEnvironmentReturn,
+    useEnvironment,
+} from 'hooks/useEnvironmnet'
 import { useCombinedAuth } from 'privy/useCombinedAuth'
 import { useMockNftBalance } from 'hooks/useMockNftBalance'
 import { useBalance } from 'hooks/useBalance'
@@ -27,7 +33,6 @@ const log = debug('app:DebugBar')
 const anvilKey = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
 
 type ModalProps = {
-    onHide: () => void
     platform: string
     synced: boolean
     environment: UseEnvironmentReturn
@@ -141,7 +146,7 @@ const FundButton = (props: FundProps & { disabled: boolean }) => {
     )
 }
 
-const DebugModal = ({ onHide, environment }: ModalProps) => {
+const DebugModal = ({ environment }: ModalProps) => {
     const { baseProvider: provider, baseChain, signerContext, clientSingleton } = useTownsContext()
     const walletChain = baseChain
     const { logout: libLogout } = useConnectivity()
@@ -202,7 +207,7 @@ const DebugModal = ({ onHide, environment }: ModalProps) => {
     }, [clearEnvironment, deleteDbs])
 
     return (
-        <ModalContainer onHide={onHide}>
+        <ModalContainer onHide={() => {}}>
             <Stack gap="lg">
                 <Text strong size="sm">
                     Environment: {environment.id}
@@ -273,7 +278,6 @@ const DebugModal = ({ onHide, environment }: ModalProps) => {
                                 size="button_xs"
                                 onClick={async () => {
                                     await privyLogout()
-                                    onHide()
                                 }}
                             >
                                 Logout from Privy
@@ -287,10 +291,6 @@ const DebugModal = ({ onHide, environment }: ModalProps) => {
                                 }}
                             >
                                 Logout from River + Privy
-                            </Button>
-
-                            <Button size="button_xs" onClick={onHide}>
-                                Cancel
                             </Button>
                         </Stack>
                     </>
@@ -357,15 +357,12 @@ const useAsyncSwitchNetwork = () => {
 
 const DebugBar = (environment: UseEnvironmentReturn) => {
     const chain = environment.baseChain
-    const [modal, setModal] = useState(false)
+    const navigate = useNavigate()
+
     const { accountAbstractionConfig } = environment
 
-    const onHide = useEvent(() => {
-        setModal(false)
-    })
-
     const onShow = useEvent(() => {
-        setModal(true)
+        navigate('/env')
     })
 
     const connectedChainId = chain?.id
@@ -390,16 +387,14 @@ const DebugBar = (environment: UseEnvironmentReturn) => {
             gap="sm"
             justifyContent={touch ? 'start' : 'end'}
         >
-            {modal && (
-                <PrivyWrapper>
-                    <DebugModal
-                        environment={environment}
-                        platform={platform}
-                        synced={synced}
-                        onHide={onHide}
-                    />
-                </PrivyWrapper>
-            )}
+            {/* {modal && (
+                <DebugModal
+                    environment={environment}
+                    platform={platform}
+                    synced={synced}
+                    onHide={onHide}
+                />
+            )} */}
             <Box flexDirection="row" alignItems="center" cursor="pointer" gap="sm" onClick={onShow}>
                 {touch ? (
                     <>
@@ -449,3 +444,20 @@ const DebugBar = (environment: UseEnvironmentReturn) => {
 }
 
 export default DebugBar
+
+export const DebugRoute = React.memo(() => {
+    const environment = useEnvironment()
+    const chain = environment.baseChain
+
+    const serverName = environment.id
+    const connectedChainId = chain?.id
+
+    const platform = !chain?.name ? ` ${serverName}` : `w: ${chain.id} | ${serverName}`
+    const synced = environment.baseChain.id === connectedChainId
+
+    return (
+        <PrivyWrapper>
+            <DebugModal environment={environment} platform={platform} synced={synced} />
+        </PrivyWrapper>
+    )
+})
