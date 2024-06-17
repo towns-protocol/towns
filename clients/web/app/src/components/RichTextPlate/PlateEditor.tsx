@@ -22,6 +22,7 @@ import { ELEMENT_PARAGRAPH } from '@udecode/plate-paragraph'
 import every from 'lodash/every'
 import isEqual from 'lodash/isEqual'
 import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
+import { uniq } from 'lodash'
 import { useMediaDropContext } from '@components/MediaDropContext/MediaDropContext'
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { Box, BoxProps, Stack } from '@ui'
@@ -141,12 +142,18 @@ const PlateEditorWithoutBoundary = ({
 
     const { lookupUser } = useUserLookupContext()
 
-    const spaceMembers = useMemo(
-        () => spaceMemberIds.map((userId) => lookupUser(userId)).filter(notUndefined),
-        [spaceMemberIds, lookupUser],
+    const availableMemberIds = useMemo(
+        () => uniq([...channelMemberIds, ...spaceMemberIds]),
+        [channelMemberIds, spaceMemberIds],
+    )
+
+    const availableMembers = useMemo(
+        () => availableMemberIds.map((userId) => lookupUser(userId)).filter(notUndefined),
+        [availableMemberIds, lookupUser],
     )
 
     const channelId = useChannelId()
+
     const isDMorGDM = useMemo(
         () => isDMChannelStreamId(channelId) || isGDMChannelStreamId(channelId),
         [channelId],
@@ -154,14 +161,14 @@ const PlateEditorWithoutBoundary = ({
 
     const userMentions: TComboboxItemWithData<TUserWithChannel>[] = useMemo(() => {
         return (isDMorGDM ? [] : [AtChannelUser])
-            .concat(spaceMembers)
+            .concat(availableMembers)
             .map((user) => ({
                 text: getPrettyDisplayName(user),
                 key: user.userId,
                 data: { ...user, isChannelMember: channelMemberIds.includes(user.userId) },
             }))
             .filter(notUndefined)
-    }, [isDMorGDM, channelMemberIds, spaceMembers])
+    }, [isDMorGDM, availableMembers, channelMemberIds])
 
     const channelMentions: TComboboxItemWithData<Channel>[] = useMemo(() => {
         return channels
@@ -174,8 +181,8 @@ const PlateEditorWithoutBoundary = ({
     }, [channels])
 
     const userIdNameMap: TUserIDNameMap = useMemo(() => {
-        return getUserIdNameMap(spaceMembers)
-    }, [spaceMembers])
+        return getUserIdNameMap(availableMembers)
+    }, [availableMembers])
 
     const initialValue = useMemo(() => {
         if (!_initialValue) {
