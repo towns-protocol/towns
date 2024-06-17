@@ -1,6 +1,10 @@
 name: 'Run_river_stress_tests'
 
 on:
+    schedule:
+        # Once per hour between 8 - 4 PST
+        - cron: '0 16-23,0 * * *'
+
     workflow_dispatch:
         inputs:
             environment_name:
@@ -22,7 +26,7 @@ on:
                 description: 'Container count'
                 required: true
                 type: number
-                default: 10
+                default: 2
             stress_duration:
                 description: 'Stress test duration (seconds)'
                 required: true
@@ -64,14 +68,28 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
 
+            - name: Set Environment Variables
+              run: |
+                  # if this is a cron job, set default values:
+
+                    if [ -z "${{ inputs.environment_name }}" ]; then
+                        echo "No environment name provided, using default values."
+                        echo "ENVIRONMENT_NAME=gamma" >> $GITHUB_ENV
+                        echo "CLIENTS_COUNT=40" >> $GITHUB_ENV
+                        echo "PROCESSES_PER_CONTAINER=2" >> $GITHUB_ENV
+                        echo "CONTAINER_COUNT=2" >> $GITHUB_ENV
+                        echo "STRESS_DURATION=300" >> $GITHUB_ENV
+                        echo "ECS_MODE=task" >> $GITHUB_ENV
+                    else
+                        echo "ENVIRONMENT_NAME=${{ inputs.environment_name }}" >> $GITHUB_ENV
+                        echo "CLIENTS_COUNT=${{ inputs.clients_count }}" >> $GITHUB_ENV
+                        echo "PROCESSES_PER_CONTAINER=${{ inputs.processes_per_container }}" >> $GITHUB_ENV
+                        echo "CONTAINER_COUNT=${{ inputs.container_count }}" >> $GITHUB_ENV
+                        echo "STRESS_DURATION=${{ inputs.stress_duration }}" >> $GITHUB_ENV
+                        echo "ECS_MODE=${{ inputs.ecs_mode }}" >> $GITHUB_ENV
+                    fi
+
             - name: Run ECS Cluster Tasks
-              env:
-                  ENVIRONMENT_NAME: ${{ inputs.environment_name }}
-                  CLIENTS_COUNT: ${{ inputs.clients_count }}
-                  PROCESSES_PER_CONTAINER: ${{ inputs.processes_per_container }}
-                  CONTAINER_COUNT: ${{ inputs.container_count }}
-                  STRESS_DURATION: ${{ inputs.stress_duration }}
-                  ECS_MODE: ${{ inputs.ecs_mode }}
               run: ./scripts/run-river-stress-tests.sh
 
             # If action failed, we send a slack notification
