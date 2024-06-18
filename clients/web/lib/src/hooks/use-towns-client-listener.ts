@@ -1,5 +1,5 @@
 import { MutableRefObject, useEffect, useRef, useState } from 'react'
-import { Client as CasablancaClient, SignerContext } from '@river/sdk'
+import { Client as CasablancaClient, SignerContext, userIdFromAddress } from '@river/sdk'
 import { check } from '@river-build/dlog'
 import { AuthStatus } from './login'
 import { TownsClient } from '../client/TownsClient'
@@ -16,6 +16,7 @@ import { staticAssertNever } from '../utils/towns-utils'
 import AnalyticsService, { AnalyticsEvents } from '../utils/analyticsService'
 import { useNetworkStatus } from './use-network-status'
 import { useSpaceDapp } from './use-space-dapp'
+import { useOfflineStore } from '../store/use-offline-store'
 
 export const useTownsClientListener = (opts: TownsOpts) => {
     const { setAuthStatus: setCasablancaAuthStatus, setAuthError: setCasablancaAuthError } =
@@ -254,15 +255,16 @@ async function logInWithRetries(
         try {
             console.log('**logging in')
             const context = credentialsToSignerContext(credentials)
-
-            // use unauthenticated client to check to see if we exist on the server, if so, we can login
-            const unauthedClient = await client.makeUnauthenticatedClient()
-            const isRegistered = await unauthedClient.userWithAddressExists(context.creatorAddress)
+            const userId = userIdFromAddress(context.creatorAddress)
+            const isRegistered =
+                useOfflineStore.getState().skipIsRegisteredCheck[userId] ||
+                (await fetchIsRegistered(client, context))
             if (!isRegistered) {
                 console.log("**user authenticated, hasn't joined a space")
                 return new Credentialed(credentials, context)
             } else {
                 console.log('**user authenticated, starting casablanca client')
+                useOfflineStore.getState().setSkipIsRegisteredCheck(userId)
                 const casablancaClient = await client.startCasablancaClient(context)
                 return new ConnectedToRiver(credentials, casablancaClient, context)
             }
@@ -341,4 +343,10 @@ function logServerUrlMismatch(
             client: clientSingleton.current?.client.opts.environmentId,
         })
     }
+}
+
+async function fetchIsRegistered(client: TownsClient, context: SignerContext) {
+    console.log('** fetching Is registered State for', context.creatorAddress)
+    const unauthedClient = await client.makeUnauthenticatedClient()
+    return await unauthedClient.userWithAddressExists(context.creatorAddress)
 }

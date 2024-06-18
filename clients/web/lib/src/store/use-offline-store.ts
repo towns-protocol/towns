@@ -26,6 +26,8 @@ export type OfflineWalletAddressMap = Record<string, string>
 export type OfflineUserBioMap = Record<string, string>
 
 export type OfflineStates = {
+    skipIsRegisteredCheck: Record<string, boolean>
+    setSkipIsRegisteredCheck: (userAddress: string) => void
     offlineSpaceInfoMap: OfflineSpaceInfoMap
     setOfflineSpaceInfo: (spaceInfo: SpaceInfo) => void
     offlineChannelMetadataMap: Record<string, OfflineChannelMetadata>
@@ -50,6 +52,21 @@ export const generateOfflineUserKey = (spaceId: string, walletAddress: string): 
 export const useOfflineStore = create<OfflineStates>(
     (persist as unknown as MyPersist)(
         (set) => ({
+            skipIsRegisteredCheck: {},
+            setSkipIsRegisteredCheck(userAddress: string) {
+                set((state) => {
+                    if (state.skipIsRegisteredCheck[userAddress] === true) {
+                        return state
+                    }
+                    return {
+                        ...state,
+                        skipIsRegisteredCheck: {
+                            ...state.skipIsRegisteredCheck,
+                            [userAddress]: true,
+                        },
+                    }
+                })
+            },
             offlineSpaceInfoMap: {},
             setOfflineSpaceInfo(spaceInfo) {
                 set((state) => {
