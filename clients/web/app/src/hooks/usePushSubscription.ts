@@ -100,23 +100,6 @@ async function deletePushSubscription(userId: string) {
     }
 }
 
-async function unsubscribePushSubscription() {
-    if (!navigator.serviceWorker.controller) {
-        console.info('PUSH: skipping unsubscribe, no service worker controller')
-        return
-    }
-
-    try {
-        const registration = await navigator.serviceWorker.ready
-        const subscription = await registration.pushManager.getSubscription()
-        if (subscription) {
-            await subscription.unsubscribe()
-        }
-    } catch (e) {
-        console.error('PUSH: failed to unsubscribe', e)
-    }
-}
-
 export const useUnsubscribeNotification = () => {
     const userId = useMyUserId()
 
@@ -124,7 +107,6 @@ export const useUnsubscribeNotification = () => {
         if (userId) {
             await deletePushSubscription(userId)
         }
-        await unsubscribePushSubscription()
     }, [userId])
 
     return unsubscribeNotification
