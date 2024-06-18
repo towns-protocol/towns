@@ -20,7 +20,7 @@
         "@mui/icons-material": "^5.10.9",
         "@mui/material": "^5.10.10",
         "@mui/styles": "^5.10.10",
-        "@privy-io/react-auth": "^1.71.0",
+        "@privy-io/react-auth": "1.59.7",
         "@privy-io/wagmi-connector": "^0.1.13",
         "@river-build/generated": "workspace:^",
         "@river-build/web3": "workspace:^",

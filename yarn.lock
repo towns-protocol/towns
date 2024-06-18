@@ -2605,21 +2605,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@coinbase/wallet-sdk@npm:4.0.3":
-  version: 4.0.3
-  resolution: "@coinbase/wallet-sdk@npm:4.0.3"
-  dependencies:
-    buffer: ^6.0.3
-    clsx: ^1.2.1
-    eventemitter3: ^5.0.1
-    keccak: ^3.0.3
-    preact: ^10.16.0
-    sha.js: ^2.4.11
-  checksum: 47c2818b57f13b1fa403a5e79fc3e039a8cfc4daf9e92910aec4fe32caa4f2326d13c7ff26bbe1921cdcae29acfe41fbf5f0d3c9d58ab39035f05b1737bc06ab
-  languageName: node
-  linkType: hard
-
-"@coinbase/wallet-sdk@npm:^3.6.6":
+"@coinbase/wallet-sdk@npm:^3.6.6, @coinbase/wallet-sdk@npm:^3.9.2":
   version: 3.9.3
   resolution: "@coinbase/wallet-sdk@npm:3.9.3"
   dependencies:
@@ -4441,12 +4427,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@heroicons/react@npm:^2.1.1":
-  version: 2.1.3
-  resolution: "@heroicons/react@npm:2.1.3"
+"@heroicons/react@npm:^2.0.18":
+  version: 2.1.4
+  resolution: "@heroicons/react@npm:2.1.4"
   peerDependencies:
     react: ">= 16"
-  checksum: 2a72920fa36d789d08aab76f09a687dd86f2ed665d21d796593e3f744457d5436467f1c3324103a794afa9ca7235ffd1fde00953ce348b501c7304890b1fe746
+  checksum: 4bdfc8934a855321e2e572dbad9bb5198e56d2cfa8d9c70b068d425e1f57028a1d3a114d27a01bd41948c6cc05b84632fc60355c34ad904c6be9671dd029f9ce
   languageName: node
   linkType: hard
 
@@ -6323,11 +6309,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@privy-io/react-auth@npm:^1.71.0":
-  version: 1.71.0
-  resolution: "@privy-io/react-auth@npm:1.71.0"
+"@privy-io/react-auth@npm:1.59.7":
+  version: 1.59.7
+  resolution: "@privy-io/react-auth@npm:1.59.7"
   dependencies:
-    "@coinbase/wallet-sdk": 4.0.3
+    "@coinbase/wallet-sdk": ^3.9.2
     "@ethersproject/abstract-signer": ^5.7.0
     "@ethersproject/address": ^5.7.0
     "@ethersproject/bignumber": ^5.7.0
@@ -6339,11 +6325,10 @@ __metadata:
     "@ethersproject/transactions": ^5.7.0
     "@ethersproject/units": ^5.7.0
     "@headlessui/react": ^1.7.18
-    "@heroicons/react": ^2.1.1
+    "@heroicons/react": ^2.0.18
     "@marsidev/react-turnstile": ^0.4.1
     "@metamask/eth-sig-util": ^6.0.0
-    "@simplewebauthn/browser": ^9.0.1
-    "@walletconnect/ethereum-provider": ^2.13.1
+    "@walletconnect/ethereum-provider": ^2.11.1
     "@walletconnect/modal": ^2.6.2
     base64-js: ^1.5.1
     dotenv: ^16.0.3
@@ -6355,11 +6340,12 @@ __metadata:
     libphonenumber-js: ^1.10.14
     lokijs: ^1.5.12
     md5: ^2.3.0
-    mipd: ^0.0.7
-    ofetch: ^1.3.4
+    mipd: ^0.0.5
+    ofetch: ^1.2.0
     pino-pretty: ^10.0.0
     qrcode: ^1.5.1
     react-device-detect: ^2.2.2
+    react-use: ^17.4.2
     secure-password-utilities: ^0.2.1
     styled-components: ^5.3.6
     tinycolor2: ^1.6.0
@@ -6369,7 +6355,7 @@ __metadata:
   peerDependencies:
     react: ^18
     react-dom: ^18
-  checksum: 816a2f5bee12402f1998ba3823c44685942927785f32a445199fa6d81247449c0feac9d64b38f2a833f82bbe89e394ef6f94bf7f3bca73c8b3638d4a2ed375b4
+  checksum: 6de942d962b54e66bebf76b533b49843a4496bd98e78ee07dfb459f2d25c00967eb286f18535bd8faade8ff13bcf41c67fb4c96509585aea01ef52780da83625
   languageName: node
   linkType: hard
 
@@ -7490,22 +7476,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@simplewebauthn/browser@npm:^9.0.1":
-  version: 9.0.1
-  resolution: "@simplewebauthn/browser@npm:9.0.1"
-  dependencies:
-    "@simplewebauthn/types": ^9.0.1
-  checksum: eb7adcddf8b73c13c5551cc4ed4531135d2cb42947936b13c7c3b7d660fcf9b69f282a846aa2140d76db3d1c81d7502eaec5412fa51cd6ebe251882118ecac23
-  languageName: node
-  linkType: hard
-
-"@simplewebauthn/types@npm:^9.0.1":
-  version: 9.0.1
-  resolution: "@simplewebauthn/types@npm:9.0.1"
-  checksum: 416dfd688eb706a680df4f0982c9ea32535664e015e3c63982f37d61d63a217d440268467658dc2af7bc7ed9d7ac532efb8e752fcc503a79c8e7dc27295ea81b
-  languageName: node
-  linkType: hard
-
 "@sinclair/typebox@npm:^0.27.8":
   version: 0.27.8
   resolution: "@sinclair/typebox@npm:0.27.8"
@@ -7992,7 +7962,7 @@ __metadata:
     eslint-plugin-react: ^7.32.2
     typescript: ^5.1.6
   peerDependencies:
-    "@privy-io/react-auth": ^1.71.0
+    "@privy-io/react-auth": 1.59.7
     "@privy-io/wagmi-connector": ^0.1.13
     "@types/react": ^18.2.11
     "@types/react-dom": ^18.2.4
@@ -10121,7 +10091,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@walletconnect/ethereum-provider@npm:^2.13.1":
+"@walletconnect/ethereum-provider@npm:^2.11.1":
   version: 2.13.3
   resolution: "@walletconnect/ethereum-provider@npm:2.13.3"
   dependencies:
@@ -17196,7 +17166,7 @@ __metadata:
     "@harmony/prettier-config": "workspace:^"
     "@hookform/resolvers": ^2.9.10
     "@ngneat/falso": ^6.1.0
-    "@privy-io/react-auth": ^1.71.0
+    "@privy-io/react-auth": 1.59.7
     "@react-hook/resize-observer": ^1.2.6
     "@react-spring/three": ^9.7.3
     "@react-three/drei": ^9.105.4
@@ -21802,15 +21772,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mipd@npm:^0.0.7":
-  version: 0.0.7
-  resolution: "mipd@npm:0.0.7"
+"mipd@npm:^0.0.5":
+  version: 0.0.5
+  resolution: "mipd@npm:0.0.5"
+  dependencies:
+    viem: ^1.1.4
   peerDependencies:
     typescript: ">=5.0.4"
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: 14526f78d6d1bc8580898922508d64714f5abc7293b5998fe93c54237fd1cea120dc98674fe2b329ba3803bda5a85f3e442c3b1fa880e4c6b443bf73018514a8
+  checksum: 920b3afb3a92daeb66685adb746211ac4268ff805392a2f6e1da2703c43aa5835e5ad7be9d0312582a348d4c764ae3c81ab39362b66607ba0d54032def0038f1
   languageName: node
   linkType: hard
 
@@ -22068,7 +22040,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nano-css@npm:^5.3.1":
+"nano-css@npm:^5.3.1, nano-css@npm:^5.6.1":
   version: 5.6.1
   resolution: "nano-css@npm:5.6.1"
   dependencies:
@@ -22599,6 +22571,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ofetch@npm:^1.2.0":
+  version: 1.3.4
+  resolution: "ofetch@npm:1.3.4"
+  dependencies:
+    destr: ^2.0.3
+    node-fetch-native: ^1.6.3
+    ufo: ^1.5.3
+  checksum: 46749d5bf88cc924657520fa409ece473ee7d70303a374e0acf8a88883576be515861b2342b4e5d491776e2da9c8c52911c3ef298329619ef34832a5a4ffe64c
+  languageName: node
+  linkType: hard
+
 "ofetch@npm:^1.3.3":
   version: 1.3.3
   resolution: "ofetch@npm:1.3.3"
@@ -22607,17 +22590,6 @@ __metadata:
     node-fetch-native: ^1.4.0
     ufo: ^1.3.0
   checksum: 945d757b25ba144f9f45d9de3382de743f0950e68e76726a4c0d2ef01456fa6700a6b102cc343a4e06f71d5ac59a8affdd9a673751c448f4265996f7f22ffa3d
-  languageName: node
-  linkType: hard
-
-"ofetch@npm:^1.3.4":
-  version: 1.3.4
-  resolution: "ofetch@npm:1.3.4"
-  dependencies:
-    destr: ^2.0.3
-    node-fetch-native: ^1.6.3
-    ufo: ^1.5.3
-  checksum: 46749d5bf88cc924657520fa409ece473ee7d70303a374e0acf8a88883576be515861b2342b4e5d491776e2da9c8c52911c3ef298329619ef34832a5a4ffe64c
   languageName: node
   linkType: hard
 
@@ -24205,6 +24177,31 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-use@npm:^17.4.2":
+  version: 17.5.0
+  resolution: "react-use@npm:17.5.0"
+  dependencies:
+    "@types/js-cookie": ^2.2.6
+    "@xobotyi/scrollbar-width": ^1.9.5
+    copy-to-clipboard: ^3.3.1
+    fast-deep-equal: ^3.1.3
+    fast-shallow-equal: ^1.0.0
+    js-cookie: ^2.2.1
+    nano-css: ^5.6.1
+    react-universal-interface: ^0.6.2
+    resize-observer-polyfill: ^1.5.1
+    screenfull: ^5.1.0
+    set-harmonic-interval: ^1.0.1
+    throttle-debounce: ^3.0.1
+    ts-easing: ^0.2.0
+    tslib: ^2.1.0
+  peerDependencies:
+    react: "*"
+    react-dom: "*"
+  checksum: d3164db313f27aa701dcf87177861db6e19624ea7dd8bc81805352af7f6bf04072010b9776da4ac458d6bd318759ee69b12763d96098d83c75b7d66ffc689e3a
+  languageName: node
+  linkType: hard
+
 "react@npm:^18.2.0":
   version: 18.2.0
   resolution: "react@npm:18.2.0"
@@ -25005,7 +25002,7 @@ __metadata:
     "@mui/icons-material": ^5.10.9
     "@mui/material": ^5.10.10
     "@mui/styles": ^5.10.10
-    "@privy-io/react-auth": ^1.71.0
+    "@privy-io/react-auth": 1.59.7
     "@privy-io/wagmi-connector": ^0.1.13
     "@river-build/generated": "workspace:^"
     "@river-build/web3": "workspace:^"
@@ -28532,6 +28529,27 @@ __metadata:
     typescript:
       optional: true
   checksum: 0309bddd163c2da83c36c5f1a62a7a3fa826eb2c8bd578eccb8f1a034f741938bafb616ae6c9f8489f416df2348dc0d09c0ec9146047e99fa2f9e4bc05134497
+  languageName: node
+  linkType: hard
+
+"viem@npm:^1.1.4":
+  version: 1.21.4
+  resolution: "viem@npm:1.21.4"
+  dependencies:
+    "@adraffy/ens-normalize": 1.10.0
+    "@noble/curves": 1.2.0
+    "@noble/hashes": 1.3.2
+    "@scure/bip32": 1.3.2
+    "@scure/bip39": 1.2.1
+    abitype: 0.9.8
+    isows: 1.0.3
+    ws: 8.13.0
+  peerDependencies:
+    typescript: ">=5.0.4"
+  peerDependenciesMeta:
+    typescript:
+      optional: true
+  checksum: c351fdea2d53d2d781ac73c964348b3b9fc5dd46f9eb53903e867705fc9e30a893cb9f2c8d7a00acdcdeca27d14eeebf976eed9f948c28c47018dc9211369117
   languageName: node
   linkType: hard
 
