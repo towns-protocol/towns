@@ -1,9 +1,8 @@
 version: '3'
 services:
   terraform:
-    # build:
-    #   context: .
-    image: public.ecr.aws/l8h0l2e6/hnt-infra
+    build:
+      context: .
     volumes:
     - .:/mnt/
     - ~/.aws/:/root/.aws

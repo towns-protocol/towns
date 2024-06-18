@@ -1,5 +1,4 @@
-# FROM python:3.11-alpine
-FROM public.ecr.aws/l8h0l2e6/hnt-infra:latest
+FROM bash:5.2.26-alpine3.19
 ENV TERRAFORM_VERSION=1.6.3
 
 # Update package list and install packages
@@ -20,6 +19,7 @@ RUN apk update && apk add --no-cache \
   npm \
   jq \
   aws-cli \
+  yarn \
   flock
 
 # Install Terraform
