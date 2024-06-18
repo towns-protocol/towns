@@ -29,17 +29,26 @@ import type {
 export interface IOperatorRegistryInterface extends utils.Interface {
   functions: {
     "approveOperator(address)": FunctionFragment;
+    "getAllOperators()": FunctionFragment;
     "isOperator(address)": FunctionFragment;
     "removeOperator(address)": FunctionFragment;
   };
 
   getFunction(
-    nameOrSignatureOrTopic: "approveOperator" | "isOperator" | "removeOperator"
+    nameOrSignatureOrTopic:
+      | "approveOperator"
+      | "getAllOperators"
+      | "isOperator"
+      | "removeOperator"
   ): FunctionFragment;
 
   encodeFunctionData(
     functionFragment: "approveOperator",
     values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getAllOperators",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "isOperator",
@@ -52,6 +61,10 @@ export interface IOperatorRegistryInterface extends utils.Interface {
 
   decodeFunctionResult(
     functionFragment: "approveOperator",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getAllOperators",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "isOperator", data: BytesLike): Result;
@@ -118,6 +131,8 @@ export interface IOperatorRegistry extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    getAllOperators(overrides?: CallOverrides): Promise<[string[]]>;
+
     isOperator(
       operator: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -134,6 +149,8 @@ export interface IOperatorRegistry extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  getAllOperators(overrides?: CallOverrides): Promise<string[]>;
+
   isOperator(
     operator: PromiseOrValue<string>,
     overrides?: CallOverrides
@@ -149,6 +166,8 @@ export interface IOperatorRegistry extends BaseContract {
       operator: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    getAllOperators(overrides?: CallOverrides): Promise<string[]>;
 
     isOperator(
       operator: PromiseOrValue<string>,
@@ -183,6 +202,8 @@ export interface IOperatorRegistry extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    getAllOperators(overrides?: CallOverrides): Promise<BigNumber>;
+
     isOperator(
       operator: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -199,6 +220,8 @@ export interface IOperatorRegistry extends BaseContract {
       operator: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
+
+    getAllOperators(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     isOperator(
       operator: PromiseOrValue<string>,

@@ -16,6 +16,7 @@ contract DeployOperatorRegistry is FacetHelper, Deployer {
     addSelector(OperatorRegistry.approveOperator.selector);
     addSelector(OperatorRegistry.isOperator.selector);
     addSelector(OperatorRegistry.removeOperator.selector);
+    addSelector(OperatorRegistry.getAllOperators.selector);
   }
 
   function initializer() public pure override returns (bytes4) {

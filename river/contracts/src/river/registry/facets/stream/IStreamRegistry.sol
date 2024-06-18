@@ -108,4 +108,8 @@ interface IStreamRegistry {
   function getStreamsOnNode(
     address nodeAddress
   ) external view returns (StreamWithId[] memory);
+
+  function getStreamCountOnNode(
+    address nodeAddress
+  ) external view returns (uint256);
 }

@@ -7,6 +7,7 @@ export { IChannel__factory } from "./IChannel__factory";
 export { ICustomEntitlement__factory } from "./ICustomEntitlement__factory";
 export { IDiamond__factory } from "./IDiamond__factory";
 export { IDiamondCut__factory } from "./IDiamondCut__factory";
+export { IERC721A__factory } from "./IERC721A__factory";
 export { IERC721AQueryable__factory } from "./IERC721AQueryable__factory";
 export { IEntitlementDataQueryable__factory } from "./IEntitlementDataQueryable__factory";
 export { IEntitlementsManager__factory } from "./IEntitlementsManager__factory";

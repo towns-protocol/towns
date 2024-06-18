@@ -1,0 +1,227 @@
+{
+  "compiler": {
+    "version": "0.8.24+commit.e11b9ed9"
+  },
+  "language": "Solidity",
+  "output": {
+    "abi": [
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "ApprovalCallerNotOwnerNorApproved"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "ApprovalQueryForNonexistentToken"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "BalanceQueryForZeroAddress"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "MintERC2309QuantityExceedsLimit"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "MintToZeroAddress"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "MintZeroQuantity"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "OwnerQueryForNonexistentToken"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "OwnershipNotInitializedForExtraData"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "TransferCallerNotOwnerNorApproved"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "TransferFromIncorrectOwner"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "TransferToNonERC721ReceiverImplementer"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "TransferToZeroAddress"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "URIQueryForNonexistentToken"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "owner",
+            "type": "address",
+            "indexed": true
+          },
+          {
+            "internalType": "address",
+            "name": "approved",
+            "type": "address",
+            "indexed": true
+          },
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "Approval",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "owner",
+            "type": "address",
+            "indexed": true
+          },
+          {
+            "internalType": "address",
+            "name": "operator",
+            "type": "address",
+            "indexed": true
+          },
+          {
+            "internalType": "bool",
+            "name": "approved",
+            "type": "bool",
+            "indexed": false
+          }
+        ],
+        "type": "event",
+        "name": "ApprovalForAll",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "fromTokenId",
+            "type": "uint256",
+            "indexed": true
+          },
+          {
+            "internalType": "uint256",
+            "name": "toTokenId",
+            "type": "uint256",
+            "indexed": false
+          },
+          {
+            "internalType": "address",
+            "name": "from",
+            "type": "address",
+            "indexed": true
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "ConsecutiveTransfer",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "from",
+            "type": "address",
+            "indexed": true
+          },
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address",
+            "indexed": true
+          },
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "Transfer",
+        "anonymous": false
+      }
+    ],
+    "devdoc": {
+      "kind": "dev",
+      "methods": {},
+      "version": 1
+    },
+    "userdoc": {
+      "kind": "user",
+      "methods": {},
+      "version": 1
+    }
+  },
+  "settings": {
+    "remappings": [
+      "@openzeppelin/=lib/@openzeppelin/",
+      "@prb/math/=lib/@prb/math/src/",
+      "@prb/test/=lib/@prb/test/src/",
+      "account-abstraction/=lib/account-abstraction/contracts/",
+      "base64/=lib/base64/",
+      "ds-test/=lib/ds-test/src/",
+      "forge-std/=lib/forge-std/src/",
+      "hardhat-deploy/=lib/hardhat-deploy/"
+    ],
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "metadata": {
+      "bytecodeHash": "none",
+      "appendCBOR": false
+    },
+    "compilationTarget": {
+      "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol": "IERC721ABase"
+    },
+    "evmVersion": "paris",
+    "libraries": {}
+  },
+  "sources": {
+    "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol": {
+      "keccak256": "0xb57dee608d37c98c32ac38fa3c84e77f5962cf39a0697815ad209edf55593782",
+      "urls": [
+        "bzz-raw://092750f101ae80c5bace9fd53ae87547a0aac6109cd58290609acd2ef489ce9d",
+        "dweb:/ipfs/QmREM18vUEQmcmnTSyR4XxHB9Ykqomc9RuCFZcWNiovgbz"
+      ],
+      "license": "MIT"
+    }
+  },
+  "version": 1
+}

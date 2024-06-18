@@ -83,4 +83,34 @@ contract OperatorRegistryTest is RiverRegistryBaseSetup, IOwnableBase {
     vm.expectRevert(bytes(RiverRegistryErrors.OPERATOR_NOT_FOUND));
     operatorRegistry.removeOperator(nodeOperator);
   }
+
+  // =============================================================
+  //                            getAllOperators
+  // =============================================================
+
+  function test_getAllOperators() external {
+    address[] memory operators = operatorRegistry.getAllOperators();
+    // initially, we have 1 operator
+    assertEq(operators.length, 1);
+
+    vm.prank(deployer);
+    address nodeOperator1 = address(0x1);
+    operatorRegistry.approveOperator(nodeOperator1);
+
+    operators = operatorRegistry.getAllOperators();
+    assertEq(operators.length, 2);
+
+    vm.prank(deployer);
+    address nodeOperator2 = address(0x2);
+    operatorRegistry.approveOperator(nodeOperator2);
+
+    operators = operatorRegistry.getAllOperators();
+    assertEq(operators.length, 3);
+
+    vm.prank(deployer);
+    operatorRegistry.removeOperator(nodeOperator1);
+
+    operators = operatorRegistry.getAllOperators();
+    assertEq(operators.length, 2);
+  }
 }

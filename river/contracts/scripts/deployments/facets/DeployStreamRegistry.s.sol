@@ -26,6 +26,7 @@ contract DeployStreamRegistry is FacetHelper, Deployer {
     addSelector(StreamRegistry.getAllStreams.selector);
     addSelector(StreamRegistry.getPaginatedStreams.selector);
     addSelector(StreamRegistry.getStreamsOnNode.selector);
+    addSelector(StreamRegistry.getStreamCountOnNode.selector);
   }
 
   function versionName() public pure override returns (string memory) {

@@ -1,0 +1,175 @@
+{
+  "compiler": {
+    "version": "0.8.24+commit.e11b9ed9"
+  },
+  "language": "Solidity",
+  "output": {
+    "abi": [
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "operator",
+            "type": "address"
+          }
+        ],
+        "type": "error",
+        "name": "SpaceDelegation__AlreadyDelegated"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "SpaceDelegation__AlreadyRegistered"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "SpaceDelegation__InvalidAddress"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "SpaceDelegation__InvalidOperator"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "SpaceDelegation__InvalidSpace"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "SpaceDelegation__InvalidStakeRequirement"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "SpaceDelegation__InvalidStatusTransition"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "SpaceDelegation__NotEnoughStake"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "SpaceDelegation__NotRegistered"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "SpaceDelegation__NotTransferable"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "SpaceDelegation__StatusNotChanged"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "mainnetDelegation",
+            "type": "address",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "MainnetDelegationChanged",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "riverToken",
+            "type": "address",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "RiverTokenChanged",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "space",
+            "type": "address",
+            "indexed": true
+          },
+          {
+            "internalType": "address",
+            "name": "operator",
+            "type": "address",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "SpaceDelegatedToOperator",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "stakeRequirement",
+            "type": "uint256",
+            "indexed": false
+          }
+        ],
+        "type": "event",
+        "name": "StakeRequirementChanged",
+        "anonymous": false
+      }
+    ],
+    "devdoc": {
+      "kind": "dev",
+      "methods": {},
+      "version": 1
+    },
+    "userdoc": {
+      "kind": "user",
+      "methods": {},
+      "version": 1
+    }
+  },
+  "settings": {
+    "remappings": [
+      "@openzeppelin/=lib/@openzeppelin/",
+      "@prb/math/=lib/@prb/math/src/",
+      "@prb/test/=lib/@prb/test/src/",
+      "account-abstraction/=lib/account-abstraction/contracts/",
+      "base64/=lib/base64/",
+      "ds-test/=lib/ds-test/src/",
+      "forge-std/=lib/forge-std/src/",
+      "hardhat-deploy/=lib/hardhat-deploy/"
+    ],
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "metadata": {
+      "bytecodeHash": "none",
+      "appendCBOR": false
+    },
+    "compilationTarget": {
+      "contracts/src/base/registry/facets/delegation/ISpaceDelegation.sol": "ISpaceDelegationBase"
+    },
+    "evmVersion": "paris",
+    "libraries": {}
+  },
+  "sources": {
+    "contracts/src/base/registry/facets/delegation/ISpaceDelegation.sol": {
+      "keccak256": "0xb7796a50a2686902fb7bc6b25664b6a24c485092718c9eb8501a61b841a36c04",
+      "urls": [
+        "bzz-raw://a54b27f059faa0868c8df0757de492ad8559040cb6956ff71595c8e3f1c783c5",
+        "dweb:/ipfs/QmXy4KFpJEHDvDCNNyEdbeYhUGJtamd8DToKHTbBXuWwdp"
+      ],
+      "license": "MIT"
+    }
+  },
+  "version": 1
+}

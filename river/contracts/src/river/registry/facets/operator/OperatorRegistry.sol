@@ -55,6 +55,10 @@ contract OperatorRegistry is
     emit OperatorRemoved(operator);
   }
 
+  function getAllOperators() external view returns (address[] memory) {
+    return ds.operators.values();
+  }
+
   // =============================================================
   //                           Internal
   // =============================================================

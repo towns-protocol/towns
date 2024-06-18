@@ -23,4 +23,6 @@ interface IOperatorRegistry {
   function isOperator(address operator) external view returns (bool);
 
   function removeOperator(address operator) external;
+
+  function getAllOperators() external view returns (address[] memory);
 }
