@@ -88,3 +88,11 @@ output "node_operator_wallet_private_key" {
 output "notification_apns_auth_key_secret" {
   value = aws_secretsmanager_secret.notification_apns_auth_key
 }
+
+output "gamma_chainsstring_secret" {
+  value = aws_secretsmanager_secret.gamma_chainsstring_secret
+}
+
+output "omega_chainsstring_secret" {
+  value = aws_secretsmanager_secret.omega_chainsstring_secret
+}

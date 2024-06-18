@@ -188,6 +188,7 @@ module "river_node" {
 
   river_chain_id                         = local.river_chain_id
   river_chain_rpc_url_plaintext_override = module.river_anvil_service[0].network_url
+  chainsstring_secret_arn                = local.global_remote_state.gamma_chainsstring_secret.arn
 
   ecs_cluster = {
     id   = local.transient_global_remote_state.river_ecs_cluster.id

@@ -109,3 +109,8 @@ variable "lb" {
     lb_dns_name          = string
   })
 }
+
+variable "chainsstring_secret_arn" {
+  description = "The secret ARN for the chain ids and rpc urls"
+  type        = string
+}

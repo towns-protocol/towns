@@ -245,7 +245,8 @@ resource "aws_iam_role_policy" "river_node_credentials" {
           "${local.global_remote_state.river_mainnet_rpc_url_secret.arn}",
           "${local.global_remote_state.base_sepolia_rpc_url_secret.arn}",
           "${local.global_remote_state.base_mainnet_rpc_url_secret.arn}",
-          "${var.river_node_ssl_cert_secret_arn}"
+          "${var.river_node_ssl_cert_secret_arn}",
+          "${var.chainsstring_secret_arn}"
         ]
       },
       {
@@ -408,6 +409,10 @@ resource "aws_ecs_task_definition" "river-fargate" {
       {
         name      = "TLSCONFIG__KEY",
         valueFrom = "${var.river_node_ssl_cert_secret_arn}:key::"
+      },
+      {
+        name      = "CHAINSSTRING",
+        valueFrom = var.chainsstring_secret_arn
       }
       ],
       local.base_chain_default_td_secret_config,

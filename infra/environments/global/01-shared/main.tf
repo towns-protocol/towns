@@ -154,6 +154,16 @@ resource "aws_secretsmanager_secret" "base_mainnet_rpc_url_secret" {
   description = "Base Mainnet RPC URL"
 }
 
+resource "aws_secretsmanager_secret" "gamma_chainsstring_secret" {
+  name        = "gamma-chainsstring"
+  description = "csv pairs of chain ids and rpc urls for gamma"
+}
+
+resource "aws_secretsmanager_secret" "omega_chainsstring_secret" {
+  name        = "omega-chainsstring"
+  description = "csv pairs of chain ids and rpc urls for omega"
+}
+
 module "river_node_credentials" {
   source = "../../../modules/river-node-credentials"
 

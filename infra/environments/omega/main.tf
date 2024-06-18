@@ -182,6 +182,7 @@ module "archive_node" {
 
   base_chain_rpc_url_secret_arn  = local.global_remote_state.base_mainnet_rpc_url_secret.arn
   river_chain_rpc_url_secret_arn = local.global_remote_state.river_mainnet_rpc_url_secret.arn
+  chainsstring_secret_arn        = local.global_remote_state.omega_chainsstring_secret.arn
 
   base_chain_id  = local.base_chain_id
   river_chain_id = local.river_chain_id
