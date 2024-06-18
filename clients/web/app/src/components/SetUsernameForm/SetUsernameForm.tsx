@@ -2,7 +2,7 @@ import React, { FormEvent, useCallback, useEffect, useMemo, useRef, useState } f
 import { SpaceData, useMyDefaultUsernames, useTownsClient } from 'use-towns-client'
 import { AnimatePresence } from 'framer-motion'
 import { ModalContainer } from '@components/Modals/ModalContainer'
-import { Box, Button, MotionText, Stack, Text, TextField } from '@ui'
+import { Box, FancyButton, MotionText, Stack, Text, TextField } from '@ui'
 import { useSetUsername } from 'hooks/useSetUsername'
 import { validateUsername } from './validateUsername'
 
@@ -52,10 +52,10 @@ export const SetUsernameForm = (props: Props & { onHide: () => void }) => {
                     setRequestInFlight(false)
                 }
             }
-
             void submit()
+            props.onHide()
         },
-        [setUsername, spaceData.id, value, setRequestInFlight],
+        [props, setUsername, spaceData.id, value],
     )
 
     const usernameValid = useMemo(() => {
@@ -101,57 +101,61 @@ export const SetUsernameForm = (props: Props & { onHide: () => void }) => {
 
     return (
         <ModalContainer onHide={noop}>
-            <Stack gap padding>
-                <Text size="md" textAlign="center" fontWeight="strong">
-                    Welcome to
-                </Text>
-                <Text size="h2" textAlign="center" fontWeight="strong">
-                    {spaceData.name}
-                </Text>
+            <Stack padding gap="x4">
+                <Stack gap>
+                    <Text size="md" textAlign="center" fontWeight="strong">
+                        Welcome to
+                    </Text>
+                    <Text size="h2" textAlign="center" fontWeight="strong">
+                        {spaceData.name}
+                    </Text>
+                </Stack>
+                <Stack gap>
+                    <Text fontWeight="strong">Username</Text>
+                    <Text color="gray2">This is the username you will be using for this town.</Text>
+                    <form autoComplete="off" onSubmit={onSubmit}>
+                        <TextField
+                            autoFocus
+                            name="username"
+                            disabled={requestInFlight}
+                            placeholder="Enter your username"
+                            background="level2"
+                            value={value}
+                            autoComplete="off"
+                            onChange={onTextFieldChange}
+                        />
+                        <AnimatePresence>
+                            {!usernameAvailable && (
+                                <MotionText
+                                    color="error"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                >
+                                    This username is taken in this town already. Please choose
+                                    another.
+                                </MotionText>
+                            )}
 
-                <Text fontWeight="strong">Username</Text>
-                <Text color="gray2">This is the username you will be using for this town.</Text>
-                <form autoComplete="off" onSubmit={onSubmit}>
-                    <TextField
-                        autoFocus
-                        name="username"
-                        disabled={requestInFlight}
-                        placeholder="Enter your username"
-                        background="level2"
-                        value={value}
-                        autoComplete="off"
-                        onChange={onTextFieldChange}
-                    />
-                    <AnimatePresence>
-                        {!usernameAvailable && (
-                            <MotionText
-                                color="error"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                            >
-                                This username is taken in this town already. Please choose another.
-                            </MotionText>
-                        )}
-
-                        {showInvalidUsernameError && (
-                            <MotionText
-                                color="error"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                            >
-                                Your username must be between 3 and 16 characters <br />
-                                and can only contain letters, numbers, and underscores.
-                            </MotionText>
-                        )}
-                    </AnimatePresence>
-                    <Box paddingTop="md">
-                        <Button type="submit" disabled={!submitButtonEnabled} tone="cta1">
-                            {requestInFlight ? 'Joining Town' : 'Join Town'}
-                        </Button>
-                    </Box>
-                </form>
+                            {showInvalidUsernameError && (
+                                <MotionText
+                                    color="error"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                >
+                                    Your username must be between 3 and 16 characters <br />
+                                    and can only contain letters, numbers, and underscores.
+                                </MotionText>
+                            )}
+                        </AnimatePresence>
+                        <Box paddingTop="md">
+                            <FancyButton cta type="submit" disabled={!submitButtonEnabled}>
+                                {requestInFlight ? 'Joining Town' : 'Join Town'}
+                            </FancyButton>
+                        </Box>
+                    </form>
+                </Stack>
             </Stack>
         </ModalContainer>
     )
