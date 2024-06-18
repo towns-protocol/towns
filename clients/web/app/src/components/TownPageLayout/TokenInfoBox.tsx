@@ -1,8 +1,9 @@
 import React from 'react'
-import { Box, Icon } from '@ui'
+import { Box, Icon, Text } from '@ui'
 import { TokenImage } from '@components/Tokens/TokenSelector/TokenImage'
 import { useTokenMetadataForChainId } from 'api/lib/collectionMetadata'
 import { vars } from 'ui/styles/vars.css'
+import { NetworkName } from '@components/Tokens/TokenSelector/NetworkName'
 import { InformationBox } from './InformationBox'
 
 export const TokenInfoBox = ({
@@ -69,5 +70,17 @@ export const TokenInfoBox = ({
 function SelectedToken({ contractAddress, chainId }: { contractAddress: string; chainId: number }) {
     const { data: tokenDataWithChainId } = useTokenMetadataForChainId(contractAddress, chainId)
 
-    return <TokenImage imgSrc={tokenDataWithChainId?.data.imgSrc} width="x3" />
+    return (
+        <Box
+            tooltip={
+                <Box centerContent gap="sm" padding="sm" background="level3" rounded="sm">
+                    <Text size="sm">{tokenDataWithChainId?.data.label}</Text>
+                    <NetworkName chainId={chainId} size="xs" color="initial" />
+                    <Text size="xs">{tokenDataWithChainId?.data.address}</Text>
+                </Box>
+            }
+        >
+            <TokenImage imgSrc={tokenDataWithChainId?.data.imgSrc} width="x3" />
+        </Box>
+    )
 }
