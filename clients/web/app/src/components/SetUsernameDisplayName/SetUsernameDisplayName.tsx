@@ -8,7 +8,8 @@ import {
 } from 'use-towns-client'
 import noop from 'lodash/noop'
 import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
-import { Box, Button, Divider, IconButton, Stack, Text, TextButton, TextField } from '@ui'
+import { toast } from 'react-hot-toast/headless'
+import { Box, Button, IconButton, Stack, Text, TextButton, TextField } from '@ui'
 import { validateUsername } from '@components/SetUsernameForm/validateUsername'
 import { useSetUsername } from 'hooks/useSetUsername'
 import { EncryptedName } from '@components/EncryptedContent/EncryptedName'
@@ -22,6 +23,7 @@ import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { CHANNEL_INFO_PARAMS } from 'routes'
 import { useDevice } from 'hooks/useDevice'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { UpdateEnsDisplayNameFailed } from '@components/Notifications/UpdateEnsDisplayNameFailed'
 import { useRouteParams } from 'hooks/useRouteParams'
 
 export const useCurrentStreamID = () => {
@@ -302,8 +304,10 @@ export const SetUsernameDisplayName = (props: { streamId: string }) => {
             )}
             {isShowingEnsDisplayNameForm && (
                 <EnsDisplayNameModal
+                    spaceId={spaceData?.id}
                     streamId={streamId}
-                    currentEnsName={user?.ensAddress}
+                    currentEnsAddress={user?.ensAddress}
+                    setShowinEnsDisplayNameForm={setShowinEnsDisplayNameForm}
                     onHide={() => setShowinEnsDisplayNameForm(false)}
                 />
             )}
@@ -409,46 +413,23 @@ const UsernameDisplayNameEncryptedContent = (props: { user: LookupUser }) => {
     )
 }
 
-// TODO: use mask to show that there's more data on the scroll
 const EnsDisplayNameModal = (props: {
     streamId: string
-    currentEnsName?: string
+    spaceId: string | undefined
+    currentEnsAddress?: string
     onHide: () => void
+    setShowinEnsDisplayNameForm: (show: boolean) => void
 }) => {
-    const { streamId, onHide, currentEnsName: currentEnsName } = props
+    const { spaceId, streamId, onHide, currentEnsAddress, setShowinEnsDisplayNameForm } = props
     const { ensNames, isFetching } = useEnsNames()
     const { setEnsName } = useSetEnsName()
+    const { lookupUser, setSpaceUser } = useUserLookupStore()
+    const myUserId = useMyUserId()
     const { openPanel } = usePanelActions()
-    const [selectedWallet, setSelectedWallet] = useState<string | undefined>(currentEnsName)
-    const [pendingWallet, setPendingWallet] = useState<string | undefined>(undefined)
-    const { isTouch } = useDevice()
-
-    useEffect(() => {
-        setPendingWallet(currentEnsName)
-    }, [currentEnsName])
-
-    const onSelectWallet = useCallback(
-        (walletAddress: string | undefined) => {
-            if (!streamId) {
-                return
-            }
-            setSelectedWallet(walletAddress)
-        },
-        [streamId, setSelectedWallet],
+    const [selectedEnsAddress, setSelectedEnsAddress] = useState<string | undefined>(
+        currentEnsAddress,
     )
-
-    const onSave = useCallback(() => {
-        if (!streamId) {
-            return
-        }
-        setPendingWallet(selectedWallet)
-        setEnsName(streamId, selectedWallet).then(() => {
-            onHide()
-        })
-    }, [streamId, selectedWallet, setEnsName, onHide])
-
-    const saveInProgress = pendingWallet != currentEnsName
-    const saveButtonEnabled = !saveInProgress && selectedWallet != currentEnsName
+    const { isTouch } = useDevice()
 
     const onViewLinkedWalletsClick = useCallback(() => {
         onHide()
@@ -457,11 +438,72 @@ const EnsDisplayNameModal = (props: {
 
     const hasEnsName = ensNames.length > 0 && !isFetching
 
+    const setOptimisticEns = useCallback(
+        async (ensAddress: string | undefined, ensName: string | undefined) => {
+            if (!streamId || !myUserId) {
+                return
+            }
+            const user = lookupUser(myUserId)
+            setSpaceUser(
+                myUserId,
+                {
+                    ...user,
+                    ensAddress,
+                    ensName,
+                },
+                spaceId,
+            )
+        },
+        [lookupUser, myUserId, setSpaceUser, spaceId, streamId],
+    )
+
+    const saveOnHide = useCallback(() => {
+        if (!myUserId) {
+            onHide()
+            return
+        }
+        const user = lookupUser(myUserId)
+        const oldEnsAddress = user?.ensAddress
+        const oldEnsName = user?.ensName
+
+        // Ideally, we would like to queue those updates and do it later
+        if (!streamId) {
+            setOptimisticEns(oldEnsAddress, oldEnsName)
+            toast.custom((t) => (
+                <UpdateEnsDisplayNameFailed
+                    toast={t}
+                    onClick={() => setShowinEnsDisplayNameForm(true)}
+                />
+            ))
+            onHide()
+            return
+        }
+        setEnsName(streamId, selectedEnsAddress).catch(() => {
+            setOptimisticEns(oldEnsAddress, oldEnsName)
+            toast.custom((t) => (
+                <UpdateEnsDisplayNameFailed
+                    toast={t}
+                    onClick={() => setShowinEnsDisplayNameForm(true)}
+                />
+            ))
+        })
+        onHide()
+    }, [
+        myUserId,
+        lookupUser,
+        streamId,
+        setEnsName,
+        selectedEnsAddress,
+        onHide,
+        setOptimisticEns,
+        setShowinEnsDisplayNameForm,
+    ])
+
     return (
-        <ModalContainer asSheet maxWidth="400" onHide={onHide}>
+        <ModalContainer asSheet maxWidth="400" onHide={saveOnHide}>
             {!isTouch && (
                 <Box position="relative">
-                    <IconButton position="topRight" icon="close" onClick={onHide} />
+                    <IconButton position="topRight" icon="close" onClick={saveOnHide} />
                 </Box>
             )}
             <Stack gap alignItems="center" paddingTop="lg">
@@ -478,16 +520,22 @@ const EnsDisplayNameModal = (props: {
                             <WalletRow
                                 key={ensName.wallet}
                                 label={ensName.ensName}
-                                checked={ensName.wallet === selectedWallet}
-                                onSelectWallet={() => onSelectWallet(ensName.wallet)}
+                                checked={ensName.wallet === selectedEnsAddress}
+                                onSelectWallet={() => {
+                                    setSelectedEnsAddress(ensName.wallet)
+                                    setOptimisticEns(ensName.wallet, ensName.ensName)
+                                }}
                             />
                         ))}
 
                         <WalletRow
                             key="no-name"
                             label="None"
-                            checked={selectedWallet === undefined}
-                            onSelectWallet={() => onSelectWallet(undefined)}
+                            checked={selectedEnsAddress === undefined}
+                            onSelectWallet={() => {
+                                setSelectedEnsAddress(undefined)
+                                setOptimisticEns(undefined, undefined)
+                            }}
                         />
                     </Stack>
                 ) : (
@@ -503,28 +551,6 @@ const EnsDisplayNameModal = (props: {
             </Stack>
 
             <Stack gap shrink={false} paddingTop="sm">
-                {hasEnsName && (
-                    <>
-                        <Button
-                            tone={saveButtonEnabled ? 'cta1' : 'level2'}
-                            width="100%"
-                            disabled={!saveButtonEnabled}
-                            onClick={onSave}
-                        >
-                            {saveInProgress ? <ButtonSpinner /> : 'Set ENS'}
-                        </Button>
-                        <Stack horizontal gap="sm" alignItems="center" width="100%">
-                            <Divider />
-                            <Text shrink={false} color="gray2" fontSize="sm">
-                                {ensNames.length > 0
-                                    ? 'Or add a verified ENS'
-                                    : 'Add a verified ENS'}
-                            </Text>
-                            <Divider />
-                        </Stack>
-                    </>
-                )}
-
                 <Button
                     tone={hasEnsName ? 'level2' : 'cta1'}
                     width="100%"
