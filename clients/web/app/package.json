@@ -13,7 +13,7 @@
         "preview": "vite preview",
         "test": "yarn test:unit",
         "test:unit": "yarn test:unit:watch run",
-        "test:unit:watch": "VITE_TOKEN_SERVER_URL=http://fake.com VITE_AUTH_WORKER_HEADER_SECRET=fake VITE_GIPHY_API_KEY=fake VITE_UNFURL_SERVER_URL=http://fake.com VITE_ALCHEMY_API_KEY=fake VITE_GATEWAY_URL=http://fake.com VITE_PRIVY_ID=imustbe25charslong_______ VITE_BASE_SEPOLIA_RPC_URL=http://fake-provide-rpc.com VITE_AA_BUNDLER_URL=http://fake.com VITE_AA_PAYMASTER_PROXY_URL=http://fake.com VITE_XCHAIN_ETHEREUM_RPC_URL=http://fake-provide-rpc.com VITE_XCHAIN_POLYGON_RPC_URL=http://fake-provide-rpc.com VITE_XCHAIN_ARBITRUM_RPC_URL=http://fake-provide-rpc.com VITE_XCHAIN_OPTIMISM_RPC_URL=http://fake-provide-rpc.com vitest",
+        "test:unit:watch": "VITE_TOKEN_SERVER_URL=http://fake.com VITE_AUTH_WORKER_HEADER_SECRET=fake VITE_GIPHY_API_KEY=fake VITE_UNFURL_SERVER_URL=http://fake.com VITE_ALCHEMY_API_KEY=fake VITE_GATEWAY_URL=http://fake.com VITE_PRIVY_ID=imustbe25charslong_______ VITE_BASE_SEPOLIA_RPC_URL=http://fake-provide-rpc.com VITE_AA_BUNDLER_URL=http://fake.com VITE_AA_PAYMASTER_PROXY_URL=http://fake.com VITE_ETHEREUM_RPC_URL=http://fake-provide-rpc.com",
         "vitest-preview": "vitest-preview"
     },
     "dependencies": {

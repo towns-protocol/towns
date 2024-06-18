@@ -139,10 +139,8 @@ export class TownsTestClient extends TownsClient {
         throw new Error('createSpaceTransaction failed')
     }
 
-    public override async getSupportedXChainIds(): Promise<number[]> {
-        const chainIds = await super.getSupportedXChainIds()
-        chainIds.push(foundry.id)
-        return chainIds
+    public override getSupportedXChainIds(): Promise<number[]> {
+        return Promise.resolve([foundry.id])
     }
 
     public override async joinTown(

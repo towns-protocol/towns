@@ -5,7 +5,7 @@ import { useQueries, useQuery } from '@tanstack/react-query'
 import { useLinkedWallets, useLinkedWalletsForWallet } from 'use-towns-client'
 import { env } from 'utils'
 
-const ethMainnetRpcUrl = env.VITE_XCHAIN_ETHEREUM_RPC_URL
+const ethMainnetRpcUrl = env.VITE_ETHEREUM_RPC_URL
 const publicClient = createPublicClient({
     chain: mainnet,
     transport: ethMainnetRpcUrl ? http(ethMainnetRpcUrl) : http(),

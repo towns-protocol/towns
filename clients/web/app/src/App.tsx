@@ -1,6 +1,6 @@
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import React, { useEffect, useMemo, useRef } from 'react'
-import { LOCALHOST_CHAIN_ID, TownsContextProvider, ZTEvent } from 'use-towns-client'
+import { TownsContextProvider, ZTEvent } from 'use-towns-client'
 import { Helmet } from 'react-helmet'
 import { isDefined } from '@river/sdk'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -85,19 +85,13 @@ export const App = () => {
     }
 
     const supportedXChainRpcMapping = useMemo(() => {
-        const supported: { [x: number]: string } = {
-            1: env.VITE_XCHAIN_ETHEREUM_RPC_URL,
-            8453: env.VITE_BASE_CHAIN_RPC_URL ?? 'https://mainnet.base.org',
-            137: env.VITE_XCHAIN_POLYGON_RPC_URL,
-            42161: env.VITE_XCHAIN_ARBITRUM_RPC_URL,
-            10: env.VITE_XCHAIN_OPTIMISM_RPC_URL,
+        const config = env.VITE_XCHAIN_CONFIG
+        if (!config) {
+            console.warn('No XCHAIN config found')
+            return {}
         }
-
-        if (environment.baseChain.id === LOCALHOST_CHAIN_ID && env.VITE_BASE_SEPOLIA_RPC_URL) {
-            supported[84532] = env.VITE_BASE_SEPOLIA_RPC_URL
-        }
-        return supported
-    }, [environment.baseChain.id])
+        return validateAndParse(config)
+    }, [])
 
     const { rel, notificationEntry, notificationKind } = useMemo(() => {
         return {
@@ -159,7 +153,7 @@ export const App = () => {
             accountAbstractionConfig={environment.accountAbstractionConfig}
             highPriorityStreamIds={highPriorityStreamIds.current}
             supportedXChainRpcMapping={supportedXChainRpcMapping}
-            ethMainnetRpcUrl={env.VITE_XCHAIN_ETHEREUM_RPC_URL}
+            ethMainnetRpcUrl={env.VITE_ETHEREUM_RPC_URL}
         >
             <>
                 <FaviconBadge />
@@ -198,3 +192,40 @@ export const App = () => {
 }
 
 export default App
+
+interface ParsedObject {
+    [key: number]: string
+}
+
+const validateAndParse = (input: string): ParsedObject => {
+    const obj: ParsedObject = {}
+    const urlPattern: RegExp = /^(http|https):\/\/[^\s/$.?#].[^\s]*$/
+    const pairs: string[] = input.split(',')
+
+    pairs.forEach((pair) => {
+        const colonIndex = pair.indexOf(':')
+        if (colonIndex === -1) {
+            throw new Error(`Invalid pair: "${pair}". Each pair must be in the format key:url.`)
+        }
+        const key = pair.substring(0, colonIndex)
+        const value = pair.substring(colonIndex + 1)
+
+        if (!key || !value) {
+            throw new Error(`Invalid pair: "${pair}". Each pair must be in the format key:url.`)
+        }
+
+        const keyNumber = Number(key)
+
+        if (isNaN(keyNumber)) {
+            throw new Error(`Invalid key: "${key}". Key must be a number.`)
+        }
+
+        if (!urlPattern.test(value)) {
+            throw new Error(`Invalid URL: "${value}". Value must be a valid URL.`)
+        }
+
+        obj[keyNumber] = value
+    })
+
+    return obj
+}

@@ -17,7 +17,13 @@ import {
     isDefined,
 } from '@river/sdk'
 import { EntitlementsDelegate, DecryptionStatus } from '@river-build/encryption'
-import { CreateSpaceParams, IRuleEntitlement, UpdateChannelParams } from '@river-build/web3'
+import {
+    BASE_MAINNET,
+    BASE_SEPOLIA,
+    CreateSpaceParams,
+    IRuleEntitlement,
+    UpdateChannelParams,
+} from '@river-build/web3'
 import { ChannelMessage_Post_Mention, FullyReadMarker } from '@river-build/proto'
 import {
     ChannelTransactionContext,
@@ -236,6 +242,8 @@ export class TownsClient
         this.casablancaClient.on('decryptionExtStatusChanged', (status: DecryptionStatus) => {
             AnalyticsService.getInstance().trackEventOnce(`decryptionExtStatus[${status}]`)
         })
+        const xChainRpcUrls = await this.getSupportedXChainRpcUrls()
+        this.log('xChainRpcUrls', xChainRpcUrls)
 
         this.casablancaClient.startSync()
         this.emit('onCasablancaClientCreated', this.casablancaClient)
@@ -846,10 +854,10 @@ export class TownsClient
                 // base
                 8453,
             ])
-        }
-        // if we're not on base mainnet, add the current chain id
-        if (!this.supportedXChainIds.includes(this.opts.baseChainId)) {
-            this.supportedXChainIds.push(this.opts.baseChainId)
+            // if we're not on base mainnet, add the testnet chains
+            if (this.opts.baseChainId !== BASE_MAINNET) {
+                this.supportedXChainIds.push(BASE_SEPOLIA, 11155111)
+            }
         }
 
         return this.supportedXChainIds
@@ -866,9 +874,8 @@ export class TownsClient
             .filter(([chainId, rpcUrl]) => isDefined(rpcUrl) && xChainIds.includes(+chainId))
             .map(([, rpcUrl]) => rpcUrl)
 
-        // if we're not on base mainnet, add the current network rpc url
-        if (!filteredByRiverSupported.includes(this.opts.baseProvider.connection.url)) {
-            filteredByRiverSupported.push(this.opts.baseProvider.connection.url)
+        if (xChainIds.length !== filteredByRiverSupported.length) {
+            console.warn('Some xchain rpc urls are missing from the supported xchains list')
         }
 
         return filteredByRiverSupported

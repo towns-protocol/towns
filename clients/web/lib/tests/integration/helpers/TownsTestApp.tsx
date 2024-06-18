@@ -47,6 +47,9 @@ export const TownsTestApp = (props: Props) => {
             riverChain={riverChain}
             riverConfig={provider.config.river.chainConfig}
             QueryClientProvider={TestQueryClientProvider}
+            supportedXChainRpcMapping={{
+                [foundry.id]: foundry.rpcUrls.default.http[0],
+            }}
         >
             <>
                 {children}
