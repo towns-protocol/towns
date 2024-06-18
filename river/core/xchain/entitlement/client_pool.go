@@ -31,14 +31,17 @@ type (
 func NewBlockchainClientPool(ctx context.Context, cfg *config.Config) (BlockchainClientPool, error) {
 	log := dlog.FromCtx(ctx)
 	clients := make(map[uint64]crypto.BlockchainClient)
-	for chainID, endpoint := range cfg.Chains {
-		if _, got := clients[chainID]; got {
-			return nil, RiverError(Err_BAD_CONFIG, "Duplicate chain in configuration").Tag("chainId", chainID)
+	// TODO: why this is not returning errors if chain client can't be created?
+	for _, chainID := range cfg.XChainBlockchains {
+		chainCfg, ok := cfg.ChainConfigs[chainID]
+		if !ok {
+			log.Warn("Chain config not found", "chainId", chainID)
+			continue
 		}
 
-		client, err := ethclient.DialContext(ctx, endpoint)
+		client, err := ethclient.DialContext(ctx, chainCfg.NetworkUrl)
 		if err != nil {
-			log.Warn("Unable to dial endpoint", "chainId", chainID, "endpoint", endpoint, "err", err)
+			log.Warn("Unable to dial endpoint", "chainId", chainID, "err", err)
 			continue
 		}
 
@@ -46,11 +49,11 @@ func NewBlockchainClientPool(ctx context.Context, cfg *config.Config) (Blockchai
 		fetchedChainID, err := client.ChainID(ctx)
 		if err != nil {
 			client.Close()
-			log.Warn("Unable to connect to endpoint", "chainId", chainID, "endpoint", endpoint, "err", err)
+			log.Warn("Unable to connect to endpoint", "chainId", chainID, "err", err)
 			continue
 		}
 		if fetchedChainID.Uint64() != chainID {
-			log.Warn("Chain points to different endpoint", "chainId", chainID, "gotChainId", fetchedChainID, "url", endpoint)
+			log.Warn("Chain points to different endpoint", "chainId", chainID, "gotChainId", fetchedChainID)
 			client.Close()
 			continue
 		}

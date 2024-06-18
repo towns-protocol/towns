@@ -278,7 +278,10 @@ func NewBlockchainTestContext(ctx context.Context, numKeys int, mineOnTx bool) (
 	return btc, nil
 }
 
-func initChainContext(ctx context.Context, numKeys int) ([]*Wallet, *simulated.Backend, *ethclient.Client, bool, error) {
+func initChainContext(
+	ctx context.Context,
+	numKeys int,
+) ([]*Wallet, *simulated.Backend, *ethclient.Client, bool, error) {
 	var (
 		remoteNodeURL     = os.Getenv("RIVER_REMOTE_NODE_URL")
 		remoteFundAccount = os.Getenv("RIVER_REMOTE_NODE_FUND_PRIVATE_KEY")

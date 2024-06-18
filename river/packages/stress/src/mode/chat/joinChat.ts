@@ -83,6 +83,9 @@ export async function joinChat(client: StressClient, cfg: ChatConfig) {
             await client.streamsClient.joinStream(channelId)
             await client.streamsClient.waitForStream(channelId)
         }
+        await client.streamsClient.cryptoBackend?.ensureOutboundSession(channelId, {
+            awaitInitialShareSession: true,
+        })
         await client.sendMessage(
             channelId,
             `${makeSillyMessage({ maxWords: 2 })}! ${cfg.sessionId}`,

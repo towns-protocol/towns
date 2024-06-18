@@ -35,19 +35,23 @@ export class UnauthenticatedClient {
         this.logCall('new UnauthenticatedClient')
     }
 
-    async userExists(userId: string): Promise<boolean> {
-        const userStreamId = makeUserStreamId(userId)
-        this.logCall('userExists', userId)
-        const response = await this.rpcClient.getStream({
-            streamId: streamIdAsBytes(userStreamId),
-            optional: true,
-        })
-        this.logCall('userExists', userId, response.stream)
-        return response.stream !== undefined
-    }
-
     async userWithAddressExists(address: Uint8Array): Promise<boolean> {
         return this.userExists(userIdFromAddress(address))
+    }
+
+    async userExists(userId: string): Promise<boolean> {
+        const userStreamId = makeUserStreamId(userId)
+        return this.streamExists(userStreamId)
+    }
+
+    async streamExists(streamId: string | Uint8Array): Promise<boolean> {
+        this.logCall('streamExists?', streamId)
+        const response = await this.rpcClient.getStream({
+            streamId: streamIdAsBytes(streamId),
+            optional: true,
+        })
+        this.logCall('streamExists=', streamId, response.stream)
+        return response.stream !== undefined
     }
 
     async getStream(streamId: string | Uint8Array): Promise<StreamStateView> {

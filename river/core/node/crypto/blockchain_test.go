@@ -2,9 +2,10 @@ package crypto
 
 import (
 	"context"
-	"github.com/river-build/river/core/node/contracts"
 	"math/big"
 	"testing"
+
+	"github.com/river-build/river/core/node/contracts"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"

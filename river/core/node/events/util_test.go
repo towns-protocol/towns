@@ -2,6 +2,7 @@ package events
 
 import (
 	"context"
+
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -100,7 +101,6 @@ func setOnChainStreamConfig(ctx context.Context, btc *crypto.BlockchainTestConte
 				return btc.Configuration.SetConfiguration(
 					opts, key.ID(), blockNum, value)
 			})
-
 		if err != nil {
 			panic(err)
 		}
@@ -121,13 +121,25 @@ func setOnChainStreamConfig(ctx context.Context, btc *crypto.BlockchainTestConte
 		setConfig(crypto.StreamMediaMaxChunkSizeConfigKey, 0, crypto.ABIEncodeUint64(uint64(p.mediaMaxChunkSize)))
 	}
 	if p.recencyConstraintsGenerations != 0 {
-		setConfig(crypto.StreamRecencyConstraintsGenerationsConfigKey, 0, crypto.ABIEncodeUint64(uint64(p.recencyConstraintsGenerations)))
+		setConfig(
+			crypto.StreamRecencyConstraintsGenerationsConfigKey,
+			0,
+			crypto.ABIEncodeUint64(uint64(p.recencyConstraintsGenerations)),
+		)
 	}
 	if p.recencyConstraintsAgeSec != 0 {
-		setConfig(crypto.StreamRecencyConstraintsAgeSecConfigKey, 0, crypto.ABIEncodeUint64(uint64(p.recencyConstraintsAgeSec)))
+		setConfig(
+			crypto.StreamRecencyConstraintsAgeSecConfigKey,
+			0,
+			crypto.ABIEncodeUint64(uint64(p.recencyConstraintsAgeSec)),
+		)
 	}
 	if p.defaultMinEventsPerSnapshot != 0 {
-		setConfig(crypto.StreamDefaultMinEventsPerSnapshotConfigKey, 0, crypto.ABIEncodeUint64(uint64(p.defaultMinEventsPerSnapshot)))
+		setConfig(
+			crypto.StreamDefaultMinEventsPerSnapshotConfigKey,
+			0,
+			crypto.ABIEncodeUint64(uint64(p.defaultMinEventsPerSnapshot)),
+		)
 	}
 }
 

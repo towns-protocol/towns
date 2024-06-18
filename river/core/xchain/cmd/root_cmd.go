@@ -54,6 +54,7 @@ func initConfigAndLog() {
 			decodeHooks  = mapstructure.ComposeDecodeHookFunc(
 				config.DecodeAddressOrAddressFileHook(),
 				config.DecodeDurationHook(),
+				config.DecodeUint64SliceHook(),
 			)
 		)
 

@@ -6,12 +6,17 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+const (
+	EthSepoliaChainIdUint64  = uint64(11155111)
+	BaseSepoliaChainIdUint64 = uint64(84532)
+)
+
 var (
 	// These constants are used for testing the entitlement system on real world networks. xchain is
 	// not sufficiently tested locally by anvil, because anvil diverges from real ethereum networks
 	// in ways that have led to outages in the past.
-	BaseSepoliaChainId = big.NewInt(84532)
-	EthSepoliaChainId  = big.NewInt(11155111)
+	EthSepoliaChainId  = new(big.Int).SetUint64(EthSepoliaChainIdUint64)
+	BaseSepoliaChainId = new(big.Int).SetUint64(BaseSepoliaChainIdUint64)
 
 	// This wallet has been loaded with 25 LINK tokens on base sepolia and 50 on ethereum sepolia
 	SepoliaChainlinkWallet = common.HexToAddress("0x4BCfC6962Ab0297aF801da21216014F53B46E991")

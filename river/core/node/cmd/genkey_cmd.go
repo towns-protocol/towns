@@ -4,13 +4,12 @@ import (
 	"context"
 	"os"
 
-	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/crypto"
 
 	"github.com/spf13/cobra"
 )
 
-func genkey(cfg *config.Config, overwrite bool) error {
+func genkey(overwrite bool) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
 
 	wallet, err := crypto.NewWallet(ctx)
@@ -46,7 +45,7 @@ func init() {
 			if err != nil {
 				return err
 			}
-			return genkey(cmdConfig, overwrite)
+			return genkey(overwrite)
 		},
 	}
 	cmdGenKey.Flags().Bool("overwrite", false, "Overwrite existing key files")

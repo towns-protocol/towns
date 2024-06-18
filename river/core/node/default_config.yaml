@@ -1,3 +1,6 @@
+# This config is included in the docker image as default config.
+# CI and local tests use config-template.yaml
+
 # Network configuration
 port: 443
 database:
@@ -112,7 +115,22 @@ graffiti: ''
 # Debug feature flags.
 disableBaseChain: false
 
-chains: '31337:http://localhost:8545,31338:http://localhost:8546,84532:https://sepolia.base.org,11155111:https://ethereum-sepolia-rpc.publicnode.com'
+# This is comma separated list of CHAID_ID:PROVIDER_URL pairs.
+chains: ''
+
+# Another alias for chains.
+chainsString: ''
+
+#ChainBlocktimes is a comma-separated list chaidID:blockTimeDuration pairs
+# I.e. 1:12s,84532:2s,6524490:2s
+# Blocktimes for common known chains are pre-set in GetDefaultBlockchainInfo(),
+# so there is no need to configure them here.
+chainBlocktimes: ''
+
+# This is a comma separated list of chain IDs that are allowed to be used for XChain checks.
+# If empty all blockchains in `chains` are used.
+# TODO: move this setting to blockchain so it is shared between all nodes and clients.
+xChainBlockchains: ''
 
 history: 30s
 

@@ -149,13 +149,20 @@ var nftMultiCheckHighThresholdBaseSepolia = CheckOperation{
 	Threshold:       big.NewInt(10),
 }
 
-var chains = map[uint64]string{
-	examples.BaseSepoliaChainId.Uint64(): "https://sepolia.base.org",
-	examples.EthSepoliaChainId.Uint64():  "https://ethereum-sepolia-rpc.publicnode.com",
-}
-
 var cfg = &config.Config{
-	Chains: chains,
+	ChainConfigs: map[uint64]*config.ChainConfig{
+		examples.EthSepoliaChainIdUint64: {
+			NetworkUrl:  "https://ethereum-sepolia-rpc.publicnode.com",
+			ChainId:     examples.EthSepoliaChainIdUint64,
+			BlockTimeMs: 12000,
+		},
+		examples.BaseSepoliaChainIdUint64: {
+			NetworkUrl:  "https://sepolia.base.org",
+			ChainId:     examples.BaseSepoliaChainIdUint64,
+			BlockTimeMs: 2000,
+		},
+	},
+	XChainBlockchains: []uint64{examples.EthSepoliaChainIdUint64, examples.BaseSepoliaChainIdUint64},
 }
 
 var evaluator *Evaluator
@@ -330,15 +337,43 @@ func TestCheckOperation_Untimed(t *testing.T) {
 		// entitlement checks work on base and ethereum mainnets, which is where they will happen
 		// in practice.
 		// ERC20 checks with single wallet
-		"ERC20 base sepolia":         {&erc20TrueCheckBaseSepolia, []common.Address{examples.SepoliaChainlinkWallet}, true},
-		"ERC20 base sepolia (false)": {&erc20FalseCheckBaseSepolia, []common.Address{examples.SepoliaChainlinkWallet}, false},
-		"ERC20 eth sepolia":          {&erc20TrueCheckEthereumSepolia, []common.Address{examples.SepoliaChainlinkWallet}, true},
-		"ERC20 eth sepolia (false)":  {&erc20FalseCheckEthereumSepolia, []common.Address{examples.SepoliaChainlinkWallet}, false},
+		"ERC20 base sepolia": {
+			&erc20TrueCheckBaseSepolia,
+			[]common.Address{examples.SepoliaChainlinkWallet},
+			true,
+		},
+		"ERC20 base sepolia (false)": {
+			&erc20FalseCheckBaseSepolia,
+			[]common.Address{examples.SepoliaChainlinkWallet},
+			false,
+		},
+		"ERC20 eth sepolia": {
+			&erc20TrueCheckEthereumSepolia,
+			[]common.Address{examples.SepoliaChainlinkWallet},
+			true,
+		},
+		"ERC20 eth sepolia (false)": {
+			&erc20FalseCheckEthereumSepolia,
+			[]common.Address{examples.SepoliaChainlinkWallet},
+			false,
+		},
 
 		// NFT checks with single and multiple NFTs, wallets
-		"ERC721 eth sepolia":                        {&nftCheckEthereumSepolia, []common.Address{sepoliaTestNftWallet_1Token}, true},
-		"ERC721 eth sepolia (no tokens)":            {&nftCheckEthereumSepolia, []common.Address{sepoliaTestNoNftsWallet}, false},
-		"ERC721 eth sepolia (insufficient balance)": {&nftMultiCheckEthereumSepolia, []common.Address{sepoliaTestNftWallet_1Token}, false},
+		"ERC721 eth sepolia": {
+			&nftCheckEthereumSepolia,
+			[]common.Address{sepoliaTestNftWallet_1Token},
+			true,
+		},
+		"ERC721 eth sepolia (no tokens)": {
+			&nftCheckEthereumSepolia,
+			[]common.Address{sepoliaTestNoNftsWallet},
+			false,
+		},
+		"ERC721 eth sepolia (insufficient balance)": {
+			&nftMultiCheckEthereumSepolia,
+			[]common.Address{sepoliaTestNftWallet_1Token},
+			false,
+		},
 		"ERC721 multi-wallet eth sepolia": {
 			&nftMultiCheckEthereumSepolia,
 			[]common.Address{sepoliaTestNftWallet_1Token, sepoliaTestNftWallet_2Tokens, sepoliaTestNftWallet_3Tokens},
@@ -349,9 +384,21 @@ func TestCheckOperation_Untimed(t *testing.T) {
 			[]common.Address{sepoliaTestNftWallet_1Token, sepoliaTestNftWallet_2Tokens, sepoliaTestNftWallet_3Tokens},
 			false,
 		},
-		"ERC721 base sepolia":                        {&nftCheckBaseSepolia, []common.Address{sepoliaTestNftWallet_1Token}, true},
-		"ERC721 base sepolia (no tokens)":            {&nftCheckBaseSepolia, []common.Address{sepoliaTestNoNftsWallet}, false},
-		"ERC721 base sepolia (insufficient balance)": {&nftMultiCheckBaseSepolia, []common.Address{sepoliaTestNftWallet_1Token}, false},
+		"ERC721 base sepolia": {
+			&nftCheckBaseSepolia,
+			[]common.Address{sepoliaTestNftWallet_1Token},
+			true,
+		},
+		"ERC721 base sepolia (no tokens)": {
+			&nftCheckBaseSepolia,
+			[]common.Address{sepoliaTestNoNftsWallet},
+			false,
+		},
+		"ERC721 base sepolia (insufficient balance)": {
+			&nftMultiCheckBaseSepolia,
+			[]common.Address{sepoliaTestNftWallet_1Token},
+			false,
+		},
 		"ERC721 multi-wallet base sepolia": {
 			&nftMultiCheckEthereumSepolia,
 			[]common.Address{sepoliaTestNftWallet_1Token, sepoliaTestNftWallet_2Tokens, sepoliaTestNftWallet_3Tokens},
@@ -367,7 +414,6 @@ func TestCheckOperation_Untimed(t *testing.T) {
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
 			result, err := evaluator.evaluateOp(context.Background(), tc.a, tc.wallets)
-
 			if err != nil {
 				t.Errorf("evaluateCheckOperation error (%v) = %v; want %v", tc.a, err, nil)
 			}

@@ -99,8 +99,8 @@ do
 
     # Copy node binary and config template
     cp "./bin/xchain_node" "${INSTANCE_DIR}/bin"
-    # Using the shared default_config.yaml with the node
-    cp ../node/default_config.yaml "${INSTANCE_DIR}/config/config.yaml"
+    # Using the same config as the node
+    cp ../node/run_files/${RUN_ENV}/00/config/config.yaml "${INSTANCE_DIR}/config/config.yaml"
 
     # Substitute METRIC_PORT and create config.yaml
     METRICS_PORT=$((9080 + i))

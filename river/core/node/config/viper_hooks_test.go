@@ -21,6 +21,9 @@ func TestDecodeHooks(t *testing.T) {
 			FromFile    common.Address
 			DurationOne time.Duration
 			DurationTwo time.Duration
+			Uint64Empty []uint64
+			Uint64One   []uint64
+			Uint64Five  []uint64
 		}{}
 		expFromHex     = common.HexToAddress("0x71C7656EC7ab88b098defB751B7401B5f6d8976F")
 		expFromFile    = common.HexToAddress("0x03300DF841dE9089B1Ad4918cDbA863eF84d2Fe6")
@@ -29,6 +32,7 @@ func TestDecodeHooks(t *testing.T) {
 		decodeHooks    = mapstructure.ComposeDecodeHookFunc(
 			config.DecodeAddressOrAddressFileHook(),
 			config.DecodeDurationHook(),
+			config.DecodeUint64SliceHook(),
 		)
 	)
 
@@ -41,4 +45,7 @@ func TestDecodeHooks(t *testing.T) {
 	assert.Equal(expFromFile, cfg.FromFile, "address from file")
 	assert.Equal(expDurationOne, cfg.DurationOne, "duration one")
 	assert.Equal(expDurationTwo, cfg.DurationTwo, "duration two")
+	assert.Equal([]uint64{}, cfg.Uint64Empty, "empty uint64 slice")
+	assert.Equal([]uint64{1}, cfg.Uint64One, "uint64 slice with one element")
+	assert.Equal([]uint64{1, 2, 3, 4, 5}, cfg.Uint64Five, "uint64 slice with five elements")
 }

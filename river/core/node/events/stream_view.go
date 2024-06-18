@@ -43,7 +43,11 @@ type StreamView interface {
 		currentTime time.Time,
 	) error
 	GetStats() StreamViewStats
-	ProposeNextMiniblock(ctx context.Context, cfg crypto.OnChainConfiguration, forceSnapshot bool) (*MiniblockProposal, error)
+	ProposeNextMiniblock(
+		ctx context.Context,
+		cfg crypto.OnChainConfiguration,
+		forceSnapshot bool,
+	) (*MiniblockProposal, error)
 	IsMember(userAddress []byte) (bool, error)
 }
 

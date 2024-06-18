@@ -292,7 +292,8 @@ jobs:
                   name: 'river-node-${{ github.job }}'
                   path: |
                       ./core/node/run_files/
-                      !./core/node/run_files/**/bin/**
+                      ./core/xchain/run_files/
+                      !./core/**/bin/**
 
     Multinode:
         permissions: write-all
@@ -425,7 +426,8 @@ jobs:
                   name: 'river-node-${{ github.job }}'
                   path: |
                       ./core/node/run_files/
-                      !./core/node/run_files/**/bin/**
+                      ./core/xchain/run_files/
+                      !./core/**/bin/**
 
     Client_Entitlements:
         permissions: write-all
@@ -562,7 +564,8 @@ jobs:
                   name: 'river-node-${{ github.job }}'
                   path: |
                       ./core/node/run_files/
-                      !./core/node/run_files/**/bin/**
+                      ./core/xchain/run_files/
+                      !./core/**/bin/**
 
     Multinode_Ent:
         permissions: write-all
@@ -698,7 +701,8 @@ jobs:
                   name: 'river-node-${{ github.job }}'
                   path: |
                       ./core/node/run_files/
-                      !./core/node/run_files/**/bin/**
+                      ./core/xchain/run_files/
+                      !./core/**/bin/**
 
     Node:
         permissions: write-all

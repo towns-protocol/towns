@@ -101,7 +101,6 @@ func newServiceTester(numNodes int, require *require.Assertions) *serviceTester 
 }
 
 func (st *serviceTester) deployXchainTestContracts() {
-
 	var (
 		log                   = dlog.FromCtx(st.ctx)
 		approvedNodeOperators []common.Address
@@ -120,7 +119,12 @@ func (st *serviceTester) deployXchainTestContracts() {
 	st.require.NoError(err)
 
 	// Deploy the mock entitlement checker
-	addr, _, _, err := contracts.DeployMockEntitlementChecker(auth, client, approvedNodeOperators, st.Config().GetContractVersion())
+	addr, _, _, err := contracts.DeployMockEntitlementChecker(
+		auth,
+		client,
+		approvedNodeOperators,
+		st.Config().GetContractVersion(),
+	)
 	st.require.NoError(err)
 
 	st.entitlementCheckerAddress = addr
@@ -183,7 +187,13 @@ func (st *serviceTester) ClientSimulatorBlockchain() *node_crypto.Blockchain {
 func (st *serviceTester) Close() {
 	// Is this needed? Or is the cancel enough here? Do we need to cancel individual nodes?
 	for _, node := range st.nodes {
-		node.svr.Stop()
+		// if the node failed to start, it may not have a server
+		if node.svr != nil {
+			node.svr.Stop()
+		} else {
+			log := dlog.FromCtx(st.ctx)
+			log.Warn("Skipping srv Stop, node wasn't started")
+		}
 	}
 	if st.stopBlockAutoMining != nil {
 		st.stopBlockAutoMining()
@@ -243,9 +253,13 @@ func (st *serviceTester) Start(t *testing.T) {
 		bc := st.btc.GetBlockchain(st.ctx, i)
 
 		// register node
-		pendingTx, err := bc.TxPool.Submit(ctx, "RegisterNode", func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return st.entitlementChecker.RegisterNode(opts, bc.Wallet.Address)
-		})
+		pendingTx, err := bc.TxPool.Submit(
+			ctx,
+			"RegisterNode",
+			func(opts *bind.TransactOpts) (*types.Transaction, error) {
+				return st.entitlementChecker.RegisterNode(opts, bc.Wallet.Address)
+			},
+		)
 
 		require.NoError(t, err, "register node")
 		receipt := <-pendingTx.Wait()
@@ -263,9 +277,10 @@ func (st *serviceTester) Start(t *testing.T) {
 
 func (st *serviceTester) Config() *config.Config {
 	cfg := &config.Config{
-		BaseChain:    node_config.ChainConfig{},
-		RiverChain:   node_config.ChainConfig{},
-		ChainsString: fmt.Sprintf("%d:%s", ChainID, BaseRpcEndpoint),
+		BaseChain:         node_config.ChainConfig{},
+		RiverChain:        node_config.ChainConfig{},
+		Chains:            fmt.Sprintf("%d:%s", ChainID, BaseRpcEndpoint),
+		XChainBlockchains: []uint64{ChainID},
 		TestEntitlementContract: config.ContractConfig{
 			Address: st.mockEntitlementGatedAddress,
 		},

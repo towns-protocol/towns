@@ -236,11 +236,19 @@ func TestLoad(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, len(newSV1.blocks), 2) // we should have both blocks in memory
 
-	pendingTx, err := btc.DeployerBlockchain.TxPool.Submit(ctx, "SetConfiguration", func(opts *bind.TransactOpts) (*types.Transaction, error) {
-		blockNum := btc.BlockNum(ctx)
-		return btc.Configuration.SetConfiguration(
-			opts, crypto.StreamRecencyConstraintsGenerationsConfigKey.ID(), blockNum.AsUint64(), crypto.ABIEncodeInt64(int64(0)))
-	})
+	pendingTx, err := btc.DeployerBlockchain.TxPool.Submit(
+		ctx,
+		"SetConfiguration",
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			blockNum := btc.BlockNum(ctx)
+			return btc.Configuration.SetConfiguration(
+				opts,
+				crypto.StreamRecencyConstraintsGenerationsConfigKey.ID(),
+				blockNum.AsUint64(),
+				crypto.ABIEncodeInt64(int64(0)),
+			)
+		},
+	)
 	require.NoError(t, err)
 	receipt := <-pendingTx.Wait()
 	require.Equal(t, crypto.TransactionResultSuccess, receipt.Status)

@@ -474,7 +474,11 @@ func (cs *clientSimulator) Wallet() *node_crypto.Wallet {
 	return cs.wallet
 }
 
-func (cs *clientSimulator) EvaluateRuleData(ctx context.Context, cfg *config.Config, ruleData e.IRuleData) (bool, error) {
+func (cs *clientSimulator) EvaluateRuleData(
+	ctx context.Context,
+	cfg *config.Config,
+	ruleData e.IRuleData,
+) (bool, error) {
 	log := dlog.FromCtx(ctx).With("application", "clientSimulator")
 	log.Info("ClientSimulator evaluating rule data", "ruleData", ruleData)
 
