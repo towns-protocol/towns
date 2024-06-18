@@ -3,7 +3,8 @@ import React, { useEffect, useMemo, useRef } from 'react'
 import { LOCALHOST_CHAIN_ID, TownsContextProvider, ZTEvent } from 'use-towns-client'
 import { Helmet } from 'react-helmet'
 import { isDefined } from '@river/sdk'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useEvent } from 'react-use-event-hook'
 import { Notifications } from '@components/Notifications/Notifications'
 import { useDevice } from 'hooks/useDevice'
 import { ENVIRONMENTS, useEnvironment } from 'hooks/useEnvironmnet'
@@ -27,8 +28,10 @@ import {
     LINKED_NOTIFICATION_NAME,
     LINKED_NOTIFICATION_REL_ENTRY,
     LINKED_RESOURCE,
+    NotificationRelEntry,
 } from 'data/rel'
 import { useAnalytics } from 'hooks/useAnalytics'
+import { useNotificationRoute } from 'hooks/useNotificationRoute'
 
 FontLoader.init()
 
@@ -43,6 +46,7 @@ export const App = () => {
     const { isTouch } = useDevice()
 
     const highPriorityStreamIds = useRef<string[]>([])
+    const isFirstRender = useRef(false)
 
     const state = useStore.getState()
     const spaceIdBookmark = state.spaceIdBookmark
@@ -50,6 +54,8 @@ export const App = () => {
         ? state.townRouteBookmarks[spaceIdBookmark]
         : undefined
     const didSetHighpriorityStreamIds = useRef<boolean>(false)
+    const { urlPathnameSafeToNavigate } = useNotificationRoute()
+    const navigate = useNavigate()
 
     // FIXME: this is not great, we don't directly use bookmarks for mobile, we should
     // have a channel history stack with the latest 2-5 channels instead
@@ -102,8 +108,22 @@ export const App = () => {
     }, [searchParams])
     const { analytics } = useAnalytics()
 
+    const navigateTo = useEvent((path: string) => {
+        navigate(path, { state: { fromNotification: true } })
+    })
+
     useEffect(() => {
-        if (rel.includes(LINKED_NOTIFICATION_NAME)) {
+        // when the App is rendered for the first time, we need to check if we
+        // have a notification
+        if (!isFirstRender.current) {
+            return
+        }
+        // if the app is launched from a notification, we need to navigate to it
+        if (
+            rel.includes(LINKED_NOTIFICATION_NAME) &&
+            notificationEntry?.includes(NotificationRelEntry.OpenWindow) &&
+            channelId
+        ) {
             const tracked = {
                 spaceId,
                 channelId,
@@ -114,8 +134,16 @@ export const App = () => {
             analytics?.track('clicked notification', tracked, () => {
                 console.log('[analytics][App][route] clicked notification', tracked)
             })
+
+            const url = new URL(window.location.href)
+            const safeUrl = urlPathnameSafeToNavigate(url.pathname, channelId)
+            console.log(
+                `[App][route] on notification ${NotificationRelEntry.OpenWindow}, navigate to`,
+                safeUrl,
+            )
+            navigateTo(safeUrl)
         }
-    }, [analytics, channelId, notificationEntry, notificationKind, rel, spaceId])
+    })
 
     return (
         <TownsContextProvider

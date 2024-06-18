@@ -296,13 +296,6 @@ export const TouchHome = () => {
     }, [openPanel])
 
     useEffect(() => {
-        if (locationState?.fromNotification) {
-            console.log('[TouchHome][route]]', 'navigating to notification route', {
-                notificationRoute,
-            })
-            navigate(notificationRoute ?? storeBookmarkedRoute ?? '/')
-        }
-
         if (locationState?.fromCreateTown) {
             locationState.fromCreateTown = undefined
             return

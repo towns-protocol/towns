@@ -2,7 +2,7 @@ import {
     LookupUser,
     SpaceContextProvider,
     SpaceData,
-    useMyProfile,
+    useMyUserId,
     useSpaceDataWithId,
     useTownsContext,
     useUserLookupStore,
@@ -23,7 +23,7 @@ function createInitialCurrentUser() {
 }
 
 export function ServiceWorkerMetadataSyncer() {
-    const myProfile = useMyProfile()
+    const myUserId = useMyUserId()
     const { casablancaClient, spaceHierarchies } = useTownsContext()
     const [store, setStore] = useState<NotificationStore | null>(null)
     const [currentUser] = useState<NotificationCurrentUser>(createInitialCurrentUser)
@@ -42,25 +42,24 @@ export function ServiceWorkerMetadataSyncer() {
     useEffect(() => {
         let cancelled = false
         async function setCurrentUser() {
-            if (!myProfile?.userId || !cryptoStoreDatabaseName) {
+            if (!myUserId || !cryptoStoreDatabaseName) {
                 return
             }
 
-            const currentUserId = myProfile.userId
             try {
                 const currentRecord = await currentUser.getCurrentUserRecord()
-                if (currentRecord?.userId !== currentUserId) {
+                if (currentRecord?.userId !== myUserId) {
                     const updatedRecord: CurrentUser = {
-                        userId: currentUserId,
+                        userId: myUserId,
                         databaseName: cryptoStoreDatabaseName,
-                        lastUrlTimestamp: 0,
+                        notificationClickedTimestamp: 0,
                     }
                     await currentUser.setCurrentUserRecord(updatedRecord)
                     log('set currentUser', updatedRecord)
                 }
                 if (!cancelled) {
                     // open the notification cache for this user
-                    setStore(new NotificationStore(currentUserId))
+                    setStore(new NotificationStore(myUserId))
                 }
             } catch (error) {
                 console.error('sw:push: error setting my userId', error)
@@ -70,7 +69,7 @@ export function ServiceWorkerMetadataSyncer() {
         return () => {
             cancelled = true
         }
-    }, [cryptoStoreDatabaseName, currentUser, myProfile?.userId])
+    }, [cryptoStoreDatabaseName, currentUser, myUserId])
 
     return (
         <>

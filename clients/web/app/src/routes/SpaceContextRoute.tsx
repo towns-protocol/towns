@@ -9,7 +9,6 @@ import { useSetDocTitle } from 'hooks/useDocTitle'
 import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
 import { APP_NAME } from 'data/constants'
 import { useDevice } from 'hooks/useDevice'
-import { useHnt5685 } from 'hooks/useHnt5685'
 
 export interface RouteParams {
     spaceId?: string
@@ -39,10 +38,9 @@ const SpaceContext = () => {
     const location = useLocation()
 
     const spaceSlug = space?.id ?? ''
-    const { setTownRouteBookmark, setNotificationRoute } = useStore((s) => {
+    const { setTownRouteBookmark } = useStore((s) => {
         return {
             setTownRouteBookmark: s.setTownRouteBookmark,
-            setNotificationRoute: s.setNotificationRoute,
         }
     })
 
@@ -54,7 +52,6 @@ const SpaceContext = () => {
         console.log('[SpaceContextRoute][route]', 'route', {
             spaceSlug,
             routeMatcherPathname: path?.pathname ?? '',
-            routeMatcherNotificationDeepLink: path?.notificationDeepLink ?? '',
             locationPathname: location.pathname,
             routeMatcherSearch: path?.search ?? '',
             locationSearch: location.search,
@@ -68,7 +65,6 @@ const SpaceContext = () => {
         location.pathname,
         location.search,
         path?.type,
-        path?.notificationDeepLink,
         path?.pathname,
         path?.search,
         spaceSlug,
@@ -99,12 +95,6 @@ const SpaceContext = () => {
             }
         }
     }, [isTouch, location.pathname, path, setTownRouteBookmark, spaceSlug])
-
-    useEffect(() => {
-        if (path?.notificationDeepLink) {
-            setNotificationRoute(path.notificationDeepLink)
-        }
-    }, [path?.notificationDeepLink, setNotificationRoute])
 
     const title = useMemo(() => {
         if (!path) {
@@ -141,14 +131,11 @@ export interface RouteInfo {
     search: string
     name?: string
     channel?: Channel
-    notificationDeepLink?: string
-    notificationTimestamp?: number
 }
 
 const useSpaceRouteMatcher = (space: SpaceData | undefined): RouteInfo | undefined => {
     const location = useLocation()
     const { isTouch } = useDevice()
-    const notificationRouteInfo = useHnt5685()
     const [search] = useSearchParams()
 
     const routeInfo = useMemo(() => {
@@ -156,9 +143,8 @@ const useSpaceRouteMatcher = (space: SpaceData | undefined): RouteInfo | undefin
         return {
             pathname: scrubbedPathname,
             search: location.search,
-            notificationDeepLink: notificationRouteInfo?.notificationDeepLink,
         }
-    }, [location.pathname, location.search, notificationRouteInfo])
+    }, [location.pathname, location.search])
 
     return useMemo(() => {
         const channelPath = matchPath(
@@ -190,7 +176,7 @@ const useSpaceRouteMatcher = (space: SpaceData | undefined): RouteInfo | undefin
             } else if (routeInfo.pathname.includes(MESSAGES)) {
                 if (isTouch) {
                     // handle the special case for Touch devices where the spaceId is inserted into the path
-                    const { spaceId, channelId } = getRouteParams(routeInfo.pathname)
+                    const { spaceId } = getRouteParams(routeInfo.pathname)
                     let spaceIdBookmark = spaceId
                     // handle the special case for Touch devices where
                     // the navigation stack is different between HOME and MESSAGES
@@ -206,11 +192,6 @@ const useSpaceRouteMatcher = (space: SpaceData | undefined): RouteInfo | undefin
                     if (spaceIdBookmark) {
                         routeInfo.pathname = `/${SPACES}/${spaceIdBookmark}`
                         routeInfo.search = searchWithDmStackId
-                        if (channelId) {
-                            routeInfo.notificationDeepLink = `/${SPACES}/${spaceIdBookmark}/${MESSAGES}/${channelId}`
-                        } else {
-                            routeInfo.notificationDeepLink = `/${SPACES}/${spaceIdBookmark}/${MESSAGES}`
-                        }
                     }
                 }
                 return {

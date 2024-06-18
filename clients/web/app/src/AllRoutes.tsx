@@ -9,6 +9,7 @@ import { PATHS } from 'routes'
 import { AuthenticatedRoutes } from 'routes/AuthenticatedRoutes'
 import { PlaygroundLazy } from '@components/Playground/PlaygroundLazy'
 import { PublicTownPage } from 'routes/PublicTownPage/PublicTownPage'
+import { NotificationRoute } from 'routes/NotificationRoute'
 import { env } from 'utils'
 import { DebugRoute } from '@components/DebugBar/DebugBar'
 
@@ -17,6 +18,7 @@ export const AllRoutes = () => {
 
     return (
         <>
+            <NotificationRoute />
             <Routes>
                 <Route element={<ResponsiveOutlet />}>
                     {/* TODO: Remove extra level */}

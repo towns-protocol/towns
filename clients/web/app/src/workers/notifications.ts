@@ -50,8 +50,7 @@ async function getCurrentUser(): Promise<CurrentUser> {
         currentUser ?? {
             userId: '',
             databaseName: '',
-            lastUrl: undefined,
-            lastUrlTimestamp: 0,
+            notificationClickedTimestamp: 0,
         }
     )
 }
@@ -179,30 +178,36 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                 )
 
                 const currentUserStore = await getCurrentUserStore()
-                let path = pathFromAppNotification(data)
+                const { notificationUrl, spaceId, channelId, threadId } =
+                    pathFromAppNotification(data)
                 if (hadWindowToFocus) {
                     // update the path with specific search params
-                    path = getPathnameWithParams(
+                    const url = getPathnameWithParams(
                         new URL(worker.location.origin),
-                        path,
+                        notificationUrl,
                         NotificationRelEntry.BroadcastChannel,
                         data.kind,
                     )
                     log('[route] service worker posting message to broadcast channel', {
-                        path,
+                        path: url,
                         hadWindowToFocus: true,
                     })
                     // work around for hnt-5685
-                    await currentUserStore.setLastUrl(path)
+                    await currentUserStore.setNotificationClicked({
+                        notificationUrl: url,
+                        spaceId,
+                        channelId,
+                        threadId,
+                    })
                     await hadWindowToFocus.focus()
                     const navigationChannel = new BroadcastChannel(WEB_PUSH_NAVIGATION_CHANNEL)
                     // avoid reloading the page
-                    navigationChannel.postMessage({ path })
+                    navigationChannel.postMessage({ path: url, channelId, threadId })
                 } else {
                     // update the path with specific search params
                     const url = getUrlWithParams(
                         new URL(worker.location.origin),
-                        path,
+                        notificationUrl,
                         NotificationRelEntry.OpenWindow,
                         data.kind,
                     )
@@ -211,8 +216,12 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                         hadWindowToFocus: false,
                     })
                     // work around for hnt-5685
-                    const pathWithParams = url.pathname + url.search
-                    await currentUserStore.setLastUrl(pathWithParams)
+                    await currentUserStore.setNotificationClicked({
+                        notificationUrl: url.pathname + url.search,
+                        spaceId,
+                        channelId,
+                        threadId,
+                    })
                     const window = await worker.clients.openWindow(url.toString())
                     await window?.focus()
                 }
