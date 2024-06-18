@@ -471,6 +471,7 @@ const EnsDisplayNameModal = (props: {
             </Stack>
 
             <Stack gap alignItems="center" paddingTop="lg">
+                {isFetching && <ButtonSpinner />}
                 {hasEnsName ? (
                     <Stack scroll alignContent="start" width="100%" gap="sm">
                         {ensNames.map((ensName) => (
@@ -491,7 +492,6 @@ const EnsDisplayNameModal = (props: {
                     </Stack>
                 ) : (
                     <>
-                        {!hasEnsName && <ButtonSpinner />}
                         <Box grow centerContent padding>
                             <Text color="gray2" textAlign="center">
                                 No ENS names were found in your wallets. <br />
