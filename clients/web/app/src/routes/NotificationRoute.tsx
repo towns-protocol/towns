@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTimelineThread, useTownsContext } from 'use-towns-client'
 
 import { createSearchParams } from 'react-router-dom'
-import { dlogger } from '@river-build/dlog'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useLocation, useNavigate } from 'react-router'
 import { useEvent } from 'react-use-event-hook'
@@ -12,7 +11,8 @@ import { SECOND_MS } from 'data/constants'
 import { useDevice } from 'hooks/useDevice'
 import { useNotificationRoute } from 'hooks/useNotificationRoute'
 
-const log = dlogger('[route][push]app:NotificationRoute')
+const TAG = '[NotificationRoute][route]'
+const log = console.log
 const FRESHNESS_THRESHOLD = 5 * SECOND_MS
 
 /**
@@ -118,7 +118,7 @@ export function NotificationRoute(): JSX.Element | null {
             (isChannelIdPresent || isDmChannelIdPresent) &&
             isSpaceIdPresentOrUnspecified &&
             isThreadIdPresentOrUnspecified
-        log.info('isRequiredPathParamsPresent', {
+        log(TAG, 'isRequiredPathParamsPresent', {
             isRequiredPathParamsPresent: isRequiredPresent,
             isFresh,
             isDmOrChannelIdPresent: isChannelIdPresent || isDmChannelIdPresent,
@@ -145,7 +145,7 @@ export function NotificationRoute(): JSX.Element | null {
     }, [channelId, isRequiredPathParamsPresent, notificationUrl, urlPathnameSafeToNavigate])
 
     useEffect(() => {
-        log.info('route', {
+        log(TAG, 'route', {
             channelId,
             hasVisitedUrl,
             isRequiredPathParamsPresent,
@@ -174,7 +174,7 @@ export function NotificationRoute(): JSX.Element | null {
                 ...url.searchParams,
                 stackId: PanelStack.DIRECT_MESSAGES,
             }).toString()
-            log.info('navigateTo', {
+            log(TAG, 'navigateTo', {
                 pathname,
                 search,
                 isDmOrChannel: isDmChannelIdPresent ? 'dm/gdm' : 'channel',
@@ -190,7 +190,7 @@ export function NotificationRoute(): JSX.Element | null {
                 },
             )
         } else {
-            log.info('navigateTo', {
+            log(TAG, 'navigateTo', {
                 pathname: to,
                 isDmOrChannel: isDmChannelIdPresent ? 'dm/gdm' : 'channel',
                 deviceType: isTouch ? 'mobile' : 'desktop',

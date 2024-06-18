@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react'
-import { dlogger } from '@river-build/dlog'
 import { useNavigate } from 'react-router'
 import { useEvent } from 'react-use-event-hook'
 import { WEB_PUSH_NAVIGATION_CHANNEL } from 'workers/types.d'
@@ -7,7 +6,8 @@ import { WEB_PUSH_NAVIGATION_CHANNEL } from 'workers/types.d'
 import { useNotificationRoute } from './useNotificationRoute'
 import { useDevice } from './useDevice'
 
-const log = dlogger('[route][push]app:useAppNotifications')
+const TAG = '[useAppNotifications][route]'
+const log = console.log
 
 export function useAppNotifications() {
     const { isTouch } = useDevice()
@@ -22,11 +22,11 @@ export function useAppNotifications() {
     })
 
     useEffect(() => {
-        log.info('mounted: open broadcast channel')
+        log(TAG, 'mounted: open broadcast channel')
         const broadcastChannel = new BroadcastChannel(WEB_PUSH_NAVIGATION_CHANNEL)
         broadcastChannel.onmessage = (event) => {
             const path = urlPathnameSafeToNavigate(event.data.path, event.data.channelId)
-            log.info('received navigation event on broadcast channel', {
+            log(TAG, 'received navigation event on broadcast channel', {
                 deviceType: isTouchRef.current ? 'mobile' : 'desktop',
                 eventDataPath: event.data.path,
                 eventDataChannelId: event.data.channelId,
@@ -37,7 +37,7 @@ export function useAppNotifications() {
         }
 
         return () => {
-            log.info('unmounted: close broadcast channel')
+            log(TAG, 'unmounted: close broadcast channel')
             broadcastChannel.close()
         }
     }, [navigateTo, urlPathnameSafeToNavigate])
