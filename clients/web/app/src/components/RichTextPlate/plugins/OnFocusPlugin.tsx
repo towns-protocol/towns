@@ -22,6 +22,9 @@ export const OnFocusPlugin = ({ autoFocus, onFocusChange, editorRef }: Props) =>
 
         if (isRendered && editor) {
             const timeout = setTimeout(() => {
+                if (document.activeElement?.tagName === 'INPUT') {
+                    return
+                }
                 focusEditor(editor, getEndPoint(editor, []))
                 onFocusChange(true)
             }, 0)

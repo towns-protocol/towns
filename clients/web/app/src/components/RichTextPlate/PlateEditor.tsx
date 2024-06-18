@@ -349,6 +349,8 @@ const PlateEditorWithoutBoundary = ({
     const fileCount = files.length
     const background = isEditing && !isTouch ? 'level2' : 'level2'
 
+    const [isOtherInputFocused] = useState(() => document.activeElement?.tagName === 'INPUT')
+
     const sendButtons = (
         <SendMarkdownPlugin
             displayButtons={displayButtons ?? 'on-focus'}
@@ -419,7 +421,7 @@ const PlateEditorWithoutBoundary = ({
                         <Box grow paddingX="md" position="relative" ref={editableContainerRef}>
                             <Editor
                                 readOnly={!editable}
-                                autoFocus={autoFocus}
+                                autoFocus={autoFocus && !isOtherInputFocused}
                                 tabIndex={tabIndex}
                                 disabled={isSendingMessage}
                                 isTouch={isTouch}
