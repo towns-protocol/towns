@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react'
+import React, { useCallback, useEffect, useId } from 'react'
 import { focusEditor } from '@udecode/slate-react'
 import { getEndPoint } from '@udecode/slate'
 import { getSelectionText } from '@udecode/slate-utils'
@@ -89,7 +89,7 @@ export const RichTextBottomToolbar = (props: Props) => {
         [mediaDropContext],
     )
 
-    const mediaInputId = 'media' + mediaDropContext.channelId + mediaDropContext.eventId
+    const mediaInputId = useId()
 
     return (
         <Stack horizontal gap={isTouch ? 'sm' : 'xs'} alignItems="center">
@@ -146,7 +146,7 @@ export const RichTextBottomToolbar = (props: Props) => {
             )}
 
             <label htmlFor={mediaInputId}>
-                {props.visible && (
+                {(!isTouch || props.visible) && (
                     <Box
                         padding="xs"
                         tooltip={isTouch ? undefined : 'Upload file'}
