@@ -18,8 +18,8 @@
             "type": "address"
           }
         ],
-        "type": "error",
-        "name": "AddressEmptyCode"
+        "name": "AddressEmptyCode",
+        "type": "error"
       },
       {
         "inputs": [
@@ -29,53 +29,53 @@
             "type": "address"
           }
         ],
-        "type": "error",
-        "name": "ERC1967InvalidImplementation"
+        "name": "ERC1967InvalidImplementation",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "ERC1967NonPayable"
+        "name": "ERC1967NonPayable",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Entitlement__InvalidValue"
+        "name": "Entitlement__InvalidValue",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Entitlement__NotAllowed"
+        "name": "Entitlement__NotAllowed",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Entitlement__NotMember"
+        "name": "Entitlement__NotMember",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "Entitlement__ValueAlreadyExists"
+        "name": "Entitlement__ValueAlreadyExists",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "FailedInnerCall"
+        "name": "FailedInnerCall",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "InvalidInitialization"
+        "name": "InvalidInitialization",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "NotInitializing"
+        "name": "NotInitializing",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "UUPSUnauthorizedCallContext"
+        "name": "UUPSUnauthorizedCallContext",
+        "type": "error"
       },
       {
         "inputs": [
@@ -85,39 +85,37 @@
             "type": "bytes32"
           }
         ],
-        "type": "error",
-        "name": "UUPSUnsupportedProxiableUUID"
+        "name": "UUPSUnsupportedProxiableUUID",
+        "type": "error"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": false,
             "internalType": "uint64",
             "name": "version",
-            "type": "uint64",
-            "indexed": false
+            "type": "uint64"
           }
         ],
-        "type": "event",
         "name": "Initialized",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "address",
             "name": "implementation",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           }
         ],
-        "type": "event",
         "name": "Upgraded",
-        "anonymous": false
+        "type": "event"
       },
       {
         "inputs": [],
-        "stateMutability": "view",
-        "type": "function",
         "name": "SPACE_ADDRESS",
         "outputs": [
           {
@@ -125,12 +123,12 @@
             "name": "",
             "type": "address"
           }
-        ]
+        ],
+        "stateMutability": "view",
+        "type": "function"
       },
       {
         "inputs": [],
-        "stateMutability": "view",
-        "type": "function",
         "name": "UPGRADE_INTERFACE_VERSION",
         "outputs": [
           {
@@ -138,12 +136,12 @@
             "name": "",
             "type": "string"
           }
-        ]
+        ],
+        "stateMutability": "view",
+        "type": "function"
       },
       {
         "inputs": [],
-        "stateMutability": "view",
-        "type": "function",
         "name": "description",
         "outputs": [
           {
@@ -151,7 +149,9 @@
             "name": "",
             "type": "string"
           }
-        ]
+        ],
+        "stateMutability": "view",
+        "type": "function"
       },
       {
         "inputs": [
@@ -161,8 +161,6 @@
             "type": "uint256"
           }
         ],
-        "stateMutability": "view",
-        "type": "function",
         "name": "getEntitlementDataByRoleId",
         "outputs": [
           {
@@ -170,7 +168,9 @@
             "name": "",
             "type": "bytes"
           }
-        ]
+        ],
+        "stateMutability": "view",
+        "type": "function"
       },
       {
         "inputs": [
@@ -180,14 +180,13 @@
             "type": "address"
           }
         ],
+        "name": "initialize",
+        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function",
-        "name": "initialize"
+        "type": "function"
       },
       {
         "inputs": [],
-        "stateMutability": "pure",
-        "type": "function",
         "name": "isCrosschain",
         "outputs": [
           {
@@ -195,7 +194,9 @@
             "name": "",
             "type": "bool"
           }
-        ]
+        ],
+        "stateMutability": "pure",
+        "type": "function"
       },
       {
         "inputs": [
@@ -215,8 +216,6 @@
             "type": "bytes32"
           }
         ],
-        "stateMutability": "view",
-        "type": "function",
         "name": "isEntitled",
         "outputs": [
           {
@@ -224,12 +223,12 @@
             "name": "",
             "type": "bool"
           }
-        ]
+        ],
+        "stateMutability": "view",
+        "type": "function"
       },
       {
         "inputs": [],
-        "stateMutability": "view",
-        "type": "function",
         "name": "moduleType",
         "outputs": [
           {
@@ -237,12 +236,12 @@
             "name": "",
             "type": "string"
           }
-        ]
+        ],
+        "stateMutability": "view",
+        "type": "function"
       },
       {
         "inputs": [],
-        "stateMutability": "view",
-        "type": "function",
         "name": "name",
         "outputs": [
           {
@@ -250,12 +249,12 @@
             "name": "",
             "type": "string"
           }
-        ]
+        ],
+        "stateMutability": "view",
+        "type": "function"
       },
       {
         "inputs": [],
-        "stateMutability": "view",
-        "type": "function",
         "name": "proxiableUUID",
         "outputs": [
           {
@@ -263,7 +262,9 @@
             "name": "",
             "type": "bytes32"
           }
-        ]
+        ],
+        "stateMutability": "view",
+        "type": "function"
       },
       {
         "inputs": [
@@ -273,9 +274,10 @@
             "type": "uint256"
           }
         ],
+        "name": "removeEntitlement",
+        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function",
-        "name": "removeEntitlement"
+        "type": "function"
       },
       {
         "inputs": [
@@ -290,9 +292,10 @@
             "type": "bytes"
           }
         ],
+        "name": "setEntitlement",
+        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function",
-        "name": "setEntitlement"
+        "type": "function"
       },
       {
         "inputs": [
@@ -302,8 +305,6 @@
             "type": "bytes4"
           }
         ],
-        "stateMutability": "view",
-        "type": "function",
         "name": "supportsInterface",
         "outputs": [
           {
@@ -311,7 +312,9 @@
             "name": "",
             "type": "bool"
           }
-        ]
+        ],
+        "stateMutability": "view",
+        "type": "function"
       },
       {
         "inputs": [
@@ -326,12 +329,63 @@
             "type": "bytes"
           }
         ],
+        "name": "upgradeToAndCall",
+        "outputs": [],
         "stateMutability": "payable",
-        "type": "function",
-        "name": "upgradeToAndCall"
+        "type": "function"
       }
     ],
     "devdoc": {
+      "errors": {
+        "AddressEmptyCode(address)": [
+          {
+            "details": "There's no code at `target` (it is not a contract)."
+          }
+        ],
+        "ERC1967InvalidImplementation(address)": [
+          {
+            "details": "The `implementation` of the proxy is invalid."
+          }
+        ],
+        "ERC1967NonPayable()": [
+          {
+            "details": "An upgrade function sees `msg.value > 0` that may be lost."
+          }
+        ],
+        "FailedInnerCall()": [
+          {
+            "details": "A call to an address target failed. The target may have reverted."
+          }
+        ],
+        "InvalidInitialization()": [
+          {
+            "details": "The contract is already initialized."
+          }
+        ],
+        "NotInitializing()": [
+          {
+            "details": "The contract is not initializing."
+          }
+        ],
+        "UUPSUnauthorizedCallContext()": [
+          {
+            "details": "The call is from an unauthorized context."
+          }
+        ],
+        "UUPSUnsupportedProxiableUUID(bytes32)": [
+          {
+            "details": "The storage `slot` is unsupported as a UUID."
+          }
+        ]
+      },
+      "events": {
+        "Initialized(uint64)": {
+          "details": "Triggered when the contract has been initialized or reinitialized."
+        },
+        "Upgraded(address)": {
+          "details": "Emitted when the implementation is upgraded."
+        }
+      },
       "kind": "dev",
       "methods": {
         "constructor": {
@@ -372,6 +426,11 @@
           "details": "Upgrade the implementation of the proxy to `newImplementation`, and subsequently execute the function call encoded in `data`. Calls {_authorizeUpgrade}. Emits an {Upgraded} event."
         }
       },
+      "stateVariables": {
+        "__gap": {
+          "details": "Added to allow future versions to add new variables in case this contract becomes      inherited. See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps"
+        }
+      },
       "version": 1
     },
     "userdoc": {
@@ -403,158 +462,158 @@
     }
   },
   "settings": {
-    "remappings": [
-      "@openzeppelin/=lib/@openzeppelin/",
-      "@prb/math/=lib/@prb/math/src/",
-      "@prb/test/=lib/@prb/test/src/",
-      "account-abstraction/=lib/account-abstraction/contracts/",
-      "base64/=lib/base64/",
-      "ds-test/=lib/ds-test/src/",
-      "forge-std/=lib/forge-std/src/",
-      "hardhat-deploy/=lib/hardhat-deploy/"
-    ],
-    "optimizer": {
-      "enabled": true,
-      "runs": 200
-    },
-    "metadata": {
-      "bytecodeHash": "none",
-      "appendCBOR": false
-    },
     "compilationTarget": {
       "contracts/src/spaces/entitlements/user/UserEntitlement.sol": "UserEntitlement"
     },
     "evmVersion": "paris",
-    "libraries": {}
+    "libraries": {},
+    "metadata": {
+      "appendCBOR": false,
+      "bytecodeHash": "none"
+    },
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "remappings": [
+      ":@openzeppelin/=lib/@openzeppelin/",
+      ":@prb/math/=lib/@prb/math/src/",
+      ":@prb/test/=lib/@prb/test/src/",
+      ":account-abstraction/=lib/account-abstraction/contracts/",
+      ":base64/=lib/base64/",
+      ":ds-test/=lib/ds-test/src/",
+      ":forge-std/=lib/forge-std/src/",
+      ":hardhat-deploy/=lib/hardhat-deploy/"
+    ]
   },
   "sources": {
     "contracts/src/spaces/entitlements/IEntitlement.sol": {
       "keccak256": "0x81712a4b9127000ba341966d99395917dcb4b1305eadeddd1e1ad4e562587fdd",
+      "license": "MIT",
       "urls": [
         "bzz-raw://df0fcc9d7ed7489786684f5fa8375b277146969021f96f6a9feb81cb39176eca",
         "dweb:/ipfs/QmbxXXeXe6AzXUL8cSoABMx2E2QbRAK2uJXd8TRnDuKSJ8"
-      ],
-      "license": "MIT"
+      ]
     },
     "contracts/src/spaces/entitlements/user/IUserEntitlement.sol": {
       "keccak256": "0x573a718650f7088b84fe0bc6ec0b85c354c58c842691c66b2e682912455161c9",
+      "license": "MIT",
       "urls": [
         "bzz-raw://5b41f88dd0e806b3f61b72f340dbdc53710827b1c8de9bcba6ba11fd1f8ae25a",
         "dweb:/ipfs/QmZZtrWAgx3aLFA2dXuoHtujBqEuxAkHZkMP4FdmEAcQRx"
-      ],
-      "license": "MIT"
+      ]
     },
     "contracts/src/spaces/entitlements/user/UserEntitlement.sol": {
       "keccak256": "0xb210baad6226d8405366b141e9c6b12b4400d2cdff64020c147ba23001d5e9ea",
+      "license": "MIT",
       "urls": [
         "bzz-raw://e9c3b3a9c763326aebccc932be913229f50c32136b90ce34b5900d7d87f0ce57",
         "dweb:/ipfs/Qmc4pzjGhSFgPu2oLvuiqUmphzvkv73rbG72fqWA4Wcx2Q"
-      ],
-      "license": "MIT"
+      ]
     },
     "contracts/src/spaces/facets/channels/IChannel.sol": {
       "keccak256": "0x8f461ec8c49234f27257fc5cf20dd5e9fdb4692d9b17075be63e8ee6db854554",
+      "license": "MIT",
       "urls": [
         "bzz-raw://52673312b7dfe3fa2b0e8b603a368036f3b428b303f9e539b558ccfdf5490b54",
         "dweb:/ipfs/Qme3LoUvB1Axz9ZJZ8Erv6Cw6GLPQB7PNghMQ3FUYfA4VV"
-      ],
-      "license": "MIT"
+      ]
     },
     "contracts/src/spaces/facets/roles/IRoles.sol": {
       "keccak256": "0xa69cfbcd989b8794187a56a93deffbefaee8ca456e381ce30f85897893c50272",
+      "license": "MIT",
       "urls": [
         "bzz-raw://cf8e9b2711f66eefb949f5b5ead4d72005f1845cd63f22b287fdba3339101bd4",
         "dweb:/ipfs/Qmf7sPY4BgmvZf7p4GBsyVyd4o66yJXMgAmEgpdQAQyBdx"
-      ],
-      "license": "MIT"
+      ]
     },
     "lib/@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol": {
       "keccak256": "0x631188737069917d2f909d29ce62c4d48611d326686ba6683e26b72a23bfac0b",
+      "license": "MIT",
       "urls": [
         "bzz-raw://7a61054ae84cd6c4d04c0c4450ba1d6de41e27e0a2c4f1bcdf58f796b401c609",
         "dweb:/ipfs/QmUvtdp7X1mRVyC3CsHrtPbgoqWaXHp3S1ZR24tpAQYJWM"
-      ],
-      "license": "MIT"
+      ]
     },
     "lib/@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol": {
       "keccak256": "0x3f13b947637c4969c0644cab4ef399cdc4b67f101463b8775c5a43b118558e53",
+      "license": "MIT",
       "urls": [
         "bzz-raw://c6683e6ade6985d394d32baaef5eea0d8b9ff0b3eca86ae413d6cdde114a9930",
         "dweb:/ipfs/QmdBE8T1BTddZxpdECMsb3KiCFyjNWmxcCddYrWFTXmWPj"
-      ],
-      "license": "MIT"
+      ]
     },
     "lib/@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol": {
       "keccak256": "0xdbef5f0c787055227243a7318ef74c8a5a1108ca3a07f2b3a00ef67769e1e397",
+      "license": "MIT",
       "urls": [
         "bzz-raw://08e39f23d5b4692f9a40803e53a8156b72b4c1f9902a88cd65ba964db103dab9",
         "dweb:/ipfs/QmPKn6EYDgpga7KtpkA8wV2yJCYGMtc9K4LkJfhKX2RVSV"
-      ],
-      "license": "MIT"
+      ]
     },
     "lib/@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol": {
       "keccak256": "0xdaba3f7c42c55b2896353f32bd27d4d5f8bae741b3b05d4c53f67abc4dc47ce8",
+      "license": "MIT",
       "urls": [
         "bzz-raw://1fa2e61141c602510bcd2cd936ed9561922ac8772a9b9c9a9db091a74e354a45",
         "dweb:/ipfs/QmcHQDDoEBwJmwUbzoVkytvJsBx3KVHYFFnDkvRGWh9Wmh"
-      ],
-      "license": "MIT"
+      ]
     },
     "lib/@openzeppelin/contracts/interfaces/draft-IERC1822.sol": {
       "keccak256": "0x2a1f9944df2015c081d89cd41ba22ffaf10aa6285969f0dc612b235cc448999c",
+      "license": "MIT",
       "urls": [
         "bzz-raw://ef381843676aec64421200ee85eaa0b1356a35f28b9fc67e746a6bbb832077d9",
         "dweb:/ipfs/QmY8aorMYA2TeTCnu6ejDjzb4rW4t7TCtW4GZ6LoxTFm7v"
-      ],
-      "license": "MIT"
+      ]
     },
     "lib/@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol": {
       "keccak256": "0x06a78f9b3ee3e6d0eb4e4cd635ba49960bea34cac1db8c0a27c75f2319f1fd65",
+      "license": "MIT",
       "urls": [
         "bzz-raw://547d21aa17f4f3f1a1a7edf7167beff8dd9496a0348d5588f15cc8a4b29d052a",
         "dweb:/ipfs/QmT16JtRQSWNpLo9W23jr6CzaMuTAcQcjJJcdRd8HLJ6cE"
-      ],
-      "license": "MIT"
+      ]
     },
     "lib/@openzeppelin/contracts/proxy/beacon/IBeacon.sol": {
       "keccak256": "0xc59a78b07b44b2cf2e8ab4175fca91e8eca1eee2df7357b8d2a8833e5ea1f64c",
+      "license": "MIT",
       "urls": [
         "bzz-raw://5aa4f07e65444784c29cd7bfcc2341b34381e4e5b5da9f0c5bd00d7f430e66fa",
         "dweb:/ipfs/QmWRMh4Q9DpaU9GvsiXmDdoNYMyyece9if7hnfLz7uqzWM"
-      ],
-      "license": "MIT"
+      ]
     },
     "lib/@openzeppelin/contracts/utils/Address.sol": {
       "keccak256": "0xaf28a975a78550e45f65e559a3ad6a5ad43b9b8a37366999abd1b7084eb70721",
+      "license": "MIT",
       "urls": [
         "bzz-raw://b7bd24e224f67f65bfadf85dc2929fa965456bb2415478bd0125471b5ce35245",
         "dweb:/ipfs/QmRaydGr8BTHs1kvaZfsNU69pKzUAGFrvABn1KiRSbE51y"
-      ],
-      "license": "MIT"
+      ]
     },
     "lib/@openzeppelin/contracts/utils/StorageSlot.sol": {
       "keccak256": "0x32ba59b4b7299237c8ba56319110989d7978a039faf754793064e967e5894418",
+      "license": "MIT",
       "urls": [
         "bzz-raw://1ae50c8b562427df610cc4540c9bf104acca7ef8e2dcae567ae7e52272281e9c",
         "dweb:/ipfs/QmTHiadFCSJUPpRjNegc5SahmeU8bAoY8i9Aq6tVscbcKR"
-      ],
-      "license": "MIT"
+      ]
     },
     "lib/@openzeppelin/contracts/utils/introspection/IERC165.sol": {
       "keccak256": "0x4296879f55019b23e135000eb36896057e7101fb7fb859c5ef690cf14643757b",
+      "license": "MIT",
       "urls": [
         "bzz-raw://87b3541437c8c443ccd36795e56a338ed12855eec17f8da624511b8d1a7e14df",
         "dweb:/ipfs/QmeJQCtZrQjtJLr6u7ZHWeH3pBnjtLWzvRrKViAi7UZqxL"
-      ],
-      "license": "MIT"
+      ]
     },
     "lib/@openzeppelin/contracts/utils/structs/EnumerableSet.sol": {
       "keccak256": "0x86c1470cbfd878491e5de030072b647352d36bd27122cffb928970b1945282aa",
+      "license": "MIT",
       "urls": [
         "bzz-raw://ad85dd393ee0a1917c57046abc5155f51f77844b2c6a42c05c1b8dd26d6ff3c1",
         "dweb:/ipfs/QmNqYc8To2NdnpP6E1tGz7t6A7beuENde5yovwov5pW1fA"
-      ],
-      "license": "MIT"
+      ]
     }
   },
   "version": 1

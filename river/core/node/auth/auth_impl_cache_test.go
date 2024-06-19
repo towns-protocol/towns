@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/node/base/test"
-	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/testutils"
 

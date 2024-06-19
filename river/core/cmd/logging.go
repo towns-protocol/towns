@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/river-build/river/core/node/config"
+	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/node/dlog"
 )
 

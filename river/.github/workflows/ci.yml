@@ -34,13 +34,13 @@ on:
                 required: false
                 default: false
                 type: boolean
-            skip_node:
-                description: Skip Node Tests
+            skip_go:
+                description: Skip Go Tests
                 required: false
                 default: false
                 type: boolean
-            skip_xchain_node:
-                description: Skip XChain Node Tests
+            skip_xchain_integration:
+                description: Skip XChain Integration Tests
                 required: false
                 default: false
                 type: boolean
@@ -704,9 +704,9 @@ jobs:
                       ./core/xchain/run_files/
                       !./core/**/bin/**
 
-    Node:
+    Go_Tests:
         permissions: write-all
-        if: github.event_name != 'workflow_dispatch' || !inputs.skip_node
+        if: github.event_name != 'workflow_dispatch' || !inputs.skip_go
         runs-on: ubuntu-latest-8-cores
         timeout-minutes: 30
         services:
@@ -789,27 +789,6 @@ jobs:
             - name: Start and configure blockchains
               run: ./scripts/bc-all-start.sh
 
-            - name: Show PostgreSQL max_connections
-              run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
-              env:
-                  POSTGRES_PASSWORD: postgres
-                  PGPASSWORD: postgres
-
-            - name: Increase max_connections in Postgres
-              run: |
-                  docker exec -i river_postgres_container bash << EOF
-                    echo 'max_connections = 1000' >> /var/lib/postgresql/data/postgresql.conf
-                    echo 'shared_buffers = 2GB' >> /var/lib/postgresql/data/postgresql.conf
-                  EOF
-                  docker restart --time 0 river_postgres_container
-                  sleep 5
-
-            - name: Show PostgreSQL max_connections
-              run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
-              env:
-                  POSTGRES_PASSWORD: postgres
-                  PGPASSWORD: postgres
-
             - name: create db
               run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
               working-directory: core
@@ -823,74 +802,11 @@ jobs:
 
             - name: Run node tests
               run: go test -race -timeout 12m ./...
-              working-directory: core/node
-
-    XChain_Node:
-        permissions: write-all
-        if: ( github.event_name != 'workflow_dispatch' || !inputs.skip_xchain_node )
-        runs-on: ubuntu-latest-8-cores
-        timeout-minutes: 30
-        steps:
-            - name: Cancel previous runs
-              if: github.event_name != 'schedule'
-              uses: styfle/cancel-workflow-action@0.12.1
-              with:
-                  access_token: ${{ github.token }}
-
-            - name: Checkout code
-              uses: actions/checkout@v4
-
-            - name: Git submodules
-              run: git submodule update --init --recursive
-
-            - name: Setup Go
-              uses: actions/setup-go@v5
-              with:
-                  go-version-file: 'go.work'
-                  cache-dependency-path: '**/*.sum'
-
-            - uses: actions/setup-node@v4
-              with:
-                  node-version: '20'
-                  cache: 'yarn'
-
-            - name: Install Foundry
-              uses: foundry-rs/foundry-toolchain@v1
-              with:
-                  version: ${{ env.FOUNDRY_VERSION }}
-
-            - name: Install node dependencies
-              run: yarn install --immutable
-
-            - name: Print versions
-              run: ./scripts/print-versions.sh
-
-            # Start an ssh session with tmate if the PR has the 'ssh' label
-            - name: Setup tmate session
-              uses: mxschmitt/action-tmate@v3
-              if: contains(github.event.pull_request.labels.*.name, 'ssh')
-
-            - name: Start and configure blockchains
-              run: ./scripts/bc-all-start.sh
-
-            - name: Generate xchain contract bindings
-              run: ./scripts/build-contract-types.sh localhost
-
-            - name: Maintain Turbo cache
-              uses: actions/cache@v4
-              with:
-                  path: node_modules/.cache/turbo
-                  key: ${{ runner.os }}-turbo-${{ github.run_id }}
-                  restore-keys: |
-                      ${{ runner.os }}-turbo-
-
-            - name: Run xchain node tests
-              run: go test --race ./...
-              working-directory: core/xchain
+              working-directory: core
 
     XChain_Integration:
         permissions: write-all
-        if: github.event_name != 'workflow_dispatch' || !inputs.skip_client_noentitlements
+        if: github.event_name != 'workflow_dispatch' || !inputs.skip_xchain_integration
         runs-on: ubuntu-latest-8-cores
         timeout-minutes: 30
 
@@ -956,8 +872,8 @@ jobs:
                 Multinode,
                 Client_Entitlements,
                 Multinode_Ent,
-                Node,
-                XChain_Node,
+                Go_Tests,
+                XChain_Integration,
             ]
         if: failure()
         runs-on: ubuntu-latest

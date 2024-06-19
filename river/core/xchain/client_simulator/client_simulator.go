@@ -7,7 +7,7 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/river-build/river/core/node/config"
+	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/node/infra"
 	"github.com/river-build/river/core/xchain/contracts"
 	"github.com/river-build/river/core/xchain/entitlement"

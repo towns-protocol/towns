@@ -78,7 +78,6 @@ contract PlatformRequirementsTest is
   }
 
   // Membership Fee
-
   function test_getMembershipFee() public {
     uint256 membershipFee = platformReqs.getMembershipFee();
     assertEq(membershipFee, 0.005 ether);
@@ -102,7 +101,6 @@ contract PlatformRequirementsTest is
   }
 
   // Membership Mint Limit
-
   function test_getMembershipMintLimit() public {
     uint256 membershipMintLimit = platformReqs.getMembershipMintLimit();
     assertEq(membershipMintLimit, 1_000);
@@ -155,5 +153,27 @@ contract PlatformRequirementsTest is
 
     uint64 membershipDuration = platformReqs.getMembershipDuration();
     assertEq(membershipDuration, newMembershipDuration);
+  }
+
+  // Membership Min Price
+  function test_setMembershipMinPrice() external {
+    uint256 newMembershipMinPrice = 0.001 ether;
+
+    vm.expectRevert(
+      abi.encodeWithSelector(Ownable__NotOwner.selector, address(this))
+    );
+    platformReqs.setMembershipMinPrice(newMembershipMinPrice);
+
+    vm.expectRevert(Platform__InvalidMembershipMinPrice.selector);
+    vm.prank(deployer);
+    platformReqs.setMembershipMinPrice(0);
+
+    vm.prank(deployer);
+    vm.expectEmit(address(spaceFactory));
+    emit PlatformMembershipMinPriceSet(newMembershipMinPrice);
+    platformReqs.setMembershipMinPrice(newMembershipMinPrice);
+
+    uint256 membershipMinPrice = platformReqs.getMembershipMinPrice();
+    assertEq(membershipMinPrice, newMembershipMinPrice);
   }
 }

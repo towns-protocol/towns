@@ -4,7 +4,7 @@ import (
 	"context"
 	"math/big"
 
-	"github.com/river-build/river/core/node/config"
+	"github.com/river-build/river/core/config"
 	dev "github.com/river-build/river/core/xchain/contracts/dev"
 	v3 "github.com/river-build/river/core/xchain/contracts/v3"
 

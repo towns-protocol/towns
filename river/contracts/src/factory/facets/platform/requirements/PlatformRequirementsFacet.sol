@@ -58,6 +58,16 @@ contract PlatformRequirementsFacet is
   }
 
   /// @inheritdoc IPlatformRequirements
+  function setMembershipMinPrice(uint256 minPrice) external onlyOwner {
+    _setMembershipMinPrice(minPrice);
+  }
+
+  /// @inheritdoc IPlatformRequirements
+  function getMembershipMinPrice() external view returns (uint256) {
+    return _getMembershipMinPrice();
+  }
+
+  /// @inheritdoc IPlatformRequirements
   function setFeeRecipient(address recipient) external onlyOwner {
     _setFeeRecipient(recipient);
   }

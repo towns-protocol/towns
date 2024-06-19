@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/river-build/river/core/node/config"
+	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/xchain/client_simulator"
 	xc_common "github.com/river-build/river/core/xchain/common"
 	"github.com/river-build/river/core/xchain/contracts"
@@ -24,8 +24,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	node_config "github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/node/base/test"
-	node_config "github.com/river-build/river/core/node/config"
 	node_contracts "github.com/river-build/river/core/node/contracts"
 	node_crypto "github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
@@ -261,7 +261,7 @@ func (st *serviceTester) Start(t *testing.T) {
 			},
 		)
 
-		require.NoError(t, err, "register node")
+		st.AssertNoEVMError(err)
 		receipt := <-pendingTx.Wait()
 		if receipt == nil || receipt.Status != node_crypto.TransactionResultSuccess {
 			log.Fatal("unable to register node")

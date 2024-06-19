@@ -3,7 +3,7 @@ package cmd
 import (
 	"context"
 
-	"github.com/river-build/river/core/node/config"
+	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/node/rpc"
 
 	"github.com/spf13/cobra"

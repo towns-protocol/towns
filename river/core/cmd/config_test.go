@@ -15,7 +15,7 @@ func TestBlockchainConfiNotSetByDefault(t *testing.T) {
 	clean()
 	require := require.New(t)
 
-	configFile = "../default_config.yaml"
+	configFile = "../node/default_config.yaml"
 	cmdConfig, _, _, err := initViperConfig()
 	require.NoError(err)
 	require.NotNil(cmdConfig)
@@ -35,7 +35,7 @@ func TestBlockchainConfigSetByEnv(t *testing.T) {
 	t.Setenv("CHAINBLOCKTIMES", "2:100s,123:2.5s")
 	t.Setenv("XCHAINBLOCKCHAINS", xchainsValue)
 
-	configFile = "../default_config.yaml"
+	configFile = "../node/default_config.yaml"
 	cmdConfig, _, _, err := initViperConfig()
 	require.NoError(err)
 	require.NotNil(cmdConfig)
@@ -67,7 +67,7 @@ func TestXChainFallback(t *testing.T) {
 	t.Setenv("CHAINBLOCKTIMES", "2:100s,123:2.5s")
 	t.Setenv("XCHAINBLOCKCHAINS", "")
 
-	configFile = "../default_config.yaml"
+	configFile = "../node/default_config.yaml"
 	cmdConfig, _, _, err := initViperConfig()
 	require.NoError(err)
 	require.NotNil(cmdConfig)
@@ -101,7 +101,7 @@ func TestBlockchainChainsStringFallbakc(t *testing.T) {
 	t.Setenv("CHAINBLOCKTIMES", "2:100s,123:2.5s")
 	t.Setenv("XCHAINBLOCKCHAINS", xchainsValue)
 
-	configFile = "../default_config.yaml"
+	configFile = "../node/default_config.yaml"
 	cmdConfig, _, _, err := initViperConfig()
 	require.NoError(err)
 	require.NotNil(cmdConfig)

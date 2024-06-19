@@ -8,7 +8,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 
-	"github.com/river-build/river/core/node/config"
+	"github.com/river-build/river/core/config"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

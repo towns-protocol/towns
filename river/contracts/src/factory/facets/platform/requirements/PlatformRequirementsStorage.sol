@@ -18,6 +18,7 @@ library PlatformRequirementsStorage {
     address feeRecipient;
     uint64 membershipDuration;
     uint16 membershipBps;
+    uint256 membershipMinPrice;
   }
 
   function layout() internal pure returns (Layout storage l) {

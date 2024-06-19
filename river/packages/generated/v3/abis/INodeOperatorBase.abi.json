@@ -1,0 +1,148 @@
+[
+  {
+    "type": "event",
+    "name": "OperatorClaimAddressChanged",
+    "inputs": [
+      {
+        "name": "operator",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "claimAddress",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "OperatorCommissionChanged",
+    "inputs": [
+      {
+        "name": "operator",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "commission",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "OperatorRegistered",
+    "inputs": [
+      {
+        "name": "operator",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "OperatorStatusChanged",
+    "inputs": [
+      {
+        "name": "operator",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "newStatus",
+        "type": "uint8",
+        "indexed": true,
+        "internalType": "enum NodeOperatorStatus"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "error",
+    "name": "NodeOperator__AlreadyDelegated",
+    "inputs": [
+      {
+        "name": "operator",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "NodeOperator__AlreadyRegistered",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NodeOperator__ClaimAddressNotChanged",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NodeOperator__InvalidAddress",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NodeOperator__InvalidCommissionRate",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NodeOperator__InvalidOperator",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NodeOperator__InvalidSpace",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NodeOperator__InvalidStakeRequirement",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NodeOperator__InvalidStatusTransition",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NodeOperator__NotClaimer",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NodeOperator__NotEnoughStake",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NodeOperator__NotRegistered",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NodeOperator__NotTransferable",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NodeOperator__StatusNotChanged",
+    "inputs": []
+  }
+]

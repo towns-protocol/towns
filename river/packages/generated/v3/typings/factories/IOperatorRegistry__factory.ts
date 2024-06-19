@@ -25,6 +25,19 @@ const _abi = [
   },
   {
     type: "function",
+    name: "getAllOperators",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "address[]",
+        internalType: "address[]",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
     name: "isOperator",
     inputs: [
       {
