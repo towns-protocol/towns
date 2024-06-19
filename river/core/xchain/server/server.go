@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/river-build/river/core/node/config"
+	"github.com/river-build/river/core/config"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/xchain/contracts"
 	"github.com/river-build/river/core/xchain/entitlement"
@@ -274,6 +274,7 @@ func (x *xchain) Run(ctx context.Context) {
 
 	// register callback for Base EntitlementCheckRequested events
 	x.baseChain.ChainMonitor.OnContractWithTopicsEvent(
+		x.baseChain.InitialBlockNum,
 		entitlementAddress,
 		[][]common.Hash{{x.checkerABI.Events["EntitlementCheckRequested"].ID}},
 		onEntitlementCheckRequestedCallback)

@@ -17,8 +17,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/river-build/river/core/config"
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/protocol"
 )
@@ -120,6 +120,7 @@ func NewTransactionPoolWithPoliciesFromConfig(
 	riverClient BlockchainClient,
 	wallet *Wallet,
 	chainMonitor ChainMonitor,
+	initialBlockNumber BlockNumber,
 	metrics infra.MetricsFactory,
 ) (*transactionPool, error) {
 	if cfg.BlockTimeMs <= 0 {
@@ -141,7 +142,7 @@ func NewTransactionPoolWithPoliciesFromConfig(
 	)
 
 	return NewTransactionPoolWithPolicies(
-		ctx, riverClient, wallet, replacementPolicy, pricePolicy, chainMonitor, metrics)
+		ctx, riverClient, wallet, replacementPolicy, pricePolicy, chainMonitor, initialBlockNumber, metrics)
 }
 
 // NewTransactionPoolWithPolicies creates an in-memory transaction pool that tracks transactions that are submitted
@@ -156,6 +157,7 @@ func NewTransactionPoolWithPolicies(
 	replacePolicy TransactionPoolReplacePolicy,
 	pricePolicy TransactionPricePolicy,
 	chainMonitor ChainMonitor,
+	initialBlockNumber BlockNumber,
 	metrics infra.MetricsFactory,
 ) (*transactionPool, error) {
 	chainID, err := client.ChainID(ctx)

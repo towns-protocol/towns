@@ -22,6 +22,8 @@ contract DeployPlatformRequirements is FacetHelper, Deployer {
     addSelector(PlatformRequirementsFacet.setMembershipFee.selector);
     addSelector(PlatformRequirementsFacet.setMembershipMintLimit.selector);
     addSelector(PlatformRequirementsFacet.setMembershipDuration.selector);
+    addSelector(PlatformRequirementsFacet.setMembershipMinPrice.selector);
+    addSelector(PlatformRequirementsFacet.getMembershipMinPrice.selector);
     addSelector(PlatformRequirementsFacet.getDenominator.selector);
   }
 

@@ -9,8 +9,8 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/river-build/river/core/config"
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/contracts"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
@@ -576,8 +576,8 @@ func (c *RiverRegistryContract) OnStreamEvent(
 	lastMiniblockUpdated func(ctx context.Context, event *contracts.StreamRegistryV1StreamLastMiniblockUpdated),
 	placementUpdated func(ctx context.Context, event *contracts.StreamRegistryV1StreamPlacementUpdated),
 ) error {
-	// TODO: modify ChainMonitor to accept block number in each subscription call
 	c.Blockchain.ChainMonitor.OnContractWithTopicsEvent(
+		startBlockNumInclusive,
 		c.Address,
 		c.StreamEventTopics,
 		func(ctx context.Context, log types.Log) {

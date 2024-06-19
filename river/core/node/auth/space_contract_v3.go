@@ -12,7 +12,7 @@ import (
 	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/protocol"
 
-	"github.com/river-build/river/core/node/config"
+	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/xchain/bindings/erc721"
 	"github.com/river-build/river/core/xchain/bindings/ierc5313"

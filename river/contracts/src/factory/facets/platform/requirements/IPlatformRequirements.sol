@@ -13,6 +13,7 @@ interface IPlatformRequirementsBase {
   error Platform__InvalidMembershipBps();
   error Platform__InvalidMembershipMintLimit();
   error Platform__InvalidMembershipDuration();
+  error Platform__InvalidMembershipMinPrice();
 
   // Events
   event PlatformFeeRecipientSet(address indexed recipient);
@@ -20,6 +21,7 @@ interface IPlatformRequirementsBase {
   event PlatformMembershipFeeSet(uint256 fee);
   event PlatformMembershipMintLimitSet(uint256 limit);
   event PlatformMembershipDurationSet(uint256 duration);
+  event PlatformMembershipMinPriceSet(uint256 minPrice);
 }
 
 interface IPlatformRequirements is IPlatformRequirementsBase {
@@ -87,6 +89,19 @@ interface IPlatformRequirements is IPlatformRequirementsBase {
    * @return The membership duration
    */
   function getMembershipDuration() external view returns (uint64);
+
+  /**
+   * @notice Get the minimum price for a membership
+   * @dev This is the minimum price that can be set for a membership
+   * @return The minimum price for a membership
+   */
+  function getMembershipMinPrice() external view returns (uint256);
+
+  /**
+   * @notice Set the minimum price for a membership
+   * @param minPrice The minimum price for a membership
+   */
+  function setMembershipMinPrice(uint256 minPrice) external;
 
   /**
    * @notice Get the denominator

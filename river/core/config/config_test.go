@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/river-build/river/core/node/config"
+	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/node/testutils"
 	"github.com/stretchr/testify/require"
 )

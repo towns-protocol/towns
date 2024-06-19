@@ -35,11 +35,13 @@ export interface PlatformRequirementsFacetInterface extends utils.Interface {
     "getMembershipBps()": FunctionFragment;
     "getMembershipDuration()": FunctionFragment;
     "getMembershipFee()": FunctionFragment;
+    "getMembershipMinPrice()": FunctionFragment;
     "getMembershipMintLimit()": FunctionFragment;
     "setFeeRecipient(address)": FunctionFragment;
     "setMembershipBps(uint16)": FunctionFragment;
     "setMembershipDuration(uint64)": FunctionFragment;
     "setMembershipFee(uint256)": FunctionFragment;
+    "setMembershipMinPrice(uint256)": FunctionFragment;
     "setMembershipMintLimit(uint256)": FunctionFragment;
   };
 
@@ -51,11 +53,13 @@ export interface PlatformRequirementsFacetInterface extends utils.Interface {
       | "getMembershipBps"
       | "getMembershipDuration"
       | "getMembershipFee"
+      | "getMembershipMinPrice"
       | "getMembershipMintLimit"
       | "setFeeRecipient"
       | "setMembershipBps"
       | "setMembershipDuration"
       | "setMembershipFee"
+      | "setMembershipMinPrice"
       | "setMembershipMintLimit"
   ): FunctionFragment;
 
@@ -90,6 +94,10 @@ export interface PlatformRequirementsFacetInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "getMembershipMinPrice",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "getMembershipMintLimit",
     values?: undefined
   ): string;
@@ -107,6 +115,10 @@ export interface PlatformRequirementsFacetInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "setMembershipFee",
+    values: [PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setMembershipMinPrice",
     values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
@@ -139,6 +151,10 @@ export interface PlatformRequirementsFacetInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "getMembershipMinPrice",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "getMembershipMintLimit",
     data: BytesLike
   ): Result;
@@ -159,6 +175,10 @@ export interface PlatformRequirementsFacetInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "setMembershipMinPrice",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "setMembershipMintLimit",
     data: BytesLike
   ): Result;
@@ -172,6 +192,7 @@ export interface PlatformRequirementsFacetInterface extends utils.Interface {
     "PlatformMembershipBpsSet(uint16)": EventFragment;
     "PlatformMembershipDurationSet(uint256)": EventFragment;
     "PlatformMembershipFeeSet(uint256)": EventFragment;
+    "PlatformMembershipMinPriceSet(uint256)": EventFragment;
     "PlatformMembershipMintLimitSet(uint256)": EventFragment;
   };
 
@@ -185,6 +206,9 @@ export interface PlatformRequirementsFacetInterface extends utils.Interface {
     nameOrSignatureOrTopic: "PlatformMembershipDurationSet"
   ): EventFragment;
   getEvent(nameOrSignatureOrTopic: "PlatformMembershipFeeSet"): EventFragment;
+  getEvent(
+    nameOrSignatureOrTopic: "PlatformMembershipMinPriceSet"
+  ): EventFragment;
   getEvent(
     nameOrSignatureOrTopic: "PlatformMembershipMintLimitSet"
   ): EventFragment;
@@ -274,6 +298,17 @@ export type PlatformMembershipFeeSetEvent = TypedEvent<
 export type PlatformMembershipFeeSetEventFilter =
   TypedEventFilter<PlatformMembershipFeeSetEvent>;
 
+export interface PlatformMembershipMinPriceSetEventObject {
+  minPrice: BigNumber;
+}
+export type PlatformMembershipMinPriceSetEvent = TypedEvent<
+  [BigNumber],
+  PlatformMembershipMinPriceSetEventObject
+>;
+
+export type PlatformMembershipMinPriceSetEventFilter =
+  TypedEventFilter<PlatformMembershipMinPriceSetEvent>;
+
 export interface PlatformMembershipMintLimitSetEventObject {
   limit: BigNumber;
 }
@@ -331,6 +366,8 @@ export interface PlatformRequirementsFacet extends BaseContract {
 
     getMembershipFee(overrides?: CallOverrides): Promise<[BigNumber]>;
 
+    getMembershipMinPrice(overrides?: CallOverrides): Promise<[BigNumber]>;
+
     getMembershipMintLimit(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     setFeeRecipient(
@@ -350,6 +387,11 @@ export interface PlatformRequirementsFacet extends BaseContract {
 
     setMembershipFee(
       fee: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    setMembershipMinPrice(
+      minPrice: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -378,6 +420,8 @@ export interface PlatformRequirementsFacet extends BaseContract {
 
   getMembershipFee(overrides?: CallOverrides): Promise<BigNumber>;
 
+  getMembershipMinPrice(overrides?: CallOverrides): Promise<BigNumber>;
+
   getMembershipMintLimit(overrides?: CallOverrides): Promise<BigNumber>;
 
   setFeeRecipient(
@@ -397,6 +441,11 @@ export interface PlatformRequirementsFacet extends BaseContract {
 
   setMembershipFee(
     fee: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  setMembershipMinPrice(
+    minPrice: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -425,6 +474,8 @@ export interface PlatformRequirementsFacet extends BaseContract {
 
     getMembershipFee(overrides?: CallOverrides): Promise<BigNumber>;
 
+    getMembershipMinPrice(overrides?: CallOverrides): Promise<BigNumber>;
+
     getMembershipMintLimit(overrides?: CallOverrides): Promise<BigNumber>;
 
     setFeeRecipient(
@@ -444,6 +495,11 @@ export interface PlatformRequirementsFacet extends BaseContract {
 
     setMembershipFee(
       fee: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    setMembershipMinPrice(
+      minPrice: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -504,6 +560,13 @@ export interface PlatformRequirementsFacet extends BaseContract {
     ): PlatformMembershipFeeSetEventFilter;
     PlatformMembershipFeeSet(fee?: null): PlatformMembershipFeeSetEventFilter;
 
+    "PlatformMembershipMinPriceSet(uint256)"(
+      minPrice?: null
+    ): PlatformMembershipMinPriceSetEventFilter;
+    PlatformMembershipMinPriceSet(
+      minPrice?: null
+    ): PlatformMembershipMinPriceSetEventFilter;
+
     "PlatformMembershipMintLimitSet(uint256)"(
       limit?: null
     ): PlatformMembershipMintLimitSetEventFilter;
@@ -532,6 +595,8 @@ export interface PlatformRequirementsFacet extends BaseContract {
 
     getMembershipFee(overrides?: CallOverrides): Promise<BigNumber>;
 
+    getMembershipMinPrice(overrides?: CallOverrides): Promise<BigNumber>;
+
     getMembershipMintLimit(overrides?: CallOverrides): Promise<BigNumber>;
 
     setFeeRecipient(
@@ -551,6 +616,11 @@ export interface PlatformRequirementsFacet extends BaseContract {
 
     setMembershipFee(
       fee: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    setMembershipMinPrice(
+      minPrice: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -582,6 +652,10 @@ export interface PlatformRequirementsFacet extends BaseContract {
 
     getMembershipFee(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
+    getMembershipMinPrice(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     getMembershipMintLimit(
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
@@ -603,6 +677,11 @@ export interface PlatformRequirementsFacet extends BaseContract {
 
     setMembershipFee(
       fee: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setMembershipMinPrice(
+      minPrice: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

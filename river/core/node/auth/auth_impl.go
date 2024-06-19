@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/river-build/river/core/config"
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/infra"

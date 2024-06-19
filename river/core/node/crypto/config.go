@@ -225,7 +225,7 @@ func NewOnChainConfig(
 	// each time configuration stored on chain changed the ConfigurationChanged event is raised.
 	// Register a callback that updates the in-memory configuration when this happens.
 	chainMonitor.OnContractWithTopicsEvent(
-		riverRegistry, [][]common.Hash{{cfgABI.Events["ConfigurationChanged"].ID}}, cfg.onConfigChanged)
+		appliedBlockNum+1, riverRegistry, [][]common.Hash{{cfgABI.Events["ConfigurationChanged"].ID}}, cfg.onConfigChanged)
 
 	return cfg, nil
 }

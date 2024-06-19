@@ -99,6 +99,19 @@ export default [
   },
   {
     "type": "function",
+    "name": "getMembershipMinPrice",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "getMembershipMintLimit",
     "inputs": [],
     "outputs": [
@@ -155,6 +168,19 @@ export default [
     "inputs": [
       {
         "name": "fee",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setMembershipMinPrice",
+    "inputs": [
+      {
+        "name": "minPrice",
         "type": "uint256",
         "internalType": "uint256"
       }
@@ -287,6 +313,19 @@ export default [
   },
   {
     "type": "event",
+    "name": "PlatformMembershipMinPriceSet",
+    "inputs": [
+      {
+        "name": "minPrice",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "PlatformMembershipMintLimitSet",
     "inputs": [
       {
@@ -347,6 +386,11 @@ export default [
   {
     "type": "error",
     "name": "Platform__InvalidMembershipDuration",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "Platform__InvalidMembershipMinPrice",
     "inputs": []
   },
   {

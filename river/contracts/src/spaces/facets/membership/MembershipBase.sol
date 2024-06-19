@@ -128,7 +128,7 @@ abstract contract MembershipBase is IMembershipBase {
   // =============================================================
   function _verifyPrice(uint256 newPrice) internal view {
     uint256 minPrice = IPlatformRequirements(_getSpaceFactory())
-      .getMembershipFee();
+      .getMembershipMinPrice();
     if (newPrice < minPrice) revert Membership__PriceTooLow();
   }
 
@@ -157,7 +157,7 @@ abstract contract MembershipBase is IMembershipBase {
           totalSupply
         );
 
-    return IPlatformRequirements(ds.spaceFactory).getMembershipFee();
+    return IPlatformRequirements(ds.spaceFactory).getMembershipMinPrice();
   }
 
   function _setMembershipRenewalPrice(

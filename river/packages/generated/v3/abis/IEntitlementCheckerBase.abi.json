@@ -1,0 +1,95 @@
+[
+  {
+    "type": "event",
+    "name": "EntitlementCheckRequested",
+    "inputs": [
+      {
+        "name": "callerAddress",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "contractAddress",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "transactionId",
+        "type": "bytes32",
+        "indexed": false,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "roleId",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "selectedNodes",
+        "type": "address[]",
+        "indexed": false,
+        "internalType": "address[]"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "NodeRegistered",
+    "inputs": [
+      {
+        "name": "nodeAddress",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "NodeUnregistered",
+    "inputs": [
+      {
+        "name": "nodeAddress",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "error",
+    "name": "EntitlementChecker_InsufficientNumberOfNodes",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "EntitlementChecker_InvalidNodeOperator",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "EntitlementChecker_InvalidOperator",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "EntitlementChecker_NodeAlreadyRegistered",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "EntitlementChecker_NodeNotRegistered",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "EntitlementChecker_OperatorNotActive",
+    "inputs": []
+  }
+]

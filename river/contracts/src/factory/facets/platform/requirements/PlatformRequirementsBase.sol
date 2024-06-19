@@ -72,4 +72,16 @@ abstract contract PlatformRequirementsBase is IPlatformRequirementsBase {
   function _getMembershipDuration() internal view returns (uint64) {
     return PlatformRequirementsStorage.layout().membershipDuration;
   }
+
+  // Membership Min Price
+  function _setMembershipMinPrice(uint256 minPrice) internal {
+    if (minPrice == 0) revert Platform__InvalidMembershipMinPrice();
+
+    PlatformRequirementsStorage.layout().membershipMinPrice = minPrice;
+    emit PlatformMembershipMinPriceSet(minPrice);
+  }
+
+  function _getMembershipMinPrice() internal view returns (uint256) {
+    return PlatformRequirementsStorage.layout().membershipMinPrice;
+  }
 }
