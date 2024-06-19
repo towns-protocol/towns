@@ -173,7 +173,7 @@ export async function getTestGatingNFTContractAddress(): Promise<`0x${string}`> 
     return await getContractAddress('TestGatingNFT')
 }
 
-export async function publicMint(nftName: string, toAddress: `0x${string}`) {
+export async function publicMint(nftName: string, toAddress: `0x${string}`): Promise<number> {
     const privateKey = generatePrivateKey()
     const throwawayAccount = privateKeyToAccount(privateKey)
     const client = createTestClient({
@@ -201,8 +201,78 @@ export async function publicMint(nftName: string, toAddress: `0x${string}`) {
         args: [toAddress, 1n],
         account: throwawayAccount,
     })
+
     logger.log('minted', nftReceipt)
 
     const receipt = await client.waitForTransactionReceipt({ hash: nftReceipt })
     expect(receipt.status).toBe('success')
+
+    // create a filter to listen for the Transfer event to find the token id
+    // don't worry about the possibility of non-matching arguments, as we're specifying the contract
+    // address of the contract we're interested in.
+    const filter = await client.createContractEventFilter({
+        abi: MockERC721a.abi,
+        address: contractAddress,
+        eventName: 'Transfer',
+        args: {
+            to: toAddress,
+        },
+        fromBlock: receipt.blockNumber,
+        toBlock: receipt.blockNumber,
+    })
+    const eventLogs = await client.getFilterLogs({ filter })
+    for (const eventLog of eventLogs) {
+        if (eventLog.transactionHash === receipt.transactionHash) {
+            expect(eventLog.args.tokenId).toBeDefined()
+            return Number(eventLog.args.tokenId)
+        }
+    }
+
+    throw Error('No mint event found')
+}
+
+export async function burn(nftName: string, tokenId: number): Promise<void> {
+    const client = createTestClient({
+        chain: foundry,
+        mode: 'anvil',
+        transport: http(),
+    })
+        .extend(publicActions)
+        .extend(walletActions)
+
+    const contractAddress = await getContractAddress(nftName)
+
+    const account = (await client.getAddresses())[0]
+
+    const nftReceipt = await client.writeContract({
+        address: contractAddress,
+        abi: MockERC721a.abi,
+        functionName: 'burn',
+        args: [BigInt(tokenId)],
+        account,
+    })
+
+    const receipt = await client.waitForTransactionReceipt({ hash: nftReceipt })
+    expect(receipt.status).toBe('success')
+}
+
+export async function balanceOf(nftName: string, address: `0x${string}`): Promise<number> {
+    const client = createTestClient({
+        chain: foundry,
+        mode: 'anvil',
+        transport: http(),
+    })
+        .extend(publicActions)
+        .extend(walletActions)
+
+    const contractAddress = await getContractAddress(nftName)
+
+    const balanceEncoded = await client.readContract({
+        address: contractAddress,
+        abi: MockERC721a.abi,
+        functionName: 'balanceOf',
+        args: [address],
+    })
+
+    return Number(balanceEncoded)
 }

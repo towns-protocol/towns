@@ -181,9 +181,10 @@ export async function setupWalletsAndContexts() {
         ethers.Wallet.createRandom(),
     ])
 
-    const [alicesContext, bobsContext] = await Promise.all([
+    const [alicesContext, bobsContext, carolsContext] = await Promise.all([
         makeUserContextFromWallet(alicesWallet),
         makeUserContextFromWallet(bobsWallet),
+        makeUserContextFromWallet(carolsWallet),
     ])
 
     const aliceProvider = new LocalhostWeb3Provider(baseConfig.rpcUrl, alicesWallet)
@@ -201,27 +202,30 @@ export async function setupWalletsAndContexts() {
     const carolSpaceDapp = createSpaceDapp(carolProvider, baseConfig.chainConfig)
 
     // create a user
-    const [alice, bob] = await Promise.all([
+    const [alice, bob, carol] = await Promise.all([
         makeTestClient({
             context: alicesContext,
+            deviceId: 'alice',
         }),
         makeTestClient({ context: bobsContext }),
+        makeTestClient({ context: carolsContext }),
     ])
 
     return {
         alice,
         bob,
+        carol,
         alicesWallet,
         bobsWallet,
+        carolsWallet,
         alicesContext,
         bobsContext,
+        carolsContext,
         aliceProvider,
         bobProvider,
+        carolProvider,
         aliceSpaceDapp,
         bobSpaceDapp,
-        // Return a third wallet / provider for wallet linking
-        carolsWallet,
-        carolProvider,
         carolSpaceDapp,
     }
 }

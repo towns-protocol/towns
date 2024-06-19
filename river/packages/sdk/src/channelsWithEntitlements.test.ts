@@ -25,6 +25,8 @@ import {
     Permission,
     getContractAddress,
     publicMint,
+    burn,
+    balanceOf,
     LogicalOperationType,
     OperationType,
     Operation,
@@ -32,6 +34,7 @@ import {
     treeToRuleData,
 } from '@river-build/web3'
 import { Client } from './client'
+import { make_MemberPayload_KeySolicitation } from './types'
 
 const log = dlog('csb:test:channelsWithEntitlements')
 
@@ -39,10 +42,12 @@ const log = dlog('csb:test:channelsWithEntitlements')
 async function setupChannelWithCustomRole(
     userNames: string[],
     ruleData: IRuleEntitlement.RuleDataStruct,
+    permissions: Permission[] = [Permission.Read],
 ) {
     const {
         alice,
         bob,
+        carol,
         alicesWallet,
         bobsWallet,
         carolsWallet,
@@ -74,7 +79,7 @@ async function setupChannelWithCustomRole(
         bobProvider,
         spaceId,
         'nft-gated read role',
-        [Permission.Read],
+        permissions,
         users,
         ruleData,
         bobProvider.wallet,
@@ -120,6 +125,7 @@ async function setupChannelWithCustomRole(
     return {
         alice,
         bob,
+        carol,
         alicesWallet,
         bobsWallet,
         carolsWallet,
@@ -238,8 +244,13 @@ describe('channelsWithEntitlements', () => {
         // Link carol's wallet to alice's as root
         await linkWallets(aliceSpaceDapp, aliceProvider.wallet, carolProvider.wallet)
 
+        await expect(alice.joinStream(channelId!)).rejects.toThrow(/7:PERMISSION_DENIED/)
+
         log('Minting an NFT for carols wallet, which is linked to alices wallet')
         await publicMint('TestNFT1', carolsWallet.address as `0x${string}`)
+
+        // Wait 2 seconds for the negative auth cache to expire
+        await new Promise((f) => setTimeout(f, 2000))
 
         // Validate alice can join the channel
         await expectUserCanJoinChannel(alice, channelId!)
@@ -287,12 +298,131 @@ describe('channelsWithEntitlements', () => {
             getNftRuleData(testNftAddress),
         )
 
+        // Alice initially cannot join because she has no nft
+        await expect(alice.joinStream(channelId!)).rejects.toThrow(/7:PERMISSION_DENIED/)
+
         // Mint an nft for alice - she should be able to join now
-        log('Minting NFT for Alice', testNftAddress, alicesWallet.address)
         await publicMint('TestNFT', alicesWallet.address as `0x${string}`)
 
-        // Alice should be able to join the nft-gated channel since she has the required NFT token.
+        // Wait 2 seconds for the negative auth cache to expire
+        await new Promise((f) => setTimeout(f, 2000))
+
+        // Validate alice can join the channel
         await expectUserCanJoinChannel(alice, channelId!)
+
+        await bob.stopSync()
+        await alice.stopSync()
+    })
+
+    test('user booted on key request after entitlement loss', async () => {
+        const testNftAddress = await getContractAddress('TestNFT')
+        const { alice, alicesWallet, bob, channelId } = await setupChannelWithCustomRole(
+            [],
+            getNftRuleData(testNftAddress),
+        )
+
+        // Mint an nft for alice - she should be able to join now
+        const tokenId = await publicMint('TestNFT', alicesWallet.address as `0x${string}`)
+
+        // Validate alice can join the channel
+        await expectUserCanJoinChannel(alice, channelId!)
+
+        const channelStream = await bob.waitForStream(channelId!)
+        // Validate Alice is member of the channel
+        await waitFor(() =>
+            channelStream.view.membershipContent.isMember(MembershipOp.SO_JOIN, alice.userId),
+        )
+
+        // Burn Alice's NFT and validate her zero balance. She should now fail an entitlement check for the
+        // channel.
+        await burn('TestNFT', tokenId)
+        await expect(balanceOf('TestNFT', alicesWallet.address as `0x${string}`)).resolves.toBe(0)
+
+        // Wait 5 seconds for the positive auth cache to expire
+        await new Promise((f) => setTimeout(f, 5000))
+
+        // Have alice solicit keys in the channel where she just lost entitlements.
+        // This key solicitation should fail because she no longer has the required NFT.
+        // Additionally, she should be removed from the channel.
+        const payload = make_MemberPayload_KeySolicitation({
+            deviceKey: 'alice-new-device',
+            sessionIds: [],
+            fallbackKey: 'alice-fallback-key',
+            isNewDevice: true,
+        })
+        await expect(alice.makeEventAndAddToStream(channelId!, payload)).rejects.toThrow(
+            /7:PERMISSION_DENIED/,
+        )
+
+        // Alice's user stream should reflect that she is no longer a member of the channel.
+        // TODO why no linter complain with no await here?
+        const aliceUserStream = await alice.waitForStream(alice.userStreamId!)
+        await waitFor(() =>
+            expect(
+                aliceUserStream.view.userContent.isMember(channelId!, MembershipOp.SO_LEAVE),
+            ).toBeTruthy(),
+        )
+        await waitFor(() =>
+            expect(
+                channelStream.view.membershipContent.isMember(MembershipOp.SO_LEAVE, alice.userId),
+            ).toBeTruthy(),
+        )
+
+        // Alice cannot rejoin the stream.
+        await expect(alice.joinStream(channelId!)).rejects.toThrow(/7:PERMISSION_DENIED/)
+
+        await bob.stopSync()
+        await alice.stopSync()
+    })
+
+    test('user booted on message post after entitlement loss', async () => {
+        const testNftAddress = await getContractAddress('TestNFT')
+        const { alice, alicesWallet, bob, channelId } = await setupChannelWithCustomRole(
+            [],
+            getNftRuleData(testNftAddress),
+            [Permission.Read, Permission.Write],
+        )
+
+        // Mint an nft for alice - she should be able to join now
+        const tokenId = await publicMint('TestNFT', alicesWallet.address as `0x${string}`)
+
+        // Validate alice can join the channel
+        await expectUserCanJoinChannel(alice, channelId!)
+
+        const channelStream = await bob.waitForStream(channelId!)
+        // Validate Alice is member of the channel
+        await waitFor(() =>
+            channelStream.view.membershipContent.isMember(MembershipOp.SO_JOIN, alice.userId),
+        )
+
+        // Burn Alice's NFT and validate her zero balance. She should now fail an entitlement check for the
+        // channel.
+        await burn('TestNFT', tokenId)
+        await expect(balanceOf('TestNFT', alicesWallet.address as `0x${string}`)).resolves.toBe(0)
+
+        // Wait 5 seconds for the positive auth cache to expire
+        await new Promise((f) => setTimeout(f, 5000))
+
+        await expect(
+            alice.sendMessage(channelId!, 'Message after entitlement loss'),
+        ).rejects.toThrow(/7:PERMISSION_DENIED/)
+
+        // Alice's user stream should reflect that she is no longer a member of the channel.
+        // TODO why no linter complain with no await here?
+        const aliceUserStream = await alice.waitForStream(alice.userStreamId!)
+        await waitFor(() =>
+            expect(
+                aliceUserStream.view.userContent.isMember(channelId!, MembershipOp.SO_LEAVE),
+            ).toBeTruthy(),
+        )
+        await waitFor(() =>
+            expect(
+                channelStream.view.membershipContent.isMember(MembershipOp.SO_LEAVE, alice.userId),
+            ).toBeTruthy(),
+        )
+
+        // Alice cannot rejoin the stream.
+        await expect(alice.joinStream(channelId!)).rejects.toThrow(/7:PERMISSION_DENIED/)
 
         await bob.stopSync()
         await alice.stopSync()

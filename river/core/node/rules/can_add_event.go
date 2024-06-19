@@ -195,7 +195,8 @@ func (params *aeParams) canAddChannelPayload(payload *StreamEvent_ChannelPayload
 	case *ChannelPayload_Message:
 		return aeBuilder().
 			check(params.creatorIsMember).
-			requireChainAuth(params.channelMessageWriteEntitlements)
+			requireChainAuth(params.channelMessageWriteEntitlements).
+			onChainAuthFailure(params.onEntitlementFailureForUserEvent)
 	case *ChannelPayload_Redaction_:
 		return aeBuilder().check(params.creatorIsMember).
 			requireChainAuth(params.redactChannelMessageEntitlements)
@@ -395,9 +396,18 @@ func (params *aeParams) canAddMemberPayload(payload *StreamEvent_MemberPayload) 
 			params:       params,
 			solicitation: content.KeySolicitation,
 		}
-		return aeBuilder().
-			checkOneOf(params.creatorIsMember).
-			check(ru.validKeySolicitation)
+
+		if shared.ValidChannelStreamId(params.streamView.StreamId()) {
+			return aeBuilder().
+				checkOneOf(params.creatorIsMember).
+				check(ru.validKeySolicitation).
+				requireChainAuth(params.channelMessageReadEntitlements).
+				onChainAuthFailure(params.onEntitlementFailureForUserEvent)
+		} else {
+			return aeBuilder().
+				checkOneOf(params.creatorIsMember).
+				check(ru.validKeySolicitation)
+		}
 	case *MemberPayload_KeyFulfillment_:
 		ru := &aeKeyFulfillmentRules{
 			params:      params,
@@ -920,6 +930,62 @@ func (params *aeParams) channelMessageWriteEntitlements() (*auth.ChainAuthArgs, 
 	)
 
 	return chainAuthArgs, nil
+}
+
+func (params *aeParams) channelMessageReadEntitlements() (*auth.ChainAuthArgs, error) {
+	userId, err := shared.AddressHex(params.parsedEvent.Event.CreatorAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	inception, err := params.streamView.(events.ChannelStreamView).GetChannelInception()
+	if err != nil {
+		return nil, err
+	}
+
+	spaceId, err := shared.StreamIdFromBytes(inception.SpaceId)
+	if err != nil {
+		return nil, err
+	}
+
+	chainAuthArgs := auth.NewChainAuthArgsForChannel(
+		spaceId,
+		*params.streamView.StreamId(),
+		userId,
+		auth.PermissionRead,
+	)
+
+	return chainAuthArgs, nil
+}
+
+func (params *aeParams) onEntitlementFailureForUserEvent() (*DerivedEvent, error) {
+	userId, err := shared.AddressHex(params.parsedEvent.Event.CreatorAddress)
+	if err != nil {
+		return nil, err
+	}
+	userStreamId, err := shared.UserStreamIdFromBytes(params.parsedEvent.Event.CreatorAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	channelId := params.streamView.StreamId()
+	if !shared.ValidChannelStreamId(channelId) {
+		return nil, RiverError(Err_INVALID_ARGUMENT, "invalid channel stream id", "streamId", channelId)
+	}
+	spaceId := params.streamView.StreamParentId()
+	if spaceId == nil {
+		return nil, RiverError(Err_INVALID_ARGUMENT, "channel has no parent", "channelId", channelId)
+	}
+
+	return &DerivedEvent{
+		StreamId: userStreamId,
+		Payload: events.Make_UserPayload_Membership(
+			MembershipOp_SO_LEAVE,
+			*channelId,
+			&userId,
+			spaceId[:],
+		),
+	}, nil
 }
 
 func (params *aeParams) redactChannelMessageEntitlements() (*auth.ChainAuthArgs, error) {

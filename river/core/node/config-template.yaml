@@ -23,6 +23,7 @@ baseChain:
     chainId: 31337
     networkUrl: 'http://127.0.0.1:8545'
     blockTimeMs: <BLOCK_TIME_MS>
+    positiveEntitlementCacheTTLSeconds: <POSITIVE_ENTITLEMENT_CACHE_TTL_SECONDS> # Short TTL for testing
 riverChain:
     chainId: 31338
     networkUrl: 'http://127.0.0.1:8546'
@@ -90,11 +91,11 @@ stream:
         a1: 10 # USER_INBOX
         a5: 10 # USER_SETTINGS
     # Timeout after streams with no activity in the cache are expired and evicted
-    # valid time unites are "ns", "us" (or "µs"), "ms", "s", "m", "h"
+    # valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h"
     # Set to 0 to disable cache expiration
     cacheExpiration: 5m
     # Interval to check for inactive streams in the cache (default=cacheExpiration/10)
-    # valid time unites are "ns", "us" (or "µs"), "ms", "s", "m", "h"
+    # valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h"
     cacheExpirationPollInterval: 30s
 
 network:
