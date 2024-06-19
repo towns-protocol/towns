@@ -28,6 +28,8 @@ import { MOCK_EMOJI } from './ComboboxTypes'
 export const BREAK_TAG = '<br>'
 export const TYPEAHEAD_POPUP_ID = 'typeaheadPopup'
 
+export const isInputFocused = () => document.activeElement?.tagName === 'INPUT'
+
 export const isCodeBlockElement = (editor: PlateEditor) =>
     isType(editor, getBlockAbove(editor)?.[0], ELEMENT_CODE_LINE)
 

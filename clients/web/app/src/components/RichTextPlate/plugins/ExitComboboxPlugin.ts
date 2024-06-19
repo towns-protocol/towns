@@ -12,6 +12,14 @@ import { getFilteredItemsWithoutMockEmoji } from '../utils/helpers'
 
 const KEY_EXIT_COMBOBOX = 'exit_combobox'
 
+export const changeMentionInputToParagraph = (editor: PlateEditor<Value>) => {
+    comboboxActions.reset()
+    const currentMentionInput = findMentionInput(editor)!
+    if (currentMentionInput) {
+        removeMentionInput(editor, currentMentionInput[1])
+    }
+}
+
 /**
  * When user presses space or enter, and there are no results available,
  * it will reset the combobox and remove the mention input, turning it back to a
@@ -22,9 +30,7 @@ export const createExitComboboxPlugin = createPluginFactory<HotkeyPlugin>({
     key: KEY_EXIT_COMBOBOX,
     handlers: {
         onKeyDown:
-            <V extends Value = Value, E extends PlateEditor<V> = PlateEditor<V>>(
-                editor: E,
-            ): KeyboardHandlerReturnType =>
+            (editor: PlateEditor<Value>): KeyboardHandlerReturnType =>
             (event) => {
                 const isOpen = comboboxSelectors.isOpen()
 
@@ -37,11 +43,7 @@ export const createExitComboboxPlugin = createPluginFactory<HotkeyPlugin>({
                     getFilteredItemsWithoutMockEmoji(filteredItems)
                 if (isHotkey('space', event) || isHotkey('Enter', event)) {
                     if (filteredItemsWithoutMockEmoji.length === 0) {
-                        comboboxActions.reset()
-                        const currentMentionInput = findMentionInput(editor)!
-                        if (currentMentionInput) {
-                            removeMentionInput(editor, currentMentionInput[1])
-                        }
+                        changeMentionInputToParagraph(editor)
                     }
                 }
 

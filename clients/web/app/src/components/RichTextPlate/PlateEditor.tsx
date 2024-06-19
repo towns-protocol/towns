@@ -36,7 +36,7 @@ import {
 import { useInlineReplyAttchmentPreview } from '@components/EmbeddedMessageAttachement/hooks/useInlineReplyAttchmentPreview'
 import { useInputStore } from 'store/store'
 import { toPlainText } from './utils/toPlainText'
-import { getChannelNames, getMentionIds } from './utils/helpers'
+import { getChannelNames, getMentionIds, isInputFocused } from './utils/helpers'
 import { RichTextPlaceholder } from './components/RichTextEditorPlaceholder'
 import { toMD } from './utils/toMD'
 import { RememberInputPlugin } from './plugins/RememberInputPlugin'
@@ -330,7 +330,7 @@ const PlateEditorWithoutBoundary = ({
 
     const handleSendOnEnter: React.KeyboardEventHandler = useCallback(
         async (event) => {
-            if (!editorRef.current || isTouch || disabledSend || disabled) {
+            if (!editorRef.current || isTouch || disabledSend || disabled || isEditorEmpty) {
                 return
             }
 
@@ -343,13 +343,13 @@ const PlateEditorWithoutBoundary = ({
                 }
             }
         },
-        [onSendCb, editorText, isTouch, disabled, disabledSend, files.length],
+        [isEditorEmpty, onSendCb, editorText, isTouch, disabled, disabledSend, files.length],
     )
 
     const fileCount = files.length
     const background = isEditing && !isTouch ? 'level2' : 'level2'
 
-    const [isOtherInputFocused] = useState(() => document.activeElement?.tagName === 'INPUT')
+    const [isOtherInputFocused] = useState(isInputFocused)
 
     const sendButtons = (
         <SendMarkdownPlugin

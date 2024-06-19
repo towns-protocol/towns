@@ -2,6 +2,7 @@ import React, { useCallback, useEffect } from 'react'
 import { Button, Stack } from '@ui'
 import { MotionIconButton } from 'ui/components/Motion/MotionComponents'
 import { useDevice } from 'hooks/useDevice'
+import { isInputFocused } from '../utils/helpers'
 
 /**
  * Dispatches a mock Enter event to the active element (editor).
@@ -62,16 +63,38 @@ export const EditMessageButtons = (props: {
             if (isTouch) {
                 dispatchMockEnterEvent()
                 onSave?.()
-            } else {
-                // For desktop, we don't need to invoke onSave(), because we listen to 'Enter' key event in PlateEditor.tsx
-                // Calling onSave() here will send the message twice
+            }
+            // For desktop, we don't need to invoke onSave(), if editor is focused,
+            // because we listen to 'Enter' key event in PlateEditor.tsx
+            // Calling onSave() here will send the message twice
+            else if (isInputFocused()) {
                 dispatchMockEnterEvent()
+            } else {
+                onSave?.()
             }
         },
         [onSave, isTouch],
     )
 
     const disabled = props.disabled || (isEditorEmpty && !hasImage)
+
+    /**
+     * If we are on touch device, we need to use `onMouseDown` to prevent the
+     * default behavior of the button. Otherwise, the button will get focus and the
+     * software keyboard will disappear
+     *
+     * If we are on desktop, we use `onClick` event, because `onMouseDown` event
+     * will not trigger `onBlur` events attached to editor, e.g. closing the combobox gracefully
+     * @see: `createComboboxPlugin` in ../plugins/index.ts
+     */
+    const clickHandlers = {
+        cancel: {
+            [isTouch ? 'onMouseDown' : 'onClick']: cancelButtonPressed,
+        },
+        save: {
+            [isTouch ? 'onMouseDown' : 'onClick']: saveButtonPressed,
+        },
+    }
 
     return (
         <Stack
@@ -82,10 +105,10 @@ export const EditMessageButtons = (props: {
         >
             {isEditing ? (
                 <>
-                    <Button size="button_xs" onMouseDown={cancelButtonPressed}>
+                    <Button size="button_xs" {...clickHandlers.cancel}>
                         Cancel
                     </Button>
-                    <Button size="button_xs" tone="cta1" onMouseDown={saveButtonPressed}>
+                    <Button size="button_xs" tone="cta1" {...clickHandlers.save}>
                         Save
                     </Button>
                 </>
@@ -113,7 +136,7 @@ export const EditMessageButtons = (props: {
                     }
                     icon={disabled ? 'touchSendDisabled' : 'touchSendEnabled'}
                     size="square_md"
-                    onMouseDown={disabled ? undefined : saveButtonPressed}
+                    onClick={disabled ? undefined : saveButtonPressed}
                 />
             )}
         </Stack>

@@ -55,7 +55,7 @@ export const RichTextBottomToolbar = (props: Props) => {
             editor.insertNodes([
                 {
                     type: ELEMENT_MENTION_EMOJI,
-                    children: [{ text: '' }],
+                    children: [{ text: data.native }],
                     emoji: { name: data.name, emoji: data.native },
                     value: data.native,
                 } as TEmojiMentionElement,

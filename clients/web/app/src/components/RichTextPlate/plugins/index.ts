@@ -54,7 +54,7 @@ import { EmojiMentionElement } from '../components/plate-ui/EmojilMentionElement
 import { autoformatRules } from './autoformat'
 import { nodeResetRules } from './nodeReset'
 import { createShiftEnterListPlugin } from './shiftEnterListPlugin'
-import { createExitComboboxPlugin } from './ExitComboboxPlugin'
+import { changeMentionInputToParagraph, createExitComboboxPlugin } from './ExitComboboxPlugin'
 import { createFormatTextLinkPlugin } from './createFormatTextLinkPlugin'
 import { ELEMENT_MENTION_CHANNEL, createChannelPlugin } from './createChannelPlugin'
 import { ELEMENT_MENTION_EMOJI, createEmojiPlugin } from './emoji/createEmojiPlugin'
@@ -87,7 +87,18 @@ const platePlugins = (
             }),
             createListPlugin(),
             createExitComboboxPlugin(), // should be before createComboboxPlugin
-            createComboboxPlugin(), // should be after createExitComboboxPlugin
+            createComboboxPlugin({
+                handlers: {
+                    onBlur: (editor) => (_event) => {
+                        /**
+                         * This will convert the MENTION_INPUT node to a paragraph node when the combobox
+                         * is closed (user clicks away without selecting anything).
+                         * It ensures, whatever user has typed in the combobox is not lost. E.g. :) or @ me
+                         */
+                        changeMentionInputToParagraph(editor)
+                    },
+                },
+            }), // should be after createExitComboboxPlugin
             createEmojiPlugin({
                 options: {
                     id: ComboboxTypes.emojiMention,
