@@ -6,7 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/mitchellh/mapstructure"
-	"github.com/river-build/river/core/config"
+	"github.com/river-build/river/core/node/config"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

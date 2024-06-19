@@ -50,32 +50,22 @@ func (lfb *chainMonitorBuilder) OnBlock(cb OnChainNewBlock) {
 	lfb.dirty = true
 }
 
-func (lfb *chainMonitorBuilder) OnAllEvents(from BlockNumber, cb OnChainEventCallback) {
-	lfb.eventCallbacks = append(lfb.eventCallbacks, &chainEventCallback{handler: cb, logProcessed: false, fromBlock: from})
+func (lfb *chainMonitorBuilder) OnAllEvents(cb OnChainEventCallback) {
+	lfb.eventCallbacks = append(lfb.eventCallbacks, &chainEventCallback{handler: cb})
 	lfb.dirty = true
 }
 
-func (lfb *chainMonitorBuilder) OnContractEvent(from BlockNumber, addr common.Address, cb OnChainEventCallback) {
-	lfb.eventCallbacks = append(
-		lfb.eventCallbacks,
-		&chainEventCallback{handler: cb, address: &addr, logProcessed: false, fromBlock: from},
-	)
+func (lfb *chainMonitorBuilder) OnContractEvent(addr common.Address, cb OnChainEventCallback) {
+	lfb.eventCallbacks = append(lfb.eventCallbacks, &chainEventCallback{handler: cb, address: &addr})
 	lfb.dirty = true
 }
 
 func (lfb *chainMonitorBuilder) OnContractWithTopicsEvent(
-	from BlockNumber,
 	addr common.Address,
 	topics [][]common.Hash,
 	cb OnChainEventCallback,
 ) {
-	lfb.eventCallbacks = append(lfb.eventCallbacks, &chainEventCallback{
-		handler:            cb,
-		address:            &addr,
-		topics:             topics,
-		logProcessed:       false,
-		lastProcessedBlock: from.AsUint64(),
-	})
+	lfb.eventCallbacks = append(lfb.eventCallbacks, &chainEventCallback{handler: cb, address: &addr, topics: topics})
 	lfb.dirty = true
 }
 
@@ -85,21 +75,9 @@ func (lfb *chainMonitorBuilder) OnChainMonitorStopped(cb OnChainMonitorStoppedCa
 }
 
 type chainEventCallback struct {
-	handler               OnChainEventCallback
-	address               *common.Address
-	topics                [][]common.Hash
-	logProcessed          bool
-	lastProcessedBlock    uint64
-	lastProcessedTxIndex  uint
-	lastProcessedLogIndex uint
-	fromBlock             BlockNumber
-}
-
-// alreadyProcessed returns an indication if cb already processed the given log.
-func (cb chainEventCallback) alreadyProcessed(log *types.Log) bool {
-	return !(!cb.logProcessed || cb.lastProcessedBlock < log.BlockNumber ||
-		(cb.lastProcessedBlock == log.BlockNumber && (cb.lastProcessedTxIndex < log.TxIndex ||
-			(cb.lastProcessedTxIndex == log.TxIndex && cb.lastProcessedLogIndex < log.Index))))
+	handler OnChainEventCallback
+	address *common.Address
+	topics  [][]common.Hash
 }
 
 type chainEventCallbacks []*chainEventCallback
@@ -108,14 +86,8 @@ type chainEventCallbacks []*chainEventCallback
 // in the given log.
 func (ecb chainEventCallbacks) onLogReceived(ctx context.Context, log types.Log) {
 	for _, cb := range ecb {
-		if !cb.alreadyProcessed(&log) {
-			if (cb.address == nil || *cb.address == log.Address) && matchTopics(cb.topics, log.Topics) {
-				cb.handler(ctx, log)
-			}
-			cb.logProcessed = true
-			cb.lastProcessedBlock = log.BlockNumber
-			cb.lastProcessedTxIndex = log.TxIndex
-			cb.lastProcessedLogIndex = log.Index
+		if (cb.address == nil || *cb.address == log.Address) && matchTopics(cb.topics, log.Topics) {
+			cb.handler(ctx, log)
 		}
 	}
 }

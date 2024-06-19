@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/river-build/river/core/config"
+	"github.com/river-build/river/core/node/config"
 )
 
 func GetTestDbUrl() string {

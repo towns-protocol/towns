@@ -163,19 +163,6 @@ const _abi = [
   },
   {
     type: "event",
-    name: "PlatformMembershipMinPriceSet",
-    inputs: [
-      {
-        name: "minPrice",
-        type: "uint256",
-        indexed: false,
-        internalType: "uint256",
-      },
-    ],
-    anonymous: false,
-  },
-  {
-    type: "event",
     name: "PlatformMembershipMintLimitSet",
     inputs: [
       {
@@ -239,11 +226,6 @@ const _abi = [
   {
     type: "error",
     name: "Platform__InvalidMembershipDuration",
-    inputs: [],
-  },
-  {
-    type: "error",
-    name: "Platform__InvalidMembershipMinPrice",
     inputs: [],
   },
   {

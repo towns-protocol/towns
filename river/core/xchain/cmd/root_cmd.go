@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/river-build/river/core/config"
+	"github.com/river-build/river/core/node/config"
 
-	node_cmd "github.com/river-build/river/core/cmd"
+	node_cmd "github.com/river-build/river/core/node/cmd"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

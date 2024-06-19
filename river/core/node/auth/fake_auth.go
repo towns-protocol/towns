@@ -3,7 +3,7 @@ package auth
 import (
 	"context"
 
-	"github.com/river-build/river/core/config"
+	"github.com/river-build/river/core/node/config"
 )
 
 // This checkers always returns true, used for some testing scenarios.

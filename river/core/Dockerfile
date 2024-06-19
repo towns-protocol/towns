@@ -11,8 +11,6 @@ ARG VER_COMMIT=commit_unset
 
 # Prepare build environment
 WORKDIR /build
-COPY cmd cmd
-COPY config config
 COPY node node
 COPY xchain xchain
 COPY go.* .

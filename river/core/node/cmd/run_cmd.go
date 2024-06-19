@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/river-build/river/core/config"
+	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/node/version"
 	"github.com/river-build/river/core/node/rpc"
 

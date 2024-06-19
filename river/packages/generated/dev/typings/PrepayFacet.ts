@@ -86,7 +86,6 @@ export interface PrepayFacetInterface extends utils.Interface {
     "PlatformMembershipBpsSet(uint16)": EventFragment;
     "PlatformMembershipDurationSet(uint256)": EventFragment;
     "PlatformMembershipFeeSet(uint256)": EventFragment;
-    "PlatformMembershipMinPriceSet(uint256)": EventFragment;
     "PlatformMembershipMintLimitSet(uint256)": EventFragment;
     "PrepayBase__Prepaid(address,uint256)": EventFragment;
   };
@@ -100,9 +99,6 @@ export interface PrepayFacetInterface extends utils.Interface {
     nameOrSignatureOrTopic: "PlatformMembershipDurationSet"
   ): EventFragment;
   getEvent(nameOrSignatureOrTopic: "PlatformMembershipFeeSet"): EventFragment;
-  getEvent(
-    nameOrSignatureOrTopic: "PlatformMembershipMinPriceSet"
-  ): EventFragment;
   getEvent(
     nameOrSignatureOrTopic: "PlatformMembershipMintLimitSet"
   ): EventFragment;
@@ -180,17 +176,6 @@ export type PlatformMembershipFeeSetEvent = TypedEvent<
 
 export type PlatformMembershipFeeSetEventFilter =
   TypedEventFilter<PlatformMembershipFeeSetEvent>;
-
-export interface PlatformMembershipMinPriceSetEventObject {
-  minPrice: BigNumber;
-}
-export type PlatformMembershipMinPriceSetEvent = TypedEvent<
-  [BigNumber],
-  PlatformMembershipMinPriceSetEventObject
->;
-
-export type PlatformMembershipMinPriceSetEventFilter =
-  TypedEventFilter<PlatformMembershipMinPriceSetEvent>;
 
 export interface PlatformMembershipMintLimitSetEventObject {
   limit: BigNumber;
@@ -344,13 +329,6 @@ export interface PrepayFacet extends BaseContract {
       fee?: null
     ): PlatformMembershipFeeSetEventFilter;
     PlatformMembershipFeeSet(fee?: null): PlatformMembershipFeeSetEventFilter;
-
-    "PlatformMembershipMinPriceSet(uint256)"(
-      minPrice?: null
-    ): PlatformMembershipMinPriceSetEventFilter;
-    PlatformMembershipMinPriceSet(
-      minPrice?: null
-    ): PlatformMembershipMinPriceSetEventFilter;
 
     "PlatformMembershipMintLimitSet(uint256)"(
       limit?: null

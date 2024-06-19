@@ -279,25 +279,6 @@ export default [
   },
   {
     "type": "function",
-    "name": "getStreamCountOnNode",
-    "inputs": [
-      {
-        "name": "nodeAddress",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
     "name": "getStreamWithGenesis",
     "inputs": [
       {

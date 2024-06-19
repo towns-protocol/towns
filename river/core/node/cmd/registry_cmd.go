@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/river-build/river/core/config"
 	. "github.com/river-build/river/core/node/base"
+	"github.com/river-build/river/core/node/config"
 	"github.com/river-build/river/core/node/contracts"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/infra"

@@ -31,11 +31,11 @@ type (
 		// OnBlock adds a callback that is called for each new block
 		OnBlock(cb OnChainNewBlock)
 		// OnAllEvents matches all events for all contracts, e.g. all chain events.
-		OnAllEvents(from BlockNumber, cb OnChainEventCallback)
+		OnAllEvents(cb OnChainEventCallback)
 		// OnContractEvent matches all events created by the contract on the given address.
-		OnContractEvent(from BlockNumber, addr common.Address, cb OnChainEventCallback)
+		OnContractEvent(addr common.Address, cb OnChainEventCallback)
 		// OnContractWithTopicsEvent matches events created by the contract on the given
-		OnContractWithTopicsEvent(from BlockNumber, addr common.Address, topics [][]common.Hash, cb OnChainEventCallback)
+		OnContractWithTopicsEvent(addr common.Address, topics [][]common.Hash, cb OnChainEventCallback)
 		// OnStopped calls cb after the chain monitor stopped monitoring the chain
 		OnStopped(cb OnChainMonitorStoppedCallback)
 	}
@@ -57,10 +57,8 @@ type (
 	OnChainMonitorStoppedCallback = func(context.Context)
 
 	chainMonitor struct {
-		mu               sync.Mutex
-		builder          chainMonitorBuilder
-		fromBlock        *big.Int
-		fromBlockVersion uint64
+		muBuilder sync.Mutex
+		builder   chainMonitorBuilder
 	}
 
 	// ChainMonitorPollInterval determines the next poll interval for the chain monitor
@@ -108,62 +106,43 @@ func (p *defaultChainMonitorPollIntervalCalculator) Interval(
 	return max(p.blockPeriod-took, 0)
 }
 
-// setFromBlock must be called with ecm.mu locked.
-func (ecm *chainMonitor) setFromBlock(processed *big.Int) {
-	ecm.setFromBlockVersioned(ecm.fromBlockVersion+1, processed)
-}
-
-// setFromBlockVersioned must be called with ecm.mu locked.
-func (ecm *chainMonitor) setFromBlockVersioned(version uint64, processed *big.Int) {
-	if ecm.fromBlock == nil || ecm.fromBlockVersion == version {
-		ecm.fromBlock = processed
-	} else if ecm.fromBlock.Cmp(processed) > 0 && version > ecm.fromBlockVersion {
-		ecm.fromBlock = processed
-	}
-	ecm.fromBlockVersion++
-}
-
 func (ecm *chainMonitor) OnHeader(cb OnChainNewHeader) {
-	ecm.mu.Lock()
-	defer ecm.mu.Unlock()
+	ecm.muBuilder.Lock()
+	defer ecm.muBuilder.Unlock()
 	ecm.builder.OnHeader(cb)
 }
 
 func (ecm *chainMonitor) OnBlock(cb OnChainNewBlock) {
-	ecm.mu.Lock()
-	defer ecm.mu.Unlock()
+	ecm.muBuilder.Lock()
+	defer ecm.muBuilder.Unlock()
 	ecm.builder.OnBlock(cb)
 }
 
-func (ecm *chainMonitor) OnAllEvents(from BlockNumber, cb OnChainEventCallback) {
-	ecm.mu.Lock()
-	defer ecm.mu.Unlock()
-	ecm.builder.OnAllEvents(from, cb)
-	ecm.setFromBlock(from.AsBigInt())
+func (ecm *chainMonitor) OnAllEvents(cb OnChainEventCallback) {
+	ecm.muBuilder.Lock()
+	defer ecm.muBuilder.Unlock()
+	ecm.builder.OnAllEvents(cb)
 }
 
-func (ecm *chainMonitor) OnContractEvent(from BlockNumber, addr common.Address, cb OnChainEventCallback) {
-	ecm.mu.Lock()
-	defer ecm.mu.Unlock()
-	ecm.builder.OnContractEvent(from, addr, cb)
-	ecm.setFromBlock(from.AsBigInt())
+func (ecm *chainMonitor) OnContractEvent(addr common.Address, cb OnChainEventCallback) {
+	ecm.muBuilder.Lock()
+	defer ecm.muBuilder.Unlock()
+	ecm.builder.OnContractEvent(addr, cb)
 }
 
 func (ecm *chainMonitor) OnContractWithTopicsEvent(
-	from BlockNumber,
 	addr common.Address,
 	topics [][]common.Hash,
 	cb OnChainEventCallback,
 ) {
-	ecm.mu.Lock()
-	defer ecm.mu.Unlock()
-	ecm.builder.OnContractWithTopicsEvent(from, addr, topics, cb)
-	ecm.setFromBlock(from.AsBigInt())
+	ecm.muBuilder.Lock()
+	defer ecm.muBuilder.Unlock()
+	ecm.builder.OnContractWithTopicsEvent(addr, topics, cb)
 }
 
 func (ecm *chainMonitor) OnStopped(cb OnChainMonitorStoppedCallback) {
-	ecm.mu.Lock()
-	defer ecm.mu.Unlock()
+	ecm.muBuilder.Lock()
+	defer ecm.muBuilder.Unlock()
 	ecm.builder.OnChainMonitorStopped(cb)
 }
 
@@ -210,6 +189,7 @@ func (ecm *chainMonitor) RunWithBlockPeriod(
 	var (
 		log                   = dlog.FromCtx(ctx)
 		one                   = big.NewInt(1)
+		fromBlock             = initialBlock.AsBigInt()
 		lastProcessed         *big.Int
 		pollInterval          = time.Duration(0)
 		poll                  = NewChainMonitorPollIntervalCalculator(blockPeriod, 30*time.Second)
@@ -231,13 +211,11 @@ func (ecm *chainMonitor) RunWithBlockPeriod(
 		return
 	}
 
-	ecm.mu.Lock()
-	ecm.setFromBlock(initialBlock.AsBigInt())
-	ecm.mu.Unlock()
-
 	log.Debug("chain monitor started", "blockPeriod", blockPeriod, "fromBlock", initialBlock)
 
 	for {
+		// log.Debug("chain monitor iteration", "pollInterval", pollInterval)
+
 		pollIntervalCounter.Inc()
 
 		select {
@@ -251,7 +229,6 @@ func (ecm *chainMonitor) RunWithBlockPeriod(
 
 		case <-time.After(pollInterval):
 			start := time.Now()
-
 			head, err := client.HeaderByNumber(ctx, nil)
 			if err != nil {
 				log.Warn("chain monitor is unable to retrieve chain head", "error", err)
@@ -278,21 +255,18 @@ func (ecm *chainMonitor) RunWithBlockPeriod(
 				callbacksExecuted   sync.WaitGroup
 			)
 
-			ecm.mu.Lock()
-			fromBlock := ecm.fromBlock
-			fromBlockVersion := ecm.fromBlockVersion
-			ecm.mu.Unlock()
-
 			// ensure that the search range isn't too big because RPC providers
 			// often have limitations on the block range and/or response size.
-			if head.Number.Cmp(fromBlock) > 0 && head.Number.Uint64()-fromBlock.Uint64() > 25 {
+			if head.Number.Uint64()-fromBlock.Uint64() > 25 {
 				moreBlocksAvailable = true
 				toBlock.SetUint64(fromBlock.Uint64() + 25)
 			}
 
-			ecm.mu.Lock()
+			ecm.muBuilder.Lock()
 			query := ecm.builder.Query()
 			query.FromBlock, query.ToBlock = fromBlock, toBlock
+
+			// log.Debug("chain monitor block range", "from", query.FromBlock, "to", query.ToBlock)
 
 			if len(ecm.builder.blockCallbacks) > 0 {
 				for i := query.FromBlock.Uint64(); i <= query.ToBlock.Uint64(); i++ {
@@ -305,7 +279,7 @@ func (ecm *chainMonitor) RunWithBlockPeriod(
 				if err != nil {
 					log.Warn("unable to retrieve logs", "error", err)
 					pollInterval = poll.Interval(time.Since(start), false, true)
-					ecm.mu.Unlock()
+					ecm.muBuilder.Unlock()
 					continue
 				}
 				receivedEventsCounter.Add(float64(len(collectedLogs)))
@@ -340,10 +314,10 @@ func (ecm *chainMonitor) RunWithBlockPeriod(
 			}
 
 			callbacksExecuted.Wait()
+			ecm.muBuilder.Unlock()
 
 			// from and toBlocks are inclusive, start at the next block on next iteration
-			ecm.setFromBlockVersioned(fromBlockVersion, new(big.Int).Add(query.ToBlock, one))
-			ecm.mu.Unlock()
+			fromBlock = new(big.Int).Add(query.ToBlock, one)
 			pollInterval = poll.Interval(time.Since(start), moreBlocksAvailable, false)
 			lastProcessed = toBlock
 
