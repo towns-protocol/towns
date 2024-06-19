@@ -2,9 +2,14 @@
 // Reference in case we ever use local bundler for testing
 //
 
-import { Address, LocalhostWeb3Provider, SpaceDapp, getWeb3Deployment } from '@river-build/web3'
+import {
+    Address,
+    ISpaceDapp,
+    LocalhostWeb3Provider,
+    SpaceDapp,
+    getWeb3Deployment,
+} from '@river-build/web3'
 import { ethers } from 'ethers'
-import { Address, ISpaceDapp } from '@river-build/web3'
 import { TestUserOps } from './TestUserOps'
 
 // these tests are comprised of basic transactions that don't interact with towns contracts per se,
@@ -30,6 +35,7 @@ describe.skip('sanity: user operations', () => {
             aaRpcUrl: process.env.AA_RPC_URL!,
             entryPointAddress: process.env.AA_ENTRY_POINT_ADDRESS,
             factoryAddress: process.env.AA_FACTORY_ADDRESS,
+            skipPromptUserOnPMRejectedOp: true,
         })
         // must fund the AA wallet to pass gas verification checks b/c no paymaster
         await bob.fundWallet(
