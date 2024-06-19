@@ -45,17 +45,8 @@ func NewMetrics(namespace string, subsystem string) *Metrics {
 	}
 }
 
-func (m *Metrics) StartMetricsServer(ctx context.Context, config config.MetricsConfig) {
-	log := dlog.FromCtx(ctx)
-
-	if !config.Enabled {
-		log.Info("Metrics service is disabled")
-		return
-	}
-
-	mux := http.NewServeMux()
-
-	metricsHandler := promhttp.HandlerFor(
+func (m *Metrics) CreateHandler() http.Handler {
+	return promhttp.HandlerFor(
 		m.Registry(),
 		promhttp.HandlerOpts{
 			Registry:          m.Registry(),
@@ -63,6 +54,19 @@ func (m *Metrics) StartMetricsServer(ctx context.Context, config config.MetricsC
 			ProcessStartTime:  time.Now(),
 		},
 	)
+}
+
+func (m *Metrics) StartMetricsServer(ctx context.Context, config config.MetricsConfig) {
+	log := dlog.FromCtx(ctx)
+
+	if !config.Enabled || config.Port == 0 {
+		log.Info("Secondary metrics service is disabled")
+		return
+	}
+
+	mux := http.NewServeMux()
+
+	metricsHandler := m.CreateHandler()
 
 	mux.Handle("/metrics", metricsHandler)
 

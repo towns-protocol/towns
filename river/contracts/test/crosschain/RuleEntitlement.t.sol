@@ -8,7 +8,6 @@ import {RuleEntitlement} from "contracts/src/spaces/entitlements/rule/RuleEntitl
 import {IEntitlementBase} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {validateRuleData} from "contracts/src/spaces/entitlements/rule/RuleEntitlement.sol";
 
 contract RuleEntitlementTest is TestUtils, IEntitlementBase {
   RuleEntitlement internal implementation;
@@ -37,7 +36,7 @@ contract RuleEntitlementTest is TestUtils, IEntitlementBase {
     ruleEntitlement = RuleEntitlement(entitlement);
   }
 
-  function makeMockEncodedRuleData() internal view returns (bytes memory) {
+  modifier givenRuleEntitlementIsSet() {
     uint256 chainId = 31337;
     address erc20Contract = _randomAddress();
     address erc721Contract = _randomAddress();
@@ -105,12 +104,6 @@ contract RuleEntitlementTest is TestUtils, IEntitlementBase {
 
     bytes memory encodedData = abi.encode(ruleData);
 
-    return encodedData;
-  }
-
-  modifier givenRuleEntitlementIsSet() {
-    bytes memory encodedData = makeMockEncodedRuleData();
-
     vm.prank(space);
     ruleEntitlement.setEntitlement(roleId, encodedData);
     _;
@@ -120,23 +113,6 @@ contract RuleEntitlementTest is TestUtils, IEntitlementBase {
     IRuleEntitlement.Operation[] memory ruleOperations = ruleEntitlement
       .getOperations(roleId);
     assertEq(ruleOperations.length, 3);
-  }
-
-  function test_setRuleEntitlementTwice() external givenRuleEntitlementIsSet {
-    IRuleEntitlement.Operation[] memory ruleOperations = ruleEntitlement
-      .getOperations(roleId);
-    assertEq(ruleOperations.length, 3);
-
-    vm.prank(space);
-    ruleEntitlement.setEntitlement(roleId, makeMockEncodedRuleData());
-    ruleOperations = ruleEntitlement.getOperations(roleId);
-    assertEq(ruleOperations.length, 3);
-
-    IRuleEntitlement.RuleData memory ruleData = ruleEntitlement.getRuleData(
-      roleId
-    );
-
-    validateRuleData(ruleData);
   }
 
   function test_removeRuleEntitlement() external givenRuleEntitlementIsSet {

@@ -27,66 +27,6 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 import {IRuleEntitlement} from "./IRuleEntitlement.sol";
 
-function validateRuleData(
-  IRuleEntitlement.RuleData memory data
-)
-  pure
-  returns (
-    uint256 operationsLength,
-    uint256 checkOperationsLength,
-    uint256 logicalOperationsLength
-  )
-{
-  // Cache lengths of operations arrays to reduce state access cost
-  operationsLength = data.operations.length;
-  checkOperationsLength = data.checkOperations.length;
-  logicalOperationsLength = data.logicalOperations.length;
-
-  // Step 1: Validate Operation against CheckOperation and LogicalOperation
-  for (uint256 i = 0; i < operationsLength; i++) {
-    IRuleEntitlement.CombinedOperationType opType = data.operations[i].opType; // cache the operation type
-    uint8 index = data.operations[i].index; // cache the operation index
-
-    if (opType == IRuleEntitlement.CombinedOperationType.CHECK) {
-      if (index >= checkOperationsLength) {
-        revert IRuleEntitlement.InvalidCheckOperationIndex(
-          index,
-          uint8(checkOperationsLength)
-        );
-      }
-    } else if (opType == IRuleEntitlement.CombinedOperationType.LOGICAL) {
-      // Use custom error in revert statement
-      if (index >= logicalOperationsLength) {
-        revert IRuleEntitlement.InvalidLogicalOperationIndex(
-          index,
-          uint8(logicalOperationsLength)
-        );
-      }
-
-      // Verify the logical operations make a DAG
-      IRuleEntitlement.LogicalOperation memory logicalOp = data
-        .logicalOperations[index];
-      uint8 leftOperationIndex = logicalOp.leftOperationIndex;
-      uint8 rightOperationIndex = logicalOp.rightOperationIndex;
-
-      // Use custom errors in revert statements
-      if (leftOperationIndex >= i) {
-        revert IRuleEntitlement.InvalidLeftOperationIndex(
-          leftOperationIndex,
-          uint8(i)
-        );
-      }
-
-      if (rightOperationIndex >= i) {
-        revert IRuleEntitlement.InvalidRightOperationIndex(
-          rightOperationIndex,
-          uint8(i)
-        );
-      }
-    }
-  }
-}
-
 contract RuleEntitlement is
   Initializable,
   ERC165Upgradeable,
@@ -183,21 +123,52 @@ contract RuleEntitlement is
     address sender = _msgSender();
     uint256 currentTime = block.timestamp;
 
-    (
-      uint256 operationsLength,
-      uint256 checkOperationsLength,
-      uint256 logicalOperationsLength
-    ) = validateRuleData(data);
+    // Cache lengths of operations arrays to reduce state access cost
+    uint256 operationsLength = data.operations.length;
+    uint256 checkOperationsLength = data.checkOperations.length;
+    uint256 logicalOperationsLength = data.logicalOperations.length;
+
+    // Step 1: Validate Operation against CheckOperation and LogicalOperation
+    for (uint256 i = 0; i < operationsLength; i++) {
+      CombinedOperationType opType = data.operations[i].opType; // cache the operation type
+      uint8 index = data.operations[i].index; // cache the operation index
+
+      if (opType == CombinedOperationType.CHECK) {
+        if (index >= checkOperationsLength) {
+          revert InvalidCheckOperationIndex(
+            index,
+            uint8(checkOperationsLength)
+          );
+        }
+      } else if (opType == CombinedOperationType.LOGICAL) {
+        // Use custom error in revert statement
+        if (index >= logicalOperationsLength) {
+          revert InvalidLogicalOperationIndex(
+            index,
+            uint8(logicalOperationsLength)
+          );
+        }
+
+        // Verify the logical operations make a DAG
+        LogicalOperation memory logicalOp = data.logicalOperations[index];
+        uint8 leftOperationIndex = logicalOp.leftOperationIndex;
+        uint8 rightOperationIndex = logicalOp.rightOperationIndex;
+
+        // Use custom errors in revert statements
+        if (leftOperationIndex >= i) {
+          revert InvalidLeftOperationIndex(leftOperationIndex, uint8(i));
+        }
+
+        if (rightOperationIndex >= i) {
+          revert InvalidRightOperationIndex(rightOperationIndex, uint8(i));
+        }
+      }
+    }
 
     Entitlement storage entitlement = entitlementsByRoleId[roleId];
 
     entitlement.grantedBy = sender;
     entitlement.grantedTime = currentTime;
-
-    // If the entitlement already exists, clear the existing data
-    delete entitlement.data.checkOperations;
-    delete entitlement.data.logicalOperations;
-    delete entitlement.data.operations;
 
     // All checks passed; initialize state variables
     // Manually copy _checkOperations to checkOperations

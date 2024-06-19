@@ -362,6 +362,10 @@ func (s *Service) runHttpServer() error {
 	mux.HandleFunc("/info", s.handleInfo)
 	mux.HandleFunc("/status", s.handleStatus)
 
+	if cfg.Metrics.Enabled && !cfg.Metrics.DisablePublic {
+		mux.Handle("/metrics", s.metrics.CreateHandler())
+	}
+
 	corsMiddleware := cors.New(cors.Options{
 		AllowCredentials: false,
 		Debug:            cfg.Log.Level == "debug",
