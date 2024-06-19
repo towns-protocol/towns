@@ -61,7 +61,7 @@ export const getUserIdNameMap = (
     const map: TUserIDNameMap = {}
     users.forEach((user) => {
         if (user.userId) {
-            map[user.userId] = getPrettyDisplayName(user as UserWithDisplayName)
+            map[user.userId] = getPrettyDisplayName(user as UserWithDisplayName, true)
         }
     })
     return map
