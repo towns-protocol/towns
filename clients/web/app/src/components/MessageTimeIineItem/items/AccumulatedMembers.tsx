@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react'
 import uniqBy from 'lodash/uniqBy'
+import uniq from 'lodash/uniq'
 import { firstBy } from 'thenby'
 import { Membership, useUserLookupContext } from 'use-towns-client'
 import { Paragraph, Stack, Tooltip } from '@ui'
@@ -77,8 +78,7 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
                     {senderDisplayName} {isGDMRemovedEvent ? 'removed ' : 'added '}
                     <UserList
                         excludeSelf
-                        userIds={users
-                            .map((u) => u?.userId)
+                        userIds={uniq(users.map((u) => u?.userId))
                             .filter((uid) => uid !== senderId)
                             .filter(notUndefined)}
                         myUserId={senderId}
