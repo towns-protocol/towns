@@ -34,7 +34,7 @@ export function BlockchainTxNotifier() {
         if (tx.status === 'potential') {
             switch (tx.type) {
                 case BlockchainTransactionType.LinkWallet:
-                    if (!isMember) {
+                    if (spaceId && !isMember) {
                         // skip b/c we can wallet link when on a public town page, and we handle there
                         return
                     }
@@ -45,7 +45,7 @@ export function BlockchainTxNotifier() {
                     })
                     break
                 case BlockchainTransactionType.UnlinkWallet:
-                    if (!isMember) {
+                    if (spaceId && !isMember) {
                         // skip b/c we can wallet link when on a public town page, and we handle there
                         return
                     }
