@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/node/version"
 	"github.com/river-build/river/core/node/rpc/render"
 	"github.com/river-build/river/core/node/rpc/statusinfo"
+	"github.com/river-build/river/core/river_node/version"
 )
 
 func (s *Service) blockchainPing(ctx context.Context, chain *crypto.Blockchain) *statusinfo.BlockchainPing {

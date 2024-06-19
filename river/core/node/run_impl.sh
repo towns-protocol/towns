@@ -113,8 +113,8 @@ if [ "$BUILD" == "true" ]; then
     go build \
         -o ${OUTPUT} \
         -race \
-        -ldflags="-X github.com/river-build/river/core/node/node/version.branch=$(git rev-parse --abbrev-ref HEAD) -X github.com/river-build/river/core/node/node/version.commit=$(git describe --tags --always --dirty)" \
-        ./node/main.go
+        -ldflags="-X github.com/river-build/river/core/river_node/version.branch=$(git rev-parse --abbrev-ref HEAD) -X github.com/river-build/river/core/river_node/version.commit=$(git describe --tags --always --dirty)" \
+        ../river_node/main.go
 fi
 
 if [ "$RUN" == "true" ]; then
@@ -134,12 +134,12 @@ if [ "$RUN" == "true" ]; then
         # if NUM_INSTANCES in not one, run in background, otherwise run with optional restart
         if [ "$NUM_INSTANCES" -ne 1 ]; then
             echo "Running instance in background"
-            ../bin/river_node run --config config/config.yaml "${args[@]:-}" &
+            ../bin/river_node run stream --config config/config.yaml "${args[@]:-}" &
         else
             echo "Running single $INSTANCE in the retry loop"
             while true; do
                 # Run the built executable
-                ../bin/river_node run "${args[@]:-}" &
+                ../bin/river_node run stream "${args[@]:-}" &
                 job_pid=$!
 
                 # Wait for the job to finish and capture its exit status

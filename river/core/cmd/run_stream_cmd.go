@@ -9,10 +9,9 @@ import (
 	"time"
 
 	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/node/node/version"
 	"github.com/river-build/river/core/node/rpc"
+	"github.com/river-build/river/core/river_node/version"
 
-	"github.com/spf13/cobra"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 	"gopkg.in/DataDog/dd-trace-go.v1/profiler"
 )
@@ -99,7 +98,7 @@ func runMetricsAndProfiler(ctx context.Context, cfg *config.Config) error {
 	return nil
 }
 
-func runServer(cfg *config.Config) error {
+func runStreamMode(cfg *config.Config) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
 	err := runMetricsAndProfiler(ctx, cfg)
 	if err != nil {
@@ -130,16 +129,4 @@ func getEnvFromDDTags() string {
 		}
 	}
 	return ""
-}
-
-func init() {
-	cmd := &cobra.Command{
-		Use:   "run",
-		Short: "Runs the node",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return runServer(cmdConfig)
-		},
-	}
-
-	rootCmd.AddCommand(cmd)
 }

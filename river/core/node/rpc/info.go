@@ -13,10 +13,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/dlog"
-	"github.com/river-build/river/core/node/node/version"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/protocol/protocolconnect"
 	"github.com/river-build/river/core/node/shared"
+	"github.com/river-build/river/core/river_node/version"
 )
 
 func (s *Service) Info(

@@ -9,8 +9,8 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}/node/main.go",
-            "args": ["run"],
+            "program": "${workspaceFolder}/../river_node/main.go",
+            "args": ["run stream"],
             "cwd": "${workspaceFolder}/run_files/single/00"
         },
         {
@@ -18,8 +18,8 @@
           "type": "go",
           "request": "launch",
           "mode": "auto",
-          "program": "${workspaceFolder}/node/main.go",
-          "args": ["run"],
+          "program": "${workspaceFolder}/../river_node/main.go",
+          "args": ["run stream"],
           "cwd": "${workspaceFolder}/run_files/single_ne/00"
       }
     ]

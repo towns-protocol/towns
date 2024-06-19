@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/river-build/river/core/node/node/version"
+	"github.com/river-build/river/core/river_node/version"
 )
 
 func init() {

@@ -10,7 +10,7 @@
         "request": "launch",
         "mode": "auto",
         "cwd": "${workspaceFolder}/node",
-        "program": "./node/node/main.go",
+        "program": "./river_node/main.go",
         "args": ["run", "-l", "info"]
       }
     ]

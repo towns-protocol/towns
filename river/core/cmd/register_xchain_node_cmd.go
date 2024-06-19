@@ -65,7 +65,7 @@ func registerImpl(operatorKeyfile string, userConfirmationMessage string, regist
 		ctx, cancel                = context.WithTimeout(context.Background(), time.Minute)
 		xchainWallet, xWalletErr   = util.LoadWallet(ctx)
 		operatorWallet, oWalletErr = crypto.LoadWallet(ctx, operatorKeyfile)
-		entitlementGatedMetaData   = contracts.NewEntitlementGatedMetaData(loadedCfg.GetContractVersion())
+		entitlementGatedMetaData   = contracts.NewEntitlementGatedMetaData(cmdConfig.GetContractVersion())
 	)
 	defer cancel()
 
@@ -82,7 +82,7 @@ func registerImpl(operatorKeyfile string, userConfirmationMessage string, regist
 	}
 
 	metrics := infra.NewMetrics("xchain", "cmdline")
-	baseChain, err := crypto.NewBlockchain(ctx, &loadedCfg.BaseChain, operatorWallet, metrics)
+	baseChain, err := crypto.NewBlockchain(ctx, &cmdConfig.BaseChain, operatorWallet, metrics)
 	if err != nil {
 		return fmt.Errorf("unable to instantiate base chain client: %s", err)
 	}
@@ -90,12 +90,12 @@ func registerImpl(operatorKeyfile string, userConfirmationMessage string, regist
 		ctx,
 		baseChain.Client,
 		0,
-		time.Duration(loadedCfg.BaseChain.BlockTimeMs)*time.Millisecond,
+		time.Duration(cmdConfig.BaseChain.BlockTimeMs)*time.Millisecond,
 		metrics,
 	)
 
 	checker, err := contracts.NewIEntitlementChecker(
-		loadedCfg.GetEntitlementContractAddress(), baseChain.Client, loadedCfg.GetContractVersion())
+		cmdConfig.GetEntitlementContractAddress(), baseChain.Client, cmdConfig.GetContractVersion())
 	if err != nil {
 		return err
 	}

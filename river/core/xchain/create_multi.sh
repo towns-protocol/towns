@@ -98,7 +98,7 @@ do
     mkdir -p "${INSTANCE_DIR}/bin" "${INSTANCE_DIR}/logs" "${INSTANCE_DIR}/config" "${INSTANCE_DIR}/wallet"
 
     # Copy node binary and config template
-    cp "./bin/xchain_node" "${INSTANCE_DIR}/bin"
+    cp "./bin/river_node" "${INSTANCE_DIR}/bin"
     # Using the same config as the node
     cp ../node/run_files/${RUN_ENV}/00/config/config.yaml "${INSTANCE_DIR}/config/config.yaml"
 
@@ -117,7 +117,7 @@ do
     
     pushd "${INSTANCE_DIR}"
     # Run each process with 'generate_key' argument
-    "./bin/xchain_node" genkey
+    "./bin/river_node" genkey
 
       NODE_ADDRESS=$(cat wallet/node_address)
 

@@ -8,11 +8,9 @@ import (
 	"syscall"
 
 	"github.com/river-build/river/core/xchain/server"
-
-	"github.com/spf13/cobra"
 )
 
-func run() error {
+func runXChain() error {
 	// cfg := config.GetConfig()
 	// if cfg.Metrics.Enabled {
 	// 	// Since the xchain server runs alongside the stream node
@@ -26,7 +24,7 @@ func run() error {
 	)
 
 	// create xchain instance
-	srv, err := server.New(ctx, loadedCfg, nil, 1)
+	srv, err := server.New(ctx, cmdConfig, nil, 1)
 	if err != nil {
 		return err
 	}
@@ -50,16 +48,4 @@ func run() error {
 	tasks.Wait()
 
 	return nil
-}
-
-func init() {
-	cmd := &cobra.Command{
-		Use:   "run",
-		Short: "Runs the node",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return run()
-		},
-	}
-
-	rootCmd.AddCommand(cmd)
 }

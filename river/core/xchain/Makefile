@@ -19,7 +19,7 @@ build: $(OUTPUT_DIR)/node
 
 # Compiles the node binary
 $(OUTPUT_DIR)/node: $(SRC)
-	go build -o $(OUTPUT_DIR)/xchain_node ./node
+	go build -o $(OUTPUT_DIR)/river_node ../river_node
 
 # The `test` target runs the tests.
 test:

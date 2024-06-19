@@ -2,4 +2,4 @@
 set -euo pipefail
 cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 
-go run ../../node/main.go --config config.yaml $@
+go run ../../../river_node/main.go --config config.yaml $@
