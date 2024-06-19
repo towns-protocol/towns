@@ -24,6 +24,7 @@ import {
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { useBalance } from 'hooks/useBalance'
 import { formatEthDisplay } from './utils'
+import { useWalletPrefix } from './useWalletPrefix'
 
 export const WalletLinkingPanel = React.memo(() => {
     return (
@@ -185,6 +186,7 @@ export function LinkedWallet({
     const { data: aaAdress } = useAbstractAccountAddress({
         rootKeyAddress: loggedInWalletAddress,
     })
+
     const isAbstractAccount =
         aaAdress && isAbstractAccountAddress({ address, abstractAccountAddress: aaAdress })
 
@@ -196,6 +198,8 @@ export function LinkedWallet({
 
     const isWalletLinkingPending = useIsTransactionPending(BlockchainTransactionType.LinkWallet)
     const isWalletUnLinkingPending = useIsTransactionPending(BlockchainTransactionType.UnlinkWallet)
+
+    const walletPrefix = useWalletPrefix()
 
     // TODO: we have a privy wallet, and AA wallet. Probably we want to filter out the privy wallet, and only show AA wallet address. Do we need to have our own UI for AA wallet assets? Since you can't export it to MM
     return (
@@ -219,7 +223,7 @@ export function LinkedWallet({
                 <ClipboardCopy
                     color={isAbstractAccount ? 'gray2' : 'gray1'}
                     label={shortAddress(address)}
-                    clipboardContent={address}
+                    clipboardContent={isAbstractAccount ? `${walletPrefix}:${address}` : address}
                 />
             </Stack>
 

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Address, useConnectivity } from 'use-towns-client'
+import { useConnectivity } from 'use-towns-client'
 import { BoxProps, Icon, MotionBox, Stack, Text } from '@ui'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { openSeaBaseAssetUrl } from '../utils'
@@ -12,20 +12,21 @@ const buttonStyle: Partial<BoxProps> = {
     cursor: 'pointer',
     as: 'button',
     rounded: 'sm',
-    background: 'none',
     width: '100%',
     height: 'x6',
     color: 'default',
-    border: 'level4',
+    background: 'level3',
     overflow: 'hidden',
 }
 
 export function CopyWalletAddressButton({
-    text = 'Copy Towns Wallet to Deposit Asset',
+    text,
     address,
+    onClick,
 }: {
     text?: string
-    address?: Address
+    address?: string
+    onClick?: () => void
 }) {
     const { loggedInWalletAddress } = useConnectivity()
     const addressToCopy = address || loggedInWalletAddress
@@ -41,8 +42,9 @@ export function CopyWalletAddressButton({
             }
             await copy(addressToCopy)
             setCopied(true)
+            onClick?.()
         },
-        [copy, addressToCopy],
+        [addressToCopy, copy, onClick],
     )
 
     useEffect(() => {

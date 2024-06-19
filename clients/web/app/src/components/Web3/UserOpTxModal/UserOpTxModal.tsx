@@ -1,10 +1,10 @@
-import React from 'react'
+import React, { useMemo, useState } from 'react'
 import { userOpsStore } from '@towns/userops'
 import { BigNumber, utils } from 'ethers'
 
-import { useMembershipInfo } from 'use-towns-client'
+import { BASE_SEPOLIA, useMembershipInfo } from 'use-towns-client'
 import { useShallow } from 'zustand/react/shallow'
-import { Box, Button, Heading, Icon, IconButton, Text } from '@ui'
+import { Box, Button, Heading, Icon, IconButton, Paragraph, Text } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { isTouch, useDevice } from 'hooks/useDevice'
@@ -12,8 +12,10 @@ import { useIsSmartAccountDeployed } from 'hooks/useIsSmartAccountDeployed'
 import { useBalance } from 'hooks/useBalance'
 import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
 import { AboveAppProgressModalContainer } from '@components/AppProgressOverlay/AboveAppProgress/AboveAppProgress'
+import { useEnvironment } from 'hooks/useEnvironmnet'
 import { formatEthDisplay } from '../utils'
 import { CopyWalletAddressButton } from '../TokenVerification/Buttons'
+import { useWalletPrefix } from '../useWalletPrefix'
 
 type Props = {
     membershipPrice?: bigint
@@ -60,6 +62,9 @@ function UserOpTxModalContent({
         })),
     )
 
+    const { baseChainConfig } = useEnvironment()
+    const walletPrefix = useWalletPrefix()
+
     const {
         data: isSmartAccountDeployed,
         isLoading: isSmartAccountDeployedLoading,
@@ -83,6 +88,7 @@ function UserOpTxModalContent({
     const totalInEthFixedTo5 = parseFloat(totalInEth).toFixed(5)
     const totalInEthFixedTo8 = parseFloat(totalInEth).toFixed(8)
     const displayTotalEthPrice = totalInEthFixedTo5 === '0.00000' ? '< 0.00001' : totalInEthFixedTo5
+    const [showWalletWarning, setShowWalletWarning] = useState(false)
 
     const { data: balanceData, isLoading: isLoadingBalance } = useBalance({
         address: smartAccountAddress,
@@ -96,6 +102,20 @@ function UserOpTxModalContent({
 
     const balanceIsLessThanCost = balanceData && balanceData.value < totalCost.toBigInt()
     const _isTouch = isTouch()
+
+    const walletCopyText = useMemo(
+        () => `${walletPrefix}:${smartAccountAddress}`,
+        [smartAccountAddress, walletPrefix],
+    )
+
+    const bridgeLink =
+        baseChainConfig.chainId === BASE_SEPOLIA
+            ? 'https://sepolia-bridge.base.org/deposit'
+            : 'https://bridge.base.org/deposit'
+
+    const onCopyClick = () => {
+        setShowWalletWarning(true)
+    }
 
     const bottomContent = () => {
         if (membershipPriceError) {
@@ -130,12 +150,36 @@ function UserOpTxModalContent({
             return (
                 <>
                     <Text color="error" size="sm">
-                        Wallet has insufficient funds for this transaction
+                        You need to transfer ETH on Base to your towns wallet{' '}
+                        <Box
+                            as="a"
+                            display="inline"
+                            cursor="pointer"
+                            href={bridgeLink}
+                            color="default"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            here
+                        </Box>
+                        .
                     </Text>
+
                     <CopyWalletAddressButton
                         text="Copy Wallet Address"
-                        address={smartAccountAddress}
+                        address={walletCopyText}
+                        onClick={onCopyClick}
                     />
+
+                    {showWalletWarning && (
+                        <Box centerContent padding horizontal gap rounded="sm" background="level3">
+                            <Icon shrink={false} type="alert" />
+                            <Paragraph>
+                                Important! Only transfer assets on {walletPrefix} to your Towns
+                                wallet.
+                            </Paragraph>
+                        </Box>
+                    )}
                 </>
             )
         }
@@ -193,7 +237,14 @@ function UserOpTxModalContent({
                         <Text strong> {totalInEthFixedTo8 + ' ETH'}</Text>
                     </Box>
                 </Box>
-                <Box color="default" background="level3" rounded="sm" width="100%" gap="md">
+                <Box
+                    color="default"
+                    background="level3"
+                    rounded="sm"
+                    width="100%"
+                    gap="md"
+                    border={balanceIsLessThanCost ? 'negative' : 'none'}
+                >
                     <Box padding horizontal justifyContent="spaceBetween" alignItems="center">
                         <Box horizontal gap="sm">
                             <Box position="relative" width="x3">
@@ -208,9 +259,7 @@ function UserOpTxModalContent({
                             </Text>
                         </Box>
                         {formattedBalance ? (
-                            <Text color={balanceIsLessThanCost ? 'error' : 'default'}>
-                                {formattedBalance} Available
-                            </Text>
+                            <Text>{formattedBalance} Available</Text>
                         ) : (
                             <ButtonSpinner />
                         )}
