@@ -4,6 +4,8 @@ import { DatadogMetrics } from './datadog'
 import { RiverRegistry } from './river-registry'
 import { getWalletBalances } from './wallet-balance'
 import { Ping } from './ping'
+import { BaseRegistry } from './base-registry'
+import { SpaceOwner } from './space-owner'
 
 // This is the main internal execution logic for the lambda. We separete it to help with development and testing.
 // It accepts a Config object, which the lambda puts together from environment variables and AWS Secrets Manager.
@@ -16,6 +18,8 @@ export async function execute(config: Config) {
         datadogApplicationKey,
         environment,
         riverRegistryContractAddress,
+        baseRegistryContractAddress,
+        spaceOwnerContractAddress,
     } = config
     const baseChainClient = createPublicClient({
         transport: httpViem(baseChainRpcUrl),
@@ -29,11 +33,15 @@ export async function execute(config: Config) {
         address: riverRegistryContractAddress,
     })
 
-    const nodes = await riverRegistry.getAllNodes()
+    const baseRegistry = new BaseRegistry({
+        client: baseChainClient,
+        address: baseRegistryContractAddress,
+    })
 
-    const baseChainWalletBalances = await getWalletBalances(baseChainClient, nodes, 'base')
-    const riverChainWalletBalances = await getWalletBalances(riverChainClient, nodes, 'river')
-    const walletBalances = riverChainWalletBalances.concat(baseChainWalletBalances)
+    const spaceOwner = new SpaceOwner({
+        client: baseChainClient,
+        address: spaceOwnerContractAddress,
+    })
 
     const datadogMetrics = new DatadogMetrics({
         apiKey: datadogApiKey,
@@ -41,11 +49,38 @@ export async function execute(config: Config) {
         env: environment,
     })
 
-    const ping = new Ping(nodes)
+    const nodesOnRiver = await riverRegistry.getAllNodes()
+    // TODO: uncomment once working
+    // const nodesOnRiverWithStreamCounts = await riverRegistry.getStreamCountsOnNodes(nodesOnRiver)
+    const nodesOnBase = await baseRegistry.getNodes()
+    const operatorsOnBase = await baseRegistry.getOperators()
+
+    const numTotalSpaces = await spaceOwner.totalSupply()
+    const numTotalNodesOnBase = nodesOnBase.length
+    const numTotalNodesOnRiver = nodesOnRiver.length
+    const numTotalOperatorsOnBase = operatorsOnBase.length
+
+    const baseChainWalletBalances = await getWalletBalances(baseChainClient, nodesOnRiver, 'base')
+    const riverChainWalletBalances = await getWalletBalances(
+        riverChainClient,
+        nodesOnRiver,
+        'river',
+    )
+    const walletBalances = riverChainWalletBalances.concat(baseChainWalletBalances)
+
+    const ping = new Ping(nodesOnRiver)
 
     const nodePingResults = await ping.pingNodes()
 
     await datadogMetrics.postWalletBalances(walletBalances)
-    await datadogMetrics.postNodeStatusList(nodes)
+    await datadogMetrics.postNodeStatusList(nodesOnRiver)
     await datadogMetrics.postNodePingResults(nodePingResults)
+    // await datadogMetrics.postNodeStreamCounts(nodesOnRiverWithStreamCounts)
+    await datadogMetrics.postBaseOperatorStatus(operatorsOnBase)
+    await datadogMetrics.postAggregateNetworkStats({
+        numTotalSpaces,
+        numTotalNodesOnBase,
+        numTotalNodesOnRiver,
+        numTotalOperatorsOnBase,
+    })
 }

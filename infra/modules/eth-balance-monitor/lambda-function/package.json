@@ -1,5 +1,5 @@
 {
-    "name": "eth-balance-monitor",
+    "name": "on-chain-metrics-lambda",
     "version": "1.0.0",
     "type": "module",
     "description": "",
@@ -7,13 +7,18 @@
     "dependencies": {
         "@aws-sdk/client-secrets-manager": "3.460.0",
         "@datadog/datadog-api-client": "^1.22.0",
-        "typescript": "^5.3.3",
-        "viem": "^2.9.29",
-        "zod": "^3.23.8"
+        "@river-build/generated": "workspace:^",
+        "@river-build/web3": "workspace:^",
+        "ethers": "^5.7.2",
+        "typescript": "^5.1.6",
+        "viem": "^1.18.2",
+        "zod": "^3.21.4"
     },
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "build": "esbuild src/index.ts --sourcemap=inline --bundle --platform=node --target=node20 --format=cjs --outfile=dist/index.cjs"
+        "build": "esbuild src/index.ts --sourcemap=inline --bundle --platform=node --target=node20 --format=cjs --outfile=dist/index.cjs",
+        "build-example": "esbuild src/example.ts --sourcemap=inline --bundle --platform=node --target=node20 --format=cjs --outfile=dist/example.cjs",
+        "dev": "yarn build-example && node ./dist/example.cjs"
     },
     "author": "",
     "license": "ISC",

@@ -11,20 +11,7 @@ locals {
   global_remote_state = module.global_constants.global_remote_state.outputs
 }
 
-resource "null_resource" "build_lambda" {
-  triggers = {
-    build_trigger = "${sha256(file("${path.module}/lambda-function/src/index.ts"))}"
-  }
-
-  provisioner "local-exec" {
-    working_dir = "${path.module}/lambda-function" // Set the correct working directory
-    command     = "npm install && npm run build"
-  }
-}
-
 module "lambda_function" {
-  depends_on = [null_resource.build_lambda] // Ensure build completes before Lambda deployment
-
   source                = "terraform-aws-modules/lambda/aws"
   version               = "7.2.0"
   function_name         = "${local.lambda_function_service_name}-${terraform.workspace}"
@@ -52,6 +39,8 @@ module "lambda_function" {
     RIVER_CHAIN_RPC_URL_SECRET_ARN     = var.river_chain_rpc_url_secret_arn,
     BASE_CHAIN_RPC_URL_SECRET_ARN      = var.base_chain_rpc_url_secret_arn,
     RIVER_REGISTRY_CONTRACT_ADDRESS    = var.river_registry_contract_address,
+    BASE_REGISTRY_CONTRACT_ADDRESS     = var.base_registry_contract_address
+    SPACE_OWNER_CONTRACT_ADDRESS       = var.space_owner_contract_address
     ENVIRONMENT                        = terraform.workspace
   }
 

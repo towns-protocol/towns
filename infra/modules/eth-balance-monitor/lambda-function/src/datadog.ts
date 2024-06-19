@@ -3,6 +3,8 @@ import { MetricSeries } from '@datadog/datadog-api-client/dist/packages/datadog-
 import { RiverNode } from './river-node'
 import { RiverNodeWalletBalance } from './wallet-balance'
 import { RiverNodePingResults } from './ping'
+import { RiverNodeWithStreamCount } from './river-registry'
+import { BaseOperator } from './base-registry'
 
 export class DatadogMetrics {
     private readonly apiKey: string
@@ -62,7 +64,7 @@ export class DatadogMetrics {
         return this.postSeries(series)
     }
 
-    public async postNodeStatusList(nodeStatusList: RiverNode[]) {
+    public async postNodeStatusList(nodeStatusList: readonly RiverNode[]) {
         console.log('Posting node status list to Datadog:')
 
         const series = nodeStatusList.map((node) => {
@@ -82,6 +84,28 @@ export class DatadogMetrics {
                 tags,
             }
         })
+        console.log('Series:', JSON.stringify(series, null, 2))
+        return this.postSeries(series)
+    }
+
+    public async postNodeStreamCounts(nodeStreamCounts: RiverNodeWithStreamCount[]) {
+        console.log('Posting node stream counts to Datadog:')
+
+        const series = nodeStreamCounts.map(({ streamCount, node }) => {
+            const tags = [
+                `env:${this.env}`,
+                `wallet_address:${node.nodeAddress}`,
+                `operator_address:${node.operator}`,
+                `node_url:${encodeURI(node.url)}`,
+            ]
+
+            return {
+                metric: `river_node.stream_count`,
+                points: [{ timestamp: this.timestamp, value: streamCount }],
+                tags,
+            }
+        })
+
         console.log('Series:', JSON.stringify(series, null, 2))
         return this.postSeries(series)
     }
@@ -110,6 +134,55 @@ export class DatadogMetrics {
                 tags,
             }
         })
+        console.log('Series:', JSON.stringify(series, null, 2))
+        return this.postSeries(series)
+    }
+
+    public async postBaseOperatorStatus(baseOperators: BaseOperator[]) {
+        console.log('Posting base operator status to Datadog:')
+
+        const series = baseOperators.map((operator) => {
+            const tags = [`env:${this.env}`, `operator_address:${operator.operatorAddress}`]
+
+            return {
+                metric: `base_operator.status`,
+                points: [{ timestamp: this.timestamp, value: operator.status }],
+                tags,
+            }
+        })
+    }
+
+    public async postAggregateNetworkStats(stats: {
+        numTotalSpaces: number
+        numTotalNodesOnBase: number
+        numTotalNodesOnRiver: number
+        numTotalOperatorsOnBase: number
+    }) {
+        console.log('Posting aggregate network stats to Datadog:')
+
+        const series = [
+            {
+                metric: `river_network.total_spaces`,
+                points: [{ timestamp: this.timestamp, value: stats.numTotalSpaces }],
+                tags: [`env:${this.env}`],
+            },
+            {
+                metric: `river_network.total_nodes_on_base`,
+                points: [{ timestamp: this.timestamp, value: stats.numTotalNodesOnBase }],
+                tags: [`env:${this.env}`],
+            },
+            {
+                metric: `river_network.total_nodes_on_river`,
+                points: [{ timestamp: this.timestamp, value: stats.numTotalNodesOnRiver }],
+                tags: [`env:${this.env}`],
+            },
+            {
+                metric: `river_network.total_operators_on_base`,
+                points: [{ timestamp: this.timestamp, value: stats.numTotalOperatorsOnBase }],
+                tags: [`env:${this.env}`],
+            },
+        ]
+
         console.log('Series:', JSON.stringify(series, null, 2))
         return this.postSeries(series)
     }

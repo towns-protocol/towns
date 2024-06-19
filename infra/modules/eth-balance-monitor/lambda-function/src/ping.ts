@@ -14,7 +14,7 @@ const NodeStatusSchema = z.object({
 export type RiverNodePingResults = Unpromisify<ReturnType<Ping['pingNodes']>>
 
 export class Ping {
-    constructor(public readonly nodes: RiverNode[]) {}
+    constructor(public readonly nodes: readonly RiverNode[]) {}
 
     private async pingNode(node: RiverNode) {
         const url = new URL(node.url)

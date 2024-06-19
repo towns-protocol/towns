@@ -1,6 +1,8 @@
+import { Address } from 'viem'
+
 export interface RiverNode {
     status: number
     url: string
-    nodeAddress: string
-    operator: string
+    nodeAddress: Address
+    operator: Address
 }

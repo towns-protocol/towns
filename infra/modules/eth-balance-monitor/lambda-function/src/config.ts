@@ -8,6 +8,8 @@ function getEnvVars() {
         DATADOG_API_KEY_SECRET_ARN,
         DATADOG_APPLICATION_KEY_SECRET_ARN,
         RIVER_REGISTRY_CONTRACT_ADDRESS,
+        BASE_REGISTRY_CONTRACT_ADDRESS,
+        SPACE_OWNER_CONTRACT_ADDRESS,
         RIVER_CHAIN_RPC_URL_SECRET_ARN,
         BASE_CHAIN_RPC_URL_SECRET_ARN,
     } = process.env
@@ -44,6 +46,18 @@ function getEnvVars() {
     ) {
         throw new Error('RIVER_REGISTRY_CONTRACT_ADDRESS is not defined')
     }
+    if (
+        typeof BASE_REGISTRY_CONTRACT_ADDRESS !== 'string' ||
+        !BASE_REGISTRY_CONTRACT_ADDRESS.trim().length
+    ) {
+        throw new Error('BASE_REGISTRY_CONTRACT_ADDRESS is not defined')
+    }
+    if (
+        typeof SPACE_OWNER_CONTRACT_ADDRESS !== 'string' ||
+        !SPACE_OWNER_CONTRACT_ADDRESS.trim().length
+    ) {
+        throw new Error('SPACE_OWNER_CONTRACT_ADDRESS is not defined')
+    }
     return {
         ENVIRONMENT,
         DATADOG_API_KEY_SECRET_ARN,
@@ -51,6 +65,8 @@ function getEnvVars() {
         RIVER_CHAIN_RPC_URL_SECRET_ARN,
         BASE_CHAIN_RPC_URL_SECRET_ARN,
         RIVER_REGISTRY_CONTRACT_ADDRESS,
+        BASE_REGISTRY_CONTRACT_ADDRESS,
+        SPACE_OWNER_CONTRACT_ADDRESS,
     }
 }
 
@@ -74,6 +90,8 @@ export async function getConfig() {
         BASE_CHAIN_RPC_URL_SECRET_ARN,
         ENVIRONMENT,
         RIVER_REGISTRY_CONTRACT_ADDRESS,
+        BASE_REGISTRY_CONTRACT_ADDRESS,
+        SPACE_OWNER_CONTRACT_ADDRESS,
     } = getEnvVars()
     const datadogApiKey = await getSecretValue(DATADOG_API_KEY_SECRET_ARN)
     const datadogApplicationKey = await getSecretValue(DATADOG_APPLICATION_KEY_SECRET_ARN)
@@ -83,6 +101,12 @@ export async function getConfig() {
     if (!isAddress(RIVER_REGISTRY_CONTRACT_ADDRESS)) {
         throw new Error(`Invalid contract address: ${RIVER_REGISTRY_CONTRACT_ADDRESS}`)
     }
+    if (!isAddress(BASE_REGISTRY_CONTRACT_ADDRESS)) {
+        throw new Error(`Invalid contract address: ${BASE_REGISTRY_CONTRACT_ADDRESS}`)
+    }
+    if (!isAddress(SPACE_OWNER_CONTRACT_ADDRESS)) {
+        throw new Error(`Invalid contract address: ${SPACE_OWNER_CONTRACT_ADDRESS}`)
+    }
 
     return {
         datadogApiKey,
@@ -91,6 +115,8 @@ export async function getConfig() {
         baseChainRpcUrl,
         environment: ENVIRONMENT,
         riverRegistryContractAddress: RIVER_REGISTRY_CONTRACT_ADDRESS,
+        baseRegistryContractAddress: BASE_REGISTRY_CONTRACT_ADDRESS,
+        spaceOwnerContractAddress: SPACE_OWNER_CONTRACT_ADDRESS,
     }
 }
 
