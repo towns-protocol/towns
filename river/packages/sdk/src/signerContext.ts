@@ -35,27 +35,34 @@ export const checkDelegateSig = (params: {
     delegateSig: Uint8Array
     expiryEpochMs: bigint
 }): void => {
-    const { delegateSig, expiryEpochMs } = params
-    const delegatePubKey =
-        typeof params.delegatePubKey === 'string'
-            ? publicKeyToUint8Array(params.delegatePubKey)
-            : params.delegatePubKey
     const creatorAddress =
         typeof params.creatorAddress === 'string'
             ? publicKeyToUint8Array(params.creatorAddress)
             : params.creatorAddress
-
-    const hashSource = riverDelegateHashSrc(delegatePubKey, expiryEpochMs)
-    const hash = hashPersonalMessage(Buffer.from(hashSource))
-    const { v, r, s } = fromRpcSig('0x' + bin_toHexString(delegateSig))
-    const recoveredCreatorPubKey = ecrecover(hash, v, r, s)
-    const recoveredCreatorAddress = Uint8Array.from(publicKeyToAddress(recoveredCreatorPubKey))
-
+    const recoveredCreatorAddress = recoverPublicKeyFromDelegateSig(params)
     check(
         bin_equal(recoveredCreatorAddress, creatorAddress),
         'delegateSig does not match creatorAddress',
         Err.BAD_DELEGATE_SIG,
     )
+}
+
+export const recoverPublicKeyFromDelegateSig = (params: {
+    delegatePubKey: Uint8Array | string
+    delegateSig: Uint8Array
+    expiryEpochMs: bigint
+}): Uint8Array => {
+    const { delegateSig, expiryEpochMs } = params
+    const delegatePubKey =
+        typeof params.delegatePubKey === 'string'
+            ? publicKeyToUint8Array(params.delegatePubKey)
+            : params.delegatePubKey
+    const hashSource = riverDelegateHashSrc(delegatePubKey, expiryEpochMs)
+    const hash = hashPersonalMessage(Buffer.from(hashSource))
+    const { v, r, s } = fromRpcSig('0x' + bin_toHexString(delegateSig))
+    const recoveredCreatorPubKey = ecrecover(hash, v, r, s)
+    const recoveredCreatorAddress = Uint8Array.from(publicKeyToAddress(recoveredCreatorPubKey))
+    return recoveredCreatorAddress
 }
 
 async function makeRiverDelegateSig(

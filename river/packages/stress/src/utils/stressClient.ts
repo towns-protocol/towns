@@ -34,8 +34,10 @@ export async function makeStressClient(
     clientIndex: number,
     inWallet?: Wallet,
 ) {
-    const { userId, delegateWallet, signerContext, baseProvider, riverProvider, rpcClient } =
-        await makeConnection(config, inWallet)
+    const { userId, signerContext, baseProvider, riverProvider, rpcClient } = await makeConnection(
+        config,
+        inWallet,
+    )
     const cryptoDb = new CryptoStore(`crypto-${userId}`, userId)
     const spaceDapp = new SpaceDapp(config.base.chainConfig, baseProvider)
     const delegate = {
@@ -61,7 +63,6 @@ export async function makeStressClient(
         config,
         clientIndex,
         userId,
-        delegateWallet,
         signerContext,
         baseProvider,
         riverProvider,
@@ -76,7 +77,6 @@ export class StressClient {
         public config: RiverConfig,
         public clientIndex: number,
         public userId: string,
-        public delegateWallet: Wallet,
         public signerContext: SignerContext,
         public baseProvider: LocalhostWeb3Provider,
         public riverProvider: LocalhostWeb3Provider,
