@@ -4,7 +4,7 @@ import { blockchainKeys } from '../query/query-keys'
 import { queryClient, useQuery } from '../query/queryClient'
 import { ethers } from 'ethers'
 
-export function usePlatformMembershipFee<T>({
+export function usePlatformMinMembershipPrice<T>({
     select,
 }: {
     select?: (data: ethers.BigNumber) => T
@@ -18,7 +18,7 @@ export function usePlatformMembershipFee<T>({
     return useQuery(
         blockchainKeys.minimumMembershipPrice(),
         () => {
-            return spaceDapp.platformRequirements.getMembershipFee()
+            return spaceDapp.platformRequirements.getMembershipMinPrice()
         },
         {
             enabled: !!spaceDapp,
@@ -27,6 +27,6 @@ export function usePlatformMembershipFee<T>({
     )
 }
 
-export function getPlatformMembershipFeeFromQueryCache(): ethers.BigNumber | undefined {
+export function getPlatformMinMembershipPriceFromQueryCache(): ethers.BigNumber | undefined {
     return queryClient.getQueryData(blockchainKeys.minimumMembershipPrice())
 }

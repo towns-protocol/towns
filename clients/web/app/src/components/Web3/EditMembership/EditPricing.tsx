@@ -2,7 +2,7 @@ import React, { ChangeEvent, useCallback } from 'react'
 import { UseFormReturn, useFormContext } from 'react-hook-form'
 import { ErrorMessage, RadioCard, Stack, TextField } from '@ui'
 import { FadeInBox } from '@components/Transitions'
-import { usePlatformMembershipFeeInEth } from 'hooks/usePlatformMembershipFeeInEth'
+import { usePlatformMinMembershipPriceInEth } from 'hooks/usePlatformMinMembershipPriceInEth'
 import { MembershipSettingsSchemaType } from '../MembershipNFT/CreateSpaceFormV2/CreateSpaceFormV2.schema'
 
 export function EditPricing({
@@ -13,7 +13,7 @@ export function EditPricing({
 }) {
     const { formState, setValue, watch, trigger } = useFormContext<MembershipSettingsSchemaType>()
     const { data: minimumMmebershipPrice, isLoading: isLoadingMinMembershipPrice } =
-        usePlatformMembershipFeeInEth()
+        usePlatformMinMembershipPriceInEth()
 
     const formProps = useFormContext<MembershipSettingsSchemaType>()
 

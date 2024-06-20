@@ -25,7 +25,7 @@ import { convertTokenTypeToOperationType } from '@components/Tokens/utils'
 import { useStore } from 'store/store'
 import { useAnalytics } from 'hooks/useAnalytics'
 import { useNotificationSettings } from 'hooks/useNotificationSettings'
-import { usePlatformMembershipFeeInEth } from 'hooks/usePlatformMembershipFeeInEth'
+import { usePlatformMinMembershipPriceInEth } from 'hooks/usePlatformMinMembershipPriceInEth'
 import { PanelType, TransactionDetails } from './types'
 import { CreateSpaceFormV2SchemaType } from './CreateSpaceFormV2.schema'
 import { mapToErrorMessage } from '../../utils'
@@ -50,7 +50,7 @@ export function CreateTownSubmit({
     ])
 
     const { addChannelNotificationSettings } = useNotificationSettings()
-    const { data: minimumMmebershipPrice } = usePlatformMembershipFeeInEth()
+    const { data: minimumMmebershipPrice } = usePlatformMinMembershipPriceInEth()
 
     // use the hook props instead of BlockchainStore/BlockchainTxNotifier
     // b/c creating a space does a lot of things on river and we want to wait for those too, not just for the tx

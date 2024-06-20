@@ -35,7 +35,7 @@ import { FullPanelOverlay } from '@components/Web3/WalletLinkingPanel'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { EVERYONE_ADDRESS } from 'utils'
-import { usePlatformMembershipFeeInEth } from 'hooks/usePlatformMembershipFeeInEth'
+import { usePlatformMinMembershipPriceInEth } from 'hooks/usePlatformMinMembershipPriceInEth'
 import { EditMembershipSchemaType, editMembershipSchema } from './editMembershipSchema'
 
 export const EDIT_MEMBERSHIP_SETTINGS_PANEL = 'editMembershipSettings'
@@ -256,7 +256,7 @@ function SubmitButton({
 
     const isSubmittedRef = React.useRef(false)
 
-    const { data: minimumMmebershipPrice } = usePlatformMembershipFeeInEth()
+    const { data: minimumMmebershipPrice } = usePlatformMinMembershipPriceInEth()
 
     const onValid = useEvent(async (data: EditMembershipSchemaType) => {
         if (

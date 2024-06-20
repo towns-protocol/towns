@@ -106,9 +106,9 @@ export { usePricingModules, usePricingModuleForMembership } from './hooks/use-pr
 export { useSupportedXChainIds } from './hooks/use-supported-xchain-ids'
 export { useUnjoinedChannelMembers } from './hooks/use-unjoined-channel-members'
 export {
-    usePlatformMembershipFee,
-    getPlatformMembershipFeeFromQueryCache,
-} from './hooks/use-platform-membership-fee'
+    usePlatformMinMembershipPrice,
+    getPlatformMinMembershipPriceFromQueryCache,
+} from './hooks/use-platform-min-membership-price'
 
 export { useCasablancaStore } from './store/use-casablanca-store'
 export { useFullyReadMarkerStore } from './store/use-fully-read-marker-store'

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { getPlatformMembershipFeeFromQueryCache } from 'use-towns-client'
+import { getPlatformMinMembershipPriceFromQueryCache } from 'use-towns-client'
 import { ethers } from 'ethers'
 import { tokenEntitlementSchema } from '@components/Tokens/TokenSelector/tokenSchemas'
 
@@ -77,7 +77,7 @@ export const membershipSettingsSchema = z
                 })
             }
 
-            const minimumMembershipCost = getPlatformMembershipFeeFromQueryCache()
+            const minimumMembershipCost = getPlatformMinMembershipPriceFromQueryCache()
             const minCostInEth = minimumMembershipCost
                 ? ethers.utils.formatEther(minimumMembershipCost)
                 : undefined
