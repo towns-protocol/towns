@@ -4,6 +4,7 @@ import remarkTransformUserAndChannels, {
     PasteTransformer,
 } from '../utils/remark/remarkTransformUserAndChannels'
 import { TUserIDNameMap } from '../utils/ComboboxTypes'
+import { deserializeMd } from '../utils/deserializeMD'
 
 export const KEY_PASTE_MENTIONS_PLUGIN = 'KEY_PASTE_MENTIONS_PLUGIN'
 
@@ -17,9 +18,19 @@ export const createPasteMentionsPlugin = (
 ) =>
     createPluginFactory({
         key: KEY_PASTE_MENTIONS_PLUGIN,
+        editor: {
+            insertData: {
+                // For handling pasting of text/plain data (mobile, etc.)
+                format: 'text/plain',
+                getFragment: ({ data }) => {
+                    return deserializeMd(data, channelList, mentions, lookupUser)
+                },
+            },
+        },
         then: (_editor) => ({
             inject: {
                 pluginsByKey: {
+                    // For handling pasting of text/html data
                     [KEY_DESERIALIZE_HTML]: {
                         editor: {
                             insertData: {
