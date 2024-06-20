@@ -137,7 +137,11 @@ const platePlugins = (
             createItalicPlugin(),
             createUnderlinePlugin(),
             createStrikethroughPlugin(),
-            createCodePlugin(),
+            createCodePlugin({
+                options: {
+                    hotkey: '', // turn off the default hotkey for code (Cmd+E)
+                },
+            }),
             createResetNodePlugin({
                 options: {
                     rules: nodeResetRules,

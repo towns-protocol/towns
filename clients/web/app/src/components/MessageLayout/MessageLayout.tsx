@@ -270,6 +270,7 @@ export const MessageLayout = (props: Props) => {
                     !isEditing &&
                     isSelectable && (
                         <MessageContextMenu
+                            isFocused={isFocused}
                             canReply={canReply}
                             canReact={!!onReaction}
                             channelId={channelId}

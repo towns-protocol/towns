@@ -25,6 +25,7 @@ type Props = {
     canEdit?: boolean
     canReply?: boolean
     canReact?: boolean
+    isFocused?: boolean
 }
 
 const style = {
@@ -34,7 +35,7 @@ const style = {
 }
 
 export const MessageContextMenu = (props: Props) => {
-    const { eventId, channelId, spaceId, threadParentId } = props
+    const { eventId, channelId, spaceId, threadParentId, isFocused } = props
 
     const { redactEvent, sendReaction, sendReadReceipt, adminRedactMessage } = useTownsClient()
     const timelineContext = useContext(MessageTimelineContext)
@@ -221,7 +222,7 @@ export const MessageContextMenu = (props: Props) => {
                 >
                     {props.canReact && (
                         <EmojiPickerButton
-                            parentFocused
+                            parentFocused={isFocused}
                             tooltip={<ShortcutTooltip action="ReactToMessage" />}
                             shortcut="ReactToMessage"
                             onSelectEmoji={onSelectEmoji}
