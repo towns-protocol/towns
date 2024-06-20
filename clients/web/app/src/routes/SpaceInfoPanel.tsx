@@ -229,7 +229,7 @@ export const SpaceInfo = () => {
         }
         const url = getInviteUrl({ spaceId: space.id })
         try {
-            await navigator.share({ title: space.name, url: url })
+            await navigator.share({ title: space.name, url: url, text: url })
         } catch (_) {} // eslint-disable-line no-empty
     })
 
