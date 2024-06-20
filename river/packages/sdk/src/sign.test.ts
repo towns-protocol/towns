@@ -12,7 +12,12 @@ import { getPublicKey } from 'ethereum-cryptography/secp256k1'
 import { ethers } from 'ethers'
 import { EncryptedData, StreamEvent } from '@river-build/proto'
 import { TEST_ENCRYPTED_MESSAGE_PROPS } from './util.test'
-import { SignerContext, checkDelegateSig, makeSignerContext } from './signerContext'
+import {
+    SignerContext,
+    checkDelegateSig,
+    makeSignerDelegate,
+    makeSignerContext,
+} from './signerContext'
 
 const log = dlog('test:sign')
 
@@ -153,6 +158,23 @@ describe('sign', () => {
                 delegatePubKey: delegate.publicKey,
                 creatorAddress: primary.address,
                 delegateSig: delegateSig!,
+                expiryEpochMs: 0n,
+            }),
+        ).not.toThrow()
+    })
+
+    test('make-signer-delegate', async () => {
+        const user = keys[0]
+        const userWallet = new ethers.Wallet(user.privateKey)
+
+        const { signerContext, delegateWallet } = await makeSignerDelegate(userWallet)
+
+        expect(signerContext.delegateSig).toBeDefined()
+        expect(() =>
+            checkDelegateSig({
+                delegatePubKey: delegateWallet.publicKey,
+                creatorAddress: user.address,
+                delegateSig: signerContext.delegateSig!,
                 expiryEpochMs: 0n,
             }),
         ).not.toThrow()

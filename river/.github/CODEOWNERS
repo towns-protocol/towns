@@ -47,6 +47,7 @@
 /packages/ @sergekh2 @texuf
 /packages/addresses/ @sergekh2 @texuf @giuseppecrj
 /packages/generated/ @sergekh2 @texuf @giuseppecrj
+/packages/generated/dev/ @sergekh2 @giuseppecrj
 /packages/sdk/ @sergekh2 @texuf @erikolsson
 /protocol/ @sergekh2 @texuf
 /scripts/ @texuf

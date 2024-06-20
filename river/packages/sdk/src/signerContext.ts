@@ -101,6 +101,24 @@ export async function makeSignerContext(
     }
 }
 
+export async function makeSignerDelegate(
+    signer: ethers.Signer,
+    expiry?: {
+        days?: number
+        hours?: number
+        minutes?: number
+        seconds?: number
+    },
+): Promise<{ delegateWallet: ethers.Wallet; signerContext: SignerContext }> {
+    const delegateWallet = ethers.Wallet.createRandom()
+    const signerContext = await makeSignerContext(signer, delegateWallet, expiry)
+
+    return {
+        delegateWallet,
+        signerContext,
+    }
+}
+
 function makeExpiryEpochMs({
     days,
     hours,

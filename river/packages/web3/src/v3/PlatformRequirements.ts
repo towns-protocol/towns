@@ -34,4 +34,8 @@ export class PlatformRequirements extends BaseContractShim<
     public getMembershipFee() {
         return this.read.getMembershipFee()
     }
+
+    public getMembershipMinPrice() {
+        return this.read.getMembershipMinPrice()
+    }
 }
