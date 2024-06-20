@@ -26,15 +26,11 @@ self.addEventListener('message', (event) => {
 // clean old assets
 cleanupOutdatedCaches()
 
+// self.__WB_MANIFEST is default injection point
 const manifest = self.__WB_MANIFEST
-console.log('main-sw: inject manifest', manifest)
 
-precacheAndRoute(manifest, {
-    // just in case, but these options shouldn't be needed since we are using
-    // the register route below redirecting all navigation requests to index.html
-    cleanURLs: false,
-    ignoreURLParametersMatching: [/.*/],
-})
+console.log('main-sw: precaching', manifest)
+precacheAndRoute(manifest)
 
 // to allow work offline
 console.log('main-sw: enabling offline precaching')

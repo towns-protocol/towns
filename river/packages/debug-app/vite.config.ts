@@ -4,8 +4,7 @@ import { defineConfig } from 'vite'
 import checker from 'vite-plugin-checker'
 import tsconfigPaths from 'vite-tsconfig-paths'
 //import eslintPlugin from 'vite-plugin-eslint'
-import { visualizer } from 'rollup-plugin-visualizer'
-import polyfillNode from 'rollup-plugin-polyfill-node'
+import { nodePolyfills }from 'vite-plugin-node-polyfills'
 import path from 'path'
 
 // https://vitejs.dev/config/
@@ -20,13 +19,12 @@ export default defineConfig({
     //     },
     // },
     plugins: [
-        polyfillNode(),
+        nodePolyfills(),
         react(),
         tsconfigPaths(),
         checker({ typescript: true }),
         //eslintPlugin(),
-        vanillaExtractPlugin(),
-        visualizer({ filename: 'dist/stats.html' }),
+        vanillaExtractPlugin()
     ],
     server: {
         port: 3002,

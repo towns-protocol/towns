@@ -14,8 +14,8 @@
     },
     "devDependencies": {
         "miniflare": "^3.20240524.1",
-        "vitest": "^1.1.1",
-        "vitest-environment-miniflare": "^2.14.1",
+        "vitest": "^1.6.0",
+        "vitest-environment-miniflare": "^2.14.2",
         "wrangler": "^3.58.0"
     }
 }

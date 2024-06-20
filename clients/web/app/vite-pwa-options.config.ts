@@ -40,7 +40,9 @@ export function vitePWAOptions(
         srcDir: 'src/workers',
         filename: 'main-sw.ts',
         injectManifest: {
-            globPatterns: ['{.,assets,fonts,pwa}/*.{js,css,html,ico,png,webp,svg,woff2,wasm}'],
+            globPatterns: [
+                '{.,assets,fonts,placeholders,pwa}/*.{js,css,html,ico,png,webp,svg,woff2,wasm,map}',
+            ],
             // 64 MB PWA precache limit
             maximumFileSizeToCacheInBytes: 64 * 1024 * 1024,
         },

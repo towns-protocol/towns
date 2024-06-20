@@ -134,7 +134,6 @@
                     "@testing-library/react",
                     "@vanilla-extract/vite-plugin",
                     "@vitejs/plugin-react",
-                    "rollup-plugin-polyfill-node",
                     "rollup-plugin-visualizer",
                     "vite-plugin-checker",
                     "vite-tsconfig-paths"

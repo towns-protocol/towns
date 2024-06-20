@@ -4,7 +4,7 @@ import { defineConfig, loadEnv, PluginOption, UserConfig } from 'vite'
 import checker from 'vite-plugin-checker'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import { visualizer } from 'rollup-plugin-visualizer'
-import polyfillNode from 'rollup-plugin-polyfill-node'
+import { nodePolyfills } from 'vite-plugin-node-polyfills'
 import mkcert from 'vite-plugin-mkcert'
 import { VitePWA } from 'vite-plugin-pwa'
 import { vitePWAOptions } from './vite-pwa-options.config'
@@ -76,7 +76,7 @@ export default ({ mode }: { mode: string }) => {
         assetsInclude: ['**/*.png', '**/*.svg', '**/*.wasm'],
         plugins: [
             VitePWA(vitePWAOptions(mode, env)),
-            polyfillNode(),
+            nodePolyfills(),
             react(),
             tsconfigPaths(),
             vanillaExtractPlugin(),

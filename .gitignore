@@ -62,3 +62,4 @@ bin/gen-bindings-remove-struct
 go.work.sum
 
 .keys
+clients/web/app/cert.csr

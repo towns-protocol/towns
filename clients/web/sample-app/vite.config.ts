@@ -3,10 +3,8 @@ import react from '@vitejs/plugin-react'
 import { PluginOption, defineConfig } from 'vite'
 import checker from 'vite-plugin-checker'
 import tsconfigPaths from 'vite-tsconfig-paths'
-import eslintPlugin from 'vite-plugin-eslint'
+import { nodePolyfills } from 'vite-plugin-node-polyfills'
 import { visualizer } from 'rollup-plugin-visualizer'
-import polyfillNode from 'rollup-plugin-polyfill-node'
-import path from 'path'
 
 const devPlugins: PluginOption[] = [
     checker({
@@ -42,7 +40,7 @@ export default ({ mode }: { mode: string }) =>
             APP_VERSION: JSON.stringify(process.env.npm_package_version),
         },
         assetsInclude: ['**/*.png', '**/*.svg'],
-        plugins: [polyfillNode(), react(), tsconfigPaths(), vanillaExtractPlugin()].concat(
+        plugins: [nodePolyfills(), react(), tsconfigPaths(), vanillaExtractPlugin()].concat(
             mode === 'development' ? devPlugins : prodPlugins,
         ) as PluginOption[],
         server: {

@@ -26,6 +26,6 @@
         "target": "esnext",
         "types": ["vite/client", "vite-plugin-pwa/client"]
     },
-    "include": ["src", "*.config.ts"],
+    "include": ["src", "*.config.ts", "workbox.d.ts"],
     "exclude": ["node_modules"]
 }
