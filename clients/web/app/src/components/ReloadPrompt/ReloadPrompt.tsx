@@ -29,15 +29,6 @@ export const ReloadPrompt = () => {
                 window.location.reload()
             }, SECOND_MS * 10)
 
-            // for safety, currently some of our URLs only work in SPA mode but
-            // fail upon hard-refresh because of invalid chars
-            const isCleanUrl = window.location.href.match(/\/$/)
-
-            if (!isCleanUrl) {
-                log('cleaning url...', window.location.href)
-                window.location.replace(`${window.location.href}${isCleanUrl ? '' : '/'}`)
-            }
-
             log('updateServiceWorker...')
 
             // triggers update and immediate reload
