@@ -268,6 +268,9 @@ export function useConnectThenLink({
 
             onLinkWallet(rootSigner, (await wallet.getEthersProvider()).getSigner())
         },
+        onError: (error) => {
+            console.error('error connecting wallet', error)
+        },
     })
 
     return connectWallet

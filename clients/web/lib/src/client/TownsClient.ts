@@ -2138,6 +2138,7 @@ export class TownsClient
         } catch (err: any) {
             const parsedError = walletLink.parseError(err)
             error = parsedError
+            console.error('linkEOAToRootKey error', error)
         }
         continueStoreTx({
             hashOrUserOpHash: getTransactionHashOrUserOpHash(transaction),
