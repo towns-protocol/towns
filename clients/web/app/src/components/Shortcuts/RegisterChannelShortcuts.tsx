@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useChannelId, useMyChannels, useSpaceData } from 'use-towns-client'
 import { useNavigate } from 'react-router'
+import sortBy from 'lodash/sortBy'
 import { useShortcut } from 'hooks/useShortcut'
 import { PATHS } from 'routes'
 import { useCreateLink } from 'hooks/useCreateLink'
@@ -8,7 +9,14 @@ import { useCreateLink } from 'hooks/useCreateLink'
 export const RegisterChannelShortcuts = () => {
     const space = useSpaceData()
     const groups = useMyChannels(space)
-    const channels = useMemo(() => groups.flatMap((c) => c.channels), [groups])
+    const channels = useMemo(
+        () =>
+            sortBy(
+                groups.flatMap((c) => c.channels),
+                'label',
+            ),
+        [groups],
+    )
     const channelId = useChannelId()
 
     const navigate = useNavigate()
@@ -20,7 +28,6 @@ export const RegisterChannelShortcuts = () => {
         }
         const currentChannelIndex = channels.findIndex((s) => s.id === channelId)
         const numChannels = channels.length
-
         const index = (currentChannelIndex + increment + numChannels) % numChannels
         navigate(`/${PATHS.SPACES}/${space.id}/${PATHS.CHANNELS}/${channels[index].id}/`)
     }
