@@ -5,7 +5,7 @@ import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store
 import { ThreadStatsMap, useTimelineStore } from '../../store/use-timeline-store'
 import isEqual from 'lodash/isEqual'
 import debounce from 'lodash/debounce'
-import { isChannelStreamId, spaceIdFromChannelId } from '@river/sdk'
+import { isChannelStreamId, spaceIdFromChannelId } from '@river-build/sdk'
 import { useSpaceIdStore } from './useSpaceIds'
 
 export function useSpaceUnreads({

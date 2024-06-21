@@ -3,7 +3,7 @@ import { StressClient } from '../../utils/stressClient'
 import { ChatConfig } from './types'
 import { getSystemInfo } from '../../utils/systemInfo'
 import { channelMessagePostWhere } from '../../utils/timeline'
-import { isDefined } from '@river/sdk'
+import { isDefined } from '@river-build/sdk'
 import { makeCodeBlock } from '../../utils/messages'
 
 export async function sumarizeChat(

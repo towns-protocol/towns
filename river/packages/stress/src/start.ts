@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto' // used to mock indexdb in dexie, don't remove
 import { check, dlogger } from '@river-build/dlog'
-import { makeRiverConfig } from '@river/sdk'
+import { makeRiverConfig } from '@river-build/sdk'
 import { exit } from 'process'
 import { Wallet } from 'ethers'
 import { isSet } from './utils/expect'

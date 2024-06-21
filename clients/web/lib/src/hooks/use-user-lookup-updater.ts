@@ -4,7 +4,7 @@ import {
     isDMChannelStreamId,
     isGDMChannelStreamId,
     isSpaceStreamId,
-} from '@river/sdk'
+} from '@river-build/sdk'
 import { useUserLookupStore } from '../store/use-user-lookup-store'
 import { LookupUser } from '../types/user-lookup'
 import { useEffect, useCallback, useRef } from 'react'

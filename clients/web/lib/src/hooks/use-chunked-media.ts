@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTownsContext } from '../components/TownsContextProvider'
 import { decryptAESGCM } from '../utils/crypto-utils'
-import { Client } from '@river/sdk'
+import { Client } from '@river-build/sdk'
 
 type Props = {
     streamId: string

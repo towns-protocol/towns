@@ -15,7 +15,7 @@ import { TestConstants } from './helpers/TestConstants'
 import { TownsTestClient } from './helpers/TownsTestClient'
 import { sleep } from '../../src/utils/towns-utils'
 import { check } from '@river-build/dlog'
-import { isDefined } from '@river/sdk'
+import { isDefined } from '@river-build/sdk'
 
 describe('space invite', () => {
     test('Inviter is not allowed due to missing Invite permission', async () => {

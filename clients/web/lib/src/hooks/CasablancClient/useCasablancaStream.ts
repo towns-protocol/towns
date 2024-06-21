@@ -1,4 +1,4 @@
-import { Stream } from '@river/sdk'
+import { Stream } from '@river-build/sdk'
 import { useTownsContext } from '../../components/TownsContextProvider'
 import { useEffect, useState } from 'react'
 

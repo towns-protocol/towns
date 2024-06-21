@@ -7,7 +7,7 @@ import {
 } from '@rudderstack/analytics-js'
 import { useState } from 'react'
 import { keccak256 } from 'ethers/lib/utils'
-import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
+import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
 import { env, isTest } from 'utils'
 import { getBrowserName, isAndroid, isIOS, isPWA } from './useDevice'
 

@@ -1,4 +1,4 @@
-import { makeStreamRpcClient } from '@river/sdk'
+import { makeStreamRpcClient } from '@river-build/sdk'
 
 export const fetchData = async (url: string): Promise<string> => {
     const options: RequestInit = {

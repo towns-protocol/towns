@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import isEqual from 'lodash/isEqual'
 import { create } from 'zustand'
-import { Client as CasablancaClient } from '@river/sdk'
+import { Client as CasablancaClient } from '@river-build/sdk'
 import { useSpacesIds_Casablanca } from './useSpaceIds_Casablanca'
 
 export type SpaceIdStore = {

@@ -1,6 +1,11 @@
 import { check } from '@river-build/dlog'
 import { LocalhostWeb3Provider } from '@river-build/web3'
-import { RiverConfig, makeRiverRpcClient, makeSignerContext, userIdFromAddress } from '@river/sdk'
+import {
+    RiverConfig,
+    makeRiverRpcClient,
+    makeSignerContext,
+    userIdFromAddress,
+} from '@river-build/sdk'
 import { ethers } from 'ethers'
 
 export async function makeConnection(config: RiverConfig, wallet?: ethers.Wallet) {

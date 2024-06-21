@@ -5159,20 +5159,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@harmony/eslint-config@workspace:river/packages/eslint-config":
-  version: 0.0.0-use.local
-  resolution: "@harmony/eslint-config@workspace:river/packages/eslint-config"
-  languageName: unknown
-  linkType: soft
-
-"@harmony/prettier-config@workspace:^, @harmony/prettier-config@workspace:river/packages/prettier-config":
-  version: 0.0.0-use.local
-  resolution: "@harmony/prettier-config@workspace:river/packages/prettier-config"
-  peerDependencies:
-    prettier: ^2.8.8
-  languageName: unknown
-  linkType: soft
-
 "@headlessui/react@npm:^1.7.18":
   version: 1.7.18
   resolution: "@headlessui/react@npm:1.7.18"
@@ -7470,6 +7456,42 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@river-build/contracts@workspace:river/contracts":
+  version: 0.0.0-use.local
+  resolution: "@river-build/contracts@workspace:river/contracts"
+  dependencies:
+    "@openzeppelin/contracts": ^5.0.2
+    "@openzeppelin/contracts-upgradeable": ^5.0.2
+    "@prb/math": ^4.0.2
+    "@prb/test": ^0.6.4
+    account-abstraction: "github:eth-infinitism/account-abstraction"
+    base64: "github:Brechtpd/base64"
+    ds-test: "github:dapphub/ds-test"
+    forge-std: "github:foundry-rs/forge-std#v1"
+    prettier: ^2.8.8
+    prettier-plugin-solidity: ^1.1.3
+    solhint: ^3.4.1
+    solhint-plugin-prettier: ^0.0.5
+  languageName: unknown
+  linkType: soft
+
+"@river-build/debug-app@workspace:river/packages/debug-app":
+  version: 0.0.0-use.local
+  resolution: "@river-build/debug-app@workspace:river/packages/debug-app"
+  dependencies:
+    "@river-build/sdk": "workspace:^"
+    "@vanilla-extract/vite-plugin": ^4.0.4
+    "@vitejs/plugin-react": ^4.3.1
+    rollup-plugin-visualizer: ^5.12.0
+    ts-node: ^10.9.1
+    typescript: ^5.1.6
+    vite: ^5.3.1
+    vite-plugin-checker: ^0.6.4
+    vite-plugin-node-polyfills: ^0.22.0
+    vite-tsconfig-paths: ^4.3.2
+  languageName: unknown
+  linkType: soft
+
 "@river-build/dlog@workspace:^, @river-build/dlog@workspace:river/packages/dlog":
   version: 0.0.0-use.local
   resolution: "@river-build/dlog@workspace:river/packages/dlog"
@@ -7527,9 +7549,23 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@river-build/eslint-config@workspace:river/packages/eslint-config":
+  version: 0.0.0-use.local
+  resolution: "@river-build/eslint-config@workspace:river/packages/eslint-config"
+  languageName: unknown
+  linkType: soft
+
 "@river-build/generated@workspace:^, @river-build/generated@workspace:river/packages/generated":
   version: 0.0.0-use.local
   resolution: "@river-build/generated@workspace:river/packages/generated"
+  languageName: unknown
+  linkType: soft
+
+"@river-build/prettier-config@workspace:^, @river-build/prettier-config@workspace:river/packages/prettier-config":
+  version: 0.0.0-use.local
+  resolution: "@river-build/prettier-config@workspace:river/packages/prettier-config"
+  peerDependencies:
+    prettier: ^2.8.8
   languageName: unknown
   linkType: soft
 
@@ -7582,6 +7618,61 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@river-build/sdk@workspace:^, @river-build/sdk@workspace:river/packages/sdk":
+  version: 0.0.0-use.local
+  resolution: "@river-build/sdk@workspace:river/packages/sdk"
+  dependencies:
+    "@bufbuild/protobuf": ^1.9.0
+    "@connectrpc/connect": ^1.4.0
+    "@connectrpc/connect-web": ^1.4.0
+    "@datadog/browser-rum": ^5.8.0
+    "@ethereumjs/util": ^8.0.1
+    "@jest/globals": ^29.6.2
+    "@river-build/dlog": "workspace:^"
+    "@river-build/encryption": "workspace:^"
+    "@river-build/proto": "workspace:^"
+    "@river-build/web3": "workspace:^"
+    "@testing-library/jest-dom": ^5.16.5
+    "@testing-library/react": ^14.2.1
+    "@types/debug": ^4.1.8
+    "@types/jest": ^29.5.3
+    "@types/lodash": ^4.14.186
+    "@types/node": ^20.5.0
+    "@types/seedrandom": ^3.0.4
+    "@typescript-eslint/eslint-plugin": ^6.10.0
+    "@typescript-eslint/parser": ^6.10.0
+    axios: ^1.2.6
+    browser-or-node: ^2.1.1
+    bullmq: ^4.10.0
+    debug: ^4.3.4
+    dexie: ^4.0.7
+    eslint: ^8.53.0
+    eslint-import-resolver-typescript: ^3.5.5
+    eslint-plugin-import: ^2.27.5
+    eslint-plugin-jest: ^27.2.3
+    ethereum-cryptography: ^1.2.0
+    ethers: ^5.7.2
+    fake-indexeddb: ^4.0.1
+    ioredis: ^5.3.2
+    jest: ^29.6.2
+    jest-environment-jsdom: ^29.6.2
+    jest-extended: ^4.0.1
+    jest-mock-extended: ^3.0.4
+    jest-runner-groups: ^2.2.0
+    lodash: ^4.17.21
+    msgpackr: ^1.10.1
+    nanoid: ^4.0.0
+    p-limit: ^5.0.0
+    seedrandom: ^3.0.5
+    supports-color: ^9.2.3
+    ts-jest: ^29.1.1
+    ts-node: ^10.9.1
+    typed-emitter: ^2.1.0
+    typescript: ^5.1.6
+    wagmi: ^1.4.12
+  languageName: unknown
+  linkType: soft
+
 "@river-build/stress@workspace:river/packages/stress":
   version: 0.0.0-use.local
   resolution: "@river-build/stress@workspace:river/packages/stress"
@@ -7592,8 +7683,8 @@ __metadata:
     "@river-build/dlog": "workspace:^"
     "@river-build/encryption": "workspace:^"
     "@river-build/proto": "workspace:^"
+    "@river-build/sdk": "workspace:^"
     "@river-build/web3": "workspace:^"
-    "@river/sdk": "workspace:^"
     "@testing-library/jest-dom": ^5.16.5
     "@testing-library/react": ^14.2.1
     "@types/debug": ^4.1.8
@@ -7650,97 +7741,6 @@ __metadata:
     typescript: ^5.1.6
     viem: ^1.18.2
     zod: ^3.21.4
-  languageName: unknown
-  linkType: soft
-
-"@river/contracts@workspace:river/contracts":
-  version: 0.0.0-use.local
-  resolution: "@river/contracts@workspace:river/contracts"
-  dependencies:
-    "@openzeppelin/contracts": ^5.0.2
-    "@openzeppelin/contracts-upgradeable": ^5.0.2
-    "@prb/math": ^4.0.2
-    "@prb/test": ^0.6.4
-    account-abstraction: "github:eth-infinitism/account-abstraction"
-    base64: "github:Brechtpd/base64"
-    ds-test: "github:dapphub/ds-test"
-    forge-std: "github:foundry-rs/forge-std#v1"
-    prettier: ^2.8.8
-    prettier-plugin-solidity: ^1.1.3
-    solhint: ^3.4.1
-    solhint-plugin-prettier: ^0.0.5
-  languageName: unknown
-  linkType: soft
-
-"@river/debug-app@workspace:river/packages/debug-app":
-  version: 0.0.0-use.local
-  resolution: "@river/debug-app@workspace:river/packages/debug-app"
-  dependencies:
-    "@river/sdk": "workspace:^"
-    "@vanilla-extract/vite-plugin": ^4.0.4
-    "@vitejs/plugin-react": ^4.3.1
-    rollup-plugin-visualizer: ^5.12.0
-    ts-node: ^10.9.1
-    typescript: ^5.1.6
-    vite: ^5.3.1
-    vite-plugin-checker: ^0.6.4
-    vite-plugin-node-polyfills: ^0.22.0
-    vite-tsconfig-paths: ^4.3.2
-  languageName: unknown
-  linkType: soft
-
-"@river/sdk@workspace:^, @river/sdk@workspace:river/packages/sdk":
-  version: 0.0.0-use.local
-  resolution: "@river/sdk@workspace:river/packages/sdk"
-  dependencies:
-    "@bufbuild/protobuf": ^1.9.0
-    "@connectrpc/connect": ^1.4.0
-    "@connectrpc/connect-web": ^1.4.0
-    "@datadog/browser-rum": ^5.8.0
-    "@ethereumjs/util": ^8.0.1
-    "@jest/globals": ^29.6.2
-    "@river-build/dlog": "workspace:^"
-    "@river-build/encryption": "workspace:^"
-    "@river-build/proto": "workspace:^"
-    "@river-build/web3": "workspace:^"
-    "@testing-library/jest-dom": ^5.16.5
-    "@testing-library/react": ^14.2.1
-    "@types/debug": ^4.1.8
-    "@types/jest": ^29.5.3
-    "@types/lodash": ^4.14.186
-    "@types/node": ^20.5.0
-    "@types/seedrandom": ^3.0.4
-    "@typescript-eslint/eslint-plugin": ^6.10.0
-    "@typescript-eslint/parser": ^6.10.0
-    axios: ^1.2.6
-    browser-or-node: ^2.1.1
-    bullmq: ^4.10.0
-    debug: ^4.3.4
-    dexie: ^4.0.7
-    eslint: ^8.53.0
-    eslint-import-resolver-typescript: ^3.5.5
-    eslint-plugin-import: ^2.27.5
-    eslint-plugin-jest: ^27.2.3
-    ethereum-cryptography: ^1.2.0
-    ethers: ^5.7.2
-    fake-indexeddb: ^4.0.1
-    ioredis: ^5.3.2
-    jest: ^29.6.2
-    jest-environment-jsdom: ^29.6.2
-    jest-extended: ^4.0.1
-    jest-mock-extended: ^3.0.4
-    jest-runner-groups: ^2.2.0
-    lodash: ^4.17.21
-    msgpackr: ^1.10.1
-    nanoid: ^4.0.0
-    p-limit: ^5.0.0
-    seedrandom: ^3.0.5
-    supports-color: ^9.2.3
-    ts-jest: ^29.1.1
-    ts-node: ^10.9.1
-    typed-emitter: ^2.1.0
-    typescript: ^5.1.6
-    wagmi: ^1.4.12
   languageName: unknown
   linkType: soft
 
@@ -9018,7 +9018,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@towns/privy@workspace:clients/web/privy"
   dependencies:
-    "@harmony/prettier-config": "workspace:^"
+    "@river-build/prettier-config": "workspace:^"
     "@typescript-eslint/eslint-plugin": ^6.10.0
     "@typescript-eslint/parser": ^6.10.0
     eslint: ^8.53.0
@@ -9041,7 +9041,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@towns/userops@workspace:clients/web/userops"
   dependencies:
-    "@harmony/prettier-config": "workspace:^"
+    "@river-build/prettier-config": "workspace:^"
     "@river-build/web3": "workspace:^"
     "@typescript-eslint/eslint-plugin": ^6.10.0
     "@typescript-eslint/parser": ^6.10.0
@@ -18383,7 +18383,6 @@ __metadata:
     "@emoji-mart/react": ^1.1.1
     "@giphy/js-fetch-api": ^4.4.0
     "@giphy/react-components": ^6.2.0
-    "@harmony/prettier-config": "workspace:^"
     "@hookform/resolvers": ^2.9.10
     "@ngneat/falso": ^6.1.0
     "@privy-io/react-auth": 1.59.7
@@ -18391,6 +18390,7 @@ __metadata:
     "@react-spring/three": ^9.7.3
     "@react-three/drei": ^9.105.4
     "@river-build/generated": "workspace:^"
+    "@river-build/prettier-config": "workspace:^"
     "@river-build/proto": "workspace:^"
     "@river-build/web3": "workspace:^"
     "@rudderstack/analytics-js": ^3.1.0
@@ -26196,13 +26196,13 @@ __metadata:
   dependencies:
     "@emotion/react": ^11.10.4
     "@emotion/styled": ^11.10.4
-    "@harmony/prettier-config": "workspace:^"
     "@mui/icons-material": ^5.10.9
     "@mui/material": ^5.10.10
     "@mui/styles": ^5.10.10
     "@privy-io/react-auth": 1.59.7
     "@privy-io/wagmi-connector": ^0.1.13
     "@river-build/generated": "workspace:^"
+    "@river-build/prettier-config": "workspace:^"
     "@river-build/web3": "workspace:^"
     "@rollup/plugin-inject": ^5.0.3
     "@towns/privy": "workspace:^"
@@ -29317,8 +29317,8 @@ __metadata:
   dependencies:
     "@river-build/generated": "workspace:^"
     "@river-build/proto": "workspace:^"
+    "@river-build/sdk": "workspace:^"
     "@river-build/web3": "workspace:^"
-    "@river/sdk": "workspace:^"
     "@tanstack/react-query": ^5.20.1
     "@testing-library/dom": ^9.0.0
     "@testing-library/jest-dom": ^5.16.5

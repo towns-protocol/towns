@@ -9,7 +9,7 @@ import {
     makeUniqueChannelStreamId,
     SignerContext,
     StreamRpcClient,
-} from '@river/sdk'
+} from '@river-build/sdk'
 import { makeConnection } from './connection'
 import { CryptoStore, EntitlementsDelegate } from '@river-build/encryption'
 import {

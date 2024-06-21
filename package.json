@@ -5,10 +5,10 @@
     "private": true,
     "packageManager": "yarn@3.8.0",
     "scripts": {
-        "anvil": "yarn workspace @river/contracts exec anvil",
+        "anvil": "yarn workspace @river-build/contracts exec anvil",
         "build": "turbo build",
-        "cast": "yarn workspace @river/contracts exec cast",
-        "csb:build": "yarn workspace @river-build/proto run build && yarn workspace @river-build/dlog run build && yarn workspace @river-build/web3 run build && yarn workspace @river-build/encryption run build && yarn workspace @river/sdk run build && echo BUILD DONE || (echo BUILD ERROR; exit 1)",
+        "cast": "yarn workspace @river-build/contracts exec cast",
+        "csb:build": "yarn workspace @river-build/proto run build && yarn workspace @river-build/dlog run build && yarn workspace @river-build/web3 run build && yarn workspace @river-build/encryption run build && yarn workspace @river-build/sdk run build && echo BUILD DONE || (echo BUILD ERROR; exit 1)",
         "csb:cb": "yarn csb:clean && yarn csb:build",
         "csb:clean": "yarn csb:command run clean",
         "csb:command": "bash -c 'yarn workspaces foreach --verbose $(yarn csb:list:include) $0 $@'",
@@ -32,14 +32,14 @@
         "csb:stop": "./river/core/scripts/stop.sh",
         "csb:storage": "./river/core/scripts/launch_storage.sh",
         "csb:test": "yarn csb:command run test && echo ALL GOOD || (echo NOT PASSED; exit 1)",
-        "csb:test-remote": "yarn workspace @river/sdk run test",
+        "csb:test-remote": "yarn workspace @river-build/sdk run test",
         "csb:turbo": "bash -c 'yarn run turbo run build test:ci $(yarn csb:list:filter) --filter=use-towns-client'",
         "csb:turbo-no-sdk": "bash -c 'yarn run turbo run build test:ci $(yarn csb:list:filter-without-sdk) --filter=use-towns-client --no-cache --force'",
         "csb:wait": "yarn csb:wait:entitlements",
         "csb:wait:entitlements": "wait-on https://localhost:5157/info --timeout=900000 --i=5000 --verbose",
         "csb:wait:no-entitlements": "wait-on https://localhost:5158/info --timeout=900000 --i=5000 --verbose",
         "drt:wait": "wait-on tcp:8008 --timeout=900000 --i=5000 --verbose",
-        "forge": "yarn workspace @river/contracts exec forge",
+        "forge": "yarn workspace @river-build/contracts exec forge",
         "harmonyweb:build": "turbo build --filter harmonyweb",
         "install:foundry": "./river/scripts/foundry-up.sh && yarn forge install",
         "lint": "turbo lint",
@@ -140,8 +140,8 @@
                 ],
                 "packages": [
                     "@river-build/stress",
-                    "@river/sdk",
-                    "@river/debug-app"
+                    "@river-build/sdk",
+                    "@river-build/debug-app"
                 ],
                 "dependencyTypes": [
                     "prod",

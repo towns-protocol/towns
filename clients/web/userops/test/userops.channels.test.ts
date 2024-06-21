@@ -8,7 +8,7 @@ import {
     sleepBetweenTxs,
     waitForOpAndTx,
 } from './utils'
-import { makeUniqueChannelStreamId } from '@river/sdk'
+import { makeUniqueChannelStreamId } from '@river-build/sdk'
 
 const TEST_CHANNEL_NAME = 'test_channel'
 const NEW_ROLE_NAME = 'new_role_name'

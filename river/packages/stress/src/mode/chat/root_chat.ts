@@ -1,7 +1,7 @@
 import { check, dlogger } from '@river-build/dlog'
 import { isSet } from '../../utils/expect'
 import { ChatConfig } from './types'
-import { RiverConfig, makeDefaultChannelStreamId } from '@river/sdk'
+import { RiverConfig, makeDefaultChannelStreamId } from '@river-build/sdk'
 import { generateWalletsFromSeed } from '../../utils/wallets'
 import { Wallet } from 'ethers'
 import { makeStressClient } from '../../utils/stressClient'

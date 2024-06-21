@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTownsContext } from '../components/TownsContextProvider'
 import { Membership, toMembership } from '../types/towns-types'
 import { useCasablancaStream } from './CasablancClient/useCasablancaStream'
-import { Stream } from '@river/sdk'
+import { Stream } from '@river-build/sdk'
 
 /**
  * useMyMembership is different than useMembership in that it uses the userStream to determine the membership

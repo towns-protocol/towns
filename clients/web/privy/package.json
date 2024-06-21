@@ -6,7 +6,7 @@
         "lint:fix": "yarn lint --fix"
     },
     "devDependencies": {
-        "@harmony/prettier-config": "workspace:^",
+        "@river-build/prettier-config": "workspace:^",
         "@typescript-eslint/eslint-plugin": "^6.10.0",
         "@typescript-eslint/parser": "^6.10.0",
         "eslint": "^8.53.0",

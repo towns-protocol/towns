@@ -277,13 +277,13 @@ jobs:
               run: yarn csb:wait:no-entitlements
 
             - name: Run SDK Tests (without entitlements)
-              run: yarn run turbo run build test:ci --filter=@river/sdk
+              run: yarn run turbo run build test:ci --filter=@river-build/sdk
 
             - name: Run Node Restart Tests (without entitlements)
-              run: yarn workspace @river/sdk run test:restart
+              run: yarn workspace @river-build/sdk run test:restart
 
             - name: Run Node Flush Tests (without entitlements)
-              run: yarn workspace @river/sdk run test:node-minipool-flush
+              run: yarn workspace @river-build/sdk run test:node-minipool-flush
 
             - name: Archive River Node Logs and Settings
               if: always()
@@ -549,7 +549,7 @@ jobs:
               run: yarn csb:turbo-no-sdk
 
             - name: Run River Tests (with entitlements)
-              run: yarn workspace @river/sdk run test:ci:with-entitlements
+              run: yarn workspace @river-build/sdk run test:ci:with-entitlements
 
             - name: Run Stress Test Tests (yarn) (with entitlements)
               run: yarn workspace @river-build/stress run test:ci:with-entitlements
@@ -692,7 +692,7 @@ jobs:
               run: yarn csb:turbo-no-sdk
 
             - name: Run River Tests (with entitlements)
-              run: yarn workspace @river/sdk run test:ci:multi:ent
+              run: yarn workspace @river-build/sdk run test:ci:multi:ent
 
             - name: Archive River Node Logs and Settings
               if: always()

@@ -6,7 +6,7 @@ import { useCasablancaStore } from '../store/use-casablanca-store'
 import { AuthStatus } from './login'
 import { TSigner, Address } from '../types/web3-types'
 import { SignerUndefinedError } from '../types/error-types'
-import { makeSignerContext } from '@river/sdk'
+import { makeSignerContext } from '@river-build/sdk'
 
 export function useCasablancaWalletSignIn() {
     const { environmentId } = useTownsContext()

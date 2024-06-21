@@ -6,7 +6,7 @@ import {
     isRemoteEvent,
     makeRiverRpcClient,
     userIdFromAddress,
-} from '@river/sdk'
+} from '@river-build/sdk'
 import { useEffect } from 'react'
 import { AuthStatus, makeProviderFromConfig, useConnectivity } from 'use-towns-client'
 import { create } from 'zustand'

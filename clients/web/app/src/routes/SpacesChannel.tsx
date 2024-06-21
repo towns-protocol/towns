@@ -1,4 +1,4 @@
-import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
+import { isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
 import React, {
     MutableRefObject,
     useCallback,

@@ -1,5 +1,5 @@
 import { ChannelMessage_Post_Content_Text } from '@river-build/proto'
-import { StreamTimelineEvent } from '@river/sdk'
+import { StreamTimelineEvent } from '@river-build/sdk'
 
 export function channelMessagePostWhere(
     filterFn: (value: ChannelMessage_Post_Content_Text) => boolean,

@@ -3,7 +3,7 @@ import { useChannelContext } from '../components/ChannelContextProvider'
 import { useMemo } from 'react'
 import { useSpaceData } from './use-space-data'
 import { useRoom } from './use-room'
-import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
+import { isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
 
 export function useChannelData(): ChannelData {
     const { channelId, spaceId } = useChannelContext()

@@ -1,4 +1,4 @@
-import { isTestEnv } from '@river/sdk'
+import { isTestEnv } from '@river-build/sdk'
 // eslint-disable-next-line no-restricted-imports
 import {
     QueryClient,

@@ -16,7 +16,7 @@ import {
 import { Permission } from '@river-build/web3'
 import { waitFor } from '@testing-library/dom'
 import { check } from '@river-build/dlog'
-import { DecryptedTimelineEvent } from '@river/sdk'
+import { DecryptedTimelineEvent } from '@river-build/sdk'
 import { SnapshotCaseType } from '@river-build/proto'
 
 describe('sendAMessage', () => {

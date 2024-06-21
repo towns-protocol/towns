@@ -128,7 +128,7 @@
         "zustand": "^4.3.3"
     },
     "devDependencies": {
-        "@harmony/prettier-config": "workspace:^",
+        "@river-build/prettier-config": "workspace:^",
         "@testing-library/jest-dom": "^5.16.5",
         "@testing-library/react": "^14.2.1",
         "@testing-library/user-event": "^14.4.3",

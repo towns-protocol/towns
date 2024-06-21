@@ -26,7 +26,7 @@ import {
     makeRiverRpcClient,
     makeSignerContext,
     userIdFromAddress,
-} from '@river/sdk'
+} from '@river-build/sdk'
 import { Permission, IArchitectBase, IRuleEntitlement, createSpaceDapp } from '@river-build/web3'
 import { bin_fromHexString } from '@river-build/dlog'
 

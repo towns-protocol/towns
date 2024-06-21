@@ -1,4 +1,9 @@
-import { Client as CasablancaClient, Stream, isSpaceStreamId, isUserStreamId } from '@river/sdk'
+import {
+    Client as CasablancaClient,
+    Stream,
+    isSpaceStreamId,
+    isUserStreamId,
+} from '@river-build/sdk'
 import { useEffect, useState } from 'react'
 import { SpaceItem } from '../../types/towns-types'
 import isEqual from 'lodash/isEqual'

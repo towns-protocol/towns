@@ -1,4 +1,4 @@
-import { Client as CasablancaClient } from '@river/sdk'
+import { Client as CasablancaClient } from '@river-build/sdk'
 import { RoomMember } from '../../types/towns-types'
 
 export function useCasablancaUser(

@@ -7,7 +7,7 @@ import {
     useTimelineReactions,
     useUserLookupContext,
 } from 'use-towns-client'
-import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
+import { isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
 import { MessageLayout } from '@components/MessageLayout'
 import { RichTextPreview } from '@components/RichTextPlate/RichTextPreview'
 import { Box, BoxProps } from '@ui'

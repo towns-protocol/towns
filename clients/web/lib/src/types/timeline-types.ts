@@ -16,7 +16,7 @@ import { PlainMessage } from '@bufbuild/protobuf'
 import { Channel, Membership, Mention, MessageType } from './towns-types'
 import { staticAssertNever } from '../utils/towns-utils'
 import { DecryptionSessionError } from '@river-build/encryption'
-import { isDefined } from '@river/sdk'
+import { isDefined } from '@river-build/sdk'
 import { bin_toHexString } from '@river-build/dlog'
 
 /**************************************************************************

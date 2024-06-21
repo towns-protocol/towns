@@ -15,7 +15,7 @@ import {
     isChannelStreamId,
     isDMChannelStreamId,
     isDefined,
-} from '@river/sdk'
+} from '@river-build/sdk'
 import { EntitlementsDelegate, DecryptionStatus } from '@river-build/encryption'
 import {
     BASE_MAINNET,
@@ -53,11 +53,11 @@ import {
     UpdateChannelInfo,
     toMembership,
 } from '../types/towns-types'
-import { SignerContext } from '@river/sdk'
+import { SignerContext } from '@river-build/sdk'
 import { PushNotificationClient } from './PushNotificationClient'
 import { MembershipRejectedError, SignerUndefinedError } from '../types/error-types'
-import { makeUniqueChannelStreamId } from '@river/sdk'
-import { makeSpaceStreamId, makeDefaultChannelStreamId } from '@river/sdk'
+import { makeUniqueChannelStreamId } from '@river-build/sdk'
+import { makeSpaceStreamId, makeDefaultChannelStreamId } from '@river-build/sdk'
 import { staticAssertNever } from '../utils/towns-utils'
 import { toUtf8String } from 'ethers/lib/utils.js'
 import { toStreamView } from './casablanca/CasablancaUtils'

@@ -9,7 +9,7 @@ import {
     makeStreamRpcClient,
     MockEntitlementsDelegate,
     makeSignerContext,
-} from '@river/sdk'
+} from '@river-build/sdk'
 import { ethers } from 'ethers'
 import { RoomMessageEvent, ZTEvent } from '../../src/types/timeline-types'
 import {

@@ -7,7 +7,7 @@ import {
     useTownsClient,
     useUserLookupContext,
 } from 'use-towns-client'
-import { isGDMChannelStreamId } from '@river/sdk'
+import { isGDMChannelStreamId } from '@river-build/sdk'
 import { Sheet } from 'react-modal-sheet'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { Box, Button, Icon, Paragraph, Stack, Text } from '@ui'

@@ -54,11 +54,11 @@ interact-river-anvil :;
 # ===========================
 deploy-river-testnet :;
 	@echo "Deploying $(contract)..."
-	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ffi --rpc-url river_devnet --private-key ${RIVER_PRIVATE_KEY} --verifier blockscout --verifier-url ${RIVERSCAN_DEVNET_URL} --broadcast --verify
+	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ffi --rpc-url river_devnet --private-key ${TESTNET_PRIVATE_KEY} --verifier blockscout --verifier-url ${RIVERSCAN_DEVNET_URL} --broadcast --verify
 
 interact-river-testnet :;
 	@echo "Interacting through $(contract)..."
-	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url river_devnet --private-key ${RIVER_PRIVATE_KEY} --broadcast
+	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url river_devnet --private-key ${TESTNET_PRIVATE_KEY} --broadcast
 
 test-river-testnet :;
 	@forge build

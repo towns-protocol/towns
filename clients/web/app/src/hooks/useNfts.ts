@@ -1,5 +1,5 @@
 import { useLinkedWalletsForWallet } from 'use-towns-client'
-import { isDefined } from '@river/sdk'
+import { isDefined } from '@river-build/sdk'
 import { useMemo } from 'react'
 import { useCollectionsForAddressesAcrossNetworks, useNftMetadata } from 'api/lib/tokenContracts'
 import { TokenType } from '@components/Tokens/types'

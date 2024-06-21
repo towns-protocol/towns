@@ -11,7 +11,7 @@ import {
     useTownsClient,
     useUserLookupContext,
 } from 'use-towns-client'
-import { isDefined } from '@river/sdk'
+import { isDefined } from '@river-build/sdk'
 import { Box, Icon, Stack, Text, TextButton, TextField } from '@ui'
 import { Panel } from '@components/Panel/Panel'
 import { ConfirmLeaveModal } from '@components/ConfirmLeaveModal/ConfirmLeaveModal'

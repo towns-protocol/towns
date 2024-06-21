@@ -21,7 +21,7 @@ import {
 } from '@river-build/web3'
 import { TestConstants } from './helpers/TestConstants'
 import { ethers } from 'ethers'
-import { ParsedChannelProperties, assert } from '@river/sdk'
+import { ParsedChannelProperties, assert } from '@river-build/sdk'
 import { getTransactionHashFromTransactionOrUserOp } from '@towns/userops'
 import { waitFor } from '@testing-library/dom'
 

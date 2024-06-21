@@ -1,5 +1,5 @@
 {
-    "name": "@river/debug-app",
+    "name": "@river-build/debug-app",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "scripts": {
@@ -7,7 +7,7 @@
         "dev": "vite --config vite.config.js"
     },
     "dependencies": {
-        "@river/sdk": "workspace:^"
+        "@river-build/sdk": "workspace:^"
     },
     "devDependencies": {
         "@vanilla-extract/vite-plugin": "^4.0.4",

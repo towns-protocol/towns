@@ -1,5 +1,5 @@
 {
-    "name": "@harmony/prettier-config",
+    "name": "@river-build/prettier-config",
     "version": "workspace:^",
     "license": "MIT",
     "main": "config.js",

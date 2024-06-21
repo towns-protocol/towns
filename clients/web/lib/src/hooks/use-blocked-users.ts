@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Client as CasablancaClient, Stream, isDefined, userIdFromAddress } from '@river/sdk'
+import { Client as CasablancaClient, Stream, isDefined, userIdFromAddress } from '@river-build/sdk'
 import { check } from '@river-build/dlog'
 import { UserSettingsPayload_UserBlock } from '@river-build/proto'
 

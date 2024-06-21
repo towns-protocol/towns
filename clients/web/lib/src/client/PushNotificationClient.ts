@@ -17,7 +17,7 @@ import {
     ReplyToUsersRequestParams,
 } from '../types/notification-types'
 import { MediaInfo } from 'types/timeline-types'
-import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
+import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
 
 interface PushNotificationClientOptions {
     url: string // push notification worker's url

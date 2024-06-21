@@ -2,7 +2,7 @@ import { Nft, useMemberOf, useSpaceData, useUserLookupContext } from 'use-towns-
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { toast } from 'react-hot-toast/headless'
-import { isDMChannelStreamId, isDefined, isGDMChannelStreamId } from '@river/sdk'
+import { isDMChannelStreamId, isDefined, isGDMChannelStreamId } from '@river-build/sdk'
 import {
     Box,
     Button,

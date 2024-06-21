@@ -1,5 +1,5 @@
 {
-    "name": "@river/sdk",
+    "name": "@river-build/sdk",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",

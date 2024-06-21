@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Address, useSpaceMembers, useUserLookupContext } from 'use-towns-client'
-import { isDefined } from '@river/sdk'
+import { isDefined } from '@river-build/sdk'
 import { shortAddress } from 'ui/utils/utils'
 import { Box, CardLabel, Grid, Paragraph, Stack } from '@ui'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'

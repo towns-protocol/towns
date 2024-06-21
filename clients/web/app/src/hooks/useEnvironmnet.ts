@@ -10,7 +10,7 @@ import {
     getWeb3Deployments,
 } from '@river-build/web3'
 import { check } from '@river-build/dlog'
-import { isDefined } from '@river/sdk'
+import { isDefined } from '@river-build/sdk'
 import { AccountAbstractionConfig } from '@towns/userops'
 import { env } from 'utils'
 import {

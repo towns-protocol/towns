@@ -1,3 +1,3 @@
 module.exports = {
-    ...require('@harmony/prettier-config'),
+    ...require('@river-build/prettier-config'),
 }

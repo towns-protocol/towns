@@ -1,2 +1,2 @@
-import prettierConfig from "@harmony/prettier-config";
+import prettierConfig from "@river-build/prettier-config";
 export default prettierConfig;

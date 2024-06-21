@@ -1,4 +1,4 @@
-import { Client as CasablancaClient, ClientInitStatus } from '@river/sdk'
+import { Client as CasablancaClient, ClientInitStatus } from '@river-build/sdk'
 import { useEffect, useState } from 'react'
 
 export function useClientInitStatus(client?: CasablancaClient) {

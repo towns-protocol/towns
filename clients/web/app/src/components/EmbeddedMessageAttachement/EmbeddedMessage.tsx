@@ -1,4 +1,4 @@
-import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
+import { isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
 import React, { useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {

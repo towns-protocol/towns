@@ -1,4 +1,4 @@
-import { Client as CasablancaClient, Stream, isSpaceStreamId } from '@river/sdk'
+import { Client as CasablancaClient, Stream, isSpaceStreamId } from '@river-build/sdk'
 import { useEffect, useState } from 'react'
 import isEqual from 'lodash/isEqual'
 import { SnapshotCaseType } from '@river-build/proto'

@@ -7,7 +7,7 @@ import {
     sleepBetweenTxs,
     waitForOpAndTx,
 } from './utils'
-import { makeUniqueChannelStreamId } from '@river/sdk'
+import { makeUniqueChannelStreamId } from '@river-build/sdk'
 import { TestConstants } from 'use-towns-client/tests/integration/helpers/TestConstants'
 import { EVERYONE_ADDRESS } from '../src/utils'
 

@@ -16,7 +16,7 @@ import {
     userIdFromAddress,
     streamIdFromBytes,
     streamIdAsString,
-} from '@river/sdk'
+} from '@river-build/sdk'
 import {
     ChannelMessage_Post,
     UserPayload,

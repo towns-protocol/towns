@@ -1,4 +1,4 @@
-import { Client as CasablancaClient } from '@river/sdk'
+import { Client as CasablancaClient } from '@river-build/sdk'
 import { useEffect, useState } from 'react'
 import { DMChannelIdentifier } from 'types/dm-channel-identifier'
 import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store'

@@ -1,7 +1,7 @@
 import { dlogger } from '@river-build/dlog'
 import { printSystemInfo } from './utils/systemInfo'
 import { setupChat, startStressChat } from './mode/chat/root_chat'
-import { genShortId, makeRiverConfig } from '@river/sdk'
+import { genShortId, makeRiverConfig } from '@river-build/sdk'
 import { LocalhostWeb3Provider } from '@river-build/web3'
 
 const logger = dlogger('stress:test')

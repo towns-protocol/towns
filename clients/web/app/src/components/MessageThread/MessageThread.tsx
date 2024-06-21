@@ -14,7 +14,7 @@ import {
 } from 'use-towns-client'
 import { firstBy } from 'thenby'
 import { Link, useSearchParams } from 'react-router-dom'
-import { isDefined } from '@river/sdk'
+import { isDefined } from '@river-build/sdk'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
 import { RichTextEditor } from '@components/RichTextPlate/PlateEditor'

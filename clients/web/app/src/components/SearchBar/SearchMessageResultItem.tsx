@@ -8,7 +8,7 @@ import {
     useUserLookupContext,
 } from 'use-towns-client'
 import { formatDistance } from 'date-fns'
-import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
+import { isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
 import { RichTextPreview } from '@components/RichTextPlate/RichTextPreview'
 import { Box, BoxProps, Stack, Text } from '@ui'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'

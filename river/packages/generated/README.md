@@ -1,6 +1,6 @@
-# @harmony/contracts
+# @river-build/generated
 
-## How to bundle and publish this package?
+## How to generate contract types
 
 From the root of the repo, run:
 
@@ -8,17 +8,15 @@ From the root of the repo, run:
 ./scripts/build-contract-types.sh
 ```
 
-## How to install this package in a workspace?
-
-```bash
-yarn workspace @harmony/{workspace_name} add @harmony/contracts
-```
-
 ## What are deployments?
 
 Deployments are a group of contracts on multiple chains that together make up a river environment
 
-from the root of the repo run ./scripts/deploy-contracts.sh --e single
+In order to deploy, run the following command from the repo root
+
+```bash
+./scripts/deploy-contracts.sh --e single
+```
 
 ## Addresses
 

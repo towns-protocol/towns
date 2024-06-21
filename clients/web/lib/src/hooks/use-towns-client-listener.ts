@@ -1,5 +1,5 @@
 import { MutableRefObject, useEffect, useRef, useState } from 'react'
-import { Client as CasablancaClient, SignerContext, userIdFromAddress } from '@river/sdk'
+import { Client as CasablancaClient, SignerContext, userIdFromAddress } from '@river-build/sdk'
 import { check } from '@river-build/dlog'
 import { AuthStatus } from './login'
 import { TownsClient } from '../client/TownsClient'

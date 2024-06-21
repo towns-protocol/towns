@@ -1,5 +1,5 @@
 {
-    "name": "@harmony/eslint-config",
+    "name": "@river-build/eslint-config",
     "version": "1.0.0",
     "license": "MIT",
     "private": true,

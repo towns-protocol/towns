@@ -1,5 +1,5 @@
 import { Membership } from '../../types/towns-types'
-import { Stream } from '@river/sdk'
+import { Stream } from '@river-build/sdk'
 import { useEffect, useState } from 'react'
 import { useCasablancaStream } from './useCasablancaStream'
 

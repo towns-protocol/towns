@@ -30,7 +30,7 @@ import { useCasablancaWalletSignIn } from './use-casablanca-wallet-signin'
 import { create } from 'zustand'
 import { IArchitectBase, Permission, IRuleEntitlement } from '@river-build/web3'
 import { TSigner } from 'types/web3-types'
-import { SignerContext } from '@river/sdk'
+import { SignerContext } from '@river-build/sdk'
 import { UserOps } from '@towns/userops'
 
 export type TownsErrorStoreState = {

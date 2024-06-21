@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto' // used to mock indexdb in dexie, don't remove
-import { isDecryptedEvent, makeRiverConfig } from '@river/sdk'
+import { isDecryptedEvent, makeRiverConfig } from '@river-build/sdk'
 import { check, dlogger } from '@river-build/dlog'
 import { InfoRequest } from '@river-build/proto'
 import { EncryptionDelegate } from '@river-build/encryption'

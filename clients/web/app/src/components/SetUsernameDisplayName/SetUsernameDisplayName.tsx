@@ -7,7 +7,7 @@ import {
     useUserLookupStore,
 } from 'use-towns-client'
 import noop from 'lodash/noop'
-import { isDMChannelStreamId, isGDMChannelStreamId } from '@river/sdk'
+import { isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
 import { toast } from 'react-hot-toast/headless'
 import { Box, Button, IconButton, Stack, Text, TextButton, TextField } from '@ui'
 import { validateUsername } from '@components/SetUsernameForm/validateUsername'
