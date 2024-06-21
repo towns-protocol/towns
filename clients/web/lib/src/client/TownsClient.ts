@@ -615,17 +615,26 @@ export class TownsClient
     ): Promise<ChannelTransactionContext> {
         const txnContext = await this._waitForBlockchainTransaction(context)
 
+        let riverError: Error | undefined = undefined
         if (txnContext.status === TransactionStatus.Success) {
             if (txnContext?.data) {
                 const roomId = txnContext.data
                 // wait until the channel is minted on-chain
                 // before creating the stream
-                await this.createChannelRoom(createChannelInfo, roomId)
+                try {
+                    await this.createChannelRoom(createChannelInfo, roomId)
+                } catch (error) {
+                    console.error('[waitForCreateChannelTransaction] river error', error)
+                    riverError = error as Error
+                }
                 this.log('[waitForCreateChannelTransaction] Channel stream created', roomId)
             }
         }
 
-        if (txnContext.error) {
+        if (riverError) {
+            txnContext.error = riverError
+            txnContext.status = TransactionStatus.Failed
+        } else if (txnContext.error) {
             txnContext.error = this.getDecodedErrorForSpace(
                 createChannelInfo.parentSpaceId,
                 txnContext.error,
