@@ -317,6 +317,7 @@ const InformationBoxes = (props: {
         anyoneCanJoin,
         tokensGatingMembership,
         membershipPricingModule,
+        isTokensGatingMembershipLoading,
     } = props
     const { isTouch } = useDevice()
     const onAddressClick = useEvent(() => {
@@ -331,7 +332,7 @@ const InformationBoxes = (props: {
     })
 
     const durationTexts = useMemo(() => durationTitleSubtitle(duration), [duration])
-    const _tokens = useMemo(() => tokensGatingMembership?.tokens ?? [], [tokensGatingMembership])
+    const _tokens = useMemo(() => tokensGatingMembership?.tokens, [tokensGatingMembership])
     const precisionMultiplier = 1_0_0_0_0_0_0
     const isFree = price?.toLowerCase() === 'free'
 
@@ -356,6 +357,7 @@ const InformationBoxes = (props: {
                 title="For"
                 subtitle={anyoneCanJoin ? 'Anyone' : 'ERC-721'}
                 anyoneCanJoin={anyoneCanJoin}
+                isTokensGatingMembershipLoading={isTokensGatingMembershipLoading}
                 tokensGatingMembership={_tokens}
             />
             <InformationBox

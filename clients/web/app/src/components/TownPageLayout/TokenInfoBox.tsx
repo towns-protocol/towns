@@ -4,6 +4,7 @@ import { TokenImage } from '@components/Tokens/TokenSelector/TokenImage'
 import { useTokenMetadataForChainId } from 'api/lib/collectionMetadata'
 import { vars } from 'ui/styles/vars.css'
 import { NetworkName } from '@components/Tokens/TokenSelector/NetworkName'
+import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { InformationBox } from './InformationBox'
 
 export const TokenInfoBox = ({
@@ -13,8 +14,10 @@ export const TokenInfoBox = ({
     title,
     subtitle,
     anyoneCanJoin,
+    isTokensGatingMembershipLoading,
 }: {
-    tokensGatingMembership: { address: string; chainId: number }[]
+    tokensGatingMembership: { address: string; chainId: number }[] | undefined
+    isTokensGatingMembershipLoading?: boolean
     onInfoBoxClick?: () => void
     title: string
     subtitle: string
@@ -29,10 +32,12 @@ export const TokenInfoBox = ({
             centerContent={
                 <>
                     {!anyoneCanJoin ? (
-                        tokensGatingMembership.length === 0 ? (
+                        isTokensGatingMembershipLoading ? (
                             <Box>
-                                <TokenImage imgSrc={undefined} width="x4" />
+                                <ButtonSpinner height="x1" />
                             </Box>
+                        ) : !tokensGatingMembership ? (
+                            <></>
                         ) : (
                             <Box position="relative" width="x3" aspectRatio="1/1">
                                 {tokensGatingMembership.map((token, index) => (
@@ -80,7 +85,11 @@ function SelectedToken({ contractAddress, chainId }: { contractAddress: string; 
                 </Box>
             }
         >
-            <TokenImage imgSrc={tokenDataWithChainId?.data.imgSrc} width="x3" />
+            {tokenDataWithChainId ? (
+                <TokenImage imgSrc={tokenDataWithChainId.data?.imgSrc} width="x3" />
+            ) : (
+                <Box centerContent width="x3" aspectRatio="1/1" background="level4" rounded="sm" />
+            )}
         </Box>
     )
 }
