@@ -2,7 +2,7 @@ services:
     river-node:
         # image: public.ecr.aws/h5v6m2x1/river:latest
         build:
-            dockerfile: ./Dockerfile
+            dockerfile: ../Dockerfile
         volumes:
             - ./local_xchain_node_logs:/riveruser/xchain_node/logs
             - ./local_stream_node_logs:/riveruser/stream_node/logs

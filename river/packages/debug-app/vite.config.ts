@@ -4,7 +4,7 @@ import { defineConfig } from 'vite'
 import checker from 'vite-plugin-checker'
 import tsconfigPaths from 'vite-tsconfig-paths'
 //import eslintPlugin from 'vite-plugin-eslint'
-import { nodePolyfills }from 'vite-plugin-node-polyfills'
+import { nodePolyfills } from 'vite-plugin-node-polyfills'
 import path from 'path'
 
 // https://vitejs.dev/config/
@@ -24,7 +24,7 @@ export default defineConfig({
         tsconfigPaths(),
         checker({ typescript: true }),
         //eslintPlugin(),
-        vanillaExtractPlugin()
+        vanillaExtractPlugin(),
     ],
     server: {
         port: 3002,

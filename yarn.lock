@@ -7560,6 +7560,28 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@river-build/react-sdk@workspace:river/packages/react":
+  version: 0.0.0-use.local
+  resolution: "@river-build/react-sdk@workspace:river/packages/react"
+  dependencies:
+    "@testing-library/react": ^14.2.1
+    "@types/react": ^18.2.11
+    "@types/react-dom": ^18.2.4
+    "@typescript-eslint/eslint-plugin": ^6.10.0
+    "@typescript-eslint/parser": ^6.10.0
+    eslint: ^8.53.0
+    eslint-plugin-import: ^2.27.5
+    eslint-plugin-react: ^7.32.2
+    eslint-plugin-react-hooks: ^4.6.0
+    react: ^18.2.0
+    react-dom: ^18.2.0
+    typescript: ^5.1.6
+  peerDependencies:
+    react: ^18.2.0
+    typescript: ^5.1.6
+  languageName: unknown
+  linkType: soft
+
 "@river-build/stress@workspace:river/packages/stress":
   version: 0.0.0-use.local
   resolution: "@river-build/stress@workspace:river/packages/stress"
@@ -7573,7 +7595,7 @@ __metadata:
     "@river-build/web3": "workspace:^"
     "@river/sdk": "workspace:^"
     "@testing-library/jest-dom": ^5.16.5
-    "@testing-library/react": ^14.0.0
+    "@testing-library/react": ^14.2.1
     "@types/debug": ^4.1.8
     "@types/jest": ^29.5.3
     "@types/lodash": ^4.14.186
@@ -7682,7 +7704,7 @@ __metadata:
     "@river-build/proto": "workspace:^"
     "@river-build/web3": "workspace:^"
     "@testing-library/jest-dom": ^5.16.5
-    "@testing-library/react": ^14.0.0
+    "@testing-library/react": ^14.2.1
     "@types/debug": ^4.1.8
     "@types/jest": ^29.5.3
     "@types/lodash": ^4.14.186
@@ -8952,7 +8974,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/react@npm:^14.0.0, @testing-library/react@npm:^14.2.1":
+"@testing-library/react@npm:^14.2.1":
   version: 14.2.1
   resolution: "@testing-library/react@npm:14.2.1"
   dependencies:

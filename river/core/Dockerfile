@@ -33,9 +33,9 @@ LABEL org.opencontainers.image.title="River Node" \
 RUN apk add --no-cache libcap supervisor && \
     adduser -D riveruser
 
-COPY run.sh /etc/run.sh
-COPY full_node.supervisord.conf /etc/full_node.supervisord.conf
-COPY archive_node.supervisord.conf /etc/archive_node.supervisord.conf
+COPY docker/run.sh /etc/run.sh
+COPY docker/full_node.supervisord.conf /etc/full_node.supervisord.conf
+COPY docker/archive_node.supervisord.conf /etc/archive_node.supervisord.conf
 COPY --from=builder /bin/river_node /usr/bin/river_node
 
 # Use setcap to allow the web server binary to bind to privileged ports
