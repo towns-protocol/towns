@@ -268,23 +268,32 @@ const LastDirectMessageContent = (props: {
         }
         case 'member_added': {
             const user = lookupUser(info.userId)
-            const displayName = getMessageDisplayName(user, myUserId)
             // Since the DM created event is done first, and then the member added event
-            // we need to check if its a DM, if so, we want to show the dm_created message
-            return channel.isGroup
-                ? `${displayName} got added to this group`
-                : `You started a new DM`
+            // we need to check if it's a DM, if so, we want to show the dm_created message
+            if (!channel.isGroup) {
+                return `You started a new DM`
+            } else {
+                const sender = info.senderId && lookupUser(info.senderId)
+                const userDisplayName = getMessageDisplayName(user, myUserId)
+                const senderDisplayName = sender && getMessageDisplayName(sender, myUserId)
+
+                return `${senderDisplayName} added ${userDisplayName}`
+            }
         }
         case 'member_left': {
             const user = lookupUser(info.userId)
-            const displayName = getMessageDisplayName(user, myUserId)
-            // TODO: HNT-6766 - show who left the group: `X left Y`
-            return channel.isGroup
-                ? `${displayName} left this group`
-                : `${displayName} left this DM`
+            const sender = info.senderId && lookupUser(info.senderId)
+            const userDisplayName = getMessageDisplayName(user, myUserId)
+            const senderDisplayName = sender && getMessageDisplayName(sender, myUserId)
+
+            if (channel.isGroup) {
+                return sender
+                    ? `${senderDisplayName} removed ${userDisplayName}`
+                    : `${userDisplayName} left this group`
+            } else {
+                return `${userDisplayName} left this DM`
+            }
         }
-        // TODO: HNT-6766 - add new case:
-        // case 'member_removed': X removed Y from this group
         case 'member_invited': {
             const user = lookupUser(info.userId)
             const displayName = getMessageDisplayName(user, myUserId)

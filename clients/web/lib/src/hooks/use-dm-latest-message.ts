@@ -3,7 +3,6 @@ import {
     Attachment,
     RoomMessageEncryptedEvent,
     TimelineEvent,
-    TimelineEvent_OneOf,
     ZTEvent,
 } from '../types/timeline-types'
 
@@ -51,11 +50,13 @@ export interface MostRecentMessageEncrypted {
 export interface MostRecentMemberAdded {
     kind: 'member_added'
     userId: string
+    senderId?: string
 }
 
 export interface MostRecentMemberLeft {
     kind: 'member_left'
     userId: string
+    senderId?: string
 }
 
 export interface MostRecentMemberInvited {
@@ -93,7 +94,7 @@ export function useDMLatestMessage(roomId: string, ignoreThreads = true) {
         let latest: LatestMessageInfo | undefined
         for (let i = timeline.length - 1; i >= 0; i--) {
             const message = timeline[i]
-            const info = toMostRecentMessageInfo(message.content)
+            const info = toMostRecentMessageInfo(message)
 
             if (!markerReached && info && hasRelevantUnreadMarker) {
                 unreadCount++
@@ -106,7 +107,7 @@ export function useDMLatestMessage(roomId: string, ignoreThreads = true) {
                 }
             }
             if (unreadMarker?.eventId === message.eventId) {
-                // we don't need to look further than the lastest unread marker
+                // we don't need to look further than the latest unread marker
                 markerReached = true
             }
         }
@@ -142,9 +143,8 @@ export function useDMLatestMessage(roomId: string, ignoreThreads = true) {
     return latest
 }
 
-function toMostRecentMessageInfo(
-    content?: TimelineEvent_OneOf,
-): MostRecentMessageInfo_OneOf | undefined {
+function toMostRecentMessageInfo(message: TimelineEvent): MostRecentMessageInfo_OneOf | undefined {
+    const { content, sender } = message
     if (content?.kind === ZTEvent.RoomMessageEncrypted) {
         return {
             kind: 'encrypted',
@@ -172,12 +172,14 @@ function toMostRecentMessageInfo(
             return {
                 kind: 'member_added',
                 userId: content.userId,
+                senderId: sender.id !== content.userId ? sender.id : undefined,
             }
         }
         if (content.membership === Membership.Leave) {
             return {
                 kind: 'member_left',
                 userId: content.userId,
+                senderId: sender.id !== content.userId ? sender.id : undefined,
             }
         }
         if (content.membership === Membership.Invite) {
