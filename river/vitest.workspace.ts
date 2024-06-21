@@ -5,10 +5,10 @@ export default defineWorkspace([
         test: {
             name: '@river-build/react-sdk',
             environment: 'node',
-            include: ['./packages/react/src/**/*.test.ts'],
+            include: ['./packages/react-sdk/src/**/*.test.ts'],
             testTimeout: 10_000,
             // Later, we can use the `setupFiles` option to run a setup file before each test.
-            // setupFiles: ['./packages/react/test/setup.ts'],
+            // setupFiles: ['./packages/react-sdk/test/setup.ts'],
         },
     },
 ])
