@@ -61,7 +61,6 @@
       "label": "Stage 3",
       "dependsOn": [
         "Start Watches",
-        "Casablanca DebugApp",
         "Casablanca",
         "Casablanca-No-Entitlements",
         "XChain-Single",
@@ -417,16 +416,6 @@
       "problemMatcher": [],
       "presentation": {
         "group": "local-watch-proto"
-      }
-    },
-    {
-      "label": "Casablanca DebugApp",
-      "type": "shell",
-      "command": "./scripts/wait-for-core.sh && cd packages/debug-app && yarn dev",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "local-clients"
       }
     },
     {

@@ -3,7 +3,6 @@
     "source.fixAll.eslint": "explicit"
   },
   "eslint.workingDirectories": [
-    "./river/packages/debug-app",
     "./river/packages/dlog",
     "./river/packages/encryption",
     "./river/packages/proto",

@@ -460,16 +460,6 @@
       }
     },
     {
-      "label": "Casablanca DebugApp",
-      "type": "shell",
-      "command": "./river/scripts/wait-for-core.sh && cd river/packages/debug-app && yarn dev",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "local-clients"
-      }
-    },
-    {
       "label": "MITM - Casablanca",
       "type": "shell",
       "command": "mitmweb -p 7105 --mode reverse:http://localhost:7104/",

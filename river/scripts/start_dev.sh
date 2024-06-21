@@ -131,7 +131,6 @@ commands=(
     "watch_proto:cd packages/proto && yarn watch"
     "watch_web3:cd packages/web3 && yarn watch"
     "watch_go:cd protocol && yarn watch:go"
-    "debug_app:cd packages/debug-app && yarn dev"
     "core_single:./core/node/run_single.sh -r"
     "core_single_ne:./core/node/run_single.sh -r --de"
     "core_multi:./core/node/run_multi.sh -r"
