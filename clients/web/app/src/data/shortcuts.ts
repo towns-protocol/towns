@@ -10,15 +10,15 @@ type ShortcutsType = {
 export const Shortcuts = {
     General: {
         DisplayShortcutModal: {
-            keys: 'Meta+/',
+            keys: 'Mod+/',
             description: 'Show all shortcuts',
         },
         DisplaySearchModal: {
-            keys: ['Meta+K'],
+            keys: ['Mod+K'],
             description: 'Search for Towns, channels, or DMs',
         },
         CreateNewTown: {
-            keys: 'Meta+Alt+N',
+            keys: 'Mod+Alt+N',
             description: 'Create a new town',
         },
         DismissDialog: {
@@ -32,15 +32,15 @@ export const Shortcuts = {
     },
     Navigation: {
         DisplayTownInfo: {
-            keys: 'Meta+Shift+I',
+            keys: 'Mod+Shift+I',
             description: 'Display town info',
         },
         NavigateToPreviousTown: {
-            keys: 'Meta+Alt+ArrowUp',
+            keys: 'Mod+Alt+ArrowUp',
             description: 'Navigate to previous town',
         },
         NavigateToNextTown: {
-            keys: 'Meta+Alt+ArrowDown',
+            keys: 'Mod+Alt+ArrowDown',
             description: 'Navigate to next town',
         },
         NavigateToPreviousChannel: {
@@ -56,13 +56,13 @@ export const Shortcuts = {
             description: 'Display channel info',
         },
         DisplayChannelDirectory: {
-            keys: 'Shift+Meta+E',
+            keys: 'Shift+Mod+E',
             description: 'Display channel directory',
         },
     },
     ['Direct Messages']: {
         CreateMessage: {
-            keys: 'Meta+Shift+K',
+            keys: 'Mod+Shift+K',
             description: 'Create new message',
         },
         DirectReply: {
@@ -84,7 +84,7 @@ export const Shortcuts = {
             description: 'Reply in Thread',
         },
         ReactToMessage: {
-            keys: 'Meta+E',
+            keys: 'Mod+E',
             description: 'React to message',
         },
         MarkAsUnread: {
@@ -98,19 +98,19 @@ export const Shortcuts = {
     },
     Editor: {
         BoldText: {
-            keys: 'Meta+B',
+            keys: 'Mod+B',
             description: 'Bold',
         },
         ItalicText: {
-            keys: 'Meta+I',
+            keys: 'Mod+I',
             description: 'Italic',
         },
         OpenGifPicker: {
-            keys: 'Meta+G',
+            keys: 'Mod+G',
             description: 'Open GIF picker',
         },
         OpenEmojiPicker: {
-            keys: 'Meta+E',
+            keys: 'Mod+E',
             description: 'Open emoji picker',
         },
     },

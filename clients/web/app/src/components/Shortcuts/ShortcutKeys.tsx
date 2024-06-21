@@ -1,5 +1,6 @@
 import React, { Fragment } from 'react'
 import { Box, Paragraph, Text } from '@ui'
+import { isIOS, isMacOS } from 'hooks/useDevice'
 
 export const DisplayShortcutRow = (props: {
     shortcuts: string[]
@@ -27,8 +28,9 @@ export const DisplayShortcutRow = (props: {
 )
 
 export const ShortcutKeys = (props: { keys: string; size?: 'md' | 'sm' }) => {
+    const isApple = isIOS() || isMacOS()
     const keys = props.keys
-        .replace('Meta', '⌘')
+        .replace('Mod', isApple ? '⌘' : 'Ctrl')
         .replace('Backspace', '⌫')
         .replace('Enter', '⏎')
         .replace('ArrowUp', '↑')

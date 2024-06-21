@@ -56,7 +56,7 @@ export const useTimelineRecorder = (events: TimelineEvent[]) => {
     }, [isEnabled, mode])
 
     useHotkeys(
-        'Meta+Shift+O',
+        'Mod+Shift+O',
         () => {
             log('toggle mode')
             setMode((mode) => (mode === 'record' ? 'playback' : 'record'))
@@ -85,7 +85,7 @@ export const useTimelineRecorder = (events: TimelineEvent[]) => {
         [mode, playhead],
     )
     useHotkeys(
-        'Meta+Shift+ArrowLeft',
+        'Mod+Shift+ArrowLeft',
         (e) => {
             interactiveRef.current = true
             const min = 0
@@ -95,7 +95,7 @@ export const useTimelineRecorder = (events: TimelineEvent[]) => {
         [mode, playhead],
     )
     useHotkeys(
-        'Meta+Shift+ArrowRight',
+        'Mod+Shift+ArrowRight',
         (e) => {
             interactiveRef.current = true
             const max = timestampsRef.current.length - 1
