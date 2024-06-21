@@ -12,8 +12,7 @@ import { AuthEnv, Environment } from 'worker-common'
 export interface Env extends AuthEnv {
     ENVIRONMENT: Environment
     ALCHEMY_API_KEY: string
-    INFURA_API_KEY: string
-    INFURA_API_SECRET: string
+    SIMPLEHASH_API_KEY: string
 }
 
 export interface TokenProviderRequest extends Request {
@@ -150,4 +149,16 @@ export enum TokenType {
     ERC20 = 'ERC20',
     NOT_A_CONTRACT = 'NOT_A_CONTRACT',
     UNKNOWN = 'UNKNOWN',
+}
+
+// https://docs.simplehash.com/reference/collections-by-contract
+// abbreviated for simplicity
+export type SimpleHashCollectionsResponse = {
+    collections: {
+        collection_id: string
+        name: string
+        description: string | null
+        image_url: string | null
+        image_properties: string | null
+    }[]
 }

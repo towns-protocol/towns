@@ -4,18 +4,23 @@ import {
     GetContractMetadataAlchemyResponse,
     GetContractsForOwnerAlchemyResponse,
     GetNftMetadataResponse,
+    SimpleHashCollectionsResponse,
 } from './types'
 import { throwCustomError } from './router'
 import { createPublicClient, http } from 'viem'
 import { GetOwnersForNftResponse } from 'alchemy-sdk'
 
 const nftNetworkMap = [
-    { vChain: mainnet, alchemyIdentifier: 'eth-mainnet' },
-    { vChain: arbitrum, alchemyIdentifier: 'arb-mainnet' },
-    { vChain: optimism, alchemyIdentifier: 'opt-mainnet' },
-    { vChain: polygon, alchemyIdentifier: 'polygon-mainnet' },
-    { vChain: base, alchemyIdentifier: 'base-mainnet' },
-    { vChain: baseSepolia, alchemyIdentifier: 'base-sepolia' },
+    { vChain: mainnet, alchemyIdentifier: 'eth-mainnet', simpleHashIdentifier: 'ethereum' },
+    { vChain: arbitrum, alchemyIdentifier: 'arb-mainnet', simpleHashIdentifier: 'arbitrum' },
+    { vChain: optimism, alchemyIdentifier: 'opt-mainnet', simpleHashIdentifier: 'optimism' },
+    { vChain: polygon, alchemyIdentifier: 'polygon-mainnet', simpleHashIdentifier: 'polygon' },
+    { vChain: base, alchemyIdentifier: 'base-mainnet', simpleHashIdentifier: 'base' },
+    {
+        vChain: baseSepolia,
+        alchemyIdentifier: 'base-sepolia',
+        simpleHashIdentifier: 'base-sepolia',
+    },
 ] as const
 
 export function supportedNftNetworkMap(supportedChains: number[]) {
@@ -143,6 +148,57 @@ export function toContractMetadata(response: GetContractMetadataAlchemyResponse)
         symbol: response.symbol,
         tokenType: response.tokenType,
         imageUrl: response.openSeaMetadata?.imageUrl,
+    }
+}
+
+// TODO: remove simplehash dependency https://linear.app/hnt-labs/issue/HNT-7233/remove-simplehash-in-token-worker-once-alchemy-supports-other-networks
+export async function withSimpleHashImage({
+    contractMetadata,
+    chainId,
+    simpleHashApiKey,
+}: {
+    simpleHashApiKey: string
+    contractMetadata: ContractMetadata
+    chainId: number
+}): Promise<ContractMetadata> {
+    if (contractMetadata.imageUrl) {
+        return contractMetadata
+    }
+    const simpleHashIdentifier = nftNetworkMap.find(
+        (x) => x.vChain.id === chainId,
+    )?.simpleHashIdentifier
+
+    if (!simpleHashIdentifier) {
+        return contractMetadata
+    }
+
+    const url = `https://api.simplehash.com/api/v0/nfts/collections/${simpleHashIdentifier}/${contractMetadata.address}`
+
+    try {
+        const response = await fetch(url, {
+            headers: {
+                'X-API-KEY': simpleHashApiKey,
+                accept: 'application/json',
+            },
+        })
+        if (!response.ok) {
+            console.error('could not fetch from simplehash', response.status)
+            return contractMetadata
+        }
+        const data = (await response.json()) as SimpleHashCollectionsResponse
+        const collectionWithImage = data.collections.find((x) => !!x.image_url)
+
+        if (!collectionWithImage) {
+            return contractMetadata
+        }
+
+        return {
+            ...contractMetadata,
+            imageUrl: collectionWithImage.image_url,
+        }
+    } catch (error) {
+        console.error('could not fetch from simplehash', error)
+        return contractMetadata
     }
 }
 

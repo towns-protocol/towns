@@ -107,7 +107,7 @@ router
         '/api/getCollectionMetadata/:provider/:network',
         withNetwork,
         (request: TokenProviderRequest, env: Env) => {
-            return getCollectionMetadata(request, env.ENVIRONMENT)
+            return getCollectionMetadata(request, env)
         },
     )
 
@@ -124,11 +124,7 @@ router
     .get(
         '/api/getCollectionMetadataAcrossNetworks/:provider',
         (request: TokenProviderRequest, env: Env) => {
-            return getCollectionMetadataAcrossNetworks(
-                request,
-                env.ALCHEMY_API_KEY,
-                env.ENVIRONMENT,
-            )
+            return getCollectionMetadataAcrossNetworks(request, env)
         },
     )
 

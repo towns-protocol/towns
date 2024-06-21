@@ -28,8 +28,7 @@ describe('getCollectionMetadataAcrossNetworks()', () => {
             {
                 ALCHEMY_API_KEY: 'fake_key',
                 AUTH_SECRET: 'fake_secret',
-                INFURA_API_KEY: 'fake_key',
-                INFURA_API_SECRET: 'fake_secret',
+                SIMPLEHASH_API_KEY: 'fake_key',
                 ENVIRONMENT: 'test',
             },
         )
