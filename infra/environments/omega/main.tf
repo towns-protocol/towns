@@ -232,6 +232,11 @@ module "eth_balance_monitor" {
   base_chain_rpc_url_secret_arn  = local.global_remote_state.base_mainnet_rpc_url_secret.arn
   river_chain_rpc_url_secret_arn = local.global_remote_state.river_mainnet_rpc_url_secret.arn
 }
+module "operator_logs" {
+  source      = "../../modules/operator-logs"
+  bucket_name = "figment-logs"
+  user_name   = "figment"
+}
 
 # TODO: setup uptime monitors for mainnet nodes
 # TODO: standardize wallet balance alerts for gamma, and reuse them for mainnet in terraform
