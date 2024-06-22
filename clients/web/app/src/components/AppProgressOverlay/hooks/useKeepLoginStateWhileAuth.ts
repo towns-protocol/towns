@@ -18,6 +18,15 @@ export const useKeepLoginStateWhileAuth = () => {
             console.log('[HideContentWhileAuthenticating] setting appProgressOverlay')
             useAppProgressStore.setState({ appProgressOverlay: AppProgressState.LoggingIn })
         }
+
         prevState.current = appProgressOverlay
+
+        return () => {
+            useAppProgressStore.setState((s) =>
+                s.appProgressOverlay === AppProgressState.LoggingIn
+                    ? { appProgressOverlay: AppProgressState.None }
+                    : s,
+            )
+        }
     }, [appProgressOverlay, hasPrivyOAuthProvider])
 }
