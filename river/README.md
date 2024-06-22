@@ -91,3 +91,15 @@ d) you want its e2e tests to be run on CI, add a `"test:e2e"` script
 e) you want a single script to run all tests within the package, add `"test: yarn test:unit && yarn test:e2e"` script to its package.json
 
 Similarly, if you edit or delete these scripts, be aware that you may be removing those scripts from CI.
+
+## Publishing to npm
+
+1. create a new branch and push it
+2. run the lerna command:
+
+```
+yarn build
+npx lerna publish --no-private --force-publish
+```
+
+3. this modifies a lot of files. commit the changes, make a pr

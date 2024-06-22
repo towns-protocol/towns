@@ -7409,6 +7409,7 @@ __metadata:
     "@connectrpc/protoc-gen-connect-es": ^1.4.0
     "@river-build/proto-source": "workspace:^"
     "@types/jest": ^29.5.3
+    "@types/node": ^20.5.0
     jest: ^29.6.2
     jest-extended: ^4.0.1
     lodash.debounce: ^4.0.8
