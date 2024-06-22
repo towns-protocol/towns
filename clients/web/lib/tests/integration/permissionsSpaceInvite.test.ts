@@ -14,8 +14,6 @@ import { Permission } from '@river-build/web3'
 import { TestConstants } from './helpers/TestConstants'
 import { TownsTestClient } from './helpers/TownsTestClient'
 import { sleep } from '../../src/utils/towns-utils'
-import { check } from '@river-build/dlog'
-import { isDefined } from '@river-build/sdk'
 
 describe('space invite', () => {
     test('Inviter is not allowed due to missing Invite permission', async () => {
@@ -25,10 +23,10 @@ describe('space invite', () => {
         const { alice, bob, einstein } = await registerAndStartClients(['alice', 'bob', 'einstein'])
         await bob.fundWallet()
 
-        // create a space with token entitlement
-        const bobsSpaceId = await createTestSpaceGatedByTownsNfts(bob, [Permission.Read])
+        // create a space for bob
+        const bobsSpaceId = await createTestSpaceGatedByTownNft(bob, [Permission.Read])
         // have alice create a space so she can create a user stream
-        const aliceSpaceId = await createTestSpaceGatedByTownsNfts(alice, [Permission.Read])
+        const aliceSpaceId = await createTestSpaceGatedByTownNft(alice, [Permission.Read])
         // have enstein join alice space and become a real user
         await einstein.joinTown(aliceSpaceId, einstein.wallet)
 
@@ -171,8 +169,7 @@ describe('space invite', () => {
 
         // create a space with token entitlement for minting
         const spaceId = await createTestSpaceGatedByTownsNfts(bob, [Permission.Read])
-
-        check(isDefined(spaceId), 'spaceId')
+        expect(spaceId).toBeDefined()
 
         /** Act */
         try {

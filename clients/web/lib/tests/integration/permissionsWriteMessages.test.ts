@@ -13,7 +13,7 @@ import {
 
 import {
     Permission,
-    createExternalTokenStruct,
+    createExternalNFTStruct,
     getTestGatingNftAddress,
     NoopRuleData,
 } from '@river-build/web3'
@@ -36,7 +36,7 @@ describe('write messages', () => {
         if (!councilNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }
-        const councilToken = createExternalTokenStruct([councilNftAddress])
+        const councilToken = createExternalNFTStruct([councilNftAddress])
 
         // if you create the space with a member role w/ write permissions, then later modify the role to remove write permissions,
         // there are weird entilement issues in the assertions
@@ -89,11 +89,10 @@ describe('write messages', () => {
         // const consoleErrorSpy = jest.spyOn(global.console, 'error')
         /** Assert */
         // user sends a message to the room
-        try {
-            await alice.sendMessage(channelId, 'Hello Bob!')
-        } catch (e) {
-            expect((e as Error).message).toMatch(new RegExp('Unauthorised|permission_denied'))
-        }
+        await expect(alice.sendMessage(channelId, 'Hello Bob!')).rejects.toThrow(
+            /Unauthorised|permission_denied/,
+        )
+
         //expect(consoleErrorSpy).toHaveBeenCalled()
         await waitFor(
             () => expect(alice.getMessages(channelId)).toContain('Hello tokenGrantedUser!'),
@@ -198,15 +197,16 @@ describe('write messages', () => {
             ]),
         )
 
+        // Give stream node 5s to flush entitlements cache for (channel, permission)
+        await new Promise((f) => setTimeout(f, 5000))
+
         // TODO check why on Casablanca the error does not show in the console
         // const consoleErrorSpy = jest.spyOn(global.console, 'error')
         /** Assert */
         // user sends a message to the room
-        try {
-            await alice.sendMessage(channelId, 'Goodbye Bob!')
-        } catch (e) {
-            expect((e as Error).message).toMatch(new RegExp('Unauthorised|permission_denied'))
-        }
+        await expect(alice.sendMessage(channelId, 'Goodbye Bob!')).rejects.toThrow(
+            /Unauthorised|permission_denied/,
+        )
 
         await bob.sendMessage(channelId, 'Another Bob message')
         await waitFor(

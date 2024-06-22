@@ -3,7 +3,7 @@
  */
 import {
     createTestChannelWithSpaceRoles,
-    createTestSpaceGatedByTownsNfts,
+    createTestSpaceGatedByTownNft,
     makeUniqueName,
     registerAndStartClients,
     registerAndStartClient,
@@ -34,7 +34,7 @@ describe('useSpaceDataHook', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // bob creates a space
-        const spaceId = await createTestSpaceGatedByTownsNfts(
+        const spaceId = await createTestSpaceGatedByTownNft(
             bob,
             // For alice to create a channel, the role must include the AddRemoveChannels permission.
             [Permission.Read, Permission.Write, Permission.AddRemoveChannels],

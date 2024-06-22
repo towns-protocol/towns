@@ -513,6 +513,7 @@ export interface MembershipFacetInterface extends utils.Interface {
     "Membership__ReferralTimeCreated(uint256,uint16,uint256,uint256)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
     "Paused(address)": EventFragment;
+    "Prepay__Prepaid(uint256)": EventFragment;
     "RoleCreated(address,uint256)": EventFragment;
     "RoleRemoved(address,uint256)": EventFragment;
     "RoleUpdated(address,uint256)": EventFragment;
@@ -555,6 +556,7 @@ export interface MembershipFacetInterface extends utils.Interface {
   ): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Paused"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Prepay__Prepaid"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RoleCreated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RoleRemoved"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RoleUpdated"): EventFragment;
@@ -795,6 +797,16 @@ export interface PausedEventObject {
 export type PausedEvent = TypedEvent<[string], PausedEventObject>;
 
 export type PausedEventFilter = TypedEventFilter<PausedEvent>;
+
+export interface Prepay__PrepaidEventObject {
+  supply: BigNumber;
+}
+export type Prepay__PrepaidEvent = TypedEvent<
+  [BigNumber],
+  Prepay__PrepaidEventObject
+>;
+
+export type Prepay__PrepaidEventFilter = TypedEventFilter<Prepay__PrepaidEvent>;
 
 export interface RoleCreatedEventObject {
   creator: string;
@@ -1581,6 +1593,9 @@ export interface MembershipFacet extends BaseContract {
 
     "Paused(address)"(account?: null): PausedEventFilter;
     Paused(account?: null): PausedEventFilter;
+
+    "Prepay__Prepaid(uint256)"(supply?: null): Prepay__PrepaidEventFilter;
+    Prepay__Prepaid(supply?: null): Prepay__PrepaidEventFilter;
 
     "RoleCreated(address,uint256)"(
       creator?: PromiseOrValue<string> | null,

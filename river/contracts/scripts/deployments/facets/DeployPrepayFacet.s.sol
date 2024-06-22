@@ -8,7 +8,7 @@ pragma solidity ^0.8.23;
 //contracts
 import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {PrepayFacet} from "contracts/src/factory/facets/prepay/PrepayFacet.sol";
+import {PrepayFacet} from "contracts/src/spaces/facets/prepay/PrepayFacet.sol";
 
 contract DeployPrepayFacet is FacetHelper, Deployer {
   constructor() {

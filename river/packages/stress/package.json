@@ -1,5 +1,7 @@
 {
     "name": "@river-build/stress",
+    "version": "0.0.1",
+    "private": true,
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",

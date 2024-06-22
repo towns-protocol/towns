@@ -121,6 +121,11 @@ export const TEST_ENCRYPTED_MESSAGE_PROPS: PlainMessage<EncryptedData> = {
     senderKey: '',
 }
 
+export const getXchainSupportedRpcUrlsForTesting = (): string[] => {
+    // TODO: generate this for test environment and read from it
+    return ['http://127.0.0.1:8545', 'http://127.0.0.1:8546']
+}
+
 /**
  * makeUniqueSpaceStreamId - space stream ids are derived from the contract
  * in tests without entitlements there are no contracts, so we use a random id
@@ -423,6 +428,16 @@ export async function expectUserCanJoin(
     wallet: ethers.Wallet,
 ) {
     const joinStart = Date.now()
+
+    // Check that the local evaluation of the user's entitlements for joining the space
+    // passes.
+    const entitledWallet = await spaceDapp.getEntitledWalletForJoiningSpace(
+        spaceId,
+        address,
+        getXchainSupportedRpcUrlsForTesting(),
+    )
+    expect(entitledWallet).toBeDefined()
+
     const { issued } = await spaceDapp.joinSpace(spaceId, address, wallet)
     expect(issued).toBeTrue()
     log(`${name} joined space ${spaceId}`, Date.now() - joinStart)

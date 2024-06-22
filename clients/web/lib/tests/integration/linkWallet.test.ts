@@ -158,7 +158,7 @@ describe('Link Wallet', () => {
     })
 
     // see note at bottom of test
-    test.skip('link join wallet', async () => {
+    test('link join wallet', async () => {
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
         const metamaskWallet = await TestConstants.getWalletWithTestGatingNft()
 
@@ -182,13 +182,6 @@ describe('Link Wallet', () => {
             Permission.Read,
             Permission.Write,
         ])
-
-        const { issued: aliceIssued } = await alice.spaceDapp.joinSpace(
-            spaceId,
-            metamaskWallet.address,
-            alice.wallet,
-        )
-        expect(aliceIssued).toBeTruthy()
 
         const isEntitledToSpace = await bob.isEntitled(
             spaceId,

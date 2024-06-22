@@ -22,6 +22,8 @@ import {Entitled} from "contracts/src/spaces/facets/Entitled.sol";
 import {MembershipReferralBase} from "./referral/MembershipReferralBase.sol";
 import {RolesBase} from "contracts/src/spaces/facets/roles/RolesBase.sol";
 import {DispatcherBase} from "contracts/src/spaces/facets/dispatcher/DispatcherBase.sol";
+import {PrepayBase} from "contracts/src/spaces/facets/prepay/PrepayBase.sol";
+
 import {EntitlementGated} from "contracts/src/spaces/facets/gated/EntitlementGated.sol";
 
 contract MembershipFacet is
@@ -34,6 +36,7 @@ contract MembershipFacet is
   Entitled,
   RolesBase,
   DispatcherBase,
+  PrepayBase,
   EntitlementGated
 {
   bytes32 constant JOIN_SPACE =
@@ -147,8 +150,22 @@ contract MembershipFacet is
       (address, address)
     );
 
-    // allocate protocol and membership fees
-    uint256 membershipPrice = _getMembershipPrice(_totalSupply());
+    uint256 totalSupply = _totalSupply();
+    uint256 membershipPrice;
+
+    uint256 freeAllocation = _getMembershipFreeAllocation();
+    uint256 prepaidSupply = _getPrepaidSupply();
+
+    if (freeAllocation > totalSupply) {
+      membershipPrice = 0;
+    } else if (prepaidSupply > 0) {
+      membershipPrice = 0;
+      _reducePrepay(1);
+    } else {
+      membershipPrice = _getMembershipPrice(totalSupply);
+    }
+
+    // get token id
     uint256 tokenId = _nextTokenId();
 
     if (membershipPrice > 0) {

@@ -33,6 +33,7 @@ import { IERC721AQueryableShim } from './IERC721AQueryableShim'
 import { IEntitlementDataQueryableShim } from './IEntitlementDataQueryableShim'
 import { ContractVersion } from '../IStaticContractsInfo'
 import { parseChannelMetadataJSON } from '../Utils'
+import { IPrepayShim } from './IPrepayShim'
 
 interface AddressToEntitlement {
     [address: string]: EntitlementShim
@@ -63,6 +64,7 @@ export class Space {
     private readonly banning: IBanningShim
     private readonly erc721AQueryable: IERC721AQueryableShim
     private readonly entitlementDataQueryable: IEntitlementDataQueryableShim
+    private readonly prepay: IPrepayShim
 
     constructor({ address, version, spaceId, provider, spaceOwnerAddress }: SpaceConstructorArgs) {
         this.address = address
@@ -87,6 +89,7 @@ export class Space {
             version,
             provider,
         )
+        this.prepay = new IPrepayShim(address, version, provider)
     }
 
     private getAllShims() {
@@ -102,6 +105,7 @@ export class Space {
             this.banning,
             this.erc721AQueryable,
             this.entitlementDataQueryable,
+            this.prepay,
         ] as const
     }
 
@@ -155,6 +159,10 @@ export class Space {
 
     public get EntitlementDataQueryable(): IEntitlementDataQueryableShim {
         return this.entitlementDataQueryable
+    }
+
+    public get Prepay(): IPrepayShim {
+        return this.prepay
     }
 
     public getSpaceInfo(): Promise<ISpaceOwnerBase.SpaceStruct> {

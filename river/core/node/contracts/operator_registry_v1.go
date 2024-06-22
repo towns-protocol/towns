@@ -31,7 +31,7 @@ var (
 
 // OperatorRegistryV1MetaData contains all meta data concerning the OperatorRegistryV1 contract.
 var OperatorRegistryV1MetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"approveOperator\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"isOperator\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"removeOperator\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"OperatorAdded\",\"inputs\":[{\"name\":\"operatorAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OperatorRemoved\",\"inputs\":[{\"name\":\"operatorAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"approveOperator\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getAllOperators\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isOperator\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"removeOperator\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"OperatorAdded\",\"inputs\":[{\"name\":\"operatorAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OperatorRemoved\",\"inputs\":[{\"name\":\"operatorAddress\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false}]",
 }
 
 // OperatorRegistryV1ABI is the input ABI used to generate the binding from.
@@ -178,6 +178,37 @@ func (_OperatorRegistryV1 *OperatorRegistryV1TransactorRaw) Transfer(opts *bind.
 // Transact invokes the (paid) contract method with params as input values.
 func (_OperatorRegistryV1 *OperatorRegistryV1TransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
 	return _OperatorRegistryV1.Contract.contract.Transact(opts, method, params...)
+}
+
+// GetAllOperators is a free data retrieval call binding the contract method 0xd911c632.
+//
+// Solidity: function getAllOperators() view returns(address[])
+func (_OperatorRegistryV1 *OperatorRegistryV1Caller) GetAllOperators(opts *bind.CallOpts) ([]common.Address, error) {
+	var out []interface{}
+	err := _OperatorRegistryV1.contract.Call(opts, &out, "getAllOperators")
+
+	if err != nil {
+		return *new([]common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]common.Address)).(*[]common.Address)
+
+	return out0, err
+
+}
+
+// GetAllOperators is a free data retrieval call binding the contract method 0xd911c632.
+//
+// Solidity: function getAllOperators() view returns(address[])
+func (_OperatorRegistryV1 *OperatorRegistryV1Session) GetAllOperators() ([]common.Address, error) {
+	return _OperatorRegistryV1.Contract.GetAllOperators(&_OperatorRegistryV1.CallOpts)
+}
+
+// GetAllOperators is a free data retrieval call binding the contract method 0xd911c632.
+//
+// Solidity: function getAllOperators() view returns(address[])
+func (_OperatorRegistryV1 *OperatorRegistryV1CallerSession) GetAllOperators() ([]common.Address, error) {
+	return _OperatorRegistryV1.Contract.GetAllOperators(&_OperatorRegistryV1.CallOpts)
 }
 
 // IsOperator is a free data retrieval call binding the contract method 0x6d70f7ae.

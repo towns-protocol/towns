@@ -1094,13 +1094,10 @@ export class UserOps {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
 
-        const callData = await this.spaceDapp.prepay.encodeFunctionData('prepayMembership', [
-            space.Membership.address,
-            prepaidSupply,
-        ])
+        const callData = await space.Prepay.encodeFunctionData('prepayMembership', [prepaidSupply])
 
         return this.sendUserOp({
-            toAddress: this.spaceDapp.prepay.address,
+            toAddress: space.Prepay.address,
             callData,
             signer,
             spaceId,

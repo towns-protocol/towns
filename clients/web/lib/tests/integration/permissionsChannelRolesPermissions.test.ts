@@ -12,7 +12,7 @@ import {
 } from 'use-towns-client/tests/integration/helpers/TestUtils'
 
 import { TestConstants } from './helpers/TestConstants'
-import { Permission, createExternalTokenStruct, getTestGatingNftAddress } from '@river-build/web3'
+import { Permission, createExternalNFTStruct, getTestGatingNftAddress } from '@river-build/web3'
 import { RoleIdentifier } from '../../src/types/web3-types'
 
 describe('channel with roles and permissions', () => {
@@ -72,7 +72,7 @@ describe('channel with roles and permissions', () => {
         await waitForWithRetries(() => bob.joinRoom(channelId))
     }) // end test
 
-    test.skip('denied access to token-gated channel', async () => {
+    test('denied access to token-gated channel', async () => {
         /** Arrange */
 
         // create all the users for the test
@@ -87,7 +87,7 @@ describe('channel with roles and permissions', () => {
         if (!testGatingNftAddress) {
             throw new Error('testGatingNftAddress is undefined')
         }
-        const ruleData = createExternalTokenStruct([testGatingNftAddress])
+        const ruleData = createExternalNFTStruct([testGatingNftAddress])
 
         const roleIdentifier: RoleIdentifier | undefined = await alice.createRole(
             spaceId,

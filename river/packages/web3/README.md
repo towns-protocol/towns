@@ -1,3 +1,3 @@
 # web3
 
-smart contracts
+Dapps for our Space and Registry contracts

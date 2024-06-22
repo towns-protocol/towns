@@ -14,9 +14,11 @@ import {
     linkWallets,
     getNftRuleData,
     twoNftRuleData,
+    getXchainSupportedRpcUrlsForTesting,
 } from './util.test'
 import { dlog } from '@river-build/dlog'
 import { MembershipOp } from '@river-build/proto'
+import { Client } from './client'
 import {
     CheckOperationType,
     ETH_ADDRESS,
@@ -30,6 +32,7 @@ import {
     publicMint,
     treeToRuleData,
     IRuleEntitlement,
+    ISpaceDapp,
 } from '@river-build/web3'
 
 const log = dlog('csb:test:spaceWithEntitlements')
@@ -95,6 +98,14 @@ async function createTownWithRequirements(requirements: {
         membershipInfo,
     )
 
+    // Validate that owner passes entitlement check
+    const entitledWallet = await bobSpaceDapp.getEntitledWalletForJoiningSpace(
+        spaceId,
+        bobsWallet.address,
+        getXchainSupportedRpcUrlsForTesting(),
+    )
+    expect(entitledWallet).toBeDefined()
+
     return {
         alice,
         bob,
@@ -113,6 +124,23 @@ async function createTownWithRequirements(requirements: {
     }
 }
 
+async function expectUserCannotJoinSpace(
+    spaceId: string,
+    client: Client,
+    spaceDapp: ISpaceDapp,
+    address: string,
+) {
+    // Check that the local evaluation of the user's entitlements for joining the space
+    // fails.
+    const entitledWallet = await spaceDapp.getEntitledWalletForJoiningSpace(
+        spaceId,
+        address,
+        getXchainSupportedRpcUrlsForTesting(),
+    )
+    expect(entitledWallet).toBeUndefined()
+    await expect(client.joinStream(spaceId)).rejects.toThrow(/PERMISSION_DENIED/)
+}
+
 describe('spaceWithEntitlements', () => {
     let testNft1Address: string, testNft2Address: string, testNft3Address: string
     beforeAll(async () => {
@@ -121,6 +149,58 @@ describe('spaceWithEntitlements', () => {
             getContractAddress('TestNFT2'),
             getContractAddress('TestNFT3'),
         ])
+    })
+
+    test('banned user not entitled to join space', async () => {
+        const {
+            alice,
+            alicesWallet,
+            aliceSpaceDapp,
+            bob,
+            bobSpaceDapp,
+            bobProvider,
+            spaceId,
+            channelId,
+        } = await createTownWithRequirements({
+            everyone: true,
+            users: [],
+            ruleData: NoopRuleData,
+        })
+
+        // Have alice join the space so we can ban her
+        await expectUserCanJoin(
+            spaceId,
+            channelId,
+            'alice',
+            alice,
+            aliceSpaceDapp,
+            alicesWallet.address,
+            bobProvider.wallet,
+        )
+
+        const tx = await bobSpaceDapp.banWalletAddress(
+            spaceId,
+            alicesWallet.address,
+            bobProvider.wallet,
+        )
+        await tx.wait()
+
+        // Wait 2 seconds for the banning cache to expire on the stream node
+        await new Promise((f) => setTimeout(f, 2000))
+
+        // Alice no longer satisfies space entitlements
+        const entitledWallet = await aliceSpaceDapp.getEntitledWalletForJoiningSpace(
+            spaceId,
+            alicesWallet.address,
+            getXchainSupportedRpcUrlsForTesting(),
+        )
+        expect(entitledWallet).toBeUndefined()
+
+        const doneStart = Date.now()
+        // kill the clients
+        await bob.stopSync()
+        await alice.stopSync()
+        log('Done', Date.now() - doneStart)
     })
 
     // Banning with entitlements — users need permission to ban other users.
@@ -140,8 +220,6 @@ describe('spaceWithEntitlements', () => {
             users: [],
             ruleData: NoopRuleData,
         })
-
-        // await expect(alice.joinStream(spaceId)).rejects.toThrow() // todo
 
         log('Alice should be able to join space')
         await expectUserCanJoin(
@@ -240,7 +318,7 @@ describe('spaceWithEntitlements', () => {
         )
 
         // Alice cannot join the space on the stream node.
-        await expect(alice.joinStream(spaceId)).rejects.toThrow(/PERMISSION_DENIED/)
+        await expectUserCannotJoinSpace(spaceId, alice, aliceSpaceDapp, alicesWallet.address)
 
         // Kill the clients
         const doneStart = Date.now()
@@ -466,7 +544,7 @@ describe('spaceWithEntitlements', () => {
         )
 
         // Alice cannot join the space on the stream node.
-        await expect(alice.joinStream(spaceId)).rejects.toThrow(/PERMISSION_DENIED/)
+        await expectUserCannotJoinSpace(spaceId, alice, aliceSpaceDapp, alicesWallet.address)
 
         // kill the clients
         await bob.stopSync()
@@ -582,7 +660,7 @@ describe('spaceWithEntitlements', () => {
             aliceProvider.wallet,
         )
         // Alice cannot join the space on the stream node.
-        await expect(alice.joinStream(spaceId)).rejects.toThrow(/7:PERMISSION_DENIED/)
+        await expectUserCannotJoinSpace(spaceId, alice, aliceSpaceDapp, alicesWallet.address)
 
         // kill the clients
         await bob.stopSync()

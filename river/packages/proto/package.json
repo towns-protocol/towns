@@ -1,6 +1,6 @@
 {
     "name": "@river-build/proto",
-    "private": true,
+    "version": "0.0.0",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",

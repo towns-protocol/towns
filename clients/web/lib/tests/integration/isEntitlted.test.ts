@@ -12,7 +12,7 @@ import { RoleIdentifier } from '../../src/types/web3-types'
 import { TestConstants } from './helpers/TestConstants'
 import { getAccountAddress } from '../../src/types/user-identifier'
 import {
-    createExternalTokenStruct,
+    createExternalNFTStruct,
     getTestGatingNftAddress,
     NoopRuleData,
     Permission,
@@ -21,8 +21,8 @@ import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
 import { getTransactionHashFromTransactionOrUserOp } from '@towns/userops'
 
 // TODO: this test uses createTestSpaceGatedByTownNfts. skipping for now b/c createTestSpaceGatedByTownNfts needs more xchain work
-describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
-    test('server checks isEntitledToSpace true', async () => {
+describe('isEntitledToSpace and isEntitledToChannel tests', () => {
+    test.skip('server checks isEntitledToSpace true', async () => {
         /** Arrange */
         // create all the users for the test
         const bobWithNft = await registerAndStartClient(
@@ -49,7 +49,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
         expect(roomId).toBeDefined()
     }) // end test
 
-    test('server checks isEntitledToSpace false', async () => {
+    test.skip('server checks isEntitledToSpace false', async () => {
         /** Arrange */
         // create all the users for the test
         console.time('registerAndStartClients')
@@ -84,7 +84,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
         console.timeLog('joinTown')
     }) // end test
 
-    test('server checks isEntitledToChannel true', async () => {
+    test.skip('server checks isEntitledToChannel true', async () => {
         /** Arrange */
         // create all the users for the test
         const { alice } = await registerAndStartClients(['alice'])
@@ -100,7 +100,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
             throw new Error('testGatingNftAddress is undefined')
         }
 
-        const ruleData = createExternalTokenStruct([testGatingNftAddress])
+        const ruleData = createExternalNFTStruct([testGatingNftAddress])
         const users: string[] = []
         await alice.fundWallet()
         const spaceId = await createTestSpaceGatedByTownsNfts(alice, permissions)
@@ -127,7 +127,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
         await waitForWithRetries(() => bobWithNft.joinRoom(channelId, spaceId))
     }) // end test
 
-    test('server checks isEntitledToChannel false', async () => {
+    test.skip('server checks isEntitledToChannel false', async () => {
         /** Arrange */
         // create all the users for the test
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
@@ -138,7 +138,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
             throw new Error('testGatingNftAddress is undefined')
         }
 
-        const ruleData = createExternalTokenStruct([testGatingNftAddress])
+        const ruleData = createExternalNFTStruct([testGatingNftAddress])
         const users: string[] = []
         await alice.fundWallet()
         const spaceId = await createTestSpaceGatedByTownsNfts(alice, permissions)
@@ -199,7 +199,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
             spaceId,
             undefined,
             alice.wallet.address,
-            Permission.Read,
+            Permission.JoinSpace,
         )
         /** Assert */
         expect(isAliceEntitledToSpace).toBe(true)
@@ -208,7 +208,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
             spaceId,
             undefined,
             bobWithNft.wallet.address,
-            Permission.Read,
+            Permission.JoinSpace,
         )
 
         /** Assert */
@@ -246,7 +246,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
             spaceId,
             undefined,
             alice.wallet.address,
-            Permission.Read,
+            Permission.JoinSpace,
         )
         /** Assert */
         expect(isAliceEntitledToSpace).toBe(true)
@@ -296,7 +296,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
             spaceId,
             undefined,
             alice.wallet.address,
-            Permission.Read,
+            Permission.JoinSpace,
         )
         /** Assert */
         expect(isAliceEntitledToSpace).toBe(true)
@@ -333,7 +333,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
             spaceId,
             undefined,
             bobAccountAddress,
-            Permission.Read,
+            Permission.JoinSpace,
         )
 
         /** Assert */
@@ -358,7 +358,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
             throw new Error('testGatingNftAddress is undefined')
         }
 
-        const ruleData = createExternalTokenStruct([testGatingNftAddress])
+        const ruleData = createExternalNFTStruct([testGatingNftAddress])
         const users: string[] = []
         await alice.fundWallet()
         const spaceId = await createTestSpaceGatedByTownsNfts(alice, permissions)
@@ -405,7 +405,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
         if (!testGatingNftAddress) {
             throw new Error('testGatingNftAddress is undefined')
         }
-        const ruleData = createExternalTokenStruct([testGatingNftAddress])
+        const ruleData = createExternalNFTStruct([testGatingNftAddress])
         const users: string[] = []
         await alice.fundWallet()
         const spaceId = await createTestSpaceGatedByTownsNfts(alice, permissions)

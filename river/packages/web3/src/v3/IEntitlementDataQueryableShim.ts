@@ -1,11 +1,13 @@
 import {
     IEntitlementDataQueryable as LocalhostContract,
     IEntitlementDataQueryableInterface as LocalhostInterface,
+    IEntitlementDataQueryableBase as LocalhostBase,
 } from '@river-build/generated/dev/typings/IEntitlementDataQueryable'
 
 import {
     IEntitlementDataQueryable as BaseSepoliaContract,
     IEntitlementDataQueryableInterface as BaseSepoliaInterface,
+    IEntitlementDataQueryableBase as BaseSepoliaBase,
 } from '@river-build/generated/v3/typings/IEntitlementDataQueryable'
 
 import { ethers } from 'ethers'
@@ -32,3 +34,7 @@ export class IEntitlementDataQueryableShim extends BaseContractShim<
         })
     }
 }
+
+export type EntitlementDataStructOutput =
+    | LocalhostBase.EntitlementDataStructOutput
+    | BaseSepoliaBase.EntitlementDataStructOutput

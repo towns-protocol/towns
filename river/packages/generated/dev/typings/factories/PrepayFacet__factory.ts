@@ -36,13 +36,7 @@ const _abi = [
   {
     type: "function",
     name: "prepaidMembershipSupply",
-    inputs: [
-      {
-        name: "account",
-        type: "address",
-        internalType: "address",
-      },
-    ],
+    inputs: [],
     outputs: [
       {
         name: "",
@@ -57,11 +51,6 @@ const _abi = [
     name: "prepayMembership",
     inputs: [
       {
-        name: "membership",
-        type: "address",
-        internalType: "address",
-      },
-      {
         name: "supply",
         type: "uint256",
         internalType: "uint256",
@@ -69,6 +58,106 @@ const _abi = [
     ],
     outputs: [],
     stateMutability: "payable",
+  },
+  {
+    type: "event",
+    name: "Approval",
+    inputs: [
+      {
+        name: "owner",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "approved",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "tokenId",
+        type: "uint256",
+        indexed: true,
+        internalType: "uint256",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "ApprovalForAll",
+    inputs: [
+      {
+        name: "owner",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "operator",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "approved",
+        type: "bool",
+        indexed: false,
+        internalType: "bool",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "Banned",
+    inputs: [
+      {
+        name: "moderator",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "tokenId",
+        type: "uint256",
+        indexed: true,
+        internalType: "uint256",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "ConsecutiveTransfer",
+    inputs: [
+      {
+        name: "fromTokenId",
+        type: "uint256",
+        indexed: true,
+        internalType: "uint256",
+      },
+      {
+        name: "toTokenId",
+        type: "uint256",
+        indexed: false,
+        internalType: "uint256",
+      },
+      {
+        name: "from",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "to",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+    ],
+    anonymous: false,
   },
   {
     type: "event",
@@ -111,10 +200,16 @@ const _abi = [
   },
   {
     type: "event",
-    name: "PlatformFeeRecipientSet",
+    name: "OwnershipTransferred",
     inputs: [
       {
-        name: "recipient",
+        name: "previousOwner",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "newOwner",
         type: "address",
         indexed: true,
         internalType: "address",
@@ -124,79 +219,21 @@ const _abi = [
   },
   {
     type: "event",
-    name: "PlatformMembershipBpsSet",
+    name: "Paused",
     inputs: [
       {
-        name: "bps",
-        type: "uint16",
-        indexed: false,
-        internalType: "uint16",
-      },
-    ],
-    anonymous: false,
-  },
-  {
-    type: "event",
-    name: "PlatformMembershipDurationSet",
-    inputs: [
-      {
-        name: "duration",
-        type: "uint256",
-        indexed: false,
-        internalType: "uint256",
-      },
-    ],
-    anonymous: false,
-  },
-  {
-    type: "event",
-    name: "PlatformMembershipFeeSet",
-    inputs: [
-      {
-        name: "fee",
-        type: "uint256",
-        indexed: false,
-        internalType: "uint256",
-      },
-    ],
-    anonymous: false,
-  },
-  {
-    type: "event",
-    name: "PlatformMembershipMinPriceSet",
-    inputs: [
-      {
-        name: "minPrice",
-        type: "uint256",
-        indexed: false,
-        internalType: "uint256",
-      },
-    ],
-    anonymous: false,
-  },
-  {
-    type: "event",
-    name: "PlatformMembershipMintLimitSet",
-    inputs: [
-      {
-        name: "limit",
-        type: "uint256",
-        indexed: false,
-        internalType: "uint256",
-      },
-    ],
-    anonymous: false,
-  },
-  {
-    type: "event",
-    name: "PrepayBase__Prepaid",
-    inputs: [
-      {
-        name: "membership",
+        name: "account",
         type: "address",
-        indexed: true,
+        indexed: false,
         internalType: "address",
       },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "Prepay__Prepaid",
+    inputs: [
       {
         name: "supply",
         type: "uint256",
@@ -205,6 +242,219 @@ const _abi = [
       },
     ],
     anonymous: false,
+  },
+  {
+    type: "event",
+    name: "SubscriptionUpdate",
+    inputs: [
+      {
+        name: "tokenId",
+        type: "uint256",
+        indexed: true,
+        internalType: "uint256",
+      },
+      {
+        name: "expiration",
+        type: "uint64",
+        indexed: false,
+        internalType: "uint64",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "Transfer",
+    inputs: [
+      {
+        name: "from",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "to",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "tokenId",
+        type: "uint256",
+        indexed: true,
+        internalType: "uint256",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "Unbanned",
+    inputs: [
+      {
+        name: "moderator",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "tokenId",
+        type: "uint256",
+        indexed: true,
+        internalType: "uint256",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "Unpaused",
+    inputs: [
+      {
+        name: "account",
+        type: "address",
+        indexed: false,
+        internalType: "address",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "error",
+    name: "AddressEmptyCode",
+    inputs: [
+      {
+        name: "target",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+  },
+  {
+    type: "error",
+    name: "AddressInsufficientBalance",
+    inputs: [
+      {
+        name: "account",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+  },
+  {
+    type: "error",
+    name: "ApprovalCallerNotOwnerNorApproved",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "ApprovalQueryForNonexistentToken",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "BalanceQueryForZeroAddress",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "Banning__AlreadyBanned",
+    inputs: [
+      {
+        name: "tokenId",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+  },
+  {
+    type: "error",
+    name: "Banning__CannotBanOwner",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "Banning__CannotBanSelf",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "Banning__InvalidTokenId",
+    inputs: [
+      {
+        name: "tokenId",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+  },
+  {
+    type: "error",
+    name: "Banning__NotBanned",
+    inputs: [
+      {
+        name: "tokenId",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+  },
+  {
+    type: "error",
+    name: "ERC5643__DurationZero",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "ERC5643__InvalidTokenId",
+    inputs: [
+      {
+        name: "tokenId",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+  },
+  {
+    type: "error",
+    name: "ERC5643__NotApprovedOrOwner",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "ERC5643__SubscriptionNotRenewable",
+    inputs: [
+      {
+        name: "tokenId",
+        type: "uint256",
+        internalType: "uint256",
+      },
+    ],
+  },
+  {
+    type: "error",
+    name: "Entitlement__InvalidValue",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "Entitlement__NotAllowed",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "Entitlement__NotMember",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "Entitlement__ValueAlreadyExists",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "FailedInnerCall",
+    inputs: [],
   },
   {
     type: "error",
@@ -228,42 +478,73 @@ const _abi = [
   },
   {
     type: "error",
-    name: "Platform__InvalidFeeRecipient",
+    name: "MintERC2309QuantityExceedsLimit",
     inputs: [],
   },
   {
     type: "error",
-    name: "Platform__InvalidMembershipBps",
+    name: "MintToZeroAddress",
     inputs: [],
   },
   {
     type: "error",
-    name: "Platform__InvalidMembershipDuration",
+    name: "MintZeroQuantity",
     inputs: [],
   },
   {
     type: "error",
-    name: "Platform__InvalidMembershipMinPrice",
+    name: "Ownable__NotOwner",
+    inputs: [
+      {
+        name: "account",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+  },
+  {
+    type: "error",
+    name: "Ownable__ZeroAddress",
     inputs: [],
   },
   {
     type: "error",
-    name: "Platform__InvalidMembershipMintLimit",
+    name: "OwnerQueryForNonexistentToken",
     inputs: [],
   },
   {
     type: "error",
-    name: "PrepayBase__InvalidAddress",
+    name: "OwnershipNotInitializedForExtraData",
     inputs: [],
   },
   {
     type: "error",
-    name: "PrepayBase__InvalidAmount",
+    name: "Pausable__NotPaused",
     inputs: [],
   },
   {
     type: "error",
-    name: "PrepayBase__InvalidMembership",
+    name: "Pausable__Paused",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "Prepay__InvalidAddress",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "Prepay__InvalidAmount",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "Prepay__InvalidMembership",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "Prepay__InvalidSupplyAmount",
     inputs: [],
   },
   {
@@ -271,10 +552,46 @@ const _abi = [
     name: "ReentrancyGuard__ReentrantCall",
     inputs: [],
   },
+  {
+    type: "error",
+    name: "SafeERC20FailedOperation",
+    inputs: [
+      {
+        name: "token",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+  },
+  {
+    type: "error",
+    name: "TransferCallerNotOwnerNorApproved",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "TransferFromIncorrectOwner",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "TransferToNonERC721ReceiverImplementer",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "TransferToZeroAddress",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "URIQueryForNonexistentToken",
+    inputs: [],
+  },
 ] as const;
 
 const _bytecode =
-  "0x608060405234801561001057600080fd5b5061001961001e565b6100c4565b7f59b501c3653afc186af7d48dda36cf6732bd21629a6295693664240a6ef520008054640100000000900460ff161561006a576040516366008a2d60e01b815260040160405180910390fd5b805463ffffffff90811610156100c157805463ffffffff191663ffffffff90811782556040519081527fe9c9b456cb2994b80aeef036cf59d26e9617df80f816a6ee5a5b4166e07e2f5c9060200160405180910390a15b50565b6106f6806100d36000396000f3fe60806040526004361061003f5760003560e01c806327bc79f11461004457806386272406146100765780639262b1b31461008b578063aabe967d146100ab575b600080fd5b34801561005057600080fd5b5061006461005f3660046105ff565b6100c0565b60405190815260200160405180910390f35b610089610084366004610630565b6100d1565b005b34801561009757600080fd5b506100646100a636600461065c565b61032e565b3480156100b757600080fd5b5061008961036b565b60006100cb826103c7565b92915050565b60027f54f22f54f370bd020e00ee80e1a5099a71652e2ccbcf6a75281e4c70a3e11a00540361011357604051635db5c7cd60e11b815260040160405180910390fd5b61013c60027f54f22f54f370bd020e00ee80e1a5099a71652e2ccbcf6a75281e4c70a3e11a0055565b8060000361015d57604051632484b54d60e01b815260040160405180910390fd5b6001600160a01b03821661018457604051631ea9dac160e21b815260040160405180910390fd5b336001600160a01b0316826001600160a01b0316638da5cb5b6040518163ffffffff1660e01b8152600401602060405180830381865afa1580156101cc573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906101f09190610680565b6001600160a01b03161461021757604051631ea9dac160e21b815260040160405180910390fd5b600061024a7fb29a817dd0719f30ad87abc8dff26e6354077e5b46bf38f34d5ac48732860d02546001600160a01b031690565b90506000610257836103c7565b905080341461027957604051632484b54d60e01b815260040160405180910390fd5b600083856001600160a01b03166318160ddd6040518163ffffffff1660e01b8152600401602060405180830381865afa1580156102ba573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906102de919061069d565b6102e891906106cc565b90506102f485826103fb565b6102fe8383610475565b50505061032a60017f54f22f54f370bd020e00ee80e1a5099a71652e2ccbcf6a75281e4c70a3e11a0055565b5050565b6001600160a01b03811660009081527f097b4f25b64e012d0cf55f67e9b34fe5d57f15b11b95baa4ddd136b424967c0060205260408120546100cb565b7f59b501c3653afc186af7d48dda36cf6732bd21629a6295693664240a6ef5200054640100000000900460ff166103b557604051630ef4733760e31b815260040160405180910390fd5b6103c5630cfe7b1160e21b610521565b565b60006103f17fb29a817dd0719f30ad87abc8dff26e6354077e5b46bf38f34d5ac48732860d005490565b6100cb90836106df565b60007f097b4f25b64e012d0cf55f67e9b34fe5d57f15b11b95baa4ddd136b424967c006001600160a01b03841660008181526020838152604091829020869055905185815292935090917f884527d8d797310d66e571e2a24daeddc15ae52474ef2c763ab29b60c5678369910160405180910390a2505050565b6000826001600160a01b03168260405160006040518083038185875af1925050503d80600081146104c2576040519150601f19603f3d011682016040523d82523d6000602084013e6104c7565b606091505b505090508061051c5760405162461bcd60e51b815260206004820152601c60248201527f6e617469766520746f6b656e207472616e73666572206661696c656400000000604482015260640160405180910390fd5b505050565b6001600160e01b0319811660009081527f81088bbc801e045ea3e7620779ab349988f58afbdfba10dff983df3f33522b00602052604090205460ff1615156001146105ae576001600160e01b0319811660009081527f81088bbc801e045ea3e7620779ab349988f58afbdfba10dff983df3f33522b0060205260409020805460ff191660011790556105c7565b604051637967f77d60e11b815260040160405180910390fd5b6040516001600160e01b03198216907f78f84e5b1c5c05be2b5ad3800781dd404d6d6c6302bc755c0fe20f58a33a7f2290600090a250565b60006020828403121561061157600080fd5b5035919050565b6001600160a01b038116811461062d57600080fd5b50565b6000806040838503121561064357600080fd5b823561064e81610618565b946020939093013593505050565b60006020828403121561066e57600080fd5b813561067981610618565b9392505050565b60006020828403121561069257600080fd5b815161067981610618565b6000602082840312156106af57600080fd5b5051919050565b634e487b7160e01b600052601160045260246000fd5b808201808211156100cb576100cb6106b6565b80820281158282048414176100cb576100cb6106b656";
+  "0x608060405234801561001057600080fd5b5061001961001e565b6100c4565b7f59b501c3653afc186af7d48dda36cf6732bd21629a6295693664240a6ef520008054640100000000900460ff161561006a576040516366008a2d60e01b815260040160405180910390fd5b805463ffffffff90811610156100c157805463ffffffff191663ffffffff90811782556040519081527fe9c9b456cb2994b80aeef036cf59d26e9617df80f816a6ee5a5b4166e07e2f5c9060200160405180910390a15b50565b610aea806100d36000396000f3fe60806040526004361061003f5760003560e01c806306499d7f1461004457806327bc79f114610059578063aabe967d1461008b578063b6a45cd6146100a0575b600080fd5b6100576100523660046109fe565b6100b5565b005b34801561006557600080fd5b506100796100743660046109fe565b610318565b60405190815260200160405180910390f35b34801561009757600080fd5b506100576103dd565b3480156100ac57600080fd5b50610079610439565b60027f54f22f54f370bd020e00ee80e1a5099a71652e2ccbcf6a75281e4c70a3e11a0054036100f757604051635db5c7cd60e11b815260040160405180910390fd5b61012060027f54f22f54f370bd020e00ee80e1a5099a71652e2ccbcf6a75281e4c70a3e11a0055565b610128610468565b6001600160a01b0316336001600160a01b031614610160576040516365f4906560e01b81523360048201526024015b60405180910390fd5b806000036101815760405163305b66fd60e01b815260040160405180910390fd5b7fc21004fcc619240a31f006438274d15cd813308303284436eef6055f0fdcb6065460408051630eac306d60e01b815290517fc21004fcc619240a31f006438274d15cd813308303284436eef6055f0fdcb600926001600160a01b0316916000918391630eac306d9160048083019260209291908290030181865afa15801561020e573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906102329190610a17565b61023c9085610a46565b905080341461025e5760405163cd27698760e01b815260040160405180910390fd5b61026784610532565b600480840154604080516301332c8360e61b815290516001600160a01b0392831693600093871692634ccb20c092818301926020928290030181865afa1580156102b5573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906102d99190610a5d565b90506102e7823383866105a3565b505050505061031560017f54f22f54f370bd020e00ee80e1a5099a71652e2ccbcf6a75281e4c70a3e11a0055565b50565b7fc21004fcc619240a31f006438274d15cd813308303284436eef6055f0fdcb6065460408051630eac306d60e01b815290516000927fc21004fcc619240a31f006438274d15cd813308303284436eef6055f0fdcb600926001600160a01b03909116918291630eac306d9160048083019260209291908290030181865afa1580156103a7573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906103cb9190610a17565b6103d59085610a46565b949350505050565b7f59b501c3653afc186af7d48dda36cf6732bd21629a6295693664240a6ef5200054640100000000900460ff1661042757604051630ef4733760e31b815260040160405180910390fd5b6104376312ea370b60e31b6105ef565b565b60006104637f097b4f25b64e012d0cf55f67e9b34fe5d57f15b11b95baa4ddd136b424967c005490565b905090565b6040805180820182527fd2f24d4f172e4e84e48e7c4125b6e904c29e5eba33ad4938fee51dd5dbd4b600546001600160a01b03168082527fd2f24d4f172e4e84e48e7c4125b6e904c29e5eba33ad4938fee51dd5dbd4b60154602080840182905284516331a9108f60e11b815260048101929092529351600094636352211e92602480820193918290030181865afa158015610508573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061052c9190610a5d565b91505090565b7f097b4f25b64e012d0cf55f67e9b34fe5d57f15b11b95baa4ddd136b424967c00805482908290600090610567908490610a86565b90915550506040518281527fad9b877dcdf275e10be629bbe390dc68f7b5de14e3cc5f11f1745d300bb3852e9060200160405180910390a15050565b80156105e95773eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeed196001600160a01b038516016105dd576105d882826106cd565b6105e9565b6105e984848484610775565b50505050565b6001600160e01b0319811660009081527f81088bbc801e045ea3e7620779ab349988f58afbdfba10dff983df3f33522b00602052604090205460ff16151560011461067c576001600160e01b0319811660009081527f81088bbc801e045ea3e7620779ab349988f58afbdfba10dff983df3f33522b0060205260409020805460ff19166001179055610695565b604051637967f77d60e11b815260040160405180910390fd5b6040516001600160e01b03198216907f78f84e5b1c5c05be2b5ad3800781dd404d6d6c6302bc755c0fe20f58a33a7f2290600090a250565b6000826001600160a01b03168260405160006040518083038185875af1925050503d806000811461071a576040519150601f19603f3d011682016040523d82523d6000602084013e61071f565b606091505b50509050806107705760405162461bcd60e51b815260206004820152601c60248201527f6e617469766520746f6b656e207472616e73666572206661696c6564000000006044820152606401610157565b505050565b816001600160a01b0316836001600160a01b031603156105e957306001600160a01b038416036107b3576105d86001600160a01b03851683836107c8565b6105e96001600160a01b038516848484610827565b6040516001600160a01b0383811660248301526044820183905261077091859182169063a9059cbb906064015b604051602081830303815290604052915060e01b6020820180516001600160e01b038381831617835250505050610860565b6040516001600160a01b0384811660248301528381166044830152606482018390526105e99186918216906323b872dd906084016107f5565b60006108756001600160a01b038416836108c3565b9050805160001415801561089a5750808060200190518101906108989190610a99565b155b1561077057604051635274afe760e01b81526001600160a01b0384166004820152602401610157565b60606108d1838360006108da565b90505b92915050565b6060814710156108ff5760405163cd78605960e01b8152306004820152602401610157565b600080856001600160a01b0316848660405161091b9190610abb565b60006040518083038185875af1925050503d8060008114610958576040519150601f19603f3d011682016040523d82523d6000602084013e61095d565b606091505b509150915061096d868383610979565b925050505b9392505050565b60608261098e57610989826109d5565b610972565b81511580156109a557506001600160a01b0384163b155b156109ce57604051639996b31560e01b81526001600160a01b0385166004820152602401610157565b5080610972565b8051156109e55780518082602001fd5b604051630a12f52160e11b815260040160405180910390fd5b600060208284031215610a1057600080fd5b5035919050565b600060208284031215610a2957600080fd5b5051919050565b634e487b7160e01b600052601160045260246000fd5b80820281158282048414176108d4576108d4610a30565b600060208284031215610a6f57600080fd5b81516001600160a01b038116811461097257600080fd5b808201808211156108d4576108d4610a30565b600060208284031215610aab57600080fd5b8151801515811461097257600080fd5b6000825160005b81811015610adc5760208186018101518583015201610ac2565b50600092019182525091905056";
 
 type PrepayFacetConstructorParams =
   | [signer?: Signer]

@@ -11,6 +11,7 @@ import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {IEntitlementsManager, IEntitlementsManagerBase} from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
 import {IRoles, IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
 import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
+import {IPrepay} from "contracts/src/spaces/facets/prepay/IPrepay.sol";
 
 // libraries
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
@@ -41,6 +42,7 @@ contract MembershipBaseSetup is
   MembershipFacet internal membership;
   MembershipReferralFacet internal referrals;
   IPlatformRequirements internal platformReqs;
+  IPrepay prepayFacet;
 
   // entitled user
   Vm.Wallet aliceWallet;
@@ -58,7 +60,7 @@ contract MembershipBaseSetup is
 
   address internal userSpace;
 
-  function setUp() public override {
+  function setUp() public virtual override {
     super.setUp();
 
     aliceWallet = vm.createWallet("alice");
@@ -86,6 +88,7 @@ contract MembershipBaseSetup is
 
     membership = MembershipFacet(userSpace);
     referrals = MembershipReferralFacet(userSpace);
+    prepayFacet = IPrepay(userSpace);
     platformReqs = IPlatformRequirements(spaceFactory);
 
     _registerOperators();

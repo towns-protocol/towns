@@ -12,7 +12,14 @@ import {
 
 import { RoleIdentifier } from '../../src/types/web3-types'
 import { TestConstants } from './helpers/TestConstants'
-import { getTestGatingNftAddress, Permission, RoleDetails, NoopRuleData } from '@river-build/web3'
+import {
+    getTestGatingNftAddress,
+    Permission,
+    RoleDetails,
+    NoopRuleData,
+    CheckOperationType,
+    createOperationsTree,
+} from '@river-build/web3'
 
 describe('get role details', () => {
     test('get details of a role that no channel uses', async () => {
@@ -128,15 +135,20 @@ describe('get role details', () => {
         const expectedMinterRole: RoleDetails = {
             id: 1,
             name: 'Minter',
-            users: [EVERYONE_ADDRESS],
-            ruleData: NoopRuleData,
+            users: [],
+            ruleData: createOperationsTree([
+                {
+                    address: councilNftAddress,
+                    chainId: BigInt(alice.opts.baseChainId),
+                    type: CheckOperationType.ERC721,
+                },
+            ]),
             permissions: [Permission.JoinSpace],
             channels: [],
         }
         const expectedMemberRole: RoleDetails = {
             id: 2,
             name: 'Member',
-            // todo: https://linear.app/hnt-labs/issue/HNT-5145/implement-ruleentitlementshim-to-return-the-xchain-op-details
             users: [EVERYONE_ADDRESS], // workaround for now
             ruleData: NoopRuleData,
             permissions,

@@ -32,8 +32,8 @@ export interface PrepayFacetInterface extends utils.Interface {
   functions: {
     "__PrepayFacet_init()": FunctionFragment;
     "calculateMembershipPrepayFee(uint256)": FunctionFragment;
-    "prepaidMembershipSupply(address)": FunctionFragment;
-    "prepayMembership(address,uint256)": FunctionFragment;
+    "prepaidMembershipSupply()": FunctionFragment;
+    "prepayMembership(uint256)": FunctionFragment;
   };
 
   getFunction(
@@ -54,11 +54,11 @@ export interface PrepayFacetInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "prepaidMembershipSupply",
-    values: [PromiseOrValue<string>]
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "prepayMembership",
-    values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
+    values: [PromiseOrValue<BigNumberish>]
   ): string;
 
   decodeFunctionResult(
@@ -79,35 +79,83 @@ export interface PrepayFacetInterface extends utils.Interface {
   ): Result;
 
   events: {
+    "Approval(address,address,uint256)": EventFragment;
+    "ApprovalForAll(address,address,bool)": EventFragment;
+    "Banned(address,uint256)": EventFragment;
+    "ConsecutiveTransfer(uint256,uint256,address,address)": EventFragment;
     "Initialized(uint32)": EventFragment;
     "InterfaceAdded(bytes4)": EventFragment;
     "InterfaceRemoved(bytes4)": EventFragment;
-    "PlatformFeeRecipientSet(address)": EventFragment;
-    "PlatformMembershipBpsSet(uint16)": EventFragment;
-    "PlatformMembershipDurationSet(uint256)": EventFragment;
-    "PlatformMembershipFeeSet(uint256)": EventFragment;
-    "PlatformMembershipMinPriceSet(uint256)": EventFragment;
-    "PlatformMembershipMintLimitSet(uint256)": EventFragment;
-    "PrepayBase__Prepaid(address,uint256)": EventFragment;
+    "OwnershipTransferred(address,address)": EventFragment;
+    "Paused(address)": EventFragment;
+    "Prepay__Prepaid(uint256)": EventFragment;
+    "SubscriptionUpdate(uint256,uint64)": EventFragment;
+    "Transfer(address,address,uint256)": EventFragment;
+    "Unbanned(address,uint256)": EventFragment;
+    "Unpaused(address)": EventFragment;
   };
 
+  getEvent(nameOrSignatureOrTopic: "Approval"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "ApprovalForAll"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Banned"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "ConsecutiveTransfer"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Initialized"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "InterfaceAdded"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "InterfaceRemoved"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "PlatformFeeRecipientSet"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "PlatformMembershipBpsSet"): EventFragment;
-  getEvent(
-    nameOrSignatureOrTopic: "PlatformMembershipDurationSet"
-  ): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "PlatformMembershipFeeSet"): EventFragment;
-  getEvent(
-    nameOrSignatureOrTopic: "PlatformMembershipMinPriceSet"
-  ): EventFragment;
-  getEvent(
-    nameOrSignatureOrTopic: "PlatformMembershipMintLimitSet"
-  ): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "PrepayBase__Prepaid"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Paused"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Prepay__Prepaid"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "SubscriptionUpdate"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Transfer"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Unbanned"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Unpaused"): EventFragment;
 }
+
+export interface ApprovalEventObject {
+  owner: string;
+  approved: string;
+  tokenId: BigNumber;
+}
+export type ApprovalEvent = TypedEvent<
+  [string, string, BigNumber],
+  ApprovalEventObject
+>;
+
+export type ApprovalEventFilter = TypedEventFilter<ApprovalEvent>;
+
+export interface ApprovalForAllEventObject {
+  owner: string;
+  operator: string;
+  approved: boolean;
+}
+export type ApprovalForAllEvent = TypedEvent<
+  [string, string, boolean],
+  ApprovalForAllEventObject
+>;
+
+export type ApprovalForAllEventFilter = TypedEventFilter<ApprovalForAllEvent>;
+
+export interface BannedEventObject {
+  moderator: string;
+  tokenId: BigNumber;
+}
+export type BannedEvent = TypedEvent<[string, BigNumber], BannedEventObject>;
+
+export type BannedEventFilter = TypedEventFilter<BannedEvent>;
+
+export interface ConsecutiveTransferEventObject {
+  fromTokenId: BigNumber;
+  toTokenId: BigNumber;
+  from: string;
+  to: string;
+}
+export type ConsecutiveTransferEvent = TypedEvent<
+  [BigNumber, BigNumber, string, string],
+  ConsecutiveTransferEventObject
+>;
+
+export type ConsecutiveTransferEventFilter =
+  TypedEventFilter<ConsecutiveTransferEvent>;
 
 export interface InitializedEventObject {
   version: number;
@@ -137,83 +185,76 @@ export type InterfaceRemovedEvent = TypedEvent<
 export type InterfaceRemovedEventFilter =
   TypedEventFilter<InterfaceRemovedEvent>;
 
-export interface PlatformFeeRecipientSetEventObject {
-  recipient: string;
+export interface OwnershipTransferredEventObject {
+  previousOwner: string;
+  newOwner: string;
 }
-export type PlatformFeeRecipientSetEvent = TypedEvent<
-  [string],
-  PlatformFeeRecipientSetEventObject
+export type OwnershipTransferredEvent = TypedEvent<
+  [string, string],
+  OwnershipTransferredEventObject
 >;
 
-export type PlatformFeeRecipientSetEventFilter =
-  TypedEventFilter<PlatformFeeRecipientSetEvent>;
+export type OwnershipTransferredEventFilter =
+  TypedEventFilter<OwnershipTransferredEvent>;
 
-export interface PlatformMembershipBpsSetEventObject {
-  bps: number;
+export interface PausedEventObject {
+  account: string;
 }
-export type PlatformMembershipBpsSetEvent = TypedEvent<
-  [number],
-  PlatformMembershipBpsSetEventObject
->;
+export type PausedEvent = TypedEvent<[string], PausedEventObject>;
 
-export type PlatformMembershipBpsSetEventFilter =
-  TypedEventFilter<PlatformMembershipBpsSetEvent>;
+export type PausedEventFilter = TypedEventFilter<PausedEvent>;
 
-export interface PlatformMembershipDurationSetEventObject {
-  duration: BigNumber;
-}
-export type PlatformMembershipDurationSetEvent = TypedEvent<
-  [BigNumber],
-  PlatformMembershipDurationSetEventObject
->;
-
-export type PlatformMembershipDurationSetEventFilter =
-  TypedEventFilter<PlatformMembershipDurationSetEvent>;
-
-export interface PlatformMembershipFeeSetEventObject {
-  fee: BigNumber;
-}
-export type PlatformMembershipFeeSetEvent = TypedEvent<
-  [BigNumber],
-  PlatformMembershipFeeSetEventObject
->;
-
-export type PlatformMembershipFeeSetEventFilter =
-  TypedEventFilter<PlatformMembershipFeeSetEvent>;
-
-export interface PlatformMembershipMinPriceSetEventObject {
-  minPrice: BigNumber;
-}
-export type PlatformMembershipMinPriceSetEvent = TypedEvent<
-  [BigNumber],
-  PlatformMembershipMinPriceSetEventObject
->;
-
-export type PlatformMembershipMinPriceSetEventFilter =
-  TypedEventFilter<PlatformMembershipMinPriceSetEvent>;
-
-export interface PlatformMembershipMintLimitSetEventObject {
-  limit: BigNumber;
-}
-export type PlatformMembershipMintLimitSetEvent = TypedEvent<
-  [BigNumber],
-  PlatformMembershipMintLimitSetEventObject
->;
-
-export type PlatformMembershipMintLimitSetEventFilter =
-  TypedEventFilter<PlatformMembershipMintLimitSetEvent>;
-
-export interface PrepayBase__PrepaidEventObject {
-  membership: string;
+export interface Prepay__PrepaidEventObject {
   supply: BigNumber;
 }
-export type PrepayBase__PrepaidEvent = TypedEvent<
-  [string, BigNumber],
-  PrepayBase__PrepaidEventObject
+export type Prepay__PrepaidEvent = TypedEvent<
+  [BigNumber],
+  Prepay__PrepaidEventObject
 >;
 
-export type PrepayBase__PrepaidEventFilter =
-  TypedEventFilter<PrepayBase__PrepaidEvent>;
+export type Prepay__PrepaidEventFilter = TypedEventFilter<Prepay__PrepaidEvent>;
+
+export interface SubscriptionUpdateEventObject {
+  tokenId: BigNumber;
+  expiration: BigNumber;
+}
+export type SubscriptionUpdateEvent = TypedEvent<
+  [BigNumber, BigNumber],
+  SubscriptionUpdateEventObject
+>;
+
+export type SubscriptionUpdateEventFilter =
+  TypedEventFilter<SubscriptionUpdateEvent>;
+
+export interface TransferEventObject {
+  from: string;
+  to: string;
+  tokenId: BigNumber;
+}
+export type TransferEvent = TypedEvent<
+  [string, string, BigNumber],
+  TransferEventObject
+>;
+
+export type TransferEventFilter = TypedEventFilter<TransferEvent>;
+
+export interface UnbannedEventObject {
+  moderator: string;
+  tokenId: BigNumber;
+}
+export type UnbannedEvent = TypedEvent<
+  [string, BigNumber],
+  UnbannedEventObject
+>;
+
+export type UnbannedEventFilter = TypedEventFilter<UnbannedEvent>;
+
+export interface UnpausedEventObject {
+  account: string;
+}
+export type UnpausedEvent = TypedEvent<[string], UnpausedEventObject>;
+
+export type UnpausedEventFilter = TypedEventFilter<UnpausedEvent>;
 
 export interface PrepayFacet extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -251,13 +292,9 @@ export interface PrepayFacet extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
-    prepaidMembershipSupply(
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
+    prepaidMembershipSupply(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     prepayMembership(
-      membership: PromiseOrValue<string>,
       supply: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
@@ -272,13 +309,9 @@ export interface PrepayFacet extends BaseContract {
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
-  prepaidMembershipSupply(
-    account: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
+  prepaidMembershipSupply(overrides?: CallOverrides): Promise<BigNumber>;
 
   prepayMembership(
-    membership: PromiseOrValue<string>,
     supply: PromiseOrValue<BigNumberish>,
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
@@ -291,19 +324,59 @@ export interface PrepayFacet extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    prepaidMembershipSupply(
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
+    prepaidMembershipSupply(overrides?: CallOverrides): Promise<BigNumber>;
 
     prepayMembership(
-      membership: PromiseOrValue<string>,
       supply: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
   };
 
   filters: {
+    "Approval(address,address,uint256)"(
+      owner?: PromiseOrValue<string> | null,
+      approved?: PromiseOrValue<string> | null,
+      tokenId?: PromiseOrValue<BigNumberish> | null
+    ): ApprovalEventFilter;
+    Approval(
+      owner?: PromiseOrValue<string> | null,
+      approved?: PromiseOrValue<string> | null,
+      tokenId?: PromiseOrValue<BigNumberish> | null
+    ): ApprovalEventFilter;
+
+    "ApprovalForAll(address,address,bool)"(
+      owner?: PromiseOrValue<string> | null,
+      operator?: PromiseOrValue<string> | null,
+      approved?: null
+    ): ApprovalForAllEventFilter;
+    ApprovalForAll(
+      owner?: PromiseOrValue<string> | null,
+      operator?: PromiseOrValue<string> | null,
+      approved?: null
+    ): ApprovalForAllEventFilter;
+
+    "Banned(address,uint256)"(
+      moderator?: PromiseOrValue<string> | null,
+      tokenId?: PromiseOrValue<BigNumberish> | null
+    ): BannedEventFilter;
+    Banned(
+      moderator?: PromiseOrValue<string> | null,
+      tokenId?: PromiseOrValue<BigNumberish> | null
+    ): BannedEventFilter;
+
+    "ConsecutiveTransfer(uint256,uint256,address,address)"(
+      fromTokenId?: PromiseOrValue<BigNumberish> | null,
+      toTokenId?: null,
+      from?: PromiseOrValue<string> | null,
+      to?: PromiseOrValue<string> | null
+    ): ConsecutiveTransferEventFilter;
+    ConsecutiveTransfer(
+      fromTokenId?: PromiseOrValue<BigNumberish> | null,
+      toTokenId?: null,
+      from?: PromiseOrValue<string> | null,
+      to?: PromiseOrValue<string> | null
+    ): ConsecutiveTransferEventFilter;
+
     "Initialized(uint32)"(version?: null): InitializedEventFilter;
     Initialized(version?: null): InitializedEventFilter;
 
@@ -321,52 +394,52 @@ export interface PrepayFacet extends BaseContract {
       interfaceId?: PromiseOrValue<BytesLike> | null
     ): InterfaceRemovedEventFilter;
 
-    "PlatformFeeRecipientSet(address)"(
-      recipient?: PromiseOrValue<string> | null
-    ): PlatformFeeRecipientSetEventFilter;
-    PlatformFeeRecipientSet(
-      recipient?: PromiseOrValue<string> | null
-    ): PlatformFeeRecipientSetEventFilter;
+    "OwnershipTransferred(address,address)"(
+      previousOwner?: PromiseOrValue<string> | null,
+      newOwner?: PromiseOrValue<string> | null
+    ): OwnershipTransferredEventFilter;
+    OwnershipTransferred(
+      previousOwner?: PromiseOrValue<string> | null,
+      newOwner?: PromiseOrValue<string> | null
+    ): OwnershipTransferredEventFilter;
 
-    "PlatformMembershipBpsSet(uint16)"(
-      bps?: null
-    ): PlatformMembershipBpsSetEventFilter;
-    PlatformMembershipBpsSet(bps?: null): PlatformMembershipBpsSetEventFilter;
+    "Paused(address)"(account?: null): PausedEventFilter;
+    Paused(account?: null): PausedEventFilter;
 
-    "PlatformMembershipDurationSet(uint256)"(
-      duration?: null
-    ): PlatformMembershipDurationSetEventFilter;
-    PlatformMembershipDurationSet(
-      duration?: null
-    ): PlatformMembershipDurationSetEventFilter;
+    "Prepay__Prepaid(uint256)"(supply?: null): Prepay__PrepaidEventFilter;
+    Prepay__Prepaid(supply?: null): Prepay__PrepaidEventFilter;
 
-    "PlatformMembershipFeeSet(uint256)"(
-      fee?: null
-    ): PlatformMembershipFeeSetEventFilter;
-    PlatformMembershipFeeSet(fee?: null): PlatformMembershipFeeSetEventFilter;
+    "SubscriptionUpdate(uint256,uint64)"(
+      tokenId?: PromiseOrValue<BigNumberish> | null,
+      expiration?: null
+    ): SubscriptionUpdateEventFilter;
+    SubscriptionUpdate(
+      tokenId?: PromiseOrValue<BigNumberish> | null,
+      expiration?: null
+    ): SubscriptionUpdateEventFilter;
 
-    "PlatformMembershipMinPriceSet(uint256)"(
-      minPrice?: null
-    ): PlatformMembershipMinPriceSetEventFilter;
-    PlatformMembershipMinPriceSet(
-      minPrice?: null
-    ): PlatformMembershipMinPriceSetEventFilter;
+    "Transfer(address,address,uint256)"(
+      from?: PromiseOrValue<string> | null,
+      to?: PromiseOrValue<string> | null,
+      tokenId?: PromiseOrValue<BigNumberish> | null
+    ): TransferEventFilter;
+    Transfer(
+      from?: PromiseOrValue<string> | null,
+      to?: PromiseOrValue<string> | null,
+      tokenId?: PromiseOrValue<BigNumberish> | null
+    ): TransferEventFilter;
 
-    "PlatformMembershipMintLimitSet(uint256)"(
-      limit?: null
-    ): PlatformMembershipMintLimitSetEventFilter;
-    PlatformMembershipMintLimitSet(
-      limit?: null
-    ): PlatformMembershipMintLimitSetEventFilter;
+    "Unbanned(address,uint256)"(
+      moderator?: PromiseOrValue<string> | null,
+      tokenId?: PromiseOrValue<BigNumberish> | null
+    ): UnbannedEventFilter;
+    Unbanned(
+      moderator?: PromiseOrValue<string> | null,
+      tokenId?: PromiseOrValue<BigNumberish> | null
+    ): UnbannedEventFilter;
 
-    "PrepayBase__Prepaid(address,uint256)"(
-      membership?: PromiseOrValue<string> | null,
-      supply?: null
-    ): PrepayBase__PrepaidEventFilter;
-    PrepayBase__Prepaid(
-      membership?: PromiseOrValue<string> | null,
-      supply?: null
-    ): PrepayBase__PrepaidEventFilter;
+    "Unpaused(address)"(account?: null): UnpausedEventFilter;
+    Unpaused(account?: null): UnpausedEventFilter;
   };
 
   estimateGas: {
@@ -379,13 +452,9 @@ export interface PrepayFacet extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    prepaidMembershipSupply(
-      account: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
+    prepaidMembershipSupply(overrides?: CallOverrides): Promise<BigNumber>;
 
     prepayMembership(
-      membership: PromiseOrValue<string>,
       supply: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
@@ -402,12 +471,10 @@ export interface PrepayFacet extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     prepaidMembershipSupply(
-      account: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     prepayMembership(
-      membership: PromiseOrValue<string>,
       supply: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;

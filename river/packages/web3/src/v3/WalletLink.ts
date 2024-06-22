@@ -5,6 +5,8 @@ import { arrayify } from 'ethers/lib/utils'
 import { WalletAlreadyLinkedError, WalletNotLinkedError } from '../error-types'
 import { Address } from '../ContractTypes'
 
+export const INVALID_ADDRESS = '0x0000000000000000000000000000000000000000'
+
 export class WalletLink {
     private readonly walletLinkShim: IWalletLinkShim
     public address: Address

@@ -36,6 +36,7 @@ import {DeployRoles} from "contracts/scripts/deployments/facets/DeployRoles.s.so
 import {DeployChannels} from "contracts/scripts/deployments/facets/DeployChannels.s.sol";
 import {DeployTokenPausable} from "contracts/scripts/deployments/facets/DeployTokenPausable.s.sol";
 import {DeployMembershipReferral} from "contracts/scripts/deployments/facets/DeployMembershipReferral.s.sol";
+import {DeployPrepayFacet} from "contracts/scripts/deployments/facets/DeployPrepayFacet.s.sol";
 import {DeployMultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.sol";
 
 contract DeploySpace is DiamondDeployer {
@@ -64,6 +65,7 @@ contract DeploySpace is DiamondDeployer {
   DeployTokenPausable tokenPausableHelper = new DeployTokenPausable();
   DeployMembershipReferral membershipReferralHelper =
     new DeployMembershipReferral();
+  DeployPrepayFacet prepayHelper = new DeployPrepayFacet();
   DeployMultiInit deployMultiInit = new DeployMultiInit();
 
   ERC721AHelper erc721aHelper = new ERC721AHelper();
@@ -84,6 +86,7 @@ contract DeploySpace is DiamondDeployer {
   address membershipMetadata;
   address entitlementDataQueryable;
   address ownablePending;
+  address prepay;
   address multiInit;
 
   function versionName() public pure override returns (string memory) {
@@ -108,6 +111,7 @@ contract DeploySpace is DiamondDeployer {
     channels = channelsHelper.deploy();
     tokenPausable = tokenPausableHelper.deploy();
     membershipReferral = membershipReferralHelper.deploy();
+    prepay = prepayHelper.deploy();
     multiInit = deployMultiInit.deploy();
 
     membershipHelper.addSelectors(erc721aHelper.selectors());
@@ -164,6 +168,7 @@ contract DeploySpace is DiamondDeployer {
     addCut(
       ownablePendingHelper.makeCut(ownablePending, IDiamond.FacetCutAction.Add)
     );
+    addCut(prepayHelper.makeCut(prepay, IDiamond.FacetCutAction.Add));
 
     addInit(
       ownablePending,

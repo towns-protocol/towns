@@ -19,7 +19,7 @@ import {
 
 // TODO: this test uses createTestSpaceGatedByTownNfts. skipping for now b/c createTestSpaceGatedByTownNfts needs more xchain work
 // https://linear.app/hnt-labs/issue/HNT-5149/fix-channelsettingstest-and-joinchanneltest
-describe.skip('channel settings', () => {
+describe('channel settings', () => {
     test('get channel settings', async () => {
         /** Arrange */
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
@@ -96,12 +96,12 @@ describe.skip('channel settings', () => {
         )) as Address
 
         for (const role of channelSettings.roles) {
-            if (role.name === 'Member') {
+            if (role.name === 'Minter') {
                 assertRole(role, {
-                    roleId: 3, // dummy
-                    name: 'Member',
+                    roleId: 0, // dummy
+                    name: 'Minter',
                     permissions: memberPermissions,
-                    users: [EVERYONE_ADDRESS],
+                    users: [],
                     ruleData: createOperationsTree([
                         {
                             address: membershipTokenAddress,
@@ -109,6 +109,14 @@ describe.skip('channel settings', () => {
                             type: CheckOperationType.ERC721,
                         },
                     ]),
+                })
+            } else if (role.name === 'Member') {
+                assertRole(role, {
+                    roleId: 1, // dummy
+                    name: 'Member',
+                    permissions: memberPermissions,
+                    users: [EVERYONE_ADDRESS],
+                    ruleData: NoopRuleData,
                 })
             } else if (role.name === moderatorRole.name) {
                 assertRole(role, moderatorRole)

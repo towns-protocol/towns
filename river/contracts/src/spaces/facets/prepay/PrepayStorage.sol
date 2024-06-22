@@ -13,7 +13,7 @@ library PrepayStorage {
     0x097b4f25b64e012d0cf55f67e9b34fe5d57f15b11b95baa4ddd136b424967c00;
 
   struct Layout {
-    mapping(address => uint256) supplyByAddress;
+    uint256 supply;
   }
 
   function layout() internal pure returns (Layout storage l) {

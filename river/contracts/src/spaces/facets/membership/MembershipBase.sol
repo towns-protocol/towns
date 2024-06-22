@@ -5,7 +5,7 @@ pragma solidity ^0.8.23;
 import {IMembershipBase} from "./IMembership.sol";
 import {IPlatformRequirements} from "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {IMembershipPricing} from "./pricing/IMembershipPricing.sol";
-import {IPrepay} from "contracts/src/factory/facets/prepay/IPrepay.sol";
+import {IPrepay} from "contracts/src/spaces/facets/prepay/IPrepay.sol";
 import {IPricingModules} from "contracts/src/factory/facets/architect/pricing/IPricingModules.sol";
 // libraries
 import {MembershipStorage} from "./MembershipStorage.sol";
@@ -140,15 +140,6 @@ abstract contract MembershipBase is IMembershipBase {
 
     // get free allocation
     uint256 freeAllocation = _getMembershipFreeAllocation();
-
-    // if the free allocation is greater than the total supply, return 0
-    if (freeAllocation > totalSupply) return 0;
-
-    // if the total supply is greater than the free allocation, but you have a prepaid balance return 0
-    if (
-      IPrepay(ds.spaceFactory).prepaidMembershipSupply(address(this)) >
-      totalSupply
-    ) return 0;
 
     if (ds.pricingModule != address(0))
       return

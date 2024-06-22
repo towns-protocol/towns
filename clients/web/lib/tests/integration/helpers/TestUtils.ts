@@ -14,6 +14,9 @@ import {
     MembershipStruct,
     getDynamicPricingModule,
     getFixedPricingModule,
+    createOperationsTree,
+    getTestGatingNftAddress,
+    CheckOperationType,
 } from '@river-build/web3'
 import { makeRiverConfig } from '@river-build/sdk'
 
@@ -109,9 +112,7 @@ export async function createTestSpaceGatedByTownsNfts(
         throw new Error('client.walletAddress is undefined')
     }
 
-    // const testGatingNftAddress = await getTestGatingNftAddress(client.chainId)
     const dynamicPricingModule = await getDynamicPricingModule(client.spaceDapp)
-
     const membershipInfo: IArchitectBase.MembershipStruct = {
         settings: {
             name: 'Member',
@@ -125,21 +126,16 @@ export async function createTestSpaceGatedByTownsNfts(
             pricingModule: dynamicPricingModule.module,
         },
         permissions: rolePermissions,
-        // TODO: THIS SHOULD BE USED ONCE THE XCHAIN WORK IS DONE
-        // requirements: {
-        //     everyone: true,
-        //     users: [],
-        //     ruleData: createOperationsTree([
-        //         {
-        //             address: testGatingNftAddress,
-        //             chainId: BigInt(client.chainId),
-        //         },
-        //     ]),
-        // },
         requirements: {
-            everyone: true,
+            everyone: false,
             users: [],
-            ruleData: NoopRuleData,
+            ruleData: createOperationsTree([
+                {
+                    address: await getTestGatingNftAddress(client.opts.baseChainId),
+                    chainId: BigInt(client.opts.baseChainId),
+                    type: CheckOperationType.ERC721,
+                },
+            ]),
         },
     }
     if (!createSpaceInfo) {

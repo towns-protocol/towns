@@ -1,5 +1,6 @@
 {
     "name": "@river-build/encryption",
+    "version": "0.0.1",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",

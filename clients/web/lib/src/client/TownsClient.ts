@@ -804,47 +804,32 @@ export class TownsClient
         user: string,
         permission: Permission,
     ): Promise<boolean> {
-        // special handling for xchain rule entitlements on permission JoinSpace
-        if (permission === Permission.JoinSpace) {
-            return this.isEntitledToJoinSpace(spaceId, user)
-        }
-
-        const rootKeyPromise = this.isWalletEntitled(
-            spaceId,
-            channelId,
-            user,
-            permission,
-            `rootKey:${user}`,
-        ).then((result) => {
-            if (!result) {
-                throw new Error('not entitled')
-            } else {
-                return result
+        let isEntitled = false
+        if (channelId && spaceId) {
+            isEntitled = await this.spaceDapp.isEntitledToChannel(
+                spaceId,
+                channelId,
+                user,
+                permission,
+                await this.getSupportedXChainRpcUrls(),
+            )
+        } else if (spaceId) {
+            if (permission === Permission.JoinSpace) {
+                return await this.isEntitledToJoinSpace(spaceId, user)
             }
+            isEntitled = await this.spaceDapp.isEntitledToSpace(spaceId, user, permission)
+        } else {
+            // TODO: Implement entitlement checks for DMs (channels without a space)
+            // https://linear.app/hnt-labs/issue/HNT-3112/implement-entitlement-checks
+            isEntitled = true
+        }
+        this.log(`[isEntitled] is user entitled for channel and space for permission`, isEntitled, {
+            user,
+            spaceId: spaceId,
+            channelId: channelId,
+            permission: permission,
         })
-
-        const walletsPromise = this.getLinkedWallets(user).then((wallets) =>
-            Promise.any(
-                wallets.map((wallet) =>
-                    this.isWalletEntitled(
-                        spaceId,
-                        channelId,
-                        wallet,
-                        permission,
-                        `wallet:${wallet}`,
-                    ).then((result) => {
-                        if (!result) {
-                            throw new Error('not entitled')
-                        } else {
-                            return result
-                        }
-                    }),
-                ),
-            ),
-        )
-        const allPromises = [rootKeyPromise, walletsPromise]
-
-        return Promise.any(allPromises).catch(() => false)
+        return isEntitled
     }
 
     // this is eventually going to be read from river
@@ -915,7 +900,6 @@ export class TownsClient
         channelId: string | undefined,
         wallet: string,
         permission: Permission,
-        subTag: string,
     ): Promise<boolean> {
         let isEntitled = false
         if (channelId && spaceId) {
@@ -924,10 +908,11 @@ export class TownsClient
                 channelId,
                 wallet,
                 permission,
+                await this.getSupportedXChainRpcUrls(),
             )
         } else if (spaceId) {
             if (permission === Permission.JoinSpace) {
-                throw new Error('use isEntitledToJoinSpace for Permission.JoinSpace')
+                return this.isEntitledToJoinSpace(spaceId, wallet)
             }
             isEntitled = await this.spaceDapp.isEntitledToSpace(spaceId, wallet, permission)
         } else {
@@ -935,16 +920,12 @@ export class TownsClient
             // https://linear.app/hnt-labs/issue/HNT-3112/implement-entitlement-checks
             isEntitled = true
         }
-        this.log(
-            `[isEntitled] [${subTag}] is user entitlted for channel and space for permission`,
-            isEntitled,
-            {
-                user: wallet,
-                spaceId: spaceId,
-                channelId: channelId,
-                permission: permission,
-            },
-        )
+        this.log(`[isEntitled] is user entitled for channel and space for permission`, isEntitled, {
+            user: wallet,
+            spaceId: spaceId,
+            channelId: channelId,
+            permission: permission,
+        })
         return isEntitled
     }
 
@@ -2138,7 +2119,6 @@ export class TownsClient
         } catch (err: any) {
             const parsedError = walletLink.parseError(err)
             error = parsedError
-            console.error('linkEOAToRootKey error', error)
         }
         continueStoreTx({
             hashOrUserOpHash: getTransactionHashOrUserOpHash(transaction),
