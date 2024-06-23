@@ -19,6 +19,7 @@ import { CopySpaceLink } from '@components/CopySpaceLink/CopySpaceLink'
 import { OpenInEtherscan } from '@components/Tooltips/OpenInEtherscan'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { baseScanUrl } from '@components/Web3/utils'
+import { useDevice } from 'hooks/useDevice'
 import * as styles from './SpaceSideBar.css'
 
 export const SpaceSideBarHeader = (props: {
@@ -70,6 +71,7 @@ export const SpaceSideBarHeader = (props: {
 
     const size = useSizeContext()
     const isSmall = size.lessThan(200)
+    const { isReduceMotion } = useDevice()
 
     return (
         <>
@@ -115,7 +117,7 @@ export const SpaceSideBarHeader = (props: {
             >
                 {space ? (
                     <InteractiveSpaceIcon
-                        key={space.id}
+                        key={!isReduceMotion ? space.id : undefined}
                         size="sm"
                         spaceId={space.id}
                         address={spaceInfo?.address}

@@ -156,7 +156,7 @@ export const InteractiveTownsToken = (props: Props) => {
                 {
                     ['--tk-h']: 1,
 
-                    ['--tk-mint']: 1 - 0,
+                    ['--tk-mint']: 1,
 
                     ['--tk-rad']: 1,
                     ['--tk-rad-abs']: 1,

@@ -22,7 +22,7 @@ import { useSortedChannels } from 'hooks/useSortedChannels'
 import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'
 import { ReloadPrompt } from '@components/ReloadPrompt/ReloadPrompt'
 import { env } from 'utils'
-import { useDevice } from 'hooks/useDevice'
+import { isReduceMotion, useDevice } from 'hooks/useDevice'
 import { useUnseenChannelIds } from 'hooks/useUnseenChannelIdsCount'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { OffscreenMarker, OffscreenPill } from '@components/OffscreenPill/OffscreenPill'
@@ -116,7 +116,7 @@ export const SpaceSideBar = (props: Props) => {
 
     const itemRenderer = useCallback(
         (u: (typeof unreadChannels)[0], isUnreadSection?: boolean) => {
-            const key = `${u.id}`
+            const key = `${u.label ?? u.id}`
             return (
                 <SpaceSideBarListItem key={key}>
                     <OffscreenMarker id={key} containerMarginTop={HEADER_MARGIN} />
@@ -173,114 +173,122 @@ export const SpaceSideBar = (props: Props) => {
                         {space.isLoadingChannels ? (
                             <SidebarLoadingAnimation />
                         ) : (
-                            <LayoutGroup>
-                                {/* threads */}
-                                <SpaceSideBarListItem key="threads">
-                                    <OffscreenMarker
-                                        id="threads"
-                                        containerMarginTop={HEADER_MARGIN}
-                                    />
-                                    <ActionNavItem
-                                        highlight={unreadThreadsCount > 0}
-                                        icon="threads"
-                                        link={`/${PATHS.SPACES}/${space.id}/threads`}
-                                        id="threads"
-                                        label="Threads"
-                                        badge={
-                                            unreadThreadMentions > 0 && (
-                                                <Badge value={unreadThreadMentions} />
-                                            )
-                                        }
-                                        minHeight="x5"
-                                        key="threads"
-                                    />
-                                </SpaceSideBarListItem>
-
-                                {/* mentions */}
-                                <SpaceSideBarListItem key="mentions">
-                                    <ActionNavItem
-                                        icon="at"
-                                        id="mentions"
-                                        label="Mentions"
-                                        link={`/${PATHS.SPACES}/${space.id}/mentions`}
-                                        minHeight="x5"
-                                        key="mentions"
-                                    />
-                                </SpaceSideBarListItem>
-
-                                <SpaceSideBarSectionHeader
-                                    label="Unreads"
-                                    key="unreads"
-                                    hidden={unreadChannels.length === 0}
-                                />
-                                <OffscreenMarker id="unreads" containerMarginTop={HEADER_MARGIN} />
-                                {unreadChannels.map((channel) => itemRenderer(channel, true))}
-
-                                <SpaceSideBarSectionHeader
-                                    label="Favorites"
-                                    key="favorites"
-                                    hidden={favoriteChannels.length === 0}
-                                />
-                                {favoriteChannels.map((channel) => itemRenderer(channel))}
-
-                                <SpaceSideBarSectionHeader
-                                    label="Channels"
-                                    badgeValue={unseenChannelIds.size}
-                                    headerContent={
-                                        <Stack horizontal alignItems="center">
-                                            <IconButton
-                                                icon={
-                                                    unseenChannelIds.size > 0
-                                                        ? 'searchBadged'
-                                                        : 'search'
-                                                }
-                                                tooltip="Browse channels"
-                                                tooltipOptions={{ immediate: true }}
-                                                onClick={onShowBrowseChannels}
-                                            />
-
-                                            {canCreateChannel && (
-                                                <IconButton
-                                                    icon="plus"
-                                                    tooltip="New channel"
-                                                    tooltipOptions={{ immediate: true }}
-                                                    onClick={onShowCreateChannel}
-                                                />
-                                            )}
-                                        </Stack>
-                                    }
-                                    key="channels"
-                                />
-
-                                {readChannels.map((channel) => itemRenderer(channel))}
-
-                                {canCreateChannel && (
-                                    <SpaceSideBarListItem key="create-channel">
+                            <>
+                                <MenuGroup>
+                                    {/* threads */}
+                                    <SpaceSideBarListItem key="threads">
+                                        <OffscreenMarker
+                                            id="threads"
+                                            containerMarginTop={HEADER_MARGIN}
+                                        />
                                         <ActionNavItem
-                                            icon="plus"
-                                            id="newChannel"
-                                            label="Create channel"
-                                            onClick={onShowCreateChannel}
+                                            highlight={unreadThreadsCount > 0}
+                                            icon="threads"
+                                            link={`/${PATHS.SPACES}/${space.id}/threads`}
+                                            id="threads"
+                                            label="Threads"
+                                            badge={
+                                                unreadThreadMentions > 0 && (
+                                                    <Badge value={unreadThreadMentions} />
+                                                )
+                                            }
+                                            minHeight="x5"
+                                            key="threads"
                                         />
                                     </SpaceSideBarListItem>
-                                )}
 
-                                <SpaceSideBarSectionHeader
-                                    label="Direct Messages"
-                                    headerContent={
-                                        <IconButton
-                                            size="square_sm"
-                                            icon="compose"
-                                            color="gray2"
-                                            cursor="pointer"
-                                            tooltip="New message"
-                                            onClick={onDisplayCreate}
+                                    {/* mentions */}
+                                    <SpaceSideBarListItem key="mentions">
+                                        <ActionNavItem
+                                            icon="at"
+                                            id="mentions"
+                                            label="Mentions"
+                                            link={`/${PATHS.SPACES}/${space.id}/mentions`}
+                                            minHeight="x5"
+                                            key="mentions"
                                         />
-                                    }
-                                    key="direct-messages"
-                                />
-                                {readDms.map((channel) => itemRenderer(channel))}
-                            </LayoutGroup>
+                                    </SpaceSideBarListItem>
+                                </MenuGroup>
+                                <MenuGroup>
+                                    <SpaceSideBarSectionHeader
+                                        label="Unreads"
+                                        key="unreads"
+                                        hidden={unreadChannels.length === 0}
+                                    />
+                                    <OffscreenMarker
+                                        id="unreads"
+                                        containerMarginTop={HEADER_MARGIN}
+                                    />
+                                    {unreadChannels.map((channel) => itemRenderer(channel, true))}
+                                </MenuGroup>
+                                <MenuGroup>
+                                    <SpaceSideBarSectionHeader
+                                        label="Favorites"
+                                        key="favorites"
+                                        hidden={favoriteChannels.length === 0}
+                                    />
+                                    {favoriteChannels.map((channel) => itemRenderer(channel))}
+
+                                    <SpaceSideBarSectionHeader
+                                        label="Channels"
+                                        badgeValue={unseenChannelIds.size}
+                                        headerContent={
+                                            <Stack horizontal alignItems="center">
+                                                <IconButton
+                                                    icon={
+                                                        unseenChannelIds.size > 0
+                                                            ? 'searchBadged'
+                                                            : 'search'
+                                                    }
+                                                    tooltip="Browse channels"
+                                                    tooltipOptions={{ immediate: true }}
+                                                    onClick={onShowBrowseChannels}
+                                                />
+
+                                                {canCreateChannel && (
+                                                    <IconButton
+                                                        icon="plus"
+                                                        tooltip="New channel"
+                                                        tooltipOptions={{ immediate: true }}
+                                                        onClick={onShowCreateChannel}
+                                                    />
+                                                )}
+                                            </Stack>
+                                        }
+                                        key="channels"
+                                    />
+                                </MenuGroup>
+                                <MenuGroup>
+                                    {readChannels.map((channel) => itemRenderer(channel))}
+
+                                    {canCreateChannel && (
+                                        <SpaceSideBarListItem key="create-channel">
+                                            <ActionNavItem
+                                                icon="plus"
+                                                id="newChannel"
+                                                label="Create channel"
+                                                onClick={onShowCreateChannel}
+                                            />
+                                        </SpaceSideBarListItem>
+                                    )}
+
+                                    <SpaceSideBarSectionHeader
+                                        label="Direct Messages"
+                                        headerContent={
+                                            <IconButton
+                                                size="square_sm"
+                                                icon="compose"
+                                                color="gray2"
+                                                cursor="pointer"
+                                                tooltip="New message"
+                                                onClick={onDisplayCreate}
+                                            />
+                                        }
+                                        key="direct-messages"
+                                    />
+                                    {readDms.map((channel) => itemRenderer(channel))}
+                                </MenuGroup>
+                            </>
                         )}
                     </Stack>
 
@@ -313,15 +321,32 @@ export const SpaceSideBar = (props: Props) => {
         </>
     )
 }
+const REDUCE_MOTION = isReduceMotion()
+
+const MenuGroup = ({ children }: { children: React.ReactNode }) =>
+    REDUCE_MOTION ? children : <LayoutGroup>{children}</LayoutGroup>
 
 const SpaceSideBarListItem = ({ children }: { children: React.ReactNode }) => {
-    return (
+    return REDUCE_MOTION ? (
+        children
+    ) : (
         <MotionBox
-            initial={{ opacity: 0.5 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3, ease: 'circOut' }}
+            initial={{ opacity: 0 }}
+            animate={{
+                opacity: 1,
+                transition: {
+                    opacity: {
+                        delay: 0.15,
+                        duration: 0.25,
+                        ease: 'easeIn',
+                    },
+                },
+            }}
             exit={{ opacity: 0 }}
             layout="position"
+            transition={{
+                layout: { duration: 0.4, ease: 'circOut' },
+            }}
         >
             {children}
         </MotionBox>

@@ -181,8 +181,10 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
 
     // - - - - - - - - - - - - - - - - - - - collect read channels sorted by name
 
+    const mRef = useRef<ChannelMenuItem[]>([])
+
     const readChannels = useMemo(() => {
-        return [
+        const channels = [
             ...channelItems.filter(
                 (c) =>
                     !c.unread &&
@@ -192,6 +194,10 @@ export const useSortedChannels = ({ spaceId, currentRouteId }: Params) => {
                     !c.favorite,
             ),
         ]
+        if (!isEqual(channels, mRef.current)) {
+            mRef.current = channels
+        }
+        return mRef.current
     }, [channelItems, joinedChannels, persistUnreadId])
 
     const favoriteChannels = useMemo(() => {

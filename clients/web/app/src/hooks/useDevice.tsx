@@ -36,11 +36,18 @@ export function getBrowserName() {
     return browser.name
 }
 
+export function isReduceMotion() {
+    return !!window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+
+const device = {
+    isTouch: isTouch(),
+    isIOS: isIOS,
+    isAndroid: isAndroid,
+    isPWA: isPWA(),
+    isReduceMotion: isReduceMotion(),
+}
+
 export function useDevice() {
-    return {
-        isTouch: isTouch(),
-        isIOS: isIOS,
-        isAndroid: isAndroid,
-        isPWA: isPWA(),
-    }
+    return device
 }

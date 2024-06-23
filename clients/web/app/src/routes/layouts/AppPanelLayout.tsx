@@ -63,7 +63,7 @@ export const AppPanelLayout = () => {
                         {isMessagesRoute ? (
                             <DirectMessagesPanel />
                         ) : space ? (
-                            <SpaceSideBar space={space} key={space.id} />
+                            <SpaceSideBar space={space} />
                         ) : (
                             <SpaceSidebarLoadingPlaceholder />
                         )}

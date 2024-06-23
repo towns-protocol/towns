@@ -26,8 +26,8 @@ export const transformContainer = style([
         transformOrigin: `center center`,
         transform: `
             translateZ(calc((1 - var(--tk-h,1)) * -10px))
-            rotateY(calc(var(--p-d,1) * 0.10 * -3.14rad * var(--tk-x, 0)))
-            rotateX(calc(var(--p-d, 1) * 0.10 * 3.14rad * var(--tk-y, 0)))
+            rotateY(calc(var(--p-d,1) * (0.055) * -3.14rad * var(--tk-x, 0)))
+            rotateX(calc(var(--p-d,1) * (0.055) * 3.14rad * var(--tk-y, 0)))
         `,
     },
 ])
@@ -44,8 +44,8 @@ export const addressContainer = style([
         transformOrigin: `center center`,
         transform: `
             translateZ(calc((-1 + var(--tk-h,1)) * 5px))
-            rotateY(calc(var(--p-d, 1) * 0.1 * -3.14rad * var(--tk-x, 0)))
-            rotateX(calc(var(--p-d, 1) * 0.1 * 3.14rad * var(--tk-y, 0)))
+            rotateY(calc(var(--p-d, 1) * 0.055 * -3.14rad * var(--tk-x, 0)))
+            rotateX(calc(var(--p-d, 1) * 0.055 * 3.14rad * var(--tk-y, 0)))
         `,
     },
 ])
