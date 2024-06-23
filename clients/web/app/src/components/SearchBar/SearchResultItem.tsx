@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Channel, DMChannelIdentifier, useMyProfile, useTownsClient } from 'use-towns-client'
+import { Channel, DMChannelIdentifier, useMyProfile } from 'use-towns-client'
 import { ThreadStatsMap } from 'use-towns-client/dist/store/use-timeline-store'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { Box, BoxProps, Icon, Paragraph } from '@ui'
@@ -237,26 +237,15 @@ const MessageResultItem = (props: {
 const useCreateUserDM = () => {
     const navigate = useNavigate()
     const { createLink } = useCreateLink()
-
-    const { createDMChannel } = useTownsClient()
-
     const createDirectMessage = useCallback(
         async (userId: string, dmChannelIds: DMChannelIdentifier[]) => {
-            let messageId = dmChannelIds.find(
-                (dm) => dm.userIds.length === 1 && dm.userIds[0] === userId,
-            )?.id
+            const link = createLink({ messageId: 'new' })
 
-            if (!messageId) {
-                messageId = await createDMChannel(userId)
-            }
-
-            const link = createLink({ messageId: messageId })
-
-            if (messageId && link) {
-                navigate(link)
+            if (link && userId) {
+                navigate(`${link}?to=${userId}`)
             }
         },
-        [createDMChannel, createLink, navigate],
+        [createLink, navigate],
     )
 
     return { createDirectMessage }

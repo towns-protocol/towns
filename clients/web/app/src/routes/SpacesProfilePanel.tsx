@@ -123,9 +123,9 @@ const SpaceProfileWithoutAuth = () => {
         if (!userId) {
             return
         }
-        const link = createLink({ draftMessageUserId: userId })
+        const link = createLink({ messageId: 'new' })
         if (link) {
-            navigate(link)
+            navigate(`${link}?to=${userId}`)
         }
     }, [createLink, navigate, userId])
 

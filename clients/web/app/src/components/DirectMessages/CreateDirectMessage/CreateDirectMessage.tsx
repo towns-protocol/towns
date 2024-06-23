@@ -1,6 +1,6 @@
 import { AnimatePresence } from 'framer-motion'
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { Outlet, useNavigate, useParams } from 'react-router'
+import { Outlet, useNavigate } from 'react-router'
 import {
     ChannelContextProvider,
     DMChannelContextUserLookupProvider,
@@ -17,9 +17,9 @@ import { ZLayerBox } from '@components/ZLayer/ZLayerContext'
 import { Box, Button, Icon, MotionBox, Paragraph, Stack, Text } from '@ui'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { useDevice } from 'hooks/useDevice'
-import { SpacesChannelComponent } from 'routes/SpacesChannel'
 import { PanelContext, PanelStack } from '@components/Panel/PanelContext'
 import { useAnalytics } from 'hooks/useAnalytics'
+import { SpacesChannelComponent } from 'routes/SpacesChannel'
 import { ChannelPlaceholder } from './ChannelPlaceholder'
 import { MessageDropDown } from './MessageDropDown'
 import { UserOption, UserPillSelector } from './UserPillSelector'
@@ -53,7 +53,7 @@ export const CreateDirectMessage = (props: Props) => {
     const { onDirectMessageCreated } = props
 
     const { isTouch } = useDevice()
-    const { noStreamUserId } = useParams()
+
     const { analytics } = useAnalytics()
     const navigate = useNavigate()
     const { createLink } = useCreateLink()
@@ -64,6 +64,10 @@ export const CreateDirectMessage = (props: Props) => {
     const [selectedUsers, setSelectedIds] = useState(() => new Set<string>())
     const selectedUserArray = useMemo(() => Array.from(selectedUsers), [selectedUsers])
     const numSelectedUsers = selectedUserArray.length
+
+    const [searchParams] = useSearchParams()
+    const noStreamUserId = searchParams.get('to')
+
     const isDraft = !!noStreamUserId
     const { inclusiveMatches, matchingDM, matchingGDM } = useMatchingMessages({
         selectedUserArray,

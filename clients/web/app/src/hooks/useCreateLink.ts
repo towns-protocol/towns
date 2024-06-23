@@ -120,10 +120,6 @@ const messagesThreadPaths: Path[] = [
         path: `/${PATHS.SPACES}/:spaceId/*`,
         replace: `/${PATHS.SPACES}/:spaceId/${PATHS.MESSAGES}/:messageId`,
     },
-    {
-        path: `/${PATHS.SPACES}/:spaceId/*`,
-        replace: `/${PATHS.SPACES}/:spaceId/${PATHS.MESSAGES}/new/draft/:draftMessageUserId`,
-    },
 ]
 
 const threadsRoutePaths: Path[] = [
@@ -228,11 +224,6 @@ const linkParams = {
             route: 'mentions',
         },
     },
-    draftMessage: {
-        params: {
-            draftMessageUserId: 'draftMessageUserId' as string | undefined,
-        },
-    },
 } as const
 
 export type LinkParams = (typeof linkParams)[keyof typeof linkParams]['params']
@@ -258,9 +249,6 @@ const getSearchPathsForParams = (linkParams: LinkParams) => {
     }
     if ('messageId' in linkParams) {
         return messagesThreadPaths
-    }
-    if ('draftMessageUserId' in linkParams) {
-        return [messagesThreadPaths[2]]
     }
     if ('profileId' in linkParams) {
         return profilePaths.map((path) => ({

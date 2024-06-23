@@ -12,6 +12,7 @@ type Params = {
     fromDraft?: boolean
     onDirectMessageCreated?: () => void
 }
+const PREVENT_SUBMIT = false
 
 export const useCreateDirectMessage = (params: Params) => {
     const { selectedIdsArray, matchingChannel, onDirectMessageCreated, fromDraft = false } = params
@@ -112,5 +113,10 @@ export const useCreateDirectMessage = (params: Params) => {
         createDMChannel,
         createGDMChannel,
     ])
-    return { onSubmit, isSubmitting }
+
+    const preventSubmit = useCallback(() => {
+        console.warn('create dm/gm: prevent submit')
+    }, [])
+
+    return { onSubmit: PREVENT_SUBMIT ? preventSubmit : onSubmit, isSubmitting }
 }
