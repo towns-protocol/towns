@@ -6,9 +6,9 @@
         "lint": "eslint .",
         "lint:fix": "yarn lint --fix",
         "test:exclude:limits": "vitest run --coverage --exclude **/**/userops.limits.test.ts",
+        "test:userops:paymaster-limits": "DOTENV_CONFIG_PATH=.env.test vitest limits run",
         "test:userops:privy-wallet": "DOTENV_CONFIG_PATH=.env.test PRIVY_WALLET_PRIVATE_KEY_1=09892cb15045f5989457e72dd4c7321f29d1dcb93b9f90d78da6fc433852a367 PRIVY_WALLET_PRIVATE_KEY_2=757fb31b53bdf75d16ce0342c54047d1a848a66ba3b0d656b883208a88460ee3 yarn test:exclude:limits",
-        "test:userops:random-wallet": "DOTENV_CONFIG_PATH=.env.test yarn test:exclude:limits",
-        "test:userops:paymaster-limits": "DOTENV_CONFIG_PATH=.env.test vitest limits run"
+        "test:userops:random-wallet": "DOTENV_CONFIG_PATH=.env.test yarn test:exclude:limits"
     },
     "dependencies": {
         "@river-build/web3": "workspace:^",

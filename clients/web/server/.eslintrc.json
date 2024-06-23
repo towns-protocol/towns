@@ -1,0 +1,48 @@
+{
+    "root": true,
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+        "ecmaVersion": 2021,
+        "project": ["./tsconfig.json"],
+        "sourceType": "module"
+    },
+    "extends": [
+        "eslint:recommended",
+        "plugin:@typescript-eslint/recommended",
+        "plugin:@typescript-eslint/recommended-requiring-type-checking",
+        "plugin:prettier/recommended"
+    ],
+    "plugins": ["@typescript-eslint", "prettier"],
+    "env": {
+        "node": true,
+        "es2021": true
+    },
+    "rules": {
+        "curly": "warn",
+        "@typescript-eslint/no-floating-promises": "error",
+        "@typescript-eslint/no-base-to-string": "error",
+        "@typescript-eslint/no-unused-vars": [
+            "error",
+            {
+                "argsIgnorePattern": "^_",
+                "varsIgnorePattern": "^_"
+            }
+        ],
+        "prettier/prettier": "error",
+        "no-restricted-imports": [
+            "error",
+            {
+                "patterns": [],
+                "paths": []
+            }
+        ]
+    },
+    "overrides": [
+        {
+            "files": ["*.ts", "*.tsx"],
+            "rules": {
+                "@typescript-eslint/explicit-module-boundary-types": "off"
+            }
+        }
+    ]
+}

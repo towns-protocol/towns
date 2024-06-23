@@ -1,0 +1,35 @@
+{
+    "name": "server",
+    "type": "module",
+    "main": "dist/server.js",
+    "scripts": {
+        "build": "yarn ./build.js",
+        "coverage": "vitest run --coverage",
+        "lint": "eslint . --ext .ts",
+        "start": "nodemon",
+        "test": "vitest"
+    },
+    "dependencies": {
+        "@fastify/compress": "^5.0.0",
+        "@fastify/cookie": "^7.0.0",
+        "@fastify/cors": "^8.0.0",
+        "@fastify/formbody": "^7.0.0",
+        "@fastify/helmet": "^10.0.0",
+        "@fastify/jwt": "^7.0.0",
+        "@fastify/mongodb": "^6.0.0",
+        "@fastify/multipart": "^7.0.0",
+        "@fastify/rate-limit": "^8.0.0",
+        "@fastify/sensible": "^5.0.0",
+        "@fastify/static": "^6.0.0",
+        "@fastify/view": "^9.1.0",
+        "@river-build/generated": "workspace:^",
+        "ejs": "^3.1.10",
+        "fastify": "^4.28.0",
+        "viem": "^1.18.2"
+    },
+    "devDependencies": {
+        "@types/ejs": "^3.1.5",
+        "esbuild": "^0.21.5",
+        "nodemon": "^3.1.4"
+    }
+}

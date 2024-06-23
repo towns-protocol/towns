@@ -1,9 +1,17 @@
 {
     "name": "on-chain-metrics-lambda",
-    "version": "1.0.0",
-    "type": "module",
     "description": "",
+    "version": "1.0.0",
+    "author": "",
+    "license": "ISC",
+    "type": "module",
     "main": "index.js",
+    "scripts": {
+        "build": "esbuild src/index.ts --sourcemap=inline --bundle --platform=node --target=node20 --format=cjs --outfile=dist/index.cjs",
+        "build-example": "esbuild src/example.ts --sourcemap=inline --bundle --platform=node --target=node20 --format=cjs --outfile=dist/example.cjs",
+        "dev": "yarn build-example && node ./dist/example.cjs",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
     "dependencies": {
         "@aws-sdk/client-secrets-manager": "3.460.0",
         "@datadog/datadog-api-client": "^1.22.0",
@@ -14,17 +22,9 @@
         "viem": "^1.18.2",
         "zod": "^3.21.4"
     },
-    "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
-        "build": "esbuild src/index.ts --sourcemap=inline --bundle --platform=node --target=node20 --format=cjs --outfile=dist/index.cjs",
-        "build-example": "esbuild src/example.ts --sourcemap=inline --bundle --platform=node --target=node20 --format=cjs --outfile=dist/example.cjs",
-        "dev": "yarn build-example && node ./dist/example.cjs"
-    },
-    "author": "",
-    "license": "ISC",
     "devDependencies": {
         "@types/aws-lambda": "^8.10.133",
-        "esbuild": "^0.20.0",
+        "esbuild": "^0.21.5",
         "prettier": "^2.8.8"
     }
 }

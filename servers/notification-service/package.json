@@ -7,21 +7,21 @@
     "type": "module",
     "scripts": {
         "build": "prisma generate && tsc",
+        "db:create-migration:local": "dotenv -e .env.local -- yarn prisma migrate dev --name",
         "db:generate": "prisma generate",
         "db:local": "yarn db:generate & yarn db:migrate:local",
         "db:migrate": "prisma migrate deploy",
         "db:migrate:local": "dotenv -e .env.local -- npx prisma migrate deploy",
-        "db:create-migration:local": "dotenv -e .env.local -- yarn prisma migrate dev --name",
         "db:studio": "dotenv -e .env.local -- yarn prisma studio",
         "dev": "yarn db:local && tsc --watch & yarn my-node --env-file .env.local --watch dist/server.js",
+        "lint": "eslint . --max-warnings=0",
+        "lint:fix": "yarn lint --fix",
         "my-jest": "NODE_ENV=test NODE_TLS_REJECT_UNAUTHORIZED=0 $(yarn bin jest) --config jest.config.ts",
         "my-node": "node --experimental-specifier-resolution=node --loader ts-node/esm",
         "start": "node --experimental-specifier-resolution=node --loader ts-node/esm dist/server.js",
         "start:local": "yarn my-node --env-file .env.local dist/server.js",
         "test": "yarn my-jest",
-        "watch": "tsc --watch",
-        "lint": "eslint . --max-warnings=0",
-        "lint:fix": "yarn lint --fix"
+        "watch": "tsc --watch"
     },
     "dependencies": {
         "@bufbuild/protobuf": "^1.9.0",

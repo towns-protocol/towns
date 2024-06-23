@@ -1,0 +1,7 @@
+{
+    "watch": ["src"],
+    "ignore": ["src/**/*.test.ts"],
+    "ext": "ts,mjs,js,json,graphql",
+    "exec": "node ./build.cjs && node dist/server.cjs",
+    "legacyWatch": true
+}

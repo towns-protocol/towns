@@ -13,9 +13,9 @@
         "prettier:check": "prettier --check .",
         "prettier:fix": "prettier --write .",
         "publish": "wrangler deploy --env $CF_ENV",
+        "tail:stage": "wrangler tail stackup-worker --env test-beta",
         "test": "yarn test:unit",
-        "test:unit": "yarn node --experimental-vm-modules $(yarn bin jest)",
-        "tail:stage": "wrangler tail stackup-worker --env test-beta"
+        "test:unit": "yarn node --experimental-vm-modules $(yarn bin jest)"
     },
     "dependencies": {
         "@river-build/generated": "workspace:^",

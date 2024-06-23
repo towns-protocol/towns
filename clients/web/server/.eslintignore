@@ -1,0 +1,6 @@
+node_modules
+dist
+coverage
+node_modules
+jest.*.ts
+build.cjs
