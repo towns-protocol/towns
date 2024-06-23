@@ -576,8 +576,8 @@ func (c *RiverRegistryContract) OnStreamEvent(
 	lastMiniblockUpdated func(ctx context.Context, event *contracts.StreamRegistryV1StreamLastMiniblockUpdated),
 	placementUpdated func(ctx context.Context, event *contracts.StreamRegistryV1StreamPlacementUpdated),
 ) error {
-	// TODO: modify ChainMonitor to accept block number in each subscription call
 	c.Blockchain.ChainMonitor.OnContractWithTopicsEvent(
+		startBlockNumInclusive,
 		c.Address,
 		c.StreamEventTopics,
 		func(ctx context.Context, log types.Log) {

@@ -120,6 +120,7 @@ func NewTransactionPoolWithPoliciesFromConfig(
 	riverClient BlockchainClient,
 	wallet *Wallet,
 	chainMonitor ChainMonitor,
+	initialBlockNumber BlockNumber,
 	metrics infra.MetricsFactory,
 ) (*transactionPool, error) {
 	if cfg.BlockTimeMs <= 0 {
@@ -141,7 +142,7 @@ func NewTransactionPoolWithPoliciesFromConfig(
 	)
 
 	return NewTransactionPoolWithPolicies(
-		ctx, riverClient, wallet, replacementPolicy, pricePolicy, chainMonitor, metrics)
+		ctx, riverClient, wallet, replacementPolicy, pricePolicy, chainMonitor, initialBlockNumber, metrics)
 }
 
 // NewTransactionPoolWithPolicies creates an in-memory transaction pool that tracks transactions that are submitted
@@ -156,6 +157,7 @@ func NewTransactionPoolWithPolicies(
 	replacePolicy TransactionPoolReplacePolicy,
 	pricePolicy TransactionPricePolicy,
 	chainMonitor ChainMonitor,
+	initialBlockNumber BlockNumber,
 	metrics infra.MetricsFactory,
 ) (*transactionPool, error) {
 	chainID, err := client.ChainID(ctx)
@@ -226,8 +228,10 @@ func NewTransactionPoolWithPolicies(
 		walletBalance:                walletBalance.With(curryLabels),
 	}
 
-	chainMonitor.OnBlock(txPool.OnBlock)
-	chainMonitor.OnHeader(txPool.OnHeader)
+	chainMonitor.OnHeader(func(ctx context.Context, head *types.Header) {
+		go txPool.CheckPendingTransactions(ctx, head)
+	})
+	chainMonitor.OnHeader(txPool.Balance)
 
 	return txPool, nil
 }
@@ -370,7 +374,7 @@ func (r *transactionPool) Submit(
 	return pendingTx, nil
 }
 
-func (r *transactionPool) OnHeader(ctx context.Context, _ *types.Header) {
+func (r *transactionPool) Balance(ctx context.Context, _ *types.Header) {
 	if time.Since(r.walletBalanceLastTimeChecked) < time.Minute {
 		return
 	}
@@ -386,14 +390,13 @@ func (r *transactionPool) OnHeader(ctx context.Context, _ *types.Header) {
 	r.walletBalanceLastTimeChecked = time.Now()
 }
 
-func (r *transactionPool) OnBlock(ctx context.Context, blockNumber BlockNumber) {
+func (r *transactionPool) CheckPendingTransactions(ctx context.Context, head *types.Header) {
 	log := dlog.FromCtx(ctx).With("chain", r.chainID)
 
-	r.mu.Lock()
-	// if !r.mu.TryLock() {
-	// 	log.Debug("unable to claim tx pool lock")
-	// 	return
-	// }
+	if !r.mu.TryLock() {
+		log.Debug("unable to claim tx pool lock")
+		return
+	}
 	defer r.mu.Unlock()
 
 	if r.firstPendingTx == nil {
@@ -456,17 +459,8 @@ func (r *transactionPool) OnBlock(ctx context.Context, blockNumber BlockNumber) 
 		}
 	}
 
-	var head *types.Header
 	// replace transactions that are eligible for it
 	for pendingTx := r.firstPendingTx; pendingTx != nil; pendingTx = pendingTx.next {
-		if head == nil {
-			// replace transactions that are eligible for it
-			head, err = r.client.HeaderByNumber(ctx, blockNumber.AsBigInt())
-			if err != nil {
-				log.Error("unable to retrieve chain head", "err", err)
-				return
-			}
-		}
 		if r.replacePolicy.Eligible(head, pendingTx.lastSubmit, pendingTx.tx) {
 			pendingTx.txOpts.GasPrice, pendingTx.txOpts.GasFeeCap, pendingTx.txOpts.GasTipCap = r.pricePolicy.Reprice(
 				head, pendingTx.tx)

@@ -286,6 +286,7 @@ func (cs *clientSimulator) Stop() {
 
 func (cs *clientSimulator) Start(ctx context.Context) {
 	cs.baseChain.ChainMonitor.OnContractWithTopicsEvent(
+		0,
 		cs.cfg.GetTestEntitlementContractAddress(),
 		[][]common.Hash{{cs.entitlementGatedABI.Events["EntitlementCheckResultPosted"].ID}},
 		func(ctx context.Context, event types.Log) {
@@ -298,6 +299,7 @@ func (cs *clientSimulator) Start(ctx context.Context) {
 		Info("check requested topics", "topics", cs.checkerABI.Events["EntitlementCheckRequested"].ID)
 
 	cs.baseChain.ChainMonitor.OnContractWithTopicsEvent(
+		0,
 		cs.cfg.GetEntitlementContractAddress(),
 		[][]common.Hash{{cs.checkerABI.Events["EntitlementCheckRequested"].ID}},
 		func(ctx context.Context, event types.Log) {

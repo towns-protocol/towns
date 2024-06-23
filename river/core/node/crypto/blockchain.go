@@ -2,15 +2,13 @@ package crypto
 
 import (
 	"context"
-	"math/big"
-	"time"
-
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/river-build/river/core/config"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/infra"
 	. "github.com/river-build/river/core/node/protocol"
+	"math/big"
 )
 
 // BlockchainClient is an interface that covers common functionality
@@ -120,17 +118,10 @@ func NewBlockchainWithClient(
 		ChainMonitor:    monitor,
 	}
 
-	go monitor.RunWithBlockPeriod(
-		ctx,
-		client,
-		initialBlockNum,
-		time.Duration(cfg.BlockTimeMs)*time.Millisecond,
-		metrics,
-	)
-
 	if wallet != nil {
 		bc.Wallet = wallet
-		bc.TxPool, err = NewTransactionPoolWithPoliciesFromConfig(ctx, cfg, bc.Client, wallet, bc.ChainMonitor, metrics)
+		bc.TxPool, err = NewTransactionPoolWithPoliciesFromConfig(
+			ctx, cfg, bc.Client, wallet, bc.ChainMonitor, initialBlockNum, metrics)
 		if err != nil {
 			return nil, err
 		}

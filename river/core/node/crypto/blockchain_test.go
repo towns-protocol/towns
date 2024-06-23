@@ -228,11 +228,11 @@ func TestBlockchainMultiMonitor(t *testing.T) {
 
 	// ensure that all chain monitor capture the node added event
 	deployer.ChainMonitor.OnContractWithTopicsEvent(
-		tc.RiverRegistryAddress, [][]common.Hash{{nodeAddedTopic}}, bindLogCallback)
+		0, tc.RiverRegistryAddress, [][]common.Hash{{nodeAddedTopic}}, bindLogCallback)
 	chain0.ChainMonitor.OnContractWithTopicsEvent(
-		tc.RiverRegistryAddress, [][]common.Hash{{nodeAddedTopic}}, bindLogCallback)
+		0, tc.RiverRegistryAddress, [][]common.Hash{{nodeAddedTopic}}, bindLogCallback)
 	chain1.ChainMonitor.OnContractWithTopicsEvent(
-		tc.RiverRegistryAddress, [][]common.Hash{{nodeAddedTopic}}, bindLogCallback)
+		0, tc.RiverRegistryAddress, [][]common.Hash{{nodeAddedTopic}}, bindLogCallback)
 
 	// register node that triggers the above registered callbacks
 	pendingTx, err := deployer.TxPool.Submit(ctx, "", func(opts *bind.TransactOpts) (*types.Transaction, error) {
