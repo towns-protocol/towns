@@ -195,10 +195,11 @@ function spaceInfoWithChannelsQueryConfig({
     }
 }
 
-export function useChannelMetadata(
-    spaceId: string | undefined,
-    channels: { id: string; updatedAtKey: string }[],
-) {
+export function useChannelMetadata(spaceChannels: {
+    spaceId: string | undefined
+    channels: { id: string; updatedAtKey: string }[]
+}) {
+    const { spaceId, channels } = spaceChannels
     const { baseProvider: provider, baseConfig: config, client } = useTownsContext()
     const spaceDapp = useSpaceDapp({ config, provider })
 
@@ -444,10 +445,15 @@ export function useSpaceRollup(streamId: string | undefined, fromTag: string | u
     const userStream = useCasablancaStream(casablancaClient?.userStreamId)
     const { setSpaceData } = useSpaceDataStore()
 
-    const [spaceChannels, setSpaceChannels] = useState<{ id: string; updatedAtKey: string }[]>(
-        mapSpaceChannels(stream),
-    )
-    const channelMetadata = useChannelMetadata(streamId, spaceChannels)
+    const [spaceChannels, setSpaceChannels] = useState<{
+        spaceId: string | undefined
+        channels: { id: string; updatedAtKey: string }[]
+    }>(() => ({
+        spaceId: stream?.streamId,
+        channels: mapSpaceChannels(stream),
+    }))
+
+    const channelMetadata = useChannelMetadata(spaceChannels)
 
     useEffect(() => {
         if (!stream || !casablancaClient || stream.view.contentKind !== 'spaceContent') {
@@ -456,10 +462,13 @@ export function useSpaceRollup(streamId: string | undefined, fromTag: string | u
         const update = () => {
             const spaceChannels = mapSpaceChannels(stream)
             setSpaceChannels((prev) => {
-                if (isEqual(prev, spaceChannels)) {
+                if (isEqual(prev.channels, spaceChannels)) {
                     return prev
                 }
-                return spaceChannels
+                return {
+                    spaceId: stream.streamId,
+                    channels: spaceChannels,
+                }
             })
         }
 
@@ -497,6 +506,10 @@ export function useSpaceRollup(streamId: string | undefined, fromTag: string | u
         // wrap the update op, we get the channel ids and
         // rollup the space channels into a space
         const update = () => {
+            if ((streamId !== stream.streamId || spaceChannels.spaceId) !== stream.streamId) {
+                // FIXME: This conditions shouldn't exist, but happens when switching spaces.
+                return
+            }
             const spaceName: string = spaceInfo?.name ?? ''
             const membership = toMembership(
                 userStream.view.userContent.getMembership(stream.streamId)?.op,
@@ -504,11 +517,11 @@ export function useSpaceRollup(streamId: string | undefined, fromTag: string | u
             const newSpace = rollupSpace(
                 stream,
                 membership,
-                spaceChannels,
+                spaceChannels.channels,
                 channelMetadata,
                 spaceName,
             )
-            if (newSpace && newSpace.id === stream.streamId) {
+            if (newSpace) {
                 setSpaceData(newSpace)
             }
         }
@@ -541,6 +554,7 @@ export function useSpaceRollup(streamId: string | undefined, fromTag: string | u
         spaceInfo?.name,
         stream,
         userStream,
+        streamId,
     ])
 }
 
