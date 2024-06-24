@@ -137,7 +137,7 @@ export function lookupUserNameSearchString(user: LookupUser) {
     // string.
     const memberOf = useUserLookupStore.getState().allUsers[user.userId]
     return Object.values(memberOf ?? {})
-        .flatMap((info) => [info.displayName, info.username])
+        .flatMap((info: LookupUser) => [info.displayName, info.username, info.ensName])
         .join(' ')
         .trim()
 }

@@ -82,9 +82,9 @@ export const useUserLookupStore = createWithEqualityFn<UserLookupStore>()(
                         if (!state.allUsers[userId]) {
                             state.allUsers[userId] = {}
                         }
-                        if (!state.allUsers[userId][spaceId]) {
-                            state.allUsers[userId][spaceId] = { ...user }
-                        }
+
+                        state.allUsers[userId][spaceId] = { ...user }
+
                         if (!state.spaceUsers[spaceId]) {
                             state.spaceUsers[spaceId] = {}
                         }
