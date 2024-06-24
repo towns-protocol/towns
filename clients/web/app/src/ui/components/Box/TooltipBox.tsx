@@ -10,9 +10,14 @@ type Props = {
 
 export type TooltipBoxProps = Props
 
-export const TooltipBox = forwardRef<HTMLElement, Props>(
-    ({ tooltip, tooltipOptions, onMouseEnter, onMouseLeave, ...boxProps }, ref) => {
-        return tooltip ? (
+export const TooltipBox = forwardRef<HTMLElement, Props>((props, ref) => {
+    if (!props.tooltip) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { tooltip, tooltipOptions, ...boxProps } = props
+        return <Box {...boxProps} ref={ref} />
+    } else {
+        const { tooltip, tooltipOptions, onMouseEnter, onMouseLeave, ...boxProps } = props
+        return (
             <TooltipRenderer
                 tooltip={typeof tooltip === 'string' ? <Tooltip>{tooltip}</Tooltip> : tooltip}
                 {...tooltipOptions}
@@ -21,8 +26,6 @@ export const TooltipBox = forwardRef<HTMLElement, Props>(
             >
                 {({ triggerProps }) => <Box {...boxProps} {...triggerProps} />}
             </TooltipRenderer>
-        ) : (
-            <Box {...boxProps} ref={ref} />
         )
-    },
-)
+    }
+})
