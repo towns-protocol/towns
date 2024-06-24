@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
@@ -19,15 +20,11 @@ func init() {
 		Use:   "print",
 		Short: "Print current config",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cfg, vpr, _, err := initViperConfig()
-			if err != nil {
-				return err
-			}
-
 			fmt.Println("Viper settings:")
 			fmt.Println()
 
-			for key, value := range vpr.AllSettings() {
+			viperAllSettings := cmdConfigBuilder.AllViperSettings()
+			for key, value := range viperAllSettings {
 				fmt.Printf("%s: %v\n", key, value)
 			}
 
@@ -36,7 +33,7 @@ func init() {
 			fmt.Println()
 
 			configMap := make(map[string]interface{})
-			if err := mapstructure.Decode(cfg, &configMap); err != nil {
+			if err := mapstructure.Decode(*cmdConfig, &configMap); err != nil {
 				fmt.Printf("Failed to decode config struct: %v\n", err)
 				return err
 			}
@@ -56,12 +53,14 @@ func init() {
 		Use:   "names",
 		Short: "Print environment variable names for all config settings",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			_, _, canonicalConfigEnvVars, err := initViperConfig()
-			if err != nil {
-				return err
+			envVars := cmdConfigBuilder.EnvMap()
+			var keys []string
+			for k := range envVars {
+				keys = append(keys, k)
 			}
-			for _, envVar := range canonicalConfigEnvVars {
-				fmt.Println(envVar)
+			slices.Sort(keys)
+			for _, k := range keys {
+				fmt.Println(k, envVars[k])
 			}
 			return nil
 		},

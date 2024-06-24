@@ -28,7 +28,7 @@ import { EntitlementsDelegate } from '@river-build/encryption'
 import { bin_fromHexString, check, dlog } from '@river-build/dlog'
 import { ethers, ContractTransaction } from 'ethers'
 import { RiverDbManager } from './riverDbManager'
-import { StreamRpcClientType, makeStreamRpcClient } from './makeStreamRpcClient'
+import { StreamRpcClient, makeStreamRpcClient } from './makeStreamRpcClient'
 import assert from 'assert'
 import _ from 'lodash'
 import { MockEntitlementsDelegate } from './utils'
@@ -287,7 +287,7 @@ export const makeDonePromise = (): DonePromise => {
     return new DonePromise()
 }
 
-export const sendFlush = async (client: StreamRpcClientType): Promise<void> => {
+export const sendFlush = async (client: StreamRpcClient): Promise<void> => {
     const r = await client.info({ debug: ['flush_cache'] })
     assert(r.graffiti === 'cache flushed')
 }

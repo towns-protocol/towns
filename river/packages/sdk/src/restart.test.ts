@@ -11,7 +11,7 @@ import {
     streamIdToBytes,
     userIdFromAddress,
 } from './id'
-import { StreamRpcClientType } from './makeStreamRpcClient'
+import { StreamRpcClient } from './makeStreamRpcClient'
 import { makeEvent, unpackStream, unpackStreamEnvelopes } from './sign'
 import {
     getChannelUpdatePayload,
@@ -136,7 +136,7 @@ const createNewChannelAndPostHello = async (
     bobsContext: SignerContext,
     spacedStreamId: Uint8Array,
     bobsUserId: string,
-    bob: StreamRpcClientType,
+    bob: StreamRpcClient,
 ) => {
     const channelIdStr = makeUniqueChannelStreamId(streamIdFromBytes(spacedStreamId))
     const channelId = streamIdToBytes(channelIdStr)
@@ -218,7 +218,7 @@ const createNewChannelAndPostHello = async (
     return { channelId, lastHash }
 }
 
-const getStreamAndExpectHello = async (bob: StreamRpcClientType, channelId: Uint8Array) => {
+const getStreamAndExpectHello = async (bob: StreamRpcClient, channelId: Uint8Array) => {
     const channel2 = await bob.getStream({ streamId: channelId })
     expect(channel2).toBeDefined()
     expect(channel2.stream).toBeDefined()
@@ -232,7 +232,7 @@ const getStreamAndExpectHello = async (bob: StreamRpcClientType, channelId: Uint
     expect(hello?.ciphertext).toEqual('hello')
 }
 
-const countStreamBlocksAndSnapshots = async (bob: StreamRpcClientType, streamId: Uint8Array) => {
+const countStreamBlocksAndSnapshots = async (bob: StreamRpcClient, streamId: Uint8Array) => {
     const response = await bob.getStream({ streamId: streamId })
     expect(response).toBeDefined()
     expect(response.stream).toBeDefined()

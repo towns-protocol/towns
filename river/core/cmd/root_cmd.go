@@ -3,18 +3,16 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"slices"
 	"strings"
 
-	"github.com/mitchellh/mapstructure"
-
 	"github.com/river-build/river/core/config"
+	"github.com/river-build/river/core/config/builder"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-var configFile string
+var configFiles []string
 
 var (
 	logLevel     string
@@ -23,7 +21,10 @@ var (
 	logNoColor   bool
 )
 
-var cmdConfig *config.Config
+var (
+	cmdConfig        *config.Config
+	cmdConfigBuilder *builder.ConfigBuilder[config.Config]
+)
 
 var rootCmd = &cobra.Command{
 	Use:          "river_node",
@@ -79,84 +80,46 @@ func bindViperKeys(
 	return nil
 }
 
-func initViperConfig() (*config.Config, *viper.Viper, []string, error) {
-	vpr := viper.New()
-
-	if configFile != "" {
-		vpr.SetConfigFile(configFile)
-	} else {
-		fmt.Println("No config file specified")
+func initViperConfig() (*config.Config, *builder.ConfigBuilder[config.Config], error) {
+	cfg := &config.Config{
+		Log: config.LogConfig{
+			Format: "text",
+		},
 	}
 
-	// This iterates over all possible keys in config.Config and binds evn vars to them
-	// For each key, there are two bound env vars:
-	// Mertics.Enabled <= RIVER_METRICS_ENABLED, METRICS__ENABLED
-	// With RIVER_METRICS_ENABLED being canonical and recommended.
-	// The double underscore version is for compatibility with older versions of the settings.
-	configMap := make(map[string]interface{})
-	err := mapstructure.Decode(config.Config{}, &configMap)
+	bld, err := builder.NewConfigBuilder(cfg, "RIVER")
 	if err != nil {
-		return nil, nil, nil, err
-	}
-	canonicalConfigEnvVars := make([]string, 0, 50)
-	err = bindViperKeys(vpr, "", "", "", configMap, &canonicalConfigEnvVars)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-	slices.Sort(canonicalConfigEnvVars)
-
-	err = vpr.ReadInConfig()
-	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
-	var configStruct config.Config
-	err = vpr.Unmarshal(
-		&configStruct,
-		viper.DecodeHook(
-			mapstructure.ComposeDecodeHookFunc(
-				config.DecodeAddressOrAddressFileHook(),
-				config.DecodeDurationHook(),
-				config.DecodeUint64SliceHook(),
-			),
-		),
-	)
-	if err != nil {
-		return nil, nil, nil, err
-	}
+	bld.BindPFlag("Log.Level", rootCmd.PersistentFlags().Lookup("log_level"))
+	bld.BindPFlag("Log.File", rootCmd.PersistentFlags().Lookup("log_file"))
+	bld.BindPFlag("Log.Console", rootCmd.PersistentFlags().Lookup("log_to_console"))
+	bld.BindPFlag("Log.NoColor", rootCmd.PersistentFlags().Lookup("log_no_color"))
 
-	if configStruct.Log.Format == "" {
-		configStruct.Log.Format = "text"
-	}
-
-	if logLevel != "" {
-		configStruct.Log.Level = logLevel
-	}
-	if logFile != "default" {
-		if logFile != "none" {
-			configStruct.Log.File = logFile
-		} else {
-			configStruct.Log.File = ""
+	for _, configFile := range configFiles {
+		err = bld.LoadConfig(configFile)
+		if err != nil {
+			return nil, nil, err
 		}
 	}
-	if logToConsole {
-		configStruct.Log.Console = true
-	}
-	if logNoColor {
-		configStruct.Log.NoColor = true
-	}
 
-	err = configStruct.Init()
+	cfg, err = bld.Build()
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
-	return &configStruct, vpr, canonicalConfigEnvVars, nil
+	err = cfg.Init()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return cfg, bld, nil
 }
 
 func initConfigAndLog() {
 	var err error
-	cmdConfig, _, _, err = initViperConfig()
+	cmdConfig, cmdConfigBuilder, err = initViperConfig()
 	if err != nil {
 		fmt.Println("Failed to initialize config, error=", err)
 		os.Exit(1)
@@ -166,32 +129,30 @@ func initConfigAndLog() {
 
 func init() {
 	cobra.OnInitialize(initConfigAndLog)
-	rootCmd.PersistentFlags().
-		StringVarP(&configFile, "config", "c", "./config/config.yaml", "Path to the configuration file")
 
-	rootCmd.PersistentFlags().StringVarP(
-		&logLevel,
+	rootCmd.PersistentFlags().
+		StringSliceVarP(&configFiles, "config", "c", []string{"./config/config.yaml"},
+			"Path to the configuration file. Can be specified multiple times. Values are applied in sequence. Set to empty to disable default config.")
+
+	rootCmd.PersistentFlags().StringP(
 		"log_level",
 		"l",
-		"",
-		"Override log level (options: trace, debug, info, warn, error, panic, fatal)",
+		"info",
+		"Log level (options: trace, debug, info, warn, error, panic, fatal)",
 	)
-	rootCmd.PersistentFlags().StringVar(
-		&logFile,
+	rootCmd.PersistentFlags().String(
 		"log_file",
-		"default",
-		"Override log file ('default' to use the one specified in the config file, 'none' to disable logging to file)",
+		"",
+		"Path to the log file",
 	)
-	rootCmd.PersistentFlags().BoolVar(
-		&logToConsole,
+	rootCmd.PersistentFlags().Bool(
 		"log_to_console",
 		false,
-		"Override log to console (true to log to console, false to use the one specified in the config file)",
+		"Log to console",
 	)
-	rootCmd.PersistentFlags().BoolVar(
-		&logNoColor,
+	rootCmd.PersistentFlags().Bool(
 		"log_no_color",
 		false,
-		"Override log color (true to disable color, false to use the one specified in the config file)",
+		"Disable color in log output",
 	)
 }

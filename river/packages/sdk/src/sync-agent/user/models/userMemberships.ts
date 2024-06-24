@@ -27,12 +27,12 @@ export type UserMembershipEvents = {
     userStreamMembershipChanged: (streamId: string) => void
 }
 
-@persistedObservable({ tableName: 'userMemberships', loadPriority: LoadPriority.high })
+@persistedObservable({ tableName: 'userMemberships' })
 export class UserMemberships extends PersistedObservable<UserMembershipsModel> {
     emitter: TypedEmitter<UserMembershipEvents>
 
     constructor(id: string, store: Store) {
-        super({ id, initialized: false, memberships: {} }, store)
+        super({ id, initialized: false, memberships: {} }, store, LoadPriority.high)
         this.emitter = new EventEmitter() as TypedEmitter<UserMembershipEvents>
     }
 

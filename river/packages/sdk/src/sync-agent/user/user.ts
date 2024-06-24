@@ -12,7 +12,7 @@ export interface UserModel {
     initialized: boolean
 }
 
-@persistedObservable({ tableName: 'user', loadPriority: LoadPriority.high })
+@persistedObservable({ tableName: 'user' })
 export class User extends PersistedObservable<UserModel> {
     id: string
     streamsClient: StreamsClient
@@ -22,7 +22,7 @@ export class User extends PersistedObservable<UserModel> {
     settings: UserSettings
 
     constructor(id: string, store: Store, streamsClient: StreamsClient) {
-        super({ id, initialized: false }, store)
+        super({ id, initialized: false }, store, LoadPriority.high)
         this.id = id
         this.streamsClient = streamsClient
         this.memberships = new UserMemberships(id, store)

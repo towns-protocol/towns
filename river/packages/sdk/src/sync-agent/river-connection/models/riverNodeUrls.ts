@@ -16,7 +16,6 @@ export interface RiverNodeUrlsModel {
 // Define a class that will manage the data model, decorate it to give it store properties
 @persistedObservable({
     tableName: 'riverNodeUrls', // this is the name of the table in the database
-    loadPriority: LoadPriority.high, // this is the priority of loading the data, high means it will load first
 })
 export class RiverNodeUrls extends PersistedObservable<RiverNodeUrlsModel> {
     private riverRegistry: RiverRegistry // store any member variables required for logic
@@ -24,7 +23,8 @@ export class RiverNodeUrls extends PersistedObservable<RiverNodeUrlsModel> {
     // The constructor is where we set up the class, we pass in the store and any other dependencies
     constructor(store: Store, riverRegistryDapp: RiverRegistry) {
         // pass a default value to the parent class, this is what will be used if the data is not loaded
-        super({ id: '0', urls: '' }, store)
+        // set the load priority to high, this will load first
+        super({ id: '0', urls: '' }, store, LoadPriority.high)
         // assign any local variables
         this.riverRegistry = riverRegistryDapp
     }

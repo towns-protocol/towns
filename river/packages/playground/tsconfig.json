@@ -1,0 +1,22 @@
+{
+    "extends": "./../tsconfig.base.json",
+    "compilerOptions": {
+        "lib": ["ES2020", "DOM", "DOM.Iterable"],
+        "module": "ESNext",
+        "baseUrl": ".",
+        "paths": {
+            "@/*": ["./src/*"]
+        },
+
+        /* Bundler mode */
+        "moduleResolution": "bundler",
+        "allowImportingTsExtensions": true,
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "noEmit": true,
+        "jsx": "react-jsx",
+        "incremental": true
+    },
+    "include": ["src", ".eslint.cjs", "vite.config.ts"],
+    "references": [{ "path": "./tsconfig.node.json" }]
+}

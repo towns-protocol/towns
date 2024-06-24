@@ -1,4 +1,4 @@
-package config_test
+package builder_test
 
 import (
 	"testing"
@@ -6,7 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/mitchellh/mapstructure"
-	"github.com/river-build/river/core/config"
+	"github.com/river-build/river/core/config/builder"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -30,9 +30,9 @@ func TestDecodeHooks(t *testing.T) {
 		expDurationOne = 10 * time.Second
 		expDurationTwo = time.Hour
 		decodeHooks    = mapstructure.ComposeDecodeHookFunc(
-			config.DecodeAddressOrAddressFileHook(),
-			config.DecodeDurationHook(),
-			config.DecodeUint64SliceHook(),
+			builder.DecodeAddressOrAddressFileHook(),
+			builder.DecodeDurationHook(),
+			builder.DecodeUint64SliceHook(),
 		)
 	)
 

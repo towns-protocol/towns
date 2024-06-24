@@ -1,26 +1,18 @@
 module.exports = {
     parser: '@typescript-eslint/parser',
-    parserOptions: {
-        ecmaVersion: 8,
-        sourceType: 'module',
-        ecmaFeatures: {
-            impliedStrict: true,
-            experimentalObjectRestSpread: true,
-        },
-        allowImportExportEverywhere: true,
-    },
-    plugins: ['@typescript-eslint', 'import', 'react', 'jest'],
+    plugins: ['@typescript-eslint', 'import', 'react'],
     extends: [
         'eslint:recommended',
         'plugin:@typescript-eslint/recommended',
+        'plugin:react/jsx-runtime',
+        'plugin:react-hooks/recommended',
         'plugin:import/warnings',
         'plugin:import/typescript',
-        'react-app',
-        'plugin:prettier/recommended',
-        'prettier',
     ],
     rules: {
+        curly: 'warn',
         '@typescript-eslint/no-base-to-string': 'error',
+        '@typescript-eslint/no-unused-vars': ['warn', { args: 'none' }],
         'import/no-named-as-default-member': 'off',
         'react/display-name': 'off',
         'react/jsx-boolean-value': ['warn', 'never'],
@@ -39,6 +31,7 @@ module.exports = {
                 noSortAlphabetically: true,
             },
         ],
+        'import/no-cycle': ['warn'],
         'import/order': [
             'error',
             {
@@ -53,52 +46,5 @@ module.exports = {
                 ignoreMemberSort: false,
             },
         ],
-    },
-    overrides: [
-        {
-            files: ['src/*.mdx'],
-            extends: ['plugin:mdx/recommended'],
-            rules: {
-                'prettier/prettier': 'off',
-                'import/no-anonymous-default-export': 'off',
-                'react/display-name': 'off',
-                'react/jsx-no-undef': 'off',
-                'no-undef': 'warn',
-            },
-            settings: {
-                'mdx/code-blocks': true,
-            },
-        },
-        {
-            files: ['src/*.{md,mdx}'],
-            extends: 'plugin:mdx/code-blocks',
-            rules: {
-                'prettier/prettier': 'off',
-                '@typescript-eslint/no-unused-vars': 'off',
-                'import/no-unresolved': 'off',
-                'react/react-in-jsx-scope': 'off',
-                'react/jsx-no-undef': 'off',
-            },
-        },
-    ],
-    settings: {
-        'import/parsers': {
-            '@typescript-eslint/parser': ['.ts', '.tsx', '.d.ts'],
-        },
-        'import/resolver': {
-            typescript: {
-                alwaysTryTypes: true,
-                project: ['./tsconfig.json'],
-            },
-        },
-        react: {
-            version: 'detect',
-        },
-    },
-    env: {
-        es6: true,
-        browser: true,
-        node: true,
-        jest: true,
     },
 }

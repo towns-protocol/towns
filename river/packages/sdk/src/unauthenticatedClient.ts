@@ -1,7 +1,7 @@
 import debug from 'debug'
 import { DLogger, check, dlog, dlogError } from '@river-build/dlog'
 import { hasElements, isDefined } from './check'
-import { StreamRpcClientType } from './makeStreamRpcClient'
+import { StreamRpcClient } from './makeStreamRpcClient'
 import { unpackMiniblock, unpackStream } from './sign'
 import { StreamStateView } from './streamStateView'
 import { ParsedMiniblock, StreamTimelineEvent } from './types'
@@ -10,7 +10,7 @@ import { streamIdAsString, streamIdAsBytes, userIdFromAddress, makeUserStreamId 
 const SCROLLBACK_MAX_COUNT = 20
 const SCROLLBACK_MULTIPLIER = 4n
 export class UnauthenticatedClient {
-    readonly rpcClient: StreamRpcClientType
+    readonly rpcClient: StreamRpcClient
 
     private readonly logCall: DLogger
     private readonly logEmitFromClient: DLogger
@@ -19,7 +19,7 @@ export class UnauthenticatedClient {
     private readonly userId = 'unauthenticatedClientUser'
     private getScrollbackRequests: Map<string, ReturnType<typeof this.scrollback>> = new Map()
 
-    constructor(rpcClient: StreamRpcClientType, logNamespaceFilter?: string) {
+    constructor(rpcClient: StreamRpcClient, logNamespaceFilter?: string) {
         if (logNamespaceFilter) {
             debug.enable(logNamespaceFilter)
         }

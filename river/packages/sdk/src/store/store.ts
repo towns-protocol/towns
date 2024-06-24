@@ -17,7 +17,8 @@ class TransactionBundler {
     isWrite = false
     tableNames: string[] = []
     dbOps: (() => Promise<void>)[] = []
-    effects: (() => Promise<void>)[] = []
+    effects: (() => void)[] = []
+    onCommitted: (() => Promise<void>)[] = []
 }
 
 class TransactionGroup implements Record<LoadPriority, TransactionBundler> {
@@ -99,9 +100,10 @@ export class Store {
                     await fn()
                 }
             })
-            if (bundle.effects.length > 0) {
+            if (bundle.effects.length > 0 || bundle.onCommitted.length > 0) {
                 this.newTransactionGroup(`${tGroup.name}>effects_${bundle.name}`)
-                await Promise.all(bundle.effects.map((fn) => fn()))
+                bundle.effects.forEach((fn) => fn())
+                await Promise.all(bundle.onCommitted.map((fn) => fn()))
                 await this.commitTransaction()
             }
         }
@@ -122,8 +124,9 @@ export class Store {
         tableName: string,
         id: string,
         loadPriority: LoadPriority,
-        onLoad: (data?: T) => Promise<void>,
-        onError: (e: Error) => Promise<void>,
+        onLoad: (data?: T) => void,
+        onError: (e: Error) => void,
+        onCommitted: () => Promise<void>,
     ) {
         log('+enqueue load', tableName, id, loadPriority)
         this.checkTableName(tableName)
@@ -133,19 +136,21 @@ export class Store {
         const dbOp = async () => {
             try {
                 const data = await this.db.table<T, string>(tableName).get(id)
-                bundler.effects.push(async () => await onLoad(data))
+                bundler.effects.push(() => onLoad(data))
             } catch (e) {
-                bundler.effects.push(async () => await onError(e as Error))
+                bundler.effects.push(() => onError(e as Error))
             }
         }
         bundler.dbOps.push(dbOp)
+        bundler.onCommitted.push(onCommitted)
     }
 
     save<T extends Identifiable>(
         tableName: string,
         data: T,
-        onSaved: () => Promise<void>,
-        onError: (e: Error) => Promise<void>,
+        onSaved: () => void,
+        onError: (e: Error) => void,
+        onCommitted: () => Promise<void>,
     ) {
         log('+enqueue save', tableName, data.id)
         this.checkTableName(tableName)
@@ -157,11 +162,12 @@ export class Store {
             try {
                 const id = await this.db.table<T, string>(tableName).put(data)
                 check(id === data.id, 'id mismatch???')
-                bundler.effects.push(async () => await onSaved())
+                bundler.effects.push(() => onSaved())
             } catch (e) {
-                bundler.effects.push(async () => await onError(e as Error))
+                bundler.effects.push(() => onError(e as Error))
             }
         }
         bundler.dbOps.push(dbOp)
+        bundler.onCommitted.push(onCommitted)
     }
 }

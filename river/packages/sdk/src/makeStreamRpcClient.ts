@@ -378,5 +378,3 @@ export function makeStreamRpcClient(
     client.url = url
     return client
 }
-
-export type StreamRpcClientType = StreamRpcClient

@@ -48,7 +48,7 @@ import {
     UserDeviceCollection,
     makeSessionKeys,
 } from '@river-build/encryption'
-import { errorContains, getRpcErrorProperty, StreamRpcClientType } from './makeStreamRpcClient'
+import { errorContains, getRpcErrorProperty, StreamRpcClient } from './makeStreamRpcClient'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
 import {
@@ -133,7 +133,7 @@ export class Client
     implements IGroupEncryptionClient
 {
     readonly signerContext: SignerContext
-    readonly rpcClient: StreamRpcClientType
+    readonly rpcClient: StreamRpcClient
     readonly userId: string
     readonly streams: SyncedStreams
 
@@ -165,7 +165,7 @@ export class Client
 
     constructor(
         signerContext: SignerContext,
-        rpcClient: StreamRpcClientType,
+        rpcClient: StreamRpcClient,
         cryptoStore: CryptoStore,
         entitlementsDelegate: EntitlementsDelegate,
         persistenceStoreName?: string,

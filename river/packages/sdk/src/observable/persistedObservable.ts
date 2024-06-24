@@ -5,7 +5,6 @@ import { isDefined } from '../check'
 
 export interface PersistedOpts {
     tableName: string
-    loadPriority: LoadPriority
 }
 
 export type PersistedModel<T> =
@@ -17,7 +16,7 @@ export type PersistedModel<T> =
 
 interface Storable {
     tableName: string
-    loadPriority: LoadPriority
+    load(): void
 }
 
 const all_tables = new Set<string>()
@@ -32,14 +31,7 @@ export function persistedObservable(options: PersistedOpts) {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 super(...args)
                 this.tableName = options.tableName
-                this.loadPriority = options.loadPriority
-                check(
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                    isDefined((this as any).load),
-                    'missing load method, please inherit from a PersistedObservable class',
-                )
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-                ;(this as any).load()
+                this.load()
             }
             static tableName = options.tableName
         }
@@ -52,27 +44,30 @@ export class PersistedObservable<T extends Identifiable>
 {
     private readonly store: Store
     tableName: string = ''
-    loadPriority: LoadPriority = LoadPriority.low
+    readonly loadPriority: LoadPriority
     readonly id: string
 
     // must be called in a store transaction
-    constructor(initialValue: T, store: Store) {
+    constructor(initialValue: T, store: Store, loadPriority: LoadPriority = LoadPriority.low) {
         super({ status: 'loading', data: initialValue })
         this.id = initialValue.id
+        this.loadPriority = loadPriority
         this.store = store
     }
 
-    protected load() {
+    load() {
+        check(this.value.status === 'loading', 'already loaded')
         this.store.load(
             this.tableName,
             this.id,
             this.loadPriority,
-            async (data?: T) => {
+            (data?: T) => {
                 super.set({ status: 'loaded', data: data ?? this.data })
-                await this.onLoaded()
             },
-            async (error: Error) => {
+            (error: Error) => {
                 super.set({ status: 'error', data: this.data, error })
+            },
+            async () => {
                 await this.onLoaded()
             },
         )
@@ -96,12 +91,13 @@ export class PersistedObservable<T extends Identifiable>
                 this.store.save(
                     this.tableName,
                     data,
-                    async () => {
+                    () => {
                         super.set({ status: 'saved', data: data })
-                        await this.onSaved()
                     },
-                    async (e) => {
+                    (e) => {
                         super.set({ status: 'error', data: data, error: e })
+                    },
+                    async () => {
                         await this.onSaved()
                     },
                 )
