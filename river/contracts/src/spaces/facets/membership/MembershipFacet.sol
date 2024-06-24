@@ -138,7 +138,7 @@ contract MembershipFacet is
     if (!isCrosschainPending && shouldRefund) {
       _captureData(transactionId, "");
       if (msg.value > 0) {
-        _releaseCapturedValue(transactionId, msg.value);
+        _refundBalance(transactionId, sender);
       }
       emit MembershipTokenRejected(receiver);
     }
@@ -158,9 +158,11 @@ contract MembershipFacet is
 
     if (freeAllocation > totalSupply) {
       membershipPrice = 0;
+      _refundBalance(transactionId, sender);
     } else if (prepaidSupply > 0) {
       membershipPrice = 0;
       _reducePrepay(1);
+      _refundBalance(transactionId, sender);
     } else {
       membershipPrice = _getMembershipPrice(totalSupply);
     }
@@ -172,7 +174,7 @@ contract MembershipFacet is
       uint256 userValue = _getCapturedValue(transactionId);
 
       if (userValue == 0) revert Membership__InsufficientPayment();
-      if (membershipPrice > userValue) revert Membership__InsufficientPayment();
+      if (userValue != membershipPrice) revert Membership__InvalidPayment();
 
       // set renewal price for token
       _setMembershipRenewalPrice(tokenId, membershipPrice);

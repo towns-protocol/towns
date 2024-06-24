@@ -13,143 +13,143 @@
             "type": "address"
           }
         ],
-        "type": "error",
-        "name": "NodeOperator__AlreadyDelegated"
+        "name": "NodeOperator__AlreadyDelegated",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "NodeOperator__AlreadyRegistered"
+        "name": "NodeOperator__AlreadyRegistered",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "NodeOperator__ClaimAddressNotChanged"
+        "name": "NodeOperator__ClaimAddressNotChanged",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "NodeOperator__InvalidAddress"
+        "name": "NodeOperator__InvalidAddress",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "NodeOperator__InvalidCommissionRate"
+        "name": "NodeOperator__InvalidCommissionRate",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "NodeOperator__InvalidOperator"
+        "name": "NodeOperator__InvalidOperator",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "NodeOperator__InvalidSpace"
+        "name": "NodeOperator__InvalidSpace",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "NodeOperator__InvalidStakeRequirement"
+        "name": "NodeOperator__InvalidStakeRequirement",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "NodeOperator__InvalidStatusTransition"
+        "name": "NodeOperator__InvalidStatusTransition",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "NodeOperator__NotClaimer"
+        "name": "NodeOperator__NotClaimer",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "NodeOperator__NotEnoughStake"
+        "name": "NodeOperator__NotEnoughStake",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "NodeOperator__NotRegistered"
+        "name": "NodeOperator__NotRegistered",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "NodeOperator__NotTransferable"
+        "name": "NodeOperator__NotTransferable",
+        "type": "error"
       },
       {
         "inputs": [],
-        "type": "error",
-        "name": "NodeOperator__StatusNotChanged"
+        "name": "NodeOperator__StatusNotChanged",
+        "type": "error"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "address",
             "name": "operator",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           },
           {
+            "indexed": true,
             "internalType": "address",
             "name": "claimAddress",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           }
         ],
-        "type": "event",
         "name": "OperatorClaimAddressChanged",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "address",
             "name": "operator",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           },
           {
+            "indexed": true,
             "internalType": "uint256",
             "name": "commission",
-            "type": "uint256",
-            "indexed": true
+            "type": "uint256"
           }
         ],
-        "type": "event",
         "name": "OperatorCommissionChanged",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "address",
             "name": "operator",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           }
         ],
-        "type": "event",
         "name": "OperatorRegistered",
-        "anonymous": false
+        "type": "event"
       },
       {
+        "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
             "internalType": "address",
             "name": "operator",
-            "type": "address",
-            "indexed": true
+            "type": "address"
           },
           {
+            "indexed": true,
             "internalType": "enum NodeOperatorStatus",
             "name": "newStatus",
-            "type": "uint8",
-            "indexed": true
+            "type": "uint8"
           }
         ],
-        "type": "event",
         "name": "OperatorStatusChanged",
-        "anonymous": false
+        "type": "event"
       },
       {
         "inputs": [
@@ -159,8 +159,6 @@
             "type": "address"
           }
         ],
-        "stateMutability": "view",
-        "type": "function",
         "name": "getClaimAddressForOperator",
         "outputs": [
           {
@@ -168,7 +166,9 @@
             "name": "",
             "type": "address"
           }
-        ]
+        ],
+        "stateMutability": "view",
+        "type": "function"
       },
       {
         "inputs": [
@@ -178,8 +178,6 @@
             "type": "address"
           }
         ],
-        "stateMutability": "view",
-        "type": "function",
         "name": "getCommissionRate",
         "outputs": [
           {
@@ -187,7 +185,9 @@
             "name": "",
             "type": "uint256"
           }
-        ]
+        ],
+        "stateMutability": "view",
+        "type": "function"
       },
       {
         "inputs": [
@@ -197,8 +197,6 @@
             "type": "address"
           }
         ],
-        "stateMutability": "view",
-        "type": "function",
         "name": "getOperatorStatus",
         "outputs": [
           {
@@ -206,7 +204,9 @@
             "name": "",
             "type": "uint8"
           }
-        ]
+        ],
+        "stateMutability": "view",
+        "type": "function"
       },
       {
         "inputs": [
@@ -216,8 +216,6 @@
             "type": "address"
           }
         ],
-        "stateMutability": "view",
-        "type": "function",
         "name": "isOperator",
         "outputs": [
           {
@@ -225,7 +223,9 @@
             "name": "",
             "type": "bool"
           }
-        ]
+        ],
+        "stateMutability": "view",
+        "type": "function"
       },
       {
         "inputs": [
@@ -235,9 +235,10 @@
             "type": "address"
           }
         ],
+        "name": "registerOperator",
+        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function",
-        "name": "registerOperator"
+        "type": "function"
       },
       {
         "inputs": [
@@ -252,9 +253,10 @@
             "type": "address"
           }
         ],
+        "name": "setClaimAddressForOperator",
+        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function",
-        "name": "setClaimAddressForOperator"
+        "type": "function"
       },
       {
         "inputs": [
@@ -264,9 +266,10 @@
             "type": "uint256"
           }
         ],
+        "name": "setCommissionRate",
+        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function",
-        "name": "setCommissionRate"
+        "type": "function"
       },
       {
         "inputs": [
@@ -281,9 +284,10 @@
             "type": "uint8"
           }
         ],
+        "name": "setOperatorStatus",
+        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function",
-        "name": "setOperatorStatus"
+        "type": "function"
       }
     ],
     "devdoc": {
@@ -298,54 +302,54 @@
     }
   },
   "settings": {
-    "remappings": [
-      "@openzeppelin/=lib/@openzeppelin/",
-      "@prb/math/=lib/@prb/math/src/",
-      "@prb/test/=lib/@prb/test/src/",
-      "account-abstraction/=lib/account-abstraction/contracts/",
-      "base64/=lib/base64/",
-      "ds-test/=lib/ds-test/src/",
-      "forge-std/=lib/forge-std/src/",
-      "hardhat-deploy/=lib/hardhat-deploy/"
-    ],
-    "optimizer": {
-      "enabled": true,
-      "runs": 200
-    },
-    "metadata": {
-      "bytecodeHash": "none",
-      "appendCBOR": false
-    },
     "compilationTarget": {
       "contracts/src/base/registry/facets/operator/INodeOperator.sol": "INodeOperator"
     },
     "evmVersion": "paris",
-    "libraries": {}
+    "libraries": {},
+    "metadata": {
+      "appendCBOR": false,
+      "bytecodeHash": "none"
+    },
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "remappings": [
+      ":@openzeppelin/=lib/@openzeppelin/",
+      ":@prb/math/=lib/@prb/math/src/",
+      ":@prb/test/=lib/@prb/test/src/",
+      ":account-abstraction/=lib/account-abstraction/contracts/",
+      ":base64/=lib/base64/",
+      ":ds-test/=lib/ds-test/src/",
+      ":forge-std/=lib/forge-std/src/",
+      ":hardhat-deploy/=lib/hardhat-deploy/"
+    ]
   },
   "sources": {
     "contracts/src/base/registry/facets/operator/INodeOperator.sol": {
       "keccak256": "0x51fb272223040fd0ecf38e6ca021169fd6fe29dca4d4cf7bd65a209c236e6ab5",
+      "license": "MIT",
       "urls": [
         "bzz-raw://1107dd9cc7f0c9ad4ea64a8b3a9e7d362f13061b25943cf2fb7a8e4b3eac6024",
         "dweb:/ipfs/QmTbfwqkMonebKZPXhZbCwssbo91A4SkDvmLVRapae4i8R"
-      ],
-      "license": "MIT"
+      ]
     },
     "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol": {
       "keccak256": "0xbd8bd0bbd6173e20355fdb81e1076dbdfd9d031706f301e669c950cccd969db9",
+      "license": "MIT",
       "urls": [
         "bzz-raw://1540d7cd9a283ab53d57117e76787d457cb6f4db1f3deb747b513320e561baca",
         "dweb:/ipfs/QmQYDBchk2MnDaUspdALGDtqZkT7ZmE5i4Fz3kJoj6DfrC"
-      ],
-      "license": "MIT"
+      ]
     },
     "lib/@openzeppelin/contracts/utils/structs/EnumerableSet.sol": {
       "keccak256": "0x86c1470cbfd878491e5de030072b647352d36bd27122cffb928970b1945282aa",
+      "license": "MIT",
       "urls": [
         "bzz-raw://ad85dd393ee0a1917c57046abc5155f51f77844b2c6a42c05c1b8dd26d6ff3c1",
         "dweb:/ipfs/QmNqYc8To2NdnpP6E1tGz7t6A7beuENde5yovwov5pW1fA"
-      ],
-      "license": "MIT"
+      ]
     }
   },
   "version": 1

@@ -7,8 +7,8 @@ import {
     IERC721AInterface as V3Interface,
 } from '@river-build/generated/v3/typings/IERC721A'
 
-import DevAbi from '@river-build/generated/dev/abis/IERC721A.abi' assert { type: 'json' }
-import V3Abi from '@river-build/generated/v3/abis/IERC721A.abi' assert { type: 'json' }
+import DevAbi from '@river-build/generated/dev/abis/IERC721A.abi.json' assert { type: 'json' }
+import V3Abi from '@river-build/generated/v3/abis/IERC721A.abi.json' assert { type: 'json' }
 
 import { ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'

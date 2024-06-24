@@ -42,6 +42,7 @@ interface IMembershipBase {
   error Membership__InvalidTokenId();
   error Membership__NotExpired();
   error Membership__InsufficientAllowance();
+  error Membership__InvalidPayment();
 
   // =============================================================
   //                           Events

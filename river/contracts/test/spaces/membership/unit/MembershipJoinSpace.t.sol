@@ -12,7 +12,10 @@ import {IWalletLink, IWalletLinkBase} from "contracts/src/factory/facets/wallet-
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 //libraries
-import {Vm, Test} from "forge-std/Test.sol";
+import {Vm} from "forge-std/Test.sol";
+
+// debuggging
+import {console} from "forge-std/console.sol";
 
 //contracts
 
@@ -22,14 +25,14 @@ contract MembershipJoinSpace is
   IEntitlementGatedBase,
   IWalletLinkBase
 {
-  bytes32 constant CHECK_REQUESTED =
+  bytes32 internal constant CHECK_REQUESTED =
     keccak256(
       "EntitlementCheckRequested(address,address,bytes32,uint256,address[])"
     );
-  bytes32 constant RESULT_POSTED =
+  bytes32 internal constant RESULT_POSTED =
     keccak256("EntitlementCheckResultPosted(bytes32,uint8)");
-
-  bytes32 TOKEN_EMITTED = keccak256("MembershipTokenIssued(address,uint256)");
+  bytes32 internal constant TOKEN_EMITTED =
+    keccak256("MembershipTokenIssued(address,uint256)");
 
   function test_joinSpace() external givenAliceHasMintedMembership {
     assertEq(membership.balanceOf(alice), 1);
@@ -489,5 +492,33 @@ contract MembershipJoinSpace is
         );
       }
     }
+  }
+
+  function test_joinSpace_withValueAndFreeAllocation(uint256 value) external {
+    vm.assume(value > 0);
+
+    // assert there are freeAllocations available
+    vm.prank(founder);
+    membership.setMembershipFreeAllocation(1000);
+    uint256 freeAlloc = membership.getMembershipFreeAllocation();
+    assertTrue(freeAlloc > 0);
+
+    vm.prank(alice);
+    vm.deal(alice, value);
+    membership.joinSpace{value: value}(alice);
+
+    // space has balance
+    assertTrue(address(membership).balance == 0);
+    assertTrue(alice.balance == value);
+
+    // Attempt to withdraw
+    address withdrawAddress = _randomAddress();
+    vm.prank(founder);
+    vm.expectRevert(Membership__InsufficientPayment.selector);
+    membership.withdraw(withdrawAddress);
+
+    // withdraw address balance is 0
+    assertEq(withdrawAddress.balance, 0);
+    assertEq(address(membership).balance, 0);
   }
 }

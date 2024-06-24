@@ -1492,6 +1492,11 @@
   },
   {
     "type": "error",
+    "name": "Membership__InvalidPayment",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "Membership__InvalidPrice",
     "inputs": []
   },
