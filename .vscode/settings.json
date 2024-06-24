@@ -11,6 +11,7 @@
     "./clients/web/app",
     "./clients/web/lib",
     "./clients/web/privy",
+    "./clients/web/server",
     "./clients/web/sample-app",
     "./clients/web/userops",
     "./servers/notification-service",

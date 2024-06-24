@@ -56,21 +56,8 @@ const client = createPublicClient({
 const indexPath = path.join(__dirname, '../../app', 'dist', 'index.html')
 const template = fsSync.readFileSync(indexPath, 'utf-8')
 
-// Register the static plugin
-void server.register(fastifyStatic, {
-    root: path.join(__dirname, '..', '..', 'app', 'dist'),
-    prefix: '/', // optional: default '/'
-})
-
-// Register view engine for HTML templates
-void server.register(fastifyView, {
-    engine: {
-        ejs: ejs,
-    },
-})
-
 // Example route to call a contract method
-void server.get('/timer', async (_request, _reply) => {
+server.get('/timer', async (_request, _reply) => {
     server.log.info('Timer route hit')
     await new Promise((resolve) => setTimeout(resolve, 5000))
     const result = 'done' // Replace with actual method
@@ -78,7 +65,7 @@ void server.get('/timer', async (_request, _reply) => {
 })
 
 // Serve static files or index.html for all other routes
-void void server.setNotFoundHandler(async (request, reply) => {
+server.setNotFoundHandler(async (request, reply) => {
     const urlPath = request.raw.url || ''
     const filePath = path.join(__dirname, '..', '..', 'app', 'dist', urlPath)
 
@@ -88,7 +75,7 @@ void void server.setNotFoundHandler(async (request, reply) => {
     } else if (urlPath.startsWith('/t/')) {
         const townId = urlPath.match(/^\/t\/([0-9a-f]{64})/)?.[1] ?? ''
         const html = await updateTemplate(townId)
-        return reply.send(html)
+        return reply.header('Content-Type', 'text/html').send(html)
     }
 
     return reply.callNotFound()
@@ -96,8 +83,21 @@ void void server.setNotFoundHandler(async (request, reply) => {
 
 const start = async () => {
     try {
-        await server.listen({ port: Number(PORT) })
-        console.log(`Server running at http://localhost:${PORT}`)
+        // Register the static plugin
+        await server.register(fastifyStatic, {
+            root: path.join(__dirname, '..', '..', 'app', 'dist'),
+            prefix: '/', // optional: default '/'
+        })
+
+        // Register view engine for HTML templates
+        await server.register(fastifyView, {
+            engine: {
+                ejs: ejs,
+            },
+        })
+
+        const address = await server.listen({ port: Number(PORT), host: '::' })
+        console.log(`Server running at ${address}`)
     } catch (err) {
         server.log.error(err)
         process.exit(1)
@@ -135,7 +135,7 @@ async function updateTemplate(townId: string) {
 
         // if applicable, ammend with fetched data
         if (townDataFromGateway) {
-            console.log('townDataFromGateway', townDataFromGateway)
+            server.log.info('townDataFromGateway : ' + JSON.stringify(townDataFromGateway))
             info.description = townDataFromGateway.bio
         }
         if (townName) {
@@ -154,14 +154,19 @@ async function getTownNameFromContract(townId: string): Promise<string | undefin
         return
     }
 
-    const contractAddress = CONTRACT_ADDRESS
-    const spaceAddress = ethers.utils.getAddress(townId.slice(2, 42))
-    const contract = new ethers.Contract(contractAddress, SpaceOwnerAbi, provider)
+    try {
+        const contractAddress = CONTRACT_ADDRESS
+        const spaceAddress = ethers.utils.getAddress(townId.slice(2, 42))
+        const contract = new ethers.Contract(contractAddress, SpaceOwnerAbi, provider)
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    const result = (await contract['getSpaceInfo'](spaceAddress)) as string[]
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        const result = (await contract['getSpaceInfo'](spaceAddress)) as string[]
 
-    return Array.isArray(result) && result.length ? result?.[0] : undefined
+        return Array.isArray(result) && result.length ? result?.[0] : undefined
+    } catch (error) {
+        server.log.error('Error fetching town name from contract' + JSON.stringify(error))
+        return
+    }
 }
 
 // This calls the Cloudflare gateway and fetches the information about the town
