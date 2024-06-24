@@ -18,7 +18,6 @@ type Props = {
     icon?: IconName
     forceMatch?: boolean
     highlight?: boolean
-    pinned?: boolean
     settings?: boolean
     onSettings?: (id: string) => void
     exact?: boolean
@@ -28,7 +27,7 @@ type Props = {
 }
 
 export const SpaceNavItem = (props: Props) => {
-    const { id, spaceName, forceMatch, highlight, exact, icon, pinned, isInvite } = props
+    const { id, spaceName, forceMatch, highlight, exact, icon, isInvite } = props
 
     const { isTouch } = useDevice()
     const notificationCounts = useSpaceNotificationCounts(id)
@@ -144,11 +143,15 @@ export const SpaceNavItem = (props: Props) => {
             </ButtonText>
 
             <Box shrink display={isSmall ? 'none' : undefined} color="gray2">
-                {pinned && <Icon type="pin" size="square_sm" padding="xs" />}
-            </Box>
-
-            <Box shrink display={isSmall ? 'none' : undefined} color="gray2">
                 <Badge value={mentions} />
+            </Box>
+            <Box
+                shrink
+                display={isSmall ? 'none' : undefined}
+                color={favoriteSpaces.includes(id) ? 'default' : 'gray2'}
+                onClick={onToggleFavorite}
+            >
+                <Icon type={favoriteSpaces.includes(id) ? 'starFilled' : 'star'} size="square_xs" />
             </Box>
         </NavItem>
     )

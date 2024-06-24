@@ -80,7 +80,6 @@ export const MainSideBar = () => {
                     <SpaceNavItem
                         isInvite
                         id={m.id}
-                        pinned={false}
                         spaceName={spaces.find((sp) => sp.id === spaceId)?.name || ''}
                     />
                 </TransitionItem>
@@ -133,7 +132,6 @@ export const SpaceList = (props: {
                 forceMatch={s === spaceId}
                 id={s}
                 spaceName={spaces.find((sp) => sp.id === s)?.name || ''}
-                pinned={false}
                 onClick={() => {
                     onSelectItem(s)
                 }}

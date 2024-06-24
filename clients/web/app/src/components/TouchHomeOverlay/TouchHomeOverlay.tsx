@@ -71,8 +71,6 @@ export const TouchHomeOverlay = (props: Props) => {
                 </Stack>
                 <Box grow scroll>
                     <Box minHeight="forceScroll">
-                        <SpaceList spaces={spaces} spaceId={spaceId} onSelectSpace={onClose} />
-
                         <ActionNavItem
                             id={`${PATHS.SPACES}/new`}
                             link={`/${PATHS.SPACES}/new`}
@@ -84,6 +82,7 @@ export const TouchHomeOverlay = (props: Props) => {
                                 immediate: true,
                             }}
                         />
+                        <SpaceList spaces={spaces} spaceId={spaceId} onSelectSpace={onClose} />
                     </Box>
                 </Box>
 
