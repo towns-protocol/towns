@@ -11,11 +11,13 @@ type Props = {
 export type TooltipBoxProps = Props
 
 export const TooltipBox = forwardRef<HTMLElement, Props>(
-    ({ tooltip, tooltipOptions, ...boxProps }, ref) => {
+    ({ tooltip, tooltipOptions, onMouseEnter, onMouseLeave, ...boxProps }, ref) => {
         return tooltip ? (
             <TooltipRenderer
                 tooltip={typeof tooltip === 'string' ? <Tooltip>{tooltip}</Tooltip> : tooltip}
                 {...tooltipOptions}
+                onMouseEnter={onMouseEnter}
+                onMouseLeave={onMouseLeave}
             >
                 {({ triggerProps }) => <Box {...boxProps} {...triggerProps} />}
             </TooltipRenderer>

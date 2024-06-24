@@ -33,18 +33,20 @@ export type TooltipOptions = {
 type Props = TooltipOptions & {
     children?: (renderProps: { triggerProps: TriggerProps }) => React.ReactNode
     tooltip: React.ReactNode | undefined
+    onMouseEnter?: React.MouseEventHandler<HTMLElement>
+    onMouseLeave?: React.MouseEventHandler<HTMLElement>
 }
 
 export type HoverTriggerProps = {
     ref: RefObject<HTMLElement>
-    onMouseEnter: () => void
-    onMouseLeave: () => void
-    onMouseUp?: () => void
+    onMouseEnter: React.MouseEventHandler
+    onMouseLeave: React.MouseEventHandler
+    onMouseUp?: React.MouseEventHandler
 }
 
 export type ClickTriggerProps = {
     ref: RefObject<HTMLElement>
-    onMouseUp?: () => void
+    onMouseUp?: React.MouseEventHandler
 }
 
 export type TriggerProps = HoverTriggerProps | ClickTriggerProps
@@ -71,14 +73,16 @@ export const TooltipRenderer = (props: Props) => {
     const alignRef = props.alignRef ?? triggerRef
     const [active, setActive] = useState(forceActive)
 
-    const onMouseEnter = useEvent(() => {
+    const onMouseEnter: React.MouseEventHandler<HTMLElement> = useEvent((e) => {
         setActive(true)
+        props?.onMouseEnter?.(e)
     })
 
-    const onMouseLeave = useEvent(() => {
+    const onMouseLeave: React.MouseEventHandler<HTMLElement> = useEvent((e) => {
         if (!forceActive) {
             setActive(false)
         }
+        props?.onMouseLeave?.(e)
     })
 
     const onMouseClick = useEvent(() => {

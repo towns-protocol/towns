@@ -17,7 +17,7 @@ type TooltipPositionerProps = {
     align?: 'start' | 'center' | 'end'
     render: React.ReactNode
     triggerRef: RefObject<HTMLElement>
-    onMouseLeave: () => void
+    onMouseLeave: React.MouseEventHandler<HTMLElement>
     containerRef: React.MutableRefObject<HTMLElement | null>
 }
 const DEBUG = false
