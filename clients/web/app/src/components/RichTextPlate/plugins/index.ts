@@ -60,6 +60,7 @@ import { ELEMENT_MENTION_CHANNEL, createChannelPlugin } from './createChannelPlu
 import { ELEMENT_MENTION_EMOJI, createEmojiPlugin } from './emoji/createEmojiPlugin'
 import { createErrorHandlingPlugin } from './WithErrorHandlingPlugin'
 import { ComboboxTypes, TUserIDNameMap, TUserMention } from '../utils/ComboboxTypes'
+import { isLinkURIDecoded } from '../utils/helpers'
 import { createPasteMentionsPlugin } from './createPasteMentionsPlugin'
 
 const platePlugins = (
@@ -82,7 +83,7 @@ const platePlugins = (
             }),
             createLinkPlugin({
                 options: {
-                    getUrlHref: (url) => encodeURI(url),
+                    getUrlHref: (url) => (isLinkURIDecoded(url) ? url : decodeURI(url)),
                 },
             }),
             createListPlugin(),

@@ -30,6 +30,8 @@ export const TYPEAHEAD_POPUP_ID = 'typeaheadPopup'
 
 export const isInputFocused = () => document.activeElement?.tagName === 'INPUT'
 
+export const isLinkURIDecoded = (link: string) => decodeURI(link) !== link
+
 export const isCodeBlockElement = (editor: PlateEditor) =>
     isType(editor, getBlockAbove(editor)?.[0], ELEMENT_CODE_LINE)
 
