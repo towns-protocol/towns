@@ -19,3 +19,4 @@ echo "Build: Previous step set VITE_TRANSIENT_ENV_GITHUB_PR_NUMBER to $VITE_TRAN
 
 yarn install
 yarn harmonyweb:build
+yarn harmonyserver:build

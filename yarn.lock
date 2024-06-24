@@ -19378,6 +19378,32 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"harmonyserver@workspace:clients/web/server":
+  version: 0.0.0-use.local
+  resolution: "harmonyserver@workspace:clients/web/server"
+  dependencies:
+    "@fastify/compress": ^5.0.0
+    "@fastify/cookie": ^7.0.0
+    "@fastify/cors": ^8.0.0
+    "@fastify/formbody": ^7.0.0
+    "@fastify/helmet": ^10.0.0
+    "@fastify/jwt": ^7.0.0
+    "@fastify/mongodb": ^6.0.0
+    "@fastify/multipart": ^7.0.0
+    "@fastify/rate-limit": ^8.0.0
+    "@fastify/sensible": ^5.0.0
+    "@fastify/static": ^6.0.0
+    "@fastify/view": ^9.1.0
+    "@river-build/generated": "workspace:^"
+    "@types/ejs": ^3.1.5
+    ejs: ^3.1.10
+    esbuild: ^0.21.5
+    fastify: ^4.28.0
+    nodemon: ^3.1.4
+    viem: ^1.18.2
+  languageName: unknown
+  linkType: soft
+
 "harmonyweb@workspace:clients/web/app":
   version: 0.0.0-use.local
   resolution: "harmonyweb@workspace:clients/web/app"
@@ -27770,32 +27796,6 @@ __metadata:
   checksum: af57fc13be40d90a12562e98c0b7855cf6e8bd4c107fe9a45c212bf023058d54a1871b1c89511c3958f70626fff47faeb795f5d83f8cf88514dbaeb2b724464d
   languageName: node
   linkType: hard
-
-"server@workspace:clients/web/server":
-  version: 0.0.0-use.local
-  resolution: "server@workspace:clients/web/server"
-  dependencies:
-    "@fastify/compress": ^5.0.0
-    "@fastify/cookie": ^7.0.0
-    "@fastify/cors": ^8.0.0
-    "@fastify/formbody": ^7.0.0
-    "@fastify/helmet": ^10.0.0
-    "@fastify/jwt": ^7.0.0
-    "@fastify/mongodb": ^6.0.0
-    "@fastify/multipart": ^7.0.0
-    "@fastify/rate-limit": ^8.0.0
-    "@fastify/sensible": ^5.0.0
-    "@fastify/static": ^6.0.0
-    "@fastify/view": ^9.1.0
-    "@river-build/generated": "workspace:^"
-    "@types/ejs": ^3.1.5
-    ejs: ^3.1.10
-    esbuild: ^0.21.5
-    fastify: ^4.28.0
-    nodemon: ^3.1.4
-    viem: ^1.18.2
-  languageName: unknown
-  linkType: soft
 
 "set-blocking@npm:^2.0.0":
   version: 2.0.0

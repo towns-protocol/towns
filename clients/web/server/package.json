@@ -1,9 +1,9 @@
 {
-    "name": "server",
+    "name": "harmonyserver",
     "type": "module",
-    "main": "dist/server.js",
+    "main": "dist/server.cjs",
     "scripts": {
-        "build": "yarn ./build.js",
+        "build": "node ./build.cjs",
         "coverage": "vitest run --coverage",
         "lint": "eslint . --ext .ts",
         "start": "nodemon",
