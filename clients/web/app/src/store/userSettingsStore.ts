@@ -4,22 +4,22 @@ import { persist } from 'zustand/middleware'
 type UserState = {
     users: {
         [userId: string]: {
-            orderedSpaces: string[]
+            favoriteSpaces: string[]
         }
     }
-    setOrderedSpaces: (userId: string, orderedSpaces: string[]) => void
+    setFavoriteSpaces: (userId: string, favoriteSpaces: string[]) => void
 }
 
 export const useUserStore = create(
     persist<UserState>(
         (set, get) => ({
             users: {},
-            setOrderedSpaces: (userId: string, orderedSpaces: string[]) => {
+            setFavoriteSpaces: (userId: string, favoriteSpaces: string[]) => {
                 set((state) => ({
                     users: {
                         ...state.users,
                         [userId]: {
-                            orderedSpaces: orderedSpaces,
+                            favoriteSpaces,
                         },
                     },
                 }))

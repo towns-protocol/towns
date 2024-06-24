@@ -1,5 +1,5 @@
-import { Reorder, motion } from 'framer-motion'
-import React, { forwardRef, useCallback, useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
+import React, { forwardRef, useCallback, useEffect, useMemo, useRef } from 'react'
 import {
     SpaceItem,
     useInvites,
@@ -9,6 +9,8 @@ import {
 } from 'use-towns-client'
 import { useEvent } from 'react-use-event-hook'
 import { useNavigate } from 'react-router'
+import { firstBy } from 'thenby'
+import { isEqual } from 'lodash'
 import { ActionNavItem } from '@components/NavItem/ActionNavItem'
 import { SpaceNavItem } from '@components/NavItem/SpaceNavItem'
 import { RegisterMainShortcuts } from '@components/Shortcuts/RegisterMainShortcuts'
@@ -78,9 +80,8 @@ export const MainSideBar = () => {
                     <SpaceNavItem
                         isInvite
                         id={m.id}
-                        name={m.name}
-                        avatar={m.avatarSrc}
                         pinned={false}
+                        spaceName={spaces.find((sp) => sp.id === spaceId)?.name || ''}
                     />
                 </TransitionItem>
             ))}
@@ -96,82 +97,49 @@ export const SpaceList = (props: {
     const { spaces, spaceId } = props
     const userId = useMyUserId()
 
-    const [setPersistedOrderedSpaces, persistedOrderedSpaces] = useUserStore((s) => [
-        s.setOrderedSpaces,
-        (userId && s.users[userId]?.orderedSpaces) || [],
+    const [setFavoritedSpaces, favoritedSpaces] = useUserStore((s) => [
+        s.setFavoriteSpaces,
+        (userId && s.users[userId]?.favoriteSpaces) || [],
     ])
 
-    const [isDragging, setIsDragging] = useState(false)
+    const spaceIdsRef = useRef<string[]>([])
+    const spaceIds = useMemo(() => {
+        const ids = spaces.map((s) => s.id)
+        spaceIdsRef.current = ids
+        return isEqual(ids, spaceIdsRef.current) ? spaceIdsRef.current : ids
+    }, [spaces])
+    const orderedSpaces = useOrderedSpaces({ spaceIds, favoritedSpaces })
+
     const navigate = useNavigate()
+
     const onSelectItem = useCallback(
         (id: string) => {
-            if (!isDragging) {
-                navigate(`/${PATHS.SPACES}/${id}/`)
-                props.onSelectSpace?.(id)
-            }
+            navigate(`/${PATHS.SPACES}/${id}/`)
+            props.onSelectSpace?.(id)
         },
-        [isDragging, navigate, props],
-    )
-
-    const [orderedSpaces, onReorder] = useState(() =>
-        persistedOrderedSpaces?.length ? persistedOrderedSpaces : spaces.map((s) => s.id),
+        [navigate, props],
     )
 
     useEffect(() => {
         if (userId) {
-            setPersistedOrderedSpaces(userId, orderedSpaces)
+            setFavoritedSpaces(userId, favoritedSpaces)
         }
-    }, [orderedSpaces, setPersistedOrderedSpaces, userId])
+    }, [favoritedSpaces, setFavoritedSpaces, userId])
 
-    useEffect(() => {
-        onReorder((prev) => {
-            const newSpaces = spaces.filter((s) => !prev.includes(s.id))
-            return [...prev, ...newSpaces.map((s) => s.id)]
-        })
-    }, [spaces])
-
-    const handleDragStart = () => {
-        setIsDragging(true)
-    }
-
-    const handleDragEnd = () => {
-        setIsDragging(false)
-    }
-
-    const { isTouch } = useDevice()
-
-    return (
-        <Reorder.Group axis="y" values={orderedSpaces} onReorder={onReorder}>
-            {spaces
-                .slice()
-                .sort((a, b) =>
-                    Math.sign(orderedSpaces.indexOf(a.id) - orderedSpaces.indexOf(b.id)),
-                )
-                .map((s) => (
-                    <Reorder.Item
-                        key={s.id}
-                        value={s.id}
-                        style={{ touchAction: 'none' }}
-                        onTap={isTouch ? () => onSelectItem(s.id) : undefined}
-                        onClick={isTouch ? undefined : () => onSelectItem(s.id)}
-                        onDragStart={handleDragStart}
-                        onDragEnd={handleDragEnd}
-                    >
-                        <TransitionItem key={s.id}>
-                            <SpaceNavItem
-                                exact={false}
-                                forceMatch={s.id === spaceId}
-                                id={s.id}
-                                name={s.name}
-                                avatar={s.avatarSrc}
-                                pinned={false}
-                                isDragging={isDragging}
-                            />
-                        </TransitionItem>
-                    </Reorder.Item>
-                ))}
-        </Reorder.Group>
-    )
+    return orderedSpaces.map((s) => (
+        <TransitionItem key={s}>
+            <SpaceNavItem
+                exact={false}
+                forceMatch={s === spaceId}
+                id={s}
+                spaceName={spaces.find((sp) => sp.id === s)?.name || ''}
+                pinned={false}
+                onClick={() => {
+                    onSelectItem(s)
+                }}
+            />
+        </TransitionItem>
+    ))
 }
 
 const TransitionItem = forwardRef<HTMLDivElement, { children: React.ReactNode }>((props, ref) => (
@@ -203,3 +171,31 @@ const TransitionItem = forwardRef<HTMLDivElement, { children: React.ReactNode }>
         {props.children}
     </motion.div>
 ))
+
+const useOrderedSpaces = ({
+    spaceIds,
+    favoritedSpaces,
+}: {
+    spaceIds: string[]
+    favoritedSpaces: string[]
+}) => {
+    const { spaceUnreads } = useTownsContext()
+
+    const prevOrderedSpaces = useRef<string[]>([])
+
+    const orderedSpaces = useMemo(
+        () =>
+            [...spaceIds].sort(
+                firstBy((s: string) => {
+                    const index = favoritedSpaces.indexOf(s)
+                    return index === -1 ? Number.MAX_SAFE_INTEGER : index
+                }, 1)
+                    .thenBy((s: string) => spaceUnreads[s], -1)
+                    .thenBy((s: string) => prevOrderedSpaces.current.indexOf(s)),
+            ),
+        [favoritedSpaces, spaceUnreads, spaceIds],
+    )
+
+    prevOrderedSpaces.current = orderedSpaces
+    return orderedSpaces
+}
