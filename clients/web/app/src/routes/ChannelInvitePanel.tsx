@@ -3,7 +3,7 @@ import {
     useChannelId,
     useChannelMembers,
     useTownsClient,
-    useUserLookupContext,
+    useUserLookupArray,
 } from 'use-towns-client'
 import { Toast, toast as headlessToast } from 'react-hot-toast/headless'
 import { isGDMChannelStreamId } from '@river-build/sdk'
@@ -12,7 +12,6 @@ import { Box, Button, Icon, IconButton, Stack, Text } from '@ui'
 import { InviteUserList } from '@components/InviteUserList/InviteUserList'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { getNameListFromUsers } from '@components/UserList/UserList'
-import { notUndefined } from 'ui/utils/utils'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 
 const ChannelInvite = (props: { onClose?: () => void }) => {
@@ -105,13 +104,13 @@ const InviteSuccessToast = ({
         () => (isGDMChannelStreamId(channelId) ? 'this group' : 'this channel'),
         [channelId],
     )
-    const { lookupUser } = useUserLookupContext()
+
+    const users = useUserLookupArray(userIds)
 
     const message = useMemo(() => {
-        const users = userIds.map((u) => lookupUser(u)).filter(notUndefined)
-        const usersNameList = getNameListFromUsers(lookupUser, users)
+        const usersNameList = getNameListFromUsers(users)
         return `${usersNameList} has been added to ${channelDisplayName}`
-    }, [channelDisplayName, lookupUser, userIds])
+    }, [channelDisplayName, users])
 
     return (
         <Box

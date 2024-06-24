@@ -117,20 +117,7 @@ export const useUserLookupStore = createWithEqualityFn<UserLookupStore>()(
             },
             lookupUser: (userId, spaceId, channelId) => {
                 const state = get()
-
-                if (channelId && state.channelUsers[channelId]?.[userId]) {
-                    return state.channelUsers[channelId][userId]
-                }
-
-                if (spaceId && state.spaceUsers[spaceId] && state.spaceUsers[spaceId][userId]) {
-                    return state.spaceUsers[spaceId][userId]
-                }
-
-                if (state.fallbackUserLookups[userId]) {
-                    return state.fallbackUserLookups[userId]
-                }
-
-                return undefined
+                return userLookupFn(state, userId, spaceId, channelId)
             },
         })),
         {
@@ -157,3 +144,24 @@ export const useUserLookupStore = createWithEqualityFn<UserLookupStore>()(
     ),
     shallow,
 )
+
+export const userLookupFn = (
+    state: UserLookupStore,
+    userId: string,
+    spaceId: string | undefined,
+    channelId: string | undefined,
+) => {
+    if (channelId && state.channelUsers[channelId]?.[userId]) {
+        return state.channelUsers[channelId][userId]
+    }
+
+    if (spaceId && state.spaceUsers[spaceId] && state.spaceUsers[spaceId]?.[userId]) {
+        return state.spaceUsers[spaceId][userId]
+    }
+
+    if (state.fallbackUserLookups[userId]) {
+        return state.fallbackUserLookups[userId]
+    }
+
+    return undefined
+}

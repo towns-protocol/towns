@@ -1,6 +1,6 @@
 import React, { useMemo, useRef } from 'react'
 import { firstBy } from 'thenby'
-import { LookupUser, LookupUserFn, useUserLookupContext } from 'use-towns-client'
+import { LookupUser, useUserLookupMap } from 'use-towns-client'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 
 type UserName = {
@@ -27,15 +27,22 @@ export const useUserList = (params: Props) => {
     const stableRenderRef = useRef(params.renderUser)
     const renderUser = (stableRenderRef.current = params.renderUser)
 
-    const { lookupUser } = useUserLookupContext()
+    const availableUserIds = useMemo(
+        () => (userIds.length || !myUserId ? userIds : [myUserId]),
+        [userIds, myUserId],
+    )
+    const userLookupMap = useUserLookupMap(availableUserIds)
+
     const members = useMemo(() => {
         return (userIds.length || !myUserId ? userIds : [myUserId]).map((u) => {
             return {
                 userId: u,
-                displayName: getPrettyDisplayName(lookupUser(u) ?? { userId: u, displayName: '' }),
+                displayName: getPrettyDisplayName(
+                    userLookupMap.get(u) ?? { userId: u, displayName: '' },
+                ),
             }
         })
-    }, [userIds, myUserId, lookupUser])
+    }, [userIds, myUserId, userLookupMap])
 
     const fragments = useMemo(() => {
         if (userIds.length === 0 && !myUserId) {
@@ -82,7 +89,6 @@ const SORT_CURRENT_USER = {
  *
  */
 export const getNameListFromUsers = (
-    lookupUser: LookupUserFn,
     users: LookupUser[],
     currentUserId?: string,
     options: {

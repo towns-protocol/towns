@@ -12,6 +12,7 @@ import {
     useChannelId,
     useChannelMembers,
     useNetworkStatus,
+    useUserLookupArray,
     useUserLookupContext,
 } from 'use-towns-client'
 import { datadogRum } from '@datadog/browser-rum'
@@ -146,10 +147,7 @@ const PlateEditorWithoutBoundary = ({
         [channelMemberIds, spaceMemberIds],
     )
 
-    const availableMembers = useMemo(
-        () => availableMemberIds.map((userId) => lookupUser(userId)).filter(notUndefined),
-        [availableMemberIds, lookupUser],
-    )
+    const availableMembers = useUserLookupArray(availableMemberIds)
 
     const channelId = useChannelId()
 
