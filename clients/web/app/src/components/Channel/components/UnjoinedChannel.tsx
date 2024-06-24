@@ -1,26 +1,27 @@
-import React from 'react'
-import { Channel } from 'use-towns-client'
+import React, { useCallback } from 'react'
+import { useTownsClient } from 'use-towns-client'
 import { ChannelHeader } from '@components/ChannelHeader/ChannelHeader'
 import { Box, Button, Heading, Icon, Paragraph } from '@ui'
 
-export const UnjoinedChannelComponent = ({
-    channel,
-    hideHeader,
-    spaceId,
-    triggerClose,
-    onJoinChannel,
-}: {
-    channel: Channel
+export const UnjoinedChannelComponent = (props: {
     hideHeader?: boolean
     spaceId?: string
-    triggerClose?: () => void
-    onJoinChannel: () => void
+    channel: { id: string; label: string; topic?: string }
 }) => {
+    const { channel } = props
+    const channelId = channel.id
+    const { hideHeader, spaceId } = props
+    const { joinRoom } = useTownsClient()
+
+    const onJoinChannel = useCallback(() => {
+        if (channelId) {
+            joinRoom(channelId)
+        }
+    }, [joinRoom, channelId])
+
     return (
         <>
-            {channel && !hideHeader && (
-                <ChannelHeader channel={channel} spaceId={spaceId} onTouchClose={triggerClose} />
-            )}
+            {!hideHeader && <ChannelHeader channel={channel} spaceId={spaceId} />}
             <Box absoluteFill centerContent padding="lg">
                 <Box centerContent gap="md">
                     <Box padding="md" color="gray2" background="level2" rounded="sm">
@@ -33,10 +34,10 @@ export const UnjoinedChannelComponent = ({
                         </Paragraph>
                     </Box>
                     <Button
-                        minWidth="100"
-                        size="button_sm"
-                        rounded="sm"
                         hoverEffect="none"
+                        minWidth="100"
+                        rounded="sm"
+                        size="button_sm"
                         tone="cta1"
                         onClick={onJoinChannel}
                     >

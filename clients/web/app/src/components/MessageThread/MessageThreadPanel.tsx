@@ -148,7 +148,7 @@ export const MessageThreadPanel = (props: Props) => {
                             storageId={`${channelId}-${messageId}`}
                             threadId={messageId}
                             channels={channels}
-                            memberIds={memberIds}
+                            spaceMemberIds={memberIds}
                             background="level2"
                             userId={userId}
                             onSend={onSend}

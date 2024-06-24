@@ -65,7 +65,7 @@ export const TimelineMessageEditor = (props: Props) => {
                     displayButtons="always"
                     initialValue={initialValue}
                     channels={channels}
-                    memberIds={memberIds}
+                    spaceMemberIds={memberIds}
                     mentions={eventContent.mentions}
                     userId={userId}
                     onSend={onSend}
@@ -88,7 +88,7 @@ export const TimelineMessageEditor = (props: Props) => {
                     displayButtons="always"
                     initialValue={initialValue}
                     channels={channels}
-                    memberIds={memberIds}
+                    spaceMemberIds={memberIds}
                     mentions={eventContent.mentions}
                     userId={userId}
                     onSend={onSend}

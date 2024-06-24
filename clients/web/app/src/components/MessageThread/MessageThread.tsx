@@ -175,7 +175,7 @@ export const MessageThread = (props: {
                                     autoFocus={false}
                                     placeholder="Reply..."
                                     channels={channels}
-                                    memberIds={memberIds}
+                                    spaceMemberIds={memberIds}
                                     userId={userId}
                                     onSend={onSend}
                                 />

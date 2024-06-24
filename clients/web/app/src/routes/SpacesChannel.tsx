@@ -1,6 +1,6 @@
 import React from 'react'
 import { Outlet } from 'react-router'
-import { SpacesChannelComponent } from '@components/Channel/Channel'
+import { Channel } from '@components/Channel/Channel'
 import { SpaceChannelWrapper } from '@components/Channel/ChannelWrapper'
 
 type Props = {
@@ -13,7 +13,7 @@ type Props = {
 export const SpacesChannel = (props: Props) => {
     return (
         <SpaceChannelWrapper channelId={props.channelId}>
-            <SpacesChannelComponent {...props} />
+            <Channel {...props} />
         </SpaceChannelWrapper>
     )
 }

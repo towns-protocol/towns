@@ -1,7 +1,6 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useContext, useMemo } from 'react'
 import {
     Address,
-    Channel,
     useChannelMembers,
     useDMData,
     useMembers,
@@ -31,9 +30,14 @@ import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { useChannelHeaderMembers } from 'hooks/useChannelHeaderMembers'
 import { useAnalytics } from 'hooks/useAnalytics'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { TouchPanelContext } from '@components/Panel/Panel'
 
 type Props = {
-    channel: Channel
+    channel: {
+        id: string
+        label: string
+        topic?: string
+    }
     spaceId: string | undefined
     onTouchClose?: () => void
 }
@@ -44,6 +48,13 @@ export const ChannelHeader = (props: Props) => {
     const { clientStatus } = useTownsContext()
     const myUserId = useMyUserId()
     const { memberIds } = useChannelMembers()
+
+    const triggerClose = useContext(TouchPanelContext)?.triggerPanelClose
+
+    const onTouchClose = useCallback(() => {
+        triggerClose()
+    }, [triggerClose])
+
     const isUserChannelMember = useMemo(
         () => (myUserId ? memberIds.includes(myUserId) : false),
         [memberIds, myUserId],
@@ -52,7 +63,11 @@ export const ChannelHeader = (props: Props) => {
         (!upToDate || !clientStatus.streamSyncActive) && isUserChannelMember
 
     return isTouch ? (
-        <TouchChannelHeader {...props} showLoadingIndicator={showLoadingIndicator} />
+        <TouchChannelHeader
+            {...props}
+            showLoadingIndicator={showLoadingIndicator}
+            onTouchClose={onTouchClose}
+        />
     ) : (
         <DesktopChannelHeader {...props} showLoadingIndicator={showLoadingIndicator} />
     )

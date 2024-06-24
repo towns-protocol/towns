@@ -69,7 +69,6 @@ type Props = {
     autoFocus?: boolean
     editable?: boolean
     editing?: boolean
-    disabledSend?: boolean
     placeholder?: string
     initialValue?: string
     displayButtons?: 'always' | 'on-focus'
@@ -79,7 +78,7 @@ type Props = {
     threadId?: string // only used for giphy plugin
     threadPreview?: string
     channels: Channel[]
-    memberIds: string[] // List of all users in the space, regardless of whether they are in the channel
+    spaceMemberIds: string[] // List of all users in the space, regardless of whether they are in the channel
     mentions?: OTWMention[] // Used during editing - list of mentions in an existing message
     userId?: string
     isFullWidthOnTouch?: boolean
@@ -94,7 +93,6 @@ const EMPTY_NODE: TElement = {
 const PlateEditorWithoutBoundary = ({
     editing: isEditing,
     editable = true,
-    disabledSend = false,
     placeholder = 'Write something ...',
     tabIndex,
     onSend,
@@ -102,7 +100,7 @@ const PlateEditorWithoutBoundary = ({
     displayButtons,
     channels,
     mentions,
-    memberIds: spaceMemberIds,
+    spaceMemberIds,
     initialValue: _initialValue,
     ...props
 }: Props) => {
@@ -125,6 +123,7 @@ const PlateEditorWithoutBoundary = ({
     >([])
     const [unfurledLinkAttachments, setUnfurledAttachments] = useState<UnfurledLinkAttachment[]>([])
     const disabled = isOffline || !editable || isSendingMessage
+    const disabledSend = typeof onSend !== 'function'
     const hasInlinePreview = !!inlineReplyPreview
 
     // hack: reset field + apply autoFocus when a new inline reply is opened
@@ -511,7 +510,6 @@ const arePropsEqual = (prevProps: Props, nextProps: Props) => {
     return every(
         [
             isEqual(prevProps.editable, nextProps.editable),
-            isEqual(prevProps.disabledSend, nextProps.disabledSend),
             isEqual(prevProps.displayButtons, nextProps.displayButtons),
             isEqual(prevProps.placeholder, nextProps.placeholder),
             isEqual(prevProps.initialValue, nextProps.initialValue),
@@ -519,7 +517,7 @@ const arePropsEqual = (prevProps: Props, nextProps: Props) => {
             isEqual(prevProps.threadPreview, nextProps.threadPreview),
             isEqual(prevProps.isFullWidthOnTouch, nextProps.isFullWidthOnTouch),
             isEqual(getChannelNames(prevProps.channels), getChannelNames(nextProps.channels)),
-            isEqual(prevProps.memberIds, nextProps.memberIds),
+            isEqual(prevProps.spaceMemberIds, nextProps.spaceMemberIds),
             isEqual(getMentionIds(prevProps.mentions), getMentionIds(nextProps.mentions)),
         ],
         true,

@@ -11,7 +11,6 @@ import {
 } from 'use-towns-client'
 import { useSearchParams } from 'react-router-dom'
 import { Panel } from '@components/Panel/Panel'
-import { FadeInBox } from '@components/Transitions'
 import { UserList } from '@components/UserList/UserList'
 import { ZLayerBox } from '@components/ZLayer/ZLayerContext'
 import { Box, Button, Icon, MotionBox, Paragraph, Stack, Text } from '@ui'
@@ -19,12 +18,12 @@ import { useCreateLink } from 'hooks/useCreateLink'
 import { useDevice } from 'hooks/useDevice'
 import { PanelContext, PanelStack } from '@components/Panel/PanelContext'
 import { useAnalytics } from 'hooks/useAnalytics'
-import { SpacesChannelComponent } from '@components/Channel/Channel'
+import { Channel, DraftChannel } from '@components/Channel/Channel'
+import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { MessageDropDown } from './MessageDropDown'
 import { UserOption, UserPillSelector } from './UserPillSelector'
 import { useCreateDirectMessage } from './hooks/useCreateDirectMessage'
 import { useMatchingMessages } from './hooks/useMatchingMessages'
-import { ChannelPlaceholder } from './ChannelPlaceholder'
 
 type Props = {
     onDirectMessageCreated?: () => void
@@ -69,6 +68,7 @@ export const CreateDirectMessage = (props: Props) => {
     const noStreamUserId = searchParams.get('to')
 
     const isDraft = !!noStreamUserId
+
     const { inclusiveMatches, matchingDM, matchingGDM } = useMatchingMessages({
         selectedUserArray,
         dmChannels,
@@ -128,15 +128,11 @@ export const CreateDirectMessage = (props: Props) => {
         [createLink, navigate, stackId],
     )
 
-    // preview a channel when selecting first user from dropdown
-    const [userPreview, setUserPreview] = useState<string | undefined>(undefined)
-
     // preview a channel when selecting from message dropdown
     const [userChannelPreview, setUserChannelPreview] = useState<DMChannelIdentifier | undefined>()
 
     const onUserPreviewChange = (user: LookupUser | undefined) => {
         if (user) {
-            setUserPreview(user?.userId)
             const matchingChannel = user?.userId
                 ? dmChannels.find((dm) => !dm.isGroup && dm.userIds.includes(user?.userId))
                 : undefined
@@ -280,52 +276,55 @@ export const CreateDirectMessage = (props: Props) => {
 
     return (
         <Stack grow position="relative">
-            {!isTouch && (numSelectedUsers || isDraft) && (
-                <Box grow ref={channelContainerRef}>
-                    <AnimatePresence mode="sync">
-                        <MotionBox
-                            grow
-                            position="relative"
-                            key={animationKey}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0, transition: { duration: 0 } }}
-                            transition={{ duration: 0.3, delay: 0, ease: 'easeInOut' }}
-                        >
-                            {preview ? (
-                                <DMChannelContextUserLookupProvider channelId={preview}>
-                                    <ChannelContextProvider channelId={preview}>
-                                        <SpacesChannelComponent hideHeader preventAutoFocus />
+            {!isTouch ? (
+                (numSelectedUsers || isDraft) && (
+                    <Box grow ref={channelContainerRef}>
+                        <AnimatePresence mode="sync">
+                            <MotionBox
+                                grow
+                                position="relative"
+                                key={animationKey}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0, transition: { duration: 0 } }}
+                                transition={{ duration: 0.3, delay: 0, ease: 'easeInOut' }}
+                            >
+                                <DMChannelContextUserLookupProvider channelId={preview ?? ''}>
+                                    <ChannelContextProvider channelId={preview ?? ''}>
+                                        {preview ? (
+                                            <Channel hideHeader preventAutoFocus />
+                                        ) : (
+                                            <DraftChannel
+                                                userIds={selectedUserArray}
+                                                preventAutoFocus={!isDraft && !isSubmitting}
+                                            />
+                                        )}
                                     </ChannelContextProvider>
                                 </DMChannelContextUserLookupProvider>
-                            ) : (
-                                <ChannelPlaceholder
-                                    autoFocus={isDraft}
-                                    userIds={
-                                        selectedUserArray?.length
-                                            ? selectedUserArray
-                                            : userPreview
-                                            ? [userPreview]
-                                            : []
-                                    }
-                                />
-                            )}
 
-                            {isTouch && (
-                                <Box
-                                    absoluteFill
-                                    cursor="pointer"
-                                    background="level1"
-                                    style={{ opacity: 0 }}
-                                    onClick={() => onSelectChannel(preview)}
-                                />
-                            )}
-                        </MotionBox>
-                    </AnimatePresence>
+                                {isTouch && (
+                                    <Box
+                                        absoluteFill
+                                        cursor="pointer"
+                                        background="level1"
+                                        style={{ opacity: 0 }}
+                                        onClick={() => onSelectChannel(preview)}
+                                    />
+                                )}
+                            </MotionBox>
+                        </AnimatePresence>
+                    </Box>
+                )
+            ) : isSubmitting ? (
+                // temporary spinner for touch - will go away next PR
+                <Box centerContent absoluteFill>
+                    <ButtonSpinner />
                 </Box>
+            ) : (
+                <></>
             )}
 
-            {!isDraft && (
+            {!isDraft && !isSubmitting && (
                 <ZLayerBox>
                     <UserPillSelector
                         emptySelectionElement={emptySelectionElement}
@@ -334,20 +333,6 @@ export const CreateDirectMessage = (props: Props) => {
                         onConfirm={onConfirm}
                         onUserPreviewChange={onUserPreviewChange}
                     />
-                    <AnimatePresence>
-                        {isSubmitting && !isDraft && (
-                            <FadeInBox absoluteFill>
-                                <Box
-                                    centerContent
-                                    width="100%"
-                                    height="x8"
-                                    pointerEvents="none"
-                                    background="level1"
-                                    style={{ opacity: 0.5 }}
-                                />
-                            </FadeInBox>
-                        )}
-                    </AnimatePresence>
                 </ZLayerBox>
             )}
         </Stack>

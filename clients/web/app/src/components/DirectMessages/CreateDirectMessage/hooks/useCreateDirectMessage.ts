@@ -115,6 +115,7 @@ export const useCreateDirectMessage = (params: Params) => {
     ])
 
     const preventSubmit = useCallback(() => {
+        setIsSubmitting(true)
         console.warn('create dm/gm: prevent submit')
     }, [])
 
