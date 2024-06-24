@@ -13,6 +13,7 @@ export interface BaseChainConfig {
     addresses: {
         spaceFactory: Address
         spaceOwner: Address
+        baseRegistry: Address
         mockNFT?: Address // mockErc721aAddress
         member?: Address // testGatingTokenAddress - For tesing token gating scenarios
     }

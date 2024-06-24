@@ -84,6 +84,8 @@ function set_env() {
     export VITE_BASE_CHAIN_ID="31337"
     export VITE_RIVER_CHAIN_ID="31338"
 
+    # baseRegistry contract address is stored as entitlement-checker in aws parameter store
+    export VITE_ADDRESS_BASE_REGISTRY=$(get_aws_parameter_store_value_for_contract $pr_number "entitlement-checker")
     export VITE_ADDRESS_SPACE_FACTORY=$(get_aws_parameter_store_value_for_contract $pr_number "space-factory")
     export VITE_ADDRESS_SPACE_OWNER=$(get_aws_parameter_store_value_for_contract $pr_number "space-owner")
     export VITE_ADDRESS_RIVER_REGISTRY=$(get_aws_parameter_store_value_for_contract $pr_number "river-registry")
@@ -91,7 +93,9 @@ function set_env() {
     assert_is_address "$VITE_ADDRESS_SPACE_FACTORY"
     assert_is_address "$VITE_ADDRESS_SPACE_OWNER"
     assert_is_address "$VITE_ADDRESS_RIVER_REGISTRY"
+    assert_is_address "$VITE_ADDRESS_BASE_REGISTRY"
 
+    echo "Setting VITE_ADDRESS_BASE_REGISTRY to $VITE_ADDRESS_BASE_REGISTRY"
     echo "Setting VITE_ADDRESS_SPACE_FACTORY to $VITE_ADDRESS_SPACE_FACTORY"
     echo "Setting VITE_ADDRESS_SPACE_OWNER to $VITE_ADDRESS_SPACE_OWNER"
     echo "Setting VITE_ADDRESS_RIVER_REGISTRY to $VITE_ADDRESS_RIVER_REGISTRY"

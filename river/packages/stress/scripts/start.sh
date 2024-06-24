@@ -37,6 +37,7 @@ export CLIENTS_COUNT="${CLIENTS_COUNT:-10}"
 
 # optional deployment environment variables, all required if pointed to a custom deployment
 export BASE_CHAIN_ID="${BASE_CHAIN_ID:-}" # not required if using deployment in packages/generated/deployments
+export BASE_REGISTRY_ADDRESS="${BASE_REGISTRY_ADDRESS:-}" # not required if using deployment in packages/generated/deployments
 export SPACE_FACTORY_ADDRESS="${SPACE_FACTORY_ADDRESS:-}" # not required if using deployment in packages/generated/deployments
 export SPACE_OWNER_ADDRESS="${SPACE_OWNER_ADDRESS:-}" # not required if using deployment in packages/generated/deployments
 export RIVER_CHAIN_ID="${RIVER_CHAIN_ID:-}" # not required if using deployment in packages/generated/deployments

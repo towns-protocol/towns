@@ -58,6 +58,7 @@ function makeEnvironments(): TownsEnvironmentInfo[] {
                 chainId: parseInt(env.VITE_BASE_CHAIN_ID),
                 contractVersion: (env.VITE_BASE_CONTRACT_VERSION ?? 'v3') as ContractVersion,
                 addresses: {
+                    baseRegistry: env.VITE_ADDRESS_BASE_REGISTRY as Address,
                     spaceFactory: env.VITE_ADDRESS_SPACE_FACTORY as Address,
                     spaceOwner: env.VITE_ADDRESS_SPACE_OWNER as Address,
                     mockNFT: env.VITE_ADDRESS_MOCK_NFT as Address | undefined,

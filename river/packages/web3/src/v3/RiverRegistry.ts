@@ -1,9 +1,11 @@
 import { NodeStructOutput } from '@river-build/generated/dev/typings/INodeRegistry'
 import { RiverChainConfig } from '../IStaticContractsInfo'
-import { IRiverRegistryShim } from './IRiverRegistryShim'
+import { INodeRegistryShim } from './INodeRegistryShim'
 import { ethers } from 'ethers'
+import { IStreamRegistryShim } from './IStreamRegistryShim'
+import { IOperatorRegistryShim } from './IOperatorRegistryShim'
 
-interface IRiverRegistry {
+interface RiverNodesMap {
     [nodeAddress: string]: NodeStructOutput
 }
 
@@ -14,25 +16,37 @@ interface NodeUrls {
 export class RiverRegistry {
     public readonly config: RiverChainConfig
     public readonly provider: ethers.providers.Provider
-    public readonly riverRegistry: IRiverRegistryShim
-    public readonly registry: IRiverRegistry = {}
+    public readonly nodeRegistry: INodeRegistryShim
+    public readonly streamRegistry: IStreamRegistryShim
+    public readonly operatorRegistry: IOperatorRegistryShim
+    public readonly riverNodesMap: RiverNodesMap = {}
 
     constructor(config: RiverChainConfig, provider: ethers.providers.Provider) {
         this.config = config
         this.provider = provider
-        this.riverRegistry = new IRiverRegistryShim(
+        this.nodeRegistry = new INodeRegistryShim(
+            this.config.addresses.riverRegistry,
+            this.config.contractVersion,
+            provider,
+        )
+        this.streamRegistry = new IStreamRegistryShim(
+            this.config.addresses.riverRegistry,
+            this.config.contractVersion,
+            provider,
+        )
+        this.operatorRegistry = new IOperatorRegistryShim(
             this.config.addresses.riverRegistry,
             this.config.contractVersion,
             provider,
         )
     }
 
-    public async getAllNodes(nodeStatus?: number): Promise<IRiverRegistry | undefined> {
-        const allNodes = await this.riverRegistry.read.getAllNodes()
+    public async getAllNodes(nodeStatus?: number): Promise<RiverNodesMap | undefined> {
+        const allNodes = await this.nodeRegistry.read.getAllNodes()
         if (allNodes.length == 0) {
             return undefined
         }
-        const registry: IRiverRegistry = {}
+        const registry: RiverNodesMap = {}
         for (const node of allNodes) {
             if (nodeStatus && node.status != nodeStatus) {
                 continue
@@ -41,17 +55,17 @@ export class RiverRegistry {
                 registry[node.nodeAddress] = node
             }
             // update in-memory registry
-            this.registry[node.nodeAddress] = node
+            this.riverNodesMap[node.nodeAddress] = node
         }
         if (nodeStatus !== undefined) {
             return registry
         }
         // if we've updated the entire registry return that
-        return this.registry
+        return this.riverNodesMap
     }
 
     public async getAllNodeUrls(nodeStatus?: number): Promise<NodeUrls[] | undefined> {
-        const allNodes = await this.riverRegistry.read.getAllNodes()
+        const allNodes = await this.nodeRegistry.read.getAllNodes()
         if (allNodes.length == 0) {
             return undefined
         }
@@ -63,7 +77,7 @@ export class RiverRegistry {
             }
             nodeUrls.push({ url: node.url })
             // update registry
-            this.registry[node.nodeAddress] = node
+            this.riverNodesMap[node.nodeAddress] = node
         }
         return nodeUrls
     }
@@ -75,5 +89,19 @@ export class RiverRegistry {
             throw new Error('No operational nodes found in registry')
         }
         return nodeUrls.map((x) => x.url).join(',')
+    }
+
+    async getStreamCount(): Promise<ethers.BigNumber> {
+        return this.streamRegistry.read.getStreamCount()
+    }
+
+    private async getStreamCountOnNode(nodeAddress: string): Promise<ethers.BigNumber> {
+        return this.streamRegistry.read.getStreamCountOnNode(nodeAddress)
+    }
+
+    public async getStreamCountsOnNodes(nodeAddresses: string[]): Promise<ethers.BigNumber[]> {
+        const getStreamCountOnNode = this.getStreamCountOnNode.bind(this)
+        const promises = nodeAddresses.map(getStreamCountOnNode)
+        return Promise.all(promises)
     }
 }
