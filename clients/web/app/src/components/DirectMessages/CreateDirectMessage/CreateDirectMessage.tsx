@@ -19,12 +19,12 @@ import { useCreateLink } from 'hooks/useCreateLink'
 import { useDevice } from 'hooks/useDevice'
 import { PanelContext, PanelStack } from '@components/Panel/PanelContext'
 import { useAnalytics } from 'hooks/useAnalytics'
-import { SpacesChannelComponent } from 'routes/SpacesChannel'
-import { ChannelPlaceholder } from './ChannelPlaceholder'
+import { SpacesChannelComponent } from '@components/Channel/Channel'
 import { MessageDropDown } from './MessageDropDown'
 import { UserOption, UserPillSelector } from './UserPillSelector'
 import { useCreateDirectMessage } from './hooks/useCreateDirectMessage'
 import { useMatchingMessages } from './hooks/useMatchingMessages'
+import { ChannelPlaceholder } from './ChannelPlaceholder'
 
 type Props = {
     onDirectMessageCreated?: () => void

@@ -1,5 +1,5 @@
 import { isEqual, uniqBy } from 'lodash'
-import React, { MutableRefObject, useCallback, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { MessageType, TimelineEvent, ZTEvent } from 'use-towns-client'
 import AnalyticsService, { AnalyticsEvents } from 'use-towns-client/dist/utils/analyticsService'
 import { MessageTimelineItem } from '@components/MessageTimeIineItem/TimelineItem'
@@ -12,6 +12,7 @@ import { VList } from 'ui/components/VList2/VList'
 import { notUndefined } from 'ui/utils/utils'
 import { useChannelType } from 'hooks/useChannelType'
 import { FullyReadObserver } from '@components/MessageTimeIineItem/items/FullyReadObserver'
+import { ScrollbackMarker } from '@components/Channel/components/ScrollbackMarker'
 import { DateDivider } from '../MessageTimeIineItem/items/DateDivider'
 import { NewDivider } from '../MessageTimeIineItem/items/NewDivider'
 import { MessageTimelineType, useTimelineContext } from './MessageTimelineContext'
@@ -29,14 +30,13 @@ import {
     isRoomMessage,
 } from './util/getEventsByDate'
 import { usePersistedUnreadMarkers } from './hooks/usePersistedUnreadMarkers'
+import { useScrollback } from './hooks/useScrollback'
 
 type Props = {
-    prepend?: JSX.Element
     header?: JSX.Element
     align: 'top' | 'bottom'
     highlightId?: string
     collapsed?: boolean
-    containerRef?: MutableRefObject<HTMLDivElement | null>
     groupByUser?: boolean
     displayAsSimpleList?: boolean
 }
@@ -60,6 +60,10 @@ export const MessageTimeline = (props: Props) => {
     }, [])
 
     const stableEventsRef = useRef<TimelineEvent[]>([])
+
+    const ref = useRef<HTMLDivElement>(null)
+
+    const { onFirstMessageReached } = useScrollback(channelId)
 
     const events = useMemo(() => {
         // remove unneeded events
@@ -419,11 +423,21 @@ export const MessageTimeline = (props: Props) => {
 
     const { visualViewportScrolled: tabBarHidden } = useVisualViewportContext()
 
+    const scrollbackMarker = useMemo(
+        () => (
+            <ScrollbackMarker
+                watermark={events.at(0)?.eventId}
+                containerRef={ref}
+                onMarkerReached={onFirstMessageReached}
+            />
+        ),
+        [events, onFirstMessageReached],
+    )
     const itemRenderer = useCallback(
         (r: ListItem, measureRef?: React.RefObject<HTMLDivElement> | undefined) => {
             switch (r.type) {
                 case 'header': {
-                    return <>{props.prepend}</>
+                    return <>{scrollbackMarker}</>
                 }
                 case 'group': {
                     return (
@@ -504,7 +518,7 @@ export const MessageTimeline = (props: Props) => {
             onMarkAsRead,
             props.header,
             props.highlightId,
-            props.prepend,
+            scrollbackMarker,
             timelineContext?.type,
             userId,
         ],
@@ -548,7 +562,7 @@ export const MessageTimeline = (props: Props) => {
                     item.type === 'message' ||
                     item.type === 'header'
                 }
-                containerRef={props.containerRef}
+                containerRef={ref}
                 key={channelId}
                 groupIds={groupIds}
                 pointerEvents={isTouch && tabBarHidden ? 'none' : undefined}
