@@ -5,7 +5,7 @@ import {
     IdentifyTraits,
     RudderAnalytics,
 } from '@rudderstack/analytics-js'
-import { useState } from 'react'
+import { useCallback, useRef } from 'react'
 import { keccak256 } from 'ethers/lib/utils'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
 import { env, isTest } from 'utils'
@@ -99,23 +99,20 @@ export class Analytics {
 }
 
 export function useAnalytics() {
-    const [analytics /*, setAnalytics*/] = useState<Analytics>()
+    const analyticsRef = useRef<Analytics>()
 
-    /*
-    useEffect(() => {
-        if (isProd) {
-            if (!analytics) {
-                const analyticsInstance = Analytics.getInstance()
-                if (analyticsInstance) {
-                    setAnalytics(analyticsInstance)
-                }
+    const getAnalyticsInstance = useCallback(() => {
+        if (isProd && !analyticsRef.current) {
+            const analyticsInstance = Analytics.getInstance()
+            if (analyticsInstance) {
+                analyticsRef.current = analyticsInstance
             }
         }
-    }, [analytics])
-    */
+        return analyticsRef.current
+    }, [])
 
     return {
-        analytics,
+        analytics: getAnalyticsInstance(),
     } as const
 }
 
