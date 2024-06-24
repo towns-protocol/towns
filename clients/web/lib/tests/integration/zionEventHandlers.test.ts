@@ -57,7 +57,7 @@ describe('Towns event handlers test', () => {
                 maxSupply: 100,
                 duration: 0,
                 currency: ethers.constants.AddressZero,
-                feeRecipient: alice.wallet.address,
+                feeRecipient: ethers.constants.AddressZero,
                 freeAllocation: 0,
                 pricingModule: dynamicPricingModule.module,
             },

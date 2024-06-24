@@ -155,7 +155,7 @@ export const CreateSpaceForm = (props: Props) => {
                 maxSupply: formValue.limit,
                 duration: 0,
                 currency: ethers.constants.AddressZero,
-                feeRecipient: await signer.getAddress(),
+                feeRecipient: ethers.constants.AddressZero,
                 freeAllocation: 0,
                 pricingModule: dynamicPricingModule.module,
             },

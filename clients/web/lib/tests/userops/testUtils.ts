@@ -43,7 +43,7 @@ export async function createUngatedSpace(
             maxSupply: 100,
             duration: 0,
             currency: ethers.constants.AddressZero,
-            feeRecipient: client.walletAddress,
+            feeRecipient: ethers.constants.AddressZero,
             freeAllocation: 0,
             pricingModule: dynamicPricingModule.module,
         },

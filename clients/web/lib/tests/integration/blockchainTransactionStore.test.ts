@@ -71,7 +71,7 @@ test('should clear all promises when client stops', async () => {
             maxSupply: 100,
             duration: 0,
             currency: ethers.constants.AddressZero,
-            feeRecipient: bob.provider.wallet.address,
+            feeRecipient: ethers.constants.AddressZero,
             freeAllocation: 0,
             pricingModule: dynamicPricingModule.module,
         },

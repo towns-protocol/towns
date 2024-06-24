@@ -266,7 +266,9 @@ export function CreateTownSubmit({
                         maxSupply: membershipLimit,
                         duration: 60 * 60 * 24 * 365, // 1 year in seconds
                         currency: ethers.constants.AddressZero,
-                        feeRecipient: await signer.getAddress(),
+                        // this value is no longer used in contract
+                        // the fees go to the space contract
+                        feeRecipient: ethers.constants.AddressZero,
                         // when fixed pricing, freeAllocation is 1, meaning owner gets in for free and all future members must pay
                         // dynamic pricing has it's own set of rules in contract and has historically been set as 0 here
                         freeAllocation: isFixedPricing ? 1 : 0,
