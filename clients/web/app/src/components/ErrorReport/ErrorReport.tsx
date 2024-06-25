@@ -148,8 +148,12 @@ export const ErrorReportModal = (props: { minimal?: boolean }) => {
     )
 }
 
-export const ErrorReportForm = (props: { onHide?: () => void; asSheet?: boolean }) => {
-    const { onHide, asSheet } = props
+export const ErrorReportForm = (props: {
+    onHide?: () => void
+    asSheet?: boolean
+    excludeDebugInfo?: boolean
+}) => {
+    const { onHide, asSheet, excludeDebugInfo } = props
     const inputRef = useRef<HTMLInputElement>(null)
     const [success, setSuccess] = useState(false)
     const [isDragging, setIsDragging] = useState(false)
@@ -398,7 +402,7 @@ export const ErrorReportForm = (props: { onHide?: () => void; asSheet?: boolean 
                                     )}
                                 </PanelButton>
                             )}
-                            <DebugInfo />
+                            {!excludeDebugInfo && <DebugInfo />}
                             {errorMessage && (
                                 <Stack paddingBottom="sm">
                                     <Text color="error">{errorMessage}</Text>
