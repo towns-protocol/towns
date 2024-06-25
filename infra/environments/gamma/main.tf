@@ -268,9 +268,3 @@ resource "cloudflare_record" "sample_app_dns" {
   type    = "CNAME"
   ttl     = 60
 }
-
-module "operator_logs" {
-  source      = "../../modules/operator-logs"
-  bucket_name = "figment-logs"
-  user_name   = "gamma-figment"
-}
