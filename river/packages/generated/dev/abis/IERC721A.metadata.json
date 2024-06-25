@@ -7,174 +7,174 @@
     "abi": [
       {
         "inputs": [],
-        "name": "ApprovalCallerNotOwnerNorApproved",
-        "type": "error"
+        "type": "error",
+        "name": "ApprovalCallerNotOwnerNorApproved"
       },
       {
         "inputs": [],
-        "name": "ApprovalQueryForNonexistentToken",
-        "type": "error"
+        "type": "error",
+        "name": "ApprovalQueryForNonexistentToken"
       },
       {
         "inputs": [],
-        "name": "BalanceQueryForZeroAddress",
-        "type": "error"
+        "type": "error",
+        "name": "BalanceQueryForZeroAddress"
       },
       {
         "inputs": [],
-        "name": "MintERC2309QuantityExceedsLimit",
-        "type": "error"
+        "type": "error",
+        "name": "MintERC2309QuantityExceedsLimit"
       },
       {
         "inputs": [],
-        "name": "MintToZeroAddress",
-        "type": "error"
+        "type": "error",
+        "name": "MintToZeroAddress"
       },
       {
         "inputs": [],
-        "name": "MintZeroQuantity",
-        "type": "error"
+        "type": "error",
+        "name": "MintZeroQuantity"
       },
       {
         "inputs": [],
-        "name": "OwnerQueryForNonexistentToken",
-        "type": "error"
+        "type": "error",
+        "name": "OwnerQueryForNonexistentToken"
       },
       {
         "inputs": [],
-        "name": "OwnershipNotInitializedForExtraData",
-        "type": "error"
+        "type": "error",
+        "name": "OwnershipNotInitializedForExtraData"
       },
       {
         "inputs": [],
-        "name": "TransferCallerNotOwnerNorApproved",
-        "type": "error"
+        "type": "error",
+        "name": "TransferCallerNotOwnerNorApproved"
       },
       {
         "inputs": [],
-        "name": "TransferFromIncorrectOwner",
-        "type": "error"
+        "type": "error",
+        "name": "TransferFromIncorrectOwner"
       },
       {
         "inputs": [],
-        "name": "TransferToNonERC721ReceiverImplementer",
-        "type": "error"
+        "type": "error",
+        "name": "TransferToNonERC721ReceiverImplementer"
       },
       {
         "inputs": [],
-        "name": "TransferToZeroAddress",
-        "type": "error"
+        "type": "error",
+        "name": "TransferToZeroAddress"
       },
       {
         "inputs": [],
-        "name": "URIQueryForNonexistentToken",
-        "type": "error"
+        "type": "error",
+        "name": "URIQueryForNonexistentToken"
       },
       {
-        "anonymous": false,
         "inputs": [
           {
-            "indexed": true,
             "internalType": "address",
             "name": "owner",
-            "type": "address"
+            "type": "address",
+            "indexed": true
           },
           {
-            "indexed": true,
             "internalType": "address",
             "name": "approved",
-            "type": "address"
+            "type": "address",
+            "indexed": true
           },
           {
-            "indexed": true,
             "internalType": "uint256",
             "name": "tokenId",
-            "type": "uint256"
+            "type": "uint256",
+            "indexed": true
           }
         ],
+        "type": "event",
         "name": "Approval",
-        "type": "event"
+        "anonymous": false
       },
       {
-        "anonymous": false,
         "inputs": [
           {
-            "indexed": true,
             "internalType": "address",
             "name": "owner",
-            "type": "address"
+            "type": "address",
+            "indexed": true
           },
           {
-            "indexed": true,
             "internalType": "address",
             "name": "operator",
-            "type": "address"
+            "type": "address",
+            "indexed": true
           },
           {
-            "indexed": false,
             "internalType": "bool",
             "name": "approved",
-            "type": "bool"
+            "type": "bool",
+            "indexed": false
           }
         ],
+        "type": "event",
         "name": "ApprovalForAll",
-        "type": "event"
+        "anonymous": false
       },
       {
-        "anonymous": false,
         "inputs": [
           {
-            "indexed": true,
             "internalType": "uint256",
             "name": "fromTokenId",
-            "type": "uint256"
+            "type": "uint256",
+            "indexed": true
           },
           {
-            "indexed": false,
             "internalType": "uint256",
             "name": "toTokenId",
-            "type": "uint256"
+            "type": "uint256",
+            "indexed": false
           },
           {
-            "indexed": true,
             "internalType": "address",
             "name": "from",
-            "type": "address"
+            "type": "address",
+            "indexed": true
           },
           {
-            "indexed": true,
             "internalType": "address",
             "name": "to",
-            "type": "address"
+            "type": "address",
+            "indexed": true
           }
         ],
+        "type": "event",
         "name": "ConsecutiveTransfer",
-        "type": "event"
+        "anonymous": false
       },
       {
-        "anonymous": false,
         "inputs": [
           {
-            "indexed": true,
             "internalType": "address",
             "name": "from",
-            "type": "address"
+            "type": "address",
+            "indexed": true
           },
           {
-            "indexed": true,
             "internalType": "address",
             "name": "to",
-            "type": "address"
+            "type": "address",
+            "indexed": true
           },
           {
-            "indexed": true,
             "internalType": "uint256",
             "name": "tokenId",
-            "type": "uint256"
+            "type": "uint256",
+            "indexed": true
           }
         ],
+        "type": "event",
         "name": "Transfer",
-        "type": "event"
+        "anonymous": false
       },
       {
         "inputs": [
@@ -189,10 +189,9 @@
             "type": "uint256"
           }
         ],
-        "name": "approve",
-        "outputs": [],
         "stateMutability": "payable",
-        "type": "function"
+        "type": "function",
+        "name": "approve"
       },
       {
         "inputs": [
@@ -202,6 +201,8 @@
             "type": "address"
           }
         ],
+        "stateMutability": "view",
+        "type": "function",
         "name": "balanceOf",
         "outputs": [
           {
@@ -209,9 +210,7 @@
             "name": "balance",
             "type": "uint256"
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
@@ -221,6 +220,8 @@
             "type": "uint256"
           }
         ],
+        "stateMutability": "view",
+        "type": "function",
         "name": "getApproved",
         "outputs": [
           {
@@ -228,9 +229,7 @@
             "name": "operator",
             "type": "address"
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
@@ -245,6 +244,8 @@
             "type": "address"
           }
         ],
+        "stateMutability": "view",
+        "type": "function",
         "name": "isApprovedForAll",
         "outputs": [
           {
@@ -252,12 +253,12 @@
             "name": "",
             "type": "bool"
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [],
+        "stateMutability": "view",
+        "type": "function",
         "name": "name",
         "outputs": [
           {
@@ -265,9 +266,7 @@
             "name": "",
             "type": "string"
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
@@ -277,6 +276,8 @@
             "type": "uint256"
           }
         ],
+        "stateMutability": "view",
+        "type": "function",
         "name": "ownerOf",
         "outputs": [
           {
@@ -284,9 +285,7 @@
             "name": "owner",
             "type": "address"
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
@@ -306,10 +305,9 @@
             "type": "uint256"
           }
         ],
-        "name": "safeTransferFrom",
-        "outputs": [],
         "stateMutability": "payable",
-        "type": "function"
+        "type": "function",
+        "name": "safeTransferFrom"
       },
       {
         "inputs": [
@@ -334,10 +332,9 @@
             "type": "bytes"
           }
         ],
-        "name": "safeTransferFrom",
-        "outputs": [],
         "stateMutability": "payable",
-        "type": "function"
+        "type": "function",
+        "name": "safeTransferFrom"
       },
       {
         "inputs": [
@@ -352,13 +349,14 @@
             "type": "bool"
           }
         ],
-        "name": "setApprovalForAll",
-        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function"
+        "type": "function",
+        "name": "setApprovalForAll"
       },
       {
         "inputs": [],
+        "stateMutability": "view",
+        "type": "function",
         "name": "symbol",
         "outputs": [
           {
@@ -366,9 +364,7 @@
             "name": "",
             "type": "string"
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
@@ -378,6 +374,8 @@
             "type": "uint256"
           }
         ],
+        "stateMutability": "view",
+        "type": "function",
         "name": "tokenURI",
         "outputs": [
           {
@@ -385,12 +383,12 @@
             "name": "",
             "type": "string"
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [],
+        "stateMutability": "view",
+        "type": "function",
         "name": "totalSupply",
         "outputs": [
           {
@@ -398,9 +396,7 @@
             "name": "",
             "type": "uint256"
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
@@ -420,28 +416,12 @@
             "type": "uint256"
           }
         ],
-        "name": "transferFrom",
-        "outputs": [],
         "stateMutability": "payable",
-        "type": "function"
+        "type": "function",
+        "name": "transferFrom"
       }
     ],
     "devdoc": {
-      "details": "Interface of ERC721A.",
-      "events": {
-        "Approval(address,address,uint256)": {
-          "details": "Emitted when `owner` enables `approved` to manage the `tokenId` token."
-        },
-        "ApprovalForAll(address,address,bool)": {
-          "details": "Emitted when `owner` enables or disables (`approved`) `operator` to manage all of its assets."
-        },
-        "ConsecutiveTransfer(uint256,uint256,address,address)": {
-          "details": "Emitted when tokens in `fromTokenId` to `toTokenId` (inclusive) is transferred from `from` to `to`, as defined in the [ERC2309](https://eips.ethereum.org/EIPS/eip-2309) standard. See {_mintERC2309} for more details."
-        },
-        "Transfer(address,address,uint256)": {
-          "details": "Emitted when `tokenId` token is transferred from `from` to `to`."
-        }
-      },
       "kind": "dev",
       "methods": {
         "approve(address,uint256)": {
@@ -487,111 +467,44 @@
       "version": 1
     },
     "userdoc": {
-      "errors": {
-        "ApprovalCallerNotOwnerNorApproved()": [
-          {
-            "notice": "The caller must own the token or be an approved operator."
-          }
-        ],
-        "ApprovalQueryForNonexistentToken()": [
-          {
-            "notice": "The token does not exist."
-          }
-        ],
-        "BalanceQueryForZeroAddress()": [
-          {
-            "notice": "Cannot query the balance for the zero address."
-          }
-        ],
-        "MintERC2309QuantityExceedsLimit()": [
-          {
-            "notice": "The `quantity` minted with ERC2309 exceeds the safety limit."
-          }
-        ],
-        "MintToZeroAddress()": [
-          {
-            "notice": "Cannot mint to the zero address."
-          }
-        ],
-        "MintZeroQuantity()": [
-          {
-            "notice": "The quantity of tokens minted must be more than zero."
-          }
-        ],
-        "OwnerQueryForNonexistentToken()": [
-          {
-            "notice": "The token does not exist."
-          }
-        ],
-        "OwnershipNotInitializedForExtraData()": [
-          {
-            "notice": "The `extraData` cannot be set on an unintialized ownership slot."
-          }
-        ],
-        "TransferCallerNotOwnerNorApproved()": [
-          {
-            "notice": "The caller must own the token or be an approved operator."
-          }
-        ],
-        "TransferFromIncorrectOwner()": [
-          {
-            "notice": "The token must be owned by `from`."
-          }
-        ],
-        "TransferToNonERC721ReceiverImplementer()": [
-          {
-            "notice": "Cannot safely transfer to a contract that does not implement the ERC721Receiver interface."
-          }
-        ],
-        "TransferToZeroAddress()": [
-          {
-            "notice": "Cannot transfer to the zero address."
-          }
-        ],
-        "URIQueryForNonexistentToken()": [
-          {
-            "notice": "The token does not exist."
-          }
-        ]
-      },
       "kind": "user",
       "methods": {},
       "version": 1
     }
   },
   "settings": {
-    "compilationTarget": {
-      "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol": "IERC721A"
-    },
-    "evmVersion": "paris",
-    "libraries": {},
-    "metadata": {
-      "appendCBOR": false,
-      "bytecodeHash": "none"
-    },
+    "remappings": [
+      "@openzeppelin/=lib/@openzeppelin/",
+      "@prb/math/=lib/@prb/math/src/",
+      "@prb/test/=lib/@prb/test/src/",
+      "account-abstraction/=lib/account-abstraction/contracts/",
+      "base64/=lib/base64/",
+      "ds-test/=lib/ds-test/src/",
+      "forge-std/=lib/forge-std/src/",
+      "hardhat-deploy/=lib/hardhat-deploy/"
+    ],
     "optimizer": {
       "enabled": true,
       "runs": 200
     },
-    "remappings": [
-      ":@openzeppelin/=lib/@openzeppelin/",
-      ":@prb/math/=lib/@prb/math/src/",
-      ":@prb/test/=lib/@prb/test/src/",
-      ":account-abstraction/=lib/account-abstraction/contracts/",
-      ":base64/=lib/base64/",
-      ":ds-test/=lib/ds-test/src/",
-      ":forge-std/=lib/forge-std/src/",
-      ":hardhat-deploy/=lib/hardhat-deploy/"
-    ]
+    "metadata": {
+      "bytecodeHash": "none",
+      "appendCBOR": false
+    },
+    "compilationTarget": {
+      "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol": "IERC721A"
+    },
+    "evmVersion": "paris",
+    "libraries": {}
   },
   "sources": {
     "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol": {
       "keccak256": "0xb57dee608d37c98c32ac38fa3c84e77f5962cf39a0697815ad209edf55593782",
-      "license": "MIT",
       "urls": [
         "bzz-raw://092750f101ae80c5bace9fd53ae87547a0aac6109cd58290609acd2ef489ce9d",
         "dweb:/ipfs/QmREM18vUEQmcmnTSyR4XxHB9Ykqomc9RuCFZcWNiovgbz"
-      ]
+      ],
+      "license": "MIT"
     }
   },
   "version": 1

@@ -7,96 +7,96 @@
     "abi": [
       {
         "inputs": [],
-        "name": "EntitlementChecker_InsufficientNumberOfNodes",
-        "type": "error"
+        "type": "error",
+        "name": "EntitlementChecker_InsufficientNumberOfNodes"
       },
       {
         "inputs": [],
-        "name": "EntitlementChecker_InvalidNodeOperator",
-        "type": "error"
+        "type": "error",
+        "name": "EntitlementChecker_InvalidNodeOperator"
       },
       {
         "inputs": [],
-        "name": "EntitlementChecker_InvalidOperator",
-        "type": "error"
+        "type": "error",
+        "name": "EntitlementChecker_InvalidOperator"
       },
       {
         "inputs": [],
-        "name": "EntitlementChecker_NodeAlreadyRegistered",
-        "type": "error"
+        "type": "error",
+        "name": "EntitlementChecker_NodeAlreadyRegistered"
       },
       {
         "inputs": [],
-        "name": "EntitlementChecker_NodeNotRegistered",
-        "type": "error"
+        "type": "error",
+        "name": "EntitlementChecker_NodeNotRegistered"
       },
       {
         "inputs": [],
-        "name": "EntitlementChecker_OperatorNotActive",
-        "type": "error"
+        "type": "error",
+        "name": "EntitlementChecker_OperatorNotActive"
       },
       {
-        "anonymous": false,
         "inputs": [
           {
-            "indexed": false,
             "internalType": "address",
             "name": "callerAddress",
-            "type": "address"
+            "type": "address",
+            "indexed": false
           },
           {
-            "indexed": false,
             "internalType": "address",
             "name": "contractAddress",
-            "type": "address"
+            "type": "address",
+            "indexed": false
           },
           {
-            "indexed": false,
             "internalType": "bytes32",
             "name": "transactionId",
-            "type": "bytes32"
+            "type": "bytes32",
+            "indexed": false
           },
           {
-            "indexed": false,
             "internalType": "uint256",
             "name": "roleId",
-            "type": "uint256"
+            "type": "uint256",
+            "indexed": false
           },
           {
-            "indexed": false,
             "internalType": "address[]",
             "name": "selectedNodes",
-            "type": "address[]"
+            "type": "address[]",
+            "indexed": false
           }
         ],
+        "type": "event",
         "name": "EntitlementCheckRequested",
-        "type": "event"
+        "anonymous": false
       },
       {
-        "anonymous": false,
         "inputs": [
           {
-            "indexed": true,
             "internalType": "address",
             "name": "nodeAddress",
-            "type": "address"
+            "type": "address",
+            "indexed": true
           }
         ],
+        "type": "event",
         "name": "NodeRegistered",
-        "type": "event"
+        "anonymous": false
       },
       {
-        "anonymous": false,
         "inputs": [
           {
-            "indexed": true,
             "internalType": "address",
             "name": "nodeAddress",
-            "type": "address"
+            "type": "address",
+            "indexed": true
           }
         ],
+        "type": "event",
         "name": "NodeUnregistered",
-        "type": "event"
+        "anonymous": false
       },
       {
         "inputs": [
@@ -106,6 +106,8 @@
             "type": "uint256"
           }
         ],
+        "stateMutability": "view",
+        "type": "function",
         "name": "getNodeAtIndex",
         "outputs": [
           {
@@ -113,12 +115,12 @@
             "name": "",
             "type": "address"
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [],
+        "stateMutability": "view",
+        "type": "function",
         "name": "getNodeCount",
         "outputs": [
           {
@@ -126,9 +128,7 @@
             "name": "",
             "type": "uint256"
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
@@ -138,6 +138,8 @@
             "type": "address"
           }
         ],
+        "stateMutability": "view",
+        "type": "function",
         "name": "getNodesByOperator",
         "outputs": [
           {
@@ -145,9 +147,7 @@
             "name": "",
             "type": "address[]"
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
@@ -157,6 +157,8 @@
             "type": "uint256"
           }
         ],
+        "stateMutability": "view",
+        "type": "function",
         "name": "getRandomNodes",
         "outputs": [
           {
@@ -164,9 +166,7 @@
             "name": "",
             "type": "address[]"
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
@@ -176,6 +176,8 @@
             "type": "address"
           }
         ],
+        "stateMutability": "view",
+        "type": "function",
         "name": "isValidNode",
         "outputs": [
           {
@@ -183,9 +185,7 @@
             "name": "",
             "type": "bool"
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
@@ -195,10 +195,9 @@
             "type": "address"
           }
         ],
-        "name": "registerNode",
-        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function"
+        "type": "function",
+        "name": "registerNode"
       },
       {
         "inputs": [
@@ -223,10 +222,9 @@
             "type": "address[]"
           }
         ],
-        "name": "requestEntitlementCheck",
-        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function"
+        "type": "function",
+        "name": "requestEntitlementCheck"
       },
       {
         "inputs": [
@@ -236,10 +234,9 @@
             "type": "address"
           }
         ],
-        "name": "unregisterNode",
-        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function"
+        "type": "function",
+        "name": "unregisterNode"
       }
     ],
     "devdoc": {
@@ -254,38 +251,38 @@
     }
   },
   "settings": {
-    "compilationTarget": {
-      "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol": "IEntitlementChecker"
-    },
-    "evmVersion": "paris",
-    "libraries": {},
-    "metadata": {
-      "appendCBOR": false,
-      "bytecodeHash": "none"
-    },
+    "remappings": [
+      "@openzeppelin/=lib/@openzeppelin/",
+      "@prb/math/=lib/@prb/math/src/",
+      "@prb/test/=lib/@prb/test/src/",
+      "account-abstraction/=lib/account-abstraction/contracts/",
+      "base64/=lib/base64/",
+      "ds-test/=lib/ds-test/src/",
+      "forge-std/=lib/forge-std/src/",
+      "hardhat-deploy/=lib/hardhat-deploy/"
+    ],
     "optimizer": {
       "enabled": true,
       "runs": 200
     },
-    "remappings": [
-      ":@openzeppelin/=lib/@openzeppelin/",
-      ":@prb/math/=lib/@prb/math/src/",
-      ":@prb/test/=lib/@prb/test/src/",
-      ":account-abstraction/=lib/account-abstraction/contracts/",
-      ":base64/=lib/base64/",
-      ":ds-test/=lib/ds-test/src/",
-      ":forge-std/=lib/forge-std/src/",
-      ":hardhat-deploy/=lib/hardhat-deploy/"
-    ]
+    "metadata": {
+      "bytecodeHash": "none",
+      "appendCBOR": false
+    },
+    "compilationTarget": {
+      "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol": "IEntitlementChecker"
+    },
+    "evmVersion": "paris",
+    "libraries": {}
   },
   "sources": {
     "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol": {
       "keccak256": "0xbeb7bfa236f19172b29eac53be03a3b377de3524b2d836192b0c64ebe708c204",
-      "license": "MIT",
       "urls": [
         "bzz-raw://3d5a103a2b7b6be1ffa6662db6081763bcd210216fefc25307b835c555e0cf4d",
         "dweb:/ipfs/QmUCvhZdZpVnyJuZVgd2qGduTf11384TmmBJb2RaEBHxhh"
-      ]
+      ],
+      "license": "MIT"
     }
   },
   "version": 1

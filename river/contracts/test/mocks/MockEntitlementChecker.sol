@@ -35,7 +35,7 @@ contract MockEntitlementChecker is
 
     for (uint256 i = 0; i < approvedOperators.length; ++i) {
       ds.operators.add(approvedOperators[i]);
-      ds.statusByOperator[approvedOperators[i]] = NodeOperatorStatus.Standby;
+      ds.statusByOperator[approvedOperators[i]] = NodeOperatorStatus.Approved;
       ds.claimerByOperator[approvedOperators[i]] = msg.sender;
       ds.operatorsByClaimer[msg.sender].add(approvedOperators[i]);
 

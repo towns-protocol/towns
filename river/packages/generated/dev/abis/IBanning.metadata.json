@@ -13,18 +13,18 @@
             "type": "uint256"
           }
         ],
-        "name": "Banning__AlreadyBanned",
-        "type": "error"
+        "type": "error",
+        "name": "Banning__AlreadyBanned"
       },
       {
         "inputs": [],
-        "name": "Banning__CannotBanOwner",
-        "type": "error"
+        "type": "error",
+        "name": "Banning__CannotBanOwner"
       },
       {
         "inputs": [],
-        "name": "Banning__CannotBanSelf",
-        "type": "error"
+        "type": "error",
+        "name": "Banning__CannotBanSelf"
       },
       {
         "inputs": [
@@ -34,8 +34,8 @@
             "type": "uint256"
           }
         ],
-        "name": "Banning__InvalidTokenId",
-        "type": "error"
+        "type": "error",
+        "name": "Banning__InvalidTokenId"
       },
       {
         "inputs": [
@@ -45,46 +45,46 @@
             "type": "uint256"
           }
         ],
-        "name": "Banning__NotBanned",
-        "type": "error"
+        "type": "error",
+        "name": "Banning__NotBanned"
       },
       {
-        "anonymous": false,
         "inputs": [
           {
-            "indexed": true,
             "internalType": "address",
             "name": "moderator",
-            "type": "address"
+            "type": "address",
+            "indexed": true
           },
           {
-            "indexed": true,
             "internalType": "uint256",
             "name": "tokenId",
-            "type": "uint256"
+            "type": "uint256",
+            "indexed": true
           }
         ],
+        "type": "event",
         "name": "Banned",
-        "type": "event"
+        "anonymous": false
       },
       {
-        "anonymous": false,
         "inputs": [
           {
-            "indexed": true,
             "internalType": "address",
             "name": "moderator",
-            "type": "address"
+            "type": "address",
+            "indexed": true
           },
           {
-            "indexed": true,
             "internalType": "uint256",
             "name": "tokenId",
-            "type": "uint256"
+            "type": "uint256",
+            "indexed": true
           }
         ],
+        "type": "event",
         "name": "Unbanned",
-        "type": "event"
+        "anonymous": false
       },
       {
         "inputs": [
@@ -94,13 +94,14 @@
             "type": "uint256"
           }
         ],
-        "name": "ban",
-        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function"
+        "type": "function",
+        "name": "ban"
       },
       {
         "inputs": [],
+        "stateMutability": "view",
+        "type": "function",
         "name": "banned",
         "outputs": [
           {
@@ -108,9 +109,7 @@
             "name": "",
             "type": "uint256[]"
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
@@ -120,6 +119,8 @@
             "type": "uint256"
           }
         ],
+        "stateMutability": "view",
+        "type": "function",
         "name": "isBanned",
         "outputs": [
           {
@@ -127,9 +128,7 @@
             "name": "",
             "type": "bool"
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
@@ -139,10 +138,9 @@
             "type": "uint256"
           }
         ],
-        "name": "unban",
-        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function"
+        "type": "function",
+        "name": "unban"
       }
     ],
     "devdoc": {
@@ -157,38 +155,38 @@
     }
   },
   "settings": {
-    "compilationTarget": {
-      "contracts/src/spaces/facets/banning/IBanning.sol": "IBanning"
-    },
-    "evmVersion": "paris",
-    "libraries": {},
-    "metadata": {
-      "appendCBOR": false,
-      "bytecodeHash": "none"
-    },
+    "remappings": [
+      "@openzeppelin/=lib/@openzeppelin/",
+      "@prb/math/=lib/@prb/math/src/",
+      "@prb/test/=lib/@prb/test/src/",
+      "account-abstraction/=lib/account-abstraction/contracts/",
+      "base64/=lib/base64/",
+      "ds-test/=lib/ds-test/src/",
+      "forge-std/=lib/forge-std/src/",
+      "hardhat-deploy/=lib/hardhat-deploy/"
+    ],
     "optimizer": {
       "enabled": true,
       "runs": 200
     },
-    "remappings": [
-      ":@openzeppelin/=lib/@openzeppelin/",
-      ":@prb/math/=lib/@prb/math/src/",
-      ":@prb/test/=lib/@prb/test/src/",
-      ":account-abstraction/=lib/account-abstraction/contracts/",
-      ":base64/=lib/base64/",
-      ":ds-test/=lib/ds-test/src/",
-      ":forge-std/=lib/forge-std/src/",
-      ":hardhat-deploy/=lib/hardhat-deploy/"
-    ]
+    "metadata": {
+      "bytecodeHash": "none",
+      "appendCBOR": false
+    },
+    "compilationTarget": {
+      "contracts/src/spaces/facets/banning/IBanning.sol": "IBanning"
+    },
+    "evmVersion": "paris",
+    "libraries": {}
   },
   "sources": {
     "contracts/src/spaces/facets/banning/IBanning.sol": {
       "keccak256": "0x350ec182a95a86a41335979cd7212132858c5cfcd366602b2f6cd0ec0694b63e",
-      "license": "MIT",
       "urls": [
         "bzz-raw://ecb4ad0c5a1086c38448b3e279733f33edc0cc39648368e5cb43dfff139ff7e8",
         "dweb:/ipfs/QmWYfYE8Haqk9kBRxmLijfQSfqbfxf7LB3wQ24d3pG5PE3"
-      ]
+      ],
+      "license": "MIT"
     }
   },
   "version": 1

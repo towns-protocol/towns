@@ -13,47 +13,47 @@
             "type": "address"
           }
         ],
-        "name": "InvalidPricingModule",
-        "type": "error"
+        "type": "error",
+        "name": "InvalidPricingModule"
       },
       {
-        "anonymous": false,
         "inputs": [
           {
-            "indexed": true,
             "internalType": "address",
             "name": "module",
-            "type": "address"
+            "type": "address",
+            "indexed": true
           }
         ],
+        "type": "event",
         "name": "PricingModuleAdded",
-        "type": "event"
+        "anonymous": false
       },
       {
-        "anonymous": false,
         "inputs": [
           {
-            "indexed": true,
             "internalType": "address",
             "name": "module",
-            "type": "address"
+            "type": "address",
+            "indexed": true
           }
         ],
+        "type": "event",
         "name": "PricingModuleRemoved",
-        "type": "event"
+        "anonymous": false
       },
       {
-        "anonymous": false,
         "inputs": [
           {
-            "indexed": true,
             "internalType": "address",
             "name": "module",
-            "type": "address"
+            "type": "address",
+            "indexed": true
           }
         ],
+        "type": "event",
         "name": "PricingModuleUpdated",
-        "type": "event"
+        "anonymous": false
       }
     ],
     "devdoc": {
@@ -68,38 +68,38 @@
     }
   },
   "settings": {
-    "compilationTarget": {
-      "contracts/src/factory/facets/architect/pricing/IPricingModules.sol": "IPricingModulesBase"
-    },
-    "evmVersion": "paris",
-    "libraries": {},
-    "metadata": {
-      "appendCBOR": false,
-      "bytecodeHash": "none"
-    },
+    "remappings": [
+      "@openzeppelin/=lib/@openzeppelin/",
+      "@prb/math/=lib/@prb/math/src/",
+      "@prb/test/=lib/@prb/test/src/",
+      "account-abstraction/=lib/account-abstraction/contracts/",
+      "base64/=lib/base64/",
+      "ds-test/=lib/ds-test/src/",
+      "forge-std/=lib/forge-std/src/",
+      "hardhat-deploy/=lib/hardhat-deploy/"
+    ],
     "optimizer": {
       "enabled": true,
       "runs": 200
     },
-    "remappings": [
-      ":@openzeppelin/=lib/@openzeppelin/",
-      ":@prb/math/=lib/@prb/math/src/",
-      ":@prb/test/=lib/@prb/test/src/",
-      ":account-abstraction/=lib/account-abstraction/contracts/",
-      ":base64/=lib/base64/",
-      ":ds-test/=lib/ds-test/src/",
-      ":forge-std/=lib/forge-std/src/",
-      ":hardhat-deploy/=lib/hardhat-deploy/"
-    ]
+    "metadata": {
+      "bytecodeHash": "none",
+      "appendCBOR": false
+    },
+    "compilationTarget": {
+      "contracts/src/factory/facets/architect/pricing/IPricingModules.sol": "IPricingModulesBase"
+    },
+    "evmVersion": "paris",
+    "libraries": {}
   },
   "sources": {
     "contracts/src/factory/facets/architect/pricing/IPricingModules.sol": {
       "keccak256": "0xa45fcd2bb5037c0b9b80bb02a3a4bd00fa99598a8d9e0a5ee2dff7a04c670171",
-      "license": "MIT",
       "urls": [
         "bzz-raw://15f95100f32791a9aa2e3cc47fb9cd58542e9250834bfc38756012cc4baaa786",
         "dweb:/ipfs/QmYGPF6HQLoq5bCgMYW1AyT2Vz1H12Lt8LDdmzTadN5Ppm"
-      ]
+      ],
+      "license": "MIT"
     }
   },
   "version": 1

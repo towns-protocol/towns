@@ -13,116 +13,116 @@
             "type": "address"
           }
         ],
-        "name": "SpaceDelegation__AlreadyDelegated",
-        "type": "error"
+        "type": "error",
+        "name": "SpaceDelegation__AlreadyDelegated"
       },
       {
         "inputs": [],
-        "name": "SpaceDelegation__AlreadyRegistered",
-        "type": "error"
+        "type": "error",
+        "name": "SpaceDelegation__AlreadyRegistered"
       },
       {
         "inputs": [],
-        "name": "SpaceDelegation__InvalidAddress",
-        "type": "error"
+        "type": "error",
+        "name": "SpaceDelegation__InvalidAddress"
       },
       {
         "inputs": [],
-        "name": "SpaceDelegation__InvalidOperator",
-        "type": "error"
+        "type": "error",
+        "name": "SpaceDelegation__InvalidOperator"
       },
       {
         "inputs": [],
-        "name": "SpaceDelegation__InvalidSpace",
-        "type": "error"
+        "type": "error",
+        "name": "SpaceDelegation__InvalidSpace"
       },
       {
         "inputs": [],
-        "name": "SpaceDelegation__InvalidStakeRequirement",
-        "type": "error"
+        "type": "error",
+        "name": "SpaceDelegation__InvalidStakeRequirement"
       },
       {
         "inputs": [],
-        "name": "SpaceDelegation__InvalidStatusTransition",
-        "type": "error"
+        "type": "error",
+        "name": "SpaceDelegation__InvalidStatusTransition"
       },
       {
         "inputs": [],
-        "name": "SpaceDelegation__NotEnoughStake",
-        "type": "error"
+        "type": "error",
+        "name": "SpaceDelegation__NotEnoughStake"
       },
       {
         "inputs": [],
-        "name": "SpaceDelegation__NotRegistered",
-        "type": "error"
+        "type": "error",
+        "name": "SpaceDelegation__NotRegistered"
       },
       {
         "inputs": [],
-        "name": "SpaceDelegation__NotTransferable",
-        "type": "error"
+        "type": "error",
+        "name": "SpaceDelegation__NotTransferable"
       },
       {
         "inputs": [],
-        "name": "SpaceDelegation__StatusNotChanged",
-        "type": "error"
+        "type": "error",
+        "name": "SpaceDelegation__StatusNotChanged"
       },
       {
-        "anonymous": false,
         "inputs": [
           {
-            "indexed": true,
             "internalType": "address",
             "name": "mainnetDelegation",
-            "type": "address"
+            "type": "address",
+            "indexed": true
           }
         ],
+        "type": "event",
         "name": "MainnetDelegationChanged",
-        "type": "event"
+        "anonymous": false
       },
       {
-        "anonymous": false,
         "inputs": [
           {
-            "indexed": true,
             "internalType": "address",
             "name": "riverToken",
-            "type": "address"
+            "type": "address",
+            "indexed": true
           }
         ],
+        "type": "event",
         "name": "RiverTokenChanged",
-        "type": "event"
+        "anonymous": false
       },
       {
-        "anonymous": false,
         "inputs": [
           {
-            "indexed": true,
             "internalType": "address",
             "name": "space",
-            "type": "address"
+            "type": "address",
+            "indexed": true
           },
           {
-            "indexed": true,
             "internalType": "address",
             "name": "operator",
-            "type": "address"
+            "type": "address",
+            "indexed": true
           }
         ],
+        "type": "event",
         "name": "SpaceDelegatedToOperator",
-        "type": "event"
+        "anonymous": false
       },
       {
-        "anonymous": false,
         "inputs": [
           {
-            "indexed": false,
             "internalType": "uint256",
             "name": "stakeRequirement",
-            "type": "uint256"
+            "type": "uint256",
+            "indexed": false
           }
         ],
+        "type": "event",
         "name": "StakeRequirementChanged",
-        "type": "event"
+        "anonymous": false
       },
       {
         "inputs": [
@@ -132,6 +132,8 @@
             "type": "address"
           }
         ],
+        "stateMutability": "view",
+        "type": "function",
         "name": "getSpaceDelegation",
         "outputs": [
           {
@@ -139,9 +141,7 @@
             "name": "",
             "type": "address"
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
@@ -151,6 +151,8 @@
             "type": "address"
           }
         ],
+        "stateMutability": "view",
+        "type": "function",
         "name": "getSpaceDelegationsByOperator",
         "outputs": [
           {
@@ -158,9 +160,7 @@
             "name": "",
             "type": "address[]"
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
@@ -170,6 +170,8 @@
             "type": "address"
           }
         ],
+        "stateMutability": "view",
+        "type": "function",
         "name": "getTotalDelegation",
         "outputs": [
           {
@@ -177,12 +179,12 @@
             "name": "",
             "type": "uint256"
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [],
+        "stateMutability": "view",
+        "type": "function",
         "name": "riverToken",
         "outputs": [
           {
@@ -190,9 +192,7 @@
             "name": "",
             "type": "address"
           }
-        ],
-        "stateMutability": "view",
-        "type": "function"
+        ]
       },
       {
         "inputs": [
@@ -202,10 +202,9 @@
             "type": "address"
           }
         ],
-        "name": "setMainnetDelegation",
-        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function"
+        "type": "function",
+        "name": "setMainnetDelegation"
       },
       {
         "inputs": [
@@ -215,10 +214,9 @@
             "type": "address"
           }
         ],
-        "name": "setRiverToken",
-        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function"
+        "type": "function",
+        "name": "setRiverToken"
       },
       {
         "inputs": [
@@ -228,10 +226,9 @@
             "type": "uint256"
           }
         ],
-        "name": "setStakeRequirement",
-        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function"
+        "type": "function",
+        "name": "setStakeRequirement"
       }
     ],
     "devdoc": {
@@ -246,38 +243,38 @@
     }
   },
   "settings": {
-    "compilationTarget": {
-      "contracts/src/base/registry/facets/delegation/ISpaceDelegation.sol": "ISpaceDelegation"
-    },
-    "evmVersion": "paris",
-    "libraries": {},
-    "metadata": {
-      "appendCBOR": false,
-      "bytecodeHash": "none"
-    },
+    "remappings": [
+      "@openzeppelin/=lib/@openzeppelin/",
+      "@prb/math/=lib/@prb/math/src/",
+      "@prb/test/=lib/@prb/test/src/",
+      "account-abstraction/=lib/account-abstraction/contracts/",
+      "base64/=lib/base64/",
+      "ds-test/=lib/ds-test/src/",
+      "forge-std/=lib/forge-std/src/",
+      "hardhat-deploy/=lib/hardhat-deploy/"
+    ],
     "optimizer": {
       "enabled": true,
       "runs": 200
     },
-    "remappings": [
-      ":@openzeppelin/=lib/@openzeppelin/",
-      ":@prb/math/=lib/@prb/math/src/",
-      ":@prb/test/=lib/@prb/test/src/",
-      ":account-abstraction/=lib/account-abstraction/contracts/",
-      ":base64/=lib/base64/",
-      ":ds-test/=lib/ds-test/src/",
-      ":forge-std/=lib/forge-std/src/",
-      ":hardhat-deploy/=lib/hardhat-deploy/"
-    ]
+    "metadata": {
+      "bytecodeHash": "none",
+      "appendCBOR": false
+    },
+    "compilationTarget": {
+      "contracts/src/base/registry/facets/delegation/ISpaceDelegation.sol": "ISpaceDelegation"
+    },
+    "evmVersion": "paris",
+    "libraries": {}
   },
   "sources": {
     "contracts/src/base/registry/facets/delegation/ISpaceDelegation.sol": {
       "keccak256": "0xb7796a50a2686902fb7bc6b25664b6a24c485092718c9eb8501a61b841a36c04",
-      "license": "MIT",
       "urls": [
         "bzz-raw://a54b27f059faa0868c8df0757de492ad8559040cb6956ff71595c8e3f1c783c5",
         "dweb:/ipfs/QmXy4KFpJEHDvDCNNyEdbeYhUGJtamd8DToKHTbBXuWwdp"
-      ]
+      ],
+      "license": "MIT"
     }
   },
   "version": 1

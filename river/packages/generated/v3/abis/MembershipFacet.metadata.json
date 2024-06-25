@@ -255,6 +255,11 @@
       {
         "inputs": [],
         "type": "error",
+        "name": "Membership__InvalidPayment"
+      },
+      {
+        "inputs": [],
+        "type": "error",
         "name": "Membership__InvalidPrice"
       },
       {
@@ -2278,10 +2283,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/membership/IMembership.sol": {
-      "keccak256": "0x677bd0b837a9122d28f0946009d241411c6243ab9ad3e193b82ec62b927db64b",
+      "keccak256": "0x6412840e6051b909892e0ac881214235a18a290a39394a5462b54e0e0ab09a46",
       "urls": [
-        "bzz-raw://6ff8653e498b99c98bd22144d6b4c02a251469532288bbc9e059a057fca6e3ab",
-        "dweb:/ipfs/QmURz989yqwEd8D9ogo1rqggn6zkfVf553JLUJ6n2T44QR"
+        "bzz-raw://0a9a2be307336fd760d84d2adddf25a8ea10398672fb1447a299118649a9a544",
+        "dweb:/ipfs/QmR9553MSLHUw7mSN6M5dEuLBVfUb5g6tGoY6Xv7sGWaRs"
       ],
       "license": "MIT"
     },
@@ -2294,10 +2299,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/membership/MembershipFacet.sol": {
-      "keccak256": "0xba06ebdc091f4735fc8a57babf51ce403759109262e4094736a2bc4eca8d28ae",
+      "keccak256": "0xf654b24b573378ed3ebf1b808e9969a368408a483a788cf99773d1be3b1fd1a8",
       "urls": [
-        "bzz-raw://d44c0def7b0d3de70ba29edce50914003b253d7ded090b2c9b12b57d9aab17b3",
-        "dweb:/ipfs/QmZVRcsgbrzrysGGwQnHdnf7tD3owBeDq3HpckZcUD9gyS"
+        "bzz-raw://491ffbd1415218f8e0f25849f680a4e6dc6a4f5ead7e593402e1c4712f197eef",
+        "dweb:/ipfs/QmUyArxLWHTjmirRUYxWabzhpZG5q9kaxG59W9uKDc71Kj"
       ],
       "license": "MIT"
     },
