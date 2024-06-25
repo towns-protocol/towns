@@ -242,8 +242,6 @@ echo "Short hash: $SHORT_HASH"
 # Use the commit hash in the branch name
 BRANCH_NAME="river_subtree_merge_${SHORT_HASH}"
 
-list_inprogress_branches
-
 if [[ "$(git status --porcelain)" != "" ]]; then
     echo "There are uncommitted changes. Please commit or stash them before running this script."
     exit 1
@@ -254,6 +252,8 @@ fi
 
 git fetch --all
 git pull
+
+list_inprogress_branches
 
 PR_TITLE="Merge ${SUBTREE_PREFIX} at ${SHORT_HASH}"
 PR_BODY_DESC="This merges the latest changes from the ${SUBTREE_PREFIX} repository at commit ${SHORT_HASH}."
