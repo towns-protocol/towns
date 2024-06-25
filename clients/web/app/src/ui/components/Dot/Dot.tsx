@@ -10,7 +10,7 @@ export const Dot = (props: Props) => (
         width="x1"
         height="x1"
         rounded="full"
-        style={{ boxShadow: `0 0 0px 3px var(--background)` }}
+        style={{ boxShadow: `0 0 0px 2px var(--background)` }}
     >
         <Box className={clsx([props.className, styles.Dot])} />
     </Box>

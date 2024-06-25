@@ -9,6 +9,7 @@ import { IconName } from 'ui/components/Icon'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
 import { vars } from 'ui/styles/vars.css'
 import { useUserStore } from 'store/userSettingsStore'
+import { ToneName } from 'ui/styles/themes'
 import { NavItem } from './_NavItem'
 
 type Props = {
@@ -30,26 +31,21 @@ export const SpaceNavItem = (props: Props) => {
     const { id, spaceName, forceMatch, highlight, exact, icon, isInvite } = props
 
     const { isTouch } = useDevice()
+    const userId = useMyUserId()
     const notificationCounts = useSpaceNotificationCounts(id)
     const mentions = notificationCounts.mentions
     const newMessages = useShowHasUnreadBadgeForSpaceId(id)
     const sizeContext = useSizeContext()
-    // TODO: use tokens
     const isSmall = sizeContext.lessThan(180)
-
-    const [isHovered, setIsHovered] = React.useState(false)
-    const onMouseEnter = useCallback(() => setIsHovered(true), [])
-    const onMouseLeave = useCallback(() => setIsHovered(false), [])
-
-    const userId = useMyUserId()
 
     const [setFavoriteSpaces, favoriteSpaces] = useUserStore((s) => [
         s.setFavoriteSpaces,
         (userId && s.users[userId]?.favoriteSpaces) || [],
     ])
 
-    const onToggleFavorite = (e: React.MouseEvent) => {
-        e.stopPropagation()
+    const isFavorite = favoriteSpaces.includes(id)
+
+    const onToggleFavorite = useCallback(() => {
         if (!userId) {
             return
         }
@@ -59,7 +55,18 @@ export const SpaceNavItem = (props: Props) => {
                 ? favoriteSpaces.filter((f) => f !== id)
                 : [id, ...favoriteSpaces],
         )
-    }
+    }, [favoriteSpaces, id, setFavoriteSpaces, userId])
+
+    const [isHovered, setIsHovered] = React.useState(false)
+    const onMouseEnter = useCallback(() => setIsHovered(true), [])
+    const onMouseLeave = useCallback(() => setIsHovered(false), [])
+    const onStarTap = useCallback(
+        (e: React.MouseEvent) => {
+            e.stopPropagation()
+            onToggleFavorite()
+        },
+        [onToggleFavorite],
+    )
 
     return (
         <NavItem
@@ -93,47 +100,15 @@ export const SpaceNavItem = (props: Props) => {
                     variant="thumbnail100"
                     firstLetterOfSpaceName={spaceName?.[0] ?? ''}
                 />
-                <AnimatePresence mode="sync">
-                    {isHovered ? (
-                        <MotionBox
-                            key="star"
-                            position="topRight"
-                            initial={{
-                                x: `50%`,
-                                y: `-50%`,
-                                scale: 0.5,
-                                ['color' as string]: vars.color.foreground.default,
-                                ['--background' as string]: favoriteSpaces.includes(id)
-                                    ? vars.color.foreground.default
-                                    : vars.color.background.level1,
-                            }}
-                            animate={{ x: `50%`, y: `-50%`, scale: 1 }}
-                            transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-                            whileHover={{
-                                ['color' as string]: vars.color.foreground.default,
-                                ['--background' as string]: favoriteSpaces.includes(id)
-                                    ? vars.color.background.level1
-                                    : vars.color.foreground.default,
-                                scale: favoriteSpaces.includes(id) ? 0.9 : 1.1,
-                            }}
-                            onClick={onToggleFavorite}
-                        >
-                            <MotionBox {...motionPreset}>
-                                <Icon
-                                    type="starFilledOutline"
-                                    size="square_xs"
-                                    style={{
-                                        filter: 'drop-shadow(-2px 2px 3px #000F)',
-                                    }}
-                                />
-                            </MotionBox>
-                        </MotionBox>
-                    ) : newMessages ? (
-                        <Dot position="topRight" style={{ transform: `translate(25%,-25%)` }} />
-                    ) : (
-                        <></>
-                    )}
-                </AnimatePresence>
+                {!isTouch && (
+                    <IconNotification
+                        spaceId={id}
+                        hasUnread={newMessages}
+                        isHovered={isHovered}
+                        isFavorite={isFavorite}
+                        onToggleFavorite={onToggleFavorite}
+                    />
+                )}
             </Box>
 
             {icon && <Icon type={icon} color="gray2" background="level2" size="square_lg" />}
@@ -149,7 +124,7 @@ export const SpaceNavItem = (props: Props) => {
                 shrink
                 display={isSmall ? 'none' : undefined}
                 color={favoriteSpaces.includes(id) ? 'default' : 'gray2'}
-                onClick={onToggleFavorite}
+                onClick={onStarTap}
             >
                 <Icon type={favoriteSpaces.includes(id) ? 'starFilled' : 'star'} size="square_xs" />
             </Box>
@@ -157,8 +132,65 @@ export const SpaceNavItem = (props: Props) => {
     )
 }
 
-const motionPreset = {
-    initial: { opacity: 0, scale: 0.5 },
-    animate: { opacity: 1, scale: 1 },
-    exit: { opacity: 0, scale: 0.5 },
+const IconNotification = (props: {
+    spaceId: string
+    hasUnread: boolean
+    isFavorite: boolean
+    isHovered: boolean
+    onToggleFavorite: () => void
+}) => {
+    const { hasUnread, isFavorite, isHovered, onToggleFavorite } = props
+    const onClick = useCallback(
+        (e: React.MouseEvent) => {
+            e.stopPropagation()
+            onToggleFavorite()
+        },
+        [onToggleFavorite],
+    )
+
+    return (
+        <AnimatePresence mode="wait">
+            {isHovered || isFavorite ? (
+                <MotionBox
+                    key="star"
+                    position="topRight"
+                    initial={{
+                        scale: 0.5,
+                        x: `40%`,
+                        y: `-40%`,
+                    }}
+                    animate={{
+                        scale: 1,
+                        ['color' as string]: hasUnread
+                            ? vars.color.foreground[ToneName.Accent]
+                            : isFavorite
+                            ? vars.color.foreground.gray2
+                            : vars.color.foreground.gray2,
+                        ['--background' as string]: vars.color.background.level1,
+                    }}
+                    whileHover={{
+                        scale: isFavorite ? 0.9 : 1.2,
+                    }}
+                    onClick={onClick}
+                    {...motionPreset}
+                >
+                    <Icon type="starFilledOutline" size="square_sm" />
+                </MotionBox>
+            ) : hasUnread ? (
+                <MotionBox
+                    position="topRight"
+                    key="dot"
+                    initial={{ x: '30%', y: '-30%', scale: 0.5 }}
+                    animate={{ scale: 1 }}
+                    {...motionPreset}
+                >
+                    <Dot />
+                </MotionBox>
+            ) : (
+                <></>
+            )}
+        </AnimatePresence>
+    )
 }
+
+const motionPreset = { transition: { type: 'spring', stiffness: 200, damping: 20 } }
