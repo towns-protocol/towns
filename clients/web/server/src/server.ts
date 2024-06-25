@@ -72,7 +72,7 @@ server.setNotFoundHandler(async (request, reply) => {
     if (await checkFileExists(filePath)) {
         // If file exists, serve the static file
         return reply.sendFile(urlPath)
-    } else if (urlPath.startsWith('/t/')) {
+    } else if (urlPath.startsWith('/t/') || urlPath === '/') {
         const townId = urlPath.match(/^\/t\/([0-9a-f]{64})/)?.[1] ?? ''
         const html = await updateTemplate(townId)
         return reply.header('Content-Type', 'text/html').send(html)
@@ -87,6 +87,7 @@ const start = async () => {
         await server.register(fastifyStatic, {
             root: path.join(__dirname, '..', '..', 'app', 'dist'),
             prefix: '/', // optional: default '/'
+            index: false,
         })
 
         // Register view engine for HTML templates
@@ -114,7 +115,7 @@ function validateTownId(townId: string) {
     return townId.match(/^[0-9a-f]{64}$/)
 }
 
-async function updateTemplate(townId: string) {
+async function updateTemplate(townId?: string) {
     // default info
     const info: Record<string, string> = {
         title: 'Towns',
@@ -124,8 +125,7 @@ async function updateTemplate(townId: string) {
 
     if (townId && validateTownId(townId)) {
         // default town info
-        info.title = `title of ${townId}`
-        info.description = `description of ${townId}`
+        info.description = ``
         info.image = `https://imagedelivery.net/qaaQ52YqlPXKEVQhjChiDA/${townId}/thumbnail600`
 
         const [townDataFromGateway, townName] = await Promise.all([
