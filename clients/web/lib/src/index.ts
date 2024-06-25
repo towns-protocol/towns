@@ -105,6 +105,8 @@ export { useHasMemberNft } from './hooks/use-has-member-nft'
 export { usePricingModules, usePricingModuleForMembership } from './hooks/use-pricing-modules'
 export { useSupportedXChainIds } from './hooks/use-supported-xchain-ids'
 export { useUnjoinedChannelMembers } from './hooks/use-unjoined-channel-members'
+export { usePrepayMembershipTransaction } from './hooks/use-prepay-membership-transaction'
+export { usePrepaidSupply } from './hooks/use-prepaid-supply'
 export {
     usePlatformMinMembershipPrice,
     getPlatformMinMembershipPriceFromQueryCache,

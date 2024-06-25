@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react'
 import { userOpsStore } from '@towns/userops'
 import { BigNumber, utils } from 'ethers'
 
-import { BASE_SEPOLIA, useMembershipInfo } from 'use-towns-client'
+import { BASE_SEPOLIA } from 'use-towns-client'
 import { useShallow } from 'zustand/react/shallow'
 import { Box, Button, Heading, Icon, IconButton, Paragraph, Text } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
@@ -18,9 +18,7 @@ import { CopyWalletAddressButton } from '../TokenVerification/Buttons'
 import { useWalletPrefix } from '../useWalletPrefix'
 
 type Props = {
-    membershipPrice?: bigint
-    isLoadingMembershipPrice?: boolean
-    membershipPriceError?: ReturnType<typeof useMembershipInfo>['error']
+    valueLabel?: string
 }
 
 export function UserOpTxModal(props: Props) {
@@ -47,18 +45,17 @@ export function UserOpTxModal(props: Props) {
 }
 
 function UserOpTxModalContent({
-    membershipPrice,
-    isLoadingMembershipPrice,
-    membershipPriceError,
+    valueLabel,
     endPublicPageLoginFlow,
 }: Props & { endPublicPageLoginFlow: () => void }) {
-    const { currOpGas, confirm, deny, smartAccountAddress, retryType } = userOpsStore(
+    const { currOpGas, currOpValue, confirm, deny, smartAccountAddress, retryType } = userOpsStore(
         useShallow((s) => ({
             currOpGas: s.currOpGas,
             confirm: s.confirm,
             deny: s.deny,
             smartAccountAddress: s.smartAccountAddress,
             retryType: s.retryType,
+            currOpValue: s.currOpValue,
         })),
     )
 
@@ -79,11 +76,11 @@ function UserOpTxModalContent({
         .mul(BigNumber.from(gasPrice))
         .add(BigNumber.from(preverificationGas))
 
-    const totalCost = gasCost.add(BigNumber.from(membershipPrice ?? 0))
+    const totalCost = gasCost.add(BigNumber.from(currOpValue ?? 0))
 
     const gasInEth = utils.formatEther(gasCost)
     const gasInEthFixedTo8 = parseFloat(gasInEth).toFixed(8)
-    const membershipInEth = membershipPrice ? utils.formatEther(membershipPrice) : undefined
+    const membershipInEth = currOpValue ? utils.formatEther(currOpValue) : undefined
     const totalInEth = utils.formatEther(totalCost.toBigInt())
     const totalInEthFixedTo5 = parseFloat(totalInEth).toFixed(5)
     const totalInEthFixedTo8 = parseFloat(totalInEth).toFixed(8)
@@ -118,14 +115,6 @@ function UserOpTxModalContent({
     }
 
     const bottomContent = () => {
-        if (membershipPriceError) {
-            return (
-                <Text color="error" size="sm">
-                    There was an error grabbing the membership price. Please try again later.
-                </Text>
-            )
-        }
-
         if (!balanceData) {
             return <Box centerContent height="x4" width="100%" />
         }
@@ -218,10 +207,15 @@ function UserOpTxModalContent({
                         </Text>
                         <Text> {gasInEthFixedTo8 + ' ETH'}</Text>
                     </Box>
-                    {isLoadingMembershipPrice ? <ButtonSpinner /> : null}
-                    {membershipPrice ? (
-                        <Box horizontal width="100%" justifyContent="spaceBetween">
-                            <Text>Membership </Text>
+                    {/* {isLoadingMembershipPrice ? <ButtonSpinner /> : null} */}
+                    {currOpValue ? (
+                        <Box
+                            horizontal={!_isTouch}
+                            gap={_isTouch ? 'sm' : undefined}
+                            width="100%"
+                            justifyContent="spaceBetween"
+                        >
+                            <Text>{valueLabel} </Text>
                             <Text> {membershipInEth + ' ETH'}</Text>
                         </Box>
                     ) : null}

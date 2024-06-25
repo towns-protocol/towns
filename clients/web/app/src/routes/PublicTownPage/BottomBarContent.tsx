@@ -1,10 +1,4 @@
 import React, { useEffect, useMemo, useRef } from 'react'
-import {
-    BlockchainTransactionType,
-    useIsTransactionPending,
-    useMembershipInfo,
-} from 'use-towns-client'
-import { ethers } from 'ethers'
 import { useReadableMembershipInfo } from '@components/TownPageLayout/useReadableMembershipInfo'
 import { BottomBarWithColWidths } from '@components/Web3/MembershipNFT/BottomBar'
 import { Box, Stack, Text } from '@ui'
@@ -28,11 +22,6 @@ export function BottomBarContent({
     const footerRef = useRef<HTMLDivElement>(null)
     const { data: membershipInfo } = useReadableMembershipInfo(spaceId ?? '')
     const { totalSupply, maxSupply } = membershipInfo ?? {}
-    const {
-        price: membershipPriceInWei,
-        isLoading: isLoadingMembershipPrice,
-        error: membershipPriceError,
-    } = useMembershipPriceInWei()
 
     useEffect(() => {
         if (!isTouch || !footerRef.current) {
@@ -115,39 +104,7 @@ export function BottomBarContent({
                 />
             </Stack>
             {isJoining && <JoiningOverlay />}
-            <UserOpTxModal
-                membershipPrice={membershipPriceInWei}
-                isLoadingMembershipPrice={isLoadingMembershipPrice}
-                membershipPriceError={membershipPriceError}
-            />
+            <UserOpTxModal valueLabel="Membership" />
         </>
     )
-}
-
-function useMembershipPriceInWei() {
-    const spaceId = useSpaceIdFromPathname()
-
-    const {
-        data: membershipInfo,
-        isLoading: isLoadingMembershipInfo,
-        error,
-    } = useMembershipInfo(spaceId ?? '')
-    const isJoinPending = useIsTransactionPending(BlockchainTransactionType.JoinSpace)
-
-    return useMemo(() => {
-        if (!isJoinPending) {
-            return { price: undefined, isLoading: false, error }
-        }
-        if (isLoadingMembershipInfo) {
-            return { price: undefined, isLoading: true, error }
-        }
-        if (!membershipInfo) {
-            return { price: undefined, isLoading: false, error }
-        }
-        return {
-            price: ethers.BigNumber.from(membershipInfo.price).toBigInt(),
-            isLoading: false,
-            error,
-        }
-    }, [isJoinPending, isLoadingMembershipInfo, membershipInfo, error])
 }

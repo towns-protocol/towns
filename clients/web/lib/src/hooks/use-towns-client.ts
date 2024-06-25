@@ -8,6 +8,7 @@ import {
     ChannelUpdateTransactionContext,
     CreateSpaceTransactionContext,
     ITownsServerVersions,
+    PrepayMembershipTransactionContext,
     RoleTransactionContext,
     TransactionContext,
     WalletLinkTransactionContext,
@@ -227,6 +228,14 @@ interface TownsClientImpl {
     waitWalletLinkTransaction: (
         transactionContext: WalletLinkTransactionContext,
     ) => Promise<WalletLinkTransactionContext | undefined>
+    prepayMembershipTransaction: (
+        spaceId: string,
+        supply: number,
+        signer: TSigner,
+    ) => Promise<PrepayMembershipTransactionContext | undefined>
+    waitForPrepayMembershipTransaction: (
+        context: PrepayMembershipTransactionContext | undefined,
+    ) => Promise<PrepayMembershipTransactionContext | undefined>
 }
 
 export function useTownsClient(): TownsClientImpl {
@@ -349,6 +358,10 @@ export function useTownsClient(): TownsClientImpl {
         getLinkedWallets: useWithCatch(clientSingleton?.getLinkedWallets),
         waitWalletLinkTransaction: useWithCatch(clientSingleton?.waitWalletLinkTransaction),
         getSupportedXChainIds: useWithCatch(clientSingleton?.getSupportedXChainIds),
+        prepayMembershipTransaction: useWithCatch(clientSingleton?.prepayMembershipTransaction),
+        waitForPrepayMembershipTransaction: useWithCatch(
+            clientSingleton?.waitForPrepayMembershipTransaction,
+        ),
     }
 }
 

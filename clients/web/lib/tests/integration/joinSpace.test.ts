@@ -88,10 +88,11 @@ test('create a space with a fixed cost, user must pay to join', async () => {
 
     const DEFAULT_FIXED_COST = '0.1'
     // bob creates a space with (default) 0.1 eth fixed cost
-    const spaceId = await createPaidTestSpaceGatedByTownNft(bob, [
-        Permission.Read,
-        Permission.Write,
-    ])
+    const spaceId = await createPaidTestSpaceGatedByTownNft(
+        bob,
+        [Permission.Read, Permission.Write],
+        parseFloat(DEFAULT_FIXED_COST),
+    )
 
     const spaceInfo = await bob.spaceDapp.getMembershipInfo(spaceId)
     assert(spaceInfo !== undefined, 'spaceInfo undefined')

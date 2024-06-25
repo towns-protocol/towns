@@ -40,7 +40,11 @@ export async function signUserOpHash(ctx: IUserOperationMiddlewareCtx, signer: e
     ctx.op.signature = await signer.signMessage(ethers.utils.arrayify(ctx.getUserOpHash()))
 }
 
-export function promptUser(multiplier: number, spaceDapp: ISpaceDapp | undefined) {
+export function promptUser(
+    preverificationGasMultiplier: number,
+    spaceDapp: ISpaceDapp | undefined,
+    value?: ethers.BigNumberish,
+) {
     return async function (
         ctx: IUserOperationMiddlewareCtx,
         {
@@ -85,7 +89,7 @@ export function promptUser(multiplier: number, spaceDapp: ISpaceDapp | undefined
 
                     ctx.op.preVerificationGas = increaseByPercentage({
                         gas: estimate.preVerificationGas,
-                        multiplier,
+                        multiplier: preverificationGasMultiplier,
                     })
                     ctx.op.verificationGasLimit =
                         estimate.verificationGasLimit ?? estimate.verificationGas
@@ -119,13 +123,11 @@ export function promptUser(multiplier: number, spaceDapp: ISpaceDapp | undefined
                         body?.error?.data,
                     )
 
-                    let spaceDappError: Error | undefined
                     // better logs
-                    if (townId) {
-                        spaceDappError = await spaceDapp?.parseSpaceError(townId, exception)
-                    } else {
-                        spaceDappError = spaceDapp?.parseSpaceFactoryError(exception)
-                    }
+                    const spaceDappError = spaceDapp?.parseAllContractErrors({
+                        spaceId: townId,
+                        error: exception,
+                    })
 
                     console.error(
                         '[paymasterProxyMiddleware] calling estimateUserOperationGas failed:',
@@ -146,12 +148,13 @@ export function promptUser(multiplier: number, spaceDapp: ISpaceDapp | undefined
             await new Promise((resolve, reject) => {
                 userOpsStore.setState({
                     currOpGas: estimate,
+                    currOpValue: value && ethers.BigNumber.from(value).gt(0) ? value : undefined,
                     confirm: () => {
-                        userOpsStore.setState({ currOpGas: undefined, retryType: undefined })
+                        userOpsStore.getState().clear()
                         resolve('User confirmed!')
                     },
                     deny: () => {
-                        userOpsStore.setState({ currOpGas: undefined, retryType: undefined })
+                        userOpsStore.getState().clear()
                         reject(new CodeException('user rejected user operation', 'ACTION_REJECTED'))
                     },
                 })

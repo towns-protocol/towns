@@ -180,7 +180,11 @@ export class UserOps {
         // 3 - prompt user if the paymaster rejected. recalculate preverification gas
         if (!this.skipPromptUserOnPMRejectedOp) {
             userOp.useMiddleware(async (ctx) =>
-                promptUser(preverificationGasMultiplierValue, this.spaceDapp)(ctx, {
+                promptUser(
+                    preverificationGasMultiplierValue,
+                    this.spaceDapp,
+                    args.value,
+                )(ctx, {
                     provider: this.spaceDapp?.provider,
                     config: this.spaceDapp?.config,
                     rpcUrl: this.aaRpcUrl,
@@ -1048,27 +1052,6 @@ export class UserOps {
             })
         }
 
-        ///////////////////////////////////////////////////////////////////////////////////
-        //// update prepay seats //////////////////////////////////////////////////////////
-        //
-        // TODO: get this to work in its own M
-        // also, need to pass value for prepayMembership
-        // executeBatch does not support value
-        // therefore this tx would have to be separate
-        //
-        // if (!prepaidMembershipSupply.eq(ethers.BigNumber.from(newPrepaidSupply))) {
-        //     const callData = await this.spaceDapp.prepay.encodeFunctionData('prepayMembership', [
-        //         space.Membership.address,
-        //         newPrepaidSupply,
-        //     ])
-        //     txs.push({
-        //         callData,
-        //         toAddress: this.spaceDapp.prepay.address,
-        //     })
-        // }
-        ///////////////////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////////////////////////////////////////////////
-
         return this.sendUserOp({
             toAddress: txs.map((tx) => tx.toAddress),
             callData: txs.map((tx) => tx.callData),
@@ -1078,29 +1061,27 @@ export class UserOps {
         })
     }
 
-    public async sendPrepayMembershipOp(args: {
-        spaceId: string
-        prepaidSupply: ethers.BigNumberish
-        signer: ethers.Signer
-    }) {
-        const { spaceId, prepaidSupply, signer } = args
+    public async sendPrepayMembershipOp(args: Parameters<SpaceDapp['prepayMembership']>) {
+        const [spaceId, prepaidSupply, signer] = args
 
         if (!this.spaceDapp) {
             throw new Error('spaceDapp is required')
         }
-        const space = await this.spaceDapp.getSpace(spaceId)
+        const space = this.spaceDapp.getSpace(spaceId)
 
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
 
-        const callData = await space.Prepay.encodeFunctionData('prepayMembership', [prepaidSupply])
+        const cost = await space.Prepay.read.calculateMembershipPrepayFee(prepaidSupply)
+        const callData = space.Prepay.encodeFunctionData('prepayMembership', [prepaidSupply])
 
         return this.sendUserOp({
             toAddress: space.Prepay.address,
             callData,
             signer,
             spaceId,
+            value: cost,
             functionHashForPaymasterProxy: 'prepayMembership',
         })
     }

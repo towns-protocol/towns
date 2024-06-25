@@ -45,6 +45,7 @@ export enum BlockchainTransactionType {
     JoinSpace = 'joinSpace',
     // not a single tx, but a series of txs exectued in a single user operation
     EditSpaceMembership = 'editSpaceMembership',
+    PrepayMembership = 'prepayMembership',
 }
 
 export type BlockchainTransaction = {

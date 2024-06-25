@@ -210,7 +210,7 @@ export async function createTestSpaceGatedByTownNft(
 export async function createPaidTestSpaceGatedByTownNft(
     client: TownsTestClient,
     rolePermissions: Permission[],
-    costInEth = 0.1,
+    costInEth?: number,
 ): Promise<string> {
     let createSpaceInfo = {
         name: client.makeUniqueName(),
@@ -226,7 +226,13 @@ export async function createPaidTestSpaceGatedByTownNft(
         settings: {
             name: 'Everyone',
             symbol: 'MEMBER',
-            price: ethers.utils.parseEther(costInEth.toString()),
+            price: ethers.utils.parseEther(
+                costInEth
+                    ? costInEth.toString()
+                    : (
+                          await client.spaceDapp.platformRequirements.getMembershipMinPrice()
+                      ).toString(),
+            ),
             maxSupply: 100,
             duration: 0,
             currency: ethers.constants.AddressZero,

@@ -96,6 +96,11 @@ export type BanUnbanWalletTransactionContext = TransactionContext<{
     isBan: boolean
 }>
 
+export type PrepayMembershipTransactionContext = TransactionContext<{
+    spaceId: string
+    supply: number
+}>
+
 export type TownsClientEventHandlers = {
     onCreateSpace?: (roomId: string) => void
     onJoinRoom?: (roomId: string, spaceId: string) => void

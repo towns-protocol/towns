@@ -90,6 +90,14 @@ export function BlockchainTxNotifier() {
                     })
                     break
                 }
+                case BlockchainTransactionType.PrepayMembership: {
+                    generateToast({
+                        tx,
+                        pendingMessage: 'Adding prepaid seats...',
+                        successMessage: `${tx.data?.supply} Prepaid seats added!`,
+                    })
+                    break
+                }
                 case BlockchainTransactionType.EditChannel:
                     generateToast({
                         tx,

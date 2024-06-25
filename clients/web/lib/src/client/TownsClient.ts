@@ -39,6 +39,7 @@ import {
     createTransactionContext,
     logTxnResult,
     BanUnbanWalletTransactionContext,
+    PrepayMembershipTransactionContext,
     JoinFlowStatus,
 } from './TownsClientTypes'
 import {
@@ -67,6 +68,7 @@ import {
     ReceiptType,
     TransactionOrUserOperation,
     Address,
+    TSigner,
 } from '../types/web3-types'
 import { IArchitectBase, Permission, SpaceInfo, ISpaceDapp } from '@river-build/web3'
 import { BlockchainTransactionStore } from './BlockchainTransactionStore'
@@ -1722,6 +1724,54 @@ export class TownsClient
             })
             throw decodeError
         }
+    }
+
+    public async prepayMembershipTransaction(
+        spaceId: string,
+        supply: number,
+        signer: TSigner,
+    ): Promise<PrepayMembershipTransactionContext> {
+        let transaction: TransactionOrUserOperation | undefined = undefined
+        let error: Error | undefined = undefined
+        const continueStoreTx = this.blockchainTransactionStore.begin({
+            type: BlockchainTransactionType.PrepayMembership,
+            data: {
+                supply,
+            },
+        })
+
+        try {
+            if (this.isAccountAbstractionEnabled()) {
+                transaction = await this.userOps?.sendPrepayMembershipOp([spaceId, supply, signer])
+            } else {
+                transaction = await this.spaceDapp.prepayMembership(spaceId, supply, signer)
+            }
+            this.log(`[linkEOAToRootKey] transaction created` /*, transaction*/)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (err: unknown) {
+            error = this.spaceDapp.parseSpaceError(spaceId, err)
+        }
+        continueStoreTx({
+            hashOrUserOpHash: getTransactionHashOrUserOpHash(transaction),
+            transaction,
+            error,
+        })
+
+        return {
+            transaction,
+            receipt: undefined,
+            status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
+            data: { spaceId: spaceId, supply },
+            error,
+        }
+    }
+
+    public async waitForPrepayMembershipTransaction(
+        context: PrepayMembershipTransactionContext | undefined,
+    ): Promise<PrepayMembershipTransactionContext> {
+        const txnContext = await this._waitForBlockchainTransaction(context)
+        logTxnResult('waitForPrepayMembershipTransaction', txnContext)
+        return txnContext
     }
 
     /************************************************

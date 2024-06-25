@@ -68,5 +68,9 @@ export const blockchainKeys = {
         { chainId: chainId ?? 'waitingForChainId' },
     ],
     supportedXChainIds: () => ['supportedXChainIds'],
+    prepaidSupply: (spaceId: string | undefined) => [
+        'prepaidSupply',
+        spaceId ?? 'waitingForSpaceId',
+    ],
     minimumMembershipPrice: () => ['minimumMembershipPrice'],
 }
