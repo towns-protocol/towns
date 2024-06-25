@@ -107,7 +107,9 @@ export function SingleRolePanelWithoutAuth() {
                         defaultValues={{
                             // roleDetails is undefined when creating a new role
                             name: roleDetails?.name ?? '',
-                            permissions: isCreateRole ? ['Read'] : roleDetails?.permissions ?? [],
+                            permissions: isCreateRole
+                                ? [Permission.Read]
+                                : roleDetails?.permissions ?? [],
                             users: roleDetails?.users ?? [],
                             tokens: roleDetails?.ruleData
                                 ? convertRuleDataToTokenFormSchema(roleDetails.ruleData)
@@ -600,6 +602,7 @@ function PermissionsToggles({
                 defaultToggled={!!role?.permissions.includes(permissionId)}
                 metaData={rolePermissionDescriptions[permissionId]}
                 key={permissionId}
+                disabled={rolePermissionDescriptions[permissionId]?.disabled}
                 onToggle={onToggleRole}
             />
         ) : null

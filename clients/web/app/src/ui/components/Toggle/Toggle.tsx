@@ -6,6 +6,7 @@ import * as style from './Toggle.css'
 type Props<D> = {
     toggled: boolean
     onToggle: (checked: boolean, data?: D) => void
+    disabled?: boolean
     metaData?: D
 }
 /**
@@ -20,6 +21,7 @@ export const Toggle = <D,>(props: Props<D>) => {
     return (
         <Box display="block">
             <Box
+                opacity={props.disabled ? '0.3' : 'opaque'}
                 data-testid="toggle"
                 as="label"
                 flexDirection="row"
@@ -33,8 +35,8 @@ export const Toggle = <D,>(props: Props<D>) => {
                 rounded="md"
             >
                 <Box
-                    cursor="pointer"
-                    pointerEvents="all"
+                    cursor={props.disabled ? 'not-allowed' : 'pointer'}
+                    pointerEvents={props.disabled ? 'none' : 'all'}
                     className={style.checkboxWrapper}
                     position="relative"
                     style={{

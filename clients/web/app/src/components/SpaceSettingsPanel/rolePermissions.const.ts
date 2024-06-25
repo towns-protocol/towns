@@ -4,11 +4,13 @@ export const rolePermissionDescriptions: {
     [key in Permission]?: {
         name: string
         description: string
+        disabled?: boolean
     }
 } = {
     [Permission.Read]: {
         name: 'Read messages',
         description: 'Allow members to read messages.',
+        disabled: true,
     },
     [Permission.Write]: {
         name: 'Send messages',

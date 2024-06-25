@@ -18,12 +18,16 @@ type RoleProps = {
     defaultToggled: boolean
     metaData: PermissionMeta
     onToggle: (id: Permission, value: boolean) => void
+    disabled?: boolean
 }
 
 export const RoleRow = (props: RoleProps) => {
     const { permissionId, metaData, defaultToggled, role } = props
     const [checked, setChecked] = React.useState(defaultToggled)
     const onToggle = (checked: boolean) => {
+        if (props.disabled) {
+            return
+        }
         props.onToggle(permissionId, checked)
     }
 
@@ -44,7 +48,7 @@ export const RoleRow = (props: RoleProps) => {
                 <Paragraph color="gray2">{metaData?.description}</Paragraph>
             </Stack>
             <Stack centerContent>
-                <Toggle toggled={checked} onToggle={onToggle} />
+                <Toggle toggled={checked} disabled={props.disabled} onToggle={onToggle} />
             </Stack>
         </Stack>
     )
