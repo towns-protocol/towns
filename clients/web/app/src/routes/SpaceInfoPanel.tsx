@@ -10,6 +10,7 @@ import {
     useContractSpaceInfo,
     useGetRootKeyFromLinkedWallet,
     useHasPermission,
+    useIsSpaceOwner,
     useRoleDetails,
     useSpaceData,
     useSpaceId,
@@ -94,6 +95,8 @@ export const SpaceInfo = () => {
         walletAddress: loggedInWalletAddress ?? '',
         permission: Permission.ModifySpaceSettings,
     })
+
+    const { isOwner } = useIsSpaceOwner(space?.id, loggedInWalletAddress)
 
     const { hasPermission: canBan } = useHasPermission({
         spaceId: space?.id ?? '',
@@ -376,7 +379,7 @@ export const SpaceInfo = () => {
                 />
                 <MdGap>
                     <EditSpaceName
-                        canEdit={canEdit}
+                        canEdit={isOwner}
                         name={space?.name}
                         address={address}
                         onEdit={onEditSpaceNameClick}
@@ -427,7 +430,7 @@ export const SpaceInfo = () => {
                     <Icon type="search" size="square_sm" color="gray2" />
                     <Paragraph color="default">Preview</Paragraph>
                 </PanelButton>
-                {canEdit && (
+                {isOwner && (
                     <PanelButton onClick={onEditSpaceSettingsClick}>
                         <Icon type="treasury" size="square_sm" color="gray2" />
                         <Paragraph color="default">Edit Membership Settings</Paragraph>

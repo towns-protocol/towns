@@ -29,9 +29,9 @@ export const rolePermissionDescriptions: {
         description: 'Allow members to ban other members.',
     },
     [Permission.ModifySpaceSettings]: {
-        name: 'Modify town settings',
+        name: 'Manage town settings',
         description:
-            'Allow members to modify the town settings. Change town image, name, topic, and other settings such as permissions and roles.',
+            'Allow members to create, edit and delete roles and their corresponding permissions. Additionally, members can change the town image, description, and motto.',
     },
 } as const
 
