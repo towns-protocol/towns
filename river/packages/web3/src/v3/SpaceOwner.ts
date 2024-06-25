@@ -24,7 +24,7 @@ export class SpaceOwner {
         )
     }
 
-    public async getNumTotalMemberships(): Promise<ethers.BigNumber> {
+    public async getNumTotalSpaces(): Promise<ethers.BigNumber> {
         return this.erc721A.read.totalSupply()
     }
 }

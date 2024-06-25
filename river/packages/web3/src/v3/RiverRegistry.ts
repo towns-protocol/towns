@@ -88,7 +88,10 @@ export class RiverRegistry {
         if (!nodeUrls || nodeUrls.length === 0) {
             throw new Error('No operational nodes found in registry')
         }
-        return nodeUrls.map((x) => x.url).join(',')
+        return nodeUrls
+            .sort()
+            .map((x) => x.url)
+            .join(',')
     }
 
     async getStreamCount(): Promise<ethers.BigNumber> {

@@ -8,7 +8,6 @@ import {
     IOutboundGroupSessionKey,
     OutboundGroupSession,
     Utility,
-    Session,
 } from './encryptionTypes'
 import { EncryptionDelegate } from './encryptionDelegate'
 import { GROUP_ENCRYPTION_ALGORITHM, GroupEncryptionSession } from './olmLib'
@@ -635,7 +634,6 @@ export class EncryptionDevice {
      *
      * @param streamId - streamId of session
      * @param sessionId  - session identifier
-     * @param sessionData - the session object from the store
      */
     public async exportInboundGroupSession(
         streamId: string,
@@ -660,5 +658,37 @@ export class EncryptionDevice {
             sessionKey: sessionKey,
             algorithm: GROUP_ENCRYPTION_ALGORITHM,
         }
+    }
+
+    /**
+     * Get a list containing all of the room keys
+     *
+     * @returns a list of session export objects
+     */
+    public async exportRoomKeys(): Promise<GroupEncryptionSession[] | undefined> {
+        const exportedSessions: GroupEncryptionSession[] = []
+
+        await this.cryptoStore.withGroupSessions(async () => {
+            const sessions = await this.cryptoStore.getAllEndToEndInboundGroupSessions()
+            for (const sessionData of sessions) {
+                if (!sessionData) {
+                    continue
+                }
+
+                const session = this.unpickleInboundGroupSession(sessionData)
+                const messageIndex = session.first_known_index()
+                const sessionKey = session.export_session(messageIndex)
+                session.free()
+
+                exportedSessions.push({
+                    streamId: sessionData.streamId,
+                    sessionId: sessionData.sessionId,
+                    sessionKey: sessionKey,
+                    algorithm: GROUP_ENCRYPTION_ALGORITHM,
+                })
+            }
+        })
+
+        return exportedSessions
     }
 }

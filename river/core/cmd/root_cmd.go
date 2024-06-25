@@ -81,11 +81,7 @@ func bindViperKeys(
 }
 
 func initViperConfig() (*config.Config, *builder.ConfigBuilder[config.Config], error) {
-	cfg := &config.Config{
-		Log: config.LogConfig{
-			Format: "text",
-		},
-	}
+	cfg := config.GetDefaultConfig()
 
 	bld, err := builder.NewConfigBuilder(cfg, "RIVER")
 	if err != nil {

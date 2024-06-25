@@ -47,7 +47,7 @@ export function checkNever(value: never, message?: string): never {
     throw new Error(message ?? `Unhandled switch value ${value}`)
 }
 
-export const TIERED_PRICING_ORACLE = 'TieredLogPricingOracle'
+export const TIERED_PRICING_ORACLE = 'TieredLogPricingOracleV2'
 export const FIXED_PRICING = 'FixedPricing'
 
 export const getDynamicPricingModule = async (spaceDapp: ISpaceDapp | undefined) => {

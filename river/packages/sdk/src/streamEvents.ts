@@ -3,6 +3,7 @@ import {
     FullyReadMarker,
     UserInboxPayload_GroupEncryptionSessions,
     UserSettingsPayload_UserBlock,
+    UserPayload_UserMembership,
 } from '@river-build/proto'
 
 import {
@@ -60,7 +61,7 @@ export type StreamStateEvents = {
     userJoinedStream: (streamId: string) => void
     userInvitedToStream: (streamId: string) => void
     userLeftStream: (streamId: string) => void
-    userStreamMembershipChanged: (streamId: string) => void
+    userStreamMembershipChanged: (streamId: string, payload: UserPayload_UserMembership) => void
     spaceChannelCreated: (spaceId: string, channelId: string) => void
     spaceChannelUpdated: (spaceId: string, channelId: string) => void
     spaceChannelDeleted: (spaceId: string, channelId: string) => void

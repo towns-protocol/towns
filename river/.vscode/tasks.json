@@ -23,6 +23,7 @@
         "CheckVersions",
         "FoundryUp",
         "YarnInstall",
+        "BuildProtobufs",
         "Stage 1",
       ],
       // Mark as the default build task so cmd/ctrl+shift+b will create them
@@ -48,7 +49,6 @@
       "label": "Stage 2",
       "dependsOn": [
         "CasablancaConfigureNodes",
-        "BuildProtobufs",
         "Stage 3"
       ],
       "group": {

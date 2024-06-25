@@ -85,6 +85,47 @@ describe('TestDecryptionExtensions', () => {
         expect(bobDex.seenStates).toContain(DecryptionStatus.respondingToKeyRequests)
         expect(aliceDex.seenStates).toContain(DecryptionStatus.processingNewGroupSessions)
     })
+
+    test('should be able to export/import stream room key', async () => {
+        // arrange
+        const clientDiscoveryService: ClientDiscoveryService = {}
+        const streamId = genStreamId()
+        const alice = genUserId('Alice')
+        const bob = genUserId('Bob')
+        const bobsPlaintext = "bob's plaintext"
+        const { decryptionExtension: aliceDex } = await createCryptoMocks(
+            alice,
+            clientDiscoveryService,
+        )
+        const { crypto: bobCrypto, decryptionExtension: bobDex } = await createCryptoMocks(
+            bob,
+            clientDiscoveryService,
+        )
+
+        // act
+        aliceDex.start()
+        // bob starts the decryption extension
+        bobDex.start()
+        // bob encrypts a message
+        const encryptedData = await bobCrypto.encryptGroupEvent(streamId, bobsPlaintext)
+        // alice doesn't have the session key
+        // alice imports the keys exported by bob
+        const roomKeys = await bobDex.crypto.encryptionDevice.exportRoomKeys()
+        if (roomKeys) {
+            await aliceDex.crypto.importRoomKeys(roomKeys)
+        }
+
+        // after alice gets the session key,
+        // try to decrypt the message
+        const decrypted = await aliceDex.crypto.decryptGroupEvent(streamId, encryptedData)
+
+        // stop the decryption extensions
+        await bobDex.stop()
+        await aliceDex.stop()
+
+        // assert
+        expect(decrypted).toBe(bobsPlaintext)
+    })
 })
 
 type ReleaseFunction = (value: void | PromiseLike<void>) => void

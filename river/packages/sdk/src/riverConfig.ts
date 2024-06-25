@@ -46,6 +46,11 @@ function makeWeb3Deployment(environmentId: string): Web3Deployment {
     if (getWeb3Deployments().includes(environmentId)) {
         return getWeb3Deployment(environmentId)
     }
+    if (!isDefined(process.env.BASE_CHAIN_ID)) {
+        throw new Error(
+            `Attempted to make local deployment ${environmentId}, which was not found in packages/generated/config/deployments.json AND individual chain ids and addresses were not defined in the process.env. Try configuring a local environment or updating the process.env`,
+        )
+    }
     // Fallback to env vars
     check(isDefined(process.env.BASE_CHAIN_ID), 'BASE_CHAIN_ID is not defined')
     check(isDefined(process.env.BASE_CHAIN_RPC_URL), 'BASE_CHAIN_RPC_URL is not defined')

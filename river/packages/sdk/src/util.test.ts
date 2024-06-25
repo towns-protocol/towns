@@ -659,7 +659,7 @@ export function isValidEthAddress(address: string): boolean {
     return ethAddressRegex.test(address)
 }
 
-export const TIERED_PRICING_ORACLE = 'TieredLogPricingOracle'
+export const TIERED_PRICING_ORACLE = 'TieredLogPricingOracleV2'
 export const FIXED_PRICING = 'FixedPricing'
 
 export const getDynamicPricingModule = (pricingModules: PricingModuleStruct[]) => {

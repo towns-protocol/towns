@@ -91,16 +91,16 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
         switch (op) {
             case MembershipOp.SO_INVITE:
                 emitter?.emit('userInvitedToStream', streamId)
-                emitter?.emit('userStreamMembershipChanged', streamId)
+                emitter?.emit('userStreamMembershipChanged', streamId, payload)
                 break
             case MembershipOp.SO_JOIN:
                 emitter?.emit('userJoinedStream', streamId)
-                emitter?.emit('userStreamMembershipChanged', streamId)
+                emitter?.emit('userStreamMembershipChanged', streamId, payload)
                 break
             case MembershipOp.SO_LEAVE:
                 if (wasInvited || wasJoined) {
                     emitter?.emit('userLeftStream', streamId)
-                    emitter?.emit('userStreamMembershipChanged', streamId)
+                    emitter?.emit('userStreamMembershipChanged', streamId, payload)
                 }
                 break
             case MembershipOp.SO_UNSPECIFIED:

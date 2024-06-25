@@ -140,7 +140,7 @@
         "@types/react-helmet": "^6.1.6",
         "@types/react-test-renderer": "^18.0.0",
         "@typescript-eslint/eslint-plugin": "^6.10.0",
-        "@typescript-eslint/parser": "^6.10.0",
+        "@typescript-eslint/parser": "^7.14.1",
         "@vanilla-extract/css": "^1.11.0",
         "@vanilla-extract/dynamic": "^2.0.3",
         "@vanilla-extract/recipes": "^0.4.0",

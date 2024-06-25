@@ -1,3 +1,5 @@
+import { InboundGroupSessionData } from './encryptionDevice'
+
 export interface AccountRecord {
     id: string
     accountPickle: string
@@ -14,4 +16,9 @@ export interface UserDeviceRecord {
     deviceKey: string
     fallbackKey: string
     expirationTimestamp: number
+}
+
+export interface ExtendedInboundGroupSessionData extends InboundGroupSessionData {
+    streamId: string
+    sessionId: string
 }

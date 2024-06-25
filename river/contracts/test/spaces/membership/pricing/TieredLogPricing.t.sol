@@ -74,7 +74,7 @@ contract TieredLogPricingTest is TestUtils {
       _roundId: 1,
       _answer: EXCHANGE_RATE,
       _startedAt: 0,
-      _updatedAt: 0,
+      _updatedAt: block.timestamp,
       _answeredInRound: 0
     });
   }

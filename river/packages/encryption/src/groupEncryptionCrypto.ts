@@ -16,6 +16,24 @@ import { check, dlog } from '@river-build/dlog'
 
 const log = dlog('csb:encryption:groupEncryptionCrypto')
 
+export interface ImportRoomKeysOpts {
+    /** Reports ongoing progress of the import process. Can be used for feedback. */
+    progressCallback?: (stage: ImportRoomKeyProgressData) => void
+}
+
+/**
+ * Room key import progress report.
+ * Used when calling {@link GroupEncryptionCrypto#importRoomKeys} or
+ * {@link GroupEncryptionCrypto#importRoomKeysAsJson} as the parameter of
+ * the progressCallback. Used to display feedback.
+ */
+export interface ImportRoomKeyProgressData {
+    stage: string // TODO: Enum
+    successes?: number
+    failures?: number
+    total?: number
+}
+
 export class GroupEncryptionCrypto {
     private delegate: EncryptionDelegate | undefined
 
@@ -159,5 +177,71 @@ export class GroupEncryptionCrypto {
                 }),
             ),
         )
+    }
+
+    /**
+     * Import a list of room keys previously exported by exportRoomKeys
+     *
+     * @param keys - a list of session export objects
+     * @returns a promise which resolves once the keys have been imported
+     */
+    public importRoomKeys(
+        keys: GroupEncryptionSession[],
+        opts: ImportRoomKeysOpts = {},
+    ): Promise<void> {
+        let successes = 0
+        let failures = 0
+        const total = keys.length
+
+        function updateProgress(): void {
+            opts.progressCallback?.({
+                stage: 'load_keys',
+                successes,
+                failures,
+                total,
+            })
+        }
+
+        return Promise.all(
+            keys.map(async (key) => {
+                if (!key.streamId || !key.algorithm) {
+                    log('ignoring room key entry with missing fields', key)
+                    failures++
+                    if (opts.progressCallback) {
+                        updateProgress()
+                    }
+                    return
+                }
+
+                try {
+                    await this.groupDecryption.importStreamKey(key.streamId, key)
+                    successes++
+                    if (opts.progressCallback) {
+                        updateProgress()
+                    }
+                } catch (error) {
+                    log('failed to import key', error)
+                    failures++
+                    if (opts.progressCallback) {
+                        updateProgress()
+                    }
+                }
+                return
+            }),
+        ).then()
+    }
+
+    /**
+     * Import a JSON string encoding a list of room keys previously
+     * exported by exportRoomKeysAsJson
+     *
+     * @param keys - a JSON string encoding a list of session export
+     *    objects, each of which is an GroupEncryptionSession
+     * @param opts - options object
+     * @returns a promise which resolves once the keys have been imported
+     */
+    public async importRoomKeysAsJson(keys: string): Promise<void> {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        return await this.importRoomKeys(JSON.parse(keys))
     }
 }

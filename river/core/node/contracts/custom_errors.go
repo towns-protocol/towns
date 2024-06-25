@@ -52,7 +52,7 @@ func (ca *EvmErrorDecoder) AddMetaData(md *bind.MetaData) error {
 // It will try to decode the EVM message to a custom error defined in any of the
 // wrapped ABI's. If that fails it tries to decode the message as a classical
 // string error. If that fails it returns err as a RiverError.
-func (ca *EvmErrorDecoder) DecodeEVMError(err error) (*CustomerError, *StringError, error) {
+func (ca *EvmErrorDecoder) DecodeEVMError(err error) (*CustomError, *StringError, error) {
 	if err == nil {
 		return nil, nil, nil
 	}
@@ -85,14 +85,14 @@ func (ca *EvmErrorDecoder) DecodeEVMError(err error) (*CustomerError, *StringErr
 					if decErr, _ := a.ErrorByID(funcSelector); decErr != nil {
 						if decoded, err := decErr.Unpack(rawData); err == nil {
 							if decodedAsSlice, ok := decoded.([]any); ok {
-								return &CustomerError{
+								return &CustomError{
 									Code:         code,
 									Message:      message,
 									DecodedError: decErr,
 									Params:       decodedAsSlice,
 								}, nil, nil
 							} else {
-								return &CustomerError{
+								return &CustomError{
 									Code:         code,
 									Message:      message,
 									DecodedError: decErr,
@@ -128,8 +128,8 @@ func (ca *EvmErrorDecoder) DecodeEVMError(err error) (*CustomerError, *StringErr
 	return nil, nil, AsRiverError(err).Func("DecodeEVMError")
 }
 
-// CustomerError represents a custom error returned by the RPC server.
-type CustomerError struct {
+// CustomError represents a custom error returned by the RPC server.
+type CustomError struct {
 	// Code is the received RPC error code
 	Code int64
 	// Message is the received RPC message
@@ -142,7 +142,7 @@ type CustomerError struct {
 	Params []any
 }
 
-func (ce CustomerError) Error() string {
+func (ce CustomError) Error() string {
 	var sb strings.Builder
 	sb.Write([]byte(ce.DecodedError.Name))
 	sb.Write([]byte("("))

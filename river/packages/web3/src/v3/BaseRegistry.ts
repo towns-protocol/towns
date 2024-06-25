@@ -10,6 +10,8 @@ export type BaseOperator = {
     status: number
 }
 
+export type BaseNodeWithOperator = { node: string; operator: BaseOperator }
+
 export class BaseRegistry {
     public readonly config: BaseChainConfig
     public readonly provider: ethers.providers.Provider
@@ -85,5 +87,26 @@ export class BaseRegistry {
         const nodes = await Promise.all(nodeAtIndexPromises)
 
         return nodes
+    }
+
+    public async getNodesWithOperators(): Promise<BaseNodeWithOperator[]> {
+        const operators = await this.getOperators()
+        const nodesByOperatorPromises = operators.map((operator) =>
+            this.entitlementChecker.read.getNodesByOperator(operator.operatorAddress),
+        )
+        const nodesByOperator = await Promise.all(nodesByOperatorPromises)
+        const operatorsWithNodes = operators.map((operator, index) => ({
+            operator,
+            nodes: nodesByOperator[index],
+        }))
+
+        const nodesWithOperators: BaseNodeWithOperator[] = []
+        operatorsWithNodes.forEach(({ operator, nodes }) => {
+            nodes.forEach((node) => {
+                nodesWithOperators.push({ node, operator })
+            })
+        })
+
+        return nodesWithOperators
     }
 }

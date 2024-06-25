@@ -11,72 +11,6 @@ import (
 	. "github.com/river-build/river/core/node/protocol"
 )
 
-type BlockchainInfo struct {
-	ChainId   uint64
-	Name      string
-	Blocktime time.Duration
-}
-
-func GetDefaultBlockchainInfo() map[uint64]BlockchainInfo {
-	return map[uint64]BlockchainInfo{
-		1: {
-			ChainId:   1,
-			Name:      "Ethereum Mainnet",
-			Blocktime: 12 * time.Second,
-		},
-		11155111: {
-			ChainId:   11155111,
-			Name:      "Ethereum Sepolia",
-			Blocktime: 12 * time.Second,
-		},
-		550: {
-			ChainId:   550,
-			Name:      "River Mainnet",
-			Blocktime: 2 * time.Second,
-		},
-		6524490: {
-			ChainId:   6524490,
-			Name:      "River Testnet",
-			Blocktime: 2 * time.Second,
-		},
-		8453: {
-			ChainId:   8453,
-			Name:      "Base Mainnet",
-			Blocktime: 2 * time.Second,
-		},
-		84532: {
-			ChainId:   84532,
-			Name:      "Base Sepolia",
-			Blocktime: 2 * time.Second,
-		},
-		137: {
-			ChainId:   137,
-			Name:      "Polygon Mainnet",
-			Blocktime: 2 * time.Second,
-		},
-		42161: {
-			ChainId:   42161,
-			Name:      "Arbitrum One",
-			Blocktime: 250 * time.Millisecond,
-		},
-		10: {
-			ChainId:   10,
-			Name:      "Optimism Mainnet",
-			Blocktime: 2 * time.Second,
-		},
-		31337: {
-			ChainId:   31337,
-			Name:      "Anvil Base",
-			Blocktime: 2 * time.Second,
-		},
-		31338: {
-			ChainId:   31338,
-			Name:      "Anvil River",
-			Blocktime: 2 * time.Second,
-		},
-	}
-}
-
 type ContractVersion string
 
 const (
@@ -84,10 +18,48 @@ const (
 	VersionV3  ContractVersion = "v3"
 )
 
-type TLSConfig struct {
-	Cert   string // Path to certificate file or BASE64 encoded certificate
-	Key    string `dlog:"omit" json:"-" yaml:"-"` // Path to key file or BASE64 encoded key. Sensitive data, omitted from logging.
-	TestCA string // Path to CA certificate file or BASE64 encoded CA certificate
+func GetDefaultConfig() *Config {
+	return &Config{
+		Port: 443,
+		Database: DatabaseConfig{
+			StartupDelay: 2 * time.Second,
+		},
+		StorageType: "postgres",
+		UseHttps:    true,
+		BaseChain: ChainConfig{
+			// TODO: ChainId:
+			BlockTimeMs: 2000,
+		},
+		RiverChain: ChainConfig{
+			// TODO: ChainId:
+			BlockTimeMs: 2000,
+			TransactionPool: TransactionPoolConfig{
+				TransactionTimeout:               6 * time.Second,
+				GasFeeCap:                        150_000_000_000, // 150 Gwei
+				MinerTipFeeReplacementPercentage: 10,
+				GasFeeIncreasePercentage:         10,
+			},
+		},
+		// TODO: ArchitectContract: ContractConfig{},
+		// TODO: RegistryContract:  ContractConfig{},
+		Log: LogConfig{
+			Level:   "info",
+			Console: true,
+			NoColor: true,
+			Format:  "json",
+		},
+		Metrics: MetricsConfig{
+			Enabled: true,
+		},
+		// TODO: Network: NetworkConfig{},
+		StandByOnStart:    true,
+		StandByPollPeriod: 500 * time.Millisecond,
+		ShutdownTimeout:   1 * time.Second,
+		History:           30 * time.Second,
+		Archive: ArchiveConfig{
+			PrintStatsPeriod: 10 * time.Second,
+		},
+	}
 }
 
 // Viper uses mapstructure module to marshal settings into config struct.
@@ -177,11 +149,19 @@ type Config struct {
 	TestCustomEntitlementContract ContractConfig  `mapstructure:"test_custom_entitlement_contract"`
 
 	// History indicates how far back xchain must look for entitlement check requests after start
-	History        time.Duration
+	History time.Duration
+
+	// EnableTestAPIs enables additional APIs used for testing.
 	EnableTestAPIs bool
 
 	// Enables go profiler, gc and so on enpoints on /debug
 	EnableDebugEndpoints bool
+}
+
+type TLSConfig struct {
+	Cert   string // Path to certificate file or BASE64 encoded certificate
+	Key    string `dlog:"omit" json:"-" yaml:"-"` // Path to key file or BASE64 encoded key. Sensitive data, omitted from logging.
+	TestCA string // Path to CA certificate file or BASE64 encoded CA certificate
 }
 
 type NetworkConfig struct {
