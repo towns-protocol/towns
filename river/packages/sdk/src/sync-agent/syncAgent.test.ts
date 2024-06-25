@@ -1,5 +1,5 @@
 /**
- * @group with-entitilements
+ * @group main
  */
 import { Wallet } from 'ethers'
 import { makeSignerContext } from '../signerContext'

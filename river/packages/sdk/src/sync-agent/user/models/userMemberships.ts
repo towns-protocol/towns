@@ -1,9 +1,12 @@
-import { MembershipOp } from '@river-build/proto'
-import EventEmitter from 'events'
-import TypedEmitter from 'typed-emitter'
+import { MembershipOp, UserPayload_UserMembership } from '@river-build/proto'
 import { PersistedObservable, persistedObservable } from '../../../observable/persistedObservable'
 import { LoadPriority, Store } from '../../../store/store'
-import { dlogger } from '@river-build/dlog'
+import { check, dlogger } from '@river-build/dlog'
+import { RiverConnection } from '../../river-connection/riverConnection'
+import { Client } from '../../../client'
+import { makeUserStreamId, streamIdFromBytes, userIdFromAddress } from '../../../id'
+import { StreamStateView } from '../../../streamStateView'
+import { isDefined } from '../../../check'
 
 const logger = dlogger('csb:userMemberships')
 
@@ -29,23 +32,31 @@ export type UserMembershipEvents = {
 
 @persistedObservable({ tableName: 'userMemberships' })
 export class UserMemberships extends PersistedObservable<UserMembershipsModel> {
-    emitter: TypedEmitter<UserMembershipEvents>
+    private riverConnection: RiverConnection
+    private streamId: string
 
-    constructor(id: string, store: Store) {
+    constructor(id: string, store: Store, riverConnection: RiverConnection) {
         super({ id, initialized: false, memberships: {} }, store, LoadPriority.high)
-        this.emitter = new EventEmitter() as TypedEmitter<UserMembershipEvents>
+        this.riverConnection = riverConnection
+        this.streamId = makeUserStreamId(id)
     }
 
     override async onLoaded() {
-        if (this.data.initialized) {
-            // start doing stuff
-        }
+        this.riverConnection.registerView(this)
     }
 
-    async initialize(metadata?: { spaceId: Uint8Array }) {
-        logger.log('initialize', metadata)
-        this.update({ ...this.data, initialized: true })
-        // get or create the user stream
+    onClientStarted(client: Client) {
+        logger.log('onClientStarted')
+        const streamView = this.riverConnection.client.value?.stream(this.streamId)?.view
+        if (streamView) {
+            this.initialize(streamView)
+        }
+        client.addListener('userStreamMembershipChanged', this.onUserStreamMembershipChanged)
+        client.addListener('streamInitialized', this.onStreamInitialized)
+        return () => {
+            client.removeListener('userStreamMembershipChanged', this.onUserStreamMembershipChanged)
+            client.removeListener('streamInitialized', this.onStreamInitialized)
+        }
     }
 
     getMembership(streamId: string): UserMembership | undefined {
@@ -59,4 +70,49 @@ export class UserMemberships extends PersistedObservable<UserMembershipsModel> {
     isJoined(streamId: string): boolean {
         return this.isMember(streamId, MembershipOp.SO_JOIN)
     }
+
+    private initialize = (streamView: StreamStateView) => {
+        const memberships = Object.entries(streamView.userContent.streamMemberships).reduce(
+            (acc, [streamId, payload]) => {
+                acc[streamId] = toUserMembership(payload)
+                return acc
+            },
+            {} as Record<string, UserMembership>,
+        )
+        this.update({ ...this.data, memberships, initialized: true })
+    }
+
+    private onStreamInitialized = (streamId: string) => {
+        if (streamId === this.streamId) {
+            const streamView = this.riverConnection.client.value?.stream(this.streamId)?.view
+            check(isDefined(streamView), 'streamView is not defined')
+            this.initialize(streamView)
+        }
+    }
+
+    private onUserStreamMembershipChanged = (
+        streamId: string,
+        payload: UserPayload_UserMembership,
+    ) => {
+        this.update({
+            ...this.data,
+            memberships: {
+                ...this.data.memberships,
+                [streamId]: toUserMembership(payload),
+            },
+        })
+    }
+}
+
+function toUserMembership(payload: UserPayload_UserMembership): UserMembership {
+    const { op, streamId: inStreamId } = payload
+    const streamId = streamIdFromBytes(inStreamId)
+    return {
+        streamId,
+        op,
+        inviter: payload.inviter ? userIdFromAddress(payload.inviter) : undefined,
+        streamParentId: payload.streamParentId
+            ? streamIdFromBytes(payload.streamParentId)
+            : undefined,
+    } satisfies UserMembership
 }
