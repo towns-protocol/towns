@@ -1,12 +1,12 @@
 import { client, v2 } from '@datadog/datadog-api-client'
 import { MetricSeries } from '@datadog/datadog-api-client/dist/packages/datadog-api-client-v2'
-import { RiverNode } from './river-node'
 import { RiverNodeWalletBalance } from './wallet-balance'
 import { RiverNodePingResults } from './ping'
-import { RiverNodeWithStreamCount } from './river-registry'
-import { BaseOperator } from './base-registry'
+import { NodeStructOutput } from '@river-build/generated/v3/typings/INodeRegistry'
+import { BaseOperator } from '@river-build/web3'
+import { RiverMetrics } from './get-metrics'
 
-export class DatadogMetrics {
+export class DatadogMetricsClient {
     private readonly apiKey: string
     private readonly appKey: string
     private readonly env: string
@@ -42,6 +42,28 @@ export class DatadogMetrics {
             })
     }
 
+    public async postAllMetrics(riverMetrics: RiverMetrics) {
+        const {
+            aggregateNetworkStats,
+            nodePingResults,
+            nodesOnRiver,
+            // nodesOnRiverWithStreamCounts,
+            operatorsOnBase,
+            operatorsOnRiver,
+            walletBalances,
+        } = riverMetrics
+        await Promise.all([
+            this.postWalletBalances(walletBalances),
+            this.postNodeStatusList(nodesOnRiver),
+            this.postNodePingResults(nodePingResults),
+            // TODO: uncomment to post stream counts
+            // await datadog.postNodeStreamCounts(nodesOnRiverWithStreamCounts)
+            this.postBaseOperatorStatus(operatorsOnBase),
+            this.postRiverOperatorStatus(operatorsOnRiver),
+            this.postAggregateNetworkStats(aggregateNetworkStats),
+        ])
+    }
+
     public async postWalletBalances(walletBalances: RiverNodeWalletBalance[]) {
         console.log('Posting wallet balances to Datadog:')
 
@@ -64,10 +86,10 @@ export class DatadogMetrics {
         return this.postSeries(series)
     }
 
-    public async postNodeStatusList(nodeStatusList: readonly RiverNode[]) {
+    public async postNodeStatusList(nodes: NodeStructOutput[]) {
         console.log('Posting node status list to Datadog:')
 
-        const series = nodeStatusList.map((node) => {
+        const series = nodes.map((node) => {
             const tags = [
                 `env:${this.env}`,
                 `wallet_address:${node.nodeAddress}`,
@@ -88,7 +110,9 @@ export class DatadogMetrics {
         return this.postSeries(series)
     }
 
-    public async postNodeStreamCounts(nodeStreamCounts: RiverNodeWithStreamCount[]) {
+    public async postNodeStreamCounts(
+        nodeStreamCounts: { node: NodeStructOutput; streamCount: number }[],
+    ) {
         console.log('Posting node stream counts to Datadog:')
 
         const series = nodeStreamCounts.map(({ streamCount, node }) => {
@@ -150,6 +174,26 @@ export class DatadogMetrics {
                 tags,
             }
         })
+
+        console.log('Series:', JSON.stringify(series, null, 2))
+        return this.postSeries(series)
+    }
+
+    public async postRiverOperatorStatus(riverOperators: string[]) {
+        console.log('Posting river operator status to Datadog:')
+
+        const series = riverOperators.map((operatorAddress) => {
+            const tags = [`env:${this.env}`, `operator_address:${operatorAddress}`]
+
+            return {
+                metric: `river_operator.status`,
+                points: [{ timestamp: this.timestamp, value: 1 }],
+                tags,
+            }
+        })
+
+        console.log('Series:', JSON.stringify(series, null, 2))
+        return this.postSeries(series)
     }
 
     public async postAggregateNetworkStats(stats: {
@@ -157,31 +201,44 @@ export class DatadogMetrics {
         numTotalNodesOnBase: number
         numTotalNodesOnRiver: number
         numTotalOperatorsOnBase: number
+        numTotalOperatorsOnRiver: number
+        numTotalStreams: number
     }) {
         console.log('Posting aggregate network stats to Datadog:')
-
-        const series = [
+        const metrics = [
             {
-                metric: `river_network.total_spaces`,
-                points: [{ timestamp: this.timestamp, value: stats.numTotalSpaces }],
-                tags: [`env:${this.env}`],
+                name: 'river_network.total_spaces',
+                value: stats.numTotalSpaces,
             },
             {
-                metric: `river_network.total_nodes_on_base`,
-                points: [{ timestamp: this.timestamp, value: stats.numTotalNodesOnBase }],
-                tags: [`env:${this.env}`],
+                name: 'river_network.total_nodes_on_base',
+                value: stats.numTotalNodesOnBase,
             },
             {
-                metric: `river_network.total_nodes_on_river`,
-                points: [{ timestamp: this.timestamp, value: stats.numTotalNodesOnRiver }],
-                tags: [`env:${this.env}`],
+                name: 'river_network.total_nodes_on_river',
+                value: stats.numTotalNodesOnRiver,
             },
             {
-                metric: `river_network.total_operators_on_base`,
-                points: [{ timestamp: this.timestamp, value: stats.numTotalOperatorsOnBase }],
-                tags: [`env:${this.env}`],
+                name: 'river_network.total_operators_on_base',
+                value: stats.numTotalOperatorsOnBase,
+            },
+            {
+                name: 'river_network.total_operators_on_river',
+                value: stats.numTotalOperatorsOnRiver,
+            },
+            {
+                name: 'river_network.total_streams',
+                value: stats.numTotalStreams,
             },
         ]
+
+        const series = metrics.map(({ name, value }) => {
+            return {
+                metric: name,
+                points: [{ timestamp: this.timestamp, value }],
+                tags: [`env:${this.env}`],
+            }
+        })
 
         console.log('Series:', JSON.stringify(series, null, 2))
         return this.postSeries(series)

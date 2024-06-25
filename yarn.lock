@@ -25792,7 +25792,6 @@ __metadata:
     ethers: ^5.7.2
     prettier: ^2.8.8
     typescript: ^5.1.6
-    viem: ^1.18.2
     zod: ^3.21.4
   languageName: unknown
   linkType: soft

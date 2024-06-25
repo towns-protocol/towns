@@ -38,9 +38,6 @@ module "lambda_function" {
     DATADOG_APPLICATION_KEY_SECRET_ARN = local.global_remote_state.datadog_application_key_secret.arn
     RIVER_CHAIN_RPC_URL_SECRET_ARN     = var.river_chain_rpc_url_secret_arn,
     BASE_CHAIN_RPC_URL_SECRET_ARN      = var.base_chain_rpc_url_secret_arn,
-    RIVER_REGISTRY_CONTRACT_ADDRESS    = var.river_registry_contract_address,
-    BASE_REGISTRY_CONTRACT_ADDRESS     = var.base_registry_contract_address
-    SPACE_OWNER_CONTRACT_ADDRESS       = var.space_owner_contract_address
     ENVIRONMENT                        = terraform.workspace
   }
 

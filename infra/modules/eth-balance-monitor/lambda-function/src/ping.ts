@@ -1,6 +1,6 @@
-import { RiverNode } from './river-node'
 import { z } from 'zod'
 import { Unpromisify } from './utils'
+import { NodeStructOutput } from '@river-build/generated/v3/typings/INodeRegistry'
 
 const NodeStatusSchema = z.object({
     status: z.string(),
@@ -14,9 +14,9 @@ const NodeStatusSchema = z.object({
 export type RiverNodePingResults = Unpromisify<ReturnType<Ping['pingNodes']>>
 
 export class Ping {
-    constructor(public readonly nodes: readonly RiverNode[]) {}
+    constructor(public readonly nodes: NodeStructOutput[]) {}
 
-    private async pingNode(node: RiverNode) {
+    private async pingNode(node: NodeStructOutput) {
         const url = new URL(node.url)
         url.pathname = '/status'
 
