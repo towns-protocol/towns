@@ -9,6 +9,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/river-build/river/core/config"
+	"github.com/river-build/river/core/contracts/base"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
@@ -146,7 +147,7 @@ type chainAuth struct {
 	blockchain              *crypto.Blockchain
 	evaluator               *entitlement.Evaluator
 	spaceContract           SpaceContract
-	walletLinkContract      WalletLinkContract
+	walletLinkContract      *base.WalletLink
 	linkedWalletsLimit      int
 	contractCallsTimeoutMs  int
 	entitlementCache        *entitlementCache
@@ -181,7 +182,7 @@ func NewChainAuth(
 		return nil, err
 	}
 
-	walletLinkContract, err := NewWalletLink(ctx, architectCfg, blockchain.Client)
+	walletLinkContract, err := base.NewWalletLink(architectCfg.Address, blockchain.Client)
 	if err != nil {
 		return nil, err
 	}

@@ -26,12 +26,15 @@ describe('run.test.ts', () => {
         })
 
         const clientsCount = 2
+        const randomClientsCount = 1
+        const totalClients = clientsCount + randomClientsCount
 
         // set some env props
         process.env.SESSION_ID = genShortId()
         process.env.STRESS_DURATION = '10'
         process.env.CLIENTS_PER_PROCESS = clientsCount.toString()
         process.env.CLIENTS_COUNT = clientsCount.toString()
+        process.env.RANDOM_CLIENTS_COUNT = randomClientsCount.toString()
         process.env.SPACE_ID = setup.spaceId
         process.env.CHANNEL_IDS = setup.channelIds[0].toString() // only run one channel
         process.env.CONTAINER_INDEX = '0'
@@ -50,7 +53,7 @@ describe('run.test.ts', () => {
             const value = result.summary.checkinCounts[key]
             logger.log('checkinCounts key', key, value)
             expect(value).toBeDefined()
-            expect(value[clientsCount.toString()]).toBe(clientsCount)
+            expect(value[totalClients.toString()]).toBe(totalClients)
         }
     })
 })

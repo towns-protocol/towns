@@ -1,4 +1,5 @@
 import { Wallet } from 'ethers'
+import { StressClient } from '../../utils/stressClient'
 
 export interface ChatConfig {
     containerIndex: number
@@ -13,6 +14,8 @@ export interface ChatConfig {
     announceChannelId: string
     channelIds: string[]
     allWallets: Wallet[]
+    randomClientsCount: number
+    randomClients: StressClient[]
     localClients: {
         startIndex: number
         endIndex: number

@@ -1,6 +1,6 @@
 import { StressClient } from '../../utils/stressClient'
 import { getSystemInfo } from '../../utils/systemInfo'
-import { BigNumber } from 'ethers'
+import { BigNumber, Wallet } from 'ethers'
 import { ChatConfig } from './types'
 import { check, dlogger } from '@river-build/dlog'
 import { makeCodeBlock } from '../../utils/messages'
@@ -28,7 +28,7 @@ export async function kickoffChat(rootClient: StressClient, cfg: ChatConfig) {
     logger.log('send message')
     const { eventId } = await rootClient.sendMessage(
         announceChannelId,
-        `hello, we're starting the stress test now!, containers: ${cfg.containerCount} ppc: ${cfg.processesPerContainer} clients: ${cfg.clientsCount} sessionId: ${sessionId}`,
+        `hello, we're starting the stress test now!, containers: ${cfg.containerCount} ppc: ${cfg.processesPerContainer} clients: ${cfg.clientsCount} randomNewClients: ${cfg.randomClients.length} sessionId: ${sessionId}`,
     )
 
     const initialStats = {
@@ -47,12 +47,7 @@ export async function kickoffChat(rootClient: StressClient, cfg: ChatConfig) {
         { threadId: eventId },
     )
 
-    logger.log('mint memberships')
-    // loop over all the clients, mint memberships for them if they're not members
-    // via spaceDapp.hasSpaceMembership
-    for (let i = 0; i < cfg.allWallets.length; i++) {
-        const wallet = cfg.allWallets[i]
-
+    const mintMembershipForWallet = async (wallet: Wallet, i: number) => {
         const hasSpaceMembership = await rootClient.spaceDapp.hasSpaceMembership(
             spaceId,
             wallet.address,
@@ -68,6 +63,20 @@ export async function kickoffChat(rootClient: StressClient, cfg: ChatConfig) {
             // sleep for > 1 second
             await new Promise((resolve) => setTimeout(resolve, 1100))
         }
+    }
+
+    logger.log('mint random memberships')
+    for (let i = 0; i < cfg.randomClients.length; i++) {
+        const client = cfg.randomClients[i]
+        await mintMembershipForWallet(client.baseProvider.wallet, i)
+    }
+
+    // loop over all the clients, mint memberships for them if they're not members
+    // via spaceDapp.hasSpaceMembership
+    logger.log('mint memberships')
+    for (let i = 0; i < cfg.allWallets.length; i++) {
+        const wallet = cfg.allWallets[i]
+        await mintMembershipForWallet(wallet, i)
     }
     logger.log('done')
 }

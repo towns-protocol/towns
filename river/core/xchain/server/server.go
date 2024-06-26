@@ -484,11 +484,10 @@ func (x *xchain) getLinkedWallets(ctx context.Context, wallet common.Address) ([
 		return nil, x.handleContractError(log, err, "Failed to create IWalletLink")
 	}
 
-	wrapped := entitlement.NewWrappedWalletLink(iWalletLink)
 	wallets, err := entitlement.GetLinkedWallets(
 		ctx,
 		wallet,
-		wrapped,
+		iWalletLink,
 		x.callDurations,
 		x.getRootKeyForWalletCalls,
 		x.getWalletsByRootKeyCalls,

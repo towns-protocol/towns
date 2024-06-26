@@ -11,33 +11,10 @@ import (
 	"github.com/river-build/river/core/node/infra"
 )
 
-type WrappedWalletLink interface {
-	GetRootKeyForWallet(ctx context.Context, wallet common.Address) (common.Address, error)
-	GetWalletsByRootKey(ctx context.Context, rootKey common.Address) ([]common.Address, error)
-}
-
-type wrappedWalletLink struct {
-	contract *base.WalletLink
-}
-
-func (w *wrappedWalletLink) GetRootKeyForWallet(ctx context.Context, wallet common.Address) (common.Address, error) {
-	return w.contract.GetRootKeyForWallet(&bind.CallOpts{Context: ctx}, wallet)
-}
-
-func (w *wrappedWalletLink) GetWalletsByRootKey(ctx context.Context, rootKey common.Address) ([]common.Address, error) {
-	return w.contract.GetWalletsByRootKey(&bind.CallOpts{Context: ctx}, rootKey)
-}
-
-func NewWrappedWalletLink(contract *base.WalletLink) WrappedWalletLink {
-	return &wrappedWalletLink{
-		contract: contract,
-	}
-}
-
 func GetLinkedWallets(
 	ctx context.Context,
 	wallet common.Address,
-	walletLink WrappedWalletLink,
+	walletLink *base.WalletLink,
 	callDurations *prometheus.HistogramVec,
 	getRootKeyForWalletCalls *infra.StatusCounterVec,
 	getWalletsByRootKeyCalls *infra.StatusCounterVec,
@@ -48,7 +25,7 @@ func GetLinkedWallets(
 	if callDurations != nil {
 		timer = prometheus.NewTimer(callDurations.WithLabelValues("GetRootKeyForWallet"))
 	}
-	rootKey, err := walletLink.GetRootKeyForWallet(ctx, wallet)
+	rootKey, err := walletLink.GetRootKeyForWallet(&bind.CallOpts{Context: ctx}, wallet)
 	if timer != nil {
 		timer.ObserveDuration()
 	}
@@ -73,7 +50,7 @@ func GetLinkedWallets(
 	if callDurations != nil {
 		timer = prometheus.NewTimer(callDurations.WithLabelValues("GetWalletsByRootKey"))
 	}
-	wallets, err := walletLink.GetWalletsByRootKey(ctx, rootKey)
+	wallets, err := walletLink.GetWalletsByRootKey(&bind.CallOpts{Context: ctx}, rootKey)
 	if timer != nil {
 		timer.ObserveDuration()
 	}
