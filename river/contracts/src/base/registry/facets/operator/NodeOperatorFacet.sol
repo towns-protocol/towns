@@ -151,6 +151,11 @@ contract NodeOperatorFacet is INodeOperator, OwnableBase, ERC721ABase, Facet {
     return NodeOperatorStorage.layout().claimerByOperator[operator];
   }
 
+  function getOperators() external view returns (address[] memory) {
+    NodeOperatorStorage.Layout storage ds = NodeOperatorStorage.layout();
+    return ds.operators.values();
+  }
+
   // =============================================================
   //                           Commission
   // =============================================================

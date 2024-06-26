@@ -66,6 +66,19 @@ const _abi = [
   },
   {
     type: "function",
+    name: "getOperators",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "address[]",
+        internalType: "address[]",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
     name: "isOperator",
     inputs: [
       {

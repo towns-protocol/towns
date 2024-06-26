@@ -96,6 +96,33 @@ contract RewardsDistribution is
     );
   }
 
+  function operatorClaimByAddress(address operatorAddress) external {
+    RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage
+      .layout();
+
+    NodeOperatorStorage.Layout storage nos = NodeOperatorStorage.layout();
+    if (nos.claimerByOperator[operatorAddress] != msg.sender)
+      revert RewardsDistribution_UnauthorizedOperatorClaimer(
+        operatorAddress,
+        msg.sender
+      );
+
+    uint256 amount = getClaimableAmountForOperator(operatorAddress);
+    if (amount == 0) revert RewardsDistribution_NoRewardsToClaim();
+    ds.distributionByOperator[operatorAddress] = 0;
+
+    SpaceDelegationStorage.Layout storage sd = SpaceDelegationStorage.layout();
+    if (IERC20(sd.riverToken).balanceOf(address(this)) < amount)
+      revert RewardsDistribution_InsufficientRewardBalance();
+
+    CurrencyTransfer.transferCurrency(
+      sd.riverToken,
+      address(this),
+      msg.sender,
+      amount
+    );
+  }
+
   function mainnetClaim() external {
     RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage
       .layout();
@@ -122,6 +149,33 @@ contract RewardsDistribution is
       address(this),
       msg.sender,
       totalClaimableAmount
+    );
+  }
+
+  function mainnetClaimByAddress(address mainnetDelegatorToClaim) external {
+    RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage
+      .layout();
+
+    if (_getAuthorizedClaimer(mainnetDelegatorToClaim) != msg.sender)
+      revert RewardsDistribution_UnauthorizedClaimer(
+        mainnetDelegatorToClaim,
+        msg.sender
+      );
+
+    uint256 amount = getClaimableAmountForDelegator(mainnetDelegatorToClaim);
+    if (amount == 0) revert RewardsDistribution_NoRewardsToClaim();
+
+    ds.distributionByDelegator[mainnetDelegatorToClaim] = 0;
+
+    SpaceDelegationStorage.Layout storage sd = SpaceDelegationStorage.layout();
+    if (IERC20(sd.riverToken).balanceOf(address(this)) < amount)
+      revert RewardsDistribution_InsufficientRewardBalance();
+
+    CurrencyTransfer.transferCurrency(
+      sd.riverToken,
+      address(this),
+      msg.sender,
+      amount
     );
   }
 

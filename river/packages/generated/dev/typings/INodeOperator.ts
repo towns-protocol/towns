@@ -32,6 +32,7 @@ export interface INodeOperatorInterface extends utils.Interface {
     "getClaimAddressForOperator(address)": FunctionFragment;
     "getCommissionRate(address)": FunctionFragment;
     "getOperatorStatus(address)": FunctionFragment;
+    "getOperators()": FunctionFragment;
     "isOperator(address)": FunctionFragment;
     "registerOperator(address)": FunctionFragment;
     "setClaimAddressForOperator(address,address)": FunctionFragment;
@@ -44,6 +45,7 @@ export interface INodeOperatorInterface extends utils.Interface {
       | "getClaimAddressForOperator"
       | "getCommissionRate"
       | "getOperatorStatus"
+      | "getOperators"
       | "isOperator"
       | "registerOperator"
       | "setClaimAddressForOperator"
@@ -62,6 +64,10 @@ export interface INodeOperatorInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "getOperatorStatus",
     values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getOperators",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "isOperator",
@@ -94,6 +100,10 @@ export interface INodeOperatorInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "getOperatorStatus",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getOperators",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "isOperator", data: BytesLike): Result;
@@ -218,6 +228,8 @@ export interface INodeOperator extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[number]>;
 
+    getOperators(overrides?: CallOverrides): Promise<[string[]]>;
+
     isOperator(
       operator: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -261,6 +273,8 @@ export interface INodeOperator extends BaseContract {
     overrides?: CallOverrides
   ): Promise<number>;
 
+  getOperators(overrides?: CallOverrides): Promise<string[]>;
+
   isOperator(
     operator: PromiseOrValue<string>,
     overrides?: CallOverrides
@@ -303,6 +317,8 @@ export interface INodeOperator extends BaseContract {
       operator: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<number>;
+
+    getOperators(overrides?: CallOverrides): Promise<string[]>;
 
     isOperator(
       operator: PromiseOrValue<string>,
@@ -384,6 +400,8 @@ export interface INodeOperator extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    getOperators(overrides?: CallOverrides): Promise<BigNumber>;
+
     isOperator(
       operator: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -427,6 +445,8 @@ export interface INodeOperator extends BaseContract {
       operator: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
+
+    getOperators(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     isOperator(
       operator: PromiseOrValue<string>,

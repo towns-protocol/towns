@@ -384,7 +384,7 @@ func (c *BlockchainTestContext) mineBlock(ctx context.Context) error {
 	} else if c.EthClient != nil {
 		return c.EthClient.Client().Call(nil, "evm_mine")
 	} else {
-		panic("no backend or client")
+		return nil
 	}
 }
 
@@ -397,6 +397,7 @@ func (c *BlockchainTestContext) Close() {
 	}
 	if c.Backend != nil {
 		_ = c.Backend.Close()
+		c.Backend = nil
 	}
 	if c.EthClient != nil {
 		c.EthClient.Close()

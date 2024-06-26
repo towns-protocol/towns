@@ -32,11 +32,13 @@ func TestOnChainConfigSettingMultipleActiveBlockValues(t *testing.T) {
 		settings = &onChainSettings{
 			s: map[common.Hash]settings{},
 		}
+		ctx, cancel = test.NewTestContext()
 	)
+	defer cancel()
 
-	settings.Set(StreamReplicationFactorConfigKey, 20, uint64(3))
-	settings.Set(StreamReplicationFactorConfigKey, 5, uint64(1))
-	settings.Set(StreamReplicationFactorConfigKey, 10, uint64(2))
+	settings.Set(ctx, StreamReplicationFactorConfigKey, 20, uint64(3))
+	settings.Set(ctx, StreamReplicationFactorConfigKey, 5, uint64(1))
+	settings.Set(ctx, StreamReplicationFactorConfigKey, 10, uint64(2))
 
 	for _, tt := range tests {
 		val, err := settings.getOnBlock(tt.Key, tt.Block).Uint64()

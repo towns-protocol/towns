@@ -84,6 +84,30 @@ contract NodeOperatorFacetTest is
     );
   }
 
+  function test_getOperatorsAfterRegisterOperator(
+    address randomOperator1,
+    address randomOperator2
+  ) public {
+    vm.assume(randomOperator1 != address(0));
+    vm.assume(randomOperator2 != address(0));
+    vm.assume(randomOperator1 != randomOperator2);
+    vm.assume(!nodeOperator.isOperator(randomOperator1));
+    vm.assume(!nodeOperator.isOperator(randomOperator2));
+    address[] memory baseOperators = nodeOperator.getOperators();
+    assertEq(baseOperators.length, 0);
+    vm.prank(randomOperator1);
+    nodeOperator.registerOperator(randomOperator1);
+    baseOperators = nodeOperator.getOperators();
+    assertEq(baseOperators.length, 1);
+    assertEq(baseOperators[0], randomOperator1);
+    vm.prank(randomOperator2);
+    nodeOperator.registerOperator(randomOperator2);
+    baseOperators = nodeOperator.getOperators();
+    assertEq(baseOperators.length, 2);
+    assertEq(baseOperators[0], randomOperator1);
+    assertEq(baseOperators[1], randomOperator2);
+  }
+
   // =============================================================
   //                           isOperator
   // =============================================================

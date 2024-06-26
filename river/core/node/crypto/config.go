@@ -254,7 +254,7 @@ func (occ *onChainConfiguration) loadFromChain(ctx context.Context, activeBlock 
 		if err != nil {
 			return err
 		}
-		occ.settings.Set(key, setting.BlockNumber, value)
+		occ.settings.Set(ctx, key, setting.BlockNumber, value)
 	}
 
 	return nil
@@ -277,7 +277,7 @@ func (occ *onChainConfiguration) loadMissing(ctx context.Context, activeBlock ui
 			"activeBlock", activeBlock,
 		)
 
-		occ.settings.Set(key, activeBlock, key.defaultValue)
+		occ.settings.Set(ctx, key, activeBlock, key.defaultValue)
 	}
 }
 
@@ -307,7 +307,7 @@ func (occ *onChainConfiguration) onConfigChanged(ctx context.Context, event type
 	}
 
 	if e.Deleted {
-		occ.settings.Remove(configKey, e.Block)
+		occ.settings.Remove(ctx, configKey, e.Block)
 	} else {
 		value, err := configKey.decode(e.Value)
 		if err != nil {
@@ -315,7 +315,7 @@ func (occ *onChainConfiguration) onConfigChanged(ctx context.Context, event type
 				"tx", event.TxHash, "key", configKey.name, "err", err)
 			return
 		}
-		occ.settings.Set(configKey, e.Block, value)
+		occ.settings.Set(ctx, configKey, e.Block, value)
 	}
 }
 
@@ -399,9 +399,9 @@ func (occ *onChainConfiguration) All() (*AllSettings, error) {
 	return &all, nil
 }
 
-func (ocs *onChainSettings) Remove(key chainKeyImpl, activeOnBlockNumber uint64) {
+func (ocs *onChainSettings) Remove(ctx context.Context, key chainKeyImpl, activeOnBlockNumber uint64) {
 	var (
-		log   = dlog.FromCtx(context.Background()) // lint:ignore context.Background() is fine here
+		log   = dlog.FromCtx(ctx)
 		keyID = key.ID()
 	)
 
@@ -420,9 +420,9 @@ func (ocs *onChainSettings) Remove(key chainKeyImpl, activeOnBlockNumber uint64)
 
 // Set the given value to the settings identified by the given key for the
 // given block number.
-func (ocs *onChainSettings) Set(key chainKeyImpl, activeOnBlockNumber uint64, value any) {
+func (ocs *onChainSettings) Set(ctx context.Context, key chainKeyImpl, activeOnBlockNumber uint64, value any) {
 	var (
-		log   = dlog.FromCtx(context.Background()) // lint:ignore context.Background() is fine here
+		log   = dlog.FromCtx(ctx)
 		keyID = key.ID()
 	)
 

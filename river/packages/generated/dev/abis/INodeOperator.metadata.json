@@ -209,6 +209,19 @@
         ]
       },
       {
+        "inputs": [],
+        "stateMutability": "view",
+        "type": "function",
+        "name": "getOperators",
+        "outputs": [
+          {
+            "internalType": "address[]",
+            "name": "",
+            "type": "address[]"
+          }
+        ]
+      },
+      {
         "inputs": [
           {
             "internalType": "address",
@@ -324,10 +337,10 @@
   },
   "sources": {
     "contracts/src/base/registry/facets/operator/INodeOperator.sol": {
-      "keccak256": "0x51fb272223040fd0ecf38e6ca021169fd6fe29dca4d4cf7bd65a209c236e6ab5",
+      "keccak256": "0x3a3bcc633851dc36fd914ce9ba3c7ecaecaba96ff9533c52444a5d466721cb56",
       "urls": [
-        "bzz-raw://1107dd9cc7f0c9ad4ea64a8b3a9e7d362f13061b25943cf2fb7a8e4b3eac6024",
-        "dweb:/ipfs/QmTbfwqkMonebKZPXhZbCwssbo91A4SkDvmLVRapae4i8R"
+        "bzz-raw://a3d71ec4e6e14b5ed9f2a067c9ccde4d94efc72d90b02ef2f9d659a156576b74",
+        "dweb:/ipfs/QmXk7qqcE1poxX5yfkRJpcyqeiMdkwexYTKF96CCHwX9fs"
       ],
       "license": "MIT"
     },

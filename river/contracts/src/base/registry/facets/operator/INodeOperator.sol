@@ -88,6 +88,8 @@ interface INodeOperator is INodeOperatorBase {
     address operator
   ) external view returns (address);
 
+  function getOperators() external view returns (address[] memory);
+
   // =============================================================
   //                           Commission
   // =============================================================
