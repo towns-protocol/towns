@@ -10,26 +10,26 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/river-build/river/core/config"
+	"github.com/river-build/river/core/contracts/river"
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/contracts"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/shared"
 )
 
-var streamRegistryABI, _ = contracts.StreamRegistryV1MetaData.GetAbi()
+var streamRegistryABI, _ = river.StreamRegistryV1MetaData.GetAbi()
 
 // Convinience wrapper for the IRiverRegistryV1 interface (abigen exports it as RiverRegistryV1)
 type RiverRegistryContract struct {
-	OperatorRegistry *contracts.OperatorRegistryV1
+	OperatorRegistry *river.OperatorRegistryV1
 
-	NodeRegistry    *contracts.NodeRegistryV1
+	NodeRegistry    *river.NodeRegistryV1
 	NodeRegistryAbi *abi.ABI
 	NodeEventTopics [][]common.Hash
 	NodeEventInfo   map[common.Hash]*EventInfo
 
-	StreamRegistry    *contracts.StreamRegistryV1
+	StreamRegistry    *river.StreamRegistryV1
 	StreamRegistryAbi *abi.ABI
 	StreamEventTopics [][]common.Hash
 	StreamEventInfo   map[common.Hash]*EventInfo
@@ -39,7 +39,7 @@ type RiverRegistryContract struct {
 	Address   common.Address
 	Addresses []common.Address
 
-	errDecoder *contracts.EvmErrorDecoder
+	errDecoder *crypto.EvmErrorDecoder
 }
 
 type EventInfo struct {
@@ -108,15 +108,6 @@ func NewRiverRegistryContract(
 	blockchain *crypto.Blockchain,
 	cfg *config.ContractConfig,
 ) (*RiverRegistryContract, error) {
-	if cfg.Version != "" {
-		return nil, RiverError(
-			Err_BAD_CONFIG,
-			"Always binding to same interface, version should be empty",
-			"version",
-			cfg.Version,
-		).Func("NewRiverRegistryContract")
-	}
-
 	c := &RiverRegistryContract{
 		Blockchain: blockchain,
 		Address:    cfg.Address,
@@ -126,10 +117,10 @@ func NewRiverRegistryContract(
 	var err error
 	c.OperatorRegistry, _, _, _, err = initContract(
 		ctx,
-		contracts.NewOperatorRegistryV1,
+		river.NewOperatorRegistryV1,
 		cfg.Address,
 		blockchain.Client,
-		contracts.OperatorRegistryV1MetaData,
+		river.OperatorRegistryV1MetaData,
 		nil,
 	)
 	if err != nil {
@@ -138,15 +129,15 @@ func NewRiverRegistryContract(
 
 	c.NodeRegistry, c.NodeRegistryAbi, c.NodeEventTopics, c.NodeEventInfo, err = initContract(
 		ctx,
-		contracts.NewNodeRegistryV1,
+		river.NewNodeRegistryV1,
 		cfg.Address,
 		blockchain.Client,
-		contracts.NodeRegistryV1MetaData,
+		river.NodeRegistryV1MetaData,
 		[]*EventInfo{
-			{"NodeAdded", func() any { return new(contracts.NodeRegistryV1NodeAdded) }},
-			{"NodeRemoved", func() any { return new(contracts.NodeRegistryV1NodeRemoved) }},
-			{"NodeStatusUpdated", func() any { return new(contracts.NodeRegistryV1NodeStatusUpdated) }},
-			{"NodeUrlUpdated", func() any { return new(contracts.NodeRegistryV1NodeUrlUpdated) }},
+			{"NodeAdded", func() any { return new(river.NodeRegistryV1NodeAdded) }},
+			{"NodeRemoved", func() any { return new(river.NodeRegistryV1NodeRemoved) }},
+			{"NodeStatusUpdated", func() any { return new(river.NodeRegistryV1NodeStatusUpdated) }},
+			{"NodeUrlUpdated", func() any { return new(river.NodeRegistryV1NodeUrlUpdated) }},
 		},
 	)
 	if err != nil {
@@ -155,19 +146,19 @@ func NewRiverRegistryContract(
 
 	c.StreamRegistry, c.StreamRegistryAbi, c.StreamEventTopics, c.StreamEventInfo, err = initContract(
 		ctx,
-		contracts.NewStreamRegistryV1,
+		river.NewStreamRegistryV1,
 		cfg.Address,
 		blockchain.Client,
-		contracts.StreamRegistryV1MetaData,
+		river.StreamRegistryV1MetaData,
 		[]*EventInfo{
-			{contracts.Event_StreamAllocated, func() any { return new(contracts.StreamRegistryV1StreamAllocated) }},
+			{river.Event_StreamAllocated, func() any { return new(river.StreamRegistryV1StreamAllocated) }},
 			{
-				contracts.Event_StreamLastMiniblockUpdated,
-				func() any { return new(contracts.StreamRegistryV1StreamLastMiniblockUpdated) },
+				river.Event_StreamLastMiniblockUpdated,
+				func() any { return new(river.StreamRegistryV1StreamLastMiniblockUpdated) },
 			},
 			{
-				contracts.Event_StreamPlacementUpdated,
-				func() any { return new(contracts.StreamRegistryV1StreamPlacementUpdated) },
+				river.Event_StreamPlacementUpdated,
+				func() any { return new(river.StreamRegistryV1StreamPlacementUpdated) },
 			},
 		},
 	)
@@ -175,7 +166,7 @@ func NewRiverRegistryContract(
 		return nil, err
 	}
 
-	c.errDecoder, err = contracts.NewEVMErrorDecoder(contracts.StreamRegistryV1MetaData)
+	c.errDecoder, err = crypto.NewEVMErrorDecoder(river.StreamRegistryV1MetaData)
 	if err != nil {
 		return nil, err
 	}
@@ -238,7 +229,7 @@ type GetStreamResult struct {
 	IsSealed          bool
 }
 
-func makeGetStreamResult(streamId StreamId, stream *contracts.Stream) *GetStreamResult {
+func makeGetStreamResult(streamId StreamId, stream *river.Stream) *GetStreamResult {
 	return &GetStreamResult{
 		StreamId:          streamId,
 		Nodes:             stream.Nodes,
@@ -297,7 +288,7 @@ func (c *RiverRegistryContract) GetAllStreams(
 
 	lastPage := false
 	var err error
-	var streams []contracts.StreamWithId
+	var streams []river.StreamWithId
 	for i := int64(0); !lastPage; i += pageSize {
 		callOpts := c.callOptsWithBlockNum(ctx, blockNum)
 		streams, lastPage, err = c.StreamRegistry.GetPaginatedStreams(callOpts, big.NewInt(i), big.NewInt(i+pageSize))
@@ -327,7 +318,7 @@ func (c *RiverRegistryContract) GetAllStreams(
 // latest block. It returns the streamId's for which the proposed block was set successful as the latest block, failed
 // or an error in case the transaction could not be submitted or failed.
 func (c *RiverRegistryContract) SetStreamLastMiniblockBatch(
-	ctx context.Context, mbs []contracts.SetMiniblock,
+	ctx context.Context, mbs []river.SetMiniblock,
 ) ([]StreamId, []StreamId, error) {
 	var (
 		log     = dlog.FromCtx(ctx)
@@ -484,7 +475,7 @@ func (c *RiverRegistryContract) SetStreamLastMiniblock(
 	return RiverError(Err_ERR_UNSPECIFIED, "SetStreamLastMiniblock transaction result unknown")
 }
 
-type NodeRecord = contracts.Node
+type NodeRecord = river.Node
 
 func (c *RiverRegistryContract) GetAllNodes(ctx context.Context, blockNum crypto.BlockNumber) ([]NodeRecord, error) {
 	nodes, err := c.NodeRegistry.GetAllNodes(c.callOptsWithBlockNum(ctx, blockNum))
@@ -512,10 +503,10 @@ func (c *RiverRegistryContract) callOptsWithBlockNum(ctx context.Context, blockN
 }
 
 type NodeEvents interface {
-	contracts.NodeRegistryV1NodeAdded |
-		contracts.NodeRegistryV1NodeRemoved |
-		contracts.NodeRegistryV1NodeStatusUpdated |
-		contracts.NodeRegistryV1NodeUrlUpdated
+	river.NodeRegistryV1NodeAdded |
+		river.NodeRegistryV1NodeRemoved |
+		river.NodeRegistryV1NodeStatusUpdated |
+		river.NodeRegistryV1NodeUrlUpdated
 }
 
 func (c *RiverRegistryContract) GetNodeEventsForBlock(ctx context.Context, blockNum crypto.BlockNumber) ([]any, error) {
@@ -572,9 +563,9 @@ func (c *RiverRegistryContract) ParseEvent(
 func (c *RiverRegistryContract) OnStreamEvent(
 	ctx context.Context,
 	startBlockNumInclusive crypto.BlockNumber,
-	allocated func(ctx context.Context, event *contracts.StreamRegistryV1StreamAllocated),
-	lastMiniblockUpdated func(ctx context.Context, event *contracts.StreamRegistryV1StreamLastMiniblockUpdated),
-	placementUpdated func(ctx context.Context, event *contracts.StreamRegistryV1StreamPlacementUpdated),
+	allocated func(ctx context.Context, event *river.StreamRegistryV1StreamAllocated),
+	lastMiniblockUpdated func(ctx context.Context, event *river.StreamRegistryV1StreamLastMiniblockUpdated),
+	placementUpdated func(ctx context.Context, event *river.StreamRegistryV1StreamPlacementUpdated),
 ) error {
 	c.Blockchain.ChainMonitor.OnContractWithTopicsEvent(
 		startBlockNumInclusive,
@@ -587,11 +578,11 @@ func (c *RiverRegistryContract) OnStreamEvent(
 				return
 			}
 			switch e := parsed.(type) {
-			case *contracts.StreamRegistryV1StreamAllocated:
+			case *river.StreamRegistryV1StreamAllocated:
 				allocated(ctx, e)
-			case *contracts.StreamRegistryV1StreamLastMiniblockUpdated:
+			case *river.StreamRegistryV1StreamLastMiniblockUpdated:
 				lastMiniblockUpdated(ctx, e)
-			case *contracts.StreamRegistryV1StreamPlacementUpdated:
+			case *river.StreamRegistryV1StreamPlacementUpdated:
 				placementUpdated(ctx, e)
 			default:
 				dlog.FromCtx(ctx).Error("Unknown event type", "event", e)

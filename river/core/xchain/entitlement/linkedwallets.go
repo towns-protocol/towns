@@ -6,9 +6,9 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/river-build/river/core/contracts/base"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/infra"
-	"github.com/river-build/river/core/xchain/contracts"
 )
 
 type WrappedWalletLink interface {
@@ -17,7 +17,7 @@ type WrappedWalletLink interface {
 }
 
 type wrappedWalletLink struct {
-	contract *contracts.IWalletLink
+	contract *base.WalletLink
 }
 
 func (w *wrappedWalletLink) GetRootKeyForWallet(ctx context.Context, wallet common.Address) (common.Address, error) {
@@ -28,7 +28,7 @@ func (w *wrappedWalletLink) GetWalletsByRootKey(ctx context.Context, rootKey com
 	return w.contract.GetWalletsByRootKey(&bind.CallOpts{Context: ctx}, rootKey)
 }
 
-func NewWrappedWalletLink(contract *contracts.IWalletLink) WrappedWalletLink {
+func NewWrappedWalletLink(contract *base.WalletLink) WrappedWalletLink {
 	return &wrappedWalletLink{
 		contract: contract,
 	}

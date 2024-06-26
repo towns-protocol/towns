@@ -60,7 +60,7 @@ package nodes
 // 	addrs := []common.Address{btc.Wallets[0].Address, crypto.GetTestAddress(), crypto.GetTestAddress()}
 
 // 	pendingTx, err := owner.TxPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
-// 		return btc.NodeRegistry.RegisterNode(opts, addrs[0], urls[0], contracts.NodeStatus_NotInitialized)
+// 		return btc.NodeRegistry.RegisterNode(opts, addrs[0], urls[0], river.NodeStatus_NotInitialized)
 // 	})
 // 	require.NoError(err)
 // 	btc.Commit()
@@ -82,10 +82,10 @@ package nodes
 // 	require.Equal(btc.Wallets[0].Address, record.address)
 // 	require.Equal(urls[0], record.url)
 // 	require.True(record.local)
-// 	require.Equal(contracts.NodeStatus_NotInitialized, record.status)
+// 	require.Equal(river.NodeStatus_NotInitialized, record.status)
 
 // 	pendingTx, err = owner.TxPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
-// 		return btc.NodeRegistry.RegisterNode(opts, addrs[1], urls[1], contracts.NodeStatus_Operational)
+// 		return btc.NodeRegistry.RegisterNode(opts, addrs[1], urls[1], river.NodeStatus_Operational)
 // 	})
 // 	require.NoError(err)
 // 	btc.Commit()
@@ -101,7 +101,7 @@ package nodes
 // 	require.Equal(addrs[1], record.address)
 // 	require.Equal(urls[1], record.url)
 // 	require.False(record.local)
-// 	require.Equal(contracts.NodeStatus_Operational, record.status)
+// 	require.Equal(river.NodeStatus_Operational, record.status)
 
 // 	const updatedUrl = "https://river1-updated.test"
 // 	pendingTx, err = owner.TxPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
@@ -118,10 +118,10 @@ package nodes
 // 	require.Equal(addrs[1], record.address)
 // 	require.Equal(updatedUrl, record.url)
 // 	require.False(record.local)
-// 	require.Equal(contracts.NodeStatus_Operational, record.status)
+// 	require.Equal(river.NodeStatus_Operational, record.status)
 
 // 	pendingTx, err = owner.TxPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
-// 		return btc.NodeRegistry.UpdateNodeStatus(opts, addrs[1], contracts.NodeStatus_Departing)
+// 		return btc.NodeRegistry.UpdateNodeStatus(opts, addrs[1], river.NodeStatus_Departing)
 // 	})
 // 	require.NoError(err)
 // 	btc.Commit()
@@ -134,7 +134,7 @@ package nodes
 // 	require.Equal(addrs[1], record.address)
 // 	require.Equal(updatedUrl, record.url)
 // 	require.False(record.local)
-// 	require.Equal(contracts.NodeStatus_Departing, record.status)
+// 	require.Equal(river.NodeStatus_Departing, record.status)
 
 // 	_, err = owner.TxPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
 // 		tx, err := btc.NodeRegistry.RemoveNode(opts, addrs[1])
@@ -146,7 +146,7 @@ package nodes
 // 	btc.Commit()
 
 // 	_, err = owner.TxPool.Submit(ctx, func(opts *bind.TransactOpts) (*types.Transaction, error) {
-// 		return btc.NodeRegistry.UpdateNodeStatus(opts, addrs[1], contracts.NodeStatus_Deleted)
+// 		return btc.NodeRegistry.UpdateNodeStatus(opts, addrs[1], river.NodeStatus_Deleted)
 // 	})
 // 	require.NoError(err)
 // 	btc.Commit()

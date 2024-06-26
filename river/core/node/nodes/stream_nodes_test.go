@@ -5,8 +5,9 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/river-build/river/core/node/nodes"
 	"github.com/stretchr/testify/require"
+
+	"github.com/river-build/river/core/node/nodes"
 )
 
 var (

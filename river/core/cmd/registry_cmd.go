@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/river-build/river/core/config"
+	"github.com/river-build/river/core/contracts/river"
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/contracts"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/infra"
 	. "github.com/river-build/river/core/node/protocol"
@@ -125,7 +125,7 @@ func nodesdump(cfg *config.Config) error {
 			node.NodeAddress.Hex(),
 			node.Operator.Hex(),
 			node.Status,
-			contracts.NodeStatusString(node.Status),
+			river.NodeStatusString(node.Status),
 			node.Url,
 		)
 	}

@@ -11,8 +11,8 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/river-build/river/core/config"
+	"github.com/river-build/river/core/contracts/river"
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/contracts"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/events"
 	"github.com/river-build/river/core/node/nodes"
@@ -283,7 +283,7 @@ func (a *Archiver) startImpl(ctx context.Context, once bool) error {
 
 	lastPage := false
 	var err error
-	var streams []contracts.StreamWithId
+	var streams []river.StreamWithId
 	for i := int64(0); !lastPage; i += pageSize {
 		streams, lastPage, err = a.contract.StreamRegistry.GetPaginatedStreams(
 			callOpts,
@@ -326,7 +326,7 @@ func (a *Archiver) startImpl(ctx context.Context, once bool) error {
 	return nil
 }
 
-func (a *Archiver) onStreamAllocated(ctx context.Context, event *contracts.StreamRegistryV1StreamAllocated) {
+func (a *Archiver) onStreamAllocated(ctx context.Context, event *river.StreamRegistryV1StreamAllocated) {
 	a.newStreamAllocated.Add(1)
 	id := StreamId(event.StreamId)
 	a.addNewStream(ctx, id, &event.Nodes, 0)
@@ -335,7 +335,7 @@ func (a *Archiver) onStreamAllocated(ctx context.Context, event *contracts.Strea
 
 func (a *Archiver) onStreamPlacementUpdated(
 	ctx context.Context,
-	event *contracts.StreamRegistryV1StreamPlacementUpdated,
+	event *river.StreamRegistryV1StreamPlacementUpdated,
 ) {
 	a.streamPlacementUpdated.Add(1)
 
@@ -351,7 +351,7 @@ func (a *Archiver) onStreamPlacementUpdated(
 
 func (a *Archiver) onStreamLastMiniblockUpdated(
 	ctx context.Context,
-	event *contracts.StreamRegistryV1StreamLastMiniblockUpdated,
+	event *river.StreamRegistryV1StreamLastMiniblockUpdated,
 ) {
 	a.streamLastMiniblockUpdated.Add(1)
 

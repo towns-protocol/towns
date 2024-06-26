@@ -5,12 +5,12 @@ import (
 	"hash/fnv"
 	"sync"
 
-	"github.com/river-build/river/core/node/dlog"
-
 	"github.com/ethereum/go-ethereum/common"
+
+	"github.com/river-build/river/core/contracts/river"
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/contracts"
 	"github.com/river-build/river/core/node/crypto"
+	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/registries"
 	. "github.com/river-build/river/core/node/shared"
@@ -93,7 +93,7 @@ func (sr *streamRegistryImpl) chooseStreamNodes(ctx context.Context, streamId St
 	nodes := make([]*NodeRecord, 0, len(allNodes))
 
 	for _, n := range allNodes {
-		if n.Status() == contracts.NodeStatus_Operational {
+		if n.Status() == river.NodeStatus_Operational {
 			nodes = append(nodes, n)
 		}
 	}

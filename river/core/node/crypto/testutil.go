@@ -17,10 +17,11 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/ethclient/simulated"
+
 	"github.com/river-build/river/core/config"
+	"github.com/river-build/river/core/contracts/river"
+	"github.com/river-build/river/core/contracts/river/deploy"
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/contracts"
-	"github.com/river-build/river/core/node/contracts/deploy"
 	"github.com/river-build/river/core/node/infra"
 	. "github.com/river-build/river/core/node/protocol"
 )
@@ -58,9 +59,9 @@ type BlockchainTestContext struct {
 	Wallets              []*Wallet
 	OnChainConfig        OnChainConfiguration
 	RiverRegistryAddress common.Address
-	NodeRegistry         *contracts.NodeRegistryV1
-	StreamRegistry       *contracts.StreamRegistryV1
-	Configuration        *contracts.RiverConfigV1
+	NodeRegistry         *river.NodeRegistryV1
+	StreamRegistry       *river.StreamRegistryV1
+	Configuration        *river.RiverConfigV1
 	ChainId              *big.Int
 	DeployerBlockchain   *Blockchain
 }
@@ -239,17 +240,17 @@ func NewBlockchainTestContext(ctx context.Context, numKeys int, mineOnTx bool) (
 		return nil, err
 	}
 
-	btc.NodeRegistry, err = contracts.NewNodeRegistryV1(btc.RiverRegistryAddress, client)
+	btc.NodeRegistry, err = river.NewNodeRegistryV1(btc.RiverRegistryAddress, client)
 	if err != nil {
 		return nil, err
 	}
 
-	btc.StreamRegistry, err = contracts.NewStreamRegistryV1(btc.RiverRegistryAddress, client)
+	btc.StreamRegistry, err = river.NewStreamRegistryV1(btc.RiverRegistryAddress, client)
 	if err != nil {
 		return nil, err
 	}
 
-	btc.Configuration, err = contracts.NewRiverConfigV1(btc.RiverRegistryAddress, client)
+	btc.Configuration, err = river.NewRiverConfigV1(btc.RiverRegistryAddress, client)
 	if err != nil {
 		return nil, err
 	}
@@ -495,7 +496,7 @@ func (c *BlockchainTestContext) NewWalletAndBlockchain(ctx context.Context) *Blo
 }
 
 func (c *BlockchainTestContext) InitNodeRecord(ctx context.Context, index int, url string) error {
-	return c.InitNodeRecordEx(ctx, index, url, contracts.NodeStatus_Operational)
+	return c.InitNodeRecordEx(ctx, index, url, river.NodeStatus_Operational)
 }
 
 func (c *BlockchainTestContext) InitNodeRecordEx(ctx context.Context, index int, url string, status uint8) error {

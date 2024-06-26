@@ -9,9 +9,8 @@ import (
 )
 
 type Evaluator struct {
-	clients         BlockchainClientPool
-	contractVersion config.ContractVersion
-	evalHistrogram  *prometheus.HistogramVec
+	clients        BlockchainClientPool
+	evalHistrogram *prometheus.HistogramVec
 }
 
 func NewEvaluatorFromConfig(ctx context.Context, cfg *config.Config, metrics infra.MetricsFactory) (*Evaluator, error) {
@@ -20,8 +19,7 @@ func NewEvaluatorFromConfig(ctx context.Context, cfg *config.Config, metrics inf
 		return nil, err
 	}
 	return &Evaluator{
-		clients:         clients,
-		contractVersion: cfg.GetContractVersion(),
+		clients: clients,
 		evalHistrogram: metrics.NewHistogramVecEx(
 			"entitlement_op_duration_seconds",
 			"Duration of entitlement evaluation",

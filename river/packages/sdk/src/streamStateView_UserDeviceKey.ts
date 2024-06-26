@@ -33,7 +33,7 @@ export class StreamStateView_UserDeviceKeys extends StreamStateView_AbstractCont
     ): void {
         // dispatch events for all device keys, todo this seems inefficient?
         for (const value of content.encryptionDevices) {
-            this.addUserDeviceKey(value, encryptionEmitter)
+            this.addUserDeviceKey(value, encryptionEmitter, undefined)
         }
     }
 
@@ -50,7 +50,7 @@ export class StreamStateView_UserDeviceKeys extends StreamStateView_AbstractCont
         event: RemoteTimelineEvent,
         _cleartext: string | undefined,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
-        _stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         check(event.remoteEvent.event.payload.case === 'userDeviceKeyPayload')
         const payload: UserDeviceKeyPayload = event.remoteEvent.event.payload.value
@@ -58,7 +58,7 @@ export class StreamStateView_UserDeviceKeys extends StreamStateView_AbstractCont
             case 'inception':
                 break
             case 'encryptionDevice':
-                this.addUserDeviceKey(payload.content.value, encryptionEmitter)
+                this.addUserDeviceKey(payload.content.value, encryptionEmitter, stateEmitter)
                 break
             case undefined:
                 break
@@ -70,6 +70,7 @@ export class StreamStateView_UserDeviceKeys extends StreamStateView_AbstractCont
     private addUserDeviceKey(
         value: UserDeviceKeyPayload_EncryptionDevice,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ) {
         const device = {
             deviceKey: value.deviceKey,
@@ -81,5 +82,6 @@ export class StreamStateView_UserDeviceKeys extends StreamStateView_AbstractCont
         }
         this.deviceKeys.push(device)
         encryptionEmitter?.emit('userDeviceKeyMessage', this.streamId, this.streamCreatorId, device)
+        stateEmitter?.emit('userDeviceKeysUpdated', this.streamId, this.deviceKeys)
     }
 }

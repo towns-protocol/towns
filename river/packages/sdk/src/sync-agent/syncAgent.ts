@@ -6,12 +6,18 @@ import { RetryParams } from '../makeStreamRpcClient'
 import { Store } from '../store/store'
 import { SignerContext } from '../signerContext'
 import { userIdFromAddress } from '../id'
-import { RiverNodeUrls } from './river-connection/models/riverNodeUrls'
-import { User } from './user/user'
+import { StreamNodeUrlsModel } from './river-connection/models/streamNodeUrls'
+import { AuthStatus, User, UserModel } from './user/user'
 import { makeBaseProvider, makeRiverProvider } from './utils/providers'
-import { UserMemberships } from './user/models/userMemberships'
+import { UserMembershipsModel } from './user/models/userMemberships'
 import { RiverDbManager } from '../riverDbManager'
 import { Entitlements } from './entitlements/entitlements'
+import { PersistedObservable } from '../observable/persistedObservable'
+import { Observable } from '../observable/observable'
+import { UserInboxModel } from './user/models/userInbox'
+import { SyncAgentStore } from './syncAgentStore'
+import { UserDeviceKeysModel } from './user/models/userDeviceKeys'
+import { UserSettingsModel } from './user/models/userSettings'
 
 export interface SyncAgentConfig {
     context: SignerContext
@@ -33,6 +39,17 @@ export class SyncAgent {
     user: User
     //spaces: Spaces
 
+    // flattened observables - just pointers to the observable objects in the models
+    observables: {
+        riverStreamNodeUrls: PersistedObservable<StreamNodeUrlsModel>
+        user: PersistedObservable<UserModel>
+        userAuthStatus: Observable<AuthStatus>
+        userMemberships: PersistedObservable<UserMembershipsModel>
+        userInbox: PersistedObservable<UserInboxModel>
+        userDeviceKeys: PersistedObservable<UserDeviceKeysModel>
+        userSettings: PersistedObservable<UserSettingsModel>
+    }
+
     constructor(config: SyncAgentConfig) {
         this.userId = userIdFromAddress(config.context.creatorAddress)
         this.config = config
@@ -40,11 +57,7 @@ export class SyncAgent {
         const river = config.riverConfig.river
         this.baseProvider = makeBaseProvider(config.riverConfig)
         this.riverProvider = makeRiverProvider(config.riverConfig)
-        this.store = new Store(`syncAgent-${this.userId}`, 1, [
-            RiverNodeUrls,
-            User,
-            UserMemberships,
-        ])
+        this.store = new SyncAgentStore(this.userId)
         this.store.newTransactionGroup('SyncAgent::initalization')
         this.spaceDapp = new SpaceDapp(base.chainConfig, this.baseProvider)
         this.riverRegistryDapp = new RiverRegistry(river.chainConfig, this.riverProvider)
@@ -57,7 +70,18 @@ export class SyncAgent {
             highPriorityStreamIds: this.config.highPriorityStreamIds,
             rpcRetryParams: config.retryParams,
         })
-        this.user = new User(this.userId, this.store, this.riverConnection)
+        this.user = new User(this.userId, this.store, this.riverConnection, this.spaceDapp)
+
+        // flatten out the observables
+        this.observables = {
+            riverStreamNodeUrls: this.riverConnection.streamNodeUrls,
+            user: this.user,
+            userAuthStatus: this.user.authStatus,
+            userMemberships: this.user.streams.memberships,
+            userInbox: this.user.streams.inbox,
+            userDeviceKeys: this.user.streams.deviceKeys,
+            userSettings: this.user.streams.settings,
+        }
     }
 
     async start() {

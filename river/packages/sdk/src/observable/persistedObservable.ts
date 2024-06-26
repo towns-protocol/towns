@@ -14,10 +14,7 @@ export type PersistedModel<T> =
     | { status: 'saving'; data: T }
     | { status: 'saved'; data: T }
 
-interface Storable {
-    tableName: string
-    load(): void
-}
+interface Storable {}
 
 const all_tables = new Set<string>()
 
@@ -30,8 +27,10 @@ export function persistedObservable(options: PersistedOpts) {
             constructor(...args: any[]) {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 super(...args)
-                this.tableName = options.tableName
-                this.load()
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                ;(this as any).tableName = options.tableName
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+                ;(this as any).load()
             }
             static tableName = options.tableName
         }
@@ -42,30 +41,28 @@ export class PersistedObservable<T extends Identifiable>
     extends Observable<PersistedModel<T>>
     implements Storable
 {
+    private tableName: string = ''
     private readonly store: Store
-    tableName: string = ''
-    readonly loadPriority: LoadPriority
-    readonly id: string
+    private readonly loadPriority: LoadPriority
 
     // must be called in a store transaction
     constructor(initialValue: T, store: Store, loadPriority: LoadPriority = LoadPriority.low) {
         super({ status: 'loading', data: initialValue })
-        this.id = initialValue.id
         this.loadPriority = loadPriority
         this.store = store
     }
 
-    load() {
-        check(this.value.status === 'loading', 'already loaded')
+    protected load() {
+        check(super.value.status === 'loading', 'already loaded')
         this.store.load(
             this.tableName,
-            this.id,
+            this.data.id,
             this.loadPriority,
             (data?: T) => {
-                super.set({ status: 'loaded', data: data ?? this.data })
+                super.setValue({ status: 'loaded', data: data ?? this.data })
             },
             (error: Error) => {
-                super.set({ status: 'error', data: this.data, error })
+                super.setValue({ status: 'error', data: this.data, error })
             },
             async () => {
                 await this.onLoaded()
@@ -73,29 +70,34 @@ export class PersistedObservable<T extends Identifiable>
         )
     }
 
-    get data(): T {
-        return this.value.data
+    override get value(): PersistedModel<T> {
+        return super.value
     }
 
-    set(_: PersistedModel<T>) {
-        throw new Error('use update method to update')
+    override setValue(_newValue: PersistedModel<T>) {
+        throw new Error('use updateData instead of set value')
+    }
+
+    get data(): T {
+        return super.value.data
     }
 
     // must be called in a store transaction
-    update(data: T) {
-        check(isDefined(data), 'value is undefined')
-        check(data.id === this.id, 'id mismatch')
-        super.set({ status: 'saving', data: data })
+    setData(newDataPartial: Partial<T>) {
+        check(isDefined(newDataPartial), 'value is undefined')
+        const newData = { ...this.data, ...newDataPartial }
+        check(newData.id === this.data.id, 'id mismatch')
+        super.setValue({ status: 'saving', data: newData })
         this.store
-            .withTransaction(`update-${this.tableName}:${this.id}`, () => {
+            .withTransaction(`update-${this.tableName}:${this.data.id}`, () => {
                 this.store.save(
                     this.tableName,
-                    data,
+                    newData,
                     () => {
-                        super.set({ status: 'saved', data: data })
+                        super.setValue({ status: 'saved', data: newData })
                     },
                     (e) => {
-                        super.set({ status: 'error', data: data, error: e })
+                        super.setValue({ status: 'error', data: newData, error: e })
                     },
                     async () => {
                         await this.onSaved()
@@ -103,7 +105,7 @@ export class PersistedObservable<T extends Identifiable>
                 )
             })
             .catch((e) => {
-                super.set({ status: 'error', data: this.data, error: e })
+                super.setValue({ status: 'error', data: this.data, error: e })
             })
     }
 

@@ -12,8 +12,8 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/river-build/river/core/contracts/river"
 	"github.com/river-build/river/core/node/base/test"
-	"github.com/river-build/river/core/node/contracts"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/stretchr/testify/require"
 )
@@ -169,7 +169,7 @@ func TestChainMonitorEvents(t *testing.T) {
 			close(onMonitorStoppedCount)
 		}
 
-		nodeRegistryABI, _ = abi.JSON(strings.NewReader(contracts.NodeRegistryV1ABI))
+		nodeRegistryABI, _ = abi.JSON(strings.NewReader(river.NodeRegistryV1ABI))
 
 		urls  = []string{"https://river0.test"}
 		addrs = []common.Address{tc.Wallets[0].Address}
@@ -192,7 +192,7 @@ func TestChainMonitorEvents(t *testing.T) {
 		ctx,
 		"RegisterNode",
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return tc.NodeRegistry.RegisterNode(opts, addrs[0], urls[0], contracts.NodeStatus_NotInitialized)
+			return tc.NodeRegistry.RegisterNode(opts, addrs[0], urls[0], river.NodeStatus_NotInitialized)
 		},
 	)
 	require.NoError(err)
@@ -246,7 +246,7 @@ func TestContractAllEventsFromFuture(t *testing.T) {
 		futureContractEventsCallback               = func(ctx context.Context, event types.Log) {
 			futureContractEventsCallbackCapturedEvents <- event
 		}
-		nodeRegistryABI, _ = abi.JSON(strings.NewReader(contracts.NodeRegistryV1MetaData.ABI))
+		nodeRegistryABI, _ = abi.JSON(strings.NewReader(river.NodeRegistryV1MetaData.ABI))
 		readCapturedEvents = func(captured <-chan types.Log) []types.Log {
 			var logs []types.Log
 			for i := 0; i < nodeCount; i++ {
@@ -280,7 +280,7 @@ func TestContractAllEventsFromFuture(t *testing.T) {
 					opts,
 					wallet.Address,
 					fmt.Sprintf("https://node%d.river.test", i),
-					contracts.NodeStatus_NotInitialized,
+					river.NodeStatus_NotInitialized,
 				)
 			},
 		)
@@ -344,7 +344,7 @@ func TestContractAllEventsFromFuture(t *testing.T) {
 					opts,
 					wallet.Address,
 					fmt.Sprintf("https://node%d.river.test", i),
-					contracts.NodeStatus_NotInitialized,
+					river.NodeStatus_NotInitialized,
 				)
 			},
 		)
@@ -390,7 +390,7 @@ func TestContractAllEventsFromPast(t *testing.T) {
 		historicalContractEventsCallback               = func(ctx context.Context, event types.Log) {
 			historicalContractEventsCallbackCapturedEvents <- event
 		}
-		nodeRegistryABI, _ = abi.JSON(strings.NewReader(contracts.NodeRegistryV1MetaData.ABI))
+		nodeRegistryABI, _ = abi.JSON(strings.NewReader(river.NodeRegistryV1MetaData.ABI))
 		readCapturedEvents = func(captured <-chan types.Log) []types.Log {
 			var logs []types.Log
 			for i := 0; i < nodeCount; i++ {
@@ -424,7 +424,7 @@ func TestContractAllEventsFromPast(t *testing.T) {
 					opts,
 					wallet.Address,
 					fmt.Sprintf("https://node%d.river.test", i),
-					contracts.NodeStatus_NotInitialized,
+					river.NodeStatus_NotInitialized,
 				)
 			},
 		)
@@ -510,7 +510,7 @@ func TestContractEventsWithTopicsFromPast(t *testing.T) {
 		historicalContractWithTopicsEventCallback               = func(ctx context.Context, event types.Log) {
 			historicalContractWithTopicsEventCallbackCapturedEvents <- event
 		}
-		nodeRegistryABI, _ = abi.JSON(strings.NewReader(contracts.NodeRegistryV1MetaData.ABI))
+		nodeRegistryABI, _ = abi.JSON(strings.NewReader(river.NodeRegistryV1MetaData.ABI))
 		readCapturedEvents = func(captured <-chan types.Log) []types.Log {
 			var logs []types.Log
 			for i := 0; i < nodeCount; i++ {
@@ -540,7 +540,7 @@ func TestContractEventsWithTopicsFromPast(t *testing.T) {
 			ctx,
 			"RegisterNode",
 			func(opts *bind.TransactOpts) (*types.Transaction, error) {
-				return tc.NodeRegistry.RegisterNode(opts, wallet.Address, fmt.Sprintf("https://node%d.river.test", i), contracts.NodeStatus_NotInitialized)
+				return tc.NodeRegistry.RegisterNode(opts, wallet.Address, fmt.Sprintf("https://node%d.river.test", i), river.NodeStatus_NotInitialized)
 			},
 		)
 		require.NoError(err, "register node")
@@ -614,7 +614,7 @@ func TestEventsOrder(t *testing.T) {
 			capturedEvents <- event
 		}
 
-		nodeRegistryABI, _ = abi.JSON(strings.NewReader(contracts.NodeRegistryV1MetaData.ABI))
+		nodeRegistryABI, _ = abi.JSON(strings.NewReader(river.NodeRegistryV1MetaData.ABI))
 		readCapturedEvents = func(captured <-chan types.Log) []types.Log {
 			var logs []types.Log
 			for i := 0; i < nodeCount; i++ {
@@ -644,7 +644,7 @@ func TestEventsOrder(t *testing.T) {
 			ctx,
 			"RegisterNode",
 			func(opts *bind.TransactOpts) (*types.Transaction, error) {
-				return tc.NodeRegistry.RegisterNode(opts, wallet.Address, fmt.Sprintf("https://node%d.river.test", i), contracts.NodeStatus_NotInitialized)
+				return tc.NodeRegistry.RegisterNode(opts, wallet.Address, fmt.Sprintf("https://node%d.river.test", i), river.NodeStatus_NotInitialized)
 			},
 		)
 		require.NoError(err, "register node")
@@ -671,7 +671,7 @@ func TestEventsOrder(t *testing.T) {
 		if nodeRegistryABI.Events["NodeAdded"].ID != event.Topics[0] {
 			continue
 		}
-		var e contracts.NodeRegistryV1NodeAdded
+		var e river.NodeRegistryV1NodeAdded
 		if err := tc.NodeRegistry.BoundContract().UnpackLog(&e, "NodeAdded", event); err != nil {
 			require.NoError(err, "OnNodeAdded: unable to decode NodeAdded event")
 		}

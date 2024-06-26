@@ -8,9 +8,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/river-build/river/core/config"
+	"github.com/river-build/river/core/contracts/river"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/base/test"
-	"github.com/river-build/river/core/node/contracts"
 	"github.com/river-build/river/core/node/crypto"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/shared"
@@ -68,7 +68,7 @@ func TestNodeEvents(t *testing.T) {
 	require.NoError(err)
 	require.Len(events, 3)
 
-	added, ok := events[0].(*contracts.NodeRegistryV1NodeAdded)
+	added, ok := events[0].(*river.NodeRegistryV1NodeAdded)
 	require.True(ok)
 	require.Equal(nodeAddr1, added.NodeAddress)
 	require.Equal(nodeUrl1, added.Url)
@@ -101,7 +101,7 @@ func TestNodeEvents(t *testing.T) {
 	require.NoError(err)
 	require.Len(events, 1)
 
-	urlUpdated, ok := events[0].(*contracts.NodeRegistryV1NodeUrlUpdated)
+	urlUpdated, ok := events[0].(*river.NodeRegistryV1NodeUrlUpdated)
 	require.True(ok)
 	require.Equal(nodeUrl2, urlUpdated.Url)
 	require.Equal(nodeAddr1, urlUpdated.NodeAddress)
@@ -123,7 +123,7 @@ func TestNodeEvents(t *testing.T) {
 	require.NoError(err)
 	require.Len(events, 1)
 
-	statusUpdated, ok := events[0].(*contracts.NodeRegistryV1NodeStatusUpdated)
+	statusUpdated, ok := events[0].(*river.NodeRegistryV1NodeStatusUpdated)
 	require.True(ok)
 	require.Equal(uint8(4), statusUpdated.Status)
 	require.Equal(nodeAddr1, statusUpdated.NodeAddress)
@@ -145,7 +145,7 @@ func TestNodeEvents(t *testing.T) {
 	require.NoError(err)
 	require.Len(events, 1)
 
-	statusUpdated, ok = events[0].(*contracts.NodeRegistryV1NodeStatusUpdated)
+	statusUpdated, ok = events[0].(*river.NodeRegistryV1NodeStatusUpdated)
 	require.True(ok)
 	require.Equal(uint8(5), statusUpdated.Status)
 	require.Equal(nodeAddr1, statusUpdated.NodeAddress)
@@ -167,7 +167,7 @@ func TestNodeEvents(t *testing.T) {
 	require.NoError(err)
 	require.Len(events, 1)
 
-	removed, ok := events[0].(*contracts.NodeRegistryV1NodeRemoved)
+	removed, ok := events[0].(*river.NodeRegistryV1NodeRemoved)
 	require.True(ok)
 	require.Equal(nodeAddr1, removed.NodeAddress)
 
@@ -222,20 +222,20 @@ func TestStreamEvents(t *testing.T) {
 	rr1, err := NewRiverRegistryContract(ctx, bc1, &config.ContractConfig{Address: tc.RiverRegistryAddress})
 	require.NoError(err)
 
-	allocatedC := make(chan *contracts.StreamRegistryV1StreamAllocated, 10)
-	lastMBC := make(chan *contracts.StreamRegistryV1StreamLastMiniblockUpdated, 10)
-	placementC := make(chan *contracts.StreamRegistryV1StreamPlacementUpdated, 10)
+	allocatedC := make(chan *river.StreamRegistryV1StreamAllocated, 10)
+	lastMBC := make(chan *river.StreamRegistryV1StreamLastMiniblockUpdated, 10)
+	placementC := make(chan *river.StreamRegistryV1StreamPlacementUpdated, 10)
 
 	err = rr1.OnStreamEvent(
 		ctx,
 		bc1.InitialBlockNum+1,
-		func(ctx context.Context, event *contracts.StreamRegistryV1StreamAllocated) {
+		func(ctx context.Context, event *river.StreamRegistryV1StreamAllocated) {
 			allocatedC <- event
 		},
-		func(ctx context.Context, event *contracts.StreamRegistryV1StreamLastMiniblockUpdated) {
+		func(ctx context.Context, event *river.StreamRegistryV1StreamLastMiniblockUpdated) {
 			lastMBC <- event
 		},
-		func(ctx context.Context, event *contracts.StreamRegistryV1StreamPlacementUpdated) {
+		func(ctx context.Context, event *river.StreamRegistryV1StreamPlacementUpdated) {
 			placementC <- event
 		},
 	)
@@ -301,7 +301,7 @@ func TestStreamEvents(t *testing.T) {
 	newMBHash2 := common.HexToHash("0x789")
 	succeeded, failed, err := rr1.SetStreamLastMiniblockBatch(
 		ctx,
-		[]contracts.SetMiniblock{{
+		[]river.SetMiniblock{{
 			StreamId:          streamId,
 			PrevMiniBlockHash: newMBHash,
 			LastMiniblockHash: newMBHash2,

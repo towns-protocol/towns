@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/river-build/river/core/contracts/base"
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/contracts/base"
 	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/shared"
@@ -20,7 +20,6 @@ type Channels interface {
 
 func NewChannels(
 	ctx context.Context,
-	version string,
 	address common.Address,
 	backend bind.ContractBackend,
 ) (Channels, error) {
@@ -31,7 +30,7 @@ func NewChannels(
 		return nil, WrapRiverError(
 			Err_CANNOT_CONNECT,
 			err,
-		).Tags("address", address, "version", version).
+		).Tags("address", address).
 			Func("NewChannels").
 			Message("Failed to initialize contract")
 	}

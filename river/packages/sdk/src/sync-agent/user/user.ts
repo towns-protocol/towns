@@ -8,6 +8,10 @@ import { UserDeviceKeys } from './models/userDeviceKeys'
 import { UserInbox } from './models/userInbox'
 import { UserMemberships } from './models/userMemberships'
 import { UserSettings } from './models/userSettings'
+import { CreateSpaceParams, SpaceDapp } from '@river-build/web3'
+import { ethers } from 'ethers'
+import { makeDefaultChannelStreamId, makeSpaceStreamId } from '../../id'
+import { makeDefaultMembershipInfo } from '../utils/spaceUtils'
 
 const logger = dlogger('csb:user')
 
@@ -27,6 +31,9 @@ export enum AuthStatus {
     Credentialed = 'Credentialed',
     /** User authenticated with a valid credential and with an active river river client. */
     ConnectedToRiver = 'ConnectedToRiver',
+    /** Disconnected, client was stopped */
+    Disconnected = 'Disconnected',
+    /** Error state: User failed to authenticate or connect to river client. */
     Error = 'Error',
 }
 
@@ -36,49 +43,87 @@ class LoginContext {
 
 @persistedObservable({ tableName: 'user' })
 export class User extends PersistedObservable<UserModel> {
-    id: string
-    memberships: UserMemberships
-    inbox: UserInbox
-    deviceKeys: UserDeviceKeys
-    settings: UserSettings
+    streams: {
+        memberships: UserMemberships
+        inbox: UserInbox
+        deviceKeys: UserDeviceKeys
+        settings: UserSettings
+    }
     authStatus = new Observable<AuthStatus>(AuthStatus.None)
     loginError?: Error
     private riverConnection: RiverConnection
+    private spaceDapp: SpaceDapp
 
-    constructor(id: string, store: Store, riverConnection: RiverConnection) {
+    constructor(id: string, store: Store, riverConnection: RiverConnection, spaceDapp: SpaceDapp) {
         super({ id, initialized: false }, store, LoadPriority.high)
-        this.id = id
+        this.streams = {
+            memberships: new UserMemberships(id, store, riverConnection),
+            inbox: new UserInbox(id, store, riverConnection),
+            deviceKeys: new UserDeviceKeys(id, store, riverConnection),
+            settings: new UserSettings(id, store, riverConnection),
+        }
         this.riverConnection = riverConnection
-        this.memberships = new UserMemberships(id, store, riverConnection)
-        this.inbox = new UserInbox(id, store)
-        this.deviceKeys = new UserDeviceKeys(id, store)
-        this.settings = new UserSettings(id, store)
+        this.spaceDapp = spaceDapp
     }
 
-    override async onLoaded() {
-        this.riverConnection.registerView(this)
+    protected override async onLoaded() {
+        this.riverConnection.registerView(this.onClientStarted)
     }
 
-    async initialize(newUserMetadata?: { spaceId: Uint8Array | string }) {
+    private async initialize(newUserMetadata?: { spaceId: Uint8Array | string }) {
         await this.riverConnection.call(async (client) => {
             await client.initializeUser(newUserMetadata)
             client.startSync()
         })
-        this.update({ ...this.data, initialized: true })
-        this.authStatus.set(AuthStatus.ConnectedToRiver)
+        this.setData({ initialized: true })
+        this.authStatus.setValue(AuthStatus.ConnectedToRiver)
     }
 
-    onClientStarted(client: Client) {
-        this.authStatus.set(AuthStatus.EvaluatingCredentials)
+    private onClientStarted = (client: Client) => {
+        this.authStatus.setValue(AuthStatus.EvaluatingCredentials)
         const loginContext = new LoginContext(client, false)
         this.loginWithRetries(loginContext).catch((err) => {
             logger.error('login failed', err)
             this.loginError = err
-            this.authStatus.set(AuthStatus.Error)
+            this.authStatus.setValue(AuthStatus.Error)
         })
         return () => {
             loginContext.cancelled = true
+            this.authStatus.setValue(AuthStatus.Disconnected)
         }
+    }
+
+    async createSpace(
+        params: Partial<Omit<CreateSpaceParams, 'spaceName'>> & { spaceName: string },
+        signer: ethers.Signer,
+    ) {
+        const membershipInfo =
+            params.membership ?? (await makeDefaultMembershipInfo(this.spaceDapp, this.data.id))
+        const transaction = await this.spaceDapp.createSpace(
+            {
+                spaceName: params.spaceName,
+                spaceMetadata: params.spaceMetadata ?? params.spaceName,
+                channelName: params.channelName ?? 'general',
+                membership: membershipInfo,
+            },
+            signer,
+        )
+        const receipt = await transaction.wait()
+        logger.log('transaction receipt', receipt)
+        const spaceAddress = this.spaceDapp.getSpaceAddress(receipt)
+        if (!spaceAddress) {
+            throw new Error('Space address not found')
+        }
+        logger.log('spaceAddress', spaceAddress)
+        const spaceId = makeSpaceStreamId(spaceAddress)
+        const defaultChannelId = makeDefaultChannelStreamId(spaceAddress)
+        logger.log('spaceId, defaultChannelId', { spaceId, defaultChannelId })
+        await this.initialize({ spaceId })
+        await this.riverConnection.call((client) => client.createSpace(spaceId))
+        await this.riverConnection.call((client) =>
+            client.createChannel(spaceId, 'general', '', defaultChannelId),
+        )
+        return { spaceId, defaultChannelId }
     }
 
     private async loginWithRetries(loginContext: LoginContext) {
@@ -90,11 +135,10 @@ export class User extends PersistedObservable<UserModel> {
                 if (this.data.initialized) {
                     await this.initialize()
                 } else {
-                    const canInitialize = await loginContext.client.userExists(this.id)
+                    const canInitialize = await loginContext.client.userExists(this.data.id)
                     if (canInitialize) {
                         await this.initialize()
                     }
-                    loginContext.client.startSync()
                 }
                 break
             } catch (err) {
@@ -105,7 +149,7 @@ export class User extends PersistedObservable<UserModel> {
                     throw err
                 } else {
                     const retryDelay = getRetryDelay(retryCount)
-                    logger.log('******* retrying', { retryDelay, retryCount })
+                    logger.log('retrying', { retryDelay, retryCount })
                     // sleep
                     await new Promise((resolve) => setTimeout(resolve, retryDelay))
                 }

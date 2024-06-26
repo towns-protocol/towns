@@ -1,6 +1,6 @@
 export class Observable<T> {
-    subscribers: ((value: T) => void)[] = []
-    private _value: T
+    protected subscribers: ((value: T) => void)[] = []
+    protected _value: T
 
     constructor(value: T) {
         this._value = value
@@ -10,8 +10,8 @@ export class Observable<T> {
         return this._value
     }
 
-    set(value: T) {
-        this._value = value
+    setValue(newValue: T) {
+        this._value = newValue
         this.notify()
     }
 

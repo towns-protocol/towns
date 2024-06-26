@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/river-build/river/core/contracts/river"
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/contracts"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/infra"
@@ -407,7 +407,7 @@ func (s *streamCacheImpl) processMiniblockProposalBatch(
 	log := dlog.FromCtx(ctx)
 	var err error
 
-	miniblocks := make([]contracts.SetMiniblock, 0, len(candidates))
+	miniblocks := make([]river.SetMiniblock, 0, len(candidates))
 	proposals := map[StreamId]*MiniblockInfo{}
 	for _, c := range candidates {
 		// Test also creates miniblocks on demand.
@@ -436,7 +436,7 @@ func (s *streamCacheImpl) processMiniblockProposalBatch(
 		}
 		miniblocks = append(
 			miniblocks,
-			contracts.SetMiniblock{
+			river.SetMiniblock{
 				StreamId:          c.streamId,
 				PrevMiniBlockHash: *proposal.headerEvent.PrevMiniblockHash,
 				LastMiniblockHash: proposal.headerEvent.Hash,

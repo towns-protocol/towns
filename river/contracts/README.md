@@ -1,4 +1,4 @@
-<h2>Towns Contracts</h2>
+<h2>River Contracts</h2>
 
 <h3>Requirements</h3>
 

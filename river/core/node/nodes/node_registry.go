@@ -5,18 +5,18 @@ import (
 	"net/http"
 	"sync"
 
+	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+
+	"github.com/river-build/river/core/contracts/river"
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/contracts"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/http_client"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/protocol/protocolconnect"
 	"github.com/river-build/river/core/node/registries"
-
-	"connectrpc.com/connect"
 )
 
 var TestHttpClientMaker func() *http.Client
@@ -159,7 +159,7 @@ func (n *nodeRegistryImpl) addNode(addr common.Address, url string, status uint8
 func (n *nodeRegistryImpl) OnNodeAdded(ctx context.Context, event types.Log) {
 	log := dlog.FromCtx(ctx)
 
-	var e contracts.NodeRegistryV1NodeAdded
+	var e river.NodeRegistryV1NodeAdded
 	if err := n.contract.NodeRegistry.BoundContract().UnpackLog(&e, "NodeAdded", event); err != nil {
 		log.Error("OnNodeAdded: unable to decode NodeAdded event")
 		return
@@ -181,7 +181,7 @@ func (n *nodeRegistryImpl) OnNodeAdded(ctx context.Context, event types.Log) {
 func (n *nodeRegistryImpl) OnNodeRemoved(ctx context.Context, event types.Log) {
 	log := dlog.FromCtx(ctx)
 
-	var e contracts.NodeRegistryV1NodeRemoved
+	var e river.NodeRegistryV1NodeRemoved
 	if err := n.contract.NodeRegistry.BoundContract().UnpackLog(&e, "NodeRemoved", event); err != nil {
 		log.Error("OnNodeRemoved: unable to decode NodeRemoved event")
 		return
@@ -203,7 +203,7 @@ func (n *nodeRegistryImpl) OnNodeRemoved(ctx context.Context, event types.Log) {
 func (n *nodeRegistryImpl) OnNodeStatusUpdated(ctx context.Context, event types.Log) {
 	log := dlog.FromCtx(ctx)
 
-	var e contracts.NodeRegistryV1NodeStatusUpdated
+	var e river.NodeRegistryV1NodeStatusUpdated
 	if err := n.contract.NodeRegistry.BoundContract().UnpackLog(&e, "NodeStatusUpdated", event); err != nil {
 		log.Error("OnNodeStatusUpdated: unable to decode NodeStatusUpdated event")
 		return
@@ -227,7 +227,7 @@ func (n *nodeRegistryImpl) OnNodeStatusUpdated(ctx context.Context, event types.
 func (n *nodeRegistryImpl) OnNodeUrlUpdated(ctx context.Context, event types.Log) {
 	log := dlog.FromCtx(ctx)
 
-	var e contracts.NodeRegistryV1NodeUrlUpdated
+	var e river.NodeRegistryV1NodeUrlUpdated
 	if err := n.contract.NodeRegistry.BoundContract().UnpackLog(&e, "NodeUrlUpdated", event); err != nil {
 		log.Error("OnNodeUrlUpdated: unable to decode NodeUrlUpdated event")
 		return

@@ -6,8 +6,9 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
+
+	"github.com/river-build/river/core/contracts/river"
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/contracts"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/protocol"
@@ -49,7 +50,7 @@ func TestAddingNewNodes(t *testing.T) {
 	require := tester.require
 	log := dlog.FromCtx(ctx)
 
-	tester.initNodeRecords(0, 10, contracts.NodeStatus_Operational)
+	tester.initNodeRecords(0, 10, river.NodeStatus_Operational)
 	tester.startNodes(0, 10)
 
 	testMethodsWithClient(tester, tester.testClient(9))
@@ -57,12 +58,12 @@ func TestAddingNewNodes(t *testing.T) {
 	c0 := tester.testClient(0)
 	streamdIds0 := testCreate100Streams(ctx, require, c0, nil)
 
-	tester.initNodeRecords(10, 20, contracts.NodeStatus_NotInitialized)
+	tester.initNodeRecords(10, 20, river.NodeStatus_NotInitialized)
 
 	testMethodsWithClient(tester, tester.testClient(4))
 
 	tester.startNodes(10, 20)
-	tester.setNodesStatus(10, 20, contracts.NodeStatus_Operational)
+	tester.setNodesStatus(10, 20, river.NodeStatus_Operational)
 
 	testMethodsWithClient(tester, tester.testClient(14))
 

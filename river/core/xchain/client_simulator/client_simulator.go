@@ -13,13 +13,13 @@ import (
 	"github.com/river-build/river/core/xchain/entitlement"
 	"github.com/river-build/river/core/xchain/examples"
 
-	node_contracts "github.com/river-build/river/core/node/contracts"
 	node_crypto "github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 
 	xc "github.com/river-build/river/core/xchain/common"
 
-	e "github.com/river-build/river/core/xchain/contracts"
+	"github.com/river-build/river/core/contracts/base"
+	"github.com/river-build/river/core/contracts/base/deploy"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -65,10 +65,9 @@ func toggleCustomEntitlement(
 	auth.GasLimit = uint64(30000000) // in units
 	auth.GasPrice = gasPrice
 
-	mockCustomContract, err := e.NewMockCustomEntitlement(
+	mockCustomContract, err := deploy.NewMockCustomEntitlement(
 		cfg.GetTestCustomEntitlementContractAddress(),
 		client,
-		cfg.GetContractVersion(),
 	)
 	if err != nil {
 		log.Error("Failed to parse contract ABI", "err", err)
@@ -101,15 +100,15 @@ func toggleCustomEntitlement(
 	)
 }
 
-func customEntitlementExample(cfg *config.Config) e.IRuleData {
-	return e.IRuleData{
-		Operations: []e.IRuleEntitlementOperation{
+func customEntitlementExample(cfg *config.Config) base.IRuleEntitlementRuleData {
+	return base.IRuleEntitlementRuleData{
+		Operations: []base.IRuleEntitlementOperation{
 			{
 				OpType: uint8(entitlement.CHECK),
 				Index:  0,
 			},
 		},
-		CheckOperations: []e.IRuleEntitlementCheckOperation{
+		CheckOperations: []base.IRuleEntitlementCheckOperation{
 			{
 				OpType:  uint8(entitlement.ISENTITLED),
 				ChainId: big.NewInt(1),
@@ -121,15 +120,15 @@ func customEntitlementExample(cfg *config.Config) e.IRuleData {
 	}
 }
 
-func erc721Example() e.IRuleData {
-	return e.IRuleData{
-		Operations: []e.IRuleEntitlementOperation{
+func erc721Example() base.IRuleEntitlementRuleData {
+	return base.IRuleEntitlementRuleData{
+		Operations: []base.IRuleEntitlementOperation{
 			{
 				OpType: uint8(entitlement.CHECK),
 				Index:  0,
 			},
 		},
-		CheckOperations: []e.IRuleEntitlementCheckOperation{
+		CheckOperations: []base.IRuleEntitlementCheckOperation{
 			{
 				OpType:  uint8(entitlement.ERC721),
 				ChainId: examples.EthSepoliaChainId,
@@ -141,15 +140,15 @@ func erc721Example() e.IRuleData {
 	}
 }
 
-func erc20Example() e.IRuleData {
-	return e.IRuleData{
-		Operations: []e.IRuleEntitlementOperation{
+func erc20Example() base.IRuleEntitlementRuleData {
+	return base.IRuleEntitlementRuleData{
+		Operations: []base.IRuleEntitlementOperation{
 			{
 				OpType: uint8(entitlement.CHECK),
 				Index:  0,
 			},
 		},
-		CheckOperations: []e.IRuleEntitlementCheckOperation{
+		CheckOperations: []base.IRuleEntitlementCheckOperation{
 			{
 				OpType:  uint8(entitlement.ERC20),
 				ChainId: examples.EthSepoliaChainId,
@@ -179,7 +178,7 @@ type postResult struct {
 type ClientSimulator interface {
 	Start(ctx context.Context)
 	Stop()
-	EvaluateRuleData(ctx context.Context, cfg *config.Config, ruleData e.IRuleData) (bool, error)
+	EvaluateRuleData(ctx context.Context, cfg *config.Config, ruleData base.IRuleEntitlementRuleData) (bool, error)
 	Wallet() *node_crypto.Wallet
 }
 
@@ -188,13 +187,13 @@ type clientSimulator struct {
 
 	wallet *node_crypto.Wallet
 
-	decoder *node_contracts.EvmErrorDecoder
+	decoder *node_crypto.EvmErrorDecoder
 
-	entitlementGated         *contracts.MockEntitlementGated
+	entitlementGated         *deploy.MockEntitlementGated
 	entitlementGatedABI      *abi.ABI
 	entitlementGatedContract *bind.BoundContract
 
-	checker         *contracts.IEntitlementChecker
+	checker         *base.IEntitlementChecker
 	checkerABI      *abi.ABI
 	checkerContract *bind.BoundContract
 
@@ -214,31 +213,38 @@ func New(
 	baseChain *node_crypto.Blockchain,
 	wallet *node_crypto.Wallet,
 ) (ClientSimulator, error) {
-	entitlementGated, err := e.NewMockEntitlementGated(
+	entitlementGated, err := deploy.NewMockEntitlementGated(
 		cfg.GetTestEntitlementContractAddress(),
 		nil,
-		cfg.GetContractVersion(),
 	)
 	if err != nil {
 		return nil, err
 	}
-	checker, err := e.NewIEntitlementChecker(cfg.GetEntitlementContractAddress(), nil, cfg.GetContractVersion())
+	checker, err := base.NewIEntitlementChecker(cfg.GetEntitlementContractAddress(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	entitlementGatedABI, err := deploy.MockEntitlementGatedMetaData.GetAbi()
+	if err != nil {
+		return nil, err
+	}
+
+	checkerABI, err := base.IEntitlementCheckerMetaData.GetAbi()
 	if err != nil {
 		return nil, err
 	}
 
 	var (
-		entitlementGatedABI      = entitlementGated.GetAbi()
 		entitlementGatedContract = bind.NewBoundContract(
 			cfg.GetTestEntitlementContractAddress(),
-			*entitlementGated.GetAbi(),
+			*entitlementGatedABI,
 			nil,
 			nil,
 			nil,
 		)
 
-		checkerABI      = checker.GetAbi()
-		checkerContract = bind.NewBoundContract(cfg.GetEntitlementContractAddress(), *checker.GetAbi(), nil, nil, nil)
+		checkerContract = bind.NewBoundContract(cfg.GetEntitlementContractAddress(), *checkerABI, nil, nil, nil)
 	)
 
 	metrics := infra.NewMetrics("xchain", "simulator")
@@ -258,7 +264,7 @@ func New(
 		)
 	}
 
-	decoder, err := node_contracts.NewEVMErrorDecoder(entitlementGated.GetMetadata(), checker.GetMetadata())
+	decoder, err := node_crypto.NewEVMErrorDecoder(deploy.MockEntitlementGatedMetaData, base.IEntitlementCheckerMetaData)
 	if err != nil {
 		return nil, err
 	}
@@ -308,7 +314,7 @@ func (cs *clientSimulator) Start(ctx context.Context) {
 	)
 }
 
-func (cs *clientSimulator) executeCheck(ctx context.Context, ruleData *e.IRuleData) error {
+func (cs *clientSimulator) executeCheck(ctx context.Context, ruleData *deploy.IRuleEntitlementRuleData) error {
 	log := dlog.FromCtx(ctx).With("application", "clientSimulator")
 	log.Info("ClientSimulator executing check", "ruleData", ruleData, "cfg", cs.cfg)
 
@@ -317,10 +323,9 @@ func (cs *clientSimulator) executeCheck(ctx context.Context, ruleData *e.IRuleDa
 		"RequestEntitlementCheck",
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
 			log.Info("Calling RequestEntitlementCheck", "opts", opts, "ruleData", ruleData)
-			gated, err := contracts.NewMockEntitlementGated(
+			gated, err := deploy.NewMockEntitlementGated(
 				cs.cfg.GetTestEntitlementContractAddress(),
 				cs.baseChain.Client,
-				cs.cfg.GetContractVersion(),
 			)
 			if err != nil {
 				log.Error("Failed to get NewMockEntitlementGated", "err", err)
@@ -416,7 +421,7 @@ func (cs *clientSimulator) onEntitlementCheckResultPosted(
 	event types.Log,
 	postedResults chan postResult,
 ) {
-	entitlementCheckResultPosted := cs.entitlementGated.EntitlementCheckResultPosted(cs.cfg.GetContractVersion())
+	entitlementCheckResultPosted := base.IEntitlementGatedEntitlementCheckResultPosted{}
 	log := dlog.FromCtx(ctx).With("application", "clientSimulator").With("function", "onEntitlementCheckResultPosted")
 
 	log.Info(
@@ -427,19 +432,19 @@ func (cs *clientSimulator) onEntitlementCheckResultPosted(
 		entitlementCheckResultPosted,
 	)
 
-	if err := cs.entitlementGatedContract.UnpackLog(entitlementCheckResultPosted.Raw(), "EntitlementCheckResultPosted", event); err != nil {
+	if err := cs.entitlementGatedContract.UnpackLog(&entitlementCheckResultPosted, "EntitlementCheckResultPosted", event); err != nil {
 		log.Error("Failed to unpack EntitlementCheckResultPosted event", "err", err)
 		return
 	}
 
 	log.Info("Received EntitlementCheckResultPosted event",
-		"TransactionId", entitlementCheckResultPosted.TransactionID(),
-		"Result", entitlementCheckResultPosted.Result(),
+		"TransactionId", entitlementCheckResultPosted.TransactionId,
+		"Result", entitlementCheckResultPosted.Result,
 	)
 
 	postedResults <- postResult{
-		transactionId: entitlementCheckResultPosted.TransactionID(),
-		result:        entitlementCheckResultPosted.Result() == contracts.NodeVoteStatus__PASSED,
+		transactionId: entitlementCheckResultPosted.TransactionId,
+		result:        entitlementCheckResultPosted.Result == contracts.NodeVoteStatus__PASSED,
 	}
 }
 
@@ -448,7 +453,7 @@ func (cs *clientSimulator) onEntitlementCheckRequested(
 	event types.Log,
 	checkRequests chan [32]byte,
 ) {
-	entitlementCheckRequest := cs.checker.EntitlementCheckRequestEvent()
+	entitlementCheckRequest := base.IEntitlementCheckerEntitlementCheckRequested{}
 	log := dlog.FromCtx(ctx).With("application", "clientSimulator").With("function", "onEntitlementCheckRequested")
 
 	log.Info(
@@ -459,28 +464,62 @@ func (cs *clientSimulator) onEntitlementCheckRequested(
 		entitlementCheckRequest,
 	)
 
-	if err := cs.checkerContract.UnpackLog(entitlementCheckRequest.Raw(), "EntitlementCheckRequested", event); err != nil {
+	if err := cs.checkerContract.UnpackLog(&entitlementCheckRequest, "EntitlementCheckRequested", event); err != nil {
 		log.Error("Failed to unpack EntitlementCheckRequested event", "err", err)
 		return
 	}
 
 	log.Info("Received EntitlementCheckRequested event",
-		"TransactionId", entitlementCheckRequest.TransactionID(),
-		"selectedNodes", entitlementCheckRequest.SelectedNodes(),
+		"TransactionId", entitlementCheckRequest.TransactionId,
+		"selectedNodes", entitlementCheckRequest.SelectedNodes,
 	)
 
-	checkRequests <- entitlementCheckRequest.TransactionID()
+	checkRequests <- entitlementCheckRequest.TransactionId
 }
 
 func (cs *clientSimulator) Wallet() *node_crypto.Wallet {
 	return cs.wallet
 }
 
+func convertRuleDataFromBaseToDeploy(ruleData base.IRuleEntitlementRuleData) deploy.IRuleEntitlementRuleData {
+	operations := make([]deploy.IRuleEntitlementOperation, len(ruleData.Operations))
+	for i, op := range ruleData.Operations {
+		operations[i] = deploy.IRuleEntitlementOperation{
+			OpType: op.OpType,
+			Index:  op.Index,
+		}
+	}
+	checkOperations := make([]deploy.IRuleEntitlementCheckOperation, len(ruleData.CheckOperations))
+	for i, op := range ruleData.CheckOperations {
+		checkOperations[i] = deploy.IRuleEntitlementCheckOperation{
+			OpType:          op.OpType,
+			ChainId:         op.ChainId,
+			ContractAddress: op.ContractAddress,
+			Threshold:       op.Threshold,
+		}
+	}
+	logicalOperations := make([]deploy.IRuleEntitlementLogicalOperation, len(ruleData.LogicalOperations))
+	for i, op := range ruleData.LogicalOperations {
+		logicalOperations[i] = deploy.IRuleEntitlementLogicalOperation{
+			LogOpType:           op.LogOpType,
+			LeftOperationIndex:  op.LeftOperationIndex,
+			RightOperationIndex: op.RightOperationIndex,
+		}
+	}
+	return deploy.IRuleEntitlementRuleData{
+		Operations:        operations,
+		CheckOperations:   checkOperations,
+		LogicalOperations: logicalOperations,
+	}
+}
+
 func (cs *clientSimulator) EvaluateRuleData(
 	ctx context.Context,
 	cfg *config.Config,
-	ruleData e.IRuleData,
+	baseRuleData base.IRuleEntitlementRuleData,
 ) (bool, error) {
+	ruleData := convertRuleDataFromBaseToDeploy(baseRuleData)
+
 	log := dlog.FromCtx(ctx).With("application", "clientSimulator")
 	log.Info("ClientSimulator evaluating rule data", "ruleData", ruleData)
 
@@ -531,7 +570,7 @@ func RunClientSimulator(ctx context.Context, cfg *config.Config, wallet *node_cr
 	cs.Start(ctx)
 	defer cs.Stop()
 
-	var ruleData e.IRuleData
+	var ruleData base.IRuleEntitlementRuleData
 	switch simType {
 	case ERC721:
 		ruleData = erc721Example()

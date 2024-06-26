@@ -234,7 +234,7 @@ export class Client
         return this.syncedStreamsExtensions.initStatus
     }
 
-    get cryptoEnabled(): boolean {
+    get cryptoInitialized(): boolean {
         return this.cryptoBackend !== undefined
     }
 

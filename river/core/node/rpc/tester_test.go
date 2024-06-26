@@ -13,16 +13,17 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/stretchr/testify/require"
+
 	"github.com/river-build/river/core/config"
+	"github.com/river-build/river/core/contracts/river"
 	"github.com/river-build/river/core/node/base/test"
-	"github.com/river-build/river/core/node/contracts"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/nodes"
 	"github.com/river-build/river/core/node/protocol/protocolconnect"
 	"github.com/river-build/river/core/node/rpc"
 	"github.com/river-build/river/core/node/storage"
 	"github.com/river-build/river/core/node/testutils/dbtestutils"
-	"github.com/stretchr/testify/require"
 )
 
 type testNodeRecord struct {
@@ -124,7 +125,7 @@ func newServiceTester(t *testing.T, opts serviceTesterOpts) *serviceTester {
 	require.Equal(crypto.TransactionResultSuccess, receipt.Status, "set stream replication factor tx failed")
 
 	if opts.start {
-		st.initNodeRecords(0, opts.numNodes, contracts.NodeStatus_Operational)
+		st.initNodeRecords(0, opts.numNodes, river.NodeStatus_Operational)
 		st.startNodes(0, opts.numNodes)
 	}
 

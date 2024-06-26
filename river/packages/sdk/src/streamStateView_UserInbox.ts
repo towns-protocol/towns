@@ -76,7 +76,7 @@ export class StreamStateView_UserInbox extends StreamStateView_AbstractContent {
         event: RemoteTimelineEvent,
         _cleartext: string | undefined,
         _encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
-        _stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         check(event.remoteEvent.event.payload.case === 'userInboxPayload')
         const payload: UserInboxPayload = event.remoteEvent.event.payload.value
@@ -90,7 +90,7 @@ export class StreamStateView_UserInbox extends StreamStateView_AbstractContent {
                 }
                 break
             case 'ack':
-                this.updateDeviceSummary(event.remoteEvent, payload.content.value)
+                this.updateDeviceSummary(event.remoteEvent, payload.content.value, stateEmitter)
                 break
             case undefined:
                 break
@@ -119,7 +119,11 @@ export class StreamStateView_UserInbox extends StreamStateView_AbstractContent {
         encryptionEmitter?.emit('newGroupSessions', content, creatorUserId)
     }
 
-    private updateDeviceSummary(event: ParsedEvent, content: UserInboxPayload_Ack) {
+    private updateDeviceSummary(
+        event: ParsedEvent,
+        content: UserInboxPayload_Ack,
+        stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
+    ) {
         const summary = this.deviceSummary[content.deviceKey]
         if (summary) {
             if (summary.upperBound <= content.miniblockNum) {
@@ -128,5 +132,11 @@ export class StreamStateView_UserInbox extends StreamStateView_AbstractContent {
                 summary.lowerBound = content.miniblockNum + 1n
             }
         }
+        stateEmitter?.emit(
+            'userInboxDeviceSummaryUpdated',
+            this.streamId,
+            content.deviceKey,
+            summary,
+        )
     }
 }

@@ -8,8 +8,8 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/river-build/river/core/config"
+	baseContracts "github.com/river-build/river/core/contracts/base"
 	. "github.com/river-build/river/core/node/base"
-	baseContracts "github.com/river-build/river/core/node/contracts/base"
 	. "github.com/river-build/river/core/node/protocol"
 )
 
@@ -95,7 +95,6 @@ func (b *banning) IsBanned(ctx context.Context, wallets []common.Address) (bool,
 func NewBanning(
 	ctx context.Context,
 	cfg *config.ChainConfig,
-	version string,
 	spaceAddress common.Address,
 	backend bind.ContractBackend,
 ) (Banning, error) {

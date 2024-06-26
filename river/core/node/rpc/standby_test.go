@@ -10,12 +10,11 @@ import (
 	"time"
 
 	"github.com/river-build/river/core/config"
+	"github.com/river-build/river/core/contracts/river"
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/contracts"
 	"github.com/river-build/river/core/node/nodes"
-	"github.com/river-build/river/core/node/rpc/statusinfo"
-
 	. "github.com/river-build/river/core/node/protocol"
+	"github.com/river-build/river/core/node/rpc/statusinfo"
 )
 
 func stanbyStartOpts() startOpts {
@@ -63,7 +62,7 @@ func TestStandbySingle(t *testing.T) {
 	tester := newServiceTester(t, serviceTesterOpts{numNodes: 1})
 	require := tester.require
 
-	tester.initNodeRecords(0, 1, contracts.NodeStatus_Operational)
+	tester.initNodeRecords(0, 1, river.NodeStatus_Operational)
 	tester.startNodes(0, 1, stanbyStartOpts())
 
 	st, err := getNodeStatus(tester.nodes[0].url)
@@ -89,7 +88,7 @@ func TestStandbyEvictionByNlbSwitch(t *testing.T) {
 
 	opts := stanbyStartOpts()
 	opts.listeners = []net.Listener{firstListener}
-	tester.initNodeRecords(0, 1, contracts.NodeStatus_Operational)
+	tester.initNodeRecords(0, 1, river.NodeStatus_Operational)
 	tester.startNodes(0, 1, opts)
 
 	first := tester.nodes[0].service
@@ -151,7 +150,7 @@ func TestStandbyEvictionByUrlUpdate(t *testing.T) {
 
 	opts := stanbyStartOpts()
 	opts.listeners = []net.Listener{firstListener}
-	tester.initNodeRecords(0, 1, contracts.NodeStatus_Operational)
+	tester.initNodeRecords(0, 1, river.NodeStatus_Operational)
 	tester.startNodes(0, 1, opts)
 
 	first := tester.nodes[0].service

@@ -6,14 +6,14 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/river-build/river/core/xchain/bindings/erc20"
-	"github.com/river-build/river/core/xchain/bindings/erc721"
-	"github.com/river-build/river/core/xchain/contracts"
-
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/river-build/river/core/contracts/base"
 	"github.com/river-build/river/core/node/dlog"
+	"github.com/river-build/river/core/xchain/bindings/erc20"
+	"github.com/river-build/river/core/xchain/bindings/erc721"
 )
 
 func (e *Evaluator) evaluateCheckOperation(
@@ -88,10 +88,9 @@ func (e *Evaluator) evaluateIsEntitledOperation(
 		return false, fmt.Errorf("evaluateIsEntitledOperation: Chain ID %v not found", op.ChainID)
 	}
 
-	customEntitlementChecker, err := contracts.NewICustomEntitlement(
+	customEntitlementChecker, err := base.NewICustomEntitlement(
 		op.ContractAddress,
 		client,
-		e.contractVersion,
 	)
 	if err != nil {
 		log.Error("Failed to instantiate a CustomEntitlement contract from supplied contract address",

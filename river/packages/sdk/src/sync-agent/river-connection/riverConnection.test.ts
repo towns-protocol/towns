@@ -1,12 +1,12 @@
 /**
- * @group main
+ * @group with-entitilements
  */
 
 import { providers } from 'ethers'
 import { genShortId } from '../../id'
 import { Store } from '../../store/store'
 import { makeRiverConfig } from '../../riverConfig'
-import { RiverNodeUrls } from './models/riverNodeUrls'
+import { StreamNodeUrls } from './models/streamNodeUrls'
 import { RiverRegistry, SpaceDapp } from '@river-build/web3'
 import { RiverConnection } from './riverConnection'
 import { makeRandomUserContext, waitFor } from '../../util.test'
@@ -25,48 +25,50 @@ describe('RiverConnection.test.ts', () => {
         // init
         const context = await makeRandomUserContext()
         const clientParams = makeClientParams({ context, riverConfig }, spaceDapp)
-        const store = new Store(databaseName, 1, [RiverNodeUrls])
+        const store = new Store(databaseName, 1, [StreamNodeUrls])
         store.newTransactionGroup('init')
         const riverRegistry = new RiverRegistry(riverConfig.river.chainConfig, riverProvider)
         const riverConnection = new RiverConnection(store, riverRegistry, clientParams)
 
         // check initial state
-        expect(riverConnection.nodeUrls.data.urls).toBe('')
-        expect(riverConnection.client.value).toBeUndefined()
+        expect(riverConnection.streamNodeUrls.data.urls).toBe('')
+        expect(riverConnection.client).toBeUndefined()
 
         // load
         await store.commitTransaction()
 
         // we should get there
         await waitFor(() => {
-            expect(riverConnection.nodeUrls.data.urls).not.toBe('')
+            expect(riverConnection.streamNodeUrls.data.urls).not.toBe('')
         })
         await waitFor(() => {
-            expect(riverConnection.client.value).toBeDefined()
+            expect(riverConnection.client).toBeDefined()
         })
         await waitFor(() => {
-            expect(riverConnection.nodeUrls.value.status).toBe('saved')
+            expect(riverConnection.streamNodeUrls.value.status).toBe('saved')
         })
+        await riverConnection.stop()
     })
     // test that a riverConnection will instantly be defined if data exists in local store
     test('riverConnection loads from db', async () => {
         // init
         const context = await makeRandomUserContext()
         const clientParams = makeClientParams({ context, riverConfig }, spaceDapp)
-        const store = new Store(databaseName, 1, [RiverNodeUrls])
+        const store = new Store(databaseName, 1, [StreamNodeUrls])
         store.newTransactionGroup('init')
         const riverRegistry = new RiverRegistry(riverConfig.river.chainConfig, riverProvider)
         const riverConnection = new RiverConnection(store, riverRegistry, clientParams)
 
         // check initial state
-        expect(riverConnection.nodeUrls.data.urls).toBe('')
-        expect(riverConnection.client.value).toBeUndefined()
+        expect(riverConnection.streamNodeUrls.data.urls).toBe('')
+        expect(riverConnection.client).toBeUndefined()
 
         // load
         await store.commitTransaction()
 
         // should still be defined before we even start!
-        expect(riverConnection.nodeUrls.data.urls).not.toBe('')
-        expect(riverConnection.client.value).toBeDefined()
+        expect(riverConnection.streamNodeUrls.data.urls).not.toBe('')
+        expect(riverConnection.client).toBeDefined()
+        await riverConnection.stop()
     })
 })

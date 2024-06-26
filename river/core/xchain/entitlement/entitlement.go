@@ -7,16 +7,15 @@ import (
 	"math/big"
 	"sync"
 
-	er "github.com/river-build/river/core/xchain/contracts"
-
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/river-build/river/core/contracts/base"
 	"github.com/river-build/river/core/node/dlog"
 )
 
 func (e *Evaluator) EvaluateRuleData(
 	ctx context.Context,
 	linkedWallets []common.Address,
-	ruleData *er.IRuleData,
+	ruleData *base.IRuleEntitlementRuleData,
 ) (bool, error) {
 	log := dlog.FromCtx(ctx)
 	log.Info("Evaluating rule data", "ruleData", ruleData)
@@ -169,7 +168,7 @@ func (a *AndOperation) SetRightOperation(right Operation) {
 }
 
 func getOperationTree(ctx context.Context,
-	ruleData *er.IRuleData,
+	ruleData *base.IRuleEntitlementRuleData,
 ) (Operation, error) {
 	log := dlog.FromCtx(ctx)
 	decodedOperations := []Operation{}

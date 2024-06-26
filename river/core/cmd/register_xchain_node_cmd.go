@@ -7,15 +7,14 @@ import (
 	"os"
 	"time"
 
-	"github.com/river-build/river/core/xchain/contracts"
-	"github.com/river-build/river/core/xchain/util"
-
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
-	node_contracts "github.com/river-build/river/core/node/contracts"
+	"github.com/spf13/cobra"
+
+	"github.com/river-build/river/core/contracts/base"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/infra"
-	"github.com/spf13/cobra"
+	"github.com/river-build/river/core/xchain/util"
 )
 
 var (
@@ -65,7 +64,6 @@ func registerImpl(operatorKeyfile string, userConfirmationMessage string, regist
 		ctx, cancel                = context.WithTimeout(context.Background(), time.Minute)
 		xchainWallet, xWalletErr   = util.LoadWallet(ctx)
 		operatorWallet, oWalletErr = crypto.LoadWallet(ctx, operatorKeyfile)
-		entitlementGatedMetaData   = contracts.NewEntitlementGatedMetaData(cmdConfig.GetContractVersion())
 	)
 	defer cancel()
 
@@ -94,13 +92,12 @@ func registerImpl(operatorKeyfile string, userConfirmationMessage string, regist
 		metrics,
 	)
 
-	checker, err := contracts.NewIEntitlementChecker(
-		cmdConfig.GetEntitlementContractAddress(), baseChain.Client, cmdConfig.GetContractVersion())
+	checker, err := base.NewIEntitlementChecker(cmdConfig.GetEntitlementContractAddress(), baseChain.Client)
 	if err != nil {
 		return err
 	}
 
-	decoder, err := node_contracts.NewEVMErrorDecoder(checker.GetMetadata(), entitlementGatedMetaData.GetMetadata())
+	decoder, err := crypto.NewEVMErrorDecoder(base.IEntitlementCheckerMetaData, base.IEntitlementGatedMetaData)
 	if err != nil {
 		return err
 	}

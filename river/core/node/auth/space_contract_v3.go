@@ -7,21 +7,18 @@ import (
 	"strings"
 	"sync"
 
-	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/contracts/base"
-	"github.com/river-build/river/core/node/dlog"
-	. "github.com/river-build/river/core/node/protocol"
-
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/node/shared"
-	"github.com/river-build/river/core/xchain/bindings/erc721"
-	"github.com/river-build/river/core/xchain/bindings/ierc5313"
-	"github.com/river-build/river/core/xchain/contracts"
-	v3 "github.com/river-build/river/core/xchain/contracts/v3"
-
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+
+	"github.com/river-build/river/core/config"
+	"github.com/river-build/river/core/contracts/base"
+	. "github.com/river-build/river/core/node/base"
+	"github.com/river-build/river/core/node/dlog"
+	. "github.com/river-build/river/core/node/protocol"
+	"github.com/river-build/river/core/node/shared"
+	"github.com/river-build/river/core/xchain/bindings/erc721"
+	"github.com/river-build/river/core/xchain/bindings/ierc5313"
 )
 
 type Space struct {
@@ -36,7 +33,6 @@ type Space struct {
 type SpaceContractV3 struct {
 	architect  Architect
 	chainCfg   *config.ChainConfig
-	version    string
 	backend    bind.ContractBackend
 	spaces     map[shared.StreamId]*Space
 	spacesLock sync.Mutex
@@ -59,7 +55,6 @@ func NewSpaceContractV3(
 	spaceContract := &SpaceContractV3{
 		architect: architect,
 		chainCfg:  chainCfg,
-		version:   architectCfg.Version,
 		backend:   backend,
 		spaces:    make(map[shared.StreamId]*Space),
 	}
@@ -108,19 +103,6 @@ func (sc *SpaceContractV3) IsEntitledToSpace(
 	return isEntitled, err
 }
 
-var (
-	parsedABI abi.ABI
-	once      sync.Once
-)
-
-func getABI() (abi.ABI, error) {
-	var err error
-	once.Do(func() {
-		parsedABI, err = abi.JSON(strings.NewReader(v3.IEntitlementGatedMetaData.ABI))
-	})
-	return parsedABI, err
-}
-
 func (sc *SpaceContractV3) marshalEntitlements(
 	ctx context.Context,
 	entitlementData []base.IEntitlementDataQueryableBaseEntitlementData,
@@ -133,13 +115,13 @@ func (sc *SpaceContractV3) marshalEntitlements(
 			entitlements[i].entitlementType = entitlement.EntitlementType
 			log.Info("Entitlement data", "entitlement_data", entitlement.EntitlementData)
 			// Parse the ABI definition
-			parsedABI, err := getABI()
+			parsedABI, err := base.IEntitlementGatedMetaData.GetAbi()
 			if err != nil {
 				log.Error("Failed to parse ABI", "error", err)
 				return nil, err
 			}
 
-			var ruleData contracts.IRuleData
+			var ruleData base.IRuleEntitlementRuleData
 
 			unpackedData, err := parsedABI.Unpack("getRuleData", entitlement.EntitlementData)
 			if err != nil {
@@ -408,15 +390,15 @@ func (sc *SpaceContractV3) getSpace(ctx context.Context, spaceId shared.StreamId
 		if err != nil || address == EMPTY_ADDRESS {
 			return nil, err
 		}
-		entitlements, err := NewEntitlements(ctx, sc.version, address, sc.backend)
+		entitlements, err := NewEntitlements(ctx, address, sc.backend)
 		if err != nil {
 			return nil, err
 		}
-		pausable, err := NewPausable(ctx, sc.version, address, sc.backend)
+		pausable, err := NewPausable(ctx, address, sc.backend)
 		if err != nil {
 			return nil, err
 		}
-		banning, err := NewBanning(ctx, sc.chainCfg, sc.version, address, sc.backend)
+		banning, err := NewBanning(ctx, sc.chainCfg, address, sc.backend)
 		if err != nil {
 			return nil, err
 		}
@@ -445,7 +427,7 @@ func (sc *SpaceContractV3) getChannel(
 	space.channelsLock.Lock()
 	defer space.channelsLock.Unlock()
 	if space.channels[channelId] == nil {
-		channel, err := NewChannels(ctx, sc.version, space.address, sc.backend)
+		channel, err := NewChannels(ctx, space.address, sc.backend)
 		if err != nil {
 			return nil, err
 		}

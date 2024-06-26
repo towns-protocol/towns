@@ -4,7 +4,8 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/river-build/river/core/node/contracts"
+	
+	"github.com/river-build/river/core/contracts/river"
 	. "github.com/river-build/river/core/node/protocol/protocolconnect"
 )
 
@@ -56,7 +57,7 @@ func (n *NodeRecord) String() string {
 		"%s %d (%-11s) %s%s %s",
 		n.address.Hex(),
 		n.status,
-		contracts.NodeStatusString(n.status),
+		river.NodeStatusString(n.status),
 		n.url,
 		local,
 		n.operator.Hex(),

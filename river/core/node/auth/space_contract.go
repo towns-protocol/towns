@@ -4,13 +4,13 @@ import (
 	"context"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/river-build/river/core/contracts/base"
 	"github.com/river-build/river/core/node/shared"
-	"github.com/river-build/river/core/xchain/contracts"
 )
 
 type Entitlement struct {
 	entitlementType string
-	ruleEntitlement *contracts.IRuleData
+	ruleEntitlement *base.IRuleEntitlementRuleData
 	userEntitlement []common.Address
 }
 

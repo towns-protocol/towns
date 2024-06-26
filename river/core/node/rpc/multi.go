@@ -14,8 +14,9 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/node/contracts"
+	"github.com/river-build/river/core/contracts/river"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/http_client"
@@ -242,7 +243,7 @@ func GetRiverNetworkStatus(
 				Url:        n.Url(),
 				Operator:   n.Operator().Hex(),
 				Status:     int(n.Status()),
-				StatusText: contracts.NodeStatusString(n.Status()),
+				StatusText: river.NodeStatusString(n.Status()),
 			},
 			Local: n.Local(),
 		}

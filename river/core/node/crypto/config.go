@@ -15,8 +15,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/river-build/river/core/contracts/river"
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/contracts"
 	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/shared"
@@ -147,7 +147,7 @@ type (
 		// activeBlock holds the current block on which the node is active
 		activeBlock atomic.Uint64
 		// contract interacts with the on-chain contract and provide metadata for decoding events
-		contract *contracts.RiverConfigV1Caller
+		contract *river.RiverConfigV1Caller
 	}
 
 	// Settings holds a list of setting values for each type of setting.
@@ -190,7 +190,7 @@ func NewOnChainConfig(
 	appliedBlockNum BlockNumber,
 	chainMonitor ChainMonitor,
 ) (*onChainConfiguration, error) {
-	caller, err := contracts.NewRiverConfigV1Caller(riverRegistry, riverClient)
+	caller, err := river.NewRiverConfigV1Caller(riverRegistry, riverClient)
 	if err != nil {
 		return nil, err
 	}
@@ -217,7 +217,7 @@ func NewOnChainConfig(
 	// on block sets the current block number that is used to determine the active configuration setting.
 	chainMonitor.OnBlock(cfg.onBlock)
 
-	cfgABI, err := contracts.RiverConfigV1MetaData.GetAbi()
+	cfgABI, err := river.RiverConfigV1MetaData.GetAbi()
 	if err != nil {
 		panic(fmt.Sprintf("RiverConfigV1 ABI invalid: %v", err))
 	}
@@ -292,7 +292,7 @@ func (occ *onChainConfiguration) ActiveBlock() uint64 {
 func (occ *onChainConfiguration) onConfigChanged(ctx context.Context, event types.Log) {
 	var (
 		log = dlog.FromCtx(ctx)
-		e   contracts.RiverConfigV1ConfigurationChanged
+		e   river.RiverConfigV1ConfigurationChanged
 	)
 	if err := occ.contract.BoundContract().UnpackLog(&e, "ConfigurationChanged", event); err != nil {
 		log.Error("OnChainConfiguration: unable to decode ConfigurationChanged event")

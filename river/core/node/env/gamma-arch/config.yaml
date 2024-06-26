@@ -5,7 +5,7 @@ useHttps: false
 # Blockchain configuration
 baseChain:
     chainId: 84532
-    networkUrl: 'https://nexus-rpc-worker-test-beta.towns.com/84532?key=NOT_SET'
+    networkUrl: ''
     blockTimeMs: 2000
 riverChain:
     chainId: 6524490

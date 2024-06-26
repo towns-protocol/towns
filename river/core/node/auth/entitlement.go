@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/river-build/river/core/contracts/base"
 	. "github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/contracts/base"
 	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/protocol"
 
@@ -35,7 +35,6 @@ type entitlementsProxy struct {
 
 func NewEntitlements(
 	ctx context.Context,
-	version string,
 	address common.Address,
 	backend bind.ContractBackend,
 ) (Entitlements, error) {
@@ -44,7 +43,7 @@ func NewEntitlements(
 		return nil, WrapRiverError(
 			Err_CANNOT_CONNECT,
 			err,
-		).Tags("address", address, "version", version, "contract", "EntitlementsManager").
+		).Tags("address", address, "contract", "EntitlementsManager").
 			Func("NewEntitlements").
 			Message("Failed to initialize contract")
 	}
@@ -53,7 +52,7 @@ func NewEntitlements(
 		return nil, WrapRiverError(
 			Err_CANNOT_CONNECT,
 			err,
-		).Tags("address", address, "version", version, "contract", "EntitlementDataQueryable").
+		).Tags("address", address, "contract", "EntitlementDataQueryable").
 			Func("NewEntitlements").
 			Message("Failed to initialize contract")
 	}

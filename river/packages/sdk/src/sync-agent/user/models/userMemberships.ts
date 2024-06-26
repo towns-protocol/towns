@@ -19,35 +19,31 @@ export interface UserMembership {
 
 export interface UserMembershipsModel {
     id: string
+    streamId: string
     initialized: boolean
     memberships: Record<string, UserMembership>
-}
-
-export type UserMembershipEvents = {
-    userJoinedStream: (streamId: string) => void
-    userInvitedToStream: (streamId: string) => void
-    userLeftStream: (streamId: string) => void
-    userStreamMembershipChanged: (streamId: string) => void
 }
 
 @persistedObservable({ tableName: 'userMemberships' })
 export class UserMemberships extends PersistedObservable<UserMembershipsModel> {
     private riverConnection: RiverConnection
-    private streamId: string
 
     constructor(id: string, store: Store, riverConnection: RiverConnection) {
-        super({ id, initialized: false, memberships: {} }, store, LoadPriority.high)
+        super(
+            { id, streamId: makeUserStreamId(id), initialized: false, memberships: {} },
+            store,
+            LoadPriority.high,
+        )
         this.riverConnection = riverConnection
-        this.streamId = makeUserStreamId(id)
     }
 
     override async onLoaded() {
-        this.riverConnection.registerView(this)
+        this.riverConnection.registerView(this.onClientStarted)
     }
 
-    onClientStarted(client: Client) {
+    private onClientStarted = (client: Client) => {
         logger.log('onClientStarted')
-        const streamView = this.riverConnection.client.value?.stream(this.streamId)?.view
+        const streamView = this.riverConnection.client?.stream(this.data.streamId)?.view
         if (streamView) {
             this.initialize(streamView)
         }
@@ -79,12 +75,12 @@ export class UserMemberships extends PersistedObservable<UserMembershipsModel> {
             },
             {} as Record<string, UserMembership>,
         )
-        this.update({ ...this.data, memberships, initialized: true })
+        this.setData({ memberships, initialized: true })
     }
 
     private onStreamInitialized = (streamId: string) => {
-        if (streamId === this.streamId) {
-            const streamView = this.riverConnection.client.value?.stream(this.streamId)?.view
+        if (streamId === this.data.streamId) {
+            const streamView = this.riverConnection.client?.stream(this.data.streamId)?.view
             check(isDefined(streamView), 'streamView is not defined')
             this.initialize(streamView)
         }
@@ -94,8 +90,7 @@ export class UserMemberships extends PersistedObservable<UserMembershipsModel> {
         streamId: string,
         payload: UserPayload_UserMembership,
     ) => {
-        this.update({
-            ...this.data,
+        this.setData({
             memberships: {
                 ...this.data.memberships,
                 [streamId]: toUserMembership(payload),

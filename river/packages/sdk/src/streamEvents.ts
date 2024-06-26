@@ -4,6 +4,7 @@ import {
     UserInboxPayload_GroupEncryptionSessions,
     UserSettingsPayload_UserBlock,
     UserPayload_UserMembership,
+    UserInboxPayload_Snapshot_DeviceSummary,
 } from '@river-build/proto'
 
 import {
@@ -62,6 +63,12 @@ export type StreamStateEvents = {
     userInvitedToStream: (streamId: string) => void
     userLeftStream: (streamId: string) => void
     userStreamMembershipChanged: (streamId: string, payload: UserPayload_UserMembership) => void
+    userInboxDeviceSummaryUpdated: (
+        streamId: string,
+        deviceKey: string,
+        summary: UserInboxPayload_Snapshot_DeviceSummary,
+    ) => void
+    userDeviceKeysUpdated: (streamId: string, deviceKeys: UserDevice[]) => void
     spaceChannelCreated: (spaceId: string, channelId: string) => void
     spaceChannelUpdated: (spaceId: string, channelId: string) => void
     spaceChannelDeleted: (spaceId: string, channelId: string) => void

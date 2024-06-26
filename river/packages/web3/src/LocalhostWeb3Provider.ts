@@ -14,6 +14,10 @@ export class LocalhostWeb3Provider extends ethers.providers.JsonRpcProvider {
         return true
     }
 
+    public get signer(): ethers.Signer {
+        return this.wallet
+    }
+
     constructor(rpcUrl: string, wallet?: ethers.Wallet) {
         super(rpcUrl)
         this.wallet = (wallet ?? ethers.Wallet.createRandom()).connect(this)
