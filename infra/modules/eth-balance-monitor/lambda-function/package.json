@@ -7,7 +7,9 @@
     "type": "module",
     "main": "index.js",
     "scripts": {
-        "build": "esbuild src/index.ts --sourcemap=inline --bundle --platform=node --target=node20 --format=cjs --outfile=dist/index.cjs",
+        "typecheck": "tsc --noEmit",
+        "compile": "esbuild src/index.ts --sourcemap=inline --bundle --platform=node --target=node20 --format=cjs --outfile=dist/index.cjs",
+        "build": "yarn typecheck && yarn compile",
         "build-example": "esbuild src/example.ts --sourcemap=inline --bundle --platform=node --target=node20 --format=cjs --outfile=dist/example.cjs",
         "dev": "yarn build-example && node ./dist/example.cjs",
         "test": "echo \"Error: no test specified\" && exit 1"

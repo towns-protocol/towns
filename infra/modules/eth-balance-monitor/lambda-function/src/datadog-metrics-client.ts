@@ -3,8 +3,7 @@ import { MetricSeries } from '@datadog/datadog-api-client/dist/packages/datadog-
 import { RiverNodeWalletBalance } from './wallet-balance'
 import { RiverNodePingResults } from './ping'
 import { NodeStructOutput } from '@river-build/generated/v3/typings/INodeRegistry'
-import { BaseOperator } from '@river-build/web3'
-import { RiverMetrics } from './get-metrics'
+import { CombinedNode, CombinedOperator, RiverMetrics } from './get-metrics'
 
 export class DatadogMetricsClient {
     private readonly apiKey: string
@@ -46,20 +45,20 @@ export class DatadogMetricsClient {
         const {
             aggregateNetworkStats,
             nodePingResults,
-            nodesOnRiver,
             // nodesOnRiverWithStreamCounts,
-            operatorsOnBase,
-            operatorsOnRiver,
             walletBalances,
+            combinedNodes,
+            combinedOperators,
         } = riverMetrics
         await Promise.all([
             this.postWalletBalances(walletBalances),
-            this.postNodeStatusList(nodesOnRiver),
+            this.postNodeStatusOnBase(combinedNodes),
+            this.postNodeStatusOnRiver(combinedNodes),
             this.postNodePingResults(nodePingResults),
             // TODO: uncomment to post stream counts
             // await datadog.postNodeStreamCounts(nodesOnRiverWithStreamCounts)
-            this.postBaseOperatorStatus(operatorsOnBase),
-            this.postRiverOperatorStatus(operatorsOnRiver),
+            this.postBaseOperatorStatus(combinedOperators),
+            this.postRiverOperatorStatus(combinedOperators),
             this.postAggregateNetworkStats(aggregateNetworkStats),
         ])
     }
@@ -86,23 +85,53 @@ export class DatadogMetricsClient {
         return this.postSeries(series)
     }
 
-    public async postNodeStatusList(nodes: NodeStructOutput[]) {
-        console.log('Posting node status list to Datadog:')
+    public async postNodeStatusOnRiver(nodes: CombinedNode[]) {
+        console.log('Posting river status to Datadog:')
 
         const series = nodes.map((node) => {
+            const nodeUrl = typeof node.url === 'string' ? node.url : 'unknown'
+            const isMissing = node.isMissingOnRiver ? 'true' : 'false'
             const tags = [
                 `env:${this.env}`,
                 `wallet_address:${node.nodeAddress}`,
-                `operator_address:${node.operator}`,
-                `node_url:${encodeURI(node.url)}`,
+                `operator_address:${node.riverOperator}`,
+                `node_url:${encodeURI(nodeUrl)}`,
+                `is_missing:${isMissing}`,
             ]
 
             // TODO: consider adding additional tags for the node status, such as "not initialized",
             // remote_only, operational, failed etc.
 
             return {
-                metric: `river_node.status`,
-                points: [{ timestamp: this.timestamp, value: node.status }],
+                metric: `river_node.river_status`,
+                points: [{ timestamp: this.timestamp, value: node.riverStatus }],
+                tags,
+            }
+        })
+        console.log('Series:', JSON.stringify(series, null, 2))
+        return this.postSeries(series)
+    }
+
+    public async postNodeStatusOnBase(nodes: CombinedNode[]) {
+        console.log('Posting base status to Datadog:')
+
+        const series = nodes.map((node) => {
+            const nodeUrl = typeof node.url === 'string' ? node.url : 'unknown'
+            const isMissing = node.isMissingOnBase ? 'true' : 'false'
+            const tags = [
+                `env:${this.env}`,
+                `wallet_address:${node.nodeAddress}`,
+                `operator_address:${node.baseOperator}`,
+                `node_url:${encodeURI(nodeUrl)}`,
+                `is_missing:${isMissing}`,
+            ]
+
+            // TODO: consider adding additional tags for the node status, such as "not initialized",
+            // remote_only, operational, failed etc.
+
+            return {
+                metric: `river_node.base_status`,
+                points: [{ timestamp: this.timestamp, value: node.baseStatus }],
                 tags,
             }
         })
@@ -138,11 +167,13 @@ export class DatadogMetricsClient {
         console.log('Posting node ping results to Datadog:')
 
         const series = pingNodeResults.map(({ ping, node }) => {
+            const nodeUrl = typeof node.url === 'string' ? node.url : 'unknown'
             const tags = [
                 `env:${this.env}`,
                 `wallet_address:${node.nodeAddress}`,
-                `operator_address:${node.operator}`,
-                `node_url:${encodeURI(node.url)}`,
+                `river_operator_address:${node.riverOperator}`,
+                `base_operator_address:${node.baseOperator}`,
+                `node_url:${encodeURI(nodeUrl)}`,
             ]
 
             const value = ping.kind === 'success' ? 1 : 0
@@ -150,10 +181,13 @@ export class DatadogMetricsClient {
             if (ping.kind === 'success') {
                 tags.push(`status:${ping.response.status}`)
                 tags.push(`version:${ping.response.version}`)
+                tags.push(`success:true`)
+            } else {
+                tags.push(`success:false`)
             }
 
             return {
-                metric: `river_node.ping_success`,
+                metric: `river_node.ping`,
                 points: [{ timestamp: this.timestamp, value }],
                 tags,
             }
@@ -162,15 +196,15 @@ export class DatadogMetricsClient {
         return this.postSeries(series)
     }
 
-    public async postBaseOperatorStatus(baseOperators: BaseOperator[]) {
+    public async postBaseOperatorStatus(operators: CombinedOperator[]) {
         console.log('Posting base operator status to Datadog:')
 
-        const series = baseOperators.map((operator) => {
+        const series = operators.map((operator) => {
             const tags = [`env:${this.env}`, `operator_address:${operator.operatorAddress}`]
 
             return {
-                metric: `base_operator.status`,
-                points: [{ timestamp: this.timestamp, value: operator.status }],
+                metric: `node_operator.base_status`,
+                points: [{ timestamp: this.timestamp, value: operator.baseOperatorStatus }],
                 tags,
             }
         })
@@ -179,15 +213,15 @@ export class DatadogMetricsClient {
         return this.postSeries(series)
     }
 
-    public async postRiverOperatorStatus(riverOperators: string[]) {
+    public async postRiverOperatorStatus(operators: CombinedOperator[]) {
         console.log('Posting river operator status to Datadog:')
 
-        const series = riverOperators.map((operatorAddress) => {
-            const tags = [`env:${this.env}`, `operator_address:${operatorAddress}`]
+        const series = operators.map((operator) => {
+            const tags = [`env:${this.env}`, `operator_address:${operator.operatorAddress}`]
 
             return {
-                metric: `river_operator.status`,
-                points: [{ timestamp: this.timestamp, value: 1 }],
+                metric: `node_operator.river_status`,
+                points: [{ timestamp: this.timestamp, value: operator.riverOperatorStatus }],
                 tags,
             }
         })
@@ -203,6 +237,9 @@ export class DatadogMetricsClient {
         numTotalOperatorsOnBase: number
         numTotalOperatorsOnRiver: number
         numTotalStreams: number
+        numMissingNodesOnBase: number
+        numMissingNodesOnRiver: number
+        numUnhealthyPings: number
     }) {
         console.log('Posting aggregate network stats to Datadog:')
         const metrics = [
@@ -229,6 +266,18 @@ export class DatadogMetricsClient {
             {
                 name: 'river_network.total_streams',
                 value: stats.numTotalStreams,
+            },
+            {
+                name: 'river_network.total_missing_nodes_on_base',
+                value: stats.numMissingNodesOnBase,
+            },
+            {
+                name: 'river_network.total_missing_nodes_on_river',
+                value: stats.numMissingNodesOnRiver,
+            },
+            {
+                name: 'river_network.total_unhealthy_pings',
+                value: stats.numUnhealthyPings,
             },
         ]
 

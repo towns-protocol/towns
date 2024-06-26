@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { Unpromisify } from './utils'
-import { NodeStructOutput } from '@river-build/generated/v3/typings/INodeRegistry'
+import { CombinedNode } from './get-metrics'
 
 const NodeStatusSchema = z.object({
     status: z.string(),
@@ -14,9 +14,15 @@ const NodeStatusSchema = z.object({
 export type RiverNodePingResults = Unpromisify<ReturnType<Ping['pingNodes']>>
 
 export class Ping {
-    constructor(public readonly nodes: NodeStructOutput[]) {}
+    constructor(public readonly nodes: CombinedNode[]) {}
 
-    private async pingNode(node: NodeStructOutput) {
+    private async pingNode(node: CombinedNode) {
+        if (typeof node.url === 'undefined') {
+            return {
+                kind: 'exempt' as const,
+                message: `Node ${node.nodeAddress} has unknown URL`,
+            }
+        }
         const url = new URL(node.url)
         url.pathname = '/status'
 

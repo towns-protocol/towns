@@ -1,10 +1,99 @@
 import ethers from 'ethers'
-import { getWeb3Deployment, RiverRegistry, BaseRegistry, SpaceOwner } from '@river-build/web3'
+import {
+    getWeb3Deployment,
+    RiverRegistry,
+    BaseRegistry,
+    SpaceOwner,
+    BaseOperator,
+} from '@river-build/web3'
 import { Ping } from './ping'
 import { getWalletBalances } from './wallet-balance'
 import { Unpromisify } from './utils'
+import { NodeStructOutput } from '@river-build/generated/v3/typings/INodeRegistry'
 
 export type RiverMetrics = Unpromisify<ReturnType<typeof getMetrics>>
+
+export type CombinedOperator = {
+    operatorAddress: string
+    baseOperatorStatus: number
+    riverOperatorStatus: number
+}
+
+function combineOperators(
+    baseOperators: BaseOperator[],
+    riverOperators: string[],
+): CombinedOperator[] {
+    const baseOperatorAddresses = baseOperators.map((operator) => operator.operatorAddress)
+    const baseOperatorMap = new Map(
+        baseOperators.map((operator) => [operator.operatorAddress, operator]),
+    )
+    const riverOperatorAddressSet = new Set(riverOperators)
+    const allOperatorAddressesSet = new Set(riverOperators.concat(baseOperatorAddresses))
+    const allOperatorAddresses = Array.from(allOperatorAddressesSet)
+    const combinedOperators: CombinedOperator[] = allOperatorAddresses.map((operatorAddress) => {
+        const baseOperator = baseOperatorMap.get(operatorAddress)
+        let baseOperatorStatus = -1 // -1 means not found
+        if (baseOperator) {
+            baseOperatorStatus = baseOperator.status
+        }
+
+        const riverOperatorStatus = riverOperatorAddressSet.has(operatorAddress) ? 1 : -1
+        return {
+            operatorAddress,
+            baseOperatorStatus,
+            riverOperatorStatus,
+        }
+    })
+    return combinedOperators
+}
+
+export type CombinedNode = {
+    nodeAddress: string
+    baseStatus: number
+    baseOperator: string
+    riverStatus: number
+    riverOperator: string
+    url?: string
+    isMissingOnRiver: boolean
+    isMissingOnBase: boolean
+}
+
+function combineNodes(nodesOnBase: string[], nodesOnRiver: NodeStructOutput[]): CombinedNode[] {
+    const nodesOnRiverAddresses = nodesOnRiver.map((node) => node.nodeAddress)
+    const nodesOnRiverMap = new Map(nodesOnRiver.map((node) => [node.nodeAddress, node]))
+    const nodesOnBaseSet = new Set(nodesOnBase)
+    const allNodeAddressesSet = new Set(nodesOnBase.concat(nodesOnRiverAddresses))
+    const allNodeAddresses = Array.from(allNodeAddressesSet)
+    const combinedNodes = allNodeAddresses.map((nodeAddress) => {
+        const nodeOnRiver = nodesOnRiverMap.get(nodeAddress)
+        let riverStatus = -1 // -1 means not found
+        let riverOperator = 'unknown'
+        let url: string | undefined
+        let baseOperator = 'unknown'
+        if (nodeOnRiver) {
+            riverStatus = nodeOnRiver.status
+            riverOperator = nodeOnRiver.operator
+            url = nodeOnRiver.url
+        }
+
+        // TODO: enhance via operators on base (https://github.com/river-build/river/pull/272)
+
+        const baseStatus = nodesOnBaseSet.has(nodeAddress) ? 1 : -1
+        const isOnRiver = riverStatus > -1 && riverStatus < 3 // ignore FAILED, DEPARTING, DELETED
+
+        return {
+            nodeAddress,
+            baseStatus,
+            riverStatus,
+            riverOperator,
+            baseOperator,
+            url,
+            isMissingOnRiver: baseStatus > -1 && riverStatus === -1,
+            isMissingOnBase: isOnRiver && baseStatus === -1,
+        }
+    })
+    return combinedNodes
+}
 
 export async function getMetrics({
     baseChainRpcUrl,
@@ -52,7 +141,7 @@ export async function getMetrics({
     // })
 
     console.log('getting total spaces')
-    const numTotalSpacesBigNumber = await spaceOwner.getNumTotalMemberships() // TODO: this method should actually read: getNumTotalSpaces. this is the wrong method name
+    const numTotalSpacesBigNumber = await spaceOwner.getNumTotalSpaces()
     console.log('got total spaces')
     const numTotalSpaces = Number(numTotalSpacesBigNumber)
     const numTotalNodesOnBase = nodesOnBase.length
@@ -78,26 +167,41 @@ export async function getMetrics({
     console.log('got wallet balances on river')
     const walletBalances = riverChainWalletBalances.concat(baseChainWalletBalances)
 
-    const ping = new Ping(nodesOnRiver)
+    const combinedOperators = combineOperators(operatorsOnBase, operatorsOnRiver)
+    console.log('combined operators:', combinedOperators)
+
+    const combinedNodes = combineNodes(nodesOnBase, nodesOnRiver)
+    console.log('combined nodes:', combinedNodes)
+
+    const ping = new Ping(combinedNodes)
 
     console.log('pinging nodes')
     const nodePingResults = await ping.pingNodes()
     console.log('pinged nodes')
 
+    const numUnhealthyPings = nodePingResults.filter(({ ping }) => ping.kind === 'error').length
+
+    const missingNodesOnRiver = combinedNodes.filter((node) => node.isMissingOnRiver)
+    const missingNodesOnBase = combinedNodes.filter((node) => node.isMissingOnBase)
+    const numMissingNodesOnRiver = missingNodesOnRiver.length
+    const numMissingNodesOnBase = missingNodesOnBase.length
+
     return {
         walletBalances,
-        nodesOnRiver,
         nodePingResults,
         // nodesOnRiverWithStreamCounts,
-        operatorsOnBase,
-        operatorsOnRiver,
+        combinedNodes,
+        combinedOperators,
         aggregateNetworkStats: {
             numTotalSpaces,
+            numTotalStreams,
             numTotalNodesOnBase,
             numTotalNodesOnRiver,
             numTotalOperatorsOnBase,
             numTotalOperatorsOnRiver,
-            numTotalStreams,
+            numMissingNodesOnBase,
+            numMissingNodesOnRiver,
+            numUnhealthyPings,
         },
     }
 }
