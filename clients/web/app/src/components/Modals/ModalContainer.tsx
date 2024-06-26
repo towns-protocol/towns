@@ -50,6 +50,7 @@ export const ModalContainer = (props: ModalContainerProps) => {
                 return (
                     <Sheet
                         isOpen
+                        disableScrollLocking
                         detent="content-height"
                         className={modalSheetClass}
                         onClose={onHide}
