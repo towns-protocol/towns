@@ -8,8 +8,8 @@ import { Controller, UseFormReturn, useWatch } from 'react-hook-form'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import {
     Box,
-    Button,
     ErrorMessage,
+    FancyButton,
     FormRender,
     Icon,
     MotionBox,
@@ -21,7 +21,6 @@ import {
 import { TextArea } from 'ui/components/TextArea/TextArea'
 import { axiosClient } from 'api/apiClient'
 import { env } from 'utils'
-import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { bufferedLogger } from 'utils/wrappedlogger'
 import { useStore } from 'store/store'
 import { BetaDebugger } from 'BetaDebugger'
@@ -411,18 +410,25 @@ export const ErrorReportForm = (props: {
 
                             <Box grow />
                         </Stack>
-                        <Stack horizontal gap paddingTop="sm" justifyContent="end">
-                            <Button
-                                grow
-                                tone="cta1"
+                        <Box height="x8" />
+                        <Box
+                            padding
+                            paddingTop="sm"
+                            position="bottomLeft"
+                            width="100%"
+                            background="backdropBlur"
+                        >
+                            <FancyButton
+                                cta
                                 type="submit"
                                 ref={submitButtonRef}
                                 disabled={isLoading}
+                                spinner={isLoading}
+                                width="100%"
                             >
-                                {isLoading && <ButtonSpinner />}
                                 Submit
-                            </Button>
-                        </Stack>
+                            </FancyButton>
+                        </Box>
                     </>
                 )
             }}

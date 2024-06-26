@@ -19,12 +19,13 @@ type FancyButtonProps = {
 } & Omit<
     ButtonHTMLAttributes<HTMLButtonElement>,
     'onDrag' | 'onDragEnd' | 'onDragStart' | 'onAnimationStart' | 'size' | 'color'
->
+> &
+    Pick<BoxProps, 'width'>
 
 /**
  * Convulted button that enables background transitions
  */
-export const FancyButton = (props: FancyButtonProps) => {
+export const FancyButton = React.forwardRef<HTMLButtonElement, FancyButtonProps>((props, ref) => {
     const {
         children,
         cta,
@@ -72,6 +73,7 @@ export const FancyButton = (props: FancyButtonProps) => {
             layout
             horizontal
             centerContent
+            ref={ref}
             whileTap="tap"
             as="button"
             form={props.form}
@@ -194,7 +196,7 @@ export const FancyButton = (props: FancyButtonProps) => {
             </MotionStack>
         </MotionBox>
     )
-}
+})
 
 const Background = (props: {
     tone: BoxProps['background']
