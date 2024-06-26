@@ -9,7 +9,6 @@ import { useStore } from 'store/store'
 import { AppOverlayDebugger } from './AppOverlayDebugger'
 import { AppProgressState } from './AppProgressState'
 import { AppSkeletonView } from './AppSkeletonView'
-import { useKeepLoginStateWhileAuth } from './hooks/useKeepLoginStateWhileAuth'
 import { useAppProgressStore } from './store/appProgressStore'
 
 export const AppProgressOverlay = (props: { debug?: boolean }) => {
@@ -24,7 +23,7 @@ export const AppProgressOverlay = (props: { debug?: boolean }) => {
         }),
     )
 
-    useKeepLoginStateWhileAuth()
+    const content = useAppOverlayContent(appProgressOverlay, isOptimisticInitialized)
 
     useEffect(() => {
         console.log('[app progress] initialized')
@@ -34,7 +33,9 @@ export const AppProgressOverlay = (props: { debug?: boolean }) => {
         console.log('[app progress] overlay:', appProgressOverlay)
     }, [appProgressOverlay])
 
-    const content = useAppOverlayContent(appProgressOverlay, isOptimisticInitialized)
+    useEffect(() => {
+        console.log('[app progress] overlay key:', content.key)
+    }, [appProgressOverlay, content.key])
 
     return (
         <AnimatePresence mode="sync">
