@@ -116,7 +116,7 @@ export const SpaceSideBar = (props: Props) => {
 
     const itemRenderer = useCallback(
         (u: (typeof unreadChannels)[0], isUnreadSection?: boolean) => {
-            const key = `${u.label ?? u.id}`
+            const key = `${u.label || u.id}`
             return (
                 <SpaceSideBarListItem key={key}>
                     <OffscreenMarker id={key} containerMarginTop={HEADER_MARGIN} />
