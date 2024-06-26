@@ -52,7 +52,7 @@ import {
 import { EditorFallback } from './components/EditorFallback'
 import { MentionCombobox } from './components/plate-ui/MentionCombobox'
 import { Editor } from './components/plate-ui/Editor'
-import { PlateToolbar } from './components/plate-ui/PlateToolbar'
+import { ToolbarController } from './components/plate-ui/ToolbarController'
 import { RichTextBottomToolbar } from './components/RichTextBottomToolbar'
 import { SendMarkdownPlugin } from './components/SendMarkdownPlugin'
 import platePlugins from './plugins'
@@ -363,20 +363,22 @@ const PlateEditorWithoutBoundary = ({
         />
     )
 
-    const plateFormattingToolbar = (
-        <PlateToolbar
+    // force show floating toolbar in desktop when user selects text in editor
+    const toolbarController = (
+        <ToolbarController
             readOnly={!editable}
             focused={focused || !isEditorEmpty}
             editing={isEditing}
+            editorId={editorRef.current?.id ?? ''}
             background={background}
             attemptingToSend={isAttemptingSend}
             threadId={props.threadId}
             threadPreview={props.threadPreview}
             showFormattingToolbar={isFormattingToolbarOpen}
             setIsFormattingToolbarOpen={setIsFormattingToolbarOpen}
-            key="editor"
         />
     )
+
     return (
         <>
             <Box position="relative">
@@ -413,7 +415,7 @@ const PlateEditorWithoutBoundary = ({
                     key={`plate-${storageId}`}
                     onChange={onChange}
                 >
-                    {!isTouch && plateFormattingToolbar}
+                    {!isTouch && toolbarController}
                     <Stack horizontal width="100%" paddingRight="sm" alignItems="end">
                         <Box grow paddingX="md" position="relative" ref={editableContainerRef}>
                             <Editor
@@ -470,7 +472,7 @@ const PlateEditorWithoutBoundary = ({
                     <Box paddingX="md" paddingBottom="sm">
                         <PasteFilePlugin editableContainerRef={editableContainerRef} />
                     </Box>
-                    {isTouch && plateFormattingToolbar}
+                    {isTouch && toolbarController}
                     <Stack
                         gap
                         shrink

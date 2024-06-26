@@ -1,16 +1,13 @@
-import React, { useCallback, useEffect, useId } from 'react'
+import React, { useCallback, useId } from 'react'
 import { focusEditor } from '@udecode/slate-react'
 import { getEndPoint } from '@udecode/slate'
-import { getSelectionText } from '@udecode/slate-utils'
-import { useEditorRef, useEditorSelector, useEventEditorSelectors } from '@udecode/plate-common'
+import { useEditorRef, useEventEditorSelectors } from '@udecode/plate-common'
 import { GiphyEntryDesktop, GiphyEntryTouch } from '@components/Giphy/GiphyEntry'
 import { EmojiPickerButton, EmojiPickerButtonTouch } from '@components/EmojiPickerButton'
 import { useDevice } from 'hooks/useDevice'
 import { Box, IconButton, Stack } from '@ui'
 import { MotionIcon, MotionIconButton } from 'ui/components/Motion/MotionComponents'
 import { useMediaDropContext } from '@components/MediaDropContext/MediaDropContext'
-import { SECOND_MS } from 'data/constants'
-import { useThrottledValue } from 'hooks/useThrottledValue'
 import { ELEMENT_MENTION_EMOJI } from '../plugins/emoji/createEmojiPlugin'
 import { TEmojiMentionElement } from '../utils/ComboboxTypes'
 
@@ -27,8 +24,6 @@ type Props = {
 export const RichTextBottomToolbar = (props: Props) => {
     const { isTouch } = useDevice()
     const editor = useEditorRef()
-    // Debounced method to get selected text in editor
-    const selectedText = useThrottledValue(useEditorSelector(getSelectionText, []), SECOND_MS)
     const mediaDropContext = useMediaDropContext()
 
     const {
@@ -37,18 +32,6 @@ export const RichTextBottomToolbar = (props: Props) => {
         editing: isEditing = false,
         focused: isFocused = false,
     } = props
-
-    /** Open formatting toolbar when user selects any text and keep it open */
-    useEffect(() => {
-        if (!isFormattingToolbarOpen && selectedText && selectedText.length > 0) {
-            setTimeout(() => {
-                const _selectedText = getSelectionText(editor)
-                if (_selectedText && _selectedText.length > 0) {
-                    setIsFormattingToolbarOpen(true)
-                }
-            }, SECOND_MS)
-        }
-    }, [editor, selectedText, setIsFormattingToolbarOpen, isFormattingToolbarOpen])
 
     const onSelectEmoji = useCallback(
         (data: EmojiPickerSelection) => {
