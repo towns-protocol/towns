@@ -150,7 +150,7 @@ export default function serialize(
             children = retainWhitespaceAndFormat(children, '~~***')
         } else if (chunk.bold && chunk.italic) {
             children = retainWhitespaceAndFormat(children, '***')
-        } else if (children.match(/^[-_]{3,}/gi)) {
+        } else if (children.match(/^[-_*]{3,}/gi)) {
             // If we have a line of 3 or more dashes or underscores, we need to escape them
             // to prevent them from being parsed as a thematic break in markdown
             children = '\\' + children
