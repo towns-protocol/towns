@@ -76,7 +76,7 @@ export const SpaceNavItem = (props: Props) => {
             activeBackground={isTouch ? 'level2' : 'level3'}
             highlight={highlight}
             cursor="pointer"
-            style={{ touchAction: 'none', userSelect: 'none' }}
+            style={{ userSelect: 'none' }}
             tooltip={isTouch ? undefined : spaceName}
             tooltipOptions={{
                 placement: 'horizontal',
