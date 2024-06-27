@@ -41,9 +41,9 @@ export class PersistedObservable<T extends Identifiable>
     extends Observable<PersistedModel<T>>
     implements Storable
 {
-    private tableName: string = ''
-    private readonly store: Store
-    private readonly loadPriority: LoadPriority
+    protected tableName: string = ''
+    protected readonly store: Store
+    protected readonly loadPriority: LoadPriority
 
     // must be called in a store transaction
     constructor(initialValue: T, store: Store, loadPriority: LoadPriority = LoadPriority.low) {

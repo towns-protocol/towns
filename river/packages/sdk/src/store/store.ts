@@ -54,6 +54,7 @@ function makeSchema(classes: any[]) {
 export class Store {
     private db: Dexie
     private transactionGroup?: TransactionGroup
+    private isLoadedMap: Record<string, Set<string>> = {}
 
     constructor(name: string, version: number, classes: any[]) {
         const schema = makeSchema(classes)
@@ -131,6 +132,8 @@ export class Store {
         log('+enqueue load', tableName, id, loadPriority)
         this.checkTableName(tableName)
         check(this.transactionGroup !== undefined, 'transaction not started')
+        check(!this.isLoaded(tableName, id), `model already loaded table: ${tableName} id: ${id}`)
+        this.setIsLoaded(tableName, id)
         const bundler = this.transactionGroup[loadPriority]
         bundler.tableNames.push(tableName)
         const dbOp = async () => {
@@ -169,5 +172,16 @@ export class Store {
         }
         bundler.dbOps.push(dbOp)
         bundler.onCommitted.push(onCommitted)
+    }
+
+    private isLoaded(tableName: string, id: string): boolean {
+        return this.isLoadedMap[tableName]?.has(id) ?? false
+    }
+
+    private setIsLoaded(tableName: string, id: string) {
+        if (this.isLoadedMap[tableName] === undefined) {
+            this.isLoadedMap[tableName] = new Set<string>()
+        }
+        this.isLoadedMap[tableName].add(id)
     }
 }

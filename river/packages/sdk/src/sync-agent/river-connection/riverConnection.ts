@@ -8,6 +8,7 @@ import { CryptoStore, EntitlementsDelegate } from '@river-build/encryption'
 import { Client } from '../../client'
 import { SignerContext } from '../../signerContext'
 import { PersistedModel } from '../../observable/persistedObservable'
+import { userIdFromAddress } from '../../id'
 
 const logger = dlogger('csb:riverConnection')
 
@@ -39,6 +40,10 @@ export class RiverConnection {
         this.clientParams = clientParams
         this.streamNodeUrls = new StreamNodeUrls(store, riverRegistryDapp)
         this.streamNodeUrls.subscribe(this.onNodeUrlsChanged, { fireImediately: true })
+    }
+
+    get userId(): string {
+        return userIdFromAddress(this.clientParams.signerContext.creatorAddress)
     }
 
     async stop() {
