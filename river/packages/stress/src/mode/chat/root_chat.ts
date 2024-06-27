@@ -50,7 +50,7 @@ function getChatConfig(opts: { processIndex: number; rootWallet: Wallet }): Chat
     const wallets = allWallets.slice(clientStartIndex, clientEndIndex)
     const randomClientsCount = process.env.RANDOM_CLIENTS_COUNT
         ? parseInt(process.env.RANDOM_CLIENTS_COUNT)
-        : 5
+        : 0
     if (clientStartIndex >= clientEndIndex) {
         throw new Error('clientStartIndex >= clientEndIndex')
     }

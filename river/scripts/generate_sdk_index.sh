@@ -5,7 +5,7 @@
 cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 
 # Array of directories to process
-declare -a dirs=("../sdk/src")
+declare -a dirs=("../packages/sdk/src" "../packages/react-sdk/src")
 
 # Loop through each directory
 for dir in "${dirs[@]}"; do
@@ -23,10 +23,13 @@ for dir in "${dirs[@]}"; do
 
   # Loop through each TypeScript file to append an export statement to the array
   # Skip files that have ".test." in their name, the existing index.ts file, and directories
-  for file in $(find . -type f -name "*.ts" ! -name "*.test*" ! -name "*.d.ts" ! -name "index.ts" | sort); do
-    # Remove the './' prefix and '.ts' suffix from the file path
-    file=$(echo "$file" | sed "s|^\./||;s|\.ts$||")
-    
+  for file in $(find . -type f \( -name "*.ts" -o -name "*.tsx" \) ! -name "*.test*" ! -name "*.d.ts" ! -name "index.ts" ! -path "*/internals/*" | sort); do
+    # Remove the './' prefix and '.tsx' or '.ts' suffix from the file path
+    file_without_slash=${file#./}
+    file_without_tsx=${file_without_slash%.tsx}
+    file_without_ts=${file_without_tsx%.ts}
+    file=${file_without_ts}
+
     # Append export statement to the array
     exports+=("export * from './$file'")
   done
