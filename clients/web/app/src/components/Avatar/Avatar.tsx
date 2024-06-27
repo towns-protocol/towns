@@ -1,6 +1,6 @@
 import { clsx } from 'clsx'
 import React, { forwardRef, useCallback, useEffect, useMemo } from 'react'
-import { Address, useUserLookupStore } from 'use-towns-client'
+import { Address, useUserLookup } from 'use-towns-client'
 import { AnimatePresence } from 'framer-motion'
 import { ImageVariant, useImageSource } from '@components/UploadImage/useImageSource'
 import { useImageStore } from '@components/UploadImage/useImageStore'
@@ -64,8 +64,7 @@ export const Avatar = forwardRef<HTMLElement, Props>((props, ref) => {
 // pass a src prop to force using that image, otherwise pass userId
 export const AvatarWithoutDot = forwardRef<HTMLElement, Props & { dot?: boolean }>((props, ref) => {
     const { src, userId, imageVariant, ...rest } = props
-    const { lookupUser } = useUserLookupStore()
-    const user = userId ? lookupUser(userId) : undefined
+    const user = useUserLookup(userId ?? '')
 
     const { data: abstractAccountAddress } = useAbstractAccountAddress({
         rootKeyAddress: userId as Address | undefined,
