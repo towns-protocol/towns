@@ -1,7 +1,6 @@
 import {
     Address,
     BaseChainConfig,
-    ContractVersion,
     RiverChainConfig,
     Web3Deployment,
     getWeb3Deployment,
@@ -71,7 +70,6 @@ function makeWeb3Deployment(environmentId: string): Web3Deployment {
     return {
         base: {
             chainId: parseInt(process.env.BASE_CHAIN_ID!),
-            contractVersion: (process.env.CONTRACT_VERSION ?? 'dev') as ContractVersion,
             addresses: {
                 baseRegistry: process.env.BASE_REGISTRY_ADDRESS! as Address,
                 spaceFactory: process.env.SPACE_FACTORY_ADDRESS! as Address,
@@ -82,7 +80,6 @@ function makeWeb3Deployment(environmentId: string): Web3Deployment {
         } satisfies BaseChainConfig,
         river: {
             chainId: parseInt(process.env.RIVER_CHAIN_ID!),
-            contractVersion: (process.env.CONTRACT_VERSION ?? 'dev') as ContractVersion,
             addresses: {
                 riverRegistry: process.env.RIVER_REGISTRY_ADDRESS! as Address,
             },

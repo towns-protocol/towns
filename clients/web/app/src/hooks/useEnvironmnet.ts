@@ -4,7 +4,6 @@ import { IChainConfig } from 'use-towns-client'
 import {
     Address,
     BaseChainConfig,
-    ContractVersion,
     RiverChainConfig,
     getWeb3Deployment,
     getWeb3Deployments,
@@ -56,7 +55,6 @@ function makeEnvironments(): TownsEnvironmentInfo[] {
             ),
             baseChainConfig: {
                 chainId: parseInt(env.VITE_BASE_CHAIN_ID),
-                contractVersion: (env.VITE_BASE_CONTRACT_VERSION ?? 'v3') as ContractVersion,
                 addresses: {
                     baseRegistry: env.VITE_ADDRESS_BASE_REGISTRY as Address,
                     spaceFactory: env.VITE_ADDRESS_SPACE_FACTORY as Address,
@@ -71,7 +69,6 @@ function makeEnvironments(): TownsEnvironmentInfo[] {
             ),
             riverChainConfig: {
                 chainId: parseInt(env.VITE_RIVER_CHAIN_ID),
-                contractVersion: (env.VITE_RIVER_CONTRACT_VERSION ?? 'v3') as ContractVersion,
                 addresses: {
                     riverRegistry: env.VITE_ADDRESS_RIVER_REGISTRY as Address,
                 },

@@ -5,9 +5,7 @@ cd ..
 
 : ${RIVER_ENV:?}
 export BASE_CHAIN_ID="${BASE_CHAIN_ID:-31337}"
-export BASE_CONTRACT_VERSION="${BASE_CONTRACT_VERSION:-dev}"
 export RIVER_CHAIN_ID="${RIVER_CHAIN_ID:-31338}"
-export RIVER_CONTRACT_VERSION="${RIVER_CONTRACT_VERSION:-dev}"
 
 SKIP_CHAIN_WAIT="${SKIP_CHAIN_WAIT:-false}"
 BASE_ANVIL_SOURCE_DIR=${BASE_ANVIL_SOURCE_DIR:-"base_anvil"}
@@ -73,16 +71,14 @@ function copy_addresses() {
     local SOURCE_DIR=$1
     local DEST_DIR=$2
     local CHAIN_ID=$3
-    local CONTRACT_VERSION=$4
     cp contracts/deployments/${SOURCE_DIR}/* packages/generated/deployments/${RIVER_ENV}/${DEST_DIR}/addresses
     echo "{\"id\": ${CHAIN_ID}}" > packages/generated/deployments/${RIVER_ENV}/${DEST_DIR}/chainId.json
-    echo "{\"version\": \"${CONTRACT_VERSION}\"}" > packages/generated/deployments/${RIVER_ENV}/${DEST_DIR}/contractVersion.json
 }
 
 # copy base contracts
-copy_addresses $BASE_ANVIL_SOURCE_DIR "base" "${BASE_CHAIN_ID}" "${BASE_CONTRACT_VERSION}"
+copy_addresses $BASE_ANVIL_SOURCE_DIR "base" "${BASE_CHAIN_ID}"
 # copy river contracts
-copy_addresses $RIVER_ANVIL_SOURCE_DIR "river" "${RIVER_CHAIN_ID}" "${RIVER_CONTRACT_VERSION}"
+copy_addresses $RIVER_ANVIL_SOURCE_DIR "river" "${RIVER_CHAIN_ID}"
 
 # Update the config
 ./packages/generated/scripts/make-config.sh

@@ -31,7 +31,7 @@ import { IRuleEntitlement } from '.'
 import { IBanningShim } from './IBanningShim'
 import { IERC721AQueryableShim } from './IERC721AQueryableShim'
 import { IEntitlementDataQueryableShim } from './IEntitlementDataQueryableShim'
-import { BaseChainConfig, ContractVersion } from '../IStaticContractsInfo'
+import { BaseChainConfig } from '../IStaticContractsInfo'
 import { parseChannelMetadataJSON } from '../Utils'
 import { IPrepayShim } from './IPrepayShim'
 
@@ -43,7 +43,6 @@ export class Space {
     private readonly address: string
     private readonly addressToEntitlement: AddressToEntitlement = {}
     private readonly spaceId: string
-    private readonly version: ContractVersion
     public readonly provider: ethers.providers.Provider | undefined
     private readonly channel: IChannelShim
     private readonly entitlements: IEntitlementsShim
@@ -66,7 +65,6 @@ export class Space {
     ) {
         this.address = address
         this.spaceId = spaceId
-        this.version = config.contractVersion
         this.provider = provider
         //
         // If you add a new contract shim, make sure to add it in getAllShims()
