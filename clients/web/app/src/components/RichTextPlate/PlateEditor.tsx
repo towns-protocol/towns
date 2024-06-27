@@ -327,7 +327,13 @@ const PlateEditorWithoutBoundary = ({
 
     const handleSendOnEnter: React.KeyboardEventHandler = useCallback(
         async (event) => {
-            if (!editorRef.current || isTouch || disabledSend || disabled || isEditorEmpty) {
+            if (
+                !editorRef.current ||
+                isTouch ||
+                disabledSend ||
+                disabled ||
+                (isEditorEmpty && files.length === 0)
+            ) {
                 return
             }
 
