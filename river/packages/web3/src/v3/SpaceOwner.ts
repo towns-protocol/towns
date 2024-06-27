@@ -12,16 +12,8 @@ export class SpaceOwner {
     constructor(config: BaseChainConfig, provider: ethers.providers.Provider) {
         this.config = config
         this.provider = provider
-        this.spaceOwner = new ISpaceOwnerShim(
-            this.config.addresses.spaceOwner,
-            this.config.contractVersion,
-            provider,
-        )
-        this.erc721A = new IERC721AShim(
-            this.config.addresses.spaceOwner,
-            this.config.contractVersion,
-            provider,
-        )
+        this.spaceOwner = new ISpaceOwnerShim(this.config.addresses.spaceOwner, provider)
+        this.erc721A = new IERC721AShim(this.config.addresses.spaceOwner, provider)
     }
 
     public async getNumTotalSpaces(): Promise<ethers.BigNumber> {

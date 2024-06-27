@@ -55,7 +55,6 @@ export class SpaceDapp implements ISpaceDapp {
         this.pricingModules = new PricingModules(config, provider)
         this.platformRequirements = new PlatformRequirements(
             config.addresses.spaceFactory,
-            config.contractVersion,
             provider,
         )
 

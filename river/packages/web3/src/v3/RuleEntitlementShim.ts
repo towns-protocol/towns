@@ -3,36 +3,20 @@ import {
     IRuleEntitlementInterface as LocalhostInterface,
 } from '@river-build/generated/dev/typings/IRuleEntitlement'
 
-type BaseSepoliaContract = LocalhostContract
-type BaseSepoliaInterface = LocalhostInterface
 import LocalhostAbi from '@river-build/generated/dev/abis/IRuleEntitlement.abi.json' assert { type: 'json' }
-import BaseSepoliaAbi from '@river-build/generated/v3/abis/IRuleEntitlement.abi.json' assert { type: 'json' }
 
 import { BaseContractShim } from './BaseContractShim'
 import { BigNumberish, ethers } from 'ethers'
 import { EntitlementModuleType, EntitlementModule } from '../ContractTypes'
-import { ContractVersion } from '../IStaticContractsInfo'
 import { dlogger } from '@river-build/dlog'
 const logger = dlogger('csb:SpaceDapp:debug')
 
 export class RuleEntitlementShim
-    extends BaseContractShim<
-        LocalhostContract,
-        LocalhostInterface,
-        BaseSepoliaContract,
-        BaseSepoliaInterface
-    >
+    extends BaseContractShim<LocalhostContract, LocalhostInterface>
     implements EntitlementModule
 {
-    constructor(
-        address: string,
-        version: ContractVersion,
-        provider: ethers.providers.Provider | undefined,
-    ) {
-        super(address, version, provider, {
-            [ContractVersion.dev]: LocalhostAbi,
-            [ContractVersion.v3]: BaseSepoliaAbi,
-        })
+    constructor(address: string, provider: ethers.providers.Provider | undefined) {
+        super(address, provider, LocalhostAbi)
     }
 
     public get moduleType(): EntitlementModuleType {

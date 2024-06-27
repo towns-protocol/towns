@@ -1,11 +1,11 @@
 // ABIs - for now shared between mainnet and testnet
-import BaseSepoliaBanningAbi from '@river-build/generated/v3/abis/IBanning.abi.json' assert { type: 'json' }
-import BaseSepoliaChannelsAbi from '@river-build/generated/v3/abis/Channels.abi.json' assert { type: 'json' }
-import BaseSepoliaRolesAbi from '@river-build/generated/v3/abis/Roles.abi.json' assert { type: 'json' }
-import BaseSepoliaPrepayAbi from '@river-build/generated/v3/abis/PrepayFacet.abi.json' assert { type: 'json' }
-import BaseSepoliaMembershipAbi from '@river-build/generated/v3/abis/MembershipFacet.abi.json' assert { type: 'json' }
-import BaseSepoliaSpaceOwnerAbi from '@river-build/generated/v3/abis/SpaceOwner.abi.json' assert { type: 'json' }
-import BaseSepoliaWalletLinkAbi from '@river-build/generated/v3/abis/WalletLink.abi.json' assert { type: 'json' }
+import BaseSepoliaBanningAbi from '@river-build/generated/dev/abis/IBanning.abi.json' assert { type: 'json' }
+import BaseSepoliaChannelsAbi from '@river-build/generated/dev/abis/Channels.abi.json' assert { type: 'json' }
+import BaseSepoliaRolesAbi from '@river-build/generated/dev/abis/Roles.abi.json' assert { type: 'json' }
+import BaseSepoliaPrepayAbi from '@river-build/generated/dev/abis/PrepayFacet.abi.json' assert { type: 'json' }
+import BaseSepoliaMembershipAbi from '@river-build/generated/dev/abis/MembershipFacet.abi.json' assert { type: 'json' }
+import BaseSepoliaSpaceOwnerAbi from '@river-build/generated/dev/abis/SpaceOwner.abi.json' assert { type: 'json' }
+import BaseSepoliaWalletLinkAbi from '@river-build/generated/dev/abis/WalletLink.abi.json' assert { type: 'json' }
 
 // Base sepolia addresses
 import BaseSepoliaSpaceOwnerContractAddress from '@river-build/generated/deployments/gamma/base/addresses/spaceOwner.json' assert { type: 'json' }

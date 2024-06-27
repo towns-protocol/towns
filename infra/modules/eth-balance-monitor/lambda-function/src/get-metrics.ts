@@ -9,7 +9,7 @@ import {
 import { Ping } from './ping'
 import { getWalletBalances } from './wallet-balance'
 import { Unpromisify } from './utils'
-import { NodeStructOutput } from '@river-build/generated/v3/typings/INodeRegistry'
+import { NodeStructOutput } from '@river-build/generated/dev/typings/INodeRegistry'
 
 export type RiverMetrics = Unpromisify<ReturnType<typeof getMetrics>>
 

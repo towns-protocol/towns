@@ -24,19 +24,10 @@ export class RiverRegistry {
     constructor(config: RiverChainConfig, provider: ethers.providers.Provider) {
         this.config = config
         this.provider = provider
-        this.nodeRegistry = new INodeRegistryShim(
-            this.config.addresses.riverRegistry,
-            this.config.contractVersion,
-            provider,
-        )
-        this.streamRegistry = new IStreamRegistryShim(
-            this.config.addresses.riverRegistry,
-            this.config.contractVersion,
-            provider,
-        )
+        this.nodeRegistry = new INodeRegistryShim(this.config.addresses.riverRegistry, provider)
+        this.streamRegistry = new IStreamRegistryShim(this.config.addresses.riverRegistry, provider)
         this.operatorRegistry = new IOperatorRegistryShim(
             this.config.addresses.riverRegistry,
-            this.config.contractVersion,
             provider,
         )
     }

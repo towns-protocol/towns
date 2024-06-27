@@ -22,11 +22,7 @@ export class SpaceRegistrar {
     constructor(config: BaseChainConfig, provider: ethers.providers.Provider) {
         this.config = config
         this.provider = provider
-        this.spaceArchitect = new ISpaceArchitectShim(
-            config.addresses.spaceFactory,
-            config.contractVersion,
-            provider,
-        )
+        this.spaceArchitect = new ISpaceArchitectShim(config.addresses.spaceFactory, provider)
     }
 
     public get SpaceArchitect(): ISpaceArchitectShim {

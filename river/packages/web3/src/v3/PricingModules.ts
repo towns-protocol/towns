@@ -7,11 +7,7 @@ export class PricingModules {
     private readonly pricingShim: IPricingShim
 
     constructor(config: BaseChainConfig, provider: ethers.providers.Provider | undefined) {
-        this.pricingShim = new IPricingShim(
-            config.addresses.spaceFactory,
-            config.contractVersion,
-            provider,
-        )
+        this.pricingShim = new IPricingShim(config.addresses.spaceFactory, provider)
     }
 
     public parseError(error: unknown): Error {

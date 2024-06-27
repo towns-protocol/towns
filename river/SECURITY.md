@@ -2,4 +2,4 @@
 
 ## Reporting a Vulnerability
 
-Please report security vulnerabilities to security@towns.com.
+Please report security vulnerabilities to security@river.build.

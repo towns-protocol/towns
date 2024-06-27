@@ -51,11 +51,7 @@ export class TownsTestWeb3Provider extends ethers.providers.JsonRpcProvider {
         if (!mockNFTAddress) {
             throw new Error('mockNFTAddress not found in config')
         }
-        const mockNFT = new MockERC721AShim(
-            mockNFTAddress,
-            this.config.base.chainConfig.contractVersion,
-            this,
-        )
+        const mockNFT = new MockERC721AShim(mockNFTAddress, this)
         return mockNFT.write(this.wallet).mintTo(this.wallet.address)
     }
 

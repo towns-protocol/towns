@@ -1,6 +1,5 @@
 import { BytesLike, ethers } from 'ethers'
 import { dlogger } from '@river-build/dlog'
-import { ContractVersion } from '../IStaticContractsInfo'
 
 export type PromiseOrValue<T> = T | Promise<T>
 
@@ -13,11 +12,8 @@ const logger = dlogger('csb:BaseContractShim')
 export class BaseContractShim<
     T_DEV_CONTRACT extends ethers.Contract,
     T_DEV_INTERFACE extends ethers.utils.Interface,
-    T_VERSIONED_CONTRACT extends ethers.Contract,
-    T_VERSIONED_INTERFACE extends ethers.utils.Interface,
 > {
     public readonly address: string
-    public readonly version: ContractVersion
     public readonly contractInterface: ethers.utils.Interface
     public readonly provider: ethers.providers.Provider | undefined
     public readonly signer: ethers.Signer | undefined
@@ -27,47 +23,28 @@ export class BaseContractShim<
 
     constructor(
         address: string,
-        version: ContractVersion,
         provider: ethers.providers.Provider | undefined,
-        abis: Record<ContractVersion, ethers.ContractInterface>,
+        abi: ethers.ContractInterface,
     ) {
-        if (!abis[version]) {
-            throw new Error(`No ABI for version ${version}`)
-        }
         this.address = address
-        this.version = version
         this.provider = provider
-        this.abi = abis[version]
+        this.abi = abi
         this.contractInterface = new ethers.utils.Interface(this.abi as string)
     }
 
-    public get interface(): T_DEV_INTERFACE | T_VERSIONED_INTERFACE {
-        switch (this.version) {
-            case ContractVersion.dev:
-                return this.contractInterface as unknown as T_DEV_INTERFACE
-            case ContractVersion.v3:
-                return this.contractInterface as unknown as T_VERSIONED_INTERFACE
-            default:
-                throw new Error(`Unsupported version ${this.version}`)
-        }
+    public get interface(): T_DEV_INTERFACE {
+        return this.contractInterface as unknown as T_DEV_INTERFACE
     }
 
-    public get read(): T_DEV_CONTRACT | T_VERSIONED_CONTRACT {
+    public get read(): T_DEV_CONTRACT {
         // lazy create an instance if it is not already cached
         if (!this.readContract) {
             this.readContract = this.createReadContractInstance()
         }
-        switch (this.version) {
-            case ContractVersion.dev:
-                return this.readContract as unknown as T_DEV_CONTRACT
-            case ContractVersion.v3:
-                return this.readContract as unknown as T_VERSIONED_CONTRACT
-            default:
-                throw new Error(`Unsupported version ${this.version}`)
-        }
+        return this.readContract as unknown as T_DEV_CONTRACT
     }
 
-    public write(signer: ethers.Signer): T_DEV_CONTRACT | T_VERSIONED_CONTRACT {
+    public write(signer: ethers.Signer): T_DEV_CONTRACT {
         // lazy create an instance if it is not already cached
         if (!this.writeContract) {
             this.writeContract = this.createWriteContractInstance(signer)
@@ -77,19 +54,13 @@ export class BaseContractShim<
                 this.writeContract = this.createWriteContractInstance(signer)
             }
         }
-        switch (this.version) {
-            case ContractVersion.dev:
-                return this.writeContract as unknown as T_DEV_CONTRACT
-            case ContractVersion.v3:
-                return this.writeContract as unknown as T_VERSIONED_CONTRACT
-            default:
-                throw new Error(`Unsupported version ${this.version}`)
-        }
+        return this.writeContract as unknown as T_DEV_CONTRACT
     }
 
-    public decodeFunctionResult<
-        FnName extends keyof T_DEV_CONTRACT['functions'] | keyof T_VERSIONED_CONTRACT['functions'],
-    >(functionName: FnName, data: BytesLike) {
+    public decodeFunctionResult<FnName extends keyof T_DEV_CONTRACT['functions']>(
+        functionName: FnName,
+        data: BytesLike,
+    ) {
         if (typeof functionName !== 'string') {
             throw new Error('functionName must be a string')
         }
@@ -99,9 +70,10 @@ export class BaseContractShim<
         return this.interface.decodeFunctionResult(functionName, data)
     }
 
-    public decodeFunctionData<
-        FnName extends keyof T_DEV_CONTRACT['functions'] | keyof T_VERSIONED_CONTRACT['functions'],
-    >(functionName: FnName, data: BytesLike) {
+    public decodeFunctionData<FnName extends keyof T_DEV_CONTRACT['functions']>(
+        functionName: FnName,
+        data: BytesLike,
+    ) {
         if (typeof functionName !== 'string') {
             throw new Error('functionName must be a string')
         }
@@ -112,10 +84,8 @@ export class BaseContractShim<
     }
 
     public encodeFunctionData<
-        FnName extends keyof T_DEV_CONTRACT['functions'] | keyof T_VERSIONED_CONTRACT['functions'],
-        FnParams extends
-            | Parameters<T_DEV_CONTRACT['functions'][FnName]>
-            | Parameters<T_VERSIONED_CONTRACT['functions'][FnName]>,
+        FnName extends keyof T_DEV_CONTRACT['functions'],
+        FnParams extends Parameters<T_DEV_CONTRACT['functions'][FnName]>,
     >(functionName: FnName, args: FnParams): string {
         if (typeof functionName !== 'string') {
             throw new Error('functionName must be a string')

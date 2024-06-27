@@ -23,26 +23,13 @@ export class BaseRegistry {
     constructor(config: BaseChainConfig, provider: ethers.providers.Provider) {
         this.config = config
         this.provider = provider
-        this.nodeOperator = new INodeOperatorShim(
-            config.addresses.baseRegistry,
-            config.contractVersion,
-            provider,
-        )
+        this.nodeOperator = new INodeOperatorShim(config.addresses.baseRegistry, provider)
         this.entitlementChecker = new IEntitlementCheckerShim(
             config.addresses.baseRegistry,
-            config.contractVersion,
             provider,
         )
-        this.spaceDelegation = new ISpaceDelegationShim(
-            config.addresses.baseRegistry,
-            config.contractVersion,
-            provider,
-        )
-        this.erc721A = new IERC721AShim(
-            config.addresses.baseRegistry,
-            config.contractVersion,
-            provider,
-        )
+        this.spaceDelegation = new ISpaceDelegationShim(config.addresses.baseRegistry, provider)
+        this.erc721A = new IERC721AShim(config.addresses.baseRegistry, provider)
     }
 
     private async getOperatorStatus(operator: string) {

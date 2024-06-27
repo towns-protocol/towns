@@ -12,11 +12,7 @@ export class WalletLink {
     public address: Address
 
     constructor(config: BaseChainConfig, provider: ethers.providers.Provider | undefined) {
-        this.walletLinkShim = new IWalletLinkShim(
-            config.addresses.spaceFactory,
-            config.contractVersion,
-            provider,
-        )
+        this.walletLinkShim = new IWalletLinkShim(config.addresses.spaceFactory, provider)
         this.address = config.addresses.spaceFactory
     }
 

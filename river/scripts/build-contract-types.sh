@@ -3,20 +3,15 @@ set -ueo pipefail
 cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 cd ..
 
-VERSION="${1:-localhost}"
-if [ "$VERSION" = "localhost" ]; then
-  VERSION="dev"
-elif [ "$VERSION" = "base_sepolia" ]; then
-  VERSION="v3"
-fi
+IGNORED="${1:-}"
 FROZEN="${2:-}"
-ABI_DIR="packages/generated/${VERSION}/abis"
+ABI_DIR="packages/generated/dev/abis"
 
 forge build
 
 CONTRACT_INTERFACES="(IDiamond|IDiamondCut|IArchitect|IProxyManager|IPausable|IEntitlementsManager|IChannel|IRoles|IMulticall|IRuleEntitlement|IWalletLink|INodeRegistry|IOperatorRegistry|IStreamRegistry|OwnableFacet|TokenPausableFacet|UserEntitlement|ISpaceOwner|MockERC721A|MembershipFacet|Member|IBanning|IPricingModules|ICustomEntitlement|MockEntitlementGated|PrepayFacet|IERC721AQueryable|IEntitlementDataQueryable|PlatformRequirementsFacet|IERC721A|INodeOperator|ISpaceDelegation|IEntitlementChecker)"
 
-yarn typechain --target=ethers-v5 "contracts/out/**/?${CONTRACT_INTERFACES}.json" --out-dir "packages/generated/${VERSION}/typings"
+yarn typechain --target=ethers-v5 "contracts/out/**/?${CONTRACT_INTERFACES}.json" --out-dir "packages/generated/dev/typings"
 
 mkdir -p $ABI_DIR && cp -a contracts/out/{Diamond,DiamondCutFacet,Architect,ProxyManager,IPausable,EntitlementsManager,Channels,Roles,IMulticall,OwnableFacet,WalletLink,NodeRegistry,OperatorRegistry,StreamRegistry,TokenPausableFacet,IRuleEntitlement,UserEntitlement,SpaceOwner,MockERC721A,MembershipFacet,Member,MockRiverRegistry,IBanning,IPricingModules,ICustomEntitlement,MockCustomEntitlement,MockEntitlementGated,PrepayFacet,IERC721AQueryable,IEntitlementDataQueryable,PlatformRequirementsFacet,IERC721A,INodeOperator,ISpaceDelegation,IEntitlementChecker}.sol/* "$ABI_DIR"
 
