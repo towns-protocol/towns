@@ -1,7 +1,7 @@
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ContractMetadata, GetCollectionMetadataAcrossNetworksResponse } from '@token-worker/types'
 import { ethers } from 'ethers'
-import { z } from 'zod'
+import { ZodEffects, ZodNativeEnum, z } from 'zod'
 import { Address, useSupportedXChainIds } from 'use-towns-client'
 import { env } from 'utils'
 import { axiosClient } from 'api/apiClient'
@@ -11,11 +11,24 @@ import { TokenEntitlement } from '@components/Tokens/TokenSelector/tokenSchemas'
 export const queryKeyAcrossNetworks = 'tokenMetadataAcrossNetworks'
 const singleTokenQueryKey = 'tokenMetadata'
 
+// Converts any unknown token type to TokenType.UNKNOWN before parsing
+const TokenTypeSchema = z.preprocess((val) => {
+    const _val = val as TokenType
+    if (_val in TokenType) {
+        return _val
+    }
+    return TokenType.UNKNOWN
+}, z.nativeEnum(TokenType)) as ZodEffects<
+    ZodNativeEnum<typeof TokenType>,
+    ZodNativeEnum<typeof TokenType>['_output'],
+    TokenType
+>
+
 const metadataForSingleNetworkSchema: z.ZodType<ContractMetadata> = z.object({
     address: z.string().optional().nullable(),
     name: z.string().optional().nullable(),
     symbol: z.string().optional().nullable(),
-    tokenType: z.nativeEnum(TokenType),
+    tokenType: TokenTypeSchema,
     imageUrl: z.string().optional().nullable(),
 })
 
@@ -27,7 +40,7 @@ const metadataAcrossNetworksSchema: z.ZodType<GetCollectionMetadataAcrossNetwork
                 address: z.string().optional().nullable(),
                 name: z.string().optional().nullable(),
                 symbol: z.string().optional().nullable(),
-                tokenType: z.nativeEnum(TokenType),
+                tokenType: TokenTypeSchema,
                 imageUrl: z.string().optional().nullable(),
             }),
         }),
