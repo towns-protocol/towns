@@ -3,9 +3,9 @@ const { exec } = require("child_process");
 const debounce = require("lodash.debounce");
 
 const currentDirectory = process.cwd();
-const toolsDirectory = process.cwd() + "/../node/protocol_extensions";
+const toolsDirectory = process.cwd() + "/../../core/node/protocol_extensions";
 const protocolDirectory = process.cwd() + "/../../protocol";
-const buildCommand = "cd ../node && go generate -v -x protocol/gen.go";
+const buildCommand = "cd ../../core/node && go generate -v -x protocol/gen.go";
 
 const handleFileChange = debounce((eventType, filename) => {
   console.log(`Detected ${eventType} in ${filename}, running build command...`);

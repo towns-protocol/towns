@@ -296,6 +296,35 @@ export const make_MemberPayload_Nft = (
     }
 }
 
+export const make_ChannelPayload_Pin = (
+    eventHash: Uint8Array,
+    streamEvent: StreamEvent,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'channelPayload',
+        value: {
+            content: {
+                case: 'pin',
+                value: { eventId: eventHash, event: streamEvent },
+            },
+        },
+    }
+}
+
+export const make_ChannelPayload_Unpin = (
+    eventId: Uint8Array,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'channelPayload',
+        value: {
+            content: {
+                case: 'unpin',
+                value: { eventId },
+            },
+        },
+    }
+}
+
 export const make_ChannelMessage_Post_Content_Text = (
     body: string,
     mentions?: PlainMessage<ChannelMessage_Post_Mention>[],

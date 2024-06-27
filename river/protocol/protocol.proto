@@ -245,6 +245,7 @@ message ChannelPayload {
     message Snapshot {
         // inception
         Inception inception = 1;
+        repeated Pin pins = 2;
     }
     
     message Inception {
@@ -258,10 +259,21 @@ message ChannelPayload {
         bytes event_id = 1;
     }
 
+    message Pin { 
+        bytes event_id = 1;
+        StreamEvent event = 2;
+    }
+
+    message Unpin {
+        bytes event_id = 1;
+    }
+
     oneof content {
         Inception inception = 1;
         EncryptedData message = 2;
         Redaction redaction = 3;
+        Pin pin = 4;
+        Unpin unpin = 5;
     }
 }
 

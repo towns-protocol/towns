@@ -631,6 +631,10 @@ function toTownsContent_ChannelPayload(
                     adminRedaction: true,
                 } satisfies RedactionActionEvent,
             }
+        case 'pin':
+            return { error: `TODO PIN: ${description}` }
+        case 'unpin':
+            return { error: `TODO UNPIN: ${description}` }
         case undefined: {
             return { error: `Undefined payload case: ${description}` }
         }
@@ -744,7 +748,7 @@ function toTownsContent_ChannelPayload_ChannelProperties(
 }
 
 function toTownsContent_ChannelPayload_Message_Post(
-    value: ChannelMessage_Post | PlainMessage<ChannelMessage_Post>,
+    value: PlainMessage<ChannelMessage_Post>,
     eventId: string,
     editsEventId: string | undefined,
     description: string,

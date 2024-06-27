@@ -267,12 +267,16 @@ if [[ "$(parse_git_branch)" != "${BRANCH_NAME}" ]]; then
   exit 1
 fi
 
+echo "Checking out branch ${BRANCH_NAME}."
 # Pull the latest changes from the subtree, blasting away any local changes
 rm -rf "${SUBTREE_PREFIX}"
 rm -rf "${SUBTREE_PREFIX}" # run twice to get around permission denied errors
 git clone --depth 1 "${SUBTREE_REPO}" "${SUBTREE_PREFIX}"
 pushd "${SUBTREE_PREFIX}"
+
+echo "Checking out commit ${COMMIT_HASH}."
 git checkout "${COMMIT_HASH}"
+sleep 0.25
 if git checkout "$COMMIT_HASH" >/dev/null 2>&1; then
   # If the fetch succeeds, the commit exists
   echo "$COMMIT_HASH is a valid commit in the repository."
@@ -283,6 +287,8 @@ else
 fi
 popd
 
+echo "Removing river root files from ${SUBTREE_PREFIX}"
+remove_river_yarn_files
 remove_river_yarn_files
 
 git add .

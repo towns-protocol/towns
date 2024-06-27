@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/river-build/river/core/node/crypto"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/river-build/river/core/node/auth"
@@ -47,6 +48,11 @@ type aeUserMembershipActionRules struct {
 type aeSpaceChannelRules struct {
 	params        *aeParams
 	channelUpdate *SpacePayload_ChannelUpdate
+}
+
+type aeChannelPinRules struct {
+	params *aeParams
+	pin    *ChannelPayload_Pin
 }
 
 type aeMediaPayloadChunkRules struct {
@@ -198,8 +204,22 @@ func (params *aeParams) canAddChannelPayload(payload *StreamEvent_ChannelPayload
 			requireChainAuth(params.channelMessageWriteEntitlements).
 			onChainAuthFailure(params.onEntitlementFailureForUserEvent)
 	case *ChannelPayload_Redaction_:
-		return aeBuilder().check(params.creatorIsMember).
+		return aeBuilder().
+			check(params.creatorIsMember).
 			requireChainAuth(params.redactChannelMessageEntitlements)
+	case *ChannelPayload_Pin_:
+		pinRuls := &aeChannelPinRules{
+			params: params,
+			pin:    content.Pin,
+		}
+		return aeBuilder().
+			check(params.creatorIsMember).
+			check(pinRuls.validChannelPin).
+			requireChainAuth(params.channelMessageWriteEntitlements)
+	case *ChannelPayload_Unpin_:
+		return aeBuilder().
+			check(params.creatorIsMember).
+			requireChainAuth(params.channelMessageWriteEntitlements)
 	default:
 		return aeBuilder().
 			fail(unknownContentType(content))
@@ -1099,6 +1119,47 @@ func (ru *aeMembershipRules) getPermissionForMembershipOp() (auth.Permission, st
 	default:
 		return auth.PermissionUndefined, "", RiverError(Err_BAD_EVENT, "Need valid membership op", "op", membership.Op)
 	}
+}
+
+func (ru *aeChannelPinRules) validChannelPin() (bool, error) {
+	if ru.pin == nil {
+		return false, RiverError(Err_INVALID_ARGUMENT, "event is not a channel pin event")
+	}
+	// check the hash
+	if len(ru.pin.EventId) != 32 {
+		return false, RiverError(Err_INVALID_ARGUMENT, "invalid message hash")
+	}
+
+	// hash the event and check against the hash
+	eventBytes, err := proto.Marshal(ru.pin.Event)
+	if err != nil {
+		return false, err
+	}
+	computedHash := crypto.RiverHash(eventBytes)
+
+	if !bytes.Equal(ru.pin.EventId, computedHash[:]) {
+		return false, RiverError(Err_INVALID_ARGUMENT, "invalid message hash")
+	}
+
+	// cast as channel view state
+	view := ru.params.streamView.(events.ChannelStreamView)
+	// get existing pins
+	existingPins, err := view.GetPinnedMessages()
+	if err != nil {
+		return false, err
+	}
+	// check if we have too many pins
+	if len(existingPins) > 5 {
+		// if we have more than 5 pins, we can't add more
+		return false, RiverError(Err_INVALID_ARGUMENT, "channel has too many pins")
+	}
+	// check if the hash is already pinned
+	for _, pin := range existingPins {
+		if bytes.Equal(pin.EventId, ru.pin.EventId) {
+			return false, RiverError(Err_DUPLICATE_EVENT, "message is already pinned")
+		}
+	}
+	return true, nil
 }
 
 func (ru *aeSpaceChannelRules) validSpaceChannelOp() (bool, error) {

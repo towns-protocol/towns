@@ -211,6 +211,7 @@ export class StreamStateView {
                 this.channelContent.applySnapshot(
                     snapshot,
                     snapshot.content.value,
+                    cleartexts,
                     encryptionEmitter,
                 )
                 break

@@ -522,6 +522,96 @@ describe('clientTest', () => {
         log('bobSendsSingleMessage done')
     })
 
+    test('bobPinsAMessage', async () => {
+        log('bobPinsAMessage')
+
+        // Bob gets created, creates a space, and creates a channel.
+        await expect(bobsClient.initializeUser()).toResolve()
+        bobsClient.startSync()
+
+        const bobsSpaceId = makeUniqueSpaceStreamId()
+        await expect(bobsClient.createSpace(bobsSpaceId)).toResolve()
+
+        const bobsChannelId = makeUniqueChannelStreamId(bobsSpaceId)
+        const bobsChannelName = 'Bobs channel'
+        const bobsChannelTopic = 'Bobs channel topic'
+
+        await expect(
+            bobsClient.createChannel(bobsSpaceId, bobsChannelName, bobsChannelTopic, bobsChannelId),
+        ).toResolve()
+
+        // Bob can send a message.
+        const channelStream = await bobsClient.waitForStream(bobsChannelId)
+
+        const { eventId: eventId_1 } = await bobsClient.sendMessage(
+            bobsChannelId,
+            'Hello, world from Bob!',
+        )
+        const { eventId: eventId_2 } = await bobsClient.sendMessage(bobsChannelId, 'event 2')
+        const { eventId: eventId_3 } = await bobsClient.sendMessage(bobsChannelId, 'event 3')
+
+        await bobsClient.pin(bobsChannelId, eventId_1)
+
+        await waitFor(() => {
+            const pin = channelStream.view.channelContent.pins.find(
+                (e) => e.event.hashStr === eventId_1,
+            )
+            expect(pin).toBeDefined()
+            expect(pin?.event.decryptedContent?.kind).toBe('channelMessage')
+            if (pin?.event.decryptedContent?.kind === 'channelMessage') {
+                expect(getChannelMessagePayload(pin?.event.decryptedContent?.content)).toBe(
+                    'Hello, world from Bob!',
+                )
+            }
+        })
+
+        await expect(bobsClient.pin(bobsChannelId, eventId_1)).rejects.toThrow(
+            'message is already pinned',
+        )
+
+        await bobsClient.unpin(bobsChannelId, eventId_1)
+
+        await waitFor(() => {
+            expect(channelStream.view.channelContent.pins.length).toBe(0)
+        })
+
+        await bobsClient.pin(bobsChannelId, eventId_1)
+        await bobsClient.pin(bobsChannelId, eventId_2)
+        await bobsClient.pin(bobsChannelId, eventId_3)
+
+        await bobsClient.debugForceMakeMiniblock(bobsChannelId, { forceSnapshot: true })
+
+        await waitFor(() => {
+            const pin = channelStream.view.channelContent.pins.find(
+                (e) => e.event.hashStr === eventId_1,
+            )
+            expect(pin).toBeDefined()
+        })
+        await waitFor(() => {
+            const pin = channelStream.view.channelContent.pins.find(
+                (e) => e.event.hashStr === eventId_2,
+            )
+            expect(pin).toBeDefined()
+        })
+        await waitFor(() => {
+            const pin = channelStream.view.channelContent.pins.find(
+                (e) => e.event.hashStr === eventId_3,
+            )
+            expect(pin).toBeDefined()
+        })
+
+        await bobsClient.unpin(bobsChannelId, eventId_1)
+        await bobsClient.unpin(bobsChannelId, eventId_2)
+        await bobsClient.debugForceMakeMiniblock(bobsChannelId, { forceSnapshot: true })
+
+        const rawStream = await bobsClient.getStream(bobsChannelId)
+        expect(rawStream).toBeDefined()
+        expect(rawStream?.channelContent.pins.length).toBe(1)
+        expect(rawStream?.channelContent.pins[0].event.hashStr).toBe(eventId_3)
+
+        log('bobSendsSingleMessage done')
+    })
+
     test('bobAndAliceConverse', async () => {
         log('bobAndAliceConverse')
 

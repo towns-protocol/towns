@@ -197,10 +197,15 @@ export const unpackEnvelope = async (
         }
     }
 
+    return makeParsedEvent(event, envelope.hash)
+}
+
+export function makeParsedEvent(event: StreamEvent, hash?: Uint8Array) {
+    hash = hash ?? riverHash(event.toBinary())
     return {
         event,
-        hash: envelope.hash,
-        hashStr: bin_toHexString(envelope.hash),
+        hash,
+        hashStr: bin_toHexString(hash),
         prevMiniblockHashStr: event.prevMiniblockHash
             ? bin_toHexString(event.prevMiniblockHash)
             : undefined,

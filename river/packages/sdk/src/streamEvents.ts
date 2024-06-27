@@ -18,6 +18,7 @@ import {
 import { KeySolicitationContent, UserDevice } from '@river-build/encryption'
 import { EncryptedContent } from './encryptedContentTypes'
 import { SyncState } from './syncedStreams'
+import { Pin } from './streamStateView_Channel'
 
 export type StreamChange = {
     prepended?: RemoteTimelineEvent[]
@@ -72,6 +73,9 @@ export type StreamStateEvents = {
     spaceChannelCreated: (spaceId: string, channelId: string) => void
     spaceChannelUpdated: (spaceId: string, channelId: string) => void
     spaceChannelDeleted: (spaceId: string, channelId: string) => void
+    channelPinAdded: (channelId: string, pin: Pin) => void
+    channelPinRemoved: (channelId: string, pin: Pin, index: number) => void
+    channelPinDecrypted: (channelId: string, pin: Pin, index: number) => void
     fullyReadMarkersUpdated: (
         channelId: string,
         fullyReadMarkers: Record<string, FullyReadMarker>,
