@@ -5,6 +5,7 @@ import {
     GetContractsForOwnerAlchemyResponse,
     GetNftMetadataResponse,
     SimpleHashCollectionsResponse,
+    TokenType,
 } from './types'
 import { throwCustomError } from './router'
 import { createPublicClient, http } from 'viem'
@@ -164,6 +165,16 @@ export async function withSimpleHashImage({
     if (contractMetadata.imageUrl) {
         return contractMetadata
     }
+
+    // if it's not one of these types, just skip trying to fetch from simplehash
+    if (
+        contractMetadata.tokenType !== TokenType.ERC721 &&
+        contractMetadata.tokenType !== TokenType.ERC1155 &&
+        contractMetadata.tokenType !== TokenType.ERC20
+    ) {
+        return contractMetadata
+    }
+
     const simpleHashIdentifier = nftNetworkMap.find(
         (x) => x.vChain.id === chainId,
     )?.simpleHashIdentifier
