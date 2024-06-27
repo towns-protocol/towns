@@ -1,6 +1,7 @@
 {
     "compilerOptions": {
         "target": "es2020",
+        "noImplicitAny": true,
         "strict": true,
         "preserveConstEnums": true,
         "noEmit": true,

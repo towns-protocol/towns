@@ -1,9 +1,10 @@
 import { client, v2 } from '@datadog/datadog-api-client'
 import { MetricSeries } from '@datadog/datadog-api-client/dist/packages/datadog-api-client-v2'
 import { RiverNodeWalletBalance } from './wallet-balance'
-import { RiverNodePingResults } from './ping'
+import { RiverNodePingResults } from './pinger'
 import { NodeStructOutput } from '@river-build/generated/dev/typings/INodeRegistry'
-import { CombinedNode, CombinedOperator, RiverMetrics } from './get-metrics'
+import { RiverMetrics } from './metrics-extractor'
+import { CombinedNode, CombinedOperator } from './metrics-integrator'
 
 export class DatadogMetricsClient {
     private readonly apiKey: string

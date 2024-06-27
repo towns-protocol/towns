@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { Unpromisify } from './utils'
-import { CombinedNode } from './get-metrics'
+import { CombinedNode } from './metrics-integrator'
 
 const NodeStatusSchema = z.object({
     status: z.string(),
@@ -14,7 +14,7 @@ const NodeStatusSchema = z.object({
 export type RiverNodePingResults = Unpromisify<ReturnType<Ping['pingNodes']>>
 
 export class Ping {
-    constructor(public readonly nodes: CombinedNode[]) {}
+    constructor() {}
 
     private async pingNode(node: CombinedNode) {
         if (typeof node.url === 'undefined') {
@@ -76,14 +76,17 @@ export class Ping {
         }
     }
 
-    public async pingNodes() {
-        const promises = this.nodes.map(async (node) => {
+    public async pingNodes(nodes: CombinedNode[]) {
+        console.log('Pinging nodes...')
+        const promises = nodes.map(async (node) => {
             const ping = await this.pingNode(node)
             return {
                 node,
                 ping,
             }
         })
-        return await Promise.all(promises)
+        const result = await Promise.all(promises)
+        console.log('Done pinging nodes')
+        return result
     }
 }
