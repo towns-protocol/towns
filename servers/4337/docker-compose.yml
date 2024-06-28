@@ -1,0 +1,153 @@
+version: "3.8"
+
+services:
+  node:
+    # instead of stackupwallet/go-ethereum:v1.13.15
+    # this image is a fork of go-ethereum with a modification to the chain id for --dev mode
+    # changes the hardcoded chain id from 1337 to 31337 to be compatible with our contract deployments
+    # see stackup-geth/Dockerfile
+    image: evanhnt/stackup-go-ethereum
+    ports:
+      - "8547:8545"
+    command:
+      - "--http.vhosts=*"
+      - "--http"
+      - "--http.api=eth,net,web3,debug"
+      - "--http.corsdomain=*"
+      - "--http.addr=0.0.0.0"
+      - "--nodiscover"
+      - "--maxpeers=0"
+      - "--mine"
+      - "--networkid=31337"
+      - "--dev"
+      # interval mining 1 second
+      - "--dev.period=1"
+      - "--allow-insecure-unlock"
+      - "--rpc.allow-unprotected-txs"
+      - "--miner.gaslimit=12000000"
+
+  bundler:
+    image: stackupwallet/stackup-bundler:v0.6.45
+    ports:
+      - "43370:4337"
+    environment:
+      ERC4337_BUNDLER_ETH_CLIENT_URL: "http://node:8545"
+      ERC4337_BUNDLER_NATIVE_BUNDLER_COLLECTOR_TRACER: "bundlerCollectorTracer"
+      ERC4337_BUNDLER_NATIVE_BUNDLER_EXECUTOR_TRACER: "bundlerExecutorTracer"
+      ERC4337_BUNDLER_PRIVATE_KEY: "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+    restart: always
+    depends_on:
+      node:
+        condition: service_started
+
+  proxy:
+    image: openresty/openresty:1.25.3.1-2-alpine
+    ports:
+      - "8545:80"
+    volumes:
+      - ./proxy:/etc/nginx/conf.d
+    depends_on:
+      bundler:
+        condition: service_started
+
+  fund-account:
+    image: evanhnt/stackup-go-ethereum
+    # b/c of interval mining, wait for the confirmation of the transaction
+    command: >
+      --exec "
+      function sleep(seconds) {
+        var e = new Date().getTime() + (seconds * 1000);
+        while (new Date().getTime() <= e) {}
+      }
+      var txHash = eth.sendTransaction({from: eth.accounts[0], to: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266', value: web3.toWei(100000, 'ether')});
+      console.log('Transaction sent, waiting for confirmation...');
+      while (true) {
+        try {
+          var receipt = eth.getTransactionReceipt(txHash);
+          if (receipt && receipt.blockNumber) {
+            console.log('Transaction confirmed in block: ' + receipt.blockNumber);
+            break;
+          }
+          console.log('Waiting for transaction to be mined...');
+        } catch (error) {
+          console.error('Error while checking transaction receipt:', error);
+        }
+        sleep(1);
+      }
+      " attach http://node:8545
+    depends_on:
+      proxy:
+        condition: service_started
+
+  deploy-v0.6:
+    build:
+      context: .
+      dockerfile: ./contracts/v0.6.Dockerfile
+    command: "deploy --network localhost"
+    depends_on:
+      fund-account:
+        condition: service_completed_successfully
+
+  # Skipping this for now as we are not using v0.7 yet
+  #  
+  # deploy-v0.7:
+  #   build:
+  #     context: .
+  #     dockerfile: ./contracts/v0.7.Dockerfile
+  #   command: "deploy --network localhost"
+  #   depends_on:
+  #     deploy-v0.6:
+  #       condition: service_completed_successfully
+
+  deploy-v0.6-stackup-paymaster:
+    build:
+      context: .
+      dockerfile: ./contracts/v0.6-stackup-paymaster.Dockerfile
+    command: "deploy:VerifyingPaymaster --network devnet"
+    depends_on:
+      deploy-v0.6:
+        condition: service_completed_successfully
+
+  stake-v0.6-stackup-paymaster:
+    build:
+      context: .
+      dockerfile: ./contracts/v0.6-stackup-paymaster.Dockerfile
+    command: |
+      hardhat verifyingPaymaster:stake:add 0x42051Fa8F6c012102899c902aA214f1e97bD8aDb 0.3 --network devnet
+    depends_on:
+      deploy-v0.6-stackup-paymaster:
+        condition: service_completed_successfully
+
+  deposit-v0.6-stackup-paymaster:
+    build:
+      context: .
+      dockerfile: ./contracts/v0.6-stackup-paymaster.Dockerfile
+    command: |
+      hardhat verifyingPaymaster:deposit:add 0x42051Fa8F6c012102899c902aA214f1e97bD8aDb 1 --network devnet
+    depends_on:
+      stake-v0.6-stackup-paymaster:
+        condition: service_completed_successfully
+
+  get-v0.6-stackup-paymaster:
+    build:
+      context: .
+      dockerfile: ./contracts/v0.6-stackup-paymaster.Dockerfile
+    command: |
+      hardhat verifyingPaymaster:deposit:get 0x42051Fa8F6c012102899c902aA214f1e97bD8aDb --network devnet
+    depends_on:
+      deposit-v0.6-stackup-paymaster:
+        condition: service_completed_successfully
+
+  paymaster:
+    image: stackupwallet/stackup-paymaster:v0.0.1
+    ports:
+      - "43371:43371"
+    environment:
+      ERC4337_PAYMASTER_SIGNING_KEY: "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+      ERC4337_PAYMASTER_ETH_CLIENT_URL: "http://node:8545"
+      ERC4337_PAYMASTER_ENTRYPOINT_TO_PAYMASTERS: |
+        0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789=0x42051Fa8F6c012102899c902aA214f1e97bD8aDb
+    restart: always
+    depends_on:
+      get-v0.6-stackup-paymaster:
+        condition: service_completed_successfully
