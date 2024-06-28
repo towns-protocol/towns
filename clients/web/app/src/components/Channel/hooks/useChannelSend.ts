@@ -2,6 +2,7 @@ import { useCallback, useContext } from 'react'
 import { SendMessageOptions, useTownsClient } from 'use-towns-client'
 import { getChannelType, useAnalytics } from 'hooks/useAnalytics'
 import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
+import { useSlashCommand } from 'hooks/useSlashCommand'
 
 export const useChannelSend = (params: {
     channelId: string
@@ -12,9 +13,15 @@ export const useChannelSend = (params: {
     const { analytics } = useAnalytics()
     const { sendMessage } = useTownsClient()
     const { replyToEventId, setReplyToEventId } = useContext(ReplyToMessageContext)
+    const { parseAndExecuteCommand } = useSlashCommand()
+
     const onSend = useCallback(
         (value: string, options: SendMessageOptions | undefined) => {
             if (!channelId) {
+                return
+            }
+
+            if (parseAndExecuteCommand(value)) {
                 return
             }
 
@@ -47,7 +54,16 @@ export const useChannelSend = (params: {
                 setReplyToEventId?.(null)
             }
         },
-        [channelId, analytics, spaceId, threadId, replyToEventId, sendMessage, setReplyToEventId],
+        [
+            channelId,
+            parseAndExecuteCommand,
+            spaceId,
+            threadId,
+            analytics,
+            replyToEventId,
+            sendMessage,
+            setReplyToEventId,
+        ],
     )
 
     return { onSend }

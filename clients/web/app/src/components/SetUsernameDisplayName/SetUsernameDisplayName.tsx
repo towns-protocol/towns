@@ -6,11 +6,10 @@ import {
     useTownsClient,
     useUserLookupStore,
 } from 'use-towns-client'
-import noop from 'lodash/noop'
 import { isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
 import { toast } from 'react-hot-toast/headless'
-import { Box, Button, IconButton, Stack, Text, TextButton, TextField } from '@ui'
-import { validateUsername } from '@components/SetUsernameForm/validateUsername'
+import { Box, Button, IconButton, Stack, Text, TextButton } from '@ui'
+import { validateDisplayName, validateUsername } from '@components/SetUsernameForm/validateUsername'
 import { useSetUsername } from 'hooks/useSetUsername'
 import { EncryptedName } from '@components/EncryptedContent/EncryptedName'
 import { shortAddress } from 'ui/utils/utils'
@@ -25,6 +24,8 @@ import { useDevice } from 'hooks/useDevice'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { UpdateEnsDisplayNameFailed } from '@components/Notifications/UpdateEnsDisplayNameFailed'
 import { useRouteParams } from 'hooks/useRouteParams'
+import { useValidateUsername } from 'hooks/useValidateUsername'
+import { EditableInputField } from './EditableInputField'
 
 export const useCurrentStreamID = () => {
     const { spaceId, channelId } = useRouteParams()
@@ -34,16 +35,6 @@ export const useCurrentStreamID = () => {
         }
     }
     return spaceId
-}
-
-const validateDisplayName = (displayName: string) => {
-    if (displayName.endsWith('.eth')) {
-        return { valid: false, message: 'Display name cannot end with .eth' }
-    }
-    if (displayName.length > 32) {
-        return { valid: false, message: 'Your display name must be between 1 and 32 characters' }
-    }
-    return { valid: true }
 }
 
 export const SetUsernameDisplayName = (props: { streamId: string }) => {
@@ -69,34 +60,33 @@ export const SetUsernameDisplayName = (props: { streamId: string }) => {
 
     const { setUsername } = useSetUsername()
     const { setDisplayName } = useTownsClient()
-    const [dirtyUsername, setDirtyUsername] = React.useState<string>(user?.username ?? '')
-    const [usernameAvailable, setUsernameAvailable] = React.useState<boolean>(true)
     const [dirtyDisplayName, setDirtyDisplayName] = React.useState<string>(user?.displayName ?? '')
     const [isShowingEnsDisplayNameForm, setShowinEnsDisplayNameForm] = useState<boolean>(false)
-    const { getIsUsernameAvailable } = useTownsClient()
+
+    const {
+        username: dirtyUsername,
+        usernameErrorMessage,
+        updateUsername,
+    } = useValidateUsername({
+        streamId,
+        defaultUsername: user?.username ?? '',
+    })
 
     const onUsernameChange = useCallback(
         async (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-            if (!streamId) {
-                return
-            }
-            setDirtyUsername(e.target.value)
-            setUsernameAvailable(true)
-            const usernameAvailable =
-                (await getIsUsernameAvailable(streamId, e.target.value)) ?? false
-            setUsernameAvailable(usernameAvailable)
+            updateUsername(e.target.value)
         },
-        [setDirtyUsername, setUsernameAvailable, getIsUsernameAvailable, streamId],
+        [updateUsername],
     )
 
     useEffect(() => {
         if (user?.username) {
-            setDirtyUsername(user.username)
+            updateUsername(user.username)
         }
         if (user?.displayName) {
             setDirtyDisplayName(user.displayName)
         }
-    }, [user?.username, user?.displayName, setDirtyUsername, setDirtyDisplayName])
+    }, [user?.username, user?.displayName, updateUsername, setDirtyDisplayName])
 
     const onSave = useCallback(async () => {
         if (!streamId) {
@@ -112,10 +102,10 @@ export const SetUsernameDisplayName = (props: { streamId: string }) => {
     }, [user, setUsername, streamId, dirtyUsername, dirtyDisplayName, setDisplayName])
 
     const onCancel = useCallback(() => {
-        setDirtyUsername(user?.username ?? '')
+        updateUsername(user?.username ?? '')
         setDirtyDisplayName(user?.displayName ?? '')
         setShowEditFields(false)
-    }, [setDirtyDisplayName, setDirtyUsername, setShowEditFields, user])
+    }, [setDirtyDisplayName, updateUsername, setShowEditFields, user])
 
     const onDisplayNameChange = useCallback(
         (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -128,24 +118,17 @@ export const SetUsernameDisplayName = (props: { streamId: string }) => {
         setShowinEnsDisplayNameForm(true)
     }, [setShowinEnsDisplayNameForm])
 
-    const usernameErrorMessage = useMemo(() => {
-        if (dirtyUsername === user?.username || dirtyUsername.length < 3) {
-            return undefined
-        }
-        if (!usernameAvailable) {
-            return 'This username is already taken.'
-        }
-
-        if (validateUsername(dirtyUsername)) {
-            return undefined
-        }
-        return 'Your username must be between 1 and 16 characters and can only contain letters, numbers, and underscores.'
-    }, [dirtyUsername, usernameAvailable, user])
-
     const displayNameErrorMessage = useMemo(
         () => validateDisplayName(dirtyDisplayName).message,
         [dirtyDisplayName],
     )
+
+    const usernameError = useMemo(() => {
+        if (dirtyUsername === user?.username) {
+            return undefined
+        }
+        return usernameErrorMessage
+    }, [dirtyUsername, usernameErrorMessage, user])
 
     const saveButtonDisabled = useMemo(() => {
         return (
@@ -235,7 +218,7 @@ export const SetUsernameDisplayName = (props: { streamId: string }) => {
                     <EditableInputField
                         title="Username"
                         value={dirtyUsername}
-                        error={usernameErrorMessage}
+                        error={usernameError}
                         maxLength={16}
                         placeholder="Enter username"
                         onKeyDown={saveOnEnter}
@@ -310,70 +293,6 @@ export const SetUsernameDisplayName = (props: { streamId: string }) => {
                     setShowinEnsDisplayNameForm={setShowinEnsDisplayNameForm}
                     onHide={() => setShowinEnsDisplayNameForm(false)}
                 />
-            )}
-        </Stack>
-    )
-}
-
-const EditableInputField = (props: {
-    title: string
-    value: string
-    placeholder: string
-    error?: string
-    maxLength: number
-    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
-    onKeyDown?: (e: React.KeyboardEvent) => void
-}) => {
-    const { title, value, placeholder, error, maxLength, onChange, onKeyDown } = props
-    const charsRemaining = maxLength - value.length
-    const [isEditing, setIsEditing] = useState<boolean>(false)
-    const editingStateChanged = useCallback(
-        (active: boolean) => {
-            setIsEditing(active)
-        },
-        [setIsEditing],
-    )
-
-    const charLimitExceeded = charsRemaining < 0
-    return (
-        <Stack gap="paragraph">
-            <Text color="default" fontSize="sm" fontWeight="medium">
-                {title}
-            </Text>
-            <Stack horizontal gap alignItems="center" background="level3" rounded="sm">
-                <Box position="relative" width="100%">
-                    <TextField
-                        border
-                        width="100%"
-                        value={value}
-                        height="height_lg"
-                        paddingX="sm"
-                        placeholder={placeholder}
-                        // need to manually override paddingRight for the chars remaining to fit
-                        style={{ paddingRight: '20px' }}
-                        autoCorrect="off"
-                        onKeyDown={onKeyDown || noop}
-                        onChange={onChange}
-                        onFocus={() => editingStateChanged(true)}
-                        onBlur={() => editingStateChanged(false)}
-                    />
-                    <Box
-                        centerContent
-                        height="100%"
-                        position="absolute"
-                        right="sm"
-                        visibility={isEditing || charLimitExceeded ? 'visible' : 'hidden'}
-                    >
-                        <Text color={charLimitExceeded ? 'error' : 'gray2'} size="xs">
-                            {charsRemaining.toString()}
-                        </Text>
-                    </Box>
-                </Box>
-            </Stack>
-            {error && (
-                <Text color="error" size="sm">
-                    {error}
-                </Text>
             )}
         </Stack>
     )

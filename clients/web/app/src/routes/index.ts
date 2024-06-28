@@ -44,6 +44,7 @@ export const CHANNEL_INFO_PARAMS = {
     SPACE_SETTINGS_NAVIGATION: 'space-settings',
     PREPAID_MEMBERSHIPS: 'prepaid-memberships',
     NODE_STATUS: 'node-status',
+    MINT_BOT: 'mint-bot',
 } as const
 
 export type CHANNEL_INFO_PARAMS_VALUES =
