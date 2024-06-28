@@ -115,3 +115,5 @@ fi
 
 # kill notification service DB
 ./scripts/stop-local-notification-db.sh
+
+./scripts/stop-4337.sh

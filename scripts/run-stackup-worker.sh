@@ -59,7 +59,15 @@ if lsof -Pi :8686 -sTCP:LISTEN -t >/dev/null ; then
     echo "Previous stackup worker on 8686 killed."
 fi
 
-STACKUP_API_TOKEN=""
+# Save the current value of ENVIRONMENT to an override variable if it exists
+if [ -n "$ENVIRONMENT" ]; then
+  ENVIRONMENT_OVERRIDE="$ENVIRONMENT"
+fi
+
+if [ -n "$PAYMASTER_RPC_URL" ]; then
+  PAYMASTER_RPC_URL_OVERRIDE="$PAYMASTER_RPC_URL"
+fi
+
 PRIVY_APP_KEY=""
 ALCHEMY_API_KEY=""
 
@@ -75,28 +83,41 @@ else
     exit 1
 fi
 
+if [ -n "$ENVIRONMENT_OVERRIDE" ]; then
+  ENVIRONMENT="$ENVIRONMENT_OVERRIDE"
+fi
+
+if [ -n "$PAYMASTER_RPC_URL_OVERRIDE" ]; then
+  PAYMASTER_RPC_URL="$PAYMASTER_RPC_URL_OVERRIDE"
+fi
+
 # if variables are not present, throw an error
-if [ -z "$STACKUP_API_TOKEN" ]; then
-    echo "ERROR: Missing STACKUP_API_TOKEN in $DEV_VARS_FILE"
+if [ -z "$PAYMASTER_RPC_URL" ]; then
+    echo "ERROR: Missing PAYMASTER_RPC_URL"
     exit 1
 fi
 
 if [ -z "$PRIVY_APP_KEY" ]; then
-    echo "ERROR: Missing PRIVY_APP_KEY in $DEV_VARS_FILE"
+    echo "ERROR: Missing PRIVY_APP_KEY"
     exit 1
 fi
 
 if [ -z "$ALCHEMY_API_KEY" ]; then
-    echo "ERROR: Missing ALCHEMY_API_KEY in $DEV_VARS_FILE"
+    echo "ERROR: Missing ALCHEMY_API_KEY"
     exit 1
 fi
 
-echo "STACKUP_API_TOKEN: ${STACKUP_API_TOKEN}"
+echo "PAYMASTER_RPC_URL: ${PAYMASTER_RPC_URL}"
 echo "PRIVY_APP_KEY: ${PRIVY_APP_KEY}"
 echo "ALCHEMY_API_KEY: ${ALCHEMY_API_KEY}"
+echo "ENVIRONMENT: ${ENVIRONMENT}"
 
 # Define the yarn command without output redirection
-stackup_command="cd ./servers/workers/stackup-worker && yarn dev:local --var PAYMASTER_ADDRESS:0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789 STACKUP_API_TOKEN:$STACKUP_API_TOKEN PRIVY_APP_KEY:$PRIVY_APP_KEY PRIVY_APP_ID:clml5fp7s013vmf0fnkabuaiw ALCHEMY_API_KEY:$ALCHEMY_API_KEY AUTH_SECRET:foo ENVIRONMENT:test-beta"
+stackup_command="cd ./servers/workers/stackup-worker && yarn dev:local --var PAYMASTER_ADDRESS:0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789 PAYMASTER_RPC_URL:$PAYMASTER_RPC_URL PRIVY_APP_KEY:$PRIVY_APP_KEY PRIVY_APP_ID:clml5fp7s013vmf0fnkabuaiw ALCHEMY_API_KEY:$ALCHEMY_API_KEY AUTH_SECRET:foo"
+
+if [ -n "$ENVIRONMENT" ]; then
+    stackup_command="$stackup_command ENVIRONMENT:$ENVIRONMENT"
+fi
 
 # Only allow 1 of each tx type to be processed, additional should reject
 if [ "$PAYMASTER_LIMIT" = "true" ]; then
