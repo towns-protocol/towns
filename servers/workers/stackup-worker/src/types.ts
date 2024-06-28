@@ -240,7 +240,7 @@ const FunctionHash = {
 type FunctionHash = (typeof FunctionHash)[keyof typeof FunctionHash]
 
 export const Networks = {
-    anvil: 'anvil',
+    dev: 'dev',
     base_sepolia: 'base_sepolia',
     base: 'base',
 } as const

@@ -6,6 +6,7 @@ import { ContractName, EventName, FunctionName, Networks } from './types'
 import {
     BaseMainnetContracts,
     BaseSepoliaContracts,
+    LocalhostContracts,
     isSpaceSpecificContract,
     spaceSpecificContracts,
 } from './contractsMap'
@@ -30,6 +31,7 @@ const BaseSepoliaBlocksPerDay = 43200 // at 2s blocks
 const BaseMainnetBlocksPerDay = 43200 // at 2s blocks
 
 const NetworkContracts = new Map<Networks, Map<ContractName, ContractDetails>>([
+    ['dev', LocalhostContracts],
     ['base_sepolia', BaseSepoliaContracts],
     ['base', BaseMainnetContracts],
 ])

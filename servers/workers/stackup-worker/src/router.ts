@@ -30,8 +30,6 @@ import { UNKNOWN_ERROR } from '@river-build/web3'
 // can be 'payg' or 'erc20token'
 // see https://docs.stackup.sh/reference/pm-sponsoruseroperation
 const contextType = 'payg'
-// todo: move ot env var
-export const STACKUP_API_URL = 'https://api.stackup.sh/v1/paymaster'
 
 const router = Router()
 
@@ -613,7 +611,7 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
         type: { type: contextType },
     })
     console.log('stackup API request:', requestInit.body)
-    const responseFetched = await fetch(`${STACKUP_API_URL}/${env.STACKUP_API_TOKEN}`, requestInit)
+    const responseFetched = await fetch(`${env.PAYMASTER_RPC_URL}`, requestInit)
     if (responseFetched.status !== 200) {
         return new Response(toJson({ error: 'Invalid Paymaster Response' }), {
             status: responseFetched.status,

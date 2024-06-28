@@ -23,7 +23,7 @@ export interface Env extends AuthEnv {
     ADDRESS_WHITELIST: KVNamespace
     //JOIN_TOWN: KVNamespace // KV Namespace for joinTowns transactions
     //LINK_WALLET_TO_ROOT_KEY: KVNamespace // KV Namespace for linkWalletToRootKey transactions
-    STACKUP_API_TOKEN: string
+    PAYMASTER_RPC_URL: string
     PRIVY_APP_KEY: string
     PRIVY_APP_ID: string
     ALCHEMY_API_KEY: string

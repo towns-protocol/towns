@@ -15,13 +15,13 @@ const providerMap = new Map<Environment, string>([
 ])
 
 export const networkMap = new Map<Environment, Networks>([
-    ['development', 'anvil'],
+    ['development', 'dev'],
     ['test-beta', 'base_sepolia'],
     ['omega', 'base'],
 ])
 
 export const riverEnvMap = new Map<Environment, string>([
-    ['development', 'single'],
+    ['development', 'local_single'],
     ['test-beta', 'gamma'],
     ['omega', 'omega'],
 ])

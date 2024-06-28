@@ -1,11 +1,15 @@
 // ABIs - for now shared between mainnet and testnet
-import BaseSepoliaBanningAbi from '@river-build/generated/dev/abis/IBanning.abi.json' assert { type: 'json' }
-import BaseSepoliaChannelsAbi from '@river-build/generated/dev/abis/Channels.abi.json' assert { type: 'json' }
-import BaseSepoliaRolesAbi from '@river-build/generated/dev/abis/Roles.abi.json' assert { type: 'json' }
-import BaseSepoliaPrepayAbi from '@river-build/generated/dev/abis/PrepayFacet.abi.json' assert { type: 'json' }
-import BaseSepoliaMembershipAbi from '@river-build/generated/dev/abis/MembershipFacet.abi.json' assert { type: 'json' }
-import BaseSepoliaSpaceOwnerAbi from '@river-build/generated/dev/abis/SpaceOwner.abi.json' assert { type: 'json' }
-import BaseSepoliaWalletLinkAbi from '@river-build/generated/dev/abis/WalletLink.abi.json' assert { type: 'json' }
+import BanningAbi from '@river-build/generated/dev/abis/IBanning.abi.json' assert { type: 'json' }
+import ChannelsAbi from '@river-build/generated/dev/abis/Channels.abi.json' assert { type: 'json' }
+import RolesAbi from '@river-build/generated/dev/abis/Roles.abi.json' assert { type: 'json' }
+import PrepayAbi from '@river-build/generated/dev/abis/PrepayFacet.abi.json' assert { type: 'json' }
+import MembershipAbi from '@river-build/generated/dev/abis/MembershipFacet.abi.json' assert { type: 'json' }
+import SpaceOwnerAbi from '@river-build/generated/dev/abis/SpaceOwner.abi.json' assert { type: 'json' }
+import WalletLinkAbi from '@river-build/generated/dev/abis/WalletLink.abi.json' assert { type: 'json' }
+
+// Dev addresses
+import LocalhostSpaceOwnerContractAddress from '@river-build/generated/deployments/gamma/base/addresses/spaceOwner.json' assert { type: 'json' }
+import LocalhostSpaceFactoryContractAddress from '@river-build/generated/deployments/gamma/base/addresses/spaceFactory.json' assert { type: 'json' }
 
 // Base sepolia addresses
 import BaseSepoliaSpaceOwnerContractAddress from '@river-build/generated/deployments/gamma/base/addresses/spaceOwner.json' assert { type: 'json' }
@@ -51,50 +55,74 @@ type RequiredContracts = [
     [typeof ContractName.Membership, { address: undefined; abi: ethers.ContractInterface }],
 ]
 
-export const BaseSepoliaContracts = new Map<ContractName, ContractDetails>([
+export const LocalhostContracts = new Map<ContractName, ContractDetails>([
     [
         ContractName.SpaceOwner,
-        { address: BaseSepoliaSpaceOwnerContractAddress.address, abi: BaseSepoliaSpaceOwnerAbi },
+        { address: LocalhostSpaceOwnerContractAddress.address, abi: SpaceOwnerAbi },
     ],
     [
         ContractName.SpaceFactory,
-        { address: BaseSepoliaSpaceFactoryContractAddress.address, abi: BaseSepoliaSpaceOwnerAbi },
+        { address: LocalhostSpaceFactoryContractAddress.address, abi: SpaceOwnerAbi },
     ],
     [
         ContractName.WalletLink,
-        { address: BaseSepoliaSpaceFactoryContractAddress.address, abi: BaseSepoliaWalletLinkAbi },
+        { address: LocalhostSpaceFactoryContractAddress.address, abi: WalletLinkAbi },
     ],
     [
         ContractName.Prepay,
-        { address: BaseSepoliaSpaceFactoryContractAddress.address, abi: BaseSepoliaPrepayAbi }, //
+        { address: LocalhostSpaceFactoryContractAddress.address, abi: PrepayAbi }, //
     ],
     // space specific contracts, these addresses are derived during runtime
-    [ContractName.Channels, { address: undefined, abi: BaseSepoliaChannelsAbi }],
-    [ContractName.Roles, { address: undefined, abi: BaseSepoliaRolesAbi }],
-    [ContractName.Banning, { address: undefined, abi: BaseSepoliaBanningAbi }],
-    [ContractName.Membership, { address: undefined, abi: BaseSepoliaMembershipAbi }],
+    [ContractName.Channels, { address: undefined, abi: ChannelsAbi }],
+    [ContractName.Roles, { address: undefined, abi: RolesAbi }],
+    [ContractName.Banning, { address: undefined, abi: BanningAbi }],
+    [ContractName.Membership, { address: undefined, abi: MembershipAbi }],
+] satisfies RequiredContracts)
+
+export const BaseSepoliaContracts = new Map<ContractName, ContractDetails>([
+    [
+        ContractName.SpaceOwner,
+        { address: BaseSepoliaSpaceOwnerContractAddress.address, abi: SpaceOwnerAbi },
+    ],
+    [
+        ContractName.SpaceFactory,
+        { address: BaseSepoliaSpaceFactoryContractAddress.address, abi: SpaceOwnerAbi },
+    ],
+    [
+        ContractName.WalletLink,
+        { address: BaseSepoliaSpaceFactoryContractAddress.address, abi: WalletLinkAbi },
+    ],
+    [
+        ContractName.Prepay,
+        { address: BaseSepoliaSpaceFactoryContractAddress.address, abi: PrepayAbi }, //
+    ],
+    // space specific contracts, these addresses are derived during runtime
+    [ContractName.Channels, { address: undefined, abi: ChannelsAbi }],
+    [ContractName.Roles, { address: undefined, abi: RolesAbi }],
+    [ContractName.Banning, { address: undefined, abi: BanningAbi }],
+    [ContractName.Membership, { address: undefined, abi: MembershipAbi }],
 ] satisfies RequiredContracts)
 
 export const BaseMainnetContracts = new Map<ContractName, ContractDetails>([
     [
         ContractName.SpaceOwner,
-        { address: BaseMainnetSpaceOwnerContractAddress.address, abi: BaseSepoliaSpaceOwnerAbi },
+        { address: BaseMainnetSpaceOwnerContractAddress.address, abi: SpaceOwnerAbi },
     ],
     [
         ContractName.SpaceFactory,
-        { address: BaseMainnetSpaceFactoryContractAddress.address, abi: BaseSepoliaSpaceOwnerAbi },
+        { address: BaseMainnetSpaceFactoryContractAddress.address, abi: SpaceOwnerAbi },
     ],
     [
         ContractName.WalletLink,
-        { address: BaseMainnetSpaceFactoryContractAddress.address, abi: BaseSepoliaWalletLinkAbi },
+        { address: BaseMainnetSpaceFactoryContractAddress.address, abi: WalletLinkAbi },
     ],
     [
         ContractName.Prepay,
-        { address: BaseMainnetSpaceFactoryContractAddress.address, abi: BaseSepoliaPrepayAbi }, //
+        { address: BaseMainnetSpaceFactoryContractAddress.address, abi: PrepayAbi }, //
     ],
     // space specific contracts, these addresses are derived during runtime
-    [ContractName.Channels, { address: undefined, abi: BaseSepoliaChannelsAbi }],
-    [ContractName.Roles, { address: undefined, abi: BaseSepoliaRolesAbi }],
-    [ContractName.Banning, { address: undefined, abi: BaseSepoliaBanningAbi }],
-    [ContractName.Membership, { address: undefined, abi: BaseSepoliaMembershipAbi }],
+    [ContractName.Channels, { address: undefined, abi: ChannelsAbi }],
+    [ContractName.Roles, { address: undefined, abi: RolesAbi }],
+    [ContractName.Banning, { address: undefined, abi: BanningAbi }],
+    [ContractName.Membership, { address: undefined, abi: MembershipAbi }],
 ] satisfies RequiredContracts)
