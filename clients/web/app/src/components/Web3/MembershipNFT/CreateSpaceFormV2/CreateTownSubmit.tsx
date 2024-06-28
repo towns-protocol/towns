@@ -189,8 +189,8 @@ export function CreateTownSubmit({
                 const dynamicPricingModule = findDynamicPricingModule(pricingModules)
                 const fixedPricingModule = findFixedPricingModule(pricingModules)
 
-                if (!dynamicPricingModule || !fixedPricingModule) {
-                    console.warn('Cannot find dynamic pricing or fixed pricing modules')
+                if (!dynamicPricingModule && !fixedPricingModule) {
+                    console.warn('Cannot find either dynamic pricing or fixed pricing modules')
                     setPricingModuleError()
                     return
                 }
@@ -214,10 +214,14 @@ export function CreateTownSubmit({
                 }
 
                 let pricingModuleToSubmit: string
-                if (isFixedPricing) {
+                if (isFixedPricing && fixedPricingModule) {
                     pricingModuleToSubmit = await fixedPricingModule.module
-                } else {
+                } else if (dynamicPricingModule) {
                     pricingModuleToSubmit = await dynamicPricingModule.module
+                } else {
+                    console.warn('No pricing module found')
+                    setPricingModuleError()
+                    return
                 }
                 //////////////////////////////////////////
                 // check quantity

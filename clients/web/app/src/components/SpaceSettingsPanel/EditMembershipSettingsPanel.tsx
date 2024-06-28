@@ -298,8 +298,8 @@ function SubmitButton({
         const dynamicPricingModule = findDynamicPricingModule(pricingModules)
         const fixedPricingModule = findFixedPricingModule(pricingModules)
 
-        if (!dynamicPricingModule || !fixedPricingModule) {
-            console.warn('Cannot find dynamic pricing or fixed pricing modules')
+        if (!dynamicPricingModule && !fixedPricingModule) {
+            console.warn('Cannot find either dynamic pricing or fixed pricing modules')
             setPricingModuleError()
             return
         }
@@ -319,10 +319,14 @@ function SubmitButton({
         }
 
         let pricingModuleToSubmit: string
-        if (isFixedPricing) {
+        if (isFixedPricing && fixedPricingModule) {
             pricingModuleToSubmit = await fixedPricingModule.module
-        } else {
+        } else if (dynamicPricingModule) {
             pricingModuleToSubmit = await dynamicPricingModule.module
+        } else {
+            console.warn('No pricing module to submit')
+            setPricingModuleError()
+            return
         }
 
         //////////////////////////////////////////
