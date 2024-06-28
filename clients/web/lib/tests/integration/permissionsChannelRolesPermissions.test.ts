@@ -4,6 +4,7 @@
  */
 import {
     createTestChannelWithSpaceRoles,
+    createGatedChannel,
     createTestSpaceGatedByTownNft,
     createTestSpaceGatedByTownsNfts,
     registerAndStartClients,
@@ -12,8 +13,14 @@ import {
 } from 'use-towns-client/tests/integration/helpers/TestUtils'
 
 import { TestConstants } from './helpers/TestConstants'
-import { Permission, createExternalNFTStruct, getTestGatingNftAddress } from '@river-build/web3'
+import {
+    Permission,
+    createExternalNFTStruct,
+    getTestGatingNftAddress,
+    NoopRuleData,
+} from '@river-build/web3'
 import { RoleIdentifier } from '../../src/types/web3-types'
+import { Membership } from '../../src/types/towns-types'
 
 describe('channel with roles and permissions', () => {
     test('join token-gated channel', async () => {
@@ -44,6 +51,108 @@ describe('channel with roles and permissions', () => {
         // join the channel
         await tokenGrantedUser.joinTown(spaceId, tokenGrantedUser.wallet)
         await waitForWithRetries(() => tokenGrantedUser.joinRoom(channelId))
+    }) // end test
+
+    test('join token-gated channel with asset in linked wallet', async () => {
+        /** Arrange */
+
+        // create all the users for the test
+        const tokenGrantedUser = await registerAndStartClient(
+            'tokenGrantedUser',
+            TestConstants.getWalletWithTestGatingNft(),
+        )
+        const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
+        // create a space with token entitlement to read & write
+        await bob.fundWallet()
+        const spaceId = await createTestSpaceGatedByTownNft(bob, [
+            Permission.Read,
+            Permission.Write,
+        ])
+
+        const ruleData = createExternalNFTStruct([
+            await getTestGatingNftAddress(bob.opts.baseChainId),
+        ])
+
+        // create a channel gated by the test nft token
+        const channelId = await createGatedChannel(
+            bob,
+            {
+                name: 'gated channel',
+                parentSpaceId: spaceId,
+                roleIds: [],
+            },
+            [],
+            ruleData,
+        )
+
+        /** Act */
+
+        // Alice joins the town
+        await alice.joinTown(spaceId, alice.wallet)
+
+        // Alice cannot join the channel
+        await expect(alice.joinRoom(channelId)).rejects.toThrow(
+            new RegExp('Unauthorised|permission_denied'),
+        )
+
+        const tx = await alice.linkCallerToRootKey(
+            alice.provider.wallet,
+            tokenGrantedUser.provider.wallet,
+        )
+        await alice.waitWalletLinkTransaction(tx)
+
+        await waitForWithRetries(() => alice.joinRoom(channelId))
+    }) // end test
+
+    test('join token-gated channel with asset in root key wallet', async () => {
+        /** Arrange */
+
+        // create all the users for the test
+        const tokenGrantedUser = await registerAndStartClient(
+            'tokenGrantedUser',
+            TestConstants.getWalletWithTestGatingNft(),
+        )
+        const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
+        // create a space with token entitlement to read & write
+        await bob.fundWallet()
+        const spaceId = await createTestSpaceGatedByTownNft(bob, [
+            Permission.Read,
+            Permission.Write,
+        ])
+
+        const ruleData = createExternalNFTStruct([
+            await getTestGatingNftAddress(bob.opts.baseChainId),
+        ])
+
+        // create a channel gated by the test nft token
+        const channelId = await createGatedChannel(
+            bob,
+            {
+                name: 'gated channel',
+                parentSpaceId: spaceId,
+                roleIds: [],
+            },
+            [],
+            ruleData,
+        )
+
+        /** Act */
+
+        // Alice joins the town
+        await alice.joinTown(spaceId, alice.wallet)
+
+        // Alice cannot join the channel
+        await expect(alice.joinRoom(channelId)).rejects.toThrow(
+            new RegExp('Unauthorised|permission_denied'),
+        )
+
+        const tx = await tokenGrantedUser.linkCallerToRootKey(
+            tokenGrantedUser.provider.wallet,
+            alice.provider.wallet,
+        )
+        await tokenGrantedUser.waitWalletLinkTransaction(tx)
+
+        await waitForWithRetries(() => alice.joinRoom(channelId))
     }) // end test
 
     test('join Everyone channel', async () => {
@@ -113,5 +222,154 @@ describe('channel with roles and permissions', () => {
         await expect(bob.joinRoom(channelId)).rejects.toThrow(
             new RegExp('Unauthorised|permission_denied'),
         )
+    }) // end test
+
+    test('join user-gated channel with linked wallet address', async () => {
+        /** Arrange */
+
+        // create all the users for the test
+        const { alice, bob, carol } = await registerAndStartClients(['alice', 'bob', 'carol'])
+        // create a space with token entitlement to read & write
+        await bob.fundWallet()
+        const spaceId = await createTestSpaceGatedByTownNft(bob, [
+            Permission.Read,
+            Permission.Write,
+        ])
+
+        // create a channel gated by the test nft token
+        const channelId = await createGatedChannel(
+            bob,
+            {
+                name: 'gated channel',
+                parentSpaceId: spaceId,
+                roleIds: [],
+            },
+            [carol.wallet.address],
+            NoopRuleData,
+        )
+
+        /** Act */
+
+        // Alice joins the town
+        await alice.joinTown(spaceId, alice.wallet)
+
+        // Alice cannot join the channel
+        await expect(alice.joinRoom(channelId)).rejects.toThrow(
+            new RegExp('Unauthorised|permission_denied'),
+        )
+
+        const tx = await alice.linkCallerToRootKey(alice.provider.wallet, carol.provider.wallet)
+        await alice.waitWalletLinkTransaction(tx)
+
+        await waitForWithRetries(() => alice.joinRoom(channelId))
+    }) // end test
+
+    test('after entitlement loss, user is booted from channel on message send', async () => {
+        /** Arrange */
+
+        // create all the users for the test
+        const { alice, bob, carol } = await registerAndStartClients(['alice', 'bob', 'carol'])
+        // create a space with token entitlement to read & write
+        await bob.fundWallet()
+        const spaceId = await createTestSpaceGatedByTownNft(bob, [
+            Permission.Read,
+            Permission.Write,
+        ])
+
+        // create a channel gated by the test nft token
+        const channelId = await createGatedChannel(
+            bob,
+            {
+                name: 'gated channel',
+                parentSpaceId: spaceId,
+                roleIds: [],
+            },
+            [carol.wallet.address],
+            NoopRuleData,
+        )
+
+        /** Act */
+
+        // link alice and carol wallets
+        const txn = await alice.linkCallerToRootKey(alice.provider.wallet, carol.provider.wallet)
+        await alice.waitWalletLinkTransaction(txn)
+
+        // Alice joins the town
+        await alice.joinTown(spaceId, alice.wallet)
+
+        await alice.joinRoom(channelId)
+
+        // Remove the link between alice and carol wallets, causing Alice to lose her entitlement to the channel.
+        const tx = await alice.removeLink(alice.provider.wallet, carol.wallet.address)
+        await alice.waitWalletLinkTransaction(tx)
+
+        // Await 5s for cached entitlement to be cleared on the stream server.
+        // The subsequent message send should fail.
+        await new Promise((f) => setTimeout(f, 5000))
+
+        // Have alice send a message to the channel after losing her entitlement to the channel.
+        // Her message should be rejected and she should be booted from the channel.
+        await expect(alice.sendMessage(channelId, 'hello')).rejects.toThrow(
+            /Unauthorised|permission_denied/,
+        )
+
+        const aliceHasLeft = () =>
+            new Promise<void>((resolve, reject) => {
+                const membership = alice.getMembership(channelId)
+                if (membership === Membership.Leave) {
+                    resolve()
+                } else {
+                    reject()
+                }
+            })
+
+        // Expect alice to lose channel membership
+        await waitForWithRetries(aliceHasLeft)
+
+        // Again, Alice cannot join the channel
+        await expect(alice.joinRoom(channelId)).rejects.toThrow(
+            new RegExp('Unauthorised|permission_denied'),
+        )
+    }) // end test
+
+    test('join token-gated channel as linked wallet with root key whitelisted', async () => {
+        /** Arrange */
+
+        // create all the users for the test
+        const { alice, bob, carol } = await registerAndStartClients(['alice', 'bob', 'carol'])
+
+        // create a space with token entitlement to read & write
+        await bob.fundWallet()
+        const spaceId = await createTestSpaceGatedByTownNft(bob, [
+            Permission.Read,
+            Permission.Write,
+        ])
+
+        // create a channel gated by the test nft token
+        const channelId = await createGatedChannel(
+            bob,
+            {
+                name: 'gated channel',
+                parentSpaceId: spaceId,
+                roleIds: [],
+            },
+            [carol.wallet.address],
+            NoopRuleData,
+        )
+
+        /** Act */
+
+        // Alice joins the town
+        await alice.joinTown(spaceId, alice.wallet)
+
+        // Alice cannot join the channel
+        await expect(alice.joinRoom(channelId)).rejects.toThrow(
+            new RegExp('Unauthorised|permission_denied'),
+        )
+
+        const txn = await carol.linkCallerToRootKey(carol.provider.wallet, alice.provider.wallet)
+        await carol.waitWalletLinkTransaction(txn)
+
+        await waitForWithRetries(() => alice.joinRoom(channelId))
     }) // end test
 })

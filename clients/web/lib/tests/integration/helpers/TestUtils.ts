@@ -17,6 +17,7 @@ import {
     createOperationsTree,
     getTestGatingNftAddress,
     CheckOperationType,
+    IRuleEntitlement,
 } from '@river-build/web3'
 import { makeRiverConfig } from '@river-build/sdk'
 
@@ -281,6 +282,26 @@ export async function createTestChannelWithSpaceRoles(
     if (!streamId) {
         throw new Error('createTestChannelWithSpaceRoles failed : streamId is undefined')
     }
+    return streamId
+}
+
+export async function createGatedChannel(
+    client: TownsTestClient,
+    createChannelInfo: CreateChannelInfo,
+    users: string[],
+    ruleData: IRuleEntitlement.RuleDataStruct,
+): Promise<string> {
+    const roleId = await client.createRole(
+        createChannelInfo.parentSpaceId,
+        'gatedRole',
+        [Permission.Read, Permission.Write],
+        users,
+        ruleData,
+    )
+    expect(roleId).toBeDefined()
+    createChannelInfo.roleIds = [...createChannelInfo.roleIds, roleId!.roleId]
+    const streamId = await client.createChannel(createChannelInfo, client.provider.wallet)
+    expect(streamId).toBeDefined()
     return streamId
 }
 
