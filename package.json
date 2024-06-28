@@ -8,6 +8,7 @@
         "anvil": "yarn workspace @river-build/contracts exec anvil",
         "build": "turbo build",
         "cast": "yarn workspace @river-build/contracts exec cast",
+        "clean": "./scripts/yarn-clean.sh",
         "csb:build": "yarn workspace @river-build/proto run build && yarn workspace @river-build/dlog run build && yarn workspace @river-build/web3 run build && yarn workspace @river-build/encryption run build && yarn workspace @river-build/sdk run build && echo BUILD DONE || (echo BUILD ERROR; exit 1)",
         "csb:cb": "yarn csb:clean && yarn csb:build",
         "csb:clean": "yarn csb:command run clean",
