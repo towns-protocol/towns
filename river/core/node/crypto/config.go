@@ -119,20 +119,28 @@ type (
 	OnChainConfiguration interface {
 		// ActiveBlock returns the blocknumber of the active config
 		ActiveBlock() uint64
+
 		// GetUint64 returns the setting value for the given key that is active on the current block.
 		GetUint64(key ChainKey) (uint64, error)
 		// GetInt64 returns the setting value for the given key that is active on the current block.
 		GetInt64(key ChainKey) (int64, error)
 		// GetInt returns the setting value for the given key that is active on the current block.
 		GetInt(key ChainKey) (int, error)
+		// GetRawValue returns the raw value as stored in the RiverConfig smart contract. nil if the setting is not found.
+		GetRawValue(key ChainKey) []byte
+
 		// GetUint64OnBlock returns the setting value for the given key that is active on the given block number.
 		GetUint64OnBlock(blockNumber uint64, key ChainKey) (uint64, error)
 		// GetInt64OnBlock returns the setting value for the given key that is active on the given block number.
 		GetInt64OnBlock(blockNumber uint64, key ChainKey) (int64, error)
 		// GetIntOnBlock returns the setting value for the given key that is active on the given block number.
 		GetIntOnBlock(blockNumber uint64, key ChainKey) (int, error)
+		// GetRawValueOnBlock returns the raw value as stored in the RiverConfig smart contract. nil if the setting is not found.
+		GetRawValueOnBlock(blockNumber uint64, key ChainKey) []byte
+
 		// All returns the collection of all settings retrieved from the on-chain configuration facet
 		All() (*AllSettings, error)
+
 		// GetMinEventsPerSnapshot returns the minimum events in a stream before a snapshot is taken. If there is no
 		// special setting for the requested stream the default value is returned.
 		GetMinEventsPerSnapshot(streamType byte) (int, error)
@@ -165,6 +173,8 @@ type (
 		ActiveFromBlockNumber uint64
 		// Value holds the decoded value from the RiverConfig smart contract
 		Value any
+		// Raw holds the raw value as stored in the RiverConfig smart contract
+		Raw []byte
 	}
 
 	// settings represents a list of setting values.
@@ -254,7 +264,7 @@ func (occ *onChainConfiguration) loadFromChain(ctx context.Context, activeBlock 
 		if err != nil {
 			return err
 		}
-		occ.settings.Set(ctx, key, setting.BlockNumber, value)
+		occ.settings.Set(ctx, key, setting.BlockNumber, value, setting.Value)
 	}
 
 	return nil
@@ -277,7 +287,7 @@ func (occ *onChainConfiguration) loadMissing(ctx context.Context, activeBlock ui
 			"activeBlock", activeBlock,
 		)
 
-		occ.settings.Set(ctx, key, activeBlock, key.defaultValue)
+		occ.settings.Set(ctx, key, activeBlock, key.defaultValue, nil)
 	}
 }
 
@@ -315,7 +325,7 @@ func (occ *onChainConfiguration) onConfigChanged(ctx context.Context, event type
 				"tx", event.TxHash, "key", configKey.name, "err", err)
 			return
 		}
-		occ.settings.Set(ctx, configKey, e.Block, value)
+		occ.settings.Set(ctx, configKey, e.Block, value, e.Value)
 	}
 }
 
@@ -332,6 +342,11 @@ func (occ *onChainConfiguration) GetInt64(key ChainKey) (int64, error) {
 func (occ *onChainConfiguration) GetInt(key ChainKey) (int, error) {
 	blockNum := occ.activeBlock.Load()
 	return occ.GetIntOnBlock(blockNum, key)
+}
+
+func (occ *onChainConfiguration) GetRawValue(key ChainKey) []byte {
+	blockNum := occ.activeBlock.Load()
+	return occ.GetRawValueOnBlock(blockNum, key)
 }
 
 func (occ *onChainConfiguration) GetMinEventsPerSnapshot(streamType byte) (int, error) {
@@ -374,6 +389,14 @@ func (occ *onChainConfiguration) GetInt64OnBlock(blockNumber uint64, key ChainKe
 		return key.DefaultAsInt64(), nil
 	}
 	return setting.Int64()
+}
+
+func (occ *onChainConfiguration) GetRawValueOnBlock(blockNumber uint64, key ChainKey) []byte {
+	setting := occ.settings.getOnBlock(key, blockNumber)
+	if setting == nil {
+		return nil
+	}
+	return setting.Raw
 }
 
 func (occ *onChainConfiguration) All() (*AllSettings, error) {
@@ -420,7 +443,7 @@ func (ocs *onChainSettings) Remove(ctx context.Context, key chainKeyImpl, active
 
 // Set the given value to the settings identified by the given key for the
 // given block number.
-func (ocs *onChainSettings) Set(ctx context.Context, key chainKeyImpl, activeOnBlockNumber uint64, value any) {
+func (ocs *onChainSettings) Set(ctx context.Context, key chainKeyImpl, activeOnBlockNumber uint64, value any, raw []byte) {
 	var (
 		log   = dlog.FromCtx(ctx)
 		keyID = key.ID()
@@ -436,6 +459,7 @@ func (ocs *onChainSettings) Set(ctx context.Context, key chainKeyImpl, activeOnB
 			ocs.s[keyID][i] = &settingValue{
 				ActiveFromBlockNumber: activeOnBlockNumber,
 				Value:                 value,
+				Raw:                   raw,
 			}
 			log.Info("set chain config",
 				"key", key.Name(), "activationBlock", activeOnBlockNumber, "value", value)
@@ -446,6 +470,7 @@ func (ocs *onChainSettings) Set(ctx context.Context, key chainKeyImpl, activeOnB
 	ocs.s[keyID] = append(ocs.s[keyID], &settingValue{
 		ActiveFromBlockNumber: activeOnBlockNumber,
 		Value:                 value,
+		Raw:                   raw,
 	})
 	log.Info("set chain config", "key", key.Name(), "activationBlock", activeOnBlockNumber, "value", value)
 

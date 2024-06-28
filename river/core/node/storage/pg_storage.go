@@ -1058,22 +1058,6 @@ func DbSchemaNameForArchive(archiveId string) string {
 	return "arch" + strings.ToLower(archiveId)
 }
 
-func getDbURL(dbConfig *config.DatabaseConfig) string {
-	if dbConfig.Password != "" {
-		return fmt.Sprintf(
-			"postgresql://%s:%s@%s:%d/%s%s",
-			dbConfig.User,
-			dbConfig.Password,
-			dbConfig.Host,
-			dbConfig.Port,
-			dbConfig.Database,
-			dbConfig.Extra,
-		)
-	}
-
-	return dbConfig.Url
-}
-
 type PgxPoolInfo struct {
 	Pool   *pgxpool.Pool
 	Url    string
@@ -1086,7 +1070,7 @@ func createAndValidatePgxPool(
 	cfg *config.DatabaseConfig,
 	databaseSchemaName string,
 ) (*PgxPoolInfo, error) {
-	databaseUrl := getDbURL(cfg)
+	databaseUrl := cfg.GetUrl()
 
 	poolConf, err := pgxpool.ParseConfig(databaseUrl)
 	if err != nil {

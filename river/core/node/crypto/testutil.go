@@ -8,6 +8,7 @@ import (
 	"math/big"
 	"os"
 	"sync"
+	"testing"
 	"time"
 
 	"github.com/ethereum/go-ethereum"
@@ -17,6 +18,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/ethclient/simulated"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/contracts/river"
@@ -586,6 +589,36 @@ func (c *BlockchainTestContext) BlockNum(ctx context.Context) BlockNumber {
 		panic(err)
 	}
 	return BlockNumber(blockNum)
+}
+
+func (c *BlockchainTestContext) SetConfigValue(t *testing.T, ctx context.Context, key ChainKey, value []byte) {
+	blockNum := c.BlockNum(ctx)
+
+	pendingTx, err := c.DeployerBlockchain.TxPool.Submit(
+		ctx,
+		"SetConfiguration",
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			return c.Configuration.SetConfiguration(
+				opts,
+				key.ID(),
+				blockNum.AsUint64(),
+				value,
+			)
+		},
+	)
+	require.NoError(t, err)
+	receipt := <-pendingTx.Wait()
+	require.Equal(t, TransactionResultSuccess, receipt.Status)
+
+	require.EventuallyWithT(
+		t,
+		func(t *assert.CollectT) {
+			readValue := c.OnChainConfig.GetRawValueOnBlock(uint64(blockNum), key)
+			assert.Equal(t, value, readValue)
+		},
+		10*time.Second,
+		50*time.Millisecond,
+	)
 }
 
 // GetTestAddress returns a random common.Address that can be used in tests.

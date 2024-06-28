@@ -23,6 +23,10 @@ func GetTestDbUrl() string {
 }
 
 func DeleteTestSchema(ctx context.Context, dbUrl string, schemaName string) error {
+	if dbUrl == "" {
+		return nil
+	}
+
 	if os.Getenv("RIVER_TEST_DUMP_DB") != "" {
 		cmd := exec.Command(
 			"pg_dump",
@@ -49,11 +53,7 @@ func DeleteTestSchema(ctx context.Context, dbUrl string, schemaName string) erro
 	}
 	defer conn.Close()
 	_, err = conn.Exec(ctx, fmt.Sprintf("DROP SCHEMA IF EXISTS \"%s\" CASCADE", schemaName))
-	if err != nil {
-		fmt.Printf("Failed to drop schema: %v", err)
-		return err
-	}
-	return nil
+	return err
 }
 
 func StartDB(ctx context.Context) (*config.DatabaseConfig, string, func(), error) {
@@ -74,19 +74,20 @@ func StartDB(ctx context.Context) (*config.DatabaseConfig, string, func(), error
 			StartupDelay: 2 * time.Millisecond,
 		}, dbSchemaName, func() {}, nil
 	} else {
-		return &config.DatabaseConfig{
-				Host:                      "localhost",
-				Port:                      5433,
-				User:                      "postgres",
-				Password:                  "postgres",
-				Database:                  "river",
-				Extra:                     "?sslmode=disable&pool_max_conns=1000",
-				StreamingConnectionsRatio: 0.1,
-				StartupDelay:              2 * time.Millisecond,
-			},
+		cfg := &config.DatabaseConfig{
+			Host:                      "localhost",
+			Port:                      5433,
+			User:                      "postgres",
+			Password:                  "postgres",
+			Database:                  "river",
+			Extra:                     "?sslmode=disable&pool_max_conns=1000",
+			StreamingConnectionsRatio: 0.1,
+			StartupDelay:              2 * time.Millisecond,
+		}
+		return cfg,
 			dbSchemaName,
 			func() {
-				_ = DeleteTestSchema(ctx, dbUrl, dbSchemaName)
+				_ = DeleteTestSchema(ctx, cfg.GetUrl(), dbSchemaName)
 			},
 			nil
 	}

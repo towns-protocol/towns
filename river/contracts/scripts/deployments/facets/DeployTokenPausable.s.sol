@@ -2,7 +2,6 @@
 pragma solidity ^0.8.23;
 
 //interfaces
-import {ITokenOwnableBase} from "contracts/src/diamond/facets/ownable/token/ITokenOwnable.sol";
 
 //libraries
 

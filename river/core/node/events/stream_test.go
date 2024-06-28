@@ -83,7 +83,7 @@ func mbTest(
 	t *testing.T,
 	params mbTestParams,
 ) {
-	ctx, tt := makeTestStreamParams(testParams{replFactor: 1})
+	ctx, tt := makeTestStreamParams(t, testParams{replFactor: 1})
 	defer tt.closer()
 	require := require.New(t)
 

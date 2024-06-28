@@ -51,8 +51,14 @@ cleanup() {
 trap cleanup SIGINT SIGTERM
 
 # Fund the instances
-./fund_multi.sh
-
+# allow for defining a path to run an alternative fund_multi.sh script
+if [ -z "${PATH_TO_FUND_MULTI:-}" ]; then
+    echo "PATH_TO_FUND_MULTI environment variable is not set. Using default path."
+    ./fund_multi.sh
+else
+    echo "Using custom path: ${PATH_TO_FUND_MULTI}"
+    "${PATH_TO_FUND_MULTI}"
+fi
 
 # Loop to launch N instances from instance directories
 for (( i=1; i<=N; i++ ))

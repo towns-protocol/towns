@@ -2,10 +2,9 @@ package events
 
 import (
 	"context"
+	"testing"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/infra"
@@ -34,7 +33,7 @@ type testParams struct {
 	defaultMinEventsPerSnapshot   int
 }
 
-func makeTestStreamParams(p testParams) (context.Context, *testContext) {
+func makeTestStreamParams(t *testing.T, p testParams) (context.Context, *testContext) {
 	ctx, cancel := test.NewTestContext()
 	btc, err := crypto.NewBlockchainTestContext(ctx, 1, true)
 	if err != nil {
@@ -63,7 +62,7 @@ func makeTestStreamParams(p testParams) (context.Context, *testContext) {
 		panic(err)
 	}
 
-	setOnChainStreamConfig(ctx, btc, p)
+	setOnChainStreamConfig(t, ctx, btc, p)
 
 	sr := NewStreamRegistry(bc.Wallet.Address, nr, registry, btc.OnChainConfig)
 
@@ -94,57 +93,38 @@ func makeTestStreamParams(p testParams) (context.Context, *testContext) {
 		}
 }
 
-func setOnChainStreamConfig(ctx context.Context, btc *crypto.BlockchainTestContext, p testParams) {
-	setConfig := func(key crypto.ChainKey, blockNum uint64, value []byte) {
-		pendingTx, err := btc.DeployerBlockchain.TxPool.Submit(
-			ctx, "SetConfiguration", func(opts *bind.TransactOpts) (*types.Transaction, error) {
-				return btc.Configuration.SetConfiguration(
-					opts, key.ID(), blockNum, value)
-			})
-		if err != nil {
-			panic(err)
-		}
-
-		receipt := <-pendingTx.Wait()
-		if receipt.Status != crypto.TransactionResultSuccess {
-			panic("transaction failed")
-		}
-	}
-
+func setOnChainStreamConfig(t *testing.T, ctx context.Context, btc *crypto.BlockchainTestContext, p testParams) {
 	if p.replFactor != 0 {
-		setConfig(crypto.StreamReplicationFactorConfigKey, 0, crypto.ABIEncodeUint64(uint64(p.replFactor)))
+		btc.SetConfigValue(t, ctx, crypto.StreamReplicationFactorConfigKey, crypto.ABIEncodeUint64(uint64(p.replFactor)))
 	}
 	if p.mediaMaxChunkCount != 0 {
-		setConfig(crypto.StreamMediaMaxChunkCountConfigKey, 0, crypto.ABIEncodeUint64(uint64(p.mediaMaxChunkCount)))
+		btc.SetConfigValue(t, ctx, crypto.StreamMediaMaxChunkCountConfigKey, crypto.ABIEncodeUint64(uint64(p.mediaMaxChunkCount)))
 	}
 	if p.mediaMaxChunkSize != 0 {
-		setConfig(crypto.StreamMediaMaxChunkSizeConfigKey, 0, crypto.ABIEncodeUint64(uint64(p.mediaMaxChunkSize)))
+		btc.SetConfigValue(t, ctx, crypto.StreamMediaMaxChunkSizeConfigKey, crypto.ABIEncodeUint64(uint64(p.mediaMaxChunkSize)))
 	}
 	if p.recencyConstraintsGenerations != 0 {
-		setConfig(
+		btc.SetConfigValue(t, ctx,
 			crypto.StreamRecencyConstraintsGenerationsConfigKey,
-			0,
 			crypto.ABIEncodeUint64(uint64(p.recencyConstraintsGenerations)),
 		)
 	}
 	if p.recencyConstraintsAgeSec != 0 {
-		setConfig(
+		btc.SetConfigValue(t, ctx,
 			crypto.StreamRecencyConstraintsAgeSecConfigKey,
-			0,
 			crypto.ABIEncodeUint64(uint64(p.recencyConstraintsAgeSec)),
 		)
 	}
 	if p.defaultMinEventsPerSnapshot != 0 {
-		setConfig(
+		btc.SetConfigValue(t, ctx,
 			crypto.StreamDefaultMinEventsPerSnapshotConfigKey,
-			0,
 			crypto.ABIEncodeUint64(uint64(p.defaultMinEventsPerSnapshot)),
 		)
 	}
 }
 
-func makeTestStreamCache(p testParams) (context.Context, *testContext) {
-	ctx, testContext := makeTestStreamParams(p)
+func makeTestStreamCache(t *testing.T, p testParams) (context.Context, *testContext) {
+	ctx, testContext := makeTestStreamParams(t, p)
 
 	bc := testContext.bcTest.GetBlockchain(ctx, 0)
 

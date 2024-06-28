@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -187,6 +188,22 @@ type DatabaseConfig struct {
 	// If StandByOnStart is true, it's recommended to set it to the double of Config.ShutdownTimeout.
 	// If set to 0, then default value is used. To disable the delay set to 1ms or less.
 	StartupDelay time.Duration
+}
+
+func (c DatabaseConfig) GetUrl() string {
+	if c.Host != "" {
+		return fmt.Sprintf(
+			"postgresql://%s:%s@%s:%d/%s%s",
+			c.User,
+			c.Password,
+			c.Host,
+			c.Port,
+			c.Database,
+			c.Extra,
+		)
+	}
+
+	return c.Url
 }
 
 // TransactionPoolConfig specifies when it is time for a replacement transaction and its gas fee costs.

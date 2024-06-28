@@ -190,7 +190,7 @@ func leaveChannel_T(
 }
 
 func TestSpaceViewState(t *testing.T) {
-	ctx, tt := makeTestStreamCache(testParams{
+	ctx, tt := makeTestStreamCache(t, testParams{
 		defaultMinEventsPerSnapshot: 2,
 	})
 	defer tt.closer()
@@ -278,7 +278,7 @@ func spaceViewStateTest_CheckUserJoined(
 }
 
 func TestChannelViewState_JoinedMembers(t *testing.T) {
-	ctx, tt := makeTestStreamCache(testParams{
+	ctx, tt := makeTestStreamCache(t, testParams{
 		replFactor:                  1,
 		defaultMinEventsPerSnapshot: 2,
 	})
@@ -337,7 +337,7 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 }
 
 func TestChannelViewState_RemainingMembers(t *testing.T) {
-	ctx, tt := makeTestStreamCache(testParams{
+	ctx, tt := makeTestStreamCache(t, testParams{
 		replFactor:                  1,
 		defaultMinEventsPerSnapshot: 2,
 	})

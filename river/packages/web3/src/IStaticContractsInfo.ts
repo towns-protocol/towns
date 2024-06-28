@@ -11,6 +11,7 @@ export interface BaseChainConfig {
         mockNFT?: Address // mockErc721aAddress
         member?: Address // testGatingTokenAddress - For tesing token gating scenarios
     }
+    executionClient?: 'geth_dev' | undefined
 }
 
 export interface RiverChainConfig {

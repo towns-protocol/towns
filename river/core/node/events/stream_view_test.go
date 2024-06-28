@@ -281,8 +281,9 @@ func TestLoad(t *testing.T) {
 	assert.NoError(t, err)
 	// wait 2 second
 	time.Sleep(2 * time.Second)
+
 	// try with tighter recency constraints
-	setOnChainStreamConfig(ctx, btc, testParams{
+	setOnChainStreamConfig(t, ctx, btc, testParams{
 		recencyConstraintsGenerations: 5,
 		recencyConstraintsAgeSec:      1,
 	})
