@@ -175,7 +175,9 @@ export class MetricsExtractor {
         const numMissingNodesOnBase = missingNodesOnBase.length
         const numTotalNodesOnBase = nodesOnBase.length
         const numTotalNodesOnRiver = nodesOnRiver.length
-        const numTotalOperatorsOnBase = operatorsOnBase.length
+        const numTotalOperatorsOnBase = operatorsOnBase.filter(
+            (operator) => operator.status === 3, // 3 is the status for approved operators
+        ).length
         const numTotalOperatorsOnRiver = operatorsOnRiver.length
 
         return {
@@ -185,6 +187,8 @@ export class MetricsExtractor {
             combinedOperators,
             combinedNodesWithOperators,
             combinedOperatorsWithNodes,
+            nodesOnBase,
+            nodesOnRiver,
             aggregateNetworkStats: {
                 numTotalSpaces,
                 numTotalStreams,
