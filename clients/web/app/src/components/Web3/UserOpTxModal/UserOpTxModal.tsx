@@ -62,11 +62,7 @@ function UserOpTxModalContent({
     const { baseChainConfig } = useEnvironment()
     const walletPrefix = useWalletPrefix()
 
-    const {
-        data: isSmartAccountDeployed,
-        isLoading: isSmartAccountDeployedLoading,
-        error: isSmartAccountDeployedError,
-    } = useIsSmartAccountDeployed()
+    const { isLoading: isSmartAccountDeployedLoading } = useIsSmartAccountDeployed()
 
     const gasPrice = currOpGas?.maxFeePerGas ?? 0.0
     const gasLimit = currOpGas?.callGasLimit ?? 0.0
@@ -121,18 +117,6 @@ function UserOpTxModalContent({
 
         if (isSmartAccountDeployedLoading) {
             return <ButtonSpinner />
-        }
-
-        // Temporary, to be refactored w/ credit card integration
-        // https://linear.app/hnt-labs/issue/HNT-5529/revisit-the-smart-account-not-deployed-guard-in-useroptxmodal
-        if (isSmartAccountDeployedError || !isSmartAccountDeployed) {
-            return (
-                <>
-                    <Text color="error" size="sm">
-                        Smart wallet is not yet deployed.
-                    </Text>
-                </>
-            )
         }
 
         if (balanceIsLessThanCost) {

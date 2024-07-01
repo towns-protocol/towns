@@ -2,7 +2,6 @@ import { useQueries, useQuery } from '@tanstack/react-query'
 import { useCallback, useMemo } from 'react'
 import {
     Address,
-    LOCALHOST_CHAIN_ID,
     LookupUser,
     queryClient,
     staleTime24Hours,
@@ -12,7 +11,7 @@ import {
     useTownsContext,
     useUserLookupContext,
 } from 'use-towns-client'
-import { UserOps } from '@towns/userops'
+import { AccountAbstractionConfig, UserOps } from '@towns/userops'
 import { useEnvironment } from './useEnvironmnet'
 
 const queryKey = 'smartAccountAddress'
@@ -20,18 +19,17 @@ const queryKey = 'smartAccountAddress'
 function querySetup({
     rootKeyAddress,
     userOpsInstance,
-    chainId,
     cachedAddress,
     setOfflineWalletAddress,
+    accountAbstractionConfig,
 }: {
     rootKeyAddress: Address | undefined
     userOpsInstance: UserOps | undefined
-    chainId: number | undefined
     cachedAddress: Address | undefined
     setOfflineWalletAddress: (userId: string, abstractAccountAddress: string) => void
+    accountAbstractionConfig: AccountAbstractionConfig | undefined
 }) {
-    // checking chainId instead of townsClient.isAccountAbstractionEnabled b/c we might not have a townsClient if logged out
-    const isAccountAbstractionEnabled = chainId !== LOCALHOST_CHAIN_ID
+    const isAccountAbstractionEnabled = accountAbstractionConfig !== undefined
     return {
         queryKey: [queryKey, { isAccountAbstractionEnabled, rootKeyAddress }],
         queryFn: async () => {
@@ -74,8 +72,7 @@ export function useAbstractAccountAddress({
 }: {
     rootKeyAddress: Address | undefined
 }) {
-    const { baseChain } = useEnvironment()
-    const chainId = baseChain.id
+    const { accountAbstractionConfig } = useEnvironment()
     const userOpsInstance = useUserOpsInstance()
     const { offlineWalletAddressMap, setOfflineWalletAddress } = useOfflineStore()
 
@@ -87,7 +84,7 @@ export function useAbstractAccountAddress({
         ...querySetup({
             rootKeyAddress,
             userOpsInstance,
-            chainId,
+            accountAbstractionConfig,
             cachedAddress,
             setOfflineWalletAddress,
         }),
@@ -95,8 +92,7 @@ export function useAbstractAccountAddress({
 }
 
 export function useGetAbstractAccountAddressAsync() {
-    const { baseChain } = useEnvironment()
-    const chainId = baseChain.id
+    const { accountAbstractionConfig } = useEnvironment()
     const userOpsInstance = useUserOpsInstance()
     const { offlineWalletAddressMap, setOfflineWalletAddress } = useOfflineStore()
 
@@ -109,7 +105,7 @@ export function useGetAbstractAccountAddressAsync() {
             const qs = querySetup({
                 rootKeyAddress,
                 userOpsInstance,
-                chainId,
+                accountAbstractionConfig,
                 cachedAddress,
                 setOfflineWalletAddress,
             })
@@ -118,7 +114,12 @@ export function useGetAbstractAccountAddressAsync() {
                 queryFn: qs.queryFn,
             })
         },
-        [chainId, userOpsInstance, offlineWalletAddressMap, setOfflineWalletAddress],
+        [
+            userOpsInstance,
+            accountAbstractionConfig,
+            setOfflineWalletAddress,
+            offlineWalletAddressMap,
+        ],
     )
 }
 
@@ -128,8 +129,8 @@ export type LookupUserWithAbstractAccountAddress = LookupUser & {
 // TODO: we should move this into zustand - with lookupUser as a selector this
 // won't
 export function useLookupUsersWithAbstractAccountAddress() {
-    const { baseChain } = useEnvironment()
-    const chainId = baseChain.id
+    const { accountAbstractionConfig } = useEnvironment()
+
     const userOpsInstance = useUserOpsInstance()
     const { memberIds } = useSpaceMembers()
     const { offlineWalletAddressMap, setOfflineWalletAddress } = useOfflineStore()
@@ -141,7 +142,7 @@ export function useLookupUsersWithAbstractAccountAddress() {
             const cachedAddress = offlineWalletAddressMap[userId] as Address | undefined
             return {
                 ...querySetup({
-                    chainId,
+                    accountAbstractionConfig,
                     rootKeyAddress: userId as `0x${string}` | undefined,
                     userOpsInstance,
                     cachedAddress,

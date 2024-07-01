@@ -61,8 +61,73 @@
       "label": "Stage 3",
       "dependsOn": [
         "Apps and Workers",
+        "StackupWorker",
         "Casablanca Single",
         "XChainLaunchMulti",
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "problemMatcher": []
+    },
+    {
+      // same as start local dev but uses 4337 infra
+      // instead of anvil, base chain is using geth node
+      //
+      // 1. yarn install
+      // 2. start blockchains
+      // 3. configure nodes
+      // 4. starts all servers and clients
+      //
+      // it's important to do in this order since the servers
+      // and use the artifacts of the contracts in their builds
+      "label": "~ 4337: Start Local Dev~",
+      "dependsOn": [
+        "CheckVersions",
+        "FoundryUp",
+        "YarnInstall",
+        "4337: Stage 1",
+      ],
+      // Mark as the default build task so cmd/ctrl+shift+b will create them
+      "group": {
+        "kind": "build",
+      },
+      "dependsOrder": "sequence"
+    },
+    {
+      "label": "4337: Stage 1",
+      "dependsOn": [
+        "4337",
+        "RiverChain",
+        "4337: Stage 2"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+    },
+    {
+      "label": "4337: Stage 2",
+      "dependsOn": [
+        "WaitFor4337",
+        "4337: Configure Casablanca-Single",
+        "BuildProtobufs",
+        "4337: Stage 3"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "dependsOrder": "sequence"
+    },
+    {
+      "label": "4337: Stage 3",
+      "dependsOn": [
+        "Apps and Workers",
+        "4337: StackupWorker",
+        "Casablanca Single",
+        "4337: XChainLaunchMulti",
       ],
       "group": {
         "kind": "build",
@@ -76,6 +141,7 @@
         "CheckVersions",
         "YarnInstall",
         "Apps and Workers",
+        "StackupWorker",
       ],
       // Mark as the default build task so cmd/ctrl+shift+b will create them
       "group": {
@@ -86,6 +152,7 @@
     },
     {
       "label": "Apps and Workers",
+      // stackup worker excluded because it needs different configuration between 4337 and non-4337 local dev
       "dependsOn": [
         "Start Watches",
         "App",
@@ -93,7 +160,6 @@
         "UnfurlWorker",
         "TokenWorker",
         "GatewayWorker",
-        "StackupWorker",
         "NotificationService",
       ],
       "group": {
@@ -235,6 +301,18 @@
       }
     },
     {
+      "label": "4337: Configure Casablanca-Single",
+      "type": "shell",
+      "command": "BASE_EXECUTION_CLIENT=geth_dev ./river/scripts/configure-nodes.sh --single",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "ephemeral",
+        "focus": true,
+        "panel": "shared",
+      }
+    },
+    {
       "label": "Configure Casablanca-Single-No-Entitlements",
       "type": "shell",
       "command": "./river/scripts/configure-nodes.sh --single_ne",
@@ -304,9 +382,39 @@
       }
     },
     {
+      "label": "4337: XChainLaunchMulti",
+      "type": "shell",
+      "command": "sleep 1 && RUN_ENV=single PATH_TO_FUND_MULTI=${PWD}/scripts/fund_multi_for_geth.sh ./river/core/xchain/launch_multi.sh",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "xchain"
+      }
+    },
+    {
       "label": "BaseChain",
       "type": "shell",
       "command": "RIVER_BLOCK_TIME=1 ./river/scripts/start-local-basechain.sh",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-blockchains"
+      }
+    },
+    {
+      "label": "4337",
+      "type": "shell",
+      "command": "./scripts/start-4337.sh",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-blockchains"
+      }
+    },
+    {
+      "label": "WaitFor4337",
+      "type": "shell",
+      "command": "./scripts/wait-for-4337.sh",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -509,10 +617,22 @@
         "group": "local-workers"
       }
     },
+    // Non 4337 stackup worker does not work with anvil, thus it uses values in .dev.vars that should point to base sepolia
     {
       "label": "StackupWorker",
       "type": "shell",
-      "command": "sleep 5 && cd servers/workers/stackup-worker && yarn dev:local",
+      "command": "sleep 5 && ./scripts/run-stackup-worker.sh",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-workers"
+      }
+    },
+    // 4337: stackup worker works with local geth node
+    {
+      "label": "4337: StackupWorker",
+      "type": "shell",
+      "command": "sleep 5 && ./scripts/run-stackup-worker-development.sh",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -523,6 +643,18 @@
       "label": "KillAllLocalDev",
       "type": "shell",
       "command": "./scripts/kill-all-local-dev.sh -y",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "ephemeral",
+        "focus": true,
+        "panel": "shared",
+      }
+    },
+    {
+      "label": "Kill 4337",
+      "type": "shell",
+      "command": "./scripts/stop-4337.sh",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {

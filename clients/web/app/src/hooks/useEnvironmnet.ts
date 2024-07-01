@@ -104,31 +104,41 @@ function makeEnvironments(): TownsEnvironmentInfo[] {
         if (!riverChain) {
             continue
         }
-        // account abstraction only works on gamma or omega, add some tech debt to figure out
-        // how to support it elsewhere
-        const supportsAA = riverEnv === 'gamma' || riverEnv === 'omega'
-        // add the env
-        retVal.push({
+        const envInfo: TownsEnvironmentInfo = {
             id: riverEnv,
             name: riverEnv,
             baseChain,
             baseChainConfig: deployment.base,
             riverChain,
             riverChainConfig: deployment.river,
-            // account abstraction is a little tacked on, if the chain supports it, we add the config
-            // it should probably be tied to the deployment/riverEnv value instead
-            accountAbstractionConfig: supportsAA
-                ? {
-                      aaRpcUrl: baseChain.rpcUrls.default.http[0],
-                      bundlerUrl: env.VITE_AA_BUNDLER_URL,
-                      paymasterProxyUrl: env.VITE_AA_PAYMASTER_PROXY_URL,
-                      entryPointAddress: env.VITE_AA_ENTRY_POINT_ADDRESS,
-                      factoryAddress: env.VITE_AA_FACTORY_ADDRESS,
-                      paymasterProxyAuthSecret: env.VITE_AUTH_WORKER_HEADER_SECRET,
-                      skipPromptUserOnPMRejectedOp: false,
-                  }
-                : undefined,
-        } satisfies TownsEnvironmentInfo)
+        }
+
+        // Account abstraction works on gamma and omega
+        if (riverEnv === 'gamma' || riverEnv === 'omega') {
+            envInfo.accountAbstractionConfig = {
+                aaRpcUrl: baseChain.rpcUrls.default.http[0],
+                bundlerUrl: env.VITE_AA_BUNDLER_URL,
+                paymasterProxyUrl: env.VITE_AA_PAYMASTER_PROXY_URL,
+                entryPointAddress: env.VITE_AA_ENTRY_POINT_ADDRESS,
+                factoryAddress: env.VITE_AA_FACTORY_ADDRESS,
+                paymasterProxyAuthSecret: env.VITE_AUTH_WORKER_HEADER_SECRET,
+                skipPromptUserOnPMRejectedOp: false,
+            }
+        }
+        // Account abstraction only works on local nodes if running geth, not anvil
+        else if (deployment.base.executionClient === 'geth_dev') {
+            envInfo.accountAbstractionConfig = {
+                aaRpcUrl: 'http://localhost:8545',
+                bundlerUrl: 'http://localhost:43370',
+                paymasterProxyUrl: 'http://localhost:8686',
+                entryPointAddress: undefined, // uses default userop.js address
+                factoryAddress: undefined, // uses default userop.js address
+                paymasterProxyAuthSecret: env.VITE_AUTH_WORKER_HEADER_SECRET,
+                skipPromptUserOnPMRejectedOp: false,
+            }
+        }
+
+        retVal.push(envInfo)
     }
     return retVal
 }
