@@ -31,7 +31,7 @@ export const isForbiddenError = (error: Error): boolean => {
 export const getAppUrl = () => `${window.location.protocol}//${window.location.host}`
 
 export const getInviteUrl = ({ spaceId }: { spaceId: string | undefined }) =>
-    `${getAbsoluteSpaceUrl({ spaceId })}/?invite`
+    `${getAbsoluteSpaceUrl({ spaceId })}/`
 
 export const getAbsoluteSpaceUrl = ({ spaceId }: { spaceId: string | undefined }) =>
     spaceId ? `${getAppUrl()}/${PATHS.SPACES}/${spaceId}` : undefined

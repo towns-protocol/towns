@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useEvent } from 'react-use-event-hook'
 import {
@@ -9,17 +9,19 @@ import {
     useSpaceMembers,
 } from 'use-towns-client'
 import { AnimatePresence } from 'framer-motion'
+import { Link } from 'react-router-dom'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { PATHS } from 'routes'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
-import { Box, Icon, IconName, Paragraph, Stack } from '@ui'
-import { shortAddress } from 'ui/utils/utils'
+import { Box, Icon, IconButton, Paragraph, Stack } from '@ui'
+import { getInviteUrl } from 'ui/utils/utils'
 import { InteractiveSpaceIcon } from '@components/SpaceIcon'
-import { CopySpaceLink } from '@components/CopySpaceLink/CopySpaceLink'
-import { OpenInEtherscan } from '@components/Tooltips/OpenInEtherscan'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { baseScanUrl } from '@components/Web3/utils'
 import { useDevice } from 'hooks/useDevice'
+import useCopyToClipboard from 'hooks/useCopyToClipboard'
+import { SECOND_MS } from 'data/constants'
+import { FadeIn } from '@components/Transitions'
 import * as styles from './SpaceSideBar.css'
 
 export const SpaceSideBarHeader = (props: {
@@ -39,10 +41,6 @@ export const SpaceSideBarHeader = (props: {
     const membersCount = memberIds.length
 
     const navigate = useNavigate()
-
-    const onMembersClick = useEvent(() => {
-        navigate(`/${PATHS.SPACES}/${space.id}/members`)
-    })
 
     const onAddressClick = useEvent(() => {
         window.open(
@@ -67,7 +65,6 @@ export const SpaceSideBarHeader = (props: {
 
     const hasName = space && myMembership === Membership.Join && !!space.name
     const hasMembers = membersCount > 0
-    const hasAddress = !!spaceInfo?.address
 
     const size = useSizeContext()
     const isSmall = size.lessThan(200)
@@ -97,10 +94,10 @@ export const SpaceSideBarHeader = (props: {
                 </Box>
                 <Box centerContent width="x6" pointerEvents="auto">
                     <AnimatePresence>
-                        <CopySpaceLink
-                            spaceId={space.id}
-                            background="none"
-                            color={{ hover: 'default', default: 'gray2' }}
+                        <IconButton
+                            icon="etherscan"
+                            tooltip="Open Contract details"
+                            onClick={onAddressClick}
                         />
                     </AnimatePresence>
                 </Box>
@@ -112,7 +109,6 @@ export const SpaceSideBarHeader = (props: {
                 position="relative"
                 width="100%"
                 className={styles.spaceIconContainer}
-                insetBottom="sm" // cheating since sibling is sticky and needs more top space
                 onClick={onTokenClick}
             >
                 {space ? (
@@ -173,73 +169,72 @@ export const SpaceSideBarHeader = (props: {
                 </Stack>
             </Stack>
 
-            <>
-                <Stack paddingX="md" gap="sm" insetX="xs">
-                    <SidebarPill
-                        icon="people"
-                        label="Members"
-                        labelRight={hasMembers ? membersCount : 'fetching...'}
-                        onClick={onMembersClick}
-                    />
-                    <Box
-                        tooltip={<OpenInEtherscan />}
-                        tooltipOptions={{ placement: 'horizontal', align: 'end' }}
-                    >
-                        <SidebarPill
-                            icon="document"
-                            label="Address"
-                            labelRight={
-                                !hasAddress
-                                    ? `fetching...`
-                                    : isSmall
-                                    ? `${spaceInfo?.address.slice(
-                                          0,
-                                          4,
-                                      )}..${spaceInfo?.address.slice(-2)}`
-                                    : shortAddress(spaceInfo?.address)
-                            }
-                            onClick={onAddressClick}
-                        />
-                    </Box>
-                </Stack>
-            </>
+            <Stack gap paddingX insetX="xs">
+                <Paragraph textAlign="center" color="cta2" size="sm">
+                    <Link to={`/${PATHS.SPACES}/${space.id}/members`}>
+                        {hasMembers
+                            ? `${membersCount} member${membersCount > 1 ? 's' : ''}`
+                            : 'fetching members...'}
+                    </Link>
+                </Paragraph>
+                <ShareTownLinkButton spaceId={space.id} />
+            </Stack>
         </>
     )
 }
 
-const SidebarPill = (props: {
-    icon: IconName
-    label: string
-    labelRight: string | number
-    onClick?: () => void
-}) => {
+const ShareTownLinkButton = (props: { spaceId: string }) => {
+    const { spaceId } = props
+    const [, copy] = useCopyToClipboard()
+    const inviteUrl = getInviteUrl({ spaceId })
+    const [copyDisplay, setCopyDisplay] = useState(false)
+    const text = !copyDisplay ? `Share Town Link` : 'Town link copied'
+
+    const onCopyClick = useCallback(() => {
+        copy(inviteUrl)
+        setCopyDisplay(true)
+    }, [copy, inviteUrl])
+
+    useEffect(() => {
+        if (copyDisplay) {
+            const timeout = setTimeout(() => {
+                setCopyDisplay(false)
+            }, 3 * SECOND_MS)
+            return () => {
+                clearTimeout(timeout)
+            }
+        }
+    }, [copyDisplay])
+
     return (
-        <Stack
+        <Box
             horizontal
-            transition
             hoverable
-            background="level2"
+            centerContent
             gap="sm"
-            rounded="lg"
-            paddingX="md"
-            height="height_lg"
-            alignItems="center"
+            height="x5"
+            borderRadius="lg"
+            background="level2"
+            border={copyDisplay ? 'positive' : 'none'}
+            transition="default"
             cursor="pointer"
-            color="gray2"
-            position="relative"
-            onClick={props.onClick}
+            onClick={onCopyClick}
         >
-            <Box width="x3">
-                <Icon type={props.icon} size="square_md" padding="xxs" insetLeft="xxs" />
-            </Box>
             <AnimatePresence mode="sync">
-                <Paragraph size="sm">{props.label}</Paragraph>
-            </AnimatePresence>
-            <Stack horizontal grow alignItems="center" justifyContent="end">
-                <Paragraph size="sm" color="default" textAlign="right">
-                    {props.labelRight}
+                {!copyDisplay ? (
+                    <FadeIn>
+                        <Icon type="link" size="square_md" padding="xxs" />
+                    </FadeIn>
+                ) : (
+                    <FadeIn>
+                        <Icon type="check" size="square_md" padding="xxs" color="positive" />
+                    </FadeIn>
+                )}
+
+                <Paragraph size="sm" color={copyDisplay ? 'positive' : undefined}>
+                    {text}
                 </Paragraph>
-            </Stack>
-        </Stack>
+            </AnimatePresence>
+        </Box>
     )
 }
