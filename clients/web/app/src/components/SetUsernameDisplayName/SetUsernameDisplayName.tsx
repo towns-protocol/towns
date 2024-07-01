@@ -8,7 +8,7 @@ import {
 } from 'use-towns-client'
 import { isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
 import { toast } from 'react-hot-toast/headless'
-import { Box, Button, IconButton, Stack, Text, TextButton } from '@ui'
+import { Box, Button, Divider, IconButton, Stack, Text, TextButton } from '@ui'
 import { validateDisplayName, validateUsername } from '@components/SetUsernameForm/validateUsername'
 import { useSetUsername } from 'hooks/useSetUsername'
 import { EncryptedName } from '@components/EncryptedContent/EncryptedName'
@@ -376,7 +376,7 @@ const EnsDisplayNameModal = (props: {
         [lookupUser, myUserId, setSpaceUser, spaceId, streamId],
     )
 
-    const saveOnHide = useCallback(() => {
+    const onSave = useCallback(() => {
         if (!myUserId) {
             onHide()
             return
@@ -419,10 +419,10 @@ const EnsDisplayNameModal = (props: {
     ])
 
     return (
-        <ModalContainer asSheet maxWidth="400" onHide={saveOnHide}>
+        <ModalContainer asSheet maxWidth="400" onHide={onHide}>
             {!isTouch && (
                 <Box position="relative">
-                    <IconButton position="topRight" icon="close" onClick={saveOnHide} />
+                    <IconButton position="topRight" icon="close" onClick={onHide} />
                 </Box>
             )}
             <Stack gap alignItems="center" paddingTop="lg">
@@ -440,10 +440,7 @@ const EnsDisplayNameModal = (props: {
                                 key={ensName.wallet}
                                 label={ensName.ensName}
                                 checked={ensName.wallet === selectedEnsAddress}
-                                onSelectWallet={() => {
-                                    setSelectedEnsAddress(ensName.wallet)
-                                    setOptimisticEns(ensName.wallet, ensName.ensName)
-                                }}
+                                onSelectWallet={() => setSelectedEnsAddress(ensName.wallet)}
                             />
                         ))}
 
@@ -451,10 +448,7 @@ const EnsDisplayNameModal = (props: {
                             key="no-name"
                             label="None"
                             checked={selectedEnsAddress === undefined}
-                            onSelectWallet={() => {
-                                setSelectedEnsAddress(undefined)
-                                setOptimisticEns(undefined, undefined)
-                            }}
+                            onSelectWallet={() => setSelectedEnsAddress(undefined)}
                         />
                     </Stack>
                 ) : (
@@ -470,12 +464,26 @@ const EnsDisplayNameModal = (props: {
             </Stack>
 
             <Stack gap shrink={false} paddingTop="sm">
+                {hasEnsName && (
+                    <>
+                        <Button tone="cta1" width="100%" onClick={onSave}>
+                            Set ENS
+                        </Button>
+                        <Stack horizontal gap="sm" alignItems="center" width="100%">
+                            <Divider />
+                            <Text shrink={false} color="gray2" fontSize="sm">
+                                Or add a verified ENS
+                            </Text>
+                            <Divider />
+                        </Stack>
+                    </>
+                )}
                 <Button
                     tone={hasEnsName ? 'level2' : 'cta1'}
                     width="100%"
                     onClick={onViewLinkedWalletsClick}
                 >
-                    View Linked Wallets
+                    {hasEnsName ? 'View Linked Wallets' : 'Link a Wallet'}
                 </Button>
             </Stack>
         </ModalContainer>
