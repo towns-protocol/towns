@@ -11,7 +11,7 @@ import {
     SyncOp,
 } from '@river-build/proto'
 import { PlainMessage } from '@bufbuild/protobuf'
-import { StreamStateView } from './streamStateView'
+import { IStreamStateView } from './streamStateView'
 import { Client } from './client'
 import { makeBaseChainConfig, makeRiverChainConfig } from './riverConfig'
 import {
@@ -344,7 +344,7 @@ export async function createSpaceAndDefaultChannel(
 ): Promise<{
     spaceId: string
     defaultChannelId: string
-    userStreamView: StreamStateView
+    userStreamView: IStreamStateView
 }> {
     const transaction = await spaceDapp.createSpace(
         {

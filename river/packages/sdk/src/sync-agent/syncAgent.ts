@@ -1,5 +1,4 @@
-import { providers } from 'ethers'
-import { RiverConnection } from './river-connection/riverConnection'
+import { RiverConnection, RiverConnectionModel } from './river-connection/riverConnection'
 import { RiverConfig } from '../riverConfig'
 import { RiverRegistry, SpaceDapp } from '@river-build/web3'
 import { RetryParams } from '../makeStreamRpcClient'
@@ -7,7 +6,7 @@ import { Store } from '../store/store'
 import { SignerContext } from '../signerContext'
 import { userIdFromAddress } from '../id'
 import { StreamNodeUrlsModel } from './river-connection/models/streamNodeUrls'
-import { AuthStatus, User, UserModel } from './user/user'
+import { User, UserModel } from './user/user'
 import { makeBaseProvider, makeRiverProvider } from './utils/providers'
 import { UserMembershipsModel } from './user/models/userMemberships'
 import { RiverDbManager } from '../riverDbManager'
@@ -19,6 +18,7 @@ import { DB_MODELS, DB_VERSION } from './db'
 import { UserDeviceKeysModel } from './user/models/userDeviceKeys'
 import { UserSettingsModel } from './user/models/userSettings'
 import { Spaces, SpacesModel } from './spaces/spaces'
+import { AuthStatus } from './river-connection/models/authStatus'
 
 export interface SyncAgentConfig {
     context: SignerContext
@@ -31,10 +31,6 @@ export interface SyncAgentConfig {
 export class SyncAgent {
     userId: string
     config: SyncAgentConfig
-    baseProvider: providers.StaticJsonRpcProvider
-    riverProvider: providers.StaticJsonRpcProvider
-    spaceDapp: SpaceDapp
-    riverRegistryDapp: RiverRegistry
     riverConnection: RiverConnection
     store: Store
     user: User
@@ -42,10 +38,11 @@ export class SyncAgent {
 
     // flattened observables - just pointers to the observable objects in the models
     observables: {
+        riverAuthStatus: Observable<AuthStatus>
+        riverConnection: PersistedObservable<RiverConnectionModel>
         riverStreamNodeUrls: PersistedObservable<StreamNodeUrlsModel>
         spaces: PersistedObservable<SpacesModel>
         user: PersistedObservable<UserModel>
-        userAuthStatus: Observable<AuthStatus>
         userMemberships: PersistedObservable<UserMembershipsModel>
         userInbox: PersistedObservable<UserInboxModel>
         userDeviceKeys: PersistedObservable<UserDeviceKeysModel>
@@ -57,34 +54,36 @@ export class SyncAgent {
         this.config = config
         const base = config.riverConfig.base
         const river = config.riverConfig.river
-        this.baseProvider = makeBaseProvider(config.riverConfig)
-        this.riverProvider = makeRiverProvider(config.riverConfig)
+        const baseProvider = makeBaseProvider(config.riverConfig)
+        const riverProvider = makeRiverProvider(config.riverConfig)
         this.store = new Store(this.syncAgentDbName(), DB_VERSION, DB_MODELS)
         this.store.newTransactionGroup('SyncAgent::initalization')
-        this.spaceDapp = new SpaceDapp(base.chainConfig, this.baseProvider)
-        this.riverRegistryDapp = new RiverRegistry(river.chainConfig, this.riverProvider)
-        this.riverConnection = new RiverConnection(this.store, this.riverRegistryDapp, {
+        const spaceDapp = new SpaceDapp(base.chainConfig, baseProvider)
+        const riverRegistryDapp = new RiverRegistry(river.chainConfig, riverProvider)
+        this.riverConnection = new RiverConnection(this.store, spaceDapp, riverRegistryDapp, {
             signerContext: config.context,
             cryptoStore: RiverDbManager.getCryptoDb(this.userId, this.cryptoDbName()),
-            entitlementsDelegate: new Entitlements(this.config.riverConfig, this.spaceDapp),
+            entitlementsDelegate: new Entitlements(this.config.riverConfig, spaceDapp),
             persistenceStoreName: this.persistenceDbName(),
             logNamespaceFilter: undefined,
             highPriorityStreamIds: this.config.highPriorityStreamIds,
             rpcRetryParams: config.retryParams,
         })
-        this.user = new User(this.userId, this.store, this.riverConnection, this.spaceDapp)
-        this.spaces = new Spaces(this.riverConnection, this.user, this.store)
+
+        this.user = new User(this.userId, this.store, this.riverConnection)
+        this.spaces = new Spaces(this.store, this.riverConnection, this.user.memberships, spaceDapp)
 
         // flatten out the observables
         this.observables = {
+            riverAuthStatus: this.riverConnection.authStatus,
+            riverConnection: this.riverConnection,
             riverStreamNodeUrls: this.riverConnection.streamNodeUrls,
             spaces: this.spaces,
             user: this.user,
-            userAuthStatus: this.user.authStatus,
-            userMemberships: this.user.streams.memberships,
-            userInbox: this.user.streams.inbox,
-            userDeviceKeys: this.user.streams.deviceKeys,
-            userSettings: this.user.streams.settings,
+            userMemberships: this.user.memberships,
+            userInbox: this.user.inbox,
+            userDeviceKeys: this.user.deviceKeys,
+            userSettings: this.user.settings,
         }
     }
 

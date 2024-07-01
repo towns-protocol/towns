@@ -5,7 +5,7 @@ import { check, dlogger } from '@river-build/dlog'
 import { RiverConnection } from '../../river-connection/riverConnection'
 import { Client } from '../../../client'
 import { makeUserStreamId, streamIdFromBytes, userIdFromAddress } from '../../../id'
-import { StreamStateView } from '../../../streamStateView'
+import { IStreamStateView } from '../../../streamStateView'
 import { isDefined } from '../../../check'
 
 const logger = dlogger('csb:userMemberships')
@@ -67,7 +67,7 @@ export class UserMemberships extends PersistedObservable<UserMembershipsModel> {
         return this.isMember(streamId, MembershipOp.SO_JOIN)
     }
 
-    private initialize = (streamView: StreamStateView) => {
+    private initialize = (streamView: IStreamStateView) => {
         const memberships = Object.entries(streamView.userContent.streamMemberships).reduce(
             (acc, [streamId, payload]) => {
                 acc[streamId] = toUserMembership(payload)

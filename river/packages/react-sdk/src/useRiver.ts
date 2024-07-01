@@ -5,11 +5,7 @@ import { useSyncAgent } from './useSyncAgent'
 
 type SyncLens = SyncAgent['observables']
 
-// TODO: maybe we should call this useRiver?
-export function useSyncValue<T>(
-    fn: (sync: SyncLens) => Observable<T>,
-    config?: ObservableConfig<T>,
-) {
+export function useRiver<T>(fn: (sync: SyncLens) => Observable<T>, config?: ObservableConfig<T>) {
     const syncAgent = useSyncAgent()
-    return useObservable(syncAgent ? fn(syncAgent.observables) : undefined, config)
+    return useObservable(fn(syncAgent.observables), config)
 }

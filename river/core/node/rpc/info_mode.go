@@ -37,13 +37,7 @@ func (s *Service) startInfoMode() error {
 		return AsRiverError(err).Message("Failed to run http server").LogError(s.defaultLogger)
 	}
 
-	go s.riverChain.ChainMonitor.RunWithBlockPeriod(
-		s.serverCtx,
-		s.riverChain.Client,
-		s.riverChain.InitialBlockNum,
-		time.Duration(s.riverChain.Config.BlockTimeMs)*time.Millisecond,
-		s.metrics,
-	)
+	s.riverChain.StartChainMonitor(s.serverCtx)
 
 	s.registerDebugHandlers(s.config.EnableDebugEndpoints)
 

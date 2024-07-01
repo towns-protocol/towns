@@ -424,29 +424,6 @@ export default [
   },
   {
     "type": "function",
-    "name": "joinSpaceWithReferral",
-    "inputs": [
-      {
-        "name": "receiver",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "referrer",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "referralCode",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "payable"
-  },
-  {
-    "type": "function",
     "name": "name",
     "inputs": [],
     "outputs": [
@@ -1004,69 +981,6 @@ export default [
   },
   {
     "type": "event",
-    "name": "Membership__ReferralCreated",
-    "inputs": [
-      {
-        "name": "code",
-        "type": "uint256",
-        "indexed": true,
-        "internalType": "uint256"
-      },
-      {
-        "name": "bps",
-        "type": "uint16",
-        "indexed": false,
-        "internalType": "uint16"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "Membership__ReferralRemoved",
-    "inputs": [
-      {
-        "name": "code",
-        "type": "uint256",
-        "indexed": true,
-        "internalType": "uint256"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "Membership__ReferralTimeCreated",
-    "inputs": [
-      {
-        "name": "code",
-        "type": "uint256",
-        "indexed": true,
-        "internalType": "uint256"
-      },
-      {
-        "name": "bps",
-        "type": "uint16",
-        "indexed": false,
-        "internalType": "uint16"
-      },
-      {
-        "name": "startTime",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      },
-      {
-        "name": "endTime",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
     "name": "OwnershipTransferred",
     "inputs": [
       {
@@ -1503,21 +1417,6 @@ export default [
   {
     "type": "error",
     "name": "Membership__InvalidPricingModule",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "Membership__InvalidReferralBps",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "Membership__InvalidReferralCode",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "Membership__InvalidReferralTime",
     "inputs": []
   },
   {

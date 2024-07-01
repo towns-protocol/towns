@@ -101,10 +101,10 @@ func TestFlags(t *testing.T) {
 	pflags.Bool("bool_flag", false, "bool field")
 	pflags.String("str2_flag", "sub default", "string field")
 	pflags.Int("int2_flag", 21, "int field")
-	pflags.Set("str_flag", "hello flag")
-	pflags.Set("int_flag", "12345")
-	pflags.Set("bool_flag", "true")
-	pflags.Set("str2_flag", "sub hello")
+	require.NoError(pflags.Set("str_flag", "hello flag"))
+	require.NoError(pflags.Set("int_flag", "12345"))
+	require.NoError(pflags.Set("bool_flag", "true"))
+	require.NoError(pflags.Set("str2_flag", "sub hello"))
 
 	b, err := builder.NewConfigBuilder(defaultConfig(), "TEST")
 	require.NoError(err)
@@ -204,7 +204,7 @@ func TestAllTogether(t *testing.T) {
 	pflags := pflag.NewFlagSet("test", pflag.ContinueOnError)
 	pflags.String("extra1_flag", "default 1", "string field")
 	pflags.String("extra2_flag", "default 2", "string field")
-	pflags.Set("extra1_flag", "extra 111")
+	require.NoError(pflags.Set("extra1_flag", "extra 111"))
 
 	require.NoError(b.BindPFlag("Extra1", pflags.Lookup("extra1_flag")))
 	require.NoError(b.BindPFlag("Extra2", pflags.Lookup("extra2_flag")))
@@ -263,7 +263,7 @@ func TestAllTogether2(t *testing.T) {
 		[]string{"def"},
 		"Path to the configuration file. Can be specified multiple times. Values are applied in sequence.",
 	)
-	pflags.Set("config", "")
+	require.NoError(pflags.Set("config", ""))
 
 	require.Equal([]string{}, configFiles)
 }

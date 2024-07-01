@@ -1,16 +1,21 @@
-import { MembershipOp, Snapshot, SyncCookie } from '@river-build/proto'
+import { ChannelMessage, MembershipOp, Snapshot, SyncCookie } from '@river-build/proto'
 import { DLogger } from '@river-build/dlog'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
-import { StreamStateView } from './streamStateView'
-import { ParsedEvent, ParsedMiniblock, isLocalEvent } from './types'
+import { IStreamStateView, StreamStateView } from './streamStateView'
+import { LocalEventStatus, ParsedEvent, ParsedMiniblock, isLocalEvent } from './types'
 import { StreamEvents } from './streamEvents'
+import { DecryptedContent } from './encryptedContentTypes'
+import { DecryptionSessionError } from '@river-build/encryption'
 
 export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents>) {
     readonly clientEmitter: TypedEmitter<StreamEvents>
     readonly logEmitFromStream: DLogger
     readonly userId: string
-    view: StreamStateView
+    _view: StreamStateView
+    get view(): IStreamStateView {
+        return this._view
+    }
     private stopped = false
 
     constructor(
@@ -23,11 +28,11 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
         this.clientEmitter = clientEmitter
         this.logEmitFromStream = logEmitFromStream
         this.userId = userId
-        this.view = new StreamStateView(userId, streamId)
+        this._view = new StreamStateView(userId, streamId)
     }
 
     get streamId(): string {
-        return this.view.streamId
+        return this._view.streamId
     }
 
     /**
@@ -44,11 +49,11 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
         cleartexts: Record<string, string> | undefined,
     ): void {
         // grab any local events from the previous view that haven't been processed
-        const localEvents = this.view.timeline
+        const localEvents = this._view.timeline
             .filter(isLocalEvent)
             .filter((e) => e.hashStr.startsWith('~'))
-        this.view = new StreamStateView(this.userId, this.streamId)
-        this.view.initialize(
+        this._view = new StreamStateView(this.userId, this.streamId)
+        this._view.initialize(
             nextSyncCookie,
             minipoolEvents,
             snapshot,
@@ -71,7 +76,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
         nextSyncCookie: SyncCookie,
         cleartexts: Record<string, string> | undefined,
     ): Promise<void> {
-        this.view.appendEvents(events, nextSyncCookie, cleartexts, this)
+        this._view.appendEvents(events, nextSyncCookie, cleartexts, this)
     }
 
     prependEvents(
@@ -79,7 +84,23 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
         cleartexts: Record<string, string> | undefined,
         terminus: boolean,
     ) {
-        this.view.prependEvents(miniblocks, cleartexts, terminus, this, this)
+        this._view.prependEvents(miniblocks, cleartexts, terminus, this, this)
+    }
+
+    appendLocalEvent(channelMessage: ChannelMessage, status: LocalEventStatus) {
+        return this._view.appendLocalEvent(channelMessage, status, this)
+    }
+
+    updateDecryptedContent(eventId: string, content: DecryptedContent) {
+        return this._view.updateDecryptedContent(eventId, content, this)
+    }
+
+    updateDecryptedContentError(eventId: string, content: DecryptionSessionError) {
+        return this._view.updateDecryptedContentError(eventId, content, this)
+    }
+
+    updateLocalEvent(localId: string, parsedEventHash: string, status: LocalEventStatus) {
+        return this._view.updateLocalEvent(localId, parsedEventHash, status, this)
     }
 
     emit<E extends keyof StreamEvents>(event: E, ...args: Parameters<StreamEvents[E]>): boolean {
@@ -97,14 +118,14 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
      */
     public async waitForMembership(membership: MembershipOp, userId?: string) {
         // check to see if we're already in that state
-        if (this.view.getMembers().isMember(membership, userId ?? this.userId)) {
+        if (this._view.getMembers().isMember(membership, userId ?? this.userId)) {
             return
         }
         // wait for a membership updated event, event, check again
         await this.waitFor('streamMembershipUpdated', (_streamId: string, iUserId: string) => {
             return (
                 (userId === undefined || userId === iUserId) &&
-                this.view.getMembers().isMember(membership, userId ?? this.userId)
+                this._view.getMembers().isMember(membership, userId ?? this.userId)
             )
         })
     }

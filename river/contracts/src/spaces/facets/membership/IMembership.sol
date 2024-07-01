@@ -76,18 +76,6 @@ interface IMembership is IMembershipBase {
   function joinSpace(address receiver) external payable;
 
   /**
-   * @notice Join a space with a referral
-   * @param receiver The address of the receiver
-   * @param referrer The address of the referrer
-   * @param referralCode The referral code
-   */
-  function joinSpaceWithReferral(
-    address receiver,
-    address referrer,
-    uint256 referralCode
-  ) external payable;
-
-  /**
    * @notice Renew a space membership
    * @param tokenId The token id of the membership
    */

@@ -29,7 +29,6 @@ import {EntitlementGated} from "contracts/src/spaces/facets/gated/EntitlementGat
 contract MembershipFacet is
   IMembership,
   MembershipBase,
-  MembershipReferralBase,
   ERC5643Base,
   ReentrancyGuard,
   ERC721A,
@@ -194,51 +193,6 @@ contract MembershipFacet is
     // set expiration of membership
     _renewSubscription(tokenId, _getMembershipDuration());
     emit MembershipTokenIssued(receiver, tokenId);
-  }
-
-  /// @inheritdoc IMembership
-  function joinSpaceWithReferral(
-    address receiver,
-    address referrer,
-    uint256 referralCode
-  ) external payable nonReentrant {
-    _validateJoinSpace(receiver);
-
-    // get token id
-    uint256 tokenId = _nextTokenId();
-
-    // allocate protocol, membership and referral fees
-    uint256 membershipPrice = _getMembershipPrice(_totalSupply());
-
-    if (membershipPrice > 0) {
-      // set renewal price for referral
-      _setMembershipRenewalPrice(tokenId, membershipPrice);
-
-      uint256 protocolFee = _collectProtocolFee(receiver, membershipPrice);
-      uint256 surplus = membershipPrice - protocolFee;
-      address currency = _getMembershipCurrency();
-
-      if (surplus > 0) {
-        // calculate referral fee from net membership price
-        uint256 referralFee = _calculateReferralAmount(surplus, referralCode);
-        CurrencyTransfer.transferCurrency(
-          currency,
-          receiver,
-          referrer,
-          referralFee
-        );
-
-        // transfer remaining amount to fee recipient
-        uint256 recipientFee = surplus - referralFee;
-        if (recipientFee > 0) _transferIn(receiver, recipientFee);
-      }
-    }
-
-    // mint membership
-    _safeMint(receiver, 1);
-
-    // set expiration of membership
-    _renewSubscription(tokenId, _getMembershipDuration());
   }
 
   // =============================================================

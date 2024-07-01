@@ -180,16 +180,12 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
     }
 
     public onDecryptionError(item: EncryptedContentItem, err: DecryptionSessionError): void {
-        this.client.stream(item.streamId)?.view.updateDecryptedContentError(
-            item.eventId,
-            {
-                missingSession: err.missingSession,
-                kind: err.kind,
-                encryptedData: item.encryptedData,
-                error: err,
-            },
-            this.client,
-        )
+        this.client.stream(item.streamId)?.updateDecryptedContentError(item.eventId, {
+            missingSession: err.missingSession,
+            kind: err.kind,
+            encryptedData: item.encryptedData,
+            error: err,
+        })
     }
 
     public async ackNewGroupSession(

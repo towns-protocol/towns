@@ -4,7 +4,7 @@ import { UserDevice } from '@river-build/encryption'
 import { PersistedObservable, persistedObservable } from '../../../observable/persistedObservable'
 import { makeUserDeviceKeyStreamId } from '../../../id'
 import { RiverConnection } from '../../river-connection/riverConnection'
-import { StreamStateView } from '../../../streamStateView'
+import { IStreamStateView } from '../../../streamStateView'
 import { isDefined } from '../../../check'
 import { Client } from '../../../client'
 
@@ -68,7 +68,7 @@ export class UserDeviceKeys extends PersistedObservable<UserDeviceKeysModel> {
         }
     }
 
-    private initialize(deviceId: string, streamView: StreamStateView) {
+    private initialize(deviceId: string, streamView: IStreamStateView) {
         this.setData({
             initialized: true,
             deviceId,

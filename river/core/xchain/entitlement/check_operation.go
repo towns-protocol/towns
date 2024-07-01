@@ -23,10 +23,9 @@ func (e *Evaluator) evaluateCheckOperation(
 ) (bool, error) {
 	defer prometheus.NewTimer(e.evalHistrogram.WithLabelValues(op.CheckType.String())).ObserveDuration()
 
-	switch op.CheckType {
-	case MOCK:
+	if op.CheckType == MOCK {
 		return e.evaluateMockOperation(ctx, op)
-	case CheckNONE:
+	} else if op.CheckType == CheckNONE {
 		return false, fmt.Errorf("unknown operation")
 	}
 
@@ -51,6 +50,10 @@ func (e *Evaluator) evaluateCheckOperation(
 		return e.evaluateErc721Operation(ctx, op, linkedWallets)
 	case ERC1155:
 		return e.evaluateErc1155Operation(ctx, op)
+	case CheckNONE:
+		fallthrough
+	case MOCK:
+		fallthrough
 	default:
 		return false, fmt.Errorf("unknown operation")
 	}

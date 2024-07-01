@@ -85,6 +85,7 @@ func mbTest(
 ) {
 	ctx, tt := makeTestStreamParams(t, testParams{replFactor: 1})
 	defer tt.closer()
+	_ = tt.initCache(ctx)
 	require := require.New(t)
 
 	spaceStreamId := testutils.FakeStreamId(STREAM_SPACE_BIN)

@@ -4,9 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/crypto"
 	. "github.com/river-build/river/core/node/protocol"
@@ -128,32 +126,8 @@ func TestLoad(t *testing.T) {
 	// check snapshot generation
 	assert.Equal(t, false, view.shouldSnapshot(ctx, btc.OnChainConfig))
 
-	setStreamMinEventsPerSnapshot := func(key crypto.ChainKey, value int) {
-		blockNumber := btc.BlockNum(ctx)
-		require.NoError(t, err)
-
-		pendingTx, err := btc.DeployerBlockchain.TxPool.Submit(
-			ctx, "SetConfiguration", func(opts *bind.TransactOpts) (*types.Transaction, error) {
-				v := crypto.ABIEncodeInt64(int64(value))
-				return btc.Configuration.SetConfiguration(opts, key.ID(), blockNumber.AsUint64(), v)
-			})
-		require.NoError(t, err)
-		receipt := <-pendingTx.Wait()
-		require.Equal(t, crypto.TransactionResultSuccess, receipt.Status)
-
-		// wait for chain monitor to pick up the new configuration setting and apply them
-		for {
-			currentSetting, err := btc.OnChainConfig.GetInt(key)
-			require.NoError(t, err)
-			if currentSetting == value {
-				return
-			}
-			time.Sleep(10 * time.Millisecond)
-		}
-	}
-
 	// check per stream snapshot generation
-	setStreamMinEventsPerSnapshot(crypto.StreamMinEventsPerSnapshotUserConfigKey, 2)
+	btc.SetConfigValue(t, ctx, crypto.StreamMinEventsPerSnapshotUserConfigKey, crypto.ABIEncodeInt64(2))
 	assert.Equal(t, false, view.shouldSnapshot(ctx, btc.OnChainConfig))
 
 	blockHash := view.LastBlock().Hash
@@ -236,31 +210,7 @@ func TestLoad(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, len(newSV1.blocks), 2) // we should have both blocks in memory
 
-	pendingTx, err := btc.DeployerBlockchain.TxPool.Submit(
-		ctx,
-		"SetConfiguration",
-		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			blockNum := btc.BlockNum(ctx)
-			return btc.Configuration.SetConfiguration(
-				opts,
-				crypto.StreamRecencyConstraintsGenerationsConfigKey.ID(),
-				blockNum.AsUint64(),
-				crypto.ABIEncodeInt64(int64(0)),
-			)
-		},
-	)
-	require.NoError(t, err)
-	receipt := <-pendingTx.Wait()
-	require.Equal(t, crypto.TransactionResultSuccess, receipt.Status)
-	// wait for the chain monitor to apply the config change in the on chain configuration
-	for {
-		val, err := btc.OnChainConfig.GetInt(crypto.StreamRecencyConstraintsGenerationsConfigKey)
-		require.NoError(t, err)
-		if val == 0 {
-			break
-		}
-		time.Sleep(10 * time.Millisecond)
-	}
+	btc.SetConfigValue(t, ctx, crypto.StreamRecencyConstraintsGenerationsConfigKey, crypto.ABIEncodeInt64(0))
 
 	// with 0 generations (0 in memory block history)
 	newSV2, err := view.copyAndApplyBlock(miniblock, btc.OnChainConfig)

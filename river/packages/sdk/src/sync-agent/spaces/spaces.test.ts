@@ -2,30 +2,35 @@
  * @group with-entitilements
  */
 import { dlogger } from '@river-build/dlog'
-import { TestUser } from '../utils/testUser.test'
+import { Bot } from '../utils/bot'
+import { waitFor } from '../../util.test'
 
 const logger = dlogger('csb:test:spaces')
 
 describe('spaces.test.ts', () => {
     logger.log('start')
-    const testUser = new TestUser()
+    const testUser = new Bot()
 
     test('create/leave/join space', async () => {
         const syncAgent = await testUser.makeSyncAgent()
         await syncAgent.start()
         expect(syncAgent.spaces.value.status).not.toBe('loading')
-        const { spaceId } = await syncAgent.user.createSpace(
+        const { spaceId, defaultChannelId } = await syncAgent.spaces.createSpace(
             { spaceName: 'BlastOff' },
             testUser.signer,
         )
         expect(syncAgent.spaces.data.spaceIds.length).toBe(1)
         expect(syncAgent.spaces.data.spaceIds[0]).toBe(spaceId)
-        // expect(bob.spaces.getSpaces().length).toBe(1)
-        // expect(bob.spaces.getSpaces()[0].id).toBe(spaceId)
-        // expect(bob.spaces.getSpace(spaceId)).toBeDefined()
-        // const space = bob.spaces.getSpace(spaceId)!
-        // expect(space.data.spaceIds.length).toBe(1)
-        // await waitFor(() => expect(space.data.spaceIds.length).toBe(1)
+        expect(syncAgent.spaces.getSpace(spaceId)).toBeDefined()
+        const space = syncAgent.spaces.getSpace(spaceId)!
+        await waitFor(() => expect(space.value.status).not.toBe('loading'))
+        await waitFor(() => expect(space.data.channelIds.length).toBe(1))
+        expect(space.data.channelIds[0]).toBe(defaultChannelId)
+        expect(space.getChannel(defaultChannelId)).toBeDefined()
+        const channel = space.getChannel(defaultChannelId)
+        await channel.sendMessage('hello world')
+        expect(channel.timeline.events.value.length).toBeGreaterThan(1)
+        expect(channel.timeline.events.value.find((x) => x.text === 'hello world')).toBeDefined()
         await syncAgent.stop()
     })
 })

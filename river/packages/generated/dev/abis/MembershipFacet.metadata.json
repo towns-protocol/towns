@@ -270,21 +270,6 @@
       {
         "inputs": [],
         "type": "error",
-        "name": "Membership__InvalidReferralBps"
-      },
-      {
-        "inputs": [],
-        "type": "error",
-        "name": "Membership__InvalidReferralCode"
-      },
-      {
-        "inputs": [],
-        "type": "error",
-        "name": "Membership__InvalidReferralTime"
-      },
-      {
-        "inputs": [],
-        "type": "error",
         "name": "Membership__InvalidTokenId"
       },
       {
@@ -721,69 +706,6 @@
         ],
         "type": "event",
         "name": "MembershipWithdrawal",
-        "anonymous": false
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "uint256",
-            "name": "code",
-            "type": "uint256",
-            "indexed": true
-          },
-          {
-            "internalType": "uint16",
-            "name": "bps",
-            "type": "uint16",
-            "indexed": false
-          }
-        ],
-        "type": "event",
-        "name": "Membership__ReferralCreated",
-        "anonymous": false
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "uint256",
-            "name": "code",
-            "type": "uint256",
-            "indexed": true
-          }
-        ],
-        "type": "event",
-        "name": "Membership__ReferralRemoved",
-        "anonymous": false
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "uint256",
-            "name": "code",
-            "type": "uint256",
-            "indexed": true
-          },
-          {
-            "internalType": "uint16",
-            "name": "bps",
-            "type": "uint16",
-            "indexed": false
-          },
-          {
-            "internalType": "uint256",
-            "name": "startTime",
-            "type": "uint256",
-            "indexed": false
-          },
-          {
-            "internalType": "uint256",
-            "name": "endTime",
-            "type": "uint256",
-            "indexed": false
-          }
-        ],
-        "type": "event",
-        "name": "Membership__ReferralTimeCreated",
         "anonymous": false
       },
       {
@@ -1383,28 +1305,6 @@
         "name": "joinSpace"
       },
       {
-        "inputs": [
-          {
-            "internalType": "address",
-            "name": "receiver",
-            "type": "address"
-          },
-          {
-            "internalType": "address",
-            "name": "referrer",
-            "type": "address"
-          },
-          {
-            "internalType": "uint256",
-            "name": "referralCode",
-            "type": "uint256"
-          }
-        ],
-        "stateMutability": "payable",
-        "type": "function",
-        "name": "joinSpaceWithReferral"
-      },
-      {
         "inputs": [],
         "stateMutability": "view",
         "type": "function",
@@ -1752,13 +1652,6 @@
             "receiver": "The address of the receiver"
           }
         },
-        "joinSpaceWithReferral(address,address,uint256)": {
-          "params": {
-            "receiver": "The address of the receiver",
-            "referralCode": "The referral code",
-            "referrer": "The address of the referrer"
-          }
-        },
         "name()": {
           "details": "Returns the token collection name."
         },
@@ -1849,9 +1742,6 @@
         },
         "joinSpace(address)": {
           "notice": "Join a space"
-        },
-        "joinSpaceWithReferral(address,address,uint256)": {
-          "notice": "Join a space with a referral"
         },
         "renewMembership(uint256)": {
           "notice": "Renew a space membership"
@@ -2283,10 +2173,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/membership/IMembership.sol": {
-      "keccak256": "0x6412840e6051b909892e0ac881214235a18a290a39394a5462b54e0e0ab09a46",
+      "keccak256": "0x7fbf37c681ae95610ed376a30d68808b9da602a3225dbe1724dfe7c1c82de672",
       "urls": [
-        "bzz-raw://0a9a2be307336fd760d84d2adddf25a8ea10398672fb1447a299118649a9a544",
-        "dweb:/ipfs/QmR9553MSLHUw7mSN6M5dEuLBVfUb5g6tGoY6Xv7sGWaRs"
+        "bzz-raw://afa8d56cca2d01883595cfbd1a6aa3b63202ed25fb56ac1e57d3cf645665dd77",
+        "dweb:/ipfs/QmbLF87ZZCovJn3enbs78mcJu39zXi8FYum72fTufZt3e4"
       ],
       "license": "MIT"
     },
@@ -2299,10 +2189,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/membership/MembershipFacet.sol": {
-      "keccak256": "0xf654b24b573378ed3ebf1b808e9969a368408a483a788cf99773d1be3b1fd1a8",
+      "keccak256": "0x414de29e0f53e027c31008fbe4409515a542102743944e316a7f146e183d2427",
       "urls": [
-        "bzz-raw://491ffbd1415218f8e0f25849f680a4e6dc6a4f5ead7e593402e1c4712f197eef",
-        "dweb:/ipfs/QmUyArxLWHTjmirRUYxWabzhpZG5q9kaxG59W9uKDc71Kj"
+        "bzz-raw://ea972f69ab820b1a5032c45c086b4d8960c4a859e8f8c33ab08abd0ea5044a6a",
+        "dweb:/ipfs/QmYiishuJXayrxf4pVm9TX3jNQ2dvvBH9TMXVLJ9AWVns4"
       ],
       "license": "MIT"
     },

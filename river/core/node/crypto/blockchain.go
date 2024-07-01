@@ -2,13 +2,15 @@ package crypto
 
 import (
 	"context"
+	"math/big"
+	"time"
+
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/river-build/river/core/config"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/infra"
 	. "github.com/river-build/river/core/node/protocol"
-	"math/big"
 )
 
 // BlockchainClient is an interface that covers common functionality
@@ -48,6 +50,7 @@ type Blockchain struct {
 	Config          *config.ChainConfig
 	InitialBlockNum BlockNumber
 	ChainMonitor    ChainMonitor
+	Metrics         infra.MetricsFactory
 }
 
 // NewBlockchain creates a new Blockchain instance that
@@ -116,6 +119,7 @@ func NewBlockchainWithClient(
 		Config:          cfg,
 		InitialBlockNum: initialBlockNum,
 		ChainMonitor:    monitor,
+		Metrics:         metrics,
 	}
 
 	if wallet != nil {
@@ -142,4 +146,15 @@ func (b *Blockchain) GetBlockNumber(ctx context.Context) (BlockNumber, error) {
 		return 0, AsRiverError(err, Err_CANNOT_CONNECT).Message("Cannot retrieve block number").Func("GetBlockNumber")
 	}
 	return BlockNumber(n), nil
+}
+
+// TODO: refactor to start chain monitor in NewBlockchainWithClient
+func (b *Blockchain) StartChainMonitor(ctx context.Context) {
+	go b.ChainMonitor.RunWithBlockPeriod(
+		ctx,
+		b.Client,
+		b.InitialBlockNum,
+		time.Duration(b.Config.BlockTimeMs)*time.Millisecond,
+		b.Metrics,
+	)
 }

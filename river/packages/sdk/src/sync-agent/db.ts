@@ -1,4 +1,5 @@
 import { StreamNodeUrls } from './river-connection/models/streamNodeUrls'
+import { RiverConnection } from './river-connection/riverConnection'
 import { Channel } from './spaces/models/channel'
 import { Space } from './spaces/models/space'
 import { Spaces } from './spaces/spaces'
@@ -14,6 +15,7 @@ export const DB_MODELS = [
     Space,
     Spaces,
     StreamNodeUrls,
+    RiverConnection,
     User,
     UserDeviceKeys,
     UserInbox,

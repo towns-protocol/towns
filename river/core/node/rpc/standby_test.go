@@ -15,6 +15,8 @@ import (
 	"github.com/river-build/river/core/node/nodes"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/rpc/statusinfo"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func stanbyStartOpts() startOpts {
@@ -44,18 +46,17 @@ func getNodeStatus(url string) (*statusinfo.StatusResponse, error) {
 	return &status, nil
 }
 
-func pollStatus(url string, expected string) bool {
-	start := time.Now()
-	for {
-		st, err := getNodeStatus(url)
-		if err == nil && st.Status == expected {
-			return true
-		}
-		if time.Since(start) > 5*time.Second {
-			return false
-		}
-		time.Sleep(10 * time.Millisecond)
-	}
+func requireStatus(t *testing.T, url string, expected string) {
+	require.EventuallyWithT(
+		t,
+		func(t *assert.CollectT) {
+			st, err := getNodeStatus(url)
+			assert.NoError(t, err)
+			assert.Equal(t, expected, st.Status)
+		},
+		20*time.Second,
+		10*time.Millisecond,
+	)
 }
 
 func TestStandbySingle(t *testing.T) {
@@ -121,12 +122,12 @@ func TestStandbyEvictionByNlbSwitch(t *testing.T) {
 	require.Equal("OK", st2.Status)
 	require.Equal(st1.InstanceId, st2.InstanceId)
 
-	require.True(pollStatus(secondUrl, "STANDBY"))
+	requireStatus(t, secondUrl, "STANDBY")
 
 	// Emulate NLB switch
 	time.Sleep(50 * time.Millisecond) // Give some time for second instance to poll
 	redirectAddr.Store(&secondAddr)
-	require.True(pollStatus(secondUrl, "OK"))
+	requireStatus(t, secondUrl, "OK")
 
 	// Get status again through redirector URL
 	st3, err := getNodeStatus(tester.nodes[0].url)
@@ -170,21 +171,21 @@ func TestStandbyEvictionByUrlUpdate(t *testing.T) {
 
 	// Start the second node with same address
 	opts.listeners = []net.Listener{secondListener}
-	go func() { require.NoError(tester.startSingle(0, opts)) }()
+	go func() {
+		require.NoError(tester.startSingle(0, opts))
+	}()
 
 	// First node should be operational
 	st1, err := getNodeStatus(firstUrl)
 	require.NoError(err)
 	require.Equal("OK", st1.Status)
 
-	require.True(pollStatus(secondUrl, "STANDBY"))
-
-	time.Sleep(50 * time.Millisecond) // Give some time for second instance to poll
+	requireStatus(t, secondUrl, "STANDBY")
 
 	// While in practice this is not how this should happen (NLB should be used),
 	// standby mode should work even if URL is updated.
 	require.NoError(tester.btc.UpdateNodeUrl(tester.ctx, 0, secondUrl))
-	require.True(pollStatus(secondUrl, "OK"))
+	requireStatus(t, secondUrl, "OK")
 
 	st3, err := getNodeStatus(secondUrl)
 	require.NoError(err)

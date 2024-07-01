@@ -102,27 +102,37 @@ jobs:
                   restore-keys: |
                       ${{ runner.os }}-turbo-
 
+            - name: Setup Done
+              id: setup_success
+              run: echo "Setup done, running all checks..."
+
             - name: Syncpack
+              if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
               run: yarn syncpack:check
 
             - name: Build
+              id: ts_build
+              if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
               run: yarn build
 
             - name: Prettier
+              if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
               run: yarn prettier:check
 
             - name: Lint
+              if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
               run: yarn lint
 
             - name: Linting River Node
-              uses: golangci/golangci-lint-action@v3
+              if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
+              uses: golangci/golangci-lint-action@v6
               with:
                   version: latest
-                  working-directory: core/node
-                  skip-pkg-cache: true
-                  args: --timeout=10m
+                  working-directory: core
+                  args: --timeout=10m --config=.golangci.yml
 
             - name: Linting River Node W/ Custom Rules
+              if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
               run: |
                   cd core/node
                   ./lint_extensions.sh > river_lint_extensions.txt
@@ -133,10 +143,11 @@ jobs:
                   fi
 
             - name: Staticcheck River Node
+              if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
               uses: dominikh/staticcheck-action@v1
               with:
                   version: latest
-                  working-directory: core/node
+                  working-directory: core
                   install-go: false
 
             # - name: Terraform Lint
@@ -144,9 +155,11 @@ jobs:
             #   working-directory: ./infra
 
             - name: Build town types
+              if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
               run: ./scripts/build-contract-types.sh localhost --frozen
 
             - name: Unit Tests
+              if: ${{ !cancelled() && steps.setup_success.outcome == 'success' && steps.ts_build.outcome == 'success' }}
               run: yarn test:unit
 
     Client_NoEntitlements:

@@ -124,7 +124,12 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
                     isDefault: isDefaultChannelId(channelId),
                     updatedAtEventNum,
                 })
-                stateEmitter?.emit('spaceChannelUpdated', this.streamId, channelId)
+                stateEmitter?.emit(
+                    'spaceChannelUpdated',
+                    this.streamId,
+                    channelId,
+                    updatedAtEventNum,
+                )
                 break
             }
             default:

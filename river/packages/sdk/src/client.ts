@@ -72,7 +72,7 @@ import {
 } from './id'
 import { makeEvent, unpackMiniblock, unpackStream, unpackStreamEx } from './sign'
 import { StreamEvents } from './streamEvents'
-import { StreamStateView } from './streamStateView'
+import { IStreamStateView, StreamStateView } from './streamStateView'
 import {
     make_UserDeviceKeyPayload_Inception,
     make_ChannelPayload_Inception,
@@ -123,7 +123,7 @@ import { SyncedStream } from './syncedStream'
 import { SyncedStreamsExtension } from './syncedStreamsExtension'
 import { SignerContext } from './signerContext'
 
-type ClientEvents = StreamEvents & DecryptionEvents
+export type ClientEvents = StreamEvents & DecryptionEvents
 
 type SendChannelMessageOptions = {
     beforeSendEventHook?: Promise<void>
@@ -1178,7 +1178,7 @@ export class Client
     ): Promise<{ eventId: string }> {
         const stream = this.stream(streamId)
         check(stream !== undefined, 'stream not found')
-        const localId = stream.view.appendLocalEvent(payload, 'sending', this)
+        const localId = stream.appendLocalEvent(payload, 'sending')
         opts?.onLocalEventAppended?.(localId)
         if (opts?.beforeSendEventHook) {
             await opts?.beforeSendEventHook
@@ -1656,7 +1656,7 @@ export class Client
      *     that are in the room but that have been blocked.
      */
     async getDevicesInStream(stream_id: string): Promise<UserDeviceCollection> {
-        let stream: StreamStateView | undefined
+        let stream: IStreamStateView | undefined
         stream = this.stream(stream_id)?.view
         if (!stream || !stream.isInitialized) {
             stream = await this.getStream(stream_id)
@@ -1796,7 +1796,7 @@ export class Client
             // when we have a localId, we need to update the local event with the eventId
             const stream = this.streams.get(streamId)
             assert(stream !== undefined, 'unknown stream ' + streamIdAsString(streamId))
-            stream.view.updateLocalEvent(localId, eventId, 'sending', this)
+            stream.updateLocalEvent(localId, eventId, 'sending')
         }
 
         if (cleartext) {
@@ -1812,7 +1812,7 @@ export class Client
             })
             if (localId) {
                 const stream = this.streams.get(streamId)
-                stream?.view.updateLocalEvent(localId, eventId, 'sent', this)
+                stream?.updateLocalEvent(localId, eventId, 'sent')
             }
             return { prevMiniblockHash, eventId, error }
         } catch (err) {
@@ -1844,7 +1844,7 @@ export class Client
             } else {
                 if (localId) {
                     const stream = this.streams.get(streamId)
-                    stream?.view.updateLocalEvent(localId, eventId, 'failed', this)
+                    stream?.updateLocalEvent(localId, eventId, 'failed')
                 }
                 throw err
             }
@@ -1957,7 +1957,7 @@ export class Client
         check(isEncryptedContentKind(kind), `invalid kind ${kind}`)
         const cleartext = await this.cleartextForGroupEvent(streamId, eventId, encryptedData)
         const decryptedContent = toDecryptedContent(kind, cleartext)
-        stream.view.updateDecryptedContent(eventId, decryptedContent, this)
+        stream.updateDecryptedContent(eventId, decryptedContent)
     }
 
     private async cleartextForGroupEvent(

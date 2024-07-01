@@ -57,7 +57,40 @@ import { migrateSnapshot } from './migrations/migrateSnapshot'
 const log = dlog('csb:streams')
 const logError = dlogError('csb:streams:error')
 
-export class StreamStateView {
+// it's very important that the Stream is the emitter for all events
+// for any mutations, go through the stream
+export interface IStreamStateView {
+    readonly streamId: string
+    readonly userId: string
+    readonly contentKind: SnapshotCaseType
+    readonly timeline: StreamTimelineEvent[]
+    readonly events: Map<string, StreamTimelineEvent>
+    isInitialized: boolean
+    snapshot?: Snapshot
+    prevMiniblockHash?: Uint8Array
+    lastEventNum: bigint
+    prevSnapshotMiniblockNum: bigint
+    miniblockInfo?: { max: bigint; min: bigint; terminusReached: boolean }
+    syncCookie?: SyncCookie
+    membershipContent: StreamStateView_Members
+    get spaceContent(): StreamStateView_Space
+    get channelContent(): StreamStateView_Channel
+    get dmChannelContent(): StreamStateView_DMChannel
+    get gdmChannelContent(): StreamStateView_GDMChannel
+    get userContent(): StreamStateView_User
+    get userSettingsContent(): StreamStateView_UserSettings
+    get userDeviceKeyContent(): StreamStateView_UserDeviceKeys
+    get userInboxContent(): StreamStateView_UserInbox
+    get mediaContent(): StreamStateView_Media
+    getMembers(): StreamStateView_Members
+    getUserMetadata(): StreamStateView_UserMetadata
+    getChannelMetadata(): StreamStateView_ChannelMetadata | undefined
+    getContent(): StreamStateView_AbstractContent
+    userIsEntitledToKeyExchange(userId: string): boolean
+    getUsersEntitledToKeyExchange(): Set<string>
+}
+
+export class StreamStateView implements IStreamStateView {
     readonly streamId: string
     readonly userId: string
     readonly contentKind: SnapshotCaseType

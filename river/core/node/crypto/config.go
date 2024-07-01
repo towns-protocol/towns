@@ -235,7 +235,11 @@ func NewOnChainConfig(
 	// each time configuration stored on chain changed the ConfigurationChanged event is raised.
 	// Register a callback that updates the in-memory configuration when this happens.
 	chainMonitor.OnContractWithTopicsEvent(
-		appliedBlockNum+1, riverRegistry, [][]common.Hash{{cfgABI.Events["ConfigurationChanged"].ID}}, cfg.onConfigChanged)
+		appliedBlockNum+1,
+		riverRegistry,
+		[][]common.Hash{{cfgABI.Events["ConfigurationChanged"].ID}},
+		cfg.onConfigChanged,
+	)
 
 	return cfg, nil
 }
@@ -443,7 +447,13 @@ func (ocs *onChainSettings) Remove(ctx context.Context, key chainKeyImpl, active
 
 // Set the given value to the settings identified by the given key for the
 // given block number.
-func (ocs *onChainSettings) Set(ctx context.Context, key chainKeyImpl, activeOnBlockNumber uint64, value any, raw []byte) {
+func (ocs *onChainSettings) Set(
+	ctx context.Context,
+	key chainKeyImpl,
+	activeOnBlockNumber uint64,
+	value any,
+	raw []byte,
+) {
 	var (
 		log   = dlog.FromCtx(ctx)
 		keyID = key.ID()

@@ -1,7 +1,14 @@
-import { Client } from '../../../client'
+import { check, dlogger } from '@river-build/dlog'
+import { isDefined } from '../../../check'
+import { makeDefaultChannelStreamId, makeUniqueChannelStreamId } from '../../../id'
 import { PersistedObservable, persistedObservable } from '../../../observable/persistedObservable'
 import { Identifiable, Store } from '../../../store/store'
 import { RiverConnection } from '../../river-connection/riverConnection'
+import { Channel } from './channel'
+import { ethers } from 'ethers'
+import { SpaceDapp } from '@river-build/web3'
+
+const logger = dlogger('csb:space')
 
 export interface SpaceMetadata {
     name: string
@@ -9,21 +16,152 @@ export interface SpaceMetadata {
 
 export interface SpaceModel extends Identifiable {
     id: string
+    initialized: boolean
     channelIds: string[]
     metadata?: SpaceMetadata
 }
 
 @persistedObservable({ tableName: 'space' })
 export class Space extends PersistedObservable<SpaceModel> {
-    constructor(id: string, private riverConnection: RiverConnection, store: Store) {
-        super({ id, channelIds: [] }, store)
+    private channels: Record<string, Channel>
+    constructor(
+        id: string,
+        private riverConnection: RiverConnection,
+        store: Store,
+        private spaceDapp: SpaceDapp,
+    ) {
+        super({ id, channelIds: [], initialized: false }, store)
+        this.channels = {
+            [makeDefaultChannelStreamId(id)]: new Channel(
+                makeDefaultChannelStreamId(id),
+                id,
+                riverConnection,
+                store,
+            ),
+        }
     }
 
     protected override async onLoaded() {
-        this.riverConnection.registerView(this.onClientStarted)
+        this.riverConnection.registerView((client) => {
+            if (
+                client.streams.has(this.data.id) &&
+                client.streams.get(this.data.id)?.view.isInitialized
+            ) {
+                this.onStreamInitialized(this.data.id)
+            }
+            client.on('streamInitialized', this.onStreamInitialized)
+            client.on('spaceChannelCreated', this.onSpaceChannelCreated)
+            client.on('spaceChannelDeleted', this.onSpaceChannelDeleted)
+            client.on('spaceChannelUpdated', this.onSpaceChannelUpdated)
+            return () => {
+                client.off('spaceChannelCreated', this.onSpaceChannelCreated)
+                client.off('spaceChannelDeleted', this.onSpaceChannelDeleted)
+                client.off('spaceChannelUpdated', this.onSpaceChannelUpdated)
+                client.off('streamInitialized', this.onStreamInitialized)
+            }
+        })
     }
 
-    private onClientStarted = (_client: Client) => {
-        return () => {}
+    async join(signer: ethers.Signer, opts?: { skipMintMembership?: boolean }) {
+        const spaceId = this.data.id
+        if (opts?.skipMintMembership !== true) {
+            const { issued } = await this.spaceDapp.joinSpace(
+                spaceId,
+                this.riverConnection.userId,
+                signer,
+            )
+            logger.log('joinSpace transaction', issued)
+        }
+        await this.riverConnection.login({ spaceId })
+        await this.riverConnection.call(async (client) => {
+            await client.joinStream(spaceId)
+            await client.joinStream(makeDefaultChannelStreamId(spaceId))
+        })
+    }
+
+    async createChannel(channelName: string, signer: ethers.Signer) {
+        const spaceId = this.data.id
+        const channelId = makeUniqueChannelStreamId(spaceId)
+        const roles = await this.spaceDapp.getRoles(spaceId)
+        const tx = await this.spaceDapp.createChannel(
+            spaceId,
+            channelName,
+            '',
+            channelId,
+            roles.filter((role) => role.name !== 'Owner').map((role) => role.roleId),
+            signer,
+        )
+        const receipt = await tx.wait()
+        logger.log('createChannel receipt', receipt)
+        await this.riverConnection.call((client) =>
+            client.createChannel(spaceId, channelName, '', channelId),
+        )
+        return channelId
+    }
+
+    getChannel(channelId: string): Channel {
+        if (!this.channels[channelId]) {
+            this.channels[channelId] = new Channel(
+                channelId,
+                this.data.id,
+                this.riverConnection,
+                this.store,
+            )
+        }
+        return this.channels[channelId]
+    }
+
+    getDefaultChannel(): Channel {
+        return this.channels[makeDefaultChannelStreamId(this.data.id)]
+    }
+
+    private onStreamInitialized = (streamId: string) => {
+        if (this.data.id === streamId) {
+            const stream = this.riverConnection.client?.stream(streamId)
+            check(isDefined(stream), 'stream is not defined')
+            const channelIds = stream.view.spaceContent.spaceChannelsMetadata.keys()
+            for (const channelId of channelIds) {
+                if (!this.channels[channelId]) {
+                    this.channels[channelId] = new Channel(
+                        channelId,
+                        this.data.id,
+                        this.riverConnection,
+                        this.store,
+                    )
+                }
+            }
+            this.setData({ initialized: true })
+        }
+    }
+
+    private onSpaceChannelCreated = (streamId: string, channelId: string) => {
+        if (streamId === this.data.id) {
+            if (!this.channels[channelId]) {
+                this.channels[channelId] = new Channel(
+                    channelId,
+                    this.data.id,
+                    this.riverConnection,
+                    this.store,
+                )
+            }
+            this.setData({ channelIds: [...this.data.channelIds, channelId] })
+        }
+    }
+
+    private onSpaceChannelDeleted = (streamId: string, channelId: string) => {
+        if (streamId === this.data.id) {
+            delete this.channels[channelId]
+            this.setData({ channelIds: this.data.channelIds.filter((id) => id !== channelId) })
+        }
+    }
+
+    private onSpaceChannelUpdated = (
+        streamId: string,
+        _channelId: string,
+        _updatedAtEventNum: bigint,
+    ) => {
+        if (streamId === this.data.id) {
+            // refetch the channel data from on chain
+        }
     }
 }

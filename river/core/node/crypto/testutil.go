@@ -472,13 +472,7 @@ func makeTestBlockchain(
 		panic(err)
 	}
 
-	go bc.ChainMonitor.RunWithBlockPeriod(
-		ctx,
-		client,
-		bc.InitialBlockNum,
-		100*time.Millisecond,
-		infra.NewMetrics("", ""),
-	)
+	bc.StartChainMonitor(ctx)
 
 	return bc
 }

@@ -3,10 +3,10 @@
  */
 
 import { waitFor } from '../../util.test'
-import { TestUser } from '../utils/testUser.test'
+import { Bot } from '../utils/bot'
 
 describe('RiverConnection.test.ts', () => {
-    const testUser = new TestUser()
+    const testUser = new Bot()
 
     // test that a riverConnection will eventually be defined if passed valid config
     test('riverConnection initializes from empty', async () => {
@@ -28,7 +28,7 @@ describe('RiverConnection.test.ts', () => {
             expect(riverConnection.client).toBeDefined()
         })
         await waitFor(() => {
-            expect(riverConnection.streamNodeUrls.value.status).toBe('saved')
+            expect(riverConnection.streamNodeUrls.value.status).toBe('loaded')
         })
         // cleanup
         await syncAgent.stop()

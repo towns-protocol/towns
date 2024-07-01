@@ -190,10 +190,11 @@ func leaveChannel_T(
 }
 
 func TestSpaceViewState(t *testing.T) {
-	ctx, tt := makeTestStreamCache(t, testParams{
+	ctx, tt := makeTestStreamParams(t, testParams{
 		defaultMinEventsPerSnapshot: 2,
 	})
 	defer tt.closer()
+	_ = tt.initCache(ctx)
 
 	user1Wallet, _ := crypto.NewWallet(ctx)
 	user2Wallet, _ := crypto.NewWallet(ctx)
@@ -278,11 +279,12 @@ func spaceViewStateTest_CheckUserJoined(
 }
 
 func TestChannelViewState_JoinedMembers(t *testing.T) {
-	ctx, tt := makeTestStreamCache(t, testParams{
+	ctx, tt := makeTestStreamParams(t, testParams{
 		replFactor:                  1,
 		defaultMinEventsPerSnapshot: 2,
 	})
 	defer tt.closer()
+	_ = tt.initCache(ctx)
 
 	userWallet, _ := crypto.NewWallet(ctx)
 	aliceWallet, _ := crypto.NewWallet(ctx)
@@ -337,11 +339,12 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 }
 
 func TestChannelViewState_RemainingMembers(t *testing.T) {
-	ctx, tt := makeTestStreamCache(t, testParams{
+	ctx, tt := makeTestStreamParams(t, testParams{
 		replFactor:                  1,
 		defaultMinEventsPerSnapshot: 2,
 	})
 	defer tt.closer()
+	_ = tt.initCache(ctx)
 
 	userWallet, _ := crypto.NewWallet(ctx)
 	aliceWallet, _ := crypto.NewWallet(ctx)

@@ -144,7 +144,6 @@ export interface MembershipFacetInterface extends utils.Interface {
     "getSpaceFactory()": FunctionFragment;
     "isApprovedForAll(address,address)": FunctionFragment;
     "joinSpace(address)": FunctionFragment;
-    "joinSpaceWithReferral(address,address,uint256)": FunctionFragment;
     "name()": FunctionFragment;
     "ownerOf(uint256)": FunctionFragment;
     "postEntitlementCheckResult(bytes32,uint256,uint8)": FunctionFragment;
@@ -185,7 +184,6 @@ export interface MembershipFacetInterface extends utils.Interface {
       | "getSpaceFactory"
       | "isApprovedForAll"
       | "joinSpace"
-      | "joinSpaceWithReferral"
       | "name"
       | "ownerOf"
       | "postEntitlementCheckResult"
@@ -280,14 +278,6 @@ export interface MembershipFacetInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "joinSpace",
     values: [PromiseOrValue<string>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "joinSpaceWithReferral",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>
-    ]
   ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
   encodeFunctionData(
@@ -433,10 +423,6 @@ export interface MembershipFacetInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "joinSpace", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "joinSpaceWithReferral",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "ownerOf", data: BytesLike): Result;
   decodeFunctionResult(
@@ -508,9 +494,6 @@ export interface MembershipFacetInterface extends utils.Interface {
     "MembershipTokenIssued(address,uint256)": EventFragment;
     "MembershipTokenRejected(address)": EventFragment;
     "MembershipWithdrawal(address,uint256)": EventFragment;
-    "Membership__ReferralCreated(uint256,uint16)": EventFragment;
-    "Membership__ReferralRemoved(uint256)": EventFragment;
-    "Membership__ReferralTimeCreated(uint256,uint16,uint256,uint256)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
     "Paused(address)": EventFragment;
     "Prepay__Prepaid(uint256)": EventFragment;
@@ -545,15 +528,6 @@ export interface MembershipFacetInterface extends utils.Interface {
   getEvent(nameOrSignatureOrTopic: "MembershipTokenIssued"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "MembershipTokenRejected"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "MembershipWithdrawal"): EventFragment;
-  getEvent(
-    nameOrSignatureOrTopic: "Membership__ReferralCreated"
-  ): EventFragment;
-  getEvent(
-    nameOrSignatureOrTopic: "Membership__ReferralRemoved"
-  ): EventFragment;
-  getEvent(
-    nameOrSignatureOrTopic: "Membership__ReferralTimeCreated"
-  ): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Paused"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Prepay__Prepaid"): EventFragment;
@@ -741,43 +715,6 @@ export type MembershipWithdrawalEvent = TypedEvent<
 
 export type MembershipWithdrawalEventFilter =
   TypedEventFilter<MembershipWithdrawalEvent>;
-
-export interface Membership__ReferralCreatedEventObject {
-  code: BigNumber;
-  bps: number;
-}
-export type Membership__ReferralCreatedEvent = TypedEvent<
-  [BigNumber, number],
-  Membership__ReferralCreatedEventObject
->;
-
-export type Membership__ReferralCreatedEventFilter =
-  TypedEventFilter<Membership__ReferralCreatedEvent>;
-
-export interface Membership__ReferralRemovedEventObject {
-  code: BigNumber;
-}
-export type Membership__ReferralRemovedEvent = TypedEvent<
-  [BigNumber],
-  Membership__ReferralRemovedEventObject
->;
-
-export type Membership__ReferralRemovedEventFilter =
-  TypedEventFilter<Membership__ReferralRemovedEvent>;
-
-export interface Membership__ReferralTimeCreatedEventObject {
-  code: BigNumber;
-  bps: number;
-  startTime: BigNumber;
-  endTime: BigNumber;
-}
-export type Membership__ReferralTimeCreatedEvent = TypedEvent<
-  [BigNumber, number, BigNumber, BigNumber],
-  Membership__ReferralTimeCreatedEventObject
->;
-
-export type Membership__ReferralTimeCreatedEventFilter =
-  TypedEventFilter<Membership__ReferralTimeCreatedEvent>;
 
 export interface OwnershipTransferredEventObject {
   previousOwner: string;
@@ -988,13 +925,6 @@ export interface MembershipFacet extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    joinSpaceWithReferral(
-      receiver: PromiseOrValue<string>,
-      referrer: PromiseOrValue<string>,
-      referralCode: PromiseOrValue<BigNumberish>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
     name(overrides?: CallOverrides): Promise<[string]>;
 
     ownerOf(
@@ -1158,13 +1088,6 @@ export interface MembershipFacet extends BaseContract {
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  joinSpaceWithReferral(
-    receiver: PromiseOrValue<string>,
-    referrer: PromiseOrValue<string>,
-    referralCode: PromiseOrValue<BigNumberish>,
-    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
   name(overrides?: CallOverrides): Promise<string>;
 
   ownerOf(
@@ -1325,13 +1248,6 @@ export interface MembershipFacet extends BaseContract {
 
     joinSpace(
       receiver: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    joinSpaceWithReferral(
-      receiver: PromiseOrValue<string>,
-      referrer: PromiseOrValue<string>,
-      referralCode: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1553,35 +1469,6 @@ export interface MembershipFacet extends BaseContract {
       amount?: null
     ): MembershipWithdrawalEventFilter;
 
-    "Membership__ReferralCreated(uint256,uint16)"(
-      code?: PromiseOrValue<BigNumberish> | null,
-      bps?: null
-    ): Membership__ReferralCreatedEventFilter;
-    Membership__ReferralCreated(
-      code?: PromiseOrValue<BigNumberish> | null,
-      bps?: null
-    ): Membership__ReferralCreatedEventFilter;
-
-    "Membership__ReferralRemoved(uint256)"(
-      code?: PromiseOrValue<BigNumberish> | null
-    ): Membership__ReferralRemovedEventFilter;
-    Membership__ReferralRemoved(
-      code?: PromiseOrValue<BigNumberish> | null
-    ): Membership__ReferralRemovedEventFilter;
-
-    "Membership__ReferralTimeCreated(uint256,uint16,uint256,uint256)"(
-      code?: PromiseOrValue<BigNumberish> | null,
-      bps?: null,
-      startTime?: null,
-      endTime?: null
-    ): Membership__ReferralTimeCreatedEventFilter;
-    Membership__ReferralTimeCreated(
-      code?: PromiseOrValue<BigNumberish> | null,
-      bps?: null,
-      startTime?: null,
-      endTime?: null
-    ): Membership__ReferralTimeCreatedEventFilter;
-
     "OwnershipTransferred(address,address)"(
       previousOwner?: PromiseOrValue<string> | null,
       newOwner?: PromiseOrValue<string> | null
@@ -1731,13 +1618,6 @@ export interface MembershipFacet extends BaseContract {
 
     joinSpace(
       receiver: PromiseOrValue<string>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    joinSpaceWithReferral(
-      receiver: PromiseOrValue<string>,
-      referrer: PromiseOrValue<string>,
-      referralCode: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1916,13 +1796,6 @@ export interface MembershipFacet extends BaseContract {
 
     joinSpace(
       receiver: PromiseOrValue<string>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    joinSpaceWithReferral(
-      receiver: PromiseOrValue<string>,
-      referrer: PromiseOrValue<string>,
-      referralCode: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

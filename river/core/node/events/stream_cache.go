@@ -26,11 +26,14 @@ const (
 )
 
 type StreamCacheParams struct {
-	Storage     storage.StreamStorage
-	Wallet      *crypto.Wallet
-	RiverChain  *crypto.Blockchain
-	Registry    *registries.RiverRegistryContract
-	ChainConfig crypto.OnChainConfiguration
+	Storage         storage.StreamStorage
+	Wallet          *crypto.Wallet
+	RiverChain      *crypto.Blockchain
+	Registry        *registries.RiverRegistryContract
+	ChainConfig     crypto.OnChainConfiguration
+	AppliedBlockNum crypto.BlockNumber
+	ChainMonitor    crypto.ChainMonitor
+	Metrics         infra.MetricsFactory
 }
 
 type StreamCache interface {
@@ -69,21 +72,18 @@ var _ StreamCache = (*streamCacheImpl)(nil)
 func NewStreamCache(
 	ctx context.Context,
 	params *StreamCacheParams,
-	appliedBlockNum crypto.BlockNumber,
-	chainMonitor crypto.ChainMonitor,
-	metrics infra.MetricsFactory,
 ) (*streamCacheImpl, error) {
 	s := &streamCacheImpl{
 		params:                    params,
 		registerMiniBlocksBatched: true,
-		streamCacheSizeGauge: metrics.NewGaugeVecEx(
+		streamCacheSizeGauge: params.Metrics.NewGaugeVecEx(
 			"stream_cache_size", "Number of streams in stream cache",
 			"chain_id", "address",
 		).WithLabelValues(
 			params.RiverChain.ChainId.String(),
 			params.Wallet.Address.String(),
 		),
-		streamCacheUnloadedGauge: metrics.NewGaugeVecEx(
+		streamCacheUnloadedGauge: params.Metrics.NewGaugeVecEx(
 			"stream_cache_unloaded", "Number of unloaded streams in stream cache",
 			"chain_id", "address",
 		).WithLabelValues(
@@ -93,7 +93,7 @@ func NewStreamCache(
 		chainConfig: params.ChainConfig,
 	}
 
-	streams, err := params.Registry.GetAllStreams(ctx, appliedBlockNum)
+	streams, err := params.Registry.GetAllStreams(ctx, params.AppliedBlockNum)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +113,7 @@ func NewStreamCache(
 
 	// TODO: setup monitor for stream updates and update records accordingly.
 
-	chainMonitor.OnBlock(func(ctx context.Context, _ crypto.BlockNumber) { s.OnNewBlock(ctx) })
+	params.ChainMonitor.OnBlock(func(ctx context.Context, _ crypto.BlockNumber) { s.OnNewBlock(ctx) })
 
 	go s.runCacheCleanup(ctx)
 

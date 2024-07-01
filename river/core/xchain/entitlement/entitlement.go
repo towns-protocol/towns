@@ -200,10 +200,10 @@ func getOperationTree(ctx context.Context,
 					RightOperation: decodedOperations[logicalOperation.RightOperationIndex],
 				})
 			} else {
-				return nil, errors.New("Unknown logical operation type")
+				return nil, errors.New("unknown logical operation type")
 			}
 		} else {
-			return nil, errors.New("Unknown logical operation type")
+			return nil, errors.New("unknown logical operation type")
 		}
 		log.Debug("Decoded operation", "operation", operation, "decodedOperations", decodedOperations)
 	}
@@ -213,7 +213,7 @@ func getOperationTree(ctx context.Context,
 	for _, op := range decodedOperations {
 		if OperationType(op.GetOpType()) == LOGICAL {
 			if len(stack) < 2 {
-				return nil, errors.New("Invalid post-order array, not enough operands")
+				return nil, errors.New("invalid post-order array, not enough operands")
 			}
 			right := stack[len(stack)-1]
 			left := stack[len(stack)-2]
@@ -224,18 +224,18 @@ func getOperationTree(ctx context.Context,
 				logicalOp.SetRightOperation(right)
 				stack = append(stack, logicalOp)
 			} else {
-				return nil, errors.New("Unknown logical operation type")
+				return nil, errors.New("unknown logical operation type")
 			}
 		} else if OperationType(op.GetOpType()) == CHECK {
 			stack = append(stack, op)
 		} else {
-			return nil, errors.New("Unknown operation type")
+			return nil, errors.New("unknown operation type")
 		}
 		log.Debug("decodedOperation", "op", op, "stack", stack)
 	}
 
 	if len(stack) != 1 {
-		return nil, errors.New("Invalid post-order array")
+		return nil, errors.New("invalid post-order array")
 	}
 
 	return stack[0], nil

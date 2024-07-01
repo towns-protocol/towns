@@ -2,31 +2,39 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { type Observable, type PersistedModel } from '@river-build/sdk'
 
-export type ObservableConfig<T> = {
-    fireImmediately?: boolean
-    onUpdate?: (data: T) => void
-    onError?: (error: Error) => void
-    onSaved?: (data: T) => void
-}
+export type ObservableConfig<Data> = Data extends PersistedModel<infer UnwrappedData>
+    ? {
+          fireImmediately?: boolean
+          onUpdate?: (data: UnwrappedData) => void
+          onError?: (error: Error) => void
+      }
+    : {
+          fireImmediately?: boolean
+          onUpdate?: (data: Data) => void
+          onError?: (error: Error) => void
+      }
 
-type ObservableReturn<T> = {
-    data: T | undefined
-    error: Error | undefined
-    status: PersistedModel<T>['status']
-    isLoading: boolean
-    isError: boolean
-    isSaving: boolean
-    isSaved: boolean
-    isLoaded: boolean
-}
+type ObservableValue<Data> = Data extends PersistedModel<infer UnwrappedData>
+    ? {
+          // Its a persisted object - PersistedObservable<T>
+          data: UnwrappedData
+          error: Error | undefined
+          status: PersistedModel<Data>['status']
+          isLoading: boolean
+          isError: boolean
+          isLoaded: boolean
+      }
+    : {
+          // Its a non persisted object - Observable<T>
+          data: Data
+          error: undefined
+          status: 'loaded'
+          isLoading: false
+          isError: false
+          isLoaded: true
+      }
 
-// Needed to treat Observable<T> and Observable<PersistedModel<T>> as the same
-const makeDataModel = <T>(value: T): PersistedModel<T> => ({
-    status: 'loaded',
-    data: value,
-})
-
-const isPersisted = <T>(value: unknown): value is PersistedModel<T> => {
+const isPersisted = <T>(value: T | PersistedModel<T>): value is PersistedModel<T> => {
     if (typeof value !== 'object') {
         return false
     }
@@ -37,37 +45,34 @@ const isPersisted = <T>(value: unknown): value is PersistedModel<T> => {
 }
 
 export function useObservable<T>(
-    observable: Observable<T> | undefined,
+    observable: Observable<T>,
     config?: ObservableConfig<T>,
-): ObservableReturn<T> {
-    const [value, setValue] = useState<PersistedModel<T> | undefined>(
-        observable?.value
-            ? isPersisted<T>(observable.value)
-                ? observable?.value
-                : makeDataModel(observable.value)
-            : undefined,
+): ObservableValue<T> {
+    const [value, setValue] = useState<PersistedModel<T> | T>(
+        isPersisted<T>(observable.value) ? observable.value.data : observable.value,
     )
 
-    const opts = { fireImmediately: true, ...config } satisfies ObservableConfig<T>
+    const opts = useMemo(
+        () => ({ fireImmediately: true, ...config }),
+        [config],
+    ) as ObservableConfig<T>
 
     const onSubscribe = useCallback(
         (newValue: PersistedModel<T> | T) => {
-            let value: PersistedModel<T> | undefined
-            if (isPersisted<T>(newValue)) {
-                value = newValue
+            let value: T | undefined
+            if (isPersisted(newValue)) {
+                value = newValue.data
+                if (newValue.status === 'loaded') {
+                    opts.onUpdate?.(newValue.data)
+                }
+                if (newValue.status === 'error') {
+                    opts.onError?.(newValue.error)
+                }
             } else {
-                value = makeDataModel(newValue)
+                value = newValue
+                opts.onUpdate?.(newValue)
             }
             setValue(value)
-            if (value.status === 'loaded') {
-                opts.onUpdate?.(value.data)
-            }
-            if (value.status === 'error') {
-                opts.onError?.(value.error)
-            }
-            if (value.status === 'saved') {
-                opts.onSaved?.(value.data)
-            }
         },
         [opts],
     )
@@ -83,30 +88,27 @@ export function useObservable<T>(
     }, [opts, observable, onSubscribe])
 
     const data = useMemo(() => {
-        if (!value) {
+        if (isPersisted(value)) {
+            const { data, status } = value
             return {
-                data: undefined,
+                data: data,
+                error: status === 'error' ? value.error : undefined,
+                status,
+                isLoading: status === 'loading',
+                isError: status === 'error',
+                isLoaded: status === 'loaded',
+            }
+        } else {
+            return {
+                data: value,
                 error: undefined,
-                status: 'loading',
-                isLoading: true,
+                status: 'loaded',
+                isLoading: false,
                 isError: false,
-                isSaving: false,
-                isLoaded: false,
-                isSaved: false,
+                isLoaded: true,
             }
         }
-        const { data, status } = value
-        return {
-            data,
-            error: status === 'error' ? value.error : undefined,
-            status,
-            isLoading: status === 'loading',
-            isError: status === 'error',
-            isSaving: status === 'saving',
-            isLoaded: status === 'loaded',
-            isSaved: status === 'saved',
-        }
-    }, [value]) satisfies ObservableReturn<T>
+    }, [value]) as ObservableValue<T>
 
     return data
 }

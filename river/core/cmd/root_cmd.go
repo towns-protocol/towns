@@ -3,23 +3,14 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/config/builder"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var configFiles []string
-
-var (
-	logLevel     string
-	logFile      string
-	logToConsole bool
-	logNoColor   bool
-)
 
 var (
 	cmdConfig        *config.Config
@@ -44,42 +35,6 @@ func Execute() {
 	}
 }
 
-func bindViperKeys(
-	vpr *viper.Viper,
-	varPrefix string,
-	envPrefixSingle string,
-	envPrefixDouble string,
-	m map[string]interface{},
-	canonicalEnvVar *[]string,
-) error {
-	for k, v := range m {
-		subMap, ok := v.(map[string]interface{})
-		if ok {
-			upperK := strings.ToUpper(k)
-			err := bindViperKeys(
-				vpr,
-				varPrefix+k+".",
-				envPrefixSingle+upperK+"_",
-				envPrefixDouble+upperK+"__",
-				subMap,
-				canonicalEnvVar,
-			)
-			if err != nil {
-				return err
-			}
-		} else {
-			envName := strings.ToUpper(k)
-			canonical := "RIVER_" + envPrefixSingle + envName
-			*canonicalEnvVar = append(*canonicalEnvVar, canonical)
-			err := vpr.BindEnv(varPrefix+k, canonical, envPrefixDouble+envName)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
 func initViperConfig() (*config.Config, *builder.ConfigBuilder[config.Config], error) {
 	cfg := config.GetDefaultConfig()
 
@@ -88,10 +43,22 @@ func initViperConfig() (*config.Config, *builder.ConfigBuilder[config.Config], e
 		return nil, nil, err
 	}
 
-	bld.BindPFlag("Log.Level", rootCmd.PersistentFlags().Lookup("log_level"))
-	bld.BindPFlag("Log.File", rootCmd.PersistentFlags().Lookup("log_file"))
-	bld.BindPFlag("Log.Console", rootCmd.PersistentFlags().Lookup("log_to_console"))
-	bld.BindPFlag("Log.NoColor", rootCmd.PersistentFlags().Lookup("log_no_color"))
+	err = bld.BindPFlag("Log.Level", rootCmd.PersistentFlags().Lookup("log_level"))
+	if err != nil {
+		return nil, nil, err
+	}
+	err = bld.BindPFlag("Log.File", rootCmd.PersistentFlags().Lookup("log_file"))
+	if err != nil {
+		return nil, nil, err
+	}
+	err = bld.BindPFlag("Log.Console", rootCmd.PersistentFlags().Lookup("log_to_console"))
+	if err != nil {
+		return nil, nil, err
+	}
+	err = bld.BindPFlag("Log.NoColor", rootCmd.PersistentFlags().Lookup("log_no_color"))
+	if err != nil {
+		return nil, nil, err
+	}
 
 	for _, configFile := range configFiles {
 		err = bld.LoadConfig(configFile)

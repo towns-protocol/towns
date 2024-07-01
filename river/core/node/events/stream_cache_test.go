@@ -6,22 +6,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common/hexutil"
-
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/infra"
 	"github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/registries"
 	"github.com/river-build/river/core/node/shared"
-	"github.com/river-build/river/core/node/storage"
 	"github.com/river-build/river/core/node/testutils"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/proto"
 )
 
 func TestStreamCacheViewEviction(t *testing.T) {
@@ -57,60 +47,14 @@ func DisabledTestStreamMiniblockBatchProduction(t *testing.T) {
 }
 
 func testStreamCacheViewEviction(t *testing.T, useBatchRegistration bool) {
-	var (
-		ctx, cancel  = test.NewTestContext()
-		require      = require.New(t)
-		chainMonitor = crypto.NewChainMonitor()
-	)
-	defer cancel()
+	require := require.New(t)
+	ctx, tc := makeTestStreamParams(t, testParams{})
+	defer tc.closer()
 
-	btc, err := crypto.NewBlockchainTestContext(ctx, 1, true)
-	require.NoError(err, "instantiating blockchain test context")
-	defer btc.Close()
+	// disable auto stream cache cleanup, do cleanup manually
+	tc.bcTest.SetConfigValue(t, ctx, crypto.StreamCacheExpirationPollIntervalMsConfigKey, crypto.ABIEncodeUint64(0))
 
-	go chainMonitor.RunWithBlockPeriod(ctx, btc.Client(), 0, 10*time.Millisecond, infra.NewMetrics("", ""))
-
-	node := btc.GetBlockchain(ctx, 0)
-
-	pendingTx, err := btc.DeployerBlockchain.TxPool.Submit(
-		ctx,
-		"RegisterNode",
-		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return btc.NodeRegistry.RegisterNode(opts, node.Wallet.Address, "http://node.local:1234", 2)
-		},
-	)
-	require.NoError(err, "register node")
-	receipt := <-pendingTx.Wait()
-	require.Equal(crypto.TransactionResultSuccess, receipt.Status, "register node transaction failed")
-
-	riverRegistry, err := registries.NewRiverRegistryContract(ctx, node, &config.ContractConfig{
-		Address: btc.RiverRegistryAddress,
-	})
-	require.NoError(err, "instantiating river registry contract")
-
-	pg := storage.NewTestPgStore(ctx)
-	defer pg.Close()
-
-	// disable auto stream cache cleanup, do it manual
-	pendingTx, err = btc.DeployerBlockchain.TxPool.Submit(
-		ctx, "SetConfiguration", func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return btc.Configuration.
-				SetConfiguration(opts, crypto.StreamCacheExpirationPollIntervalMsConfigKey.ID(), 0,
-					hexutil.MustDecode("0x0000000000000000000000000000000000000000000000000000000000000000"))
-		})
-	require.NoError(err, "set configuration")
-	receipt = <-pendingTx.Wait()
-	require.Equal(crypto.TransactionResultSuccess, receipt.Status, "set configuration transaction failed")
-
-	streamCache, err := NewStreamCache(ctx, &StreamCacheParams{
-		Storage:     pg.Storage,
-		Wallet:      node.Wallet,
-		RiverChain:  node,
-		Registry:    riverRegistry,
-		ChainConfig: btc.OnChainConfig,
-	}, 0, chainMonitor, infra.NewMetrics("", ""))
-	require.NoError(err, "instantiating stream cache")
-
+	streamCache := tc.initCache(ctx)
 	streamCache.registerMiniBlocksBatched = useBatchRegistration
 
 	streamCache.cache.Range(func(key, value any) bool {
@@ -118,32 +62,11 @@ func testStreamCacheViewEviction(t *testing.T, useBatchRegistration bool) {
 		return true
 	})
 
-	var (
-		nodes            = []common.Address{node.Wallet.Address}
-		streamID         = testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
-		genesisMiniblock = MakeGenesisMiniblockForSpaceStream(t, node.Wallet, streamID)
-	)
+	node := tc.getBC()
+	streamID := testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
+	_, genesisMiniblock := makeTestSpaceStream(t, node.Wallet, streamID, nil)
 
-	genesisMiniblockBytes, err := proto.Marshal(genesisMiniblock)
-	require.NoError(err, "marshalling genesis miniblock")
-
-	pendingTx, err = node.TxPool.Submit(
-		ctx,
-		"AllocateStream",
-		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return riverRegistry.StreamRegistry.AllocateStream(
-				opts,
-				streamID,
-				nodes,
-				[32]byte(genesisMiniblock.Header.Hash),
-				genesisMiniblockBytes,
-			)
-		},
-	)
-
-	require.NoError(err, "allocate stream")
-	receipt = <-pendingTx.Wait()
-	require.Equal(crypto.TransactionResultSuccess, receipt.Status, "allocate stream transaction failed")
+	require.NoError(tc.createStreamNoCache(ctx, streamID, genesisMiniblock))
 
 	streamSync, streamView, err := streamCache.GetStream(ctx, streamID)
 	require.NoError(err, "loading stream record")
@@ -232,95 +155,26 @@ func testStreamCacheViewEviction(t *testing.T, useBatchRegistration bool) {
 }
 
 func testCacheEvictionWithFilledMiniBlockPool(t *testing.T, useBatchRegistration bool) {
-	var (
-		ctx, cancel  = test.NewTestContext()
-		require      = require.New(t)
-		chainMonitor = crypto.NewChainMonitor()
-	)
-	defer cancel()
+	require := require.New(t)
+	ctx, tc := makeTestStreamParams(t, testParams{})
+	defer tc.closer()
 
-	btc, err := crypto.NewBlockchainTestContext(ctx, 1, true)
-	require.NoError(err, "instantiating blockchain test context")
-	defer btc.Close()
+	// disable auto stream cache cleanup, do cleanup manually
+	tc.bcTest.SetConfigValue(t, ctx, crypto.StreamCacheExpirationPollIntervalMsConfigKey, crypto.ABIEncodeUint64(0))
 
-	go chainMonitor.RunWithBlockPeriod(ctx, btc.Client(), 0, 10*time.Millisecond, infra.NewMetrics("", ""))
-
-	node := btc.GetBlockchain(ctx, 0)
-
-	pendingTx, err := btc.DeployerBlockchain.TxPool.Submit(
-		ctx,
-		"RegisterNode",
-		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return btc.NodeRegistry.RegisterNode(opts, node.Wallet.Address, "http://node.local:1234", 2)
-		},
-	)
-	require.NoError(err, "register node")
-	receipt := <-pendingTx.Wait()
-	require.Equal(crypto.TransactionResultSuccess, receipt.Status, "register node transaction failed")
-
-	// disable auto stream cache cleanup, do it manual
-	pendingTx, err = btc.DeployerBlockchain.TxPool.Submit(
-		ctx, "SetConfiguration", func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return btc.Configuration.
-				SetConfiguration(opts, crypto.StreamCacheExpirationPollIntervalMsConfigKey.ID(), 0,
-					hexutil.MustDecode("0x0000000000000000000000000000000000000000000000000000000000000000"))
-		})
-	require.NoError(err, "set configuration")
-	receipt = <-pendingTx.Wait()
-	require.Equal(crypto.TransactionResultSuccess, receipt.Status, "set configuration transaction failed")
-
-	riverRegistry, err := registries.NewRiverRegistryContract(ctx, node, &config.ContractConfig{
-		Address: btc.RiverRegistryAddress,
-	})
-	require.NoError(err, "instantiating river registry contract")
-
-	pg := storage.NewTestPgStore(ctx)
-	defer pg.Close()
-
-	streamCacheParams := &StreamCacheParams{
-		Storage:     pg.Storage,
-		Wallet:      node.Wallet,
-		RiverChain:  node,
-		Registry:    riverRegistry,
-		ChainConfig: btc.OnChainConfig,
-	}
-
-	streamCache, err := NewStreamCache(ctx, streamCacheParams, 0, chainMonitor, infra.NewMetrics("", ""))
-	require.NoError(err, "instantiating stream cache")
-
+	streamCache := tc.initCache(ctx)
 	streamCache.registerMiniBlocksBatched = useBatchRegistration
 
 	streamCache.cache.Range(func(key, value any) bool {
-		require.Fail("stream cache should be empty")
+		require.Fail("stream cache must be empty")
 		return true
 	})
 
-	var (
-		nodes            = []common.Address{node.Wallet.Address}
-		streamID         = testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
-		genesisMiniblock = MakeGenesisMiniblockForSpaceStream(t, node.Wallet, streamID)
-	)
+	node := tc.getBC()
+	streamID := testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
+	_, genesisMiniblock := makeTestSpaceStream(t, node.Wallet, streamID, nil)
 
-	genesisMiniblockBytes, err := proto.Marshal(genesisMiniblock)
-	require.NoError(err, "marshalling genesis miniblock")
-
-	pendingTx, err = node.TxPool.Submit(
-		ctx,
-		"AllocateStream",
-		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return riverRegistry.StreamRegistry.AllocateStream(
-				opts,
-				streamID,
-				nodes,
-				[32]byte(genesisMiniblock.Header.Hash),
-				genesisMiniblockBytes,
-			)
-		},
-	)
-
-	require.NoError(err, "allocate stream")
-	receipt = <-pendingTx.Wait()
-	require.Equal(crypto.TransactionResultSuccess, receipt.Status, "allocate stream transaction failed")
+	require.NoError(tc.createStreamNoCache(ctx, streamID, genesisMiniblock))
 
 	streamSync, _, err := streamCache.GetStream(ctx, streamID)
 	require.NoError(err, "loading stream record")
@@ -353,7 +207,7 @@ func testCacheEvictionWithFilledMiniBlockPool(t *testing.T, useBatchRegistration
 	require.NoError(err, "make miniblock")
 
 	// add event to stream with unloaded view, view should be loaded in cache and minipool must contain event
-	addEvent(t, ctx, streamCacheParams, streamSync, "payload", common.BytesToHash(genesisMiniblock.Header.Hash))
+	addEvent(t, ctx, tc.params, streamSync, "payload", common.BytesToHash(genesisMiniblock.Header.Hash))
 
 	// with event in minipool ensure that view isn't evicted from cache
 	time.Sleep(10 * time.Millisecond) // make sure we hit the cache expiration of 1 ms
@@ -392,61 +246,19 @@ func (sub *testStreamCacheViewEvictionSub) OnSyncError(err error) {
 }
 
 func testStreamMiniblockBatchProduction(t *testing.T, useBatchRegistration bool) {
-	var (
-		ctx, cancel  = test.NewTestContext()
-		require      = require.New(t)
-		streamsCount = 10*MiniblockCandidateBatchSize - 1
-	)
-	defer cancel()
+	require := require.New(t)
+	ctx, tc := makeTestStreamParams(t, testParams{})
+	defer tc.closer()
+	btc := tc.bcTest
 
-	btc, err := crypto.NewBlockchainTestContext(ctx, 1, true)
-	require.NoError(err, "instantiating blockchain test context")
-	defer btc.Close()
+	// disable auto stream cache cleanup, do cleanup manually
+	tc.bcTest.SetConfigValue(t, ctx, crypto.StreamCacheExpirationPollIntervalMsConfigKey, crypto.ABIEncodeUint64(0))
 
-	node := btc.GetBlockchain(ctx, 0)
-	pendingTx, err := btc.DeployerBlockchain.TxPool.Submit(
-		ctx,
-		"RegisterNode",
-		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return btc.NodeRegistry.RegisterNode(opts, node.Wallet.Address, "http://node.local:1234", 2)
-		},
-	)
-	require.NoError(err, "register node")
-	receipt := <-pendingTx.Wait()
-	require.Equal(crypto.TransactionResultSuccess, receipt.Status, "register node transaction failed")
-
-	// disable auto stream cache cleanup, do it manual
-	pendingTx, err = btc.DeployerBlockchain.TxPool.Submit(
-		ctx, "SetConfiguration", func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return btc.Configuration.
-				SetConfiguration(opts, crypto.StreamCacheExpirationPollIntervalMsConfigKey.ID(), 0,
-					hexutil.MustDecode("0x0000000000000000000000000000000000000000000000000000000000000000"))
-		})
-	require.NoError(err, "set configuration")
-	receipt = <-pendingTx.Wait()
-	require.Equal(crypto.TransactionResultSuccess, receipt.Status, "set configuration transaction failed")
-
-	riverRegistry, err := registries.NewRiverRegistryContract(ctx, node, &config.ContractConfig{
-		Address: btc.RiverRegistryAddress,
-	})
-	require.NoError(err, "instantiating river registry contract")
-
-	pg := storage.NewTestPgStore(ctx)
-	defer pg.Close()
-
-	streamCache, err := NewStreamCache(ctx, &StreamCacheParams{
-		Storage:     pg.Storage,
-		Wallet:      node.Wallet,
-		RiverChain:  node,
-		Registry:    riverRegistry,
-		ChainConfig: btc.OnChainConfig,
-	}, node.InitialBlockNum, node.ChainMonitor, infra.NewMetrics("", ""))
-	require.NoError(err, "instantiating stream cache")
-
+	streamCache := tc.initCache(ctx)
 	streamCache.registerMiniBlocksBatched = useBatchRegistration
 
 	streamCache.cache.Range(func(key, value any) bool {
-		require.Fail("stream cache should be empty")
+		require.Fail("stream cache must be empty")
 		return true
 	})
 
@@ -454,11 +266,9 @@ func testStreamMiniblockBatchProduction(t *testing.T, useBatchRegistration bool)
 	// after initialization take back control when to create new chain blocks.
 	// TODO: this handler is gone, refactor
 	// btc.DeployerBlockchain.TxPool.SetOnSubmitHandler(nil)
-
-	var (
-		genesisBlocks     = allocateStreams(t, ctx, btc, streamsCount, node, riverRegistry)
-		streamsWithEvents = make(map[shared.StreamId]int)
-	)
+	streamsCount := 10*MiniblockCandidateBatchSize - 1
+	genesisBlocks := allocateStreams(t, ctx, tc, streamsCount)
+	streamsWithEvents := make(map[shared.StreamId]int)
 
 	// add events to ~50% of the streams
 	for streamID, genesis := range genesisBlocks {
@@ -499,7 +309,7 @@ func testStreamMiniblockBatchProduction(t *testing.T, useBatchRegistration bool)
 				gotStreamEventsCount = 0
 			)
 
-			syncCookie := view.SyncCookie(node.Wallet.Address)
+			syncCookie := view.SyncCookie(tc.getBC().Wallet.Address)
 			require.NotNil(syncCookie, "sync cookie")
 
 			miniblocks, _, err := stream.GetMiniblocks(ctx, 0, syncCookie.MinipoolGen)
@@ -524,9 +334,22 @@ func testStreamMiniblockBatchProduction(t *testing.T, useBatchRegistration bool)
 }
 
 func TestStreamUnloadWithSubscribers(t *testing.T) {
+	require := require.New(t)
+	ctx, tc := makeTestStreamParams(t, testParams{})
+	defer tc.closer()
+
+	// disable auto stream cache cleanup, do cleanup manually
+	tc.bcTest.SetConfigValue(t, ctx, crypto.StreamCacheExpirationPollIntervalMsConfigKey, crypto.ABIEncodeUint64(0))
+
+	streamCache := tc.initCache(ctx)
+	streamCache.registerMiniBlocksBatched = true
+
+	streamCache.cache.Range(func(key, value any) bool {
+		require.Fail("stream cache must be empty")
+		return true
+	})
+
 	var (
-		ctx, cancel  = test.NewTestContext()
-		require      = require.New(t)
 		streamsCount = 5
 		cleanUpCache = func(streamCache *streamCacheImpl, expOutcome bool) {
 			streamCache.cache.Range(func(key, streamVal any) bool {
@@ -544,59 +367,6 @@ func TestStreamUnloadWithSubscribers(t *testing.T) {
 			})
 		}
 	)
-	defer cancel()
-
-	btc, err := crypto.NewBlockchainTestContext(ctx, 1, true)
-	require.NoError(err, "instantiating blockchain test context")
-	defer btc.Close()
-
-	node := btc.GetBlockchain(ctx, 0)
-	pendingTx, err := btc.DeployerBlockchain.TxPool.Submit(
-		ctx,
-		"RegisterNode",
-		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return btc.NodeRegistry.RegisterNode(opts, node.Wallet.Address, "http://node.local:1234", 2)
-		},
-	)
-
-	require.NoError(err, "register node")
-	receipt := <-pendingTx.Wait()
-	require.Equal(crypto.TransactionResultSuccess, receipt.Status, "register node transaction failed")
-
-	// disable auto stream cache cleanup, do it manual
-	pendingTx, err = btc.DeployerBlockchain.TxPool.Submit(
-		ctx, "SetConfiguration", func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return btc.Configuration.
-				SetConfiguration(opts, crypto.StreamCacheExpirationPollIntervalMsConfigKey.ID(), 0,
-					hexutil.MustDecode("0x0000000000000000000000000000000000000000000000000000000000000000"))
-		})
-	require.NoError(err, "set configuration")
-	receipt = <-pendingTx.Wait()
-	require.Equal(crypto.TransactionResultSuccess, receipt.Status, "set configuration transaction failed")
-
-	riverRegistry, err := registries.NewRiverRegistryContract(ctx, node, &config.ContractConfig{
-		Address: btc.RiverRegistryAddress,
-	})
-	require.NoError(err, "instantiating river registry contract")
-
-	pg := storage.NewTestPgStore(ctx)
-	defer pg.Close()
-
-	streamCache, err := NewStreamCache(ctx, &StreamCacheParams{
-		Storage:     pg.Storage,
-		Wallet:      node.Wallet,
-		RiverChain:  node,
-		Registry:    riverRegistry,
-		ChainConfig: btc.OnChainConfig,
-	}, node.InitialBlockNum, node.ChainMonitor, infra.NewMetrics("", ""))
-	require.NoError(err, "instantiating stream cache")
-
-	streamCache.registerMiniBlocksBatched = true
-
-	streamCache.cache.Range(func(key, value any) bool {
-		require.Fail("stream cache should be empty")
-		return true
-	})
 
 	// the stream cache uses the chain block production as a ticker to create new mini-blocks.
 	// after initialization take back control when to create new chain blocks.
@@ -604,7 +374,8 @@ func TestStreamUnloadWithSubscribers(t *testing.T) {
 	// btc.DeployerBlockchain.TxPool.SetOnSubmitHandler(nil)
 
 	var (
-		genesisBlocks         = allocateStreams(t, ctx, btc, streamsCount, node, riverRegistry)
+		node                  = tc.getBC()
+		genesisBlocks         = allocateStreams(t, ctx, tc, streamsCount)
 		syncCookies           = make(map[shared.StreamId]*protocol.SyncCookie)
 		subscriptionReceivers = make(map[shared.StreamId]*testStreamCacheViewEvictionSub)
 		eventsReceived        = func(sub *testStreamCacheViewEvictionSub) int {
@@ -626,16 +397,12 @@ func TestStreamUnloadWithSubscribers(t *testing.T) {
 
 	blockNum, err := node.GetBlockNumber(ctx)
 	require.NoError(err, "get block number")
+	tc.params.AppliedBlockNum = blockNum
 
 	// create fresh stream cache and subscribe
-	streamCache, err = NewStreamCache(ctx, &StreamCacheParams{
-		Storage:     pg.Storage,
-		Wallet:      node.Wallet,
-		RiverChain:  node,
-		Registry:    riverRegistry,
-		ChainConfig: btc.OnChainConfig,
-	}, blockNum, node.ChainMonitor, infra.NewMetrics("", ""))
+	streamCache, err = NewStreamCache(ctx, tc.params)
 	require.NoError(err, "instantiating stream cache")
+	streamCache.registerMiniBlocksBatched = true
 
 	for streamID, syncCookie := range syncCookies {
 		streamSync, err := streamCache.GetSyncStream(ctx, streamID)
@@ -696,52 +463,21 @@ func TestStreamUnloadWithSubscribers(t *testing.T) {
 func allocateStreams(
 	t *testing.T,
 	ctx context.Context,
-	btc *crypto.BlockchainTestContext,
+	tt *testContext,
 	count int,
-	node *crypto.Blockchain,
-	riverRegistry *registries.RiverRegistryContract,
 ) map[shared.StreamId]*protocol.Miniblock {
 	var (
 		require       = require.New(t)
 		genesisBlocks = make(map[shared.StreamId]*protocol.Miniblock)
-		lastPendingTx crypto.TransactionPoolPendingTransaction
 	)
 
 	for i := 0; i < count; i++ {
-		var (
-			nodes            = []common.Address{node.Wallet.Address}
-			streamID         = testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
-			genesisMiniblock = MakeGenesisMiniblockForSpaceStream(t, node.Wallet, streamID)
-		)
-
-		genesisMiniblockBytes, err := proto.Marshal(genesisMiniblock)
-		require.NoError(err, "marshalling genesis miniblock")
-
-		pendingTx, err := node.TxPool.Submit(ctx, "AllocateStream",
-			func(opts *bind.TransactOpts) (*types.Transaction, error) {
-				return riverRegistry.StreamRegistry.AllocateStream(
-					opts,
-					streamID,
-					nodes,
-					[32]byte(genesisMiniblock.Header.Hash),
-					genesisMiniblockBytes,
-				)
-			},
-		)
-		require.NoError(err, "submit allocate stream tx")
-		lastPendingTx = pendingTx
-		genesisBlocks[streamID] = genesisMiniblock
+		streamID := testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
+		mb := MakeGenesisMiniblockForSpaceStream(t, tt.getBC().Wallet, streamID)
+		err := tt.createStreamNoCache(ctx, streamID, mb)
+		require.NoError(err, "create stream")
+		genesisBlocks[streamID] = mb
 	}
 
-	for {
-		btc.Commit(ctx)
-		select {
-		case receipt := <-lastPendingTx.Wait():
-			require.Equal(crypto.TransactionResultSuccess, receipt.Status,
-				"allocate streams failed")
-			return genesisBlocks
-		case <-time.After(time.Second):
-			continue
-		}
-	}
+	return genesisBlocks
 }

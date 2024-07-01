@@ -4,7 +4,6 @@ import (
 	"context"
 	"log/slog"
 	"math/big"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/river-build/river/core/config"
@@ -18,7 +17,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	go_eth_types "github.com/ethereum/go-ethereum/core/types"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
@@ -145,13 +143,7 @@ func New(
 		}
 
 		log.Info("Start processing entitlement check requests", "startBlock", baseChain.InitialBlockNum)
-		go baseChain.ChainMonitor.RunWithBlockPeriod(
-			ctx,
-			baseChain.Client,
-			baseChain.InitialBlockNum,
-			time.Duration(cfg.BaseChain.BlockTimeMs)*time.Millisecond,
-			metrics,
-		)
+		baseChain.StartChainMonitor(ctx)
 	}
 
 	decoder, err := crypto.NewEVMErrorDecoder(
@@ -418,7 +410,7 @@ func (x *xchain) writeEntitlementCheckResults(ctx context.Context, checkResults 
 
 				if err != nil {
 					x.entitlementCheckTx.IncFail()
-					x.handleContractError(log, err, "Failed to submit transaction for xchain request")
+					_ = x.handleContractError(log, err, "Failed to submit transaction for xchain request")
 					continue
 				}
 				pending <- &inprogress{pendingTx, gasEstimate, receipt}
@@ -431,7 +423,7 @@ func (x *xchain) writeEntitlementCheckResults(ctx context.Context, checkResults 
 		receipt := <-task.ptx.Wait() // Base transaction receipt
 
 		x.entitlementCheckTx.IncPass()
-		if receipt.Status == go_eth_types.ReceiptStatusFailed {
+		if receipt.Status == types.ReceiptStatusFailed {
 			// it is possible that other xchain instances have already reached a quorum and our transaction was simply
 			// too late and failed because of that. Therefore this can be an expected error.
 			log.Warn("entitlement check response failed to post",

@@ -135,13 +135,7 @@ func (s *Service) start() error {
 		return AsRiverError(err).Message("Failed to init cache and sync").LogError(s.defaultLogger)
 	}
 
-	go s.riverChain.ChainMonitor.RunWithBlockPeriod(
-		s.serverCtx,
-		s.riverChain.Client,
-		s.riverChain.InitialBlockNum,
-		time.Duration(s.riverChain.Config.BlockTimeMs)*time.Millisecond,
-		s.metrics,
-	)
+	s.riverChain.StartChainMonitor(s.serverCtx)
 
 	s.initHandlers()
 
@@ -490,15 +484,15 @@ func (s *Service) initCacheAndSync() error {
 	s.cache, err = events.NewStreamCache(
 		s.serverCtx,
 		&events.StreamCacheParams{
-			Storage:     s.storage,
-			Wallet:      s.wallet,
-			RiverChain:  s.riverChain,
-			Registry:    s.registryContract,
-			ChainConfig: s.chainConfig,
+			Storage:         s.storage,
+			Wallet:          s.wallet,
+			RiverChain:      s.riverChain,
+			Registry:        s.registryContract,
+			ChainConfig:     s.chainConfig,
+			AppliedBlockNum: s.riverChain.InitialBlockNum,
+			ChainMonitor:    s.riverChain.ChainMonitor,
+			Metrics:         s.metrics,
 		},
-		s.riverChain.InitialBlockNum,
-		s.riverChain.ChainMonitor,
-		s.metrics,
 	)
 	if err != nil {
 		return err

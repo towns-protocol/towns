@@ -15,7 +15,7 @@ export interface StreamNodeUrlsModel {
 
 // Define a class that will manage the data model, decorate it to give it store properties
 @persistedObservable({
-    tableName: 'riverNodeUrls', // this is the name of the table in the database
+    tableName: 'streamNodeUrls', // this is the name of the table in the database
 })
 export class StreamNodeUrls extends PersistedObservable<StreamNodeUrlsModel> {
     private riverRegistry: RiverRegistry // store any member variables required for logic

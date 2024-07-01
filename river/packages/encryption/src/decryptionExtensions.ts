@@ -212,6 +212,7 @@ export abstract class BaseDecryptionExtensions {
         sessions: UserInboxPayload_GroupEncryptionSessions,
         _senderId: string,
     ): void {
+        this.log.info('enqueueNewGroupSessions', sessions)
         this.queues.newGroupSession.push(sessions)
         this.checkStartTicking()
     }

@@ -168,21 +168,4 @@ contract MembershipBaseSetup is
     referrals.createReferralCode(REFERRAL_CODE, REFERRAL_BPS);
     _;
   }
-
-  modifier givenAliceHasMintedReferralMembership() {
-    vm.prank(alice);
-    membership.joinSpaceWithReferral(alice, bob, REFERRAL_CODE);
-    _;
-  }
-
-  modifier givenAliceHasPaidReferralMembership() {
-    vm.prank(alice);
-    vm.deal(alice, MEMBERSHIP_PRICE);
-    membership.joinSpaceWithReferral{value: MEMBERSHIP_PRICE}(
-      alice,
-      bob,
-      REFERRAL_CODE
-    );
-    _;
-  }
 }

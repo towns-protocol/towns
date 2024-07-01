@@ -11,8 +11,6 @@ export type PersistedModel<T> =
     | { status: 'loading'; data: T }
     | { status: 'loaded'; data: T }
     | { status: 'error'; data: T; error: Error }
-    | { status: 'saving'; data: T }
-    | { status: 'saved'; data: T }
 
 interface Storable {}
 
@@ -29,8 +27,11 @@ export function persistedObservable(options: PersistedOpts) {
                 super(...args)
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                 ;(this as any).tableName = options.tableName
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-                ;(this as any).load()
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                ;((this as any).store as Store).withTransaction(`new-${options.tableName}`, () => {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+                    ;(this as any).load()
+                })
             }
             static tableName = options.tableName
         }
@@ -85,28 +86,23 @@ export class PersistedObservable<T extends Identifiable>
     // must be called in a store transaction
     setData(newDataPartial: Partial<T>) {
         check(isDefined(newDataPartial), 'value is undefined')
+        const prevData = this.data
         const newData = { ...this.data, ...newDataPartial }
         check(newData.id === this.data.id, 'id mismatch')
-        super.setValue({ status: 'saving', data: newData })
-        this.store
-            .withTransaction(`update-${this.tableName}:${this.data.id}`, () => {
-                this.store.save(
-                    this.tableName,
-                    newData,
-                    () => {
-                        super.setValue({ status: 'saved', data: newData })
-                    },
-                    (e) => {
-                        super.setValue({ status: 'error', data: newData, error: e })
-                    },
-                    async () => {
-                        await this.onSaved()
-                    },
-                )
-            })
-            .catch((e) => {
-                super.setValue({ status: 'error', data: this.data, error: e })
-            })
+        super.setValue({ status: 'loaded', data: newData })
+        this.store.withTransaction(`update-${this.tableName}:${this.data.id}`, () => {
+            this.store.save(
+                this.tableName,
+                newData,
+                () => {},
+                (e) => {
+                    super.setValue({ status: 'error', data: prevData, error: e })
+                },
+                async () => {
+                    await this.onSaved()
+                },
+            )
+        })
     }
 
     protected async onLoaded() {
