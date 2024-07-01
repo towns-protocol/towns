@@ -87,9 +87,7 @@ function remarkTransformUserAndChannels(
             const member = lookupUser?.(userId)
             userIdNameCurrent[mentionDisplayName] = {
                 userId,
-                displayName: !isEmpty(member?.displayName)
-                    ? getPrettyDisplayName(member)
-                    : mentionDisplayName,
+                displayName: !isEmpty(member) ? getPrettyDisplayName(member) : mentionDisplayName,
             }
         })
 
