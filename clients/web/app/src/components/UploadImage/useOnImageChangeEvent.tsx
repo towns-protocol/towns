@@ -34,8 +34,8 @@ export function useOnImageChangeEvent<T extends FieldValues>({
     const _resourceId = useMemo(() => resourceId, [resourceId])
     const {
         maxSize = {
-            message: 'Upload an image less than 5MB',
-            max: 5000000,
+            message: 'Upload an image less than 25MB',
+            max: 25_000_000,
         },
         minDimension = {
             message: `Image is too small. Please upload an image with a minimum height & width of 400px.`,

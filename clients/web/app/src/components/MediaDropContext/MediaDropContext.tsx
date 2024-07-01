@@ -88,12 +88,12 @@ export const MediaDropContextProvider = ({
                     continue
                 }
 
-                if (file.size > 5_000_000) {
+                if (file.size > 25_000_000) {
                     toast.custom((t) => {
                         return (
                             <FileUploadFailedToast
                                 toast={t}
-                                message="File size exceeds maximum limit of 5mb."
+                                message="File size exceeds maximum limit of 25mb."
                             />
                         )
                     })
