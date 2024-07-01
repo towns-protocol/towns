@@ -10,7 +10,9 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { vitePWAOptions } from './vite-pwa-options.config'
 import { execSync } from 'child_process'
 
-const commitHash = execSync('git rev-parse --short HEAD').toString().trim()
+const commitHash = process.env.RENDER_GIT_COMMIT
+    ? String(process.env.RENDER_GIT_COMMIT).substring(0, 7)
+    : execSync('git rev-parse --short HEAD').toString().trim()
 
 const isProduction = process.env.NODE_ENV === 'production'
 
@@ -62,8 +64,10 @@ export default ({ mode }: { mode: string }) => {
             minify: false, // Ensure esbuild is used for minification
         },
         define: {
-            APP_VERSION: JSON.stringify(process.env.npm_package_version),
-            APP_COMMIT_HASH: JSON.stringify(commitHash),
+            VITE_APP_VERSION: JSON.stringify(process.env.npm_package_version),
+            VITE_APP_COMMIT_HASH: JSON.stringify(commitHash),
+            VITE_APP_TIMESTAMP: JSON.stringify(Date.now()),
+            VITE_APP_MODE: JSON.stringify(process.env.MODE ?? ''),
             // userops mode is used for loading env.userops.local
             ...(mode === 'development' || mode === 'userops'
                 ? {

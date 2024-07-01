@@ -1,5 +1,4 @@
 import { VitePWAOptions } from 'vite-plugin-pwa'
-import { APP_NAME } from './src/data/constants'
 
 export interface AppPwaDevOptions {
     enablePushNotification?: boolean
@@ -52,8 +51,8 @@ export function vitePWAOptions(
         includeAssets: ['favicon.svg', 'favicon.png', 'apple-touch-icon.png', 'masked-icon.svg'],
 
         manifest: {
-            name: APP_NAME,
-            short_name: APP_NAME,
+            name: process.env.VITE_APP_NAME ?? 'Towns',
+            short_name: process.env.VITE_APP_NAME ?? 'Towns',
             icons: [
                 {
                     src: 'pwa/rounded_x512.png',

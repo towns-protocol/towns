@@ -7,6 +7,7 @@ import { transitions } from 'ui/transitions/transitions'
 import { PATHS } from 'routes'
 import { ActionNavItem } from '@components/NavItem/ActionNavItem'
 import { SpaceList } from '@components/SideBars/MainSideBar'
+import { AppVersionText } from '@components/SideBars/SpaceSideBar/AppVersionText'
 
 type Props = {
     onClose: () => void
@@ -69,30 +70,28 @@ export const TouchHomeOverlay = (props: Props) => {
                     <Box grow />
                     <IconButton icon="close" onClick={onClose} />
                 </Stack>
-                <Box grow scroll>
-                    <Box minHeight="forceScroll">
-                        <ActionNavItem
-                            id={`${PATHS.SPACES}/new`}
-                            link={`/${PATHS.SPACES}/new`}
-                            icon="plus"
-                            label="New Town"
-                            tooltip="New Town"
-                            tooltipOptions={{
-                                placement: 'horizontal',
-                                immediate: true,
-                            }}
-                        />
-                        <SpaceList spaces={spaces} spaceId={spaceId} onSelectSpace={onClose} />
-                    </Box>
-                </Box>
+                <Box maxHeight="min-content" overflow="scroll">
+                    <ActionNavItem
+                        id={`${PATHS.SPACES}/new`}
+                        link={`/${PATHS.SPACES}/new`}
+                        icon="plus"
+                        label="New Town"
+                        tooltip="New Town"
+                        tooltipOptions={{
+                            placement: 'horizontal',
+                            immediate: true,
+                        }}
+                    />
 
-                <Stack paddingX="sm" paddingTop="md">
-                    <Box paddingX="sm">
-                        <Text textAlign="left" color="gray2" fontSize="sm">
-                            Towns {APP_VERSION} ({APP_COMMIT_HASH})
-                        </Text>
-                    </Box>
-                </Stack>
+                    <SpaceList spaces={spaces} spaceId={spaceId} onSelectSpace={onClose} />
+                    <Stack paddingX="sm" paddingTop="md">
+                        <Box paddingX="sm">
+                            <Text textAlign="left" color="gray2" fontSize="sm">
+                                <AppVersionText />
+                            </Text>
+                        </Box>
+                    </Stack>
+                </Box>
             </MotionStack>
         </Box>
     )

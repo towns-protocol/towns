@@ -17,7 +17,9 @@ if (!env.DEV) {
 }
 
 console.log(
-    `%c\n\nTOWNS\n%c${APP_VERSION}[${APP_COMMIT_HASH}]\n${env.DEV ? 'DEV' : ''}${'\n'.repeat(3)}`,
+    `%c\n\nTOWNS\n%c${VITE_APP_MODE}\n${VITE_APP_COMMIT_HASH}\n${new Date(
+        VITE_APP_TIMESTAMP,
+    ).toLocaleString()}\n${env.DEV ? 'DEV' : ''}${'\n'.repeat(3)}`,
     `font-size:32px;font-weight:bold;font-family:sans-serif;`,
     ``,
 )

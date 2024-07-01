@@ -15,7 +15,7 @@ import { ActionNavItem } from '@components/NavItem/ActionNavItem'
 import { ChannelNavGroup } from '@components/NavItem/ChannelNavGroup'
 import { ChannelNavItem } from '@components/NavItem/ChannelNavItem'
 import { CreateChannelFormContainer } from '@components/Web3/CreateChannelForm'
-import { Badge, Box, Card, IconButton, MotionBox, Stack, Text } from '@ui'
+import { Badge, Box, Card, IconButton, MotionBox, Paragraph, Stack } from '@ui'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { useShortcut } from 'hooks/useShortcut'
 import { useSortedChannels } from 'hooks/useSortedChannels'
@@ -32,6 +32,7 @@ import { SpaceSideBarHeader } from './SpaceSideBarHeader'
 import { SidebarLoadingAnimation } from './SpaceSideBarLoading'
 import { CondensedChannelNavItem } from './CondensedChannelNavItem'
 import { useOffscreenMarkers } from './hooks/useOffscreenMarkers'
+import { AppVersionText } from './AppVersionText'
 
 type Props = {
     space: SpaceData
@@ -292,10 +293,16 @@ export const SpaceSideBar = (props: Props) => {
                         )}
                     </Stack>
 
-                    <Box gap paddingTop="md" paddingX="sm" paddingBottom="lg">
-                        <Text textAlign="center" color="gray2" fontSize="sm">
-                            Towns {APP_VERSION} ({APP_COMMIT_HASH})
-                        </Text>
+                    <Box
+                        centerContent
+                        paddingTop="md"
+                        paddingX="sm"
+                        paddingBottom="x4"
+                        style={{ opacity: 0.5 }}
+                    >
+                        <Paragraph size="xs" textAlign="center" color="gray2">
+                            <AppVersionText />
+                        </Paragraph>
                     </Box>
                 </Box>
 

@@ -10,8 +10,46 @@
     <meta property="og:description" content="__description__" />
     <meta property="og:image" content="__image__" />
     <!--app-head-->
+    <title>__title__</title>
+    <link rel="icon" href="/favicon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <link rel="icon" href="/pwa/maskable_icon_x192.png" />
+    <link rel="mask-icon" href="/pwa/maskable_icon_x192.png" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <style>
+      body {
+        background-color: hsl(260, 5%, 17%);
+      }
+      @media screen and (prefers-color-scheme: light) {
+        body {
+          background-color: hsla(0, 0%, 92%, 1);
+        }
+      }
+    </style>
     <script>
-      // analytics
+      document.title = document.title.match(/__title__/)
+        ? "Towns"
+        : document.title;
+    </script>
+    <script type="module">
+      window.onload = function () {
+        var host = window.location.hostname;
+        var favicon = document.querySelector(
+          'link[rel="icon"][href="/favicon.png"]',
+        );
+        if (favicon) {
+          if (host === "app.gamma.towns.com") {
+            favicon.href = "/favicon-blue.png";
+          } else if (host === "localhost") {
+            favicon.href = "/favicon-green.png";
+          }
+        }
+      };
+    </script>
+    <script>
       window.rudderanalytics = [];
       var methods = [
         "load",
@@ -46,40 +84,6 @@
         window.townsAppStartTime = Date.now();
         window.townsMeasureFlag = true;
       }
-    </script>
-    <title>__title__</title>
-    <link rel="icon" href="/favicon.png" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <link rel="icon" href="/pwa/maskable_icon_x192.png" />
-    <link rel="mask-icon" href="/pwa/maskable_icon_x192.png" />
-    <meta
-      name="apple-mobile-web-app-status-bar-style"
-      content="black-translucent"
-    />
-    <style>
-      body {
-        background-color: hsl(260, 5%, 17%);
-      }
-      @media screen and (prefers-color-scheme: light) {
-        body {
-          background-color: hsla(0, 0%, 92%, 1);
-        }
-      }
-    </style>
-    <script>
-      window.onload = function () {
-        var host = window.location.hostname;
-        var favicon = document.querySelector(
-          'link[rel="icon"][href="/favicon.png"]',
-        );
-        if (favicon) {
-          if (host === "app.gamma.towns.com") {
-            favicon.href = "/favicon-blue.png";
-          } else if (host === "localhost") {
-            favicon.href = "/favicon-green.png";
-          }
-        }
-      };
     </script>
   </head>
   <body>

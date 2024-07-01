@@ -36,7 +36,10 @@ export function BetaDebugger() {
 
                 <Stack horizontal gap="xs" color="gray1" fontSize="sm" alignItems="center">
                     <Paragraph size="sm">App Version:</Paragraph>
-                    <ClipboardCopy clipboardContent={APP_COMMIT_HASH} label={APP_COMMIT_HASH} />
+                    <ClipboardCopy
+                        clipboardContent={VITE_APP_COMMIT_HASH}
+                        label={VITE_APP_COMMIT_HASH}
+                    />
                 </Stack>
                 <Stack horizontal gap="xs" color="gray1" fontSize="sm" alignItems="center">
                     <Paragraph size="sm">User ID:</Paragraph>

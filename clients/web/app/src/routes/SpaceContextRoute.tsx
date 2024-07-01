@@ -7,8 +7,8 @@ import { PATHS } from 'routes'
 import { useStore } from 'store/store'
 import { useSetDocTitle } from 'hooks/useDocTitle'
 import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
-import { APP_NAME } from 'data/constants'
 import { useDevice } from 'hooks/useDevice'
+import { env } from 'utils/environment'
 
 export interface RouteParams {
     spaceId?: string
@@ -17,7 +17,7 @@ export interface RouteParams {
 }
 
 const createSpaceTitle = (spaceName?: string, childLabel?: string) => {
-    return [childLabel, spaceName].filter(Boolean).concat(APP_NAME).join(' - ')
+    return [childLabel, spaceName].filter(Boolean).concat(env.VITE_APP_NAME).join(' - ')
 }
 
 export const SpaceContextRoute = () => {

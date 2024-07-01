@@ -1,7 +1,8 @@
 import { useCallback, useEffect } from 'react'
-import { APP_NAME } from 'data/constants'
 
-const FALLBACK = APP_NAME
+import { env } from '../utils/environment'
+
+const FALLBACK = env.VITE_APP_NAME
 
 export const useSetDocTitle = () => {
     const setTitle = useCallback((title?: string) => {

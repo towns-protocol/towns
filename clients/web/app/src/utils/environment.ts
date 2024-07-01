@@ -42,6 +42,8 @@ const envSchema = z.object({
     BASE_URL: baseUrlSchema,
     DESTROY_PROD_SERVICE_WORKER: boolish.default(false),
 
+    VITE_APP_NAME: z.string().optional().default('Towns2'),
+
     // start environment config, if any are set, all should be set
     VITE_RIVER_ENV: z.string().optional(),
     VITE_BASE_CHAIN_RPC_URL: z.string().url().optional(),
