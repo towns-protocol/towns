@@ -220,22 +220,24 @@ const Header = (props: { isPreview: boolean; onClosePreview?: () => void }) => {
                 )}
             </Stack>
             {isShowingBugReport && (
-                <ModalContainer asSheet onHide={onHideBugReport}>
-                    {!isTouch && (
-                        <Box position="relative">
-                            <IconButton
-                                position="topRight"
-                                icon="close"
-                                onClick={onHideBugReport}
-                            />
-                        </Box>
-                    )}
-                    <Stack gap alignItems="center" paddingY="lg">
-                        <Text size="lg" fontWeight="strong" color="default">
-                            Bug Report
-                        </Text>
-                    </Stack>
-                    <ErrorReportForm asSheet onHide={onHideBugReport} />
+                <ModalContainer asSheet padding="none" onHide={onHideBugReport}>
+                    <Box position="relative">
+                        {!isTouch && (
+                            <Box top="md" right="md" position="relative">
+                                <IconButton
+                                    position="topRight"
+                                    icon="close"
+                                    onClick={onHideBugReport}
+                                />
+                            </Box>
+                        )}
+                        <Stack gap alignItems="center" paddingY="lg">
+                            <Text size="lg" fontWeight="strong" color="default">
+                                Bug Report
+                            </Text>
+                        </Stack>
+                        <ErrorReportForm asSheet onHide={onHideBugReport} />
+                    </Box>
                 </ModalContainer>
             )}
         </Box>

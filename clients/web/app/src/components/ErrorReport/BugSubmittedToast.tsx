@@ -7,7 +7,7 @@ export const BugSubmittedToast = ({ toast, message }: { toast: Toast; message: s
         <Box horizontal width="300" justifyContent="spaceBetween">
             <Box horizontal gap alignItems="center">
                 <Icon color="gray2" type="tag" background="level4" padding="xs" />
-                <Text size="sm">{message}</Text>
+                <Text>{message}</Text>
             </Box>
             <IconButton
                 alignSelf="start"
