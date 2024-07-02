@@ -104,57 +104,65 @@ router.get('/space-icon/:id+', async (request: WorkerRequest, env) => {
 })
 
 router.post('/space-icon/:id', async (request: WorkerRequest, env) => {
-    // spaceId is <id>:node1.towns.com
-    const spaceId = request.params?.id
-    const copyRequest: Request = request.clone()
-    const formData = await copyRequest.formData()
+    // https://linear.app/hnt-labs/issue/HNT-7392/disabling-gateway-worker-post-requests
+    return new Response(JSON.stringify({ error: 'Not allowed' }), {
+        status: 403,
+    })
+    // // spaceId is <id>:node1.towns.com
+    // const spaceId = request.params?.id
+    // const copyRequest: Request = request.clone()
+    // const formData = await copyRequest.formData()
 
-    const formId = formData.get('id')
-    if (formId !== spaceId) {
-        return new Response(JSON.stringify({ error: 'id mismatch' }), {
-            status: 400,
-        })
-    }
+    // const formId = formData.get('id')
+    // if (formId !== spaceId) {
+    //     return new Response(JSON.stringify({ error: 'id mismatch' }), {
+    //         status: 400,
+    //     })
+    // }
 
-    try {
-        const destinationURL = new URL([env.CF_API, env.ACCOUNT_ID, 'images/v1', spaceId].join('/'))
-        // upsert
-        const getUrl = new URL(
-            [IMAGE_DELIVERY_SERVICE, env.IMAGE_HASH, spaceId, 'public'].join('/'),
-        )
-        return await upsertImage(getUrl, destinationURL, request, env)
-    } catch (error) {
-        console.error(error)
-        return new Response(JSON.stringify({ error: (error as Error).message }), {
-            status: 400,
-        })
-    }
+    // try {
+    //     const destinationURL = new URL([env.CF_API, env.ACCOUNT_ID, 'images/v1', spaceId].join('/'))
+    //     // upsert
+    //     const getUrl = new URL(
+    //         [IMAGE_DELIVERY_SERVICE, env.IMAGE_HASH, spaceId, 'public'].join('/'),
+    //     )
+    //     return await upsertImage(getUrl, destinationURL, request, env)
+    // } catch (error) {
+    //     console.error(error)
+    //     return new Response(JSON.stringify({ error: (error as Error).message }), {
+    //         status: 400,
+    //     })
+    // }
 })
 
 router.post('/user/:id/avatar', async (request: WorkerRequest, env) => {
-    // user id is equivalent to wallet address of the form 0x83..
-    const userId = request.params?.id
-    const copyRequest: Request = request.clone()
-    const formData = await copyRequest.formData()
-    const formId = formData.get('id')
-    if (formId !== userId) {
-        return new Response(JSON.stringify({ error: 'id mismatch' }), {
-            status: 400,
-        })
-    }
+    // https://linear.app/hnt-labs/issue/HNT-7392/disabling-gateway-worker-post-requests
+    return new Response(JSON.stringify({ error: 'Not allowed' }), {
+        status: 403,
+    })
+    // // user id is equivalent to wallet address of the form 0x83..
+    // const userId = request.params?.id
+    // const copyRequest: Request = request.clone()
+    // const formData = await copyRequest.formData()
+    // const formId = formData.get('id')
+    // if (formId !== userId) {
+    //     return new Response(JSON.stringify({ error: 'id mismatch' }), {
+    //         status: 400,
+    //     })
+    // }
 
-    try {
-        console.log('env', env)
-        const destinationURL = new URL([env.CF_API, env.ACCOUNT_ID, 'images/v1', userId].join('/'))
-        // upsert
-        const getUrl = new URL([IMAGE_DELIVERY_SERVICE, env.IMAGE_HASH, userId, 'public'].join('/'))
-        return await upsertImage(getUrl, destinationURL, request, env)
-    } catch (error) {
-        console.error(error)
-        return new Response(JSON.stringify({ error: (error as Error).message }), {
-            status: 400,
-        })
-    }
+    // try {
+    //     console.log('env', env)
+    //     const destinationURL = new URL([env.CF_API, env.ACCOUNT_ID, 'images/v1', userId].join('/'))
+    //     // upsert
+    //     const getUrl = new URL([IMAGE_DELIVERY_SERVICE, env.IMAGE_HASH, userId, 'public'].join('/'))
+    //     return await upsertImage(getUrl, destinationURL, request, env)
+    // } catch (error) {
+    //     console.error(error)
+    //     return new Response(JSON.stringify({ error: (error as Error).message }), {
+    //         status: 400,
+    //     })
+    // }
 })
 
 // /user/<user_id>/avatar/<IMAGE_OPTIONS>
@@ -197,35 +205,39 @@ router.get('/user/:id/avatar', async (request: WorkerRequest, env) => {
 })
 
 router.post('/user/:id/bio', async (request: WorkerRequest, env) => {
-    // user id is equivalent to wallet address of the form 0x83..
-    const userId = request.params?.id
+    // https://linear.app/hnt-labs/issue/HNT-7392/disabling-gateway-worker-post-requests
+    return new Response(JSON.stringify({ error: 'Not allowed' }), {
+        status: 403,
+    })
+    // // user id is equivalent to wallet address of the form 0x83..
+    // const userId = request.params?.id
 
-    const copyRequest: Request = request.clone()
-    const contentType = copyRequest.headers.get('content-type')
-    if (contentType !== 'application/json') {
-        return new Response(JSON.stringify({ error: 'invalid content-type' }), {
-            status: 400,
-        })
-    }
-    const requestBody = JSON.stringify(await copyRequest.json())
-    const BIO_MAX_SIZE = 280
+    // const copyRequest: Request = request.clone()
+    // const contentType = copyRequest.headers.get('content-type')
+    // if (contentType !== 'application/json') {
+    //     return new Response(JSON.stringify({ error: 'invalid content-type' }), {
+    //         status: 400,
+    //     })
+    // }
+    // const requestBody = JSON.stringify(await copyRequest.json())
+    // const BIO_MAX_SIZE = 280
 
-    // validate bio length
-    if (!validateLength(JSON.parse(requestBody).bio, BIO_MAX_SIZE)) {
-        return new Response(
-            JSON.stringify({ error: `bio must be under ${BIO_MAX_SIZE} characters` }),
-            { status: 400 },
-        )
-    }
-    try {
-        await env.USER.put(userId, requestBody)
-    } catch (error) {
-        console.error(error)
-        return new Response(JSON.stringify({ error: (error as Error).message }), {
-            status: 400,
-        })
-    }
-    return new Response('ok', { status: 200 })
+    // // validate bio length
+    // if (!validateLength(JSON.parse(requestBody).bio, BIO_MAX_SIZE)) {
+    //     return new Response(
+    //         JSON.stringify({ error: `bio must be under ${BIO_MAX_SIZE} characters` }),
+    //         { status: 400 },
+    //     )
+    // }
+    // try {
+    //     await env.USER.put(userId, requestBody)
+    // } catch (error) {
+    //     console.error(error)
+    //     return new Response(JSON.stringify({ error: (error as Error).message }), {
+    //         status: 400,
+    //     })
+    // }
+    // return new Response('ok', { status: 200 })
 })
 
 router.get('/user/:id/bio', async (request: WorkerRequest, env) => {
@@ -239,41 +251,46 @@ router.get('/user/:id/bio', async (request: WorkerRequest, env) => {
 })
 
 router.post('/space/:id/identity', async (request: WorkerRequest, env) => {
-    const spaceId = request.params?.id
+    // https://linear.app/hnt-labs/issue/HNT-7392/disabling-gateway-worker-post-requests
+    return new Response(JSON.stringify({ error: 'Not allowed' }), {
+        status: 403,
+    })
 
-    const copyRequest: Request = request.clone()
-    const contentType = copyRequest.headers.get('content-type')
-    if (contentType !== 'application/json') {
-        return new Response(JSON.stringify({ error: 'invalid content-type' }), {
-            status: 400,
-        })
-    }
-    const requestBody = JSON.stringify(await copyRequest.json())
-    const BIO_MAX_SIZE = 500
+    // const spaceId = request.params?.id
 
-    // validate bio length
-    if (!validateLength(JSON.parse(requestBody).bio, BIO_MAX_SIZE)) {
-        return new Response(
-            JSON.stringify({ error: `bio must be under ${BIO_MAX_SIZE} characters` }),
-            { status: 400 },
-        )
-    }
-    // validate motto length
-    if (!validateLength(JSON.parse(requestBody).motto, MOTTO_MAX_SIZE)) {
-        return new Response(
-            JSON.stringify({ error: `motto must be under ${MOTTO_MAX_SIZE} characters` }),
-            { status: 400 },
-        )
-    }
-    try {
-        await env.SPACE.put(spaceId, requestBody)
-    } catch (error) {
-        console.error(error)
-        return new Response(JSON.stringify({ error: (error as Error).message }), {
-            status: 400,
-        })
-    }
-    return new Response('ok', { status: 200 })
+    // const copyRequest: Request = request.clone()
+    // const contentType = copyRequest.headers.get('content-type')
+    // if (contentType !== 'application/json') {
+    //     return new Response(JSON.stringify({ error: 'invalid content-type' }), {
+    //         status: 400,
+    //     })
+    // }
+    // const requestBody = JSON.stringify(await copyRequest.json())
+    // const BIO_MAX_SIZE = 500
+
+    // // validate bio length
+    // if (!validateLength(JSON.parse(requestBody).bio, BIO_MAX_SIZE)) {
+    //     return new Response(
+    //         JSON.stringify({ error: `bio must be under ${BIO_MAX_SIZE} characters` }),
+    //         { status: 400 },
+    //     )
+    // }
+    // // validate motto length
+    // if (!validateLength(JSON.parse(requestBody).motto, MOTTO_MAX_SIZE)) {
+    //     return new Response(
+    //         JSON.stringify({ error: `motto must be under ${MOTTO_MAX_SIZE} characters` }),
+    //         { status: 400 },
+    //     )
+    // }
+    // try {
+    //     await env.SPACE.put(spaceId, requestBody)
+    // } catch (error) {
+    //     console.error(error)
+    //     return new Response(JSON.stringify({ error: (error as Error).message }), {
+    //         status: 400,
+    //     })
+    // }
+    // return new Response('ok', { status: 200 })
 })
 
 router.get('/space/:id/identity', async (request: WorkerRequest, env) => {

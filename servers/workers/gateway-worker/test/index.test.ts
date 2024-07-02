@@ -53,7 +53,8 @@ describe('http router', () => {
         expect(text).toContain('Could not fetch the image')
     })
 
-    test('error post user avatar', async () => {
+    // https://linear.app/hnt-labs/issue/HNT-7392/disabling-gateway-worker-post-requests
+    test.skip('error post user avatar', async () => {
         const result = await worker.fetch(
             ...generateRequest(
                 'user/1/avatar',
