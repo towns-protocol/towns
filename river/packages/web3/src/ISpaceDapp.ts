@@ -173,6 +173,7 @@ export interface ISpaceDapp {
     ) => Promise<TransactionType>
     getSpace(spaceId: string): Space | undefined
     getSpaceMembershipTokenAddress: (spaceId: string) => Promise<string>
+    getJoinSpacePrice: (spaceId: string) => Promise<BigNumber>
     joinSpace: (
         spaceId: string,
         recipient: string,

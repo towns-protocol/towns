@@ -832,6 +832,19 @@ export class SpaceDapp implements ISpaceDapp {
         return space.Membership.address
     }
 
+    public async getJoinSpacePrice(spaceId: string): Promise<ethers.BigNumber> {
+        const space = this.getSpace(spaceId)
+        if (!space) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+        }
+        const prepaidSupply = await space.Prepay.read.prepaidMembershipSupply()
+
+        if (prepaidSupply.gt(0)) {
+            return ethers.BigNumber.from(0)
+        }
+        return space.Membership.read.getMembershipPrice()
+    }
+
     public async joinSpace(
         spaceId: string,
         recipient: string,
@@ -854,7 +867,7 @@ export class SpaceDapp implements ISpaceDapp {
 
         logger.log('joinSpace before blockNumber', Date.now() - getSpaceStart, blockNumber)
         const getPriceStart = Date.now()
-        const price = await space.Membership.read.getMembershipPrice()
+        const price = await this.getJoinSpacePrice(spaceId)
         logger.log('joinSpace getMembershipPrice', Date.now() - getPriceStart)
         const wrapStart = Date.now()
         const result = await wrapTransaction(async () => {

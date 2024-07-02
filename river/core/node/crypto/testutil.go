@@ -239,6 +239,19 @@ func NewBlockchainTestContext(ctx context.Context, numKeys int, mineOnTx bool) (
 				return RiverError(Err_INTERNAL, "auto mining failed to include tx in block", "tx", tx.Hash())
 			},
 		}
+
+		if btc.Backend != nil {
+			go func() {
+				for {
+					select {
+					case <-ctx.Done():
+						return
+					case <-time.After(1000 * time.Millisecond):
+						_ = btc.mineBlock(ctx)
+					}
+				}
+			}()
+		}
 	}
 	btc.BcClient = client
 
