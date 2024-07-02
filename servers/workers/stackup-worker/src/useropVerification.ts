@@ -150,15 +150,26 @@ export async function verifyJoinTown(params: ITownTransactionParams): Promise<IV
         if (hasMembershipToken) {
             return { verified: false, error: `User already has membership token for town` }
         }
-        // check if membership fee == 0
+
         const { maxSupply, price } = await spaceDapp.getMembershipInfo(params.townId)
-        // we don't sponsor joinTown gas for towns with membership tokens with a price greater than zero
-        if (maxSupply === 0 || price > BigNumber.from(0)) {
+        if (maxSupply === 0) {
             return {
                 verified: false,
-                error: 'max supply zero or membership token price greater than zero',
+                error: 'max supply zero',
             }
         }
+
+        // we don't sponsor joining towns w/ a cost unless there are available prepaid memberships
+        if (BigNumber.from(price).gt(0)) {
+            const prepaidSupply = await spaceDapp.getPrepaidMembershipSupply(params.townId)
+            if (BigNumber.from(prepaidSupply).eq(0)) {
+                return {
+                    verified: false,
+                    error: 'prepaid membership supply is not depleted',
+                }
+            }
+        }
+
         // 5. check if membership tokens still available to claim
         const { totalSupply: membershipSupply } = await spaceDapp.getMembershipSupply(params.townId)
         if (membershipSupply <= 0) {
