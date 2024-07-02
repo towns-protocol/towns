@@ -37,7 +37,7 @@ var (
 
 type autoMiningClientWrapper struct {
 	BlockchainClient
-	onTx func(context.Context) error
+	onTx func(context.Context, *types.Transaction) error
 }
 
 func (w *autoMiningClientWrapper) SendTransaction(ctx context.Context, tx *types.Transaction) error {
@@ -48,7 +48,7 @@ func (w *autoMiningClientWrapper) SendTransaction(ctx context.Context, tx *types
 	if w.onTx == nil {
 		return nil
 	} else {
-		return w.onTx(ctx)
+		return w.onTx(ctx, tx)
 	}
 }
 
@@ -222,8 +222,21 @@ func NewBlockchainTestContext(ctx context.Context, numKeys int, mineOnTx bool) (
 	if mineOnTx {
 		client = &autoMiningClientWrapper{
 			BlockchainClient: client,
-			onTx: func(ctx context.Context) error {
-				return btc.mineBlock(ctx)
+			onTx: func(ctx context.Context, tx *types.Transaction) error {
+				for range 20 {
+					if err := btc.mineBlock(ctx); err != nil {
+						return err
+					}
+					receipt, err := client.TransactionReceipt(ctx, tx.Hash())
+					if receipt != nil {
+						return nil
+					}
+					if !errors.Is(err, ethereum.NotFound) {
+						return err
+					}
+					<-time.After(5 * time.Millisecond)
+				}
+				return RiverError(Err_INTERNAL, "auto mining failed to include tx in block", "tx", tx.Hash())
 			},
 		}
 	}

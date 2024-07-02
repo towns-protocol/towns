@@ -11,7 +11,6 @@ import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol"
 import {DiamondDeployer} from "../common/DiamondDeployer.s.sol";
 
 import {TokenPausableHelper} from "contracts/test/diamond/pausable/token/TokenPausableSetup.sol";
-import {MembershipReferralHelper} from "contracts/test/spaces/membership/MembershipReferralSetup.sol";
 import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
 
 // Facets
@@ -35,7 +34,6 @@ import {DeployEntitlementsManager} from "contracts/scripts/deployments/facets/De
 import {DeployRoles} from "contracts/scripts/deployments/facets/DeployRoles.s.sol";
 import {DeployChannels} from "contracts/scripts/deployments/facets/DeployChannels.s.sol";
 import {DeployTokenPausable} from "contracts/scripts/deployments/facets/DeployTokenPausable.s.sol";
-import {DeployMembershipReferral} from "contracts/scripts/deployments/facets/DeployMembershipReferral.s.sol";
 import {DeployPrepayFacet} from "contracts/scripts/deployments/facets/DeployPrepayFacet.s.sol";
 import {DeployMultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.sol";
 
@@ -63,8 +61,7 @@ contract DeploySpace is DiamondDeployer {
   DeployRoles rolesHelper = new DeployRoles();
   DeployChannels channelsHelper = new DeployChannels();
   DeployTokenPausable tokenPausableHelper = new DeployTokenPausable();
-  DeployMembershipReferral membershipReferralHelper =
-    new DeployMembershipReferral();
+
   DeployPrepayFacet prepayHelper = new DeployPrepayFacet();
   DeployMultiInit deployMultiInit = new DeployMultiInit();
 
@@ -110,7 +107,7 @@ contract DeploySpace is DiamondDeployer {
     roles = rolesHelper.deploy();
     channels = channelsHelper.deploy();
     tokenPausable = tokenPausableHelper.deploy();
-    membershipReferral = membershipReferralHelper.deploy();
+
     prepay = prepayHelper.deploy();
     multiInit = deployMultiInit.deploy();
 
@@ -137,12 +134,7 @@ contract DeploySpace is DiamondDeployer {
     addCut(channelsHelper.makeCut(channels, IDiamond.FacetCutAction.Add));
 
     addCut(membershipHelper.makeCut(membership, IDiamond.FacetCutAction.Add));
-    addCut(
-      membershipReferralHelper.makeCut(
-        membershipReferral,
-        IDiamond.FacetCutAction.Add
-      )
-    );
+
     addCut(banningHelper.makeCut(banning, IDiamond.FacetCutAction.Add));
     addCut(
       membershipMetadataHelper.makeCut(

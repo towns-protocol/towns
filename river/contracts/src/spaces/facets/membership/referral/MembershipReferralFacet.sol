@@ -18,7 +18,6 @@ contract MembershipReferralFacet is
   Facet
 {
   function __MembershipReferralFacet_init() external onlyInitializing {
-    __MembershipReferralBase_init();
     _addInterface(type(IMembershipReferral).interfaceId);
   }
 

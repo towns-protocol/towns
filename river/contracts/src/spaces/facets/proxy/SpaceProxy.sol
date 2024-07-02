@@ -12,7 +12,6 @@ import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.so
 import {ManagedProxyBase} from "contracts/src/diamond/proxy/managed/ManagedProxyBase.sol";
 import {TokenOwnableBase} from "contracts/src/diamond/facets/ownable/token/TokenOwnableBase.sol";
 import {MembershipBase} from "contracts/src/spaces/facets/membership/MembershipBase.sol";
-import {MembershipReferralBase} from "contracts/src/spaces/facets/membership/referral/MembershipReferralBase.sol";
 import {ERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol";
 import {IntrospectionBase} from "contracts/src/diamond/facets/introspection/IntrospectionBase.sol";
 import {EntitlementGatedBase} from "contracts/src/spaces/facets/gated/EntitlementGatedBase.sol";
@@ -24,7 +23,6 @@ contract SpaceProxy is
   TokenOwnableBase,
   ERC721ABase,
   MembershipBase,
-  MembershipReferralBase,
   EntitlementGatedBase,
   Multicall
 {
@@ -39,7 +37,6 @@ contract SpaceProxy is
     __TokenOwnableBase_init(tokenOwnable);
     __ERC721ABase_init(membership.name, membership.symbol);
     __MembershipBase_init(membership, managedProxy.manager);
-    __MembershipReferralBase_init();
 
     _safeMint(owner, 1);
     _setFallbackEntitlementChecker();

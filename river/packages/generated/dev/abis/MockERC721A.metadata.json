@@ -7,6 +7,11 @@
     "abi": [
       {
         "inputs": [],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+      },
+      {
+        "inputs": [],
         "type": "error",
         "name": "ApprovalCallerNotOwnerNorApproved"
       },
@@ -671,10 +676,10 @@
       "license": "MIT"
     },
     "contracts/src/diamond/facets/token/ERC721A/ERC721A.sol": {
-      "keccak256": "0x831bb3c33d216c2469726e2665840bcd780bdea916e33ac53ff334b2a60e58d7",
+      "keccak256": "0x5662ab29272ecaabdaf5792c368a71693fcad9df24566f9e470ff1ec3510fd8f",
       "urls": [
-        "bzz-raw://b2ca636e3c22830ca38ce5eaa3d9945dcb80b7acab637085038cdb39236401cb",
-        "dweb:/ipfs/QmeXEtdSitN9z4LNxQd1TZQJtYvNHqKfJa6VuiCyQtxgtP"
+        "bzz-raw://2ef719ff8dce040daf5bcfe328f3463261fb3acfe5c41c589365143916748cc3",
+        "dweb:/ipfs/QmUm4PHj4y2237H7hnCwnfRyTWbp1DHWpc8GN26M6T4ToC"
       ],
       "license": "MIT"
     },
@@ -703,10 +708,10 @@
       "license": "MIT"
     },
     "contracts/test/mocks/MockERC721A.sol": {
-      "keccak256": "0x3096e91334d0840ce7b1ec636da4fdf327dc47e9505eabfe3832597df43be691",
+      "keccak256": "0x80071b1ba055681eea1cc0827319e36c8aaf045d17d9e16866f16984bdcd6312",
       "urls": [
-        "bzz-raw://c5716d0d1c7f28ba9bfb36e52536766646a758e99592328bf198ebf1bfde74a3",
-        "dweb:/ipfs/QmYDQMSB9nT7B37fDL47JP1mGJxk7auaAFyUvnrk8FXgnV"
+        "bzz-raw://b1b8864b9ffc23fa666b4b423b9fccf561694059ebf676debd5af205491633ab",
+        "dweb:/ipfs/QmemqAUhh1X9kh7v17Fy6D7Tr2hFxeE6dw77RvG7vMFvrA"
       ],
       "license": "MIT"
     },

@@ -46,6 +46,7 @@ generate_go base/deploy deploy EntitlementChecker entitlement_checker
 generate_go base/deploy deploy WalletLink wallet_link
 generate_go base/deploy deploy MockERC20 mock_erc20
 generate_go base/deploy deploy MockERC721 mock_erc721
+generate_go base/deploy deploy MockWalletLink mock_wallet_link
 
 # River contracts interfaces
 generate_go river river INodeRegistry node_registry_v1
@@ -68,4 +69,5 @@ go build -o bin/gen-bindings-remove-struct scripts/gen-bindings-remove-struct.go
 ./bin/gen-bindings-remove-struct core/contracts/base/architect.go IRuleEntitlementCheckOperation,IRuleEntitlementLogicalOperation,IRuleEntitlementOperation,IRuleEntitlementRuleData
 ./bin/gen-bindings-remove-struct core/contracts/base/entitlements_manager.go IRuleEntitlementCheckOperation,IRuleEntitlementLogicalOperation,IRuleEntitlementOperation,IRuleEntitlementRuleData
 ./bin/gen-bindings-remove-struct core/contracts/base/rule_entitlement.go IRuleEntitlementCheckOperation,IRuleEntitlementLogicalOperation,IRuleEntitlementOperation,IRuleEntitlementRuleData
+./bin/gen-bindings-remove-struct core/contracts/base/deploy/mock_wallet_link.go IWalletLinkBaseLinkedWallet
 

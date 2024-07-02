@@ -9,6 +9,10 @@ pragma solidity ^0.8.23;
 import {ERC721A} from "contracts/src/diamond/facets/token/ERC721A/ERC721A.sol";
 
 contract MockERC721A is ERC721A {
+  constructor() {
+    __ERC721A_init_unchained("TownsTest", "TNFT");
+  }
+
   function mintTo(address to) external returns (uint256 tokenId) {
     tokenId = _nextTokenId();
     _mint(to, 1);

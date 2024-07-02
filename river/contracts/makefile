@@ -24,6 +24,8 @@ anvil :; anvil -m 'test test test test test test test test test test test junk'
 
 clear-anvil-deployments :; rm -rf deployments/base_anvil deployments/river_anvil
 
+# ================================== LOCAL ==================================
+
 # ===========================
 # 				Base Anvil
 # ===========================
@@ -112,6 +114,13 @@ interact-sepolia :;
 	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url sepolia --private-key ${TESTNET_PRIVATE_KEY} --broadcast --legacy
 
 # ================================== PRODUCTION ==================================
+
+# ===========================
+# 				 	Any
+# ===========================
+deploy-any :;
+	@echo "Deploying $(contract)..."
+	@forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ffi --rpc-url ${rpc} --private-key ${TESTNET_PRIVATE_KEY} --broadcast --verifier-url ${verifier} --etherscan-api-key ${etherscan} --verify -vvvv
 
 # ===========================
 # 				 	River

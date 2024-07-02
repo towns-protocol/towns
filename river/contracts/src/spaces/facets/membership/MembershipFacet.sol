@@ -19,7 +19,6 @@ import {ERC721A} from "contracts/src/diamond/facets/token/ERC721A/ERC721A.sol";
 import {ERC5643Base} from "contracts/src/diamond/facets/token/ERC5643/ERC5643Base.sol";
 import {ReentrancyGuard} from "contracts/src/diamond/facets/reentrancy/ReentrancyGuard.sol";
 import {Entitled} from "contracts/src/spaces/facets/Entitled.sol";
-import {MembershipReferralBase} from "./referral/MembershipReferralBase.sol";
 import {RolesBase} from "contracts/src/spaces/facets/roles/RolesBase.sol";
 import {DispatcherBase} from "contracts/src/spaces/facets/dispatcher/DispatcherBase.sol";
 import {PrepayBase} from "contracts/src/spaces/facets/prepay/PrepayBase.sol";

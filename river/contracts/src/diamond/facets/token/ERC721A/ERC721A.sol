@@ -34,7 +34,7 @@ contract ERC721A is IERC721A, ERC721ABase, Facet {
   function __ERC721A_init_unchained(
     string memory name_,
     string memory symbol_
-  ) internal onlyInitializing {
+  ) internal {
     _addInterface(0x80ac58cd); // ERC165 Interface ID for ERC721
     _addInterface(0x5b5e139f); // ERC165 Interface ID for ERC721Metadata
     __ERC721ABase_init(name_, symbol_);

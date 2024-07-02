@@ -146,7 +146,7 @@ func (st *serviceTester) deployXchainTestContracts() {
 	st.mockCustomEntitlementAddress = addr
 
 	// Deploy the wallet linking contract
-	addr, _, _, err = test_contracts.DeployWalletLink(auth, client)
+	addr, _, _, err = test_contracts.DeployMockWalletLink(auth, client)
 	st.require.NoError(err)
 	st.walletLinkingAddress = addr
 	walletLink, err := base.NewWalletLink(addr, client)

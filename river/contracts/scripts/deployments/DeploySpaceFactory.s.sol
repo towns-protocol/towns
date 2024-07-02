@@ -38,6 +38,7 @@ import {DeployPricingModules} from "contracts/scripts/deployments/facets/DeployP
 import {DeployImplementationRegistry} from "contracts/scripts/deployments/facets/DeployImplementationRegistry.s.sol";
 import {DeployPausable} from "contracts/scripts/deployments/facets/DeployPausable.s.sol";
 import {DeployPlatformRequirements} from "./facets/DeployPlatformRequirements.s.sol";
+import {DeployEIP712Facet} from "contracts/scripts/deployments/facets/DeployEIP712Facet.s.sol";
 
 contract DeploySpaceFactory is DiamondDeployer {
   // diamond helpers
@@ -65,6 +66,7 @@ contract DeploySpaceFactory is DiamondDeployer {
   DeployFixedPricing deployFixedPricing = new DeployFixedPricing();
   DeployPlatformRequirements platformReqsHelper =
     new DeployPlatformRequirements();
+  DeployEIP712Facet eip712Helper = new DeployEIP712Facet();
 
   // helpers
 
@@ -83,6 +85,7 @@ contract DeploySpaceFactory is DiamondDeployer {
 
   address registry;
   address walletLink;
+  address eip712;
 
   // external contracts
   address public userEntitlement;
@@ -132,6 +135,8 @@ contract DeploySpaceFactory is DiamondDeployer {
 
     pausable = pausableHelper.deploy();
     platformReqs = platformReqsHelper.deploy();
+
+    eip712 = eip712Helper.deploy();
 
     addFacet(
       diamondCutHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
@@ -205,6 +210,11 @@ contract DeploySpaceFactory is DiamondDeployer {
       walletLinkHelper.makeCut(walletLink, IDiamond.FacetCutAction.Add),
       walletLink,
       walletLinkHelper.makeInitData("")
+    );
+    addFacet(
+      eip712Helper.makeCut(eip712, IDiamond.FacetCutAction.Add),
+      eip712,
+      eip712Helper.makeInitData("SpaceFactory", "1")
     );
 
     return

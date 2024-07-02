@@ -11,11 +11,6 @@ import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
 // contracts
 
 abstract contract MembershipReferralBase is IMembershipReferralBase {
-  function __MembershipReferralBase_init() internal {
-    // create default referral code for client side developers
-    _createReferralCode(123, 1000); // 10%
-  }
-
   /**
    * @notice Create a referral code
    * @param code The referral code

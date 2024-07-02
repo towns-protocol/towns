@@ -1,5 +1,10 @@
 export default [
   {
+    "type": "constructor",
+    "inputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
     "type": "function",
     "name": "__ERC721A_init",
     "inputs": [

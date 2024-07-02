@@ -25,7 +25,7 @@
   "[makefile]": {
     "editor.renderWhitespace": "all"
   },
-  "go.formatTool": "gofumpt",
+  "go.formatTool": "custom",
   "go.testFlags": [
     "-v",
     "-tags",
@@ -36,5 +36,8 @@
   "tailwindCSS.experimental.classRegex": [
     ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
     ["cn\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
-  ]
+  ],
+  "go.alternateTools": {
+    "customFormatter": "${workspaceFolder}/core/fmt.sh",
+  }
 }

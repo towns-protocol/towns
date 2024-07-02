@@ -1,19 +1,28 @@
 import { BigNumber, ContractTransaction, ethers } from 'ethers'
-import { IWalletLinkShim } from './WalletLinkShim'
-import { BaseChainConfig } from '../IStaticContractsInfo'
-import { arrayify } from 'ethers/lib/utils'
 import { WalletAlreadyLinkedError, WalletNotLinkedError } from '../error-types'
+
 import { Address } from '../ContractTypes'
+import { BaseChainConfig } from '../IStaticContractsInfo'
+import { IWalletLinkShim } from './WalletLinkShim'
+import { createEip712LinkedWalletdData } from './EIP-712'
 
 export const INVALID_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 export class WalletLink {
+    private readonly LINKED_WALLET_MESSAGE = 'Link your external wallet'
     private readonly walletLinkShim: IWalletLinkShim
+    private readonly eip712Domain: ethers.TypedDataDomain
     public address: Address
 
     constructor(config: BaseChainConfig, provider: ethers.providers.Provider | undefined) {
         this.walletLinkShim = new IWalletLinkShim(config.addresses.spaceFactory, provider)
         this.address = config.addresses.spaceFactory
+        this.eip712Domain = {
+            name: 'SpaceFactory',
+            version: '1',
+            chainId: config.chainId,
+            verifyingContract: config.addresses.spaceFactory,
+        }
     }
 
     private async assertNotAlreadyLinked(rootKey: ethers.Signer, wallet: ethers.Signer | Address) {
@@ -49,41 +58,82 @@ export class WalletLink {
         rootKeyNonce,
     }: {
         rootKey: ethers.Signer
-        walletAddress: string
+        walletAddress: Address
         rootKeyNonce: BigNumber
-    }) {
-        return rootKey.signMessage(packAddressWithNonce(walletAddress, rootKeyNonce))
+    }): Promise<string> {
+        const { domain, types, value } = createEip712LinkedWalletdData({
+            domain: this.eip712Domain,
+            message: this.LINKED_WALLET_MESSAGE,
+            nonce: rootKeyNonce,
+            userID: walletAddress,
+        })
+        return this.signTypedData(rootKey, domain, types, value)
     }
 
     private generateWalletSignatureForRootKey({
         wallet,
         rootKeyAddress,
-        rootKeyNonce,
+        nonce: rootKeyNonce,
     }: {
         wallet: ethers.Signer
-        rootKeyAddress: string
-        rootKeyNonce: BigNumber
-    }) {
-        return wallet.signMessage(packAddressWithNonce(rootKeyAddress, rootKeyNonce))
+        rootKeyAddress: Address
+        nonce: BigNumber
+    }): Promise<string> {
+        const { domain, types, value } = createEip712LinkedWalletdData({
+            domain: this.eip712Domain,
+            message: this.LINKED_WALLET_MESSAGE,
+            nonce: rootKeyNonce,
+            userID: rootKeyAddress,
+        })
+        return this.signTypedData(wallet, domain, types, value)
     }
 
-    private async generateLinkCallerData(rootKey: ethers.Signer, wallet: ethers.Signer | Address) {
+    private generateRootKeySignatureForCallerData({
+        rootKey,
+        walletAddress,
+        rootKeyNonce,
+    }: {
+        rootKey: ethers.Signer
+        walletAddress: Address
+        rootKeyNonce: BigNumber
+    }): Promise<string> {
+        const { domain, types, value } = createEip712LinkedWalletdData({
+            domain: this.eip712Domain,
+            message: this.LINKED_WALLET_MESSAGE,
+            nonce: rootKeyNonce,
+            userID: walletAddress,
+        })
+        return this.signTypedData(rootKey, domain, types, value)
+    }
+
+    private async generateLinkCallerData(
+        message: string,
+        rootKey: ethers.Signer,
+        wallet: ethers.Signer | Address,
+    ) {
         const { rootKeyAddress, walletAddress } = await this.assertNotAlreadyLinked(rootKey, wallet)
 
         const nonce = await this.walletLinkShim.read.getLatestNonceForRootKey(rootKeyAddress)
-        const rootKeySignature = await rootKey.signMessage(
-            packAddressWithNonce(walletAddress, nonce),
-        )
+        const rootKeySignature = await this.generateRootKeySignatureForCallerData({
+            rootKey,
+            walletAddress: walletAddress as Address,
+            rootKeyNonce: nonce,
+        })
 
         const rootKeyData = {
             addr: rootKeyAddress,
             signature: rootKeySignature,
+            message,
         }
 
         return { rootKeyData, nonce }
     }
 
-    private async generateLinkWalletData(rootKey: ethers.Signer, wallet: ethers.Signer) {
+    private async generateLinkWalletData(
+        message: string,
+        rootKey: ethers.Signer,
+        wallet: ethers.Signer,
+    ) {
         const { rootKeyAddress, walletAddress } = await this.assertNotAlreadyLinked(rootKey, wallet)
 
         const nonce = await this.walletLinkShim.read.getLatestNonceForRootKey(rootKeyAddress)
@@ -91,25 +141,27 @@ export class WalletLink {
         // sign root key with new wallet address
         const rootKeySignature = await this.generateRootKeySignatureForWallet({
             rootKey,
-            walletAddress,
+            walletAddress: walletAddress as Address,
             rootKeyNonce: nonce,
         })
 
         // sign new wallet with root key address
         const walletSignature = await this.generateWalletSignatureForRootKey({
             wallet,
-            rootKeyAddress,
-            rootKeyNonce: nonce,
+            rootKeyAddress: rootKeyAddress as Address,
+            nonce,
         })
 
         const rootKeyData = {
             addr: rootKeyAddress,
             signature: rootKeySignature,
+            message,
         }
 
         const walletData = {
             addr: walletAddress,
             signature: walletSignature,
+            message,
         }
 
         return { rootKeyData, walletData, nonce }
@@ -124,7 +176,11 @@ export class WalletLink {
         rootKey: ethers.Signer,
         wallet: ethers.Signer,
     ): Promise<ContractTransaction> {
-        const { rootKeyData, nonce } = await this.generateLinkCallerData(rootKey, wallet)
+        const { rootKeyData, nonce } = await this.generateLinkCallerData(
+            this.LINKED_WALLET_MESSAGE,
+            rootKey,
+            wallet,
+        )
 
         // msg.sender = new wallet
         return this.walletLinkShim.write(wallet).linkCallerToRootKey(rootKeyData, nonce)
@@ -137,12 +193,15 @@ export class WalletLink {
      * @param rootKey
      * @returns
      */
-    public async linkWalletToRootKey(rootKey: ethers.Signer, wallet: ethers.Signer) {
+    public async linkWalletToRootKey(
+        rootKey: ethers.Signer,
+        wallet: ethers.Signer,
+    ): Promise<ContractTransaction> {
         const { walletData, rootKeyData, nonce } = await this.generateLinkWalletData(
+            this.LINKED_WALLET_MESSAGE,
             rootKey,
             wallet,
         )
-
         // msg.sender = root key
         return this.walletLinkShim
             .write(rootKey)
@@ -153,7 +212,11 @@ export class WalletLink {
         rootKey: ethers.Signer,
         wallet: Address,
     ): Promise<string> {
-        const { rootKeyData, nonce } = await this.generateLinkCallerData(rootKey, wallet)
+        const { rootKeyData, nonce } = await this.generateLinkCallerData(
+            this.LINKED_WALLET_MESSAGE,
+            rootKey,
+            wallet,
+        )
 
         return this.walletLinkShim.interface.encodeFunctionData('linkCallerToRootKey', [
             rootKeyData,
@@ -166,6 +229,7 @@ export class WalletLink {
         wallet: ethers.Signer,
     ): Promise<string> {
         const { walletData, rootKeyData, nonce } = await this.generateLinkWalletData(
+            this.LINKED_WALLET_MESSAGE,
             rootKey,
             wallet,
         )
@@ -197,10 +261,13 @@ export class WalletLink {
     private async generateRemoveLinkData(rootKey: ethers.Signer, walletAddress: string) {
         const { rootKeyAddress } = await this.assertAlreadyLinked(rootKey, walletAddress)
         const nonce = await this.walletLinkShim.read.getLatestNonceForRootKey(rootKeyAddress)
-        const rootKeySignature = await rootKey.signMessage(
-            packAddressWithNonce(walletAddress, nonce),
-        )
-
+        const { domain, types, value } = createEip712LinkedWalletdData({
+            domain: this.eip712Domain,
+            message: this.LINKED_WALLET_MESSAGE,
+            nonce,
+            userID: walletAddress as Address,
+        })
+        const rootKeySignature = await this.signTypedData(rootKey, domain, types, value)
         return { rootKeyAddress, rootKeySignature, nonce }
     }
 
@@ -218,6 +285,7 @@ export class WalletLink {
             {
                 addr: rootKeyAddress,
                 signature: rootKeySignature,
+                message: this.LINKED_WALLET_MESSAGE,
             },
             nonce,
         )
@@ -234,19 +302,26 @@ export class WalletLink {
             {
                 addr: rootKeyAddress,
                 signature: rootKeySignature,
+                message: this.LINKED_WALLET_MESSAGE,
             },
             nonce,
         ])
     }
 
+    private async signTypedData(
+        signer: ethers.Signer,
+        domain: any,
+        types: any,
+        value: any,
+    ): Promise<string> {
+        if ('_signTypedData' in signer && typeof signer._signTypedData === 'function') {
+            return (await signer._signTypedData(domain, types, value)) as string
+        } else {
+            throw new Error('wallet does not have the funciton to sign typed data')
+        }
+    }
+
     public getInterface() {
         return this.walletLinkShim.interface
     }
-}
-
-function packAddressWithNonce(address: string, nonce: BigNumber): Uint8Array {
-    const abi = ethers.utils.defaultAbiCoder
-    const packed = abi.encode(['address', 'uint256'], [address, nonce.toNumber()])
-    const hash = ethers.utils.keccak256(packed)
-    return arrayify(hash)
 }
