@@ -1,60 +1,41 @@
 import React, { useCallback } from 'react'
-import { AnimatePresence, LayoutGroup } from 'framer-motion'
 import { Address } from 'use-towns-client'
 import { useDevice } from 'hooks/useDevice'
 import { avatarSizes } from 'components/Avatar/avatarProperties.css'
 import { ProfileHoverCard } from 'components/ProfileHoverCard/ProfileHoverCard'
-import { Avatar } from 'components/Avatar/Avatar'
+import { AvatarWithoutDot } from 'components/Avatar/Avatar'
 import { Box, Stack } from '@ui'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 
 type Props = {
-    users: {
-        userId?: string
-        displayName?: string
-    }[]
+    userIds: string[]
     size?: keyof typeof avatarSizes
 }
 
 export const AvatarStack = (props: Props) => {
-    const { size = 'avatar_md', users } = props
+    const { size = 'avatar_md', userIds: users } = props
     const { isTouch } = useDevice()
 
     return (
-        <Stack horizontal>
-            <LayoutGroup>
-                <AnimatePresence>
-                    {users
-                        .filter(
-                            (
-                                u,
-                            ): u is {
-                                userId: string
-                                displayName?: string
-                            } => !!u.userId,
-                        )
-                        .map((u, index) => (
-                            <Box
-                                key={u.userId}
-                                tooltip={
-                                    isTouch ? undefined : (
-                                        <ProfileHoverCard userId={u.userId ?? ''} />
-                                    )
-                                }
-                                tooltipOptions={{ immediate: true }}
-                            >
-                                <AvatarLink userId={u.userId} index={index} size={size} />
-                            </Box>
-                        ))}
-                </AnimatePresence>
-            </LayoutGroup>
+        <Stack horizontal insetRight="xxs">
+            {users
+                .filter((u): u is string => !!u)
+                .map((u, index, arr) => (
+                    <Box
+                        key={u}
+                        tooltip={isTouch ? undefined : <ProfileHoverCard userId={u ?? ''} />}
+                        tooltipOptions={{ immediate: true }}
+                    >
+                        <AvatarLink stacked userId={u} size={size} />
+                    </Box>
+                ))}
         </Stack>
     )
 }
 
-function AvatarLink(props: { userId: string; index: number; size: Props['size'] }) {
-    const { userId, index, size } = props
+function AvatarLink(props: { userId: string; stacked?: boolean; size: Props['size'] }) {
+    const { userId, stacked, size } = props
     const { data: abstractAccountAddress } = useAbstractAccountAddress({
         rootKeyAddress: userId as Address,
     })
@@ -66,7 +47,7 @@ function AvatarLink(props: { userId: string; index: number; size: Props['size'] 
 
     return (
         <Box cursor="pointer" onClick={onClick}>
-            <Avatar stacked={index > 0} userId={userId} size={size} />
+            <AvatarWithoutDot userId={userId} size={size} stacked={stacked} />
         </Box>
     )
 }

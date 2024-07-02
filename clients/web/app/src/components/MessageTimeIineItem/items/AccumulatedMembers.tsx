@@ -1,7 +1,5 @@
 import React, { useMemo } from 'react'
-import uniqBy from 'lodash/uniqBy'
 import uniq from 'lodash/uniq'
-import { firstBy } from 'thenby'
 import { Membership, useUserLookupContext } from 'use-towns-client'
 import { Paragraph, Stack, Tooltip } from '@ui'
 import { notUndefined } from 'ui/utils/utils'
@@ -26,6 +24,8 @@ const Verbs = {
     [Membership.Invite]: 'received an invitation to join',
 } as const
 
+const MAX_AVATARS = 3
+
 export const AccumulatedRoomMemberEvent = (props: Props) => {
     const { lookupUser } = useUserLookupContext()
     const { event, channelName, channelType, userId, channelEncrypted: isChannelEncrypted } = props
@@ -40,19 +40,16 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
         channelType === 'gdm' &&
         event.membershipType === Membership.Leave &&
         senderId !== eventUserId // If X leaves a GDM on their own, we show `X left`
-    const avatarUsers = useMemo(
+
+    const allUserIds = useMemo(
         () =>
-            uniqBy(
-                event.events.map((e) => ({
-                    displayName: e.content.displayName,
-                    userId: e.content.userId,
-                })),
-                (e) => e.userId,
-            ).filter(({ userId: _userId }) =>
-                isAddedEvent || isGDMRemovedEvent ? userId !== _userId : true,
-            ),
-        [event.events, isGDMRemovedEvent, isAddedEvent, userId],
+            uniq(event.events.map((e) => e.content.userId))
+                .filter((u) => typeof u !== 'undefined')
+                .sort((u) => (u === userId ? -1 : 0)),
+        [event.events, userId],
     )
+
+    const cappedUsers = allUserIds.slice(0, MAX_AVATARS)
 
     const message = useMemo(() => {
         const includesUser = event.events.some((e) => e.content.userId === userId)
@@ -68,20 +65,15 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
         // in GDMs we display 'X added Y,Z and others' instead of invites and joins
         if (isAddedEvent || isGDMRemovedEvent) {
             const sender = lookupUser(senderId)
-
             const senderDisplayName = senderId === userId ? 'You' : getPrettyDisplayName(sender)
-
-            const users = event.events.map((e) => lookupUser(e.content.userId))
 
             return (
                 <>
                     {senderDisplayName} {isGDMRemovedEvent ? 'removed ' : 'added '}
                     <UserList
                         excludeSelf
-                        userIds={uniq(users.map((u) => u?.userId))
-                            .filter((uid) => uid !== senderId)
-                            .filter(notUndefined)}
-                        myUserId={senderId}
+                        userIds={allUserIds.filter((u) => u !== senderId)}
+                        myUserId={userId}
                         renderUser={(props) => (
                             <UserWithTooltip
                                 userId={props.userId}
@@ -106,35 +98,28 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
         }
 
         const names = getNameListFromArray(
-            event.events
-                .slice()
-                .sort(firstBy((e) => e.content.userId === userId, -1))
-                .map((e, index) => {
-                    if (e.content.userId === userId) {
+            allUserIds
+                .map((u, index) => {
+                    if (u === userId) {
                         return index === 0 ? 'You' : 'you'
                     }
-                    return (
-                        <UserWithTooltip
-                            key={e.content.userId}
-                            userId={e.content.userId}
-                            lookupUser={lookupUser}
-                        />
-                    )
+                    return <UserWithTooltip key={u} userId={u} lookupUser={lookupUser} />
                 })
                 .filter(notUndefined),
             verb,
         )
         return names
     }, [
-        channelType,
-        senderId,
-        isGDMRemovedEvent,
+        allUserIds,
         channelName,
+        channelType,
         event.events,
         event.membershipType,
         isAddedEvent,
         isChannelEncrypted,
+        isGDMRemovedEvent,
         lookupUser,
+        senderId,
         userId,
     ])
 
@@ -147,7 +132,7 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
             paddingY="sm"
             color="gray2"
         >
-            <AvatarStack users={avatarUsers} size="avatar_xs" />
+            <AvatarStack userIds={cappedUsers} size="avatar_xs" />
             <Paragraph textAlign={{ mobile: 'center' }}>{message}</Paragraph>
         </Stack>
     )
