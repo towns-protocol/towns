@@ -149,6 +149,16 @@ resource "aws_secretsmanager_secret" "base_sepolia_rpc_url_secret" {
   description = "Base Sepolia RPC URL"
 }
 
+resource "aws_secretsmanager_secret" "base_mainnet_metics_rpc_url_secret" {
+  name        = "base-mainnet-metrics-rpc-url"
+  description = "Base Mainnet Metrics RPC URL"
+}
+
+resource "aws_secretsmanager_secret" "base_sepolia_metrics_rpc_url_secret" {
+  name        = "base-sepolia-metrics-rpc-url"
+  description = "Base Sepolia Metrics RPC URL"
+}
+
 resource "aws_secretsmanager_secret" "base_mainnet_rpc_url_secret" {
   name        = "base-mainnet-rpc-url"
   description = "Base Mainnet RPC URL"

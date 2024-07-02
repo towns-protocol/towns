@@ -7,11 +7,10 @@ export const handler: Handler = async (
 ): Promise<APIGatewayProxyResult> => {
     const config = await getConfig()
     await execute(config)
-
     return {
         statusCode: 200,
         body: JSON.stringify({
-            message: `Successfully posted wallet balances to Datadog for ${config.environment}`,
+            message: `Successfully posted Dataodog metrics for ${config.environment}`,
         }),
     }
 }

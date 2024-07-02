@@ -57,6 +57,14 @@ output "base_mainnet_rpc_url_secret" {
   value = aws_secretsmanager_secret.base_mainnet_rpc_url_secret
 }
 
+output "base_sepolia_metrics_rpc_url_secret" {
+  value = aws_secretsmanager_secret.base_sepolia_metrics_rpc_url_secret
+}
+
+output "base_mainnet_metrics_rpc_url_secret" {
+  value = aws_secretsmanager_secret.base_mainnet_metics_rpc_url_secret
+}
+
 output "river_node_acme_account_secret" {
   value = aws_secretsmanager_secret.river_node_acme_account
 }

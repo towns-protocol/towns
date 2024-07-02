@@ -1,10 +1,21 @@
-import { getWeb3Deployment, RiverRegistry, BaseRegistry, SpaceOwner } from '@river-build/web3'
+import {
+    getWeb3Deployment,
+    RiverRegistry,
+    BaseRegistry,
+    SpaceOwner,
+    SpaceRegistrar,
+    Space,
+} from '@river-build/web3'
 import { ethers } from 'ethers'
 import { Ping as Pinger } from './pinger'
 import { getWalletBalances } from './wallet-balance'
 import { NodeStructOutput } from '@river-build/generated/dev/typings/INodeRegistry'
 import { Unpromisify } from './utils'
 import { MetricsIntegrator } from './metrics-integrator'
+
+export type MetricsExtractorScrapeConfig = {
+    getTotalSpaceMemberships: boolean
+}
 
 export type MetricsExtractorConfig = {
     baseChainRpcUrl: string
@@ -14,6 +25,11 @@ export type MetricsExtractorConfig = {
 
 export type RiverMetrics = Unpromisify<ReturnType<typeof MetricsExtractor.prototype.extract>>
 
+export type SpaceWithMemberships = {
+    address: string
+    memberships: number
+}
+
 export class MetricsExtractor {
     constructor(
         private readonly baseChainProvider: ethers.providers.JsonRpcProvider,
@@ -21,8 +37,10 @@ export class MetricsExtractor {
         private readonly riverRegistry: RiverRegistry,
         private readonly baseRegistry: BaseRegistry,
         private readonly spaceOwner: SpaceOwner,
+        private readonly spaceRegistrar: SpaceRegistrar,
         private readonly pinger: Pinger,
         private readonly integrator: MetricsIntegrator,
+        private readonly scrapeConfig: MetricsExtractorScrapeConfig,
     ) {}
 
     public static init(config: MetricsExtractorConfig) {
@@ -32,8 +50,12 @@ export class MetricsExtractor {
         const riverRegistry = new RiverRegistry(deployment.river, riverChainProvider)
         const baseRegistry = new BaseRegistry(deployment.base, baseChainProvider)
         const spaceOwner = new SpaceOwner(deployment.base, baseChainProvider)
+        const spaceRegistrar = new SpaceRegistrar(deployment.base, baseChainProvider)
         const pinger = new Pinger()
         const metricsIntegrator = new MetricsIntegrator()
+        const scrapeConfig = {
+            getTotalSpaceMemberships: config.environment === 'omega', // this is an incredibly expensive query, so we only do it for omega
+        }
 
         return new MetricsExtractor(
             baseChainProvider,
@@ -41,8 +63,10 @@ export class MetricsExtractor {
             riverRegistry,
             baseRegistry,
             spaceOwner,
+            spaceRegistrar,
             pinger,
             metricsIntegrator,
+            scrapeConfig,
         )
     }
 
@@ -129,6 +153,93 @@ export class MetricsExtractor {
         return riverChainWalletBalances
     }
 
+    private async getSpaceWithMembershipsByTokenId(tokenId: number): Promise<SpaceWithMemberships> {
+        const spaceAddress = await this.spaceRegistrar.SpaceArchitect.read.getSpaceByTokenId(
+            tokenId,
+        )
+        const space = this.spaceRegistrar.getSpace(spaceAddress)!
+        const membershipsBigInt = await space.Membership.read.totalSupply()
+        const memberships = membershipsBigInt.toNumber()
+        return {
+            address: spaceAddress,
+            memberships,
+        }
+    }
+
+    private async getSpacesWithMembershipsByTokenIds(
+        tokenIds: number[],
+    ): Promise<SpaceWithMemberships[]> {
+        return await Promise.all(
+            tokenIds.map(async (tokenId) => {
+                return this.getSpaceWithMembershipsByTokenId(tokenId)
+            }),
+        )
+    }
+
+    private async getSpacesWithMembershipsByTokenIdsWithRetries(
+        tokenIds: number[],
+        attempts: number,
+    ): Promise<SpaceWithMemberships[]> {
+        let error: unknown
+        while (attempts > 0) {
+            try {
+                return await this.getSpacesWithMembershipsByTokenIds(tokenIds)
+            } catch (e) {
+                error = e
+                if (attempts > 0) {
+                    console.error(`Error getting space memberships, retrying...`, e)
+                    attempts--
+                }
+            }
+        }
+        throw error
+    }
+
+    private async getAllSpacesWithMemberships(numTotalSpaces: number) {
+        if (!this.scrapeConfig.getTotalSpaceMemberships) {
+            return {
+                kind: 'skipped' as const,
+            }
+        }
+        console.log('getting space memberships')
+
+        const tokenIds = Array.from({ length: numTotalSpaces }, (_, i) => i)
+
+        // prepare token id batches:
+        const BATCH_SIZE = 200
+        const NUM_ATTEMPTS = 3
+
+        const batches = []
+        for (let i = 0; i < tokenIds.length; i += BATCH_SIZE) {
+            batches.push(tokenIds.slice(i, i + BATCH_SIZE))
+        }
+
+        const spacesWithMemberships: SpaceWithMemberships[][] = []
+
+        for (let i = 0; i < batches.length; i++) {
+            console.log(`getting space memberships for batch ${i}`)
+            const currentBatchSpaces = await this.getSpacesWithMembershipsByTokenIdsWithRetries(
+                batches[i],
+                NUM_ATTEMPTS,
+            )
+            spacesWithMemberships.push(currentBatchSpaces)
+        }
+
+        console.log('got space memberships')
+        console.log('flattening space memberships')
+
+        const result = spacesWithMemberships.flat()
+        console.log('flattened space memberships')
+        console.log('sorting space memberships')
+        result.sort((a, b) => b.memberships - a.memberships) // sort by memberships in descending order
+        console.log('sorted space memberships')
+
+        return {
+            kind: 'success' as const,
+            result,
+        }
+    }
+
     async extract() {
         const [
             nodesOnRiver,
@@ -160,12 +271,17 @@ export class MetricsExtractor {
             combinedNodes,
         )
 
-        const [baseChainWalletBalances, riverChainWalletBalances, nodePingResults] =
-            await Promise.all([
-                this.getBaseChainWalletBalances(nodesOnRiver),
-                this.getRiverChainWalletBalances(nodesOnRiver),
-                this.pinger.pingNodes(combinedNodes),
-            ])
+        const [
+            baseChainWalletBalances,
+            riverChainWalletBalances,
+            nodePingResults,
+            spacesWithMemberships,
+        ] = await Promise.all([
+            this.getBaseChainWalletBalances(nodesOnRiver),
+            this.getRiverChainWalletBalances(nodesOnRiver),
+            this.pinger.pingNodes(combinedNodes),
+            this.getAllSpacesWithMemberships(numTotalSpaces),
+        ])
 
         const walletBalances = riverChainWalletBalances.concat(baseChainWalletBalances)
         const numUnhealthyPings = nodePingResults.filter(({ ping }) => ping.kind === 'error').length
@@ -180,6 +296,14 @@ export class MetricsExtractor {
         ).length
         const numTotalOperatorsOnRiver = operatorsOnRiver.length
 
+        let numTotalSpaceMemberships = 0
+        if (spacesWithMemberships.kind === 'success') {
+            numTotalSpaceMemberships = spacesWithMemberships.result.reduce(
+                (acc, space) => acc + space.memberships,
+                0,
+            )
+        }
+
         return {
             walletBalances,
             nodePingResults,
@@ -189,8 +313,10 @@ export class MetricsExtractor {
             combinedOperatorsWithNodes,
             nodesOnBase,
             nodesOnRiver,
+            spacesWithMemberships,
             aggregateNetworkStats: {
                 numTotalSpaces,
+                numTotalSpaceMemberships,
                 numTotalStreams,
                 numTotalNodesOnBase,
                 numTotalNodesOnRiver,

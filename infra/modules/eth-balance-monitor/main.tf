@@ -15,7 +15,7 @@ module "lambda_function" {
   source                = "terraform-aws-modules/lambda/aws"
   version               = "7.2.0"
   function_name         = "${local.lambda_function_service_name}-${terraform.workspace}"
-  description           = "Lambda function to monitor river node eth balances"
+  description           = "Lambda function to monitor on-chain metrics"
   handler               = "index.handler"
   runtime               = "nodejs20.x"
   architectures         = ["x86_64"]
@@ -32,7 +32,8 @@ module "lambda_function" {
 
   trigger_on_package_timestamp = false
 
-  memory_size = 256
+  memory_size = 8192
+
   environment_variables = {
     DATADOG_API_KEY_SECRET_ARN         = local.global_remote_state.river_global_dd_agent_api_key.arn
     DATADOG_APPLICATION_KEY_SECRET_ARN = local.global_remote_state.datadog_application_key_secret.arn

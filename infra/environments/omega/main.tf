@@ -229,7 +229,7 @@ module "eth_balance_monitor" {
   base_registry_contract_address  = module.system_parameters.entitlement_checker_contract_address_parameter.value // entitlement checker is on base registry 
   space_owner_contract_address    = module.system_parameters.space_owner_contract_address_parameter.value
 
-  base_chain_rpc_url_secret_arn  = local.global_remote_state.base_mainnet_rpc_url_secret.arn
+  base_chain_rpc_url_secret_arn  = local.global_remote_state.base_mainnet_metrics_rpc_url_secret.arn
   river_chain_rpc_url_secret_arn = local.global_remote_state.river_mainnet_rpc_url_secret.arn
 }
 module "operator_logs" {

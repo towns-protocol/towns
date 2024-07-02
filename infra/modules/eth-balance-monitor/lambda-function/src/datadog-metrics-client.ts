@@ -241,6 +241,7 @@ export class DatadogMetricsClient {
         numMissingNodesOnBase: number
         numMissingNodesOnRiver: number
         numUnhealthyPings: number
+        numTotalSpaceMemberships: number
     }) {
         console.log('Posting aggregate network stats to Datadog:')
         const metrics = [
@@ -279,6 +280,10 @@ export class DatadogMetricsClient {
             {
                 name: 'river_network.total_unhealthy_pings',
                 value: stats.numUnhealthyPings,
+            },
+            {
+                name: 'river_network.total_space_memberships',
+                value: stats.numTotalSpaceMemberships,
             },
         ]
 
