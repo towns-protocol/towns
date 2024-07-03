@@ -6,6 +6,7 @@ import {
     CheckOperationType,
     CreateSpaceParams,
     IArchitectBase,
+    LocalhostWeb3Provider,
     NoopRuleData,
     Permission,
     SpaceDapp,
@@ -16,6 +17,24 @@ import {
 } from '@river-build/web3'
 import { ISendUserOperationResponse } from 'userop'
 
+export const fundWallet = async (address: string, provider: LocalhostWeb3Provider) => {
+    const wallet = new ethers.Wallet(
+        // the private key of the account funded during startup of 4337
+        '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
+        provider,
+    )
+
+    const tx = {
+        from: wallet.address,
+        to: address,
+        value: ethers.utils.parseEther('1'),
+        gasLimit: 1000000,
+        chainId: (await provider.getNetwork()).chainId,
+    }
+    const result = await wallet.sendTransaction(tx)
+    const receipt = await result.wait()
+    return receipt
+}
 export const BORED_APE_ADDRESS = '0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d'
 export const boredApeRuleData = createOperationsTree([
     {

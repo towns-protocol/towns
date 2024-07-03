@@ -22,7 +22,12 @@ import { ERC4337 } from 'userop/dist/constants'
 import { CodeException, errorToCodeException, isPreverificationGasTooLowError } from './errors'
 import { UserOperationEventEvent } from 'userop/dist/typechain/EntryPoint'
 import { EVERYONE_ADDRESS } from './utils'
-import { preverificationGasMultiplier, promptUser, signUserOpHash } from './middlewares'
+import {
+    simpleEstimateGas,
+    preverificationGasMultiplier,
+    promptUser,
+    signUserOpHash,
+} from './middlewares'
 import { paymasterProxyMiddleware } from './paymasterProxyMiddleware'
 
 export class UserOps {
@@ -146,6 +151,16 @@ export class UserOps {
             if (Array.isArray(callData)) {
                 throw new Error('callData must be a string if toAddress is a string')
             }
+            /**
+             * IMPORTANT: This value can result in RPC errors if the smart account has insufficient funds
+             *
+             * If estimating user operation gas, you can override sender balance via state overrides https://docs.stackup.sh/docs/erc-4337-bundler-rpc-methods#eth_senduseroperation
+             * which we are doing, see prompttUser middleware
+             *
+             * However, in the case of a tx that costs ETH, but that we also want to sponsor, this value should be 0
+             * Otherwise, the paymaster will reject the operation if the user does not have enough funds
+             * This kind of tx would be something like joining a town that has a fixed membership cost, but ALSO contains prepaid seats
+             */
             userOp = builder.execute(toAddress, value ?? 0, callData)
         }
 
@@ -191,6 +206,12 @@ export class UserOps {
                     bundlerUrl: this.bundlerUrl,
                     townId: args.spaceId,
                 }),
+            )
+        }
+        // estimate gas w/o prompt if needed
+        else {
+            userOp.useMiddleware(async (ctx) =>
+                simpleEstimateGas(ctx, this.aaRpcUrl, this.bundlerUrl),
             )
         }
 
@@ -382,7 +403,7 @@ export class UserOps {
             throw new Error('abstractAccountAddress is required')
         }
 
-        const membershipPrice = await space.Membership.read.getMembershipPrice()
+        const membershipPrice = await this.spaceDapp.getJoinSpacePrice(spaceId)
         const callDataJoinSpace = space.Membership.encodeFunctionData('joinSpace', [recipient])
 
         if (await this.spaceDapp.walletLink.checkIfLinked(signer, abstractAccountAddress)) {

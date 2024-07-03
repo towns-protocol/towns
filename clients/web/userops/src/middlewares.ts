@@ -174,7 +174,33 @@ type GasEstimate = {
     verificationGas: BigNumberish
 }
 
-export const estimateUserOperationGas = async (
+export const simpleEstimateGas = async (
+    ctx: IUserOperationMiddlewareCtx,
+    rpcUrl: string,
+    bundlerUrl: string,
+) => {
+    if (ctx.op.paymasterAndData !== '0x') {
+        return
+    }
+
+    const estimate = await estimateUserOperationGas(
+        {
+            ...ctx,
+            stateOverrides: {
+                [ctx.op.sender]: {
+                    balance: ethers.utils.parseEther('1000000').toHexString(),
+                },
+            },
+        },
+        new BundlerJsonRpcProvider(rpcUrl).setBundlerRpc(bundlerUrl),
+    )
+
+    ctx.op.preVerificationGas = estimate.preVerificationGas
+    ctx.op.verificationGasLimit = estimate.verificationGasLimit ?? estimate.verificationGas
+    ctx.op.callGasLimit = estimate.callGasLimit
+}
+
+const estimateUserOperationGas = async (
     ctx: IUserOperationMiddlewareCtx,
     provider: ethers.providers.JsonRpcProvider,
 ) => {
