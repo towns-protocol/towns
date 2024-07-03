@@ -70,7 +70,7 @@ export async function verifyCreateSpace(
         if (!network) {
             throw new Error(`Unknown environment network: ${params.env.ENVIRONMENT}`)
         }
-        const townFactoryAddress = contractAddress(network, 'SpaceFactory')
+        const townFactoryAddress = await contractAddress(network, 'SpaceFactory')
         // check that quota has not been breached on-chain
         const queryResult = await runLogQuery({
             environment: params.env.ENVIRONMENT,

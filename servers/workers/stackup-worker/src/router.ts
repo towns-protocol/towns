@@ -59,7 +59,7 @@ router.post('/api/transaction-limits', async (request: WorkerRequest, env: Env) 
                     console.error(`Unknown environment network: ${environment}`)
                     return null
                 }
-                const townFactoryAddress = contractAddress(network, 'SpaceFactory')
+                const townFactoryAddress = await contractAddress(network, 'SpaceFactory')
                 const queryResult = await runLogQuery({
                     environment,
                     network,

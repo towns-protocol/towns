@@ -20,6 +20,11 @@ SKIP_PRIVY_VERIFICATION="true"
 OUTPUT_TO_FILE="false"
 PAYMASTER_LIMIT="false"
 
+usage() {
+    echo "Usage: run-stackup-worker.sh [OPTIONS]"
+    echo "Prerequisites: you must ether have a .dev.vars file in ./servers/workers/stackup-worker or pass the following environment variables: PAYMASTER_RPC_URL, PRIVY_APP_KEY"
+}
+
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -79,8 +84,7 @@ if [ -f "$DEV_VARS_FILE" ]; then
     source "$DEV_VARS_FILE"
     echo "Variables loaded from $DEV_VARS_FILE"
 else
-    echo "ERROR: .dev.vars file not found at $DEV_VARS_FILE"
-    exit 1
+    echo "Warning: .dev.vars file not found at $DEV_VARS_FILE, using CLI vars."
 fi
 
 if [ -n "$ENVIRONMENT_OVERRIDE" ]; then
@@ -97,13 +101,8 @@ if [ -z "$PAYMASTER_RPC_URL" ]; then
     exit 1
 fi
 
-if [ -z "$PRIVY_APP_KEY" ]; then
+if [ "$SKIP_PRIVY_VERIFICATION" = "false" ] && [ -z "$PRIVY_APP_KEY" ]; then
     echo "ERROR: Missing PRIVY_APP_KEY"
-    exit 1
-fi
-
-if [ -z "$ALCHEMY_API_KEY" ]; then
-    echo "ERROR: Missing ALCHEMY_API_KEY"
     exit 1
 fi
 
@@ -113,7 +112,7 @@ echo "ALCHEMY_API_KEY: ${ALCHEMY_API_KEY}"
 echo "ENVIRONMENT: ${ENVIRONMENT}"
 
 # Define the yarn command without output redirection
-stackup_command="cd ./servers/workers/stackup-worker && yarn dev:local --var PAYMASTER_ADDRESS:0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789 PAYMASTER_RPC_URL:$PAYMASTER_RPC_URL PRIVY_APP_KEY:$PRIVY_APP_KEY PRIVY_APP_ID:clml5fp7s013vmf0fnkabuaiw ALCHEMY_API_KEY:$ALCHEMY_API_KEY AUTH_SECRET:foo"
+stackup_command="cd ./servers/workers/stackup-worker && yarn dev:local --var PAYMASTER_ADDRESS:0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789 SKIP_PRIVY_VERIFICATION:$SKIP_PRIVY_VERIFICATION PAYMASTER_RPC_URL:$PAYMASTER_RPC_URL PRIVY_APP_KEY:$PRIVY_APP_KEY PRIVY_APP_ID:clml5fp7s013vmf0fnkabuaiw ALCHEMY_API_KEY:$ALCHEMY_API_KEY AUTH_SECRET:foo"
 
 if [ -n "$ENVIRONMENT" ]; then
     stackup_command="$stackup_command ENVIRONMENT:$ENVIRONMENT"
@@ -125,7 +124,7 @@ if [ "$PAYMASTER_LIMIT" = "true" ]; then
     stackup_command="$stackup_command LIMIT_CREATE_SPACE:1 LIMIT_ROLE_SET:1 LIMIT_ENTITLEMENT_SET:1 LIMIT_CHANNEL_CREATE:1 LIMIT_LINK_WALLET:1 LIMIT_UPDATE_SPACE_INFO:1 LIMIT_BAN_UNBAN:1"
 else
     echo "Running stackup worker without limits on paymaster."
-    stackup_command="$stackup_command SKIP_LIMIT_VERIFICATION:true SKIP_PRIVY_VERIFICATION:$SKIP_PRIVY_VERIFICATION "
+    stackup_command="$stackup_command SKIP_LIMIT_VERIFICATION:true"
 fi
 
 # Run the command either in the background or in the foreground based on user's choice

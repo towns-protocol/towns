@@ -51,9 +51,7 @@ test('will reject each userop if beyond the limit', async () => {
     expect(createSpaceReceipt1.status).toBe(1)
     await sleepBetweenTxs()
 
-    // in tests we skip gas estimates (b/c they are expected to have sponsorship, else test wallets need real funds)
-    // so this should throw with either gas estimates, or if default gas estimate is fine, then it will throw b/c no paymaster and wallet has no funds
-    expect(() =>
+    await expect(() =>
         createUngatedSpace({
             userOps,
             spaceDapp,
@@ -62,7 +60,7 @@ test('will reject each userop if beyond the limit', async () => {
         }),
     ).rejects.toThrow()
 
-    const spaceId = await getSpaceId(spaceDapp, createSpaceReceipt1)
+    const spaceId = getSpaceId(spaceDapp, createSpaceReceipt1)
 
     ////////////////////////////////////////
     // create role
@@ -81,7 +79,7 @@ test('will reject each userop if beyond the limit', async () => {
     expect(createRoleRecipt.status).toBe(1)
     await sleepBetweenTxs()
 
-    expect(() =>
+    await expect(() =>
         userOps.sendCreateRoleOp([spaceId, 'dummy role', [], [], NoopRuleData, alice.wallet]),
     ).rejects.toThrow()
 
@@ -102,7 +100,7 @@ test('will reject each userop if beyond the limit', async () => {
     const updateReceipt = await waitForOpAndTx(updateRoleOp, alice, 'update role')
     expect(updateReceipt.status).toBe(1)
 
-    expect(() =>
+    await expect(() =>
         userOps.sendUpdateRoleOp([
             {
                 spaceNetworkId: spaceId,
@@ -124,7 +122,7 @@ test('will reject each userop if beyond the limit', async () => {
     await sleepBetweenTxs()
     expect(deleteReceipt.status).toBe(1)
 
-    expect(() => userOps.sendDeleteRoleOp([spaceId, 2, alice.wallet])).rejects.toThrow()
+    await expect(() => userOps.sendDeleteRoleOp([spaceId, 2, alice.wallet])).rejects.toThrow()
 
     ////////////////////////////////////////
     // create channel
@@ -142,7 +140,7 @@ test('will reject each userop if beyond the limit', async () => {
     await sleepBetweenTxs()
     expect(createChannelReceipt.status).toBe(1)
 
-    expect(() =>
+    await expect(() =>
         userOps.sendCreateChannelOp([
             spaceId,
             'test',
@@ -175,7 +173,7 @@ test('will reject each userop if beyond the limit', async () => {
     await sleepBetweenTxs()
     expect(updateChannelReceipt.status).toBe(1)
 
-    expect(() =>
+    await expect(() =>
         userOps.sendUpdateChannelOp([
             {
                 spaceId,
@@ -191,6 +189,7 @@ test('will reject each userop if beyond the limit', async () => {
     ////////////////////////////////////////
     // update space info
     ////////////////////////////////////////
+
     const updateSpaceOp = await userOps.sendUpdateSpaceNameOp([
         spaceId,
         'new space name',
@@ -200,7 +199,7 @@ test('will reject each userop if beyond the limit', async () => {
     await sleepBetweenTxs()
     expect(updateSpaceReceipt.status).toBe(1)
 
-    expect(() =>
+    await expect(() =>
         userOps.sendUpdateSpaceNameOp([spaceId, 'new space name 2', alice.wallet]),
     ).rejects.toThrow()
 
@@ -232,7 +231,7 @@ test('will reject each userop if beyond the limit', async () => {
     await sleepBetweenTxs()
     expect(banReceipt.status).toBe(1)
 
-    expect(() =>
+    await expect(() =>
         userOps.sendBanWalletAddressOp([spaceId!, steve.wallet.address, alice.wallet]),
     ).rejects.toThrow()
 
@@ -245,7 +244,7 @@ test('will reject each userop if beyond the limit', async () => {
     await sleepBetweenTxs()
     expect(unbanReceipt.status).toBe(1)
 
-    expect(() =>
+    await expect(() =>
         userOps.sendUnbanWalletAddressOp([spaceId!, steve.wallet.address, alice.wallet]),
     ).rejects.toThrow()
 }, 200_000)
@@ -272,5 +271,7 @@ test('will reject wallet link operations if beyond the limit', async () => {
     await sleepBetweenTxs()
     expect(linkReceipt.status).toBe(1)
 
-    expect(() => userOps.sendLinkEOAToRootKeyOp([alice.wallet, metamaskWallet2])).rejects.toThrow()
+    await expect(() =>
+        userOps.sendLinkEOAToRootKeyOp([alice.wallet, metamaskWallet2]),
+    ).rejects.toThrow()
 })

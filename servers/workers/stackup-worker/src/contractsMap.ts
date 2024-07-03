@@ -1,4 +1,3 @@
-// ABIs - for now shared between mainnet and testnet
 import BanningAbi from '@river-build/generated/dev/abis/IBanning.abi.json' assert { type: 'json' }
 import ChannelsAbi from '@river-build/generated/dev/abis/Channels.abi.json' assert { type: 'json' }
 import RolesAbi from '@river-build/generated/dev/abis/Roles.abi.json' assert { type: 'json' }
@@ -7,19 +6,7 @@ import MembershipAbi from '@river-build/generated/dev/abis/MembershipFacet.abi.j
 import SpaceOwnerAbi from '@river-build/generated/dev/abis/SpaceOwner.abi.json' assert { type: 'json' }
 import WalletLinkAbi from '@river-build/generated/dev/abis/WalletLink.abi.json' assert { type: 'json' }
 
-// Dev addresses
-import LocalhostSpaceOwnerContractAddress from '@river-build/generated/deployments/gamma/base/addresses/spaceOwner.json' assert { type: 'json' }
-import LocalhostSpaceFactoryContractAddress from '@river-build/generated/deployments/gamma/base/addresses/spaceFactory.json' assert { type: 'json' }
-
-// Base sepolia addresses
-import BaseSepoliaSpaceOwnerContractAddress from '@river-build/generated/deployments/gamma/base/addresses/spaceOwner.json' assert { type: 'json' }
-import BaseSepoliaSpaceFactoryContractAddress from '@river-build/generated/deployments/gamma/base/addresses/spaceFactory.json' assert { type: 'json' }
-
-// Base mainnet addresses
-import BaseMainnetSpaceOwnerContractAddress from '@river-build/generated/deployments/omega/base/addresses/spaceOwner.json' assert { type: 'json' }
-import BaseMainnetSpaceFactoryContractAddress from '@river-build/generated/deployments/omega/base/addresses/spaceFactory.json' assert { type: 'json' }
-
-import { ContractName } from './types'
+import { ContractName, Networks } from './types'
 import { ethers } from 'ethers'
 
 type ContractDetails = {
@@ -55,74 +42,112 @@ type RequiredContracts = [
     [typeof ContractName.Membership, { address: undefined; abi: ethers.ContractInterface }],
 ]
 
-export const LocalhostContracts = new Map<ContractName, ContractDetails>([
-    [
-        ContractName.SpaceOwner,
-        { address: LocalhostSpaceOwnerContractAddress.address, abi: SpaceOwnerAbi },
-    ],
-    [
-        ContractName.SpaceFactory,
-        { address: LocalhostSpaceFactoryContractAddress.address, abi: SpaceOwnerAbi },
-    ],
-    [
-        ContractName.WalletLink,
-        { address: LocalhostSpaceFactoryContractAddress.address, abi: WalletLinkAbi },
-    ],
-    [
-        ContractName.Prepay,
-        { address: LocalhostSpaceFactoryContractAddress.address, abi: PrepayAbi }, //
-    ],
-    // space specific contracts, these addresses are derived during runtime
-    [ContractName.Channels, { address: undefined, abi: ChannelsAbi }],
-    [ContractName.Roles, { address: undefined, abi: RolesAbi }],
-    [ContractName.Banning, { address: undefined, abi: BanningAbi }],
-    [ContractName.Membership, { address: undefined, abi: MembershipAbi }],
-] satisfies RequiredContracts)
+/**
+ * Dynamically load contract addresses based on the network
+ * We must import() these addresses b/c for local dev we want to use local addresses, which are not checked in and available for deployed workers
+ */
+export const createContractMap = async (
+    network: Networks,
+): Promise<Map<ContractName, ContractDetails> | null> => {
+    let spaceOwner = null
+    let spaceFactory = null
 
-export const BaseSepoliaContracts = new Map<ContractName, ContractDetails>([
-    [
-        ContractName.SpaceOwner,
-        { address: BaseSepoliaSpaceOwnerContractAddress.address, abi: SpaceOwnerAbi },
-    ],
-    [
-        ContractName.SpaceFactory,
-        { address: BaseSepoliaSpaceFactoryContractAddress.address, abi: SpaceOwnerAbi },
-    ],
-    [
-        ContractName.WalletLink,
-        { address: BaseSepoliaSpaceFactoryContractAddress.address, abi: WalletLinkAbi },
-    ],
-    [
-        ContractName.Prepay,
-        { address: BaseSepoliaSpaceFactoryContractAddress.address, abi: PrepayAbi }, //
-    ],
-    // space specific contracts, these addresses are derived during runtime
-    [ContractName.Channels, { address: undefined, abi: ChannelsAbi }],
-    [ContractName.Roles, { address: undefined, abi: RolesAbi }],
-    [ContractName.Banning, { address: undefined, abi: BanningAbi }],
-    [ContractName.Membership, { address: undefined, abi: MembershipAbi }],
-] satisfies RequiredContracts)
+    if (network === 'base_sepolia') {
+        try {
+            spaceOwner = await import(
+                '@river-build/generated/deployments/gamma/base/addresses/spaceOwner.json',
+                {
+                    assert: { type: 'json' },
+                }
+            )
+            spaceFactory = await import(
+                '@river-build/generated/deployments/gamma/base/addresses/spaceFactory.json',
+                {
+                    assert: { type: 'json' },
+                }
+            )
+        } catch (error) {
+            console.error('createContractMap: error loading contracts for base_sepolia', error)
+        }
+    } else if (network === 'base') {
+        try {
+            spaceOwner = await import(
+                '@river-build/generated/deployments/omega/base/addresses/spaceOwner.json',
+                {
+                    assert: { type: 'json' },
+                }
+            )
+            spaceFactory = await import(
+                '@river-build/generated/deployments/omega/base/addresses/spaceFactory.json',
+                {
+                    assert: { type: 'json' },
+                }
+            )
+        } catch (error) {
+            console.error('createContractMap: error loading contracts for base', error)
+        }
+    } else {
+        // TODO: better way to determine which path to import from based on local env
+        // these paths are only used for logFilters, which are used for limiting the max sponsored txs per user per day
+        // so don't really impact local development unless you're specifically testing that feature
+        // the pitfall here would be if a dev has both of these deployments in their local environment
+        try {
+            spaceOwner = await import(
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
+                '@river-build/generated/deployments/local_single/base/addresses/spaceOwner.json',
+                {
+                    assert: { type: 'json' },
+                }
+            )
+            spaceFactory = await import(
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
+                '@river-build/generated/deployments/local_single/base/addresses/spaceFactory.json',
+                {
+                    assert: { type: 'json' },
+                }
+            )
+        } catch (error) {
+            console.error('createContractMap: error loading contracts for local_single', error)
+        }
 
-export const BaseMainnetContracts = new Map<ContractName, ContractDetails>([
-    [
-        ContractName.SpaceOwner,
-        { address: BaseMainnetSpaceOwnerContractAddress.address, abi: SpaceOwnerAbi },
-    ],
-    [
-        ContractName.SpaceFactory,
-        { address: BaseMainnetSpaceFactoryContractAddress.address, abi: SpaceOwnerAbi },
-    ],
-    [
-        ContractName.WalletLink,
-        { address: BaseMainnetSpaceFactoryContractAddress.address, abi: WalletLinkAbi },
-    ],
-    [
-        ContractName.Prepay,
-        { address: BaseMainnetSpaceFactoryContractAddress.address, abi: PrepayAbi }, //
-    ],
-    // space specific contracts, these addresses are derived during runtime
-    [ContractName.Channels, { address: undefined, abi: ChannelsAbi }],
-    [ContractName.Roles, { address: undefined, abi: RolesAbi }],
-    [ContractName.Banning, { address: undefined, abi: BanningAbi }],
-    [ContractName.Membership, { address: undefined, abi: MembershipAbi }],
-] satisfies RequiredContracts)
+        if (!spaceOwner || !spaceFactory) {
+            try {
+                spaceOwner = await import(
+                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                    // @ts-ignore
+                    '@river-build/generated/deployments/local_multi/base/addresses/spaceOwner.json',
+                    {
+                        assert: { type: 'json' },
+                    }
+                )
+                spaceFactory = await import(
+                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                    // @ts-ignore
+                    '@river-build/generated/deployments/local_multi/base/addresses/spaceFactory.json',
+                    {
+                        assert: { type: 'json' },
+                    }
+                )
+            } catch (error) {
+                console.error('createContractMap: error loading contracts for local_multi', error)
+            }
+        }
+    }
+
+    if (!spaceOwner || !spaceFactory) {
+        return null
+    }
+
+    return new Map<ContractName, ContractDetails>([
+        [ContractName.SpaceOwner, { address: spaceOwner.address, abi: SpaceOwnerAbi }],
+        [ContractName.SpaceFactory, { address: spaceFactory.address, abi: SpaceOwnerAbi }],
+        [ContractName.WalletLink, { address: spaceFactory.address, abi: WalletLinkAbi }],
+        [ContractName.Prepay, { address: spaceFactory.address, abi: PrepayAbi }],
+        [ContractName.Channels, { address: undefined, abi: ChannelsAbi }],
+        [ContractName.Roles, { address: undefined, abi: RolesAbi }],
+        [ContractName.Banning, { address: undefined, abi: BanningAbi }],
+        [ContractName.Membership, { address: undefined, abi: MembershipAbi }],
+    ] satisfies RequiredContracts)
+}

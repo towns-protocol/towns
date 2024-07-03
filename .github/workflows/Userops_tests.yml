@@ -1,12 +1,17 @@
 name: 'Run Userops Tests'
 env:
     FOUNDRY_VERSION: nightly
+    RIVER_BLOCK_TIME: 1
+    BASE_EXECUTION_CLIENT: geth_dev
 
 on:
-    workflow_dispatch:
-    schedule:
-        # Once per hour between 8 - 4 PST
-        - cron: '0 16-23,0 * * *'
+    pull_request:
+        paths:
+            - 'river/**'
+            - 'servers/4337/**'
+            - 'servers/workers/stackup-worker/**'
+            - 'clients/web/userops/**'
+    workflow_dispatch: # Allow manual trigger in GitHub UI
 
 jobs:
     user_ops_tests:
@@ -16,85 +21,86 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v4
 
-            - name: Install Foundry
-              uses: foundry-rs/foundry-toolchain@v1
-              with:
-                  version: ${{ env.FOUNDRY_VERSION }}
-
             - uses: actions/setup-node@v4
               with:
                   node-version: '20'
                   cache: 'yarn'
 
+            - name: Install Foundry
+              uses: foundry-rs/foundry-toolchain@v1
+              with:
+                  version: ${{ env.FOUNDRY_VERSION }}
+
             - name: Install node dependencies
               run: yarn install --immutable
 
-            # Disabled b/c `Run @towns/userop package tests with max daily limits of 1` covers this
+            - name: Start 4337
+              run: ./scripts/start-4337.sh &
 
-            # - name: Spin up stackup worker without privy verification
-            #   working-directory: ./servers/workers/stackup-worker
-            #   # PAYMASTER_ADDRESS is actually the entrypoint address and we need to change the name of this env var
-            #   # https://linear.app/hnt-labs/issue/HNT-4569/change-paymaster-address-to-entrypoint-address-in-paymaster-proxy
-            #   run: yarn dev:local --var SKIP_PRIVY_VERIFICATION:true PAYMASTER_ADDRESS:0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789 SKIP_LIMIT_VERIFICATION:true STACKUP_API_TOKEN:${{ secrets.STACKUP_TEST_API_TOKEN }} PRIVY_APP_KEY:${{ secrets.PRIVY_APP_KEY }} PRIVY_APP_ID:clml5fp7s013vmf0fnkabuaiw ALCHEMY_API_KEY:${{ secrets.ALCHEMY_API_KEY }} AUTH_SECRET:foo ENVIRONMENT:test-beta &
+            - name: Wait for 4337
+              run: ./scripts/wait-for-4337.sh
+
+            - name: Start River blockchain
+              run: ./river/scripts/start-local-riverchain.sh &
+
+            - name: Setup River CA for testing certificates
+              run: ./scripts/register-ca.sh
+              working-directory: river/core
+
+            - name: Set up Custom CA Certificate for Node.js
+              run: |
+                  echo "NODE_EXTRA_CA_CERTS=$HOME/river-ca-cert.pem" >> $GITHUB_ENV
+
+            - name: Configure single
+              run: |
+                  ./run_single.sh -c
+              working-directory: river/core/node
 
             - name: Spin up stackup worker with privy verification
               working-directory: ./servers/workers/stackup-worker
               # PAYMASTER_ADDRESS is actually the entrypoint address and we need to change the name of this env var
               # https://linear.app/hnt-labs/issue/HNT-4569/change-paymaster-address-to-entrypoint-address-in-paymaster-proxy
-              run: PORT=8787 yarn dev:local --var PAYMASTER_ADDRESS:0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789 SKIP_LIMIT_VERIFICATION:true STACKUP_API_TOKEN:${{ secrets.STACKUP_TEST_API_TOKEN }} PRIVY_APP_KEY:${{ secrets.PRIVY_APP_KEY }} PRIVY_APP_ID:clml5fp7s013vmf0fnkabuaiw ALCHEMY_API_KEY:${{ secrets.ALCHEMY_API_KEY }} AUTH_SECRET:foo ENVIRONMENT:test-beta &
+              run: PORT=8787 yarn dev:local --var PAYMASTER_ADDRESS:0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789 SKIP_LIMIT_VERIFICATION:true PAYMASTER_RPC_URL:http://localhost:43371 PRIVY_APP_KEY:${{ secrets.PRIVY_APP_KEY }} PRIVY_APP_ID:clml5fp7s013vmf0fnkabuaiw ALCHEMY_API_KEY:FAKE AUTH_SECRET:foo ENVIRONMENT:development &
 
-            - name: Spin up stackup worker with strict limits
+            - name: Spin up stackup worker with strict limits (includes new user flow)
               working-directory: ./servers/workers/stackup-worker
               # PAYMASTER_ADDRESS is actually the entrypoint address and we need to change the name of this env var
               # https://linear.app/hnt-labs/issue/HNT-4569/change-paymaster-address-to-entrypoint-address-in-paymaster-proxy
-              run: PORT=8989 yarn dev:local --var LIMIT_CREATE_SPACE:1 LIMIT_ROLE_SET:1 LIMIT_ENTITLEMENT_SET:1 LIMIT_CHANNEL_CREATE:1 LIMIT_LINK_WALLET:1 LIMIT_UPDATE_SPACE_INFO:1 LIMIT_BAN_UNBAN:1 SKIP_PRIVY_VERIFICATION:true PAYMASTER_ADDRESS:0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789 STACKUP_API_TOKEN:${{ secrets.STACKUP_TEST_API_TOKEN }} PRIVY_APP_KEY:${{ secrets.PRIVY_APP_KEY }} PRIVY_APP_ID:clml5fp7s013vmf0fnkabuaiw ALCHEMY_API_KEY:${{ secrets.ALCHEMY_API_KEY }} AUTH_SECRET:foo ENVIRONMENT:test-beta &
+              run: PORT=8989 yarn dev:local --var LIMIT_CREATE_SPACE:1 LIMIT_ROLE_SET:1 LIMIT_ENTITLEMENT_SET:1 LIMIT_CHANNEL_CREATE:1 LIMIT_LINK_WALLET:1 LIMIT_UPDATE_SPACE_INFO:1 LIMIT_BAN_UNBAN:1 SKIP_PRIVY_VERIFICATION:true PAYMASTER_ADDRESS:0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789 PAYMASTER_RPC_URL:http://localhost:43371 PRIVY_APP_KEY:${{ secrets.PRIVY_APP_KEY }} PRIVY_APP_ID:clml5fp7s013vmf0fnkabuaiw ALCHEMY_API_KEY:FAKE AUTH_SECRET:foo ENVIRONMENT:development &
 
-            # - name: Wait for first stackup worker to be up on 8686
-            #   run: yarn worker:wait:stackup
-
-            - name: Wait for second stackup worker to be up on 8787
+            - name: Wait for second stackup worker with privy checks to be up on 8787
               run: PORT=8787 yarn worker:wait:stackup
 
-            - name: Wait for thrid stackup worker to be up on 8989
+            - name: Wait for stackup worker with limits enforced to be up on 8989
               run: PORT=8989 yarn worker:wait:stackup
 
-            # Disabled b/c `Run @towns/userop package tests with max daily limits of 1` covers this
-            #
-            # - name: Run @towns/userop package tests with new, random users that skip privy verification (SpaceDapp/base-sepolia)
-            #   timeout-minutes: 20
-            #   env:
-            #     AA_PAYMASTER_PROXY_URL: http://127.0.0.1:8686
-            #     AA_PAYMASTER_PROXY_AUTH_SECRET: Zm9v
-            #     AA_RPC_URL: ${{ secrets.AA_RPC_URL }}
-            #     AA_BUNDLER_URL: ${{ secrets.AA_BUNDLER_URL }}
-            #     RIVER_ENV: gamma
-
-            #   working-directory: ./clients/web/userops
-            #   run: yarn test:userops:random-wallet
-
-            - name: Run @towns/userop package tests with pre-existing privy users (SpaceDapp/base-sepolia)
+            - name: Run @towns/userop package tests with pre-existing privy users
               timeout-minutes: 20
               env:
                   AA_PAYMASTER_PROXY_URL: http://127.0.0.1:8787
                   AA_PAYMASTER_PROXY_AUTH_SECRET: Zm9v
-                  AA_RPC_URL: ${{ secrets.AA_RPC_URL }}
-                  AA_BUNDLER_URL: ${{ secrets.AA_BUNDLER_URL }}
-                  RIVER_ENV: gamma
+                  AA_RPC_URL: http://localhost:8545
+                  AA_BUNDLER_URL: http://localhost:43370
+                  RIVER_ENV: local_single
 
               working-directory: ./clients/web/userops
               run: yarn test:userops:privy-wallet
 
-            - name: Run @towns/userop package tests with max daily limits of 1 (SpaceDapp/base-sepolia)
+            # this also covers brand new users
+            - name: Run @towns/userop package tests with max daily limits of 1
               timeout-minutes: 20
               env:
                   AA_PAYMASTER_PROXY_URL: http://127.0.0.1:8989
                   AA_PAYMASTER_PROXY_AUTH_SECRET: Zm9v
-                  AA_RPC_URL: ${{ secrets.AA_RPC_URL }}
-                  AA_BUNDLER_URL: ${{ secrets.AA_BUNDLER_URL }}
-                  RIVER_ENV: gamma
+                  AA_RPC_URL: http://localhost:8545
+                  AA_BUNDLER_URL: http://localhost:43370
+                  RIVER_ENV: local_single
 
               working-directory: ./clients/web/userops
               run: yarn test:userops:paymaster-limits
+
+            - name: Stop 4337
+              run: ./scripts/stop-4337.sh
 
             # If failed, we send a slack notification
             - name: Slack notification

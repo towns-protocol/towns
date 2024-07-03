@@ -15,7 +15,7 @@ const providerMap = new Map<Environment, string>([
 ])
 
 export const networkMap = new Map<Environment, Networks>([
-    ['development', 'dev'],
+    ['development', 'local'],
     ['test-beta', 'base_sepolia'],
     ['omega', 'base'],
 ])

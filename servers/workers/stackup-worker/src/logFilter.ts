@@ -3,13 +3,7 @@ import { Environment, isErrorType } from 'worker-common'
 import { createJsonProvider as createProvider } from './provider'
 import { Env } from '.'
 import { ContractName, EventName, FunctionName, Networks } from './types'
-import {
-    BaseMainnetContracts,
-    BaseSepoliaContracts,
-    LocalhostContracts,
-    isSpaceSpecificContract,
-    spaceSpecificContracts,
-} from './contractsMap'
+import { createContractMap, isSpaceSpecificContract, spaceSpecificContracts } from './contractsMap'
 import { SpaceAddressFromSpaceId } from '@river-build/web3'
 
 interface ContractDetails {
@@ -30,13 +24,8 @@ type filterArgType = string | number | null
 const BaseSepoliaBlocksPerDay = 43200 // at 2s blocks
 const BaseMainnetBlocksPerDay = 43200 // at 2s blocks
 
-const NetworkContracts = new Map<Networks, Map<ContractName, ContractDetails>>([
-    ['dev', LocalhostContracts],
-    ['base_sepolia', BaseSepoliaContracts],
-    ['base', BaseMainnetContracts],
-])
-
 export const NetworkBlocksPerDay = new Map<Environment, number>([
+    ['development', BaseSepoliaBlocksPerDay],
     ['test-beta', BaseSepoliaBlocksPerDay],
     ['omega', BaseMainnetBlocksPerDay],
 ])
@@ -70,15 +59,15 @@ export const EventByMethod = new Map<keyof typeof FunctionName, keyof typeof Eve
     ['setMembershipPrice', 'MembershipPriceUpdated'],
 ])
 
-function createContract<CN extends ContractName>(
+async function createContract<CN extends ContractName>(
     network: Networks,
     contractName: CN,
     provider: ethers.providers.Provider,
     townId: CN extends (typeof spaceSpecificContracts)[number] ? string : undefined,
-): ethers.Contract | null {
-    const networkContracts = NetworkContracts.get(network)
+): Promise<ethers.Contract | null> {
+    const networkContracts = await createContractMap(network)
     if (!networkContracts) {
-        console.error(`Unknown network: ${network}`)
+        console.error(`createContract:: networkContracts could not be obtained for: ${network}`)
         return null
     }
     const contractDetails = networkContracts.get(contractName)
@@ -110,10 +99,13 @@ function createContract<CN extends ContractName>(
     }
 }
 
-export function contractAddress(network: Networks, contractName: ContractName): string | null {
-    const networkContracts = NetworkContracts.get(network)
+export async function contractAddress(
+    network: Networks,
+    contractName: ContractName,
+): Promise<string | null> {
+    const networkContracts = await createContractMap(network)
     if (!networkContracts) {
-        console.error(`Unknown network: ${network}`)
+        console.error(`createContract:: networkContracts could not be obtained for: ${network}`)
         return null
     }
     const contractDetails = networkContracts.get(contractName)
@@ -206,7 +198,7 @@ export async function runLogQuery<CN extends ContractName>(args: {
         return null
     }
 
-    const contract = createContract(network, contractName, rpcProvider, townId)
+    const contract = await createContract(network, contractName, rpcProvider, townId)
     if (!contract) {
         console.error(`Unable to create contract: ${contract}`)
         return null
