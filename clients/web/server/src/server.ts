@@ -66,7 +66,9 @@ server.get('/timer', async (_request, _reply) => {
 
 // Serve static files or index.html for all other routes
 server.setNotFoundHandler(async (request, reply) => {
-    const urlPath = request.raw.url || ''
+    // strip query params and hash
+    const urlPath = new URL(request.raw.url ?? '', `https://${request.headers.host}`).pathname
+
     const filePath = path.join(__dirname, '..', '..', 'app', 'dist', urlPath)
 
     if (await checkFileExists(filePath)) {
