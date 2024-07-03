@@ -8,9 +8,11 @@ import { PrivyWrapper } from 'privy/PrivyProvider'
 import { EditableInputField } from '@components/SetUsernameDisplayName/EditableInputField'
 import { useValidateUsername } from 'hooks/useValidateUsername'
 import { validateDisplayName, validateUsername } from '@components/SetUsernameForm/validateUsername'
+import { useErrorToast } from 'hooks/useErrorToast'
 
 export const MintBotPanel = ({ streamId }: { streamId: string }) => {
     const [loading, setLoading] = useState<boolean>(false)
+    const [errorMessage, setErrorMessage] = useState<string>('')
     const [displayName, setDisplayName] = React.useState<string>('')
     const { username, usernameErrorMessage, updateUsername } = useValidateUsername({ streamId })
     const mintBot = useMintBot()
@@ -35,21 +37,31 @@ export const MintBotPanel = ({ streamId }: { streamId: string }) => {
     )
 
     const onMintBot = async () => {
+        setErrorMessage('')
         if (usernameErrorMessage || displayNameErrorMessage || !username) {
             return
         }
 
         setLoading(true)
-        await mintBot(username, displayName)
-        setLoading(false)
-
-        setDisplayName('')
-        updateUsername('')
+        try {
+            await mintBot(username, displayName)
+            setDisplayName('')
+            updateUsername('')
+        } catch (e) {
+            setErrorMessage('Failed to mint bot')
+            console.error(e)
+        } finally {
+            setLoading(false)
+        }
     }
 
     const isBtnDisabled = useMemo(() => {
         return !username || !validateUsername(username) || !validateDisplayName(displayName).valid
     }, [displayName, username])
+
+    useErrorToast({
+        errorMessage,
+    })
 
     return (
         <Panel label="Mint Bot">
