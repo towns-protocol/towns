@@ -1,7 +1,14 @@
 import { globalStyle, style } from '@vanilla-extract/css'
-import { vars } from 'ui/styles/vars.css'
+import { vars, zIndexVar } from 'ui/styles/vars.css'
+
+export const zIndex = style({
+    vars: {
+        [zIndexVar]: 'tooltipsAbove',
+    },
+})
+
 export const modalSheetClass = style({
-    zIndex: 'unset!important',
+    zIndex: zIndex + '!important',
 })
 
 globalStyle(`${modalSheetClass} .react-modal-sheet-backdrop`, {
