@@ -18,6 +18,7 @@
         "watch": "tsc --watch"
     },
     "dependencies": {
+        "@isaacs/ttlcache": "^1.4.1",
         "@river-build/dlog": "workspace:^",
         "@river-build/generated": "workspace:^",
         "abitype": "^0.9.10",

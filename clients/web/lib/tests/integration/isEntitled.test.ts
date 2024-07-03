@@ -439,7 +439,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         expect(isEntitledToChannel).toBe(false)
     }) // end test
 
-    test('client checks isEntitledToChannel starts fales, becomes true', async () => {
+    test('client checks isEntitledToChannel starts false, becomes true', async () => {
         /** Arrange */
         // create all the users for the test
         const { alice } = await registerAndStartClients(['alice'])
@@ -495,8 +495,8 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
 
         await alice.waitForUpdateRoleTransaction(transaction)
 
-        // Wait a bit for the TTL on the cache to expire, currently set to 2s in auth_impl_cache.go
-        await new Promise((resolve) => setTimeout(resolve, 2000))
+        // Wait a bit for the TTL on the entitlements cache to expire in the client
+        await new Promise((resolve) => setTimeout(resolve, 5000))
 
         /** Act */
         // test the user's entitlement to the space

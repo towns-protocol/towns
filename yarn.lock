@@ -5736,6 +5736,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@isaacs/ttlcache@npm:^1.4.1":
+  version: 1.4.1
+  resolution: "@isaacs/ttlcache@npm:1.4.1"
+  checksum: b99f0918faf1eba405b6bc3421584282b2edc46cca23f8d8e112a643bf6e4506c6c53a4525901118e229d19c5719bbec3028ec438d758fd71081f6c32af871ec
+  languageName: node
+  linkType: hard
+
 "@istanbuljs/load-nyc-config@npm:^1.0.0":
   version: 1.1.0
   resolution: "@istanbuljs/load-nyc-config@npm:1.1.0"
@@ -8777,6 +8784,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@river-build/web3@workspace:river/packages/web3"
   dependencies:
+    "@isaacs/ttlcache": ^1.4.1
     "@river-build/dlog": "workspace:^"
     "@river-build/generated": "workspace:^"
     "@types/jest": ^29.5.3

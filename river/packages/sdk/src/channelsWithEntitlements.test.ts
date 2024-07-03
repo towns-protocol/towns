@@ -242,6 +242,9 @@ describe('channelsWithEntitlements', () => {
         )
         await tx.wait()
 
+        // Wait 5 seconds for the positive auth cache on the client to expire
+        await new Promise((f) => setTimeout(f, 5000))
+
         await expect(
             aliceSpaceDapp.isEntitledToChannel(
                 spaceId,

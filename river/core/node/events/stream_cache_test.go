@@ -334,12 +334,17 @@ func testStreamMiniblockBatchProduction(t *testing.T, useBatchRegistration bool)
 }
 
 func TestStreamUnloadWithSubscribers(t *testing.T) {
+	t.Parallel()
+
 	require := require.New(t)
 	ctx, tc := makeTestStreamParams(t, testParams{})
 	defer tc.closer()
 
 	// disable auto stream cache cleanup, do cleanup manually
 	tc.bcTest.SetConfigValue(t, ctx, crypto.StreamCacheExpirationPollIntervalMsConfigKey, crypto.ABIEncodeUint64(0))
+
+	// replace the default chain monitor to disable automatic mini-block production on new blocks in the stream cache
+	tc.params.ChainMonitor = crypto.NoopChainMonitor{}
 
 	streamCache := tc.initCache(ctx)
 	streamCache.registerMiniBlocksBatched = true
