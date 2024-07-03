@@ -156,3 +156,11 @@ export enum JoinFlowStatus {
     MembershipMinted = 'membership-minted',
     Error = 'error',
 }
+
+export enum CreateSpaceFlowStatus {
+    MintingSpace = 'minting-space',
+    CreatingSpace = 'creating-space',
+    CreatingChannel = 'creating-channel',
+    CreatingUser = 'creating-user',
+    Error = 'error',
+}

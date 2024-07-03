@@ -11,7 +11,8 @@ import { Figma } from 'ui/styles/palette'
 import { useDummyNodes } from './hooks/useDummyNodes'
 import { SetupChecklist } from './SetupChecklist'
 
-export const CreateSpaceAnimation = () => {
+export const CreateSpaceAnimation = (props: { steps: string[]; step: number }) => {
+    const { steps, step } = props
     const darkMode = useStore((state) => state.getTheme() === 'dark')
     const dummyNodes = useDummyNodes({ grayScale: true })
     const nodeUrl = dummyNodes[1].nodeUrl
@@ -31,22 +32,13 @@ export const CreateSpaceAnimation = () => {
         [backgroundColorString, darkMode, dummyNodes, nodeUrl],
     )
 
-    const steps = useMemo(
-        () => [
-            'Creating town onchain',
-            'Decentralizing messages across nodes',
-            'Creating first channel onchain',
-        ],
-        [],
-    )
-
     return (
         <Stack gap centerContent padding>
             <Stack gap padding centerContent elevate background="level2" rounded="md" width="400">
                 <NodeAnimationContext.Provider value={config}>
                     <NodeAnimationLoader skipPlaceholder showSparklingDots maxWidth="250" />
                 </NodeAnimationContext.Provider>
-                <SetupChecklist steps={steps} step={0} />
+                <SetupChecklist steps={steps} step={step} />
                 <Disclaimer />
             </Stack>
         </Stack>
@@ -60,8 +52,7 @@ const Disclaimer = () => (
         </Box>
         <Box grow>
             <Paragraph color="gray2" size="sm">
-                This might take a bit longer than expected. Please stay on this page so you
-                don&apos;t lose your progress.
+                Give it a moment. Building a town takes a village.
             </Paragraph>
         </Box>
     </Box>

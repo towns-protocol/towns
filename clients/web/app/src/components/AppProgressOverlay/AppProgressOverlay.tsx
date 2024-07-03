@@ -2,7 +2,6 @@ import { AnimatePresence } from 'framer-motion'
 import React, { useEffect, useMemo } from 'react'
 import { matchPath, useLocation } from 'react-router'
 import { TransitionLogo } from '@components/Logo/Logo'
-import { CreateSpaceAnimation } from '@components/SetupAnimation/CreateSpaceAnimation'
 import { SetupAnimation } from '@components/SetupAnimation/SetupAnimation'
 import { BoxProps, MotionStack } from '@ui'
 import { useStore } from 'store/store'
@@ -86,10 +85,6 @@ export const useAppOverlayContent = (
                 key: 'animation',
                 element: <SetupAnimation mode={AppProgressState.Joining} key="animation" />,
             }
-        }
-
-        if (state === AppProgressState.CreatingSpace) {
-            return { key: 'animation', element: <CreateSpaceAnimation key="create" /> }
         }
 
         return { key: 'logo', element: <TransitionLogo key="logo" /> }

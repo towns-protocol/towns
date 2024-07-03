@@ -4,6 +4,8 @@ import { ethers } from 'ethers'
 
 import { useNavigate } from 'react-router'
 import { useConnectivity } from 'use-towns-client'
+import { CreateSpaceFlowStatus } from 'use-towns-client/dist/client/TownsClientTypes'
+import { AnimatePresence } from 'framer-motion'
 import { PrivyWrapper } from 'privy/PrivyProvider'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import {
@@ -40,8 +42,8 @@ import { ModalContainer } from '@components/Modals/ModalContainer'
 import { ErrorReportForm } from '@components/ErrorReport/ErrorReport'
 import { InformationBox } from '@components/TownPageLayout/InformationBox'
 import { TokenInfoBox } from '@components/TownPageLayout/TokenInfoBox'
-import { AppProgressOverlayTrigger } from '@components/AppProgressOverlay/AppProgressOverlayTrigger'
-import { AppProgressState } from '@components/AppProgressOverlay/AppProgressState'
+import { CreateSpaceAnimation } from '@components/SetupAnimation/CreateSpaceAnimation'
+import { SECOND_MS } from 'data/constants'
 import { CreateSpaceFormV2SchemaType, schema } from './CreateSpaceFormV2.schema'
 import { AvatarPlaceholder } from '../AvatarPlaceholder'
 import { PanelType, TransactionDetails } from './types'
@@ -125,6 +127,12 @@ function CreateSpaceFormV2WithoutAuth() {
             // TODO: currency defaults to ETH when addressZero
             membershipCurrency: ethers.constants.AddressZero,
         }
+
+    const [createFlowStatus, setCreateFlowStatus] = useState<CreateSpaceFlowStatus>()
+
+    const onCreateSpaceFlowStatus = useCallback((status: CreateSpaceFlowStatus) => {
+        setCreateFlowStatus(status)
+    }, [])
 
     return (
         <Stack horizontal>
@@ -511,19 +519,16 @@ function CreateSpaceFormV2WithoutAuth() {
                                                     setPanelType={setPanelType}
                                                     form={_form}
                                                     setTransactionDetails={setTransactionDetails}
+                                                    onCreateSpaceFlowStatus={
+                                                        onCreateSpaceFlowStatus
+                                                    }
                                                 >
                                                     {({ onSubmit, disabled }) => (
-                                                        <>
-                                                            {
-                                                                <SubmitButton
-                                                                    disabled={disabled}
-                                                                    transactionDetails={
-                                                                        transactionDetails
-                                                                    }
-                                                                    onSubmit={onSubmit}
-                                                                />
-                                                            }
-                                                        </>
+                                                        <SubmitButton
+                                                            disabled={disabled}
+                                                            transactionDetails={transactionDetails}
+                                                            onSubmit={onSubmit}
+                                                        />
                                                     )}
                                                 </CreateTownSubmit>
                                             </Stack>
@@ -574,6 +579,9 @@ function CreateSpaceFormV2WithoutAuth() {
                                                             setTransactionDetails={
                                                                 setTransactionDetails
                                                             }
+                                                            onCreateSpaceFlowStatus={
+                                                                onCreateSpaceFlowStatus
+                                                            }
                                                         >
                                                             {({ onSubmit, disabled }) => (
                                                                 <>
@@ -606,6 +614,7 @@ function CreateSpaceFormV2WithoutAuth() {
                                                 setPanelType={setPanelType}
                                                 form={_form}
                                                 setTransactionDetails={setTransactionDetails}
+                                                onCreateSpaceFlowStatus={onCreateSpaceFlowStatus}
                                             >
                                                 {({ onSubmit, disabled }) => (
                                                     <SubmitButton
@@ -623,16 +632,67 @@ function CreateSpaceFormV2WithoutAuth() {
                     )
                 }}
             </FormRender>
-            {transactionDetails.isTransacting ? (
-                <AppProgressOverlayTrigger
-                    progressState={AppProgressState.CreatingSpace}
-                    debugSource="Create Space Form"
-                />
-            ) : (
-                <></>
-            )}
+            <ProgressOverlay
+                isTransacting={transactionDetails.isTransacting}
+                status={createFlowStatus}
+            />
+
             <UserOpTxModal />
         </Stack>
+    )
+}
+
+const ProgressOverlay = (props: { status?: CreateSpaceFlowStatus; isTransacting: boolean }) => {
+    const { isTransacting, status } = props
+
+    const [showOverlay, setShowOverlay] = useState(() => isTransacting)
+
+    useEffect(() => {
+        if (!isTransacting) {
+            const timeout = setTimeout(() => {
+                setShowOverlay(false)
+            }, SECOND_MS * 0.5)
+            return () => {
+                clearTimeout(timeout)
+            }
+        } else {
+            setShowOverlay(true)
+        }
+    }, [isTransacting])
+
+    useEffect(() => {
+        console.log('[createFlowStatus]', isTransacting, status)
+    }, [isTransacting, status])
+
+    const steps = useMemo(
+        () => ['Creating town onchain', 'Initializing River streams', 'Setting up your town'],
+        [],
+    )
+    const step = useMemo(() => {
+        switch (status) {
+            default:
+            case CreateSpaceFlowStatus.MintingSpace:
+                return 0
+            case CreateSpaceFlowStatus.CreatingSpace:
+                return 1
+            case CreateSpaceFlowStatus.CreatingUser:
+                return 2
+        }
+    }, [status])
+
+    return (
+        <AnimatePresence>
+            {showOverlay ? (
+                <FadeInBox
+                    centerContent
+                    position="absoluteFill"
+                    background="backdropBlur"
+                    key="overlay"
+                >
+                    <CreateSpaceAnimation steps={steps} step={step} />
+                </FadeInBox>
+            ) : null}
+        </AnimatePresence>
     )
 }
 

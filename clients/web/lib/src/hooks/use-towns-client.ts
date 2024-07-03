@@ -6,6 +6,7 @@ import {
     BanUnbanWalletTransactionContext,
     ChannelTransactionContext,
     ChannelUpdateTransactionContext,
+    CreateSpaceFlowStatus,
     CreateSpaceTransactionContext,
     ITownsServerVersions,
     PrepayMembershipTransactionContext,
@@ -61,10 +62,12 @@ interface TownsClientImpl {
         createSpaceInfo: CreateSpaceInfo,
         membership: IArchitectBase.MembershipStruct,
         signer: TSigner | undefined,
+        onCreateFlowStatus?: (update: CreateSpaceFlowStatus) => void,
     ) => Promise<CreateSpaceTransactionContext | undefined>
     waitForCreateSpaceTransaction: (
         context: CreateSpaceTransactionContext | undefined,
         defaultUsernames: string[],
+        onCreateSpaceFlowStatus?: (update: CreateSpaceFlowStatus) => void,
     ) => Promise<CreateSpaceTransactionContext | undefined>
     createChannelTransaction: (
         createChannelInfo: CreateChannelInfo,
@@ -266,7 +269,11 @@ export function useTownsClient(): TownsClientImpl {
         // if you call join town before you have a user in the stream node
         // join town will initialize your user after you have have minted in the space contract
         // capture and pass the space context here
-        (context: CreateSpaceTransactionContext | undefined, defaultUsernames: string[]) => {
+        (
+            context: CreateSpaceTransactionContext | undefined,
+            defaultUsernames: string[],
+            onCreateSpaceFlowStatus?: (status: CreateSpaceFlowStatus) => void,
+        ) => {
             if (!clientSingleton) {
                 console.error('clientSingleton is undefined')
                 return Promise.resolve(undefined)
@@ -275,6 +282,7 @@ export function useTownsClient(): TownsClientImpl {
                 context,
                 signerContext,
                 defaultUsernames,
+                onCreateSpaceFlowStatus,
             )
         },
         [clientSingleton, signerContext],

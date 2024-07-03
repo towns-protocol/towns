@@ -41,6 +41,7 @@ import {
     BanUnbanWalletTransactionContext,
     PrepayMembershipTransactionContext,
     JoinFlowStatus,
+    CreateSpaceFlowStatus,
 } from './TownsClientTypes'
 import {
     CreateChannelInfo,
@@ -290,22 +291,30 @@ export class TownsClient
         createSpaceInfo: CreateSpaceInfo,
         membership: IArchitectBase.MembershipStruct,
         signer: ethers.Signer | undefined,
+        onSpaceCreateFlowStatus?: (update: CreateSpaceFlowStatus) => void,
     ): Promise<CreateSpaceTransactionContext> {
         if (!signer) {
             throw new SignerUndefinedError()
         }
-        return this.createCasablancaSpaceTransaction(createSpaceInfo, membership, signer)
+        return this.createCasablancaSpaceTransaction(
+            createSpaceInfo,
+            membership,
+            signer,
+            onSpaceCreateFlowStatus,
+        )
     }
 
     public async waitForCreateSpaceTransaction(
         context: CreateSpaceTransactionContext | undefined,
         signerContext: SignerContext | undefined,
         defaultUsernames: string[] = [],
+        onCreateFlowStatus?: (update: CreateSpaceFlowStatus) => void,
     ): Promise<CreateSpaceTransactionContext> {
         const txContext = await this._waitForBlockchainTransaction(context)
         if (txContext.status === TransactionStatus.Success) {
             this.log('[waitForCreateSpaceTransaction] space created on chain', txContext.data)
             if (txContext.data) {
+                onCreateFlowStatus?.(CreateSpaceFlowStatus.CreatingSpace)
                 const spaceAddress = this.spaceDapp.getSpaceAddress(txContext.receipt)
                 if (!spaceAddress) {
                     throw new Error('Space address not found')
@@ -343,6 +352,7 @@ export class TownsClient
                     PerformanceEvents.CREATE_SPACE,
                     'casablancaClient.waitForStream',
                 )
+                onCreateFlowStatus?.(CreateSpaceFlowStatus.CreatingChannel)
                 await this.casablancaClient.waitForStream(spaceId)
                 this.log('[waitForCreateSpaceTransaction] Space stream created', {
                     result: result,
@@ -357,6 +367,7 @@ export class TownsClient
                         PerformanceEvents.CREATE_SPACE,
                         'setUsername',
                     )
+                    onCreateFlowStatus?.(CreateSpaceFlowStatus.CreatingUser)
                     // new space, no member, we can just set first username as default
                     await this.casablancaClient.setUsername(spaceId, defaultUsernames[0])
                     performanceMetrics.endMeasurement(PerformanceEvents.CREATE_SPACE, 'setUsername')
@@ -400,9 +411,13 @@ export class TownsClient
         createSpaceInfo: CreateSpaceInfo,
         membership: IArchitectBase.MembershipStruct,
         signer: ethers.Signer,
+        onCreateSpageFlowStatus?: (status: CreateSpaceFlowStatus) => void,
     ): Promise<CreateSpaceTransactionContext> {
         let transaction: TransactionOrUserOperation | undefined = undefined
         let error: Error | undefined = undefined
+
+        onCreateSpageFlowStatus?.(CreateSpaceFlowStatus.MintingSpace)
+
         const continueStoreTx = this.blockchainTransactionStore.begin({
             type: BlockchainTransactionType.CreateSpace,
             data: {},

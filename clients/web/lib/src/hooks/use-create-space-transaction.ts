@@ -1,5 +1,6 @@
 import { SignerUndefinedError, toError } from '../types/error-types'
 import {
+    CreateSpaceFlowStatus,
     CreateSpaceTransactionContext,
     TransactionStatus,
     createTransactionContext,
@@ -39,6 +40,7 @@ export function useCreateSpaceTransaction() {
             createInfo: CreateSpaceInfo,
             membershipInfo: IArchitectBase.MembershipStruct,
             signer: TSigner,
+            onCreateSpaceFlowStatus?: (status: CreateSpaceFlowStatus) => void,
         ): Promise<CreateSpaceTransactionContext | undefined> {
             if (isTransacting.current) {
                 // Transaction already in progress
@@ -60,7 +62,12 @@ export function useCreateSpaceTransaction() {
                 transactionResult = createTransactionContext({ status: TransactionStatus.Pending })
                 setTransactionContext(transactionResult)
 
-                transactionResult = await createSpaceTransaction(createInfo, membershipInfo, signer)
+                transactionResult = await createSpaceTransaction(
+                    createInfo,
+                    membershipInfo,
+                    signer,
+                    onCreateSpaceFlowStatus,
+                )
 
                 setTransactionContext(transactionResult)
 
@@ -69,6 +76,7 @@ export function useCreateSpaceTransaction() {
                     transactionResult = await waitForCreateSpaceTransaction(
                         transactionResult,
                         defaultUsernames,
+                        onCreateSpaceFlowStatus,
                     )
                     setTransactionContext(transactionResult)
                 }
@@ -82,6 +90,7 @@ export function useCreateSpaceTransaction() {
             } finally {
                 isTransacting.current = false
             }
+
             return transactionResult
         },
         [createSpaceTransaction, defaultUsernames, waitForCreateSpaceTransaction],
@@ -117,6 +126,7 @@ export function useCreateSpaceTransactionWithRetries() {
             createInfo: CreateSpaceInfo,
             membershipInfo: IArchitectBase.MembershipStruct,
             signer: TSigner,
+            onCreateSpaceFlowStatus?: (status: CreateSpaceFlowStatus) => void,
         ) {
             const retryInterval = 5_000
             const maxRetryDuration = 60_000
@@ -132,6 +142,7 @@ export function useCreateSpaceTransactionWithRetries() {
                             createInfo,
                             membershipInfo,
                             signer,
+                            onCreateSpaceFlowStatus,
                         )
                         if (
                             transactionResult?.error ||

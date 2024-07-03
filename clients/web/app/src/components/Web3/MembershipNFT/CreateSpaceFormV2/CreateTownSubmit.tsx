@@ -14,6 +14,7 @@ import { ethers } from 'ethers'
 import headlessToast, { Toast, toast } from 'react-hot-toast/headless'
 import { datadogRum } from '@datadog/browser-rum'
 import { useGetEmbeddedSigner } from '@towns/privy'
+import { CreateSpaceFlowStatus } from 'use-towns-client/dist/client/TownsClientTypes'
 import { Box, Icon, IconButton, Text } from '@ui'
 import { PATHS } from 'routes'
 import { useImageStore } from '@components/UploadImage/useImageStore'
@@ -35,11 +36,13 @@ export function CreateTownSubmit({
     setPanelType,
     setTransactionDetails,
     children,
+    onCreateSpaceFlowStatus,
 }: {
     form: UseFormReturn<CreateSpaceFormV2SchemaType>
     setPanelType: (panelType: PanelType | undefined) => void
     setTransactionDetails: ({ isTransacting }: TransactionDetails) => void
     children: (props: { onSubmit: () => void; disabled: boolean }) => React.ReactNode
+    onCreateSpaceFlowStatus?: (status: CreateSpaceFlowStatus) => void
 }) {
     const getSigner = useGetEmbeddedSigner()
     const { spaceDapp } = useTownsClient()
@@ -298,6 +301,7 @@ export function CreateTownSubmit({
                     createSpaceInfo,
                     requirements,
                     signer,
+                    onCreateSpaceFlowStatus,
                 )
 
                 if (result?.error) {
@@ -421,6 +425,7 @@ export function CreateTownSubmit({
         minimumMmebershipPrice,
         setPanelType,
         createSpaceTransactionWithRole,
+        onCreateSpaceFlowStatus,
         uploadSpaceIdentity,
         addChannelNotificationSettings,
         uploadImage,
