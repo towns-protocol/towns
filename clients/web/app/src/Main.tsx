@@ -12,6 +12,7 @@ import { AppProgressState } from '@components/AppProgressOverlay/AppProgressStat
 import { WelcomeLayout } from 'routes/layouts/WelcomeLayout'
 import { AppProgressOverlayTrigger } from '@components/AppProgressOverlay/AppProgressOverlayTrigger'
 import { AboveAppProgressOverlay } from '@components/AppProgressOverlay/AboveAppProgress/AboveAppProgress'
+import { AppBugReportOverlay } from '@components/AppBugReport/AppBugReportOverlay'
 
 const App = React.lazy(() => import('App'))
 
@@ -50,29 +51,32 @@ export const Main = () => {
     const isHomeRoute = useMemo(() => window.location.pathname === '/', [])
 
     return (
-        <ErrorBoundary FallbackComponent={AppErrorFallback}>
-            <BrowserRouter>
-                <DebugRouter>
-                    <Suspense
-                        fallback={
-                            isHomeRoute ? (
-                                <WelcomeLayout />
-                            ) : (
-                                <AppProgressOverlayTrigger
-                                    progressState={AppProgressState.LoadingAssets}
-                                    debugSource="Main suspense fallback"
-                                />
-                            )
-                        }
-                    >
-                        <ZLayerProvider>
-                            <App />
-                        </ZLayerProvider>
-                    </Suspense>
-                </DebugRouter>
-                <AppProgressOverlay />
-                <AboveAppProgressOverlay />
-            </BrowserRouter>
-        </ErrorBoundary>
+        <>
+            <ErrorBoundary FallbackComponent={AppErrorFallback}>
+                <BrowserRouter>
+                    <DebugRouter>
+                        <Suspense
+                            fallback={
+                                isHomeRoute ? (
+                                    <WelcomeLayout />
+                                ) : (
+                                    <AppProgressOverlayTrigger
+                                        progressState={AppProgressState.LoadingAssets}
+                                        debugSource="Main suspense fallback"
+                                    />
+                                )
+                            }
+                        >
+                            <ZLayerProvider>
+                                <App />
+                            </ZLayerProvider>
+                        </Suspense>
+                    </DebugRouter>
+                    <AppProgressOverlay />
+                    <AboveAppProgressOverlay />
+                </BrowserRouter>
+            </ErrorBoundary>
+            <AppBugReportOverlay />
+        </>
     )
 }

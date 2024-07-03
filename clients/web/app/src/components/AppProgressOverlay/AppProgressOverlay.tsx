@@ -3,8 +3,9 @@ import React, { useEffect, useMemo } from 'react'
 import { matchPath, useLocation } from 'react-router'
 import { TransitionLogo } from '@components/Logo/Logo'
 import { SetupAnimation } from '@components/SetupAnimation/SetupAnimation'
-import { BoxProps, MotionStack } from '@ui'
+import { BoxProps, MotionStack, ZLayerProvider } from '@ui'
 import { useStore } from 'store/store'
+import { AppBugReportButton } from '@components/AppBugReport/AppBugReportButton'
 import { AppOverlayDebugger } from './AppOverlayDebugger'
 import { AppProgressState } from './AppProgressState'
 import { AppSkeletonView } from './AppSkeletonView'
@@ -37,14 +38,19 @@ export const AppProgressOverlay = (props: { debug?: boolean }) => {
     }, [appProgressOverlay, content.key])
 
     return (
-        <AnimatePresence mode="sync">
-            {appProgressOverlay !== AppProgressState.None ? (
-                <TransitionContainer key={content.key}>
-                    {content.element}
-                    {props.debug && <AppOverlayDebugger debugText={appProgressOverlay} />}
-                </TransitionContainer>
-            ) : null}
-        </AnimatePresence>
+        <ZLayerProvider>
+            <AnimatePresence mode="sync">
+                {appProgressOverlay !== AppProgressState.None ? (
+                    <>
+                        <TransitionContainer key={content.key}>
+                            {content.element}
+                            {props.debug && <AppOverlayDebugger debugText={appProgressOverlay} />}
+                        </TransitionContainer>
+                        <AppBugReportButton topRight />
+                    </>
+                ) : null}
+            </AnimatePresence>
+        </ZLayerProvider>
     )
 }
 
@@ -108,7 +114,7 @@ export const TransitionContainer = (props: Pick<BoxProps, 'children' | 'backgrou
             absoluteFill
             background="level1"
             {...transition}
-            height="100vh"
+            height="100%"
             {...props}
         />
     )

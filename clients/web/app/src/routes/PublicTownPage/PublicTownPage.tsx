@@ -1,22 +1,20 @@
 import { Allotment } from 'allotment'
 import { clsx } from 'clsx'
 import debug from 'debug'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useConnectivity, useContractSpaceInfoWithoutClient, useMyProfile } from 'use-towns-client'
 import { AppProgressState } from '@components/AppProgressOverlay/AppProgressState'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
-import { ErrorReportForm } from '@components/ErrorReport/ErrorReport'
 import { LogoSingleLetter } from '@components/Logo/Logo'
-import { ModalContainer } from '@components/Modals/ModalContainer'
 import { MainSideBar } from '@components/SideBars'
 import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackground'
 import { TownPageActivity } from '@components/TownPageLayout/TownPageActivity'
 import { TownPageLayout } from '@components/TownPageLayout/TownPageLayout'
 import { FadeInBox } from '@components/Transitions'
 import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
-import { Box, BoxProps, Button, Heading, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
+import { Box, BoxProps, Button, Heading, Icon, IconButton, Paragraph, Stack } from '@ui'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { useAnalytics } from 'hooks/useAnalytics'
 import { useDevice } from 'hooks/useDevice'
@@ -28,6 +26,7 @@ import { darkTheme } from 'ui/styles/vars.css'
 import { shortAddress } from 'ui/utils/utils'
 import { AppProgressOverlayTrigger } from '@components/AppProgressOverlay/AppProgressOverlayTrigger'
 import { Avatar } from '@components/Avatar/Avatar'
+import { AppBugReportButton } from '@components/AppBugReport/AppBugReportButton'
 import { BottomBarContent } from './BottomBarContent'
 import { usePublicPageLoginFlow } from './usePublicPageLoginFlow'
 
@@ -152,17 +151,8 @@ export const PublicTownPage = React.memo(
 const Header = (props: { isPreview: boolean; onClosePreview?: () => void }) => {
     const { isAuthenticated } = useConnectivity()
     const { isPreview, onClosePreview } = props
-    const [isShowingBugReport, setIsShowingBugReport] = useState(false)
-    const onShowBugReport = useCallback(() => {
-        setIsShowingBugReport(true)
-    }, [setIsShowingBugReport])
-
-    const onHideBugReport = useCallback(() => {
-        setIsShowingBugReport(false)
-    }, [setIsShowingBugReport])
     const { login } = useCombinedAuth()
     const { analytics } = useAnalytics()
-    const { isTouch } = useDevice()
 
     const onClickLogin = useCallback(() => {
         analytics?.track(
@@ -188,21 +178,7 @@ const Header = (props: { isPreview: boolean; onClosePreview?: () => void }) => {
                     <IconButton hoverable icon="close" color="default" onClick={onClosePreview} />
                 ) : (
                     <>
-                        <Box
-                            hoverable
-                            centerContent
-                            cursor="pointer"
-                            tooltip="Report a bug"
-                            tooltipOptions={{ placement: 'horizontal' }}
-                            padding="line"
-                            background="lightHover"
-                            rounded="sm"
-                            height="x4"
-                            width="x4"
-                            onClick={onShowBugReport}
-                        >
-                            <Icon size="square_sm" type="bug" color="default" />
-                        </Box>
+                        <AppBugReportButton />
 
                         {isAuthenticated ? (
                             <LoggedUserAvatar />
@@ -219,27 +195,6 @@ const Header = (props: { isPreview: boolean; onClosePreview?: () => void }) => {
                     </>
                 )}
             </Stack>
-            {isShowingBugReport && (
-                <ModalContainer asSheet padding="none" onHide={onHideBugReport}>
-                    <Box position="relative">
-                        {!isTouch && (
-                            <Box top="md" right="md" position="relative">
-                                <IconButton
-                                    position="topRight"
-                                    icon="close"
-                                    onClick={onHideBugReport}
-                                />
-                            </Box>
-                        )}
-                        <Stack gap alignItems="center" paddingY="lg">
-                            <Text size="lg" fontWeight="strong" color="default">
-                                Bug Report
-                            </Text>
-                        </Stack>
-                        <ErrorReportForm asSheet onHide={onHideBugReport} />
-                    </Box>
-                </ModalContainer>
-            )}
         </Box>
     )
 }

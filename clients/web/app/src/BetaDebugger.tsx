@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { useMyUserId, useNetworkStatus, useTownsContext } from 'use-towns-client'
+import React, { useContext, useState } from 'react'
+import { TownsContext, useMyUserId, useNetworkStatus, useTownsContext } from 'use-towns-client'
 import { Box, Button, Paragraph, Stack, Text, TextButton } from '@ui'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
@@ -10,30 +10,12 @@ export function BetaDebugger() {
     const show = () => setIsVisible(true)
     const hide = () => setIsVisible(false)
     const { errorMessage, clearSiteData } = useClearSiteData()
-    const { clientStatus } = useTownsContext()
-    const { isOffline } = useNetworkStatus()
-    const userId = useMyUserId()
+    const context = useContext(TownsContext)
 
     return (
         <>
             <Box gap alignItems="start">
-                <Stack horizontal gap="sm" justifyContent="center">
-                    <Box
-                        width="x1"
-                        height="x1"
-                        rounded="full"
-                        background={clientStatus.streamSyncActive && !isOffline ? 'cta1' : 'error'}
-                    />
-                    <Text
-                        color={clientStatus.streamSyncActive && !isOffline ? 'cta1' : 'error'}
-                        fontSize="sm"
-                    >
-                        {clientStatus.streamSyncActive && !isOffline
-                            ? 'Sync active'
-                            : 'Sync Offline'}
-                    </Text>
-                </Stack>
-
+                {!!context && <ClientStatus />}
                 <Stack horizontal gap="xs" color="gray1" fontSize="sm" alignItems="center">
                     <Paragraph size="sm">App Version:</Paragraph>
                     <ClipboardCopy
@@ -41,10 +23,7 @@ export function BetaDebugger() {
                         label={VITE_APP_COMMIT_HASH}
                     />
                 </Stack>
-                <Stack horizontal gap="xs" color="gray1" fontSize="sm" alignItems="center">
-                    <Paragraph size="sm">User ID:</Paragraph>
-                    <ClipboardCopy clipboardContent={userId} label={shortAddress(userId ?? '')} />
-                </Stack>
+                {!!context && <UserStatus />}
                 <Box padding="sm">
                     <TextButton tone="level3" color="negative" onClick={show}>
                         <Paragraph size="sm">Reset Caches</Paragraph>
@@ -69,6 +48,37 @@ export function BetaDebugger() {
                 </ModalContainer>
             )}
         </>
+    )
+}
+
+const ClientStatus = () => {
+    const { isOffline } = useNetworkStatus()
+    const { clientStatus } = useTownsContext()
+    return (
+        <Stack horizontal gap="sm" justifyContent="center">
+            <Box
+                width="x1"
+                height="x1"
+                rounded="full"
+                background={clientStatus.streamSyncActive && !isOffline ? 'cta1' : 'error'}
+            />
+            <Text
+                color={clientStatus.streamSyncActive && !isOffline ? 'cta1' : 'error'}
+                fontSize="sm"
+            >
+                {clientStatus.streamSyncActive && !isOffline ? 'Sync active' : 'Sync Offline'}
+            </Text>
+        </Stack>
+    )
+}
+
+const UserStatus = () => {
+    const userId = useMyUserId()
+    return (
+        <Stack horizontal gap="xs" color="gray1" fontSize="sm" alignItems="center">
+            <Paragraph size="sm">User ID:</Paragraph>
+            <ClipboardCopy clipboardContent={userId} label={shortAddress(userId ?? '')} />
+        </Stack>
     )
 }
 
