@@ -59,9 +59,9 @@ export const SetupAnimation = (props: Props) => {
 
     const rotateText = useMemo(
         () => [
-            'Locating a node...',
-            'Downloading message streams...',
-            'Syncing streams across nodes...',
+            'Connecting to River Network',
+            'Downloading message streams',
+            'Setting up your towns',
         ],
         [],
     )
@@ -86,7 +86,11 @@ const JoiningChecklist = () => {
     // "connecting" and "initializing workspace" are happening in parallel
     // the following steps are more relevant to the user:
     const steps = useMemo(
-        () => ['Minting town membership', 'Connecting to a node', 'Initializing workspace'],
+        () => [
+            'Minting town membership',
+            'Connecting to River Network',
+            'Downloading message streams',
+        ],
         [],
     )
     const { joinStep } = usePublicPageLoginFlow()
