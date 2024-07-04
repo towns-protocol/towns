@@ -8,7 +8,6 @@ import {
     useMyMembership,
     useSpaceMembers,
 } from 'use-towns-client'
-import { AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { PATHS } from 'routes'
@@ -21,7 +20,6 @@ import { baseScanUrl } from '@components/Web3/utils'
 import { useDevice } from 'hooks/useDevice'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { SECOND_MS } from 'data/constants'
-import { FadeIn } from '@components/Transitions'
 import * as styles from './SpaceSideBar.css'
 
 export const SpaceSideBarHeader = (props: {
@@ -93,13 +91,11 @@ export const SpaceSideBarHeader = (props: {
                     </Box>
                 </Box>
                 <Box centerContent width="x6" pointerEvents="auto">
-                    <AnimatePresence>
-                        <IconButton
-                            icon="etherscan"
-                            tooltip="Open Contract details"
-                            onClick={onAddressClick}
-                        />
-                    </AnimatePresence>
+                    <IconButton
+                        icon="etherscan"
+                        tooltip="Open Contract details"
+                        onClick={onAddressClick}
+                    />
                 </Box>
             </Stack>
             <Stack
@@ -215,26 +211,16 @@ const ShareTownLinkButton = (props: { spaceId: string }) => {
             height="x5"
             borderRadius="lg"
             background="level2"
-            border={copyDisplay ? 'positive' : 'none'}
             transition="default"
             cursor="pointer"
             onClick={onCopyClick}
         >
-            <AnimatePresence mode="sync">
-                {!copyDisplay ? (
-                    <FadeIn>
-                        <Icon type="link" size="square_md" padding="xxs" />
-                    </FadeIn>
-                ) : (
-                    <FadeIn>
-                        <Icon type="check" size="square_md" padding="xxs" color="positive" />
-                    </FadeIn>
-                )}
-
-                <Paragraph size="sm" color={copyDisplay ? 'positive' : undefined}>
-                    {text}
-                </Paragraph>
-            </AnimatePresence>
+            {!copyDisplay ? (
+                <Icon type="link" size="square_md" padding="xxs" />
+            ) : (
+                <Icon type="check" size="square_md" padding="xxs" />
+            )}
+            <Paragraph size="sm">{text}</Paragraph>
         </Box>
     )
 }
