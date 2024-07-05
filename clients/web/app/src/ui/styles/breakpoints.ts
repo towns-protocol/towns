@@ -16,6 +16,8 @@ const responsiveConditions = {
     tablet: { '@media': `screen and (max-width: ${breakpoints.desktop}px)` },
     /** wider than desktop */
     wide: { '@media': `screen and (min-width: ${breakpoints.wide}px)` },
+    /** standalone pwa mode */
+    standalone: { '@media': `screen and (display-mode: standalone)` },
 }
 
 export const responsivePropertiesMixin = {

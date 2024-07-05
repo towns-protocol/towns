@@ -28,8 +28,8 @@ export const AppBugReportButton = (props: { topRight?: true }) => {
     )
 
     return props.topRight ? (
-        <Box padding position="topRight" paddingTop={{ touch: 'safeAreaInsetTop', default: 'md' }}>
-            {button}
+        <Box position="topRight" paddingTop={{ standalone: 'safeAreaInsetTop', default: 'none' }}>
+            <Box padding>{button}</Box>
         </Box>
     ) : (
         button

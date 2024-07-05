@@ -241,7 +241,7 @@ export const ErrorReportForm = (props: {
                 return (
                     <>
                         <Stack
-                            padding
+                            padding={{ mobile: 'sm', default: 'none' }}
                             scroll={asSheet}
                             scrollbars={asSheet}
                             maxHeight={asSheet ? '50vh' : 'auto'}

@@ -114,7 +114,7 @@ export const TransitionContainer = (props: Pick<BoxProps, 'children' | 'backgrou
             absoluteFill
             background="level1"
             {...transition}
-            height="100%"
+            height="100dvh"
             {...props}
         />
     )

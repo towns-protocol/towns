@@ -158,8 +158,9 @@ export const BottomBarWithColWidths = ({
             paddingBottom="safeAreaInsetBottom"
             height={{
                 desktop: 'x12',
-                mobile: 'x10',
+                mobile: undefined,
             }}
+            paddingY="md"
             {...boxProps}
         >
             <Stack absoluteFill />

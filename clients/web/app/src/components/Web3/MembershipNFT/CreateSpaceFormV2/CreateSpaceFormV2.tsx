@@ -38,12 +38,11 @@ import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { Avatar } from '@components/Avatar/Avatar'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { isTouch } from 'hooks/useDevice'
-import { ModalContainer } from '@components/Modals/ModalContainer'
-import { ErrorReportForm } from '@components/ErrorReport/ErrorReport'
 import { InformationBox } from '@components/TownPageLayout/InformationBox'
 import { TokenInfoBox } from '@components/TownPageLayout/TokenInfoBox'
 import { CreateSpaceAnimation } from '@components/SetupAnimation/CreateSpaceAnimation'
 import { SECOND_MS } from 'data/constants'
+import { AppBugReportButton } from '@components/AppBugReport/AppBugReportButton'
 import { CreateSpaceFormV2SchemaType, schema } from './CreateSpaceFormV2.schema'
 import { AvatarPlaceholder } from '../AvatarPlaceholder'
 import { PanelType, TransactionDetails } from './types'
@@ -98,9 +97,6 @@ function CreateSpaceFormV2WithoutAuth() {
         isTransacting: false,
         townAddress: undefined,
     })
-    const [isShowingBugReport, setIsShowingBugReport] = useState(false)
-    const showBugReport = () => setIsShowingBugReport(true)
-    const hideBugReport = () => setIsShowingBugReport(false)
 
     const { data: abstractAccountAddress } = useAbstractAccountAddress({
         rootKeyAddress: loggedInWalletAddress,
@@ -145,7 +141,10 @@ function CreateSpaceFormV2WithoutAuth() {
                     alignItems="center"
                     justifyContent="spaceBetween"
                     width="100%"
-                    paddingTop="safeAreaInsetTop"
+                    paddingTop={{
+                        standalone: 'safeAreaInsetTop',
+                        default: 'md',
+                    }}
                 >
                     <Stack>
                         <IconButton
@@ -156,22 +155,7 @@ function CreateSpaceFormV2WithoutAuth() {
                             onClick={() => navigate('/')}
                         />
                     </Stack>
-
-                    <Stack>
-                        <IconButton
-                            icon="bug"
-                            background="level2"
-                            color="gray2"
-                            disabled={transactionDetails.isTransacting}
-                            onClick={showBugReport}
-                        />
-                    </Stack>
-
-                    {isShowingBugReport && (
-                        <ModalContainer onHide={hideBugReport}>
-                            <ErrorReportForm onHide={hideBugReport} />
-                        </ModalContainer>
-                    )}
+                    <AppBugReportButton />
                 </Stack>
             )}
             <FormRender
@@ -499,6 +483,17 @@ function CreateSpaceFormV2WithoutAuth() {
                                                 }
                                                 ref={rightColRef}
                                             >
+                                                {/* mimics the top bar to push down relative content */}
+                                                <Box
+                                                    paddingBottom="md"
+                                                    paddingTop={{
+                                                        standalone: 'safeAreaInsetTop',
+                                                        default: 'none',
+                                                    }}
+                                                    display={{ touch: 'flex', default: 'none' }}
+                                                >
+                                                    <Box height="height_md" />
+                                                </Box>
                                                 <Stack display="block">
                                                     <UploadImageField
                                                         isActive={
@@ -685,6 +680,7 @@ const ProgressOverlay = (props: { status?: CreateSpaceFlowStatus; isTransacting:
             {showOverlay ? (
                 <FadeInBox
                     centerContent
+                    padding
                     position="absoluteFill"
                     background="backdropBlur"
                     key="overlay"
