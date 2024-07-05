@@ -52,6 +52,10 @@ export const OffscreenPill = (props: {
             return
         }
 
+        if (!markers.length) {
+            setActiveMarker(undefined)
+        }
+
         const onChangeObserved: IntersectionObserverCallback = () => {
             const containerBounds = container.getBoundingClientRect()
             // we need to check the intersection of all items, not just the ones
