@@ -19,7 +19,7 @@ export function useEnsNames() {
             queryKey: ['linkedWalletsEnsNames', wallet],
             queryFn: async () => {
                 const ensName = await publicClient.getEnsName({ address: wallet as `0x${string}` })
-                return { ensName: ensName as string | undefined, wallet }
+                return { name: ensName as string | undefined, address: wallet }
             },
             staleTime: 1000 * 3600,
             refetchOnMount: false,
@@ -32,7 +32,7 @@ export function useEnsNames() {
     const ensNames = ensResponses
         .map((r) => r.data)
         .filter(isDefined)
-        .filter((r) => r.ensName && r.ensName.length > 0)
+        .filter((ens) => ens.name && ens.name.length > 0)
 
     const isLoadingEnsNames = ensResponses.some((response) => response.isLoading)
     return { ensNames: ensNames, isFetching: isLoadingWallets || isLoadingEnsNames }

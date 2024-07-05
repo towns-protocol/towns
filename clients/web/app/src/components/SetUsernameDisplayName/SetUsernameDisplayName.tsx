@@ -61,7 +61,7 @@ export const SetUsernameDisplayName = (props: { streamId: string }) => {
     const { setUsername } = useSetUsername()
     const { setDisplayName } = useTownsClient()
     const [dirtyDisplayName, setDirtyDisplayName] = React.useState<string>(user?.displayName ?? '')
-    const [isShowingEnsDisplayNameForm, setShowinEnsDisplayNameForm] = useState<boolean>(false)
+    const [isShowingEnsDisplayNameForm, setShowingEnsDisplayNameForm] = useState<boolean>(false)
 
     const {
         username: dirtyUsername,
@@ -115,8 +115,8 @@ export const SetUsernameDisplayName = (props: { streamId: string }) => {
     )
 
     const onSetEnsNameClicked = useCallback(() => {
-        setShowinEnsDisplayNameForm(true)
-    }, [setShowinEnsDisplayNameForm])
+        setShowingEnsDisplayNameForm(true)
+    }, [setShowingEnsDisplayNameForm])
 
     const displayNameErrorMessage = useMemo(
         () => validateDisplayName(dirtyDisplayName).message,
@@ -289,9 +289,9 @@ export const SetUsernameDisplayName = (props: { streamId: string }) => {
                 <EnsDisplayNameModal
                     spaceId={spaceData?.id}
                     streamId={streamId}
-                    currentEnsAddress={user?.ensAddress}
-                    setShowinEnsDisplayNameForm={setShowinEnsDisplayNameForm}
-                    onHide={() => setShowinEnsDisplayNameForm(false)}
+                    currentEns={{ address: user?.ensAddress, name: user?.ensName }}
+                    setShowingEnsDisplayNameForm={setShowingEnsDisplayNameForm}
+                    onHide={() => setShowingEnsDisplayNameForm(false)}
                 />
             )}
         </Stack>
@@ -335,18 +335,18 @@ const UsernameDisplayNameEncryptedContent = (props: { user: LookupUser }) => {
 const EnsDisplayNameModal = (props: {
     streamId: string
     spaceId: string | undefined
-    currentEnsAddress?: string
+    currentEns?: { address?: string; name?: string }
     onHide: () => void
-    setShowinEnsDisplayNameForm: (show: boolean) => void
+    setShowingEnsDisplayNameForm: (show: boolean) => void
 }) => {
-    const { spaceId, streamId, onHide, currentEnsAddress, setShowinEnsDisplayNameForm } = props
+    const { spaceId, streamId, onHide, currentEns, setShowingEnsDisplayNameForm } = props
     const { ensNames, isFetching } = useEnsNames()
     const { setEnsName } = useSetEnsName()
     const { lookupUser, setSpaceUser } = useUserLookupStore()
     const myUserId = useMyUserId()
     const { openPanel } = usePanelActions()
-    const [selectedEnsAddress, setSelectedEnsAddress] = useState<string | undefined>(
-        currentEnsAddress,
+    const [selectedEns, setSelectedEns] = useState<{ address?: string; name?: string } | undefined>(
+        currentEns,
     )
     const { isTouch } = useDevice()
 
@@ -382,27 +382,27 @@ const EnsDisplayNameModal = (props: {
             return
         }
         const user = lookupUser(myUserId)
-        const oldEnsAddress = user?.ensAddress
-        const oldEnsName = user?.ensName
+        const oldEns = { address: user?.ensAddress, name: user?.ensName }
 
         // Ideally, we would like to queue those updates and do it later
         if (!streamId) {
-            setOptimisticEns(oldEnsAddress, oldEnsName)
+            setOptimisticEns(oldEns.address, oldEns.name)
             toast.custom((t) => (
                 <UpdateEnsDisplayNameFailed
                     toast={t}
-                    onClick={() => setShowinEnsDisplayNameForm(true)}
+                    onClick={() => setShowingEnsDisplayNameForm(true)}
                 />
             ))
             onHide()
             return
         }
-        setEnsName(streamId, selectedEnsAddress).catch(() => {
-            setOptimisticEns(oldEnsAddress, oldEnsName)
+        setOptimisticEns(selectedEns?.address, selectedEns?.name)
+        setEnsName(streamId, selectedEns?.address).catch(() => {
+            setOptimisticEns(oldEns.address, oldEns.name)
             toast.custom((t) => (
                 <UpdateEnsDisplayNameFailed
                     toast={t}
-                    onClick={() => setShowinEnsDisplayNameForm(true)}
+                    onClick={() => setShowingEnsDisplayNameForm(true)}
                 />
             ))
         })
@@ -411,11 +411,12 @@ const EnsDisplayNameModal = (props: {
         myUserId,
         lookupUser,
         streamId,
-        setEnsName,
-        selectedEnsAddress,
-        onHide,
         setOptimisticEns,
-        setShowinEnsDisplayNameForm,
+        selectedEns?.address,
+        selectedEns?.name,
+        setEnsName,
+        onHide,
+        setShowingEnsDisplayNameForm,
     ])
 
     return (
@@ -436,19 +437,24 @@ const EnsDisplayNameModal = (props: {
                 {hasEnsName ? (
                     <Stack scroll alignContent="start" width="100%" gap="sm">
                         {ensNames.map((ensName) => (
-                            <WalletRow
-                                key={ensName.wallet}
-                                label={ensName.ensName}
-                                checked={ensName.wallet === selectedEnsAddress}
-                                onSelectWallet={() => setSelectedEnsAddress(ensName.wallet)}
+                            <EnsRow
+                                key={ensName.address}
+                                label={ensName.name}
+                                checked={ensName.address === selectedEns?.address}
+                                onClick={() =>
+                                    setSelectedEns({
+                                        address: ensName.address,
+                                        name: ensName.name,
+                                    })
+                                }
                             />
                         ))}
 
-                        <WalletRow
+                        <EnsRow
                             key="no-name"
                             label="None"
-                            checked={selectedEnsAddress === undefined}
-                            onSelectWallet={() => setSelectedEnsAddress(undefined)}
+                            checked={selectedEns?.address === undefined}
+                            onClick={() => setSelectedEns(undefined)}
                         />
                     </Stack>
                 ) : (
@@ -490,12 +496,8 @@ const EnsDisplayNameModal = (props: {
     )
 }
 
-const WalletRow = (props: {
-    label: string | undefined
-    checked: boolean
-    onSelectWallet: () => void
-}) => {
-    const { label: ensName, onSelectWallet, checked } = props
+const EnsRow = (props: { label: string | undefined; checked: boolean; onClick: () => void }) => {
+    const { label: ensName, onClick, checked } = props
     return (
         <Stack
             hoverable
@@ -505,7 +507,7 @@ const WalletRow = (props: {
             gap="sm"
             background={{ default: 'level2', hover: 'level3' }}
             rounded="sm"
-            onClick={onSelectWallet}
+            onClick={onClick}
         >
             <Text size="md" color="default">
                 {ensName}
