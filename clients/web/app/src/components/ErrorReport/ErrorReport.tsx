@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { useMutation } from '@tanstack/react-query'
 import { toast } from 'react-hot-toast/headless'
 import { useShallow } from 'zustand/react/shallow'
-import { Controller, UseFormReturn, useWatch } from 'react-hook-form'
+import { Controller, UseFormReturn } from 'react-hook-form'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import {
     Box,
@@ -30,6 +30,10 @@ import { PanelButton } from '@components/Panel/PanelButton'
 import { UploadInput } from 'ui/components/Form/Upload'
 import { FieldOutline } from 'ui/components/_internal/Field/FieldOutline/FieldOutline'
 import { srOnlyClass } from 'ui/styles/globals/utils.css'
+import {
+    FileDropContextProvider,
+    useFileDropContext,
+} from '@components/FileDropContext/FileDropContext'
 import * as fieldStyles from '../../ui/components/_internal/Field/Field.css'
 import { BugSubmittedToast } from './BugSubmittedToast'
 
@@ -153,6 +157,23 @@ export const ErrorReportForm = (props: {
     excludeDebugInfo?: boolean
 }) => {
     const { onHide, asSheet, excludeDebugInfo } = props
+    return (
+        <FileDropContextProvider title="Attach a file">
+            <_ErrorReportForm
+                asSheet={asSheet}
+                excludeDebugInfo={excludeDebugInfo}
+                onHide={onHide}
+            />
+        </FileDropContextProvider>
+    )
+}
+
+const _ErrorReportForm = (props: {
+    onHide?: () => void
+    asSheet?: boolean
+    excludeDebugInfo?: boolean
+}) => {
+    const { onHide, asSheet, excludeDebugInfo } = props
     const inputRef = useRef<HTMLInputElement>(null)
     const [success, setSuccess] = useState(false)
     const [isDragging, setIsDragging] = useState(false)
@@ -162,6 +183,7 @@ export const ErrorReportForm = (props: {
         retry: 4, // retry N times
         retryDelay: (attempt) => Math.min(attempt > 1 ? 2 ** attempt * 1000 : 1000, 8 * 1000), // exponential backoff
     })
+    const { addFiles } = useFileDropContext()
     const { isTouch } = useDevice()
 
     const { setBugReportCredentials, bugReportCredentials } = useStore(
@@ -240,6 +262,7 @@ export const ErrorReportForm = (props: {
 
                 return (
                     <>
+                        <SyncFormFiles form={form} />
                         <Stack
                             padding={{ mobile: 'sm', default: 'none' }}
                             scroll={asSheet}
@@ -305,11 +328,15 @@ export const ErrorReportForm = (props: {
                                                 fieldName={FormStateKeys.comments}
                                             />
                                         }
+                                        onPaste={(e) => {
+                                            const files = Array.from(e.clipboardData?.files ?? [])
+                                            addFiles(files)
+                                        }}
                                         {...register(FormStateKeys.comments)}
                                     />
                                 </MotionBox>
 
-                                <PreviewFiles form={form} />
+                                <PreviewFiles />
 
                                 <MotionBox layout="position">
                                     <PanelButton
@@ -369,16 +396,9 @@ export const ErrorReportForm = (props: {
                                                         name={name}
                                                         register={register}
                                                         onChange={(e) => {
-                                                            const file = e.target?.files?.[0]
-                                                            if (
-                                                                !file ||
-                                                                value.some(
-                                                                    (f) => f.name === file.name,
-                                                                )
-                                                            ) {
-                                                                return onChange(value)
-                                                            }
-                                                            return onChange([...value, file])
+                                                            addFiles(
+                                                                Array.from(e.target.files ?? []),
+                                                            )
                                                         }}
                                                     />
                                                     <ErrorMessage
@@ -476,7 +496,9 @@ const DebugInfo = () => {
     )
 }
 
-const UploadedImage = ({ file, form }: { file: File; form: UseFormReturn<FormState> }) => {
+const UploadedImage = ({ file, index }: { file: File; index: number }) => {
+    const { removeFile } = useFileDropContext()
+
     const imageSrc = useMemo(() => {
         const isImage = file.type.startsWith('image/')
         if (isImage) {
@@ -521,27 +543,28 @@ const UploadedImage = ({ file, form }: { file: File; form: UseFormReturn<FormSta
                     size="square_xs"
                     color="gray2"
                     cursor="pointer"
-                    onClick={() => {
-                        form.setValue(
-                            FormStateKeys.attachments,
-                            form
-                                .getValues(FormStateKeys.attachments)
-                                .filter((f) => f.name !== file.name),
-                        )
-                    }}
+                    onClick={() => removeFile(index)}
                 />
             </Box>
         </MotionBox>
     )
 }
 
-const PreviewFiles = ({ form }: { form: UseFormReturn<FormState> }) => {
-    const fields = useWatch({ control: form.control })
+const SyncFormFiles = ({ form }: { form: UseFormReturn<FormState> }) => {
+    const { files } = useFileDropContext()
+    useEffect(() => {
+        form.setValue(FormStateKeys.attachments, files)
+    }, [files, form])
+    return null
+}
+
+const PreviewFiles = () => {
+    const { files } = useFileDropContext()
 
     return (
         <>
-            {fields[FormStateKeys.attachments]?.map((file: File) => (
-                <UploadedImage key={file.name} file={file} form={form} />
+            {files.map((file: File, index) => (
+                <UploadedImage key={file.name} file={file} index={index} />
             ))}
         </>
     )
