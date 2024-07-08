@@ -2,8 +2,11 @@ import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { z } from 'zod'
 import { Color } from 'three'
+import { createRiverRegistry, useTownsContext } from 'use-towns-client'
+import { dlogger } from '@river-build/dlog'
 import { SECOND_MS } from 'data/constants'
-import { useEnvironment } from 'hooks/useEnvironmnet'
+
+const logger = dlogger('useNodeData')
 
 export const NODE_COLORS = [
     '#1DDCF2',
@@ -33,17 +36,59 @@ export type NodeData = {
 }
 
 export const useNodeData = (connectedNode: string | undefined) => {
-    const { id } = useEnvironment()
-    const nodeUrl = useMemo(() => {
-        if (id === 'omega') {
-            return `https://framework-1.nodes.towns-u4.com/debug/multi/json`
-        }
-        return `https://river1.nodes.gamma.towns.com/debug/multi/json`
-    }, [id])
+    const { riverProvider, riverConfig } = useTownsContext()
+
     const { data } = useQuery<NodeStatusSchema>({
         queryKey: ['nodeStatus'],
-        queryFn: () => {
-            return fetch(nodeUrl).then((res) => res.json())
+        queryFn: async () => {
+            const fetchNodeData = async (url: string) => {
+                const res = await fetch(url + '/debug/multi/json')
+                if (!res.ok) {
+                    throw new Error(`Failed to fetch from ${url}`)
+                }
+                return res.json()
+            }
+
+            // Try connected node first if provided
+            if (connectedNode) {
+                try {
+                    return await fetchNodeData(connectedNode)
+                } catch (error) {
+                    logger.error(
+                        `Failed to fetch from connected node ${connectedNode}, trying random nodes`,
+                    )
+                }
+            }
+
+            const riverRegistry = createRiverRegistry(riverProvider, riverConfig)
+            // Get operational nodes only if needed
+            const urls = (await riverRegistry.getOperationalNodeUrls()).split(',')
+
+            // Remove connected node from the array if present
+            if (connectedNode) {
+                const connectedNodeIndex = urls.indexOf(connectedNode)
+                if (connectedNodeIndex > -1) {
+                    urls.splice(connectedNodeIndex, 1)
+                }
+            }
+
+            // Try up to 5 random nodes
+            for (let attempt = 0; attempt < 5 && urls.length > 0; attempt++) {
+                const randomIndex = Math.floor(Math.random() * urls.length)
+                const randomUrl = urls[randomIndex]
+
+                // Remove the attempted URL from the array
+                urls.splice(randomIndex, 1)
+
+                try {
+                    return await fetchNodeData(randomUrl)
+                } catch (error) {
+                    logger.error(`Failed to fetch from ${randomUrl}, attempt ${attempt + 1} of 5`)
+                }
+            }
+            logger.error('All fetch attempts failed')
+
+            throw new Error('All fetch attempts failed')
         },
         refetchInterval: SECOND_MS * 30,
     })

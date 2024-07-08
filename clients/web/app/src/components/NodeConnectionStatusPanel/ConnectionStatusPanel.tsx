@@ -32,8 +32,6 @@ export const NodeStatusPanel = () => {
         [backgroundColorString, darkMode, nodeConnections, nodeUrl],
     )
 
-    const nodes = useNodeData(nodeUrl)
-
     const ref = useRef<HTMLDivElement>(null)
 
     const onScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
@@ -63,8 +61,8 @@ export const NodeStatusPanel = () => {
                 </Box>
             </Box>
             <Box gap position="relative">
-                {nodes?.length ? (
-                    nodes.map((n) => (
+                {nodeConnections?.length ? (
+                    nodeConnections.map((n) => (
                         <NodeStatusPill
                             nodeData={n}
                             key={n.id}
