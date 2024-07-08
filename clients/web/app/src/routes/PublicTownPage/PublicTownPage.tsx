@@ -167,17 +167,42 @@ const Header = (props: { isPreview: boolean; onClosePreview?: () => void }) => {
         login()
     }, [analytics, login])
 
+    const fromLink = useLocation().state?.fromLink === true
+    const navigate = useNavigate()
+    const { isTouch } = useDevice()
+    const onNavigateBack = useCallback(() => {
+        if (fromLink) {
+            navigate(-1)
+        } else {
+            navigate('/')
+        }
+    }, [fromLink, navigate])
+
     return (
         <Box horizontal centerContent width="100%">
             <Stack horizontal width="100%" paddingY="md" gap="md">
-                <Link to="/">
-                    <LogoSingleLetter />
-                </Link>
+                {fromLink && isTouch ? (
+                    <IconButton
+                        centerContent
+                        color="default"
+                        icon="arrowLeft"
+                        background="lightHover"
+                        width="x4"
+                        height="x4"
+                        onClick={onNavigateBack}
+                    />
+                ) : (
+                    <Link to="/">
+                        <LogoSingleLetter />
+                    </Link>
+                )}
+
                 <Box grow />
                 {isPreview ? (
                     <IconButton hoverable icon="close" color="default" onClick={onClosePreview} />
                 ) : (
                     <>
+                        {isAuthenticated && !isTouch ? <HomeButton /> : null}
                         <AppBugReportButton />
 
                         {isAuthenticated ? (
@@ -332,3 +357,22 @@ export const TownNotFoundBox = () => (
         </Box>
     </FadeInBox>
 )
+
+export const HomeButton = () => {
+    const fromLink = useLocation().state?.fromLink === true
+    const navigate = useNavigate()
+
+    const onClick = useCallback(() => {
+        if (fromLink) {
+            navigate(-1)
+        } else {
+            navigate('/')
+        }
+    }, [fromLink, navigate])
+
+    return (
+        <Button size="button_sm" tone="lightHover" color="default" onClick={onClick}>
+            {fromLink ? 'Back' : 'Home'}
+        </Button>
+    )
+}

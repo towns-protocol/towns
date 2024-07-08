@@ -51,6 +51,7 @@ export const NodeStatusButton = () => {
                 rounded="sm"
                 width="x4"
                 height="x4"
+                color="gray1"
                 onClick={onClick}
             >
                 <Icon

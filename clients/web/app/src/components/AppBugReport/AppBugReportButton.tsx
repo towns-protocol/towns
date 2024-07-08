@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react'
-import { Box, Icon } from '@ui'
+import { Box, IconButton } from '@ui'
 import { useAppOverlayBugReport } from './AppBugReportOverlay'
 
 export const AppBugReportButton = (props: { topRight?: true }) => {
@@ -9,22 +9,19 @@ export const AppBugReportButton = (props: { topRight?: true }) => {
     }, [showBugReport])
 
     const button = (
-        <Box
-            horizontal
-            hoverable
-            gap="paragraph"
-            padding="sm"
-            cursor="pointer"
-            tooltip="Report a bug"
-            tooltipOptions={{ placement: 'horizontal' }}
-            background="lightHover"
-            rounded="sm"
-            alignContent="center"
-            alignItems="center"
-            onClick={onShowBugReport}
-        >
-            <Icon size="square_sm" type="bug" color="default" />
-        </Box>
+        <>
+            <IconButton
+                horizontal
+                centerContent
+                icon="bug"
+                color="gray2"
+                background="lightHover"
+                width="x4"
+                height="x4"
+                shrink={false}
+                onClick={onShowBugReport}
+            />
+        </>
     )
 
     return props.topRight ? (

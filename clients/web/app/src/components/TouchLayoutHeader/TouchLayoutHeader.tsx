@@ -85,8 +85,8 @@ export const TouchLayoutHeader = (props: Props) => {
                 {space && (
                     <IconButton
                         icon="info"
-                        color="default"
-                        size="square_md"
+                        color="gray1"
+                        size="square_sm"
                         padding="xs"
                         background="none"
                         onClick={onTokenClick}
