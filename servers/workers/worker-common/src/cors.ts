@@ -12,6 +12,7 @@ export function getAllowedOrigins(env: Environment): string[] {
                 'https://app-test.towns.com',
                 'https://app.towns.com',
                 'https://fast-app.towns.com',
+                'https://server.omega.towns.com', // TODO: remove after migrating omega off the static app
                 'https://app-test-beta.towns.com',
                 'https://app.gamma.towns.com',
                 'https://harmony-web-pr-*.onrender.com',
@@ -27,6 +28,7 @@ export function getAllowedOrigins(env: Environment): string[] {
         case 'omega':
             return [
                 'https://app.towns.com',
+                'https://server.omega.towns.com', // TODO: remove after migrating omega off the static app
                 'https://fast-app.towns.com',
                 'https://harmony-web-pr-*.onrender.com',
                 'http://localhost:3000',
