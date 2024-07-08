@@ -12,9 +12,10 @@ import { getWalletBalances } from './wallet-balance'
 import { NodeStructOutput } from '@river-build/generated/dev/typings/INodeRegistry'
 import { Unpromisify } from './utils'
 import { MetricsIntegrator } from './metrics-integrator'
+import { IERC721ABase } from '@river-build/generated/dev/typings/IERC721AQueryable'
 
 export type MetricsExtractorScrapeConfig = {
-    getTotalSpaceMemberships: boolean
+    getSpaceMemberships: boolean
 }
 
 export type MetricsExtractorConfig = {
@@ -25,9 +26,10 @@ export type MetricsExtractorConfig = {
 
 export type RiverMetrics = Unpromisify<ReturnType<typeof MetricsExtractor.prototype.extract>>
 
-export type SpaceWithMemberships = {
+export type SpaceWithTokenOwners = {
     address: string
-    memberships: number
+    numMemberships: number
+    tokenOwnerships: IERC721ABase.TokenOwnershipStructOutput[]
 }
 
 export class MetricsExtractor {
@@ -54,7 +56,7 @@ export class MetricsExtractor {
         const pinger = new Pinger()
         const metricsIntegrator = new MetricsIntegrator()
         const scrapeConfig = {
-            getTotalSpaceMemberships: config.environment === 'omega', // this is an incredibly expensive query, so we only do it for omega
+            getSpaceMemberships: config.environment === 'omega', // this is an incredibly expensive query, so we only do it for omega
         }
 
         return new MetricsExtractor(
@@ -153,22 +155,27 @@ export class MetricsExtractor {
         return riverChainWalletBalances
     }
 
-    private async getSpaceWithMembershipsByTokenId(tokenId: number): Promise<SpaceWithMemberships> {
+    private async getSpaceWithMembershipsByTokenId(tokenId: number): Promise<SpaceWithTokenOwners> {
         const spaceAddress = await this.spaceRegistrar.SpaceArchitect.read.getSpaceByTokenId(
             tokenId,
         )
         const space = this.spaceRegistrar.getSpace(spaceAddress)!
-        const membershipsBigInt = await space.Membership.read.totalSupply()
-        const memberships = membershipsBigInt.toNumber()
+        const numMembershipsBigInt = await space.Membership.read.totalSupply()
+        const numMemberships = numMembershipsBigInt.toNumber()
+        const membershipTokenIds = Array.from({ length: numMemberships }, (_, i) => i)
+        const tokenOwnerships = await space.ERC721AQueryable.read.explicitOwnershipsOf(
+            membershipTokenIds,
+        )
         return {
             address: spaceAddress,
-            memberships,
+            numMemberships,
+            tokenOwnerships,
         }
     }
 
     private async getSpacesWithMembershipsByTokenIds(
         tokenIds: number[],
-    ): Promise<SpaceWithMemberships[]> {
+    ): Promise<SpaceWithTokenOwners[]> {
         return await Promise.all(
             tokenIds.map(async (tokenId) => {
                 return this.getSpaceWithMembershipsByTokenId(tokenId)
@@ -179,7 +186,7 @@ export class MetricsExtractor {
     private async getSpacesWithMembershipsByTokenIdsWithRetries(
         tokenIds: number[],
         attempts: number,
-    ): Promise<SpaceWithMemberships[]> {
+    ): Promise<SpaceWithTokenOwners[]> {
         let error: unknown
         while (attempts > 0) {
             try {
@@ -195,8 +202,30 @@ export class MetricsExtractor {
         throw error
     }
 
+    private getUniqueMembers(space: SpaceWithTokenOwners) {
+        const uniqueMembers = new Set<string>()
+        space.tokenOwnerships.forEach((ownership) => {
+            if (!ownership.burned) {
+                uniqueMembers.add(ownership.addr)
+            }
+        })
+        return uniqueMembers
+    }
+
+    private getNumMembershipsPerMemberAddress(spaces: SpaceWithTokenOwners[]) {
+        const memberToNumMemberships = new Map<string, number>()
+        spaces.forEach((space) => {
+            const uniqueMembers = this.getUniqueMembers(space)
+            for (const member of uniqueMembers) {
+                const currentNumMemberships = memberToNumMemberships.get(member) || 0
+                memberToNumMemberships.set(member, currentNumMemberships + 1)
+            }
+        })
+        return memberToNumMemberships
+    }
+
     private async getAllSpacesWithMemberships(numTotalSpaces: number) {
-        if (!this.scrapeConfig.getTotalSpaceMemberships) {
+        if (!this.scrapeConfig.getSpaceMemberships) {
             return {
                 kind: 'skipped' as const,
             }
@@ -214,7 +243,7 @@ export class MetricsExtractor {
             batches.push(tokenIds.slice(i, i + BATCH_SIZE))
         }
 
-        const spacesWithMemberships: SpaceWithMemberships[][] = []
+        const spacesWithMemberships: SpaceWithTokenOwners[][] = []
 
         for (let i = 0; i < batches.length; i++) {
             console.log(`getting space memberships for batch ${i}`)
@@ -231,7 +260,7 @@ export class MetricsExtractor {
         const result = spacesWithMemberships.flat()
         console.log('flattened space memberships')
         console.log('sorting space memberships')
-        result.sort((a, b) => b.memberships - a.memberships) // sort by memberships in descending order
+        result.sort((a, b) => b.numMemberships - a.numMemberships) // sort by memberships in descending order
         console.log('sorted space memberships')
 
         return {
@@ -297,11 +326,19 @@ export class MetricsExtractor {
         const numTotalOperatorsOnRiver = operatorsOnRiver.length
 
         let numTotalSpaceMemberships = 0
+        let memberAddressToNumMemberships: Map<string, number> = new Map()
+        let numTotalUniqueSpaceMembers = 0
         if (spacesWithMemberships.kind === 'success') {
             numTotalSpaceMemberships = spacesWithMemberships.result.reduce(
-                (acc, space) => acc + space.memberships,
+                (acc, space) => acc + space.numMemberships,
                 0,
             )
+
+            memberAddressToNumMemberships = this.getNumMembershipsPerMemberAddress(
+                spacesWithMemberships.result,
+            )
+
+            numTotalUniqueSpaceMembers = memberAddressToNumMemberships.size
         }
 
         return {
@@ -314,6 +351,7 @@ export class MetricsExtractor {
             nodesOnBase,
             nodesOnRiver,
             spacesWithMemberships,
+            memberAddressToNumMemberships,
             aggregateNetworkStats: {
                 numTotalSpaces,
                 numTotalSpaceMemberships,
@@ -325,6 +363,7 @@ export class MetricsExtractor {
                 numMissingNodesOnBase,
                 numMissingNodesOnRiver,
                 numUnhealthyPings,
+                numTotalUniqueSpaceMembers,
             },
         }
     }
