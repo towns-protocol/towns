@@ -23,7 +23,7 @@ import { QUERY_PARAMS } from 'routes'
 import { SendStatus } from '@components/MessageLayout/SendStatusIndicator'
 import {
     MessageAttachments,
-    isEmbeddedMessageAttachment,
+    isUrlAttachement,
 } from '@components/MessageAttachments/MessageAttachments'
 import {
     MessageTimelineContext,
@@ -101,7 +101,7 @@ export const MessageItem = (props: Props) => {
     const attachedLinks = useMemo(() => {
         return (
             (event.content.kind === ZTEvent.RoomMessage &&
-                event.content.attachments?.filter(isEmbeddedMessageAttachment).map((a) => a.url)) ||
+                event.content.attachments?.filter(isUrlAttachement).map((a) => a.url)) ||
             []
         )
     }, [event.content])

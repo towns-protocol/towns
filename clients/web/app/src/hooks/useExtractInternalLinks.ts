@@ -6,6 +6,7 @@ import { UnfurledLinkAttachment } from 'use-towns-client'
 import { useUnfurlContent } from 'api/lib/unfurl'
 import { PATHS } from 'routes'
 import { notUndefined } from 'ui/utils/utils'
+import { isTownsAppUrl } from 'utils/isTownsAppUrl'
 
 export type EmbeddedMessageLink = {
     type: 'message'
@@ -64,14 +65,10 @@ export const useExtractExternalLinks = (text: string): UnfurledLinkAttachment[] 
 
 function getTownsLinks(text: string) {
     const urls = Array.from(text.matchAll(/https:\/\/[^\s]+/g))
-        .map((u) => {
+        .map((url) => {
+            const u = url?.[0]
             if (u) {
-                try {
-                    const url = new URL(u[0])
-                    return parseUrl(url)
-                } catch (e) {
-                    // ignore, trivial error
-                }
+                return parseUrl(u)
             }
         })
         .filter(notUndefined)
@@ -96,13 +93,13 @@ function getExternalLinks(text: string) {
     return urls
 }
 
-const isTownsLink = (url: URL) => {
-    return url.host === window.location.host || url.host.match(/^([a-z0-9-]+\.|)towns\.com$/)
-}
-
-const parseUrl = (url: URL) => {
-    if (isTownsLink(url)) {
-        return parseTownLink(url)
+const parseUrl = (url: string) => {
+    if (isTownsAppUrl(url)) {
+        try {
+            return parseTownLink(new URL(url))
+        } catch (e) {
+            // ignore, trivial error
+        }
     }
 }
 

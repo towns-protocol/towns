@@ -4,6 +4,7 @@ import { RichTextPreview as PlateRichTextPreview } from '@components/RichTextPla
 import { getMessageBody } from 'utils/ztevent_util'
 import { useDevice } from 'hooks/useDevice'
 import { Box, Icon, Stack, TextButton } from '@ui'
+import { isTownsAppUrl } from 'utils/isTownsAppUrl'
 import { MessageStatusAnnotation } from '../MessageStatusAnnotation'
 
 type Props = {
@@ -90,7 +91,8 @@ const useHideAttachementLinks = (body: string, attachedLinks: string[]) => {
             return body
         }
         const link = attachedLinks?.[0]
-        if (link?.match(/^https:\/\/[a-z.]+\.towns\.com\//i)) {
+
+        if (isTownsAppUrl(link)) {
             // body is a single markdown link to the attachment
             const pattern = `[${link}](${link})`
             return body.startsWith(pattern) || body.endsWith(pattern)

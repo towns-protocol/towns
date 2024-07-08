@@ -6,12 +6,14 @@ import {
     MessageType,
     UnfurledLinkAttachment,
 } from 'use-towns-client'
+import { Link } from 'react-router-dom'
 import { isUrl } from 'utils/isUrl'
 import { ChunkedFile } from '@components/ChunkedFile/ChunkedFile'
 import { EmbeddedMessage } from '@components/EmbeddedMessageAttachement/EmbeddedMessage'
 import { Box, Stack, Text } from '@ui'
 import { isMediaMimeType } from 'utils/isMediaMimeType'
 import { RatioedBackgroundImage } from '@components/RatioedBackgroundImage'
+import { getTownParamsFromUrl } from 'utils/getTownParamsFromUrl'
 import { MessageAttachmentsContext } from './MessageAttachmentsContext'
 
 const emptyArray: never[] = []
@@ -139,6 +141,12 @@ export function isEmbeddedMessageAttachment(
     return attachment.type === 'embedded_message'
 }
 
+export function isUrlAttachement(
+    attachment: Attachment,
+): attachment is UnfurledLinkAttachment | EmbeddedMessageAttachment {
+    return isUnfurledLinkAttachment(attachment) || isEmbeddedMessageAttachment(attachment)
+}
+
 // need this pattern to avoid circular dependency
 const EmbeddedMessageContainer = (props: {
     attachment: EmbeddedMessageAttachment
@@ -170,12 +178,8 @@ const EmbeddedMessageContainer = (props: {
 }
 
 const UnfurledLinkAttachmentContainer = (props: UnfurledLinkAttachment) => {
-    return (
+    const content = (
         <Box
-            as="a"
-            href={props.url}
-            rel="noopener noreferrer"
-            target="_blank"
             alignSelf="start"
             background="level3"
             padding="md"
@@ -225,5 +229,17 @@ const UnfurledLinkAttachmentContainer = (props: UnfurledLinkAttachment) => {
                 </Text>
             </Box>
         </Box>
+    )
+
+    const { townPath } = getTownParamsFromUrl(props.url) ?? {}
+
+    return townPath ? (
+        <Link to={townPath} state={{ fromLink: true }}>
+            {content}
+        </Link>
+    ) : (
+        <a href={props.url} rel="noopener noreferrer" target="_blank">
+            {content}
+        </a>
     )
 }
