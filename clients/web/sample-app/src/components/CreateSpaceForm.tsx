@@ -34,6 +34,8 @@ type FormValues = {
     price: number
     limit: number
     membershipRequirement: MembershipRequirement
+    shortDescription: string
+    longDescription: string
 }
 
 export const CreateSpaceForm = (props: Props) => {
@@ -51,6 +53,8 @@ export const CreateSpaceForm = (props: Props) => {
         price: 0,
         limit: 1000,
         membershipRequirement: MembershipRequirement.Everyone,
+        shortDescription: '',
+        longDescription: '',
     })
 
     function updateFormValue<P extends keyof FormValues>(property: P, value: FormValues[P]) {

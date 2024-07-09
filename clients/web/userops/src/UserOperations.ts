@@ -597,7 +597,6 @@ export class UserOps {
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
-        const spaceInfo = await space.getSpaceInfo()
 
         // the function name in the contract is updateSpaceInfo
         // in space dapp we update the space name only using updateSpaceInfo which calls updateSpaceInfo
@@ -608,6 +607,7 @@ export class UserOps {
             functionName,
         )
 
+        const spaceInfo = await space.getSpaceInfo()
         const callData = await space.SpaceOwner.encodeFunctionData(functionName, [
             space.Address,
             spaceName,
@@ -619,8 +619,8 @@ export class UserOps {
         return this.sendUserOp({
             toAddress: space.SpaceOwner.address,
             callData: callData,
-            signer,
             spaceId: spaceId,
+            signer,
             functionHashForPaymasterProxy,
         })
     }

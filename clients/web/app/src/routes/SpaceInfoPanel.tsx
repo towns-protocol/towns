@@ -1,6 +1,5 @@
 import { Permission } from '@river-build/web3'
-import React, { useCallback, useRef, useState } from 'react'
-import { toast } from 'react-hot-toast/headless'
+import React, { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useSearchParams } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
@@ -18,16 +17,15 @@ import {
     useTownsClient,
     useUser,
 } from 'use-towns-client'
+import { EditTownInfo } from '@components/Panel/EditTownInfo'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { MembersPageTouchModal } from '@components/MembersPage/MembersPage'
 import { ModalContainer } from '@components/Modals/ModalContainer'
-import { InvalidCookieNotification } from '@components/Notifications/InvalidCookieNotification'
 import { PanelButton } from '@components/Panel/PanelButton'
 import { InteractiveSpaceIcon } from '@components/SpaceIcon'
-import { SpaceNameModal } from '@components/SpaceNameModal/SpaceNameModal'
+import { TownInfoModal } from '@components/TownInfoModal/TownInfoModal'
 import { LargeUploadImageTemplate } from '@components/UploadImage/LargeUploadImageTemplate'
 import { Box, BoxProps, FormRender, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
-import { errorHasInvalidCookieResponseHeader } from 'api/apiClient'
 import {
     toggleMuteSetting,
     useMuteSettings,
@@ -35,8 +33,7 @@ import {
 } from 'api/lib/notificationSettings'
 import { useDevice } from 'hooks/useDevice'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
-import { useGetSpaceIdentity, useSetSpaceIdentity } from 'hooks/useSpaceIdentity'
-import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'
+import { CHANNEL_INFO_PARAMS, PATHS, TOWN_INFO_PARAMS } from 'routes'
 import { getInviteUrl, shortAddress } from 'ui/utils/utils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { ConfirmLeaveModal } from '@components/ConfirmLeaveModal/ConfirmLeaveModal'
@@ -52,8 +49,6 @@ import { TokenImage } from '@components/Tokens/TokenSelector/TokenImage'
 import { useTokenMetadataForChainId } from 'api/lib/collectionMetadata'
 import { NetworkName } from '@components/Tokens/TokenSelector/NetworkName'
 import { useAppProgressStore } from '@components/AppProgressOverlay/store/appProgressStore'
-import { EditTextArea } from '@components/Panel/EditTextArea'
-import { EditSpaceName } from '@components/Panel/EditSpaceName'
 import { useNotificationSettings } from 'hooks/useNotificationSettings'
 import { AllChannelsList } from './AllChannelsList/AllChannelsList'
 import { PublicTownPage } from './PublicTownPage/PublicTownPage'
@@ -89,6 +84,8 @@ export const SpaceInfo = () => {
     const { data: contractSpaceInfo } = useContractSpaceInfo(space?.id)
     const owner = contractSpaceInfo?.owner
     const address = contractSpaceInfo?.address ?? ''
+    const shortDescription = contractSpaceInfo?.shortDescription ?? ''
+    const longDescription = contractSpaceInfo?.longDescription ?? ''
     const navigate = useNavigate()
     const { hasPermission: canEdit } = useHasPermission({
         spaceId: space?.id ?? '',
@@ -104,16 +101,6 @@ export const SpaceInfo = () => {
         permission: Permission.Ban,
     })
 
-    const [isEditMotto, setIsEditMotto] = useState(false)
-    const [isEditBio, setIsEditBio] = useState(false)
-    const [editErrorMessage, setEditErrorMessage] = useState<string | null>(null)
-    const mottoTextAreaRef = useRef<HTMLTextAreaElement>(null)
-    const bioTextAreaRef = useRef<HTMLTextAreaElement>(null)
-    const { data: spaceIdentity, isLoading: isLoadingSpaceIdentity } = useGetSpaceIdentity(
-        space?.id,
-    )
-
-    const { mutate, isPending: isSettingSpaceIdentity } = useSetSpaceIdentity(space?.id)
     const { removeTownNotificationSettings } = useNotificationSettings()
 
     const { memberIds } = useSpaceMembers()
@@ -125,6 +112,7 @@ export const SpaceInfo = () => {
         | 'wallets'
         | 'edit-membership'
         | (typeof CHANNEL_INFO_PARAMS)[keyof typeof CHANNEL_INFO_PARAMS]
+        | (typeof TOWN_INFO_PARAMS)[keyof typeof TOWN_INFO_PARAMS]
         | undefined
     >(undefined)
 
@@ -139,91 +127,6 @@ export const SpaceInfo = () => {
     })
 
     const onShowTownPreview = useEvent(() => setActiveModal('preview'))
-
-    const onEditMotto = useEvent(() => {
-        onCancelBio()
-        setIsEditMotto(true)
-        setEditErrorMessage(null)
-        setTimeout(() => {
-            mottoTextAreaRef.current?.focus()
-        })
-    })
-    const onEditBio = useEvent(() => {
-        onCancelMotto()
-        setIsEditBio(true)
-        setEditErrorMessage(null)
-        setTimeout(() => {
-            bioTextAreaRef.current?.focus()
-        })
-    })
-    const onCancelMotto = useEvent(() => setIsEditMotto(false))
-    const onCancelBio = useEvent(() => setIsEditBio(false))
-
-    const onSaveMotto = useEvent(() => {
-        if (!mottoTextAreaRef.current?.value.length || !canEdit) {
-            return
-        }
-        mutate(
-            {
-                spaceIdentity: {
-                    motto: mottoTextAreaRef.current?.value ?? '',
-                    bio: spaceIdentity?.bio ?? '',
-                },
-            },
-            {
-                onSuccess: async () => {
-                    setIsEditMotto(false)
-                    setEditErrorMessage(null)
-                },
-                onError: (error) => {
-                    if (errorHasInvalidCookieResponseHeader(error)) {
-                        toast.custom((t) => (
-                            <InvalidCookieNotification
-                                toast={t}
-                                actionMessage="edit the town motto"
-                            />
-                        ))
-                    }
-                    setEditErrorMessage(
-                        "We weren't able to save your changes. Please try again later.",
-                    )
-                },
-            },
-        )
-    })
-
-    const onSave = useEvent(() => {
-        if (!bioTextAreaRef.current?.value.length || !canEdit) {
-            return
-        }
-        mutate(
-            {
-                spaceIdentity: {
-                    motto: spaceIdentity?.motto ?? '',
-                    bio: bioTextAreaRef.current?.value ?? '',
-                },
-            },
-            {
-                onSuccess: async () => {
-                    setIsEditBio(false)
-                    setEditErrorMessage(null)
-                },
-                onError: (error) => {
-                    if (errorHasInvalidCookieResponseHeader(error)) {
-                        toast.custom((t) => (
-                            <InvalidCookieNotification
-                                toast={t}
-                                actionMessage="edit the description"
-                            />
-                        ))
-                    }
-                    setEditErrorMessage(
-                        "We weren't able to save your changes. Please try again later.",
-                    )
-                },
-            },
-        )
-    })
 
     const shareButtonEnabled = isTouch && navigator.share
     const onSharePressed = useEvent(async () => {
@@ -318,8 +221,8 @@ export const SpaceInfo = () => {
         spaceID,
     ])
 
-    const onEditSpaceNameClick = useCallback(() => {
-        setActiveModal(CHANNEL_INFO_PARAMS.EDIT_MEMBERSHIP)
+    const onEditTownInfoClick = useCallback(() => {
+        setActiveModal(TOWN_INFO_PARAMS.EDIT_TOWN_NAME)
     }, [setActiveModal])
 
     const setModalUndefined = useCallback(() => setActiveModal(undefined), [])
@@ -377,54 +280,14 @@ export const SpaceInfo = () => {
                     canEdit={!!canEdit}
                     onClick={onEditSpaceSettingsClick}
                 />
-                <MdGap>
-                    <EditSpaceName
-                        canEdit={isOwner}
-                        name={space?.name}
-                        address={address}
-                        onEdit={onEditSpaceNameClick}
-                    />
-                </MdGap>
-                {(canEdit || spaceIdentity?.motto) && (
-                    <MdGap data-testId="motto-section">
-                        <EditTextArea
-                            label="Town Motto"
-                            canEdit={canEdit}
-                            isEditing={isEditMotto}
-                            isSetting={isSettingSpaceIdentity}
-                            isLoading={isLoadingSpaceIdentity}
-                            defaultValue={spaceIdentity?.motto}
-                            errorMessage={editErrorMessage}
-                            maxLength={32}
-                            height="x2"
-                            ref={mottoTextAreaRef}
-                            notExistYetText='Click "edit" to add a motto.'
-                            onSave={onSaveMotto}
-                            onEdit={onEditMotto}
-                            onCancel={onCancelMotto}
-                        />
-                    </MdGap>
-                )}
-                {(canEdit || spaceIdentity?.bio) && (
-                    <MdGap data-testId="about-section">
-                        <EditTextArea
-                            label="About"
-                            canEdit={canEdit}
-                            isEditing={isEditBio}
-                            isSetting={isSettingSpaceIdentity}
-                            isLoading={isLoadingSpaceIdentity}
-                            defaultValue={spaceIdentity?.bio}
-                            errorMessage={editErrorMessage}
-                            notExistYetText='Click "edit" to add a description.'
-                            maxLength={400}
-                            height="150"
-                            ref={bioTextAreaRef}
-                            onSave={onSave}
-                            onEdit={onEditBio}
-                            onCancel={onCancelBio}
-                        />
-                    </MdGap>
-                )}
+                <EditTownInfo
+                    canEdit={isOwner}
+                    name={space?.name}
+                    address={address}
+                    shortDescription={shortDescription}
+                    longDescription={longDescription}
+                    onEdit={onEditTownInfoClick}
+                />
                 {!!owner && <TownOwnerButton owner={owner} address={address} />}
                 <PanelButton disabled={isSettingNotification} onClick={onShowTownPreview}>
                     <Icon type="search" size="square_sm" color="gray2" />
@@ -499,8 +362,8 @@ export const SpaceInfo = () => {
                 />
             )}
 
-            {activeModal === CHANNEL_INFO_PARAMS.EDIT_MEMBERSHIP && (
-                <SpaceNameModal onHide={setModalUndefined} />
+            {activeModal === TOWN_INFO_PARAMS.EDIT_TOWN_NAME && (
+                <TownInfoModal onHide={setModalUndefined} />
             )}
 
             {activeModal === 'preview' && (

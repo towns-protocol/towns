@@ -12,6 +12,7 @@ import {
 } from 'use-towns-client'
 
 import { usePrefetchMultipleRoleDetails } from 'use-towns-client/dist/hooks/use-role-details'
+import { EditChannelName } from '@components/Panel/EditChannelName'
 import { Box, Icon, Paragraph, Stack, TextButton } from '@ui'
 import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'
 import { useDevice } from 'hooks/useDevice'
@@ -24,7 +25,6 @@ import { PanelButton } from '@components/Panel/PanelButton'
 import { Panel } from '@components/Panel/Panel'
 
 import { useLeaveChannel } from 'hooks/useLeaveChannel'
-import { EditSpaceName } from '@components/Panel/EditSpaceName'
 import { ChannelSettingsModal } from '@components/ChannelSettings/ChannelSettings'
 import { PrivyWrapper } from 'privy/PrivyProvider'
 import { useContractRoles } from 'hooks/useContractRoles'
@@ -126,7 +126,7 @@ export const ChannelInfo = () => {
         <>
             <Stack gap>
                 <Stack gap padding background="level2" rounded="sm">
-                    <EditSpaceName
+                    <EditChannelName
                         canEdit={canEditChannel}
                         name={`#${channel?.label}`}
                         address={channel?.id ?? ''}

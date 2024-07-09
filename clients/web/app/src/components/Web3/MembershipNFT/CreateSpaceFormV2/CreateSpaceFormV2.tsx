@@ -118,8 +118,8 @@ function CreateSpaceFormV2WithoutAuth() {
             tokensGatingMembership: [],
             spaceIconUrl: null,
             spaceIconFile: null,
-            spaceMotto: null,
-            spaceBio: null,
+            shortDescription: null,
+            longDescription: null,
             // TODO: currency defaults to ETH when addressZero
             membershipCurrency: ethers.constants.AddressZero,
         }
@@ -176,8 +176,8 @@ function CreateSpaceFormV2WithoutAuth() {
                         limit,
                         tokensGatingMembership,
                         membershipType,
-                        spaceMottoValue,
-                        spaceBioValue,
+                        shortDescriptionValue,
+                        longDescriptionValue,
                         membershipPricingType,
                         spaceIconUrl,
                     ] = _form.watch([
@@ -186,8 +186,8 @@ function CreateSpaceFormV2WithoutAuth() {
                         'membershipLimit',
                         'tokensGatingMembership',
                         'membershipType',
-                        'spaceMotto',
-                        'spaceBio',
+                        'shortDescription',
+                        'longDescription',
                         'membershipPricingType',
                         'spaceIconUrl',
                     ])
@@ -437,7 +437,9 @@ function CreateSpaceFormV2WithoutAuth() {
                                                         paddingY="md"
                                                     >
                                                         <AutoGrowTextArea
-                                                            text={spaceMottoValue ?? undefined}
+                                                            text={
+                                                                shortDescriptionValue ?? undefined
+                                                            }
                                                             fontSize="lg"
                                                             placeholder="Add town motto"
                                                             tone="none"
@@ -445,7 +447,7 @@ function CreateSpaceFormV2WithoutAuth() {
                                                             counterOffset={{
                                                                 bottom: 'none',
                                                             }}
-                                                            {..._form.register('spaceMotto')}
+                                                            {..._form.register('shortDescription')}
                                                         />
                                                     </Box>
                                                     {/* bio */}
@@ -455,7 +457,7 @@ function CreateSpaceFormV2WithoutAuth() {
                                                         paddingY="md"
                                                     >
                                                         <AutoGrowTextArea
-                                                            text={spaceBioValue ?? undefined}
+                                                            text={longDescriptionValue ?? undefined}
                                                             fontSize="lg"
                                                             placeholder="Add town description"
                                                             tone="none"
@@ -464,7 +466,7 @@ function CreateSpaceFormV2WithoutAuth() {
                                                             counterOffset={{
                                                                 bottom: 'none',
                                                             }}
-                                                            {..._form.register('spaceBio')}
+                                                            {..._form.register('longDescription')}
                                                         />
                                                     </Box>
                                                 </Stack>

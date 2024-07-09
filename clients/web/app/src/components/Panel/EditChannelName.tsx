@@ -10,7 +10,7 @@ type Props = {
     address: string
 }
 
-export function EditSpaceName(props: Props) {
+export function EditChannelName(props: Props) {
     const { canEdit, onEdit, name, address } = props
     return (
         <Stack gap>

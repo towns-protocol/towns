@@ -22,6 +22,10 @@ export const QUERY_PARAMS = {
     GALLERY_THREAD_ID: 'galleryThreadId',
 } as const
 
+export const TOWN_INFO_PARAMS = {
+    EDIT_TOWN_NAME: 'edit-town-name',
+}
+
 export const CHANNEL_INFO_PARAMS = {
     BROWSE_CHANNELS: 'browse-channels',
     BANNED: 'banned',

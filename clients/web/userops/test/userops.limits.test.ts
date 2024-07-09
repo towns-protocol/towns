@@ -189,7 +189,6 @@ test('will reject each userop if beyond the limit', async () => {
     ////////////////////////////////////////
     // update space info
     ////////////////////////////////////////
-
     const updateSpaceOp = await userOps.sendUpdateSpaceInfoOp([
         spaceId,
         'new space name',

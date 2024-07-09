@@ -7,10 +7,9 @@ import { SignerUndefinedError, toError } from '../types/error-types'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { TSigner } from '../types/web3-types'
-import { blockchainKeys } from '../query/query-keys'
-import { useQueryClient } from '../query/queryClient'
 import { useTownsClient } from './use-towns-client'
 import { getTransactionHashOrUserOpHash } from '@towns/userops'
+import { useMutationSpaceInfoCache } from './use-mutation-space-info-cache'
 
 /**
  * Hook to update space name with a transaction.
@@ -20,8 +19,9 @@ export function useUpdateSpaceInfoTransaction() {
         TransactionContext<void> | undefined
     >(undefined)
     const isTransacting = useRef<boolean>(false)
-    const { updateSpaceInfoTransaction, waitForUpdateSpaceInfoTransaction } = useTownsClient()
-    const queryClient = useQueryClient()
+    const { updateSpaceInfoTransaction, waitForUpdateSpaceInfoTransaction, spaceDapp } =
+        useTownsClient()
+    const spaceInfoCache = useMutationSpaceInfoCache()
 
     const { data, isLoading, transactionHash, transactionStatus, error } = useMemo(() => {
         return {
@@ -33,7 +33,7 @@ export function useUpdateSpaceInfoTransaction() {
         }
     }, [transactionContext])
 
-    // update space name with new name
+    // update space info
     const _updateSpaceInfoTransaction = useCallback(
         async function (
             spaceNetworkId: string,
@@ -78,14 +78,15 @@ export function useUpdateSpaceInfoTransaction() {
                     transactionResult = await waitForUpdateSpaceInfoTransaction(transactionResult)
                     setTransactionContext(transactionResult)
                     if (transactionResult?.status === TransactionStatus.Success) {
-                        await queryClient.invalidateQueries({
-                            queryKey: blockchainKeys.spaceInfo(spaceNetworkId),
-                        })
+                        if (spaceDapp) {
+                            const spaceInfo = await spaceDapp.getSpaceInfo(spaceNetworkId)
+                            // Update cache
+                            spaceInfoCache.mutate(spaceInfo)
+                        }
                     }
                 }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (e: any) {
-                console.error('useUpdateSpaceNameTransaction', 'Transaction failed', e)
                 transactionResult = createTransactionContext({
                     status: TransactionStatus.Failed,
                     error: toError(e),
@@ -96,11 +97,11 @@ export function useUpdateSpaceInfoTransaction() {
             }
             return transactionResult
         },
-        [queryClient, updateSpaceInfoTransaction, waitForUpdateSpaceInfoTransaction],
+        [spaceDapp, spaceInfoCache, updateSpaceInfoTransaction, waitForUpdateSpaceInfoTransaction],
     )
 
     useEffect(() => {
-        console.log('useUpdateSpaceNameTransaction', 'states', {
+        console.log('useUpdateSpaceInfoTransaction', 'states', {
             isLoading,
             data,
             error,

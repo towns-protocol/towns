@@ -6,6 +6,7 @@ import {
     findDynamicPricingModule,
     findFixedPricingModule,
     useCreateSpaceTransaction,
+    useMutationSpaceInfoCache,
     useTownsClient,
 } from 'use-towns-client'
 import { useNavigate } from 'react-router'
@@ -19,7 +20,6 @@ import { Box, Icon, IconButton, Text } from '@ui'
 import { PATHS } from 'routes'
 import { useImageStore } from '@components/UploadImage/useImageStore'
 import { useUploadImage } from 'api/lib/uploadImage'
-import { useSetSpaceIdentity } from 'hooks/useSpaceIdentity'
 import { FailedUploadAfterSpaceCreation } from '@components/Notifications/FailedUploadAfterSpaceCreation'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { convertTokenTypeToOperationType } from '@components/Tokens/utils'
@@ -61,6 +61,7 @@ export function CreateTownSubmit({
 
     const navigate = useNavigate()
     const { analytics } = useAnalytics()
+    const spaceInfoCache = useMutationSpaceInfoCache()
 
     const hasError = useMemo(() => {
         return Boolean(error && error.name !== 'ACTION_REJECTED')
@@ -94,28 +95,6 @@ export function CreateTownSubmit({
             )
         },
     })
-    const { mutate: uploadSpaceIdentity } = useSetSpaceIdentity(undefined, {
-        onError: () => {
-            if (data?.spaceId === undefined) {
-                console.warn('No space id, cannot upload space bio')
-                return
-            }
-            const { removeLoadedResource } = useImageStore.getState()
-            removeLoadedResource(data.spaceId)
-            toast.custom(
-                (t) => (
-                    <FailedUploadAfterSpaceCreation
-                        toast={t}
-                        spaceId={data.spaceId ?? ''}
-                        message="There was an error uploading your town bio."
-                    />
-                ),
-                {
-                    duration: 10_000,
-                },
-            )
-        },
-    })
 
     const onSubmit = useCallback(async () => {
         toast.dismiss()
@@ -133,6 +112,8 @@ export function CreateTownSubmit({
 
                 const createSpaceInfo: CreateSpaceInfo = {
                     name: spaceName ?? '',
+                    shortDescription: values.shortDescription ?? '',
+                    longDescription: values.longDescription ?? '',
                     // TODO: spaceMetadata
                     // TODO: defaultChannelName?
                 }
@@ -372,13 +353,6 @@ export function CreateTownSubmit({
                         })
                     }
 
-                    // if there's no bio, just upload an empty string
-                    const { spaceMotto, spaceBio } = values
-                    uploadSpaceIdentity({
-                        spaceIdentity: { motto: spaceMotto ?? '', bio: spaceBio ?? '' },
-                        innerSpaceId: networkId,
-                    })
-
                     let timeoutDuration = 0
                     try {
                         const spaceInfo = await spaceDapp?.getSpaceInfo(networkId)
@@ -387,6 +361,7 @@ export function CreateTownSubmit({
                             townAddress: spaceInfo?.address as Address,
                         })
                         timeoutDuration = 3000
+                        spaceInfoCache.mutate(spaceInfo)
                     } catch (error) {
                         console.log('error getting space info after creating town: ', error)
                     }
@@ -426,9 +401,9 @@ export function CreateTownSubmit({
         setPanelType,
         createSpaceTransactionWithRole,
         onCreateSpaceFlowStatus,
-        uploadSpaceIdentity,
         addChannelNotificationSettings,
         uploadImage,
+        spaceInfoCache,
         navigate,
     ])
 

@@ -5,12 +5,16 @@ import {
     QueryFunction,
     QueryKey,
     UseQueryOptions,
+    useMutation as useMutationBase,
     useQueryClient,
     useQuery as useBaseQuery,
     useQueries,
     QueryClientProvider,
     QueryClientConfig,
     UseQueryResult,
+    DefaultError,
+    UseMutationOptions,
+    UseMutationResult,
 } from '@tanstack/react-query'
 
 const defaultStaleTime = 1_000 * 15
@@ -59,10 +63,18 @@ function useQuery<
     })
 }
 
+function useMutation<TData = unknown, TError = DefaultError, TVariables = void, TContext = unknown>(
+    options: UseMutationOptions<TData, TError, TVariables, TContext>,
+    queryClient?: QueryClient,
+): UseMutationResult<TData, TError, TVariables, TContext> {
+    return useMutationBase(options, queryClient)
+}
+
 // [re]exporting from here so other files can import from this file for all their needs
 export {
     useQuery,
     queryClient,
+    useMutation,
     useQueries,
     useQueryClient,
     QueryClientProvider,
