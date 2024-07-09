@@ -37,9 +37,10 @@ func GetDefaultConfig() *Config {
 		// TODO: ArchitectContract: ContractConfig{},
 		// TODO: RegistryContract:  ContractConfig{},
 		Log: LogConfig{
-			Level:   "info",
-			Console: true,
-			NoColor: true,
+			Level:   "info", // NOTE: this default is replaced by flag value
+			Console: true,   // NOTE: this default is replaced by flag value
+			File:    "",     // NOTE: this default is replaced by flag value
+			NoColor: false,  // NOTE: this default is replaced by flag value
 			Format:  "json",
 		},
 		Metrics: MetricsConfig{
@@ -286,9 +287,9 @@ type LogConfig struct {
 	Level        string // Used for both file and console if their levels not set explicitly
 	File         string // Path to log file
 	FileLevel    string // If not set, use Level
-	Console      bool   // Log to sederr if true
+	Console      bool   // Log to console if true
 	ConsoleLevel string // If not set, use Level
-	NoColor      bool
+	NoColor      bool   // If true, disable color text output to console
 	Format       string // "json" or "text"
 }
 

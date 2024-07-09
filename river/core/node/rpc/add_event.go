@@ -64,7 +64,7 @@ func (s *Service) addParsedEvent(
 		return err
 	}
 
-	canAddEvent, chainAuthArgs, sideEffects, err := rules.CanAddEvent(
+	canAddEvent, chainAuthArgsList, sideEffects, err := rules.CanAddEvent(
 		ctx,
 		s.chainConfig,
 		s.nodeRegistry.GetValidNodeAddresses(),
@@ -77,11 +77,20 @@ func (s *Service) addParsedEvent(
 		return err
 	}
 
-	if chainAuthArgs != nil {
-		isEntitled, err := s.chainAuth.IsEntitled(ctx, s.config, chainAuthArgs)
-		if err != nil {
-			return err
+	if len(chainAuthArgsList) > 0 {
+		isEntitled := false
+		var err error
+		// Determine if any chainAuthArgs grant entitlement
+		for _, chainAuthArgs := range chainAuthArgsList {
+			isEntitled, err = s.chainAuth.IsEntitled(ctx, s.config, chainAuthArgs)
+			if err != nil {
+				return err
+			}
+			if isEntitled {
+				break
+			}
 		}
+		// If no chainAuthArgs grant entitlement, execute the OnChainAuthFailure side effect.
 		if !isEntitled {
 			if sideEffects.OnChainAuthFailure != nil {
 				err := s.addEventPayload(
@@ -96,8 +105,8 @@ func (s *Service) addParsedEvent(
 			return RiverError(
 				Err_PERMISSION_DENIED,
 				"IsEntitled failed",
-				"chainAuthArgs",
-				chainAuthArgs.String(),
+				"chainAuthArgsList",
+				chainAuthArgsList,
 			).Func("addParsedEvent")
 		}
 	}

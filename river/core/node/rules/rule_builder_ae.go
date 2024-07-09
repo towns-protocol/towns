@@ -15,31 +15,34 @@ type AddEventSideEffects struct {
 	OnChainAuthFailure *DerivedEvent
 }
 
-type ruleBuilderAE interface {
-	check(f func() (bool, error)) ruleBuilderAE
-	checkOneOf(f ...func() (bool, error)) ruleBuilderAE
-	requireChainAuth(f func() (*auth.ChainAuthArgs, error)) ruleBuilderAE
-	requireParentEvent(f func() (*DerivedEvent, error)) ruleBuilderAE
-	onChainAuthFailure(f func() (*DerivedEvent, error)) ruleBuilderAE
-	fail(err error) ruleBuilderAE
-	run() (bool, *auth.ChainAuthArgs, *AddEventSideEffects, error)
-}
+type (
+	chainAuthFunc func() (*auth.ChainAuthArgs, error)
+	ruleBuilderAE interface {
+		check(f func() (bool, error)) ruleBuilderAE
+		checkOneOf(f ...func() (bool, error)) ruleBuilderAE
+		requireChainAuth(f chainAuthFunc) ruleBuilderAE
+		requireParentEvent(f func() (*DerivedEvent, error)) ruleBuilderAE
+		onChainAuthFailure(f func() (*DerivedEvent, error)) ruleBuilderAE
+		fail(err error) ruleBuilderAE
+		run() (bool, []*auth.ChainAuthArgs, *AddEventSideEffects, error)
+	}
+)
 
-type ruleBuilderAEImpl struct {
-	failErr          error
-	checks           [][]func() (bool, error)
-	chainAuth        func() (*auth.ChainAuthArgs, error)
-	parentEvent      func() (*DerivedEvent, error)
-	chainAuthFailure func() (*DerivedEvent, error)
-}
+type (
+	ruleBuilderAEImpl struct {
+		failErr          error
+		checks           [][]func() (bool, error)
+		chainAuths       []chainAuthFunc
+		parentEvent      func() (*DerivedEvent, error)
+		chainAuthFailure func() (*DerivedEvent, error)
+	}
+)
 
 func aeBuilder() ruleBuilderAE {
 	return &ruleBuilderAEImpl{
-		failErr: nil,
-		checks:  nil,
-		chainAuth: func() (*auth.ChainAuthArgs, error) {
-			return nil, nil
-		},
+		failErr:    nil,
+		checks:     nil,
+		chainAuths: []chainAuthFunc{},
 		parentEvent: func() (*DerivedEvent, error) {
 			return nil, nil
 		},
@@ -58,8 +61,8 @@ func (re *ruleBuilderAEImpl) checkOneOf(f ...func() (bool, error)) ruleBuilderAE
 	return re
 }
 
-func (re *ruleBuilderAEImpl) requireChainAuth(f func() (*auth.ChainAuthArgs, error)) ruleBuilderAE {
-	re.chainAuth = f
+func (re *ruleBuilderAEImpl) requireChainAuth(f chainAuthFunc) ruleBuilderAE {
+	re.chainAuths = append(re.chainAuths, f)
 	return re
 }
 
@@ -106,7 +109,7 @@ func runChecksAE(checksList [][]func() (bool, error)) (bool, error) {
 	return true, nil
 }
 
-func (re *ruleBuilderAEImpl) run() (bool, *auth.ChainAuthArgs, *AddEventSideEffects, error) {
+func (re *ruleBuilderAEImpl) run() (bool, []*auth.ChainAuthArgs, *AddEventSideEffects, error) {
 	if re.failErr != nil {
 		return false, nil, nil, re.failErr
 	}
@@ -115,9 +118,15 @@ func (re *ruleBuilderAEImpl) run() (bool, *auth.ChainAuthArgs, *AddEventSideEffe
 	if err != nil || !canAdd {
 		return false, nil, nil, err
 	}
-	chainAuthArgs, err := re.chainAuth()
-	if err != nil {
-		return false, nil, nil, err
+	chainAuthArgsList := make([]*auth.ChainAuthArgs, 0, len(re.chainAuths))
+	for _, chainAuth := range re.chainAuths {
+		chainAuthArgs, err := chainAuth()
+		if err != nil {
+			return false, nil, nil, err
+		}
+		if chainAuthArgs != nil {
+			chainAuthArgsList = append(chainAuthArgsList, chainAuthArgs)
+		}
 	}
 	requiredParentEvent, err := re.parentEvent()
 	if err != nil {
@@ -127,12 +136,12 @@ func (re *ruleBuilderAEImpl) run() (bool, *auth.ChainAuthArgs, *AddEventSideEffe
 	if err != nil {
 		return false, nil, nil, err
 	}
-	if len(re.checks) == 0 && chainAuthArgs == nil && requiredParentEvent == nil {
+	if len(re.checks) == 0 && len(chainAuthArgsList) == 0 && requiredParentEvent == nil {
 		return false, nil, nil, RiverError(Err_INTERNAL, "no checks or requirements")
 	}
 	sideEffects := &AddEventSideEffects{
 		RequiredParentEvent: requiredParentEvent,
 		OnChainAuthFailure:  onEntitlementFailure,
 	}
-	return true, chainAuthArgs, sideEffects, nil
+	return true, chainAuthArgsList, sideEffects, nil
 }

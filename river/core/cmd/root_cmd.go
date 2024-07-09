@@ -110,7 +110,7 @@ func init() {
 	)
 	rootCmd.PersistentFlags().Bool(
 		"log_to_console",
-		false,
+		true,
 		"Log to console",
 	)
 	rootCmd.PersistentFlags().Bool(
