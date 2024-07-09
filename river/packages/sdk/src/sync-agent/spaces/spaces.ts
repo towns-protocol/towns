@@ -93,6 +93,8 @@ export class Spaces extends PersistedObservable<SpacesModel> {
                 spaceMetadata: params.spaceMetadata ?? params.spaceName,
                 channelName: channelName,
                 membership: membershipInfo,
+                shortDescription: params.shortDescription,
+                longDescription: params.longDescription,
             },
             signer,
         )

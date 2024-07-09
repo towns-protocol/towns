@@ -16,6 +16,11 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/rs/cors"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
+	httptrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/net/http"
+
 	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/node/auth"
 	. "github.com/river-build/river/core/node/base"
@@ -29,10 +34,6 @@ import (
 	"github.com/river-build/river/core/node/registries"
 	"github.com/river-build/river/core/node/storage"
 	"github.com/river-build/river/core/xchain/entitlement"
-	"github.com/rs/cors"
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/h2c"
-	httptrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/net/http"
 )
 
 const (
@@ -497,6 +498,8 @@ func (s *Service) initCacheAndSync() error {
 	if err != nil {
 		return err
 	}
+
+	s.mbProducer = events.NewMiniblockProducer(s.serverCtx, s.cache, nil)
 
 	s.syncHandler = NewSyncHandler(
 		s.wallet,

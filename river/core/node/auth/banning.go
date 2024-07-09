@@ -7,6 +7,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/river-build/river/core/config"
 	baseContracts "github.com/river-build/river/core/contracts/base"
 	. "github.com/river-build/river/core/node/base"

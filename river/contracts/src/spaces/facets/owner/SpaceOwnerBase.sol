@@ -43,7 +43,9 @@ abstract contract SpaceOwnerBase is ISpaceOwnerBase {
     string memory name,
     string memory uri,
     uint256 tokenId,
-    address space
+    address space,
+    string memory shortDescription,
+    string memory longDescription
   ) internal {
     Validator.checkLength(name, 2);
     Validator.checkLength(uri, 0);
@@ -52,33 +54,58 @@ abstract contract SpaceOwnerBase is ISpaceOwnerBase {
     SpaceOwnerStorage.Layout storage ds = SpaceOwnerStorage.layout();
 
     ds.spaceByTokenId[tokenId] = space;
-    ds.spaceByAddress[space] = Space({
+    ds.spaceByAddress[space] = SpaceOwnerStorage.Space({
       name: name,
       uri: uri,
       tokenId: tokenId,
       createdAt: block.timestamp
+    });
+    ds.spaceMetadata[space] = SpaceOwnerStorage.SpaceMetadata({
+      shortDescription: shortDescription,
+      longDescription: longDescription
     });
   }
 
   function _updateSpace(
     address space,
     string memory name,
-    string memory uri
+    string memory uri,
+    string memory shortDescription,
+    string memory longDescription
   ) internal {
     Validator.checkLength(name, 2);
     Validator.checkLength(uri, 1);
 
     SpaceOwnerStorage.Layout storage ds = SpaceOwnerStorage.layout();
 
-    Space storage spaceInfo = ds.spaceByAddress[space];
+    SpaceOwnerStorage.Space storage spaceInfo = ds.spaceByAddress[space];
     spaceInfo.name = name;
     spaceInfo.uri = uri;
+
+    SpaceOwnerStorage.SpaceMetadata storage metadata = ds.spaceMetadata[space];
+    metadata.shortDescription = shortDescription;
+    metadata.longDescription = longDescription;
 
     emit SpaceOwner__UpdateSpace(space);
   }
 
   function _getSpace(address space) internal view returns (Space memory) {
-    SpaceOwnerStorage.Layout storage ds = SpaceOwnerStorage.layout();
-    return ds.spaceByAddress[space];
+    SpaceOwnerStorage.Space storage spaceInfo = SpaceOwnerStorage
+      .layout()
+      .spaceByAddress[space];
+
+    SpaceOwnerStorage.SpaceMetadata storage metadata = SpaceOwnerStorage
+      .layout()
+      .spaceMetadata[space];
+
+    return
+      Space({
+        name: spaceInfo.name,
+        uri: spaceInfo.uri,
+        tokenId: spaceInfo.tokenId,
+        createdAt: spaceInfo.createdAt,
+        shortDescription: metadata.shortDescription,
+        longDescription: metadata.longDescription
+      });
   }
 }

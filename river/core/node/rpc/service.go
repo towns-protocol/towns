@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/node/auth"
 	"github.com/river-build/river/core/node/crypto"
@@ -42,6 +43,7 @@ type Service struct {
 
 	// Streams
 	cache       events.StreamCache
+	mbProducer  events.MiniblockProducer
 	syncHandler SyncHandler
 
 	// River chain

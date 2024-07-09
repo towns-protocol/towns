@@ -111,7 +111,8 @@ contract RuleEntitlementTest is TestUtils, IEntitlementBase {
 
   function test_setRuleEntitlement() external givenRuleEntitlementIsSet {
     IRuleEntitlement.Operation[] memory ruleOperations = ruleEntitlement
-      .getOperations(roleId);
+      .getRuleData(roleId)
+      .operations;
     assertEq(ruleOperations.length, 3);
   }
 
@@ -119,7 +120,8 @@ contract RuleEntitlementTest is TestUtils, IEntitlementBase {
     vm.prank(space);
     ruleEntitlement.removeEntitlement(roleId);
     IRuleEntitlement.Operation[] memory ruleOperations = ruleEntitlement
-      .getOperations(roleId);
+      .getRuleData(roleId)
+      .operations;
     assertEq(ruleOperations.length, 0);
   }
 
@@ -202,7 +204,8 @@ contract RuleEntitlementTest is TestUtils, IEntitlementBase {
     ruleEntitlement.setEntitlement(0, encodedData);
 
     IRuleEntitlement.Operation[] memory ruleOperations = ruleEntitlement
-      .getOperations(uint256(0));
+      .getRuleData(uint256(0))
+      .operations;
     assertEq(ruleOperations.length, 0);
   }
 }

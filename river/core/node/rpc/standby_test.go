@@ -1,4 +1,4 @@
-package rpc_test
+package rpc
 
 import (
 	"encoding/json"
@@ -9,14 +9,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/contracts/river"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/nodes"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/rpc/statusinfo"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func stanbyStartOpts() startOpts {

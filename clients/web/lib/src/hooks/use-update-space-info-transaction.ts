@@ -15,12 +15,12 @@ import { getTransactionHashOrUserOpHash } from '@towns/userops'
 /**
  * Hook to update space name with a transaction.
  */
-export function useUpdateSpaceNameTransaction() {
+export function useUpdateSpaceInfoTransaction() {
     const [transactionContext, setTransactionContext] = useState<
         TransactionContext<void> | undefined
     >(undefined)
     const isTransacting = useRef<boolean>(false)
-    const { updateSpaceNameTransaction, waitForUpdateSpaceNameTransaction } = useTownsClient()
+    const { updateSpaceInfoTransaction, waitForUpdateSpaceInfoTransaction } = useTownsClient()
     const queryClient = useQueryClient()
 
     const { data, isLoading, transactionHash, transactionStatus, error } = useMemo(() => {
@@ -34,19 +34,22 @@ export function useUpdateSpaceNameTransaction() {
     }, [transactionContext])
 
     // update space name with new name
-    const _updateSpaceNameTransaction = useCallback(
+    const _updateSpaceInfoTransaction = useCallback(
         async function (
             spaceNetworkId: string,
             name: string,
+            uri: string,
+            shortDescription: string,
+            longDescription: string,
             signer: TSigner,
         ): Promise<TransactionContext<void> | undefined> {
             if (isTransacting.current) {
-                console.warn('useUpdateSpaceNameTransaction', 'Transaction already in progress')
+                console.warn('useUpdateSpaceInfoTransaction', 'Transaction already in progress')
                 return undefined
             }
             let transactionResult: TransactionContext<void> | undefined
             if (!signer) {
-                console.error('useUpdateSpaceNameTransaction', 'Signer is undefined')
+                console.error('useUpdateSpaceInfoTransaction', 'Signer is undefined')
                 transactionResult = createTransactionContext({
                     status: TransactionStatus.Failed,
                     error: new SignerUndefinedError(),
@@ -61,11 +64,18 @@ export function useUpdateSpaceNameTransaction() {
                     status: TransactionStatus.Pending,
                 })
                 setTransactionContext(transactionResult)
-                transactionResult = await updateSpaceNameTransaction(spaceNetworkId, name, signer)
+                transactionResult = await updateSpaceInfoTransaction(
+                    spaceNetworkId,
+                    name,
+                    uri,
+                    shortDescription,
+                    longDescription,
+                    signer,
+                )
                 setTransactionContext(transactionResult)
                 if (transactionResult?.status === TransactionStatus.Pending) {
                     // Wait for transaction to be mined
-                    transactionResult = await waitForUpdateSpaceNameTransaction(transactionResult)
+                    transactionResult = await waitForUpdateSpaceInfoTransaction(transactionResult)
                     setTransactionContext(transactionResult)
                     if (transactionResult?.status === TransactionStatus.Success) {
                         await queryClient.invalidateQueries({
@@ -86,7 +96,7 @@ export function useUpdateSpaceNameTransaction() {
             }
             return transactionResult
         },
-        [queryClient, updateSpaceNameTransaction, waitForUpdateSpaceNameTransaction],
+        [queryClient, updateSpaceInfoTransaction, waitForUpdateSpaceInfoTransaction],
     )
 
     useEffect(() => {
@@ -105,6 +115,6 @@ export function useUpdateSpaceNameTransaction() {
         error,
         transactionHash,
         transactionStatus,
-        updateSpaceNameTransaction: _updateSpaceNameTransaction,
+        updateSpaceInfoTransaction: _updateSpaceInfoTransaction,
     }
 }

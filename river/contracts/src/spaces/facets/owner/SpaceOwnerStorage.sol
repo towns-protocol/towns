@@ -2,7 +2,6 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {ISpaceOwnerBase} from "./ISpaceOwner.sol";
 
 // libraries
 
@@ -13,10 +12,23 @@ library SpaceOwnerStorage {
   bytes32 internal constant STORAGE_SLOT =
     0x7fc24c9500f4388b797f8975c0991ad4ffd0338c2cbf5335b2bf5b7fe5747700;
 
+  struct Space {
+    string name;
+    string uri;
+    uint256 tokenId;
+    uint256 createdAt;
+  }
+
+  struct SpaceMetadata {
+    string shortDescription;
+    string longDescription;
+  }
+
   struct Layout {
     address factory;
     mapping(uint256 => address) spaceByTokenId;
-    mapping(address => ISpaceOwnerBase.Space) spaceByAddress;
+    mapping(address => Space) spaceByAddress;
+    mapping(address => SpaceMetadata) spaceMetadata;
   }
 
   function layout() internal pure returns (Layout storage l) {

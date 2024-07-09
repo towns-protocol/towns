@@ -124,6 +124,8 @@ export interface CreateSpaceInfo {
     name: string
     spaceMetadata?: string
     defaultChannelName?: string
+    shortDescription?: string
+    longDescription?: string
 }
 
 export interface CreateChannelInfo {

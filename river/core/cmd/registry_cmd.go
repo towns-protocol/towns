@@ -4,6 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+
 	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/contracts/river"
 	. "github.com/river-build/river/core/node/base"
@@ -16,7 +20,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func srdump(cfg *config.Config, countOnly bool) error {
+func srStreamDump(cfg *config.Config, countOnly bool) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
 	blockchain, err := crypto.NewBlockchain(ctx, &cfg.RiverChain, nil, infra.NewMetrics("river", "cmdline"))
 	if err != nil {
@@ -66,7 +70,7 @@ func srdump(cfg *config.Config, countOnly bool) error {
 	return nil
 }
 
-func srstream(cfg *config.Config, streamId string) error {
+func srStream(cfg *config.Config, streamId string) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
 
 	blockchain, err := crypto.NewBlockchain(ctx, &cfg.RiverChain, nil, infra.NewMetrics("river", "cmdline"))
@@ -100,7 +104,7 @@ func srstream(cfg *config.Config, streamId string) error {
 	return nil
 }
 
-func nodesdump(cfg *config.Config) error {
+func nodesDump(cfg *config.Config) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
 
 	blockchain, err := crypto.NewBlockchain(ctx, &cfg.RiverChain, nil, infra.NewMetrics("river", "cmdline"))
@@ -133,6 +137,62 @@ func nodesdump(cfg *config.Config) error {
 	return nil
 }
 
+func settingsDump(cfg *config.Config) error {
+	ctx := context.Background() // lint:ignore context.Background() is fine here
+
+	blockchain, err := crypto.NewBlockchain(ctx, &cfg.RiverChain, nil, infra.NewMetrics("river", "cmdline"))
+	if err != nil {
+		return err
+	}
+
+	blockNum, err := blockchain.GetBlockNumber(ctx)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Using current block number: %d\n", blockNum)
+
+	caller, err := river.NewRiverConfigV1Caller(cfg.RegistryContract.Address, blockchain.Client)
+	if err != nil {
+		return err
+	}
+
+	retrievedSettings, err := caller.GetAllConfiguration(&bind.CallOpts{
+		Context:     ctx,
+		BlockNumber: blockNum.AsBigInt(),
+	})
+	if err != nil {
+		return err
+	}
+
+	if len(retrievedSettings) == 0 {
+		fmt.Println("No settings found")
+		return nil
+	}
+
+	for _, s := range retrievedSettings {
+		fmt.Printf("%10d %s %s\n", s.BlockNumber, common.Hash(s.Key).Hex(), hexutil.Encode(s.Value))
+	}
+
+	return nil
+}
+
+func blockNumber(cfg *config.Config) error {
+	ctx := context.Background() // lint:ignore context.Background() is fine here
+
+	blockchain, err := crypto.NewBlockchain(ctx, &cfg.RiverChain, nil, infra.NewMetrics("river", "cmdline"))
+	if err != nil {
+		return err
+	}
+
+	blockNum, err := blockchain.GetBlockNumber(ctx)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%d\n", blockNum)
+
+	return nil
+}
+
 func init() {
 	srCmd := &cobra.Command{
 		Use:     "registry",
@@ -149,7 +209,7 @@ func init() {
 			if err != nil {
 				return err
 			}
-			return srdump(cmdConfig, countOnly)
+			return srStreamDump(cmdConfig, countOnly)
 		},
 	}
 	streamsCmd.Flags().Bool("count", false, "Only print the stream count")
@@ -160,7 +220,7 @@ func init() {
 		Short: "Get stream info from stream registry",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return srstream(cmdConfig, args[0])
+			return srStream(cmdConfig, args[0])
 		},
 	})
 
@@ -168,7 +228,24 @@ func init() {
 		Use:   "nodes",
 		Short: "Get node records from the registry contract",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return nodesdump(cmdConfig)
+			return nodesDump(cmdConfig)
+		},
+	})
+
+	srCmd.AddCommand(&cobra.Command{
+		Use:   "settings",
+		Short: "Dump settings from the registry contract",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return settingsDump(cmdConfig)
+		},
+	})
+
+	srCmd.AddCommand(&cobra.Command{
+		Use:     "blocknumber",
+		Aliases: []string{"bn"},
+		Short:   "Print current River chain block number",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return blockNumber(cmdConfig)
 		},
 	})
 }

@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	. "github.com/river-build/river/core/node/base"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/testutils"
-	"github.com/stretchr/testify/require"
 )
 
 func mbDataForNumb(n int64) []byte {

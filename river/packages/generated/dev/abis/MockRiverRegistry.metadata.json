@@ -1349,11 +1349,13 @@
           }
         },
         "deleteConfiguration(bytes32)": {
+          "details": "Emits ConfigurationChanged event with deleted flag set to true and block number set to max value of uint64",
           "params": {
             "key": "The setting key"
           }
         },
         "deleteConfigurationOnBlock(bytes32,uint64)": {
+          "details": "Emits ConfigurationChanged event with deleted flag set to true",
           "params": {
             "blockNumber": "The block number on which the setting becomes active",
             "key": "The setting key"
@@ -1408,10 +1410,11 @@
           }
         },
         "setConfiguration(bytes32,uint64,bytes)": {
+          "details": "Emits ConfigurationChanged event",
           "params": {
-            "blockNumber": "The block number on which the setting becomes active",
+            "blockNumber": "The block number on which the setting becomes active, can't be max value of uint64",
             "key": "The setting key",
-            "value": "The setting value (value must be its ABI representation)"
+            "value": "The setting value (value must be its ABI representation), can't be empty"
           }
         }
       },
@@ -1562,18 +1565,18 @@
       "license": "MIT"
     },
     "contracts/src/river/registry/facets/config/IRiverConfig.sol": {
-      "keccak256": "0x5d62ebb9f5d6718d877c09cc74ef35278b57c37161d40e4b3e16da3d503752e1",
+      "keccak256": "0x7293c511c6915f4c9074b499f175f18841cb3f3acb8271cb34007f376e164c3a",
       "urls": [
-        "bzz-raw://abf8b130209f321a8e83ff444b882a73802b1bee2f8ff04d5701b930023f95ff",
-        "dweb:/ipfs/QmQsggJEjxNX73kMQo5PoNZ14GcsZnY6JYhTuMQ6M4gKWi"
+        "bzz-raw://89fe81eb0e39efdd7909ee912e684c9a7bfd6c05ccfefa2d43052cf696c66fb2",
+        "dweb:/ipfs/Qmbf8uS41N2LcgEQq9AwXNm23HnPAJhWkt1JK8LGxTUofF"
       ],
       "license": "MIT"
     },
     "contracts/src/river/registry/facets/config/RiverConfig.sol": {
-      "keccak256": "0x9a805b2412b8853a36c970b2289cc3cbc41bc2eba2c9d87ca7c554d66b93a460",
+      "keccak256": "0x49cf1c0c245c82c7203b8ea844e6ba09c53221a7453e6e4b963308e328205a2f",
       "urls": [
-        "bzz-raw://b78c1384efb6314715ad7a4138b8f2fb340abd485a39b0c032e4c6ddf030ecfd",
-        "dweb:/ipfs/QmcD5HN2XVChRYTsPPunA8Zyb1oss7TpSqkRh69vbJNFtL"
+        "bzz-raw://c885936399539a1907595b6128b7369ca6a9a94a0c91b2786d6a11f27c208fc6",
+        "dweb:/ipfs/QmSDWM2UgPiUautAdYt912WS4acXvR5ALQFTZiGeU8h2vR"
       ],
       "license": "MIT"
     },

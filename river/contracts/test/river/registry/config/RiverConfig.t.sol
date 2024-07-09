@@ -38,6 +38,7 @@ contract RiverConfigTest is
     bytes memory value
   ) {
     vm.assume(key != bytes32(0));
+    vm.assume(blockNumber != type(uint64).max);
     vm.assume(value.length > 0);
 
     vm.prank(deployer);
@@ -67,6 +68,7 @@ contract RiverConfigTest is
     bytes32 key,
     uint64 blockNumber
   ) external givenConfigurationManagerIsApproved(configManager) {
+    vm.assume(blockNumber != type(uint64).max);
     vm.prank(configManager);
     riverConfig.setConfiguration(key, blockNumber, "hello");
     vm.prank(configManager);
@@ -136,7 +138,7 @@ contract RiverConfigTest is
 
     vm.prank(deployer);
     vm.expectEmit(address(riverConfig));
-    emit ConfigurationChanged(key, 0, "", true);
+    emit ConfigurationChanged(key, type(uint64).max, "", true);
 
     riverConfig.deleteConfiguration(key);
   }

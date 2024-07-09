@@ -7,11 +7,12 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/infra"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestNewTransactionPoolWithReplaceTx(t *testing.T) {
@@ -22,7 +23,7 @@ func TestNewTransactionPoolWithReplaceTx(t *testing.T) {
 		ctx, cancel    = test.NewTestContext()
 		resubmitPolicy = crypto.NewTransactionPoolDeadlinePolicy(250 * time.Millisecond)
 		repricePolicy  = crypto.NewDefaultTransactionPricePolicy(0, 15_000_000_000, 0)
-		tc, errTC      = crypto.NewBlockchainTestContext(ctx, 1, false)
+		tc, errTC      = crypto.NewBlockchainTestContext(ctx, crypto.TestParams{NumKeys: 1})
 		pendingTxs     []crypto.TransactionPoolPendingTransaction
 	)
 	defer cancel()

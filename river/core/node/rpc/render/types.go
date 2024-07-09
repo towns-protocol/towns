@@ -106,7 +106,8 @@ func (d DebugMultiData) TemplateName() string {
 }
 
 type OnChainConfigData struct {
-	Config *crypto.AllSettings
+	CurrentBlockNumber crypto.BlockNumber
+	Config             string
 }
 
 func (d OnChainConfigData) TemplateName() string {

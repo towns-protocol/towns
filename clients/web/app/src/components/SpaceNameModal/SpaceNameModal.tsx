@@ -5,7 +5,7 @@ import {
     WalletDoesNotMatchSignedInAccountError,
     useContractSpaceInfo,
     useSpaceData,
-    useUpdateSpaceNameTransaction,
+    useUpdateSpaceInfoTransaction,
 } from 'use-towns-client'
 import { z } from 'zod'
 import { useGetEmbeddedSigner } from '@towns/privy'
@@ -25,14 +25,23 @@ type Props = {
 
 const FormStateKeys = {
     name: 'name',
+    motto: 'motto',
+    about: 'about',
+    uri: 'uri',
 } as const
 
 type FormState = {
     [FormStateKeys.name]: string
+    [FormStateKeys.motto]: string
+    [FormStateKeys.about]: string
+    [FormStateKeys.uri]: string // tod
 }
 
 export const schema = z.object({
     [FormStateKeys.name]: z.string().min(1, 'Please enter a town name'),
+    [FormStateKeys.motto]: z.string().optional(),
+    [FormStateKeys.about]: z.string().optional(),
+    [FormStateKeys.uri]: z.string().optional(),
 })
 
 export const SpaceNameModal = React.memo((props: Props) => {
@@ -52,8 +61,8 @@ export const SpaceNameModalWithoutAuth = (props: Props) => {
         error: transactionError,
         transactionHash,
         transactionStatus,
-        updateSpaceNameTransaction,
-    } = useUpdateSpaceNameTransaction()
+        updateSpaceInfoTransaction,
+    } = useUpdateSpaceInfoTransaction()
 
     const transactionUIState = toTransactionUIStates(transactionStatus, Boolean(data))
 
@@ -70,9 +79,12 @@ export const SpaceNameModalWithoutAuth = (props: Props) => {
                 return
             }
 
-            const txResult = await updateSpaceNameTransaction(
+            const txResult = await updateSpaceInfoTransaction(
                 data?.networkId,
                 changes[FormStateKeys.name],
+                changes[FormStateKeys.uri],
+                changes[FormStateKeys.motto],
+                changes[FormStateKeys.about],
                 signer,
             )
             console.log('[SpaceNameModal] txResult', txResult)
@@ -80,7 +92,7 @@ export const SpaceNameModalWithoutAuth = (props: Props) => {
                 onHide()
             }
         },
-        [data?.networkId, updateSpaceNameTransaction, getSigner, onHide],
+        [data?.networkId, updateSpaceInfoTransaction, getSigner, onHide],
     )
 
     const hasTransactionError = Boolean(

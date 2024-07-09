@@ -10,8 +10,9 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/river-build/river/core/node/dlog"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/river-build/river/core/node/dlog"
 )
 
 type Data2 struct {

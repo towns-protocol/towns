@@ -439,4 +439,22 @@ export class Space {
             ruleData: entitlementDetails.ruleData,
         }
     }
+
+    /**
+     * This function is potentially expensive and should be used with caution.
+     * For example, a space with 1000 members will make 1000 + 1 calls to the blockchain.
+     * @param untilTokenId - The token id to stop at, if not provided, will get all members
+     * @returns An array of member addresses
+     */
+    public async __expensivelyGetMembers(untilTokenId?: BigNumberish): Promise<string[]> {
+        if (untilTokenId === undefined) {
+            untilTokenId = await this.Membership.read.totalSupply()
+        }
+
+        untilTokenId = Number(untilTokenId)
+
+        const tokenIds = Array.from({ length: untilTokenId }, (_, i) => i)
+        const promises = tokenIds.map((tokenId) => this.Membership.read.ownerOf(tokenId))
+        return Promise.all(promises)
+    }
 }

@@ -56,6 +56,16 @@ const _abi = [
             type: "uint256",
             internalType: "uint256",
           },
+          {
+            name: "shortDescription",
+            type: "string",
+            internalType: "string",
+          },
+          {
+            name: "longDescription",
+            type: "string",
+            internalType: "string",
+          },
         ],
       },
     ],
@@ -79,6 +89,16 @@ const _abi = [
         name: "space",
         type: "address",
         internalType: "address",
+      },
+      {
+        name: "shortDescription",
+        type: "string",
+        internalType: "string",
+      },
+      {
+        name: "longDescription",
+        type: "string",
+        internalType: "string",
       },
     ],
     outputs: [
@@ -132,6 +152,16 @@ const _abi = [
       },
       {
         name: "uri",
+        type: "string",
+        internalType: "string",
+      },
+      {
+        name: "shortDescription",
+        type: "string",
+        internalType: "string",
+      },
+      {
+        name: "longDescription",
         type: "string",
         internalType: "string",
       },

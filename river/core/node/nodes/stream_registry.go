@@ -10,7 +10,6 @@ import (
 	"github.com/river-build/river/core/contracts/river"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/crypto"
-	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/registries"
 	. "github.com/river-build/river/core/node/shared"
@@ -31,7 +30,6 @@ type StreamRegistry interface {
 type streamRegistryImpl struct {
 	localNodeAddress common.Address
 	nodeRegistry     NodeRegistry
-	replFactor       int
 	onChainConfig    crypto.OnChainConfiguration
 	contract         *registries.RiverRegistryContract
 
@@ -98,13 +96,7 @@ func (sr *streamRegistryImpl) chooseStreamNodes(ctx context.Context, streamId St
 		}
 	}
 
-	replFactor, err := sr.onChainConfig.GetInt(crypto.StreamReplicationFactorConfigKey)
-	if err != nil {
-		// TODO: disable fallback to stream repl factor from file/env config if setting could not be read from chain config
-		dlog.FromCtx(ctx).Warn("Unable to load stream replication factor from on-chain config", "err", err)
-		replFactor = sr.replFactor
-		// return nil, err
-	}
+	replFactor := int(sr.onChainConfig.Get().ReplicationFactor)
 
 	if len(nodes) < replFactor {
 		return nil, RiverError(

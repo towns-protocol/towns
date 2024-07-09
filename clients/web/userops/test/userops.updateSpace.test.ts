@@ -36,7 +36,14 @@ test('can update a space (name) via userop', async () => {
 
     expect((await town?.getSpaceInfo())?.name).toBe(ogName)
 
-    const updateSpaceOp = await userOps.sendUpdateSpaceNameOp([spaceId, newName, bob.wallet])
+    const updateSpaceOp = await userOps.sendUpdateSpaceInfoOp([
+        spaceId,
+        newName,
+        'uri',
+        'shortDescription',
+        'longDescription',
+        bob.wallet,
+    ])
     await waitForOpAndTx(updateSpaceOp, bob)
     await sleepBetweenTxs()
 

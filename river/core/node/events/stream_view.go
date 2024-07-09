@@ -3,10 +3,12 @@ package events
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/emptypb"
+
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
@@ -14,8 +16,6 @@ import (
 	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/storage"
 	. "github.com/river-build/river/core/node/utils"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type StreamViewStats struct {
@@ -311,10 +311,7 @@ func (r *streamViewImpl) copyAndApplyBlock(
 	miniblock *MiniblockInfo,
 	cfg crypto.OnChainConfiguration,
 ) (*streamViewImpl, error) {
-	recencyConstraintsGenerations, err := cfg.GetInt(crypto.StreamRecencyConstraintsGenerationsConfigKey)
-	if err != nil {
-		return nil, err
-	}
+	recencyConstraintsGenerations := int(cfg.Get().RecencyConstraintsGen)
 
 	header := miniblock.headerEvent.Event.GetMiniblockHeader()
 	if header == nil {
@@ -503,12 +500,7 @@ func (r *streamViewImpl) SyncCookie(localNodeAddress common.Address) *SyncCookie
 }
 
 func (r *streamViewImpl) shouldSnapshot(ctx context.Context, cfg crypto.OnChainConfiguration) bool {
-	minEventsPerSnapshot, err := cfg.GetMinEventsPerSnapshot(r.streamId.Type())
-	if err != nil {
-		dlog.FromCtx(ctx).Error("Unable to determine minimum events per snapshot",
-			"streamType", fmt.Sprintf("%x", r.streamId[0]), "err", err)
-		return false
-	}
+	minEventsPerSnapshot := int(cfg.Get().MinSnapshotEvents.ForType(r.streamId.Type()))
 
 	count := 0
 	// count the events in the minipool
@@ -608,15 +600,7 @@ func (r *streamViewImpl) isRecentBlock(
 	block *MiniblockInfo,
 	currentTime time.Time,
 ) bool {
-	ageSec, err := cfg.GetInt64(crypto.StreamRecencyConstraintsAgeSecConfigKey)
-	if err != nil {
-		ageSec = 5
-	}
-
-	maxAgeDuration := time.Duration(ageSec) * time.Second
-	if maxAgeDuration == 0 {
-		maxAgeDuration = 5 * time.Second
-	}
+	maxAgeDuration := cfg.Get().RecencyConstraintsAge
 	diff := currentTime.Sub(block.header().Timestamp.AsTime())
 	return diff <= maxAgeDuration
 }

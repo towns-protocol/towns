@@ -428,6 +428,8 @@ export class TownsClient
             spaceMetadata: createSpaceInfo.name,
             channelName: createSpaceInfo.defaultChannelName ?? 'general', // default channel name
             membership,
+            shortDescription: createSpaceInfo.shortDescription ?? '',
+            longDescription: createSpaceInfo.longDescription ?? '',
         }
 
         try {
@@ -1076,9 +1078,12 @@ export class TownsClient
         }
     }
 
-    public async updateSpaceNameTransaction(
+    public async updateSpaceInfoTransaction(
         spaceNetworkId: string,
         name: string,
+        uri: string,
+        shortDescription: string,
+        longDescription: string,
         signer: ethers.Signer | undefined,
     ): Promise<TransactionContext<void>> {
         if (!signer) {
@@ -1087,19 +1092,27 @@ export class TownsClient
         let transaction: TransactionOrUserOperation | undefined = undefined
         let error: Error | undefined = undefined
         const continueStoreTx = this.blockchainTransactionStore.begin({
-            type: BlockchainTransactionType.UpdateSpaceName,
+            type: BlockchainTransactionType.UpdateSpaceInfo,
             data: {
                 spaceStreamId: spaceNetworkId,
             },
         })
         try {
-            const args = [spaceNetworkId, name, signer] as const
+            const spaceInfo = await this.spaceDapp.getSpaceInfo(spaceNetworkId)
+            const args = [
+                spaceNetworkId,
+                name,
+                uri ?? spaceInfo?.uri ?? '',
+                shortDescription ?? spaceInfo?.shortDescription ?? '',
+                longDescription ?? spaceInfo?.longDescription ?? '',
+                signer,
+            ] as const
             if (this.isAccountAbstractionEnabled()) {
-                transaction = await this.userOps?.sendUpdateSpaceNameOp([...args])
+                transaction = await this.userOps?.sendUpdateSpaceInfoOp([...args])
             } else {
-                transaction = await this.spaceDapp.updateSpaceName(...args)
+                transaction = await this.spaceDapp.updateSpaceInfo(...args)
             }
-            this.log(`[updateSpaceNameTransaction] transaction created` /*, transaction*/)
+            this.log(`[updateSpaceInfoTransaction] transaction created` /*, transaction*/)
         } catch (err) {
             error = this.spaceDapp.parseSpaceError(spaceNetworkId, err)
         }
@@ -1239,11 +1252,11 @@ export class TownsClient
         return txnContext
     }
 
-    public async waitForUpdateSpaceNameTransaction(
+    public async waitForUpdateSpaceInfoTransaction(
         context: TransactionContext<void> | undefined,
     ): Promise<TransactionContext<void>> {
         const txnContext = await this._waitForBlockchainTransaction(context)
-        logTxnResult('waitForUpdateSpaceNameTransaction', txnContext)
+        logTxnResult('waitForUpdateSpaceInfoTransaction', txnContext)
         return txnContext
     }
 

@@ -71,7 +71,13 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
     ds.tokenIdBySpace[spaceAddress] = spaceTokenId;
 
     // mint token to and transfer to Architect
-    ims.spaceToken.mintSpace(spaceInfo.name, spaceInfo.uri, spaceAddress);
+    ims.spaceToken.mintSpace(
+      spaceInfo.name,
+      spaceInfo.uri,
+      spaceAddress,
+      spaceInfo.shortDescription,
+      spaceInfo.longDescription
+    );
 
     // deploy user entitlement
     IUserEntitlement userEntitlement = IUserEntitlement(

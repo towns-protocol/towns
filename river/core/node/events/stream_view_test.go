@@ -5,14 +5,15 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
+
 	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/crypto"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/storage"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/proto"
 )
 
 func parsedEvent(t *testing.T, envelope *Envelope) *ParsedEvent {
@@ -115,19 +116,19 @@ func TestLoad(t *testing.T) {
 	// Check minipool, should be empty
 	assert.Equal(t, 0, len(view.minipool.events.Values))
 
-	btc, err := crypto.NewBlockchainTestContext(ctx, 0, true)
+	btc, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{MineOnTx: true, AutoMine: true})
 	require.NoError(t, err)
 
 	// check for invalid config
-	num, err := btc.OnChainConfig.GetMinEventsPerSnapshot(0x00)
-	require.NoError(t, err)
-	assert.Equal(t, num, 100) // hard coded default
+	num := btc.OnChainConfig.Get().MinSnapshotEvents.ForType(0)
+	assert.EqualValues(t, num, 100) // hard coded default
 
 	// check snapshot generation
 	assert.Equal(t, false, view.shouldSnapshot(ctx, btc.OnChainConfig))
 
 	// check per stream snapshot generation
-	btc.SetConfigValue(t, ctx, crypto.StreamMinEventsPerSnapshotUserConfigKey, crypto.ABIEncodeInt64(2))
+	btc.SetConfigValue(t, ctx, crypto.StreamMinEventsPerSnapshotUserConfigKey, crypto.ABIEncodeUint64(2))
+	assert.EqualValues(t, 2, btc.OnChainConfig.Get().MinSnapshotEvents.ForType(STREAM_USER_BIN))
 	assert.Equal(t, false, view.shouldSnapshot(ctx, btc.OnChainConfig))
 
 	blockHash := view.LastBlock().Hash

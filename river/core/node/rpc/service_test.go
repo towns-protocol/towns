@@ -1,4 +1,4 @@
-package rpc_test
+package rpc
 
 import (
 	"context"
@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"testing"
 
+	"golang.org/x/net/http2"
+
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/events"
@@ -18,7 +20,6 @@ import (
 	"github.com/river-build/river/core/node/protocol/protocolconnect"
 	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/testutils"
-	"golang.org/x/net/http2"
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/accounts"

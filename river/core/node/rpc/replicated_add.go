@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	. "github.com/river-build/river/core/node/events"
 	. "github.com/river-build/river/core/node/nodes"
 	. "github.com/river-build/river/core/node/protocol"

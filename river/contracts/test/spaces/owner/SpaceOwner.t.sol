@@ -16,6 +16,8 @@ import {SpaceOwner} from "contracts/src/spaces/facets/owner/SpaceOwner.sol";
 contract SpaceOwnerTest is ISpaceOwnerBase, IOwnableBase, BaseSetup {
   string internal name = "Awesome Space";
   string internal uri = "ipfs://space-name";
+  string internal shortDescription = "short description";
+  string internal longDescription = "long description";
 
   SpaceOwner internal spaceOwnerToken;
 
@@ -31,7 +33,13 @@ contract SpaceOwnerTest is ISpaceOwnerBase, IOwnableBase, BaseSetup {
     address bob = _randomAddress();
 
     vm.startPrank(spaceFactory);
-    uint256 tokenId = spaceOwnerToken.mintSpace(name, uri, spaceAddress);
+    uint256 tokenId = spaceOwnerToken.mintSpace(
+      name,
+      uri,
+      spaceAddress,
+      shortDescription,
+      longDescription
+    );
     spaceOwnerToken.transferFrom(spaceFactory, alice, tokenId);
     vm.stopPrank();
 
@@ -51,7 +59,13 @@ contract SpaceOwnerTest is ISpaceOwnerBase, IOwnableBase, BaseSetup {
 
     vm.prank(_randomAddress());
     vm.expectRevert(SpaceOwner__OnlyFactoryAllowed.selector);
-    spaceOwnerToken.mintSpace(name, uri, spaceAddress);
+    spaceOwnerToken.mintSpace(
+      name,
+      uri,
+      spaceAddress,
+      shortDescription,
+      longDescription
+    );
   }
 
   function test_mintSpace_revert_invalidName() external {
@@ -59,13 +73,25 @@ contract SpaceOwnerTest is ISpaceOwnerBase, IOwnableBase, BaseSetup {
 
     vm.prank(spaceFactory);
     vm.expectRevert(Validator__InvalidStringLength.selector);
-    spaceOwnerToken.mintSpace("", uri, spaceAddress);
+    spaceOwnerToken.mintSpace(
+      "",
+      uri,
+      spaceAddress,
+      shortDescription,
+      longDescription
+    );
   }
 
   function test_mintSpace_revert_invalidAddress() external {
     vm.prank(spaceFactory);
     vm.expectRevert(Validator__InvalidAddress.selector);
-    spaceOwnerToken.mintSpace(name, uri, address(0));
+    spaceOwnerToken.mintSpace(
+      name,
+      uri,
+      address(0),
+      shortDescription,
+      longDescription
+    );
   }
 
   // ------------ updateSpace ------------
@@ -74,19 +100,29 @@ contract SpaceOwnerTest is ISpaceOwnerBase, IOwnableBase, BaseSetup {
     address spaceAddress = _randomAddress();
 
     vm.prank(spaceFactory);
-    spaceOwnerToken.mintSpace(name, uri, spaceAddress);
+    spaceOwnerToken.mintSpace(
+      name,
+      uri,
+      spaceAddress,
+      shortDescription,
+      longDescription
+    );
 
     vm.prank(spaceFactory);
     spaceOwnerToken.updateSpaceInfo(
       spaceAddress,
       "New Name",
-      "ipfs://new-name"
+      "ipfs://new-name",
+      "new short description",
+      "new long description"
     );
 
     Space memory space = spaceOwnerToken.getSpaceInfo(spaceAddress);
 
     assertEq(space.name, "New Name");
     assertEq(space.uri, "ipfs://new-name");
+    assertEq(space.shortDescription, "new short description");
+    assertEq(space.longDescription, "new long description");
   }
 
   function test_updateSpace_revert_notSpaceOwner() external {
@@ -94,7 +130,13 @@ contract SpaceOwnerTest is ISpaceOwnerBase, IOwnableBase, BaseSetup {
     address alice = _randomAddress();
 
     vm.startPrank(spaceFactory);
-    uint256 tokenId = spaceOwnerToken.mintSpace(name, uri, spaceAddress);
+    uint256 tokenId = spaceOwnerToken.mintSpace(
+      name,
+      uri,
+      spaceAddress,
+      shortDescription,
+      longDescription
+    );
     spaceOwnerToken.transferFrom(spaceFactory, alice, tokenId);
     vm.stopPrank();
 
@@ -108,7 +150,9 @@ contract SpaceOwnerTest is ISpaceOwnerBase, IOwnableBase, BaseSetup {
     spaceOwnerToken.updateSpaceInfo(
       spaceAddress,
       "New Name",
-      "ipfs://new-name"
+      "ipfs://new-name",
+      "new short description",
+      "new long description"
     );
   }
 
@@ -116,22 +160,46 @@ contract SpaceOwnerTest is ISpaceOwnerBase, IOwnableBase, BaseSetup {
     address spaceAddress = _randomAddress();
 
     vm.prank(spaceFactory);
-    spaceOwnerToken.mintSpace(name, uri, spaceAddress);
+    spaceOwnerToken.mintSpace(
+      name,
+      uri,
+      spaceAddress,
+      shortDescription,
+      longDescription
+    );
 
     vm.prank(spaceFactory);
     vm.expectRevert(Validator__InvalidStringLength.selector);
-    spaceOwnerToken.updateSpaceInfo(spaceAddress, "", "ipfs://new-name");
+    spaceOwnerToken.updateSpaceInfo(
+      spaceAddress,
+      "",
+      "ipfs://new-name",
+      "new short description",
+      "new long description"
+    );
   }
 
   function test_updateSpace_revert_invalidUri() external {
     address spaceAddress = _randomAddress();
 
     vm.prank(spaceFactory);
-    spaceOwnerToken.mintSpace(name, uri, spaceAddress);
+    spaceOwnerToken.mintSpace(
+      name,
+      uri,
+      spaceAddress,
+      shortDescription,
+      longDescription
+    );
 
     vm.prank(spaceFactory);
     vm.expectRevert(Validator__InvalidStringLength.selector);
-    spaceOwnerToken.updateSpaceInfo(spaceAddress, "New Name", "");
+    spaceOwnerToken.updateSpaceInfo(
+      spaceAddress,
+      "New Name",
+      "",
+      "new short description",
+      "new long description"
+    );
   }
 
   // ------------ setFactory ------------
@@ -165,7 +233,7 @@ contract SpaceOwnerTest is ISpaceOwnerBase, IOwnableBase, BaseSetup {
     assertEq(spaceOwnerToken.getVotes(deployer), 0);
 
     vm.prank(spaceFactory);
-    spaceOwnerToken.mintSpace(name, "", _randomAddress());
+    spaceOwnerToken.mintSpace(name, "", _randomAddress(), "", "");
 
     vm.prank(spaceFactory);
     spaceOwnerToken.delegate(deployer);

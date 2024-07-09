@@ -35,6 +35,8 @@ interface IArchitectBase {
     string uri;
     Membership membership;
     ChannelInfo channel;
+    string shortDescription;
+    string longDescription;
   }
 
   // =============================================================

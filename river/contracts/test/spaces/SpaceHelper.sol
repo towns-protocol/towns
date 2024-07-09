@@ -20,6 +20,8 @@ abstract contract SpaceHelper {
       IArchitectBase.SpaceInfo({
         name: spaceId,
         uri: "ipfs://test",
+        shortDescription: "short description",
+        longDescription: "long description",
         membership: IArchitectBase.Membership({
           settings: IMembershipBase.Membership({
             name: "Member",
@@ -50,6 +52,8 @@ abstract contract SpaceHelper {
       IArchitectBase.SpaceInfo({
         name: spaceId,
         uri: "ipfs://test",
+        shortDescription: "short description",
+        longDescription: "long description",
         membership: IArchitectBase.Membership({
           settings: IMembershipBase.Membership({
             name: "Member",
@@ -84,6 +88,8 @@ abstract contract SpaceHelper {
       IArchitectBase.SpaceInfo({
         name: spaceId,
         uri: "ipfs://test",
+        shortDescription: "short description",
+        longDescription: "long description",
         membership: IArchitectBase.Membership({
           settings: IMembershipBase.Membership({
             name: "Member",
@@ -118,6 +124,8 @@ abstract contract SpaceHelper {
       IArchitectBase.SpaceInfo({
         name: townId,
         uri: "ipfs://test",
+        shortDescription: "short description",
+        longDescription: "long description",
         membership: IArchitectBase.Membership({
           settings: IMembershipBase.Membership({
             name: "Member",

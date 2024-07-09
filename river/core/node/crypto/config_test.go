@@ -1,140 +1,182 @@
 package crypto
 
 import (
+	"math"
 	"testing"
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/river-build/river/core/node/base"
-	"github.com/river-build/river/core/node/base/test"
-	"github.com/river-build/river/core/node/protocol"
+	"github.com/mitchellh/mapstructure"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/river-build/river/core/contracts/river"
+	"github.com/river-build/river/core/node/base/test"
 )
 
 func TestOnChainConfigSettingMultipleActiveBlockValues(t *testing.T) {
-	var (
-		tests = []struct {
-			Key          ChainKey
-			Block        uint64
-			Exp          uint64
-			RiverErrCode protocol.Err
-		}{
-			{StreamReplicationFactorConfigKey, 0, 0, protocol.Err_NOT_FOUND},
-			{StreamReplicationFactorConfigKey, 1, 0, protocol.Err_NOT_FOUND},
-			{StreamReplicationFactorConfigKey, 9, 1, -1},
-			{StreamReplicationFactorConfigKey, 10, 2, -1},
-			{StreamReplicationFactorConfigKey, 20, 3, -1},
-			{StreamReplicationFactorConfigKey, 21, 3, -1},
-		}
-		settings = &onChainSettings{
-			s: map[common.Hash]settings{},
-		}
-		ctx, cancel = test.NewTestContext()
-	)
+	require := require.New(t)
+	assert := assert.New(t)
+	ctx, cancel := test.NewTestContext()
 	defer cancel()
 
-	settings.Set(ctx, StreamReplicationFactorConfigKey, 20, uint64(3), nil)
-	settings.Set(ctx, StreamReplicationFactorConfigKey, 5, uint64(1), nil)
-	settings.Set(ctx, StreamReplicationFactorConfigKey, 10, uint64(2), nil)
+	settings, err := makeOnChainConfig(ctx, nil, nil, 1)
+	require.NoError(err)
 
-	for _, tt := range tests {
-		val, err := settings.getOnBlock(tt.Key, tt.Block).Uint64()
-		if err != nil && tt.RiverErrCode == -1 {
-			t.Fatalf("unexpected error: %v", err)
-		} else if err != nil && err.(*base.RiverErrorImpl).Code != tt.RiverErrCode {
-			t.Fatalf("want error code: %d, got %d", tt.RiverErrCode, err.(*base.RiverErrorImpl).Code)
-		} else if tt.Exp != val {
-			t.Errorf("expected %d, got %d", tt.Exp, val)
-		}
+	keyId := HashSettingName(StreamReplicationFactorConfigKey)
+	settings.applyEvent(ctx, &river.RiverConfigV1ConfigurationChanged{
+		Key:   keyId,
+		Block: 20,
+		Value: ABIEncodeUint64(3),
+	})
+	settings.applyEvent(ctx, &river.RiverConfigV1ConfigurationChanged{
+		Key:   keyId,
+		Block: 5,
+		Value: ABIEncodeUint64(2),
+	})
+	settings.applyEvent(ctx, &river.RiverConfigV1ConfigurationChanged{
+		Key:   keyId,
+		Block: 10,
+		Value: ABIEncodeUint64(5),
+	})
+	settings.applyEvent(ctx, &river.RiverConfigV1ConfigurationChanged{
+		Key:   keyId,
+		Block: 30,
+		Value: ABIEncodeUint64(100),
+	})
+
+	for _, tt := range []struct {
+		block BlockNumber
+		value uint64
+	}{
+		{0, 1},
+		{4, 1},
+		{5, 2},
+		{9, 2},
+		{10, 5},
+		{19, 5},
+		{20, 3},
+		{29, 3},
+		{30, 100},
+		{1000, 100},
+	} {
+		cfg := settings.GetOnBlock(tt.block)
+		assert.Equal(tt.value, cfg.ReplicationFactor, "unexpected value at block %d", tt.block)
+	}
+
+	settings.applyEvent(ctx, &river.RiverConfigV1ConfigurationChanged{
+		Key:     keyId,
+		Block:   20,
+		Deleted: true,
+	})
+
+	for _, tt := range []struct {
+		block BlockNumber
+		value uint64
+	}{
+		{0, 1},
+		{4, 1},
+		{5, 2},
+		{9, 2},
+		{10, 5},
+		{19, 5},
+		{20, 5},
+		{29, 5},
+		{30, 100},
+		{1000, 100},
+	} {
+		cfg := settings.GetOnBlock(tt.block)
+		assert.Equal(tt.value, cfg.ReplicationFactor, "unexpected value at block %d", tt.block)
+	}
+
+	settings.applyEvent(ctx, &river.RiverConfigV1ConfigurationChanged{
+		Key:     keyId,
+		Block:   math.MaxUint64,
+		Deleted: true,
+	})
+
+	for _, tt := range []struct {
+		block BlockNumber
+		value uint64
+	}{
+		{0, 1},
+		{4, 1},
+		{5, 1},
+		{9, 1},
+		{10, 1},
+		{19, 1},
+		{20, 1},
+		{29, 1},
+		{30, 1},
+		{1000, 1},
+	} {
+		cfg := settings.GetOnBlock(tt.block)
+		assert.Equal(tt.value, cfg.ReplicationFactor, "unexpected value at block %d", tt.block)
 	}
 }
 
 func TestSetOnChain(t *testing.T) {
-	var (
-		require     = require.New(t)
-		ctx, cancel = test.NewTestContext()
-	)
+	require := require.New(t)
+	assert := assert.New(t)
+	ctx, cancel := test.NewTestContext()
 	defer cancel()
 
-	tc, err := NewBlockchainTestContext(ctx, 1, false)
+	btc, err := NewBlockchainTestContext(ctx, TestParams{MineOnTx: true, AutoMine: true})
 	require.NoError(err)
-	defer tc.Close()
+	defer btc.Close()
 
-	blockNum := tc.BlockNum(ctx)
+	btc.SetConfigValue(t, ctx, StreamReplicationFactorConfigKey, ABIEncodeUint64(3))
+	btc.SetConfigValue(t, ctx, StreamMediaMaxChunkCountConfigKey, ABIEncodeUint64(1000))
+	btc.SetConfigValue(t, ctx, StreamCacheExpirationMsConfigKey, ABIEncodeUint64(3000))
+	btc.SetConfigValue(t, ctx, StreamRecencyConstraintsAgeSecConfigKey, ABIEncodeUint64(5))
+	btc.SetConfigValue(t, ctx, "unknown key is fine", ABIEncodeUint64(5))
+	btc.SetConfigValue(t, ctx, MediaStreamMembershipLimitsDMConfigKey, ABIEncodeUint64(5))
 
-	for _, key := range configKeyIDToKey {
-		value, err := tc.OnChainConfig.GetUint64OnBlock(blockNum.AsUint64(), key)
-		require.NoError(err, "retrieve uint64 setting")
-		require.Equal(key.defaultValue.(int), int(value))
-	}
+	s := btc.OnChainConfig.Get()
+	assert.EqualValues(3, s.ReplicationFactor)
+	assert.EqualValues(1000, s.MediaMaxChunkCount)
+	assert.Equal(3*time.Second, s.StreamCacheExpiration)
+	assert.Equal(5*time.Second, s.RecencyConstraintsAge)
+	assert.EqualValues(5, s.MembershipLimits.DM)
+
+	btc.SetConfigValue(t, ctx, StreamReplicationFactorConfigKey, []byte("invalid value is ignored"))
+	assert.EqualValues(3, btc.OnChainConfig.Get().ReplicationFactor)
 }
 
-func TestLoadConfiguration(t *testing.T) {
-	var (
-		require     = require.New(t)
-		assert      = assert.New(t)
-		ctx, cancel = test.NewTestContext()
-		btc, err    = NewBlockchainTestContext(ctx, 0, false)
-		missing     = map[common.Hash]struct{}{
-			StreamMediaMaxChunkCountConfigKey.ID():            {},
-			StreamMediaMaxChunkSizeConfigKey.ID():             {},
-			StreamMinEventsPerSnapshotUserInboxConfigKey.ID(): {},
-		}
-	)
+func TestDefaultAvailable(t *testing.T) {
+	require := require.New(t)
+	assert := assert.New(t)
+	ctx, cancel := test.NewTestContext()
 	defer cancel()
 
-	require.NoError(err, "unable to construct blockchain test context")
+	btc, err := NewBlockchainTestContext(ctx, TestParams{MineOnTx: true, AutoMine: true})
+	require.NoError(err)
+	defer btc.Close()
 
-	// ensure that settings in missing are dropped from the on chain config
-	for keyID := range missing {
-		pendingTx, err := btc.DeployerBlockchain.TxPool.Submit(ctx, "DeleteConfig",
-			func(opts *bind.TransactOpts) (*types.Transaction, error) {
-				return btc.Configuration.DeleteConfiguration(opts, keyID)
-			})
-		require.NoError(err, "unable to delete configuration")
-		require.NoError(btc.mineBlock(ctx), "unable to mine block")
-		receipt := <-pendingTx.Wait()
-		require.Equal(TransactionResultSuccess, receipt.Status)
-	}
-
-	// load on chain-config and ensure that the missing keys are loaded with their default values
-	cfg, err := NewOnChainConfig(
-		ctx, btc.Client(), btc.RiverRegistryAddress, btc.BlockNum(ctx), btc.DeployerBlockchain.ChainMonitor)
-	require.NoError(err, "unable to construct on-chain config")
-
-	for _, key := range configKeyIDToKey {
-		if _, found := missing[key.ID()]; found { // ensure default value is loaded
-			value, err := cfg.GetInt(key)
-			require.NoErrorf(err, "unable to retrieve setting %s", key.Name())
-			assert.Equalf(key.defaultValue, value, "unexpected value retrieved for %s", key.Name())
-		} else { // ensure that value is available
-			_, err := cfg.GetInt(key)
-			require.NoErrorf(err, "unable to retrieve setting %s", key.Name())
-		}
-	}
+	s := btc.OnChainConfig.Get()
+	assert.EqualValues(1, s.ReplicationFactor)
+	assert.EqualValues(50, s.MediaMaxChunkCount)
+	assert.Equal(5*time.Minute, s.StreamCacheExpiration)
+	assert.Equal(11*time.Second, s.RecencyConstraintsAge)
 }
 
 func TestConfigSwitchAfterNewBlock(t *testing.T) {
 	var (
 		ctx, cancel = test.NewTestContext()
 		require     = require.New(t)
-		tc, errTC   = NewBlockchainTestContext(ctx, 1, false)
+		tc, errTC   = NewBlockchainTestContext(ctx, TestParams{NumKeys: 1, MineOnTx: true, AutoMine: true})
 
 		currentBlockNum = tc.BlockNum(ctx)
-		activeBlockNum  = currentBlockNum.AsUint64() + 5
-		newValue        = int64(3939232)
-		newValueEncoded = ABIEncodeInt64(newValue)
+		activeBlockNum  = currentBlockNum + 5
+		newValue        = uint64(3939232)
+		newValueEncoded = ABIEncodeUint64(newValue)
 	)
 	defer cancel()
 
 	require.NoError(errTC, "unable to construct block test context")
 
-	dv, err := tc.OnChainConfig.GetInt64(StreamRecencyConstraintsAgeSecConfigKey)
-	require.NoError(err, "StreamRecencyConstraintsAgeSecConfigKey get int 64")
-	require.Equal(StreamRecencyConstraintsAgeSecConfigKey.DefaultAsInt64(), dv, "invalid default config")
+	require.EqualValues(1, tc.OnChainConfig.Get().ReplicationFactor, "invalid default config")
 
 	// change config on the future block 'activeBlockNum'
 	pendingTx, err := tc.DeployerBlockchain.TxPool.Submit(
@@ -142,7 +184,11 @@ func TestConfigSwitchAfterNewBlock(t *testing.T) {
 		"SetConfiguration",
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
 			return tc.Configuration.SetConfiguration(
-				opts, StreamRecencyConstraintsAgeSecConfigKey.ID(), activeBlockNum, newValueEncoded)
+				opts,
+				HashSettingName(StreamReplicationFactorConfigKey),
+				activeBlockNum.AsUint64(),
+				newValueEncoded,
+			)
 		})
 
 	require.NoError(err, "unable to set configuration")
@@ -151,20 +197,15 @@ func TestConfigSwitchAfterNewBlock(t *testing.T) {
 	require.Equal(TransactionResultSuccess, receipt.Status, "tx failed")
 
 	// make sure new change is not yet active, should happen on a future block
-	dv, err = tc.OnChainConfig.GetInt64(StreamRecencyConstraintsAgeSecConfigKey)
-	require.NoError(err, "StreamRecencyConstraintsAgeSecConfigKey get int 64")
-	require.Equal(StreamRecencyConstraintsAgeSecConfigKey.DefaultAsInt64(), dv, "invalid default config")
+	require.EqualValues(1, tc.OnChainConfig.Get().ReplicationFactor, "invalid default config")
 
 	// make sure new change becomes active when the chain reached activeBlockNum
 	for {
 		tc.Commit(ctx)
 		if tc.OnChainConfig.ActiveBlock() >= activeBlockNum {
-			dv, err = tc.OnChainConfig.GetInt64(StreamRecencyConstraintsAgeSecConfigKey)
-			require.NoError(err, "StreamRecencyConstraintsAgeSecConfigKey get int 64")
-			require.Equal(newValue, dv, "invalid default config")
+			require.Equal(newValue, tc.OnChainConfig.Get().ReplicationFactor, "invalid config")
 			return
 		}
-		time.Sleep(25 * time.Millisecond)
 	}
 }
 
@@ -172,7 +213,7 @@ func TestConfigDefaultValue(t *testing.T) {
 	var (
 		ctx, cancel = test.NewTestContext()
 		require     = require.New(t)
-		tc, errTC   = NewBlockchainTestContext(ctx, 1, false)
+		tc, errTC   = NewBlockchainTestContext(ctx, TestParams{NumKeys: 1})
 		newIntVal   = int64(239398893)
 		newValue    = ABIEncodeInt64(newIntVal)
 	)
@@ -180,16 +221,19 @@ func TestConfigDefaultValue(t *testing.T) {
 
 	require.NoError(errTC, "unable to construct block test context")
 
-	dv, err := tc.OnChainConfig.GetInt64(StreamRecencyConstraintsAgeSecConfigKey)
-	require.NoError(err, "StreamRecencyConstraintsAgeSecConfigKey get int 64")
-	require.Equal(StreamRecencyConstraintsAgeSecConfigKey.DefaultAsInt64(), dv, "invalid default config")
+	require.EqualValues(1, tc.OnChainConfig.Get().ReplicationFactor)
 
 	// set custom value to ensure that config falls back to default value when deleted
 	pendingTx, err := tc.DeployerBlockchain.TxPool.Submit(
 		ctx,
 		"SetConfiguration",
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return tc.Configuration.SetConfiguration(opts, StreamRecencyConstraintsAgeSecConfigKey.ID(), 0, newValue)
+			return tc.Configuration.SetConfiguration(
+				opts,
+				HashSettingName(StreamReplicationFactorConfigKey),
+				0,
+				newValue,
+			)
 		})
 
 	require.NoError(err, "unable to set configuration")
@@ -200,30 +244,20 @@ func TestConfigDefaultValue(t *testing.T) {
 	// make sure the chain config moved after the block the key was updated
 	for {
 		tc.Commit(ctx)
-		if tc.OnChainConfig.ActiveBlock() > receipt.BlockNumber.Uint64() {
+		if tc.OnChainConfig.ActiveBlock().AsUint64() > receipt.BlockNumber.Uint64() {
 			break
 		}
 		time.Sleep(25 * time.Millisecond)
 	}
 
-	val, err := tc.OnChainConfig.GetInt(StreamRecencyConstraintsAgeSecConfigKey)
-	require.NoError(err)
-	require.Equal(int(newIntVal), val, "invalid config")
-
-	val64, err := tc.OnChainConfig.GetInt64(StreamRecencyConstraintsAgeSecConfigKey)
-	require.NoError(err)
-	require.Equal(newIntVal, val64, "invalid config")
-
-	valu64, err := tc.OnChainConfig.GetUint64(StreamRecencyConstraintsAgeSecConfigKey)
-	require.NoError(err)
-	require.Equal(uint64(newIntVal), valu64, "invalid config")
+	require.EqualValues(newIntVal, tc.OnChainConfig.Get().ReplicationFactor)
 
 	// drop configuration and check that the chain config falls back to the default value
 	pendingTx, err = tc.DeployerBlockchain.TxPool.Submit(
 		ctx,
 		"SetConfiguration",
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return tc.Configuration.DeleteConfiguration(opts, StreamRecencyConstraintsAgeSecConfigKey.ID())
+			return tc.Configuration.DeleteConfiguration(opts, HashSettingName(StreamReplicationFactorConfigKey))
 		})
 
 	require.NoError(err, "unable to set configuration")
@@ -234,18 +268,56 @@ func TestConfigDefaultValue(t *testing.T) {
 	// make sure the chain config moved after the block the key was deleted
 	for {
 		tc.Commit(ctx)
-		if tc.OnChainConfig.ActiveBlock() > receipt.BlockNumber.Uint64() {
+		if tc.OnChainConfig.ActiveBlock().AsUint64() > receipt.BlockNumber.Uint64() {
 			break
 		}
 		time.Sleep(25 * time.Millisecond)
 	}
 
 	// ensure that the default value is returned
-	dv, err = tc.OnChainConfig.GetInt64(StreamRecencyConstraintsAgeSecConfigKey)
-	require.NoError(err)
-	require.Equal(StreamRecencyConstraintsAgeSecConfigKey.DefaultAsInt64(), dv)
+	require.EqualValues(1, tc.OnChainConfig.Get().ReplicationFactor)
+}
 
-	dvu, err := tc.OnChainConfig.GetUint64(StreamRecencyConstraintsAgeSecConfigKey)
+type Cfg struct {
+	C1 int64         `mapstructure:"foo.c1"`
+	C2 uint64        `mapstructure:"foo.c2"`
+	C3 time.Duration `mapstructure:"foo.c3Ms"`
+	C4 time.Duration `mapstructure:"foo.c4Seconds"`
+	C5 CfgInner      `mapstructure:",squash"`
+}
+
+type CfgInner struct {
+	F1 string `mapstructure:"foo.f1"`
+	F2 int    `mapstructure:"foo.f2"`
+}
+
+func TestDecoder(t *testing.T) {
+	require := require.New(t)
+	ctx, cancel := test.NewTestContext()
+	defer cancel()
+
+	configMap := make(map[string]interface{})
+	configMap["foo.c1"] = ABIEncodeInt64(1)
+	configMap["foo.c2"] = ABIEncodeUint64(2)
+	configMap["foo.c3Ms"] = ABIEncodeUint64(3000)
+	configMap["foo.c4Seconds"] = ABIEncodeUint64(5)
+	configMap["foo.f1"] = ABIEncodeString("hello")
+	configMap["foo.f2"] = ABIEncodeInt64(42)
+
+	var decodedCfg Cfg
+	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		DecodeHook: abiBytesToTypeDecoder(ctx),
+		Result:     &decodedCfg,
+	})
 	require.NoError(err)
-	require.Equal(uint64(StreamRecencyConstraintsAgeSecConfigKey.DefaultAsInt64()), dvu)
+
+	err = decoder.Decode(configMap)
+	require.NoError(err)
+
+	require.Equal(int64(1), decodedCfg.C1)
+	require.Equal(uint64(2), decodedCfg.C2)
+	require.Equal(time.Duration(3000)*time.Millisecond, decodedCfg.C3)
+	require.Equal(time.Duration(5)*time.Second, decodedCfg.C4)
+	require.Equal("hello", decodedCfg.C5.F1)
+	require.Equal(42, decodedCfg.C5.F2)
 }

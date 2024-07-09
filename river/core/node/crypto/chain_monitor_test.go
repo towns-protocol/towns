@@ -12,10 +12,11 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/stretchr/testify/require"
+
 	"github.com/river-build/river/core/contracts/river"
 	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/crypto"
-	"github.com/stretchr/testify/require"
 )
 
 func TestChainMonitorBlocks(t *testing.T) {
@@ -23,7 +24,7 @@ func TestChainMonitorBlocks(t *testing.T) {
 	ctx, cancel := test.NewTestContext()
 	defer cancel()
 
-	tc, err := crypto.NewBlockchainTestContext(ctx, 1, false)
+	tc, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{NumKeys: 1})
 	require.NoError(err)
 	defer tc.Close()
 
@@ -137,7 +138,7 @@ func TestChainMonitorEvents(t *testing.T) {
 	require := require.New(t)
 	ctx, cancel := test.NewTestContext()
 
-	tc, err := crypto.NewBlockchainTestContext(ctx, 1, false)
+	tc, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{NumKeys: 1})
 	require.NoError(err)
 	defer tc.Close()
 
@@ -234,7 +235,7 @@ func TestContractAllEventsFromFuture(t *testing.T) {
 	ctx, cancel := test.NewTestContext()
 	defer cancel()
 
-	tc, err := crypto.NewBlockchainTestContext(ctx, 0, false)
+	tc, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{})
 	require.NoError(err)
 	defer tc.Close()
 
@@ -374,7 +375,7 @@ func TestContractAllEventsFromPast(t *testing.T) {
 	ctx, cancel := test.NewTestContext()
 	defer cancel()
 
-	tc, err := crypto.NewBlockchainTestContext(ctx, 0, false)
+	tc, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{})
 	require.NoError(err)
 	defer tc.Close()
 
@@ -498,7 +499,7 @@ func TestContractEventsWithTopicsFromPast(t *testing.T) {
 	ctx, cancel := test.NewTestContext()
 	defer cancel()
 
-	tc, err := crypto.NewBlockchainTestContext(ctx, 0, false)
+	tc, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{})
 	require.NoError(err)
 	defer tc.Close()
 
@@ -610,7 +611,7 @@ func TestEventsOrder(t *testing.T) {
 	ctx, cancel := test.NewTestContext()
 	defer cancel()
 
-	tc, err := crypto.NewBlockchainTestContext(ctx, 0, false)
+	tc, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{})
 	require.NoError(err)
 	defer tc.Close()
 

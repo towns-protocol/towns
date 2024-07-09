@@ -46,6 +46,7 @@ contract RiverConfig is IRiverConfig, RegistryModifiers, OwnableBase, Facet {
     uint64 blockNumber,
     bytes calldata value
   ) external onlyConfigurationManager(msg.sender) {
+    if (blockNumber == type(uint64).max) revert(RiverRegistryErrors.BAD_ARG);
     if (value.length == 0) revert(RiverRegistryErrors.BAD_ARG);
 
     if (!ds.configurationKeys.contains(key)) {
@@ -78,7 +79,7 @@ contract RiverConfig is IRiverConfig, RegistryModifiers, OwnableBase, Facet {
 
     ds.configurationKeys.remove(key);
 
-    emit ConfigurationChanged(key, 0, "", true);
+    emit ConfigurationChanged(key, type(uint64).max, "", true);
   }
 
   /// Deletes the setting for the given key at the given block

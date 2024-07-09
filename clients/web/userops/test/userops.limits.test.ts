@@ -190,9 +190,12 @@ test('will reject each userop if beyond the limit', async () => {
     // update space info
     ////////////////////////////////////////
 
-    const updateSpaceOp = await userOps.sendUpdateSpaceNameOp([
+    const updateSpaceOp = await userOps.sendUpdateSpaceInfoOp([
         spaceId,
         'new space name',
+        'uri',
+        'shortDescription',
+        'longDescription',
         alice.wallet,
     ])
     const updateSpaceReceipt = await waitForOpAndTx(updateSpaceOp, alice, 'update space info')
@@ -200,7 +203,14 @@ test('will reject each userop if beyond the limit', async () => {
     expect(updateSpaceReceipt.status).toBe(1)
 
     await expect(() =>
-        userOps.sendUpdateSpaceNameOp([spaceId, 'new space name 2', alice.wallet]),
+        userOps.sendUpdateSpaceInfoOp([
+            spaceId,
+            'new space name 2',
+            'uri',
+            'shortDescription',
+            'longDescription',
+            alice.wallet,
+        ]),
     ).rejects.toThrow()
 
     ////////////////////////////////////////

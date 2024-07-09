@@ -12,6 +12,8 @@ interface ISpaceOwnerBase {
     string uri;
     uint256 tokenId;
     uint256 createdAt;
+    string shortDescription;
+    string longDescription;
   }
 
   error SpaceOwner__OnlyFactoryAllowed();
@@ -36,11 +38,15 @@ interface ISpaceOwner is ISpaceOwnerBase {
   /// @param name The name of the space
   /// @param uri The URI of the space
   /// @param space The address of the space
+  /// @param shortDescription The short description of the space
+  /// @param longDescription The long description of the space
   /// @return tokenId The token id of the minted space
   function mintSpace(
     string memory name,
     string memory uri,
-    address space
+    address space,
+    string memory shortDescription,
+    string memory longDescription
   ) external returns (uint256 tokenId);
 
   /// @notice Get the space info
@@ -53,9 +59,13 @@ interface ISpaceOwner is ISpaceOwnerBase {
   /// @param space The address of the space
   /// @param name The name of the space
   /// @param uri The URI of the space
+  /// @param shortDescription The short description of the space
+  /// @param longDescription The long description of the space
   function updateSpaceInfo(
     address space,
     string memory name,
-    string memory uri
+    string memory uri,
+    string memory shortDescription,
+    string memory longDescription
   ) external;
 }

@@ -214,22 +214,4 @@ contract RuleEntitlement is
   ) external view returns (RuleData memory data) {
     return entitlementsByRoleId[roleId].data;
   }
-
-  function getOperations(
-    uint256 roleId
-  ) external view returns (Operation[] memory) {
-    return entitlementsByRoleId[roleId].data.operations;
-  }
-
-  function getLogicalOperations(
-    uint256 roleId
-  ) external view returns (LogicalOperation[] memory) {
-    return entitlementsByRoleId[roleId].data.logicalOperations;
-  }
-
-  function getCheckOperations(
-    uint256 roleId
-  ) external view returns (CheckOperation[] memory) {
-    return entitlementsByRoleId[roleId].data.checkOperations;
-  }
 }

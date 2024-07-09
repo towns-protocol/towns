@@ -286,6 +286,8 @@ export class UserOps {
         const spaceInfo: IArchitectBase.SpaceInfoStruct = {
             name: createSpaceParams.spaceName,
             uri: createSpaceParams.spaceMetadata,
+            shortDescription: createSpaceParams.shortDescription ?? '',
+            longDescription: createSpaceParams.longDescription ?? '',
             membership: createSpaceParams.membership,
             channel: {
                 metadata: createSpaceParams.channelName || '',
@@ -583,13 +585,13 @@ export class UserOps {
         })
     }
 
-    public async sendUpdateSpaceNameOp(
-        args: Parameters<SpaceDapp['updateSpaceName']>,
+    public async sendUpdateSpaceInfoOp(
+        args: Parameters<SpaceDapp['updateSpaceInfo']>,
     ): Promise<ISendUserOperationResponse> {
         if (!this.spaceDapp) {
             throw new Error('spaceDapp is required')
         }
-        const [spaceId, spaceName, signer] = args
+        const [spaceId, spaceName, uri, shortDescription, longDescription, signer] = args
         const space = await this.spaceDapp.getSpace(spaceId)
 
         if (!space) {
@@ -598,7 +600,7 @@ export class UserOps {
         const spaceInfo = await space.getSpaceInfo()
 
         // the function name in the contract is updateSpaceInfo
-        // in space dapp we update the space name only using updateSpaceName which calls updateSpaceInfo
+        // in space dapp we update the space name only using updateSpaceInfo which calls updateSpaceInfo
         const functionName = 'updateSpaceInfo'
 
         const functionHashForPaymasterProxy = this.getFunctionSigHash(
@@ -609,7 +611,9 @@ export class UserOps {
         const callData = await space.SpaceOwner.encodeFunctionData(functionName, [
             space.Address,
             spaceName,
-            spaceInfo.uri,
+            uri ?? spaceInfo.uri ?? '',
+            shortDescription ?? spaceInfo.shortDescription ?? '',
+            longDescription ?? spaceInfo.longDescription ?? '',
         ])
 
         return this.sendUserOp({

@@ -6,9 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/river-build/river/core/node/crypto"
-
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/storage"
 
@@ -44,28 +41,6 @@ type SyncStream interface {
 	Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResultReceiver) error
 	Unsub(receiver SyncResultReceiver)
 
-	// MakeMiniblock creates a miniblock proposal, stores it in the registry, and applies it to the stream.
-	// MakeMiniblock exits early if another MakeMiniblock is already running,
-	// and as such is not determenistic, it's intended to be called periodically.
-	MakeMiniblock(ctx context.Context) // TODO: doesn't seem pertinent to SyncStream
-
-	// TestMakeMiniblock is a debug function that creates a miniblock proposal, stores it in the registry, and applies it to the stream.
-	// It is intended to be called manually from test code.
-	// TestMakeMiniblock always creates a miniblock if there are events in the minipool.
-	// TestMakeMiniblock always creates a miniblock if forceSnapshot is true. This miniblock will have a snapshot.
-	//
-	// If lastKnownMiniblockNumber is -1 and no new miniblock was created, function succeeds and returns zero hash and -1 miniblock number.
-	//
-	// If lastKnownMiniblockNumber is -1 and a new miniblock was created, function succeeds and returns the hash of the new miniblock and the miniblock number.
-	//
-	// If lastKnownMiniblockNumber is not -1 and no new miniblock was created, but last block has a higher number than lastKnownMiniblockNumber,
-	// function succeeds and returns the hash of the last block and the miniblock number.
-	TestMakeMiniblock(
-		ctx context.Context,
-		forceSnapshot bool,
-		lastKnownMiniblockNumber int64,
-	) (common.Hash, int64, error)
-
 	ProposeNextMiniblock(ctx context.Context, forceSnapshot bool) (*MiniblockInfo, error)
 	MakeMiniblockHeader(ctx context.Context, proposal *MiniblockProposal) (*MiniblockHeader, []*ParsedEvent, error)
 	ApplyMiniblock(ctx context.Context, miniblock *MiniblockInfo) error
@@ -100,9 +75,6 @@ type streamImpl struct {
 
 	// TODO: perf optimization: support subs on unloaded streams.
 	receivers mapset.Set[SyncResultReceiver]
-
-	// This mutex is used to ensure that only one MakeMiniblock is running at a time.
-	makeMiniblockMutex sync.Mutex
 }
 
 var _ SyncStream = (*streamImpl)(nil)
@@ -114,12 +86,7 @@ func (s *streamImpl) loadInternal(ctx context.Context) error {
 		return nil
 	}
 
-	streamRecencyConstraintsGenerations, err := s.params.ChainConfig.GetInt(
-		crypto.StreamRecencyConstraintsGenerationsConfigKey,
-	)
-	if err != nil {
-		return err
-	}
+	streamRecencyConstraintsGenerations := int(s.params.ChainConfig.Get().RecencyConstraintsGen)
 
 	streamData, err := s.params.Storage.ReadStreamFromLastSnapshot(
 		ctx,
@@ -293,80 +260,6 @@ func (s *streamImpl) constructMiniblockFromProposal(
 	}
 
 	return NewMiniblockInfoFromParsed(miniblockHeaderEvent, envelopes)
-}
-
-func (s *streamImpl) MakeMiniblock(ctx context.Context) {
-	if !s.makeMiniblockMutex.TryLock() {
-		return
-	}
-	defer s.makeMiniblockMutex.Unlock()
-
-	_, _, err := s.makeMiniblockImpl(ctx, false, -1)
-	if err != nil {
-		dlog.FromCtx(ctx).Error("Stream.MakeMiniblock failed", "error", err, "streamId", s.streamId)
-	}
-}
-
-func (s *streamImpl) TestMakeMiniblock(
-	ctx context.Context,
-	forceSnapshot bool,
-	lastKnownMiniblockNumber int64,
-) (common.Hash, int64, error) {
-	s.makeMiniblockMutex.Lock()
-	defer s.makeMiniblockMutex.Unlock()
-
-	return s.makeMiniblockImpl(ctx, forceSnapshot, lastKnownMiniblockNumber)
-}
-
-func (s *streamImpl) makeMiniblockImpl(
-	ctx context.Context,
-	forceSnapshot bool,
-	lastKnownMiniblockNumber int64,
-) (common.Hash, int64, error) {
-	// 1. Create miniblock
-	miniblock, err := s.ProposeNextMiniblock(ctx, forceSnapshot)
-	if err != nil {
-		return common.Hash{}, -1, err
-	}
-
-	// empty minipool, do not propose.
-	if miniblock == nil {
-		if lastKnownMiniblockNumber > -1 {
-			s.mu.RLock()
-			defer s.mu.RUnlock()
-			if s.view != nil {
-				lastMiniblock := s.view.LastBlock()
-				if lastMiniblock.Num > lastKnownMiniblockNumber {
-					return lastMiniblock.Hash, lastMiniblock.Num, nil
-				} else {
-					return common.Hash{}, -1, nil
-				}
-			} else {
-				return common.Hash{}, -1, RiverError(Err_INTERNAL, "makeMiniblockImpl: Stream is not loaded", "streamId", s.streamId)
-			}
-		}
-		return common.Hash{}, -1, nil
-	}
-
-	// 2. Update registry with candidate block metadata
-	err = s.params.Registry.SetStreamLastMiniblock(
-		ctx,
-		s.streamId,
-		*miniblock.headerEvent.PrevMiniblockHash,
-		miniblock.headerEvent.Hash,
-		uint64(miniblock.Num),
-		false,
-	)
-	if err != nil {
-		return common.Hash{}, -1, err
-	}
-
-	// 3. Commit proposal as current block
-	err = s.ApplyMiniblock(ctx, miniblock)
-	if err != nil {
-		return common.Hash{}, -1, err
-	}
-	return miniblock.Hash, miniblock.Num, nil
 }
 
 func (s *streamImpl) initFromBlockchain(ctx context.Context) error {
@@ -687,9 +580,32 @@ func (s *streamImpl) canCreateMiniblock() bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	// Loaded, has events in minipool, fake leader and periodic miniblock creation is not disabled in test settings.
+	// Loaded, has events in minipool, and periodic miniblock creation is not disabled in test settings.
 	return s.view != nil &&
 		s.view.minipool.events.Len() > 0 &&
-		s.nodes.LocalIsLeader() &&
 		!s.view.snapshot.GetInceptionPayload().GetSettings().GetDisableMiniblockCreation()
+}
+
+type streamImplStatus struct {
+	loaded            bool
+	numMinipoolEvents int
+	numSubscribers    int
+	lastAccess        time.Time
+}
+
+func (s *streamImpl) getStatus() *streamImplStatus {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	ret := &streamImplStatus{
+		numSubscribers: s.receivers.Cardinality(),
+		lastAccess:     s.lastAccessedTime,
+	}
+
+	if s.view != nil {
+		ret.loaded = true
+		ret.numMinipoolEvents = s.view.minipool.events.Len()
+	}
+
+	return ret
 }

@@ -243,120 +243,12 @@
         ],
         "stateMutability": "view",
         "type": "function",
-        "name": "getCheckOperations",
-        "outputs": [
-          {
-            "internalType": "struct IRuleEntitlement.CheckOperation[]",
-            "name": "",
-            "type": "tuple[]",
-            "components": [
-              {
-                "internalType": "enum IRuleEntitlement.CheckOperationType",
-                "name": "opType",
-                "type": "uint8"
-              },
-              {
-                "internalType": "uint256",
-                "name": "chainId",
-                "type": "uint256"
-              },
-              {
-                "internalType": "address",
-                "name": "contractAddress",
-                "type": "address"
-              },
-              {
-                "internalType": "uint256",
-                "name": "threshold",
-                "type": "uint256"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "uint256",
-            "name": "roleId",
-            "type": "uint256"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function",
         "name": "getEntitlementDataByRoleId",
         "outputs": [
           {
             "internalType": "bytes",
             "name": "",
             "type": "bytes"
-          }
-        ]
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "uint256",
-            "name": "roleId",
-            "type": "uint256"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function",
-        "name": "getLogicalOperations",
-        "outputs": [
-          {
-            "internalType": "struct IRuleEntitlement.LogicalOperation[]",
-            "name": "",
-            "type": "tuple[]",
-            "components": [
-              {
-                "internalType": "enum IRuleEntitlement.LogicalOperationType",
-                "name": "logOpType",
-                "type": "uint8"
-              },
-              {
-                "internalType": "uint8",
-                "name": "leftOperationIndex",
-                "type": "uint8"
-              },
-              {
-                "internalType": "uint8",
-                "name": "rightOperationIndex",
-                "type": "uint8"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "uint256",
-            "name": "roleId",
-            "type": "uint256"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function",
-        "name": "getOperations",
-        "outputs": [
-          {
-            "internalType": "struct IRuleEntitlement.Operation[]",
-            "name": "",
-            "type": "tuple[]",
-            "components": [
-              {
-                "internalType": "enum IRuleEntitlement.CombinedOperationType",
-                "name": "opType",
-                "type": "uint8"
-              },
-              {
-                "internalType": "uint8",
-                "name": "index",
-                "type": "uint8"
-              }
-            ]
           }
         ]
       },
@@ -560,12 +452,28 @@
     "devdoc": {
       "kind": "dev",
       "methods": {
+        "encodeRuleData(((uint8,uint8)[],(uint8,uint256,address,uint256)[],(uint8,uint8,uint8)[]))": {
+          "params": {
+            "data": "RuleData struct to encode"
+          },
+          "returns": {
+            "_0": "Encoded bytes of the RuleData struct"
+          }
+        },
         "getEntitlementDataByRoleId(uint256)": {
           "params": {
             "roleId": "the roleId to fetch the entitlement data for"
           },
           "returns": {
             "_0": "entitlementData array for the role"
+          }
+        },
+        "getRuleData(uint256)": {
+          "params": {
+            "roleId": "Role ID"
+          },
+          "returns": {
+            "data": "RuleData struct"
           }
         },
         "isCrosschain()": {
@@ -603,8 +511,14 @@
         "description()": {
           "notice": "The description of the entitlement module"
         },
+        "encodeRuleData(((uint8,uint8)[],(uint8,uint256,address,uint256)[],(uint8,uint8,uint8)[]))": {
+          "notice": "Encodes the RuleData struct into bytes"
+        },
         "getEntitlementDataByRoleId(uint256)": {
           "notice": "fetches the entitlement data for a roleId"
+        },
+        "getRuleData(uint256)": {
+          "notice": "Decodes the RuleData struct from bytes"
         },
         "initialize(address)": {
           "notice": "initializes the entitlement module"
@@ -666,10 +580,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol": {
-      "keccak256": "0x667a71b4ea5c072ed8039139345f73779f7f08820a09848f708cd159fd9f1b79",
+      "keccak256": "0x28650d058077713dfc28d5c613998d9f1e895a6f5f6b0d93467d25455fc3ea1d",
       "urls": [
-        "bzz-raw://988f98a1147ecfa0480bf747fbed8202229aa0c37f43dd25a967ebca213b8050",
-        "dweb:/ipfs/QmWHdrRbCu48aHYKhhGt2UgukaQsQhuHV38c51Yk566Rse"
+        "bzz-raw://e2446b7958f8b5f2713860e2826acf1b123c6b24719f844c7811d1e3f5a87c86",
+        "dweb:/ipfs/Qmesso9ftmVUCHi6w2gkJs9tEjGG5ZZgqhAenkyTDgFPC2"
       ],
       "license": "MIT"
     }

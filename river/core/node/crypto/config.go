@@ -4,17 +4,20 @@ import (
 	"context"
 	"fmt"
 	"math"
-	"math/big"
-	"sort"
+	"reflect"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/mitchellh/mapstructure"
+
 	"github.com/river-build/river/core/contracts/river"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/dlog"
@@ -22,177 +25,321 @@ import (
 	"github.com/river-build/river/core/node/shared"
 )
 
-var (
+const (
 	// StreamMediaMaxChunkCountConfigKey defines the maximum number chunks of data a media stream can contain.
-	StreamMediaMaxChunkCountConfigKey = newChainKeyImpl(
-		"stream.media.maxChunkCount", uint64Type, 50)
+	StreamMediaMaxChunkCountConfigKey = "stream.media.maxChunkCount"
 	// StreamMediaMaxChunkSizeConfigKey defines the maximum size of a data chunk that is allowed to be added to a media
 	// stream in a single event.
-	StreamMediaMaxChunkSizeConfigKey = newChainKeyImpl(
-		"stream.media.maxChunkSize", uint64Type, 500000)
-	StreamRecencyConstraintsAgeSecConfigKey = newChainKeyImpl(
-		"stream.recencyConstraints.ageSeconds", uint64Type, 11)
-	StreamRecencyConstraintsGenerationsConfigKey = newChainKeyImpl(
-		"stream.recencyConstraints.generations", uint64Type, 5)
+	StreamMediaMaxChunkSizeConfigKey             = "stream.media.maxChunkSize"
+	StreamRecencyConstraintsAgeSecConfigKey      = "stream.recencyConstraints.ageSeconds"
+	StreamRecencyConstraintsGenerationsConfigKey = "stream.recencyConstraints.generations"
 	// StreamReplicationFactorConfigKey is the key for how often a stream is replicated over nodes
-	StreamReplicationFactorConfigKey = newChainKeyImpl(
-		"stream.replicationFactor", uint64Type, 1)
-	StreamDefaultMinEventsPerSnapshotConfigKey = newChainKeyImpl(
-		"stream.defaultMinEventsPerSnapshot", uint64Type, 100)
-	StreamMinEventsPerSnapshotUserInboxConfigKey = newChainKeyImpl(
-		"stream.minEventsPerSnapshot.a1", uint64Type, 10)
-	StreamMinEventsPerSnapshotUserSettingsConfigKey = newChainKeyImpl(
-		"stream.minEventsPerSnapshot.a5", uint64Type, 10)
-	StreamMinEventsPerSnapshotUserConfigKey = newChainKeyImpl(
-		"stream.minEventsPerSnapshot.a8", uint64Type, 10)
-	StreamMinEventsPerSnapshotUserDeviceConfigKey = newChainKeyImpl(
-		"stream.minEventsPerSnapshot.ad", uint64Type, 10)
-	StreamCacheExpirationMsConfigKey = newChainKeyImpl(
-		"stream.cacheExpirationMs", uint64Type, 300000)
-	StreamCacheExpirationPollIntervalMsConfigKey = newChainKeyImpl(
-		"stream.cacheExpirationPollIntervalMs", uint64Type, 30000)
-	MediaStreamMembershipLimitsGDMConfigKey = newChainKeyImpl(
-		"media.streamMembershipLimits.77", uint64Type, 48)
-	MediaStreamMembershipLimitsDMConfigKey = newChainKeyImpl(
-		"media.streamMembershipLimits.88", uint64Type, 2)
-
-	// mapping from setting id to its keys (needs to contain all config keys)
-	configKeyIDToKey = map[common.Hash]chainKeyImpl{
-		StreamMediaMaxChunkCountConfigKey.ID():               StreamMediaMaxChunkCountConfigKey,
-		StreamMediaMaxChunkSizeConfigKey.ID():                StreamMediaMaxChunkSizeConfigKey,
-		StreamRecencyConstraintsAgeSecConfigKey.ID():         StreamRecencyConstraintsAgeSecConfigKey,
-		StreamRecencyConstraintsGenerationsConfigKey.ID():    StreamRecencyConstraintsGenerationsConfigKey,
-		StreamReplicationFactorConfigKey.ID():                StreamReplicationFactorConfigKey,
-		StreamDefaultMinEventsPerSnapshotConfigKey.ID():      StreamDefaultMinEventsPerSnapshotConfigKey,
-		StreamMinEventsPerSnapshotUserInboxConfigKey.ID():    StreamMinEventsPerSnapshotUserInboxConfigKey,
-		StreamMinEventsPerSnapshotUserSettingsConfigKey.ID(): StreamMinEventsPerSnapshotUserSettingsConfigKey,
-		StreamMinEventsPerSnapshotUserConfigKey.ID():         StreamMinEventsPerSnapshotUserConfigKey,
-		StreamMinEventsPerSnapshotUserDeviceConfigKey.ID():   StreamMinEventsPerSnapshotUserDeviceConfigKey,
-		StreamCacheExpirationMsConfigKey.ID():                StreamCacheExpirationMsConfigKey,
-		StreamCacheExpirationPollIntervalMsConfigKey.ID():    StreamCacheExpirationPollIntervalMsConfigKey,
-		MediaStreamMembershipLimitsGDMConfigKey.ID():         MediaStreamMembershipLimitsGDMConfigKey,
-		MediaStreamMembershipLimitsDMConfigKey.ID():          MediaStreamMembershipLimitsDMConfigKey,
-	}
-
-	streamTypeToMinEventsPerSnapshotKey = map[byte]ChainKey{
-		shared.STREAM_USER_INBOX_BIN:      StreamMinEventsPerSnapshotUserInboxConfigKey,
-		shared.STREAM_USER_SETTINGS_BIN:   StreamMinEventsPerSnapshotUserSettingsConfigKey,
-		shared.STREAM_USER_BIN:            StreamMinEventsPerSnapshotUserConfigKey,
-		shared.STREAM_USER_DEVICE_KEY_BIN: StreamMinEventsPerSnapshotUserDeviceConfigKey,
-	}
-
-	streamTypeToUserLimitKey = map[byte]ChainKey{
-		shared.STREAM_GDM_CHANNEL_BIN: MediaStreamMembershipLimitsGDMConfigKey,
-		shared.STREAM_DM_CHANNEL_BIN:  MediaStreamMembershipLimitsDMConfigKey,
-	}
-
-	uint64Type, _ = abi.NewType("uint64", "", nil)
-	int64Type, _  = abi.NewType("int64", "", nil)
+	StreamReplicationFactorConfigKey                = "stream.replicationFactor"
+	StreamDefaultMinEventsPerSnapshotConfigKey      = "stream.defaultMinEventsPerSnapshot"
+	StreamMinEventsPerSnapshotUserInboxConfigKey    = "stream.minEventsPerSnapshot.a1"
+	StreamMinEventsPerSnapshotUserSettingsConfigKey = "stream.minEventsPerSnapshot.a5"
+	StreamMinEventsPerSnapshotUserConfigKey         = "stream.minEventsPerSnapshot.a8"
+	StreamMinEventsPerSnapshotUserDeviceConfigKey   = "stream.minEventsPerSnapshot.ad"
+	StreamCacheExpirationMsConfigKey                = "stream.cacheExpirationMs"
+	StreamCacheExpirationPollIntervalMsConfigKey    = "stream.cacheExpirationPollIntervalMs"
+	MediaStreamMembershipLimitsGDMConfigKey         = "media.streamMembershipLimits.77"
+	MediaStreamMembershipLimitsDMConfigKey          = "media.streamMembershipLimits.88"
 )
 
-// ChainKey represents a key under which settings are stored in the RiverConfig smart contract.
-type (
-	ChainKey interface {
-		// ID is the key under which the setting is stored in the RiverConfig smart contract.
-		ID() common.Hash
-		// Name is the human-readable name of the setting.
-		Name() string
-		// DefaultAsInt64 returns the default value for the key as an int64.
-		// Panics if the default value isn't, or could not be converted to an int64.
-		DefaultAsInt64() int64
+// OnChainSettings holds the configuration settings that are stored on-chain.
+// This data structure is immutable, so it is safe to access it concurrently.
+type OnChainSettings struct {
+	FromBlockNumber BlockNumber `mapstructure:"-"`
+
+	MediaMaxChunkCount uint64 `mapstructure:"stream.media.maxChunkCount"`
+	MediaMaxChunkSize  uint64 `mapstructure:"stream.media.maxChunkSize"`
+
+	RecencyConstraintsAge time.Duration `mapstructure:"stream.recencyConstraints.ageSeconds"`
+	RecencyConstraintsGen uint64        `mapstructure:"stream.recencyConstraints.generations"`
+
+	ReplicationFactor uint64 `mapstructure:"stream.replicationFactor"`
+
+	MinSnapshotEvents MinSnapshotEventsSettings `mapstructure:",squash"`
+
+	StreamCacheExpiration    time.Duration `mapstructure:"stream.cacheExpirationMs"`
+	StreamCachePollIntterval time.Duration `mapstructure:"stream.cacheExpirationPollIntervalMs"`
+
+	MembershipLimits MembershipLimitsSettings `mapstructure:",squash"`
+}
+
+type MinSnapshotEventsSettings struct {
+	Default      uint64 `mapstructure:"stream.defaultMinEventsPerSnapshot"`
+	UserInbox    uint64 `mapstructure:"stream.minEventsPerSnapshot.a1"`
+	UserSettings uint64 `mapstructure:"stream.minEventsPerSnapshot.a5"`
+	User         uint64 `mapstructure:"stream.minEventsPerSnapshot.a8"`
+	UserDevice   uint64 `mapstructure:"stream.minEventsPerSnapshot.ad"`
+}
+
+func (m MinSnapshotEventsSettings) ForType(streamType byte) uint64 {
+	switch streamType {
+	case shared.STREAM_USER_INBOX_BIN:
+		return m.UserInbox
+	case shared.STREAM_USER_SETTINGS_BIN:
+		return m.UserSettings
+	case shared.STREAM_USER_BIN:
+		return m.User
+	case shared.STREAM_USER_DEVICE_KEY_BIN:
+		return m.UserDevice
+	default:
+		return m.Default
+	}
+}
+
+type MembershipLimitsSettings struct {
+	GDM uint64 `mapstructure:"media.streamMembershipLimits.77"`
+	DM  uint64 `mapstructure:"media.streamMembershipLimits.88"`
+}
+
+func (m MembershipLimitsSettings) ForType(streamType byte) uint64 {
+	switch streamType {
+	case shared.STREAM_GDM_CHANNEL_BIN:
+		return m.GDM
+	case shared.STREAM_DM_CHANNEL_BIN:
+		return m.DM
+	default:
+		return 0
+	}
+}
+
+func DefaultOnChainSettings() *OnChainSettings {
+	return &OnChainSettings{
+		MediaMaxChunkCount: 50,
+		MediaMaxChunkSize:  500000,
+
+		RecencyConstraintsAge: 11 * time.Second,
+		RecencyConstraintsGen: 5,
+
+		ReplicationFactor: 1,
+
+		MinSnapshotEvents: MinSnapshotEventsSettings{
+			Default:      100,
+			UserInbox:    10,
+			UserSettings: 10,
+			User:         10,
+			UserDevice:   10,
+		},
+
+		StreamCacheExpiration:    5 * time.Minute,
+		StreamCachePollIntterval: 30 * time.Second,
+
+		MembershipLimits: MembershipLimitsSettings{
+			GDM: 48,
+			DM:  2,
+		},
+	}
+}
+
+type OnChainConfiguration interface {
+	ActiveBlock() BlockNumber
+
+	Get() *OnChainSettings
+	GetOnBlock(block BlockNumber) *OnChainSettings
+
+	All() []*OnChainSettings
+
+	// LastAppliedEvent returns the last applied event.
+	// This is a test helper for checking that the settings was set.
+	LastAppliedEvent() *river.RiverConfigV1ConfigurationChanged
+}
+
+type configEntry struct {
+	name  string
+	value []byte
+}
+
+// This datastructure mimics the on-chain configuration storage so updates
+// from events can be applied consistently.
+type rawSettingsMap map[string]map[BlockNumber][]byte
+
+func (r rawSettingsMap) init(
+	ctx context.Context,
+	keyHashToName map[common.Hash]string,
+	retrievedSettings []river.Setting,
+) {
+	for _, setting := range retrievedSettings {
+		if setting.BlockNumber == math.MaxUint64 {
+			dlog.FromCtx(ctx).
+				Warn("Invalid block number, ignoring", "key", setting.Key, "value", setting.Value)
+			continue
+		}
+		name, ok := keyHashToName[setting.Key]
+		if !ok {
+			dlog.FromCtx(ctx).
+				Info("Skipping unknown setting key", "key", setting.Key, "value", setting.Value, "block", setting.BlockNumber)
+			continue
+		}
+		blockMap, ok := r[name]
+		if !ok {
+			blockMap = make(map[BlockNumber][]byte)
+			r[name] = blockMap
+		}
+		blockNum := BlockNumber(setting.BlockNumber)
+		oldVal, ok := blockMap[blockNum]
+		if ok {
+			dlog.FromCtx(ctx).
+				Warn("Duplicate setting", "key", setting.Key, "block", blockNum, "oldValue",
+					oldVal, "newValue", setting.Value)
+		}
+		blockMap[blockNum] = setting.Value
+	}
+}
+
+func (r rawSettingsMap) apply(
+	ctx context.Context,
+	keyHashToName map[common.Hash]string,
+	event *river.RiverConfigV1ConfigurationChanged,
+) {
+	name, ok := keyHashToName[event.Key]
+	if !ok {
+		dlog.FromCtx(ctx).
+			Info("Skipping unknown setting key", "key", event.Key, "value", event.Value, "block", event.Block, "deleted", event.Deleted)
+		return
+	}
+	if event.Deleted {
+		if blockMap, ok := r[name]; ok {
+			// block number == max uint64 means delete all settings for this key
+			if event.Block == math.MaxUint64 {
+				delete(r, name)
+			} else {
+				blockNum := BlockNumber(event.Block)
+				if _, ok := blockMap[blockNum]; ok {
+					delete(blockMap, blockNum)
+					if len(blockMap) == 0 {
+						delete(r, name)
+					}
+				} else {
+					dlog.FromCtx(ctx).
+						Warn("Got delete event for non-existing block", "key", event.Key, "block", event.Block)
+				}
+			}
+		} else {
+			dlog.FromCtx(ctx).
+				Warn("Got delete event for non-existing setting", "key", event.Key, "block", event.Block)
+		}
+	} else {
+		if _, ok := r[name]; !ok {
+			r[name] = make(map[BlockNumber][]byte)
+		}
+		r[name][BlockNumber(event.Block)] = event.Value
+	}
+}
+
+func (r rawSettingsMap) transform() (map[BlockNumber][]*configEntry, []BlockNumber) {
+	result := make(map[BlockNumber][]*configEntry)
+	for name, blockMap := range r {
+		for block, value := range blockMap {
+			result[block] = append(result[block], &configEntry{
+				name:  name,
+				value: value,
+			})
+		}
 	}
 
-	allSettingValue struct {
-		ActiveBlockNumber uint64
-		Value             any
+	var blockNums []BlockNumber
+	for key := range result {
+		blockNums = append(blockNums, key)
+	}
+	slices.Sort(blockNums)
+
+	return result, blockNums
+}
+
+type onChainConfiguration struct {
+	// contract interacts with the on-chain contract and provide metadata for decoding events
+	contract      *river.RiverConfigV1Caller
+	defaultsMap   map[string]interface{}
+	keyHashToName map[common.Hash]string
+
+	// activeBlock holds the current block on which the node is active
+	activeBlock      atomic.Uint64
+	cfg              atomic.Pointer[[]*OnChainSettings]
+	lastAppliedEvent atomic.Pointer[river.RiverConfigV1ConfigurationChanged]
+
+	mu               sync.Mutex
+	loadedSettingMap rawSettingsMap
+}
+
+var _ OnChainConfiguration = (*onChainConfiguration)(nil)
+
+func (occ *onChainConfiguration) ActiveBlock() BlockNumber {
+	return BlockNumber(occ.activeBlock.Load())
+}
+
+func (occ *onChainConfiguration) Get() *OnChainSettings {
+	return occ.GetOnBlock(occ.ActiveBlock())
+}
+
+func (occ *onChainConfiguration) GetOnBlock(block BlockNumber) *OnChainSettings {
+	settings := *occ.cfg.Load()
+	// Go in reverse order to find the most recent settings
+	for i := len(settings) - 1; i >= 0; i-- {
+		if block >= settings[i].FromBlockNumber {
+			return settings[i]
+		}
+	}
+	// First element should always be the default settings with block number 0.
+	panic("never")
+}
+
+func (occ *onChainConfiguration) All() []*OnChainSettings {
+	return *occ.cfg.Load()
+}
+
+func (occ *onChainConfiguration) LastAppliedEvent() *river.RiverConfigV1ConfigurationChanged {
+	return occ.lastAppliedEvent.Load()
+}
+
+func HashSettingName(name string) common.Hash {
+	return crypto.Keccak256Hash([]byte(strings.ToLower(name)))
+}
+
+func (occ *onChainConfiguration) processRawSettings(
+	ctx context.Context,
+) {
+	log := dlog.FromCtx(ctx)
+
+	byBlockNum, blockNums := occ.loadedSettingMap.transform()
+
+	// First settings are the default settings
+	settings := []*OnChainSettings{DefaultOnChainSettings()}
+
+	decodeHook := abiBytesToTypeDecoder(ctx)
+	for _, blockNum := range blockNums {
+		input := make(map[string]any)
+
+		for _, v := range byBlockNum[blockNum] {
+			input[v.name] = v.value
+		}
+
+		// Copy values from the previous block
+		setting := *settings[len(settings)-1]
+		setting.FromBlockNumber = blockNum
+
+		decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+			Result:     &setting,
+			DecodeHook: decodeHook,
+		})
+		if err != nil {
+			log.Error("SHOULD NOT HAPPEN: failed to create decoder", "err", err)
+			continue
+		}
+		err = decoder.Decode(input)
+		if err != nil {
+			log.Error("SHOULD NOT HAPPEN: failed to decode settings", "err", err)
+			continue
+		}
+
+		settings = append(settings, &setting)
 	}
 
-	// AllSettings holds the collection of all settings loaded from the on-chain configuration facet
-	AllSettings struct {
-		// CurrentBlockNumber indicates which block is currently used to pick the active on-chain configuration
-		CurrentBlockNumber uint64
-		// Settings is the list with settings grouped by key
-		Settings map[string][]allSettingValue
-	}
+	occ.cfg.Store(&settings)
+}
 
-	// OnChainConfiguration retrieves configuration settings from the RiverConfig facet smart contract.
-	OnChainConfiguration interface {
-		// ActiveBlock returns the blocknumber of the active config
-		ActiveBlock() uint64
-
-		// GetUint64 returns the setting value for the given key that is active on the current block.
-		GetUint64(key ChainKey) (uint64, error)
-		// GetInt64 returns the setting value for the given key that is active on the current block.
-		GetInt64(key ChainKey) (int64, error)
-		// GetInt returns the setting value for the given key that is active on the current block.
-		GetInt(key ChainKey) (int, error)
-		// GetRawValue returns the raw value as stored in the RiverConfig smart contract. nil if the setting is not found.
-		GetRawValue(key ChainKey) []byte
-
-		// GetUint64OnBlock returns the setting value for the given key that is active on the given block number.
-		GetUint64OnBlock(blockNumber uint64, key ChainKey) (uint64, error)
-		// GetInt64OnBlock returns the setting value for the given key that is active on the given block number.
-		GetInt64OnBlock(blockNumber uint64, key ChainKey) (int64, error)
-		// GetIntOnBlock returns the setting value for the given key that is active on the given block number.
-		GetIntOnBlock(blockNumber uint64, key ChainKey) (int, error)
-		// GetRawValueOnBlock returns the raw value as stored in the RiverConfig smart contract. nil if the setting is not found.
-		GetRawValueOnBlock(blockNumber uint64, key ChainKey) []byte
-
-		// All returns the collection of all settings retrieved from the on-chain configuration facet
-		All() (*AllSettings, error)
-
-		// GetMinEventsPerSnapshot returns the minimum events in a stream before a snapshot is taken. If there is no
-		// special setting for the requested stream the default value is returned.
-		GetMinEventsPerSnapshot(streamType byte) (int, error)
-		// GetStreamMembershipLimit returns the maximum number of clients that are allowed in a stream.
-		GetStreamMembershipLimit(streamType byte) (int, error)
-	}
-
-	onChainConfiguration struct {
-		// settings holds a list of values for a particular setting, indexed by key and sorted by block number
-		// the setting becomes active.
-		settings *onChainSettings
-		// activeBlock holds the current block on which the node is active
-		activeBlock atomic.Uint64
-		// contract interacts with the on-chain contract and provide metadata for decoding events
-		contract *river.RiverConfigV1Caller
-	}
-
-	// Settings holds a list of setting values for each type of setting.
-	// For each key there can be multiple setting values, each active on a different
-	// block number. Therefor to get the correct value users need to specify on
-	// which block number they need to get the setting value.
-	onChainSettings struct {
-		mu sync.RWMutex
-		s  map[common.Hash]settings
-	}
-
-	// settingValue represents a setting as store on-chain in the RiverConfig smart contract.
-	settingValue struct {
-		// ActiveFromBlockNumber is the block number from which this setting is active
-		ActiveFromBlockNumber uint64
-		// Value holds the decoded value from the RiverConfig smart contract
-		Value any
-		// Raw holds the raw value as stored in the RiverConfig smart contract
-		Raw []byte
-	}
-
-	// settings represents a list of setting values.
-	settings []*settingValue
-
-	// sort setting values by block number
-	byBlockNumber []*settingValue
-
-	// implements ChainKey
-	chainKeyImpl struct {
-		key          common.Hash
-		name         string
-		typ          abi.Type
-		defaultValue any
-	}
-)
-
-// NewOnChainConfig returns a OnChainConfiguration that syncs with the on-chain configuration contract.
 func NewOnChainConfig(
 	ctx context.Context,
 	riverClient BlockchainClient,
@@ -205,24 +352,20 @@ func NewOnChainConfig(
 		return nil, err
 	}
 
-	cfg := &onChainConfiguration{
-		settings: &onChainSettings{
-			s: make(map[common.Hash]settings),
-		},
-		contract: caller,
+	retrievedSettings, err := caller.GetAllConfiguration(&bind.CallOpts{
+		Context:     ctx,
+		BlockNumber: appliedBlockNum.AsBigInt(),
+	})
+	if err != nil {
+		return nil, AsRiverError(err, Err_CANNOT_CALL_CONTRACT).
+			Message("Failed to retrieve on-chain configuration").
+			Func("NewOnChainConfig")
 	}
 
-	// set the current block number as the current active block. This is used to determine which settings are currently
-	// active. Settings can be queued and become active after a future block.
-	cfg.activeBlock.Store(appliedBlockNum.AsUint64())
-
-	// retrieve settings from the chain on appliedBlockNum
-	if err := cfg.loadFromChain(ctx, appliedBlockNum.AsBigInt()); err != nil {
+	cfg, err := makeOnChainConfig(ctx, retrievedSettings, caller, appliedBlockNum)
+	if err != nil {
 		return nil, err
 	}
-
-	// load default settings for config settings that have no active value at the current block height.
-	cfg.loadMissing(ctx, appliedBlockNum.AsUint64())
 
 	// on block sets the current block number that is used to determine the active configuration setting.
 	chainMonitor.OnBlock(cfg.onBlock)
@@ -244,374 +387,72 @@ func NewOnChainConfig(
 	return cfg, nil
 }
 
-// loadFromChain retrieves the configuration from the chain on the given active block.
-func (occ *onChainConfiguration) loadFromChain(ctx context.Context, activeBlock *big.Int) error {
-	retrievedSettings, err := occ.contract.GetAllConfiguration(&bind.CallOpts{
-		Context:     ctx,
-		BlockNumber: activeBlock,
-	})
+func makeOnChainConfig(
+	ctx context.Context,
+	retrievedSettings []river.Setting,
+	contract *river.RiverConfigV1Caller,
+	appliedBlockNum BlockNumber,
+) (*onChainConfiguration, error) {
+	log := dlog.FromCtx(ctx)
+
+	// Get defaults to use if the setting is deleted
+	defaultsMap := make(map[string]interface{})
+	err := mapstructure.Decode(DefaultOnChainSettings(), &defaultsMap)
 	if err != nil {
-		return AsRiverError(err, Err_CANNOT_CONNECT).
-			Message("Failed to retrieve on-chain configuration").
-			Func("loadFromChain")
+		return nil, err
 	}
 
-	log := dlog.FromCtx(ctx)
-	for _, setting := range retrievedSettings {
-		key, found := configKeyIDToKey[setting.Key]
-		if !found {
-			log.Error("OnChainConfiguration: retrieved unsupported configuration key from on-chain config",
-				"key", fmt.Sprintf("0x%x", setting.Key))
-			continue
-		}
-		value, err := key.decode(setting.Value)
-		if err != nil {
-			return err
-		}
-		occ.settings.Set(ctx, key, setting.BlockNumber, value, setting.Value)
+	keyHashToName := make(map[common.Hash]string)
+	for key, value := range defaultsMap {
+		hash := HashSettingName(key)
+		log.Debug("OnChainConfig monitoring key", "key", key, "hash", hash, "default", value)
+		keyHashToName[hash] = key
 	}
 
-	return nil
-}
+	rawSettings := make(rawSettingsMap)
+	rawSettings.init(ctx, keyHashToName, retrievedSettings)
 
-// loadMissing sets default values for configuration items that have no value at the given activeBlock.
-func (occ *onChainConfiguration) loadMissing(ctx context.Context, activeBlock uint64) {
-	log := dlog.FromCtx(ctx)
-
-	for _, key := range configKeyIDToKey {
-		setting, found := occ.settings.s[key.ID()]
-		if found && setting.OnBlock(activeBlock) != nil {
-			continue
-		}
-
-		log.Debug(
-			"OnChainConfiguration: missing config setting on chain, use default",
-			"key", key.Name(),
-			"default", key.defaultValue,
-			"activeBlock", activeBlock,
-		)
-
-		occ.settings.Set(ctx, key, activeBlock, key.defaultValue, nil)
+	cfg := &onChainConfiguration{
+		contract:         contract,
+		keyHashToName:    keyHashToName,
+		defaultsMap:      defaultsMap,
+		loadedSettingMap: rawSettings,
 	}
+	cfg.processRawSettings(ctx)
+
+	// set the current block number as the current active block. This is used to determine which settings are currently
+	// active. Settings can be queued and become active after a future block.
+	cfg.activeBlock.Store(appliedBlockNum.AsUint64())
+
+	return cfg, nil
 }
 
 func (occ *onChainConfiguration) onBlock(_ context.Context, blockNumber BlockNumber) {
 	occ.activeBlock.Store(blockNumber.AsUint64())
 }
 
-func (occ *onChainConfiguration) ActiveBlock() uint64 {
-	return occ.activeBlock.Load()
-}
-
 func (occ *onChainConfiguration) onConfigChanged(ctx context.Context, event types.Log) {
-	var (
-		log = dlog.FromCtx(ctx)
-		e   river.RiverConfigV1ConfigurationChanged
-	)
+	var e river.RiverConfigV1ConfigurationChanged
 	if err := occ.contract.BoundContract().UnpackLog(&e, "ConfigurationChanged", event); err != nil {
-		log.Error("OnChainConfiguration: unable to decode ConfigurationChanged event")
+		dlog.FromCtx(ctx).Error("OnChainConfiguration: unable to decode ConfigurationChanged event")
 		return
 	}
-
-	configKey, ok := configKeyIDToKey[e.Key]
-	if !ok {
-		log.Error("OnChainConfiguration: received update for unknown config key",
-			"key", fmt.Sprintf("0x%x", e.Key))
-		return
-	}
-
-	if e.Deleted {
-		occ.settings.Remove(ctx, configKey, e.Block)
-	} else {
-		value, err := configKey.decode(e.Value)
-		if err != nil {
-			log.Error("OnChainConfiguration: received config update with invalid value",
-				"tx", event.TxHash, "key", configKey.name, "err", err)
-			return
-		}
-		occ.settings.Set(ctx, configKey, e.Block, value, e.Value)
-	}
+	occ.applyEvent(ctx, &e)
+	occ.lastAppliedEvent.Store(&e)
 }
 
-func (occ *onChainConfiguration) GetUint64(key ChainKey) (uint64, error) {
-	blockNum := occ.activeBlock.Load()
-	return occ.GetUint64OnBlock(blockNum, key)
+func (occ *onChainConfiguration) applyEvent(ctx context.Context, event *river.RiverConfigV1ConfigurationChanged) {
+	occ.mu.Lock()
+	defer occ.mu.Unlock()
+	occ.loadedSettingMap.apply(ctx, occ.keyHashToName, event)
+	occ.processRawSettings(ctx)
 }
 
-func (occ *onChainConfiguration) GetInt64(key ChainKey) (int64, error) {
-	blockNum := occ.activeBlock.Load()
-	return occ.GetInt64OnBlock(blockNum, key)
-}
-
-func (occ *onChainConfiguration) GetInt(key ChainKey) (int, error) {
-	blockNum := occ.activeBlock.Load()
-	return occ.GetIntOnBlock(blockNum, key)
-}
-
-func (occ *onChainConfiguration) GetRawValue(key ChainKey) []byte {
-	blockNum := occ.activeBlock.Load()
-	return occ.GetRawValueOnBlock(blockNum, key)
-}
-
-func (occ *onChainConfiguration) GetMinEventsPerSnapshot(streamType byte) (int, error) {
-	if key, ok := streamTypeToMinEventsPerSnapshotKey[streamType]; ok {
-		if val, err := occ.GetInt(key); err == nil {
-			return val, nil
-		}
-	}
-	return occ.GetInt(StreamDefaultMinEventsPerSnapshotConfigKey)
-}
-
-func (occ *onChainConfiguration) GetStreamMembershipLimit(streamType byte) (int, error) {
-	if key, ok := streamTypeToUserLimitKey[streamType]; ok {
-		if val, err := occ.GetInt(key); err == nil {
-			return val, err
-		}
-	}
-	return 0, nil
-}
-
-func (occ *onChainConfiguration) GetUint64OnBlock(blockNumber uint64, key ChainKey) (uint64, error) {
-	setting := occ.settings.getOnBlock(key, blockNumber)
-	if setting == nil {
-		return uint64(key.DefaultAsInt64()), nil
-	}
-	return setting.Uint64()
-}
-
-func (occ *onChainConfiguration) GetIntOnBlock(blockNumber uint64, key ChainKey) (int, error) {
-	setting := occ.settings.getOnBlock(key, blockNumber)
-	if setting == nil {
-		return int(key.DefaultAsInt64()), nil
-	}
-	return setting.Int()
-}
-
-func (occ *onChainConfiguration) GetInt64OnBlock(blockNumber uint64, key ChainKey) (int64, error) {
-	setting := occ.settings.getOnBlock(key, blockNumber)
-	if setting == nil {
-		return key.DefaultAsInt64(), nil
-	}
-	return setting.Int64()
-}
-
-func (occ *onChainConfiguration) GetRawValueOnBlock(blockNumber uint64, key ChainKey) []byte {
-	setting := occ.settings.getOnBlock(key, blockNumber)
-	if setting == nil {
-		return nil
-	}
-	return setting.Raw
-}
-
-func (occ *onChainConfiguration) All() (*AllSettings, error) {
-	all := AllSettings{
-		CurrentBlockNumber: occ.activeBlock.Load(),
-		Settings:           make(map[string][]allSettingValue),
-	}
-
-	occ.settings.mu.RLock()
-	defer occ.settings.mu.RUnlock()
-
-	for keyID, key := range configKeyIDToKey {
-		parsed := make([]allSettingValue, len(occ.settings.s[keyID]))
-		for i, setting := range occ.settings.s[keyID] {
-			parsed[i] = allSettingValue{
-				ActiveBlockNumber: setting.ActiveFromBlockNumber,
-				Value:             setting.Value,
-			}
-		}
-		all.Settings[key.name] = parsed
-	}
-
-	return &all, nil
-}
-
-func (ocs *onChainSettings) Remove(ctx context.Context, key chainKeyImpl, activeOnBlockNumber uint64) {
-	var (
-		log   = dlog.FromCtx(ctx)
-		keyID = key.ID()
-	)
-
-	ocs.mu.Lock()
-	defer ocs.mu.Unlock()
-
-	for i, v := range ocs.s[keyID] {
-		if v.ActiveFromBlockNumber == activeOnBlockNumber {
-			ocs.s[keyID][len(ocs.s[keyID])-1], ocs.s[keyID][i] = ocs.s[keyID][i], ocs.s[keyID][len(ocs.s[keyID])-1]
-			ocs.s[keyID] = ocs.s[keyID][:len(ocs.s[keyID])-1]
-			log.Info("dropped chain config", "key", key.Name(), "activationBlock", activeOnBlockNumber)
-			return
-		}
-	}
-}
-
-// Set the given value to the settings identified by the given key for the
-// given block number.
-func (ocs *onChainSettings) Set(
-	ctx context.Context,
-	key chainKeyImpl,
-	activeOnBlockNumber uint64,
-	value any,
-	raw []byte,
-) {
-	var (
-		log   = dlog.FromCtx(ctx)
-		keyID = key.ID()
-	)
-
-	ocs.mu.Lock()
-	defer ocs.mu.Unlock()
-
-	for i, v := range ocs.s[keyID] {
-		if v.ActiveFromBlockNumber == activeOnBlockNumber { // update
-			// create new instance because original settingsValue might be shared at this moment
-			// and therefore can't be updated.
-			ocs.s[keyID][i] = &settingValue{
-				ActiveFromBlockNumber: activeOnBlockNumber,
-				Value:                 value,
-				Raw:                   raw,
-			}
-			log.Info("set chain config",
-				"key", key.Name(), "activationBlock", activeOnBlockNumber, "value", value)
-			return
-		}
-	}
-
-	ocs.s[keyID] = append(ocs.s[keyID], &settingValue{
-		ActiveFromBlockNumber: activeOnBlockNumber,
-		Value:                 value,
-		Raw:                   raw,
-	})
-	log.Info("set chain config", "key", key.Name(), "activationBlock", activeOnBlockNumber, "value", value)
-
-	sort.Sort(byBlockNumber(ocs.s[keyID]))
-}
-
-// Get returns the set of settings for the given key.
-func (ocs *onChainSettings) getOnBlock(key ChainKey, blockNumber uint64) *settingValue {
-	ocs.mu.RLock()
-	defer ocs.mu.RUnlock()
-
-	return ocs.s[key.ID()].OnBlock(blockNumber)
-}
-
-func (s byBlockNumber) Len() int      { return len(s) }
-func (s byBlockNumber) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
-func (s byBlockNumber) Less(i, j int) bool {
-	return s[i].ActiveFromBlockNumber < s[j].ActiveFromBlockNumber
-}
-
-// OnBlock return the setting that is active at the given block number.
-func (s settings) OnBlock(blockNumber uint64) *settingValue {
-	for i := len(s) - 1; i >= 0; i-- {
-		if s[i].ActiveFromBlockNumber <= blockNumber {
-			return s[i]
-		}
-	}
-	return nil
-}
-
-// Uint64 returns the setting value as uint64.
-// If the value could not be decoded to an uint64 an error is returned.
-func (s *settingValue) Uint64() (uint64, error) {
-	if s == nil {
-		return 0, RiverError(Err_NOT_FOUND, "Missing on-chain configuration setting")
-	}
-	if v, ok := s.Value.(int); ok && v >= 0 {
-		return uint64(v), nil
-	}
-	if v, ok := s.Value.(uint64); ok {
-		return v, nil
-	}
-	if v, ok := s.Value.(int64); ok && v >= 0 {
-		return uint64(v), nil
-	}
-	return 0, RiverError(Err_BAD_CONFIG, "Invalid configuration setting").
-		Tag("typ", fmt.Sprintf("%T", s.Value)).Func("Uint64")
-}
-
-// Int64 returns the setting value as int64.
-// If the value could not be decoded to an int64 an error is returned.
-func (s *settingValue) Int64() (int64, error) {
-	if s == nil {
-		return 0, RiverError(Err_NOT_FOUND, "Missing on-chain configuration setting")
-	}
-	if v, ok := s.Value.(int); ok {
-		return int64(v), nil
-	}
-	if v, ok := s.Value.(int64); ok {
-		return v, nil
-	}
-	if v, ok := s.Value.(uint64); ok && v < math.MaxInt64 {
-		return int64(v), nil
-	}
-	return 0, RiverError(Err_BAD_CONFIG, "Invalid configuration setting").
-		Tags("typ", fmt.Sprintf("%T", s.Value)).Func("Int64")
-}
-
-// Int returns the setting value as the systems native integer type.
-// If the value could not be decoded an error is returned.
-func (s *settingValue) Int() (int, error) {
-	if s == nil {
-		return 0, RiverError(Err_NOT_FOUND, "Missing on-chain configuration setting")
-	}
-	if v, ok := s.Value.(int); ok {
-		return v, nil
-	}
-	if v, err := s.Uint64(); err == nil && v < math.MaxInt {
-		return int(v), nil
-	}
-	if v, err := s.Int64(); err == nil && v < math.MaxInt {
-		return int(v), nil
-	}
-	return 0, RiverError(Err_BAD_CONFIG, "Invalid configuration setting").
-		Tag("typ", fmt.Sprintf("%T", s.Value)).Func("Int")
-}
-
-// ID returns the key under which the setting is stored on-chain in the
-// RiverConfig smart contract.
-func (ck chainKeyImpl) ID() common.Hash {
-	return ck.key
-}
-
-func (ck chainKeyImpl) Name() string {
-	return ck.name
-}
-
-func (ck chainKeyImpl) DefaultAsInt64() int64 {
-	switch v := ck.defaultValue.(type) {
-	case int:
-		return int64(v)
-	case int64:
-		return v
-	case uint64:
-		if v < math.MaxInt64 {
-			return int64(v)
-		}
-	}
-	panic(fmt.Sprintf("Unable to retrieve default value for chain key %s as int64", ck.name))
-}
-
-func newChainKeyImpl(key string, typ abi.Type, defaultValue any) chainKeyImpl {
-	return chainKeyImpl{
-		crypto.Keccak256Hash([]byte(strings.ToLower(key))),
-		key,
-		typ,
-		defaultValue,
-	}
-}
-
-func (ck chainKeyImpl) decode(value []byte) (any, error) {
-	args := abi.Arguments{{Type: ck.typ}}
-	decoded, err := args.Unpack(value)
-	if err != nil {
-		return nil, err
-	}
-	if len(decoded) != 1 {
-		return nil, RiverError(Err_BAD_CONFIG, "Invalid on-chain configuration setting").Tag("key", ck.name)
-	}
-	return decoded[0], nil
-}
+var (
+	int64Type, _  = abi.NewType("int64", "", nil)
+	uint64Type, _ = abi.NewType("uint64", "", nil)
+	stringType, _ = abi.NewType("string", "string", nil)
+)
 
 // ABIEncodeInt64 returns Solidity abi.encode(i)
 func ABIEncodeInt64(i int64) []byte {
@@ -619,8 +460,101 @@ func ABIEncodeInt64(i int64) []byte {
 	return value
 }
 
+func ABIDecodeInt64(data []byte) (int64, error) {
+	args, err := abi.Arguments{{Type: int64Type}}.Unpack(data)
+	if err != nil {
+		return 0, err
+	}
+	return args[0].(int64), nil
+}
+
 // ABIEncodeUint64 returns Solidity abi.encode(i)
 func ABIEncodeUint64(i uint64) []byte {
 	value, _ := abi.Arguments{{Type: uint64Type}}.Pack(i)
 	return value
+}
+
+func ABIDecodeUint64(data []byte) (uint64, error) {
+	args, err := abi.Arguments{{Type: uint64Type}}.Unpack(data)
+	if err != nil {
+		return 0, err
+	}
+	return args[0].(uint64), nil
+}
+
+// ABIEncodeString returns Solidity abi.encode(s)
+func ABIEncodeString(s string) []byte {
+	value, _ := abi.Arguments{{Type: stringType}}.Pack(s)
+	return value
+}
+
+func ABIDecodeString(data []byte) (string, error) {
+	args, err := abi.Arguments{{Type: stringType}}.Unpack(data)
+	if err != nil {
+		return "", err
+	}
+	return args[0].(string), nil
+}
+
+func abiBytesToTypeDecoder(ctx context.Context) mapstructure.DecodeHookFuncValue {
+	log := dlog.FromCtx(ctx)
+	return func(from reflect.Value, to reflect.Value) (interface{}, error) {
+		// This function ignores decoding errors.
+		// If there is bad setting value on chain, it will be ignored.
+		if from.Kind() == reflect.Map {
+			// Preprocess durations based on name suffix.
+			mapValue, ok := from.Interface().(map[string]interface{})
+			if ok {
+				var badKeys []string
+				for key, value := range mapValue {
+					ms := strings.HasSuffix(key, "Ms")
+					sec := strings.HasSuffix(key, "Seconds")
+					bb, ok := value.([]byte)
+					if (ms || sec) && ok {
+						vv, err := ABIDecodeInt64(bb)
+						if err != nil {
+							log.Error("failed to decode int64", "key", key, "err", err, "bytes", bb)
+							badKeys = append(badKeys, key)
+							continue
+						}
+						var result time.Duration
+						if ms {
+							result = time.Duration(vv) * time.Millisecond
+						} else {
+							result = time.Duration(vv) * time.Second
+						}
+						mapValue[key] = result
+					}
+				}
+				for _, key := range badKeys {
+					delete(mapValue, key)
+				}
+			}
+		} else if from.Kind() == reflect.Slice && from.Type().Elem().Kind() == reflect.Uint8 {
+			if to.Kind() == reflect.Int64 || to.Kind() == reflect.Int {
+				v, err := ABIDecodeInt64(from.Bytes())
+				if err == nil {
+					return v, nil
+				}
+				log.Error("failed to decode int64", "err", err, "bytes", from.Bytes())
+			} else if to.Kind() == reflect.Uint64 || to.Kind() == reflect.Uint {
+				v, err := ABIDecodeUint64(from.Bytes())
+				if err == nil {
+					return v, nil
+				}
+				log.Error("failed to decode uint64", "err", err, "bytes", from.Bytes())
+			} else if to.Kind() == reflect.String {
+				v, err := ABIDecodeString(from.Bytes())
+				if err == nil {
+					return v, nil
+				}
+				log.Error("failed to decode string", "err", err, "bytes", from.Bytes())
+			} else {
+				log.Error("unsupported type for setting decoding", "type", to.Kind(), "bytes", from.Bytes())
+			}
+			// Failed to decode, return unchanged value.
+			return to.Interface(), nil
+		}
+		return from.Interface(), nil
+	}
 }

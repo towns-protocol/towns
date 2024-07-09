@@ -6,6 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/river-build/river/core/contracts/base"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/infra"

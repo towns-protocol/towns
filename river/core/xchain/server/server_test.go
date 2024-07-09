@@ -27,6 +27,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	node_config "github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/node/base/test"
+	"github.com/river-build/river/core/node/crypto"
 	node_crypto "github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/stretchr/testify/require"
@@ -91,7 +92,10 @@ func newServiceTester(numNodes int, require *require.Assertions) *serviceTester 
 		nodes:   make([]*testNodeRecord, numNodes),
 	}
 
-	btc, err := node_crypto.NewBlockchainTestContext(ctx, numNodes+1, true)
+	btc, err := node_crypto.NewBlockchainTestContext(
+		ctx,
+		crypto.TestParams{NumKeys: numNodes + 1, MineOnTx: true, AutoMine: true},
+	)
 	require.NoError(err)
 	st.btc = btc
 

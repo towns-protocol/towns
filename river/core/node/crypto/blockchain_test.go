@@ -25,7 +25,7 @@ func TestBlockchain(t *testing.T) {
 	require := require.New(t)
 	assert := assert.New(t)
 
-	tc, err := NewBlockchainTestContext(ctx, 2, false)
+	tc, err := NewBlockchainTestContext(ctx, TestParams{NumKeys: 2})
 	require.NoError(err)
 	defer tc.Close()
 
@@ -206,7 +206,7 @@ func TestBlockchainMultiMonitor(t *testing.T) {
 	require := require.New(t)
 	assert := assert.New(t)
 
-	tc, err := NewBlockchainTestContext(ctx, 3, true)
+	tc, err := NewBlockchainTestContext(ctx, TestParams{NumKeys: 3, MineOnTx: true, AutoMine: true})
 	require.NoError(err)
 	defer tc.Close()
 

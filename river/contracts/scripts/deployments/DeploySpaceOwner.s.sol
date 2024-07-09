@@ -10,7 +10,6 @@ import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
 import {DiamondDeployer} from "../common/DiamondDeployer.s.sol";
 
 // facets
-import {SpaceOwner} from "contracts/src/spaces/facets/owner/SpaceOwner.sol";
 import {GuardianFacet} from "contracts/src/spaces/facets/guardian/GuardianFacet.sol";
 
 // helpers
@@ -19,29 +18,21 @@ import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamo
 import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDiamondLoupe.s.sol";
 import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
 import {DeployMetadata} from "contracts/scripts/deployments/facets/DeployMetadata.s.sol";
+import {DeploySpaceOwnerFacet} from "contracts/scripts/deployments/facets/DeploySpaceOwnerFacet.s.sol";
+import {DeployMultiInit, MultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.sol";
 
 import {GuardianHelper} from "contracts/test/spaces/guardian/GuardianSetup.sol";
-import {SpaceOwnerHelper} from "contracts/test/spaces/owner/SpaceOwnerHelper.sol";
-import {IntrospectionHelper} from "contracts/test/diamond/introspection/IntrospectionSetup.sol";
-import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
-import {VotesHelper} from "contracts/test/governance/votes/VotesSetup.sol";
-
-import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
-
-import {DeployMultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.sol";
 
 contract DeploySpaceOwner is DiamondDeployer {
   DeployDiamondCut diamondCutHelper = new DeployDiamondCut();
   DeployDiamondLoupe diamondLoupeHelper = new DeployDiamondLoupe();
   DeployOwnable ownableHelper = new DeployOwnable();
   DeployIntrospection introspectionHelper = new DeployIntrospection();
+  DeploySpaceOwnerFacet spaceOwnerHelper = new DeploySpaceOwnerFacet();
   DeployMetadata metadataHelper = new DeployMetadata();
   DeployMultiInit multiInitHelper = new DeployMultiInit();
 
   GuardianHelper guardianHelper = new GuardianHelper();
-  ERC721AHelper erc721aHelper = new ERC721AHelper();
-  VotesHelper votesHelper = new VotesHelper();
-  SpaceOwnerHelper spaceOwnerHelper = new SpaceOwnerHelper();
 
   function versionName() public pure override returns (string memory) {
     return "spaceOwner";
@@ -55,15 +46,12 @@ contract DeploySpaceOwner is DiamondDeployer {
     address introspection = introspectionHelper.deploy();
     address ownable = ownableHelper.deploy();
     address metadata = metadataHelper.deploy();
+    address spaceOwner = spaceOwnerHelper.deploy();
     address multiInit = multiInitHelper.deploy();
 
     vm.startBroadcast(deployer);
-    address spaceOwner = address(new SpaceOwner());
     address guardian = address(new GuardianFacet());
     vm.stopBroadcast();
-
-    spaceOwnerHelper.addSelectors(erc721aHelper.selectors());
-    spaceOwnerHelper.addSelectors(votesHelper.selectors());
 
     addFacet(
       diamondCutHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add),

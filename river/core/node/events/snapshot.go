@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"slices"
 
+	"google.golang.org/protobuf/proto"
+
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/events/migrations"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/shared"
-	"google.golang.org/protobuf/proto"
 )
 
 func Make_GenisisSnapshot(events []*ParsedEvent) (*Snapshot, error) {

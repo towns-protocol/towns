@@ -249,6 +249,10 @@ type ChainConfig struct {
 	NegativeEntitlementManagerCacheTTLSeconds int
 }
 
+func (c ChainConfig) BlockTime() time.Duration {
+	return time.Duration(c.BlockTimeMs) * time.Millisecond
+}
+
 type PerformanceTrackingConfig struct {
 	ProfilingEnabled bool
 	TracingEnabled   bool

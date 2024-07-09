@@ -10,7 +10,7 @@ import { useUpdateChannelTransaction } from '../../../src/hooks/use-update-chann
 import { useCreateRoleTransaction } from '../../../src/hooks/use-create-role-transaction'
 import { useDeleteRoleTransaction } from '../../../src/hooks/use-delete-role-transaction'
 import { useUpdateRoleTransaction } from '../../../src/hooks/use-update-role-transaction'
-import { useUpdateSpaceNameTransaction } from '../../../src/hooks/use-update-space-name-transaction'
+import { useUpdateSpaceInfoTransaction } from '../../../src/hooks/use-update-space-info-transaction'
 
 export const RegisterWallet = ({ signer }: { signer: TSigner }) => {
     const { userId, authError, authStatus } = useCasablancaCredentials()
@@ -145,7 +145,7 @@ export function TransactionInfo<
         | ReturnType<typeof useCreateRoleTransaction>
         | ReturnType<typeof useUpdateRoleTransaction>
         | ReturnType<typeof useDeleteRoleTransaction>
-        | ReturnType<typeof useUpdateSpaceNameTransaction>,
+        | ReturnType<typeof useUpdateSpaceInfoTransaction>,
 >(props: {
     for: T
 

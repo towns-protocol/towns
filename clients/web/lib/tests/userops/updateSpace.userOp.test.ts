@@ -41,8 +41,8 @@ test('can update a space (name) via userop', async () => {
 
     expect((await town?.getSpaceInfo())?.name).toBe(ogName)
 
-    const userop = await alice.updateSpaceNameTransaction(spaceId!, newName, alice.wallet)
-    await alice.waitForUpdateSpaceNameTransaction(userop)
+    const userop = await alice.updateSpaceInfoTransaction(spaceId!, newName, alice.wallet)
+    await alice.waitForUpdateSpaceInfoTransaction(userop)
     await sleepBetweenTxs()
 
     expect((await town?.getSpaceInfo())?.name).toBe(newName)

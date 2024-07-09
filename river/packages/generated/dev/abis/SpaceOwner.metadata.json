@@ -829,6 +829,16 @@
                 "internalType": "uint256",
                 "name": "createdAt",
                 "type": "uint256"
+              },
+              {
+                "internalType": "string",
+                "name": "shortDescription",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "longDescription",
+                "type": "string"
               }
             ]
           }
@@ -893,6 +903,16 @@
             "internalType": "address",
             "name": "space",
             "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "shortDescription",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "longDescription",
+            "type": "string"
           }
         ],
         "stateMutability": "nonpayable",
@@ -1131,6 +1151,16 @@
             "internalType": "string",
             "name": "uri",
             "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "shortDescription",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "longDescription",
+            "type": "string"
           }
         ],
         "stateMutability": "nonpayable",
@@ -1188,10 +1218,12 @@
         "isApprovedForAll(address,address)": {
           "details": "Returns if the `operator` is allowed to manage all of the assets of `owner`. See {setApprovalForAll}."
         },
-        "mintSpace(string,string,address)": {
+        "mintSpace(string,string,address,string,string)": {
           "details": "Only the factory is allowed to mint spaces",
           "params": {
+            "longDescription": "The long description of the space",
             "name": "The name of the space",
+            "shortDescription": "The short description of the space",
             "space": "The address of the space",
             "uri": "The URI of the space"
           },
@@ -1226,10 +1258,12 @@
         "transferFrom(address,address,uint256)": {
           "details": "Transfers `tokenId` from `from` to `to`. Requirements: - `from` cannot be the zero address. - `to` cannot be the zero address. - `tokenId` token must be owned by `from`. - If the caller is not `from`, it must be approved to move this token by either {approve} or {setApprovalForAll}. Emits a {Transfer} event."
         },
-        "updateSpaceInfo(address,string,string)": {
+        "updateSpaceInfo(address,string,string,string,string)": {
           "details": "Only the space owner is allowed to update the space info",
           "params": {
+            "longDescription": "The long description of the space",
             "name": "The name of the space",
+            "shortDescription": "The short description of the space",
             "space": "The address of the space",
             "uri": "The URI of the space"
           }
@@ -1246,7 +1280,7 @@
         "getSpaceInfo(address)": {
           "notice": "Get the space info"
         },
-        "mintSpace(string,string,address)": {
+        "mintSpace(string,string,address,string,string)": {
           "notice": "Mint a space"
         },
         "nextTokenId()": {
@@ -1255,7 +1289,7 @@
         "setFactory(address)": {
           "notice": "Set the factory address that is allowed to mint spaces"
         },
-        "updateSpaceInfo(address,string,string)": {
+        "updateSpaceInfo(address,string,string,string,string)": {
           "notice": "Update the space info"
         }
       },
@@ -1505,42 +1539,42 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/owner/ISpaceOwner.sol": {
-      "keccak256": "0xff6ef530de3398b53d22b11fa207dc10646bc8c3823b0f472903d09f2a3fff09",
+      "keccak256": "0x75fef729920165a9cc37f7c212da288bc983bb11e39544a59c657cd9fa2e204a",
       "urls": [
-        "bzz-raw://36991d594ca8452a27647a48c15ab24aab39d33322d3bc0d726a8a7b33fd5ab2",
-        "dweb:/ipfs/QmVSBbXi5sxPW5Skoph6qjKfzGCnCpExYBb38S4HqvhtzQ"
+        "bzz-raw://1baac2d168e5ee3269b0b6b59ce7df29e63c38ef3d484850ed05f0a56ab59464",
+        "dweb:/ipfs/QmZPxAByZ4PiQFUq45AM8LEJ2YC6n8XxE6nRHgf8Kg7nxZ"
       ],
       "license": "MIT"
     },
     "contracts/src/spaces/facets/owner/SpaceOwner.sol": {
-      "keccak256": "0xd4ae1573c079a664691dcf26c8dc9a40ea2d1ef939698b0d048c5d3e66004a7d",
+      "keccak256": "0x2aca80d58e543ed53cd74703b88bc0984bbc5fe123248ec6fc6ab85f9fd19dab",
       "urls": [
-        "bzz-raw://29883563ce4582f629ac71050544f04ab3ff8dfa0d33ca85045c45f588b87bf3",
-        "dweb:/ipfs/Qmdz5UeU5EF76bKD4L7AQMjnCqyLQarDSo814Gt6XT6pea"
+        "bzz-raw://50f09db550b493adcd6bf5922e5a2202483776a1ce1c561d3f772170d5e53253",
+        "dweb:/ipfs/QmUycNN84TbHZuTvXcGYmKizUEvaeEFZfVe98eQRFyiGQU"
       ],
       "license": "MIT"
     },
     "contracts/src/spaces/facets/owner/SpaceOwnerBase.sol": {
-      "keccak256": "0xd0ecb2821b80216dc333473ab0144f8d551ee7c226a5994f05d95b8b98a3df64",
+      "keccak256": "0xa1cb5b0bc9aec89791654a4725f7c42798245a432f3f3a741e4999fd12020f77",
       "urls": [
-        "bzz-raw://26493620d6dd7f1c410f0aa2193358eb9efe6e02baabaffa1341d6b9b4b60473",
-        "dweb:/ipfs/Qmc32ouEvEK8mQVLqGx7m95HR2tXab5LWmJkBWyGj62rLZ"
+        "bzz-raw://720a72562f1f8c129b3b276a4fb67cf403bc628db1534fed04e45a79b7773cb1",
+        "dweb:/ipfs/QmNu34EsvFQjbaE8MwdxkAn4iXGDUY4wYq2GVBwUEu1uRh"
       ],
       "license": "MIT"
     },
     "contracts/src/spaces/facets/owner/SpaceOwnerStorage.sol": {
-      "keccak256": "0x3c840cdb978b3d927b3744284a5aaccf17fed77fa8fbe508f996defd4e96e036",
+      "keccak256": "0xb008bca5ced76250a86fa507a18d1f5e77c2b7bd9fa7df3c11a7c048d148dc5a",
       "urls": [
-        "bzz-raw://a8a1e53140a066f867b237e3c8bdd47048e54ad2ae8bcc81dc87e8a6b9615aa5",
-        "dweb:/ipfs/QmVzoTNDFkNuKxU2Vx7YPxdRUjN8rG2WqVzqBwf484owa3"
+        "bzz-raw://2adccdd8c8b1407dd973b2b1b5cd4be0713d15bd0350ae9b2f7e1b7a9b2ace50",
+        "dweb:/ipfs/QmW6Q8XXhXhDqDSqkBBsN9MqmqEidDPySS83YwXfE7Sx5Y"
       ],
       "license": "MIT"
     },
     "contracts/src/spaces/facets/owner/SpaceOwnerUriBase.sol": {
-      "keccak256": "0xb610b4b21b8fe1624a87ce276a4257724ce22ad730aa13e4d7e73e88a95928a6",
+      "keccak256": "0x089ce5c4408e752e52a820135620e312a08e361b5580ddcdd8ab8b4254067367",
       "urls": [
-        "bzz-raw://e3c81b24d5efc63410633c807441e3b906eb7db27e769e8cc1e71fea539ed004",
-        "dweb:/ipfs/QmZZ1rGuRu8v1yky2J3gHDFdgRKbYZ4oW4u8nYaSyLm7hD"
+        "bzz-raw://71b3db0d8d498344f3290f46f356f635c63ec4e60264855b956ee8c566509fcb",
+        "dweb:/ipfs/QmXkU1ZfWm5kpL9Q9HzYMvzJvhMkAf4k7mMohQGUQxMe6p"
       ],
       "license": "MIT"
     },

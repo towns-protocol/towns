@@ -1,4 +1,4 @@
-package rpc_test
+package rpc
 
 import (
 	"context"
@@ -6,6 +6,8 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/river-build/river/core/contracts/river"
 	. "github.com/river-build/river/core/node/base"
@@ -15,7 +17,6 @@ import (
 	"github.com/river-build/river/core/node/protocol/protocolconnect"
 	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/testutils"
-	"github.com/stretchr/testify/require"
 )
 
 func testCreate100Streams(

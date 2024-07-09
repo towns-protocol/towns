@@ -245,6 +245,8 @@ export class SpaceDapp implements ISpaceDapp {
             channel: {
                 metadata: params.channelName || '',
             },
+            shortDescription: params.shortDescription ?? '',
+            longDescription: params.longDescription ?? '',
         }
         return wrapTransaction(
             () => this.spaceRegistrar.SpaceArchitect.write(signer).createSpace(spaceInfo),
@@ -381,12 +383,20 @@ export class SpaceDapp implements ISpaceDapp {
             name: (spaceInfo.name as string) ?? '',
             owner,
             disabled,
+            uri: (spaceInfo.uri as string) ?? '',
+            tokenId: spaceInfo.tokenId as ethers.BigNumber,
+            createdAt: spaceInfo.createdAt as ethers.BigNumber,
+            shortDescription: (spaceInfo.shortDescription as string) ?? '',
+            longDescription: (spaceInfo.longDescription as string) ?? '',
         }
     }
 
-    public async updateSpaceName(
+    public async updateSpaceInfo(
         spaceId: string,
         name: string,
+        uri: string,
+        shortDescription: string,
+        longDescription: string,
         signer: ethers.Signer,
         txnOpts?: TransactionOpts,
     ): Promise<ContractTransaction> {
@@ -394,11 +404,15 @@ export class SpaceDapp implements ISpaceDapp {
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
-        const spaceInfo = await space.getSpaceInfo()
-        // update the space name
         return wrapTransaction(
             () =>
-                space.SpaceOwner.write(signer).updateSpaceInfo(space.Address, name, spaceInfo.uri),
+                space.SpaceOwner.write(signer).updateSpaceInfo(
+                    space.Address,
+                    name,
+                    uri,
+                    shortDescription,
+                    longDescription,
+                ),
             txnOpts,
         )
     }
@@ -714,7 +728,11 @@ export class SpaceDapp implements ISpaceDapp {
             ? channelNetworkId
             : `0x${channelNetworkId}`
 
-        if (permission === Permission.Read || permission === Permission.Write) {
+        if (
+            permission === Permission.Read ||
+            permission === Permission.Write ||
+            permission === Permission.ReactReply
+        ) {
             const linkedWallets = await this.getLinkedWallets(user)
 
             const owner = await space.Ownable.read.owner()
@@ -1057,7 +1075,7 @@ export class SpaceDapp implements ISpaceDapp {
 
         logger.log('joinSpace before blockNumber', Date.now() - getSpaceStart, blockNumber)
         const getPriceStart = Date.now()
-        const price = await this.getJoinSpacePrice(spaceId)
+        const price = await space.Membership.read.getMembershipPrice()
         logger.log('joinSpace getMembershipPrice', Date.now() - getPriceStart)
         const wrapStart = Date.now()
         const result = await wrapTransaction(async () => {

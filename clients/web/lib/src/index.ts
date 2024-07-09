@@ -82,7 +82,7 @@ export { useTimelineThread } from './hooks/use-timeline-thread'
 export { useTimelineThreadStats } from './hooks/use-timeline-thread-stats'
 export { useUpdateChannelTransaction } from './hooks/use-update-channel-transaction'
 export { useUpdateRoleTransaction } from './hooks/use-update-role-transaction'
-export { useUpdateSpaceNameTransaction } from './hooks/use-update-space-name-transaction'
+export { useUpdateSpaceInfoTransaction } from './hooks/use-update-space-info-transaction'
 export { useEditSpaceMembershipTransaction } from './hooks/use-edit-space-membership-transaction'
 export { useUser } from './hooks/use-user'
 export {

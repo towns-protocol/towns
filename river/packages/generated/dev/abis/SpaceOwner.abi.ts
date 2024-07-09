@@ -339,6 +339,16 @@ export default [
             "name": "createdAt",
             "type": "uint256",
             "internalType": "uint256"
+          },
+          {
+            "name": "shortDescription",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "longDescription",
+            "type": "string",
+            "internalType": "string"
           }
         ]
       }
@@ -406,6 +416,16 @@ export default [
         "name": "space",
         "type": "address",
         "internalType": "address"
+      },
+      {
+        "name": "shortDescription",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "longDescription",
+        "type": "string",
+        "internalType": "string"
       }
     ],
     "outputs": [
@@ -647,6 +667,16 @@ export default [
       },
       {
         "name": "uri",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "shortDescription",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "longDescription",
         "type": "string",
         "internalType": "string"
       }

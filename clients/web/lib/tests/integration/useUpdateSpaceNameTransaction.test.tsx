@@ -13,7 +13,7 @@ import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TownsTestApp } from './helpers/TownsTestApp'
 import { TownsTestWeb3Provider } from './helpers/TownsTestWeb3Provider'
 import { createMembershipStruct, makeUniqueName } from './helpers/TestUtils'
-import { useUpdateSpaceNameTransaction } from '../../src/hooks/use-update-space-name-transaction'
+import { useUpdateSpaceInfoTransaction } from '../../src/hooks/use-update-space-info-transaction'
 import { useCreateSpaceTransactionWithRetries } from '../../src/hooks/use-create-space-transaction'
 import { TestConstants } from './helpers/TestConstants'
 import { TransactionStatus } from '../../src/client/TownsClientTypes'
@@ -23,9 +23,9 @@ import { TSigner } from '../../src/types/web3-types'
 import { useTownsClient } from '../../src/hooks/use-towns-client'
 
 /**
- * This test suite tests the useUpdateSpaceNameTransaction hook.
+ * This test suite tests the useUpdateSpaceInfoTransaction hook.
  */
-describe('useUpdateSpaceNameTransaction', () => {
+describe('useUpdateSpaceInfoTransaction', () => {
     test('create a new space, and then update its name', async () => {
         /* Arrange */
         const provider = new TownsTestWeb3Provider()
@@ -105,8 +105,8 @@ function TestComponent(args: {
         transactionStatus: spaceTransactionStatus,
     } = spaceTransaction
     const spaceId = txData?.spaceId
-    const updateSpaceNameTransactionInfo = useUpdateSpaceNameTransaction()
-    const { updateSpaceNameTransaction } = updateSpaceNameTransactionInfo
+    const updateSpaceInfoTransactionInfo = useUpdateSpaceInfoTransaction()
+    const { updateSpaceInfoTransaction } = updateSpaceInfoTransactionInfo
     const spaceNetworkId = spaceId ? spaceId : ''
     const { spaceDapp } = useTownsClient()
 
@@ -137,10 +137,17 @@ function TestComponent(args: {
     // handle click to update space name
     const onClickUpdateSpaceName = useCallback(() => {
         const handleClick = async () => {
-            await updateSpaceNameTransaction(spaceNetworkId, args.newSpaceName, args.signer)
+            await updateSpaceInfoTransaction(
+                spaceNetworkId,
+                args.newSpaceName,
+                'uri',
+                'shortDescription',
+                'longDescription',
+                args.signer,
+            )
         }
         void handleClick()
-    }, [updateSpaceNameTransaction, spaceNetworkId, args.newSpaceName, args.signer])
+    }, [updateSpaceInfoTransaction, spaceNetworkId, args.newSpaceName, args.signer])
     // the view
     return (
         <>
@@ -148,8 +155,8 @@ function TestComponent(args: {
             <button onClick={onClickUpdateSpaceName}>Update Space Name</button>
             <TransactionInfo for={spaceTransaction} label="spaceTransaction" />
             <TransactionInfo
-                for={updateSpaceNameTransactionInfo}
-                label="updateSpaceNameTransaction"
+                for={updateSpaceInfoTransactionInfo}
+                label="updateSpaceInfoTransaction"
             />
             {spaceTransactionStatus === TransactionStatus.Success && (
                 <SpaceContextProvider spaceId={spaceId}>
@@ -164,7 +171,7 @@ function TestComponent(args: {
 
 function SpacesComponent(args: { spaceId?: string }): JSX.Element {
     // spaces
-    const { isLoading: isLoadingSpaceNameTx } = useUpdateSpaceNameTransaction()
+    const { isLoading: isLoadingSpaceNameTx } = useUpdateSpaceInfoTransaction()
     const { data: spaceInfo, isLoading: isLoadingSpaceNames } = useContractSpaceInfo(
         args?.spaceId ?? '',
     )

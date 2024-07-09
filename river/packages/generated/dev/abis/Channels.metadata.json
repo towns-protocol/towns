@@ -1068,10 +1068,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/Permissions.sol": {
-      "keccak256": "0x543fa893d7fb2f612c253dd5894c2b1176ae19cf79f9275b7234327ffb5bf0fa",
+      "keccak256": "0xaeec9c70d231be9debb15660bf6939746532d0012c80d5518e8207dd33653de2",
       "urls": [
-        "bzz-raw://7e9c3e20122f6179b5fc3fb00085d506c979e4f237b003fa8c9c5df50644f182",
-        "dweb:/ipfs/QmSdpvxbz6NKFoumbCv6tzfXqo7kSrp1VrgeTp8nPxDnfm"
+        "bzz-raw://bab7c5dd8f55f03f48d3908b8d6732b3e2d93f36312a0c3408ff10be258c165a",
+        "dweb:/ipfs/QmevmAc6tzP3kFoH84cRtipSq4ryqbrP3H4VB8mRZgnRxn"
       ],
       "license": "MIT"
     },

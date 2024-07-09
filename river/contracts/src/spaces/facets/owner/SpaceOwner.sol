@@ -60,10 +60,12 @@ contract SpaceOwner is
   function mintSpace(
     string memory name,
     string memory uri,
-    address space
+    address space,
+    string memory shortDescription,
+    string memory longDescription
   ) external onlyFactory returns (uint256 tokenId) {
     tokenId = _nextTokenId();
-    _mintSpace(name, uri, tokenId, space);
+    _mintSpace(name, uri, tokenId, space, shortDescription, longDescription);
     _mint(msg.sender, 1);
   }
 
@@ -76,10 +78,12 @@ contract SpaceOwner is
   function updateSpaceInfo(
     address space,
     string memory name,
-    string memory uri
+    string memory uri,
+    string memory shortDescription,
+    string memory longDescription
   ) external {
     _onlySpaceOwner(space);
-    _updateSpace(space, name, uri);
+    _updateSpace(space, name, uri, shortDescription, longDescription);
   }
 
   function nonces(address owner) external view returns (uint256 result) {

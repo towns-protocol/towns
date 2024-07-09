@@ -4,14 +4,15 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
+
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/storage"
 	"github.com/river-build/river/core/node/testutils"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/proto"
 )
 
 func makeEnvelopeWithPayload_T(
@@ -190,11 +191,10 @@ func leaveChannel_T(
 }
 
 func TestSpaceViewState(t *testing.T) {
-	ctx, tt := makeTestStreamParams(t, testParams{
+	ctx, tt := makeCacheTestContext(t, testParams{
 		defaultMinEventsPerSnapshot: 2,
 	})
-	defer tt.closer()
-	_ = tt.initCache(ctx)
+	_ = tt.initCache(0, nil)
 
 	user1Wallet, _ := crypto.NewWallet(ctx)
 	user2Wallet, _ := crypto.NewWallet(ctx)
@@ -208,8 +208,7 @@ func TestSpaceViewState(t *testing.T) {
 	require.NoError(t, err)
 
 	_, mb := makeTestSpaceStream(t, user1Wallet, spaceStreamId, nil)
-	s, _, err := tt.createStream(ctx, spaceStreamId, mb)
-	require.NoError(t, err)
+	s, _ := tt.createStream(spaceStreamId, mb)
 	stream := s.(*streamImpl)
 	require.NotNil(t, stream)
 	// refresh view
@@ -234,8 +233,7 @@ func TestSpaceViewState(t *testing.T) {
 	require.Equal(t, 1, len(stream.view.blocks))
 
 	// make a miniblock
-	_, _, err = stream.TestMakeMiniblock(ctx, false, -1)
-	require.NoError(t, err)
+	_, _ = tt.makeMiniblock(0, spaceStreamId, false)
 	// check that we have 2 blocks
 	require.Equal(t, 2, len(stream.view.blocks))
 	// refresh view
@@ -279,12 +277,11 @@ func spaceViewStateTest_CheckUserJoined(
 }
 
 func TestChannelViewState_JoinedMembers(t *testing.T) {
-	ctx, tt := makeTestStreamParams(t, testParams{
+	ctx, tt := makeCacheTestContext(t, testParams{
 		replFactor:                  1,
 		defaultMinEventsPerSnapshot: 2,
 	})
-	defer tt.closer()
-	_ = tt.initCache(ctx)
+	_ = tt.initCache(0, nil)
 
 	userWallet, _ := crypto.NewWallet(ctx)
 	aliceWallet, _ := crypto.NewWallet(ctx)
@@ -301,18 +298,16 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 
 	// create a space stream and add the members
 	_, mb := makeTestSpaceStream(t, userWallet, spaceStreamId, nil)
-	sStream, _, err := tt.createStream(ctx, spaceStreamId, mb)
-	require.NoError(t, err)
+	sStream, _ := tt.createStream(spaceStreamId, mb)
 	spaceStream := sStream.(*streamImpl)
 	joinSpace_T(t, userWallet, ctx, spaceStream, []string{bob, carol})
 	// create a channel stream and add the members
 	_, mb = makeTestChannelStream(t, userWallet, alice, channelStreamId, spaceStreamId, nil)
-	cStream, _, _ := tt.createStream(ctx, channelStreamId, mb)
+	cStream, _ := tt.createStream(channelStreamId, mb)
 	channelStream := cStream.(*streamImpl)
 	joinChannel_T(t, userWallet, ctx, channelStream, []string{alice, bob, carol})
 	// make a miniblock
-	_, _, err = channelStream.TestMakeMiniblock(ctx, false, -1)
-	require.NoError(t, err)
+	_, _ = tt.makeMiniblock(0, channelStreamId, false)
 	// get the miniblock's last snapshot and convert it into bytes
 	miniblocks := channelStream.view.MiniblocksFromLastSnapshot()
 	miniblock := miniblocks[0]
@@ -339,12 +334,11 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 }
 
 func TestChannelViewState_RemainingMembers(t *testing.T) {
-	ctx, tt := makeTestStreamParams(t, testParams{
+	ctx, tt := makeCacheTestContext(t, testParams{
 		replFactor:                  1,
 		defaultMinEventsPerSnapshot: 2,
 	})
-	defer tt.closer()
-	_ = tt.initCache(ctx)
+	_ = tt.initCache(0, nil)
 
 	userWallet, _ := crypto.NewWallet(ctx)
 	aliceWallet, _ := crypto.NewWallet(ctx)
@@ -361,21 +355,18 @@ func TestChannelViewState_RemainingMembers(t *testing.T) {
 
 	// create a space stream and add the members
 	_, mb := makeTestSpaceStream(t, userWallet, spaceStreamId, nil)
-	sStream, _, err := tt.createStream(ctx, spaceStreamId, mb)
-	require.NoError(t, err)
+	sStream, _ := tt.createStream(spaceStreamId, mb)
 	spaceStream := sStream.(*streamImpl)
 	joinSpace_T(t, userWallet, ctx, spaceStream, []string{bob, carol})
 	// create a channel stream and add the members
 	_, mb = makeTestChannelStream(t, userWallet, alice, channelStreamId, spaceStreamId, nil)
-	cStream, _, err := tt.createStream(ctx, channelStreamId, mb)
-	require.NoError(t, err)
+	cStream, _ := tt.createStream(channelStreamId, mb)
 	channelStream := cStream.(*streamImpl)
 	joinChannel_T(t, userWallet, ctx, channelStream, []string{alice, bob, carol})
 	// bob leaves the channel
 	leaveChannel_T(t, userWallet, ctx, channelStream, []string{bob})
 	// make a miniblock
-	_, _, err = channelStream.TestMakeMiniblock(ctx, false, -1)
-	require.NoError(t, err)
+	_, _ = tt.makeMiniblock(0, channelStreamId, false)
 	// get the miniblock's last snapshot and convert it into bytes
 	miniblocks := channelStream.view.MiniblocksFromLastSnapshot()
 	miniblock := miniblocks[0]

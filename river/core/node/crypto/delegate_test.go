@@ -5,8 +5,9 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/river-build/river/core/node/base/test"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/river-build/river/core/node/base/test"
 )
 
 func TestDelegateEth(t *testing.T) {

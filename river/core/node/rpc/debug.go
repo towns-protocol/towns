@@ -3,6 +3,7 @@ package rpc
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/pprof"
@@ -62,11 +63,11 @@ func (s *Service) registerDebugHandlers(enableDebugEndpoints bool) {
 	mux.HandleFunc("/debug", handler.ServeHTTP)
 	handler.HandleFunc(mux, "/debug/multi", s.handleDebugMulti)
 	handler.HandleFunc(mux, "/debug/multi/json", s.handleDebugMultiJson)
+	handler.Handle(mux, "/debug/config", &onChainConfigHandler{onChainConfig: s.chainConfig})
 
 	if enableDebugEndpoints {
 		handler.Handle(mux, "/debug/cache", &cacheHandler{cache: s.cache})
 		handler.Handle(mux, "/debug/txpool", &txpoolHandler{riverTxPool: s.riverChain.TxPool})
-		handler.Handle(mux, "/debug/config", &onChainConfigHandler{onChainConfig: s.chainConfig})
 		handler.HandleFunc(mux, "/debug/memory", MemoryHandler)
 		handler.HandleFunc(mux, "/debug/pprof/", pprof.Index)
 		mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
@@ -121,12 +122,15 @@ func (h *onChainConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		err   error
 	)
 
-	reply.Config, err = h.onChainConfig.All()
+	reply.CurrentBlockNumber = h.onChainConfig.ActiveBlock()
+	settings := h.onChainConfig.All()
+	bb, err := json.MarshalIndent(settings, "", "  ")
 	if err != nil {
-		dlog.FromCtx(ctx).Error("unable to obtain on-chain-config data", "err", err)
+		dlog.FromCtx(ctx).Error("unable to marshall on-chain-config data", "err", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
+	reply.Config = string(bb)
 
 	output, err := render.Execute(&reply)
 	if err != nil {

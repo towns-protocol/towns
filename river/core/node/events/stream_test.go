@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/river-build/river/core/node/crypto"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/shared"
@@ -83,19 +84,17 @@ func mbTest(
 	t *testing.T,
 	params mbTestParams,
 ) {
-	ctx, tt := makeTestStreamParams(t, testParams{replFactor: 1})
-	defer tt.closer()
-	_ = tt.initCache(ctx)
+	ctx, tt := makeCacheTestContext(t, testParams{replFactor: 1})
+	_ = tt.initCache(0, nil)
 	require := require.New(t)
 
 	spaceStreamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
-	miniblockProto := MakeGenesisMiniblockForSpaceStream(t, tt.params.Wallet, spaceStreamId)
+	miniblockProto := MakeGenesisMiniblockForSpaceStream(t, tt.instances[0].params.Wallet, spaceStreamId)
 
-	stream, view, err := tt.createStream(ctx, spaceStreamId, miniblockProto)
-	require.NoError(err)
+	stream, view := tt.createStream(spaceStreamId, miniblockProto)
 
-	addEvent(t, ctx, tt.params, stream, "1", view.LastBlock().Hash)
-	addEvent(t, ctx, tt.params, stream, "2", view.LastBlock().Hash)
+	addEvent(t, ctx, tt.instances[0].params, stream, "1", view.LastBlock().Hash)
+	addEvent(t, ctx, tt.instances[0].params, stream, "2", view.LastBlock().Hash)
 
 	proposal, err := stream.ProposeNextMiniblock(ctx, false)
 	mb := proposal.headerEvent.Event.GetMiniblockHeader()
@@ -107,7 +106,7 @@ func mbTest(
 	require.Equal(int64(1), mb.MiniblockNum)
 
 	if params.addAfterProposal {
-		addEvent(t, ctx, tt.params, stream, "3", view.LastBlock().Hash)
+		addEvent(t, ctx, tt.instances[0].params, stream, "3", view.LastBlock().Hash)
 	}
 
 	require.NoError(err)
@@ -121,7 +120,7 @@ func mbTest(
 	require.NoError(err)
 	stats := view2.GetStats()
 	require.Equal(params.eventsInMinipool, stats.EventsInMinipool)
-	addEvent(t, ctx, tt.params, stream, "4", view2.LastBlock().Hash)
+	addEvent(t, ctx, tt.instances[0].params, stream, "4", view2.LastBlock().Hash)
 
 	view2, err = stream.GetView(ctx)
 	require.NoError(err)

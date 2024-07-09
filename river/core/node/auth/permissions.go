@@ -13,6 +13,7 @@ const (
 	PermissionPinMessages
 	PermissionAddRemoveChannels
 	PermissionModifySpaceSettings
+	PermissionReactReply
 )
 
 func (p Permission) String() string {
@@ -37,6 +38,9 @@ func (p Permission) String() string {
 		return "AddRemoveChannels"
 	case PermissionModifySpaceSettings:
 		return "ModifySpaceSettings"
+	case PermissionReactReply:
+		return "ReactReply"
+
 	default:
 		return "Unknown"
 	}

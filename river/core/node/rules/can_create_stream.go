@@ -10,6 +10,7 @@ import (
 	"github.com/river-build/river/core/node/crypto"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/node/auth"
 	. "github.com/river-build/river/core/node/base"
@@ -164,21 +165,13 @@ func CanCreateStream(
 		)
 	}
 
-	maxChunkCount, err := chainConfig.GetInt(crypto.StreamMediaMaxChunkCountConfigKey)
-	if err != nil {
-		return nil, err
-	}
-
-	streamMembershipLimit, err := chainConfig.GetStreamMembershipLimit(streamId.Type())
-	if err != nil {
-		return nil, err
-	}
+	settings := chainConfig.Get()
 
 	r := &csParams{
 		ctx:                   ctx,
 		cfg:                   cfg,
-		maxChunkCount:         maxChunkCount,
-		streamMembershipLimit: streamMembershipLimit,
+		maxChunkCount:         int(settings.MediaMaxChunkCount),
+		streamMembershipLimit: int(settings.MembershipLimits.ForType(streamId.Type())),
 		streamId:              streamId,
 		parsedEvents:          parsedEvents,
 		requestMetadata:       requestMetadata,

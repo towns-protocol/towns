@@ -143,7 +143,7 @@ interface TownsClientImpl {
     waitForUpdateRoleTransaction: (
         context: TransactionContext<void> | undefined,
     ) => Promise<TransactionContext<void> | undefined>
-    waitForUpdateSpaceNameTransaction: (
+    waitForUpdateSpaceInfoTransaction: (
         context: TransactionContext<void> | undefined,
     ) => Promise<TransactionContext<void> | undefined>
     deleteRoleTransaction: (
@@ -210,9 +210,12 @@ interface TownsClientImpl {
     setRoomProperties: (roomId: string, title: string, topic: string) => Promise<void>
     setDisplayName: (streamId: string, displayName: string) => Promise<void>
     setHighPriorityStreams: (streamIds: string[]) => Promise<void>
-    updateSpaceNameTransaction: (
+    updateSpaceInfoTransaction: (
         spaceId: string,
         name: string,
+        uri: string,
+        shortDescription: string,
+        longDescription: string,
         signer: TSigner | undefined,
     ) => Promise<TransactionContext<void> | undefined>
     linkEOAToRootKey: (
@@ -323,10 +326,10 @@ export function useTownsClient(): TownsClientImpl {
         waitForUpdateRoleTransaction: useWithCatch(clientSingleton?.waitForUpdateRoleTransaction),
         deleteRoleTransaction: useWithCatch(clientSingleton?.deleteRoleTransaction),
         waitForDeleteRoleTransaction: useWithCatch(clientSingleton?.waitForDeleteRoleTransaction),
-        waitForUpdateSpaceNameTransaction: useWithCatch(
-            clientSingleton?.waitForUpdateSpaceNameTransaction,
+        waitForUpdateSpaceInfoTransaction: useWithCatch(
+            clientSingleton?.waitForUpdateSpaceInfoTransaction,
         ),
-        updateSpaceNameTransaction: useWithCatch(clientSingleton?.updateSpaceNameTransaction),
+        updateSpaceInfoTransaction: useWithCatch(clientSingleton?.updateSpaceInfoTransaction),
         editSpaceMembershipTransaction: useWithCatch(
             clientSingleton?.editSpaceMembershipTransaction,
         ),

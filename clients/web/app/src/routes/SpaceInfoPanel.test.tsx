@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 // eslint-disable-next-line no-restricted-imports
 import * as Lib from 'use-towns-client'
 import * as Router from 'react-router'
-// import { useContractSpaceInfo } from 'use-towns-client'
+import { BigNumber } from 'ethers'
 import { TestApp, getWalletAddress } from 'test/testUtils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { SpaceInfoPanel } from './SpaceInfoPanel'
@@ -32,6 +32,8 @@ const generateSpaceData = (networkId: string) => {
         membership: Lib.Membership.Join,
         isLoadingChannels: false,
         hasLoadedMemberships: false,
+        shortDescription: 'my short description',
+        longDescription: 'my long, long, long description',
     }
 
     const onChainSpaceInfo = {
@@ -40,6 +42,11 @@ const generateSpaceData = (networkId: string) => {
         name: spaceData.name,
         owner: ownerUser.userId,
         disabled: false,
+        shortDescription: spaceData.shortDescription,
+        longDescription: spaceData.longDescription,
+        createdAt: BigNumber.from(0),
+        tokenId: BigNumber.from(0),
+        uri: 'https://example.com',
     }
 
     return {

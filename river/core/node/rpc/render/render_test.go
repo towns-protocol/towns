@@ -3,9 +3,10 @@ package render_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/river-build/river/core/node/rpc/render"
 	"github.com/river-build/river/core/node/rpc/statusinfo"
-	"github.com/stretchr/testify/require"
 )
 
 // implicitly calls render.init that loads and parses all templates

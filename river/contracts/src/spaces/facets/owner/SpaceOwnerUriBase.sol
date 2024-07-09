@@ -20,7 +20,7 @@ abstract contract SpaceOwnerUriBase is ISpaceOwnerBase {
 
     if (spaceAddress == address(0)) return "";
 
-    Space memory space = ds.spaceByAddress[spaceAddress];
+    SpaceOwnerStorage.Space memory space = ds.spaceByAddress[spaceAddress];
 
     return
       string(

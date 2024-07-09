@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/river-build/river/core/node/infra"
 
 	"github.com/ethereum/go-ethereum"
@@ -17,6 +18,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+
 	"github.com/river-build/river/core/config"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/dlog"

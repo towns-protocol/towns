@@ -10,6 +10,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/mitchellh/mapstructure"
+
 	"github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/protocol"
 )

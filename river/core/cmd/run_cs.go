@@ -11,8 +11,9 @@ import (
 	xc "github.com/river-build/river/core/xchain/client_simulator"
 	"github.com/river-build/river/core/xchain/util"
 
-	"github.com/river-build/river/core/node/dlog"
 	"github.com/spf13/cobra"
+
+	"github.com/river-build/river/core/node/dlog"
 )
 
 func keyboardInput(input chan rune) {

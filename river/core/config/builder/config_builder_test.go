@@ -5,9 +5,10 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/river-build/river/core/config/builder"
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/require"
+
+	"github.com/river-build/river/core/config/builder"
 )
 
 type Config struct {

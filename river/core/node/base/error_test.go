@@ -6,11 +6,12 @@ import (
 	"testing"
 
 	"connectrpc.com/connect"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/protocol"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestRiverError(t *testing.T) {

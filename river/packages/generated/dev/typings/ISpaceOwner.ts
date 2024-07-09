@@ -33,13 +33,24 @@ export declare namespace ISpaceOwnerBase {
     uri: PromiseOrValue<string>;
     tokenId: PromiseOrValue<BigNumberish>;
     createdAt: PromiseOrValue<BigNumberish>;
+    shortDescription: PromiseOrValue<string>;
+    longDescription: PromiseOrValue<string>;
   };
 
-  export type SpaceStructOutput = [string, string, BigNumber, BigNumber] & {
+  export type SpaceStructOutput = [
+    string,
+    string,
+    BigNumber,
+    BigNumber,
+    string,
+    string
+  ] & {
     name: string;
     uri: string;
     tokenId: BigNumber;
     createdAt: BigNumber;
+    shortDescription: string;
+    longDescription: string;
   };
 }
 
@@ -47,10 +58,10 @@ export interface ISpaceOwnerInterface extends utils.Interface {
   functions: {
     "getFactory()": FunctionFragment;
     "getSpaceInfo(address)": FunctionFragment;
-    "mintSpace(string,string,address)": FunctionFragment;
+    "mintSpace(string,string,address,string,string)": FunctionFragment;
     "nextTokenId()": FunctionFragment;
     "setFactory(address)": FunctionFragment;
-    "updateSpaceInfo(address,string,string)": FunctionFragment;
+    "updateSpaceInfo(address,string,string,string,string)": FunctionFragment;
   };
 
   getFunction(
@@ -76,6 +87,8 @@ export interface ISpaceOwnerInterface extends utils.Interface {
     values: [
       PromiseOrValue<string>,
       PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
       PromiseOrValue<string>
     ]
   ): string;
@@ -90,6 +103,8 @@ export interface ISpaceOwnerInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "updateSpaceInfo",
     values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
       PromiseOrValue<string>,
       PromiseOrValue<string>,
       PromiseOrValue<string>
@@ -181,6 +196,8 @@ export interface ISpaceOwner extends BaseContract {
       name: PromiseOrValue<string>,
       uri: PromiseOrValue<string>,
       space: PromiseOrValue<string>,
+      shortDescription: PromiseOrValue<string>,
+      longDescription: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -195,6 +212,8 @@ export interface ISpaceOwner extends BaseContract {
       space: PromiseOrValue<string>,
       name: PromiseOrValue<string>,
       uri: PromiseOrValue<string>,
+      shortDescription: PromiseOrValue<string>,
+      longDescription: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
@@ -210,6 +229,8 @@ export interface ISpaceOwner extends BaseContract {
     name: PromiseOrValue<string>,
     uri: PromiseOrValue<string>,
     space: PromiseOrValue<string>,
+    shortDescription: PromiseOrValue<string>,
+    longDescription: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -224,6 +245,8 @@ export interface ISpaceOwner extends BaseContract {
     space: PromiseOrValue<string>,
     name: PromiseOrValue<string>,
     uri: PromiseOrValue<string>,
+    shortDescription: PromiseOrValue<string>,
+    longDescription: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -239,6 +262,8 @@ export interface ISpaceOwner extends BaseContract {
       name: PromiseOrValue<string>,
       uri: PromiseOrValue<string>,
       space: PromiseOrValue<string>,
+      shortDescription: PromiseOrValue<string>,
+      longDescription: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -253,6 +278,8 @@ export interface ISpaceOwner extends BaseContract {
       space: PromiseOrValue<string>,
       name: PromiseOrValue<string>,
       uri: PromiseOrValue<string>,
+      shortDescription: PromiseOrValue<string>,
+      longDescription: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
   };
@@ -283,6 +310,8 @@ export interface ISpaceOwner extends BaseContract {
       name: PromiseOrValue<string>,
       uri: PromiseOrValue<string>,
       space: PromiseOrValue<string>,
+      shortDescription: PromiseOrValue<string>,
+      longDescription: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -297,6 +326,8 @@ export interface ISpaceOwner extends BaseContract {
       space: PromiseOrValue<string>,
       name: PromiseOrValue<string>,
       uri: PromiseOrValue<string>,
+      shortDescription: PromiseOrValue<string>,
+      longDescription: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
   };
@@ -313,6 +344,8 @@ export interface ISpaceOwner extends BaseContract {
       name: PromiseOrValue<string>,
       uri: PromiseOrValue<string>,
       space: PromiseOrValue<string>,
+      shortDescription: PromiseOrValue<string>,
+      longDescription: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -327,6 +360,8 @@ export interface ISpaceOwner extends BaseContract {
       space: PromiseOrValue<string>,
       name: PromiseOrValue<string>,
       uri: PromiseOrValue<string>,
+      shortDescription: PromiseOrValue<string>,
+      longDescription: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };

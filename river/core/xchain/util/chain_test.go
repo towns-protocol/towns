@@ -7,9 +7,10 @@ import (
 	"github.com/river-build/river/core/xchain/util"
 
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/stretchr/testify/require"
+
 	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/crypto"
-	"github.com/stretchr/testify/require"
 )
 
 // TestStartBlockNumberRange ensures that utils.StartBlockNumber ensures that the duration to go back falls within an
@@ -43,7 +44,7 @@ func TestStartBlockNumber(t *testing.T) {
 	ctx, cancel := test.NewTestContext()
 	defer cancel()
 
-	btc, err := crypto.NewBlockchainTestContext(ctx, 0, false)
+	btc, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{})
 	require.NoError(err, "instantiate blockchain test context")
 	defer btc.Close()
 
@@ -93,7 +94,7 @@ func TestStartBlockNumberLongChain(t *testing.T) {
 	ctx, cancel := test.NewTestContext()
 	defer cancel()
 
-	btc, err := crypto.NewBlockchainTestContext(ctx, 0, false)
+	btc, err := crypto.NewBlockchainTestContext(ctx, crypto.TestParams{})
 	require.NoError(err, "instantiate blockchain test context")
 	defer btc.Close()
 

@@ -31,7 +31,7 @@ var (
 
 // RuleEntitlementMetaData contains all meta data concerning the RuleEntitlement contract.
 var RuleEntitlementMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"description\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"encodeRuleData\",\"inputs\":[{\"name\":\"data\",\"type\":\"tuple\",\"internalType\":\"structIRuleEntitlement.RuleData\",\"components\":[{\"name\":\"operations\",\"type\":\"tuple[]\",\"internalType\":\"structIRuleEntitlement.Operation[]\",\"components\":[{\"name\":\"opType\",\"type\":\"uint8\",\"internalType\":\"enumIRuleEntitlement.CombinedOperationType\"},{\"name\":\"index\",\"type\":\"uint8\",\"internalType\":\"uint8\"}]},{\"name\":\"checkOperations\",\"type\":\"tuple[]\",\"internalType\":\"structIRuleEntitlement.CheckOperation[]\",\"components\":[{\"name\":\"opType\",\"type\":\"uint8\",\"internalType\":\"enumIRuleEntitlement.CheckOperationType\"},{\"name\":\"chainId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"contractAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"threshold\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"logicalOperations\",\"type\":\"tuple[]\",\"internalType\":\"structIRuleEntitlement.LogicalOperation[]\",\"components\":[{\"name\":\"logOpType\",\"type\":\"uint8\",\"internalType\":\"enumIRuleEntitlement.LogicalOperationType\"},{\"name\":\"leftOperationIndex\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"rightOperationIndex\",\"type\":\"uint8\",\"internalType\":\"uint8\"}]}]}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"stateMutability\":\"pure\"},{\"type\":\"function\",\"name\":\"getCheckOperations\",\"inputs\":[{\"name\":\"roleId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIRuleEntitlement.CheckOperation[]\",\"components\":[{\"name\":\"opType\",\"type\":\"uint8\",\"internalType\":\"enumIRuleEntitlement.CheckOperationType\"},{\"name\":\"chainId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"contractAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"threshold\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getEntitlementDataByRoleId\",\"inputs\":[{\"name\":\"roleId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getLogicalOperations\",\"inputs\":[{\"name\":\"roleId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIRuleEntitlement.LogicalOperation[]\",\"components\":[{\"name\":\"logOpType\",\"type\":\"uint8\",\"internalType\":\"enumIRuleEntitlement.LogicalOperationType\"},{\"name\":\"leftOperationIndex\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"rightOperationIndex\",\"type\":\"uint8\",\"internalType\":\"uint8\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getOperations\",\"inputs\":[{\"name\":\"roleId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIRuleEntitlement.Operation[]\",\"components\":[{\"name\":\"opType\",\"type\":\"uint8\",\"internalType\":\"enumIRuleEntitlement.CombinedOperationType\"},{\"name\":\"index\",\"type\":\"uint8\",\"internalType\":\"uint8\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getRuleData\",\"inputs\":[{\"name\":\"roleId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"data\",\"type\":\"tuple\",\"internalType\":\"structIRuleEntitlement.RuleData\",\"components\":[{\"name\":\"operations\",\"type\":\"tuple[]\",\"internalType\":\"structIRuleEntitlement.Operation[]\",\"components\":[{\"name\":\"opType\",\"type\":\"uint8\",\"internalType\":\"enumIRuleEntitlement.CombinedOperationType\"},{\"name\":\"index\",\"type\":\"uint8\",\"internalType\":\"uint8\"}]},{\"name\":\"checkOperations\",\"type\":\"tuple[]\",\"internalType\":\"structIRuleEntitlement.CheckOperation[]\",\"components\":[{\"name\":\"opType\",\"type\":\"uint8\",\"internalType\":\"enumIRuleEntitlement.CheckOperationType\"},{\"name\":\"chainId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"contractAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"threshold\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"logicalOperations\",\"type\":\"tuple[]\",\"internalType\":\"structIRuleEntitlement.LogicalOperation[]\",\"components\":[{\"name\":\"logOpType\",\"type\":\"uint8\",\"internalType\":\"enumIRuleEntitlement.LogicalOperationType\"},{\"name\":\"leftOperationIndex\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"rightOperationIndex\",\"type\":\"uint8\",\"internalType\":\"uint8\"}]}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"initialize\",\"inputs\":[{\"name\":\"space\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"isCrosschain\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isEntitled\",\"inputs\":[{\"name\":\"channelId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"user\",\"type\":\"address[]\",\"internalType\":\"address[]\"},{\"name\":\"permission\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"moduleType\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"name\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"removeEntitlement\",\"inputs\":[{\"name\":\"roleId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setEntitlement\",\"inputs\":[{\"name\":\"roleId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"entitlementData\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"error\",\"name\":\"CheckOperationsLimitReaced\",\"inputs\":[{\"name\":\"limit\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"Entitlement__InvalidValue\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Entitlement__NotAllowed\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Entitlement__NotMember\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Entitlement__ValueAlreadyExists\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidCheckOperationIndex\",\"inputs\":[{\"name\":\"operationIndex\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"checkOperationsLength\",\"type\":\"uint8\",\"internalType\":\"uint8\"}]},{\"type\":\"error\",\"name\":\"InvalidLeftOperationIndex\",\"inputs\":[{\"name\":\"leftOperationIndex\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"currentOperationIndex\",\"type\":\"uint8\",\"internalType\":\"uint8\"}]},{\"type\":\"error\",\"name\":\"InvalidLogicalOperationIndex\",\"inputs\":[{\"name\":\"operationIndex\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"logicalOperationsLength\",\"type\":\"uint8\",\"internalType\":\"uint8\"}]},{\"type\":\"error\",\"name\":\"InvalidOperationType\",\"inputs\":[{\"name\":\"opType\",\"type\":\"uint8\",\"internalType\":\"enumIRuleEntitlement.CombinedOperationType\"}]},{\"type\":\"error\",\"name\":\"InvalidRightOperationIndex\",\"inputs\":[{\"name\":\"rightOperationIndex\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"currentOperationIndex\",\"type\":\"uint8\",\"internalType\":\"uint8\"}]},{\"type\":\"error\",\"name\":\"LogicalOperationLimitReached\",\"inputs\":[{\"name\":\"limit\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"OperationsLimitReached\",\"inputs\":[{\"name\":\"limit\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"description\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"encodeRuleData\",\"inputs\":[{\"name\":\"data\",\"type\":\"tuple\",\"internalType\":\"structIRuleEntitlement.RuleData\",\"components\":[{\"name\":\"operations\",\"type\":\"tuple[]\",\"internalType\":\"structIRuleEntitlement.Operation[]\",\"components\":[{\"name\":\"opType\",\"type\":\"uint8\",\"internalType\":\"enumIRuleEntitlement.CombinedOperationType\"},{\"name\":\"index\",\"type\":\"uint8\",\"internalType\":\"uint8\"}]},{\"name\":\"checkOperations\",\"type\":\"tuple[]\",\"internalType\":\"structIRuleEntitlement.CheckOperation[]\",\"components\":[{\"name\":\"opType\",\"type\":\"uint8\",\"internalType\":\"enumIRuleEntitlement.CheckOperationType\"},{\"name\":\"chainId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"contractAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"threshold\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"logicalOperations\",\"type\":\"tuple[]\",\"internalType\":\"structIRuleEntitlement.LogicalOperation[]\",\"components\":[{\"name\":\"logOpType\",\"type\":\"uint8\",\"internalType\":\"enumIRuleEntitlement.LogicalOperationType\"},{\"name\":\"leftOperationIndex\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"rightOperationIndex\",\"type\":\"uint8\",\"internalType\":\"uint8\"}]}]}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"stateMutability\":\"pure\"},{\"type\":\"function\",\"name\":\"getEntitlementDataByRoleId\",\"inputs\":[{\"name\":\"roleId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getRuleData\",\"inputs\":[{\"name\":\"roleId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"data\",\"type\":\"tuple\",\"internalType\":\"structIRuleEntitlement.RuleData\",\"components\":[{\"name\":\"operations\",\"type\":\"tuple[]\",\"internalType\":\"structIRuleEntitlement.Operation[]\",\"components\":[{\"name\":\"opType\",\"type\":\"uint8\",\"internalType\":\"enumIRuleEntitlement.CombinedOperationType\"},{\"name\":\"index\",\"type\":\"uint8\",\"internalType\":\"uint8\"}]},{\"name\":\"checkOperations\",\"type\":\"tuple[]\",\"internalType\":\"structIRuleEntitlement.CheckOperation[]\",\"components\":[{\"name\":\"opType\",\"type\":\"uint8\",\"internalType\":\"enumIRuleEntitlement.CheckOperationType\"},{\"name\":\"chainId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"contractAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"threshold\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"logicalOperations\",\"type\":\"tuple[]\",\"internalType\":\"structIRuleEntitlement.LogicalOperation[]\",\"components\":[{\"name\":\"logOpType\",\"type\":\"uint8\",\"internalType\":\"enumIRuleEntitlement.LogicalOperationType\"},{\"name\":\"leftOperationIndex\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"rightOperationIndex\",\"type\":\"uint8\",\"internalType\":\"uint8\"}]}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"initialize\",\"inputs\":[{\"name\":\"space\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"isCrosschain\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isEntitled\",\"inputs\":[{\"name\":\"channelId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"user\",\"type\":\"address[]\",\"internalType\":\"address[]\"},{\"name\":\"permission\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"moduleType\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"name\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"removeEntitlement\",\"inputs\":[{\"name\":\"roleId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setEntitlement\",\"inputs\":[{\"name\":\"roleId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"entitlementData\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"error\",\"name\":\"CheckOperationsLimitReaced\",\"inputs\":[{\"name\":\"limit\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"Entitlement__InvalidValue\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Entitlement__NotAllowed\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Entitlement__NotMember\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"Entitlement__ValueAlreadyExists\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidCheckOperationIndex\",\"inputs\":[{\"name\":\"operationIndex\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"checkOperationsLength\",\"type\":\"uint8\",\"internalType\":\"uint8\"}]},{\"type\":\"error\",\"name\":\"InvalidLeftOperationIndex\",\"inputs\":[{\"name\":\"leftOperationIndex\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"currentOperationIndex\",\"type\":\"uint8\",\"internalType\":\"uint8\"}]},{\"type\":\"error\",\"name\":\"InvalidLogicalOperationIndex\",\"inputs\":[{\"name\":\"operationIndex\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"logicalOperationsLength\",\"type\":\"uint8\",\"internalType\":\"uint8\"}]},{\"type\":\"error\",\"name\":\"InvalidOperationType\",\"inputs\":[{\"name\":\"opType\",\"type\":\"uint8\",\"internalType\":\"enumIRuleEntitlement.CombinedOperationType\"}]},{\"type\":\"error\",\"name\":\"InvalidRightOperationIndex\",\"inputs\":[{\"name\":\"rightOperationIndex\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"currentOperationIndex\",\"type\":\"uint8\",\"internalType\":\"uint8\"}]},{\"type\":\"error\",\"name\":\"LogicalOperationLimitReached\",\"inputs\":[{\"name\":\"limit\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"OperationsLimitReached\",\"inputs\":[{\"name\":\"limit\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}]",
 }
 
 // RuleEntitlementABI is the input ABI used to generate the binding from.
@@ -242,37 +242,6 @@ func (_RuleEntitlement *RuleEntitlementCallerSession) EncodeRuleData(data IRuleE
 	return _RuleEntitlement.Contract.EncodeRuleData(&_RuleEntitlement.CallOpts, data)
 }
 
-// GetCheckOperations is a free data retrieval call binding the contract method 0xe3eeace1.
-//
-// Solidity: function getCheckOperations(uint256 roleId) view returns((uint8,uint256,address,uint256)[])
-func (_RuleEntitlement *RuleEntitlementCaller) GetCheckOperations(opts *bind.CallOpts, roleId *big.Int) ([]IRuleEntitlementCheckOperation, error) {
-	var out []interface{}
-	err := _RuleEntitlement.contract.Call(opts, &out, "getCheckOperations", roleId)
-
-	if err != nil {
-		return *new([]IRuleEntitlementCheckOperation), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new([]IRuleEntitlementCheckOperation)).(*[]IRuleEntitlementCheckOperation)
-
-	return out0, err
-
-}
-
-// GetCheckOperations is a free data retrieval call binding the contract method 0xe3eeace1.
-//
-// Solidity: function getCheckOperations(uint256 roleId) view returns((uint8,uint256,address,uint256)[])
-func (_RuleEntitlement *RuleEntitlementSession) GetCheckOperations(roleId *big.Int) ([]IRuleEntitlementCheckOperation, error) {
-	return _RuleEntitlement.Contract.GetCheckOperations(&_RuleEntitlement.CallOpts, roleId)
-}
-
-// GetCheckOperations is a free data retrieval call binding the contract method 0xe3eeace1.
-//
-// Solidity: function getCheckOperations(uint256 roleId) view returns((uint8,uint256,address,uint256)[])
-func (_RuleEntitlement *RuleEntitlementCallerSession) GetCheckOperations(roleId *big.Int) ([]IRuleEntitlementCheckOperation, error) {
-	return _RuleEntitlement.Contract.GetCheckOperations(&_RuleEntitlement.CallOpts, roleId)
-}
-
 // GetEntitlementDataByRoleId is a free data retrieval call binding the contract method 0x1eee07b2.
 //
 // Solidity: function getEntitlementDataByRoleId(uint256 roleId) view returns(bytes)
@@ -302,68 +271,6 @@ func (_RuleEntitlement *RuleEntitlementSession) GetEntitlementDataByRoleId(roleI
 // Solidity: function getEntitlementDataByRoleId(uint256 roleId) view returns(bytes)
 func (_RuleEntitlement *RuleEntitlementCallerSession) GetEntitlementDataByRoleId(roleId *big.Int) ([]byte, error) {
 	return _RuleEntitlement.Contract.GetEntitlementDataByRoleId(&_RuleEntitlement.CallOpts, roleId)
-}
-
-// GetLogicalOperations is a free data retrieval call binding the contract method 0x545f09d3.
-//
-// Solidity: function getLogicalOperations(uint256 roleId) view returns((uint8,uint8,uint8)[])
-func (_RuleEntitlement *RuleEntitlementCaller) GetLogicalOperations(opts *bind.CallOpts, roleId *big.Int) ([]IRuleEntitlementLogicalOperation, error) {
-	var out []interface{}
-	err := _RuleEntitlement.contract.Call(opts, &out, "getLogicalOperations", roleId)
-
-	if err != nil {
-		return *new([]IRuleEntitlementLogicalOperation), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new([]IRuleEntitlementLogicalOperation)).(*[]IRuleEntitlementLogicalOperation)
-
-	return out0, err
-
-}
-
-// GetLogicalOperations is a free data retrieval call binding the contract method 0x545f09d3.
-//
-// Solidity: function getLogicalOperations(uint256 roleId) view returns((uint8,uint8,uint8)[])
-func (_RuleEntitlement *RuleEntitlementSession) GetLogicalOperations(roleId *big.Int) ([]IRuleEntitlementLogicalOperation, error) {
-	return _RuleEntitlement.Contract.GetLogicalOperations(&_RuleEntitlement.CallOpts, roleId)
-}
-
-// GetLogicalOperations is a free data retrieval call binding the contract method 0x545f09d3.
-//
-// Solidity: function getLogicalOperations(uint256 roleId) view returns((uint8,uint8,uint8)[])
-func (_RuleEntitlement *RuleEntitlementCallerSession) GetLogicalOperations(roleId *big.Int) ([]IRuleEntitlementLogicalOperation, error) {
-	return _RuleEntitlement.Contract.GetLogicalOperations(&_RuleEntitlement.CallOpts, roleId)
-}
-
-// GetOperations is a free data retrieval call binding the contract method 0x5ad4d49e.
-//
-// Solidity: function getOperations(uint256 roleId) view returns((uint8,uint8)[])
-func (_RuleEntitlement *RuleEntitlementCaller) GetOperations(opts *bind.CallOpts, roleId *big.Int) ([]IRuleEntitlementOperation, error) {
-	var out []interface{}
-	err := _RuleEntitlement.contract.Call(opts, &out, "getOperations", roleId)
-
-	if err != nil {
-		return *new([]IRuleEntitlementOperation), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new([]IRuleEntitlementOperation)).(*[]IRuleEntitlementOperation)
-
-	return out0, err
-
-}
-
-// GetOperations is a free data retrieval call binding the contract method 0x5ad4d49e.
-//
-// Solidity: function getOperations(uint256 roleId) view returns((uint8,uint8)[])
-func (_RuleEntitlement *RuleEntitlementSession) GetOperations(roleId *big.Int) ([]IRuleEntitlementOperation, error) {
-	return _RuleEntitlement.Contract.GetOperations(&_RuleEntitlement.CallOpts, roleId)
-}
-
-// GetOperations is a free data retrieval call binding the contract method 0x5ad4d49e.
-//
-// Solidity: function getOperations(uint256 roleId) view returns((uint8,uint8)[])
-func (_RuleEntitlement *RuleEntitlementCallerSession) GetOperations(roleId *big.Int) ([]IRuleEntitlementOperation, error) {
-	return _RuleEntitlement.Contract.GetOperations(&_RuleEntitlement.CallOpts, roleId)
 }
 
 // GetRuleData is a free data retrieval call binding the contract method 0x069a3ee9.
