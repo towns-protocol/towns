@@ -11,7 +11,6 @@ export const CaptureLinkAttachmentsPlugin = (props: {
     onUpdate: (
         messageAttachments: EmbeddedMessageAttachment[],
         unfurledLinkAttachments: UnfurledLinkAttachment[],
-        isLoading: boolean,
     ) => void
 }) => {
     const { onUpdate } = props
@@ -30,9 +29,8 @@ export const CaptureLinkAttachmentsPlugin = (props: {
             externalAttachments
                 // omit external urls already included as message attachments
                 .filter((l) => messageAttachments.every((m) => m.url !== l.url)),
-            isLoading,
         )
     }, [externalAttachments, isLoading, messageAttachments, onUpdate])
 
-    return <> {isLoading ? 'isLoading' : 'nope'}</>
+    return <></>
 }
