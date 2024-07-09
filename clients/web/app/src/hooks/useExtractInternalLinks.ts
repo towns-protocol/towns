@@ -29,7 +29,9 @@ export const useExtractInternalLinks = (text: string): EmbeddedMessageLink[] => 
     }, [links])
 }
 
-export const useExtractExternalLinks = (text: string): UnfurledLinkAttachment[] => {
+export const useExtractExternalLinks = (
+    text: string,
+): { attachments: UnfurledLinkAttachment[]; isLoading: boolean } => {
     const links = getExternalLinks(text)
     const linksRef = useRef(links)
     const cleanLinks = useMemo(() => {
@@ -38,7 +40,11 @@ export const useExtractExternalLinks = (text: string): UnfurledLinkAttachment[] 
             ? linksRef.current
             : (linksRef.current = cleanLinks)
     }, [links])
-    const { data: unfurledContent, isError } = useUnfurlContent({
+    const {
+        data: unfurledContent,
+        isError,
+        isLoading,
+    } = useUnfurlContent({
         urlsArray: cleanLinks.map((l) => l.href),
         enabled: cleanLinks.length > 0,
     })
@@ -60,7 +66,7 @@ export const useExtractExternalLinks = (text: string): UnfurledLinkAttachment[] 
         })
     }, [unfurledContent, isError])
 
-    return unfurledLinks
+    return { attachments: unfurledLinks, isLoading }
 }
 
 function getTownsLinks(text: string) {

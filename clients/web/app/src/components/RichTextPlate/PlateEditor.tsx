@@ -60,9 +60,8 @@ import { ELEMENT_MENTION_CHANNEL } from './plugins/createChannelPlugin'
 import { EmojiPlugin } from './plugins/emoji/EmojiPlugin'
 import { OnFocusPlugin } from './plugins/OnFocusPlugin'
 import { PasteFilePlugin } from './components/PasteFilePlugin'
-import { CaptureTownsLinkPlugin } from './components/CaptureTownsLinkPlugin'
+import { CaptureLinkAttachmentsPlugin } from './components/CaptureLinkAttachmentsPlugin'
 import { OfflineIndicator } from './components/OfflineIndicator'
-import { CaptureExternalLinkPlugin } from './components/CaptureExternalLinkPlugin'
 
 type Props = {
     onSend?: (value: string, options: SendTextMessageOptions | undefined) => void
@@ -219,13 +218,13 @@ const PlateEditorWithoutBoundary = ({
         [unfurledLinkAttachments],
     )
 
-    const onMessageLinksUpdated = useCallback((links: EmbeddedMessageAttachment[]) => {
-        setEmbeddedMessageAttachments(links)
-    }, [])
-
-    const onUnfurledLinksUpdated = useCallback((links: UnfurledLinkAttachment[]) => {
-        setUnfurledAttachments(links)
-    }, [])
+    const onMessageLinksUpdated = useCallback(
+        (messages: EmbeddedMessageAttachment[], links: UnfurledLinkAttachment[]) => {
+            setEmbeddedMessageAttachments(messages)
+            setUnfurledAttachments(links)
+        },
+        [],
+    )
 
     const onChange = useCallback(() => {
         if (editorRef.current) {
@@ -444,8 +443,7 @@ const PlateEditorWithoutBoundary = ({
                             editorRef={editorRef}
                             onFocusChange={onFocusChange}
                         />
-                        <CaptureTownsLinkPlugin onUpdate={onMessageLinksUpdated} />
-                        <CaptureExternalLinkPlugin onUpdate={onUnfurledLinksUpdated} />
+                        <CaptureLinkAttachmentsPlugin onUpdate={onMessageLinksUpdated} />
                         <EmojiPlugin />
                         <MentionCombobox<TUserWithChannel>
                             id={ComboboxTypes.userMention}
