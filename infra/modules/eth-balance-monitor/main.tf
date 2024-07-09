@@ -68,8 +68,11 @@ resource "aws_cloudwatch_event_rule" "schedule" {
   name        = "schedule-${module.lambda_function.lambda_function_name}"
   description = "Schedule for the river node eth balance monitor lambda function"
 
-  # every 10 minutes
-  schedule_expression = "rate(10 minutes)"
+  # TODO: create a separate lambda for expensive queries. (https://linear.app/hnt-labs/issue/HNT-8096/create-a-second-lambda-for-expensive-queries-with-lower-run-rates)
+  # The cheaper queries should run every 5-10 minutes.
+  # The expensive ones should run no more than once per hour.
+  # every 1 hour
+  schedule_expression = "rate(1 hour)"
 }
 
 resource "aws_cloudwatch_event_target" "schedule" {
