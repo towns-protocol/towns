@@ -33,7 +33,7 @@ const recursivelyGetNameAndId = (node: TUserMentionElement, mentions: Mention[])
 }
 
 export const userMentionFilter = (query: string) => (item: TComboboxItem<TUserWithChannel>) =>
-    [item.data.username, item.data.displayName]
+    [item.data.username, item.data.displayName, item.data.ensName]
         .join(' ')
         .toLowerCase()
         .includes(query.toLowerCase())

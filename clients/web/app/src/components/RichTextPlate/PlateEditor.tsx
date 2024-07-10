@@ -450,7 +450,7 @@ const PlateEditorWithoutBoundary = ({
                             items={userMentions}
                             currentUser={props.userId}
                             filter={userMentionFilter}
-                        />{' '}
+                        />
                         <MentionCombobox<Channel>
                             pluginKey={ELEMENT_MENTION_CHANNEL}
                             id={ComboboxTypes.channelMention}
