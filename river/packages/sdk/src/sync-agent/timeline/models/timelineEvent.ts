@@ -1,8 +1,11 @@
-import { StreamTimelineEvent } from '../../../types'
+import { isDecryptedEvent, StreamTimelineEvent } from '../../../types'
 
 export interface TimelineEvent {
     eventId: string
     text: string
+    createdAtEpochMs: bigint
+    creatorUserId: string
+    isDecryptedEvent: boolean
 }
 
 export function toEvent(timelineEvent: StreamTimelineEvent, _userId: string): TimelineEvent {
@@ -12,6 +15,9 @@ export function toEvent(timelineEvent: StreamTimelineEvent, _userId: string): Ti
     return {
         eventId,
         text: getEventText(timelineEvent),
+        createdAtEpochMs: timelineEvent.createdAtEpochMs,
+        creatorUserId: timelineEvent.creatorUserId,
+        isDecryptedEvent: isDecryptedEvent(timelineEvent),
     }
 }
 

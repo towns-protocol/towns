@@ -8,6 +8,10 @@ import { Bot } from '../utils/bot'
 describe('RiverConnection.test.ts', () => {
     const testUser = new Bot()
 
+    beforeEach(async () => {
+        await testUser.fundWallet()
+    })
+
     // test that a riverConnection will eventually be defined if passed valid config
     test('riverConnection initializes from empty', async () => {
         const syncAgent = await testUser.makeSyncAgent()

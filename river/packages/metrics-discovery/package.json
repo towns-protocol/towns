@@ -1,0 +1,31 @@
+{
+    "name": "@river-build/metrics-discovery",
+    "description": "",
+    "version": "0.0.11",
+    "packageManager": "yarn@3.8.0",
+    "author": "",
+    "license": "ISC",
+    "type": "module",
+    "main": "index.js",
+    "scripts": {
+        "lint": "eslint . --ext .ts",
+        "start": "node ./dist/index.cjs",
+        "typecheck": "tsc --noEmit",
+        "compile": "esbuild src/index.ts --sourcemap=inline --bundle --platform=node --target=node20 --format=cjs --outfile=dist/index.cjs",
+        "build": "yarn typecheck && yarn compile",
+        "dev": "yarn build && yarn start",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "dependencies": {
+        "@river-build/generated": "workspace:^",
+        "@river-build/web3": "workspace:^",
+        "ethers": "^5.7.2",
+        "zod": "^3.21.4"
+    },
+    "devDependencies": {
+        "esbuild": "^0.21.5",
+        "eslint": "^8.53.0",
+        "prettier": "^2.8.8",
+        "typescript": "^5.1.6"
+    }
+}

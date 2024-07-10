@@ -215,13 +215,62 @@ func (p *miniblockProducer) TestMakeMiniblock(
 	return view.LastBlock().Hash, view.LastBlock().Num, nil
 }
 
+// mbProposeAndStore is implemented as standalone function to allow calling from tests.
+func mbProposeAndStore(
+	ctx context.Context,
+	params *StreamCacheParams,
+	stream *streamImpl,
+	forceSnapshot bool,
+) (*MiniblockInfo, error) {
+	view, err := stream.getView(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	proposal, err := view.ProposeNextMiniblock(ctx, params.ChainConfig, forceSnapshot)
+	if err != nil {
+		return nil, err
+	}
+	if proposal == nil {
+		return nil, nil
+	}
+
+	miniblockHeader, envelopes, err := view.makeMiniblockHeader(ctx, proposal)
+	if err != nil {
+		return nil, err
+	}
+
+	mbInfo, err := NewMiniblockInfoFromHeaderAndParsed(params.Wallet, miniblockHeader, envelopes)
+	if err != nil {
+		return nil, err
+	}
+
+	miniblockBytes, err := mbInfo.ToBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	err = params.Storage.WriteBlockProposal(
+		ctx,
+		stream.streamId,
+		mbInfo.Hash,
+		mbInfo.Num,
+		miniblockBytes,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return mbInfo, nil
+}
+
 func (p *miniblockProducer) jobStart(ctx context.Context, j *mbJob, forceSnapshot bool) {
 	if ctx.Err() != nil {
 		p.jobDone(ctx, j)
 		return
 	}
 
-	proposal, err := j.stream.ProposeNextMiniblock(ctx, forceSnapshot)
+	proposal, err := mbProposeAndStore(ctx, p.streamCache.Params(), j.stream, forceSnapshot)
 	if err != nil {
 		dlog.FromCtx(ctx).
 			Error("MiniblockProducer: jobStart: Error creating new miniblock proposal", "streamId", j.stream.streamId, "err", err)

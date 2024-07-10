@@ -12,6 +12,7 @@ describe('spaces.test.ts', () => {
     const testUser = new Bot()
 
     test('create/leave/join space', async () => {
+        await testUser.fundWallet()
         const syncAgent = await testUser.makeSyncAgent()
         await syncAgent.start()
         expect(syncAgent.spaces.value.status).not.toBe('loading')

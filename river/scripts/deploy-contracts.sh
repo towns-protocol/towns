@@ -103,4 +103,6 @@ copy_addresses $BASE_ANVIL_SOURCE_DIR "base" "${BASE_CHAIN_ID}"
 copy_addresses $RIVER_ANVIL_SOURCE_DIR "river" "${RIVER_CHAIN_ID}"
 
 # Update the config
-./packages/generated/scripts/make-config.sh
+pushd ./packages/generated
+    yarn make-config
+popd

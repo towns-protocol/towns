@@ -1,0 +1,42 @@
+version: '3.8'
+
+volumes:
+    prometheus_data: {}
+
+services:
+    river-metrics-discovery:
+        container_name: river-metrics-discovery
+        build:
+            context: ../../
+            dockerfile: ./packages/metrics-discovery/Dockerfile
+        volumes:
+            - ./prometheus/etc/config:/river/packages/metrics-discovery/prometheus/etc/config:rw
+        env_file:
+            - ./.env
+
+    prometheus:
+        container_name: prometheus
+        image: prom/prometheus:latest
+        user: root
+        volumes:
+            - ./prometheus/etc:/prometheus/etc
+            - prometheus_data:/prometheus
+        command:
+            - --config.file=/prometheus/etc/config/prometheus-config.yaml
+            - --log.level=debug
+        ports:
+            - '9090:9090'
+
+    datadog:
+        container_name: datadog
+        image: datadog/agent:7
+        ports:
+            - '8125:8125/udp'
+            - '8126:8126'
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+            - /proc/:/host/proc/:ro
+            - /sys/fs/cgroup:/host/sys/fs/cgroup:ro
+            - ./datadog/prometheus.d:/conf.d/prometheus.d:ro
+        env_file:
+            - ./.env

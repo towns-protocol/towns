@@ -12,6 +12,10 @@ describe('User.test.ts', () => {
     logger.log('start')
     const testUser = new Bot()
 
+    beforeEach(async () => {
+        await testUser.fundWallet()
+    })
+
     test('User initializes', async () => {
         const syncAgent = await testUser.makeSyncAgent()
         const riverConnection = syncAgent.riverConnection

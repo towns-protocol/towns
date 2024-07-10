@@ -203,7 +203,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
     }
 
     private requestPersistentStorage() {
-        if (navigator.storage && navigator.storage.persist) {
+        if (typeof navigator !== 'undefined' && navigator.storage && navigator.storage.persist) {
             navigator.storage
                 .persist()
                 .then((persisted) => {
@@ -218,7 +218,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
     }
 
     private logPersistenceStats() {
-        if (navigator.storage && navigator.storage.estimate) {
+        if (typeof navigator !== 'undefined' && navigator.storage && navigator.storage.estimate) {
             navigator.storage
                 .estimate()
                 .then((estimate) => {

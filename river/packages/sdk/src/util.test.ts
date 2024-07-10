@@ -10,10 +10,11 @@ import {
     SyncStreamsResponse,
     SyncOp,
 } from '@river-build/proto'
+import { Entitlements } from './sync-agent/entitlements/entitlements'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { IStreamStateView } from './streamStateView'
 import { Client } from './client'
-import { makeBaseChainConfig, makeRiverChainConfig } from './riverConfig'
+import { makeBaseChainConfig, makeRiverChainConfig, makeRiverConfig } from './riverConfig'
 import {
     genId,
     makeSpaceStreamId,
@@ -51,6 +52,7 @@ import {
     Operation,
     OperationType,
     treeToRuleData,
+    SpaceDapp,
 } from '@river-build/web3'
 
 const log = dlog('csb:test:util')
@@ -207,13 +209,21 @@ export async function setupWalletsAndContexts() {
     const carolSpaceDapp = createSpaceDapp(carolProvider, baseConfig.chainConfig)
 
     // create a user
+    const riverConfig = makeRiverConfig()
     const [alice, bob, carol] = await Promise.all([
         makeTestClient({
             context: alicesContext,
             deviceId: 'alice',
+            entitlementsDelegate: new Entitlements(riverConfig, aliceSpaceDapp as SpaceDapp),
         }),
-        makeTestClient({ context: bobsContext }),
-        makeTestClient({ context: carolsContext }),
+        makeTestClient({
+            context: bobsContext,
+            entitlementsDelegate: new Entitlements(riverConfig, bobSpaceDapp as SpaceDapp),
+        }),
+        makeTestClient({
+            context: carolsContext,
+            entitlementsDelegate: new Entitlements(riverConfig, carolSpaceDapp as SpaceDapp),
+        }),
     ])
 
     return {

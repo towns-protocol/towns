@@ -216,6 +216,23 @@ func NewMiniblockInfoFromParsed(headerEvent *ParsedEvent, events []*ParsedEvent)
 	}, nil
 }
 
+func NewMiniblockInfoFromHeaderAndParsed(
+	wallet *crypto.Wallet,
+	header *MiniblockHeader,
+	events []*ParsedEvent,
+) (*MiniblockInfo, error) {
+	headerEvent, err := MakeParsedEventWithPayload(
+		wallet,
+		Make_MiniblockHeader(header),
+		header.PrevMiniblockHash,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewMiniblockInfoFromParsed(headerEvent, events)
+}
+
 func (b *MiniblockInfo) ToBytes() ([]byte, error) {
 	serialized, err := proto.Marshal(b.Proto)
 	if err == nil {

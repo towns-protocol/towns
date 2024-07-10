@@ -16,6 +16,8 @@ describe('syncAgents.test.ts', () => {
     let alice: SyncAgent
 
     beforeEach(async () => {
+        await bobUser.fundWallet()
+        await aliceUser.fundWallet()
         bob = await bobUser.makeSyncAgent()
         alice = await aliceUser.makeSyncAgent()
     })

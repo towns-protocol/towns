@@ -12,6 +12,10 @@ const logger = dlogger('csb:test:syncAgent')
 describe('syncAgent.test.ts', () => {
     const testUser = new Bot()
 
+    beforeEach(async () => {
+        await testUser.fundWallet()
+    })
+
     test('syncAgent', async () => {
         const syncAgent = await testUser.makeSyncAgent()
         expect(syncAgent.user.value.status).toBe('loading')

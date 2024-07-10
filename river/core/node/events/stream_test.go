@@ -96,7 +96,7 @@ func mbTest(
 	addEvent(t, ctx, tt.instances[0].params, stream, "1", view.LastBlock().Hash)
 	addEvent(t, ctx, tt.instances[0].params, stream, "2", view.LastBlock().Hash)
 
-	proposal, err := stream.ProposeNextMiniblock(ctx, false)
+	proposal, err := mbProposeAndStore(ctx, tt.instances[0].params, stream.(*streamImpl), false)
 	mb := proposal.headerEvent.Event.GetMiniblockHeader()
 	events := proposal.events
 	require.NoError(err)

@@ -136,7 +136,7 @@ export class StreamStateView implements IStreamStateView {
     get gdmChannelContent(): StreamStateView_GDMChannel {
         check(
             isDefined(this._gdmChannelContent),
-            `dmChannelContent not defined for ${this.contentKind}`,
+            `gdmChannelContent not defined for ${this.contentKind}`,
         )
         return this._gdmChannelContent
     }
