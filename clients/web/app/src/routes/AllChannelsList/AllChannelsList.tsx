@@ -23,6 +23,8 @@ import { LinkParams, useCreateLink } from 'hooks/useCreateLink'
 import { useAnalytics } from 'hooks/useAnalytics'
 import { useLeaveChannel } from 'hooks/useLeaveChannel'
 import { useNotificationSettings } from 'hooks/useNotificationSettings'
+import { useChannelEntitlements } from 'hooks/useChannelEntitlements'
+import { TokenTypePill } from '@components/Web3/TokenTypePill'
 
 export const AllChannelsList = ({
     onHideBrowseChannels,
@@ -125,6 +127,11 @@ export const ChannelItem = ({
     const { analytics } = useAnalytics()
     const { addChannelNotificationSettings, removeChannelNotificationSettings } =
         useNotificationSettings()
+
+    const { tokenTypes, hasSomeEntitlement } = useChannelEntitlements({
+        spaceId: space?.id,
+        channelId: channelNetworkId,
+    })
 
     useEffect(() => {
         // quick fix, leave events result in a faster rerender than the join event
@@ -248,12 +255,20 @@ export const ChannelItem = ({
                     cursor="pointer"
                     onClick={onOpenChannelClick}
                 >
-                    <Icon type="tag" padding="line" background="level2" size="square_lg" />
+                    <Icon
+                        type={hasSomeEntitlement ? 'lock' : 'tag'}
+                        padding="line"
+                        background="level2"
+                        size="square_lg"
+                    />
                     <Stack gap="sm" overflow="hidden" padding="sm">
                         <Stack horizontal shrink={false} gap="sm" alignItems="center">
                             <Text truncate color="gray1" textAlign="left">
-                                {name}
+                                {name}{' '}
                             </Text>
+                            {tokenTypes?.map((t) => (
+                                <TokenTypePill key={t} type={t} />
+                            ))}
                             {showDot && (
                                 <Box
                                     shrink={false}

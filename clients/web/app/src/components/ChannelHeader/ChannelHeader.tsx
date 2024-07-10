@@ -31,6 +31,7 @@ import { useChannelHeaderMembers } from 'hooks/useChannelHeaderMembers'
 import { useAnalytics } from 'hooks/useAnalytics'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { TouchPanelContext } from '@components/Panel/Panel'
+import { useChannelEntitlements } from 'hooks/useChannelEntitlements'
 
 type Props = {
     channel: {
@@ -40,6 +41,11 @@ type Props = {
     }
     spaceId: string | undefined
     onTouchClose?: () => void
+}
+
+type HeaderProps = {
+    showLoadingIndicator: boolean
+    hasSomeEntitlement: boolean | undefined
 }
 
 export const ChannelHeader = (props: Props) => {
@@ -62,18 +68,28 @@ export const ChannelHeader = (props: Props) => {
     const showLoadingIndicator =
         (!upToDate || !clientStatus.streamSyncActive) && isUserChannelMember
 
+    const { hasSomeEntitlement } = useChannelEntitlements({
+        spaceId: props.spaceId,
+        channelId: props.channel.id,
+    })
+
     return isTouch ? (
         <TouchChannelHeader
             {...props}
+            hasSomeEntitlement={hasSomeEntitlement}
             showLoadingIndicator={showLoadingIndicator}
             onTouchClose={onTouchClose}
         />
     ) : (
-        <DesktopChannelHeader {...props} showLoadingIndicator={showLoadingIndicator} />
+        <DesktopChannelHeader
+            {...props}
+            showLoadingIndicator={showLoadingIndicator}
+            hasSomeEntitlement={hasSomeEntitlement}
+        />
     )
 }
 
-const DesktopChannelHeader = (props: Props & { showLoadingIndicator: boolean }) => {
+const DesktopChannelHeader = (props: Props & HeaderProps) => {
     const { channel, spaceId, showLoadingIndicator } = props
     const { displayNotificationBanner, requestPushPermission, denyPushPermission } =
         usePushNotifications()
@@ -126,7 +142,11 @@ const DesktopChannelHeader = (props: Props & { showLoadingIndicator: boolean }) 
                 >
                     {channelType === 'channel' ? (
                         <>
-                            <Icon type="tag" size="square_sm" color="gray2" />
+                            <Icon
+                                type={props.hasSomeEntitlement ? 'lock' : 'tag'}
+                                size="square_sm"
+                                color="gray2"
+                            />
                             <Paragraph fontWeight="strong" color="default">
                                 {channel.label}
                             </Paragraph>
@@ -201,7 +221,7 @@ const GDMTitleContent = (props: { roomIdentifier: string }) => {
     )
 }
 
-const TouchChannelHeader = (props: Props & { showLoadingIndicator: boolean }) => {
+const TouchChannelHeader = (props: Props & HeaderProps) => {
     const { channel, onTouchClose, showLoadingIndicator } = props
     const spaceId = useSpaceIdFromPathname()
     const memberIds = useChannelHeaderMembers(channel.id)
@@ -277,9 +297,14 @@ const TouchChannelHeader = (props: Props & { showLoadingIndicator: boolean }) =>
                 >
                     {channelType === 'channel' ? (
                         <>
-                            <Stack horizontal gap="sm" alignContent="center">
+                            <Stack horizontal gap="xxs" alignContent="center">
+                                <Icon
+                                    type={props.hasSomeEntitlement ? 'lock' : 'tag'}
+                                    size="square_xs"
+                                    color="default"
+                                />
                                 <Paragraph truncate strong color="default" size="md">
-                                    #{channel.label}
+                                    {channel.label}
                                 </Paragraph>
                                 {isMuted && (
                                     <Box>

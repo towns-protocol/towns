@@ -5,6 +5,7 @@ import { PATHS } from 'routes'
 import { Badge, Box, ButtonText, Icon, Stack } from '@ui'
 import { useMuteSettings } from 'api/lib/notificationSettings'
 import { FavoriteChannelButton } from '@components/FavoriteChannelButton/FavoriteChannelButton'
+import { useChannelEntitlements } from 'hooks/useChannelEntitlements'
 import { NavItem } from './_NavItem'
 
 type Props = {
@@ -28,6 +29,11 @@ export const ChannelNavItem = (props: Props) => {
         isUnreadSection = false,
     } = props
 
+    const { hasSomeEntitlement } = useChannelEntitlements({
+        spaceId: space.id,
+        channelId: channel.id,
+    })
+
     const link = `/${PATHS.SPACES}/${space.id}/channels/${channel.id}/`
     const isHighlight = channel.id === channelSlug
 
@@ -46,8 +52,9 @@ export const ChannelNavItem = (props: Props) => {
             <NavItem to={link} id={id} exact={false} paddingY="xxs" minHeight="x5">
                 <Stack horizontal width="100%" gap="sm" alignItems="center">
                     <Box>
+                        {}
                         <Icon
-                            type="tag"
+                            type={hasSomeEntitlement ? 'lock' : 'tag'}
                             padding="line"
                             background="level2"
                             color={showUnread ? 'default' : 'gray2'}

@@ -69,6 +69,7 @@ import { useUnseenChannelIds } from 'hooks/useUnseenChannelIdsCount'
 import { usePanels } from 'routes/layouts/hooks/usePanels'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { useAnalytics } from 'hooks/useAnalytics'
+import { useChannelEntitlements } from 'hooks/useChannelEntitlements'
 import { ChannelItem } from '../AllChannelsList/AllChannelsList'
 import { TouchTabBarLayout } from '../layouts/TouchTabBarLayout'
 
@@ -519,6 +520,8 @@ const ChannelList = React.memo(
             ) : c.joined ? (
                 <TouchChannelResultRow
                     key={c.id}
+                    channelId={c.id}
+                    spaceId={space.id}
                     itemLink={{ channelId: c.id }}
                     name={c.channel.label}
                     unread={c.unread}
@@ -583,8 +586,10 @@ export const TouchChannelResultRow = (props: {
     mentionCount: number
     muted: boolean
     icontElement?: React.ReactNode
+    channelId?: string
+    spaceId?: string
 }) => {
-    const { itemLink, name, unread, mentionCount, muted } = props
+    const { itemLink, name, unread, mentionCount, muted, channelId, spaceId } = props
     const { createLink } = useCreateLink()
     const link =
         createLink(
@@ -593,6 +598,10 @@ export const TouchChannelResultRow = (props: {
                 : { messageId: itemLink.messageId },
         ) + `?ref=home`
 
+    const { hasSomeEntitlement } = useChannelEntitlements({
+        spaceId,
+        channelId,
+    })
     return (
         <NavItem to={link} padding="none">
             <NavItemContent
@@ -600,7 +609,9 @@ export const TouchChannelResultRow = (props: {
                 fontWeight={unread ? 'strong' : 'normal'}
                 color={unread ? 'default' : 'gray1'}
             >
-                {props.icontElement ?? <SearchResultItemIcon type="tag" />}
+                {props.icontElement ?? (
+                    <SearchResultItemIcon type={hasSomeEntitlement ? 'lock' : 'tag'} />
+                )}
                 <Text truncate textAlign="left">
                     {name}
                 </Text>
