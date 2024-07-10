@@ -302,56 +302,86 @@ router.get('/space/:id/identity', async (request: WorkerRequest, env) => {
     return new Response(JSON.parse(JSON.stringify(value)), { status: 200 })
 })
 
-router.post('/user-feedback', async (request: WorkerRequest, env) => {
-    const formData = await request.formData()
-    const requestBody = {
-        env: formData.get('env') as string,
-        deviceInfo: formData.get('deviceInfo') as string,
-        id: formData.get('id') as string,
-        name: formData.get('name') as string,
-        email: formData.get('email') as string,
-        comments: formData.get('comments') as string,
-        logJson: formData.get('logs') as string,
-        attachments: formData.getAll('attachment[]') as unknown as File[], // Unclear if this is correct
+router.post('/user-feedback', async (request: WorkerRequest, env: Env, ctx) => {
+    const uploads = (async () => {
+        const formData = await request.formData()
+        const requestBody = {
+            env: formData.get('env') as string,
+            deviceInfo: formData.get('deviceInfo') as string,
+            id: formData.get('id') as string,
+            name: formData.get('name') as string,
+            email: formData.get('email') as string,
+            comments: formData.get('comments') as string,
+            logJson: formData.get('logs') as string,
+            attachments: formData.getAll('attachment[]') as unknown as File[], // Check if this works as expected
+        }
+
+        const linearConfig = {
+            apiKey: env.LINEAR_API_KEY,
+            teamId: env.LINEAR_TEAM_ID,
+            graphQLUrl: env.LINEAR_GRAPHQL_URL,
+            userFeedbackProjectId: env.LINEAR_USER_FEEDBACK_PROJECT_ID,
+        }
+
+        const asyncTasks = [
+            async () => {
+                try {
+                    await createLinearIssue({
+                        config: linearConfig,
+                        ...requestBody,
+                    })
+                } catch (error) {
+                    console.error(`Failed to create linear issue: ${error}`)
+                } finally {
+                    console.log('Linear feedback submitted')
+                }
+            },
+            async () => {
+                try {
+                    await sendSnsTopic(
+                        {
+                            Message: JSON.stringify({
+                                name: requestBody.name,
+                                email: requestBody.email,
+                                comments: requestBody.comments,
+                            }), // MESSAGE_TEXT
+                            TopicArn: env.USER_FEEDBACK_TOPIC_ARN, // TOPIC_ARN
+                        },
+                        env.AWS_ACCESS_KEY_ID,
+                        env.AWS_SECRET_ACCESS_KEY,
+                    )
+                } catch (error) {
+                    console.error(`Failed to send SNS topic: ${error}`)
+                } finally {
+                    console.log('SNS feedback submitted')
+                }
+            },
+        ]
+
+        try {
+            await Promise.all(asyncTasks.map((fn) => fn()))
+        } catch (error) {
+            console.error(`Failed to create linear issue or send SNS topic: ${error}`)
+        } finally {
+            console.log('User feedback submitted')
+        }
+    })()
+
+    // Use the waitUntil method to ensure background work continues after the response
+    if (ctx && typeof ctx.waitUntil === 'function') {
+        ctx.waitUntil(uploads)
+        console.log('User feedback queued for processing')
+    } else {
+        console.error('Context (ctx) is undefined or does not have waitUntil method')
     }
 
-    const linearConfig = {
-        apiKey: env.LINEAR_API_KEY,
-        teamId: env.LINEAR_TEAM_ID,
-        graphQLUrl: env.LINEAR_GRAPHQL_URL,
-        userFeedbackProjectId: env.LINEAR_USER_FEEDBACK_PROJECT_ID,
-    }
-    const promises = [
-        createLinearIssue({
-            config: linearConfig,
-            ...requestBody,
-        }),
-        sendSnsTopic(
-            {
-                Message: JSON.stringify({
-                    name: requestBody.name,
-                    email: requestBody.email,
-                    comments: requestBody.comments,
-                }), // MESSAGE_TEXT
-                TopicArn: USER_FEEDBACK_TOPIC_ARN, //TOPIC_ARN
-            },
-            env.AWS_ACCESS_KEY_ID,
-            env.AWS_SECRET_ACCESS_KEY,
-        ),
-    ]
-    try {
-        await Promise.all(promises)
-        return new Response('ok', { status: 200 })
-    } catch (error) {
-        console.error(error)
-        return new Response(JSON.stringify({ error: (error as Error).message }), {
-            status: 400,
-        })
-    }
+    // Send the response immediately
+    return new Response('ok', { status: 200 })
 })
 
 router.post('/')
 
 router.get('*', () => new Response('Not Found', { status: 404 }))
 
-export const handleRequest = (request: WorkerRequest, env: Env) => router.handle(request, env)
+export const handleRequest = (request: WorkerRequest, env: Env, ctx?: ExecutionContext) =>
+    router.handle(request, env, ctx)

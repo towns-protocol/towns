@@ -1,6 +1,5 @@
 import { IMAGE_DELIVERY_SERVICE } from '../src/handler'
 import { Env, worker } from '../src/index'
-
 const FAKE_SERVER_URL = 'http://fakeserver.com'
 const FAKE_IMAGE_HASH = 'bar' // wrangler.test.toml
 const AUTH_TOKEN = 'Zm9v'
@@ -10,9 +9,9 @@ function generateRequest(
     method = 'GET',
     headers = {},
     body?: BodyInit,
-): [Request, Env] {
+): [Request, Env, ExecutionContext?] {
     const url = `${FAKE_SERVER_URL}/${route}`
-    return [new Request(url, { method, headers, body }), getMiniflareBindings()]
+    return [new Request(url, { method, headers, body }), getMiniflareBindings(), undefined]
 }
 
 describe('http router', () => {
