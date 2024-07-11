@@ -11,7 +11,7 @@ import * as dotenv from 'dotenv'
 
 dotenv.config({ path: path.join(__dirname, '../../app', '.env.local') })
 
-const MODE = process.env.NODE_ENV || 'gamma'
+const MODE = process.env.MODE || 'gamma'
 
 // spaceOwner
 const CONTRACT_ADDRESS = process.env.VITE_ADDRESS_SPACE_OWNER
