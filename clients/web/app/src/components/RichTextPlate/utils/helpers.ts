@@ -30,7 +30,15 @@ export const TYPEAHEAD_POPUP_ID = 'typeaheadPopup'
 
 export const isInputFocused = () => document.activeElement?.tagName === 'INPUT'
 
-export const isLinkURIDecoded = (link: string) => decodeURI(link) !== link
+export const isLinkURIDecoded = (link: string) => {
+    try {
+        // '%' doesn't decode to a valid URI and throws a malformed URI
+        return link === '%' || decodeURI(link) !== link
+    } catch (e) {
+        // saftey catch for malformed URIs
+        return true
+    }
+}
 
 export const isCodeBlockElement = (editor: PlateEditor) =>
     isType(editor, getBlockAbove(editor)?.[0], ELEMENT_CODE_LINE)
