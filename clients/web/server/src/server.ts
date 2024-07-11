@@ -11,15 +11,17 @@ import * as dotenv from 'dotenv'
 
 dotenv.config({ path: path.join(__dirname, '../../app', '.env.local') })
 
-// spaceOwner
-const CONTRACT_ADDRESS = '0x9dEdb330A126C6dF2893a33018bb81aFE8573805'
+const MODE = process.env.NODE_ENV || 'gamma'
 
+// spaceOwner
+const CONTRACT_ADDRESS = process.env.VITE_ADDRESS_SPACE_OWNER
 const PORT = Number(process.env.PORT) || 3000
-const PROVIDER_URL = process.env.VITE_BASE_SEPOLIA_RPC_URL
-const GATEWAY_URL = process.env.VITE_GATEWAY_URL
-const GATEWAY_SECRET = process.env.VITE_AUTH_WORKER_HEADER_SECRET
+const PROVIDER_URL =
+    MODE === 'gamma' ? process.env.VITE_BASE_SEPOLIA_RPC_URL : process.env.VITE_BASE_CHAIN_RPC_URL
 
 const provider = new ethers.providers.JsonRpcProvider(PROVIDER_URL)
+
+console.log('provider', MODE, CONTRACT_ADDRESS, PROVIDER_URL)
 
 const server = Fastify({
     logger: true,
@@ -130,18 +132,12 @@ async function updateTemplate(townId?: string) {
         info.description = ``
         info.image = `https://imagedelivery.net/qaaQ52YqlPXKEVQhjChiDA/${townId}/thumbnail600`
 
-        const [townDataFromGateway, townName] = await Promise.all([
-            fetchDataPlaceholder(townId),
-            getTownNameFromContract(townId),
-        ])
+        const townData = await getTownDataFromContract(townId)
 
-        // if applicable, ammend with fetched data
-        if (townDataFromGateway) {
-            server.log.info('townDataFromGateway : ' + JSON.stringify(townDataFromGateway))
-            info.description = townDataFromGateway.bio
-        }
-        if (townName) {
-            info.title = townName
+        if (townData) {
+            info.title = townData.name || info.title
+            info.description =
+                townData.longDescription || townData.shortDescription || info.description
         }
     }
 
@@ -151,7 +147,9 @@ async function updateTemplate(townId?: string) {
         .replace(/__image__/g, info.image)
 }
 
-async function getTownNameFromContract(townId: string): Promise<string | undefined> {
+async function getTownDataFromContract(
+    townId: string,
+): Promise<{ name: string; shortDescription: string; longDescription: string } | undefined> {
     if (!provider) {
         return
     }
@@ -159,40 +157,23 @@ async function getTownNameFromContract(townId: string): Promise<string | undefin
     try {
         const contractAddress = CONTRACT_ADDRESS
         const spaceAddress = ethers.utils.getAddress(townId.slice(2, 42))
+
+        if (!contractAddress) {
+            return
+        }
+
         const contract = new ethers.Contract(contractAddress, SpaceOwnerAbi, provider)
 
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        const result = (await contract['getSpaceInfo'](spaceAddress)) as string[]
+        const result = (await contract['getSpaceInfo'](spaceAddress)) as {
+            name: string
+            shortDescription: string
+            longDescription: string
+        }
 
-        return Array.isArray(result) && result.length ? result?.[0] : undefined
+        return result
     } catch (error) {
         server.log.error('Error fetching town name from contract' + JSON.stringify(error))
         return
     }
-}
-
-// This calls the Cloudflare gateway and fetches the information about the town
-// stored in the KVM in the format of { bio: string; motto: string }
-async function fetchDataPlaceholder(
-    townId: string,
-): Promise<{ bio: string; motto: string } | undefined> {
-    if (!validateTownId(townId) || !GATEWAY_URL || !GATEWAY_SECRET) {
-        return
-    }
-    const response = await fetch(`${GATEWAY_URL}/${townId}/identity`, {
-        method: 'GET',
-        headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${GATEWAY_SECRET}`,
-        },
-    })
-
-    if (response.status !== 200) {
-        return
-    }
-
-    const data = (await response.json()) as { bio: string; motto: string }
-
-    return typeof data === 'object' ? data : undefined
 }
