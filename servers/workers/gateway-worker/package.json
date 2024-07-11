@@ -15,7 +15,6 @@
         "test:unit": "yarn node --experimental-vm-modules $(yarn bin jest)"
     },
     "dependencies": {
-        "@aws-sdk/client-sns": "^3.295.0",
         "@river-build/generated": "workspace:^",
         "aws-sdk": "^2.1339.0",
         "buffer": "^6.0.3",

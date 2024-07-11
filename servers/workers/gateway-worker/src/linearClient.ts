@@ -49,6 +49,7 @@ export async function createLinearIssue({
         logUrl: log.fileUrl,
         attachments: uploadedAttachments,
     })
+    console.log('Linear feedback submitted')
 }
 
 interface UploadLogToLinearInput {
