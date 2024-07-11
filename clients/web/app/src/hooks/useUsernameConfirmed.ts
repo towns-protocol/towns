@@ -1,4 +1,5 @@
-import { useEffect } from 'react'
+import { UserInfo } from '@river-build/sdk'
+import { useEffect, useRef } from 'react'
 import { useMyUserId, useSpaceId, useTownsContext, useUserLookupStore } from 'use-towns-client'
 
 export const useUsernameConfirmed = () => {
@@ -16,7 +17,9 @@ export const useUsernameConfirmed = () => {
         spaceId && userId ? spaceUsers[spaceId]?.[userId] : undefined,
     )
 
-    const usernameConfirmedFromStream =
+    const usernameConfirmedFromStreamRef = useRef<UserInfo | undefined>()
+
+    usernameConfirmedFromStreamRef.current =
         spaceId && userId
             ? casablancaClient?.streams.get(spaceId)?.view.getUserMetadata()?.userInfo(userId)
             : undefined
@@ -26,11 +29,11 @@ export const useUsernameConfirmed = () => {
             spaceId,
             userId,
             usernameConfirmed,
-            usernameConfirmedFromStream: usernameConfirmedFromStream?.usernameConfirmed,
+            usernameConfirmedFromStream: usernameConfirmedFromStreamRef.current?.usernameConfirmed,
             userFromLookup: user,
-            userFromStream: usernameConfirmedFromStream,
+            userFromStream: usernameConfirmedFromStreamRef.current,
         })
-    }, [spaceId, user, userId, usernameConfirmed, usernameConfirmedFromStream])
+    }, [spaceId, user, userId, usernameConfirmed])
 
     // ----------------- logging -----------------
 
