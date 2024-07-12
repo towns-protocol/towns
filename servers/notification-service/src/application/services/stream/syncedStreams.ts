@@ -88,7 +88,7 @@ interface PingInfo {
 
 export class SyncedStreams {
     // mapping of stream id to stream
-    private readonly streams: Map<string, StreamAndCookie | undefined> = new Map()
+    private readonly streams: Map<string, StreamAndCookie> = new Map()
 
     // Starting the client creates the syncLoop
     // While a syncLoop exists, the client tried to keep the syncLoop connected, and if it reconnects, it
@@ -149,8 +149,7 @@ export class SyncedStreams {
     }
 
     public getStreams(): StreamAndCookie[] {
-        // Need to filter out streams that haven't started syncing yet
-        return Array.from(this.streams.values()).filter(isDefined)
+        return Array.from(this.streams.values())
     }
 
     public getStreamIds(): string[] {
@@ -229,24 +228,23 @@ export class SyncedStreams {
 
     // adds stream to the sync subscription
     public async addStreamToSync(syncCookie: SyncCookie): Promise<void> {
-        if (this.syncState === SyncState.Syncing) {
-            const stream = this.streams.has(bin_toHexString(syncCookie.streamId))
+        /*
+        const stream = this.streams.has(syncCookie.streamId)
 
-            if (stream) {
-                logger.info('addStreamToSync streamId already syncing', syncCookie)
-                return
-            }
+        if (stream) {
+            logger.info('addStreamToSync streamId already syncing', syncCookie)
+            return
+        }
+        */
+        if (this.syncState === SyncState.Syncing) {
             try {
-                // When this is successful, the server will start sending updates for this stream
-                // and the stream will be added to the streams map. "undefined" is a placeholder for the stream
-                // until the server sends the first update
-                this.streams.set(bin_toHexString(syncCookie.streamId), undefined)
                 await this.rpcClient.addStreamToSync({
                     syncId: this.syncId,
                     syncPos: syncCookie,
                 })
                 logger.info('addedStreamToSync', { syncCookie })
             } catch (error) {
+                // Trigger restart of sync loop
                 logger.error(`addedStreamToSync error`, { error })
                 if (errorContains(error, Err.BAD_SYNC_COOKIE)) {
                     logger.error('addStreamToSync BAD_SYNC_COOKIE', { syncCookie })
@@ -324,12 +322,31 @@ export class SyncedStreams {
                             this.setSyncState(SyncState.Starting)
                         }
 
+                        // const syncCookies = Array.from(this.streams.values())
+                        //     .map((stream) => stream.syncCookie)
+                        //     .filter(isDefined)
+
                         try {
                             // syncId needs to be reset before starting a new syncStreams
                             // syncStreams() should return a new syncId
                             this.syncId = undefined
 
-                            const streams = this.rpcClient.syncStreams({})
+                            const dbSyncedStreams = await database.syncedStream.findMany()
+
+                            const syncCookies: SyncCookie[] = []
+                            for (const dbStream of dbSyncedStreams) {
+                                syncCookies.push(SyncCookie.fromJsonString(dbStream.SyncCookie))
+                            }
+
+                            if (syncCookies.length === 0) {
+                                logger.info('no syncCookies found')
+                                await this.attemptRetry()
+                                continue
+                            }
+
+                            const streams = this.rpcClient.syncStreams({
+                                syncPos: syncCookies,
+                            })
 
                             const iterator = streams[Symbol.asyncIterator]()
 
@@ -373,7 +390,7 @@ export class SyncedStreams {
                                 let pingStats: NonceStats | undefined
                                 switch (value.syncOp) {
                                     case SyncOp.SYNC_NEW:
-                                        await this.syncStarted(value.syncId)
+                                        this.syncStarted(value.syncId)
                                         break
                                     case SyncOp.SYNC_CLOSE:
                                         this.syncClosed()
@@ -488,7 +505,7 @@ export class SyncedStreams {
         }
     }
 
-    private async syncStarted(syncId: string): Promise<void> {
+    private syncStarted(syncId: string): void {
         if (!this.syncId && stateConstraints[this.syncState].has(SyncState.Syncing)) {
             this.setSyncState(SyncState.Syncing)
             this.syncId = syncId
@@ -498,23 +515,6 @@ export class SyncedStreams {
             logger.info(`syncStarted syncId: ${this.syncId}`, {
                 syncId: this.syncId,
             })
-
-            this.streams.clear()
-
-            const dbSyncedStreams = await database.syncedStream.findMany()
-
-            const syncCookies: SyncCookie[] = []
-            for (const dbStream of dbSyncedStreams) {
-                syncCookies.push(SyncCookie.fromJsonString(dbStream.SyncCookie))
-            }
-
-            if (syncCookies.length === 0) {
-                logger.info('no syncCookies found')
-            } else {
-                for (const syncCookie of syncCookies) {
-                    await this.addStreamToSync(syncCookie)
-                }
-            }
         } else {
             logger.info(
                 `syncStarted: invalid state transition ${this.syncState} -> ${SyncState.Syncing}`,
@@ -529,7 +529,6 @@ export class SyncedStreams {
             logger.info(`server acknowledged our close attempt ${this.syncId}`, {
                 syncId: this.syncId,
             })
-            this.streams.clear()
         } else {
             logger.info(
                 `server cancelled unepexectedly, go through the retry loop ${this.syncId}`,
