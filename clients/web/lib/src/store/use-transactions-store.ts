@@ -23,16 +23,22 @@ export const useTransactionStore = () => {
     return transactions
 }
 
-export const useOnTransactionUpdated = (callback: (args: BlockchainStoreTx) => void) => {
+export const useOnTransactionUpdated = (
+    callback: (args: BlockchainStoreTx) => void,
+    cleanup?: () => void,
+) => {
     const { clientSingleton } = useTownsClient()
     const cbRef = useRef(callback)
     cbRef.current = callback
+    const cleanupRef = useRef(cleanup)
+    cleanupRef.current = cleanup
 
     useEffect(() => {
         const cb = (args: BlockchainStoreTx) => cbRef.current(args)
         clientSingleton?.blockchainTransactionStore.on('updatedTransaction', cb)
         return () => {
             clientSingleton?.blockchainTransactionStore.off('updatedTransaction', cb)
+            cleanupRef.current?.()
         }
     }, [clientSingleton])
 }

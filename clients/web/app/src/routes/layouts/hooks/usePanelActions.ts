@@ -16,6 +16,7 @@ export const usePanelActions = () => {
     const { analytics } = useAnalytics()
 
     return {
+        data: useMemo(() => searchParams.get('data'), [searchParams]),
         isStacked: useMemo(() => {
             if (isTouch) {
                 return !isRootPanel
@@ -30,6 +31,7 @@ export const usePanelActions = () => {
                     stackId?: string
                     channelId?: string
                     profileId?: string
+                    data?: string
                 } = {},
             ) => {
                 const { stackId = contextStackId, ...restOptions } = options
@@ -77,5 +79,6 @@ export const usePanelActions = () => {
             },
             [searchParams],
         ),
+        currentlyOpenPanel: useMemo(() => searchParams.get('panel'), [searchParams]),
     }
 }

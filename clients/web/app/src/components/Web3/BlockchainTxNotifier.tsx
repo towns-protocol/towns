@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
 import {
     BlockchainStoreTx,
     BlockchainTransactionType,
@@ -7,27 +7,32 @@ import {
     useOnTransactionUpdated,
 } from 'use-towns-client'
 
-import headlessToast, { Toast, toast } from 'react-hot-toast/headless'
+import headlessToast, { Toast } from 'react-hot-toast/headless'
 import { useSearchParams } from 'react-router-dom'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
-import { Box, Icon, IconButton, Text } from '@ui'
-import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
+import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
+import { CHANNEL_INFO_PARAMS } from 'routes'
+import { popupToast } from '@components/Notifications/popupToast'
+import { StandardToast } from '@components/Notifications/StandardToast'
 import { mapToErrorMessage } from './utils'
 
 type ToastProps = {
     tx: BlockchainStoreTx
+    /**
+     * if onlyShowPending is true, the toast will appear in pending state and never dismiss
+     * the component that is handling other toasts must dismiss toasts at the appropriate time to remove it
+     */
+    onlyShowPending?: boolean
     successMessage: string
     pendingMessage?: string
-    pendingContextMessage?: string
-    successContextMessage?: string
     errorMessage?: string
-    errorContextMessage?: string
 }
 
 export function BlockchainTxNotifier() {
     const spaceId = useSpaceIdFromPathname()
     const myMembership = useMyMembership(spaceId ?? '')
     const isMember = myMembership === Membership.Join
+    const { currentlyOpenPanel } = usePanelActions()
 
     useOnTransactionUpdated((tx) => {
         // these potential txs will show a toast that transitions from a pending to a success or failure state
@@ -42,6 +47,8 @@ export function BlockchainTxNotifier() {
                         tx,
                         pendingMessage: 'Linking wallet...',
                         successMessage: 'Wallet linked!',
+                        onlyShowPending:
+                            currentlyOpenPanel === CHANNEL_INFO_PARAMS.ROLE_RESTRICTED_CHANNEL_JOIN,
                     })
                     break
                 case BlockchainTransactionType.UnlinkWallet:
@@ -53,6 +60,8 @@ export function BlockchainTxNotifier() {
                         tx,
                         pendingMessage: 'Unlinking wallet...',
                         successMessage: 'Unlinked your wallet!',
+                        onlyShowPending:
+                            currentlyOpenPanel === CHANNEL_INFO_PARAMS.ROLE_RESTRICTED_CHANNEL_JOIN,
                     })
                     break
                 case BlockchainTransactionType.CreateRole: {
@@ -133,8 +142,10 @@ export function BlockchainTxNotifier() {
 }
 
 function generateToast(props: ToastProps) {
-    return toast.custom((t) => <MonitoringNotification {...props} toast={t} />, {
-        duration: Infinity,
+    const status = props.tx.status
+    return popupToast(({ toast: t }) => <MonitoringNotification {...props} toast={t} />, {
+        // because we don't want to start a duration timer until the tx is no longer pending
+        duration: status === 'pending' || status === 'potential' ? Infinity : 8_000,
     })
 }
 
@@ -143,11 +154,13 @@ function MonitoringNotification(props: ToastProps & { toast: Toast }) {
         tx,
         successMessage,
         pendingMessage = 'Transaction pending...',
-        pendingContextMessage,
-        successContextMessage,
         errorMessage = tx.error ? mapToErrorMessage(tx.error) : undefined,
-        errorContextMessage,
         toast,
+        /**
+         * if onlyShowPending is true, the toast will appear in pending state and never dismiss
+         * the component that is handling other toasts must dismiss toasts at the appropriate time to remove it
+         */
+        onlyShowPending,
     } = props
 
     const [status, setStatus] = useState(tx.status)
@@ -155,52 +168,58 @@ function MonitoringNotification(props: ToastProps & { toast: Toast }) {
     const [searchParams, setSearchParams] = useSearchParams()
     const rolesParam = searchParams.get('roles')
 
-    const isSuccess = status === 'success'
-    const isPending = status === 'pending'
-    const isPotential = status === 'potential'
-
-    const { message, contextMessage } = useMemo(() => {
+    const { message } = useMemo(() => {
         return status === 'pending' || status === 'potential'
             ? {
                   message: pendingMessage,
-                  contextMessage: pendingContextMessage,
               }
             : status === 'success'
             ? {
                   message: successMessage,
-                  contextMessage: successContextMessage,
               }
             : {
                   message: errorMessage,
-                  contextMessage: errorContextMessage,
               }
-    }, [
-        status,
-        pendingMessage,
-        pendingContextMessage,
-        successMessage,
-        successContextMessage,
-        errorMessage,
-        errorContextMessage,
-    ])
+    }, [status, pendingMessage, successMessage, errorMessage])
 
-    useOnTransactionUpdated((_tx) => {
-        if (_tx.id !== tx.id) {
-            return
-        }
-        setStatus(_tx.status)
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-        if (_tx.status === 'failure') {
-            const errorMessage = mapToErrorMessage(_tx.error)
-            // if the error message is empty, the user rejected the tx and we can dismiss the toast
-            if (!errorMessage) {
-                headlessToast.dismiss(toast.id)
+    useOnTransactionUpdated(
+        (_tx) => {
+            if (_tx.id !== tx.id) {
                 return
             }
-        } else if (_tx.status === 'success') {
-            onSuccess()
-        }
-    })
+
+            if (onlyShowPending && (_tx.status === 'failure' || _tx.status === 'success')) {
+                return
+            }
+
+            setStatus(_tx.status)
+
+            const dismissTimer = () => {
+                timeoutRef.current && clearTimeout(timeoutRef.current)
+                timeoutRef.current = setTimeout(() => {
+                    headlessToast.dismiss(toast.id)
+                }, 8_000)
+            }
+
+            if (_tx.status === 'failure') {
+                const errorMessage = mapToErrorMessage(_tx.error)
+                // if the error message is empty, the user rejected the tx and we can dismiss the toast
+                if (!errorMessage) {
+                    headlessToast.dismiss(toast.id)
+                    return
+                }
+                dismissTimer()
+            } else if (_tx.status === 'success') {
+                onSuccess()
+                dismissTimer()
+            }
+        },
+        () => {
+            timeoutRef.current && clearTimeout(timeoutRef.current)
+        },
+    )
 
     const onSuccess = useCallback(() => {
         switch (tx.type) {
@@ -224,39 +243,13 @@ function MonitoringNotification(props: ToastProps & { toast: Toast }) {
         return null
     }
 
-    return (
-        <Box gap width="300" justifyContent="spaceBetween">
-            <Box horizontal gap justifyContent="spaceBetween">
-                <Box horizontal gap alignItems="center">
-                    {isPending || isPotential ? (
-                        <ButtonSpinner />
-                    ) : (
-                        <Icon
-                            color={isSuccess ? 'positive' : 'negative'}
-                            type={isSuccess ? 'check' : 'alert'}
-                        />
-                    )}
-                    <Text as="span" display="inline">
-                        {message}
-                    </Text>
-                </Box>
+    if (tx.status === 'success') {
+        return <StandardToast.Success toast={toast} message={message ?? ''} />
+    }
 
-                <IconButton
-                    alignSelf="center"
-                    size="square_xs"
-                    icon="close"
-                    border="level4"
-                    rounded="full"
-                    disabled={isPending || isPotential}
-                    visibility={isPending || isPotential ? 'hidden' : 'visible'}
-                    onClick={() => headlessToast.dismiss(toast.id)}
-                />
-            </Box>
-            {contextMessage && (
-                <Box gap>
-                    <Text size="sm">{contextMessage}</Text>
-                </Box>
-            )}
-        </Box>
-    )
+    if (tx.status === 'failure') {
+        return <StandardToast.Error toast={toast} message={message ?? ''} />
+    }
+
+    return <StandardToast.Pending toast={toast} message={message ?? ''} />
 }

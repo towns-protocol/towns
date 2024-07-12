@@ -1,6 +1,7 @@
 import { useMatch } from 'react-router'
 import { useSearchParams } from 'react-router-dom'
 import React from 'react'
+import { RoleRestrictedChannelJoinPanel } from 'routes/RoleRestrictedChannelJoinPanel'
 import { MintBotPrivyWrapper } from '@components/MintBotPanel/MintBotPanel'
 import { BrowseChannelsPanel } from '@components/BrowseChannelsPanel/BrowseChannelsPanel'
 import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'
@@ -137,6 +138,9 @@ export const usePanels = () => {
         }
         case CHANNEL_INFO_PARAMS.MINT_BOT: {
             return withWrapper(<MintBotPrivyWrapper />)
+        }
+        case CHANNEL_INFO_PARAMS.ROLE_RESTRICTED_CHANNEL_JOIN: {
+            return <RoleRestrictedChannelJoinPanel />
         }
     }
 

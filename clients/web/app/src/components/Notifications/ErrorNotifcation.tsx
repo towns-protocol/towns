@@ -2,6 +2,10 @@ import React from 'react'
 import headlessToast, { Toast } from 'react-hot-toast/headless'
 import { Box, Icon, IconButton, Text } from '@ui'
 
+/**
+ *
+ * @deprecated see StandardToast.Error
+ */
 export const ErrorNotification = ({
     toast,
     errorMessage,
