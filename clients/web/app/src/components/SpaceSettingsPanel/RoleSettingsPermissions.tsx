@@ -1,9 +1,11 @@
 import React, { useEffect } from 'react'
 import { Permission } from '@river-build/web3'
 import { Paragraph, Stack, Toggle } from '@ui'
-import { rolePermissionDescriptions } from './rolePermissions.const'
+import { channelPermissionDescriptions, townPermissionDescriptions } from './rolePermissions.const'
 
-type PermissionMeta = (typeof rolePermissionDescriptions)[keyof typeof rolePermissionDescriptions]
+type PermissionMeta =
+    (typeof channelPermissionDescriptions)[keyof typeof channelPermissionDescriptions] &
+        (typeof townPermissionDescriptions)[keyof typeof channelPermissionDescriptions]
 
 export type Role = {
     id: string

@@ -17,7 +17,8 @@ export const formSchema = z
             })
             .min(1),
         tokens: z.array(tokenEntitlementSchema),
-        permissions: z.array(z.nativeEnum(Permission)),
+        channelPermissions: z.array(z.nativeEnum(Permission)),
+        townPermissions: z.array(z.nativeEnum(Permission)),
         users: z.array(z.string()),
     })
     // check that at least a token or user is selected

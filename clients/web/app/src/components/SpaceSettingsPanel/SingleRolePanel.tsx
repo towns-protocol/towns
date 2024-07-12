@@ -5,6 +5,7 @@ import {
     BlockchainTransactionType,
     NoopRuleData,
     Permission,
+    RoleDetails,
     createOperationsTree,
     useCreateRoleTransaction,
     useDeleteRoleTransaction,
@@ -34,8 +35,10 @@ import {
 } from '@ui'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import {
-    enabledRolePermissions,
-    rolePermissionDescriptions,
+    channelPermissionDescriptions,
+    enabledChannelPermissions,
+    enabledTownPermissions,
+    townPermissionDescriptions,
 } from '@components/SpaceSettingsPanel/rolePermissions.const'
 import { RoleRow } from '@components/SpaceSettingsPanel/RoleSettingsPermissions'
 import { ModalContainer } from '@components/Modals/ModalContainer'
@@ -72,6 +75,26 @@ export function SingleRolePanelWithoutAuth() {
     const roleId = isCreateRole ? undefined : convertToNumber(rolesParam ?? '')
 
     const { isLoading, roleDetails } = useRoleDetails(spaceIdFromPath ?? '', roleId)
+    const { channelRoleDetails, townRoleDetails } = useMemo(() => {
+        const channelRoleDetails: RoleDetails | undefined = roleDetails
+            ? { ...roleDetails }
+            : undefined
+        const townRoleDetails: RoleDetails | undefined = roleDetails
+            ? { ...roleDetails }
+            : undefined
+        channelRoleDetails &&
+            (channelRoleDetails.permissions = channelRoleDetails.permissions.filter(
+                (p) => channelPermissionDescriptions[p],
+            ))
+        townRoleDetails &&
+            (townRoleDetails.permissions = townRoleDetails.permissions.filter(
+                (p) => townPermissionDescriptions[p],
+            ))
+        return {
+            channelRoleDetails,
+            townRoleDetails,
+        }
+    }, [roleDetails])
     const [deleteModal, setDeleteModal] = useState(false)
     const hideDeleteModal = () => setDeleteModal(false)
     const showDeleteModal = () => setDeleteModal(true)
@@ -107,9 +130,10 @@ export function SingleRolePanelWithoutAuth() {
                         defaultValues={{
                             // roleDetails is undefined when creating a new role
                             name: roleDetails?.name ?? '',
-                            permissions: isCreateRole
+                            channelPermissions: isCreateRole
                                 ? [Permission.Read]
-                                : roleDetails?.permissions ?? [],
+                                : channelRoleDetails?.permissions ?? [],
+                            townPermissions: townRoleDetails?.permissions ?? [],
                             users: roleDetails?.users ?? [],
                             tokens: roleDetails?.ruleData
                                 ? convertRuleDataToTokenFormSchema(roleDetails.ruleData)
@@ -201,15 +225,28 @@ export function SingleRolePanelWithoutAuth() {
                                                 )}
 
                                                 <Stack gap="md">
-                                                    <Text>Permissions</Text>
+                                                    <Text>Channel permissions</Text>
                                                     <Stack
                                                         gap="lg"
                                                         background="level2"
                                                         rounded="sm"
                                                         padding="md"
                                                     >
-                                                        <PermissionsToggles
-                                                            roleDetails={roleDetails}
+                                                        <ChannelPermissionsToggles
+                                                            roleDetails={channelRoleDetails}
+                                                        />
+                                                    </Stack>
+                                                </Stack>
+                                                <Stack gap="md">
+                                                    <Text>Town permissions</Text>
+                                                    <Stack
+                                                        gap="lg"
+                                                        background="level2"
+                                                        rounded="sm"
+                                                        padding="md"
+                                                    >
+                                                        <TownPermissionsToggles
+                                                            roleDetails={townRoleDetails}
                                                         />
                                                     </Stack>
                                                 </Stack>
@@ -341,7 +378,8 @@ function SubmitButton({
         const def = structuredClone(defaultValues)
         const cur = structuredClone(watchAllFields)
         function sorter(arr: typeof defaultValues | undefined) {
-            arr?.permissions?.sort()
+            arr?.channelPermissions?.sort()
+            arr?.townPermissions?.sort()
             arr?.users?.sort()
             arr?.tokens?.sort()
             arr?.tokens?.forEach((t) => t?.tokenIds?.sort())
@@ -385,7 +423,7 @@ function SubmitButton({
             await createRoleTransaction(
                 spaceId,
                 data.name,
-                data.permissions,
+                [...data.channelPermissions, ...data.townPermissions],
                 data.users,
                 ruleData,
                 signer,
@@ -399,7 +437,7 @@ function SubmitButton({
                 spaceId,
                 roleId,
                 data.name,
-                data.permissions,
+                [...data.channelPermissions, ...data.townPermissions],
                 data.users,
                 ruleData,
                 signer,
@@ -557,7 +595,7 @@ function TokenSearch({ isCreateRole }: { isCreateRole: boolean }) {
     )
 }
 
-function PermissionsToggles({
+function ChannelPermissionsToggles({
     roleDetails,
 }: {
     roleDetails: ReturnType<typeof useRoleDetails>['roleDetails']
@@ -574,13 +612,13 @@ function PermissionsToggles({
         return {
             id: roleDetails?.id.toString() ?? '',
             name: formValues.name,
-            permissions: formValues.permissions ?? [],
+            permissions: formValues.channelPermissions ?? [],
             tokens: formValues.tokens ?? [],
             users: (formValues.users as Address[]) ?? [],
         }
     })
 
-    const onToggleRole = useEvent((permissionId: Permission, value: boolean) => {
+    const onToggleChannelPermissions = useEvent((permissionId: Permission, value: boolean) => {
         const currentPermissions = role.permissions
         const newPermissions = value
             ? currentPermissions.concat(permissionId)
@@ -591,19 +629,71 @@ function PermissionsToggles({
             permissions: newPermissions,
         }))
 
-        setValue('permissions', newPermissions)
+        setValue('channelPermissions', newPermissions)
     })
 
-    return enabledRolePermissions.map((permissionId: Permission) => {
+    return enabledChannelPermissions.map((permissionId: Permission) => {
         return role ? (
             <RoleRow
                 permissionId={permissionId}
                 role={role}
-                defaultToggled={!!role?.permissions.includes(permissionId)}
-                metaData={rolePermissionDescriptions[permissionId]}
+                defaultToggled={!!role?.permissions?.includes(permissionId)}
+                metaData={channelPermissionDescriptions[permissionId]}
                 key={permissionId}
-                disabled={rolePermissionDescriptions[permissionId]?.disabled}
-                onToggle={onToggleRole}
+                disabled={channelPermissionDescriptions[permissionId]?.disabled}
+                onToggle={onToggleChannelPermissions}
+            />
+        ) : null
+    })
+}
+
+function TownPermissionsToggles({
+    roleDetails,
+}: {
+    roleDetails: ReturnType<typeof useRoleDetails>['roleDetails']
+}) {
+    const { setValue, getValues } = useFormContext<RoleFormSchemaType>()
+
+    // TODO: once SpaceSettings is gone and RoleRow lives here only, we can refactor RoleRow to just use the initial permissions of the form
+    // and pass only the permissions to the row, no need to pass the whole role
+
+    const [role, setRole] = useState(() => {
+        // use the default form values, which map to the roleDetails
+        const formValues = getValues()
+
+        return {
+            id: roleDetails?.id.toString() ?? '',
+            name: formValues.name,
+            permissions: formValues.townPermissions ?? [],
+            tokens: formValues.tokens ?? [],
+            users: (formValues.users as Address[]) ?? [],
+        }
+    })
+
+    const onToggleTownPermissions = useEvent((permissionId: Permission, value: boolean) => {
+        const currentPermissions = role.permissions
+        const newPermissions = value
+            ? currentPermissions.concat(permissionId)
+            : currentPermissions.filter((p) => p !== permissionId)
+
+        setRole((role) => ({
+            ...role,
+            permissions: newPermissions,
+        }))
+
+        setValue('townPermissions', newPermissions)
+    })
+
+    return enabledTownPermissions.map((permissionId: Permission) => {
+        return role ? (
+            <RoleRow
+                permissionId={permissionId}
+                role={role}
+                defaultToggled={!!role?.permissions?.includes(permissionId)}
+                metaData={townPermissionDescriptions[permissionId]}
+                key={permissionId}
+                disabled={townPermissionDescriptions[permissionId]?.disabled}
+                onToggle={onToggleTownPermissions}
             />
         ) : null
     })

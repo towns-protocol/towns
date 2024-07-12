@@ -1,6 +1,6 @@
 import { Permission } from '@river-build/web3'
 
-export const rolePermissionDescriptions: {
+export const channelPermissionDescriptions: {
     [key in Permission]?: {
         name: string
         description: string
@@ -24,18 +24,31 @@ export const rolePermissionDescriptions: {
         name: 'Remove messages',
         description: 'Allow members to remove messages.',
     },
+} as const
+
+export const townPermissionDescriptions: {
+    [key in Permission]?: {
+        name: string
+        description: string
+        disabled?: boolean
+    }
+} = {
     [Permission.Ban]: {
         name: 'Ban members',
         description: 'Allow members to ban other members.',
     },
     [Permission.ModifySpaceSettings]: {
-        name: 'Manage town settings',
+        name: 'Manage roles',
         description:
-            'Allow members to create, edit and delete roles and their corresponding permissions. Additionally, members can change the town image, description, and motto.',
+            'Allow members to create, edit and delete roles and their corresponding permissions.',
     },
 } as const
 
-export const enabledRolePermissions = Object.keys(rolePermissionDescriptions).map(
+export const enabledChannelPermissions = Object.keys(channelPermissionDescriptions).map(
+    (key) => Permission[key as keyof typeof Permission],
+)
+
+export const enabledTownPermissions = Object.keys(townPermissionDescriptions).map(
     (key) => Permission[key as keyof typeof Permission],
 )
 
