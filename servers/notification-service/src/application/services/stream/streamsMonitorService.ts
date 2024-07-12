@@ -92,9 +92,12 @@ export class StreamsMonitorService implements IStreamsMonitorService {
         })
         const unpacked = await unpackStream(response.stream)
 
-        if (response.stream) {
-            this.streams.set(streamId, response.stream!)
-            this.streams.addStreamToSync(response.stream.nextSyncCookie!)
+        if (response.stream && response.stream.nextSyncCookie) {
+            this.streams.set(streamId, response.stream)
+            this.streams.addStreamToSync(response.stream.nextSyncCookie)
+        } else {
+            logger.error('no stream or nextSyncCookie in response', { streamId, response })
+            return currentMembers
         }
 
         if (unpacked.miniblocks.length === 0) {
@@ -297,9 +300,11 @@ export class StreamsMonitorService implements IStreamsMonitorService {
         })
         const unpacked = await unpackStream(response.stream)
 
-        if (response.stream) {
-            this.streams.set(streamId, response.stream!)
-            this.streams.addStreamToSync(response.stream.nextSyncCookie!)
+        if (response.stream && response.stream.nextSyncCookie) {
+            this.streams.set(streamId, response.stream)
+            this.streams.addStreamToSync(response.stream.nextSyncCookie)
+        } else {
+            logger.error('no stream or nextSyncCookie in response', { streamId, response })
         }
 
         assert(unpacked.miniblocks.length > 0, 'no miniblocks in stream')
