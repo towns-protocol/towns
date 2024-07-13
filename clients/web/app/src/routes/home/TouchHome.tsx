@@ -140,7 +140,6 @@ export const TouchHome = () => {
             'home page',
             {
                 spaceId,
-                anonymousId: analytics.anonymousId,
             },
             () => {
                 console.log('[analytics] home page')

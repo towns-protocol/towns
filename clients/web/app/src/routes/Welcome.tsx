@@ -11,16 +11,9 @@ export const WelcomeRoute = React.memo(() => {
     const { analytics } = useAnalytics()
 
     useEffect(() => {
-        analytics?.page(
-            'home-page',
-            'welcome page',
-            {
-                anonymousId: analytics.anonymousId,
-            },
-            () => {
-                console.log('[analytics] welcome page')
-            },
-        )
+        analytics?.page('home-page', 'welcome page', {}, () => {
+            console.log('[analytics] welcome page')
+        })
     }, [analytics, location.pathname, location.search])
 
     return (

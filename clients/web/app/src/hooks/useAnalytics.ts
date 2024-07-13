@@ -163,6 +163,7 @@ function getCommonAnalyticsProperties(): ApiObject {
     const device = isIOS() ? 'ios' : isAndroid() ? 'android' : 'desktop'
     const platform = isPWA() ? 'pwa' : 'browser'
     return {
+        anonymousId: getAnonymousId(),
         browserName: getBrowserName(),
         device,
         platform,

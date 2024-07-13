@@ -85,7 +85,6 @@ export const SpaceHome = () => {
             'home page',
             {
                 spaceId,
-                anonymousId: analytics.anonymousId,
             },
             () => {
                 console.log('[analytics] home page')

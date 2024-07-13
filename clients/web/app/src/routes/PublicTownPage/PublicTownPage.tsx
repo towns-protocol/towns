@@ -74,10 +74,8 @@ const PublicTownPageWithoutAuth = (props: { isPreview?: boolean; onClosePreview?
     }, [])
 
     useEffect(() => {
-        const anonymousId = analytics?.anonymousId
         const tracked = {
             joinSpaceId,
-            anonymousId,
             isInvite,
             oauthProvider,
         }
