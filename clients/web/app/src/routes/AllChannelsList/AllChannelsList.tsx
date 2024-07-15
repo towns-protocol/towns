@@ -212,10 +212,18 @@ export const ChannelItem = ({
                     console.error('[AllChannelsList]', 'cannot join channel', room)
                     throw new Error('cannot join channel')
                 }
-                await addChannelNotificationSettings({
-                    channelId: channelIdentifier,
-                    spaceId: space.id,
-                })
+                try {
+                    await addChannelNotificationSettings({
+                        channelId: channelIdentifier,
+                        spaceId: space.id,
+                    })
+                } catch (error) {
+                    console.warn(
+                        '[AllChannelList',
+                        'cannot add channel notification settings',
+                        error,
+                    )
+                }
                 console.log('[AllChannelsList]', 'joined room', 'room', room)
             } catch (e) {
                 console.warn(
