@@ -290,7 +290,7 @@ const ChannelMemberRow = (props: ChannelMemberRowProps) => {
                 >
                     <Avatar userId={userId} size="avatar_x4" />
                 </Box>
-                <Stack grow gap="paragraph" overflow="hidden">
+                <Stack grow gap="paragraph" overflow="hidden" paddingY="xs" insetY="xxs">
                     <Paragraph truncate color="default">
                         {getPrettyDisplayName(globalUser)}
                     </Paragraph>
