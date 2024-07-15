@@ -240,3 +240,15 @@ module "operator_logs" {
 
 # TODO: setup uptime monitors for mainnet nodes
 # TODO: standardize wallet balance alerts for gamma, and reuse them for mainnet in terraform
+
+module "metrics_aggregator" {
+  source = "../../modules/metrics-aggregator"
+
+  vpc_id                         = module.vpc.vpc_id
+  river_chain_rpc_url_secret_arn = local.global_remote_state.river_mainnet_rpc_url_secret.arn
+  subnets                        = module.vpc.private_subnets
+  ecs_cluster = {
+    id   = aws_ecs_cluster.river_ecs_cluster.id
+    name = aws_ecs_cluster.river_ecs_cluster.name
+  }
+}

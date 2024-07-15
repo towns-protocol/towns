@@ -18,7 +18,7 @@ variable "ecs_cluster" {
 }
 
 variable "subnets" {
-  description = "A list of subnets to associate with the river service"
+  description = "A list of subnets to associate with the service"
   type        = list(string)
 }
 
