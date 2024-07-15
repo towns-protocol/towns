@@ -40,8 +40,13 @@ export const RepliesButton = (props: Props) => {
     const onClick = useCallback(() => onOpenMessageThread(eventId), [onOpenMessageThread, eventId])
 
     return (
-        <Pill rounded="sm" height={{ default: 'x4' }} border={isUnread ? 'accent' : undefined}>
-            <Box shrink centerContent horizontal gap="sm" cursor="pointer" onClick={onClick}>
+        <Pill
+            rounded="sm"
+            height={{ default: 'x4' }}
+            border={isUnread ? 'accent' : undefined}
+            onClick={onClick}
+        >
+            <Box shrink centerContent horizontal gap="sm">
                 <Stack horizontal gap="xs">
                     {users.slice(0, 3).map((u) => (
                         <Avatar userId={u.userId} key={u.userId} size="avatar_xs" />
