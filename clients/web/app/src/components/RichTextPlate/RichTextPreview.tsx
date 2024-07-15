@@ -68,10 +68,10 @@ const RichTextPreviewInternal = ({
     }, [mentions])
 
     const isSingleEmoji = useMemo(() => {
-        //  https://stackoverflow.com/a/72727900/64223
-        return (
-            content.length < 12 && /^(\p{Emoji}\uFE0F|\p{Emoji_Presentation}|\s)+$/u.test(content)
-        )
+        const emojiRegex =
+            /^(?:\p{Emoji_Presentation}|\p{Emoji}\uFE0F?)(?:\u200D(?:\p{Emoji_Presentation}|\p{Emoji}\uFE0F?))*$/u
+
+        return content.length < 6 && emojiRegex.test(content)
     }, [content])
 
     const memoizedComponents = useMemo(
