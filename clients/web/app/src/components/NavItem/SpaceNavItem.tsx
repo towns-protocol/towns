@@ -100,6 +100,12 @@ export const SpaceNavItem = (props: Props) => {
                     variant="thumbnail100"
                     firstLetterOfSpaceName={spaceName?.[0] ?? ''}
                 />
+                {isTouch && newMessages ? (
+                    <Dot position="topRight" style={{ transform: `translate(25%,-25%)` }} />
+                ) : (
+                    <></>
+                )}
+
                 {!isTouch && (
                     <IconNotification
                         spaceId={id}
