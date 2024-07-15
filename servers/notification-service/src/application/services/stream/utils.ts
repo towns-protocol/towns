@@ -25,3 +25,7 @@ export function streamIdFromBytes(bytes: Uint8Array): string {
 export function streamIdAsString(streamId: string | Uint8Array): string {
     return typeof streamId === 'string' ? streamId : streamIdFromBytes(streamId)
 }
+
+export function generateRandomUUID(): string {
+    return crypto.randomUUID()
+}

@@ -12,10 +12,15 @@ import {
     SyncStreamsResponse,
 } from '@river-build/proto'
 import assert from 'assert'
-import { nanoid } from 'nanoid'
 
 import { StreamRpcClient, errorContains } from './streamRpcClient'
-import { bin_toHexString, streamIdFromBytes, streamIdToBytes, userIdFromAddress } from './utils'
+import {
+    bin_toHexString,
+    generateRandomUUID,
+    streamIdFromBytes,
+    streamIdToBytes,
+    userIdFromAddress,
+} from './utils'
 import { database } from '../../prisma'
 import { ParsedEvent, ParsedMiniblock, ParsedStreamAndCookie } from './types'
 import { NotifyUser, notificationService } from '../../notificationService'
@@ -100,7 +105,7 @@ export class SyncedStreams {
     // The syncId is only set once a connection is established
     // On retry, it is cleared
     // After being cancelled, it is cleared
-    private syncId?: string
+    private _syncId?: string
 
     // rpcClient is used to receive sync updates from the server
     private rpcClient: StreamRpcClient
@@ -126,26 +131,13 @@ export class SyncedStreams {
         this.rpcClient = rpcClient
     }
 
-    public has(streamId: string): boolean {
-        return this.streams.get(streamId) !== undefined
+    // public readonly syncId
+    public get syncId(): string | undefined {
+        return this._syncId
     }
 
-    public get(streamId: string): StreamAndCookie | undefined {
-        return this.streams.get(streamId)
-    }
-
-    public set(streamId: string, stream: StreamAndCookie): void {
-        logger.info(`set ${streamId}`, { streamId })
-        this.streams.set(streamId, stream)
-    }
-
-    public delete(streamId: string) {
-        // this.streams.get(streamId)?.stop()
-        this.streams.delete(streamId)
-    }
-
-    public size(): number {
-        return this.streams.size
+    private set syncId(syncId: string | undefined) {
+        this._syncId = syncId
     }
 
     public getStreams(): StreamAndCookie[] {
@@ -228,15 +220,7 @@ export class SyncedStreams {
 
     // adds stream to the sync subscription
     public async addStreamToSync(syncCookie: SyncCookie): Promise<void> {
-        /*
-        const stream = this.streams.has(syncCookie.streamId)
-
-        if (stream) {
-            logger.info('addStreamToSync streamId already syncing', syncCookie)
-            return
-        }
-        */
-        if (this.syncState === SyncState.Syncing) {
+        if (this.syncState === SyncState.Syncing && this.syncId) {
             try {
                 await this.rpcClient.addStreamToSync({
                     syncId: this.syncId,
@@ -253,22 +237,18 @@ export class SyncedStreams {
             }
         } else {
             logger.info(
-                `addStreamToSync: not in "syncing" state; let main sync loop handle this with its streams map ${syncCookie.streamId}`,
+                'addStreamToSync: not in "syncing" state; let main sync loop handle this with its streams map',
+                {
+                    syncId: this.syncId ?? 'undefined',
+                    streamId: syncCookie.streamId,
+                },
             )
         }
     }
 
     // remove stream from the sync subsbscription
     public async removeStreamFromSync(streamId: string): Promise<void> {
-        const stream = this.streams.get(streamId)
-        if (!stream) {
-            logger.info(`removeStreamFromSync streamId ${streamId} not found`, {
-                streamId,
-            })
-            // no such stream
-            return
-        }
-        if (this.syncState === SyncState.Syncing) {
+        if (this.syncState === SyncState.Syncing && this.syncId) {
             try {
                 await this.rpcClient.removeStreamFromSync({
                     syncId: this.syncId,
@@ -278,13 +258,14 @@ export class SyncedStreams {
                 // Trigger restart of sync loop
                 logger.info('removeStreamFromSync error', { error })
             }
-            // stream.stop()
-            this.streams.delete(streamId)
             logger.info(`removed stream ${streamId} from sync`, { streamId })
         } else {
             logger.info(
                 'removeStreamFromSync: not in "syncing" state; let main sync loop handle this with its streams map',
-                { streamId },
+                {
+                    syncId: this.syncId ?? 'undefined',
+                    streamId,
+                },
             )
         }
     }
@@ -327,10 +308,6 @@ export class SyncedStreams {
                         //     .filter(isDefined)
 
                         try {
-                            // syncId needs to be reset before starting a new syncStreams
-                            // syncStreams() should return a new syncId
-                            this.syncId = undefined
-
                             const dbSyncedStreams = await database.syncedStream.findMany()
 
                             const syncCookies: SyncCookie[] = []
@@ -343,6 +320,10 @@ export class SyncedStreams {
                                 await this.attemptRetry()
                                 continue
                             }
+
+                            // syncId needs to be reset before starting a new syncStreams
+                            // syncStreams() should return a new syncId
+                            this.syncId = undefined
 
                             const streams = this.rpcClient.syncStreams({
                                 syncPos: syncCookies,
@@ -921,7 +902,7 @@ export class SyncedStreams {
         this.pingInfo.pingInterval = setTimeout(() => {
             const ping = async () => {
                 if (this.syncState === SyncState.Syncing && this.syncId) {
-                    const n = nanoid()
+                    const n = generateRandomUUID()
                     this.pingInfo.nonces[n] = {
                         sequence: this.pingInfo.currentSequence++,
                         nonce: n,

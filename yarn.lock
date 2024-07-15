@@ -17581,6 +17581,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"esm@npm:^3.2.25":
+  version: 3.2.25
+  resolution: "esm@npm:3.2.25"
+  checksum: 978aabe2de83541c105605a6d60a26ed8e627ef6bb0a7605fe15a95bbdea6b8348bd045255cb22219c054dd09a81a94823df00843d9e97f42419c92015ce3a64
+  languageName: node
+  linkType: hard
+
 "espree@npm:^9.5.1, espree@npm:^9.6.0, espree@npm:^9.6.1":
   version: 9.6.1
   resolution: "espree@npm:9.6.1"
@@ -24862,6 +24869,7 @@ __metadata:
     eslint-plugin-n: ^16.0.0
     eslint-plugin-prettier: ^4.2.1
     eslint-plugin-promise: ^6.0.0
+    esm: ^3.2.25
     express: ^4.18.2
     express-async-errors: ^3.1.1
     helmet: ^7.1.0

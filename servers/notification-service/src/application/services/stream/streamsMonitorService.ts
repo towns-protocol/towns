@@ -93,7 +93,6 @@ export class StreamsMonitorService implements IStreamsMonitorService {
         const unpacked = await unpackStream(response.stream)
 
         if (response.stream) {
-            this.streams.set(streamId, response.stream!)
             this.streams.addStreamToSync(response.stream.nextSyncCookie!)
         }
 
@@ -298,7 +297,6 @@ export class StreamsMonitorService implements IStreamsMonitorService {
         const unpacked = await unpackStream(response.stream)
 
         if (response.stream) {
-            this.streams.set(streamId, response.stream!)
             this.streams.addStreamToSync(response.stream.nextSyncCookie!)
         }
 
