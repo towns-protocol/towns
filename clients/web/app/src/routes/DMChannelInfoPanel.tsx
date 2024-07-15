@@ -32,11 +32,7 @@ export const DMChannelInfoPanel = () => {
     const channelId = useChannelData()?.channel?.id
     const { data } = useDMData(channelId)
     const title = data ? (data.isGroup ? 'Group Info' : 'Direct Message') : ''
-    return (
-        <Panel modalPresentable label={title}>
-            {<DMChannelInfo channelId={channelId} data={data} />}
-        </Panel>
-    )
+    return <Panel label={title}>{<DMChannelInfo channelId={channelId} data={data} />}</Panel>
 }
 
 export const DMChannelInfo = (props: { channelId?: string; data?: DMChannelIdentifier }) => {

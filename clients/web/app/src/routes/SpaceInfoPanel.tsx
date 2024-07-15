@@ -61,7 +61,7 @@ const MdGap = ({ children, ...boxProps }: { children: JSX.Element } & BoxProps) 
 
 export const SpaceInfoPanel = () => {
     return (
-        <Panel modalPresentable label="Town Info">
+        <Panel label="Town Info">
             <SpaceInfo />
         </Panel>
     )

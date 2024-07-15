@@ -34,7 +34,7 @@ import { usePanelActions } from './layouts/hooks/usePanelActions'
 export const ChannelInfoPanel = React.memo(() => {
     return (
         <PrivyWrapper>
-            <Panel modalPresentable label="Channel Info">
+            <Panel label="Channel Info">
                 <ChannelInfo />
             </Panel>
         </PrivyWrapper>
