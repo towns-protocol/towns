@@ -1,4 +1,5 @@
 import { Env } from '.'
+import { durationLogger } from './utils'
 
 const PRIVY_API_URL = 'https://auth.privy.io/api/v1'
 
@@ -112,7 +113,9 @@ export async function searchPrivyForUser(
         return mockPrivyApiResponse()
     }
     const init = createPrivSearchRequest(request, env)
+    const completeDuration = durationLogger('searchPrivyForUser')
     const responseFetched = await fetch(`${PRIVY_API_URL}/users/search`, init)
+    completeDuration()
     console.log('responseFetched', responseFetched.status)
     if (responseFetched.status !== 200) {
         return new Response('Invalid Privy Response', {

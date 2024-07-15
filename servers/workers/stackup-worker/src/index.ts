@@ -11,6 +11,7 @@ import {
 } from 'worker-common'
 
 import { handleRequest } from './router'
+import { durationLogger } from './utils'
 
 export interface Env extends AuthEnv {
     ENVIRONMENT: Environment
@@ -79,7 +80,9 @@ export const worker = {
                     }
                 }
             }
+            const durationRequest = durationLogger(request.url)
             const response = await handleRequest(request, env)
+            durationRequest()
             const newResponse = new Response(response.body, response)
             return appendCorsHeaders(newResponse, withCorsHeaders(request, env.ENVIRONMENT))
         } catch (e) {

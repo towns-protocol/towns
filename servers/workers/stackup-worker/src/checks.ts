@@ -2,6 +2,7 @@ import { Env } from '.'
 import { isPrivyApiSearchResponse, searchPrivyForUser } from './privy'
 import { Overrides, isWhitelistStoredOperation, IOverrideOperation } from './types'
 import { TRANSACTION_LIMIT_DEFAULTS_PER_DAY } from './useropVerification'
+import { durationLogger } from './utils'
 //import { Permission } from '@river-build/web3'
 
 export interface IVerificationResult {
@@ -145,6 +146,7 @@ export async function checkMintKVOverrides(
     env: Env,
 ): Promise<IVerificationResult | null> {
     // more restrictive rule requires whitelisted email
+    const emailOverrides = durationLogger('Overrides.EveryWalletCanMintWhitelistedEmail')
     const everyWalletCanMintWhitelistedEmail = await env.OVERRIDES.get(
         Overrides.EveryWalletCanMintWhitelistedEmail,
         {
@@ -152,6 +154,7 @@ export async function checkMintKVOverrides(
             cacheTtl: 3600,
         },
     )
+    emailOverrides()
     // check if wallet is signed up with privy
     const searchParam = { walletAddresses: [rootAddress] }
     const privyResponse = await searchPrivyForUser(searchParam, env)
@@ -167,6 +170,7 @@ export async function checkMintKVOverrides(
                     return account.type.includes('_oauth')
                 })
 
+                const linkedDuration = durationLogger('linkedAccounts')
                 for (const linkedAccount of linkedAccounts) {
                     // search for associated emails and cross check against whitelist of emails
                     const emailWhitelist = await env.EMAIL_WHITELIST.get(
@@ -184,12 +188,14 @@ export async function checkMintKVOverrides(
                         console.log(
                             `user ${rootAddress}, email ${linkedAccount.email} is on email whitelist`,
                         )
+                        linkedDuration()
                         return {
                             verified: true,
                             maxActionsPerDay: TRANSACTION_LIMIT_DEFAULTS_PER_DAY.createSpace,
                         }
                     }
                 }
+                linkedDuration()
                 return {
                     verified: false,
                     error: 'user not on email whitelist',

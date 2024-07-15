@@ -3,6 +3,16 @@ import { Request as IttyRequest } from 'itty-router'
 
 export type WorkerRequest = Request & IttyRequest
 
+export const durationLogger = (step: string) => {
+    const now = Date.now()
+    console.log(`DURATION START: ${step}`, `Timestamp: ${now}`)
+    return () => {
+        const end = Date.now()
+        const duration = end - now
+        console.log(`DURATION END: ${step}`, duration, `Timestamp: ${end}`)
+    }
+}
+
 export function createPmSponsorUserOperationRequest(params: {
     userOperation: IUserOperation
     paymasterAddress: string

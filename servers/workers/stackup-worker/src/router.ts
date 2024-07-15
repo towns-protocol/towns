@@ -21,7 +21,12 @@ import {
 } from './useropVerification'
 
 import { isErrorType, Environment } from 'worker-common'
-import { WorkerRequest, createPmSponsorUserOperationRequest, getContentAsJson } from './utils'
+import {
+    WorkerRequest,
+    createPmSponsorUserOperationRequest,
+    getContentAsJson,
+    durationLogger,
+} from './utils'
 import { contractAddress, createFilterWrapper, runLogQuery } from './logFilter'
 import { IVerificationResult, checkMintKVOverrides } from './checks'
 import { createSpaceDappForNetwork, networkMap } from './provider'
@@ -611,7 +616,11 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env) => {
         type: { type: contextType },
     })
     console.log('stackup API request:', requestInit.body)
+    const durationStackupApiRequest = durationLogger(
+        'Stackup API Request - pm_sponsorUserOperation',
+    )
     const responseFetched = await fetch(`${env.PAYMASTER_RPC_URL}`, requestInit)
+    durationStackupApiRequest()
     if (responseFetched.status !== 200) {
         return new Response(toJson({ error: 'Invalid Paymaster Response' }), {
             status: responseFetched.status,

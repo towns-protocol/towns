@@ -5,6 +5,7 @@ import { Env } from '.'
 import { ContractName, EventName, FunctionName, Networks } from './types'
 import { createContractMap, isSpaceSpecificContract, spaceSpecificContracts } from './contractsMap'
 import { SpaceAddressFromSpaceId } from '@river-build/web3'
+import { durationLogger } from './utils'
 
 interface ContractDetails {
     address: string | undefined
@@ -222,7 +223,9 @@ export async function runLogQuery<CN extends ContractName>(args: {
         )
         console.log(`running filter: ${JSON.stringify(filter)}`)
         console.log(`running contract: ${contract.address}`)
+        const queryDuration = durationLogger(`QueryFilter - ${eventName}`)
         logs = await contract.queryFilter(filter, blockLookback, latestBlockNumber)
+        queryDuration()
     } catch (error) {
         console.error(
             `Unable to queryFilter: ${isErrorType(error) ? error?.message : 'Unkown error'}}`,
