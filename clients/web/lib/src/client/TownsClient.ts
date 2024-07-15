@@ -1937,6 +1937,9 @@ export class TownsClient
         }
         const creatorUserId = this.casablancaClient?.stream(roomId)?.view.events.get(eventId)
             ?.remoteEvent?.creatorUserId
+
+        const beforeSendEventHooks: Promise<void>[] = []
+
         if (
             this.pushNotificationClient &&
             creatorUserId &&
@@ -1944,16 +1947,29 @@ export class TownsClient
                 isGDMChannelStreamId(roomId) ||
                 isDMChannelStreamId(roomId))
         ) {
-            await this.pushNotificationClient.sendUserReactionToNotificationService(
-                roomId,
-                creatorUserId,
-                threadId,
+            beforeSendEventHooks.push(
+                this.pushNotificationClient.sendUserReactionToNotificationService(
+                    roomId,
+                    creatorUserId,
+                    threadId,
+                ),
             )
         }
-        await this.casablancaClient.sendChannelMessage_Reaction(roomId, {
-            reaction,
-            refEventId: eventId,
-        })
+
+        const beforeSendEventHook = beforeSendEventHooks.length
+            ? Promise.all(beforeSendEventHooks).then(() => undefined)
+            : undefined
+
+        await this.casablancaClient.sendChannelMessage_Reaction(
+            roomId,
+            {
+                reaction,
+                refEventId: eventId,
+            },
+            {
+                beforeSendEventHook,
+            },
+        )
         this.log('sendReaction')
     }
 
