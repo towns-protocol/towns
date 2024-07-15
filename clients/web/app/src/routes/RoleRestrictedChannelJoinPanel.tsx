@@ -1,5 +1,545 @@
-import React from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
+import { useParams } from 'react-router'
+import {
+    BlockchainTransactionType,
+    EVERYONE_ADDRESS,
+    Permission,
+    RoleEntitlements,
+    blockchainQueryKeys,
+    useChannelSettings,
+    useConnectivity,
+    useGetRootKeyFromLinkedWallet,
+    useHasPermission,
+    useIsTransactionPending,
+    useLinkEOAToRootKeyTransaction,
+    useLinkedWallets,
+    useSpaceData,
+    useUser,
+} from 'use-towns-client'
+import headlessToast, { Toast } from 'react-hot-toast/headless'
+import { Panel } from '@components/Panel/Panel'
+import { Box, Button, Icon, MotionIcon, Pill, Stack, Text } from '@ui'
+import { Accordion } from 'ui/components/Accordion/Accordion'
+import { convertRuleDataToTokenFormSchema } from '@components/Tokens/utils'
+import { Avatar } from '@components/Avatar/Avatar'
+import { TokenEntitlement } from '@components/Tokens/TokenSelector/tokenSchemas'
+import { TokenImage } from '@components/Tokens/TokenSelector/TokenImage'
+import { useTokenMetadataForChainId } from 'api/lib/collectionMetadata'
+import { TokenDetails } from '@components/Web3/TokenDetails'
+import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
+import { useConnectThenLink } from '@components/Web3/WalletLinkingPanel'
+import { PrivyWrapper } from 'privy/PrivyProvider'
+import {
+    checkWalletsForTokens2QueryDataBalances,
+    useWatchLinkedWalletsForToken2,
+} from '@components/Web3/TokenVerification/tokenStatus'
+import { popupToast } from '@components/Notifications/popupToast'
+import { StandardToast } from '@components/Notifications/StandardToast'
+import { mapToErrorMessage } from '@components/Web3/utils'
+import { usePanelActions } from './layouts/hooks/usePanelActions'
+import { useOnJoinChannel } from './AllChannelsList/AllChannelsList'
 
-export const RoleRestrictedChannelJoinPanel = () => {
-    return <></>
+export const RoleRestrictedChannelJoinPanel = React.memo(() => {
+    return (
+        <PrivyWrapper>
+            <RoleRestrictedChannelJoinPanelWithoutAuth />
+        </PrivyWrapper>
+    )
+})
+
+function RoleRestrictedChannelJoinPanelWithoutAuth() {
+    const { data: channelId } = usePanelActions()
+    const { spaceSlug } = useParams()
+
+    const { channelSettings, isLoading } = useChannelSettings(spaceSlug ?? '', channelId ?? '')
+
+    const roles = channelSettings?.roles
+
+    return (
+        <Panel label="Role Required to Join">
+            {isLoading && <ButtonSpinner />}
+            {roles && (
+                <RolesList
+                    roles={roles}
+                    spaceId={spaceSlug}
+                    channelName={channelSettings.name}
+                    channelId={channelId ?? undefined}
+                />
+            )}
+        </Panel>
+    )
+}
+
+function RolesList(props: {
+    roles: RoleEntitlements[]
+    spaceId: string | undefined
+    channelId: string | undefined
+    channelName: string
+}) {
+    const { roles, spaceId, channelId, channelName } = props
+    const { allWallets, newWallets } = useTrackedWallets()
+
+    const { loggedInWalletAddress } = useConnectivity()
+
+    const {
+        hasPermission: canJoinChannel,
+        invalidate: invalidateJoinChannel,
+        getQueryData: getJoinChannelQueryData,
+    } = useHasPermission({
+        walletAddress: loggedInWalletAddress,
+        spaceId,
+        channelId: channelId ?? '',
+        permission: Permission.Read,
+    })
+
+    const space = useSpaceData()
+
+    const {
+        syncingSpace,
+        joinFailed,
+        setJoinFailed,
+        onClick: onJoinClick,
+    } = useOnJoinChannel({
+        channelId: channelId ?? undefined,
+        space,
+        isJoined: false,
+    })
+
+    useShowToast({
+        condition: joinFailed,
+        onPostNotification: () => setJoinFailed(false),
+        ToastComponent: ({ resetToast, toast }) => (
+            <StandardToast.Error
+                message="There was an error joining the channel. Please try again in a few minutes."
+                toast={toast}
+                onDismiss={resetToast}
+            />
+        ),
+    })
+
+    const { linkEOAToRootKeyTransaction } = useLinkEOAToRootKeyTransaction({
+        onSuccess: async () => {
+            if (!channelId || !loggedInWalletAddress) {
+                return
+            }
+            await invalidateJoinChannel()
+            const canJoin = getJoinChannelQueryData()
+
+            if (canJoin) {
+                const qualifiedRoles: string[] = []
+                const wallets = blockchainQueryKeys.linkedWallets(loggedInWalletAddress)
+
+                for (const role of roles) {
+                    const {
+                        hasUserEntitlement,
+                        hasRuleEntitlement,
+                        tokens,
+                        qualifiesForUserEntitlement,
+                    } = getGeneralEntitlmemntData({ role, wallets })
+
+                    const tokenBalances = checkWalletsForTokens2QueryDataBalances()
+
+                    const hasAllTokens =
+                        Object.keys(tokenBalances).length === tokens.length &&
+                        Object.values(tokenBalances).every((b) => b > 0)
+
+                    if (
+                        qualifiesForRole({
+                            hasUserEntitlement,
+                            hasRuleEntitlement,
+                            qualifiesForUserEntitlement,
+                            isLoadingTokensInWallet: false,
+                            hasAllTokens,
+                        })
+                    ) {
+                        qualifiedRoles.push(role.name)
+                    }
+                }
+                headlessToast.dismiss()
+                popupToast(({ toast: t }) => (
+                    <StandardToast.Success
+                        message={`You've been verified for the ${qualifiedRoles.join(', ')} role${
+                            qualifiedRoles.length > 1 ? 's' : ''
+                        } and now have access to this channel.`}
+                        cta={`Go to #${channelName}`}
+                        toast={t}
+                        onCtaClick={async ({ dismissToast }) => {
+                            const result = await onJoinClick({
+                                navigateWithPanel: false,
+                            })
+                            if (result) {
+                                dismissToast()
+                            }
+                        }}
+                    />
+                ))
+            } else {
+                headlessToast.dismiss()
+                popupToast(({ toast: t }) => (
+                    <StandardToast.Error
+                        message={`You've linked your wallet, but you don't have the required roles to join this channel.`}
+                        toast={t}
+                    />
+                ))
+            }
+        },
+        onError: async (e) => {
+            headlessToast.dismiss()
+            console.error('Error linking wallet to root key', e)
+            popupToast(({ toast: t }) => (
+                <StandardToast.Error
+                    message={mapToErrorMessage(e) ?? 'There was an error linking your wallet.'}
+                    toast={t}
+                />
+            ))
+        },
+    })
+
+    const onLinkEOAClick = useConnectThenLink({
+        onLinkWallet: linkEOAToRootKeyTransaction,
+    })
+    const isWalletLinkingPending = useIsTransactionPending(BlockchainTransactionType.LinkWallet)
+
+    return (
+        <>
+            {roles?.map((role) => {
+                return (
+                    <RoleAccordion
+                        key={role.roleId}
+                        role={role}
+                        wallets={allWallets}
+                        showQualifiedStatus={newWallets ? newWallets.length > 0 : undefined}
+                    />
+                )
+            })}
+            <Stack grow gap="sm" justifyContent="end">
+                {canJoinChannel && (
+                    <Button
+                        tone="level2"
+                        disabled={syncingSpace}
+                        onClick={async () => {
+                            await onJoinClick({ navigateWithPanel: false })
+                        }}
+                    >
+                        {syncingSpace && <ButtonSpinner />} Go to #{channelName}
+                    </Button>
+                )}
+
+                <Button
+                    tone={syncingSpace || isWalletLinkingPending ? 'level2' : 'cta1'}
+                    disabled={syncingSpace || isWalletLinkingPending}
+                    onClick={onLinkEOAClick}
+                >
+                    <Icon type="link" /> Link Wallet
+                </Button>
+            </Stack>
+        </>
+    )
+}
+
+function RoleAccordion(props: {
+    role: RoleEntitlements
+    wallets: string[] | undefined
+    showQualifiedStatus?: boolean
+}) {
+    const { role, wallets, showQualifiedStatus } = props
+
+    const {
+        hasUserEntitlement,
+        hasRuleEntitlement,
+        tokens,
+        tokenTypes,
+        qualifiesForUserEntitlement,
+    } = getGeneralEntitlmemntData({ role, wallets })
+
+    const { data: tokensInWallet, isLoading: isLoadingTokensInWallet } =
+        useWatchLinkedWalletsForToken2({
+            tokens,
+        })
+
+    const hasAllTokens = tokensInWallet?.every((d) => d.data?.status === 'success')
+
+    const _qualifiesForRole = useMemo(() => {
+        if (!showQualifiedStatus) {
+            return
+        }
+        return qualifiesForRole({
+            hasUserEntitlement,
+            hasRuleEntitlement,
+            qualifiesForUserEntitlement,
+            isLoadingTokensInWallet,
+            hasAllTokens,
+        })
+    }, [
+        hasAllTokens,
+        hasRuleEntitlement,
+        hasUserEntitlement,
+        isLoadingTokensInWallet,
+        qualifiesForUserEntitlement,
+        showQualifiedStatus,
+    ])
+
+    const subTitle = useMemo(() => {
+        let message = ''
+        if (hasUserEntitlement) {
+            message += `${role.users.length} member${role.users.length > 1 ? 's' : ''} whitelisted`
+        }
+        if (hasRuleEntitlement) {
+            message += `${message.length > 0 ? ', ' : ''}${tokenTypes} Required`
+        }
+
+        return message
+    }, [hasRuleEntitlement, hasUserEntitlement, role.users.length, tokenTypes])
+
+    return (
+        <Accordion
+            border={_qualifiesForRole ? 'positive' : 'faint'}
+            header={({ isExpanded }) => (
+                <AccordionHeader
+                    qualified={_qualifiesForRole}
+                    title={role.name}
+                    subTitle={subTitle}
+                    isExpanded={isExpanded}
+                    tokens={tokens}
+                />
+            )}
+        >
+            <Stack>
+                {hasUserEntitlement && <UserList users={role.users} />}
+                {hasRuleEntitlement && (
+                    <Stack gap="sm">
+                        {tokens.map((token) => (
+                            <TokenDetailsWithWalletMatch
+                                key={token.address}
+                                token={token}
+                                tokensInWallet={showQualifiedStatus ? tokensInWallet : undefined}
+                            />
+                        ))}
+                    </Stack>
+                )}
+            </Stack>
+        </Accordion>
+    )
+}
+
+function TokenDetailsWithWalletMatch(props: {
+    token: TokenEntitlement
+    tokensInWallet: ReturnType<typeof useWatchLinkedWalletsForToken2>['data']
+}) {
+    const { token, tokensInWallet } = props
+    const match = tokensInWallet?.find((t) => t.data?.tokenAddress === token.address)
+    const ownsToken = match?.data ? match.data.status === 'success' : undefined
+
+    return <TokenDetails token={token} userOwnsToken={ownsToken} />
+}
+
+function UserList({ users }: { users: string[] }) {
+    return (
+        <Stack horizontal padding="sm" gap="xs" flexWrap="wrap" rounded="md" background="level3">
+            {users.map((user) => (
+                <User key={user} wallet={user} />
+            ))}
+        </Stack>
+    )
+}
+
+function AccordionHeader(props: {
+    title: string
+    subTitle: string
+    isExpanded: boolean
+    tokens: TokenEntitlement[]
+    qualified?: boolean
+}) {
+    const { title, subTitle, isExpanded, tokens, qualified } = props
+
+    return (
+        <Box horizontal gap="sm" justifyContent="spaceBetween">
+            <Box grow gap="sm">
+                <Stack horizontal alignItems="center" gap="sm">
+                    <Text color="default">{title}</Text>
+                    {qualified === false && <Icon size="square_xs" type="close" color="negative" />}
+                    {qualified === true && <Icon size="square_xs" type="check" color="positive" />}
+                </Stack>
+                <Text color="gray2" size="sm">
+                    {subTitle}
+                </Text>
+            </Box>
+            <Box horizontal gap="xs">
+                {tokens.slice(0, 3).map((token) => (
+                    <HeaderToken key={token.address} token={token} />
+                ))}
+                {tokens.length > 3 && (
+                    <Box>
+                        <Box
+                            centerContent
+                            background="level4"
+                            width="x3"
+                            aspectRatio="1/1"
+                            rounded="sm"
+                        >
+                            <Text strong size="sm">
+                                +{tokens.length - 3}
+                            </Text>
+                        </Box>
+                    </Box>
+                )}
+            </Box>
+            <MotionIcon
+                animate={{
+                    rotate: isExpanded ? '0deg' : '-180deg',
+                }}
+                shrink={false}
+                initial={{ rotate: '-180deg' }}
+                transition={{ duration: 0.2 }}
+                type="arrowDown"
+            />
+        </Box>
+    )
+}
+
+function HeaderToken(props: { token: TokenEntitlement }) {
+    const { token } = props
+    const { data: tokenDataWithChainId } = useTokenMetadataForChainId(token.address, token.chainId)
+
+    return (
+        <Box>
+            <TokenImage imgSrc={tokenDataWithChainId?.data.imgSrc} width="x3" />
+        </Box>
+    )
+}
+
+function User(props: { wallet: string }) {
+    const { wallet } = props
+    const { data: userId } = useGetRootKeyFromLinkedWallet({ walletAddress: wallet })
+    const user = useUser(userId)
+    const name = useMemo(
+        () => (user?.displayName ? user.displayName : user?.username ? user.username : wallet),
+        [user?.displayName, user?.username, wallet],
+    )
+
+    return (
+        <>
+            <Pill gap="sm" background="level4" color="default">
+                {user && <Avatar userId={userId} size="avatar_xs" />}
+                {name}
+            </Pill>
+        </>
+    )
+}
+
+function useShowToast(props: {
+    condition: boolean
+    onPostNotification?: () => void
+    ToastComponent: React.ElementType<{ resetToast: () => void; toast: Toast }>
+}) {
+    const { ToastComponent, onPostNotification, condition } = props
+    const [toast, setToast] = useState<string | undefined>()
+
+    useEffect(() => {
+        const resetToast = () => {
+            if (toast) {
+                headlessToast.dismiss(toast)
+            }
+            setToast(undefined)
+        }
+        if (condition && !toast) {
+            const id = popupToast(({ toast: t }) => (
+                <ToastComponent resetToast={resetToast} toast={t} />
+            ))
+            setToast(id)
+            onPostNotification?.()
+        }
+    }, [ToastComponent, condition, onPostNotification, props, props.condition, toast])
+}
+
+function useTrackedWallets() {
+    const { data: wallets, isLoading: isLoadingWallets } = useLinkedWallets()
+    const [trackedWallets, setTrackedWallets] = React.useState<
+        | {
+              initialWallets: string[]
+              newWallets: string[]
+          }
+        | undefined
+    >()
+    useEffect(() => {
+        if (isLoadingWallets) {
+            return
+        }
+        if (wallets) {
+            setTrackedWallets((s) => {
+                if (!s?.initialWallets.length) {
+                    return {
+                        initialWallets: wallets,
+                        newWallets: [],
+                    }
+                } else {
+                    return {
+                        initialWallets: s.initialWallets,
+                        newWallets: wallets,
+                    }
+                }
+            })
+        }
+    }, [isLoadingWallets, wallets])
+
+    return useMemo(
+        () => ({
+            initialWallets: trackedWallets?.initialWallets,
+            newWallets: trackedWallets?.newWallets,
+            allWallets: wallets,
+            isLoading: isLoadingWallets,
+        }),
+        [trackedWallets?.initialWallets, trackedWallets?.newWallets, wallets, isLoadingWallets],
+    )
+}
+
+function getGeneralEntitlmemntData({
+    role,
+    wallets,
+}: {
+    role: RoleEntitlements
+    wallets: string[] | undefined
+}) {
+    const hasUserEntitlement = role.users.length > 0 && !role.users.includes(EVERYONE_ADDRESS)
+    const hasRuleEntitlement = role.ruleData.checkOperations.length > 0
+    const tokens = convertRuleDataToTokenFormSchema(role.ruleData)
+    const tokenTypes = [...new Set(tokens.map((p) => p.type))].join(', ')
+    const qualifiesForUserEntitlement =
+        hasUserEntitlement && wallets?.some((w) => role.users.includes(w))
+
+    return {
+        hasUserEntitlement,
+        hasRuleEntitlement,
+        tokens,
+        tokenTypes,
+        qualifiesForUserEntitlement,
+    }
+}
+
+function qualifiesForRole({
+    hasUserEntitlement,
+    hasRuleEntitlement,
+    qualifiesForUserEntitlement,
+    isLoadingTokensInWallet,
+    hasAllTokens,
+}: {
+    hasUserEntitlement: boolean
+    hasRuleEntitlement: boolean
+    qualifiesForUserEntitlement: boolean | undefined
+    isLoadingTokensInWallet: boolean
+    hasAllTokens: boolean | undefined
+}) {
+    if (hasUserEntitlement && hasRuleEntitlement) {
+        if (isLoadingTokensInWallet) {
+            return
+        }
+        return qualifiesForUserEntitlement && hasAllTokens === true
+    } else if (hasUserEntitlement) {
+        return qualifiesForUserEntitlement
+    } else if (hasRuleEntitlement) {
+        if (isLoadingTokensInWallet) {
+            return
+        }
+        return hasAllTokens === true
+    }
 }

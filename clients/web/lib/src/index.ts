@@ -122,6 +122,7 @@ export * from './store/use-timeline-filter'
 export * from './store/use-transactions-store'
 export type { BlockchainStoreTx } from './client/BlockchainTransactionStore'
 export { staleTime24Hours, queryClient } from './query/queryClient'
+export { blockchainKeys as blockchainQueryKeys } from './query/query-keys'
 
 export * from './types/towns-types'
 export { Membership, MessageType } from './types/towns-types'

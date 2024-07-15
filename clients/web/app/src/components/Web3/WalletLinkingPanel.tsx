@@ -109,10 +109,16 @@ function WalletLinkingPanelWithoutAuth() {
             {/* {isLoadingUnlinkingWallet && <FullPanelOverlay text="Unlinking Wallet" />} */}
 
             {unlinkModal.visible && (
-                <ModalContainer minWidth="auto" onHide={hideUnlinkModal}>
+                <ModalContainer asSheet minWidth="auto" onHide={hideUnlinkModal}>
                     <Box padding="sm" gap="lg" alignItems="center">
                         <Text>Are you sure you want to unlink</Text>
-                        <Text>{unlinkModal.addressToUnlink}?</Text>
+                        <Text
+                            fontSize={{
+                                mobile: 'sm',
+                            }}
+                        >
+                            {unlinkModal.addressToUnlink}?
+                        </Text>
                         <Box horizontal gap>
                             <Button tone="level2" onClick={hideUnlinkModal}>
                                 Cancel

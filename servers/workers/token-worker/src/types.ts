@@ -73,7 +73,7 @@ export interface GetContractMetadataAlchemyResponse extends ContractMetadata {
     contractDeployer: string
     deployedBlockNumber: number
     tokenType: TokenType
-    openSeaMetadata: OpenSeaCollectionMetadata
+    openSeaMetadata: OpenSeaCollectionMetadata & { collectionSlug?: string | null }
 }
 
 // worker response for /getCollectionsForOwner
@@ -120,6 +120,7 @@ export type ContractMetadata = {
     symbol?: string | null
     tokenType?: TokenType
     imageUrl?: string | null // from OpenSea data if available
+    openSeaCollectionUrl?: string | null
     image?: NftImageMetadata | null
     displayNft?: NftDisplayNft | null
 }

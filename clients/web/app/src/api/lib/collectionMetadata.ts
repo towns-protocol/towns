@@ -30,6 +30,7 @@ const metadataForSingleNetworkSchema: z.ZodType<ContractMetadata> = z.object({
     symbol: z.string().optional().nullable(),
     tokenType: TokenTypeSchema,
     imageUrl: z.string().optional().nullable(),
+    openSeaCollectionUrl: z.string().optional().nullable(),
 })
 
 const metadataAcrossNetworksSchema: z.ZodType<GetCollectionMetadataAcrossNetworksResponse[]> =
@@ -42,6 +43,7 @@ const metadataAcrossNetworksSchema: z.ZodType<GetCollectionMetadataAcrossNetwork
                 symbol: z.string().optional().nullable(),
                 tokenType: TokenTypeSchema,
                 imageUrl: z.string().optional().nullable(),
+                openSeaCollectionUrl: z.string().optional().nullable(),
             }),
         }),
     )
@@ -237,6 +239,7 @@ export function mapToTokenData(token: ContractMetadata, chainId: number): TokenD
         chainId,
         data: {
             imgSrc: token.imageUrl || '',
+            openSeaCollectionUrl: token.openSeaCollectionUrl || undefined,
             label: token.name || '',
             address: (token.address || '') as Address,
             type: (token?.tokenType as TokenType) || undefined,

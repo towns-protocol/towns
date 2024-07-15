@@ -12,6 +12,7 @@ export type TokenData = {
         name?: string | null
     }
     image?: NftImageMetadata
+    openSeaCollectionUrl?: string | null
 }
 
 export type TokenDataWithChainId = {

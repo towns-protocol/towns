@@ -6,7 +6,6 @@ import {
 
 import { WalletAlreadyLinkedError, WalletNotLinkedError } from '@river-build/web3'
 
-import { arbitrum, base, baseSepolia, mainnet, optimism } from 'viem/chains'
 import {
     ENTITLEMENT_NOT_ALLOWED,
     ERROR_GATE_FACET_SERVICE_NOT_ALLOWED,
@@ -165,12 +164,3 @@ export function openSeaAssetUrl(chainId: number, contractAddress: string) {
 }
 
 export const openSeaBaseAssetUrl = 'https://opensea.io/assets/base'
-
-// TODO: supportedNftNetworks will be grabbed from river
-export const supportedNftNetworks = [
-    { vChain: mainnet, alchemyIdentifier: 'eth-mainnet' },
-    { vChain: base, alchemyIdentifier: 'base-mainnet' },
-    { vChain: arbitrum, alchemyIdentifier: 'arb-mainnet' },
-    { vChain: optimism, alchemyIdentifier: 'opt-mainnet' },
-    { vChain: baseSepolia, alchemyIdentifier: 'base-sepolia' },
-] as const

@@ -42,7 +42,16 @@ export function StandardToast<T extends IconProps['type'] | undefined>(props: Pr
         setCtaActionLoading(false)
     }
     return (
-        <Box horizontal gap width="390" alignItems="center" justifyContent="spaceBetween">
+        <Box
+            horizontal
+            gap
+            width={{
+                mobile: '300',
+                desktop: '390',
+            }}
+            alignItems="center"
+            justifyContent="spaceBetween"
+        >
             <Box alignSelf="start">
                 <Box
                     horizontal

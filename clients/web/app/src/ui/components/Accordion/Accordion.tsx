@@ -42,6 +42,7 @@ const Header = ({
                 animate={{
                     rotate: isExpanded ? '0deg' : '-180deg',
                 }}
+                initial={{ rotate: '-180deg' }}
                 transition={{ duration: 0.2 }}
                 type="arrowDown"
             />

@@ -5,7 +5,6 @@ import { TokenDataWithChainId } from '@components/Tokens/types'
 import { Box, Button, Icon, IconButton, Text, TextField } from '@ui'
 import { useTokenMetadataAcrossNetworks } from 'api/lib/collectionMetadata'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
-import { supportedNftNetworks } from '@components/Web3/utils'
 import { useClickedOrFocusedOutside } from 'hooks/useClickedOrFocusedOutside'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { isTouch } from 'hooks/useDevice'
@@ -432,18 +431,6 @@ function useSorted(tokenMetadata: TokenDataWithChainId[] | undefined) {
                               return a.data.label.localeCompare(b.data.label)
                           }
                           return 1
-                      })
-                      // then sort by our preferred order of networks
-                      .sort((a, b) => {
-                          const chainA = supportedNftNetworks.find((n) => n.vChain.id === a.chainId)
-                          const chainB = supportedNftNetworks.find((n) => n.vChain.id === b.chainId)
-                          if (!chainA || !chainB) {
-                              return -1
-                          }
-                          return (
-                              supportedNftNetworks.indexOf(chainA) -
-                              supportedNftNetworks.indexOf(chainB)
-                          )
                       })
                 : undefined,
         [tokenMetadata],

@@ -27,7 +27,6 @@ import {
 } from '@components/DirectMessages/DirectMessageListItem'
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { SomethingWentWrong } from '@components/Errors/SomethingWentWrong'
-import { ModalContainer } from '@components/Modals/ModalContainer'
 import { NavItem } from '@components/NavItem/_NavItem'
 import { TouchHomeOverlay } from '@components/TouchHomeOverlay/TouchHomeOverlay'
 import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackground'
@@ -64,12 +63,12 @@ import { ShakeToReport } from '@components/BugReportButton/ShakeToReport'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { ReloadPrompt } from '@components/ReloadPrompt/ReloadPrompt'
 import { env } from 'utils'
-import { BrowseChannelsPanel } from '@components/BrowseChannelsPanel/BrowseChannelsPanel'
 import { useUnseenChannelIds } from 'hooks/useUnseenChannelIdsCount'
 import { usePanels } from 'routes/layouts/hooks/usePanels'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { useAnalytics } from 'hooks/useAnalytics'
 import { useChannelEntitlements } from 'hooks/useChannelEntitlements'
+import { CHANNEL_INFO_PARAMS } from 'routes'
 import { ChannelItem } from '../AllChannelsList/AllChannelsList'
 import { TouchTabBarLayout } from '../layouts/TouchTabBarLayout'
 
@@ -100,7 +99,7 @@ export const TouchHome = () => {
     }, [lookupUser, memberIds])
     const { state: locationState } = useLocation()
 
-    const { unseenChannelIds, markChannelsAsSeen } = useUnseenChannelIds()
+    const { unseenChannelIds } = useUnseenChannelIds()
     const spaceId = space?.id ?? ''
 
     const { storeBookmarkedSpaceId, storeBookmarkedRoute, notificationRoute } = useStore((s) => {
@@ -146,6 +145,8 @@ export const TouchHome = () => {
             },
         )
     }, [analytics, spaceId])
+
+    const { openPanel } = usePanelActions()
 
     const onFocus = useCallback(() => {
         setIsSearching(true)
@@ -244,22 +245,8 @@ export const TouchHome = () => {
                 console.log('clicked browse channels', { spaceId: space?.id })
             },
         )
-        setActiveOverlay('browse-channels')
-    }, [analytics, space?.id])
-
-    const onHideBrowseChannels = useCallback(() => {
-        analytics?.track(
-            'closed panel',
-            {
-                panel: 'browse-channels',
-            },
-            () => {
-                console.log('[analytics] closed panel', { panel: 'browse-channels' })
-            },
-        )
-        markChannelsAsSeen()
-        onHideOverlay()
-    }, [analytics, markChannelsAsSeen, onHideOverlay])
+        openPanel(CHANNEL_INFO_PARAMS.BROWSE_CHANNELS)
+    }, [analytics, openPanel, space?.id])
 
     const { imageSrc } = useImageSource(space?.id ?? '', ImageVariants.thumbnail300)
 
@@ -290,7 +277,6 @@ export const TouchHome = () => {
     const displayMentionsItem =
         mentionsLink && (!isSearching || filteredMenuItems.some((f) => f.obj.value === 'mentions'))
 
-    const { openPanel } = usePanelActions()
     const openCreateChannelPanel = useCallback(() => {
         openPanel('create-channel')
     }, [openPanel])
@@ -470,11 +456,6 @@ export const TouchHome = () => {
                     {activeOverlay === 'main-panel' && <TouchHomeOverlay onClose={onHideOverlay} />}
                     {activeOverlay === 'create-channel' && space?.id && (
                         <CreateChannelFormModal spaceId={space.id} onHide={onHideOverlay} />
-                    )}
-                    {activeOverlay === 'browse-channels' && (
-                        <ModalContainer touchTitle="Browse channels" onHide={onHideBrowseChannels}>
-                            <BrowseChannelsPanel onClose={onHideBrowseChannels} />
-                        </ModalContainer>
                     )}
                 </AnimatePresence>
             </VisualViewportContextProvider>

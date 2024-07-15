@@ -16,8 +16,14 @@ import { useSpaceDapp } from './use-space-dapp'
 import { useOfflineStore } from '../store/use-offline-store'
 import { useTownsContext } from '../components/TownsContextProvider'
 
-export function useLinkEOAToRootKeyTransaction() {
-    const { traceTransaction, ...rest } = useLinkTransactionBuilder()
+export function useLinkEOAToRootKeyTransaction({
+    onSuccess,
+    onError,
+}: {
+    onSuccess?: () => Promise<void>
+    onError?: (error?: Error) => Promise<void>
+} = {}) {
+    const { traceTransaction, ...rest } = useLinkTransactionBuilder({ onSuccess, onError })
     const { linkEOAToRootKey } = useTownsClient()
     return {
         ...rest,
@@ -29,6 +35,7 @@ export function useLinkEOAToRootKeyTransaction() {
                 return traceTransaction(async () => {
                     if (!rootKey || !wallet) {
                         // cannot sign the transaction. stop processing.
+                        await onError?.(new SignerUndefinedError())
                         return createTransactionContext({
                             status: TransactionStatus.Failed,
                             error: new SignerUndefinedError(),
@@ -38,7 +45,7 @@ export function useLinkEOAToRootKeyTransaction() {
                     return linkEOAToRootKey(rootKey, wallet)
                 })
             },
-            [linkEOAToRootKey, traceTransaction],
+            [linkEOAToRootKey, onError, traceTransaction],
         ),
     }
 }
@@ -100,7 +107,10 @@ export function useUnlinkWalletTransaction() {
     }
 }
 
-function useLinkTransactionBuilder() {
+function useLinkTransactionBuilder({
+    onSuccess,
+    onError,
+}: { onSuccess?: () => Promise<void>; onError?: (error?: Error) => Promise<void> } = {}) {
     const { waitWalletLinkTransaction } = useTownsClient()
     const { loggedInWalletAddress } = useConnectivity()
     const [transactionContext, setTransactionContext] = useState<
@@ -155,10 +165,15 @@ function useLinkTransactionBuilder() {
                 setTransactionContext(transactionResult)
             } finally {
                 isTransacting.current = false
+                if (transactionResult?.status === TransactionStatus.Failed) {
+                    await onError?.(transactionResult.error)
+                } else if (transactionResult?.status === TransactionStatus.Success) {
+                    await onSuccess?.()
+                }
             }
             return transactionResult
         },
-        [loggedInWalletAddress, waitWalletLinkTransaction],
+        [loggedInWalletAddress, onError, onSuccess, waitWalletLinkTransaction],
     )
 
     return {

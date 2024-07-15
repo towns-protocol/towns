@@ -1,8 +1,11 @@
-import React, { useEffect, useMemo } from 'react'
+import React, { useCallback, useEffect, useMemo } from 'react'
 import {
     ChannelContextProvider,
     Membership,
+    Permission,
     SpaceData,
+    useConnectivity,
+    useHasPermission,
     useMyChannels,
     useMyMemberships,
     useSpaceData,
@@ -13,7 +16,7 @@ import { useNavigate } from 'react-router'
 
 import { Box, Button, Icon, IconButton, Stack, Text } from '@ui'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
-import { PATHS } from 'routes'
+import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'
 import { useChannelIdFromPathname } from 'hooks/useChannelIdFromPathname'
 import { useDevice } from 'hooks/useDevice'
 import { useStore } from 'store/store'
@@ -25,6 +28,7 @@ import { useLeaveChannel } from 'hooks/useLeaveChannel'
 import { useNotificationSettings } from 'hooks/useNotificationSettings'
 import { useChannelEntitlements } from 'hooks/useChannelEntitlements'
 import { TokenTypePill } from '@components/Web3/TokenTypePill'
+import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 
 export const AllChannelsList = ({
     onHideBrowseChannels,
@@ -116,21 +120,29 @@ export const ChannelItem = ({
     onOpenChannel?: (channelId: string) => void
 }) => {
     const navigate = useNavigate()
-    const { client } = useTownsClient()
-    const { leaveChannel } = useLeaveChannel()
     const channelIdentifier = channelNetworkId
-    const currentChannelId = useChannelIdFromPathname()
     const { createLink } = useCreateLink()
-    const groups = useMyChannels(space)
-    const myJoinedChannelsInSpace = useMemo(() => groups.flatMap((c) => c.channels), [groups])
     const { isTouch } = useDevice()
-    const { analytics } = useAnalytics()
-    const { addChannelNotificationSettings, removeChannelNotificationSettings } =
-        useNotificationSettings()
 
     const { tokenTypes, hasSomeEntitlement } = useChannelEntitlements({
         spaceId: space?.id,
         channelId: channelNetworkId,
+    })
+
+    const { loggedInWalletAddress } = useConnectivity()
+
+    const { hasPermission: canJoinChannel } = useHasPermission({
+        walletAddress: loggedInWalletAddress,
+        spaceId: space.id,
+        channelId: channelNetworkId,
+        permission: Permission.Read,
+    })
+    const { openPanel } = usePanelActions()
+
+    const { syncingSpace, joinFailed, setSyncingSpace, onClick } = useOnJoinChannel({
+        channelId: channelNetworkId,
+        space,
+        isJoined,
     })
 
     useEffect(() => {
@@ -145,98 +157,17 @@ export const ChannelItem = ({
         } else {
             setSyncingSpace(false)
         }
-    }, [isJoined])
-
-    const [syncingSpace, setSyncingSpace] = React.useState(false)
-    const [joinFailed, setJoinFailed] = React.useState(false)
-    const setTownRouteBookmark = useStore((s) => s.setTownRouteBookmark)
+    }, [isJoined, setSyncingSpace])
 
     const onJoinClick = useEvent(async () => {
-        setSyncingSpace(true)
-        setJoinFailed(false)
-
-        const tracked = {
-            spaceId: space.id,
-            channelId: channelIdentifier,
-            isJoined: isJoined ? 'leave' : 'join',
+        if (!canJoinChannel) {
+            openPanel(CHANNEL_INFO_PARAMS.ROLE_RESTRICTED_CHANNEL_JOIN, {
+                data: channelIdentifier,
+            })
+            return
         }
-        analytics?.track('clicked join / leave channel', tracked, () => {
-            console.log('[analytics] track', 'clicked join / leave channel', tracked)
-        })
 
-        const flatChannels = space.channelGroups.flatMap((g) => g.channels)
-        const joinedChannels = flatChannels.filter((flatChannel) =>
-            myJoinedChannelsInSpace.some((joinedChannel) => joinedChannel.id === flatChannel.id),
-        )
-
-        const indexOfThisChannel = flatChannels.findIndex((c) => c.id === channelIdentifier)
-
-        if (isJoined) {
-            await leaveChannel(channelIdentifier, space.id)
-            await removeChannelNotificationSettings(channelIdentifier)
-            if (currentChannelId === channelIdentifier) {
-                // leaving the last channel
-                if (joinedChannels.length === 1) {
-                    setTownRouteBookmark(space.id, '')
-                    navigate(`/${PATHS.SPACES}/${space.id}/`)
-                }
-                // go to the next channel
-                else if (indexOfThisChannel === 0) {
-                    navigate(
-                        `/${PATHS.SPACES}/${space.id}/${PATHS.CHANNELS}/${
-                            joinedChannels[indexOfThisChannel + 1].id
-                        }/`,
-                    )
-                }
-                // go to the previous channel
-                else {
-                    navigate(
-                        `/${PATHS.SPACES}/${space.id}/${PATHS.CHANNELS}/${
-                            flatChannels[indexOfThisChannel - 1].id
-                        }/`,
-                    )
-                }
-            }
-        } else {
-            try {
-                const link = createLink({
-                    spaceId: space.id,
-                    channelId: channelIdentifier,
-                    panel: 'browse-channels',
-                })
-                if (link) {
-                    navigate(link)
-                }
-                const room = await client?.joinRoom(channelIdentifier, space.id)
-                if (!room) {
-                    console.error('[AllChannelsList]', 'cannot join channel', room)
-                    throw new Error('cannot join channel')
-                }
-                try {
-                    await addChannelNotificationSettings({
-                        channelId: channelIdentifier,
-                        spaceId: space.id,
-                    })
-                } catch (error) {
-                    console.warn(
-                        '[AllChannelList',
-                        'cannot add channel notification settings',
-                        error,
-                    )
-                }
-                console.log('[AllChannelsList]', 'joined room', 'room', room)
-            } catch (e) {
-                console.warn(
-                    '[AllChannelsList]',
-                    'cannot join channel',
-                    `{ name: ${name}, networkId: ${channelNetworkId} }`,
-                    e,
-                )
-                setJoinFailed(true)
-            } finally {
-                setSyncingSpace(false)
-            }
-        }
+        await onClick()
     })
 
     const onOpenChannelClick = useEvent(() => {
@@ -317,4 +248,167 @@ export const ChannelItem = ({
             )}
         </Stack>
     )
+}
+
+export function useOnJoinChannel(props: {
+    channelId: string | undefined
+    space: SpaceData | undefined
+    isJoined?: boolean
+}) {
+    const { channelId, space, isJoined } = props
+    const [syncingSpace, setSyncingSpace] = React.useState(false)
+    const [joinFailed, setJoinFailed] = React.useState(false)
+    const setTownRouteBookmark = useStore((s) => s.setTownRouteBookmark)
+    const { analytics } = useAnalytics()
+    const groups = useMyChannels(space)
+    const myJoinedChannelsInSpace = useMemo(() => groups.flatMap((c) => c.channels), [groups])
+    const { leaveChannel } = useLeaveChannel()
+    const { addChannelNotificationSettings, removeChannelNotificationSettings } =
+        useNotificationSettings()
+    const navigate = useNavigate()
+    const { client } = useTownsClient()
+
+    const currentChannelId = useChannelIdFromPathname()
+    const { createLink } = useCreateLink()
+    const { closePanel } = usePanelActions()
+
+    const onClick = useCallback(
+        async (
+            { navigateWithPanel }: { navigateWithPanel?: boolean } = {
+                navigateWithPanel: true,
+            },
+        ) => {
+            if (!channelId || !space) {
+                return
+            }
+            setSyncingSpace(true)
+            setJoinFailed(false)
+
+            const tracked = {
+                spaceId: space.id,
+                channelId: channelId,
+                isJoined: isJoined ? 'leave' : 'join',
+            }
+            analytics?.track('clicked join / leave channel', tracked, () => {
+                console.log('[analytics] track', 'clicked join / leave channel', tracked)
+            })
+
+            const flatChannels = space.channelGroups.flatMap((g) => g.channels)
+            const joinedChannels = flatChannels.filter((flatChannel) =>
+                myJoinedChannelsInSpace.some(
+                    (joinedChannel) => joinedChannel.id === flatChannel.id,
+                ),
+            )
+
+            const indexOfThisChannel = flatChannels.findIndex((c) => c.id === channelId)
+
+            if (isJoined) {
+                await leaveChannel(channelId, space.id)
+                await removeChannelNotificationSettings(channelId)
+                if (currentChannelId === channelId) {
+                    // leaving the last channel
+                    if (joinedChannels.length === 1) {
+                        setTownRouteBookmark(space.id, '')
+                        navigate(`/${PATHS.SPACES}/${space.id}/`)
+                    }
+                    // go to the next channel
+                    else if (indexOfThisChannel === 0) {
+                        navigate(
+                            `/${PATHS.SPACES}/${space.id}/${PATHS.CHANNELS}/${
+                                joinedChannels[indexOfThisChannel + 1].id
+                            }/`,
+                        )
+                    }
+                    // go to the previous channel
+                    else {
+                        navigate(
+                            `/${PATHS.SPACES}/${space.id}/${PATHS.CHANNELS}/${
+                                flatChannels[indexOfThisChannel - 1].id
+                            }/`,
+                        )
+                    }
+                }
+                return true
+            } else {
+                try {
+                    const room = await client?.joinRoom(channelId, space.id)
+
+                    const linkConfig: {
+                        spaceId: string
+                        channelId: string
+                        panel?: string
+                    } = {
+                        spaceId: space.id,
+                        channelId: channelId,
+                    }
+
+                    // don't set panel to undefined b/c createLink won't match the path
+                    if (navigateWithPanel) {
+                        linkConfig.panel = 'browse-channels'
+                    }
+                    const link = createLink(linkConfig)
+
+                    if (link) {
+                        if (!navigateWithPanel) {
+                            closePanel({ force: true })
+                        }
+                        navigate(link)
+                    }
+                    if (!room) {
+                        console.error('[AllChannelsList]', 'cannot join channel', room)
+                        throw new Error('cannot join channel')
+                    }
+                    addChannelNotificationSettings({
+                        channelId: channelId,
+                        spaceId: space.id,
+                    }).catch((error) => {
+                        console.warn(
+                            '[AllChannelList',
+                            'cannot add channel notification settings',
+                            error,
+                        )
+                    })
+                    console.log('[AllChannelsList]', 'joined room', 'room', room)
+                    return true
+                } catch (e) {
+                    console.warn(
+                        '[AllChannelsList]',
+                        'cannot join channel',
+                        `{ name: ${name}, networkId: ${channelId} }`,
+                        e,
+                    )
+                    setJoinFailed(true)
+                    return false
+                } finally {
+                    setSyncingSpace(false)
+                }
+            }
+        },
+        [
+            addChannelNotificationSettings,
+            analytics,
+            channelId,
+            client,
+            closePanel,
+            createLink,
+            currentChannelId,
+            isJoined,
+            leaveChannel,
+            myJoinedChannelsInSpace,
+            navigate,
+            removeChannelNotificationSettings,
+            setTownRouteBookmark,
+            space,
+        ],
+    )
+
+    return useMemo(() => {
+        return {
+            syncingSpace,
+            setSyncingSpace,
+            setJoinFailed,
+            joinFailed,
+            onClick,
+        }
+    }, [joinFailed, onClick, syncingSpace])
 }

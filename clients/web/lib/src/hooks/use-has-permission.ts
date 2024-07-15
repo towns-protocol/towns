@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 
-import { useQuery } from '../query/queryClient'
+import { useQuery, useQueryClient } from '../query/queryClient'
 import { useTownsClient } from './use-towns-client'
 import { blockchainKeys } from '../query/query-keys'
 import { Permission } from '@river-build/web3'
@@ -16,6 +16,7 @@ interface Props {
 export function useHasPermission(props: Props) {
     const { clientSingleton } = useTownsClient()
     const { spaceId, channelId, walletAddress, permission } = props
+    const queryClient = useQueryClient()
 
     const getHasPermission = useCallback(async () => {
         if (clientSingleton && walletAddress) {
@@ -41,6 +42,14 @@ export function useHasPermission(props: Props) {
         }
         return false
     }, [channelId, clientSingleton, permission, spaceId, walletAddress])
+
+    const invalidate = useCallback(() => {
+        return queryClient.invalidateQueries({ queryKey: blockchainKeys.hasPermission(props) })
+    }, [props, queryClient])
+
+    const getQueryData = useCallback(() => {
+        return queryClient.getQueryData<boolean>(blockchainKeys.hasPermission(props))
+    }, [props, queryClient])
 
     // Queries
     const {
@@ -68,6 +77,8 @@ export function useHasPermission(props: Props) {
     return {
         isLoading,
         hasPermission,
+        invalidate,
+        getQueryData,
         error,
     }
 }

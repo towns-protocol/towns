@@ -48,7 +48,7 @@ export const usePanelActions = () => {
             [context, contextStackId, setSearchParams],
         ),
         closePanel: useCallback(
-            (params?: { preventPopStack: boolean }) => {
+            (params?: { preventPopStack?: boolean; force?: boolean }) => {
                 const panel = searchParams.get('panel')
                 if (panel && analytics) {
                     analytics.track(
@@ -60,6 +60,11 @@ export const usePanelActions = () => {
                             console.log('[analytics] closed panel', panel)
                         },
                     )
+                }
+                if (params?.force) {
+                    searchParams.delete('panel')
+                    setSearchParams({ ...searchParams })
+                    return
                 }
                 if (contextParentRoute) {
                     navigate(contextParentRoute)

@@ -55,6 +55,7 @@ const zContractData: z.ZodType<ContractMetadata> = z.object({
     imageUrl: z.string().optional().nullable(),
     displayNft: zDisplayNft.optional().nullable(),
     image: zNftImageMetadata.optional().nullable(),
+    openSeaCollectionUrl: z.string().optional().nullable(),
 })
 
 const zSchema: z.ZodType<GetCollectionsForOwnerResponse> = z.object({
@@ -256,6 +257,7 @@ export async function mapToTokenProps(token: ContractMetadata): Promise<TokenDat
         type: (token.tokenType as TokenType) || TokenType.UNKNOWN,
         quantity: undefined,
         image: token.image ?? undefined,
+        openSeaCollectionUrl: token.openSeaCollectionUrl ?? undefined,
     }
 }
 
@@ -297,6 +299,7 @@ export async function mapToTokenPropsWithChainId(
             label: token.name || '',
             address: (token.address || '') as Address,
             type: (token.tokenType as TokenType) || TokenType.UNKNOWN,
+            openSeaCollectionUrl: token.openSeaCollectionUrl ?? undefined,
             quantity: undefined,
             image: token.image ?? undefined,
             displayNft: token.displayNft ?? undefined,

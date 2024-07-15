@@ -40,10 +40,9 @@ export function useChannelEntitlements({
             hasSomeEntitlement: hasRuleEntitlement || hasUserEntitlement,
             hasRuleEntitlement,
             hasUserEntitlement,
-            ruleEntitlements,
             tokenTypes: [...new Set(tokenTypes)],
             error,
             isLoading,
         }
-    }, [channelSettings?.roles, error, isLoading])
+    }, [channelSettings, error, isLoading])
 }

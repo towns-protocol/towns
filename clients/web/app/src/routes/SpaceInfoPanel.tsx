@@ -50,7 +50,6 @@ import { useTokenMetadataForChainId } from 'api/lib/collectionMetadata'
 import { NetworkName } from '@components/Tokens/TokenSelector/NetworkName'
 import { useAppProgressStore } from '@components/AppProgressOverlay/store/appProgressStore'
 import { useNotificationSettings } from 'hooks/useNotificationSettings'
-import { AllChannelsList } from './AllChannelsList/AllChannelsList'
 import { PublicTownPage } from './PublicTownPage/PublicTownPage'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 
@@ -341,16 +340,6 @@ export const SpaceInfo = () => {
             <Stack grow padding paddingBottom="lg" justifyContent="end">
                 {/* footer content */}
             </Stack>
-
-            {activeModal === 'browse-channels' && (
-                <ModalContainer
-                    minWidth="500"
-                    touchTitle="Browse channels"
-                    onHide={setModalUndefined}
-                >
-                    <AllChannelsList onHideBrowseChannels={setModalUndefined} />
-                </ModalContainer>
-            )}
 
             {activeModal === 'members' && <MembersPageTouchModal onHide={setModalUndefined} />}
 

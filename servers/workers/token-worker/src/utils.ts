@@ -149,6 +149,9 @@ export function toContractMetadata(response: GetContractMetadataAlchemyResponse)
         symbol: response.symbol,
         tokenType: response.tokenType,
         imageUrl: response.openSeaMetadata?.imageUrl,
+        openSeaCollectionUrl: response.openSeaMetadata?.collectionSlug
+            ? `https://opensea.io/collection/${response.openSeaMetadata?.collectionSlug}`
+            : undefined,
     }
 }
 
