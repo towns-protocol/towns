@@ -18,6 +18,7 @@ lcov.info
 /artifacts
 .DS_Store
 coverage.json
+.npmrc
 
 # Contracts
 contracts/.openzeppelin/unknown-*.json

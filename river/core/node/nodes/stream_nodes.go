@@ -17,6 +17,7 @@ type StreamNodes interface {
 	GetNodes() []common.Address
 	GetRemotes() []common.Address
 	NumRemotes() int
+	GetRemotesAndIsLocal() ([]common.Address, bool)
 
 	GetStickyPeer() common.Address
 	AdvanceStickyPeer(currentPeer common.Address) common.Address
@@ -101,6 +102,12 @@ func (s *streamNodesImpl) GetRemotes() []common.Address {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return slices.Clone(s.remotes)
+}
+
+func (s *streamNodesImpl) GetRemotesAndIsLocal() ([]common.Address, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return slices.Clone(s.remotes), s.isLocal
 }
 
 func (s *streamNodesImpl) GetStickyPeer() common.Address {

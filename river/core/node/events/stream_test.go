@@ -18,30 +18,37 @@ import (
 func MakeGenesisMiniblockForSpaceStream(
 	t *testing.T,
 	wallet *crypto.Wallet,
-	spaceStreamId StreamId,
+	streamId StreamId,
 ) *Miniblock {
-	inception, err := MakeEnvelopeWithPayload(
+	inception, err := MakeParsedEventWithPayload(
 		wallet,
-		Make_SpacePayload_Inception(spaceStreamId, nil),
+		Make_SpacePayload_Inception(streamId, nil),
 		nil,
 	)
 	require.NoError(t, err)
 
-	miniblockHeader, err := Make_GenesisMiniblockHeader([]*ParsedEvent{parsedEvent(t, inception)})
+	mb, err := MakeGenesisMiniblock(wallet, []*ParsedEvent{inception})
 	require.NoError(t, err)
-	miniblockHeaderProto, err := MakeEnvelopeWithPayload(
+
+	return mb
+}
+
+func MakeGenesisMiniblockForUserSettingsStream(
+	t *testing.T,
+	wallet *crypto.Wallet,
+	streamId StreamId,
+) *Miniblock {
+	inception, err := MakeParsedEventWithPayload(
 		wallet,
-		Make_MiniblockHeader(miniblockHeader),
+		Make_UserSettingsPayload_Inception(streamId, nil),
 		nil,
 	)
 	require.NoError(t, err)
 
-	miniblockProto := &Miniblock{
-		Header: miniblockHeaderProto,
-		Events: []*Envelope{inception},
-	}
+	mb, err := MakeGenesisMiniblock(wallet, []*ParsedEvent{inception})
+	require.NoError(t, err)
 
-	return miniblockProto
+	return mb
 }
 
 func MakeEvent(
@@ -96,7 +103,7 @@ func mbTest(
 	addEvent(t, ctx, tt.instances[0].params, stream, "1", view.LastBlock().Hash)
 	addEvent(t, ctx, tt.instances[0].params, stream, "2", view.LastBlock().Hash)
 
-	proposal, err := mbProposeAndStore(ctx, tt.instances[0].params, stream.(*streamImpl), false)
+	proposal, err := mbProduceCandiate(ctx, tt.instances[0].params, stream.(*streamImpl), false)
 	mb := proposal.headerEvent.Event.GetMiniblockHeader()
 	events := proposal.events
 	require.NoError(err)

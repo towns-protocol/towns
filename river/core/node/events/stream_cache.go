@@ -7,6 +7,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/river-build/river/core/contracts/river"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
@@ -19,14 +20,15 @@ import (
 )
 
 type StreamCacheParams struct {
-	Storage         storage.StreamStorage
-	Wallet          *crypto.Wallet
-	RiverChain      *crypto.Blockchain
-	Registry        *registries.RiverRegistryContract
-	ChainConfig     crypto.OnChainConfiguration
-	AppliedBlockNum crypto.BlockNumber
-	ChainMonitor    crypto.ChainMonitor
-	Metrics         infra.MetricsFactory
+	Storage                 storage.StreamStorage
+	Wallet                  *crypto.Wallet
+	RiverChain              *crypto.Blockchain
+	Registry                *registries.RiverRegistryContract
+	ChainConfig             crypto.OnChainConfiguration
+	AppliedBlockNum         crypto.BlockNumber
+	ChainMonitor            crypto.ChainMonitor // TODO: delete and use RiverChain.ChainMonitor
+	Metrics                 infra.MetricsFactory
+	RemoteMiniblockProvider RemoteMiniblockProvider
 }
 
 type StreamCache interface {
@@ -96,11 +98,58 @@ func NewStreamCache(
 		}
 	}
 
-	// TODO: setup monitor for stream updates and update records accordingly.
+	err = params.Registry.OnStreamEvent(
+		ctx,
+		params.AppliedBlockNum+1,
+		s.onStreamAllocated,
+		s.onStreamLastMiniblockUpdated,
+		s.onStreamPlacementUpdated,
+	)
+	if err != nil {
+		return nil, err
+	}
 
 	go s.runCacheCleanup(ctx)
 
 	return s, nil
+}
+
+func (s *streamCacheImpl) onStreamAllocated(ctx context.Context, event *river.StreamRegistryV1StreamAllocated) {
+}
+
+func (s *streamCacheImpl) onStreamLastMiniblockUpdated(
+	ctx context.Context,
+	event *river.StreamRegistryV1StreamLastMiniblockUpdated,
+) {
+	entry, _ := s.cache.Load(StreamId(event.StreamId))
+	if entry == nil {
+		// Stream is not local, ignore.
+		return
+	}
+
+	stream := entry.(*streamImpl)
+
+	view, err := stream.getView(ctx)
+	if err != nil {
+		dlog.FromCtx(ctx).Error("onStreamLastMiniblockUpdated: failed to get stream view", "err", err)
+		return
+	}
+
+	// Check if current state is beyond candidate. (Local candidates are applied immediately after tx).
+	if uint64(view.LastBlock().Num) >= event.LastMiniblockNum {
+		return
+	}
+
+	err = stream.PromoteCandidate(ctx, event.LastMiniblockHash, int64(event.LastMiniblockNum))
+	if err != nil {
+		dlog.FromCtx(ctx).Error("onStreamLastMiniblockUpdated: failed to promote candidate", "err", err)
+	}
+}
+
+func (s *streamCacheImpl) onStreamPlacementUpdated(
+	ctx context.Context,
+	event *river.StreamRegistryV1StreamPlacementUpdated,
+) {
 }
 
 func (s *streamCacheImpl) Params() *StreamCacheParams {
@@ -264,6 +313,15 @@ func (s *streamCacheImpl) GetStream(ctx context.Context, streamId StreamId) (Syn
 		// TODO: if stream is not present in local storage, schedule reconciliation.
 		return nil, nil, err
 	}
+}
+
+func (s *streamCacheImpl) getStreamImpl(ctx context.Context, streamId StreamId) (*streamImpl, error) {
+	entry, _ := s.cache.Load(streamId)
+	if entry == nil {
+		syncStream, _, err := s.tryLoadStreamRecord(ctx, streamId, false)
+		return syncStream.(*streamImpl), err
+	}
+	return entry.(*streamImpl), nil
 }
 
 func (s *streamCacheImpl) GetSyncStream(ctx context.Context, streamId StreamId) (SyncStream, error) {

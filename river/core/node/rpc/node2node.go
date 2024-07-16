@@ -8,7 +8,7 @@ import (
 	. "github.com/river-build/river/core/node/base"
 	. "github.com/river-build/river/core/node/events"
 	. "github.com/river-build/river/core/node/protocol"
-	"github.com/river-build/river/core/node/shared"
+	. "github.com/river-build/river/core/node/shared"
 )
 
 func (s *Service) AllocateStream(
@@ -31,7 +31,7 @@ func (s *Service) AllocateStream(
 }
 
 func (s *Service) allocateStream(ctx context.Context, req *AllocateStreamRequest) (*AllocateStreamResponse, error) {
-	streamId, err := shared.StreamIdFromBytes(req.StreamId)
+	streamId, err := StreamIdFromBytes(req.StreamId)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +70,7 @@ func (s *Service) newEventReceived(
 	ctx context.Context,
 	req *NewEventReceivedRequest,
 ) (*NewEventReceivedResponse, error) {
-	streamId, err := shared.StreamIdFromBytes(req.StreamId)
+	streamId, err := StreamIdFromBytes(req.StreamId)
 	if err != nil {
 		return nil, err
 	}
@@ -99,4 +99,88 @@ func (s *Service) NewEventInPool(
 	*connect.Request[NewEventInPoolRequest],
 ) (*connect.Response[NewEventInPoolResponse], error) {
 	return nil, nil
+}
+
+func (s *Service) ProposeMiniblock(
+	ctx context.Context,
+	req *connect.Request[ProposeMiniblockRequest],
+) (*connect.Response[ProposeMiniblockResponse], error) {
+	ctx, log := ctxAndLogForRequest(ctx, req)
+	log.Debug("ProposeMiniblock ENTER")
+	r, e := s.proposeMiniblock(ctx, req.Msg)
+	if e != nil {
+		return nil, AsRiverError(
+			e,
+		).Func("ProposeMiniblock").
+			Tag("streamId", req.Msg.StreamId).
+			LogWarn(log).
+			AsConnectError()
+	}
+	log.Debug("ProposeMiniblock LEAVE", "response", r)
+	return connect.NewResponse(r), nil
+}
+
+func (s *Service) proposeMiniblock(
+	ctx context.Context,
+	req *ProposeMiniblockRequest,
+) (*ProposeMiniblockResponse, error) {
+	streamId, err := StreamIdFromBytes(req.StreamId)
+	if err != nil {
+		return nil, err
+	}
+
+	_, view, err := s.cache.GetStream(ctx, streamId)
+	if err != nil {
+		return nil, err
+	}
+
+	proposal, err := view.ProposeNextMiniblock(ctx, s.chainConfig, req.DebugForceSnapshot)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ProposeMiniblockResponse{
+		Proposal: proposal,
+	}, nil
+}
+
+func (s *Service) SaveMiniblockCandidate(
+	ctx context.Context,
+	req *connect.Request[SaveMiniblockCandidateRequest],
+) (*connect.Response[SaveMiniblockCandidateResponse], error) {
+	ctx, log := ctxAndLogForRequest(ctx, req)
+	log.Debug("SaveMiniblockCandidate ENTER")
+	r, e := s.saveMiniblockCandidate(ctx, req.Msg)
+	if e != nil {
+		return nil, AsRiverError(
+			e,
+		).Func("SaveMiniblockCandidate").
+			Tag("streamId", req.Msg.StreamId).
+			LogWarn(log).
+			AsConnectError()
+	}
+	log.Debug("SaveMiniblockCandidate LEAVE", "response", r)
+	return connect.NewResponse(r), nil
+}
+
+func (s *Service) saveMiniblockCandidate(
+	ctx context.Context,
+	req *SaveMiniblockCandidateRequest,
+) (*SaveMiniblockCandidateResponse, error) {
+	streamId, err := StreamIdFromBytes(req.StreamId)
+	if err != nil {
+		return nil, err
+	}
+
+	stream, err := s.cache.GetSyncStream(ctx, streamId)
+	if err != nil {
+		return nil, err
+	}
+
+	err = stream.SaveMiniblockCandidate(ctx, req.Miniblock)
+	if err != nil {
+		return nil, err
+	}
+
+	return &SaveMiniblockCandidateResponse{}, nil
 }

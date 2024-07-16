@@ -3,9 +3,11 @@ package rpc
 import (
 	"context"
 	"fmt"
+	"hash/fnv"
 	"log"
 	"math/big"
 	"net"
+	"slices"
 	"testing"
 	"time"
 
@@ -13,6 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/river-build/river/core/config"
@@ -21,6 +24,7 @@ import (
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/nodes"
 	"github.com/river-build/river/core/node/protocol/protocolconnect"
+	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/storage"
 	"github.com/river-build/river/core/node/testutils/dbtestutils"
 )
@@ -270,4 +274,117 @@ func (st *serviceTester) testClient(i int) protocolconnect.StreamServiceClient {
 
 func testClient(url string) protocolconnect.StreamServiceClient {
 	return protocolconnect.NewStreamServiceClient(nodes.TestHttpClientMaker(), url, connect.WithGRPCWeb())
+}
+
+func bytesHash(b []byte) uint64 {
+	h := fnv.New64a()
+	_, _ = h.Write(b)
+	return h.Sum64()
+}
+
+func (st *serviceTester) compareStreamDataInStorage(
+	t assert.TestingT,
+	streamId StreamId,
+	expectedMbs int,
+	expectedEvents int,
+) {
+	// Read data from storage.
+	var data []*storage.DebugReadStreamDataResult
+	for _, n := range st.nodes {
+		d, err := n.service.storage.DebugReadStreamData(st.ctx, streamId)
+		if !assert.NoError(t, err) {
+			return
+		}
+		data = append(data, d)
+	}
+
+	var evHashes0 []uint64
+	for i, d := range data {
+		failed := false
+
+		failed = !assert.Equal(t, streamId, d.StreamId, "StreamId, node %d", i) || failed
+
+		failed = !assert.Equal(t, expectedMbs, len(d.Miniblocks), "Miniblocks, node %d", i) || failed
+
+		eventsLen := 0
+		// Do not count slot -1 db marker events
+		for _, e := range d.Events {
+			if e.Slot != -1 {
+				eventsLen++
+			}
+		}
+		failed = !assert.Equal(t, expectedEvents, eventsLen, "Events, node %d", i) || failed
+
+		if !failed {
+			// All events should have the same generation and consecutive slots
+			// starting with -1 (marker slot for in database table)
+			if len(d.Events) > 1 {
+				gen := d.Events[0].Generation
+				for j, e := range d.Events {
+					if !assert.Equal(t, gen, e.Generation, "Mismatching event generation") ||
+						!assert.EqualValues(t, j-1, e.Slot, "Mismatching event slot") {
+						failed = true
+						break
+					}
+				}
+			}
+		}
+
+		// Events in minipools might be in different order
+		evHashes := []uint64{}
+		for _, e := range d.Events {
+			evHashes = append(evHashes, bytesHash(e.Data))
+		}
+		slices.Sort(evHashes)
+
+		if i > 0 {
+			if !failed {
+				// Compare fields separately to get better error messages
+				assert.Equal(
+					t,
+					data[0].LatestSnapshotMiniblockNum,
+					d.LatestSnapshotMiniblockNum,
+					"Bad snapshot num in node %d",
+					i,
+				)
+				for j, mb := range data[i].Miniblocks {
+					exp := data[0].Miniblocks[j]
+					_ = assert.EqualValues(t, exp.MiniblockNumber, mb.MiniblockNumber, "Bad mb num in node %d", i) &&
+						assert.EqualValues(t, exp.Hash, mb.Hash, "Bad mb hash in node %d", i) &&
+						assert.Equal(
+							t,
+							bytesHash(exp.Data),
+							bytesHash(mb.Data),
+							"Bad mb data in node %d, mb %d",
+							i,
+							j,
+						)
+				}
+
+				if !slices.Equal(evHashes0, evHashes) {
+					assert.Fail(t, "Events mismatch", "node %d", i)
+				}
+			}
+		} else {
+			evHashes0 = evHashes
+		}
+
+		if failed {
+			t.Errorf("Data for node %d: %v", i, d)
+		}
+	}
+}
+
+func (st *serviceTester) eventuallyCompareStreamDataInStorage(
+	streamId StreamId,
+	expectedMbs int,
+	expectedEvents int,
+) {
+	st.require.EventuallyWithT(
+		func(t *assert.CollectT) {
+			st.compareStreamDataInStorage(t, streamId, expectedMbs, expectedEvents)
+		},
+		20*time.Second,
+		100*time.Millisecond,
+	)
 }

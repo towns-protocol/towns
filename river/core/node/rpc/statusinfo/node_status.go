@@ -40,17 +40,16 @@ type RegistryNodeInfo struct {
 }
 
 type HttpResult struct {
-	Success          bool           `json:"success"`
-	Status           int            `json:"status"`
-	StatusText       string         `json:"status_text"`
-	Elapsed          string         `json:"elapsed"`
-	ElapsedAfterDNS  string         `json:"elapsed_after_dns"`
-	ElapsedAfterConn string         `json:"elapsed_after_conn"`
-	Response         StatusResponse `json:"response"`
-	Protocol         string         `json:"protocol"`
-	UsedTLS          bool           `json:"used_tls"`
-	RemoteAddress    string         `json:"remote_address"`
-	DNSAddresses     []string       `json:"dns_addresses"`
+	Success       bool           `json:"success"`
+	Status        int            `json:"status"`
+	StatusText    string         `json:"status_text"`
+	Elapsed       string         `json:"elapsed"`
+	Timeline      Timeline       `json:"timeline"`
+	Response      StatusResponse `json:"response"`
+	Protocol      string         `json:"protocol"`
+	UsedTLS       bool           `json:"used_tls"`
+	RemoteAddress string         `json:"remote_address"`
+	DNSAddresses  []string       `json:"dns_addresses"`
 }
 
 func (r HttpResult) ToPrettyJson() string {
@@ -58,19 +57,27 @@ func (r HttpResult) ToPrettyJson() string {
 }
 
 type GrpcResult struct {
-	Success          bool     `json:"success"`
-	StatusText       string   `json:"status_text"`
-	Elapsed          string   `json:"elapsed"`
-	ElapsedAfterDNS  string   `json:"elapsed_after_dns"`
-	ElapsedAfterConn string   `json:"elapsed_after_conn"`
-	Version          string   `json:"version"`
-	StartTime        string   `json:"start_time"`
-	Uptime           string   `json:"uptime"`
-	Graffiti         string   `json:"graffiti,omitempty"`
-	Protocol         string   `json:"protocol"`
-	XHttpVersion     string   `json:"x_http_version"`
-	RemoteAddress    string   `json:"remote_address"`
-	DNSAddresses     []string `json:"dns_addresses"`
+	Success       bool     `json:"success"`
+	StatusText    string   `json:"status_text"`
+	Elapsed       string   `json:"elapsed"`
+	Timeline      Timeline `json:"timeline"`
+	Version       string   `json:"version"`
+	StartTime     string   `json:"start_time"`
+	Uptime        string   `json:"uptime"`
+	Graffiti      string   `json:"graffiti,omitempty"`
+	Protocol      string   `json:"protocol"`
+	XHttpVersion  string   `json:"x_http_version"`
+	RemoteAddress string   `json:"remote_address"`
+	DNSAddresses  []string `json:"dns_addresses"`
+}
+
+type Timeline struct {
+	DNSDone              string `json:"dns_done"`
+	ConnectDone          string `json:"connect_done"`
+	TLSHandshakeDone     string `json:"tls_handshake_done"`
+	WroteRequest         string `json:"wrote_request"`
+	GotFirstResponseByte string `json:"got_first_response_byte"`
+	Total                string `json:"total"`
 }
 
 func (r GrpcResult) ToPrettyJson() string {

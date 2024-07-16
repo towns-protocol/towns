@@ -127,7 +127,7 @@ func NewTransactionPoolWithPoliciesFromConfig(
 ) (*transactionPool, error) {
 	if cfg.BlockTimeMs <= 0 {
 		return nil, RiverError(Err_BAD_CONFIG, "BlockTimeMs must be set").
-			Func("NewBlockchainWithClient")
+			Func("NewTransactionPoolWithPoliciesFromConfig")
 	}
 	// if pending tx timeout is not specified use a default of 3*chain.BlockPeriod
 	txTimeout := cfg.TransactionPool.TransactionTimeout

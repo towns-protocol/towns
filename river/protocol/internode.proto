@@ -38,9 +38,28 @@ message NewEventInPoolRequest {
 message NewEventInPoolResponse {
 }
 
+message ProposeMiniblockRequest {
+    bytes stream_id = 1;
+    bool debug_force_snapshot = 2;
+}
+
+message ProposeMiniblockResponse {
+    MiniblockProposal proposal = 1;
+}
+
+message SaveMiniblockCandidateRequest {
+    bytes stream_id = 1;
+    Miniblock miniblock = 2;
+}
+
+message SaveMiniblockCandidateResponse {
+}
+
 service NodeToNode {
     rpc AllocateStream(AllocateStreamRequest) returns (AllocateStreamResponse);
     rpc NewEventReceived(NewEventReceivedRequest) returns (NewEventReceivedResponse);
     rpc NewEventInPool(NewEventInPoolRequest) returns (NewEventInPoolResponse);
+    rpc ProposeMiniblock(ProposeMiniblockRequest) returns (ProposeMiniblockResponse); 
+    rpc SaveMiniblockCandidate(SaveMiniblockCandidateRequest) returns (SaveMiniblockCandidateResponse);
 }
 

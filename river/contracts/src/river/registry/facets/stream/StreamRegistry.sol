@@ -31,7 +31,8 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
       revert(RiverRegistryErrors.ALREADY_EXISTS);
 
     // verify that the nodes stream is placed on are in the registry
-    for (uint256 i = 0; i < nodes.length; ++i) {
+    uint256 nodeCount = nodes.length;
+    for (uint256 i = 0; i < nodeCount; ++i) {
       if (!ds.nodes.contains(nodes[i]))
         revert(RiverRegistryErrors.NODE_NOT_FOUND);
     }
@@ -60,16 +61,18 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
 
   function getStream(bytes32 streamId) external view returns (Stream memory) {
     if (!ds.streams.contains(streamId)) revert(RiverRegistryErrors.NOT_FOUND);
-
     return ds.streamById[streamId];
   }
 
   function getStreamByIndex(
     uint256 i
   ) external view returns (StreamWithId memory) {
-    if (i >= ds.streams.length()) {
+    uint256 streamCount = ds.streams.length();
+
+    if (i >= streamCount) {
       revert(RiverRegistryErrors.NOT_FOUND);
     }
+
     bytes32 streamId = ds.streams.at(i);
     return StreamWithId({id: streamId, stream: ds.streamById[streamId]});
   }
@@ -101,24 +104,6 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
 
     Stream storage stream = ds.streamById[streamId];
 
-    // TODO: this check is relaxed until storing of candidate miniblocks is
-    // implemented on river node side. Currently, if there is a failure
-    // to commit during mb production, contract and local storage
-    // get out of sync.
-    // This relaxation allows to get back in sync again.
-    // // Check if the stream is already sealed using bitwise AND
-    // if ((stream.flags & StreamFlags.SEALED) != 0) {
-    //   revert(RiverRegistryErrors.STREAM_SEALED);
-    // }
-
-    // // Validate that the lastMiniblockNum is the next expected miniblock
-    // if (
-    //   stream.lastMiniblockNum + 1 != lastMiniblockNum ||
-    //   stream.lastMiniblockHash != prevMiniBlockHash
-    // ) {
-    //   revert(RiverRegistryErrors.BAD_ARG);
-    // }
-
     // Update the stream information
     stream.lastMiniblockHash = lastMiniblockHash;
     stream.lastMiniblockNum = lastMiniblockNum;
@@ -144,7 +129,9 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
   function setStreamLastMiniblockBatch(
     SetMiniblock[] calldata miniblocks
   ) external onlyNode(msg.sender) {
-    for (uint256 i = 0; i < miniblocks.length; ++i) {
+    uint256 miniblockCount = miniblocks.length;
+
+    for (uint256 i = 0; i < miniblockCount; ++i) {
       SetMiniblock calldata miniblock = miniblocks[i];
 
       if (!ds.streams.contains(miniblock.streamId)) {
@@ -158,36 +145,6 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
       }
 
       Stream storage stream = ds.streamById[miniblock.streamId];
-
-      // TODO: this check is relaxed until storing of candidate miniblocks is
-      // implemented on river node side. Currently, if there is a failure
-      // to commit during mb production, contract and local storage
-      // get out of sync.
-      // This relaxation allows to get back in sync again.
-      // // Check if the stream is already sealed using bitwise AND
-      // if ((stream.flags & StreamFlags.SEALED) != 0)
-      //   emit StreamLastMiniblockUpdateFailed(
-      //     miniblock.streamId,
-      //     miniblock.lastMiniblockHash,
-      //     miniblock.lastMiniblockNum,
-      //     miniblock.isSealed,
-      //     RiverRegistryErrors.STREAM_SEALED);
-      //   continue
-      // }
-
-      // // Validate that the lastMiniblockNum is the next expected miniblock
-      // if (
-      //   stream.lastMiniblockNum + 1 != lastMiniblockNum ||
-      //   stream.lastMiniblockHash != prevMiniBlockHash
-      // ) {
-      //   emit StreamLastMiniblockUpdateFailed(
-      //     miniblock.streamId,
-      //     miniblock.lastMiniblockHash,
-      //     miniblock.lastMiniblockNum,
-      //     miniblock.isSealed,
-      //     RiverRegistryErrors.BAD_ARG);
-      //   continue;
-      // }
 
       // Update the stream information
       stream.lastMiniblockHash = miniblock.lastMiniblockHash;
@@ -219,7 +176,9 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     Stream storage stream = ds.streamById[streamId];
 
     // validate that the node is not already on the stream
-    for (uint256 i = 0; i < stream.nodes.length; ++i) {
+    uint256 nodeCount = stream.nodes.length;
+
+    for (uint256 i = 0; i < nodeCount; ++i) {
       if (stream.nodes[i] == nodeAddress)
         revert(RiverRegistryErrors.ALREADY_EXISTS);
     }
@@ -236,9 +195,11 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     Stream storage stream = ds.streamById[streamId];
 
     bool found = false;
-    for (uint256 i = 0; i < stream.nodes.length; ++i) {
+    uint256 nodeCount = stream.nodes.length;
+
+    for (uint256 i = 0; i < nodeCount; ++i) {
       if (stream.nodes[i] == nodeAddress) {
-        stream.nodes[i] = stream.nodes[stream.nodes.length - 1];
+        stream.nodes[i] = stream.nodes[nodeCount - 1];
         stream.nodes.pop();
         found = true;
         break;
@@ -258,9 +219,10 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
   }
 
   function getAllStreams() external view returns (StreamWithId[] memory) {
-    StreamWithId[] memory streams = new StreamWithId[](ds.streams.length());
+    uint256 streamCount = ds.streams.length();
+    StreamWithId[] memory streams = new StreamWithId[](streamCount);
 
-    for (uint256 i = 0; i < ds.streams.length(); ++i) {
+    for (uint256 i = 0; i < streamCount; ++i) {
       bytes32 id = ds.streams.at(i);
       streams[i] = StreamWithId({id: id, stream: ds.streamById[id]});
     }
@@ -276,28 +238,35 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
 
     StreamWithId[] memory streams = new StreamWithId[](stop - start);
 
+    uint256 streamCount = ds.streams.length();
+
     for (
       uint256 i = 0;
-      ((start + i) < ds.streams.length()) && ((start + i) < stop);
+      ((start + i) < streamCount) && ((start + i) < stop);
       ++i
     ) {
       bytes32 id = ds.streams.at(start + i);
       streams[i] = StreamWithId({id: id, stream: ds.streamById[id]});
     }
 
-    return (streams, stop >= ds.streams.length());
+    return (streams, stop >= streamCount);
   }
 
   function getStreamsOnNode(
     address nodeAddress
   ) external view returns (StreamWithId[] memory) {
     // TODO: very naive implementation, can be optimized
-    bytes32[] memory allStreamIds = new bytes32[](ds.streams.length());
+    uint256 streamLength = ds.streams.length();
+
+    bytes32[] memory allStreamIds = new bytes32[](streamLength);
     uint32 streamCount;
-    for (uint256 i = 0; i < ds.streams.length(); ++i) {
+
+    for (uint256 i = 0; i < streamLength; ++i) {
       bytes32 id = ds.streams.at(i);
       Stream storage stream = ds.streamById[id];
-      for (uint256 j = 0; j < stream.nodes.length; ++j) {
+      uint256 nodeCount = stream.nodes.length;
+
+      for (uint256 j = 0; j < nodeCount; ++j) {
         if (stream.nodes[j] == nodeAddress) {
           allStreamIds[streamCount++] = id;
           break;
@@ -320,7 +289,8 @@ contract StreamRegistry is IStreamRegistry, RegistryModifiers {
     address nodeAddress
   ) external view returns (uint256) {
     uint256 count = 0;
-    for (uint256 i = 0; i < ds.streams.length(); ++i) {
+    uint256 streamLength = ds.streams.length();
+    for (uint256 i = 0; i < streamLength; ++i) {
       bytes32 id = ds.streams.at(i);
       Stream storage stream = ds.streamById[id];
       for (uint256 j = 0; j < stream.nodes.length; ++j) {

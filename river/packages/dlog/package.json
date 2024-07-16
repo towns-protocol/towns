@@ -1,6 +1,6 @@
 {
     "name": "@river-build/dlog",
-    "version": "0.0.11",
+    "version": "0.0.19",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
@@ -25,6 +25,7 @@
         "ethereum-cryptography": "^1.2.0"
     },
     "devDependencies": {
+        "@types/debug": "^4.1.8",
         "@types/jest": "^29.5.3",
         "@typescript-eslint/eslint-plugin": "^6.10.0",
         "@typescript-eslint/parser": "^7.14.1",

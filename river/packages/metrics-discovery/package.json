@@ -1,12 +1,13 @@
 {
     "name": "@river-build/metrics-discovery",
     "description": "",
-    "version": "0.0.11",
+    "version": "0.0.15",
     "packageManager": "yarn@3.8.0",
     "author": "",
     "license": "ISC",
     "type": "module",
     "main": "index.js",
+    "private": true,
     "scripts": {
         "lint": "eslint . --ext .ts",
         "start": "node ./dist/index.cjs",

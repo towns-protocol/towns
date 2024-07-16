@@ -350,6 +350,7 @@ func TestStreamUnloadWithSubscribers(t *testing.T) {
 	tc.btc.SetConfigValue(t, ctx, crypto.StreamCacheExpirationPollIntervalMsConfigKey, crypto.ABIEncodeUint64(0))
 
 	// replace the default chain monitor to disable automatic mini-block production on new blocks in the stream cache
+	// TODO: use options on MiniblockProducer instead
 	tc.instances[0].params.ChainMonitor = crypto.NoopChainMonitor{}
 
 	streamCache := tc.initCache(0, nil)

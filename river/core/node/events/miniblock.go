@@ -168,6 +168,7 @@ func NewMiniblockInfoFromProto(pb *Miniblock, opts NewMiniblockInfoFromProtoOpts
 	if opts.ExpectedBlockNumber >= 0 && blockHeader.MiniblockNum != int64(opts.ExpectedBlockNumber) {
 		return nil, RiverError(
 			Err_BAD_EVENT,
+			"block number mismatch",
 			"expected",
 			opts.ExpectedBlockNumber,
 			"actual",

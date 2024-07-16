@@ -240,10 +240,14 @@ func TestPostgresEventStore(t *testing.T) {
 	var testEnvelopes [][]byte
 	testEnvelopes = append(testEnvelopes, []byte("event2"))
 	blockHash := common.BytesToHash([]byte("block_hash"))
-	err = pgEventStore.WriteBlockProposal(ctx, streamId1, blockHash, 1, []byte("block1"))
+	blockData := []byte("block1")
+	err = pgEventStore.WriteBlockProposal(ctx, streamId1, blockHash, 1, blockData)
 	if err != nil {
 		t.Fatal("error creating block candidate")
 	}
+	mbBytes, err := pgEventStore.ReadMiniblockCandidate(ctx, streamId1, blockHash, 1)
+	require.NoError(err)
+	require.EqualValues(blockData, mbBytes)
 	err = pgEventStore.PromoteBlock(ctx, streamId1, 1, blockHash, false, testEnvelopes)
 	if err != nil {
 		t.Fatal("error promoting block", err)

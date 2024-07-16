@@ -42,14 +42,22 @@ const (
 	// NodeToNodeNewEventInPoolProcedure is the fully-qualified name of the NodeToNode's NewEventInPool
 	// RPC.
 	NodeToNodeNewEventInPoolProcedure = "/river.NodeToNode/NewEventInPool"
+	// NodeToNodeProposeMiniblockProcedure is the fully-qualified name of the NodeToNode's
+	// ProposeMiniblock RPC.
+	NodeToNodeProposeMiniblockProcedure = "/river.NodeToNode/ProposeMiniblock"
+	// NodeToNodeSaveMiniblockCandidateProcedure is the fully-qualified name of the NodeToNode's
+	// SaveMiniblockCandidate RPC.
+	NodeToNodeSaveMiniblockCandidateProcedure = "/river.NodeToNode/SaveMiniblockCandidate"
 )
 
 // These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
 var (
-	nodeToNodeServiceDescriptor                = protocol.File_internode_proto.Services().ByName("NodeToNode")
-	nodeToNodeAllocateStreamMethodDescriptor   = nodeToNodeServiceDescriptor.Methods().ByName("AllocateStream")
-	nodeToNodeNewEventReceivedMethodDescriptor = nodeToNodeServiceDescriptor.Methods().ByName("NewEventReceived")
-	nodeToNodeNewEventInPoolMethodDescriptor   = nodeToNodeServiceDescriptor.Methods().ByName("NewEventInPool")
+	nodeToNodeServiceDescriptor                      = protocol.File_internode_proto.Services().ByName("NodeToNode")
+	nodeToNodeAllocateStreamMethodDescriptor         = nodeToNodeServiceDescriptor.Methods().ByName("AllocateStream")
+	nodeToNodeNewEventReceivedMethodDescriptor       = nodeToNodeServiceDescriptor.Methods().ByName("NewEventReceived")
+	nodeToNodeNewEventInPoolMethodDescriptor         = nodeToNodeServiceDescriptor.Methods().ByName("NewEventInPool")
+	nodeToNodeProposeMiniblockMethodDescriptor       = nodeToNodeServiceDescriptor.Methods().ByName("ProposeMiniblock")
+	nodeToNodeSaveMiniblockCandidateMethodDescriptor = nodeToNodeServiceDescriptor.Methods().ByName("SaveMiniblockCandidate")
 )
 
 // NodeToNodeClient is a client for the river.NodeToNode service.
@@ -57,6 +65,8 @@ type NodeToNodeClient interface {
 	AllocateStream(context.Context, *connect.Request[protocol.AllocateStreamRequest]) (*connect.Response[protocol.AllocateStreamResponse], error)
 	NewEventReceived(context.Context, *connect.Request[protocol.NewEventReceivedRequest]) (*connect.Response[protocol.NewEventReceivedResponse], error)
 	NewEventInPool(context.Context, *connect.Request[protocol.NewEventInPoolRequest]) (*connect.Response[protocol.NewEventInPoolResponse], error)
+	ProposeMiniblock(context.Context, *connect.Request[protocol.ProposeMiniblockRequest]) (*connect.Response[protocol.ProposeMiniblockResponse], error)
+	SaveMiniblockCandidate(context.Context, *connect.Request[protocol.SaveMiniblockCandidateRequest]) (*connect.Response[protocol.SaveMiniblockCandidateResponse], error)
 }
 
 // NewNodeToNodeClient constructs a client for the river.NodeToNode service. By default, it uses the
@@ -87,14 +97,28 @@ func NewNodeToNodeClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(nodeToNodeNewEventInPoolMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
+		proposeMiniblock: connect.NewClient[protocol.ProposeMiniblockRequest, protocol.ProposeMiniblockResponse](
+			httpClient,
+			baseURL+NodeToNodeProposeMiniblockProcedure,
+			connect.WithSchema(nodeToNodeProposeMiniblockMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
+		saveMiniblockCandidate: connect.NewClient[protocol.SaveMiniblockCandidateRequest, protocol.SaveMiniblockCandidateResponse](
+			httpClient,
+			baseURL+NodeToNodeSaveMiniblockCandidateProcedure,
+			connect.WithSchema(nodeToNodeSaveMiniblockCandidateMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // nodeToNodeClient implements NodeToNodeClient.
 type nodeToNodeClient struct {
-	allocateStream   *connect.Client[protocol.AllocateStreamRequest, protocol.AllocateStreamResponse]
-	newEventReceived *connect.Client[protocol.NewEventReceivedRequest, protocol.NewEventReceivedResponse]
-	newEventInPool   *connect.Client[protocol.NewEventInPoolRequest, protocol.NewEventInPoolResponse]
+	allocateStream         *connect.Client[protocol.AllocateStreamRequest, protocol.AllocateStreamResponse]
+	newEventReceived       *connect.Client[protocol.NewEventReceivedRequest, protocol.NewEventReceivedResponse]
+	newEventInPool         *connect.Client[protocol.NewEventInPoolRequest, protocol.NewEventInPoolResponse]
+	proposeMiniblock       *connect.Client[protocol.ProposeMiniblockRequest, protocol.ProposeMiniblockResponse]
+	saveMiniblockCandidate *connect.Client[protocol.SaveMiniblockCandidateRequest, protocol.SaveMiniblockCandidateResponse]
 }
 
 // AllocateStream calls river.NodeToNode.AllocateStream.
@@ -112,11 +136,23 @@ func (c *nodeToNodeClient) NewEventInPool(ctx context.Context, req *connect.Requ
 	return c.newEventInPool.CallUnary(ctx, req)
 }
 
+// ProposeMiniblock calls river.NodeToNode.ProposeMiniblock.
+func (c *nodeToNodeClient) ProposeMiniblock(ctx context.Context, req *connect.Request[protocol.ProposeMiniblockRequest]) (*connect.Response[protocol.ProposeMiniblockResponse], error) {
+	return c.proposeMiniblock.CallUnary(ctx, req)
+}
+
+// SaveMiniblockCandidate calls river.NodeToNode.SaveMiniblockCandidate.
+func (c *nodeToNodeClient) SaveMiniblockCandidate(ctx context.Context, req *connect.Request[protocol.SaveMiniblockCandidateRequest]) (*connect.Response[protocol.SaveMiniblockCandidateResponse], error) {
+	return c.saveMiniblockCandidate.CallUnary(ctx, req)
+}
+
 // NodeToNodeHandler is an implementation of the river.NodeToNode service.
 type NodeToNodeHandler interface {
 	AllocateStream(context.Context, *connect.Request[protocol.AllocateStreamRequest]) (*connect.Response[protocol.AllocateStreamResponse], error)
 	NewEventReceived(context.Context, *connect.Request[protocol.NewEventReceivedRequest]) (*connect.Response[protocol.NewEventReceivedResponse], error)
 	NewEventInPool(context.Context, *connect.Request[protocol.NewEventInPoolRequest]) (*connect.Response[protocol.NewEventInPoolResponse], error)
+	ProposeMiniblock(context.Context, *connect.Request[protocol.ProposeMiniblockRequest]) (*connect.Response[protocol.ProposeMiniblockResponse], error)
+	SaveMiniblockCandidate(context.Context, *connect.Request[protocol.SaveMiniblockCandidateRequest]) (*connect.Response[protocol.SaveMiniblockCandidateResponse], error)
 }
 
 // NewNodeToNodeHandler builds an HTTP handler from the service implementation. It returns the path
@@ -143,6 +179,18 @@ func NewNodeToNodeHandler(svc NodeToNodeHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(nodeToNodeNewEventInPoolMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
+	nodeToNodeProposeMiniblockHandler := connect.NewUnaryHandler(
+		NodeToNodeProposeMiniblockProcedure,
+		svc.ProposeMiniblock,
+		connect.WithSchema(nodeToNodeProposeMiniblockMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
+	nodeToNodeSaveMiniblockCandidateHandler := connect.NewUnaryHandler(
+		NodeToNodeSaveMiniblockCandidateProcedure,
+		svc.SaveMiniblockCandidate,
+		connect.WithSchema(nodeToNodeSaveMiniblockCandidateMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/river.NodeToNode/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case NodeToNodeAllocateStreamProcedure:
@@ -151,6 +199,10 @@ func NewNodeToNodeHandler(svc NodeToNodeHandler, opts ...connect.HandlerOption) 
 			nodeToNodeNewEventReceivedHandler.ServeHTTP(w, r)
 		case NodeToNodeNewEventInPoolProcedure:
 			nodeToNodeNewEventInPoolHandler.ServeHTTP(w, r)
+		case NodeToNodeProposeMiniblockProcedure:
+			nodeToNodeProposeMiniblockHandler.ServeHTTP(w, r)
+		case NodeToNodeSaveMiniblockCandidateProcedure:
+			nodeToNodeSaveMiniblockCandidateHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -170,4 +222,12 @@ func (UnimplementedNodeToNodeHandler) NewEventReceived(context.Context, *connect
 
 func (UnimplementedNodeToNodeHandler) NewEventInPool(context.Context, *connect.Request[protocol.NewEventInPoolRequest]) (*connect.Response[protocol.NewEventInPoolResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("river.NodeToNode.NewEventInPool is not implemented"))
+}
+
+func (UnimplementedNodeToNodeHandler) ProposeMiniblock(context.Context, *connect.Request[protocol.ProposeMiniblockRequest]) (*connect.Response[protocol.ProposeMiniblockResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("river.NodeToNode.ProposeMiniblock is not implemented"))
+}
+
+func (UnimplementedNodeToNodeHandler) SaveMiniblockCandidate(context.Context, *connect.Request[protocol.SaveMiniblockCandidateRequest]) (*connect.Response[protocol.SaveMiniblockCandidateResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("river.NodeToNode.SaveMiniblockCandidate is not implemented"))
 }

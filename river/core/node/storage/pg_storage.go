@@ -775,6 +775,54 @@ func (s *PostgresEventStore) writeBlockProposalTxn(
 	return err
 }
 
+func (s *PostgresEventStore) ReadMiniblockCandidate(
+	ctx context.Context,
+	streamId StreamId,
+	blockHash common.Hash,
+	blockNumber int64,
+) ([]byte, error) {
+	var miniblock []byte
+	err := s.txRunner(
+		ctx,
+		"ReadMiniblockCandidate",
+		pgx.ReadOnly,
+		func(ctx context.Context, tx pgx.Tx) error {
+			var err error
+			miniblock, err = s.readMiniblockCandidateTx(ctx, tx, streamId, blockHash, blockNumber)
+			return err
+		},
+		nil,
+		"streamId", streamId,
+		"blockHash", blockHash,
+		"blockNumber", blockNumber,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return miniblock, nil
+}
+
+func (s *PostgresEventStore) readMiniblockCandidateTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+	blockHash common.Hash,
+	blockNumber int64,
+) ([]byte, error) {
+	var miniblock []byte
+	err := tx.QueryRow(
+		ctx,
+		"SELECT blockdata FROM miniblock_candidates WHERE stream_id = $1 AND seq_num = $2 AND block_hash = $3",
+		streamId,
+		blockNumber,
+		hex.EncodeToString(blockHash.Bytes()), // avoid leading '0x'
+	).Scan(&miniblock)
+	if err != nil {
+		return nil, err
+	}
+	return miniblock, nil
+}
+
 func (s *PostgresEventStore) PromoteBlock(
 	ctx context.Context,
 	streamId StreamId,
@@ -1498,4 +1546,114 @@ func getCurrentNodeProcessInfo(currentSchemaName string) string {
 	}
 	currentPID := os.Getpid()
 	return fmt.Sprintf("hostname=%s, pid=%d, schema=%s", currentHostname, currentPID, currentSchemaName)
+}
+
+func (s *PostgresEventStore) DebugReadStreamData(
+	ctx context.Context,
+	streamId StreamId,
+) (*DebugReadStreamDataResult, error) {
+	var ret *DebugReadStreamDataResult
+	err := s.txRunner(
+		ctx,
+		"DebugReadStreamData",
+		pgx.ReadOnly,
+		func(ctx context.Context, tx pgx.Tx) error {
+			var err error
+			ret, err = s.debugReadStreamData(ctx, tx, streamId)
+			return err
+		},
+		nil,
+		"streamId", streamId,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return ret, nil
+}
+
+func (s *PostgresEventStore) debugReadStreamData(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+) (*DebugReadStreamDataResult, error) {
+	result := &DebugReadStreamDataResult{
+		StreamId: streamId,
+	}
+
+	err := tx.
+		QueryRow(ctx, "SELECT latest_snapshot_miniblock FROM es WHERE stream_id = $1", streamId).
+		Scan(&result.LatestSnapshotMiniblockNum)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, WrapRiverError(Err_NOT_FOUND, err).Message("stream not found in local storage")
+		} else {
+			return nil, err
+		}
+	}
+
+	miniblocksRow, err := tx.Query(
+		ctx,
+		"SELECT seq_num, blockdata FROM miniblocks WHERE stream_id = $1 ORDER BY seq_num",
+		streamId,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer miniblocksRow.Close()
+
+	for miniblocksRow.Next() {
+		var mb MiniblockDescriptor
+
+		err = miniblocksRow.Scan(&mb.MiniblockNumber, &mb.Data)
+		if err != nil {
+			return nil, err
+		}
+		result.Miniblocks = append(result.Miniblocks, mb)
+	}
+
+	rows, err := tx.Query(
+		ctx,
+		"SELECT generation, slot_num, envelope FROM minipools WHERE stream_id = $1 ORDER BY generation, slot_num",
+		streamId,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var e EventDescriptor
+		err = rows.Scan(&e.Generation, &e.Slot, &e.Data)
+		if err != nil {
+			return nil, err
+		}
+		result.Events = append(result.Events, e)
+	}
+
+	candRows, err := tx.Query(
+		ctx,
+		"SELECT seq_num, block_hash, blockdata FROM miniblock_candidates WHERE stream_id = $1 ORDER BY seq_num",
+		streamId,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer candRows.Close()
+
+	for candRows.Next() {
+		var num int64
+		var hashStr string
+		var data []byte
+		err = candRows.Scan(&num, &hashStr, &data)
+		if err != nil {
+			return nil, err
+		}
+		result.MbCandidates = append(result.MbCandidates, MiniblockDescriptor{
+			MiniblockNumber: num,
+			Data:            data,
+			Hash:            common.HexToHash(hashStr),
+		})
+	}
+
+	return result, nil
 }

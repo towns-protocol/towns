@@ -1,4 +1,6 @@
+#!/usr/bin/env bash
 
+set -x
 
 function parse_git_branch() {
     git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'
@@ -9,7 +11,7 @@ function make_pr_description() {
     git log origin/main..HEAD
 }
 
-# if current branch is main, then exit
+# You must be on main with a clean working directory to run this script.
 if [[ "$(git status --porcelain)" != "" ]]; then
     echo "There are uncommitted changes. Please commit or stash them before running this script."
     exit 1
@@ -18,17 +20,16 @@ elif [[ "$(parse_git_branch)" != "main" ]]; then
     exit 1
 fi
 
-
 # get the current git hash 
-COMMIT_HASH=$(git rev-parse HEAD)
-SHORT_HASH="${COMMIT_HASH:0:7}"
-BRANCH_NAME="release-sdk/${SHORT_HASH}"
-PR_TITLE="Release SDK ${SHORT_HASH}"
+COMMIT_HASH=$(git rev-parse --short HEAD)
+BRANCH_NAME="release-sdk/${COMMIT_HASH}"
+PR_TITLE="Release SDK ${COMMIT_HASH}"
+VERSION_PREFIX="sdk-${COMMIT_HASH}-"
 
 git checkout -b "${BRANCH_NAME}"
 
 ./scripts/yarn-clean.sh
-yarn install
+yarn install --immutable
 exit_status_yarn=$?
 
 if [ $exit_status_yarn -ne 0 ]; then
@@ -46,11 +47,12 @@ fi
 
 git push -u origin "${BRANCH_NAME}"
 
-npx lerna version --yes --force-publish --no-private
+# Get the new patch version from Lerna and tag it
+npx lerna version patch --yes --force-publish --no-private --tag-version-prefix "${VERSION_PREFIX}"
 
 PR_DESCRIPTION="$(make_pr_description)"
 
-gh pr create --base main --head "${BRANCH_NAME}" --title "${PR_TITLE}" --body "$(PR_DESCRIPTION)"
+gh pr create --base main --head "${BRANCH_NAME}" --title "${PR_TITLE}" --body "${PR_DESCRIPTION}"
 
 while true; do
     WAIT_TIME=5
@@ -64,11 +66,8 @@ while true; do
     fi
     done
 
-
-
     gh pr checks "${BRANCH_NAME}" --fail-fast --interval 2 --watch
     exit_status=$?
-
 
     # Check if the command succeeded or failed
     if [ $exit_status -ne 0 ]; then
@@ -102,4 +101,5 @@ fi
 # Pull the changes to local main
 git pull --rebase
 
-npx lerna publish from-package --yes --no-private --force-publish
+# Publish the nightly version to npm
+npx lerna publish from-package --yes --no-private --force-publish --dist-tag nightly --tag-version-prefix "${VERSION_PREFIX}"

@@ -47,6 +47,38 @@ func formatDurationToSeconds(d time.Duration) string {
 	}
 }
 
+func traceCtxForTimeline(
+	ctx context.Context,
+	start time.Time,
+	timeline *statusinfo.Timeline,
+	dnsAddrs *[]string,
+	usedAddr *string,
+) context.Context {
+	return httptrace.WithClientTrace(ctx, &httptrace.ClientTrace{
+		GotConn: func(connInfo httptrace.GotConnInfo) {
+			*usedAddr = connInfo.Conn.RemoteAddr().String()
+			// TLSHandshakeDone is not called for HTTP/2 connections,
+			// but GotConn is called right after.
+			timeline.TLSHandshakeDone = formatDurationToMs(time.Since(start))
+		},
+		GotFirstResponseByte: func() {
+			timeline.GotFirstResponseByte = formatDurationToMs(time.Since(start))
+		},
+		DNSDone: func(dnsInfo httptrace.DNSDoneInfo) {
+			for _, addr := range dnsInfo.Addrs {
+				*dnsAddrs = append(*dnsAddrs, addr.String())
+			}
+			timeline.DNSDone = formatDurationToMs(time.Since(start))
+		},
+		ConnectDone: func(network, addr string, err error) {
+			timeline.ConnectDone = formatDurationToMs(time.Since(start))
+		},
+		WroteRequest: func(wroteRequestInfo httptrace.WroteRequestInfo) {
+			timeline.WroteRequest = formatDurationToMs(time.Since(start))
+		},
+	})
+}
+
 func getHttpStatus(
 	ctx context.Context,
 	baseUrl string,
@@ -58,25 +90,13 @@ func getHttpStatus(
 	defer wg.Done()
 
 	start := time.Now()
-	dnsResolved := start
-	connectionEstablished := start
 	dnsAddrs := []string{}
 	var usedAddr string
-	traceCtx := httptrace.WithClientTrace(ctx, &httptrace.ClientTrace{
-		DNSDone: func(dnsInfo httptrace.DNSDoneInfo) {
-			for _, addr := range dnsInfo.Addrs {
-				dnsAddrs = append(dnsAddrs, addr.String())
-			}
-			dnsResolved = time.Now()
-		},
-		GotConn: func(connInfo httptrace.GotConnInfo) {
-			usedAddr = connInfo.Conn.RemoteAddr().String()
-			connectionEstablished = time.Now()
-		},
-	})
-
+	var timeline statusinfo.Timeline
 	url := baseUrl + "/status?blockchain=1"
-	req, err := http.NewRequestWithContext(traceCtx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(
+		traceCtxForTimeline(ctx, start, &timeline, &dnsAddrs, &usedAddr),
+		"GET", url, nil)
 	req.Header.Set("Accept", "application/json")
 	if err != nil {
 		log.Error("Error creating request", "err", err, "url", url)
@@ -84,7 +104,7 @@ func getHttpStatus(
 		return
 	}
 	resp, err := client.Do(req)
-	end := time.Now()
+	timeline.Total = formatDurationToMs(time.Since(start))
 	result.DNSAddresses = dnsAddrs
 	result.RemoteAddress = usedAddr
 	if err != nil {
@@ -98,9 +118,8 @@ func getHttpStatus(
 		result.Success = resp.StatusCode == 200
 		result.Status = resp.StatusCode
 		result.StatusText = resp.Status
-		result.Elapsed = formatDurationToMs(end.Sub(start))
-		result.ElapsedAfterDNS = formatDurationToMs(end.Sub(dnsResolved))
-		result.ElapsedAfterConn = formatDurationToMs(end.Sub(connectionEstablished))
+		result.Elapsed = timeline.Total
+		result.Timeline = timeline
 		result.Protocol = resp.Proto
 		result.UsedTLS = resp.TLS != nil
 		if resp.StatusCode == 200 {
@@ -131,26 +150,14 @@ func getGrpcStatus(
 	defer wg.Done()
 
 	start := time.Now()
-	dnsResolved := start
-	connectionEstablished := start
 	dnsAddrs := []string{}
 	var usedAddr string
-	traceCtx := httptrace.WithClientTrace(ctx, &httptrace.ClientTrace{
-		DNSDone: func(dnsInfo httptrace.DNSDoneInfo) {
-			for _, addr := range dnsInfo.Addrs {
-				dnsAddrs = append(dnsAddrs, addr.String())
-			}
-			dnsResolved = time.Now()
-		},
-		GotConn: func(connInfo httptrace.GotConnInfo) {
-			usedAddr = connInfo.Conn.RemoteAddr().String()
-			connectionEstablished = time.Now()
-		},
-	})
-
+	var timeline statusinfo.Timeline
 	req := connect.NewRequest(&InfoRequest{})
-	resp, err := client.Info(traceCtx, req)
-	end := time.Now()
+	resp, err := client.Info(
+		traceCtxForTimeline(ctx, start, &timeline, &dnsAddrs, &usedAddr),
+		req)
+	timeline.Total = formatDurationToMs(time.Since(start))
 	record.Grpc.DNSAddresses = dnsAddrs
 	record.Grpc.RemoteAddress = usedAddr
 	if err != nil {
@@ -163,9 +170,8 @@ func getGrpcStatus(
 
 	record.Grpc.Success = true
 	record.Grpc.StatusText = "OK"
-	record.Grpc.Elapsed = formatDurationToMs(end.Sub(start))
-	record.Grpc.ElapsedAfterDNS = formatDurationToMs(end.Sub(dnsResolved))
-	record.Grpc.ElapsedAfterConn = formatDurationToMs(end.Sub(connectionEstablished))
+	record.Grpc.Elapsed = timeline.Total
+	record.Grpc.Timeline = timeline
 	record.Grpc.Version = resp.Msg.Version
 	record.Grpc.StartTime = startTime.UTC().Format(time.RFC3339)
 	record.Grpc.Uptime = formatDurationToSeconds(time.Since(startTime))
@@ -219,7 +225,6 @@ func GetRiverNetworkStatus(
 		return nil, err
 	}
 	http11client.Timeout = cfg.Network.GetHttpRequestTimeout()
-
 
 	http20client, err := http_client.GetHttpClient(ctx)
 	if err != nil {

@@ -109,6 +109,8 @@ func (s *Service) start() error {
 		return AsRiverError(err).Message("Failed to init river chain").LogError(s.defaultLogger)
 	}
 
+	s.initEthBalanceMetrics()
+
 	err = s.prepareStore()
 	if err != nil {
 		return AsRiverError(err).Message("Failed to prepare store").LogError(s.defaultLogger)
@@ -485,14 +487,15 @@ func (s *Service) initCacheAndSync() error {
 	s.cache, err = events.NewStreamCache(
 		s.serverCtx,
 		&events.StreamCacheParams{
-			Storage:         s.storage,
-			Wallet:          s.wallet,
-			RiverChain:      s.riverChain,
-			Registry:        s.registryContract,
-			ChainConfig:     s.chainConfig,
-			AppliedBlockNum: s.riverChain.InitialBlockNum,
-			ChainMonitor:    s.riverChain.ChainMonitor,
-			Metrics:         s.metrics,
+			Storage:                 s.storage,
+			Wallet:                  s.wallet,
+			RiverChain:              s.riverChain,
+			Registry:                s.registryContract,
+			ChainConfig:             s.chainConfig,
+			AppliedBlockNum:         s.riverChain.InitialBlockNum,
+			ChainMonitor:            s.riverChain.ChainMonitor,
+			Metrics:                 s.metrics,
+			RemoteMiniblockProvider: s,
 		},
 	)
 	if err != nil {

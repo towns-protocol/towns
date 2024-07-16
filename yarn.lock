@@ -7751,6 +7751,7 @@ __metadata:
   dependencies:
     "@bufbuild/protobuf": ^1.9.0
     "@river-build/proto": "workspace:^"
+    "@types/debug": ^4.1.8
     "@types/jest": ^29.5.3
     "@typescript-eslint/eslint-plugin": ^6.10.0
     "@typescript-eslint/parser": ^7.14.1

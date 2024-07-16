@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/storage"
 
@@ -45,6 +47,11 @@ type SyncStream interface {
 	Unsub(receiver SyncResultReceiver)
 
 	ApplyMiniblock(ctx context.Context, miniblock *MiniblockInfo) error
+	PromoteCandidate(ctx context.Context, mbHash common.Hash, mbNum int64) error
+	SaveMiniblockCandidate(
+		ctx context.Context,
+		mb *Miniblock,
+	) error
 }
 
 func SyncStreamsResponseFromStreamAndCookie(result *StreamAndCookie) *SyncStreamsResponse {
@@ -56,10 +63,8 @@ func SyncStreamsResponseFromStreamAndCookie(result *StreamAndCookie) *SyncStream
 type streamImpl struct {
 	params *StreamCacheParams
 
-	// TODO: perf optimization: already in map as key, refactor API to remove dup data.
 	streamId StreamId
 
-	// TODO: move under lock to support updated.
 	nodes StreamNodes
 
 	// Mutex protects fields below
@@ -120,6 +125,18 @@ func (s *streamImpl) ApplyMiniblock(ctx context.Context, miniblock *MiniblockInf
 		}
 	}
 
+	return s.applyMiniblockImplNoLock(ctx, miniblock)
+}
+
+func (s *streamImpl) applyMiniblockImplNoLock(ctx context.Context, miniblock *MiniblockInfo) error {
+	// Check if the miniblock is already applied.
+	if miniblock.Num <= s.view.LastBlock().Num {
+		return nil
+	}
+
+	// TODO: strict check here.
+	// TODO: tests for this.
+
 	// Lets see if this miniblock can be applied.
 	newSV, err := s.view.copyAndApplyBlock(miniblock, s.params.ChainConfig)
 	if err != nil {
@@ -153,6 +170,29 @@ func (s *streamImpl) ApplyMiniblock(ctx context.Context, miniblock *MiniblockInf
 
 	s.notifySubscribers([]*Envelope{miniblock.headerEvent.Envelope}, newSyncCookie, prevSyncCookie)
 	return nil
+}
+
+func (s *streamImpl) PromoteCandidate(ctx context.Context, mbHash common.Hash, mbNum int64) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.view == nil {
+		if err := s.loadInternal(ctx); err != nil {
+			return err
+		}
+	}
+
+	miniblockBytes, err := s.params.Storage.ReadMiniblockCandidate(ctx, s.streamId, mbHash, mbNum)
+	if err != nil {
+		return err
+	}
+
+	miniblock, err := NewMiniblockInfoFromBytes(miniblockBytes, mbNum)
+	if err != nil {
+		return err
+	}
+
+	return s.applyMiniblockImplNoLock(ctx, miniblock)
 }
 
 func (s *streamImpl) initFromBlockchain(ctx context.Context) error {
@@ -510,4 +550,46 @@ func (s *streamImpl) getStatus() *streamImplStatus {
 	}
 
 	return ret
+}
+
+func (s *streamImpl) SaveMiniblockCandidate(ctx context.Context, mb *Miniblock) error {
+	mbInfo, err := NewMiniblockInfoFromProto(
+		mb,
+		NewMiniblockInfoFromProtoOpts{DontParseEvents: true, ExpectedBlockNumber: -1},
+	)
+	if err != nil {
+		return err
+	}
+
+	serialized, err := mbInfo.ToBytes()
+	if err != nil {
+		return err
+	}
+
+	view, err := s.getView(ctx)
+	if err != nil {
+		return err
+	}
+
+	if mbInfo.Num <= view.LastBlock().Num {
+		// TODO: better error code.
+		return RiverError(
+			Err_INTERNAL,
+			"Miniblock is too old",
+			"candidate.Num",
+			mbInfo.Num,
+			"lastBlock.Num",
+			view.LastBlock().Num,
+			"streamId",
+			s.streamId,
+		)
+	}
+
+	return s.params.Storage.WriteBlockProposal(
+		ctx,
+		s.streamId,
+		mbInfo.Hash,
+		mbInfo.Num,
+		serialized,
+	)
 }

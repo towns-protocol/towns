@@ -23,8 +23,8 @@ abstract contract Interaction is Script, DeployBase {
   // - invoke __deploy() with the private key
   // - save the deployment to `deployments/<network>/<contract>.json`
   function interact() public virtual {
-    uint256 pk = isAnvil() ? vm.envUint("LOCAL_PRIVATE_KEY") : isRiver()
-      ? vm.envUint("RIVER_PRIVATE_KEY")
+    uint256 pk = isAnvil()
+      ? vm.envUint("LOCAL_PRIVATE_KEY")
       : vm.envUint("TESTNET_PRIVATE_KEY");
 
     address potential = vm.addr(pk);
