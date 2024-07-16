@@ -255,7 +255,6 @@ describe('channelsWithEntitlements', () => {
         ).toResolve()
 
         // Top-level post currently allowed.
-        // TODO: after client is updated to reject unpermitted self-posts, this should reject.
         await expect(
             alice.sendMessage(channelId!, 'Hello, world!'),
         ).rejects.toThrow(/*not entitled to add message to channel*/)
