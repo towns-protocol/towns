@@ -1,12 +1,11 @@
 import { useQueries, useQuery } from '@tanstack/react-query'
-import { useCallback, useMemo } from 'react'
+import { useCallback } from 'react'
 import {
     Address,
     LookupUser,
     queryClient,
     staleTime24Hours,
     useOfflineStore,
-    useSpaceDapp,
     useSpaceMembers,
     useTownsContext,
     useUserLookupContext,
@@ -73,7 +72,7 @@ export function useAbstractAccountAddress({
     rootKeyAddress: Address | undefined
 }) {
     const { accountAbstractionConfig } = useEnvironment()
-    const userOpsInstance = useUserOpsInstance()
+    const userOpsInstance = useUserOps()
     const { offlineWalletAddressMap, setOfflineWalletAddress } = useOfflineStore()
 
     let cachedAddress: Address | undefined
@@ -93,7 +92,7 @@ export function useAbstractAccountAddress({
 
 export function useGetAbstractAccountAddressAsync() {
     const { accountAbstractionConfig } = useEnvironment()
-    const userOpsInstance = useUserOpsInstance()
+    const userOpsInstance = useUserOps()
     const { offlineWalletAddressMap, setOfflineWalletAddress } = useOfflineStore()
 
     return useCallback(
@@ -131,7 +130,7 @@ export type LookupUserWithAbstractAccountAddress = LookupUser & {
 export function useLookupUsersWithAbstractAccountAddress() {
     const { accountAbstractionConfig } = useEnvironment()
 
-    const userOpsInstance = useUserOpsInstance()
+    const userOpsInstance = useUserOps()
     const { memberIds } = useSpaceMembers()
     const { offlineWalletAddressMap, setOfflineWalletAddress } = useOfflineStore()
 
@@ -181,30 +180,7 @@ export function isAbstractAccountAddress({
     return address.toLowerCase() === abstractAccountAddress?.toLowerCase()
 }
 
-// we need to get abstract account address even while logged out
-// so we use a userOps instance instead of townsClient.getAbstractAccountAddress
-// b/c the latter requires a client, which requires a logged in user
-function useUserOpsInstance() {
-    const { baseProvider: provider, baseConfig: config } = useTownsContext()
-
-    const { accountAbstractionConfig: aaConfig } = useEnvironment()
-
-    const spaceDapp = useSpaceDapp({
-        provider,
-        config,
-    })
-
-    // undefined if on anvil
-
-    return useMemo(() => {
-        if (!spaceDapp || !aaConfig) {
-            return
-        }
-        return new UserOps({
-            ...aaConfig,
-            spaceDapp,
-            provider,
-            config,
-        })
-    }, [aaConfig, config, provider, spaceDapp])
+function useUserOps() {
+    const { clientSingleton } = useTownsContext()
+    return clientSingleton?.userOps
 }

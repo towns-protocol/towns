@@ -67,4 +67,23 @@ export const FunctionHash = {
     unban: 'unban',
     createSpace_linkWallet: 'createSpace_linkWallet',
     joinSpace_linkWallet: 'joinSpace_linkWallet',
+    prepayMembership: 'prepayMembership',
+    editMembershipSettings: 'editMembershipSettings',
 } as const
+
+export type FunctionHash = keyof typeof FunctionHash
+
+export const TimeTrackerEvents = {
+    CREATE_SPACE: 'CREATE_SPACE',
+    JOIN_SPACE: 'JOIN_SPACE',
+} as const
+
+export type TimeTrackerEvents = keyof typeof TimeTrackerEvents
+
+export type TimeTracker = {
+    startMeasurement: (
+        sequence: TimeTrackerEvents,
+        step: string,
+    ) => ((endSequence?: boolean) => void) | undefined
+    endMeasurement: (sequence: string, step: string, endSequence?: boolean) => void
+}

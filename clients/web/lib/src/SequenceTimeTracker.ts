@@ -29,7 +29,7 @@ class TimeTracker {
         window.listSequenceTimes = this.getAllMetrics.bind(this)
     }
 
-    public startMeasurement(sequence: string, step: string) {
+    public startMeasurement(sequence: TimeTrackerEvents, step: string) {
         try {
             if (!sequence) {
                 console.error('Measurement name is required.')
@@ -191,7 +191,9 @@ export const getTimeTracker = (analytics?: TownsAnalytics) => {
     return instance
 }
 
-export const Events = {
+export const TimeTrackerEvents = {
     CREATE_SPACE: 'CREATE_SPACE',
-    JOIN_TOWN: 'JOIN_TOWN',
+    JOIN_SPACE: 'JOIN_SPACE',
 } as const
+
+export type TimeTrackerEvents = keyof typeof TimeTrackerEvents

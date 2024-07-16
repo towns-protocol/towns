@@ -74,7 +74,7 @@ import {
 import { IArchitectBase, Permission, SpaceInfo, ISpaceDapp } from '@river-build/web3'
 import { BlockchainTransactionStore } from './BlockchainTransactionStore'
 import { UserOps, getTransactionHashOrUserOpHash, isUserOpResponse } from '@towns/userops'
-import { Events as TimeTrackerEvents, getTimeTracker } from '../SequenceTimeTracker'
+import { TimeTrackerEvents, getTimeTracker } from '../SequenceTimeTracker'
 import { waitForTimeoutOrMembership } from '../utils/waitForTimeoutOrMembershipEvent'
 import { TownsAnalytics } from '../types/TownsAnalytics'
 
@@ -106,7 +106,7 @@ export class TownsClient
     private _signerContext?: SignerContext
     protected _eventHandlers?: TownsClientEventHandlers
     private pushNotificationClient?: PushNotificationClient
-    private userOps: UserOps | undefined = undefined
+    public userOps: UserOps | undefined = undefined
     private supportedXChainIds: number[] | undefined
     private analytics: TownsAnalytics | undefined
 
@@ -114,7 +114,6 @@ export class TownsClient
         super()
         this.opts = opts
         this.analytics = opts.analytics
-        getTimeTracker(this.analytics)
         this.name = name || Math.random().toString(36).substring(7)
         console.log('~~~ new TownsClient ~~~', this.name, this.opts)
         this.spaceDapp = spaceDapp
@@ -125,6 +124,7 @@ export class TownsClient
                 provider: opts.baseProvider,
                 config: opts.baseConfig,
                 spaceDapp: this.spaceDapp,
+                timeTracker: getTimeTracker(this.analytics),
             })
         }
         this.blockchainTransactionStore = new BlockchainTransactionStore(this.spaceDapp)
@@ -205,6 +205,7 @@ export class TownsClient
     public async startCasablancaClient(
         context: SignerContext,
         metadata?: { spaceId: string },
+        sequenceName?: TimeTrackerEvents,
     ): Promise<CasablancaClient> {
         this.log('startCasablancaClient', context)
         if (this.casablancaClient) {
@@ -216,11 +217,21 @@ export class TownsClient
         this._signerContext = context
         let rpcClient: StreamRpcClient
 
+        let endMakeRiverRpc: (() => void) | undefined
+        if (sequenceName) {
+            endMakeRiverRpc = getTimeTracker().startMeasurement(
+                sequenceName,
+                'river_make_rpc_client',
+            )
+        }
         // to force a specific rpc url, open the console and type `localStorage.RIVER_RPC_URL = 'https://river1.nodes.gamma.towns.com'`
         if (localStorage.getItem('RIVER_RPC_URL')) {
             rpcClient = makeStreamRpcClient(localStorage.getItem('RIVER_RPC_URL') as string)
         } else {
             rpcClient = await makeRiverRpcClient(this.opts.riverProvider, this.opts.riverConfig)
+        }
+        if (endMakeRiverRpc) {
+            endMakeRiverRpc()
         }
 
         const userId = userIdFromAddress(context.creatorAddress)
@@ -238,7 +249,19 @@ export class TownsClient
         )
         this.casablancaClient.setMaxListeners(100)
 
+        let endIntializeUser: (() => void) | undefined
+        if (sequenceName) {
+            endIntializeUser = getTimeTracker().startMeasurement(
+                sequenceName,
+                'river_initialize_user',
+            )
+        }
+
         await this.casablancaClient.initializeUser(metadata)
+
+        if (endIntializeUser) {
+            endIntializeUser()
+        }
 
         this._eventHandlers?.onRegister?.({
             userId: this.casablancaClient.userId,
@@ -316,7 +339,10 @@ export class TownsClient
         defaultUsernames: string[] = [],
         onCreateFlowStatus?: (update: CreateSpaceFlowStatus) => void,
     ): Promise<CreateSpaceTransactionContext> {
-        const txContext = await this._waitForBlockchainTransaction(context)
+        const txContext = await this._waitForBlockchainTransaction(
+            context,
+            TimeTrackerEvents.CREATE_SPACE,
+        )
         if (txContext.status === TransactionStatus.Success) {
             this.log('[waitForCreateSpaceTransaction] space created on chain', txContext.data)
             if (txContext.data) {
@@ -333,22 +359,20 @@ export class TownsClient
                 const timeTracker = getTimeTracker()
                 // wait until the space and channel are minted on-chain
                 // before creating the streams
-                const endCsbStart = timeTracker.startMeasurement(
-                    TimeTrackerEvents.CREATE_SPACE,
-                    'csb_start_client',
-                )
                 if (!this.casablancaClient && signerContext) {
-                    await this.startCasablancaClient(signerContext, { spaceId })
+                    await this.startCasablancaClient(
+                        signerContext,
+                        { spaceId },
+                        TimeTrackerEvents.CREATE_SPACE,
+                    )
                 }
-
-                endCsbStart?.()
 
                 if (!this.casablancaClient) {
                     throw new Error('casablancaClient not started')
                 }
                 const endCsbCreateSpace = timeTracker.startMeasurement(
                     TimeTrackerEvents.CREATE_SPACE,
-                    'csb_create_space',
+                    'river_create_space',
                 )
                 const result = await this.casablancaClient.createSpace(spaceId)
 
@@ -356,7 +380,7 @@ export class TownsClient
 
                 const endCsbWaitForStream = timeTracker.startMeasurement(
                     TimeTrackerEvents.CREATE_SPACE,
-                    'csb_wait_for_stream',
+                    'river_wait_for_stream',
                 )
 
                 onCreateFlowStatus?.(CreateSpaceFlowStatus.CreatingChannel)
@@ -371,7 +395,7 @@ export class TownsClient
                 if (defaultUsernames.length > 0) {
                     const endCsbSetUsername = timeTracker.startMeasurement(
                         TimeTrackerEvents.CREATE_SPACE,
-                        'csb_set_username',
+                        'river_set_username',
                     )
                     onCreateFlowStatus?.(CreateSpaceFlowStatus.CreatingUser)
                     // new space, no member, we can just set first username as default
@@ -385,7 +409,7 @@ export class TownsClient
 
                 const endCsbCreateDefaultChannel = timeTracker.startMeasurement(
                     TimeTrackerEvents.CREATE_SPACE,
-                    'csb_create_default_channel',
+                    'river_create_default_channel',
                 )
                 await this.createSpaceDefaultChannelRoom(spaceId, 'general', channelId)
 
@@ -438,44 +462,7 @@ export class TownsClient
 
         try {
             if (this.isAccountAbstractionEnabled()) {
-                transaction = await this.userOps?.sendCreateSpaceOp([args, signer], {
-                    getAbstractAccount: {
-                        start: () =>
-                            getTimeTracker().startMeasurement(
-                                TimeTrackerEvents.CREATE_SPACE,
-                                'getAbstractAccount',
-                            ),
-                        end: () =>
-                            getTimeTracker().endMeasurement(
-                                TimeTrackerEvents.CREATE_SPACE,
-                                'getAbstractAccount',
-                            ),
-                    },
-                    checkIfLinked: {
-                        start: () =>
-                            getTimeTracker().startMeasurement(
-                                TimeTrackerEvents.CREATE_SPACE,
-                                'checkIfLinked',
-                            ),
-                        end: () =>
-                            getTimeTracker().endMeasurement(
-                                TimeTrackerEvents.CREATE_SPACE,
-                                'checkIfLinked',
-                            ),
-                    },
-                    sendUserOp: {
-                        start: () =>
-                            getTimeTracker().startMeasurement(
-                                TimeTrackerEvents.CREATE_SPACE,
-                                'sendUserOp',
-                            ),
-                        end: () =>
-                            getTimeTracker().endMeasurement(
-                                TimeTrackerEvents.CREATE_SPACE,
-                                'sendUserOp',
-                            ),
-                    },
-                })
+                transaction = await this.userOps?.sendCreateSpaceOp([args, signer])
             } else {
                 transaction = await this.spaceDapp.createSpace(args, signer)
             }
@@ -1555,10 +1542,19 @@ export class TownsClient
 
         const joinRiverRoom = async () => {
             if (!this.casablancaClient && signerContext) {
-                await this.startCasablancaClient(signerContext, { spaceId })
+                await this.startCasablancaClient(
+                    signerContext,
+                    { spaceId },
+                    TimeTrackerEvents.JOIN_SPACE,
+                )
             }
             onJoinFlowStatus?.(JoinFlowStatus.JoiningRoom)
+            const endJoinSpace = getTimeTracker().startMeasurement(
+                TimeTrackerEvents.JOIN_SPACE,
+                'river_joinroom_space',
+            )
             const room = await this.joinRoom(spaceId)
+            endJoinSpace?.()
             this.log('[joinTown] room', room)
             // join the default channels
             const spaceContent = this.casablancaClient?.streams.get(spaceId)?.view.spaceContent
@@ -1567,10 +1563,15 @@ export class TownsClient
                     if (value.isDefault) {
                         onJoinFlowStatus?.(JoinFlowStatus.JoiningDefaultChannel)
                         this.log('[joinTown] joining default channel', key)
+                        const endJoinChannel = getTimeTracker().startMeasurement(
+                            TimeTrackerEvents.JOIN_SPACE,
+                            'river_joinroom_channel',
+                        )
                         await this.joinRoom(key, undefined, {
                             skipWaitForMiniblockConfirmation: true,
                             skipWaitForUserStreamUpdate: true,
                         })
+                        endJoinChannel?.()
                     }
                 }
             }
@@ -1637,12 +1638,18 @@ export class TownsClient
             type: BlockchainTransactionType.JoinSpace,
         })
 
+        const timeTracker = getTimeTracker()
         try {
+            const endGetEndtitledWallet = timeTracker.startMeasurement(
+                TimeTrackerEvents.JOIN_SPACE,
+                'userops_get_entitled_wallet',
+            )
             const entitledWallet = await this.spaceDapp.getEntitledWalletForJoiningSpace(
                 spaceId,
                 rootWallet,
                 await this.getSupportedXChainRpcUrls(),
             )
+            endGetEndtitledWallet?.()
 
             if (!entitledWallet) {
                 console.error('[mintMembershipTransaction] failed, no wallets have balance')
@@ -1729,7 +1736,12 @@ export class TownsClient
                 },
             )
 
+            const endWaitForMembership = timeTracker.startMeasurement(
+                TimeTrackerEvents.JOIN_SPACE,
+                'contract_wait_for_membership_issued',
+            )
             const { issued, tokenId, error } = await membershipOrTimeout
+            endWaitForMembership?.()
 
             this.log('[mintMembershipTransaction] membershipListener result', issued, tokenId)
 
@@ -2260,17 +2272,23 @@ export class TownsClient
 
         try {
             if (this.isAccountAbstractionEnabled()) {
+                walletAddress =
+                    (await this.getAbstractAccountAddress({
+                        rootKeyAddress: rootKeyAddress as Address,
+                    })) ?? ''
+                if (!walletAddress || walletAddress === '') {
+                    throw new Error('Abstract account address not found')
+                }
                 // when account abstraction is enabled, the only time we should be using this method is when linking a smart account to a root key
                 if (wallet) {
                     throw new Error(
                         '[linkCallerToRootKey] wallet address should not be provided when account abstraction is enabled',
                     )
                 }
-                transaction = await this.userOps?.sendLinkSmartAccountToRootKeyOp(rootKey)
-                walletAddress =
-                    (await this.getAbstractAccountAddress({
-                        rootKeyAddress: rootKeyAddress as Address,
-                    })) ?? ''
+                transaction = await this.userOps?.sendLinkSmartAccountToRootKeyOp(
+                    rootKey,
+                    walletAddress as Address,
+                )
             } else {
                 if (!wallet) {
                     throw new Error(
@@ -2489,6 +2507,7 @@ export class TownsClient
 
     private async _waitForBlockchainTransaction<TxnContext>(
         context: TransactionContext<TxnContext> | undefined,
+        sequenceName?: TimeTrackerEvents,
     ): Promise<TransactionContext<TxnContext>> {
         if (!context?.transaction) {
             return createTransactionContext<TxnContext>({
@@ -2506,15 +2525,19 @@ export class TownsClient
         try {
             if (isUserOpResponse(transaction)) {
                 // wait for the userop event - this .wait is not the same as ethers.ContractTransaction.wait - see userop.js sendUserOperation
-                getTimeTracker().startMeasurement(
-                    TimeTrackerEvents.CREATE_SPACE,
-                    'waitForUserOpEvent',
-                )
+                let endWaitForUserOpEvent: ((endSequence?: boolean) => void) | undefined
+                if (sequenceName) {
+                    endWaitForUserOpEvent = getTimeTracker().startMeasurement(
+                        sequenceName,
+                        'userops_wait_for_user_op_event',
+                    )
+                }
+
                 const userOpEvent = await transaction.wait()
-                getTimeTracker().endMeasurement(
-                    TimeTrackerEvents.CREATE_SPACE,
-                    'waitForUserOpEvent',
-                )
+
+                if (endWaitForUserOpEvent) {
+                    endWaitForUserOpEvent()
+                }
 
                 if (userOpEvent) {
                     if (userOpEvent.args.success === false) {
@@ -2524,18 +2547,20 @@ export class TownsClient
                         )
                     }
 
+                    let endWaitForTxConfirmation: ((endSequence?: boolean) => void) | undefined
                     // we probably don't need to wait for this transaction, but for now we can convert it to a receipt for less refactoring
-                    getTimeTracker().startMeasurement(
-                        TimeTrackerEvents.CREATE_SPACE,
-                        'waitForTransaction',
-                    )
+                    if (sequenceName) {
+                        endWaitForTxConfirmation = getTimeTracker().startMeasurement(
+                            sequenceName,
+                            'userops_wait_for_tx_confirmation',
+                        )
+                    }
                     receipt = await this.opts.baseProvider?.waitForTransaction(
                         userOpEvent.transactionHash,
                     )
-                    getTimeTracker().endMeasurement(
-                        TimeTrackerEvents.CREATE_SPACE,
-                        'waitForTransaction',
-                    )
+                    if (endWaitForTxConfirmation) {
+                        endWaitForTxConfirmation()
+                    }
                 } else {
                     throw new Error(`[_waitForBlockchainTransaction] userOpEvent is undefined`)
                 }

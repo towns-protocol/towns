@@ -14,14 +14,14 @@ import {
 import { ethers } from 'ethers'
 import isEqual from 'lodash/isEqual'
 import { ISendUserOperationResponse, Client as UseropClient, Presets } from 'userop'
-import { UserOpsConfig, UserOpParams, FunctionHash } from './types'
+import { UserOpsConfig, UserOpParams, FunctionHash, TimeTracker, TimeTrackerEvents } from './types'
 import { userOpsStore } from './userOpsStore'
 // TODO: we can probably add these via @account-abrstraction/contracts if preferred
 import { EntryPoint__factory, SimpleAccountFactory__factory } from 'userop/dist/typechain'
 import { ERC4337 } from 'userop/dist/constants'
 import { CodeException, errorToCodeException, isPreverificationGasTooLowError } from './errors'
 import { UserOperationEventEvent } from 'userop/dist/typechain/EntryPoint'
-import { EVERYONE_ADDRESS } from './utils'
+import { EVERYONE_ADDRESS, getFunctionSigHash } from './utils'
 import {
     simpleEstimateGas,
     preverificationGasMultiplier,
@@ -42,8 +42,14 @@ export class UserOps {
     private skipPromptUserOnPMRejectedOp = false
     private userOpClient: UseropClient | undefined
     protected spaceDapp: ISpaceDapp | undefined
+    private timeTracker: TimeTracker | undefined
 
-    constructor(config: UserOpsConfig & { spaceDapp: ISpaceDapp }) {
+    constructor(
+        config: UserOpsConfig & {
+            spaceDapp: ISpaceDapp
+            timeTracker?: TimeTracker
+        },
+    ) {
         this.bundlerUrl = config.bundlerUrl ?? ''
         this.aaRpcUrl = config.aaRpcUrl
         this.paymasterProxyUrl = config.paymasterProxyUrl
@@ -52,6 +58,7 @@ export class UserOps {
         this.paymasterProxyAuthSecret = config.paymasterProxyAuthSecret
         this.spaceDapp = config.spaceDapp
         this.skipPromptUserOnPMRejectedOp = config.skipPromptUserOnPMRejectedOp
+        this.timeTracker = config.timeTracker
     }
 
     public async getAbstractAccountAddress({
@@ -75,7 +82,7 @@ export class UserOps {
                 throw new Error('spaceDapp is required')
             }
 
-            const initCode = await ethers.utils.hexConcat([
+            const initCode = ethers.utils.hexConcat([
                 this.factoryAddress,
                 SimpleAccountFactory__factory.createInterface().encodeFunctionData(
                     'createAccount',
@@ -122,14 +129,24 @@ export class UserOps {
     public async sendUserOp(
         args: UserOpParams & {
             // a function signature hash to pass to paymaster proxy - this is just the function name for now
-            functionHashForPaymasterProxy: string
+            functionHashForPaymasterProxy: FunctionHash
             spaceId: string | undefined
             retryCount?: number
         },
+        sequenceName?: TimeTrackerEvents,
     ): Promise<ISendUserOperationResponse> {
         const { toAddress, callData, value } = args
 
+        const timeTracker = this.timeTracker
+
+        let endInitBuilder: (() => void) | undefined
+        if (sequenceName) {
+            endInitBuilder = timeTracker?.startMeasurement(sequenceName, 'userops_init_builder')
+        }
+
         const builder = await this.initBuilder(args)
+
+        endInitBuilder?.()
 
         if (!toAddress) {
             throw new Error('toAddress is required')
@@ -164,14 +181,21 @@ export class UserOps {
             userOp = builder.execute(toAddress, value ?? 0, callData)
         }
 
+        let endInitClient: (() => void) | undefined
+        if (sequenceName) {
+            endInitClient = timeTracker?.startMeasurement(sequenceName, 'userops_init_client')
+        }
+
         const userOpClient = await this.getUserOpClient()
+
+        endInitClient?.()
 
         // We get back preverification gas too low errors sometimes
         // - for pm sponsored ops, pretty much all we can do is retry. The paymaster is going to do its own esitamtes and provide a sig. We can't change it or the sig will be invalid
         // - for non-pm sponsored ops, we can up the preverification gas and retry
         let preverificationGasMultiplierValue = 1
 
-        // 1 - estimate preverification gas. don't think this has any impact on paymaster's gas estimation, but we can pass it along just in case it does
+        // 1 - increase preverification gas (on retries). don't think this has any impact on paymaster's gas estimation, but we can pass it along just in case it does
         userOp.useMiddleware(async (ctx) =>
             preverificationGasMultiplier(preverificationGasMultiplierValue)(ctx),
         )
@@ -180,26 +204,35 @@ export class UserOps {
         // paymaster returns preverification gas and we assign it to the user operation.
         // The userop fields can no longer be manipulated or else the paymaster sig will be invalid
         if (this.paymasterProxyUrl && this.paymasterProxyAuthSecret) {
-            userOp.useMiddleware(async (ctx) =>
-                paymasterProxyMiddleware({
+            userOp.useMiddleware(async (ctx) => {
+                let endPaymasterMiddleware: (() => void) | undefined
+                if (sequenceName) {
+                    endPaymasterMiddleware = timeTracker?.startMeasurement(
+                        sequenceName,
+                        `userops_${args.functionHashForPaymasterProxy}_paymasterProxyMiddleware`,
+                    )
+                }
+                await paymasterProxyMiddleware({
                     rootKeyAddress: await args.signer.getAddress(),
                     userOpContext: ctx,
                     paymasterProxyAuthSecret: this.paymasterProxyAuthSecret,
                     paymasterProxyUrl: this.paymasterProxyUrl,
                     functionHashForPaymasterProxy: args.functionHashForPaymasterProxy,
                     townId: args.spaceId, // can or should i rename this to space id?
-                }),
-            )
+                })
+
+                endPaymasterMiddleware?.()
+            })
         }
 
         // 3 - prompt user if the paymaster rejected. recalculate preverification gas
         if (!this.skipPromptUserOnPMRejectedOp) {
             userOp.useMiddleware(async (ctx) =>
-                promptUser(
-                    preverificationGasMultiplierValue,
-                    this.spaceDapp,
-                    args.value,
-                )(ctx, {
+                promptUser(preverificationGasMultiplierValue, this.spaceDapp, args.value, {
+                    sequenceName,
+                    timeTracker,
+                    stepPrefix: args.functionHashForPaymasterProxy,
+                })(ctx, {
                     provider: this.spaceDapp?.provider,
                     config: this.spaceDapp?.config,
                     rpcUrl: this.aaRpcUrl,
@@ -209,6 +242,7 @@ export class UserOps {
             )
         }
         // estimate gas w/o prompt if needed
+        // time tracking not needed as this is for error reporting in test scenarios
         else {
             userOp.useMiddleware(async (ctx) =>
                 simpleEstimateGas(ctx, this.aaRpcUrl, this.bundlerUrl),
@@ -224,12 +258,20 @@ export class UserOps {
             let _error: CodeException | undefined = undefined
             while (shouldTry && attempt < (args.retryCount ?? 3)) {
                 try {
+                    let endSendUserOperation: (() => void) | undefined
+                    if (sequenceName) {
+                        endSendUserOperation = timeTracker?.startMeasurement(
+                            sequenceName,
+                            `userops_${args.functionHashForPaymasterProxy}_send_userop`,
+                        )
+                    }
                     const res = await userOpClient.sendUserOperation(userOp, {
                         onBuild: (op) => {
                             console.log('[UserOperations] Signed UserOperation:', op)
                         },
                     })
                     console.log('[UserOperations] userOpHash:', res.userOpHash)
+                    endSendUserOperation?.()
                     return res
                 } catch (error) {
                     _error = errorToCodeException(error)
@@ -263,20 +305,6 @@ export class UserOps {
 
     public async sendCreateSpaceOp(
         args: Parameters<SpaceDapp['createSpace']>,
-        performanceCallbacks?: {
-            getAbstractAccount: {
-                start: () => void
-                end: () => void
-            }
-            checkIfLinked: {
-                start: () => void
-                end: () => void
-            }
-            sendUserOp: {
-                start: () => void
-                end: () => void
-            }
-        },
     ): Promise<ISendUserOperationResponse> {
         if (!this.spaceDapp) {
             throw new Error('spaceDapp is required')
@@ -294,11 +322,15 @@ export class UserOps {
             },
         }
 
-        performanceCallbacks?.getAbstractAccount.start()
+        const endGetAA = this.timeTracker?.startMeasurement(
+            TimeTrackerEvents.CREATE_SPACE,
+            'userops_get_abstract_account_address',
+        )
         const abstractAccountAddress = await this.getAbstractAccountAddress({
             rootKeyAddress: await getSignerAddress(signer),
         })
-        performanceCallbacks?.getAbstractAccount.end()
+
+        endGetAA?.()
 
         if (!abstractAccountAddress) {
             throw new Error('abstractAccountAddress is required')
@@ -311,40 +343,47 @@ export class UserOps {
             [spaceInfo],
         )
 
-        performanceCallbacks?.checkIfLinked.start()
-        if (await this.spaceDapp.walletLink.checkIfLinked(signer, abstractAccountAddress)) {
-            performanceCallbacks?.checkIfLinked.end()
+        const endLinkCheck = this.timeTracker?.startMeasurement(
+            TimeTrackerEvents.CREATE_SPACE,
+            'userops_check_if_linked',
+        )
 
-            const functionHashForPaymasterProxy = this.getFunctionSigHash(
+        if (await this.spaceDapp.walletLink.checkIfLinked(signer, abstractAccountAddress)) {
+            endLinkCheck?.()
+
+            const functionHashForPaymasterProxy = getFunctionSigHash(
                 this.spaceDapp.spaceRegistrar.SpaceArchitect.interface,
                 createSpaceFnName,
             )
 
-            performanceCallbacks?.sendUserOp.start()
-            const op = await this.sendUserOp({
-                toAddress: this.spaceDapp.spaceRegistrar.SpaceArchitect.address,
-                callData: callDataCreateSpace,
-                signer,
-                spaceId: undefined,
-                functionHashForPaymasterProxy,
-            })
-            performanceCallbacks?.sendUserOp.end()
+            const op = await this.sendUserOp(
+                {
+                    toAddress: this.spaceDapp.spaceRegistrar.SpaceArchitect.address,
+                    callData: callDataCreateSpace,
+                    signer,
+                    spaceId: undefined,
+                    functionHashForPaymasterProxy,
+                },
+                TimeTrackerEvents.CREATE_SPACE,
+            )
             return op
         }
-        performanceCallbacks?.checkIfLinked.end()
+        endLinkCheck?.()
 
         // wallet isn't linked, create a user op that both links and creates the space
         const functionName = 'createSpace_linkWallet'
 
         // TODO: this needs to accept an array of names/interfaces
-        const functionHashForPaymasterProxy = this.getFunctionSigHash(
+        const functionHashForPaymasterProxy = getFunctionSigHash(
             this.spaceDapp.spaceRegistrar.SpaceArchitect.interface,
             functionName,
         )
 
-        const callDataForLinkingSmartAccount = await this.encodeDataForLinkingSmartAccount(signer)
+        const callDataForLinkingSmartAccount = await this.encodeDataForLinkingSmartAccount(
+            signer,
+            abstractAccountAddress,
+        )
 
-        performanceCallbacks?.sendUserOp.start()
         const op = await this.sendUserOp({
             toAddress: [
                 this.spaceDapp.walletLink.address,
@@ -355,18 +394,16 @@ export class UserOps {
             spaceId: undefined,
             functionHashForPaymasterProxy,
         })
-        performanceCallbacks?.sendUserOp.end()
         return op
     }
 
-    private async encodeDataForLinkingSmartAccount(rootKeySigner: ethers.Signer) {
+    private async encodeDataForLinkingSmartAccount(
+        rootKeySigner: ethers.Signer,
+        abstractAccountAddress: Address,
+    ) {
         if (!this.spaceDapp) {
             throw new Error('spaceDapp is required')
         }
-
-        const abstractAccountAddress = await this.getAbstractAccountAddress({
-            rootKeyAddress: await getSignerAddress(rootKeySigner),
-        })
 
         if (!abstractAccountAddress) {
             throw new Error('abstractAccountAddress is required')
@@ -392,15 +429,21 @@ export class UserOps {
             throw new Error('spaceDapp is required')
         }
         const [spaceId, recipient, signer] = args
-        const space = await this.spaceDapp.getSpace(spaceId)
+        const space = this.spaceDapp.getSpace(spaceId)
 
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
 
+        const endGetAA = this.timeTracker?.startMeasurement(
+            TimeTrackerEvents.JOIN_SPACE,
+            'userops_get_abstract_account_address',
+        )
+
         const abstractAccountAddress = await this.getAbstractAccountAddress({
             rootKeyAddress: await getSignerAddress(signer),
         })
+        endGetAA?.()
         if (!abstractAccountAddress) {
             throw new Error('abstractAccountAddress is required')
         }
@@ -408,11 +451,17 @@ export class UserOps {
         const membershipPrice = await this.spaceDapp.getJoinSpacePrice(spaceId)
         const callDataJoinSpace = space.Membership.encodeFunctionData('joinSpace', [recipient])
 
+        const endCheckLink = this.timeTracker?.startMeasurement(
+            TimeTrackerEvents.JOIN_SPACE,
+            'userops_check_if_linked',
+        )
+
         if (await this.spaceDapp.walletLink.checkIfLinked(signer, abstractAccountAddress)) {
+            endCheckLink?.()
             // they already have a linked wallet, just join the space
             const functionName = 'joinSpace'
 
-            const functionHashForPaymasterProxy = this.getFunctionSigHash(
+            const functionHashForPaymasterProxy = getFunctionSigHash(
                 space.Membership.interface,
                 functionName,
             )
@@ -425,15 +474,19 @@ export class UserOps {
             //     throw this.parseSpaceError(spaceId, error)
             // }
 
-            return this.sendUserOp({
-                toAddress: space.Address,
-                callData: callDataJoinSpace,
-                value: membershipPrice,
-                signer,
-                spaceId: space.SpaceId,
-                functionHashForPaymasterProxy,
-            })
+            return this.sendUserOp(
+                {
+                    toAddress: space.Address,
+                    callData: callDataJoinSpace,
+                    value: membershipPrice,
+                    signer,
+                    spaceId: space.SpaceId,
+                    functionHashForPaymasterProxy,
+                },
+                TimeTrackerEvents.JOIN_SPACE,
+            )
         }
+        endCheckLink?.()
 
         // if the user does not have a linked wallet, we need to link their smart account first b/c that is where the memberhship NFT will be minted
         // joinSpace might require a value, if the space has a fixed membership cost
@@ -443,11 +496,20 @@ export class UserOps {
         //
         // Therefore, we need to link the wallet first, then join the space
         // Another smart account contract should support this and allow for a single user operation
-        const linkWalletUserOp = await this.sendLinkSmartAccountToRootKeyOp(signer)
+        const linkWalletUserOp = await this.sendLinkSmartAccountToRootKeyOp(
+            signer,
+            abstractAccountAddress,
+            TimeTrackerEvents.JOIN_SPACE,
+        )
 
         let userOpEventWalletLink: UserOperationEventEvent | null
         try {
+            const endLinkRelay = this.timeTracker?.startMeasurement(
+                TimeTrackerEvents.JOIN_SPACE,
+                'userops_wait_for_link_wallet_relay',
+            )
             userOpEventWalletLink = await linkWalletUserOp.wait()
+            endLinkRelay?.()
             if (!userOpEventWalletLink?.args.success) {
                 throw new CodeException(
                     'Failed to perform user operation for linking wallet',
@@ -463,9 +525,14 @@ export class UserOps {
         }
 
         try {
+            const endWaitForLinkWalletTx = this.timeTracker?.startMeasurement(
+                TimeTrackerEvents.JOIN_SPACE,
+                'userops_wait_for_link_wallet_tx',
+            )
             const linkWalletReceipt = await this.spaceDapp.provider?.waitForTransaction(
                 userOpEventWalletLink.transactionHash,
             )
+            endWaitForLinkWalletTx?.()
             if (linkWalletReceipt?.status !== 1) {
                 throw new CodeException('Failed to link wallet', 'USER_OPS_FAILED_TO_LINK_WALLET')
             }
@@ -477,14 +544,17 @@ export class UserOps {
             )
         }
 
-        return this.sendUserOp({
-            toAddress: space.Address,
-            value: membershipPrice,
-            callData: callDataJoinSpace,
-            signer,
-            spaceId: space.SpaceId,
-            functionHashForPaymasterProxy: 'joinSpace',
-        })
+        return this.sendUserOp(
+            {
+                toAddress: space.Address,
+                value: membershipPrice,
+                callData: callDataJoinSpace,
+                signer,
+                spaceId: space.SpaceId,
+                functionHashForPaymasterProxy: 'joinSpace',
+            },
+            TimeTrackerEvents.JOIN_SPACE,
+        )
     }
 
     /**
@@ -493,28 +563,43 @@ export class UserOps {
      */
     public async sendLinkSmartAccountToRootKeyOp(
         rootKeySigner: ethers.Signer,
+        abstractAccountAddress: Address,
+        sequenceName?: TimeTrackerEvents,
     ): Promise<ISendUserOperationResponse> {
         if (!this.spaceDapp) {
             throw new Error('spaceDapp is required')
         }
         const signer = rootKeySigner
-        const walletLink = await this.spaceDapp.walletLink
+        const walletLink = this.spaceDapp.walletLink
         const functionName = 'linkCallerToRootKey'
 
-        const functionHashForPaymasterProxy = this.getFunctionSigHash(
+        const functionHashForPaymasterProxy = getFunctionSigHash(
             walletLink.getInterface(),
             functionName,
         )
 
-        const callDataForLinkingSmartAccount = await this.encodeDataForLinkingSmartAccount(signer)
+        const endEncoding = this.timeTracker?.startMeasurement(
+            TimeTrackerEvents.JOIN_SPACE,
+            'userops_encode_data_for_linking_smart_account',
+        )
 
-        return this.sendUserOp({
-            toAddress: this.spaceDapp.walletLink.address,
-            callData: callDataForLinkingSmartAccount,
+        const callDataForLinkingSmartAccount = await this.encodeDataForLinkingSmartAccount(
             signer,
-            spaceId: undefined,
-            functionHashForPaymasterProxy,
-        })
+            abstractAccountAddress,
+        )
+
+        endEncoding?.()
+
+        return this.sendUserOp(
+            {
+                toAddress: this.spaceDapp.walletLink.address,
+                callData: callDataForLinkingSmartAccount,
+                signer,
+                spaceId: undefined,
+                functionHashForPaymasterProxy,
+            },
+            sequenceName,
+        )
     }
 
     /**
@@ -534,7 +619,7 @@ export class UserOps {
         const walletLink = await this.spaceDapp.walletLink
         const functionName = 'linkWalletToRootKey'
 
-        const functionHashForPaymasterProxy = this.getFunctionSigHash(
+        const functionHashForPaymasterProxy = getFunctionSigHash(
             walletLink.getInterface(),
             functionName,
         )
@@ -566,7 +651,7 @@ export class UserOps {
 
         const functionName = 'removeLink'
 
-        const functionHashForPaymasterProxy = this.getFunctionSigHash(
+        const functionHashForPaymasterProxy = getFunctionSigHash(
             walletLink.getInterface(),
             functionName,
         )
@@ -602,7 +687,7 @@ export class UserOps {
         // in space dapp we update the space name only using updateSpaceInfo which calls updateSpaceInfo
         const functionName = 'updateSpaceInfo'
 
-        const functionHashForPaymasterProxy = this.getFunctionSigHash(
+        const functionHashForPaymasterProxy = getFunctionSigHash(
             space.SpaceOwner.interface,
             functionName,
         )
@@ -644,7 +729,7 @@ export class UserOps {
 
         const functionName = 'createChannel'
 
-        const functionHashForPaymasterProxy = this.getFunctionSigHash(
+        const functionHashForPaymasterProxy = getFunctionSigHash(
             space.Channels.interface,
             functionName,
         )
@@ -675,7 +760,7 @@ export class UserOps {
         if (!this.spaceDapp) {
             throw new Error('spaceDapp is required')
         }
-        const space = await this.spaceDapp.getSpace(params.spaceId)
+        const space = this.spaceDapp.getSpace(params.spaceId)
 
         if (!space) {
             throw new Error(`Space with spaceId "${params.spaceId}" is not found.`)
@@ -683,7 +768,7 @@ export class UserOps {
 
         const callData = await this.spaceDapp.encodedUpdateChannelData(space, params)
 
-        const multiCallData = await space.Multicall.encodeFunctionData('multicall', [callData])
+        const multiCallData = space.Multicall.encodeFunctionData('multicall', [callData])
 
         return this.sendUserOp({
             toAddress: [space.Multicall.address],
@@ -724,7 +809,7 @@ export class UserOps {
 
         const functionName = 'createRole'
 
-        const functionHashForPaymasterProxy = this.getFunctionSigHash(
+        const functionHashForPaymasterProxy = getFunctionSigHash(
             space.Roles.interface,
             functionName,
         )
@@ -760,7 +845,7 @@ export class UserOps {
         }
         const functionName = 'removeRole'
 
-        const functionHashForPaymasterProxy = this.getFunctionSigHash(
+        const functionHashForPaymasterProxy = getFunctionSigHash(
             space.Roles.interface,
             functionName,
         )
@@ -783,7 +868,7 @@ export class UserOps {
         if (!this.spaceDapp) {
             throw new Error('spaceDapp is required')
         }
-        const space = await this.spaceDapp.getSpace(updateRoleParams.spaceNetworkId)
+        const space = this.spaceDapp.getSpace(updateRoleParams.spaceNetworkId)
         if (!space) {
             throw new Error(`Space with spaceId "${updateRoleParams.spaceNetworkId}" is not found.`)
         }
@@ -810,7 +895,7 @@ export class UserOps {
     }) {
         const functionName = 'updateRole'
 
-        const functionHashForPaymasterProxy = this.getFunctionSigHash(
+        const functionHashForPaymasterProxy = getFunctionSigHash(
             space.Roles.interface,
             functionName,
         )
@@ -845,7 +930,7 @@ export class UserOps {
         }
 
         const functionName = 'ban'
-        const functionHashForPaymasterProxy = this.getFunctionSigHash(
+        const functionHashForPaymasterProxy = getFunctionSigHash(
             space.Banning.interface,
             functionName,
         )
@@ -875,7 +960,7 @@ export class UserOps {
         }
 
         const functionName = 'unban'
-        const functionHashForPaymasterProxy = this.getFunctionSigHash(
+        const functionHashForPaymasterProxy = getFunctionSigHash(
             space.Banning.interface,
             functionName,
         )
@@ -1139,20 +1224,6 @@ export class UserOps {
                 // that userop does not estimate the gas, which we do in other middleware
             },
         })
-    }
-
-    /**
-     * should return a matching functionHash for paymaster proxy validation
-     * TODO: proxy still uses function name, not sigHash
-     */
-    private getFunctionSigHash<ContractInterface extends ethers.utils.Interface>(
-        _contractInterface: ContractInterface,
-        functionHash: keyof typeof FunctionHash,
-    ) {
-        return functionHash
-        // TODO: swap to this
-        // const frag = contractInterface.getFunction(functionName)
-        // return frag.format() // format sigHash
     }
 }
 

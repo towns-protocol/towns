@@ -3,6 +3,7 @@ import { ethers, BigNumberish } from 'ethers'
 import { userOpsStore } from './userOpsStore'
 import { CodeException } from './errors'
 import { BaseChainConfig, ISpaceDapp } from '@river-build/web3'
+import { TimeTracker, TimeTrackerEvents } from './types'
 
 function increaseByPercentage({
     gas,
@@ -44,7 +45,13 @@ export function promptUser(
     preverificationGasMultiplier: number,
     spaceDapp: ISpaceDapp | undefined,
     value?: ethers.BigNumberish,
+    timeTrackArgs?: {
+        sequenceName?: TimeTrackerEvents | undefined
+        timeTracker?: TimeTracker | undefined
+        stepPrefix?: string | undefined
+    },
 ) {
+    const { sequenceName, timeTracker, stepPrefix } = timeTrackArgs ?? {}
     return async function (
         ctx: IUserOperationMiddlewareCtx,
         {
@@ -71,6 +78,13 @@ export function promptUser(
                 try {
                     // this is a new estimate because at this point the paymaster would have rejected our operation
                     // and we need an estimate to display to the user and to submit to the bundler
+                    let endEstimateGas: ((endSequence?: boolean) => void) | undefined
+                    if (sequenceName && timeTracker) {
+                        endEstimateGas = timeTracker.startMeasurement(
+                            sequenceName,
+                            `userops_${stepPrefix}_estimate_user_operation_gas`,
+                        )
+                    }
                     const estimate = await estimateUserOperationGas(
                         {
                             ...ctx,
@@ -86,6 +100,10 @@ export function promptUser(
                         },
                         new BundlerJsonRpcProvider(rpcUrl).setBundlerRpc(bundlerUrl),
                     )
+
+                    if (endEstimateGas) {
+                        endEstimateGas?.()
+                    }
 
                     ctx.op.preVerificationGas = increaseByPercentage({
                         gas: estimate.preVerificationGas,

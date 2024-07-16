@@ -58,7 +58,10 @@ test('can link a smart account', async () => {
         }
     }
 
-    const linkOp = await userOps.sendLinkSmartAccountToRootKeyOp(alice.wallet)
+    const linkOp = await userOps.sendLinkSmartAccountToRootKeyOp(
+        alice.wallet,
+        aliceAbstractAccountAddress as Address,
+    )
     await waitForOpAndTx(linkOp, alice)
     await sleepBetweenTxs()
 

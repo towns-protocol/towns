@@ -1,6 +1,7 @@
-import { ContractTransaction } from 'ethers'
+import { ContractTransaction, ethers } from 'ethers'
 import { ISendUserOperationResponse } from 'userop'
 import { Address } from '@river-build/web3'
+import { FunctionHash } from './types'
 
 export function isUserOpResponse(
     tx: undefined | ContractTransaction | ISendUserOperationResponse,
@@ -34,3 +35,17 @@ export async function getTransactionHashFromTransactionOrUserOp(
 }
 
 export const EVERYONE_ADDRESS = '0x0000000000000000000000000000000000000001'
+
+/**
+ * should return a matching functionHash for paymaster proxy validation
+ * TODO: proxy still uses function name, not sigHash
+ */
+export function getFunctionSigHash<ContractInterface extends ethers.utils.Interface>(
+    _contractInterface: ContractInterface,
+    functionHash: FunctionHash,
+) {
+    return functionHash
+    // TODO: swap to this
+    // const frag = contractInterface.getFunction(functionName)
+    // return frag.format() // format sigHash
+}
