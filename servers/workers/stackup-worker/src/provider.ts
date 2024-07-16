@@ -25,7 +25,7 @@ export const networkMap = new Map<Environment, Networks>([
 export const riverEnvMap = new Map<Environment, string>([
     ['development', 'local_single'],
     ['test-beta', 'gamma'],
-    ['alpha', 'gamma'],
+    ['alpha', 'alpha'],
     ['omega', 'omega'],
 ])
 
