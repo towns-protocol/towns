@@ -1,22 +1,22 @@
 import { useMemo } from 'react'
-import { useChannelId, useMyChannels, useSpaceData } from 'use-towns-client'
+import { useChannelId, useSpaceData } from 'use-towns-client'
 import { useNavigate } from 'react-router'
-import sortBy from 'lodash/sortBy'
-import { useShortcut } from 'hooks/useShortcut'
 import { PATHS } from 'routes'
+import { useShortcut } from 'hooks/useShortcut'
 import { useCreateLink } from 'hooks/useCreateLink'
+import { useSortedChannels } from 'hooks/useSortedChannels'
 
 export const RegisterChannelShortcuts = () => {
     const space = useSpaceData()
-    const groups = useMyChannels(space)
+    const { favoriteChannels, unreadChannels, readChannels } = useSortedChannels({
+        spaceId: space?.id,
+    })
+
     const channels = useMemo(
-        () =>
-            sortBy(
-                groups.flatMap((c) => c.channels),
-                'label',
-            ),
-        [groups],
+        () => [...unreadChannels, ...favoriteChannels, ...readChannels],
+        [unreadChannels, favoriteChannels, readChannels],
     )
+
     const channelId = useChannelId()
 
     const navigate = useNavigate()
