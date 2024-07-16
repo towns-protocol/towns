@@ -2019,6 +2019,8 @@ export class TownsClient
         await this.casablancaClient.sendChannelMessage_Edit_Text(roomId, eventId, {
             threadId: originalEventContent.threadId,
             threadPreview: originalEventContent.threadPreview,
+            replyId: originalEventContent.replyId,
+            replyPreview: originalEventContent.replyPreview,
             content: {
                 body: message,
                 mentions: options?.mentions?.map((x) => new ChannelMessage_Post_Mention(x)) ?? [],
