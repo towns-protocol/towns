@@ -17,6 +17,7 @@ on:
                 options:
                     - 'test-beta'
                     - 'omega'
+                    - 'alpha'
                 default: 'test-beta'
 
 concurrency:

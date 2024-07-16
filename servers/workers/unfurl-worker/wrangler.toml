@@ -41,3 +41,9 @@ vars = { ENVIRONMENT = "test-beta" }
 [env.omega]
 routes = [{ pattern = "unfurl-worker.towns.com", custom_domain = true }]
 vars = { ENVIRONMENT = "omega" }
+
+# alpha routes
+# CF_ENV=alpha yarn publish
+[env.alpha]
+routes = [{ pattern = "unfurl-worker-alpha.towns.com", custom_domain = true }]
+vars = { ENVIRONMENT = "alpha" }
