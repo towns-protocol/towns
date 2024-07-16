@@ -8,17 +8,19 @@ import {
 import { useCallback, useRef } from 'react'
 import { keccak256 } from 'ethers/lib/utils'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
+import { TownsAnalytics } from 'use-towns-client'
 import { env, isTest } from 'utils'
 import { getBrowserName, isAndroid, isIOS, isPWA } from './useDevice'
 
 const ANOYNOMOUS_ID = 'analytics-anonymousId'
 const isProd = !env.DEV && !isTest()
 
-export class Analytics {
+export class Analytics implements TownsAnalytics {
     private static instance: Analytics
     private _pseudoId: string | undefined
     private readonly analytics: RudderAnalytics
     public readonly commoneProperties: ApiObject
+    public readonly trackedEvents: Set<string> = new Set()
 
     private constructor(analytics: RudderAnalytics) {
         this.analytics = analytics
@@ -95,6 +97,16 @@ export class Analytics {
             },
             callback,
         )
+    }
+
+    public trackOnce(event: string, properties?: ApiObject, callback?: ApiCallback) {
+        if (this.trackedEvents.has(event)) {
+            return
+        } else {
+            this.trackedEvents.add(event)
+        }
+
+        this.track(event, properties, callback)
     }
 }
 

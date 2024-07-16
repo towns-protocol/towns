@@ -13,6 +13,7 @@ export {
 export type { DMChannelIdentifier } from './types/dm-channel-identifier'
 export * from './components/UserLookupContextProviders'
 
+export type { TownsAnalytics } from './types/TownsAnalytics'
 export { AuthStatus } from './hooks/login'
 export type * from './types/user-lookup'
 export type { LookupUserFn } from './hooks/use-user-lookup-context'
@@ -145,7 +146,6 @@ export { useUserLookupStore } from './store/use-user-lookup-store'
 export * from './types/error-types'
 export * from './utils/towns-utils'
 export * from './utils/crypto-utils'
-export * from './utils/analyticsService'
 export * from './utils/provider-utils'
 
 // buffer hack required for casalanca: https://github.com/randlabs/myalgo-connect/issues/27

@@ -1,7 +1,6 @@
 import { isEqual, uniqBy } from 'lodash'
 import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { MessageType, TimelineEvent, ZTEvent } from 'use-towns-client'
-import AnalyticsService, { AnalyticsEvents } from 'use-towns-client/dist/utils/analyticsService'
 import { MessageTimelineItem } from '@components/MessageTimeIineItem/TimelineItem'
 import { useVisualViewportContext } from '@components/VisualViewportContext/VisualViewportContext'
 import { Box, Divider, Paragraph } from '@ui'
@@ -13,6 +12,7 @@ import { notUndefined } from 'ui/utils/utils'
 import { useChannelType } from 'hooks/useChannelType'
 import { FullyReadObserver } from '@components/MessageTimeIineItem/items/FullyReadObserver'
 import { ScrollbackMarker } from '@components/Channel/components/ScrollbackMarker'
+import { useAnalytics } from 'hooks/useAnalytics'
 import { DateDivider } from '../MessageTimeIineItem/items/DateDivider'
 import { NewDivider } from '../MessageTimeIineItem/items/NewDivider'
 import { MessageTimelineType, useTimelineContext } from './MessageTimelineContext'
@@ -59,6 +59,8 @@ export const MessageTimeline = (props: Props) => {
         setCollapsed(false)
     }, [])
 
+    const { analytics } = useAnalytics()
+
     const stableEventsRef = useRef<TimelineEvent[]>([])
 
     const ref = useRef<HTMLDivElement>(null)
@@ -100,7 +102,9 @@ export const MessageTimeline = (props: Props) => {
 
     if (events.length > 0) {
         isStartupRef.current = false
-        AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.MessageTimeline)
+        analytics?.trackOnce('message_timeline', {
+            debug: true,
+        })
     }
 
     const { fullyReadMarker, fullreadMarkerPersisted, onMarkAsRead, isUnreadMarkerFaded } =

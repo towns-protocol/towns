@@ -8,6 +8,7 @@
 export function transformEvent(event, metadata) {
     const page = event.context?.page
     const properties = event.properties
+
     if (page?.search) {
         event.context.page.search = removePrivyOAuthParams(page.search)
     }

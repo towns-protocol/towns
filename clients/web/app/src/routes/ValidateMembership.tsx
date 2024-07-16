@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Outlet } from 'react-router'
 import {
     Membership,
@@ -7,7 +7,6 @@ import {
     useSpaceDataStore,
     useTownsContext,
 } from 'use-towns-client'
-import AnalyticsService, { AnalyticsEvents } from 'use-towns-client/dist/utils/analyticsService'
 import isEqual from 'lodash/isEqual'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { SetUsernameFormWithClose } from '@components/SetUsernameForm/SetUsernameForm'
@@ -43,6 +42,7 @@ export const ValidateMembership = () => {
     const [_PublicTownPage] = useState(<PublicTownPage />)
     const spaceDataIds = useSpaceDataIds()
     const { analytics } = useAnalytics()
+    const trackPublicTownPage = useTrackPublicTownPage()
     const userId = useMyUserId()
 
     useEffect(() => {
@@ -98,14 +98,14 @@ export const ValidateMembership = () => {
     // if a user has hit the join/login button from the non-authenticated public town page
     // continue to show the public town page and let the page complete the join/login flow
     if (isJoining) {
-        AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.PublicTownPage)
+        trackPublicTownPage()
         return _PublicTownPage
     }
 
     // A user that has never joined a space will not have a client
     if (signerContext && !client) {
         // if we're "authenticated" but we don't have a client we need to show the public town page
-        AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.PublicTownPage)
+        trackPublicTownPage()
         return _PublicTownPage
     }
 
@@ -119,7 +119,7 @@ export const ValidateMembership = () => {
                 (spaceDataIds && !spaceDataIds.includes(spaceIdFromPathname))) &&
             !deferPublicPage
         ) {
-            AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.PublicTownPage)
+            trackPublicTownPage()
             return _PublicTownPage
         }
 
@@ -144,16 +144,21 @@ export const ValidateMembership = () => {
     const isMember = space.membership === Membership.Join
 
     if (!isMember && !deferPublicPage) {
-        AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.PublicTownPage)
+        trackPublicTownPage()
         return _PublicTownPage
     }
 
-    AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.IsMember)
+    analytics?.trackOnce('is_member', {
+        debug: true,
+        isMember,
+    })
 
     if (!isRemoteDataLoaded || !isLocalDataLoaded) {
-        AnalyticsService.getInstance().trackEventOnce(
-            `AnalyticsEvents.WelcomeLayoutLoadLocalData: isRemoteDataLoaded === ${isRemoteDataLoaded}, isLocalDataLoaded === ${isLocalDataLoaded}`,
-        )
+        analytics?.trackOnce('load_local_data', {
+            debug: true,
+            isRemoteDataLoaded,
+            isLocalDataLoaded,
+        })
         return (
             <>
                 {/* <Outlet /> <- we can add the app in the background underneath the progress */}
@@ -223,4 +228,16 @@ function useSpaceDataIds() {
     }
 
     return newIds
+}
+
+function useTrackPublicTownPage() {
+    const { analytics } = useAnalytics()
+
+    return useCallback(() => {
+        if (analytics) {
+            analytics.trackOnce('public_town_page', {
+                debug: true,
+            })
+        }
+    }, [analytics])
 }

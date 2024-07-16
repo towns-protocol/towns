@@ -3,6 +3,7 @@ import { SendMessageOptions, UpdateChannelInfo } from '../types/towns-types'
 import { RoleIdentifier, TProvider, TransactionOrUserOperation } from '../types/web3-types'
 import { BaseChainConfig, RiverChainConfig } from '@river-build/web3'
 import { AccountAbstractionConfig } from '@towns/userops'
+import { TownsAnalytics } from 'types/TownsAnalytics'
 
 export interface TownsOpts {
     environmentId: string
@@ -23,6 +24,7 @@ export interface TownsOpts {
     accountAbstractionConfig?: AccountAbstractionConfig
     highPriorityStreamIds?: string[]
     ethMainnetRpcUrl?: string
+    analytics?: TownsAnalytics
 }
 
 export interface SpaceIdentifier {

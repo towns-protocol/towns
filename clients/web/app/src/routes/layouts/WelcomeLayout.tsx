@@ -1,10 +1,13 @@
 import React from 'react'
-import AnalyticsService, { AnalyticsEvents } from 'use-towns-client/dist/utils/analyticsService'
 import { TransitionLogo } from '@components/Logo/Logo'
 import { Box, Paragraph, Stack } from '@ui'
+import { useAnalytics } from 'hooks/useAnalytics'
 
 export const WelcomeLayout = (props: { children?: React.ReactNode; debugText?: string }) => {
-    AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.Welcome)
+    const { analytics } = useAnalytics()
+    analytics?.trackOnce('welcome_layout', {
+        debug: true,
+    })
     return (
         <>
             <Stack centerContent scroll height="100vh" background="level1" width="100vw">

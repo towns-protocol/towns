@@ -74,9 +74,9 @@ import {
 import { IArchitectBase, Permission, SpaceInfo, ISpaceDapp } from '@river-build/web3'
 import { BlockchainTransactionStore } from './BlockchainTransactionStore'
 import { UserOps, getTransactionHashOrUserOpHash, isUserOpResponse } from '@towns/userops'
-import AnalyticsService, { AnalyticsEvents } from '../utils/analyticsService'
-import { Events as PerformanceEvents, performanceMetrics } from '../PerformanceMetrics'
+import { Events as TimeTrackerEvents, getTimeTracker } from '../SequenceTimeTracker'
 import { waitForTimeoutOrMembership } from '../utils/waitForTimeoutOrMembershipEvent'
+import { TownsAnalytics } from '../types/TownsAnalytics'
 
 /***
  * Towns Client
@@ -108,13 +108,15 @@ export class TownsClient
     private pushNotificationClient?: PushNotificationClient
     private userOps: UserOps | undefined = undefined
     private supportedXChainIds: number[] | undefined
+    private analytics: TownsAnalytics | undefined
 
     constructor(opts: TownsOpts, spaceDapp: ISpaceDapp, name?: string) {
         super()
         this.opts = opts
+        this.analytics = opts.analytics
+        getTimeTracker(this.analytics)
         this.name = name || Math.random().toString(36).substring(7)
         console.log('~~~ new TownsClient ~~~', this.name, this.opts)
-        AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.ClientWrapperCreated)
         this.spaceDapp = spaceDapp
 
         if (opts.accountAbstractionConfig?.aaRpcUrl) {
@@ -243,8 +245,12 @@ export class TownsClient
         })
 
         this.casablancaClient.on('decryptionExtStatusChanged', (status: DecryptionStatus) => {
-            AnalyticsService.getInstance().trackEventOnce(`decryptionExtStatus[${status}]`)
+            this.analytics?.trackOnce(`decryption_status_changed`, {
+                status,
+                debug: true,
+            })
         })
+
         const xChainRpcUrls = await this.getSupportedXChainRpcUrls()
         this.log('xChainRpcUrls', xChainRpcUrls)
 
@@ -323,70 +329,68 @@ export class TownsClient
                 const channelId = makeDefaultChannelStreamId(spaceAddress)
                 txContext.data.spaceId = spaceId
                 txContext.data.channelId = channelId
+
+                const timeTracker = getTimeTracker()
                 // wait until the space and channel are minted on-chain
                 // before creating the streams
-                performanceMetrics.startMeasurement(
-                    PerformanceEvents.CREATE_SPACE,
-                    'startCasablancaClient',
+                const endCsbStart = timeTracker.startMeasurement(
+                    TimeTrackerEvents.CREATE_SPACE,
+                    'csb_start_client',
                 )
                 if (!this.casablancaClient && signerContext) {
                     await this.startCasablancaClient(signerContext, { spaceId })
                 }
-                performanceMetrics.endMeasurement(
-                    PerformanceEvents.CREATE_SPACE,
-                    'startCasablancaClient',
-                )
+
+                endCsbStart?.()
+
                 if (!this.casablancaClient) {
                     throw new Error('casablancaClient not started')
                 }
-                performanceMetrics.startMeasurement(
-                    PerformanceEvents.CREATE_SPACE,
-                    'casablancaClient.createSpace',
+                const endCsbCreateSpace = timeTracker.startMeasurement(
+                    TimeTrackerEvents.CREATE_SPACE,
+                    'csb_create_space',
                 )
                 const result = await this.casablancaClient.createSpace(spaceId)
-                performanceMetrics.endMeasurement(
-                    PerformanceEvents.CREATE_SPACE,
-                    'casablancaClient.createSpace',
+
+                endCsbCreateSpace?.()
+
+                const endCsbWaitForStream = timeTracker.startMeasurement(
+                    TimeTrackerEvents.CREATE_SPACE,
+                    'csb_wait_for_stream',
                 )
-                performanceMetrics.startMeasurement(
-                    PerformanceEvents.CREATE_SPACE,
-                    'casablancaClient.waitForStream',
-                )
+
                 onCreateFlowStatus?.(CreateSpaceFlowStatus.CreatingChannel)
                 await this.casablancaClient.waitForStream(spaceId)
                 this.log('[waitForCreateSpaceTransaction] Space stream created', {
                     result: result,
                     spaceId,
                 })
-                performanceMetrics.endMeasurement(
-                    PerformanceEvents.CREATE_SPACE,
-                    'casablancaClient.waitForStream',
-                )
+
+                endCsbWaitForStream?.()
+
                 if (defaultUsernames.length > 0) {
-                    performanceMetrics.startMeasurement(
-                        PerformanceEvents.CREATE_SPACE,
-                        'setUsername',
+                    const endCsbSetUsername = timeTracker.startMeasurement(
+                        TimeTrackerEvents.CREATE_SPACE,
+                        'csb_set_username',
                     )
                     onCreateFlowStatus?.(CreateSpaceFlowStatus.CreatingUser)
                     // new space, no member, we can just set first username as default
                     await this.casablancaClient.setUsername(spaceId, defaultUsernames[0])
-                    performanceMetrics.endMeasurement(PerformanceEvents.CREATE_SPACE, 'setUsername')
+                    endCsbSetUsername?.()
                     this.log('[waitForCreateSpaceTransaction] Set default username', {
                         defaultUsername: defaultUsernames[0],
                         spaceId,
                     })
                 }
 
-                performanceMetrics.startMeasurement(
-                    PerformanceEvents.CREATE_SPACE,
-                    'createSpaceDefaultChannelRoom',
+                const endCsbCreateDefaultChannel = timeTracker.startMeasurement(
+                    TimeTrackerEvents.CREATE_SPACE,
+                    'csb_create_default_channel',
                 )
                 await this.createSpaceDefaultChannelRoom(spaceId, 'general', channelId)
-                performanceMetrics.endMeasurement(
-                    PerformanceEvents.CREATE_SPACE,
-                    'createSpaceDefaultChannelRoom',
-                    true,
-                )
+
+                endCsbCreateDefaultChannel?.(true)
+
                 this.log(
                     '[waitForCreateSpaceTransaction] default channel stream created',
                     channelId,
@@ -437,37 +441,37 @@ export class TownsClient
                 transaction = await this.userOps?.sendCreateSpaceOp([args, signer], {
                     getAbstractAccount: {
                         start: () =>
-                            performanceMetrics.startMeasurement(
-                                PerformanceEvents.CREATE_SPACE,
+                            getTimeTracker().startMeasurement(
+                                TimeTrackerEvents.CREATE_SPACE,
                                 'getAbstractAccount',
                             ),
                         end: () =>
-                            performanceMetrics.endMeasurement(
-                                PerformanceEvents.CREATE_SPACE,
+                            getTimeTracker().endMeasurement(
+                                TimeTrackerEvents.CREATE_SPACE,
                                 'getAbstractAccount',
                             ),
                     },
                     checkIfLinked: {
                         start: () =>
-                            performanceMetrics.startMeasurement(
-                                PerformanceEvents.CREATE_SPACE,
+                            getTimeTracker().startMeasurement(
+                                TimeTrackerEvents.CREATE_SPACE,
                                 'checkIfLinked',
                             ),
                         end: () =>
-                            performanceMetrics.endMeasurement(
-                                PerformanceEvents.CREATE_SPACE,
+                            getTimeTracker().endMeasurement(
+                                TimeTrackerEvents.CREATE_SPACE,
                                 'checkIfLinked',
                             ),
                     },
                     sendUserOp: {
                         start: () =>
-                            performanceMetrics.startMeasurement(
-                                PerformanceEvents.CREATE_SPACE,
+                            getTimeTracker().startMeasurement(
+                                TimeTrackerEvents.CREATE_SPACE,
                                 'sendUserOp',
                             ),
                         end: () =>
-                            performanceMetrics.endMeasurement(
-                                PerformanceEvents.CREATE_SPACE,
+                            getTimeTracker().endMeasurement(
+                                TimeTrackerEvents.CREATE_SPACE,
                                 'sendUserOp',
                             ),
                     },
@@ -2502,13 +2506,13 @@ export class TownsClient
         try {
             if (isUserOpResponse(transaction)) {
                 // wait for the userop event - this .wait is not the same as ethers.ContractTransaction.wait - see userop.js sendUserOperation
-                performanceMetrics.startMeasurement(
-                    PerformanceEvents.CREATE_SPACE,
+                getTimeTracker().startMeasurement(
+                    TimeTrackerEvents.CREATE_SPACE,
                     'waitForUserOpEvent',
                 )
                 const userOpEvent = await transaction.wait()
-                performanceMetrics.endMeasurement(
-                    PerformanceEvents.CREATE_SPACE,
+                getTimeTracker().endMeasurement(
+                    TimeTrackerEvents.CREATE_SPACE,
                     'waitForUserOpEvent',
                 )
 
@@ -2521,15 +2525,15 @@ export class TownsClient
                     }
 
                     // we probably don't need to wait for this transaction, but for now we can convert it to a receipt for less refactoring
-                    performanceMetrics.startMeasurement(
-                        PerformanceEvents.CREATE_SPACE,
+                    getTimeTracker().startMeasurement(
+                        TimeTrackerEvents.CREATE_SPACE,
                         'waitForTransaction',
                     )
                     receipt = await this.opts.baseProvider?.waitForTransaction(
                         userOpEvent.transactionHash,
                     )
-                    performanceMetrics.endMeasurement(
-                        PerformanceEvents.CREATE_SPACE,
+                    getTimeTracker().endMeasurement(
+                        TimeTrackerEvents.CREATE_SPACE,
                         'waitForTransaction',
                     )
                 } else {

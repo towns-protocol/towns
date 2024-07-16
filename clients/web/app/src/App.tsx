@@ -30,12 +30,14 @@ import {
     LINKED_RESOURCE,
     NotificationRelEntry,
 } from 'data/rel'
-import { useAnalytics } from 'hooks/useAnalytics'
+import { Analytics, useAnalytics } from 'hooks/useAnalytics'
 import { useNotificationRoute } from 'hooks/useNotificationRoute'
 
 FontLoader.init()
 
 const DEFAULT_TIMELINE_FILTER = new Set([ZTEvent.Fulfillment, ZTEvent.KeySolicitation]) // we don't need to see these in the ui
+
+const analyticsInstance = Analytics.getInstance()
 
 export const App = () => {
     const _envornmentId = useRef<string | undefined>(undefined)
@@ -154,6 +156,7 @@ export const App = () => {
             highPriorityStreamIds={highPriorityStreamIds.current}
             supportedXChainRpcMapping={supportedXChainRpcMapping}
             ethMainnetRpcUrl={env.VITE_ETHEREUM_RPC_URL}
+            analytics={analyticsInstance}
         >
             <>
                 <FaviconBadge />

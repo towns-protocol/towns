@@ -1,10 +1,15 @@
-class PerformanceMetrics {
+import { TownsAnalytics } from './types/TownsAnalytics'
+import { nanoid } from 'nanoid'
+
+class TimeTracker {
+    public townsAnalytics: TownsAnalytics | undefined
     private metrics: {
         [key: string]: {
             count: number
             totalDurationMs: number
             totalDurationSec: number
             startTime: number | undefined
+            sequenceId: string
             steps: {
                 [key: string]: {
                     count: number
@@ -16,14 +21,15 @@ class PerformanceMetrics {
         }
     }
 
-    constructor() {
+    constructor(analytics?: TownsAnalytics) {
         this.metrics = {}
+        this.townsAnalytics = analytics
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        window.listPerformanceMetrics = this.getAllMetrics.bind(this)
+        window.listSequenceTimes = this.getAllMetrics.bind(this)
     }
 
-    public startMeasurement(sequence: string, step: string): void {
+    public startMeasurement(sequence: string, step: string) {
         try {
             if (!sequence) {
                 console.error('Measurement name is required.')
@@ -37,6 +43,7 @@ class PerformanceMetrics {
                     totalDurationMs: 0,
                     totalDurationSec: 0,
                     startTime: now,
+                    sequenceId: nanoid(),
                     steps: {
                         [step]: {
                             count: 1,
@@ -58,10 +65,16 @@ class PerformanceMetrics {
                 this.metrics[sequence].steps[step].startTime = now
             }
 
+            // reset
+            // sequence of type already exists
+            // new one sequence starting
             if (!this.metrics[sequence].startTime) {
+                this.metrics[sequence].sequenceId = nanoid()
                 this.metrics[sequence].startTime = now
                 this.metrics[sequence].count++
             }
+
+            return (endSequence?: boolean) => this.endMeasurement(sequence, step, endSequence)
         } catch (error) {
             console.error('Error starting measurement:', error)
         }
@@ -74,14 +87,14 @@ class PerformanceMetrics {
                 return
             }
 
-            const startTime = this.metrics[sequence].steps[step].startTime
-            if (startTime === undefined) {
+            const stepStartTime = this.metrics[sequence].steps[step].startTime
+            if (stepStartTime === undefined) {
                 console.error(`Measurement "${sequence}" not started.`)
                 return
             }
 
             const endTime = performance.now()
-            const durationMs = endTime - startTime
+            const durationMs = endTime - stepStartTime
             const durationSec = durationMs / 1000
 
             this.metrics[sequence].totalDurationMs += durationMs
@@ -91,7 +104,27 @@ class PerformanceMetrics {
 
             // Reset start time
             this.metrics[sequence].steps[step].startTime = undefined
+
+            this.townsAnalytics?.track(`sequence_time`, {
+                sequence,
+                step,
+                sequenceId: this.metrics[sequence].sequenceId,
+                durationMs: durationMs,
+                debug: true,
+            })
+
             if (endSequence) {
+                const sequenceStartTime = this.metrics[sequence].startTime
+                if (sequenceStartTime) {
+                    this.townsAnalytics?.track(`sequence_time`, {
+                        sequence: sequence,
+                        step: 'complete',
+                        sequenceId: this.metrics[sequence].sequenceId,
+                        durationMs: endTime - sequenceStartTime,
+                        debug: true,
+                    })
+                }
+
                 this.metrics[sequence].startTime = undefined
             }
         } catch (error) {
@@ -133,7 +166,7 @@ class PerformanceMetrics {
 
     public getAllMetrics() {
         return Object.keys(this.metrics).reduce<
-            Record<string, ReturnType<PerformanceMetrics['getMetric']>>
+            Record<string, ReturnType<TimeTracker['getMetric']>>
         >((acc, sequence) => {
             const seq = this.getMetric(sequence)
             if (!seq) {
@@ -149,7 +182,14 @@ class PerformanceMetrics {
     }
 }
 
-export const performanceMetrics = new PerformanceMetrics()
+let instance: TimeTracker | undefined
+
+export const getTimeTracker = (analytics?: TownsAnalytics) => {
+    if (!instance) {
+        instance = new TimeTracker(analytics)
+    }
+    return instance
+}
 
 export const Events = {
     CREATE_SPACE: 'CREATE_SPACE',

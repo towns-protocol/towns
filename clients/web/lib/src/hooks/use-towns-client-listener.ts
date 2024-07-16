@@ -13,7 +13,6 @@ import { useCasablancaStore } from '../store/use-casablanca-store'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
 import { staticAssertNever } from '../utils/towns-utils'
-import AnalyticsService, { AnalyticsEvents } from '../utils/analyticsService'
 import { useNetworkStatus } from './use-network-status'
 import { useSpaceDapp } from './use-space-dapp'
 import { useOfflineStore } from '../store/use-offline-store'
@@ -231,7 +230,6 @@ class ClientStateMachine extends (EventEmitter as new () => TypedEmitter<ClientS
                 return new None()
             case AuthStatus.EvaluatingCredentials: {
                 check(currentSituation instanceof None)
-                AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.LoggingIn)
                 this.emit('onErrorUpdated', undefined)
                 const { credentials } = transition
                 const newState = await logInWithRetries(credentials, this.client, this)
@@ -307,7 +305,6 @@ function getTransition(current: Situations, next: Next): Transitions | undefined
             }
             break
         case AuthStatus.ConnectedToRiver:
-            AnalyticsService.getInstance().trackEventOnce(AnalyticsEvents.LoggedIn)
             if (next.credentials !== current.credentials) {
                 return new DisconnectingFromRiver(current.casablancaClient)
             }

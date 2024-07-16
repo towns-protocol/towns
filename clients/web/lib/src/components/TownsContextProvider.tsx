@@ -26,6 +26,7 @@ import { makeProviderFromChain, makeProviderFromConfig } from '../utils/provider
 import { BaseChainConfig, RiverChainConfig } from '@river-build/web3'
 import { AccountAbstractionConfig } from '@towns/userops'
 import { useUserLookupUpdater } from '../hooks/use-user-lookup-updater'
+import { TownsAnalytics } from '../types/TownsAnalytics'
 
 export type InitialSyncSortPredicate = (a: string, b: string) => number
 
@@ -85,6 +86,7 @@ interface TownsContextProviderProps {
         [chainId: number]: string
     }
     ethMainnetRpcUrl?: string
+    analytics?: TownsAnalytics
 }
 
 export function TownsContextProvider({
@@ -156,6 +158,7 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
             highPriorityStreamIds: props.highPriorityStreamIds,
             supportedXChainRpcMapping: props.supportedXChainRpcMapping,
             ethMainnetRpcUrl: props.ethMainnetRpcUrl,
+            analytics: props.analytics,
         } satisfies TownsOpts
     }, [
         baseChain.id,
@@ -168,6 +171,7 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
         props.pushNotificationAuthToken,
         props.pushNotificationWorkerUrl,
         props.supportedXChainRpcMapping,
+        props.analytics,
         riverChain.chainId,
         riverConfig,
         riverProvider,
