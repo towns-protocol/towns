@@ -106,6 +106,7 @@ const envSchema = z.object({
     // Analytics keys
     VITE_RUDDERSTACK_API_CONFIG_URL: z.string().url().optional(),
     VITE_RUDDERSTACK_CDN_SDK_URL: z.string().url().optional(),
+    VITE_RUDDERSTACK_PLUGINS_SDK_URL: z.string().url().optional(),
     VITE_RUDDERSTACK_DATA_PLANE_URL: z.string().url().optional(),
     VITE_RUDDERSTACK_WRITE_KEY: z.string().optional(),
 

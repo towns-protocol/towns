@@ -37,6 +37,7 @@ export class Analytics implements TownsAnalytics {
             const dataPlaneUrl = env.VITE_RUDDERSTACK_DATA_PLANE_URL
             const destSDKBaseURL = env.VITE_RUDDERSTACK_CDN_SDK_URL
             const configUrl = env.VITE_RUDDERSTACK_API_CONFIG_URL
+            const pluginsSDKBaseURL = env.VITE_RUDDERSTACK_PLUGINS_SDK_URL
             const isAnalyticsConfigured = writeKey && dataPlaneUrl && destSDKBaseURL && configUrl
 
             if (!isAnalyticsConfigured) {
@@ -48,6 +49,7 @@ export class Analytics implements TownsAnalytics {
             analyticsInstance.load(writeKey, dataPlaneUrl, {
                 useBeacon: true,
                 destSDKBaseURL,
+                pluginsSDKBaseURL,
                 configUrl,
             })
             analyticsInstance.ready(() => {
