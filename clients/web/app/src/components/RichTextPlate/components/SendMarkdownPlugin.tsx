@@ -49,7 +49,6 @@ export const SendMarkdownPlugin = (props: {
                         initial={isTouch ? { height: 0, opacity: 0 } : undefined}
                         exit={isTouch ? { height: 0, opacity: 0 } : undefined}
                         animate={isTouch ? { height: 'auto', opacity: 1 } : undefined}
-                        layout="position"
                     >
                         <EditMessageButtons
                             isEditing={props.isEditing}
