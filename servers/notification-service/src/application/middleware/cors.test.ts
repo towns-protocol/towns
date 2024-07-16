@@ -3,7 +3,7 @@ import { Environment } from 'worker-common/src/environment'
 import { isAllowedOrigin } from './cors'
 
 const PRODUCTION_ENVS: Environment[] = ['production', 'omega']
-const DEVELOPMENT_ENVS: Environment[] = ['development', 'test-beta']
+const DEVELOPMENT_ENVS: Environment[] = ['development', 'test-beta', 'alpha']
 
 describe('isAllowedOrigin', () => {
     test('should return true for allowed origins in development environments', () => {

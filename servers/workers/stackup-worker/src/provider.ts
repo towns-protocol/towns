@@ -11,18 +11,21 @@ const BASE_RPC_URL = 'https://base-mainnet.g.alchemy.com/v2/'
 const providerMap = new Map<Environment, string>([
     ['development', LOCALHOST_RPC_URL],
     ['test-beta', `${BASE_SEPOLIA_RPC_URL}`],
+    ['alpha', `${BASE_SEPOLIA_RPC_URL}`],
     ['omega', `${BASE_RPC_URL}`],
 ])
 
 export const networkMap = new Map<Environment, Networks>([
     ['development', 'local'],
     ['test-beta', 'base_sepolia'],
+    ['alpha', 'base_sepolia'],
     ['omega', 'base'],
 ])
 
 export const riverEnvMap = new Map<Environment, string>([
     ['development', 'local_single'],
     ['test-beta', 'gamma'],
+    ['alpha', 'gamma'],
     ['omega', 'omega'],
 ])
 

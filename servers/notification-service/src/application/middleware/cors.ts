@@ -28,6 +28,7 @@ export function isAllowedOrigin(origin: string | undefined, environment: Environ
         case 'omega':
         case 'development':
         case 'test-beta':
+        case 'alpha':
         case 'test': {
             // RFC Origin: https://www.rfc-editor.org/rfc/rfc6454
             // The RFC states that the origin is null is allowed:

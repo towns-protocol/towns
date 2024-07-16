@@ -5,6 +5,7 @@ export function getAllowedOrigins(env: Environment): string[] {
         // todo: test-beta should reflect name of logical app environment, gamma
         case 'test-beta':
         case 'development':
+        case 'alpha':
             /*
                 Everything except for production
             */
