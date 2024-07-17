@@ -24,7 +24,6 @@ const cors = createCorsConfig({
 export function isAllowedOrigin(origin: string | undefined, environment: Environment): boolean {
     const corsOrigin = getOriginForCors(origin, environment)
     switch (environment) {
-        case 'production':
         case 'omega':
         case 'development':
         case 'test-beta':
