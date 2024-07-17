@@ -2,12 +2,8 @@ import { useEffect } from 'react'
 import { useStore } from 'store/store'
 
 export const useWindowListener = () => {
-    const { isWindowFocused, setIsWindowFocused } = useStore(
-        ({ isWindowFocused, setIsWindowFocused }) => ({
-            isWindowFocused,
-            setIsWindowFocused,
-        }),
-    )
+    const isWindowFocused = useStore((state) => state.isWindowFocused)
+    const setIsWindowFocused = useStore((state) => state.setIsWindowFocused)
 
     useEffect(() => {
         const checkFocus = () => {

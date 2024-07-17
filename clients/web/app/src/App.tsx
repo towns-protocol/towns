@@ -41,19 +41,17 @@ const analyticsInstance = Analytics.getInstance()
 
 export const App = () => {
     const _envornmentId = useRef<string | undefined>(undefined)
-    const { theme, mutedChannelIds } = useStore((state) => ({
-        theme: state.getTheme(),
-        mutedChannelIds: state.mutedChannelIds,
-    }))
+    const theme = useStore((state) => state.getTheme())
+    const mutedChannelIds = useStore((state) => state.mutedChannelIds)
+    const spaceIdBookmark = useStore((state) => state.spaceIdBookmark)
+    const townRouteBookmarks = useStore((state) => state.townRouteBookmarks)
     const { isTouch } = useDevice()
 
     const highPriorityStreamIds = useRef<string[]>([])
     const isFirstRender = useRef(false)
 
-    const state = useStore.getState()
-    const spaceIdBookmark = state.spaceIdBookmark
     const channelBookmark = isDefined(spaceIdBookmark)
-        ? state.townRouteBookmarks[spaceIdBookmark]
+        ? townRouteBookmarks[spaceIdBookmark]
         : undefined
     const didSetHighpriorityStreamIds = useRef<boolean>(false)
     const { urlPathnameSafeToNavigate } = useNotificationRoute()
