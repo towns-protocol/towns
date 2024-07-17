@@ -2,7 +2,7 @@ import './../utils/envs.mock'
 import { Environment } from 'worker-common/src/environment'
 import { isAllowedOrigin } from './cors'
 
-const PRODUCTION_ENVS: Environment[] = ['production', 'omega']
+const PRODUCTION_ENVS: Environment[] = ['omega']
 const DEVELOPMENT_ENVS: Environment[] = ['development', 'test-beta', 'alpha']
 
 describe('isAllowedOrigin', () => {

@@ -24,7 +24,7 @@ ENVIRONMENT = "development"
 # For production, you can add these in the Cloudflare dashboard or run
 # `echo <VALUE> | wrangler secret put <NAME>` for each of these
 # for production, the secrets must be deployed behind the production flag
-# `echo <VALUE> | wrangler secret put <NAME> --env production`
+# `echo <VALUE> | wrangler secret put <NAME> --env omega`
 # OR
 # Run `echo <VALUE> | wrangler secret put <NAME>` for each of these
 
