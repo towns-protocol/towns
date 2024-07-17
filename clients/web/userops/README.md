@@ -22,17 +22,9 @@ An alternative is to run `scripts/setup-4337-and-run-userops-test.sh` from the r
 
 These tests are able to be run for 3 scenarios: random (new) users, privy (established) users, and with strict paymaster limits. The default scenario is random users, following the above instructions.
 
-To run the other scenarios, you need to restart the stackup worker, and run the tests with the appropriate command.
+To run the other scenarios, you may need to restart the stackup worker, and run the tests with the appropriate command.
 
 So in either VSCode or by running the script noted above, kill the stackup worker.
-
-To test Privy users:
-
-Start stackup worker with the following command:
-
-```
-sh scripts/run-stackup-worker-development.sh -p
-```
 
 Then from within this package:
 

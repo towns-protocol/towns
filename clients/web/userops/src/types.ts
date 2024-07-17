@@ -23,6 +23,7 @@ export type UserOpsConfig = {
     factoryAddress?: string
     paymasterProxyAuthSecret?: string
     skipPromptUserOnPMRejectedOp: boolean
+    fetchAccessTokenFn: (() => Promise<string | null>) | undefined
 }
 
 export type UserOpParams = {

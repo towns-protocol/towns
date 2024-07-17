@@ -1,5 +1,5 @@
 import { Env } from '.'
-import { isPrivyApiSearchResponse, searchPrivyForUser } from './privy'
+import { isPrivyApiSearchResponse, searchPrivyForUserByDid, verifyPrivyAuthToken } from './privy'
 import { Overrides, isWhitelistStoredOperation, IOverrideOperation } from './types'
 import { TRANSACTION_LIMIT_DEFAULTS_PER_DAY } from './useropVerification'
 import { durationLogger } from './utils'
@@ -44,15 +44,7 @@ export async function checkLinkKVOverrides(
         type: 'json',
         cacheTtl: 3600,
     })
-    let privyVerified = false
-    // check if wallet is signed up with privy
-    const searchParam = { walletAddresses: [rootAddress] }
-    const privyResponse = await searchPrivyForUser(searchParam, env)
-    if (isPrivyApiSearchResponse(privyResponse)) {
-        if (privyResponse.data.length > 0) {
-            privyVerified = true
-        }
-    }
+
     if (restriction !== null && isOperationOverride(restriction) && restriction.enabled) {
         // check if address on HNT whitelist
         const addressWhitelist = await env.ADDRESS_WHITELIST.get(rootAddress ?? '', {
@@ -72,7 +64,7 @@ export async function checkLinkKVOverrides(
         return { verified: false, error: 'address is not on whitelist' }
     }
     return {
-        verified: privyVerified,
+        verified: true,
         maxActionsPerDay: TRANSACTION_LIMIT_DEFAULTS_PER_DAY.linkWallet,
     }
 }
@@ -143,6 +135,7 @@ export async function checkjoinTownKVOverrides(
 
 export async function checkMintKVOverrides(
     rootAddress: string,
+    privyDid: string,
     env: Env,
 ): Promise<IVerificationResult | null> {
     // more restrictive rule requires whitelisted email
@@ -155,59 +148,50 @@ export async function checkMintKVOverrides(
         },
     )
     emailOverrides()
-    // check if wallet is signed up with privy
-    const searchParam = { walletAddresses: [rootAddress] }
-    const privyResponse = await searchPrivyForUser(searchParam, env)
     // check for whitelisted emails that are associated with privy users
     if (
         everyWalletCanMintWhitelistedEmail !== null &&
         isOperationOverride(everyWalletCanMintWhitelistedEmail) &&
         everyWalletCanMintWhitelistedEmail.enabled
     ) {
-        if (isPrivyApiSearchResponse(privyResponse)) {
-            if (privyResponse.data.length > 0) {
-                const linkedAccounts = privyResponse.data[0].linked_accounts.filter((account) => {
-                    return account.type.includes('_oauth')
-                })
+        const privyUser = await searchPrivyForUserByDid(privyDid, env)
+        if (isPrivyApiSearchResponse(privyUser)) {
+            const linkedAccounts = privyUser.linked_accounts.filter((account) => {
+                return account.type.includes('_oauth')
+            })
 
-                const linkedDuration = durationLogger('linkedAccounts')
-                for (const linkedAccount of linkedAccounts) {
-                    // search for associated emails and cross check against whitelist of emails
-                    const emailWhitelist = await env.EMAIL_WHITELIST.get(
-                        linkedAccount.email ?? '',
-                        {
-                            type: 'json',
-                            cacheTtl: 3600,
-                        },
+            const linkedDuration = durationLogger('linkedAccounts')
+            for (const linkedAccount of linkedAccounts) {
+                // search for associated emails and cross check against whitelist of emails
+                const emailWhitelist = await env.EMAIL_WHITELIST.get(linkedAccount.email ?? '', {
+                    type: 'json',
+                    cacheTtl: 3600,
+                })
+                if (
+                    isWhitelistStoredOperation(emailWhitelist) &&
+                    emailWhitelist.data === linkedAccount.email &&
+                    emailWhitelist.enabled
+                ) {
+                    console.log(
+                        `user ${rootAddress}, email ${linkedAccount.email} is on email whitelist`,
                     )
-                    if (
-                        isWhitelistStoredOperation(emailWhitelist) &&
-                        emailWhitelist.data === linkedAccount.email &&
-                        emailWhitelist.enabled
-                    ) {
-                        console.log(
-                            `user ${rootAddress}, email ${linkedAccount.email} is on email whitelist`,
-                        )
-                        linkedDuration()
-                        return {
-                            verified: true,
-                            maxActionsPerDay: TRANSACTION_LIMIT_DEFAULTS_PER_DAY.createSpace,
-                        }
+                    linkedDuration()
+                    return {
+                        verified: true,
+                        maxActionsPerDay: TRANSACTION_LIMIT_DEFAULTS_PER_DAY.createSpace,
                     }
                 }
-                linkedDuration()
-                return {
-                    verified: false,
-                    error: 'user not on email whitelist',
-                }
+            }
+            linkedDuration()
+            return {
+                verified: false,
+                error: 'user not on email whitelist',
             }
         }
     }
     // default criteria
-    if (isPrivyApiSearchResponse(privyResponse)) {
-        if (privyResponse.data.length > 0) {
-            return { verified: true, maxActionsPerDay: 3 }
-        }
+    if (privyDid) {
+        return { verified: true, maxActionsPerDay: 3 }
     }
 
     return null

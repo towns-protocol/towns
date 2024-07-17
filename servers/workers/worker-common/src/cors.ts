@@ -69,11 +69,11 @@ export function getLocalDomainOrigin(origin: string, env: Environment): string |
 function getCorsHeaders(origin: string): HeadersInit {
     return {
         'Access-Control-Allow-Headers':
-            'Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, Authorization, Cache-Control, Baggage, Sentry-Trace',
+            'Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, Authorization, Cache-Control, Baggage, Sentry-Trace, X-PM-Token',
         'Access-Control-Allow-Methods': 'GET, OPTIONS, POST, PUT',
         'Access-Control-Allow-Origin': origin,
         'Access-Control-Allow-Credentials': 'true',
-        'Access-Control-Expose-Headers': 'X-invalid-cookie',
+        'Access-Control-Expose-Headers': 'X-invalid-cookie,X-PM-Token',
     }
 }
 

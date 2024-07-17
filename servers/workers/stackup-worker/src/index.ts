@@ -12,6 +12,7 @@ import {
 
 import { handleRequest } from './router'
 import { durationLogger } from './utils'
+import { PrivyClient } from '@privy-io/server-auth'
 
 export interface Env extends AuthEnv {
     ENVIRONMENT: Environment
@@ -30,6 +31,7 @@ export interface Env extends AuthEnv {
     ALCHEMY_API_KEY: string
     SKIP_LIMIT_VERIFICATION: string
     REFUSE_ALL_OPS: string
+    // if true, will use fake privy verification
     SKIP_PRIVY_VERIFICATION: string
 
     LIMIT_CREATE_SPACE?: number
@@ -80,8 +82,11 @@ export const worker = {
                     }
                 }
             }
+
+            const privyClient = new PrivyClient(env.PRIVY_APP_ID, env.PRIVY_APP_KEY)
+
             const durationRequest = durationLogger(request.url)
-            const response = await handleRequest(request, env)
+            const response = await handleRequest(request, env, { privyClient })
             durationRequest()
             const newResponse = new Response(response.body, response)
             return appendCorsHeaders(newResponse, withCorsHeaders(request, env.ENVIRONMENT))

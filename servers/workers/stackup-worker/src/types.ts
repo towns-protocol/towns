@@ -1,5 +1,6 @@
 import { IUserOperation } from 'userop.js'
 import { Environment } from 'worker-common'
+import { Env } from '.'
 
 // see https://github.com/stackup-wallet/userop.js/blob/1d9d0e034691cd384e194c9e8b3165680a334180/src/preset/middleware/paymaster.ts
 export interface VerifyingPaymasterResult {
@@ -9,16 +10,20 @@ export interface VerifyingPaymasterResult {
     callGasLimit: string
 }
 
-export type TownsUserOperation = IUserOperation & {
-    townId?: string
-    functionHash: (typeof FunctionHash)[keyof typeof FunctionHash]
-    rootKeyAddress: string
+export type TownsUserOperation = {
+    data: IUserOperation & {
+        townId?: string
+        functionHash: (typeof FunctionHash)[keyof typeof FunctionHash]
+        rootKeyAddress: string
+    }
+    accessToken: string
 }
 
 export type TransactionLimitRequest = {
     environment: Environment
     operation: FunctionName
     rootAddress: string
+    privyDid: string
     blockLookbackNum?: number
 }
 
@@ -39,6 +44,7 @@ export function isTransactionLimitRequest(obj: any): obj is TransactionLimitRequ
             obj.operation === 'linkCallerToRootKey' ||
             obj.operation === 'removeLink') &&
         typeof obj.rootAddress === 'string' &&
+        typeof obj.privyDid === 'string' &&
         (typeof obj.blockLookbackNum === 'number' || obj.blockLookbackNum === undefined)
     )
 }
@@ -49,23 +55,27 @@ function isFunctionHash(operation: string): operation is FunctionHash {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isTownsUserOperation(obj: any): obj is TownsUserOperation {
-    return (
-        typeof obj === 'object' &&
-        typeof obj.rootKeyAddress === 'string' &&
-        typeof obj.sender === 'string' &&
-        typeof obj.nonce === 'string' &&
-        typeof obj.initCode === 'string' &&
-        typeof obj.callData === 'string' &&
-        typeof obj.callGasLimit === 'string' &&
-        typeof obj.verificationGasLimit === 'string' &&
-        typeof obj.preVerificationGas === 'string' &&
-        typeof obj.maxFeePerGas === 'string' &&
-        typeof obj.maxPriorityFeePerGas === 'string' &&
-        typeof obj.paymasterAndData === 'string' &&
-        typeof obj.signature === 'string' &&
-        typeof obj.functionHash === 'string' &&
-        isFunctionHash(obj.functionHash)
-    )
+    if (!obj || typeof obj !== 'object') {
+        return false
+    }
+    const { data } = obj
+    const dataCheck =
+        typeof data.rootKeyAddress === 'string' &&
+        typeof data.sender === 'string' &&
+        typeof data.nonce === 'string' &&
+        typeof data.initCode === 'string' &&
+        typeof data.callData === 'string' &&
+        typeof data.callGasLimit === 'string' &&
+        typeof data.verificationGasLimit === 'string' &&
+        typeof data.preVerificationGas === 'string' &&
+        typeof data.maxFeePerGas === 'string' &&
+        typeof data.maxPriorityFeePerGas === 'string' &&
+        typeof data.paymasterAndData === 'string' &&
+        typeof data.signature === 'string' &&
+        typeof data.functionHash === 'string' &&
+        isFunctionHash(data.functionHash)
+
+    return dataCheck
 }
 
 export enum Overrides {

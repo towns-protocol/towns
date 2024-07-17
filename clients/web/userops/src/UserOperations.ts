@@ -43,6 +43,7 @@ export class UserOps {
     private userOpClient: UseropClient | undefined
     protected spaceDapp: ISpaceDapp | undefined
     private timeTracker: TimeTracker | undefined
+    private fetchAccessTokenFn: (() => Promise<string | null>) | undefined
 
     constructor(
         config: UserOpsConfig & {
@@ -59,6 +60,7 @@ export class UserOps {
         this.spaceDapp = config.spaceDapp
         this.skipPromptUserOnPMRejectedOp = config.skipPromptUserOnPMRejectedOp
         this.timeTracker = config.timeTracker
+        this.fetchAccessTokenFn = config.fetchAccessTokenFn
     }
 
     public async getAbstractAccountAddress({
@@ -219,6 +221,7 @@ export class UserOps {
                     paymasterProxyUrl: this.paymasterProxyUrl,
                     functionHashForPaymasterProxy: args.functionHashForPaymasterProxy,
                     townId: args.spaceId, // can or should i rename this to space id?
+                    fetchAccessTokenFn: this.fetchAccessTokenFn,
                 })
 
                 endPaymasterMiddleware?.()

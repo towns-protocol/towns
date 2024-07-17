@@ -4,6 +4,7 @@ import { IUserOperation, IUserOperationMiddlewareCtx } from 'userop'
 import { z } from 'zod'
 import { userOpsStore } from './userOpsStore'
 import { Address } from '@river-build/web3'
+import { CodeException } from './errors'
 
 type PaymasterProxyResponse = {
     paymasterAndData: string
@@ -31,6 +32,7 @@ export const paymasterProxyMiddleware = async (
         rootKeyAddress: string
         functionHashForPaymasterProxy: string | undefined
         townId: string | undefined
+        fetchAccessTokenFn: (() => Promise<string | null>) | undefined
     } & Pick<UserOpsConfig, 'paymasterProxyUrl' | 'paymasterProxyAuthSecret'>,
 ) => {
     const { getState, setState } = userOpsStore
@@ -42,6 +44,7 @@ export const paymasterProxyMiddleware = async (
         townId,
         paymasterProxyAuthSecret,
         paymasterProxyUrl,
+        fetchAccessTokenFn,
     } = args
 
     if (!getState().smartAccountAddress) {
@@ -83,7 +86,7 @@ export const paymasterProxyMiddleware = async (
             )
         }
 
-        const userOp: PaymasterProxyPostData = {
+        const data: PaymasterProxyPostData = {
             ...ctx.op,
             functionHash: functionHashForPaymasterProxy,
             rootKeyAddress: rootKeyAddress,
@@ -91,16 +94,30 @@ export const paymasterProxyMiddleware = async (
         }
         // convert all bigNumberish types to hex strings for paymaster proxy payload
         bigNumberishTypes.forEach((type) => {
-            const value = userOp[type]
-            userOp[type] = BigNumber.from(value).toHexString()
+            const value = data[type]
+            data[type] = BigNumber.from(value).toHexString()
         })
         const sponsorUserOpUrl = `${paymasterProxyUrl}/api/sponsor-userop`
+        let accessToken: string | undefined
+        try {
+            accessToken = (await fetchAccessTokenFn?.()) ?? undefined
+        } catch (error) {
+            throw new CodeException(
+                'Failed to get access token',
+                'USER_OPS_FAILED_ACCESS_TOKEN',
+                error,
+            )
+        }
+
         const response = await fetch(sponsorUserOpUrl, {
             method: 'POST',
-            body: JSON.stringify(userOp),
+            body: JSON.stringify({
+                data,
+            }),
             headers: {
                 'Content-Type': 'application/json',
                 Authorization: `Bearer ${paymasterProxyAuthSecret}`,
+                'X-PM-Token': accessToken ?? '',
             },
         })
         const json = await response.json()

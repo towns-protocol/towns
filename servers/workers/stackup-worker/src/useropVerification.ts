@@ -16,8 +16,8 @@ import {
     checkMintKVOverrides,
     checkUseTownKVOverrides,
 } from './checks'
-import { isPrivyApiSearchResponse, searchPrivyForUser } from './privy'
-import { ContractName, EventName, FunctionName } from './types'
+import { FunctionName } from './types'
+import { durationLogger } from './utils'
 
 interface ITownTransactionParams {
     rootKeyAddress: `0x${string}`
@@ -51,17 +51,22 @@ export const TRANSACTION_LIMIT_DEFAULTS_PER_DAY = {
       HNT Labs Privy DB can mint 3 towns/day with no gas
 */
 export async function verifyCreateSpace(
-    params: Omit<ITownTransactionParams, 'townId'>,
+    params: Omit<ITownTransactionParams, 'townId'> & {
+        privyDid: string
+    },
 ): Promise<IVerificationResult> {
     const spaceDapp = await createSpaceDappForNetwork(params.env)
     if (!spaceDapp) {
         return { verified: false, error: 'Unable to create SpaceDapp' }
     }
-
     try {
         // check for whitelist overrides for user, email associated with privy account
         // checks against Privy and so should the rootKeyAddress
-        const isOverride = await checkMintKVOverrides(params.rootKeyAddress, params.env)
+        const isOverride = await checkMintKVOverrides(
+            params.rootKeyAddress,
+            params.privyDid,
+            params.env,
+        )
         if (isOverride == null) {
             return { verified: false, error: 'user not allowed to mint towns with paymaster' }
         }
@@ -120,6 +125,7 @@ export async function verifyJoinTown(params: ITownTransactionParams): Promise<IV
     if (!spaceDapp) {
         return { verified: false, error: 'Unable to create SpaceDapp' }
     }
+
     try {
         // check if town does not already exist
         console.log(spaceDapp.config.chainId, params, await spaceDapp.provider?.getNetwork())
@@ -127,21 +133,12 @@ export async function verifyJoinTown(params: ITownTransactionParams): Promise<IV
         if (!spaceInfo) {
             return { verified: false, error: `Town ${params.townId} does not exist` }
         }
-        // check if user is in privy db
-        // check if wallet is signed up with privy
-        const searchParam = { walletAddresses: [params.rootKeyAddress] }
-        const privyResponse = await searchPrivyForUser(searchParam, params.env)
-        if (!isPrivyApiSearchResponse(privyResponse)) {
-            return { verified: false, error: 'not a privy response' }
-        }
-        if (privyResponse.data.length === 0) {
-            return { verified: false, error: 'user not in privy db' }
-        }
         // check for more restrictive rule and if town is on whitelist if so
         const override = await checkjoinTownKVOverrides(params.townId, params.env)
         if (override?.verified === false) {
             return { verified: false, error: 'townId not on whitelist and restriction is set' }
         }
+
         // check if user already has membership token
         const hasMembershipToken = await spaceDapp.hasSpaceMembership(
             params.townId,
@@ -226,7 +223,6 @@ export async function verifyUseTown(
     if (!spaceDapp) {
         return { verified: false, error: 'Unable to create SpaceDapp' }
     }
-
     try {
         // check if town does not already exists
         try {
@@ -238,7 +234,9 @@ export async function verifyUseTown(
             console.error(error)
         }
         // check for restrictive rule which requires whitelist overrides for town
+        const endCheckOverrides = durationLogger('checkUseTownKVOverrides')
         const isOverride = await checkUseTownKVOverrides(params.rootKeyAddress, params.env)
+        endCheckOverrides()
         if (isOverride !== null && isOverride.verified === false) {
             return { verified: false, error: 'town not allowed to use channels with paymaster' }
         }
@@ -432,11 +430,6 @@ export async function verifyLinkWallet(
         functionHash: 'linkWalletToRootKey' | 'linkCallerToRootKey' | 'removeLink'
     },
 ): Promise<IVerificationResult> {
-    const spaceDapp = await createSpaceDappForNetwork(params.env)
-    if (!spaceDapp) {
-        return { verified: false, error: 'Unable to create SpaceDapp' }
-    }
-
     try {
         // check for restrictive rule which requires whitelist overrides for user address
         const verification = await checkLinkKVOverrides(params.rootKeyAddress, params.env)

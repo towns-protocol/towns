@@ -7,14 +7,15 @@ PAYMASTER_RPC_URL=
 
 # skips all verification checks for an operation
 SKIP_TOWNID_VERIFICATION=
-AUTH_SECRET=
-ADMIN_AUTH_SECRET=
 
 # skips the limit verification for the operation (testing purposes only)
 SKIP_LIMIT_VERIFICATION=
 
 # skips the privy verification for the operation (testing purposes only)
 SKIP_PRIVY_VERIFICATION=
+
+AUTH_SECRET=
+ADMIN_AUTH_SECRET=
 
 # these are required if SKIP_TOWNID_VERIFICATION is not true
 PRIVY_APP_KEY=

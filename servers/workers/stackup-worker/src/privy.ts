@@ -1,5 +1,6 @@
+import { AuthTokenClaims, PrivyClient } from '@privy-io/server-auth'
 import { Env } from '.'
-import { durationLogger } from './utils'
+import { durationLogger, WorkerRequest } from './utils'
 
 const PRIVY_API_URL = 'https://auth.privy.io/api/v1'
 
@@ -11,15 +12,10 @@ interface LinkedAccount {
     verified_at: number
 }
 
-interface UserData {
+interface PrivyApiSingleUserResponse {
     id: string
     created_at: number
     linked_accounts: LinkedAccount[]
-}
-
-interface PrivyApiResponse {
-    data: UserData[]
-    next_cursor: string
 }
 
 interface PrivySearchRequest {
@@ -29,92 +25,101 @@ interface PrivySearchRequest {
 }
 
 // Type guard for Privy search respoonse
-// https://auth.privy.io/api/v1/users/search
-// see: https://docs.privy.io/guide/backend/api/users/search-users
+// see: https://docs.privy.io/guide/server/users/get
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function isPrivyApiSearchResponse(obj: any): obj is PrivyApiResponse {
+export function isPrivyApiSearchResponse(obj: any): obj is PrivyApiSingleUserResponse {
     if (typeof obj !== 'object' || obj === null) {
         return false
     }
-    if (!('data' in obj)) {
-        return false
-    }
-    if (obj.data === undefined) {
-        return false
-    }
-    if (!Array.isArray(obj.data)) {
+    const userData = obj
+
+    if (
+        typeof userData.id !== 'string' ||
+        typeof userData.created_at !== 'number' ||
+        !Array.isArray(userData.linked_accounts)
+    ) {
         return false
     }
 
-    for (const userData of obj.data) {
+    for (const account of userData.linked_accounts) {
         if (
-            typeof userData.id !== 'string' ||
-            typeof userData.created_at !== 'number' ||
-            !Array.isArray(userData.linked_accounts)
+            ('type' in account && typeof account.type !== 'string') ||
+            ('address' in account && typeof account.address !== 'string') ||
+            ('verified_at' in account && typeof account.verified_at !== 'number')
         ) {
             return false
         }
-
-        for (const account of userData.linked_accounts) {
-            if (
-                ('type' in account && typeof account.type !== 'string') ||
-                ('address' in account && typeof account.address !== 'string') ||
-                ('verified_at' in account && typeof account.verified_at !== 'number')
-            ) {
-                return false
-            }
-        }
-    }
-
-    if (typeof obj.next_cursor !== 'string') {
-        return false
     }
 
     return true
 }
 
-function mockPrivyApiResponse(): PrivyApiResponse {
+function mockPrivyApiResponse(): PrivyApiSingleUserResponse {
     return {
-        data: [
+        id: 'x',
+        created_at: 1,
+        linked_accounts: [
             {
-                id: 'x',
-                created_at: 1,
-                linked_accounts: [
-                    {
-                        type: 'privy',
-                        address: '0x123',
-                        verified_at: 1,
-                    },
-                ],
+                type: 'privy',
+                address: '0x123',
+                verified_at: 1,
             },
         ],
-        next_cursor: 'x',
     }
 }
 
-export function createPrivSearchRequest(requestObj: PrivySearchRequest, env: Env): RequestInit {
-    const init = {
-        body: JSON.stringify(requestObj),
-        method: 'POST',
+// https://docs.privy.io/guide/server/authorization/verification
+export async function verifyPrivyAuthToken(args: {
+    request: WorkerRequest
+    privyClient: PrivyClient
+    env: Env
+}): Promise<AuthTokenClaims | undefined> {
+    const { privyClient, env, request } = args
+    if (env.SKIP_PRIVY_VERIFICATION === 'true') {
+        return {
+            appId: env.PRIVY_APP_ID,
+            issuer: 'privy.io',
+            issuedAt: 9999999999,
+            expiration: 9999999999,
+            sessionId: 'fake-session-id',
+            userId: 'did:privy:0x123',
+        } satisfies AuthTokenClaims
+    }
+
+    const privyToken = request.headers.get('X-PM-Token')
+
+    if (!privyToken || privyToken === '') {
+        console.error('Missing Paymaster Token')
+        return
+    }
+
+    let verifiedClaims: AuthTokenClaims | undefined
+    try {
+        verifiedClaims = await privyClient.verifyAuthToken(privyToken)
+        if (verifiedClaims.appId === env.PRIVY_APP_ID) {
+            return verifiedClaims
+        }
+    } catch (error) {
+        console.error(error)
+    }
+}
+
+export async function searchPrivyForUserByDid(
+    privyDid: string, // did:privy:0x123
+    env: Env,
+): Promise<PrivyApiSingleUserResponse | Response> {
+    if (env.SKIP_PRIVY_VERIFICATION === 'true') {
+        return mockPrivyApiResponse()
+    }
+    const completeDuration = durationLogger('searchPrivyForUser')
+    const responseFetched = await fetch(`${PRIVY_API_URL}/users/${privyDid}`, {
+        method: 'GET',
         headers: {
             'content-type': 'application/json',
             Authorization: `Basic ${btoa(env.PRIVY_APP_ID + ':' + env.PRIVY_APP_KEY)}`,
             'privy-app-id': env.PRIVY_APP_ID,
         },
-    }
-    return init
-}
-
-export async function searchPrivyForUser(
-    request: PrivySearchRequest,
-    env: Env,
-): Promise<PrivyApiResponse | Response> {
-    if (env.SKIP_PRIVY_VERIFICATION === 'true') {
-        return mockPrivyApiResponse()
-    }
-    const init = createPrivSearchRequest(request, env)
-    const completeDuration = durationLogger('searchPrivyForUser')
-    const responseFetched = await fetch(`${PRIVY_API_URL}/users/search`, init)
+    })
     completeDuration()
     console.log('responseFetched', responseFetched.status)
     if (responseFetched.status !== 200) {

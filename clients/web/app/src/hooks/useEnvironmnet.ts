@@ -11,6 +11,7 @@ import {
 import { check } from '@river-build/dlog'
 import { isDefined } from '@river-build/sdk'
 import { AccountAbstractionConfig } from '@towns/userops'
+import { getAccessToken } from '@privy-io/react-auth'
 import { env } from 'utils'
 import {
     getCustomBaseChain,
@@ -33,6 +34,7 @@ export interface TownsEnvironmentInfo {
 
 function makeEnvironments(): TownsEnvironmentInfo[] {
     const retVal: TownsEnvironmentInfo[] = []
+    const fetchAccessTokenFn = () => retryGetAccessToken(3)
     // first grab the config from the env, this will be the default if it exists
     // note: use this var to support transient environments otherwise use
     // VITE_RIVER_DEFAULT_ENV
@@ -82,6 +84,7 @@ function makeEnvironments(): TownsEnvironmentInfo[] {
                       factoryAddress: env.VITE_AA_FACTORY_ADDRESS,
                       paymasterProxyAuthSecret: env.VITE_AUTH_WORKER_HEADER_SECRET,
                       skipPromptUserOnPMRejectedOp: false,
+                      fetchAccessTokenFn,
                   }
                 : undefined,
         } satisfies TownsEnvironmentInfo)
@@ -123,6 +126,7 @@ function makeEnvironments(): TownsEnvironmentInfo[] {
                 factoryAddress: env.VITE_AA_FACTORY_ADDRESS,
                 paymasterProxyAuthSecret: env.VITE_AUTH_WORKER_HEADER_SECRET,
                 skipPromptUserOnPMRejectedOp: false,
+                fetchAccessTokenFn,
             }
         }
         // Account abstraction only works on local nodes if running geth, not anvil
@@ -135,6 +139,7 @@ function makeEnvironments(): TownsEnvironmentInfo[] {
                 factoryAddress: undefined, // uses default userop.js address
                 paymasterProxyAuthSecret: env.VITE_AUTH_WORKER_HEADER_SECRET,
                 skipPromptUserOnPMRejectedOp: false,
+                fetchAccessTokenFn,
             }
         }
 
@@ -190,4 +195,32 @@ export function useEnvironment() {
             clearEnvironment,
         }
     }, [environmentInfo, setEnvironment, clearEnvironment])
+}
+
+async function retryGetAccessToken(
+    maxRetries: number,
+    initialDelay: number = 1000,
+    factor: number = 2,
+): Promise<string | null> {
+    let attempt = 0
+    let delayTime = initialDelay
+
+    while (attempt < maxRetries) {
+        try {
+            const result = await getAccessToken()
+            if (result) {
+                return result
+            }
+            throw new Error("getAccessToken didn't return a token")
+        } catch (error) {
+            if (attempt === maxRetries - 1) {
+                throw error
+            }
+            await new Promise((resolve) => setTimeout(resolve, delayTime))
+            delayTime *= factor
+            attempt++
+        }
+    }
+
+    throw new Error(`Failed after ${maxRetries} retries`)
 }

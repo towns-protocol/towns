@@ -18,6 +18,7 @@
         "test:unit": "yarn node --experimental-vm-modules $(yarn bin jest)"
     },
     "dependencies": {
+        "@privy-io/server-auth": "^1.9.1",
         "@river-build/generated": "workspace:^",
         "@river-build/web3": "workspace:^",
         "itty-router": "^2.6.6",

@@ -6664,6 +6664,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@privy-io/server-auth@npm:^1.9.1":
+  version: 1.9.1
+  resolution: "@privy-io/server-auth@npm:1.9.1"
+  dependencies:
+    dotenv: ^16.0.3
+    jose: ^4.10.4
+    node-fetch-native: ^1.4.0
+    redaxios: ^0.5.1
+    ts-case-convert: ^2.0.2
+    type-fest: ^3.6.1
+  checksum: f8430fd97bf6e609beed6cc64d0aa4b730c0b60def4b9f38534af4cbe2b33d0a91a41d9bfbace5f5de1fb132a7ffb68207b4e6f32087a12f86b93ca1be07a4bb
+  languageName: node
+  linkType: hard
+
 "@privy-io/wagmi-connector@npm:^0.1.13":
   version: 0.1.13
   resolution: "@privy-io/wagmi-connector@npm:0.1.13"
@@ -21586,6 +21600,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"jose@npm:^4.10.4":
+  version: 4.15.9
+  resolution: "jose@npm:4.15.9"
+  checksum: 41abe1c99baa3cf8a78ebbf93da8f8e50e417b7a26754c4afa21865d87527b8ac2baf66de2c5f6accc3f7d7158658dae7364043677236ea1d07895b040097f15
+  languageName: node
+  linkType: hard
+
 "jose@npm:^4.15.5":
   version: 4.15.5
   resolution: "jose@npm:4.15.5"
@@ -24650,7 +24671,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-fetch-native@npm:^1.4.1, node-fetch-native@npm:^1.6.3":
+"node-fetch-native@npm:^1.4.0, node-fetch-native@npm:^1.4.1, node-fetch-native@npm:^1.6.3":
   version: 1.6.4
   resolution: "node-fetch-native@npm:1.6.4"
   checksum: 7b159f610e037e8813750096a6616ec6771e9abf868aa6e75e5b790bfc2ba2d92cf2abcce33c18fd01f2e5e5cc72de09c78bd4381e7f8c0887f7de21bd96f045
@@ -27146,6 +27167,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"redaxios@npm:^0.5.1":
+  version: 0.5.1
+  resolution: "redaxios@npm:0.5.1"
+  checksum: 0ccd38610d2d0769fb72205151ee90aa2a929be66c6056b3eba0784e32e76618d5a9314bbb0d35d5d3a6197a032a411532437ade5bf0f350abbc1b631b1d0d17
+  languageName: node
+  linkType: hard
+
 "redent@npm:^3.0.0":
   version: 3.0.0
   resolution: "redent@npm:3.0.0"
@@ -28782,6 +28810,7 @@ __metadata:
   resolution: "stackup-worker@workspace:servers/workers/stackup-worker"
   dependencies:
     "@cloudflare/workers-types": ^4.20240529.0
+    "@privy-io/server-auth": ^1.9.1
     "@river-build/generated": "workspace:^"
     "@river-build/web3": "workspace:^"
     "@types/jest": ^29.5.3
@@ -29954,6 +29983,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ts-case-convert@npm:^2.0.2":
+  version: 2.0.7
+  resolution: "ts-case-convert@npm:2.0.7"
+  checksum: 25ec59a8a18b766dc8faca012cec5b47390bf5008fe048285233ba456a4f904fa6e0d479971d2f2889ef07870e009d62806f23c25be576cd14645671afcf9511
+  languageName: node
+  linkType: hard
+
 "ts-command-line-args@npm:^2.2.0":
   version: 2.4.2
   resolution: "ts-command-line-args@npm:2.4.2"
@@ -30272,6 +30308,13 @@ __metadata:
   version: 2.19.0
   resolution: "type-fest@npm:2.19.0"
   checksum: a4ef07ece297c9fba78fc1bd6d85dff4472fe043ede98bd4710d2615d15776902b595abf62bd78339ed6278f021235fb28a96361f8be86ed754f778973a0d278
+  languageName: node
+  linkType: hard
+
+"type-fest@npm:^3.6.1":
+  version: 3.13.1
+  resolution: "type-fest@npm:3.13.1"
+  checksum: c06b0901d54391dc46de3802375f5579868949d71f93b425ce564e19a428a0d411ae8d8cb0e300d330071d86152c3ea86e744c3f2860a42a79585b6ec2fdae8e
   languageName: node
   linkType: hard
 

@@ -1,4 +1,5 @@
 import { Env, worker } from '../src/index'
+import { toJson } from '../src/utils'
 import { createSpaceFakeRequest, joinTownFakeRequest, linkWalletFakeRequest } from './test_utils'
 
 const FAKE_SERVER_URL = 'http:/server.com'
@@ -41,7 +42,10 @@ describe('http router', () => {
                 {
                     Authorization: `Bearer ${AUTH_TOKEN}`,
                 },
-                createSpaceFakeRequest as BodyInit,
+                toJson({
+                    data: JSON.parse(createSpaceFakeRequest),
+                    accessToken: 'fake',
+                }) as BodyInit,
                 env,
             ),
         )
@@ -77,7 +81,10 @@ describe('http router', () => {
                 {
                     Authorization: `Bearer ${AUTH_TOKEN}`,
                 },
-                createSpaceFakeRequest as BodyInit,
+                toJson({
+                    data: JSON.parse(createSpaceFakeRequest),
+                    accessToken: 'fake',
+                }) as BodyInit,
                 env,
             ),
         )
@@ -113,7 +120,10 @@ describe('http router', () => {
                 {
                     Authorization: `Bearer ${AUTH_TOKEN}`,
                 },
-                joinTownFakeRequest as BodyInit,
+                toJson({
+                    data: JSON.parse(joinTownFakeRequest),
+                    accessToken: 'fake',
+                }) as BodyInit,
                 env,
             ),
         )
@@ -149,7 +159,10 @@ describe('http router', () => {
                 {
                     Authorization: `Bearer ${AUTH_TOKEN}`,
                 },
-                linkWalletFakeRequest as BodyInit,
+                toJson({
+                    data: JSON.parse(linkWalletFakeRequest),
+                    accessToken: 'fake',
+                }) as BodyInit,
                 env,
             ),
         )
