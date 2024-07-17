@@ -387,16 +387,19 @@ export class UserOps {
             abstractAccountAddress,
         )
 
-        const op = await this.sendUserOp({
-            toAddress: [
-                this.spaceDapp.walletLink.address,
-                this.spaceDapp.spaceRegistrar.SpaceArchitect.address,
-            ],
-            callData: [callDataForLinkingSmartAccount, callDataCreateSpace],
-            signer,
-            spaceId: undefined,
-            functionHashForPaymasterProxy,
-        })
+        const op = await this.sendUserOp(
+            {
+                toAddress: [
+                    this.spaceDapp.walletLink.address,
+                    this.spaceDapp.spaceRegistrar.SpaceArchitect.address,
+                ],
+                callData: [callDataForLinkingSmartAccount, callDataCreateSpace],
+                signer,
+                spaceId: undefined,
+                functionHashForPaymasterProxy,
+            },
+            TimeTrackerEvents.CREATE_SPACE,
+        )
         return op
     }
 
