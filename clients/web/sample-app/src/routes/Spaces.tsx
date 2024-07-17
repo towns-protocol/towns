@@ -14,7 +14,7 @@ export const Spaces = () => {
     const { joinTown } = useTownsClient()
     const { spaceId } = useSpaceContext()
     const space = useSpaceData()
-    const getSigner = useGetEmbeddedSigner()
+    const { getSigner } = useGetEmbeddedSigner()
 
     const onClickJoinSpace = useCallback(async () => {
         const signer = await getSigner()

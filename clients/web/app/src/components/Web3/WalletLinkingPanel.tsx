@@ -55,7 +55,7 @@ function WalletLinkingPanelWithoutAuth() {
     const { loggedInWalletAddress } = useConnectivity()
     const { linkEOAToRootKeyTransaction } = useLinkEOAToRootKeyTransaction()
     const { unlinkWalletTransaction } = useUnlinkWalletTransaction()
-    const getSigner = useGetEmbeddedSigner()
+    const { getSigner, isPrivyReady } = useGetEmbeddedSigner()
 
     const onLinkEOAClick = useConnectThenLink({
         onLinkWallet: linkEOAToRootKeyTransaction,
@@ -79,6 +79,8 @@ function WalletLinkingPanelWithoutAuth() {
         return null
     }
 
+    const isDisabled = !isPrivyReady || isWalletLinkingPending || isWalletUnLinkingPending
+
     return (
         <Stack gap grow position="relative" overflow="auto">
             {linkedWallets?.map((a) => {
@@ -92,11 +94,9 @@ function WalletLinkingPanelWithoutAuth() {
                 )
             })}
             <PanelButton
-                cursor={
-                    isWalletLinkingPending || isWalletUnLinkingPending ? 'not-allowed' : 'pointer'
-                }
-                opacity={isWalletLinkingPending || isWalletUnLinkingPending ? '0.5' : 'opaque'}
-                disabled={isWalletLinkingPending || isWalletUnLinkingPending}
+                cursor={isDisabled ? 'not-allowed' : 'pointer'}
+                opacity={isDisabled ? '0.5' : 'opaque'}
+                disabled={isDisabled}
                 onClick={onLinkEOAClick}
             >
                 <Box width="height_md" alignItems="center">
@@ -204,8 +204,9 @@ export function LinkedWallet({
 
     const isWalletLinkingPending = useIsTransactionPending(BlockchainTransactionType.LinkWallet)
     const isWalletUnLinkingPending = useIsTransactionPending(BlockchainTransactionType.UnlinkWallet)
-
+    const { isPrivyReady } = useGetEmbeddedSigner()
     const walletPrefix = useWalletPrefix()
+    const isDisabled = !isPrivyReady || isWalletLinkingPending || isWalletUnLinkingPending
 
     // TODO: we have a privy wallet, and AA wallet. Probably we want to filter out the privy wallet, and only show AA wallet address. Do we need to have our own UI for AA wallet assets? Since you can't export it to MM
     return (
@@ -235,13 +236,9 @@ export function LinkedWallet({
 
             {!isAbstractAccount && (
                 <IconButton
-                    cursor={
-                        isWalletLinkingPending || isWalletUnLinkingPending
-                            ? 'not-allowed'
-                            : 'pointer'
-                    }
-                    disabled={isWalletLinkingPending || isWalletUnLinkingPending}
-                    opacity={isWalletLinkingPending || isWalletUnLinkingPending ? '0.5' : 'opaque'}
+                    cursor={isDisabled ? 'not-allowed' : 'pointer'}
+                    disabled={isDisabled}
+                    opacity={isDisabled ? '0.5' : 'opaque'}
                     icon="unlink"
                     color="default"
                     tooltip="Unlink Wallet"
@@ -262,7 +259,7 @@ export function useConnectThenLink({
     ) => void
 }) {
     const embeddedWallet = useEmbeddedWallet()
-    const getSigner = useGetEmbeddedSigner()
+    const { getSigner } = useGetEmbeddedSigner()
 
     const { connectWallet } = useConnectWallet({
         onSuccess: async (wallet) => {

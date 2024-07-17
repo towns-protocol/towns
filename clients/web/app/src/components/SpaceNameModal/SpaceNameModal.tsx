@@ -66,7 +66,7 @@ export const SpaceNameModalWithoutAuth = (props: Props) => {
 
     const transactionUIState = toTransactionUIStates(transactionStatus, Boolean(data))
 
-    const getSigner = useGetEmbeddedSigner()
+    const { getSigner } = useGetEmbeddedSigner()
 
     const onSubmit = useCallback(
         async (changes: FormState) => {

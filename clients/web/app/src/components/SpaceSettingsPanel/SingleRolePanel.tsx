@@ -319,7 +319,7 @@ function DeleteRoleModal({
 }) {
     // success and error statuses are handled by <BlockchainTxNotifier />
     const { deleteRoleTransaction } = useDeleteRoleTransaction()
-    const getSigner = useGetEmbeddedSigner()
+    const { getSigner, isPrivyReady } = useGetEmbeddedSigner()
     const onDelete = useEvent(async () => {
         if (!spaceId || !roleId) {
             return
@@ -343,6 +343,7 @@ function DeleteRoleModal({
                     <Button
                         tone="error"
                         data-testid="confirm-delete-role-button"
+                        disabled={!isPrivyReady}
                         onClick={onDelete}
                     >
                         Delete
@@ -372,7 +373,7 @@ function SubmitButton({
     // success and error statuses are handled by <BlockchainTxNotifier />
     const { createRoleTransaction } = useCreateRoleTransaction()
     const { updateRoleTransaction } = useUpdateRoleTransaction()
-    const getSigner = useGetEmbeddedSigner()
+    const { getSigner, isPrivyReady } = useGetEmbeddedSigner()
 
     const isUnchanged = useMemo(() => {
         const def = structuredClone(defaultValues)
@@ -391,6 +392,7 @@ function SubmitButton({
     }, [defaultValues, watchAllFields])
 
     const isDisabled =
+        !isPrivyReady ||
         formState.isSubmitting ||
         isUnchanged ||
         Object.keys(formState.errors).length > 0 ||

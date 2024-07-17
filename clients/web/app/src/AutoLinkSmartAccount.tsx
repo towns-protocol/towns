@@ -15,7 +15,7 @@ export function AutoLinkSmartAccount() {
     const { isAuthenticated } = useConnectivity()
     const linkAttempted = useRef(false)
     const { linkCallerToRootKeyTransaction } = useLinkCallerToRootKey()
-    const getSigner = useGetEmbeddedSigner()
+    const { getSigner } = useGetEmbeddedSigner()
     const transactions = useTransactionStore()
     const { accountAbstractionConfig } = useEnvironment()
 

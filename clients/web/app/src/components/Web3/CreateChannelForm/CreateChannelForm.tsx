@@ -114,8 +114,10 @@ export const CreateChannelForm = (props: Props) => {
         )
     }, [transactionHash, transactionStatus])
 
+    const { getSigner, isPrivyReady } = useGetEmbeddedSigner()
+
     const transactionUIState = toTransactionUIStates(transactionStatus, Boolean(channelId))
-    const isAbleToInteract = transactionUIState === TransactionUIState.None
+    const isAbleToInteract = isPrivyReady && transactionUIState === TransactionUIState.None
 
     const { hasTransactionError, hasServerError } = useMemo(() => {
         return {
@@ -204,7 +206,6 @@ export const CreateChannelForm = (props: Props) => {
             : [],
         [FormStateKeys.rolesWithDetails]: rolesWithDetails ?? [],
     }
-    const getSigner = useGetEmbeddedSigner()
 
     return rolesWithDetails ? (
         <FormRender<FormState>

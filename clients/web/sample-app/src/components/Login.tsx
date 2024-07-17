@@ -64,7 +64,7 @@ function NetworkInfo() {
     const { authStatus: casablancaAuthStatus } = useCasablancaStore()
     const { id: environmentId } = useEnvironment()
     const { isAuthenticated } = useConnectivity()
-    const getSigner = useGetEmbeddedSigner()
+    const { getSigner } = useGetEmbeddedSigner()
 
     const onLoginCasablanca = useCallback(
         async function () {

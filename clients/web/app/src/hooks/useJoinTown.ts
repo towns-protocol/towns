@@ -9,7 +9,7 @@ import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLogin
 export const useJoinTown = (spaceId: string | undefined, onSuccessfulJoin?: () => void) => {
     const { clientSingleton, signerContext } = useTownsContext()
     const { setRecentlyMintedSpaceToken } = useStore()
-    const getSigner = useGetEmbeddedSigner()
+    const { getSigner } = useGetEmbeddedSigner()
     const { end: endPublicPageLoginFlow } = usePublicPageLoginFlow()
     const [errorDetails, setErrorDetails] = useState<{
         maxLimitReached: boolean

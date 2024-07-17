@@ -46,7 +46,7 @@ export const CreateSpaceForm = (props: Props) => {
     const { chain: walletChain } = useNetwork()
     const { authStatus: casablancaAuthStatus } = useCasablancaStore()
     const { spaceDapp } = useTownsClient()
-    const getSigner = useGetEmbeddedSigner()
+    const { getSigner } = useGetEmbeddedSigner()
 
     const [formValue, setFormValue] = useState<FormValues>({
         spaceName: '',

@@ -71,7 +71,7 @@ function useCombinedAuthContext(): CombinedAuthContext {
         loginToRiverAfterPrivy,
     })
 
-    const getSigner = useGetEmbeddedSigner()
+    const { getSigner } = useGetEmbeddedSigner()
     const isConnected = useIsConnected()
 
     const login = useCallback(async () => {

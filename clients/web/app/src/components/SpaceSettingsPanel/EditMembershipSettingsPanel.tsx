@@ -225,7 +225,7 @@ function SubmitButton({
     const { defaultValues } = formState
     const watchAllFields = watch()
     // success and error statuses are handled by <BlockchainTxNotifier />
-    const getSigner = useGetEmbeddedSigner()
+    const { getSigner, isPrivyReady } = useGetEmbeddedSigner()
     const { editSpaceMembershipTransaction } = useEditSpaceMembershipTransaction()
     const { data: pricingModules, isLoading: isLoadingPricingModules } = usePricingModules()
     const { roleDetails, isLoading: isLoadingRoleDetails } = useRoleDetails(spaceId ?? '', 1)
@@ -245,6 +245,7 @@ function SubmitButton({
     }, [defaultValues, watchAllFields])
 
     const isDisabled =
+        !isPrivyReady ||
         formState.isSubmitting ||
         isUnchanged ||
         Object.keys(formState.errors).length > 0 ||

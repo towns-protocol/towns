@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { useChannelId } from 'use-towns-client'
+import { useGetEmbeddedSigner } from '@towns/privy'
 import { Panel } from '@components/Panel/Panel'
 import { Button, Stack, Text } from '@ui'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
@@ -16,7 +17,7 @@ export const MintBotPanel = ({ streamId }: { streamId: string }) => {
     const [displayName, setDisplayName] = React.useState<string>('')
     const { username, usernameErrorMessage, updateUsername } = useValidateUsername({ streamId })
     const mintBot = useMintBot()
-
+    const { isPrivyReady } = useGetEmbeddedSigner()
     const onUsernameChange = useCallback(
         async (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
             updateUsername(e.target.value)
@@ -56,8 +57,13 @@ export const MintBotPanel = ({ streamId }: { streamId: string }) => {
     }
 
     const isBtnDisabled = useMemo(() => {
-        return !username || !validateUsername(username) || !validateDisplayName(displayName).valid
-    }, [displayName, username])
+        return (
+            !isPrivyReady ||
+            !username ||
+            !validateUsername(username) ||
+            !validateDisplayName(displayName).valid
+        )
+    }, [displayName, isPrivyReady, username])
 
     useErrorToast({
         errorMessage,

@@ -20,7 +20,7 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
     riverAuthError: UseConnectivtyReturnValue['authError']
     isRiverAuthencticated: UseConnectivtyReturnValue['isAuthenticated']
 }) {
-    const getSigner = useGetEmbeddedSigner()
+    const { getSigner } = useGetEmbeddedSigner()
     const { logout: privyLogout } = usePrivy()
     const { end: endPublicPageLoginFlow } = usePublicPageLoginFlow()
 

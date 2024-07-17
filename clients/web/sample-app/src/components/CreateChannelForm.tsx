@@ -43,7 +43,7 @@ export function CreateChannelForm(props: Props): JSX.Element {
         setRoles(roles)
     }, [])
 
-    const getSigner = useGetEmbeddedSigner()
+    const { getSigner } = useGetEmbeddedSigner()
 
     const onClickCreateChannel = useAsyncButtonCallback(async () => {
         const signer = await getSigner()

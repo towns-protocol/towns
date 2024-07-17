@@ -29,7 +29,7 @@ export function TokenVerification({ onHide, spaceId }: { spaceId: string; onHide
     const { data: tokensGatingMembership } = useTokensGatingMembership(spaceId)
     const tokensLength = tokensGatingMembership?.tokens.length ?? 0
     const maxWidth = tokensLength > 2 ? 'auto' : '400'
-    const getSigner = useGetEmbeddedSigner()
+    const { getSigner } = useGetEmbeddedSigner()
     const { data: aaAdress } = useAbstractAccountAddress({
         rootKeyAddress: loggedInWalletAddress,
     })
@@ -110,6 +110,7 @@ function Content({
     const { joinSpace, errorMessage: errorJoinSpace } = useJoinTown(spaceId)
     const [isJoining, setIsJoining] = useState(false)
     const isJoinPending = useIsTransactionPending(BlockchainTransactionType.JoinSpace)
+    const { isPrivyReady } = useGetEmbeddedSigner()
 
     const {
         isLoading: isLoadingLinkingWallet,
@@ -161,7 +162,7 @@ function Content({
 
             {allTokensSuccessful ? (
                 <Button
-                    disabled={isJoining || isJoinPending}
+                    disabled={!isPrivyReady || isJoining || isJoinPending}
                     tone="cta1"
                     width="100%"
                     type="button"

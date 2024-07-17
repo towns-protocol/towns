@@ -108,7 +108,7 @@ export function ChannelSettingsForm({
         }
     }, [transactionError, transactionHash])
 
-    const getSigner = useGetEmbeddedSigner()
+    const { getSigner, isPrivyReady } = useGetEmbeddedSigner()
 
     const onSubmit = useCallback(
         async (changes: FormState) => {
@@ -230,7 +230,8 @@ export function ChannelSettingsForm({
                     const { onChange: onNameChange, ...restOfNameProps } = register(
                         FormStateKeys.name,
                     )
-                    const isDisabled = hasPendingTx || !formState.isDirty || !formState.isValid
+                    const isDisabled =
+                        !isPrivyReady || hasPendingTx || !formState.isDirty || !formState.isValid
                     watch()
 
                     return (

@@ -67,7 +67,7 @@ export const TownInfoModalWithoutAuth = (props: Props) => {
     const transactionUIState = toTransactionUIStates(transactionStatus, Boolean(data))
     const hasPendingTx = Boolean(transactionUIState != TransactionUIState.None)
 
-    const getSigner = useGetEmbeddedSigner()
+    const { getSigner } = useGetEmbeddedSigner()
 
     const onSubmit = useCallback(
         async (changes: FormState) => {

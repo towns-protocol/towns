@@ -1,12 +1,16 @@
-import React, { createContext, useCallback, useContext, useEffect } from 'react'
+import React, { createContext, useCallback, useContext, useEffect, useMemo } from 'react'
 import { useEmbeddedWallet } from './useEmbeddedWallet'
 import { TSigner } from 'use-towns-client'
 import { ConnectedWallet, usePrivy } from '@privy-io/react-auth'
 import { create } from 'zustand'
 
-const EmbeddedSignerContext = createContext<(() => Promise<TSigner | undefined>) | undefined>(
-    undefined,
-)
+const EmbeddedSignerContext = createContext<
+    | {
+          getSigner: () => Promise<TSigner | undefined>
+          isPrivyReady: boolean
+      }
+    | undefined
+>(undefined)
 
 const store = create<{
     embeddedWallet: ConnectedWallet | undefined
@@ -69,7 +73,7 @@ function useGetEmbeddedSignerContext(chainId: number) {
         return provider.getSigner()
     }, [authenticated, chainId, privyReady])
 
-    return getSigner
+    return useMemo(() => ({ getSigner, isPrivyReady: privyReady }), [getSigner, privyReady])
 }
 
 export function useGetEmbeddedSigner() {

@@ -16,7 +16,7 @@ export const useMintBot = () => {
     const { spaceDapp, clientSingleton } = useTownsClient()
     const spaceId = useSpaceId()
     const channelId = useChannelId()
-    const getSigner = useGetEmbeddedSigner()
+    const { getSigner } = useGetEmbeddedSigner()
     const { riverProvider, riverConfig } = useTownsContext()
 
     const mintBot = useCallback(

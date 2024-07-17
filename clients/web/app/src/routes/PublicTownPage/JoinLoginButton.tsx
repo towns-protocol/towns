@@ -21,7 +21,7 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
     const { client, signerContext } = useTownsClient()
     const { isAuthenticated, loggedInWalletAddress } = useConnectivity()
     const { isConnected: connected } = useCombinedAuth()
-    const getSigner = useGetEmbeddedSigner()
+    const { getSigner } = useGetEmbeddedSigner()
 
     const {
         start: startPublicPageloginFlow,

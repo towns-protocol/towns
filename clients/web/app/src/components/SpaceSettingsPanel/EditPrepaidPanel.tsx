@@ -38,7 +38,7 @@ export function EditPrepaidPanel() {
 export function EditPrepaidPanelWithoutAuth() {
     const spaceId = useSpaceIdFromPathname()
     const { data: prepaidSupply, isLoading: isLoadingPrepaidSupply } = usePrepaidSupply(spaceId)
-    const getSigner = useGetEmbeddedSigner()
+    const { getSigner, isPrivyReady } = useGetEmbeddedSigner()
     const isPendingTx = useIsTransactionPending(BlockchainTransactionType.PrepayMembership)
     const { prepayMembershipTransaction } = usePrepayMembershipTransaction()
     const onValid = useEvent(
@@ -81,6 +81,7 @@ export function EditPrepaidPanelWithoutAuth() {
                                     hookForm as unknown as UseFormReturn<PrepaidSchemaType>
 
                                 const disabled =
+                                    !isPrivyReady ||
                                     !!Object.keys(_form.formState.errors).length ||
                                     !_form.formState.isDirty ||
                                     isPendingTx

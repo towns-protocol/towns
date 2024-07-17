@@ -44,7 +44,7 @@ export function CreateTownSubmit({
     children: (props: { onSubmit: () => void; disabled: boolean }) => React.ReactNode
     onCreateSpaceFlowStatus?: (status: CreateSpaceFlowStatus) => void
 }) {
-    const getSigner = useGetEmbeddedSigner()
+    const { getSigner, isPrivyReady } = useGetEmbeddedSigner()
     const { spaceDapp } = useTownsClient()
     const { setRecentlyMintedSpaceToken } = useStore()
     const [membershipCostValue, membershipPricingType] = form.watch([
@@ -410,6 +410,7 @@ export function CreateTownSubmit({
     return children({
         onSubmit,
         disabled:
+            !isPrivyReady ||
             isLoading ||
             !form.formState.isDirty ||
             Object.keys(form.formState.errors).length > 0 ||

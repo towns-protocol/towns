@@ -403,7 +403,7 @@ const BanPanelButton = (props: { walletAddress: string; space: SpaceData; isBann
     const { banTransaction } = useBanTransaction()
     const { unbanTransaction } = useUnbanTransaction()
 
-    const getSigner = useGetEmbeddedSigner()
+    const { getSigner, isPrivyReady } = useGetEmbeddedSigner()
 
     const onClick = useCallback(() => {
         setIsConfirmModalVisible(true)
@@ -447,7 +447,7 @@ const BanPanelButton = (props: { walletAddress: string; space: SpaceData; isBann
 
     return (
         <>
-            <PanelButton tone="negative" onClick={onClick}>
+            <PanelButton disabled={!isPrivyReady} tone="negative" onClick={onClick}>
                 <Icon type={isBanned ? 'unban' : 'ban'} size="square_sm" />
                 {isTransactionPending ? (
                     <Box grow>

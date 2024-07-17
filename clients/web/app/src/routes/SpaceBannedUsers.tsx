@@ -40,7 +40,7 @@ export const SpaceBannedUsersWithoutAuth = () => {
     const { unbanTransaction } = useUnbanTransaction()
     const unbanTransactionPending = useIsTransactionPending(BlockchainTransactionType.UnbanUser)
 
-    const getSigner = useGetEmbeddedSigner()
+    const { getSigner, isPrivyReady } = useGetEmbeddedSigner()
 
     const unbanClicked = useCallback(
         (userId: string) => {
@@ -97,7 +97,7 @@ export const SpaceBannedUsersWithoutAuth = () => {
                                 transactionInProgress={
                                     unbanTransactionPending && userId === selectedUserId
                                 }
-                                disabled={unbanTransactionPending}
+                                disabled={!isPrivyReady || unbanTransactionPending}
                             />
                         ))
                     ) : (

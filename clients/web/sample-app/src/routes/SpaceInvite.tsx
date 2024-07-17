@@ -10,7 +10,7 @@ export function SpaceInvite() {
     const space = useSpaceData()
     const navigate = useNavigate()
     const { inviteUser, spaceDapp } = useTownsClient()
-    const getSigner = useGetEmbeddedSigner()
+    const { getSigner } = useGetEmbeddedSigner()
 
     const onClickSendInvite = useCallback(
         async (spaceId: string, inviteeId: string) => {
