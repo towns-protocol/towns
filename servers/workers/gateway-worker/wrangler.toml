@@ -31,8 +31,6 @@ LINEAR_GRAPHQL_URL = "https://api.linear.app/graphql"
 # AUTH_SECRET
 # IMAGE_HASH - cloudflare images account hash
 # API_TOKEN - images api token obtained from CF dashboard
-# AWS_SECRET_ACCESS_KEY
-# AWS_ACCESS_KEY_ID
 # LINEAR_API_KEY
 # for local development, you can add these in .dev.vars
 # 

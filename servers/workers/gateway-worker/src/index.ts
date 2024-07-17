@@ -18,8 +18,6 @@ export interface Env extends AuthEnv {
     LINEAR_GRAPHQL_URL: string
     LINEAR_USER_FEEDBACK_PROJECT_ID: string
     USER_FEEDBACK_TOPIC_ARN: string
-    AWS_ACCESS_KEY_ID: string
-    AWS_SECRET_ACCESS_KEY: string
 }
 
 export default {
