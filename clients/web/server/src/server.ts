@@ -137,7 +137,7 @@ async function updateTemplate(townId?: string) {
         if (townData) {
             info.title = townData.name || info.title
             info.description =
-                townData.longDescription || townData.shortDescription || info.description
+                townData.shortDescription || townData.longDescription || info.description
         }
     }
 
