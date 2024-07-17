@@ -4,7 +4,6 @@ import {
     BaseRegistry,
     SpaceOwner,
     SpaceRegistrar,
-    Space,
 } from '@river-build/web3'
 import { ethers } from 'ethers'
 import { Ping as Pinger } from './pinger'
@@ -13,6 +12,8 @@ import { NodeStructOutput } from '@river-build/generated/dev/typings/INodeRegist
 import { Unpromisify } from './utils'
 import { MetricsIntegrator } from './metrics-integrator'
 import { IERC721ABase } from '@river-build/generated/dev/typings/IERC721AQueryable'
+import pRetry from 'p-retry'
+import pThrottle from 'p-throttle'
 
 export type MetricsExtractorScrapeConfig = {
     getSpaceMemberships: boolean
@@ -173,35 +174,6 @@ export class MetricsExtractor {
         }
     }
 
-    private async getSpacesWithMembershipsByTokenIds(
-        tokenIds: number[],
-    ): Promise<SpaceWithTokenOwners[]> {
-        return await Promise.all(
-            tokenIds.map(async (tokenId) => {
-                return this.getSpaceWithMembershipsByTokenId(tokenId)
-            }),
-        )
-    }
-
-    private async getSpacesWithMembershipsByTokenIdsWithRetries(
-        tokenIds: number[],
-        attempts: number,
-    ): Promise<SpaceWithTokenOwners[]> {
-        let error: unknown
-        while (attempts > 0) {
-            try {
-                return await this.getSpacesWithMembershipsByTokenIds(tokenIds)
-            } catch (e) {
-                error = e
-                if (attempts > 0) {
-                    console.error(`Error getting space memberships, retrying...`, e)
-                    attempts--
-                }
-            }
-        }
-        throw error
-    }
-
     private getUniqueMembers(space: SpaceWithTokenOwners) {
         const uniqueMembers = new Set<string>()
         space.tokenOwnerships.forEach((ownership) => {
@@ -225,6 +197,10 @@ export class MetricsExtractor {
     }
 
     private async getAllSpacesWithMemberships(numTotalSpaces: number) {
+        const NUM_RETRIES = 3
+        const THROTTLE_LIMIT = 200 // num requests
+        const THROTTLE_INTERVAL = 1000 // per ms
+
         if (!this.scrapeConfig.getSpaceMemberships) {
             return {
                 kind: 'skipped' as const,
@@ -234,38 +210,36 @@ export class MetricsExtractor {
 
         const tokenIds = Array.from({ length: numTotalSpaces }, (_, i) => i)
 
-        // prepare token id batches:
-        const BATCH_SIZE = 200
-        const NUM_ATTEMPTS = 3
+        const withRetries = (tokenId: number) =>
+            pRetry(() => this.getSpaceWithMembershipsByTokenId(tokenId), {
+                retries: NUM_RETRIES,
+                onFailedAttempt: (error) => {
+                    console.log(
+                        `failed attempt to get space memberships for token id ${tokenId}. retrying...`,
+                    )
+                    console.warn(error)
+                },
+            })
 
-        const batches = []
-        for (let i = 0; i < tokenIds.length; i += BATCH_SIZE) {
-            batches.push(tokenIds.slice(i, i + BATCH_SIZE))
-        }
+        const throttle = pThrottle({
+            limit: THROTTLE_LIMIT,
+            interval: THROTTLE_INTERVAL,
+            onDelay: () => console.log('throttling the spaceMembership query...'),
+        })
 
-        const spacesWithMemberships: SpaceWithTokenOwners[][] = []
+        const withThrottling = (tokenId: number) => throttle(() => withRetries(tokenId))
+        const promises = tokenIds.map((tokenId) => withThrottling(tokenId)())
 
-        for (let i = 0; i < batches.length; i++) {
-            console.log(`getting space memberships for batch ${i}`)
-            const currentBatchSpaces = await this.getSpacesWithMembershipsByTokenIdsWithRetries(
-                batches[i],
-                NUM_ATTEMPTS,
-            )
-            spacesWithMemberships.push(currentBatchSpaces)
-        }
-
+        const spacesWithMemberships = await Promise.all(promises)
         console.log('got space memberships')
-        console.log('flattening space memberships')
 
-        const result = spacesWithMemberships.flat()
-        console.log('flattened space memberships')
         console.log('sorting space memberships')
-        result.sort((a, b) => b.numMemberships - a.numMemberships) // sort by memberships in descending order
+        spacesWithMemberships.sort((a, b) => b.numMemberships - a.numMemberships) // sort by memberships in descending order
         console.log('sorted space memberships')
 
         return {
             kind: 'success' as const,
-            result,
+            result: spacesWithMemberships,
         }
     }
 

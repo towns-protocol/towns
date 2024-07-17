@@ -1,5 +1,5 @@
 import { SecretsManager } from '@aws-sdk/client-secrets-manager'
-import { Unpromisify } from './utils'
+import { Unpromisify } from './lib/utils'
 
 function getEnvVars() {
     const {

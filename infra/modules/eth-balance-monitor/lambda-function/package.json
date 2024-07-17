@@ -8,10 +8,10 @@
     "main": "index.js",
     "scripts": {
         "typecheck": "tsc --noEmit",
-        "compile": "esbuild src/index.ts --sourcemap=inline --bundle --platform=node --target=node20 --format=cjs --outfile=dist/index.cjs",
-        "build": "yarn typecheck && yarn compile",
-        "build-example": "esbuild src/example.ts --sourcemap=inline --bundle --platform=node --target=node20 --format=cjs --outfile=dist/example.cjs",
-        "dev": "yarn build-example && node ./dist/example.cjs",
+        "compile": "esbuild $SRC --sourcemap=inline --bundle --platform=node --target=node20 --format=cjs --outdir=dist --out-extension:.js=.cjs",
+        "build": "yarn typecheck && SRC=src/index.ts yarn compile",
+        "dev": "SRC=src/example.ts yarn compile && node ./dist/example.cjs",
+        "artifacts": "SRC=src/artifacts.ts yarn compile && node ./dist/artifacts.cjs",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "dependencies": {
@@ -20,6 +20,8 @@
         "@river-build/generated": "workspace:^",
         "@river-build/web3": "workspace:^",
         "ethers": "^5.7.2",
+        "p-retry": "^6.2.0",
+        "p-throttle": "^6.1.0",
         "typescript": "^5.1.6",
         "zod": "^3.21.4"
     },
