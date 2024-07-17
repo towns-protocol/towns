@@ -64,3 +64,17 @@ kv_namespaces = [
   { binding = "EMAIL_WHITELIST", id = "21cdaa431ba847488c812e764bc001de" },
   { binding = "TOWN_WHITELIST", id = "9c38e3c079ab49ebb1ca0f6ebaa6211b" },
 ]
+
+[env.alpha]
+routes = [{ pattern = "stackup-worker-alpha.towns.com", custom_domain = true }]
+vars = { ENVIRONMENT = "alpha", PAYMASTER_ADDRESS = "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789", SKIP_TOWNID_VERIFICATION = "false" }
+# created with
+# wrangler kv:namespace create "CREATE_TOWN" --env alpha
+kv_namespaces = [
+  { binding = "CREATE_TOWN", id = "cc442957ec224be6b79bbca07ac5e5ba" },
+  { binding = "OVERRIDES", id = "071275d4239e4875863b2be676deaa8d" },
+  { binding = "JOIN_TOWN", id = "7fad6a0c956e4f55b53006c096f3af84" },
+  { binding = "LINK_WALLET_TO_ROOT_KEY", id = "dc5100388c994ad0ba15b8aaf74b8665" },
+  { binding = "EMAIL_WHITELIST", id = "2c8323695f35412a8085d3578742ab7f" },
+  { binding = "TOWN_WHITELIST", id = "4cc893654ea646f6b70cd195d80a77de" },
+]

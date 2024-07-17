@@ -5,6 +5,7 @@ export function getAllowedOrigins(env: Environment): string[] {
         // todo: test-beta should reflect name of logical app environment, gamma
         case 'test-beta':
         case 'development':
+        case 'alpha':
             /*
                 Everything except for production
             */
@@ -95,7 +96,6 @@ function getOriginForCors(request: Request, env: Environment): string {
 export function isAllowedOrigin(request: Request, env: Environment): boolean {
     const corsOrigin = getOriginForCors(request, env)
     switch (env) {
-        case 'production':
         case 'development':
         case 'test-beta':
         case 'test': {

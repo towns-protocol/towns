@@ -94,7 +94,7 @@ export const worker = {
             console.error('[worker]::', e)
             let errMsg = ''
             switch (env.ENVIRONMENT) {
-                case 'production':
+                case 'omega':
                     errMsg = 'Oh oh... our server has an issue. Please try again later.'
                     break
                 default:

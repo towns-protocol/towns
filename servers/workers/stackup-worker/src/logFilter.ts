@@ -28,6 +28,7 @@ const BaseMainnetBlocksPerDay = 43200 // at 2s blocks
 export const NetworkBlocksPerDay = new Map<Environment, number>([
     ['development', BaseSepoliaBlocksPerDay],
     ['test-beta', BaseSepoliaBlocksPerDay],
+    ['alpha', BaseSepoliaBlocksPerDay],
     ['omega', BaseMainnetBlocksPerDay],
 ])
 
