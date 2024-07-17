@@ -1,11 +1,40 @@
 import { useQuery } from '@tanstack/react-query'
+import { z } from 'zod'
 import { env } from 'utils'
+import { MONTH_MS, SECOND_MS } from 'data/constants'
 import { axiosClient } from '../apiClient'
 
-export function getUnfurlContent(urlsArray: string[]) {
+const DEBUG_LATENCY = import.meta.env.DEV && false
+
+const unfurledLinkSchema = z.object({
+    url: z.string(),
+    title: z.string().optional(),
+    description: z.string().optional(),
+    image: z.object({
+        width: z.number(),
+        height: z.number(),
+        url: z.string(),
+    }),
+})
+
+const unfurledLinkResponseSchema = z.object({
+    data: z.array(unfurledLinkSchema),
+})
+
+export async function getUnfurlContent(urlsArray: string[]) {
     const UNFURL_SERVER_URL = env.VITE_UNFURL_SERVER_URL
+
+    if (DEBUG_LATENCY) {
+        await new Promise((resolve) => setTimeout(resolve, SECOND_MS * 2))
+    }
+
     const encodedUrls = urlsArray.map((url) => `&url=${encodeURIComponent(url)}`)
-    return axiosClient.get(`${UNFURL_SERVER_URL}?${encodedUrls.join('')}`)
+    const response = await axiosClient.get(`${UNFURL_SERVER_URL}?${encodedUrls.join('')}`)
+    const parsed = unfurledLinkResponseSchema.safeParse(response)
+
+    if (parsed.success) {
+        return parsed.data
+    }
 }
 
 export function useUnfurlContent({
@@ -19,14 +48,16 @@ export function useUnfurlContent({
     return useQuery({
         queryKey: urlsArray,
         queryFn: () => getUnfurlContent(urlsArray),
-        select: ({ data }) => data,
+        select: (response) => {
+            return response?.data
+        },
         enabled,
         // unfurl content doesn't need to be refetched
         // if user edits their message, that's fine, it's a new query key so will be fetched
         refetchOnMount: false,
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
-        staleTime: 31 * 24 * 60 * 60 * 1000, // 31 days
-        gcTime: 31 * 24 * 60 * 60 * 1000, // 31 days
+        staleTime: MONTH_MS,
+        gcTime: MONTH_MS,
     })
 }

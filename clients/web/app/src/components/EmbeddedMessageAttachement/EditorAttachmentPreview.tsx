@@ -12,6 +12,8 @@ import { MessageAttachments } from '@components/MessageAttachments/MessageAttach
 import { MessageAttachmentsContext } from '@components/MessageAttachments/MessageAttachmentsContext'
 import { FadeInBox } from '@components/Transitions'
 import { RichTextPreview } from '@components/RichTextPlate/RichTextPreview'
+import { LoadingUnfurledLinkAttachment } from 'hooks/useExtractInternalLinks'
+import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 
 type MessageAttachmentPreviewProps = {
     attachment: EmbeddedMessageAttachment
@@ -105,7 +107,7 @@ export const EditorAttachmentPreview = (props: {
 }
 
 const UnfurledLinkPreview = (props: {
-    attachment: UnfurledLinkAttachment
+    attachment: UnfurledLinkAttachment | LoadingUnfurledLinkAttachment
     onRemove?: (attachmentId: string) => void
 }) => {
     const { onRemove } = props
@@ -123,12 +125,14 @@ const UnfurledLinkPreview = (props: {
         window.open(url, '_blank')
     }, [url])
 
+    const isLoading = 'isLoading' in props.attachment && props.attachment.isLoading === true
+
     return (
         <FadeInBox
             hoverable
-            centerContent
             width="250"
-            padding="md"
+            paddingY="sm"
+            paddingX="paragraph"
             background="level3"
             rounded="sm"
             boxShadow="panel"
@@ -137,32 +141,47 @@ const UnfurledLinkPreview = (props: {
             cursor="pointer"
             onClick={onClick}
         >
-            <Stack gap="sm" alignContent="center" width="100%">
+            <Stack
+                gap="xs"
+                alignContent="center"
+                width="100%"
+                color={isLoading ? 'gray2' : 'default'}
+            >
                 <Stack horizontal gap="sm" alignItems="center">
+                    {isLoading && (
+                        <Box horizontal gap="sm" alignItems="center" overflow="hidden">
+                            <ButtonSpinner height="paragraph" />
+                            <Paragraph truncate size="sm">
+                                {props.attachment.url}
+                            </Paragraph>
+                        </Box>
+                    )}
                     {image?.url && <IconImage url={image.url} />}
                     {title && (
                         <Text truncate strong fontSize="sm">
                             {title}
                         </Text>
                     )}
+                    <IconButton
+                        insetX="xs"
+                        size="square_xs"
+                        icon="close"
+                        color="default"
+                        tooltip="Remove"
+                        tooltipOptions={{ immediate: true }}
+                        onClick={onRemoveClicked}
+                    />
                 </Stack>
-                {description && (
-                    <Box hoverable color={{ hover: 'default', default: 'cta2' }}>
+                {description ? (
+                    <Box hoverable color={{ hover: 'cta2', default: 'gray2' }}>
                         <Text truncate fontSize="sm" fontWeight="medium">
                             {description}
                         </Text>
                     </Box>
+                ) : (
+                    <Box grow />
                 )}
             </Stack>
-            <Box position="topRight" padding="xxs">
-                <IconButton
-                    icon="close"
-                    color="default"
-                    tooltip="Remove"
-                    tooltipOptions={{ immediate: true }}
-                    onClick={onRemoveClicked}
-                />
-            </Box>
         </FadeInBox>
     )
 }

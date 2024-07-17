@@ -4,13 +4,17 @@ import { useEditorSelector } from '@udecode/plate-core'
 import { useExtractMessageAttachments } from 'hooks/useExtractMessageAttachments'
 import { useThrottledValue } from 'hooks/useThrottledValue'
 import { SECOND_MS } from 'data/constants'
-import { useExtractExternalLinks } from 'hooks/useExtractInternalLinks'
+import {
+    LoadingUnfurledLinkAttachment,
+    useExtractExternalLinks,
+} from 'hooks/useExtractInternalLinks'
 import { toPlainText } from '../utils/toPlainText'
 
 export const CaptureLinkAttachmentsPlugin = (props: {
     onUpdate: (
         messageAttachments: EmbeddedMessageAttachment[],
-        unfurledLinkAttachments: UnfurledLinkAttachment[],
+        unfurledLinkAttachments: (UnfurledLinkAttachment | LoadingUnfurledLinkAttachment)[],
+        isLoading: boolean,
     ) => void
 }) => {
     const { onUpdate } = props
@@ -29,6 +33,7 @@ export const CaptureLinkAttachmentsPlugin = (props: {
             externalAttachments
                 // omit external urls already included as message attachments
                 .filter((l) => messageAttachments.every((m) => m.url !== l.url)),
+            isLoading,
         )
     }, [externalAttachments, isLoading, messageAttachments, onUpdate])
 

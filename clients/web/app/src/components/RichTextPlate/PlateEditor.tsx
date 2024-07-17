@@ -9,9 +9,11 @@ import {
     OTWMention,
     SendTextMessageOptions,
     UnfurledLinkAttachment,
+    transformAttachments,
     useChannelId,
     useChannelMembers,
     useNetworkStatus,
+    useTownsContext,
     useUserLookupArray,
     useUserLookupContext,
 } from 'use-towns-client'
@@ -21,8 +23,9 @@ import { TComboboxItemWithData } from '@udecode/plate-combobox'
 import { ELEMENT_PARAGRAPH } from '@udecode/plate-paragraph'
 import every from 'lodash/every'
 import isEqual from 'lodash/isEqual'
-import { isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
+import { isDMChannelStreamId, isDefined, isGDMChannelStreamId } from '@river-build/sdk'
 import { uniq } from 'lodash'
+import { ChannelMessage_Post_Content_Text } from '@river-build/proto'
 import { useMediaDropContext } from '@components/MediaDropContext/MediaDropContext'
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { Box, BoxProps, Stack } from '@ui'
@@ -36,6 +39,9 @@ import {
 } from '@components/EmbeddedMessageAttachement/EditorAttachmentPreview'
 import { useInlineReplyAttchmentPreview } from '@components/EmbeddedMessageAttachement/hooks/useInlineReplyAttchmentPreview'
 import { useInputStore } from 'store/store'
+import { LoadingUnfurledLinkAttachment } from 'hooks/useExtractInternalLinks'
+import { getUnfurlContent } from 'api/lib/unfurl'
+import { SECOND_MS } from 'data/constants'
 import { toPlainText } from './utils/toPlainText'
 import { getChannelNames, getMentionIds, isInputFocused } from './utils/helpers'
 import { RichTextPlaceholder } from './components/RichTextEditorPlaceholder'
@@ -121,7 +127,9 @@ const PlateEditorWithoutBoundary = ({
     const [embeddedMessageAttachments, setEmbeddedMessageAttachments] = useState<
         EmbeddedMessageAttachment[]
     >([])
-    const [unfurledLinkAttachments, setUnfurledAttachments] = useState<UnfurledLinkAttachment[]>([])
+    const [unfurledLinkAttachments, setUnfurledAttachments] = useState<
+        (UnfurledLinkAttachment | LoadingUnfurledLinkAttachment)[]
+    >([])
     const disabled = isOffline || !editable || isSendingMessage
     const disabledSend = typeof onSend !== 'function'
     const hasInlinePreview = !!inlineReplyPreview
@@ -274,6 +282,8 @@ const PlateEditorWithoutBoundary = ({
         setIsSendingMessage(false)
     }, [setInput, storageId, setIsSendingMessage])
 
+    const { casablancaClient } = useTownsContext()
+
     const onSendCb = useCallback(
         async (message: string, mentions: Mention[]) => {
             if (!onSend) {
@@ -298,17 +308,50 @@ const PlateEditorWithoutBoundary = ({
                 options.attachments = attachments
             }
 
-            if (uploadFiles && files?.length > 0) {
-                // used to defer the send event until the files are uploaded
-                const deferredRef: { resolve?: () => void } = {}
-                options.beforeSendEventHook = new Promise((resolve) => {
-                    deferredRef.resolve = resolve
-                })
-                // callback invoked when the local event has been added to the stream
-                options.onLocalEventAppended = async (localId: string) => {
+            const isLoadingUnfurledLinkAttachment = (
+                a: Attachment,
+            ): a is LoadingUnfurledLinkAttachment =>
+                a.type === 'unfurled_link' && 'isLoading' in a && a.isLoading === true
+
+            const pendingUnfurls = attachments
+                .filter(isLoadingUnfurledLinkAttachment)
+                .map((a) => a.url)
+
+            // used to defer the send event until the files are uploaded
+            const deferredRef: { resolve?: () => void } = {}
+            options.beforeSendEventHook = new Promise((resolve) => {
+                deferredRef.resolve = resolve
+            })
+            // callback invoked when the local event has been added to the stream
+            options.onLocalEventAppended = async (localId: string) => {
+                // check if there are files yet to upload, if so await until ready
+                if (uploadFiles && files?.length > 0) {
                     await uploadFiles(localId)
-                    deferredRef.resolve?.()
                 }
+
+                if (pendingUnfurls.length > 0) {
+                    // find the related and update the local event before sending on wire
+                    const stream = casablancaClient?.streams.get(channelId)
+                    const event = stream?.view.events.get(localId)
+                    const payload = event?.localEvent?.channelMessage.payload
+
+                    if (payload?.case === 'post' && payload.value.content?.case === 'text') {
+                        await Promise.race([
+                            // max timeout
+                            new Promise((resolve) => setTimeout(resolve, SECOND_MS * 10)),
+                            unfurlLinksToAttachments(pendingUnfurls, payload.value.content.value),
+                        ])
+
+                        // remove links that didn't unfurl in time
+                        payload.value.content.value.attachments =
+                            payload.value.content.value.attachments.filter(
+                                (a) =>
+                                    !(a.content.case === 'unfurledUrl' && !a.content.value.title),
+                            )
+                    }
+                }
+
+                deferredRef.resolve?.()
             }
 
             onSend(message, options)
@@ -318,9 +361,11 @@ const PlateEditorWithoutBoundary = ({
             onSend,
             embeddedMessageAttachments,
             unfurledLinkAttachments,
+            resetEditorAfterSend,
             uploadFiles,
             files?.length,
-            resetEditorAfterSend,
+            casablancaClient?.streams,
+            channelId,
         ],
     )
 
@@ -546,4 +591,39 @@ export const RichTextEditor = (props: Props) => {
             <MemoizedPlateEditor {...props} />
         </ErrorBoundary>
     )
+}
+
+const unfurlLinksToAttachments = async (
+    pending: string[],
+    payload: ChannelMessage_Post_Content_Text,
+) => {
+    const response = await getUnfurlContent(pending)
+    const data = response?.data
+
+    if (!Array.isArray(data)) {
+        return
+    }
+
+    for (const content of data) {
+        if (!isDefined(content)) {
+            continue
+        }
+        const unfurl = {
+            type: 'unfurled_link',
+            url: content.url,
+            title: content.title ?? '',
+            description: content.description ?? '',
+            image: content.image,
+            id: content.url,
+        } as const
+
+        const attachmentIndex = payload.attachments?.findIndex(
+            (a) => a.content.case === 'unfurledUrl' && unfurl.url === a.content.value.url,
+        )
+
+        if (attachmentIndex > -1) {
+            const transformedAttachements = transformAttachments([unfurl])
+            payload.attachments[attachmentIndex] = transformedAttachements[0]
+        }
+    }
 }

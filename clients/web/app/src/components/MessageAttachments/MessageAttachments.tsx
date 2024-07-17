@@ -14,6 +14,7 @@ import { Box, Stack, Text } from '@ui'
 import { isMediaMimeType } from 'utils/isMediaMimeType'
 import { RatioedBackgroundImage } from '@components/RatioedBackgroundImage'
 import { getTownParamsFromUrl } from 'utils/getTownParamsFromUrl'
+import { LoadingUnfurledLinkAttachment } from 'hooks/useExtractInternalLinks'
 import { MessageAttachmentsContext } from './MessageAttachmentsContext'
 
 const emptyArray: never[] = []
@@ -177,7 +178,9 @@ const EmbeddedMessageContainer = (props: {
     )
 }
 
-const UnfurledLinkAttachmentContainer = (props: UnfurledLinkAttachment) => {
+const UnfurledLinkAttachmentContainer = (
+    props: UnfurledLinkAttachment | LoadingUnfurledLinkAttachment,
+) => {
     const content = (
         <Box
             alignSelf="start"

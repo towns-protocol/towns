@@ -1,7 +1,6 @@
-import { isEqual, uniq, uniqBy } from 'lodash'
+import { isEqual, isEqualWith, uniq, uniqBy } from 'lodash'
 import { useMemo, useRef } from 'react'
 import { matchPath } from 'react-router'
-import { UnfurlData } from '@unfurl-worker/types'
 import { UnfurledLinkAttachment } from 'use-towns-client'
 import { useUnfurlContent } from 'api/lib/unfurl'
 import { PATHS } from 'routes'
@@ -18,6 +17,8 @@ export type EmbeddedMessageLink = {
     url: string
 }
 
+export type LoadingUnfurledLinkAttachment = UnfurledLinkAttachment & { isLoading: true }
+
 export const useExtractInternalLinks = (text: string): EmbeddedMessageLink[] => {
     const links = getTownsLinks(text)
     const linksRef = useRef(links)
@@ -31,17 +32,23 @@ export const useExtractInternalLinks = (text: string): EmbeddedMessageLink[] => 
 
 export const useExtractExternalLinks = (
     text: string,
-): { attachments: UnfurledLinkAttachment[]; isLoading: boolean } => {
+): {
+    attachments: (UnfurledLinkAttachment | LoadingUnfurledLinkAttachment)[]
+    isLoading: boolean
+} => {
     const links = getExternalLinks(text)
+
     const linksRef = useRef(links)
     const cleanLinks = useMemo(() => {
         const cleanLinks = uniq(links ?? [])
-        return isEqual(cleanLinks, linksRef.current)
+        return isEqualWith(cleanLinks, linksRef.current, (u) => u.href)
             ? linksRef.current
             : (linksRef.current = cleanLinks)
     }, [links])
+
+    // async fetch unfurled content
     const {
-        data: unfurledContent,
+        data: unfurledLinksQuery,
         isError,
         isLoading,
     } = useUnfurlContent({
@@ -50,21 +57,28 @@ export const useExtractExternalLinks = (
     })
 
     const unfurledLinks = useMemo(() => {
-        if (!unfurledContent || !Array.isArray(unfurledContent) || isError) {
-            return []
+        if (!unfurledLinksQuery || !Array.isArray(unfurledLinksQuery) || isError) {
+            return cleanLinks.map((link) => {
+                return {
+                    type: 'unfurled_link',
+                    isLoading: true,
+                    url: link.href,
+                    id: link.href,
+                } as LoadingUnfurledLinkAttachment
+            })
+        } else {
+            return unfurledLinksQuery.map((value) => {
+                return {
+                    type: 'unfurled_link',
+                    url: value.url,
+                    title: value.title ?? '',
+                    description: value.description ?? '',
+                    image: value.image,
+                    id: value.url,
+                } satisfies UnfurledLinkAttachment
+            })
         }
-
-        return unfurledContent.map((unfurled: UnfurlData) => {
-            return {
-                type: 'unfurled_link',
-                url: unfurled.url,
-                title: unfurled.title ?? '',
-                description: unfurled.description ?? '',
-                image: unfurled.image,
-                id: unfurled.url,
-            } satisfies UnfurledLinkAttachment
-        })
-    }, [unfurledContent, isError])
+    }, [unfurledLinksQuery, isError, cleanLinks])
 
     return { attachments: unfurledLinks, isLoading }
 }
