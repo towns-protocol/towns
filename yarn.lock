@@ -9833,7 +9833,7 @@ __metadata:
     userop: ^0.3.7
     vitest: ^1.6.0
     zod: ^3.21.4
-    zustand: ^4.3.3
+    zustand: ^4.5.4
   languageName: unknown
   linkType: soft
 
@@ -19546,7 +19546,7 @@ __metadata:
     html-to-text: ^9.0.5
     http-status-codes: ^2.2.0
     idb: ^7.1.1
-    immer: ^10.0.1
+    immer: ^10.1.1
     jsdom: ^22.1.0
     json-stringify-safe: ^5.0.1
     linkify-it: ^5.0.0
@@ -19611,7 +19611,7 @@ __metadata:
     workbox-window: ^7.1.0
     yet-another-react-lightbox: ^3.12.2
     zod: ^3.21.4
-    zustand: ^4.3.3
+    zustand: ^4.5.4
   languageName: unknown
   linkType: soft
 
@@ -20104,10 +20104,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"immer@npm:^10.0.1, immer@npm:^10.0.3":
+"immer@npm:^10.0.3":
   version: 10.0.3
   resolution: "immer@npm:10.0.3"
   checksum: 76acabe6f40e752028313762ba477a5d901e57b669f3b8fb406b87b9bb9b14e663a6fbbf5a6d1ab323737dd38f4b2494a4e28002045b88948da8dbf482309f28
+  languageName: node
+  linkType: hard
+
+"immer@npm:^10.1.1":
+  version: 10.1.1
+  resolution: "immer@npm:10.1.1"
+  checksum: 07c67970b7d22aded73607193d84861bf786f07d47f7d7c98bb10016c7a88f6654ad78ae1e220b3c623695b133aabbf24f5eb8d9e8060cff11e89ccd81c9c10b
   languageName: node
   linkType: hard
 
@@ -27895,7 +27902,7 @@ __metadata:
     vite-tsconfig-paths: ^4.3.2
     vitest: ^1.6.0
     wagmi: ^1.4.12
-    zustand: ^4.3.3
+    zustand: ^4.5.4
   languageName: unknown
   linkType: soft
 
@@ -31277,7 +31284,7 @@ __metadata:
     ts-jest: ^29.1.1
     typescript: ^5.1.6
     viem: ^1.18.2
-    zustand: ^4.3.3
+    zustand: ^4.5.4
   languageName: unknown
   linkType: soft
 
@@ -33251,7 +33258,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zustand@npm:^4.3.1, zustand@npm:^4.3.2, zustand@npm:^4.3.3, zustand@npm:^4.5.2":
+"zustand@npm:^4.3.1, zustand@npm:^4.3.2, zustand@npm:^4.5.2":
   version: 4.5.2
   resolution: "zustand@npm:4.5.2"
   dependencies:
@@ -33268,6 +33275,26 @@ __metadata:
     react:
       optional: true
   checksum: 160052a7faaefbaad1071e890a06e5d7a04f6ff6985def30a7b4471f4ddbdd1d30bb05b3688a2777cd0b717d1f0d98dad24883a5caa3deeb3afb4d83b6dabc55
+  languageName: node
+  linkType: hard
+
+"zustand@npm:^4.5.4":
+  version: 4.5.4
+  resolution: "zustand@npm:4.5.4"
+  dependencies:
+    use-sync-external-store: 1.2.0
+  peerDependencies:
+    "@types/react": ">=16.8"
+    immer: ">=9.0.6"
+    react: ">=16.8"
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+    immer:
+      optional: true
+    react:
+      optional: true
+  checksum: 8e824aea8b5232f9a719c6d33e016272a0dae8c69a0980a3e2aefbcf2a89379b343af1f2dace340f45f788ec8d8a55a56d037c53498b3b05b91e985d26cae047
   languageName: node
   linkType: hard
 

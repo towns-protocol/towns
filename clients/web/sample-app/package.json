@@ -42,7 +42,7 @@
         "typescript": "^5.1.6",
         "use-towns-client": "workspace:^",
         "wagmi": "^1.4.12",
-        "zustand": "^4.3.3"
+        "zustand": "^4.5.4"
     },
     "devDependencies": {
         "@river-build/prettier-config": "workspace:^",
