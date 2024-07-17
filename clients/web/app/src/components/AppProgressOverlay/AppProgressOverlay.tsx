@@ -45,8 +45,8 @@ export const AppProgressOverlay = (props: { debug?: boolean }) => {
                         <TransitionContainer key={content.key}>
                             {content.element}
                             {props.debug && <AppOverlayDebugger debugText={appProgressOverlay} />}
+                            <AppBugReportButton topRight key="bug-report" />
                         </TransitionContainer>
-                        <AppBugReportButton topRight />
                     </>
                 ) : null}
             </AnimatePresence>
