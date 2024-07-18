@@ -2,15 +2,14 @@ FROM node:20-alpine
 
 WORKDIR /monorepo
 
-COPY . .
-
 RUN apk add --no-cache python3 py3-pip make build-base git bash
+
+COPY . .
 
 WORKDIR /monorepo/servers/notification-service
 
 RUN yarn install 
-RUN yarn prisma generate
-RUN yarn build
+RUN yarn build:turbo
 
 EXPOSE 80
 
