@@ -70,8 +70,11 @@ publicRoutes.get('/health', async (_req, res) => {
             Sync: syncMetricsResult,
         }
 
+        console.log('Health check', status)
+
         return res.status(StatusCodes.OK).json(status)
     } catch (error) {
+        console.error('Error in health check', error)
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
             status: 'DOWN',
             error: error,
