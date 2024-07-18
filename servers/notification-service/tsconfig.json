@@ -11,7 +11,7 @@
         "incremental": false,
         "isolatedModules": true,
         "lib": ["esnext", "dom"],
-        "module": "esnext",
+        "module": "CommonJS",
         "moduleResolution": "node",
         "noFallthroughCasesInSwitch": true,
         "noImplicitAny": true,

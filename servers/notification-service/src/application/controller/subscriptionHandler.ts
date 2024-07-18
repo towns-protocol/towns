@@ -22,7 +22,11 @@ export async function addSubscriptionHandler(request: Request, res: Response) {
         })
         return res.status(StatusCodes.OK).json(subscription)
     } catch (error) {
-        logger.error(error)
+        if (error instanceof Error) {
+            logger.error(`subscription error: ${error.message}, ${error.stack}`)
+        } else {
+            logger.error('subscription error: %o', error)
+        }
         return res.status(StatusCodes.UNPROCESSABLE_ENTITY).json({ error: 'Invalid data' })
     }
 }

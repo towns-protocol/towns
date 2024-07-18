@@ -8,28 +8,35 @@ const port = env.PORT
 
 logger.info('Starting notification service', process.env.NOTIFICATION_DATABASE_URL)
 
-try {
-    const app = await initializeApp()
-
-    const server = app.listen(port, () => {
-        logger.info(`notification service is running at http://localhost:${port}`)
-    })
-
-    // start syncing streams
+const run = async () => {
     try {
-        await StreamsMonitorService.instance.startMonitoringStreams()
-    } catch (error) {
-        logger.error('Failed to start monitoring streams', error)
-    }
+        const app = await initializeApp()
 
-    gracefulShutdown(server, {
-        onShutdown: async () => {
-            await StreamsMonitorService.instance.stopMonitoringStreams()
-        },
-        finally: () => {
-            logger.info('Notification service is shutting down')
-        },
-    })
-} catch (error) {
-    logger.error('Failed to start notification service', error)
+        const server = app.listen(port, () => {
+            logger.info(`notification service is running at http://localhost:${port}`)
+        })
+
+        // start syncing streams
+        try {
+            await StreamsMonitorService.instance.startMonitoringStreams()
+        } catch (error) {
+            logger.error('Failed to start monitoring streams', error)
+        }
+
+        gracefulShutdown(server, {
+            onShutdown: async () => {
+                await StreamsMonitorService.instance.stopMonitoringStreams()
+            },
+            finally: () => {
+                logger.info('Notification service is shutting down')
+            },
+        })
+    } catch (error) {
+        logger.error('Failed to start notification service', error)
+    }
 }
+
+run().catch((error) => {
+    logger.error('Failed to start notification service', error)
+    process.exit(1)
+})

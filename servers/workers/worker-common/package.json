@@ -4,7 +4,7 @@
     "author": "john@hntlabs.com",
     "packageManager": "yarn@3.8.0",
     "type": "module",
-    "main": "src/index.ts",
+    "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
         "build": "tsc",

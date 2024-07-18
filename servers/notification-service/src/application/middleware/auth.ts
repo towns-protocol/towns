@@ -21,7 +21,11 @@ export function validateAuthToken(req: Request, res: Response, next: NextFunctio
         }
         logger.info('secret and token do not match')
     } catch (error) {
-        logger.error(error)
+        if (error instanceof Error) {
+            logger.error(`auth error: ${error.message}, ${error.stack}`)
+        } else {
+            logger.error('auth error: %o', error)
+        }
     }
 
     res.status(StatusCodes.UNAUTHORIZED).json({ error: 'Unauthorized' })

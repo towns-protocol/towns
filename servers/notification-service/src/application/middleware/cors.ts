@@ -4,11 +4,11 @@ import {
     getLocalDomainOrigin,
     getOnRenderOrigin,
     getTownsOrigin,
-} from 'worker-common/src/cors'
-import { Environment } from 'worker-common/src/environment'
+} from 'worker-common'
+import type { Environment } from 'worker-common'
 import { env } from '../utils/environment'
 
-const cors = createCorsConfig({
+export const cors = createCorsConfig({
     origin: (origin, callback) => {
         const environment = env.NODE_ENV as Environment
 
@@ -67,5 +67,3 @@ function getOriginForCors(origin: string | undefined, environment: Environment):
     }
     return foundOrigin ?? ''
 }
-
-export { cors }
