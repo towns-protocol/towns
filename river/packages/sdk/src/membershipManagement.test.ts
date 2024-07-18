@@ -68,7 +68,7 @@ describe('membershipManagement', () => {
         const transaction = await spaceDapp.createSpace(
             {
                 spaceName: 'bobs-space-metadata',
-                spaceMetadata: 'bobs-space-metadata',
+                uri: 'http://bobs-space-metadata.com',
                 channelName: 'general', // default channel name
                 membership: membershipInfo,
             },

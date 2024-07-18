@@ -84,7 +84,7 @@ describe('mediaWithEntitlements', () => {
         const transaction = await spaceDapp.createSpace(
             {
                 spaceName: 'space-name',
-                spaceMetadata: 'bobs-space-metadata',
+                uri: 'http://bobs-space-metadata.com',
                 channelName: 'general', // default channel name
                 membership: membershipInfo,
             },
@@ -108,7 +108,7 @@ describe('mediaWithEntitlements', () => {
         const transaction2 = await spaceDapp.createSpace(
             {
                 spaceName: 'space2',
-                spaceMetadata: 'bobs-space2-metadata',
+                uri: 'bobs-space2-metadata',
                 channelName: 'general2', // default channel name
                 membership: membershipInfo,
             },

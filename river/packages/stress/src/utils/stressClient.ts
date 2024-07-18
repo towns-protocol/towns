@@ -147,7 +147,7 @@ export class StressClient {
         const transaction = await this.spaceDapp.createSpace(
             {
                 spaceName,
-                spaceMetadata: spaceName,
+                uri: '',
                 channelName: 'general', // default channel name
                 membership: membershipInfo,
             },

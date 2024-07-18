@@ -316,7 +316,7 @@ export class UserOps {
 
         const spaceInfo: IArchitectBase.SpaceInfoStruct = {
             name: createSpaceParams.spaceName,
-            uri: createSpaceParams.spaceMetadata,
+            uri: createSpaceParams.uri,
             shortDescription: createSpaceParams.shortDescription ?? '',
             longDescription: createSpaceParams.longDescription ?? '',
             membership: createSpaceParams.membership,

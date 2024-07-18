@@ -453,7 +453,7 @@ export class TownsClient
 
         const args: CreateSpaceParams = {
             spaceName: createSpaceInfo.name,
-            spaceMetadata: createSpaceInfo.name,
+            uri: '',
             channelName: createSpaceInfo.defaultChannelName ?? 'general', // default channel name
             membership,
             shortDescription: createSpaceInfo.shortDescription ?? '',

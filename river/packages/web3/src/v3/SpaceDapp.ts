@@ -240,7 +240,7 @@ export class SpaceDapp implements ISpaceDapp {
     ): Promise<ContractTransaction> {
         const spaceInfo = {
             name: params.spaceName,
-            uri: params.spaceMetadata,
+            uri: params.uri,
             membership: params.membership as any,
             channel: {
                 metadata: params.channelName || '',

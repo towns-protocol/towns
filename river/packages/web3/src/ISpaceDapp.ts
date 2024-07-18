@@ -22,7 +22,7 @@ export type SignerType = ethers.Signer
 
 export interface CreateSpaceParams {
     spaceName: string
-    spaceMetadata: string
+    uri: string
     channelName: string
     membership: MembershipStruct
     shortDescription?: string

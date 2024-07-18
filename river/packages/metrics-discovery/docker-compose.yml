@@ -1,6 +1,3 @@
-volumes:
-    prometheus_data: {}
-
 services:
     river-metrics-discovery:
         container_name: river-metrics-discovery
@@ -11,12 +8,14 @@ services:
             - ./prometheus/etc/:/river/packages/metrics-discovery/prometheus/etc:rw
         env_file:
             - ./.env
+        ports:
+            - '8080:8080'
 
     prometheus:
         depends_on:
-            - river-metrics-discovery
+            river-metrics-discovery:
+                condition: service_healthy
         container_name: prometheus
-        restart: always
         image: prom/prometheus:latest
         user: root
         labels:
@@ -26,7 +25,6 @@ services:
             # collect_counters_with_distributions
         volumes:
             - ./prometheus/etc:/prometheus/etc
-            - prometheus_data:/prometheus
         command:
             - --config.file=/prometheus/etc/prometheus.yml
             - --log.level=debug
@@ -35,8 +33,8 @@ services:
 
     datadog:
         depends_on:
-            - prometheus
-            - river-metrics-discovery
+            river-metrics-discovery:
+                condition: service_healthy
         container_name: datadog
         image: datadog/agent:7
         ports:

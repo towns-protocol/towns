@@ -56,6 +56,7 @@ export const UserOps = ({ spaceDapp }: { spaceDapp: ISpaceDapp }) => {
         factoryAddress: process.env.AA_FACTORY_ADDRESS,
         paymasterProxyAuthSecret: process.env.AA_PAYMASTER_PROXY_AUTH_SECRET!,
         skipPromptUserOnPMRejectedOp: true,
+        fetchAccessTokenFn: undefined,
     })
 }
 
@@ -107,7 +108,7 @@ export async function createUngatedSpace({
 
     const townInfo = {
         spaceName: name,
-        spaceMetadata: name,
+        uri: name,
         channelName,
         membership: membershipInfo,
     } satisfies CreateSpaceParams
@@ -157,7 +158,7 @@ export async function createGatedSpace({
 
     const townInfo = {
         spaceName: name,
-        spaceMetadata: name,
+        uri: name,
         channelName,
         membership: membershipInfo,
     } satisfies CreateSpaceParams
@@ -207,7 +208,7 @@ export async function createFixedPriceSpace({
 
     const townInfo = {
         spaceName: name,
-        spaceMetadata: name,
+        uri: name,
         channelName,
         membership: membershipInfo,
     } satisfies CreateSpaceParams

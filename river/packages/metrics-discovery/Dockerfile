@@ -28,11 +28,13 @@ COPY ./packages/proto /river/packages/proto
 COPY ./packages/metrics-discovery /river/packages/metrics-discovery
 
 # install dependencies and build
-RUN apk add --no-cache git
+RUN apk add --no-cache git curl
 RUN corepack enable
 RUN yarn install
 RUN yarn build:metrics-discovery
 
 WORKDIR /river/packages/metrics-discovery
+
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD curl -f http://localhost:8080 || exit 1
 
 CMD [ "yarn", "start"]

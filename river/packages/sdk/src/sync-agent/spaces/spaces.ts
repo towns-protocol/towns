@@ -90,7 +90,7 @@ export class Spaces extends PersistedObservable<SpacesModel> {
         const transaction = await this.spaceDapp.createSpace(
             {
                 spaceName: params.spaceName,
-                spaceMetadata: params.spaceMetadata ?? params.spaceName,
+                uri: params.uri ?? '',
                 channelName: channelName,
                 membership: membershipInfo,
                 shortDescription: params.shortDescription,

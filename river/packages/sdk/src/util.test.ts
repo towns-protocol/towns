@@ -359,7 +359,7 @@ export async function createSpaceAndDefaultChannel(
     const transaction = await spaceDapp.createSpace(
         {
             spaceName: `${name}-space`,
-            spaceMetadata: `${name}-space-metadata`,
+            uri: `http://${name}-space-metadata.com`,
             channelName: 'general',
             membership,
         },
@@ -413,7 +413,7 @@ export async function createUserStreamAndSyncClient(
     const transaction = await spaceDapp.createSpace(
         {
             spaceName: `${name}-space`,
-            spaceMetadata: `${name}-space-metadata`,
+            uri: `${name}-space-metadata`,
             channelName: 'general',
             membership: membershipInfo,
         },
