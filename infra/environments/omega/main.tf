@@ -226,7 +226,7 @@ module "eth_balance_monitor" {
   subnet_ids = module.vpc.private_subnets
 
   river_registry_contract_address = module.system_parameters.river_registry_contract_address_parameter.value
-  base_registry_contract_address  = module.system_parameters.entitlement_checker_contract_address_parameter.value // entitlement checker is on base registry 
+  base_registry_contract_address  = module.system_parameters.entitlement_checker_contract_address_parameter.value // entitlement checker is on base registry
   space_owner_contract_address    = module.system_parameters.space_owner_contract_address_parameter.value
 
   base_chain_rpc_url_secret_arn  = local.global_remote_state.base_mainnet_metrics_rpc_url_secret.arn
