@@ -1,6 +1,6 @@
 import { Err, MemberPayload_Membership, MembershipOp, MiniblockHeader } from '@river-build/proto'
 import { StreamRpcClient, errorContains, makeStreamRpcClient } from './streamRpcClient'
-import { SyncedStreams, unpackStream } from './syncedStreams'
+import { NonceStats, SyncedStreams, unpackStream } from './syncedStreams'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './id'
 import { streamIdFromBytes, streamIdToBytes, userIdFromAddress } from './utils'
 
@@ -33,6 +33,38 @@ export class StreamsMonitorService implements IStreamsMonitorService {
             StreamsMonitorService._instance = new StreamsMonitorService()
         }
         return StreamsMonitorService._instance
+    }
+
+    public async healthCheck(): Promise<{
+        status: 'UP' | 'DOWN'
+        metrics?: NonceStats
+        error?: unknown
+    }> {
+        try {
+            const pingStat = await this.streams.healthCheck()
+            if (pingStat.duration === undefined) {
+                return { status: 'DOWN', error: 'ping duration is undefined' }
+            } else if (pingStat.duration > 1000) {
+                return { status: 'DOWN', error: 'ping duration is more than 1s' }
+            } else {
+                return { status: 'UP', metrics: pingStat }
+            }
+        } catch (error) {
+            console.error('Failed healthCheck', error)
+            let errorString: string = 'unset'
+
+            if (error instanceof Error) {
+                errorString = error.message
+            } else {
+                try {
+                    errorString = JSON.stringify(error)
+                } catch (jsonError) {
+                    errorString = 'Unknown error occurred'
+                }
+            }
+
+            return { status: 'DOWN', error: errorString }
+        }
     }
 
     private async getNewStreamsToMonitor(): Promise<StreamsMetadata> {

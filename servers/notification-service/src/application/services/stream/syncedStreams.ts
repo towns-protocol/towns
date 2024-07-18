@@ -73,12 +73,13 @@ const stateConstraints: Record<SyncState, Set<SyncState>> = {
     [SyncState.Canceling]: new Set([SyncState.NotSyncing]),
 }
 
-interface NonceStats {
+export interface NonceStats {
     sequence: number
     nonce: string
     pingAt: number
     receivedAt?: number
     duration?: number
+    callback?: (value: NonceStats | PromiseLike<NonceStats>) => void
 }
 
 interface Nonces {
@@ -315,12 +316,6 @@ export class SyncedStreams {
                                 syncCookies.push(SyncCookie.fromJsonString(dbStream.SyncCookie))
                             }
 
-                            if (syncCookies.length === 0) {
-                                logger.info('no syncCookies found')
-                                await this.attemptRetry()
-                                continue
-                            }
-
                             // syncId needs to be reset before starting a new syncStreams
                             // syncStreams() should return a new syncId
                             this.syncId = undefined
@@ -386,6 +381,9 @@ export class SyncedStreams {
                                             pingStats.receivedAt = performance.now()
                                             pingStats.duration =
                                                 pingStats.receivedAt - pingStats.pingAt
+                                            if (pingStats.callback) {
+                                                pingStats.callback(pingStats)
+                                            }
                                         } else {
                                             logger.error(`pong nonce not found ${value.pongNonce}`)
                                             this.printNonces()
@@ -895,6 +893,39 @@ export class SyncedStreams {
         )
 
         logger.info(`notificationsSentCount ${notificationsSentCount}`)
+    }
+
+    public async healthCheck(): Promise<NonceStats> {
+        return new Promise<NonceStats>((resolve, reject) => {
+            if (this.syncState !== SyncState.Syncing) {
+                reject(new Error('not syncing'))
+                return
+            }
+            if (!this.syncId) {
+                reject(new Error('no syncId'))
+                return
+            }
+            try {
+                const nonce = generateRandomUUID()
+                this.pingInfo.nonces[nonce] = {
+                    sequence: this.pingInfo.currentSequence++,
+                    nonce,
+                    pingAt: performance.now(),
+                    callback: resolve,
+                }
+                this.rpcClient
+                    .pingSync({
+                        syncId: this.syncId,
+                        nonce,
+                    })
+                    .catch((error) => {
+                        console.error('pingSync error', error)
+                        reject(error)
+                    })
+            } catch (error) {
+                reject(error)
+            }
+        })
     }
 
     private sendKeepAlivePings() {
