@@ -145,6 +145,16 @@ resource "aws_iam_role_policy" "iam_policy" {
           "${aws_secretsmanager_secret.push_notification_auth_token_secret.arn}",
           "${local.global_remote_state.notification_service_db_password_secret.arn}"
         ]
+      },
+      {
+        "Effect" : "Allow",
+        "Action" : [
+          "ssmmessages:CreateControlChannel",
+          "ssmmessages:CreateDataChannel",
+          "ssmmessages:OpenControlChannel",
+          "ssmmessages:OpenDataChannel"
+        ],
+        "Resource" : "*"
       }
     ]
   }
