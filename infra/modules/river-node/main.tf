@@ -30,24 +30,8 @@ locals {
     }
   )
 
-  dd_agent_tags = merge(
-    module.global_constants.tags,
-    {
-      Service  = "dd-agent"
-      Node_Url = local.node_url
-    }
-  )
-
-  dd_required_tags = "env:${terraform.workspace}, node_url:${local.node_url}"
-
   total_vcpu   = var.is_transient ? 2048 : 4096
   total_memory = var.is_transient ? 4096 : 30720
-
-  dd_agent_cpu   = local.total_vcpu * 0.25
-  river_node_cpu = local.total_vcpu * 0.75
-
-  dd_agent_memory   = 1024
-  river_node_memory = local.total_memory - local.dd_agent_memory
 
   ephemeral_storage_size_in_gib = var.is_transient ? 21 : 100
 }
@@ -240,7 +224,6 @@ resource "aws_iam_role_policy" "river_node_credentials" {
         "Resource": [
           "${local.shared_credentials.db_password.arn}",
           "${local.shared_credentials.wallet_private_key.arn}",
-          "${local.global_remote_state.river_global_dd_agent_api_key.arn}",
           "${local.global_remote_state.river_sepolia_rpc_url_secret.arn}",
           "${local.global_remote_state.river_mainnet_rpc_url_secret.arn}",
           "${local.global_remote_state.base_sepolia_rpc_url_secret.arn}",
@@ -374,9 +357,6 @@ resource "aws_ecs_task_definition" "river-fargate" {
       protocol      = "tcp"
     }]
 
-    cpu    = local.river_node_cpu
-    memory = local.river_node_memory
-
     secrets = concat([
       {
         name      = "ARCHITECTCONTRACT__ADDRESS"
@@ -419,12 +399,6 @@ resource "aws_ecs_task_definition" "river-fargate" {
       local.river_chain_default_td_secret_config,
       local.wallet_private_key_td_secret_config
     )
-
-    dockerLabels = {
-      "com.datadoghq.ad.check_names"  = "[\"openmetrics\"]",
-      "com.datadoghq.ad.init_configs" = "[{}]",
-      "com.datadoghq.ad.instances"    = "[{\"openmetrics_endpoint\": \"${local.node_url}/metrics\", \"namespace\": \"river_node\", \"metrics\": [\".*\"], \"collect_counters_with_distributions\": true}]"
-    }
 
     environment = concat([
       {
@@ -476,22 +450,10 @@ resource "aws_ecs_task_definition" "river-fargate" {
         value = "true"
       },
       {
-        name  = "DD_TAGS",
-        value = local.dd_required_tags
-      },
-      {
         # TODO: check with serge if this can be set to false on archive nodes
         # TODO: try again with the new version of the archive node
         name  = "STANDBYONSTART",
         value = local.run_mode == "archive" ? "false" : "true"
-      },
-      {
-        name  = "PERFORMANCETRACKING__PROFILINGENABLED",
-        value = "true"
-      },
-      {
-        name  = "PERFORMANCETRACKING__TRACINGENABLED",
-        value = "true"
       },
       {
         name  = "DATABASE__HOST",
@@ -535,47 +497,6 @@ resource "aws_ecs_task_definition" "river-fargate" {
         "awslogs-stream-prefix" = local.node_name
       }
     }
-    },
-    {
-      name      = "dd-agent"
-      image     = "public.ecr.aws/datadog/agent:7"
-      essential = true
-      portMappings = [{
-        "containerPort" : 8126,
-        "hostPort" : 8126,
-        "protocol" : "tcp"
-      }]
-
-      cpu    = local.dd_agent_cpu
-      memory = local.dd_agent_memory
-
-      secrets = [{
-        name      = "DD_API_KEY"
-        valueFrom = local.global_remote_state.river_global_dd_agent_api_key.arn
-      }]
-
-      environment = [
-        {
-          name  = "DD_SITE",
-          value = "datadoghq.com"
-        },
-        {
-          name  = "ECS_FARGATE",
-          value = "true"
-        },
-        {
-          name  = "DD_APM_ENABLED",
-          value = "true"
-        },
-        {
-          name  = "DD_PROCESS_AGENT_PROCESS_COLLECTION_ENABLED",
-          value = "true"
-        },
-        {
-          name  = "DD_TAGS",
-          value = local.dd_required_tags
-        },
-      ]
     }
   ])
 

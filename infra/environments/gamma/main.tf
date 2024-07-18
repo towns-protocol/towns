@@ -248,6 +248,17 @@ module "stress_tests" {
   river_chain_rpc_url_secret_arn = local.global_remote_state.river_sepolia_rpc_url_secret.arn
 }
 
+module "metrics_aggregator" {
+  source = "../../modules/metrics-aggregator"
+
+  vpc_id                         = module.vpc.vpc_id
+  river_chain_rpc_url_secret_arn = local.global_remote_state.river_sepolia_rpc_url_secret.arn
+  subnets                        = module.vpc.private_subnets
+  ecs_cluster = {
+    id   = aws_ecs_cluster.river_ecs_cluster.id
+    name = aws_ecs_cluster.river_ecs_cluster.name
+  }
+}
 
 data "cloudflare_zone" "zone" {
   name = module.global_constants.primary_hosted_zone_name
