@@ -12,40 +12,37 @@ import { PublicTownPage } from 'routes/PublicTownPage/PublicTownPage'
 import { NotificationRoute } from 'routes/NotificationRoute'
 import { env } from 'utils'
 import { DebugRoute } from '@components/DebugBar/DebugBar'
-import { PrivyWrapper } from 'privy/PrivyProvider'
 
 export const AllRoutes = React.memo(() => {
     const { isAuthenticated } = useConnectivity()
 
     return (
-        <PrivyWrapper>
-            <>
-                <NotificationRoute />
-                <Routes>
-                    <Route element={<ResponsiveOutlet />}>
-                        {/* TODO: Remove extra level */}
-                        <Route element={<Outlet />}>
-                            <>
-                                {!isAuthenticated ? (
-                                    <>
-                                        <Route
-                                            path={`${PATHS.SPACES}/:spaceSlug/*`}
-                                            element={<PublicTownPage />}
-                                        />
-                                        <Route path="*" element={<WelcomeRoute />} />
-                                    </>
-                                ) : (
-                                    <Route path="*" element={<AuthenticatedRoutes />} />
-                                )}
-                            </>
-                        </Route>
-
-                        <Route path="/playground/*" element={<PlaygroundLazy />} />
-                        {env.DEV && <Route path="/env" element={<DebugRoute />} />}
+        <>
+            <NotificationRoute />
+            <Routes>
+                <Route element={<ResponsiveOutlet />}>
+                    {/* TODO: Remove extra level */}
+                    <Route element={<Outlet />}>
+                        <>
+                            {!isAuthenticated ? (
+                                <>
+                                    <Route
+                                        path={`${PATHS.SPACES}/:spaceSlug/*`}
+                                        element={<PublicTownPage />}
+                                    />
+                                    <Route path="*" element={<WelcomeRoute />} />
+                                </>
+                            ) : (
+                                <Route path="*" element={<AuthenticatedRoutes />} />
+                            )}
+                        </>
                     </Route>
-                </Routes>
-            </>
-        </PrivyWrapper>
+
+                    <Route path="/playground/*" element={<PlaygroundLazy />} />
+                    {env.DEV && <Route path="/env" element={<DebugRoute />} />}
+                </Route>
+            </Routes>
+        </>
     )
 })
 
