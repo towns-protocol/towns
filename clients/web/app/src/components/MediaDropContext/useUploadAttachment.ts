@@ -155,11 +155,16 @@ export const useUploadAttachment = () => {
             spaceId: string | undefined,
             file: File,
             setProgress: (progress: number) => void,
+            setError: () => void,
         ) => {
-            if (isMediaMimeType(file.type)) {
-                return await uploadImageFile(channelId, spaceId, file, setProgress)
-            } else {
-                return await uploadFile(channelId, spaceId, file, setProgress)
+            try {
+                if (isMediaMimeType(file.type)) {
+                    return await uploadImageFile(channelId, spaceId, file, setProgress)
+                } else {
+                    return await uploadFile(channelId, spaceId, file, setProgress)
+                }
+            } catch (e) {
+                setError()
             }
         },
         [uploadImageFile, uploadFile],

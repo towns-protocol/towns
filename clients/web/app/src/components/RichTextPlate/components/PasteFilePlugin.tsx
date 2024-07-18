@@ -68,7 +68,7 @@ type PastedFileProps = FileUpload & {
 }
 
 export const PastedFile = (props: PastedFileProps) => {
-    const { id, content, removeFile, sending, waitingToSend } = props
+    const { id, content, removeFile, sending, waitingToSend, failed } = props
 
     const info = useMemo(() => {
         if (content.kind === 'file') {
@@ -141,7 +141,7 @@ export const PastedFile = (props: PastedFileProps) => {
 
             {sending ? (
                 <Box position="absoluteCenter" overflow="hidden">
-                    <ButtonSpinner />
+                    <ButtonSpinner color={failed ? 'error' : undefined} />
                 </Box>
             ) : waitingToSend ? (
                 <IconButton

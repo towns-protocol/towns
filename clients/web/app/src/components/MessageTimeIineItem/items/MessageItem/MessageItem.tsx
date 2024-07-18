@@ -231,6 +231,7 @@ const MessageUploads = (props: { uploads: FileUpload[] }) => {
                         key={u.id}
                         content={u.content}
                         progress={u.progress}
+                        failed={u.failed}
                         waitingToSend={false}
                     />
                 ))}

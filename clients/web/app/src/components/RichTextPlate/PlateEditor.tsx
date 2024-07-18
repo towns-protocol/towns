@@ -12,7 +12,6 @@ import {
     transformAttachments,
     useChannelId,
     useChannelMembers,
-    useNetworkStatus,
     useTownsContext,
     useUserLookupArray,
     useUserLookupContext,
@@ -67,7 +66,6 @@ import { EmojiPlugin } from './plugins/emoji/EmojiPlugin'
 import { OnFocusPlugin } from './plugins/OnFocusPlugin'
 import { PasteFilePlugin } from './components/PasteFilePlugin'
 import { CaptureLinkAttachmentsPlugin } from './components/CaptureLinkAttachmentsPlugin'
-import { OfflineIndicator } from './components/OfflineIndicator'
 
 type Props = {
     onSend?: (value: string, options: SendTextMessageOptions | undefined) => void
@@ -114,7 +112,6 @@ const PlateEditorWithoutBoundary = ({
     const editableContainerRef = useRef<HTMLDivElement>(null)
 
     const { isTouch } = useDevice()
-    const { isOffline } = useNetworkStatus()
     const { uploadFiles, files } = useMediaDropContext()
     const { inlineReplyPreview, onCancelInlineReply } = useInlineReplyAttchmentPreview()
     const [isSendingMessage, setIsSendingMessage] = useState(false)
@@ -130,7 +127,7 @@ const PlateEditorWithoutBoundary = ({
     const [unfurledLinkAttachments, setUnfurledAttachments] = useState<
         (UnfurledLinkAttachment | LoadingUnfurledLinkAttachment)[]
     >([])
-    const disabled = isOffline || !editable || isSendingMessage
+    const disabled = !editable || isSendingMessage
     const disabledSend = typeof onSend !== 'function'
     const hasInlinePreview = !!inlineReplyPreview
 
@@ -502,11 +499,9 @@ const PlateEditorWithoutBoundary = ({
                             items={channelMentions}
                             filter={channelMentionFilter}
                         />
-                        {!isTouch && <OfflineIndicator attemptingToSend={isAttemptingSend} />}
                         <RememberInputPlugin storageId={storageId} />
                         {!isEditing && sendButtons}
                     </Stack>
-                    {isTouch && <OfflineIndicator attemptingToSend={isAttemptingSend} />}
                     {unfurledLinkAttachments.length > 0 && (
                         <Box horizontal gap padding flexWrap="wrap" width="100%">
                             {unfurledLinkAttachments.map((attachment) => (

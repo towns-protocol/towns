@@ -16,4 +16,5 @@ export type FileUpload<T extends AttachmentContent = AttachmentContent> = {
     id: string
     content: T
     progress: number
+    failed?: boolean
 }

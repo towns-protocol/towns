@@ -14,6 +14,10 @@ type UploadStoreState = {
         uploadContext: { messageId: string; uploadId: string },
         progress: number,
     ) => void
+    setUploadFailed: (
+        uploadContext: { messageId: string; uploadId: string },
+        failed?: boolean,
+    ) => void
 }
 
 export const useUploadStore = create<UploadStoreState>((set) => ({
@@ -51,6 +55,34 @@ export const useUploadStore = create<UploadStoreState>((set) => ({
                 delete newUploads[messageId]
                 return { uploads: newUploads }
             }
+            return {
+                uploads: {
+                    ...state.uploads,
+                    [messageId]: {
+                        context: messageUploads.context,
+                        uploads,
+                    },
+                },
+            }
+        })
+    },
+    setUploadFailed: (
+        { messageId, uploadId }: { messageId: string; uploadId: string },
+        failed = true,
+    ) => {
+        set((state) => {
+            const messageUploads = state.uploads[messageId]
+            if (!messageUploads) {
+                return state
+            }
+
+            const uploads = messageUploads.uploads.map((upload) => {
+                if (upload.id === uploadId) {
+                    return { ...upload, failed, progress: 0 }
+                }
+                return upload
+            })
+
             return {
                 uploads: {
                     ...state.uploads,
