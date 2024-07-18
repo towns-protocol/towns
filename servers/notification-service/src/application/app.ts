@@ -15,7 +15,7 @@ export async function initializeApp() {
     const app = express()
 
     const skip = function (req: Request) {
-        return req.url === '/health' || req.method === 'OPTIONS'
+        return req.method === 'OPTIONS'
     }
 
     // Middlewares

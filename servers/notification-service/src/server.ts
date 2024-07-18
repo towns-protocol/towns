@@ -6,7 +6,7 @@ import { logger } from './application/logger'
 
 const port = env.PORT
 
-console.log('Starting notification service', process.env.NOTIFICATION_DATABASE_URL)
+logger.info('Starting notification service', process.env.NOTIFICATION_DATABASE_URL)
 
 try {
     const app = await initializeApp()

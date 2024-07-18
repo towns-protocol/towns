@@ -4,7 +4,7 @@ import { logger } from '../logger'
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function handleGlobalError(error: Error, req: Request, res: Response, next: NextFunction) {
-    logger.error(error)
+    logger.error('handleGlobalError', error.message + ' ' + error.stack)
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).send('Internal Server Error')
 }
 

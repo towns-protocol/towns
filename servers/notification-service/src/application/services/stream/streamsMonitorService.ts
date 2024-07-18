@@ -50,7 +50,7 @@ export class StreamsMonitorService implements IStreamsMonitorService {
                 return { status: 'UP', metrics: pingStat }
             }
         } catch (error) {
-            console.error('Failed healthCheck', error)
+            logger.error('Failed healthCheck', error)
             let errorString: string = 'unset'
 
             if (error instanceof Error) {

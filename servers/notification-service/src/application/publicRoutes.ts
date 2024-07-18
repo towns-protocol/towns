@@ -4,6 +4,7 @@ import { database } from './prisma'
 import { Metrics } from '@prisma/client/runtime/library'
 import { StreamsMonitorService } from './services/stream/streamsMonitorService'
 import { NonceStats } from './services/stream/syncedStreams'
+import { logger } from './logger'
 
 export const publicRoutes = Router()
 
@@ -55,6 +56,7 @@ const healthCheckPrisma = async () => {
 }
 
 publicRoutes.get('/health', async (_req, res) => {
+    logger.info('Health check called')
     try {
         const syncMetricsPromise = Promise.race([healthCheckSync(), createTimeoutPromise(5000)])
 
@@ -70,14 +72,16 @@ publicRoutes.get('/health', async (_req, res) => {
             Sync: syncMetricsResult,
         }
 
-        console.log('Health check', status)
+        logger.info('Health check', status)
 
         return res.status(StatusCodes.OK).json(status)
     } catch (error) {
-        console.error('Error in health check', error)
+        logger.error('Error in health check', error)
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
             status: 'DOWN',
             error: error,
         })
+    } finally {
+        logger.info('Health check finished')
     }
 })
