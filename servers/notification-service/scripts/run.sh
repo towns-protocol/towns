@@ -34,7 +34,7 @@ function mount_notification_dabase_url() {
     local db_schema="notification_service"
 
     # using the db env vars, contsruct a postgres db url:
-    export NOTIFICATION_DATABASE_URL="postgresql://$DB_USER:$DB_PASSWORD@$DB_HOST:$DB_PORT/$DB_DATABASE?schema=$db_schema"
+    export NOTIFICATION_DATABASE_URL="postgresql://$DB_USER:$DB_PASSWORD@$DB_HOST:$DB_PORT/$DB_DATABASE?schema=$db_schema&connection_limit=20"
 }
 
 function main() {
