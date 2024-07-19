@@ -6,10 +6,10 @@ RUN apk add --no-cache python3 py3-pip make build-base git bash
 
 COPY . .
 
-WORKDIR /monorepo/servers/notification-service
+RUN yarn 
+RUN yarn notification-service:build
 
-RUN yarn install 
-RUN yarn build:turbo
+WORKDIR /monorepo/servers/notification-service
 
 EXPOSE 80
 
