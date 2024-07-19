@@ -1,6 +1,6 @@
 generator client {
-  provider      = "prisma-client-js"
-  binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x", "linux-musl-openssl-3.0.x"]
+  provider        = "prisma-client-js"
+  binaryTargets   = ["native", "linux-musl-arm64-openssl-3.0.x", "linux-musl-openssl-3.0.x"]
   previewFeatures = ["metrics"]
 }
 
@@ -44,7 +44,8 @@ model UserSettingsChannel {
   ChannelMute  Mute         @default(default)
   UserSettings UserSettings @relation(fields: [UserId], references: [UserId], onDelete: Cascade, onUpdate: NoAction)
 
-  @@id([ChannelId, UserId])
+  @@id([UserId, ChannelId])
+  @@index([ChannelId, UserId])
 }
 
 model UserSettingsSpace {
@@ -53,7 +54,8 @@ model UserSettingsSpace {
   SpaceMute    Mute         @default(default)
   UserSettings UserSettings @relation(fields: [UserId], references: [UserId], onDelete: Cascade, onUpdate: NoAction)
 
-  @@id([SpaceId, UserId])
+  @@id([UserId, SpaceId])
+  @@index([SpaceId, UserId])
 }
 
 enum Mute {

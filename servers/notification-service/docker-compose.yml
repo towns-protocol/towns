@@ -1,6 +1,5 @@
 services:
     server:
-        platform: linux/amd64
         build:
             context: ../../
             dockerfile: ./servers/notification-service/Dockerfile
