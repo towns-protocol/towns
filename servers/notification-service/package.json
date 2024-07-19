@@ -6,7 +6,8 @@
     "packageManager": "yarn@3.8.0",
     "scripts": {
         "keys": "sh ./scripts/create-vapid-keys.sh",
-        "build": "prisma generate && yarn compile",
+        "build": "prisma generate && yarn typecheck && yarn compile",
+        "typecheck": "tsc --noEmit",
         "compile": "esbuild src/server.ts --sourcemap=inline --bundle --platform=node --target=node20 --format=cjs --outfile=dist/server.cjs",
         "db:create-migration:local": "dotenv -e .env.local -- yarn prisma migrate dev --name",
         "db:generate": "prisma generate",

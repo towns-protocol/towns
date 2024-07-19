@@ -163,7 +163,7 @@ async function upsertChannelAndSpaceSettings(
         upserts.push(
             tx.userSettingsSpace.upsert({
                 where: {
-                    SpaceId_UserId: {
+                    UserId_SpaceId: {
                         SpaceId: spaceSettings.spaceId,
                         UserId: userId,
                     },
@@ -192,9 +192,9 @@ async function upsertChannelAndSpaceSettings(
         upserts.push(
             tx.userSettingsChannel.upsert({
                 where: {
-                    ChannelId_UserId: {
-                        ChannelId: newSettings.ChannelId,
+                    UserId_ChannelId: {
                         UserId: userId,
+                        ChannelId: channelSettings.channelId,
                     },
                 },
                 update: { ChannelMute: newSettings.ChannelMute },

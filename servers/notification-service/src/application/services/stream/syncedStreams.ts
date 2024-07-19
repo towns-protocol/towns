@@ -849,7 +849,7 @@ export class SyncedStreams {
         })
         await database.userSettingsChannel.upsert({
             where: {
-                ChannelId_UserId: {
+                UserId_ChannelId: {
                     ChannelId: channelId,
                     UserId: userId,
                 },
@@ -871,7 +871,7 @@ export class SyncedStreams {
         })
         await database.userSettingsChannel.delete({
             where: {
-                ChannelId_UserId: {
+                UserId_ChannelId: {
                     ChannelId: channelId,
                     UserId: userId,
                 },
