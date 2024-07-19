@@ -58,6 +58,8 @@ export async function deleteNotificationSettingsHandler(req: Request, res: Respo
 }
 
 export async function getNotificationSettingsHandler(req: Request, res: Response) {
+    notificationServiceLogger.info('getNotificationSettings', req.body)
+
     const getNotificationParams: GetUserSettingsSchema = req.body
     const { userId } = getNotificationParams
 
