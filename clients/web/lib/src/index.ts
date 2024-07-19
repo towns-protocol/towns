@@ -53,6 +53,7 @@ export { useMyMemberships } from './hooks/use-my-memberships'
 export { useMyProfile } from './hooks/use-my-profile'
 export { useMyUserId } from './hooks/use-my-user-id'
 export { useNetworkStatus } from './hooks/use-network-status'
+export * from './hooks/use-pins'
 export {
     useRoleDetails,
     useMultipleRoleDetails,
