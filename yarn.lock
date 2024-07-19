@@ -18104,6 +18104,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"express-async-handler@npm:^1.2.0":
+  version: 1.2.0
+  resolution: "express-async-handler@npm:1.2.0"
+  checksum: ab9ebba8b8366954cb06ab87cf91fc974428993a97940c499114134ce33144f5d1ffad380e60a53a1569c3cd9501cb209e1fb57b1845a4fc8ff449937598f2f1
+  languageName: node
+  linkType: hard
+
 "express@npm:^4.18.2":
   version: 4.18.2
   resolution: "express@npm:4.18.2"
@@ -24917,6 +24924,7 @@ __metadata:
     esm: ^3.2.25
     express: ^4.18.2
     express-async-errors: ^3.1.1
+    express-async-handler: ^1.2.0
     helmet: ^7.1.0
     http-graceful-shutdown: ^3.1.13
     http-status-codes: ^2.2.0

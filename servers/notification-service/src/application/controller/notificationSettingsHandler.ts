@@ -32,11 +32,13 @@ export async function saveNotificationSettingsHandler(req: Request, res: Respons
             return
         } catch (e) {
             logger.error('saveSettings error', e)
-            return res.status(StatusCodes.UNPROCESSABLE_ENTITY).json({ error: 'Invalid data' })
+            res.status(StatusCodes.UNPROCESSABLE_ENTITY).json({ error: 'Invalid data' })
+            return
         }
     })
 
-    return res.status(StatusCodes.OK).json(userSettings)
+    res.status(StatusCodes.OK).json(userSettings)
+    return
 }
 
 export async function deleteNotificationSettingsHandler(req: Request, res: Response) {
@@ -45,12 +47,14 @@ export async function deleteNotificationSettingsHandler(req: Request, res: Respo
 
     try {
         await database.userSettings.delete({ where: { UserId: userId } })
-        return res.sendStatus(StatusCodes.NO_CONTENT)
+        res.sendStatus(StatusCodes.NO_CONTENT)
+        return
     } catch (e) {
         logger.error('deleteSettings error', e)
     }
 
-    return res.status(StatusCodes.UNPROCESSABLE_ENTITY).json({ error: 'Invalid data' })
+    res.status(StatusCodes.UNPROCESSABLE_ENTITY).json({ error: 'Invalid data' })
+    return
 }
 
 export async function getNotificationSettingsHandler(req: Request, res: Response) {
@@ -67,10 +71,11 @@ export async function getNotificationSettingsHandler(req: Request, res: Response
         })
 
         if (!userSettings) {
-            return res.status(StatusCodes.NOT_FOUND).json({ error: 'User settings not found' })
+            res.status(StatusCodes.NOT_FOUND).json({ error: 'User settings not found' })
+            return
         }
 
-        return res.status(StatusCodes.OK).json({
+        res.status(StatusCodes.OK).json({
             userId,
             directMessage: userSettings.DirectMessage,
             mention: userSettings.Mention,
@@ -86,11 +91,13 @@ export async function getNotificationSettingsHandler(req: Request, res: Response
             })),
             blockedUsers: userSettings.BlockedUsers,
         })
+        return
     } catch (e) {
         logger.error('getSettings error', e)
     }
 
-    return res.status(StatusCodes.UNPROCESSABLE_ENTITY).json({ error: 'Invalid data' })
+    res.status(StatusCodes.UNPROCESSABLE_ENTITY).json({ error: 'Invalid data' })
+    return
 }
 
 export async function patchNotificationSettingsHandler(req: Request, res: Response) {
@@ -100,7 +107,8 @@ export async function patchNotificationSettingsHandler(req: Request, res: Respon
 
     const dbUserSettings = await database.userSettings.findUnique({ where: { UserId: userId } })
     if (!dbUserSettings) {
-        return res.status(StatusCodes.NOT_FOUND).json({ error: 'User settings not found' })
+        res.status(StatusCodes.NOT_FOUND).json({ error: 'User settings not found' })
+        return
     }
 
     const userSettingsData = {
@@ -132,10 +140,12 @@ export async function patchNotificationSettingsHandler(req: Request, res: Respon
         })
     } catch (e) {
         logger.error('updateSettings error', e)
-        return res.status(StatusCodes.UNPROCESSABLE_ENTITY).json({ error: 'Invalid data' })
+        res.status(StatusCodes.UNPROCESSABLE_ENTITY).json({ error: 'Invalid data' })
+        return
     }
 
-    return res.status(StatusCodes.OK).json(userSettings)
+    res.status(StatusCodes.OK).json(userSettings)
+    return
 }
 
 async function upsertChannelAndSpaceSettings(

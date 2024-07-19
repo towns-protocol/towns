@@ -12,26 +12,27 @@ import {
     saveNotificationSettingsHandler,
     patchNotificationSettingsHandler,
 } from './controller/notificationSettingsHandler'
+import asyncHandler from 'express-async-handler'
 
 export const notificationSettingsRouter = Router()
 
 notificationSettingsRouter.put(
     '/notification-settings',
     validateSchema(saveUserSettingsSchema),
-    saveNotificationSettingsHandler,
+    asyncHandler(saveNotificationSettingsHandler),
 )
 notificationSettingsRouter.patch(
     '/notification-settings',
     validateSchema(patchUserSettingsSchema),
-    patchNotificationSettingsHandler,
+    asyncHandler(patchNotificationSettingsHandler),
 )
 notificationSettingsRouter.delete(
     '/notification-settings',
     validateSchema(deleteUserSettingsSchema),
-    deleteNotificationSettingsHandler,
+    asyncHandler(deleteNotificationSettingsHandler),
 )
 notificationSettingsRouter.post(
     '/get-notification-settings',
     validateSchema(getUserSettingsSchema),
-    getNotificationSettingsHandler,
+    asyncHandler(getNotificationSettingsHandler),
 )

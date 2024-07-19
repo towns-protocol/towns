@@ -54,7 +54,9 @@ export async function tagHandler(request: Request, res: Response) {
         }
     }
     if (hasError) {
-        return res.status(StatusCodes.UNPROCESSABLE_ENTITY).json({ error: 'Invalid data' })
+        res.status(StatusCodes.UNPROCESSABLE_ENTITY).json({ error: 'Invalid data' })
+        return
     }
-    return res.status(StatusCodes.OK).json(tagData)
+    res.status(StatusCodes.OK).json(tagData)
+    return
 }

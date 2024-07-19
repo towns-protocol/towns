@@ -6,6 +6,8 @@ import { StreamsMonitorService } from './services/stream/streamsMonitorService'
 import { NonceStats } from './services/stream/syncedStreams'
 import { logger } from './logger'
 
+import asyncHandler from 'express-async-handler'
+
 export const publicRoutes = Router()
 
 type PrismaStatus = {
@@ -55,33 +57,41 @@ const healthCheckPrisma = async () => {
     }
 }
 
-publicRoutes.get('/health', async (_req, res) => {
-    logger.info('Health check called')
-    try {
-        const syncMetricsPromise = Promise.race([healthCheckSync(), createTimeoutPromise(5000)])
+publicRoutes.get(
+    '/health',
+    asyncHandler(async (_req, res) => {
+        logger.info('Health check called')
+        try {
+            const syncMetricsPromise = Promise.race([healthCheckSync(), createTimeoutPromise(5000)])
 
-        const prismaMetricsPromise = Promise.race([healthCheckPrisma(), createTimeoutPromise(5000)])
+            const prismaMetricsPromise = Promise.race([
+                healthCheckPrisma(),
+                createTimeoutPromise(5000),
+            ])
 
-        const [syncMetricsResult, databaseMetricsResult] = await Promise.all([
-            syncMetricsPromise,
-            prismaMetricsPromise,
-        ])
+            const [syncMetricsResult, databaseMetricsResult] = await Promise.all([
+                syncMetricsPromise,
+                prismaMetricsPromise,
+            ])
 
-        const status: Status = {
-            Prisma: databaseMetricsResult,
-            Sync: syncMetricsResult,
+            const status: Status = {
+                Prisma: databaseMetricsResult,
+                Sync: syncMetricsResult,
+            }
+
+            logger.info('Health check', status)
+
+            res.status(StatusCodes.OK).json(status)
+            return
+        } catch (error) {
+            logger.error('Error in health check', error)
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+                status: 'DOWN',
+                error: error,
+            })
+            return
+        } finally {
+            logger.info('Health check finished')
         }
-
-        logger.info('Health check', status)
-
-        return res.status(StatusCodes.OK).json(status)
-    } catch (error) {
-        logger.error('Error in health check', error)
-        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-            status: 'DOWN',
-            error: error,
-        })
-    } finally {
-        logger.info('Health check finished')
-    }
-})
+    }),
+)

@@ -20,14 +20,16 @@ export async function addSubscriptionHandler(request: Request, res: Response) {
                 UserId: subscriptionData.UserId,
             },
         })
-        return res.status(StatusCodes.OK).json(subscription)
+        res.status(StatusCodes.OK).json(subscription)
+        return
     } catch (error) {
         if (error instanceof Error) {
             logger.error(`subscription error: ${error.message}, ${error.stack}`)
         } else {
             logger.error('subscription error: %o', error)
         }
-        return res.status(StatusCodes.UNPROCESSABLE_ENTITY).json({ error: 'Invalid data' })
+        res.status(StatusCodes.UNPROCESSABLE_ENTITY).json({ error: 'Invalid data' })
+        return
     }
 }
 
@@ -42,12 +44,14 @@ export async function removeSubscriptionHandler(request: Request, res: Response)
     })
 
     if (!existingSubscription) {
-        return res.status(StatusCodes.NOT_FOUND).json({ error: 'Subscription not found' })
+        res.status(StatusCodes.NOT_FOUND).json({ error: 'Subscription not found' })
+        return
     }
 
     await database.pushSubscription.delete({
         where: subscriptionData,
     })
 
-    return res.sendStatus(StatusCodes.NO_CONTENT)
+    res.sendStatus(StatusCodes.NO_CONTENT)
+    return
 }
