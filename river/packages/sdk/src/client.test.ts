@@ -553,7 +553,7 @@ describe('clientTest', () => {
         await bobsClient.pin(bobsChannelId, eventId_1)
 
         await waitFor(() => {
-            const pin = channelStream.view.channelContent.pins.find(
+            const pin = channelStream.view.membershipContent.pins.find(
                 (e) => e.event.hashStr === eventId_1,
             )
             expect(pin).toBeDefined()
@@ -572,7 +572,7 @@ describe('clientTest', () => {
         await bobsClient.unpin(bobsChannelId, eventId_1)
 
         await waitFor(() => {
-            expect(channelStream.view.channelContent.pins.length).toBe(0)
+            expect(channelStream.view.membershipContent.pins.length).toBe(0)
         })
 
         await bobsClient.pin(bobsChannelId, eventId_1)
@@ -582,19 +582,19 @@ describe('clientTest', () => {
         await bobsClient.debugForceMakeMiniblock(bobsChannelId, { forceSnapshot: true })
 
         await waitFor(() => {
-            const pin = channelStream.view.channelContent.pins.find(
+            const pin = channelStream.view.membershipContent.pins.find(
                 (e) => e.event.hashStr === eventId_1,
             )
             expect(pin).toBeDefined()
         })
         await waitFor(() => {
-            const pin = channelStream.view.channelContent.pins.find(
+            const pin = channelStream.view.membershipContent.pins.find(
                 (e) => e.event.hashStr === eventId_2,
             )
             expect(pin).toBeDefined()
         })
         await waitFor(() => {
-            const pin = channelStream.view.channelContent.pins.find(
+            const pin = channelStream.view.membershipContent.pins.find(
                 (e) => e.event.hashStr === eventId_3,
             )
             expect(pin).toBeDefined()
@@ -606,8 +606,8 @@ describe('clientTest', () => {
 
         const rawStream = await bobsClient.getStream(bobsChannelId)
         expect(rawStream).toBeDefined()
-        expect(rawStream?.channelContent.pins.length).toBe(1)
-        expect(rawStream?.channelContent.pins[0].event.hashStr).toBe(eventId_3)
+        expect(rawStream?.membershipContent.pins.length).toBe(1)
+        expect(rawStream?.membershipContent.pins[0].event.hashStr).toBe(eventId_3)
 
         log('bobSendsSingleMessage done')
     })

@@ -18,7 +18,7 @@ import {
 import { KeySolicitationContent, UserDevice } from '@river-build/encryption'
 import { EncryptedContent } from './encryptedContentTypes'
 import { SyncState } from './syncedStreams'
-import { Pin } from './streamStateView_Channel'
+import { Pin } from './streamStateView_Members'
 
 export type StreamChange = {
     prepended?: RemoteTimelineEvent[]

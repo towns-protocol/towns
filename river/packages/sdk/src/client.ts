@@ -109,8 +109,8 @@ import {
     make_ChannelPayload_Redaction,
     make_MemberPayload_EnsAddress,
     make_MemberPayload_Nft,
-    make_ChannelPayload_Pin,
-    make_ChannelPayload_Unpin,
+    make_MemberPayload_Pin,
+    make_MemberPayload_Unpin,
 } from './types'
 
 import debug from 'debug'
@@ -875,7 +875,6 @@ export class Client
     }
 
     async pin(streamId: string, eventId: string) {
-        check(isChannelStreamId(streamId), 'streamId must be a valid channel streamId')
         const stream = this.streams.get(streamId)
         check(isDefined(stream), 'stream not found')
         const event = stream.view.events.get(eventId)
@@ -884,7 +883,7 @@ export class Client
         check(isDefined(remoteEvent), 'remoteEvent not found')
         await this.makeEventAndAddToStream(
             streamId,
-            make_ChannelPayload_Pin(remoteEvent.hash, remoteEvent.event),
+            make_MemberPayload_Pin(remoteEvent.hash, remoteEvent.event),
             {
                 method: 'pin',
             },
@@ -892,15 +891,14 @@ export class Client
     }
 
     async unpin(streamId: string, eventId: string) {
-        check(isChannelStreamId(streamId), 'streamId must be a valid channel streamId')
         const stream = this.streams.get(streamId)
         check(isDefined(stream), 'stream not found')
-        const pin = stream.view.channelContent.pins.find((x) => x.event.hashStr === eventId)
+        const pin = stream.view.membershipContent.pins.find((x) => x.event.hashStr === eventId)
         check(isDefined(pin), 'pin not found')
         check(isDefined(pin.event.remoteEvent), 'remoteEvent not found')
         await this.makeEventAndAddToStream(
             streamId,
-            make_ChannelPayload_Unpin(pin.event.remoteEvent.hash),
+            make_MemberPayload_Unpin(pin.event.remoteEvent.hash),
             {
                 method: 'unpin',
             },

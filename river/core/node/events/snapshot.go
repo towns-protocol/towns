@@ -215,19 +215,6 @@ func update_Snapshot_Channel(iSnapshot *Snapshot, channelPayload *ChannelPayload
 		return RiverError(Err_INVALID_ARGUMENT, "cannot update blockheader with inception event")
 	case *ChannelPayload_Message:
 		return nil
-	case *ChannelPayload_Pin_:
-		snapshot.ChannelContent.Pins = append(snapshot.ChannelContent.Pins, content.Pin)
-		return nil
-	case *ChannelPayload_Unpin_:
-		snapPins := snapshot.ChannelContent.Pins
-		for i, pin := range snapPins {
-			if bytes.Equal(pin.EventId, content.Unpin.EventId) {
-				snapPins = append(snapPins[:i], snapshot.ChannelContent.Pins[i+1:]...)
-				break
-			}
-		}
-		snapshot.ChannelContent.Pins = snapPins
-		return nil
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown channel payload type %T", content)
 	}
@@ -486,6 +473,21 @@ func update_Snapshot_Member(
 		}
 		member.Nft = content.Nft
 		return nil
+	case *MemberPayload_Pin_:
+		snappedPin := &MemberPayload_SnappedPin{Pin: content.Pin, CreatorAddress: creatorAddress}
+		snapshot.Pins = append(snapshot.Pins, snappedPin)
+		return nil
+	case *MemberPayload_Unpin_:
+		snapPins := snapshot.Pins
+		for i, snappedPin := range snapPins {
+			if bytes.Equal(snappedPin.Pin.EventId, content.Unpin.EventId) {
+				snapPins = append(snapPins[:i], snapshot.Pins[i+1:]...)
+				break
+			}
+		}
+		snapshot.Pins = snapPins
+		return nil
+	
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown membership payload type %T", memberPayload.Content)
 	}

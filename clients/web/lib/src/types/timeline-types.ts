@@ -50,6 +50,7 @@ export enum ZTEvent {
     Reaction = 'm.reaction',
     Fulfillment = 'm.fulfillment',
     KeySolicitation = 'm.key_solicitation',
+    Pin = 'm.pin',
     RedactedEvent = 'm.redacted_event',
     RedactionActionEvent = 'm.redaction_action',
     RoomAvatar = 'm.room.avatar',
@@ -72,6 +73,7 @@ export enum ZTEvent {
     SpaceDisplayName = 'm.space.display_name',
     SpaceEnsAddress = 'm.space.ens_name',
     SpaceNft = 'm.space.nft',
+    Unpin = 'm.unpin',
 }
 
 /// a timeline event should have one or none of the following fields set
@@ -81,6 +83,7 @@ export type TimelineEvent_OneOf =
     | ReactionEvent
     | FulfillmentEvent
     | KeySolicitationEvent
+    | PinEvent
     | RedactedEvent
     | RedactionActionEvent
     | RoomCanonicalAliasEvent
@@ -101,6 +104,7 @@ export type TimelineEvent_OneOf =
     | SpaceEnsAddressEvent
     | SpaceNftEvent
     | RoomMessageEncryptedRefEvent
+    | UnpinEvent
 
 export interface MiniblockHeaderEvent {
     kind: ZTEvent.MiniblockHeader
@@ -206,6 +210,18 @@ export interface SpaceNftEvent {
     contractAddress: string
     tokenId: string
     chainId: number
+}
+
+export interface PinEvent {
+    kind: ZTEvent.Pin
+    userId: string
+    pinnedEventId: string
+}
+
+export interface UnpinEvent {
+    kind: ZTEvent.Unpin
+    userId: string
+    unpinnedEventId: string
 }
 
 export interface RoomMessageEncryptedRefEvent {
@@ -497,6 +513,10 @@ export function getFallbackContent(
             return `eventId: ${content.eventId}`
         case ZTEvent.RoomMessageEncryptedWithRef:
             return `refEventId: ${content.refEventId}`
+        case ZTEvent.Pin:
+            return `pinnedEventId: ${content.pinnedEventId} by: ${content.userId}`
+        case ZTEvent.Unpin:
+            return `unpinnedEventId: ${content.unpinnedEventId} by: ${content.userId}`
         default:
             staticAssertNever(content)
     }

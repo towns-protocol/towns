@@ -296,12 +296,12 @@ export const make_MemberPayload_Nft = (
     }
 }
 
-export const make_ChannelPayload_Pin = (
+export const make_MemberPayload_Pin = (
     eventHash: Uint8Array,
     streamEvent: StreamEvent,
 ): PlainMessage<StreamEvent>['payload'] => {
     return {
-        case: 'channelPayload',
+        case: 'memberPayload',
         value: {
             content: {
                 case: 'pin',
@@ -311,11 +311,11 @@ export const make_ChannelPayload_Pin = (
     }
 }
 
-export const make_ChannelPayload_Unpin = (
+export const make_MemberPayload_Unpin = (
     eventId: Uint8Array,
 ): PlainMessage<StreamEvent>['payload'] => {
     return {
-        case: 'channelPayload',
+        case: 'memberPayload',
         value: {
             content: {
                 case: 'unpin',

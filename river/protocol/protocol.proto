@@ -162,6 +162,7 @@ message MemberPayload {
         }
         
         repeated Member joined = 1;
+        repeated SnappedPin pins = 2;
     }
 
     message Membership {
@@ -190,6 +191,20 @@ message MemberPayload {
         bytes token_id = 3;
     }
 
+    message SnappedPin {
+        bytes creator_address = 1;
+        Pin pin = 2;
+    }
+
+    message Pin { 
+        bytes event_id = 1;
+        StreamEvent event = 2;
+    }
+
+    message Unpin {
+        bytes event_id = 1;
+    }
+
     oneof content {
         Membership membership = 1;
         KeySolicitation key_solicitation = 2;
@@ -198,6 +213,8 @@ message MemberPayload {
         EncryptedData display_name = 5;
         bytes ens_address = 6;
         Nft nft = 7;
+        Pin pin = 8;
+        Unpin unpin = 9;
     }
 }
 
@@ -245,7 +262,6 @@ message ChannelPayload {
     message Snapshot {
         // inception
         Inception inception = 1;
-        repeated Pin pins = 2;
     }
     
     message Inception {
@@ -259,21 +275,10 @@ message ChannelPayload {
         bytes event_id = 1;
     }
 
-    message Pin { 
-        bytes event_id = 1;
-        StreamEvent event = 2;
-    }
-
-    message Unpin {
-        bytes event_id = 1;
-    }
-
     oneof content {
         Inception inception = 1;
         EncryptedData message = 2;
         Redaction redaction = 3;
-        Pin pin = 4;
-        Unpin unpin = 5;
     }
 }
 

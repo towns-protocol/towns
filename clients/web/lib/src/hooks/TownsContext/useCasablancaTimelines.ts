@@ -67,6 +67,8 @@ import {
     EmbeddedMessageAttachment,
     SpaceEnsAddressEvent,
     SpaceNftEvent,
+    PinEvent,
+    UnpinEvent,
 } from '../../types/timeline-types'
 import { useCallback } from 'react'
 import { bin_toHexString, check } from '@river-build/dlog'
@@ -524,6 +526,22 @@ function toTownsContent_MemberPayload(
                     chainId: value.content.value.chainId,
                 } satisfies SpaceNftEvent,
             }
+        case 'pin':
+            return {
+                content: {
+                    kind: ZTEvent.Pin,
+                    userId: message.creatorUserId,
+                    pinnedEventId: bin_toHexString(value.content.value.eventId),
+                } satisfies PinEvent,
+            }
+        case 'unpin':
+            return {
+                content: {
+                    kind: ZTEvent.Unpin,
+                    userId: message.creatorUserId,
+                    unpinnedEventId: bin_toHexString(value.content.value.eventId),
+                } satisfies UnpinEvent,
+            }
         case undefined:
             return { error: `Undefined payload case: ${description}` }
         default:
@@ -631,10 +649,6 @@ function toTownsContent_ChannelPayload(
                     adminRedaction: true,
                 } satisfies RedactionActionEvent,
             }
-        case 'pin':
-            return { error: `TODO PIN: ${description}` }
-        case 'unpin':
-            return { error: `TODO UNPIN: ${description}` }
         case undefined: {
             return { error: `Undefined payload case: ${description}` }
         }

@@ -52,9 +52,14 @@ type aeSpaceChannelRules struct {
 	channelUpdate *SpacePayload_ChannelUpdate
 }
 
-type aeChannelPinRules struct {
+type aePinRules struct {
 	params *aeParams
-	pin    *ChannelPayload_Pin
+	pin    *MemberPayload_Pin
+}
+
+type aeUnpinRules struct {
+	params *aeParams
+	unpin  *MemberPayload_Unpin
 }
 
 type aeMediaPayloadChunkRules struct {
@@ -91,7 +96,7 @@ type aeKeyFulfillmentRules struct {
 
   - @return canAddEvent bool // true if the event can be added to the stream, will be false in case of duplictate state
 
-  - @return chainAuthArgs *auth.ChainAuthArgs // on chain requirements for adding an event to the stream
+  - @return chainAuthArgsList *auth.ChainAuthArgs[] // a list of on chain requirements, such that, if defined, at least one must be satisfied in order to add the event to the stream
 
   - @return sideEffects *AddEventSideEffects // side effects that need to be executed before adding the event to the stream or on failures
 
@@ -195,25 +200,11 @@ func (params *aeParams) canAddChannelPayload(payload *StreamEvent_ChannelPayload
 	case *ChannelPayload_Message:
 		return aeBuilder().
 			check(params.creatorIsMember).
-			requireChainAuth(params.channelMessageWriteEntitlements).
-			requireChainAuth(params.channelMessageReactReplyEntitlements)
+			requireOneOfChainAuths(params.channelMessageWriteEntitlements, params.channelMessageReactReplyEntitlements)
 	case *ChannelPayload_Redaction_:
 		return aeBuilder().
 			check(params.creatorIsMember).
 			requireChainAuth(params.redactChannelMessageEntitlements)
-	case *ChannelPayload_Pin_:
-		pinRuls := &aeChannelPinRules{
-			params: params,
-			pin:    content.Pin,
-		}
-		return aeBuilder().
-			check(params.creatorIsMember).
-			check(pinRuls.validChannelPin).
-			requireChainAuth(params.channelMessageWriteEntitlements)
-	case *ChannelPayload_Unpin_:
-		return aeBuilder().
-			check(params.creatorIsMember).
-			requireChainAuth(params.channelMessageWriteEntitlements)
 	default:
 		return aeBuilder().
 			fail(unknownContentType(content))
@@ -452,7 +443,46 @@ func (params *aeParams) canAddMemberPayload(payload *StreamEvent_MemberPayload) 
 		return aeBuilder().
 			check(params.creatorIsMember).
 			check(ru.validNft)
-
+	case *MemberPayload_Pin_:
+		pinRuls := &aePinRules{
+			params: params,
+			pin:    content.Pin,
+		}
+		if shared.ValidSpaceStreamId(params.streamView.StreamId()) {
+			return aeBuilder().
+				check(params.creatorIsMember).
+				check(pinRuls.validPin).
+				requireChainAuth(params.spaceWriteEntitlements)
+		} else if shared.ValidChannelStreamId(params.streamView.StreamId()) {
+			return aeBuilder().
+				check(params.creatorIsMember).
+				check(pinRuls.validPin).
+				requireChainAuth(params.channelMessageWriteEntitlements)
+		} else {
+			return aeBuilder().
+				check(params.creatorIsMember).
+				check(pinRuls.validPin)
+		}
+	case *MemberPayload_Unpin_:
+		unpinRuls := &aeUnpinRules{
+			params: params,
+			unpin:  content.Unpin,
+		}
+		if shared.ValidSpaceStreamId(params.streamView.StreamId()) {
+			return aeBuilder().
+				check(params.creatorIsMember).
+				check(unpinRuls.validUnpin).
+				requireChainAuth(params.spaceWriteEntitlements)
+		} else if shared.ValidChannelStreamId(params.streamView.StreamId()) {
+			return aeBuilder().
+				check(params.creatorIsMember).
+				check(unpinRuls.validUnpin).
+				requireChainAuth(params.channelMessageWriteEntitlements)
+		} else {
+			return aeBuilder().
+				check(params.creatorIsMember).
+				check(unpinRuls.validUnpin)
+		}
 	default:
 		return aeBuilder().
 			fail(unknownContentType(content))
@@ -920,6 +950,26 @@ func (ru *aeMembershipRules) channelMembershipEntitlements() (*auth.ChainAuthArg
 	return chainAuthArgs, nil
 }
 
+func (params *aeParams) spaceWriteEntitlements() (*auth.ChainAuthArgs, error) {
+	spaceId := params.streamView.StreamId()
+
+	if !shared.ValidSpaceStreamId(spaceId) {
+		return nil, RiverError(Err_INVALID_ARGUMENT, "invalid space stream id", "streamId", spaceId)
+	}
+
+	permissionUser, err := shared.AddressHex(params.parsedEvent.Event.CreatorAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	chainAuthArgs := auth.NewChainAuthArgsForSpace(
+		*spaceId,
+		permissionUser,
+		auth.PermissionWrite,
+	)
+	return chainAuthArgs, nil
+}
+
 func (params *aeParams) channelMessageWriteEntitlements() (*auth.ChainAuthArgs, error) {
 	userId, err := shared.AddressHex(params.parsedEvent.Event.CreatorAddress)
 	if err != nil {
@@ -1141,9 +1191,9 @@ func (ru *aeMembershipRules) getPermissionForMembershipOp() (auth.Permission, st
 	}
 }
 
-func (ru *aeChannelPinRules) validChannelPin() (bool, error) {
+func (ru *aePinRules) validPin() (bool, error) {
 	if ru.pin == nil {
-		return false, RiverError(Err_INVALID_ARGUMENT, "event is not a channel pin event")
+		return false, RiverError(Err_INVALID_ARGUMENT, "event is not a pin event")
 	}
 	// check the hash
 	if len(ru.pin.EventId) != 32 {
@@ -1161,8 +1211,8 @@ func (ru *aeChannelPinRules) validChannelPin() (bool, error) {
 		return false, RiverError(Err_INVALID_ARGUMENT, "invalid message hash")
 	}
 
-	// cast as channel view state
-	view := ru.params.streamView.(events.ChannelStreamView)
+	// cast as joinable view state
+	view := ru.params.streamView.(events.JoinableStreamView)
 	// get existing pins
 	existingPins, err := view.GetPinnedMessages()
 	if err != nil {
@@ -1174,12 +1224,36 @@ func (ru *aeChannelPinRules) validChannelPin() (bool, error) {
 		return false, RiverError(Err_INVALID_ARGUMENT, "channel has too many pins")
 	}
 	// check if the hash is already pinned
-	for _, pin := range existingPins {
-		if bytes.Equal(pin.EventId, ru.pin.EventId) {
+	for _, snappedPin := range existingPins {
+		if bytes.Equal(snappedPin.Pin.EventId, ru.pin.EventId) {
 			return false, RiverError(Err_DUPLICATE_EVENT, "message is already pinned")
 		}
 	}
 	return true, nil
+}
+
+func (ru *aeUnpinRules) validUnpin() (bool, error) {
+	if ru.unpin == nil {
+		return false, RiverError(Err_INVALID_ARGUMENT, "event is not an unpin event")
+	}
+	// check the hash
+	if len(ru.unpin.EventId) != 32 {
+		return false, RiverError(Err_INVALID_ARGUMENT, "invalid message hash")
+	}
+	// cast as joinable view state
+	view := ru.params.streamView.(events.JoinableStreamView)
+	// get existing pins
+	existingPins, err := view.GetPinnedMessages()
+	if err != nil {
+		return false, err
+	}
+	// check if the hash is already pinned
+	for _, snappedPin := range existingPins {
+		if bytes.Equal(snappedPin.Pin.EventId, ru.unpin.EventId) {
+			return true, nil
+		}
+	}
+	return false, RiverError(Err_INVALID_ARGUMENT, "message is not pinned")
 }
 
 func (ru *aeSpaceChannelRules) validSpaceChannelOp() (bool, error) {

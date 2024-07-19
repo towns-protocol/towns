@@ -380,7 +380,6 @@ export class StreamStateView implements IStreamStateView {
                     this.membershipContent.appendEvent(
                         timelineEvent,
                         cleartext,
-                        payload.value,
                         encryptionEmitter,
                         stateEmitter,
                     )
@@ -423,12 +422,7 @@ export class StreamStateView implements IStreamStateView {
             check(isConfirmedEvent(event), `Event is not confirmed ${eventId}`)
             switch (event.remoteEvent.event.payload.case) {
                 case 'memberPayload':
-                    this.membershipContent.onConfirmedEvent(
-                        event,
-                        event.remoteEvent.event.payload.value,
-                        encryptionEmitter,
-                        stateEmitter,
-                    )
+                    this.membershipContent.onConfirmedEvent(event, stateEmitter)
                     break
                 case undefined:
                     break
@@ -462,7 +456,7 @@ export class StreamStateView implements IStreamStateView {
                 case 'memberPayload':
                     this.membershipContent.prependEvent(
                         timelineEvent,
-                        payload.value,
+                        cleartext,
                         encryptionEmitter,
                         stateEmitter,
                     )

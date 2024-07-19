@@ -21,6 +21,7 @@ type (
 		check(f func() (bool, error)) ruleBuilderAE
 		checkOneOf(f ...func() (bool, error)) ruleBuilderAE
 		requireChainAuth(f chainAuthFunc) ruleBuilderAE
+		requireOneOfChainAuths(f ...chainAuthFunc) ruleBuilderAE
 		requireParentEvent(f func() (*DerivedEvent, error)) ruleBuilderAE
 		onChainAuthFailure(f func() (*DerivedEvent, error)) ruleBuilderAE
 		fail(err error) ruleBuilderAE
@@ -62,7 +63,11 @@ func (re *ruleBuilderAEImpl) checkOneOf(f ...func() (bool, error)) ruleBuilderAE
 }
 
 func (re *ruleBuilderAEImpl) requireChainAuth(f chainAuthFunc) ruleBuilderAE {
-	re.chainAuths = append(re.chainAuths, f)
+	return re.requireOneOfChainAuths(f)
+}
+
+func (re *ruleBuilderAEImpl) requireOneOfChainAuths(f ...chainAuthFunc) ruleBuilderAE {
+	re.chainAuths = append(re.chainAuths, f...)
 	return re
 }
 
