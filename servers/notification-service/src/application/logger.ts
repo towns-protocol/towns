@@ -1,35 +1,51 @@
-import * as winston from 'winston'
-import { isProduction } from './utils/environment'
+import { format, transports, createLogger as winstonCreateLogger } from 'winston'
+import { env, isProduction } from './utils/environment'
 
 export function createLogger(label: string) {
-    let format
+    const metadataFormat = format.metadata({
+        fillExcept: ['message', 'level', 'timestamp', 'label'],
+    })
+    const labelFormat = format.label({ label })
+    const errorFormat = format.errors({ stack: true })
+
+    const devTransport = new transports.Console({
+        format: format.combine(
+            labelFormat,
+            metadataFormat,
+            errorFormat,
+            format.timestamp(),
+            format.colorize(),
+            format.align(),
+            format.printf((info) => {
+                const metadataString = info.metadata ? JSON.stringify(info.metadata, null, 2) : ''
+
+                return `${info.timestamp} - ${info.level}:  [${info.label}]: ${info.message} ${metadataString}`
+            }),
+        ),
+    })
+
+    const prodTransport = new transports.Console({
+        format: format.combine(
+            labelFormat,
+            metadataFormat,
+            errorFormat,
+            format.timestamp(),
+            format.json(),
+        ),
+    })
+
+    const logger = winstonCreateLogger({
+        level: env.LOG_LEVEL,
+        exitOnError: false,
+    })
 
     if (isProduction) {
-        format = winston.format.combine(
-            winston.format.label({ label }),
-            winston.format.timestamp(),
-            winston.format.json(),
-        )
+        logger.add(prodTransport)
     } else {
-        format = winston.format.combine(
-            winston.format.label({ label }),
-            winston.format.colorize(),
-            winston.format.timestamp(),
-            winston.format.printf((info) => {
-                const { timestamp, level, label, message, ...rest } = info
-                return `${timestamp} [${label}] ${level}: ${message} ${
-                    Object.keys(rest).length ? JSON.stringify(rest, null, 2) : ''
-                }`
-            }),
-        )
+        logger.add(devTransport)
     }
 
-    return winston.createLogger({
-        level: 'info',
-        exitOnError: false,
-        format,
-        transports: [new winston.transports.Console()],
-    })
+    return logger
 }
 
-export const logger = createLogger('notificationService')
+export const notificationServiceLogger = createLogger('notificationService')

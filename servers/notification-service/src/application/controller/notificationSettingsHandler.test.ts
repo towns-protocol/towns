@@ -9,7 +9,7 @@ import {
 } from './notificationSettingsHandler'
 import { database } from '../prisma'
 import { Mute } from '../notificationSettingsSchema'
-import { logger } from '../logger'
+import { notificationServiceLogger } from '../logger'
 
 jest.mock('./../prisma', () => ({
     database: {
@@ -78,12 +78,14 @@ describe('saveNotificationSettingsHandler', () => {
         const error = new Error('Database error')
         jest.spyOn(database, '$transaction').mockImplementation((callback) => callback(database))
         ;(database.userSettings.upsert as jest.Mock).mockRejectedValueOnce(error)
-        jest.spyOn(logger, 'error').mockImplementation(() => logger)
+        jest.spyOn(notificationServiceLogger, 'error').mockImplementation(
+            () => notificationServiceLogger,
+        )
 
         await saveNotificationSettingsHandler(req, res)
 
         expect(database.$transaction).toHaveBeenCalledTimes(1)
-        expect(logger.error).toHaveBeenCalledWith('saveSettings error', error)
+        expect(notificationServiceLogger.error).toHaveBeenCalledWith('saveSettings error', error)
         expect(res.status).toHaveBeenCalledWith(StatusCodes.UNPROCESSABLE_ENTITY)
         expect(res.json).toHaveBeenCalledWith({ error: 'Invalid data' })
     })
@@ -128,7 +130,7 @@ describe('deleteNotificationSettingsHandler', () => {
         await deleteNotificationSettingsHandler(req, res)
 
         expect(database.userSettings.delete).toHaveBeenCalledTimes(1)
-        expect(logger.error).toHaveBeenCalledWith('deleteSettings error', error)
+        expect(notificationServiceLogger.error).toHaveBeenCalledWith('deleteSettings error', error)
         expect(res.status).toHaveBeenCalledWith(StatusCodes.UNPROCESSABLE_ENTITY)
         expect(res.json).toHaveBeenCalledWith({ error: 'Invalid data' })
     })
@@ -207,7 +209,7 @@ describe('getNotificationSettingsHandler', () => {
         await getNotificationSettingsHandler(req, res)
 
         expect(database.userSettings.findUnique).toHaveBeenCalledTimes(1)
-        expect(logger.error).toHaveBeenCalledWith('getSettings error', error)
+        expect(notificationServiceLogger.error).toHaveBeenCalledWith('getSettings error', error)
         expect(res.status).toHaveBeenCalledWith(StatusCodes.UNPROCESSABLE_ENTITY)
         expect(res.json).toHaveBeenCalledWith({ error: 'Invalid data' })
     })
@@ -298,12 +300,14 @@ describe('patchNotificationSettingsHandler', () => {
         const error = new Error('Database error')
         jest.spyOn(database, '$transaction').mockImplementation((callback) => callback(database))
         ;(database.userSettings.upsert as jest.Mock).mockRejectedValueOnce(error)
-        jest.spyOn(logger, 'error').mockImplementation(() => logger)
+        jest.spyOn(notificationServiceLogger, 'error').mockImplementation(
+            () => notificationServiceLogger,
+        )
 
         await saveNotificationSettingsHandler(req, res)
 
         expect(database.$transaction).toHaveBeenCalledTimes(1)
-        expect(logger.error).toHaveBeenCalledWith('saveSettings error', error)
+        expect(notificationServiceLogger.error).toHaveBeenCalledWith('saveSettings error', error)
         expect(res.status).toHaveBeenCalledWith(StatusCodes.UNPROCESSABLE_ENTITY)
         expect(res.json).toHaveBeenCalledWith({ error: 'Invalid data' })
     })

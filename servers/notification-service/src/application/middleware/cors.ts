@@ -10,12 +10,13 @@ import { env } from '../utils/environment'
 
 export const cors = createCorsConfig({
     origin: (origin, callback) => {
-        const environment = env.NODE_ENV as Environment
-
+        // TODO: remove test-beta and migrate workers namespace to gamma.
+        // otherwise we'll keep having these leaky abstractions: https://linear.app/hnt-labs/issue/HNT-9360/remove-test-beta-workers-and-replace-them-with-gamma
+        const environment = env.RIVER_ENV === 'gamma' ? 'test-beta' : env.RIVER_ENV
         if (isAllowedOrigin(origin, environment)) {
             callback(null, true)
         } else {
-            callback(new Error(`Origin "${origin}" is not allowed in Env: ${env.NODE_ENV})`))
+            callback(new Error(`Origin "${origin}" is not allowed in Env: ${env.RIVER_ENV})`))
         }
     },
 })

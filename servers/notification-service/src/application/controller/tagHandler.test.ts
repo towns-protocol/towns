@@ -6,7 +6,7 @@ import { StatusCodes } from 'http-status-codes'
 import { database } from '../prisma'
 import { tagHandler } from './tagHandler'
 import { NotificationAttachmentKind, NotificationKind } from '../tagSchema'
-import { logger } from '../logger'
+import { notificationServiceLogger } from '../logger'
 
 jest.mock('./../prisma', () => ({
     database: {
@@ -277,7 +277,9 @@ describe('tagHandler', () => {
 
     it('should handle error and return UNPROCESSABLE ENTITY (422) status', async () => {
         const error = new Error('Invalid data')
-        jest.spyOn(logger, 'error').mockImplementation(() => logger)
+        jest.spyOn(notificationServiceLogger, 'error').mockImplementation(
+            () => notificationServiceLogger,
+        )
         ;(database.notificationTag.upsert as jest.Mock).mockRejectedValue(error)
 
         await tagHandler(req, res)

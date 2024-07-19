@@ -8,9 +8,9 @@ import { Prisma, UserSettings } from '@prisma/client'
 import { Request, Response } from 'express'
 
 import { StatusCodes } from 'http-status-codes'
-import { streamsMonitorService } from '../../serviceLoader'
 import { database } from '../prisma'
-import { logger } from '../logger'
+import { notificationServiceLogger } from '../logger'
+import { StreamsMonitorService } from '../services/stream/streamsMonitorService'
 
 export async function saveNotificationSettingsHandler(req: Request, res: Response) {
     const payload: SaveUserSettingsSchema = req.body
@@ -31,7 +31,7 @@ export async function saveNotificationSettingsHandler(req: Request, res: Respons
             await upsertChannelAndSpaceSettings(tx, userSettings, userId)
             return
         } catch (e) {
-            logger.error('saveSettings error', e)
+            notificationServiceLogger.error('saveSettings error', e)
             res.status(StatusCodes.UNPROCESSABLE_ENTITY).json({ error: 'Invalid data' })
             return
         }
@@ -50,7 +50,7 @@ export async function deleteNotificationSettingsHandler(req: Request, res: Respo
         res.sendStatus(StatusCodes.NO_CONTENT)
         return
     } catch (e) {
-        logger.error('deleteSettings error', e)
+        notificationServiceLogger.error('deleteSettings error', e)
     }
 
     res.status(StatusCodes.UNPROCESSABLE_ENTITY).json({ error: 'Invalid data' })
@@ -93,7 +93,7 @@ export async function getNotificationSettingsHandler(req: Request, res: Response
         })
         return
     } catch (e) {
-        logger.error('getSettings error', e)
+        notificationServiceLogger.error('getSettings error', e)
     }
 
     res.status(StatusCodes.UNPROCESSABLE_ENTITY).json({ error: 'Invalid data' })
@@ -139,7 +139,7 @@ export async function patchNotificationSettingsHandler(req: Request, res: Respon
             }
         })
     } catch (e) {
-        logger.error('updateSettings error', e)
+        notificationServiceLogger.error('updateSettings error', e)
         res.status(StatusCodes.UNPROCESSABLE_ENTITY).json({ error: 'Invalid data' })
         return
     }
@@ -203,8 +203,8 @@ async function upsertChannelAndSpaceSettings(
 
     await Promise.all(upserts)
 
-    if (channelIds.size > 0 && streamsMonitorService) {
-        streamsMonitorService.addNewStreamsToDB(channelIds)
+    if (channelIds.size > 0) {
+        await StreamsMonitorService.instance.addNewStreamsToDB(channelIds)
     }
 }
 

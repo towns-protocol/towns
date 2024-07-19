@@ -2,41 +2,37 @@ import gracefulShutdown from 'http-graceful-shutdown'
 import { initializeApp } from './application/app'
 import { env } from './application/utils/environment'
 import { StreamsMonitorService } from './application/services/stream/streamsMonitorService'
-import { logger } from './application/logger'
+import { notificationServiceLogger } from './application/logger'
 
 const port = env.PORT
 
-logger.info('Starting notification service', process.env.NOTIFICATION_DATABASE_URL)
+notificationServiceLogger.info('Starting notification service', env.NOTIFICATION_DATABASE_URL)
 
 const run = async () => {
     try {
+        await StreamsMonitorService.instance.startMonitoringStreams()
         const app = await initializeApp()
 
         const server = app.listen(port, () => {
-            logger.info(`notification service is running at http://localhost:${port}`)
+            notificationServiceLogger.info(
+                `notification service is running at http://localhost:${port}`,
+            )
         })
-
-        // start syncing streams
-        try {
-            await StreamsMonitorService.instance.startMonitoringStreams()
-        } catch (error) {
-            logger.error('Failed to start monitoring streams', error)
-        }
 
         gracefulShutdown(server, {
             onShutdown: async () => {
                 await StreamsMonitorService.instance.stopMonitoringStreams()
             },
             finally: () => {
-                logger.info('Notification service is shutting down')
+                notificationServiceLogger.info('Notification service is shutting down')
             },
         })
     } catch (error) {
-        logger.error('Failed to start notification service', error)
+        notificationServiceLogger.error('Failed to start notification service', error)
     }
 }
 
 run().catch((error) => {
-    logger.error('Failed to start notification service', error)
+    notificationServiceLogger.error('Failed to start notification service', error)
     process.exit(1)
 })

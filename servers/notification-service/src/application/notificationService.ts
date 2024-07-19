@@ -298,7 +298,8 @@ export class NotificationService {
     public async dispatchAllPushNotification(
         pushNotificationRequests: Promise<SendPushResponse>[],
     ): Promise<number> {
-        if (env.NOTIFICATION_SYNC_ENABLED === 'false') {
+        if (!env.NOTIFICATION_SYNC_ENABLED) {
+            logger.warn('Notification dispatch is disabled')
             // notification dispatch is disabled
             return 0
         }

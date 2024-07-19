@@ -292,6 +292,14 @@ resource "aws_ecs_task_definition" "fargate_task_definition" {
       {
         name  = "APNS_TOWNS_APP_IDENTIFIER",
         value = var.apns_towns_app_identifier
+      },
+      {
+        name  = "RIVER_ENV",
+        value = terraform.workspace
+      },
+      {
+        name  = "LOG_LEVEL",
+        value = "debug"
       }
     ]
 

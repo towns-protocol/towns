@@ -13,9 +13,11 @@ import { PushSubscription } from '@prisma/client'
 import { Urgency } from '../../notificationSchema'
 import crypto from 'crypto'
 import { env } from '../../utils/environment'
-import { logger } from '../logger'
+import { createLogger } from '../logger'
 import { Provider, Notification } from '@parse/node-apn'
 import { ApnsEndpoint } from '../../tagSchema'
+
+const logger = createLogger('sendNotification')
 
 const authKey = env.APNS_AUTH_KEY.replaceAll('\\n', '\n')
 const apnsProviderProd = new Provider({

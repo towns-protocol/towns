@@ -4,7 +4,6 @@ import { NonceStats, SyncedStreams, unpackStream } from './syncedStreams'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './id'
 import { streamIdFromBytes, streamIdToBytes, userIdFromAddress } from './utils'
 
-import { IStreamsMonitorService as IStreamsMonitorService } from '../../../serviceLoader'
 import { ParsedStreamAndCookie } from './types'
 import { StreamKind } from '@prisma/client'
 import assert from 'assert'
@@ -20,7 +19,7 @@ type StreamsMetadata = {
     }
 }
 
-export class StreamsMonitorService implements IStreamsMonitorService {
+export class StreamsMonitorService {
     private rpcClient: StreamRpcClient = makeStreamRpcClient()
     private streams: SyncedStreams = new SyncedStreams(this.rpcClient)
     private intervalId: NodeJS.Timeout | null = null
@@ -365,7 +364,7 @@ export class StreamsMonitorService implements IStreamsMonitorService {
     }
 
     public async startMonitoringStreams() {
-        if (env.NOTIFICATION_SYNC_ENABLED === 'true') {
+        if (env.NOTIFICATION_SYNC_ENABLED) {
             logger.info('notification sync is enabled')
             await this.refreshChannelStreams()
             const tenMinutes = 10 * 60 * 1000
@@ -577,7 +576,7 @@ export class StreamsMonitorService implements IStreamsMonitorService {
     }
 
     public async stopMonitoringStreams() {
-        if (env.NOTIFICATION_SYNC_ENABLED === 'true') {
+        if (env.NOTIFICATION_SYNC_ENABLED) {
             if (this.intervalId) {
                 clearInterval(this.intervalId!)
             }

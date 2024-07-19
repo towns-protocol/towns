@@ -2,21 +2,23 @@ import { PromiseClient, createPromiseClient } from '@connectrpc/connect'
 import { ConnectTransportOptions, createConnectTransport } from '@connectrpc/connect-web'
 import { Err, StreamService } from '@river-build/proto'
 import { env } from '../../utils/environment'
-import { logger } from '../../logger'
+import { notificationServiceLogger } from '../../logger'
 
 export type StreamRpcClient = PromiseClient<typeof StreamService> & { url?: string }
 
 export function makeStreamRpcClient(): StreamRpcClient {
     const url = env.RIVER_NODE_URL!
-    logger.info(`makeStreamRpcClient: Connecting to url=${url}`)
+    notificationServiceLogger.info(`makeStreamRpcClient: Connecting to url=${url}`)
     const options: ConnectTransportOptions = {
         baseUrl: url,
         // interceptors: [retryInterceptor(retryParams), loggingInterceptor(transportId)],
     }
-    if (env.RIVER_DEBUG_TRANSPORT !== 'true') {
+    if (!env.RIVER_DEBUG_TRANSPORT) {
         options.useBinaryFormat = true
     } else {
-        logger.info('makeStreamRpcClient: running in debug mode, using JSON format')
+        notificationServiceLogger.info(
+            'makeStreamRpcClient: running in debug mode, using JSON format',
+        )
         options.useBinaryFormat = false
         options.jsonOptions = {
             emitDefaultValues: true,

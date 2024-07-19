@@ -28,7 +28,7 @@ import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './
 import { Mute, StreamKind, SyncedStream } from '@prisma/client'
 import { NotificationKind, NotifyUsersSchema } from '../../../types'
 import { createLogger } from '../logger'
-import { streamsMonitorService } from '../../../serviceLoader'
+import { StreamsMonitorService } from './streamsMonitorService'
 
 const logger = createLogger('syncedStreams')
 
@@ -814,7 +814,7 @@ export class SyncedStreams {
                 })
             }
             await this.addJoinedUserToChannelSettings(parentStreamId, streamId, userAddress)
-            await streamsMonitorService?.addNewStreamsToDB(new Set([streamId]))
+            await StreamsMonitorService.instance.addNewStreamsToDB(new Set([streamId]))
         }
         if (op === MembershipOp.SO_LEAVE) {
             const userAddress = userIdFromAddress(value.userAddress)
