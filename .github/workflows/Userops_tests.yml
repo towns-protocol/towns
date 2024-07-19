@@ -9,6 +9,7 @@ on:
         paths:
             - 'river/**'
             - 'servers/4337/**'
+            - 'servers/workers/worker-common/**'
             - 'servers/workers/stackup-worker/**'
             - 'clients/web/userops/**'
     workflow_dispatch: # Allow manual trigger in GitHub UI
@@ -33,6 +34,9 @@ jobs:
 
             - name: Install node dependencies
               run: yarn install --immutable
+
+            - name: Build workers
+              run: yarn workers:build
 
             - name: Start 4337
               run: ./scripts/start-4337.sh &
@@ -75,7 +79,7 @@ jobs:
               run: PORT=8989 yarn worker:wait:stackup
 
             - name: Run @towns/userop package tests with pre-existing privy users
-              timeout-minutes: 20
+              timeout-minutes: 10
               env:
                   AA_PAYMASTER_PROXY_URL: http://127.0.0.1:8787
                   AA_PAYMASTER_PROXY_AUTH_SECRET: Zm9v
@@ -88,7 +92,7 @@ jobs:
 
             # this also covers brand new users
             - name: Run @towns/userop package tests with max daily limits of 1
-              timeout-minutes: 20
+              timeout-minutes: 10
               env:
                   AA_PAYMASTER_PROXY_URL: http://127.0.0.1:8989
                   AA_PAYMASTER_PROXY_AUTH_SECRET: Zm9v
