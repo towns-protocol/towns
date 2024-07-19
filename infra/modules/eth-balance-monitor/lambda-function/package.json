@@ -20,6 +20,7 @@
         "@river-build/generated": "workspace:^",
         "@river-build/web3": "workspace:^",
         "ethers": "^5.7.2",
+        "p-queue": "^8.0.1",
         "p-retry": "^6.2.0",
         "p-throttle": "^6.1.0",
         "typescript": "^5.1.6",

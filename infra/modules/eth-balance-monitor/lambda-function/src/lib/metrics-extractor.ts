@@ -9,11 +9,12 @@ import { ethers } from 'ethers'
 import { Ping as Pinger } from './pinger'
 import { getWalletBalances } from './wallet-balance'
 import { NodeStructOutput } from '@river-build/generated/dev/typings/INodeRegistry'
-import { Unpromisify } from './utils'
+import { Unpromisify, withQueue } from './utils'
 import { MetricsIntegrator } from './metrics-integrator'
 import { IERC721ABase } from '@river-build/generated/dev/typings/IERC721AQueryable'
 import pRetry from 'p-retry'
 import pThrottle from 'p-throttle'
+import PQueue from 'p-queue'
 
 export type MetricsExtractorScrapeConfig = {
     getSpaceMemberships: boolean
@@ -157,6 +158,7 @@ export class MetricsExtractor {
     }
 
     private async getSpaceWithMembershipsByTokenId(tokenId: number): Promise<SpaceWithTokenOwners> {
+        console.log(`getting space memberships for token id ${tokenId}`)
         const spaceAddress = await this.spaceRegistrar.SpaceArchitect.read.getSpaceByTokenId(
             tokenId,
         )
@@ -200,6 +202,7 @@ export class MetricsExtractor {
         const NUM_RETRIES = 3
         const THROTTLE_LIMIT = 200 // num requests
         const THROTTLE_INTERVAL = 1000 // per ms
+        const CONCURRENCY = 50
 
         if (!this.scrapeConfig.getSpaceMemberships) {
             return {
@@ -209,28 +212,28 @@ export class MetricsExtractor {
         console.log('getting space memberships')
 
         const tokenIds = Array.from({ length: numTotalSpaces }, (_, i) => i)
+        const onFailedAttempt = (tokenId: number, error: Error) => {
+            console.warn(
+                error,
+                `failed attempt to get space memberships for token id ${tokenId}. retrying...`,
+            )
+        }
+        const options = {
+            concurrency: CONCURRENCY,
+            retries: NUM_RETRIES,
+            throttle: {
+                limit: THROTTLE_LIMIT,
+                interval: THROTTLE_INTERVAL,
+            },
+            onFailedAttempt,
+        }
 
-        const withRetries = (tokenId: number) =>
-            pRetry(() => this.getSpaceWithMembershipsByTokenId(tokenId), {
-                retries: NUM_RETRIES,
-                onFailedAttempt: (error) => {
-                    console.log(
-                        `failed attempt to get space memberships for token id ${tokenId}. retrying...`,
-                    )
-                    console.warn(error)
-                },
-            })
+        const spacesWithMemberships = await withQueue(
+            this.getSpaceWithMembershipsByTokenId.bind(this),
+            tokenIds,
+            options,
+        )
 
-        const throttle = pThrottle({
-            limit: THROTTLE_LIMIT,
-            interval: THROTTLE_INTERVAL,
-            onDelay: () => console.log('throttling the spaceMembership query...'),
-        })
-
-        const withThrottling = (tokenId: number) => throttle(() => withRetries(tokenId))
-        const promises = tokenIds.map((tokenId) => withThrottling(tokenId)())
-
-        const spacesWithMemberships = await Promise.all(promises)
         console.log('got space memberships')
 
         console.log('sorting space memberships')

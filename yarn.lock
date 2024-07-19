@@ -25153,6 +25153,7 @@ __metadata:
     "@types/aws-lambda": ^8.10.133
     esbuild: ^0.21.5
     ethers: ^5.7.2
+    p-queue: ^8.0.1
     p-retry: ^6.2.0
     p-throttle: ^6.1.0
     prettier: ^2.8.8
@@ -25404,6 +25405,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"p-queue@npm:^8.0.1":
+  version: 8.0.1
+  resolution: "p-queue@npm:8.0.1"
+  dependencies:
+    eventemitter3: ^5.0.1
+    p-timeout: ^6.1.2
+  checksum: 84a27a5b1faf2dcc96b8c0e423c34b5984b241acc07353d3cc6d8d3d1dadefb250b4ec84ce278cb1c946466999c6bf2a36ff718a75810bad8e11c7ca47ce80f5
+  languageName: node
+  linkType: hard
+
 "p-retry@npm:^6.2.0":
   version: 6.2.0
   resolution: "p-retry@npm:6.2.0"
@@ -25419,6 +25430,13 @@ __metadata:
   version: 6.1.0
   resolution: "p-throttle@npm:6.1.0"
   checksum: c1947cca8844564c3d86f8c09067add5e7398b87898cb1f1aea5c48d2c211590d039a316d28a4b0d95364ffa0213c01dff6bf71175c468eab0e381f77715dbdb
+  languageName: node
+  linkType: hard
+
+"p-timeout@npm:^6.1.2":
+  version: 6.1.2
+  resolution: "p-timeout@npm:6.1.2"
+  checksum: 887b805eb72c217dbc3c55a60a7f3b89a46cab14f04af62224f253ec84716cbd0880758be13b35444a4fa12d64d37d4c8a300f0b12a57c004d289f0a574cfe91
   languageName: node
   linkType: hard
 
