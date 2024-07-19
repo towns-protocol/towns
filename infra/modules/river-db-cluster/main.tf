@@ -39,8 +39,9 @@ module "rds_aurora_postgresql" {
   subnets               = var.database_subnets
   create_security_group = true
 
-  monitoring_interval    = 0
-  create_monitoring_role = false
+  monitoring_interval          = 0
+  create_monitoring_role       = false
+  performance_insights_enabled = true
 
   master_username = "root"
 
