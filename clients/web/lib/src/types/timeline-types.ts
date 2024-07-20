@@ -1,11 +1,11 @@
 import {
     ChannelMessage_Post,
     ChannelMessage_Post_Attachment,
-    ChannelMessage_Post_Content_ChunkedMedia_AESGCM,
+    ChunkedMedia_AESGCM,
     ChannelMessage_Post_Content_EmbeddedMessage_Info,
     ChannelMessage_Post_Content_EmbeddedMessage_StaticInfo,
     ChannelMessage_Post_Content_Image_Info,
-    ChannelMessage_Post_Content_MediaInfo,
+    MediaInfo as MediaInfoStruct,
     ChannelOp,
     ChannelProperties,
     FullyReadMarker,
@@ -377,9 +377,9 @@ export interface IgnoredNoticeEvent {
 
 export type NoticeEvent = IgnoredNoticeEvent
 
-export type Encryption = Pick<ChannelMessage_Post_Content_ChunkedMedia_AESGCM, 'iv' | 'secretKey'>
+export type Encryption = Pick<ChunkedMedia_AESGCM, 'iv' | 'secretKey'>
 export type MediaInfo = Pick<
-    ChannelMessage_Post_Content_MediaInfo,
+    MediaInfoStruct,
     'filename' | 'mimetype' | 'sizeBytes' | 'widthPixels' | 'heightPixels'
 >
 export type ImageInfo = Pick<ChannelMessage_Post_Content_Image_Info, 'url' | 'width' | 'height'>

@@ -29,7 +29,7 @@ describe('mediaTests', () => {
         const channelId = makeUniqueChannelStreamId(spaceId)
         await expect(bobsClient.createChannel(spaceId, 'Channel', 'Topic', channelId)).toResolve()
 
-        return await bobsClient.createMediaStream(channelId, spaceId, chunkCount)
+        return bobsClient.createMediaStream(channelId, spaceId, chunkCount)
     }
 
     async function bobSendMediaPayloads(
@@ -48,12 +48,35 @@ describe('mediaTests', () => {
         return prevHash
     }
 
+    async function bobCreateSpaceMediaStream(
+        chunkCount: number,
+    ): Promise<{ streamId: string; prevMiniblockHash: Uint8Array }> {
+        const spaceId = makeUniqueSpaceStreamId()
+        await expect(bobsClient.createSpace(spaceId)).toResolve()
+        const mediaInfo = await bobsClient.createMediaStream(
+            undefined,
+            spaceId,
+            chunkCount,
+            undefined,
+        )
+        return mediaInfo
+    }
+
     test('clientCanCreateMediaStream', async () => {
         await expect(bobCreateMediaStream(10)).toResolve()
     })
 
+    test('clientCanCreateSpaceMediaStream', async () => {
+        await expect(bobCreateSpaceMediaStream(10)).toResolve()
+    })
+
     test('clientCanSendMediaPayload', async () => {
         const mediaStreamInfo = await bobCreateMediaStream(10)
+        await bobSendMediaPayloads(mediaStreamInfo.streamId, 10, mediaStreamInfo.prevMiniblockHash)
+    })
+
+    test('clienCanSendSpaceMediaPayload', async () => {
+        const mediaStreamInfo = await bobCreateSpaceMediaStream(10)
         await bobSendMediaPayloads(mediaStreamInfo.streamId, 10, mediaStreamInfo.prevMiniblockHash)
     })
 
@@ -90,6 +113,20 @@ describe('mediaTests', () => {
 
     test('clientCanOnlyPostToTheirOwnMediaStream', async () => {
         const result = await bobCreateMediaStream(10)
+        const chunk = new Uint8Array(100)
+
+        const alicesClient = await makeTestClient()
+        await alicesClient.initializeUser()
+        alicesClient.startSync()
+
+        await expect(
+            alicesClient.sendMediaPayload(result.streamId, chunk, 5, result.prevMiniblockHash),
+        ).toReject()
+        await alicesClient.stop()
+    })
+
+    test('clientCanOnlyPostToTheirOwnPublicMediaStream', async () => {
+        const result = await bobCreateSpaceMediaStream(10)
         const chunk = new Uint8Array(100)
 
         const alicesClient = await makeTestClient()

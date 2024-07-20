@@ -36,8 +36,8 @@ message ChannelMessage {
         message Attachment {
             oneof content {
                 Content.Image image = 101;
-                Content.EmbeddedMedia embeddedMedia = 102;
-                Content.ChunkedMedia chunkedMedia = 103;
+                EmbeddedMedia embeddedMedia = 102;
+                ChunkedMedia chunkedMedia = 103;
                 Content.EmbeddedMessage embeddedMessage = 104;
                 Content.UnfurledURL unfurledUrl = 105;
             }
@@ -67,37 +67,9 @@ message ChannelMessage {
                 string type_url = 1;
                 optional bytes value = 2;
             }
-            
-            message MediaInfo {
-                string mimetype = 1;
-                int64 sizeBytes = 2;
-                int32 widthPixels = 3;
-                int32 heightPixels = 4;
-                string filename = 5;
-            }
-                         
-            message EmbeddedMedia {
-                MediaInfo info = 1;
-                bytes content = 2;
-            }
 
-            message ChunkedMedia {
-
-                message AESGCM {
-                    bytes iv = 1;
-                    bytes secretKey = 2;
-                }
-
-                MediaInfo info = 1;
-                string streamId = 2;
-                EmbeddedMedia thumbnail = 3;
-                oneof encryption {
-                    AESGCM aesgcm = 101;
-                }
-            }
-            
             message EmbeddedMessage {
-            
+
                 message Info {
                     string userId = 1;
                     int64 createdAtEpochMs = 2;
@@ -184,4 +156,32 @@ message FullyReadMarkers {
 */
 message SessionKeys {
     repeated string keys = 1;
+}
+
+message MediaInfo {
+    string mimetype = 1;
+    int64 sizeBytes = 2;
+    int32 widthPixels = 3;
+    int32 heightPixels = 4;
+    string filename = 5;
+}
+                
+message EmbeddedMedia {
+    MediaInfo info = 1;
+    bytes content = 2;
+}
+
+message ChunkedMedia {
+
+    message AESGCM {
+        bytes iv = 1;
+        bytes secretKey = 2;
+    }
+
+    MediaInfo info = 1;
+    string streamId = 2;
+    EmbeddedMedia thumbnail = 3;
+    oneof encryption {
+        AESGCM aesgcm = 101;
+    }
 }

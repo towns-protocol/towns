@@ -79,7 +79,11 @@ func (re *ruleBuilderCSImpl) requireUserAddr(userAddresses ...[]byte) ruleBuilde
 }
 
 func (re *ruleBuilderCSImpl) requireMembership(streamIds ...[]byte) ruleBuilderCS {
-	re.requiredMemberships = append(re.requiredMemberships, streamIds...)
+	for _, streamId := range streamIds {
+		if streamId != nil {
+			re.requiredMemberships = append(re.requiredMemberships, streamId)
+		}
+	}
 	return re
 }
 

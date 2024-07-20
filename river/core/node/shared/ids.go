@@ -136,6 +136,14 @@ func ValidSpaceStreamId(streamId *StreamId) bool {
 	return streamId.Type() == STREAM_SPACE_BIN
 }
 
+func ValidSpaceStreamIdBytes(streamId []byte) bool {
+	id, err := StreamIdFromBytes(streamId)
+	if err != nil {
+		return false
+	}
+	return ValidSpaceStreamId(&id)
+}
+
 func ValidChannelStreamIdBytes(streamId []byte) bool {
 	id, err := StreamIdFromBytes(streamId)
 	if err != nil {

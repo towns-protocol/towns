@@ -91,7 +91,7 @@ contract DeploySpace is DiamondDeployer {
   }
 
   function diamondInitParams(
-    address
+    address deployer
   ) public override returns (Diamond.InitParams memory) {
     diamondCut = diamondCutHelper.deploy();
     diamondLoupe = diamondLoupeHelper.deploy();
@@ -162,10 +162,7 @@ contract DeploySpace is DiamondDeployer {
     );
     addCut(prepayHelper.makeCut(prepay, IDiamond.FacetCutAction.Add));
 
-    addInit(
-      ownablePending,
-      ownablePendingHelper.makeInitData(GOVERNANCE_ADDRESS)
-    );
+    addInit(ownablePending, ownablePendingHelper.makeInitData(deployer));
     addInit(diamondCut, diamondCutHelper.makeInitData(""));
     addInit(diamondLoupe, diamondLoupeHelper.makeInitData(""));
     addInit(introspection, introspectionHelper.makeInitData(""));

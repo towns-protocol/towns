@@ -242,6 +242,7 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 			).
 			requireMembership(
 				inception.ChannelId,
+				inception.SpaceId,
 			).
 			requireChainAuth(ru.getChainAuthForMediaStream)
 
@@ -520,14 +521,27 @@ func (ru *csParams) derivedMembershipEvent() (*DerivedEvent, error) {
 }
 
 func (ru *csMediaRules) checkMediaInceptionPayload() error {
-	if len(ru.inception.ChannelId) == 0 {
-		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "channel id must not be empty for media stream")
-	}
 	if ru.inception.ChunkCount > int32(ru.params.maxChunkCount) {
 		return RiverError(
 			Err_BAD_STREAM_CREATION_PARAMS,
 			fmt.Sprintf("chunk count must be less than or equal to %d", ru.params.maxChunkCount),
 		)
+	}
+
+	// checks for space or channel media stream
+	if ru.inception.ChannelId == nil || len(ru.inception.ChannelId) == 0 {
+		if ru.inception.SpaceId == nil || len(ru.inception.SpaceId) == 0 {
+			return RiverError(
+				Err_BAD_STREAM_CREATION_PARAMS,
+				"both space id and channel id must not be nil or empty for media stream",
+			)
+		}
+
+		if shared.ValidSpaceStreamIdBytes(ru.inception.SpaceId) {
+			return nil
+		} else {
+			return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid space id")
+		}
 	}
 
 	if shared.ValidChannelStreamIdBytes(ru.inception.ChannelId) {
@@ -602,6 +616,17 @@ func (ru *csMediaRules) getChainAuthForMediaStream() (*auth.ChainAuthArgs, error
 			channelId,
 			userId,
 			auth.PermissionWrite,
+		), nil
+	} else if shared.ValidSpaceStreamIdBytes(ru.inception.SpaceId) {
+		spaceId, err := shared.StreamIdFromBytes(ru.inception.SpaceId)
+		if err != nil {
+			return nil, err
+		}
+
+		return auth.NewChainAuthArgsForSpace(
+			spaceId,
+			userId,
+			auth.PermissionModifySpaceSettings, // todo should it be isOwner?
 		), nil
 	} else {
 		return nil, nil

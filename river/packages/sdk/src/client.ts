@@ -70,6 +70,7 @@ import {
     streamIdAsString,
     makeSpaceStreamId,
     STREAM_ID_STRING_LENGTH,
+    makeMediaStreamIdFromSpaceId,
 } from './id'
 import { makeEvent, unpackMiniblock, unpackStream, unpackStreamEx } from './sign'
 import { StreamEvents } from './streamEvents'
@@ -677,27 +678,36 @@ export class Client
     }
 
     async createMediaStream(
-        channelId: string | Uint8Array,
+        channelId: string | Uint8Array | undefined,
         spaceId: string | Uint8Array | undefined,
         chunkCount: number,
         streamSettings?: PlainMessage<StreamSettings>,
     ): Promise<{ streamId: string; prevMiniblockHash: Uint8Array }> {
-        const streamId = makeUniqueMediaStreamId()
-
-        this.logCall('createMedia', channelId, streamId)
         assert(this.userStreamId !== undefined, 'userStreamId must be set')
-        assert(
-            isChannelStreamId(channelId) ||
-                isDMChannelStreamId(channelId) ||
-                isGDMChannelStreamId(channelId),
-            'channelId must be a valid streamId',
-        )
+        if (!channelId) {
+            assert(spaceId !== undefined, 'spaceId must be set')
+            assert(isSpaceStreamId(spaceId), 'spaceId must be a valid streamId')
+        } else {
+            assert(
+                isChannelStreamId(channelId) ||
+                    isDMChannelStreamId(channelId) ||
+                    isGDMChannelStreamId(channelId),
+                'channelId must be a valid streamId',
+            )
+        }
+
+        const streamId =
+            !channelId && spaceId
+                ? makeMediaStreamIdFromSpaceId(spaceId)
+                : makeUniqueMediaStreamId()
+
+        this.logCall('createMedia', channelId ?? spaceId, streamId)
 
         const inceptionEvent = await makeEvent(
             this.signerContext,
             make_MediaPayload_Inception({
                 streamId: streamIdAsBytes(streamId),
-                channelId: streamIdAsBytes(channelId),
+                channelId: channelId ? streamIdAsBytes(channelId) : undefined,
                 spaceId: spaceId ? streamIdAsBytes(spaceId) : undefined,
                 chunkCount,
                 settings: streamSettings,
@@ -1346,7 +1356,7 @@ export class Client
         data: Uint8Array,
         chunkIndex: number,
         prevMiniblockHash: Uint8Array,
-    ): Promise<{ prevMiniblockHash: Uint8Array }> {
+    ): Promise<{ prevMiniblockHash: Uint8Array; eventId: string }> {
         const payload = make_MediaPayload_Chunk({
             data: data,
             chunkIndex: chunkIndex,

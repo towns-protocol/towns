@@ -11,6 +11,7 @@ export class StreamStateView_Media extends StreamStateView_AbstractContent {
     readonly streamId: string
     info:
         | {
+              spaceId: string
               channelId: string
               chunkCount: number
               chunks: Uint8Array[]
@@ -28,11 +29,16 @@ export class StreamStateView_Media extends StreamStateView_AbstractContent {
         _emitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
         const inception = content.inception
-        if (!inception?.chunkCount || !inception.channelId || !inception.chunkCount) {
+        if (
+            !inception?.chunkCount ||
+            (!inception.channelId && !inception.spaceId) ||
+            !inception.chunkCount
+        ) {
             throw new Error('invalid media snapshot')
         }
         this.info = {
-            channelId: streamIdFromBytes(inception.channelId),
+            spaceId: inception.spaceId ? streamIdFromBytes(inception.spaceId) : '',
+            channelId: inception.channelId ? streamIdFromBytes(inception.channelId) : '',
             chunkCount: inception.chunkCount,
             chunks: Array<Uint8Array>(inception.chunkCount),
         }

@@ -113,6 +113,25 @@ interact-sepolia :;
 	@echo "Interacting through $(contract)..."
 	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url sepolia --private-key ${TESTNET_PRIVATE_KEY} --broadcast --legacy
 
+# ================================== ALPHA ==================================
+
+deploy-alpha-base-anvil:;
+	@echo "Deploying $(contract)..."
+	@SAVE_DEPLOYMENTS=1 DEPLOYMENT_CONTEXT=alpha forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ffi --rpc-url base_anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast
+
+deploy-alpha-sepolia :;
+	@echo "Deploying $(contract)..."
+	@SAVE_DEPLOYMENTS=1 DEPLOYMENT_CONTEXT=alpha forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ffi --rpc-url sepolia --private-key ${TESTNET_PRIVATE_KEY} --broadcast --verify --legacy -vvvv
+
+deploy-alpha-base-sepolia :;
+	@echo "Deploying $(contract)..."
+	@SAVE_DEPLOYMENTS=1 DEPLOYMENT_CONTEXT=alpha forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ffi --rpc-url base_sepolia --private-key ${TESTNET_PRIVATE_KEY} --broadcast --verify --verifier blockscout --verifier-url ${BLOCKSCOUT_SEPOLIA_URL}
+
+deploy-alpha-river-testnet :;
+	@echo "Deploying $(contract)..."
+	@SAVE_DEPLOYMENTS=1 DEPLOYMENT_CONTEXT=alpha forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ffi --rpc-url river_devnet --private-key ${TESTNET_PRIVATE_KEY} --verifier blockscout --verifier-url ${RIVERSCAN_DEVNET_URL} --broadcast --verify
+
+
 # ================================== PRODUCTION ==================================
 
 # ===========================
