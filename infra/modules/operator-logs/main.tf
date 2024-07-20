@@ -18,7 +18,7 @@ module "s3_bucket" {
   bucket = local.bucket_name
   acl    = "private"
   # Allow deletion of non-empty bucket
-  force_destroy = true
+  force_destroy = false
 
   control_object_ownership = true
   object_ownership         = "ObjectWriter"

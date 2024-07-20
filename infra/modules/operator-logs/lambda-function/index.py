@@ -31,31 +31,34 @@ def datadog_forwarder(event, context):
         # Read the file from S3
         try:
             response = s3_client.get_object(Bucket=bucket_name, Key=file_key)
-            file_content = response['Body'].read().decode('utf-8')
+            # file_content = response['Body'].read().decode('utf-8')
+
+            for i,line in enumerate(response['Body'].iter_lines()):
+                line1 = line.decode('utf-8')
+                #Do your processing part here
+
+                # Send the file content to Datadog
+                try:
+                    datadog_url = "https://http-intake.logs.datadoghq.com/v1/input"
+                    headers = {
+                        "Content-Type": "text/plain",
+                        "DD-API-KEY": datadog_api_key
+                    }
+                    payload = {
+                        "message": line1,
+                        "ddtags":  "environment:"+env+",run_type:lambda",
+                        "service": "figment-logs",
+                        "hostname": file_key
+                    }
+                    response = requests.post(datadog_url, headers=headers, json=payload)
+                    response.raise_for_status()
+                except Exception as e:
+                    print(f"Error sending data to Datadog: {e}")
+                    raise e
+            print(f"File content sent to Datadog successfully")
         except Exception as e:
             print(f"Error reading S3 file: {e}")
             raise e
-
-        # Send the file content to Datadog
-        try:
-            datadog_url = "https://http-intake.logs.datadoghq.com/v1/input"
-            headers = {
-                "Content-Type": "text/plain",
-                "DD-API-KEY": datadog_api_key
-            }
-            payload = {
-                "message": file_content,
-                "ddtags":  "environment:"+env+",run_type:lambda",
-                "service": "figment-logs",
-                "hostname": file_key
-            }
-            response = requests.post(datadog_url, headers=headers, json=payload)
-            response.raise_for_status()
-            print(f"File content sent to Datadog successfully")
-        except Exception as e:
-            print(f"Error sending data to Datadog: {e}")
-            raise e
-
     return {
         'statusCode': 200,
         'body': 'Event processed successfully'
