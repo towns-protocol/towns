@@ -3,6 +3,7 @@ import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
     test: {
+        restoreMocks: true,
         globals: true,
         setupFiles: ['./vitest.setup.ts', 'dotenv/config'],
         testTimeout: 180_000,

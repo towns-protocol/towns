@@ -22,10 +22,11 @@ test('can join an ungated space', async () => {
     )
     await bob.ready
 
-    const { spaceDapp, userOps } = createSpaceDappAndUserops(alice)
+    const { spaceDapp, userOps: userOpsAlice } = createSpaceDappAndUserops(alice)
+    const { userOps: userOpsBob } = createSpaceDappAndUserops(bob)
 
     const createSpaceOp = await createUngatedSpace({
-        userOps,
+        userOps: userOpsAlice,
         spaceDapp,
         signer: alice.wallet,
         rolePermissions: [Permission.Read, Permission.Write],
@@ -33,10 +34,10 @@ test('can join an ungated space', async () => {
     const txReceipt = await waitForOpAndTx(createSpaceOp, alice)
     await sleepBetweenTxs()
 
-    const spaceId = await getSpaceId(spaceDapp, txReceipt)
+    const spaceId = getSpaceId(spaceDapp, txReceipt)
 
     // join space
-    const joinOp = await userOps.sendJoinSpaceOp([spaceId, bob.wallet.address, bob.wallet])
+    const joinOp = await userOpsBob.sendJoinSpaceOp([spaceId, bob.wallet.address, bob.wallet])
     await waitForOpAndTx(joinOp, bob)
     await sleepBetweenTxs()
 

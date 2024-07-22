@@ -113,10 +113,11 @@ test("can create a channel when roles is gated by user's smart account", async (
     )
     await bob.ready
 
-    const { spaceDapp, userOps } = createSpaceDappAndUserops(alice)
+    const { spaceDapp, userOps: userOpsAlice } = createSpaceDappAndUserops(alice)
+    const { userOps: userOpsBob } = createSpaceDappAndUserops(bob)
 
     const createSpaceOp = await createUngatedSpace({
-        userOps,
+        userOps: userOpsAlice,
         spaceDapp,
         signer: alice.wallet,
         rolePermissions: [Permission.Read, Permission.Write],
@@ -124,20 +125,20 @@ test("can create a channel when roles is gated by user's smart account", async (
     const txReceipt = await waitForOpAndTx(createSpaceOp, alice)
     await sleepBetweenTxs()
 
-    const spaceId = await getSpaceId(spaceDapp, txReceipt)
+    const spaceId = getSpaceId(spaceDapp, txReceipt)
 
     // join space
-    const joinOp = await userOps.sendJoinSpaceOp([spaceId, bob.wallet.address, bob.wallet])
+    const joinOp = await userOpsBob.sendJoinSpaceOp([spaceId, bob.wallet.address, bob.wallet])
     await waitForOpAndTx(joinOp, bob)
     await sleepBetweenTxs()
 
-    const bobsSmartAccount = await userOps.getAbstractAccountAddress({
+    const bobsSmartAccount = await userOpsBob.getAbstractAccountAddress({
         rootKeyAddress: (await bob.wallet.getAddress()) as Address,
     })
     expect(bobsSmartAccount).toBeDefined()
 
     // create a role gated by bob's smart account
-    const createRoleOp = await userOps.sendCreateRoleOp([
+    const createRoleOp = await userOpsAlice.sendCreateRoleOp([
         spaceId,
         NEW_ROLE_NAME,
         [Permission.Read, Permission.Write, Permission.AddRemoveChannels],
@@ -153,7 +154,7 @@ test("can create a channel when roles is gated by user's smart account", async (
     expect(newRole).toBeDefined()
 
     // create a channel
-    const createChannelOp = await userOps.sendCreateChannelOp([
+    const createChannelOp = await userOpsAlice.sendCreateChannelOp([
         spaceId,
         TEST_CHANNEL_NAME,
         'channel description',

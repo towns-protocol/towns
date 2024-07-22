@@ -31,7 +31,7 @@ export const paymasterProxyMiddleware = async (
         userOpContext: IUserOperationMiddlewareCtx
         rootKeyAddress: string
         functionHashForPaymasterProxy: string | undefined
-        townId: string | undefined
+        spaceId: string | undefined
         fetchAccessTokenFn: (() => Promise<string | null>) | undefined
     } & Pick<UserOpsConfig, 'paymasterProxyUrl' | 'paymasterProxyAuthSecret'>,
 ) => {
@@ -41,7 +41,7 @@ export const paymasterProxyMiddleware = async (
         userOpContext: ctx,
         rootKeyAddress,
         functionHashForPaymasterProxy,
-        townId,
+        spaceId,
         paymasterProxyAuthSecret,
         paymasterProxyUrl,
         fetchAccessTokenFn,
@@ -74,7 +74,7 @@ export const paymasterProxyMiddleware = async (
         }
 
         if (
-            !townId &&
+            !spaceId &&
             functionHashForPaymasterProxy !== 'createSpace' &&
             functionHashForPaymasterProxy !== 'createSpace_linkWallet' &&
             functionHashForPaymasterProxy !== 'linkWalletToRootKey' &&
@@ -90,7 +90,7 @@ export const paymasterProxyMiddleware = async (
             ...ctx.op,
             functionHash: functionHashForPaymasterProxy,
             rootKeyAddress: rootKeyAddress,
-            townId: townId,
+            townId: spaceId,
         }
         // convert all bigNumberish types to hex strings for paymaster proxy payload
         bigNumberishTypes.forEach((type) => {

@@ -172,6 +172,8 @@ export class TownsClient
     public async logout(): Promise<void> {
         this.log('logout')
         await this.logoutFromCasablanca()
+        await this.blockchainTransactionStore.stop()
+        this.userOps?.reset()
     }
 
     /************************************************
@@ -305,15 +307,6 @@ export class TownsClient
             await this.casablancaClient.stop()
             this.casablancaClient = undefined
         }
-    }
-
-    /************************************************
-     * stopClients
-     *************************************************/
-    public async stopClients() {
-        this.userOps?.clearStore()
-        await this.blockchainTransactionStore.stop()
-        await this.stopCasablancaClient()
     }
 
     public async createSpaceTransaction(

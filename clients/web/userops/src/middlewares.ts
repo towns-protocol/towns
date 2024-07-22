@@ -59,13 +59,13 @@ export function promptUser(
             config,
             rpcUrl,
             bundlerUrl,
-            townId,
+            spaceId,
         }: {
             provider: ethers.providers.Provider | undefined
             config: BaseChainConfig | undefined
             rpcUrl: string
             bundlerUrl: string
-            townId: string | undefined
+            spaceId: string | undefined
         },
     ) {
         // sponsored op, no need to prompt
@@ -143,7 +143,7 @@ export function promptUser(
 
                     // better logs
                     const spaceDappError = spaceDapp?.parseAllContractErrors({
-                        spaceId: townId,
+                        spaceId: spaceId,
                         error: exception,
                     })
 

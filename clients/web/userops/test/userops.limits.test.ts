@@ -39,10 +39,10 @@ test('will reject each userop if beyond the limit', async () => {
     )
     await alice.ready
 
-    const { spaceDapp, userOps } = createSpaceDappAndUserops(alice)
+    const { spaceDapp, userOps: userOpsAlice } = createSpaceDappAndUserops(alice)
 
     const createSpaceOp = await createUngatedSpace({
-        userOps,
+        userOps: userOpsAlice,
         spaceDapp,
         signer: alice.wallet,
         rolePermissions: [Permission.Read, Permission.Write],
@@ -53,7 +53,7 @@ test('will reject each userop if beyond the limit', async () => {
 
     await expect(() =>
         createUngatedSpace({
-            userOps,
+            userOps: userOpsAlice,
             spaceDapp,
             signer: alice.wallet,
             rolePermissions: [Permission.Read, Permission.Write],
@@ -66,7 +66,7 @@ test('will reject each userop if beyond the limit', async () => {
     // create role
     ////////////////////////////////////////
 
-    const createRoleOp = await userOps.sendCreateRoleOp([
+    const createRoleOp = await userOpsAlice.sendCreateRoleOp([
         spaceId,
         'dummy role',
         [],
@@ -80,13 +80,13 @@ test('will reject each userop if beyond the limit', async () => {
     await sleepBetweenTxs()
 
     await expect(() =>
-        userOps.sendCreateRoleOp([spaceId, 'dummy role', [], [], NoopRuleData, alice.wallet]),
+        userOpsAlice.sendCreateRoleOp([spaceId, 'dummy role', [], [], NoopRuleData, alice.wallet]),
     ).rejects.toThrow()
 
     ////////////////////////////////////////
     // update role
     ////////////////////////////////////////
-    const updateRoleOp = await userOps.sendUpdateRoleOp([
+    const updateRoleOp = await userOpsAlice.sendUpdateRoleOp([
         {
             spaceNetworkId: spaceId,
             roleId: 3, // created role will have been the 3rd role
@@ -101,7 +101,7 @@ test('will reject each userop if beyond the limit', async () => {
     expect(updateReceipt.status).toBe(1)
 
     await expect(() =>
-        userOps.sendUpdateRoleOp([
+        userOpsAlice.sendUpdateRoleOp([
             {
                 spaceNetworkId: spaceId,
                 roleId: 3, // created role will have been the 3rd role
@@ -117,17 +117,17 @@ test('will reject each userop if beyond the limit', async () => {
     ////////////////////////////////////////
     // delete role
     ////////////////////////////////////////
-    const deleteRoleOp = await userOps.sendDeleteRoleOp([spaceId, 3, alice.wallet])
+    const deleteRoleOp = await userOpsAlice.sendDeleteRoleOp([spaceId, 3, alice.wallet])
     const deleteReceipt = await waitForOpAndTx(deleteRoleOp, alice, 'delete role')
     await sleepBetweenTxs()
     expect(deleteReceipt.status).toBe(1)
 
-    await expect(() => userOps.sendDeleteRoleOp([spaceId, 2, alice.wallet])).rejects.toThrow()
+    await expect(() => userOpsAlice.sendDeleteRoleOp([spaceId, 2, alice.wallet])).rejects.toThrow()
 
     ////////////////////////////////////////
     // create channel
     ////////////////////////////////////////
-    const createChannelOp = await userOps.sendCreateChannelOp([
+    const createChannelOp = await userOpsAlice.sendCreateChannelOp([
         spaceId,
         'test',
         'channel description',
@@ -141,7 +141,7 @@ test('will reject each userop if beyond the limit', async () => {
     expect(createChannelReceipt.status).toBe(1)
 
     await expect(() =>
-        userOps.sendCreateChannelOp([
+        userOpsAlice.sendCreateChannelOp([
             spaceId,
             'test',
             'channel description',
@@ -159,7 +159,7 @@ test('will reject each userop if beyond the limit', async () => {
     expect(channels).toHaveLength(2) // default plus created one
     const createdChannel = channels.find((c) => c.name === 'test')
 
-    const updateChannelOp = await userOps.sendUpdateChannelOp([
+    const updateChannelOp = await userOpsAlice.sendUpdateChannelOp([
         {
             spaceId,
             channelId: createdChannel!.channelNetworkId!,
@@ -174,7 +174,7 @@ test('will reject each userop if beyond the limit', async () => {
     expect(updateChannelReceipt.status).toBe(1)
 
     await expect(() =>
-        userOps.sendUpdateChannelOp([
+        userOpsAlice.sendUpdateChannelOp([
             {
                 spaceId,
                 channelId: createdChannel!.channelNetworkId!,
@@ -189,7 +189,7 @@ test('will reject each userop if beyond the limit', async () => {
     ////////////////////////////////////////
     // update space info
     ////////////////////////////////////////
-    const updateSpaceOp = await userOps.sendUpdateSpaceInfoOp([
+    const updateSpaceOp = await userOpsAlice.sendUpdateSpaceInfoOp([
         spaceId,
         'new space name',
         'uri',
@@ -202,7 +202,7 @@ test('will reject each userop if beyond the limit', async () => {
     expect(updateSpaceReceipt.status).toBe(1)
 
     await expect(() =>
-        userOps.sendUpdateSpaceInfoOp([
+        userOpsAlice.sendUpdateSpaceInfoOp([
             spaceId,
             'new space name 2',
             'uri',
@@ -220,7 +220,8 @@ test('will reject each userop if beyond the limit', async () => {
         generatePrivyWalletIfKey(process.env.PRIVY_WALLET_PRIVATE_KEY_1),
     )
     await bob.ready
-    const joinOp = await userOps.sendJoinSpaceOp([spaceId, bob.wallet.address, bob.wallet])
+    const { userOps: userOpsBob } = createSpaceDappAndUserops(bob)
+    const joinOp = await userOpsBob.sendJoinSpaceOp([spaceId, bob.wallet.address, bob.wallet])
     const joinReceipt = await waitForOpAndTx(joinOp, bob, 'join space bob')
     await sleepBetweenTxs()
     expect(joinReceipt.status).toBe(1)
@@ -230,21 +231,30 @@ test('will reject each userop if beyond the limit', async () => {
         generatePrivyWalletIfKey(process.env.PRIVY_WALLET_PRIVATE_KEY_1),
     )
     await steve.ready
-    const joinOpSteve = await userOps.sendJoinSpaceOp([spaceId, steve.wallet.address, steve.wallet])
+    const { userOps: userOpsSteve } = createSpaceDappAndUserops(steve)
+    const joinOpSteve = await userOpsSteve.sendJoinSpaceOp([
+        spaceId,
+        steve.wallet.address,
+        steve.wallet,
+    ])
     const joinReceiptSteve = await waitForOpAndTx(joinOpSteve, steve, 'join space steve')
     await sleepBetweenTxs()
     expect(joinReceiptSteve.status).toBe(1)
 
-    const banOp = await userOps.sendBanWalletAddressOp([spaceId!, bob.wallet.address, alice.wallet])
+    const banOp = await userOpsAlice.sendBanWalletAddressOp([
+        spaceId!,
+        bob.wallet.address,
+        alice.wallet,
+    ])
     const banReceipt = await waitForOpAndTx(banOp, alice, 'ban user')
     await sleepBetweenTxs()
     expect(banReceipt.status).toBe(1)
 
     await expect(() =>
-        userOps.sendBanWalletAddressOp([spaceId!, steve.wallet.address, alice.wallet]),
+        userOpsAlice.sendBanWalletAddressOp([spaceId!, steve.wallet.address, alice.wallet]),
     ).rejects.toThrow()
 
-    const unbanOp = await userOps.sendUnbanWalletAddressOp([
+    const unbanOp = await userOpsAlice.sendUnbanWalletAddressOp([
         spaceId!,
         bob.wallet.address,
         alice.wallet,
@@ -254,7 +264,7 @@ test('will reject each userop if beyond the limit', async () => {
     expect(unbanReceipt.status).toBe(1)
 
     await expect(() =>
-        userOps.sendUnbanWalletAddressOp([spaceId!, steve.wallet.address, alice.wallet]),
+        userOpsAlice.sendUnbanWalletAddressOp([spaceId!, steve.wallet.address, alice.wallet]),
     ).rejects.toThrow()
 }, 200_000)
 

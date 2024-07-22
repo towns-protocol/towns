@@ -22,10 +22,11 @@ test('can send banning user ops', async () => {
     )
     await bob.ready
 
-    const { spaceDapp, userOps } = createSpaceDappAndUserops(alice)
+    const { spaceDapp, userOps: userOpsAlice } = createSpaceDappAndUserops(alice)
+    const { userOps: userOpsBob } = createSpaceDappAndUserops(bob)
 
     const createSpaceOp = await createUngatedSpace({
-        userOps,
+        userOps: userOpsAlice,
         spaceDapp,
         signer: alice.wallet,
         rolePermissions: [Permission.Read, Permission.Write],
@@ -36,7 +37,7 @@ test('can send banning user ops', async () => {
     const spaceId = await getSpaceId(spaceDapp, txReceipt)
 
     // join space
-    const joinOp = await userOps.sendJoinSpaceOp([spaceId, bob.wallet.address, bob.wallet])
+    const joinOp = await userOpsBob.sendJoinSpaceOp([spaceId, bob.wallet.address, bob.wallet])
     await waitForOpAndTx(joinOp, bob)
     await sleepBetweenTxs()
 
@@ -44,7 +45,11 @@ test('can send banning user ops', async () => {
     expect(bobMembership).toBe(true)
 
     // ban bob
-    const banOp = await userOps.sendBanWalletAddressOp([spaceId, bob.wallet.address, alice.wallet])
+    const banOp = await userOpsAlice.sendBanWalletAddressOp([
+        spaceId,
+        bob.wallet.address,
+        alice.wallet,
+    ])
     await waitForOpAndTx(banOp, alice)
     await sleepBetweenTxs()
 
@@ -52,7 +57,7 @@ test('can send banning user ops', async () => {
     expect(bannedWalletAddresses).toContain(bob.wallet.address)
 
     // unban bob
-    const unbanOp = await userOps.sendUnbanWalletAddressOp([
+    const unbanOp = await userOpsAlice.sendUnbanWalletAddressOp([
         spaceId,
         bob.wallet.address,
         alice.wallet,

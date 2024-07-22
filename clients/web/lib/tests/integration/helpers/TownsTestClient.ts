@@ -307,4 +307,13 @@ export class TownsTestClient extends TownsClient {
         const events = this.getEvents(roomId)
         return events.map((e) => `${e.fallbackContent} : ${e.eventId}`).join('\n')
     }
+
+    /************************************************
+     * stopClients
+     *************************************************/
+    public async stopClients() {
+        this.userOps?.reset()
+        await this.blockchainTransactionStore.stop()
+        await this.stopCasablancaClient()
+    }
 }
