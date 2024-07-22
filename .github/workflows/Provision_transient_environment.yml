@@ -11,59 +11,7 @@ concurrency:
     # TODO: how can we make sure there's only one per environment running at the same time?
 
 jobs:
-    check_labels:
-        runs-on: ubuntu-latest
-        permissions: write-all
-        outputs:
-            transient_environment_type: ${{ steps.check_labels.outputs.transient_environment_type }}
-            num_nodes: ${{ steps.check_labels.outputs.num_nodes }}
-            continuous_deploy_iterations: ${{ steps.check_labels.outputs.continuous_deploy_iterations }}
-            river_node_log_level: ${{ steps.check_labels.outputs.river_node_log_level }}
-            is_clean_environment: ${{ steps.check_labels.outputs.is_clean_environment }}
-            skip_river_node_continuous_deploys: ${{ steps.check_labels.outputs.skip_river_node_continuous_deploys }}
-            has_stress_test_infra: ${{ steps.check_labels.outputs.has_stress_test_infra }}
-        steps:
-            - name: Check labels
-              id: check_labels
-              uses: actions/github-script@v7
-              with:
-                  github-token: ${{ secrets.GITHUB_TOKEN }}
-                  script: |
-                      const labels = await github.rest.issues.listLabelsOnIssue({
-                          owner: context.repo.owner,
-                          repo: context.repo.repo,
-                          issue_number: context.issue.number
-                      });
-                      const single_node_transient_environment = labels.data.some(label => label.name.includes('single-node'));
-                      const multi_node_transient_environment = labels.data.some(label => label.name.includes('multi-node'));
-                      const has_stress_test_infra = labels.data.some(label => label.name.includes('stress-test'));
-                      const is_clean_environment = labels.data.some(label => label.name.includes('clean'));
-                      const debug_logs_enabled = labels.data.some(label => label.name === 'transient:debug');
-                      const river_node_log_level = debug_logs_enabled ? 'debug' : 'info';
-                      const transientEnvironmentType =
-                        multi_node_transient_environment  ? 'multi-node' :
-                        single_node_transient_environment ? 'single-node' :
-                                                            'lite';
-
-                      const skipRiverNodeContinuousDeploys = labels.data.some(label => label.name === 'transient:skip-river-cd');
-
-                      const numNodes =
-                        transientEnvironmentType === 'multi-node'  ? 10 :
-                        transientEnvironmentType === 'single-node' ? 1 : 0;
-
-                      // using the numNodes, we can compute the matrix strategy for the river_node_continuous_deploys job
-                      const continuousDeployIterations = Array.from(Array(numNodes).keys()).map(i => i + 1);
-
-                      core.setOutput('transient_environment_type', transientEnvironmentType);
-                      core.setOutput('num_nodes', numNodes);
-                      core.setOutput('continuous_deploy_iterations', JSON.stringify(continuousDeployIterations));
-                      core.setOutput('is_clean_environment', is_clean_environment);
-                      core.setOutput('river_node_log_level', river_node_log_level);
-                      core.setOutput('skip_river_node_continuous_deploys', skipRiverNodeContinuousDeploys);
-                      core.setOutput('has_stress_test_infra', has_stress_test_infra);
-
     provision_transient_environment:
-        needs: check_labels
         permissions: write-all
         runs-on: ubuntu-latest-8-cores
         timeout-minutes: 40
@@ -73,10 +21,6 @@ jobs:
             AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
             ENV: 'transient'
             TF_VAR_cloudflare_terraform_api_token: ${{ secrets.CLOUDFLARE_TERRAFORM_API_TOKEN }}
-            TF_VAR_num_nodes: ${{ needs.check_labels.outputs.num_nodes }}
-            TF_VAR_river_node_log_level: ${{ needs.check_labels.outputs.river_node_log_level }}
-            TF_VAR_is_clean_environment: ${{ needs.check_labels.outputs.is_clean_environment }}
-            TF_VAR_has_stress_test_infra: ${{ needs.check_labels.outputs.has_stress_test_infra }}
             GIT_PR_NUMBER: ${{ github.event.pull_request.number}}
             CI_AUTOAPPROVE: true
             TF_VAR_datadog_api_key: ${{ secrets.TF_VAR_datadog_api_key }}
@@ -127,12 +71,6 @@ jobs:
             - name: Print versions
               run: ./river/scripts/print-versions.sh
 
-            - name: Transient contracts
-              env:
-                  TRANSIENT_ID: ${{ github.event.pull_request.number }}
-                  NUM_NODES: ${{ needs.check_labels.outputs.num_nodes }}
-              run: './scripts/transient-contracts.sh'
-
             - name: Clear Workflow level Provision lock
               if: always()
               working-directory: ./infra
@@ -163,47 +101,3 @@ jobs:
                   TF_STATUS: 'ERROR'
                   LOG_MESSAGE: 'Provision step failed for ${{ github.event.pull_request.number}} PR (https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})'
               run: './log_datadog.sh'
-
-    river_node_docker:
-        uses: './.github/workflows/River_node_docker.yml'
-        secrets:
-            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            SLACK_WEBHOOK_URL: ${{ secrets.SLACK_TRANSIENT_CD_WORKFLOW_WEBHOOK_URL }}
-        needs: check_labels
-        permissions: write-all
-
-        if: needs.check_labels.outputs.num_nodes > 0
-        # TODO: only run if a change in /core/node is detected
-        # TODO: only deploy if the new docker image is different than what's currently active
-        with:
-            environment_name: ${{ format('transient-{0}', github.event.pull_request.number )}}
-            docker_image_tag: ${{ format('transient-{0}-latest', github.event.pull_request.number )}}
-
-    river_node_continuous_deploys:
-        uses: './.github/workflows/River_deploy.yml'
-        secrets:
-            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            SLACK_ALERT_WEBHOOK_URL: ${{ secrets.SLACK_TRANSIENT_CD_WORKFLOW_WEBHOOK_URL }}
-            TF_VAR_datadog_api_key: ${{ secrets.TF_VAR_datadog_api_key }}
-        needs: [check_labels, provision_transient_environment, river_node_docker]
-        permissions: write-all
-
-        if: needs.check_labels.outputs.num_nodes > 0 && needs.check_labels.outputs.skip_river_node_continuous_deploys != 'true'
-        # TODO: only run if a change in /core/node is detected
-        # TODO: only deploy if the new docker image is different than what's currently active
-        with:
-            environment_name: ${{ format('transient-{0}', github.event.pull_request.number )}}
-            docker_image_tag: ${{ format('transient-{0}-latest', github.event.pull_request.number )}}
-            node_numbers: ${{ needs.check_labels.outputs.continuous_deploy_iterations }}
-            public_ecr_url: public.ecr.aws/l8h0l2e6/river-node
-
-    run_synthetic_transactions_test:
-        needs: [check_labels, river_node_continuous_deploys]
-        if: needs.check_labels.outputs.num_nodes > 0
-        uses: './.github/workflows/Synthetic_transactions.yml'
-        secrets:
-            SLACK_CI_CHANNEL_WEBHOOK_URL: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
-        with:
-            environment_name: ${{ format('transient-{0}', github.event.pull_request.number )}}

@@ -23,27 +23,3 @@ variable "git_pr_number" {
     error_message = "The PR number cannot be 0."
   }
 }
-
-variable "num_nodes" {
-  description = "Number of nodes to create"
-  type        = number
-  default     = 1
-}
-
-variable "is_clean_environment" {
-  description = "Flag used to determine whether clone db, fork chain block number etc"
-  type        = bool
-  default     = false
-}
-
-variable "river_node_log_level" {
-  description = "The log level for the river node (e.g debug, info, warn, error)"
-  type        = string
-  default     = "info"
-}
-
-variable "has_stress_test_infra" {
-  description = "Flag used to determine whether to create stress test infra"
-  type        = bool
-  default     = false
-}
