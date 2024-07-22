@@ -25,6 +25,7 @@
         "@river-build/generated": "workspace:^",
         "ejs": "^3.1.10",
         "fastify": "^4.28.0",
+        "node-cache": "^5.1.2",
         "viem": "^1.18.2"
     },
     "devDependencies": {

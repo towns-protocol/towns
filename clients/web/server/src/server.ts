@@ -8,6 +8,9 @@ import fsSync from 'node:fs'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import * as dotenv from 'dotenv'
+import NodeCache from 'node-cache'
+
+const cache = new NodeCache({ stdTTL: 900 }) // 900 seconds = 15 minutes
 
 dotenv.config({ path: path.join(__dirname, '../../app', '.env.local') })
 
@@ -45,14 +48,6 @@ const checkFileExists = async (filePath: string): Promise<boolean> => {
 
     return fileCache[filePath]
 }
-
-// Viem client setup
-/*
-const client = createPublicClient({
-    chain: mainnet,
-    transport: http(),
-})
-*/
 
 // Path to the index.html file
 const indexPath = path.join(__dirname, '../../app', 'dist', 'index.html')
@@ -120,6 +115,13 @@ function validateTownId(townId: string) {
 }
 
 async function updateTemplate(townId?: string) {
+    const cacheKey = `template-${townId}`
+    const cachedTemplate = cache.get<string>(cacheKey)
+
+    if (cachedTemplate) {
+        return cachedTemplate
+    }
+
     // default info
     const info: Record<string, string> = {
         title: 'Towns',
@@ -141,10 +143,14 @@ async function updateTemplate(townId?: string) {
         }
     }
 
-    return template
+    const renderedTemplate = template
         .replace(/__title__/g, info.title)
         .replace(/__description__/g, info.description)
         .replace(/__image__/g, info.image)
+
+    cache.set(cacheKey, renderedTemplate)
+
+    return renderedTemplate
 }
 
 async function getTownDataFromContract(
