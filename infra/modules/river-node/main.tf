@@ -14,7 +14,7 @@ locals {
   run_mode      = var.node_metadata.run_mode
   archive_id    = local.run_mode == "archive" ? var.node_metadata.node_number : ""
 
-  rpc_https_port = var.is_transient ? (local.node_number + 10000) : 443
+  rpc_https_port = 443
 
   service_name        = "river-node"
   global_remote_state = module.global_constants.global_remote_state.outputs
@@ -30,10 +30,10 @@ locals {
     }
   )
 
-  total_vcpu   = var.is_transient ? 2048 : 4096
-  total_memory = var.is_transient ? 4096 : 30720
+  total_vcpu   = 4096
+  total_memory = 30720
 
-  ephemeral_storage_size_in_gib = var.is_transient ? 21 : 100
+  ephemeral_storage_size_in_gib = 100
 }
 
 terraform {
@@ -294,9 +294,6 @@ locals {
     value = var.river_chain_rpc_url_plaintext_override
   }]
 
-  regular_docker_image_name   = "public.ecr.aws/h5v6m2x1/river:${var.docker_image_tag}"
-  transient_docker_image_name = var.is_transient ? "public.ecr.aws/l8h0l2e6/river-node:transient-${var.git_pr_number}-latest" : ""
-  river_node_image_name       = var.is_transient ? local.transient_docker_image_name : local.regular_docker_image_name
 
   archive_mode_additional_td_env_config = local.run_mode == "archive" ? [{
     name  = "ARCHIVE__ARCHIVEID"
@@ -340,7 +337,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
 
   container_definitions = jsonencode([{
     name  = "river-node"
-    image = local.river_node_image_name
+    image = "public.ecr.aws/h5v6m2x1/river:${var.docker_image_tag}"
 
     essential = true
     portMappings = [{
@@ -554,10 +551,8 @@ resource "aws_ecs_service" "river-ecs-service" {
   tags = local.river_node_tags
 }
 
-# Only create this DNS record for non-transient environments.
-# Since transient environments reuse the same DNS record that is created in the nlb module.
 resource "cloudflare_record" "nlb_cname_dns_record" {
-  count   = var.is_transient == true ? 0 : 1
+  count   = 1
   zone_id = data.cloudflare_zone.zone.id
   name    = local.node_dns_name
   value   = var.lb.lb_dns_name
@@ -577,7 +572,7 @@ module "datadog_sythetics_test" {
   name    = "${local.node_name} - 1min - 1 location"
   type    = "api"
   subtype = "http"
-  enabled = !var.is_transient
+  enabled = true
 
   locations = ["aws:us-west-1"]
   tags      = ["created_by:terraform", "env:${terraform.workspace}", "node_url:${local.node_url}"]

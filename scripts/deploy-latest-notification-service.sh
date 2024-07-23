@@ -16,11 +16,6 @@ CLUSTER_NAME="${ENVIRONMENT_NAME}-river-ecs-cluster"
 REGISTERED_TASK_DEFINITION_FILENAME="$( pwd )/registered-task-definition.json"
 SERVICE_NAME="notifications-${ENVIRONMENT_NAME}-fargate-service"
 
-# if CLUSTER_NAME contains transient, use the transient-global ecs cluster
-if [[ $CLUSTER_NAME == *"transient"* ]]; then
-    CLUSTER_NAME="transient-global-river-ecs-cluster"
-fi
-
 function deploy_and_wait() {
     # Update the service to use the new task definition
     aws ecs update-service \

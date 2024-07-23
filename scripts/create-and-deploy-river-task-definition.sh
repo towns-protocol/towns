@@ -81,12 +81,6 @@ function create_river_task_definition() {
 
 
 function deploy_river_task_definition() {
-
-    # if CLUSTER_NAME contains transient, use the transient-global ecs cluster
-    if [[ $CLUSTER_NAME == *"transient"* ]]; then
-        CLUSTER_NAME="transient-global-river-ecs-cluster"
-    fi
-
     # Get the ARN of the registered task definition
     TASK_DEFINITION_ARN="$( jq -r '.taskDefinition.taskDefinitionArn' ${REGISTERED_TASK_DEFINITION_FILENAME} )"
 

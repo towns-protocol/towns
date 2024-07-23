@@ -57,14 +57,7 @@ module "nlb" {
 
   security_groups = [aws_security_group.nlb_security_group.id]
 
-  # if this is a transient nlb, we don't enable delete protection
-  enable_deletion_protection = !var.is_transient
-
-
-  # TODO: look into recording access logs
-  #   access_logs = {
-  #     bucket = module.log_bucket.s3_bucket_id
-  #   }
+  enable_deletion_protection = true
 
   tags = local.tags
 }
@@ -96,28 +89,4 @@ resource "aws_security_group" "nlb_security_group" {
   }
 
   tags = local.tags
-}
-
-## DNS Record
-
-# Create a CNAME record for the NLB, if a dns_name is provided.
-# This is for transient environments.
-# Transient environments reuse a single NLB, and each listen on a different port.
-# This means that we need to create the DNS record once, right here.
-# For gamma and other non-transient environments, each river node will create its own DNS record.
-
-data "cloudflare_zone" "zone" {
-  name = module.global_constants.primary_hosted_zone_name
-}
-
-resource "cloudflare_record" "nlb_dns_record" {
-  count   = var.is_transient ? 1 : 0
-  zone_id = data.cloudflare_zone.zone.id
-  name    = var.dns_name
-  value   = module.nlb.dns_name
-  type    = "CNAME"
-  ttl     = 60
-  lifecycle {
-    ignore_changes = all
-  }
 }

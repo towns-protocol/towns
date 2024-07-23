@@ -37,12 +37,6 @@ variable "alb_dns_name" {
   type        = string
 }
 
-variable "is_transient" {
-  description = "Whether or not this db is transient"
-  type        = bool
-  default     = false
-}
-
 variable "apns_auth_key_secret_arn" {
   description = "The arn of the apns auth key secret"
   type        = string

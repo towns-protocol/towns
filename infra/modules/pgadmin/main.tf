@@ -14,7 +14,7 @@ module "global_constants" {
 
 locals {
   service_name   = "pgadmin"
-  name           = terraform.workspace == "transient-global" ? "pgadmin-transient" : "pgadmin-${terraform.workspace}"
+  name           = "pgadmin-${terraform.workspace}"
   container_name = "pgadmin"
   container_port = 80
 

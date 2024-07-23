@@ -35,11 +35,7 @@ function check_env() {
 }
 
 function get_vpc_id() {
-    if [[ $ENVIRONMENT_NAME == *"transient"* ]]; then
-        vpc_name="river-vpc-transient-global"
-    else
-        vpc_name="river-vpc-$ENVIRONMENT_NAME"
-    fi
+    vpc_name="river-vpc-$ENVIRONMENT_NAME"
     vpc_id=$(aws ec2 describe-vpcs --filters Name=tag:Name,Values=$vpc_name --query "Vpcs[].VpcId" --output text)
     echo $vpc_id
 }
