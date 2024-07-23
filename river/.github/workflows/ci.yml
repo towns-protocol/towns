@@ -284,19 +284,15 @@ jobs:
                   echo "SSL_CERT_DIR=$SSL_CERT_DIR"
 
             - name: Run node (without entitlements)
-              run: ./core/node/run_single.sh --de &
+              run: |
+                  ./core/node/run_single.sh --de -c
+                  ./core/node/run_single.sh --de -r &
 
             - name: Wait for (without entitlements) node to be up
               run: yarn csb:wait:no-entitlements
 
             - name: Run SDK Tests (without entitlements)
               run: yarn run turbo run build test:ci --filter=@river-build/sdk
-
-            - name: Run Node Restart Tests (without entitlements)
-              run: yarn workspace @river-build/sdk run test:restart
-
-            - name: Run Node Flush Tests (without entitlements)
-              run: yarn workspace @river-build/sdk run test:node-minipool-flush
 
             - name: Archive River Node Logs and Settings
               if: always()
@@ -550,7 +546,9 @@ jobs:
               working-directory: core
 
             - name: Start node with entitlements
-              run: ./core/node/run_single.sh &
+              run: |
+                  ./core/node/run_single.sh -c
+                  ./core/node/run_single.sh -r &
 
             - name: Wait for (with entitlements) node to be up
               run: yarn csb:wait:entitlements

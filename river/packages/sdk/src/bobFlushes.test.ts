@@ -1,5 +1,5 @@
 /**
- * @group node-minipool-flush
+ * @group main
  */
 
 import { bobTalksToHimself } from './bob.test_util'

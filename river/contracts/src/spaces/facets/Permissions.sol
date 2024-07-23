@@ -14,6 +14,6 @@ library Permissions {
   string public constant ModifyBanning = "ModifyBanning";
   string public constant Read = "Read";
   string public constant Write = "Write";
-  string public constant ReactReply = "ReactReply";
+  string public constant React = "React";
   string public constant Ping = "Ping";
 }

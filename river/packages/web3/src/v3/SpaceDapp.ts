@@ -731,7 +731,7 @@ export class SpaceDapp implements ISpaceDapp {
         if (
             permission === Permission.Read ||
             permission === Permission.Write ||
-            permission === Permission.ReactReply
+            permission === Permission.React
         ) {
             const linkedWallets = await this.getLinkedWallets(user)
 

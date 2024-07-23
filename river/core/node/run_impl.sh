@@ -15,6 +15,8 @@ export RPC_PORT="${RPC_PORT:-5170}"
 export DISABLE_BASE_CHAIN="${DISABLE_BASE_CHAIN:-false}"
 export RIVER_ENV="local_${RUN_ENV}"
 export POSITIVE_ENTITLEMENT_CACHE_TTL_SECONDS="${POSITIVE_ENTITLEMENT_CACHE_TTL_SECONDS:-5}"
+export BLOCK_TIME_MS=${BLOCK_TIME_MS:-2000}
+export ENABLE_DEBUG_ENDPOINTS=true
 
 [ -z "${BLOCK_TIME_MS+x}" ] && BLOCK_TIME_MS=$(( ${RIVER_BLOCK_TIME:-1} * 1000 ))
 export BLOCK_TIME_MS
@@ -68,6 +70,34 @@ if [ "$CONFIG" == "true" ]; then
 
     ../../scripts/set-riverchain-config.sh
 
+    TEMPLATE_FILE="./config-template.yaml"
+    OUTPUT_FILE="${RUN_BASE}/common_config.yaml"
+
+    cp "$TEMPLATE_FILE" "$OUTPUT_FILE"
+    grep -o '<.*>' "$TEMPLATE_FILE" | sort | uniq | while read -r KEY; do
+        key=$(echo "$KEY" | sed 's/^.\(.*\).$/\1/')
+        value=${!key:?$key is not set}
+
+        if [ -z "$value" ]; then
+            echo "Error: Missing value for key $key" >&2
+            exit 1
+        fi
+
+        # Check if key exists in the template file
+        if ! grep -q "<${key}>" "$OUTPUT_FILE"; then
+            echo "Error: Key $key not found in template." >&2
+            exit 1
+        fi
+
+        # Substitute the key with the value, adjust for macOS or Linux without creating backup files
+        if [ "$(uname)" == "Darwin" ]; then  # macOS
+            sed -i '' "s^<${key}>^${value}^g" "$OUTPUT_FILE"
+        else  # Linux
+            sed -i "s^<${key}>^${value}^g" "$OUTPUT_FILE"
+        fi
+    done
+
+
     for ((i=0; i<NUM_INSTANCES; i++)); do
         printf -v INSTANCE "%02d" $i
         export INSTANCE
@@ -118,10 +148,7 @@ fi
 if [ "$RUN" == "true" ]; then
     pushd ${RUN_BASE}
     while read -r INSTANCE; do
-
-        if [ ! -f $INSTANCE/config/config.yaml ]; then
-            echo "Skipping directory '$INSTANCE' because it does not have a config.yaml file"
-
+        if [ ! -f $INSTANCE/config/config.env ]; then
             continue
         fi
 
@@ -129,28 +156,7 @@ if [ "$RUN" == "true" ]; then
         echo "Running instance '$INSTANCE' with extra aguments: '${args[@]:-}'"
         cast rpc -r http://127.0.0.1:8546 anvil_setBalance `cat ./wallet/node_address` 10000000000000000000
 
-        # if NUM_INSTANCES in not one, run in background, otherwise run with optional restart
-        if [ "$NUM_INSTANCES" -ne 1 ]; then
-            echo "Running instance in background"
-            ../bin/river_node run stream --config config/config.yaml "${args[@]:-}" &
-        else
-            echo "Running single $INSTANCE in the retry loop"
-            while true; do
-                # Run the built executable
-                ../bin/river_node run stream "${args[@]:-}" &
-                job_pid=$!
-
-                # Wait for the job to finish and capture its exit status
-                wait $job_pid
-                exit_status=$?
-
-                if [ "${exit_status:-0}" -ne 22 ]; then
-                    break
-                fi
-
-                echo "RESTARTING"
-            done
-        fi
+        ../bin/river_node run stream --config ../common_config.yaml --config config/config.env "${args[@]:-}" &
 
         popd
     done < <(find . -type d -mindepth 1 -maxdepth 1 | sort)

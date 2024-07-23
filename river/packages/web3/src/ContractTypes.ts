@@ -19,7 +19,7 @@ export const Permission = {
     PinMessage: 'PinMessage',
     AddRemoveChannels: 'AddRemoveChannels',
     ModifySpaceSettings: 'ModifySpaceSettings',
-    ReactReply: 'ReactReply',
+    React: 'React',
 } as const
 
 export type Permission = (typeof Permission)[keyof typeof Permission]

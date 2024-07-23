@@ -100,7 +100,7 @@ do
     # Copy node binary and config template
     cp "./bin/river_node" "${INSTANCE_DIR}/bin"
     # Using the same config as the node
-    cp ../node/run_files/${RUN_ENV}/00/config/config.yaml "${INSTANCE_DIR}/config/config.yaml"
+    cp ../node/run_files/${RUN_ENV}/common_config.yaml "${INSTANCE_DIR}/config/config.yaml"
 
     # Substitute METRIC_PORT and create config.yaml
     METRICS_PORT=$((9080 + i))
