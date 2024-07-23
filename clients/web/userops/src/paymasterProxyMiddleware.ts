@@ -2,8 +2,6 @@ import { UserOpsConfig } from './types'
 import { BigNumber } from 'ethers'
 import { IUserOperation, IUserOperationMiddlewareCtx } from 'userop'
 import { z } from 'zod'
-import { userOpsStore } from './userOpsStore'
-import { Address } from '@river-build/web3'
 import { CodeException } from './errors'
 
 type PaymasterProxyResponse = {
@@ -35,8 +33,6 @@ export const paymasterProxyMiddleware = async (
         fetchAccessTokenFn: (() => Promise<string | null>) | undefined
     } & Pick<UserOpsConfig, 'paymasterProxyUrl' | 'paymasterProxyAuthSecret'>,
 ) => {
-    const { getState, setState } = userOpsStore
-
     const {
         userOpContext: ctx,
         rootKeyAddress,
@@ -46,10 +42,6 @@ export const paymasterProxyMiddleware = async (
         paymasterProxyUrl,
         fetchAccessTokenFn,
     } = args
-
-    if (!getState().smartAccountAddress) {
-        setState({ smartAccountAddress: ctx.op.sender as Address })
-    }
 
     try {
         // TODO: ///////////////////////////

@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react'
 import { userOpsStore } from '@towns/userops'
 import { BigNumber, utils } from 'ethers'
 
-import { BASE_SEPOLIA } from 'use-towns-client'
+import { Address, BASE_SEPOLIA, useConnectivity } from 'use-towns-client'
 import { useShallow } from 'zustand/react/shallow'
 import { Box, Button, Heading, Icon, IconButton, Paragraph, Text } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
@@ -13,6 +13,7 @@ import { useBalance } from 'hooks/useBalance'
 import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
 import { AboveAppProgressModalContainer } from '@components/AppProgressOverlay/AboveAppProgress/AboveAppProgress'
 import { useEnvironment } from 'hooks/useEnvironmnet'
+import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { formatEthDisplay } from '../utils'
 import { CopyWalletAddressButton } from '../TokenVerification/Buttons'
 import { useWalletPrefix } from '../useWalletPrefix'
@@ -48,16 +49,20 @@ function UserOpTxModalContent({
     valueLabel,
     endPublicPageLoginFlow,
 }: Props & { endPublicPageLoginFlow: () => void }) {
-    const { currOpGas, currOpValue, confirm, deny, smartAccountAddress, retryType } = userOpsStore(
+    const { currOpGas, currOpValue, confirm, deny, retryType } = userOpsStore(
         useShallow((s) => ({
             currOpGas: s.currOpGas,
             confirm: s.confirm,
             deny: s.deny,
-            smartAccountAddress: s.smartAccountAddress,
             retryType: s.retryType,
             currOpValue: s.currOpValue,
         })),
     )
+    const { loggedInWalletAddress } = useConnectivity()
+
+    const { data: smartAccountAddress } = useAbstractAccountAddress({
+        rootKeyAddress: loggedInWalletAddress as Address,
+    })
 
     const { baseChainConfig } = useEnvironment()
     const walletPrefix = useWalletPrefix()

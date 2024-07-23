@@ -1,4 +1,3 @@
-import { Address } from '@river-build/web3'
 import { BigNumberish } from 'ethers'
 import { create } from 'zustand'
 
@@ -13,7 +12,6 @@ export type UserOpGas = {
 export const userOpsStore = create<{
     currOpGas: UserOpGas | undefined
     currOpValue: BigNumberish | undefined
-    smartAccountAddress: Address | undefined
     retryType: 'preVerification' | undefined
     confirm: () => void
     deny: () => void
@@ -21,7 +19,6 @@ export const userOpsStore = create<{
 }>((set) => ({
     currOpGas: undefined,
     currOpValue: undefined,
-    smartAccountAddress: undefined,
     retryType: undefined,
     confirm: () => {},
     deny: () => {},

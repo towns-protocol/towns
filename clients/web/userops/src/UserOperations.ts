@@ -30,6 +30,7 @@ import {
 } from './middlewares'
 import { paymasterProxyMiddleware } from './paymasterProxyMiddleware'
 import { MiddlewareVars } from './MiddlewareVars'
+import { abstractAddressMap } from './abstractAddressMap'
 
 export class UserOps {
     private bundlerUrl: string
@@ -74,6 +75,10 @@ export class UserOps {
     }: {
         rootKeyAddress: Address
     }): Promise<Address | undefined> {
+        if (abstractAddressMap.get(rootKeyAddress)) {
+            return abstractAddressMap.get(rootKeyAddress)
+        }
+
         // copied from userop.js
         // easier b/c we don't need the signer, which we don't store
         //
@@ -114,8 +119,7 @@ export class UserOps {
             if (!address) {
                 throw error
             }
-
-            userOpsStore.setState({ smartAccountAddress: address })
+            abstractAddressMap.set(rootKeyAddress, address)
             return address as Address
         }
     }
