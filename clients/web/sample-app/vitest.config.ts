@@ -20,6 +20,7 @@ export default defineConfig({
                 /.*.\/core\/waterproof\/dist\/(.*\.js)$/,
                 /.*.\/core\/web3\/dist\/(.*\.js)$/,
                 'vitest-canvas-mock',
+                '@privy-io/js-sdk-core',
             ],
         },
     },
