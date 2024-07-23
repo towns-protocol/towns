@@ -68,6 +68,26 @@ vi.mock('use-towns-client', async () => {
 describe('CreateChannelForm', () => {
     beforeEach(() => {
         vi.resetAllMocks()
+
+        vi.mock('ui/styles/atoms.css', () => ({
+            atoms: Object.assign(() => {}, {
+                properties: new Set([]),
+            }),
+            boxClass: '',
+            containerWithGapClass: '',
+        }))
+
+        vi.mock('framer-motion', async () => {
+            return {
+                AnimatePresence: ({ children }: { children: JSX.Element }) => children,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                motion: (c: any) => c,
+            }
+        })
+    })
+
+    afterAll(() => {
+        vi.resetAllMocks()
     })
 
     test.skip('renders checkbox for each role', async () => {

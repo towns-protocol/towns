@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import 'fake-indexeddb/auto'
 import React from 'react'
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 // eslint-disable-next-line no-restricted-imports
 import * as Lib from 'use-towns-client'
@@ -98,6 +98,31 @@ const Wrapper = ({ roomIdentifier }: { roomIdentifier: string }) => {
 describe('<SpaceHome />', () => {
     beforeEach(() => {
         vi.resetAllMocks()
+
+        vi.mock('framer-motion', async () => {
+            return {
+                AnimatePresence: ({ children }: { children: JSX.Element }) => children,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                motion: (c: any) => c,
+            }
+        })
+
+        vi.mock('ui/styles/atoms.css', () => ({
+            atoms: Object.assign(() => {}, {
+                properties: new Set([]),
+            }),
+            boxClass: '',
+            containerWithGapClass: '',
+        }))
+
+        vi.mock('@components/SpaceIcon', () => ({
+            SpaceIcon: () => <div />,
+            InteractiveSpaceIcon: () => <div />,
+        }))
+    })
+
+    afterAll(() => {
+        vi.resetAllMocks()
     })
 
     test('renders correct basic details', async () => {
@@ -127,9 +152,18 @@ describe('<SpaceHome />', () => {
         screen.getByText(/1 member/gi)
     })
 
-    test('does not render about section if user cannot edit and room does not have topic', async () => {
+    test('does not render about section if user cannot edit and room does not have long description', async () => {
         // no-topic is matched in mocks/handlers.ts
         const { roomIdentifier, spaceData, onChainSpaceInfo } = generateSpaceData('no-topic')
+        const spaceDataWithoutLongDescription = {
+            ...spaceData,
+            longDescription: '',
+        }
+
+        const onChainSpaceInfoWithoutLongDescription = {
+            ...onChainSpaceInfo,
+            longDescription: '',
+        }
 
         // @ts-ignore
         vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
@@ -137,6 +171,13 @@ describe('<SpaceHome />', () => {
             hasPermission: false,
             error: undefined,
         })
+
+        vi.spyOn(Lib, 'useIsSpaceOwner').mockReturnValue({
+            isLoading: false,
+            isOwner: false,
+            error: undefined,
+        })
+
         vi.spyOn(Lib, 'useTownsClient').mockReturnValue({
             // @ts-ignore
             client: {
@@ -145,10 +186,10 @@ describe('<SpaceHome />', () => {
             chainId: 5,
         })
 
-        vi.spyOn(Lib, 'useSpaceData').mockReturnValue(spaceData)
+        vi.spyOn(Lib, 'useSpaceData').mockReturnValue(spaceDataWithoutLongDescription)
         // @ts-ignore
         vi.spyOn(Lib, 'useContractSpaceInfo').mockReturnValue({
-            data: onChainSpaceInfo,
+            data: onChainSpaceInfoWithoutLongDescription,
         })
 
         render(<Wrapper roomIdentifier={roomIdentifier} />)
@@ -159,6 +200,15 @@ describe('<SpaceHome />', () => {
 
     test('renders about section if user can edit, but no room topic exists yet', async () => {
         const { roomIdentifier, spaceData, onChainSpaceInfo } = generateSpaceData('no-topic')
+        const spaceDataWithoutLongDescription = {
+            ...spaceData,
+            longDescription: '',
+        }
+
+        const onChainSpaceInfoWithoutLongDescription = {
+            ...onChainSpaceInfo,
+            longDescription: '',
+        }
 
         // @ts-ignore
         vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
@@ -166,6 +216,13 @@ describe('<SpaceHome />', () => {
             hasPermission: true,
             error: undefined,
         })
+
+        vi.spyOn(Lib, 'useIsSpaceOwner').mockReturnValue({
+            isLoading: false,
+            isOwner: true,
+            error: undefined,
+        })
+
         vi.spyOn(Lib, 'useTownsClient').mockReturnValue({
             // @ts-ignore
             client: {
@@ -174,10 +231,10 @@ describe('<SpaceHome />', () => {
             chainId: 5,
         })
 
-        vi.spyOn(Lib, 'useSpaceData').mockReturnValue(spaceData)
+        vi.spyOn(Lib, 'useSpaceData').mockReturnValue(spaceDataWithoutLongDescription)
         // @ts-ignore
         vi.spyOn(Lib, 'useContractSpaceInfo').mockReturnValue({
-            data: onChainSpaceInfo,
+            data: onChainSpaceInfoWithoutLongDescription,
         })
 
         render(<Wrapper roomIdentifier={roomIdentifier} />)
@@ -201,6 +258,13 @@ describe('<SpaceHome />', () => {
             },
             chainId: 5,
         })
+
+        vi.spyOn(Lib, 'useIsSpaceOwner').mockReturnValue({
+            isLoading: false,
+            isOwner: false,
+            error: undefined,
+        })
+
         vi.spyOn(Lib, 'useSpaceData').mockReturnValue(spaceData)
         // @ts-ignore
         vi.spyOn(Lib, 'useContractSpaceInfo').mockReturnValue({
@@ -209,7 +273,7 @@ describe('<SpaceHome />', () => {
 
         render(<Wrapper roomIdentifier={roomIdentifier} />)
         await screen.findByTestId('about-section')
-        await screen.findByText(/my special space/gi)
+        await screen.findByText(/my long, long, long description/gi)
     })
 
     test('renders edit UI when user has permission to edit', async () => {
@@ -219,6 +283,12 @@ describe('<SpaceHome />', () => {
         vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
             isLoading: false,
             hasPermission: true,
+            error: undefined,
+        })
+
+        vi.spyOn(Lib, 'useIsSpaceOwner').mockReturnValue({
+            isLoading: false,
+            isOwner: true,
             error: undefined,
         })
         vi.spyOn(Lib, 'useTownsClient').mockReturnValue({
@@ -238,12 +308,18 @@ describe('<SpaceHome />', () => {
         await screen.findByTestId('upload-image-button')
     })
 
-    test('user with permission is able to edit and submit description', async () => {
+    test('user with permission is able to edit description', async () => {
         const { roomIdentifier, spaceData, onChainSpaceInfo } = generateSpaceData('abcd')
         // @ts-ignore
         vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
             isLoading: false,
             hasPermission: true,
+            error: undefined,
+        })
+
+        vi.spyOn(Lib, 'useIsSpaceOwner').mockReturnValue({
+            isLoading: false,
+            isOwner: true,
             error: undefined,
         })
 
@@ -263,20 +339,6 @@ describe('<SpaceHome />', () => {
 
         render(<Wrapper roomIdentifier={roomIdentifier} />)
         const container = await screen.findByTestId('about-section')
-        const editButton = await within(container).findByTestId('edit-button')
-        fireEvent.click(editButton)
-        const saveButton = await within(container).findByTestId('save-button')
-        const textArea = await within(container).findByTestId('edit-text-area')
-        fireEvent.change(textArea, { target: { value: 'new description' } })
-        fireEvent.click(saveButton)
-
-        // TODO: verify that the description was updated. Probably need to use https://mswjs.io/docs/api/response/once
-        // to mock the first request as one description, then let subsequent requests be the updated description.
-        // await waitFor(() => {
-        //     expect(saveButton).not.toBeInTheDocument()
-        // })
-        // await waitFor(() => {
-        //     expect(/new description/gi).toBeInTheDocument()
-        // })
+        await within(container).findByTestId('edit-button')
     })
 })

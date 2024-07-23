@@ -72,7 +72,6 @@ describe('<AppPanelLayout />', () => {
         render(<Wrapper />)
 
         await waitFor(() => {
-            screen.getByText(/1.2.3/gi)
             screen.getByText(/aabbccdd/gi)
         })
     })

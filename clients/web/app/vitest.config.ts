@@ -28,7 +28,9 @@ export default defineConfig({
     },
     plugins: [tsconfigPaths(), vanillaExtractPlugin(), VitePWA()] as any,
     define: {
-        APP_VERSION: JSON.stringify('1.2.3'),
-        APP_COMMIT_HASH: JSON.stringify('aabbccdd'),
+        VITE_APP_VERSION: JSON.stringify('1.2.3'),
+        VITE_APP_COMMIT_HASH: JSON.stringify('aabbccdd'),
+        VITE_APP_TIMESTAMP: JSON.stringify(Date.now()),
+        VITE_APP_MODE: JSON.stringify(process.env.MODE ?? ''),
     },
 })

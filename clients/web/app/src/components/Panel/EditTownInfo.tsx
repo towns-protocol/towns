@@ -36,39 +36,53 @@ export function EditTownInfo(props: Props) {
                             {name ?? ''}
                         </Paragraph>
                         <Box grow />
-                        {canEdit && <TextButton onClick={onEdit}>Edit</TextButton>}
+                        {canEdit && (
+                            <TextButton data-testid="edit-button" onClick={onEdit}>
+                                Edit
+                            </TextButton>
+                        )}
                     </Stack>
                     {address && (
                         <ClipboardCopy label={shortAddress(address)} clipboardContent={address} />
                     )}
                 </Stack>
             </MdGap>
-            <MdGap data-testId="motto-section">
+            <MdGap data-testid="motto-section">
                 <Stack gap>
                     <Stack horizontal alignItems="center" width="100%">
                         <Paragraph strong color="default">
                             Town Motto
                         </Paragraph>{' '}
                         <Box grow />
-                        {canEdit && <TextButton onClick={onEdit}>Edit</TextButton>}
+                        {canEdit && (
+                            <TextButton data-testid="edit-button" onClick={onEdit}>
+                                Edit
+                            </TextButton>
+                        )}
                     </Stack>
                     <Paragraph truncate size="md" color="gray2">
                         {motto}
                     </Paragraph>
                 </Stack>
             </MdGap>
-            <MdGap data-testId="about-section">
-                <Stack gap>
-                    <Stack horizontal alignItems="center" width="100%">
-                        <Paragraph strong color="default">
-                            About
-                        </Paragraph>{' '}
-                        <Box grow />
-                        {canEdit && <TextButton onClick={onEdit}>Edit</TextButton>}
+            {!canEdit && about.length === 0 ? null : (
+                <MdGap data-testid="about-section">
+                    <Stack gap>
+                        <Stack horizontal alignItems="center" width="100%">
+                            <Paragraph strong color="default">
+                                About
+                            </Paragraph>{' '}
+                            <Box grow />
+                            {canEdit && (
+                                <TextButton data-testid="edit-button" onClick={onEdit}>
+                                    Edit
+                                </TextButton>
+                            )}
+                        </Stack>
+                        <Paragraph color="gray2">{about}</Paragraph>
                     </Stack>
-                    <Paragraph color="gray2">{about}</Paragraph>
-                </Stack>
-            </MdGap>
+                </MdGap>
+            )}
         </>
     )
 }

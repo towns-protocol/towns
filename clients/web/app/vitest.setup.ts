@@ -12,10 +12,10 @@ server.listen()
 vi.mock('./src/components/Transitions/MotionBox')
 vi.mock('./src/ui/components/ZLayer/ZLayer')
 
-vi.mock('./src/hooks/useAutoLoginToRiverIfEmbeddedWallet', async () => {
+vi.mock('./src/privy/useAutoLoginToRiverIfEmbeddedWallet', async () => {
     const actual = await vi.importActual<
-        typeof import('./src/hooks/useAutoLoginToRiverIfEmbeddedWallet')
-    >('./src/hooks/useAutoLoginToRiverIfEmbeddedWallet')
+        typeof import('./src/privy/useAutoLoginToRiverIfEmbeddedWallet')
+    >('./src/privy/useAutoLoginToRiverIfEmbeddedWallet')
 
     return {
         ...actual,
@@ -69,9 +69,12 @@ vi.mock('@towns/privy', async (importOriginal) => {
     const actual = await importOriginal<typeof import('@towns/privy')>()
     return {
         ...actual,
-        useGetEmbeddedSigner: () => () => {
+        useGetEmbeddedSigner: () => {
             //empty object for fake signer
-            return {}
+            return {
+                getSigner: () => ({} as EIP1193Provider),
+                isPrivyReady: true,
+            }
         },
     }
 })
@@ -111,4 +114,18 @@ beforeEach(() => {
 
 afterAll(() => {
     server.close()
+})
+
+Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: vi.fn().mockImplementation((query) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(), // deprecated
+        removeListener: vi.fn(), // deprecated
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+    })),
 })
