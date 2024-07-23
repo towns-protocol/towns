@@ -1,6 +1,5 @@
 import React from 'react'
 import { Box, Heading, Stack, Text } from '@ui'
-import { Logo } from '@components/Logo'
 
 export const Everything = () => (
     <Box>
@@ -21,6 +20,5 @@ export const Everything = () => (
             <Box color="cta1" />
         </Stack>
         <Text>Text</Text>
-        <Logo />
     </Box>
 )

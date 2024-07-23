@@ -7,7 +7,7 @@ import {
     TypeaheadPositionResult,
     getTypeaheadPosition,
 } from '@components/RichTextPlate/utils/helpers'
-import { Box, BoxProps } from '../Box/Box'
+import { Box, BoxProps } from '@ui'
 
 type TypeaheadMenuProps = React.PropsWithChildren<{
     zIndex?: BoxProps['zIndex']

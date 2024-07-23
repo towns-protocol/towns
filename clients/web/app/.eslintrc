@@ -13,6 +13,7 @@
   },
   "ignorePatterns": ["vitest.setup.ts"],
   "plugins": [
+    "boundaries",
     "@typescript-eslint",
     "import",
     "react",
@@ -28,8 +29,10 @@
     "plugin:import/typescript",
     "plugin:prettier/recommended",
     "prettier",
-    "plugin:testing-library/react"
+    "plugin:testing-library/react",
+    "plugin:boundaries/recommended"
   ],
+
   "rules": {
     "curly": "warn",
     "@typescript-eslint/no-base-to-string": "error",
@@ -100,6 +103,19 @@
           }
         ]
       }
+    ],
+    "boundaries/element-types": [
+      "error",
+      {
+        "default": "allow",
+        "rules": [
+          {
+            "message": "to enhance code-splitting. @ui package should not contain dependencies outside the ui/ folder",
+            "from": ["ui"],
+            "disallow": ["components"]
+          }
+        ]
+      }
     ]
   },
   "overrides": [
@@ -143,6 +159,16 @@
     }
   ],
   "settings": {
+    "boundaries/elements": [
+      {
+        "type": "ui",
+        "pattern": "src/ui/components/**"
+      },
+      {
+        "type": "components",
+        "pattern": "src/components/**"
+      }
+    ],
     "import/parsers": {
       "@typescript-eslint/parser": [".ts", ".tsx", ".d.ts"]
     },

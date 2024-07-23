@@ -24,7 +24,7 @@ import every from 'lodash/every'
 import isEqual from 'lodash/isEqual'
 import React, { memo, useCallback, useEffect } from 'react'
 import fuzzysort from 'fuzzysort'
-import { TypeaheadMenuAnchored, TypeaheadMenuItem } from '@ui'
+import { TypeaheadMenuAnchored, TypeaheadMenuItem } from '../Typeahead'
 import { getUsernameForMention } from '../../utils/mentions'
 import {
     ComboboxTypes,
