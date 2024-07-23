@@ -6,7 +6,6 @@ export DB_PORT=5433
 export LOG_LEVEL=info
 export LOG_NOCOLOR=false
 export METRICS_ENABLED=true
-export METRICS_PORT=8081
 export NUM_INSTANCES=1
 export REPL_FACTOR=1
 export RPC_PORT=5157
@@ -33,7 +32,6 @@ while [[ "$#" -gt 0 ]]; do
         --disable_entitlements|--de)
             RUN_ENV=single_ne
             METRICS_ENABLED=false
-            METRICS_PORT=8082
             RPC_PORT=5158
             DISABLE_BASE_CHAIN=true
             shift

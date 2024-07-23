@@ -5,11 +5,14 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/prometheus/client_golang/prometheus"
-	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
+	"github.com/river-build/river/core/node/shared"
 )
 
 type streamIdProvider interface {
-	GetStreamId() string
+	GetStreamId() []byte
 }
 
 type metricsInterceptor struct {
@@ -38,17 +41,20 @@ func (i *metricsInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc
 			m    = i.unaryInflight.With(prometheus.Labels{"proc": proc})
 		)
 		m.Inc()
-		
+
 		defer func() {
 			m.Dec()
 			prometheus.NewTimer(i.rpcDuration.WithLabelValues(proc)).ObserveDuration()
 		}()
 
+		// add streamId to tracing span
 		r, ok := req.Any().(streamIdProvider)
 		if ok {
-			// this line will enrich the tracing span with the streamId
-			span, _ := tracer.SpanFromContext(ctx)
-			span.SetTag("streamId", r.GetStreamId())
+			id, err := shared.StreamIdFromBytes(r.GetStreamId())
+			if err == nil {
+				span := trace.SpanFromContext(ctx)
+				span.SetAttributes(attribute.String("streamId", id.String()))
+			}
 		}
 
 		return next(ctx, req)

@@ -240,6 +240,7 @@ func TestArchiveOneStream(t *testing.T) {
 		common.Address{},
 		bc.InitialBlockNum,
 		bc.ChainMonitor,
+		nil,
 	)
 	require.NoError(err)
 
@@ -247,7 +248,7 @@ func TestArchiveOneStream(t *testing.T) {
 	require.NoError(err)
 	defer schemaDeleter()
 
-	pool, err := storage.CreateAndValidatePgxPool(ctx, dbCfg, schema)
+	pool, err := storage.CreateAndValidatePgxPool(ctx, dbCfg, schema, nil)
 	require.NoError(err)
 
 	streamStorage, err := storage.NewPostgresEventStore(

@@ -57,10 +57,7 @@ func (m *Metrics) CreateHandler() http.Handler {
 }
 
 func (m *Metrics) StartMetricsServer(ctx context.Context, config config.MetricsConfig) {
-	log := dlog.FromCtx(ctx)
-
 	if !config.Enabled || config.Port == 0 {
-		log.Info("Secondary metrics service is disabled")
 		return
 	}
 

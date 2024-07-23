@@ -19,6 +19,7 @@ func TestMigrateExistingDb(t *testing.T) {
 		ctx,
 		testParams.config,
 		testParams.schema,
+		nil,
 	)
 	require.NoError(err)
 

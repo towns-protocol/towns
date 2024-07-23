@@ -45,12 +45,10 @@ riverChain:
 # Base contracts
 architectContract:
     address: <SPACE_FACTORY_ADDRESS>
-    version: 'dev'
 
 # River contracts
 registryContract:
     address: <RIVER_REGISTRY_ADDRESS>
-    version: '' # Explicitely uses IRiverRegistryV1 interface
 
 # Logging
 log:
@@ -59,14 +57,19 @@ log:
     console: true
     noColor: <LOG_NOCOLOR>
     format: text
+    simplify: true
 
 # Metrics
 metrics:
     enabled: <METRICS_ENABLED>
-    port: <METRICS_PORT>
 performanceTracking:
     profilingEnabled: false
-    tracingEnabled: false
+
+    # NOTE: Uncomment below to enable tracing with Jaeger (via OTLP) or Zipkin
+    # tracingEnabled: true
+    # otlpEnableGrpc: true
+    # otlpInsecure: true
+    # zipkinUrl: http://localhost:9411
 
 # Stream settings
 stream:
@@ -112,3 +115,5 @@ xChainBlockchains: '31337,31338,84532,11155111'
 enableDebugEndpoints: <ENABLE_DEBUG_ENDPOINTS>
 
 history: 30s
+
+standByOnStart: false

@@ -9,7 +9,6 @@ export DB_PORT="${DB_PORT:-5433}"
 export LOG_LEVEL="${LOG_LEVEL:-info}"
 export LOG_NOCOLOR="${LOG_NOCOLOR:-false}"
 export METRICS_ENABLED="${METRICS_ENABLED:-true}"
-export METRICS_PORT="${METRICS_PORT:-8010}"
 export NUM_INSTANCES="${NUM_INSTANCES:-10}"
 export REPL_FACTOR="${REPL_FACTOR:-1}"
 export RPC_PORT="${RPC_PORT:-5170}"
@@ -73,10 +72,8 @@ if [ "$CONFIG" == "true" ]; then
         printf -v INSTANCE "%02d" $i
         export INSTANCE
         I_RPC_PORT=$((RPC_PORT + i))
-        I_METRICS_PORT=$((METRICS_PORT + i))
 
         RPC_PORT=${I_RPC_PORT} \
-        METRICS_PORT=${I_METRICS_PORT} \
         ./config_instance.sh
 
         NODE_ADDRESS=$(cat ${RUN_BASE}/$INSTANCE/wallet/node_address)

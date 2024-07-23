@@ -20,7 +20,7 @@ func NewTestPgStore(ctx context.Context) *TestPgStore {
 		panic(err)
 	}
 
-	pool, err := CreateAndValidatePgxPool(ctx, dbCfg, schema)
+	pool, err := CreateAndValidatePgxPool(ctx, dbCfg, schema, nil)
 	if err != nil {
 		panic(err)
 	}

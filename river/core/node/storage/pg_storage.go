@@ -11,7 +11,9 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/exaring/otelpgx"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/river-build/river/core/config"
 	. "github.com/river-build/river/core/node/base"
@@ -1118,6 +1120,7 @@ func createAndValidatePgxPool(
 	ctx context.Context,
 	cfg *config.DatabaseConfig,
 	databaseSchemaName string,
+	tracerProvider trace.TracerProvider,
 ) (*PgxPoolInfo, error) {
 	databaseUrl := cfg.GetUrl()
 
@@ -1131,6 +1134,14 @@ func createAndValidatePgxPool(
 	poolConf.ConnConfig.RuntimeParams["search_path"] = databaseSchemaName
 
 	poolConf.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
+
+	if tracerProvider != nil {
+		poolConf.ConnConfig.Tracer = otelpgx.NewTracer(
+			otelpgx.WithTracerProvider(tracerProvider),
+			otelpgx.WithDisableQuerySpanNamePrefix(),
+			otelpgx.WithTrimSQLInSpanName(),
+		)
+	}
 
 	pool, err := pgxpool.NewWithConfig(ctx, poolConf)
 	if err != nil {
@@ -1154,8 +1165,9 @@ func CreateAndValidatePgxPool(
 	ctx context.Context,
 	cfg *config.DatabaseConfig,
 	databaseSchemaName string,
+	tracerProvider trace.TracerProvider,
 ) (*PgxPoolInfo, error) {
-	r, err := createAndValidatePgxPool(ctx, cfg, databaseSchemaName)
+	r, err := createAndValidatePgxPool(ctx, cfg, databaseSchemaName, tracerProvider)
 	if err != nil {
 		return nil, AsRiverError(err, Err_DB_OPERATION_FAILURE).Func("CreateAndValidatePgxPool")
 	}
@@ -1324,7 +1336,9 @@ func (s *PostgresEventStore) createSchemaTx(ctx context.Context, tx pgx.Tx) erro
 		}
 		log.Info("DB Schema created", "schema", s.schemaName)
 	} else {
-		log.Info("DB Schema already exists", "schema", s.schemaName)
+		if config.UseDetailedLog(ctx) {
+			log.Info("DB Schema already exists", "schema", s.schemaName)
+		}
 	}
 	return nil
 }

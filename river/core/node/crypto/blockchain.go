@@ -2,6 +2,7 @@ package crypto
 
 import (
 	"context"
+	"go.opentelemetry.io/otel/trace"
 	"math/big"
 	"time"
 
@@ -64,6 +65,7 @@ func NewBlockchain(
 	cfg *config.ChainConfig,
 	wallet *Wallet,
 	metrics infra.MetricsFactory,
+	tracer trace.Tracer,
 ) (*Blockchain, error) {
 	client, err := ethclient.DialContext(ctx, cfg.NetworkUrl)
 	if err != nil {
@@ -71,6 +73,11 @@ func NewBlockchain(
 			Message("Cannot connect to chain RPC node").
 			Tag("chainId", cfg.ChainId).
 			Func("NewBlockchain")
+	}
+
+	if tracer != nil {
+		instrumentedClient := NewInstrumentedEthClient(client, tracer)
+		return NewBlockchainWithClient(ctx, cfg, wallet, instrumentedClient, instrumentedClient, metrics)
 	}
 
 	return NewBlockchainWithClient(ctx, cfg, wallet, client, client, metrics)

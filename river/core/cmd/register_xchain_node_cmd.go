@@ -80,7 +80,7 @@ func registerImpl(operatorKeyfile string, userConfirmationMessage string, regist
 	}
 
 	metrics := infra.NewMetrics("xchain", "cmdline")
-	baseChain, err := crypto.NewBlockchain(ctx, &cmdConfig.BaseChain, operatorWallet, metrics)
+	baseChain, err := crypto.NewBlockchain(ctx, &cmdConfig.BaseChain, operatorWallet, metrics, nil)
 	if err != nil {
 		return fmt.Errorf("unable to instantiate base chain client: %s", err)
 	}

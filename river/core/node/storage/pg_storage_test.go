@@ -50,6 +50,7 @@ func setupTestWithMigration(
 		ctx,
 		dbCfg,
 		dbSchemaName,
+		nil,
 	)
 	if err != nil {
 		panic(err)
@@ -567,6 +568,7 @@ func TestExitIfSecondStorageCreated(t *testing.T) {
 		ctx,
 		testParams.config,
 		testParams.schema,
+		nil,
 	)
 	require.NoError(err)
 

@@ -12,7 +12,6 @@ import (
 	"github.com/river-build/river/core/node/rpc"
 	"github.com/river-build/river/core/river_node/version"
 
-	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 	"gopkg.in/DataDog/dd-trace-go.v1/profiler"
 )
 
@@ -20,25 +19,6 @@ func runMetricsAndProfiler(ctx context.Context, cfg *config.Config) error {
 	// we overwrite the DD_TAGS environment variable, because this is the best way to pass them down to the tracer
 	setDDTagsEnv()
 
-	if cfg.PerformanceTracking.TracingEnabled {
-		if os.Getenv("DD_TAGS") != "" {
-			fmt.Println("Starting Datadog tracer")
-			tracer.Start(
-				tracer.WithEnv(getEnvFromDDTags()),
-				tracer.WithService("river-node"),
-				tracer.WithServiceVersion(version.GetFullVersion()),
-				// tracer.WithGlobalTag(t1, v1),
-				// tracer.WithGlobalTag(t2, v2),
-				// ..
-				// ^ falling back to DD_TAGS env var
-			)
-			// defer tracer.Stop()
-		} else {
-			fmt.Println("Tracing was enabled, but DD_ENV was not set. Tracing will not be enabled.")
-		}
-	} else {
-		fmt.Println("Tracing disabled")
-	}
 	if cfg.PerformanceTracking.ProfilingEnabled {
 		if os.Getenv("DD_TAGS") != "" {
 			fmt.Println("Starting Datadog profiler")

@@ -19,7 +19,7 @@ import (
 func runPing(cfg *config.Config) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
 
-	blockchain, err := crypto.NewBlockchain(ctx, &cfg.RiverChain, nil, infra.NewMetrics("river", "cmdline"))
+	blockchain, err := crypto.NewBlockchain(ctx, &cfg.RiverChain, nil, infra.NewMetrics("river", "cmdline"), nil)
 	if err != nil {
 		return err
 	}
@@ -30,12 +30,12 @@ func runPing(cfg *config.Config) error {
 	}
 
 	nodeRegistry, err := nodes.LoadNodeRegistry(
-		ctx, registryContract, common.Address{}, blockchain.InitialBlockNum, blockchain.ChainMonitor)
+		ctx, registryContract, common.Address{}, blockchain.InitialBlockNum, blockchain.ChainMonitor, nil)
 	if err != nil {
 		return err
 	}
 
-	result, err := rpc.GetRiverNetworkStatus(ctx, cfg, nodeRegistry, blockchain)
+	result, err := rpc.GetRiverNetworkStatus(ctx, cfg, nodeRegistry, blockchain, nil)
 	if err != nil {
 		return err
 	}

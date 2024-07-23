@@ -131,7 +131,7 @@ func New(
 	log = log.With("nodeAddress", wallet.Address.Hex())
 
 	if baseChain == nil {
-		baseChain, err = crypto.NewBlockchain(ctx, &cfg.BaseChain, wallet, metrics)
+		baseChain, err = crypto.NewBlockchain(ctx, &cfg.BaseChain, wallet, metrics, nil)
 		if err != nil {
 			return nil, err
 		}

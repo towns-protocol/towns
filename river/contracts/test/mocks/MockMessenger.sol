@@ -2,7 +2,6 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {ICrossDomainMessenger} from "./../../src/tokens/river/mainnet/delegation/ICrossDomainMessenger.sol";
 
 // libraries
 

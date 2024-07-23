@@ -5,7 +5,7 @@ Inspired by [hardhat-deploy](https://github.com/wighawag/hardhat-deploy)
 For each contract being deployed, we create a script that will:
 
 1. inherit from `Deployer`
-2. implements a `contractName()` and `__deploy()` function
+2. implements a `versionName()` and `__deploy()` function
 
 ```solidity
 // SPDX-License-Identifier: MIT
@@ -16,7 +16,7 @@ import { Pioneer } from "contracts/src/core/tokens/Pioneer.sol";
 
 contract DeployPioneer is Deployer {
   function versionName() public pure override returns (string memory) {
-    return "pioneerToken"; // will show up in packages/generated/{chain}/addresses/pioneerToken.json
+    return "pioneerToken"; // will show up in contracts/deployments/{chain}/{pioneerToken}.json
   }
 
   function __deploy(address deployer) public override returns (address) {
@@ -129,12 +129,12 @@ contract DeployHello is Deployer {
     return "hello";
   }
 
-  function __deploy(uint256 deployerPK) public override returns (address) {
-    bytes32 salt = bytes32(uint256(deployerPK)); // create a salt
+  function __deploy(address deployer) public override returns (address) {
+    bytes32 salt = bytes32(uint256(deployer)); // create a salt
 
     bytes32 initCodeHash = hashInitCode(
       type(Hello).creationCode,
-      abi.encode("Hello, World!") // encode any parameters that will go in the contstructor
+      abi.encode("Hello, World!") // encode any parameters that will go in the constructor
     );
 
     address predeterminedAddress = computeCreate2Address(salt, initCodeHash);

@@ -251,7 +251,7 @@ func New(
 	var ownsChain bool
 	if baseChain == nil {
 		ownsChain = true
-		baseChain, err = node_crypto.NewBlockchain(ctx, &cfg.BaseChain, wallet, metrics)
+		baseChain, err = node_crypto.NewBlockchain(ctx, &cfg.BaseChain, wallet, metrics, nil)
 		if err != nil {
 			return nil, err
 		}
