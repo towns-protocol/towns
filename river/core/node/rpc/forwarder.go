@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"github.com/river-build/river/core/node/utils"
 
 	"connectrpc.com/connect"
 
@@ -141,7 +142,7 @@ func (s *Service) CreateStream(
 	ctx context.Context,
 	req *connect.Request[CreateStreamRequest],
 ) (*connect.Response[CreateStreamResponse], error) {
-	ctx, log := ctxAndLogForRequest(ctx, req)
+	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	log.Debug("CreateStream REQUEST", "streamId", req.Msg.StreamId)
 	r, e := s.createStreamImpl(ctx, req)
 	if e != nil {
@@ -174,7 +175,7 @@ func (s *Service) GetStream(
 	ctx context.Context,
 	req *connect.Request[GetStreamRequest],
 ) (*connect.Response[GetStreamResponse], error) {
-	ctx, log := ctxAndLogForRequest(ctx, req)
+	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	log.Debug("GetStream ENTER")
 	r, e := s.getStreamImpl(ctx, req)
 	if e != nil {
@@ -194,7 +195,7 @@ func (s *Service) GetStreamEx(
 	req *connect.Request[GetStreamExRequest],
 	resp *connect.ServerStream[GetStreamExResponse],
 ) error {
-	ctx, log := ctxAndLogForRequest(ctx, req)
+	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	log.Debug("GetStreamEx ENTER")
 	e := s.getStreamExImpl(ctx, req, resp)
 	if e != nil {
@@ -316,7 +317,7 @@ func (s *Service) GetMiniblocks(
 	ctx context.Context,
 	req *connect.Request[GetMiniblocksRequest],
 ) (*connect.Response[GetMiniblocksResponse], error) {
-	ctx, log := ctxAndLogForRequest(ctx, req)
+	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	log.Debug("GetMiniblocks ENTER", "req", req.Msg)
 	r, e := s.getMiniblocksImpl(ctx, req)
 	if e != nil {
@@ -368,7 +369,7 @@ func (s *Service) GetLastMiniblockHash(
 	ctx context.Context,
 	req *connect.Request[GetLastMiniblockHashRequest],
 ) (*connect.Response[GetLastMiniblockHashResponse], error) {
-	ctx, log := ctxAndLogForRequest(ctx, req)
+	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	log.Debug("GetLastMiniblockHash ENTER", "req", req.Msg)
 	r, e := s.getLastMiniblockHashImpl(ctx, req)
 	if e != nil {
@@ -420,7 +421,7 @@ func (s *Service) AddEvent(
 	ctx context.Context,
 	req *connect.Request[AddEventRequest],
 ) (*connect.Response[AddEventResponse], error) {
-	ctx, log := ctxAndLogForRequest(ctx, req)
+	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	log.Debug("AddEvent ENTER", "req", req.Msg)
 	r, e := s.addEventImpl(ctx, req)
 	if e != nil {

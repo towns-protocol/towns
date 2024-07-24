@@ -230,7 +230,7 @@ describe('channelsWithEntitlements', () => {
         log('Done', Date.now() - doneStart)
     })
 
-    test('READ + REACT user can react, cannot write (top-level or reply)', async () => {
+    test('READ + REACT user can react and redact reactions, but cannot write (top-level or reply)', async () => {
         const { alice, bob, aliceSpaceDapp, spaceId, channelId } = await setupChannelWithCustomRole(
             ['alice'],
             NoopRuleData,
@@ -241,9 +241,17 @@ describe('channelsWithEntitlements', () => {
         await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
 
         const { eventId: refEventId } = await bob.sendMessage(channelId!, 'Hello, world!')
-        // Reacting to Bob's message should be allowed.
+
+        // Reacting to Bob's message should be allowed. Redacting the reaction should also be allowed.
+        const { eventId } = await alice.sendChannelMessage_Reaction(channelId!, {
+            reaction: '👍',
+            refEventId,
+        })
+        expect(eventId).toBeDefined()
         await expect(
-            alice.sendChannelMessage_Reaction(channelId!, { reaction: '👍', refEventId }),
+            alice.sendChannelMessage_Redaction(channelId!, {
+                refEventId: eventId,
+            }),
         ).toResolve()
 
         // Replying to Bob's message should not be allowed.
@@ -283,9 +291,17 @@ describe('channelsWithEntitlements', () => {
         await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
 
         const { eventId: refEventId } = await bob.sendMessage(channelId!, 'Hello, world!')
-        // Reacting to Bob's message should be allowed.
+
+        // Reacting to Bob's message should be allowed. Redacting the reaction should also be allowed.
+        const { eventId } = await alice.sendChannelMessage_Reaction(channelId!, {
+            reaction: '👍',
+            refEventId,
+        })
+        expect(eventId).toBeDefined()
         await expect(
-            alice.sendChannelMessage_Reaction(channelId!, { reaction: '👍', refEventId }),
+            alice.sendChannelMessage_Redaction(channelId!, {
+                refEventId: eventId,
+            }),
         ).toResolve()
 
         // Replying to Bob's message should be allowed.
@@ -321,9 +337,17 @@ describe('channelsWithEntitlements', () => {
         await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
 
         const { eventId: refEventId } = await bob.sendMessage(channelId!, 'Hello, world!')
-        // Reacting to Bob's message should be disallowed.
+
+        // Reacting to Bob's message should be allowed. Redacting the reaction should also be allowed.
+        const { eventId } = await alice.sendChannelMessage_Reaction(channelId!, {
+            reaction: '👍',
+            refEventId,
+        })
+        expect(eventId).toBeDefined()
         await expect(
-            alice.sendChannelMessage_Reaction(channelId!, { reaction: '👍', refEventId }),
+            alice.sendChannelMessage_Redaction(channelId!, {
+                refEventId: eventId,
+            }),
         ).toResolve()
 
         // Replying to Bob's message should be allowed.

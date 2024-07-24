@@ -1215,11 +1215,12 @@ export class Client
 
             // We check entitlements on the client side for writes to channels. A top-level
             // message post is only permitted if the user has write permissions. If the message
-            // is a reply, a reaction, a self-redaction or an edit, it may have Write or ReactReply
-            // permissions - any change to an existing message authored by the user is implicitly
-            // permitted.
+            // is a reaction or redaction, the user may also have react permissions. This is
+            // to allow react-only users to react to posts and edit their reactions. We're not
+            // concerned with being overly permissive with redactions, as at this time, a user
+            // is always allowed to redact their own messages.
             const expectedPermissions: Permission[] =
-                payload.payload.case === 'reaction'
+                payload.payload.case === 'reaction' || payload.payload.case === 'redaction'
                     ? [Permission.React, Permission.Write]
                     : [Permission.Write]
             let isEntitled = false

@@ -269,7 +269,7 @@ func (st *serviceTester) Start(t *testing.T) {
 			log.Fatal("unable to register node")
 		}
 
-		svr, err := server.New(st.ctx, st.Config(), bc, i)
+		svr, err := server.New(st.ctx, st.Config(), bc, i, nil)
 		st.require.NoError(err)
 		st.nodes[i].svr = svr
 		st.nodes[i].address = bc.Wallet.Address

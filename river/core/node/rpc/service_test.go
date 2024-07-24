@@ -1,17 +1,24 @@
 package rpc
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"fmt"
+	"math/rand"
 	"net"
 	"net/http"
 	"os"
+	"slices"
 	"strconv"
+	"sync"
 	"testing"
+	"time"
 
-	"golang.org/x/net/http2"
-
+	"connectrpc.com/connect"
+	"github.com/ethereum/go-ethereum/accounts"
+	"github.com/ethereum/go-ethereum/common"
+	eth_crypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/events"
@@ -20,12 +27,8 @@ import (
 	"github.com/river-build/river/core/node/protocol/protocolconnect"
 	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/testutils"
-
-	"connectrpc.com/connect"
-	"github.com/ethereum/go-ethereum/accounts"
-	"github.com/ethereum/go-ethereum/common"
-	eth_crypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/http2"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -749,7 +752,7 @@ func testAddStreamsToSync(tester *serviceTester) {
 			},
 		),
 	)
-	require.Nilf(err, "error calling AddStreamsToSync: %v", err)
+	require.NoError(err, "error calling AddStreamsToSync")
 	// wait for the sync
 	syncRes.Receive()
 	msg := syncRes.Msg()
@@ -761,6 +764,7 @@ func testAddStreamsToSync(tester *serviceTester) {
 	*/
 	require.NotEmpty(syncId, "expected non-empty sync id")
 	require.NotNil(msg.Stream, "expected 1 stream")
+	require.Equal(len(msg.Stream.Events), 1, "expected 1 event")
 	require.Equal(syncId, msg.SyncId, "expected sync id to match")
 }
 
@@ -839,7 +843,7 @@ func testRemoveStreamsFromSync(tester *serviceTester) {
 			},
 		),
 	)
-	require.Nilf(err, "error calling AddStreamsToSync: %v", err)
+	require.NoError(err, "AddStreamsToSync")
 	log.Info("AddStreamToSync", "resp", resp)
 	// When AddEvent is called, node calls streamImpl.notifyToSubscribers() twice
 	// for different events. 	See hnt-3683 for explanation. First event is for
@@ -898,13 +902,20 @@ OuterLoop:
 	)
 	require.Nilf(err, "error calling AddEvent: %v", err)
 
-	/**
-	For debugging only. Uncomment to see syncRes.Receive() block.
-	bobClient's syncRes no longer receives the latest events from alice.
+	gotUnexpectedMsg := make(chan *protocol.SyncStreamsResponse)
+	go func() {
+		if syncRes.Receive() {
+			gotUnexpectedMsg <- syncRes.Msg()
+		}
+	}()
 
-	// wait to see if we got a message. We shouldn't.
-	// uncomment: syncRes.Receive()
-	*/
+	select {
+	case <-time.After(3 * time.Second):
+		break
+	case <-gotUnexpectedMsg:
+		require.Fail("received message after stream was removed from sync")
+	}
+
 	syncCancel()
 
 	/**
@@ -1041,4 +1052,514 @@ func TestForwardingWithRetries(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestUnstableStreams ensures that when a stream becomes unavailable a SyncOp_Down message is received and when
+// available again allows the client to resubscribe.
+func TestUnstableStreams(t *testing.T) {
+	var (
+		req      = require.New(t)
+		services = newServiceTester(t, serviceTesterOpts{numNodes: 5, start: true})
+		client0  = services.testClient(0)
+		client1  = services.testClient(1)
+		ctx      = services.ctx
+		wallets  []*crypto.Wallet
+		users    []*protocol.SyncCookie
+		channels []*protocol.SyncCookie
+	)
+
+	// create users that will join and add messages to channels.
+	for range 10 {
+		// Create user streams
+		wallet, err := crypto.NewWallet(ctx)
+		req.NoError(err, "new wallet")
+		syncCookie, _, err := createUser(ctx, wallet, client0, nil)
+		req.NoError(err, "create user")
+
+		_, _, err = createUserDeviceKeyStream(ctx, wallet, client0, nil)
+		req.NoError(err)
+
+		wallets = append(wallets, wallet)
+		users = append(users, syncCookie)
+	}
+
+	// create a space and several channels in it
+	spaceID := testutils.FakeStreamId(STREAM_SPACE_BIN)
+	resspace, _, err := createSpace(ctx, wallets[0], client0, spaceID, nil)
+	req.NoError(err)
+	req.NotNil(resspace, "create space sync cookie")
+
+	// create enough channels that they will be distributed among local and remote nodes
+	for range TestStreams {
+		channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+		channel, _, err := createChannel(ctx, wallets[0], client0, spaceID, channelId, nil)
+		req.NoError(err)
+		req.NotNil(channel, "nil create channel sync cookie")
+		channels = append(channels, channel)
+	}
+
+	// subscribe to channel updates
+	syncPos := append(users, channels...)
+	syncRes, err := client1.SyncStreams(ctx, connect.NewRequest(&protocol.SyncStreamsRequest{SyncPos: syncPos}))
+	req.NoError(err, "sync streams")
+
+	syncRes.Receive()
+	syncID := syncRes.Msg().SyncId
+	t.Logf("subscription %s created on node: %s", syncID, services.nodes[1].address)
+
+	// collect sync cookie updates for channels
+	var (
+		messages           = make(chan string, 512)
+		mu                 sync.Mutex
+		streamDownMessages = make(map[StreamId]struct{})
+		syncCookies        = make(map[StreamId][]*protocol.StreamAndCookie)
+	)
+
+	go func() {
+		for syncRes.Receive() {
+			msg := syncRes.Msg()
+
+			switch msg.GetSyncOp() {
+			case protocol.SyncOp_SYNC_NEW:
+				syncID := msg.GetSyncId()
+				t.Logf("start stream sync %s ", syncID)
+			case protocol.SyncOp_SYNC_UPDATE:
+				req.Equal(syncID, msg.GetSyncId(), "sync id")
+				req.NotNil(msg.GetStream(), "stream")
+				req.NotNil(msg.GetStream().GetNextSyncCookie(), "next sync cookie")
+				cookie := msg.GetStream().GetNextSyncCookie()
+				streamID, err := StreamIdFromBytes(cookie.GetStreamId())
+				if err != nil {
+					req.NoError(err, "invalid stream id in sync op update")
+				}
+
+				mu.Lock()
+				syncCookies[streamID] = append(syncCookies[streamID], msg.GetStream())
+				delete(streamDownMessages, streamID)
+				mu.Unlock()
+
+				for _, e := range msg.GetStream().GetEvents() {
+					var payload protocol.StreamEvent
+					err = proto.Unmarshal(e.Event, &payload)
+					req.NoError(err)
+					switch p := payload.Payload.(type) {
+					case *protocol.StreamEvent_ChannelPayload:
+						switch p.ChannelPayload.Content.(type) {
+						case *protocol.ChannelPayload_Message:
+							messages <- p.ChannelPayload.GetMessage().GetCiphertext()
+						}
+					}
+				}
+
+			case protocol.SyncOp_SYNC_DOWN:
+				req.Equal(syncID, msg.GetSyncId(), "sync id")
+				streamID, err := StreamIdFromBytes(msg.GetStreamId())
+				req.NoError(err, "stream id")
+
+				mu.Lock()
+				if _, found := streamDownMessages[streamID]; found {
+					t.Error("received a second down message in a row for a stream")
+					return
+				}
+				streamDownMessages[streamID] = struct{}{}
+				mu.Unlock()
+
+			case protocol.SyncOp_SYNC_CLOSE:
+				req.Equal(syncID, msg.GetSyncId(), "invalid sync id in sync close message")
+				close(messages)
+
+			case protocol.SyncOp_SYNC_UNSPECIFIED, protocol.SyncOp_SYNC_PONG:
+				continue
+
+			default:
+				t.Errorf("unexpected sync operation %s", msg.GetSyncOp())
+				return
+			}
+		}
+	}()
+
+	// users join channels
+	channelsCount := len(channels)
+	for i, wallet := range wallets[1:] {
+		for c := range channelsCount {
+			channel := channels[c]
+
+			miniBlockHashResp, err := client1.GetLastMiniblockHash(
+				ctx,
+				connect.NewRequest(&protocol.GetLastMiniblockHashRequest{StreamId: users[i+1].StreamId}))
+
+			req.NoError(err, "get last miniblock hash")
+
+			channelId, _ := StreamIdFromBytes(channel.GetStreamId())
+			userJoin, err := events.MakeEnvelopeWithPayload(
+				wallet,
+				events.Make_UserPayload_Membership(protocol.MembershipOp_SO_JOIN, channelId, nil, spaceID[:]),
+				miniBlockHashResp.Msg.GetHash(),
+			)
+			req.NoError(err)
+
+			resp, err := client1.AddEvent(
+				ctx,
+				connect.NewRequest(
+					&protocol.AddEventRequest{
+						StreamId: users[i+1].StreamId,
+						Event:    userJoin,
+					},
+				),
+			)
+
+			req.NoError(err)
+			req.Nil(resp.Msg.GetError())
+		}
+	}
+
+	// send a bunch of messages and ensure that all are received
+	sendMessagesAndReceive(100, wallets, channels, req, client0, ctx, messages, func(StreamId) bool { return false })
+
+	t.Logf("first messages batch received")
+
+	// bring ~25% of the streams down
+	streamsDownCounter := 0
+	rand.Shuffle(len(channels), func(i, j int) { channels[i], channels[j] = channels[j], channels[i] })
+
+	for i, syncCookie := range channels {
+		streamID, _ := StreamIdFromBytes(syncCookie.GetStreamId())
+		if _, err = client1.Info(ctx, connect.NewRequest(&protocol.InfoRequest{Debug: []string{
+			"drop_stream",
+			syncID,
+			streamID.String(),
+		}})); err != nil {
+			req.NoError(err, "unable to bring stream down")
+		}
+
+		streamsDownCounter++
+
+		t.Logf("bring stream %s down", streamID)
+
+		if i > TestStreams/4 {
+			break
+		}
+	}
+
+	// make sure that for all streams that are down a SyncOp_Down msg is received
+	req.Eventuallyf(func() bool {
+		mu.Lock()
+		count := len(streamDownMessages)
+		mu.Unlock()
+
+		return count == streamsDownCounter
+	}, 20*time.Second, 100*time.Millisecond, "didn't receive for all streams a down message")
+
+	t.Logf("received SyncOp_Down message for all expected streams")
+
+	// make sure that no more stream down messages are received
+	req.Never(func() bool {
+		mu.Lock()
+		count := len(streamDownMessages)
+		mu.Unlock()
+		return count > streamsDownCounter
+	}, 5*time.Second, 100*time.Millisecond, "received unexpected stream down message")
+
+	// send a bunch of messages to streams and ensure that we messages are received streams that are up
+	sendMessagesAndReceive(100, wallets, channels, req, client0, ctx, messages, func(streamID StreamId) bool {
+		mu.Lock()
+		defer mu.Unlock()
+
+		_, found := streamDownMessages[streamID]
+		return found
+	})
+
+	t.Logf("second messages batch received")
+
+	// resubscribe to the head on down streams and ensure that messages are received for all streams again
+	mu.Lock()
+	for streamID := range streamDownMessages {
+		getStreamResp, err := client1.GetStream(ctx, connect.NewRequest(&protocol.GetStreamRequest{
+			StreamId: streamID[:],
+			Optional: false,
+		}))
+		req.NoError(err, "GetStream")
+
+		_, err = client1.AddStreamToSync(ctx, connect.NewRequest(&protocol.AddStreamToSyncRequest{
+			SyncId:  syncID,
+			SyncPos: getStreamResp.Msg.GetStream().GetNextSyncCookie(),
+		}))
+		req.NoError(err, "AddStreamToSync")
+	}
+	mu.Unlock()
+
+	t.Logf("resubscribed to streams that where brought down")
+
+	// ensure that messages for all streams are received again
+	sendMessagesAndReceive(100, wallets, channels, req, client0, ctx, messages, func(StreamId) bool { return false })
+
+	t.Logf("third messages batch received")
+
+	// unsub from ~25% streams and ensure that no updates are received again
+	unsubbedStreams := make(map[StreamId]struct{})
+	rand.Shuffle(len(channels), func(i, j int) { channels[i], channels[j] = channels[j], channels[i] })
+	for i, syncCookie := range channels {
+		streamID, _ := StreamIdFromBytes(syncCookie.GetStreamId())
+		_, err = client1.RemoveStreamFromSync(ctx, connect.NewRequest(&protocol.RemoveStreamFromSyncRequest{
+			SyncId:   syncID,
+			StreamId: streamID[:],
+		}))
+		req.NoError(err, "RemoveStreamFromSync")
+
+		unsubbedStreams[streamID] = struct{}{}
+
+		t.Logf("unsubbed from stream %s", streamID)
+
+		if i > TestStreams/4 {
+			break
+		}
+	}
+
+	sendMessagesAndReceive(100, wallets, channels, req, client0, ctx, messages, func(streamID StreamId) bool {
+		_, found := unsubbedStreams[streamID]
+		return found
+	})
+
+	t.Logf("fourth messages batch received")
+
+	// resubscribe to the head on down streams and ensure that messages are received for all streams again
+	mu.Lock()
+	for streamID := range unsubbedStreams {
+		getStreamResp, err := client1.GetStream(ctx, connect.NewRequest(&protocol.GetStreamRequest{
+			StreamId: streamID[:],
+			Optional: false,
+		}))
+		req.NoError(err, "GetStream")
+
+		_, err = client1.AddStreamToSync(ctx, connect.NewRequest(&protocol.AddStreamToSyncRequest{
+			SyncId:  syncID,
+			SyncPos: getStreamResp.Msg.GetStream().GetNextSyncCookie(),
+		}))
+		req.NoError(err, "AddStreamToSync")
+	}
+	mu.Unlock()
+
+	t.Logf("resubscribed to streams that where brought down")
+
+	sendMessagesAndReceive(100, wallets, channels, req, client0, ctx, messages, func(streamID StreamId) bool {
+		return false
+	})
+
+	t.Logf("fifth messages batch received")
+
+	// drop all streams from a node
+	var (
+		targetNodeAddr = services.nodes[4].address
+		targetStreams  []StreamId
+	)
+
+	mu.Lock()
+	streamDownMessages = map[StreamId]struct{}{}
+	mu.Unlock()
+
+	for _, pos := range syncPos {
+		if bytes.Equal(pos.GetNodeAddress(), targetNodeAddr.Bytes()) {
+			streamID, _ := StreamIdFromBytes(pos.GetStreamId())
+			targetStreams = append(targetStreams, streamID)
+		}
+	}
+
+	for _, targetStream := range targetStreams {
+		_, err = client1.Info(ctx, connect.NewRequest(&protocol.InfoRequest{Debug: []string{
+			"drop_stream",
+			syncID,
+			targetStream.String(),
+		}}))
+		req.NoError(err, "drop stream")
+	}
+
+	// make sure that for all streams that are down a SyncOp_Down msg is received
+	req.Eventuallyf(func() bool {
+		mu.Lock()
+		count := len(streamDownMessages)
+		mu.Unlock()
+
+		return count == len(targetStreams)
+	}, 20*time.Second, 100*time.Millisecond, "didn't receive for all streams a down message")
+
+	t.Logf("received SyncOp_Down message for all expected streams")
+
+	sendMessagesAndReceive(100, wallets, channels, req, client0, ctx, messages, func(streamID StreamId) bool {
+		mu.Lock()
+		_, found := streamDownMessages[streamID]
+		mu.Unlock()
+		return found
+	})
+
+	t.Logf("sixt messages batch received")
+
+	// make sure we can resubscribe to these streams
+	for _, streamID := range targetStreams {
+		getStreamResp, err := client1.GetStream(ctx, connect.NewRequest(&protocol.GetStreamRequest{
+			StreamId: streamID[:],
+			Optional: false,
+		}))
+		req.NoError(err, "GetStream")
+
+		_, err = client1.AddStreamToSync(ctx, connect.NewRequest(&protocol.AddStreamToSyncRequest{
+			SyncId:  syncID,
+			SyncPos: getStreamResp.Msg.GetStream().GetNextSyncCookie(),
+		}))
+		req.NoError(err, "AddStreamToSync")
+	}
+
+	sendMessagesAndReceive(100, wallets, channels, req, client0, ctx, messages, func(streamID StreamId) bool {
+		return false
+	})
+
+	t.Logf("seventh messages batch received")
+
+	_, err = client1.CancelSync(ctx, connect.NewRequest(&protocol.CancelSyncRequest{SyncId: syncID}))
+	req.NoError(err, "cancel sync")
+
+	t.Logf("Streams subscription cancelled")
+
+	sendMessagesAndReceive(100, wallets, channels, req, client0, ctx, messages, func(streamID StreamId) bool {
+		return true
+	})
+
+	t.Logf("eight messages batch received")
+
+	// make sure that SyncOp_Close msg is received (messages is closed)
+	req.Eventuallyf(func() bool {
+		select {
+		case _, gotMsg := <-messages:
+			return !gotMsg
+		default:
+			return false
+		}
+	}, 20*time.Second, 100*time.Millisecond, "no SyncOp_Close message received")
+}
+
+func sendMessagesAndReceive(
+	N int,
+	wallets []*crypto.Wallet,
+	channels []*protocol.SyncCookie,
+	require *require.Assertions,
+	client protocolconnect.StreamServiceClient,
+	ctx context.Context,
+	messages chan string,
+	expectNoReceive func(streamID StreamId) bool,
+) {
+	var (
+		prefix          = fmt.Sprintf("%d", time.Now().UnixMilli()%100000)
+		sendMsgCount    = 0
+		expMsgToReceive = make(map[string]struct{})
+	)
+
+	// send a bunch of messages to random channels
+	for range N {
+		wallet := wallets[rand.Int()%len(wallets)]
+		channel := channels[rand.Int()%len(channels)]
+		streamID, _ := StreamIdFromBytes(channel.GetStreamId())
+		expNoRecv := expectNoReceive(streamID)
+		msgContents := fmt.Sprintf("%s: msg #%d", prefix, sendMsgCount)
+
+		getStreamResp, err := client.GetStream(ctx, connect.NewRequest(&protocol.GetStreamRequest{
+			StreamId: channel.GetStreamId(),
+			Optional: false,
+		}))
+		require.NoError(err)
+
+		message, err := events.MakeEnvelopeWithPayload(
+			wallet,
+			events.Make_ChannelPayload_Message(msgContents),
+			getStreamResp.Msg.GetStream().GetNextSyncCookie().GetPrevMiniblockHash(),
+		)
+		require.NoError(err)
+
+		_, err = client.AddEvent(
+			ctx,
+			connect.NewRequest(
+				&protocol.AddEventRequest{
+					StreamId: channel.GetStreamId(),
+					Event:    message,
+				},
+			),
+		)
+
+		require.NoError(err)
+
+		if !expNoRecv {
+			expMsgToReceive[msgContents] = struct{}{}
+			sendMsgCount++
+		}
+	}
+
+	// make sure all expected messages are received
+	require.Eventuallyf(func() bool {
+		for {
+			select {
+			case msg, ok := <-messages:
+				if !ok {
+					return len(expMsgToReceive) == 0
+				}
+
+				delete(expMsgToReceive, msg)
+				continue
+			default:
+				return len(expMsgToReceive) == 0
+			}
+		}
+	}, 20*time.Second, 100*time.Millisecond, "didn't receive messages in reasonable time")
+}
+
+// TestStreamSyncPingPong test stream sync subscription ping/pong
+func TestStreamSyncPingPong(t *testing.T) {
+	var (
+		req      = require.New(t)
+		services = newServiceTester(t, serviceTesterOpts{numNodes: 2, start: true})
+		client   = services.testClient(0)
+		ctx      = services.ctx
+		mu       sync.Mutex
+		pongs    []string
+		syncID   string
+	)
+
+	// create stream sub
+	syncRes, err := client.SyncStreams(ctx, connect.NewRequest(&protocol.SyncStreamsRequest{SyncPos: nil}))
+	req.NoError(err, "sync streams")
+
+	pings := []string{"ping1", "ping2", "ping3", "ping4", "ping5"}
+	sendPings := func() {
+		for _, ping := range pings {
+			_, err := client.PingSync(ctx, connect.NewRequest(&protocol.PingSyncRequest{SyncId: syncID, Nonce: ping}))
+			req.NoError(err, "ping sync")
+		}
+	}
+
+	go func() {
+		for syncRes.Receive() {
+			msg := syncRes.Msg()
+			switch msg.GetSyncOp() {
+			case protocol.SyncOp_SYNC_NEW:
+				syncID = msg.GetSyncId()
+				// send some pings and ensure all pongs are received
+				sendPings()
+			case protocol.SyncOp_SYNC_PONG:
+				req.NotEmpty(syncID, "expected non-empty sync id")
+				req.Equal(syncID, msg.GetSyncId(), "sync id")
+				mu.Lock()
+				pongs = append(pongs, msg.GetPongNonce())
+				mu.Unlock()
+			case protocol.SyncOp_SYNC_CLOSE, protocol.SyncOp_SYNC_DOWN,
+				protocol.SyncOp_SYNC_UNSPECIFIED, protocol.SyncOp_SYNC_UPDATE:
+				continue
+			default:
+				t.Errorf("unexpected sync operation %s", msg.GetSyncOp())
+				return
+			}
+		}
+	}()
+
+	req.Eventuallyf(func() bool {
+		mu.Lock()
+		defer mu.Unlock()
+		return slices.Equal(pings, pongs)
+	}, 20*time.Second, 100*time.Millisecond, "didn't receive all pongs in reasonable time or out of order")
 }

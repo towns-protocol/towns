@@ -11,7 +11,7 @@ import (
 
 func runArchive(cfg *config.Config, once bool) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
-	err := runMetricsAndProfiler(ctx, cfg)
+	err := setupProfiler(ctx, cfg)
 	if err != nil {
 		return err
 	}

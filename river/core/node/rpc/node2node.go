@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"github.com/river-build/river/core/node/utils"
 
 	"connectrpc.com/connect"
 
@@ -15,7 +16,7 @@ func (s *Service) AllocateStream(
 	ctx context.Context,
 	req *connect.Request[AllocateStreamRequest],
 ) (*connect.Response[AllocateStreamResponse], error) {
-	ctx, log := ctxAndLogForRequest(ctx, req)
+	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	log.Debug("AllocateStream ENTER")
 	r, e := s.allocateStream(ctx, req.Msg)
 	if e != nil {
@@ -51,7 +52,7 @@ func (s *Service) NewEventReceived(
 	ctx context.Context,
 	req *connect.Request[NewEventReceivedRequest],
 ) (*connect.Response[NewEventReceivedResponse], error) {
-	ctx, log := ctxAndLogForRequest(ctx, req)
+	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	log.Debug("NewEventReceived ENTER")
 	r, e := s.newEventReceived(ctx, req.Msg)
 	if e != nil {
@@ -105,7 +106,7 @@ func (s *Service) ProposeMiniblock(
 	ctx context.Context,
 	req *connect.Request[ProposeMiniblockRequest],
 ) (*connect.Response[ProposeMiniblockResponse], error) {
-	ctx, log := ctxAndLogForRequest(ctx, req)
+	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	log.Debug("ProposeMiniblock ENTER")
 	r, e := s.proposeMiniblock(ctx, req.Msg)
 	if e != nil {
@@ -148,7 +149,7 @@ func (s *Service) SaveMiniblockCandidate(
 	ctx context.Context,
 	req *connect.Request[SaveMiniblockCandidateRequest],
 ) (*connect.Response[SaveMiniblockCandidateResponse], error) {
-	ctx, log := ctxAndLogForRequest(ctx, req)
+	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	log.Debug("SaveMiniblockCandidate ENTER")
 	r, e := s.saveMiniblockCandidate(ctx, req.Msg)
 	if e != nil {

@@ -63,17 +63,11 @@ turbo-*.log
 **/coverage
 **/.turbo
 servers/workers/*/dist/*
-core/xchain/bin/*
-core/xchain/instance_*/*
 
 .envrc
-core/xchain/run_files/*
 bin/gen-bindings-remove-struct
-core/node/river_node
-core/node/run_files/*
+/core/**/run_files/
 
 go.work.sum
-core/local_stream_node_logs/dev.log
-core/local_xchain_node_logs/dev.log
 
 /packages/stress-testing/.env

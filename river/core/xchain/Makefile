@@ -1,7 +1,7 @@
 # Makefile
 
 # Configurations
-OUTPUT_DIR=./bin
+OUTPUT_DIR=../run_files/bin
 
 # Source files
 SRC := $(shell find . -type f -name '*.go')
@@ -15,10 +15,10 @@ clean:
 
 # The `build` target compiles the code and puts the resulting binary in OUTPUT_DIR.
 .PHONY: build
-build: $(OUTPUT_DIR)/node
+build: $(OUTPUT_DIR)/river_node
 
 # Compiles the node binary
-$(OUTPUT_DIR)/node: $(SRC)
+$(OUTPUT_DIR)/river_node: $(SRC)
 	go build -o $(OUTPUT_DIR)/river_node ../river_node
 
 # The `test` target runs the tests.

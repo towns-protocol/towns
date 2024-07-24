@@ -63,7 +63,7 @@ func setupTestWithMigration(
 		pool,
 		instanceId,
 		exitSignal,
-		infra.NewMetricsFactory("", ""),
+		infra.NewMetricsFactory(nil, "", ""),
 		migrations,
 	)
 	if err != nil {
@@ -579,7 +579,7 @@ func TestExitIfSecondStorageCreated(t *testing.T) {
 		pool,
 		instanceId2,
 		exitSignal2,
-		infra.NewMetricsFactory("", ""),
+		infra.NewMetricsFactory(nil, "", ""),
 		migrationsDir,
 	)
 	require.NoError(err)

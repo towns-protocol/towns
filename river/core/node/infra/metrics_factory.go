@@ -46,11 +46,14 @@ type MetricsFactory interface {
 // always set to the provided values.
 // namespace and subsystem can be empty.
 // NewXxx maybe called multiple times with the same name, the same counter created on the first call will be returned.
-func NewMetricsFactory(namespace string, subsystem string) MetricsFactory {
+func NewMetricsFactory(registry *prometheus.Registry, namespace string, subsystem string) MetricsFactory {
+	if registry == nil {
+		registry = prometheus.NewRegistry()
+	}
 	return &metricsFactory{
 		namespace: namespace,
 		subsystem: subsystem,
-		registry:  prometheus.NewRegistry(),
+		registry:  registry,
 		counters:  make(map[string]any),
 	}
 }

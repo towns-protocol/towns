@@ -6,15 +6,11 @@ cd "$(dirname "$0")"
 
 : ${RUN_ENV:?}
 
-# Base directory for the instances
-RUN_FILES_DIR="./run_files"
-
-# PID file for the script, stored in the base directory
-SCRIPT_PID_FILE="${RUN_FILES_DIR}/${RUN_ENV}/launch_multi.pid"
-
-BASE_DIR="${RUN_FILES_DIR}/${RUN_ENV}"
-
+RUN_FILES_DIR="../run_files"
+BASE_DIR="${RUN_FILES_DIR}/${RUN_ENV}/xchain"
 mkdir -p "${BASE_DIR}"
+
+SCRIPT_PID_FILE="${BASE_DIR}/launch_multi.pid"
 
 # stop previous instances
 ./stop_multi.sh
@@ -22,7 +18,7 @@ mkdir -p "${BASE_DIR}"
 # Record the script's own PID
 echo $$ > "$SCRIPT_PID_FILE"
 
-make
+make build
 
 # Get number of instances by counting instance directories
 N=$(ls -d ${BASE_DIR}/instance_* 2>/dev/null | wc -l)
@@ -64,7 +60,7 @@ fi
 for (( i=1; i<=N; i++ ))
 do
   INSTANCE_DIR="${BASE_DIR}/instance_${i}"
-  cp bin/river_node "${INSTANCE_DIR}/bin/river_node"
+  cp ../run_files/bin/river_node "${INSTANCE_DIR}/bin/river_node"
   pushd "${INSTANCE_DIR}"
 
   "./bin/river_node" run xchain &

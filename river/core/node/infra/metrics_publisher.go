@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/river-build/river/core/config"
@@ -31,32 +32,31 @@ var DefaultDurationBucketsSeconds = []float64{
 	10,
 }
 
-// Metrics provides MetricsFactory and runs an HTTP server to expose metrics
-// registered with the MetricsFactory.
-type Metrics struct {
-	MetricsFactory
-
+// MetricsPublisher both provides handler to publish metrics from the given registry
+// and optionally published metric on give adddress:port.
+type MetricsPublisher struct {
+	registry   *prometheus.Registry
 	httpServer *http.Server
 }
 
-func NewMetrics(namespace string, subsystem string) *Metrics {
-	return &Metrics{
-		MetricsFactory: NewMetricsFactory(namespace, subsystem),
+func NewMetricsPublisher(registry *prometheus.Registry) *MetricsPublisher {
+	return &MetricsPublisher{
+		registry: registry,
 	}
 }
 
-func (m *Metrics) CreateHandler() http.Handler {
+func (m *MetricsPublisher) CreateHandler() http.Handler {
 	return promhttp.HandlerFor(
-		m.Registry(),
+		m.registry,
 		promhttp.HandlerOpts{
-			Registry:          m.Registry(),
+			Registry:          m.registry,
 			EnableOpenMetrics: true,
 			ProcessStartTime:  time.Now(),
 		},
 	)
 }
 
-func (m *Metrics) StartMetricsServer(ctx context.Context, config config.MetricsConfig) {
+func (m *MetricsPublisher) StartMetricsServer(ctx context.Context, config config.MetricsConfig) {
 	if !config.Enabled || config.Port == 0 {
 		return
 	}
@@ -76,7 +76,7 @@ func (m *Metrics) StartMetricsServer(ctx context.Context, config config.MetricsC
 	go m.waitForClose(ctx)
 }
 
-func (m *Metrics) serveHttp(ctx context.Context) {
+func (m *MetricsPublisher) serveHttp(ctx context.Context) {
 	log := dlog.FromCtx(ctx)
 
 	log.Info("Starting metrics HTTP server", "url", fmt.Sprintf("http://%s/metrics", m.httpServer.Addr))
@@ -90,7 +90,7 @@ func (m *Metrics) serveHttp(ctx context.Context) {
 	}
 }
 
-func (m *Metrics) waitForClose(ctx context.Context) {
+func (m *MetricsPublisher) waitForClose(ctx context.Context) {
 	<-ctx.Done()
 	log := dlog.FromCtx(ctx)
 

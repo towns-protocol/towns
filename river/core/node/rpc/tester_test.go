@@ -258,6 +258,7 @@ func (st *serviceTester) startSingle(i int, opts ...startOpts) error {
 		}
 		return err
 	}
+
 	st.nodes[i].service = service
 	st.nodes[i].address = bc.Wallet.Address
 

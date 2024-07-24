@@ -30,7 +30,7 @@ func TestMigrateExistingDb(t *testing.T) {
 		pool,
 		instanceId2,
 		exitSignal2,
-		infra.NewMetricsFactory("", ""),
+		infra.NewMetricsFactory(nil, "", ""),
 		migrationsDir,
 	)
 	require.NoError(err)

@@ -256,7 +256,7 @@ func TestArchiveOneStream(t *testing.T) {
 		pool,
 		GenShortNanoid(),
 		make(chan error, 1),
-		infra.NewMetricsFactory("", ""),
+		infra.NewMetricsFactory(nil, "", ""),
 	)
 	require.NoError(err)
 

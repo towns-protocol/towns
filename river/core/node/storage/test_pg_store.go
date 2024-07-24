@@ -31,7 +31,7 @@ func NewTestPgStore(ctx context.Context) *TestPgStore {
 		pool,
 		GenShortNanoid(),
 		exitChan,
-		infra.NewMetricsFactory("", ""),
+		infra.NewMetricsFactory(nil, "", ""),
 	)
 	if err != nil {
 		panic(err)

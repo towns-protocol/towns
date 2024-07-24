@@ -199,6 +199,7 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 type testStreamCacheViewEvictionSub struct {
 	receivedStreamAndCookies []*protocol.StreamAndCookie
 	receivedErrors           []error
+	streamErrors             []shared.StreamId
 }
 
 func (sub *testStreamCacheViewEvictionSub) OnUpdate(sac *protocol.StreamAndCookie) {
@@ -207,6 +208,10 @@ func (sub *testStreamCacheViewEvictionSub) OnUpdate(sac *protocol.StreamAndCooki
 
 func (sub *testStreamCacheViewEvictionSub) OnSyncError(err error) {
 	sub.receivedErrors = append(sub.receivedErrors, err)
+}
+
+func (sub *testStreamCacheViewEvictionSub) OnStreamSyncDown(streamID shared.StreamId) {
+	sub.streamErrors = append(sub.streamErrors, streamID)
 }
 
 func (sub *testStreamCacheViewEvictionSub) eventsReceived() int {

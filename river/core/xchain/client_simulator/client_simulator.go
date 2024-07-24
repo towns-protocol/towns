@@ -247,7 +247,7 @@ func New(
 		checkerContract = bind.NewBoundContract(cfg.GetEntitlementContractAddress(), *checkerABI, nil, nil, nil)
 	)
 
-	metrics := infra.NewMetrics("xchain", "simulator")
+	metrics := infra.NewMetricsFactory(nil, "xchain", "simulator")
 	var ownsChain bool
 	if baseChain == nil {
 		ownsChain = true

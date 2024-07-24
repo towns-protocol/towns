@@ -171,7 +171,7 @@ var evaluator *Evaluator
 
 func TestMain(m *testing.M) {
 	var err error
-	evaluator, err = NewEvaluatorFromConfig(context.Background(), cfg, infra.NewMetricsFactory("", ""))
+	evaluator, err = NewEvaluatorFromConfig(context.Background(), cfg, infra.NewMetricsFactory(nil, "", ""))
 	if err != nil {
 		panic(err)
 	}

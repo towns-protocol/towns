@@ -39,7 +39,8 @@ type (
 		evaluator       *entitlement.Evaluator
 
 		// Metrics
-		metrics                   *infra.Metrics
+		metrics                   infra.MetricsFactory
+		metricsPublisher          *infra.MetricsPublisher
 		entitlementCheckRequested *infra.StatusCounterVec
 		entitlementCheckProcessed *infra.StatusCounterVec
 		entitlementCheckTx        *infra.StatusCounterVec
@@ -77,6 +78,7 @@ func New(
 	cfg *config.Config,
 	baseChain *crypto.Blockchain,
 	workerID int,
+	metricsRegistry *prometheus.Registry,
 ) (server *xchain, err error) {
 	ctx, cancel := context.WithCancel(ctx)
 
@@ -87,7 +89,7 @@ func New(
 		}
 	}()
 
-	metrics := infra.NewMetrics("river", "xchain")
+	metrics := infra.NewMetricsFactory(metricsRegistry, "river", "xchain")
 
 	evaluator, err := entitlement.NewEvaluatorFromConfig(ctx, cfg, metrics)
 	if err != nil {
@@ -197,6 +199,12 @@ func New(
 		),
 	}
 
+	// If extrernal metrics registry is provided, caller is publishing metrics.
+	// Otherwies, if publishing is enabled, publish here.
+	if metricsRegistry == nil && x.config.Metrics.Enabled && x.config.Metrics.Port > 0 {
+		x.metricsPublisher = infra.NewMetricsPublisher(metrics.Registry())
+	}
+
 	isRegistered, err := x.isRegistered(ctx)
 	if err != nil {
 		return nil, err
@@ -253,11 +261,13 @@ func (x *xchain) Run(ctx context.Context) {
 		"nodeAddress", x.baseChain.Wallet.Address.Hex(),
 	)
 
-	if x.config.Metrics.Enabled {
+	if x.metricsPublisher != nil {
+		// TODO: remove once both service run from the same process
 		// node and xchain are run in the same docker container and share the same config key for the metrics port.
 		// to prevent both processes claiming the same port we decided to increment the port by 1 for xchain.
-		x.config.Metrics.Port += 1
-		x.metrics.StartMetricsServer(runCtx, x.config.Metrics)
+		cfg := x.config.Metrics
+		cfg.Port += 1
+		x.metricsPublisher.StartMetricsServer(runCtx, cfg)
 	}
 
 	// register callback for Base EntitlementCheckRequested events

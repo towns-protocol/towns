@@ -50,7 +50,7 @@ export ENTITLEMENT_TEST_ADDRESS=$(jq -r '.address' ../../packages/generated/depl
 export CUSTOM_ENTITLEMENT_TEST_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/base/addresses/customEntitlementExample.json)
 export BASE_REGISTRY_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/base/addresses/baseRegistry.json)
 
-make
+make build
 
 source ../../contracts/.env.localhost
 OPERATOR_ADDRESS=$(cast wallet addr $LOCAL_PRIVATE_KEY)
@@ -79,8 +79,7 @@ cast send \
 N=5
 
 # Base directory for the instances
-BASE_DIR="./run_files/${RUN_ENV}"
-
+BASE_DIR="../run_files/${RUN_ENV}/xchain"
 mkdir -p "${BASE_DIR}"
 
 
@@ -98,9 +97,9 @@ do
     mkdir -p "${INSTANCE_DIR}/bin" "${INSTANCE_DIR}/logs" "${INSTANCE_DIR}/config" "${INSTANCE_DIR}/wallet"
 
     # Copy node binary and config template
-    cp "./bin/river_node" "${INSTANCE_DIR}/bin"
+    cp "../run_files/bin/river_node" "${INSTANCE_DIR}/bin"
     # Using the same config as the node
-    cp ../node/run_files/${RUN_ENV}/common_config.yaml "${INSTANCE_DIR}/config/config.yaml"
+    cp ../run_files/${RUN_ENV}/common_config.yaml "${INSTANCE_DIR}/config/config.yaml"
 
     # Substitute METRIC_PORT and create config.yaml
     METRICS_PORT=$((9080 + i))

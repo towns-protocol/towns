@@ -4,11 +4,8 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/prometheus/client_golang/prometheus"
-
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/dlog"
-	"github.com/river-build/river/core/node/infra"
 )
 
 const (
@@ -18,22 +15,14 @@ const (
 type httpHandler struct {
 	base http.Handler
 	log  *slog.Logger
-
-	counter *prometheus.CounterVec
 }
 
 var _ http.Handler = (*httpHandler)(nil)
 
-func newHttpHandler(b http.Handler, l *slog.Logger, m infra.MetricsFactory) *httpHandler {
+func newHttpHandler(b http.Handler, l *slog.Logger) *httpHandler {
 	return &httpHandler{
 		base: b,
 		log:  l,
-		counter: m.NewCounterVec(
-			prometheus.CounterOpts{
-				Name: "http_requests",
-			},
-			[]string{"method", "path", "protocol", "status"},
-		),
 	}
 }
 
@@ -62,7 +51,4 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add(RequestIdHeader, id)
 
 	h.base.ServeHTTP(w, r)
-
-	// TODO: implement status reporting here
-	h.counter.WithLabelValues(r.Method, r.URL.Path, r.Proto, "TODO").Inc()
 }

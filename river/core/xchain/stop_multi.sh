@@ -4,11 +4,9 @@ set -euo pipefail
 # Change the current working directory to the directory of the script
 cd "$(dirname "$0")"
 
-# Base directory for the instances
-BASE_DIR="./run_files"
-
-# PID file for the script, stored in the RUN_ENV directory
-SCRIPT_PID_FILE="${BASE_DIR}/${RUN_ENV}/launch_multi.pid"
+RUN_FILES_DIR="../run_files"
+BASE_DIR="${RUN_FILES_DIR}/${RUN_ENV}/xchain"
+SCRIPT_PID_FILE="${BASE_DIR}/launch_multi.pid"
 
 
 if [[ -f "$SCRIPT_PID_FILE" ]]; then

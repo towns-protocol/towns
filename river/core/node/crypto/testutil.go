@@ -456,7 +456,7 @@ func makeTestBlockchain(
 		wallet,
 		client,
 		nil,
-		infra.NewMetrics("", ""),
+		infra.NewMetricsFactory(nil, "", ""),
 	)
 	if err != nil {
 		panic(err)

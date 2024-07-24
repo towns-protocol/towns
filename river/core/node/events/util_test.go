@@ -115,7 +115,7 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 			ChainConfig:             btc.OnChainConfig,
 			AppliedBlockNum:         blockNumber,
 			ChainMonitor:            bc.ChainMonitor,
-			Metrics:                 infra.NewMetrics("", ""),
+			Metrics:                 infra.NewMetricsFactory(nil, "", ""),
 			RemoteMiniblockProvider: ctc,
 		}
 

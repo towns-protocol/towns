@@ -691,24 +691,43 @@ message AddEventResponse {
     Error error = 1; // only set if AddEventRequest.optional is true
 }
 
+// SyncStreamsRequest is a request to start a streams sync session.
 message SyncStreamsRequest {
+    // sync_pos is the list of streams and positions in those streams to receive updates from.
     repeated SyncCookie sync_pos = 1;
 }
 
+// SyncStreamsResponse is a stream of updates that the client receives for streams it subscribed to within a streams
+// sync session.
 message SyncStreamsResponse {
+    // sync_id is the id of the sync session.
     string sync_id = 1;
+    // sync_op marks the type of update.
     SyncOp sync_op = 2;
+    // stream indicates an update of a stream.
+    // only set when sync_op = SYNC_UPDATE
     StreamAndCookie stream = 3;
+    // pong_nonce is returned after a ping request was made to the sync session through PingSync.
+    // Set with the ping value from the PingSync request when sync_op = SYNC_PONG
     string pong_nonce = 4;
+    // stream_id is set when sync_op = SYNC_DOWN and indicates it will not receive updates anymore for this stream.
+    // If the client is still is interested in updates for this stream it must re-add the stream to the sync session.
+    bytes stream_id = 5;
 }
 
+// AddStreamToSyncRequest is a request to add a stream to an existing streams sync session.
 message AddStreamToSyncRequest {
+    // sync_id is the id of the sync session.
     string sync_id = 1;
+    // sync_pos identifies the stream and position in the stream to receive updates from.
     SyncCookie sync_pos = 2;
 }
 
 message AddStreamToSyncResponse {}
 
+// RemoveStreamFromSyncRequest stops the client to receive updates from this stream in the sync session.
+// Note that due to buffering in the stream it is possible still receives several updates for this stream after it was
+// removed.
 message RemoveStreamFromSyncRequest {
     string sync_id = 1;
     bytes stream_id = 2;
@@ -716,14 +735,19 @@ message RemoveStreamFromSyncRequest {
 
 message RemoveStreamFromSyncResponse {}
 
+// CancelSyncRequest cancels the sync session.
 message CancelSyncRequest {
+    // sync_id is the unique id of the sync session.
     string sync_id = 1;
 }
 
 message CancelSyncResponse {}
 
+// PingSyncRequest is a request to receive a pong in the sync session stream.
 message PingSyncRequest {
+    // sync_id is the unique id of the sync session.
     string sync_id = 1;
+    // nonce is the pong to return in the sync session stream.
     string nonce = 2;
 }
 
@@ -760,6 +784,7 @@ enum SyncOp {
     SYNC_CLOSE = 2; // close the sync
     SYNC_UPDATE = 3; // update from server
     SYNC_PONG = 4; // respond to the ping message from the client.
+    SYNC_DOWN = 5; // indication that stream updates could (temporarily) not be provided
 }
 
 enum MembershipOp {

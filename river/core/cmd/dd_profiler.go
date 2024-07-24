@@ -9,13 +9,12 @@ import (
 	"time"
 
 	"github.com/river-build/river/core/config"
-	"github.com/river-build/river/core/node/rpc"
 	"github.com/river-build/river/core/river_node/version"
 
 	"gopkg.in/DataDog/dd-trace-go.v1/profiler"
 )
 
-func runMetricsAndProfiler(ctx context.Context, cfg *config.Config) error {
+func setupProfiler(ctx context.Context, cfg *config.Config) error {
 	// we overwrite the DD_TAGS environment variable, because this is the best way to pass them down to the tracer
 	setDDTagsEnv()
 
@@ -76,15 +75,6 @@ func runMetricsAndProfiler(ctx context.Context, cfg *config.Config) error {
 		fmt.Println("Profiling disabled")
 	}
 	return nil
-}
-
-func runStreamMode(cfg *config.Config) error {
-	ctx := context.Background() // lint:ignore context.Background() is fine here
-	err := runMetricsAndProfiler(ctx, cfg)
-	if err != nil {
-		return err
-	}
-	return rpc.RunServer(ctx, cfg)
 }
 
 // overwrites the DD_TAGS environment variable to include the commit, version and branch

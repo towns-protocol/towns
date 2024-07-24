@@ -33,8 +33,12 @@ type Stream interface {
 }
 
 type SyncResultReceiver interface {
+	// OnUpdate is called each time a new cookie is available for a stream
 	OnUpdate(r *StreamAndCookie)
+	// OnSyncError is called when a sync subscription failed unrecoverable
 	OnSyncError(err error)
+	// OnStreamSyncDown is called when updates for a stream could not be given.
+	OnStreamSyncDown(StreamId)
 }
 
 // TODO: refactor interfaces.

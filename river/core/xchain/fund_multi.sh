@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Base directory for the instances
-BASE_DIR="./run_files"
+BASE_DIR="../run_files"
 
 # Find all node_address files under the base directory
 ADDRESS_FILES=$(find "$BASE_DIR" -type f -name 'node_address')

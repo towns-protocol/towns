@@ -10,8 +10,6 @@ import (
 
 	"connectrpc.com/otelconnect"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel/trace"
-
 	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/node/auth"
 	"github.com/river-build/river/core/node/crypto"
@@ -20,8 +18,10 @@ import (
 	"github.com/river-build/river/core/node/nodes"
 	. "github.com/river-build/river/core/node/protocol/protocolconnect"
 	"github.com/river-build/river/core/node/registries"
+	river_sync "github.com/river-build/river/core/node/rpc/sync"
 	"github.com/river-build/river/core/node/storage"
 	"github.com/river-build/river/core/xchain/entitlement"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type Service struct {
@@ -46,7 +46,7 @@ type Service struct {
 	// Streams
 	cache       events.StreamCache
 	mbProducer  events.MiniblockProducer
-	syncHandler SyncHandler
+	syncHandler river_sync.Handler
 
 	// River chain
 	riverChain       *crypto.Blockchain
@@ -74,8 +74,8 @@ type Service struct {
 	Archiver *Archiver
 
 	// Metrics
-	metrics               *infra.Metrics
-	rpcDuration           *prometheus.HistogramVec
+	metrics               infra.MetricsFactory
+	metricsPublisher      *infra.MetricsPublisher
 	otelTraceProvider     trace.TracerProvider
 	otelTracer            trace.Tracer
 	otelConnectIterceptor *otelconnect.Interceptor
@@ -107,4 +107,8 @@ func (s *Service) GetStatus() string {
 
 func (s *Service) Storage() storage.StreamStorage {
 	return s.storage
+}
+
+func (s *Service) MetricsRegistry() *prometheus.Registry {
+	return s.metrics.Registry()
 }

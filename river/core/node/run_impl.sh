@@ -4,7 +4,7 @@ cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 
 : ${RUN_ENV:?} # values are single, single_ne, multi, multi_ne
 
-export RUN_BASE="./run_files/${RUN_ENV}"
+export RUN_BASE="../run_files/${RUN_ENV}"
 export DB_PORT="${DB_PORT:-5433}"
 export LOG_LEVEL="${LOG_LEVEL:-info}"
 export LOG_NOCOLOR="${LOG_NOCOLOR:-false}"
