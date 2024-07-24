@@ -121,8 +121,6 @@ export class SyncedStreams {
     // Only responses related to the current syncId are processed.
     // Responses are queued and processed in order
     // and are cleared when sync stops
-    private responsesQueue: SyncStreamsResponse[] = []
-    private inProgressTick?: Promise<void>
     private pingInfo: PingInfo = {
         currentSequence: 0,
         nonces: {},
@@ -153,36 +151,8 @@ export class SyncedStreams {
         return this.createSyncLoop()
     }
 
-    public checkStartTicking() {
-        if (this.inProgressTick) {
-            return
-        }
-
-        if (this.responsesQueue.length === 0) {
-            return
-        }
-
-        const tick = this.tick()
-        this.inProgressTick = tick
-        queueMicrotask(() => {
-            tick.catch((error) => logger.error('ProcessTick Error', { error })).finally(() => {
-                this.inProgressTick = undefined
-                this.checkStartTicking()
-            })
-        })
-    }
-
-    private async tick() {
-        const item = this.responsesQueue.shift()
-        if (!item || item.syncId !== this.syncId) {
-            return
-        }
-        await this.onUpdate(item)
-    }
-
     public async stopSync() {
         logger.info('sync STOP CALLED')
-        this.responsesQueue = []
         if (stateConstraints[this.syncState].has(SyncState.Canceling)) {
             const syncId = this.syncId
             const syncLoop = this.syncLoop
@@ -324,6 +294,8 @@ export class SyncedStreams {
                                 syncPos: syncCookies,
                             })
 
+                            console.log('started sync with len of syncCookies', syncCookies.length)
+
                             const iterator = streams[Symbol.asyncIterator]()
 
                             while (
@@ -372,8 +344,7 @@ export class SyncedStreams {
                                         this.syncClosed()
                                         break
                                     case SyncOp.SYNC_UPDATE:
-                                        this.responsesQueue.push(value)
-                                        this.checkStartTicking()
+                                        await this.onUpdate(value)
                                         break
                                     case SyncOp.SYNC_PONG:
                                         pingStats = this.pingInfo.nonces[value.pongNonce]
@@ -406,9 +377,6 @@ export class SyncedStreams {
                     this.stopPing()
                     if (stateConstraints[this.syncState].has(SyncState.NotSyncing)) {
                         this.setSyncState(SyncState.NotSyncing)
-                        // this.streams.forEach((stream) => {
-                        // stream.stop()
-                        // })
                         this.streams.clear()
                         this.abortRetry = undefined
                         this.syncId = undefined
@@ -520,6 +488,7 @@ export class SyncedStreams {
     }
 
     private async onUpdate(res: SyncStreamsResponse): Promise<void> {
+        const start = Date.now()
         // Until we've completed canceling, accept responses
         if (this.syncState === SyncState.Syncing || this.syncState === SyncState.Canceling) {
             if (this.syncId != res.syncId) {
@@ -572,6 +541,7 @@ export class SyncedStreams {
                 `onUpdate: invalid state ${this.syncState}, should have been ${SyncState.Syncing}`,
             )
         }
+        logger.info('onUpdate duration', { duration: Date.now() - start })
     }
 
     private async handleDmOrGDMStreamUpdate(

@@ -46,6 +46,7 @@ export class NotificationService {
         channelId: string,
         taggedUsers: NotificationTag[],
     ): Promise<NotifyUser[]> {
+        const startTime = Date.now()
         const recipients: NotifyUsers = {}
         const notificationContent = notificationData.payload.content
         const isDMorGDM = notificationContent.kind === NotificationKind.DirectMessage
@@ -211,6 +212,11 @@ export class NotificationService {
             }
         }
 
+        logger.info(
+            `found ${Object.keys(recipients).length} users to notify in ${
+                Date.now() - startTime
+            }ms`,
+        )
         return Object.values(recipients)
     }
 
@@ -218,6 +224,7 @@ export class NotificationService {
         notificationData: NotifyUsersSchema,
         usersToNotify: NotifyUser[],
     ): Promise<Promise<SendPushResponse>[]> {
+        const startTime = Date.now()
         const pushNotificationPromises: Promise<SendPushResponse>[] = []
         const isDMorGDM = notificationData.payload.content.kind === NotificationKind.DirectMessage
 
@@ -292,12 +299,18 @@ export class NotificationService {
                 }
             }
         }
+        logger.info(
+            `created ${pushNotificationPromises.length} notification requests in ${
+                Date.now() - startTime
+            }ms`,
+        )
         return pushNotificationPromises
     }
 
     public async dispatchAllPushNotification(
         pushNotificationRequests: Promise<SendPushResponse>[],
     ): Promise<number> {
+        const startTime = Date.now()
         if (!env.NOTIFICATION_SYNC_ENABLED) {
             logger.warn('Notification dispatch is disabled')
             // notification dispatch is disabled
@@ -339,6 +352,9 @@ export class NotificationService {
             // all other errors
             logger.error('failed to send notification', { result })
         }
+        logger.info(
+            `dispatched ${notificationsSentCount} notifications in ${Date.now() - startTime}ms`,
+        )
         return notificationsSentCount
     }
 
