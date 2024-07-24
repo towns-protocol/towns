@@ -190,7 +190,7 @@ const UnfurledLinkAttachmentContainer = (
             gap="md"
             maxWidth="300"
         >
-            {props.image?.url && (
+            {props.image?.url && !!props.image?.height && (
                 <RatioedBackgroundImage
                     alt={props.title}
                     url={props.image.url}

@@ -10,11 +10,13 @@ const unfurledLinkSchema = z.object({
     url: z.string(),
     title: z.string().optional(),
     description: z.string().optional(),
-    image: z.object({
-        width: z.number(),
-        height: z.number(),
-        url: z.string(),
-    }),
+    image: z
+        .object({
+            width: z.number().optional(),
+            height: z.number().optional(),
+            url: z.string(),
+        })
+        .optional(),
 })
 
 const unfurledLinkResponseSchema = z.object({
@@ -34,6 +36,8 @@ export async function getUnfurlContent(urlsArray: string[]) {
 
     if (parsed.success) {
         return parsed.data
+    } else if (parsed.error) {
+        console.error('Error parsing unfurled link response:', parsed.error)
     }
 }
 
