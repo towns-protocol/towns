@@ -1,4 +1,3 @@
-import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin'
 import react from '@vitejs/plugin-react'
 import { PluginOption, defineConfig } from 'vite'
 import checker from 'vite-plugin-checker'
@@ -40,7 +39,7 @@ export default ({ mode }: { mode: string }) =>
             APP_VERSION: JSON.stringify(process.env.npm_package_version),
         },
         assetsInclude: ['**/*.png', '**/*.svg'],
-        plugins: [nodePolyfills(), react(), tsconfigPaths(), vanillaExtractPlugin()].concat(
+        plugins: [nodePolyfills(), react(), tsconfigPaths()].concat(
             mode === 'development' ? devPlugins : prodPlugins,
         ) as PluginOption[],
         server: {

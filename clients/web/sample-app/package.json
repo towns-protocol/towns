@@ -47,7 +47,6 @@
     "devDependencies": {
         "@river-build/prettier-config": "workspace:^",
         "@rollup/plugin-inject": "^5.0.3",
-        "@vanilla-extract/vite-plugin": "^3.9.3",
         "@vitejs/plugin-react": "^4.3.1",
         "eslint": "^8.53.0",
         "fake-indexeddb": "^4.0.1",
