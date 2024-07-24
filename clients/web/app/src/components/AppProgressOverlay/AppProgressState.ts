@@ -5,4 +5,6 @@ export enum AppProgressState {
     Joining = 'Joining',
     InitializingWorkspace = 'InitializingWorkspace',
     CreatingSpace = 'CreatingSpace',
+    CreatingDM = 'CreatingDM',
+    CreatingGDM = 'CreatingGDM',
 }

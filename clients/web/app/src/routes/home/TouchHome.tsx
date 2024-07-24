@@ -741,7 +741,6 @@ const CreateChannelRow = (props: { onClick: () => void }) => {
 }
 
 const BrowseChannelRow = (props: { onClick: () => void; badgeCount?: number }) => {
-    console.log(props.badgeCount, 'props.badgeCount')
     return (
         <NavItem padding="none" onClick={props.onClick}>
             <NavItemContent>

@@ -18,6 +18,8 @@ type Props = {
         | AppProgressState.Joining
         | AppProgressState.InitializingWorkspace
         | AppProgressState.CreatingSpace
+        | AppProgressState.CreatingDM
+        | AppProgressState.CreatingGDM
 }
 
 export const SetupAnimation = (props: Props) => {
@@ -58,12 +60,23 @@ export const SetupAnimation = (props: Props) => {
     )
 
     const rotateText = useMemo(
-        () => [
-            'Connecting to River Network',
-            'Downloading message streams',
-            'Setting up your towns',
-        ],
-        [],
+        () =>
+            mode === AppProgressState.InitializingWorkspace
+                ? [
+                      'Connecting to River Network',
+                      'Downloading message streams',
+                      'Setting up your towns',
+                  ]
+                : mode === AppProgressState.CreatingDM || mode === AppProgressState.CreatingGDM
+                ? [
+                      mode === AppProgressState.CreatingDM
+                          ? 'Creating encrypted direct message'
+                          : 'Creating encrypted group',
+                      'Connecting to River Network',
+                      'Sharing encryption keys',
+                  ]
+                : [],
+        [mode],
     )
 
     return (
@@ -72,6 +85,8 @@ export const SetupAnimation = (props: Props) => {
                 <NodeAnimationLoader skipPlaceholder animateIntro maxWidth="250" />
             </NodeAnimationContext.Provider>
             {mode === AppProgressState.InitializingWorkspace ? (
+                <RotatingText texts={rotateText} />
+            ) : mode === AppProgressState.CreatingDM || mode === AppProgressState.CreatingGDM ? (
                 <RotatingText texts={rotateText} />
             ) : (
                 <JoiningChecklist />

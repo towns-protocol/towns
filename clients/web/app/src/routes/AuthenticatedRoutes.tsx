@@ -5,9 +5,9 @@ import { SpaceContextRoute } from 'routes/SpaceContextRoute'
 import { useDevice } from 'hooks/useDevice'
 import { DirectMessageThread } from '@components/DirectMessages/DirectMessageThread'
 import { CreateSpaceFormV2 } from '@components/Web3/MembershipNFT/CreateSpaceFormV2/CreateSpaceFormV2'
-import { CreateMessagePanel } from '@components/DirectMessages/CreateDirectMessage/CreateDirectMessage'
 import { Panel } from '@components/Panel/Panel'
 import { CardLabel } from '@ui'
+import { CreateMessage } from '@components/DirectMessages/CreateDirectMessage/CreateMessage'
 import { ChannelSettings } from './ChannelSettings'
 import { SpaceHome, TouchHome } from './home'
 import { SpaceMentions } from './SpaceMentions'
@@ -141,11 +141,8 @@ export const AuthenticatedRoutes = () => {
 }
 const messageRoutes = (
     <Route path={PATHS.MESSAGES} element={<DirectMessages />}>
-        <Route path="new" element={<CreateMessagePanel />}>
+        <Route path="new" element={<CreateMessage />}>
             <Route path=":channelSlug" element={<DirectMessageThread />} />
-            <Route path="draft">
-                <Route path=":noStreamUserId" element={<CreateMessagePanel />} />
-            </Route>
         </Route>
         <Route path=":channelSlug" element={<DirectMessageThread />} />
     </Route>

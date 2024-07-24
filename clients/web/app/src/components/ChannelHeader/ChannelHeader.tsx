@@ -11,6 +11,7 @@ import {
 } from 'use-towns-client'
 import { AnimatePresence } from 'framer-motion'
 import { useSearchParams } from 'react-router-dom'
+import { isDefined } from '@river-build/sdk'
 import { ChannelUsersPill } from '@components/ChannelUserPill/ChannelUserPill'
 import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
 import { useUserList } from '@components/UserList/UserList'
@@ -152,9 +153,9 @@ const DesktopChannelHeader = (props: Props & HeaderProps) => {
                             </Paragraph>
                         </>
                     ) : channelType === 'dm' ? (
-                        <DMTitleContent roomIdentifier={channel.id} />
+                        <DMStreamTitle roomIdentifier={channel.id} />
                     ) : channelType === 'gdm' ? (
-                        <GDMTitleContent roomIdentifier={channel.id} />
+                        <GDMStreamTitle roomIdentifier={channel.id} />
                     ) : (
                         <></>
                     )}
@@ -185,17 +186,18 @@ const DesktopChannelHeader = (props: Props & HeaderProps) => {
     )
 }
 
-const DMTitleContent = (props: { roomIdentifier: string }) => {
+const DMStreamTitle = (props: { roomIdentifier: string }) => {
     const { counterParty } = useDMData(props.roomIdentifier)
-
     const userIds = useMemo(() => (counterParty ? [counterParty] : []), [counterParty])
     const isSelf = !counterParty
     const myUserId = useMyUserId()
     const title = useUserList({ userIds, excludeSelf: true, myUserId }).join('')
 
+    const userId = isSelf ? myUserId : userIds[0]
+
     return (
         <>
-            <Avatar userId={isSelf ? myUserId : userIds[0]} size="avatar_sm" />
+            <MessageAvatarLayout userIds={[userId]} />
             <Text truncate fontSize="md" fontWeight="medium" color="default">
                 {title}
             </Text>
@@ -203,21 +205,61 @@ const DMTitleContent = (props: { roomIdentifier: string }) => {
     )
 }
 
-const GDMTitleContent = (props: { roomIdentifier: string }) => {
+const GDMStreamTitle = (props: { roomIdentifier: string }) => {
     const { data } = useDMData(props.roomIdentifier)
     const userIds = useMemo(() => data?.userIds ?? [], [data?.userIds])
-    const userListTitle = useUserList({ userIds, excludeSelf: true, maxNames: 3 }).join('')
     const title =
         data?.properties?.name && data.properties.name.length > 0
             ? data?.properties?.name
-            : userListTitle
+            : undefined
+
     return (
         <>
-            <AvatarGroup userIds={userIds} width="x3" />
-            <Text truncate fontSize="md" color="default">
-                {title}
-            </Text>
+            <MessageAvatarLayout userIds={userIds} />
+            <MessageTitleLayout userIds={userIds} title={title} />
         </>
+    )
+}
+
+export const MessageAvatarTitleLayout = (props: {
+    userIds: (string | undefined)[]
+    title?: string
+}) => {
+    return (
+        <>
+            <MessageAvatarLayout userIds={props.userIds} />
+            <MessageTitleLayout userIds={props.userIds} title={props.title} />
+        </>
+    )
+}
+
+const MessageAvatarLayout = (props: { userIds: (string | undefined)[] }) => {
+    const userIds = useMemo(() => props.userIds.filter(isDefined), [props.userIds])
+    if (userIds.length === 1) {
+        return <Avatar userId={userIds[0]} size="avatar_sm" />
+    } else if (userIds.length > 1) {
+        return <AvatarGroup userIds={userIds} width="x3" />
+    } else {
+        return <></>
+    }
+}
+
+const MessageTitleLayout = (props: {
+    myUserId?: string
+    userIds: (string | undefined)[]
+    title?: string
+}) => {
+    const userIds = useMemo(() => props.userIds.filter(isDefined), [props.userIds])
+    const title = useUserList({
+        userIds,
+        excludeSelf: true,
+        maxNames: 3,
+        myUserId: props.myUserId,
+    }).join('')
+    return (
+        <Text truncate fontSize="md" color="default">
+            {props.title || title}
+        </Text>
     )
 }
 
@@ -329,9 +371,9 @@ const TouchChannelHeader = (props: Props & HeaderProps) => {
                     ) : (
                         <Stack horizontal gap="sm" alignItems="center" overflow="hidden">
                             {channelType === 'dm' ? (
-                                <DMTitleContent roomIdentifier={channel.id} />
+                                <DMStreamTitle roomIdentifier={channel.id} />
                             ) : (
-                                <GDMTitleContent roomIdentifier={channel.id} />
+                                <GDMStreamTitle roomIdentifier={channel.id} />
                             )}
                             {isMuted && <Icon type="muteActive" size="square_xs" color="gray2" />}
                         </Stack>

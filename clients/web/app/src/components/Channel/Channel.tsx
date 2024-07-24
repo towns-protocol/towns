@@ -1,5 +1,5 @@
 import { isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
-import React, { useCallback, useEffect, useMemo } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useParams } from 'react-router'
 import { useSearchParams } from 'react-router-dom'
 import {
@@ -15,7 +15,7 @@ import {
     useSpaceMembers,
     useTownsClient,
 } from 'use-towns-client'
-import { ChannelHeader } from '@components/ChannelHeader/ChannelHeader'
+import { ChannelHeader, MessageAvatarTitleLayout } from '@components/ChannelHeader/ChannelHeader'
 import { ChannelIntro, DMChannelIntro } from '@components/ChannelIntro'
 import { FullScreenMedia } from '@components/FullScreenMedia/FullScreenMedia'
 import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDropContext'
@@ -24,7 +24,7 @@ import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimel
 import { RichTextEditor } from '@components/RichTextPlate/PlateEditor'
 import { RegisterChannelShortcuts } from '@components/Shortcuts/RegisterChannelShortcuts'
 import { useUserList } from '@components/UserList/UserList'
-import { Box, Button, Stack, Text } from '@ui'
+import { Box, Button, CardHeader, Stack, Text } from '@ui'
 import { useBlockedUsers } from 'hooks/useBlockedUsers'
 import { useDevice } from 'hooks/useDevice'
 import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
@@ -33,6 +33,9 @@ import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { QUERY_PARAMS } from 'routes'
 import { notUndefined } from 'ui/utils/utils'
 import { getDraftDMStorageId } from 'utils'
+import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
+import { SetupAnimation } from '@components/SetupAnimation/SetupAnimation'
+import { AppProgressState } from '@components/AppProgressOverlay/AppProgressState'
 import { BlockedUserBottomBanner } from './components/BlockedUserBottomBanner'
 import { UnjoinedChannelComponent } from './components/UnjoinedChannel'
 import { useChannelSend } from './hooks/useChannelSend'
@@ -43,6 +46,7 @@ type Props = {
     channelId?: string
     preventAutoFocus?: boolean
     hideHeader?: boolean
+    storageId?: string
 }
 export const Channel = (props: Props) => {
     const { channel, spaceId, channelId = 'placeholder' } = useChannelData()
@@ -84,8 +88,7 @@ export const Channel = (props: Props) => {
 
     // -------------------------------------------------------------------------
 
-    const location = useLocation()
-    const storageId = location.state?.fromDraft ? getDraftDMStorageId(dmData?.userIds) : channelId
+    const storageId = props.storageId || channelId
     const { messageId: threadId } = useParams()
 
     // -------------------------------------------------------------------------
@@ -124,28 +127,74 @@ export const Channel = (props: Props) => {
 export const DraftChannel = (props: { userIds: string[] } & Props) => {
     const { userIds, ...restProps } = props
     const userList = useUserList({ excludeSelf: true, userIds }).join('')
+
+    const { channel, spaceId, channelId = 'placeholder' } = useChannelData()
+
     const placeholders = useMessageFieldPlaceholders({
-        channelId: '',
+        channelId: channel?.id ?? '',
         isChannelWritable: true,
         isDmOrGDM: true,
         userList,
     })
 
-    const storageId = getDraftDMStorageId(userIds)
+    const storageId = props.storageId || getDraftDMStorageId(userIds)
+
+    const { onSend: onSendReal } = useChannelSend({ channelId, spaceId })
+
+    const [pending, setPending] = useState<
+        { value: string; options: SendMessageOptions | undefined } | undefined
+    >()
+
+    const onSendOptimistic = useCallback(
+        (value: string, options: SendMessageOptions | undefined) => {
+            setPending({ value, options })
+        },
+        [],
+    )
+
+    const onSendRealRef = useRef(onSendReal)
+    onSendRealRef.current = onSendReal
+
+    useEffect(() => {
+        if (pending && channel?.id) {
+            console.log('Send pending message', pending)
+            onSendRealRef.current(pending.value, pending.options)
+            setPending(undefined)
+        }
+    }, [channel?.id, pending])
+
+    const onSend = channel?.id ? onSendReal : !pending ? onSendOptimistic : undefined
 
     return (
-        <ChannelLayout
-            hideHeader
-            userIds={userIds}
-            channel={{
-                id: '',
-                label: 'placeholder',
-                topic: 'placeholder',
-            }}
-            placeholders={placeholders}
-            storageId={storageId}
-            {...restProps}
-        />
+        <>
+            <ChannelLayout
+                userIds={userIds}
+                channel={
+                    channel ?? {
+                        id: '',
+                        label: 'placeholder',
+                        topic: 'placeholder',
+                    }
+                }
+                placeholders={placeholders}
+                storageId={storageId}
+                onSend={onSend}
+                {...restProps}
+            />
+            {pending && (
+                <Box absoluteFill centerContent background="backdropBlur" cursor="progress">
+                    <Box padding="x4" paddingBottom="x8" background="level2" borderRadius="md">
+                        <SetupAnimation
+                            mode={
+                                userIds?.length === 1
+                                    ? AppProgressState.CreatingDM
+                                    : AppProgressState.CreatingGDM
+                            }
+                        />
+                    </Box>
+                </Box>
+            )}
+        </>
     )
 }
 
@@ -204,7 +253,7 @@ export const ChannelLayout = (props: ExtendedProps) => {
                 />
             ) : (
                 <MediaDropContextProvider
-                    key={channelId}
+                    key={storageId ?? channelId}
                     title={imageUploadTitle}
                     channelId={channelId ?? ''}
                     spaceId={spaceId}
@@ -221,9 +270,19 @@ export const ChannelLayout = (props: ExtendedProps) => {
                             {showDMAcceptInvitation && <DMAcceptInvitation channelId={channelId} />}
                         </>
                     ) : userIds ? (
-                        <Box paddingY grow justifyContent="end" gap="lg">
-                            <DMChannelIntro userIds={userIds} />
-                        </Box>
+                        <>
+                            {!props.hideHeader && (
+                                <CardHeader gap="sm">
+                                    <MessageAvatarTitleLayout userIds={userIds} />
+                                    <Stack grow horizontal justifyContent="end">
+                                        <ButtonSpinner height="paragraph" />
+                                    </Stack>
+                                </CardHeader>
+                            )}
+                            <Box paddingY grow justifyContent="end" gap="lg">
+                                <DMChannelIntro userIds={userIds} />
+                            </Box>
+                        </>
                     ) : (
                         <></>
                     )}
