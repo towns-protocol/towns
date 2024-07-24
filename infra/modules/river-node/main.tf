@@ -193,6 +193,10 @@ resource "null_resource" "invoke_lambda" {
     command = "aws lambda invoke --function-name ${local.function_name} /dev/null"
   }
   depends_on = [var.river_node_db, module.post_provision_config]
+
+  lifecycle {
+    ignore_changes = all
+  }
 }
 
 resource "aws_cloudwatch_log_group" "river_log_group" {

@@ -162,15 +162,16 @@ module "river_node_credentials" {
 }
 
 
-resource "null_resource" "lambda_npm_dependencies" {
+resource "null_resource" "build_lambda" {
   provisioner "local-exec" {
-    command = "cd ${path.root}/lambda-function && npm install"
+    command = "cd ${path.root}/lambda-function && yarn install && yarn build"
   }
 
   triggers = {
-    index   = sha256(file("${path.root}/lambda-function/index.js"))
+    # TODO: make this work with the entire directory
+    src     = sha256(file("${path.root}/lambda-function/src/index.ts"))
     package = sha256(file("${path.root}/lambda-function/package.json"))
-    lock    = sha256(file("${path.root}/lambda-function/package-lock.json"))
+    lock    = sha256(file("${path.root}/lambda-function/yarn.lock"))
   }
 }
 
@@ -179,16 +180,8 @@ locals {
   source_dir           = "${path.root}/lambda-function/"
 }
 
-data "null_data_source" "wait_for_npm_dependecies_exporter" {
-  depends_on = [null_resource.lambda_npm_dependencies]
-  inputs = {
-    lambda_dependency_id = null_resource.lambda_npm_dependencies.id
-    source_dir           = local.source_dir
-  }
-}
-
-data "archive_file" "build_zip_lambda" {
-  depends_on  = [null_resource.lambda_npm_dependencies]
+data "archive_file" "zip_lambda" {
+  depends_on  = [null_resource.build_lambda]
   output_path = "${path.root}/${local.lambda_zip_file_name}"
   source_dir  = local.source_dir
   type        = "zip"
@@ -202,8 +195,8 @@ resource "aws_s3_bucket" "hnt_lambdas" {
 resource "aws_s3_object" "post_provision_config_lambda_code" {
   bucket = aws_s3_bucket.hnt_lambdas.bucket
   key    = local.lambda_zip_file_name
-  source = data.archive_file.build_zip_lambda.output_path
-  etag   = data.archive_file.build_zip_lambda.output_md5
+  source = data.archive_file.zip_lambda.output_path
+  etag   = data.archive_file.zip_lambda.output_md5
 }
 
 resource "aws_s3_bucket_versioning" "post_provision_config_lambda_code_versioning" {

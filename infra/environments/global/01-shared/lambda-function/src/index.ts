@@ -1,12 +1,26 @@
-const {SecretsManagerClient, GetSecretValueCommand, PutSecretValueCommand} = require('@aws-sdk/client-secrets-manager')
-const {Client} = require('pg');
-const crypto = require('crypto');
+import {SecretsManagerClient, GetSecretValueCommand, PutSecretValueCommand} from '@aws-sdk/client-secrets-manager'
+import {Client, DatabaseError} from 'pg';
+import { toBuffer } from 'ethereumjs-util';
+import crypto from'crypto';
+import Wallet from 'ethereumjs-wallet';
+import type { Handler } from 'aws-lambda';
 
-const EthereumUtil = require('ethereumjs-util');
-const Wallet = require('ethereumjs-wallet');
+type DBConfig = {
+    HOST: string
+    DATABASE: string
+    PASSWORD: string
+    USER: string
+    PORT: number
+}
 
 function generatePassword(length = 12) {
   return crypto.randomBytes(length).toString('base64').slice(0, length);
+}
+
+function isDBAlreadyExistsError(e: unknown) {
+  return e instanceof DatabaseError && (
+    e.code == '42P04' || e.code == '23505'
+  )
 }
 
 function generatePostgresPassword() {
@@ -26,7 +40,7 @@ function generatePostgresPassword() {
   return password;
 }
 
-function generateFromPrivateKey(privateKey) {
+function generateFromPrivateKey(privateKey: string) {
   console.log('generating from private key')
   // Ensure the private key starts with '0x'
   if (!privateKey.startsWith('0x')) {
@@ -34,7 +48,7 @@ function generateFromPrivateKey(privateKey) {
   }
 
   // Create a wallet from the private key
-  return Wallet.default.fromPrivateKey(EthereumUtil.toBuffer(privateKey));
+  return Wallet.fromPrivateKey(toBuffer(privateKey));
 }
 
 async function findOrCreateWalletPrivateKey() {
@@ -47,7 +61,7 @@ async function findOrCreateWalletPrivateKey() {
   const secretString = secretRaw.SecretString;
   let privateKey;
   if (secretString === 'DUMMY') {
-    const wallet = Wallet.default.generate();
+    const wallet = Wallet.generate();
     const hexPrivateKey = wallet.getPrivateKeyString();
     privateKey = hexPrivateKey.substring(2);
     const putSecretCommand = new PutSecretValueCommand({
@@ -71,6 +85,9 @@ const getMasterUserCredentials = async () => {
     SecretId: process.env.RIVER_DB_CLUSTER_MASTER_USER_SECRET_ARN
   })
   const masterUserCredentialsSecret = (await secretsClient.send(getMasterUserCredentials)).SecretString;
+  if (!masterUserCredentialsSecret) {
+    throw new Error('master user credentials not found')
+  }
 
   const masterUserCredentials = JSON.parse(masterUserCredentialsSecret)
   console.log('got master user credentials')
@@ -80,6 +97,9 @@ const getMasterUserCredentials = async () => {
 const createSchema = async ({
   schemaName,
   dbConfig
+}: {
+  schemaName: string,
+  dbConfig: DBConfig
 }) => {
   // create schema if not exists
   console.log('creating schema')
@@ -131,6 +151,9 @@ const createSchema = async ({
 const createRiverNodeDbUser = async ({
   riverUserDBConfig,
   masterUserCredentials,
+}: {
+  riverUserDBConfig: DBConfig,
+  masterUserCredentials: {username: string, password: string}
 }) => {
   console.log('creating river node db user')
 
@@ -176,7 +199,7 @@ const createRiverNodeDbUser = async ({
       await pgClient.query(createDatabaseQuery);
       console.log('created database')
     } catch (e) {
-      if (e.code == '42P04' || e.code == '23505') {
+      if (isDBAlreadyExistsError(e)) {
         console.log('database already exists')
       } else {
         console.error('error creating database: ', e)
@@ -229,6 +252,9 @@ const createRiverNodeDbUser = async ({
 const createNotificationServiceDbUser = async ({
   notificationServiceUserDbConfig,
   masterUserCredentials,
+}: {
+  notificationServiceUserDbConfig: DBConfig,
+  masterUserCredentials: {username: string, password: string}
 }) => {
   console.log('creating notification service db user')
 
@@ -275,7 +301,7 @@ const createNotificationServiceDbUser = async ({
       await pgClient.query(createDatabaseQuery);
       console.log('created database')
     } catch (e) {
-      if (e.code == '42P04' || e.code == '23505') {
+      if (isDBAlreadyExistsError(e)) {
         console.log('database already exists')
       } else {
         console.error('error creating database: ', e)
@@ -329,6 +355,10 @@ const createReadOnlyDbUser = async ({
   riverReadOnlyUserDBConfig,
   masterUserCredentials,
   schemaName,
+}: {
+  riverReadOnlyUserDBConfig: DBConfig,
+  masterUserCredentials: {username: string, password: string},
+  schemaName: string,
 }) => {
   console.log('creating river node Read only db user')
 
@@ -416,6 +446,9 @@ const createReadOnlyDbUser = async ({
 }
 async function findOrCreateRiverUserDBConfig() {
   console.log('finding or creating river user password')
+  if (!process.env.RIVER_USER_DB_CONFIG) {
+    throw new Error('RIVER_USER_DB_CONFIG not set')
+  }
   const RIVER_USER_DB_CONFIG = JSON.parse(process.env.RIVER_USER_DB_CONFIG)
 
   const secretsClient = new SecretsManagerClient({ region: "us-east-1" })
@@ -444,6 +477,9 @@ async function findOrCreateRiverUserDBConfig() {
 
 async function findOrCreateNotificationServiceUserDbConfig() {
   console.log('finding or creating notification service db password')
+  if (!process.env.NOTIFICATION_SERVICE_USER_DB_CONFIG) {
+    throw new Error('NOTIFICATION_SERVICE_USER_DB_CONFIG not set')
+  }
   const NOTIFICATION_SERVICE_USER_DB_CONFIG = JSON.parse(process.env.NOTIFICATION_SERVICE_USER_DB_CONFIG)
 
   const secretsClient = new SecretsManagerClient({ region: "us-east-1" })
@@ -470,6 +506,9 @@ async function findOrCreateNotificationServiceUserDbConfig() {
 
 async function findOrCreateRiverReadOnlyUserDBConfig() {
   console.log('finding or creating river read only user password')
+  if (!process.env.RIVER_READ_ONLY_USER_DB_CONFIG) {
+    throw new Error('RIVER_READ_ONLY_USER_DB_CONFIG not set')
+  }
   const RIVER_READ_ONLY_USER_DB_CONFIG = JSON.parse(process.env.RIVER_READ_ONLY_USER_DB_CONFIG)
 
   const secretsClient = new SecretsManagerClient({ region: "us-east-1" })
@@ -496,7 +535,7 @@ async function findOrCreateRiverReadOnlyUserDBConfig() {
   }
 }
 
-exports.handler = async (event, context, callback) => {
+export const handler: Handler = async (event, context, callback) => {
   try {
     // find or create the wallet private key, and use it to configure the db schema
 
@@ -505,17 +544,24 @@ exports.handler = async (event, context, callback) => {
     const riverReadOnlyUserDBConfig = await findOrCreateRiverReadOnlyUserDBConfig();
     const notificationServiceUserDbConfig = await findOrCreateNotificationServiceUserDbConfig();
 
-
     let riverNodeSchemaName; 
     
     if (process.env.RUN_MODE === 'full') {
       const privateKey = await findOrCreateWalletPrivateKey()
+      if (!privateKey) {
+        throw new Error('private key not found')
+      }
       const wallet = generateFromPrivateKey(privateKey);
       const address = wallet.getAddressString();
       riverNodeSchemaName = `s${address.toLowerCase()}`
     } else if (process.env.RUN_MODE === 'archive') {
+      if (typeof process.env.ARCHIVE_ID !== 'string') {
+        throw new Error('invalid ARCHIVE_ID')
+      }
       const archiveId = process.env.ARCHIVE_ID.toLowerCase()
       riverNodeSchemaName = `arch${archiveId}`
+    } else {
+      throw new Error('invalid RUN_MODE')
     }
 
     await createRiverNodeDbUser({
@@ -555,6 +601,10 @@ exports.handler = async (event, context, callback) => {
     callback(null, 'done')
   } catch (e) {
     console.error('error: ', e)
-    callback(e)
+    if (e instanceof Error) {
+      callback(e)
+    } else {
+      callback(new Error('unknown error'))
+    }
   }
 }

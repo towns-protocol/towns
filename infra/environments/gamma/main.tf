@@ -200,6 +200,14 @@ module "archive_node" {
   lb = module.archive_node_nlb[count.index]
 }
 
+module "notification_service_db_cluster" {
+  source = "../../modules/notification-service-db-cluster"
+
+  vpc_id                    = module.vpc.vpc_id
+  database_subnets          = module.vpc.database_subnets
+  pgadmin_security_group_id = module.pgadmin.security_group_id
+}
+
 module "notification_service" {
   source = "../../modules/notification-service"
 
@@ -221,8 +229,9 @@ module "notification_service" {
   # TODO: check with brian & team to see who runs this account
   vapid_subject = "mailto:support@towns.com"
 
-  river_node_db  = module.river_db_cluster
   river_node_url = module.global_constants.full_nodes[0].url
+
+  db_cluster = module.notification_service_db_cluster
 }
 
 module "eth_balance_monitor" {

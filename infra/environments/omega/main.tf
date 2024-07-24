@@ -195,6 +195,14 @@ module "archive_node" {
   lb = module.archive_node_nlb[count.index]
 }
 
+module "notification_service_db_cluster" {
+  source = "../../modules/notification-service-db-cluster"
+
+  vpc_id                    = module.vpc.vpc_id
+  database_subnets          = module.vpc.database_subnets
+  pgadmin_security_group_id = module.pgadmin.security_group_id
+}
+
 module "notification_service" {
   source = "../../modules/notification-service"
 
@@ -215,9 +223,9 @@ module "notification_service" {
 
   vapid_subject = "mailto:support@towns.com"
 
-  river_node_db = module.river_db_cluster
-
   river_node_url = "https://hnt-labs-1.staking.production.figment.io"
+
+  db_cluster = module.notification_service_db_cluster
 }
 
 module "eth_balance_monitor" {
@@ -237,9 +245,6 @@ module "operator_logs" {
   bucket_name = "figment-logs"
   user_name   = "figment"
 }
-
-# TODO: setup uptime monitors for mainnet nodes
-# TODO: standardize wallet balance alerts for gamma, and reuse them for mainnet in terraform
 
 module "metrics_aggregator" {
   source = "../../modules/metrics-aggregator"

@@ -50,8 +50,8 @@ variable "vapid_subject" {
   type = string
 }
 
-variable "river_node_db" {
-  description = "The river node db module"
+variable "db_cluster" {
+  description = "The db cluster to connect to"
   type        = any
 }
 

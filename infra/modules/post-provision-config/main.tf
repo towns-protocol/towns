@@ -28,7 +28,7 @@ module "post_provision_config_lambda_function" {
   version                = "7.2.0"
   function_name          = "${local.name}-lambda"
   description            = "Lambda function to configure the infra after provisioning"
-  handler                = "index.handler"
+  handler                = "dist/index.handler"
   runtime                = "nodejs20.x"
   ephemeral_storage_size = 512
   architectures          = ["x86_64"]

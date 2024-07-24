@@ -50,6 +50,26 @@ data "terraform_remote_state" "global_remote_state" {
   }
 }
 
+module "notification_service_db_config_lambda" {
+  source = "../notification-service-db-config-lambda"
+
+  vpc_id     = var.vpc_id
+  subnet_ids = var.subnets
+  db_cluster = var.db_cluster
+}
+
+resource "null_resource" "invoke_lambda" {
+  depends_on = [module.notification_service_db_config_lambda]
+
+  provisioner "local-exec" {
+    command = "aws lambda invoke --function-name ${module.notification_service_db_config_lambda.function_name} /dev/null"
+  }
+
+  lifecycle {
+    ignore_changes = all
+  }
+}
+
 resource "aws_iam_role" "ecs_task_execution_role" {
   name                = "${local.local_name}-ecsTaskExecutionRole"
   managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"]
@@ -97,7 +117,7 @@ resource "aws_security_group_rule" "allow_inbound_to_db" {
   to_port   = 5432
   protocol  = "tcp"
 
-  security_group_id        = var.river_node_db.rds_aurora_postgresql.security_group_id
+  security_group_id        = var.db_cluster.rds_aurora_postgresql.security_group_id
   source_security_group_id = module.internal_sg.security_group_id
 }
 
@@ -261,7 +281,7 @@ resource "aws_ecs_task_definition" "fargate_task_definition" {
       },
       {
         name  = "DB_HOST",
-        value = var.river_node_db.rds_aurora_postgresql.cluster_endpoint
+        value = var.db_cluster.rds_aurora_postgresql.cluster_endpoint
       },
       {
         name  = "DB_DATABASE",
@@ -324,7 +344,7 @@ resource "aws_ecs_service" "river-ecs-service" {
   deployment_maximum_percent         = 200
 
   # do not attempt to create the service before the lambda runs
-  depends_on = [var.river_node_db]
+  depends_on = [module.notification_service_db_config_lambda]
 
   enable_execute_command = true
 

@@ -349,10 +349,6 @@ resource "aws_ecs_task_definition" "fargate_task_definition" {
           value = "false"
         },
         {
-          name  = "DD_APM_ENABLED",
-          value = "false"
-        },
-        {
           name  = "DD_SYSTEM_PROBE_ENABLED",
           value = "false"
         }

@@ -10,6 +10,7 @@
 #/.pnp.*
 lcov.info
 /**/yarn.lock
+!infra/**/yarn.lock
 # The subtree has it's own yarn.lock, we delete it in our import of the subtree to avoid confusion
 river/yarn.lock
 
