@@ -1,11 +1,6 @@
 import { streamIdAsString } from './utils'
 
-// Original list of StreamPrefix is in river/packages/sdk/src/id.ts
-export enum StreamPrefix {
-    Channel = '20',
-    DM = '88',
-    GDM = '77',
-}
+import { StreamPrefix } from '@river-build/sdk'
 
 export const isDMChannelStreamId = (streamId: string | Uint8Array): boolean =>
     streamIdAsString(streamId).startsWith(StreamPrefix.DM)

@@ -63,6 +63,7 @@
     "devDependencies": {
         "@typechain/ethers-v5": "^10.1.1",
         "@types/node": "^20.5.0",
+        "esbuild-plugin-wasm": "^1.1.0",
         "eslint": "^8.53.0",
         "eslint-config-prettier": "^8.8.0",
         "eslint-plugin-mocha": "^10.1.0",

@@ -8,7 +8,7 @@
         "keys": "sh ./scripts/create-vapid-keys.sh",
         "build": "prisma generate && yarn typecheck && yarn compile",
         "typecheck": "tsc --noEmit",
-        "compile": "esbuild src/server.ts --sourcemap=inline --bundle --platform=node --target=node20 --format=cjs --outfile=dist/server.cjs",
+        "compile": "node esbuild.config.mjs",
         "db:create-migration:local": "dotenv -e .env.local -- yarn prisma migrate dev --name",
         "db:generate": "prisma generate",
         "db:local": "yarn db:generate & yarn db:migrate:local",
@@ -23,7 +23,7 @@
     "dependencies": {
         "@bufbuild/protobuf": "^1.9.0",
         "@connectrpc/connect": "^1.4.0",
-        "@connectrpc/connect-web": "^1.4.0",
+        "@connectrpc/connect-node": "^1.4.0",
         "@parse/node-apn": "^6.0.1",
         "@prisma/client": "^5.17.0",
         "@river-build/proto": "workspace:^",

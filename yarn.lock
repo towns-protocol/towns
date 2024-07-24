@@ -2855,6 +2855,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@connectrpc/connect-node@npm:^1.4.0":
+  version: 1.4.0
+  resolution: "@connectrpc/connect-node@npm:1.4.0"
+  dependencies:
+    undici: ^5.28.3
+  peerDependencies:
+    "@bufbuild/protobuf": ^1.4.2
+    "@connectrpc/connect": 1.4.0
+  checksum: d13dc98d25e7321cce9969a009788874046ae9c0848922ecd2690dddc833b732fe756d486213fe0de55b1e4ae68024a45505d193ba0a927c6ec5b8a6d6a599e0
+  languageName: node
+  linkType: hard
+
 "@connectrpc/connect-web@npm:^1.4.0":
   version: 1.4.0
   resolution: "@connectrpc/connect-web@npm:1.4.0"
@@ -16447,6 +16459,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"esbuild-plugin-wasm@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "esbuild-plugin-wasm@npm:1.1.0"
+  checksum: 382df12ecb92634d0f526cad4792b0ac5dc8016cdf63e23d9ee099f0f2c530855463cc45045c4a6ec10a6a1bd2ff59b5c4b24e6314a361fa70cc57645caf602b
+  languageName: node
+  linkType: hard
+
 "esbuild-sunos-64@npm:0.15.18":
   version: 0.15.18
   resolution: "esbuild-sunos-64@npm:0.15.18"
@@ -19165,6 +19184,7 @@ __metadata:
   dependencies:
     "@typechain/ethers-v5": ^10.1.1
     "@types/node": ^20.5.0
+    esbuild-plugin-wasm: ^1.1.0
     eslint: ^8.53.0
     eslint-config-prettier: ^8.8.0
     eslint-plugin-mocha: ^10.1.0
@@ -24692,7 +24712,7 @@ __metadata:
   dependencies:
     "@bufbuild/protobuf": ^1.9.0
     "@connectrpc/connect": ^1.4.0
-    "@connectrpc/connect-web": ^1.4.0
+    "@connectrpc/connect-node": ^1.4.0
     "@parse/node-apn": ^6.0.1
     "@prisma/client": ^5.17.0
     "@river-build/proto": "workspace:^"
@@ -30419,7 +30439,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"undici@npm:^5.28.2":
+"undici@npm:^5.28.2, undici@npm:^5.28.3":
   version: 5.28.4
   resolution: "undici@npm:5.28.4"
   dependencies:

@@ -10,7 +10,7 @@ import { database } from './prisma'
 import { NotificationAttachmentKind, NotificationKind } from './tagSchema'
 import { PushType } from './subscriptionSchema'
 import { sendNotificationViaWebPush } from './services/web-push/send-notification'
-import { StreamPrefix } from './services/stream/id'
+import { StreamPrefix } from '@river-build/sdk'
 
 jest.mock('./prisma', () => ({
     database: {

@@ -6,6 +6,10 @@
     "sourceType": "module"
   },
   "ignorePatterns": ["dist/"],
+  "env": {
+    "node": true, // Add this line to define Node.js environment
+    "es2021": true // This ensures modern ECMAScript features are recognized
+  },
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",

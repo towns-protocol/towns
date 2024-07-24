@@ -1,7 +1,7 @@
-import { format, transports, createLogger as winstonCreateLogger } from 'winston'
+import { Logger, format, transports, createLogger as winstonCreateLogger } from 'winston'
 import { env, isProduction } from './utils/environment'
 
-export function createLogger(label: string) {
+export function createLogger(label: string): Logger {
     const metadataFormat = format.metadata({
         fillExcept: ['message', 'level', 'timestamp', 'label'],
     })
@@ -46,6 +46,12 @@ export function createLogger(label: string) {
     }
 
     return logger
+}
+
+export function createSubLogger(parentLogger: Logger, subLabel: string): Logger {
+    return parentLogger.child({
+        defaultMeta: { label: `${parentLogger.defaultMeta.label}-${subLabel}` },
+    })
 }
 
 export const notificationServiceLogger = createLogger('notificationService')
