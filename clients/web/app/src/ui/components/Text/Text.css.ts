@@ -124,7 +124,7 @@ const siblings = ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'ul', 'ol'] as const
 
 siblings.forEach((s) => {
     siblings.forEach((m) =>
-        globalStyle(`${boxClass}:not(.${containerWithGapClass}) >  ${s} + ${m}`, {
+        globalStyle(`${boxClass}:not(.${containerWithGapClass}) > ${s} + ${m}`, {
             marginTop: vars.space.md,
         }),
     )
