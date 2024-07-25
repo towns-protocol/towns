@@ -12,7 +12,7 @@ export function transformEvent(event, metadata) {
     const properties = event.properties
 
     // filter out events with debug property
-    if (properties['debug']) {
+    if (properties?.debug === true) {
         return
     }
 
