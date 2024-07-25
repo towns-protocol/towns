@@ -137,7 +137,7 @@ export const EmbeddedMessage = (props: {
                     <Text size={{ desktop: 'sm', mobile: 'xs' }} whiteSpace="nowrap">
                         {formatDate(Number(attachment.info.createdAtEpochMs))}
                     </Text>
-                    <Text>&bull;</Text>
+                    {messageLink.type && <Text>&bull;</Text>}
                     {messageLink.type === 'internal-link' && (
                         <Link to={messageLink.path}>
                             <Text
