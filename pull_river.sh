@@ -304,6 +304,9 @@ if ! git diff main --quiet --cached; then
 
     # Run yarn, commit new yarn.lock, and check for build breakages
     yarn_install_and_check
+
+    # Store the river node tag
+    AUTOCOMMIT=true ./scripts/river-node-tag/run.sh set "${SHORT_HASH}"
     
     # if PROMPT_BEFORE_PR is true, prompt the user for any key to continue
     if [[ $PROMPT_BEFORE_PR -eq 1 ]]; then
@@ -392,6 +395,7 @@ if ! git diff main --quiet --cached; then
 
     echo "Subtree merge completed successfully."
 
+    # TODO: remove these lines, and have gh actions run the deployment instead
     echo "Deploying river..."
 
     gh workflow run River_deploy.yml -f docker_image_tag="${SHORT_HASH}" -f run_mode="full" -f node_numbers="[1,2,3,4,5,6,7,8,9,10,11]"
