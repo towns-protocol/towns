@@ -7765,7 +7765,6 @@ __metadata:
     "@types/seedrandom": ^3.0.4
     "@typescript-eslint/eslint-plugin": ^6.10.0
     "@typescript-eslint/parser": ^7.14.1
-    axios: ^1.2.6
     browser-or-node: ^2.1.1
     bullmq: ^4.10.0
     debug: ^4.3.4
@@ -7788,12 +7787,10 @@ __metadata:
     nanoid: ^4.0.0
     p-limit: ^5.0.0
     seedrandom: ^3.0.5
-    supports-color: ^9.2.3
     ts-jest: ^29.1.1
     ts-node: ^10.9.1
     typed-emitter: ^2.1.0
     typescript: ^5.1.6
-    wagmi: ^1.4.12
   languageName: unknown
   linkType: soft
 
@@ -29133,7 +29130,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"supports-color@npm:^9.0.0, supports-color@npm:^9.2.3":
+"supports-color@npm:^9.0.0":
   version: 9.3.1
   resolution: "supports-color@npm:9.3.1"
   checksum: 00c4d1082a7ba0ee21cba1d4e4a466642635412e40476777b530aa5110d035e99a420cd048e1fb6811f2254c0946095fbb87a1eccf1af1d1ca45ab0a4535db93

@@ -1,6 +1,6 @@
 {
     "name": "@river-build/sdk",
-    "version": "0.0.23",
+    "version": "0.0.24",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
@@ -31,7 +31,6 @@
         "@river-build/encryption": "workspace:^",
         "@river-build/proto": "workspace:^",
         "@river-build/web3": "workspace:^",
-        "axios": "^1.2.6",
         "browser-or-node": "^2.1.1",
         "debug": "^4.3.4",
         "dexie": "^4.0.7",
@@ -39,9 +38,7 @@
         "ethers": "^5.7.2",
         "lodash": "^4.17.21",
         "nanoid": "^4.0.0",
-        "p-limit": "^5.0.0",
-        "supports-color": "^9.2.3",
-        "wagmi": "^1.4.12"
+        "p-limit": "^5.0.0"
     },
     "devDependencies": {
         "@jest/globals": "^29.6.2",
