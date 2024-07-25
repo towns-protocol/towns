@@ -94,6 +94,45 @@ describe('http router', () => {
         expect(text).toContain('Invalid Paymaster Response')
     })
 
+    test('verify createSpace with mocked fetch to Alchemy api', async () => {
+        const fetchMock = getMiniflareFetchMock()
+        fetchMock.disableNetConnect()
+        const env = getMiniflareBindings()
+        const url = new URL(env.PAYMASTER_RPC_URL)
+        const origin = fetchMock.get(url.origin)
+        env.SKIP_TOWNID_VERIFICATION = 'true'
+        const resultErrorStackup = {
+            id: 1,
+            jsonrpc: '2.0',
+            error: { message: 'api error', code: 1 },
+        }
+        origin
+            .intercept({
+                method: 'POST',
+                path: `${url.pathname}`, // user 1, public image variant
+            })
+            .reply(400, resultErrorStackup)
+
+        const result = await worker.fetch(
+            ...generateRequest(
+                'api/sponsor-userop/alchemy',
+                'POST',
+                {
+                    Authorization: `Bearer ${AUTH_TOKEN}`,
+                },
+                toJson({
+                    data: JSON.parse(createSpaceFakeRequest),
+                    accessToken: 'fake',
+                }) as BodyInit,
+                env,
+            ),
+        )
+        expect(result.status).toBe(400)
+
+        const text = await result.text()
+        expect(text).toContain('Invalid Paymaster Response')
+    })
+
     test('verify joinTown with mocked fetch to Stackup api', async () => {
         const fetchMock = getMiniflareFetchMock()
         fetchMock.disableNetConnect()

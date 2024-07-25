@@ -1207,6 +1207,7 @@ export class UserOps {
                         paymasterProxyUrl: this.paymasterProxyUrl,
                         functionHashForPaymasterProxy: functionHashForPaymasterProxy,
                         spaceId,
+                        bundlerUrl: this.bundlerUrl,
                         fetchAccessTokenFn: this.fetchAccessTokenFn,
                     })
 

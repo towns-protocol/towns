@@ -1,6 +1,17 @@
 # stackup-worker
 
-Worker proxy for Stack Account Abstraction package.
+Worker proxy for Stack Account Abstraction sponsorship.
+
+It supports both alchemy and stackup paymaster APIs.
+
+```
+/api/sponsor-userop/ - stackup
+/api/sponsor-userop/alchemy - alchemy
+```
+
+For the time being, both APIs will be supported because local development is set up to use Stackup's infra.
+
+For relevant env vars, see .dev.vars.
 
 ## Dependencies
 

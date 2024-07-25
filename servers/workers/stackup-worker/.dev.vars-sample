@@ -3,6 +3,8 @@
 
 # this is actually the entrypoint address
 PAYMASTER_ADDRESS=
+
+# the paymaster rpc url is either stackup or localhost
 PAYMASTER_RPC_URL=
 
 # skips all verification checks for an operation
@@ -21,6 +23,10 @@ ADMIN_AUTH_SECRET=
 PRIVY_APP_KEY=
 PRIVY_APP_ID=
 ALCHEMY_API_KEY=
+
+# these are required if using Alchemy for userop sponsorship
+ALCHEMY_PAYMASTER_RPC_URL=
+ALCHEMY_GM_POLICY_ID=
 
 # should be test-beta if you are running against base sepolia
 ENVIRONMENT=development

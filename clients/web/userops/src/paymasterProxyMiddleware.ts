@@ -9,6 +9,8 @@ type PaymasterProxyResponse = {
     preVerificationGas: string
     verificationGasLimit: string
     callGasLimit: string
+    maxPriorityFeePerGas?: string
+    maxFeePerGas?: string
 }
 
 const zSchema: z.ZodType<PaymasterProxyResponse> = z.object({
@@ -16,6 +18,8 @@ const zSchema: z.ZodType<PaymasterProxyResponse> = z.object({
     preVerificationGas: z.string().startsWith('0x'),
     verificationGasLimit: z.string().startsWith('0x'),
     callGasLimit: z.string().startsWith('0x'),
+    maxPriorityFeePerGas: z.string().startsWith('0x').optional(),
+    maxFeePerGas: z.string().startsWith('0x').optional(),
 })
 
 type PaymasterProxyPostData = IUserOperation & {
@@ -30,6 +34,7 @@ export const paymasterProxyMiddleware = async (
         rootKeyAddress: string
         functionHashForPaymasterProxy: string | undefined
         spaceId: string | undefined
+        bundlerUrl: string
         fetchAccessTokenFn: (() => Promise<string | null>) | undefined
     } & Pick<UserOpsConfig, 'paymasterProxyUrl' | 'paymasterProxyAuthSecret'>,
 ) => {
@@ -41,6 +46,7 @@ export const paymasterProxyMiddleware = async (
         paymasterProxyAuthSecret,
         paymasterProxyUrl,
         fetchAccessTokenFn,
+        bundlerUrl,
     } = args
 
     try {
@@ -89,7 +95,13 @@ export const paymasterProxyMiddleware = async (
             const value = data[type]
             data[type] = BigNumber.from(value).toHexString()
         })
-        const sponsorUserOpUrl = `${paymasterProxyUrl}/api/sponsor-userop`
+
+        let sponsorUserOpUrl = `${paymasterProxyUrl}/api/sponsor-userop`
+
+        if (bundlerUrl.includes('alchemy')) {
+            sponsorUserOpUrl = `${paymasterProxyUrl}/api/sponsor-userop/alchemy`
+        }
+
         let accessToken: string | undefined
         try {
             accessToken = (await fetchAccessTokenFn?.()) ?? undefined
@@ -130,10 +142,23 @@ export const paymasterProxyMiddleware = async (
                 )}`,
             )
         }
+
+        // the op needs to be updated with the values returned from the paymaster call
+        // if paymaster returns a response that includes fields that are missing here
+        // then you'll likely encounter an invalid paymaster signature error
+        // https://docs.stackup.sh/reference/pm-sponsoruseroperation
+        // being explicity here instead of spreading the parseResult.data, for clarity
         ctx.op.paymasterAndData = parseResult.data.paymasterAndData
         ctx.op.preVerificationGas = parseResult.data.preVerificationGas
         ctx.op.verificationGasLimit = parseResult.data.verificationGasLimit
         ctx.op.callGasLimit = parseResult.data.callGasLimit
+
+        // alchemy returns these as well, so we need to set them here
+        // https://docs.alchemy.com/reference/alchemy-requestgasandpaymasteranddata
+        if (parseResult.data.maxFeePerGas && parseResult.data.maxPriorityFeePerGas) {
+            ctx.op.maxFeePerGas = parseResult.data.maxFeePerGas
+            ctx.op.maxPriorityFeePerGas = parseResult.data.maxPriorityFeePerGas
+        }
     } catch (error) {
         // if the paymaster responds with an error
         // just estimate the gas the same way Presets.SimpleAccount does when no paymaster is passed

@@ -2,6 +2,7 @@ import { IUserOperation } from 'userop.js'
 import { Request as IttyRequest } from 'itty-router'
 import { isHexString } from './types'
 import { Address } from '@river-build/web3'
+import { Env } from '.'
 
 export type WorkerRequest = Request & IttyRequest
 
@@ -15,9 +16,9 @@ export const durationLogger = (step: string) => {
     }
 }
 
-export function createPmSponsorUserOperationRequest(params: {
+export function createStackupPMSponsorUserOperationRequest(params: {
     userOperation: IUserOperation
-    paymasterAddress: string
+    entryPoint: string
     type: { type: string }
 }): RequestInit {
     const init = {
@@ -26,6 +27,43 @@ export function createPmSponsorUserOperationRequest(params: {
             id: 1,
             method: 'pm_sponsorUserOperation',
             params: Object.values(params),
+        }),
+        method: 'POST',
+        headers: {
+            'content-type': 'application/json',
+            accept: 'application/json',
+        },
+    }
+    return init
+}
+
+export function createAlchemyRequestGasAndPaymasterDataRequest(args: {
+    policyId: string
+    entryPoint: string
+    userOperation: IUserOperation
+}) {
+    const { policyId, entryPoint, userOperation } = args
+
+    // https://docs.alchemy.com/reference/alchemy-requestgasandpaymasteranddata
+    const init = {
+        body: JSON.stringify({
+            jsonrpc: '2.0',
+            id: 1,
+            method: 'alchemy_requestGasAndPaymasterAndData',
+            params: [
+                {
+                    policyId,
+                    entryPoint,
+                    dummySignature: userOperation.signature,
+                    // don't add gas fields here
+                    userOperation: {
+                        sender: userOperation.sender,
+                        nonce: userOperation.nonce,
+                        initCode: userOperation.initCode,
+                        callData: userOperation.callData,
+                    },
+                },
+            ],
         }),
         method: 'POST',
         headers: {

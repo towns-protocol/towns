@@ -29,6 +29,8 @@ export interface Env extends AuthEnv {
     PRIVY_APP_KEY: string
     PRIVY_APP_ID: string
     ALCHEMY_API_KEY: string
+    ALCHEMY_GM_POLICY_ID?: string
+    ALCHEMY_PAYMASTER_RPC_URL?: string
     SKIP_LIMIT_VERIFICATION: string
     REFUSE_ALL_OPS: string
     // if true, will use fake privy verification
@@ -86,6 +88,9 @@ export const worker = {
             const privyClient = new PrivyClient(env.PRIVY_APP_ID, env.PRIVY_APP_KEY)
 
             const durationRequest = durationLogger(request.url)
+            console.log(`[worker]::fetching ${request.url}`, {
+                env,
+            })
             const response = await handleRequest(request, env, { privyClient })
             durationRequest()
             const newResponse = new Response(response.body, response)

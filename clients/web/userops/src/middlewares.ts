@@ -98,7 +98,8 @@ export function promptUser(
                                 },
                             },
                         },
-                        new BundlerJsonRpcProvider(rpcUrl).setBundlerRpc(bundlerUrl),
+                        rpcUrl,
+                        bundlerUrl,
                     )
 
                     if (endEstimateGas) {
@@ -210,7 +211,8 @@ export const simpleEstimateGas = async (
                 },
             },
         },
-        new BundlerJsonRpcProvider(rpcUrl).setBundlerRpc(bundlerUrl),
+        rpcUrl,
+        bundlerUrl,
     )
 
     ctx.op.preVerificationGas = estimate.preVerificationGas
@@ -220,10 +222,31 @@ export const simpleEstimateGas = async (
 
 const estimateUserOperationGas = async (
     ctx: IUserOperationMiddlewareCtx,
-    provider: ethers.providers.JsonRpcProvider,
+    rpcUrl: string,
+    bundlerUrl: string,
 ) => {
+    const provider = new BundlerJsonRpcProvider(rpcUrl).setBundlerRpc(bundlerUrl)
+
+    let op:
+        | IUserOperation
+        | Pick<
+              IUserOperation,
+              'sender' | 'nonce' | 'initCode' | 'callData' | 'paymasterAndData' | 'signature'
+          > = OpToJSON(ctx.op)
+
+    if (bundlerUrl.includes('alchemy')) {
+        op = {
+            sender: op.sender,
+            nonce: op.nonce,
+            initCode: op.initCode,
+            callData: op.callData,
+            paymasterAndData: op.paymasterAndData,
+            signature: op.signature,
+        }
+    }
+
     const est = (await provider.send('eth_estimateUserOperationGas', [
-        OpToJSON(ctx.op),
+        op,
         ctx.entryPoint,
         // make sure to include stateOverrides for users w/o funds!
         ctx.stateOverrides,

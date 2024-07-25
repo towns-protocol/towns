@@ -1,6 +1,5 @@
 import { IUserOperation } from 'userop.js'
 import { Environment } from 'worker-common'
-import { Env } from '.'
 
 // see https://github.com/stackup-wallet/userop.js/blob/1d9d0e034691cd384e194c9e8b3165680a334180/src/preset/middleware/paymaster.ts
 export interface VerifyingPaymasterResult {
@@ -133,7 +132,7 @@ export function isHexString(input: string): input is `0x${string}` {
     return /^0x[0-9A-Fa-f]+$/.test(input)
 }
 
-export type pmSponsorUserOperationResponse = {
+type PaymasterResponse = {
     id: number | null
     jsonrpc: string
     error?: { message: string; code: number }
@@ -146,7 +145,7 @@ export type pmSponsorUserOperationResponse = {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function isPmSponsorUserOperationResponse(obj: any): obj is pmSponsorUserOperationResponse {
+export function isPaymasterResponse(obj: any): obj is PaymasterResponse {
     return (
         typeof obj === 'object' &&
         obj !== null &&

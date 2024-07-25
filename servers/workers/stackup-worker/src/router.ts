@@ -2,40 +2,29 @@ import { Router } from 'itty-router'
 import { Env } from '.'
 import {
     isTownsUserOperation,
-    isPmSponsorUserOperationResponse,
+    isPaymasterResponse,
     isOverrideOperation,
     Overrides,
     isWhitelistOperation,
     Whitelist,
     isTransactionLimitRequest,
 } from './types'
-import {
-    TRANSACTION_LIMIT_DEFAULTS_PER_DAY,
-    verifyCreateSpace,
-    verifyJoinTown,
-    verifyLinkWallet,
-    verifyUpdateSpaceInfo,
-    verifyUseTown,
-} from './useropVerification'
+import { TRANSACTION_LIMIT_DEFAULTS_PER_DAY } from './useropVerification'
 
 import { isErrorType, Environment } from 'worker-common'
 import {
     WorkerRequest,
-    createPmSponsorUserOperationRequest,
     getContentAsJson,
     durationLogger,
-    commonChecks,
-    invalidTownErrorMessage,
+    createStackupPMSponsorUserOperationRequest,
+    createAlchemyRequestGasAndPaymasterDataRequest,
 } from './utils'
 import { contractAddress, createFilterWrapper, runLogQuery } from './logFilter'
 import { checkMintKVOverrides } from './checks'
 import { createSpaceDappForNetwork, networkMap } from './provider'
 import { verifyPrivyAuthToken } from './privy'
 import { PrivyClient } from '@privy-io/server-auth'
-
-// can be 'payg' or 'erc20token'
-// see https://docs.stackup.sh/reference/pm-sponsoruseroperation
-const contextType = 'payg'
+import { handlePaymasterResponse, handleVerifications } from './sponsorHelpers'
 
 const router = Router()
 
@@ -155,354 +144,99 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env, { pr
     if (env.REFUSE_ALL_OPS === 'true') {
         return new Response(toJson({ error: 'User operations are not available' }), { status: 503 })
     }
-    // check payload is IUserOperation with townId
     const content = await getContentAsJson(request)
     if (!content || !isTownsUserOperation(content)) {
         return new Response(toJson({ error: 'Bad Request' }), { status: 400 })
     }
-    // check town is associated with paymaster
     const { data } = content
 
-    const endVerifyAuthTokenDuration = durationLogger('Verify Auth Token')
-    const verifiedClaims = await verifyPrivyAuthToken({
-        request,
+    const { townId, functionHash, rootKeyAddress, ...userOperation } = data
+
+    const verificationErrorResponse = await handleVerifications({
         privyClient,
+        request,
+        data,
         env,
     })
-    endVerifyAuthTokenDuration()
-    if (!verifiedClaims) {
-        return new Response(toJson({ error: 'invalid auth token' }), { status: 401 })
+
+    if (verificationErrorResponse) {
+        return verificationErrorResponse
     }
 
-    const { townId, functionHash, rootKeyAddress, ...userOperation } = data
-    // depending on the function hash, validate the content
-    try {
-        /* createSpace (TownArchitect.sol)
-		/* joinTown (MembershipFacet.sol)
-        */
-        /* linkWalletToRootKey (WalletLink.sol)
-          1. check if wallet is already linked
-          2. check if wallet has any links left
-          3. check total number of link actions per wallet
-        */
-
-        // todo: all other on-chain write functions exposed in app (see @river-build/web3 for list)
-        switch (functionHash) {
-            // todo: functionHash should be a keccak hash of the function signature
-            case 'createSpace': {
-                const { errorMessage, root, sender } = commonChecks({
-                    rootKeyAddress: rootKeyAddress,
-                    sender: userOperation.sender,
-                })
-                if (errorMessage) {
-                    return new Response(toJson({ error: errorMessage }), { status: 400 })
-                }
-
-                if (env.SKIP_TOWNID_VERIFICATION !== 'true') {
-                    const verification = await verifyCreateSpace({
-                        privyDid: verifiedClaims.userId,
-                        rootKeyAddress: root,
-                        senderAddress: sender,
-                        env,
-                    })
-                    if (!verification.verified) {
-                        return new Response(
-                            toJson({ error: `Unauthorized: ${verification.error}` }),
-                            { status: 401 },
-                        )
-                    }
-                }
-                break
-            }
-            case 'joinSpace': {
-                const { errorMessage, root, sender } = commonChecks({
-                    rootKeyAddress: rootKeyAddress,
-                    sender: userOperation.sender,
-                })
-                if (errorMessage) {
-                    return new Response(toJson({ error: errorMessage }), { status: 400 })
-                }
-
-                if (!townId) {
-                    return new Response(invalidTownErrorMessage, {
-                        status: 400,
-                    })
-                }
-
-                if (env.SKIP_TOWNID_VERIFICATION !== 'true') {
-                    const verification = await verifyJoinTown({
-                        rootKeyAddress: root,
-                        senderAddress: sender,
-                        townId: townId,
-                        env,
-                    })
-                    if (!verification.verified) {
-                        return new Response(
-                            toJson({ error: `Unauthorized: ${verification.error}` }),
-                            { status: 401 },
-                        )
-                    }
-                }
-                break
-            }
-            case 'removeLink':
-            case 'linkCallerToRootKey':
-            case 'linkWalletToRootKey': {
-                const { errorMessage, root, sender } = commonChecks({
-                    rootKeyAddress: rootKeyAddress,
-                    sender: userOperation.sender,
-                })
-                if (errorMessage) {
-                    return new Response(toJson({ error: errorMessage }), { status: 400 })
-                }
-
-                if (env.SKIP_TOWNID_VERIFICATION !== 'true') {
-                    const verification = await verifyLinkWallet({
-                        rootKeyAddress: root,
-                        senderAddress: sender,
-                        functionHash: functionHash,
-                        env,
-                    })
-                    if (!verification.verified) {
-                        return new Response(
-                            toJson({ error: `Unauthorized: ${verification.error}` }),
-                            { status: 401 },
-                        )
-                    }
-                }
-                break
-            }
-            case 'createRole':
-            case 'removeRole':
-            case 'updateRole':
-            case 'addRoleToChannel':
-            case 'removeRoleFromChannel':
-            case 'removeEntitlementModule':
-            case 'addEntitlementModule':
-            case 'createChannel':
-            case 'updateChannel':
-            case 'removeChannel':
-            case 'ban':
-            case 'unban': {
-                const { errorMessage, root, sender } = commonChecks({
-                    rootKeyAddress: rootKeyAddress,
-                    sender: userOperation.sender,
-                })
-                if (errorMessage) {
-                    return new Response(toJson({ error: errorMessage }), { status: 400 })
-                }
-                if (!townId) {
-                    return new Response(
-                        toJson({ error: `Missing townId, cannot verify town exists` }),
-                        {
-                            status: 400,
-                        },
-                    )
-                }
-                if (env.SKIP_TOWNID_VERIFICATION !== 'true') {
-                    const verification = await verifyUseTown({
-                        rootKeyAddress: root,
-                        senderAddress: sender,
-                        townId: townId,
-                        env,
-                        transactionName: functionHash,
-                    })
-                    if (!verification.verified) {
-                        return new Response(
-                            toJson({ error: `Unauthorized: ${verification.error}` }),
-                            { status: 401 },
-                        )
-                    }
-                }
-                break
-            }
-            case 'updateSpaceInfo': {
-                const { errorMessage, root, sender } = commonChecks({
-                    rootKeyAddress: rootKeyAddress,
-                    sender: userOperation.sender,
-                })
-                if (errorMessage) {
-                    return new Response(toJson({ error: errorMessage }), { status: 400 })
-                }
-                if (!townId) {
-                    return new Response(
-                        toJson({ error: `Missing townId, cannot verify town exists` }),
-                        {
-                            status: 400,
-                        },
-                    )
-                }
-                if (env.SKIP_TOWNID_VERIFICATION !== 'true') {
-                    const verification = await verifyUpdateSpaceInfo({
-                        rootKeyAddress: root,
-                        senderAddress: sender,
-                        townId: townId,
-                        env,
-                    })
-                    if (!verification.verified) {
-                        return new Response(
-                            toJson({ error: `Unauthorized: ${verification.error}` }),
-                            { status: 401 },
-                        )
-                    }
-                }
-                break
-            }
-            case 'createSpace_linkWallet': {
-                // this flow is specifically for a new user
-                // they have not linked their wallet or joined or created a town yet
-                // therefore we don't need any checks
-
-                const { errorMessage } = commonChecks({
-                    rootKeyAddress: rootKeyAddress,
-                    sender: userOperation.sender,
-                })
-                if (errorMessage) {
-                    return new Response(toJson({ error: errorMessage }), { status: 400 })
-                }
-
-                break
-            }
-            case 'joinSpace_linkWallet': {
-                // this flow is specifically for a new user
-                // they have not linked their wallet or joined or created a town yet
-                // therefore we don't need any checks
-                const { errorMessage } = commonChecks({
-                    rootKeyAddress: rootKeyAddress,
-                    sender: userOperation.sender,
-                })
-                if (errorMessage) {
-                    return new Response(toJson({ error: errorMessage }), { status: 400 })
-                }
-
-                if (!townId) {
-                    return new Response(
-                        toJson({
-                            error: `Missing townId, cannot verify that town does not exist`,
-                        }),
-                        {
-                            status: 400,
-                        },
-                    )
-                }
-
-                break
-            }
-            case 'editMembershipSettings': {
-                const { errorMessage, root, sender } = commonChecks({
-                    rootKeyAddress: rootKeyAddress,
-                    sender: userOperation.sender,
-                })
-                if (errorMessage) {
-                    return new Response(toJson({ error: errorMessage }), { status: 400 })
-                }
-                if (!townId) {
-                    return new Response(
-                        toJson({ error: `Missing townId, cannot verify town exists` }),
-                        {
-                            status: 400,
-                        },
-                    )
-                }
-
-                if (env.SKIP_TOWNID_VERIFICATION !== 'true') {
-                    const verification = await verifyUseTown({
-                        rootKeyAddress: root,
-                        senderAddress: sender,
-                        townId: townId,
-                        env,
-                        transactionName: 'updateRole',
-                    })
-                    if (!verification.verified) {
-                        return new Response(
-                            toJson({ error: `Unauthorized: ${verification.error}` }),
-                            { status: 401 },
-                        )
-                    }
-
-                    if (!verification.verified) {
-                        return new Response(
-                            toJson({ error: `Unauthorized: ${verification.error}` }),
-                            { status: 401 },
-                        )
-                    }
-                }
-                break
-            }
-            default:
-                // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-                return new Response(toJson({ error: `Unknown functionHash ${functionHash}` }), {
-                    status: 404,
-                })
-        }
-    } catch (error) {
-        console.error(`KV returned error: ${isErrorType(error) ? error?.message : 'Unknown error'}`)
-        return new Response(toJson({ error: 'Internal Service Error' }), { status: 500 })
-    }
-    // if so, fetch paymasterAndData from Stackup api
-    const requestInit = createPmSponsorUserOperationRequest({
+    const requestInit = createStackupPMSponsorUserOperationRequest({
         userOperation,
-        // PAYMASTER_ADDRESS is actually the entrypoint address and we need to change the name of this env var
-        // https://linear.app/hnt-labs/issue/HNT-4569/change-paymaster-address-to-entrypoint-address-in-paymaster-proxy
-        paymasterAddress: env.PAYMASTER_ADDRESS,
-        type: { type: contextType },
+        entryPoint: env.PAYMASTER_ADDRESS,
+        // can be 'payg' or 'erc20token'
+        // see https://docs.stackup.sh/reference/pm-sponsoruseroperation
+        type: { type: 'payg' },
     })
-    console.log('stackup API request:', requestInit.body)
-    const durationStackupApiRequest = durationLogger(
-        'Stackup API Request - pm_sponsorUserOperation',
-    )
+    console.log('paymaster API request:', requestInit.body)
+    const durationStackupApiRequest = durationLogger('paymaster API Request')
     const responseFetched = await fetch(`${env.PAYMASTER_RPC_URL}`, requestInit)
     durationStackupApiRequest()
-    if (responseFetched.status !== 200) {
-        return new Response(toJson({ error: 'Invalid Paymaster Response' }), {
-            status: responseFetched.status,
-        })
-    }
-    const json = await responseFetched.json()
-    if (!isPmSponsorUserOperationResponse(json)) {
-        return new Response(toJson({ error: 'Invalid Paymaster Response' }), { status: 400 })
-    }
-    const statusCode = responseFetched.status
-    if (statusCode !== 200) {
-        return new Response(toJson({ error: 'Paymaster Error' }), {
-            status: statusCode,
-            statusText: `Error code ${json?.error?.code}, message ${json?.error?.message}`,
-        })
-    } else {
-        if (json.error) {
-            const spaceDapp = await createSpaceDappForNetwork(env)
-            const error = json.error
-            let spaceDappError: Error | undefined
-            if (spaceDapp) {
-                if (townId) {
-                    spaceDappError = spaceDapp.parseSpaceError(townId, json.error)
-                } else {
-                    spaceDappError = spaceDapp.parseSpaceFactoryError(json.error)
-                }
-            }
 
-            const spaceDappErrorMessage = `${spaceDappError?.message} ${spaceDappError?.name}`
-
-            console.error(`stackup API returned error: ${json.error.code}, ${json.error.message}`)
-            console.error(`Parsed error from SpaceDapp: ${spaceDappErrorMessage}`)
-
-            return new Response(
-                toJson({
-                    error: spaceDappError ? spaceDappErrorMessage : 'Internal Service Error',
-                }),
-                {
-                    status: 500,
-                    statusText: `Error code ${json.error.code}, message ${
-                        spaceDappError ? spaceDappErrorMessage : json.error.message
-                    }`,
-                },
-            )
-        }
-        console.log('stackup API response:', json.result)
-        return new Response(toJson(json.result), { status: 200 })
-    }
+    return handlePaymasterResponse({
+        paymasterResponse: responseFetched,
+        env,
+        townId,
+    })
     // proxy successful VerifyingPaymasterResult response to caller
 })
+
+router.post(
+    '/api/sponsor-userop/alchemy',
+    async (request: WorkerRequest, env: Env, { privyClient }) => {
+        if (env.REFUSE_ALL_OPS === 'true') {
+            return new Response(toJson({ error: 'User operations are not available' }), {
+                status: 503,
+            })
+        }
+        const content = await getContentAsJson(request)
+        if (!content || !isTownsUserOperation(content)) {
+            return new Response(toJson({ error: 'Bad Request' }), { status: 400 })
+        }
+        const { data } = content
+
+        const { townId, functionHash, rootKeyAddress, ...userOperation } = data
+
+        const verificationErrorResponse = await handleVerifications({
+            privyClient,
+            request,
+            data,
+            env,
+        })
+
+        if (verificationErrorResponse) {
+            return verificationErrorResponse
+        }
+
+        if (!env.ALCHEMY_GM_POLICY_ID) {
+            return new Response(toJson({ error: 'ALCHEMY_GM_POLICY_ID not set' }), { status: 405 })
+        }
+        if (!env.ALCHEMY_PAYMASTER_RPC_URL) {
+            return new Response(toJson({ error: 'ALCHEMY_PAYMASTER_RPC_URL not set' }), {
+                status: 405,
+            })
+        }
+
+        const requestInit = createAlchemyRequestGasAndPaymasterDataRequest({
+            policyId: env.ALCHEMY_GM_POLICY_ID,
+            userOperation,
+            entryPoint: env.PAYMASTER_ADDRESS,
+        })
+        console.log('paymaster API request:', requestInit.body)
+        const durationStackupApiRequest = durationLogger('paymaster API Request')
+        const responseFetched = await fetch(`${env.ALCHEMY_PAYMASTER_RPC_URL}`, requestInit)
+        durationStackupApiRequest()
+
+        return handlePaymasterResponse({
+            paymasterResponse: responseFetched,
+            env,
+            townId,
+        })
+        // proxy successful VerifyingPaymasterResult response to caller
+    },
+)
 
 router.post('/admin/api/add-override', async (request: WorkerRequest, env: Env) => {
     // authneticate and authorize caller here (HNT Labs)
