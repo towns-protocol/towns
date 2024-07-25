@@ -48,10 +48,4 @@ export function createLogger(label: string): Logger {
     return logger
 }
 
-export function createSubLogger(parentLogger: Logger, subLabel: string): Logger {
-    return parentLogger.child({
-        defaultMeta: { label: `${parentLogger.defaultMeta.label}-${subLabel}` },
-    })
-}
-
 export const notificationServiceLogger = createLogger('notificationService')
