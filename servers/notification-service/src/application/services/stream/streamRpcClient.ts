@@ -179,7 +179,7 @@ const loggingInterceptor: () => Interceptor = () => {
                         for (const p of syncPos) {
                             const s = p['streamId']
                             if (s !== undefined) {
-                                args.push(s)
+                                args.push(streamIdAsString(s))
                             }
                         }
                         callsLogger.info(name, 'num=', args.length, id, args)
@@ -208,13 +208,16 @@ const loggingInterceptor: () => Interceptor = () => {
         try {
             for await (const m of stream) {
                 try {
-                    const streamId: string | undefined = m.stream?.nextSyncCookie?.streamId
+                    const streamId: Uint8Array | undefined = m.stream?.nextSyncCookie?.streamId
                     if (streamId !== undefined) {
-                        callsLogger.info(name, 'RECV', streamId, id)
+                        callsLogger.info(name, 'RECV', streamIdAsString(streamId), id)
                     } else {
                         callsLogger.info(name, 'RECV', id)
                     }
-                    updateHistogram(`${name} RECV`, streamId)
+                    updateHistogram(
+                        `${name} RECV`,
+                        streamId ? streamIdAsString(streamId) : 'undefined',
+                    )
                     protoLogger.info(name, 'STREAMING RESPONSE', id, m)
                     yield m
                 } catch (err) {
