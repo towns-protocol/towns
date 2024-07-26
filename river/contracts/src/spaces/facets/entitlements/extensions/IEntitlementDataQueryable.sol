@@ -24,4 +24,9 @@ interface IEntitlementDataQueryable is IEntitlementDataQueryableBase {
     bytes32 channelId,
     string calldata permission
   ) external view returns (EntitlementData[] memory);
+
+  function getCrossChainEntitlementData(
+    bytes32 transactionId,
+    uint256 roleId
+  ) external view returns (EntitlementData memory);
 }

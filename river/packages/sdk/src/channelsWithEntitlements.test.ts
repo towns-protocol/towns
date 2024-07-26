@@ -22,7 +22,7 @@ import { makeUserStreamId } from './id'
 import { dlog } from '@river-build/dlog'
 import {
     NoopRuleData,
-    IRuleEntitlement,
+    IRuleEntitlementBase,
     Permission,
     getContractAddress,
     publicMint,
@@ -43,7 +43,7 @@ const log = dlog('csb:test:channelsWithEntitlements')
 // pass in users as 'alice', 'bob', 'carol' - b/c their wallets are created here
 async function setupChannelWithCustomRole(
     userNames: string[],
-    ruleData: IRuleEntitlement.RuleDataStruct,
+    ruleData: IRuleEntitlementBase.RuleDataStruct,
     permissions: Permission[] = [Permission.Read],
 ) {
     const {

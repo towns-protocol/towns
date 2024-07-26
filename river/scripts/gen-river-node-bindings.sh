@@ -57,17 +57,17 @@ generate_go river river IRiverConfig river_config_v1
 # Full River contracts for deployment from tests
 generate_go river/deploy deploy MockRiverRegistry mock_river_registry
 
-# The follwing structs get included twice in the generated code, this utility removes them from a file
+# The following structs get included twice in the generated code, this utility removes them from a file
 #
-#		"IRuleEntitlementCheckOperation":   true,
-#		"IRuleEntitlementLogicalOperation": true,
-#		"IRuleEntitlementOperation":        true,
-#		"IRuleEntitlementRuleData":         true,
+#		"IRuleEntitlementBaseCheckOperation":   true,
+#		"IRuleEntitlementBaseLogicalOperation": true,
+#		"IRuleEntitlementBaseOperation":        true,
+#		"IRuleEntitlementBaseRuleData":         true,
 
 mkdir -p bin
 go build -o bin/gen-bindings-remove-struct scripts/gen-bindings-remove-struct.go
-./bin/gen-bindings-remove-struct core/contracts/base/architect.go IRuleEntitlementCheckOperation,IRuleEntitlementLogicalOperation,IRuleEntitlementOperation,IRuleEntitlementRuleData
-./bin/gen-bindings-remove-struct core/contracts/base/entitlements_manager.go IRuleEntitlementCheckOperation,IRuleEntitlementLogicalOperation,IRuleEntitlementOperation,IRuleEntitlementRuleData
-./bin/gen-bindings-remove-struct core/contracts/base/rule_entitlement.go IRuleEntitlementCheckOperation,IRuleEntitlementLogicalOperation,IRuleEntitlementOperation,IRuleEntitlementRuleData
+./bin/gen-bindings-remove-struct core/contracts/base/architect.go IRuleEntitlementBaseCheckOperation,IRuleEntitlementBaseLogicalOperation,IRuleEntitlementBaseOperation,IRuleEntitlementBaseRuleData
+./bin/gen-bindings-remove-struct core/contracts/base/entitlements_manager.go IRuleEntitlementBaseCheckOperation,IRuleEntitlementBaseLogicalOperation,IRuleEntitlementBaseOperation,IRuleEntitlementBaseRuleData
+./bin/gen-bindings-remove-struct core/contracts/base/rule_entitlement.go IRuleEntitlementBaseCheckOperation,IRuleEntitlementBaseLogicalOperation,IRuleEntitlementBaseOperation,IRuleEntitlementBaseRuleData
 ./bin/gen-bindings-remove-struct core/contracts/base/deploy/mock_wallet_link.go IWalletLinkBaseLinkedWallet
 

@@ -5,7 +5,7 @@ import {
 } from './v3/ISpaceArchitectShim'
 import { IRolesBase as IRolesBaseV3 } from './v3/IRolesShim'
 import { RuleEntitlementShim } from './v3/RuleEntitlementShim'
-import { IRuleEntitlement } from './v3'
+import { IRuleEntitlementBase } from './v3'
 import { IPricingModulesBase } from './v3/IPricingShim'
 
 export const Permission = {
@@ -56,7 +56,7 @@ export interface RoleDetails {
     name: string
     permissions: Permission[]
     users: string[]
-    ruleData: IRuleEntitlement.RuleDataStruct
+    ruleData: IRuleEntitlementBase.RuleDataStruct
     channels: ChannelMetadata[]
 }
 
@@ -90,7 +90,7 @@ export interface RoleEntitlements {
     name: string
     permissions: Permission[]
     users: string[]
-    ruleData: IRuleEntitlement.RuleDataStruct
+    ruleData: IRuleEntitlementBase.RuleDataStruct
 }
 
 /*
@@ -98,7 +98,7 @@ export interface RoleEntitlements {
 */
 export interface EntitlementDetails {
     users: string[]
-    ruleData: IRuleEntitlement.RuleDataStruct
+    ruleData: IRuleEntitlementBase.RuleDataStruct
 }
 
 export interface BasicRoleInfo {

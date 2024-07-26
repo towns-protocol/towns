@@ -517,7 +517,7 @@ func (x *xchain) getRuleData(
 	roleId *big.Int,
 	contractAddress common.Address,
 	client crypto.BlockchainClient,
-) (*base.IRuleEntitlementRuleData, error) {
+) (*base.IRuleEntitlementBaseRuleData, error) {
 	log := x.Log(ctx).With("function", "getRuleData", "req.txid", transactionId)
 	gater, err := base.NewIEntitlementGated(contractAddress, client)
 	if err != nil {

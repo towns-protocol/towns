@@ -307,17 +307,17 @@
                         "type": "address[]"
                       },
                       {
-                        "internalType": "struct IRuleEntitlement.RuleData",
+                        "internalType": "struct IRuleEntitlementBase.RuleData",
                         "name": "ruleData",
                         "type": "tuple",
                         "components": [
                           {
-                            "internalType": "struct IRuleEntitlement.Operation[]",
+                            "internalType": "struct IRuleEntitlementBase.Operation[]",
                             "name": "operations",
                             "type": "tuple[]",
                             "components": [
                               {
-                                "internalType": "enum IRuleEntitlement.CombinedOperationType",
+                                "internalType": "enum IRuleEntitlementBase.CombinedOperationType",
                                 "name": "opType",
                                 "type": "uint8"
                               },
@@ -329,12 +329,12 @@
                             ]
                           },
                           {
-                            "internalType": "struct IRuleEntitlement.CheckOperation[]",
+                            "internalType": "struct IRuleEntitlementBase.CheckOperation[]",
                             "name": "checkOperations",
                             "type": "tuple[]",
                             "components": [
                               {
-                                "internalType": "enum IRuleEntitlement.CheckOperationType",
+                                "internalType": "enum IRuleEntitlementBase.CheckOperationType",
                                 "name": "opType",
                                 "type": "uint8"
                               },
@@ -356,12 +356,12 @@
                             ]
                           },
                           {
-                            "internalType": "struct IRuleEntitlement.LogicalOperation[]",
+                            "internalType": "struct IRuleEntitlementBase.LogicalOperation[]",
                             "name": "logicalOperations",
                             "type": "tuple[]",
                             "components": [
                               {
-                                "internalType": "enum IRuleEntitlement.LogicalOperationType",
+                                "internalType": "enum IRuleEntitlementBase.LogicalOperationType",
                                 "name": "logOpType",
                                 "type": "uint8"
                               },
@@ -874,10 +874,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol": {
-      "keccak256": "0x28650d058077713dfc28d5c613998d9f1e895a6f5f6b0d93467d25455fc3ea1d",
+      "keccak256": "0x2ad8c7e10beb26f80dde5445b9aa8fcb2fcbcb149c38d94e4434982924b6eb27",
       "urls": [
-        "bzz-raw://e2446b7958f8b5f2713860e2826acf1b123c6b24719f844c7811d1e3f5a87c86",
-        "dweb:/ipfs/Qmesso9ftmVUCHi6w2gkJs9tEjGG5ZZgqhAenkyTDgFPC2"
+        "bzz-raw://de00bf4a319a6c4c8a227039e9ac39f01ddc21f5c61186d7067614d686d010fd",
+        "dweb:/ipfs/QmWseV2PXggxynEEDXq8HkLQstC9e8BFYVQFhrfxVaVH6j"
       ],
       "license": "MIT"
     },
@@ -890,10 +890,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/Permissions.sol": {
-      "keccak256": "0xaeec9c70d231be9debb15660bf6939746532d0012c80d5518e8207dd33653de2",
+      "keccak256": "0x08f1d02cacf8b8adcb38219623f999d15908185eefca4e3d0ea2c3486091d08c",
       "urls": [
-        "bzz-raw://bab7c5dd8f55f03f48d3908b8d6732b3e2d93f36312a0c3408ff10be258c165a",
-        "dweb:/ipfs/QmevmAc6tzP3kFoH84cRtipSq4ryqbrP3H4VB8mRZgnRxn"
+        "bzz-raw://b6b021cd9adfed316fc1f43b99e5430d75469ef13d252fa5eb25057155908b77",
+        "dweb:/ipfs/QmYAhL8hWcbtHARsAY9nauyRB4BERUi9s7SSRYkb1e1kCh"
       ],
       "license": "MIT"
     },

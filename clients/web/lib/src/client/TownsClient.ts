@@ -21,7 +21,7 @@ import {
     BASE_MAINNET,
     BASE_SEPOLIA,
     CreateSpaceParams,
-    IRuleEntitlement,
+    IRuleEntitlementBase,
     UpdateChannelParams,
 } from '@river-build/web3'
 import { ChannelMessage_Post_Mention, FullyReadMarker } from '@river-build/proto'
@@ -944,7 +944,7 @@ export class TownsClient
         roleName: string,
         permissions: Permission[],
         users: string[],
-        ruleData: IRuleEntitlement.RuleDataStruct,
+        ruleData: IRuleEntitlementBase.RuleDataStruct,
         signer: ethers.Signer | undefined,
     ): Promise<RoleTransactionContext> {
         if (!signer) {
@@ -1179,7 +1179,7 @@ export class TownsClient
         roleName: string,
         permissions: Permission[],
         users: string[],
-        ruleData: IRuleEntitlement.RuleDataStruct,
+        ruleData: IRuleEntitlementBase.RuleDataStruct,
         signer: ethers.Signer | undefined,
     ): Promise<TransactionContext<void>> {
         if (!signer) {

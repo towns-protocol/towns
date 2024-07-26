@@ -37,7 +37,7 @@ type IEntitlementDataQueryableBaseEntitlementData struct {
 
 // EntitlementDataQueryableMetaData contains all meta data concerning the EntitlementDataQueryable contract.
 var EntitlementDataQueryableMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"getChannelEntitlementDataByPermission\",\"inputs\":[{\"name\":\"channelId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"permission\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIEntitlementDataQueryableBase.EntitlementData[]\",\"components\":[{\"name\":\"entitlementType\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"entitlementData\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getEntitlementDataByPermission\",\"inputs\":[{\"name\":\"permission\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIEntitlementDataQueryableBase.EntitlementData[]\",\"components\":[{\"name\":\"entitlementType\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"entitlementData\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}],\"stateMutability\":\"view\"}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"getChannelEntitlementDataByPermission\",\"inputs\":[{\"name\":\"channelId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"permission\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIEntitlementDataQueryableBase.EntitlementData[]\",\"components\":[{\"name\":\"entitlementType\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"entitlementData\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getCrossChainEntitlementData\",\"inputs\":[{\"name\":\"transactionId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"roleId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIEntitlementDataQueryableBase.EntitlementData\",\"components\":[{\"name\":\"entitlementType\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"entitlementData\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getEntitlementDataByPermission\",\"inputs\":[{\"name\":\"permission\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIEntitlementDataQueryableBase.EntitlementData[]\",\"components\":[{\"name\":\"entitlementType\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"entitlementData\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}],\"stateMutability\":\"view\"}]",
 }
 
 // EntitlementDataQueryableABI is the input ABI used to generate the binding from.
@@ -215,6 +215,37 @@ func (_EntitlementDataQueryable *EntitlementDataQueryableSession) GetChannelEnti
 // Solidity: function getChannelEntitlementDataByPermission(bytes32 channelId, string permission) view returns((string,bytes)[])
 func (_EntitlementDataQueryable *EntitlementDataQueryableCallerSession) GetChannelEntitlementDataByPermission(channelId [32]byte, permission string) ([]IEntitlementDataQueryableBaseEntitlementData, error) {
 	return _EntitlementDataQueryable.Contract.GetChannelEntitlementDataByPermission(&_EntitlementDataQueryable.CallOpts, channelId, permission)
+}
+
+// GetCrossChainEntitlementData is a free data retrieval call binding the contract method 0x0fe44a21.
+//
+// Solidity: function getCrossChainEntitlementData(bytes32 transactionId, uint256 roleId) view returns((string,bytes))
+func (_EntitlementDataQueryable *EntitlementDataQueryableCaller) GetCrossChainEntitlementData(opts *bind.CallOpts, transactionId [32]byte, roleId *big.Int) (IEntitlementDataQueryableBaseEntitlementData, error) {
+	var out []interface{}
+	err := _EntitlementDataQueryable.contract.Call(opts, &out, "getCrossChainEntitlementData", transactionId, roleId)
+
+	if err != nil {
+		return *new(IEntitlementDataQueryableBaseEntitlementData), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(IEntitlementDataQueryableBaseEntitlementData)).(*IEntitlementDataQueryableBaseEntitlementData)
+
+	return out0, err
+
+}
+
+// GetCrossChainEntitlementData is a free data retrieval call binding the contract method 0x0fe44a21.
+//
+// Solidity: function getCrossChainEntitlementData(bytes32 transactionId, uint256 roleId) view returns((string,bytes))
+func (_EntitlementDataQueryable *EntitlementDataQueryableSession) GetCrossChainEntitlementData(transactionId [32]byte, roleId *big.Int) (IEntitlementDataQueryableBaseEntitlementData, error) {
+	return _EntitlementDataQueryable.Contract.GetCrossChainEntitlementData(&_EntitlementDataQueryable.CallOpts, transactionId, roleId)
+}
+
+// GetCrossChainEntitlementData is a free data retrieval call binding the contract method 0x0fe44a21.
+//
+// Solidity: function getCrossChainEntitlementData(bytes32 transactionId, uint256 roleId) view returns((string,bytes))
+func (_EntitlementDataQueryable *EntitlementDataQueryableCallerSession) GetCrossChainEntitlementData(transactionId [32]byte, roleId *big.Int) (IEntitlementDataQueryableBaseEntitlementData, error) {
+	return _EntitlementDataQueryable.Contract.GetCrossChainEntitlementData(&_EntitlementDataQueryable.CallOpts, transactionId, roleId)
 }
 
 // GetEntitlementDataByPermission is a free data retrieval call binding the contract method 0xdb0a69a8.

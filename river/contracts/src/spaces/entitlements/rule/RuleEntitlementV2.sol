@@ -1,0 +1,254 @@
+// SPDX-License-Identifier: MIT
+
+/**
+ * @title EntitlementRule
+ * @dev This contract manages entitlement rules based on blockchain operations.
+ * The contract maintains a tree-like data structure to combine various types of operations.
+ * The tree is implemented as a dynamic array of 'Operation' structs, and is built in post-order fashion.
+ *
+ * Post-order Tree Structure:
+ * In a post-order binary tree, children nodes must be added before their respective parent nodes.
+ * The 'LogicalOperation' nodes refer to their child nodes via indices in the 'operations' array.
+ * As new LogicalOperation nodes are added, they can only reference existing nodes in the 'operations' array,
+ * ensuring a valid post-order tree structure.
+ */
+pragma solidity ^0.8.0;
+
+// contracts
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
+import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+
+// libraries
+
+// interfaces
+import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
+import {IRuleEntitlementV2} from "./IRuleEntitlement.sol";
+
+contract RuleEntitlementV2 is
+  Initializable,
+  ERC165Upgradeable,
+  ContextUpgradeable,
+  UUPSUpgradeable,
+  IRuleEntitlementV2
+{
+  struct Entitlement {
+    address grantedBy;
+    uint256 grantedTime;
+    RuleData data;
+  }
+
+  mapping(uint256 => Entitlement) internal entitlementsByRoleId;
+  address public SPACE_ADDRESS;
+
+  // keccak256(abi.encode(uint256(keccak256("spaces.entitlements.rule.storage")) - 1)) & ~bytes32(uint256(0xff))
+  bytes32 private constant STORAGE_SLOT =
+    0xa7ba26993e5aed586ba0b4d511980a49b23ea33e13d5f0920b7e42ae1a27cc00;
+
+  struct EntitlementV2 {
+    address grantedBy;
+    uint256 grantedTime;
+    bytes data;
+  }
+
+  // @custom:storage-location erc7201:spaces.entitlements.rule.storage
+  struct Layout {
+    mapping(uint256 => EntitlementV2) entitlementsByRoleIdV2;
+  }
+
+  string public constant name = "Rule Entitlement V2";
+  string public constant description = "Entitlement for crosschain rules";
+  string public constant moduleType = "RuleEntitlementV2";
+  bool public constant isCrosschain = true;
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
+  }
+
+  function initialize(address _space) public initializer {
+    __UUPSUpgradeable_init();
+    __ERC165_init();
+    __Context_init();
+    SPACE_ADDRESS = _space;
+  }
+
+  modifier onlySpace() {
+    if (_msgSender() != SPACE_ADDRESS) {
+      revert Entitlement__NotAllowed();
+    }
+    _;
+  }
+
+  // =============================================================
+  //                           Admin
+  // =============================================================
+
+  /// @notice allow the contract to be upgraded while retaining state
+  /// @param newImplementation address of the new implementation
+  function _authorizeUpgrade(
+    address newImplementation
+  ) internal override onlySpace {}
+
+  /// @notice get the storage slot for the contract
+  /// @return ds storage slot
+  function layout() internal pure returns (Layout storage ds) {
+    bytes32 slot = STORAGE_SLOT;
+    assembly {
+      ds.slot := slot
+    }
+  }
+
+  // =============================================================
+  //                           External
+  // =============================================================
+
+  function supportsInterface(
+    bytes4 interfaceId
+  ) public view override returns (bool) {
+    return
+      interfaceId == type(IEntitlement).interfaceId ||
+      interfaceId == type(IRuleEntitlementV2).interfaceId ||
+      super.supportsInterface(interfaceId);
+  }
+
+  // @inheritdoc IEntitlement
+  function isEntitled(
+    bytes32,
+    address[] memory,
+    bytes32
+  ) external pure returns (bool) {
+    return false;
+  }
+
+  // @inheritdoc IEntitlement
+  function setEntitlement(
+    uint256 roleId,
+    bytes calldata entitlementData
+  ) external onlySpace {
+    _removeRuleDataV1(roleId);
+
+    // Decode the data
+    RuleDataV2 memory data = abi.decode(entitlementData, (RuleDataV2));
+
+    if (entitlementData.length == 0 || data.operations.length == 0) {
+      return;
+    }
+
+    // Cache sender and currentTime
+    address sender = _msgSender();
+    uint256 currentTime = block.timestamp;
+
+    // Cache lengths of operations arrays to reduce state access cost
+    uint256 operationsLength = data.operations.length;
+    uint256 checkOperationsLength = data.checkOperations.length;
+    uint256 logicalOperationsLength = data.logicalOperations.length;
+
+    // Step 1: Validate Operation against CheckOperation and LogicalOperation
+    for (uint256 i = 0; i < operationsLength; i++) {
+      CombinedOperationType opType = data.operations[i].opType; // cache the operation type
+      uint8 index = data.operations[i].index; // cache the operation index
+
+      if (opType == CombinedOperationType.CHECK) {
+        if (index >= checkOperationsLength) {
+          revert InvalidCheckOperationIndex(
+            index,
+            uint8(checkOperationsLength)
+          );
+        }
+      } else if (opType == CombinedOperationType.LOGICAL) {
+        // Use custom error in revert statement
+        if (index >= logicalOperationsLength) {
+          revert InvalidLogicalOperationIndex(
+            index,
+            uint8(logicalOperationsLength)
+          );
+        }
+
+        // Verify the logical operations make a DAG
+        LogicalOperation memory logicalOp = data.logicalOperations[index];
+        uint8 leftOperationIndex = logicalOp.leftOperationIndex;
+        uint8 rightOperationIndex = logicalOp.rightOperationIndex;
+
+        // Use custom errors in revert statements
+        if (leftOperationIndex >= i) {
+          revert InvalidLeftOperationIndex(leftOperationIndex, uint8(i));
+        }
+
+        if (rightOperationIndex >= i) {
+          revert InvalidRightOperationIndex(rightOperationIndex, uint8(i));
+        }
+      }
+    }
+
+    EntitlementV2 storage entitlement = layout().entitlementsByRoleIdV2[roleId];
+    entitlement.grantedBy = sender;
+    entitlement.grantedTime = currentTime;
+    entitlement.data = entitlementData;
+  }
+
+  // @inheritdoc IEntitlement
+  function removeEntitlement(uint256 roleId) external onlySpace {
+    Layout storage ds = layout();
+
+    EntitlementV2 memory entitlement = ds.entitlementsByRoleIdV2[roleId];
+
+    if (entitlement.grantedBy == address(0)) {
+      revert Entitlement__InvalidValue();
+    }
+
+    delete ds.entitlementsByRoleIdV2[roleId].grantedBy;
+    delete ds.entitlementsByRoleIdV2[roleId].grantedTime;
+    delete ds.entitlementsByRoleIdV2[roleId].data;
+    delete ds.entitlementsByRoleIdV2[roleId];
+  }
+
+  // @inheritdoc IEntitlement
+  function getEntitlementDataByRoleId(
+    uint256 roleId
+  ) external view returns (bytes memory) {
+    EntitlementV2 storage entitlement = layout().entitlementsByRoleIdV2[roleId];
+    return entitlement.data;
+  }
+
+  function encodeRuleData(
+    RuleDataV2 calldata data
+  ) external pure returns (bytes memory) {
+    return abi.encode(data);
+  }
+
+  function getRuleData(
+    uint256 roleId
+  ) external view returns (RuleData memory data) {
+    return entitlementsByRoleId[roleId].data;
+  }
+
+  function getRuleDataV2(
+    uint256 roleId
+  ) external view returns (RuleDataV2 memory data) {
+    bytes memory ruleData = layout().entitlementsByRoleIdV2[roleId].data;
+
+    if (ruleData.length == 0) {
+      return
+        RuleDataV2(
+          new Operation[](0),
+          new CheckOperationV2[](0),
+          new LogicalOperation[](0)
+        );
+    }
+
+    return abi.decode(ruleData, (RuleDataV2));
+  }
+
+  // =============================================================
+  //                           Internal
+  // =============================================================
+  function _removeRuleDataV1(uint256 roleId) internal {
+    if (entitlementsByRoleId[roleId].grantedBy != address(0)) {
+      delete entitlementsByRoleId[roleId];
+      delete entitlementsByRoleId[roleId].grantedBy;
+      delete entitlementsByRoleId[roleId].grantedTime;
+    }
+  }
+}

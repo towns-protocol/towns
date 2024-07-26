@@ -300,8 +300,7 @@ jobs:
               with:
                   name: 'river-node-${{ github.job }}'
                   path: |
-                      ./core/node/run_files/
-                      ./core/xchain/run_files/
+                      ./core/run_files/
                       !./core/**/bin/**
 
     Multinode:
@@ -434,8 +433,7 @@ jobs:
               with:
                   name: 'river-node-${{ github.job }}'
                   path: |
-                      ./core/node/run_files/
-                      ./core/xchain/run_files/
+                      ./core/run_files/
                       !./core/**/bin/**
 
     Client_Entitlements:
@@ -574,8 +572,7 @@ jobs:
               with:
                   name: 'river-node-${{ github.job }}'
                   path: |
-                      ./core/node/run_files/
-                      ./core/xchain/run_files/
+                      ./core/run_files/
                       !./core/**/bin/**
 
     Multinode_Ent:
@@ -711,8 +708,7 @@ jobs:
               with:
                   name: 'river-node-${{ github.job }}'
                   path: |
-                      ./core/node/run_files/
-                      ./core/xchain/run_files/
+                      ./core/run_files/
                       !./core/**/bin/**
 
     Go_Tests:
@@ -898,5 +894,5 @@ jobs:
                   SLACK_USERNAME: 'CI'
                   SLACK_ICON_EMOJI: ':boom:'
                   SLACK_COLOR: '#FF0000'
-                  SLACK_MESSAGE: 'CI Failure on ${{ github.repository }} ${{ vars.GOALIE_SLACK_GROUP_ID}}'
+                  SLACK_MESSAGE: 'CI Failure on ${{ github.repository }} ${{ vars.RIVER_CI_ALERTS_SLACK_GROUP_ID }}'
                   SLACK_LINK_NAMES: true

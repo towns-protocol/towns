@@ -1,5 +1,5 @@
 import type { AbiParameter, AbiFunction } from 'abitype'
-import { IRuleEntitlement, IRuleEntitlementAbi } from './v3/IRuleEntitlementShim'
+import { IRuleEntitlementBase, IRuleEntitlementAbi } from './v3/IRuleEntitlementShim'
 
 import {
     createPublicClient,
@@ -181,7 +181,7 @@ const encodeRuleDataInputs: readonly AbiParameter[] | undefined = (
         | undefined
 )?.inputs
 
-export function encodeEntitlementData(ruleData: IRuleEntitlement.RuleDataStruct): Address {
+export function encodeEntitlementData(ruleData: IRuleEntitlementBase.RuleDataStruct): Address {
     if (!encodeRuleDataInputs) {
         throw new Error('setRuleDataInputs not found')
     }
@@ -194,16 +194,18 @@ const getRuleDataOutputs: readonly AbiParameter[] | undefined = (
         | undefined
 )?.outputs
 
-export function decodeEntitlementData(entitlementData: Address): IRuleEntitlement.RuleDataStruct[] {
+export function decodeEntitlementData(
+    entitlementData: Address,
+): IRuleEntitlementBase.RuleDataStruct[] {
     if (!getRuleDataOutputs) {
         throw new Error('getRuleDataOutputs not found')
     }
     return decodeAbiParameters(
         getRuleDataOutputs,
         entitlementData,
-    ) as IRuleEntitlement.RuleDataStruct[]
+    ) as IRuleEntitlementBase.RuleDataStruct[]
 }
-export function ruleDataToOperations(data: IRuleEntitlement.RuleDataStruct[]): Operation[] {
+export function ruleDataToOperations(data: IRuleEntitlementBase.RuleDataStruct[]): Operation[] {
     if (data.length === 0) {
         return []
     }
@@ -281,7 +283,7 @@ export function postOrderTraversal(operation: Operation, data: DeepWriteable<Rul
     }
 }
 
-export function treeToRuleData(root: Operation): IRuleEntitlement.RuleDataStruct {
+export function treeToRuleData(root: Operation): IRuleEntitlementBase.RuleDataStruct {
     const data = {
         operations: [],
         checkOperations: [],
@@ -565,7 +567,7 @@ export function createOperationsTree(
     checkOp: (Omit<ContractCheckOperation, 'threshold'> & {
         threshold?: bigint
     })[],
-): IRuleEntitlement.RuleDataStruct {
+): IRuleEntitlementBase.RuleDataStruct {
     if (checkOp.length === 0) {
         return {
             operations: [NoopOperation],
@@ -603,7 +605,7 @@ export function createOperationsTree(
 }
 
 export function createContractCheckOperationFromTree(
-    entitlementData: IRuleEntitlement.RuleDataStruct,
+    entitlementData: IRuleEntitlementBase.RuleDataStruct,
 ): ContractCheckOperation[] {
     const operations = ruleDataToOperations([entitlementData])
     const checkOpSubsets: ContractCheckOperation[] = []

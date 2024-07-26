@@ -360,20 +360,19 @@ abstract contract RolesBase is IRolesBase {
   function _getEntitlementsByRole(
     uint256 roleId
   ) internal view returns (IEntitlement[] memory) {
+    EnumerableSet.AddressSet storage entitlements = RolesStorage
+      .layout()
+      .roleById[roleId]
+      .entitlements;
+
+    uint256 entitlementLen = entitlements.length();
+
     IEntitlement[] memory entitlementsArray = new IEntitlement[](
-      RolesStorage.layout().roleById[roleId].entitlements.length()
+      entitlementLen
     );
 
-    for (
-      uint256 i = 0;
-      i < RolesStorage.layout().roleById[roleId].entitlements.length();
-      i++
-    ) {
-      address entitlementAddress = RolesStorage
-        .layout()
-        .roleById[roleId]
-        .entitlements
-        .at(i);
+    for (uint256 i = 0; i < entitlementLen; i++) {
+      address entitlementAddress = entitlements.at(i);
       entitlementsArray[i] = IEntitlement(entitlementAddress);
     }
 
@@ -448,11 +447,13 @@ abstract contract RolesBase is IRolesBase {
       // if permission is empty, revert
       _checkEmptyString(permissions[i]);
 
-      if (!rs.roleById[roleId].permissions.contains(permissions[i])) {
+      RolesStorage.Role storage role = rs.roleById[roleId];
+
+      if (!role.permissions.contains(permissions[i])) {
         revert Roles__PermissionDoesNotExist();
       }
 
-      rs.roleById[roleId].permissions.remove(permissions[i]);
+      role.permissions.remove(permissions[i]);
 
       unchecked {
         i++;
@@ -518,22 +519,22 @@ abstract contract RolesBase is IRolesBase {
     uint256 roleId,
     address entitlement
   ) internal {
-    RolesStorage.Layout storage rs = RolesStorage.layout();
+    RolesStorage.Role storage role = RolesStorage.layout().roleById[roleId];
 
-    if (!rs.roleById[roleId].entitlements.contains(entitlement)) {
+    if (!role.entitlements.contains(entitlement)) {
       revert Roles__EntitlementDoesNotExist();
     }
 
-    rs.roleById[roleId].entitlements.remove(entitlement);
+    role.entitlements.remove(entitlement);
   }
 
   function _addEntitlementToRole(uint256 roleId, address entitlement) internal {
-    RolesStorage.Layout storage rs = RolesStorage.layout();
+    RolesStorage.Role storage role = RolesStorage.layout().roleById[roleId];
 
-    if (rs.roleById[roleId].entitlements.contains(entitlement)) {
+    if (role.entitlements.contains(entitlement)) {
       revert Roles__EntitlementAlreadyExists();
     }
 
-    rs.roleById[roleId].entitlements.add(entitlement);
+    role.entitlements.add(entitlement);
   }
 }

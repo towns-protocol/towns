@@ -299,17 +299,17 @@ export default [
       {
         "name": "",
         "type": "tuple",
-        "internalType": "struct IRuleEntitlement.RuleData",
+        "internalType": "struct IRuleEntitlementBase.RuleData",
         "components": [
           {
             "name": "operations",
             "type": "tuple[]",
-            "internalType": "struct IRuleEntitlement.Operation[]",
+            "internalType": "struct IRuleEntitlementBase.Operation[]",
             "components": [
               {
                 "name": "opType",
                 "type": "uint8",
-                "internalType": "enum IRuleEntitlement.CombinedOperationType"
+                "internalType": "enum IRuleEntitlementBase.CombinedOperationType"
               },
               {
                 "name": "index",
@@ -321,12 +321,12 @@ export default [
           {
             "name": "checkOperations",
             "type": "tuple[]",
-            "internalType": "struct IRuleEntitlement.CheckOperation[]",
+            "internalType": "struct IRuleEntitlementBase.CheckOperation[]",
             "components": [
               {
                 "name": "opType",
                 "type": "uint8",
-                "internalType": "enum IRuleEntitlement.CheckOperationType"
+                "internalType": "enum IRuleEntitlementBase.CheckOperationType"
               },
               {
                 "name": "chainId",
@@ -348,12 +348,12 @@ export default [
           {
             "name": "logicalOperations",
             "type": "tuple[]",
-            "internalType": "struct IRuleEntitlement.LogicalOperation[]",
+            "internalType": "struct IRuleEntitlementBase.LogicalOperation[]",
             "components": [
               {
                 "name": "logOpType",
                 "type": "uint8",
-                "internalType": "enum IRuleEntitlement.LogicalOperationType"
+                "internalType": "enum IRuleEntitlementBase.LogicalOperationType"
               },
               {
                 "name": "leftOperationIndex",

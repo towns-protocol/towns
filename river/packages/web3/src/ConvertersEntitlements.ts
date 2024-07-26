@@ -3,7 +3,7 @@ import { ethers } from 'ethers'
 import { Address, EntitlementStruct } from './ContractTypes'
 import { Hex, decodeAbiParameters, parseAbiParameters } from 'viem'
 import { encodeEntitlementData } from './entitlement'
-import { IRuleEntitlement } from './v3'
+import { IRuleEntitlementBase } from './v3'
 
 const UserAddressesEncoding = 'address[]'
 
@@ -50,7 +50,7 @@ export function createUserEntitlementStruct(
 
 export function createRuleEntitlementStruct(
     moduleAddress: `0x${string}`,
-    ruleData: IRuleEntitlement.RuleDataStruct,
+    ruleData: IRuleEntitlementBase.RuleDataStruct,
 ): EntitlementStruct {
     const encoded = encodeEntitlementData(ruleData)
     return {

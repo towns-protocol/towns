@@ -10,7 +10,7 @@ import { TSigner } from '../types/web3-types'
 import { blockchainKeys } from '../query/query-keys'
 import { useQueryClient } from '../query/queryClient'
 import { useTownsClient } from './use-towns-client'
-import { Permission, IRuleEntitlement } from '@river-build/web3'
+import { Permission, IRuleEntitlementBase } from '@river-build/web3'
 import { getTransactionHashOrUserOpHash } from '@towns/userops'
 
 /**
@@ -41,7 +41,7 @@ export function useCreateRoleTransaction() {
             roleName: string,
             permissions: Permission[],
             users: string[],
-            ruleData: IRuleEntitlement.RuleDataStruct,
+            ruleData: IRuleEntitlementBase.RuleDataStruct,
             signer: TSigner,
         ): Promise<RoleTransactionContext | undefined> {
             if (isTransacting.current) {

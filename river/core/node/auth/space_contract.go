@@ -11,7 +11,7 @@ import (
 
 type Entitlement struct {
 	entitlementType string
-	ruleEntitlement *base.IRuleEntitlementRuleData
+	ruleEntitlement *base.IRuleEntitlementBaseRuleData
 	userEntitlement []common.Address
 }
 

@@ -5,15 +5,17 @@
 /* eslint-disable jest/no-commented-out-tests */
 import { makeEvent, unpackStream } from './sign'
 import { SyncState, SyncedStreams, stateConstraints } from './syncedStreams'
-import { makeDonePromise, makeRandomUserContext, makeTestRpcClient } from './util.test'
-import { makeUserStreamId, streamIdToBytes, userIdFromAddress } from './id'
-import { make_UserPayload_Inception } from './types'
+import { makeDonePromise, makeRandomUserContext, makeTestRpcClient, waitFor } from './util.test'
+import { makeUserInboxStreamId, streamIdToBytes, userIdFromAddress } from './id'
+import { make_UserInboxPayload_Ack, make_UserInboxPayload_Inception } from './types'
 import { dlog } from '@river-build/dlog'
 import TypedEmitter from 'typed-emitter'
 import EventEmitter from 'events'
 import { StreamEvents } from './streamEvents'
 import { SyncedStream } from './syncedStream'
 import { StubPersistenceStore } from './persistenceStore'
+import { PartialMessage, PlainMessage } from '@bufbuild/protobuf'
+import { Envelope, StreamEvent } from '@river-build/proto'
 
 const log = dlog('csb:test:syncedStreams')
 
@@ -40,46 +42,114 @@ describe('syncStreams', () => {
 
     test('starting->syncing->canceling->notSyncing', async () => {
         log('starting->syncing->canceling->notSyncing')
-        /** Arrange */
-        const alice = await makeTestRpcClient()
+
+        // globals setup
+        const stubPersistenceStore = new StubPersistenceStore()
         const done1 = makeDonePromise()
-        const alicesContext = await makeRandomUserContext()
-
-        const alicesUserId = userIdFromAddress(alicesContext.creatorAddress)
-        const alicesUserStreamIdStr = makeUserStreamId(alicesUserId)
-        const alicesUserStreamId = streamIdToBytes(alicesUserStreamIdStr)
-        // create account for alice
-        const aliceUserStream = await alice.createStream({
-            events: [
-                await makeEvent(
-                    alicesContext,
-                    make_UserPayload_Inception({
-                        streamId: alicesUserStreamId,
-                    }),
-                ),
-            ],
-            streamId: alicesUserStreamId,
-        })
-        const { streamAndCookie } = await unpackStream(aliceUserStream.stream)
-
         const mockClientEmitter = new EventEmitter() as TypedEmitter<StreamEvents>
-        mockClientEmitter.on('streamSyncActive', (isActive) => {
+        mockClientEmitter.on('streamSyncActive', (isActive: boolean) => {
             if (isActive) {
                 done1.done()
             }
         })
-        const alicesSyncedStreams = new SyncedStreams(alicesUserId, alice, mockClientEmitter)
-        const stream = new SyncedStream(
+        // alice setup
+        const rpcClient = await makeTestRpcClient()
+        const alicesContext = await makeRandomUserContext()
+        const alicesUserId = userIdFromAddress(alicesContext.creatorAddress)
+        const alicesSyncedStreams = new SyncedStreams(alicesUserId, rpcClient, mockClientEmitter)
+
+        // some helper functions
+        const createStream = async (streamId: Uint8Array, events: PartialMessage<Envelope>[]) => {
+            const streamResponse = await rpcClient.createStream({
+                events,
+                streamId,
+            })
+            const response = await unpackStream(streamResponse.stream)
+            return response
+        }
+
+        // user inbox stream setup
+        const alicesUserInboxStreamIdStr = makeUserInboxStreamId(alicesUserId)
+        const alicesUserInboxStreamId = streamIdToBytes(alicesUserInboxStreamIdStr)
+        const userInboxStreamResponse = await createStream(alicesUserInboxStreamId, [
+            await makeEvent(
+                alicesContext,
+                make_UserInboxPayload_Inception({
+                    streamId: alicesUserInboxStreamId,
+                }),
+            ),
+        ])
+        const userInboxStream = new SyncedStream(
             alicesUserId,
-            alicesUserStreamIdStr,
+            alicesUserInboxStreamIdStr,
             mockClientEmitter,
             log,
-            new StubPersistenceStore(),
+            stubPersistenceStore,
         )
+        await userInboxStream.initializeFromResponse(userInboxStreamResponse)
+
         await alicesSyncedStreams.startSyncStreams()
         await done1.promise
-        alicesSyncedStreams.set(alicesUserStreamIdStr, stream)
-        await alicesSyncedStreams.addStreamToSync(streamAndCookie.nextSyncCookie)
+
+        alicesSyncedStreams.set(alicesUserInboxStreamIdStr, userInboxStream)
+        await alicesSyncedStreams.addStreamToSync(userInboxStream.view.syncCookie!)
+
+        // some helper functions
+        const addEvent = async (payload: PlainMessage<StreamEvent>['payload']) => {
+            await rpcClient.addEvent({
+                streamId: alicesUserInboxStreamId,
+                event: await makeEvent(
+                    alicesContext,
+                    payload,
+                    userInboxStreamResponse.streamAndCookie.miniblocks[0].hash,
+                ),
+            })
+        }
+
+        // post an ack (easiest way to put a string in a stream)
+        await addEvent(
+            make_UserInboxPayload_Ack({
+                deviceKey: 'numero uno',
+                miniblockNum: 1n,
+            }),
+        )
+
+        // make sure it shows up
+        await waitFor(() =>
+            expect(
+                userInboxStream.view.timeline.find(
+                    (e) =>
+                        e.remoteEvent?.event.payload.case === 'userInboxPayload' &&
+                        e.remoteEvent?.event.payload.value.content.case === 'ack' &&
+                        e.remoteEvent?.event.payload.value.content.value.deviceKey === 'numero uno',
+                ),
+            ).toBeDefined(),
+        )
+
+        // drop the stream
+        await rpcClient.info({
+            debug: ['drop_stream', alicesSyncedStreams.getSyncId()!, alicesUserInboxStreamIdStr],
+        })
+
+        // add second event
+        await addEvent(
+            make_UserInboxPayload_Ack({
+                deviceKey: 'numero dos',
+                miniblockNum: 1n,
+            }),
+        )
+
+        // make sure it shows up
+        await waitFor(() =>
+            expect(
+                userInboxStream.view.timeline.find(
+                    (e) =>
+                        e.remoteEvent?.event.payload.case === 'userInboxPayload' &&
+                        e.remoteEvent?.event.payload.value.content.case === 'ack' &&
+                        e.remoteEvent?.event.payload.value.content.value.deviceKey === 'numero dos',
+                ),
+            ).toBeDefined(),
+        )
 
         await alicesSyncedStreams.stopSync()
     })

@@ -23,7 +23,7 @@ import { createEntitlementStruct } from '../ConvertersRoles'
 import { BaseChainConfig } from '../IStaticContractsInfo'
 import { WalletLink, INVALID_ADDRESS } from './WalletLink'
 import { SpaceInfo } from '../types'
-import { IRuleEntitlement, UNKNOWN_ERROR, UserEntitlementShim } from './index'
+import { IRuleEntitlementBase, UNKNOWN_ERROR, UserEntitlementShim } from './index'
 import { PricingModules } from './PricingModules'
 import { dlogger, isJest } from '@river-build/dlog'
 import { EVERYONE_ADDRESS, stringifyChannelMetadataJSON } from '../Utils'
@@ -37,7 +37,7 @@ const logger = dlogger('csb:SpaceDapp:debug')
 
 type EntitlementData = {
     entitlementType: EntitlementModuleType
-    ruleEntitlement: IRuleEntitlement.RuleDataStruct[] | undefined
+    ruleEntitlement: IRuleEntitlementBase.RuleDataStruct[] | undefined
     userEntitlement: string[] | undefined
 }
 
@@ -289,7 +289,7 @@ export class SpaceDapp implements ISpaceDapp {
         roleName: string,
         permissions: Permission[],
         users: string[],
-        ruleData: IRuleEntitlement.RuleDataStruct,
+        ruleData: IRuleEntitlementBase.RuleDataStruct,
         signer: ethers.Signer,
         txnOpts?: TransactionOpts,
     ): Promise<ContractTransaction> {

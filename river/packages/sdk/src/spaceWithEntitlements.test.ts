@@ -31,7 +31,7 @@ import {
     getContractAddress,
     publicMint,
     treeToRuleData,
-    IRuleEntitlement,
+    IRuleEntitlementBase,
     ISpaceDapp,
 } from '@river-build/web3'
 
@@ -42,7 +42,7 @@ const log = dlog('csb:test:spaceWithEntitlements')
 async function createTownWithRequirements(requirements: {
     everyone: boolean
     users: string[]
-    ruleData: IRuleEntitlement.RuleDataStruct
+    ruleData: IRuleEntitlementBase.RuleDataStruct
 }) {
     const {
         alice,

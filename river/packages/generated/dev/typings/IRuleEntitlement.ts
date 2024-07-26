@@ -23,7 +23,7 @@ import type {
   PromiseOrValue,
 } from "./common";
 
-export declare namespace IRuleEntitlement {
+export declare namespace IRuleEntitlementBase {
   export type OperationStruct = {
     opType: PromiseOrValue<BigNumberish>;
     index: PromiseOrValue<BigNumberish>;
@@ -66,19 +66,19 @@ export declare namespace IRuleEntitlement {
   };
 
   export type RuleDataStruct = {
-    operations: IRuleEntitlement.OperationStruct[];
-    checkOperations: IRuleEntitlement.CheckOperationStruct[];
-    logicalOperations: IRuleEntitlement.LogicalOperationStruct[];
+    operations: IRuleEntitlementBase.OperationStruct[];
+    checkOperations: IRuleEntitlementBase.CheckOperationStruct[];
+    logicalOperations: IRuleEntitlementBase.LogicalOperationStruct[];
   };
 
   export type RuleDataStructOutput = [
-    IRuleEntitlement.OperationStructOutput[],
-    IRuleEntitlement.CheckOperationStructOutput[],
-    IRuleEntitlement.LogicalOperationStructOutput[]
+    IRuleEntitlementBase.OperationStructOutput[],
+    IRuleEntitlementBase.CheckOperationStructOutput[],
+    IRuleEntitlementBase.LogicalOperationStructOutput[]
   ] & {
-    operations: IRuleEntitlement.OperationStructOutput[];
-    checkOperations: IRuleEntitlement.CheckOperationStructOutput[];
-    logicalOperations: IRuleEntitlement.LogicalOperationStructOutput[];
+    operations: IRuleEntitlementBase.OperationStructOutput[];
+    checkOperations: IRuleEntitlementBase.CheckOperationStructOutput[];
+    logicalOperations: IRuleEntitlementBase.LogicalOperationStructOutput[];
   };
 }
 
@@ -118,7 +118,7 @@ export interface IRuleEntitlementInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "encodeRuleData",
-    values: [IRuleEntitlement.RuleDataStruct]
+    values: [IRuleEntitlementBase.RuleDataStruct]
   ): string;
   encodeFunctionData(
     functionFragment: "getEntitlementDataByRoleId",
@@ -224,7 +224,7 @@ export interface IRuleEntitlement extends BaseContract {
     description(overrides?: CallOverrides): Promise<[string]>;
 
     encodeRuleData(
-      data: IRuleEntitlement.RuleDataStruct,
+      data: IRuleEntitlementBase.RuleDataStruct,
       overrides?: CallOverrides
     ): Promise<[string]>;
 
@@ -237,8 +237,8 @@ export interface IRuleEntitlement extends BaseContract {
       roleId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<
-      [IRuleEntitlement.RuleDataStructOutput] & {
-        data: IRuleEntitlement.RuleDataStructOutput;
+      [IRuleEntitlementBase.RuleDataStructOutput] & {
+        data: IRuleEntitlementBase.RuleDataStructOutput;
       }
     >;
 
@@ -275,7 +275,7 @@ export interface IRuleEntitlement extends BaseContract {
   description(overrides?: CallOverrides): Promise<string>;
 
   encodeRuleData(
-    data: IRuleEntitlement.RuleDataStruct,
+    data: IRuleEntitlementBase.RuleDataStruct,
     overrides?: CallOverrides
   ): Promise<string>;
 
@@ -287,7 +287,7 @@ export interface IRuleEntitlement extends BaseContract {
   getRuleData(
     roleId: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
-  ): Promise<IRuleEntitlement.RuleDataStructOutput>;
+  ): Promise<IRuleEntitlementBase.RuleDataStructOutput>;
 
   initialize(
     space: PromiseOrValue<string>,
@@ -322,7 +322,7 @@ export interface IRuleEntitlement extends BaseContract {
     description(overrides?: CallOverrides): Promise<string>;
 
     encodeRuleData(
-      data: IRuleEntitlement.RuleDataStruct,
+      data: IRuleEntitlementBase.RuleDataStruct,
       overrides?: CallOverrides
     ): Promise<string>;
 
@@ -334,7 +334,7 @@ export interface IRuleEntitlement extends BaseContract {
     getRuleData(
       roleId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<IRuleEntitlement.RuleDataStructOutput>;
+    ): Promise<IRuleEntitlementBase.RuleDataStructOutput>;
 
     initialize(
       space: PromiseOrValue<string>,
@@ -372,7 +372,7 @@ export interface IRuleEntitlement extends BaseContract {
     description(overrides?: CallOverrides): Promise<BigNumber>;
 
     encodeRuleData(
-      data: IRuleEntitlement.RuleDataStruct,
+      data: IRuleEntitlementBase.RuleDataStruct,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -420,7 +420,7 @@ export interface IRuleEntitlement extends BaseContract {
     description(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     encodeRuleData(
-      data: IRuleEntitlement.RuleDataStruct,
+      data: IRuleEntitlementBase.RuleDataStruct,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 

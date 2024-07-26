@@ -11,6 +11,7 @@ SKIP_CHAIN_WAIT="${SKIP_CHAIN_WAIT:-false}"
 BASE_EXECUTION_CLIENT="${BASE_EXECUTION_CLIENT:-''}"
 BASE_ANVIL_SOURCE_DIR=${BASE_ANVIL_SOURCE_DIR:-"base_anvil"}
 RIVER_ANVIL_SOURCE_DIR=${RIVER_ANVIL_SOURCE_DIR:-"river_anvil"}
+RIVER_BLOCK_TIME="${RIVER_BLOCK_TIME:-1}"
 
 echo "Deploying contracts for ${RIVER_ENV} environment"
 
@@ -38,7 +39,7 @@ fi
 # Account Abstraction is not supported on anvil
 # make deploy-base-anvil type=contract contract=DeployEntrypoint
 # make deploy-base-anvil type=contract contract=DeployAccountFactory
-RIVER_BLOCK_TIME="${RIVER_BLOCK_TIME:-1}"
+
 
 # Only anvil supports automine but this might be a local geth node
 if [ "${BASE_EXECUTION_CLIENT}" != "geth_dev" ]; then

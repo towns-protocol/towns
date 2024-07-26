@@ -1,5 +1,6 @@
 import {
     IRuleEntitlement as LocalhostContract,
+    IRuleEntitlementBase as LocalhostBase,
     IRuleEntitlementInterface as LocalhostInterface,
 } from '@river-build/generated/dev/typings/IRuleEntitlement'
 
@@ -25,7 +26,7 @@ export class RuleEntitlementShim
 
     public async getRoleEntitlement(
         roleId: BigNumberish,
-    ): Promise<LocalhostContract.RuleDataStruct | null> {
+    ): Promise<LocalhostBase.RuleDataStruct | null> {
         if (roleId === 0) {
             return {
                 operations: [],
@@ -36,14 +37,12 @@ export class RuleEntitlementShim
         return this.read.getRuleData(roleId)
     }
 
-    public decodeGetRuleData(
-        entitlmentData: string,
-    ): LocalhostContract.RuleDataStruct[] | undefined {
+    public decodeGetRuleData(entitlmentData: string): LocalhostBase.RuleDataStruct[] | undefined {
         try {
             const decoded = this.decodeFunctionResult(
                 'getRuleData',
                 entitlmentData,
-            ) as unknown as LocalhostContract.RuleDataStruct[]
+            ) as unknown as LocalhostBase.RuleDataStruct[]
 
             if (decoded.length === 0) {
                 logger.error('RuleEntitlementShim No rule data', decoded)

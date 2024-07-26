@@ -4,6 +4,7 @@
 import type {
   BaseContract,
   BigNumber,
+  BigNumberish,
   BytesLike,
   CallOverrides,
   PopulatedTransaction,
@@ -35,12 +36,14 @@ export declare namespace IEntitlementDataQueryableBase {
 export interface IEntitlementDataQueryableInterface extends utils.Interface {
   functions: {
     "getChannelEntitlementDataByPermission(bytes32,string)": FunctionFragment;
+    "getCrossChainEntitlementData(bytes32,uint256)": FunctionFragment;
     "getEntitlementDataByPermission(string)": FunctionFragment;
   };
 
   getFunction(
     nameOrSignatureOrTopic:
       | "getChannelEntitlementDataByPermission"
+      | "getCrossChainEntitlementData"
       | "getEntitlementDataByPermission"
   ): FunctionFragment;
 
@@ -49,12 +52,20 @@ export interface IEntitlementDataQueryableInterface extends utils.Interface {
     values: [PromiseOrValue<BytesLike>, PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
+    functionFragment: "getCrossChainEntitlementData",
+    values: [PromiseOrValue<BytesLike>, PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
     functionFragment: "getEntitlementDataByPermission",
     values: [PromiseOrValue<string>]
   ): string;
 
   decodeFunctionResult(
     functionFragment: "getChannelEntitlementDataByPermission",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getCrossChainEntitlementData",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -98,6 +109,12 @@ export interface IEntitlementDataQueryable extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[IEntitlementDataQueryableBase.EntitlementDataStructOutput[]]>;
 
+    getCrossChainEntitlementData(
+      transactionId: PromiseOrValue<BytesLike>,
+      roleId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[IEntitlementDataQueryableBase.EntitlementDataStructOutput]>;
+
     getEntitlementDataByPermission(
       permission: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -110,6 +127,12 @@ export interface IEntitlementDataQueryable extends BaseContract {
     overrides?: CallOverrides
   ): Promise<IEntitlementDataQueryableBase.EntitlementDataStructOutput[]>;
 
+  getCrossChainEntitlementData(
+    transactionId: PromiseOrValue<BytesLike>,
+    roleId: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<IEntitlementDataQueryableBase.EntitlementDataStructOutput>;
+
   getEntitlementDataByPermission(
     permission: PromiseOrValue<string>,
     overrides?: CallOverrides
@@ -121,6 +144,12 @@ export interface IEntitlementDataQueryable extends BaseContract {
       permission: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<IEntitlementDataQueryableBase.EntitlementDataStructOutput[]>;
+
+    getCrossChainEntitlementData(
+      transactionId: PromiseOrValue<BytesLike>,
+      roleId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<IEntitlementDataQueryableBase.EntitlementDataStructOutput>;
 
     getEntitlementDataByPermission(
       permission: PromiseOrValue<string>,
@@ -137,6 +166,12 @@ export interface IEntitlementDataQueryable extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    getCrossChainEntitlementData(
+      transactionId: PromiseOrValue<BytesLike>,
+      roleId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     getEntitlementDataByPermission(
       permission: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -147,6 +182,12 @@ export interface IEntitlementDataQueryable extends BaseContract {
     getChannelEntitlementDataByPermission(
       channelId: PromiseOrValue<BytesLike>,
       permission: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    getCrossChainEntitlementData(
+      transactionId: PromiseOrValue<BytesLike>,
+      roleId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 

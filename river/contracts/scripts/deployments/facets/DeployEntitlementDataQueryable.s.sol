@@ -19,6 +19,7 @@ contract DeployEntitlementDataQueryable is Deployer, FacetHelper {
     addSelector(
       EntitlementDataQueryable.getChannelEntitlementDataByPermission.selector
     );
+    addSelector(EntitlementDataQueryable.getCrossChainEntitlementData.selector);
   }
 
   // Deploying

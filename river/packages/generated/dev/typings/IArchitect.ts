@@ -63,7 +63,7 @@ export declare namespace IMembershipBase {
   };
 }
 
-export declare namespace IRuleEntitlement {
+export declare namespace IRuleEntitlementBase {
   export type OperationStruct = {
     opType: PromiseOrValue<BigNumberish>;
     index: PromiseOrValue<BigNumberish>;
@@ -106,19 +106,19 @@ export declare namespace IRuleEntitlement {
   };
 
   export type RuleDataStruct = {
-    operations: IRuleEntitlement.OperationStruct[];
-    checkOperations: IRuleEntitlement.CheckOperationStruct[];
-    logicalOperations: IRuleEntitlement.LogicalOperationStruct[];
+    operations: IRuleEntitlementBase.OperationStruct[];
+    checkOperations: IRuleEntitlementBase.CheckOperationStruct[];
+    logicalOperations: IRuleEntitlementBase.LogicalOperationStruct[];
   };
 
   export type RuleDataStructOutput = [
-    IRuleEntitlement.OperationStructOutput[],
-    IRuleEntitlement.CheckOperationStructOutput[],
-    IRuleEntitlement.LogicalOperationStructOutput[]
+    IRuleEntitlementBase.OperationStructOutput[],
+    IRuleEntitlementBase.CheckOperationStructOutput[],
+    IRuleEntitlementBase.LogicalOperationStructOutput[]
   ] & {
-    operations: IRuleEntitlement.OperationStructOutput[];
-    checkOperations: IRuleEntitlement.CheckOperationStructOutput[];
-    logicalOperations: IRuleEntitlement.LogicalOperationStructOutput[];
+    operations: IRuleEntitlementBase.OperationStructOutput[];
+    checkOperations: IRuleEntitlementBase.CheckOperationStructOutput[];
+    logicalOperations: IRuleEntitlementBase.LogicalOperationStructOutput[];
   };
 }
 
@@ -126,17 +126,17 @@ export declare namespace IArchitectBase {
   export type MembershipRequirementsStruct = {
     everyone: PromiseOrValue<boolean>;
     users: PromiseOrValue<string>[];
-    ruleData: IRuleEntitlement.RuleDataStruct;
+    ruleData: IRuleEntitlementBase.RuleDataStruct;
   };
 
   export type MembershipRequirementsStructOutput = [
     boolean,
     string[],
-    IRuleEntitlement.RuleDataStructOutput
+    IRuleEntitlementBase.RuleDataStructOutput
   ] & {
     everyone: boolean;
     users: string[];
-    ruleData: IRuleEntitlement.RuleDataStructOutput;
+    ruleData: IRuleEntitlementBase.RuleDataStructOutput;
   };
 
   export type MembershipStruct = {

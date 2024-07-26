@@ -100,15 +100,15 @@ func toggleCustomEntitlement(
 	)
 }
 
-func customEntitlementExample(cfg *config.Config) base.IRuleEntitlementRuleData {
-	return base.IRuleEntitlementRuleData{
-		Operations: []base.IRuleEntitlementOperation{
+func customEntitlementExample(cfg *config.Config) base.IRuleEntitlementBaseRuleData {
+	return base.IRuleEntitlementBaseRuleData{
+		Operations: []base.IRuleEntitlementBaseOperation{
 			{
 				OpType: uint8(entitlement.CHECK),
 				Index:  0,
 			},
 		},
-		CheckOperations: []base.IRuleEntitlementCheckOperation{
+		CheckOperations: []base.IRuleEntitlementBaseCheckOperation{
 			{
 				OpType:  uint8(entitlement.ISENTITLED),
 				ChainId: big.NewInt(1),
@@ -120,15 +120,15 @@ func customEntitlementExample(cfg *config.Config) base.IRuleEntitlementRuleData 
 	}
 }
 
-func erc721Example() base.IRuleEntitlementRuleData {
-	return base.IRuleEntitlementRuleData{
-		Operations: []base.IRuleEntitlementOperation{
+func erc721Example() base.IRuleEntitlementBaseRuleData {
+	return base.IRuleEntitlementBaseRuleData{
+		Operations: []base.IRuleEntitlementBaseOperation{
 			{
 				OpType: uint8(entitlement.CHECK),
 				Index:  0,
 			},
 		},
-		CheckOperations: []base.IRuleEntitlementCheckOperation{
+		CheckOperations: []base.IRuleEntitlementBaseCheckOperation{
 			{
 				OpType:  uint8(entitlement.ERC721),
 				ChainId: examples.EthSepoliaChainId,
@@ -140,15 +140,15 @@ func erc721Example() base.IRuleEntitlementRuleData {
 	}
 }
 
-func erc20Example() base.IRuleEntitlementRuleData {
-	return base.IRuleEntitlementRuleData{
-		Operations: []base.IRuleEntitlementOperation{
+func erc20Example() base.IRuleEntitlementBaseRuleData {
+	return base.IRuleEntitlementBaseRuleData{
+		Operations: []base.IRuleEntitlementBaseOperation{
 			{
 				OpType: uint8(entitlement.CHECK),
 				Index:  0,
 			},
 		},
-		CheckOperations: []base.IRuleEntitlementCheckOperation{
+		CheckOperations: []base.IRuleEntitlementBaseCheckOperation{
 			{
 				OpType:  uint8(entitlement.ERC20),
 				ChainId: examples.EthSepoliaChainId,
@@ -178,7 +178,7 @@ type postResult struct {
 type ClientSimulator interface {
 	Start(ctx context.Context)
 	Stop()
-	EvaluateRuleData(ctx context.Context, cfg *config.Config, ruleData base.IRuleEntitlementRuleData) (bool, error)
+	EvaluateRuleData(ctx context.Context, cfg *config.Config, ruleData base.IRuleEntitlementBaseRuleData) (bool, error)
 	Wallet() *node_crypto.Wallet
 }
 
@@ -311,7 +311,7 @@ func (cs *clientSimulator) Start(ctx context.Context) {
 	)
 }
 
-func (cs *clientSimulator) executeCheck(ctx context.Context, ruleData *deploy.IRuleEntitlementRuleData) error {
+func (cs *clientSimulator) executeCheck(ctx context.Context, ruleData *deploy.IRuleEntitlementBaseRuleData) error {
 	log := dlog.FromCtx(ctx).With("application", "clientSimulator")
 	log.Info("ClientSimulator executing check", "ruleData", ruleData, "cfg", cs.cfg)
 
@@ -478,32 +478,32 @@ func (cs *clientSimulator) Wallet() *node_crypto.Wallet {
 	return cs.wallet
 }
 
-func convertRuleDataFromBaseToDeploy(ruleData base.IRuleEntitlementRuleData) deploy.IRuleEntitlementRuleData {
-	operations := make([]deploy.IRuleEntitlementOperation, len(ruleData.Operations))
+func convertRuleDataFromBaseToDeploy(ruleData base.IRuleEntitlementBaseRuleData) deploy.IRuleEntitlementBaseRuleData {
+	operations := make([]deploy.IRuleEntitlementBaseOperation, len(ruleData.Operations))
 	for i, op := range ruleData.Operations {
-		operations[i] = deploy.IRuleEntitlementOperation{
+		operations[i] = deploy.IRuleEntitlementBaseOperation{
 			OpType: op.OpType,
 			Index:  op.Index,
 		}
 	}
-	checkOperations := make([]deploy.IRuleEntitlementCheckOperation, len(ruleData.CheckOperations))
+	checkOperations := make([]deploy.IRuleEntitlementBaseCheckOperation, len(ruleData.CheckOperations))
 	for i, op := range ruleData.CheckOperations {
-		checkOperations[i] = deploy.IRuleEntitlementCheckOperation{
+		checkOperations[i] = deploy.IRuleEntitlementBaseCheckOperation{
 			OpType:          op.OpType,
 			ChainId:         op.ChainId,
 			ContractAddress: op.ContractAddress,
 			Threshold:       op.Threshold,
 		}
 	}
-	logicalOperations := make([]deploy.IRuleEntitlementLogicalOperation, len(ruleData.LogicalOperations))
+	logicalOperations := make([]deploy.IRuleEntitlementBaseLogicalOperation, len(ruleData.LogicalOperations))
 	for i, op := range ruleData.LogicalOperations {
-		logicalOperations[i] = deploy.IRuleEntitlementLogicalOperation{
+		logicalOperations[i] = deploy.IRuleEntitlementBaseLogicalOperation{
 			LogOpType:           op.LogOpType,
 			LeftOperationIndex:  op.LeftOperationIndex,
 			RightOperationIndex: op.RightOperationIndex,
 		}
 	}
-	return deploy.IRuleEntitlementRuleData{
+	return deploy.IRuleEntitlementBaseRuleData{
 		Operations:        operations,
 		CheckOperations:   checkOperations,
 		LogicalOperations: logicalOperations,
@@ -513,7 +513,7 @@ func convertRuleDataFromBaseToDeploy(ruleData base.IRuleEntitlementRuleData) dep
 func (cs *clientSimulator) EvaluateRuleData(
 	ctx context.Context,
 	cfg *config.Config,
-	baseRuleData base.IRuleEntitlementRuleData,
+	baseRuleData base.IRuleEntitlementBaseRuleData,
 ) (bool, error) {
 	ruleData := convertRuleDataFromBaseToDeploy(baseRuleData)
 
@@ -567,7 +567,7 @@ func RunClientSimulator(ctx context.Context, cfg *config.Config, wallet *node_cr
 	cs.Start(ctx)
 	defer cs.Stop()
 
-	var ruleData base.IRuleEntitlementRuleData
+	var ruleData base.IRuleEntitlementBaseRuleData
 	switch simType {
 	case ERC721:
 		ruleData = erc721Example()

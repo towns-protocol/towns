@@ -42,6 +42,7 @@ contract EntitlementGated is
     _postEntitlementCheckResult(transactionId, roleId, result);
   }
 
+  /// deprecated Use EntitlementDataQueryable.getCrossChainEntitlementData instead
   function getRuleData(
     bytes32 transactionId,
     uint256 roleId

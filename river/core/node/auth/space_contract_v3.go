@@ -121,7 +121,7 @@ func (sc *SpaceContractV3) marshalEntitlements(
 				return nil, err
 			}
 
-			var ruleData base.IRuleEntitlementRuleData
+			var ruleData base.IRuleEntitlementBaseRuleData
 
 			unpackedData, err := parsedABI.Unpack("getRuleData", entitlement.EntitlementData)
 			if err != nil {

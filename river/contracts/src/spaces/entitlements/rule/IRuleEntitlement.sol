@@ -16,7 +16,7 @@ import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
  * As new LogicalOperation nodes are added, they can only reference existing nodes in the 'operations' array,
  * ensuring a valid post-order tree structure.
  */
-interface IRuleEntitlement is IEntitlement {
+interface IRuleEntitlementBase {
   // =============================================================
   //                           Errors
   // =============================================================
@@ -31,7 +31,7 @@ interface IRuleEntitlement is IEntitlement {
     uint8 operationIndex,
     uint8 logicalOperationsLength
   );
-  error InvalidOperationType(IRuleEntitlement.CombinedOperationType opType);
+  error InvalidOperationType(CombinedOperationType opType);
   error InvalidLeftOperationIndex(
     uint8 leftOperationIndex,
     uint8 currentOperationIndex
@@ -70,12 +70,18 @@ interface IRuleEntitlement is IEntitlement {
   // =============================================================
   //                           Structs
   // =============================================================
-
   struct CheckOperation {
     CheckOperationType opType;
     uint256 chainId;
     address contractAddress;
     uint256 threshold;
+  }
+
+  struct CheckOperationV2 {
+    CheckOperationType opType;
+    uint256 chainId;
+    address contractAddress;
+    bytes params;
   }
 
   struct LogicalOperation {
@@ -95,6 +101,38 @@ interface IRuleEntitlement is IEntitlement {
     LogicalOperation[] logicalOperations;
   }
 
+  struct RuleDataV2 {
+    Operation[] operations;
+    CheckOperationV2[] checkOperations;
+    LogicalOperation[] logicalOperations;
+  }
+}
+
+interface IRuleEntitlementV2 is IRuleEntitlementBase, IEntitlement {
+  // =============================================================
+  //                           Functions
+  // =============================================================
+
+  /**
+   * @notice Encodes the RuleData struct into bytes
+   * @param data RuleData struct to encode
+   * @return Encoded bytes of the RuleData struct
+   */
+  function encodeRuleData(
+    RuleDataV2 memory data
+  ) external pure returns (bytes memory);
+
+  /**
+   * @notice Decodes the RuleDataV2 struct from bytes
+   * @param roleId Role ID
+   * @return data RuleDataV2 struct
+   */
+  function getRuleDataV2(
+    uint256 roleId
+  ) external view returns (RuleDataV2 memory data);
+}
+
+interface IRuleEntitlement is IRuleEntitlementBase, IEntitlement {
   // =============================================================
   //                           Functions
   // =============================================================

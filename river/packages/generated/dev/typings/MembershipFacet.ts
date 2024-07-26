@@ -64,7 +64,7 @@ export declare namespace IMembershipBase {
   };
 }
 
-export declare namespace IRuleEntitlement {
+export declare namespace IRuleEntitlementBase {
   export type OperationStruct = {
     opType: PromiseOrValue<BigNumberish>;
     index: PromiseOrValue<BigNumberish>;
@@ -107,19 +107,19 @@ export declare namespace IRuleEntitlement {
   };
 
   export type RuleDataStruct = {
-    operations: IRuleEntitlement.OperationStruct[];
-    checkOperations: IRuleEntitlement.CheckOperationStruct[];
-    logicalOperations: IRuleEntitlement.LogicalOperationStruct[];
+    operations: IRuleEntitlementBase.OperationStruct[];
+    checkOperations: IRuleEntitlementBase.CheckOperationStruct[];
+    logicalOperations: IRuleEntitlementBase.LogicalOperationStruct[];
   };
 
   export type RuleDataStructOutput = [
-    IRuleEntitlement.OperationStructOutput[],
-    IRuleEntitlement.CheckOperationStructOutput[],
-    IRuleEntitlement.LogicalOperationStructOutput[]
+    IRuleEntitlementBase.OperationStructOutput[],
+    IRuleEntitlementBase.CheckOperationStructOutput[],
+    IRuleEntitlementBase.LogicalOperationStructOutput[]
   ] & {
-    operations: IRuleEntitlement.OperationStructOutput[];
-    checkOperations: IRuleEntitlement.CheckOperationStructOutput[];
-    logicalOperations: IRuleEntitlement.LogicalOperationStructOutput[];
+    operations: IRuleEntitlementBase.OperationStructOutput[];
+    checkOperations: IRuleEntitlementBase.CheckOperationStructOutput[];
+    logicalOperations: IRuleEntitlementBase.LogicalOperationStructOutput[];
   };
 }
 
@@ -910,7 +910,7 @@ export interface MembershipFacet extends BaseContract {
       transactionId: PromiseOrValue<BytesLike>,
       roleId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<[IRuleEntitlement.RuleDataStructOutput]>;
+    ): Promise<[IRuleEntitlementBase.RuleDataStructOutput]>;
 
     getSpaceFactory(overrides?: CallOverrides): Promise<[string]>;
 
@@ -1073,7 +1073,7 @@ export interface MembershipFacet extends BaseContract {
     transactionId: PromiseOrValue<BytesLike>,
     roleId: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
-  ): Promise<IRuleEntitlement.RuleDataStructOutput>;
+  ): Promise<IRuleEntitlementBase.RuleDataStructOutput>;
 
   getSpaceFactory(overrides?: CallOverrides): Promise<string>;
 
@@ -1236,7 +1236,7 @@ export interface MembershipFacet extends BaseContract {
       transactionId: PromiseOrValue<BytesLike>,
       roleId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<IRuleEntitlement.RuleDataStructOutput>;
+    ): Promise<IRuleEntitlementBase.RuleDataStructOutput>;
 
     getSpaceFactory(overrides?: CallOverrides): Promise<string>;
 

@@ -273,7 +273,7 @@
     {
       "label": "CasablancaConfigureNodes",
       "type": "shell",
-      "command": "./scripts/configure-nodes.sh --single && ./scripts/configure-nodes.sh --single_ne",
+      "command": "RIVER_BLOCK_TIME=1 ./scripts/configure-nodes.sh --single && RIVER_BLOCK_TIME=1 ./scripts/configure-nodes.sh --single_ne",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {

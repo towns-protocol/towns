@@ -81,10 +81,10 @@ export function useObservable<T>(
         if (!observable) {
             return
         }
-        const subscription = observable.subscribe(onSubscribe, {
+        const unsub = observable.subscribe(onSubscribe, {
             fireImediately: opts?.fireImmediately,
         })
-        return () => subscription.unsubscribe(onSubscribe)
+        return unsub
     }, [opts, observable, onSubscribe])
 
     const data = useMemo(() => {

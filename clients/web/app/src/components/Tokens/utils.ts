@@ -1,6 +1,6 @@
 import {
     CheckOperationType,
-    IRuleEntitlement,
+    IRuleEntitlementBase,
     createContractCheckOperationFromTree,
 } from 'use-towns-client'
 import { TokenType } from './types'
@@ -33,7 +33,7 @@ export function convertOperationTypeToTokenType(type: CheckOperationType) {
 }
 
 export function convertRuleDataToTokenFormSchema(
-    ruleData: IRuleEntitlement.RuleDataStruct,
+    ruleData: IRuleEntitlementBase.RuleDataStruct,
 ): TokenEntitlement[] {
     return createContractCheckOperationFromTree(ruleData).map((p) => {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars

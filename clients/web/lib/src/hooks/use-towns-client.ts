@@ -30,7 +30,7 @@ import { useSendReadReceipt } from './TownsContext/useSendReadReceipt'
 import { useTownsContext } from '../components/TownsContextProvider'
 import { useCasablancaWalletSignIn } from './use-casablanca-wallet-signin'
 import { create } from 'zustand'
-import { IArchitectBase, Permission, IRuleEntitlement } from '@river-build/web3'
+import { IArchitectBase, Permission, IRuleEntitlementBase } from '@river-build/web3'
 import { TSigner } from 'types/web3-types'
 import { SignerContext } from '@river-build/sdk'
 import { UserOps } from '@towns/userops'
@@ -116,7 +116,7 @@ interface TownsClientImpl {
         roleName: string,
         permissions: Permission[],
         users: string[],
-        ruleData: IRuleEntitlement.RuleDataStruct,
+        ruleData: IRuleEntitlementBase.RuleDataStruct,
         signer: TSigner | undefined,
     ) => Promise<RoleTransactionContext | undefined>
     waitForCreateRoleTransaction: (
@@ -137,7 +137,7 @@ interface TownsClientImpl {
         roleName: string,
         permissions: Permission[],
         users: string[],
-        ruleData: IRuleEntitlement.RuleDataStruct,
+        ruleData: IRuleEntitlementBase.RuleDataStruct,
         signer: TSigner | undefined,
     ) => Promise<TransactionContext<void> | undefined>
     waitForUpdateRoleTransaction: (

@@ -37,6 +37,42 @@
   },
   {
     "type": "function",
+    "name": "getCrossChainEntitlementData",
+    "inputs": [
+      {
+        "name": "transactionId",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "roleId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "tuple",
+        "internalType": "struct IEntitlementDataQueryableBase.EntitlementData",
+        "components": [
+          {
+            "name": "entitlementType",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "entitlementData",
+            "type": "bytes",
+            "internalType": "bytes"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "getEntitlementDataByPermission",
     "inputs": [
       {

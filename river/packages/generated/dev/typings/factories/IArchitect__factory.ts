@@ -101,18 +101,18 @@ const _abi = [
                   {
                     name: "ruleData",
                     type: "tuple",
-                    internalType: "struct IRuleEntitlement.RuleData",
+                    internalType: "struct IRuleEntitlementBase.RuleData",
                     components: [
                       {
                         name: "operations",
                         type: "tuple[]",
-                        internalType: "struct IRuleEntitlement.Operation[]",
+                        internalType: "struct IRuleEntitlementBase.Operation[]",
                         components: [
                           {
                             name: "opType",
                             type: "uint8",
                             internalType:
-                              "enum IRuleEntitlement.CombinedOperationType",
+                              "enum IRuleEntitlementBase.CombinedOperationType",
                           },
                           {
                             name: "index",
@@ -125,13 +125,13 @@ const _abi = [
                         name: "checkOperations",
                         type: "tuple[]",
                         internalType:
-                          "struct IRuleEntitlement.CheckOperation[]",
+                          "struct IRuleEntitlementBase.CheckOperation[]",
                         components: [
                           {
                             name: "opType",
                             type: "uint8",
                             internalType:
-                              "enum IRuleEntitlement.CheckOperationType",
+                              "enum IRuleEntitlementBase.CheckOperationType",
                           },
                           {
                             name: "chainId",
@@ -154,13 +154,13 @@ const _abi = [
                         name: "logicalOperations",
                         type: "tuple[]",
                         internalType:
-                          "struct IRuleEntitlement.LogicalOperation[]",
+                          "struct IRuleEntitlementBase.LogicalOperation[]",
                         components: [
                           {
                             name: "logOpType",
                             type: "uint8",
                             internalType:
-                              "enum IRuleEntitlement.LogicalOperationType",
+                              "enum IRuleEntitlementBase.LogicalOperationType",
                           },
                           {
                             name: "leftOperationIndex",

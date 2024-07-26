@@ -16,7 +16,7 @@ import (
 func (e *Evaluator) EvaluateRuleData(
 	ctx context.Context,
 	linkedWallets []common.Address,
-	ruleData *base.IRuleEntitlementRuleData,
+	ruleData *base.IRuleEntitlementBaseRuleData,
 ) (bool, error) {
 	log := dlog.FromCtx(ctx)
 	log.Info("Evaluating rule data", "ruleData", ruleData)
@@ -169,7 +169,7 @@ func (a *AndOperation) SetRightOperation(right Operation) {
 }
 
 func getOperationTree(ctx context.Context,
-	ruleData *base.IRuleEntitlementRuleData,
+	ruleData *base.IRuleEntitlementBaseRuleData,
 ) (Operation, error) {
 	log := dlog.FromCtx(ctx)
 	decodedOperations := []Operation{}

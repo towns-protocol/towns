@@ -3,6 +3,7 @@ set -euo pipefail
 cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 cd ..
 
+export RIVER_BLOCK_TIME="${RIVER_BLOCK_TIME:-1}"
 
 # check to see if the user passed a --single or --multi flag
 # if not, default to --single

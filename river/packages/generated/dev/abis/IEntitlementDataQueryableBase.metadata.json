@@ -43,10 +43,10 @@
   },
   "sources": {
     "contracts/src/spaces/facets/entitlements/extensions/IEntitlementDataQueryable.sol": {
-      "keccak256": "0x7b43371418a8298bf582580bc884d3a319c812cd89fae988af19a1935c92c497",
+      "keccak256": "0x408fcf935d47c3696901b138edbe3f862e63227e45a80be0154a21d39d6a4030",
       "urls": [
-        "bzz-raw://f2fd3c564fc93121ea8be125da9d87df2807d53efece4cfb46776eb19caa46c2",
-        "dweb:/ipfs/QmW8r4i8e9SRkDWC14Fvdwrc9RgTX9FJ49ymfhd6a5DVNR"
+        "bzz-raw://dab36eda141004d86570adf5daf5d011186bedea42c183eada86e4a24c3e15f3",
+        "dweb:/ipfs/QmbSenMpHd3CW7LASFJmrbVZea7ueTS74NWjymEBMdpHbe"
       ],
       "license": "MIT"
     }

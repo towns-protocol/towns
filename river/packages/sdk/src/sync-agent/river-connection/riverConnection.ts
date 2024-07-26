@@ -115,7 +115,7 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
         if (!urls) {
             return
         }
-        logger.log(`RiverConnection: setting rpcClient with urls: "${urls}"`)
+        logger.log(`setting rpcClient with urls: "${urls}"`)
         const rpcClient = makeStreamRpcClient(urls, this.clientParams.rpcRetryParams, () =>
             this.riverRegistryDapp.getOperationalNodeUrls(),
         )
@@ -130,6 +130,13 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
             this.clientParams.highPriorityStreamIds,
         )
         this.client = client
+        // initialize views
+        this.store.withTransaction('RiverConnection::onNewClient', () => {
+            this.views.forEach((viewFn) => {
+                const onStopFn = viewFn(client)
+                this.onStoppedFns.push(onStopFn)
+            })
+        })
         // try to log in
         logger.log('attempting login after new client')
         this.login().catch((err) => {
@@ -174,13 +181,6 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
                         await client.initializeUser(this.newUserMetadata)
                         client.startSync()
                         this.setData({ userExists: true })
-                        // initialize views
-                        this.store.withTransaction('RiverConnection::login', () => {
-                            this.views.forEach((viewFn) => {
-                                const onStopFn = viewFn(client)
-                                this.onStoppedFns.push(onStopFn)
-                            })
-                        })
                         this.authStatus.setValue(AuthStatus.ConnectedToRiver)
                         // New rpcClient is available, resolve all queued requests
                         this.clientQueue.flush(client)

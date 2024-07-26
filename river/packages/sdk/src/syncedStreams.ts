@@ -5,7 +5,7 @@ import { unpackStream, unpackStreamAndCookie } from './sign'
 import { SyncedStreamEvents } from './streamEvents'
 import { SyncedStream } from './syncedStream'
 import TypedEmitter from 'typed-emitter'
-import { isDefined } from './check'
+import { isDefined, logNever } from './check'
 import { nanoid } from 'nanoid'
 import { isMobileSafari } from './utils'
 import { streamIdAsBytes, streamIdAsString } from './id'
@@ -145,6 +145,10 @@ export class SyncedStreams {
 
     public size(): number {
         return this.streams.size
+    }
+
+    public getSyncId(): string | undefined {
+        return this.syncId
     }
 
     public getStreams(): SyncedStream[] {
@@ -458,8 +462,12 @@ export class SyncedStreams {
                                             this.printNonces()
                                         }
                                         break
+                                    case SyncOp.SYNC_DOWN:
+                                        this.syncDown(value.streamId)
+                                        break
                                     default:
-                                        this.log(
+                                        logNever(
+                                            value.syncOp,
                                             `unknown syncOp { syncId: ${this.syncId}, syncOp: ${value.syncOp} }`,
                                         )
                                         break
@@ -587,6 +595,55 @@ export class SyncedStreams {
             )
             //throw new Error('syncStarted: invalid state transition')
         }
+    }
+
+    private syncDown(
+        streamId: Uint8Array,
+        retryParams?: { syncId: string; retryCount: number },
+    ): void {
+        if (this.syncId === undefined) {
+            return
+        }
+        if (retryParams !== undefined && retryParams.syncId !== this.syncId) {
+            return
+        }
+        if (streamId === undefined || streamId.length === 0) {
+            this.logError('syncDown: streamId is empty')
+            return
+        }
+        if (this.syncState !== SyncState.Syncing) {
+            this.logError('syncDown: invalid state transition', this.syncState)
+            return
+        }
+        const stream = this.streams.get(streamIdAsString(streamId))
+        if (!stream) {
+            this.log('syncDown: stream not found', streamIdAsString(streamId))
+            return
+        }
+        const cookie = stream.view.syncCookie
+        if (!cookie) {
+            this.logError('syncDown: syncCookie not found', streamIdAsString(streamId))
+            return
+        }
+        const syncId = this.syncId
+        const retryCount = retryParams?.retryCount ?? 0
+        this.addStreamToSync(cookie).catch((err) => {
+            const retryDelay = Math.min(1000 * Math.pow(2, retryCount), 60000)
+            this.logError(
+                'syncDown: addStreamToSync error',
+                err,
+                'retryParams',
+                retryParams,
+                'retryDelay',
+                retryDelay,
+            )
+            setTimeout(() => {
+                this.syncDown(streamId, {
+                    syncId,
+                    retryCount: retryCount + 1,
+                })
+            }, retryDelay)
+        })
     }
 
     private syncClosed() {

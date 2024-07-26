@@ -27,7 +27,7 @@ import { toPermissions } from '../ConvertersRoles'
 import { IMembershipShim } from './IMembershipShim'
 import { NoopRuleData } from '../entitlement'
 import { RuleEntitlementShim } from './RuleEntitlementShim'
-import { IRuleEntitlement } from '.'
+import { IRuleEntitlementBase } from '.'
 import { IBanningShim } from './IBanningShim'
 import { IERC721AQueryableShim } from './IERC721AQueryableShim'
 import { IEntitlementDataQueryableShim } from './IEntitlementDataQueryableShim'
@@ -367,8 +367,8 @@ export class Space {
         )
 
         function isRuleDataStruct(
-            ruleData: IRuleEntitlement.RuleDataStruct | undefined,
-        ): ruleData is IRuleEntitlement.RuleDataStruct {
+            ruleData: IRuleEntitlementBase.RuleDataStruct | undefined,
+        ): ruleData is IRuleEntitlementBase.RuleDataStruct {
             return ruleData !== undefined
         }
 

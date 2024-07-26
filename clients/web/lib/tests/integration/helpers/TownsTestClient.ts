@@ -27,7 +27,12 @@ import {
     makeSignerContext,
     userIdFromAddress,
 } from '@river-build/sdk'
-import { Permission, IArchitectBase, IRuleEntitlement, createSpaceDapp } from '@river-build/web3'
+import {
+    Permission,
+    IArchitectBase,
+    IRuleEntitlementBase,
+    createSpaceDapp,
+} from '@river-build/web3'
 import { bin_fromHexString } from '@river-build/dlog'
 
 import { foundry } from 'viem/chains'
@@ -161,7 +166,7 @@ export class TownsTestClient extends TownsClient {
         roleName: string,
         permissions: Permission[],
         users: string[],
-        ruleData: IRuleEntitlement.RuleDataStruct,
+        ruleData: IRuleEntitlementBase.RuleDataStruct,
     ): Promise<RoleIdentifier | undefined> {
         const txContext = await this.createRoleTransaction(
             spaceNetworkId,

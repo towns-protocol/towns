@@ -17,7 +17,7 @@ import {
     createOperationsTree,
     getTestGatingNftAddress,
     CheckOperationType,
-    IRuleEntitlement,
+    IRuleEntitlementBase,
 } from '@river-build/web3'
 import { makeRiverConfig } from '@river-build/sdk'
 
@@ -289,7 +289,7 @@ export async function createGatedChannel(
     client: TownsTestClient,
     createChannelInfo: CreateChannelInfo,
     users: string[],
-    ruleData: IRuleEntitlement.RuleDataStruct,
+    ruleData: IRuleEntitlementBase.RuleDataStruct,
 ): Promise<string> {
     const roleId = await client.createRole(
         createChannelInfo.parentSpaceId,

@@ -346,15 +346,15 @@ func (st *serviceTester) linkWalletToRootWallet(
 	st.require.Equal(uint64(1), receipt.Status)
 }
 
-func erc721Check(chainId uint64, contractAddress common.Address, threshold uint64) base.IRuleEntitlementRuleData {
-	return base.IRuleEntitlementRuleData{
-		Operations: []base.IRuleEntitlementOperation{
+func erc721Check(chainId uint64, contractAddress common.Address, threshold uint64) base.IRuleEntitlementBaseRuleData {
+	return base.IRuleEntitlementBaseRuleData{
+		Operations: []base.IRuleEntitlementBaseOperation{
 			{
 				OpType: uint8(entitlement.CHECK),
 				Index:  0,
 			},
 		},
-		CheckOperations: []base.IRuleEntitlementCheckOperation{
+		CheckOperations: []base.IRuleEntitlementBaseCheckOperation{
 			{
 				OpType:          uint8(entitlement.ERC721),
 				ChainId:         new(big.Int).SetUint64(chainId),
@@ -365,15 +365,15 @@ func erc721Check(chainId uint64, contractAddress common.Address, threshold uint6
 	}
 }
 
-func erc20Check(chainId uint64, contractAddress common.Address, threshold uint64) base.IRuleEntitlementRuleData {
-	return base.IRuleEntitlementRuleData{
-		Operations: []base.IRuleEntitlementOperation{
+func erc20Check(chainId uint64, contractAddress common.Address, threshold uint64) base.IRuleEntitlementBaseRuleData {
+	return base.IRuleEntitlementBaseRuleData{
+		Operations: []base.IRuleEntitlementBaseOperation{
 			{
 				OpType: uint8(entitlement.CHECK),
 				Index:  0,
 			},
 		},
-		CheckOperations: []base.IRuleEntitlementCheckOperation{
+		CheckOperations: []base.IRuleEntitlementBaseCheckOperation{
 			{
 				OpType:  uint8(entitlement.ERC20),
 				ChainId: new(big.Int).SetUint64(chainId),
@@ -385,15 +385,15 @@ func erc20Check(chainId uint64, contractAddress common.Address, threshold uint64
 	}
 }
 
-func customEntitlementCheck(chainId uint64, contractAddress common.Address) base.IRuleEntitlementRuleData {
-	return base.IRuleEntitlementRuleData{
-		Operations: []base.IRuleEntitlementOperation{
+func customEntitlementCheck(chainId uint64, contractAddress common.Address) base.IRuleEntitlementBaseRuleData {
+	return base.IRuleEntitlementBaseRuleData{
+		Operations: []base.IRuleEntitlementBaseOperation{
 			{
 				OpType: uint8(entitlement.CHECK),
 				Index:  0,
 			},
 		},
-		CheckOperations: []base.IRuleEntitlementCheckOperation{
+		CheckOperations: []base.IRuleEntitlementBaseCheckOperation{
 			{
 				OpType:          uint8(entitlement.ISENTITLED),
 				ChainId:         new(big.Int).SetUint64(chainId),
@@ -473,7 +473,7 @@ func expectEntitlementCheckResult(
 	cs client_simulator.ClientSimulator,
 	ctx context.Context,
 	cfg *config.Config,
-	data base.IRuleEntitlementRuleData,
+	data base.IRuleEntitlementBaseRuleData,
 	expected bool,
 ) {
 	result, err := cs.EvaluateRuleData(ctx, cfg, data)

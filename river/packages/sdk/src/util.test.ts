@@ -40,7 +40,7 @@ import {
     createExternalNFTStruct,
     createRiverRegistry,
     createSpaceDapp,
-    IRuleEntitlement,
+    IRuleEntitlementBase,
     Permission,
     ISpaceDapp,
     IArchitectBase,
@@ -498,7 +498,7 @@ export function twoNftRuleData(
     nft1Address: string,
     nft2Address: string,
     logOpType: LogicalOperationType.AND | LogicalOperationType.OR = LogicalOperationType.AND,
-): IRuleEntitlement.RuleDataStruct {
+): IRuleEntitlementBase.RuleDataStruct {
     const leftOperation: Operation = {
         opType: OperationType.CHECK,
         checkType: CheckOperationType.ERC721,
@@ -680,7 +680,7 @@ export const getFixedPricingModule = (pricingModules: PricingModuleStruct[]) => 
     return pricingModules.find((module) => module.name === FIXED_PRICING)
 }
 
-export function getNftRuleData(testNftAddress: `0x${string}`): IRuleEntitlement.RuleDataStruct {
+export function getNftRuleData(testNftAddress: `0x${string}`): IRuleEntitlementBase.RuleDataStruct {
     return createExternalNFTStruct([testNftAddress])
 }
 
@@ -696,7 +696,7 @@ export async function createRole(
     roleName: string,
     permissions: Permission[],
     users: string[],
-    ruleData: IRuleEntitlement.RuleDataStruct,
+    ruleData: IRuleEntitlementBase.RuleDataStruct,
     signer: ethers.Signer,
 ): Promise<CreateRoleContext> {
     let txn: ethers.ContractTransaction | undefined = undefined
