@@ -50,7 +50,9 @@ cp clients/web/app/.env.local-sample clients/web/app/.env.local
 
 Then update `clients/web/app/.env.local` with the required (blank) keys.
 
-3. For local Cloudflare workers to run properly, you'll need to add their secret env variables. At `servers/workers/` you'll see: `gateway-worker`, `token-worker`, and `unfurl-worker`. For each, `cp .dev.vars-sample .dev.vars` and add the required config. The `siwe-worker` is optional for local development.
+3. For local Cloudflare workers to run properly, you'll need to add their secret env variables. At `servers/workers/` you'll see: `gateway-worker`, `token-worker`, `unfurl-worker`, and `stackup-worker`. For each, `cp .dev.vars-sample .dev.vars` and add the required config.
+
+> !! YOU CAN FIND A SAMPLE OF ALL THE REQUIRED VALUES FOR 1 AND 2 IN [THIS NOTION DOC](https://www.notion.so/herenottherelabs/env-files-for-local-dev-046b81ff5bb947d69b9c3cf107c3597d) !!
 
 4. Create a Certificate Authority. Run `./core/scripts/register-ca.sh` from the root of the repository. This will create the required `$HOME/river-ca-cert.pem` and `$HOME/river-ca-key.pem` files.
 
@@ -58,11 +60,27 @@ Then update `clients/web/app/.env.local` with the required (blank) keys.
 
 Open VScode in the root of this directory: `code .`
 
-Launch local server via .vscode/tasks.json:
+There are a few ways to run the local dev environment:
 
-- Use the keystroke: `CMD+P` to bring up the switcher and type `task ~Start Local Dev~` (Once you type the word "task" you will see all the options from task.json in the dropdown)
+### App development against gamma (uses Account Abstraction)
 
-This workflow runs the `.vscode/tasks.json` task labeled `~Start Local Dev~` and starts everything needed to work and run integration tests locally.
+- Use the keystroke: `Ctrl+Shift+P` to bring up the command pallets and type `tasks`, select `Tasks: Run Task` and then select `Apps and workers`. This will start the required services for the app and workers to run locally, against River's gamma environment (base-sepolia, deployed river nodes, etc).
+- You MUST make sure the env switcher in the bottom right of the app UI is set to `gamma`.
+
+### App development against local blockchains/servers with Account Abstraction
+
+- This mirrors the production setup, locally. Use the keystroke: `Ctrl+Shift+P` to bring up the command pallets and type `tasks`, select `~4337: Start Local Dev~`. It will take several minutes to start up.
+- You MUST make sure the env switcher in the bottom right of the app UI is set to `local` to run against the local environment.
+- If you are working on user operations, base chain transactions, SpaceDapp, you should run the app this way!!
+
+### App development against local blockchains/servers without Account Abstraction
+
+- This is the same as above, without account abstraction. Use the keystroke: `Ctrl+Shift+P` to bring up the command pallets and type `tasks`, select `~Start Local Dev~`.
+- You can use the env switcher in the bottom right of the app UI to switch between `local` and `gamma`.
+
+- This is not recommended for most development, because things can become confusing when you have to reconcile the account abstraction flow vs the non-account abstraction flow, you might write working code that follows a path that is not called in AA flow, etc.However, if you are working on something that is more related to River protocol (messsaging, streams, etc) and not user operations or base chain txs, you can use this setup.
+
+This is also an ok step to debug a base chain transaction - like maybe you want to see that the tx actually works w/out the AA layer - but you should always test the final version of your code in the AA flow.
 
 ![Screen Shot 2022-09-02 at 2 58 02 PM](https://user-images.githubusercontent.com/950745/188241222-c71d65dc-cda4-41db-8272-f5bdb18e26bf.png)
 
@@ -71,14 +89,6 @@ This workflow runs the `.vscode/tasks.json` task labeled `~Start Local Dev~` and
 If you want to restart everything, `CMD+P` + `task KillAllLocalDev` will search for and terminate our processes. Please note this script both needs to be kept up to date if something is added, and also has very broad search paramaters. If you want to try it out first, running `./scripts/kill-all-local-dev.sh` from the terminal will prompt you before it kills anything.
 
 If you want to restart just the server, `CMD+P` + `task RestartCasablanca` will relaunch the servers. Same for `CMD+P` + `task RestartWatches`
-
-# App
-
-If you would like to run the main app:
-
-`cp clients/web/app/.env.local-sample clients/web/app/.env.local` and populate with [Giphy API key](https://www.notion.so/herenottherelabsCredentials-4f284469da01425a9f7f936b9e3ed8aa)
-
-`cp servers/workers/unfurl-worker/.dev.vars-sample servers/workers/unfurl-worker/.dev.vars` and populate with [Twitter bearer token](https://www.notion.so/herenottherelabsCredentials-4f284469da01425a9f7f936b9e3ed8aa)
 
 ## Tests
 
