@@ -1,7 +1,10 @@
 'use client'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useSyncExternalStore } from 'react'
 import { type Observable, type PersistedModel } from '@river-build/sdk'
 
+// TODO: Some util props:
+// - select: select a subset of the data, or transform it
+// - remove onError is is not a persisted model data
 export type ObservableConfig<Data> = Data extends PersistedModel<infer UnwrappedData>
     ? {
           fireImmediately?: boolean
@@ -48,44 +51,28 @@ export function useObservable<T>(
     observable: Observable<T>,
     config?: ObservableConfig<T>,
 ): ObservableValue<T> {
-    const [value, setValue] = useState<PersistedModel<T> | T>(
-        isPersisted<T>(observable.value) ? observable.value.data : observable.value,
-    )
-
     const opts = useMemo(
         () => ({ fireImmediately: true, ...config }),
         [config],
     ) as ObservableConfig<T>
 
-    const onSubscribe = useCallback(
-        (newValue: PersistedModel<T> | T) => {
-            let value: T | undefined
-            if (isPersisted(newValue)) {
-                value = newValue.data
-                if (newValue.status === 'loaded') {
-                    opts.onUpdate?.(newValue.data)
-                }
-                if (newValue.status === 'error') {
-                    opts.onError?.(newValue.error)
-                }
-            } else {
-                value = newValue
-                opts.onUpdate?.(newValue)
-            }
-            setValue(value)
-        },
-        [opts],
+    const value = useSyncExternalStore(
+        (subscriber) => observable.subscribe(subscriber, { fireImediately: opts?.fireImmediately }),
+        () => observable.value,
     )
 
     useEffect(() => {
-        if (!observable) {
-            return
+        if (isPersisted(value)) {
+            if (value.status === 'loaded') {
+                opts.onUpdate?.(value.data)
+            }
+            if (value.status === 'error') {
+                opts.onError?.(value.error)
+            }
+        } else {
+            opts.onUpdate?.(value)
         }
-        const unsub = observable.subscribe(onSubscribe, {
-            fireImediately: opts?.fireImmediately,
-        })
-        return unsub
-    }, [opts, observable, onSubscribe])
+    }, [opts, value])
 
     const data = useMemo(() => {
         if (isPersisted(value)) {

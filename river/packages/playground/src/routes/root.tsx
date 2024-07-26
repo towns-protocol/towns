@@ -1,35 +1,38 @@
 import { useAccount, useConnect } from 'wagmi'
-import { makeRiverConfig } from '@river-build/sdk'
-import { useRiver, useRiverConnection } from '@river-build/react-sdk'
+import { useRiverConnection } from '@river-build/react-sdk'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { useEthersSigner } from '@/utils/viem-to-ethers'
+import { UserAuthStatusBlock } from '@/components/blocks/auth-block'
+import { ConnectionBlock } from '@/components/blocks/connection-block'
+import { SpacesBlock } from '@/components/blocks/spaces'
+import { type Env, RiverEnvSwitcher } from '@/components/dialog/env-switcher'
+import { TimelineBlock } from '@/components/blocks/timeline'
+import { ChannelsBlock } from '@/components/blocks/channels'
+import { SpaceProvider } from '@/hooks/current-space'
+import { ChannelProvider } from '@/hooks/current-channel'
 
 export const ConnectRoute = () => {
-    const { isConnected } = useAccount()
+    const { isConnected: isWalletConnected } = useAccount()
 
     return (
         <div className="flex flex-col gap-6">
-            {isConnected ? <ConnectRiver /> : <ChainConnectButton />}
+            {isWalletConnected ? <ConnectRiver /> : <ChainConnectButton />}
         </div>
     )
 }
 
 const ChainConnectButton = () => {
     const { connector: activeConnector } = useAccount()
-    const { connect, connectors, error, isLoading, pendingConnector } = useConnect()
+    const { connectors, connect, error, isLoading } = useConnect()
 
     return (
         <div>
             {connectors.map((connector) => (
-                <Button
-                    disabled={!connector.ready}
-                    key={connector.id}
-                    onClick={() => connect({ connector })}
-                >
+                <Button key={connector.id} onClick={() => connect({ connector })}>
                     {activeConnector?.id === connector.id
                         ? `Connected - ${connector.name}`
                         : connector.name}
-                    {isLoading && pendingConnector?.id === connector.id && ' (connecting)'}
+                    {isLoading && ' (connecting)'}
                 </Button>
             ))}
             {error && <div>{error.message}</div>}
@@ -37,51 +40,50 @@ const ChainConnectButton = () => {
     )
 }
 
-const riverConfig = makeRiverConfig('gamma')
-
 const ConnectRiver = () => {
-    const signer = useEthersSigner()
-    const { connect, disconnect, isConnecting, isConnected } = useRiverConnection()
+    const [envId, setEnv] = useState<Env['id']>('gamma')
+    const { isConnected } = useRiverConnection()
 
     return (
         <>
-            <div>
-                <Button
-                    onClick={() => {
-                        if (isConnected) {
-                            disconnect()
-                        } else {
-                            if (signer) {
-                                connect(signer, { riverConfig })
-                            }
-                        }
-                    }}
-                >
-                    {isConnected ? 'Disconnect' : isConnecting ? 'Connecting...' : 'Connect'}
-                </Button>
-            </div>
             {isConnected ? (
                 <>
-                    <h2 className="text-lg font-semibold">Connected to Sync Agent</h2>
+                    <div className="flex items-center justify-between gap-2">
+                        <h2 className="text-lg font-semibold">Connected to Sync Agent</h2>
+                        <RiverEnvSwitcher currentEnv={envId} setEnv={setEnv} />
+                    </div>
                     <ConnectedContent />
                 </>
             ) : (
-                <h2 className="text-lg font-semibold">Not Connected</h2>
+                <div className="max-w-lg">
+                    <RiverEnvSwitcher currentEnv={envId} setEnv={setEnv} />
+                </div>
             )}
         </>
     )
 }
 
 const ConnectedContent = () => {
-    const { data: nodeUrls } = useRiver((s) => s.riverStreamNodeUrls, {
-        onUpdate: (data) => console.log('onUpdate', data),
-        onError: (error) => console.error('onError', error),
-    })
+    const [spaceId, setSpaceId] = useState<string>()
+    const [channelId, setChannelId] = useState<string>()
+
+    const changeSpace = (spaceId: string) => {
+        setSpaceId(spaceId)
+        setChannelId(undefined)
+    }
+    const changeChannel = (channelId: string) => setChannelId(channelId)
+
     return (
-        <div className="max-w-xl rounded-sm border border-zinc-200 bg-zinc-100 p-2">
-            <pre className="overflow-auto whitespace-pre-wrap">
-                {JSON.stringify(nodeUrls, null, 2)}
-            </pre>
+        <div className="grid grid-cols-4 gap-4">
+            <ConnectionBlock />
+            <UserAuthStatusBlock />
+            <SpacesBlock changeSpace={changeSpace} />
+            <SpaceProvider spaceId={spaceId}>
+                <ChannelsBlock changeChannel={changeChannel} />
+                <ChannelProvider channelId={channelId}>
+                    <TimelineBlock />
+                </ChannelProvider>
+            </SpaceProvider>
         </div>
     )
 }

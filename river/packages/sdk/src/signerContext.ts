@@ -21,6 +21,7 @@ import { Err } from '@river-build/proto'
  * @param signerPrivateKey - a function that returns a private key to sign events
  * @param creatorAddress - a creator, i.e. user address derived from the user public key
  * @param delegateSig - an optional delegate signature
+ * @param delegateExpiryEpochMs - an optional delegate expiry epoch
  */
 export interface SignerContext {
     signerPrivateKey: () => string

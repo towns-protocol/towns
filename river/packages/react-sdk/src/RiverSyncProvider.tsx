@@ -12,8 +12,17 @@ export const RiverSyncProvider = (props: RiverSyncProviderProps) => {
     const [syncAgent, setSyncAgent] = useState(() => props.syncAgent)
 
     useEffect(() => {
+        setSyncAgent(props.syncAgent)
+    }, [props.syncAgent])
+
+    useEffect(() => {
         if (syncAgent) {
             syncAgent.start()
+        }
+        return () => {
+            if (syncAgent) {
+                syncAgent.stop()
+            }
         }
     }, [syncAgent])
 

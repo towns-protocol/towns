@@ -4,20 +4,19 @@ import { Identifiable, Store } from '../../../store/store'
 import { RiverConnection } from '../../river-connection/riverConnection'
 import { ChannelMessage_Post_Attachment, ChannelMessage_Post_Mention } from '@river-build/proto'
 import { Timeline } from '../../timeline/timeline'
-import { check } from '@river-build/dlog'
+import { check, dlogger } from '@river-build/dlog'
 import { isDefined } from '../../../check'
 import { Observable } from '../../../observable/observable'
 import { StreamConnectionStatus } from '../../streams/models/streamConnectionStatus'
+import { ChannelDetails, SpaceDapp } from '@river-build/web3'
 
-export interface ChannelMetadata {
-    name: string
-}
+const logger = dlogger('csb:channel')
 
 export interface ChannelModel extends Identifiable {
     id: string
     spaceId: string
     isJoined: boolean
-    metadata?: ChannelMetadata
+    metadata?: ChannelDetails
 }
 
 @persistedObservable({ tableName: 'channel' })
@@ -28,6 +27,7 @@ export class Channel extends PersistedObservable<ChannelModel> {
         id: string,
         spaceId: string,
         private riverConnection: RiverConnection,
+        private spaceDapp: SpaceDapp,
         store: Store,
     ) {
         super({ id, spaceId, isJoined: false }, store)
@@ -49,6 +49,20 @@ export class Channel extends PersistedObservable<ChannelModel> {
                 this.connectionStatus.setValue(StreamConnectionStatus.disconnected)
             }
         })
+
+        if (!this.data.metadata) {
+            // todo aellis this needs batching and retries, and should be updated on spaceChannelUpdated events
+            this.spaceDapp
+                .getChannelDetails(this.data.spaceId, this.data.id)
+                .then((metadata) => {
+                    if (metadata) {
+                        this.setData({ metadata })
+                    }
+                })
+                .catch((error) => {
+                    logger.error('failed to get channel details', { id: this.data.id, error })
+                })
+        }
     }
 
     async sendMessage(
@@ -71,7 +85,7 @@ export class Channel extends PersistedObservable<ChannelModel> {
                 content: {
                     body: message,
                     mentions: options?.mentions ?? [],
-                    attachments: [],
+                    attachments: options?.attachments ?? [],
                 },
             }),
         )

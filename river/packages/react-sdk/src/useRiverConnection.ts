@@ -1,7 +1,7 @@
 import type { SyncAgentConfig } from '@river-build/sdk'
 import { useCallback, useMemo, useState } from 'react'
 import type { ethers } from 'ethers'
-import { connectRiver } from './connectRiver'
+import { signAndConnect } from './connectRiver'
 import { useRiverSync } from './internals/useRiverSync'
 
 export const useRiverConnection = () => {
@@ -15,8 +15,11 @@ export const useRiverConnection = () => {
             }
 
             setConnecting(true)
-            return connectRiver(signer, config)
-                .then((syncAgent) => river?.setSyncAgent(syncAgent))
+            return signAndConnect(signer, config)
+                .then((syncAgent) => {
+                    river?.setSyncAgent(syncAgent)
+                    return syncAgent
+                })
                 .finally(() => setConnecting(false))
         },
         [river],

@@ -17,7 +17,7 @@ yarn add @river-build/react-sdk
 `@river-build/react-sdk` suggests you to use Wagmi to connect to River.
 Wrap your app with `RiverSyncProvider` and use the `useConnectRiver` hook to connect to River.
 
-> [!note] If you're using Viem
+> [!NOTE]
 > You'll need to use `useEthersSigner` to get the signer from viem wallet client.
 > You can get the hook from [wagmi docs](https://wagmi.sh/react/guides/ethers#usage-1).
 

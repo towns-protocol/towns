@@ -64,6 +64,7 @@
         "Casablanca",
         "Casablanca-No-Entitlements",
         "XChain-Single",
+        "Playground",
       ],
       "group": {
         "kind": "build",
@@ -79,6 +80,7 @@
         "WatchCasablancaProto",
         "WatchCasablancaWeb3",
         "WatchCasablancaSdk",
+        "WatchReactSdk",
       ],
       "group": {
         "kind": "build",
@@ -359,9 +361,29 @@
       }
     },
     {
+      "label": "Playground",
+      "type": "shell",
+      "command": "cd packages/playground && yarn dev",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "apps"
+      }
+    },
+    {
       "label": "WatchCasablancaSdk",
       "type": "shell",
       "command": "cd packages/sdk && yarn watch",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-watch"
+      }
+    },
+    {
+      "label": "WatchReactSdk",
+      "type": "shell",
+      "command": "cd packages/react-sdk && yarn watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {

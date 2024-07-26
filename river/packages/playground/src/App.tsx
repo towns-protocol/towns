@@ -1,25 +1,35 @@
 import { RouterProvider } from 'react-router-dom'
-import { WagmiConfig, configureChains, createConfig, mainnet } from 'wagmi'
-import { publicProvider } from 'wagmi/providers/public'
-import { InjectedConnector } from 'wagmi/connectors/injected'
-import { RiverSyncProvider } from '@river-build/react-sdk'
+import { WagmiConfig } from 'wagmi'
+
+import { RiverSyncProvider, connectRiver } from '@river-build/react-sdk'
+
+import { useEffect, useState } from 'react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { type SyncAgent } from '@river-build/sdk'
 import { router } from './routes'
-
-const { publicClient, webSocketPublicClient } = configureChains([mainnet], [publicProvider()])
-
-const config = createConfig({
-    autoConnect: true,
-    publicClient,
-    webSocketPublicClient,
-    connectors: [new InjectedConnector()],
-})
+import { config } from './config/wagmi'
+import { loadAuth } from './utils/persist-auth'
 
 function App() {
+    const [queryClient] = useState(() => new QueryClient())
+    const [syncAgent, setSyncAgent] = useState<SyncAgent | undefined>()
+
+    useEffect(() => {
+        const auth = loadAuth()
+        if (auth) {
+            connectRiver(auth.signerContext, { riverConfig: auth.riverConfig }).then((syncAgent) =>
+                setSyncAgent(syncAgent),
+            )
+        }
+    }, [])
+
     return (
         <WagmiConfig config={config}>
-            <RiverSyncProvider>
-                <RouterProvider router={router} />
-            </RiverSyncProvider>
+            <QueryClientProvider client={queryClient}>
+                <RiverSyncProvider syncAgent={syncAgent}>
+                    <RouterProvider router={router} />
+                </RiverSyncProvider>
+            </QueryClientProvider>
         </WagmiConfig>
     )
 }
