@@ -71,11 +71,14 @@ function UserOpTxModalContent({
 
     const gasPrice = currOpGas?.maxFeePerGas ?? 0.0
     const gasLimit = currOpGas?.callGasLimit ?? 0.0
+    const verificationGasLimit = currOpGas?.verificationGasLimit ?? 0.0
     const preverificationGas = currOpGas?.preverificationGas ?? 0.0
 
-    const gasCost = BigNumber.from(gasLimit)
-        .mul(BigNumber.from(gasPrice))
+    const sumGas = BigNumber.from(gasLimit)
         .add(BigNumber.from(preverificationGas))
+        .add(BigNumber.from(verificationGasLimit))
+
+    const gasCost = sumGas.mul(BigNumber.from(gasPrice))
 
     const totalCost = gasCost.add(BigNumber.from(currOpValue ?? 0))
 
