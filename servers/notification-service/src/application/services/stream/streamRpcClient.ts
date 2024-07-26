@@ -96,19 +96,13 @@ const loggingInterceptor: () => Interceptor = () => {
                 error += e.error ?? 0
             }
             if (interval > 0) {
-                histogramLogger.info(
-                    'RPC stats',
-                    'interval=',
+                histogramLogger.info('RPC stats', {
                     interval,
-                    'total=',
                     total,
-                    'error=',
                     error,
-                    'intervalMs=',
                     histogramIntervalMs,
-                    '\n',
-                    sortObjectKey(callHistogram),
-                )
+                    histogram: sortObjectKey(callHistogram),
+                })
                 for (const key in callHistogram) {
                     callHistogram[key].interval = 0
                 }

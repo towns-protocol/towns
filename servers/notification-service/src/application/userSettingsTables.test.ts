@@ -142,37 +142,50 @@ describe('userSettingsTables', () => {
     describe('getBlockedUsersBy', () => {
         test('should return an array of blocked users for a given user ID', async () => {
             const BlockedUsers = ['blockedUser1', 'blockedUser2']
-            const findUniqueMock = jest
-                .spyOn(database.userSettings, 'findUnique')
-                .mockResolvedValue({
+            // Mock the findMany method
+            const findManyMock = jest.spyOn(database.userSettings, 'findMany').mockResolvedValue([
+                {
                     UserId: 'userId',
+                    BlockedUsers: BlockedUsers,
                     ReplyTo: true,
                     Mention: true,
                     DirectMessage: true,
-                    BlockedUsers,
-                })
+                },
+            ])
+            const results = await UserSettingsTables.getBlockedUsersByUserIds(['userId'])
 
-            const result = await UserSettingsTables.getBlockedUsersBy('userId')
+            expect(results.length).toBeGreaterThanOrEqual(1)
+            const blockedUsers = results[0].blockedUsers
 
-            expect(findUniqueMock).toHaveBeenCalledWith({
+            expect(findManyMock).toHaveBeenCalledWith({
                 where: {
-                    UserId: 'userId',
+                    UserId: {
+                        in: ['userId'],
+                    },
                 },
                 select: {
+                    UserId: true,
                     BlockedUsers: true,
                 },
             })
-            expect(result).toEqual(BlockedUsers)
+            expect(blockedUsers).toEqual(BlockedUsers)
         })
 
         test('should return an empty array if the user is not found', async () => {
-            const findUniqueMock = jest
-                .spyOn(database.userSettings, 'findUnique')
-                .mockResolvedValue(null)
+            // Mock the findMany method
+            const findManyMock = jest.spyOn(database.userSettings, 'findMany').mockResolvedValue([
+                {
+                    UserId: 'userId',
+                    BlockedUsers: [],
+                    ReplyTo: true,
+                    Mention: true,
+                    DirectMessage: true,
+                },
+            ])
 
-            const result = await UserSettingsTables.getBlockedUsersBy('userId')
+            const results = await UserSettingsTables.getBlockedUsersByUserIds(['userId'])
 
-            expect(findUniqueMock).toHaveBeenCalledWith({
+            expect(findManyMock).toHaveBeenCalledWith({
                 where: {
                     UserId: 'userId',
                 },
@@ -180,7 +193,7 @@ describe('userSettingsTables', () => {
                     BlockedUsers: true,
                 },
             })
-            expect(result).toEqual([])
+            expect(results[0]?.blockedUsers).toEqual([])
         })
     })
 })

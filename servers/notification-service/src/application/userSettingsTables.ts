@@ -58,16 +58,24 @@ export class UserSettingsTables {
         })
     }
 
-    public static async getBlockedUsersBy(userId: string): Promise<string[]> {
-        const userSettings = await database.userSettings.findUnique({
+    public static async getBlockedUsersByUserIds(
+        userIds: string[],
+    ): Promise<{ userId: string; blockedUsers: string[] }[]> {
+        const userSettings = await database.userSettings.findMany({
             where: {
-                UserId: userId,
+                UserId: {
+                    in: userIds,
+                },
             },
             select: {
+                UserId: true,
                 BlockedUsers: true,
             },
         })
 
-        return userSettings?.BlockedUsers ?? []
+        return userSettings.map((setting) => ({
+            userId: setting.UserId,
+            blockedUsers: setting.BlockedUsers,
+        }))
     }
 }

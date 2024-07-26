@@ -61,7 +61,7 @@ export class NotificationService {
                 (
                     await UserSettingsTables.getUserMutedInChannel(
                         notificationData.users,
-                        (notificationContent as NotificationContentMessageSchema).spaceId,
+                        notificationContent.spaceId,
                         channelId,
                     )
                 ).map((user) => user.UserId),
@@ -137,7 +137,14 @@ export class NotificationService {
             )
         }
 
-        for (const userId of notificationData.users) {
+        const blockedUsers = await UserSettingsTables.getBlockedUsersByUserIds(
+            notificationData.users,
+        )
+        logger.info(
+            `${notificationData.users.length} found ${blockedUsers.length} blocked users lists`,
+        )
+        for (const blockedList of blockedUsers) {
+            const { userId, blockedUsers } = blockedList
             const isUserGloballyMuted = mutedUsersInChannel.has(userId)
             if (userId === notificationData.sender || (!isDMorGDM && isUserGloballyMuted)) {
                 continue
@@ -153,9 +160,7 @@ export class NotificationService {
                 reactionUsersTagged.some((u) => u.userId === userId) ||
                 attachmentUsersTagged.some((user) => user.UserId === userId)
 
-            const isSenderUserBlocked = (
-                await UserSettingsTables.getBlockedUsersBy(userId)
-            ).includes(notificationData.sender)
+            const isSenderUserBlocked = blockedUsers.includes(notificationData.sender)
 
             const isUserMutedForMention = isMentionedUser && mutedMentionUsers.has(userId)
             const isUserMutedForReplyTo =
