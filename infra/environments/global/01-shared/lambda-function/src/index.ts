@@ -249,108 +249,6 @@ const createRiverNodeDbUser = async ({
   }
 }
 
-const createNotificationServiceDbUser = async ({
-  notificationServiceUserDbConfig,
-  masterUserCredentials,
-}: {
-  notificationServiceUserDbConfig: DBConfig,
-  masterUserCredentials: {username: string, password: string}
-}) => {
-  console.log('creating notification service db user')
-
-  const pgClient = new Client({
-    host: notificationServiceUserDbConfig.HOST,
-    database: 'postgres',
-    password: masterUserCredentials.password,
-    user: masterUserCredentials.username,
-    port: notificationServiceUserDbConfig.PORT,
-    ssl: {
-      rejectUnauthorized: false
-    }
-  })
-
-  let error;
-
-  try {
-    console.log('connecting')
-    await pgClient.connect();
-    console.log('connected')
-
-    // create user if not exists
-    console.log('creating user')
-
-    const createUserQuery = `
-      DO
-      $do$
-      BEGIN
-        IF NOT EXISTS (
-          SELECT FROM pg_catalog.pg_user WHERE usename = '${notificationServiceUserDbConfig.USER}'
-        ) THEN
-          CREATE USER ${notificationServiceUserDbConfig.USER} WITH PASSWORD '${notificationServiceUserDbConfig.PASSWORD}';
-        END IF;
-      END
-      $do$
-    `;
-
-    await pgClient.query(createUserQuery);
-    console.log('created user')
-
-    try {
-      console.log('creating database')
-      const createDatabaseQuery = `CREATE DATABASE ${notificationServiceUserDbConfig.DATABASE};`;
-      await pgClient.query(createDatabaseQuery);
-      console.log('created database')
-    } catch (e) {
-      if (isDBAlreadyExistsError(e)) {
-        console.log('database already exists')
-      } else {
-        console.error('error creating database: ', e)
-        throw e;
-      }
-    }
-
-    console.log('granting create schema to user')
-
-    await pgClient.query('SELECT pg_advisory_lock(1);'); // 1 is an arbitrary lock ID
-    const grantCreateSchemaQuery = `
-      GRANT CREATE ON DATABASE ${notificationServiceUserDbConfig.DATABASE} TO ${notificationServiceUserDbConfig.USER};
-    `;
-
-    // run the query above with 5 retry attempts:
-    const executeCreateQuery = async () => {
-      let attempt = 0;
-      let error;
-      while (attempt < 5) {
-        try {
-          await pgClient.query(grantCreateSchemaQuery);
-          break;
-        } catch (e) {
-          console.warn(`error executing create query attempt: ${attempt}`, e)
-          error = e;
-          attempt++;
-        }
-      }
-      if (error) {
-        throw error;
-      }
-    }
-
-    await executeCreateQuery()
-
-    console.log('done creating user')
-
-  } catch (e) {
-    error = e;
-  } finally {
-    await pgClient.query('SELECT pg_advisory_unlock(1);');
-    await pgClient.end()
-  }
-
-  if (error) {
-    throw error;
-  }
-}
-
 const createReadOnlyDbUser = async ({
   riverReadOnlyUserDBConfig,
   masterUserCredentials,
@@ -475,35 +373,6 @@ async function findOrCreateRiverUserDBConfig() {
   }
 }
 
-async function findOrCreateNotificationServiceUserDbConfig() {
-  console.log('finding or creating notification service db password')
-  if (!process.env.NOTIFICATION_SERVICE_USER_DB_CONFIG) {
-    throw new Error('NOTIFICATION_SERVICE_USER_DB_CONFIG not set')
-  }
-  const NOTIFICATION_SERVICE_USER_DB_CONFIG = JSON.parse(process.env.NOTIFICATION_SERVICE_USER_DB_CONFIG)
-
-  const secretsClient = new SecretsManagerClient({ region: "us-east-1" })
-  const command = new GetSecretValueCommand({
-    SecretId: NOTIFICATION_SERVICE_USER_DB_CONFIG.PASSWORD_ARN
-  })
-  const secretValue = await secretsClient.send(command);
-  let password = secretValue.SecretString;
-  if (password === 'DUMMY') {
-    console.log('saving new notification service db password')
-    password = generatePostgresPassword();
-    const putSecretCommand = new PutSecretValueCommand({
-      SecretId: NOTIFICATION_SERVICE_USER_DB_CONFIG.PASSWORD_ARN,
-      SecretString: password,
-    })
-    await secretsClient.send(putSecretCommand);
-  }
-
-  return {
-    ...NOTIFICATION_SERVICE_USER_DB_CONFIG,
-    PASSWORD: password,
-  }
-}
-
 async function findOrCreateRiverReadOnlyUserDBConfig() {
   console.log('finding or creating river read only user password')
   if (!process.env.RIVER_READ_ONLY_USER_DB_CONFIG) {
@@ -542,7 +411,6 @@ export const handler: Handler = async (event, context, callback) => {
     const riverUserDBConfig = await findOrCreateRiverUserDBConfig();
     const masterUserCredentials = await getMasterUserCredentials();
     const riverReadOnlyUserDBConfig = await findOrCreateRiverReadOnlyUserDBConfig();
-    const notificationServiceUserDbConfig = await findOrCreateNotificationServiceUserDbConfig();
 
     let riverNodeSchemaName; 
     
@@ -569,11 +437,6 @@ export const handler: Handler = async (event, context, callback) => {
       masterUserCredentials,
     });
 
-    await createNotificationServiceDbUser({
-      notificationServiceUserDbConfig,
-      masterUserCredentials,
-    });
-
     // need to create the schema before creating the read only user,
     // because the read only user needs to maintain read access to the schema
     await createSchema({
@@ -581,19 +444,8 @@ export const handler: Handler = async (event, context, callback) => {
       dbConfig: riverUserDBConfig,
     });
 
-    await createSchema({
-      schemaName: 'notification_service',
-      dbConfig: notificationServiceUserDbConfig,
-    });
-
     await createReadOnlyDbUser({
       schemaName: riverNodeSchemaName,
-      riverReadOnlyUserDBConfig,
-      masterUserCredentials,
-    });
-
-    await createReadOnlyDbUser({
-      schemaName: 'notification_service',
       riverReadOnlyUserDBConfig,
       masterUserCredentials,
     });

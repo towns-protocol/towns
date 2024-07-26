@@ -28,7 +28,7 @@ module "post_provision_config_lambda_function" {
   version                = "7.2.0"
   function_name          = "${local.name}-lambda"
   description            = "Lambda function to configure the infra after provisioning"
-  handler                = "dist/index.handler"
+  handler                = "index.handler"
   runtime                = "nodejs20.x"
   ephemeral_storage_size = 512
   architectures          = ["x86_64"]
@@ -66,13 +66,6 @@ module "post_provision_config_lambda_function" {
       USER         = "river-readonly"
       PASSWORD_ARN = local.global_remote_state.readonlyuser_db_password_secret.arn
     })
-    NOTIFICATION_SERVICE_USER_DB_CONFIG = jsonencode({
-      HOST         = var.river_user_db_config.host
-      PORT         = var.river_user_db_config.port
-      DATABASE     = var.river_user_db_config.database
-      USER         = "notification_service"
-      PASSWORD_ARN = local.global_remote_state.notification_service_db_password_secret.arn
-    })
     RIVER_NODE_WALLET_CREDENTIALS_ARN       = var.river_node_wallet_credentials_arn
     RIVER_DB_CLUSTER_MASTER_USER_SECRET_ARN = var.river_db_cluster_master_user_secret_arn
     RUN_MODE                                = local.run_mode
@@ -101,8 +94,7 @@ module "post_provision_config_lambda_function" {
           "Resource": [
             "${var.river_user_db_config.password_arn}",
             "${local.global_remote_state.readonlyuser_db_password_secret.arn}",
-            "${var.river_node_wallet_credentials_arn}",
-            "${local.global_remote_state.notification_service_db_password_secret.arn}"
+            "${var.river_node_wallet_credentials_arn}"
           ]
         }
       ]

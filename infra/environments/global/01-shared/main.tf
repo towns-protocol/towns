@@ -177,7 +177,7 @@ resource "null_resource" "build_lambda" {
 
 locals {
   lambda_zip_file_name = "post_provision_config_lambda_code.zip"
-  source_dir           = "${path.root}/lambda-function/"
+  source_dir           = "${path.root}/lambda-function/dist"
 }
 
 data "archive_file" "zip_lambda" {
