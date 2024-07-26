@@ -70,22 +70,15 @@ export const ValidateMembership = () => {
     ])
 
     useEffect(() => {
-        if (analytics && analytics.pseudoId === undefined && userId) {
+        if (analytics && userId) {
             const pId = analytics.setPseudoId(userId)
-            analytics?.identify(
-                pId,
-                {
-                    anonymousId: analytics.anonymousId,
-                    pseudoId: pId,
-                },
-                () => {
-                    console.log(
-                        '[analytics][ValidateMembership] identify logged in user',
-                        pId,
-                        analytics.commoneProperties,
-                    )
-                },
-            )
+            const tracked = {
+                anonymousId: analytics.anonymousId,
+                pseudoId: pId,
+            }
+            analytics?.identify(pId, tracked, () => {
+                console.log('[analytics][ValidateMembership] identify logged in user', tracked)
+            })
         }
     }, [analytics, userId])
 

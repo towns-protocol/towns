@@ -7,6 +7,7 @@ import { clearEmbeddedWalletStorage } from '@towns/privy/EmbeddedSignerContext'
 import { ErrorNotification } from '@components/Notifications/ErrorNotifcation'
 import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
 import { useUnsubscribeNotification } from 'hooks/usePushSubscription'
+import { useAnalytics } from 'hooks/useAnalytics'
 import { useAutoLoginToRiverIfEmbeddedWallet } from './useAutoLoginToRiverIfEmbeddedWallet'
 
 type CombinedAuthContext = {
@@ -125,6 +126,7 @@ function usePrivyLoginWithErrorHandler({
     loginToRiverAfterPrivy?: () => void
 }) {
     const { end: endPublicPageLoginFlow } = usePublicPageLoginFlow()
+    const { analytics } = useAnalytics()
     const { login: privyLogin } = useLogin({
         onComplete(user, isNewUser, wasAlreadyAuthenticated, loginMethod) {
             // don't call on page load when user already authenticated
@@ -132,10 +134,31 @@ function usePrivyLoginWithErrorHandler({
             // so we need to check if the user is already authenticated to river too (loggedInWalletAddress)
             if (!wasAlreadyAuthenticated && !loggedInWalletAddress) {
                 loginToRiverAfterPrivy?.()
+                const pseudoId = user?.wallet?.address
+                    ? analytics?.setPseudoId(user.wallet.address)
+                    : undefined
+                try {
+                    const tracked = {
+                        isNewUser,
+                        loginMethod,
+                        pseudoId,
+                    }
+                    analytics?.track('login success', tracked, () => {
+                        console.log('[analytics] login success', tracked)
+                    })
+                } catch (error) {
+                    console.error('[analytics] Error tracking login success', error)
+                }
             }
         },
         onError: (error) => {
             endPublicPageLoginFlow()
+            const tracked = {
+                error,
+            }
+            analytics?.track('login error', tracked, () => {
+                console.log('[analytics] login error', tracked)
+            })
             if (error === 'exited_auth_flow') {
                 return
             }
