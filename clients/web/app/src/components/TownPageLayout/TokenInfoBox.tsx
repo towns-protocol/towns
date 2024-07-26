@@ -1,5 +1,5 @@
 import React from 'react'
-import { Box, Icon, Text } from '@ui'
+import { Box, BoxProps, Icon, Text } from '@ui'
 import { TokenImage } from '@components/Tokens/TokenSelector/TokenImage'
 import { useTokenMetadataForChainId } from 'api/lib/collectionMetadata'
 import { vars } from 'ui/styles/vars.css'
@@ -72,9 +72,21 @@ export const TokenInfoBox = ({
     )
 }
 
-function SelectedToken({ contractAddress, chainId }: { contractAddress: string; chainId: number }) {
-    const { data: tokenDataWithChainId } = useTokenMetadataForChainId(contractAddress, chainId)
-
+export function SelectedToken({
+    contractAddress,
+    chainId,
+    size = 'x3',
+    ...boxProps
+}: {
+    contractAddress: string
+    chainId: number
+    size?: BoxProps['width']
+} & Omit<BoxProps, 'size'>) {
+    const { data: tokenDataWithChainId, error } = useTokenMetadataForChainId(
+        contractAddress,
+        chainId,
+    )
+    console.log('tokenDataWithChainId', tokenDataWithChainId, error)
     return (
         <Box
             tooltip={
@@ -86,9 +98,16 @@ function SelectedToken({ contractAddress, chainId }: { contractAddress: string; 
             }
         >
             {tokenDataWithChainId ? (
-                <TokenImage imgSrc={tokenDataWithChainId.data?.imgSrc} width="x3" />
+                <TokenImage imgSrc={tokenDataWithChainId.data?.imgSrc} width={size} />
             ) : (
-                <Box centerContent width="x3" aspectRatio="1/1" background="level4" rounded="sm" />
+                <Box
+                    centerContent
+                    aspectRatio="1/1"
+                    background="level4"
+                    borderRadius="sm"
+                    width={size}
+                    {...boxProps}
+                />
             )}
         </Box>
     )

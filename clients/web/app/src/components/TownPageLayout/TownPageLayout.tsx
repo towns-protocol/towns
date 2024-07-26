@@ -22,9 +22,9 @@ import {
 import { useGetSpaceIdentity } from 'hooks/useSpaceIdentity'
 import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
 import { useReadableMembershipInfo } from './useReadableMembershipInfo'
-import { durationTitleSubtitle } from './townPageUtils'
 import { TokenInfoBox } from './TokenInfoBox'
 import { InformationBox } from './InformationBox'
+import { getDurationText, getPriceText } from './townPageUtils'
 
 type TownPageLayoutProps = {
     headerContent?: React.ReactNode
@@ -97,6 +97,16 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
     const [leftColWidth, rightColWidth] = useColumnWidths({ leftColRef, rightColRef })
     const isJoining = !!usePublicPageLoginFlow().joiningSpace
 
+    const priceText = useMemo(
+        () => getPriceText(membershipInfo?.price, membershipPricingModule?.isFixed),
+        [membershipInfo?.price, membershipPricingModule],
+    )
+
+    const durationText = useMemo(
+        () => getDurationText(membershipInfo?.duration),
+        [membershipInfo?.duration],
+    )
+
     return (
         <>
             <Stack
@@ -149,8 +159,8 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                         {!isJoining && (
                             <InformationBoxes
                                 imageSrc={imageSrc}
-                                price={membershipInfo?.price}
-                                duration={membershipInfo?.duration}
+                                price={priceText}
+                                duration={durationText}
                                 address={address}
                                 chainId={chainId}
                                 anyoneCanJoin={anyoneCanJoin}
@@ -300,8 +310,8 @@ const Header = (props: {
 
 const InformationBoxes = (props: {
     imageSrc?: string
-    price?: string
-    duration?: number
+    price: { value: string; suffix: string } | undefined
+    duration: { value: string; suffix: string } | undefined
     address?: `0x${string}`
     chainId: number
     anyoneCanJoin: boolean
@@ -310,14 +320,13 @@ const InformationBoxes = (props: {
     membershipPricingModule?: ReturnType<typeof usePricingModuleForMembership>['data']
 }) => {
     const {
-        price,
         address,
+        anyoneCanJoin,
         chainId,
         duration,
-        anyoneCanJoin,
-        tokensGatingMembership,
-        membershipPricingModule,
         isTokensGatingMembershipLoading,
+        price,
+        tokensGatingMembership,
     } = props
     const { isTouch } = useDevice()
     const onAddressClick = useEvent(() => {
@@ -331,10 +340,7 @@ const InformationBoxes = (props: {
         window.open(`${openSeaAssetUrl(chainId, address)}`, '_blank', 'noopener,noreferrer')
     })
 
-    const durationTexts = useMemo(() => durationTitleSubtitle(duration), [duration])
     const _tokens = useMemo(() => tokensGatingMembership?.tokens, [tokensGatingMembership])
-    const precisionMultiplier = 1_0_0_0_0_0_0
-    const isFree = price?.toLowerCase() === 'free'
 
     return (
         <MotionStack
@@ -366,32 +372,21 @@ const InformationBoxes = (props: {
                 placeholder={!price}
                 centerContent={
                     <Text size="lg" fontWeight="strong">
-                        {isFree
-                            ? 'Free'
-                            : price
-                            ? Math.round(parseFloat(price) * precisionMultiplier) /
-                              precisionMultiplier
-                            : undefined}
+                        {price?.value}
                     </Text>
                 }
-                subtitle={
-                    membershipPricingModule === undefined
-                        ? ''
-                        : membershipPricingModule.isFixed
-                        ? 'ETH'
-                        : 'First 100'
-                }
+                subtitle={price?.suffix}
             />
             <InformationBox
                 key="duration"
                 title="Valid for"
-                placeholder={!durationTexts}
+                placeholder={!duration}
                 centerContent={
                     <Text size="lg" fontWeight="strong">
-                        {durationTexts?.title}
+                        {duration?.value}
                     </Text>
                 }
-                subtitle={durationTexts?.subtitle ?? ''}
+                subtitle={duration?.suffix}
                 onClick={onAddressClick}
             />
             {address && (

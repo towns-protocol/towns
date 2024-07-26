@@ -9,6 +9,7 @@ export const TokenAddress = (props: {
     size: number
     radius: number
     fontSize: number
+    reduceMotion?: boolean
 }) => (
     <Box className={styles.addressContainer}>
         <AddressText
@@ -16,6 +17,7 @@ export const TokenAddress = (props: {
             fontSize={props.fontSize}
             size={props.size}
             radius={props.radius}
+            reduceMotion={props.reduceMotion}
         />
     </Box>
 )
@@ -26,7 +28,9 @@ const AddressText = (props: {
     fontSize: number
     size: number
     radius: number
+    reduceMotion?: boolean
 }) => {
+    const { reduceMotion } = props
     // remove 0x prefix - prepended automatically
     const address = useMemo(
         () => (props.value?.match(/^0x/) ? props.value?.slice(2) : props.value),
@@ -41,7 +45,7 @@ const AddressText = (props: {
                 .join('')}`,
     )
 
-    const [animateMintIndex, setAnimateIndex] = useState(0)
+    const [animateMintIndex, setAnimateIndex] = useState(reduceMotion ? 40 : 0)
 
     useEffect(() => {
         if (address) {
@@ -69,7 +73,7 @@ const AddressText = (props: {
     }, [address])
 
     useEffect(() => {
-        if (!address || animateMintIndex > address.length) {
+        if (!address || animateMintIndex > address.length || reduceMotion) {
             return
         }
         const interval = setTimeout(() => {
@@ -78,7 +82,7 @@ const AddressText = (props: {
         return () => {
             clearTimeout(interval)
         }
-    }, [animateMintIndex, address])
+    }, [animateMintIndex, address, reduceMotion])
 
     const result = useMemo(
         () =>
@@ -211,7 +215,12 @@ const AddressText = (props: {
                             `,
                         }}
                     >
-                        <Letter angle={letterAngle} minted={isMinted} fontSize={props.fontSize}>
+                        <Letter
+                            angle={letterAngle}
+                            minted={isMinted}
+                            fontSize={props.fontSize}
+                            reduceMotion={reduceMotion}
+                        >
                             {l.toUpperCase()}
                         </Letter>
                     </Box>
@@ -226,8 +235,9 @@ const Letter = (props: {
     angle: number
     minted: boolean
     children: React.ReactNode
+    reduceMotion?: boolean
 }) => {
-    const { minted: isMinted } = props
+    const { minted: isMinted, reduceMotion } = props
 
     return (
         <motion.p
@@ -242,7 +252,7 @@ const Letter = (props: {
                 duration: 1.25,
             }}
             initial={
-                !isMinted
+                !isMinted || reduceMotion
                     ? false
                     : {
                           scale: 2,

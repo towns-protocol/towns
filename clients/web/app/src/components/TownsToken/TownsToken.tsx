@@ -12,6 +12,7 @@ type Props = {
     address?: string
     size: TownsTokenSize
     imageSrc?: string
+    reduceMotion?: boolean
     // imageSrcRenderKey?: string
 } & Omit<BoxProps, 'size'>
 
@@ -51,6 +52,7 @@ export const TownsToken = (props: Props) => {
                     fontSize={config.fontSize}
                     address={address}
                     radius={config.addressRadius}
+                    reduceMotion={props.reduceMotion}
                 />
                 <Box
                     borderRadius={config.borderRadius}

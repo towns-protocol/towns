@@ -6,7 +6,7 @@ import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 export type Props = {
     title: string
     centerContent: React.ReactNode
-    subtitle: string
+    subtitle: string | undefined
     border?: BoxProps['border']
     onClick?: () => void
     placeholder?: boolean
@@ -53,7 +53,7 @@ export const InformationBox = (props: Props) => {
                     </Box>
                     <Box centerContent height="x4">
                         <Text size="sm" color="gray1">
-                            {props.subtitle}
+                            {props.subtitle ?? ''}
                         </Text>
                     </Box>
                 </>

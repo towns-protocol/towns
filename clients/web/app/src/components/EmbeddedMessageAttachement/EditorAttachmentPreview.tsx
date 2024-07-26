@@ -156,13 +156,16 @@ const UnfurledLinkPreview = (props: {
                             </Paragraph>
                         </Box>
                     )}
-                    {image?.url && <IconImage url={image.url} />}
+                    {image?.url && !!image.height && <IconImage url={image.url} />}
                     {title && (
-                        <Text truncate strong fontSize="sm">
+                        <Text truncate strong fontSize="sm" color="gray1">
                             {title}
                         </Text>
                     )}
+                    <Box grow />
                     <IconButton
+                        background="lightHover"
+                        rounded="full"
                         insetX="xs"
                         size="square_xs"
                         icon="close"
@@ -179,7 +182,7 @@ const UnfurledLinkPreview = (props: {
                         </Text>
                     </Box>
                 ) : (
-                    <Box grow />
+                    <></>
                 )}
             </Stack>
         </FadeInBox>
@@ -212,7 +215,8 @@ const IconImage = ({ url }: { url: string }) => {
         <Box
             shrink={false}
             rounded="xs"
-            width="x2"
+            insetLeft="xxs"
+            width="x3"
             aspectRatio="1/1"
             style={{
                 backgroundImage: `url(${url})`,

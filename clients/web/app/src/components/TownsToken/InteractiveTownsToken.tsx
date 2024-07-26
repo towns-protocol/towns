@@ -10,10 +10,11 @@ type Props = TownsTokenProps & {
     mintMode?: boolean
     imageSrc?: string
     imageSrcRenderKey?: string
+    reduceMotion?: boolean
 }
 
 export const InteractiveTownsToken = (props: Props) => {
-    const { address, onAnimationComplete } = props
+    const { address, onAnimationComplete, reduceMotion } = props
     const config = TownsTokenConfig.sizes[props.size]
 
     const [{ x, y, a }, setInput] = useState({ x: 0, y: 0, a: 0 })
@@ -30,7 +31,7 @@ export const InteractiveTownsToken = (props: Props) => {
         }
     }, [])
 
-    const [isOut, setIsOut] = useState(true)
+    const [isOut, setIsOut] = useState(reduceMotion ? false : true)
 
     const [isInteracting, setIsInteracting] = useState(false)
     useEffect(() => {
@@ -58,7 +59,7 @@ export const InteractiveTownsToken = (props: Props) => {
     const isMint = !!address && props.mintMode
     const mint = isMint ? 0 : 1
 
-    const [isInit, setIsInit] = useState(false)
+    const [isInit, setIsInit] = useState(reduceMotion ? true : false)
     useEffect(() => {
         const timeout = setTimeout(() => {
             setIsInit(true)
@@ -203,6 +204,7 @@ export const InteractiveTownsToken = (props: Props) => {
                     address={props.address}
                     size={props.size}
                     imageSrc={props.imageSrc}
+                    reduceMotion={reduceMotion}
                     onMouseMove={onMouseMove}
                     onMouseEnter={onMouseEnter}
                     onMouseLeave={onMouseLeave}

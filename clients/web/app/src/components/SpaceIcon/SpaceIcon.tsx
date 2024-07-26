@@ -16,6 +16,7 @@ type Props = {
     overrideSrc?: string
     overrideBorderRadius?: BoxProps['borderRadius']
     fadeIn: boolean
+    reduceMotion?: boolean
 } & BoxProps
 
 // Primitive for grabbing a space icon image with a fallback to first letter of space name
@@ -74,7 +75,7 @@ export const SpaceIcon = (props: Props) => {
 
 export const InteractiveSpaceIcon = (
     props: Pick<Props, 'spaceId' | 'overrideSrc'> &
-        Pick<TownsTokenProps, 'size' | 'address' | 'spaceName'>,
+        Pick<TownsTokenProps, 'size' | 'address' | 'spaceName' | 'reduceMotion'>,
 ) => {
     const { overrideSrc, size, spaceName: name, address } = props
 
@@ -88,6 +89,7 @@ export const InteractiveSpaceIcon = (
             address={address}
             spaceName={name}
             imageSrcRenderKey={imageSrc}
+            reduceMotion={props.reduceMotion}
         />
     )
 }

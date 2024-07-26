@@ -1,6 +1,22 @@
 import { MONTH_MS, SECOND_MS, YEAR_MS } from 'data/constants'
 
-export function durationTitleSubtitle(duration?: number) {
+export const getPriceText = (price: string | undefined, isFixed?: boolean) => {
+    if (typeof price === 'undefined') {
+        return undefined
+    }
+    const precisionMultiplier = 1_0_0_0_0_0_0
+    const numericPrice = parseFloat(price || '0')
+    const isFree = price?.toLowerCase() === 'free' || numericPrice === 0
+
+    return {
+        value: isFree
+            ? 'Free'
+            : `${Math.round(parseFloat(price) * precisionMultiplier) / precisionMultiplier}`,
+        suffix: isFree ? '' : isFixed ? 'ETH' : 'First 100',
+    }
+}
+
+export const getDurationText = (duration?: number) => {
     if (!duration) {
         return undefined
     }
@@ -11,16 +27,16 @@ export function durationTitleSubtitle(duration?: number) {
     if (duration >= YEAR) {
         const years = Math.floor(duration / YEAR)
         return {
-            title: `${years}`,
-            subtitle: years === 1 ? 'Year' : 'Years',
+            value: `${years}`,
+            suffix: years === 1 ? 'Year' : 'Years',
         }
     }
 
     if (duration >= MONTH) {
         const months = Math.floor(duration / MONTH)
         return {
-            title: `${months}`,
-            subtitle: months === 1 ? 'Month' : 'Months',
+            value: `${months}`,
+            suffix: months === 1 ? 'Month' : 'Months',
         }
     }
 

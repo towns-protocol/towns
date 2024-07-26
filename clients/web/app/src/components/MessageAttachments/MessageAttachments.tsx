@@ -1,20 +1,34 @@
-import React, { useContext } from 'react'
+import React, { MouseEventHandler, useCallback, useContext } from 'react'
 import {
     Attachment,
     ChunkedMediaAttachment,
     EmbeddedMessageAttachment,
     MessageType,
     UnfurledLinkAttachment,
+    useContractSpaceInfo,
+    useGetRootKeyFromLinkedWallet,
+    usePricingModuleForMembership,
+    useTownsClient,
+    useUserLookup,
 } from 'use-towns-client'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { Image } from '@unfurl-worker/types'
 import { isUrl } from 'utils/isUrl'
 import { ChunkedFile } from '@components/ChunkedFile/ChunkedFile'
 import { EmbeddedMessage } from '@components/EmbeddedMessageAttachement/EmbeddedMessage'
-import { Box, Stack, Text } from '@ui'
+import { Box, BoxProps, Heading, Paragraph, Stack, Text } from '@ui'
 import { isMediaMimeType } from 'utils/isMediaMimeType'
 import { RatioedBackgroundImage } from '@components/RatioedBackgroundImage'
 import { getTownParamsFromUrl } from 'utils/getTownParamsFromUrl'
 import { LoadingUnfurledLinkAttachment } from 'hooks/useExtractInternalLinks'
+import { InteractiveSpaceIcon } from '@components/SpaceIcon'
+import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { Avatar } from '@components/Avatar/Avatar'
+import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
+import { useReadableMembershipInfo } from '@components/TownPageLayout/useReadableMembershipInfo'
+import { getPriceText } from '@components/TownPageLayout/townPageUtils'
+import { useTokensGatingMembership } from 'hooks/useTokensGatingMembership'
+import { SelectedToken } from '@components/TownPageLayout/TokenInfoBox'
 import { MessageAttachmentsContext } from './MessageAttachmentsContext'
 
 const emptyArray: never[] = []
@@ -181,23 +195,195 @@ const EmbeddedMessageContainer = (props: {
 const UnfurledLinkAttachmentContainer = (
     props: UnfurledLinkAttachment | LoadingUnfurledLinkAttachment,
 ) => {
-    const content = (
-        <Box
-            alignSelf="start"
-            background="level3"
-            padding="md"
-            borderRadius="sm"
-            gap="md"
-            maxWidth="300"
+    const townData = getTownParamsFromUrl(props.url)
+
+    return townData?.townId && townData?.townPath ? (
+        <TownsContent {...props} {...townData} />
+    ) : (
+        <a href={props.url} rel="noopener noreferrer" target="_blank">
+            <GenericContent {...props} />
+        </a>
+    )
+}
+
+const TownsContent = (
+    props: UnfurledLinkAttachment & { townPath: string; townId: string; channelId?: string },
+) => {
+    const { townPath, townId } = props
+
+    const { data: spaceInfo } = useContractSpaceInfo(townId)
+    const { data: memberInfo, isLoading } = useReadableMembershipInfo(townId)
+    const { data: tokensGatingMembership } = useTokensGatingMembership(townId)
+
+    const { data: membershipPricingModule } = usePricingModuleForMembership(townId)
+
+    const priceText = getPriceText(memberInfo?.price, membershipPricingModule?.isFixed)
+
+    const navigate = useNavigate()
+
+    const onClick = useCallback(() => {
+        navigate(townPath, { state: { fromLink: true } })
+    }, [navigate, townPath])
+
+    return (
+        <LinkContainer
+            horizontal
+            hoverable
+            padding="sm"
+            minWidth={{ mobile: '300', default: '150' }}
+            gap="sm"
+            maxWidth={{ mobile: '300', default: '400' }}
+            width="100%"
+            cursor="pointer"
+            onClick={onClick}
         >
-            {props.image?.url && !!props.image?.height && (
-                <RatioedBackgroundImage
-                    alt={props.title}
-                    url={props.image.url}
-                    width={props.image.width}
-                    height={props.image.height}
-                />
-            )}
+            <InteractiveSpaceIcon
+                reduceMotion
+                spaceId={townId}
+                address={spaceInfo?.address}
+                size="xs"
+                spaceName={spaceInfo?.name}
+            />
+            <Box gap="paragraph" paddingY="sm" paddingRight="sm" overflow="hidden">
+                <Stack gap="paragraph">
+                    <Heading level={3} color="default" whiteSpace="normal">
+                        {spaceInfo?.name}
+                    </Heading>
+                    {spaceInfo?.shortDescription && (
+                        <Paragraph color="gray2">{spaceInfo?.shortDescription}</Paragraph>
+                    )}
+                </Stack>
+                {spaceInfo?.longDescription && (
+                    <Stack>
+                        <Paragraph color="gray2" size="sm">
+                            {spaceInfo?.longDescription}
+                        </Paragraph>
+                    </Stack>
+                )}
+                <Stack horizontal gap="sm" alignItems="center">
+                    <Paragraph size="sm" color="gray2">
+                        By
+                    </Paragraph>
+                    <OwnerPill userId={spaceInfo?.owner} />
+                </Stack>
+                {!isLoading && (
+                    <Stack horizontal flexWrap="wrap" gap="sm">
+                        {(memberInfo?.totalSupply ?? 0 > 1) && (
+                            <Pill>
+                                {memberInfo?.totalSupply} Member
+                                {(memberInfo?.totalSupply ?? 0) > 1 ? `s` : ``}
+                            </Pill>
+                        )}
+                        {priceText ? (
+                            <Pill>
+                                {priceText?.value}
+                                {parseFloat(priceText.value) > 0 ? ' ETH' : ''}
+                            </Pill>
+                        ) : (
+                            <></>
+                        )}
+                        {(tokensGatingMembership?.tokens.length ?? 0) > 0 ? (
+                            <Pill position="relative" alignSelf="start">
+                                <Stack horizontal gap="xs">
+                                    {tokensGatingMembership.tokens.map((token, index) => (
+                                        <Box key={token.address + token.chainId}>
+                                            <SelectedToken
+                                                contractAddress={token.address}
+                                                chainId={token.chainId}
+                                                size="x2"
+                                                borderRadius="xs"
+                                            />
+                                        </Box>
+                                    ))}
+                                    {tokensGatingMembership.tokens.at(-1)?.type}
+                                </Stack>
+                            </Pill>
+                        ) : (
+                            <></>
+                        )}
+                    </Stack>
+                )}
+            </Box>
+        </LinkContainer>
+    )
+}
+
+const OwnerPill = (props: { userId: string | undefined }) => {
+    const { client } = useTownsClient()
+
+    const isAccountAbstractionEnabled = client?.isAccountAbstractionEnabled()
+    const { data: rootKeyAddress } = useGetRootKeyFromLinkedWallet({
+        walletAddress: props.userId,
+    })
+
+    const userId = isAccountAbstractionEnabled ? rootKeyAddress : props.userId
+    const user = useUserLookup(userId || '')
+
+    const { openPanel } = usePanelActions()
+    const onOwnerClick: MouseEventHandler = useCallback(
+        (e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            openPanel('profile', { profileId: user.userId })
+        },
+        [openPanel, user.userId],
+    )
+    if (!userId) {
+        return null
+    }
+    return (
+        <Box
+            horizontal
+            centerContent
+            hoverable
+            gap="sm"
+            background="lightHover"
+            padding="xs"
+            paddingRight="paragraph"
+            borderRadius="lg"
+            onClick={onOwnerClick}
+        >
+            <Avatar userId={userId} size="avatar_sm" />
+            <Paragraph fontWeight="medium" size="sm" color="default">
+                {getPrettyDisplayName(user)}
+            </Paragraph>
+        </Box>
+    )
+}
+
+const Pill = ({ children, ...props }: BoxProps) => (
+    <Box
+        background="lightHover"
+        borderRadius="md"
+        paddingY="sm"
+        paddingX="paragraph"
+        {...props}
+        justifyContent="center"
+        height="height_md"
+        overflow="hidden"
+    >
+        <Text truncate size="sm" color="gray1" whiteSpace="nowrap">
+            {children}
+        </Text>
+    </Box>
+)
+
+const GenericContent = (props: {
+    image?: Image
+    title?: string
+    description?: string
+    url?: string
+}) => (
+    <LinkContainer>
+        {props.image?.url && !!props.image?.height && (
+            <RatioedBackgroundImage
+                alt={props.title}
+                url={props.image.url}
+                width={props.image.width}
+                height={props.image.height}
+            />
+        )}
+        <Stack gap="paragraph" padding="md">
             {props.title && !isUrl(props.title) && (
                 <Box>
                     <Text
@@ -231,18 +417,10 @@ const UnfurledLinkAttachmentContainer = (
                     {props.url}
                 </Text>
             </Box>
-        </Box>
-    )
+        </Stack>
+    </LinkContainer>
+)
 
-    const { townPath } = getTownParamsFromUrl(props.url) ?? {}
-
-    return townPath ? (
-        <Link to={townPath} state={{ fromLink: true }}>
-            {content}
-        </Link>
-    ) : (
-        <a href={props.url} rel="noopener noreferrer" target="_blank">
-            {content}
-        </a>
-    )
-}
+const LinkContainer = (props: BoxProps) => (
+    <Box background="level2" borderRadius="md" maxWidth="300" {...props} />
+)
