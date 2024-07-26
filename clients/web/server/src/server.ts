@@ -7,25 +7,19 @@ import Fastify from 'fastify'
 import fsSync from 'node:fs'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import * as dotenv from 'dotenv'
 import NodeCache from 'node-cache'
 import { getPackageVersion } from './utils/getPackageVersion'
+import { config } from './config'
+
+const { PROVIDER_URL, MODE, PORT, VITE_ADDRESS_SPACE_OWNER } = config
 
 const cache = new NodeCache({ stdTTL: 900 }) // 900 seconds = 15 minutes
 
-dotenv.config({ path: path.join(__dirname, '../../app', '.env.local') })
-
-const MODE = process.env.MODE || 'gamma'
-
 // spaceOwner
-const CONTRACT_ADDRESS = process.env.VITE_ADDRESS_SPACE_OWNER
-const PORT = Number(process.env.PORT) || 3000
-const PROVIDER_URL =
-    MODE === 'gamma' ? process.env.VITE_BASE_SEPOLIA_RPC_URL : process.env.VITE_BASE_CHAIN_RPC_URL
 
 const provider = new ethers.providers.JsonRpcProvider(PROVIDER_URL)
 
-console.log('provider', MODE, CONTRACT_ADDRESS, PROVIDER_URL)
+console.log('provider', MODE, VITE_ADDRESS_SPACE_OWNER, PROVIDER_URL)
 
 const server = Fastify({
     logger: true,
@@ -167,14 +161,13 @@ async function getTownDataFromContract(
     }
 
     try {
-        const contractAddress = CONTRACT_ADDRESS
         const spaceAddress = ethers.utils.getAddress(townId.slice(2, 42))
 
-        if (!contractAddress) {
+        if (!VITE_ADDRESS_SPACE_OWNER) {
             return
         }
 
-        const contract = new ethers.Contract(contractAddress, SpaceOwnerAbi, provider)
+        const contract = new ethers.Contract(VITE_ADDRESS_SPACE_OWNER, SpaceOwnerAbi, provider)
 
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         const result = (await contract['getSpaceInfo'](spaceAddress)) as {

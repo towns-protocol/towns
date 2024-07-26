@@ -35,7 +35,8 @@
                 "patterns": [],
                 "paths": []
             }
-        ]
+        ],
+        "no-process-env": "error"
     },
     "overrides": [
         {
