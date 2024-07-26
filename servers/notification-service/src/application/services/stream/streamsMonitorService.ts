@@ -7,11 +7,11 @@ import { streamIdFromBytes, streamIdToBytes, userIdFromAddress } from './utils'
 import { ParsedStreamAndCookie } from './types'
 import { StreamKind } from '@prisma/client'
 import assert from 'assert'
-import { createLogger } from '../logger'
 import { database } from '../../prisma'
 import { env } from '../../utils/environment'
+import { notificationServiceLogger } from '../../logger'
 
-const logger = createLogger('streamsMonitorService')
+const logger = notificationServiceLogger.child('streamsMonitorService')
 
 type StreamsMetadata = {
     [key in StreamKind]: {

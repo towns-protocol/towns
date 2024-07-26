@@ -1,23 +1,16 @@
 import type { JestConfigWithTsJest } from 'ts-jest'
 
 const config: JestConfigWithTsJest = {
+    preset: 'ts-jest',
+
     verbose: true,
-    preset: 'ts-jest/presets/default-esm',
     testEnvironment: 'node',
-    extensionsToTreatAsEsm: ['.ts', '.tsx'],
     testMatch: ['**/*.test.ts?(x)'],
     transform: {
-        '^.+\\.tsx?$': [
-            'ts-jest',
-            {
-                useESM: true,
-            },
-        ],
+        '^.+\\.tsx?$': 'ts-jest',
+        '^.+\\.jsx?$': 'babel-jest',
     },
     moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
-    moduleNameMapper: {
-        '^@river-build/proto$': '<rootDir>/../../river/packages/proto/src/gen/protocol_pb.ts',
-    },
     modulePathIgnorePatterns: ['/dist/'],
     testPathIgnorePatterns: ['/dist/', '/node_modules/'],
     testTimeout: 60000,

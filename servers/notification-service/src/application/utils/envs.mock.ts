@@ -1,5 +1,5 @@
 if (process.env.NODE_ENV !== 'test') {
-    throw new Error('Thos should only be loaded by tests.')
+    throw new Error('These should only be loaded by tests.')
 }
 
 process.env.NODE_ENV = 'test'

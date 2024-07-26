@@ -17,11 +17,9 @@ import {
     sendNotificationViaWebPush,
 } from './services/web-push/send-notification'
 import { Urgency } from './notificationSchema'
-import { createLogger } from './services/logger'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './services/stream/id'
 import { isPayloadLengthValid } from './services/web-push/crypto-utils'
-
-const logger = createLogger('notificationService')
+import { notificationServiceLogger } from './logger'
 
 export interface NotifyUser {
     userId: string
@@ -140,8 +138,9 @@ export class NotificationService {
         const blockedUsers = await UserSettingsTables.getBlockedUsersByUserIds(
             notificationData.users,
         )
-        logger.info(
+        notificationServiceLogger.info(
             `${notificationData.users.length} found ${blockedUsers.length} blocked users lists`,
+            { blockedUsers },
         )
         for (const blockedList of blockedUsers) {
             const { userId, blockedUsers } = blockedList
@@ -217,10 +216,11 @@ export class NotificationService {
             }
         }
 
-        logger.info(
+        notificationServiceLogger.info(
             `found ${Object.keys(recipients).length} users to notify in ${
                 Date.now() - startTime
             }ms`,
+            { recipients },
         )
         return Object.values(recipients)
     }
@@ -242,7 +242,7 @@ export class NotificationService {
                 kind as unknown as NotificationAttachmentKind,
             )
             if (isAttachmentOnly) {
-                logger.info(`Attachment notification ${kind}`)
+                notificationServiceLogger.info(`Attachment notification ${kind}`)
                 payload.content.attachmentOnly = kind as NotificationAttachmentKind
                 if (
                     isDMChannelStreamId(payload.content.channelId) ||
@@ -274,7 +274,9 @@ export class NotificationService {
 
             if (!isPayloadLengthValid(JSON.stringify(payload))) {
                 payload.content.event = {}
-                logger.info('Payload size exceeds the limit, trimming down the payload')
+                notificationServiceLogger.warn(
+                    'Payload size exceeds the limit, trimming down the payload',
+                )
             }
 
             const option: NotificationOptions = {
@@ -304,7 +306,7 @@ export class NotificationService {
                 }
             }
         }
-        logger.info(
+        notificationServiceLogger.info(
             `created ${pushNotificationPromises.length} notification requests in ${
                 Date.now() - startTime
             }ms`,
@@ -317,20 +319,19 @@ export class NotificationService {
     ): Promise<number> {
         const startTime = Date.now()
         if (!env.NOTIFICATION_SYNC_ENABLED) {
-            logger.warn('Notification dispatch is disabled')
+            notificationServiceLogger.warn('Notification dispatch is disabled')
             // notification dispatch is disabled
             return 0
         }
 
-        let sendResults: PromiseSettledResult<SendPushResponse>[] = []
-        sendResults = await Promise.allSettled(pushNotificationRequests)
+        const sendResults = await Promise.allSettled(pushNotificationRequests)
 
         // handle the results
         // count the number of successful notifications sent
         let notificationsSentCount = 0
         for (const result of sendResults) {
             if (result.status === 'rejected') {
-                logger.info('failed to send notification', { result })
+                notificationServiceLogger.warn('failed to send notification', { result })
                 continue
             }
 
@@ -344,7 +345,7 @@ export class NotificationService {
                 result.value.statusCode >= 400 &&
                 result.value.statusCode < 500
             ) {
-                logger.error(
+                notificationServiceLogger.error(
                     'failed to send notification because of subscription error. Delete subscription',
                     {
                         result,
@@ -355,10 +356,11 @@ export class NotificationService {
             }
 
             // all other errors
-            logger.error('failed to send notification', { result })
+            notificationServiceLogger.error('failed to send notification', { result })
         }
-        logger.info(
+        notificationServiceLogger.info(
             `dispatched ${notificationsSentCount} notifications in ${Date.now() - startTime}ms`,
+            { sendResults },
         )
         return notificationsSentCount
     }
@@ -366,9 +368,13 @@ export class NotificationService {
     public async deleteFailedSubscription(
         result: PromiseFulfilledResult<SendPushResponse>,
     ): Promise<void> {
-        logger.info(`deleting subscription from the db - userId: ${result.value.userId}`, {
-            pushSubscription: result.value.pushSubscription,
-        })
+        notificationServiceLogger.warn(
+            `deleting subscription from the db - userId: ${result.value.userId}`,
+            {
+                pushSubscription: result.value.pushSubscription,
+                userId: result.value.userId,
+            },
+        )
         try {
             await database.pushSubscription.delete({
                 where: {
@@ -377,7 +383,7 @@ export class NotificationService {
                 },
             })
         } catch (err) {
-            logger.error('failed to delete subscription from the db', { err })
+            notificationServiceLogger.error('failed to delete subscription from the db', { err })
         }
     }
 }

@@ -1,10 +1,9 @@
 import { NextFunction, Request, Response } from 'express'
 import { StatusCodes } from 'http-status-codes'
-import { notificationServiceLogger } from '../logger'
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function handleGlobalError(error: Error, req: Request, res: Response, next: NextFunction) {
-    notificationServiceLogger.error('handleGlobalError: ', error)
+    req.logger.error('handleGlobalError: ', error)
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).send('Internal Server Error')
 }
 

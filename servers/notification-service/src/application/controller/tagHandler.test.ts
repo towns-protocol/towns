@@ -30,6 +30,9 @@ describe('tagHandler', () => {
                     tag: NotificationKind.Mention,
                 },
             ],
+            logger: {
+                error: jest.fn(),
+            },
         } as unknown as Request
 
         res = {

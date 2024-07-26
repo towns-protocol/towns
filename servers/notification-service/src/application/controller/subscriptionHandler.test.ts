@@ -29,6 +29,11 @@ describe('addSubscriptionHandler', () => {
                 },
                 pushType: 'WebPush',
             },
+            logger: {
+                info: jest.fn(),
+                error: jest.fn(),
+                warn: jest.fn(),
+            },
         } as unknown as Request
 
         res = {
@@ -82,7 +87,7 @@ describe('addSubscriptionHandler', () => {
                 UserId: req.body.userId,
             },
         })
-        expect(notificationServiceLogger.error).toHaveBeenCalledWith(error)
+        expect(req.logger.error).toHaveBeenCalledWith('subscription error: ', error)
         expect(res.status).toHaveBeenCalledWith(StatusCodes.UNPROCESSABLE_ENTITY)
         expect(res.json).toHaveBeenCalledWith({ error: 'Invalid data' })
     })
@@ -100,6 +105,11 @@ describe('removeSubscriptionHandler', () => {
                     endpoint: 'https://example.com',
                     keys: { p256dh: 'key', auth: 'auth' },
                 },
+            },
+            logger: {
+                info: jest.fn(),
+                error: jest.fn(),
+                warn: jest.fn(),
             },
         } as unknown as Request
 

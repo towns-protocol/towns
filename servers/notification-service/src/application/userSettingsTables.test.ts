@@ -186,11 +186,14 @@ describe('userSettingsTables', () => {
             const results = await UserSettingsTables.getBlockedUsersByUserIds(['userId'])
 
             expect(findManyMock).toHaveBeenCalledWith({
-                where: {
-                    UserId: 'userId',
-                },
                 select: {
-                    BlockedUsers: true,
+                    UserId: true,
+                },
+                where: {
+                    Mention: false,
+                    UserId: {
+                        in: ['user1', 'user2', 'user3'],
+                    },
                 },
             })
             expect(results[0]?.blockedUsers).toEqual([])

@@ -9,7 +9,6 @@ import { Request, Response } from 'express'
 
 import { StatusCodes } from 'http-status-codes'
 import { database } from '../prisma'
-import { notificationServiceLogger } from '../logger'
 import { StreamsMonitorService } from '../services/stream/streamsMonitorService'
 
 export async function saveNotificationSettingsHandler(req: Request, res: Response) {
@@ -31,7 +30,7 @@ export async function saveNotificationSettingsHandler(req: Request, res: Respons
             await upsertChannelAndSpaceSettings(tx, userSettings, userId)
             return
         } catch (e) {
-            notificationServiceLogger.error('saveSettings error', e)
+            req.logger.error('saveSettings error', e)
             res.status(StatusCodes.UNPROCESSABLE_ENTITY).json({ error: 'Invalid data' })
             return
         }
@@ -50,7 +49,7 @@ export async function deleteNotificationSettingsHandler(req: Request, res: Respo
         res.sendStatus(StatusCodes.NO_CONTENT)
         return
     } catch (e) {
-        notificationServiceLogger.error('deleteSettings error', e)
+        req.logger.error('deleteSettings error', e)
     }
 
     res.status(StatusCodes.UNPROCESSABLE_ENTITY).json({ error: 'Invalid data' })
@@ -58,7 +57,7 @@ export async function deleteNotificationSettingsHandler(req: Request, res: Respo
 }
 
 export async function getNotificationSettingsHandler(req: Request, res: Response) {
-    notificationServiceLogger.info('getNotificationSettings', req.body)
+    req.logger.info('getNotificationSettings', req.body)
 
     const getNotificationParams: GetUserSettingsSchema = req.body
     const { userId } = getNotificationParams
@@ -95,7 +94,7 @@ export async function getNotificationSettingsHandler(req: Request, res: Response
         })
         return
     } catch (e) {
-        notificationServiceLogger.error('getSettings error', e)
+        req.logger.error('getSettings error', e)
     }
 
     res.status(StatusCodes.UNPROCESSABLE_ENTITY).json({ error: 'Invalid data' })
@@ -141,7 +140,7 @@ export async function patchNotificationSettingsHandler(req: Request, res: Respon
             }
         })
     } catch (e) {
-        notificationServiceLogger.error('updateSettings error', e)
+        req.logger.error('updateSettings error', e)
         res.status(StatusCodes.UNPROCESSABLE_ENTITY).json({ error: 'Invalid data' })
         return
     }

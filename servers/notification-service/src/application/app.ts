@@ -10,6 +10,7 @@ import { handleGlobalError, handleNotFound } from './middleware/errors'
 import { publicRoutes } from './publicRoutes'
 import { routes } from './routes'
 import { isProduction } from './utils/environment'
+import { attachReqLogger } from './logger'
 
 export async function initializeApp() {
     const app = express()
@@ -41,6 +42,8 @@ export async function initializeApp() {
     app.use(cors)
     app.use(helmet())
     app.use(express.json())
+
+    app.use(attachReqLogger)
 
     // public routes
     app.use(publicRoutes)

@@ -2,7 +2,6 @@ import { Request, Response } from 'express'
 
 import { StatusCodes } from 'http-status-codes'
 import { database } from '../prisma'
-import { notificationServiceLogger } from '../logger'
 import { NotificationKind, TagSchema } from '../tagSchema'
 
 export async function tagHandler(request: Request, res: Response) {
@@ -47,7 +46,7 @@ export async function tagHandler(request: Request, res: Response) {
     const results = await Promise.allSettled(upserts)
     for (const result of results) {
         if (result.status === 'rejected' && result.reason instanceof Error) {
-            notificationServiceLogger.error('Failed to upsert notification tag', {
+            request.logger.error('Failed to upsert notification tag', {
                 reason: result.reason.message,
             })
             hasError = true

@@ -27,10 +27,10 @@ import { NotifyUser, notificationService } from '../../notificationService'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './id'
 import { Mute, StreamKind, SyncedStream } from '@prisma/client'
 import { NotificationKind, NotifyUsersSchema } from '../../../types'
-import { createLogger } from '../logger'
 import { StreamsMonitorService } from './streamsMonitorService'
+import { notificationServiceLogger } from '../../logger'
 
-const logger = createLogger('syncedStreams')
+const logger = notificationServiceLogger.child({ label: 'syncedStreams' })
 
 export function isDefined<T>(value: T | undefined | null): value is T {
     return <T>value !== undefined && <T>value !== null
@@ -498,12 +498,12 @@ export class SyncedStreams {
             }
             const syncStream = res.stream
             if (syncStream !== undefined) {
+                const streamId = syncStream.nextSyncCookie?.streamId
+                    ? bin_toHexString(syncStream.nextSyncCookie.streamId)
+                    : ''
                 try {
-                    const streamId = syncStream.nextSyncCookie?.streamId
-                        ? bin_toHexString(syncStream.nextSyncCookie.streamId)
-                        : ''
-
                     if (syncStream.syncReset) {
+                        logger.warn('syncReset', { streamId })
                         // const response = await unpackStream(syncStream)
                         // await stream.initializeFromResponse(response)
                     } else {
@@ -531,7 +531,7 @@ export class SyncedStreams {
                         })
                     }
                 } catch (error) {
-                    logger.error('onUpdate error:', { error })
+                    logger.error('onUpdate error:', { error, syncStream, streamId })
                 }
             } else {
                 logger.info('sync RESULTS no stream', { syncStream })

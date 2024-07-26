@@ -1,7 +1,8 @@
 import { Logger, format, transports, createLogger as winstonCreateLogger } from 'winston'
 import { env, isProduction } from './utils/environment'
+import { Request, Response, NextFunction } from 'express'
 
-export function createLogger(label: string): Logger {
+function createLogger(label: string): Logger {
     const metadataFormat = format.metadata({
         fillExcept: ['message', 'level', 'timestamp', 'label'],
     })
@@ -49,3 +50,18 @@ export function createLogger(label: string): Logger {
 }
 
 export const notificationServiceLogger = createLogger('notificationService')
+
+// Needs to be installed after JSON parsing middleware
+export function attachReqLogger(req: Request, res: Response, next: NextFunction) {
+    let userId: string
+    if ((req.method === 'POST' || req.method === 'PATCH') && req.body && req.body.userId) {
+        userId = req.body.userId
+    } else {
+        userId = (req.headers['user-id'] as string) || 'unknown'
+    }
+
+    const requestId = req.headers['x-request-id'] || 'unknown'
+
+    req.logger = notificationServiceLogger.child({ requestId, userId })
+    next()
+}

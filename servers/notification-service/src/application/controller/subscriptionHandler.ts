@@ -2,11 +2,10 @@ import { Request, Response } from 'express'
 import { StatusCodes } from 'http-status-codes'
 import { database } from '../prisma'
 import { PushType } from '../subscriptionSchema'
-import { notificationServiceLogger } from '../logger'
 
 export async function addSubscriptionHandler(request: Request, res: Response) {
     try {
-        notificationServiceLogger.info(`addSubscriptionHandler userId ${request.body.userId}`)
+        request.logger.info(`addSubscriptionHandler userId ${request.body.userId}`)
         const subscriptionData = {
             UserId: request.body.userId,
             PushSubscription: JSON.stringify(request.body.subscriptionObject),
@@ -23,7 +22,7 @@ export async function addSubscriptionHandler(request: Request, res: Response) {
         res.status(StatusCodes.OK).json(subscription)
         return
     } catch (error) {
-        notificationServiceLogger.error('subscription error: ', error)
+        request.logger.error('subscription error: ', error)
         res.status(StatusCodes.UNPROCESSABLE_ENTITY).json({ error: 'Invalid data' })
         return
     }
@@ -40,6 +39,7 @@ export async function removeSubscriptionHandler(request: Request, res: Response)
     })
 
     if (!existingSubscription) {
+        request.logger.warn('Subscription not found', subscriptionData)
         res.status(StatusCodes.NOT_FOUND).json({ error: 'Subscription not found' })
         return
     }

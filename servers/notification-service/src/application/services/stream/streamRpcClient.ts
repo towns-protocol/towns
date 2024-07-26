@@ -12,17 +12,16 @@ import { ConnectTransportOptions, createConnectTransport } from '@connectrpc/con
 import { Err, StreamService } from '@river-build/proto'
 import { env } from '../../utils/environment'
 import { notificationServiceLogger } from '../../logger'
-import { createLogger } from '../logger'
 import { AnyMessage } from '@bufbuild/protobuf'
 import { genShortId, isIConnectError, streamIdAsString } from '@river-build/sdk'
 
 const histogramIntervalMs = 5000
 
-const logger = createLogger('rpcClient')
-const histogramLogger = createLogger('rpcClient:histogram')
-const callsLogger = createLogger('rpcClient:calls')
+const logger = notificationServiceLogger.child({ label: 'rpcClient' })
+const histogramLogger = notificationServiceLogger.child({ label: 'rpcClient:histogram' })
+const callsLogger = notificationServiceLogger.child({ label: 'rpcClient:calls' })
 callsLogger.level = 'silent'
-const protoLogger = createLogger('rpcClient:proto')
+const protoLogger = notificationServiceLogger.child({ label: 'rpcClient:proto' })
 protoLogger.level = 'silent'
 
 const sortObjectKey = (obj: Record<string, unknown>) => {

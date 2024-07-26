@@ -13,11 +13,9 @@ import { PushSubscription } from '@prisma/client'
 import { Urgency } from '../../notificationSchema'
 import crypto from 'crypto'
 import { env } from '../../utils/environment'
-import { createLogger } from '../logger'
 import { Provider, Notification } from '@parse/node-apn'
 import { ApnsEndpoint } from '../../tagSchema'
-
-const logger = createLogger('sendNotification')
+import { notificationServiceLogger } from '../../logger'
 
 const authKey = env.APNS_AUTH_KEY.replaceAll('\\n', '\n')
 const apnsProviderProd = new Provider({
@@ -50,6 +48,11 @@ export async function sendNotificationViaWebPush(
     if (!vapidDetails.publicKey || !vapidDetails.privateKey || !vapidDetails.subject) {
         throw new Error('Missing required VAPID environment variables')
     }
+    const logger = notificationServiceLogger.child({
+        label: 'sendNotification',
+        userId: options.userId,
+    })
+
     try {
         const subscription: WebPushSubscription = JSON.parse(subscribed.PushSubscription)
         if (!subscription) {
@@ -92,7 +95,6 @@ export async function sendNotificationViaWebPush(
             requestUrl: request.url,
             status: response.status,
             message: await response.text(),
-            userId: options.userId,
         })
 
         return {
@@ -117,6 +119,11 @@ export async function sendNotificationViaAPNS(
     options: NotificationOptions,
     subscribed: PushSubscription,
 ): Promise<SendPushResponse> {
+    const logger = notificationServiceLogger.child({
+        label: 'sendNotification',
+        userId: options.userId,
+    })
+
     try {
         const subscription: WebPushSubscription = JSON.parse(subscribed.PushSubscription)
         if (
@@ -148,7 +155,6 @@ export async function sendNotificationViaAPNS(
             environment: subscription.endpoint,
             failed: response.failed,
             sent: response.sent,
-            userId: options.userId,
         })
         if (response.failed.length > 0) {
             return {
@@ -165,6 +171,10 @@ export async function sendNotificationViaAPNS(
             }
         }
     } catch (err) {
+        logger.info('sendNotificationViaAPNS error', {
+            err,
+        })
+
         return {
             status: SendPushStatus.Error,
             message: `Error sending APNS notification: ${err}`,
