@@ -73,7 +73,7 @@ function Main() {
 
     return (
         <Box centerContent absoluteFill className={darkTheme}>
-            <Paragraph>Minimal version of the app</Paragraph>
+            <Paragraph>Minimal version of the app {VITE_APP_VERSION}</Paragraph>
             <Paragraph>Fast to rebuild --watch</Paragraph>
             <Updater />
             <ReloadPrompt />

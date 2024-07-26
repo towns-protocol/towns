@@ -9,6 +9,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import * as dotenv from 'dotenv'
 import NodeCache from 'node-cache'
+import { getPackageVersion } from './utils/getPackageVersion'
 
 const cache = new NodeCache({ stdTTL: 900 }) // 900 seconds = 15 minutes
 
@@ -75,6 +76,11 @@ server.setNotFoundHandler(async (request, reply) => {
         const townId = urlPath.match(/^\/t\/([0-9a-f]{64})/)?.[1] ?? ''
         const html = await updateTemplate(townId)
         return reply.header('Content-Type', 'text/html').send(html)
+    } else if (urlPath === '/version') {
+        const version = await getPackageVersion()
+        if (version) {
+            return reply.header('Content-Type', 'text/json').send(JSON.stringify({ version }))
+        }
     }
 
     return reply.callNotFound()

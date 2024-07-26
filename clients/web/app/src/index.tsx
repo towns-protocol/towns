@@ -82,7 +82,7 @@ if (env.VITE_DD_CLIENT_TOKEN) {
         sessionSampleRate: env.VITE_LOG_SAMPLING_RATE,
         telemetrySampleRate: 0,
         env: datadogEnvName,
-        version: env.VITE_APP_RELEASE_VERSION,
+        version: VITE_APP_VERSION,
         beforeSend: (event) => {
             event.session_id = datadogRum.getInternalContext()?.session_id
         },
