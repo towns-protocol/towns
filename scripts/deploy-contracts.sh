@@ -47,6 +47,12 @@ if [ "${BASE_EXECUTION_CLIENT}" != "geth_dev" ]; then
 fi
 cast rpc evm_setAutomine true --rpc-url $RIVER_ANVIL_RPC_URL
 
+# Only anvil supports setCode but this might be a local geth node
+if [ "${BASE_EXECUTION_CLIENT}" != "geth_dev" ]; then
+    cast rpc anvil_setCode $SEQUENCE_MULTICALL_ADDRESS $SEQUENCE_MULTICALL_BYTECODE --rpc-url $BASE_ANVIL_RPC_URL
+fi
+cast rpc anvil_setCode $SEQUENCE_MULTICALL_ADDRESS $SEQUENCE_MULTICALL_BYTECODE --rpc-url $RIVER_ANVIL_RPC_URL
+
 # Space Architect
 make clear-anvil-deployments context=$RIVER_ENV
 make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=diamonds contract=DeployBaseRegistry
