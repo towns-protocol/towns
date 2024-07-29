@@ -2,23 +2,15 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import { Chain } from 'viem'
 import { IChainConfig } from 'use-towns-client'
 import {
-    Address,
     BaseChainConfig,
     RiverChainConfig,
     getWeb3Deployment,
     getWeb3Deployments,
 } from '@river-build/web3'
-import { check } from '@river-build/dlog'
-import { isDefined } from '@river-build/sdk'
 import { AccountAbstractionConfig } from '@towns/userops'
 import { getAccessToken } from '@privy-io/react-auth'
 import { env } from 'utils'
-import {
-    getCustomBaseChain,
-    getCustomRiverChain,
-    makeBaseChain,
-    makeRiverChain,
-} from 'customChains'
+import { getCustomBaseChain, getCustomRiverChain } from 'customChains'
 
 const TOWNS_DEV_ENV = 'TOWNS_DEV_ENV'
 
@@ -35,67 +27,10 @@ export interface TownsEnvironmentInfo {
 function makeEnvironments(): TownsEnvironmentInfo[] {
     const retVal: TownsEnvironmentInfo[] = []
     const fetchAccessTokenFn = () => retryGetAccessToken(3)
-    // first grab the config from the env, this will be the default if it exists
-    // note: use this var to support transient environments otherwise use
-    // VITE_RIVER_DEFAULT_ENV
-    if (env.VITE_RIVER_ENV) {
-        // if we define VITE_RIVER_ENV, we should define all the other river env vars
-        check(isDefined(env.VITE_BASE_CHAIN_RPC_URL), 'Missing VITE_BASE_CHAIN_RPC_URL')
-        check(isDefined(env.VITE_BASE_CHAIN_ID), 'Missing VITE_BASE_CHAIN_ID')
-        check(isDefined(env.VITE_RIVER_CHAIN_RPC_URL), 'Missing VITE_RIVER_CHAIN_RPC_URL')
-        check(isDefined(env.VITE_RIVER_CHAIN_ID), 'Missing VITE_RIVER_CHAIN_ID')
-        check(isDefined(env.VITE_ADDRESS_SPACE_FACTORY), 'Missing VITE_ADDRESS_SPACE_FACTORY')
-        check(isDefined(env.VITE_ADDRESS_SPACE_OWNER), 'Missing VITE_ADDRESS_SPACE_OWNER')
-        check(isDefined(env.VITE_ADDRESS_RIVER_REGISTRY), 'Missing VITE_ADDRESS_RIVER_REGISTRY')
-        retVal.push({
-            id: env.VITE_RIVER_ENV,
-            name: env.VITE_RIVER_ENV,
-            baseChain: makeBaseChain(
-                parseInt(env.VITE_BASE_CHAIN_ID),
-                env.VITE_BASE_CHAIN_RPC_URL,
-                env.VITE_BASE_CHAIN_WS_URL,
-            ),
-            baseChainConfig: {
-                chainId: parseInt(env.VITE_BASE_CHAIN_ID),
-                addresses: {
-                    baseRegistry: env.VITE_ADDRESS_BASE_REGISTRY as Address,
-                    spaceFactory: env.VITE_ADDRESS_SPACE_FACTORY as Address,
-                    spaceOwner: env.VITE_ADDRESS_SPACE_OWNER as Address,
-                    mockNFT: env.VITE_ADDRESS_MOCK_NFT as Address | undefined,
-                    member: env.VITE_ADDRESS_MEMBER as Address | undefined,
-                },
-            },
-            riverChain: makeRiverChain(
-                parseInt(env.VITE_RIVER_CHAIN_ID),
-                env.VITE_RIVER_CHAIN_RPC_URL,
-            ),
-            riverChainConfig: {
-                chainId: parseInt(env.VITE_RIVER_CHAIN_ID),
-                addresses: {
-                    riverRegistry: env.VITE_ADDRESS_RIVER_REGISTRY as Address,
-                },
-            },
-            accountAbstractionConfig: env.VITE_AA_RPC_URL // currently aa_rpc_url is the same as the base chain rpc url
-                ? {
-                      aaRpcUrl: env.VITE_AA_RPC_URL,
-                      bundlerUrl: env.VITE_AA_BUNDLER_URL,
-                      paymasterProxyUrl: env.VITE_AA_PAYMASTER_PROXY_URL,
-                      entryPointAddress: env.VITE_AA_ENTRY_POINT_ADDRESS,
-                      factoryAddress: env.VITE_AA_FACTORY_ADDRESS,
-                      paymasterProxyAuthSecret: env.VITE_AUTH_WORKER_HEADER_SECRET,
-                      skipPromptUserOnPMRejectedOp: false,
-                      fetchAccessTokenFn,
-                  }
-                : undefined,
-        } satisfies TownsEnvironmentInfo)
-    }
     // add the web3 environments
     for (const riverEnv of getWeb3Deployments()) {
         const deployment = getWeb3Deployment(riverEnv)
         // don't add the default env
-        if (riverEnv === env.VITE_RIVER_ENV) {
-            continue
-        }
         // get the chains
         const baseChain = getCustomBaseChain(deployment.base.chainId)
         // don't add chain if we haven't predefined a custom base chain
@@ -152,9 +87,8 @@ export const ENVIRONMENTS = makeEnvironments()
 if (!ENVIRONMENTS.length) {
     throw new Error('No environments defined')
 }
-const defaultEnvironmentId = env.VITE_RIVER_ENV ?? env.VITE_RIVER_DEFAULT_ENV
-const DEFAULT_ENVIRNOMENT =
-    ENVIRONMENTS.find((x) => x.id === defaultEnvironmentId) ?? ENVIRONMENTS[0]
+const DEFAULT_ENVIRONMENT =
+    ENVIRONMENTS.find((x) => x.id === env.VITE_RIVER_DEFAULT_ENV) ?? ENVIRONMENTS[0]
 
 export type UseEnvironmentReturn = ReturnType<typeof useEnvironment>
 
@@ -184,7 +118,7 @@ export function useEnvironment() {
     }, [])
 
     const environmentInfo = useMemo(
-        () => ENVIRONMENTS.find((e) => e.id === environmentId) ?? DEFAULT_ENVIRNOMENT,
+        () => ENVIRONMENTS.find((e) => e.id === environmentId) ?? DEFAULT_ENVIRONMENT,
         [environmentId],
     )
 

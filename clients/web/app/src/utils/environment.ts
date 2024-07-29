@@ -45,32 +45,19 @@ const envSchema = z.object({
     VITE_APP_NAME: z.string().optional().default('Towns'),
 
     // start environment config, if any are set, all should be set
-    VITE_RIVER_ENV: z.string().optional(),
     VITE_BASE_CHAIN_RPC_URL: z.string().url().optional(),
     VITE_BASE_CHAIN_WS_URL: z.string().url().optional(),
-    VITE_BASE_CHAIN_ID: z.string().optional(),
     VITE_RIVER_CHAIN_RPC_URL: z.string().optional(),
-    VITE_RIVER_CHAIN_ID: z.string().optional(),
-    VITE_ADDRESS_BASE_REGISTRY: z.string().optional(),
-    VITE_ADDRESS_SPACE_FACTORY: z.string().optional(),
-    VITE_ADDRESS_SPACE_OWNER: z.string().optional(),
-    VITE_ADDRESS_RIVER_REGISTRY: z.string().optional(),
-    // optional environment config
-    VITE_ADDRESS_MOCK_NFT: z.string().optional(),
-    VITE_ADDRESS_MEMBER: z.string().optional(),
-    // end environment config
 
     // start env specific config
     VITE_BASE_SEPOLIA_RPC_URL: z.string().url().optional(),
     VITE_BASE_SEPOLIA_WS_URL: z.string().url().optional(),
     VITE_RIVER_TESTNET_RPC_URL: z.string().url().optional(),
     // end env specific config
-    VITE_RIVER_DEFAULT_ENV: z.string().optional(), // if more than one env is available, and VITE_RIVER_ENV is not set, this is the default
+    VITE_RIVER_DEFAULT_ENV: z.string().optional(),
 
     VITE_ETHEREUM_RPC_URL: z.string(),
 
-    VITE_TYPEFORM_ALPHA_URL: z.string().optional(),
-    VITE_IGNORE_IS_DEV_CHECKS: z.string().optional(),
     VITE_TOKEN_SERVER_URL: z.string().url(),
     VITE_UNFURL_SERVER_URL: z.string().url(),
     VITE_GATEWAY_URL: z.string().url(),
@@ -78,8 +65,6 @@ const envSchema = z.object({
     VITE_GIPHY_API_KEY: z.string(), // TODO: is it safe to have these as VITE_ env vars on the client?
 
     VITE_APP_RELEASE_VERSION: z.string().optional(),
-    VITE_AMPLITUDE_KEY: z.string().nullish(), // making this optional since we want to allow local development without it
-    VITE_GLEAP_API_KEY: z.string().optional(), // making this optional since we want to allow local development without it
 
     VITE_PUSH_NOTIFICATION_ENABLED: boolish.default(false), // making this optional since we want to allow local development with / without it
     VITE_DISABLE_DEBUG_BARS: boolish.default(false),
@@ -87,7 +72,6 @@ const envSchema = z.object({
     VITE_WEB_PUSH_APPLICATION_SERVER_KEY: z.string().optional(), // making this optional since we want to allow local development without it
     VITE_WEB_PUSH_WORKER_URL: z.string().optional(), // url to the web push worker
     VITE_AMP_WORKER_URL: z.string().url().optional(),
-    VITE_TOWNS_TOKEN_URL: z.string().url().optional(),
 
     VITE_TRANSIENT_ENV_GITHUB_PR_NUMBER: intString.optional(),
 
