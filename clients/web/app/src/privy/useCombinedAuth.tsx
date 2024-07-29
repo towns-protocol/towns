@@ -1,10 +1,8 @@
 import { Address, useConnectivity } from 'use-towns-client'
 import React, { createContext, useCallback, useContext, useMemo } from 'react'
-import { toast } from 'react-hot-toast/headless'
 import { useLogin, usePrivy } from '@privy-io/react-auth'
 import { useEmbeddedWallet, useGetEmbeddedSigner } from '@towns/privy'
 import { clearEmbeddedWalletStorage } from '@towns/privy/EmbeddedSignerContext'
-import { ErrorNotification } from '@components/Notifications/ErrorNotifcation'
 import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
 import { useUnsubscribeNotification } from 'hooks/usePushSubscription'
 import { useAnalytics } from 'hooks/useAnalytics'
@@ -176,20 +174,6 @@ function usePrivyLoginWithErrorHandler({
             if (error === 'exited_auth_flow') {
                 return
             }
-            toast.custom(
-                (t) => {
-                    return (
-                        <ErrorNotification
-                            toast={t}
-                            errorMessage="There was an error logging in to Privy."
-                            contextMessage={error}
-                        />
-                    )
-                },
-                {
-                    duration: Infinity,
-                },
-            )
         },
     })
 

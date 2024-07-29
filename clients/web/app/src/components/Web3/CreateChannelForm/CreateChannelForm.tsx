@@ -156,7 +156,7 @@ export const CreateChannelForm = (props: Props) => {
                 break
         }
         // mapToErrorMessage(transactionError) handles more cases that might result in not showing the error message to a user - i.e. transasction rejected by user
-        if (errMsg && mapToErrorMessage(transactionError)) {
+        if (errMsg && mapToErrorMessage({ error: transactionError, source: 'create channel' })) {
             return (
                 <Box paddingBottom="sm" flexDirection="row" justifyContent="end">
                     <ErrorMessageText message={errMsg} />

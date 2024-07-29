@@ -92,6 +92,15 @@ vi.mock('zustand', async () => {
             storeResetFns.add(() => store.setState(initialState, true))
             return store
         },
+        createStore: (createStatee) => {
+            const { createStore } = actual
+            const store = createStore(createStatee)
+            const initialState = store.getInitialState()
+            storeResetFns.add(() => {
+                store.setState(initialState, true)
+            })
+            return store
+        },
     }
 })
 

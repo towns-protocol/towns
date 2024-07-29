@@ -1,7 +1,7 @@
 import { BundlerJsonRpcProvider, IUserOperation, IUserOperationMiddlewareCtx } from 'userop'
 import { ethers, BigNumberish } from 'ethers'
 import { userOpsStore } from './userOpsStore'
-import { CodeException } from './errors'
+import { CodeException, errorCategories } from './errors'
 import { BaseChainConfig, ISpaceDapp } from '@river-build/web3'
 import { TimeTracker, TimeTrackerEvents } from './types'
 
@@ -136,11 +136,12 @@ export function promptUser(
                           }
                         | undefined
 
-                    const exception = new CodeException(
-                        body?.error?.message ?? 'Error estimating gas for user operation',
-                        body?.error?.code ?? 'UNKNOWN_ERROR',
-                        body?.error?.data,
-                    )
+                    const exception = new CodeException({
+                        message: body?.error?.message ?? 'Error estimating gas for user operation',
+                        code: body?.error?.code ?? 'UNKNOWN_ERROR',
+                        data: body?.error?.data,
+                        category: errorCategories.userop_non_sponsored,
+                    })
 
                     // better logs
                     const spaceDappError = spaceDapp?.parseAllContractErrors({
@@ -174,7 +175,13 @@ export function promptUser(
                     },
                     deny: () => {
                         userOpsStore.getState().clear()
-                        reject(new CodeException('user rejected user operation', 'ACTION_REJECTED'))
+                        reject(
+                            new CodeException({
+                                message: 'User rejected user operation',
+                                code: 'ACTION_REJECTED',
+                                category: 'misc',
+                            }),
+                        )
                     },
                 })
             })

@@ -31,3 +31,33 @@ export class MembershipRejectedError extends Error {
         this.name = 'MembershipRejected'
     }
 }
+
+type ErrorCategory = 'river' | 'userop'
+
+/**
+ * Adds an category to an error object
+ */
+export function addCategoryToError<T>(error: T, category: ErrorCategory) {
+    const existingErrorCategory = getErrorCategory(error)
+
+    if (typeof error === 'object' && error !== null) {
+        Object.assign(error, { category: existingErrorCategory ?? category })
+    }
+}
+
+function isErrorWithCategory(error: unknown): error is Error & { category: ErrorCategory } {
+    if (typeof error === 'object' && error !== null) {
+        return 'category' in error
+    }
+    return false
+}
+
+export function getErrorCategory(error: unknown) {
+    if (isErrorWithCategory(error)) {
+        return error.category
+    }
+}
+
+export function addCategoryToErrorIfNotExists<T>(error: T, category: ErrorCategory) {
+    return addCategoryToError(error, getErrorCategory(error) ?? category)
+}

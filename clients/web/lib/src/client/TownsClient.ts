@@ -57,7 +57,12 @@ import {
 } from '../types/towns-types'
 import { SignerContext } from '@river-build/sdk'
 import { PushNotificationClient } from './PushNotificationClient'
-import { MembershipRejectedError, SignerUndefinedError } from '../types/error-types'
+import {
+    addCategoryToError,
+    getErrorCategory,
+    MembershipRejectedError,
+    SignerUndefinedError,
+} from '../types/error-types'
 import { makeUniqueChannelStreamId } from '@river-build/sdk'
 import { makeSpaceStreamId, makeDefaultChannelStreamId } from '@river-build/sdk'
 import { staticAssertNever } from '../utils/towns-utils'
@@ -336,9 +341,9 @@ export class TownsClient
             context,
             TimeTrackerEvents.CREATE_SPACE,
         )
-        if (txContext.status === TransactionStatus.Success) {
+        if (txContext.status === TransactionStatus.Success && txContext.data) {
             this.log('[waitForCreateSpaceTransaction] space created on chain', txContext.data)
-            if (txContext.data) {
+            try {
                 onCreateFlowStatus?.(CreateSpaceFlowStatus.CreatingSpace)
                 const spaceAddress = this.spaceDapp.getSpaceAddress(txContext.receipt)
                 if (!spaceAddress) {
@@ -416,11 +421,16 @@ export class TownsClient
                 // functions to create a space, and this is the only place
                 // that all different functions go through
                 this._eventHandlers?.onCreateSpace?.(spaceId)
+            } catch (error) {
+                addCategoryToError(error, 'river')
+                throw error
             }
         }
 
         if (txContext.error) {
+            const category = getErrorCategory(txContext.error)
             txContext.error = this.getDecodedErrorForSpaceFactory(txContext.error)
+            addCategoryToError(txContext.error, category ?? 'userop')
         }
 
         logTxnResult('waitForCreateSpaceTransaction', txContext)
@@ -464,6 +474,7 @@ export class TownsClient
         } catch (err) {
             console.error('[createCasablancaSpaceTransaction] error', err)
             error = this.getDecodedErrorForSpaceFactory(err)
+            addCategoryToError(error, getErrorCategory(err) ?? 'userop')
         }
 
         continueStoreTx({
@@ -1591,6 +1602,7 @@ export class TownsClient
             }
             // otherwise some other error occurred
             else {
+                addCategoryToError(error, 'river')
                 throw error
             }
         }
@@ -1612,11 +1624,18 @@ export class TownsClient
                 this.log('[joinTown] already member')
             } else {
                 console.error('[joinTown] mint membership failed', error)
+                addCategoryToError(error, 'userop')
                 throw error
             }
         }
-        const room = await joinRiverRoom()
-        return room
+
+        try {
+            const room = await joinRiverRoom()
+            return room
+        } catch (error) {
+            addCategoryToError(error, 'river')
+            throw error
+        }
     }
 
     /************************************************

@@ -22,7 +22,9 @@ function LoginComponent({
     const { login, isAutoLoggingInToRiver } = useCombinedAuth()
     const { authError, authStatus: libAuthStatus } = useConnectivity()
 
-    const errorMessage = authError ? mapToErrorMessage(authError) : undefined
+    const errorMessage = authError
+        ? mapToErrorMessage({ error: authError, source: 'login' })
+        : undefined
 
     const isBusy = libAuthStatus === AuthStatus.EvaluatingCredentials || isAutoLoggingInToRiver
 

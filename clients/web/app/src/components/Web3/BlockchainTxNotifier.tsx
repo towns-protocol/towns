@@ -128,7 +128,7 @@ export function BlockchainTxNotifier() {
                     generateToast({
                         tx,
                         successMessage: '',
-                        errorMessage: mapToErrorMessage(tx.error),
+                        errorMessage: mapToErrorMessage({ error: tx.error, source: tx.type }),
                     })
                     break
                 }
@@ -154,7 +154,9 @@ function MonitoringNotification(props: ToastProps & { toast: Toast }) {
         tx,
         successMessage,
         pendingMessage = 'Transaction pending...',
-        errorMessage = tx.error ? mapToErrorMessage(tx.error) : undefined,
+        errorMessage = tx.error
+            ? mapToErrorMessage({ error: tx.error, source: tx.type })
+            : undefined,
         toast,
         /**
          * if onlyShowPending is true, the toast will appear in pending state and never dismiss
@@ -204,7 +206,7 @@ function MonitoringNotification(props: ToastProps & { toast: Toast }) {
             }
 
             if (_tx.status === 'failure') {
-                const errorMessage = mapToErrorMessage(_tx.error)
+                const errorMessage = mapToErrorMessage({ error: _tx.error, source: _tx.type })
                 // if the error message is empty, the user rejected the tx and we can dismiss the toast
                 if (!errorMessage) {
                     headlessToast.dismiss(toast.id)

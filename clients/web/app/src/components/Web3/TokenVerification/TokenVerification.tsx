@@ -41,7 +41,12 @@ export function TokenVerification({ onHide, spaceId }: { spaceId: string; onHide
     } = useUnlinkWalletTransaction()
 
     useErrorToast({
-        errorMessage: errorUnlinkWallet ? mapToErrorMessage(errorUnlinkWallet) : undefined,
+        errorMessage: errorUnlinkWallet
+            ? mapToErrorMessage({
+                  error: errorUnlinkWallet,
+                  source: 'token verification unlink wallet',
+              })
+            : undefined,
     })
 
     async function onUnlinkClick(addressToUnlink: Address) {
@@ -123,7 +128,12 @@ function Content({
     })
 
     useErrorToast({
-        errorMessage: errorLinkWallet ? mapToErrorMessage(errorLinkWallet) : undefined,
+        errorMessage: errorLinkWallet
+            ? mapToErrorMessage({
+                  error: errorLinkWallet,
+                  source: 'token verification link wallet',
+              })
+            : undefined,
     })
 
     useErrorToast({

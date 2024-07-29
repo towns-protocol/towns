@@ -75,22 +75,20 @@ export const useJoinTown = (spaceId: string | undefined, onSuccessfulJoin?: () =
                         isNoFundsError: false,
                         notEntitled: false,
                     })
-                    setErrorMessage(mapToErrorMessage(_error))
                 } else if (isMaybeFundsError(_error)) {
                     setErrorDetails({
                         maxLimitReached: false,
                         isNoFundsError: true,
                         notEntitled: false,
                     })
-                    setErrorMessage(mapToErrorMessage(_error))
                 } else {
                     setErrorDetails({
                         maxLimitReached: false,
                         isNoFundsError: false,
                         notEntitled: true,
                     })
-                    setErrorMessage(mapToErrorMessage(_error))
                 }
+                setErrorMessage(mapToErrorMessage({ error: _error, source: 'join space' }))
             }
         }
     }, [

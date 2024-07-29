@@ -9,6 +9,7 @@ import { clearEmbeddedWalletStorage } from '@towns/privy/EmbeddedSignerContext'
 import { ErrorNotification } from '@components/Notifications/ErrorNotifcation'
 import { waitFor } from 'utils'
 import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
+import { trackError } from 'hooks/useAnalytics'
 type UseConnectivtyReturnValue = ReturnType<typeof useConnectivity>
 
 export function useAutoLoginToRiverIfEmbeddedWallet({
@@ -56,10 +57,19 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
                         await privyLogout()
                         clearEmbeddedWalletStorage()
                         send('RESET')
+                        const displayText = "Can't detect signer."
+                        trackError({
+                            error: new Error('privy_no_signer'),
+                            name: '',
+                            code: '',
+                            displayText: displayText,
+                            category: 'privy',
+                            source: 'auto login to river',
+                        })
                         toast.custom((t) => (
                             <ErrorNotification
                                 toast={t}
-                                errorMessage="Can't detect signer."
+                                errorMessage={displayText}
                                 contextMessage="There was an error logging in, please try again."
                             />
                         ))

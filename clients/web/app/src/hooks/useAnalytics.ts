@@ -130,6 +130,33 @@ export function useAnalytics() {
     } as const
 }
 
+export function trackError(args: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    error: any
+    displayText?: string
+    // privy | userop | userop_sponsored | userop_non_sponsored | river | misc
+    category: string
+    code: number | string
+    source: string | undefined
+    name?: string
+}) {
+    const { error, category, displayText, code, name, source } = args
+
+    return Analytics.getInstance()?.track('error', {
+        errorMessage: isErrorLike(error) ? error.message : 'unknown error message',
+        displayText,
+        code,
+        category,
+        name,
+        source,
+        debug: true,
+    })
+}
+
+function isErrorLike(e: unknown) {
+    return e && typeof e === 'object' && 'message' in e && typeof e.message === 'string'
+}
+
 export function getAnonymousId() {
     let anonymousId = localStorage.getItem(ANOYNOMOUS_ID)
 

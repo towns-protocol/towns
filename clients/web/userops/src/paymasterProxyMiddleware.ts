@@ -106,11 +106,12 @@ export const paymasterProxyMiddleware = async (
         try {
             accessToken = (await fetchAccessTokenFn?.()) ?? undefined
         } catch (error) {
-            throw new CodeException(
-                'Failed to get access token',
-                'USER_OPS_FAILED_ACCESS_TOKEN',
-                error,
-            )
+            throw new CodeException({
+                message: 'Failed to get access token',
+                code: 'USER_OPS_FAILED_ACCESS_TOKEN',
+                data: error,
+                category: 'userop',
+            })
         }
 
         const response = await fetch(sponsorUserOpUrl, {

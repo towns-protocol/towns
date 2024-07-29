@@ -290,7 +290,9 @@ export function CreateTownSubmit({
                         isTransacting: false,
                         townAddress: undefined,
                     })
-                    const errorMessage = result?.error && mapToErrorMessage(result.error)
+                    const errorMessage =
+                        result?.error &&
+                        mapToErrorMessage({ error: result.error, source: 'create space' })
 
                     if (errorMessage) {
                         analytics?.track(

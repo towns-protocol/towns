@@ -188,7 +188,10 @@ function RolesList(props: {
             console.error('Error linking wallet to root key', e)
             popupToast(({ toast: t }) => (
                 <StandardToast.Error
-                    message={mapToErrorMessage(e) ?? 'There was an error linking your wallet.'}
+                    message={
+                        mapToErrorMessage({ error: e, source: 'restricted join channel panel' }) ??
+                        'There was an error linking your wallet.'
+                    }
                     toast={t}
                 />
             ))

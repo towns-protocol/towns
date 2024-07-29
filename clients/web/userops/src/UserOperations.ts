@@ -231,7 +231,11 @@ export class UserOps {
                     endSendUserOperation?.()
                     return res
                 } catch (error) {
-                    _error = errorToCodeException(error)
+                    const sponsoredOp = simpleAccount.getPaymasterAndData() !== '0x'
+                    _error = errorToCodeException(
+                        error,
+                        sponsoredOp ? 'userop_sponsored' : 'userop_non_sponsored',
+                    )
                     // so far observed bundler errors for both paid and free ops seem to be b/c of preverification gas
                     // may need to handle additional errors in the future
                     // for now, only retrying the known preverification gas error
@@ -472,17 +476,19 @@ export class UserOps {
             userOpEventWalletLink = await linkWalletUserOp.wait()
             endLinkRelay?.()
             if (!userOpEventWalletLink?.args.success) {
-                throw new CodeException(
-                    'Failed to perform user operation for linking wallet',
-                    'USER_OPS_FAILED_TO_PERFORM_USER_OPERATION_LINK_WALLET',
-                )
+                throw new CodeException({
+                    message: 'Failed to perform user operation for linking wallet',
+                    code: 'USER_OPS_FAILED_TO_PERFORM_USER_OPERATION_LINK_WALLET',
+                    category: 'userop',
+                })
             }
         } catch (error) {
-            throw new CodeException(
-                'Failed to perform user operation for linking wallet',
-                'USER_OPS_FAILED_TO_PERFORM_USER_OPERATION_LINK_WALLET',
-                error,
-            )
+            throw new CodeException({
+                message: 'Failed to perform user operation for linking wallet',
+                code: 'USER_OPS_FAILED_TO_PERFORM_USER_OPERATION_LINK_WALLET',
+                data: error,
+                category: 'userop',
+            })
         }
 
         try {
@@ -495,14 +501,19 @@ export class UserOps {
             )
             endWaitForLinkWalletTx?.()
             if (linkWalletReceipt?.status !== 1) {
-                throw new CodeException('Failed to link wallet', 'USER_OPS_FAILED_TO_LINK_WALLET')
+                throw new CodeException({
+                    message: 'Failed to link wallet',
+                    code: 'USER_OPS_FAILED_TO_LINK_WALLET',
+                    category: 'userop',
+                })
             }
         } catch (error) {
-            throw new CodeException(
-                'Failed to link wallet',
-                'USER_OPS_FAILED_TO_LINK_WALLET',
-                error,
-            )
+            throw new CodeException({
+                message: 'Failed to link wallet',
+                code: 'USER_OPS_FAILED_TO_LINK_WALLET',
+                data: error,
+                category: 'userop',
+            })
         }
 
         return this.sendUserOp(
@@ -1009,15 +1020,17 @@ export class UserOps {
             const newRuleDataIsNoop = isEqual(newRuleData, NoopRuleData)
 
             if (newRuleDataIsNoop && !newUsers.includes(EVERYONE_ADDRESS)) {
-                throw new CodeException(
-                    'Noop rule entitlement must be used with the everyone address',
-                    'USER_OPS_NOOP_REQUIRES_EVERYONE',
-                )
+                throw new CodeException({
+                    message: 'Noop rule entitlement must be used with the everyone address',
+                    code: 'USER_OPS_NOOP_REQUIRES_EVERYONE',
+                    category: 'userop',
+                })
             } else if (!newRuleDataIsNoop && newUsers.includes(EVERYONE_ADDRESS)) {
-                throw new CodeException(
-                    'Rule entitlements cannot be used with the everyone address',
-                    'USER_OPS_RULES_CANNOT_BE_USED_WITH_EVERYONE',
-                )
+                throw new CodeException({
+                    message: 'Rule entitlements cannot be used with the everyone address',
+                    code: 'USER_OPS_RULES_CANNOT_BE_USED_WITH_EVERYONE',
+                    category: 'userop',
+                })
             }
 
             const roleData = await this.encodeUpdateRoleData({
@@ -1086,10 +1099,11 @@ export class UserOps {
         }
         // switching to free space
         else if (currentIsFixedPricing && !newIsFixedPricing) {
-            throw new CodeException(
-                'Cannot change a paid space to a free space',
-                'USER_OPS_CANNOT_CHANGE_TO_FREE_SPACE',
-            )
+            throw new CodeException({
+                message: 'Cannot change a paid space to a free space',
+                code: 'USER_OPS_CANNOT_CHANGE_TO_FREE_SPACE',
+                category: 'userop',
+            })
         }
         // price update only
         else if (currentIsFixedPricing && newIsFixedPricing) {
