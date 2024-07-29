@@ -28,9 +28,11 @@ abstract contract Interaction is Script, DeployBase {
       : vm.envUint("TESTNET_PRIVATE_KEY");
 
     address potential = vm.addr(pk);
-    address deployer = isAnvil() ? potential : msg.sender != potential
-      ? msg.sender
-      : potential;
+    address deployer = isAnvil()
+      ? potential
+      : msg.sender != potential
+        ? msg.sender
+        : potential;
 
     info(
       string.concat(

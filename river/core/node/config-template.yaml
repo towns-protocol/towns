@@ -1,46 +1,23 @@
-# This config template is used for local and CI tests. Default protuction config is in default_config.yaml
+# This config template is used for local and CI tests. Default production config is in default_config.yaml
 
-# Network configuration
-port: <RPC_PORT>
 database:
-    url: postgres://postgres:postgres@localhost:<DB_PORT>/river?sslmode=disable&pool_max_conns=1000
-    database: ''
-    user: ''
-    password: ''
-    port: ''
-    extra: ''
-    host: ''
-storageType: postgres
+    url: postgres://postgres:postgres@localhost:5433/river?sslmode=disable&pool_max_conns=1000
 
 # Certificates for TLS
 TLSConfig:
     cert: certs/cert.pem
     key: certs/key.pem
-UseHttps: true
 
 # Blockchain configuration
 baseChain:
     chainId: 31337
     networkUrl: 'http://127.0.0.1:8545'
     blockTimeMs: <BLOCK_TIME_MS>
-    positiveEntitlementCacheTTLSeconds: <POSITIVE_ENTITLEMENT_CACHE_TTL_SECONDS> # Short TTL for testing
+    positiveEntitlementCacheTTLSeconds: 5 # Short TTL for testing
 riverChain:
     chainId: 31338
     networkUrl: 'http://127.0.0.1:8546'
     blockTimeMs: <BLOCK_TIME_MS>
-    transactionPool:
-        # transactionTimeout specifies the duration after which a pending transaction is replaced. Recommended is a
-        # multiple of the chain block period. If not specified the node uses blockTimeMs, if that is not set it tries
-        # to estimate the block period based on the 2 last blocks and sets Timeout to 3 * chain.BlockPeriod.
-        transactionTimeout: 6s
-        # gasFeeCap is a hard limit for the max price per gas in EIP1559 transactions (in Wei)
-        gasFeeCap: 150_000_000_000 # 150 Gwei
-        # The miner tip increase (%) for EIP-1559 replacement transactions.
-        # Nodes typically accept replacement transactions with at least a 10% miner tip increase.
-        minerTipFeeReplacementPercentage: 10
-        # The gas price increase (%) for legacy replacement transactions.
-        # Nodes typically accept legacy replacement transactions with at least a 10% gas fee increase.
-        gasFeeIncreasePercentage: 10
 
 # Base contracts
 architectContract:
@@ -53,53 +30,18 @@ registryContract:
 # Logging
 log:
     file: logs/dev.log
-    level: <LOG_LEVEL>
+    level: info
     console: true
-    noColor: <LOG_NOCOLOR>
+    noColor: false
     format: text
     simplify: true
 
-# Metrics
-metrics:
-    enabled: <METRICS_ENABLED>
 performanceTracking:
-    profilingEnabled: false
-
     # NOTE: Uncomment below to enable tracing with Jaeger (via OTLP) or Zipkin
     # tracingEnabled: true
     # otlpEnableGrpc: true
     # otlpInsecure: true
     # zipkinUrl: http://localhost:9411
-
-# Stream settings
-stream:
-    media:
-        maxChunkCount: 10 # max number of chunks in a media stream
-        maxChunkSize: 500000 # max number of bytes in a single chunk
-    streamMembershipLimits:
-        77: 6 # GDMs
-        88: 2 # DMs
-    recencyConstraints:
-        # Each event must be unique and reference the hash of a previous miniblock
-        # If the hash is not of the most recent block, the referenced miniblock must be less than M seconds old.
-        ageSeconds: 11
-        # The node will load M generation miniblocks before the most recent snapshot
-        generations: 5
-    replicationFactor: <REPL_FACTOR>
-    defaultMinEventsPerSnapshot: 100
-    minEventsPerSnapshot:
-        # stream prefixes should be lower case because go is lower casing them anyway
-        a8: 10 # USER
-        ad: 10 # USER_DEVICE_KEY
-        a1: 10 # USER_INBOX
-        a5: 10 # USER_SETTINGS
-    # Timeout after streams with no activity in the cache are expired and evicted
-    # valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h"
-    # Set to 0 to disable cache expiration
-    cacheExpiration: 5m
-    # Interval to check for inactive streams in the cache (default=cacheExpiration/10)
-    # valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h"
-    cacheExpirationPollInterval: 30s
 
 network:
     numRetries: 3
@@ -112,8 +54,6 @@ disableBaseChain: <DISABLE_BASE_CHAIN>
 chains: '31337:http://localhost:8545,31338:http://localhost:8546,84532:https://sepolia.base.org,11155111:https://ethereum-sepolia-rpc.publicnode.com'
 xChainBlockchains: '31337,31338,84532,11155111'
 
-enableDebugEndpoints: <ENABLE_DEBUG_ENDPOINTS>
-
-history: 30s
+enableDebugEndpoints: true
 
 standByOnStart: false

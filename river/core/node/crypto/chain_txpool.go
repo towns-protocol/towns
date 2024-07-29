@@ -66,13 +66,14 @@ type (
 	}
 
 	txPoolPendingTransaction struct {
-		txHashes   []common.Hash // transaction hashes, due to resubmit there can be multiple
-		tx         *types.Transaction
-		txOpts     *bind.TransactOpts
-		next       *txPoolPendingTransaction
-		name       string
-		resubmit   CreateTransaction
-		lastSubmit time.Time
+		txHashes    []common.Hash // transaction hashes, due to resubmit there can be multiple
+		tx          *types.Transaction
+		txOpts      *bind.TransactOpts
+		next        *txPoolPendingTransaction
+		name        string
+		resubmit    CreateTransaction
+		firstSubmit time.Time
+		lastSubmit  time.Time
 		// listener waits on this channel for the transaction receipt
 		listener chan *types.Receipt
 		// The hash of the transaction that was executed on the chain. This is only set on the
@@ -94,15 +95,16 @@ type (
 		lastReplacementSent atomic.Int64
 
 		// metrics
-		transactionSubmitted         *prometheus.CounterVec
-		transactionsReplaced         *prometheus.CounterVec
-		transactionsPending          prometheus.Gauge
-		transactionsProcessed        *prometheus.CounterVec
-		transactionInclusionDuration prometheus.Observer
-		transactionGasCap            *prometheus.GaugeVec
-		transactionGasTip            *prometheus.GaugeVec
-		walletBalanceLastTimeChecked time.Time
-		walletBalance                prometheus.Gauge
+		transactionSubmitted              *prometheus.CounterVec
+		transactionsReplaced              *prometheus.CounterVec
+		transactionsPending               prometheus.Gauge
+		transactionsProcessed             *prometheus.CounterVec
+		transactionTotalInclusionDuration prometheus.Observer
+		transactionInclusionDuration      prometheus.Observer
+		transactionGasCap                 *prometheus.GaugeVec
+		transactionGasTip                 *prometheus.GaugeVec
+		walletBalanceLastTimeChecked      time.Time
+		walletBalance                     prometheus.Gauge
 
 		// mu protects the remaining fields
 		mu             sync.Mutex
@@ -201,9 +203,14 @@ func NewTransactionPoolWithPolicies(
 		"txpool_tx_miner_tip_wei", "Latest submitted EIP1559 transaction gas fee miner tip",
 		"chain_id", "address", "replacement",
 	)
+	transactionTotalInclusionDuration := metrics.NewHistogramVecEx(
+		"txpool_tx_total_inclusion_duration_sec",
+		"How long it takes before a transaction is included in the chain since first submit",
+		prometheus.LinearBuckets(1.0, 2.0, 10), "chain_id", "address",
+	)
 	transactionInclusionDuration := metrics.NewHistogramVecEx(
 		"txpool_tx_inclusion_duration_sec",
-		"How long it takes before a transaction is included in the chain",
+		"How long it takes before a transaction is included in the chain since last submit",
 		prometheus.LinearBuckets(1.0, 2.0, 10), "chain_id", "address",
 	)
 	walletBalance := metrics.NewGaugeVecEx(
@@ -213,21 +220,22 @@ func NewTransactionPoolWithPolicies(
 
 	curryLabels := prometheus.Labels{"chain_id": chainID.String(), "address": wallet.Address.String()}
 	txPool := &transactionPool{
-		client:                       client,
-		wallet:                       wallet,
-		chainID:                      chainID.Uint64(),
-		chainIDStr:                   chainID.String(),
-		replacePolicy:                replacePolicy,
-		pricePolicy:                  pricePolicy,
-		signerFn:                     signerFn,
-		transactionSubmitted:         transactionsSubmittedCounter.MustCurryWith(curryLabels),
-		transactionsReplaced:         transactionsReplacedCounter.MustCurryWith(curryLabels),
-		transactionsPending:          transactionsPendingCounter.With(curryLabels),
-		transactionsProcessed:        transactionsProcessedCounter.MustCurryWith(curryLabels),
-		transactionInclusionDuration: transactionInclusionDuration.With(curryLabels),
-		transactionGasCap:            transactionGasCap.MustCurryWith(curryLabels),
-		transactionGasTip:            transactionGasTip.MustCurryWith(curryLabels),
-		walletBalance:                walletBalance.With(curryLabels),
+		client:                            client,
+		wallet:                            wallet,
+		chainID:                           chainID.Uint64(),
+		chainIDStr:                        chainID.String(),
+		replacePolicy:                     replacePolicy,
+		pricePolicy:                       pricePolicy,
+		signerFn:                          signerFn,
+		transactionSubmitted:              transactionsSubmittedCounter.MustCurryWith(curryLabels),
+		transactionsReplaced:              transactionsReplacedCounter.MustCurryWith(curryLabels),
+		transactionsPending:               transactionsPendingCounter.With(curryLabels),
+		transactionsProcessed:             transactionsProcessedCounter.MustCurryWith(curryLabels),
+		transactionTotalInclusionDuration: transactionTotalInclusionDuration.With(curryLabels),
+		transactionInclusionDuration:      transactionInclusionDuration.With(curryLabels),
+		transactionGasCap:                 transactionGasCap.MustCurryWith(curryLabels),
+		transactionGasTip:                 transactionGasTip.MustCurryWith(curryLabels),
+		walletBalance:                     walletBalance.With(curryLabels),
 	}
 
 	chainMonitor.OnHeader(func(ctx context.Context, head *types.Header) {
@@ -353,14 +361,16 @@ func (r *transactionPool) Submit(
 		"gasTipCap", tx.GasTipCap(),
 	)
 
+	now := time.Now()
 	pendingTx := &txPoolPendingTransaction{
-		txHashes:   []common.Hash{tx.Hash()},
-		tx:         tx,
-		txOpts:     opts,
-		resubmit:   createTx,
-		name:       name,
-		lastSubmit: time.Now(),
-		listener:   make(chan *types.Receipt, 1),
+		txHashes:    []common.Hash{tx.Hash()},
+		tx:          tx,
+		txOpts:      opts,
+		resubmit:    createTx,
+		name:        name,
+		firstSubmit: now,
+		lastSubmit:  now,
+		listener:    make(chan *types.Receipt, 1),
 	}
 
 	if r.lastPendingTx == nil {
@@ -418,6 +428,7 @@ func (r *transactionPool) CheckPendingTransactions(ctx context.Context, head *ty
 			if receipt != nil {
 				r.pendingTxCount.Add(-1)
 				r.processedTxCount.Add(1)
+				r.transactionTotalInclusionDuration.Observe(time.Since(r.firstPendingTx.firstSubmit).Seconds())
 				r.transactionInclusionDuration.Observe(time.Since(r.firstPendingTx.lastSubmit).Seconds())
 
 				if r.lastPendingTx.tx.Nonce() == pendingTx.tx.Nonce() {

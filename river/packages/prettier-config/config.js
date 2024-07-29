@@ -5,6 +5,7 @@
 module.exports = {
     arrowParens: 'always',
     endOfLine: 'lf',
+    plugins: ['prettier-plugin-solidity'],
     printWidth: 80,
     semi: true,
     singleQuote: false,

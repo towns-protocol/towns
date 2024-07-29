@@ -1,0 +1,11 @@
+name: Workitem (team members only)
+description: Workitem for River project
+labels: ['workitem', 'triage']
+projects: ['river-build/1']
+body:
+    - type: textarea
+      attributes:
+          label: Description
+          description: Workitem details
+      validations:
+          required: false

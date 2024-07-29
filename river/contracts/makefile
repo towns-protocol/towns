@@ -18,7 +18,7 @@ snapshot :; forge snapshot
 
 format :; yarn prettier --write .
 
-lint :; yarn solhint "{scripts,src,test/**/*.sol}"
+lint :; yarn solhint "{scripts,src,test}/**/*.sol"
 
 anvil :; anvil -m 'test test test test test test test test test test test junk'
 
