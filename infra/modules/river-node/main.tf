@@ -531,47 +531,47 @@ resource "aws_ecs_task_definition" "river-fargate" {
       }
     }
     }
-    ], {
-    name      = "dd-agent"
-    image     = "public.ecr.aws/datadog/agent:7"
-    essential = true
-    portMappings = [{
-      "containerPort" : 8126,
-      "hostPort" : 8126,
-      "protocol" : "tcp"
-      }, {
-      "containerPort" : 4317,
-      "hostPort" : 4317,
-      "protocol" : "tcp"
-    }]
+    , {
+      name      = "dd-agent"
+      image     = "public.ecr.aws/datadog/agent:7"
+      essential = true
+      portMappings = [{
+        "containerPort" : 8126,
+        "hostPort" : 8126,
+        "protocol" : "tcp"
+        }, {
+        "containerPort" : 4317,
+        "hostPort" : 4317,
+        "protocol" : "tcp"
+      }]
 
-    cpu    = local.dd_agent_cpu
-    memory = local.dd_agent_memory
+      cpu    = local.dd_agent_cpu
+      memory = local.dd_agent_memory
 
-    secrets = [{
-      name      = "DD_API_KEY"
-      valueFrom = local.global_remote_state.river_global_dd_agent_api_key.arn
-    }]
+      secrets = [{
+        name      = "DD_API_KEY"
+        valueFrom = local.global_remote_state.river_global_dd_agent_api_key.arn
+      }]
 
-    environment = [
-      {
-        name  = "DD_SITE",
-        value = "datadoghq.com"
-      },
-      {
-        name  = "ECS_FARGATE",
-        value = "true"
-      },
-      {
-        name  = "DD_TAGS",
-        value = local.dd_required_tags
-      },
-      {
-        name  = "DD_OTLP_CONFIG_RECEIVER_PROTOCOLS_GRPC_ENDPOINT",
-        value = "0.0.0.0:4317"
-      }
-    ]
-  })
+      environment = [
+        {
+          name  = "DD_SITE",
+          value = "datadoghq.com"
+        },
+        {
+          name  = "ECS_FARGATE",
+          value = "true"
+        },
+        {
+          name  = "DD_TAGS",
+          value = local.dd_required_tags
+        },
+        {
+          name  = "DD_OTLP_CONFIG_RECEIVER_PROTOCOLS_GRPC_ENDPOINT",
+          value = "0.0.0.0:4317"
+        }
+      ]
+  }])
 
   tags = module.global_constants.tags
 }
