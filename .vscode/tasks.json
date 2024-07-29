@@ -61,7 +61,6 @@
       "label": "Stage 3",
       "dependsOn": [
         "Apps and Workers",
-        "StackupWorker",
         "Casablanca Single",
         "XChainLaunchMulti",
       ],
@@ -141,7 +140,6 @@
         "CheckVersions",
         "YarnInstall",
         "Apps and Workers",
-        "StackupWorker",
       ],
       // Mark as the default build task so cmd/ctrl+shift+b will create them
       "group": {
@@ -161,6 +159,7 @@
         "TokenWorker",
         "GatewayWorker",
         "NotificationService",
+        "StackupWorker"
       ],
       "group": {
         "kind": "build",

@@ -64,7 +64,7 @@ There are a few ways to run the local dev environment:
 
 ### App development against gamma (uses Account Abstraction)
 
-- Use the keystroke: `Ctrl+Shift+P` to bring up the command pallets and type `tasks`, select `Tasks: Run Task` and then select `Apps and workers`. This will start the required services for the app and workers to run locally, against River's gamma environment (base-sepolia, deployed river nodes, etc).
+- Use the keystroke: `Ctrl+Shift+P` to bring up the command pallets and type `tasks`, select `Tasks: Run Task` and then select `Start local Apps and workers`. This will start the required services for the app and workers to run locally, against River's gamma environment (base-sepolia, deployed river nodes, etc).
 - You MUST make sure the env switcher in the bottom right of the app UI is set to `gamma`.
 
 ### App development against local blockchains/servers with Account Abstraction
