@@ -138,6 +138,20 @@ function usePrivyLoginWithErrorHandler({
                     ? analytics?.setPseudoId(user.wallet.address)
                     : undefined
                 try {
+                    if (pseudoId) {
+                        analytics?.identify(
+                            pseudoId,
+                            {
+                                loginMethod,
+                            },
+                            () => {
+                                console.log('[analytics] identify logged in user', {
+                                    pseudoId,
+                                    loginMethod,
+                                })
+                            },
+                        )
+                    }
                     const tracked = {
                         isNewUser,
                         loginMethod,
