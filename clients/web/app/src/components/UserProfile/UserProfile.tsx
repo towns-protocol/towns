@@ -1,8 +1,8 @@
-import { Nft, useMemberOf, useSpaceData, useUserLookupContext } from 'use-towns-client'
+import { Nft, useMemberOf, useUserLookupContext } from 'use-towns-client'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { toast } from 'react-hot-toast/headless'
-import { isDMChannelStreamId, isDefined, isGDMChannelStreamId } from '@river-build/sdk'
+import { isDefined } from '@river-build/sdk'
 import { AnimatePresence, MotionConfig } from 'framer-motion'
 import {
     Box,
@@ -57,7 +57,6 @@ enum InputId {
 export const UserProfile = (props: Props) => {
     const { userId, canEdit, center, info, userBio, abstractAccountAddress } = props
     const memberOf = useMemberOf(userId)
-    const spaceData = useSpaceData()
     const { lookupUser } = useUserLookupContext()
     const user = userId ? lookupUser(userId) : undefined
     const [showNftProfilePicture, setShowNftProfilePicture] = useState(false)
@@ -200,17 +199,7 @@ export const UserProfile = (props: Props) => {
                 )}
             </Stack>
             {canEdit ? (
-                <>
-                    {streamId && isGDMChannelStreamId(streamId) ? (
-                        <SetUsernameDisplayName streamId={streamId} />
-                    ) : streamId && isDMChannelStreamId(streamId) ? (
-                        <SetUsernameDisplayName streamId={streamId} />
-                    ) : spaceData ? (
-                        <SetUsernameDisplayName streamId={spaceData.id} />
-                    ) : (
-                        <></>
-                    )}
-                </>
+                <>{streamId && <SetUsernameDisplayName streamId={streamId} />}</>
             ) : (
                 <Stack padding gap="sm" rounded="sm" background="level2">
                     {user && (
@@ -304,6 +293,7 @@ export const UserProfile = (props: Props) => {
                     {showNftProfilePicture && userId && (
                         <NftProfilePicture
                             userId={userId}
+                            streamId={streamId}
                             currentNft={user?.nft}
                             onHide={() => setShowNftProfilePicture(false)}
                         />
@@ -445,13 +435,17 @@ export const EditModeContainer = (props: EditRowProps) => {
     )
 }
 
-const NftProfilePicture = (props: { onHide: () => void; userId: string; currentNft?: Nft }) => {
-    const { onHide, userId, currentNft } = props
+const NftProfilePicture = (props: {
+    onHide: () => void
+    userId: string
+    streamId: string | undefined
+    currentNft?: Nft
+}) => {
+    const { onHide, userId, streamId, currentNft } = props
 
     const { isTouch } = useDevice()
     const { nfts, isFetching } = useNfts(userId)
     const { setNft } = useSetNftProfilePicture()
-    const streamId = useCurrentStreamID()
     const { openPanel } = usePanelActions()
     const [selectedNft, setSelectedNft] = useState<Nft | undefined>(currentNft)
     const [pendingSaveNft, setPendingSaveNft] = useState<Nft | undefined>(undefined)
@@ -496,16 +490,6 @@ const NftProfilePicture = (props: { onHide: () => void; userId: string; currentN
         setPendingSaveNft(selectedNft)
     }, [selectedNft, streamId, setNft])
 
-    const onSelectNft = useCallback(
-        (nft: { tokenId: string; contractAddress: string; chainId: number }) => {
-            if (!streamId) {
-                return
-            }
-            setSelectedNft(nft)
-        },
-        [streamId, setSelectedNft],
-    )
-
     const saveInProgress = !!pendingSaveNft
     const saveButtonEnabled =
         !saveInProgress && !isNftSaved && selectedNft?.tokenId != currentNft?.tokenId
@@ -549,79 +533,74 @@ const NftProfilePicture = (props: { onHide: () => void; userId: string; currentN
                     centerContent
                     scrollbars
                     scroll
+                    gap
                     flexWrap="wrap"
                     width="100%"
                     maxHeight={isTouch ? '50vh' : '300'}
                 >
                     {displayableNfts.map((nft) => (
                         <Box
-                            padding="sm"
+                            hoverable
                             key={nft.contractAddress}
-                            onClick={() => {
-                                onSelectNft(nft)
+                            position="relative"
+                            width="x12"
+                            height="x12"
+                            background="level2"
+                            rounded="xs"
+                            border={{
+                                default:
+                                    nft.tokenId == selectedNft?.tokenId &&
+                                    nft.contractAddress == selectedNft.contractAddress
+                                        ? 'positive'
+                                        : 'none',
+                                hover: 'positive',
                             }}
+                            style={{
+                                backgroundImage: `url(${nft.image?.cachedUrl})`,
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                            }}
+                            onClick={() => setSelectedNft(nft)}
                         >
-                            <Box
-                                hoverable
-                                position="relative"
-                                width="x12"
-                                height="x12"
-                                background="level2"
-                                rounded="xs"
-                                border={{
-                                    default:
-                                        nft.tokenId == selectedNft?.tokenId &&
-                                        nft.contractAddress == selectedNft.contractAddress
-                                            ? 'positive'
-                                            : 'none',
-                                    hover: 'positive',
-                                }}
-                                style={{
-                                    backgroundImage: `url(${nft.image?.cachedUrl})`,
-                                    backgroundSize: 'cover',
-                                    backgroundPosition: 'center',
-                                }}
-                            >
-                                <AnimatePresence>
-                                    <MotionConfig transition={{ ease: 'easeOut', duration: 0.2 }}>
-                                        {nft.tokenId == selectedNft?.tokenId &&
-                                            nft.contractAddress == selectedNft.contractAddress && (
-                                                <>
-                                                    <MotionIcon
-                                                        initial={{ opacity: 0 }}
-                                                        animate={{ opacity: 1 }}
-                                                        exit={{ opacity: 0 }}
-                                                        zIndex="uiAbove"
-                                                        square="square_xxs"
-                                                        position="absolute"
-                                                        top="xxs"
-                                                        right="xxs"
-                                                        type="verifiedEnsName"
-                                                        style={{
-                                                            strokeWidth: 1,
-                                                            stroke: 'black',
-                                                        }}
-                                                    />
-                                                    <MotionIcon
-                                                        initial={{ opacity: 0 }}
-                                                        animate={{ opacity: 1 }}
-                                                        exit={{ opacity: 0 }}
-                                                        square="square_xxs"
-                                                        position="absolute"
-                                                        top="xxs"
-                                                        right="xxs"
-                                                        type="verifiedEnsName"
-                                                        style={{
-                                                            stroke: 'black',
-                                                            strokeWidth: 2,
-                                                            filter: 'brightness(0%)',
-                                                        }}
-                                                    />
-                                                </>
-                                            )}
-                                    </MotionConfig>
-                                </AnimatePresence>
-                            </Box>
+                            <AnimatePresence>
+                                <MotionConfig transition={{ ease: 'easeOut', duration: 0.2 }}>
+                                    {nft.tokenId == selectedNft?.tokenId &&
+                                        nft.contractAddress == selectedNft.contractAddress && (
+                                            <>
+                                                <MotionIcon
+                                                    initial={{ opacity: 0 }}
+                                                    animate={{ opacity: 1 }}
+                                                    exit={{ opacity: 0 }}
+                                                    zIndex="uiAbove"
+                                                    square="square_xxs"
+                                                    position="absolute"
+                                                    top="xxs"
+                                                    right="xxs"
+                                                    type="verifiedEnsName"
+                                                    style={{
+                                                        strokeWidth: 1,
+                                                        stroke: 'black',
+                                                    }}
+                                                />
+                                                <MotionIcon
+                                                    initial={{ opacity: 0 }}
+                                                    animate={{ opacity: 1 }}
+                                                    exit={{ opacity: 0 }}
+                                                    square="square_xxs"
+                                                    position="absolute"
+                                                    top="xxs"
+                                                    right="xxs"
+                                                    type="verifiedEnsName"
+                                                    style={{
+                                                        stroke: 'black',
+                                                        strokeWidth: 2,
+                                                        filter: 'brightness(0%)',
+                                                    }}
+                                                />
+                                            </>
+                                        )}
+                                </MotionConfig>
+                            </AnimatePresence>
                         </Box>
                     ))}
                 </Stack>

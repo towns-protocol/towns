@@ -9,7 +9,7 @@ export interface ISpaceContext {
 export const SpaceContext = createContext<ISpaceContext | undefined>(undefined)
 
 /**
- * use instead of React.useContext, throws if not in a Provider
+ * use instead of React.useContext
  */
 export function useSpaceContext(): ISpaceContext {
     const spaceContext = useContext<ISpaceContext | undefined>(SpaceContext)

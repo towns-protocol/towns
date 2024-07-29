@@ -3,6 +3,7 @@ import {
     LookupUser,
     useMyUserId,
     useSpaceData,
+    useSpaceId,
     useTownsClient,
     useUserLookupStore,
 } from 'use-towns-client'
@@ -28,7 +29,9 @@ import { useValidateUsername } from 'hooks/useValidateUsername'
 import { EditableInputField } from './EditableInputField'
 
 export const useCurrentStreamID = () => {
-    const { spaceId, channelId } = useRouteParams()
+    const { spaceId: spaceIdFromUrl, channelId } = useRouteParams()
+    const spaceIdFromContext = useSpaceId()
+    const spaceId = spaceIdFromUrl ?? spaceIdFromContext
     if (channelId) {
         if (isDMChannelStreamId(channelId) || isGDMChannelStreamId(channelId)) {
             return channelId
