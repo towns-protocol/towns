@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"encoding/hex"
 	"log/slog"
 	"math/big"
 
@@ -300,14 +301,15 @@ func (x *xchain) onEntitlementCheckRequested(
 		return
 	}
 
-	log.Info("Received EntitlementCheckRequested", "xchain.req.txid", entitlementCheckRequest.TransactionId)
+	log.Info("Received EntitlementCheckRequested",
+		"xchain.req.txid", hex.EncodeToString(entitlementCheckRequest.TransactionId[:]))
 
 	// process the entitlement request and post the result to entitlementCheckResults
 	outcome, err := x.handleEntitlementCheckRequest(ctx, entitlementCheckRequest)
 	if err != nil {
 		x.entitlementCheckRequested.IncFail()
 		log.Error("Entitlement check failed to process",
-			"err", err, "xchain.req.txid", entitlementCheckRequest.TransactionId)
+			"err", err, "xchain.req.txid", hex.EncodeToString(entitlementCheckRequest.TransactionId[:]))
 		return
 	}
 	if outcome != nil { // request was not intended for this xchain instance.
@@ -331,7 +333,7 @@ func (x *xchain) handleEntitlementCheckRequest(
 ) (*entitlementCheckReceipt, error) {
 	log := x.Log(ctx).
 		With("function", "handleEntitlementCheckRequest").
-		With("req.txid", request.TransactionId).
+		With("req.txid", hex.EncodeToString(request.TransactionId[:])).
 		With("roleId", request.RoleId.String())
 
 	for _, selectedNodeAddress := range request.SelectedNodes {
@@ -546,7 +548,7 @@ func (x *xchain) process(
 	log := x.Log(ctx).
 		With("caller_address", callerAddress.Hex())
 
-	log = log.With("function", "process", "req.txid", request.TransactionId)
+	log = log.With("function", "process", "req.txid", hex.EncodeToString(request.TransactionId[:]))
 	log.Info("Process EntitlementCheckRequested")
 
 	wallets, err := x.getLinkedWallets(ctx, callerAddress)
