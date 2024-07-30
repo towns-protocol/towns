@@ -243,7 +243,7 @@ const DebugModal = ({ environment }: ModalProps) => {
                         <Divider />
 
                         <Stack gap justifyContent="end">
-                            {ENVIRONMENTS.map((env) => (
+                            {ENVIRONMENTS.filter((env) => env.name !== 'omega').map((env) => (
                                 <Button
                                     key={env.name}
                                     size="button_xs"
