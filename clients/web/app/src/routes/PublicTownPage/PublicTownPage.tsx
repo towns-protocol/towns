@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useConnectivity, useContractSpaceInfoWithoutClient, useMyProfile } from 'use-towns-client'
+import { getTownDataFromSSR } from 'utils/parseTownDataFromSSR'
 import { AppProgressState } from '@components/AppProgressOverlay/AppProgressState'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { LogoSingleLetter } from '@components/Logo/Logo'
@@ -38,8 +39,13 @@ const PublicTownPageWithoutAuth = (props: { isPreview?: boolean; onClosePreview?
     const spaceId = useSpaceIdFromPathname()
     const { isConnected: connected } = useCombinedAuth()
 
-    const { data: spaceInfo, isLoading } = useContractSpaceInfoWithoutClient(spaceId)
+    const { data: _spaceInfo, isLoading } = useContractSpaceInfoWithoutClient(spaceId)
 
+    const spaceInfoFromSSR = useMemo(() => {
+        return getTownDataFromSSR()
+    }, [])
+
+    const spaceInfo = _spaceInfo || spaceInfoFromSSR?.townData
     const className = clsx([darkTheme, atoms({ color: 'default' })])
     const isJoining = !!usePublicPageLoginFlow().joiningSpace
 

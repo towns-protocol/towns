@@ -4,7 +4,7 @@ import {
     createHandlerBoundToURL,
     precacheAndRoute,
 } from 'workbox-precaching'
-import { NetworkOnly } from 'workbox-strategies'
+import { NetworkFirst, NetworkOnly } from 'workbox-strategies'
 import { env } from '../utils/environment'
 import { handleNotifications } from './notifications'
 
@@ -35,6 +35,10 @@ precacheAndRoute(manifest)
 registerRoute(({ url }) => {
     return url.pathname === '/version'
 }, new NetworkOnly())
+
+registerRoute(({ url }) => {
+    return url.pathname.match(new RegExp(`^/t/[0-9a-f]{64}/?$`))
+}, new NetworkFirst())
 
 // to allow work offline
 console.log('main-sw: enabling offline precaching')

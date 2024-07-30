@@ -26,6 +26,7 @@
       name="apple-mobile-web-app-status-bar-style"
       content="black-translucent"
     />
+
     <style>
       body {
         background-color: hsl(260, 5%, 17%);
@@ -87,10 +88,19 @@
           };
         })(method);
       }
-      if (window.location.pathname.match(/\/SPCE-.+\/CHAN|DMDM/)) {
+    </script>
+    <script>
+      const matchTownsChannel = new RegExp(
+        `^/t/([a-f0-9]{64})/channels/([a-f0-9]{64})(?:/|$)`,
+        "i",
+      );
+      if (matchTownsChannel.test(window.location.pathname)) {
         window.townsAppStartTime = Date.now();
         window.townsMeasureFlag = true;
       }
+    </script>
+    <script>
+      window.__SSR__ = `__ssr__`;
     </script>
   </head>
   <body>

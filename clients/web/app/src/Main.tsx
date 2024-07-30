@@ -13,6 +13,7 @@ import { WelcomeLayout } from 'routes/layouts/WelcomeLayout'
 import { AppProgressOverlayTrigger } from '@components/AppProgressOverlay/AppProgressOverlayTrigger'
 import { AboveAppProgressOverlay } from '@components/AppProgressOverlay/AboveAppProgress/AboveAppProgress'
 import { AppBugReportOverlay } from '@components/AppBugReport/AppBugReportOverlay'
+import { PATHS } from 'routes'
 
 const App = React.lazy(() => import('App'))
 
@@ -49,6 +50,10 @@ export const Main = () => {
     usePeriodicUpdates()
 
     const isHomeRoute = useMemo(() => window.location.pathname === '/', [])
+    const isTownPageRoute = useMemo(
+        () => window.location.pathname.match(new RegExp(`/${PATHS.SPACES}/[a-f0-9]{64}/?$`)),
+        [],
+    )
 
     return (
         <>
@@ -59,6 +64,8 @@ export const Main = () => {
                             fallback={
                                 isHomeRoute ? (
                                     <WelcomeLayout />
+                                ) : isTownPageRoute ? (
+                                    <></>
                                 ) : (
                                     <AppProgressOverlayTrigger
                                         progressState={AppProgressState.LoadingAssets}

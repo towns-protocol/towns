@@ -48,14 +48,6 @@ const checkFileExists = async (filePath: string): Promise<boolean> => {
 const indexPath = path.join(__dirname, '../../app', 'dist', 'index.html')
 const template = fsSync.readFileSync(indexPath, 'utf-8')
 
-// Example route to call a contract method
-server.get('/timer', async (_request, _reply) => {
-    server.log.info('Timer route hit')
-    await new Promise((resolve) => setTimeout(resolve, 5000))
-    const result = 'done' // Replace with actual method
-    return { result }
-})
-
 // Serve static files or index.html for all other routes
 server.setNotFoundHandler(async (request, reply) => {
     // strip query params and hash
@@ -68,7 +60,8 @@ server.setNotFoundHandler(async (request, reply) => {
         return reply.sendFile(urlPath)
     } else if (urlPath.startsWith('/t/') || urlPath === '/') {
         const townId = urlPath.match(/^\/t\/([0-9a-f]{64})/)?.[1] ?? ''
-        const html = await updateTemplate(townId)
+        const exactMatch = townId && urlPath.match(new RegExp(`^/t/[0-9a-f]{64}/?$`))
+        const html = await updateTemplate({ townId, route: exactMatch ? 'town-page' : 'page' })
         return reply.header('Content-Type', 'text/html').send(html)
     } else if (urlPath === '/version') {
         const version = await getPackageVersion()
@@ -77,7 +70,8 @@ server.setNotFoundHandler(async (request, reply) => {
         }
     }
 
-    return reply.callNotFound()
+    const html = await updateTemplate()
+    return reply.code(404).header('Content-Type', 'text/html').send(html)
 })
 
 const start = async () => {
@@ -114,7 +108,23 @@ function validateTownId(townId: string) {
     return townId.match(/^[0-9a-f]{64}$/)
 }
 
-async function updateTemplate(townId?: string) {
+type TownData = {
+    name?: string
+    shortDescription?: string
+    longDescription?: string
+    uri?: string
+    tokenId?: number
+    createdAt?: number
+    networkId?: string
+    address?: string
+    owner?: string
+    disabled?: boolean
+}
+
+async function updateTemplate({
+    townId,
+    route,
+}: { townId?: string; route?: 'town-page' | 'page' } = {}) {
     const cacheKey = `template-${townId}`
     const cachedTemplate = cache.get<string>(cacheKey)
 
@@ -129,12 +139,16 @@ async function updateTemplate(townId?: string) {
         image: 'https://app.towns.com/favicon.png',
     }
 
+    let townData: TownData | undefined
+
     if (townId && validateTownId(townId)) {
         // default town info
         info.description = ``
         info.image = `https://imagedelivery.net/qaaQ52YqlPXKEVQhjChiDA/${townId}/thumbnail600`
 
-        const townData = await getTownDataFromContract(townId)
+        townData = await getTownDataFromContract(townId)
+
+        console.log({ townData })
 
         if (townData) {
             info.title = townData.name || info.title
@@ -147,15 +161,14 @@ async function updateTemplate(townId?: string) {
         .replace(/__title__/g, info.title)
         .replace(/__description__/g, info.description)
         .replace(/__image__/g, info.image)
+        .replace(/__ssr__/g, townId ? JSON.stringify({ townData, route }) : '')
 
     cache.set(cacheKey, renderedTemplate)
 
     return renderedTemplate
 }
 
-async function getTownDataFromContract(
-    townId: string,
-): Promise<{ name: string; shortDescription: string; longDescription: string } | undefined> {
+async function getTownDataFromContract(townId: string): Promise<TownData | undefined> {
     if (!provider) {
         return
     }
@@ -170,13 +183,22 @@ async function getTownDataFromContract(
         const contract = new ethers.Contract(VITE_ADDRESS_SPACE_OWNER, SpaceOwnerAbi, provider)
 
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        const result = (await contract['getSpaceInfo'](spaceAddress)) as {
-            name: string
-            shortDescription: string
-            longDescription: string
-        }
+        const result = (await contract['getSpaceInfo'](spaceAddress)) as TownData
 
         return result
+            ? {
+                  address: spaceAddress,
+                  name: result.name,
+                  shortDescription: result.shortDescription,
+                  longDescription: result.longDescription,
+                  tokenId: Number(result.tokenId),
+                  createdAt: Number(result.createdAt),
+                  uri: result.uri,
+                  networkId: townId,
+                  disabled: true, // TODO: pausable
+                  owner: '', // TODO: ownable
+              }
+            : undefined
     } catch (error) {
         server.log.error('Error fetching town name from contract' + JSON.stringify(error))
         return
