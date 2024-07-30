@@ -97,15 +97,27 @@ export async function sendNotificationViaWebPush(
             message: await response.text(),
         })
 
+        const success = status >= 200 && status <= 204
+
+        if (!success) {
+            logger.error('sendNotificationViaWebPush error', {
+                response,
+                message: await response.text(),
+            })
+        }
+
         return {
-            status: status >= 200 && status <= 204 ? SendPushStatus.Success : SendPushStatus.Error,
+            status: success ? SendPushStatus.Success : SendPushStatus.Error,
             userId: options.userId,
             pushSubscription: subscribed.PushSubscription,
             statusCode: status,
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
-        logger.info(e)
+        logger.error('sendNotificationViaWebPush error', {
+            error: e,
+        })
+
         return {
             status: SendPushStatus.Error,
             message: e.message,
@@ -130,6 +142,9 @@ export async function sendNotificationViaAPNS(
             subscription.endpoint !== ApnsEndpoint.Production &&
             subscription.endpoint !== ApnsEndpoint.Sandbox
         ) {
+            logger.error('invalid APNS endpoint', {
+                endpoint: subscription.endpoint,
+            })
             return {
                 status: SendPushStatus.Error,
                 message: 'invalid APNS endpoint',
@@ -157,6 +172,9 @@ export async function sendNotificationViaAPNS(
             sent: response.sent,
         })
         if (response.failed.length > 0) {
+            logger.error('sendNotificationViaAPNS error', {
+                response,
+            })
             return {
                 status: SendPushStatus.Error,
                 message: response.failed[0].response?.reason,
@@ -171,7 +189,7 @@ export async function sendNotificationViaAPNS(
             }
         }
     } catch (err) {
-        logger.info('sendNotificationViaAPNS error', {
+        logger.error('sendNotificationViaAPNS error', {
             err,
         })
 
