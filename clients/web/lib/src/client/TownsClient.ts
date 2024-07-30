@@ -97,6 +97,7 @@ import { TownsAnalytics } from '../types/TownsAnalytics'
 
 export type TownsClientEvents = {
     onCasablancaClientCreated: (client: CasablancaClient) => void
+    onWalletUnlinked: (userId: string, walletAddress: string) => void
 }
 
 export class TownsClient
@@ -2367,6 +2368,8 @@ export class TownsClient
             error,
         })
 
+        const userId = await rootKey.getAddress()
+        this.emit('onWalletUnlinked', userId, walletAddress)
         return {
             transaction,
             receipt: undefined,

@@ -6,7 +6,7 @@ import {
     ZTEvent,
     staticAssertNever,
     useTownsClient,
-    useUserLookupContext,
+    useUserLookup,
 } from 'use-towns-client'
 import { useSearchParams } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
@@ -255,7 +255,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
     const { sender } = event
     const timelineContext = useTimelineContext()
     const { isTouch } = useDevice()
-    const { lookupUser } = useUserLookupContext()
+    const user = useUserLookup(sender.id)
 
     const body = event.content?.kind === ZTEvent.RoomMessage ? event.content.body : undefined
 
@@ -269,8 +269,6 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
         isChannelWritable,
         threadParentId,
     } = timelineContext
-
-    const user = lookupUser(sender.id)
 
     const isOwn = event.content?.kind == ZTEvent.RoomMessage && sender.id === userId
 

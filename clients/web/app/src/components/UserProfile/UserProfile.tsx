@@ -1,4 +1,4 @@
-import { Nft, useMemberOf, useUserLookupContext } from 'use-towns-client'
+import { Nft, useMemberOf, useUserLookup } from 'use-towns-client'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { toast } from 'react-hot-toast/headless'
@@ -57,8 +57,7 @@ enum InputId {
 export const UserProfile = (props: Props) => {
     const { userId, canEdit, center, info, userBio, abstractAccountAddress } = props
     const memberOf = useMemberOf(userId)
-    const { lookupUser } = useUserLookupContext()
-    const user = userId ? lookupUser(userId) : undefined
+    const user = useUserLookup(userId ?? '')
     const [showNftProfilePicture, setShowNftProfilePicture] = useState(false)
     const [isRemovingNft, setIsRemovingNft] = useState(false)
 

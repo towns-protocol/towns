@@ -1,11 +1,18 @@
-import { staleTime24Hours, useQueries, useQueryClient } from '../query/queryClient'
+import { useQueries, useQueryClient } from '../query/queryClient'
 import { useCallback, useMemo, useState } from 'react'
-import { GetEnsNameReturnType, createPublicClient, http, isAddress } from 'viem'
+import { Address, createPublicClient, http } from 'viem'
 import { mainnet } from 'viem/chains'
 import { useUserLookupStore } from '../store/use-user-lookup-store'
 import { TownsOpts } from 'client/TownsClientTypes'
+import { TownsClient } from 'client/TownsClient'
 
-export const useSpaceEnsLookup = ({ ethMainnetRpcUrl }: Pick<TownsOpts, 'ethMainnetRpcUrl'>) => {
+export const useSpaceEnsLookup = ({
+    ethMainnetRpcUrl,
+    townsClient,
+}: {
+    ethMainnetRpcUrl: TownsOpts['ethMainnetRpcUrl']
+    townsClient?: TownsClient
+}) => {
     const { spaceUsers } = useUserLookupStore()
     const qc = useQueryClient()
     const [publicClient] = useState(() =>
@@ -28,11 +35,12 @@ export const useSpaceEnsLookup = ({ ethMainnetRpcUrl }: Pick<TownsOpts, 'ethMain
                 queryKey: ['ensName', ensAddress],
                 queryFn: () =>
                     publicClient.getEnsName({
-                        address: ensAddress as `0x${string}`,
+                        address: ensAddress as Address,
                     }),
-                // Exponential backoff with a max of 30 seconds
-                retryDelay: (retryCount: number) => Math.min(1000 * 2 ** retryCount, 30000),
-                staleTime: staleTime24Hours,
+                // Exponential backoff w/ a max of 40 seconds
+                retryDelay: (retryCount: number) => Math.min(5000 * 2 ** retryCount, 40000),
+                staleTime: 900000, // 15 minutes
+                cacheTime: 900000,
             })
         }
         return queries
@@ -42,32 +50,36 @@ export const useSpaceEnsLookup = ({ ethMainnetRpcUrl }: Pick<TownsOpts, 'ethMain
         queries: ensQueries,
     })
 
-    const queryData = qc.getQueriesData<GetEnsNameReturnType>({
-        queryKey: ['ensName'],
-    })
-    const addressToEnsMap = useMemo(
-        () =>
-            queryData?.reduce<{ [ensAddress: string]: string }>((acc, query) => {
-                const key = query[0]
-                const ensName = query[1]
-                const ensAddress = key[1]
-                if (ensName && typeof ensAddress === 'string' && isAddress(ensAddress)) {
-                    acc[ensAddress] = ensName
-                }
-                return acc
-            }, {}),
-        [queryData],
-    )
-
-    const getEnsFromAddress = useCallback(
-        (ensAddress: string | undefined) => {
+    const getEnsData = useCallback(
+        async (userId: string, ensAddress: string | undefined, fetchOnCacheMiss = true) => {
             if (!ensAddress) {
                 return
             }
-            return addressToEnsMap[ensAddress]
+            const ensName = qc.getQueryData(['ensName', ensAddress]) as string
+            if (!ensName) {
+                if (!fetchOnCacheMiss) {
+                    return
+                }
+                const ensName = await publicClient.getEnsName({
+                    address: ensAddress as Address,
+                })
+                if (ensName) {
+                    qc.setQueryData(['ensName', ensAddress], ensName)
+                    return { ensAddress, ensName }
+                }
+            }
+            const linkedWallets = await townsClient?.getLinkedWallets(userId)
+            const isOwned = linkedWallets?.includes(ensAddress)
+
+            return isOwned
+                ? {
+                      ensAddress,
+                      ensName,
+                  }
+                : undefined
         },
-        [addressToEnsMap],
+        [publicClient, qc, townsClient],
     )
 
-    return { getEnsFromAddress }
+    return { getEnsData }
 }

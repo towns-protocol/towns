@@ -17,7 +17,7 @@ import { shortAddress } from 'ui/utils/utils'
 import { useEnsNames } from 'api/lib/ensNames'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
-import { useSetEnsName } from 'hooks/useSetEnsName'
+import { useSetEnsAddress } from 'hooks/useSetEnsAddress'
 import { EnsBadge } from '@components/EnsBadge/EnsBadge'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { CHANNEL_INFO_PARAMS } from 'routes'
@@ -344,7 +344,7 @@ const EnsDisplayNameModal = (props: {
 }) => {
     const { spaceId, streamId, onHide, currentEns, setShowingEnsDisplayNameForm } = props
     const { ensNames, isFetching } = useEnsNames()
-    const { setEnsName } = useSetEnsName()
+    const { setEnsAddress } = useSetEnsAddress()
     const { lookupUser, setSpaceUser } = useUserLookupStore()
     const myUserId = useMyUserId()
     const { openPanel } = usePanelActions()
@@ -400,7 +400,7 @@ const EnsDisplayNameModal = (props: {
             return
         }
         setOptimisticEns(selectedEns?.address, selectedEns?.name)
-        setEnsName(streamId, selectedEns?.address).catch(() => {
+        setEnsAddress(streamId, selectedEns?.address).catch(() => {
             setOptimisticEns(oldEns.address, oldEns.name)
             toast.custom((t) => (
                 <UpdateEnsDisplayNameFailed
@@ -417,7 +417,7 @@ const EnsDisplayNameModal = (props: {
         setOptimisticEns,
         selectedEns?.address,
         selectedEns?.name,
-        setEnsName,
+        setEnsAddress,
         onHide,
         setShowingEnsDisplayNameForm,
     ])

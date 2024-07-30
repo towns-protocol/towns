@@ -186,7 +186,7 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
     const { channels: dmChannels } = useCasablancaDMs(casablancaClient)
     const spaceHierarchies = useCasablancaSpaceHierarchies(casablancaClient)
     const blockedUserIds = useBlockedUsers(casablancaClient)
-    useUserLookupUpdater(townsOpts, casablancaClient)
+    useUserLookupUpdater(townsOpts, casablancaClient, client)
 
     const { spaceUnreads, spaceMentions, spaceUnreadChannelIds } = useSpaceUnreads({
         client,

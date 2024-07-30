@@ -18,6 +18,7 @@ type UserLookupStore = {
     setSpaceUser: (userId: string, user: LookupUser, spaceId?: string) => void
     setChannelUser: (userId: string, user: LookupUser, channelId?: string) => void
     lookupUser: (userId: string, spaceId?: string, channelId?: string) => LookupUser | undefined
+    updateUserEverywhere: (userId: string, updatedUser: (user: LookupUser) => LookupUser) => void
 }
 
 type OmitFunctions<T> = {
@@ -118,6 +119,38 @@ export const useUserLookupStore = createWithEqualityFn<UserLookupStore>()(
             lookupUser: (userId, spaceId, channelId) => {
                 const state = get()
                 return userLookupFn(state, userId, spaceId, channelId)
+            },
+            updateUserEverywhere: (userId: string, updater: (user: LookupUser) => LookupUser) => {
+                set((state) => {
+                    for (const spaceId in state.spaceUsers) {
+                        if (state.spaceUsers[spaceId][userId]) {
+                            state.spaceUsers[spaceId][userId] = updater(
+                                state.spaceUsers[spaceId][userId],
+                            )
+                        }
+                    }
+                    for (const channelId in state.channelUsers) {
+                        if (state.channelUsers[channelId][userId]) {
+                            state.channelUsers[channelId][userId] = updater(
+                                state.channelUsers[channelId][userId],
+                            )
+                        }
+                    }
+                    if (state.fallbackUserLookups[userId]) {
+                        state.fallbackUserLookups[userId] = updater(
+                            state.fallbackUserLookups[userId],
+                        )
+                    }
+                    if (state.allUsers[userId]) {
+                        for (const streamId in state.allUsers[userId]) {
+                            if (state.allUsers[userId][streamId]) {
+                                state.allUsers[userId][streamId] = updater(
+                                    state.allUsers[userId][streamId],
+                                )
+                            }
+                        }
+                    }
+                })
             },
         })),
         {

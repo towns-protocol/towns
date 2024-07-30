@@ -12,6 +12,9 @@ import { dlogger } from '@river-build/dlog'
 import { SnapshotCaseType } from '@river-build/proto'
 import { TownsOpts } from '../client/TownsClientTypes'
 import { useSpaceEnsLookup } from './use-ens-lookup'
+import { TownsClient } from 'client/TownsClient'
+
+type EnsInfo = { ensAddress: string; ensName: string }
 
 const dlog = dlogger('csb:hooks:user-lookup-updater')
 
@@ -39,7 +42,7 @@ const isUserInfo = (maybeInfo?: UserInfo): maybeInfo is UserInfo => {
     )
 }
 
-const createUserLookup = (userId: string, info: UserInfo, ensName?: string): LookupUser =>
+const createUserLookup = (userId: string, info: UserInfo, ens?: EnsInfo): LookupUser =>
     ({
         userId: userId,
         username: info.username,
@@ -47,15 +50,19 @@ const createUserLookup = (userId: string, info: UserInfo, ensName?: string): Loo
         usernameEncrypted: info.usernameEncrypted,
         displayName: info.displayName,
         displayNameEncrypted: info.displayNameEncrypted,
-        ensAddress: info.ensAddress,
+        ensAddress: ens?.ensAddress,
         nft: info.nft,
-        ensName,
+        ensName: ens?.ensName,
     } as const)
 
-export const useUserLookupUpdater = (townsOpts: TownsOpts, client?: CasablancaClient) => {
+export const useUserLookupUpdater = (
+    townsOpts: TownsOpts,
+    client?: CasablancaClient,
+    townsClient?: TownsClient,
+) => {
     const { ethMainnetRpcUrl } = townsOpts
-    const { setSpaceUser, setChannelUser } = useUserLookupStore()
-    const { getEnsFromAddress } = useSpaceEnsLookup({ ethMainnetRpcUrl })
+    const { setSpaceUser, setChannelUser, updateUserEverywhere } = useUserLookupStore()
+    const { getEnsData } = useSpaceEnsLookup({ ethMainnetRpcUrl, townsClient })
 
     const onStreamMetadataUpdated = useCallback(
         (streamId: string, userId: string) => {
@@ -65,22 +72,34 @@ export const useUserLookupUpdater = (townsOpts: TownsOpts, client?: CasablancaCl
                 const metadata = stream?.view.getUserMetadata()
                 const info = metadata?.userInfo(userId)
                 if (isUserInfo(info)) {
-                    const ensName = getEnsFromAddress(info?.ensAddress)
-                    const lookupUser = createUserLookup(userId, info, ensName)
-                    setSpaceUser(userId, lookupUser, streamId)
+                    const update = async () => {
+                        let ens: EnsInfo | undefined
+                        if (info.ensAddress) {
+                            ens = await getEnsData(userId, info?.ensAddress)
+                        }
+                        const lookupUser = createUserLookup(userId, info, ens)
+                        setSpaceUser(userId, lookupUser, streamId)
+                    }
+                    void update()
                 }
             } else if (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)) {
                 const stream = client?.streams.get(streamId)
                 const metadata = stream?.view.getUserMetadata()
                 const info = metadata?.userInfo(userId)
                 if (meaningfulInfo(info)) {
-                    const ensName = getEnsFromAddress(info?.ensAddress)
-                    const lookupUser = createUserLookup(userId, info, ensName)
-                    setChannelUser(userId, lookupUser, streamId)
+                    const update = async () => {
+                        let ens: EnsInfo | undefined
+                        if (info.ensAddress) {
+                            ens = await getEnsData(userId, info?.ensAddress)
+                        }
+                        const lookupUser = createUserLookup(userId, info, ens)
+                        setChannelUser(userId, lookupUser, streamId)
+                    }
+                    void update()
                 }
             }
         },
-        [client?.streams, getEnsFromAddress, setChannelUser, setSpaceUser],
+        [client?.streams, getEnsData, setChannelUser, setSpaceUser],
     )
 
     const onStreamInitialized = useCallback(
@@ -96,25 +115,46 @@ export const useUserLookupUpdater = (townsOpts: TownsOpts, client?: CasablancaCl
             for (const userId of stream.view.getMembers().participants() ?? []) {
                 const info = metadata.userInfo(userId)
                 if (isUserInfo(info)) {
-                    const ens = getEnsFromAddress(info?.ensAddress)
-                    const lookupUser = createUserLookup(userId, info, ens)
+                    const update = async () => {
+                        let ens: EnsInfo | undefined
+                        if (info.ensAddress) {
+                            ens = await getEnsData(userId, info?.ensAddress, false)
+                        }
+                        const lookupUser = createUserLookup(userId, info, ens)
+                        switch (contentKind) {
+                            case SnapshotCaseTypeValues.spaceContent:
+                                setSpaceUser(userId, lookupUser, streamId)
+                                break
 
-                    switch (contentKind) {
-                        case SnapshotCaseTypeValues.spaceContent:
-                            setSpaceUser(userId, lookupUser, streamId)
-                            break
-
-                        case SnapshotCaseTypeValues.dmChannelContent:
-                        case SnapshotCaseTypeValues.gdmChannelContent:
-                            if (meaningfulInfo(info)) {
-                                setChannelUser(userId, lookupUser, streamId)
-                            }
-                            break
+                            case SnapshotCaseTypeValues.dmChannelContent:
+                            case SnapshotCaseTypeValues.gdmChannelContent:
+                                if (meaningfulInfo(info)) {
+                                    setChannelUser(userId, lookupUser, streamId)
+                                }
+                                break
+                        }
                     }
+                    void update()
                 }
             }
         },
-        [client?.streams, getEnsFromAddress, setChannelUser, setSpaceUser],
+        [client?.streams, getEnsData, setChannelUser, setSpaceUser],
+    )
+
+    const onWalletUnlinked = useCallback(
+        (userId: string, walletUnlinked: string) => {
+            updateUserEverywhere(userId, (user) => {
+                if (user.ensAddress === walletUnlinked) {
+                    return {
+                        ...user,
+                        ensName: undefined,
+                        ensAddress: undefined,
+                    }
+                }
+                return user
+            })
+        },
+        [updateUserEverywhere],
     )
 
     const oldClient = useRef(client)
@@ -138,6 +178,7 @@ export const useUserLookupUpdater = (townsOpts: TownsOpts, client?: CasablancaCl
         client.on('streamUserLeft', onStreamMetadataUpdated)
         client.on('streamEnsAddressUpdated', onStreamMetadataUpdated)
         client.on('streamNftUpdated', onStreamMetadataUpdated)
+        townsClient?.on('onWalletUnlinked', onWalletUnlinked)
         return () => {
             client.off('streamInitialized', onStreamInitialized)
             client.off('streamMembershipUpdated', onStreamMetadataUpdated)
@@ -149,6 +190,7 @@ export const useUserLookupUpdater = (townsOpts: TownsOpts, client?: CasablancaCl
             client.off('streamUserLeft', onStreamMetadataUpdated)
             client.off('streamEnsAddressUpdated', onStreamMetadataUpdated)
             client.off('streamNftUpdated', onStreamMetadataUpdated)
+            townsClient?.on('onWalletUnlinked', onWalletUnlinked)
         }
-    }, [client, onStreamInitialized, onStreamMetadataUpdated])
+    }, [client, onStreamInitialized, onStreamMetadataUpdated, onWalletUnlinked, townsClient])
 }
