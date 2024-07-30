@@ -186,7 +186,12 @@ const Counter = (props: { value: number }) => {
 }
 
 function formatRelativeTime(timestamp: number) {
+    if (!timestamp) {
+        return ''
+    }
+
     const secondsAgo = (Date.now() - timestamp) / 1000
+
     if (secondsAgo < 60) {
         return 'just now'
     }

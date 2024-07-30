@@ -135,8 +135,8 @@ export const useFetchUnauthenticatedActivity = (townId: string) => {
                 let numJoinedUsers = initialJoinedUsers(stream)
 
                 setTownStats(() => ({
-                    numJoinedUsers: Array.from(numJoinedUsers).length,
-                    latestJoinedUsers: Array.from(numJoinedUsers),
+                    numJoinedUsers: 0,
+                    latestJoinedUsers: [],
                     spaceCreateEvent: undefined,
                     latestCreatedChannels: undefined,
                 }))
