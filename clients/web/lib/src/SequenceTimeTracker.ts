@@ -1,5 +1,6 @@
 import { TownsAnalytics } from './types/TownsAnalytics'
 import { nanoid } from 'nanoid'
+import { datadogLogs } from '@datadog/browser-logs'
 
 class TimeTracker {
     public townsAnalytics: TownsAnalytics | undefined
@@ -105,23 +106,21 @@ class TimeTracker {
             // Reset start time
             this.metrics[sequence].steps[step].startTime = undefined
 
-            this.townsAnalytics?.track(`sequence_time`, {
+            datadogLogs.logger.info(`sequence_time: ${sequence} ${step} ${durationMs}ms`, {
                 sequence,
                 step,
                 sequenceId: this.metrics[sequence].sequenceId,
-                durationMs: durationMs,
-                debug: true,
+                durationMs,
             })
 
             if (endSequence) {
                 const sequenceStartTime = this.metrics[sequence].startTime
                 if (sequenceStartTime) {
-                    this.townsAnalytics?.track(`sequence_time`, {
-                        sequence: sequence,
+                    datadogLogs.logger.info(`sequence_time: ${sequence} complete ${durationMs}ms`, {
+                        sequence,
                         step: 'complete',
                         sequenceId: this.metrics[sequence].sequenceId,
                         durationMs: endTime - sequenceStartTime,
-                        debug: true,
                     })
                 }
 

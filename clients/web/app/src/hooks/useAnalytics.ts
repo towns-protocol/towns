@@ -9,6 +9,7 @@ import { useCallback, useRef } from 'react'
 import { keccak256 } from 'ethers/lib/utils'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
 import { TownsAnalytics } from 'use-towns-client'
+import { datadogLogs } from '@datadog/browser-logs'
 import { env, isTest } from 'utils'
 import { getBrowserName, isAndroid, isIOS, isPWA } from './useDevice'
 
@@ -141,15 +142,16 @@ export function trackError(args: {
     name?: string
 }) {
     const { error, category, displayText, code, name, source } = args
-
-    return Analytics.getInstance()?.track('error', {
-        errorMessage: isErrorLike(error) ? error.message : 'unknown error message',
-        displayText,
-        code,
-        category,
-        name,
-        source,
-        debug: true,
+    const message = isErrorLike(error) ? error.message : 'Unknown error'
+    datadogLogs.logger.error(`tracked_error ${source} ${category} ${code} ${message} `, {
+        data: {
+            message,
+            displayText,
+            code,
+            category,
+            name,
+            source,
+        },
     })
 }
 

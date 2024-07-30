@@ -219,7 +219,7 @@ export class UserOps {
                     if (sequenceName) {
                         endSendUserOperation = timeTracker?.startMeasurement(
                             sequenceName,
-                            `userops_${args.functionHashForPaymasterProxy}_send_userop`,
+                            `userops_${args.functionHashForPaymasterProxy}_send_userop_incl_paymaster_time`,
                         )
                     }
                     const res = await userOpClient.sendUserOperation(simpleAccount, {

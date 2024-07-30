@@ -2543,7 +2543,7 @@ export class TownsClient
                 if (sequenceName) {
                     endWaitForUserOpEvent = getTimeTracker().startMeasurement(
                         sequenceName,
-                        'userops_wait_for_user_op_event',
+                        'userops_wait_for_user_op_send_to_entrypoint',
                     )
                 }
 
