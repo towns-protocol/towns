@@ -13,7 +13,6 @@ function main() {
     check_env
     pr_number=$(get_pr_number_of_preview)
     set_domain "$pr_number"
-    export VITE_TRANSIENT_ENV_GITHUB_PR_NUMBER="$pr_number"
 }
 
 function check_env() {

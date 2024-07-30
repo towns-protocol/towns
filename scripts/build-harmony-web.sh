@@ -15,8 +15,6 @@ export PREVIEW_DOMAIN_SUFFIX="app-preview.towns.com"
 
 source ./scripts/setup-render-preview-environment.sh
 
-echo "Build: Previous step set VITE_TRANSIENT_ENV_GITHUB_PR_NUMBER to $VITE_TRANSIENT_ENV_GITHUB_PR_NUMBER"
-
 yarn install
 yarn harmonyweb:build
 yarn harmonyserver:build

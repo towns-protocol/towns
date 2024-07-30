@@ -27,10 +27,6 @@ console.log(
 // fixes: uncaught ReferenceError: global is not defined for 3rd party libs
 window.global ||= globalThis
 
-const datadogEnvName = env.VITE_TRANSIENT_ENV_GITHUB_PR_NUMBER
-    ? `transient-${env.VITE_TRANSIENT_ENV_GITHUB_PR_NUMBER}`
-    : env.MODE
-
 if (env.DEV) {
     // Register runtime-error overlay
     // From: https://github.com/vitejs/vite/issues/2076
@@ -81,7 +77,7 @@ if (env.VITE_DD_CLIENT_TOKEN) {
         forwardErrorsToLogs: true,
         sessionSampleRate: env.VITE_LOG_SAMPLING_RATE,
         telemetrySampleRate: 0,
-        env: datadogEnvName,
+        env: env.MODE,
         version: VITE_APP_VERSION,
         beforeSend: (event) => {
             event.session_id = datadogRum.getInternalContext()?.session_id
