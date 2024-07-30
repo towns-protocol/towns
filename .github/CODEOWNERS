@@ -25,9 +25,21 @@
 ## please visit: https://github.com/HereNotThere/harmony/pulls?q=is%3Apr+is%3Aopen+user-review-requested%3A%40me
 ##
 
-/core/ @sergekh2
+
+# Order is important; the last matching pattern takes the most
+# precedence. 
+
 /.github/ @mechanical-turk
+/clients/web/app @ttillberg
+/clients/web/lib @texuf
+/clients/web/privy @salzbrenner
+/clients/web/sample-app @texuf
+/clients/web/server @ttillberg
+/clients/web/userops @salzbrenner
 /infra @mechanical-turk
+/river @texuf
+/scripts @texuf
+/servers @tak-hntlabs 
+/servers/workers @salzbrenner 
+/servers/4337 @salzbrenner 
 turbo.json @mechanical-turk
-/contracts/src/node-network @mechanical-turk
-/core/sdk/src/stream* @erikolsson
