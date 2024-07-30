@@ -123,7 +123,12 @@
     {
       "label": "4337: Stage 3",
       "dependsOn": [
-        "Apps and Workers",
+        "Start Watches",
+        "App",
+        "UnfurlWorker",
+        "TokenWorker",
+        "GatewayWorker",
+        "NotificationService",
         "4337: StackupWorker",
         "Casablanca Single",
         "4337: XChainLaunchMulti",
@@ -150,7 +155,6 @@
     },
     {
       "label": "Apps and Workers",
-      // stackup worker excluded because it needs different configuration between 4337 and non-4337 local dev
       "dependsOn": [
         "Start Watches",
         "App",
