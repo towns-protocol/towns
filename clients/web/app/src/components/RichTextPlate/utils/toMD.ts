@@ -1,8 +1,8 @@
 import { PlateEditor } from '@udecode/plate-common'
 import { Mention } from 'use-towns-client'
-import { TUserMentionElement } from './ComboboxTypes'
+import { TUserMentionElement } from '../components/plate-ui/autocomplete/types'
 import { serialize } from './remark'
-import { getMentions } from './mentions'
+import { getMentions } from '../components/plate-ui/autocomplete/helpers'
 
 export const toMD = (editor: PlateEditor): Promise<{ message: string; mentions: Mention[] }> => {
     return new Promise((resolve, reject) => {

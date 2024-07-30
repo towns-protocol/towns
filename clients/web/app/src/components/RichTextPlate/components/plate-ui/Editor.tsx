@@ -33,9 +33,10 @@ const Editor = React.forwardRef<
             })}
             readOnly={disabled || readOnly}
             aria-disabled={disabled}
-            spellCheck={false}
+            spellCheck={!isTouch}
             autoCapitalize="on"
             autoComplete="off"
+            ref={ref}
             {...props}
             onKeyDown={_onKeyDown}
         />

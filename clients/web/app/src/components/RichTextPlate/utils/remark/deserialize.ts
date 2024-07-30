@@ -102,21 +102,9 @@ export default function deserialize<T extends InputNodeTypes>(
                           }))
                         : [{ text: node.value }],
             } as CodeBlockNode<T>
-        case ELEMENT_MENTION: {
-            return {
-                type: ELEMENT_MENTION,
-                value: node.value,
-                userId: node.value,
-                children: [{ text: '' }],
-            }
-        }
+        case ELEMENT_MENTION:
         case ELEMENT_MENTION_CHANNEL: {
-            return {
-                type: ELEMENT_MENTION_CHANNEL,
-                value: node.value,
-                channel: node.channel,
-                children: [{ text: '' }],
-            }
+            return node
         }
         case 'html':
             if (node.value?.includes('<br>')) {

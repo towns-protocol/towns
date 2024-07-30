@@ -3,7 +3,7 @@ import { AT_CHANNEL_MENTION } from 'use-towns-client'
 import { Text } from '@ui'
 import { TextProps } from 'ui/components/Text/Text'
 
-export const ComboBoxTrailingContent = ({
+export const ComboboxTrailingContent = ({
     userId,
     isChannelMember,
 }: PropsWithChildren<{ userId: string; isChannelMember: boolean }>) => {

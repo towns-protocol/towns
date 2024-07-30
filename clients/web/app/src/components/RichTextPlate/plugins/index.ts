@@ -10,7 +10,6 @@ import {
     ELEMENT_CODE_SYNTAX,
     createCodeBlockPlugin,
 } from '@udecode/plate-code-block'
-import { TComboboxItemWithData, createComboboxPlugin } from '@udecode/plate-combobox'
 import { ELEMENT_LINK, createLinkPlugin } from '@udecode/plate-link'
 import {
     ELEMENT_LI,
@@ -48,28 +47,37 @@ import { LinkElement } from '../components/plate-ui/LinkElement'
 import { ListElement } from '../components/plate-ui/ListElement'
 import { ChannelMentionElement } from '../components/plate-ui/ChannelMentionElement'
 import { MentionElement } from '../components/plate-ui/MentionElement'
-import { MentionInputElement } from '../components/plate-ui/MentionInputElement'
+import { ComboboxContextWrapper } from '../components/plate-ui/autocomplete/ComboboxContextWrapper'
+import { ComboboxInput } from '../components/plate-ui/autocomplete/ComboboxInputUser'
 import { ParagraphElement } from '../components/plate-ui/ParagraphElement'
-import { EmojiMentionElement } from '../components/plate-ui/EmojilMentionElement'
+import { EmojiMentionElement } from '../components/plate-ui/EmojiMentionElement'
 import { autoformatRules } from './autoformat'
 import { nodeResetRules } from './nodeReset'
 import { createShiftEnterListPlugin } from './shiftEnterListPlugin'
-import { changeMentionInputToParagraph, createExitComboboxPlugin } from './ExitComboboxPlugin'
 import { createFormatTextLinkPlugin } from './createFormatTextLinkPlugin'
 import { ELEMENT_MENTION_CHANNEL, createChannelPlugin } from './createChannelPlugin'
-import { ELEMENT_MENTION_EMOJI, createEmojiPlugin } from './emoji/createEmojiPlugin'
+import { ELEMENT_MENTION_EMOJI, createEmojiPlugin } from './createEmojiPlugin'
+import { createSanitizeDOMPlugin } from './createSanitizePlugin'
 import { createErrorHandlingPlugin } from './WithErrorHandlingPlugin'
-import { ComboboxTypes, TUserIDNameMap, TUserMention } from '../utils/ComboboxTypes'
+import {
+    ComboboxTypes,
+    TComboboxItemWithData,
+    TUserIDNameMap,
+    TUserWithChannel,
+} from '../components/plate-ui/autocomplete/types'
 import { isLinkURIDecoded } from '../utils/helpers'
 import { createPasteMentionsPlugin } from './createPasteMentionsPlugin'
 
 const platePlugins = (
     channelList: Channel[],
     mentions: TUserIDNameMap,
+    userMentions: TComboboxItemWithData<TUserWithChannel>[],
+    channelMentions: TComboboxItemWithData<Channel>[],
     lookupUser?: ReturnType<typeof useUserLookupContext>['lookupUser'],
 ) =>
     createPlugins(
         [
+            createSanitizeDOMPlugin(),
             createAutoformatPlugin({
                 options: {
                     rules: autoformatRules,
@@ -83,53 +91,21 @@ const platePlugins = (
             }),
             createLinkPlugin({
                 options: {
-                    getUrlHref: (url) => (isLinkURIDecoded(url) ? url : decodeURI(url)),
+                    getUrlHref: (url: string) => (isLinkURIDecoded(url) ? url : decodeURI(url)),
                 },
             }),
             createListPlugin(),
-            createExitComboboxPlugin(), // should be before createComboboxPlugin
-            createComboboxPlugin({
-                handlers: {
-                    onBlur: (editor) => (_event) => {
-                        /**
-                         * This will convert the MENTION_INPUT node to a paragraph node when the combobox
-                         * is closed (user clicks away without selecting anything).
-                         * It ensures, whatever user has typed in the combobox is not lost. E.g. :) or @ me
-                         */
-                        changeMentionInputToParagraph(editor)
-                    },
-                },
-            }), // should be after createExitComboboxPlugin
-            createEmojiPlugin({
-                options: {
-                    id: ComboboxTypes.emojiMention,
-                    insertSpaceAfterMention: true,
-                },
-            }),
-            createChannelPlugin({
-                options: {
-                    id: ComboboxTypes.channelMention,
-                    trigger: '#',
-                    insertSpaceAfterMention: true,
-                    triggerPreviousCharPattern: /^$|^[\s"']$/,
-                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                    // @ts-ignore
-                    createMentionNode: (item: TComboboxItemWithData<Channel>) => ({
-                        value: '#' + item.text,
-                        channel: item.data,
-                        children: [{ text: '#' + item.text }],
-                    }),
-                },
-            }),
+            createChannelPlugin(),
+            createEmojiPlugin(),
             createMentionPlugin({
                 options: {
                     id: ComboboxTypes.userMention,
                     insertSpaceAfterMention: true,
                     triggerPreviousCharPattern: /^$|^[\s"']$/,
-                    createMentionNode: (item) => ({
+                    createMentionNode: (item: TComboboxItemWithData<TUserWithChannel>) => ({
                         value: '@' + item.text,
                         userId: item.key,
-                        atChannel: (item as TComboboxItemWithData<TUserMention>).data.atChannel,
+                        atChannel: item.data.atChannel,
                         children: [{ text: '@' + item.text }],
                     }),
                 },
@@ -196,7 +172,11 @@ const platePlugins = (
                 [ELEMENT_MENTION]: MentionElement,
                 [ELEMENT_MENTION_EMOJI]: EmojiMentionElement,
                 [ELEMENT_MENTION_CHANNEL]: ChannelMentionElement,
-                [ELEMENT_MENTION_INPUT]: MentionInputElement,
+                [ELEMENT_MENTION_INPUT]: withProps(ComboboxContextWrapper, {
+                    Component: ComboboxInput,
+                    userList: userMentions,
+                    channelList: channelMentions,
+                }),
                 [ELEMENT_PARAGRAPH]: ParagraphElement,
                 [MARK_BOLD]: withProps(PlateLeaf, { as: 'strong' }),
                 [MARK_CODE]: CodeLeaf,

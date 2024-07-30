@@ -8,8 +8,8 @@ import { useDevice } from 'hooks/useDevice'
 import { Box, IconButton, Stack } from '@ui'
 import { MotionIcon, MotionIconButton } from 'ui/components/Motion/MotionComponents'
 import { useMediaDropContext } from '@components/MediaDropContext/MediaDropContext'
-import { ELEMENT_MENTION_EMOJI } from '../plugins/emoji/createEmojiPlugin'
-import { TEmojiMentionElement } from '../utils/ComboboxTypes'
+import { ELEMENT_MENTION_EMOJI } from '../plugins/createEmojiPlugin'
+import { TEmojiMentionElement } from './plate-ui/autocomplete/types'
 
 type Props = {
     threadId?: string

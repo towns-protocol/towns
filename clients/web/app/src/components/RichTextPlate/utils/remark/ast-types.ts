@@ -1,7 +1,7 @@
 import { ELEMENT_MENTION, TMentionElement } from '@udecode/plate-mention'
 import { ELEMENT_CODE_BLOCK, ELEMENT_CODE_LINE, TCodeBlockElement } from '@udecode/plate-code-block'
-import { TChannelMentionElement, TMentionEmoji } from '../ComboboxTypes'
-import { ELEMENT_MENTION_EMOJI } from '../../plugins/emoji/createEmojiPlugin'
+import { TChannelMentionElement, TMentionEmoji } from '../../components/plate-ui/autocomplete/types'
+import { ELEMENT_MENTION_EMOJI } from '../../plugins/createEmojiPlugin'
 import { ELEMENT_MENTION_CHANNEL } from '../../plugins/createChannelPlugin'
 
 export interface NodeTypes {

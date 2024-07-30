@@ -6,10 +6,14 @@ import { clsx } from 'clsx'
 import { Channel, OTWMention, useUserLookupContext } from 'use-towns-client'
 import { Box } from '@ui'
 import { MessageStatusAnnotation } from '@components/MessageTimeIineItem/items/MessageItem/MessageStatusAnnotation'
-import { getUserIdNameMap } from './utils/mentions'
+import { getUserIdNameMap } from './components/plate-ui/autocomplete/helpers'
 import { getChannelNames, getMentionIds } from './utils/helpers'
 import { CodeBlockElement } from './components/plate-ui/CodeBlockElement'
-import { TChannelMentionElement, TUserIDNameMap, TUserMentionElement } from './utils/ComboboxTypes'
+import {
+    TChannelMentionElement,
+    TUserIDNameMap,
+    TUserMentionElement,
+} from './components/plate-ui/autocomplete/types'
 import { ELEMENT_MENTION_CHANNEL } from './plugins/createChannelPlugin'
 import { MentionElementWithoutPlate } from './components/plate-ui/MentionElement'
 import { ChannelLinkForDisplay } from './components/ChannelLink'

@@ -11,6 +11,8 @@ import { ELEMENT_PARAGRAPH } from '@udecode/plate-paragraph'
 import { ResetNodePluginRule } from '@udecode/plate-reset-node'
 import { getLowestBlockquoteNode, getLowestParagraphNode } from '../utils/helpers'
 
+type ResetNodePluginRuleWithHotKey = ResetNodePluginRule & { hotkey: string | string[] }
+
 const resetBlockTypesCommonRule = {
     types: [ELEMENT_BLOCKQUOTE],
     defaultType: ELEMENT_PARAGRAPH,
@@ -28,7 +30,7 @@ const resetListBlockRule = {
     onReset: unwrapList,
 }
 
-export const nodeResetRules: ResetNodePluginRule[] = [
+export const nodeResetRules: ResetNodePluginRuleWithHotKey[] = [
     {
         ...resetBlockTypesCommonRule,
         hotkey: 'Backspace',

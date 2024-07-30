@@ -1,10 +1,9 @@
 import React from 'react'
 import { useEditorSelector } from '@udecode/plate-core'
 import { isListRoot } from '@udecode/plate-list'
-import { isSelectionInMentionInput } from '@udecode/plate-mention'
 import { isSelectionAtCodeBlockStart } from '@udecode/plate-code-block'
 import { Box } from '@ui'
-import { isBlockquoteElement } from '../utils/helpers'
+import { getMentionInputElement, isBlockquoteElement } from '../utils/helpers'
 
 export const RichTextPlaceholder = ({
     placeholder,
@@ -14,7 +13,7 @@ export const RichTextPlaceholder = ({
             isListRoot(editor, editor.children[0]) ||
             isSelectionAtCodeBlockStart(editor) ||
             isBlockquoteElement(editor) ||
-            isSelectionInMentionInput(editor)
+            getMentionInputElement(editor)
         )
     }, [])
 

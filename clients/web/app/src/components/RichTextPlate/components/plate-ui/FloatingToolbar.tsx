@@ -23,6 +23,8 @@ export const FloatingToolbar = withRef<
 
     const floatingToolbarState = useFloatingToolbarState({
         ...state,
+        editorId,
+        focusedEditorId,
         floatingOptions: {
             placement: 'top',
             middleware: [

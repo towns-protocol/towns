@@ -13,7 +13,7 @@ import {
     TChannelMentionElement,
     TUserIDNameMap,
     TUserMentionElement,
-} from '../ComboboxTypes'
+} from '../../components/plate-ui/autocomplete/types'
 
 const SPACE_NODE = {
     type: 'text',
@@ -120,6 +120,7 @@ function remarkTransformUserAndChannels(
                 ...whitespace,
                 {
                     userId: user.userId,
+                    atChannel: userName === AtChannelUser.displayName,
                     value: USER_TRIGGER + user.displayName,
                     type: ELEMENT_MENTION,
                     children: [{ text: USER_TRIGGER + user.displayName }],

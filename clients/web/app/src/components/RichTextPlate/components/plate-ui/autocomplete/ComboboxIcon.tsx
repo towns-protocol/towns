@@ -1,7 +1,7 @@
 import React, { PropsWithChildren, useMemo } from 'react'
 import { AT_CHANNEL_MENTION } from 'use-towns-client'
 import { Avatar } from '@components/Avatar/Avatar'
-import { ComboboxTypes, TComboboxAllData, TMentionComboboxTypes } from '../../utils/ComboboxTypes'
+import { ComboboxTypes, TComboboxAllData, TMentionComboboxTypes } from './types'
 
 const ComboboxUserIcon = ({ userId }: TComboboxAllData) => {
     return useMemo(() => {

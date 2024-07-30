@@ -47,7 +47,7 @@ export const link = style([
 
 export const mentionInput = style([
     atoms({
-        display: 'inline-block',
+        display: 'inline',
         fontWeight: 'medium',
         background: { default: 'level2', hover: 'hover' },
         border: { default: 'level3', hover: 'level4' },
@@ -55,8 +55,41 @@ export const mentionInput = style([
         fontSize: { desktop: 'md', mobile: 'mds' },
         cursor: 'pointer',
         color: 'default',
-        insetY: 'xxs',
     }),
+    {
+        letterSpacing: 'unset',
+    },
+])
+
+globalStyle(`${mentionInput}:hover, ${mentionInput}:focus`, {
+    outline: 'none',
+})
+
+export const mentionInputInner = style([
+    atoms({
+        display: 'inline',
+        rounded: 'xs',
+        color: 'default',
+    }),
+    {
+        background: 'none',
+        border: 'none',
+        outline: 'none',
+        width: '100%',
+        minWidth: 1,
+        position: 'absolute',
+        left: 0,
+        top: 0,
+    },
+])
+
+export const mentionInputInvisibleSpan = style([
+    {
+        display: 'inline',
+        visibility: 'hidden',
+        overflow: 'hidden',
+        whiteSpace: 'pre-wrap',
+    },
 ])
 
 export const mentionChannelInput = style([

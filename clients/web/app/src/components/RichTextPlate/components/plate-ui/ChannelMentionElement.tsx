@@ -3,7 +3,7 @@ import { withRef } from '@udecode/cn'
 import { PlateElement, getHandler, useElement } from '@udecode/plate-common'
 import { ChannelLink } from '../ChannelLink'
 import { mentionChannelInput } from '../../RichTextEditor.css'
-import { TChannelMentionElement } from '../../utils/ComboboxTypes'
+import { TChannelMentionElement } from './autocomplete/types'
 
 export const ChannelMentionElement = withRef<
     typeof PlateElement,

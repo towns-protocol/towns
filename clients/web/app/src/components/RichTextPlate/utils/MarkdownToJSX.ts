@@ -17,7 +17,7 @@ import remarkPreserveListContent from './remark/remarkPreserveListContent'
 import remarkRemoveHeadings from './remark/remarkRemoveHeadings'
 import remarkDecodeHTMLCodeBlocks from './remark/remarkDecodeHTMLCodeBlocks'
 import { getChannelNames } from './helpers'
-import { TUserIDNameMap } from './ComboboxTypes'
+import { TUserIDNameMap } from '../components/plate-ui/autocomplete/types'
 
 type MarkdownRendererProps = React.PropsWithChildren<{
     components: Partial<Components>

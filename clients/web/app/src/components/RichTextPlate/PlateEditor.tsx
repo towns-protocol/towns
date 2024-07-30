@@ -17,8 +17,8 @@ import {
     useUserLookupContext,
 } from 'use-towns-client'
 import { datadogRum } from '@datadog/browser-rum'
+import { getEndPoint } from '@udecode/slate'
 import { focusEditor } from '@udecode/slate-react'
-import { TComboboxItemWithData } from '@udecode/plate-combobox'
 import { ELEMENT_PARAGRAPH } from '@udecode/plate-paragraph'
 import every from 'lodash/every'
 import isEqual from 'lodash/isEqual'
@@ -47,22 +47,19 @@ import { RichTextPlaceholder } from './components/RichTextEditorPlaceholder'
 import { toMD } from './utils/toMD'
 import { RememberInputPlugin } from './plugins/RememberInputPlugin'
 import { deserializeMd } from './utils/deserializeMD'
-import { channelMentionFilter, getUserIdNameMap, userMentionFilter } from './utils/mentions'
+import { getUserIdNameMap } from './components/plate-ui/autocomplete/helpers'
 import {
     AtChannelUser,
-    ComboboxTypes,
+    TComboboxItemWithData,
     TUserIDNameMap,
     TUserWithChannel,
-} from './utils/ComboboxTypes'
+} from './components/plate-ui/autocomplete/types'
 import { EditorFallback } from './components/EditorFallback'
-import { MentionCombobox } from './components/plate-ui/MentionCombobox'
 import { Editor } from './components/plate-ui/Editor'
 import { ToolbarController } from './components/plate-ui/ToolbarController'
 import { RichTextBottomToolbar } from './components/RichTextBottomToolbar'
 import { SendMarkdownPlugin } from './components/SendMarkdownPlugin'
 import platePlugins from './plugins'
-import { ELEMENT_MENTION_CHANNEL } from './plugins/createChannelPlugin'
-import { EmojiPlugin } from './plugins/emoji/EmojiPlugin'
 import { OnFocusPlugin } from './plugins/OnFocusPlugin'
 import { PasteFilePlugin } from './components/PasteFilePlugin'
 import { CaptureLinkAttachmentsPlugin } from './components/CaptureLinkAttachmentsPlugin'
@@ -232,6 +229,15 @@ const PlateEditorWithoutBoundary = ({
     )
 
     const onChange = useCallback(() => {
+        /**
+         * `editorText` is used to check if the editor is empty or not and display the placeholder
+         * on mobile devices, this is often slow because of the way the editor is rendered and
+         * its children are updated.
+         *
+         * As a workaround, we set the editor text to a space character to remove the placeholder
+         * on any manual input change. The reconciliation of the actual editor text is completed later
+         */
+        setEditorText(' ')
         if (editorRef.current) {
             const text = toPlainText(editorRef.current.children)
             setEditorText(text)
@@ -272,7 +278,7 @@ const PlateEditorWithoutBoundary = ({
             // Delay focusing the editor to wait for the editor to reset and re-render
             setTimeout(() => {
                 if (editorRef.current) {
-                    focusEditor(editorRef.current)
+                    focusEditor(editorRef.current, getEndPoint(editorRef.current, []))
                 }
             }, 100)
         }
@@ -456,7 +462,13 @@ const PlateEditorWithoutBoundary = ({
             >
                 <Plate
                     normalizeInitialValue
-                    plugins={platePlugins(channels, userIdNameMap, lookupUser)}
+                    plugins={platePlugins(
+                        channels,
+                        userIdNameMap,
+                        userMentions,
+                        channelMentions,
+                        lookupUser,
+                    )}
                     editorRef={editorRef}
                     initialValue={initialValue}
                     key={`plate-${storageId}`}
@@ -486,19 +498,6 @@ const PlateEditorWithoutBoundary = ({
                             onFocusChange={onFocusChange}
                         />
                         <CaptureLinkAttachmentsPlugin onUpdate={onMessageLinksUpdated} />
-                        <EmojiPlugin />
-                        <MentionCombobox<TUserWithChannel>
-                            id={ComboboxTypes.userMention}
-                            items={userMentions}
-                            currentUser={props.userId}
-                            filter={userMentionFilter}
-                        />
-                        <MentionCombobox<Channel>
-                            pluginKey={ELEMENT_MENTION_CHANNEL}
-                            id={ComboboxTypes.channelMention}
-                            items={channelMentions}
-                            filter={channelMentionFilter}
-                        />
                         <RememberInputPlugin storageId={storageId} />
                         {!isEditing && sendButtons}
                     </Stack>

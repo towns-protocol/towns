@@ -3,7 +3,7 @@ import { withRef } from '@udecode/cn'
 import { PlateElement, getHandler, useElement } from '@udecode/plate-common'
 import { Box } from '@ui'
 import { mentionInput } from '../../RichTextEditor.css'
-import { TUserMentionElement } from '../../utils/ComboboxTypes'
+import { TUserMentionElement } from './autocomplete/types'
 
 export const MentionElement = withRef<
     typeof PlateElement,

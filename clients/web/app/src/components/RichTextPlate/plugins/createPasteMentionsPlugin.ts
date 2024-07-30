@@ -3,7 +3,7 @@ import { Channel, useUserLookupContext } from 'use-towns-client'
 import remarkTransformUserAndChannels, {
     PasteTransformer,
 } from '../utils/remark/remarkTransformUserAndChannels'
-import { TUserIDNameMap } from '../utils/ComboboxTypes'
+import { TUserIDNameMap } from '../components/plate-ui/autocomplete/types'
 import { deserializeMd } from '../utils/deserializeMD'
 
 export const KEY_PASTE_MENTIONS_PLUGIN = 'KEY_PASTE_MENTIONS_PLUGIN'

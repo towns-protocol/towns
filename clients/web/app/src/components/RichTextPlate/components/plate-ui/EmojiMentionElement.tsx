@@ -2,7 +2,7 @@ import React from 'react'
 import { withRef } from '@udecode/cn'
 import { PlateElement, useElement } from '@udecode/plate-common'
 import { Box } from '@ui'
-import { TEmojiMentionElement } from '../../utils/ComboboxTypes'
+import { TEmojiMentionElement } from './autocomplete/types'
 
 export const EmojiMentionElement = withRef<
     typeof PlateElement,
@@ -19,6 +19,8 @@ export const EmojiMentionElement = withRef<
             paddingX="xs"
             data-slate-value={element.value}
             title={element.emoji.name}
+            {...props.attributes}
+            ref={ref}
         >
             {element.emoji.emoji}
             {children}

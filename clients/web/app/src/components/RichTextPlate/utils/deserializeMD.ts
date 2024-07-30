@@ -7,7 +7,7 @@ import remarkDecodeHTMLCodeBlocks from './remark/remarkDecodeHTMLCodeBlocks'
 import remarkSlate from './remark/plugin'
 import remarkTransformUserAndChannels from './remark/remarkTransformUserAndChannels'
 import remarkRemoveHeadings from './remark/remarkRemoveHeadings'
-import { TUserIDNameMap } from './ComboboxTypes'
+import { TUserIDNameMap } from '../components/plate-ui/autocomplete/types'
 
 /**
  * Deserialize content from Markdown format to Slate format.

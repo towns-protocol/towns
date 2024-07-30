@@ -2,23 +2,7 @@ import React, { useCallback, useEffect } from 'react'
 import { Button, Stack } from '@ui'
 import { MotionIconButton } from 'ui/components/Motion/MotionComponents'
 import { useDevice } from 'hooks/useDevice'
-import { isInputFocused } from '../utils/helpers'
-
-/**
- * Dispatches a mock Enter event to the active element (editor).
- * This is used in ExitComboboxPlugin.ts plugin to convert any unselected combobox item to a paragraph node.
- * E.g. :) or @ me
- *
- * Only required for touch devices, because on touch, we don't use Enter key to send the message.
- */
-const dispatchMockEnterEvent = () => {
-    const mockEnterEvent = new KeyboardEvent('keydown', {
-        bubbles: true,
-        key: 'Enter',
-        keyCode: 13,
-    })
-    document.activeElement?.dispatchEvent(mockEnterEvent)
-}
+import { dispatchMockEnterEvent } from '../utils/helpers'
 
 export const EditMessageButtons = (props: {
     onSave?: () => void
@@ -56,6 +40,13 @@ export const EditMessageButtons = (props: {
         [onCancel],
     )
 
+    /**
+     * Dispatches a mock Enter event to the active element (editor).
+     * This is used in ExitComboboxPlugin.ts plugin to convert any unselected combobox item to a paragraph node.
+     * E.g. :) or @ me
+     *
+     * Only required for touch devices, because on touch, we don't use Enter key to send the message.
+     */
     const saveButtonPressed = useCallback(
         (event: React.MouseEvent) => {
             event.preventDefault()
@@ -67,9 +58,7 @@ export const EditMessageButtons = (props: {
             // For desktop, we don't need to invoke onSave(), if editor is focused,
             // because we listen to 'Enter' key event in PlateEditor.tsx
             // Calling onSave() here will send the message twice
-            else if (isInputFocused()) {
-                dispatchMockEnterEvent()
-            } else {
+            else {
                 onSave?.()
             }
         },
