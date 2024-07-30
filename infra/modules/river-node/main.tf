@@ -477,7 +477,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
         value = local.run_mode == "archive" ? "false" : "true"
       },
       {
-        name  = "RIVER_PERFORMANCETRACKING_OTLPENABLEGRPC",
+        name  = "RIVER_PERFORMANCETRACKING_TRACINGENABLED",
         value = "true"
       },
       {
