@@ -20850,7 +20850,7 @@ __metadata:
     "@fastify/sensible": ^5.0.0
     "@fastify/static": ^6.0.0
     "@fastify/view": ^9.1.0
-    "@river-build/generated": "workspace:^"
+    "@river-build/web3": "workspace:^"
     "@types/ejs": ^3.1.5
     ejs: ^3.1.10
     esbuild: ^0.21.5

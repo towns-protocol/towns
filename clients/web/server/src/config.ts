@@ -7,15 +7,13 @@ dotenv.config({ path: path.join(__dirname, '../../app', '.env.local') })
 const envSchema = z.object({
     MODE: z.string(),
     PORT: z.string().optional(),
-    VITE_ADDRESS_SPACE_OWNER: z.string().optional(),
+    VITE_RIVER_DEFAULT_ENV: z.string().optional(),
     VITE_BASE_SEPOLIA_RPC_URL: z.string().url().optional(),
     VITE_BASE_CHAIN_RPC_URL: z.string().url().optional(),
 })
 
 // eslint-disable-next-line no-process-env -- This is the only place we should access process.env
 const env = envSchema.parse(process.env)
-
-// TODO: stop using VITE_ADDRESS_SPACE_OWNER, and use RIVER_DEFAULT_ENV instead
 
 const PORT = Number(env.PORT) || 3000
 

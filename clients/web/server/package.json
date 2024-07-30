@@ -22,7 +22,7 @@
         "@fastify/sensible": "^5.0.0",
         "@fastify/static": "^6.0.0",
         "@fastify/view": "^9.1.0",
-        "@river-build/generated": "workspace:^",
+        "@river-build/web3": "workspace:^",
         "ejs": "^3.1.10",
         "fastify": "^4.28.0",
         "node-cache": "^5.1.2",

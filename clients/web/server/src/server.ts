@@ -1,6 +1,5 @@
 import fastifyStatic from '@fastify/static'
 import fastifyView from '@fastify/view'
-import SpaceOwnerAbi from '@river-build/generated/dev/abis/SpaceOwner.abi'
 import ejs from 'ejs'
 import { ethers } from 'ethers'
 import Fastify from 'fastify'
@@ -10,20 +9,27 @@ import path from 'node:path'
 import NodeCache from 'node-cache'
 import { getPackageVersion } from './utils/getPackageVersion'
 import { config } from './config'
+import { getWeb3Deployment, ISpaceOwnerShim, SpaceOwner } from '@river-build/web3'
 
-const { PROVIDER_URL, MODE, PORT, VITE_ADDRESS_SPACE_OWNER } = config
+const { PROVIDER_URL, MODE, PORT, VITE_RIVER_DEFAULT_ENV } = config
 
 const cache = new NodeCache({ stdTTL: 900 }) // 900 seconds = 15 minutes
-
-// spaceOwner
-
-const provider = new ethers.providers.JsonRpcProvider(PROVIDER_URL)
-
-console.log('provider', MODE, VITE_ADDRESS_SPACE_OWNER, PROVIDER_URL)
 
 const server = Fastify({
     logger: true,
 })
+
+const provider = new ethers.providers.JsonRpcProvider(PROVIDER_URL)
+
+console.log('provider', MODE, VITE_RIVER_DEFAULT_ENV, PROVIDER_URL)
+
+let spaceOwner: ISpaceOwnerShim | undefined
+
+if (VITE_RIVER_DEFAULT_ENV) {
+    const web3Deployment = getWeb3Deployment(VITE_RIVER_DEFAULT_ENV)
+    const contract = new SpaceOwner(web3Deployment.base, provider)
+    spaceOwner = contract.spaceOwner
+}
 
 // In-memory cache for file existence checks
 const fileCache: { [key: string]: boolean } = {}
@@ -169,21 +175,15 @@ async function updateTemplate({
 }
 
 async function getTownDataFromContract(townId: string): Promise<TownData | undefined> {
-    if (!provider) {
+    if (!spaceOwner) {
         return
     }
 
     try {
         const spaceAddress = ethers.utils.getAddress(townId.slice(2, 42))
 
-        if (!VITE_ADDRESS_SPACE_OWNER) {
-            return
-        }
-
-        const contract = new ethers.Contract(VITE_ADDRESS_SPACE_OWNER, SpaceOwnerAbi, provider)
-
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        const result = (await contract['getSpaceInfo'](spaceAddress)) as TownData
+        const result = await spaceOwner.read.getSpaceInfo(spaceAddress)
 
         return result
             ? {
