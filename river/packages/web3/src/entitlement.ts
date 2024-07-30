@@ -448,8 +448,16 @@ async function evaluateCheckOperation(
         }
         case CheckOperationType.ISENTITLED:
             throw new Error(`CheckOperationType.ISENTITLED not implemented`)
-        case CheckOperationType.ERC20:
-            throw new Error('CheckOperationType.ERC20 not implemented')
+        case CheckOperationType.ERC20: {
+            await Promise.all(providers.map((p) => p.ready))
+            const provider = findProviderFromChainId(providers, operation.chainId)
+
+            if (!provider) {
+                controller.abort()
+                return zeroAddress
+            }
+            return evaluateERC20Operation(operation, controller, provider, linkedWallets)
+        }
         case CheckOperationType.ERC721: {
             await Promise.all(providers.map((p) => p.ready))
             const provider = findProviderFromChainId(providers, operation.chainId)
@@ -653,8 +661,39 @@ async function evaluateERC721Operation(
     provider: ethers.providers.StaticJsonRpcProvider,
     linkedWallets: string[],
 ): Promise<EntitledWalletOrZeroAddress> {
-    const contract = new ethers.Contract(
+    return evaluateContractBalanceAcrossWallets(
         operation.contractAddress,
+        operation.threshold,
+        controller,
+        provider,
+        linkedWallets,
+    )
+}
+
+async function evaluateERC20Operation(
+    operation: CheckOperation,
+    controller: AbortController,
+    provider: ethers.providers.StaticJsonRpcProvider,
+    linkedWallets: string[],
+): Promise<EntitledWalletOrZeroAddress> {
+    return evaluateContractBalanceAcrossWallets(
+        operation.contractAddress,
+        operation.threshold,
+        controller,
+        provider,
+        linkedWallets,
+    )
+}
+
+async function evaluateContractBalanceAcrossWallets(
+    contractAddress: `0x${string}`,
+    threshold: bigint,
+    controller: AbortController,
+    provider: ethers.providers.StaticJsonRpcProvider,
+    linkedWallets: string[],
+): Promise<EntitledWalletOrZeroAddress> {
+    const contract = new ethers.Contract(
+        contractAddress,
         ['function balanceOf(address) view returns (uint)'],
         provider,
     )
@@ -690,7 +729,7 @@ async function evaluateERC721Operation(
         ethers.BigNumber.from(0),
     )
 
-    if (walletsWithAsset.length > 0 && accumulatedBalance.gte(operation.threshold)) {
+    if (walletsWithAsset.length > 0 && accumulatedBalance.gte(threshold)) {
         return walletsWithAsset[0].wallet
     } else {
         controller.abort()

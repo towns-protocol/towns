@@ -21,6 +21,7 @@ import { MembershipOp } from '@river-build/proto'
 import { makeUserStreamId } from './id'
 import { dlog } from '@river-build/dlog'
 import {
+    Address,
     NoopRuleData,
     IRuleEntitlementBase,
     Permission,
@@ -497,7 +498,7 @@ describe('channelsWithEntitlements', () => {
             carolProvider,
             spaceId,
             channelId,
-        } = await setupChannelWithCustomRole([], getNftRuleData(testNft1Address as `0x${string}`))
+        } = await setupChannelWithCustomRole([], getNftRuleData(testNft1Address as Address))
 
         // Link carol's wallet to alice's as root
         await linkWallets(aliceSpaceDapp, aliceProvider.wallet, carolProvider.wallet)
@@ -507,7 +508,7 @@ describe('channelsWithEntitlements', () => {
 
         // Mint the needed asset to Alice's linked wallet
         log('Minting an NFT for carols wallet, which is linked to alices wallet')
-        await publicMint('TestNFT1', carolsWallet.address as `0x${string}`)
+        await publicMint('TestNFT1', carolsWallet.address as Address)
 
         // Wait 2 seconds for the negative auth cache to expire
         await new Promise((f) => setTimeout(f, 2000))
@@ -534,13 +535,13 @@ describe('channelsWithEntitlements', () => {
             carolProvider,
             spaceId,
             channelId,
-        } = await setupChannelWithCustomRole([], getNftRuleData(testNft1Address as `0x${string}`))
+        } = await setupChannelWithCustomRole([], getNftRuleData(testNft1Address as Address))
 
         log("Joining alice's wallet as a linked wallet to carols root wallet")
         await linkWallets(carolSpaceDapp, carolProvider.wallet, aliceProvider.wallet)
 
         log('Minting an NFT for carols wallet, which is the root to alices wallet')
-        await publicMint('TestNFT1', carolsWallet.address as `0x${string}`)
+        await publicMint('TestNFT1', carolsWallet.address as Address)
 
         log('expect that alice can join the space')
         // Validate alice can join the channel
@@ -562,7 +563,7 @@ describe('channelsWithEntitlements', () => {
         await expectUserCannotJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
 
         // Mint an nft for alice - she should be able to join now
-        await publicMint('TestNFT', alicesWallet.address as `0x${string}`)
+        await publicMint('TestNFT', alicesWallet.address as Address)
 
         // Wait 2 seconds for the negative auth cache to expire
         await new Promise((f) => setTimeout(f, 2000))
@@ -580,7 +581,7 @@ describe('channelsWithEntitlements', () => {
             await setupChannelWithCustomRole([], getNftRuleData(testNftAddress))
 
         // Mint an nft for alice - she should be able to join now
-        const tokenId = await publicMint('TestNFT', alicesWallet.address as `0x${string}`)
+        const tokenId = await publicMint('TestNFT', alicesWallet.address as Address)
 
         // Validate alice can join the channel
         await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
@@ -594,7 +595,7 @@ describe('channelsWithEntitlements', () => {
         // Burn Alice's NFT and validate her zero balance. She should now fail an entitlement check for the
         // channel.
         await burn('TestNFT', tokenId)
-        await expect(balanceOf('TestNFT', alicesWallet.address as `0x${string}`)).resolves.toBe(0)
+        await expect(balanceOf('TestNFT', alicesWallet.address as Address)).resolves.toBe(0)
 
         // Wait 5 seconds for the positive auth cache to expire
         await new Promise((f) => setTimeout(f, 5000))
@@ -642,7 +643,7 @@ describe('channelsWithEntitlements', () => {
             ])
 
         // Mint an nft for alice - she should be able to join now
-        const tokenId = await publicMint('TestNFT', alicesWallet.address as `0x${string}`)
+        const tokenId = await publicMint('TestNFT', alicesWallet.address as Address)
 
         // Validate alice can join the channel
         await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
@@ -656,7 +657,7 @@ describe('channelsWithEntitlements', () => {
         // Burn Alice's NFT and validate her zero balance. She should now fail an entitlement check for the
         // channel.
         await burn('TestNFT', tokenId)
-        await expect(balanceOf('TestNFT', alicesWallet.address as `0x${string}`)).resolves.toBe(0)
+        await expect(balanceOf('TestNFT', alicesWallet.address as Address)).resolves.toBe(0)
 
         // Wait 5 seconds for the positive auth cache to expire
         await new Promise((f) => setTimeout(f, 5000))
@@ -676,7 +677,7 @@ describe('channelsWithEntitlements', () => {
         const testNft1Address = await getContractAddress('TestNFT1')
         const { alice, aliceSpaceDapp, bob, spaceId, channelId } = await setupChannelWithCustomRole(
             [],
-            getNftRuleData(testNft1Address as `0x${string}`),
+            getNftRuleData(testNft1Address as Address),
         )
 
         // Alice has no NFTs, so she should not be able to join the channel
@@ -693,8 +694,8 @@ describe('channelsWithEntitlements', () => {
         const { alice, bob, alicesWallet, aliceSpaceDapp, spaceId, channelId } =
             await setupChannelWithCustomRole([], twoNftRuleData(testNft1Address, testNft2Address))
 
-        const aliceMintTx1 = publicMint('TestNFT1', alicesWallet.address as `0x${string}`)
-        const aliceMintTx2 = publicMint('TestNFT2', alicesWallet.address as `0x${string}`)
+        const aliceMintTx1 = publicMint('TestNFT1', alicesWallet.address as Address)
+        const aliceMintTx2 = publicMint('TestNFT2', alicesWallet.address as Address)
 
         log('Minting nfts for alice')
         await Promise.all([aliceMintTx1, aliceMintTx2])
@@ -725,8 +726,8 @@ describe('channelsWithEntitlements', () => {
             channelId,
         } = await setupChannelWithCustomRole([], twoNftRuleData(testNft1Address, testNft2Address))
 
-        const aliceMintTx1 = publicMint('TestNFT1', alicesWallet.address as `0x${string}`)
-        const carolMintTx2 = publicMint('TestNFT2', carolsWallet.address as `0x${string}`)
+        const aliceMintTx1 = publicMint('TestNFT1', alicesWallet.address as Address)
+        const carolMintTx2 = publicMint('TestNFT2', carolsWallet.address as Address)
 
         log('Minting nfts for alice and carol')
         await Promise.all([aliceMintTx1, carolMintTx2])
@@ -752,7 +753,7 @@ describe('channelsWithEntitlements', () => {
 
         // Mint only one of the required NFTs for alice
         log('Minting only one of two required NFTs for alice')
-        await publicMint('TestNFT1', alicesWallet.address as `0x${string}`)
+        await publicMint('TestNFT1', alicesWallet.address as Address)
 
         log('expect that alice cannot join the channel')
         await expectUserCannotJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
@@ -772,7 +773,7 @@ describe('channelsWithEntitlements', () => {
             )
         // join alice
         log('Minting an NFT for alice')
-        await publicMint('TestNFT1', alicesWallet.address as `0x${string}`)
+        await publicMint('TestNFT1', alicesWallet.address as Address)
 
         log('expect that alice can join the channel')
         await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
@@ -792,7 +793,7 @@ describe('channelsWithEntitlements', () => {
             opType: OperationType.CHECK,
             checkType: CheckOperationType.ERC721,
             chainId: 31337n,
-            contractAddress: testNft1Address as `0x${string}`,
+            contractAddress: testNft1Address as Address,
             threshold: 1n,
         }
 
@@ -800,7 +801,7 @@ describe('channelsWithEntitlements', () => {
             opType: OperationType.CHECK,
             checkType: CheckOperationType.ERC721,
             chainId: 31337n,
-            contractAddress: testNft2Address as `0x${string}`,
+            contractAddress: testNft2Address as Address,
             threshold: 1n,
         }
         const two: Operation = {
@@ -818,7 +819,7 @@ describe('channelsWithEntitlements', () => {
                 opType: OperationType.CHECK,
                 checkType: CheckOperationType.ERC721,
                 chainId: 31337n,
-                contractAddress: testNft3Address as `0x${string}`,
+                contractAddress: testNft3Address as Address,
                 threshold: 1n,
             },
         }
@@ -828,8 +829,8 @@ describe('channelsWithEntitlements', () => {
             await setupChannelWithCustomRole([], ruleData)
 
         log("Mint Alice's NFTs")
-        const aliceMintTx1 = publicMint('TestNFT1', alicesWallet.address as `0x${string}`)
-        const aliceMintTx2 = publicMint('TestNFT2', alicesWallet.address as `0x${string}`)
+        const aliceMintTx1 = publicMint('TestNFT1', alicesWallet.address as Address)
+        const aliceMintTx2 = publicMint('TestNFT2', alicesWallet.address as Address)
         await Promise.all([aliceMintTx1, aliceMintTx2])
 
         log('expect that alice can join the channel')

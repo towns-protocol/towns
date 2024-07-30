@@ -20,6 +20,7 @@ import { dlog } from '@river-build/dlog'
 import { MembershipOp } from '@river-build/proto'
 import { Client } from './client'
 import {
+    Address,
     CheckOperationType,
     ETH_ADDRESS,
     LogicalOperationType,
@@ -419,14 +420,14 @@ describe('spaceWithEntitlements', () => {
         } = await createTownWithRequirements({
             everyone: false,
             users: [],
-            ruleData: getNftRuleData(testNft1Address as `0x${string}`),
+            ruleData: getNftRuleData(testNft1Address as Address),
         })
 
         await linkWallets(aliceSpaceDapp, aliceProvider.wallet, carolProvider.wallet)
 
         // join alice
         log('Minting an NFT for carols wallet, which is linked to alices wallet')
-        await publicMint('TestNFT1', carolsWallet.address as `0x${string}`)
+        await publicMint('TestNFT1', carolsWallet.address as Address)
 
         await expectUserCanJoin(
             spaceId,
@@ -460,7 +461,7 @@ describe('spaceWithEntitlements', () => {
         } = await createTownWithRequirements({
             everyone: false,
             users: [],
-            ruleData: getNftRuleData(testNft1Address as `0x${string}`),
+            ruleData: getNftRuleData(testNft1Address as Address),
         })
 
         log("Joining alice's wallet as a linked wallet to carols root wallet")
@@ -468,7 +469,7 @@ describe('spaceWithEntitlements', () => {
 
         // join alice
         log('Minting an NFT for carols wallet, which is the root to alices wallet')
-        await publicMint('TestNFT1', carolsWallet.address as `0x${string}`)
+        await publicMint('TestNFT1', carolsWallet.address as Address)
 
         log('expect that alice can join the space')
         await expectUserCanJoin(
@@ -493,12 +494,12 @@ describe('spaceWithEntitlements', () => {
             await createTownWithRequirements({
                 everyone: false,
                 users: [],
-                ruleData: getNftRuleData(testNft1Address as `0x${string}`),
+                ruleData: getNftRuleData(testNft1Address as Address),
             })
 
         // join alice
         log('Minting an NFT for alice')
-        await publicMint('TestNFT1', alicesWallet.address as `0x${string}`)
+        await publicMint('TestNFT1', alicesWallet.address as Address)
 
         await expectUserCanJoin(
             spaceId,
@@ -522,7 +523,7 @@ describe('spaceWithEntitlements', () => {
             await createTownWithRequirements({
                 everyone: false,
                 users: [],
-                ruleData: getNftRuleData(testNft1Address as `0x${string}`),
+                ruleData: getNftRuleData(testNft1Address as Address),
             })
 
         log('Alice about to attempt to join space', { alicesUserId: alice.userId })
@@ -559,8 +560,8 @@ describe('spaceWithEntitlements', () => {
                 ruleData: twoNftRuleData(testNft1Address, testNft2Address),
             })
 
-        const aliceMintTx1 = publicMint('TestNFT1', alicesWallet.address as `0x${string}`)
-        const aliceMintTx2 = publicMint('TestNFT2', alicesWallet.address as `0x${string}`)
+        const aliceMintTx1 = publicMint('TestNFT1', alicesWallet.address as Address)
+        const aliceMintTx2 = publicMint('TestNFT2', alicesWallet.address as Address)
 
         log('Minting nfts for alice')
         await Promise.all([aliceMintTx1, aliceMintTx2])
@@ -600,8 +601,8 @@ describe('spaceWithEntitlements', () => {
             ruleData: twoNftRuleData(testNft1Address, testNft2Address),
         })
 
-        const aliceMintTx1 = publicMint('TestNFT1', alicesWallet.address as `0x${string}`)
-        const carolMintTx2 = publicMint('TestNFT2', carolsWallet.address as `0x${string}`)
+        const aliceMintTx1 = publicMint('TestNFT1', alicesWallet.address as Address)
+        const carolMintTx2 = publicMint('TestNFT2', carolsWallet.address as Address)
 
         log('Minting nfts for alice and carol')
         await Promise.all([aliceMintTx1, carolMintTx2])
@@ -637,7 +638,7 @@ describe('spaceWithEntitlements', () => {
 
         // join alice
         log('Minting an NFT for alice')
-        await publicMint('TestNFT1', alicesWallet.address as `0x${string}`)
+        await publicMint('TestNFT1', alicesWallet.address as Address)
 
         // first join the space on chain
         const aliceJoinStart = Date.now()
@@ -677,7 +678,7 @@ describe('spaceWithEntitlements', () => {
 
         // join alice
         log('Minting an NFT for alice')
-        await publicMint('TestNFT1', alicesWallet.address as `0x${string}`)
+        await publicMint('TestNFT1', alicesWallet.address as Address)
 
         // first join the space on chain
         log('Expect alice can join space')
@@ -703,7 +704,7 @@ describe('spaceWithEntitlements', () => {
             opType: OperationType.CHECK,
             checkType: CheckOperationType.ERC721,
             chainId: 31337n,
-            contractAddress: testNft1Address as `0x${string}`,
+            contractAddress: testNft1Address as Address,
             threshold: 1n,
         }
 
@@ -711,7 +712,7 @@ describe('spaceWithEntitlements', () => {
             opType: OperationType.CHECK,
             checkType: CheckOperationType.ERC721,
             chainId: 31337n,
-            contractAddress: testNft2Address as `0x${string}`,
+            contractAddress: testNft2Address as Address,
             threshold: 1n,
         }
         const two: Operation = {
@@ -729,7 +730,7 @@ describe('spaceWithEntitlements', () => {
                 opType: OperationType.CHECK,
                 checkType: CheckOperationType.ERC721,
                 chainId: 31337n,
-                contractAddress: testNft3Address as `0x${string}`,
+                contractAddress: testNft3Address as Address,
                 threshold: 1n,
             },
         }
@@ -743,8 +744,8 @@ describe('spaceWithEntitlements', () => {
             })
 
         log("Mint Alice's NFTs")
-        const aliceMintTx1 = publicMint('TestNFT1', alicesWallet.address as `0x${string}`)
-        const aliceMintTx2 = publicMint('TestNFT2', alicesWallet.address as `0x${string}`)
+        const aliceMintTx1 = publicMint('TestNFT1', alicesWallet.address as Address)
+        const aliceMintTx2 = publicMint('TestNFT2', alicesWallet.address as Address)
         await Promise.all([aliceMintTx1, aliceMintTx2])
 
         log('expect alice can join space')

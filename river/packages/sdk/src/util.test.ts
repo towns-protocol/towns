@@ -35,6 +35,7 @@ import _ from 'lodash'
 import { MockEntitlementsDelegate } from './utils'
 import { SignerContext, makeSignerContext } from './signerContext'
 import {
+    Address,
     LocalhostWeb3Provider,
     PricingModuleStruct,
     createExternalNFTStruct,
@@ -503,7 +504,7 @@ export function twoNftRuleData(
         opType: OperationType.CHECK,
         checkType: CheckOperationType.ERC721,
         chainId: 31337n,
-        contractAddress: nft1Address as `0x${string}`,
+        contractAddress: nft1Address as Address,
         threshold: 1n,
     }
 
@@ -511,7 +512,7 @@ export function twoNftRuleData(
         opType: OperationType.CHECK,
         checkType: CheckOperationType.ERC721,
         chainId: 31337n,
-        contractAddress: nft2Address as `0x${string}`,
+        contractAddress: nft2Address as Address,
         threshold: 1n,
     }
     const root: Operation = {
@@ -680,7 +681,7 @@ export const getFixedPricingModule = (pricingModules: PricingModuleStruct[]) => 
     return pricingModules.find((module) => module.name === FIXED_PRICING)
 }
 
-export function getNftRuleData(testNftAddress: `0x${string}`): IRuleEntitlementBase.RuleDataStruct {
+export function getNftRuleData(testNftAddress: Address): IRuleEntitlementBase.RuleDataStruct {
     return createExternalNFTStruct([testNftAddress])
 }
 

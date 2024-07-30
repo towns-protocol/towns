@@ -6,12 +6,14 @@ import MockERC721a from './MockERC721A'
 import { keccak256, parseEther } from 'viem/utils'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 
+import { Address } from './ContractTypes'
+
 import { dlogger } from '@river-build/dlog'
 
 const logger = dlogger('csb:TestGatingNFT')
 
-export function toEIP55Address(address: `0x${string}`): `0x${string}` {
-    const addressHash = keccak256(address.substring(2).toLowerCase() as `0x${string}`)
+export function toEIP55Address(address: Address): Address {
+    const addressHash = keccak256(address.substring(2).toLowerCase() as Address)
     let checksumAddress = '0x'
 
     for (let i = 2; i < address.length; i++) {
@@ -22,15 +24,15 @@ export function toEIP55Address(address: `0x${string}`): `0x${string}` {
         }
     }
 
-    return checksumAddress as `0x${string}`
+    return checksumAddress as Address
 }
 
-export function isEIP55Address(address: `0x${string}`): boolean {
+export function isEIP55Address(address: Address): boolean {
     return address === toEIP55Address(address)
 }
 /*
  */
-export function isHexString(value: unknown): value is `0x${string}` {
+export function isHexString(value: unknown): value is Address {
     // Check if the value is undefined first
     if (value === undefined) {
         return false
@@ -82,10 +84,10 @@ class Mutex {
     }
 }
 
-const nftContracts = new Map<string, `0x${string}`>()
+const nftContracts = new Map<string, Address>()
 const nftContractsMutex = new Mutex()
 
-export async function getContractAddress(nftName: string): Promise<`0x${string}`> {
+export async function getContractAddress(nftName: string): Promise<Address> {
     let retryCount = 0
     let lastError: unknown
     try {
@@ -169,11 +171,11 @@ export async function getContractAddress(nftName: string): Promise<`0x${string}`
     return contractAddress
 }
 
-export async function getTestGatingNFTContractAddress(): Promise<`0x${string}`> {
+export async function getTestGatingNFTContractAddress(): Promise<Address> {
     return await getContractAddress('TestGatingNFT')
 }
 
-export async function publicMint(nftName: string, toAddress: `0x${string}`): Promise<number> {
+export async function publicMint(nftName: string, toAddress: Address): Promise<number> {
     const privateKey = generatePrivateKey()
     const throwawayAccount = privateKeyToAccount(privateKey)
     const client = createTestClient({
@@ -256,7 +258,7 @@ export async function burn(nftName: string, tokenId: number): Promise<void> {
     expect(receipt.status).toBe('success')
 }
 
-export async function balanceOf(nftName: string, address: `0x${string}`): Promise<number> {
+export async function balanceOf(nftName: string, address: Address): Promise<number> {
     const client = createTestClient({
         chain: foundry,
         mode: 'anvil',

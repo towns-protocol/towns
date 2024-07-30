@@ -38,7 +38,7 @@ export function balanceOfMockNFT(
     return mockNFT.read.balanceOf(address)
 }
 
-export async function getTestGatingNftAddress(_chainId: number): Promise<`0x${string}`> {
+export async function getTestGatingNftAddress(_chainId: number): Promise<Address> {
     return await getTestGatingNFTContractAddress()
 }
 

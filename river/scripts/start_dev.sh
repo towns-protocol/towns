@@ -106,18 +106,6 @@ echo "STARTED ALL CHAINS AND BUILT ALL CONTRACTS"
 ./scripts/configure-nodes.sh --multi
 #./scripts/configure-nodes.sh --multi_ne
 
-
-# Define the base directory for easier reference
-CONFIGS_DIR="./core/node/run_files/"
-PNW_URL="http://localhost:8787"
-PNW_AUTH_TOKEN="Zm9v"
-
-# Loop over each config.yaml file in the run_files subdirectories
-find "$CONFIGS_DIR" -type f -name "config.yaml" | while read -r YAML_FILE; do
-    yq eval ".pushNotification.url = \"$PNW_URL\"" -i $YAML_FILE
-    yq eval ".pushNotification.authToken = \"$PNW_AUTH_TOKEN\"" -i $YAML_FILE
-done
-
 # Continue with rest of the script
 echo "Continuing with the rest of the script..."
 

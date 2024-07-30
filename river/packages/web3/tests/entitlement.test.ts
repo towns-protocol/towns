@@ -16,6 +16,7 @@ import {
 } from '../src/entitlement'
 import { MOCK_ADDRESS } from '../src/Utils'
 import { zeroAddress } from 'viem'
+import { Address } from '../src/ContractTypes'
 
 function makeRandomOperation(depth: number): Operation {
     const rand = Math.random()
@@ -53,8 +54,8 @@ test('random', async () => {
     expect(result).toBeDefined()
 })
 
-function generateRandomEthAddress(): `0x${string}` {
-    let address: `0x${string}` = '0x'
+function generateRandomEthAddress(): Address {
+    let address: Address = '0x'
     const characters = '0123456789abcdef'
     for (let i = 0; i < 40; i++) {
         address += characters.charAt(Math.floor(Math.random() * characters.length))
@@ -102,15 +103,18 @@ const slowTrueCheck: CheckOperation = {
 // reproduce the same unit tests here to ensure parity between evaluation in xchain and the
 // client.
 // Contract addresses for the test NFT contracts.
-const SepoliaTestNftContract: `0x${string}` = '0xb088b3f2b35511A611bF2aaC13fE605d491D6C19'
-const SepoliaTestNftWallet_1Token: `0x${string}` = '0x1FDBA84c2153568bc22686B88B617CF64cdb0637'
-const SepoliaTestNftWallet_3Tokens: `0x${string}` = '0xB79Af997239A334355F60DBeD75bEDf30AcD37bD'
-const SepoliaTestNftWallet_2Tokens: `0x${string}` = '0x8cECcB1e5537040Fc63A06C88b4c1dE61880dA4d'
+const SepoliaTestNftContract: Address = '0xb088b3f2b35511A611bF2aaC13fE605d491D6C19'
+const SepoliaTestNftWallet_1Token: Address = '0x1FDBA84c2153568bc22686B88B617CF64cdb0637'
+const SepoliaTestNftWallet_3Tokens: Address = '0xB79Af997239A334355F60DBeD75bEDf30AcD37bD'
+const SepoliaTestNftWallet_2Tokens: Address = '0x8cECcB1e5537040Fc63A06C88b4c1dE61880dA4d'
+
+const ethereumSepoliaChainId = 11155111n
+const baseSepoliaChainId = 84532n
 
 const nftCheckEthereumSepolia: CheckOperation = {
     opType: OperationType.CHECK,
     checkType: CheckOperationType.ERC721,
-    chainId: 11155111n,
+    chainId: ethereumSepoliaChainId,
     contractAddress: SepoliaTestNftContract,
     threshold: 1n,
 } as const
@@ -118,7 +122,7 @@ const nftCheckEthereumSepolia: CheckOperation = {
 const nftMultiCheckEthereumSepolia: CheckOperation = {
     opType: OperationType.CHECK,
     checkType: CheckOperationType.ERC721,
-    chainId: 11155111n,
+    chainId: ethereumSepoliaChainId,
     contractAddress: SepoliaTestNftContract,
     threshold: 6n,
 } as const
@@ -126,7 +130,7 @@ const nftMultiCheckEthereumSepolia: CheckOperation = {
 const nftMultiCheckHighThresholdEthereumSepolia: CheckOperation = {
     opType: OperationType.CHECK,
     checkType: CheckOperationType.ERC721,
-    chainId: 11155111n,
+    chainId: ethereumSepoliaChainId,
     contractAddress: SepoliaTestNftContract,
     threshold: 100n,
 } as const
@@ -251,6 +255,185 @@ const nftCases = [
 ]
 
 test.each(nftCases)('erc721Check - $desc', async (props) => {
+    const { check, wallets, provider, expectedResult } = props
+    const controller = new AbortController()
+    const result = await evaluateTree(controller, wallets, [provider], check)
+    if (expectedResult) {
+        expect(result).toBeTruthy()
+    } else {
+        expect(result).toEqual(zeroAddress)
+    }
+})
+
+// These are the addresses of the chain link test contract on base sepolia and ethereum sepolia.
+const baseSepoliaChainLinkContract: Address = '0xE4aB69C077896252FAFBD49EFD26B5D171A32410'
+const ethSepoliaChainLinkContract: Address = '0x779877A7B0D9E8603169DdbD7836e478b4624789'
+
+// The following are the addresses of the wallets that hold the chain link tokens for testing.
+// Some wallet addresses are duplicated for the sake of self-documenting variable names.
+const sepoliaChainLinkWallet_50Link: Address = '0x4BCfC6962Ab0297aF801da21216014F53B46E991'
+const sepoliaChainLinkWallet_25Link: Address = '0xa4D440AeA5F555feEB5AEa0ddcED6e1B9FaD6A9C'
+const baseSepoliaChainLinkWallet_50Link: Address = '0x4BCfC6962Ab0297aF801da21216014F53B46E991'
+const baseSepoliaChainLinkWallet_25Link: Address = '0xa4D440AeA5F555feEB5AEa0ddcED6e1B9FaD6A9C'
+const testEmptyAccount: Address = '0xb227905F186095083869928BAb49cA9CE9546817'
+
+const chainlinkExp = BigInt(10) ** BigInt(18)
+
+const erc20ChainLinkCheckBaseSepolia_20Tokens: CheckOperation = {
+    opType: OperationType.CHECK,
+    checkType: CheckOperationType.ERC20,
+    chainId: 84532n,
+    contractAddress: baseSepoliaChainLinkContract,
+    threshold: 20n * chainlinkExp,
+}
+
+const erc20ChainLinkCheckBaseSepolia_30Tokens: CheckOperation = {
+    ...erc20ChainLinkCheckBaseSepolia_20Tokens,
+    threshold: 30n * chainlinkExp,
+}
+
+const erc20ChainLinkCheckBaseSepolia_75Tokens: CheckOperation = {
+    ...erc20ChainLinkCheckBaseSepolia_20Tokens,
+    threshold: 75n * chainlinkExp,
+}
+
+const erc20ChainLinkCheckBaseSepolia_90Tokens: CheckOperation = {
+    ...erc20ChainLinkCheckBaseSepolia_20Tokens,
+    threshold: 90n * chainlinkExp,
+}
+
+const erc20ChainLinkEthereumSepolia_20Tokens: CheckOperation = {
+    opType: OperationType.CHECK,
+    checkType: CheckOperationType.ERC20,
+    chainId: ethereumSepoliaChainId,
+    contractAddress: ethSepoliaChainLinkContract,
+    threshold: 20n * chainlinkExp,
+}
+
+const erc20ChainLinkCheckEthereumSepolia_30Tokens: CheckOperation = {
+    ...erc20ChainLinkEthereumSepolia_20Tokens,
+    threshold: 30n * chainlinkExp,
+}
+
+const erc20ChainLinkCheckEthereumSepolia_75Tokens: CheckOperation = {
+    ...erc20ChainLinkEthereumSepolia_20Tokens,
+    threshold: 75n * chainlinkExp,
+}
+
+const erc20ChainLinkCheckEthereumSepolia_90Tokens: CheckOperation = {
+    ...erc20ChainLinkEthereumSepolia_20Tokens,
+    threshold: 90n * chainlinkExp,
+}
+
+const erc20Cases = [
+    {
+        desc: 'base sepolia (empty wallet, false)',
+        check: erc20ChainLinkCheckBaseSepolia_20Tokens,
+        wallets: [testEmptyAccount],
+        provider: baseSepoliaProvider,
+        expectedResult: false,
+    },
+    {
+        desc: 'base sepolia (single wallet)',
+        check: erc20ChainLinkCheckBaseSepolia_20Tokens,
+        wallets: [baseSepoliaChainLinkWallet_25Link],
+        provider: baseSepoliaProvider,
+        expectedResult: true,
+    },
+    {
+        desc: 'base sepolia (two wallets)',
+        check: erc20ChainLinkCheckBaseSepolia_20Tokens,
+        wallets: [baseSepoliaChainLinkWallet_25Link, testEmptyAccount],
+        provider: baseSepoliaProvider,
+        expectedResult: true,
+    },
+    {
+        desc: 'base sepolia (false)',
+        check: erc20ChainLinkCheckBaseSepolia_30Tokens,
+        wallets: [baseSepoliaChainLinkWallet_25Link],
+        provider: baseSepoliaProvider,
+        expectedResult: false,
+    },
+    {
+        desc: 'base sepolia (two wallets, false)',
+        check: erc20ChainLinkCheckBaseSepolia_30Tokens,
+        wallets: [baseSepoliaChainLinkWallet_25Link, testEmptyAccount],
+        provider: baseSepoliaProvider,
+        expectedResult: false,
+    },
+    {
+        desc: 'base sepolia (two nonempty wallets, true)',
+        check: erc20ChainLinkCheckBaseSepolia_30Tokens,
+        wallets: [baseSepoliaChainLinkWallet_25Link, baseSepoliaChainLinkWallet_50Link],
+        provider: baseSepoliaProvider,
+        expectedResult: true,
+    },
+    {
+        desc: 'base sepolia (two nonempty wallets, exact balance - true)',
+        check: erc20ChainLinkCheckBaseSepolia_75Tokens,
+        wallets: [baseSepoliaChainLinkWallet_25Link, baseSepoliaChainLinkWallet_50Link],
+        provider: baseSepoliaProvider,
+        expectedResult: true,
+    },
+    {
+        desc: 'base sepolia (two nonempty wallets, false)',
+        check: erc20ChainLinkCheckBaseSepolia_90Tokens,
+        wallets: [baseSepoliaChainLinkWallet_25Link, baseSepoliaChainLinkWallet_50Link],
+        provider: baseSepoliaProvider,
+        expectedResult: false,
+    },
+    {
+        desc: 'eth sepolia (empty wallet, false)',
+        check: erc20ChainLinkCheckEthereumSepolia_30Tokens,
+        wallets: [testEmptyAccount],
+        provider: ethSepoliaProvider,
+        expectedResult: false,
+    },
+    {
+        desc: 'eth sepolia (single wallet)',
+        check: erc20ChainLinkCheckBaseSepolia_20Tokens,
+        wallets: [sepoliaChainLinkWallet_25Link],
+        provider: ethSepoliaProvider,
+        expectedResult: true,
+    },
+    {
+        desc: 'eth sepolia (two wallets)',
+        check: erc20ChainLinkCheckBaseSepolia_20Tokens,
+        wallets: [sepoliaChainLinkWallet_25Link, testEmptyAccount],
+        provider: ethSepoliaProvider,
+        expectedResult: true,
+    },
+    {
+        desc: 'eth sepolia (false)',
+        check: erc20ChainLinkCheckBaseSepolia_30Tokens,
+        wallets: [sepoliaChainLinkWallet_25Link],
+        provider: ethSepoliaProvider,
+        expectedResult: false,
+    },
+    {
+        desc: 'eth sepolia (two wallets, false)',
+        check: erc20ChainLinkCheckBaseSepolia_30Tokens,
+        wallets: [sepoliaChainLinkWallet_25Link, testEmptyAccount],
+        provider: ethSepoliaProvider,
+        expectedResult: false,
+    },
+    {
+        desc: 'eth sepolia (two nonempty wallets, exact balance - true)',
+        check: erc20ChainLinkCheckEthereumSepolia_75Tokens,
+        wallets: [sepoliaChainLinkWallet_25Link, sepoliaChainLinkWallet_50Link],
+        provider: ethSepoliaProvider,
+        expectedResult: true,
+    },
+    {
+        desc: 'eth sepolia (two nonempty wallets, false)',
+        check: erc20ChainLinkCheckEthereumSepolia_90Tokens,
+        wallets: [sepoliaChainLinkWallet_25Link, sepoliaChainLinkWallet_50Link],
+        provider: ethSepoliaProvider,
+        expectedResult: false,
+    },
+]
+
+test.each(erc20Cases)('erc20Check - $desc', async (props) => {
     const { check, wallets, provider, expectedResult } = props
     const controller = new AbortController()
     const result = await evaluateTree(controller, wallets, [provider], check)

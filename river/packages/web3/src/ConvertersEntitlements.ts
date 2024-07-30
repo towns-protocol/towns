@@ -49,7 +49,7 @@ export function createUserEntitlementStruct(
 }
 
 export function createRuleEntitlementStruct(
-    moduleAddress: `0x${string}`,
+    moduleAddress: Address,
     ruleData: IRuleEntitlementBase.RuleDataStruct,
 ): EntitlementStruct {
     const encoded = encodeEntitlementData(ruleData)
