@@ -148,7 +148,14 @@ export class SyncedStreams {
     }
 
     public async startSyncStreams() {
-        return this.createSyncLoop()
+        await this.createSyncLoop()
+        const dbSyncedStreams = await database.syncedStream.findMany()
+
+        for (const dbStream of dbSyncedStreams) {
+            await this.addStreamToSync(SyncCookie.fromJsonString(dbStream.SyncCookie))
+        }
+
+        console.log('started sync with len of syncCookies', dbSyncedStreams.length)
     }
 
     public async stopSync() {
@@ -279,22 +286,11 @@ export class SyncedStreams {
                         //     .filter(isDefined)
 
                         try {
-                            const dbSyncedStreams = await database.syncedStream.findMany()
-
-                            const syncCookies: SyncCookie[] = []
-                            for (const dbStream of dbSyncedStreams) {
-                                syncCookies.push(SyncCookie.fromJsonString(dbStream.SyncCookie))
-                            }
-
                             // syncId needs to be reset before starting a new syncStreams
                             // syncStreams() should return a new syncId
                             this.syncId = undefined
 
-                            const streams = this.rpcClient.syncStreams({
-                                syncPos: syncCookies,
-                            })
-
-                            console.log('started sync with len of syncCookies', syncCookies.length)
+                            const streams = this.rpcClient.syncStreams({})
 
                             const iterator = streams[Symbol.asyncIterator]()
 
