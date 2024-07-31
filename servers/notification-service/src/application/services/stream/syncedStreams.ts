@@ -93,9 +93,6 @@ interface PingInfo {
 }
 
 export class SyncedStreams {
-    // mapping of stream id to stream
-    private readonly streams: Map<string, StreamAndCookie> = new Map()
-
     // Starting the client creates the syncLoop
     // While a syncLoop exists, the client tried to keep the syncLoop connected, and if it reconnects, it
     // will restart sync for all Streams
@@ -139,23 +136,19 @@ export class SyncedStreams {
         this._syncId = syncId
     }
 
-    public getStreams(): StreamAndCookie[] {
-        return Array.from(this.streams.values())
-    }
-
-    public getStreamIds(): string[] {
-        return Array.from(this.streams.keys())
-    }
-
     public async startSyncStreams() {
         await this.createSyncLoop()
         const dbSyncedStreams = await database.syncedStream.findMany()
+        const start = Date.now()
 
         for (const dbStream of dbSyncedStreams) {
             await this.addStreamToSync(SyncCookie.fromJsonString(dbStream.SyncCookie))
         }
 
-        console.log('started sync with len of syncCookies', dbSyncedStreams.length)
+        logger.info('started sync with len of syncCookies', {
+            streamCount: dbSyncedStreams.length,
+            duration: Date.now() - start,
+        })
     }
 
     public async stopSync() {
@@ -281,15 +274,12 @@ export class SyncedStreams {
                             this.setSyncState(SyncState.Starting)
                         }
 
-                        // const syncCookies = Array.from(this.streams.values())
-                        //     .map((stream) => stream.syncCookie)
-                        //     .filter(isDefined)
-
                         try {
                             // syncId needs to be reset before starting a new syncStreams
                             // syncStreams() should return a new syncId
                             this.syncId = undefined
 
+                            // Start an empty sync, streams will be added later
                             const streams = this.rpcClient.syncStreams({})
 
                             const iterator = streams[Symbol.asyncIterator]()
@@ -356,8 +346,12 @@ export class SyncedStreams {
                                             this.printNonces()
                                         }
                                         break
+                                    case SyncOp.SYNC_DOWN:
+                                        logger.warn('SYNC_DOWN received', { value })
+                                        this.syncClosed()
+                                        break
                                     default:
-                                        logger.info(
+                                        logger.warn(
                                             `unknown syncOp { syncId: ${this.syncId}, syncOp: ${value.syncOp} }`,
                                         )
                                         break
@@ -373,7 +367,6 @@ export class SyncedStreams {
                     this.stopPing()
                     if (stateConstraints[this.syncState].has(SyncState.NotSyncing)) {
                         this.setSyncState(SyncState.NotSyncing)
-                        this.streams.clear()
                         this.abortRetry = undefined
                         this.syncId = undefined
                     } else {
@@ -500,28 +493,39 @@ export class SyncedStreams {
                 try {
                     if (syncStream.syncReset) {
                         logger.warn('syncReset', { streamId })
-                        // const response = await unpackStream(syncStream)
-                        // await stream.initializeFromResponse(response)
+                    }
+
+                    const streamAndCookie = await unpackStreamAndCookie(syncStream)
+
+                    if (streamAndCookie.events.length > 0) {
+                        if (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)) {
+                            await this.handleDmOrGDMStreamUpdate(streamAndCookie, streamId)
+                        } else if (isChannelStreamId(streamId)) {
+                            await this.handleChannelStreamUpdate(streamAndCookie, streamId)
+                        }
+                    }
+
+                    const kind = isDMChannelStreamId(streamId)
+                        ? StreamKind.DM
+                        : isChannelStreamId(streamId)
+                        ? StreamKind.Channel
+                        : isGDMChannelStreamId(streamId)
+                        ? StreamKind.GDM
+                        : undefined
+
+                    if (kind === undefined) {
+                        logger.error('stream kind is undefined', { streamId })
                     } else {
-                        const streamAndCookie = await unpackStreamAndCookie(syncStream)
-                        const stream = this.streams.get(streamId)
-                        if (stream === undefined) {
-                            this.streams.set(streamId, syncStream)
-                        }
-
-                        if (streamAndCookie.events.length > 0) {
-                            if (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)) {
-                                await this.handleDmOrGDMStreamUpdate(streamAndCookie, streamId)
-                            } else if (isChannelStreamId(streamId)) {
-                                await this.handleChannelStreamUpdate(streamAndCookie, streamId)
-                            }
-                        }
-
-                        await database.syncedStream.update({
+                        await database.syncedStream.upsert({
                             where: {
                                 StreamId: streamId,
                             },
-                            data: {
+                            update: {
+                                SyncCookie: streamAndCookie.nextSyncCookie.toJsonString(),
+                            },
+                            create: {
+                                Kind: kind,
+                                StreamId: streamId,
                                 SyncCookie: streamAndCookie.nextSyncCookie.toJsonString(),
                             },
                         })
