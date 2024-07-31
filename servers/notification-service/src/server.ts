@@ -10,6 +10,14 @@ notificationServiceLogger.info('Starting notification service', env.NOTIFICATION
 
 const run = async () => {
     try {
+        const startSync = Date.now()
+
+        await StreamsMonitorService.instance.startMonitoringStreams()
+
+        notificationServiceLogger.info('Streams monitoring started in', {
+            duration: Date.now() - startSync,
+        })
+
         const start = Date.now()
         const app = await initializeApp()
 
@@ -19,14 +27,6 @@ const run = async () => {
             )
         })
         notificationServiceLogger.info('Server started in', { duration: Date.now() - start })
-
-        const startSync = Date.now()
-
-        await StreamsMonitorService.instance.startMonitoringStreams()
-
-        notificationServiceLogger.info('Streams monitoring started in', {
-            duration: Date.now() - startSync,
-        })
 
         gracefulShutdown(server, {
             onShutdown: async () => {
