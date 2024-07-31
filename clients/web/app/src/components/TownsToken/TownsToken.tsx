@@ -19,7 +19,7 @@ type Props = {
 export type TownsTokenProps = Props
 
 export const TownsToken = (props: Props) => {
-    const { imageSrc, address, size, spaceName, ...boxProps } = props
+    const { imageSrc, address, size, spaceName, reduceMotion, ...boxProps } = props
     const config = TownsTokenConfig.sizes[size]
     const [loaded, setLoaded] = React.useState(false)
     const [error, setError] = React.useState(false)
@@ -52,7 +52,7 @@ export const TownsToken = (props: Props) => {
                     fontSize={config.fontSize}
                     address={address}
                     radius={config.addressRadius}
-                    reduceMotion={props.reduceMotion}
+                    reduceMotion={reduceMotion}
                 />
                 <Box
                     borderRadius={config.borderRadius}
