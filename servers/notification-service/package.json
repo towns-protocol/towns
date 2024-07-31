@@ -9,7 +9,7 @@
         "build": "prisma generate && yarn typecheck && yarn compile",
         "typecheck": "tsc --noEmit",
         "compile": "node esbuild.config.mjs",
-        "db:create-migration:local": "dotenv -e .env.local -- yarn prisma migrate dev --name",
+        "db:create-migration:local": "dotenv -e .env.local -- yarn prisma migrate dev",
         "db:generate": "prisma generate",
         "db:local": "yarn db:generate & yarn db:migrate:local",
         "db:migrate": "prisma migrate deploy",

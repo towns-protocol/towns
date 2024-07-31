@@ -140,21 +140,6 @@ export class SyncedStreams {
         logger.info('startSyncStreams called')
         await this.createSyncLoop()
         logger.info('startSyncStreams created sync loop')
-        const dbSyncedStreams = await database.syncedStream.findMany()
-        const start = Date.now()
-
-        logger.info('starting addStreamToSync with len of dbSyncedStreams', {
-            streamCount: dbSyncedStreams.length,
-        })
-
-        for (const dbStream of dbSyncedStreams) {
-            await this.addStreamToSync(SyncCookie.fromJsonString(dbStream.SyncCookie))
-        }
-
-        logger.info('addStreamToSync completed with len of syncCookies', {
-            streamCount: dbSyncedStreams.length,
-            duration: Date.now() - start,
-        })
     }
 
     public async stopSync() {
@@ -331,7 +316,7 @@ export class SyncedStreams {
                                 let pingStats: NonceStats | undefined
                                 switch (value.syncOp) {
                                     case SyncOp.SYNC_NEW:
-                                        this.syncStarted(value.syncId)
+                                        await this.syncStarted(value.syncId)
                                         break
                                     case SyncOp.SYNC_CLOSE:
                                         this.syncClosed()
@@ -449,7 +434,7 @@ export class SyncedStreams {
         }
     }
 
-    private syncStarted(syncId: string): void {
+    private async syncStarted(syncId: string) {
         if (!this.syncId && stateConstraints[this.syncState].has(SyncState.Syncing)) {
             this.setSyncState(SyncState.Syncing)
             this.syncId = syncId
@@ -458,6 +443,26 @@ export class SyncedStreams {
             this.sendKeepAlivePings() // ping the server periodically to keep the connection alive
             logger.info(`syncStarted syncId: ${this.syncId}`, {
                 syncId: this.syncId,
+            })
+
+            // TODO This needs to be stopped if the sync stops before loading from the database is complete
+            const start = Date.now()
+
+            const dbSyncedStreams = await database.syncedStream.findMany()
+
+            logger.info('starting addStreamToSync with len of dbSyncedStreams', {
+                streamCount: dbSyncedStreams.length,
+                duration: Date.now() - start,
+            })
+
+            const addStreamStart = Date.now()
+            for (const dbStream of dbSyncedStreams) {
+                await this.addStreamToSync(SyncCookie.fromJsonString(dbStream.SyncCookie))
+            }
+
+            logger.info('addStreamToSync completed with len of syncCookies', {
+                streamCount: dbSyncedStreams.length,
+                duration: Date.now() - addStreamStart,
             })
         } else {
             logger.info(
