@@ -385,6 +385,7 @@ export class SyncedStreams {
                 }
                 return iteration
             })()
+            logger.info('sync loop created')
         })
     }
 
