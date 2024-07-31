@@ -138,14 +138,19 @@ export class SyncedStreams {
 
     public async startSyncStreams() {
         await this.createSyncLoop()
+        logger.info('startSyncStreams created sync loop')
         const dbSyncedStreams = await database.syncedStream.findMany()
         const start = Date.now()
+
+        logger.info('starting addStreamToSync with len of dbSyncedStreams', {
+            streamCount: dbSyncedStreams.length,
+        })
 
         for (const dbStream of dbSyncedStreams) {
             await this.addStreamToSync(SyncCookie.fromJsonString(dbStream.SyncCookie))
         }
 
-        logger.info('started sync with len of syncCookies', {
+        logger.info('addStreamToSync completed with len of syncCookies', {
             streamCount: dbSyncedStreams.length,
             duration: Date.now() - start,
         })
@@ -242,6 +247,7 @@ export class SyncedStreams {
     }
 
     private async createSyncLoop() {
+        logger.info('createSyncLoop called')
         return new Promise<void>((resolve, reject) => {
             if (stateConstraints[this.syncState].has(SyncState.Starting)) {
                 this.setSyncState(SyncState.Starting)
