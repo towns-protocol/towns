@@ -137,6 +137,7 @@ export class SyncedStreams {
     }
 
     public async startSyncStreams() {
+        logger.info('startSyncStreams called')
         await this.createSyncLoop()
         logger.info('startSyncStreams created sync loop')
         const dbSyncedStreams = await database.syncedStream.findMany()
