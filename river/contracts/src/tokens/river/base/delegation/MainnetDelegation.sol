@@ -58,6 +58,15 @@ contract MainnetDelegation is
   }
 
   // =============================================================
+  //                       Remove Delegators
+  // =============================================================
+  function removeDelegations(
+    address[] calldata delegators
+  ) external onlyCrossDomainMessenger {
+    _removeDelegations(delegators);
+  }
+
+  // =============================================================
   //                  Batch Authorized Claimers
   // =============================================================
   function setBatchAuthorizedClaimers(
@@ -80,6 +89,7 @@ contract MainnetDelegation is
     uint256[] calldata quantities
   ) external onlyCrossDomainMessenger {
     uint256 delegatorsLen = delegators.length;
+
     for (uint256 i; i < delegatorsLen; i++) {
       _replaceDelegation(
         delegators[i],
@@ -98,6 +108,7 @@ contract MainnetDelegation is
   }
 
   /// @inheritdoc IMainnetDelegation
+  /// @notice deprecated
   function setDelegation(
     address delegator,
     address operator,

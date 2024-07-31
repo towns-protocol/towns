@@ -32,6 +32,21 @@ contract ProxyBatchDelegation is IProxyBatchDelegation {
     TARGET = _target;
   }
 
+  function removeDelegators() external {
+    address[] memory delegators = new address[](2);
+    delegators[0] = 0x204f1aA5B666d0eAc07228D3065a461e92AC399c;
+    delegators[1] = 0x3541F646d321CACbc0fF4A7cCcB583E8B6E413da;
+
+    ICrossDomainMessenger(MESSENGER).sendMessage(
+      TARGET,
+      abi.encodeWithSelector(
+        IMainnetDelegation.removeDelegations.selector,
+        delegators
+      ),
+      200_000
+    );
+  }
+
   function sendAuthorizedClaimers() external {
     address[] memory delegators = rvr.getDelegators();
     address[] memory authorizedClaimers = new address[](delegators.length);

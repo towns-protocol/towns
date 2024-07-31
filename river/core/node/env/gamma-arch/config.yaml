@@ -5,7 +5,7 @@ useHttps: false
 # Blockchain configuration
 baseChain:
     chainId: 84532
-    networkUrl: ''
+    networkUrl: 'https://sepolia.base.org'
     blockTimeMs: 2000
 riverChain:
     chainId: 6524490

@@ -57,6 +57,14 @@ contract DeployProxyBatchDelegation is Deployer {
       mainnetDelegation = _getMainnetDelegation();
     }
 
+    if (riverToken == address(0)) {
+      revert("DeployProxyBatchDelegation: River token not deployed");
+    }
+
+    if (claimers == address(0)) {
+      revert("DeployProxyBatchDelegation: Claimers not deployed");
+    }
+
     vm.broadcast(deployer);
     return
       address(

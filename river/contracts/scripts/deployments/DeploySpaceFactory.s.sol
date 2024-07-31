@@ -190,7 +190,8 @@ contract DeploySpaceFactory is DiamondDeployer {
         500, // membershipBps 5%
         0.005 ether, // membershipFee
         1_000, // membershipFreeAllocation
-        365 days // membershipDuration
+        365 days, // membershipDuration
+        0.001 ether // membershipMinPrice
       )
     );
     addFacet(
@@ -228,10 +229,4 @@ contract DeploySpaceFactory is DiamondDeployer {
         )
       });
   }
-
-  // function postDeploy(address deployer, address spaceFactory) public override {
-  //   vm.startBroadcast(deployer);
-  //   ISpaceOwner(spaceOwner).setFactory(spaceFactory);
-  //   vm.stopBroadcast();
-  // }
 }

@@ -14,11 +14,11 @@ riverChain:
 
 # Base contracts
 architectContract:
-    address: '0x968696BC59431Ef085441641f550C8e2Eaca8BEd'
+    address: '0xc09ac0ffeecaae5100158247512dc177aeaca3e3'
 
 # River contracts
 registryContract:
-    address: '0xf18E98D36A6bd1aDb52F776aCc191E69B491c070'
+    address: '0x44354786eacbebf981453a05728e1653bc3c5def'
 
 # Disable logging
 log:
@@ -27,3 +27,9 @@ log:
     console: true
     noColor: false
     format: text
+# For reference:
+# Space: 0xB712844A05245fBD17dADA91615C7c9521985873
+# SpaceOwner: 0x0443258849016da8Af08e2984Bce8C0ef6Cfc9A0
+# SpaceFactory: 0xc09ac0ffeecaae5100158247512dc177aeaca3e3
+# BaseRegistry: 0x0230a9d28bc48a90d6f5e5112b24319ec1b14c52
+# RiverRegistry: 0x44354786eacbebf981453a05728e1653bc3c5def

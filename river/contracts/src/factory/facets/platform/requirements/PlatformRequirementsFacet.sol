@@ -22,7 +22,8 @@ contract PlatformRequirementsFacet is
     uint16 membershipBps,
     uint256 membershipFee,
     uint256 membershipMintLimit,
-    uint64 membershipDuration
+    uint64 membershipDuration,
+    uint256 membershipMinPrice
   ) external onlyInitializing {
     _addInterface(type(IPlatformRequirements).interfaceId);
     _setFeeRecipient(feeRecipient);
@@ -30,6 +31,7 @@ contract PlatformRequirementsFacet is
     _setMembershipFee(membershipFee);
     _setMembershipMintLimit(membershipMintLimit);
     _setMembershipDuration(membershipDuration);
+    _setMembershipMinPrice(membershipMinPrice);
   }
 
   /// @inheritdoc IPlatformRequirements

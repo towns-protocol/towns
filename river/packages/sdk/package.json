@@ -51,7 +51,7 @@
         "@types/seedrandom": "^3.0.4",
         "@typescript-eslint/eslint-plugin": "^6.10.0",
         "@typescript-eslint/parser": "^7.14.1",
-        "bullmq": "^4.10.0",
+        "bullmq": "^5.11.0",
         "eslint": "^8.53.0",
         "eslint-import-resolver-typescript": "^3.5.5",
         "eslint-plugin-import": "^2.27.5",

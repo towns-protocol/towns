@@ -32,7 +32,6 @@ import {DeployERC721ANonTransferable} from "contracts/scripts/deployments/facets
 import {DeployMockMessenger} from "contracts/scripts/deployments/facets/DeployMockMessenger.s.sol";
 
 contract DeployBaseRegistry is DiamondDeployer {
-  // SpaceDelegationHelper spaceDelegationHelper = new SpaceDelegationHelper();
   DeployERC721ANonTransferable deployNFT = new DeployERC721ANonTransferable();
 
   // deployments

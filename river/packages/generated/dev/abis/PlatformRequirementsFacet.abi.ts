@@ -27,6 +27,11 @@ export default [
         "name": "membershipDuration",
         "type": "uint64",
         "internalType": "uint64"
+      },
+      {
+        "name": "membershipMinPrice",
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
     "outputs": [],

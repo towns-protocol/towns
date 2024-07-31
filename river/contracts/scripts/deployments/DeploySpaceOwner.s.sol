@@ -9,9 +9,6 @@ import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
 // contracts
 import {DiamondDeployer} from "../common/DiamondDeployer.s.sol";
 
-// facets
-import {GuardianFacet} from "contracts/src/spaces/facets/guardian/GuardianFacet.sol";
-
 // helpers
 import {DeployOwnable} from "contracts/scripts/deployments/facets/DeployOwnable.s.sol";
 import {DeployDiamondCut} from "contracts/scripts/deployments/facets/DeployDiamondCut.s.sol";
@@ -19,9 +16,8 @@ import {DeployDiamondLoupe} from "contracts/scripts/deployments/facets/DeployDia
 import {DeployIntrospection} from "contracts/scripts/deployments/facets/DeployIntrospection.s.sol";
 import {DeployMetadata} from "contracts/scripts/deployments/facets/DeployMetadata.s.sol";
 import {DeploySpaceOwnerFacet} from "contracts/scripts/deployments/facets/DeploySpaceOwnerFacet.s.sol";
+import {DeployGuardianFacet} from "contracts/scripts/deployments/facets/DeployGuardianFacet.s.sol";
 import {DeployMultiInit, MultiInit} from "contracts/scripts/deployments/DeployMultiInit.s.sol";
-
-import {GuardianHelper} from "contracts/test/spaces/guardian/GuardianSetup.sol";
 
 contract DeploySpaceOwner is DiamondDeployer {
   DeployDiamondCut diamondCutHelper = new DeployDiamondCut();
@@ -30,9 +26,8 @@ contract DeploySpaceOwner is DiamondDeployer {
   DeployIntrospection introspectionHelper = new DeployIntrospection();
   DeploySpaceOwnerFacet spaceOwnerHelper = new DeploySpaceOwnerFacet();
   DeployMetadata metadataHelper = new DeployMetadata();
+  DeployGuardianFacet guardianHelper = new DeployGuardianFacet();
   DeployMultiInit multiInitHelper = new DeployMultiInit();
-
-  GuardianHelper guardianHelper = new GuardianHelper();
 
   function versionName() public pure override returns (string memory) {
     return "spaceOwner";
@@ -47,11 +42,8 @@ contract DeploySpaceOwner is DiamondDeployer {
     address ownable = ownableHelper.deploy();
     address metadata = metadataHelper.deploy();
     address spaceOwner = spaceOwnerHelper.deploy();
+    address guardian = guardianHelper.deploy();
     address multiInit = multiInitHelper.deploy();
-
-    vm.startBroadcast(deployer);
-    address guardian = address(new GuardianFacet());
-    vm.stopBroadcast();
 
     addFacet(
       diamondCutHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add),

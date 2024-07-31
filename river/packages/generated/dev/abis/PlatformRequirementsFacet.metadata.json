@@ -228,6 +228,11 @@
             "internalType": "uint64",
             "name": "membershipDuration",
             "type": "uint64"
+          },
+          {
+            "internalType": "uint256",
+            "name": "membershipMinPrice",
+            "type": "uint256"
           }
         ],
         "stateMutability": "nonpayable",
@@ -637,10 +642,10 @@
       "license": "MIT"
     },
     "contracts/src/factory/facets/platform/requirements/PlatformRequirementsFacet.sol": {
-      "keccak256": "0x4651003ea985b35dfda0f55854e9d2b66f8ee1ed98e53e1965e0993db01a4770",
+      "keccak256": "0xbeee806cab5492d17340d20f279df65335005604348d35be8606ff19e0956d78",
       "urls": [
-        "bzz-raw://1acf0678e7e6291177a2a4c732fa61f0d8a42409c480490475515b9865df1cd9",
-        "dweb:/ipfs/QmZKb23KKYTVb6DcnUFuWD7bQG3EmcJwt9TQ32iWcpVBPF"
+        "bzz-raw://04e698309931b83628117493454417403616728751203815276bb1baeb4c5529",
+        "dweb:/ipfs/QmWYXFAUPKg7zACbJEGR6RwGSJ1QY46xM1k5jWDdKRcuX2"
       ],
       "license": "MIT"
     },

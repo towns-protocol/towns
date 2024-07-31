@@ -5,6 +5,7 @@ pragma solidity ^0.8.19;
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 
 //interfaces
+import {IMainnetDelegationBase} from "contracts/src/tokens/river/base/delegation/IMainnetDelegation.sol";
 
 //libraries
 
@@ -13,13 +14,45 @@ import {MockMessenger} from "contracts/test/mocks/MockMessenger.sol";
 import {MainnetDelegation} from "contracts/src/tokens/river/base/delegation/MainnetDelegation.sol";
 
 // Base
-contract ForkMainnetDelegationTest is TestUtils {
+contract ForkMainnetDelegationTest is TestUtils, IMainnetDelegationBase {
   address baseRegistry = 0x7c0422b31401C936172C897802CF0373B35B7698;
 
   MainnetDelegation internal mainnetDelegation;
 
   function setUp() external onlyForked {
     mainnetDelegation = MainnetDelegation(baseRegistry);
+  }
+
+  function test_removeDelegators() external onlyForked {
+    address getMessenger = mainnetDelegation.getMessenger();
+    address getProxyDelegation = mainnetDelegation.getProxyDelegation();
+
+    MockMessenger mockMessenger = new MockMessenger();
+    vm.etch(getMessenger, address(mockMessenger).code);
+    MockMessenger(getMessenger).setXDomainMessageSender(getProxyDelegation);
+
+    address delegatorAddress = 0x204f1aA5B666d0eAc07228D3065a461e92AC399c;
+
+    Delegation memory delegator = mainnetDelegation.getDelegationByDelegator(
+      delegatorAddress
+    );
+
+    assertEq(delegator.delegator, delegatorAddress);
+
+    vm.prank(address(getMessenger));
+    (bool success, ) = baseRegistry.call{gas: 200_000}(
+      // solhint-disable-next-line max-line-length
+      hex"012ad9da00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000002000000000000000000000000204f1aa5b666d0eac07228d3065a461e92ac399c0000000000000000000000003541f646d321cacbc0ff4a7cccb583e8b6e413da"
+    );
+
+    assertTrue(success);
+
+    delegator = mainnetDelegation.getDelegationByDelegator(delegatorAddress);
+
+    assertEq(delegator.operator, address(0));
+    assertEq(delegator.quantity, 0);
+    assertEq(delegator.delegationTime, 0);
+    assertEq(delegator.delegator, address(0));
   }
 
   function test_setBatchAuthorizedClaimers() external onlyForked {

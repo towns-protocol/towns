@@ -14,6 +14,25 @@ import {MainnetDelegationStorage} from "./MainnetDelegationStorage.sol";
 abstract contract MainnetDelegationBase is IMainnetDelegationBase {
   using EnumerableSet for EnumerableSet.AddressSet;
 
+  function _removeDelegations(address[] memory delegators) internal {
+    MainnetDelegationStorage.Layout storage ds = MainnetDelegationStorage
+      .layout();
+
+    for (uint256 i = 0; i < delegators.length; i++) {
+      address delegator = delegators[i];
+      address operator = ds.delegationByDelegator[delegator].operator;
+
+      ds.delegatorsByOperator[operator].remove(delegator);
+      delete ds.delegationByDelegator[delegator];
+      delete ds.delegationByDelegator[delegator].operator;
+      delete ds.delegationByDelegator[delegator].quantity;
+      delete ds.delegationByDelegator[delegator].delegationTime;
+      delete ds.delegationByDelegator[delegator].delegator;
+
+      ds.delegators.remove(delegator);
+    }
+  }
+
   function _replaceDelegation(
     address delegator,
     address claimer,
@@ -22,6 +41,10 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
   ) internal {
     MainnetDelegationStorage.Layout storage ds = MainnetDelegationStorage
       .layout();
+
+    // Remove the current delegator
+    ds.delegators.remove(delegator);
+
     Delegation storage delegation = ds.delegationByDelegator[delegator];
     address currentClaimer = ds.claimerByDelegator[delegator];
 
@@ -37,13 +60,16 @@ abstract contract MainnetDelegationBase is IMainnetDelegationBase {
     }
 
     // Set the new delegation
+    ds.delegators.add(delegator);
     ds.delegatorsByOperator[operator].add(delegator);
-    ds.delegationByDelegator[delegator] = Delegation(
-      operator,
-      quantity,
-      delegator,
-      block.timestamp
-    );
+
+    if (delegation.operator != operator || delegation.quantity != quantity) {
+      delegation.delegationTime = block.timestamp;
+    }
+
+    delegation.operator = operator;
+    delegation.quantity = quantity;
+    delegation.delegator = delegator;
 
     // Update the claimer if it has changed
     if (claimer != currentClaimer) {

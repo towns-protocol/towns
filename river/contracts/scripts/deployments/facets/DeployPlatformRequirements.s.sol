@@ -47,7 +47,8 @@ contract DeployPlatformRequirements is FacetHelper, Deployer {
     uint16 membershipBps,
     uint256 membershipFee,
     uint256 membershipMintLimit,
-    uint64 membershipDuration
+    uint64 membershipDuration,
+    uint256 membershipMinPrice
   ) public pure returns (bytes memory) {
     return
       abi.encodeWithSelector(
@@ -56,7 +57,8 @@ contract DeployPlatformRequirements is FacetHelper, Deployer {
         membershipBps,
         membershipFee,
         membershipMintLimit,
-        membershipDuration
+        membershipDuration,
+        membershipMinPrice
       );
   }
 }

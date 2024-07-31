@@ -33,4 +33,9 @@ contract ForkProxyBatchDelegationTest is TestUtils {
     vm.prank(_randomAddress());
     proxyBatchDelegation.sendAuthorizedClaimers();
   }
+
+  function test_removeDelegators() external onlyForked {
+    vm.prank(_randomAddress());
+    proxyBatchDelegation.removeDelegators();
+  }
 }

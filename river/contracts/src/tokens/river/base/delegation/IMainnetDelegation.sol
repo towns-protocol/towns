@@ -82,6 +82,12 @@ interface IMainnetDelegation is IMainnetDelegationBase {
   ) external;
 
   /**
+   * @notice Remove delegation of a delegator
+   * @param delegators The delegator address
+   */
+  function removeDelegations(address[] memory delegators) external;
+
+  /**
    * @notice Get delegation of a delegator
    * @param delegator The delegator address
    * @return Delegation delegation struct

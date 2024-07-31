@@ -29,7 +29,7 @@ import type {
 
 export interface PlatformRequirementsFacetInterface extends utils.Interface {
   functions: {
-    "__PlatformRequirements_init(address,uint16,uint256,uint256,uint64)": FunctionFragment;
+    "__PlatformRequirements_init(address,uint16,uint256,uint256,uint64,uint256)": FunctionFragment;
     "getDenominator()": FunctionFragment;
     "getFeeRecipient()": FunctionFragment;
     "getMembershipBps()": FunctionFragment;
@@ -67,6 +67,7 @@ export interface PlatformRequirementsFacetInterface extends utils.Interface {
     functionFragment: "__PlatformRequirements_init",
     values: [
       PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>,
@@ -353,6 +354,7 @@ export interface PlatformRequirementsFacet extends BaseContract {
       membershipFee: PromiseOrValue<BigNumberish>,
       membershipMintLimit: PromiseOrValue<BigNumberish>,
       membershipDuration: PromiseOrValue<BigNumberish>,
+      membershipMinPrice: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -407,6 +409,7 @@ export interface PlatformRequirementsFacet extends BaseContract {
     membershipFee: PromiseOrValue<BigNumberish>,
     membershipMintLimit: PromiseOrValue<BigNumberish>,
     membershipDuration: PromiseOrValue<BigNumberish>,
+    membershipMinPrice: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -461,6 +464,7 @@ export interface PlatformRequirementsFacet extends BaseContract {
       membershipFee: PromiseOrValue<BigNumberish>,
       membershipMintLimit: PromiseOrValue<BigNumberish>,
       membershipDuration: PromiseOrValue<BigNumberish>,
+      membershipMinPrice: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -582,6 +586,7 @@ export interface PlatformRequirementsFacet extends BaseContract {
       membershipFee: PromiseOrValue<BigNumberish>,
       membershipMintLimit: PromiseOrValue<BigNumberish>,
       membershipDuration: PromiseOrValue<BigNumberish>,
+      membershipMinPrice: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -637,6 +642,7 @@ export interface PlatformRequirementsFacet extends BaseContract {
       membershipFee: PromiseOrValue<BigNumberish>,
       membershipMintLimit: PromiseOrValue<BigNumberish>,
       membershipDuration: PromiseOrValue<BigNumberish>,
+      membershipMinPrice: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

@@ -24,6 +24,7 @@ library MainnetDelegationStorage {
     ICrossDomainMessenger messenger;
     mapping(address claimer => EnumerableSet.AddressSet delegators) delegatorsByAuthorizedClaimer;
     address proxyDelegation;
+    EnumerableSet.AddressSet delegators;
   }
 
   function layout() internal pure returns (Layout storage s) {
