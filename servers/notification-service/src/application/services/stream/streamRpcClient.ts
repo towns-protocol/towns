@@ -129,11 +129,16 @@ const loggingInterceptor: () => Interceptor = () => {
                 const streamIdBytes = req.message['streamId'] as Uint8Array
                 streamId = streamIdBytes ? streamIdAsString(streamIdBytes) : undefined
                 if (streamId !== undefined) {
-                    callsLogger.info(req.method.name, streamId, id)
+                    callsLogger.info('StreamId found', { name: req.method.name, streamId, id })
                 } else {
-                    callsLogger.info(req.method.name, id)
+                    callsLogger.info('StreamId undefined', { name: req.method.name, id })
                 }
-                protoLogger.info(req.method.name, 'REQUEST', id, req.message)
+                protoLogger.info('Proto log', {
+                    name: req.method.name,
+                    type: 'REQUEST',
+                    id,
+                    message: req.message,
+                })
             }
             updateHistogram(req.method.name, streamId)
 
@@ -162,7 +167,12 @@ const loggingInterceptor: () => Interceptor = () => {
                         e.code === (Code.NotFound as number)
                     )
                 ) {
-                    logger.error(req.method.name, 'ERROR', id, e)
+                    logger.error('RPC Error', {
+                        name: req.method.name,
+                        type: 'ERROR',
+                        id,
+                        error: e,
+                    })
                     updateHistogram(req.method.name, streamId, true)
                 }
                 throw e
@@ -190,13 +200,23 @@ const loggingInterceptor: () => Interceptor = () => {
                     protoLogger.info(name, 'STREAMING REQUEST', id, m)
                     yield m
                 } catch (err) {
-                    logger.error(name, 'ERROR YIELDING REQUEST', id, err)
+                    logger.error('Request Error', {
+                        name,
+                        type: 'ERROR YIELDING REQUEST',
+                        id,
+                        error: err,
+                    })
                     updateHistogram(name, undefined, true)
                     throw err
                 }
             }
         } catch (err) {
-            logger.error(name, 'ERROR STREAMING REQUEST', id, err)
+            logger.error('Streaming Request Error', {
+                name,
+                type: 'ERROR STREAMING REQUEST',
+                id,
+                error: err,
+            })
             updateHistogram(name, undefined, true)
             throw err
         }
@@ -220,7 +240,12 @@ const loggingInterceptor: () => Interceptor = () => {
                     protoLogger.info(name, 'STREAMING RESPONSE', id, m)
                     yield m
                 } catch (err) {
-                    logger.error(name, 'ERROR YIELDING RESPONSE', id, err)
+                    logger.error('Streaming Response Error', {
+                        name,
+                        type: 'ERROR YIELDING RESPONSE',
+                        id,
+                        error: err,
+                    })
                     updateHistogram(`${name} RECV`, undefined, true)
                 }
             }
@@ -233,7 +258,13 @@ const loggingInterceptor: () => Interceptor = () => {
                 updateHistogram(`${name} SHUTDOWN`)
             } else {
                 const stack = err instanceof Error && 'stack' in err ? err.stack ?? '' : ''
-                logger.error(name, 'ERROR STREAMING RESPONSE', id, err, stack)
+                logger.error('Streaming Response Error', {
+                    name,
+                    type: 'ERROR STREAMING RESPONSE',
+                    id,
+                    error: err,
+                    stack,
+                })
                 updateHistogram(`${name} RECV`, undefined, true)
             }
             throw err

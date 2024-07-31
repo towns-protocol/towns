@@ -11,7 +11,7 @@ import { database } from '../../prisma'
 import { env } from '../../utils/environment'
 import { notificationServiceLogger } from '../../logger'
 
-const logger = notificationServiceLogger.child('streamsMonitorService')
+const logger = notificationServiceLogger.child({ label: 'streamsMonitorService' })
 
 type StreamsMetadata = {
     [key in StreamKind]: {
