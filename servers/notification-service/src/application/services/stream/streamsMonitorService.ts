@@ -365,6 +365,7 @@ export class StreamsMonitorService {
 
     public async startMonitoringStreams() {
         if (env.NOTIFICATION_SYNC_ENABLED) {
+            const start = Date.now()
             logger.info('notification sync is enabled')
             await this.refreshChannelStreams()
             const tenMinutes = 10 * 60 * 1000
@@ -372,7 +373,9 @@ export class StreamsMonitorService {
                 await this.refreshChannelStreams()
             }, tenMinutes)
 
-            return this.streams.startSyncStreams()
+            logger.info('starting notification startSyncStreams')
+            await this.streams.startSyncStreams()
+            logger.info('notification sync started', { duration: Date.now() - start })
         } else {
             logger.info('notification sync is disabled')
             return new Promise<void>((resolve) => {
@@ -385,9 +388,11 @@ export class StreamsMonitorService {
     }
 
     private async refreshChannelStreams() {
+        const start = Date.now()
         logger.info('refreshChannelStreams')
         await this.fetchAndAddNewChannelStreams()
         await this.removeStaleStreams()
+        logger.info('refreshChannelStreams done', { duration: Date.now() - start })
     }
 
     public async addNewStreamsToDB(streamIds: Set<string>) {
