@@ -59,7 +59,7 @@ function RoleRestrictedChannelJoinPanelWithoutAuth() {
         <Panel label="Role Required to Join">
             {isLoading && <ButtonSpinner />}
             {roles && (
-                <RolesList
+                <Roles
                     roles={roles}
                     spaceId={spaceSlug}
                     channelName={channelSettings.name}
@@ -70,14 +70,13 @@ function RoleRestrictedChannelJoinPanelWithoutAuth() {
     )
 }
 
-function RolesList(props: {
+function Roles(props: {
     roles: RoleEntitlements[]
     spaceId: string | undefined
     channelId: string | undefined
     channelName: string
 }) {
     const { roles, spaceId, channelId, channelName } = props
-    const { allWallets, newWallets } = useTrackedWallets()
 
     const { loggedInWalletAddress } = useConnectivity()
 
@@ -205,16 +204,7 @@ function RolesList(props: {
 
     return (
         <>
-            {roles?.map((role) => {
-                return (
-                    <RoleAccordion
-                        key={role.roleId}
-                        role={role}
-                        wallets={allWallets}
-                        showQualifiedStatus={newWallets ? newWallets.length > 0 : undefined}
-                    />
-                )
-            })}
+            <RolesList roles={roles} />
             <Stack grow gap="sm" justifyContent="end">
                 {canJoinChannel && (
                     <Button
@@ -240,13 +230,56 @@ function RolesList(props: {
     )
 }
 
+export function RolesList(props: {
+    roles: RoleEntitlements[]
+    hideNegativeUI?: boolean
+    tone?: 'default' | 'lighter'
+    headerSubtitle?: (role: RoleEntitlements) => string
+}) {
+    const { roles, hideNegativeUI, headerSubtitle, tone } = props
+    const { allWallets, newWallets } = useTrackedWallets()
+
+    const showQualifiedStatus =
+        (allWallets && allWallets.length > 1) || (newWallets && newWallets.length > 0)
+
+    return roles
+        ? roles.map((role) => {
+              return (
+                  <RoleAccordion
+                      key={role.roleId}
+                      role={role}
+                      wallets={allWallets}
+                      showQualifiedStatus={showQualifiedStatus}
+                      tone={tone}
+                      header={(props) => (
+                          <AccordionHeader
+                              {...props}
+                              subTitle={headerSubtitle ? headerSubtitle(role) : props.subTitle}
+                              hideNegativeUI={hideNegativeUI ?? false}
+                          />
+                      )}
+                  />
+              )
+          })
+        : null
+}
+
 function RoleAccordion(props: {
     role: RoleEntitlements
     wallets: string[] | undefined
     showQualifiedStatus?: boolean
+    tone?: 'default' | 'lighter'
+    header: (props: {
+        qualified?: boolean
+        title: string
+        subTitle: string
+        isExpanded: boolean
+        tokens: TokenEntitlement[]
+        role: RoleEntitlements
+    }) => JSX.Element
 }) {
-    const { role, wallets, showQualifiedStatus } = props
-
+    const { role, wallets, showQualifiedStatus, header, tone: _tone } = props
+    const tone = _tone ?? 'default'
     const {
         hasUserEntitlement,
         hasRuleEntitlement,
@@ -297,15 +330,17 @@ function RoleAccordion(props: {
     return (
         <Accordion
             border={_qualifiesForRole ? 'positive' : 'faint'}
-            header={({ isExpanded }) => (
-                <AccordionHeader
-                    qualified={_qualifiesForRole}
-                    title={role.name}
-                    subTitle={subTitle}
-                    isExpanded={isExpanded}
-                    tokens={tokens}
-                />
-            )}
+            background={tone === 'lighter' ? 'level3' : 'level2'}
+            header={({ isExpanded }) =>
+                header({
+                    qualified: _qualifiesForRole,
+                    title: role.name,
+                    subTitle,
+                    isExpanded,
+                    tokens,
+                    role,
+                })
+            }
         >
             <Stack>
                 {hasUserEntitlement && <UserList users={role.users} />}
@@ -315,6 +350,7 @@ function RoleAccordion(props: {
                             <TokenDetailsWithWalletMatch
                                 key={token.address}
                                 token={token}
+                                tone={tone}
                                 tokensInWallet={showQualifiedStatus ? tokensInWallet : undefined}
                             />
                         ))}
@@ -328,12 +364,13 @@ function RoleAccordion(props: {
 function TokenDetailsWithWalletMatch(props: {
     token: TokenEntitlement
     tokensInWallet: ReturnType<typeof useWatchLinkedWalletsForToken2>['data']
+    tone: 'default' | 'lighter'
 }) {
-    const { token, tokensInWallet } = props
+    const { token, tokensInWallet, tone } = props
     const match = tokensInWallet?.find((t) => t.data?.tokenAddress === token.address)
     const ownsToken = match?.data ? match.data.status === 'success' : undefined
 
-    return <TokenDetails token={token} userOwnsToken={ownsToken} />
+    return <TokenDetails tone={tone} token={token} userOwnsToken={ownsToken} />
 }
 
 function UserList({ users }: { users: string[] }) {
@@ -352,15 +389,18 @@ function AccordionHeader(props: {
     isExpanded: boolean
     tokens: TokenEntitlement[]
     qualified?: boolean
+    hideNegativeUI: boolean
 }) {
-    const { title, subTitle, isExpanded, tokens, qualified } = props
+    const { title, subTitle, isExpanded, tokens, qualified, hideNegativeUI } = props
 
     return (
         <Box horizontal gap="sm" justifyContent="spaceBetween">
             <Box grow gap="sm">
                 <Stack horizontal alignItems="center" gap="sm">
                     <Text color="default">{title}</Text>
-                    {qualified === false && <Icon size="square_xs" type="close" color="negative" />}
+                    {!hideNegativeUI && qualified === false && (
+                        <Icon size="square_xs" type="close" color="negative" />
+                    )}
                     {qualified === true && <Icon size="square_xs" type="check" color="positive" />}
                 </Stack>
                 <Text color="gray2" size="sm">

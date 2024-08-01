@@ -2,9 +2,11 @@ import React, { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useEvent } from 'react-use-event-hook'
 import {
+    EVERYONE_ADDRESS,
     Permission,
     useChannelData,
     useChannelMembers,
+    useChannelSettings,
     useConnectivity,
     useHasPermission,
     useRoom,
@@ -13,7 +15,7 @@ import {
 
 import { usePrefetchMultipleRoleDetails } from 'use-towns-client/dist/hooks/use-role-details'
 import { EditChannelName } from '@components/Panel/EditChannelName'
-import { Box, Icon, Paragraph, Stack, TextButton } from '@ui'
+import { Box, Icon, Paragraph, Stack, Text, TextButton } from '@ui'
 import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'
 import { useDevice } from 'hooks/useDevice'
 import {
@@ -27,9 +29,9 @@ import { Panel } from '@components/Panel/Panel'
 import { useLeaveChannel } from 'hooks/useLeaveChannel'
 import { ChannelSettingsModal } from '@components/ChannelSettings/ChannelSettings'
 import { PrivyWrapper } from 'privy/PrivyProvider'
-import { useContractRoles } from 'hooks/useContractRoles'
 import { ChannelMembersModal } from './SpaceChannelDirectoryPanel'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
+import { RolesList } from './RoleRestrictedChannelJoinPanel'
 
 export const ChannelInfoPanel = React.memo(() => {
     return (
@@ -55,7 +57,10 @@ export const ChannelInfo = () => {
     const navigate = useNavigate()
     const { leaveChannel } = useLeaveChannel()
 
-    const { data: roles } = useContractRoles(spaceData?.id)
+    const { channelSettings } = useChannelSettings(spaceData?.id ?? '', channel?.id ?? '')
+
+    const roles = channelSettings?.roles
+    const hasEveryoneRole = roles?.some((r) => r.users.includes(EVERYONE_ADDRESS))
     const roledIds = useMemo(() => roles?.map((r) => r.roleId) ?? [], [roles])
     usePrefetchMultipleRoleDetails(spaceData?.id, roledIds)
 
@@ -134,6 +139,46 @@ export const ChannelInfo = () => {
                     />
                 </Stack>
 
+                {roles && !hasEveryoneRole && (
+                    <Stack
+                        padding
+                        data-testid="channel-permission-details"
+                        gap="sm"
+                        background="level2"
+                        rounded="sm"
+                    >
+                        <Stack horizontal justifyContent="spaceBetween">
+                            <Paragraph strong truncate color="default">
+                                {'Channel Permissions'}
+                            </Paragraph>
+                            {canEditChannel && (
+                                <TextButton
+                                    data-testid="channel-permission-details-edit-button"
+                                    onClick={onOpenChannelSettingsPanel}
+                                >
+                                    Edit
+                                </TextButton>
+                            )}
+                        </Stack>
+                        <Stack horizontal alignItems="center" gap="xs" color="gray2">
+                            <Icon type="lock" size="square_sm" color="gray2" />
+                            <Text
+                                size={{
+                                    mobile: 'sm',
+                                }}
+                            >
+                                Only members of these roles can access:
+                            </Text>
+                        </Stack>
+                        <RolesList
+                            hideNegativeUI
+                            roles={roles}
+                            headerSubtitle={(r) => r.permissions.join(', ')}
+                            tone="lighter"
+                        />
+                    </Stack>
+                )}
+
                 <Stack gap padding background="level2" rounded="sm">
                     <Stack horizontal alignItems="center" width="100%">
                         <Paragraph strong truncate color="default">
@@ -192,7 +237,9 @@ export const ChannelInfo = () => {
                 {canEditChannel && (
                     <PanelButton onClick={onOpenChannelSettingsPanel}>
                         <Icon type="edit" size="square_sm" color="gray2" />
-                        <Paragraph color="default">Edit channel permissions</Paragraph>
+                        <Paragraph color="default" data-testid="edit-channel-permissions-button">
+                            Edit channel permissions
+                        </Paragraph>
                     </PanelButton>
                 )}
                 <PanelButton tone="negative" onClick={onLeaveClick}>

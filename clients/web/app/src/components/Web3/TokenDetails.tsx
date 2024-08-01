@@ -9,11 +9,18 @@ import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { shortAddress } from 'ui/utils/utils'
 import { NetworkName } from '@components/Tokens/TokenSelector/NetworkName'
 
-export function TokenDetails(props: { token: TokenEntitlement; userOwnsToken?: boolean }) {
-    const { token, userOwnsToken } = props
+export function TokenDetails(props: {
+    token: TokenEntitlement
+    userOwnsToken?: boolean
+    tone: 'default' | 'lighter'
+}) {
+    const { token, userOwnsToken, tone: _tone } = props
+    const tone = _tone ?? 'gray2'
     const { data: tokenDataWithChainId } = useTokenMetadataForChainId(token.address, token.chainId)
     const [compactView, setCompactView] = useState(false)
     const containerRef = useRef<HTMLDivElement>(null)
+
+    const isDefaultTone = tone === 'default'
 
     useResizeObserver(containerRef, () => {
         if (containerRef.current) {
@@ -27,8 +34,8 @@ export function TokenDetails(props: { token: TokenEntitlement; userOwnsToken?: b
             ref={containerRef}
             gap="sm"
             padding="sm"
-            rounded="md"
-            background="level3"
+            rounded="sm"
+            background={isDefaultTone ? 'level3' : 'level4'}
             alignItems={compactView ? 'start' : 'center'}
         >
             <TokenImage imgSrc={tokenDataWithChainId?.data.imgSrc} width="x4" />
@@ -49,21 +56,32 @@ export function TokenDetails(props: { token: TokenEntitlement; userOwnsToken?: b
                         alignItems={compactView ? 'start' : 'center'}
                         gap="sm"
                     >
-                        <ClipboardCopy clipboardContent={token.address}>
-                            <Text size="sm" color="gray2">
+                        <ClipboardCopy
+                            clipboardContent={token.address}
+                            color={isDefaultTone ? undefined : 'gray1'}
+                        >
+                            <Text color={isDefaultTone ? 'gray2' : 'gray1'} size="sm">
                                 {shortAddress(token.address)}
                             </Text>
                         </ClipboardCopy>
                         {!compactView && <>&#x2022;</>}
                         <Stack horizontal centerContent gap="sm">
-                            <NetworkName chainId={token.chainId} size="sm" />
+                            <NetworkName
+                                color={isDefaultTone ? undefined : 'gray1'}
+                                chainId={token.chainId}
+                                size="sm"
+                            />
                             {tokenDataWithChainId?.data.openSeaCollectionUrl && (
                                 <Link
                                     to={tokenDataWithChainId?.data.openSeaCollectionUrl}
                                     rel="noopener noreffer"
                                     target="_blank"
                                 >
-                                    <Icon type="openSeaPlain" color="gray2" size="square_xs" />
+                                    <Icon
+                                        type="openSeaPlain"
+                                        color={isDefaultTone ? 'gray2' : 'gray1'}
+                                        size="square_xs"
+                                    />
                                 </Link>
                             )}
                         </Stack>
@@ -75,13 +93,14 @@ export function TokenDetails(props: { token: TokenEntitlement; userOwnsToken?: b
                         color="gray2"
                         padding="sm"
                         rounded="sm"
-                        background="level4"
+                        background={isDefaultTone ? 'level4' : 'lightHover'}
                         alignItems="center"
                     >
                         <Text
                             size={{
                                 mobile: 'sm',
                             }}
+                            color={isDefaultTone ? undefined : 'gray1'}
                         >
                             QTY: {token.quantity}
                         </Text>
