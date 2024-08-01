@@ -2,7 +2,7 @@ import fastifyStatic from '@fastify/static'
 import fastifyView from '@fastify/view'
 import ejs from 'ejs'
 import { ethers } from 'ethers'
-import Fastify from 'fastify'
+import Fastify, { FastifyReply } from 'fastify'
 import fsSync from 'node:fs'
 import fs from 'node:fs/promises'
 import path from 'node:path'
@@ -82,11 +82,22 @@ server.setNotFoundHandler(async (request, reply) => {
 
 const start = async () => {
     try {
+        const hours = 60 * 60
         // Register the static plugin
         await server.register(fastifyStatic, {
             root: path.join(__dirname, '..', '..', 'app', 'dist'),
             prefix: '/', // optional: default '/'
             index: false,
+            setHeaders: (res: FastifyReply['raw'], _path: string, _stat: Stats) => {
+                res.setHeader(
+                    'Cache-Control',
+                    `max-age=${1 * hours}, s-maxage=${1 * hours}, public`,
+                )
+                res.setHeader(
+                    'CDN-Cache-Control',
+                    `max-age=${1 * hours}, s-maxage=${1 * hours}, public`,
+                )
+            },
         })
 
         // Register view engine for HTML templates
