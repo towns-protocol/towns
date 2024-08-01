@@ -188,7 +188,7 @@ module "post_provision_config" {
 
   node_metadata                           = var.node_metadata
   subnet_ids                              = var.private_subnets
-  river_node_wallet_credentials_arn       = local.shared_credentials.wallet_private_key.arn
+  river_node_wallet_credentials_arn       = var.node_metadata.credentials.wallet_private_key.arn
   river_db_cluster_master_user_secret_arn = var.river_node_db.root_user_secret_arn
   river_user_db_config                    = local.river_user_db_config
   rds_cluster_resource_id                 = var.river_node_db.rds_aurora_postgresql.cluster_resource_id
@@ -242,8 +242,8 @@ resource "aws_iam_role_policy" "river_node_credentials" {
         ],
         "Effect": "Allow",
         "Resource": [
-          "${local.shared_credentials.db_password.arn}",
-          "${local.shared_credentials.wallet_private_key.arn}",
+          "${var.node_metadata.credentials.db_password.arn}",
+          "${var.node_metadata.credentials.wallet_private_key.arn}",
           "${local.global_remote_state.river_global_dd_agent_api_key.arn}",
           "${local.global_remote_state.river_sepolia_rpc_url_secret.arn}",
           "${local.global_remote_state.river_mainnet_rpc_url_secret.arn}",
@@ -289,7 +289,7 @@ locals {
     port         = "5432"
     database     = "river"
     user         = "${local.db_user_prefix}${local.node_number}"
-    password_arn = local.shared_credentials.db_password.arn
+    password_arn = var.node_metadata.credentials.db_password.arn
   }
 
   // we conditionally create these arrays. an empty array, when concatted, does nothing.
@@ -324,7 +324,7 @@ locals {
   wallet_private_key_td_secret_config = local.run_mode == "full" ? [
     {
       name      = "WALLETPRIVATEKEY"
-      valueFrom = local.shared_credentials.wallet_private_key.arn
+      valueFrom = var.node_metadata.credentials.wallet_private_key.arn
   }] : []
 }
 
@@ -400,9 +400,8 @@ resource "aws_ecs_task_definition" "river-fargate" {
       },
       {
         name      = "DATABASE__PASSWORD",
-        valueFrom = local.shared_credentials.db_password.arn
+        valueFrom = var.node_metadata.credentials.db_password.arn
       },
-
       {
         name      = "TLSCONFIG__CERT",
         valueFrom = "${var.river_node_ssl_cert_secret_arn}:cert::"

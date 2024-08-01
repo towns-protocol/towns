@@ -107,17 +107,6 @@ module "pgadmin" {
 
 locals {
   global_remote_state = module.global_constants.global_remote_state.outputs
-  shared_credentials  = local.global_remote_state.river_node_credentials_secret[0]
-
-  # we don't have river nodes on omega, but post-provision config lambda needs a node number
-  fake_river_node_number = 1
-  river_user_db_config = {
-    host         = module.river_db_cluster.rds_aurora_postgresql.cluster_endpoint
-    port         = "5432"
-    database     = "river"
-    user         = "river${local.fake_river_node_number}"
-    password_arn = local.shared_credentials.db_password.arn
-  }
 }
 
 
@@ -162,13 +151,20 @@ module "archive_node_nlb" {
   nlb_id  = "archive-${tostring(count.index + 1)}"
 }
 
+module "node_metadata" {
+  source = "../../modules/river-node-metadata"
+
+  num_full_nodes    = 0
+  num_archive_nodes = local.num_archive_nodes
+}
+
 module "archive_node" {
   source = "../../modules/river-node"
   count  = local.num_archive_nodes
 
   docker_image_tag = "mainnet"
 
-  node_metadata = module.global_constants.archive_nodes[count.index]
+  node_metadata = module.node_metadata.archive_nodes[count.index]
 
   river_node_ssl_cert_secret_arn = module.river_node_ssl_cert.river_node_ssl_cert_secret_arn
 

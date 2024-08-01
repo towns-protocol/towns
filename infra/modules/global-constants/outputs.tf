@@ -76,47 +76,4 @@ output "alb_reserved_num_rules" {
   value = 50
 }
 
-locals {
-  num_full_nodes    = 11
-  num_archive_nodes = 2
 
-  full_node_dns_names = [
-    for i in range(0, local.num_full_nodes) : "river${i + 1}.nodes.${terraform.workspace}"
-  ]
-
-  archive_node_dns_names = [
-    for i in range(0, local.num_archive_nodes) : "archive${i + 1}.nodes.${terraform.workspace}"
-  ]
-
-  full_node_urls = [
-    for i in range(0, local.num_full_nodes) : "https://${local.full_node_dns_names[i]}.towns.com"
-  ]
-
-  archive_node_urls = [
-    for i in range(0, local.num_archive_nodes) : "https://${local.archive_node_dns_names[i]}.towns.com"
-  ]
-}
-
-output "full_nodes" {
-  value = [
-    for i in range(0, local.num_full_nodes) : {
-      node_number = i + 1
-      node_name   = "river${i + 1}-${terraform.workspace}"
-      dns_name    = local.full_node_dns_names[i]
-      url         = local.full_node_urls[i]
-      run_mode    = "full"
-    }
-  ]
-}
-
-output "archive_nodes" {
-  value = [
-    for i in range(0, local.num_archive_nodes) : {
-      node_number = i + 1
-      node_name   = "archive${i + 1}-${terraform.workspace}"
-      dns_name    = local.archive_node_dns_names[i]
-      url         = local.archive_node_urls[i]
-      run_mode    = "archive"
-    }
-  ]
-}

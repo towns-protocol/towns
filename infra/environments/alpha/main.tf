@@ -125,11 +125,18 @@ module "river_nlb" {
   nlb_id  = tostring(count.index + 1)
 }
 
+module "node_metadata" {
+  source = "../../modules/river-node-metadata"
+
+  num_full_nodes    = local.num_full_nodes
+  num_archive_nodes = local.num_archive_nodes
+}
+
 module "river_node" {
   source = "../../modules/river-node"
   count  = local.num_full_nodes
 
-  node_metadata = module.global_constants.full_nodes[count.index]
+  node_metadata = module.node_metadata.full_nodes[count.index]
 
   enable_debug_endpoints = true
 
@@ -171,7 +178,7 @@ module "archive_node" {
   source = "../../modules/river-node"
   count  = local.num_archive_nodes
 
-  node_metadata = module.global_constants.archive_nodes[count.index]
+  node_metadata = module.node_metadata.archive_nodes[count.index]
 
   enable_debug_endpoints = true
 
@@ -228,7 +235,7 @@ module "notification_service" {
 
   vapid_subject = "mailto:support@towns.com"
 
-  river_node_url = module.global_constants.full_nodes[0].url
+  river_node_url = module.node_metadata.full_nodes[0].url
 
   db_cluster = module.notification_service_db_cluster
 }

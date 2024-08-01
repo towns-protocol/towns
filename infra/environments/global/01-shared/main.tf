@@ -143,22 +143,31 @@ resource "aws_secretsmanager_secret" "base_mainnet_rpc_url_secret" {
   description = "Base Mainnet RPC URL"
 }
 
+// TODO: remove from shared, put under gamma
 resource "aws_secretsmanager_secret" "gamma_chainsstring_secret" {
   name        = "gamma-chainsstring"
   description = "csv pairs of chain ids and rpc urls for gamma"
 }
 
+// TODO: remove from shared, put under omega
 resource "aws_secretsmanager_secret" "omega_chainsstring_secret" {
   name        = "omega-chainsstring"
   description = "csv pairs of chain ids and rpc urls for omega"
 }
 
+// TODO: created chainsstring secret for alpha
+
+// TODO: delete this module
 module "river_node_credentials" {
   source = "../../../modules/river-node-credentials"
 
   count = 11
 
   node_number = count.index + 1
+
+  node_prefix = ""
+
+  environment = "shared" #TODO: remove this explicit environment
 }
 
 
