@@ -48,13 +48,15 @@ func (m *OrderedMap[K, V]) Len() int {
 	return len(m.Values)
 }
 
-func (m *OrderedMap[K, V]) Set(key K, value V) {
+// Returns true if key is inserted, false if duplicate is detected.
+func (m *OrderedMap[K, V]) Set(key K, value V) bool {
 	_, ok := m.Map[key]
 	if ok {
-		panic("key already exists")
+		return false
 	}
 	m.Map[key] = value
 	m.Values = append(m.Values, value)
+	return true
 }
 
 // Copy returns a deep copy of the map.

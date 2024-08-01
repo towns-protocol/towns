@@ -89,7 +89,7 @@ func NewSyncers(
 	var (
 		syncers         = make(map[common.Address]StreamsSyncer)
 		streamID2Syncer = make(map[StreamId]StreamsSyncer)
-		messages        = make(chan *SyncStreamsResponse, 128)
+		messages        = make(chan *SyncStreamsResponse, 256)
 	)
 
 	// instantiate background syncers for sync operation

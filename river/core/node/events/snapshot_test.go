@@ -13,6 +13,10 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+const (
+	AES_GCM_DERIVED_ALGORITHM = "r.aes-256-gcm.derived"
+)
+
 func make_User_Inception(wallet *crypto.Wallet, streamId StreamId, t *testing.T) *ParsedEvent {
 	envelope, err := MakeEnvelopeWithPayload(
 		wallet,
@@ -75,6 +79,26 @@ func make_Space_Membership(
 			membershipOp,
 			userId,
 			userId,
+		),
+		prevMiniblockHash,
+	)
+	assert.NoError(t, err)
+	parsed, err := ParseEvent(envelope)
+	assert.NoError(t, err)
+	return parsed
+}
+
+func make_Space_Image(
+	wallet *crypto.Wallet,
+	ciphertext string,
+	prevMiniblockHash []byte,
+	t *testing.T,
+) *ParsedEvent {
+	envelope, err := MakeEnvelopeWithPayload(
+		wallet,
+		Make_SpacePayload_SpaceImage(
+			ciphertext,
+			AES_GCM_DERIVED_ALGORITHM,
 		),
 		prevMiniblockHash,
 	)
@@ -197,7 +221,9 @@ func TestCloneAndUpdateSpaceSnapshot(t *testing.T) {
 	membership := make_Space_Membership(wallet, MembershipOp_SO_JOIN, userId, nil, t)
 	username := make_Space_Username(wallet, "bob", nil, t)
 	displayName := make_Space_DisplayName(wallet, "bobIsTheGreatest", nil, t)
-	events := []*ParsedEvent{membership, username, displayName}
+	imageCipertext := "space_image_ciphertext"
+	image := make_Space_Image(wallet, imageCipertext, nil, t)
+	events := []*ParsedEvent{membership, username, displayName, image}
 	for i, event := range events[:] {
 		err = Update_Snapshot(snapshot, event, 1, int64(3+i))
 		assert.NoError(t, err)
@@ -230,6 +256,17 @@ func TestCloneAndUpdateSpaceSnapshot(t *testing.T) {
 		t,
 		int64(5),
 		member.DisplayName.EventNum,
+	)
+
+	assert.Equal(
+		t,
+		imageCipertext,
+		snapshot.Content.(*Snapshot_SpaceContent).SpaceContent.SpaceImage.Data.Ciphertext,
+	)
+	assert.Equal(
+		t,
+		AES_GCM_DERIVED_ALGORITHM,
+		snapshot.Content.(*Snapshot_SpaceContent).SpaceContent.SpaceImage.Data.Algorithm,
 	)
 }
 

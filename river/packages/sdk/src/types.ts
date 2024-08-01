@@ -618,6 +618,20 @@ export const make_SpacePayload_ChannelUpdate = (
     }
 }
 
+export const make_SpacePayload_SpaceImage = (
+    value: PlainMessage<EncryptedData>,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'spacePayload',
+        value: {
+            content: {
+                case: 'spaceImage',
+                value,
+            },
+        },
+    }
+}
+
 export const getUserPayload_Membership = (
     event: ParsedEvent | StreamEvent | undefined,
 ): UserPayload_UserMembership | undefined => {

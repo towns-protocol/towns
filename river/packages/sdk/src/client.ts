@@ -24,6 +24,9 @@ import {
     MemberPayload_Nft,
     CreateStreamRequest,
     AddEventResponse_Error,
+    MediaInfo,
+    ChunkedMedia,
+    EmbeddedMedia,
 } from '@river-build/proto'
 import {
     bin_fromHexString,
@@ -35,8 +38,8 @@ import {
     dlogError,
     bin_fromString,
 } from '@river-build/dlog'
-import { assert, isDefined } from './check'
 import {
+    AES_GCM_DERIVED_ALGORITHM,
     BaseDecryptionExtensions,
     CryptoStore,
     DecryptionEvents,
@@ -49,6 +52,7 @@ import {
     UserDeviceCollection,
     makeSessionKeys,
 } from '@river-build/encryption'
+import { assert, isDefined } from './check'
 import { errorContains, getRpcErrorProperty, StreamRpcClient } from './makeStreamRpcClient'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
@@ -70,7 +74,7 @@ import {
     streamIdAsString,
     makeSpaceStreamId,
     STREAM_ID_STRING_LENGTH,
-    makeMediaStreamIdFromSpaceId,
+    contractAddressFromSpaceId,
 } from './id'
 import { makeEvent, unpackMiniblock, unpackStream, unpackStreamEx } from './sign'
 import { StreamEvents } from './streamEvents'
@@ -112,6 +116,7 @@ import {
     make_MemberPayload_Nft,
     make_MemberPayload_Pin,
     make_MemberPayload_Unpin,
+    make_SpacePayload_SpaceImage,
 } from './types'
 
 import debug from 'debug'
@@ -124,6 +129,13 @@ import { SyncState, SyncedStreams } from './syncedStreams'
 import { SyncedStream } from './syncedStream'
 import { SyncedStreamsExtension } from './syncedStreamsExtension'
 import { SignerContext } from './signerContext'
+import {
+    decryptAESGCM,
+    decryptDerivedAESGCM,
+    deriveKeyAndIV,
+    encryptAESGCM,
+    uint8ArrayToBase64,
+} from './crypto_utils'
 
 export type ClientEvents = StreamEvents & DecryptionEvents
 
@@ -696,10 +708,7 @@ export class Client
             )
         }
 
-        const streamId =
-            !channelId && spaceId
-                ? makeMediaStreamIdFromSpaceId(spaceId)
-                : makeUniqueMediaStreamId()
+        const streamId = makeUniqueMediaStreamId()
 
         this.logCall('createMedia', channelId ?? spaceId, streamId)
 
@@ -827,6 +836,49 @@ export class Client
             }),
             { method: 'updateUserBlock' },
         )
+    }
+
+    async decryptSpaceImage(spaceId: string, encryptedData: EncryptedData): Promise<ChunkedMedia> {
+        this.logCall('getDecryptedSpaceImage', spaceId)
+
+        const keyPhrase = contractAddressFromSpaceId(spaceId)
+        const plaintext = await decryptDerivedAESGCM(keyPhrase, encryptedData)
+        return ChunkedMedia.fromBinary(plaintext)
+    }
+
+    async setSpaceImage(
+        spaceStreamId: string,
+        mediaStreamId: string,
+        info: MediaInfo,
+        thumbnail?: EmbeddedMedia,
+    ) {
+        this.logCall('setSpaceImage', spaceStreamId, mediaStreamId, info)
+
+        // create the chunked media to be added
+        const spaceId = contractAddressFromSpaceId(spaceStreamId)
+        const chunkedMedia = new ChunkedMedia({
+            info,
+            streamId: mediaStreamId,
+            thumbnail,
+            encryption: {
+                case: 'derived',
+                value: {
+                    context: spaceId,
+                },
+            },
+        })
+
+        // encrypt the chunked media
+        const { key, iv } = await deriveKeyAndIV(spaceId)
+        const { ciphertext } = await encryptAESGCM(chunkedMedia.toBinary(), key, iv)
+        const encryptedData = new EncryptedData({
+            ciphertext: uint8ArrayToBase64(ciphertext),
+            algorithm: AES_GCM_DERIVED_ALGORITHM,
+        })
+
+        // add the event to the stream
+        const event = make_SpacePayload_SpaceImage(encryptedData)
+        return this.makeEventAndAddToStream(spaceStreamId, event, { method: 'setSpaceImage' })
     }
 
     async setDisplayName(streamId: string, displayName: string) {
@@ -1363,6 +1415,23 @@ export class Client
             chunkIndex: chunkIndex,
         })
         return this.makeEventWithHashAndAddToStream(streamId, payload, prevMiniblockHash)
+    }
+
+    async getMediaPayload(
+        streamId: string,
+        secretKey: Uint8Array,
+        iv: Uint8Array,
+    ): Promise<Uint8Array | undefined> {
+        const stream = await this.getStream(streamId)
+        const mediaInfo = stream.mediaContent.info
+        if (!mediaInfo) {
+            return undefined
+        }
+        const data = mediaInfo.chunks.reduce((acc, chunk) => {
+            return new Uint8Array([...acc, ...chunk])
+        }, new Uint8Array())
+
+        return decryptAESGCM(data, secretKey, iv)
     }
 
     async sendChannelMessage_Reaction(

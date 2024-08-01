@@ -59,9 +59,12 @@ func TestLoad(t *testing.T) {
 	miniblockProtoBytes, err := proto.Marshal(miniblockProto)
 	assert.NoError(t, err)
 
-	view, err := MakeStreamView(&storage.ReadStreamFromLastSnapshotResult{
-		Miniblocks: [][]byte{miniblockProtoBytes},
-	})
+	view, err := MakeStreamView(
+		ctx,
+		&storage.ReadStreamFromLastSnapshotResult{
+			Miniblocks: [][]byte{miniblockProtoBytes},
+		},
+	)
 
 	assert.NoError(t, err)
 

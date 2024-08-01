@@ -41,7 +41,7 @@ func (s *Service) loadStream(ctx context.Context, streamId StreamId) (Stream, St
 		return nil, nil, err
 	}
 
-	streamView, err := MakeRemoteStreamView(resp.Msg)
+	streamView, err := MakeRemoteStreamView(ctx, resp.Msg)
 	if err != nil {
 		return nil, nil, err
 	}

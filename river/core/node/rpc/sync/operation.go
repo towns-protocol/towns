@@ -72,7 +72,7 @@ func NewStreamsSyncOperation(
 		cancel:          cancel,
 		SyncID:          GenNanoid(),
 		thisNodeAddress: node,
-		commands:        make(chan *subCommand),
+		commands:        make(chan *subCommand, 64),
 		streamCache:     streamCache,
 		nodeRegistry:    nodeRegistry,
 	}, nil

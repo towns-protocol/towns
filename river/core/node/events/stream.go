@@ -109,8 +109,10 @@ func (s *streamImpl) loadInternal(ctx context.Context) error {
 		return err
 	}
 
-	view, err := MakeStreamView(streamData)
+	view, err := MakeStreamView(ctx, streamData)
 	if err != nil {
+		dlog.FromCtx(ctx).
+			Error("Stream.loadInternal: Failed to parse stream data loaded from storage", "error", err, "streamId", s.streamId)
 		return err
 	}
 
@@ -234,10 +236,13 @@ func (s *streamImpl) initFromBlockchain(ctx context.Context) error {
 	}
 
 	// Successfully put data into storage, init stream view.
-	view, err := MakeStreamView(&storage.ReadStreamFromLastSnapshotResult{
-		StartMiniblockNumber: 0,
-		Miniblocks:           [][]byte{mb},
-	})
+	view, err := MakeStreamView(
+		ctx,
+		&storage.ReadStreamFromLastSnapshotResult{
+			StartMiniblockNumber: 0,
+			Miniblocks:           [][]byte{mb},
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -368,6 +373,12 @@ func (s *streamImpl) addEventImpl(ctx context.Context, event *ParsedEvent) error
 		return err
 	}
 
+	// Check if event can be added before writing to storage.
+	newSV, err := s.view.copyAndAddEvent(event)
+	if err != nil {
+		return err
+	}
+
 	err = s.params.Storage.WriteEvent(
 		ctx,
 		s.streamId,
@@ -381,10 +392,6 @@ func (s *streamImpl) addEventImpl(ctx context.Context, event *ParsedEvent) error
 		return err
 	}
 
-	newSV, err := s.view.copyAndAddEvent(event)
-	if err != nil {
-		return err
-	}
 	prevSyncCookie := s.view.SyncCookie(s.params.Wallet.Address)
 	s.view = newSV
 	newSyncCookie := s.view.SyncCookie(s.params.Wallet.Address)

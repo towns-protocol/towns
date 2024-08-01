@@ -261,6 +261,10 @@ func (params *aeParams) canAddSpacePayload(payload *StreamEvent_SpacePayload) ru
 				check(params.creatorIsValidNode).
 				check(ru.validSpaceChannelOp)
 		}
+	case *SpacePayload_SpaceImage:
+		return aeBuilder().
+			check(params.creatorIsMember).
+			requireOneOfChainAuths(params.spaceModifySpaceSettingsEntitlements)
 	default:
 		return aeBuilder().
 			fail(unknownContentType(content))
@@ -966,6 +970,26 @@ func (params *aeParams) spaceWriteEntitlements() (*auth.ChainAuthArgs, error) {
 		*spaceId,
 		permissionUser,
 		auth.PermissionWrite,
+	)
+	return chainAuthArgs, nil
+}
+
+func (params *aeParams) spaceModifySpaceSettingsEntitlements() (*auth.ChainAuthArgs, error) {
+	spaceId := params.streamView.StreamId()
+
+	if !shared.ValidSpaceStreamId(spaceId) {
+		return nil, RiverError(Err_INVALID_ARGUMENT, "invalid space stream id", "streamId", spaceId)
+	}
+
+	permissionUser, err := shared.AddressHex(params.parsedEvent.Event.CreatorAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	chainAuthArgs := auth.NewChainAuthArgsForSpace(
+		*spaceId,
+		permissionUser,
+		auth.PermissionModifySpaceSettings,
 	)
 	return chainAuthArgs, nil
 }

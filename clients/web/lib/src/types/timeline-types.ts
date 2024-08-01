@@ -11,6 +11,7 @@ import {
     FullyReadMarker,
     MiniblockHeader,
     PayloadCaseType,
+    ChunkedMedia_DerivedAESGCM,
 } from '@river-build/proto'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { Channel, Membership, Mention, MessageType } from './towns-types'
@@ -68,6 +69,7 @@ export enum ZTEvent {
     RoomProperties = 'm.room.properties',
     RoomTopic = 'm.room.topic',
     SpaceChild = 'm.space.child',
+    SpaceImage = 'm.space.image',
     SpaceParent = 'm.space.parent',
     SpaceUsername = 'm.space.username',
     SpaceDisplayName = 'm.space.display_name',
@@ -98,6 +100,7 @@ export type TimelineEvent_OneOf =
     | RoomPropertiesEvent
     | RoomTopicEvent
     | SpaceChildEvent
+    | SpaceImageEvent
     | SpaceParentEvent
     | SpaceUsernameEvent
     | SpaceDisplayNameEvent
@@ -298,6 +301,10 @@ export interface SpaceChildEvent {
     channelOp?: ChannelOp
 }
 
+export interface SpaceImageEvent {
+    kind: ZTEvent.SpaceImage
+}
+
 export interface SpaceParentEvent {
     kind: ZTEvent.SpaceParent
     parentId: string
@@ -377,7 +384,6 @@ export interface IgnoredNoticeEvent {
 
 export type NoticeEvent = IgnoredNoticeEvent
 
-export type Encryption = Pick<ChunkedMedia_AESGCM, 'iv' | 'secretKey'>
 export type MediaInfo = Pick<
     MediaInfoStruct,
     'filename' | 'mimetype' | 'sizeBytes' | 'widthPixels' | 'heightPixels'
@@ -393,7 +399,8 @@ export type ImageAttachment = {
 export type ChunkedMediaAttachment = {
     type: 'chunked_media'
     streamId: string
-    encryption: Encryption
+    encryption?: PlainMessage<ChunkedMedia_AESGCM>
+    derivedEncryption?: PlainMessage<ChunkedMedia_DerivedAESGCM>
     info: MediaInfo
     id: string
     thumbnail?: { content: Uint8Array; info: MediaInfo }
@@ -494,6 +501,8 @@ export function getFallbackContent(
             return `Redacts ${content.refEventId} adminRedaction: ${content.adminRedaction}`
         case ZTEvent.SpaceChild:
             return `childId: ${content.childId}`
+        case ZTEvent.SpaceImage:
+            return `SpaceImage`
         case ZTEvent.SpaceParent:
             return `parentId: ${content.parentId}`
         case ZTEvent.Notice:
@@ -540,8 +549,8 @@ export function transformAttachments(attachments?: Attachment[]): ChannelMessage
                                 encryption: {
                                     case: 'aesgcm',
                                     value: {
-                                        iv: attachment.encryption.iv,
-                                        secretKey: attachment.encryption.secretKey,
+                                        iv: attachment.encryption?.iv,
+                                        secretKey: attachment.encryption?.secretKey,
                                     },
                                 },
                                 thumbnail: {

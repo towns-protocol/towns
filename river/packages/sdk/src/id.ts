@@ -42,6 +42,11 @@ export const isUserId = (userId: string | Uint8Array): boolean => {
     return false
 }
 
+export const contractAddressFromSpaceId = (spaceId: string): string => {
+    check(isSpaceStreamId(spaceId), 'Invalid space id: ' + spaceId)
+    return '0x' + spaceId.slice(2, 42)
+}
+
 // reason about data in logs, tests, etc.
 export enum StreamPrefix {
     Channel = '20',
@@ -124,6 +129,7 @@ export const makeUniqueChannelStreamId = (spaceId: string): string => {
     // fill the rest with random bytes
     return makeStreamId(StreamPrefix.Channel, spaceId.slice(2, 42) + genId(22))
 }
+
 export const makeDefaultChannelStreamId = (spaceContractAddressOrId: string): string => {
     if (spaceContractAddressOrId.startsWith(StreamPrefix.Space)) {
         return StreamPrefix.Channel + spaceContractAddressOrId.slice(2)
@@ -147,23 +153,6 @@ export const isDefaultChannelId = (streamId: string): boolean => {
 
 export const makeUniqueGDMChannelStreamId = (): string => makeStreamId(StreamPrefix.GDM, genId())
 export const makeUniqueMediaStreamId = (): string => makeStreamId(StreamPrefix.Media, genId())
-export const makeMediaStreamIdFromSpaceId = (
-    spaceContractAddressOrId: string | Uint8Array,
-): string => {
-    if (typeof spaceContractAddressOrId === 'string') {
-        if (spaceContractAddressOrId.startsWith(StreamPrefix.Space)) {
-            return StreamPrefix.Media + spaceContractAddressOrId.slice(2)
-        }
-        // matches code in the smart contract
-        return makeStreamId(StreamPrefix.Media, spaceContractAddressOrId + '0'.repeat(22))
-    }
-    if (spaceContractAddressOrId instanceof Uint8Array) {
-        const spaceId = streamIdFromBytes(spaceContractAddressOrId)
-        return makeStreamId(StreamPrefix.Media, spaceId.slice(2) + '0'.repeat(22))
-    }
-
-    throw new Error('Invalid space id: ', spaceContractAddressOrId)
-}
 export const makeDMStreamId = (userIdA: string, userIdB: string): string => {
     const concatenated = [userIdA, userIdB]
         .map((id) => id.toLowerCase())

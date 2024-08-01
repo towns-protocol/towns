@@ -271,10 +271,13 @@ func (s *streamCacheImpl) tryLoadStreamRecord(
 		}
 
 		// Successfully put data into storage, init stream view.
-		view, err := MakeStreamView(&storage.ReadStreamFromLastSnapshotResult{
-			StartMiniblockNumber: 0,
-			Miniblocks:           [][]byte{mb},
-		})
+		view, err := MakeStreamView(
+			ctx,
+			&storage.ReadStreamFromLastSnapshotResult{
+				StartMiniblockNumber: 0,
+				Miniblocks:           [][]byte{mb},
+			},
+		)
 		if err != nil {
 			return nil, nil, err
 		}

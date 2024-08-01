@@ -158,7 +158,7 @@ func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent, miniblockNum int64
 	iSnapshot = migrations.MigrateSnapshot(iSnapshot)
 	switch payload := event.Event.Payload.(type) {
 	case *StreamEvent_SpacePayload:
-		return update_Snapshot_Space(iSnapshot, payload.SpacePayload, eventNum)
+		return update_Snapshot_Space(iSnapshot, payload.SpacePayload, event.Event.CreatorAddress, eventNum)
 	case *StreamEvent_ChannelPayload:
 		return update_Snapshot_Channel(iSnapshot, payload.ChannelPayload)
 	case *StreamEvent_DmChannelPayload:
@@ -182,7 +182,12 @@ func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent, miniblockNum int64
 	}
 }
 
-func update_Snapshot_Space(iSnapshot *Snapshot, spacePayload *SpacePayload, eventNum int64) error {
+func update_Snapshot_Space(
+	iSnapshot *Snapshot,
+	spacePayload *SpacePayload,
+	creatorAddress []byte,
+	eventNum int64,
+) error {
 	snapshot := iSnapshot.Content.(*Snapshot_SpaceContent)
 	if snapshot == nil {
 		return RiverError(Err_INVALID_ARGUMENT, "blockheader snapshot is not a space snapshot")
@@ -198,6 +203,12 @@ func update_Snapshot_Space(iSnapshot *Snapshot, spacePayload *SpacePayload, even
 			UpdatedAtEventNum: eventNum,
 		}
 		snapshot.SpaceContent.Channels = insertChannel(snapshot.SpaceContent.Channels, channel)
+		return nil
+	case *SpacePayload_SpaceImage:
+		snapshot.SpaceContent.SpaceImage = &SpacePayload_SnappedSpaceImage{
+			Data:           content.SpaceImage,
+			CreatorAddress: creatorAddress,
+		}
 		return nil
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown space payload type %T", spacePayload.Content)
@@ -487,7 +498,6 @@ func update_Snapshot_Member(
 		}
 		snapshot.Pins = snapPins
 		return nil
-	
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown membership payload type %T", memberPayload.Content)
 	}

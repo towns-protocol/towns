@@ -69,6 +69,7 @@ import {
     SpaceNftEvent,
     PinEvent,
     UnpinEvent,
+    SpaceImageEvent,
 } from '../../types/timeline-types'
 import { useCallback } from 'react'
 import { bin_toHexString, check } from '@river-build/dlog'
@@ -853,6 +854,13 @@ function toTownsContent_SpacePayload(
                 } satisfies SpaceChildEvent,
             }
         }
+        case 'spaceImage': {
+            return {
+                content: {
+                    kind: ZTEvent.SpaceImage,
+                } satisfies SpaceImageEvent,
+            }
+        }
         case undefined:
             return { error: `Undefined payload case: ${description}` }
         default:
@@ -902,7 +910,15 @@ function toAttachment(
     switch (attachment.content.case) {
         case 'chunkedMedia': {
             const info = attachment.content.value.info
-            const encryption = attachment.content.value.encryption.value
+            const encryption =
+                attachment.content.value.encryption.case === 'aesgcm'
+                    ? attachment.content.value.encryption.value
+                    : undefined
+
+            const derivedEncryption =
+                attachment.content.value.encryption.case === 'derived'
+                    ? attachment.content.value.encryption.value
+                    : undefined
             if (!info || !encryption) {
                 return undefined
             }
@@ -922,6 +938,7 @@ function toAttachment(
                 info,
                 streamId: attachment.content.value.streamId,
                 encryption: encryption,
+                derivedEncryption: derivedEncryption,
                 id,
                 thumbnail: thumbnail,
             } satisfies ChunkedMediaAttachment

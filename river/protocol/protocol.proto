@@ -227,6 +227,12 @@ message SpacePayload {
         Inception inception = 1;
         // channels: sorted by channel_id
         repeated ChannelMetadata channels = 2;
+        SnappedSpaceImage space_image = 3;
+    }
+
+    message SnappedSpaceImage {
+        bytes creator_address = 1;
+        EncryptedData data = 2;
     }
     
     message Inception {
@@ -252,6 +258,7 @@ message SpacePayload {
     oneof content {
         Inception inception = 1;
         ChannelUpdate channel = 2;
+        EncryptedData space_image = 3;
     }
 }
 

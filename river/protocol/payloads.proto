@@ -178,10 +178,15 @@ message ChunkedMedia {
         bytes secretKey = 2;
     }
 
+    message DerivedAESGCM {
+        string context = 1;
+    }
+
     MediaInfo info = 1;
     string streamId = 2;
     EmbeddedMedia thumbnail = 3;
     oneof encryption {
         AESGCM aesgcm = 101;
+        DerivedAESGCM derived = 102;
     }
 }

@@ -20,7 +20,7 @@ type MediaSenderInfoProps = {
 export const FullScreenMediaItem = (props: Props) => {
     const { attachment, userId, timestamp } = props
 
-    if (attachment.type === 'chunked_media') {
+    if (attachment.type === 'chunked_media' && attachment.encryption) {
         return (
             <ChunkedMediaFullScreen
                 streamId={attachment.streamId}

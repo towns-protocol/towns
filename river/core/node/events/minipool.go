@@ -22,13 +22,15 @@ func newMiniPoolInstance(events eventMap, generation int64, eventNumOffset int64
 	}
 }
 
-func (m *minipoolInstance) copyAndAddEvent(event *ParsedEvent) *minipoolInstance {
+func (m *minipoolInstance) tryCopyAndAddEvent(event *ParsedEvent) *minipoolInstance {
 	m = &minipoolInstance{
 		events:         m.events.Copy(1),
 		generation:     m.generation,
 		eventNumOffset: m.eventNumOffset,
 	}
-	m.events.Set(event.Hash, event)
+	if !m.events.Set(event.Hash, event) {
+		return nil
+	}
 	return m
 }
 

@@ -8,13 +8,16 @@ import {
     SpacePayload_ChannelUpdate,
     SpacePayload_ChannelMetadata,
     SpacePayload_Snapshot,
+    ChunkedMedia,
+    EncryptedData,
 } from '@river-build/proto'
 import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './streamEvents'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { DecryptedContent } from './encryptedContentTypes'
 import { check, throwWithCode } from '@river-build/dlog'
 import { logNever } from './check'
-import { isDefaultChannelId, streamIdAsString } from './id'
+import { contractAddressFromSpaceId, isDefaultChannelId, streamIdAsString } from './id'
+import { decryptDerivedAESGCM } from './crypto_utils'
 
 export type ParsedChannelProperties = {
     isDefault: boolean
@@ -24,10 +27,19 @@ export type ParsedChannelProperties = {
 export class StreamStateView_Space extends StreamStateView_AbstractContent {
     readonly streamId: string
     readonly spaceChannelsMetadata = new Map<string, ParsedChannelProperties>()
+    private _spaceImage: ChunkedMedia | undefined
 
     constructor(streamId: string) {
         super()
         this.streamId = streamId
+    }
+
+    get spaceImage(): ChunkedMedia | undefined {
+        return this._spaceImage
+    }
+
+    private set spaceImage(value: ChunkedMedia | undefined) {
+        this._spaceImage = value
     }
 
     applySnapshot(
@@ -40,6 +52,16 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
         // loop over content.channels, update space channels metadata
         for (const payload of content.channels) {
             this.addSpacePayload_Channel(eventHash, payload, payload.updatedAtEventNum, undefined)
+        }
+
+        if (content.spaceImage?.data) {
+            this.decryptSpaceImage(content.spaceImage.data)
+                .then((media) => {
+                    this.spaceImage = media
+                })
+                .catch((err) => {
+                    throw err
+                })
         }
     }
 
@@ -63,6 +85,9 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
                 break
             case 'channel':
                 // nothing to do, channel data was conveyed in the snapshot
+                break
+            case 'spaceImage':
+                // nothing to do, spaceImage is set in the snapshot
                 break
             case undefined:
                 break
@@ -90,11 +115,26 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
                     stateEmitter,
                 )
                 break
+            case 'spaceImage':
+                this.decryptSpaceImage(payload.content.value)
+                    .then((media) => {
+                        this.spaceImage = media
+                    })
+                    .catch((err) => {
+                        throw err
+                    })
+                break
             case undefined:
                 break
             default:
                 logNever(payload.content)
         }
+    }
+
+    private async decryptSpaceImage(encryptedImage: EncryptedData): Promise<ChunkedMedia> {
+        const keyPhrase = contractAddressFromSpaceId(this.streamId)
+        const plaintext = await decryptDerivedAESGCM(keyPhrase, encryptedImage)
+        return ChunkedMedia.fromBinary(plaintext)
     }
 
     private addSpacePayload_Channel(
