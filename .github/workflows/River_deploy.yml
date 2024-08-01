@@ -177,7 +177,7 @@ jobs:
 
         needs: [pre_deploy, deploy]
 
-        if: failure() && inputs.environment_name == 'gamma'
+        if: failure()
 
         permissions:
             contents: read
@@ -206,7 +206,7 @@ jobs:
 
         needs: [pre_deploy, deploy]
 
-        if: success() && inputs.environment_name == 'gamma'
+        if: success()
 
         permissions:
             contents: read
