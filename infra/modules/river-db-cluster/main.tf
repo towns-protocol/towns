@@ -76,10 +76,8 @@ resource "aws_cloudwatch_log_subscription_filter" "rds_log_group_filter" {
 }
 
 resource "aws_security_group_rule" "allow_pgadmin_inbound_to_db" {
-  # var.pgadmin_security_group_id is of type any. so the count should be determined by
-  # whether it exists.
 
-  count     = var.pgadmin_security_group_id == null ? 0 : 1
+  count     = 1
   type      = "ingress"
   from_port = 5432
   to_port   = 5432

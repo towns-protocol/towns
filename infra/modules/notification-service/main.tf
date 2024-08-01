@@ -134,13 +134,21 @@ resource "aws_cloudwatch_log_subscription_filter" "log_group_filter" {
   destination_arn = module.global_constants.datadug_forwarder_stack_lambda.arn
 }
 
+locals {
+  auth_token_secret_name_base             = "push-notification-auth-token-${terraform.workspace}"
+  notification_vapid_key_secret_name_base = "notifications-vapid-keypair-${terraform.workspace}"
+
+  auth_token_secret_name             = terraform.workspace == "alpha" ? "alpha-temp-${local.auth_token_secret_name_base}" : local.auth_token_secret_name_base
+  notification_vapid_key_secret_name = terraform.workspace == "alpha" ? "alpha-temp-${local.notification_vapid_key_secret_name_base}" : local.notification_vapid_key_secret_name_base
+}
+
 resource "aws_secretsmanager_secret" "push_notification_auth_token_secret" {
-  name = "push-notification-auth-token-${terraform.workspace}"
+  name = local.auth_token_secret_name
   tags = module.global_constants.tags
 }
 
 resource "aws_secretsmanager_secret" "notification_vapid_key" {
-  name        = "notifications-vapid-keypair-${terraform.workspace}"
+  name        = local.notification_vapid_key_secret_name
   description = "Key-pair for notification service"
 }
 

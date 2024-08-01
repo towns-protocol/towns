@@ -13,7 +13,6 @@ variable "database_subnets" {
 }
 
 variable "pgadmin_security_group_id" {
-  description = "(optional) The security group id of the pgadmin service"
-  type        = any
-  default     = null
+  description = "The security group id of the pgadmin service"
+  type        = string
 }

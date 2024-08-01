@@ -77,9 +77,10 @@ resource "aws_ecs_cluster" "river_ecs_cluster" {
 }
 
 module "river_db_cluster" {
-  source           = "../../modules/river-db-cluster"
-  database_subnets = module.vpc.database_subnets
-  vpc_id           = module.vpc.vpc_id
+  source                    = "../../modules/river-db-cluster"
+  database_subnets          = module.vpc.database_subnets
+  vpc_id                    = module.vpc.vpc_id
+  pgadmin_security_group_id = module.pgadmin.security_group_id
 }
 
 module "river_node_ssl_cert" {
