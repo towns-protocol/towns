@@ -2,6 +2,8 @@ package sync
 
 import (
 	"context"
+	"github.com/river-build/river/core/node/dlog"
+	"time"
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
@@ -21,7 +23,7 @@ type (
 		// ctx is the root context for this subscription, when expires the subscription and all background syncers are
 		// cancelled
 		ctx context.Context
-		// cancel sync operation
+		// cancel sync operation by expiring ctx
 		cancel context.CancelFunc
 		// commands holds incoming requests from the client to add/remove/cancel commands
 		commands chan *subCommand
@@ -39,6 +41,7 @@ type (
 		RmStreamReq     *connect.Request[RemoveStreamFromSyncRequest]
 		AddStreamReq    *connect.Request[AddStreamToSyncRequest]
 		PingReq         *connect.Request[PingSyncRequest]
+		CancelReq       *connect.Request[CancelSyncRequest]
 		DebugDropStream shared.StreamId
 		reply           chan error
 	}
@@ -82,13 +85,17 @@ func (syncOp *StreamSyncOperation) Run(
 ) error {
 	defer syncOp.cancel()
 
+	log := dlog.FromCtx(syncOp.ctx).With("syncId", syncOp.SyncID)
+
 	cookies, err := client.ValidateAndGroupSyncCookies(req.Msg.GetSyncPos())
 	if err != nil {
 		return err
 	}
 
 	syncers, messages, err := client.NewSyncers(
-		syncOp.ctx, syncOp.SyncID, syncOp.streamCache, syncOp.nodeRegistry, syncOp.thisNodeAddress, cookies)
+		syncOp.ctx, syncOp.cancel, syncOp.SyncID, syncOp.streamCache,
+		syncOp.nodeRegistry, syncOp.thisNodeAddress, cookies)
+
 	if err != nil {
 		return err
 	}
@@ -98,7 +105,7 @@ func (syncOp *StreamSyncOperation) Run(
 	for {
 		select {
 		case msg, ok := <-messages:
-			if !ok { // messages is closed in syncers when syncOp.ctx is cancelled
+			if !ok {
 				_ = res.Send(&SyncStreamsResponse{
 					SyncId: syncOp.SyncID,
 					SyncOp: SyncOp_SYNC_CLOSE,
@@ -108,8 +115,12 @@ func (syncOp *StreamSyncOperation) Run(
 
 			msg.SyncId = syncOp.SyncID
 			if err = res.Send(msg); err != nil {
+				log.Error("Unable to send sync stream update to client", "err", err)
 				return err
 			}
+
+		case <-syncOp.ctx.Done():
+			return nil
 
 		case cmd := <-syncOp.commands:
 			if cmd.AddStreamReq != nil {
@@ -136,6 +147,16 @@ func (syncOp *StreamSyncOperation) Run(
 				cmd.Reply(err)
 			} else if cmd.DebugDropStream != (shared.StreamId{}) {
 				cmd.Reply(syncers.DebugDropStream(cmd.Ctx, cmd.DebugDropStream))
+			} else if cmd.CancelReq != nil {
+				syncOp.cancel()
+
+				_ = res.Send(&SyncStreamsResponse{
+					SyncId: syncOp.SyncID,
+					SyncOp: SyncOp_SYNC_CLOSE,
+				})
+
+				cmd.Reply(nil)
+				return nil
 			}
 		}
 	}
@@ -184,16 +205,36 @@ func (syncOp *StreamSyncOperation) RemoveStreamFromSync(
 }
 
 func (syncOp *StreamSyncOperation) CancelSync(
-	_ context.Context,
+	ctx context.Context,
 	req *connect.Request[CancelSyncRequest],
 ) (*connect.Response[CancelSyncResponse], error) {
 	if req.Msg.GetSyncId() != syncOp.SyncID {
-		return nil, RiverError(Err_INVALID_ARGUMENT, "invalid syncId").Tag("syncId", req.Msg.GetSyncId())
+		return nil, RiverError(Err_INVALID_ARGUMENT, "invalid syncId").
+			Tag("syncId", req.Msg.GetSyncId())
 	}
 
-	syncOp.cancel()
+	cmd := &subCommand{
+		Ctx:       ctx,
+		CancelReq: req,
+		reply:     make(chan error, 1),
+	}
 
-	return connect.NewResponse(&CancelSyncResponse{}), nil
+	timeout := time.After(15 * time.Second)
+
+	select {
+	case syncOp.commands <- cmd:
+		select {
+		case err := <-cmd.reply:
+			if err == nil {
+				return connect.NewResponse(&CancelSyncResponse{}), nil
+			}
+			return nil, err
+		case <-timeout:
+			return nil, RiverError(Err_UNAVAILABLE, "sync operation command queue full")
+		}
+	case <-timeout:
+		return nil, RiverError(Err_UNAVAILABLE, "sync operation command queue full")
+	}
 }
 
 func (syncOp *StreamSyncOperation) PingSync(
@@ -236,6 +277,10 @@ func (syncOp *StreamSyncOperation) process(cmd *subCommand) error {
 		case <-syncOp.ctx.Done():
 			return RiverError(Err_CANCELED, "sync operation cancelled").Tags("syncId", syncOp.SyncID)
 		}
+	case <-time.After(10 * time.Second):
+		err := RiverError(Err_DEADLINE_EXCEEDED, "sync operation command queue full").Tags("syncId", syncOp.SyncID)
+		dlog.FromCtx(syncOp.ctx).Error("Sync operation command queue full", "err", err)
+		return err
 	case <-syncOp.ctx.Done():
 		return RiverError(Err_CANCELED, "sync operation cancelled").Tags("syncId", syncOp.SyncID)
 	}

@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"github.com/river-build/river/core/node/dlog"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -12,7 +13,10 @@ import (
 )
 
 type localSyncer struct {
-	syncStreamCtx context.Context
+	globalSyncOpID string
+
+	syncStreamCtx      context.Context
+	cancelGlobalSyncOp context.CancelFunc
 
 	streamCache events.StreamCache
 	cookies     []*SyncCookie
@@ -25,18 +29,22 @@ type localSyncer struct {
 
 func newLocalSyncer(
 	ctx context.Context,
+	globalSyncOpID string,
+	cancelGlobalSyncOp context.CancelFunc,
 	localAddr common.Address,
 	streamCache events.StreamCache,
 	cookies []*SyncCookie,
 	messages chan<- *SyncStreamsResponse,
 ) (*localSyncer, error) {
 	return &localSyncer{
-		syncStreamCtx: ctx,
-		streamCache:   streamCache,
-		localAddr:     localAddr,
-		cookies:       cookies,
-		messages:      messages,
-		activeStreams: make(map[StreamId]events.SyncStream),
+		globalSyncOpID:     globalSyncOpID,
+		syncStreamCtx:      ctx,
+		cancelGlobalSyncOp: cancelGlobalSyncOp,
+		streamCache:        streamCache,
+		localAddr:          localAddr,
+		cookies:            cookies,
+		messages:           messages,
+		activeStreams:      make(map[StreamId]events.SyncStream),
 	}, nil
 }
 
@@ -84,9 +92,15 @@ func (s *localSyncer) RemoveStream(_ context.Context, streamID StreamId) (bool, 
 
 // OnUpdate is called each time a new cookie is available for a stream
 func (s *localSyncer) OnUpdate(r *StreamAndCookie) {
-	s.messages <- &SyncStreamsResponse{
-		SyncOp: SyncOp_SYNC_UPDATE,
-		Stream: r,
+	select {
+	case s.messages <- &SyncStreamsResponse{SyncOp: SyncOp_SYNC_UPDATE, Stream: r}:
+		return
+	case <-s.syncStreamCtx.Done():
+		return
+	default:
+		log := dlog.FromCtx(s.syncStreamCtx)
+		log.Error("Cancel client sync operation - client buffer full", "syncId", s.globalSyncOpID)
+		s.cancelGlobalSyncOp()
 	}
 }
 
@@ -104,9 +118,15 @@ func (s *localSyncer) OnSyncError(error) {
 
 // OnStreamSyncDown is called when updates for a stream could not be given.
 func (s *localSyncer) OnStreamSyncDown(streamID StreamId) {
-	s.messages <- &SyncStreamsResponse{
-		SyncOp:   SyncOp_SYNC_DOWN,
-		StreamId: streamID[:],
+	select {
+	case s.messages <- &SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]}:
+		return
+	case <-s.syncStreamCtx.Done():
+		return
+	default:
+		log := dlog.FromCtx(s.syncStreamCtx)
+		log.Error("Cancel client sync operation - client buffer full", "syncId", s.globalSyncOpID)
+		s.cancelGlobalSyncOp()
 	}
 }
 

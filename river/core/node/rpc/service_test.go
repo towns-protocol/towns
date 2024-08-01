@@ -1563,3 +1563,148 @@ func TestStreamSyncPingPong(t *testing.T) {
 		return slices.Equal(pings, pongs)
 	}, 20*time.Second, 100*time.Millisecond, "didn't receive all pongs in reasonable time or out of order")
 }
+
+func TestSyncSubscriptionWithTooSlowClient(t *testing.T) {
+	t.SkipNow()
+
+	var (
+		req      = require.New(t)
+		services = newServiceTester(t, serviceTesterOpts{numNodes: 5, start: true})
+		client0  = services.testClient(0)
+		client1  = services.testClient(1)
+		ctx      = services.ctx
+		wallets  []*crypto.Wallet
+		users    []*protocol.SyncCookie
+		channels []*protocol.SyncCookie
+	)
+
+	// create users that will join and add messages to channels.
+	for range 10 {
+		// Create user streams
+		wallet, err := crypto.NewWallet(ctx)
+		req.NoError(err, "new wallet")
+		syncCookie, _, err := createUser(ctx, wallet, client0, nil)
+		req.NoError(err, "create user")
+
+		_, _, err = createUserDeviceKeyStream(ctx, wallet, client0, nil)
+		req.NoError(err)
+
+		wallets = append(wallets, wallet)
+		users = append(users, syncCookie)
+	}
+
+	// create a space and several channels in it
+	spaceID := testutils.FakeStreamId(STREAM_SPACE_BIN)
+	resspace, _, err := createSpace(ctx, wallets[0], client0, spaceID, nil)
+	req.NoError(err)
+	req.NotNil(resspace, "create space sync cookie")
+
+	// create enough channels that they will be distributed among local and remote nodes
+	for range TestStreams {
+		channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+		channel, _, err := createChannel(ctx, wallets[0], client0, spaceID, channelId, nil)
+		req.NoError(err)
+		req.NotNil(channel, "nil create channel sync cookie")
+		channels = append(channels, channel)
+	}
+
+	// subscribe to channel updates
+	fmt.Printf("sync streams on node %s\n", services.nodes[1].address)
+	syncPos := append(users, channels...)
+	syncRes, err := client1.SyncStreams(ctx, connect.NewRequest(&protocol.SyncStreamsRequest{SyncPos: syncPos}))
+	req.NoError(err, "sync streams")
+
+	syncRes.Receive()
+	syncID := syncRes.Msg().SyncId
+	t.Logf("subscription %s created on node: %s", syncID, services.nodes[1].address)
+
+	subCancelled := make(chan struct{})
+
+	go func() {
+		// don't read from syncRes and simulate an inactive client.
+		// the node should drop the subscription when the internal buffer is full with events it can't deliver
+		<-time.After(10 * time.Second)
+
+		_, err := client1.PingSync(ctx, connect.NewRequest(&protocol.PingSyncRequest{SyncId: syncID, Nonce: "ping"}))
+		req.Error(err, "sync must have been dropped")
+
+		close(subCancelled)
+	}()
+
+	// users join channels
+	channelsCount := len(channels)
+	for i, wallet := range wallets[1:] {
+		for c := range channelsCount {
+			channel := channels[c]
+
+			miniBlockHashResp, err := client1.GetLastMiniblockHash(
+				ctx,
+				connect.NewRequest(&protocol.GetLastMiniblockHashRequest{StreamId: users[i+1].StreamId}))
+
+			req.NoError(err, "get last miniblock hash")
+
+			channelId, _ := StreamIdFromBytes(channel.GetStreamId())
+			userJoin, err := events.MakeEnvelopeWithPayload(
+				wallet,
+				events.Make_UserPayload_Membership(protocol.MembershipOp_SO_JOIN, channelId, nil, spaceID[:]),
+				miniBlockHashResp.Msg.GetHash(),
+			)
+			req.NoError(err)
+
+			resp, err := client1.AddEvent(
+				ctx,
+				connect.NewRequest(
+					&protocol.AddEventRequest{
+						StreamId: users[i+1].StreamId,
+						Event:    userJoin,
+					},
+				),
+			)
+
+			req.NoError(err)
+			req.Nil(resp.Msg.GetError())
+		}
+	}
+
+	// send a bunch of messages and ensure that the sync op is cancelled because the client buffer becomes full
+	for i := range 10000 {
+		wallet := wallets[rand.Int()%len(wallets)]
+		channel := channels[rand.Int()%len(channels)]
+		msgContents := fmt.Sprintf("msg #%d", i)
+
+		getStreamResp, err := client1.GetStream(ctx, connect.NewRequest(&protocol.GetStreamRequest{
+			StreamId: channel.GetStreamId(),
+			Optional: false,
+		}))
+		req.NoError(err)
+
+		message, err := events.MakeEnvelopeWithPayload(
+			wallet,
+			events.Make_ChannelPayload_Message(msgContents),
+			getStreamResp.Msg.GetStream().GetNextSyncCookie().GetPrevMiniblockHash(),
+		)
+		req.NoError(err)
+
+		_, err = client1.AddEvent(
+			ctx,
+			connect.NewRequest(
+				&protocol.AddEventRequest{
+					StreamId: channel.GetStreamId(),
+					Event:    message,
+				},
+			),
+		)
+
+		req.NoError(err)
+	}
+
+	req.Eventuallyf(func() bool {
+		select {
+		case <-subCancelled:
+			fmt.Println("sub cancelled as expected")
+			return true
+		default:
+			return false
+		}
+	}, 20*time.Second, 100*time.Millisecond, "subscription not cancelled in reasonable time")
+}

@@ -28,6 +28,8 @@ type (
 	SyncerSet struct {
 		// ctx is the root context for all syncers in this set and used to cancel them
 		ctx context.Context
+		// globalSyncOpCtxCancel cancels ctx
+		globalSyncOpCtxCancel context.CancelFunc
 		// syncID is the sync id as used between the client and this node
 		syncID string
 		// localNodeAddress is the node address for this stream node instance
@@ -42,6 +44,8 @@ type (
 		syncerTasks sync.WaitGroup
 		// muSyncers guards syncers and streamID2Syncer
 		muSyncers sync.Mutex
+		// stopped holds an indication if the sync operation is stopped
+		stopped bool
 		// syncers is the existing set of syncers, indexed by the syncer node address
 		syncers map[common.Address]StreamsSyncer
 		// streamID2Syncer maps from a stream to its syncer
@@ -75,6 +79,7 @@ func (cs SyncCookieSet) AsSlice() []*SyncCookie {
 // are streamed to the client.
 func NewSyncers(
 	ctx context.Context,
+	globalSyncOpCtxCancel context.CancelFunc,
 	syncID string,
 	streamCache events.StreamCache,
 	nodeRegistry nodes.NodeRegistry,
@@ -90,7 +95,8 @@ func NewSyncers(
 	// instantiate background syncers for sync operation
 	for nodeAddress, cookieSet := range cookies {
 		if nodeAddress == localNodeAddress { // stream managed by this node
-			syncer, err := newLocalSyncer(ctx, localNodeAddress, streamCache, cookieSet.AsSlice(), messages)
+			syncer, err := newLocalSyncer(
+				ctx, syncID, globalSyncOpCtxCancel, localNodeAddress, streamCache, cookieSet.AsSlice(), messages)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -101,7 +107,8 @@ func NewSyncers(
 				return nil, nil, err
 			}
 
-			syncer, err := newRemoteSyncer(ctx, syncID, nodeAddress, client, cookieSet.AsSlice(), messages)
+			syncer, err := newRemoteSyncer(
+				ctx, globalSyncOpCtxCancel, syncID, nodeAddress, client, cookieSet.AsSlice(), messages)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -135,14 +142,23 @@ func (ss *SyncerSet) Run() {
 	}
 	ss.muSyncers.Unlock()
 
-	<-ss.ctx.Done()       // sync cancelled by client or client conn dropped
-	ss.syncerTasks.Wait() // background syncers finished
+	<-ss.ctx.Done() // sync cancelled by client, client conn dropped or client send buffer full
+
+	ss.muSyncers.Lock()
+	ss.stopped = true
+	ss.muSyncers.Unlock()
+
+	ss.syncerTasks.Wait() // background syncers finished -> safe to close messages channel
 	close(ss.messages)    // close will cause the sync operation to send the SYNC_CLOSE message to the client
 }
 
 func (ss *SyncerSet) AddStream(ctx context.Context, nodeAddress common.Address, streamID StreamId, cookie *SyncCookie) error {
 	ss.muSyncers.Lock()
 	defer ss.muSyncers.Unlock()
+
+	if ss.stopped {
+		return RiverError(Err_CANCELED, "Sync operation stopped", "syncId", ss.syncID)
+	}
 
 	if _, found := ss.streamID2Syncer[streamID]; found {
 		return nil // stream is already part of sync operation
@@ -163,7 +179,9 @@ func (ss *SyncerSet) AddStream(ctx context.Context, nodeAddress common.Address, 
 		err    error
 	)
 	if nodeAddress == ss.localNodeAddress {
-		if syncer, err = newLocalSyncer(ss.ctx, ss.localNodeAddress, ss.streamCache, []*SyncCookie{cookie}, ss.messages); err != nil {
+		if syncer, err = newLocalSyncer(
+			ss.ctx, ss.syncID, ss.globalSyncOpCtxCancel, ss.localNodeAddress,
+			ss.streamCache, []*SyncCookie{cookie}, ss.messages); err != nil {
 			return err
 		}
 	} else {
@@ -171,7 +189,7 @@ func (ss *SyncerSet) AddStream(ctx context.Context, nodeAddress common.Address, 
 		if err != nil {
 			return err
 		}
-		if syncer, err = newRemoteSyncer(ss.ctx, ss.syncID, nodeAddress, client, []*SyncCookie{cookie}, ss.messages); err != nil {
+		if syncer, err = newRemoteSyncer(ss.ctx, ss.globalSyncOpCtxCancel, ss.syncID, nodeAddress, client, []*SyncCookie{cookie}, ss.messages); err != nil {
 			return err
 		}
 	}
@@ -188,10 +206,10 @@ func (ss *SyncerSet) startSyncer(syncer StreamsSyncer) {
 	ss.syncerTasks.Add(1)
 	go func() {
 		syncer.Run()
+		ss.syncerTasks.Done()
 		ss.muSyncers.Lock()
 		delete(ss.syncers, syncer.Address())
 		ss.muSyncers.Unlock()
-		ss.syncerTasks.Done()
 	}()
 }
 
