@@ -35,22 +35,27 @@ function getStressMode(): string {
     return process.env.STRESS_MODE
 }
 
-switch (getStressMode()) {
-    case 'chat':
-        await startStressChat({
-            config,
-            processIndex,
-            rootWallet: getRootWallet().wallet,
-        })
-        break
-    case 'setup_chat':
-        await setupChat({
-            config,
-            rootWallet: getRootWallet().wallet,
-        })
-        break
-    default:
-        throw new Error('unknown stress mode')
+const run = async () => {
+    switch (getStressMode()) {
+        case 'chat':
+            await startStressChat({
+                config,
+                processIndex,
+                rootWallet: getRootWallet().wallet,
+            })
+            break
+        case 'setup_chat':
+            await setupChat({
+                config,
+                rootWallet: getRootWallet().wallet,
+            })
+            break
+        default:
+            throw new Error('unknown stress mode')
+    }
+    exit(0)
 }
-
-exit(0)
+run().catch((e) => {
+    logger.error('unhandled error:', e)
+    exit(1)
+})

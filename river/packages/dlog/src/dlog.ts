@@ -140,6 +140,8 @@ export interface DLogOpts {
 
 const allDlogs: Map<string, DLogger> = new Map()
 
+const isDev = typeof process !== 'undefined' && process.env.NODE_ENV === 'development'
+
 const makeDlog = (d: Debugger, opts?: DLogOpts): DLogger => {
     if (opts?.printStack) {
         // eslint-disable-next-line no-console
@@ -166,14 +168,14 @@ const makeDlog = (d: Debugger, opts?: DLogOpts): DLogger => {
                 newArgs.push(c)
             } else if (typeof c === 'object' && c !== null) {
                 if (c instanceof Error) {
-                    tailArgs.push('\n')
+                    isDev ? fmt.push('%O\n') : fmt.push('%o\n')
                     tailArgs.push(c)
                 } else {
-                    fmt.push('%O\n')
+                    isDev ? fmt.push('%O\n') : fmt.push('%o\n')
                     newArgs.push(cloneAndFormat(c, { shortenHex: true }))
                 }
             } else {
-                fmt.push('%O ')
+                isDev ? fmt.push('%O ') : fmt.push('%o ')
                 newArgs.push(c)
             }
         }

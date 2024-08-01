@@ -5,6 +5,8 @@
 import { dlog, dlogError } from '../dlog'
 import debug from 'debug'
 import { bin_fromHexString } from '../binary'
+import { CodeException } from '../check'
+import { Err } from '@river-build/proto'
 
 describe('dlogTest', () => {
     test('basic', () => {
@@ -210,5 +212,21 @@ describe('dlogTest', () => {
         // Disabled explicitly by settings, default ignored
         log = dlog(ns, { defaultEnabled: true, allowJest: true })
         expect(log.enabled).toBeFalsy()
+    })
+
+    test('handle error', () => {
+        const e = new CodeException('test', Err.ERR_UNSPECIFIED)
+        const log = dlogError('test:dlog')
+        log.enabled = true
+
+        let output: string = ''
+        log.baseDebug.log = (...args: any[]) => {
+            for (const arg of args) {
+                output += `${arg}`
+            }
+        }
+
+        log('throwWithCode', e)
+        expect(output).toContain('CodeException [Error]: test at Object.<anonymous>')
     })
 })

@@ -15,7 +15,7 @@ export class CodeException extends Error {
 
 export function throwWithCode(message?: string, code?: Err, data?: any): never {
     const e = new CodeException(message ?? 'Unknown', code ?? Err.ERR_UNSPECIFIED, data)
-    log('throwWithCode', e.message, e.stack)
+    log('throwWithCode', e)
     throw e
 }
 
