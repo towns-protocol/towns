@@ -84,7 +84,7 @@ function UserOpTxModalContent({
 
     const gasInEth = utils.formatEther(gasCost)
     const gasInEthFixedTo8 = parseFloat(gasInEth).toFixed(8)
-    const membershipInEth = currOpValue ? utils.formatEther(currOpValue) : undefined
+    const currOpValueInEth = currOpValue ? utils.formatEther(currOpValue) : undefined
     const totalInEth = utils.formatEther(totalCost.toBigInt())
     const totalInEthFixedTo5 = parseFloat(totalInEth).toFixed(5)
     const totalInEthFixedTo8 = parseFloat(totalInEth).toFixed(8)
@@ -201,14 +201,9 @@ function UserOpTxModalContent({
                     </Box>
                     {/* {isLoadingMembershipPrice ? <ButtonSpinner /> : null} */}
                     {currOpValue ? (
-                        <Box
-                            horizontal={!_isTouch}
-                            gap={_isTouch ? 'sm' : undefined}
-                            width="100%"
-                            justifyContent="spaceBetween"
-                        >
+                        <Box horizontal width="100%" justifyContent="spaceBetween">
                             <Text>{valueLabel} </Text>
-                            <Text> {membershipInEth + ' ETH'}</Text>
+                            <Text> {currOpValueInEth + ' ETH'}</Text>
                         </Box>
                     ) : null}
 
