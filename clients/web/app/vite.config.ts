@@ -61,7 +61,6 @@ export default ({ mode }: { mode: string }) => {
                     },
                 },
             },
-            minify: false, // Ensure esbuild is used for minification
         },
         define: {
             VITE_APP_VERSION: JSON.stringify(process.env.npm_package_version),
