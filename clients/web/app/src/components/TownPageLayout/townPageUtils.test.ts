@@ -32,40 +32,26 @@ describe('TownPageUtilsTests', () => {
 
     test('should convert price 0 to text', () => {
         const price = '0'
-        const priceText = getPriceText(price, undefined)
+        const priceText = getPriceText(price)
         expect(priceText?.value).toBe('Free')
-        expect(priceText?.suffix).toBe('')
-    })
-
-    test('should convert non fixed to text', () => {
-        const price = '1'
-        const priceText = getPriceText(price, false)
-        expect(priceText?.value).toBe('1')
-        expect(priceText?.suffix.toLowerCase()).toContain('first 100')
-    })
-
-    test('should convert fixed to text', () => {
-        const price = '1'
-        const priceText = getPriceText(price, true)
-        expect(priceText?.value).toBe('1')
-        expect(priceText?.suffix.toLowerCase()).toContain('eth')
+        expect(priceText?.suffix).toBe('First 100')
     })
 
     test('should respect decimals', () => {
         const price = '2.0000'
-        const priceText = getPriceText(price, true)
+        const priceText = getPriceText(price)
         expect(priceText?.value).toBe('2')
     })
 
     test('should respect decimals', () => {
         const price = '0.001'
-        const priceText = getPriceText(price, true)
+        const priceText = getPriceText(price)
         expect(priceText?.value).toBe('0.001')
     })
 
     test('should write "free"', () => {
         const price = 'Free'
-        const priceText = getPriceText(price, true)
+        const priceText = getPriceText(price)
         expect(priceText?.value).toBe('Free')
     })
 })

@@ -7,7 +7,6 @@ import {
     UnfurledLinkAttachment,
     useContractSpaceInfo,
     useGetRootKeyFromLinkedWallet,
-    usePricingModuleForMembership,
     useTownsClient,
     useUserLookup,
 } from 'use-towns-client'
@@ -215,9 +214,7 @@ const TownsContent = (
     const { data: memberInfo, isLoading } = useReadableMembershipInfo(townId)
     const { data: tokensGatingMembership } = useTokensGatingMembership(townId)
 
-    const { data: membershipPricingModule } = usePricingModuleForMembership(townId)
-
-    const priceText = getPriceText(memberInfo?.price, membershipPricingModule?.isFixed)
+    const priceText = getPriceText(memberInfo?.price)
 
     const navigate = useNavigate()
 

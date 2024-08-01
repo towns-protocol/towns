@@ -1,6 +1,6 @@
 import { MONTH_MS, SECOND_MS, YEAR_MS } from 'data/constants'
 
-export const getPriceText = (price: string | undefined, isFixed?: boolean) => {
+export const getPriceText = (price: string | undefined) => {
     if (typeof price === 'undefined') {
         return undefined
     }
@@ -12,7 +12,7 @@ export const getPriceText = (price: string | undefined, isFixed?: boolean) => {
         value: isFree
             ? 'Free'
             : `${Math.round(parseFloat(price) * precisionMultiplier) / precisionMultiplier}`,
-        suffix: isFree ? '' : isFixed ? 'ETH' : 'First 100',
+        suffix: isFree ? 'First 100' : 'ETH',
     }
 }
 

@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Address, useContractSpaceInfo, useGetRootKeyFromLinkedWallet } from 'use-towns-client'
 import { useEvent } from 'react-use-event-hook'
-import { usePricingModuleForMembership } from 'use-towns-client/dist/hooks/use-pricing-modules'
 import { isAddress } from 'viem'
 import { InteractiveTownsToken } from '@components/TownsToken/InteractiveTownsToken'
 import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
@@ -46,7 +45,6 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
     const address = isAddress(spaceInfo.address) ? spaceInfo.address : undefined
     const owner = isAddress(spaceInfo.owner) ? spaceInfo.owner : undefined
     const name = spaceInfo.name
-    const { data: membershipPricingModule } = usePricingModuleForMembership(spaceId)
 
     const { baseChain } = useEnvironment()
     const chainId = baseChain.id
@@ -97,10 +95,7 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
     const [leftColWidth, rightColWidth] = useColumnWidths({ leftColRef, rightColRef })
     const isJoining = !!usePublicPageLoginFlow().joiningSpace
 
-    const priceText = useMemo(
-        () => getPriceText(membershipInfo?.price, membershipPricingModule?.isFixed),
-        [membershipInfo?.price, membershipPricingModule],
-    )
+    const priceText = useMemo(() => getPriceText(membershipInfo?.price), [membershipInfo?.price])
 
     const durationText = useMemo(
         () => getDurationText(membershipInfo?.duration),
@@ -166,7 +161,6 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                                 anyoneCanJoin={anyoneCanJoin}
                                 isTokensGatingMembershipLoading={isTokensGatingMembershipLoading}
                                 tokensGatingMembership={tokensGatingMembership}
-                                membershipPricingModule={membershipPricingModule}
                             />
                         )}
                         <Bio bio={bio} />
@@ -317,7 +311,6 @@ const InformationBoxes = (props: {
     anyoneCanJoin: boolean
     isTokensGatingMembershipLoading: boolean
     tokensGatingMembership?: TokenGatingMembership
-    membershipPricingModule?: ReturnType<typeof usePricingModuleForMembership>['data']
 }) => {
     const {
         address,
