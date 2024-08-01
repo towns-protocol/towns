@@ -11,7 +11,7 @@ import { getPackageVersion } from './utils/getPackageVersion'
 import { config } from './config'
 import { getWeb3Deployment, ISpaceOwnerShim, SpaceOwner } from '@river-build/web3'
 
-const { PROVIDER_URL, MODE, PORT, VITE_RIVER_DEFAULT_ENV } = config
+const { PROVIDER_URL, MODE, PORT, VITE_RIVER_ENV } = config
 
 const cache = new NodeCache({ stdTTL: 900 }) // 900 seconds = 15 minutes
 
@@ -21,12 +21,12 @@ const server = Fastify({
 
 const provider = new ethers.providers.JsonRpcProvider(PROVIDER_URL)
 
-console.log('provider', MODE, VITE_RIVER_DEFAULT_ENV, PROVIDER_URL)
+console.log('provider', MODE, VITE_RIVER_ENV, PROVIDER_URL)
 
 let spaceOwner: ISpaceOwnerShim | undefined
 
-if (VITE_RIVER_DEFAULT_ENV) {
-    const web3Deployment = getWeb3Deployment(VITE_RIVER_DEFAULT_ENV)
+if (VITE_RIVER_ENV) {
+    const web3Deployment = getWeb3Deployment(VITE_RIVER_ENV)
     const contract = new SpaceOwner(web3Deployment.base, provider)
     spaceOwner = contract.spaceOwner
 }

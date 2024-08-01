@@ -71,7 +71,7 @@ const defaultValues = {
 }
 
 async function postCustomError(data: FormState) {
-    const ENV = env.VITE_RIVER_DEFAULT_ENV ?? 'localhost'
+    const ENV = env.VITE_RIVER_ENV ?? 'localhost'
     const GATEWAY_SERVER_URL = env.VITE_GATEWAY_URL
     const url = `${GATEWAY_SERVER_URL}/user-feedback`
     // generate a uuid for the custom error

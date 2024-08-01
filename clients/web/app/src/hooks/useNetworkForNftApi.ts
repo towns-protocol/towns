@@ -15,7 +15,6 @@ export const hasBaseSepoliaParam = () => {
 export const fetchMainnetTokens = env.DEV && hasMainnetParam()
 export const fetchBaseSepolia = env.DEV && hasBaseSepoliaParam()
 // random address from opensea with tokens on mainnet
-export const mainnetTokenAddress = env.VITE_ADDRESS_FOR_MAINNET_TOKENS_DEV
 
 // This is for making calls to token-worker.
 // todo evan - this needs updates for xchain

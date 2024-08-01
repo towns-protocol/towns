@@ -7,7 +7,7 @@ dotenv.config({ path: path.join(__dirname, '../../app', '.env.local') })
 const envSchema = z.object({
     MODE: z.string(),
     PORT: z.string().optional(),
-    VITE_RIVER_DEFAULT_ENV: z.string().optional(),
+    VITE_RIVER_ENV: z.string().optional(),
     VITE_BASE_SEPOLIA_RPC_URL: z.string().url().optional(),
     VITE_BASE_CHAIN_RPC_URL: z.string().url().optional(),
 })

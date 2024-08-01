@@ -17,7 +17,6 @@ import { env } from 'utils'
 import {
     fetchBaseSepolia,
     fetchMainnetTokens,
-    mainnetTokenAddress,
     useNetworkForNftApi,
 } from 'hooks/useNetworkForNftApi'
 import { useEnvironment } from 'hooks/useEnvironmnet'
@@ -114,10 +113,7 @@ export function useCollectionsForLoggedInUser() {
     const chainId = baseChain.id
 
     return useCollectionsForOwner({
-        wallet:
-            (fetchMainnetTokens && mainnetTokenAddress
-                ? mainnetTokenAddress
-                : loggedInWalletAddress) ?? '',
+        wallet: loggedInWalletAddress ?? '',
         enabled: Boolean(chainId),
         chainId,
     })

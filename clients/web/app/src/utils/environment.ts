@@ -54,7 +54,7 @@ const envSchema = z.object({
     VITE_BASE_SEPOLIA_WS_URL: z.string().url().optional(),
     VITE_RIVER_TESTNET_RPC_URL: z.string().url().optional(),
     // end env specific config
-    VITE_RIVER_DEFAULT_ENV: z.string().optional(),
+    VITE_RIVER_ENV: z.string().optional(),
 
     VITE_ETHEREUM_RPC_URL: z.string(),
 
@@ -71,20 +71,17 @@ const envSchema = z.object({
 
     VITE_WEB_PUSH_APPLICATION_SERVER_KEY: z.string().optional(), // making this optional since we want to allow local development without it
     VITE_WEB_PUSH_WORKER_URL: z.string().optional(), // url to the web push worker
-    VITE_AMP_WORKER_URL: z.string().url().optional(),
 
     VITE_DD_CLIENT_TOKEN: z.string().optional(), // used for datadog client side monitoring
     VITE_PRIVY_ID: z.string(),
 
     VITE_LOG_SAMPLING_RATE: intStringWithin(0, 100).optional(),
-    VITE_AA_RPC_URL: z.string().url().optional(),
     VITE_AA_BUNDLER_URL: z.string().url(),
     VITE_AA_PAYMASTER_PROXY_URL: z.string().url(),
     VITE_AA_ENTRY_POINT_ADDRESS: z.string().optional(),
     VITE_AA_FACTORY_ADDRESS: z.string().optional(),
 
     VITE_ADDRESS_FOR_MAINNET_TOKENS_DEV: z.string().optional(),
-    VITE_ENABLE_SLATE_PREVIEW: boolish.default(true),
     // Analytics keys
     VITE_RUDDERSTACK_API_CONFIG_URL: z.string().url().optional(),
     VITE_RUDDERSTACK_CDN_SDK_URL: z.string().url().optional(),
