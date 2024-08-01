@@ -13,6 +13,7 @@ import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { useShallow } from 'zustand/react/shallow'
 import { MembershipOp } from '@river-build/proto'
+import { immer } from 'zustand/middleware/immer'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { DAY_MS, WEEK_MS } from 'data/constants'
 import { notUndefined } from 'ui/utils/utils'
@@ -31,49 +32,65 @@ type TownStats = {
 }
 type ChannelStats = {
     numMessages: number
-    numActiveUsers: number
-    // session storage, this should be an array
     activeUsers: string[]
 }
 
 const useFetchStore = create(
-    persist<{
-        isLoading: boolean
-        members: string[]
-        channelStats: ChannelStats
-        townStats: TownStats
-        setMembers: (members: string[]) => void
-        setChannelStats: (fn: (args: ChannelStats) => ChannelStats) => void
-        setTownStats: (fn: (args: TownStats) => TownStats) => void
-        setIsLoading: (isLoading: boolean) => void
-    }>(
-        (set, get) => ({
+    persist(
+        immer<{
+            isLoading: boolean
+            members: Record<string, string[]>
+            channelStats: Record<string, ChannelStats>
+            townStats: Record<string, TownStats>
+            setMembers: (townId: string, members: string[]) => void
+            setChannelStats: (townId: string, s: ChannelStats) => void
+            appendChannelStats: (townId: string, s: Omit<ChannelStats, 'numActiveUsers'>) => void
+            setTownStats: (townId: string, s: Partial<TownStats>) => void
+            setIsLoading: (isLoading: boolean) => void
+        }>((set, get) => ({
             isLoading: true,
-            members: [],
-            channelStats: {
-                numMessages: 0,
-                numActiveUsers: 0,
-                activeUsers: [],
+            members: {},
+            channelStats: {},
+            townStats: {},
+            setMembers: (townId, members) => {
+                set((state) => {
+                    state.members[townId] = members
+                })
             },
-            townStats: {
-                numJoinedUsers: 0,
-                latestJoinedUsers: undefined,
-                spaceCreateEvent: undefined,
-                latestCreatedChannels: undefined,
+            setChannelStats: (townId, s) => {
+                set((state) => {
+                    state.channelStats[townId] = {
+                        ...(state.channelStats[townId] ?? {}),
+                        ...s,
+                    }
+                })
             },
-            setMembers: (members: string[]) => set({ members }),
-            setChannelStats: (fn) => {
-                const state = get().channelStats
-                return set({ channelStats: fn(state) })
+            appendChannelStats: (townId, s) => {
+                set((state) => {
+                    const activeUsers = state.channelStats[townId]?.activeUsers ?? []
+                    const numMessages = state.channelStats[townId]?.numMessages ?? 0
+                    state.channelStats[townId] = {
+                        activeUsers: Array.from(new Set([...activeUsers, ...s.activeUsers])),
+                        numMessages: numMessages + s.numMessages,
+                    }
+                })
             },
-            setTownStats: (fn) => {
-                const state = get().townStats
-                return set({ townStats: fn(state) })
+            setTownStats: (townId: string, s: Partial<TownStats>) => {
+                set((state) => {
+                    state.townStats[townId] = {
+                        ...(state.townStats[townId] ?? {}),
+                        ...s,
+                    }
+                })
             },
-            setIsLoading: (isLoading) => set({ isLoading }),
-        }),
+            setIsLoading: (isLoading: boolean) =>
+                set((state) => {
+                    state.isLoading = isLoading
+                }),
+        })),
         {
             name: 'unauthenticated-activity',
+            version: 2,
             storage: createJSONStorage(() => sessionStorage),
         },
     ),
@@ -82,28 +99,31 @@ const useFetchStore = create(
 export const useFetchUnauthenticatedActivity = (townId: string) => {
     const { authStatus } = useConnectivity()
     const {
+        appendChannelStats,
+        channelStats,
         isLoading,
         members,
-        channelStats,
-        townStats,
         setChannelStats,
-        setTownStats,
-        setMembers,
         setIsLoading,
+        setMembers,
+        setTownStats,
+        townStats,
     } = useFetchStore(
         useShallow((s) => ({
+            appendChannelStats: s.appendChannelStats,
+            channelStats: s.channelStats,
             isLoading: s.isLoading,
             members: s.members,
-            channelStats: s.channelStats,
-            townStats: s.townStats,
-            setMembers: s.setMembers,
             setChannelStats: s.setChannelStats,
-            setTownStats: s.setTownStats,
             setIsLoading: s.setIsLoading,
+            setMembers: s.setMembers,
+            setTownStats: s.setTownStats,
+            townStats: s.townStats,
         })),
     )
 
     const { riverChainConfig, riverChain } = useEnvironment()
+
     useEffect(() => {
         if (!riverChainConfig || authStatus === AuthStatus.EvaluatingCredentials) {
             return
@@ -116,7 +136,7 @@ export const useFetchUnauthenticatedActivity = (townId: string) => {
             const provider = makeProviderFromConfig(riverChain)
 
             try {
-                console.log('TownPageActivity fetch space', townId)
+                console.log('[TownPageActivity] fetch hook enter')
                 const streamId = townId
                 const rpcClient = await withAbort(
                     () => makeRiverRpcClient(provider, riverChainConfig),
@@ -126,44 +146,42 @@ export const useFetchUnauthenticatedActivity = (townId: string) => {
                     return
                 }
                 const client = new UnauthenticatedClient(rpcClient)
-
                 const stream = await withAbort(() => client.getStream(streamId), abortController)
+
                 if (!stream) {
                     return
                 }
 
                 let numJoinedUsers = initialJoinedUsers(stream)
-
-                setTownStats(() => ({
+                setTownStats(townId, {
                     numJoinedUsers: 0,
                     latestJoinedUsers: [],
                     spaceCreateEvent: undefined,
                     latestCreatedChannels: undefined,
-                }))
+                })
 
-                setMembers(Array.from(stream.getMembers().membership.joinedUsers))
+                setMembers(townId, Array.from(stream.getMembers().membership.joinedUsers))
 
-                await withAbort(
-                    () => client.scrollbackToDate(stream, Date.now() - WEEK_MS),
-                    abortController,
-                )
+                const fetchTownStats = async () => {
+                    await withAbort(() => client.scrollbackToDate(stream, WEEK_MS), abortController)
+                    numJoinedUsers = getJoinedUsersAfterScrollback(stream.timeline, WEEK_MS)
+                    const spaceCreateEvent = getSpaceCreatedEvent(stream.timeline)
+                    setTownStats(townId, {
+                        numJoinedUsers: Array.from(numJoinedUsers).length,
+                        latestJoinedUsers: numJoinedUsers,
+                        spaceCreateEvent: spaceCreateEvent,
+                        latestCreatedChannels: undefined,
+                    })
+                }
 
-                numJoinedUsers = getJoinedUsersAfterScrollback(stream.timeline)
-                // space creation event
-                const spaceCreateEvent = getSpaceCreatedEvent(stream.timeline)
-
-                console.log('TownPageActivity numJoinedUsers last week', numJoinedUsers)
-                setTownStats(() => ({
-                    numJoinedUsers: Array.from(numJoinedUsers).length,
-                    latestJoinedUsers: numJoinedUsers,
-                    spaceCreateEvent: spaceCreateEvent,
-                    latestCreatedChannels: undefined,
-                }))
+                void fetchTownStats()
 
                 const channelsIds = Array.from(stream.spaceContent.spaceChannelsMetadata.keys())
                 const channelCreatedEvents: StreamTimelineEvent[] = []
 
-                for (const channelId of channelsIds) {
+                let firstData = true
+
+                const fetchChannelStats = async (channelId: string) => {
                     const channelStats = await withAbort(
                         () => getChannelStats(client, channelId),
                         abortController,
@@ -171,28 +189,32 @@ export const useFetchUnauthenticatedActivity = (townId: string) => {
                     if (!channelStats) {
                         return
                     }
+
                     channelCreatedEvents.concat(channelStats.channelInception)
-                    setChannelStats((s) => {
-                        const activeUsers = Array.from(
-                            new Set<string>([...s.activeUsers, ...channelStats.activeUsers]),
-                        )
-                        return {
-                            numMessages: s.numMessages + channelStats.numMessages,
-                            numActiveUsers: activeUsers.length,
-                            activeUsers,
-                        }
-                    })
+
+                    if (firstData) {
+                        // prevent appending data until first fetch is done
+                        firstData = false
+                        setChannelStats(townId, {
+                            numMessages: channelStats.numMessages,
+                            activeUsers: Array.from(channelStats.activeUsers),
+                        })
+                    } else {
+                        appendChannelStats(townId, {
+                            numMessages: channelStats.numMessages,
+                            activeUsers: Array.from(channelStats.activeUsers),
+                        })
+                    }
                 }
+                console.log(
+                    `[TownPageActivity] fetch hook fetchChannelStats (${channelsIds?.length} channels)`,
+                )
+                await Promise.all(channelsIds.map((channelId) => fetchChannelStats(channelId)))
 
-                setTownStats((currentStats) => {
-                    if (!currentStats) {
-                        return currentStats
-                    }
+                console.log('[TownPageActivity] fetch hook fetchChannelStats done')
 
-                    return {
-                        ...currentStats,
-                        latestCreatedChannels: getLatestCreatedChannels(channelCreatedEvents),
-                    }
+                setTownStats(townId, {
+                    latestCreatedChannels: getLatestCreatedChannels(channelCreatedEvents),
                 })
 
                 setIsLoading(false)
@@ -208,6 +230,7 @@ export const useFetchUnauthenticatedActivity = (townId: string) => {
             abortController.abort()
         }
     }, [
+        appendChannelStats,
         authStatus,
         riverChain,
         riverChainConfig,
@@ -229,7 +252,7 @@ export const useFetchUnauthenticatedActivity = (townId: string) => {
 async function getChannelStats(client: UnauthenticatedClient, channelId: string) {
     console.log('TownPageActivity fetch channel', channelId)
     const streamView = await client.getStream(channelId)
-    await client.scrollbackToDate(streamView, Date.now() - WEEK_MS)
+    await client.scrollbackToDate(streamView, DAY_MS)
     const channelMessages = streamView.timeline.filter(
         (x) =>
             isRemoteEvent(x) &&
@@ -271,14 +294,15 @@ function initialJoinedUsers(stream: StreamStateView) {
     }) satisfies ActivityEvent[]
 }
 
-function getJoinedUsersAfterScrollback(timeline: StreamTimelineEvent[]) {
+function getJoinedUsersAfterScrollback(timeline: StreamTimelineEvent[], ms: number) {
     return timeline
         .flatMap((e) => (isRemoteEvent(e) ? e : undefined))
         .filter(notUndefined)
         .filter(
             (s) =>
                 s?.remoteEvent.event.payload.value?.content.case === 'membership' &&
-                s.remoteEvent.event.payload.value?.content.value?.op === MembershipOp.SO_JOIN,
+                s.remoteEvent.event.payload.value?.content.value?.op === MembershipOp.SO_JOIN &&
+                s.createdAtEpochMs > Date.now() - ms,
         )
         .map((s) => {
             if (s.remoteEvent.event.payload.value?.content.case === 'membership') {

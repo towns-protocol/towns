@@ -1,5 +1,5 @@
 import { AnimatePresence, animate } from 'framer-motion'
-import React, { useEffect, useMemo, useRef } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useContractSpaceInfo } from 'use-towns-client'
 import { FadeInBox } from '@components/Transitions'
 import { Box, Icon, IconName, Paragraph, Stack, Text } from '@ui'
@@ -7,13 +7,20 @@ import { useDevice } from 'hooks/useDevice'
 import { shortAddress } from 'ui/utils/utils'
 import { AvatarWithoutDot } from '@components/Avatar/Avatar'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
-import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { useFetchUnauthenticatedActivity } from './useFetchUnauthenticatedActivity'
 
 export const TownPageActivity = (props: { townId: string }) => {
-    const { members, townStats, channelStats, isLoading } = useFetchUnauthenticatedActivity(
-        props.townId,
-    )
+    const { townId } = props
+    const {
+        members: _members,
+        townStats: _townsStats,
+        channelStats: _channelStats,
+        isLoading,
+    } = useFetchUnauthenticatedActivity(townId)
+    const members = _members?.[townId]
+    const townStats = _townsStats?.[townId]
+    const channelStats = _channelStats?.[townId]
+
     const spaceId = useSpaceIdFromPathname()
     const { data: spaceInfo } = useContractSpaceInfo(spaceId)
 
@@ -48,13 +55,13 @@ export const TownPageActivity = (props: { townId: string }) => {
                 body: `new message${channelStats?.numMessages > 1 ? 's' : ''} were sent`,
             })
 
-        !!channelStats?.numActiveUsers &&
+        !!channelStats?.activeUsers?.length &&
             activities.push({
                 icon: 'sun',
                 title: 'In the past 24h',
-                value: channelStats?.numActiveUsers,
+                value: channelStats?.activeUsers.length,
                 body: `${
-                    channelStats.numActiveUsers > 1 ? 'people were' : 'member was'
+                    channelStats.activeUsers.length > 1 ? 'people were' : 'member was'
                 } active in the town`,
             })
 
@@ -94,6 +101,14 @@ export const TownPageActivity = (props: { townId: string }) => {
     const { isTouch } = useDevice()
     const maxMembers = isTouch ? 7 : 10
 
+    const [cachedActivities] = useState(activities)
+    // there might be a gap between cached and newly fetched activities, prevent
+    // this and only show new activities once they are substantial
+    const renderedActivities =
+        !isLoading || !cachedActivities || activities.length >= cachedActivities.length
+            ? activities
+            : cachedActivities
+
     return (
         <AnimatePresence>
             <Stack gap="x4">
@@ -130,36 +145,40 @@ export const TownPageActivity = (props: { townId: string }) => {
                     </FadeInBox>
                 )}
 
-                <Box gap="md" key="activities">
-                    <Stack horizontal gap alignItems="center">
-                        <Text strong size="md">
-                            Activity
-                        </Text>
-                        {isLoading && <ButtonSpinner height="height_sm" />}
-                    </Stack>
-
-                    {activities.map((a, i) => (
-                        <Stack
-                            horizontal
-                            gap
-                            key={a.title + a.body + `${i}`}
-                            alignItems="center"
-                            paddingBottom="sm"
-                        >
-                            <Box centerContent width="x6" shrink={false}>
-                                {a.icon && <Icon type={a.icon} size="square_md" color="gray2" />}
-                            </Box>
-                            <Box grow gap="paragraph">
-                                <Paragraph size="md" color="gray2">
-                                    {a.title}
-                                </Paragraph>
-                                <Text fontSize={isTouch ? 'md' : 'lg'} color="gray1">
-                                    {a.value !== undefined && <Counter value={a.value} />} {a.body}
-                                </Text>
-                            </Box>
+                {renderedActivities.length > 0 && (
+                    <FadeInBox gap="md" key="activities">
+                        <Stack horizontal gap alignItems="center">
+                            <Text strong size="md">
+                                Activity
+                            </Text>
                         </Stack>
-                    ))}
-                </Box>
+
+                        {renderedActivities.map((a, i) => (
+                            <Stack
+                                horizontal
+                                gap
+                                key={a.title + a.body + `${i}`}
+                                alignItems="center"
+                                paddingBottom="sm"
+                            >
+                                <Box centerContent width="x6" shrink={false}>
+                                    {a.icon && (
+                                        <Icon type={a.icon} size="square_md" color="gray2" />
+                                    )}
+                                </Box>
+                                <Box grow gap="paragraph">
+                                    <Paragraph size="md" color="gray2">
+                                        {a.title}
+                                    </Paragraph>
+                                    <Text fontSize={isTouch ? 'md' : 'lg'} color="gray1">
+                                        {a.value !== undefined && <Counter value={a.value} />}{' '}
+                                        {a.body}
+                                    </Text>
+                                </Box>
+                            </Stack>
+                        ))}
+                    </FadeInBox>
+                )}
             </Stack>
         </AnimatePresence>
     )
