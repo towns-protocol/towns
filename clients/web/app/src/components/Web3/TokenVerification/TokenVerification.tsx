@@ -9,19 +9,18 @@ import {
     useUnlinkWalletTransaction,
 } from 'use-towns-client'
 import { useGetEmbeddedSigner } from '@towns/privy'
-import { Button, Grid, Icon, IconButton, MotionBox, Paragraph, Stack, Text } from '@ui'
+import { Button, Icon, IconButton, MotionBox, Paragraph, Stack, Text } from '@ui'
 import { useErrorToast } from 'hooks/useErrorToast'
-import { useEnvironment } from 'hooks/useEnvironmnet'
-import { isTouch } from 'hooks/useDevice'
 import { useJoinTown } from 'hooks/useJoinTown'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { TokenGatingMembership, useTokensGatingMembership } from 'hooks/useTokensGatingMembership'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { TokenDetailsWithWalletMatch } from 'routes/RoleRestrictedChannelJoinPanel'
+import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { FullPanelOverlay, LinkedWallet, useConnectThenLink } from '../WalletLinkingPanel'
 import { mapToErrorMessage } from '../utils'
 import { currentWalletLinkingStore, useTokenBalances } from './tokenStatus'
-import { TokenBox } from './TokenBox'
 
 export function TokenVerification({ onHide, spaceId }: { spaceId: string; onHide: () => void }) {
     const { data: linkedWallets } = useLinkedWallets()
@@ -69,8 +68,13 @@ export function TokenVerification({ onHide, spaceId }: { spaceId: string; onHide
                 </Text>
                 <Text color="gray1">{`To join this town, you need to prove ownership of the following digital asset(s):`}</Text>
 
-                <Content tokensGatingMembership={tokensGatingMembership}>
-                    {linkedWallets?.length ? <Paragraph strong>Linked Wallets</Paragraph> : null}
+                <Content
+                    linkedWallets={linkedWallets}
+                    tokensGatingMembership={tokensGatingMembership}
+                >
+                    {linkedWallets && linkedWallets.length > 1 ? (
+                        <Paragraph strong>Linked Wallets</Paragraph>
+                    ) : null}
                     {linkedWallets !== undefined &&
                         linkedWallets
                             // exclude showing the aaAdress in the list of linked wallets for digital asset requirement
@@ -98,17 +102,15 @@ export function TokenVerification({ onHide, spaceId }: { spaceId: string; onHide
 
 function Content({
     tokensGatingMembership,
+    linkedWallets,
     children,
 }: PropsWithChildren<{
+    linkedWallets: string[] | undefined
     tokensGatingMembership: TokenGatingMembership
 }>) {
-    const tokensLength = tokensGatingMembership.tokens.length
-    const { baseChain } = useEnvironment()
-    const chainId = baseChain.id
-    const columns = isTouch() ? 1 : tokensLength > 2 ? 3 : tokensLength > 1 ? 2 : 1
-    const { data: tokenBalances, isLoading: isLoadingBalances } = useTokenBalances({
-        chainId,
-        tokensGatingMembership: tokensGatingMembership.tokens,
+    const { data: tokensInWallet, isLoading: isLoadingTokensInWallet } = useTokenBalances({
+        tokens: tokensGatingMembership.tokens,
+        refetchInterval: 4_000,
     })
     const noAssets = currentWalletLinkingStore((s) => s.noAssets)
     const spaceId = useSpaceIdFromPathname()
@@ -144,7 +146,7 @@ function Content({
     // but entitlement is somewhat broken atm
     // also this will update at inteveral of 2s and need to adjust useHasPermission to allow for that
     const allTokensSuccessful =
-        tokenBalances?.length && tokenBalances?.every((t) => t.balance && t.balance > 0)
+        tokensInWallet?.length && tokensInWallet?.every((t) => t.data?.status === 'success')
 
     const onJoinClick = useCallback(async () => {
         if (isJoining) {
@@ -155,20 +157,33 @@ function Content({
         setIsJoining(false)
     }, [isJoining, joinSpace])
 
+    if (linkedWallets === undefined || isLoadingTokensInWallet) {
+        return (
+            <Stack centerContent height="x20">
+                <ButtonSpinner />
+            </Stack>
+        )
+    }
+
     return (
         <>
-            <Grid horizontal centerContent columns={columns}>
-                {tokensGatingMembership.tokens.map((token) => {
-                    return (
-                        <TokenBox
-                            key={token.address as Address}
-                            token={token}
-                            tokensLength={tokensLength}
-                            chainId={chainId}
-                        />
-                    )
-                })}
-            </Grid>
+            <Stack width="100%" gap="sm">
+                {isLoadingTokensInWallet ? (
+                    <Stack centerContent height="x16" background="negative">
+                        <ButtonSpinner />
+                    </Stack>
+                ) : (
+                    tokensGatingMembership.tokens.map((token) => {
+                        return (
+                            <TokenDetailsWithWalletMatch
+                                key={token.address as Address}
+                                tokensInWallet={tokensInWallet}
+                                token={token}
+                            />
+                        )
+                    })
+                )}
+            </Stack>
 
             {allTokensSuccessful ? (
                 <Button
@@ -182,19 +197,21 @@ function Content({
                 </Button>
             ) : (
                 <>
-                    <MotionBox
-                        inset="xs"
-                        padding="none"
-                        opacity="transparent"
-                        animate={{
-                            opacity: noAssets ? 1 : 0,
-                            bottom: noAssets ? '50px' : 0,
-                        }}
-                    >
-                        <Text color="error" size="sm">
-                            No assets found in wallet
-                        </Text>
-                    </MotionBox>
+                    {linkedWallets && linkedWallets.length > 1 ? (
+                        <MotionBox
+                            inset="xs"
+                            padding="none"
+                            opacity="transparent"
+                            animate={{
+                                opacity: noAssets ? 1 : 0,
+                                bottom: noAssets ? '50px' : 0,
+                            }}
+                        >
+                            <Text color="error" size="sm">
+                                Wallet missing assets
+                            </Text>
+                        </MotionBox>
+                    ) : null}
 
                     {children}
 
@@ -204,13 +221,6 @@ function Content({
                     </Button>
 
                     {isLoadingLinkingWallet && <FullPanelOverlay text="Linking Wallet" />}
-                    {isLoadingBalances && (
-                        <FullPanelOverlay
-                            opacity="opaque"
-                            text="Checking assets in your wallets"
-                            background="level1"
-                        />
-                    )}
                 </>
             )}
         </>

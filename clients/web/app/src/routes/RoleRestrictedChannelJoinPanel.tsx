@@ -31,7 +31,7 @@ import { useConnectThenLink } from '@components/Web3/WalletLinkingPanel'
 import { PrivyWrapper } from 'privy/PrivyProvider'
 import {
     checkWalletsForTokens2QueryDataBalances,
-    useWatchLinkedWalletsForToken2,
+    useTokenBalances,
 } from '@components/Web3/TokenVerification/tokenStatus'
 import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast } from '@components/Notifications/StandardToast'
@@ -288,10 +288,9 @@ function RoleAccordion(props: {
         qualifiesForUserEntitlement,
     } = getGeneralEntitlmemntData({ role, wallets })
 
-    const { data: tokensInWallet, isLoading: isLoadingTokensInWallet } =
-        useWatchLinkedWalletsForToken2({
-            tokens,
-        })
+    const { data: tokensInWallet, isLoading: isLoadingTokensInWallet } = useTokenBalances({
+        tokens,
+    })
 
     const hasAllTokens = tokensInWallet?.every((d) => d.data?.status === 'success')
 
@@ -361,10 +360,10 @@ function RoleAccordion(props: {
     )
 }
 
-function TokenDetailsWithWalletMatch(props: {
+export function TokenDetailsWithWalletMatch(props: {
     token: TokenEntitlement
-    tokensInWallet: ReturnType<typeof useWatchLinkedWalletsForToken2>['data']
-    tone: 'default' | 'lighter'
+    tokensInWallet: ReturnType<typeof useTokenBalances>['data']
+    tone?: 'default' | 'lighter'
 }) {
     const { token, tokensInWallet, tone } = props
     const match = tokensInWallet?.find((t) => t.data?.tokenAddress === token.address)

@@ -12,10 +12,10 @@ import { NetworkName } from '@components/Tokens/TokenSelector/NetworkName'
 export function TokenDetails(props: {
     token: TokenEntitlement
     userOwnsToken?: boolean
-    tone: 'default' | 'lighter'
+    tone?: 'default' | 'lighter'
 }) {
     const { token, userOwnsToken, tone: _tone } = props
-    const tone = _tone ?? 'gray2'
+    const tone = _tone ?? 'default'
     const { data: tokenDataWithChainId } = useTokenMetadataForChainId(token.address, token.chainId)
     const [compactView, setCompactView] = useState(false)
     const containerRef = useRef<HTMLDivElement>(null)
