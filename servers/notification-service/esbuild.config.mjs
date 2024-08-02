@@ -15,4 +15,11 @@ build({
     ".ts": "ts",
     ".wasm": "file",
   },
+  external: [
+    // esbuild cannot bundle native modules
+    "@datadog/native-metrics",
+
+    // required if you use profiling
+    "@datadog/pprof",
+  ],
 }).catch(() => process.exit(1));

@@ -169,7 +169,8 @@ resource "aws_iam_role_policy" "iam_policy" {
           "${aws_secretsmanager_secret.notification_vapid_key.arn}",
           "${var.apns_auth_key_secret_arn}",
           "${aws_secretsmanager_secret.push_notification_auth_token_secret.arn}",
-          "${local.global_remote_state.notification_service_db_password_secret.arn}"
+          "${local.global_remote_state.notification_service_db_password_secret.arn}",
+          "${local.global_remote_state.river_global_dd_agent_api_key.arn}",
         ]
       },
       {
@@ -326,6 +327,14 @@ resource "aws_ecs_task_definition" "fargate_task_definition" {
       {
         name  = "LOG_LEVEL",
         value = "debug"
+      },
+      {
+        name  = "TRACING_ENABLED",
+        value = "true"
+      },
+      {
+        name  = "PROFILING_ENABLED",
+        value = "true"
       }
     ]
 
@@ -337,6 +346,47 @@ resource "aws_ecs_task_definition" "fargate_task_definition" {
         "awslogs-stream-prefix" = local.local_name
       }
     }
+    }, {
+    name      = "dd-agent"
+    image     = "public.ecr.aws/datadog/agent:7"
+    essential = true
+    portMappings = [{
+      "containerPort" : 8126,
+      "hostPort" : 8126,
+      "protocol" : "tcp"
+      }, {
+      "containerPort" : 4317,
+      "hostPort" : 4317,
+      "protocol" : "tcp"
+    }]
+
+    secrets = [{
+      name      = "DD_API_KEY"
+      valueFrom = local.global_remote_state.river_global_dd_agent_api_key.arn
+    }]
+
+    environment = [
+      {
+        name  = "DD_SITE",
+        value = "datadoghq.com"
+      },
+      {
+        name  = "ECS_FARGATE",
+        value = "true"
+      },
+      {
+        name  = "DD_TAGS",
+        value = "env:${terraform.workspace}"
+      },
+      {
+        name  = "DD_APM_ENABLED",
+        value = "true"
+      },
+      {
+        name  = "DD_PROFILING_ENABLED",
+        value = "true"
+      }
+    ]
     }
   ])
 

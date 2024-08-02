@@ -1,3 +1,5 @@
+import './tracer' // must come before importing any instrumented module.
+
 import gracefulShutdown from 'http-graceful-shutdown'
 import { initializeApp } from './application/app'
 import { env } from './application/utils/environment'
