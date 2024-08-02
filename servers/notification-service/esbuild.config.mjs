@@ -10,6 +10,7 @@ build({
   format: "cjs",
   outfile: "dist/server.cjs",
   plugins: [wasmLoader()],
+  assetNames: "[name]",
   loader: {
     ".ts": "ts",
     ".wasm": "file",
