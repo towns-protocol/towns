@@ -170,7 +170,7 @@ resource "aws_iam_role_policy" "iam_policy" {
           "${var.apns_auth_key_secret_arn}",
           "${aws_secretsmanager_secret.push_notification_auth_token_secret.arn}",
           "${local.global_remote_state.notification_service_db_password_secret.arn}",
-          "${local.global_remote_state.river_global_dd_agent_api_key.arn}",
+          "${local.global_remote_state.river_global_dd_agent_api_key.arn}"
         ]
       },
       {
