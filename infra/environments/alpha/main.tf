@@ -269,11 +269,10 @@ data "cloudflare_zone" "zone" {
   name = module.global_constants.primary_hosted_zone_name
 }
 
-# TODO: add cf record for the app after creating the render app
-# resource "cloudflare_record" "app_dns" {
-#   zone_id = data.cloudflare_zone.zone.id
-#   name    = "app.${terraform.workspace}"
-#   value   = "gamma-rw7y.onrender.com"
-#   type    = "CNAME"
-#   ttl     = 60
-# }
+resource "cloudflare_record" "app_dns" {
+  zone_id = data.cloudflare_zone.zone.id
+  name    = "app.${terraform.workspace}"
+  value   = "towns-server-alpha.onrender.com"
+  type    = "CNAME"
+  ttl     = 60
+}
