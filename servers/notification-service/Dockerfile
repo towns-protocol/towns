@@ -23,6 +23,9 @@ RUN apk add --no-cache bash
 COPY --from=base /monorepo/servers/notification-service/scripts /monorepo/servers/notification-service/scripts
 COPY --from=base /monorepo/servers/notification-service/dist /monorepo/servers/notification-service/dist
 COPY --from=base /monorepo/servers/notification-service/package.json /monorepo/servers/notification-service/package.json
+COPY --from=base /monorepo/node_modules /monorepo/node_modules
+COPY --from=base /monorepo/.yarnrc.yml /monorepo/.yarnrc.yml
+COPY --from=base /monorepo/.yarn /monorepo/.yarn
 
 # Ensure the scripts have execution permission
 RUN chmod +x /monorepo/servers/notification-service/scripts/run.sh
