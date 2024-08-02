@@ -119,18 +119,6 @@ jobs:
             - name: Unit Tests
               run: yarn test:unit
 
-            # If CI failed, we send a slack notification
-            - name: Slack notification
-              if: failure() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
-              uses: rtCamp/action-slack-notify@v2
-              env:
-                  SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
-                  SLACK_TITLE: 'Failure'
-                  SLACK_USERNAME: 'CI'
-                  SLACK_ICON_EMOJI: ':boom:'
-                  SLACK_COLOR: '#FF0000'
-                  SLACK_MESSAGE: 'CI Failure on ${{ github.repository }} ${{ vars.GOALIE_SLACK_GROUP_ID }}'
-
     Multinode_Ent:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_multinode_ent
@@ -262,9 +250,14 @@ jobs:
                       ./river/core/xchain/run_files/
                       !./river/core/xchain/run_files/**/bin/**
 
-            # If CI failed, we send a slack notification
+    Slack_Notification:
+        # NOTE: We should make sure that new jobs get added here
+        needs: [Common_CI, Multinode_Ent]
+        if: failure()
+        runs-on: ubuntu-latest
+        steps:
             - name: Slack notification
-              if: failure() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+              if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
               uses: rtCamp/action-slack-notify@v2
               env:
                   SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
