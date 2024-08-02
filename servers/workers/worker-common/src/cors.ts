@@ -13,7 +13,7 @@ export function getAllowedOrigins(env: Environment): string[] {
                 'https://app-test.towns.com',
                 'https://app.towns.com',
                 'https://fast-app.towns.com',
-                'https://app.alpha.towns.com/',
+                'https://app.alpha.towns.com',
                 'https://server.omega.towns.com', // TODO: remove after migrating omega off the static app
                 'https://app-test-beta.towns.com',
                 'https://app.gamma.towns.com',
