@@ -154,6 +154,7 @@ export class UserOps {
             sequenceName,
             functionHashForPaymasterProxy: args.functionHashForPaymasterProxy,
             spaceId: args.spaceId,
+            txValue: args.value,
         })
 
         const timeTracker = this.timeTracker
@@ -1171,7 +1172,7 @@ export class UserOps {
         })
     }
 
-    private async getBuilder(args: UserOpParams) {
+    public async getBuilder(args: { signer: ethers.Signer }) {
         if (!this.builder) {
             const { signer } = args
 
@@ -1237,17 +1238,13 @@ export class UserOps {
                         functionHashForPaymasterProxy,
                         spaceId,
                         preverificationGasMultiplierValue,
+                        txValue,
                     } = this.middlewareVars
-                    return promptUser(
-                        preverificationGasMultiplierValue,
-                        this.spaceDapp,
-                        args.value,
-                        {
-                            sequenceName,
-                            timeTracker,
-                            stepPrefix: functionHashForPaymasterProxy,
-                        },
-                    )(ctx, {
+                    return promptUser(preverificationGasMultiplierValue, this.spaceDapp, txValue, {
+                        sequenceName,
+                        timeTracker,
+                        stepPrefix: functionHashForPaymasterProxy,
+                    })(ctx, {
                         provider: this.spaceDapp?.provider,
                         config: this.spaceDapp?.config,
                         rpcUrl: this.aaRpcUrl,

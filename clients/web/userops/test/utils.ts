@@ -172,12 +172,14 @@ export async function createFixedPriceSpace({
     signer,
     rolePermissions,
     spaceName,
+    price,
 }: {
     userOps: TestUserOps
     spaceDapp: ISpaceDapp
     signer: ethers.Signer
     rolePermissions: Permission[]
     spaceName?: string
+    price?: string
 }): Promise<ISendUserOperationResponse> {
     const signerAddress = await signer.getAddress()
     const { spaceName: generatedSpaceName, channelName: channelName } =
@@ -190,7 +192,7 @@ export async function createFixedPriceSpace({
         settings: {
             name: 'Gated Space',
             symbol: 'MEMBER',
-            price: ethers.utils.parseEther('0.5'),
+            price: ethers.utils.parseEther(price ?? '0.5'),
             maxSupply: 100,
             duration: 0,
             currency: ethers.constants.AddressZero,
@@ -274,6 +276,6 @@ export async function isSmartAccountDeployed(signer: ethers.Signer, userOps: Tes
  * So this is a hack to slow down the time between userops
  * @param sleepTime
  */
-export async function sleepBetweenTxs(sleepTime = 5_000) {
+export async function sleepBetweenTxs(sleepTime = 2_000) {
     return new Promise((resolve) => setTimeout(resolve, sleepTime))
 }

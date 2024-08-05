@@ -11,12 +11,6 @@ test('a userop that fails because of preverification runs again with an increase
     )
     await alice.ready
 
-    const bob = new LocalhostWeb3Provider(
-        process.env.AA_RPC_URL as string,
-        generatePrivyWalletIfKey(process.env.PRIVY_WALLET_PRIVATE_KEY_2),
-    )
-    await bob.ready
-
     const { spaceDapp, userOps: userOpsAlice } = createSpaceDappAndUserops(alice)
     const useropClient = await userOpsAlice.getUserOpClient()
     expect(userOpsAlice.middlewareVars.preverificationGasMultiplierValue).toBe(1)

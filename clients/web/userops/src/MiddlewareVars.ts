@@ -1,7 +1,9 @@
 import { FunctionHash, TimeTrackerEvents } from './types'
+import { BigNumberish } from 'ethers'
 
 type MiddlewareProps = {
     preverificationGasMultiplierValue: number
+    txValue?: BigNumberish | undefined
     sequenceName?: TimeTrackerEvents | undefined
     functionHashForPaymasterProxy?: FunctionHash | undefined
     spaceId?: string | undefined
@@ -15,14 +17,22 @@ export class MiddlewareVars {
     }
 
     public reset(
-        props: Pick<MiddlewareProps, 'sequenceName' | 'functionHashForPaymasterProxy' | 'spaceId'>,
+        props: Pick<
+            MiddlewareProps,
+            'sequenceName' | 'functionHashForPaymasterProxy' | 'spaceId' | 'txValue'
+        >,
     ) {
         this.middlewareProps = {
             preverificationGasMultiplierValue: 1,
             sequenceName: props.sequenceName,
             functionHashForPaymasterProxy: props.functionHashForPaymasterProxy,
             spaceId: props.spaceId,
+            txValue: props.txValue,
         }
+    }
+
+    public get txValue() {
+        return this.middlewareProps?.txValue
     }
 
     public get preverificationGasMultiplierValue() {
@@ -55,5 +65,9 @@ export class MiddlewareVars {
 
     public set spaceId(townId: string | undefined) {
         this.middlewareProps.spaceId = townId
+    }
+
+    public set txValue(value: BigNumberish | undefined) {
+        this.middlewareProps.txValue = value
     }
 }
