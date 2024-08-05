@@ -1,6 +1,10 @@
 name: 'Run_river_stress_tests'
 
 on:
+    schedule:
+        # Once per hour
+        - cron: '0 * * * *'
+
     workflow_dispatch:
         inputs:
             environment_name:
