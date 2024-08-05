@@ -17,7 +17,7 @@
         "db:studio": "dotenv -e .env.local -- yarn prisma studio",
         "lint": "eslint . --max-warnings=0",
         "lint:fix": "yarn lint --fix",
-        "start": "node dist/server.cjs",
+        "start": "node --enable-source-maps dist/server.cjs",
         "test": "dotenv -e .env.local.test yarn jest",
         "watch": "node esbuild.watch.mjs"
     },

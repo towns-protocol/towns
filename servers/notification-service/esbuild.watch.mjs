@@ -13,7 +13,7 @@ function startNodeProcess() {
     nodeProcess.kill();
   }
 
-  nodeProcess = spawn("node", ["dist/server.cjs"], {
+  nodeProcess = spawn("node", ["--enable-source-maps", "dist/server.cjs"], {
     stdio: "inherit",
     env: { ...process.env },
   });
