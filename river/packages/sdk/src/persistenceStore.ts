@@ -236,43 +236,36 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
 }
 
 //Linting below is disable as this is a stub class which is used for testing and just follows the interface
+/* eslint-disable @typescript-eslint/no-unused-vars */
 export class StubPersistenceStore implements IPersistenceStore {
-    //eslint-disable-next-line @typescript-eslint/no-unused-vars
     async saveCleartext(eventId: string, cleartext: string) {
         return Promise.resolve()
     }
 
-    //eslint-disable-next-line @typescript-eslint/no-unused-vars
     async getCleartext(eventId: string) {
         return Promise.resolve(undefined)
     }
 
-    //eslint-disable-next-line @typescript-eslint/no-unused-vars
     async getCleartexts(eventIds: string[]) {
         return Promise.resolve(undefined)
     }
 
-    //eslint-disable-next-line @typescript-eslint/no-unused-vars
     async getSyncedStream(streamId: string) {
         return Promise.resolve(undefined)
     }
 
-    //eslint-disable-next-line @typescript-eslint/no-unused-vars
     async saveSyncedStream(streamId: string, syncedStream: PersistedSyncedStream) {
         return Promise.resolve()
     }
 
-    //eslint-disable-next-line @typescript-eslint/no-unused-vars
     async saveMiniblock(streamId: string, miniblock: ParsedMiniblock) {
         return Promise.resolve()
     }
 
-    //eslint-disable-next-line @typescript-eslint/no-unused-vars
     async saveMiniblocks(streamId: string, miniblocks: ParsedMiniblock[]) {
         return Promise.resolve()
     }
 
-    /* eslint-disable @typescript-eslint/no-unused-vars */
     async getMiniblock(
         streamId: string,
         miniblockNum: bigint,

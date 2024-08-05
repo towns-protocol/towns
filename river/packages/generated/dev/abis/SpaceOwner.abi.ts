@@ -250,6 +250,19 @@ export default [
   },
   {
     "type": "function",
+    "name": "getDefaultUri",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "getFactory",
     "inputs": [],
     "outputs": [
@@ -565,6 +578,19 @@ export default [
         "name": "approved",
         "type": "bool",
         "internalType": "bool"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setDefaultUri",
+    "inputs": [
+      {
+        "name": "uri",
+        "type": "string",
+        "internalType": "string"
       }
     ],
     "outputs": [],
@@ -912,6 +938,19 @@ export default [
   },
   {
     "type": "event",
+    "name": "SpaceOwner__SetDefaultUri",
+    "inputs": [
+      {
+        "name": "uri",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "SpaceOwner__SetFactory",
     "inputs": [
       {
@@ -1129,12 +1168,22 @@ export default [
   },
   {
     "type": "error",
+    "name": "SpaceOwner__DefaultUriNotSet",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "SpaceOwner__OnlyFactoryAllowed",
     "inputs": []
   },
   {
     "type": "error",
     "name": "SpaceOwner__OnlySpaceOwnerAllowed",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "SpaceOwner__SpaceNotFound",
     "inputs": []
   },
   {

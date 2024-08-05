@@ -1,6 +1,7 @@
 package shared
 
 import (
+	"bytes"
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
@@ -43,21 +44,57 @@ func AddressFromSpaceId(spaceId StreamId) (common.Address, error) {
 	return common.BytesToAddress(spaceId[1:21]), nil
 }
 
+func MakeSpaceId() (StreamId, error) {
+	var b [32]byte
+	b[0] = STREAM_SPACE_BIN
+	_, err := rand.Read(b[1:21])
+	if err != nil {
+		return StreamId{}, RiverError(Err_INTERNAL, "failed to create random bytes", "err", err)
+	}
+	return StreamIdFromBytes(b[:])
+}
+
 func MakeChannelId(spaceId StreamId) (StreamId, error) {
 	// replace the first byte with the channel type
 	// copy the 20 bytes of the spaceId address
 	// fill the rest with random bytes
+	b, err := makeChannelIdPrefixBytes(spaceId)
+	if err != nil {
+		return StreamId{}, err
+	}
+	_, err = rand.Read(b[21:])
+	if err != nil {
+		return StreamId{}, RiverError(Err_INTERNAL, "failed to create random bytes", "err", err)
+	}
+	return StreamIdFromBytes(b[:])
+}
+
+func makeChannelIdPrefixBytes(spaceId StreamId) (StreamId, error) {
+	// replace the first byte with the channel type
+	// copy the 20 bytes of the spaceId address
+	// leave the rest unwritten, which defaults to zeroes
 	if spaceId.Type() != STREAM_SPACE_BIN {
 		return StreamId{}, RiverError(Err_BAD_STREAM_ID, "invalid stream type for space", "streamId", spaceId)
 	}
 	var b [32]byte
 	b[0] = STREAM_CHANNEL_BIN
 	copy(b[1:], spaceId[1:21])
-	_, err := rand.Read(b[21:])
-	if err != nil {
-		return StreamId{}, RiverError(Err_INTERNAL, "failed to create random bytes", "err", err)
-	}
 	return StreamIdFromBytes(b[:])
+}
+
+func MakeDefaultChannelId(spaceId StreamId) (StreamId, error) {
+	bytes, err := makeChannelIdPrefixBytes(spaceId)
+	if err != nil {
+		return StreamId{}, err
+	}
+	return StreamIdFromBytes(bytes[:])
+}
+
+func IsDefaultChannelId(channelId StreamId) bool {
+	if channelId.Type() != STREAM_CHANNEL_BIN {
+		return false
+	}
+	return bytes.Equal(channelId[21:], make([]byte, 11))
 }
 
 func UserStreamIdFromBytes(addr []byte) (StreamId, error) {

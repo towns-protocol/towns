@@ -33,16 +33,18 @@ export const ChannelsBlock = ({ changeChannel }: ChannelsBlockProps) => {
     return (
         <Block title={`Channels in ${space.metadata?.name || 'Unnamed Space'}`}>
             <CreateChannel variant="secondary" spaceId={spaceId} onChannelCreated={changeChannel} />
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-2">
                 <span className="text-xs">Select a channel to start messaging</span>
-                {space.channelIds.map((channelId) => (
-                    <ChannelInfo
-                        key={`${spaceId}-${channelId}`}
-                        spaceId={space.id}
-                        channelId={channelId}
-                        changeChannel={changeChannel}
-                    />
-                ))}
+                <div className="flex max-h-64 flex-col gap-1 overflow-y-auto">
+                    {space.channelIds.map((channelId) => (
+                        <ChannelInfo
+                            key={`${spaceId}-${channelId}`}
+                            spaceId={space.id}
+                            channelId={channelId}
+                            changeChannel={changeChannel}
+                        />
+                    ))}
+                </div>
             </div>
             {space.channelIds.length === 0 && (
                 <p className="pt-4 text-center text-sm text-secondary-foreground">
@@ -94,7 +96,7 @@ export const CreateChannel = (
         <Block {...rest}>
             <Form {...form}>
                 <form
-                    className="space-y-8"
+                    className="space-y-3"
                     onSubmit={form.handleSubmit(async ({ channelName }) => {
                         if (!signer) {
                             return

@@ -115,3 +115,14 @@ export function isBaseUrlIncluded(baseUrls: string[], fullUrl: string): boolean 
 
     return baseUrls.some((baseUrl) => fullUrlBase === baseUrl.trim())
 }
+
+export const randomUrlSelector = (urls: string) => {
+    const u = urls.split(',')
+    if (u.length === 0) {
+        throw new Error('No urls for backend provided')
+    } else if (u.length === 1) {
+        return u[0]
+    } else {
+        return u[Math.floor(Math.random() * u.length)]
+    }
+}

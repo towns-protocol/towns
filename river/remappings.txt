@@ -1,9 +1,9 @@
 @openzeppelin/=lib/@openzeppelin/
 account-abstraction/=lib/account-abstraction/contracts/
 base64/=lib/base64/
-ds-test/=lib/ds-test/src
-forge-std/=lib/forge-std/src
+ds-test/=lib/ds-test/src/
+forge-std/=lib/forge-std/src/
 hardhat-deploy/=lib/hardhat-deploy/
-@prb/math/=lib/@prb/math/src
-@prb/test/=lib/@prb/test/src
-
+@prb/math/=lib/@prb/math/src/
+@prb/test/=lib/@prb/test/src/
+solady/=lib/solady/src/

@@ -240,12 +240,18 @@ message SpacePayload {
         StreamSettings settings = 2;
     }
 
+    message ChannelSettings {
+        bool autojoin = 1;
+        bool hide_user_join_leave_events = 2;
+    }
+
     message ChannelMetadata {
         reserved 4, 5;
         ChannelOp op = 1;
         bytes channel_id = 2;
         EventRef origin_event = 3;
         int64 updated_at_event_num = 6;
+        ChannelSettings settings = 7;
     }
 
     message ChannelUpdate {
@@ -253,16 +259,29 @@ message SpacePayload {
         ChannelOp op = 1;
         bytes channel_id = 2;
         EventRef origin_event = 3;
+        ChannelSettings settings = 6;
+    }
+
+    message UpdateChannelAutojoin {
+        bytes channel_id = 1;
+        bool autojoin = 2;
+    }
+
+    message UpdateChannelHideUserJoinLeaveEvents {
+        bytes channel_id = 1;
+        bool hide_user_join_leave_events = 2;
     }
 
     oneof content {
         Inception inception = 1;
         ChannelUpdate channel = 2;
         EncryptedData space_image = 3;
+        UpdateChannelAutojoin update_channel_autojoin = 4;
+        UpdateChannelHideUserJoinLeaveEvents update_channel_hide_user_join_leave_events = 5;
     }
 }
 
-/**
+/** 
 * ChannelPayload
 */
 message ChannelPayload {
@@ -276,6 +295,7 @@ message ChannelPayload {
         bytes stream_id = 1;
         bytes space_id = 3;
         StreamSettings settings = 5;
+        SpacePayload.ChannelSettings channel_settings = 7;
     }
 
     message Redaction {

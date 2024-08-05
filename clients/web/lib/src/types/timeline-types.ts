@@ -5,13 +5,14 @@ import {
     ChannelMessage_Post_Content_EmbeddedMessage_Info,
     ChannelMessage_Post_Content_EmbeddedMessage_StaticInfo,
     ChannelMessage_Post_Content_Image_Info,
+    ChunkedMedia_DerivedAESGCM,
     MediaInfo as MediaInfoStruct,
     ChannelOp,
     ChannelProperties,
     FullyReadMarker,
     MiniblockHeader,
     PayloadCaseType,
-    ChunkedMedia_DerivedAESGCM,
+    SpacePayload_ChannelSettings,
 } from '@river-build/proto'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { Channel, Membership, Mention, MessageType } from './towns-types'
@@ -69,6 +70,8 @@ export enum ZTEvent {
     RoomProperties = 'm.room.properties',
     RoomTopic = 'm.room.topic',
     SpaceChild = 'm.space.child',
+    SpaceUpdateAutojoin = 'm.space.update_autojoin',
+    SpaceUpdateHideUserJoinLeaves = 'm.space.update_channel_hide_user_join_leaves',
     SpaceImage = 'm.space.image',
     SpaceParent = 'm.space.parent',
     SpaceUsername = 'm.space.username',
@@ -100,6 +103,8 @@ export type TimelineEvent_OneOf =
     | RoomPropertiesEvent
     | RoomTopicEvent
     | SpaceChildEvent
+    | SpaceUpdateAutojoinEvent
+    | SpaceUpdateHideUserJoinLeavesEvent
     | SpaceImageEvent
     | SpaceParentEvent
     | SpaceUsernameEvent
@@ -299,6 +304,19 @@ export interface SpaceChildEvent {
     kind: ZTEvent.SpaceChild
     childId: string
     channelOp?: ChannelOp
+    channelSettings?: SpacePayload_ChannelSettings
+}
+
+export interface SpaceUpdateAutojoinEvent {
+    kind: ZTEvent.SpaceUpdateAutojoin
+    channelId: string
+    autojoin: boolean
+}
+
+export interface SpaceUpdateHideUserJoinLeavesEvent {
+    kind: ZTEvent.SpaceUpdateHideUserJoinLeaves
+    channelId: string
+    hideUserJoinLeaves: boolean
 }
 
 export interface SpaceImageEvent {
@@ -500,7 +518,14 @@ export function getFallbackContent(
         case ZTEvent.RedactionActionEvent:
             return `Redacts ${content.refEventId} adminRedaction: ${content.adminRedaction}`
         case ZTEvent.SpaceChild:
+            if (content.channelSettings !== undefined) {
+                return `childId: ${content.childId} autojoin: ${content.channelSettings.autojoin} hideUserJoinLeaves: ${content.channelSettings.hideUserJoinLeaveEvents}`
+            }
             return `childId: ${content.childId}`
+        case ZTEvent.SpaceUpdateAutojoin:
+            return `channelId: ${content.channelId} autojoin: ${content.autojoin}`
+        case ZTEvent.SpaceUpdateHideUserJoinLeaves:
+            return `channelId: ${content.channelId} hideUserJoinLeaves: ${content.hideUserJoinLeaves}`
         case ZTEvent.SpaceImage:
             return `SpaceImage`
         case ZTEvent.SpaceParent:

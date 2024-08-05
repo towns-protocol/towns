@@ -95,6 +95,28 @@ contract SpaceOwner is
   }
 
   // =============================================================
+  //                           Uri
+  // =============================================================
+
+  /// @inheritdoc ISpaceOwner
+  function setDefaultUri(string memory uri) external onlyOwner {
+    _setDefaultUri(uri);
+  }
+
+  /// @inheritdoc ISpaceOwner
+  function getDefaultUri() external view returns (string memory) {
+    return _getDefaultUri();
+  }
+
+  function tokenURI(
+    uint256 tokenId
+  ) public view virtual override returns (string memory) {
+    if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
+
+    return _render(tokenId);
+  }
+
+  // =============================================================
   //                           Overrides
   // =============================================================
   function approve(address to, uint256 tokenId) public payable override {
@@ -113,14 +135,6 @@ contract SpaceOwner is
     }
 
     super.setApprovalForAll(operator, approved);
-  }
-
-  function tokenURI(
-    uint256 tokenId
-  ) public view virtual override returns (string memory) {
-    if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
-
-    return _render(tokenId);
   }
 
   function _beforeTokenTransfers(

@@ -144,7 +144,6 @@ const isDev = typeof process !== 'undefined' && process.env.NODE_ENV === 'develo
 
 const makeDlog = (d: Debugger, opts?: DLogOpts): DLogger => {
     if (opts?.printStack) {
-        // eslint-disable-next-line no-console
         d.log = console.error.bind(console)
     }
 

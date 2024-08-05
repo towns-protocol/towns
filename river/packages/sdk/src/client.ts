@@ -15,6 +15,7 @@ import {
     StreamEvent,
     EncryptedData,
     StreamSettings,
+    SpacePayload_ChannelSettings,
     FullyReadMarkers,
     FullyReadMarker,
     Envelope,
@@ -52,8 +53,9 @@ import {
     UserDeviceCollection,
     makeSessionKeys,
 } from '@river-build/encryption'
+import { StreamRpcClient } from './makeStreamRpcClient'
+import { errorContains, getRpcErrorProperty } from './rpcInterceptors'
 import { assert, isDefined } from './check'
-import { errorContains, getRpcErrorProperty, StreamRpcClient } from './makeStreamRpcClient'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
 import {
@@ -116,6 +118,8 @@ import {
     make_MemberPayload_Nft,
     make_MemberPayload_Pin,
     make_MemberPayload_Unpin,
+    make_SpacePayload_UpdateChannelAutojoin,
+    make_SpacePayload_UpdateChannelHideUserJoinLeaveEvents,
     make_SpacePayload_SpaceImage,
 } from './types'
 
@@ -573,6 +577,7 @@ export class Client
         channelTopic: string,
         inChannelId: string | Uint8Array,
         streamSettings?: PlainMessage<StreamSettings>,
+        channelSettings?: PlainMessage<SpacePayload_ChannelSettings>,
     ): Promise<{ streamId: string }> {
         const oChannelId = inChannelId
         const channelId = streamIdAsBytes(oChannelId)
@@ -587,6 +592,7 @@ export class Client
                 streamId: channelId,
                 spaceId: streamIdAsBytes(spaceId),
                 settings: streamSettings,
+                channelSettings: channelSettings,
             }),
         )
         const joinEvent = await makeEvent(
@@ -767,6 +773,49 @@ export class Client
         )
     }
 
+    async updateChannelAutojoin(
+        spaceId: string | Uint8Array,
+        channelId: string | Uint8Array,
+        autojoin: boolean,
+    ) {
+        this.logCall('updateChannelAutojoin', channelId, spaceId, autojoin)
+        assert(isSpaceStreamId(spaceId), 'spaceId must be a valid streamId')
+        assert(isChannelStreamId(channelId), 'channelId must be a valid streamId')
+
+        return this.makeEventAndAddToStream(
+            spaceId, // we send events to the stream of the space where updated channel belongs to
+            make_SpacePayload_UpdateChannelAutojoin({
+                channelId: streamIdAsBytes(channelId),
+                autojoin: autojoin,
+            }),
+            { method: 'updateChannelAutojoin' },
+        )
+    }
+
+    async updateChannelHideUserJoinLeaveEvents(
+        spaceId: string | Uint8Array,
+        channelId: string | Uint8Array,
+        hideUserJoinLeaveEvents: boolean,
+    ) {
+        this.logCall(
+            'updateChannelHideUserJoinLeaveEvents',
+            channelId,
+            spaceId,
+            hideUserJoinLeaveEvents,
+        )
+        assert(isSpaceStreamId(spaceId), 'spaceId must be a valid streamId')
+        assert(isChannelStreamId(channelId), 'channelId must be a valid streamId')
+
+        return this.makeEventAndAddToStream(
+            spaceId, // we send events to the stream of the space where updated channel belongs to
+            make_SpacePayload_UpdateChannelHideUserJoinLeaveEvents({
+                channelId: streamIdAsBytes(channelId),
+                hideUserJoinLeaveEvents,
+            }),
+            { method: 'updateChannelHideUserJoinLeaveEvents' },
+        )
+    }
+
     async updateGDMChannelProperties(streamId: string, channelName: string, channelTopic: string) {
         this.logCall('updateGDMChannelProperties', streamId, channelName, channelTopic)
         assert(isGDMChannelStreamId(streamId), 'streamId must be a valid GDM stream id')
@@ -855,7 +904,8 @@ export class Client
         this.logCall('setSpaceImage', spaceStreamId, mediaStreamId, info)
 
         // create the chunked media to be added
-        const spaceId = contractAddressFromSpaceId(spaceStreamId)
+        const spaceAddress = contractAddressFromSpaceId(spaceStreamId)
+        const context = spaceAddress.toLowerCase()
         const chunkedMedia = new ChunkedMedia({
             info,
             streamId: mediaStreamId,
@@ -863,13 +913,14 @@ export class Client
             encryption: {
                 case: 'derived',
                 value: {
-                    context: spaceId,
+                    context,
                 },
             },
         })
 
         // encrypt the chunked media
-        const { key, iv } = await deriveKeyAndIV(spaceId)
+        // use the lowercased spaceId as the key phrase
+        const { key, iv } = await deriveKeyAndIV(context)
         const { ciphertext } = await encryptAESGCM(chunkedMedia.toBinary(), key, iv)
         const encryptedData = new EncryptedData({
             ciphertext: uint8ArrayToBase64(ciphertext),

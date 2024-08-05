@@ -1,6 +1,6 @@
 import { Err, SyncCookie, SyncOp, SyncStreamsResponse } from '@river-build/proto'
 import { DLogger, dlog, dlogError, shortenHexString } from '@river-build/dlog'
-import { StreamRpcClient, errorContains } from './makeStreamRpcClient'
+import { StreamRpcClient } from './makeStreamRpcClient'
 import { unpackStream, unpackStreamAndCookie } from './sign'
 import { SyncedStreamEvents } from './streamEvents'
 import { SyncedStream } from './syncedStream'
@@ -9,6 +9,7 @@ import { isDefined, logNever } from './check'
 import { nanoid } from 'nanoid'
 import { isMobileSafari } from './utils'
 import { streamIdAsBytes, streamIdAsString } from './id'
+import { errorContains } from './rpcInterceptors'
 
 export enum SyncState {
     Canceling = 'Canceling', // syncLoop, maybe syncId if was syncing, not is was starting or retrying

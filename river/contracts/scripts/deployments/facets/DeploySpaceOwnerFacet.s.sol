@@ -20,6 +20,8 @@ contract DeploySpaceOwnerFacet is FacetHelper, Deployer {
   constructor() {
     addSelector(SpaceOwner.setFactory.selector);
     addSelector(SpaceOwner.getFactory.selector);
+    addSelector(SpaceOwner.setDefaultUri.selector);
+    addSelector(SpaceOwner.getDefaultUri.selector);
     addSelector(SpaceOwner.nextTokenId.selector);
     addSelector(SpaceOwner.mintSpace.selector);
     addSelector(SpaceOwner.getSpaceInfo.selector);

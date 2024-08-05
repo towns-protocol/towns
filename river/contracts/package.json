@@ -21,7 +21,8 @@
         "@openzeppelin/contracts-upgradeable": "^5.0.2",
         "@prb/math": "^4.0.3",
         "account-abstraction": "github:eth-infinitism/account-abstraction",
-        "base64": "github:Brechtpd/base64"
+        "base64": "github:Brechtpd/base64",
+        "solady": "^0.0.228"
     },
     "devDependencies": {
         "@prb/test": "^0.6.4",

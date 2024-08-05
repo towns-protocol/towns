@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 /**
  * @group with-entitilements
  */
@@ -163,10 +162,10 @@ async function expectUserCanJoinChannel(
     ).resolves.toBeTruthy()
 
     // Stream node should allow the join
-    await expect(client.joinStream(channelId!)).toResolve()
+    await expect(client.joinStream(channelId)).toResolve()
     const aliceUserStreamView = (await client.waitForStream(makeUserStreamId(client.userId))!).view
     // Wait for alice's user stream to have the join
-    await waitFor(() => aliceUserStreamView.userContent.isMember(channelId!, MembershipOp.SO_JOIN))
+    await waitFor(() => aliceUserStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN))
 }
 
 async function expectUserCannotJoinChannel(
@@ -498,7 +497,7 @@ describe('channelsWithEntitlements', () => {
             carolProvider,
             spaceId,
             channelId,
-        } = await setupChannelWithCustomRole([], getNftRuleData(testNft1Address as Address))
+        } = await setupChannelWithCustomRole([], getNftRuleData(testNft1Address))
 
         // Link carol's wallet to alice's as root
         await linkWallets(aliceSpaceDapp, aliceProvider.wallet, carolProvider.wallet)
@@ -535,7 +534,7 @@ describe('channelsWithEntitlements', () => {
             carolProvider,
             spaceId,
             channelId,
-        } = await setupChannelWithCustomRole([], getNftRuleData(testNft1Address as Address))
+        } = await setupChannelWithCustomRole([], getNftRuleData(testNft1Address))
 
         log("Joining alice's wallet as a linked wallet to carols root wallet")
         await linkWallets(carolSpaceDapp, carolProvider.wallet, aliceProvider.wallet)
@@ -677,7 +676,7 @@ describe('channelsWithEntitlements', () => {
         const testNft1Address = await getContractAddress('TestNFT1')
         const { alice, aliceSpaceDapp, bob, spaceId, channelId } = await setupChannelWithCustomRole(
             [],
-            getNftRuleData(testNft1Address as Address),
+            getNftRuleData(testNft1Address),
         )
 
         // Alice has no NFTs, so she should not be able to join the channel
@@ -793,7 +792,7 @@ describe('channelsWithEntitlements', () => {
             opType: OperationType.CHECK,
             checkType: CheckOperationType.ERC721,
             chainId: 31337n,
-            contractAddress: testNft1Address as Address,
+            contractAddress: testNft1Address,
             threshold: 1n,
         }
 
@@ -801,7 +800,7 @@ describe('channelsWithEntitlements', () => {
             opType: OperationType.CHECK,
             checkType: CheckOperationType.ERC721,
             chainId: 31337n,
-            contractAddress: testNft2Address as Address,
+            contractAddress: testNft2Address,
             threshold: 1n,
         }
         const two: Operation = {
@@ -819,7 +818,7 @@ describe('channelsWithEntitlements', () => {
                 opType: OperationType.CHECK,
                 checkType: CheckOperationType.ERC721,
                 chainId: 31337n,
-                contractAddress: testNft3Address as Address,
+                contractAddress: testNft3Address,
                 threshold: 1n,
             },
         }

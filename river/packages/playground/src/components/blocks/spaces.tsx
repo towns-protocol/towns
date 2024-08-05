@@ -1,4 +1,4 @@
-import { useCreateSpace, useSpace, useUserSpaces } from '@river-build/react-sdk'
+import { useCreateSpace, useJoinSpace, useSpace, useUserSpaces } from '@river-build/react-sdk'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -21,7 +21,7 @@ type SpacesBlockProps = {
     changeSpace: (spaceId: string) => void
 }
 
-const formSchema = z.object({
+const createSpaceFormSchema = z.object({
     spaceName: z.string().min(1, { message: 'Space name is required' }),
 })
 
@@ -30,6 +30,7 @@ export const SpacesBlock = ({ changeSpace }: SpacesBlockProps) => {
     return (
         <Block title="Spaces">
             <CreateSpace variant="secondary" onCreateSpace={changeSpace} />
+            <JoinSpace variant="secondary" onJoinSpace={changeSpace} />
             <span className="text-xs">Select a space to start messaging</span>
             <div className="flex flex-col gap-1">
                 {spaceIds.map((spaceId) => (
@@ -64,13 +65,63 @@ const SpaceInfo = ({
     )
 }
 
+const joinSpaceFormSchema = z.object({
+    spaceId: z.string().min(1, { message: 'Space Id is required' }),
+})
+export const JoinSpace = (props: { onJoinSpace: (spaceId: string) => void } & BlockProps) => {
+    const { onJoinSpace, ...rest } = props
+    const { joinSpace, isPending } = useJoinSpace()
+    const signer = useEthersSigner()
+
+    const form = useForm<z.infer<typeof joinSpaceFormSchema>>({
+        resolver: zodResolver(joinSpaceFormSchema),
+        defaultValues: { spaceId: '' },
+    })
+
+    return (
+        <Block {...rest}>
+            <Form {...form}>
+                <form
+                    className="space-y-4"
+                    onSubmit={form.handleSubmit(async ({ spaceId }) => {
+                        if (!signer) {
+                            return
+                        }
+                        joinSpace(spaceId, signer).then(() => {
+                            onJoinSpace(spaceId)
+                        })
+                    })}
+                >
+                    <FormField
+                        control={form.control}
+                        name="spaceId"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Join Space</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="spaceId" {...field} />
+                                </FormControl>
+                                <FormDescription>
+                                    The spaceId of the space you want to join.
+                                </FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <Button type="submit"> {isPending ? 'Joining...' : 'Join'}</Button>
+                </form>
+            </Form>
+        </Block>
+    )
+}
+
 export const CreateSpace = (props: { onCreateSpace: (spaceId: string) => void } & BlockProps) => {
     const { onCreateSpace, ...rest } = props
     const { createSpace, isPending } = useCreateSpace()
     const signer = useEthersSigner()
 
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
+    const form = useForm<z.infer<typeof createSpaceFormSchema>>({
+        resolver: zodResolver(createSpaceFormSchema),
         defaultValues: { spaceName: '' },
     })
 
@@ -78,7 +129,7 @@ export const CreateSpace = (props: { onCreateSpace: (spaceId: string) => void } 
         <Block {...rest}>
             <Form {...form}>
                 <form
-                    className="space-y-8"
+                    className="space-y-3"
                     onSubmit={form.handleSubmit(async ({ spaceName }) => {
                         if (!signer) {
                             return

@@ -1130,7 +1130,7 @@ export class SpaceDapp implements ISpaceDapp {
         }
         const [price, limit, currency, feeRecipient, duration, totalSupply, pricingModule] =
             await Promise.all([
-                space.Membership.read.getMembershipPrice(),
+                this.getJoinSpacePrice(spaceId),
                 space.Membership.read.getMembershipLimit(),
                 space.Membership.read.getMembershipCurrency(),
                 space.Ownable.read.owner(),

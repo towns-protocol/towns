@@ -34,7 +34,7 @@ const MSGPACKR_FOLDER = findMsgpackrFolder()
 
 const config: JestConfigWithTsJest = {
     preset: 'ts-jest/presets/default-esm',
-    testEnvironment: './../jest.env.ts',
+    testEnvironment: 'node', // we're using http2 via @connectrpc/connect-node for the stress tests, which is not supported in the jest-browser setup
     testEnvironmentOptions: {
         browsers: ['chrome', 'firefox', 'safari'],
         url: 'http://localhost:80',

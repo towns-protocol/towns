@@ -55,6 +55,14 @@ func GetDefaultConfig() *Config {
 		Archive: ArchiveConfig{
 			PrintStatsPeriod: 10 * time.Second,
 		},
+		DebugEndpoints: DebugEndpointsConfig{
+			Cache:           true,
+			Memory:          true,
+			PProf:           false,
+			Stacks:          true,
+			StacksMaxSizeKb: 5 * 1024,
+			TxPool:          true,
+		},
 	}
 }
 
@@ -149,8 +157,11 @@ type Config struct {
 	// EnableTestAPIs enables additional APIs used for testing.
 	EnableTestAPIs bool
 
-	// Enables go profiler, gc and so on enpoints on /debug
+	// EnableDebugEndpoints is a legacy setting, enables all debug endpoints.
+	// Per endpoint configuration is in DebugEndpoints.
 	EnableDebugEndpoints bool
+
+	DebugEndpoints DebugEndpointsConfig
 }
 
 type TLSConfig struct {
@@ -328,6 +339,15 @@ type MetricsConfig struct {
 
 	// Interface to use with the port above. Usually left empty to bind to all interfaces.
 	Interface string
+}
+
+type DebugEndpointsConfig struct {
+	Cache           bool
+	Memory          bool
+	PProf           bool
+	Stacks          bool
+	StacksMaxSizeKb int
+	TxPool          bool
 }
 
 func (ac *ArchiveConfig) GetReadMiniblocksSize() uint64 {

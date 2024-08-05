@@ -87,6 +87,14 @@ type aeKeyFulfillmentRules struct {
 	fulfillment *MemberPayload_KeyFulfillment
 }
 
+type aeAutojoinRules struct {
+	update *SpacePayload_UpdateChannelAutojoin
+}
+
+type aeHideUserJoinLeaveEventsWrapperRules struct {
+	update *SpacePayload_UpdateChannelHideUserJoinLeaveEvents
+}
+
 /*
 *
 * CanAddEvent
@@ -261,6 +269,18 @@ func (params *aeParams) canAddSpacePayload(payload *StreamEvent_SpacePayload) ru
 				check(params.creatorIsValidNode).
 				check(ru.validSpaceChannelOp)
 		}
+	case *SpacePayload_UpdateChannelAutojoin_:
+		ru := &aeAutojoinRules{content.UpdateChannelAutojoin}
+		return aeBuilder().
+			check(params.creatorIsMember).
+			check(params.channelExistsInSpace(ru)).
+			requireChainAuth(params.spacePayloadChannelModifyRequirements)
+	case *SpacePayload_UpdateChannelHideUserJoinLeaveEvents_:
+		ru := &aeHideUserJoinLeaveEventsWrapperRules{content.UpdateChannelHideUserJoinLeaveEvents}
+		return aeBuilder().
+			check(params.creatorIsMember).
+			check(params.channelExistsInSpace(ru)).
+			requireChainAuth(params.spacePayloadChannelModifyRequirements)
 	case *SpacePayload_SpaceImage:
 		return aeBuilder().
 			check(params.creatorIsMember).
@@ -468,24 +488,24 @@ func (params *aeParams) canAddMemberPayload(payload *StreamEvent_MemberPayload) 
 				check(pinRuls.validPin)
 		}
 	case *MemberPayload_Unpin_:
-		unpinRuls := &aeUnpinRules{
+		unpinRules := &aeUnpinRules{
 			params: params,
 			unpin:  content.Unpin,
 		}
 		if shared.ValidSpaceStreamId(params.streamView.StreamId()) {
 			return aeBuilder().
 				check(params.creatorIsMember).
-				check(unpinRuls.validUnpin).
+				check(unpinRules.validUnpin).
 				requireChainAuth(params.spaceWriteEntitlements)
 		} else if shared.ValidChannelStreamId(params.streamView.StreamId()) {
 			return aeBuilder().
 				check(params.creatorIsMember).
-				check(unpinRuls.validUnpin).
+				check(unpinRules.validUnpin).
 				requireChainAuth(params.channelMessageWriteEntitlements)
 		} else {
 			return aeBuilder().
 				check(params.creatorIsMember).
-				check(unpinRuls.validUnpin)
+				check(unpinRules.validUnpin)
 		}
 	default:
 		return aeBuilder().
@@ -1072,6 +1092,19 @@ func (params *aeParams) channelMessageReactEntitlements() (*auth.ChainAuthArgs, 
 	return chainAuthArgs, nil
 }
 
+func (params *aeParams) spacePayloadChannelModifyRequirements() (*auth.ChainAuthArgs, error) {
+	userId, err := shared.AddressHex(params.parsedEvent.Event.CreatorAddress)
+	if err != nil {
+		return nil, err
+	}
+	chainAuthArgs := auth.NewChainAuthArgsForSpace(
+		*params.streamView.StreamId(),
+		userId,
+		auth.PermissionAddRemoveChannels,
+	)
+	return chainAuthArgs, nil
+}
+
 func (params *aeParams) onEntitlementFailureForUserEvent() (*DerivedEvent, error) {
 	userId, err := shared.AddressHex(params.parsedEvent.Event.CreatorAddress)
 	if err != nil {
@@ -1278,6 +1311,46 @@ func (ru *aeUnpinRules) validUnpin() (bool, error) {
 		}
 	}
 	return false, RiverError(Err_INVALID_ARGUMENT, "message is not pinned")
+}
+
+type HasChannelIdBytes interface {
+	channelIdBytes() ([]byte, error)
+}
+
+func (w *aeAutojoinRules) channelIdBytes() ([]byte, error) {
+	if w.update == nil {
+		return nil, RiverError(Err_INVALID_ARGUMENT, "event is not an update autojoin event")
+	}
+	return w.update.ChannelId, nil
+}
+
+func (w *aeHideUserJoinLeaveEventsWrapperRules) channelIdBytes() ([]byte, error) {
+	if w.update == nil {
+		return nil, RiverError(Err_INVALID_ARGUMENT, "event is not an update channel hide user join leave events event")
+	}
+	return w.update.ChannelId, nil
+}
+
+func (params *aeParams) channelExistsInSpace(spaceChannelPayloadRules HasChannelIdBytes) func() (bool, error) {
+	return func() (bool, error) {
+		channelIdBytes, err := spaceChannelPayloadRules.channelIdBytes()
+		if err != nil {
+			return false, err
+		}
+		channelId, err := shared.StreamIdFromBytes(channelIdBytes)
+		if err != nil {
+			return false, err
+		}
+
+		view := params.streamView.(events.SpaceStreamView)
+		// check if the channel exists
+		_, err = view.GetChannelInfo(channelId)
+		if err != nil {
+			return false, err
+		}
+
+		return true, nil
+	}
 }
 
 func (ru *aeSpaceChannelRules) validSpaceChannelOp() (bool, error) {

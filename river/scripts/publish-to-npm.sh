@@ -102,4 +102,4 @@ fi
 git pull --rebase
 
 # Publish the nightly version to npm
-npx lerna publish from-package --yes --no-private --force-publish --dist-tag nightly --tag-version-prefix "${VERSION_PREFIX}"
+npx lerna publish from-package --yes --no-private --force-publish --tag-version-prefix "${VERSION_PREFIX}"

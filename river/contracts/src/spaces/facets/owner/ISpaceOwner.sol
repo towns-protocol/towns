@@ -18,9 +18,12 @@ interface ISpaceOwnerBase {
 
   error SpaceOwner__OnlyFactoryAllowed();
   error SpaceOwner__OnlySpaceOwnerAllowed();
+  error SpaceOwner__SpaceNotFound();
+  error SpaceOwner__DefaultUriNotSet();
 
   event SpaceOwner__UpdateSpace(address indexed space);
   event SpaceOwner__SetFactory(address factory);
+  event SpaceOwner__SetDefaultUri(string uri);
 }
 
 interface ISpaceOwner is ISpaceOwnerBase {
@@ -29,6 +32,12 @@ interface ISpaceOwner is ISpaceOwnerBase {
 
   /// @notice Get the factory address
   function getFactory() external view returns (address);
+
+  /// @notice Set the default URI
+  function setDefaultUri(string memory uri) external;
+
+  /// @notice Get the default URI
+  function getDefaultUri() external view returns (string memory);
 
   /// @notice Get the next token id that will be used to mint a space
   function nextTokenId() external view returns (uint256);

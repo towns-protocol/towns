@@ -1,6 +1,4 @@
 // todo: fix lint issues and remove exception see: https://linear.app/hnt-labs/issue/HNT-1721/address-linter-overrides-in-matrix-encryption-code-from-sdk
-/* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unused-vars, @typescript-eslint/no-unsafe-argument*/
-
 import { CryptoStore } from './cryptoStore'
 import {
     Account,
@@ -124,9 +122,11 @@ export class EncryptionDevice {
             account.free()
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         this.deviceCurve25519Key = e2eKeys.curve25519
         // note jterzis 07/19/23: deprecating ed25519 key in favor of TDK
         // see: https://linear.app/hnt-labs/issue/HNT-1796/tdk-signature-storage-curve25519-key
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         this.deviceDoNotUseKey = e2eKeys.ed25519
         log(
             `init: deviceCurve25519Key: ${this.deviceCurve25519Key}, fallbackKey ${JSON.stringify(
@@ -347,9 +347,7 @@ export class EncryptionDevice {
      * @param func - Invoked with the unpickled session
      * @returns result of func
      */
-    private unpickleInboundGroupSession<T>(
-        sessionData: InboundGroupSessionData,
-    ): InboundGroupSession {
+    private unpickleInboundGroupSession(sessionData: InboundGroupSessionData): InboundGroupSession {
         const session = this.delegate.createInboundGroupSession()
         session.unpickle(this.pickleKey, sessionData.session)
         return session

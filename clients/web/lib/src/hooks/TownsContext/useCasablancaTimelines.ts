@@ -70,6 +70,8 @@ import {
     PinEvent,
     UnpinEvent,
     SpaceImageEvent,
+    SpaceUpdateAutojoinEvent,
+    SpaceUpdateHideUserJoinLeavesEvent,
 } from '../../types/timeline-types'
 import { useCallback } from 'react'
 import { bin_toHexString, check } from '@river-build/dlog'
@@ -851,7 +853,30 @@ function toTownsContent_SpacePayload(
                     kind: ZTEvent.SpaceChild,
                     childId: childId,
                     channelOp: payload.op,
+                    channelSettings: payload.settings,
                 } satisfies SpaceChildEvent,
+            }
+        }
+        case 'updateChannelAutojoin': {
+            const payload = value.content.value
+            const channelId = streamIdAsString(payload.channelId)
+            return {
+                content: {
+                    kind: ZTEvent.SpaceUpdateAutojoin,
+                    autojoin: payload.autojoin,
+                    channelId: channelId,
+                } satisfies SpaceUpdateAutojoinEvent,
+            }
+        }
+        case 'updateChannelHideUserJoinLeaveEvents': {
+            const payload = value.content.value
+            const channelId = streamIdAsString(payload.channelId)
+            return {
+                content: {
+                    kind: ZTEvent.SpaceUpdateHideUserJoinLeaves,
+                    hideUserJoinLeaves: payload.hideUserJoinLeaveEvents,
+                    channelId: channelId,
+                } satisfies SpaceUpdateHideUserJoinLeavesEvent,
             }
         }
         case 'spaceImage': {

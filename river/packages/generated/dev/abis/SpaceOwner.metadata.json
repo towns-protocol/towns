@@ -174,12 +174,22 @@
       {
         "inputs": [],
         "type": "error",
+        "name": "SpaceOwner__DefaultUriNotSet"
+      },
+      {
+        "inputs": [],
+        "type": "error",
         "name": "SpaceOwner__OnlyFactoryAllowed"
       },
       {
         "inputs": [],
         "type": "error",
         "name": "SpaceOwner__OnlySpaceOwnerAllowed"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "SpaceOwner__SpaceNotFound"
       },
       {
         "inputs": [],
@@ -440,6 +450,19 @@
         ],
         "type": "event",
         "name": "OwnershipTransferred",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "uri",
+            "type": "string",
+            "indexed": false
+          }
+        ],
+        "type": "event",
+        "name": "SpaceOwner__SetDefaultUri",
         "anonymous": false
       },
       {
@@ -734,6 +757,19 @@
             "internalType": "address",
             "name": "",
             "type": "address"
+          }
+        ]
+      },
+      {
+        "inputs": [],
+        "stateMutability": "view",
+        "type": "function",
+        "name": "getDefaultUri",
+        "outputs": [
+          {
+            "internalType": "string",
+            "name": "",
+            "type": "string"
           }
         ]
       },
@@ -1059,6 +1095,18 @@
       {
         "inputs": [
           {
+            "internalType": "string",
+            "name": "uri",
+            "type": "string"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function",
+        "name": "setDefaultUri"
+      },
+      {
+        "inputs": [
+          {
             "internalType": "address",
             "name": "factory",
             "type": "address"
@@ -1274,6 +1322,9 @@
     "userdoc": {
       "kind": "user",
       "methods": {
+        "getDefaultUri()": {
+          "notice": "Get the default URI"
+        },
         "getFactory()": {
           "notice": "Get the factory address"
         },
@@ -1285,6 +1336,9 @@
         },
         "nextTokenId()": {
           "notice": "Get the next token id that will be used to mint a space"
+        },
+        "setDefaultUri(string)": {
+          "notice": "Set the default URI"
         },
         "setFactory(address)": {
           "notice": "Set the factory address that is allowed to mint spaces"
@@ -1305,7 +1359,8 @@
       "base64/=lib/base64/",
       "ds-test/=lib/ds-test/src/",
       "forge-std/=lib/forge-std/src/",
-      "hardhat-deploy/=lib/hardhat-deploy/"
+      "hardhat-deploy/=lib/hardhat-deploy/",
+      "solady/=lib/solady/src/"
     ],
     "optimizer": {
       "enabled": true,
@@ -1539,18 +1594,18 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/owner/ISpaceOwner.sol": {
-      "keccak256": "0x75fef729920165a9cc37f7c212da288bc983bb11e39544a59c657cd9fa2e204a",
+      "keccak256": "0x7baa36238144aae1068d9df8b28c6741cbcf1f26e53c0e429fc62c351623c1f4",
       "urls": [
-        "bzz-raw://1baac2d168e5ee3269b0b6b59ce7df29e63c38ef3d484850ed05f0a56ab59464",
-        "dweb:/ipfs/QmZPxAByZ4PiQFUq45AM8LEJ2YC6n8XxE6nRHgf8Kg7nxZ"
+        "bzz-raw://4d702b63539e714f343482f80de3f342d7870647cbeb01b42abab7dc9805683a",
+        "dweb:/ipfs/QmcTDjumaJfXvAoyT6G38meixc7omy6MUuX33FrRuc8hNw"
       ],
       "license": "MIT"
     },
     "contracts/src/spaces/facets/owner/SpaceOwner.sol": {
-      "keccak256": "0x2aca80d58e543ed53cd74703b88bc0984bbc5fe123248ec6fc6ab85f9fd19dab",
+      "keccak256": "0xb70a369ccc910d3d4397e48be446fb32e308ad951ed337edbd8300f5a1dd87c3",
       "urls": [
-        "bzz-raw://50f09db550b493adcd6bf5922e5a2202483776a1ce1c561d3f772170d5e53253",
-        "dweb:/ipfs/QmUycNN84TbHZuTvXcGYmKizUEvaeEFZfVe98eQRFyiGQU"
+        "bzz-raw://5267c28f5aebfea915e5acce5f83b1f03588772094104f1817f676865ecef8a0",
+        "dweb:/ipfs/QmRQSjcgnspgPVwkJnQ6f4uL4oAc29eKBujVaeAcmy9Lt2"
       ],
       "license": "MIT"
     },
@@ -1563,18 +1618,18 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/owner/SpaceOwnerStorage.sol": {
-      "keccak256": "0xb008bca5ced76250a86fa507a18d1f5e77c2b7bd9fa7df3c11a7c048d148dc5a",
+      "keccak256": "0x150e03077204bb3bc21aae37b86f1b0513c55d07ab21cc22885f1376a1411317",
       "urls": [
-        "bzz-raw://2adccdd8c8b1407dd973b2b1b5cd4be0713d15bd0350ae9b2f7e1b7a9b2ace50",
-        "dweb:/ipfs/QmW6Q8XXhXhDqDSqkBBsN9MqmqEidDPySS83YwXfE7Sx5Y"
+        "bzz-raw://12c4b4d27e0a93ea2a85646a754ffe5b6c02029efeadceafa0bf7a745e08dd1e",
+        "dweb:/ipfs/QmWHR5yFEEaPo9SdtRWj13KeJS5uSRhjYdtZRKHx6CQqaN"
       ],
       "license": "MIT"
     },
     "contracts/src/spaces/facets/owner/SpaceOwnerUriBase.sol": {
-      "keccak256": "0x089ce5c4408e752e52a820135620e312a08e361b5580ddcdd8ab8b4254067367",
+      "keccak256": "0x33836143f0920869898e15cf3c757d749a374689bab39f49931965169ea96c18",
       "urls": [
-        "bzz-raw://71b3db0d8d498344f3290f46f356f635c63ec4e60264855b956ee8c566509fcb",
-        "dweb:/ipfs/QmXkU1ZfWm5kpL9Q9HzYMvzJvhMkAf4k7mMohQGUQxMe6p"
+        "bzz-raw://105995675fa7ed7a6032743e85166fa4d35efb2e214fdd5277b403b440507fdf",
+        "dweb:/ipfs/QmQnJpp7Juz35RPAYWBiMUPh7CnTEUDwoHA2x7vx5vkcPL"
       ],
       "license": "MIT"
     },
@@ -1655,6 +1710,14 @@
       "urls": [
         "bzz-raw://17c12e16d8d66f3af15d8787920bd41ca6c1e7517a212a6b9cebd4b6d38f36fe",
         "dweb:/ipfs/QmcXMnZUXEz6LRKsm3CSvqdPboAzmezavi8bTg2dRxM2yE"
+      ],
+      "license": "MIT"
+    },
+    "lib/solady/src/utils/LibString.sol": {
+      "keccak256": "0xbb90caa572b7f65689b74867ec211fed8cde92714314101f4287d00a40d95ab2",
+      "urls": [
+        "bzz-raw://93d2fa323793f3a2044a58789ea73c82595bb181a449b507637d8a537f9d8a16",
+        "dweb:/ipfs/Qmf4eAuQZTjARJMq2e2fXktpM2MSBow1JuMUPJbisEgZke"
       ],
       "license": "MIT"
     }

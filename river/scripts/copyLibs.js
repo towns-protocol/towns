@@ -10,6 +10,7 @@ const CONTRACT_LIBS = [
     'hardhat-deploy',
     '@prb/math/src',
     '@prb/test/src',
+    'solady/src',
 ]
 
 const findNodeModules = () => {

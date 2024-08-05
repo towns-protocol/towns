@@ -16,6 +16,8 @@
     "dependencies": {
         "@babel/node": "^7.23.9",
         "@bufbuild/protobuf": "^1.9.0",
+        "@connectrpc/connect": "^1.4.0",
+        "@connectrpc/connect-node": "^1.4.0",
         "@river-build/dlog": "workspace:^",
         "@river-build/encryption": "workspace:^",
         "@river-build/proto": "workspace:^",

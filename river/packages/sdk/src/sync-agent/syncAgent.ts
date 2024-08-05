@@ -1,7 +1,7 @@
 import { RiverConnection, RiverConnectionModel } from './river-connection/riverConnection'
 import { RiverConfig } from '../riverConfig'
 import { RiverRegistry, SpaceDapp } from '@river-build/web3'
-import { RetryParams } from '../makeStreamRpcClient'
+import { RetryParams } from '../rpcInterceptors'
 import { Store } from '../store/store'
 import { SignerContext } from '../signerContext'
 import { userIdFromAddress } from '../id'

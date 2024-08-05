@@ -28,7 +28,7 @@ func Make_GenesisMiniblockHeader(parsedEvents []*ParsedEvent) (*MiniblockHeader,
 		}
 	}
 
-	snapshot, err := Make_GenisisSnapshot(parsedEvents)
+	snapshot, err := Make_GenesisSnapshot(parsedEvents)
 	if err != nil {
 		return nil, err
 	}

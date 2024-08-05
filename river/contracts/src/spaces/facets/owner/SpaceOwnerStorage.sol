@@ -29,12 +29,12 @@ library SpaceOwnerStorage {
     mapping(uint256 => address) spaceByTokenId;
     mapping(address => Space) spaceByAddress;
     mapping(address => SpaceMetadata) spaceMetadata;
+    string defaultUri;
   }
 
   function layout() internal pure returns (Layout storage l) {
-    bytes32 slot = STORAGE_SLOT;
     assembly {
-      l.slot := slot
+      l.slot := STORAGE_SLOT
     }
   }
 }

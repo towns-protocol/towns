@@ -115,4 +115,9 @@ export class Spaces extends PersistedObservable<SpacesModel> {
         })
         return { spaceId, defaultChannelId }
     }
+
+    async joinSpace(spaceId: string, ...args: Parameters<Space['join']>) {
+        const space = this.getSpace(spaceId)
+        return space.join(...args)
+    }
 }

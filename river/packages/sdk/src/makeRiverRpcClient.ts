@@ -1,5 +1,6 @@
 import { RiverChainConfig, createRiverRegistry } from '@river-build/web3'
-import { RetryParams, StreamRpcClient, makeStreamRpcClient } from './makeStreamRpcClient'
+import { StreamRpcClient, makeStreamRpcClient } from './makeStreamRpcClient'
+import { RetryParams } from './rpcInterceptors'
 import { ethers } from 'ethers'
 
 export async function makeRiverRpcClient(

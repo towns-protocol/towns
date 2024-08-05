@@ -10,6 +10,8 @@ import {
     ChannelPayload_Inception,
     UserSettingsPayload_Inception,
     SpacePayload_ChannelUpdate,
+    SpacePayload_UpdateChannelAutojoin,
+    SpacePayload_UpdateChannelHideUserJoinLeaveEvents,
     EncryptedData,
     UserPayload_UserMembership,
     UserSettingsPayload_UserBlock,
@@ -626,6 +628,34 @@ export const make_SpacePayload_SpaceImage = (
         value: {
             content: {
                 case: 'spaceImage',
+                value,
+            },
+        },
+    }
+}
+
+export const make_SpacePayload_UpdateChannelAutojoin = (
+    value: PlainMessage<SpacePayload_UpdateChannelAutojoin>,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'spacePayload',
+        value: {
+            content: {
+                case: 'updateChannelAutojoin',
+                value,
+            },
+        },
+    }
+}
+
+export const make_SpacePayload_UpdateChannelHideUserJoinLeaveEvents = (
+    value: PlainMessage<SpacePayload_UpdateChannelHideUserJoinLeaveEvents>,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'spacePayload',
+        value: {
+            content: {
+                case: 'updateChannelHideUserJoinLeaveEvents',
                 value,
             },
         },

@@ -9,6 +9,19 @@ import type { ISpaceOwner, ISpaceOwnerInterface } from "../ISpaceOwner";
 const _abi = [
   {
     type: "function",
+    name: "getDefaultUri",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "string",
+        internalType: "string",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
     name: "getFactory",
     inputs: [],
     outputs: [
@@ -125,6 +138,19 @@ const _abi = [
   },
   {
     type: "function",
+    name: "setDefaultUri",
+    inputs: [
+      {
+        name: "uri",
+        type: "string",
+        internalType: "string",
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
     name: "setFactory",
     inputs: [
       {
@@ -171,6 +197,19 @@ const _abi = [
   },
   {
     type: "event",
+    name: "SpaceOwner__SetDefaultUri",
+    inputs: [
+      {
+        name: "uri",
+        type: "string",
+        indexed: false,
+        internalType: "string",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
     name: "SpaceOwner__SetFactory",
     inputs: [
       {
@@ -197,12 +236,22 @@ const _abi = [
   },
   {
     type: "error",
+    name: "SpaceOwner__DefaultUriNotSet",
+    inputs: [],
+  },
+  {
+    type: "error",
     name: "SpaceOwner__OnlyFactoryAllowed",
     inputs: [],
   },
   {
     type: "error",
     name: "SpaceOwner__OnlySpaceOwnerAllowed",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "SpaceOwner__SpaceNotFound",
     inputs: [],
   },
 ] as const;

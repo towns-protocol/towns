@@ -53,7 +53,7 @@ func (s *Service) startArchiveMode(once bool) error {
 
 	s.riverChain.StartChainMonitor(s.serverCtx)
 
-	s.registerDebugHandlers(s.config.EnableDebugEndpoints)
+	s.registerDebugHandlers(s.config.EnableDebugEndpoints, s.config.DebugEndpoints)
 
 	s.SetStatus("OK")
 

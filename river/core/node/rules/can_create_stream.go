@@ -483,6 +483,14 @@ func (ru *csChannelRules) derivedChannelSpaceParentEvent() (*DerivedEvent, error
 		return nil, err
 	}
 
+	channelSettings := ru.inception.ChannelSettings
+	// If channel settings unspecified, apply defaults
+	if channelSettings == nil {
+		channelSettings = &SpacePayload_ChannelSettings{
+			Autojoin:                shared.IsDefaultChannelId(channelId),
+			HideUserJoinLeaveEvents: false,
+		}
+	}
 	payload := events.Make_SpacePayload_ChannelUpdate(
 		ChannelOp_CO_CREATED,
 		channelId,
@@ -491,6 +499,7 @@ func (ru *csChannelRules) derivedChannelSpaceParentEvent() (*DerivedEvent, error
 			Hash:      ru.params.parsedEvents[0].Envelope.Hash,
 			Signature: ru.params.parsedEvents[0].Envelope.Signature,
 		},
+		channelSettings,
 	)
 
 	return &DerivedEvent{

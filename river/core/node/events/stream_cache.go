@@ -94,6 +94,7 @@ func NewStreamCache(
 				params:   params,
 				streamId: stream.StreamId,
 				nodes:    nodes,
+				lastAccessedTime: time.Now(),
 			})
 		}
 	}

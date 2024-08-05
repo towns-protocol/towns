@@ -6,8 +6,11 @@ import {IGuardian} from "contracts/src/spaces/facets/guardian/IGuardian.sol";
 import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {ISpaceOwnerBase} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
 import {Validator__InvalidStringLength, Validator__InvalidAddress} from "contracts/src/utils/Validator.sol";
+import {IERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 
 // libraries
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {LibString} from "solady/utils/LibString.sol";
 
 // contracts
 import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
@@ -32,16 +35,9 @@ contract SpaceOwnerTest is ISpaceOwnerBase, IOwnableBase, BaseSetup {
     address alice = _randomAddress();
     address bob = _randomAddress();
 
-    vm.startPrank(spaceFactory);
-    uint256 tokenId = spaceOwnerToken.mintSpace(
-      name,
-      uri,
-      spaceAddress,
-      shortDescription,
-      longDescription
-    );
+    uint256 tokenId = mintSpace(uri, spaceAddress);
+    vm.prank(spaceFactory);
     spaceOwnerToken.transferFrom(spaceFactory, alice, tokenId);
-    vm.stopPrank();
 
     vm.prank(alice);
     IGuardian(spaceOwner).disableGuardian();
@@ -83,15 +79,8 @@ contract SpaceOwnerTest is ISpaceOwnerBase, IOwnableBase, BaseSetup {
   }
 
   function test_mintSpace_revert_invalidAddress() external {
-    vm.prank(spaceFactory);
     vm.expectRevert(Validator__InvalidAddress.selector);
-    spaceOwnerToken.mintSpace(
-      name,
-      uri,
-      address(0),
-      shortDescription,
-      longDescription
-    );
+    mintSpace(uri, address(0));
   }
 
   // ------------ updateSpace ------------
@@ -99,14 +88,7 @@ contract SpaceOwnerTest is ISpaceOwnerBase, IOwnableBase, BaseSetup {
   function test_updateSpaceInfo() external {
     address spaceAddress = _randomAddress();
 
-    vm.prank(spaceFactory);
-    spaceOwnerToken.mintSpace(
-      name,
-      uri,
-      spaceAddress,
-      shortDescription,
-      longDescription
-    );
+    mintSpace(uri, spaceAddress);
 
     vm.prank(spaceFactory);
     spaceOwnerToken.updateSpaceInfo(
@@ -129,16 +111,9 @@ contract SpaceOwnerTest is ISpaceOwnerBase, IOwnableBase, BaseSetup {
     address spaceAddress = _randomAddress();
     address alice = _randomAddress();
 
-    vm.startPrank(spaceFactory);
-    uint256 tokenId = spaceOwnerToken.mintSpace(
-      name,
-      uri,
-      spaceAddress,
-      shortDescription,
-      longDescription
-    );
+    uint256 tokenId = mintSpace(uri, spaceAddress);
+    vm.prank(spaceFactory);
     spaceOwnerToken.transferFrom(spaceFactory, alice, tokenId);
-    vm.stopPrank();
 
     vm.prank(alice);
     IGuardian(spaceOwner).disableGuardian();
@@ -159,14 +134,7 @@ contract SpaceOwnerTest is ISpaceOwnerBase, IOwnableBase, BaseSetup {
   function test_updateSpace_revert_invalidName() external {
     address spaceAddress = _randomAddress();
 
-    vm.prank(spaceFactory);
-    spaceOwnerToken.mintSpace(
-      name,
-      uri,
-      spaceAddress,
-      shortDescription,
-      longDescription
-    );
+    mintSpace(uri, spaceAddress);
 
     vm.prank(spaceFactory);
     vm.expectRevert(Validator__InvalidStringLength.selector);
@@ -182,14 +150,7 @@ contract SpaceOwnerTest is ISpaceOwnerBase, IOwnableBase, BaseSetup {
   function test_updateSpace_revert_invalidUri() external {
     address spaceAddress = _randomAddress();
 
-    vm.prank(spaceFactory);
-    spaceOwnerToken.mintSpace(
-      name,
-      uri,
-      spaceAddress,
-      shortDescription,
-      longDescription
-    );
+    mintSpace(uri, spaceAddress);
 
     vm.prank(spaceFactory);
     vm.expectRevert(Validator__InvalidStringLength.selector);
@@ -229,6 +190,85 @@ contract SpaceOwnerTest is ISpaceOwnerBase, IOwnableBase, BaseSetup {
     spaceOwnerToken.setFactory(address(0));
   }
 
+  // ------------ setDefaultUri ------------
+
+  function test_setDefaultUri() external {
+    string memory newUri = "ipfs://new-uri";
+
+    vm.prank(deployer);
+    spaceOwnerToken.setDefaultUri(newUri);
+
+    assertEq(spaceOwnerToken.getDefaultUri(), newUri);
+  }
+
+  function test_setDefaultUri_revert_notOwner() external {
+    address notOwner = _randomAddress();
+
+    vm.prank(notOwner);
+    vm.expectRevert(
+      abi.encodeWithSelector(Ownable__NotOwner.selector, notOwner)
+    );
+    spaceOwnerToken.setDefaultUri("ipfs://new-uri");
+  }
+
+  function test_setDefaultUri_revert_invalidUri() external {
+    vm.prank(deployer);
+    vm.expectRevert(Validator__InvalidStringLength.selector);
+    spaceOwnerToken.setDefaultUri("");
+  }
+
+  // ------------ tokenURI ------------
+
+  function test_tokenURI() external {
+    address spaceAddress = _randomAddress();
+
+    uint256 tokenId = mintSpace(uri, spaceAddress);
+    string memory tokenUri = spaceOwnerToken.tokenURI(tokenId);
+
+    assertEq(tokenUri, uri);
+  }
+
+  function test_tokenURI_revert_nonexistentToken() external {
+    uint256 tokenId = spaceOwnerToken.nextTokenId();
+    vm.expectRevert(IERC721ABase.URIQueryForNonexistentToken.selector);
+    spaceOwnerToken.tokenURI(tokenId);
+  }
+
+  function test_tokenURI_withDefaultUri() external {
+    address spaceAddress = _randomAddress();
+    string memory defaultUri = "ipfs://default-uri";
+
+    vm.prank(deployer);
+    spaceOwnerToken.setDefaultUri(defaultUri);
+
+    uint256 tokenId = mintSpace("", spaceAddress);
+
+    string memory tokenUri = spaceOwnerToken.tokenURI(tokenId);
+    string memory expectedUri = string.concat(
+      defaultUri,
+      "/",
+      Strings.toHexString(spaceAddress)
+    );
+    assertEq(LibString.toCase(tokenUri, false), expectedUri);
+  }
+
+  function test_tokenURI_withSlash() external {
+    address spaceAddress = _randomAddress();
+    string memory uriWithSlash = "ipfs://default-uri/";
+
+    vm.prank(deployer);
+    spaceOwnerToken.setDefaultUri(uriWithSlash);
+
+    uint256 tokenId = mintSpace("", spaceAddress);
+
+    string memory tokenUri = spaceOwnerToken.tokenURI(tokenId);
+    string memory expectedUri = string.concat(
+      uriWithSlash,
+      Strings.toHexString(spaceAddress)
+    );
+    assertEq(LibString.toCase(tokenUri, false), expectedUri);
+  }
+
   function test_getVotes() external {
     assertEq(spaceOwnerToken.getVotes(deployer), 0);
 
@@ -239,5 +279,19 @@ contract SpaceOwnerTest is ISpaceOwnerBase, IOwnableBase, BaseSetup {
     spaceOwnerToken.delegate(deployer);
 
     assertEq(spaceOwnerToken.getVotes(deployer), 1);
+  }
+
+  function mintSpace(
+    string memory _uri,
+    address space
+  ) internal returns (uint256 tokenId) {
+    vm.prank(spaceFactory);
+    tokenId = spaceOwnerToken.mintSpace(
+      name,
+      _uri,
+      space,
+      shortDescription,
+      longDescription
+    );
   }
 }

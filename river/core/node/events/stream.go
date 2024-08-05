@@ -392,6 +392,7 @@ func (s *streamImpl) addEventImpl(ctx context.Context, event *ParsedEvent) error
 		return err
 	}
 
+
 	prevSyncCookie := s.view.SyncCookie(s.params.Wallet.Address)
 	s.view = newSV
 	newSyncCookie := s.view.SyncCookie(s.params.Wallet.Address)

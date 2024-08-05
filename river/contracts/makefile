@@ -14,7 +14,7 @@ build:; forge build
 
 test :; forge test --ffi
 
-snapshot :; forge snapshot
+snapshot :; forge snapshot --isolate
 
 format :; yarn prettier --write .
 

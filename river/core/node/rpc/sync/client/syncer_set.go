@@ -124,14 +124,15 @@ func NewSyncers(
 	}
 
 	return &SyncerSet{
-		ctx:              ctx,
-		syncID:           syncID,
-		streamCache:      streamCache,
-		nodeRegistry:     nodeRegistry,
-		localNodeAddress: localNodeAddress,
-		syncers:          syncers,
-		streamID2Syncer:  streamID2Syncer,
-		messages:         messages,
+		ctx:                   ctx,
+		globalSyncOpCtxCancel: globalSyncOpCtxCancel,
+		syncID:                syncID,
+		streamCache:           streamCache,
+		nodeRegistry:          nodeRegistry,
+		localNodeAddress:      localNodeAddress,
+		syncers:               syncers,
+		streamID2Syncer:       streamID2Syncer,
+		messages:              messages,
 	}, messages, nil
 }
 

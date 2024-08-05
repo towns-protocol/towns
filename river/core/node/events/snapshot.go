@@ -12,7 +12,7 @@ import (
 	"github.com/river-build/river/core/node/shared"
 )
 
-func Make_GenisisSnapshot(events []*ParsedEvent) (*Snapshot, error) {
+func Make_GenesisSnapshot(events []*ParsedEvent) (*Snapshot, error) {
 	if len(events) == 0 {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "no events to make snapshot from")
 	}
@@ -201,8 +201,43 @@ func update_Snapshot_Space(
 			Op:                content.Channel.Op,
 			OriginEvent:       content.Channel.OriginEvent,
 			UpdatedAtEventNum: eventNum,
+			Settings:          content.Channel.Settings,
+		}
+		if channel.Settings == nil {
+			if channel.Op == ChannelOp_CO_CREATED {
+				// Apply default channel settings for new channels when settings are not provided.
+				// Invariant: channel.Settings is defined for all channels in the snapshot.
+				channelId, err := shared.StreamIdFromBytes(content.Channel.ChannelId)
+				if err != nil {
+					return err
+				}
+				channel.Settings = &SpacePayload_ChannelSettings{
+					Autojoin: shared.IsDefaultChannelId(channelId),
+				}
+			} else if channel.Op == ChannelOp_CO_UPDATED {
+				// Find the existing channel and copy over the settings if new ones are not provided.
+				existingChannel, err := findChannel(snapshot.SpaceContent.Channels, content.Channel.ChannelId)
+				if err != nil {
+					return err
+				}
+				channel.Settings = existingChannel.Settings
+			}
 		}
 		snapshot.SpaceContent.Channels = insertChannel(snapshot.SpaceContent.Channels, channel)
+		return nil
+	case *SpacePayload_UpdateChannelAutojoin_:
+		channel, err := findChannel(snapshot.SpaceContent.Channels, content.UpdateChannelAutojoin.ChannelId)
+		if err != nil {
+			return err
+		}
+		channel.Settings.Autojoin = content.UpdateChannelAutojoin.Autojoin
+		return nil
+	case *SpacePayload_UpdateChannelHideUserJoinLeaveEvents_:
+		channel, err := findChannel(snapshot.SpaceContent.Channels, content.UpdateChannelHideUserJoinLeaveEvents.ChannelId)
+		if err != nil {
+			return err
+		}
+		channel.Settings.HideUserJoinLeaveEvents = content.UpdateChannelHideUserJoinLeaveEvents.HideUserJoinLeaveEvents
 		return nil
 	case *SpacePayload_SpaceImage:
 		snapshot.SpaceContent.SpaceImage = &SpacePayload_SnappedSpaceImage{

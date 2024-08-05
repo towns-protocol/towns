@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 	. "github.com/river-build/river/core/node/events"
@@ -57,7 +58,7 @@ type httpMux interface {
 	Handle(pattern string, handler http.Handler)
 }
 
-func (s *Service) registerDebugHandlers(enableDebugEndpoints bool) {
+func (s *Service) registerDebugHandlers(enableDebugEndpoints bool, cfg config.DebugEndpointsConfig) {
 	mux := s.mux
 	handler := debugHandler{}
 	mux.HandleFunc("/debug", handler.ServeHTTP)
@@ -65,23 +66,44 @@ func (s *Service) registerDebugHandlers(enableDebugEndpoints bool) {
 	handler.HandleFunc(mux, "/debug/multi/json", s.handleDebugMultiJson)
 	handler.Handle(mux, "/debug/config", &onChainConfigHandler{onChainConfig: s.chainConfig})
 
-	if enableDebugEndpoints {
+	if cfg.Cache || enableDebugEndpoints {
 		handler.Handle(mux, "/debug/cache", &cacheHandler{cache: s.cache})
-		handler.Handle(mux, "/debug/txpool", &txpoolHandler{riverTxPool: s.riverChain.TxPool})
+	}
+
+	if cfg.Memory || enableDebugEndpoints {
 		handler.HandleFunc(mux, "/debug/memory", MemoryHandler)
+	}
+
+	if cfg.PProf || enableDebugEndpoints {
 		handler.HandleFunc(mux, "/debug/pprof/", pprof.Index)
 		mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
 		mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
 		mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
 		mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
-		handler.HandleFunc(mux, "/debug/stacks", HandleStacksHandler)
+	}
+
+	if cfg.Stacks || enableDebugEndpoints {
+		handler.Handle(mux, "/debug/stacks", &stacksHandler{maxSizeKb: cfg.StacksMaxSizeKb})
+	}
+
+	if cfg.TxPool || enableDebugEndpoints {
+		handler.Handle(mux, "/debug/txpool", &txpoolHandler{riverTxPool: s.riverChain.TxPool})
 	}
 }
 
-func HandleStacksHandler(w http.ResponseWriter, r *http.Request) {
+type stacksHandler struct {
+	maxSizeKb int
+}
+
+func (h *stacksHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	stacksSize := h.maxSizeKb * 1024
+	if stacksSize == 0 {
+		stacksSize = 1024 * 1024
+	}
+
 	var (
 		ctx          = r.Context()
-		buf          = make([]byte, 1024*1024)
+		buf          = make([]byte, stacksSize)
 		stackSize    = runtime.Stack(buf, true)
 		traceScanner = bufio.NewScanner(bytes.NewReader((buf[:stackSize])))
 		reply        render.GoRoutineData
