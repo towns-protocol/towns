@@ -1,7 +1,13 @@
 version: "3.8"
+# By default, the platform is linux/amd64
+# see this https://discord.com/channels/874596133148696576/942772249662996520/1237294294214377502
+# can't get this working on mac
+# ci runs w/ linux/amd64
+# this is a workaround to run on mac
 
 services:
   node:
+    platform: ${DOCKER_PLATFORM:-linux/amd64}
     # instead of stackupwallet/go-ethereum:v1.13.15
     # this image is a fork of go-ethereum with a modification to the chain id for --dev mode
     # changes the hardcoded chain id from 1337 to 31337 to be compatible with our contract deployments
@@ -27,6 +33,7 @@ services:
       - "--miner.gaslimit=12000000"
 
   bundler:
+    platform: ${DOCKER_PLATFORM:-linux/amd64}
     image: stackupwallet/stackup-bundler:v0.6.45
     ports:
       - "43370:4337"
@@ -41,6 +48,7 @@ services:
         condition: service_started
 
   proxy:
+    platform: ${DOCKER_PLATFORM:-linux/amd64}
     image: openresty/openresty:1.25.3.1-2-alpine
     ports:
       - "8545:80"
@@ -51,6 +59,7 @@ services:
         condition: service_started
 
   fund-account:
+    platform: ${DOCKER_PLATFORM:-linux/amd64}
     image: evanhnt/stackup-go-ethereum
     # b/c of interval mining, wait for the confirmation of the transaction
     command: >
@@ -80,6 +89,7 @@ services:
         condition: service_started
 
   deploy-v0.6:
+    platform: ${DOCKER_PLATFORM:-linux/amd64}
     build:
       context: .
       dockerfile: ./contracts/v0.6.Dockerfile
@@ -100,6 +110,7 @@ services:
   #       condition: service_completed_successfully
 
   deploy-v0.6-stackup-paymaster:
+    platform: ${DOCKER_PLATFORM:-linux/amd64}
     build:
       context: .
       dockerfile: ./contracts/v0.6-stackup-paymaster.Dockerfile
@@ -109,6 +120,7 @@ services:
         condition: service_completed_successfully
 
   stake-v0.6-stackup-paymaster:
+    platform: ${DOCKER_PLATFORM:-linux/amd64}
     build:
       context: .
       dockerfile: ./contracts/v0.6-stackup-paymaster.Dockerfile
@@ -119,6 +131,7 @@ services:
         condition: service_completed_successfully
 
   deposit-v0.6-stackup-paymaster:
+    platform: ${DOCKER_PLATFORM:-linux/amd64}
     build:
       context: .
       dockerfile: ./contracts/v0.6-stackup-paymaster.Dockerfile
@@ -129,6 +142,7 @@ services:
         condition: service_completed_successfully
 
   get-v0.6-stackup-paymaster:
+    platform: ${DOCKER_PLATFORM:-linux/amd64}
     build:
       context: .
       dockerfile: ./contracts/v0.6-stackup-paymaster.Dockerfile
@@ -139,6 +153,7 @@ services:
         condition: service_completed_successfully
 
   paymaster:
+    platform: ${DOCKER_PLATFORM:-linux/amd64}
     image: stackupwallet/stackup-paymaster:v0.0.1
     ports:
       - "43371:43371"
