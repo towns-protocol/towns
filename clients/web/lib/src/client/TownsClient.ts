@@ -2546,7 +2546,7 @@ export class TownsClient
                 if (sequenceName) {
                     endWaitForUserOpEvent = getTimeTracker().startMeasurement(
                         sequenceName,
-                        'userops_wait_for_user_op_send_to_entrypoint',
+                        'userops_wait_for_op_confirmation',
                     )
                 }
 
@@ -2569,7 +2569,7 @@ export class TownsClient
                     if (sequenceName) {
                         endWaitForTxConfirmation = getTimeTracker().startMeasurement(
                             sequenceName,
-                            'userops_wait_for_tx_confirmation',
+                            'userops_wait_for_ethers_receipt',
                         )
                     }
                     receipt = await this.opts.baseProvider?.waitForTransaction(
