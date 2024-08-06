@@ -39,7 +39,7 @@ contract RiverMainnetTest is TestUtils, IRiverBase, ILockBase {
     (, , inflation) = deployRiverMainnet.config();
   }
 
-  function test_init() external {
+  function test_init() external view {
     assertEq(river.name(), "River");
     assertEq(river.symbol(), "RVR");
     assertEq(river.decimals(), 18);

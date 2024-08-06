@@ -52,7 +52,7 @@ contract RiverConfigTest is
   // =============================================================
   //                      Configuration
   // =============================================================
-  function test_configurationNonExistingKey(bytes32 key) external {
+  function test_configurationNonExistingKey(bytes32 key) external view {
     assertFalse(riverConfig.configurationExists(key));
   }
 

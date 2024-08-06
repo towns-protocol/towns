@@ -16,10 +16,6 @@ import (
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/rs/cors"
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/h2c"
-
 	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/node/auth"
 	. "github.com/river-build/river/core/node/base"
@@ -34,6 +30,9 @@ import (
 	"github.com/river-build/river/core/node/rpc/sync"
 	"github.com/river-build/river/core/node/storage"
 	"github.com/river-build/river/core/xchain/entitlement"
+	"github.com/rs/cors"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 )
 
 const (
@@ -444,6 +443,13 @@ func (s *Service) runHttpServer() error {
 			if err != nil {
 				return err
 			}
+		}
+
+		// ensure that x/http2 is used
+		// https://github.com/golang/go/issues/42534
+		err = http2.ConfigureServer(s.httpServer, nil)
+		if err != nil {
+			return err
 		}
 
 		go s.serveTLS()

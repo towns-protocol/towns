@@ -5,8 +5,8 @@ pragma solidity ^0.8.23;
 
 // libraries
 import {ERC721AStorage} from "contracts/src/diamond/facets/token/ERC721A/ERC721AStorage.sol";
-import {Base64} from "base64/base64.sol";
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {Base64} from "solady/utils/Base64.sol";
+import {LibString} from "solady/utils/LibString.sol";
 
 // contracts
 import {ERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol";
@@ -40,11 +40,11 @@ contract MembershipMetadata is
               '","image":"',
               _getMembershipImage(),
               '","attributes":[{"trait_type":"Renewal Price","display_type": "number", "value":"',
-              Strings.toString(
+              LibString.toString(
                 _getMembershipRenewalPrice(tokenId, _totalSupply())
               ),
               '"},{"trait_type":"Membership Expiration","display_type": "number", "value":"',
-              Strings.toString(_expiresAt(tokenId)),
+              LibString.toString(_expiresAt(tokenId)),
               '"},{"trait_type":"Membership Banned", "value":"',
               _isBanned(tokenId) ? "true" : "false",
               '"}]}'

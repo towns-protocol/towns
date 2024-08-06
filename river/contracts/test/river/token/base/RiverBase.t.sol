@@ -29,7 +29,7 @@ contract RiverBaseTest is BaseSetup, ILockBase, IOwnableBase {
     stakeRequirement = riverFacet.MIN_TOKEN_THRESHOLD();
   }
 
-  function test_init() external {
+  function test_init() external view {
     assertEq(riverFacet.name(), "River");
     assertEq(riverFacet.symbol(), "RVR");
     assertEq(riverFacet.decimals(), 18);

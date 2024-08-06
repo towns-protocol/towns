@@ -11,7 +11,7 @@ import {GuardianSetup} from "./GuardianSetup.sol";
 
 contract GuardianTest is GuardianSetup, IGuardianBase {
   // guardian is enabled by default
-  function test_isGuardianEnabled() external {
+  function test_isGuardianEnabled() external view {
     address wallet = _randomAddress();
     assertTrue(guardian.isGuardianEnabled(wallet));
   }

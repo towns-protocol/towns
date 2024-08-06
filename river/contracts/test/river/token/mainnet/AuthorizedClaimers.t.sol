@@ -68,7 +68,7 @@ contract AuthorizedClaimersTest is TestUtils, IAuthorizedClaimersBase {
     );
   }
 
-  function test_getAuthorizedClaimer_notAuthorized() public {
+  function test_getAuthorizedClaimer_notAuthorized() public view {
     assertEq(
       authorizedClaimers.getAuthorizedClaimer(_randomAddress()),
       address(0),

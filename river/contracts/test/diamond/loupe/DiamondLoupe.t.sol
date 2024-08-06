@@ -17,7 +17,7 @@ contract DiamondLoupeTest is DiamondCutSetup {
   DeployMockFacet mockFacetHelper = new DeployMockFacet();
   IDiamond.FacetCut[] internal facetCuts;
 
-  function test_supportsInterface() external {
+  function test_supportsInterface() external view {
     assertTrue(
       IERC165(diamond).supportsInterface(type(IDiamondLoupe).interfaceId)
     );

@@ -21,7 +21,7 @@ contract DiamondCutTest is DiamondCutSetup, IDiamondCutBase, IOwnableBase {
 
   IDiamond.FacetCut[] internal facetCuts;
 
-  function test_supportsInterface() external {
+  function test_supportsInterface() external view {
     assertTrue(
       IERC165(diamond).supportsInterface(type(IDiamondCut).interfaceId)
     );

@@ -27,7 +27,7 @@ contract PlatformRequirementsTest is
   }
 
   // Fee Recipient
-  function test_getFeeRecipient() public {
+  function test_getFeeRecipient() public view {
     address feeRecipient = platformReqs.getFeeRecipient();
     assertEq(feeRecipient, address(deployer));
   }
@@ -51,7 +51,7 @@ contract PlatformRequirementsTest is
 
   // Membership BPS
 
-  function test_getMembershipBps() public {
+  function test_getMembershipBps() public view {
     uint16 membershipBps = platformReqs.getMembershipBps();
     assertEq(membershipBps, 500);
   }
@@ -78,7 +78,7 @@ contract PlatformRequirementsTest is
   }
 
   // Membership Fee
-  function test_getMembershipFee() public {
+  function test_getMembershipFee() public view {
     uint256 membershipFee = platformReqs.getMembershipFee();
     assertEq(membershipFee, 0.005 ether);
   }
@@ -101,7 +101,7 @@ contract PlatformRequirementsTest is
   }
 
   // Membership Mint Limit
-  function test_getMembershipMintLimit() public {
+  function test_getMembershipMintLimit() public view {
     uint256 membershipMintLimit = platformReqs.getMembershipMintLimit();
     assertEq(membershipMintLimit, 1_000);
   }
@@ -129,7 +129,7 @@ contract PlatformRequirementsTest is
 
   // Membership Duration
 
-  function test_getMembershipDuration() public {
+  function test_getMembershipDuration() public view {
     uint256 membershipDuration = platformReqs.getMembershipDuration();
     assertEq(membershipDuration, 365 days);
   }

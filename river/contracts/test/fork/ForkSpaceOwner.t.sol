@@ -104,7 +104,7 @@ contract ForkSpaceOwner is
     );
   }
 
-  function test_getSpaceInfo() external onlyForked {
+  function test_getSpaceInfo() external view onlyForked {
     Space memory space = SpaceOwner(spaceOwnerDiamond).getSpaceInfo(
       0xC87bb04477151743070B45A3426938128896AC5D
     );

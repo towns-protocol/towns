@@ -5,7 +5,6 @@ pragma solidity ^0.8.23;
 import {ISpaceOwnerBase} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
 
 // libraries
-import {Base64} from "base64/base64.sol";
 import {LibString} from "solady/utils/LibString.sol";
 import {Validator} from "contracts/src/utils/Validator.sol";
 

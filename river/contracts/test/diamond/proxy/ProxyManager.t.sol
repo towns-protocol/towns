@@ -71,7 +71,7 @@ contract ProxyManagerTest is ProxyManagerSetup {
   }
 
   /// @notice This test checks that the owner of the proxy is different from the owner of the implementation
-  function test_proxyOwner() external {
+  function test_proxyOwner() external view {
     assertEq(IERC173(address(implementation)).owner(), deployer);
     assertEq(IERC173(address(managedProxy)).owner(), managedProxyOwner);
   }

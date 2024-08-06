@@ -113,7 +113,7 @@ contract ArchitectTest is
     );
   }
 
-  function test_getImplementations() external {
+  function test_getImplementations() external view {
     (
       ISpaceOwner spaceTokenAddress,
       IUserEntitlement userEntitlementAddress,

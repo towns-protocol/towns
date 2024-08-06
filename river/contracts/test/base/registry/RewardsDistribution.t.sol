@@ -978,7 +978,7 @@ contract RewardsDistributionTest is
   function verifyUserRewardsAgainstExpected(
     Entity[] memory users,
     uint256[] memory expectedUserClaims
-  ) internal {
+  ) internal view {
     for (uint256 i = 0; i < users.length; i++) {
       uint256 reward = rewardsDistributionFacet.getClaimableAmountForDelegator(
         users[i].addr
@@ -994,7 +994,7 @@ contract RewardsDistributionTest is
   function verifyOperatorRewardsAgainstExpected(
     Entity[] memory operators,
     uint256[] memory expectedOperatorClaims
-  ) internal {
+  ) internal view {
     for (uint256 i = 0; i < operators.length; i++) {
       uint256 reward = rewardsDistributionFacet.getClaimableAmountForOperator(
         operator.getClaimAddressForOperator(operators[i].addr)

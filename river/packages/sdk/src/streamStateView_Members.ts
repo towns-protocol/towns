@@ -399,8 +399,12 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
         const newPin = { creatorUserId, event } satisfies Pin
         this.pins.push(newPin)
         if (
-            event.remoteEvent.event.payload.case === 'channelPayload' &&
-            event.remoteEvent.event.payload.value.content.case === 'message'
+            (event.remoteEvent.event.payload.case === 'channelPayload' &&
+                event.remoteEvent.event.payload.value.content.case === 'message') ||
+            (event.remoteEvent.event.payload.case === 'dmChannelPayload' &&
+                event.remoteEvent.event.payload.value.content.case === 'message') ||
+            (event.remoteEvent.event.payload.case === 'gdmChannelPayload' &&
+                event.remoteEvent.event.payload.value.content.case === 'message')
         ) {
             this.decryptEvent(
                 'channelMessage',

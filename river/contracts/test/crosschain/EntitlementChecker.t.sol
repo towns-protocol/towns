@@ -119,7 +119,7 @@ contract EntitlementCheckerTest is BaseSetup, IEntitlementCheckerBase {
   // =============================================================
   //                        Random Nodes
   // =============================================================
-  function test_getRandomNodes() external {
+  function test_getRandomNodes() external view {
     address[] memory nodes = entitlementChecker.getRandomNodes(5);
     uint256 nodeLen = nodes.length;
 

@@ -46,7 +46,7 @@ contract NodeOperatorFacetTest is
     riverFacet = River(riverToken);
   }
 
-  function test_initialization() public {
+  function test_initialization() public view {
     assertTrue(
       introspection.supportsInterface(type(INodeOperator).interfaceId)
     );
@@ -113,7 +113,7 @@ contract NodeOperatorFacetTest is
   // =============================================================
   function test_revertWhen_isOperatorWithInvalidOperator(
     address randomOperator
-  ) external {
+  ) external view {
     vm.assume(randomOperator != address(0));
     vm.assume(nodeOperator.isOperator(randomOperator) == false);
     assertFalse(nodeOperator.isOperator(randomOperator));
@@ -338,7 +338,7 @@ contract NodeOperatorFacetTest is
 
   function test_getOperatorStatus_operatorNotRegistered(
     address randomOperator
-  ) public {
+  ) public view {
     vm.assume(!nodeOperator.isOperator(randomOperator));
     assertTrue(
       nodeOperator.getOperatorStatus(randomOperator) ==

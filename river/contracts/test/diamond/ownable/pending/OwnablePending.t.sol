@@ -9,7 +9,7 @@ pragma solidity ^0.8.23;
 import {OwnablePendingSetup} from "./OwnablePendingSetup.sol";
 
 contract OwnablePendingTest is OwnablePendingSetup {
-  function test_currentOwner() external {
+  function test_currentOwner() external view {
     assertEq(ownable.currentOwner(), deployer);
   }
 
