@@ -20,7 +20,7 @@ import { TUserIDNameMap } from '../components/plate-ui/autocomplete/types'
 export const deserializeMd = <V extends Value>(
     data: string,
     channels: Channel[] = [],
-    userIDNameMap: TUserIDNameMap = {},
+    userHashMap: TUserIDNameMap = {},
     lookupUser?: ReturnType<typeof useUserLookupContext>['lookupUser'],
 ): V => {
     const tree = unified()
@@ -29,7 +29,7 @@ export const deserializeMd = <V extends Value>(
         .use(remarkRemoveHeadings)
         .use(remarkDecodeHTMLCodeBlocks)
         .use(remarkSlate)
-        .use(remarkTransformUserAndChannels(channels, userIDNameMap, lookupUser))
+        .use(remarkTransformUserAndChannels(channels, userHashMap, lookupUser))
         .processSync(data)
 
     return tree.result as V

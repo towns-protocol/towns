@@ -8,7 +8,7 @@ import {
 } from 'use-towns-client'
 import { createPortal } from 'react-dom'
 import { Box, Stack, useZLayerContext } from '@ui'
-import { RichTextEditor } from '@components/RichTextPlate/PlateEditor'
+import { TownsEditorContainer } from '@components/RichTextPlate/TownsEditorContainer'
 import { useEditMessage } from 'hooks/useEditMessage'
 import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimelineContext'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
@@ -58,7 +58,7 @@ export const TimelineMessageEditor = (props: Props) => {
                 title=""
                 eventId={eventId}
             >
-                <RichTextEditor
+                <TownsEditorContainer
                     autoFocus
                     editable
                     editing
@@ -81,7 +81,7 @@ export const TimelineMessageEditor = (props: Props) => {
                 title=""
                 eventId={eventId}
             >
-                <RichTextEditor
+                <TownsEditorContainer
                     editable
                     editing
                     autoFocus

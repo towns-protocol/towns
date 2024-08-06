@@ -9,8 +9,8 @@ import { PlateRenderElementProps, TDescendant, Value } from '@udecode/plate-comm
 import { TMentionElement, TMentionInputElement } from '@udecode/plate-mention'
 
 export type ComboboxInputUserProps = Omit<ComboboxContainerProps, 'searchResults' | 'filter'> & {
-    userList: TComboboxItemWithData<TUserWithChannel>[]
-    channelList: TComboboxItemWithData<Channel>[]
+    userMentions: TComboboxItemWithData<TUserWithChannel>[]
+    channelMentions: TComboboxItemWithData<Channel>[]
 }
 
 export type ComboboxContainerProps = PlateRenderElementProps<Value, TMentionInputElement> & {

@@ -13,7 +13,7 @@ export const KEY_PASTE_MENTIONS_PLUGIN = 'KEY_PASTE_MENTIONS_PLUGIN'
  */
 export const createPasteMentionsPlugin = (
     channelList: Channel[],
-    mentions: TUserIDNameMap,
+    userHashMap: TUserIDNameMap,
     lookupUser?: ReturnType<typeof useUserLookupContext>['lookupUser'],
 ) =>
     createPluginFactory({
@@ -23,7 +23,7 @@ export const createPasteMentionsPlugin = (
                 // For handling pasting of text/plain data (mobile, etc.)
                 format: 'text/plain',
                 getFragment: ({ data }) => {
-                    return deserializeMd(data, channelList, mentions, lookupUser)
+                    return deserializeMd(data, channelList, userHashMap, lookupUser)
                 },
             },
         },
@@ -37,7 +37,7 @@ export const createPasteMentionsPlugin = (
                                 transformFragment: (fragment, { data }) => {
                                     const transformMentions = remarkTransformUserAndChannels(
                                         channelList,
-                                        mentions,
+                                        userHashMap,
                                         lookupUser,
                                     )(true) as unknown as PasteTransformer
                                     return transformMentions(fragment)

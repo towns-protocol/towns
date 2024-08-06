@@ -70,7 +70,7 @@ import { createPasteMentionsPlugin } from './createPasteMentionsPlugin'
 
 const platePlugins = (
     channelList: Channel[],
-    mentions: TUserIDNameMap,
+    userHashMap: TUserIDNameMap,
     userMentions: TComboboxItemWithData<TUserWithChannel>[],
     channelMentions: TComboboxItemWithData<Channel>[],
     lookupUser?: ReturnType<typeof useUserLookupContext>['lookupUser'],
@@ -154,7 +154,7 @@ const platePlugins = (
             }),
             createDeserializeMdPlugin(), // should be before createFormatTextLinkPlugin
             createFormatTextLinkPlugin(), // should be after createDeserializeMdPlugin
-            createPasteMentionsPlugin(channelList, mentions, lookupUser)(),
+            createPasteMentionsPlugin(channelList, userHashMap, lookupUser)(),
             createNormalizeTypesPlugin(),
             createErrorHandlingPlugin(),
         ],
@@ -174,8 +174,8 @@ const platePlugins = (
                 [ELEMENT_MENTION_CHANNEL]: ChannelMentionElement,
                 [ELEMENT_MENTION_INPUT]: withProps(ComboboxContextWrapper, {
                     Component: ComboboxInput,
-                    userList: userMentions,
-                    channelList: channelMentions,
+                    userMentions,
+                    channelMentions,
                 }),
                 [ELEMENT_PARAGRAPH]: ParagraphElement,
                 [MARK_BOLD]: withProps(PlateLeaf, { as: 'strong' }),

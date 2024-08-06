@@ -27,7 +27,7 @@ export type PasteTransformer = (fragment: EElementOrText<Value>[]) => EElementOr
  * `TChannelMentionElement` or `TUserMentionElement` respectively.
  *
  * @param channelList - List of channels in the current space
- * @param userIDNameMap - List of mentions attached to message event, which means how many users are actually mentioned in
+ * @param userHashMap - List of mentions attached to message event, which means how many users are actually mentioned in
  * the message and their details DURING the time of message creation
  * @param lookupUser - a method to lookup user by userId
  *
@@ -45,19 +45,19 @@ export type PasteTransformer = (fragment: EElementOrText<Value>[]) => EElementOr
  */
 function remarkTransformUserAndChannels(
     channelList: Channel[],
-    userIDNameMap: TUserIDNameMap,
+    userHashMap: TUserIDNameMap,
     lookupUser?: ReturnType<typeof useUserLookupContext>['lookupUser'],
 ): (onPaste?: boolean) => Transformer
 
 function remarkTransformUserAndChannels(
     channelList: Channel[],
-    userIDNameMap: TUserIDNameMap,
+    userHashMap: TUserIDNameMap,
     lookupUser?: ReturnType<typeof useUserLookupContext>['lookupUser'],
 ): (onPaste?: boolean) => PasteTransformer
 
 function remarkTransformUserAndChannels(
     channelList: Channel[],
-    userIDNameMap: TUserIDNameMap = {},
+    userHashMap: TUserIDNameMap = {},
     lookupUser?: ReturnType<typeof useUserLookupContext>['lookupUser'],
 ) {
     return function (onPaste?: boolean) {
@@ -69,7 +69,7 @@ function remarkTransformUserAndChannels(
             'gui',
         )
 
-        const userIdList = Object.values(userIDNameMap)
+        const userIdList = Object.values(userHashMap)
         const USER_TRIGGER = '@'
         const USER_NAME_REGEX = userIdList
             .concat(AtChannelUser.displayName)
@@ -82,7 +82,7 @@ function remarkTransformUserAndChannels(
             [AtChannelUser.displayName]: pick(AtChannelUser, 'userId', 'displayName'),
         }
 
-        each(userIDNameMap, (displayName, userId) => {
+        each(userHashMap, (displayName, userId) => {
             const mentionDisplayName = userNameWithoutAt(displayName)
             const member = lookupUser?.(userId)
             userIdNameCurrent[mentionDisplayName] = {

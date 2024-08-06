@@ -6,7 +6,7 @@ import { clsx } from 'clsx'
 import { Channel, OTWMention, useUserLookupContext } from 'use-towns-client'
 import { Box } from '@ui'
 import { MessageStatusAnnotation } from '@components/MessageTimeIineItem/items/MessageItem/MessageStatusAnnotation'
-import { getUserIdNameMap } from './components/plate-ui/autocomplete/helpers'
+import { getUserHashMap } from './components/plate-ui/autocomplete/helpers'
 import { getChannelNames, getMentionIds } from './utils/helpers'
 import { CodeBlockElement } from './components/plate-ui/CodeBlockElement'
 import {
@@ -67,8 +67,8 @@ const RichTextPreviewInternal = ({
         [onMentionHover],
     )
 
-    const userIdNameMap: TUserIDNameMap = useMemo(() => {
-        return getUserIdNameMap(mentions)
+    const userHashMap: TUserIDNameMap = useMemo(() => {
+        return getUserHashMap(mentions)
     }, [mentions])
 
     const isSingleEmoji = useMemo(() => {
@@ -144,7 +144,7 @@ const RichTextPreviewInternal = ({
                     // @ts-ignore
                     components={memoizedComponents}
                     channels={channels}
-                    mentions={userIdNameMap}
+                    userHashMap={userHashMap}
                     lookupUser={lookupUser}
                 >
                     {content}

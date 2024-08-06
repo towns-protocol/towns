@@ -1,3 +1,4 @@
+/*
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Plate, PlateEditor, TElement, resetEditor } from '@udecode/plate-common'
 import {
@@ -9,7 +10,6 @@ import {
     OTWMention,
     SendTextMessageOptions,
     UnfurledLinkAttachment,
-    transformAttachments,
     useChannelId,
     useChannelMembers,
     useTownsContext,
@@ -22,9 +22,8 @@ import { focusEditor } from '@udecode/slate-react'
 import { ELEMENT_PARAGRAPH } from '@udecode/plate-paragraph'
 import every from 'lodash/every'
 import isEqual from 'lodash/isEqual'
-import { isDMChannelStreamId, isDefined, isGDMChannelStreamId } from '@river-build/sdk'
+import { isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
 import { uniq } from 'lodash'
-import { ChannelMessage_Post_Content_Text } from '@river-build/proto'
 import { useMediaDropContext } from '@components/MediaDropContext/MediaDropContext'
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { Box, BoxProps, Stack } from '@ui'
@@ -39,7 +38,6 @@ import {
 import { useInlineReplyAttchmentPreview } from '@components/EmbeddedMessageAttachement/hooks/useInlineReplyAttchmentPreview'
 import { useInputStore } from 'store/store'
 import { LoadingUnfurledLinkAttachment } from 'hooks/useExtractInternalLinks'
-import { getUnfurlContent } from 'api/lib/unfurl'
 import { SECOND_MS } from 'data/constants'
 import { toPlainText } from './utils/toPlainText'
 import { getChannelNames, getMentionIds, isInputFocused } from './utils/helpers'
@@ -47,7 +45,7 @@ import { RichTextPlaceholder } from './components/RichTextEditorPlaceholder'
 import { toMD } from './utils/toMD'
 import { RememberInputPlugin } from './plugins/RememberInputPlugin'
 import { deserializeMd } from './utils/deserializeMD'
-import { getUserIdNameMap } from './components/plate-ui/autocomplete/helpers'
+import { getUserHashMap } from './components/plate-ui/autocomplete/helpers'
 import {
     AtChannelUser,
     TComboboxItemWithData,
@@ -56,13 +54,14 @@ import {
 } from './components/plate-ui/autocomplete/types'
 import { EditorFallback } from './components/EditorFallback'
 import { Editor } from './components/plate-ui/Editor'
-import { ToolbarController } from './components/plate-ui/ToolbarController'
-import { RichTextBottomToolbar } from './components/RichTextBottomToolbar'
+import { EditorToolbarTop } from './components/EditorToolbarTop'
+import { EditorToolbarBottom } from './components/EditorToolbarBottom'
 import { SendMarkdownPlugin } from './components/SendMarkdownPlugin'
 import platePlugins from './plugins'
 import { OnFocusPlugin } from './plugins/OnFocusPlugin'
 import { PasteFilePlugin } from './components/PasteFilePlugin'
 import { CaptureLinkAttachmentsPlugin } from './components/CaptureLinkAttachmentsPlugin'
+import { unfurlLinksToAttachments } from './utils/unfurlLinks'
 
 type Props = {
     onSend?: (value: string, options: SendTextMessageOptions | undefined) => void
@@ -179,7 +178,7 @@ const PlateEditorWithoutBoundary = ({
     }, [channels])
 
     const userIdNameMap: TUserIDNameMap = useMemo(() => {
-        return getUserIdNameMap(availableMembers)
+        return getUserHashMap(availableMembers)
     }, [availableMembers])
 
     const initialValue = useMemo(() => {
@@ -229,14 +228,14 @@ const PlateEditorWithoutBoundary = ({
     )
 
     const onChange = useCallback(() => {
-        /**
+        /!**
          * `editorText` is used to check if the editor is empty or not and display the placeholder
          * on mobile devices, this is often slow because of the way the editor is rendered and
          * its children are updated.
          *
          * As a workaround, we set the editor text to a space character to remove the placeholder
          * on any manual input change. The reconciliation of the actual editor text is completed later
-         */
+         *!/
         setEditorText(' ')
         if (editorRef.current) {
             const text = toPlainText(editorRef.current.children)
@@ -255,12 +254,12 @@ const PlateEditorWithoutBoundary = ({
 
     const onFocus = useCallback(() => onFocusChange(true), [onFocusChange])
 
-    /**
+    /!**
      * We want to delay the `onBlur` event to allow the user to click on the formatting toolbar icon
      * Without this delay, the bottom toolbar would disappear before `isFormattingToolbarOpen` is set to `true`
      *
      * {@link https://linear.app/hnt-labs/issue/HNT-5502/|HNT-5502}
-     */
+     *!/
     const onBlur = useCallback(
         (e: React.FocusEvent) => {
             if (isTouch) {
@@ -270,7 +269,7 @@ const PlateEditorWithoutBoundary = ({
         [isTouch, onFocusChange],
     )
 
-    /** Reset the editor after sending a message and clear local storage value as well */
+    /!** Reset the editor after sending a message and clear local storage value as well *!/
     const resetEditorAfterSend = useCallback(() => {
         setInput(storageId, '')
         if (editorRef.current) {
@@ -417,8 +416,8 @@ const PlateEditorWithoutBoundary = ({
     )
 
     // force show floating toolbar in desktop when user selects text in editor
-    const toolbarController = (
-        <ToolbarController
+    const toolbarTop = (
+        <EditorToolbarTop
             readOnly={!editable}
             focused={focused || !isEditorEmpty}
             editing={isEditing}
@@ -474,7 +473,7 @@ const PlateEditorWithoutBoundary = ({
                     key={`plate-${storageId}`}
                     onChange={onChange}
                 >
-                    {!isTouch && toolbarController}
+                    {!isTouch && toolbarTop}
                     <Stack horizontal width="100%" paddingRight="sm" alignItems="end">
                         <Box grow paddingX="md" position="relative" ref={editableContainerRef}>
                             <Editor
@@ -515,7 +514,7 @@ const PlateEditorWithoutBoundary = ({
                     <Box paddingX="md" paddingBottom="sm">
                         <PasteFilePlugin editableContainerRef={editableContainerRef} />
                     </Box>
-                    {isTouch && toolbarController}
+                    {isTouch && toolbarTop}
                     <Stack
                         gap
                         shrink
@@ -525,7 +524,7 @@ const PlateEditorWithoutBoundary = ({
                         flexWrap="wrap"
                         pointerEvents={editable ? 'auto' : 'none'}
                     >
-                        <RichTextBottomToolbar
+                        <EditorToolbarBottom
                             editing={isEditing}
                             focused={focused}
                             threadId={props.threadId}
@@ -586,38 +585,4 @@ export const RichTextEditor = (props: Props) => {
         </ErrorBoundary>
     )
 }
-
-const unfurlLinksToAttachments = async (
-    pending: string[],
-    payload: ChannelMessage_Post_Content_Text,
-) => {
-    const response = await getUnfurlContent(pending)
-    const data = response?.data
-
-    if (!Array.isArray(data)) {
-        return
-    }
-
-    for (const content of data) {
-        if (!isDefined(content)) {
-            continue
-        }
-        const unfurl = {
-            type: 'unfurled_link',
-            url: content.url,
-            title: content.title ?? '',
-            description: content.description ?? '',
-            image: content.image,
-            id: content.url,
-        } as const
-
-        const attachmentIndex = payload.attachments?.findIndex(
-            (a) => a.content.case === 'unfurledUrl' && unfurl.url === a.content.value.url,
-        )
-
-        if (attachmentIndex > -1) {
-            const transformedAttachements = transformAttachments([unfurl])
-            payload.attachments[attachmentIndex] = transformedAttachements[0]
-        }
-    }
-}
+*/

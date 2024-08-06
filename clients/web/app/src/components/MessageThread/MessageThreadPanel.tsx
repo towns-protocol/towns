@@ -11,7 +11,7 @@ import {
 import { useLocation } from 'react-router'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
-import { RichTextEditor } from '@components/RichTextPlate/PlateEditor'
+import { TownsEditorContainer } from '@components/RichTextPlate/TownsEditorContainer'
 import { Box, Paragraph, Stack } from '@ui'
 import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
 import { useSendReply } from 'hooks/useSendReply'
@@ -138,7 +138,7 @@ export const MessageThreadPanel = (props: Props) => {
                         paddingTop={{ default: 'none', touch: 'none' }}
                         bottom={isTouch ? 'sm' : 'none'}
                     >
-                        <RichTextEditor
+                        <TownsEditorContainer
                             isFullWidthOnTouch
                             key={`${messageId}-${isChannelWritable ? '' : '-readonly'}`}
                             autoFocus={!isTouch}
@@ -149,7 +149,6 @@ export const MessageThreadPanel = (props: Props) => {
                             threadId={messageId}
                             channels={channels}
                             spaceMemberIds={memberIds}
-                            background="level2"
                             userId={userId}
                             onSend={onSend}
                         />

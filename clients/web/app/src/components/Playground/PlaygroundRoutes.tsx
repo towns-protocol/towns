@@ -12,6 +12,7 @@ import { PageButtons } from './pages/PageButtons'
 import { PageText } from './pages/PageText'
 import { Playground } from './Playground'
 import { PageProgressOverlay } from './pages/PageProgressOverlay'
+import { PageEditor } from './pages/PageEditor'
 
 export const PlaygroundRoutes = () => {
     return (
@@ -26,6 +27,7 @@ export const PlaygroundRoutes = () => {
                 <Route path="tooltips" element={<PageTooltips />} />
                 <Route path="buttons" element={<PageButtons />} />
                 <Route path="overlays" element={<PageProgressOverlay />} />
+                <Route path="editor" element={<PageEditor />} />
                 {env.DEV && <Route path="upload" element={<UploadImageDebugger />} />}
             </Route>
         </Routes>

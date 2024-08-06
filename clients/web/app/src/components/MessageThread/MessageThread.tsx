@@ -17,7 +17,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { isDefined } from '@river-build/sdk'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
-import { RichTextEditor } from '@components/RichTextPlate/PlateEditor'
+import { TownsEditorContainer } from '@components/RichTextPlate/TownsEditorContainer'
 import { Box, Paragraph, Stack } from '@ui'
 import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
 import { useSendReply } from 'hooks/useSendReply'
@@ -103,8 +103,7 @@ export const MessageThread = (props: {
             .filter(isDefined)
             .map((u) => {
                 const isYou = u.userId === profile?.userId
-                const displayName = isYou ? 'you' : getPrettyDisplayName(u)
-                return displayName
+                return isYou ? 'you' : getPrettyDisplayName(u)
             })
             .sort(firstBy((n) => n === 'you'))
         return names.length > 0
@@ -165,7 +164,7 @@ export const MessageThread = (props: {
                                 paddingBottom="md"
                                 paddingX={{ default: 'md', touch: 'none' }}
                             >
-                                <RichTextEditor
+                                <TownsEditorContainer
                                     key={`${parentId}-${isChannelWritable ? '' : '-readonly'}`}
                                     editable={!!isChannelWritable}
                                     threadId={parentId}

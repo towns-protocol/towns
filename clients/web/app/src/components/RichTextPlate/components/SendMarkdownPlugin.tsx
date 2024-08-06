@@ -1,11 +1,8 @@
-import React, { useCallback } from 'react'
-import { Mention } from 'use-towns-client'
+import React from 'react'
 import { AnimatePresence } from 'framer-motion'
-import { useEditorRef } from '@udecode/plate-common'
 import { Box, MotionBox } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
-import { toMD } from '../utils/toMD'
 import { EditMessageButtons } from './EditMessageButtons'
 
 export const SendMarkdownPlugin = (props: {
@@ -14,22 +11,16 @@ export const SendMarkdownPlugin = (props: {
     focused: boolean
     isEditing: boolean
     hasImage: boolean
-    onSend?: (value: string, mentions: Mention[]) => void
+    sendMessage?: () => void
     onCancel?: () => void
     isEditorEmpty: boolean
 }) => {
-    const { disabled, onSend, isEditorEmpty, hasImage } = props
-    const editor = useEditorRef()
+    const { disabled, sendMessage, isEditorEmpty, hasImage } = props
 
     const { isTouch } = useDevice()
 
     const size = useSizeContext()
     const verticalButtons = size.lessThan(350) && props.isEditing && !isTouch
-
-    const sendMessage = useCallback(async () => {
-        const { message, mentions } = await toMD(editor)
-        onSend?.(message, mentions)
-    }, [editor, onSend])
 
     const shouldDisplayButtons =
         props.displayButtons === 'always' ||

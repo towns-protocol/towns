@@ -21,7 +21,7 @@ import { FullScreenMedia } from '@components/FullScreenMedia/FullScreenMedia'
 import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDropContext'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
-import { RichTextEditor } from '@components/RichTextPlate/PlateEditor'
+import { TownsEditorContainer } from '@components/RichTextPlate/TownsEditorContainer'
 import { RegisterChannelShortcuts } from '@components/Shortcuts/RegisterChannelShortcuts'
 import { useUserList } from '@components/UserList/UserList'
 import { Box, Button, CardHeader, Stack, Text } from '@ui'
@@ -294,9 +294,9 @@ export const ChannelLayout = (props: ExtendedProps) => {
                             !showDMAcceptInvitation &&
                             userId && (
                                 <>
-                                    <RichTextEditor
+                                    <TownsEditorContainer
                                         isFullWidthOnTouch
-                                        editable={!!isChannelWritable}
+                                        editable={isChannelWritable}
                                         background={isChannelWritable ? 'level2' : 'level1'}
                                         displayButtons={isTouch ? 'on-focus' : 'always'}
                                         key={`${storageId}-${isChannelWritable ? '' : '-readonly'}`}

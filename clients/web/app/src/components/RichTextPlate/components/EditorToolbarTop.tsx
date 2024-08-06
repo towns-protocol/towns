@@ -6,16 +6,16 @@ import { useEditorRef } from '@udecode/plate-common'
 import { getEditorString } from '@udecode/slate'
 import { upsertLink } from '@udecode/plate-link'
 import { useDevice } from 'hooks/useDevice'
-import { AddLinkModal } from './LinkModal'
-import { FloatingToolbar } from './FloatingToolbar'
-import { FormattingToolbar, FormattingToolbarProps } from './FormattingToolbar'
+import { AddLinkModal } from './plate-ui/LinkModal'
+import { FloatingToolbar } from './plate-ui/FloatingToolbar'
+import { FormattingToolbar, FormattingToolbarProps } from './plate-ui/FormattingToolbar'
 
 interface Props extends Omit<FormattingToolbarProps, 'onLinkClick'> {
     editorId: string
 }
 const linkify = linkifyit()
 
-export const ToolbarController = ({ editorId, ...props }: Props) => {
+export const EditorToolbarTop = ({ editorId, ...props }: Props) => {
     const [linkLinkModal, setLinkModal] = useState(false)
     const editor = useEditorRef()
 

@@ -10,6 +10,7 @@ import {
     ComboboxTypes,
     TComboboxItemWithData,
     TUserIDNameMap,
+    TUserMention,
     TUserMentionElement,
     TUserWithChannel,
 } from './types'
@@ -64,7 +65,7 @@ export const getUsernameForMention = <T extends TUserWithChannel>(
     return item.data.username ? `@${item.data.username}` : undefined
 }
 
-export const getUserIdNameMap = (
+export const getUserHashMap = (
     users: (Omit<UserWithDisplayName, 'userId'> & { userId?: string })[],
 ): TUserIDNameMap => {
     if (!Array.isArray(users)) {
@@ -79,9 +80,19 @@ export const getUserIdNameMap = (
     return map
 }
 
+export const convertUserToCombobox = (
+    user: TUserMention,
+    channelMemberIds: string[],
+): TComboboxItemWithData<TUserWithChannel> => ({
+    text: getPrettyDisplayName(user),
+    key: user.userId,
+    data: { ...user, isChannelMember: channelMemberIds.includes(user.userId) },
+})
+
 const onSelectItemUser: MentionOnSelectItem<TComboboxItemWithData> = getMentionOnSelectItem({
     key: ELEMENT_MENTION,
 })
+
 const onSelectItemChannel: MentionOnSelectItem<TComboboxItemWithData> = getMentionOnSelectItem({
     key: ELEMENT_MENTION_CHANNEL,
 })

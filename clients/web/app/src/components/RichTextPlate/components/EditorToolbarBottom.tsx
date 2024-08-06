@@ -21,7 +21,7 @@ type Props = {
     setIsFormattingToolbarOpen: (isFormattingToolbarOpen: boolean) => void
 }
 
-export const RichTextBottomToolbar = (props: Props) => {
+export const EditorToolbarBottom = (props: Props) => {
     const { isTouch } = useDevice()
     const editor = useEditorRef()
     const mediaDropContext = useMediaDropContext()

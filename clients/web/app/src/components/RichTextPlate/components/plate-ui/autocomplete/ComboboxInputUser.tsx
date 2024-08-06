@@ -96,7 +96,7 @@ export const ComboboxItemGeneric = ({
 const EMPTY_ARRAY: TComboboxItemWithData<TUserWithChannel | Channel>[] = []
 
 export const ComboboxInput = withRef<'div', ComboboxInputUserProps>(
-    ({ className, userList, channelList, ...props }, ref) => {
+    ({ className, userMentions, channelMentions, ...props }, ref) => {
         const {
             query: searchQueryStore,
             editor,
@@ -113,8 +113,8 @@ export const ComboboxInput = withRef<'div', ComboboxInputUserProps>(
             if (isEmojiCombobox(trigger.current)) {
                 return EMPTY_ARRAY
             }
-            return isUserCombobox(trigger.current) ? userList : channelList
-        }, [userList, channelList])
+            return isUserCombobox(trigger.current) ? userMentions : channelMentions
+        }, [userMentions, channelMentions])
 
         useEffect(() => {
             startTransition(() => {
@@ -143,14 +143,14 @@ export const ComboboxInput = withRef<'div', ComboboxInputUserProps>(
                 })
                 return
             } else if (isUserCombobox(trigger.current)) {
-                _filteredItemList = userList.filter(userMentionFilter(searchQueryStore))
+                _filteredItemList = userMentions.filter(userMentionFilter(searchQueryStore))
             } else {
-                _filteredItemList = channelList.filter(channelMentionFilter(searchQueryStore))
+                _filteredItemList = channelMentions.filter(channelMentionFilter(searchQueryStore))
             }
             startTransition(() => {
                 setFilteredItems(_filteredItemList)
             })
-        }, [getAllItems, searchQueryStore, store, userList, channelList])
+        }, [getAllItems, searchQueryStore, store, userMentions, channelMentions])
 
         const searchResults = useMemo(() => {
             return filteredItems.map((item) => {

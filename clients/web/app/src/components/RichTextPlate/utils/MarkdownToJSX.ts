@@ -22,7 +22,7 @@ import { TUserIDNameMap } from '../components/plate-ui/autocomplete/types'
 type MarkdownRendererProps = React.PropsWithChildren<{
     components: Partial<Components>
     channels?: Channel[]
-    mentions?: TUserIDNameMap
+    userHashMap?: TUserIDNameMap
     lookupUser: ReturnType<typeof useUserLookupContext>['lookupUser']
 }>
 
@@ -36,7 +36,7 @@ type MarkdownRendererProps = React.PropsWithChildren<{
 const MarkdownRenderer = ({
     components,
     channels = [],
-    mentions = {},
+    userHashMap = {},
     lookupUser,
     children,
 }: MarkdownRendererProps) => {
@@ -51,7 +51,7 @@ const MarkdownRenderer = ({
         .use(remarkPreserveListContent)
         .use(remarkRemoveHeadings)
         .use(remarkDecodeHTMLCodeBlocks)
-        .use(remarkTransformUserAndChannels(channels, mentions, lookupUser))
+        .use(remarkTransformUserAndChannels(channels, userHashMap, lookupUser))
         .use(remarkRehype, {
             passThrough: [ELEMENT_LIC, ELEMENT_MENTION, ELEMENT_MENTION_CHANNEL],
             handlers: {
