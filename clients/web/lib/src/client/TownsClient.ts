@@ -412,7 +412,7 @@ export class TownsClient
                 )
                 await this.createSpaceDefaultChannelRoom(spaceId, 'general', channelId)
 
-                endCsbCreateDefaultChannel?.(true)
+                endCsbCreateDefaultChannel?.()
 
                 this.log(
                     '[waitForCreateSpaceTransaction] default channel stream created',

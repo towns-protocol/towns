@@ -216,20 +216,22 @@ export class UserOps {
             let _error: CodeException | undefined = undefined
             while (shouldTry && attempt < (args.retryCount ?? 3)) {
                 try {
-                    let endSendUserOperation: (() => void) | undefined
-                    if (sequenceName) {
-                        endSendUserOperation = timeTracker?.startMeasurement(
-                            sequenceName,
-                            `userops_${args.functionHashForPaymasterProxy}_send_userop_incl_paymaster_time`,
-                        )
-                    }
+                    // Not tracking this event because it tracks all middlewares
+                    // This could include both a user hanging on the confirmation modal
+                    // As well as internal userop.js middlewares
+                    //
+                    // internal userop.js accounts for 1-2s of the total time
+                    //
+                    // instead, each middleware should be tracked individually
+                    // if we need to track internal userop.js middlewares and actual request for sending the user operation
+                    // then we need to extract the middlewares from userop.js, as well as the request
+                    //
                     const res = await userOpClient.sendUserOperation(simpleAccount, {
                         onBuild: (op) => {
                             console.log('[UserOperations] Signed UserOperation:', op)
                         },
                     })
                     console.log('[UserOperations] userOpHash:', res.userOpHash)
-                    endSendUserOperation?.()
                     return res
                 } catch (error) {
                     const sponsoredOp = simpleAccount.getPaymasterAndData() !== '0x'
