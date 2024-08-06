@@ -79,7 +79,14 @@ export function useSpaceUnreads({
 
             // we have lots of markers! loop over the markers just once and build up the state
             // we should transition updating on a delta of markers
-            Object.values(markers).forEach((marker) => {
+            Object.entries(markers).forEach(([key, marker]) => {
+                // fixes symptoms of HNT-10960 by filtering out markers with
+                // empty keys. We should be able to remove this once the root
+                // cause has been in production for a while.
+                if (!key) {
+                    return
+                }
+
                 // only process channel markers
                 if (isChannelStreamId(marker.channelId)) {
                     const spaceId = spaceIdFromChannelId(marker.channelId)
