@@ -42,6 +42,9 @@ jobs:
             ARCHIVE_NODE_NUMBERS: ${{ steps.set_deployment_parameters.outputs.ARCHIVE_NODE_NUMBERS }}
 
         steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
             - name: Get Environment Name
               id: get_environment_name
               env:
@@ -86,7 +89,7 @@ jobs:
                     ARCHIVE_NODE_NUMBERS="[1,2]"
 
                   else
-                    echo "Error: Env name unrecognized: $ENV_NAME". Exiting."
+                    echo "Error: Env name unrecognized: <$ENV_NAME>. Exiting."
                     exit 1
                   fi
 
@@ -95,6 +98,24 @@ jobs:
                   echo "::set-output name=ARCHIVE_NODE_NUMBERS::$ARCHIVE_NODE_NUMBERS"
                   echo "::set-output name=DOCKER_IMAGE_TAG::$DOCKER_IMAGE_TAG"
 
+            # If action failed, we send a slack notification
+            - name: Alert notification
+              if: failure()
+              uses: slackapi/slack-github-action@v1.24.0
+              env:
+                  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL }}
+                  ENV_NAME: ${{ env.ENV_NAME }}
+              with:
+                  payload: |
+                      {
+                          "step": "River Node Continuous Deployment",
+                          "environment": "${{ env.ENV_NAME }}",
+                          "branch": "${{ github.ref }}",
+                          "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                          "commit": "${{ github.sha }}",
+                          "actor": "${{ github.actor }}"
+                      }
+
     archive_node_continuous_deployment:
         needs: setup
         uses: './.github/workflows/River_deploy.yml'
@@ -102,7 +123,8 @@ jobs:
         secrets:
             AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
             AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            SLACK_ALERT_WEBHOOK_URL: ${{ secrets.SLACK_TRANSIENT_CD_WORKFLOW_WEBHOOK_URL }}
+            SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL: ${{ secrets.SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL }}
+            SLACK_CD_INFO_WORKFLOW_WEBHOOK_URL: ${{ secrets.SLACK_CD_INFO_WORKFLOW_WEBHOOK_URL }}
             TF_VAR_datadog_api_key: ${{ secrets.TF_VAR_datadog_api_key }}
 
         with:
@@ -118,7 +140,8 @@ jobs:
         secrets:
             AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
             AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            SLACK_ALERT_WEBHOOK_URL: ${{ secrets.SLACK_TRANSIENT_CD_WORKFLOW_WEBHOOK_URL }}
+            SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL: ${{ secrets.SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL }}
+            SLACK_CD_INFO_WORKFLOW_WEBHOOK_URL: ${{ secrets.SLACK_CD_INFO_WORKFLOW_WEBHOOK_URL }}
             TF_VAR_datadog_api_key: ${{ secrets.TF_VAR_datadog_api_key }}
 
         with:
