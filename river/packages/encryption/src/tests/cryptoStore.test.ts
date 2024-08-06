@@ -3,6 +3,8 @@
  */
 
 import { CryptoStore } from '../cryptoStore'
+import { EncryptionDelegate } from '../encryptionDelegate'
+import { EncryptionDevice } from '../encryptionDevice'
 import { UserDevice } from '../olmLib'
 import { nanoid } from 'nanoid'
 
@@ -100,5 +102,37 @@ describe('ClientStoreTests', () => {
         await store.initialize()
         const countAfterInitialize = await store.deviceRecordCount()
         expect(countAfterInitialize).toEqual(0)
+    })
+})
+
+describe('EncryptionDevice import/export', () => {
+    const userId = nanoid()
+
+    let store: CryptoStore
+    let device: EncryptionDevice
+    let delegate: EncryptionDelegate
+
+    beforeEach(async () => {
+        store = new CryptoStore('test', userId)
+        await store.initialize()
+        delegate = new EncryptionDelegate()
+        device = new EncryptionDevice(delegate, store)
+        await device.init()
+    })
+
+    test('Export and import device state', async () => {
+        // Generate some initial state
+        const initialCurve25519Key = device.deviceCurve25519Key
+
+        // Export the device state
+        const exportedDevice = await device.exportDevice()
+
+        // Create a new device and import the state
+        const newDevice = new EncryptionDevice(delegate, store)
+        await newDevice.init({ fromExportedDevice: exportedDevice })
+
+        // Check that the imported state matches the original
+        expect(newDevice.deviceCurve25519Key).toEqual(initialCurve25519Key)
+        expect(newDevice.pickleKey).toEqual(device.pickleKey)
     })
 })

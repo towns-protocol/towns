@@ -10,6 +10,7 @@ import {
 import { EncryptionDelegate } from './encryptionDelegate'
 import { GROUP_ENCRYPTION_ALGORITHM, GroupEncryptionSession } from './olmLib'
 import { dlog } from '@river-build/dlog'
+import type { ExtendedInboundGroupSessionData, GroupSessionRecord } from './storeTypes'
 
 const log = dlog('csb:encryption:encryptionDevice')
 
@@ -25,6 +26,18 @@ export interface InboundGroupSessionData {
     keysClaimed: Record<string, string>
     /** whether this session is untrusted. */
     untrusted?: boolean
+}
+
+export type ExportedDevice = {
+    pickleKey: string
+    pickledAccount: string
+    outboundSessions: GroupSessionRecord[]
+    inboundSessions: ExtendedInboundGroupSessionData[]
+}
+
+export type EncryptionDeviceInitOpts = {
+    fromExportedDevice?: ExportedDevice
+    pickleKey?: string
 }
 
 function checkPayloadLength(payloadString: string): void {
@@ -107,17 +120,26 @@ export class EncryptionDevice {
      *
      *
      */
-    public async init(): Promise<void> {
+    public async init(opts?: EncryptionDeviceInitOpts): Promise<void> {
+        const { fromExportedDevice, pickleKey } = opts ?? {}
         let e2eKeys
         if (!this.delegate.initialized) {
             await this.delegate.init()
         }
         const account = this.delegate.createAccount()
         try {
-            await this.initializeAccount(account)
+            if (fromExportedDevice) {
+                this.pickleKey = fromExportedDevice.pickleKey
+                await this.initializeFromExportedDevice(fromExportedDevice, account)
+            } else {
+                if (pickleKey) {
+                    this.pickleKey = pickleKey
+                }
+                await this.initializeAccount(account)
+            }
+            e2eKeys = JSON.parse(account.identity_keys())
             await this.generateFallbackKeyIfNeeded()
             this.fallbackKey = await this.getFallbackKey()
-            e2eKeys = JSON.parse(account.identity_keys())
         } finally {
             account.free()
         }
@@ -135,6 +157,34 @@ export class EncryptionDevice {
         )
     }
 
+    private async initializeFromExportedDevice(
+        exportedData: ExportedDevice,
+        account: Account,
+    ): Promise<void> {
+        await this.cryptoStore.withAccountTx(() =>
+            this.cryptoStore.storeAccount(exportedData.pickledAccount),
+        )
+        await this.cryptoStore.withGroupSessions(() => {
+            return Promise.all([
+                ...exportedData.outboundSessions.map((session) =>
+                    this.cryptoStore.storeEndToEndOutboundGroupSession(
+                        session.sessionId,
+                        session.session,
+                        session.streamId,
+                    ),
+                ),
+                ...exportedData.inboundSessions.map((session) =>
+                    this.cryptoStore.storeEndToEndInboundGroupSession(
+                        session.streamId,
+                        session.sessionId,
+                        session,
+                    ),
+                ),
+            ])
+        })
+        account.unpickle(this.pickleKey, exportedData.pickledAccount)
+    }
+
     private async initializeAccount(account: Account): Promise<void> {
         try {
             const pickledAccount = await this.cryptoStore.getAccount()
@@ -143,6 +193,28 @@ export class EncryptionDevice {
             account.create()
             const pickledAccount = account.pickle(this.pickleKey)
             await this.cryptoStore.storeAccount(pickledAccount)
+        }
+    }
+
+    /**
+     * Export the current device state
+     * @returns ExportedDevice object containing the device state
+     */
+    public async exportDevice(): Promise<ExportedDevice> {
+        const account = await this.getAccount()
+        const pickledAccount = account.pickle(this.pickleKey)
+        account.free()
+
+        const [inboundSessions, outboundSessions] = await Promise.all([
+            this.cryptoStore.getAllEndToEndInboundGroupSessions(),
+            this.cryptoStore.getAllEndToEndOutboundGroupSessions(),
+        ])
+
+        return {
+            pickleKey: this.pickleKey,
+            pickledAccount,
+            inboundSessions,
+            outboundSessions,
         }
     }
 

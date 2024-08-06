@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-redundant-type-constituents */
 import { Message, PlainMessage } from '@bufbuild/protobuf'
 import { datadogRum } from '@datadog/browser-rum'
 import { Permission } from '@river-build/web3'
@@ -52,6 +55,7 @@ import {
     UserDevice,
     UserDeviceCollection,
     makeSessionKeys,
+    type EncryptionDeviceInitOpts,
 } from '@river-build/encryption'
 import { StreamRpcClient } from './makeStreamRpcClient'
 import { errorContains, getRpcErrorProperty } from './rpcInterceptors'
@@ -320,27 +324,29 @@ export class Client
         this.syncedStreamsExtensions.setStreamIds(streamIds)
     }
 
-    async initializeUser(newUserMetadata?: { spaceId: Uint8Array | string }): Promise<void> {
-        const metadata = newUserMetadata
+    async initializeUser(opts?: {
+        spaceId?: Uint8Array | string
+        encryptionDeviceInit?: EncryptionDeviceInitOpts
+    }): Promise<void> {
+        const initUserMetadata = opts?.spaceId
             ? {
-                  ...newUserMetadata,
-                  spaceId: streamIdAsBytes(newUserMetadata.spaceId),
+                  spaceId: streamIdAsBytes(opts?.spaceId),
               }
             : undefined
 
         const initializeUserStartTime = performance.now()
         this.logCall('initializeUser', this.userId)
         assert(this.userStreamId === undefined, 'already initialized')
-        await this.initCrypto()
+        await this.initCrypto(opts?.encryptionDeviceInit)
 
         check(isDefined(this.decryptionExtensions), 'decryptionExtensions must be defined')
         check(isDefined(this.syncedStreamsExtensions), 'syncedStreamsExtensions must be defined')
 
         await Promise.all([
-            this.initUserStream(metadata),
-            this.initUserInboxStream(metadata),
-            this.initUserDeviceKeyStream(metadata),
-            this.initUserSettingsStream(metadata),
+            this.initUserStream(initUserMetadata),
+            this.initUserInboxStream(initUserMetadata),
+            this.initUserDeviceKeyStream(initUserMetadata),
+            this.initUserSettingsStream(initUserMetadata),
         ])
         await this.initUserJoinedStreams()
 
@@ -2027,7 +2033,7 @@ export class Client
         return r.hash
     }
 
-    private async initCrypto(): Promise<void> {
+    private async initCrypto(opts?: EncryptionDeviceInitOpts): Promise<void> {
         this.logCall('initCrypto')
         if (this.cryptoBackend) {
             this.logCall('Attempt to re-init crypto backend, ignoring')
@@ -2039,7 +2045,7 @@ export class Client
         await this.cryptoStore.initialize()
 
         const crypto = new GroupEncryptionCrypto(this, this.cryptoStore)
-        await crypto.init()
+        await crypto.init(opts)
         this.cryptoBackend = crypto
         this.decryptionExtensions = new ClientDecryptionExtensions(
             this,

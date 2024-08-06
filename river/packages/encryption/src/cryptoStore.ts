@@ -75,6 +75,10 @@ export class CryptoStore extends Dexie {
         return session.session
     }
 
+    async getAllEndToEndOutboundGroupSessions(): Promise<GroupSessionRecord[]> {
+        return await this.outboundGroupSessions.toArray()
+    }
+
     async getEndToEndInboundGroupSession(
         streamId: string,
         sessionId: string,

@@ -10,7 +10,7 @@ import { CryptoStore } from './cryptoStore'
 import { IGroupEncryptionClient } from './base'
 import { GroupDecryption } from './groupDecryption'
 import { GroupEncryption } from './groupEncryption'
-import { EncryptionDevice } from './encryptionDevice'
+import { EncryptionDevice, type EncryptionDeviceInitOpts } from './encryptionDevice'
 import { EncryptionDelegate } from './encryptionDelegate'
 import { check, dlog } from '@river-build/dlog'
 
@@ -69,9 +69,9 @@ export class GroupEncryptionCrypto {
     /** Iniitalize crypto module prior to usage
      *
      */
-    public async init(): Promise<void> {
+    public async init(opts?: EncryptionDeviceInitOpts): Promise<void> {
         // initialize deviceKey and fallbackKey
-        await this.encryptionDevice.init()
+        await this.encryptionDevice.init(opts)
 
         // build device keys to upload
         if (
