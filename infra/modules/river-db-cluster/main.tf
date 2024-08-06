@@ -75,14 +75,15 @@ resource "aws_cloudwatch_log_subscription_filter" "rds_log_group_filter" {
   destination_arn = module.global_constants.datadug_forwarder_stack_lambda.arn
 }
 
-resource "aws_security_group_rule" "allow_pgadmin_inbound_to_db" {
+resource "aws_vpc_security_group_ingress_rule" "allow_pgadmin_inbound_to_db" {
+  description = "Allow pgadmin inbound to db"
 
-  count     = 1
-  type      = "ingress"
-  from_port = 5432
-  to_port   = 5432
-  protocol  = "tcp"
+  from_port   = 5432
+  to_port     = 5432
+  ip_protocol = -1
 
-  security_group_id        = module.rds_aurora_postgresql.security_group_id
-  source_security_group_id = var.pgadmin_security_group_id
+  security_group_id            = module.rds_aurora_postgresql.security_group_id
+  referenced_security_group_id = var.pgadmin_security_group_id
+
+  tags = local.tags
 }
