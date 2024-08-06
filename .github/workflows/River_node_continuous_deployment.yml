@@ -1,0 +1,128 @@
+name: 'River Node Continuous Deployment'
+
+on:
+    push:
+        branches:
+            - main
+            - omega
+        paths:
+            - 'scripts/river-node-tag/tag.txt'
+
+    workflow_dispatch:
+        inputs:
+            environment_name:
+                description: 'Environment name'
+                required: true
+                type: choice
+                options:
+                    - gamma
+                    - omega
+                    - alpha
+                default: gamma
+
+    workflow_call:
+        inputs:
+            environment_name:
+                description: 'Environment name'
+                required: true
+                type: string
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    setup:
+        name: Setup
+        runs-on: ubuntu-latest
+        outputs:
+            ENV_NAME: ${{ steps.set_deployment_parameters.outputs.ENV_NAME }}
+            DOCKER_IMAGE_TAG: ${{ steps.set_deployment_parameters.outputs.DOCKER_IMAGE_TAG }}
+            FULL_NODE_NUMBERS: ${{ steps.set_deployment_parameters.outputs.FULL_NODE_NUMBERS }}
+            ARCHIVE_NODE_NUMBERS: ${{ steps.set_deployment_parameters.outputs.ARCHIVE_NODE_NUMBERS }}
+
+        steps:
+            - name: Get Environment Name
+              id: get_environment_name
+              env:
+                  BRANCH_NAME: ${{ github.ref }}
+                  ENVIRONMENT_NAME_INPUT: ${{ github.event.inputs.environment_name }}
+              run: |
+                  if [ -n "$ENVIRONMENT_NAME_INPUT" ]; then
+                    ENV_NAME=$ENVIRONMENT_NAME_INPUT
+                  elif [ $BRANCH_NAME = "refs/heads/main" ]; then
+                    ENV_NAME="gamma"
+                  elif [ $BRANCH_NAME = "refs/heads/omega" ]; then
+                    ENV_NAME="omega"
+                  else
+                      echo "Error: Could not determine environment name. Exiting."
+                      exit 1
+                  fi
+
+                  echo "ENV_NAME=$ENV_NAME" >> $GITHUB_ENV
+
+            - name: Set Deployment Parameters
+              id: set_deployment_parameters
+              env:
+                  BRANCH_NAME: ${{ github.ref }}
+                  ENV_NAME: ${{ env.ENV_NAME }}
+              run: |
+                  if [ $ENV_NAME = "gamma" ]; then
+
+                    DOCKER_IMAGE_TAG=$(./scripts/river-node-tag/run.sh get)
+                    FULL_NODE_NUMBERS="[1,2,3,4,5,6,7,8,9,10,11]"
+                    ARCHIVE_NODE_NUMBERS="[1]"
+
+                  elif [ $ENV_NAME = "alpha" ]; then
+
+                    DOCKER_IMAGE_TAG=$(./scripts/river-node-tag/run.sh get)
+                    FULL_NODE_NUMBERS="[1,2,3,4,5,6,7,8,9,10]"
+                    ARCHIVE_NODE_NUMBERS="[1]"
+
+                  elif [ $ENV_NAME = "omega" ]; then
+
+                    DOCKER_IMAGE_TAG=mainnet
+                    FULL_NODE_NUMBERS="[]"
+                    ARCHIVE_NODE_NUMBERS="[1,2]"
+
+                  else
+                    echo "Error: Env name unrecognized: $ENV_NAME". Exiting."
+                    exit 1
+                  fi
+
+                  echo "::set-output name=ENV_NAME::$ENV_NAME"
+                  echo "::set-output name=FULL_NODE_NUMBERS::$FULL_NODE_NUMBERS"
+                  echo "::set-output name=ARCHIVE_NODE_NUMBERS::$ARCHIVE_NODE_NUMBERS"
+                  echo "::set-output name=DOCKER_IMAGE_TAG::$DOCKER_IMAGE_TAG"
+
+    archive_node_continuous_deployment:
+        needs: setup
+        uses: './.github/workflows/River_deploy.yml'
+        if: ${{ needs.setup.outputs.ARCHIVE_NODE_NUMBERS != '[]' }}
+        secrets:
+            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            SLACK_ALERT_WEBHOOK_URL: ${{ secrets.SLACK_TRANSIENT_CD_WORKFLOW_WEBHOOK_URL }}
+            TF_VAR_datadog_api_key: ${{ secrets.TF_VAR_datadog_api_key }}
+
+        with:
+            environment_name: ${{ needs.setup.outputs.ENV_NAME }}
+            docker_image_tag: ${{ needs.setup.outputs.DOCKER_IMAGE_TAG }}
+            node_numbers: ${{ needs.setup.outputs.ARCHIVE_NODE_NUMBERS }}
+            run_mode: 'archive'
+
+    full_node_continuous_deployment:
+        if: ${{ needs.setup.outputs.FULL_NODE_NUMBERS != '[]' }}
+        needs: setup
+        uses: './.github/workflows/River_deploy.yml'
+        secrets:
+            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            SLACK_ALERT_WEBHOOK_URL: ${{ secrets.SLACK_TRANSIENT_CD_WORKFLOW_WEBHOOK_URL }}
+            TF_VAR_datadog_api_key: ${{ secrets.TF_VAR_datadog_api_key }}
+
+        with:
+            environment_name: ${{ needs.setup.outputs.ENV_NAME }}
+            docker_image_tag: ${{ needs.setup.outputs.DOCKER_IMAGE_TAG }}
+            node_numbers: ${{ needs.setup.outputs.FULL_NODE_NUMBERS }}
+            run_mode: 'full'

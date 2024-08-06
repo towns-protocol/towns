@@ -395,13 +395,6 @@ if ! git diff main --quiet --cached; then
 
     echo "Subtree merge completed successfully."
 
-    # TODO: remove these lines, and have gh actions run the deployment instead
-    echo "Deploying river..."
-
-    gh workflow run River_deploy.yml -f docker_image_tag="${SHORT_HASH}" -f run_mode="full" -f node_numbers="[1,2,3,4,5,6,7,8,9,10,11]"
-
-    gh workflow run River_deploy.yml -f docker_image_tag="${SHORT_HASH}" -f run_mode="archive" -f node_numbers="[1]"
-
     play_success_sound
 else
     play_failure_sound

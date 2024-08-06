@@ -72,10 +72,6 @@ jobs:
         name: Pre-deploy checks
         runs-on: ubuntu-latest
 
-        permissions:
-            contents: read
-            packages: read
-
         steps:
             - name: Checkout
               uses: actions/checkout@v4
@@ -131,10 +127,6 @@ jobs:
 
         needs: pre_deploy
 
-        permissions:
-            contents: write
-            packages: write
-
         strategy:
             matrix:
                 iteration: ${{ fromJson(inputs.node_numbers) }}
@@ -179,10 +171,6 @@ jobs:
 
         if: failure()
 
-        permissions:
-            contents: read
-            packages: read
-
         steps:
             # If action failed, we send a slack notification
             - name: Alert notification
@@ -207,10 +195,6 @@ jobs:
         needs: [pre_deploy, deploy]
 
         if: success()
-
-        permissions:
-            contents: read
-            packages: read
 
         steps:
             - name: Success notification
