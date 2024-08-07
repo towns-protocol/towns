@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import { useTownsClient } from './use-towns-client'
 import { useCasablancaCredentials } from './use-casablanca-credentials'
 import { TSigner } from 'types/web3-types'
+import { CasablancaSignInCallbacks } from './use-casablanca-wallet-signin'
 
 const loginMsgToSign = `Click to sign in and accept the Towns Terms of Service.`
 export const registerWalletMsgToSign = `Click to register and accept the Towns Terms of Service.`
@@ -18,8 +19,11 @@ export function useConnectivity() {
     } = useTownsClient()
 
     const login = useCallback(
-        async (signer: TSigner) => {
-            return await loginWithWalletToCasablanca(loginMsgToSign, signer)
+        async (signer: TSigner, { onSuccess, onError }: CasablancaSignInCallbacks = {}) => {
+            return await loginWithWalletToCasablanca(loginMsgToSign, signer, {
+                onSuccess,
+                onError,
+            })
         },
         [loginWithWalletToCasablanca],
     )

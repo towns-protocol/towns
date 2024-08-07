@@ -28,7 +28,10 @@ import { useLogout } from './use-logout'
 import { useResetFullyReadMarkers } from './TownsContext/useResetFullyReadMarkers'
 import { useSendReadReceipt } from './TownsContext/useSendReadReceipt'
 import { useTownsContext } from '../components/TownsContextProvider'
-import { useCasablancaWalletSignIn } from './use-casablanca-wallet-signin'
+import {
+    CasablancaSignInCallbacks,
+    useCasablancaWalletSignIn,
+} from './use-casablanca-wallet-signin'
 import { create } from 'zustand'
 import { IArchitectBase, Permission, IRuleEntitlementBase } from '@river-build/web3'
 import { TSigner } from 'types/web3-types'
@@ -170,7 +173,11 @@ interface TownsClientImpl {
     joinRoom: (roomId: string, parentNetworkId?: string) => Promise<StreamView | undefined>
     leaveRoom: (roomId: string, parentNetworkId?: string) => Promise<void>
     logout: () => Promise<void>
-    loginWithWalletToCasablanca: (statement: string, signer: TSigner) => Promise<void>
+    loginWithWalletToCasablanca: (
+        statement: string,
+        signer: TSigner,
+        cbs?: CasablancaSignInCallbacks,
+    ) => Promise<void>
     joinTown: (spaceId: string, signer: TSigner) => Promise<StreamView | undefined>
     redactEvent: (roomId: string, eventId: string, reason?: string) => Promise<void>
     registerWalletWithCasablanca: (statement: string, signer: TSigner) => Promise<void>
