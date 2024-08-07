@@ -106,22 +106,33 @@ class TimeTracker {
             // Reset start time
             this.metrics[sequence].steps[step].startTime = undefined
 
-            datadogLogs.logger.info(`sequence_time: ${sequence} ${step} ${durationMs}ms`, {
-                sequence,
-                step,
-                sequenceId: this.metrics[sequence].sequenceId,
-                durationMs,
-            })
+            try {
+                datadogLogs.logger.info(`sequence_time: ${sequence} ${step} ${durationMs}ms`, {
+                    sequence,
+                    step,
+                    sequenceId: this.metrics[sequence].sequenceId,
+                    durationMs,
+                })
+            } catch (error) {
+                console.log('[SequenceTimeTracker] Error logging sequence time:', error)
+            }
 
             if (endSequence) {
                 const sequenceStartTime = this.metrics[sequence].startTime
                 if (sequenceStartTime) {
-                    datadogLogs.logger.info(`sequence_time: ${sequence} complete ${durationMs}ms`, {
-                        sequence,
-                        step: 'complete',
-                        sequenceId: this.metrics[sequence].sequenceId,
-                        durationMs: endTime - sequenceStartTime,
-                    })
+                    try {
+                        datadogLogs.logger.info(
+                            `sequence_time: ${sequence} complete ${durationMs}ms`,
+                            {
+                                sequence,
+                                step: 'complete',
+                                sequenceId: this.metrics[sequence].sequenceId,
+                                durationMs: endTime - sequenceStartTime,
+                            },
+                        )
+                    } catch (error) {
+                        console.log('[SequenceTimeTracker] Error logging sequence time:', error)
+                    }
                 }
 
                 this.metrics[sequence].startTime = undefined

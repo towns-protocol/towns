@@ -48,14 +48,19 @@ export function errorToCodeException(error: unknown, category: ErrorCategory) {
     if (typeof reason === 'string') {
         const errorMatch = reason?.match(/error\\":\{([^}]+)\}/)?.[1]
         if (errorMatch) {
-            const parsedData = JSON.parse(`{${errorMatch?.replace(/\\/g, '')}}`)
-            if (isStackupErrorObject(parsedData)) {
-                return new CodeException({
-                    message: parsedData.message ?? err?.message ?? 'Unknown error',
-                    code: parsedData.code,
-                    data: parsedData.data,
-                    category,
-                })
+            try {
+                const parsedData = JSON.parse(`{${errorMatch?.replace(/\\/g, '')}}`)
+                if (isStackupErrorObject(parsedData)) {
+                    return new CodeException({
+                        message: parsedData.message ?? err?.message ?? 'Unknown error',
+                        code: parsedData.code,
+                        data: parsedData.data,
+                        category,
+                    })
+                }
+            } catch (error) {
+                // ignore
+                console.error('[errorToCodeException] failed to parse error', error)
             }
         }
     }

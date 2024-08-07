@@ -125,7 +125,7 @@ export function promptUser(
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const _e = error as Error & { body?: any }
 
-                    const body = JSON.parse(_e.body ?? '{}') as
+                    let body:
                         | {
                               error: {
                                   code?: string | number
@@ -134,7 +134,14 @@ export function promptUser(
                                   message?: string
                               }
                           }
-                        | undefined
+                        | undefined = undefined
+
+                    try {
+                        body = JSON.parse(_e.body ?? '{}')
+                    } catch (error) {
+                        // ignore
+                        console.log('[paymasterProxyMiddleware] failed to parse error body', error)
+                    }
 
                     const exception = new CodeException({
                         message: body?.error?.message ?? 'Error estimating gas for user operation',
