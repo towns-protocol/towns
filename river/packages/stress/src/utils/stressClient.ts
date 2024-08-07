@@ -88,7 +88,9 @@ export class StressClient {
         public rpcClient: StreamRpcClient,
         public spaceDapp: SpaceDapp,
         public streamsClient: StreamsClient,
-    ) {}
+    ) {
+        logger.log('StressClient', { clientIndex, userId, logId: this.logId })
+    }
 
     get logId(): string {
         return `client${this.clientIndex}:${shortenHexString(this.userId)}`
@@ -203,6 +205,9 @@ export class StressClient {
         const rawDevice = await fs.readFile(this.deviceFilePath, 'utf8').catch(() => undefined)
         if (rawDevice) {
             device = JSON.parse(rawDevice) as ExportedDevice
+            logger.info(
+                `Device imported from ${this.deviceFilePath}, outboundSessions: ${device.outboundSessions.length} inboundSessions: ${device.inboundSessions.length}`,
+            )
         }
         const botPrivateKey = this.baseProvider.wallet.privateKey
         await this.streamsClient.initializeUser({
