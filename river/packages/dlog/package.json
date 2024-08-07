@@ -20,7 +20,7 @@
     "dependencies": {
         "@bufbuild/protobuf": "^1.9.0",
         "@river-build/proto": "workspace:^",
-        "browser-or-node": "^2.1.1",
+        "browser-or-node": "^3.0.0",
         "debug": "^4.3.4",
         "ethereum-cryptography": "^1.2.0"
     },

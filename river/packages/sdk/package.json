@@ -31,7 +31,7 @@
         "@river-build/encryption": "workspace:^",
         "@river-build/proto": "workspace:^",
         "@river-build/web3": "workspace:^",
-        "browser-or-node": "^2.1.1",
+        "browser-or-node": "^3.0.0",
         "debug": "^4.3.4",
         "dexie": "^4.0.7",
         "ethereum-cryptography": "^1.2.0",

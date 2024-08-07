@@ -12,17 +12,18 @@ import (
 	"github.com/river-build/river/core/node/nodes"
 	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/shared"
-	"github.com/river-build/river/core/node/utils"
 )
 
 type (
 	// Handler defines the external grpc interface that clients can call.
 	Handler interface {
+		// SyncStreams runs a stream sync operation that subscribes to streams on the local node and remote nodes.
+		// It returns syncId, if any and an error.
 		SyncStreams(
 			ctx context.Context,
 			req *connect.Request[SyncStreamsRequest],
 			res *connect.ServerStream[SyncStreamsResponse],
-		) error
+		) (string, error)
 
 		AddStreamToSync(
 			ctx context.Context,
@@ -91,13 +92,10 @@ func (h *handlerImpl) SyncStreams(
 	ctx context.Context,
 	req *connect.Request[SyncStreamsRequest],
 	res *connect.ServerStream[SyncStreamsResponse],
-) error {
-	ctx, log := utils.CtxAndLogForRequest(ctx, req)
-
+) (string, error) {
 	op, err := NewStreamsSyncOperation(ctx, h.nodeAddr, h.streamCache, h.nodeRegistry)
 	if err != nil {
-		log.Error("Unable to create streams sync subscription", "error", err)
-		return err
+		return "", err
 	}
 
 	h.activeSyncOperations.Store(op.SyncID, op)
@@ -105,7 +103,8 @@ func (h *handlerImpl) SyncStreams(
 
 	doneChan := make(chan error, 1)
 	go h.runSyncStreams(req, res, op, doneChan)
-	return <-doneChan
+	err = <-doneChan
+	return op.SyncID, err
 }
 
 func (h *handlerImpl) runSyncStreams(
