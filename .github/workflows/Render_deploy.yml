@@ -10,12 +10,8 @@ on:
                 options:
                     - 'gamma'
                     - 'omega'
+                    - 'alpha'
                 default: 'gamma'
-
-    push:
-        branches:
-            - main
-            - omega
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
@@ -50,16 +46,24 @@ jobs:
 
                   # set the HARMONY_WEB_WEBHOOK_URL based on environment name
                   if [ "$ENVIRONMENT_NAME" == "gamma" ]; then
+
                     HARMONY_WEB_WEBHOOK_URL="${{ secrets.HARMONY_WEB_WEBHOOK_URL_GAMMA }}"
                     HARMONY_WEB_SERVICE_ID="${{ secrets.HARMONY_WEB_SERVICE_ID_GAMMA }}"
+
                   elif [ "$ENVIRONMENT_NAME" == "omega" ]; then
+
                     HARMONY_WEB_WEBHOOK_URL="${{ secrets.HARMONY_WEB_WEBHOOK_URL_OMEGA }}"
                     HARMONY_WEB_SERVICE_ID="${{ secrets.HARMONY_WEB_SERVICE_ID_OMEGA }}"
+
+                  elif [ "$ENVIRONMENT_NAME" == "alpha" ]; then
+
+                    HARMONY_WEB_WEBHOOK_URL="${{ secrets.HARMONY_WEB_WEBHOOK_URL_ALPHA }}"
+                    HARMONY_WEB_SERVICE_ID="${{ secrets.HARMONY_WEB_SERVICE_ID_ALPHA }}"
+
                   else
                     echo "Environment name not recognized: $ENVIRONMENT_NAME"
                     exit 1
                   fi
-
 
                   echo "ENVIRONMENT_NAME=$ENVIRONMENT_NAME" >> $GITHUB_ENV
                   echo "RENDER_BEARER_TOKEN=${{ secrets.RENDER_BEARER_TOKEN }}" >> $GITHUB_ENV

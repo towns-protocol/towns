@@ -74,6 +74,14 @@ function deploy_and_wait() {
         sleep 10
     done
 
+    while true; do
+        status=$(get_deployment_status $deploy_id)
+        if [ "$status" != "update_in_progress" ]; then
+            break
+        fi
+        sleep 10
+    done
+
     if [ "$status" == "canceled" ]; then
         echo "Deployment was canceled." >&2
         exit 0
