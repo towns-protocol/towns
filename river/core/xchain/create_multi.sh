@@ -41,14 +41,7 @@ cd "$(dirname "$0")"
 
 : ${RUN_ENV:?}
 : ${RIVER_ENV:?} 
-
-: ${SPACE_FACTORY_ADDRESS:?}
 : ${BASE_REGISTRY_ADDRESS:?}
-: ${RIVER_REGISTRY_ADDRESS:?}
-
-export ENTITLEMENT_TEST_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/base/addresses/entitlementGatedExample.json)
-export CUSTOM_ENTITLEMENT_TEST_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/base/addresses/customEntitlementExample.json)
-export BASE_REGISTRY_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/base/addresses/baseRegistry.json)
 
 make build
 
@@ -101,17 +94,8 @@ do
     # Using the same config as the node
     cp ../run_files/${RUN_ENV}/common_config.yaml "${INSTANCE_DIR}/config/config.yaml"
 
-    # Substitute METRIC_PORT and create config.yaml
-    METRICS_PORT=$((9080 + i))
-
     echo "Creating instance_${i}"
     
-    yq eval ".metrics.port = \"$METRICS_PORT\"" -i "${INSTANCE_DIR}/config/config.yaml"
-    yq eval ".entitlement_contract.address = strenv(BASE_REGISTRY_ADDRESS)" -i "${INSTANCE_DIR}/config/config.yaml"
-    yq eval ".test_contract.address = strenv(ENTITLEMENT_TEST_ADDRESS)" -i "${INSTANCE_DIR}/config/config.yaml"
-    yq eval ".architectContract.address = strenv(SPACE_FACTORY_ADDRESS)" -i "${INSTANCE_DIR}/config/config.yaml"
-    yq eval ".registryContract.address = strenv(RIVER_REGISTRY_ADDRESS)" -i "${INSTANCE_DIR}/config/config.yaml"
-
     yq eval ".log.level = \"debug\"" -i "${INSTANCE_DIR}/config/config.yaml"
     
     pushd "${INSTANCE_DIR}"

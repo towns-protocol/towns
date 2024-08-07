@@ -19,14 +19,6 @@ riverChain:
     networkUrl: 'http://127.0.0.1:8546'
     blockTimeMs: <BLOCK_TIME_MS>
 
-# Base contracts
-architectContract:
-    address: <SPACE_FACTORY_ADDRESS>
-
-# River contracts
-registryContract:
-    address: <RIVER_REGISTRY_ADDRESS>
-
 # Logging
 log:
     file: logs/dev.log

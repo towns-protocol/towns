@@ -52,13 +52,16 @@ if [ "$CONFIG" == "true" ]; then
     mkdir -p ${RUN_BASE}
     ../../scripts/deploy-contracts.sh
 
-    SPACE_FACTORY_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/base/addresses/spaceFactory.json)
-    BASE_REGISTRY_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/base/addresses/baseRegistry.json)
-    RIVER_REGISTRY_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/river/addresses/riverRegistry.json)    
+    export SPACE_FACTORY_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/base/addresses/spaceFactory.json)
+    export BASE_REGISTRY_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/base/addresses/baseRegistry.json)
+    export RIVER_REGISTRY_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/river/addresses/riverRegistry.json)    
+    export ENTITLEMENT_TEST_ADDRESS=$(jq -r '.address' ../../packages/generated/deployments/${RIVER_ENV}/base/addresses/entitlementGatedExample.json)
 
-    export SPACE_FACTORY_ADDRESS
-    export BASE_REGISTRY_ADDRESS
-    export RIVER_REGISTRY_ADDRESS
+    echo "" > ${RUN_BASE}/contracts.env
+    echo "RIVER_ARCHITECTCONTRACT_ADDRESS=${SPACE_FACTORY_ADDRESS}" >> ${RUN_BASE}/contracts.env
+    echo "RIVER_ENTITLEMENT_CONTRACT_ADDRESS=${BASE_REGISTRY_ADDRESS}" >> ${RUN_BASE}/contracts.env
+    echo "RIVER_REGISTRYCONTRACT_ADDRESS=${RIVER_REGISTRY_ADDRESS}" >> ${RUN_BASE}/contracts.env
+    echo "RIVER_TEST_CONTRACT_ADDRESS=${ENTITLEMENT_TEST_ADDRESS}" >> ${RUN_BASE}/contracts.env
 
     source ../../contracts/.env.localhost
 
@@ -150,7 +153,7 @@ if [ "$RUN" == "true" ]; then
         echo "Running instance '$INSTANCE' with extra aguments: '${args[@]:-}'"
         cast rpc -r http://127.0.0.1:8546 anvil_setBalance `cat ./wallet/node_address` 10000000000000000000
 
-        ../bin/river_node run stream --config ../common_config.yaml --config config/config.env "${args[@]:-}" &
+        ../bin/river_node run stream --config ../common_config.yaml --config ../contracts.env --config config/config.env "${args[@]:-}" &
 
         popd
     done < <(find . -type d -mindepth 1 -maxdepth 1 | sort)
