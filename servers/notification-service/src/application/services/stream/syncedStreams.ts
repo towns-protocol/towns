@@ -113,7 +113,10 @@ export class SyncedStreams {
     private abortRetry: (() => void) | undefined
     private currentRetryCount: number = 0
     private forceStopSyncStreams: (() => void) | undefined
-    private interruptSync: ((err: unknown) => void) | undefined
+    private interruptSync: (() => void) | undefined
+    private addToSyncQueue: SyncCookie[] = []
+    private addToSyncInProcess: SyncCookie | undefined = undefined
+    private addSyncTask: Promise<void> | undefined
 
     // Only responses related to the current syncId are processed.
     // Responses are queued and processed in order
@@ -150,6 +153,7 @@ export class SyncedStreams {
             const syncState = this.syncState
             this.setSyncState(SyncState.Canceling)
             this.stopPing()
+            this.addToSyncQueue = []
             try {
                 this.abortRetry?.()
                 // Give the server 5 seconds to respond to the cancelSync RPC before forceStopSyncStreams
@@ -180,21 +184,46 @@ export class SyncedStreams {
         }
     }
 
-    // adds stream to the sync subscription
-    public async addStreamToSync(syncCookie: SyncCookie): Promise<void> {
-        if (this.syncState === SyncState.Syncing && this.syncId) {
+    private startAddToSyncRequest() {
+        // For now we only allow one at a time
+        if (this.addSyncTask) {
+            logger.error('startAddToSyncRequest: addSyncTask already exists')
+            return
+        }
+        const syncCookie = this.addToSyncInProcess
+        this.addSyncTask = (async () => {
             try {
                 await this.rpcClient.addStreamToSync({
                     syncId: this.syncId,
                     syncPos: syncCookie,
                 })
-                logger.info('addedStreamToSync', { syncCookie })
+                logger.info('addedStreamToSync requested', {
+                    syncId: this.syncId,
+                    streamId: syncCookie?.streamId,
+                })
             } catch (error) {
                 // Trigger restart of sync loop
                 logger.error(`addedStreamToSync error`, { error })
                 if (errorContains(error, Err.BAD_SYNC_COOKIE)) {
                     logger.error('addStreamToSync BAD_SYNC_COOKIE', { syncCookie })
                     throw error
+                }
+            } finally {
+                // The next request will be started when the current one is completed
+                this.addSyncTask = undefined
+            }
+        })()
+    }
+
+    // adds stream to the sync subscription
+    public addStreamToSync(syncCookie: SyncCookie) {
+        if (this.syncState === SyncState.Syncing && this.syncId) {
+            this.addToSyncQueue.push(syncCookie)
+
+            if (!this.addToSyncInProcess) {
+                if (this.addToSyncQueue.length > 0) {
+                    this.addToSyncInProcess = this.addToSyncQueue.shift()
+                    this.startAddToSyncRequest()
                 }
             }
         } else {
@@ -280,25 +309,26 @@ export class SyncedStreams {
                                 this.syncState === SyncState.Syncing ||
                                 this.syncState === SyncState.Starting
                             ) {
-                                const interruptSyncPromise = new Promise<void>(
-                                    (resolve, reject) => {
-                                        this.forceStopSyncStreams = () => {
-                                            logger.info('forceStopSyncStreams called')
-                                            resolve()
-                                        }
-                                        this.interruptSync = (e: unknown) => {
-                                            logger.info('sync interrupted', { e })
-                                            reject(e)
-                                        }
-                                    },
-                                )
+                                const interruptSyncPromise = new Promise<{
+                                    value: undefined
+                                    done: true
+                                }>((resolve) => {
+                                    this.forceStopSyncStreams = () => {
+                                        logger.info('forceStopSyncStreams called')
+                                        resolve({ value: undefined, done: true })
+                                    }
+                                    this.interruptSync = () => {
+                                        logger.info('interruptSync called')
+                                        resolve({ value: undefined, done: true })
+                                    }
+                                })
+
+                                logger.info('syncStreams waiting for next')
                                 const { value, done } = await Promise.race([
                                     iterator.next(),
-                                    interruptSyncPromise.then(() => ({
-                                        value: undefined,
-                                        done: true,
-                                    })),
+                                    interruptSyncPromise,
                                 ])
+                                logger.info('syncStreams received next', { value, done })
                                 if (done || value === undefined) {
                                     logger.info('exiting syncStreams', done, value)
                                     // exit the syncLoop, it's done
@@ -449,21 +479,18 @@ export class SyncedStreams {
 
             const dbSyncedStreams = await database.syncedStream.findMany()
 
-            logger.info('starting addStreamToSync with len of dbSyncedStreams', {
+            logger.info('fetched streams to sync', {
                 streamCount: dbSyncedStreams.length,
                 duration: Date.now() - start,
             })
 
-            const addStreamStart = Date.now()
             for (const dbStream of dbSyncedStreams) {
-                await this.addStreamToSync(SyncCookie.fromJsonString(dbStream.SyncCookie))
-                logger.info('added stream to sync', { streamId: dbStream.StreamId })
-                await new Promise((resolve) => setTimeout(resolve, 100))
+                const syncCookie = SyncCookie.fromJsonString(dbStream.SyncCookie)
+                this.addStreamToSync(syncCookie)
             }
 
             logger.info('addStreamToSync completed with len of syncCookies', {
                 streamCount: dbSyncedStreams.length,
-                duration: Date.now() - addStreamStart,
             })
         } else {
             logger.info(
@@ -501,6 +528,19 @@ export class SyncedStreams {
             }
             const syncStream = res.stream
             if (syncStream !== undefined) {
+                // Once we have data acknowling the pending addStreamToSync, we can start the next one
+                if (
+                    this.addToSyncInProcess?.streamId &&
+                    this.addToSyncInProcess?.streamId === syncStream.nextSyncCookie?.streamId
+                ) {
+                    logger.info('addToSyncInProcess acknowledged', {
+                        streamId: this.addToSyncInProcess.streamId,
+                    })
+                    if (this.addToSyncQueue.length > 0) {
+                        this.addToSyncInProcess = this.addToSyncQueue.shift()
+                        this.startAddToSyncRequest()
+                    }
+                }
                 const streamId = syncStream.nextSyncCookie?.streamId
                     ? bin_toHexString(syncStream.nextSyncCookie.streamId)
                     : ''
@@ -934,9 +974,12 @@ export class SyncedStreams {
                     this.sendKeepAlivePings()
                 }
             }
-            ping().catch((err) => {
-                this.interruptSync?.(err)
-            })
+            try {
+                ping()
+            } catch (error) {
+                logger.error('sendKeepAlivePings error', { error })
+                this.interruptSync?.()
+            }
         }, 5 * 1000 * 60) // every 5 minutes
     }
 

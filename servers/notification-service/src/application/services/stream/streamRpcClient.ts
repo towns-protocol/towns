@@ -19,10 +19,6 @@ const histogramIntervalMs = 5000
 
 const logger = notificationServiceLogger.child({ label: 'rpcClient' })
 const histogramLogger = notificationServiceLogger.child({ label: 'rpcClient:histogram' })
-const callsLogger = notificationServiceLogger.child({ label: 'rpcClient:calls' })
-callsLogger.level = 'silent'
-const protoLogger = notificationServiceLogger.child({ label: 'rpcClient:proto' })
-protoLogger.level = 'silent'
 
 const sortObjectKey = (obj: Record<string, unknown>) => {
     const sorted: Record<string, unknown> = {}
@@ -128,16 +124,11 @@ const loggingInterceptor: () => Interceptor = () => {
             } else {
                 const streamIdBytes = req.message['streamId'] as Uint8Array
                 streamId = streamIdBytes ? streamIdAsString(streamIdBytes) : undefined
-                if (streamId !== undefined) {
-                    callsLogger.info('StreamId found', { name: req.method.name, streamId, id })
-                } else {
-                    callsLogger.info('StreamId undefined', { name: req.method.name, id })
-                }
-                protoLogger.info('Proto log', {
+                logger.info('Unary request', {
                     name: req.method.name,
                     type: 'REQUEST',
+                    streamId,
                     id,
-                    message: req.message,
                 })
             }
             updateHistogram(req.method.name, streamId)
@@ -155,11 +146,12 @@ const loggingInterceptor: () => Interceptor = () => {
                         message: logEachResponse(res.method.name, id, res.message),
                     }
                 } else {
-                    protoLogger.info('logEachResponse', {
+                    logger.info('Unary response', {
                         name: res.method.name,
                         type: 'RESPONSE',
                         id,
                         message: res.message,
+                        status: res.header.get('status'),
                     })
                 }
                 return res
@@ -196,18 +188,27 @@ const loggingInterceptor: () => Interceptor = () => {
                                 args.push(streamIdAsString(s))
                             }
                         }
-                        callsLogger.info('logEachRequest', { name, length: args.length, id, args })
+                        logger.info('Streaming request', {
+                            name,
+                            length: args.length,
+                            id,
+                            args,
+                            type: 'STREAMING REQUEST',
+                        })
                     } else {
-                        callsLogger.info('logEachRequest', { name, id })
+                        logger.info('Streaming request', {
+                            name,
+                            id,
+                            type: 'STREAMING REQUEST',
+                        })
                     }
                     updateHistogram(name)
 
-                    protoLogger.info('logEachRequest', { name, type: 'STREAMING REQUEST', id, m })
                     yield m
                 } catch (err) {
-                    logger.error('Request Error', {
+                    logger.error('Streaming request error', {
                         name,
-                        type: 'ERROR YIELDING REQUEST',
+                        type: 'STREAMING REQUEST',
                         id,
                         error: err,
                     })
@@ -218,14 +219,14 @@ const loggingInterceptor: () => Interceptor = () => {
         } catch (err) {
             logger.error('Streaming Request Error', {
                 name,
-                type: 'ERROR STREAMING REQUEST',
+                type: 'STREAMING REQUEST',
                 id,
                 error: err,
             })
             updateHistogram(name, undefined, true)
             throw err
         }
-        protoLogger.info('Streaming response done', { name, type: 'STREAMING REQUEST DONE', id })
+        logger.info('Streaming request closed', { name, type: 'STREAMING REQUEST', id })
     }
 
     async function* logEachResponse(name: string, id: string, stream: AsyncIterable<AnyMessage>) {
@@ -234,25 +235,28 @@ const loggingInterceptor: () => Interceptor = () => {
                 try {
                     const streamId: Uint8Array | undefined = m.stream?.nextSyncCookie?.streamId
                     if (streamId !== undefined) {
-                        callsLogger.info('logEachResponse', {
+                        logger.info('Streaming response', {
                             name,
-                            type: 'RECV',
+                            type: 'STREAMING RESPONSE',
                             streamId: streamIdAsString(streamId),
                             id,
                         })
                     } else {
-                        callsLogger.info('logEachResponse', { name, type: 'RECV', id })
+                        logger.info('Streaming response', {
+                            name,
+                            type: 'STREAMING RESPONSE',
+                            id,
+                        })
                     }
                     updateHistogram(
                         `${name} RECV`,
                         streamId ? streamIdAsString(streamId) : 'undefined',
                     )
-                    protoLogger.info('logEachResponse', { name, type: 'STREAMING RESPONSE', id, m })
                     yield m
                 } catch (err) {
                     logger.error('Streaming Response Error', {
                         name,
-                        type: 'ERROR YIELDING RESPONSE',
+                        type: 'STREAMING RESPONSE',
                         id,
                         error: err,
                     })
@@ -261,16 +265,20 @@ const loggingInterceptor: () => Interceptor = () => {
             }
         } catch (err) {
             if (err == 'BLIP') {
-                callsLogger.info('blip', { name, type: 'BLIP', id })
+                logger.info('Streaming Response blip', { name, type: 'BLIP', id })
                 updateHistogram(`${name} BLIP`)
             } else if (err == 'SHUTDOWN') {
-                callsLogger.info('Shutdown', { name, type: 'SHUTDOWN', id })
+                logger.info('Streaming Response Shutdown', {
+                    name,
+                    type: 'STREAMING RESPONSE',
+                    id,
+                })
                 updateHistogram(`${name} SHUTDOWN`)
             } else {
                 const stack = err instanceof Error && 'stack' in err ? err.stack ?? '' : ''
                 logger.error('Streaming Response Error', {
                     name,
-                    type: 'ERROR STREAMING RESPONSE',
+                    type: 'STREAMING RESPONSE',
                     id,
                     error: err,
                     stack,
@@ -279,7 +287,7 @@ const loggingInterceptor: () => Interceptor = () => {
             }
             throw err
         }
-        protoLogger.info('logEachResponse', { name, type: 'STREAMING RESPONSE DONE', id })
+        logger.info('Streaming Response Done', { name, type: 'STREAMING RESPONSE', id })
     }
 }
 
