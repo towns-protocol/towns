@@ -42,11 +42,7 @@ function set_env() {
     export REGISTERED_TASK_DEFINITION_FILENAME="$( pwd )/registered-task-definition.json"
     export CLUSTER_NAME="${ENVIRONMENT_NAME}-river-ecs-cluster"
     export SERVICE_NAME="${NODE_NAME}-${ENVIRONMENT_NAME}-fargate-service"
-
-    # if public ECR URL is not set, use the default
-    if [ -z "$PUBLIC_ECR_URL" ]; then
-        export PUBLIC_ECR_URL=public.ecr.aws/h5v6m2x1/river
-    fi
+    export PUBLIC_ECR_URL="public.ecr.aws/h5v6m2x1/river"
 
     echo "ENVIRONMENT_NAME: ${ENVIRONMENT_NAME}"
     echo "DOCKER_IMAGE_TAG: ${DOCKER_IMAGE_TAG}"

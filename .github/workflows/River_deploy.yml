@@ -44,10 +44,6 @@ on:
                 description: 'JSON array of node numbers to deploy to'
                 type: string
                 default: '[-1]'
-            public_ecr_url:
-                description: 'Public ECR URL'
-                required: false
-                type: string
 
         secrets:
             AWS_ACCESS_KEY_ID:
@@ -84,7 +80,6 @@ jobs:
                   echo "Deploying to environment: ${{ inputs.environment_name }}"
                   echo "with image tag: ${{ inputs.docker_image_tag }}"
                   echo "to nodes: ${{ inputs.node_numbers }}"
-                  echo "using public ECR URL: ${{ inputs.public_ecr_url }}"
 
             - name: Configure AWS credentials
               uses: aws-actions/configure-aws-credentials@v4
@@ -151,7 +146,6 @@ jobs:
                   ENVIRONMENT_NAME: ${{ inputs.environment_name }}
                   DOCKER_IMAGE_TAG: ${{ inputs.docker_image_tag }}
                   NODE_NUMBER: ${{ matrix.iteration }}
-                  PUBLIC_ECR_URL: ${{ inputs.public_ecr_url }}
                   RUN_MODE: ${{ inputs.run_mode }}
               run: ./scripts/create-and-deploy-river-task-definition.sh
 

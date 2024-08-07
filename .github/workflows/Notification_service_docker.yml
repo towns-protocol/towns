@@ -21,7 +21,7 @@ on:
                 default: 'gamma'
 
 env:
-    SLACK_WEBHOOK_URL: ${{ secrets.SLACK_CD_WORKFLOW_WEBHOOK_URL }}
+    SLACK_WEBHOOK_URL: ${{ secrets.SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL }}
 
 jobs:
     build:

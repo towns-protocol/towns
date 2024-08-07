@@ -4,11 +4,10 @@ env:
 name: Provision Transient Environment
 on:
     pull_request:
-        types: [opened, synchronize, reopened, labeled, unlabeled]
+        types: [opened, reopened]
 concurrency:
     group: ${{ github.workflow }}-provision-${{ github.ref }}
     cancel-in-progress: false
-    # TODO: how can we make sure there's only one per environment running at the same time?
 
 jobs:
     provision_transient_environment:
@@ -55,21 +54,27 @@ jobs:
               working-directory: ./infra
               run: make apply
 
-            - name: Install Foundry
-              uses: foundry-rs/foundry-toolchain@v1
+            - name: Comment on PR
+              uses: actions/github-script@v7
+              env:
+                  GIT_PR_NUMBER: ${{ github.event.pull_request.number }}
               with:
-                  version: ${{ env.FOUNDRY_VERSION }}
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  script: |
+                      const gitPrNumber = process.env.GIT_PR_NUMBER;
+                      const webAppUrl = `https://${gitPrNumber}.app-preview.towns.com`;
+                      const sampleAppUrl = `https://${gitPrNumber}.sample-app-preview.towns.com`;
+                      const message = `
+                      Web App: [${webAppUrl}](${webAppUrl})
+                      Sample App: [${sampleAppUrl}](${sampleAppUrl})
+                      `;
 
-            - uses: actions/setup-node@v4
-              with:
-                  node-version: '20'
-                  cache: 'yarn'
-
-            - name: Install node dependencies
-              run: yarn install --immutable
-
-            - name: Print versions
-              run: ./river/scripts/print-versions.sh
+                      github.rest.issues.createComment({
+                          issue_number: context.issue.number,
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                          body: message
+                      })
 
             - name: Clear Workflow level Provision lock
               if: always()

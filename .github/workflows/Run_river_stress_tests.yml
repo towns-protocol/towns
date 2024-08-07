@@ -46,7 +46,7 @@ concurrency:
     cancel-in-progress: false
 
 env:
-    SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL || secrets.SLACK_CD_WORKFLOW_WEBHOOK_URL }}
+    SLACK_WEBHOOK_URL: ${{ secrets.SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL }}
 
 jobs:
     deploy:

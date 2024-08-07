@@ -14,7 +14,7 @@ env:
     DOCKER_NAMESPACE: herenotthere
     GHCR_NAMESPACE: herenotthere
     PLATFORMS: linux/amd64,linux/arm64
-    SLACK_WEBHOOK_URL: ${{ secrets.SLACK_CD_WORKFLOW_WEBHOOK_URL }}
+    SLACK_WEBHOOK_URL: ${{ secrets.SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL }}
 
 jobs:
     build:
