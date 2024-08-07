@@ -151,7 +151,7 @@ export function logTxnResult(name: string, txn: TransactionContext<unknown>) {
 
 export enum JoinFlowStatus {
     JoiningRoom = 'joining-room',
-    JoiningDefaultChannel = 'joining-default-channel',
+    JoiningAutojoinChannels = 'joining-autojoin-channels',
     VerifyingMembership = 'verifying-membership',
     AlreadyMember = 'already-member',
     MintingMembership = 'minting-membership',

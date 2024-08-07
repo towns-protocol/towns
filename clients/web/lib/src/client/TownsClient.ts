@@ -516,6 +516,7 @@ export class TownsClient
             createInfo.topic ? createInfo.topic : '',
             networkId,
             createInfo.streamSettings,
+            createInfo.channelSettings,
         )
         await this.casablancaClient.waitForStream(streamId)
         return streamId
@@ -1564,21 +1565,22 @@ export class TownsClient
             // join the default channels
             const spaceContent = this.casablancaClient?.streams.get(spaceId)?.view.spaceContent
             if (spaceContent) {
-                for (const [key, value] of spaceContent.spaceChannelsMetadata.entries()) {
-                    if (value.isDefault) {
-                        onJoinFlowStatus?.(JoinFlowStatus.JoiningDefaultChannel)
-                        this.log('[joinTown] joining default channel', key)
-                        const endJoinChannel = getTimeTracker().startMeasurement(
-                            TimeTrackerEvents.JOIN_SPACE,
-                            'river_joinroom_channel',
-                        )
-                        await this.joinRoom(key, undefined, {
-                            skipWaitForMiniblockConfirmation: true,
-                            skipWaitForUserStreamUpdate: true,
-                        })
-                        endJoinChannel?.()
-                    }
-                }
+                await Promise.all(
+                    Array.from(spaceContent.spaceChannelsMetadata.entries())
+                        .filter(([_, value]) => value.isDefault || value.isAutojoin)
+                        .map(async ([key]) => {
+                            onJoinFlowStatus?.(JoinFlowStatus.JoiningAutojoinChannels)
+                            const endJoinChannel = getTimeTracker().startMeasurement(
+                                TimeTrackerEvents.JOIN_SPACE,
+                                'river_joinroom_channel',
+                            )
+                            await this.joinRoom(key, undefined, {
+                                skipWaitForMiniblockConfirmation: true,
+                                skipWaitForUserStreamUpdate: true,
+                            })
+                            endJoinChannel?.()
+                        }),
+                )
             }
             return room
         }
@@ -2166,6 +2168,28 @@ export class TownsClient
             throw new Error('casablanca client is undefined')
         }
         await this.casablancaClient.updateGDMChannelProperties(roomId, title, topic)
+    }
+
+    public async setChannelAutojoin(parentSpaceId: string, roomId: string, autojoin: boolean) {
+        if (!this.casablancaClient) {
+            throw new Error('casablanca client is undefined')
+        }
+        await this.casablancaClient.updateChannelAutojoin(parentSpaceId, roomId, autojoin)
+    }
+
+    public async setChannelHideUserJoinLeaveEvents(
+        parentSpaceId: string,
+        roomId: string,
+        hideUserJoinLeaveEvents: boolean,
+    ) {
+        if (!this.casablancaClient) {
+            throw new Error('casablanca client is undefined')
+        }
+        await this.casablancaClient.updateChannelHideUserJoinLeaveEvents(
+            parentSpaceId,
+            roomId,
+            hideUserJoinLeaveEvents,
+        )
     }
 
     // eslint-disable-next-line @typescript-eslint/require-await

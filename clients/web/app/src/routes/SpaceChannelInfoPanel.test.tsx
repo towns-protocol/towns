@@ -31,6 +31,8 @@ vi.mock('use-towns-client', async () => {
             membership: 'join',
             isSpaceRoom: false,
             isDefault: false,
+            isAutojoin: false,
+            hideUserJoinLeaveEvents: false,
         }),
     }
 })

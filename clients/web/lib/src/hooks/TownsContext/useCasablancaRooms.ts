@@ -83,6 +83,18 @@ export function useCasablancaRooms(
             updateState(channelId)
         }
 
+        const onAutojoinUpdated = (_spaceId: string, channelId: string, _isAutojoin: boolean) => {
+            updateState(channelId)
+        }
+
+        const onHideUserJoinLeaveEventsUpdated = (
+            _spaceId: string,
+            channelId: string,
+            _hideUserJoinLeaveEvents: boolean,
+        ) => {
+            updateState(channelId)
+        }
+
         const onOfflineStoreChange = (store: OfflineStates, prev: OfflineStates) => {
             if (!isEqual(store.offlineChannelMetadataMap, prev.offlineChannelMetadataMap)) {
                 const channelIds = Object.keys(store.offlineChannelMetadataMap)
@@ -112,6 +124,8 @@ export function useCasablancaRooms(
         client.on('spaceChannelUpdated', onChannelUpdated)
         client.on('streamEnsAddressUpdated', onStreamUpdated)
         client.on('streamNftUpdated', onStreamUpdated)
+        client.on('spaceChannelAutojoinUpdated', onAutojoinUpdated)
+        client.on('spaceChannelHideUserJoinLeaveEventsUpdated', onHideUserJoinLeaveEventsUpdated)
 
         return () => {
             unsubMetadata()
@@ -126,6 +140,11 @@ export function useCasablancaRooms(
             client.off('spaceChannelUpdated', onChannelUpdated)
             client.off('streamEnsAddressUpdated', onStreamUpdated)
             client.off('streamNftUpdated', onStreamUpdated)
+            client.off('spaceChannelAutojoinUpdated', onAutojoinUpdated)
+            client.off(
+                'spaceChannelHideUserJoinLeaveEventsUpdated',
+                onHideUserJoinLeaveEventsUpdated,
+            )
             setRooms({})
         }
     }, [client])
@@ -173,6 +192,8 @@ function toCasablancaRoom(
     }
 
     let isDefault: boolean = false
+    let isAutojoin = false
+    let hideUserJoinLeaveEvents = false
     if (isChannelStreamId(streamId)) {
         const parentSpace = client.streams.get(streamId)?.view.channelContent.spaceId
         if (parentSpace === undefined) {
@@ -182,6 +203,8 @@ function toCasablancaRoom(
             .get(parentSpace)
             ?.view.spaceContent.spaceChannelsMetadata.get(streamId)
         isDefault = channelMetadata?.isDefault ?? false
+        isAutojoin = channelMetadata?.isAutojoin ?? false
+        hideUserJoinLeaveEvents = channelMetadata?.hideUserJoinLeaveEvents ?? false
     }
 
     const name = offlineChannelInfoMap[streamId]?.channel.name ?? streamId
@@ -195,6 +218,8 @@ function toCasablancaRoom(
         inviter: undefined,
         isSpaceRoom: isSpaceStreamId(streamId),
         topic: description,
-        isDefault: isDefault,
+        isDefault,
+        isAutojoin,
+        hideUserJoinLeaveEvents,
     }
 }

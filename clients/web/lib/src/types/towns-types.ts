@@ -1,5 +1,5 @@
 import { PlainMessage } from '@bufbuild/protobuf'
-import { MembershipOp, StreamSettings } from '@river-build/proto'
+import { MembershipOp, SpacePayload_ChannelSettings, StreamSettings } from '@river-build/proto'
 import { Attachment } from './timeline-types'
 import { staticAssertNever } from '../utils/towns-utils'
 
@@ -91,6 +91,8 @@ export interface Room {
     isSpaceRoom: boolean
     topic?: string
     isDefault: boolean
+    isAutojoin: boolean
+    hideUserJoinLeaveEvents: boolean
 }
 
 export interface Rooms {
@@ -134,6 +136,7 @@ export interface CreateChannelInfo {
     roleIds: number[]
     topic?: string
     streamSettings?: PlainMessage<StreamSettings>
+    channelSettings?: PlainMessage<SpacePayload_ChannelSettings>
 }
 
 export interface UpdateChannelInfo {

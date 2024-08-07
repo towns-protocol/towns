@@ -62,6 +62,81 @@ test('create space, and have user join', async () => {
     await waitFor(() => expect(userStream?.view.userContent.isJoined(channelId)).toBeTruthy())
 })
 
+test('create space with additional autojoin channels, and have user join', async () => {
+    const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
+    await bob.fundWallet()
+    const spaceId = await createTestSpaceGatedByTownNft(bob, [Permission.Read, Permission.Write])
+
+    let defaultChannel: [string, ParsedChannelProperties] | undefined
+    await waitFor(() => {
+        const channelsMeta =
+            bob.casablancaClient?.streams.get(spaceId)?.view.spaceContent.spaceChannelsMetadata
+        expect(channelsMeta).toBeDefined()
+        defaultChannel = Array.from(channelsMeta!.entries()).find((c) => c[1].isDefault)
+        expect(defaultChannel).toBeDefined()
+    })
+    const defaultChannellId = defaultChannel![0]
+
+    const channel1 = await bob.createChannel(
+        {
+            name: 'channel 1',
+            parentSpaceId: spaceId,
+            roleIds: [0, 1, 2], // default member role
+        },
+        bob.provider.wallet,
+    )
+
+    const channel2 = await bob.createChannel(
+        {
+            name: 'channel 2',
+            parentSpaceId: spaceId,
+            roleIds: [0, 1, 2], // default member role
+            channelSettings: {
+                autojoin: true,
+                hideUserJoinLeaveEvents: false,
+            },
+        },
+        bob.provider.wallet,
+    )
+
+    // Alice joins the town - should be autojoined to default channel and autojoin channel
+    await alice.joinTown(spaceId, alice.wallet)
+
+    const aliceUserStreamId = alice.casablancaClient?.userStreamId
+    const aliceUserStream = alice.casablancaClient?.streams.get(aliceUserStreamId!)
+    await waitFor(() => {
+        expect(aliceUserStream?.view.userContent.isJoined(defaultChannellId)).toBeTruthy()
+        expect(aliceUserStream?.view.userContent.isJoined(channel2)).toBeTruthy()
+        expect(aliceUserStream?.view.userContent.isJoined(channel1)).toBeFalsy()
+    })
+
+    // Toggle autojoins for created channels
+    await bob.setChannelAutojoin(spaceId, channel1, true)
+    await bob.setChannelAutojoin(spaceId, channel2, false)
+
+    // Wait for events to be committed to space snapshot
+    await waitFor(() => {
+        const channelsMeta =
+            bob.casablancaClient?.streams.get(spaceId)?.view.spaceContent.spaceChannelsMetadata
+        expect(channelsMeta).toBeDefined()
+        expect(channelsMeta?.size).toBeGreaterThan(0)
+        expect(channelsMeta?.get(channel1)?.isAutojoin).toBeTruthy()
+        expect(channelsMeta?.get(channel2)?.isAutojoin).toBeFalsy()
+    })
+
+    const { carol } = await registerAndStartClients(['carol'])
+    // Join carol to the space. She should be autojoined to the default channel and channel 1
+    await carol.joinTown(spaceId, carol.wallet)
+    const carolUserStreamId = carol.casablancaClient?.userStreamId
+    const carolUserStream = carol.casablancaClient?.streams.get(carolUserStreamId!)
+    await waitFor(() => {
+        // carol's channel membership state
+        expect(carolUserStream?.view.userContent.isJoined(defaultChannellId)).toBeTruthy()
+        expect(carolUserStream?.view.userContent.isJoined(channel1)).toBeTruthy()
+        expect(carolUserStream?.view.userContent.isJoined(channel2)).toBeFalsy()
+    })
+})
+
 test('create space, and have user that already has membership NFT join ', async () => {
     // create clients
     // alice needs to have a valid nft in order to join bob's space / channel
