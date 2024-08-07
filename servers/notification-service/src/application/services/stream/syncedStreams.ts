@@ -370,7 +370,6 @@ export class SyncedStreams {
                 }
                 return iteration
             })()
-            logger.info('sync loop created')
         })
     }
 
@@ -458,6 +457,8 @@ export class SyncedStreams {
             const addStreamStart = Date.now()
             for (const dbStream of dbSyncedStreams) {
                 await this.addStreamToSync(SyncCookie.fromJsonString(dbStream.SyncCookie))
+                logger.info('added stream to sync', { streamId: dbStream.StreamId })
+                await new Promise((resolve) => setTimeout(resolve, 100))
             }
 
             logger.info('addStreamToSync completed with len of syncCookies', {
@@ -504,6 +505,7 @@ export class SyncedStreams {
                     ? bin_toHexString(syncStream.nextSyncCookie.streamId)
                     : ''
                 try {
+                    logger.info('sync onUpdate', { streamId })
                     if (syncStream.syncReset) {
                         logger.warn('syncReset', { streamId })
                     }
