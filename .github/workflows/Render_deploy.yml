@@ -13,6 +13,27 @@ on:
                     - 'alpha'
                 default: 'gamma'
 
+    workflow_call:
+        inputs:
+            environment_name:
+                description: 'Environment name'
+                required: true
+                type: string
+
+        secrets:
+            RENDER_BEARER_TOKEN:
+                description: 'Render Bearer Token'
+                required: true
+            HARMONY_WEB_WEBHOOK_URL_ALPHA:
+                description: 'Harmony Web Webhook URL for alpha environment'
+                required: true
+            HARMONY_WEB_SERVICE_ID_ALPHA:
+                description: 'Harmony Web Service ID for alpha environment'
+                required: true
+            SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL:
+                description: 'Slack webhook url for alerting'
+                required: true
+
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
     cancel-in-progress: true

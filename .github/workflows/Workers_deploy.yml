@@ -20,6 +20,21 @@ on:
                     - 'alpha'
                 default: 'test-beta'
 
+    workflow_call:
+        inputs:
+            environment_name:
+                description: 'Environment name'
+                required: true
+                type: string
+
+        secrets:
+            SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL:
+                description: 'Slack webhook url for alerting'
+                required: true
+            CLOUDFLARE_WORKERS_API_TOKEN:
+                description: 'Cloudflare Workers API Token'
+                required: true
+
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
     cancel-in-progress: true
@@ -39,11 +54,6 @@ jobs:
                   BRANCH_NAME: ${{ github.ref }}
                   ENVIRONMENT_NAME_INPUT: ${{ github.event.inputs.environment_name }}
               run: |
-                  # if ENVIROMENT_NAME_INPUT is set, set ENV_NAME to it.
-                  # else if branch is main, set ENV_NAME to test-beta.
-                  # else if branch is omega, set ENV_NAME to omega.
-                  # else  (branch is neither), exit with error.
-
                   if [ -n "$ENVIRONMENT_NAME_INPUT" ]; then
                     echo "ENV_NAME=$ENVIRONMENT_NAME_INPUT" >> $GITHUB_ENV
                   elif [ $BRANCH_NAME = "refs/heads/main" ]; then

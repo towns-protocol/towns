@@ -27,6 +27,23 @@ on:
                 required: true
                 type: string
 
+        secrets:
+            AWS_ACCESS_KEY_ID:
+                description: 'AWS access key id'
+                required: true
+            AWS_SECRET_ACCESS_KEY:
+                description: 'AWS secret access key'
+                required: true
+            SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL:
+                description: 'Slack webhook url for alerting'
+                required: true
+            SLACK_CD_INFO_WORKFLOW_WEBHOOK_URL:
+                description: 'Slack webhook url for info'
+                required: true
+            TF_VAR_datadog_api_key:
+                description: 'Data dog api key to log the failure in datadog'
+                required: true
+
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
     cancel-in-progress: true

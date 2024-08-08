@@ -1,0 +1,122 @@
+name: Release Alpha
+
+on:
+    schedule:
+        - cron: '0 0 * * *' # Runs every day at midnight UTC
+
+    workflow_dispatch:
+
+jobs:
+    tag_rc:
+        name: Tag Release Candidate
+        runs-on: ubuntu-latest
+
+        permissions:
+            contents: write
+            pull-requests: write
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v3
+
+            - name: Get current date
+              run: echo "DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+
+            - name: Create and push tag
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  DATE: ${{ env.DATE }}
+              run: |
+                  TAG_NAME="rc-$DATE"
+                  git config --global user.name "github-actions[bot]"
+                  git config --global user.email "github-actions[bot]@users.noreply.github.com"
+                  git tag $TAG_NAME
+                  git push origin $TAG_NAME
+
+    river_nodes:
+        uses: './.github/workflows/River_node_continuous_deployment.yml'
+        secrets:
+            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL: ${{ secrets.SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL }}
+            SLACK_CD_INFO_WORKFLOW_WEBHOOK_URL: ${{ secrets.SLACK_CD_INFO_WORKFLOW_WEBHOOK_URL }}
+            TF_VAR_datadog_api_key: ${{ secrets.TF_VAR_datadog_api_key }}
+        with:
+            environment_name: alpha
+
+    render_app:
+        uses: './.github/workflows/Render_deploy.yml'
+        secrets:
+            RENDER_BEARER_TOKEN: ${{ secrets.RENDER_BEARER_TOKEN }}
+            HARMONY_WEB_WEBHOOK_URL_ALPHA: ${{ secrets.HARMONY_WEB_WEBHOOK_URL_ALPHA }}
+            HARMONY_WEB_SERVICE_ID_ALPHA: ${{ secrets.HARMONY_WEB_SERVICE_ID_ALPHA }}
+            SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL: ${{ secrets.SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL }}
+        with:
+            environment_name: alpha
+
+    notification_service:
+        uses: './.github/workflows/Notification_service_docker.yml'
+        secrets:
+            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL: ${{ secrets.SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL }}
+            SLACK_CD_INFO_WORKFLOW_WEBHOOK_URL: ${{ secrets.SLACK_CD_INFO_WORKFLOW_WEBHOOK_URL }}
+        with:
+            environment_name: alpha
+
+    cloudflare_workers:
+        uses: './.github/workflows/Workers_deploy.yml'
+        secrets:
+            CLOUDFLARE_WORKERS_API_TOKEN: ${{ secrets.CLOUDFLARE_WORKERS_API_TOKEN }}
+            SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL: ${{ secrets.SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL }}
+        with:
+            environment_name: alpha
+
+    on_failure:
+        name: On Failure
+        runs-on: ubuntu-latest
+
+        needs: [tag_rc, river_nodes, render_app, notification_service, cloudflare_workers]
+
+        if: failure()
+
+        steps:
+            # If action failed, we send a slack notification
+            - name: Alert notification
+              uses: slackapi/slack-github-action@v1.24.0
+              env:
+                  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL }}
+              with:
+                  payload: |
+                      {
+                          "step": "Failed while cutting release candidate.",
+                          "environment": "alpha",
+                          "branch": "${{ github.ref }}",
+                          "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                          "commit": "${{ github.sha }}",
+                          "actor": "${{ github.actor }}"
+                      }
+
+    on_success:
+        name: On Success
+        runs-on: ubuntu-latest
+
+        needs: [tag_rc, river_nodes, render_app, notification_service, cloudflare_workers]
+
+        if: success()
+
+        steps:
+            - name: Success notification
+              uses: slackapi/slack-github-action@v1.24.0
+              env:
+                  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_CD_INFO_WORKFLOW_WEBHOOK_URL }}
+              with:
+                  payload: |
+                      {
+                          "message": "Release candidate ready.",
+                          "environment": "alpha",
+                          "branch": "${{ github.ref }}",
+                          "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                          "commit": "${{ github.sha }}",
+                          "actor": "${{ github.actor }}"
+                      }
