@@ -31,19 +31,15 @@ export type ParsedChannelProperties = {
 export class StreamStateView_Space extends StreamStateView_AbstractContent {
     readonly streamId: string
     readonly spaceChannelsMetadata = new Map<string, ParsedChannelProperties>()
-    private _spaceImage: ChunkedMedia | undefined
+    private spaceImage: ChunkedMedia | undefined
+    private encryptedSpaceImage: EncryptedData | undefined
+    private decryptionInProgress:
+        | { encryptedData: EncryptedData; promise: Promise<ChunkedMedia | undefined> }
+        | undefined
 
     constructor(streamId: string) {
         super()
         this.streamId = streamId
-    }
-
-    get spaceImage(): ChunkedMedia | undefined {
-        return this._spaceImage
-    }
-
-    private set spaceImage(value: ChunkedMedia | undefined) {
-        this._spaceImage = value
     }
 
     applySnapshot(
@@ -59,13 +55,7 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
         }
 
         if (content.spaceImage?.data) {
-            this.decryptSpaceImage(content.spaceImage.data)
-                .then((media) => {
-                    this.spaceImage = media
-                })
-                .catch((err) => {
-                    throw err
-                })
+            this.encryptedSpaceImage = content.spaceImage.data
         }
     }
 
@@ -135,18 +125,53 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
                 )
                 break
             case 'spaceImage':
-                this.decryptSpaceImage(payload.content.value)
-                    .then((media) => {
-                        this.spaceImage = media
-                    })
-                    .catch((err) => {
-                        throw err
-                    })
+                this.encryptedSpaceImage = payload.content.value
                 break
             case undefined:
                 break
             default:
                 logNever(payload.content)
+        }
+    }
+
+    public async getSpaceImage(): Promise<ChunkedMedia | undefined> {
+        // if we have an encrypted space image, decrypt it
+        if (this.encryptedSpaceImage) {
+            const encryptedData = this.encryptedSpaceImage
+            this.encryptedSpaceImage = undefined
+            this.decryptionInProgress = {
+                promise: this.decryptSpaceImage(encryptedData),
+                encryptedData,
+            }
+            return this.decryptionInProgress.promise
+        }
+
+        // if there isn't an updated encrypted space image, but a decryption is
+        // in progress, return the promise
+        if (this.decryptionInProgress) {
+            return this.decryptionInProgress.promise
+        }
+
+        // always return the decrypted space image
+        return this.spaceImage
+    }
+
+    private async decryptSpaceImage(
+        encryptedData: EncryptedData,
+    ): Promise<ChunkedMedia | undefined> {
+        try {
+            const spaceAddress = contractAddressFromSpaceId(this.streamId)
+            const context = spaceAddress.toLowerCase()
+            const plaintext = await decryptDerivedAESGCM(context, encryptedData)
+            const decryptedImage = ChunkedMedia.fromBinary(plaintext)
+            if (encryptedData === this.decryptionInProgress?.encryptedData) {
+                this.spaceImage = decryptedImage
+            }
+            return decryptedImage
+        } finally {
+            if (encryptedData === this.decryptionInProgress?.encryptedData) {
+                this.decryptionInProgress = undefined
+            }
         }
     }
 
@@ -187,12 +212,6 @@ export class StreamStateView_Space extends StreamStateView_AbstractContent {
             channelId,
             hideUserJoinLeaveEvents,
         )
-    }
-
-    private async decryptSpaceImage(encryptedImage: EncryptedData): Promise<ChunkedMedia> {
-        const keyPhrase = contractAddressFromSpaceId(this.streamId)
-        const plaintext = await decryptDerivedAESGCM(keyPhrase, encryptedImage)
-        return ChunkedMedia.fromBinary(plaintext)
     }
 
     private addSpacePayload_Channel(

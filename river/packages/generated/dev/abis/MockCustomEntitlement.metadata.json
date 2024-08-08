@@ -14,7 +14,7 @@
         "inputs": [
           {
             "internalType": "address[]",
-            "name": "user",
+            "name": "users",
             "type": "address[]"
           }
         ],
@@ -33,7 +33,7 @@
         "inputs": [
           {
             "internalType": "address[]",
-            "name": "user",
+            "name": "users",
             "type": "address[]"
           },
           {
@@ -49,25 +49,12 @@
     ],
     "devdoc": {
       "kind": "dev",
-      "methods": {
-        "isEntitled(address[])": {
-          "params": {
-            "user": "address of the user to check"
-          },
-          "returns": {
-            "_0": "whether the user is entitled to the permission"
-          }
-        }
-      },
+      "methods": {},
       "version": 1
     },
     "userdoc": {
       "kind": "user",
-      "methods": {
-        "isEntitled(address[])": {
-          "notice": "checks whether a user is has a given permission for a channel or a space"
-        }
-      },
+      "methods": {},
       "version": 1
     }
   },
@@ -77,10 +64,10 @@
       "@prb/math/=lib/@prb/math/src/",
       "@prb/test/=lib/@prb/test/src/",
       "account-abstraction/=lib/account-abstraction/contracts/",
-      "base64/=lib/base64/",
       "ds-test/=lib/ds-test/src/",
       "forge-std/=lib/forge-std/src/",
-      "hardhat-deploy/=lib/hardhat-deploy/"
+      "hardhat-deploy/=lib/hardhat-deploy/",
+      "solady/=lib/solady/src/"
     ],
     "optimizer": {
       "enabled": true,
@@ -106,10 +93,10 @@
       "license": "MIT"
     },
     "contracts/test/mocks/MockCustomEntitlement.sol": {
-      "keccak256": "0x6afb663aa6c5f6403a9b9f833f79e5cc87f594e8bca8f91e5d69d835242655e2",
+      "keccak256": "0x99a8c364152ef8f6a33bb93c8b2df6d29541a56cb2129a6d3260aecb1a0d0077",
       "urls": [
-        "bzz-raw://0addd74396a3583bc3e6fd38977d84e06a98093567038ce067f505784cd7e38c",
-        "dweb:/ipfs/Qma5CE3NqVK9cEczjwhtdGgtUr1P4qgGpa9DMh6druciyx"
+        "bzz-raw://b6a13501aadf349bb71309de5760dfe7971634e8dcff329e0ae8295b8830aace",
+        "dweb:/ipfs/QmT8xRoZX8gCWaNo1BPZia9GrEkCtthuxpYFFJ1dwoy46Y"
       ],
       "license": "MIT"
     }

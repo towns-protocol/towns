@@ -163,7 +163,8 @@
       "base64/=lib/base64/",
       "ds-test/=lib/ds-test/src/",
       "forge-std/=lib/forge-std/src/",
-      "hardhat-deploy/=lib/hardhat-deploy/"
+      "hardhat-deploy/=lib/hardhat-deploy/",
+      "solady/=lib/solady/src/"
     ],
     "optimizer": {
       "enabled": true,

@@ -446,8 +446,16 @@ async function evaluateCheckOperation(
         case CheckOperationType.MOCK: {
             return evaluateMockOperation(operation, controller)
         }
-        case CheckOperationType.ISENTITLED:
-            throw new Error(`CheckOperationType.ISENTITLED not implemented`)
+        case CheckOperationType.ISENTITLED: {
+            await Promise.all(providers.map((p) => p.ready))
+            const provider = findProviderFromChainId(providers, operation.chainId)
+
+            if (!provider) {
+                controller.abort()
+                return zeroAddress
+            }
+            return evaluateCustomEntitledOperation(operation, controller, provider, linkedWallets)
+        }
         case CheckOperationType.ERC20: {
             await Promise.all(providers.map((p) => p.ready))
             const provider = findProviderFromChainId(providers, operation.chainId)
@@ -685,8 +693,33 @@ async function evaluateERC20Operation(
     )
 }
 
+async function evaluateCustomEntitledOperation(
+    operation: CheckOperation,
+    controller: AbortController,
+    provider: ethers.providers.StaticJsonRpcProvider,
+    linkedWallets: string[],
+): Promise<EntitledWalletOrZeroAddress> {
+    const contract = new ethers.Contract(
+        operation.contractAddress,
+        ['function isEntitled(address[]) view returns (bool)'],
+        provider,
+    )
+    return await Promise.any(
+        linkedWallets.map(async (wallet): Promise<Address> => {
+            const isEntitled = await contract.callStatic.isEntitled([wallet])
+            if (isEntitled === true) {
+                return wallet as Address
+            }
+            throw new Error('Not entitled')
+        }),
+    ).catch(() => {
+        controller.abort()
+        return zeroAddress
+    })
+}
+
 async function evaluateContractBalanceAcrossWallets(
-    contractAddress: `0x${string}`,
+    contractAddress: Address,
     threshold: bigint,
     controller: AbortController,
     provider: ethers.providers.StaticJsonRpcProvider,

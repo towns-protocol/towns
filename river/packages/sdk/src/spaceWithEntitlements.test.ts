@@ -14,6 +14,8 @@ import {
     getNftRuleData,
     twoNftRuleData,
     getXchainSupportedRpcUrlsForTesting,
+    erc20CheckOp,
+    customCheckOp,
 } from './util.test'
 import { dlog } from '@river-build/dlog'
 import { MembershipOp } from '@river-build/proto'
@@ -28,8 +30,9 @@ import {
     Operation,
     OperationType,
     Permission,
-    getContractAddress,
-    publicMint,
+    TestCustomEntitlement,
+    TestERC20,
+    TestERC721,
     treeToRuleData,
     IRuleEntitlementBase,
     ISpaceDapp,
@@ -145,9 +148,9 @@ describe('spaceWithEntitlements', () => {
     let testNft1Address: string, testNft2Address: string, testNft3Address: string
     beforeAll(async () => {
         ;[testNft1Address, testNft2Address, testNft3Address] = await Promise.all([
-            getContractAddress('TestNFT1'),
-            getContractAddress('TestNFT2'),
-            getContractAddress('TestNFT3'),
+            TestERC721.getContractAddress('TestNFT1'),
+            TestERC721.getContractAddress('TestNFT2'),
+            TestERC721.getContractAddress('TestNFT3'),
         ])
     })
 
@@ -426,7 +429,7 @@ describe('spaceWithEntitlements', () => {
 
         // join alice
         log('Minting an NFT for carols wallet, which is linked to alices wallet')
-        await publicMint('TestNFT1', carolsWallet.address as Address)
+        await TestERC721.publicMint('TestNFT1', carolsWallet.address as Address)
 
         await expectUserCanJoin(
             spaceId,
@@ -468,7 +471,7 @@ describe('spaceWithEntitlements', () => {
 
         // join alice
         log('Minting an NFT for carols wallet, which is the root to alices wallet')
-        await publicMint('TestNFT1', carolsWallet.address as Address)
+        await TestERC721.publicMint('TestNFT1', carolsWallet.address as Address)
 
         log('expect that alice can join the space')
         await expectUserCanJoin(
@@ -498,7 +501,7 @@ describe('spaceWithEntitlements', () => {
 
         // join alice
         log('Minting an NFT for alice')
-        await publicMint('TestNFT1', alicesWallet.address as Address)
+        await TestERC721.publicMint('TestNFT1', alicesWallet.address as Address)
 
         await expectUserCanJoin(
             spaceId,
@@ -559,8 +562,8 @@ describe('spaceWithEntitlements', () => {
                 ruleData: twoNftRuleData(testNft1Address, testNft2Address),
             })
 
-        const aliceMintTx1 = publicMint('TestNFT1', alicesWallet.address as Address)
-        const aliceMintTx2 = publicMint('TestNFT2', alicesWallet.address as Address)
+        const aliceMintTx1 = TestERC721.publicMint('TestNFT1', alicesWallet.address as Address)
+        const aliceMintTx2 = TestERC721.publicMint('TestNFT2', alicesWallet.address as Address)
 
         log('Minting nfts for alice')
         await Promise.all([aliceMintTx1, aliceMintTx2])
@@ -600,8 +603,8 @@ describe('spaceWithEntitlements', () => {
             ruleData: twoNftRuleData(testNft1Address, testNft2Address),
         })
 
-        const aliceMintTx1 = publicMint('TestNFT1', alicesWallet.address as Address)
-        const carolMintTx2 = publicMint('TestNFT2', carolsWallet.address as Address)
+        const aliceMintTx1 = TestERC721.publicMint('TestNFT1', alicesWallet.address as Address)
+        const carolMintTx2 = TestERC721.publicMint('TestNFT2', carolsWallet.address as Address)
 
         log('Minting nfts for alice and carol')
         await Promise.all([aliceMintTx1, carolMintTx2])
@@ -637,7 +640,7 @@ describe('spaceWithEntitlements', () => {
 
         // join alice
         log('Minting an NFT for alice')
-        await publicMint('TestNFT1', alicesWallet.address as Address)
+        await TestERC721.publicMint('TestNFT1', alicesWallet.address as Address)
 
         // first join the space on chain
         const aliceJoinStart = Date.now()
@@ -677,7 +680,7 @@ describe('spaceWithEntitlements', () => {
 
         // join alice
         log('Minting an NFT for alice')
-        await publicMint('TestNFT1', alicesWallet.address as Address)
+        await TestERC721.publicMint('TestNFT1', alicesWallet.address as Address)
 
         // first join the space on chain
         log('Expect alice can join space')
@@ -743,8 +746,8 @@ describe('spaceWithEntitlements', () => {
             })
 
         log("Mint Alice's NFTs")
-        const aliceMintTx1 = publicMint('TestNFT1', alicesWallet.address as Address)
-        const aliceMintTx2 = publicMint('TestNFT2', alicesWallet.address as Address)
+        const aliceMintTx1 = TestERC721.publicMint('TestNFT1', alicesWallet.address as Address)
+        const aliceMintTx2 = TestERC721.publicMint('TestNFT2', alicesWallet.address as Address)
         await Promise.all([aliceMintTx1, aliceMintTx2])
 
         log('expect alice can join space')
@@ -760,6 +763,361 @@ describe('spaceWithEntitlements', () => {
 
         // kill the clients
         const doneStart = Date.now()
+        await bob.stopSync()
+        await alice.stopSync()
+        log('Done', Date.now() - doneStart)
+    })
+
+    test('erc20GateJoinPass', async () => {
+        const ruleData = treeToRuleData(await erc20CheckOp('TestERC20', 50n))
+
+        const { alice, bob, aliceSpaceDapp, aliceProvider, alicesWallet, spaceId, channelId } =
+            await createTownWithRequirements({
+                everyone: false,
+                users: [],
+                ruleData,
+            })
+
+        // join alice
+        log('Minting 100 ERC20 tokens for alice')
+        await TestERC20.publicMint('TestERC20', alicesWallet.address as Address, 100)
+
+        await expectUserCanJoin(
+            spaceId,
+            channelId,
+            'alice',
+            alice,
+            aliceSpaceDapp,
+            alicesWallet.address,
+            aliceProvider.wallet,
+        )
+
+        const doneStart = Date.now()
+        // kill the clients
+        await bob.stopSync()
+        await alice.stopSync()
+        log('Done', Date.now() - doneStart)
+    })
+
+    test('erc20GateJoinFail', async () => {
+        const ruleData = treeToRuleData(await erc20CheckOp('TestERC20', 50n))
+
+        const { alice, bob, aliceSpaceDapp, aliceProvider, alicesWallet, spaceId } =
+            await createTownWithRequirements({
+                everyone: false,
+                users: [],
+                ruleData,
+            })
+
+        // Have alice create her own space so she can initialize her user stream.
+        // Then she will attempt to join the space from the client, which should fail.
+        await createUserStreamAndSyncClient(
+            alice,
+            aliceSpaceDapp,
+            'alice',
+            await everyoneMembershipStruct(aliceSpaceDapp, alice),
+            aliceProvider.wallet,
+        )
+
+        await expectUserCannotJoinSpace(spaceId, alice, aliceSpaceDapp, alicesWallet.address)
+
+        const doneStart = Date.now()
+        // kill the clients
+        await bob.stopSync()
+        await alice.stopSync()
+        log('Done', Date.now() - doneStart)
+    })
+
+    test('erc20GateJoinPass - join as root, asset in linked wallet', async () => {
+        const ruleData = treeToRuleData(await erc20CheckOp('TestERC20', 50n))
+        const {
+            alice,
+            bob,
+            aliceSpaceDapp,
+            aliceProvider,
+            alicesWallet,
+            carolsWallet,
+            carolProvider,
+            spaceId,
+            channelId,
+        } = await createTownWithRequirements({
+            everyone: false,
+            users: [],
+            ruleData: ruleData,
+        })
+
+        await linkWallets(aliceSpaceDapp, aliceProvider.wallet, carolProvider.wallet)
+
+        // join alice
+        log('Minting 50 ERC20 tokens for carols wallet, which is linked to alices wallet')
+        await TestERC20.publicMint('TestERC20', carolsWallet.address as Address, 50)
+
+        await expectUserCanJoin(
+            spaceId,
+            channelId,
+            'alice',
+            alice,
+            aliceSpaceDapp,
+            alicesWallet.address,
+            aliceProvider.wallet,
+        )
+
+        const doneStart = Date.now()
+        // kill the clients
+        await bob.stopSync()
+        await alice.stopSync()
+        log('Done', Date.now() - doneStart)
+    })
+
+    test('erc20GateJoinPass - join as linked wallet, asset in root wallet', async () => {
+        const ruleData = treeToRuleData(await erc20CheckOp('TestERC20', 50n))
+        const {
+            alice,
+            bob,
+            aliceSpaceDapp,
+            aliceProvider,
+            alicesWallet,
+            carolsWallet,
+            carolProvider,
+            carolSpaceDapp,
+            spaceId,
+            channelId,
+        } = await createTownWithRequirements({
+            everyone: false,
+            users: [],
+            ruleData: ruleData,
+        })
+
+        log("Joining alice's wallet as a linked wallet to carols root wallet")
+        await linkWallets(carolSpaceDapp, carolProvider.wallet, aliceProvider.wallet)
+
+        // join alice
+        log('Minting an NFT for carols wallet, which is the root to alices wallet')
+        await TestERC20.publicMint('TestERC20', carolsWallet.address as Address, 50)
+
+        log('expect that alice can join the space')
+        await expectUserCanJoin(
+            spaceId,
+            channelId,
+            'alice',
+            alice,
+            aliceSpaceDapp,
+            alicesWallet.address,
+            aliceProvider.wallet,
+        )
+
+        const doneStart = Date.now()
+        // kill the clients
+        await bob.stopSync()
+        await alice.stopSync()
+        log('Done', Date.now() - doneStart)
+    })
+
+    test('erc20GateJoinPass - assets across wallets', async () => {
+        const ruleData = treeToRuleData(await erc20CheckOp('TestERC20', 50n))
+        const {
+            alice,
+            bob,
+            aliceSpaceDapp,
+            aliceProvider,
+            alicesWallet,
+            carolsWallet,
+            carolProvider,
+            carolSpaceDapp,
+            spaceId,
+            channelId,
+        } = await createTownWithRequirements({
+            everyone: false,
+            users: [],
+            ruleData: ruleData,
+        })
+
+        log("Joining alice's wallet as a linked wallet to carols root wallet")
+        await linkWallets(carolSpaceDapp, carolProvider.wallet, aliceProvider.wallet)
+
+        // join alice
+        log('Minting an NFT for carols wallet, which is the root to alices wallet')
+        await TestERC20.publicMint('TestERC20', carolsWallet.address as Address, 25)
+        await TestERC20.publicMint('TestERC20', alicesWallet.address as Address, 25)
+
+        log('expect that alice can join the space')
+        await expectUserCanJoin(
+            spaceId,
+            channelId,
+            'alice',
+            alice,
+            aliceSpaceDapp,
+            alicesWallet.address,
+            aliceProvider.wallet,
+        )
+
+        const doneStart = Date.now()
+        // kill the clients
+        await bob.stopSync()
+        await alice.stopSync()
+        log('Done', Date.now() - doneStart)
+    })
+
+    test('customEntitlementGateJoinPass', async () => {
+        const ruleData = treeToRuleData(await customCheckOp('TestCustom'))
+
+        const { alice, bob, aliceSpaceDapp, aliceProvider, alicesWallet, spaceId, channelId } =
+            await createTownWithRequirements({
+                everyone: false,
+                users: [],
+                ruleData,
+            })
+
+        // set alice as entitled; she should be able to join.
+        await TestCustomEntitlement.setEntitled(
+            'TestCustom',
+            [alicesWallet.address as Address],
+            true,
+        )
+
+        await expectUserCanJoin(
+            spaceId,
+            channelId,
+            'alice',
+            alice,
+            aliceSpaceDapp,
+            alicesWallet.address,
+            aliceProvider.wallet,
+        )
+
+        const doneStart = Date.now()
+        // kill the clients
+        await bob.stopSync()
+        await alice.stopSync()
+        log('Done', Date.now() - doneStart)
+    })
+
+    test('customEntitlementGateJoinFail', async () => {
+        const ruleData = treeToRuleData(await customCheckOp('TestCustom'))
+
+        const { alice, bob, aliceSpaceDapp, aliceProvider, alicesWallet, spaceId } =
+            await createTownWithRequirements({
+                everyone: false,
+                users: [],
+                ruleData,
+            })
+
+        // Have alice create her own space so she can initialize her user stream.
+        // Then she will attempt to join the space from the client, which should fail.
+        await createUserStreamAndSyncClient(
+            alice,
+            aliceSpaceDapp,
+            'alice',
+            await everyoneMembershipStruct(aliceSpaceDapp, alice),
+            aliceProvider.wallet,
+        )
+
+        await expectUserCannotJoinSpace(spaceId, alice, aliceSpaceDapp, alicesWallet.address)
+
+        const doneStart = Date.now()
+        // kill the clients
+        await bob.stopSync()
+        await alice.stopSync()
+        log('Done', Date.now() - doneStart)
+    })
+
+    test('customEntitlementGateJoinPass - join as root, asset in linked wallet', async () => {
+        const ruleData = treeToRuleData(await customCheckOp('TestCustom'))
+        const {
+            alice,
+            bob,
+            aliceSpaceDapp,
+            aliceProvider,
+            alicesWallet,
+            carolsWallet,
+            carolProvider,
+            spaceId,
+            channelId,
+        } = await createTownWithRequirements({
+            everyone: false,
+            users: [],
+            ruleData: ruleData,
+        })
+
+        await linkWallets(aliceSpaceDapp, aliceProvider.wallet, carolProvider.wallet)
+
+        // join alice
+        log("Setting carol's wallet as entitled")
+        await TestCustomEntitlement.setEntitled(
+            'TestCustom',
+            [carolsWallet.address as Address],
+            true,
+        )
+
+        await expectUserCanJoin(
+            spaceId,
+            channelId,
+            'alice',
+            alice,
+            aliceSpaceDapp,
+            alicesWallet.address,
+            aliceProvider.wallet,
+        )
+
+        const doneStart = Date.now()
+        // kill the clients
+        await bob.stopSync()
+        await alice.stopSync()
+        log('Done', Date.now() - doneStart)
+    })
+
+    test('customEntitlementGateJoinPass - join as linked wallet, asset in root wallet', async () => {
+        const contractName = 'TestCustom'
+        const customAddress = await TestCustomEntitlement.getContractAddress(contractName)
+        const op: Operation = {
+            opType: OperationType.CHECK,
+            checkType: CheckOperationType.ISENTITLED,
+            chainId: 31337n,
+            contractAddress: customAddress,
+            threshold: 0n,
+        }
+        const ruleData = treeToRuleData(op)
+        const {
+            alice,
+            bob,
+            aliceSpaceDapp,
+            aliceProvider,
+            alicesWallet,
+            carolsWallet,
+            carolProvider,
+            carolSpaceDapp,
+            spaceId,
+            channelId,
+        } = await createTownWithRequirements({
+            everyone: false,
+            users: [],
+            ruleData: ruleData,
+        })
+
+        log("Joining alice's wallet as a linked wallet to carols root wallet")
+        await linkWallets(carolSpaceDapp, carolProvider.wallet, aliceProvider.wallet)
+
+        // join alice
+        log("Setting carol's linked wallet as entitled")
+        await TestCustomEntitlement.setEntitled(
+            contractName,
+            [carolsWallet.address as Address],
+            true,
+        )
+
+        log('expect that alice can join the space')
+        await expectUserCanJoin(
+            spaceId,
+            channelId,
+            'alice',
+            alice,
+            aliceSpaceDapp,
+            alicesWallet.address,
+            aliceProvider.wallet,
+        )
+
+        const doneStart = Date.now()
+        // kill the clients
         await bob.stopSync()
         await alice.stopSync()
         log('Done', Date.now() - doneStart)

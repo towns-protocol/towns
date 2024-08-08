@@ -11,11 +11,10 @@ import {
 } from './helpers/TestUtils'
 
 import {
+    Address,
     IArchitectBase,
     Permission,
-    getContractAddress,
-    isHexString,
-    publicMint,
+    TestERC721,
     createExternalNFTStruct,
     getDynamicPricingModule,
 } from '@river-build/web3'
@@ -226,22 +225,18 @@ test(
 
         // bob creates a space
         const [tokenA, tokenB] = await Promise.all([
-            getContractAddress('tokenA'),
-            getContractAddress('tokenB'),
+            TestERC721.getContractAddress('tokenA'),
+            TestERC721.getContractAddress('tokenB'),
         ])
 
         const ruleData = createExternalNFTStruct([tokenA, tokenB])
 
-        assert(isHexString(alice.walletAddress), 'alice.walletAddress is not a hex string')
-        assert(isHexString(bob.walletAddress), 'bob.walletAddress is not a hex string')
-        assert(isHexString(carol.walletAddress), 'carol.walletAddress is not a hex string')
-
         await Promise.all([
             // Mint both required tokens for Bob
-            await publicMint('tokenA', bob.walletAddress),
-            await publicMint('tokenB', bob.walletAddress),
+            await TestERC721.publicMint('tokenA', bob.walletAddress as Address),
+            await TestERC721.publicMint('tokenB', bob.walletAddress as Address),
             // Carol only has one of the needed tokens
-            await publicMint('tokenA', carol.walletAddress),
+            await TestERC721.publicMint('tokenA', carol.walletAddress as Address),
         ])
         const dynamicPricingModule = await getDynamicPricingModule(alice.spaceDapp)
 
@@ -286,19 +281,16 @@ test('joinSpace gated with 2 NFTs, wallet linking', async () => {
     const { alice, bob1, bob2 } = await registerAndStartClients(['alice', 'bob1', 'bob2'])
 
     const [tokenA, tokenB] = await Promise.all([
-        getContractAddress('tokenA'),
-        getContractAddress('tokenB'),
+        TestERC721.getContractAddress('tokenA'),
+        TestERC721.getContractAddress('tokenB'),
     ])
     // TODO: remove this struct helper - it's from river/web3 and only used in tests
     const ruleData = createExternalNFTStruct([tokenA, tokenB])
 
-    assert(isHexString(alice.walletAddress), 'alice.walletAddress is not a hex string')
-    assert(isHexString(bob1.walletAddress), 'bob1.walletAddress is not a hex string')
-    assert(isHexString(bob2.walletAddress), 'bob2.walletAddress is not a hex string')
     await Promise.all([
         // Mint both required tokens for Bob, one in each wallet
-        await publicMint('tokenA', bob1.walletAddress),
-        await publicMint('tokenB', bob2.walletAddress),
+        await TestERC721.publicMint('tokenA', bob1.walletAddress as Address),
+        await TestERC721.publicMint('tokenB', bob2.walletAddress as Address),
     ])
 
     // bob1 must have funds to link wallet

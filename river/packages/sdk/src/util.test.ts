@@ -54,6 +54,8 @@ import {
     OperationType,
     treeToRuleData,
     SpaceDapp,
+    TestERC20,
+    TestCustomEntitlement,
 } from '@river-build/web3'
 
 const log = dlog('csb:test:util')
@@ -127,6 +129,28 @@ export const TEST_ENCRYPTED_MESSAGE_PROPS: PlainMessage<EncryptedData> = {
 export const getXchainSupportedRpcUrlsForTesting = (): string[] => {
     // TODO: generate this for test environment and read from it
     return ['http://127.0.0.1:8545', 'http://127.0.0.1:8546']
+}
+
+export async function erc20CheckOp(contractName: string, threshold: bigint): Promise<Operation> {
+    const contractAddress = await TestERC20.getContractAddress(contractName)
+    return {
+        opType: OperationType.CHECK,
+        checkType: CheckOperationType.ERC20,
+        chainId: 31337n,
+        contractAddress,
+        threshold,
+    }
+}
+
+export async function customCheckOp(contractName: string): Promise<Operation> {
+    const contractAddress = await TestCustomEntitlement.getContractAddress(contractName)
+    return {
+        opType: OperationType.CHECK,
+        checkType: CheckOperationType.ISENTITLED,
+        chainId: 31337n,
+        contractAddress,
+        threshold: 0n,
+    }
 }
 
 /**

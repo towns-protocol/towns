@@ -1,58 +1,43 @@
 import { createTestClient, http, publicActions, walletActions, parseEther } from 'viem'
-import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 import { foundry } from 'viem/chains'
+import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 
-import MockERC721a from './MockERC721A'
-
-import { isHexString, deployContract, Mutex } from './TestGatingUtils'
+import { MockERC20 } from './MockERC20'
+import { deployContract, Mutex } from './TestGatingUtils'
 import { Address } from './ContractTypes'
-
 import { dlogger } from '@river-build/dlog'
 
-const logger = dlogger('csb:TestGatingNFT')
+const logger = dlogger('csb:TestGatingERC20')
 
-export class TestGatingNFT {
-    public async publicMint(toAddress: string) {
-        if (!isHexString(toAddress)) {
-            throw new Error('Invalid address')
-        }
+const erc20Contracts = new Map<string, Address>()
+const erc20ContractsMutex = new Mutex()
 
-        return await publicMint('TestGatingNFT', toAddress)
-    }
-}
-
-const nftContracts = new Map<string, Address>()
-const nftContractsMutex = new Mutex()
-
-async function getContractAddress(nftName: string): Promise<Address> {
+async function getContractAddress(tokenName: string): Promise<Address> {
     try {
-        await nftContractsMutex.lock()
-        if (!nftContracts.has(nftName)) {
+        await erc20ContractsMutex.lock()
+        if (!erc20Contracts.has(tokenName)) {
             const contractAddress = await deployContract(
-                nftName,
-                MockERC721a.abi,
-                MockERC721a.bytecode.object,
+                tokenName,
+                MockERC20.abi,
+                MockERC20.bytecode,
+                ['TestERC20', 'TST'],
             )
-            nftContracts.set(nftName, contractAddress)
+            erc20Contracts.set(tokenName, contractAddress)
         }
     } catch (e) {
         logger.error('Failed to deploy contract', e)
         throw new Error(
             // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-            `Failed to get contract address: ${nftName}`,
+            `Failed to get contract address: ${tokenName}`,
         )
     } finally {
-        nftContractsMutex.unlock()
+        erc20ContractsMutex.unlock()
     }
 
-    return nftContracts.get(nftName)!
+    return erc20Contracts.get(tokenName)!
 }
 
-export async function getTestGatingNFTContractAddress(): Promise<Address> {
-    return await getContractAddress('TestGatingNFT')
-}
-
-async function publicMint(nftName: string, toAddress: Address): Promise<number> {
+async function publicMint(tokenName: string, toAddress: Address, amount: number): Promise<void> {
     const privateKey = generatePrivateKey()
     const throwawayAccount = privateKeyToAccount(privateKey)
     const client = createTestClient({
@@ -69,15 +54,15 @@ async function publicMint(nftName: string, toAddress: Address): Promise<number> 
         value: parseEther('1'),
     })
 
-    const contractAddress = await getContractAddress(nftName)
+    const contractAddress = await getContractAddress(tokenName)
 
     logger.log('minting', contractAddress, toAddress)
 
     const nftReceipt = await client.writeContract({
         address: contractAddress,
-        abi: MockERC721a.abi,
+        abi: MockERC20.abi,
         functionName: 'mint',
-        args: [toAddress, 1n],
+        args: [toAddress, amount],
         account: throwawayAccount,
     })
 
@@ -90,7 +75,7 @@ async function publicMint(nftName: string, toAddress: Address): Promise<number> 
     // don't worry about the possibility of non-matching arguments, as we're specifying the contract
     // address of the contract we're interested in.
     const filter = await client.createContractEventFilter({
-        abi: MockERC721a.abi,
+        abi: MockERC20.abi,
         address: contractAddress,
         eventName: 'Transfer',
         args: {
@@ -102,15 +87,16 @@ async function publicMint(nftName: string, toAddress: Address): Promise<number> 
     const eventLogs = await client.getFilterLogs({ filter })
     for (const eventLog of eventLogs) {
         if (eventLog.transactionHash === receipt.transactionHash) {
-            expect(eventLog.args.tokenId).toBeDefined()
-            return Number(eventLog.args.tokenId)
+            logger.log('mint logs', eventLog.args)
+            return
         }
     }
 
     throw Error('No mint event found')
 }
 
-async function burn(nftName: string, tokenId: number): Promise<void> {
+async function totalSupply(contractName: string): Promise<number> {
+    const contractAddress = await getContractAddress(contractName)
     const privateKey = generatePrivateKey()
     const throwawayAccount = privateKeyToAccount(privateKey)
     const client = createTestClient({
@@ -122,24 +108,17 @@ async function burn(nftName: string, tokenId: number): Promise<void> {
         .extend(publicActions)
         .extend(walletActions)
 
-    await client.setBalance({
-        address: throwawayAccount.address,
-        value: parseEther('1'),
+    const totalSupply = await client.readContract({
+        address: contractAddress,
+        abi: MockERC20.abi,
+        functionName: 'totalSupply',
+        args: [],
     })
-
-    const nftReceipt = await client.writeContract({
-        address: await getContractAddress(nftName),
-        abi: MockERC721a.abi,
-        functionName: 'burn',
-        args: [BigInt(tokenId)],
-        account: throwawayAccount,
-    })
-
-    const receipt = await client.waitForTransactionReceipt({ hash: nftReceipt })
-    expect(receipt.status).toBe('success')
+    return Number(totalSupply)
 }
 
-async function balanceOf(nftName: string, address: Address): Promise<number> {
+async function balanceOf(contractName: string, address: Address): Promise<number> {
+    const contractAddress = await getContractAddress(contractName)
     const privateKey = generatePrivateKey()
     const throwawayAccount = privateKeyToAccount(privateKey)
     const client = createTestClient({
@@ -151,21 +130,19 @@ async function balanceOf(nftName: string, address: Address): Promise<number> {
         .extend(publicActions)
         .extend(walletActions)
 
-    const contractAddress = await getContractAddress(nftName)
-
-    const balanceEncoded = await client.readContract({
+    const balance = await client.readContract({
         address: contractAddress,
-        abi: MockERC721a.abi,
+        abi: MockERC20.abi,
         functionName: 'balanceOf',
         args: [address],
     })
 
-    return Number(balanceEncoded)
+    return Number(balance)
 }
 
-export const TestERC721 = {
-    publicMint,
-    burn,
-    balanceOf,
+export const TestERC20 = {
     getContractAddress,
+    balanceOf,
+    totalSupply,
+    publicMint,
 }

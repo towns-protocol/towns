@@ -166,7 +166,7 @@ describe('spaceTests', () => {
         })
 
         // decrypt the snapshot and assert the image values
-        let encryptedData =
+        const encryptedData =
             spaceStream.view.snapshot?.content.case === 'spaceContent'
                 ? spaceStream.view.snapshot.content.value.spaceImage?.data
                 : undefined
@@ -175,7 +175,7 @@ describe('spaceTests', () => {
                 isEncryptedData(encryptedData) &&
                 encryptedData.algorithm === AES_GCM_DERIVED_ALGORITHM,
         ).toBe(true)
-        let decrypted = encryptedData
+        const decrypted = encryptedData
             ? await bobsClient.decryptSpaceImage(spaceId, encryptedData)
             : undefined
         expect(
@@ -208,24 +208,13 @@ describe('spaceTests', () => {
         })
 
         // decrypt the snapshot and assert the image values
-        encryptedData =
-            spaceStream.view.snapshot?.content.case === 'spaceContent'
-                ? spaceStream.view.snapshot.content.value.spaceImage?.data
-                : undefined
+        const spaceImage = await spaceStream.view.spaceContent.getSpaceImage()
         expect(
-            encryptedData !== undefined &&
-                isEncryptedData(encryptedData) &&
-                encryptedData.algorithm === AES_GCM_DERIVED_ALGORITHM,
-        ).toBe(true)
-        decrypted = encryptedData
-            ? await bobsClient.decryptSpaceImage(spaceId, encryptedData)
-            : undefined
-        expect(
-            decrypted !== undefined &&
-                decrypted?.info?.mimetype === image2.mimetype &&
-                decrypted?.info?.filename === image2.filename &&
-                decrypted.encryption.case === 'derived' &&
-                decrypted.encryption.value.context === spaceContractAddress,
+            spaceImage !== undefined &&
+                spaceImage?.info?.mimetype === image2.mimetype &&
+                spaceImage?.info?.filename === image2.filename &&
+                spaceImage.encryption.case === 'derived' &&
+                spaceImage.encryption.value.context === spaceContractAddress,
         ).toBe(true)
     })
 })

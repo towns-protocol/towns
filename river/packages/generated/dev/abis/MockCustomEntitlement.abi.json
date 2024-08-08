@@ -9,7 +9,7 @@
     "name": "isEntitled",
     "inputs": [
       {
-        "name": "user",
+        "name": "users",
         "type": "address[]",
         "internalType": "address[]"
       }
@@ -28,7 +28,7 @@
     "name": "setEntitled",
     "inputs": [
       {
-        "name": "user",
+        "name": "users",
         "type": "address[]",
         "internalType": "address[]"
       },

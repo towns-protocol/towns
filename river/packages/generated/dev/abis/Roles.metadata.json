@@ -841,7 +841,8 @@
       "base64/=lib/base64/",
       "ds-test/=lib/ds-test/src/",
       "forge-std/=lib/forge-std/src/",
-      "hardhat-deploy/=lib/hardhat-deploy/"
+      "hardhat-deploy/=lib/hardhat-deploy/",
+      "solady/=lib/solady/src/"
     ],
     "optimizer": {
       "enabled": true,
@@ -858,14 +859,6 @@
     "libraries": {}
   },
   "sources": {
-    "contracts/src/diamond/facets/introspection/IERC165.sol": {
-      "keccak256": "0x486758ee326820b0dd468c6a7a90fda8d67d48d3114792c587cee0e8417b366b",
-      "urls": [
-        "bzz-raw://b695090abcec8c2d487d73961265030fa4f64ecd84f6d80b85c6c7d4d9142ea0",
-        "dweb:/ipfs/QmQTKuV2WEoy6vTCRxL39zEqubLUf9NhoC2BGB19CiYqRq"
-      ],
-      "license": "MIT"
-    },
     "contracts/src/diamond/facets/ownable/IERC173.sol": {
       "keccak256": "0x677cebaa56ee33950d04ba5baef02188da026beb7cf669bdf580410cb1f1c303",
       "urls": [
@@ -1059,10 +1052,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/entitlements/EntitlementsManagerService.sol": {
-      "keccak256": "0x1c52a860e8d0c9d025cdd0e6490aa68e82f0e12450966ed182825299f10dbc54",
+      "keccak256": "0x85433740dc34b5a8c76e512f168e5eec3c03b9ed8683ce0c0acb5368150d5c3d",
       "urls": [
-        "bzz-raw://e82770448781ca94e9f4bf02ac981f6bebc55b2553de7bb8f977bc7335b26d11",
-        "dweb:/ipfs/QmSP1gnWqnWEJwf9eFYptd2v6M8kuTa7JzNKtG6DzkzoK6"
+        "bzz-raw://10706ddceeecee6b1d429175430f3439c25e59070ad3cf5918cf9795c113f501",
+        "dweb:/ipfs/QmRS5ag8k4GSatGkWMKVvCBfxo2HPgh917UndkaF4VKCWa"
       ],
       "license": "MIT"
     },

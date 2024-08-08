@@ -105,6 +105,14 @@ interface IStreamRegistry {
     uint256 stop
   ) external view returns (StreamWithId[] memory, bool);
 
+  /**
+   * @dev Fetch a batch of streams. Returns how many were found, and the streams found.
+   * Results may be a subset of requested streams.
+   */
+  function getStreams(
+    bytes32[] calldata streamIds
+  ) external view returns (uint256 foundCount, StreamWithId[] memory);
+
   function getStreamsOnNode(
     address nodeAddress
   ) external view returns (StreamWithId[] memory);
