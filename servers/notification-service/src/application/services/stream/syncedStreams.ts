@@ -93,6 +93,8 @@ interface PingInfo {
     pingInterval?: NodeJS.Timeout // for cancelling the next ping
 }
 
+const SYNC_DOWN_RETRY_DELAY = 5000
+
 export class SyncedStreams {
     // Starting the client creates the syncLoop
     // While a syncLoop exists, the client tried to keep the syncLoop connected, and if it reconnects, it
@@ -355,34 +357,21 @@ export class SyncedStreams {
                                     })
                                     continue
                                 }
-                                let pingStats: NonceStats | undefined
                                 switch (value.syncOp) {
                                     case SyncOp.SYNC_NEW:
                                         await this.syncStarted(value.syncId)
                                         break
                                     case SyncOp.SYNC_CLOSE:
-                                        this.syncClosed()
+                                        this.syncClose()
                                         break
                                     case SyncOp.SYNC_UPDATE:
-                                        await this.onUpdate(value)
+                                        await this.syncUpdate(value)
                                         break
                                     case SyncOp.SYNC_PONG:
-                                        pingStats = this.pingInfo.nonces[value.pongNonce]
-                                        if (pingStats) {
-                                            pingStats.receivedAt = performance.now()
-                                            pingStats.duration =
-                                                pingStats.receivedAt - pingStats.pingAt
-                                            if (pingStats.callback) {
-                                                pingStats.callback(pingStats)
-                                            }
-                                        } else {
-                                            logger.error(`pong nonce not found ${value.pongNonce}`)
-                                            this.printNonces()
-                                        }
+                                        this.syncPong(value)
                                         break
                                     case SyncOp.SYNC_DOWN:
-                                        logger.warn('SYNC_DOWN received', { value })
-                                        this.syncClosed()
+                                        await this.syncDown(value)
                                         break
                                     default:
                                         logger.warn(
@@ -515,7 +504,7 @@ export class SyncedStreams {
         }
     }
 
-    private syncClosed() {
+    private syncClose() {
         this.stopPing()
         if (this.syncState === SyncState.Canceling) {
             logger.info(`server acknowledged our close attempt ${this.syncId}`, {
@@ -532,7 +521,55 @@ export class SyncedStreams {
         }
     }
 
-    private async onUpdate(res: SyncStreamsResponse): Promise<void> {
+    private async syncDown(res: SyncStreamsResponse) {
+        logger.warn('syncDown', { res })
+        if (this.syncId !== res.syncId) {
+            logger.error('syncDown syncId mismatch', {
+                syncId: this.syncId,
+                resSyncId: res.syncId,
+            })
+            return
+        }
+        // The server is telling us to restart the sync with the streamId, queue it up
+        setTimeout(async () => {
+            const streamId = streamIdAsString(res.streamId)
+
+            const start = Date.now()
+
+            const syncedStream = await database.syncedStream.findUnique({
+                where: {
+                    StreamId: streamId,
+                },
+            })
+            logger.info('syncDown fetched syncCooke to restart sync', {
+                streamId,
+                syncedStream: syncedStream,
+                duration: Date.now() - start,
+            })
+
+            if (syncedStream) {
+                const syncCookie = SyncCookie.fromJsonString(syncedStream.SyncCookie)
+                this.addStreamToSync(syncCookie)
+                logger.info('syncDown addStreamToSync completed with len of syncCookies')
+            }
+        }, SYNC_DOWN_RETRY_DELAY)
+    }
+
+    private syncPong(value: SyncStreamsResponse) {
+        const pingStats = this.pingInfo.nonces[value.pongNonce]
+        if (pingStats) {
+            pingStats.receivedAt = performance.now()
+            pingStats.duration = pingStats.receivedAt - pingStats.pingAt
+            if (pingStats.callback) {
+                pingStats.callback(pingStats)
+            }
+        } else {
+            logger.error(`pong nonce not found ${value.pongNonce}`)
+            this.printNonces()
+        }
+    }
+
+    private async syncUpdate(res: SyncStreamsResponse): Promise<void> {
         const start = Date.now()
         // Until we've completed canceling, accept responses
         if (this.syncState === SyncState.Syncing || this.syncState === SyncState.Canceling) {
