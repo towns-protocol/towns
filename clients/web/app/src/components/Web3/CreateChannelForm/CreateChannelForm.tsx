@@ -1,6 +1,5 @@
 import {
     Permission,
-    RoleDetails,
     SignerUndefinedError,
     TransactionStatus,
     WalletDoesNotMatchSignedInAccountError,
@@ -15,6 +14,7 @@ import { z } from 'zod'
 import { useGetEmbeddedSigner } from '@towns/privy'
 import { Toast, toast } from 'react-hot-toast/headless'
 import { ApiObject } from '@rudderstack/analytics-js/*'
+import { UseFormReturn } from 'react-hook-form'
 import { PrivyWrapper } from 'privy/PrivyProvider'
 import {
     Box,
@@ -36,7 +36,6 @@ import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'
 import { Spinner } from '@components/Spinner'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { TokenCheckboxLabel } from '@components/Tokens/TokenCheckboxLabel'
-import { env } from 'utils'
 import { useContractRoles } from 'hooks/useContractRoles'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
@@ -53,25 +52,12 @@ type Props = {
     onHide: () => void
 }
 
-const FormStateKeys = {
-    name: 'name',
-    topic: 'topic',
-    roleIds: 'roleIds',
-    rolesWithDetails: 'rolesWithDetails',
-} as const
-
-type FormState = {
-    [FormStateKeys.name]: string
-    [FormStateKeys.topic]: string
-    [FormStateKeys.roleIds]: string[]
-    [FormStateKeys.rolesWithDetails]: RoleDetails[]
-}
+type FormState = z.infer<typeof schema>
 
 const schema = z.object({
-    [FormStateKeys.name]: z.string().min(2, 'Channel names must have at least 2 characters'),
-    [FormStateKeys.topic]: z.string(),
-    [FormStateKeys.roleIds]: z.string().array().nonempty('Please select at least one role'),
-    [FormStateKeys.rolesWithDetails]: z.any().array().optional(),
+    name: z.string().min(2, 'Channel names must have at least 2 characters'),
+    topic: z.string(),
+    roleIds: z.string().array().nonempty('Please select at least one role'),
 })
 
 export const CreateChannelForm = (props: Props) => {
@@ -199,20 +185,15 @@ export const CreateChannelForm = (props: Props) => {
         [channelNames],
     )
 
-    const defaultValues = {
-        [FormStateKeys.name]: '',
-        [FormStateKeys.roleIds]: firstRoleIDWithReadPermission
-            ? [firstRoleIDWithReadPermission]
-            : [],
-        [FormStateKeys.rolesWithDetails]: rolesWithDetails ?? [],
-    }
-
     return rolesWithDetails ? (
         <FormRender<FormState>
             schema={schema}
-            defaultValues={defaultValues}
+            defaultValues={{
+                name: '',
+                roleIds: firstRoleIDWithReadPermission ? [firstRoleIDWithReadPermission] : [],
+            }}
             mode="onChange"
-            onSubmit={async ({ name, topic, roleIds, rolesWithDetails }) => {
+            onSubmit={async ({ name, topic, roleIds }) => {
                 const signer = await getSigner()
                 const _roleIds = roleIds.map((roleId) => Number(roleId))
                 const channelInfo = {
@@ -287,11 +268,13 @@ export const CreateChannelForm = (props: Props) => {
                 }
             }}
         >
-            {({ register, formState, setValue, getValues, setError }) => {
-                const { onChange: onNameChange, ...restOfNameProps } = register(FormStateKeys.name)
-                const { onChange: onTopicChange, ...restOfTopicProps } = register(
-                    FormStateKeys.topic,
-                )
+            {(hookForm) => {
+                const _form = hookForm satisfies UseFormReturn<FormState>
+
+                const { register, formState, setValue, setError } = _form
+
+                const { onChange: onNameChange, ...restOfNameProps } = register('name')
+                const { onChange: onTopicChange, ...restOfTopicProps } = register('topic')
                 return !rolesWithDetails ? (
                     <Stack centerContent height="250">
                         <Spinner />
@@ -306,10 +289,10 @@ export const CreateChannelForm = (props: Props) => {
                                 placeholder="channel-name"
                                 maxLength={30}
                                 message={
-                                    <ErrorMessage
+                                    <ErrorMessage<FormState>
                                         preventSpace
                                         errors={formState.errors}
-                                        fieldName={FormStateKeys.name}
+                                        fieldName="name"
                                     />
                                 }
                                 onKeyDown={onKeyDown}
@@ -318,13 +301,13 @@ export const CreateChannelForm = (props: Props) => {
                                         .toLowerCase()
                                         .replaceAll(' ', '-')
                                     if (!channelNameAvailable(name)) {
-                                        setError(FormStateKeys.name, {
+                                        setError('name', {
                                             message: 'This channel name is already taken',
                                         })
                                         return
                                     }
                                     onNameChange(event)
-                                    setValue(FormStateKeys.name, name)
+                                    setValue('name', name)
                                 }}
                                 {...restOfNameProps}
                             />
@@ -335,14 +318,11 @@ export const CreateChannelForm = (props: Props) => {
                                 placeholder="Edit channel description"
                                 maxLength={30}
                                 message={
-                                    <ErrorMessage
-                                        errors={formState.errors}
-                                        fieldName={FormStateKeys.topic}
-                                    />
+                                    <ErrorMessage errors={formState.errors} fieldName="topic" />
                                 }
                                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                                     onTopicChange(event)
-                                    setValue(FormStateKeys.topic, event.target.value.slice(0, 30))
+                                    setValue('topic', event.target.value.slice(0, 30))
                                 }}
                                 {...restOfTopicProps}
                             />
@@ -362,7 +342,7 @@ export const CreateChannelForm = (props: Props) => {
                                     >
                                         <Checkbox
                                             width="100%"
-                                            name={FormStateKeys.roleIds}
+                                            name="roleIds"
                                             label={
                                                 // parse tokens from TODO ruleData
                                                 <TokenCheckboxLabel label={role.name} tokens={[]} />
@@ -383,20 +363,7 @@ export const CreateChannelForm = (props: Props) => {
                                 </Box>
                             )}
 
-                            {env.DEV ? (
-                                <Box color="negative" maxWidth="400">
-                                    <Text size="sm">
-                                        DEV message: If you are not seeing token display data here,
-                                        make sure you are on the correct network and pointed to
-                                        correct homeserver. See useNetworkForNftApi()
-                                    </Text>
-                                </Box>
-                            ) : null}
-
-                            <ErrorMessage
-                                errors={formState.errors}
-                                fieldName={FormStateKeys.roleIds}
-                            />
+                            <ErrorMessage errors={formState.errors} fieldName="roleIds" />
 
                             {errorBox}
                         </Stack>

@@ -1,12 +1,11 @@
 import React, { useEffect } from 'react'
-import { FieldValues, UseFormRegister, UseFormReturn } from 'react-hook-form'
+import { FieldValues, Path, PathValue, UseFormRegister, UseFormReturn } from 'react-hook-form'
 import { RoleDetails } from 'use-towns-client'
 import { Box, Checkbox, Icon, Text } from '@ui'
 import { TokenCheckboxLabel } from '@components/Tokens/TokenCheckboxLabel'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { CHANNEL_INFO_PARAMS } from 'routes'
 import { PanelButton } from '@components/Panel/PanelButton'
-import { FormStateKeys } from './formConfig'
 
 export interface RoleCheckboxProps extends RoleDetails {
     channelHasRole: boolean
@@ -17,20 +16,24 @@ export function getCheckedValuesForRoleIdsField(rolesWithDetails: RoleCheckboxPr
     return rolesWithDetails.filter((r) => r.channelHasRole).map((r) => r.id.toString())
 }
 
-export function RolesSection(props: {
+export function RolesSection<HookFormValues extends FieldValues>(props: {
     spaceId: string
+    fieldName: Path<HookFormValues>
     rolesWithDetails: RoleCheckboxProps[]
-    register: UseFormRegister<FieldValues>
-    resetField: UseFormReturn['resetField']
+    register: UseFormRegister<HookFormValues>
+    resetField: UseFormReturn<HookFormValues>['resetField']
 }) {
-    const { rolesWithDetails, resetField, register, spaceId } = props
+    const { rolesWithDetails, resetField, register, spaceId, fieldName } = props
     const { openPanel } = usePanelActions()
 
     useEffect(() => {
-        resetField(FormStateKeys.roleIds, {
-            defaultValue: getCheckedValuesForRoleIdsField(rolesWithDetails),
+        resetField(fieldName, {
+            defaultValue: getCheckedValuesForRoleIdsField(rolesWithDetails) as PathValue<
+                HookFormValues,
+                Path<HookFormValues>
+            >,
         })
-    }, [resetField, rolesWithDetails])
+    }, [fieldName, resetField, rolesWithDetails])
 
     return (
         <>
@@ -43,6 +46,7 @@ export function RolesSection(props: {
                         key={role.id}
                         spaceId={spaceId}
                         role={role}
+                        fieldName={fieldName}
                         register={register}
                     />
                 )
@@ -54,16 +58,17 @@ export function RolesSection(props: {
     )
 }
 
-function RoleDetailsComponent(props: {
+function RoleDetailsComponent<HookFormValues extends FieldValues>(props: {
+    fieldName: Path<HookFormValues>
     spaceId: string
     role: RoleCheckboxProps
-    register: UseFormRegister<FieldValues>
+    register: UseFormRegister<HookFormValues>
 }): JSX.Element {
     return (
         <Box padding="md" background="level2" borderRadius="sm" key={props.role.id}>
             <Checkbox
                 width="100%"
-                name={FormStateKeys.roleIds}
+                name={props.fieldName}
                 label={
                     <TokenCheckboxLabel
                         label={props.role.name}

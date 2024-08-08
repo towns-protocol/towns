@@ -1,18 +1,20 @@
 import React, { useRef } from 'react'
-import { UseFormReturn } from 'react-hook-form'
+import { FieldValues, Path, UseFormReturn } from 'react-hook-form'
 import { clsx } from 'clsx'
 import { Box } from '@ui'
 import { FieldOutline } from 'ui/components/_internal/Field/FieldOutline/FieldOutline'
 import { baseFieldStyles, textFieldStyle } from './TextFieldWithPill.css'
 
-type Props<PillPayload> = {
-    name: string
+type Props<PillPayload, HookFormValues extends FieldValues> = {
+    name: Path<HookFormValues>
     pills: PillPayload[]
     placeholder?: string
     renderPill?: (args: PillPayload) => React.ReactNode
-} & Partial<UseFormReturn>
+} & Partial<UseFormReturn<HookFormValues>>
 
-export const TextFieldWithPill = <T,>(props: Props<T>) => {
+export const TextFieldWithPill = <T, HookFormValues extends FieldValues>(
+    props: Props<T, HookFormValues>,
+) => {
     const { register, name, pills, placeholder, renderPill } = props
     const inputRef = useRef<HTMLInputElement>(null)
 

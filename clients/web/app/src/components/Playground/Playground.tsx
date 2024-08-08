@@ -325,6 +325,7 @@ export const Playground = () => {
             <Container label="TextField With Pills inside">
                 <FormRender<{
                     spaceIcon: File
+                    pills: string[]
                 }>
                     mode="onChange"
                     onSubmit={(data) => {
@@ -332,7 +333,13 @@ export const Playground = () => {
                     }}
                 >
                     {({ register, formState, setError, clearErrors }) => (
-                        <TextFieldWithPill
+                        <TextFieldWithPill<
+                            string,
+                            {
+                                spaceIcon: File
+                                pills: string[]
+                            }
+                        >
                             name="pills"
                             register={register}
                             pills={['abcd', '1234']}

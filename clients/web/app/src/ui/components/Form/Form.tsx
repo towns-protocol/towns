@@ -50,16 +50,16 @@ export function Form<T extends FieldValues>({
     )
 }
 
-type ChildrenWithFormProps = {
-    children: (props: UseFormReturn) => JSX.Element
+type ChildrenWithFormProps<T extends FieldValues> = {
+    children: (props: UseFormReturn<T>) => JSX.Element
 }
 
 type FormChildrenFnProps<T extends FieldValues> = Omit<FormProps<T>, 'children'> &
-    ChildrenWithFormProps
+    ChildrenWithFormProps<T>
 
-const FormChild = (props: unknown & ChildrenWithFormProps) => {
+const FormChild = <T extends FieldValues>(props: unknown & ChildrenWithFormProps<T>) => {
     const { children, ...formProps } = props
-    return children(formProps as UseFormReturn)
+    return children(formProps as UseFormReturn<T>)
 }
 
 /**

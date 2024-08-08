@@ -1,11 +1,11 @@
 import React from 'react'
-import { UseFormReturn } from 'react-hook-form'
+import { FieldValues, Path, UseFormReturn } from 'react-hook-form'
 import { Box, BoxProps } from 'ui/components/Box/Box'
 import { CheckIcon } from 'ui/components/Icon'
 import * as style from './Checkbox.css'
 
-type Props = {
-    name: string
+type Props<HookFormValues extends FieldValues> = {
+    name: Path<HookFormValues>
     label?: string | React.ReactNode
     value?: string
     width?: BoxProps['width']
@@ -16,9 +16,9 @@ type Props = {
     checked?: boolean
     defaultChecked?: boolean
     labelLast?: boolean
-} & Partial<UseFormReturn>
+} & Partial<UseFormReturn<HookFormValues>>
 
-export const Checkbox = (props: Props) => {
+export const Checkbox = <HookFormValues extends FieldValues>(props: Props<HookFormValues>) => {
     const { name, label, value, register, width, labelLast } = props
     const { onChange, ...registerProps } = register?.(name) || {}
     const _value =

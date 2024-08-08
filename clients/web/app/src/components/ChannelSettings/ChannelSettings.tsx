@@ -14,7 +14,7 @@ import {
 import React, { useCallback, useMemo, useState } from 'react'
 import { useGetEmbeddedSigner } from '@towns/privy'
 import { ChannelNameRegExp, isForbiddenError, isRejectionError } from 'ui/utils/utils'
-import { Box, Button, ErrorMessage, FormRender, Stack, TextField } from '@ui'
+import { Box, Button, ErrorMessage, FormRender, Paragraph, Stack, TextField } from '@ui'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
 import { useAllRoleDetails } from 'hooks/useAllRoleDetails'
@@ -28,7 +28,7 @@ import { ModalContainer } from '@components/Modals/ModalContainer'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { CHANNEL_INFO_PARAMS } from 'routes'
 import { FullPanelOverlay } from '@components/Web3/WalletLinkingPanel'
-import { FormState, FormStateKeys, emptyDefaultValues, schema } from './formConfig'
+import { FormState, schema } from './formConfig'
 import { RoleCheckboxProps, RolesSection, getCheckedValuesForRoleIdsField } from './RolesSection'
 
 type ChannelSettingsFormProps = {
@@ -52,8 +52,8 @@ export function ChannelSettingsForm({
 }: ChannelSettingsFormProps & {
     preventCloseMessage?: string
 }): JSX.Element {
-    const room = useRoom(channelId)
-    console.log('[ChannelSettingsModal] room', room)
+    const channel = useRoom(channelId)
+    console.log('[ChannelSettingsModal] channel', channel)
     const { data, isLoading, invalidateQuery } = useAllRoleDetails(spaceId)
 
     const rolesWithDetails = useMemo((): RoleCheckboxProps[] | undefined => {
@@ -71,17 +71,6 @@ export function ChannelSettingsForm({
                 }
             })
     }, [data, channelId, isLoading])
-
-    const defaultValues = useMemo((): FormState => {
-        if (room) {
-            return {
-                [FormStateKeys.name]: room.name,
-                [FormStateKeys.description]: room.topic,
-                [FormStateKeys.roleIds]: getCheckedValuesForRoleIdsField(rolesWithDetails ?? []),
-            }
-        }
-        return emptyDefaultValues
-    }, [room, rolesWithDetails])
 
     const {
         updateChannelTransaction,
@@ -121,9 +110,9 @@ export function ChannelSettingsForm({
                 return
             }
 
-            const name = changes[FormStateKeys.name]
-            const description = changes[FormStateKeys.description]
-            const roleIds = changes[FormStateKeys.roleIds].map((roleId) => Number(roleId))
+            const name = changes['name']
+            const description = changes['description']
+            const roleIds = changes['roleIds'].map((roleId) => Number(roleId))
             const channelInfo: UpdateChannelInfo = {
                 parentSpaceId: spaceId,
                 channelId,
@@ -209,6 +198,14 @@ export function ChannelSettingsForm({
         [channelNames],
     )
 
+    if (!channel) {
+        return (
+            <Stack minHeight="200">
+                <Paragraph>Channel not found</Paragraph>
+            </Stack>
+        )
+    }
+
     if (!rolesWithDetails) {
         return (
             <Stack minHeight="200">
@@ -222,14 +219,16 @@ export function ChannelSettingsForm({
             <FormRender<FormState>
                 grow
                 schema={schema}
-                defaultValues={defaultValues}
+                defaultValues={{
+                    name: channel.name,
+                    description: channel.topic,
+                    roleIds: getCheckedValuesForRoleIdsField(rolesWithDetails),
+                }}
                 mode="onChange"
                 onSubmit={onSubmit}
             >
                 {({ register, formState, setValue, setError, resetField, watch }) => {
-                    const { onChange: onNameChange, ...restOfNameProps } = register(
-                        FormStateKeys.name,
-                    )
+                    const { onChange: onNameChange, ...restOfNameProps } = register('name')
                     const isDisabled =
                         !isPrivyReady || hasPendingTx || !formState.isDirty || !formState.isValid
                     watch()
@@ -246,9 +245,9 @@ export function ChannelSettingsForm({
                                             placeholder="Name your channel"
                                             maxLength={30}
                                             message={
-                                                <ErrorMessage
+                                                <ErrorMessage<FormState>
                                                     errors={formState.errors}
-                                                    fieldName={FormStateKeys.name}
+                                                    fieldName="name"
                                                 />
                                             }
                                             disabled={hasPendingTx}
@@ -260,14 +259,14 @@ export function ChannelSettingsForm({
                                                     .toLowerCase()
                                                     .replaceAll(' ', '-')
                                                 if (!channelNameAvailable(name)) {
-                                                    setError(FormStateKeys.name, {
+                                                    setError('name', {
                                                         message:
                                                             'This channel name is already taken',
                                                     })
                                                     return
                                                 }
                                                 onNameChange(event)
-                                                setValue(FormStateKeys.name, name)
+                                                setValue('name', name)
                                             }}
                                             {...restOfNameProps}
                                         />
@@ -280,13 +279,13 @@ export function ChannelSettingsForm({
                                             placeholder="Describe what this channel is about"
                                             maxLength={255}
                                             message={
-                                                <ErrorMessage
+                                                <ErrorMessage<FormState>
                                                     errors={formState.errors}
-                                                    fieldName={FormStateKeys.description}
+                                                    fieldName="description"
                                                 />
                                             }
                                             disabled={hasPendingTx}
-                                            {...register(FormStateKeys.description)}
+                                            {...register('description')}
                                         />
                                     </Stack>
                                 </>
@@ -299,11 +298,12 @@ export function ChannelSettingsForm({
                                         resetField={resetField}
                                         spaceId={spaceId}
                                         register={register}
+                                        fieldName="roleIds"
                                     />
 
-                                    <ErrorMessage
+                                    <ErrorMessage<FormState>
                                         errors={formState.errors}
-                                        fieldName={FormStateKeys.roleIds}
+                                        fieldName="roleIds"
                                     />
 
                                     {errorBox}
