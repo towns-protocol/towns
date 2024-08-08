@@ -46,8 +46,9 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
 
     Transaction storage transaction = ds.transactions[transactionId];
 
-    if (transaction.hasBenSet == true) {
-      for (uint256 i = 0; i < transaction.roleIds.length; i++) {
+    if (transaction.hasBenSet) {
+      uint256 _length = transaction.roleIds.length;
+      for (uint256 i; i < _length; ++i) {
         if (transaction.roleIds[i] == roleId) {
           revert EntitlementGated_TransactionCheckAlreadyRegistered();
         }
@@ -69,7 +70,8 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
 
     transaction.roleIds.push(roleId);
 
-    for (uint256 i = 0; i < selectedNodes.length; i++) {
+    uint256 length = selectedNodes.length;
+    for (uint256 i; i < length; ++i) {
       transaction.nodeVotesArray[roleId].push(
         NodeVote({node: selectedNodes[i], vote: NodeVoteStatus.NOT_VOTED})
       );
@@ -111,7 +113,7 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
 
     uint256 transactionNodesLength = transaction.nodeVotesArray[roleId].length;
 
-    for (uint256 i = 0; i < transactionNodesLength; i++) {
+    for (uint256 i; i < transactionNodesLength; ++i) {
       NodeVote storage tempVote = transaction.nodeVotesArray[roleId][i];
 
       // Update vote if not yet voted
@@ -123,11 +125,14 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
         found = true;
       }
 
-      // Count votes
-      if (tempVote.vote == NodeVoteStatus.PASSED) {
-        passed++;
-      } else if (tempVote.vote == NodeVoteStatus.FAILED) {
-        failed++;
+      unchecked {
+        NodeVoteStatus currentStatus = tempVote.vote;
+        // Count votes
+        if (currentStatus == NodeVoteStatus.PASSED) {
+          ++passed;
+        } else if (currentStatus == NodeVoteStatus.FAILED) {
+          ++failed;
+        }
       }
     }
 
@@ -153,7 +158,8 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
       .layout();
 
     Transaction storage transaction = ds.transactions[transactionId];
-    for (uint256 i = 0; i < transaction.roleIds.length; i++) {
+    uint256 length = transaction.roleIds.length;
+    for (uint256 i; i < length; ++i) {
       delete transaction.nodeVotesArray[transaction.roleIds[i]];
     }
     delete transaction.roleIds;
@@ -174,9 +180,7 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
     }
 
     IRuleEntitlement re = IRuleEntitlement(address(transaction.entitlement));
-    IRuleEntitlement.RuleData memory ruleData = re.getRuleData(roleId);
-
-    return ruleData;
+    return re.getRuleData(roleId);
   }
 
   function _onEntitlementCheckResultPosted(

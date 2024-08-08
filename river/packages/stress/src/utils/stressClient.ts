@@ -97,7 +97,10 @@ export class StressClient {
     }
 
     get deviceFilePath(): string {
-        return path.resolve(`/tmp/device_${this.clientIndex}.json`)
+        const envSuffix =
+            this.config.environmentId === 'gamma' ? '' : `-${this.config.environmentId}`
+        const filename = `stress-${this.userId}${envSuffix}`
+        return path.resolve(`/tmp/${filename}.json`)
     }
 
     async fundWallet() {

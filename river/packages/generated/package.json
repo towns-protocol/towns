@@ -3,7 +3,7 @@
     "version": "0.0.33",
     "packageManager": "yarn@3.8.0",
     "scripts": {
-        "preinstall": "yarn make-config",
+        "preinstall": "node ./scripts/make-config.js",
         "make-config": "node ./scripts/make-config.js"
     }
 }

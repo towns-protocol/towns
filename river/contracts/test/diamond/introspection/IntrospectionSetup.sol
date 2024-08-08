@@ -38,11 +38,7 @@ contract IntrospectionSetup is FacetTest {
 }
 
 contract IntrospectionHelper is FacetHelper {
-  IntrospectionFacet internal introspection;
-
-  constructor() {
-    introspection = new IntrospectionFacet();
-  }
+  IntrospectionFacet internal introspection = new IntrospectionFacet();
 
   function facet() public view override returns (address) {
     return address(introspection);
