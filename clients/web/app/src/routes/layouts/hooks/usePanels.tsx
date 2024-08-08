@@ -26,6 +26,7 @@ import { SpaceSettingsNavigationPanel } from '@components/SpaceSettingsPanel/Spa
 import { EditPrepaidPanel } from '@components/SpaceSettingsPanel/EditPrepaidPanel'
 import { NodeStatusPanel } from '@components/NodeConnectionStatusPanel/ConnectionStatusPanel'
 import { SpaceBannedUsers } from 'routes/SpaceBannedUsers'
+import { MutualTownsPanel } from '@components/MutualTownsPanel/MutualTownsPanel'
 
 export const usePanels = () => {
     const [searchParams] = useSearchParams()
@@ -141,6 +142,12 @@ export const usePanels = () => {
         }
         case CHANNEL_INFO_PARAMS.ROLE_RESTRICTED_CHANNEL_JOIN: {
             return <RoleRestrictedChannelJoinPanel />
+        }
+        case CHANNEL_INFO_PARAMS.MUTUAL_TOWNS: {
+            const userId = searchParams.get('profileId')
+            if (userId) {
+                return <MutualTownsPanel userId={userId} />
+            }
         }
     }
 
