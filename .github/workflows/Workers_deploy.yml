@@ -36,7 +36,7 @@ on:
                 required: true
 
 concurrency:
-    group: ${{ github.workflow }}-${{ github.ref }}
+    group: workers-cd-${{ github.ref }}-${{ inputs.environment_name }}
     cancel-in-progress: true
 
 jobs:
@@ -44,15 +44,11 @@ jobs:
         name: Deploy CF Workers
         runs-on: ubuntu-latest
 
-        permissions:
-            contents: write
-            packages: write
-
         steps:
             - name: Set Environment Variables
               env:
                   BRANCH_NAME: ${{ github.ref }}
-                  ENVIRONMENT_NAME_INPUT: ${{ github.event.inputs.environment_name }}
+                  ENVIRONMENT_NAME_INPUT: ${{ inputs.environment_name }}
               run: |
                   if [ -n "$ENVIRONMENT_NAME_INPUT" ]; then
                     echo "ENV_NAME=$ENVIRONMENT_NAME_INPUT" >> $GITHUB_ENV

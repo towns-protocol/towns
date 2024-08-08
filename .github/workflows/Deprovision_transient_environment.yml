@@ -13,7 +13,7 @@ on:
                 required: true
 
 concurrency:
-    group: ${{ github.workflow }}-deprovision-${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+    group: ${{ github.workflow }}-deprovision-${{ github.event.pull_request.number || inputs.pr_number }}
     cancel-in-progress: false
     # TODO: how can we make sure there's only one per environment running at the same time?
     # TODO: make this wait for any ongoing Provision Transient Environment workflow to finish
@@ -21,7 +21,7 @@ concurrency:
 jobs:
     deprovision_transient_environment:
         permissions: write-all
-        runs-on: ubuntu-latest-8-cores
+        runs-on: ubuntu-latest
         timeout-minutes: 60
 
         env:
@@ -31,7 +31,7 @@ jobs:
             TF_VAR_cloudflare_terraform_api_token: ${{ secrets.CLOUDFLARE_TERRAFORM_API_TOKEN }}
             TF_VAR_datadog_api_key: ${{ secrets.TF_VAR_datadog_api_key }}
             TF_VAR_datadog_app_key: ${{ secrets.TF_VAR_datadog_app_key }}
-            GIT_PR_NUMBER: ${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+            GIT_PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
             # We need to set these 2 while destroying. otherwise lite environments get confused during the deprovision step as terraform tries to delete components that don't exist. But when we set these, lite or not, all components are deleted.
 
         steps:

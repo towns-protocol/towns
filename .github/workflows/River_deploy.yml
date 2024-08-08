@@ -63,7 +63,7 @@ on:
                 required: true
 
 concurrency:
-    group: ${{ github.workflow }}-${{ inputs.environment_name }}-${{ inputs.run_mode}}
+    group: river-deploy-${{ inputs.environment_name }}-${{ inputs.run_mode}}
     cancel-in-progress: true
 
 jobs:
@@ -93,12 +93,9 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
               run: |
-                  # Don't run the check for transient environments.
-                  if grep -q "transient" <<< "${{ inputs.docker_image_tag }}"; then
-                      echo "Transient deploy detected. Not running image checks."
-                  elif ! docker manifest inspect public.ecr.aws/h5v6m2x1/river:${{ inputs.docker_image_tag }} > /dev/null 2>&1; then
+                  if ! docker manifest inspect public.ecr.aws/h5v6m2x1/river:${{ inputs.docker_image_tag }} > /dev/null 2>&1; then
                       echo "Docker image with the tag=${{ inputs.docker_image_tag }} does not exist. No need to deploy river."
-                      exit 1 # fail the job, this is an error, don't call this with a image that doesn't exist
+                      exit 1 
                   else
                       echo "Docker image with the tag=${{ inputs.docker_image_tag }} exists. Continue with the deployment."
                   fi
@@ -112,7 +109,7 @@ jobs:
               with:
                   payload: |
                       {
-                          "message": "Begin deployment with image tag: ${{ inputs.docker_image_tag  }} for nodes: ${{ inputs.node_numbers }}",
+                          "message": "Begin deployment with image tag: ${{ inputs.docker_image_tag  }} for nodes: ${{ inputs.node_numbers }} with run mode: ${{ inputs.run_mode }}",
                           "environment": "${{ inputs.environment_name }}",
                           "branch": "${{ github.ref }}",
                           "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
@@ -201,7 +198,7 @@ jobs:
               with:
                   payload: |
                       {
-                          "message": "Deploy job ran successfully for docker tag: ${{ inputs.docker_image_tag }} on nodes: ${{ inputs.node_numbers }}",
+                          "message": "Deploy job ran successfully for docker tag: ${{ inputs.docker_image_tag }} on nodes: ${{ inputs.node_numbers }} with run mode: ${{ inputs.run_mode }}",
                           "environment": "${{ inputs.environment_name }}",
                           "branch": "${{ github.ref }}",
                           "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",

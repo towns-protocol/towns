@@ -15,6 +15,7 @@ echo "ENVIRONMENT_NAME: ${ENVIRONMENT_NAME}"
 CLUSTER_NAME="${ENVIRONMENT_NAME}-river-ecs-cluster"
 REGISTERED_TASK_DEFINITION_FILENAME="$( pwd )/registered-task-definition.json"
 SERVICE_NAME="notifications-${ENVIRONMENT_NAME}-fargate-service"
+TIMEOUT=900 # 15 minutes
 
 function deploy_and_wait() {
     # Update the service to use the new task definition
@@ -24,7 +25,7 @@ function deploy_and_wait() {
         --force-new-deployment \
         --enable-execute-command > /dev/null
 
-   if ! ( timeout 600 aws ecs wait services-stable --cluster="${CLUSTER_NAME}" --services="${SERVICE_NAME}" ); then
+   if ! ( timeout $TIMEOUT aws ecs wait services-stable --cluster="${CLUSTER_NAME}" --services="${SERVICE_NAME}" ); then
         echo "Service failed to stabilize in time"
         exit 1
     fi

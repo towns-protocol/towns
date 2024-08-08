@@ -3,7 +3,7 @@
 set -x
 set -eo pipefail
 
-DEPLOYMENT_TIMEOUT=720 # 12 minutes
+DEPLOYMENT_TIMEOUT=900 # 15 minutes
 
 function check_env() {
     # Validate the arguments

@@ -35,7 +35,7 @@ on:
                 required: true
 
 concurrency:
-    group: ${{ github.workflow }}-${{ github.ref }}
+    group: render-deploy-${{ inputs.environment_name }}
     cancel-in-progress: true
 
 jobs:
@@ -50,7 +50,7 @@ jobs:
             - name: Set up Environment Variables
               run: |
                   if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-                      ENVIRONMENT_NAME=${{ github.event.inputs.environment_name }}
+                      ENVIRONMENT_NAME=${{ inputs.environment_name }}
                   elif [ "${{ github.event_name }}" == "push" ]; then
                     # If the branch is omega, we deploy to omega environment
                     if [ "${{ github.ref }}" == "refs/heads/omega" ]; then
