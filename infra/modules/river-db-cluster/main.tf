@@ -76,11 +76,11 @@ resource "aws_cloudwatch_log_subscription_filter" "rds_log_group_filter" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "allow_pgadmin_inbound_to_db" {
-  description = "Allow pgadmin inbound to db"
+  description = "Allow pgadmin inbound to river node db cluster"
 
   from_port   = 5432
   to_port     = 5432
-  ip_protocol = -1
+  ip_protocol = "tcp"
 
   security_group_id            = module.rds_aurora_postgresql.security_group_id
   referenced_security_group_id = var.pgadmin_security_group_id

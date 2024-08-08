@@ -155,108 +155,6 @@ resource "aws_ecs_task_definition" "pgadmin-fargate" {
   tags = local.pgadmin_tags
 }
 
-# This module is used only if pgamdin module require to create a separate ALB
-module "pgadmin_alb" {
-  count   = var.create_loadbalancer ? 1 : 0
-  source  = "terraform-aws-modules/alb/aws"
-  version = "9.4.0"
-
-  name = local.name
-
-  load_balancer_type         = "application"
-  enable_deletion_protection = false
-
-  vpc_id  = var.vpc_id
-  subnets = var.public_subnets
-
-  # Security Group
-  security_group_ingress_rules = {
-    all_http = {
-      from_port   = 80
-      to_port     = 80
-      ip_protocol = "tcp"
-      cidr_ipv4   = "0.0.0.0/0"
-    }
-    all_https = {
-      from_port   = 443
-      to_port     = 443
-      ip_protocol = "tcp"
-      cidr_ipv4   = "0.0.0.0/0"
-    }
-  }
-
-  security_group_egress_rules = {
-    all = {
-      ip_protocol = "-1"
-      cidr_ipv4   = data.aws_vpc.vpc.cidr_block
-    }
-  }
-
-  listeners = {
-    http-https-redirect = {
-      port     = 80
-      protocol = "HTTP"
-      redirect = {
-        port        = "443"
-        protocol    = "HTTPS"
-        status_code = "HTTP_301"
-      }
-    }
-    pgadmin_rule = {
-      port            = 443
-      protocol        = "HTTPS"
-      ssl_policy      = "ELBSecurityPolicy-TLS13-1-2-2021-06"
-      certificate_arn = data.aws_acm_certificate.primary_hosted_zone_cert.arn
-
-      forward = {
-        target_group_key = "pgadmin_tgrp"
-      }
-      rules = {
-        forward-rule = {
-          actions = [
-            {
-              type             = "forward"
-              target_group_key = "pgadmin_tgrp"
-            }
-          ]
-
-          conditions = [{
-            host_header = {
-              values = ["${local.name}.${module.global_constants.primary_hosted_zone_name}"]
-          } }]
-        }
-      }
-
-    } #pgadmin_rule end
-  }   #listeners block end
-
-  target_groups = {
-    pgadmin_tgrp = {
-      backend_protocol                  = "HTTP"
-      backend_port                      = local.container_port
-      target_type                       = "ip"
-      deregistration_delay              = 5
-      load_balancing_cross_zone_enabled = true
-
-      health_check = {
-        enabled             = true
-        healthy_threshold   = 5
-        interval            = 30
-        matcher             = "200"
-        path                = "/login"
-        port                = "traffic-port"
-        protocol            = "HTTP"
-        timeout             = 5
-        unhealthy_threshold = 2
-      }
-      # ECS will attach the IPs of the tasks to this target group
-      create_attachment = false
-    }
-  }
-
-  tags = local.pgadmin_tags
-}
-
 resource "aws_lb_target_group" "pgadmin_tgrp" {
   name        = local.name
   protocol    = "HTTP"
@@ -301,17 +199,29 @@ module "pgadmin_ecs_sg" {
   name        = "${local.name}_sg"
   description = "Security group for pgadmin ECS task"
   vpc_id      = var.vpc_id
+}
 
-  # Open for security group id (rule or from_port+to_port+protocol+description)
-  ingress_with_source_security_group_id = [
-    {
-      rule                     = "http-80-tcp"
-      source_security_group_id = var.create_loadbalancer ? module.pgadmin_alb[0].security_group_id : var.alb_security_group_id
-    }
-  ]
+resource "aws_vpc_security_group_ingress_rule" "allow_alb_into_pgadmin" {
+  description = "Allow alb inbound to pgadmin"
 
-  egress_cidr_blocks = ["0.0.0.0/0"]
-  egress_rules       = ["all-all"]
+  from_port   = 80
+  to_port     = 80
+  ip_protocol = "tcp"
+
+  security_group_id            = module.pgadmin_ecs_sg.security_group_id
+  referenced_security_group_id = var.alb_security_group_id
+}
+
+resource "aws_vpc_security_group_egress_rule" "allow_pgadmin_outbound_to_all" {
+  description = "Allow pgadmin outbound to all"
+
+  from_port   = 80
+  to_port     = 80
+  ip_protocol = "tcp"
+
+  security_group_id = module.pgadmin_ecs_sg.security_group_id
+
+  cidr_ipv4 = "0.0.0.0/0"
 }
 
 resource "aws_ecs_service" "pgadmin-ecs-service" {
@@ -330,7 +240,7 @@ resource "aws_ecs_service" "pgadmin-ecs-service" {
   }
 
   load_balancer {
-    target_group_arn = var.create_loadbalancer ? module.pgadmin_alb[0].target_groups["pgadmin_tgrp"].arn : aws_lb_target_group.pgadmin_tgrp.arn
+    target_group_arn = aws_lb_target_group.pgadmin_tgrp.arn
     container_name   = local.container_name
     container_port   = local.container_port
   }
@@ -355,7 +265,7 @@ data "cloudflare_zone" "zone" {
 resource "cloudflare_record" "pgadmin_dns" {
   zone_id = data.cloudflare_zone.zone.id
   name    = local.name
-  value   = var.create_loadbalancer ? module.pgadmin_alb[0].dns_name : var.alb_dns_name
+  value   = var.alb_dns_name
   type    = "CNAME"
   ttl     = 60
 }

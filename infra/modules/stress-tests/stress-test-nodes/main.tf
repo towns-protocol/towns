@@ -174,6 +174,10 @@ resource "aws_ecs_task_definition" "task_definition" {
         value = "20a38bcf15ab6b94d404c201dee9f67c6428c0ecb14c8601d7f529814cebe12c,20a38bcf15ab6b94d404c201dee9f67c6428c0ecb1826ef52f48e2e904844cff"
       },
       {
+        name  = "REDIS_HOST",
+        value = var.redis_host
+      },
+      {
         name  = "CONTAINER_INDEX",
         value = tostring(var.container_index)
       }

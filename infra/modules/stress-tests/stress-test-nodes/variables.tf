@@ -19,7 +19,6 @@ variable "ecs_cluster" {
 variable "tags" {
   description = "Tags to be added on leader resources"
   type        = map(any)
-  default     = {}
 }
 
 variable "base_chain_rpc_url_secret_arn" {
@@ -35,6 +34,10 @@ variable "river_chain_rpc_url_secret_arn" {
 variable "container_index" {
   description = "Index of the stress test container"
   type        = number
+}
+
+variable "redis_host" {
+  type = string
 }
 
 variable "stress_test_wallet_mnemonic_secret_arn" {
