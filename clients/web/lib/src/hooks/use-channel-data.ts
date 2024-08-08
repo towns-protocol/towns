@@ -37,9 +37,20 @@ export function useChannelData(): ChannelData {
             private: channelChild.private,
             highlight: channelChild.highlight,
             topic: room?.topic ?? channelChild.topic,
+            isAutojoin: room?.isAutojoin,
+            isDefault: room?.isDefault,
+            hideUserJoinLeaveEvents: room?.hideUserJoinLeaveEvents,
         }
         return channel
-    }, [channelGroup?.channels, channelId, room?.name, room?.topic])
+    }, [
+        channelGroup?.channels,
+        channelId,
+        room?.hideUserJoinLeaveEvents,
+        room?.isAutojoin,
+        room?.isDefault,
+        room?.name,
+        room?.topic,
+    ])
     return useMemo(() => {
         return {
             spaceId,

@@ -32,6 +32,9 @@ export interface Channel {
     private?: boolean
     highlight?: boolean
     topic?: string
+    isAutojoin?: boolean
+    isDefault?: boolean
+    hideUserJoinLeaveEvents?: boolean
 }
 
 export interface ChannelGroup {

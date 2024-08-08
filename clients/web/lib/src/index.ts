@@ -115,6 +115,8 @@ export {
     usePlatformMinMembershipPrice,
     getPlatformMinMembershipPriceFromQueryCache,
 } from './hooks/use-platform-min-membership-price'
+export { useSetChannelAutojoin } from './hooks/use-set-channel-autojoin'
+export { useSetHideUserJoinLeave } from './hooks/use-set-hide-user-join-leave'
 
 export { useCasablancaStore } from './store/use-casablanca-store'
 export { useFullyReadMarkerStore } from './store/use-fully-read-marker-store'
