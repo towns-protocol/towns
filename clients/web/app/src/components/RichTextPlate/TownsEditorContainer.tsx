@@ -51,6 +51,7 @@ type Props = {
 } & Pick<BoxProps, 'background'>
 
 const TownsTextEditorWithoutBoundary = ({
+    autoFocus,
     editing: isEditing,
     editable = true,
     placeholder = 'Write something ...',
@@ -210,6 +211,7 @@ const TownsTextEditorWithoutBoundary = ({
                 rounded={{ default: 'sm', touch: 'none' }}
             >
                 <RichTextEditor
+                    autoFocus={autoFocus}
                     editable={editable}
                     initialValue={initialValue}
                     placeholder={placeholder}
