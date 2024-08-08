@@ -5,6 +5,7 @@ import {
     EmbeddedMessageAttachment,
     MessageType,
     UnfurledLinkAttachment,
+    useChannelSettings,
     useContractSpaceInfo,
     useGetRootKeyFromLinkedWallet,
     useTownsClient,
@@ -28,6 +29,7 @@ import { useReadableMembershipInfo } from '@components/TownPageLayout/useReadabl
 import { getPriceText } from '@components/TownPageLayout/townPageUtils'
 import { useTokensGatingMembership } from 'hooks/useTokensGatingMembership'
 import { SelectedToken } from '@components/TownPageLayout/TokenInfoBox'
+import { PATHS } from 'routes'
 import { MessageAttachmentsContext } from './MessageAttachmentsContext'
 
 const emptyArray: never[] = []
@@ -220,6 +222,8 @@ const TownsContent = (
 ) => {
     const { townPath, townId } = props
 
+    const channelId = townPath.match(new RegExp(`/${townId}/${PATHS.CHANNELS}/([0-9a-z]{64})`))?.[1]
+
     const { data: spaceInfo } = useContractSpaceInfo(townId)
     const { data: memberInfo, isLoading } = useReadableMembershipInfo(townId)
     const { data: tokensGatingMembership } = useTokensGatingMembership(townId)
@@ -231,6 +235,8 @@ const TownsContent = (
     const onClick = useCallback(() => {
         navigate(townPath, { state: { fromLink: true } })
     }, [navigate, townPath])
+
+    const { channelSettings } = useChannelSettings(townId, channelId ?? '')
 
     return (
         <LinkContainer
@@ -253,6 +259,11 @@ const TownsContent = (
             />
             <Box gap="paragraph" paddingY="sm" paddingRight="sm" overflow="hidden">
                 <Stack gap="paragraph">
+                    {!!channelSettings && (
+                        <Paragraph strong size="lg" color="default" whiteSpace="normal">
+                            #{channelSettings?.name}
+                        </Paragraph>
+                    )}
                     <Heading level={3} color="default" whiteSpace="normal">
                         {spaceInfo?.name}
                     </Heading>
