@@ -55,6 +55,7 @@ const TownsTextEditorWithoutBoundary = ({
     editable = true,
     placeholder = 'Write something ...',
     tabIndex,
+    storageId,
     onSend,
     onCancel,
     displayButtons,
@@ -216,7 +217,7 @@ const TownsTextEditorWithoutBoundary = ({
                     displayButtons={displayButtons}
                     background={background}
                     channels={channels}
-                    // mentions={mentions}
+                    storageId={inlineReplyPreview?.event?.eventId ?? storageId}
                     userMentions={userMentions}
                     channelMentions={channelMentions}
                     userHashMap={userHashMap}
