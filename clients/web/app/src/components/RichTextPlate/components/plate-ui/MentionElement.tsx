@@ -20,9 +20,10 @@ export const MentionElement = withRef<
             as="span"
             display="inline-block"
             data-slate-value={element.value}
+            contentEditable={false}
             onClick={getHandler(onClick, element)}
             {...props.attributes}
-            ref={ref}
+            ref={props.attributes.ref ?? ref}
         >
             <MentionElementWithoutPlate value={prefix + element.value} />
             {children}

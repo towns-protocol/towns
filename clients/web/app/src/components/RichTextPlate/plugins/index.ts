@@ -54,7 +54,7 @@ import { EmojiMentionElement } from '../components/plate-ui/EmojiMentionElement'
 import { autoformatRules } from './autoformat'
 import { nodeResetRules } from './nodeReset'
 import { createShiftEnterListPlugin } from './shiftEnterListPlugin'
-import { createFormatTextLinkPlugin } from './createFormatTextLinkPlugin'
+import { createFormatTextLinkPlugin, createIOSPasteLinkPlugin } from './createFormatTextLinkPlugin'
 import { ELEMENT_MENTION_CHANNEL, createChannelPlugin } from './createChannelPlugin'
 import { ELEMENT_MENTION_EMOJI, createEmojiPlugin } from './createEmojiPlugin'
 import { createSanitizeDOMPlugin } from './createSanitizePlugin'
@@ -153,7 +153,9 @@ const platePlugins = (
                 },
             }),
             createDeserializeMdPlugin(), // should be before createFormatTextLinkPlugin
-            createFormatTextLinkPlugin(), // should be after createDeserializeMdPlugin
+            /* Following plugins should ALWAYS be placed after createDeserializeMdPlugin() */
+            createFormatTextLinkPlugin(),
+            createIOSPasteLinkPlugin(),
             createPasteMentionsPlugin(channelList, userHashMap, lookupUser)(),
             createNormalizeTypesPlugin(),
             createErrorHandlingPlugin(),

@@ -4,7 +4,6 @@ import remarkTransformUserAndChannels, {
     PasteTransformer,
 } from '../utils/remark/remarkTransformUserAndChannels'
 import { TUserIDNameMap } from '../components/plate-ui/autocomplete/types'
-import { deserializeMd } from '../utils/deserializeMD'
 
 export const KEY_PASTE_MENTIONS_PLUGIN = 'KEY_PASTE_MENTIONS_PLUGIN'
 
@@ -18,15 +17,6 @@ export const createPasteMentionsPlugin = (
 ) =>
     createPluginFactory({
         key: KEY_PASTE_MENTIONS_PLUGIN,
-        editor: {
-            insertData: {
-                // For handling pasting of text/plain data (mobile, etc.)
-                format: 'text/plain',
-                getFragment: ({ data }) => {
-                    return deserializeMd(data, channelList, userHashMap, lookupUser)
-                },
-            },
-        },
         then: (_editor) => ({
             inject: {
                 pluginsByKey: {

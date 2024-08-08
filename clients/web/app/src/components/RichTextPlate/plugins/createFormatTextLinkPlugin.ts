@@ -44,6 +44,35 @@ export const createFormatTextLinkPlugin = createPluginFactory({
     },
 })
 
+export const KEY_IOS_PASTE_LINK = 'KEY_IOS_PASTE_LINK'
+
+/**
+ * @description On iOS when we copy a URL in browser using share button, it is added to clipboard as text/uri-list.
+ * `text/uri-list` is a MIME type for a list of URIs, each on a separate line. It is not handled natively by
+ * Plate JS editor so we need to handle it manually.
+ *
+ * @description We are using `linkify-it` to detect links in the text and then converting them to markdown links.
+ */
+export const createIOSPasteLinkPlugin = createPluginFactory({
+    key: KEY_IOS_PASTE_LINK,
+    editor: {
+        // insertData is a function that is called when the user pastes data into the editor.
+        insertData: {
+            format: 'text/uri-list',
+            query: ({ data }) => {
+                if (data.length < 1) {
+                    return false
+                }
+
+                return linkify.test(data)
+            },
+            getFragment: ({ data }) => {
+                return deserializeMd(convertPlainTextLinksToMd(data))
+            },
+        },
+    },
+})
+
 const convertPlainTextLinksToMd = (fullText: string) => {
     const links = linkify.match(fullText)
     if (!links) {
