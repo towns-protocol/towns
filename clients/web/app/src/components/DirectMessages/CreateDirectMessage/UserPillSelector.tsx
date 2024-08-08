@@ -117,7 +117,7 @@ export const UserPillSelector = (props: Props) => {
 
     const { isTouch } = useDevice()
 
-    const createMessageButton =
+    const ctaElement =
         isTouch && numSelected === 1 ? (
             <Box>
                 <Button onClick={props.onConfirm}>
@@ -126,15 +126,10 @@ export const UserPillSelector = (props: Props) => {
             </Box>
         ) : undefined
 
-    const label = showSuggestions ? 'Suggested' : 'Add people'
-
     const labelElement = (
-        <>
-            {createMessageButton}
-            <Box>
-                <Paragraph color="gray2">{label}</Paragraph>
-            </Box>
-        </>
+        <Box>
+            <Paragraph color="gray2">{showSuggestions ? 'Suggested' : 'Add people'}</Paragraph>
+        </Box>
     )
 
     return (
@@ -150,6 +145,7 @@ export const UserPillSelector = (props: Props) => {
                         hideResultsWhenNotActive={disabled}
                         options={users}
                         keys={['search']}
+                        cta={ctaElement}
                         label={labelElement}
                         initialFocusIndex={isTouch ? -1 : 0}
                         placeholder={

@@ -20,6 +20,7 @@ type Props<T> = {
     getOptionKey: (option: T) => string
     keys: string[]
     label?: string | JSX.Element
+    cta?: JSX.Element
     onConfirm?: () => void
     onPreviewChange?: (previewItem: T | undefined) => void
     onSelectionChange?: (selection: Set<string>) => void
@@ -322,7 +323,7 @@ export const PillSelector = <T,>(props: Props<T>) => {
                 />
             </Box>
             {/* dropdown */}
-            {searchItems?.length > 0 ? (
+            {searchItems?.length > 0 || props.cta ? (
                 <Box
                     padding
                     gap
@@ -332,8 +333,9 @@ export const PillSelector = <T,>(props: Props<T>) => {
                     style={{ maxHeight: 380 }}
                     boxShadow="card"
                 >
+                    {props.cta}
                     {/* label */}
-                    {typeof props.label === 'string' ? (
+                    {searchItems.length === 0 ? null : typeof props.label === 'string' ? (
                         <Box>
                             <Paragraph color="gray2">{props.label}</Paragraph>
                         </Box>
@@ -341,18 +343,20 @@ export const PillSelector = <T,>(props: Props<T>) => {
                         props.label
                     )}
                     {/* list container*/}
-                    <Stack gap="sm" ref={listRef}>
-                        {searchItems.map((o, i) => (
-                            <Box key={getOptionKey(o)}>
-                                {optionRenderer({
-                                    option: o,
-                                    selected: focusIndex === i,
-                                    onAddItem: (customKey?: string) =>
-                                        onAddItem(customKey ?? getOptionKey(o)),
-                                })}
-                            </Box>
-                        ))}
-                    </Stack>
+                    {searchItems.length > 0 && (
+                        <Stack gap="sm" ref={listRef}>
+                            {searchItems.map((o, i) => (
+                                <Box key={getOptionKey(o)}>
+                                    {optionRenderer({
+                                        option: o,
+                                        selected: focusIndex === i,
+                                        onAddItem: (customKey?: string) =>
+                                            onAddItem(customKey ?? getOptionKey(o)),
+                                    })}
+                                </Box>
+                            ))}
+                        </Stack>
+                    )}
                 </Box>
             ) : hideResultsWhenNotActive && !isInsideContainer ? null : (
                 props.emptySelectionElement?.({

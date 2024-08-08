@@ -128,7 +128,15 @@ export const CreateMessageSelect = () => {
         }
     }, [matchingDM, numSelectedUsers, onSelectChannel])
 
-    const { captureClickRef } = useCaptureContainerClick(onCreateDraft)
+    const onSelectCurrentChoice = useCallback(() => {
+        if (existingStreamId) {
+            onSelectChannel(existingStreamId)
+        } else {
+            onCreateDraft()
+        }
+    }, [existingStreamId, onCreateDraft, onSelectChannel])
+
+    const { captureClickRef } = useCaptureContainerClick(onSelectCurrentChoice)
 
     const storageId = getDraftDMStorageId(selectedUserArray)
 
@@ -167,7 +175,7 @@ export const CreateMessageSelect = () => {
                 <UserPillSelector
                     emptySelectionElement={emptySelectionElement}
                     onSelectionChange={onSelectionChange}
-                    onConfirm={onCreateDraft}
+                    onConfirm={onSelectCurrentChoice}
                 />
             </ZLayerBox>
         </MessageContainerLayout>
