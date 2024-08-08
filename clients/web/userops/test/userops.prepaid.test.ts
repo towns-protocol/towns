@@ -22,11 +22,12 @@ test('can send prepay membership op, and user can join for free', async () => {
     )
     await alice.ready
 
-    const { spaceDapp, userOps } = createSpaceDappAndUserops(bob)
+    const { spaceDapp, userOps: userOpsBob } = createSpaceDappAndUserops(bob)
+    const { userOps: userOpsAlice } = createSpaceDappAndUserops(alice)
 
     // create a space that costs
     const op = await createFixedPriceSpace({
-        userOps,
+        userOps: userOpsBob,
         spaceDapp,
         signer: bob.wallet,
         rolePermissions: [Permission.Read, Permission.Write],
@@ -41,10 +42,10 @@ test('can send prepay membership op, and user can join for free', async () => {
     const spaceId = getSpaceId(spaceDapp, txReceipt)
 
     await expect(() =>
-        userOps.sendJoinSpaceOp([spaceId, alice.wallet.address, alice.wallet]),
+        userOpsAlice.sendJoinSpaceOp([spaceId, alice.wallet.address, alice.wallet]),
     ).rejects.toThrow()
 
-    const aaAddress = await userOps.getAbstractAccountAddress({
+    const aaAddress = await userOpsBob.getAbstractAccountAddress({
         rootKeyAddress: bob.wallet.address as Address,
     })
     expect(aaAddress).toBeDefined()
@@ -52,7 +53,7 @@ test('can send prepay membership op, and user can join for free', async () => {
     const receipt = await fundWallet(aaAddress!, bob)
     expect(receipt?.status).toBe(1)
 
-    const prepaidOp = await userOps.sendPrepayMembershipOp([spaceId, 1, bob.wallet])
+    const prepaidOp = await userOpsBob.sendPrepayMembershipOp([spaceId, 1, bob.wallet])
     const prepaidOpReceipt = await prepaidOp.wait()
     expect(prepaidOpReceipt?.transactionHash).toBeDefined()
     expect(prepaidOpReceipt?.args.success).toBe(true)
@@ -61,7 +62,7 @@ test('can send prepay membership op, and user can join for free', async () => {
     expect(prepaidSeats.toNumber()).toBe(1)
 
     // now alice can join
-    const joinOp = await userOps.sendJoinSpaceOp([spaceId, alice.wallet.address, alice.wallet])
+    const joinOp = await userOpsAlice.sendJoinSpaceOp([spaceId, alice.wallet.address, alice.wallet])
     await waitForOpAndTx(joinOp, alice)
 
     const aliceMembership = await spaceDapp.hasSpaceMembership(spaceId, alice.wallet.address)

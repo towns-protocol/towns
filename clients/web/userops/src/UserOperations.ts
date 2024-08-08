@@ -42,11 +42,12 @@ export class UserOps {
     private factoryAddress: string | undefined
     private paymasterProxyAuthSecret: string | undefined
     private skipPromptUserOnPMRejectedOp = false
-    public userOpClient: UseropClient | undefined
-    public builder: Presets.Builder.SimpleAccount | undefined
+    private userOpClient: Promise<UseropClient> | undefined
+    private builder: Promise<Presets.Builder.SimpleAccount> | undefined
     protected spaceDapp: ISpaceDapp | undefined
     private timeTracker: TimeTracker | undefined
     private fetchAccessTokenFn: (() => Promise<string | null>) | undefined
+    private middlewareInitialized = false
     public middlewareVars: MiddlewareVars
 
     constructor(
@@ -126,14 +127,10 @@ export class UserOps {
 
     public async getUserOpClient() {
         if (!this.userOpClient) {
-            this.userOpClient = await UseropClient.init(this.aaRpcUrl, {
+            this.userOpClient = UseropClient.init(this.aaRpcUrl, {
                 entryPoint: this.entryPointAddress,
                 overrideBundlerRpc: this.bundlerUrl,
             })
-            // update the userop.wait() timeout and interval
-            // .wait() will poll the entrypoint every 500 ms for 30 seconds to see if the user operation was sent
-            this.userOpClient.waitTimeoutMs = 30_000
-            this.userOpClient.waitIntervalMs = 500
         }
         return this.userOpClient
     }
@@ -164,7 +161,8 @@ export class UserOps {
             endInitBuilder = timeTracker?.startMeasurement(sequenceName, 'userops_init_builder')
         }
 
-        const builder = await this.getBuilder(args)
+        const builder = await this.getBuilder({ signer: args.signer })
+        this.addMiddleware({ builder, signer: args.signer })
 
         endInitBuilder?.()
 
@@ -207,6 +205,10 @@ export class UserOps {
         }
 
         const userOpClient = await this.getUserOpClient()
+        // update the userop.wait() timeout and interval
+        // .wait() will poll the entrypoint every 500 ms for 30 seconds to see if the user operation was sent
+        userOpClient.waitTimeoutMs = 30_000
+        userOpClient.waitIntervalMs = 500
 
         endInitClient?.()
 
@@ -1177,8 +1179,7 @@ export class UserOps {
     public async getBuilder(args: { signer: ethers.Signer }) {
         if (!this.builder) {
             const { signer } = args
-
-            this.builder = await Presets.Builder.SimpleAccount.init(signer, this.aaRpcUrl, {
+            this.builder = Presets.Builder.SimpleAccount.init(signer, this.aaRpcUrl, {
                 entryPoint: this.entryPointAddress,
                 factory: this.factoryAddress,
                 overrideBundlerRpc: this.bundlerUrl,
@@ -1189,84 +1190,94 @@ export class UserOps {
                     // that userop does not call eth_estimateUserOperationGas, which we do in other middleware
                 },
             })
-
-            const timeTracker = this.timeTracker
-
-            // We get back preverification gas too low errors sometimes
-            // - for pm sponsored ops, pretty much all we can do is retry. The paymaster is going to do its own esitamtes and provide a sig. We can't change it or the sig will be invalid
-            // - for non-pm sponsored ops, we can up the preverification gas and retry
-
-            // 1 - increase preverification gas (on retries). don't think this has any impact on paymaster's gas estimation, but we can pass it along just in case it does
-            this.builder.useMiddleware(async (ctx) =>
-                preverificationGasMultiplier(this.middlewareVars.preverificationGasMultiplierValue)(
-                    ctx,
-                ),
-            )
-            // 2 - pass user op with new gas data to paymaster.
-            // Unclear if pm_sponsorUserOperation called in paymaster uses any incoming estimate when estimating sponsored gas
-            // paymaster returns preverification gas and we assign it to the user operation.
-            // The userop fields can no longer be manipulated or else the paymaster sig will be invalid
-            if (this.paymasterProxyUrl && this.paymasterProxyAuthSecret) {
-                this.builder.useMiddleware(async (ctx) => {
-                    const { sequenceName, functionHashForPaymasterProxy, spaceId } =
-                        this.middlewareVars
-                    let endPaymasterMiddleware: (() => void) | undefined
-                    if (sequenceName) {
-                        endPaymasterMiddleware = timeTracker?.startMeasurement(
-                            sequenceName,
-                            `userops_${functionHashForPaymasterProxy}_paymasterProxyMiddleware`,
-                        )
-                    }
-                    await paymasterProxyMiddleware({
-                        rootKeyAddress: await args.signer.getAddress(),
-                        userOpContext: ctx,
-                        paymasterProxyAuthSecret: this.paymasterProxyAuthSecret,
-                        paymasterProxyUrl: this.paymasterProxyUrl,
-                        functionHashForPaymasterProxy: functionHashForPaymasterProxy,
-                        spaceId,
-                        bundlerUrl: this.bundlerUrl,
-                        fetchAccessTokenFn: this.fetchAccessTokenFn,
-                    })
-
-                    endPaymasterMiddleware?.()
-                })
-            }
-
-            // 3 - prompt user if the paymaster rejected. recalculate preverification gas
-            if (!this.skipPromptUserOnPMRejectedOp) {
-                this.builder.useMiddleware(async (ctx) => {
-                    const {
-                        sequenceName,
-                        functionHashForPaymasterProxy,
-                        spaceId,
-                        preverificationGasMultiplierValue,
-                        txValue,
-                    } = this.middlewareVars
-                    return promptUser(preverificationGasMultiplierValue, this.spaceDapp, txValue, {
-                        sequenceName,
-                        timeTracker,
-                        stepPrefix: functionHashForPaymasterProxy,
-                    })(ctx, {
-                        provider: this.spaceDapp?.provider,
-                        config: this.spaceDapp?.config,
-                        rpcUrl: this.aaRpcUrl,
-                        bundlerUrl: this.bundlerUrl,
-                        spaceId,
-                    })
-                })
-            }
-            // estimate gas w/o prompt if needed
-            // time tracking not needed as this is for error reporting in test scenarios
-            else {
-                this.builder.useMiddleware(async (ctx) =>
-                    simpleEstimateGas(ctx, this.aaRpcUrl, this.bundlerUrl),
-                )
-            }
-
-            // 4 - sign the user operation
-            this.builder.useMiddleware(async (ctx) => signUserOpHash(ctx, args.signer))
         }
         return this.builder
+    }
+
+    private async addMiddleware({
+        builder,
+        signer,
+    }: {
+        builder: Presets.Builder.SimpleAccount
+        signer: ethers.Signer
+    }) {
+        if (this.middlewareInitialized) {
+            return
+        }
+        this.middlewareInitialized = true
+        const timeTracker = this.timeTracker
+        // We get back preverification gas too low errors sometimes
+        // - for pm sponsored ops, pretty much all we can do is retry. The paymaster is going to do its own esitamtes and provide a sig. We can't change it or the sig will be invalid
+        // - for non-pm sponsored ops, we can up the preverification gas and retry
+
+        // 1 - increase preverification gas (on retries). don't think this has any impact on paymaster's gas estimation, but we can pass it along just in case it does
+        builder.useMiddleware(async (ctx) =>
+            preverificationGasMultiplier(this.middlewareVars.preverificationGasMultiplierValue)(
+                ctx,
+            ),
+        )
+        // 2 - pass user op with new gas data to paymaster.
+        // Unclear if pm_sponsorUserOperation called in paymaster uses any incoming estimate when estimating sponsored gas
+        // paymaster returns preverification gas and we assign it to the user operation.
+        // The userop fields can no longer be manipulated or else the paymaster sig will be invalid
+        if (this.paymasterProxyUrl && this.paymasterProxyAuthSecret) {
+            builder.useMiddleware(async (ctx) => {
+                const { sequenceName, functionHashForPaymasterProxy, spaceId } = this.middlewareVars
+                let endPaymasterMiddleware: (() => void) | undefined
+                if (sequenceName) {
+                    endPaymasterMiddleware = timeTracker?.startMeasurement(
+                        sequenceName,
+                        `userops_${functionHashForPaymasterProxy}_paymasterProxyMiddleware`,
+                    )
+                }
+                await paymasterProxyMiddleware({
+                    rootKeyAddress: await signer.getAddress(),
+                    userOpContext: ctx,
+                    paymasterProxyAuthSecret: this.paymasterProxyAuthSecret,
+                    paymasterProxyUrl: this.paymasterProxyUrl,
+                    functionHashForPaymasterProxy: functionHashForPaymasterProxy,
+                    spaceId,
+                    bundlerUrl: this.bundlerUrl,
+                    fetchAccessTokenFn: this.fetchAccessTokenFn,
+                })
+
+                endPaymasterMiddleware?.()
+            })
+        }
+
+        // 3 - prompt user if the paymaster rejected. recalculate preverification gas
+        if (!this.skipPromptUserOnPMRejectedOp) {
+            builder.useMiddleware(async (ctx) => {
+                const {
+                    sequenceName,
+                    functionHashForPaymasterProxy,
+                    spaceId,
+                    preverificationGasMultiplierValue,
+                    txValue,
+                } = this.middlewareVars
+                return promptUser(preverificationGasMultiplierValue, this.spaceDapp, txValue, {
+                    sequenceName,
+                    timeTracker,
+                    stepPrefix: functionHashForPaymasterProxy,
+                })(ctx, {
+                    provider: this.spaceDapp?.provider,
+                    config: this.spaceDapp?.config,
+                    rpcUrl: this.aaRpcUrl,
+                    bundlerUrl: this.bundlerUrl,
+                    spaceId,
+                })
+            })
+        }
+        // estimate gas w/o prompt if needed
+        // time tracking not needed as this is for error reporting in test scenarios
+        else {
+            builder.useMiddleware(async (ctx) =>
+                simpleEstimateGas(ctx, this.aaRpcUrl, this.bundlerUrl),
+            )
+        }
+
+        // 4 - sign the user operation
+        builder.useMiddleware(async (ctx) => signUserOpHash(ctx, signer))
     }
 
     /**
@@ -1280,6 +1291,7 @@ export class UserOps {
     public reset() {
         this.builder = undefined
         this.userOpClient = undefined
+        this.middlewareInitialized = false
         this.middlewareVars = new MiddlewareVars({
             preverificationGasMultiplierValue: 1,
         })
