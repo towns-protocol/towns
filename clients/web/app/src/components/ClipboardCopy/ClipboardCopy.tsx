@@ -33,6 +33,7 @@ export const ClipboardCopy = forwardRef<HTMLDivElement, Props>((props, ref) => {
 
     const onCopy = useCallback(
         (e: React.MouseEvent) => {
+            e.stopPropagation()
             e.preventDefault()
             const asyncCopy = async () => {
                 const copied = await copy(props.clipboardContent ?? props.label ?? '')

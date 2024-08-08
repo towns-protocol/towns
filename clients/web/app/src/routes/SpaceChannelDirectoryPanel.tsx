@@ -240,12 +240,8 @@ const ChannelMemberRow = (props: ChannelMemberRowProps) => {
     const { openPanel } = usePanelActions()
     const { isTouch } = useDevice()
     const onClick = useCallback(() => {
-        if (isTouch) {
-            onRemoveMember?.(userId)
-        } else {
-            openPanel(CHANNEL_INFO_PARAMS.PROFILE, { profileId: abstractAccountAddress })
-        }
-    }, [isTouch, onRemoveMember, userId, openPanel, abstractAccountAddress])
+        openPanel(CHANNEL_INFO_PARAMS.PROFILE, { profileId: abstractAccountAddress })
+    }, [openPanel, abstractAccountAddress])
 
     const globalUser = lookupUser(userId) ?? user
 
