@@ -30,7 +30,7 @@ export const TownsToken = (props: Props) => {
     const onError = () => {
         setError(true)
     }
-    const initial = spaceName?.[0] ?? ''
+    const initial = spaceName?.trim()[0] ?? ''
 
     return (
         <Box
