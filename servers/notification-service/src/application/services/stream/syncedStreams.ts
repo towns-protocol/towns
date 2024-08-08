@@ -29,6 +29,7 @@ import { Mute, StreamKind, SyncedStream } from '@prisma/client'
 import { NotificationKind, NotifyUsersSchema } from '../../../types'
 import { StreamsMonitorService } from './streamsMonitorService'
 import { notificationServiceLogger } from '../../logger'
+import { streamIdAsString } from '@river-build/sdk'
 
 const logger = notificationServiceLogger.child({ label: 'syncedStreams' })
 
@@ -113,9 +114,9 @@ export class SyncedStreams {
     private abortRetry: (() => void) | undefined
     private currentRetryCount: number = 0
     private forceStopSyncStreams: (() => void) | undefined
-    private interruptSync: (() => void) | undefined
+    private interruptSync: ((err: unknown) => void) | undefined
     private addToSyncQueue: SyncCookie[] = []
-    private addToSyncInProcess: SyncCookie | undefined = undefined
+    private addToSyncInProcess: string | undefined = undefined
     private addSyncTask: Promise<void> | undefined
 
     // Only responses related to the current syncId are processed.
@@ -184,13 +185,12 @@ export class SyncedStreams {
         }
     }
 
-    private startAddToSyncRequest() {
+    private startAddToSyncRequest(syncCookie: SyncCookie) {
         // For now we only allow one at a time
         if (this.addSyncTask) {
             logger.error('startAddToSyncRequest: addSyncTask already exists')
             return
         }
-        const syncCookie = this.addToSyncInProcess
         this.addSyncTask = (async () => {
             try {
                 await this.rpcClient.addStreamToSync({
@@ -199,7 +199,7 @@ export class SyncedStreams {
                 })
                 logger.info('addedStreamToSync requested', {
                     syncId: this.syncId,
-                    streamId: syncCookie?.streamId,
+                    streamId: streamIdAsString(syncCookie?.streamId ?? ''),
                 })
             } catch (error) {
                 // Trigger restart of sync loop
@@ -222,8 +222,11 @@ export class SyncedStreams {
 
             if (!this.addToSyncInProcess) {
                 if (this.addToSyncQueue.length > 0) {
-                    this.addToSyncInProcess = this.addToSyncQueue.shift()
-                    this.startAddToSyncRequest()
+                    const nextSyncCookie = this.addToSyncQueue.shift()
+                    if (nextSyncCookie) {
+                        this.addToSyncInProcess = streamIdAsString(nextSyncCookie.streamId)
+                        this.startAddToSyncRequest(nextSyncCookie)
+                    }
                 }
             }
         } else {
@@ -317,9 +320,9 @@ export class SyncedStreams {
                                         logger.info('forceStopSyncStreams called')
                                         resolve({ value: undefined, done: true })
                                     }
-                                    this.interruptSync = () => {
-                                        logger.info('interruptSync called')
-                                        resolve({ value: undefined, done: true })
+                                    this.interruptSync = (err) => {
+                                        logger.info('interruptSync called', { error: err })
+                                        reject(err)
                                     }
                                 })
 
@@ -329,12 +332,15 @@ export class SyncedStreams {
                                     interruptSyncPromise,
                                 ])
                                 logger.info('syncStreams received next', { value, done })
-                                if (done || value === undefined) {
-                                    logger.info('exiting syncStreams', done, value)
-                                    // exit the syncLoop, it's done
-                                    this.forceStopSyncStreams = undefined
-                                    this.interruptSync = undefined
-                                    return iteration
+
+                                if (value === undefined) {
+                                    if (done) {
+                                        logger.info('exiting syncStreams', done, value)
+                                        // exit the syncLoop, it's done
+                                        this.forceStopSyncStreams = undefined
+                                        this.interruptSync = undefined
+                                        return iteration
+                                    }
                                 }
 
                                 if (!value.syncId || !value.syncOp) {
@@ -528,17 +534,26 @@ export class SyncedStreams {
             }
             const syncStream = res.stream
             if (syncStream !== undefined) {
+                logger.info('check addToSyncInProcess ', {
+                    addToSyncInProcess: this.addToSyncInProcess,
+                    nextSyncCookie: syncStream.nextSyncCookie,
+                    streamId: streamIdAsString(syncStream.nextSyncCookie?.streamId ?? ''),
+                })
                 // Once we have data acknowling the pending addStreamToSync, we can start the next one
                 if (
-                    this.addToSyncInProcess?.streamId &&
-                    this.addToSyncInProcess?.streamId === syncStream.nextSyncCookie?.streamId
+                    this.addToSyncInProcess &&
+                    syncStream.nextSyncCookie &&
+                    this.addToSyncInProcess === streamIdAsString(syncStream.nextSyncCookie.streamId)
                 ) {
                     logger.info('addToSyncInProcess acknowledged', {
-                        streamId: this.addToSyncInProcess.streamId,
+                        streamId: this.addToSyncInProcess,
                     })
                     if (this.addToSyncQueue.length > 0) {
-                        this.addToSyncInProcess = this.addToSyncQueue.shift()
-                        this.startAddToSyncRequest()
+                        const nextSyncCookie = this.addToSyncQueue.shift()
+                        if (nextSyncCookie) {
+                            this.addToSyncInProcess = streamIdAsString(nextSyncCookie.streamId)
+                            this.startAddToSyncRequest(nextSyncCookie)
+                        }
                     }
                 }
                 const streamId = syncStream.nextSyncCookie?.streamId
@@ -974,12 +989,10 @@ export class SyncedStreams {
                     this.sendKeepAlivePings()
                 }
             }
-            try {
-                ping()
-            } catch (error) {
+            ping().catch((error) => {
                 logger.error('sendKeepAlivePings error', { error })
-                this.interruptSync?.()
-            }
+                this.interruptSync?.(error)
+            })
         }, 5 * 1000 * 60) // every 5 minutes
     }
 
