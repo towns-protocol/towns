@@ -185,34 +185,40 @@ export class SyncedStreams {
         }
     }
 
+    private async addSyncTaskFunction(syncCookie: SyncCookie) {
+        try {
+            await this.rpcClient.addStreamToSync({
+                syncId: this.syncId,
+                syncPos: syncCookie,
+            })
+            logger.info('addedStreamToSync requested', {
+                syncId: this.syncId,
+                streamId: streamIdAsString(syncCookie?.streamId ?? ''),
+            })
+        } catch (error) {
+            // Trigger restart of sync loop
+            logger.error(`addedStreamToSync error`, { error })
+            if (errorContains(error, Err.BAD_SYNC_COOKIE)) {
+                logger.error('addStreamToSync BAD_SYNC_COOKIE', { syncCookie })
+                throw error
+            }
+        } finally {
+            // The next request will be started when the current one is completed
+            this.addSyncTask = undefined
+        }
+    }
+
     private startAddToSyncRequest(syncCookie: SyncCookie) {
         // For now we only allow one at a time
         if (this.addSyncTask) {
-            logger.error('startAddToSyncRequest: addSyncTask already exists')
-            return
+            // If the pending addSyncTask is already in progress, wait for it to complete
+            logger.warn('startAddToSyncRequest: addSyncTask already exists')
+            this.addSyncTask.then(() => {
+                this.addSyncTask = this.addSyncTaskFunction(syncCookie)
+            })
+        } else {
+            this.addSyncTask = this.addSyncTaskFunction(syncCookie)
         }
-        this.addSyncTask = (async () => {
-            try {
-                await this.rpcClient.addStreamToSync({
-                    syncId: this.syncId,
-                    syncPos: syncCookie,
-                })
-                logger.info('addedStreamToSync requested', {
-                    syncId: this.syncId,
-                    streamId: streamIdAsString(syncCookie?.streamId ?? ''),
-                })
-            } catch (error) {
-                // Trigger restart of sync loop
-                logger.error(`addedStreamToSync error`, { error })
-                if (errorContains(error, Err.BAD_SYNC_COOKIE)) {
-                    logger.error('addStreamToSync BAD_SYNC_COOKIE', { syncCookie })
-                    throw error
-                }
-            } finally {
-                // The next request will be started when the current one is completed
-                this.addSyncTask = undefined
-            }
-        })()
     }
 
     // adds stream to the sync subscription
