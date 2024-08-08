@@ -431,6 +431,9 @@ export class SyncedStreams {
         if (stateConstraints[this.syncState].has(SyncState.Retrying)) {
             if (this.syncState !== SyncState.Retrying) {
                 this.setSyncState(SyncState.Retrying)
+                this.addToSyncQueue = []
+                this.addToSyncInProcess = undefined
+                this.addSyncTask = undefined
                 this.syncId = undefined
             }
 
