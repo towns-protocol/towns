@@ -1,46 +1,48 @@
 name: Create PR for Omega Release
 
 on:
-  workflow_dispatch:
-    inputs:
-      target_branch:
-        description: 'Branch to run the workflow on'
-        required: true
-        default: 'jt/omega-release-gh-action'
+    workflow_dispatch:
+        inputs:
+            target_branch:
+                description: 'Branch to run the workflow on'
+                required: true
+                default: 'jt/omega-release-gh-action'
 
-  push:
-    branches:
-      - '*omega-release-gh-action'
+    push:
+        branches:
+            - '*omega-release-gh-action'
 
 jobs:
-  create-pr:
-    runs-on: ubuntu-latest
+    create-pr:
+        runs-on: ubuntu-latest
 
-    steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v3
-      with:
-        ref: main # Checkout the main branch
+        steps:
+            - name: Checkout Repository
+              uses: actions/checkout@v3
+              with:
+                  ref: main # Checkout the main branch
 
-    - name: Get Current Date
-      id: date
-      run: echo "DATE=$(date +'%m-%d-%Y')" >> $GITHUB_ENV
+            - name: Get Current Date
+              id: date
+              run: echo "DATE=$(date +'%m-%d-%Y')" >> $GITHUB_ENV
 
-    - name: Get Latest Commit SHA
-      id: sha
-      run: echo "COMMIT_SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
+            - name: Get Latest Commit SHA
+              id: sha
+              run: echo "COMMIT_SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
 
-    - name: Create Release Branch
-      run: |
-        git checkout -b release-branch/${{ env.DATE }}
-        git push origin release-branch/${{ env.DATE }}
+            - name: Create Release Branch
+              run: |
+                  git checkout -b release-branch/${{ env.DATE }}
+                  git push origin release-branch/${{ env.DATE }}
 
-    - name: Authenticate GitHub CLI
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        echo "${GITHUB_TOKEN}" | gh auth login --with-token
+            - name: Authenticate GitHub CLI
+              env:
+                GITHUB_TOKEN: ${{ secrets.RIVER_GITHUB_PAT }}
+              run: |
+                  echo "${GITHUB_TOKEN}" | gh auth login --with-token
 
-    - name: Create Pull Request using GitHub CLI
-      run: |
-        gh pr create --title "Omega Release" --body "Latest omega app release.\n\nCommit SHA: ${{ env.COMMIT_SHA }}" --head omega-release/${{ env.DATE }} --base omega
+            - name: Create Pull Request using GitHub CLI
+              env:
+                  GH_TOKEN: ${GITHUB_TOKEN}
+              run: |
+                  gh pr create --title "Omega Release" --body "Latest omega app release.\n\nCommit SHA: ${{ env.COMMIT_SHA }}" --head omega-release/${{ env.DATE }} --base omega
