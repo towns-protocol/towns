@@ -1,6 +1,7 @@
 import { firstBy } from 'thenby'
 import {
     Attachment,
+    ChannelData,
     Membership,
     RedactedEvent,
     RoomCreateEvent,
@@ -233,6 +234,7 @@ const createRelativeDateUtil = () => {
 export const getEventsByDate = (
     events: TimelineEvent[],
     channelType: 'channel' | 'dm' | 'gdm',
+    channelData: ChannelData,
     fullyReadMarkerEventId?: string,
     isThread?: boolean,
     replyMap?: Record<string, ThreadStats>,
@@ -322,7 +324,11 @@ export const getEventsByDate = (
                         events: [event],
                     })
                 }
-            } else if (isRoomMember(event) && channelType !== 'dm') {
+            } else if (
+                isRoomMember(event) &&
+                channelType !== 'dm' &&
+                !channelData.channel?.hideUserJoinLeaveEvents
+            ) {
                 let accumulatedEvents = renderEvents.find(
                     (e) =>
                         e.type === RenderEventType.AccumulatedRoomMembers &&

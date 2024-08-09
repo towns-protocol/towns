@@ -17,7 +17,7 @@ import { SpaceInfoPanel } from 'routes/SpaceInfoPanel'
 import { RolesPanel } from '@components/SpaceSettingsPanel/RolesPanel'
 import { WalletLinkingPanel } from '@components/Web3/WalletLinkingPanel'
 import { Panel } from '@components/Panel/Panel'
-import { ChannelSettingsPanel } from '@components/ChannelSettings/ChannelSettings'
+import { ChannelPermissionsNameDescriptionPanel } from '@components/ChannelSettings/ChannelPermissionsNameDescriptionForm'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { ChannelInvitePanel } from 'routes/ChannelInvitePanel'
 import { UserPreferences } from '@components/UserProfile/UserPreferences'
@@ -27,6 +27,7 @@ import { EditPrepaidPanel } from '@components/SpaceSettingsPanel/EditPrepaidPane
 import { NodeStatusPanel } from '@components/NodeConnectionStatusPanel/ConnectionStatusPanel'
 import { SpaceBannedUsers } from 'routes/SpaceBannedUsers'
 import { MutualTownsPanel } from '@components/MutualTownsPanel/MutualTownsPanel'
+import { ChannelRiverMetadataSettingsPanel } from '@components/ChannelSettings/ChannelRiverMetadataSettingsForm'
 
 export const usePanels = () => {
     const [searchParams] = useSearchParams()
@@ -120,8 +121,11 @@ export const usePanels = () => {
                 </Panel>
             )
         }
-        case CHANNEL_INFO_PARAMS.EDIT_CHANNEL: {
-            return withWrapper(<ChannelSettingsPanel />)
+        case CHANNEL_INFO_PARAMS.EDIT_CHANNEL_PERMISSIONS: {
+            return withWrapper(<ChannelPermissionsNameDescriptionPanel />)
+        }
+        case CHANNEL_INFO_PARAMS.EDIT_CHANNEL_RIVER_METADATA: {
+            return withWrapper(<ChannelRiverMetadataSettingsPanel />)
         }
         case CHANNEL_INFO_PARAMS.INVITE: {
             return withWrapper(<ChannelInvitePanel />)

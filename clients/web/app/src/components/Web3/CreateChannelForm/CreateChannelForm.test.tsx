@@ -118,7 +118,7 @@ describe('CreateChannelForm', () => {
         render(<Wrapper />)
 
         const everyoneCheckbox = screen.getByRole('checkbox', { name: /everyone/i })
-        const memberCheckbox = screen.getByRole('checkbox', { name: /member/i })
+        const memberCheckbox = screen.getByRole('checkbox', { name: /member(?!s)/i })
 
         expect(everyoneCheckbox).toHaveAttribute('name', 'roleIds')
         expect(everyoneCheckbox).toHaveAttribute('value', '7')
@@ -228,10 +228,16 @@ describe('CreateChannelForm', () => {
         const submitButton = screen.getByText(/create channel/i)
 
         const nameInput = screen.getByRole('textbox', { name: /name/i })
-        const memberCheckbox = screen.getByRole('checkbox', { name: /member/i })
+        const memberCheckbox = screen.getByRole('checkbox', { name: /member(?!s)/i })
+        const autojoinCheckbox = screen.getByRole('checkbox', { name: /auto-join new members/i })
+        const hideUserJoinLeaveEventsCheckbox = screen.getByRole('checkbox', {
+            name: /hide join and leave/i,
+        })
 
         fireEvent.change(nameInput, { target: { value: 'test channel' } })
         fireEvent.click(memberCheckbox)
+        fireEvent.click(autojoinCheckbox)
+        fireEvent.click(hideUserJoinLeaveEventsCheckbox)
 
         fireEvent.click(submitButton)
 
@@ -242,6 +248,10 @@ describe('CreateChannelForm', () => {
                     parentSpaceId: '',
                     topic: '',
                     roleIds: [7, 8],
+                    channelSettings: {
+                        autojoin: true,
+                        hideUserJoinLeaveEvents: true,
+                    },
                 },
                 {},
             )
@@ -274,7 +284,7 @@ describe('CreateChannelForm', () => {
 
         const nameInput = screen.getByRole('textbox', { name: /name/i })
         const everyoneCheckbox = screen.getByRole('checkbox', { name: /everyone/i })
-        const memberCheckbox = screen.getByRole('checkbox', { name: /member/i })
+        const memberCheckbox = screen.getByRole('checkbox', { name: /member(?!s)/i })
 
         fireEvent.change(nameInput, { target: { value: 'test channel' } })
         fireEvent.click(everyoneCheckbox)
@@ -315,7 +325,7 @@ describe('CreateChannelForm', () => {
 
         const nameInput = screen.getByRole('textbox', { name: /name/i })
         const everyoneCheckbox = screen.getByRole('checkbox', { name: /everyone/i })
-        const memberCheckbox = screen.getByRole('checkbox', { name: /member/i })
+        const memberCheckbox = screen.getByRole('checkbox', { name: /member(?!s)/i })
 
         fireEvent.change(nameInput, { target: { value: 'test channel' } })
         fireEvent.click(everyoneCheckbox)

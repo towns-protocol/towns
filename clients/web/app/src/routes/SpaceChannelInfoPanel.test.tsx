@@ -78,7 +78,7 @@ describe('<SpaceChannelInfoPanel />', () => {
         expect(screen.getByText('Leave #my-channel')).toBeInTheDocument()
     })
 
-    test('renders edit channel permissions button if user has channel permissions', async () => {
+    test('renders edit channel settings button if user has channel permissions', async () => {
         vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
             isLoading: false,
             hasPermission: true,
@@ -89,7 +89,7 @@ describe('<SpaceChannelInfoPanel />', () => {
 
         render(<Wrapper />)
 
-        expect(screen.getByTestId('edit-channel-permissions-button')).toBeInTheDocument()
+        expect(screen.getByTestId('edit-channel-settings-button')).toBeInTheDocument()
     })
 
     test('renders channel permission details if gated role applied to channel', async () => {
@@ -129,50 +129,6 @@ describe('<SpaceChannelInfoPanel />', () => {
         expect(
             screen.queryByTestId('channel-permission-details-edit-button'),
         ).not.toBeInTheDocument()
-    })
-
-    test('does not render channel permission details if everyone role applied to channel', async () => {
-        vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
-            isLoading: false,
-            hasPermission: false,
-            error: undefined,
-            invalidate: async () => {},
-            getQueryData: () => undefined,
-        })
-
-        const [everyoneRole, gatedRole] = roleDataWithBothRolesAssignedToChannel
-
-        vi.spyOn(Lib, 'useChannelSettings').mockReturnValue({
-            isLoading: false,
-            error: undefined,
-            channelSettings: {
-                spaceNetworkId: 'spaceId',
-                channelNetworkId: 'channelId',
-                name: 'my-channel',
-                disabled: false,
-                roles: [
-                    {
-                        roleId: 3,
-                        name: 'Everyone',
-                        permissions: ['Read'],
-                        users: everyoneRole.users,
-                        ruleData: everyoneRole.ruleData,
-                    },
-                    {
-                        roleId: 4,
-                        name: 'my-channel',
-                        permissions: ['Read'],
-                        users: [],
-                        ruleData: gatedRole.ruleData,
-                    },
-                ],
-                description: 'some description',
-            },
-        })
-
-        render(<Wrapper />)
-
-        expect(screen.queryByTestId('channel-permission-details')).not.toBeInTheDocument()
     })
 
     test('renders edit channel button within channel permission details', async () => {

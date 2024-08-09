@@ -2,7 +2,6 @@ import React, { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useEvent } from 'react-use-event-hook'
 import {
-    EVERYONE_ADDRESS,
     Permission,
     useChannelData,
     useChannelMembers,
@@ -27,7 +26,7 @@ import { PanelButton } from '@components/Panel/PanelButton'
 import { Panel } from '@components/Panel/Panel'
 
 import { useLeaveChannel } from 'hooks/useLeaveChannel'
-import { ChannelSettingsModal } from '@components/ChannelSettings/ChannelSettings'
+import { ChannelPermissionsNameDescriptionModal } from '@components/ChannelSettings/ChannelPermissionsNameDescriptionForm'
 import { PrivyWrapper } from 'privy/PrivyProvider'
 import { ChannelMembersModal } from './SpaceChannelDirectoryPanel'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
@@ -60,7 +59,6 @@ export const ChannelInfo = () => {
     const { channelSettings } = useChannelSettings(spaceData?.id ?? '', channel?.id ?? '')
 
     const roles = channelSettings?.roles
-    const hasEveryoneRole = roles?.some((r) => r.users.includes(EVERYONE_ADDRESS))
     const roledIds = useMemo(() => roles?.map((r) => r.roleId) ?? [], [roles])
     usePrefetchMultipleRoleDetails(spaceData?.id, roledIds)
 
@@ -94,8 +92,12 @@ export const ChannelInfo = () => {
         setActiveModal(undefined)
     })
 
-    const onOpenChannelSettingsPanel = useEvent(() => {
-        openPanel(CHANNEL_INFO_PARAMS.EDIT_CHANNEL)
+    const onOpenEditChannelPermissionsPanel = useEvent(() => {
+        openPanel(CHANNEL_INFO_PARAMS.EDIT_CHANNEL_PERMISSIONS)
+    })
+
+    const onOpenEditChannelSettingsPanel = useEvent(() => {
+        openPanel(CHANNEL_INFO_PARAMS.EDIT_CHANNEL_RIVER_METADATA)
     })
 
     const { mutate: mutateNotificationSettings, isPending: isSettingNotification } =
@@ -139,7 +141,7 @@ export const ChannelInfo = () => {
                     />
                 </Stack>
 
-                {roles && !hasEveryoneRole && (
+                {roles && (
                     <Stack
                         padding
                         data-testid="channel-permission-details"
@@ -154,7 +156,7 @@ export const ChannelInfo = () => {
                             {canEditChannel && (
                                 <TextButton
                                     data-testid="channel-permission-details-edit-button"
-                                    onClick={onOpenChannelSettingsPanel}
+                                    onClick={onOpenEditChannelPermissionsPanel}
                                 >
                                     Edit
                                 </TextButton>
@@ -235,13 +237,14 @@ export const ChannelInfo = () => {
                 )}
 
                 {canEditChannel && (
-                    <PanelButton onClick={onOpenChannelSettingsPanel}>
-                        <Icon type="edit" size="square_sm" color="gray2" />
-                        <Paragraph color="default" data-testid="edit-channel-permissions-button">
-                            Edit channel permissions
+                    <PanelButton onClick={onOpenEditChannelSettingsPanel}>
+                        <Icon type="settings" size="square_sm" color="gray2" />
+                        <Paragraph color="default" data-testid="edit-channel-settings-button">
+                            Channel Settings
                         </Paragraph>
                     </PanelButton>
                 )}
+
                 <PanelButton tone="negative" onClick={onLeaveClick}>
                     <Icon type="logout" size="square_sm" />
                     <Paragraph color="error">Leave #{channel?.label}</Paragraph>
@@ -252,7 +255,7 @@ export const ChannelInfo = () => {
                 <ChannelMembersModal onHide={onHideChannelSettingsPopup} />
             )}
             {activeModal === 'settings' && spaceData && channel && (
-                <ChannelSettingsModal onHide={onHideChannelSettingsPopup} />
+                <ChannelPermissionsNameDescriptionModal onHide={onHideChannelSettingsPopup} />
             )}
         </>
     )

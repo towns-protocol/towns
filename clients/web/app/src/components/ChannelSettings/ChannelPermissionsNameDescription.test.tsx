@@ -12,7 +12,7 @@ import {
     roleDataWithBothRolesAssignedToChannel,
     roleDataWithMemberAssignedToChannel,
 } from 'test/testMocks'
-import { ChannelSettingsForm } from './ChannelSettings'
+import { ChannelPermissionsNameDescriptionForm } from './ChannelPermissionsNameDescriptionForm'
 
 const CHANNEL_ID = 'channel1'
 const SPACE_ID = 'town1'
@@ -28,7 +28,7 @@ const Wrapper = () => {
             <>
                 <button onClick={() => setShowForm((state) => !state)}>Show form</button>
                 {showForm && (
-                    <ChannelSettingsForm
+                    <ChannelPermissionsNameDescriptionForm
                         editType="all"
                         spaceId={spaceRoomIdentifier}
                         channelId={channelRoomIdentifier}

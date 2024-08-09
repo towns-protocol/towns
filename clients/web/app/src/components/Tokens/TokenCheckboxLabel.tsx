@@ -4,6 +4,7 @@ import { Box } from '@ui'
 export function TokenCheckboxLabel(props: {
     tokens: string[] // needs to be parsed from ruleData
     label: string
+    for?: string
 }): JSX.Element {
     return (
         <Box>

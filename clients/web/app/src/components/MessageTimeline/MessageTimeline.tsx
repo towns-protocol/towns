@@ -1,6 +1,6 @@
 import { isEqual, uniqBy } from 'lodash'
 import React, { useCallback, useMemo, useRef, useState } from 'react'
-import { MessageType, TimelineEvent, ZTEvent } from 'use-towns-client'
+import { MessageType, TimelineEvent, ZTEvent, useChannelData } from 'use-towns-client'
 import { MessageTimelineItem } from '@components/MessageTimeIineItem/TimelineItem'
 import { useVisualViewportContext } from '@components/VisualViewportContext/VisualViewportContext'
 import { Box, Divider, Paragraph } from '@ui'
@@ -58,7 +58,7 @@ export const MessageTimeline = (props: Props) => {
     const onExpandClick = useCallback(() => {
         setCollapsed(false)
     }, [])
-
+    const channelData = useChannelData()
     const { analytics } = useAnalytics()
 
     const stableEventsRef = useRef<TimelineEvent[]>([])
@@ -127,6 +127,7 @@ export const MessageTimeline = (props: Props) => {
             getEventsByDate(
                 events,
                 channelType,
+                channelData,
                 fullreadMarkerPersisted?.eventId,
                 isThread,
                 repliesMap,
@@ -141,6 +142,7 @@ export const MessageTimeline = (props: Props) => {
             groupByUser,
             isThread,
             repliesMap,
+            channelData,
         ],
     )
 

@@ -13,6 +13,7 @@ import {
 } from 'use-towns-client'
 import React, { useCallback, useMemo, useState } from 'react'
 import { useGetEmbeddedSigner } from '@towns/privy'
+import { z } from 'zod'
 import { ChannelNameRegExp, isForbiddenError, isRejectionError } from 'ui/utils/utils'
 import { Box, Button, ErrorMessage, FormRender, Paragraph, Stack, TextField } from '@ui'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
@@ -28,10 +29,17 @@ import { ModalContainer } from '@components/Modals/ModalContainer'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { CHANNEL_INFO_PARAMS } from 'routes'
 import { FullPanelOverlay } from '@components/Web3/WalletLinkingPanel'
-import { FormState, schema } from './formConfig'
 import { RoleCheckboxProps, RolesSection, getCheckedValuesForRoleIdsField } from './RolesSection'
 
-type ChannelSettingsFormProps = {
+export type FormState = z.infer<typeof schema>
+
+export const schema = z.object({
+    name: z.string().min(1, 'Please enter a channel name'),
+    description: z.string().min(0, 'Please enter a description').optional(),
+    roleIds: z.string().array().nonempty('Please select at least one role'),
+})
+
+type ChannelPermissionsNameDescriptionFormProps = {
     spaceId: string
     channelId: string
     editType: 'metadata' | 'roles' | 'all'
@@ -43,17 +51,17 @@ type ChannelSettingsFormProps = {
  * There is only a single contract method to update the channel, which requires both metadata (name, description) and roles as parameters.
  * So that's why this is a single form that collects all this data as default values and sends it to the contract, even if the UI only shows a subset of the fields.
  */
-export function ChannelSettingsForm({
+export function ChannelPermissionsNameDescriptionForm({
     spaceId,
     channelId,
     editType,
     preventCloseMessage,
     onSuccess,
-}: ChannelSettingsFormProps & {
+}: ChannelPermissionsNameDescriptionFormProps & {
     preventCloseMessage?: string
 }): JSX.Element {
     const channel = useRoom(channelId)
-    console.log('[ChannelSettingsModal] channel', channel)
+    console.log('[ChannelPermissionsNameDescriptionModal] channel', channel)
     const { data, isLoading, invalidateQuery } = useAllRoleDetails(spaceId)
 
     const rolesWithDetails = useMemo((): RoleCheckboxProps[] | undefined => {
@@ -120,9 +128,9 @@ export function ChannelSettingsForm({
                 updatedChannelTopic: description,
                 updatedRoleIds: roleIds.map((roleId) => Number(roleId)),
             }
-            console.log('[ChannelSettingsModal] update channel', channelInfo)
+            console.log('[ChannelPermissionsNameDescriptionModal] update channel', channelInfo)
             const txResult = await updateChannelTransaction(channelInfo, signer)
-            console.log('[ChannelSettingsModal] txResult', txResult)
+            console.log('[ChannelPermissionsNameDescriptionModal] txResult', txResult)
             if (txResult?.status === TransactionStatus.Success) {
                 invalidateQuery()
                 onSuccess?.()
@@ -336,7 +344,7 @@ export function ChannelSettingsForm({
     )
 }
 
-export const ChannelSettingsPanel = React.memo(() => {
+export const ChannelPermissionsNameDescriptionPanel = React.memo(() => {
     const { openPanel } = usePanelActions()
     const hasPendingTx = useIsTransactionPending(BlockchainTransactionType.EditChannel)
 
@@ -368,7 +376,7 @@ const Form = ({
     return spaceId && channelId ? (
         <>
             <Stack grow>
-                <ChannelSettingsForm
+                <ChannelPermissionsNameDescriptionForm
                     editType={editType}
                     spaceId={spaceId}
                     preventCloseMessage={transactionMessage}
@@ -383,7 +391,7 @@ const Form = ({
     )
 }
 
-export const ChannelSettingsModal = ({ onHide }: { onHide: () => void }) => {
+export const ChannelPermissionsNameDescriptionModal = ({ onHide }: { onHide: () => void }) => {
     const [transactionMessage, setTransactionMessage] = useState<string | undefined>()
     const hasPendingTx = useIsTransactionPending(BlockchainTransactionType.EditChannel)
 

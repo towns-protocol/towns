@@ -1,4 +1,5 @@
 import {
+    CreateChannelInfo,
     Permission,
     SignerUndefinedError,
     TransactionStatus,
@@ -28,13 +29,14 @@ import {
     Stack,
     Text,
     TextField,
+    Toggle,
 } from '@ui'
 import { ChannelNameRegExp, isForbiddenError, isRejectionError } from 'ui/utils/utils'
 import { TransactionUIState, toTransactionUIStates } from 'hooks/TransactionUIState'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
 import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'
 import { Spinner } from '@components/Spinner'
-import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
+
 import { TokenCheckboxLabel } from '@components/Tokens/TokenCheckboxLabel'
 import { useContractRoles } from 'hooks/useContractRoles'
 import { ModalContainer } from '@components/Modals/ModalContainer'
@@ -44,6 +46,8 @@ import { useDevice } from 'hooks/useDevice'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useAnalytics } from 'hooks/useAnalytics'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
+import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
+import { PanelButton } from '@components/Panel/PanelButton'
 import { mapToErrorMessage } from '../utils'
 
 type Props = {
@@ -58,6 +62,8 @@ const schema = z.object({
     name: z.string().min(2, 'Channel names must have at least 2 characters'),
     topic: z.string(),
     roleIds: z.string().array().nonempty('Please select at least one role'),
+    autojoin: z.boolean().default(false),
+    hideUserJoinLeaveEvents: z.boolean().default(false),
 })
 
 export const CreateChannelForm = (props: Props) => {
@@ -193,7 +199,7 @@ export const CreateChannelForm = (props: Props) => {
                 roleIds: firstRoleIDWithReadPermission ? [firstRoleIDWithReadPermission] : [],
             }}
             mode="onChange"
-            onSubmit={async ({ name, topic, roleIds }) => {
+            onSubmit={async ({ name, topic, roleIds, autojoin, hideUserJoinLeaveEvents }) => {
                 const signer = await getSigner()
                 const _roleIds = roleIds.map((roleId) => Number(roleId))
                 const channelInfo = {
@@ -201,7 +207,11 @@ export const CreateChannelForm = (props: Props) => {
                     topic: topic,
                     parentSpaceId: props.spaceId,
                     roleIds: _roleIds,
-                }
+                    channelSettings: {
+                        hideUserJoinLeaveEvents,
+                        autojoin,
+                    },
+                } satisfies CreateChannelInfo
                 const _rolesWithDetails =
                     (_roleIds
                         .map((roleId): ApiObject | undefined => {
@@ -271,10 +281,13 @@ export const CreateChannelForm = (props: Props) => {
             {(hookForm) => {
                 const _form = hookForm satisfies UseFormReturn<FormState>
 
-                const { register, formState, setValue, setError } = _form
+                const { register, formState, setValue, setError, watch } = _form
 
                 const { onChange: onNameChange, ...restOfNameProps } = register('name')
                 const { onChange: onTopicChange, ...restOfTopicProps } = register('topic')
+                const autojoinValue = watch('autojoin')
+                const hideUserJoinLeaveEventsValue = watch('hideUserJoinLeaveEvents')
+
                 return !rolesWithDetails ? (
                     <Stack centerContent height="250">
                         <Spinner />
@@ -286,6 +299,11 @@ export const CreateChannelForm = (props: Props) => {
                                 autoFocus
                                 background="level2"
                                 label="Name"
+                                renderLabel={(label) => (
+                                    <Text as="label" for="name">
+                                        {label}
+                                    </Text>
+                                )}
                                 placeholder="channel-name"
                                 maxLength={30}
                                 message={
@@ -315,6 +333,11 @@ export const CreateChannelForm = (props: Props) => {
                             <TextField
                                 background="level2"
                                 label="Description"
+                                renderLabel={(label) => (
+                                    <Text as="label" for="topic">
+                                        {label}
+                                    </Text>
+                                )}
                                 placeholder="Edit channel description"
                                 maxLength={30}
                                 message={
@@ -329,7 +352,7 @@ export const CreateChannelForm = (props: Props) => {
                         </Stack>
                         <Stack gap="sm" maxHeight="50vh" overflow="auto">
                             <Box paddingTop="md" paddingBottom="sm">
-                                <Text strong>Which roles have access to this channel</Text>
+                                <Text>Who can join?</Text>
                             </Box>
 
                             {rolesWithDetails?.map((role) => {
@@ -355,17 +378,39 @@ export const CreateChannelForm = (props: Props) => {
                             })}
 
                             {canEditRoles && (
-                                <Box flexDirection="row" justifyContent="start" paddingTop="sm">
-                                    <Button onClick={onCreateNewRole}>
-                                        <Icon type="plus" size="square_sm" />
-                                        Create a new role
-                                    </Button>
-                                </Box>
+                                <PanelButton onClick={onCreateNewRole}>
+                                    <Icon type="plus" size="square_sm" />
+                                    Create new role
+                                </PanelButton>
                             )}
 
                             <ErrorMessage errors={formState.errors} fieldName="roleIds" />
 
                             {errorBox}
+                        </Stack>
+
+                        <Stack gap="sm">
+                            <Box paddingTop="md" paddingBottom="sm">
+                                <Text>Channel Settings</Text>
+                            </Box>
+                            <Box gap padding rounded="sm" background="level2">
+                                <ToggleAutojoin
+                                    value={autojoinValue}
+                                    onToggle={() => {
+                                        setValue('autojoin', !autojoinValue)
+                                    }}
+                                />
+
+                                <ToggleHideUserJoinLeaveEvents
+                                    value={hideUserJoinLeaveEventsValue}
+                                    onToggle={() => {
+                                        setValue(
+                                            'hideUserJoinLeaveEvents',
+                                            !hideUserJoinLeaveEventsValue,
+                                        )
+                                    }}
+                                />
+                            </Box>
                         </Stack>
 
                         {isTouch ? (
@@ -401,6 +446,63 @@ export const CreateChannelForm = (props: Props) => {
         </FormRender>
     ) : (
         <ButtonSpinner />
+    )
+}
+
+type SharedToggleProps = {
+    value: boolean
+    onToggle: () => void
+    disabled?: boolean
+}
+
+function ToggleChannelSetting(
+    props: {
+        heading: string
+        subheading: string
+    } & SharedToggleProps,
+) {
+    const { heading, subheading, value, onToggle, disabled } = props
+    return (
+        <>
+            <Stack horizontal grow gap as="label">
+                <Stack grow gap="sm">
+                    <Text>{heading}</Text>
+                    <Text size="sm" color="gray2">
+                        {subheading}
+                    </Text>
+                </Stack>
+                <Stack centerContent horizontal gap>
+                    <Box>{disabled && <ButtonSpinner height="x1" />}</Box>
+                    <Toggle toggled={value} disabled={disabled} onToggle={onToggle} />
+                </Stack>
+            </Stack>
+        </>
+    )
+}
+
+export function ToggleAutojoin(props: SharedToggleProps) {
+    const { value, onToggle, disabled } = props
+    return (
+        <ToggleChannelSetting
+            heading="Auto-join New Members"
+            subheading="New members should auto-join this channel."
+            disabled={disabled}
+            value={value}
+            onToggle={onToggle}
+        />
+    )
+}
+
+export function ToggleHideUserJoinLeaveEvents(props: SharedToggleProps) {
+    const { value, onToggle, disabled } = props
+    return (
+        <ToggleChannelSetting
+            heading="Hide Join and Leave Updates"
+            subheading="Don’t show when people join or leave the channel."
+            value={value}
+            disabled={disabled}
+            onToggle={onToggle}
+        />
     )
 }
 
