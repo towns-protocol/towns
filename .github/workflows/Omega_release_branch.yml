@@ -3,6 +3,10 @@ name: Create PR for Omega Release
 on:
   workflow_dispatch:
 
+  push:
+    branches:
+      - '*omega-release-gh-action'
+
 jobs:
   create-pr:
     runs-on: ubuntu-latest
