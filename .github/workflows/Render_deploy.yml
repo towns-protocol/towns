@@ -48,11 +48,15 @@ jobs:
               uses: actions/checkout@v4
 
             - name: Set up Environment Variables
+              env:
+                  ENVIRONMENT_NAME_INPUT: ${{ inputs.environment_name }}
               run: |
-                  if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-                      ENVIRONMENT_NAME=${{ inputs.environment_name }}
+                  if [ -n "$ENVIRONMENT_NAME_INPUT" ]; then
+
+                    ENVIRONMENT_NAME=$ENVIRONMENT_NAME_INPUT"
+
                   elif [ "${{ github.event_name }}" == "push" ]; then
-                    # If the branch is omega, we deploy to omega environment
+
                     if [ "${{ github.ref }}" == "refs/heads/omega" ]; then
                         ENVIRONMENT_NAME="omega"
                     elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
@@ -61,6 +65,7 @@ jobs:
                         echo "Environment name not set"
                         exit 1
                     fi
+
                   fi
 
                   echo "Environment name is $ENVIRONMENT_NAME"
