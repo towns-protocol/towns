@@ -22,11 +22,13 @@ type (
 	StreamSyncOperation struct {
 		// SyncID is the identifier as used with the external client to identify the streams sync operation.
 		SyncID string
+		// rootCtx is the context as passed in from the client
+		rootCtx context.Context
 		// ctx is the root context for this subscription, when expires the subscription and all background syncers are
 		// cancelled
 		ctx context.Context
 		// cancel sync operation by expiring ctx
-		cancel context.CancelFunc
+		cancel context.CancelCauseFunc
 		// commands holds incoming requests from the client to add/remove/cancel commands
 		commands chan *subCommand
 		// thisNodeAddress keeps the address of this stream  thisNodeAddress instance
@@ -68,10 +70,11 @@ func NewStreamsSyncOperation(
 	nodeRegistry nodes.NodeRegistry,
 ) (*StreamSyncOperation, error) {
 	// make the sync operation cancellable for CancelSync
-	ctx, cancel := context.WithCancel(ctx)
+	syncOpCtx, cancel := context.WithCancelCause(ctx)
 
 	return &StreamSyncOperation{
-		ctx:             ctx,
+		rootCtx:         ctx,
+		ctx:             syncOpCtx,
 		cancel:          cancel,
 		SyncID:          syncId,
 		thisNodeAddress: node,
@@ -81,13 +84,16 @@ func NewStreamsSyncOperation(
 	}, nil
 }
 
+// StreamsResponseSubscriber is helper interface that allows a custom streams sync subscriber to be given in unit tests.
+type StreamsResponseSubscriber interface {
+	Send(msg *SyncStreamsResponse) error
+}
+
 // Run the stream sync until either sub.Cancel is called or until sub.ctx expired
 func (syncOp *StreamSyncOperation) Run(
 	req *connect.Request[SyncStreamsRequest],
-	res *connect.ServerStream[SyncStreamsResponse],
+	res StreamsResponseSubscriber,
 ) error {
-	defer syncOp.cancel()
-
 	log := dlog.FromCtx(syncOp.ctx).With("syncId", syncOp.SyncID)
 
 	cookies, err := client.ValidateAndGroupSyncCookies(req.Msg.GetSyncPos())
@@ -122,7 +128,12 @@ func (syncOp *StreamSyncOperation) Run(
 			}
 
 		case <-syncOp.ctx.Done():
-			return nil
+			// clientErr non-nil indicates client hung up, get the error from the root ctx.
+			if clientErr := syncOp.rootCtx.Err(); clientErr != nil {
+				return clientErr
+			}
+			// otherwise syncOp is stopped internally.
+			return context.Cause(syncOp.ctx)
 
 		case cmd := <-syncOp.commands:
 			if cmd.AddStreamReq != nil {
@@ -150,8 +161,6 @@ func (syncOp *StreamSyncOperation) Run(
 			} else if cmd.DebugDropStream != (shared.StreamId{}) {
 				cmd.Reply(syncers.DebugDropStream(cmd.Ctx, cmd.DebugDropStream))
 			} else if cmd.CancelReq != nil {
-				syncOp.cancel()
-
 				_ = res.Send(&SyncStreamsResponse{
 					SyncId: syncOp.SyncID,
 					SyncOp: SyncOp_SYNC_CLOSE,

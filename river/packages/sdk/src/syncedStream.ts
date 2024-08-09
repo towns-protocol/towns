@@ -182,9 +182,14 @@ export class SyncedStream extends Stream {
             .map((e) => e.remoteEvent)
             .filter(isDefined)
 
+        const lastSnapshotMiniblockNum =
+            miniblock.header.snapshot !== undefined
+                ? miniblock.header.miniblockNum
+                : miniblock.header.prevSnapshotMiniblockNum
+
         const cachedSyncedStream = new PersistedSyncedStream({
             syncCookie: syncCookie,
-            lastSnapshotMiniblockNum: miniblock.header.prevSnapshotMiniblockNum,
+            lastSnapshotMiniblockNum: lastSnapshotMiniblockNum,
             minipoolEvents: minipoolEvents,
             lastMiniblockNum: miniblock.header.miniblockNum,
         })

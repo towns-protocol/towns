@@ -40,3 +40,6 @@ storageType: postgres
 archive:
     archiveId: 'ArchLocalGamma3'
     printStatsPeriod: 10s
+
+debugEndpoints:
+    pprof: true

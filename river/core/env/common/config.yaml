@@ -1,0 +1,14 @@
+# For running server in info mode ('info' command)
+port: 4040
+useHttps: false
+
+# Disable logging
+log:
+    file: ''
+    level: info
+    console: true
+    noColor: false
+    format: text
+
+debugEndpoints:
+    pprof: true

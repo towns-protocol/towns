@@ -2,11 +2,11 @@ package client
 
 import (
 	"context"
-	"github.com/river-build/river/core/node/dlog"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
 	. "github.com/river-build/river/core/node/base"
+	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/events"
 	. "github.com/river-build/river/core/node/protocol"
 	. "github.com/river-build/river/core/node/shared"
@@ -16,7 +16,7 @@ type localSyncer struct {
 	globalSyncOpID string
 
 	syncStreamCtx      context.Context
-	cancelGlobalSyncOp context.CancelFunc
+	cancelGlobalSyncOp context.CancelCauseFunc
 
 	streamCache events.StreamCache
 	cookies     []*SyncCookie
@@ -30,7 +30,7 @@ type localSyncer struct {
 func newLocalSyncer(
 	ctx context.Context,
 	globalSyncOpID string,
-	cancelGlobalSyncOp context.CancelFunc,
+	cancelGlobalSyncOp context.CancelCauseFunc,
 	localAddr common.Address,
 	streamCache events.StreamCache,
 	cookies []*SyncCookie,
@@ -98,9 +98,13 @@ func (s *localSyncer) OnUpdate(r *StreamAndCookie) {
 	case <-s.syncStreamCtx.Done():
 		return
 	default:
-		log := dlog.FromCtx(s.syncStreamCtx)
-		log.Error("Cancel client sync operation - client buffer full", "syncId", s.globalSyncOpID)
-		s.cancelGlobalSyncOp()
+		err := RiverError(Err_BUFFER_FULL, "Client sync subscription message channel is full").
+			Tag("syncId", s.globalSyncOpID).
+			Func("sendSyncStreamResponseToClient")
+
+		_ = err.LogError(dlog.FromCtx(s.syncStreamCtx))
+
+		s.cancelGlobalSyncOp(err)
 	}
 }
 
@@ -124,9 +128,13 @@ func (s *localSyncer) OnStreamSyncDown(streamID StreamId) {
 	case <-s.syncStreamCtx.Done():
 		return
 	default:
-		log := dlog.FromCtx(s.syncStreamCtx)
-		log.Error("Cancel client sync operation - client buffer full", "syncId", s.globalSyncOpID)
-		s.cancelGlobalSyncOp()
+		err := RiverError(Err_BUFFER_FULL, "Client sync subscription message channel is full").
+			Tag("syncId", s.globalSyncOpID).
+			Func("sendSyncStreamResponseToClient")
+
+		_ = err.LogError(dlog.FromCtx(s.syncStreamCtx))
+
+		s.cancelGlobalSyncOp(err)
 	}
 }
 

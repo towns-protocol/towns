@@ -18,7 +18,7 @@ import (
 )
 
 type remoteSyncer struct {
-	cancelGlobalSyncOp context.CancelFunc
+	cancelGlobalSyncOp context.CancelCauseFunc
 	syncStreamCtx      context.Context
 	syncStreamCancel   context.CancelFunc
 	syncID             string
@@ -33,7 +33,7 @@ type remoteSyncer struct {
 
 func newRemoteSyncer(
 	ctx context.Context,
-	cancelGlobalSyncOp context.CancelFunc,
+	cancelGlobalSyncOp context.CancelCauseFunc,
 	forwarderSyncID string,
 	remoteAddr common.Address,
 	client protocolconnect.StreamServiceClient,
@@ -114,7 +114,7 @@ func (s *remoteSyncer) Run() {
 			if err := s.sendSyncStreamResponseToClient(res); err != nil {
 				if !errors.Is(err, context.Canceled) {
 					log.Error("Cancel remote sync with client", "remote", s.remoteAddr, "err", err)
-					s.cancelGlobalSyncOp()
+					s.cancelGlobalSyncOp(err)
 				}
 				return
 			}
@@ -123,7 +123,7 @@ func (s *remoteSyncer) Run() {
 				if err := s.sendSyncStreamResponseToClient(res); err != nil {
 					if !errors.Is(err, context.Canceled) {
 						log.Error("Cancel remote sync with client", "remote", s.remoteAddr, "err", err)
-						s.cancelGlobalSyncOp()
+						s.cancelGlobalSyncOp(err)
 					}
 					return
 				}
@@ -143,9 +143,10 @@ func (s *remoteSyncer) Run() {
 
 			msg := &SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]}
 
+			// TODO: slow down a bit to give client time to read stream down updates
 			if err := s.sendSyncStreamResponseToClient(msg); err != nil {
 				log.Error("Cancel remote sync with client", "remote", s.remoteAddr, "err", err)
-				s.cancelGlobalSyncOp()
+				s.cancelGlobalSyncOp(err)
 				return false
 			}
 
@@ -164,7 +165,7 @@ func (s *remoteSyncer) sendSyncStreamResponseToClient(msg *SyncStreamsResponse) 
 		return s.syncStreamCtx.Err()
 	default:
 		return RiverError(Err_BUFFER_FULL, "Client sync subscription message channel is full").
-			Tag("syncOpId", s.forwarderSyncID).
+			Tag("syncId", s.forwarderSyncID).
 			Func("sendSyncStreamResponseToClient")
 	}
 }

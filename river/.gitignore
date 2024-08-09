@@ -71,3 +71,4 @@ bin/gen-bindings-remove-struct
 go.work.sum
 
 /packages/stress-testing/.env
+/packages/stress/*/.env*

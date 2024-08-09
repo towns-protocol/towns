@@ -1,7 +1,3 @@
-# For running server in info mode ('info' command)
-port: 4040
-useHttps: false
-
 # Blockchain configuration
 baseChain:
     chainId: 84532
@@ -19,14 +15,6 @@ architectContract:
 # River contracts
 registryContract:
     address: '0x44354786eacbebf981453a05728e1653bc3c5def'
-
-# Disable logging
-log:
-    file: ''
-    level: info
-    console: true
-    noColor: false
-    format: text
 # For reference:
 # Space: 0xB712844A05245fBD17dADA91615C7c9521985873
 # SpaceOwner: 0x0443258849016da8Af08e2984Bce8C0ef6Cfc9A0

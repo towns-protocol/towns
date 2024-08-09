@@ -2,8 +2,6 @@ package rpc
 
 import (
 	"context"
-	"encoding/binary"
-	"encoding/hex"
 	"time"
 
 	"connectrpc.com/connect"
@@ -13,16 +11,6 @@ import (
 	"github.com/river-build/river/core/node/utils"
 )
 
-func magicFromString(s string) (uint64, string) {
-	bb := []byte(s)
-	if len(bb) < 8 {
-		padded := make([]byte, 8)
-		copy(padded, bb)
-		bb = padded
-	}
-	return binary.BigEndian.Uint64(bb), hex.EncodeToString(bb)
-}
-
 func (s *Service) SyncStreams(
 	ctx context.Context,
 	req *connect.Request[SyncStreamsRequest],
@@ -31,19 +19,18 @@ func (s *Service) SyncStreams(
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	startTime := time.Now()
 	syncId := GenNanoid()
-	magic, hex := magicFromString(syncId)
-	log.Info("SyncStreams START", "syncId", syncId, "magic", hex)
+	log.Info("SyncStreams START", "syncId", syncId)
 
-	err := s.syncHandler.SyncStreams(magic, ctx, syncId, req, res)
+	err := s.syncHandler.SyncStreams(ctx, syncId, req, res)
 	if err != nil {
 		err = AsRiverError(
 			err,
 		).Func("SyncStreams").
-			Tags("syncId", syncId, "duration", time.Since(startTime), "magic", hex).
+			Tags("syncId", syncId, "duration", time.Since(startTime)).
 			LogWarn(log).
 			AsConnectError()
 	} else {
-		log.Info("SyncStreams DONE", "syncId", syncId, "duration", time.Since(startTime), "magic", hex)
+		log.Info("SyncStreams DONE", "syncId", syncId, "duration", time.Since(startTime))
 	}
 	return err
 }
@@ -53,13 +40,12 @@ func (s *Service) AddStreamToSync(
 	req *connect.Request[AddStreamToSyncRequest],
 ) (*connect.Response[AddStreamToSyncResponse], error) {
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
-	magic, hex := magicFromString(req.Msg.GetSyncId())
-	res, err := s.syncHandler.AddStreamToSync(magic, ctx, req)
+	res, err := s.syncHandler.AddStreamToSync(ctx, req)
 	if err != nil {
 		err = AsRiverError(
 			err,
 		).Func("AddStreamToSync").
-			Tags("syncId", req.Msg.GetSyncId(), "streamId", req.Msg.GetSyncPos().GetStreamId(), "magic", hex).
+			Tags("syncId", req.Msg.GetSyncId(), "streamId", req.Msg.GetSyncPos().GetStreamId()).
 			LogWarn(log).
 			AsConnectError()
 	}
@@ -71,13 +57,12 @@ func (s *Service) RemoveStreamFromSync(
 	req *connect.Request[RemoveStreamFromSyncRequest],
 ) (*connect.Response[RemoveStreamFromSyncResponse], error) {
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
-	magic, hex := magicFromString(req.Msg.GetSyncId())
-	res, err := s.syncHandler.RemoveStreamFromSync(magic, ctx, req)
+	res, err := s.syncHandler.RemoveStreamFromSync(ctx, req)
 	if err != nil {
 		err = AsRiverError(
 			err,
 		).Func("RemoveStreamFromSync").
-			Tags("syncId", req.Msg.GetSyncId(), "streamId", req.Msg.GetStreamId(), "magic", hex).
+			Tags("syncId", req.Msg.GetSyncId(), "streamId", req.Msg.GetStreamId()).
 			LogWarn(log).
 			AsConnectError()
 	}
@@ -89,13 +74,12 @@ func (s *Service) CancelSync(
 	req *connect.Request[CancelSyncRequest],
 ) (*connect.Response[CancelSyncResponse], error) {
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
-	magic, hex := magicFromString(req.Msg.GetSyncId())
-	res, err := s.syncHandler.CancelSync(magic, ctx, req)
+	res, err := s.syncHandler.CancelSync(ctx, req)
 	if err != nil {
 		err = AsRiverError(
 			err,
 		).Func("CancelSync").
-			Tags("syncId", req.Msg.GetSyncId(), "magic", hex).
+			Tags("syncId", req.Msg.GetSyncId()).
 			LogWarn(log).
 			AsConnectError()
 	}
@@ -107,13 +91,12 @@ func (s *Service) PingSync(
 	req *connect.Request[PingSyncRequest],
 ) (*connect.Response[PingSyncResponse], error) {
 	ctx, log := utils.CtxAndLogForRequest(ctx, req)
-	magic, hex := magicFromString(req.Msg.GetSyncId())
-	res, err := s.syncHandler.PingSync(magic, ctx, req)
+	res, err := s.syncHandler.PingSync(ctx, req)
 	if err != nil {
 		err = AsRiverError(
 			err,
 		).Func("PingSync").
-			Tags("syncId", req.Msg.GetSyncId(), "magic", hex).
+			Tags("syncId", req.Msg.GetSyncId()).
 			LogWarn(log).
 			AsConnectError()
 	}

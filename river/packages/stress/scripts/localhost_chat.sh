@@ -3,6 +3,9 @@ set -euo pipefail
 cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 cd ..
 
+# run scripts/localhost_chat_setup.sh to set up the environment variables
+source scripts/.env.localhost_chat
+
 echo "stress/scripts/localhost_chat.sh"
 
 #

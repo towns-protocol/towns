@@ -20,7 +20,6 @@ type (
 		// SyncStreams runs a stream sync operation that subscribes to streams on the local node and remote nodes.
 		// It returns syncId, if any and an error.
 		SyncStreams(
-			_ uint64,
 			ctx context.Context,
 			syncId string,
 			req *connect.Request[SyncStreamsRequest],
@@ -28,25 +27,21 @@ type (
 		) error
 
 		AddStreamToSync(
-			_ uint64,
 			ctx context.Context,
 			req *connect.Request[AddStreamToSyncRequest],
 		) (*connect.Response[AddStreamToSyncResponse], error)
 
 		RemoveStreamFromSync(
-			_ uint64,
 			ctx context.Context,
 			req *connect.Request[RemoveStreamFromSyncRequest],
 		) (*connect.Response[RemoveStreamFromSyncResponse], error)
 
 		CancelSync(
-			_ uint64,
 			ctx context.Context,
 			req *connect.Request[CancelSyncRequest],
 		) (*connect.Response[CancelSyncResponse], error)
 
 		PingSync(
-			_ uint64,
 			ctx context.Context,
 			req *connect.Request[PingSyncRequest],
 		) (*connect.Response[PingSyncResponse], error)
@@ -95,7 +90,6 @@ func NewHandler(
 }
 
 func (h *handlerImpl) SyncStreams(
-	_ uint64,
 	ctx context.Context,
 	syncId string,
 	req *connect.Request[SyncStreamsRequest],
@@ -110,6 +104,8 @@ func (h *handlerImpl) SyncStreams(
 	defer h.activeSyncOperations.Delete(op.SyncID)
 
 	doneChan := make(chan error, 1)
+	defer close(doneChan)
+
 	go h.runSyncStreams(req, res, op, doneChan)
 	return <-doneChan
 }
@@ -134,7 +130,6 @@ func (h *handlerImpl) runSyncStreams(
 }
 
 func (h *handlerImpl) AddStreamToSync(
-	_ uint64,
 	ctx context.Context,
 	req *connect.Request[AddStreamToSyncRequest],
 ) (*connect.Response[AddStreamToSyncResponse], error) {
@@ -145,7 +140,6 @@ func (h *handlerImpl) AddStreamToSync(
 }
 
 func (h *handlerImpl) RemoveStreamFromSync(
-	_ uint64,
 	ctx context.Context,
 	req *connect.Request[RemoveStreamFromSyncRequest],
 ) (*connect.Response[RemoveStreamFromSyncResponse], error) {
@@ -156,7 +150,6 @@ func (h *handlerImpl) RemoveStreamFromSync(
 }
 
 func (h *handlerImpl) CancelSync(
-	_ uint64,
 	ctx context.Context,
 	req *connect.Request[CancelSyncRequest],
 ) (*connect.Response[CancelSyncResponse], error) {
@@ -168,7 +161,6 @@ func (h *handlerImpl) CancelSync(
 }
 
 func (h *handlerImpl) PingSync(
-	_ uint64,
 	ctx context.Context,
 	req *connect.Request[PingSyncRequest],
 ) (*connect.Response[PingSyncResponse], error) {
