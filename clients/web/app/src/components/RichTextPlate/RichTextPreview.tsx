@@ -97,12 +97,12 @@ const RichTextPreviewInternal = ({
             p: ParagraphWithoutPlate,
             paragraph: ParagraphWithoutPlate,
             strong: (props: React.PropsWithChildren) => (
-                <Box fontWeight="strong" display="inline" as="span">
+                <Box fontWeight="strong" display="inline" as="strong">
                     {props.children}
                 </Box>
             ),
             em: (props: React.PropsWithChildren) => (
-                <Box fontStyle="italic" display="inline" as="span">
+                <Box fontStyle="italic" display="inline" as="em">
                     {props.children}
                 </Box>
             ),

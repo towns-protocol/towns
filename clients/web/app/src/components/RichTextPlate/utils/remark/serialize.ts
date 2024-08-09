@@ -34,12 +34,10 @@ export default function serialize(
         nodeTypes: userNodeTypes = defaultNodeTypes,
         ignoreParagraphNewline = false,
         listDepth = 0,
-        leafIndex = undefined,
-        childrenLength = 0,
     } = opts
 
     let text = (chunk as LeafType).text || ''
-    let type = (chunk as BlockType).type || ''
+    const type = (chunk as BlockType).type || ''
 
     // Handle mentions
     if (MENTION_TYPES.includes(type)) {
@@ -114,19 +112,6 @@ export default function serialize(
                 )
             })
             .join('')
-    }
-
-    // This is pretty fragile code, check the long comment where we iterate over children
-    if (
-        !ignoreParagraphNewline &&
-        (text === '' || text === '\n') &&
-        chunk.parentType === nodeTypes.paragraph &&
-        !MENTION_TYPES.includes(type) &&
-        leafIndex !== 0 &&
-        leafIndex !== childrenLength - 1
-    ) {
-        type = nodeTypes.paragraph
-        children = BREAK_TAG
     }
 
     if (children === '') {
