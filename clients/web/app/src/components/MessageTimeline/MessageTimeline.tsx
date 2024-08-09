@@ -16,7 +16,7 @@ import { useAnalytics } from 'hooks/useAnalytics'
 import { DateDivider } from '../MessageTimeIineItem/items/DateDivider'
 import { NewDivider } from '../MessageTimeIineItem/items/NewDivider'
 import { MessageTimelineType, useTimelineContext } from './MessageTimelineContext'
-import { useFocusItem } from './hooks/useFocusItem'
+import { useFocusItem, useScrollbackToFocusItem } from './hooks/useFocusItem'
 import { ListItem } from './types'
 import {
     EncryptedMessageRenderEvent,
@@ -65,7 +65,7 @@ export const MessageTimeline = (props: Props) => {
 
     const ref = useRef<HTMLDivElement>(null)
 
-    const { onFirstMessageReached } = useScrollback(channelId)
+    const { onFirstMessageReached, scrollbackState } = useScrollback(channelId)
 
     const events = useMemo(() => {
         // remove unneeded events
@@ -423,7 +423,16 @@ export const MessageTimeline = (props: Props) => {
         [listItems],
     )
 
-    const { focusItem } = useFocusItem(listItems, props.highlightId, userId, initialFullyReadMarker)
+    useScrollbackToFocusItem(
+        props.highlightId,
+        timelineContext.events,
+        scrollbackState,
+        onFirstMessageReached,
+    )
+
+    const validHighlightId = listItems.find((e) => e.key === props.highlightId)?.key
+
+    const { focusItem } = useFocusItem(listItems, validHighlightId, userId, initialFullyReadMarker)
 
     const { visualViewportScrolled: tabBarHidden } = useVisualViewportContext()
 

@@ -1,11 +1,16 @@
-import { useCallback, useRef } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useTownsClient } from 'use-towns-client'
 
+export type ScrollbackState = Awaited<ReturnType<ReturnType<typeof useTownsClient>['scrollback']>>
+
 export const useScrollback = (channelId: string) => {
+    const [scrollbackState, setScrollbackState] = useState<ScrollbackState>()
     const { scrollback } = useTownsClient()
 
     const onLoadMore = useCallback(() => {
-        scrollback(channelId)
+        scrollback(channelId).then((e) => {
+            setScrollbackState(e)
+        })
     }, [channelId, scrollback])
 
     const watermarkRef = useRef<string | undefined>(undefined)
@@ -23,5 +28,5 @@ export const useScrollback = (channelId: string) => {
         [onLoadMore],
     )
 
-    return { onFirstMessageReached }
+    return { onFirstMessageReached, scrollbackState }
 }

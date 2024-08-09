@@ -337,12 +337,8 @@ const Messages = (props: {
     const location = useLocation()
     const highlightId = useMemo(() => {
         const eventHash = location.hash?.replace(/^#/, '')
-        return eventHash?.match(/^[a-z0-9_-]{16,128}/i)
-            ? events.some((m) => m.eventId === eventHash)
-                ? eventHash
-                : undefined
-            : undefined
-    }, [events, location.hash])
+        return eventHash?.match(/^[a-z0-9_-]{16,128}/i) ? eventHash : undefined
+    }, [location.hash])
 
     const isDmOrGDM = isDMChannelStreamId(channelId) || isGDMChannelStreamId(channelId)
 

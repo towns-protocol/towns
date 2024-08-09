@@ -1,8 +1,9 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { FullyReadMarker } from '@river-build/proto'
 import { create } from 'zustand'
 import { useLocation } from 'react-router'
 import { ListItem } from '../types'
+import { ScrollbackState } from './useScrollback'
 
 /** Global state for focusing on a message in the message timeline.
  * @desc Keep in mind that the message will only be focused if you're in the MessageTimeline where the message is.
@@ -25,15 +26,18 @@ export const useFocusItem = (
     userId: string | undefined,
     fullyreadMarker: FullyReadMarker | undefined,
 ) => {
+    // there's no need to focus on a message that doesn't exist
+    const validHighlightId = listItems.find((e) => e.key === highlightId)?.key
+
     const { focusItem: storeFocus } = useFocusMessage()
     const last = listItems[listItems.length - 1]
 
     const lastKey = last?.key
 
     const [focusItem, setFocusItem] = useState<FocusOption | undefined>(() =>
-        highlightId
+        validHighlightId
             ? {
-                  key: highlightId,
+                  key: validHighlightId,
                   align: 'start' as const,
                   sticky: true,
                   force: true,
@@ -84,18 +88,42 @@ export const useFocusItem = (
     }, [fullyreadMarker])
 
     useLayoutEffect(() => {
-        if (highlightId) {
+        if (validHighlightId) {
             setFocusItem({
-                key: highlightId,
+                key: validHighlightId,
                 align: 'start' as const,
                 sticky: true,
                 force: true,
                 margin: 50,
             })
         }
-    }, [highlightId])
+    }, [validHighlightId])
 
     return { focusItem }
+}
+
+/**
+ * if a message is highlighted (via anchor link or open thread) we get it into
+ * the viewport and may not to apply scrollbacks to achieve this
+ */
+export const useScrollbackToFocusItem = (
+    highlightId: string | undefined,
+    listItems: { eventId: string }[],
+    scrollbackState: ScrollbackState,
+    onFirstMessageReached: (watermark: string) => void,
+) => {
+    const watermark = scrollbackState?.firstEventId
+    const terminus = scrollbackState?.terminus
+    useEffect(() => {
+        if (highlightId && watermark && !terminus) {
+            const found = listItems.some((s) => s.eventId === highlightId)
+            if (!found) {
+                // note: the callback can be invoked repeatedly but will only
+                // have an effect if the watermark changes
+                onFirstMessageReached(watermark)
+            }
+        }
+    }, [highlightId, listItems, onFirstMessageReached, terminus, watermark])
 }
 
 type MessageLink =
