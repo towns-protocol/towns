@@ -163,7 +163,6 @@ export const useFetchUnauthenticatedActivity = (townId: string) => {
                 setMembers(townId, Array.from(stream.getMembers().membership.joinedUsers))
 
                 const fetchTownStats = async () => {
-                    await withAbort(() => client.scrollbackToDate(stream, WEEK_MS), abortController)
                     numJoinedUsers = getJoinedUsersAfterScrollback(stream.timeline, WEEK_MS)
                     const spaceCreateEvent = getSpaceCreatedEvent(stream.timeline)
                     setTownStats(townId, {
@@ -252,7 +251,6 @@ export const useFetchUnauthenticatedActivity = (townId: string) => {
 async function getChannelStats(client: UnauthenticatedClient, channelId: string) {
     console.log('TownPageActivity fetch channel', channelId)
     const streamView = await client.getStream(channelId)
-    await client.scrollbackToDate(streamView, DAY_MS)
     const channelMessages = streamView.timeline.filter(
         (x) =>
             isRemoteEvent(x) &&

@@ -50,7 +50,7 @@ export const TownPageActivity = (props: { townId: string }) => {
         !!channelStats?.numMessages &&
             activities.push({
                 icon: 'messageVariant',
-                title: 'In the past 24h',
+                title: 'Since the last snapshot',
                 value: channelStats?.numMessages,
                 body: `new message${channelStats?.numMessages > 1 ? 's' : ''} were sent`,
             })
@@ -58,7 +58,7 @@ export const TownPageActivity = (props: { townId: string }) => {
         !!channelStats?.activeUsers?.length &&
             activities.push({
                 icon: 'sun',
-                title: 'In the past 24h',
+                title: 'Since the last snapshot',
                 value: channelStats?.activeUsers.length,
                 body: `${
                     channelStats.activeUsers.length > 1 ? 'people were' : 'member was'
@@ -68,7 +68,7 @@ export const TownPageActivity = (props: { townId: string }) => {
         !!townStats?.numJoinedUsers &&
             activities.push({
                 icon: 'treasury',
-                title: 'In the past week',
+                title: 'Since the last snapshot',
                 value: townStats?.numJoinedUsers,
                 body: `new member${townStats?.numJoinedUsers > 1 ? 's' : ''} joined`,
             })
