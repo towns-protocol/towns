@@ -2,6 +2,11 @@ name: Create PR for Omega Release
 
 on:
   workflow_dispatch:
+    inputs:
+      target_branch:
+        description: 'Branch to run the workflow on'
+        required: true
+        default: 'jt/omega-release-gh-action'
 
   push:
     branches:
