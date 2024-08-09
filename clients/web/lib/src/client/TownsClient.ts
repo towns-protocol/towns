@@ -1559,7 +1559,10 @@ export class TownsClient
                 TimeTrackerEvents.JOIN_SPACE,
                 'river_joinroom_space',
             )
-            const room = await this.joinRoom(spaceId)
+            const room = await this.joinRoom(spaceId, undefined, {
+                skipWaitForMiniblockConfirmation: true,
+                skipWaitForUserStreamUpdate: true,
+            })
             endJoinSpace?.()
             this.log('[joinTown] room', room)
             // join the default channels
@@ -1581,6 +1584,8 @@ export class TownsClient
                             endJoinChannel?.()
                         }),
                 )
+            } else {
+                this.log('[joinTown] Error no space content found')
             }
             return room
         }
