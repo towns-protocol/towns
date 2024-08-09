@@ -53,7 +53,7 @@ jobs:
               run: |
                   if [ -n "$ENVIRONMENT_NAME_INPUT" ]; then
 
-                    ENVIRONMENT_NAME=$ENVIRONMENT_NAME_INPUT"
+                    ENVIRONMENT_NAME=$ENVIRONMENT_NAME_INPUT
 
                   elif [ "${{ github.event_name }}" == "push" ]; then
 
