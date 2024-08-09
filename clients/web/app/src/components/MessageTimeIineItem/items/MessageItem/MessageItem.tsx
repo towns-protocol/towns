@@ -10,6 +10,7 @@ import {
 } from 'use-towns-client'
 import { useSearchParams } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
+import { Pin } from '@river-build/sdk'
 import {
     MessageLayout,
     MessageLayoutProps,
@@ -121,6 +122,8 @@ export const MessageItem = (props: Props) => {
     const isEditing = event.eventId === timelineActions.editingMessageId
     const isSelectable = !isEncryptedMessage
 
+    const pin = timelineContext.pins?.find((p) => p.event.hashStr === event.eventId)
+
     const msgTypeKey = getItemContentKey(itemData)
 
     // replies are only shown for channel messages (two levels only)
@@ -142,6 +145,7 @@ export const MessageItem = (props: Props) => {
 
     return (
         <MessageWrapper
+            pin={pin}
             highlight={isHighlight}
             event={event}
             selectable={!isEditing && isSelectable}
@@ -248,6 +252,7 @@ type MessageWrapperProps = {
     children: React.ReactNode
     replies?: ThreadStats
     onMediaClick: (e: React.MouseEvent) => void
+    pin?: Pin
 }
 
 const MessageWrapper = React.memo((props: MessageWrapperProps) => {
@@ -260,14 +265,15 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
     const body = event.content?.kind === ZTEvent.RoomMessage ? event.content.body : undefined
 
     const {
-        userId,
         channelId,
-        spaceId,
         handleReaction,
-        type,
-        messageReactionsMap,
         isChannelWritable,
+        messageReactionsMap,
+        pins,
+        spaceId,
         threadParentId,
+        type,
+        userId,
     } = timelineContext
 
     const isOwn = event.content?.kind == ZTEvent.RoomMessage && sender.id === userId
@@ -307,6 +313,8 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
         [setSearchParams, threadParentId],
     )
 
+    const pin = pins?.find((p) => p.event.hashStr === event.eventId)
+
     return !event ? null : (
         <MessageLayout
             avatarSize="avatar_x4"
@@ -335,6 +343,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
             messageBody={body}
             sendStatus={sendStatus}
             sessionId={event.sessionId}
+            pin={pin}
             onReaction={handleReaction}
         >
             {props.children}

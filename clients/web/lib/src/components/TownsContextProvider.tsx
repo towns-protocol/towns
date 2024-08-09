@@ -182,6 +182,7 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
     useSpacesIds(casablancaClient)
     useContentAwareTimelineDiffCasablanca(casablancaClient)
     const clientStatus = useClientInitStatus(casablancaClient)
+
     const { spaces } = useSpaces(townsOpts, casablancaClient)
     const { channels: dmChannels } = useCasablancaDMs(casablancaClient)
     const spaceHierarchies = useCasablancaSpaceHierarchies(casablancaClient)

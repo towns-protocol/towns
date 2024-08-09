@@ -1790,6 +1790,27 @@ export class TownsClient
         }
     }
 
+    /************************************************
+     * pinMessage
+     *************************************************/
+    public async pinMessage(roomId: string, eventId: string): Promise<void> {
+        if (!this.casablancaClient) {
+            throw new Error('Casablanca client not initialized')
+        }
+
+        await this.casablancaClient.pin(roomId, eventId)
+        this.log('sendUnpin')
+    }
+
+    public async unpinMessage(roomId: string, eventId: string): Promise<void> {
+        if (!this.casablancaClient) {
+            throw new Error('Casablanca client not initialized')
+        }
+
+        await this.casablancaClient.unpin(roomId, eventId)
+        this.log('sendPin')
+    }
+
     public async prepayMembershipTransaction(
         spaceId: string,
         supply: number,

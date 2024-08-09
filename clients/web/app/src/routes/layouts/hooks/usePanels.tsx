@@ -27,6 +27,7 @@ import { EditPrepaidPanel } from '@components/SpaceSettingsPanel/EditPrepaidPane
 import { NodeStatusPanel } from '@components/NodeConnectionStatusPanel/ConnectionStatusPanel'
 import { SpaceBannedUsers } from 'routes/SpaceBannedUsers'
 import { MutualTownsPanel } from '@components/MutualTownsPanel/MutualTownsPanel'
+import { PinsPanel } from '@components/PinsPanel/PinsPanel'
 import { ChannelRiverMetadataSettingsPanel } from '@components/ChannelSettings/ChannelRiverMetadataSettingsForm'
 
 export const usePanels = () => {
@@ -151,7 +152,12 @@ export const usePanels = () => {
             const userId = searchParams.get('profileId')
             if (userId) {
                 return <MutualTownsPanel userId={userId} />
+            } else {
+                return null
             }
+        }
+        case CHANNEL_INFO_PARAMS.PINS: {
+            return withWrapper(<PinsPanel />)
         }
     }
 

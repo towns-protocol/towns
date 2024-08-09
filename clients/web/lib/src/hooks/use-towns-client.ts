@@ -179,6 +179,8 @@ interface TownsClientImpl {
         cbs?: CasablancaSignInCallbacks,
     ) => Promise<void>
     joinTown: (spaceId: string, signer: TSigner) => Promise<StreamView | undefined>
+    pinMessage: (roomId: string, eventId: string) => Promise<void>
+    unpinMessage: (roomId: string, eventId: string) => Promise<void>
     redactEvent: (roomId: string, eventId: string, reason?: string) => Promise<void>
     registerWalletWithCasablanca: (statement: string, signer: TSigner) => Promise<void>
     removeUser: (streamId: string, userId: string) => Promise<void>
@@ -354,6 +356,8 @@ export function useTownsClient(): TownsClientImpl {
         loginWithWalletToCasablanca,
         logout,
         joinTown,
+        pinMessage: useWithCatch(clientSingleton?.pinMessage),
+        unpinMessage: useWithCatch(clientSingleton?.unpinMessage),
         redactEvent: useWithCatch(clientSingleton?.redactEvent),
         registerWalletWithCasablanca,
         removeUser: useWithCatch(clientSingleton?.removeUser),

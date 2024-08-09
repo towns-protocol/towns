@@ -1,8 +1,16 @@
 import { format, formatDistance } from 'date-fns'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { Address, LookupUser, MessageReactions, ThreadStats } from 'use-towns-client'
+import {
+    Address,
+    LookupUser,
+    MessageReactions,
+    ThreadStats,
+    useMyUserId,
+    useUserLookup,
+} from 'use-towns-client'
 import { Link } from 'react-router-dom'
 import debug from 'debug'
+import { Pin } from '@river-build/sdk'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
 import { Reactions } from '@components/Reactions/Reactions'
 import { RepliesButton } from '@components/Replies/MessageReplies'
@@ -54,6 +62,7 @@ type Props = {
     isChannelWritable?: boolean
     sendStatus?: SendStatus
     sessionId?: string
+    pin?: Pin
 } & BoxProps
 
 export type MessageLayoutProps = Props
@@ -86,6 +95,7 @@ export const MessageLayout = (props: Props) => {
         timestamp,
         children,
         sessionId,
+        pin,
         ...boxProps
     } = props
 
@@ -107,7 +117,7 @@ export const MessageLayout = (props: Props) => {
             : format(timestamp, 'h:mm a')
         : undefined
 
-    const backgroundProps = useHighlightBackground(isHighlight)
+    const backgroundProps = useHighlightBackground(isHighlight, !!pin)
 
     const onClick = useCallback(() => {
         setIsModalSheetVisible(true)
@@ -176,6 +186,7 @@ export const MessageLayout = (props: Props) => {
 
             {/* right / main content */}
             <Stack grow gap="paragraph" position="relative">
+                {pin ? <PinnedContent pin={pin} /> : <></>}
                 {/* name & date top row */}
                 {(displayContext === 'head' || displayContext === 'single') && (
                     <Stack horizontal grow gap="xs" height="height_sm" alignItems="center">
@@ -227,14 +238,12 @@ export const MessageLayout = (props: Props) => {
                     >
                         {children}
                     </Stack>
-
                     {/* channel */}
                     {messageSourceAnnotation && (
                         <ButtonText color="gray2" as="span">
                             {messageSourceAnnotation}
                         </ButtonText>
                     )}
-
                     {hasReactions || hasReplies ? (
                         <Stack
                             alignItems={displayButtonsInRow ? 'center' : undefined}
@@ -270,13 +279,14 @@ export const MessageLayout = (props: Props) => {
                     !isEditing &&
                     isSelectable && (
                         <MessageContextMenu
-                            isFocused={isFocused}
-                            canReply={canReply}
-                            canReact={!!onReaction}
-                            channelId={channelId}
-                            spaceId={spaceId}
-                            eventId={eventId}
                             canEdit={isEditable}
+                            canReact={!!onReaction}
+                            canReply={canReply}
+                            channelId={channelId}
+                            eventId={eventId}
+                            isFocused={isFocused}
+                            isPinned={!!pin}
+                            spaceId={spaceId}
                             threadParentId={threadParentId}
                         />
                     )}
@@ -369,10 +379,14 @@ export const RedactedMessageLayout = (props: {
     )
 }
 
-const useHighlightBackground = (isHighlight?: boolean) => {
+const useHighlightBackground = (isHighlight?: boolean, pinned?: boolean) => {
     const [isHighlightActive, setHighlightActive] = useState(isHighlight)
 
-    const background = isHighlightActive ? ('level3' as const) : undefined
+    const background = isHighlightActive
+        ? ('level3' as const)
+        : pinned
+        ? ('negativeSubtle' as const)
+        : undefined
 
     useEffect(() => {
         if (isHighlightActive) {
@@ -412,5 +426,21 @@ const ActiveAvatar = (props: AvatarProps & { userId: string; link: string }) => 
         <Link to={props.link} tabIndex={-1}>
             <AvatarWithoutDot userId={userId} {...avatarProps} />
         </Link>
+    )
+}
+
+const PinnedContent = (props: { pin: Pin }) => {
+    const myUserId = useMyUserId()
+    const { pin } = props
+    const user = useUserLookup(pin.creatorUserId)
+    return (
+        <Stack horizontal grow gap="xs" height="height_sm" alignItems="center">
+            <Box>
+                <Icon type="pinFill" size="square_xxs" />
+            </Box>
+            <Box>
+                Pinned by {myUserId === pin.creatorUserId ? 'you' : getPrettyDisplayName(user)}
+            </Box>
+        </Stack>
     )
 }

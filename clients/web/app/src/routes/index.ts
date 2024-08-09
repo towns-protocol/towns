@@ -52,6 +52,7 @@ export const CHANNEL_INFO_PARAMS = {
     MINT_BOT: 'mint-bot',
     ROLE_RESTRICTED_CHANNEL_JOIN: 'role-restricted-channel-join',
     MUTUAL_TOWNS: 'mutual-towns',
+    PINS: 'pins',
 } as const
 
 export type CHANNEL_INFO_PARAMS_VALUES =

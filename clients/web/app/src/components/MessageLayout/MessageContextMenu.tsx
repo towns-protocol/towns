@@ -14,6 +14,7 @@ import { getChannelType, useAnalytics } from 'hooks/useAnalytics'
 import { useRouteParams } from 'hooks/useRouteParams'
 import { ShortcutAction, ShortcutActions } from 'data/shortcuts'
 import { ShortcutKeys } from '@components/Shortcuts/ShortcutKeys'
+import { TooltipContext } from 'ui/components/Tooltip/TooltipRenderer'
 import { useCreateUnreadMarker } from './hooks/useCreateUnreadMarker'
 import { DeleteMessagePrompt } from './DeleteMessagePrompt'
 
@@ -26,6 +27,7 @@ type Props = {
     canReply?: boolean
     canReact?: boolean
     isFocused?: boolean
+    isPinned?: boolean
 }
 
 const style = {
@@ -35,9 +37,16 @@ const style = {
 }
 
 export const MessageContextMenu = (props: Props) => {
-    const { eventId, channelId, spaceId, threadParentId, isFocused } = props
+    const { eventId, channelId, spaceId, threadParentId, isFocused, isPinned } = props
 
-    const { redactEvent, sendReaction, sendReadReceipt, adminRedactMessage } = useTownsClient()
+    const {
+        redactEvent,
+        sendReaction,
+        sendReadReceipt,
+        adminRedactMessage,
+        pinMessage,
+        unpinMessage,
+    } = useTownsClient()
     const timelineContext = useContext(MessageTimelineContext)
 
     const { canReplyInline, setReplyToEventId } = useContext(ReplyToMessageContext)
@@ -175,8 +184,21 @@ export const MessageContextMenu = (props: Props) => {
         setDeletePrompt('adminRedaction')
     }, [setDeletePrompt])
 
+    const onPinMessage = useCallback(() => {
+        if (channelId && eventId) {
+            pinMessage(channelId, eventId)
+        }
+    }, [channelId, eventId, pinMessage])
+
+    const onUnpinMessage = useCallback(() => {
+        if (channelId && eventId) {
+            unpinMessage(channelId, eventId)
+        }
+    }, [channelId, eventId, unpinMessage])
+
     const submenuItems = useMemo(() => {
         const submenuItems = []
+
         if (props.canEdit) {
             submenuItems.push({
                 key: 'edit',
@@ -187,6 +209,22 @@ export const MessageContextMenu = (props: Props) => {
                 onClick: onEditClick,
             } as const)
         }
+
+        submenuItems.push(
+            isPinned
+                ? ({
+                      key: 'unpin',
+                      icon: 'unpin',
+                      text: 'Unpin message',
+                      onClick: onUnpinMessage,
+                  } as const)
+                : ({
+                      key: 'pin',
+                      icon: 'pin',
+                      text: 'Pin message',
+                      onClick: onPinMessage,
+                  } as const),
+        )
 
         if (props.canEdit || (canRedact && spaceId)) {
             submenuItems.push({
@@ -200,7 +238,17 @@ export const MessageContextMenu = (props: Props) => {
         }
 
         return submenuItems
-    }, [canRedact, onAdminRedact, onDeleteClick, onEditClick, props.canEdit, spaceId])
+    }, [
+        canRedact,
+        isPinned,
+        onAdminRedact,
+        onDeleteClick,
+        onEditClick,
+        onPinMessage,
+        onUnpinMessage,
+        props.canEdit,
+        spaceId,
+    ])
 
     return (
         <MotionStack pointerEvents="auto" position="topRight" {...animation} ref={ref}>
@@ -297,6 +345,7 @@ const Submenu = (props: {
         onClick?: () => void
     }[]
 }) => {
+    const tooltipContext = useContext(TooltipContext)
     const numItems = props.items.length
     return (
         <Box paddingRight="x4" paddingY="sm" inset="xs" pointerEvents="all">
@@ -319,7 +368,10 @@ const Submenu = (props: {
                             roundedTop={isFirst ? 'md' : 'none'}
                             roundedBottom={isLast ? 'md' : 'none'}
                             color={item.color}
-                            onClick={item.onClick}
+                            onClick={() => {
+                                item.onClick?.()
+                                tooltipContext?.close?.()
+                            }}
                         >
                             <IconButton background="level3" icon={item.icon} color={item.color} />
                             <Paragraph>{item.text}</Paragraph>

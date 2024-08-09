@@ -52,8 +52,8 @@ export type ClickTriggerProps = {
 export type TriggerProps = HoverTriggerProps | ClickTriggerProps
 
 export const TooltipContext = createContext<{
-    placement: 'vertical' | 'horizontal'
-}>({ placement: 'vertical' })
+    close?: () => void
+}>({})
 
 export const TooltipRenderer = (props: Props) => {
     const {
@@ -153,16 +153,18 @@ export const TooltipRenderer = (props: Props) => {
                 render &&
                 createPortal(
                     <AnimatePresence>
-                        {active && !props.disabled ? (
-                            <TooltipPositioner
-                                align={align}
-                                containerRef={containerRef}
-                                render={render}
-                                triggerRef={alignRef}
-                                placement={placement}
-                                onMouseLeave={onMouseLeave}
-                            />
-                        ) : null}
+                        <TooltipContext.Provider value={{ close: () => setActive(false) }}>
+                            {active && !props.disabled ? (
+                                <TooltipPositioner
+                                    align={align}
+                                    containerRef={containerRef}
+                                    render={render}
+                                    triggerRef={alignRef}
+                                    placement={placement}
+                                    onMouseLeave={onMouseLeave}
+                                />
+                            ) : null}
+                        </TooltipContext.Provider>
                     </AnimatePresence>,
                     root,
                 )}

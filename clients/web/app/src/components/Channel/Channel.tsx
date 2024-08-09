@@ -1,4 +1,4 @@
-import { isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
+import { Pin, isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useParams } from 'react-router'
 import { useSearchParams } from 'react-router-dom'
@@ -11,9 +11,12 @@ import {
     useDMData,
     useMyMembership,
     useMyProfile,
+    useMyUserId,
+    usePins,
     useSpaceId,
     useSpaceMembers,
     useTownsClient,
+    useUserLookup,
 } from 'use-towns-client'
 import { ChannelHeader, MessageAvatarTitleLayout } from '@components/ChannelHeader/ChannelHeader'
 import { ChannelIntro, DMChannelIntro } from '@components/ChannelIntro'
@@ -24,7 +27,7 @@ import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimel
 import { TownsEditorContainer } from '@components/RichTextPlate/TownsEditorContainer'
 import { RegisterChannelShortcuts } from '@components/Shortcuts/RegisterChannelShortcuts'
 import { useUserList } from '@components/UserList/UserList'
-import { Box, Button, CardHeader, Stack, Text } from '@ui'
+import { Box, Button, CardHeader, Icon, Paragraph, Stack, Text } from '@ui'
 import { useBlockedUsers } from 'hooks/useBlockedUsers'
 import { useDevice } from 'hooks/useDevice'
 import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
@@ -36,6 +39,9 @@ import { getDraftDMStorageId } from 'utils'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { SetupAnimation } from '@components/SetupAnimation/SetupAnimation'
 import { AppProgressState } from '@components/AppProgressOverlay/AppProgressState'
+import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { htmlToText } from 'workers/data_transforms'
+import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { BlockedUserBottomBanner } from './components/BlockedUserBottomBanner'
 import { UnjoinedChannelComponent } from './components/UnjoinedChannel'
 import { useChannelSend } from './hooks/useChannelSend'
@@ -393,6 +399,7 @@ const Messages = (props: {
                 isChannelWritable={isChannelWritable}
             >
                 {!props.hideHeader && <ChannelHeader channel={channel} spaceId={spaceId} />}
+                <ChannelPinBanner channelId={channelId} />
                 <MessageTimeline
                     align="bottom"
                     header={<ChannelIntro name={channel.label} roomIdentifier={channel.id} />}
@@ -433,4 +440,68 @@ const DMAcceptInvitation = (props: { channelId: string }) => {
             </Stack>
         </Stack>
     )
+}
+
+const ChannelPinBanner = (props: { channelId: string }) => {
+    const pins = usePins(props.channelId)
+    const pin = useMemo(() => {
+        return pins
+            ?.slice()
+            .sort((a, b) =>
+                Math.sign(Number(b.event.createdAtEpochMs) - Number(a.event.createdAtEpochMs)),
+            )
+            .at(0)
+    }, [pins])
+
+    return !!pin && <PinnedMessage channelId={props.channelId} pin={pin} />
+}
+
+const PinnedMessage = (props: { channelId: string; pin: Pin }) => {
+    const { channelId, pin } = props
+    const user = useUserLookup(pin.creatorUserId)
+    const myUserId = useMyUserId()
+
+    const userName = myUserId === pin.creatorUserId ? 'you' : getPrettyDisplayName(user)
+
+    const { openPanel } = usePanelActions()
+    const onClick = useCallback(() => {
+        openPanel('pins', { channelId })
+    }, [channelId, openPanel])
+
+    return (
+        <Box
+            padding
+            gap
+            horizontal
+            hoverable
+            background="level3"
+            cursor="pointer"
+            onClick={onClick}
+        >
+            <Box grow gap="sm" overflow="hidden" paddingY="xs" insetY="xxs">
+                <Box horizontal gap="xs" color="negative" alignItems="center">
+                    <Icon type="pinFill" size="square_xxs" />
+                    <Paragraph>Pinned by {userName}</Paragraph>
+                </Box>
+                <Box grow>
+                    <Paragraph truncate>
+                        <PinContent pin={pin} />
+                    </Paragraph>
+                </Box>
+            </Box>
+        </Box>
+    )
+}
+
+const PinContent = (props: { pin: Pin }) => {
+    const pin = props.pin
+    const content = pin.event.decryptedContent
+
+    if (
+        content?.kind === 'channelMessage' &&
+        content?.content.payload.case === 'post' &&
+        content?.content.payload.value.content.case === 'text'
+    ) {
+        return htmlToText(content.content.payload.value.content.value.body)
+    }
 }

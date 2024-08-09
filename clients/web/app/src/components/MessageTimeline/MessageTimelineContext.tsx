@@ -3,6 +3,7 @@ import {
     Channel,
     TimelineEvent,
     useMyProfile,
+    usePins,
     useSpaceMembers,
     useTimelineReactions,
     useTimelineThreadStats,
@@ -10,6 +11,7 @@ import {
 } from 'use-towns-client'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast/headless'
+import { Pin } from '@river-build/sdk'
 import { ErrorBoundary } from '@components/ErrorBoundary/ErrorBoundary'
 import { SomethingWentWrong } from '@components/Errors/SomethingWentWrong'
 import { Box } from '@ui'
@@ -43,6 +45,7 @@ export const MessageTimelineContext = createContext<{
     sendReadReceipt: ReturnType<typeof useTownsClient>['sendReadReceipt']
     memberIds: string[]
     onMentionClick?: (mentionName: string) => void
+    pins: Pin[] | undefined
 } | null>(null)
 
 export const useTimelineContext = () => {
@@ -81,6 +84,8 @@ export const MessageTimelineWrapper = (props: {
     const navigate = useNavigate()
     const { createLink } = useCreateLink()
 
+    const pins = usePins(channelId)
+
     const onMentionClick = useCallback(
         async (userId: string) => {
             if (!userId) {
@@ -111,40 +116,42 @@ export const MessageTimelineWrapper = (props: {
 
     const value = useMemo(() => {
         return {
-            userId,
-            spaceId,
             channelId,
-            threadParentId,
             channels,
             events,
+            handleReaction,
             isChannelEncrypted,
             isChannelWritable,
-            messageRepliesMap,
-            messageReactionsMap,
-            onMentionClick,
-            timelineActions,
-            handleReaction,
-            sendReadReceipt,
-            type,
             memberIds,
+            messageReactionsMap,
+            messageRepliesMap,
+            onMentionClick,
+            pins,
+            sendReadReceipt,
+            spaceId,
+            threadParentId,
+            timelineActions,
+            type,
+            userId,
         }
     }, [
-        userId,
-        spaceId,
         channelId,
-        threadParentId,
         channels,
         events,
+        handleReaction,
         isChannelEncrypted,
         isChannelWritable,
-        messageRepliesMap,
-        messageReactionsMap,
-        onMentionClick,
-        timelineActions,
-        handleReaction,
-        sendReadReceipt,
-        type,
         memberIds,
+        messageReactionsMap,
+        messageRepliesMap,
+        onMentionClick,
+        pins,
+        sendReadReceipt,
+        spaceId,
+        threadParentId,
+        timelineActions,
+        type,
+        userId,
     ])
 
     return (

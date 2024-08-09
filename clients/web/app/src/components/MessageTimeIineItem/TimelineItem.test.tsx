@@ -86,6 +86,7 @@ const Wrapper = ({ messageContent }: { messageContent: MessageContent }) => {
                     events: [],
                     messageRepliesMap: {},
                     messageReactionsMap: {},
+                    pins: [],
                     timelineActions: {
                         editingMessageId: '',
                         onSelectEditingMessage: () => null,
