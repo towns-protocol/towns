@@ -1,0 +1,37 @@
+name: Create PR for Omega Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+      with:
+        ref: main # Checkout the main branch
+
+    - name: Get Current Date
+      id: date
+      run: echo "DATE=$(date +'%m-%d-%Y')" >> $GITHUB_ENV
+
+    - name: Get Latest Commit SHA
+      id: sha
+      run: echo "COMMIT_SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
+
+    - name: Create Release Branch
+      run: |
+        git checkout -b release-branch/${{ env.DATE }}
+        git push origin release-branch/${{ env.DATE }}
+
+    - name: Authenticate GitHub CLI
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        echo "${GITHUB_TOKEN}" | gh auth login --with-token
+
+    - name: Create Pull Request using GitHub CLI
+      run: |
+        gh pr create --title "Omega Release" --body "Latest omega app release.\n\nCommit SHA: ${{ env.COMMIT_SHA }}" --head omega-release/${{ env.DATE }} --base omega
