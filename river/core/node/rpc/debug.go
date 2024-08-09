@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/pprof"
 	"runtime"
+	runtimePProf "runtime/pprof"
 	"slices"
 	"strings"
 	"time"
@@ -84,6 +85,7 @@ func (s *Service) registerDebugHandlers(enableDebugEndpoints bool, cfg config.De
 
 	if cfg.Stacks || enableDebugEndpoints {
 		handler.Handle(mux, "/debug/stacks", &stacksHandler{maxSizeKb: cfg.StacksMaxSizeKb})
+		handler.HandleFunc(mux, "/debug/stacks2", stacks2Handler)
 	}
 
 	if cfg.TxPool || enableDebugEndpoints {
@@ -131,6 +133,18 @@ func (h *stacksHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(output.Bytes())
+}
+
+func stacks2Handler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	p := runtimePProf.Lookup("goroutine")
+	if p == nil {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintln(w, "Unknown profile")
+		return
+	}
+	_ = p.WriteTo(w, 1)
 }
 
 type onChainConfigHandler struct {
