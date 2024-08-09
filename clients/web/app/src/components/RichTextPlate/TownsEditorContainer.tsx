@@ -52,10 +52,12 @@ type Props = {
 
 const TownsTextEditorWithoutBoundary = ({
     autoFocus,
-    editing: isEditing,
+    editing,
     editable = true,
     placeholder = 'Write something ...',
     tabIndex,
+    threadId,
+    threadPreview,
     storageId,
     onSend,
     onCancel,
@@ -213,11 +215,16 @@ const TownsTextEditorWithoutBoundary = ({
                 <RichTextEditor
                     autoFocus={autoFocus}
                     editable={editable}
+                    editing={editing}
                     initialValue={initialValue}
                     placeholder={placeholder}
                     tabIndex={tabIndex}
+                    threadId={threadId}
+                    threadPreview={threadPreview}
+                    hasInlinePreview={!!inlineReplyPreview}
                     displayButtons={displayButtons}
                     background={background}
+                    fileCount={files?.length}
                     channels={channels}
                     storageId={inlineReplyPreview?.event?.eventId ?? storageId}
                     userMentions={userMentions}
