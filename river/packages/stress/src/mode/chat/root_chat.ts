@@ -11,6 +11,7 @@ import { joinChat } from './joinChat'
 import { updateProfile } from './updateProfile'
 import { chitChat } from './chitChat'
 import { sumarizeChat } from './sumarizeChat'
+import { statsReporter } from './statsReporter'
 
 function getStressDuration(): number {
     check(isSet(process.env.STRESS_DURATION), 'process.env.STRESS_DURATION')
@@ -56,6 +57,8 @@ function getChatConfig(opts: { processIndex: number; rootWallet: Wallet }): Chat
         throw new Error('clientStartIndex >= clientEndIndex')
     }
     return {
+        kickoffMessageEventId: undefined,
+        countClientsMessageEventId: undefined,
         containerIndex,
         containerCount,
         processIndex: opts.processIndex,
@@ -106,7 +109,11 @@ export async function startStressChat(opts: {
         `clients.length !== chatConfig.clientsPerProcess ${clients.length} !== ${chatConfig.clientsPerProcess}`,
     )
 
+    let cancelStatsReporting: (() => void) | undefined
+
     if (chatConfig.processIndex === 0) {
+        cancelStatsReporting = statsReporter(clients[0], chatConfig)
+
         for (
             let i = chatConfig.clientsCount;
             i < chatConfig.clientsCount + chatConfig.randomClientsCount;
@@ -163,6 +170,8 @@ export async function startStressChat(opts: {
     const summary = await sumarizeChat(clients, chatConfig, errors)
 
     logger.log('done', { summary })
+
+    cancelStatsReporting?.()
 
     for (let i = 0; i < clients.length; i += 1) {
         const client = clients[i]

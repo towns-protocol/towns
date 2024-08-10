@@ -15,4 +15,4 @@ echo " (currently need to run with --disable_entitlements for tests to pass)"
 echo ""
 echo ""
 
-./start_node.sh $@
+./start_node.sh "$@"

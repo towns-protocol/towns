@@ -173,11 +173,7 @@ func (s *Service) start() error {
 	if strings.HasPrefix(addr, "[::]") {
 		addr = "localhost" + addr[4:]
 	}
-	if s.config.UseHttps {
-		addr = "https://" + addr
-	} else {
-		addr = "http://" + addr
-	}
+	addr = s.config.UrlSchema() + "://" + addr
 	s.defaultLogger.Info("Server started", "addr", addr+"/debug/multi")
 	return nil
 }
@@ -418,12 +414,14 @@ func (s *Service) runHttpServer() error {
 	})
 
 	address := fmt.Sprintf("%s:%d", cfg.Address, cfg.Port)
-	if cfg.UseHttps {
+	if !cfg.DisableHttps {
 		if !s.config.Log.Simplify {
 			log.Info("Using TLS server")
 		}
 		if (cfg.TLSConfig.Cert == "") || (cfg.TLSConfig.Key == "") {
-			return RiverError(Err_BAD_CONFIG, "TLSConfig.Cert and TLSConfig.Key must be set if UseHttps is true")
+			return RiverError(
+				Err_BAD_CONFIG, "TLSConfig.Cert and TLSConfig.Key must be set if HTTPS is enabled",
+			)
 		}
 
 		// Base 64 encoding can't contain ., if . is present then it's assumed it's a file path

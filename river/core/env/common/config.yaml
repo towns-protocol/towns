@@ -1,8 +1,8 @@
 # For running server in info mode ('info' command)
 port: 4040
-useHttps: false
+disableHttps: true
 
-# Disable logging
+# Log info and above to console in text format
 log:
     file: ''
     level: info

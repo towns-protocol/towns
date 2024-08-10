@@ -65,5 +65,15 @@ func GetDefaultBlockchainInfo() map[uint64]BlockchainInfo {
 			Name:      "Anvil River",
 			Blocktime: 2 * time.Second,
 		},
+		100: {
+			ChainId:   100,
+			Name:      "Gnosis",
+			Blocktime: 5 * time.Second,
+		},
+		10200: {
+			ChainId:   10200,
+			Name:      "Gnosis Chiado Testnet",
+			Blocktime: 5 * time.Second,
+		},
 	}
 }

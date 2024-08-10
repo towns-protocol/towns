@@ -26,10 +26,17 @@ export async function kickoffChat(rootClient: StressClient, cfg: ChatConfig) {
     const shareKeysDuration = Date.now() - shareKeysStart
 
     logger.log('send message')
-    const { eventId } = await rootClient.sendMessage(
+    const { eventId: kickoffMessageEventId } = await rootClient.sendMessage(
         announceChannelId,
         `hello, we're starting the stress test now!, containers: ${cfg.containerCount} ppc: ${cfg.processesPerContainer} clients: ${cfg.clientsCount} randomNewClients: ${cfg.randomClients.length} sessionId: ${sessionId}`,
     )
+    const { eventId: countClientsMessageEventId } = await rootClient.sendMessage(
+        cfg.announceChannelId,
+        `Clients: 0/${cfg.clientsCount} 🤖`,
+    )
+
+    cfg.kickoffMessageEventId = kickoffMessageEventId
+    cfg.countClientsMessageEventId = countClientsMessageEventId
 
     const initialStats = {
         timeToShareKeys: shareKeysDuration + 'ms',
@@ -44,7 +51,7 @@ export async function kickoffChat(rootClient: StressClient, cfg: ChatConfig) {
         `System Info: ${makeCodeBlock(getSystemInfo())} Initial Stats: ${makeCodeBlock(
             initialStats,
         )}`,
-        { threadId: eventId },
+        { threadId: kickoffMessageEventId },
     )
 
     const mintMembershipForWallet = async (wallet: Wallet, i: number) => {

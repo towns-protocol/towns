@@ -217,6 +217,7 @@ func (st *serviceTester) getConfig(opts ...startOpts) *config.Config {
 
 	cfg := &config.Config{
 		DisableBaseChain: true,
+		DisableHttps:     true,
 		RegistryContract: st.btc.RegistryConfig(),
 		Database: config.DatabaseConfig{
 			Url:          st.dbUrl,

@@ -22,4 +22,4 @@ export RIVER_ENV="${RIVER_ENV:-gamma}"
 export STRESS_MODE="${STRESS_MODE:-chat}"
 export SESSION_ID="${SESSION_ID:-$(uuidgen)}"
 
-./scripts/start.sh $@
+./scripts/start.sh "$@"

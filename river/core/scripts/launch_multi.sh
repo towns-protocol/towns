@@ -13,4 +13,4 @@ echo "!!!Multi Node!!!"
 echo ""
 echo ""
 
-./start_node_multi.sh $@
+./start_node_multi.sh "$@"

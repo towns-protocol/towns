@@ -41,4 +41,4 @@ export NODE_TLS_REJECT_UNAUTHORIZED=0 # allow unsigned against localhost
 # fund the root wallet
 cast rpc -r $BASE_CHAIN_RPC_URL anvil_setBalance $WALLET_ADDRESS 10000000000000000000 > /dev/null
 
-./scripts/start.sh $@
+./scripts/start.sh "$@"
