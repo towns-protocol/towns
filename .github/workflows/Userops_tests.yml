@@ -55,9 +55,9 @@ jobs:
               run: |
                   echo "NODE_EXTRA_CA_CERTS=$HOME/river-ca-cert.pem" >> $GITHUB_ENV
 
-            - name: Configure single
+            - name: Configure multi
               run: |
-                  ./run_single.sh -c
+                  ./run_multi.sh -c
               working-directory: river/core/node
 
             - name: Spin up stackup worker with fake privy verification that skips limit checks
@@ -85,7 +85,7 @@ jobs:
                   AA_PAYMASTER_PROXY_AUTH_SECRET: Zm9v
                   AA_RPC_URL: http://localhost:8545
                   AA_BUNDLER_URL: http://localhost:43370
-                  RIVER_ENV: local_single
+                  RIVER_ENV: local_multi
 
               working-directory: ./clients/web/userops
               run: yarn test:userops:privy-wallet
@@ -98,7 +98,7 @@ jobs:
                   AA_PAYMASTER_PROXY_AUTH_SECRET: Zm9v
                   AA_RPC_URL: http://localhost:8545
                   AA_BUNDLER_URL: http://localhost:43370
-                  RIVER_ENV: local_single
+                  RIVER_ENV: local_multi
 
               working-directory: ./clients/web/userops
               run: yarn test:userops:paymaster-limits

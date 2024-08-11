@@ -24,7 +24,7 @@ if (!existsSync(localRiverCA)) {
 process.env.NODE_EXTRA_CA_CERTS = localRiverCA
 
 process.env.NODE_ENV = 'test'
-process.env.RIVER_ENV = process.env.RIVER_ENV || 'local_single'
+process.env.RIVER_ENV = process.env.RIVER_ENV || 'local_multi'
 
 // fetch-polyfill.js
 import fetch, { Headers, Request, Response } from 'node-fetch'

@@ -8,7 +8,7 @@ This suite of tests is designed to test user operations against sepolia contract
 
 ### Random users
 
-These tests rely on a local geth node running with 4337 related contracts deployed, as well as a local_single River environment configured with Base contracts deployed. These tests do not interact with River.
+These tests rely on a local geth node running with 4337 related contracts deployed, as well as a local_multi River environment configured with Base contracts deployed. These tests do not interact with River.
 
 The easiest way to achieve this is to just run the VSCode task `4337: Start Local Dev`. Then from another terminal, within this package:
 

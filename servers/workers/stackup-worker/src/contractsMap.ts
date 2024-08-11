@@ -95,7 +95,7 @@ export const createContractMap = async (
             spaceOwner = await import(
                 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                 // @ts-ignore
-                '@river-build/generated/deployments/local_single/base/addresses/spaceOwner.json',
+                '@river-build/generated/deployments/local_multi/base/addresses/spaceOwner.json',
                 {
                     assert: { type: 'json' },
                 }
@@ -103,36 +103,13 @@ export const createContractMap = async (
             spaceFactory = await import(
                 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                 // @ts-ignore
-                '@river-build/generated/deployments/local_single/base/addresses/spaceFactory.json',
+                '@river-build/generated/deployments/local_multi/base/addresses/spaceFactory.json',
                 {
                     assert: { type: 'json' },
                 }
             )
         } catch (error) {
-            console.error('createContractMap: error loading contracts for local_single', error)
-        }
-
-        if (!spaceOwner || !spaceFactory) {
-            try {
-                spaceOwner = await import(
-                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                    // @ts-ignore
-                    '@river-build/generated/deployments/local_multi/base/addresses/spaceOwner.json',
-                    {
-                        assert: { type: 'json' },
-                    }
-                )
-                spaceFactory = await import(
-                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                    // @ts-ignore
-                    '@river-build/generated/deployments/local_multi/base/addresses/spaceFactory.json',
-                    {
-                        assert: { type: 'json' },
-                    }
-                )
-            } catch (error) {
-                console.error('createContractMap: error loading contracts for local_multi', error)
-            }
+            console.error('createContractMap: error loading contracts for local_multi', error)
         }
     }
 
