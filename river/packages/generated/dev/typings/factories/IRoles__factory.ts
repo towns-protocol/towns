@@ -304,6 +304,81 @@ const _abi = [
   },
   {
     type: "event",
+    name: "PermissionsAddedToChannelRole",
+    inputs: [
+      {
+        name: "updater",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "roleId",
+        type: "uint256",
+        indexed: true,
+        internalType: "uint256",
+      },
+      {
+        name: "channelId",
+        type: "bytes32",
+        indexed: true,
+        internalType: "bytes32",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "PermissionsRemovedFromChannelRole",
+    inputs: [
+      {
+        name: "updater",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "roleId",
+        type: "uint256",
+        indexed: true,
+        internalType: "uint256",
+      },
+      {
+        name: "channelId",
+        type: "bytes32",
+        indexed: true,
+        internalType: "bytes32",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "PermissionsUpdatedForChannelRole",
+    inputs: [
+      {
+        name: "updater",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "roleId",
+        type: "uint256",
+        indexed: true,
+        internalType: "uint256",
+      },
+      {
+        name: "channelId",
+        type: "bytes32",
+        indexed: true,
+        internalType: "bytes32",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
     name: "RoleCreated",
     inputs: [
       {

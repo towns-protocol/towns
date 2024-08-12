@@ -8,7 +8,7 @@ echo "stress/scripts/localhost_setup_chat.sh"
 #
 # create space and channels for stress testing
 #
-export RIVER_ENV="${RIVER_ENV:-local_single}"
+export RIVER_ENV="${RIVER_ENV:-local_multi}"
 export STRESS_MODE="${STRESS_MODE:-setup_chat}"
 export SESSION_ID="${SESSION_ID:-$(uuidgen)}"
 export MNEMONIC="toy alien remain valid print employ age multiply claim student story aware" 

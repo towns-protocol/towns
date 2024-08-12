@@ -14,18 +14,8 @@ on:
                 required: false
                 default: false
                 type: boolean
-            skip_client_noentitlements:
-                description: Skip Client Tests without entitlements
-                required: false
-                default: false
-                type: boolean
             skip_multinode:
                 description: Skip Multi-node Tests
-                required: false
-                default: false
-                type: boolean
-            skip_client_entitlements:
-                description: Skip Client Tests with entitlements
                 required: false
                 default: false
                 type: boolean
@@ -162,147 +152,6 @@ jobs:
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' && steps.ts_build.outcome == 'success' }}
               run: yarn test:unit
 
-    Client_NoEntitlements:
-        permissions: write-all
-        if: github.event_name != 'workflow_dispatch' || !inputs.skip_client_noentitlements
-        runs-on: ubuntu-latest-8-cores
-        timeout-minutes: 30
-        services:
-            postgres-core:
-                image: postgres:latest
-                env:
-                    POSTGRES_USER: postgres
-                    POSTGRES_PASSWORD: postgres
-                ports:
-                    # Maps tcp port 5433 on service container to the host
-                    - 5433:5432
-                options: >-
-                    --health-cmd pg_isready
-                    --health-interval 10s
-                    --health-timeout 5s
-                    --health-retries 5
-                    --name river_postgres_container
-
-        steps:
-            - name: Cancel previous runs
-              if: github.event_name != 'schedule'
-              uses: styfle/cancel-workflow-action@0.12.1
-              with:
-                  access_token: ${{ github.token }}
-
-            - name: Show PostgreSQL max_connections
-              run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
-              env:
-                  POSTGRES_PASSWORD: postgres
-                  PGPASSWORD: postgres
-
-            - name: Increase max_connections in Postgres
-              run: |
-                  docker exec -i river_postgres_container bash << EOF
-                    echo 'max_connections = 1000' >> /var/lib/postgresql/data/postgresql.conf
-                    echo 'shared_buffers = 2GB' >> /var/lib/postgresql/data/postgresql.conf
-                  EOF
-                  docker restart --time 0 river_postgres_container
-                  sleep 5
-
-            - name: Show PostgreSQL max_connections
-              run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
-              env:
-                  POSTGRES_PASSWORD: postgres
-                  PGPASSWORD: postgres
-
-            - name: Checkout code
-              uses: actions/checkout@v4
-
-            - name: Git submodules
-              run: git submodule update --init --recursive
-
-            - name: Setup Go
-              uses: actions/setup-go@v5
-              with:
-                  go-version-file: 'go.work'
-                  cache-dependency-path: '**/*.sum'
-
-            - name: Install Foundry
-              uses: foundry-rs/foundry-toolchain@v1
-              with:
-                  version: ${{ env.FOUNDRY_VERSION }}
-
-            - uses: actions/setup-node@v4
-              with:
-                  node-version: '20'
-                  cache: 'yarn'
-
-            - name: Install node dependencies
-              run: yarn install --immutable
-
-            - name: Print versions
-              run: ./scripts/print-versions.sh
-
-            # Start an ssh session with tmate if the PR has the 'ssh' label
-            - name: Setup tmate session
-              uses: mxschmitt/action-tmate@v3
-              if: contains(github.event.pull_request.labels.*.name, 'ssh')
-
-            - name: Start and configure blockchains
-              run: ./scripts/bc-all-start.sh
-
-            - name: Print Yarn package versions
-              run: yarn info --name-only --all
-
-            - name: Maintain Turbo cache
-              uses: actions/cache@v4
-              with:
-                  path: node_modules/.cache/turbo
-                  key: ${{ runner.os }}-turbo-${{ github.run_id }}
-                  restore-keys: |
-                      ${{ runner.os }}-turbo-
-
-            - name: create db
-              run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
-              working-directory: core
-              env:
-                  POSTGRES_PASSWORD: postgres
-                  PGPASSWORD: postgres
-
-            - name: Setup River CA for testing certificates
-              run: ./scripts/register-ca.sh
-              working-directory: core
-
-            - name: Check SSL directories and environment variables
-              run: |
-                  echo "Listing /etc/ssl/certs..."
-                  ls -l /etc/ssl/certs || echo "/etc/ssl/certs not found"
-
-                  echo "Listing /system/etc/security/cacerts..."
-                  ls -l /system/etc/security/cacerts || echo "/system/etc/security/cacerts not found"
-
-                  echo "Checking SSL_CERT_FILE environment variable..."
-                  echo "SSL_CERT_FILE=$SSL_CERT_FILE"
-
-                  echo "Checking SSL_CERT_DIR environment variable..."
-                  echo "SSL_CERT_DIR=$SSL_CERT_DIR"
-
-            - name: Run node (without entitlements)
-              run: |
-                  ./core/node/run_single.sh --de -c
-                  ./core/node/run_single.sh --de -r &
-
-            - name: Wait for (without entitlements) node to be up
-              run: yarn csb:wait:no-entitlements
-
-            - name: Run SDK Tests (without entitlements)
-              run: yarn run turbo run build test:ci --filter=@river-build/sdk
-
-            - name: Archive River Node Logs and Settings
-              if: always()
-              uses: actions/upload-artifact@v4
-              with:
-                  name: 'river-node-${{ github.job }}'
-                  path: |
-                      ./core/run_files/
-                      !./core/**/bin/**
-
     Multinode:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_multinode
@@ -354,9 +203,6 @@ jobs:
 
             - name: Checkout code
               uses: actions/checkout@v4
-
-            - name: Git submodules
-              run: git submodule update --init --recursive
 
             - name: Setup Go
               uses: actions/setup-go@v5
@@ -436,145 +282,6 @@ jobs:
                       ./core/run_files/
                       !./core/**/bin/**
 
-    Client_Entitlements:
-        permissions: write-all
-        if: github.event_name != 'workflow_dispatch' || !inputs.skip_client_entitlements
-        runs-on: ubuntu-latest-8-cores
-        timeout-minutes: 30
-        services:
-            postgres-core:
-                image: postgres:latest
-                env:
-                    POSTGRES_USER: postgres
-                    POSTGRES_PASSWORD: postgres
-                ports:
-                    # Maps tcp port 5433 on service container to the host
-                    - 5433:5432
-                options: >-
-                    --health-cmd pg_isready
-                    --health-interval 10s
-                    --health-timeout 5s
-                    --health-retries 5
-                    --name river_postgres_container
-
-        steps:
-            - name: Cancel previous runs
-              if: github.event_name != 'schedule'
-              uses: styfle/cancel-workflow-action@0.12.1
-              with:
-                  access_token: ${{ github.token }}
-
-            - name: Show PostgreSQL max_connections
-              run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
-              env:
-                  POSTGRES_PASSWORD: postgres
-                  PGPASSWORD: postgres
-
-            - name: Increase max_connections in Postgres
-              run: |
-                  docker exec -i river_postgres_container bash << EOF
-                    echo 'max_connections = 1000' >> /var/lib/postgresql/data/postgresql.conf
-                    echo 'shared_buffers = 2GB' >> /var/lib/postgresql/data/postgresql.conf
-                  EOF
-                  docker restart --time 0 river_postgres_container
-                  sleep 5
-
-            - name: Show PostgreSQL max_connections
-              run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
-              env:
-                  POSTGRES_PASSWORD: postgres
-                  PGPASSWORD: postgres
-
-            - name: Checkout code
-              uses: actions/checkout@v4
-
-            - name: Git submodules
-              run: git submodule update --init --recursive
-
-            - name: Setup Go
-              uses: actions/setup-go@v5
-              with:
-                  go-version-file: 'go.work'
-                  cache-dependency-path: '**/*.sum'
-
-            - name: Install Foundry
-              uses: foundry-rs/foundry-toolchain@v1
-              with:
-                  version: ${{ env.FOUNDRY_VERSION }}
-
-            - uses: actions/setup-node@v4
-              with:
-                  node-version: '20'
-                  cache: 'yarn'
-
-            - name: Install node dependencies
-              run: yarn install --immutable
-
-            - name: Print versions
-              run: ./scripts/print-versions.sh
-
-            # Start an ssh session with tmate if the PR has the 'ssh' label
-            - name: Setup tmate session
-              uses: mxschmitt/action-tmate@v3
-              if: contains(github.event.pull_request.labels.*.name, 'ssh')
-
-            - name: Start and configure blockchains
-              run: ./scripts/bc-all-start.sh
-
-            - name: Print Yarn package versions
-              run: yarn info --name-only --all
-
-            - name: Maintain Turbo cache
-              uses: actions/cache@v4
-              with:
-                  path: node_modules/.cache/turbo
-                  key: ${{ runner.os }}-turbo-${{ github.run_id }}
-                  restore-keys: |
-                      ${{ runner.os }}-turbo-
-
-            - name: create db
-              run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
-              working-directory: core
-              env:
-                  POSTGRES_PASSWORD: postgres
-                  PGPASSWORD: postgres
-
-            - name: Setup River CA for testing certificates
-              run: ./scripts/register-ca.sh
-              working-directory: core
-
-            - name: Start node with entitlements
-              run: |
-                  ./core/node/run_single.sh -c
-                  ./core/node/run_single.sh -r &
-
-            - name: Wait for (with entitlements) node to be up
-              run: yarn csb:wait:entitlements
-
-            - name: Start xchain node with entitlements
-              run: (RUN_ENV=single ./core/xchain/launch_multi.sh &) && sleep 10
-
-            - name: Build & Test (with entitlements)
-              run: yarn csb:turbo-no-sdk
-
-            - name: Run River Tests (with entitlements)
-              run: yarn workspace @river-build/sdk run test:ci:with-entitlements
-
-            - name: Run Stress Test Tests (yarn) (with entitlements)
-              run: yarn workspace @river-build/stress run test:ci:with-entitlements
-
-            - name: Run Stress Test Demo (node) (with entitlements)
-              run: ./packages/stress/scripts/localhost_demo.sh
-
-            - name: Archive River Node Logs and Settings
-              if: always()
-              uses: actions/upload-artifact@v4
-              with:
-                  name: 'river-node-${{ github.job }}'
-                  path: |
-                      ./core/run_files/
-                      !./core/**/bin/**
-
     Multinode_Ent:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_multinode_ent
@@ -626,9 +333,6 @@ jobs:
 
             - name: Checkout code
               uses: actions/checkout@v4
-
-            - name: Git submodules
-              run: git submodule update --init --recursive
 
             - name: Setup Go
               uses: actions/setup-go@v5
@@ -692,9 +396,6 @@ jobs:
                   ./run_multi.sh -c
                   ./run_multi.sh -r &
                   for i in {5170..5179}; do yarn wait-on https://localhost:$i/debug/multi --timeout=900000 --i=5000 --verbose; done
-
-            - name: Start xchain node with entitlements
-              run: (RUN_ENV=multi ./core/xchain/launch_multi.sh &) && sleep 10
 
             - name: Build & Test (with entitlements)
               run: yarn csb:turbo-no-sdk
@@ -763,9 +464,6 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v4
 
-            - name: Git submodules
-              run: git submodule update --init --recursive
-
             - name: Setup Go
               uses: actions/setup-go@v5
               with:
@@ -827,9 +525,6 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v4
 
-            - name: Git submodules
-              run: git submodule update --init --recursive
-
             - name: Setup Go
               uses: actions/setup-go@v5
               with:
@@ -872,16 +567,7 @@ jobs:
 
     Slack_Notification:
         # NOTE: We should make sure that new jobs get added here
-        needs:
-            [
-                Common_CI,
-                Client_NoEntitlements,
-                Multinode,
-                Client_Entitlements,
-                Multinode_Ent,
-                Go_Tests,
-                XChain_Integration,
-            ]
+        needs: [Common_CI, Multinode, Multinode_Ent, Go_Tests, XChain_Integration]
         if: failure()
         runs-on: ubuntu-latest
         steps:

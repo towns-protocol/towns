@@ -48,6 +48,13 @@ contract TestUtils is Test {
     // solhint-enable
   }
 
+  function getMappingValueSlot(
+    uint256 mappingSlot,
+    uint256 key
+  ) internal pure returns (bytes32) {
+    return keccak256(abi.encode(key, mappingSlot));
+  }
+
   function _bytes32ToString(bytes32 str) internal pure returns (string memory) {
     return string(abi.encodePacked(str));
   }

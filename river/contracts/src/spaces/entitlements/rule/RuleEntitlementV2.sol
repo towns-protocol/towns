@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 /**
- * @title EntitlementRule
+ * @title RuleEntitlementV2
  * @dev This contract manages entitlement rules based on blockchain operations.
  * The contract maintains a tree-like data structure to combine various types of operations.
  * The tree is implemented as a dynamic array of 'Operation' structs, and is built in post-order fashion.
@@ -33,24 +33,13 @@ contract RuleEntitlementV2 is
   UUPSUpgradeable,
   IRuleEntitlementV2
 {
-  struct Entitlement {
-    address grantedBy;
-    uint256 grantedTime;
-    RuleData data;
-  }
-
   mapping(uint256 => Entitlement) internal entitlementsByRoleId;
   address public SPACE_ADDRESS;
 
+  // TODO: abstract to a base contract
   // keccak256(abi.encode(uint256(keccak256("spaces.entitlements.rule.storage")) - 1)) & ~bytes32(uint256(0xff))
   bytes32 private constant STORAGE_SLOT =
     0xa7ba26993e5aed586ba0b4d511980a49b23ea33e13d5f0920b7e42ae1a27cc00;
-
-  struct EntitlementV2 {
-    address grantedBy;
-    uint256 grantedTime;
-    bytes data;
-  }
 
   // @custom:storage-location erc7201:spaces.entitlements.rule.storage
   struct Layout {
@@ -94,9 +83,8 @@ contract RuleEntitlementV2 is
   /// @notice get the storage slot for the contract
   /// @return ds storage slot
   function layout() internal pure returns (Layout storage ds) {
-    bytes32 slot = STORAGE_SLOT;
     assembly {
-      ds.slot := slot
+      ds.slot := STORAGE_SLOT
     }
   }
 
@@ -129,16 +117,17 @@ contract RuleEntitlementV2 is
   ) external onlySpace {
     _removeRuleDataV1(roleId);
 
-    // Decode the data
-    RuleDataV2 memory data = abi.decode(entitlementData, (RuleDataV2));
+    if (entitlementData.length == 0) return;
 
-    if (entitlementData.length == 0 || data.operations.length == 0) {
-      return;
+    // equivalent: abi.decode(entitlementData, (RuleDataV2))
+    RuleDataV2 calldata data;
+    assembly {
+      // this is a variable length struct, so calldataload(entitlementData.offset) contains the
+      // offset from entitlementData.offset at which the struct begins
+      data := add(entitlementData.offset, calldataload(entitlementData.offset))
     }
 
-    // Cache sender and currentTime
-    address sender = _msgSender();
-    uint256 currentTime = block.timestamp;
+    if (data.operations.length == 0) return;
 
     // Cache lengths of operations arrays to reduce state access cost
     uint256 operationsLength = data.operations.length;
@@ -146,7 +135,7 @@ contract RuleEntitlementV2 is
     uint256 logicalOperationsLength = data.logicalOperations.length;
 
     // Step 1: Validate Operation against CheckOperation and LogicalOperation
-    for (uint256 i = 0; i < operationsLength; i++) {
+    for (uint256 i; i < operationsLength; ++i) {
       CombinedOperationType opType = data.operations[i].opType; // cache the operation type
       uint8 index = data.operations[i].index; // cache the operation index
 
@@ -167,7 +156,7 @@ contract RuleEntitlementV2 is
         }
 
         // Verify the logical operations make a DAG
-        LogicalOperation memory logicalOp = data.logicalOperations[index];
+        LogicalOperation calldata logicalOp = data.logicalOperations[index];
         uint8 leftOperationIndex = logicalOp.leftOperationIndex;
         uint8 rightOperationIndex = logicalOp.rightOperationIndex;
 
@@ -183,24 +172,20 @@ contract RuleEntitlementV2 is
     }
 
     EntitlementV2 storage entitlement = layout().entitlementsByRoleIdV2[roleId];
-    entitlement.grantedBy = sender;
-    entitlement.grantedTime = currentTime;
+    entitlement.grantedBy = _msgSender();
+    entitlement.grantedTime = block.timestamp;
     entitlement.data = entitlementData;
   }
 
   // @inheritdoc IEntitlement
   function removeEntitlement(uint256 roleId) external onlySpace {
     Layout storage ds = layout();
-
-    EntitlementV2 memory entitlement = ds.entitlementsByRoleIdV2[roleId];
+    EntitlementV2 storage entitlement = ds.entitlementsByRoleIdV2[roleId];
 
     if (entitlement.grantedBy == address(0)) {
       revert Entitlement__InvalidValue();
     }
 
-    delete ds.entitlementsByRoleIdV2[roleId].grantedBy;
-    delete ds.entitlementsByRoleIdV2[roleId].grantedTime;
-    delete ds.entitlementsByRoleIdV2[roleId].data;
     delete ds.entitlementsByRoleIdV2[roleId];
   }
 
@@ -227,16 +212,9 @@ contract RuleEntitlementV2 is
   function getRuleDataV2(
     uint256 roleId
   ) external view returns (RuleDataV2 memory data) {
-    bytes memory ruleData = layout().entitlementsByRoleIdV2[roleId].data;
+    bytes storage ruleData = layout().entitlementsByRoleIdV2[roleId].data;
 
-    if (ruleData.length == 0) {
-      return
-        RuleDataV2(
-          new Operation[](0),
-          new CheckOperationV2[](0),
-          new LogicalOperation[](0)
-        );
-    }
+    if (ruleData.length == 0) return data;
 
     return abi.decode(ruleData, (RuleDataV2));
   }
@@ -247,8 +225,6 @@ contract RuleEntitlementV2 is
   function _removeRuleDataV1(uint256 roleId) internal {
     if (entitlementsByRoleId[roleId].grantedBy != address(0)) {
       delete entitlementsByRoleId[roleId];
-      delete entitlementsByRoleId[roleId].grantedBy;
-      delete entitlementsByRoleId[roleId].grantedTime;
     }
   }
 }

@@ -12,12 +12,12 @@ TLSConfig:
 baseChain:
     chainId: 31337
     networkUrl: 'http://127.0.0.1:8545'
-    blockTimeMs: <BLOCK_TIME_MS>
+    blockTimeMs: 1000
     positiveEntitlementCacheTTLSeconds: 5 # Short TTL for testing
 riverChain:
     chainId: 31338
     networkUrl: 'http://127.0.0.1:8546'
-    blockTimeMs: <BLOCK_TIME_MS>
+    blockTimeMs: 1000
 
 # Logging
 log:
@@ -39,9 +39,6 @@ network:
     numRetries: 3
     # Make this nice and long to not break anything.
     requestTimeout: 30s
-
-# Debug feature flags.
-disableBaseChain: <DISABLE_BASE_CHAIN>
 
 chains: '31337:http://localhost:8545,31338:http://localhost:8546,84532:https://sepolia.base.org,11155111:https://ethereum-sepolia-rpc.publicnode.com'
 xChainBlockchains: '31337,31338,84532,11155111'

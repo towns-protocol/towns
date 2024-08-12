@@ -72,7 +72,7 @@ with `ChainID=1337`
 
 1. duplicate `.env.localhost` file in the [contracts](.) folder of the project and rename it to `.env` (this is excluded
    from git via .gitignore)
-2. run `export RIVER_ENV="local_single"` from your terminal
+2. run `export RIVER_ENV="local_multi"` from your terminal
 3. you will then run `./scripts/deploy-contracts.sh` to deploy the entire suite of contracts to your local base-anvil
    and river-anvil chains.
 

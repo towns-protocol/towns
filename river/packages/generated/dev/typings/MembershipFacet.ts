@@ -496,6 +496,9 @@ export interface MembershipFacetInterface extends utils.Interface {
     "MembershipWithdrawal(address,uint256)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
     "Paused(address)": EventFragment;
+    "PermissionsAddedToChannelRole(address,uint256,bytes32)": EventFragment;
+    "PermissionsRemovedFromChannelRole(address,uint256,bytes32)": EventFragment;
+    "PermissionsUpdatedForChannelRole(address,uint256,bytes32)": EventFragment;
     "Prepay__Prepaid(uint256)": EventFragment;
     "RoleCreated(address,uint256)": EventFragment;
     "RoleRemoved(address,uint256)": EventFragment;
@@ -530,6 +533,15 @@ export interface MembershipFacetInterface extends utils.Interface {
   getEvent(nameOrSignatureOrTopic: "MembershipWithdrawal"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Paused"): EventFragment;
+  getEvent(
+    nameOrSignatureOrTopic: "PermissionsAddedToChannelRole"
+  ): EventFragment;
+  getEvent(
+    nameOrSignatureOrTopic: "PermissionsRemovedFromChannelRole"
+  ): EventFragment;
+  getEvent(
+    nameOrSignatureOrTopic: "PermissionsUpdatedForChannelRole"
+  ): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Prepay__Prepaid"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RoleCreated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RoleRemoved"): EventFragment;
@@ -734,6 +746,45 @@ export interface PausedEventObject {
 export type PausedEvent = TypedEvent<[string], PausedEventObject>;
 
 export type PausedEventFilter = TypedEventFilter<PausedEvent>;
+
+export interface PermissionsAddedToChannelRoleEventObject {
+  updater: string;
+  roleId: BigNumber;
+  channelId: string;
+}
+export type PermissionsAddedToChannelRoleEvent = TypedEvent<
+  [string, BigNumber, string],
+  PermissionsAddedToChannelRoleEventObject
+>;
+
+export type PermissionsAddedToChannelRoleEventFilter =
+  TypedEventFilter<PermissionsAddedToChannelRoleEvent>;
+
+export interface PermissionsRemovedFromChannelRoleEventObject {
+  updater: string;
+  roleId: BigNumber;
+  channelId: string;
+}
+export type PermissionsRemovedFromChannelRoleEvent = TypedEvent<
+  [string, BigNumber, string],
+  PermissionsRemovedFromChannelRoleEventObject
+>;
+
+export type PermissionsRemovedFromChannelRoleEventFilter =
+  TypedEventFilter<PermissionsRemovedFromChannelRoleEvent>;
+
+export interface PermissionsUpdatedForChannelRoleEventObject {
+  updater: string;
+  roleId: BigNumber;
+  channelId: string;
+}
+export type PermissionsUpdatedForChannelRoleEvent = TypedEvent<
+  [string, BigNumber, string],
+  PermissionsUpdatedForChannelRoleEventObject
+>;
+
+export type PermissionsUpdatedForChannelRoleEventFilter =
+  TypedEventFilter<PermissionsUpdatedForChannelRoleEvent>;
 
 export interface Prepay__PrepaidEventObject {
   supply: BigNumber;
@@ -1480,6 +1531,39 @@ export interface MembershipFacet extends BaseContract {
 
     "Paused(address)"(account?: null): PausedEventFilter;
     Paused(account?: null): PausedEventFilter;
+
+    "PermissionsAddedToChannelRole(address,uint256,bytes32)"(
+      updater?: PromiseOrValue<string> | null,
+      roleId?: PromiseOrValue<BigNumberish> | null,
+      channelId?: PromiseOrValue<BytesLike> | null
+    ): PermissionsAddedToChannelRoleEventFilter;
+    PermissionsAddedToChannelRole(
+      updater?: PromiseOrValue<string> | null,
+      roleId?: PromiseOrValue<BigNumberish> | null,
+      channelId?: PromiseOrValue<BytesLike> | null
+    ): PermissionsAddedToChannelRoleEventFilter;
+
+    "PermissionsRemovedFromChannelRole(address,uint256,bytes32)"(
+      updater?: PromiseOrValue<string> | null,
+      roleId?: PromiseOrValue<BigNumberish> | null,
+      channelId?: PromiseOrValue<BytesLike> | null
+    ): PermissionsRemovedFromChannelRoleEventFilter;
+    PermissionsRemovedFromChannelRole(
+      updater?: PromiseOrValue<string> | null,
+      roleId?: PromiseOrValue<BigNumberish> | null,
+      channelId?: PromiseOrValue<BytesLike> | null
+    ): PermissionsRemovedFromChannelRoleEventFilter;
+
+    "PermissionsUpdatedForChannelRole(address,uint256,bytes32)"(
+      updater?: PromiseOrValue<string> | null,
+      roleId?: PromiseOrValue<BigNumberish> | null,
+      channelId?: PromiseOrValue<BytesLike> | null
+    ): PermissionsUpdatedForChannelRoleEventFilter;
+    PermissionsUpdatedForChannelRole(
+      updater?: PromiseOrValue<string> | null,
+      roleId?: PromiseOrValue<BigNumberish> | null,
+      channelId?: PromiseOrValue<BytesLike> | null
+    ): PermissionsUpdatedForChannelRoleEventFilter;
 
     "Prepay__Prepaid(uint256)"(supply?: null): Prepay__PrepaidEventFilter;
     Prepay__Prepaid(supply?: null): Prepay__PrepaidEventFilter;

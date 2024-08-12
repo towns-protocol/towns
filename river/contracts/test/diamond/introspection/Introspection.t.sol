@@ -10,7 +10,7 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IntrospectionSetup} from "./IntrospectionSetup.sol";
 
 contract IntrospectionTest is IntrospectionSetup {
-  function test_supportsInterface() external {
+  function test_supportsInterface() external view {
     assertTrue(introspection.supportsInterface(type(IERC165).interfaceId));
   }
 }

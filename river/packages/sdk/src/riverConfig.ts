@@ -11,9 +11,9 @@ import { check } from '@river-build/dlog'
 
 function getEnvironmentId(): string {
     if (typeof process === 'object') {
-        return process.env.RIVER_ENV || 'local_single'
+        return process.env.RIVER_ENV || 'local_multi'
     }
-    return 'local_single'
+    return 'local_multi'
 }
 
 function getBaseRpcUrlForChain(chainId: number): string {

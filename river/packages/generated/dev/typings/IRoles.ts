@@ -166,15 +166,66 @@ export interface IRolesInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "updateRole", data: BytesLike): Result;
 
   events: {
+    "PermissionsAddedToChannelRole(address,uint256,bytes32)": EventFragment;
+    "PermissionsRemovedFromChannelRole(address,uint256,bytes32)": EventFragment;
+    "PermissionsUpdatedForChannelRole(address,uint256,bytes32)": EventFragment;
     "RoleCreated(address,uint256)": EventFragment;
     "RoleRemoved(address,uint256)": EventFragment;
     "RoleUpdated(address,uint256)": EventFragment;
   };
 
+  getEvent(
+    nameOrSignatureOrTopic: "PermissionsAddedToChannelRole"
+  ): EventFragment;
+  getEvent(
+    nameOrSignatureOrTopic: "PermissionsRemovedFromChannelRole"
+  ): EventFragment;
+  getEvent(
+    nameOrSignatureOrTopic: "PermissionsUpdatedForChannelRole"
+  ): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RoleCreated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RoleRemoved"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RoleUpdated"): EventFragment;
 }
+
+export interface PermissionsAddedToChannelRoleEventObject {
+  updater: string;
+  roleId: BigNumber;
+  channelId: string;
+}
+export type PermissionsAddedToChannelRoleEvent = TypedEvent<
+  [string, BigNumber, string],
+  PermissionsAddedToChannelRoleEventObject
+>;
+
+export type PermissionsAddedToChannelRoleEventFilter =
+  TypedEventFilter<PermissionsAddedToChannelRoleEvent>;
+
+export interface PermissionsRemovedFromChannelRoleEventObject {
+  updater: string;
+  roleId: BigNumber;
+  channelId: string;
+}
+export type PermissionsRemovedFromChannelRoleEvent = TypedEvent<
+  [string, BigNumber, string],
+  PermissionsRemovedFromChannelRoleEventObject
+>;
+
+export type PermissionsRemovedFromChannelRoleEventFilter =
+  TypedEventFilter<PermissionsRemovedFromChannelRoleEvent>;
+
+export interface PermissionsUpdatedForChannelRoleEventObject {
+  updater: string;
+  roleId: BigNumber;
+  channelId: string;
+}
+export type PermissionsUpdatedForChannelRoleEvent = TypedEvent<
+  [string, BigNumber, string],
+  PermissionsUpdatedForChannelRoleEventObject
+>;
+
+export type PermissionsUpdatedForChannelRoleEventFilter =
+  TypedEventFilter<PermissionsUpdatedForChannelRoleEvent>;
 
 export interface RoleCreatedEventObject {
   creator: string;
@@ -414,6 +465,39 @@ export interface IRoles extends BaseContract {
   };
 
   filters: {
+    "PermissionsAddedToChannelRole(address,uint256,bytes32)"(
+      updater?: PromiseOrValue<string> | null,
+      roleId?: PromiseOrValue<BigNumberish> | null,
+      channelId?: PromiseOrValue<BytesLike> | null
+    ): PermissionsAddedToChannelRoleEventFilter;
+    PermissionsAddedToChannelRole(
+      updater?: PromiseOrValue<string> | null,
+      roleId?: PromiseOrValue<BigNumberish> | null,
+      channelId?: PromiseOrValue<BytesLike> | null
+    ): PermissionsAddedToChannelRoleEventFilter;
+
+    "PermissionsRemovedFromChannelRole(address,uint256,bytes32)"(
+      updater?: PromiseOrValue<string> | null,
+      roleId?: PromiseOrValue<BigNumberish> | null,
+      channelId?: PromiseOrValue<BytesLike> | null
+    ): PermissionsRemovedFromChannelRoleEventFilter;
+    PermissionsRemovedFromChannelRole(
+      updater?: PromiseOrValue<string> | null,
+      roleId?: PromiseOrValue<BigNumberish> | null,
+      channelId?: PromiseOrValue<BytesLike> | null
+    ): PermissionsRemovedFromChannelRoleEventFilter;
+
+    "PermissionsUpdatedForChannelRole(address,uint256,bytes32)"(
+      updater?: PromiseOrValue<string> | null,
+      roleId?: PromiseOrValue<BigNumberish> | null,
+      channelId?: PromiseOrValue<BytesLike> | null
+    ): PermissionsUpdatedForChannelRoleEventFilter;
+    PermissionsUpdatedForChannelRole(
+      updater?: PromiseOrValue<string> | null,
+      roleId?: PromiseOrValue<BigNumberish> | null,
+      channelId?: PromiseOrValue<BytesLike> | null
+    ): PermissionsUpdatedForChannelRoleEventFilter;
+
     "RoleCreated(address,uint256)"(
       creator?: PromiseOrValue<string> | null,
       roleId?: PromiseOrValue<BigNumberish> | null

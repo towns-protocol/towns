@@ -1109,10 +1109,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/channels/ChannelService.sol": {
-      "keccak256": "0xdac0460cb66d31e57593154fb31ccd112dd1d51c34ea6e5ce316250ac5548abb",
+      "keccak256": "0xd99752d8c031a33e075b257fe1863a269d470c8ad18052cdca6faeb5370d2169",
       "urls": [
-        "bzz-raw://56c99fa9d482bd02ea96a01e1a960e1678edbbc1a9580511f68543ca194f6fb5",
-        "dweb:/ipfs/QmbUjxxkjLCGXVC3bNtWQDas2vJwUmS5NraTGwWiKJAXvH"
+        "bzz-raw://45bdecec56344c7cd8dceb7a47d5c66cd5b2c4e1eb006ed8b222a198e9f41f55",
+        "dweb:/ipfs/QmSFhLzHvYsYj3Py976SQDqzfSz3nnsyYc7hWBp61WPdjK"
       ],
       "license": "MIT"
     },

@@ -35,20 +35,11 @@ Welcome to the River repo. Here you will find all of the components to run the c
 
 ## Setup
 
-1. Update submodules: `git submodule update --init --recursive`
+1. Run `yarn install && yarn prepare` from the root of the repository
 
-Pro Tip: If you end up with .DS_Store files in your submodules, you can exclude them globally using
+1. Create `.env.local` files:
 
-```
-    echo .DS_Store >> ~/.gitignore_global
-    git config --global core.excludesfile ~/.gitignore_global
-```
-
-2. Run `yarn install && yarn prepare` from the root of the repository
-
-3. Create `.env.local` files:
-
-4. Create a Certificate Authority. Run `./core/scripts/register-ca.sh` from the root of the repository. This will create the required `$HOME/river-ca-cert.pem` and `$HOME/river-ca-key.pem` files.
+1. Create a Certificate Authority. Run `./core/scripts/register-ca.sh` from the root of the repository. This will create the required `$HOME/river-ca-cert.pem` and `$HOME/river-ca-key.pem` files.
 
 ## Running everything locally
 

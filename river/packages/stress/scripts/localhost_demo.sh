@@ -9,7 +9,7 @@ echo "stress/scripts/localhost_demo.sh"
 # simple test that runs in ci to ensure that the stress test can run in node against local env
 #
 
-export RIVER_ENV="${RIVER_ENV:-local_single}"
+export RIVER_ENV="${RIVER_ENV:-local_multi}"
 export STRESS_MODE="${STRESS_MODE:-test}"
 export SESSION_ID="${SESSION_ID:-$(uuidgen)}"
 

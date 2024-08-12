@@ -52,7 +52,7 @@ export async function makeStressClient(
             user: string,
             permission: Permission,
         ) => {
-            if (config.environmentId === 'local_single_ne') {
+            if (config.environmentId === 'local_multi_ne') {
                 return true
             } else if (channelId && spaceId) {
                 return spaceDapp.isEntitledToChannel(spaceId, channelId, user, permission)

@@ -27,7 +27,7 @@ import {
 const environments = [
     { id: 'gamma', name: 'Gamma', chainId: baseSepolia.id },
     { id: 'omega', name: 'Omega', chainId: base.id },
-    { id: 'local_single', name: 'Local Single', chainId: foundry.id },
+    { id: 'local_multi', name: 'Local Multi', chainId: foundry.id },
 ] as const
 
 export type Env = (typeof environments)[number]
@@ -89,7 +89,7 @@ export const RiverEnvSwitcher = (props: RiverEnvSwitcherProps) => {
                             </Button>
                         </DialogClose>
                     ))}
-                    {currentEnv === 'local_single' && <FundWallet />}
+                    {currentEnv === 'local_multi' && <FundWallet />}
                     {isConnected && (
                         <Button
                             variant="destructive"

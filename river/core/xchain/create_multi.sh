@@ -91,8 +91,7 @@ do
 
     # Copy node binary and config template
     cp "../run_files/bin/river_node" "${INSTANCE_DIR}/bin"
-    # Using the same config as the node
-    cp ../run_files/${RUN_ENV}/common_config.yaml "${INSTANCE_DIR}/config/config.yaml"
+    touch "${INSTANCE_DIR}/config/config.yaml"
 
     echo "Creating instance_${i}"
     

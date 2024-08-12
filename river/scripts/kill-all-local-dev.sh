@@ -81,8 +81,6 @@ fi
 
 if prompt 'Stop XChain?:y/n '
 then
-    RUN_ENV=single ./core/xchain/stop_multi.sh
-    RUN_ENV=single_ne ./core/xchain/stop_multi.sh
     RUN_ENV=multi ./core/xchain/stop_multi.sh
     RUN_ENV=multi_ne ./core/xchain/stop_multi.sh
 

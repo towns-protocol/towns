@@ -8,6 +8,8 @@ import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 import {IEntitlementGatedBase} from "contracts/src/spaces/facets/gated/IEntitlementGated.sol";
 
 // libraries
+import {StringSet} from "contracts/src/utils/StringSet.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {ChannelService} from "contracts/src/spaces/facets/channels/ChannelService.sol";
 import {EntitlementGatedStorage} from "contracts/src/spaces/facets/gated/EntitlementGatedStorage.sol";
 import {RolesStorage} from "contracts/src/spaces/facets/roles/RolesStorage.sol";
@@ -25,6 +27,7 @@ contract EntitlementDataQueryable is
   Facet
 {
   using StringSet for StringSet.Set;
+  using EnumerableSet for EnumerableSet.Bytes32Set;
 
   function getEntitlementDataByPermission(
     string calldata permission
@@ -67,38 +70,51 @@ contract EntitlementDataQueryable is
     bytes32 channelId,
     string calldata permission
   ) internal view returns (Role[] memory) {
+    // retrive the roles associated with the channel
     uint256[] memory channelRoles = ChannelService.getRolesByChannel(channelId);
     uint256 channelRolesLength = channelRoles.length;
 
-    uint256 roleCount = 0;
+    // initialize arrays to store the matching role IDs
     uint256[] memory matchedRoleIds = new uint256[](channelRolesLength);
+    uint256 matchedRoleCount = 0;
 
-    RolesStorage.Layout storage ds = RolesStorage.layout();
+    // access roles storage layout
+    RolesStorage.Layout storage rs = RolesStorage.layout();
 
-    // Count the number of roles that have the requested permission and record their ids.
+    // iterate through channel roles and check for the requested permission
     for (uint256 i; i < channelRolesLength; i++) {
       uint256 roleId = channelRoles[i];
 
-      RolesStorage.Role storage role = ds.roleById[roleId];
+      RolesStorage.Role storage role = rs.roleById[channelRoles[i]];
 
-      if (role.isImmutable) {
-        continue;
+      bool hasPermission = false;
+
+      // check if role is associated with the channel and has the requested permission
+      if (rs.channelOverridesByRole[roleId].contains(channelId)) {
+        StringSet.Set storage permissions = rs.permissionOverridesByRole[
+          roleId
+        ][channelId];
+        hasPermission = permissions.contains(permission);
+      }
+      // check the default permissions if this role didn't have a channel override.
+      else if (role.permissions.contains(permission)) {
+        hasPermission = true;
       }
 
-      // Check if the role has the requested permission.
-      if (role.permissions.contains(permission)) {
-        matchedRoleIds[roleCount] = roleId;
-        roleCount++;
+      // store the role ID if it has the requested permission
+      if (hasPermission) {
+        matchedRoleIds[matchedRoleCount] = roleId;
+        matchedRoleCount++;
       }
     }
 
-    // Assemble the roles that have the requested permission for the specified channel.
-    Role[] memory roles = new Role[](roleCount);
-    for (uint256 i; i < roleCount; i++) {
-      roles[i] = _getRoleById(matchedRoleIds[i]);
+    // create an array of roles with the matching IDs
+    Role[] memory rolesWithPermission = new Role[](matchedRoleCount);
+    for (uint256 i; i < matchedRoleCount; i++) {
+      rolesWithPermission[i] = _getRoleById(matchedRoleIds[i]);
     }
 
-    return roles;
+    return rolesWithPermission;
   }
 
   function _getEntitlements(
@@ -107,11 +123,9 @@ contract EntitlementDataQueryable is
     uint256 entitlementCount;
     uint256 rolesLength = roles.length;
 
-    for (uint256 i = 0; i < rolesLength; i++) {
-      Role memory role = roles[i];
-
-      if (!role.disabled) {
-        entitlementCount += role.entitlements.length;
+    for (uint256 i; i < rolesLength; i++) {
+      if (!roles[i].disabled) {
+        entitlementCount += roles[i].entitlements.length;
       }
     }
 
@@ -119,24 +133,23 @@ contract EntitlementDataQueryable is
       entitlementCount
     );
 
-    entitlementCount = 0;
+    uint256 currentIndex = 0;
 
     for (uint256 i; i < rolesLength; i++) {
-      Role memory role = roles[i];
+      if (!roles[i].disabled) {
+        for (uint256 j; j < roles[i].entitlements.length; j++) {
+          IEntitlement entitlement = IEntitlement(roles[i].entitlements[j]);
 
-      if (!role.disabled) {
-        for (uint256 j; j < role.entitlements.length; j++) {
-          IEntitlement entitlement = IEntitlement(role.entitlements[j]);
-
-          entitlementData[entitlementCount] = EntitlementData(
+          entitlementData[currentIndex] = EntitlementData(
             entitlement.moduleType(),
-            entitlement.getEntitlementDataByRoleId(role.id)
+            entitlement.getEntitlementDataByRoleId(roles[i].id)
           );
 
-          entitlementCount++;
+          currentIndex++;
         }
       }
     }
+
     return entitlementData;
   }
 }

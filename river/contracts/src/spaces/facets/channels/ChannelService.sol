@@ -167,7 +167,6 @@ library ChannelService {
     bytes32 channelId
   ) internal view returns (uint256[] memory) {
     checkChannelExists(channelId);
-
     ChannelStorage.Layout storage channel = ChannelStorage.layout();
     return channel.rolesByChannelId[channelId].values();
   }

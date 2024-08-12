@@ -11,7 +11,7 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {ERC721ASetup} from "./ERC721ASetup.sol";
 
 contract ERC721ATest is ERC721ASetup {
-  function test_supportsInterface() external {
+  function test_supportsInterface() external view {
     assertTrue(
       IERC165(address(erc721a)).supportsInterface(type(IERC721).interfaceId)
     );

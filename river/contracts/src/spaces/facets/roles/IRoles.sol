@@ -27,6 +27,24 @@ interface IRolesBase {
 
   event RoleRemoved(address indexed remover, uint256 indexed roleId);
 
+  event PermissionsAddedToChannelRole(
+    address indexed updater,
+    uint256 indexed roleId,
+    bytes32 indexed channelId
+  );
+
+  event PermissionsRemovedFromChannelRole(
+    address indexed updater,
+    uint256 indexed roleId,
+    bytes32 indexed channelId
+  );
+
+  event PermissionsUpdatedForChannelRole(
+    address indexed updater,
+    uint256 indexed roleId,
+    bytes32 indexed channelId
+  );
+
   // =============================================================
   //                           Errors
   // =============================================================

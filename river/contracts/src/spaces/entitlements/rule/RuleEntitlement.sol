@@ -36,12 +36,6 @@ contract RuleEntitlement is
 {
   using EnumerableSet for EnumerableSet.Bytes32Set;
 
-  struct Entitlement {
-    address grantedBy;
-    uint256 grantedTime;
-    RuleData data;
-  }
-
   mapping(uint256 => Entitlement) internal entitlementsByRoleId;
 
   address public SPACE_ADDRESS;
@@ -112,16 +106,17 @@ contract RuleEntitlement is
     uint256 roleId,
     bytes calldata entitlementData
   ) external onlySpace {
-    // Decode the data
-    RuleData memory data = abi.decode(entitlementData, (RuleData));
+    if (entitlementData.length == 0) return;
 
-    if (entitlementData.length == 0 || data.operations.length == 0) {
-      return;
+    // equivalent: abi.decode(entitlementData, (RuleData))
+    RuleData calldata data;
+    assembly {
+      // this is a variable length struct, so calldataload(entitlementData.offset) contains the
+      // offset from entitlementData.offset at which the struct begins
+      data := add(entitlementData.offset, calldataload(entitlementData.offset))
     }
 
-    // Cache sender and currentTime
-    address sender = _msgSender();
-    uint256 currentTime = block.timestamp;
+    if (data.operations.length == 0) return;
 
     // Cache lengths of operations arrays to reduce state access cost
     uint256 operationsLength = data.operations.length;
@@ -129,7 +124,7 @@ contract RuleEntitlement is
     uint256 logicalOperationsLength = data.logicalOperations.length;
 
     // Step 1: Validate Operation against CheckOperation and LogicalOperation
-    for (uint256 i = 0; i < operationsLength; i++) {
+    for (uint256 i; i < operationsLength; ++i) {
       CombinedOperationType opType = data.operations[i].opType; // cache the operation type
       uint8 index = data.operations[i].index; // cache the operation index
 
@@ -150,7 +145,7 @@ contract RuleEntitlement is
         }
 
         // Verify the logical operations make a DAG
-        LogicalOperation memory logicalOp = data.logicalOperations[index];
+        LogicalOperation calldata logicalOp = data.logicalOperations[index];
         uint8 leftOperationIndex = logicalOp.leftOperationIndex;
         uint8 rightOperationIndex = logicalOp.rightOperationIndex;
 
@@ -166,28 +161,14 @@ contract RuleEntitlement is
     }
 
     Entitlement storage entitlement = entitlementsByRoleId[roleId];
-
-    entitlement.grantedBy = sender;
-    entitlement.grantedTime = currentTime;
-
-    // All checks passed; initialize state variables
-    // Manually copy _checkOperations to checkOperations
-    for (uint256 i = 0; i < checkOperationsLength; i++) {
-      entitlement.data.checkOperations.push(data.checkOperations[i]);
-    }
-
-    for (uint256 i = 0; i < logicalOperationsLength; i++) {
-      entitlement.data.logicalOperations.push(data.logicalOperations[i]);
-    }
-
-    for (uint256 i = 0; i < operationsLength; i++) {
-      entitlement.data.operations.push(data.operations[i]);
-    }
+    entitlement.grantedBy = _msgSender();
+    entitlement.grantedTime = block.timestamp;
+    entitlement.data = data;
   }
 
   // @inheritdoc IEntitlement
   function removeEntitlement(uint256 roleId) external onlySpace {
-    Entitlement memory entitlement = entitlementsByRoleId[roleId];
+    Entitlement storage entitlement = entitlementsByRoleId[roleId];
     if (entitlement.grantedBy == address(0)) {
       revert Entitlement__InvalidValue();
     }

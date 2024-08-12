@@ -462,10 +462,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/roles/IRoles.sol": {
-      "keccak256": "0xa69cfbcd989b8794187a56a93deffbefaee8ca456e381ce30f85897893c50272",
+      "keccak256": "0x7cd041ba078b6023f17e877540b89b5c0d1f581163c4067332f6b43bf3bbffa6",
       "urls": [
-        "bzz-raw://cf8e9b2711f66eefb949f5b5ead4d72005f1845cd63f22b287fdba3339101bd4",
-        "dweb:/ipfs/Qmf7sPY4BgmvZf7p4GBsyVyd4o66yJXMgAmEgpdQAQyBdx"
+        "bzz-raw://33d2b6a1215ae41ca4bd40867dd7bb11bb1faf17e3d4010afb93186b4ea0fee3",
+        "dweb:/ipfs/QmbP6zEQmue7yEWdhCdjbrrVg7Ex6QZ7z1Gwi4zDjvimzP"
       ],
       "license": "MIT"
     },

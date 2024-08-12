@@ -63,7 +63,7 @@ do
   cp ../run_files/bin/river_node "${INSTANCE_DIR}/bin/river_node"
   pushd "${INSTANCE_DIR}"
 
-  ./bin/river_node --config ../../contracts.env --config config/config.yaml run xchain &
+  ./bin/river_node --config ../../common.yaml --config ../../contracts.env --config ../../config.yaml --config config/config.yaml run xchain &
   node_pid=$!
   pwd
   echo $node_pid > node.pid

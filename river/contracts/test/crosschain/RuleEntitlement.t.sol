@@ -14,20 +14,18 @@ contract RuleEntitlementTest is
   IEntitlementBase,
   IRuleEntitlementBase
 {
-  RuleEntitlement internal implementation;
+  uint256 internal constant ENTITLEMENTS_SLOT = 0;
+
   RuleEntitlement internal ruleEntitlement;
 
   address internal entitlement;
-  address internal deployer;
-  address internal space;
+  address internal deployer = makeAddr("deployer");
+  address internal space = makeAddr("space");
   uint256 internal roleId = 0;
 
-  function setUp() public {
-    deployer = _randomAddress();
-    space = _randomAddress();
-
+  function setUp() public virtual {
     vm.startPrank(deployer);
-    implementation = new RuleEntitlement();
+    RuleEntitlement implementation = new RuleEntitlement();
     entitlement = address(
       new ERC1967Proxy(
         address(implementation),
@@ -39,7 +37,7 @@ contract RuleEntitlementTest is
     ruleEntitlement = RuleEntitlement(entitlement);
   }
 
-  modifier givenRuleEntitlementIsSet() {
+  function setRuleEntitlement() internal returns (bytes memory encodedData) {
     uint256 chainId = block.chainid;
     address erc20Contract = _randomAddress();
     address erc721Contract = _randomAddress();
@@ -89,42 +87,58 @@ contract RuleEntitlementTest is
       logicalOperations
     );
 
-    bytes memory encodedData = abi.encode(ruleData);
+    encodedData = abi.encode(ruleData);
 
     vm.prank(space);
     ruleEntitlement.setEntitlement(roleId, encodedData);
-    _;
   }
 
-  function test_setRuleEntitlement() external givenRuleEntitlementIsSet {
-    Operation[] memory ruleOperations = ruleEntitlement
-      .getRuleData(roleId)
-      .operations;
-    assertEq(ruleOperations.length, 3);
+  function test_setRuleEntitlement() public virtual {
+    bytes memory encodedData = setRuleEntitlement();
+    assertEq(ruleEntitlement.getEntitlementDataByRoleId(roleId), encodedData);
   }
 
-  function test_removeRuleEntitlement() external givenRuleEntitlementIsSet {
+  function test_removeRuleEntitlement() external virtual {
+    setRuleEntitlement();
+
     vm.prank(space);
     ruleEntitlement.removeEntitlement(roleId);
 
+    RuleData memory emptyRuleData = RuleData(
+      new Operation[](0),
+      new CheckOperation[](0),
+      new LogicalOperation[](0)
+    );
     RuleData memory ruleData = ruleEntitlement.getRuleData(roleId);
+    assertEq(abi.encode(ruleData), abi.encode(emptyRuleData));
 
-    assertEq(ruleData.operations.length, 0);
+    assertEq(
+      ruleEntitlement.getEntitlementDataByRoleId(roleId),
+      abi.encode(emptyRuleData)
+    );
+
+    bytes32 slot = getMappingValueSlot(roleId, ENTITLEMENTS_SLOT);
+    bytes32 grantedBy = vm.load(entitlement, slot);
+    assertEq(grantedBy, bytes32(0));
+    bytes32 grantedTime = vm.load(entitlement, bytes32(uint256(slot) + 1));
+    assertEq(grantedTime, bytes32(0));
+    assertEq(vm.getMappingLength(entitlement, bytes32(ENTITLEMENTS_SLOT)), 0);
   }
 
-  function test_revertWhenNotAllowedToRemove()
-    external
-    givenRuleEntitlementIsSet
-  {
+  function test_fuzz_revertWhenNotAllowedToRemove(
+    address caller
+  ) external virtual {
+    vm.assume(caller != space);
     vm.expectRevert(Entitlement__NotAllowed.selector);
-    vm.prank(_randomAddress());
+    vm.prank(caller);
     ruleEntitlement.removeEntitlement(roleId);
   }
 
   // =============================================================
   //                  Request Entitlement Check
   // =============================================================
-  function test_revertOnDirectionFailureEntitlementRule() external {
+
+  function test_revertOnDirectionFailureEntitlementRule() external virtual {
     Operation[] memory operations = new Operation[](4);
     CheckOperation[] memory checkOperations = new CheckOperation[](2);
     LogicalOperation[] memory logicalOperations = new LogicalOperation[](2);
@@ -164,7 +178,7 @@ contract RuleEntitlementTest is
     ruleEntitlement.setEntitlement(0, encodedData);
 
     Operation[] memory ruleOperations = ruleEntitlement
-      .getRuleData(uint256(0))
+      .getRuleData(0)
       .operations;
     assertEq(ruleOperations.length, 0);
   }

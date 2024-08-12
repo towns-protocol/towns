@@ -2,10 +2,9 @@
 pragma solidity ^0.8.23;
 
 //interfaces
-import {IRoles, IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
+import {IRoles} from "contracts/src/spaces/facets/roles/IRoles.sol";
 import {IChannel} from "contracts/src/spaces/facets/channels/IChannel.sol";
 import {IEntitlementsManager} from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
-import {IEntitlementBase} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 
 // libraries
@@ -13,7 +12,7 @@ import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 
 // contracts
-import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
+import {RolesBaseSetup} from "contracts/test/spaces/roles/RolesBaseSetup.sol";
 import {Roles} from "contracts/src/spaces/facets/roles/Roles.sol";
 
 // errors
@@ -26,33 +25,11 @@ import {Validator__InvalidStringLength, Validator__InvalidByteLength} from "cont
 // mocks
 import {MockUserEntitlement} from "contracts/test/mocks/MockUserEntitlement.sol";
 
-contract RolesTest is BaseSetup, IRolesBase, IEntitlementBase {
-  function getRandomAddresses(
-    uint256 N
-  ) internal view returns (address[] memory) {
-    address[] memory data = new address[](N);
-    for (uint256 i = 0; i < N; i++) {
-      data[i] = _randomAddress();
-    }
-    return data;
-  }
-
-  MockUserEntitlement internal mockEntitlement;
-  Roles internal roles;
-
-  function setUp() public override {
-    super.setUp();
-
-    mockEntitlement = new MockUserEntitlement();
-    mockEntitlement.initialize(everyoneSpace);
-
-    roles = Roles(everyoneSpace);
-  }
-
+contract RolesTest is RolesBaseSetup {
   function test_createRole_only(string memory roleName) external {
     vm.assume(bytes(roleName).length > 2);
 
-    address[] memory data = getRandomAddresses(4);
+    address[] memory data = _createAccounts(4);
 
     string[] memory permissions = new string[](1);
     permissions[0] = Permissions.Read;
@@ -522,21 +499,16 @@ contract RolesTest is BaseSetup, IRolesBase, IEntitlementBase {
     roles.removeRole(0);
   }
 
-  function test_removeRole_with_channels_already_created() external {
-    string memory roleName1 = "role1";
+  function test_removeRole_with_channels_already_created()
+    external
+    givenRoleExists
+  {
     bytes32 channelId1 = "channel1";
     bytes32 channelId2 = "channel2";
 
-    vm.prank(founder);
-    uint256 roleId = roles.createRole(
-      roleName1,
-      new string[](0),
-      new IRoles.CreateEntitlement[](0)
-    );
-
     // create a channel
     uint256[] memory roleIds = new uint256[](1);
-    roleIds[0] = roleId;
+    roleIds[0] = ROLE_ID;
 
     vm.startPrank(founder);
     IChannel(everyoneSpace).createChannel(
@@ -548,7 +520,7 @@ contract RolesTest is BaseSetup, IRolesBase, IEntitlementBase {
     vm.stopPrank();
 
     vm.prank(founder);
-    roles.removeRole(roleId);
+    roles.removeRole(ROLE_ID);
 
     // verify that role was removed from channel
     IChannel.Channel memory channel = IChannel(everyoneSpace).getChannel(
@@ -1015,5 +987,78 @@ contract RolesTest is BaseSetup, IRolesBase, IEntitlementBase {
     vm.prank(founder);
     vm.expectRevert(Roles__EntitlementDoesNotExist.selector);
     roles.removeRoleFromEntitlement(roleId, entitlement);
+  }
+
+  // =============================================================
+  // Channel Permissions
+  // =============================================================
+
+  function test_updateChannelPermissionOverrides()
+    external
+    givenRoleExists
+    givenRoleIsInChannel
+  {
+    string[] memory permissions = new string[](1);
+    permissions[0] = Permissions.Read;
+
+    vm.prank(founder);
+    roles.setChannelPermissionOverrides(ROLE_ID, CHANNEL_ID, permissions);
+
+    // get the channel permissions
+    string[] memory channelPermissions = roles.getChannelPermissionOverrides(
+      ROLE_ID,
+      CHANNEL_ID
+    );
+
+    assertEq(channelPermissions.length, 1);
+    assertEq(channelPermissions[0], permissions[0]);
+
+    permissions[0] = Permissions.Write;
+
+    // update the channel permissions
+    vm.prank(founder);
+    roles.setChannelPermissionOverrides(ROLE_ID, CHANNEL_ID, permissions);
+
+    // get the channel permissions
+    channelPermissions = roles.getChannelPermissionOverrides(
+      ROLE_ID,
+      CHANNEL_ID
+    );
+
+    assertEq(channelPermissions.length, 1);
+    assertEq(channelPermissions[0], permissions[0]);
+  }
+
+  function test_clearChannelPermissionOverrides()
+    external
+    givenRoleExists
+    givenRoleIsInChannel
+  {
+    string[] memory permissions = new string[](1);
+    permissions[0] = Permissions.Read;
+
+    vm.prank(founder);
+    roles.setChannelPermissionOverrides(ROLE_ID, CHANNEL_ID, permissions);
+
+    // get the channel permissions
+    string[] memory channelPermissions = roles.getChannelPermissionOverrides(
+      ROLE_ID,
+      CHANNEL_ID
+    );
+
+    assertEq(channelPermissions.length, 1);
+    assertEq(channelPermissions[0], permissions[0]);
+
+    // remove the channel permissions
+    vm.prank(founder);
+    roles.clearChannelPermissionOverrides(ROLE_ID, CHANNEL_ID);
+
+    // get the channel permissions
+    channelPermissions = roles.getChannelPermissionOverrides(
+      ROLE_ID,
+      CHANNEL_ID
+    );
+
+    assertEq(channelPermissions.length, 0);
   }
 }

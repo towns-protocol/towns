@@ -39,24 +39,20 @@ contract Roles is IRoles, RolesBase, Entitled {
     CreateEntitlement[] memory entitlements
   ) external override {
     _validatePermission(Permissions.ModifyRoles);
-    _checkRoleExists(roleId);
     _updateRole(roleId, roleName, permissions, entitlements);
   }
 
   function removeRole(uint256 roleId) external override {
     _validatePermission(Permissions.ModifyRoles);
-    _checkRoleExists(roleId);
     _removeRole(roleId);
   }
 
   // permissions
-
   function addPermissionsToRole(
     uint256 roleId,
     string[] memory permissions
   ) external override {
     _validatePermission(Permissions.ModifyRoles);
-    _checkRoleExists(roleId);
     _addPermissionsToRole(roleId, permissions);
   }
 
@@ -65,7 +61,6 @@ contract Roles is IRoles, RolesBase, Entitled {
     string[] memory permissions
   ) external override {
     _validatePermission(Permissions.ModifyRoles);
-    _checkRoleExists(roleId);
     _removePermissionsFromRole(roleId, permissions);
   }
 
@@ -81,7 +76,6 @@ contract Roles is IRoles, RolesBase, Entitled {
     CreateEntitlement memory entitlement
   ) external {
     _validatePermission(Permissions.ModifyRoles);
-    _checkRoleExists(roleId);
     _addRoleToEntitlement(roleId, entitlement);
   }
 
@@ -90,7 +84,31 @@ contract Roles is IRoles, RolesBase, Entitled {
     CreateEntitlement memory entitlement
   ) external {
     _validatePermission(Permissions.ModifyRoles);
-    _checkRoleExists(roleId);
     _removeRoleFromEntitlement(roleId, entitlement);
+  }
+
+  // custom channel permission overrides
+  function setChannelPermissionOverrides(
+    uint256 roleId,
+    bytes32 channelId,
+    string[] memory permissions
+  ) external {
+    _validatePermission(Permissions.ModifyRoles);
+    _setChannelPermissionOverrides(roleId, channelId, permissions);
+  }
+
+  function getChannelPermissionOverrides(
+    uint256 roleId,
+    bytes32 channelId
+  ) external view returns (string[] memory permissions) {
+    return _getChannelPermissionOverrides(roleId, channelId);
+  }
+
+  function clearChannelPermissionOverrides(
+    uint256 roleId,
+    bytes32 channelId
+  ) external {
+    _validatePermission(Permissions.ModifyRoles);
+    _clearChannelPermissionOverrides(roleId, channelId);
   }
 }
