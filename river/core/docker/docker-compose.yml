@@ -4,8 +4,7 @@ services:
         build:
             dockerfile: ../Dockerfile
         volumes:
-            - ./local_xchain_node_logs:/riveruser/xchain_node/logs
-            - ./local_stream_node_logs:/riveruser/stream_node/logs
+            - ./local_river_node_logs:/riveruser/river_node/logs
         environment:
             - BASECHAIN__CHAINID=31337
             - STORAGE_TYPE=postgres
