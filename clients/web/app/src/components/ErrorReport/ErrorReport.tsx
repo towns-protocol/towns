@@ -100,6 +100,7 @@ async function postCustomError(data: FormState) {
     }
 
     let deviceInfo = `\n* Version: ${VITE_APP_VERSION}\n`
+    deviceInfo += `* Release Hash: ${VITE_APP_COMMIT_HASH}\n`
     deviceInfo += `* Release Date: ${new Date(VITE_APP_TIMESTAMP).toLocaleDateString()}\n`
     deviceInfo += `* Browser: ${getBrowserName() ?? navigator.userAgent}\n`
     deviceInfo += `* Device Type: ${deviceType}\n`
