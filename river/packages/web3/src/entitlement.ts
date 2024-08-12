@@ -1,4 +1,4 @@
-import type { AbiParameter, AbiFunction } from 'abitype'
+import type { ExtractAbiFunction } from 'abitype'
 import { IRuleEntitlementBase, IRuleEntitlementAbi } from './v3/IRuleEntitlementShim'
 
 import {
@@ -6,6 +6,8 @@ import {
     http,
     decodeAbiParameters,
     encodeAbiParameters,
+    getAbiItem,
+    Hex,
     PublicClient,
 } from 'viem'
 
@@ -36,6 +38,28 @@ export enum CheckOperationType {
     ERC721,
     ERC1155,
     ISENTITLED,
+    NATIVE_COIN_BALANCE,
+}
+
+function checkOpString(operation: CheckOperationType): string {
+    switch (operation) {
+        case CheckOperationType.NONE:
+            return 'NONE'
+        case CheckOperationType.MOCK:
+            return 'MOCK'
+        case CheckOperationType.ERC20:
+            return 'ERC20'
+        case CheckOperationType.ERC721:
+            return 'ERC721'
+        case CheckOperationType.ERC1155:
+            return 'ERC1155'
+        case CheckOperationType.ISENTITLED:
+            return 'ISENTITLED'
+        case CheckOperationType.NATIVE_COIN_BALANCE:
+            return 'NATIVE_COIN_BALANCE'
+        default:
+            return 'UNKNOWN'
+    }
 }
 
 // Enum for Operation oneof operation_clause
@@ -175,36 +199,36 @@ export const getOperationTree = async (address: Address, roleId: bigint): Promis
     return postOrderArrayToTree(operations)
 }
 
-const encodeRuleDataInputs: readonly AbiParameter[] | undefined = (
-    Object.values(IRuleEntitlementAbi).find((abi) => abi.name === 'encodeRuleData') as
-        | AbiFunction
-        | undefined
-)?.inputs
-
 export function encodeEntitlementData(ruleData: IRuleEntitlementBase.RuleDataStruct): Address {
-    if (!encodeRuleDataInputs) {
-        throw new Error('setRuleDataInputs not found')
+    const encodeRuleDataAbi: ExtractAbiFunction<typeof IRuleEntitlementAbi, 'encodeRuleData'> =
+        getAbiItem({
+            abi: IRuleEntitlementAbi,
+            name: 'encodeRuleData',
+        })
+
+    if (!encodeRuleDataAbi) {
+        throw new Error('encodeRuleData ABI not found')
     }
-    return encodeAbiParameters(encodeRuleDataInputs, [ruleData])
+    // @ts-ignore
+    return encodeAbiParameters(encodeRuleDataAbi.inputs, [ruleData])
 }
 
-const getRuleDataOutputs: readonly AbiParameter[] | undefined = (
-    Object.values(IRuleEntitlementAbi).find((abi) => abi.name === 'getRuleData') as
-        | AbiFunction
-        | undefined
-)?.outputs
+export function decodeEntitlementData(entitlementData: Hex): IRuleEntitlementBase.RuleDataStruct[] {
+    const getRuleDataAbi: ExtractAbiFunction<typeof IRuleEntitlementAbi, 'getRuleData'> =
+        getAbiItem({
+            abi: IRuleEntitlementAbi,
+            name: 'getRuleData',
+        })
 
-export function decodeEntitlementData(
-    entitlementData: Address,
-): IRuleEntitlementBase.RuleDataStruct[] {
-    if (!getRuleDataOutputs) {
-        throw new Error('getRuleDataOutputs not found')
+    if (!getRuleDataAbi) {
+        throw new Error('getRuleData ABI not found')
     }
     return decodeAbiParameters(
-        getRuleDataOutputs,
+        getRuleDataAbi.outputs,
         entitlementData,
-    ) as IRuleEntitlementBase.RuleDataStruct[]
+    ) as unknown as IRuleEntitlementBase.RuleDataStruct[]
 }
+
 export function ruleDataToOperations(data: IRuleEntitlementBase.RuleDataStruct[]): Operation[] {
     if (data.length === 0) {
         return []
@@ -446,6 +470,39 @@ async function evaluateCheckOperation(
         case CheckOperationType.MOCK: {
             return evaluateMockOperation(operation, controller)
         }
+        case CheckOperationType.NONE:
+            throw new Error('Unknown check operation type')
+        default:
+    }
+
+    if (operation.chainId < 0n) {
+        throw new Error(
+            `Invalid chain id for check operation ${checkOpString(operation.checkType)}`,
+        )
+    }
+
+    if (
+        operation.checkType !== CheckOperationType.NATIVE_COIN_BALANCE &&
+        operation.contractAddress === zeroAddress
+    ) {
+        throw new Error('Invalid contract address for check operation NATIVE_COIN_BALANCE')
+    }
+
+    if (
+        operation.checkType in
+        [
+            CheckOperationType.ERC20,
+            CheckOperationType.ERC721,
+            CheckOperationType.ERC1155,
+            CheckOperationType.NATIVE_COIN_BALANCE,
+        ]
+    ) {
+        if (operation.threshold <= 0n) {
+            throw new Error(`Invalid threshold for check operation ${operation.checkType}`)
+        }
+    }
+
+    switch (operation.checkType) {
         case CheckOperationType.ISENTITLED: {
             await Promise.all(providers.map((p) => p.ready))
             const provider = findProviderFromChainId(providers, operation.chainId)
@@ -455,6 +512,21 @@ async function evaluateCheckOperation(
                 return zeroAddress
             }
             return evaluateCustomEntitledOperation(operation, controller, provider, linkedWallets)
+        }
+        case CheckOperationType.NATIVE_COIN_BALANCE: {
+            await Promise.all(providers.map((p) => p.ready))
+            const provider = findProviderFromChainId(providers, operation.chainId)
+
+            if (!provider) {
+                controller.abort()
+                return zeroAddress
+            }
+            return evaluateNativeCoinBalanceOperation(
+                operation,
+                controller,
+                provider,
+                linkedWallets,
+            )
         }
         case CheckOperationType.ERC20: {
             await Promise.all(providers.map((p) => p.ready))
@@ -478,7 +550,6 @@ async function evaluateCheckOperation(
         }
         case CheckOperationType.ERC1155:
             throw new Error('CheckOperationType.ERC1155 not implemented')
-        case CheckOperationType.NONE:
         default:
             throw new Error('Unknown check operation type')
     }
@@ -716,6 +787,44 @@ async function evaluateCustomEntitledOperation(
         controller.abort()
         return zeroAddress
     })
+}
+
+async function evaluateNativeCoinBalanceOperation(
+    operation: CheckOperation,
+    controller: AbortController,
+    provider: ethers.providers.StaticJsonRpcProvider,
+    linkedWallets: string[],
+): Promise<EntitledWalletOrZeroAddress> {
+    const walletBalances = await Promise.all(
+        linkedWallets.map(async (wallet) => {
+            try {
+                const result = await provider.getBalance(wallet)
+                return {
+                    wallet,
+                    balance: result,
+                }
+            } catch (error) {
+                return {
+                    wallet,
+                    balance: ethers.BigNumber.from(0),
+                }
+            }
+        }),
+    )
+
+    const walletsWithAsset = walletBalances.filter((balance) => balance.balance.gt(0))
+
+    const accumulatedBalance = walletsWithAsset.reduce(
+        (acc, el) => acc.add(el.balance),
+        ethers.BigNumber.from(0),
+    )
+
+    if (walletsWithAsset.length > 0 && accumulatedBalance.gte(operation.threshold)) {
+        return walletsWithAsset[0].wallet
+    } else {
+        controller.abort()
+        return zeroAddress
+    }
 }
 
 async function evaluateContractBalanceAcrossWallets(

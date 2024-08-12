@@ -173,6 +173,16 @@
       }
     },
     {
+      "label": "Start Stress Testing Redis",
+      "type": "shell",
+      "command": "./packages/stress/scripts/start_redis.sh",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-servers"
+      }
+    },
+    {
       "label": "Casablanca",
       "type": "shell",
       "command": "sleep 3 && yarn run --top-level csb:dev:entitlements -r",

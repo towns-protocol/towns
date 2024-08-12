@@ -29,15 +29,15 @@ import { Wallet } from 'ethers'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { ChannelMessage_Post_Attachment, ChannelMessage_Post_Mention } from '@river-build/proto'
 import { waitFor } from './waitFor'
-import { promises as fs } from 'node:fs'
-import * as path from 'node:path'
 import { sha256 } from 'ethers/lib/utils'
+import { IStorage } from './storage'
 const logger = dlogger('stress:stressClient')
 
 export async function makeStressClient(
     config: RiverConfig,
     clientIndex: number,
-    inWallet?: Wallet,
+    inWallet: Wallet | undefined,
+    globalPersistedStore: IStorage | undefined,
 ) {
     const { userId, signerContext, baseProvider, riverProvider, rpcClient } = await makeConnection(
         config,
@@ -74,6 +74,7 @@ export async function makeStressClient(
         rpcClient,
         spaceDapp,
         streamsClient,
+        globalPersistedStore,
     )
 }
 
@@ -88,6 +89,7 @@ export class StressClient {
         public rpcClient: StreamRpcClient,
         public spaceDapp: SpaceDapp,
         public streamsClient: StreamsClient,
+        public globalPersistedStore: IStorage | undefined,
     ) {
         logger.log('StressClient', { clientIndex, userId, logId: this.logId })
     }
@@ -96,11 +98,8 @@ export class StressClient {
         return `client${this.clientIndex}:${shortenHexString(this.userId)}`
     }
 
-    get deviceFilePath(): string {
-        const envSuffix =
-            this.config.environmentId === 'gamma' ? '' : `-${this.config.environmentId}`
-        const filename = `stress-${this.userId}${envSuffix}`
-        return path.resolve(`/tmp/${filename}.json`)
+    get storageKey(): string {
+        return `stressclient_${this.userId}_${this.config.environmentId}`
     }
 
     async fundWallet() {
@@ -205,11 +204,13 @@ export class StressClient {
             return
         }
         let device: ExportedDevice | undefined
-        const rawDevice = await fs.readFile(this.deviceFilePath, 'utf8').catch(() => undefined)
+        const rawDevice = await this.globalPersistedStore
+            ?.get(this.storageKey)
+            .catch(() => undefined)
         if (rawDevice) {
             device = JSON.parse(rawDevice) as ExportedDevice
             logger.info(
-                `Device imported from ${this.deviceFilePath}, outboundSessions: ${device.outboundSessions.length} inboundSessions: ${device.inboundSessions.length}`,
+                `Device imported from ${this.storageKey}, outboundSessions: ${device.outboundSessions.length} inboundSessions: ${device.inboundSessions.length}`,
             )
         }
         const botPrivateKey = this.baseProvider.wallet.privateKey
@@ -282,8 +283,11 @@ export class StressClient {
         const device = await this.streamsClient.cryptoBackend?.encryptionDevice.exportDevice()
         if (device) {
             try {
-                await fs.writeFile(this.deviceFilePath, JSON.stringify(device, null, 2))
-                logger.log(`Device exported to ${this.deviceFilePath}`)
+                await this.globalPersistedStore?.set(
+                    this.storageKey,
+                    JSON.stringify(device, null, 2),
+                )
+                logger.log(`Device exported to ${this.storageKey}`)
             } catch (e) {
                 logger.error('Failed to export device', e)
             }

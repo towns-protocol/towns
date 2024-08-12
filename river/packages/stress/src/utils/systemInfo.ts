@@ -3,8 +3,6 @@ import os from 'os'
 
 export function getSystemInfo() {
     return {
-        OperatingSystem: `${os.type()} ${os.release()}`,
-        SystemUptime: `${os.uptime()} seconds`,
         TotalMemory: `${os.totalmem() / 1024 / 1024} MB`,
         FreeMemory: `${os.freemem() / 1024 / 1024} MB`,
         CPUCount: `${os.cpus().length}`,

@@ -41,5 +41,6 @@ RUN yarn
 RUN yarn csb:build
 
 ENV MONOREPO_ROOT=/monorepo
+ENV SINGLE_LINE_LOGS="true"
 
 ENTRYPOINT [ "./packages/stress-testing/scripts/start-node.sh" ]

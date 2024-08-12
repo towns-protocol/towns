@@ -38,12 +38,12 @@ async function spamInfo(count: number) {
 
 async function sendAMessage() {
     logger.log('=======================send a message - start =======================')
-    const bob = await makeStressClient(config, 0, getRootWallet())
+    const bob = await makeStressClient(config, 0, getRootWallet(), undefined)
     const { spaceId, defaultChannelId } = await bob.createSpace("bob's space")
     await bob.sendMessage(defaultChannelId, 'hello')
 
     logger.log('=======================send a message - make alice =======================')
-    const alice = await makeStressClient(config, 1)
+    const alice = await makeStressClient(config, 1, undefined, undefined)
     await bob.spaceDapp.joinSpace(
         spaceId,
         alice.baseProvider.wallet.address,

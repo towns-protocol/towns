@@ -2,9 +2,12 @@ package entitlement
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/node/infra"
@@ -69,6 +72,78 @@ var (
 	// This wallet has been kept void of nfts on all testnets.
 	sepoliaTestNoNftsWallet = examples.SepoliaChainlinkWallet
 )
+
+var nativeCoinBalance0_1EthEthereumSepolia = CheckOperation{
+	OpType:          CHECK,
+	CheckType:       CheckOperationType(NATIVE_COIN_BALANCE),
+	ChainID:         examples.EthSepoliaChainId,
+	ContractAddress: common.Address{},
+	// .1ETH in Wei
+	Threshold: big.NewInt(100_000_000_000_000_000),
+}
+
+var nativeCoinBalance0_2EthEthereumSepolia = CheckOperation{
+	OpType:          CHECK,
+	CheckType:       CheckOperationType(NATIVE_COIN_BALANCE),
+	ChainID:         examples.EthSepoliaChainId,
+	ContractAddress: common.Address{},
+	// .2ETH in Wei
+	Threshold: big.NewInt(200_000_000_000_000_000),
+}
+
+var nativeCoinBalance0_21EthEthereumSepolia = CheckOperation{
+	OpType:          CHECK,
+	CheckType:       CheckOperationType(NATIVE_COIN_BALANCE),
+	ChainID:         examples.EthSepoliaChainId,
+	ContractAddress: common.Address{},
+	// .21ETH in Wei
+	Threshold: big.NewInt(210_000_000_000_000_000),
+}
+
+var nativeCoinBalance0_3EthEthereumSepolia = CheckOperation{
+	OpType:          CHECK,
+	CheckType:       CheckOperationType(NATIVE_COIN_BALANCE),
+	ChainID:         examples.EthSepoliaChainId,
+	ContractAddress: common.Address{},
+	// .3ETH in Wei
+	Threshold: big.NewInt(300_000_000_000_000_000),
+}
+
+var nativeCoinBalance0_4EthBaseSepolia = CheckOperation{
+	OpType:          CHECK,
+	CheckType:       CheckOperationType(NATIVE_COIN_BALANCE),
+	ChainID:         examples.BaseSepoliaChainId,
+	ContractAddress: common.Address{},
+	// .4ETH in Wei
+	Threshold: big.NewInt(400_000_000_000_000_000),
+}
+
+var nativeCoinBalance0_5EthBaseSepolia = CheckOperation{
+	OpType:          CHECK,
+	CheckType:       CheckOperationType(NATIVE_COIN_BALANCE),
+	ChainID:         examples.BaseSepoliaChainId,
+	ContractAddress: common.Address{},
+	// .5ETH in Wei
+	Threshold: big.NewInt(500_000_000_000_000_000),
+}
+
+var nativeCoinBalance0_52EthBaseSepolia = CheckOperation{
+	OpType:          CHECK,
+	CheckType:       CheckOperationType(NATIVE_COIN_BALANCE),
+	ChainID:         examples.BaseSepoliaChainId,
+	ContractAddress: common.Address{},
+	// .52ETH in Wei
+	Threshold: big.NewInt(520_000_000_000_000_000),
+}
+
+var nativeCoinBalance0_6EthBaseSepolia = CheckOperation{
+	OpType:          CHECK,
+	CheckType:       CheckOperationType(NATIVE_COIN_BALANCE),
+	ChainID:         examples.BaseSepoliaChainId,
+	ContractAddress: common.Address{},
+	// .6ETH in Wei
+	Threshold: big.NewInt(600_000_000_000_000_000),
+}
 
 var erc20TrueCheckBaseSepolia = CheckOperation{
 	OpType:          CHECK,
@@ -333,9 +408,10 @@ func TestCheckOperation(t *testing.T) {
 
 func TestCheckOperation_Untimed(t *testing.T) {
 	testCases := map[string]struct {
-		a        Operation
-		wallets  []common.Address
-		expected bool
+		a           Operation
+		wallets     []common.Address
+		expected    bool
+		expectedErr error
 	}{
 		// Note: these tests call out to base sepolia and ethereum sepolia, so they are not
 		// really unit tests. However, we've had deploy failures since anvil does not always
@@ -343,85 +419,414 @@ func TestCheckOperation_Untimed(t *testing.T) {
 		// entitlement checks work on base and ethereum mainnets, which is where they will happen
 		// in practice.
 		// ERC20 checks with single wallet
+		"ERC20 empty wallets": {
+			&erc20TrueCheckBaseSepolia,
+			[]common.Address{},
+			false,
+			nil,
+		},
+		"ERC20 invalid check (no chainId)": {
+			&CheckOperation{
+				OpType:          CHECK,
+				CheckType:       CheckOperationType(ERC20),
+				ContractAddress: examples.EthSepoliaChainlinkContract,
+				Threshold:       big.NewInt(1),
+			},
+			[]common.Address{examples.SepoliaChainlinkWallet},
+			false,
+			fmt.Errorf("evaluateCheckOperation: Chain ID is nil for operation ERC20"),
+		},
+		"ERC20 invalid check (no threshold)": {
+			&CheckOperation{
+				OpType:          CHECK,
+				CheckType:       CheckOperationType(ERC20),
+				ChainID:         examples.EthSepoliaChainId,
+				ContractAddress: examples.EthSepoliaChainlinkContract,
+			},
+			[]common.Address{examples.SepoliaChainlinkWallet},
+			false,
+			fmt.Errorf("evaluateCheckOperation: Threshold is nil for operation ERC20"),
+		},
+		"ERC20 invalid check (invalid threshold: -1)": {
+			&CheckOperation{
+				OpType:          CHECK,
+				CheckType:       CheckOperationType(ERC20),
+				ChainID:         examples.EthSepoliaChainId,
+				ContractAddress: examples.EthSepoliaChainlinkContract,
+				Threshold:       big.NewInt(-1),
+			},
+			[]common.Address{examples.SepoliaChainlinkWallet},
+			false,
+			fmt.Errorf("evaluateCheckOperation: Threshold -1 is nonpositive for operation ERC20"),
+		},
+		"ERC20 invalid check (invalid threshold: 0)": {
+			&CheckOperation{
+				OpType:          CHECK,
+				CheckType:       CheckOperationType(ERC20),
+				ChainID:         examples.EthSepoliaChainId,
+				ContractAddress: examples.EthSepoliaChainlinkContract,
+				Threshold:       big.NewInt(0),
+			},
+			[]common.Address{examples.SepoliaChainlinkWallet},
+			false,
+			fmt.Errorf("evaluateCheckOperation: Threshold 0 is nonpositive for operation ERC20"),
+		},
+		"ERC20 invalid check (no contract address)": {
+			&CheckOperation{
+				OpType:    CHECK,
+				CheckType: CheckOperationType(ERC20),
+				ChainID:   examples.EthSepoliaChainId,
+				Threshold: big.NewInt(1),
+			},
+			[]common.Address{examples.SepoliaChainlinkWallet},
+			false,
+			fmt.Errorf("evaluateCheckOperation: Contract address is nil for operation ERC20"),
+		},
 		"ERC20 base sepolia": {
 			&erc20TrueCheckBaseSepolia,
 			[]common.Address{examples.SepoliaChainlinkWallet},
 			true,
+			nil,
 		},
 		"ERC20 base sepolia (false)": {
 			&erc20FalseCheckBaseSepolia,
 			[]common.Address{examples.SepoliaChainlinkWallet},
 			false,
+			nil,
 		},
 		"ERC20 eth sepolia": {
 			&erc20TrueCheckEthereumSepolia,
 			[]common.Address{examples.SepoliaChainlinkWallet},
 			true,
+			nil,
 		},
 		"ERC20 eth sepolia (false)": {
 			&erc20FalseCheckEthereumSepolia,
 			[]common.Address{examples.SepoliaChainlinkWallet},
 			false,
+			nil,
 		},
-
+		"Custom entitlement Contract Address is nil": {
+			&CheckOperation{
+				OpType:    CHECK,
+				CheckType: CheckOperationType(ISENTITLED),
+				ChainID:   examples.EthSepoliaChainId,
+				Threshold: big.NewInt(1),
+			},
+			[]common.Address{examples.SepoliaChainlinkWallet},
+			false,
+			fmt.Errorf("evaluateCheckOperation: Contract address is nil for operation ISENTITLED"),
+		},
+		"Custom entitlement check Chain ID is nil": {
+			&CheckOperation{
+				OpType:          CHECK,
+				CheckType:       CheckOperationType(ISENTITLED),
+				ContractAddress: examples.EthSepoliaChainlinkContract,
+			},
+			[]common.Address{examples.SepoliaChainlinkWallet},
+			false,
+			fmt.Errorf("evaluateCheckOperation: Chain ID is nil for operation ISENTITLED"),
+		},
+		"ERC1155 Contract Address is nil": {
+			&CheckOperation{
+				OpType:    CHECK,
+				CheckType: CheckOperationType(ERC1155),
+				ChainID:   examples.EthSepoliaChainId,
+				Threshold: big.NewInt(1),
+			},
+			[]common.Address{examples.SepoliaChainlinkWallet},
+			false,
+			fmt.Errorf("evaluateCheckOperation: Contract address is nil for operation ERC1155"),
+		},
+		"ERC1155 Threshold is nil": {
+			&CheckOperation{
+				OpType:          CHECK,
+				CheckType:       CheckOperationType(ERC1155),
+				ChainID:         examples.EthSepoliaChainId,
+				ContractAddress: examples.EthSepoliaChainlinkContract,
+			},
+			[]common.Address{examples.SepoliaChainlinkWallet},
+			false,
+			fmt.Errorf("evaluateCheckOperation: Threshold is nil for operation ERC1155"),
+		},
+		"ERC1155 Threshold is nonpositive (-1)": {
+			&CheckOperation{
+				OpType:          CHECK,
+				CheckType:       CheckOperationType(ERC1155),
+				ChainID:         examples.EthSepoliaChainId,
+				ContractAddress: examples.EthSepoliaChainlinkContract,
+				Threshold:       big.NewInt(-1),
+			},
+			[]common.Address{examples.SepoliaChainlinkWallet},
+			false,
+			fmt.Errorf("evaluateCheckOperation: Threshold -1 is nonpositive for operation ERC1155"),
+		},
+		"ERC1155 Threshold is nonpositive (0)": {
+			&CheckOperation{
+				OpType:          CHECK,
+				CheckType:       CheckOperationType(ERC1155),
+				ChainID:         examples.EthSepoliaChainId,
+				ContractAddress: examples.EthSepoliaChainlinkContract,
+				Threshold:       big.NewInt(0),
+			},
+			[]common.Address{examples.SepoliaChainlinkWallet},
+			false,
+			fmt.Errorf("evaluateCheckOperation: Threshold 0 is nonpositive for operation ERC1155"),
+		},
+		"ERC1155 Chain ID is nil": {
+			&CheckOperation{
+				OpType:          CHECK,
+				CheckType:       CheckOperationType(ERC1155),
+				ContractAddress: examples.EthSepoliaChainlinkContract,
+				Threshold:       big.NewInt(1),
+			},
+			[]common.Address{examples.SepoliaChainlinkWallet},
+			false,
+			fmt.Errorf("evaluateCheckOperation: Chain ID is nil for operation ERC1155"),
+		},
 		// NFT checks with single and multiple NFTs, wallets
+		"ERC721 empty wallets": {
+			&nftCheckEthereumSepolia,
+			[]common.Address{},
+			false,
+			nil,
+		},
+		"ERC721 invalid check (no chainId)": {
+			&CheckOperation{
+				OpType:          CHECK,
+				CheckType:       CheckOperationType(ERC721),
+				ContractAddress: examples.EthSepoliaTestNftContract,
+				Threshold:       big.NewInt(1),
+			},
+			[]common.Address{sepoliaTestNftWallet_1Token},
+			false,
+			fmt.Errorf("evaluateCheckOperation: Chain ID is nil for operation ERC721"),
+		},
+		"ERC721 invalid check (no threshold)": {
+			&CheckOperation{
+				OpType:          CHECK,
+				CheckType:       CheckOperationType(ERC721),
+				ChainID:         examples.EthSepoliaChainId,
+				ContractAddress: examples.EthSepoliaTestNftContract,
+			},
+			[]common.Address{sepoliaTestNftWallet_1Token},
+			false,
+			fmt.Errorf("evaluateCheckOperation: Threshold is nil for operation ERC721"),
+		},
+		"ERC721 invalid check (invalid threshold: -1)": {
+			&CheckOperation{
+				OpType:          CHECK,
+				CheckType:       CheckOperationType(ERC721),
+				ChainID:         examples.EthSepoliaChainId,
+				ContractAddress: examples.EthSepoliaTestNftContract,
+				Threshold:       big.NewInt(-1),
+			},
+			[]common.Address{sepoliaTestNftWallet_1Token},
+			false,
+			fmt.Errorf("evaluateCheckOperation: Threshold -1 is nonpositive for operation ERC721"),
+		},
+		"ERC721 invalid check (invalid threshold: 0)": {
+			&CheckOperation{
+				OpType:          CHECK,
+				CheckType:       CheckOperationType(ERC721),
+				ChainID:         examples.EthSepoliaChainId,
+				ContractAddress: examples.EthSepoliaTestNftContract,
+				Threshold:       big.NewInt(0),
+			},
+			[]common.Address{sepoliaTestNftWallet_1Token},
+			false,
+			fmt.Errorf("evaluateCheckOperation: Threshold 0 is nonpositive for operation ERC721"),
+		},
+		"ERC721 invalid check (no contract address)": {
+			&CheckOperation{
+				OpType:    CHECK,
+				CheckType: CheckOperationType(ERC721),
+				ChainID:   examples.EthSepoliaChainId,
+				Threshold: big.NewInt(1),
+			},
+			[]common.Address{sepoliaTestNftWallet_1Token},
+			false,
+			fmt.Errorf("evaluateCheckOperation: Contract address is nil for operation ERC721"),
+		},
 		"ERC721 eth sepolia": {
 			&nftCheckEthereumSepolia,
 			[]common.Address{sepoliaTestNftWallet_1Token},
 			true,
+			nil,
 		},
 		"ERC721 eth sepolia (no tokens)": {
 			&nftCheckEthereumSepolia,
 			[]common.Address{sepoliaTestNoNftsWallet},
 			false,
+			nil,
 		},
 		"ERC721 eth sepolia (insufficient balance)": {
 			&nftMultiCheckEthereumSepolia,
 			[]common.Address{sepoliaTestNftWallet_1Token},
 			false,
+			nil,
 		},
 		"ERC721 multi-wallet eth sepolia": {
 			&nftMultiCheckEthereumSepolia,
 			[]common.Address{sepoliaTestNftWallet_1Token, sepoliaTestNftWallet_2Tokens, sepoliaTestNftWallet_3Tokens},
 			true,
+			nil,
 		},
 		"ERC721 multi-wallet eth sepolia (insufficient balance)": {
 			&nftMultiCheckHighThresholdEthereumSepolia,
 			[]common.Address{sepoliaTestNftWallet_1Token, sepoliaTestNftWallet_2Tokens, sepoliaTestNftWallet_3Tokens},
 			false,
+			nil,
 		},
 		"ERC721 base sepolia": {
 			&nftCheckBaseSepolia,
 			[]common.Address{sepoliaTestNftWallet_1Token},
 			true,
+			nil,
 		},
 		"ERC721 base sepolia (no tokens)": {
 			&nftCheckBaseSepolia,
 			[]common.Address{sepoliaTestNoNftsWallet},
 			false,
+			nil,
 		},
 		"ERC721 base sepolia (insufficient balance)": {
 			&nftMultiCheckBaseSepolia,
 			[]common.Address{sepoliaTestNftWallet_1Token},
 			false,
+			nil,
 		},
 		"ERC721 multi-wallet base sepolia": {
 			&nftMultiCheckEthereumSepolia,
 			[]common.Address{sepoliaTestNftWallet_1Token, sepoliaTestNftWallet_2Tokens, sepoliaTestNftWallet_3Tokens},
 			true,
+			nil,
 		},
 		"ERC721 multi-wallet base sepolia (insufficient balance)": {
 			&nftMultiCheckHighThresholdBaseSepolia,
 			[]common.Address{sepoliaTestNftWallet_1Token, sepoliaTestNftWallet_2Tokens, sepoliaTestNftWallet_3Tokens},
 			false,
+			nil,
+		},
+		"ETH balance empty wallets": {
+			&nativeCoinBalance0_2EthEthereumSepolia,
+			[]common.Address{},
+			false,
+			nil,
+		},
+		"ETH balance invalid check (no chainId)": {
+			&CheckOperation{
+				OpType:    CHECK,
+				CheckType: CheckOperationType(NATIVE_COIN_BALANCE),
+				Threshold: big.NewInt(1),
+			},
+			[]common.Address{examples.Sepolia0_2EthWallet},
+			false,
+			fmt.Errorf("evaluateCheckOperation: Chain ID is nil for operation NATIVE_COIN_BALANCE"),
+		},
+		"ETH balance invalid check (no threshold)": {
+			&CheckOperation{
+				OpType:    CHECK,
+				CheckType: CheckOperationType(NATIVE_COIN_BALANCE),
+				ChainID:   examples.EthSepoliaChainId,
+			},
+			[]common.Address{examples.Sepolia0_2EthWallet},
+			false,
+			fmt.Errorf("evaluateCheckOperation: Threshold is nil for operation NATIVE_COIN_BALANCE"),
+		},
+		"ETH balance invalid check (invalid threshold: -1)": {
+			&CheckOperation{
+				OpType:          CHECK,
+				CheckType:       CheckOperationType(NATIVE_COIN_BALANCE),
+				ChainID:         examples.EthSepoliaChainId,
+				Threshold:       big.NewInt(-1),
+				ContractAddress: common.Address{},
+			},
+			[]common.Address{examples.Sepolia0_2EthWallet},
+			false,
+			fmt.Errorf("evaluateCheckOperation: Threshold -1 is nonpositive for operation NATIVE_COIN_BALANCE"),
+		},
+		"ETH balance invalid check (invalid threshold: 0)": {
+			&CheckOperation{
+				OpType:          CHECK,
+				CheckType:       CheckOperationType(NATIVE_COIN_BALANCE),
+				ChainID:         examples.EthSepoliaChainId,
+				Threshold:       big.NewInt(0),
+				ContractAddress: common.Address{},
+			},
+			[]common.Address{examples.Sepolia0_2EthWallet},
+			false,
+			fmt.Errorf("evaluateCheckOperation: Threshold 0 is nonpositive for operation NATIVE_COIN_BALANCE"),
+		},
+		"ETH balance eth sepolia": {
+			&nativeCoinBalance0_2EthEthereumSepolia,
+			[]common.Address{examples.Sepolia0_2EthWallet},
+			true,
+			nil,
+		},
+		"ETH balance eth sepolia (multiwallet)": {
+			&nativeCoinBalance0_21EthEthereumSepolia,
+			[]common.Address{examples.Sepolia0_2EthWallet, examples.Sepolia0_015EthWallet},
+			true,
+			nil,
+		},
+		"ETH balance eth sepolia (insufficient balance)": {
+			&nativeCoinBalance0_1EthEthereumSepolia,
+			[]common.Address{examples.Sepolia0_015EthWallet},
+			false,
+			nil,
+		},
+		"ETH balance eth sepolia (multiwallet, insufficient balance)": {
+			&nativeCoinBalance0_3EthEthereumSepolia,
+			[]common.Address{examples.Sepolia0_2EthWallet, examples.Sepolia0_015EthWallet},
+			false,
+			nil,
+		},
+		"ETH balance eth sepolia (no eth)": {
+			&nativeCoinBalance0_1EthEthereumSepolia,
+			[]common.Address{examples.EmptyEthTestAccount},
+			false,
+			nil,
+		},
+		"ETH balance base sepolia": {
+			&nativeCoinBalance0_5EthBaseSepolia,
+			[]common.Address{examples.BaseSepolia0_5EthWallet},
+			true,
+			nil,
+		},
+		"ETH balance base sepolia (multiwallet)": {
+			&nativeCoinBalance0_52EthBaseSepolia,
+			[]common.Address{examples.BaseSepolia0_5EthWallet, examples.BaseSepolia0_05EthWallet},
+			true,
+			nil,
+		},
+		"ETH balance base sepolia (insufficient balance)": {
+			&nativeCoinBalance0_4EthBaseSepolia,
+			[]common.Address{examples.BaseSepolia0_05EthWallet},
+			false,
+			nil,
+		},
+		"ETH balance base sepolia (multiwallet, insufficient balance)": {
+			&nativeCoinBalance0_6EthBaseSepolia,
+			[]common.Address{examples.BaseSepolia0_5EthWallet, examples.BaseSepolia0_05EthWallet},
+			false,
+			nil,
+		},
+		"ETH balance base sepolia (no eth, insufficient balance)": {
+			&nativeCoinBalance0_4EthBaseSepolia,
+			[]common.Address{examples.EmptyEthTestAccount},
+			false,
+			nil,
 		},
 	}
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
 			result, err := evaluator.evaluateOp(context.Background(), tc.a, tc.wallets)
-			if err != nil {
-				t.Errorf("evaluateCheckOperation error (%v) = %v; want %v", tc.a, err, nil)
+			if tc.expectedErr == nil {
+				require.NoError(t, err)
+			} else {
+				require.EqualError(t, err, tc.expectedErr.Error())
 			}
 			if result != tc.expected {
 				t.Errorf("evaluateCheckOperation result (%v) = %v; want %v", tc.a, result, tc.expected)

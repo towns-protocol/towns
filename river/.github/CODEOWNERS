@@ -45,8 +45,9 @@
 /core/xchain/ @sergekh2 @bas-vk @clemire @brianathere
 /infra/ @mechanical-turk
 /packages/ @sergekh2 @texuf
-/packages/addresses/ @sergekh2 @texuf @giuseppecrj
-/packages/generated/ @sergekh2 @texuf @giuseppecrj
+/packages/generated/ @sergekh2 @giuseppecrj
+/packages/generated/addresses/ @sergekh2 @texuf @giuseppecrj
+/packages/generated/deployments/ @sergekh2 @texuf @giuseppecrj
 /packages/generated/dev/ @sergekh2 @giuseppecrj
 /packages/sdk/ @sergekh2 @texuf
 /packages/sdk/src/ @sergekh2 @texuf @erikolsson

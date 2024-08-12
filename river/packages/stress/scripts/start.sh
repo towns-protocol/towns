@@ -10,6 +10,7 @@ export RIVER_ENV="${RIVER_ENV}"
 export BASE_CHAIN_RPC_URL="${BASE_CHAIN_RPC_URL}"
 export RIVER_CHAIN_RPC_URL="${RIVER_CHAIN_RPC_URL}"
 export MNEMONIC="${MNEMONIC}"
+export REDIS_HOST="${REDIS_HOST:-}"
 # stress
 export SPACE_ID="${SPACE_ID}"
 export ANNOUNCE_CHANNEL_ID="${ANNOUNCE_CHANNEL_ID:-}"
@@ -29,6 +30,7 @@ if [ -z "$DEBUG" ]; then
     export DEBUG="stress:*"
 fi
 export DEBUG_DEPTH="${DEBUG_DEPTH:-10}"
+export SINGLE_LINE_LOGS="true"
 # stride 
 export CONTAINER_INDEX="${CONTAINER_INDEX:-0}"
 export CONTAINER_COUNT="${CONTAINER_COUNT:-1}"

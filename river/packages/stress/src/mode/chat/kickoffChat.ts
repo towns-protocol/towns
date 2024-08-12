@@ -10,6 +10,12 @@ const logger = dlogger('stress:kickoffChat')
 export async function kickoffChat(rootClient: StressClient, cfg: ChatConfig) {
     logger.log('kickoffChat', rootClient.userId)
     check(rootClient.clientIndex === 0, 'rootClient.clientIndex === 0')
+    const globalRunIndex = parseInt(
+        (await cfg.globalPersistedStore?.get('stress_global_run_index').catch(() => undefined)) ??
+            '0',
+    )
+    await cfg.globalPersistedStore?.set('stress_global_run_index', `${globalRunIndex + 1}`)
+
     const { spaceId, sessionId } = cfg
     const balance = await rootClient.baseProvider.wallet.getBalance()
     const announceChannelId = cfg.announceChannelId
@@ -43,6 +49,7 @@ export async function kickoffChat(rootClient: StressClient, cfg: ChatConfig) {
         walletBalance: balance.toString(),
         testDuration: cfg.duration,
         clientsCount: cfg.clientsCount,
+        globalRunIndex,
     }
 
     logger.log('start thread')

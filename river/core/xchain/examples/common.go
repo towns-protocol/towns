@@ -31,4 +31,17 @@ var (
 	// Contract addresses for the test NFT contracts.
 	EthSepoliaTestNftContract  = common.HexToAddress("0xb088b3f2b35511A611bF2aaC13fE605d491D6C19")
 	BaseSepoliaTestNftContract = common.HexToAddress("0xb088b3f2b35511A611bF2aaC13fE605d491D6C19")
+
+	// This wallet has no eth in it on any chains.
+	EmptyEthTestAccount = common.HexToAddress("0xb227905F186095083869928BAb49cA9CE9546817")
+
+	// This wallet contains .5ETH on Base Sepolia
+	BaseSepolia0_5EthWallet = common.HexToAddress("0x4BCfC6962Ab0297aF801da21216014F53B46E991")
+	// This wallet contains .05 ETH on Base Sepolia
+	BaseSepolia0_05EthWallet = common.HexToAddress("0xB79Af997239A334355F60DBeD75bEDf30AcD37bD")
+
+	// .2 ETH on Ethereum Sepolia
+	Sepolia0_2EthWallet = common.HexToAddress("0x8cECcB1e5537040Fc63A06C88b4c1dE61880dA4d")
+	// .015 ETH on Ethereum Sepolia
+	Sepolia0_015EthWallet = common.HexToAddress("0xB4d85De80afE92C97293c32B1C0c604133d0332E")
 )

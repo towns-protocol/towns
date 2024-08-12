@@ -32,13 +32,42 @@ func (e *Evaluator) evaluateCheckOperation(
 	// Sanity checks
 	log := dlog.FromCtx(ctx).With("function", "evaluateCheckOperation")
 	if op.ChainID == nil {
-		log.Info("Chain ID is nil")
-		return false, fmt.Errorf("evaluateCheckOperation: Chain ID is nil")
+		log.Error("Entitlement check: chain ID is nil for operation", "operation", op.CheckType.String())
+		return false, fmt.Errorf("evaluateCheckOperation: Chain ID is nil for operation %s", op.CheckType)
 	}
+
 	zeroAddress := common.Address{}
-	if op.ContractAddress == zeroAddress {
-		log.Info("Contract address is nil")
-		return false, fmt.Errorf("evaluateCheckOperation: Contract address is nil")
+	if op.CheckType != NATIVE_COIN_BALANCE && op.ContractAddress == zeroAddress {
+		log.Error("Entitlement check: contract address is nil for operation", "operation", op.CheckType.String())
+		return false, fmt.Errorf(
+			"evaluateCheckOperation: Contract address is nil for operation %s",
+			op.CheckType,
+		)
+	}
+
+	if op.CheckType == ERC20 || op.CheckType == ERC721 || op.CheckType == ERC1155 ||
+		op.CheckType == NATIVE_COIN_BALANCE {
+		if op.Threshold == nil {
+			log.Error("Entitlement check: threshold is nil for operation", "operation", op.CheckType.String())
+			return false, fmt.Errorf(
+				"evaluateCheckOperation: Threshold is nil for operation %s",
+				op.CheckType,
+			)
+		}
+		if op.Threshold.Sign() <= 0 {
+			log.Error(
+				"Entitlement check: threshold is nonpositive for operation",
+				"operation",
+				op.CheckType.String(),
+				"threshold",
+				op.Threshold.String(),
+			)
+			return false, fmt.Errorf(
+				"evaluateCheckOperation: Threshold %s is nonpositive for operation %s",
+				op.Threshold,
+				op.CheckType,
+			)
+		}
 	}
 
 	switch op.CheckType {
@@ -50,6 +79,8 @@ func (e *Evaluator) evaluateCheckOperation(
 		return e.evaluateErc721Operation(ctx, op, linkedWallets)
 	case ERC1155:
 		return e.evaluateErc1155Operation(ctx, op)
+	case NATIVE_COIN_BALANCE:
+		return e.evaluateNativeCoinBalanceOperation(ctx, op, linkedWallets)
 	case CheckNONE:
 		fallthrough
 	case MOCK:
@@ -59,7 +90,8 @@ func (e *Evaluator) evaluateCheckOperation(
 	}
 }
 
-func (e *Evaluator) evaluateMockOperation(ctx context.Context,
+func (e *Evaluator) evaluateMockOperation(
+	ctx context.Context,
 	op *CheckOperation,
 ) (bool, error) {
 	delay := int(op.Threshold.Int64())
@@ -127,6 +159,48 @@ func (e *Evaluator) evaluateIsEntitledOperation(
 	return false, nil
 }
 
+// Check balance in decimals of native token
+func (e *Evaluator) evaluateNativeCoinBalanceOperation(
+	ctx context.Context,
+	op *CheckOperation,
+	linkedWallets []common.Address,
+) (bool, error) {
+	log := dlog.FromCtx(ctx).With("function", "evaluateNativeTokenBalanceOperation")
+	client, err := e.clients.Get(op.ChainID.Uint64())
+	if err != nil {
+		log.Error("Chain ID not found", "chainID", op.ChainID)
+		return false, fmt.Errorf("evaluateNativeTokenBalanceOperation: Chain ID %v not found", op.ChainID)
+	}
+
+	total := big.NewInt(0)
+	for _, wallet := range linkedWallets {
+		// Balance is returned as a representation of the balance according the denomination of the
+		// native token. The default decimals for most native tokens is 18, and we don't convert
+		// according to decimals here, but compare the threshold directly with the balance.
+		balance, err := client.BalanceAt(ctx, wallet, nil)
+		if err != nil {
+			log.Error("Failed to retrieve native token balance", "chain", op.ChainID, "error", err)
+			return false, err
+		}
+		total.Add(total, balance)
+
+		log.Info("Retrieved native token balance",
+			"balance", balance.String(),
+			"total", total.String(),
+			"threshold", op.Threshold.String(),
+			"chainID", op.ChainID.String(),
+		)
+
+		// Balance is a *big.Int
+		// Iteratively check if the total balance of evaluated wallets is greater than or equal to the
+		// threshold. Note threshold is always positive and total is non-negative.
+		if total.Cmp(op.Threshold) >= 0 {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 func (e *Evaluator) evaluateErc20Operation(
 	ctx context.Context,
 
@@ -174,7 +248,8 @@ func (e *Evaluator) evaluateErc20Operation(
 
 		// Balance is a *big.Int
 		// Iteratively check if the total balance of evaluated wallets is greater than or equal to the threshold
-		if op.Threshold.Sign() > 0 && total.Sign() > 0 && total.Cmp(op.Threshold) >= 0 {
+		// Note threshold is always positive and total is non-negative.
+		if total.Cmp(op.Threshold) >= 0 {
 			return true, nil
 		}
 	}
@@ -226,6 +301,7 @@ func (e *Evaluator) evaluateErc721Operation(
 		// )
 
 		// Iteratively check if the total balance of evaluated wallets is greater than or equal to the threshold
+		// Note threshold is always positive and total is non-negative.
 		if total.Cmp(op.Threshold) >= 0 {
 			return true, nil
 		}

@@ -12,6 +12,7 @@ import { updateProfile } from './updateProfile'
 import { chitChat } from './chitChat'
 import { sumarizeChat } from './sumarizeChat'
 import { statsReporter } from './statsReporter'
+import { RedisStorage } from '../../utils/storage'
 
 function getStressDuration(): number {
     check(isSet(process.env.STRESS_DURATION), 'process.env.STRESS_DURATION')
@@ -53,6 +54,7 @@ function getChatConfig(opts: { processIndex: number; rootWallet: Wallet }): Chat
     const randomClientsCount = process.env.RANDOM_CLIENTS_COUNT
         ? parseInt(process.env.RANDOM_CLIENTS_COUNT)
         : 0
+    const storage = process.env.REDIS_HOST ? new RedisStorage(process.env.REDIS_HOST) : undefined
     if (clientStartIndex >= clientEndIndex) {
         throw new Error('clientStartIndex >= clientEndIndex')
     }
@@ -81,6 +83,7 @@ function getChatConfig(opts: { processIndex: number; rootWallet: Wallet }): Chat
         startedAtMs,
         waitForSpaceMembershipTimeoutMs: Math.max(duration * 1000, 20000),
         waitForChannelDecryptionTimeoutMs: Math.max(duration * 1000, 20000),
+        globalPersistedStore: storage,
     } satisfies ChatConfig
 }
 
@@ -100,7 +103,12 @@ export async function startStressChat(opts: {
     logger.log('make clients')
     const clients = await Promise.all(
         chatConfig.localClients.wallets.map((wallet, i) =>
-            makeStressClient(opts.config, chatConfig.localClients.startIndex + i, wallet),
+            makeStressClient(
+                opts.config,
+                chatConfig.localClients.startIndex + i,
+                wallet,
+                chatConfig.globalPersistedStore,
+            ),
         ),
     )
 
@@ -119,7 +127,12 @@ export async function startStressChat(opts: {
             i < chatConfig.clientsCount + chatConfig.randomClientsCount;
             i++
         ) {
-            const rc = await makeStressClient(opts.config, i, ethers.Wallet.createRandom())
+            const rc = await makeStressClient(
+                opts.config,
+                i,
+                ethers.Wallet.createRandom(),
+                chatConfig.globalPersistedStore,
+            )
             chatConfig.randomClients.push(rc)
         }
 
@@ -179,6 +192,8 @@ export async function startStressChat(opts: {
         await client.stop()
     }
 
+    await chatConfig.globalPersistedStore?.close()
+
     return { summary, chatConfig, opts }
 }
 
@@ -190,7 +205,7 @@ export async function setupChat(opts: {
 }) {
     const logger = dlogger(`stress:setupChat`)
     logger.log('setupChat')
-    const client = await makeStressClient(opts.config, 0, opts.rootWallet)
+    const client = await makeStressClient(opts.config, 0, opts.rootWallet, undefined)
     // make a space
     const { spaceId } = await client.createSpace('stress test space')
     // make an announce channel

@@ -31,6 +31,8 @@ import (
 
 var (
 	Eth_1   = new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil)
+	Eth_2   = new(big.Int).Mul(Eth_1, big.NewInt(2))
+	Eth_4   = new(big.Int).Mul(Eth_1, big.NewInt(4))
 	Eth_10  = new(big.Int).Exp(big.NewInt(10), big.NewInt(19), nil)
 	Eth_100 = new(big.Int).Exp(big.NewInt(10), big.NewInt(20), nil)
 )

@@ -153,6 +153,21 @@ export async function customCheckOp(contractName: string): Promise<Operation> {
     }
 }
 
+export const twoEth = BigInt(2e18)
+export const oneEth = BigInt(1e18)
+export const threeEth = BigInt(3e18)
+export const oneHalfEth = BigInt(5e17)
+
+export function nativeCoinBalanceCheckOp(threshold: bigint): Operation {
+    return {
+        opType: OperationType.CHECK,
+        checkType: CheckOperationType.NATIVE_COIN_BALANCE,
+        chainId: 31337n,
+        contractAddress: ethers.constants.AddressZero,
+        threshold,
+    }
+}
+
 /**
  * makeUniqueSpaceStreamId - space stream ids are derived from the contract
  * in tests without entitlements there are no contracts, so we use a random id

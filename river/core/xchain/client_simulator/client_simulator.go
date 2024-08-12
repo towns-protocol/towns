@@ -332,8 +332,7 @@ func (cs *clientSimulator) executeCheck(ctx context.Context, ruleData *deploy.IR
 			tx, err := gated.RequestEntitlementCheck(opts, big.NewInt(0), *ruleData)
 			log.Info("RequestEntitlementCheck called", "tx", tx, "err", err)
 			return tx, err
-		},
-	)
+		})
 
 	log.Info("Submitted entitlement check...")
 

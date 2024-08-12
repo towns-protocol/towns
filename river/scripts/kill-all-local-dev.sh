@@ -88,6 +88,11 @@ then
     do_killl './bin/xchain_node run'
 fi
 
+if prompt 'Stop Stress?:y/n '
+then
+    ./packages/stress/scripts/stop_redis.sh
+fi
+
 do_killl yarn "$1"
 do_killl anvil "$1"
 do_killl wrangler "$1"
