@@ -1,3 +1,5 @@
+import './tracer' // must come before importing any instrumented module.
+
 import fastifyStatic from '@fastify/static'
 import fastifyView from '@fastify/view'
 import ejs from 'ejs'

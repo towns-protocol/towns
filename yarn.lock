@@ -19868,6 +19868,7 @@ __metadata:
     "@fastify/view": ^9.1.0
     "@river-build/web3": "workspace:^"
     "@types/ejs": ^3.1.5
+    dd-trace: ^5.19.0
     ejs: ^3.1.10
     esbuild: ^0.21.5
     fastify: ^4.28.0

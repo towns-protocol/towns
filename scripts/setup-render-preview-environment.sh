@@ -13,6 +13,21 @@ function main() {
     check_env
     pr_number=$(get_pr_number_of_preview)
     set_domain "$pr_number"
+    set_pr_number_render_environment "$pr_number"
+}
+
+function set_pr_number_render_environment() {
+    local pr_number="$1"
+
+    echo "Setting VITE_GITHUB_PR_NUMBER number $pr_number in Render environment"
+
+    curl  \
+        --request PUT \
+        --url https://api.render.com/v1/services/${RENDER_SERVICE_ID}/env-vars/VITE_GITHUB_PR_NUMBER \
+        --header "Authorization: Bearer $RENDER_API_KEY" \
+        --header 'accept: application/json' \
+        --header 'content-type: application/json' \
+        --data '{ "value": "'"$pr_number"'" }'
 }
 
 function check_env() {

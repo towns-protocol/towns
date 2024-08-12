@@ -23,6 +23,7 @@
         "@fastify/static": "^6.0.0",
         "@fastify/view": "^9.1.0",
         "@river-build/web3": "workspace:^",
+        "dd-trace": "^5.19.0",
         "ejs": "^3.1.10",
         "fastify": "^4.28.0",
         "node-cache": "^5.1.2",

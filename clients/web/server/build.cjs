@@ -11,4 +11,11 @@ build({
   minify: true,
   treeShaking: true,
   tsconfig: "tsconfig.json",
+  external: [
+    // esbuild cannot bundle native modules
+    "@datadog/native-metrics",
+
+    // required if you use profiling
+    "@datadog/pprof",
+  ],
 }).catch(() => process.exit(1));
