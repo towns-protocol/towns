@@ -98,7 +98,7 @@ export const SpaceNavItem = (props: Props) => {
                     background="level1"
                     rounded="xs"
                     variant="thumbnail100"
-                    firstLetterOfSpaceName={spaceName?.[0] ?? ''}
+                    firstLetterOfSpaceName={spaceName?.trim()[0] ?? ''}
                 />
                 {isTouch && newMessages ? (
                     <Dot position="topRight" style={{ transform: `translate(25%,-25%)` }} />
