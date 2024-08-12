@@ -1,10 +1,9 @@
-import { Address, StreamIdHex } from './types'
+import { StreamIdHex } from './types'
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { StreamPrefix, StreamStateView, makeStreamId } from '@river-build/sdk'
 import { getMediaStreamContent, getStream } from './riverStreamRpcClient'
 import { isBytes32String, isValidEthereumAddress } from './validators'
-
-import { deriveKeyAndIV } from '@river-build/sdk'
+import { ChunkedMedia } from '@river-build/proto'
 
 export async function handleImageRequest(request: FastifyRequest, reply: FastifyReply) {
 	const { spaceAddress } = request.params as { spaceAddress?: string }
@@ -35,21 +34,18 @@ export async function handleImageRequest(request: FastifyRequest, reply: Fastify
 	}
 
 	// get the image metatdata from the stream
-	const mediaStreamId = await getSpaceImageStreamId(stream)
+	const mediaStreamInfo = await getSpaceImage(stream)
 
-	if (!mediaStreamId) {
+	if (!mediaStreamInfo) {
 		return reply.code(404).send('Image not found')
 	}
 
-	const fullStreamId: StreamIdHex = `0x${mediaStreamId}`
+	const fullStreamId: StreamIdHex = `0x${mediaStreamInfo.streamId}`
 	if (!isBytes32String(fullStreamId)) {
 		return reply.code(400).send('Invalid stream ID')
 	}
 
-	// derive the key and IV from the space address to decrypt the image
-	// the spaceAddress must be all lowercase
-	const context = spaceAddress.toLowerCase()
-	const { key, iv } = await deriveKeyAndIV(context)
+	const { key, iv } = getEncryption(mediaStreamInfo)
 
 	const { data, mimeType } = await getMediaStreamContent(fullStreamId, key, iv)
 
@@ -60,12 +56,22 @@ export async function handleImageRequest(request: FastifyRequest, reply: Fastify
 	}
 }
 
-async function getSpaceImageStreamId(streamView: StreamStateView) {
+async function getSpaceImage(streamView: StreamStateView): Promise<ChunkedMedia | undefined> {
 	if (streamView.contentKind !== 'spaceContent') {
 		return undefined
 	}
 
 	const spaceImage = await streamView.spaceContent.getSpaceImage()
-	const streamId = spaceImage?.streamId
-	return streamId
+	return spaceImage
+}
+
+function getEncryption(chunkedMedia: ChunkedMedia): { key: Uint8Array; iv: Uint8Array } {
+	switch (chunkedMedia.encryption.case) {
+		case 'aesgcm':
+			const key = new Uint8Array(chunkedMedia.encryption.value.secretKey)
+			const iv = new Uint8Array(chunkedMedia.encryption.value.iv)
+			return { key, iv }
+		default:
+			throw new Error(`Unsupported encryption: ${chunkedMedia.encryption}`)
+	}
 }

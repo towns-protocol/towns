@@ -28,9 +28,7 @@ import {
     MemberPayload_Nft,
     CreateStreamRequest,
     AddEventResponse_Error,
-    MediaInfo,
     ChunkedMedia,
-    EmbeddedMedia,
 } from '@river-build/proto'
 import {
     bin_fromHexString,
@@ -901,33 +899,26 @@ export class Client
         return ChunkedMedia.fromBinary(plaintext)
     }
 
-    async setSpaceImage(
-        spaceStreamId: string,
-        mediaStreamId: string,
-        info: MediaInfo,
-        thumbnail?: EmbeddedMedia,
-    ) {
-        this.logCall('setSpaceImage', spaceStreamId, mediaStreamId, info)
+    async setSpaceImage(spaceStreamId: string, chunkedMediaInfo: PlainMessage<ChunkedMedia>) {
+        this.logCall(
+            'setSpaceImage',
+            spaceStreamId,
+            chunkedMediaInfo.streamId,
+            chunkedMediaInfo.info,
+        )
 
         // create the chunked media to be added
         const spaceAddress = contractAddressFromSpaceId(spaceStreamId)
         const context = spaceAddress.toLowerCase()
-        const chunkedMedia = new ChunkedMedia({
-            info,
-            streamId: mediaStreamId,
-            thumbnail,
-            encryption: {
-                case: 'derived',
-                value: {
-                    context,
-                },
-            },
-        })
 
         // encrypt the chunked media
         // use the lowercased spaceId as the key phrase
         const { key, iv } = await deriveKeyAndIV(context)
-        const { ciphertext } = await encryptAESGCM(chunkedMedia.toBinary(), key, iv)
+        const { ciphertext } = await encryptAESGCM(
+            new ChunkedMedia(chunkedMediaInfo).toBinary(),
+            key,
+            iv,
+        )
         const encryptedData = new EncryptedData({
             ciphertext: uint8ArrayToBase64(ciphertext),
             algorithm: AES_GCM_DERIVED_ALGORITHM,

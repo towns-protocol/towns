@@ -60,63 +60,53 @@ export const MessageAttachments = (props: {
         <>
             {mediaAttachments.length > 0 && (
                 <Stack horizontal gap="sm" flexWrap="wrap" onClick={onClick}>
-                    {mediaAttachments.map((attachment) =>
-                        attachment.encryption ? (
-                            <ChunkedFile
-                                key={attachment.streamId}
-                                mimetype={attachment.info.mimetype}
-                                width={attachment.info.widthPixels}
-                                height={attachment.info.heightPixels}
-                                filename={attachment.info.filename}
-                                streamId={attachment.streamId}
-                                iv={attachment.encryption.iv}
-                                secretKey={attachment.encryption.secretKey}
-                                thumbnail={attachment.thumbnail?.content}
-                                onClick={
-                                    onAttachmentClick
-                                        ? (e) => {
-                                              e.preventDefault()
-                                              e.stopPropagation()
-                                              onAttachmentClick?.(attachment.id)
-                                          }
-                                        : undefined
-                                }
-                            />
-                        ) : (
-                            // todo derived encryption
-                            <></>
-                        ),
-                    )}
+                    {mediaAttachments.map((attachment) => (
+                        <ChunkedFile
+                            key={attachment.streamId}
+                            mimetype={attachment.info.mimetype}
+                            width={attachment.info.widthPixels}
+                            height={attachment.info.heightPixels}
+                            filename={attachment.info.filename}
+                            streamId={attachment.streamId}
+                            iv={attachment.encryption.iv}
+                            secretKey={attachment.encryption.secretKey}
+                            thumbnail={attachment.thumbnail?.content}
+                            onClick={
+                                onAttachmentClick
+                                    ? (e) => {
+                                          e.preventDefault()
+                                          e.stopPropagation()
+                                          onAttachmentClick?.(attachment.id)
+                                      }
+                                    : undefined
+                            }
+                        />
+                    ))}
                 </Stack>
             )}
             {fileAttachments.length > 0 && (
                 <Stack horizontal gap="sm" flexWrap="wrap">
-                    {fileAttachments.map((attachment) =>
-                        attachment.encryption ? (
-                            <ChunkedFile
-                                key={attachment.streamId}
-                                mimetype={attachment.info.mimetype}
-                                width={attachment.info.widthPixels}
-                                height={attachment.info.heightPixels}
-                                filename={attachment.info.filename}
-                                streamId={attachment.streamId}
-                                iv={attachment.encryption.iv}
-                                secretKey={attachment.encryption.secretKey}
-                                onClick={
-                                    onAttachmentClick
-                                        ? (e) => {
-                                              e.preventDefault()
-                                              e.stopPropagation()
-                                              onAttachmentClick?.(attachment.id)
-                                          }
-                                        : undefined
-                                }
-                            />
-                        ) : (
-                            // todo derived encryption
-                            <></>
-                        ),
-                    )}
+                    {fileAttachments.map((attachment) => (
+                        <ChunkedFile
+                            key={attachment.streamId}
+                            mimetype={attachment.info.mimetype}
+                            width={attachment.info.widthPixels}
+                            height={attachment.info.heightPixels}
+                            filename={attachment.info.filename}
+                            streamId={attachment.streamId}
+                            iv={attachment.encryption.iv}
+                            secretKey={attachment.encryption.secretKey}
+                            onClick={
+                                onAttachmentClick
+                                    ? (e) => {
+                                          e.preventDefault()
+                                          e.stopPropagation()
+                                          onAttachmentClick?.(attachment.id)
+                                      }
+                                    : undefined
+                            }
+                        />
+                    ))}
                 </Stack>
             )}
 

@@ -940,11 +940,10 @@ function toAttachment(
                     ? attachment.content.value.encryption.value
                     : undefined
 
-            const derivedEncryption =
-                attachment.content.value.encryption.case === 'derived'
-                    ? attachment.content.value.encryption.value
-                    : undefined
             if (!info || !encryption) {
+                console.error('$$$ useCasablancaTimelines invalid chunkedMedia attachment', {
+                    attachment,
+                })
                 return undefined
             }
 
@@ -963,7 +962,6 @@ function toAttachment(
                 info,
                 streamId: attachment.content.value.streamId,
                 encryption: encryption,
-                derivedEncryption: derivedEncryption,
                 id,
                 thumbnail: thumbnail,
             } satisfies ChunkedMediaAttachment

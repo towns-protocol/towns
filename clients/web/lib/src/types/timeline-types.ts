@@ -5,7 +5,6 @@ import {
     ChannelMessage_Post_Content_EmbeddedMessage_Info,
     ChannelMessage_Post_Content_EmbeddedMessage_StaticInfo,
     ChannelMessage_Post_Content_Image_Info,
-    ChunkedMedia_DerivedAESGCM,
     MediaInfo as MediaInfoStruct,
     ChannelOp,
     ChannelProperties,
@@ -417,8 +416,7 @@ export type ImageAttachment = {
 export type ChunkedMediaAttachment = {
     type: 'chunked_media'
     streamId: string
-    encryption?: PlainMessage<ChunkedMedia_AESGCM>
-    derivedEncryption?: PlainMessage<ChunkedMedia_DerivedAESGCM>
+    encryption: PlainMessage<ChunkedMedia_AESGCM>
     info: MediaInfo
     id: string
     thumbnail?: { content: Uint8Array; info: MediaInfo }
