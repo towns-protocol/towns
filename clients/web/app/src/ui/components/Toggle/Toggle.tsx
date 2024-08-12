@@ -45,6 +45,7 @@ export const Toggle = <D,>(props: Props<D>) => {
                 >
                     <input
                         className={style.hiddenCheckbox}
+                        disabled={props.disabled}
                         type="checkbox"
                         checked={isToggled}
                         onChange={onChange}

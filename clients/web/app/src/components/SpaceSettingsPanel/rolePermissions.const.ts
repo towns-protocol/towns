@@ -4,17 +4,19 @@ export const channelPermissionDescriptions: {
     [key in Permission]?: {
         name: string
         description: string
-        disabled?: boolean
     }
 } = {
     [Permission.Read]: {
         name: 'Read messages',
         description: 'Allow members to read messages.',
-        disabled: true,
     },
     [Permission.Write]: {
         name: 'Send messages',
         description: 'Allow members to send messages.',
+    },
+    [Permission.React]: {
+        name: 'React',
+        description: 'Allow members to emoji react to messages.',
     },
     [Permission.AddRemoveChannels]: {
         name: 'Manage channels',

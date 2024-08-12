@@ -82,7 +82,7 @@ export function TokenSelection(
                     </Text>
                 </Box>
                 <IconButton
-                    data-testid="token-pill-delete"
+                    data-testid="token-pill-edit"
                     icon="edit"
                     size="square_xs"
                     onClick={() =>

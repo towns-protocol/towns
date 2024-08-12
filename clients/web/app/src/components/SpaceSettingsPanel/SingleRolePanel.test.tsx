@@ -11,7 +11,6 @@ import {
     memberRole,
     mockMemberIds,
     mockMembers,
-    mockUsersMap,
     roleDataWithBothRolesAssignedToChannel,
     spaceRoomIdentifier,
 } from 'test/testMocks'
@@ -131,8 +130,7 @@ vi.mock('use-towns-client', async () => {
         },
         useUserLookupContext: () => {
             return {
-                users: mockMembers,
-                usersMap: mockUsersMap,
+                lookupUser: (userId: string) => mockMembers.find((m) => m.userId === userId),
             }
         },
         useSpaceMembers: () => {
@@ -196,8 +194,7 @@ afterEach(() => {
     vi.clearAllMocks()
 })
 
-// https://linear.app/hnt-labs/issue/HNT-5363/re-enable-single-role-panel-tests
-describe.skip('SingleRolePanel', () => {
+describe('SingleRolePanel', () => {
     test('should render empty fields when creating a new role', async () => {
         mockUseSearchParams.mockReturnValue([new URLSearchParams('roles=new'), vi.fn()])
         render(<Wrapper />)
@@ -284,7 +281,7 @@ describe.skip('SingleRolePanel', () => {
             expect(createRoleTransactionSpy).toHaveBeenCalledWith(
                 spaceRoomIdentifier,
                 'new role 1',
-                [Lib.Permission.Read],
+                [Lib.Permission.React, Lib.Permission.Read],
                 // users
                 [],
                 // ruleData
@@ -318,7 +315,7 @@ describe.skip('SingleRolePanel', () => {
             expect(createRoleTransactionSpy).toHaveBeenCalledWith(
                 spaceRoomIdentifier,
                 'new role 2',
-                [Lib.Permission.Read],
+                [Lib.Permission.React, Lib.Permission.Read],
                 [EVERYONE_ADDRESS],
                 Lib.NoopRuleData,
                 {},
@@ -356,7 +353,7 @@ describe.skip('SingleRolePanel', () => {
             expect(createRoleTransactionSpy).toHaveBeenCalledWith(
                 spaceRoomIdentifier,
                 'new role 3',
-                [Lib.Permission.Read],
+                [Lib.Permission.React, Lib.Permission.Read],
                 [EVERYONE_ADDRESS],
                 createOperationsTreeForERC721(),
                 {},
@@ -392,7 +389,7 @@ describe.skip('SingleRolePanel', () => {
             expect(createRoleTransactionSpy).toHaveBeenCalledWith(
                 spaceRoomIdentifier,
                 'new role 4',
-                [Lib.Permission.Read, Lib.Permission.Write],
+                [Lib.Permission.React, Lib.Permission.Read, Lib.Permission.Write],
                 [EVERYONE_ADDRESS],
                 Lib.NoopRuleData,
                 {},
@@ -568,8 +565,9 @@ describe.skip('SingleRolePanel', () => {
             ),
         )
         expect(screen.getByTestId('submit-button')).toBeDisabled()
-        const checkboxes = screen.getAllByTestId('toggle')
-        await userEvent.click(checkboxes[2])
+        const writeCheckbox = screen.getByRole('checkbox', { name: /send messages/i })
+        expect(writeCheckbox).toBeInTheDocument()
+        await userEvent.click(writeCheckbox)
         await waitFor(() => expect(screen.getByTestId('submit-button')).not.toBeDisabled())
     })
 
@@ -629,12 +627,114 @@ describe.skip('SingleRolePanel', () => {
                 spaceRoomIdentifier,
                 roleWithMemberMNft.id,
                 roleWithMemberMNft.name,
-                roleWithMemberMNft.permissions,
+                [Lib.Permission.React, Lib.Permission.Read, Lib.Permission.Write],
                 [EVERYONE_ADDRESS],
                 roleWithMemberMNft.ruleData,
                 {},
             )
         })
+    })
+
+    test('should have React permission toggled on load, if the role contains Write permission (cover legacy, pre React permission roles)', async () => {
+        // map to the role id
+        mockUseSearchParams.mockReturnValue([new URLSearchParams('roles=8'), vi.fn()])
+        roleDetailsMockData = {
+            id: 8,
+            name: 'Member',
+            permissions: [Lib.Permission.Read, Lib.Permission.Write],
+            users: [],
+            channels: [],
+            ruleData: Lib.createOperationsTree([]),
+        }
+        render(<Wrapper />)
+        const roleName = await screen.findByPlaceholderText(/Enter a name for the role/gi)
+        await waitFor(() => expect(roleName).toHaveValue('Member'))
+        const writeCheckbox = screen.getByRole('checkbox', { name: /send messages/i })
+        const reactCheckbox = screen.getByRole('checkbox', { name: /react/i })
+        expect(writeCheckbox).toBeChecked()
+        expect(reactCheckbox).toBeChecked()
+        expect(reactCheckbox).toBeDisabled()
+    })
+
+    test('should not have React permission toggled on load, if the role does not contain Write permission (cover legacy, pre React permission roles)', async () => {
+        // map to the role id
+        mockUseSearchParams.mockReturnValue([new URLSearchParams('roles=8'), vi.fn()])
+        roleDetailsMockData = {
+            id: 8,
+            name: 'Member',
+            permissions: [Lib.Permission.Read],
+            users: [],
+            channels: [],
+            ruleData: Lib.createOperationsTree([]),
+        }
+        render(<Wrapper />)
+        const roleName = await screen.findByPlaceholderText(/Enter a name for the role/gi)
+        await waitFor(() => expect(roleName).toHaveValue('Member'))
+        const writeCheckbox = screen.getByRole('checkbox', { name: /send messages/i })
+        const reactCheckbox = screen.getByRole('checkbox', { name: /react/i })
+        expect(writeCheckbox).not.toBeChecked()
+        expect(reactCheckbox).not.toBeChecked()
+        expect(reactCheckbox).toBeEnabled()
+    })
+
+    test('should toggle React permission on if Write permission is toggled', async () => {
+        // map to the role id
+        mockUseSearchParams.mockReturnValue([new URLSearchParams('roles=8'), vi.fn()])
+        roleDetailsMockData = {
+            id: 8,
+            name: 'Member',
+            permissions: [Lib.Permission.Read],
+            users: [],
+            channels: [],
+            ruleData: Lib.createOperationsTree([]),
+        }
+        render(<Wrapper />)
+        const roleName = await screen.findByPlaceholderText(/Enter a name for the role/gi)
+        await waitFor(() => expect(roleName).toHaveValue('Member'))
+        const writeCheckbox = screen.getByRole('checkbox', { name: /send messages/i })
+        const reactCheckbox = screen.getByRole('checkbox', { name: /react/i })
+        expect(writeCheckbox).not.toBeChecked()
+        expect(reactCheckbox).not.toBeChecked()
+        expect(reactCheckbox).toBeEnabled()
+        await userEvent.click(writeCheckbox)
+        expect(writeCheckbox).toBeChecked()
+        expect(reactCheckbox).toBeChecked()
+        expect(reactCheckbox).toBeDisabled()
+    })
+
+    test('should not toggle React permission if Write permission is toggled off', async () => {
+        // map to the role id
+        mockUseSearchParams.mockReturnValue([new URLSearchParams('roles=8'), vi.fn()])
+        roleDetailsMockData = {
+            id: 8,
+            name: 'Member',
+            permissions: [Lib.Permission.Read],
+            users: [],
+            channels: [],
+            ruleData: Lib.createOperationsTree([]),
+        }
+        render(<Wrapper />)
+        const roleName = await screen.findByPlaceholderText(/Enter a name for the role/gi)
+        await waitFor(() => expect(roleName).toHaveValue('Member'))
+        const writeCheckbox = screen.getByRole('checkbox', { name: /send messages/i })
+        const reactCheckbox = screen.getByRole('checkbox', { name: /react/i })
+        expect(writeCheckbox).not.toBeChecked()
+        expect(reactCheckbox).not.toBeChecked()
+
+        await userEvent.click(writeCheckbox)
+        expect(writeCheckbox).toBeChecked()
+        expect(reactCheckbox).toBeChecked()
+        expect(reactCheckbox).toBeDisabled()
+
+        await userEvent.click(writeCheckbox)
+        expect(writeCheckbox).not.toBeChecked()
+        expect(reactCheckbox).toBeChecked()
+        expect(reactCheckbox).not.toBeDisabled()
+
+        await userEvent.click(reactCheckbox)
+        expect(reactCheckbox).not.toBeChecked()
+        expect(reactCheckbox).not.toBeDisabled()
+        expect(writeCheckbox).not.toBeChecked()
     })
 
     test('should contain delete role button when editing a role', async () => {

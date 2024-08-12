@@ -114,6 +114,19 @@ export function SingleRolePanelWithoutAuth() {
     const transactionIsPending =
         pendingCreateRoleTransaction || pendingUpdateRoleTransaction || pendingDeleteRoleTransaction
 
+    const defaultChannelPermissionsValues = useMemo(() => {
+        if (!channelRoleDetails) {
+            return []
+        }
+
+        const { permissions } = channelRoleDetails
+        // for existing roles pre react permission, add it if write is present
+        const defaultP = permissions.includes(Permission.Write)
+            ? permissions.concat(Permission.React)
+            : permissions
+        return [...new Set(defaultP)]
+    }, [channelRoleDetails])
+
     return (
         <Panel label="Roles">
             {isLoading ? (
@@ -131,8 +144,8 @@ export function SingleRolePanelWithoutAuth() {
                             // roleDetails is undefined when creating a new role
                             name: roleDetails?.name ?? '',
                             channelPermissions: isCreateRole
-                                ? [Permission.Read]
-                                : channelRoleDetails?.permissions ?? [],
+                                ? [Permission.Read, Permission.React]
+                                : defaultChannelPermissionsValues,
                             townPermissions: townRoleDetails?.permissions ?? [],
                             users: roleDetails?.users ?? [],
                             tokens: roleDetails?.ruleData
@@ -402,6 +415,10 @@ function SubmitButton({
     const onValid = useEvent(async (data: RoleFormSchemaType) => {
         const signer = await getSigner()
 
+        // just in case
+        const _channelPermissions = [...new Set(data.channelPermissions)].sort()
+        const _townPermissions = [...new Set(data.townPermissions)].sort()
+
         if (!signer) {
             createPrivyNotAuthenticatedNotification()
             return
@@ -425,7 +442,7 @@ function SubmitButton({
             await createRoleTransaction(
                 spaceId,
                 data.name,
-                [...data.channelPermissions, ...data.townPermissions],
+                [..._channelPermissions, ..._townPermissions],
                 data.users,
                 ruleData,
                 signer,
@@ -439,7 +456,7 @@ function SubmitButton({
                 spaceId,
                 roleId,
                 data.name,
-                [...data.channelPermissions, ...data.townPermissions],
+                [..._channelPermissions, ..._townPermissions],
                 data.users,
                 ruleData,
                 signer,
@@ -620,11 +637,14 @@ function ChannelPermissionsToggles({
         }
     })
 
-    const onToggleChannelPermissions = useEvent((permissionId: Permission, value: boolean) => {
+    const onToggleChannelPermissions = useEvent((permissionId: Permission, isChecked: boolean) => {
         const currentPermissions = role.permissions
-        const newPermissions = value
-            ? currentPermissions.concat(permissionId)
-            : currentPermissions.filter((p) => p !== permissionId)
+
+        const newPermissions = createNewChannelPermissions(
+            currentPermissions,
+            permissionId,
+            isChecked,
+        )
 
         setRole((role) => ({
             ...role,
@@ -635,6 +655,9 @@ function ChannelPermissionsToggles({
     })
 
     return enabledChannelPermissions.map((permissionId: Permission) => {
+        const isDisabled =
+            permissionId === Permission.Read ||
+            (permissionId === Permission.React && role.permissions.includes(Permission.Write))
         return role ? (
             <RoleRow
                 permissionId={permissionId}
@@ -642,7 +665,7 @@ function ChannelPermissionsToggles({
                 defaultToggled={!!role?.permissions?.includes(permissionId)}
                 metaData={channelPermissionDescriptions[permissionId]}
                 key={permissionId}
-                disabled={channelPermissionDescriptions[permissionId]?.disabled}
+                disabled={isDisabled}
                 onToggle={onToggleChannelPermissions}
             />
         ) : null
@@ -751,4 +774,21 @@ function ErrorsNotification() {
             </MotionStack>
         </AnimatePresence>
     )
+}
+
+function createNewChannelPermissions(
+    permissions: Permission[],
+    permissionId: Permission,
+    value: boolean,
+) {
+    let _permissions: Permission[]
+    if (permissionId === Permission.Write && value) {
+        // add write + react - can't react w/o write
+        _permissions = permissions.concat(permissionId, Permission.React)
+    } else {
+        _permissions = value
+            ? permissions.concat(permissionId)
+            : permissions.filter((p) => p !== permissionId)
+    }
+    return [...new Set(_permissions)]
 }

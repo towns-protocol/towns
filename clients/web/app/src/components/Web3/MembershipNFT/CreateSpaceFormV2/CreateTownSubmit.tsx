@@ -268,7 +268,7 @@ export function CreateTownSubmit({
                         users: [],
                         ruleData,
                     },
-                    permissions: [Permission.Read, Permission.Write],
+                    permissions: [Permission.Read, Permission.Write, Permission.React],
                 }
                 console.log('submitting values: ', {
                     createSpaceInfo,
