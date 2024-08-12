@@ -60,6 +60,7 @@ type Props = {
     background?: BoxProps['background']
     channelLabel?: string
     isChannelWritable?: boolean
+    isChannelReactable?: boolean
     sendStatus?: SendStatus
     sessionId?: string
     pin?: Pin
@@ -83,6 +84,7 @@ export const MessageLayout = (props: Props) => {
         editing: isEditing,
         highlight: isHighlight,
         isChannelWritable = true,
+        isChannelReactable,
         selectable: isSelectable,
         listView: isListView,
         displayContext = 'single',
@@ -280,8 +282,8 @@ export const MessageLayout = (props: Props) => {
                     isSelectable && (
                         <MessageContextMenu
                             canEdit={isEditable}
-                            canReact={!!onReaction}
-                            canReply={canReply}
+                            canReact={isChannelReactable}
+                            canReply={canReply && isChannelWritable}
                             channelId={channelId}
                             eventId={eventId}
                             isFocused={isFocused}
@@ -298,12 +300,12 @@ export const MessageLayout = (props: Props) => {
                 eventId &&
                 isSelectable && (
                     <MessageModalSheet
-                        canReply={canReply}
-                        canReact={!!onReaction}
+                        canReply={canReply && isChannelWritable}
+                        canReact={isChannelReactable}
                         channelId={channelId}
                         spaceId={spaceId}
                         eventId={eventId}
-                        canEdit={isEditable}
+                        canEdit={isEditable && isChannelWritable}
                         messageBody={messageBody}
                         threadParentId={threadParentId}
                         onClose={() => setIsModalSheetVisible(false)}

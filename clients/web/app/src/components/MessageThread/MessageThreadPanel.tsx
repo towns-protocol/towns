@@ -21,6 +21,7 @@ import { useDevice } from 'hooks/useDevice'
 import { Panel } from '@components/Panel/Panel'
 import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDropContext'
 import { getChannelType, useAnalytics } from 'hooks/useAnalytics'
+import { useIsChannelReactable } from 'hooks/useIsChannelReactable'
 
 type Props = {
     messageId: string
@@ -93,6 +94,7 @@ export const MessageThreadPanel = (props: Props) => {
     )
 
     const { isChannelWritable } = useIsChannelWritable(spaceId, channelId, loggedInWalletAddress)
+    const { isChannelReactable } = useIsChannelReactable(spaceId, channelId, loggedInWalletAddress)
 
     const imageUploadTitle = isChannelWritable
         ? `Upload to thread`
@@ -123,6 +125,7 @@ export const MessageThreadPanel = (props: Props) => {
                         threadParentId={messageId}
                         events={messagesWithParent}
                         isChannelWritable={isChannelWritable}
+                        isChannelReactable={isChannelReactable}
                     >
                         <MessageTimeline
                             align="bottom"

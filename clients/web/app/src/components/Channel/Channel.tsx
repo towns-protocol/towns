@@ -39,6 +39,7 @@ import { getDraftDMStorageId } from 'utils'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { SetupAnimation } from '@components/SetupAnimation/SetupAnimation'
 import { AppProgressState } from '@components/AppProgressOverlay/AppProgressState'
+import { useIsChannelReactable } from 'hooks/useIsChannelReactable'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { htmlToText } from 'workers/data_transforms'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
@@ -357,6 +358,12 @@ const Messages = (props: {
         loggedInWalletAddress,
     )?.isChannelWritable
 
+    const isChannelReactable = !!useIsChannelReactable(
+        isDmOrGDM ? undefined : spaceId,
+        channelId,
+        loggedInWalletAddress,
+    )?.isChannelReactable
+
     // -------------------------------------------------------------------------
 
     const [searchParams] = useSearchParams()
@@ -397,6 +404,7 @@ const Messages = (props: {
                 channelId={channelId}
                 events={events}
                 isChannelWritable={isChannelWritable}
+                isChannelReactable={isChannelReactable}
             >
                 {!props.hideHeader && <ChannelHeader channel={channel} spaceId={spaceId} />}
                 <ChannelPinBanner channelId={channelId} />

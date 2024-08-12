@@ -34,6 +34,7 @@ export const MessageTimelineContext = createContext<{
     channelId: string
     isChannelEncrypted?: boolean
     isChannelWritable?: boolean
+    isChannelReactable?: boolean
     threadParentId?: string
     channels: Channel[]
     events: TimelineEvent[]
@@ -63,8 +64,16 @@ export const MessageTimelineWrapper = (props: {
     events: TimelineEvent[]
     threadParentId?: string
     isChannelWritable?: boolean
+    isChannelReactable?: boolean
 }) => {
-    const { spaceId, channelId, events: _events, isChannelWritable, threadParentId } = props
+    const {
+        spaceId,
+        channelId,
+        events: _events,
+        isChannelWritable,
+        threadParentId,
+        isChannelReactable,
+    } = props
 
     const events = useTimelineRecorder(_events)
 
@@ -122,10 +131,11 @@ export const MessageTimelineWrapper = (props: {
             handleReaction,
             isChannelEncrypted,
             isChannelWritable,
-            memberIds,
-            messageReactionsMap,
+            isChannelReactable,
             messageRepliesMap,
+            messageReactionsMap,
             onMentionClick,
+            memberIds,
             pins,
             sendReadReceipt,
             spaceId,
@@ -141,10 +151,11 @@ export const MessageTimelineWrapper = (props: {
         handleReaction,
         isChannelEncrypted,
         isChannelWritable,
-        memberIds,
-        messageReactionsMap,
+        isChannelReactable,
         messageRepliesMap,
+        messageReactionsMap,
         onMentionClick,
+        memberIds,
         pins,
         sendReadReceipt,
         spaceId,

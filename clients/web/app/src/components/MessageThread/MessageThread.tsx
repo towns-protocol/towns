@@ -14,7 +14,7 @@ import {
 } from 'use-towns-client'
 import { firstBy } from 'thenby'
 import { Link, useSearchParams } from 'react-router-dom'
-import { isDefined } from '@river-build/sdk'
+import { isDMChannelStreamId, isDefined, isGDMChannelStreamId } from '@river-build/sdk'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
 import { TownsEditorContainer } from '@components/RichTextPlate/TownsEditorContainer'
@@ -28,6 +28,7 @@ import { FullScreenMedia } from '@components/FullScreenMedia/FullScreenMedia'
 import { QUERY_PARAMS } from 'routes'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDropContext'
+import { useIsChannelReactable } from 'hooks/useIsChannelReactable'
 
 export const MessageThread = (props: {
     userId: string
@@ -40,6 +41,7 @@ export const MessageThread = (props: {
     const { parentId, spaceId, channelId, channelLabel, spaceChannels: channels } = props
     const { parent, messages: unthrottledMessages } = useTimelineThread(channelId, parentId)
     let parentMessage = parent?.parentEvent
+    const isDmOrGDM = isDMChannelStreamId(channelId) || isGDMChannelStreamId(channelId)
 
     if (parent && !parentMessage) {
         parentMessage = {
@@ -123,10 +125,17 @@ export const MessageThread = (props: {
 
     const { isChannelWritable } = useIsChannelWritable(spaceId, channelId, loggedInWalletAddress)
 
+    const { isChannelReactable } = useIsChannelReactable(
+        isDmOrGDM ? undefined : spaceId,
+        channelId,
+        loggedInWalletAddress,
+    )
+
     const { createLink } = useCreateLink()
 
     return parentMessage ? (
         <MessageTimelineWrapper
+            isChannelReactable={isChannelReactable}
             events={messagesWithParent}
             spaceId={spaceId}
             channelId={channelId}

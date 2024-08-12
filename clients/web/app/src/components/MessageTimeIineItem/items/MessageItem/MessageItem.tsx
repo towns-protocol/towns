@@ -268,6 +268,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
         channelId,
         handleReaction,
         isChannelWritable,
+        isChannelReactable,
         messageReactionsMap,
         pins,
         spaceId,
@@ -332,6 +333,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
             threadParentId={event.threadParentId}
             displayContext={displayContext}
             isChannelWritable={isChannelWritable}
+            isChannelReactable={isChannelReactable}
             user={user}
             paddingTop={displayContext === 'head' || displayContext === 'single' ? 'md' : 'sm'}
             paddingBottom={displayContext === 'tail' || displayContext === 'single' ? 'md' : 'sm'}
