@@ -13,6 +13,7 @@ if (process.env.TRACING_ENABLED === 'true') {
         service: 'notification-service',
         env: process.env.RIVER_ENV,
         profiling: process.env.PROFILING_ENABLED === 'true',
+        logInjection: true,
     })
 }
 

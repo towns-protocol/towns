@@ -100,7 +100,12 @@ jobs:
                   REGISTRY_ALIAS: l8h0l2e6
                   ECR_REPOSITORY: notification-service
               run: |
-                  docker build -t $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:latest . -f ./servers/notification-service/Dockerfile
+                  docker build \
+                    -t $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:latest \
+                    -f ./servers/notification-service/Dockerfile \
+                    --build-arg GIT_SHA=${{ github.sha }} \
+                    .
+
                   docker push $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:latest
 
             - name: Deploy to ECS
