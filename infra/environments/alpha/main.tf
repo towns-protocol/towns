@@ -253,6 +253,21 @@ module "eth_balance_monitor" {
   river_chain_rpc_url_secret_arn = local.global_remote_state.river_sepolia_rpc_url_secret.arn
 }
 
+module "stress_tests" {
+  source = "../../modules/stress-tests"
+
+  vpc_id          = module.vpc.vpc_id
+  private_subnets = module.vpc.private_subnets
+  public_subnets  = module.vpc.public_subnets
+
+  base_chain_rpc_url_secret_arn  = local.global_remote_state.base_sepolia_rpc_url_secret.arn
+  river_chain_rpc_url_secret_arn = local.global_remote_state.river_sepolia_rpc_url_secret.arn
+
+  space_id            = "109bd136d3155316d5d6dfcd4f87d5ee1a3ea8f22d0000000000000000000000"
+  announce_channel_id = "209bd136d3155316d5d6dfcd4f87d5ee1a3ea8f22d3ea9c4273da5a77d10de58"
+  channel_ids         = "209bd136d3155316d5d6dfcd4f87d5ee1a3ea8f22dcc16da7e96af829d8d73be,209bd136d3155316d5d6dfcd4f87d5ee1a3ea8f22d56888a483afd0412ddb85c"
+}
+
 module "metrics_aggregator" {
   source = "../../modules/metrics-aggregator"
 

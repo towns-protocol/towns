@@ -53,3 +53,15 @@ variable "security_group_id" {
   description = "The security group id for ECS tasks"
   type        = string
 }
+
+variable "space_id" {
+  type = string
+}
+
+variable "announce_channel_id" {
+  type = string
+}
+
+variable "channel_ids" {
+  type = string
+}

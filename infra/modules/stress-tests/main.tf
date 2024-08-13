@@ -92,5 +92,9 @@ module "stress-test-nodes" {
   stress_test_wallet_mnemonic_secret_arn = aws_secretsmanager_secret.stress_test_wallet_mnemonic.arn
   system_parameters                      = module.stress-test-system-parameters
 
+  space_id            = var.space_id
+  announce_channel_id = var.announce_channel_id
+  channel_ids         = var.channel_ids
+
   tags = module.global_constants.tags
 }

@@ -91,8 +91,8 @@ resource "aws_ecs_task_definition" "task_definition" {
   task_role_arn      = aws_iam_role.ecs_task_execution_role.arn
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
 
-  cpu    = 8192
-  memory = 16384
+  cpu    = 2048
+  memory = 4096
 
   requires_compatibilities = ["FARGATE"]
 
@@ -110,9 +110,6 @@ resource "aws_ecs_task_definition" "task_definition" {
       hostPort      = 80
       protocol      = "tcp"
     }]
-
-    cpu    = 2048
-    memory = 4096
 
     secrets = [
       {
@@ -159,19 +156,16 @@ resource "aws_ecs_task_definition" "task_definition" {
         value = terraform.workspace
       },
       {
-        # TODO: make this a variable so we can reuse this module for other environments
         name  = "SPACE_ID",
-        value = "10a38bcf15ab6b94d404c201dee9f67c6428c0ecb10000000000000000000000"
+        value = var.space_id
       },
       {
-        # TODO: make this a variable so we can reuse this module for other environments
         name  = "ANNOUNCE_CHANNEL_ID",
-        value = "20a38bcf15ab6b94d404c201dee9f67c6428c0ecb1a166f49d6787eb5dd4e1b1"
+        value = var.announce_channel_id
       },
       {
-        # TODO: make this a variable so we can reuse this module for other environments
         name  = "CHANNEL_IDS",
-        value = "20a38bcf15ab6b94d404c201dee9f67c6428c0ecb14c8601d7f529814cebe12c,20a38bcf15ab6b94d404c201dee9f67c6428c0ecb1826ef52f48e2e904844cff"
+        value = var.channel_ids
       },
       {
         name  = "REDIS_HOST",

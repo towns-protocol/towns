@@ -22,3 +22,15 @@ variable "river_chain_rpc_url_secret_arn" {
   description = "river chain rpc url secret arn"
   type        = string
 }
+
+variable "space_id" {
+  type = string
+}
+
+variable "announce_channel_id" {
+  type = string
+}
+
+variable "channel_ids" {
+  type = string
+}

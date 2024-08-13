@@ -263,6 +263,10 @@ module "stress_tests" {
 
   base_chain_rpc_url_secret_arn  = local.global_remote_state.base_sepolia_rpc_url_secret.arn
   river_chain_rpc_url_secret_arn = local.global_remote_state.river_sepolia_rpc_url_secret.arn
+
+  space_id            = "10a38bcf15ab6b94d404c201dee9f67c6428c0ecb10000000000000000000000"
+  announce_channel_id = "20a38bcf15ab6b94d404c201dee9f67c6428c0ecb1a166f49d6787eb5dd4e1b1"
+  channel_ids         = "20a38bcf15ab6b94d404c201dee9f67c6428c0ecb14c8601d7f529814cebe12c,20a38bcf15ab6b94d404c201dee9f67c6428c0ecb1826ef52f48e2e904844cff"
 }
 
 module "metrics_aggregator" {

@@ -10,8 +10,11 @@ on:
             environment_name:
                 description: 'Environment name'
                 required: true
-                type: string
-                default: gamma
+                type: choice
+                options:
+                    - alpha
+                    - gamma
+                default: 'gamma'
             clients_count:
                 description: 'Clients count'
                 required: true
