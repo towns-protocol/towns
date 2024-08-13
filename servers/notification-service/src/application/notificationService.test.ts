@@ -1,6 +1,6 @@
 import './utils/envs.mock'
 
-import { SendPushResponse, SendPushStatus } from './services/web-push/web-push-types'
+import { SendPushStatus } from './services/web-push/web-push-types'
 
 import { NotificationService, NotifyUser } from './notificationService'
 import { NotifyUsersSchema } from '../types'
@@ -808,71 +808,6 @@ describe('NotificationService', () => {
             expect(result).toHaveLength(3)
             expect(database.pushSubscription.findMany).toHaveBeenCalledTimes(3)
             expect(sendNotificationViaWebPush).toHaveBeenCalledTimes(3)
-        })
-    })
-
-    describe('dispatchAllPushNotification', () => {
-        it('should handle the results of push notifications', async () => {
-            const pushNotificationRequests = [
-                Promise.resolve({
-                    status: SendPushStatus.Success,
-                    userId: 'user1',
-                    pushSubscription: 'subscription1',
-                    statusCode: 200,
-                }),
-                Promise.resolve({
-                    status: SendPushStatus.Error,
-                    userId: 'user2',
-                    pushSubscription: 'subscription2',
-                    message: 'error 2',
-                    statusCode: 400,
-                }),
-                Promise.resolve({
-                    status: SendPushStatus.Error,
-                    userId: 'user3',
-                    pushSubscription: 'subscription3',
-                    message: 'error 3',
-                    statusCode: 400,
-                }),
-            ]
-
-            ;(database.pushSubscription.delete as jest.Mock).mockResolvedValue(undefined)
-
-            const result = await notificationService.dispatchAllPushNotification(
-                pushNotificationRequests,
-            )
-
-            expect(result).toBe(1)
-            expect(database.pushSubscription.delete).toHaveBeenCalledTimes(2)
-        })
-    })
-
-    describe('deleteFailedSubscription', () => {
-        it('should delete the failed push subscription', async () => {
-            const result: PromiseFulfilledResult<SendPushResponse> = {
-                value: {
-                    status: SendPushStatus.Error,
-                    message: 'Invalid token',
-                    userId: 'user1',
-                    pushSubscription: 'subscription123',
-                    statusCode: 400,
-                },
-                status: 'fulfilled',
-            }
-
-            ;(database.pushSubscription.delete as jest.Mock).mockResolvedValue(undefined)
-
-            const consoleLogMock = jest.spyOn(console, 'log')
-            consoleLogMock.mockImplementation(() => {})
-
-            await notificationService.deleteFailedSubscription(result)
-
-            expect(database.pushSubscription.delete).toHaveBeenCalledWith({
-                where: {
-                    UserId: result.value.userId,
-                    PushSubscription: result.value.pushSubscription,
-                },
-            })
         })
     })
 })

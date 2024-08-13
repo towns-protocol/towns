@@ -16,6 +16,7 @@ import { env } from '../../utils/environment'
 import { Provider, Notification } from '@parse/node-apn'
 import { ApnsEndpoint } from '../../tagSchema'
 import { notificationServiceLogger } from '../../logger'
+import { database } from '../../prisma'
 
 const authKey = env.APNS_AUTH_KEY.replaceAll('\\n', '\n')
 const apnsProviderProd = new Provider({
@@ -91,19 +92,11 @@ export async function sendNotificationViaWebPush(
 
         const response = await fetch(request)
         const status = response.status
-        logger.info('sendNotificationViaWebPush response', {
-            requestUrl: request.url,
-            status: response.status,
-            message: await response.text(),
-        })
 
         const success = status >= 200 && status <= 204
 
-        if (!success) {
-            logger.error('sendNotificationViaWebPush error', {
-                response,
-                message: await response.text(),
-            })
+        if (status === 410 || status === 404) {
+            await deleteFailedSubscription(options.userId, subscribed.PushSubscription)
         }
 
         return {
@@ -114,7 +107,7 @@ export async function sendNotificationViaWebPush(
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
-        logger.error('sendNotificationViaWebPush error', {
+        logger.error('sendNotificationViaWebPush exception', {
             error: e,
         })
 
@@ -145,6 +138,7 @@ export async function sendNotificationViaAPNS(
             logger.error('invalid APNS endpoint', {
                 endpoint: subscription.endpoint,
             })
+            await deleteFailedSubscription(options.userId, subscribed.PushSubscription)
             return {
                 status: SendPushStatus.Error,
                 message: 'invalid APNS endpoint',
@@ -172,9 +166,14 @@ export async function sendNotificationViaAPNS(
             sent: response.sent,
         })
         if (response.failed.length > 0) {
-            logger.error('sendNotificationViaAPNS error', {
-                response,
-            })
+            // We only send one notification at a time
+            if (response.failed[0].status === 410) {
+                await deleteFailedSubscription(options.userId, subscribed.PushSubscription)
+            } else {
+                logger.error('failed to send APNS notification', {
+                    failed: response.failed,
+                })
+            }
             return {
                 status: SendPushStatus.Error,
                 message: response.failed[0].response?.reason,
@@ -202,6 +201,23 @@ export async function sendNotificationViaAPNS(
     }
 }
 
+async function deleteFailedSubscription(userId: string, pushSubscription: string): Promise<void> {
+    notificationServiceLogger.warn(`deleting subscription from the db`, {
+        pushSubscription: pushSubscription,
+        userId: userId,
+    })
+    try {
+        await database.pushSubscription.delete({
+            where: {
+                UserId: userId,
+                PushSubscription: pushSubscription,
+            },
+        })
+    } catch (err) {
+        notificationServiceLogger.error('failed to delete subscription from the db', { err })
+    }
+}
+
 export function patchTopicToEnsureSpecCompliance(topic: string): string {
     // https://developer.apple.com/documentation/usernotifications/sending_web_push_notifications_in_web_apps_safari_and_other_browsers
     const MAX_LENGTH = 32
@@ -214,14 +230,14 @@ async function createRequest(
     target: WebPushSubscription,
 ): Promise<Request> {
     const salt = crypto.getRandomValues(new Uint8Array(16))
-    const localKeys = (await crypto.subtle.generateKey(
+    const localKeys = await crypto.subtle.generateKey(
         {
             name: 'ECDH',
             namedCurve: 'P-256',
         },
         true,
         ['deriveBits'],
-    )) as CryptoKeyPair
+    )
 
     const payload = JSON.stringify(options.payload)
     const encryptedPayload = await encrypt(payload, target, salt, localKeys)
@@ -248,7 +264,7 @@ async function createHeaders(
 ): Promise<Headers> {
     // create the header values
     const localPublicKeyBuffer = await crypto.subtle.exportKey('raw', localPublicKey)
-    const localPublicKeyBase64 = base64ToUrlEncoding(localPublicKeyBuffer as ArrayBuffer)
+    const localPublicKeyBase64 = base64ToUrlEncoding(localPublicKeyBuffer)
     const jwk = vapidKeysToJsonWebKey(options.vapidDetails)
     const serverPublicKey = getPublicKeyFromJwk(jwk)
     const jwt = await sign(jwk, options.jwtData)

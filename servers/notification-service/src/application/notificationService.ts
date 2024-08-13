@@ -4,12 +4,11 @@ import {
     NotificationPayloadSchema,
     NotifyUsersSchema,
 } from '../types'
-import { SendPushResponse, SendPushStatus } from './services/web-push/web-push-types'
+import { SendPushResponse } from './services/web-push/web-push-types'
 
 import { NotificationTag } from '@prisma/client'
 import { UserSettingsTables } from './userSettingsTables'
 import { database } from './prisma'
-import { env } from './utils/environment'
 import { NotificationAttachmentKind, NotificationKind } from './tagSchema'
 import { PushType } from './subscriptionSchema'
 import {
@@ -312,79 +311,6 @@ export class NotificationService {
             }ms`,
         )
         return pushNotificationPromises
-    }
-
-    public async dispatchAllPushNotification(
-        pushNotificationRequests: Promise<SendPushResponse>[],
-    ): Promise<number> {
-        const startTime = Date.now()
-        if (!env.NOTIFICATION_SYNC_ENABLED) {
-            notificationServiceLogger.warn('Notification dispatch is disabled')
-            // notification dispatch is disabled
-            return 0
-        }
-
-        const sendResults = await Promise.allSettled(pushNotificationRequests)
-
-        // handle the results
-        // count the number of successful notifications sent
-        let notificationsSentCount = 0
-        for (const result of sendResults) {
-            if (result.status === 'rejected') {
-                notificationServiceLogger.warn('failed to send notification', { result })
-                continue
-            }
-
-            if (result.value.status === SendPushStatus.Success) {
-                notificationsSentCount++
-                continue
-            }
-
-            if (
-                result.value.statusCode &&
-                result.value.statusCode >= 400 &&
-                result.value.statusCode < 500
-            ) {
-                notificationServiceLogger.error(
-                    'failed to send notification because of subscription error. Delete subscription',
-                    {
-                        result,
-                    },
-                )
-                await this.deleteFailedSubscription(result)
-                continue
-            }
-
-            // all other errors
-            notificationServiceLogger.error('failed to send notification', { result })
-        }
-        notificationServiceLogger.info(
-            `dispatched ${notificationsSentCount} notifications in ${Date.now() - startTime}ms`,
-            { sendResults },
-        )
-        return notificationsSentCount
-    }
-
-    public async deleteFailedSubscription(
-        result: PromiseFulfilledResult<SendPushResponse>,
-    ): Promise<void> {
-        notificationServiceLogger.warn(
-            `deleting subscription from the db - userId: ${result.value.userId}`,
-            {
-                pushSubscription: result.value.pushSubscription,
-                userId: result.value.userId,
-            },
-        )
-        try {
-            await database.pushSubscription.delete({
-                where: {
-                    UserId: result.value.userId,
-                    PushSubscription: result.value.pushSubscription,
-                },
-            })
-        } catch (err) {
-            notificationServiceLogger.error('failed to delete subscription from the db', { err })
-        }
     }
 }
 

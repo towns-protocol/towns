@@ -974,11 +974,28 @@ export class SyncedStreams {
             usersToNotify,
         )
 
-        const notificationsSentCount = await notificationService.dispatchAllPushNotification(
-            pushNotificationRequests,
-        )
-
-        logger.info(`notificationsSentCount ${notificationsSentCount}`)
+        const result = await Promise.allSettled(pushNotificationRequests)
+        let notificationSuccessCount = 0
+        let notificationFailureCount = 0
+        let notificationExceptionCount = 0
+        for (const r of result) {
+            if (r.status === 'rejected') {
+                logger.error('dispatchNotification exception', { exception: r.reason })
+                notificationExceptionCount++
+            } else {
+                if (r.value.status === 'success') {
+                    notificationSuccessCount++
+                } else {
+                    notificationFailureCount++
+                }
+            }
+        }
+        logger.info('notificationsSentCount', {
+            userNotifiedCount: usersToNotify.length,
+            notificationSuccessCount,
+            notificationFailureCount,
+            notificationExceptionCount,
+        })
     }
 
     public async healthCheck(): Promise<NonceStats> {
