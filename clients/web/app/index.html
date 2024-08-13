@@ -49,7 +49,9 @@
           'link[rel="icon"][href="/favicon.png"]',
         );
         if (favicon) {
-          if (host === "app.gamma.towns.com") {
+          if (host === "app.alpha.towns.com") {
+            favicon.href = "/favicon-teal.png";
+          } else if (host === "app.gamma.towns.com") {
             favicon.href = "/favicon-blue.png";
           } else if (host === "localhost") {
             favicon.href = "/favicon-green.png";
