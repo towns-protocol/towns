@@ -18,6 +18,7 @@ sh ./scripts/stop-4337.sh
 sh ./river/scripts/foundry-up.sh
 
 yarn install
+yarn workers:build
 
 
 # Function to wait for a process and exit if it fails
@@ -114,8 +115,9 @@ wait_for_process "$BUILD_PID" "build"
 echo "STARTED ALL CHAINS AND DEPLOYED ALL CONTRACTS"
 
 # Now generate the core server config
-BASE_EXECUTION_CLIENT="geth_dev" ./river/scripts/configure-nodes.sh --single
-BASE_EXECUTION_CLIENT="geth_dev" ./river/core/node/run_single.sh -c
+BASE_EXECUTION_CLIENT="geth_dev" ./river/scripts/configure-nodes.sh --multi
+BASE_EXECUTION_CLIENT="geth_dev" ./river/core/node/run_multi.sh -c
+./scripts/fund_multi_for_geth.sh
 
 # Continue with rest of the script
 echo "Continuing with the rest of the script..."

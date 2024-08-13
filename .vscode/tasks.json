@@ -47,7 +47,7 @@
     {
       "label": "Stage 2",
       "dependsOn": [
-        "Configure Casablanca-Single",
+        "Configure Casablanca-Multinode",
         "BuildProtobufs",
         "Stage 3"
       ],
@@ -61,8 +61,7 @@
       "label": "Stage 3",
       "dependsOn": [
         "Apps and Workers",
-        "Casablanca Single",
-        "XChainLaunchMulti",
+        "Casablanca-Multinode",
       ],
       "group": {
         "kind": "build",
@@ -110,7 +109,7 @@
       "label": "4337: Stage 2",
       "dependsOn": [
         "WaitFor4337",
-        "4337: Configure Casablanca-Single",
+        "4337: Configure Casablanca-Multinode",
         "BuildProtobufs",
         "4337: Stage 3"
       ],
@@ -130,8 +129,8 @@
         "GatewayWorker",
         "NotificationService",
         "4337: StackupWorker",
-        "Casablanca Single",
-        "4337: XChainLaunchMulti",
+        "Casablanca-Multinode",
+        "4337: Fund XChain"
       ],
       "group": {
         "kind": "build",
@@ -272,53 +271,9 @@
       }
     },
     {
-      "label": "Casablanca Single",
+      "label": "4337: Configure Casablanca-Multinode",
       "type": "shell",
-      "command": "sleep 3 && yarn run --top-level csb:dev:entitlements -r",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "local-servers"
-      }
-    },
-    {
-      "label": "Casablanca Single-No-Entitlements",
-      "type": "shell",
-      "command": "yarn run --top-level csb:start:no-entitlements -r",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "local-servers"
-      }
-    },
-    {
-      "label": "Configure Casablanca-Single",
-      "type": "shell",
-      "command": "./river/scripts/configure-nodes.sh --single",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "ephemeral",
-        "focus": true,
-        "panel": "shared",
-      }
-    },
-    {
-      "label": "4337: Configure Casablanca-Single",
-      "type": "shell",
-      "command": "BASE_EXECUTION_CLIENT=geth_dev ./river/scripts/configure-nodes.sh --single",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "ephemeral",
-        "focus": true,
-        "panel": "shared",
-      }
-    },
-    {
-      "label": "Configure Casablanca-Single-No-Entitlements",
-      "type": "shell",
-      "command": "./river/scripts/configure-nodes.sh --single_ne",
+      "command": "BASE_EXECUTION_CLIENT=geth_dev ./river/scripts/configure-nodes.sh --multi",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -342,7 +297,7 @@
     {
       "label": "Casablanca-Multinode",
       "type": "shell",
-      "command": "yarn run --top-level csb:multi -r",
+      "command": "sleep 3 && yarn run --top-level csb:multi -r",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -366,7 +321,7 @@
       "dependsOn": [
         "Stop Casablanca",
         "DummyTask",
-        "Casablanca Single"
+        "Casablanca-Multinode"
       ],
       "group": {
         "kind": "build",
@@ -375,19 +330,9 @@
       "problemMatcher": [],
     },
     {
-      "label": "XChainLaunchMulti",
+      "label": "4337: Fund XChain",
       "type": "shell",
-      "command": "sleep 1 && RUN_ENV=single ./river/core/xchain/launch_multi.sh",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "xchain"
-      }
-    },
-    {
-      "label": "4337: XChainLaunchMulti",
-      "type": "shell",
-      "command": "sleep 1 && RUN_ENV=single PATH_TO_FUND_MULTI=${PWD}/scripts/fund_multi_for_geth.sh ./river/core/xchain/launch_multi.sh",
+      "command": "sleep 1 && ${PWD}/scripts/fund_multi_for_geth.sh",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
