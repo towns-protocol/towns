@@ -215,8 +215,8 @@ resource "aws_vpc_security_group_ingress_rule" "allow_alb_into_pgadmin" {
 resource "aws_vpc_security_group_egress_rule" "allow_pgadmin_outbound_to_all" {
   description = "Allow pgadmin outbound to all"
 
-  from_port   = 80
-  to_port     = 80
+  from_port   = 0
+  to_port     = 65535
   ip_protocol = "tcp"
 
   security_group_id = module.pgadmin_ecs_sg.security_group_id
