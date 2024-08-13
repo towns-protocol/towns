@@ -100,9 +100,7 @@ jobs:
                       echo "Docker image with the tag=${{ inputs.docker_image_tag }} exists. Continue with the deployment."
                   fi
 
-            # Send a slack notification before deploying if the environment is gamma
             - name: Info notification
-              if: ${{ inputs.environment_name == 'gamma' }}
               uses: slackapi/slack-github-action@v1.24.0
               env:
                   SLACK_WEBHOOK_URL: ${{ secrets.SLACK_CD_INFO_WORKFLOW_WEBHOOK_URL }}
