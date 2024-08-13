@@ -1,5 +1,10 @@
 import { UseFormReturn } from 'react-hook-form'
-import { MembershipStruct, NoopRuleData, Permission, createOperationsTree } from '@river-build/web3'
+import {
+    LegacyMembershipStruct,
+    NoopRuleData,
+    Permission,
+    createOperationsTree,
+} from '@river-build/web3'
 import {
     Address,
     CreateSpaceInfo,
@@ -246,7 +251,7 @@ export function CreateTownSubmit({
                 //////////////////////////////////////////
                 // create space
                 //////////////////////////////////////////
-                const requirements: MembershipStruct = {
+                const requirements: LegacyMembershipStruct = {
                     settings: {
                         name: createSpaceInfo.name + ' - Member',
                         symbol: 'MEMBER',

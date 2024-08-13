@@ -14,10 +14,12 @@ interface IArchitectBase {
   // =============================================================
   //                           STRUCTS
   // =============================================================
+
+  // Latest
   struct MembershipRequirements {
     bool everyone;
     address[] users;
-    IRuleEntitlement.RuleData ruleData;
+    bytes ruleData;
   }
 
   struct Membership {

@@ -1,5 +1,5 @@
 import {
-    IArchitectBase,
+    LegacyMembershipStruct,
     NoopRuleData,
     Permission,
     getDynamicPricingModule,
@@ -35,7 +35,7 @@ export async function createUngatedSpace(
     const dynamicPricingModule = await getDynamicPricingModule(client.spaceDapp)
 
     // Everyone role
-    const membershipInfo: IArchitectBase.MembershipStruct = {
+    const membershipInfo: LegacyMembershipStruct = {
         settings: {
             name: 'Everyone',
             symbol: 'MEMBER',

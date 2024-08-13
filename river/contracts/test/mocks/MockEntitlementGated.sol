@@ -7,6 +7,8 @@ import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEnti
 
 contract MockEntitlementGated is EntitlementGated {
   mapping(uint256 => IRuleEntitlement.RuleData) ruleDatasByRoleId;
+  mapping(uint256 => IRuleEntitlement.RuleDataV2) ruleDatasV2ByRoleId;
+
   IRuleEntitlement.RuleData encodedRuleData;
 
   constructor(IEntitlementChecker checker) {
@@ -21,6 +23,12 @@ contract MockEntitlementGated is EntitlementGated {
     return ruleDatasByRoleId[roleId];
   }
 
+  function getRuleDataV2(
+    uint256 roleId
+  ) external view returns (IRuleEntitlement.RuleDataV2 memory) {
+    return ruleDatasV2ByRoleId[roleId];
+  }
+
   function requestEntitlementCheck(
     uint256 roleId,
     IRuleEntitlement.RuleData calldata ruleData
@@ -29,7 +37,27 @@ contract MockEntitlementGated is EntitlementGated {
     bytes32 transactionId = keccak256(
       abi.encodePacked(tx.origin, block.number)
     );
-    _requestEntitlementCheck(transactionId, IRuleEntitlement(address(this)), 0);
+    _requestEntitlementCheck(
+      transactionId,
+      IRuleEntitlement(address(this)),
+      roleId
+    );
+    return transactionId;
+  }
+
+  function requestEntitlementCheckV2(
+    uint256 roleId,
+    IRuleEntitlement.RuleDataV2 calldata ruleData
+  ) external returns (bytes32) {
+    ruleDatasV2ByRoleId[roleId] = ruleData;
+    bytes32 transactionId = keccak256(
+      abi.encodePacked(tx.origin, block.number)
+    );
+    _requestEntitlementCheck(
+      transactionId,
+      IRuleEntitlement(address(this)),
+      roleId
+    );
     return transactionId;
   }
 }

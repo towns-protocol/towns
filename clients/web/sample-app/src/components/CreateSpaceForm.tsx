@@ -13,7 +13,7 @@ import {
     useTownsContext,
 } from 'use-towns-client'
 import {
-    MembershipStruct,
+    LegacyMembershipStruct,
     NoopRuleData,
     Permission,
     getTestGatingNFTContractAddress,
@@ -151,7 +151,7 @@ export const CreateSpaceForm = (props: Props) => {
         }
         const dynamicPricingModule = await getDynamicPricingModule(spaceDapp)
 
-        const requirements: MembershipStruct = {
+        const requirements: LegacyMembershipStruct = {
             settings: {
                 name: 'Member',
                 symbol: 'MEMBER',

@@ -10,7 +10,7 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import { TSigner } from '../types/web3-types'
 import { CreateSpaceInfo } from '../types/towns-types'
 import { useTownsClient } from './use-towns-client'
-import { IArchitectBase } from '@river-build/web3'
+import { LegacyMembershipStruct } from '@river-build/web3'
 import { getTransactionHashOrUserOpHash } from '@towns/userops'
 import { useMyDefaultUsernames } from './use-my-default-usernames'
 /**
@@ -38,7 +38,7 @@ export function useCreateSpaceTransaction() {
     const createSpaceTransactionWithRole = useCallback(
         async function (
             createInfo: CreateSpaceInfo,
-            membershipInfo: IArchitectBase.MembershipStruct,
+            membershipInfo: LegacyMembershipStruct,
             signer: TSigner,
             onCreateSpaceFlowStatus?: (status: CreateSpaceFlowStatus) => void,
         ): Promise<CreateSpaceTransactionContext | undefined> {
@@ -124,7 +124,7 @@ export function useCreateSpaceTransactionWithRetries() {
     const createSpaceTransactionWithRetries = useCallback(
         async function (
             createInfo: CreateSpaceInfo,
-            membershipInfo: IArchitectBase.MembershipStruct,
+            membershipInfo: LegacyMembershipStruct,
             signer: TSigner,
             onCreateSpaceFlowStatus?: (status: CreateSpaceFlowStatus) => void,
         ) {

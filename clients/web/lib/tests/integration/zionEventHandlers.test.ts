@@ -12,7 +12,7 @@ import { waitFor } from '@testing-library/dom'
 import { sleep } from '../../src/utils/towns-utils'
 import {
     getTestGatingNftAddress,
-    IArchitectBase,
+    LegacyMembershipStruct,
     NoopRuleData,
     Permission,
     getDynamicPricingModule,
@@ -49,7 +49,7 @@ describe('Towns event handlers test', () => {
 
         const dynamicPricingModule = await getDynamicPricingModule(alice.spaceDapp)
 
-        const membership: IArchitectBase.MembershipStruct = {
+        const membership: LegacyMembershipStruct = {
             settings: {
                 name: 'Member',
                 symbol: 'MEMBER',

@@ -88,7 +88,6 @@ type csUserInboxRules struct {
   - @return CreateStreamRules // rules for creating a stream
   - @return error // if adding result would result in invalid state
 
-    
 *
 * example valid states:
 * (nil, nil, nil) // stream can be created
@@ -531,8 +530,8 @@ func (ru *csMediaRules) checkMediaInceptionPayload() error {
 	}
 
 	// checks for space or channel media stream
-	if ru.inception.ChannelId == nil || len(ru.inception.ChannelId) == 0 {
-		if ru.inception.SpaceId == nil || len(ru.inception.SpaceId) == 0 {
+	if len(ru.inception.ChannelId) == 0 {
+		if len(ru.inception.SpaceId) == 0 {
 			return RiverError(
 				Err_BAD_STREAM_CREATION_PARAMS,
 				"both space id and channel id must not be nil or empty for media stream",

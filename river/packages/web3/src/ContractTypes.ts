@@ -3,6 +3,7 @@ import {
     IMembershipBase as IMembershipBaseV3,
     IArchitectBase as ISpaceArchitectBaseV3,
 } from './v3/ISpaceArchitectShim'
+import { ILegacyArchitectBase } from './v3/ILegacySpaceArchitectShim'
 import { IRolesBase as IRolesBaseV3 } from './v3/IRolesShim'
 import { RuleEntitlementShim } from './v3/RuleEntitlementShim'
 import { IRuleEntitlementBase } from './v3'
@@ -36,7 +37,15 @@ type TotalSupplyOutputStruct = { totalSupply: number }
 
 export type MembershipStruct = ISpaceArchitectBaseV3.MembershipStruct
 
+export type LegacyMembershipStruct = ILegacyArchitectBase.MembershipStruct
+
+export type MembershipRequirementsStruct = ISpaceArchitectBaseV3.MembershipRequirementsStruct
+
+export type LegacyMembershipRequirementsStruct = ILegacyArchitectBase.MembershipRequirementsStruct
+
 export type SpaceInfoStruct = ISpaceArchitectBaseV3.SpaceInfoStruct
+
+export type LegacySpaceInfoStruct = ILegacyArchitectBase.SpaceInfoStruct
 
 export type PricingModuleStruct = IPricingModulesBase.PricingModuleStruct
 
@@ -46,6 +55,7 @@ export type PricingModuleStruct = IPricingModulesBase.PricingModuleStruct
 export enum EntitlementModuleType {
     UserEntitlement = 'UserEntitlement',
     RuleEntitlement = 'RuleEntitlement',
+    RuleEntitlementV2 = 'RuleEntitlementV2',
 }
 
 /**

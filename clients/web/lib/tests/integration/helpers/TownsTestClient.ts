@@ -29,7 +29,7 @@ import {
 } from '@river-build/sdk'
 import {
     Permission,
-    IArchitectBase,
+    LegacyMembershipStruct,
     IRuleEntitlementBase,
     createSpaceDapp,
 } from '@river-build/web3'
@@ -114,7 +114,7 @@ export class TownsTestClient extends TownsClient {
      *************************************************/
     public async createSpace(
         createSpaceInfo: CreateSpaceInfo,
-        membership: IArchitectBase.MembershipStruct,
+        membership: LegacyMembershipStruct,
     ): Promise<string> {
         const signerContext =
             this.signerContext ??

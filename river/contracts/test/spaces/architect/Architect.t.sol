@@ -10,7 +10,7 @@ import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {IPausableBase, IPausable} from "contracts/src/diamond/facets/pausable/IPausable.sol";
 import {IGuardian} from "contracts/src/spaces/facets/guardian/IGuardian.sol";
 import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
-import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
+import {IRuleEntitlement, IRuleEntitlementV2} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
 import {RuleEntitlement} from "contracts/src/spaces/entitlements/rule/RuleEntitlement.sol";
 import {IRoles} from "contracts/src/spaces/facets/roles/IRoles.sol";
 import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.sol";
@@ -18,6 +18,7 @@ import {IWalletLink} from "contracts/src/factory/facets/wallet-link/IWalletLink.
 import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
 
 // libraries
+import {LibString} from "solady/utils/LibString.sol";
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 import {RuleEntitlementUtil} from "contracts/test/crosschain/RuleEntitlementUtil.sol";
 
@@ -45,11 +46,13 @@ contract ArchitectTest is
     spaceArchitect = Architect(spaceFactory);
   }
 
-  function test_createSpace() external {
-    string memory name = "Test";
-    address founder = _randomAddress();
+  function test_fuzz_createSpace(
+    address founder,
+    address user
+  ) external assumeEOA(founder) {
+    vm.assume(founder != user);
 
-    SpaceInfo memory spaceInfo = _createSpaceInfo(name);
+    SpaceInfo memory spaceInfo = _createSpaceInfo("Test");
     spaceInfo.membership.settings.pricingModule = pricingModule;
 
     vm.prank(founder);
@@ -66,19 +69,17 @@ contract ArchitectTest is
     // expect no one to be entitled
     assertFalse(
       IEntitlementsManager(spaceAddress).isEntitledToSpace(
-        _randomAddress(),
+        user,
         Permissions.Read
       )
     );
   }
 
-  function test_minter_role_entitlments() external {
-    string memory name = "Test";
-
-    address founder = _randomAddress();
-
+  function test_fuzz_minterRoleEntitlementExists(
+    address founder
+  ) external assumeEOA(founder) {
     vm.prank(founder);
-    IArchitectBase.SpaceInfo memory spaceInfo = _createGatedSpaceInfo(name);
+    IArchitectBase.SpaceInfo memory spaceInfo = _createGatedSpaceInfo("Test");
     spaceInfo.membership.settings.pricingModule = pricingModule;
     address spaceAddress = spaceArchitect.createSpace(spaceInfo);
 
@@ -87,12 +88,8 @@ contract ArchitectTest is
         .getEntitlements();
 
     address ruleEntitlementAddress;
-
-    for (uint256 i = 0; i < entitlements.length; i++) {
-      if (
-        keccak256(abi.encodePacked(entitlements[i].moduleType)) ==
-        keccak256(abi.encodePacked("RuleEntitlement"))
-      ) {
+    for (uint256 i; i < entitlements.length; ++i) {
+      if (LibString.eq(entitlements[i].moduleType, "RuleEntitlementV2")) {
         ruleEntitlementAddress = entitlements[i].moduleAddress;
         break;
       }
@@ -100,16 +97,13 @@ contract ArchitectTest is
 
     uint256 minterRoleId = 1;
     // ruleData for minter role
-    IRuleEntitlement.RuleData memory ruleData = IRuleEntitlement(
+    IRuleEntitlement.RuleDataV2 memory ruleData = IRuleEntitlementV2(
       ruleEntitlementAddress
-    ).getRuleData(minterRoleId);
+    ).getRuleDataV2(minterRoleId);
 
     assertEq(
-      ruleData.checkOperations[0].contractAddress,
-      RuleEntitlementUtil
-        .getMockERC721RuleData()
-        .checkOperations[0]
-        .contractAddress
+      abi.encode(ruleData),
+      abi.encode(RuleEntitlementUtil.getMockERC721RuleData())
     );
   }
 
@@ -125,12 +119,12 @@ contract ArchitectTest is
     assertEq(ruleEntitlement, address(ruleEntitlementAddress));
   }
 
-  function test_setImplementations() external {
+  function test_fuzz_setImplementations(address user) external {
     ISpaceOwner newSpaceToken = ISpaceOwner(address(new MockERC721()));
     IUserEntitlement newUserEntitlement = new UserEntitlement();
     IRuleEntitlement newRuleEntitlement = new RuleEntitlement();
 
-    address user = _randomAddress();
+    vm.assume(user != deployer);
 
     vm.prank(user);
     vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, user));
@@ -158,11 +152,13 @@ contract ArchitectTest is
     assertEq(address(newRuleEntitlement), address(tokenEntitlementAddress));
   }
 
-  function test_transfer_space_ownership(string memory spaceName) external {
+  function test_fuzz_transfer_space_ownership(
+    string memory spaceName,
+    address founder,
+    address buyer
+  ) external assumeEOA(founder) assumeEOA(buyer) {
     vm.assume(bytes(spaceName).length > 2);
-
-    address founder = _randomAddress();
-    address buyer = _randomAddress();
+    vm.assume(founder != buyer);
 
     SpaceInfo memory spaceInfo = _createSpaceInfo(spaceName);
     spaceInfo.membership.settings.pricingModule = pricingModule;
@@ -201,15 +197,14 @@ contract ArchitectTest is
     );
   }
 
-  function test_revertWhen_createSpaceAndPaused(
-    string memory spaceName
-  ) external {
+  function test_fuzz_revertWhen_createSpaceAndPaused(
+    string memory spaceName,
+    address founder
+  ) external assumeEOA(founder) {
     vm.assume(bytes(spaceName).length > 2);
 
     vm.prank(deployer);
     IPausable(address(spaceArchitect)).pause();
-
-    address founder = _randomAddress();
 
     SpaceInfo memory spaceInfo = _createSpaceInfo(spaceName);
     spaceInfo.membership.settings.pricingModule = pricingModule;
@@ -225,9 +220,9 @@ contract ArchitectTest is
     spaceArchitect.createSpace(spaceInfo);
   }
 
-  function test_revertIfInvalidSpaceId() external {
-    address founder = _randomAddress();
-
+  function test_fuzz_revertIfInvalidSpaceId(
+    address founder
+  ) external assumeEOA(founder) {
     vm.expectRevert(Validator__InvalidStringLength.selector);
 
     SpaceInfo memory spaceInfo = _createSpaceInfo("");
@@ -249,13 +244,13 @@ contract ArchitectTest is
     spaceArchitect.createSpace(spaceInfo);
   }
 
-  function test_createSpace_updateMemberPermissions(
-    string memory spaceName
-  ) external {
+  function test_fuzz_createSpace_updateMemberPermissions(
+    string memory spaceName,
+    address founder,
+    address user
+  ) external assumeEOA(founder) assumeEOA(user) {
     vm.assume(bytes(spaceName).length > 2);
-
-    address founder = _randomAddress();
-    address user = _randomAddress();
+    vm.assume(founder != user);
 
     SpaceInfo memory spaceInfo = _createEveryoneSpaceInfo(spaceName);
     spaceInfo.membership.settings.pricingModule = pricingModule;
@@ -279,8 +274,8 @@ contract ArchitectTest is
     IRoles.Role[] memory roles = IRoles(spaceInstance).getRoles();
     IRoles.Role memory memberRole;
 
-    for (uint256 i = 0; i < roles.length; i++) {
-      if (keccak256(abi.encodePacked(roles[i].name)) == keccak256("Member")) {
+    for (uint256 i; i < roles.length; ++i) {
+      if (LibString.eq(roles[i].name, "Member")) {
         memberRole = roles[i];
         break;
       }

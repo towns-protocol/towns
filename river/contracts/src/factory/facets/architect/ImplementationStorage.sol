@@ -23,6 +23,7 @@ library ImplementationStorage {
     IRuleEntitlement ruleEntitlement;
     IWalletLink walletLink;
     IEntitlementChecker entitlementChecker;
+    IRuleEntitlement legacyRuleEntitlement;
   }
 
   function layout() internal pure returns (Layout storage ds) {

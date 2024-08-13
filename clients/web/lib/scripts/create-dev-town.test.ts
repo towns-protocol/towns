@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import {
-    IArchitectBase,
+    LegacyMembershipStruct,
     NoopRuleData,
     Permission,
     getDynamicPricingModule,
@@ -71,7 +71,7 @@ export async function createDevTown(client: TownsTestClient): Promise<string | u
         throw new Error('no dynamicPricingModule')
     }
 
-    const membershipInfo: IArchitectBase.MembershipStruct = {
+    const membershipInfo: LegacyMembershipStruct = {
         settings: {
             name: 'Everyone',
             symbol: 'MEMBER',

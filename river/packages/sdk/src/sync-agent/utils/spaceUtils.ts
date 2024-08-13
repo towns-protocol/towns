@@ -1,6 +1,6 @@
 import {
     ETH_ADDRESS,
-    MembershipStruct,
+    LegacyMembershipStruct,
     NoopRuleData,
     Permission,
     SpaceDapp,
@@ -35,5 +35,5 @@ export async function makeDefaultMembershipInfo(
             users: [],
             ruleData: NoopRuleData,
         },
-    } satisfies MembershipStruct
+    } satisfies LegacyMembershipStruct
 }

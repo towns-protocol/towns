@@ -44,9 +44,8 @@ import {
     IRuleEntitlementBase,
     Permission,
     ISpaceDapp,
-    IArchitectBase,
+    LegacyMembershipStruct,
     ETH_ADDRESS,
-    MembershipStruct,
     NoopRuleData,
     CheckOperationType,
     LogicalOperationType,
@@ -390,13 +389,13 @@ export async function createSpaceAndDefaultChannel(
     spaceDapp: ISpaceDapp,
     wallet: ethers.Wallet,
     name: string,
-    membership: IArchitectBase.MembershipStruct,
+    membership: LegacyMembershipStruct,
 ): Promise<{
     spaceId: string
     defaultChannelId: string
     userStreamView: IStreamStateView
 }> {
-    const transaction = await spaceDapp.createSpace(
+    const transaction = await spaceDapp.createLegacySpace(
         {
             spaceName: `${name}-space`,
             uri: `http://${name}-space-metadata.com`,
@@ -447,10 +446,10 @@ export async function createUserStreamAndSyncClient(
     client: Client,
     spaceDapp: ISpaceDapp,
     name: string,
-    membershipInfo: IArchitectBase.MembershipStruct,
+    membershipInfo: LegacyMembershipStruct,
     wallet: ethers.Wallet,
 ) {
-    const transaction = await spaceDapp.createSpace(
+    const transaction = await spaceDapp.createLegacySpace(
         {
             spaceName: `${name}-space`,
             uri: `${name}-space-metadata`,
@@ -508,7 +507,7 @@ export async function expectUserCanJoin(
 export async function everyoneMembershipStruct(
     spaceDapp: ISpaceDapp,
     client: Client,
-): Promise<MembershipStruct> {
+): Promise<LegacyMembershipStruct> {
     const pricingModules = await spaceDapp.listPricingModules()
     const dynamicPricingModule = getDynamicPricingModule(pricingModules)
     expect(dynamicPricingModule).toBeDefined()

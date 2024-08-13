@@ -1,59 +1,33 @@
 import * as dotenv from 'dotenv'
 
-import { ChainConfig } from './types'
-import deploymentData from '@river-build/generated/config/deployments.json'
+import { Config } from './types'
+import { getWeb3Deployment } from '@river-build/web3'
 
 const isDev = process.env.NODE_ENV === 'development'
 const envFile = isDev ? '.env.localhost' : '.env'
-
-console.log('NODE_ENV:', process.env.NODE_ENV, 'isDev:', isDev, 'envFile:', envFile)
 
 dotenv.config({
 	path: envFile,
 })
 
 export const SERVER_PORT = parseInt(process.env.PORT ?? '443', 10)
-export const config = makeConfig(deploymentData, process.env.RIVER_ENV ?? 'omega')
+export const config = makeConfig(process.env.RIVER_ENV, process.env.RIVER_CHAIN_RPC_URL)
 
-console.log('config:', config)
-
-interface DeploymentsJson {
-	[riverEnv: string]: {
-		river: {
-			chainId: number
-			addresses: {
-				riverRegistry: string
-			}
-		}
-	}
-}
-
-interface AllChainConfig {
-	[riverEnv: string]: {
-		chainId: number
-		riverRegistry: string
-	}
-}
-
-function makeConfig(deploymentsJson: DeploymentsJson, riverEnv: string): ChainConfig {
-	const allChainConfig: AllChainConfig = {}
-
-	for (const key in deploymentsJson) {
-		const envConfig = deploymentsJson[key]
-		if (envConfig.river) {
-			allChainConfig[key] = {
-				chainId: envConfig.river.chainId,
-				riverRegistry: envConfig.river.addresses.riverRegistry,
-			}
-		}
-	}
-
-	if (!allChainConfig[riverEnv].chainId || !allChainConfig[riverEnv].riverRegistry) {
-		throw new Error('chainId or riverRegistry undefined')
-	}
-
+function makeConfig(
+	riverEnv = 'omega',
+	riverChainRpcUrl = 'https://mainnet.rpc.river.build/http',
+): Config {
+	const web3Config = getWeb3Deployment(riverEnv)
 	return {
-		chainId: allChainConfig[riverEnv].chainId,
-		riverRegistry: allChainConfig[riverEnv].riverRegistry,
+		...web3Config,
+		riverEnv,
+		riverChainRpcUrl,
 	}
 }
+
+console.log('config', {
+	riverEnv: config.riverEnv,
+	chainId: config.river.chainId,
+	riverRegistry: config.river.addresses.riverRegistry,
+	riverChainRpcUrl: config.riverChainRpcUrl,
+})

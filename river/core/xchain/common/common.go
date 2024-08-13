@@ -127,7 +127,7 @@ func WaitForTransaction(client *ethclient.Client, tx *types.Transaction) *big.In
 				return nil
 			}
 
-			if receipt.Logs == nil || len(receipt.Logs) == 0 {
+			if len(receipt.Logs) == 0 {
 				rcp, err := json.MarshalIndent(receipt, "", "    ")
 				if err != nil {
 					log.Error("Failed to marshal receipt", "err", err)

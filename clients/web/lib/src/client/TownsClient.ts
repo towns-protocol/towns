@@ -20,7 +20,7 @@ import { EntitlementsDelegate, DecryptionStatus } from '@river-build/encryption'
 import {
     BASE_MAINNET,
     BASE_SEPOLIA,
-    CreateSpaceParams,
+    CreateLegacySpaceParams,
     IRuleEntitlementBase,
     UpdateChannelParams,
 } from '@river-build/web3'
@@ -76,7 +76,7 @@ import {
     Address,
     TSigner,
 } from '../types/web3-types'
-import { IArchitectBase, Permission, SpaceInfo, ISpaceDapp } from '@river-build/web3'
+import { LegacyMembershipStruct, Permission, SpaceInfo, ISpaceDapp } from '@river-build/web3'
 import { BlockchainTransactionStore } from './BlockchainTransactionStore'
 import { UserOps, getTransactionHashOrUserOpHash, isUserOpResponse } from '@towns/userops'
 import { TimeTrackerEvents, getTimeTracker } from '../SequenceTimeTracker'
@@ -317,7 +317,7 @@ export class TownsClient
 
     public async createSpaceTransaction(
         createSpaceInfo: CreateSpaceInfo,
-        membership: IArchitectBase.MembershipStruct,
+        membership: LegacyMembershipStruct,
         signer: ethers.Signer | undefined,
         onSpaceCreateFlowStatus?: (update: CreateSpaceFlowStatus) => void,
     ): Promise<CreateSpaceTransactionContext> {
@@ -441,7 +441,7 @@ export class TownsClient
 
     private async createCasablancaSpaceTransaction(
         createSpaceInfo: CreateSpaceInfo,
-        membership: IArchitectBase.MembershipStruct,
+        membership: LegacyMembershipStruct,
         signer: ethers.Signer,
         onCreateSpageFlowStatus?: (status: CreateSpaceFlowStatus) => void,
     ): Promise<CreateSpaceTransactionContext> {
@@ -455,7 +455,7 @@ export class TownsClient
             data: {},
         })
 
-        const args: CreateSpaceParams = {
+        const args: CreateLegacySpaceParams = {
             spaceName: createSpaceInfo.name,
             uri: '',
             channelName: createSpaceInfo.defaultChannelName ?? 'general', // default channel name
@@ -466,9 +466,9 @@ export class TownsClient
 
         try {
             if (this.isAccountAbstractionEnabled()) {
-                transaction = await this.userOps?.sendCreateSpaceOp([args, signer])
+                transaction = await this.userOps?.sendCreateLegacySpaceOp([args, signer])
             } else {
-                transaction = await this.spaceDapp.createSpace(args, signer)
+                transaction = await this.spaceDapp.createLegacySpace(args, signer)
             }
 
             this.log(`[createCasablancaSpaceTransaction] transaction created` /*, transaction*/)

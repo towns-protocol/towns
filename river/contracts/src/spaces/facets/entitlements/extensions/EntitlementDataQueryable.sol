@@ -53,7 +53,7 @@ contract EntitlementDataQueryable is
 
     Transaction storage transaction = ds.transactions[transactionId];
 
-    if (transaction.hasBenSet == false) {
+    if (!transaction.hasBenSet) {
       revert EntitlementGated_TransactionNotRegistered();
     }
 
@@ -70,7 +70,7 @@ contract EntitlementDataQueryable is
     bytes32 channelId,
     string calldata permission
   ) internal view returns (Role[] memory) {
-    // retrive the roles associated with the channel
+    // retrieve the roles associated with the channel
     uint256[] memory channelRoles = ChannelService.getRolesByChannel(channelId);
     uint256 channelRolesLength = channelRoles.length;
 
@@ -82,7 +82,7 @@ contract EntitlementDataQueryable is
     RolesStorage.Layout storage rs = RolesStorage.layout();
 
     // iterate through channel roles and check for the requested permission
-    for (uint256 i; i < channelRolesLength; i++) {
+    for (uint256 i; i < channelRolesLength; ++i) {
       uint256 roleId = channelRoles[i];
 
       RolesStorage.Role storage role = rs.roleById[channelRoles[i]];
@@ -104,13 +104,15 @@ contract EntitlementDataQueryable is
       // store the role ID if it has the requested permission
       if (hasPermission) {
         matchedRoleIds[matchedRoleCount] = roleId;
-        matchedRoleCount++;
+        unchecked {
+          ++matchedRoleCount;
+        }
       }
     }
 
     // create an array of roles with the matching IDs
     Role[] memory rolesWithPermission = new Role[](matchedRoleCount);
-    for (uint256 i; i < matchedRoleCount; i++) {
+    for (uint256 i; i < matchedRoleCount; ++i) {
       rolesWithPermission[i] = _getRoleById(matchedRoleIds[i]);
     }
 
@@ -119,37 +121,38 @@ contract EntitlementDataQueryable is
 
   function _getEntitlements(
     Role[] memory roles
-  ) internal view returns (EntitlementData[] memory) {
+  ) internal view returns (EntitlementData[] memory entitlementData) {
     uint256 entitlementCount;
     uint256 rolesLength = roles.length;
 
-    for (uint256 i; i < rolesLength; i++) {
+    for (uint256 i; i < rolesLength; ++i) {
       if (!roles[i].disabled) {
-        entitlementCount += roles[i].entitlements.length;
+        unchecked {
+          entitlementCount += roles[i].entitlements.length;
+        }
       }
     }
 
-    EntitlementData[] memory entitlementData = new EntitlementData[](
-      entitlementCount
-    );
+    entitlementData = new EntitlementData[](entitlementCount);
 
     uint256 currentIndex = 0;
 
-    for (uint256 i; i < rolesLength; i++) {
+    for (uint256 i; i < rolesLength; ++i) {
       if (!roles[i].disabled) {
-        for (uint256 j; j < roles[i].entitlements.length; j++) {
-          IEntitlement entitlement = IEntitlement(roles[i].entitlements[j]);
+        IEntitlement[] memory entitlements = roles[i].entitlements;
+        uint256 length = entitlements.length;
+        for (uint256 j; j < length; ++j) {
+          IEntitlement entitlement = IEntitlement(entitlements[j]);
 
           entitlementData[currentIndex] = EntitlementData(
             entitlement.moduleType(),
             entitlement.getEntitlementDataByRoleId(roles[i].id)
           );
-
-          currentIndex++;
+          unchecked {
+            ++currentIndex;
+          }
         }
       }
     }
-
-    return entitlementData;
   }
 }

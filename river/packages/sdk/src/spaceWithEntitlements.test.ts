@@ -30,7 +30,7 @@ import {
     CheckOperationType,
     ETH_ADDRESS,
     LogicalOperationType,
-    MembershipStruct,
+    LegacyMembershipStruct,
     NoopRuleData,
     Operation,
     OperationType,
@@ -79,7 +79,7 @@ async function createTownWithRequirements(requirements: {
     }
     requirements.users = requirements.users.map((user) => userNameToWallet[user])
 
-    const membershipInfo: MembershipStruct = {
+    const membershipInfo: LegacyMembershipStruct = {
         settings: {
             name: 'Everyone',
             symbol: 'MEMBER',

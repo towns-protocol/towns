@@ -3,7 +3,7 @@ import {
     ChannelDetails,
     ChannelMetadata,
     MembershipInfo,
-    MembershipStruct,
+    LegacyMembershipStruct,
     Permission,
     PricingModuleStruct,
     RoleDetails,
@@ -20,11 +20,11 @@ import { PlatformRequirements } from './v3/PlatformRequirements'
 
 export type SignerType = ethers.Signer
 
-export interface CreateSpaceParams {
+export interface CreateLegacySpaceParams {
     spaceName: string
     uri: string
     channelName: string
-    membership: MembershipStruct
+    membership: LegacyMembershipStruct
     shortDescription?: string
     longDescription?: string
 }
@@ -86,8 +86,8 @@ export interface ISpaceDapp {
     ) => Promise<TransactionType>
     walletAddressIsBanned: (spaceId: string, walletAddress: string) => Promise<boolean>
     bannedWalletAddresses: (spaceId: string) => Promise<string[]>
-    createSpace: (
-        params: CreateSpaceParams,
+    createLegacySpace: (
+        params: CreateLegacySpaceParams,
         signer: SignerType,
         txnOpts?: TransactionOpts,
     ) => Promise<TransactionType>

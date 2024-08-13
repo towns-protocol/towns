@@ -4,8 +4,8 @@ import { ethers } from 'ethers'
 import {
     Address,
     CheckOperationType,
-    CreateSpaceParams,
-    IArchitectBase,
+    CreateLegacySpaceParams,
+    LegacyMembershipStruct,
     LocalhostWeb3Provider,
     NoopRuleData,
     Permission,
@@ -86,7 +86,7 @@ export async function createUngatedSpace({
     const name = spaceName ?? generatedSpaceName
     const dynamicPricingModule = await getDynamicPricingModule(spaceDapp)
 
-    const membershipInfo: IArchitectBase.MembershipStruct = {
+    const membershipInfo: LegacyMembershipStruct = {
         settings: {
             name: 'Everyone',
             symbol: 'MEMBER',
@@ -111,9 +111,9 @@ export async function createUngatedSpace({
         uri: name,
         channelName,
         membership: membershipInfo,
-    } satisfies CreateSpaceParams
+    } satisfies CreateLegacySpaceParams
 
-    return userOps.sendCreateSpaceOp([townInfo, signer])
+    return userOps.sendCreateLegacySpaceOp([townInfo, signer])
 }
 
 export async function createGatedSpace({
@@ -136,7 +136,7 @@ export async function createGatedSpace({
 
     const dynamicPricingModule = await getDynamicPricingModule(spaceDapp)
 
-    const membershipInfo: IArchitectBase.MembershipStruct = {
+    const membershipInfo: LegacyMembershipStruct = {
         settings: {
             name: 'Gated Space',
             symbol: 'MEMBER',
@@ -161,9 +161,9 @@ export async function createGatedSpace({
         uri: name,
         channelName,
         membership: membershipInfo,
-    } satisfies CreateSpaceParams
+    } satisfies CreateLegacySpaceParams
 
-    return userOps.sendCreateSpaceOp([townInfo, signer])
+    return userOps.sendCreateLegacySpaceOp([townInfo, signer])
 }
 
 export async function createFixedPriceSpace({
@@ -188,7 +188,7 @@ export async function createFixedPriceSpace({
 
     const fixedPricingModule = await getFixedPricingModule(spaceDapp)
 
-    const membershipInfo: IArchitectBase.MembershipStruct = {
+    const membershipInfo: LegacyMembershipStruct = {
         settings: {
             name: 'Gated Space',
             symbol: 'MEMBER',
@@ -213,9 +213,9 @@ export async function createFixedPriceSpace({
         uri: name,
         channelName,
         membership: membershipInfo,
-    } satisfies CreateSpaceParams
+    } satisfies CreateLegacySpaceParams
 
-    return userOps.sendCreateSpaceOp([townInfo, signer])
+    return userOps.sendCreateLegacySpaceOp([townInfo, signer])
 }
 
 export function generatePrivyWalletIfKey(privateKey?: string) {

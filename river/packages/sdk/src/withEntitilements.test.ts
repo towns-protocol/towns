@@ -20,7 +20,7 @@ import {
     LocalhostWeb3Provider,
     createSpaceDapp,
     Permission,
-    MembershipStruct,
+    LegacyMembershipStruct,
     NoopRuleData,
     ETH_ADDRESS,
 } from '@river-build/web3'
@@ -54,7 +54,7 @@ describe('withEntitlements', () => {
         // create a space stream,
         log('Bob created user, about to create space')
         // first on the blockchain
-        const membershipInfo: MembershipStruct = {
+        const membershipInfo: LegacyMembershipStruct = {
             settings: {
                 name: 'Everyone',
                 symbol: 'MEMBER',
@@ -75,7 +75,7 @@ describe('withEntitlements', () => {
         }
 
         log('transaction start bob creating space')
-        const transaction = await spaceDapp.createSpace(
+        const transaction = await spaceDapp.createLegacySpace(
             {
                 spaceName: 'bobs-space-metadata',
                 uri: 'http://bobs-space-metadata.com',

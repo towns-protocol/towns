@@ -1,7 +1,7 @@
 import {
     Address,
     ISpaceDapp,
-    IArchitectBase,
+    LegacySpaceInfoStruct,
     SpaceDapp,
     createEntitlementStruct,
     UpdateRoleParams,
@@ -270,22 +270,22 @@ export class UserOps {
         return sendUserOperationWithRetry()
     }
 
-    public async sendCreateSpaceOp(
-        args: Parameters<SpaceDapp['createSpace']>,
+    public async sendCreateLegacySpaceOp(
+        args: Parameters<SpaceDapp['createLegacySpace']>,
     ): Promise<ISendUserOperationResponse> {
         if (!this.spaceDapp) {
             throw new Error('spaceDapp is required')
         }
-        const [createSpaceParams, signer] = args
+        const [createLegacySpaceParams, signer] = args
 
-        const spaceInfo: IArchitectBase.SpaceInfoStruct = {
-            name: createSpaceParams.spaceName,
-            uri: createSpaceParams.uri,
-            shortDescription: createSpaceParams.shortDescription ?? '',
-            longDescription: createSpaceParams.longDescription ?? '',
-            membership: createSpaceParams.membership,
+        const spaceInfo: LegacySpaceInfoStruct = {
+            name: createLegacySpaceParams.spaceName,
+            uri: createLegacySpaceParams.uri,
+            shortDescription: createLegacySpaceParams.shortDescription ?? '',
+            longDescription: createLegacySpaceParams.longDescription ?? '',
+            membership: createLegacySpaceParams.membership,
             channel: {
-                metadata: createSpaceParams.channelName || '',
+                metadata: createLegacySpaceParams.channelName || '',
             },
         }
 
@@ -305,10 +305,11 @@ export class UserOps {
 
         const createSpaceFnName = 'createSpace'
 
-        const callDataCreateSpace = this.spaceDapp.spaceRegistrar.SpaceArchitect.encodeFunctionData(
-            createSpaceFnName,
-            [spaceInfo],
-        )
+        const callDataCreateSpace =
+            this.spaceDapp.spaceRegistrar.LegacySpaceArchitect.encodeFunctionData(
+                createSpaceFnName,
+                [spaceInfo],
+            )
 
         const endLinkCheck = this.timeTracker?.startMeasurement(
             TimeTrackerEvents.CREATE_SPACE,
@@ -325,7 +326,7 @@ export class UserOps {
 
             const op = await this.sendUserOp(
                 {
-                    toAddress: this.spaceDapp.spaceRegistrar.SpaceArchitect.address,
+                    toAddress: this.spaceDapp.spaceRegistrar.LegacySpaceArchitect.address,
                     callData: callDataCreateSpace,
                     signer,
                     spaceId: undefined,

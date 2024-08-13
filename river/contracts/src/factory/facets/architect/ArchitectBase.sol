@@ -233,12 +233,12 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
         );
       }
 
-      if (requirements.ruleData.operations.length > 0) {
+      if (requirements.ruleData.length > 0) {
         IRoles(spaceAddress).addRoleToEntitlement(
           roleId,
           IRolesBase.CreateEntitlement({
             module: ruleEntitlement,
-            data: abi.encode(requirements.ruleData)
+            data: requirements.ruleData
           })
         );
       }

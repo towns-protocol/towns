@@ -12,9 +12,9 @@ import {
 
 import {
     Address,
-    IArchitectBase,
     Permission,
     TestERC721,
+    LegacyMembershipStruct,
     createExternalNFTStruct,
     getDynamicPricingModule,
 } from '@river-build/web3'
@@ -240,7 +240,7 @@ test(
         ])
         const dynamicPricingModule = await getDynamicPricingModule(alice.spaceDapp)
 
-        const membershipInfo: IArchitectBase.MembershipStruct = {
+        const membershipInfo: LegacyMembershipStruct = {
             settings: {
                 name: 'Member',
                 symbol: 'MEMBER',
@@ -305,7 +305,7 @@ test('joinSpace gated with 2 NFTs, wallet linking', async () => {
     expect(tx_link.error).toBeUndefined()
     const dynamicPricingModule = await getDynamicPricingModule(alice.spaceDapp)
 
-    const membershipInfo: IArchitectBase.MembershipStruct = {
+    const membershipInfo: LegacyMembershipStruct = {
         settings: {
             name: 'Member',
             symbol: 'MEMBER',

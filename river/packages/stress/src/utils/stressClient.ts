@@ -18,7 +18,7 @@ import { CryptoStore, EntitlementsDelegate, type ExportedDevice } from '@river-b
 import {
     ETH_ADDRESS,
     LocalhostWeb3Provider,
-    MembershipStruct,
+    LegacyMembershipStruct,
     NoopRuleData,
     Permission,
     SpaceDapp,
@@ -156,8 +156,8 @@ export class StressClient {
                 users: [],
                 ruleData: NoopRuleData,
             },
-        } satisfies MembershipStruct
-        const transaction = await this.spaceDapp.createSpace(
+        } satisfies LegacyMembershipStruct
+        const transaction = await this.spaceDapp.createLegacySpace(
             {
                 spaceName,
                 uri: '',

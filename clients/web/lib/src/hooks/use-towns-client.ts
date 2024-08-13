@@ -33,7 +33,7 @@ import {
     useCasablancaWalletSignIn,
 } from './use-casablanca-wallet-signin'
 import { create } from 'zustand'
-import { IArchitectBase, Permission, IRuleEntitlementBase } from '@river-build/web3'
+import { LegacyMembershipStruct, Permission, IRuleEntitlementBase } from '@river-build/web3'
 import { TSigner } from 'types/web3-types'
 import { SignerContext } from '@river-build/sdk'
 import { UserOps } from '@towns/userops'
@@ -63,7 +63,7 @@ interface TownsClientImpl {
     spaceDapp: TownsClient['spaceDapp'] | undefined
     createSpaceTransaction: (
         createSpaceInfo: CreateSpaceInfo,
-        membership: IArchitectBase.MembershipStruct,
+        membership: LegacyMembershipStruct,
         signer: TSigner | undefined,
         onCreateFlowStatus?: (update: CreateSpaceFlowStatus) => void,
     ) => Promise<CreateSpaceTransactionContext | undefined>

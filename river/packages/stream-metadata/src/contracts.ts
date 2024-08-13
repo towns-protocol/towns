@@ -12,8 +12,8 @@ export function getStreamRegistryAbi() {
 }
 
 export function getAddress(): Address {
-	if (!config.riverRegistry) {
+	if (!config.river.addresses.riverRegistry) {
 		throw new Error(`no riverRegistry address`)
 	}
-	return config.riverRegistry as Address
+	return config.river.addresses.riverRegistry as Address
 }

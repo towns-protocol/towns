@@ -9,7 +9,8 @@ import {
     BasicRoleInfo,
     Permission,
     getFilteredRolesFromSpace,
-    IArchitectBase,
+    LegacyMembershipStruct,
+    LegacyMembershipRequirementsStruct,
     NoopRuleData,
     MembershipStruct,
     getDynamicPricingModule,
@@ -114,7 +115,7 @@ export async function createTestSpaceGatedByTownsNfts(
     }
 
     const dynamicPricingModule = await getDynamicPricingModule(client.spaceDapp)
-    const membershipInfo: IArchitectBase.MembershipStruct = {
+    const membershipInfo: LegacyMembershipStruct = {
         settings: {
             name: 'Member',
             symbol: 'MEMBER',
@@ -173,7 +174,7 @@ export async function createTestSpaceGatedByTownNft(
     const dynamicPricingModule = await getDynamicPricingModule(client.spaceDapp)
 
     // Everyone role
-    const membershipInfo: IArchitectBase.MembershipStruct = {
+    const membershipInfo: LegacyMembershipStruct = {
         settings: {
             name: 'Everyone',
             symbol: 'MEMBER',
@@ -223,7 +224,7 @@ export async function createPaidTestSpaceGatedByTownNft(
     const fixedPricingModule = await getFixedPricingModule(client.spaceDapp)
 
     // Everyone role
-    const membershipInfo: IArchitectBase.MembershipStruct = {
+    const membershipInfo: LegacyMembershipStruct = {
         settings: {
             name: 'Everyone',
             symbol: 'MEMBER',
@@ -373,7 +374,7 @@ export async function waitForWithRetries<T>(
 type CreateMembershipStructArgs = {
     name: string
     permissions: Permission[]
-    requirements: IArchitectBase.MembershipRequirementsStruct
+    requirements: LegacyMembershipRequirementsStruct
     pricingModule: MembershipStruct['settings']['pricingModule']
 }
 
@@ -382,7 +383,7 @@ export function createMembershipStruct({
     permissions,
     requirements,
     pricingModule,
-}: CreateMembershipStructArgs): MembershipStruct {
+}: CreateMembershipStructArgs): LegacyMembershipStruct {
     return {
         settings: {
             name,

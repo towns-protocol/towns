@@ -1,15 +1,16 @@
 import { ConnectTransportOptions, createConnectTransport } from '@connectrpc/connect-web'
-import { MediaContent, StreamIdHex } from './types'
+import { Config, MediaContent, StreamIdHex } from './types'
 import {
-	decryptAESGCM,
 	ParsedStreamResponse,
 	StreamStateView,
+	decryptAESGCM,
 	streamIdAsBytes,
 	streamIdAsString,
 	unpackStream,
 } from '@river-build/sdk'
 import { PromiseClient, createPromiseClient } from '@connectrpc/connect'
 
+import { BigNumber } from 'ethers'
 import { StreamService } from '@river-build/proto'
 import { filetypemime } from 'magic-bytes.js'
 import { getNodeForStream } from './streamRegistry'
@@ -33,17 +34,22 @@ function makeStreamRpcClient(url: string): StreamRpcClient {
 	return client
 }
 
-async function getStreamClient(streamId: `0x${string}`) {
-	let { url, lastMiniblockNum } = await getNodeForStream(streamId)
+async function getStreamClient(config: Config, streamId: `0x${string}`) {
+	const node = await getNodeForStream(config, streamId)
+	let url = node?.url
 	if (!clients.has(url)) {
 		const client = makeStreamRpcClient(url)
 		clients.set(client.url!, client)
 		url = client.url!
-
-		console.log(`getStreamClient: Connecting to url=${url}`)
 	}
 	console.log(`getStreamClient: url=${url}`)
-	return { client: clients.get(url), lastMiniblockNum }
+
+	const client = clients.get(url)
+	if (!client) {
+		throw new Error(`Failed to get client for url ${url}`)
+	}
+
+	return { client, lastMiniblockNum: node.lastMiniblockNum }
 }
 
 function streamViewFromUnpackedResponse(
@@ -110,12 +116,15 @@ function stripHexPrefix(hexString: string): string {
 	return hexString
 }
 
-export async function getStream(streamId: string): Promise<StreamStateView | undefined> {
+export async function getStream(
+	config: Config,
+	streamId: string,
+): Promise<StreamStateView | undefined> {
 	let client: StreamRpcClient | undefined
-	let lastMiniblockNum: bigint | undefined
+	let lastMiniblockNum: BigNumber | undefined
 
 	try {
-		const result = await getStreamClient(`0x${streamId}`)
+		const result = await getStreamClient(config, `0x${streamId}`)
 		client = result.client
 		lastMiniblockNum = result.lastMiniblockNum
 	} catch (e) {
@@ -145,6 +154,7 @@ export async function getStream(streamId: string): Promise<StreamStateView | und
 }
 
 export async function getMediaStreamContent(
+	config: Config,
 	fullStreamId: StreamIdHex,
 	secret: Uint8Array,
 	iv: Uint8Array,
@@ -163,7 +173,7 @@ export async function getMediaStreamContent(
 	*/
 
 	const streamId = stripHexPrefix(fullStreamId)
-	const sv = await getStream(streamId)
+	const sv = await getStream(config, streamId)
 
 	if (!sv) {
 		return { data: null, mimeType: null }

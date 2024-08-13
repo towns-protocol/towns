@@ -5,7 +5,7 @@ import { jest } from '@jest/globals'
 import { registerAndStartClients, createTestSpaceGatedByTownsNfts } from './helpers/TestUtils'
 
 import {
-    IArchitectBase,
+    LegacyMembershipStruct,
     NoopRuleData,
     Permission,
     getDynamicPricingModule,
@@ -63,7 +63,7 @@ test('should clear all promises when client stops', async () => {
         'abort',
     )
 
-    const membershipInfo: IArchitectBase.MembershipStruct = {
+    const membershipInfo: LegacyMembershipStruct = {
         settings: {
             name: 'Member',
             symbol: 'MEMBER',

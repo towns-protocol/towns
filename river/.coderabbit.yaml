@@ -11,6 +11,7 @@ reviews:
     poem: false
     collapse_walkthrough: false
     sequence_diagrams: false
+    path_filters: ['!packages/generated/**']
     auto_review:
         enabled: true
         drafts: false

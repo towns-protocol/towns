@@ -1,6 +1,8 @@
 import { SpaceAddressFromSpaceId } from '../Utils'
 import { BaseChainConfig } from '../IStaticContractsInfo'
 import { ISpaceArchitectShim } from './ISpaceArchitectShim'
+import { ILegacySpaceArchitectShim } from './ILegacySpaceArchitectShim'
+
 import { Space } from './Space'
 import { ethers } from 'ethers'
 
@@ -17,16 +19,25 @@ export class SpaceRegistrar {
     public readonly config: BaseChainConfig
     private readonly provider: ethers.providers.Provider
     private readonly spaceArchitect: ISpaceArchitectShim
+    private readonly legacySpaceArchitect: ILegacySpaceArchitectShim
     private readonly spaces: SpaceMap = {}
 
     constructor(config: BaseChainConfig, provider: ethers.providers.Provider) {
         this.config = config
         this.provider = provider
         this.spaceArchitect = new ISpaceArchitectShim(config.addresses.spaceFactory, provider)
+        this.legacySpaceArchitect = new ILegacySpaceArchitectShim(
+            config.addresses.spaceFactory,
+            provider,
+        )
     }
 
     public get SpaceArchitect(): ISpaceArchitectShim {
         return this.spaceArchitect
+    }
+
+    public get LegacySpaceArchitect(): ILegacySpaceArchitectShim {
+        return this.legacySpaceArchitect
     }
 
     public getSpace(spaceId: string): Space | undefined {

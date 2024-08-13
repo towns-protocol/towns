@@ -7,7 +7,7 @@ import { userIdFromAddress } from '../../id'
 import { Entitlements } from '../entitlements/entitlements'
 import {
     ETH_ADDRESS,
-    MembershipStruct,
+    LegacyMembershipStruct,
     NoopRuleData,
     Permission,
     SpaceDapp,
@@ -84,5 +84,5 @@ export async function makeTestMembershipInfo(
             users: [],
             ruleData: NoopRuleData,
         },
-    } satisfies MembershipStruct
+    } satisfies LegacyMembershipStruct
 }

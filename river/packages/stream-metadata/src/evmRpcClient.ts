@@ -1,44 +1,23 @@
-import { config } from './environment'
-import { createPublicClient, http } from 'viem'
-import { riverChainDevnet, riverChainLocalhost, riverChainProduction } from './evmChainConfig'
+import { RiverRegistry } from '@river-build/web3'
+import { ethers } from 'ethers'
+import { Config } from './types'
 
-const publicClient: Record<number, ReturnType<typeof createPublicClientFromChainId>> = {}
+let riverRegistry: ReturnType<typeof createRiverRegistry> | undefined
 
-function createPublicClientFromChainId(chainId: number) {
-	let riverChainUrl: string
+function createRiverRegistry(config: Config) {
+	const provider = new ethers.providers.JsonRpcProvider(config.riverChainRpcUrl)
+	const riverRegistry = new RiverRegistry(config.river, provider)
 
-	switch (chainId) {
-		case 550:
-			riverChainUrl = riverChainProduction.rpcUrls.default.http[0]
-			return createPublicClient({
-				chain: riverChainProduction,
-				transport: http(riverChainUrl),
-			})
-		case 6524490:
-			riverChainUrl = riverChainDevnet.rpcUrls.default.http[0]
-			return createPublicClient({
-				chain: riverChainDevnet,
-				transport: http(riverChainUrl),
-			})
-		case 31338:
-			riverChainUrl = riverChainLocalhost.rpcUrls.default.http[0]
-			return createPublicClient({
-				chain: riverChainLocalhost,
-				transport: http(riverChainUrl),
-			})
-		default:
-			console.error(`Unsupported chain ID: ${chainId}`)
-			throw new Error(`Unsupported chain ${chainId}`)
+	if (!riverRegistry) {
+		throw new Error('Failed to create river registry')
 	}
+
+	return riverRegistry
 }
 
-export function getPublicClient() {
-	const chainId = config.chainId
-	if (!chainId) {
-		throw new Error('cannot create evm rpc client because no chainId was configured')
+export function getRiverRegistry(config: Config) {
+	if (!riverRegistry) {
+		riverRegistry = createRiverRegistry(config)
 	}
-	if (!publicClient[chainId]) {
-		publicClient[chainId] = createPublicClientFromChainId(chainId)
-	}
-	return publicClient[chainId]
+	return riverRegistry
 }

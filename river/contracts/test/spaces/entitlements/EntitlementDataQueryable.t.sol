@@ -45,23 +45,24 @@ contract EntitlementDataQueryableTest is
     );
   }
 
-  function test_getEntitlementDataByRole() external view {
+  function test_getEntitlementDataByPermission() external view {
     EntitlementData[] memory entitlement = entitlements
       .getEntitlementDataByPermission(Permissions.JoinSpace);
 
-    assertEq(entitlement.length == 1, true);
-    assertEq(
-      keccak256(abi.encodePacked(entitlement[0].entitlementType)),
-      keccak256(abi.encodePacked("UserEntitlement"))
-    );
+    assertEq(entitlement.length, 1);
+    assertEq(entitlement[0].entitlementType, "UserEntitlement");
   }
 
-  function test_getChannelEntitlementDataByPermission() external {
+  function test_fuzz_getChannelEntitlementDataByPermission(
+    address[] memory users
+  ) external {
+    vm.assume(users.length > 0);
+    for (uint256 i; i < users.length; ++i) {
+      if (users[i] == address(0)) users[i] = vm.randomAddress();
+    }
+
     string[] memory permissions = new string[](1);
     permissions[0] = Permissions.Read;
-
-    address[] memory users = new address[](1);
-    users[0] = _randomAddress();
 
     CreateEntitlement[] memory createEntitlements = new CreateEntitlement[](1);
     createEntitlements[0] = CreateEntitlement({
@@ -86,24 +87,21 @@ contract EntitlementDataQueryableTest is
     EntitlementData[] memory channelEntitlements = entitlements
       .getChannelEntitlementDataByPermission(channelId, Permissions.Read);
 
-    assertEq(channelEntitlements.length == 1, true);
-    assertEq(
-      keccak256(abi.encodePacked(channelEntitlements[0].entitlementType)),
-      keccak256(abi.encodePacked("MockUserEntitlement"))
-    );
-    assertEq(
-      keccak256(abi.encodePacked(channelEntitlements[0].entitlementData)),
-      keccak256(abi.encode(users))
-    );
+    assertEq(channelEntitlements.length, 1);
+    assertEq(channelEntitlements[0].entitlementType, "MockUserEntitlement");
+    assertEq(channelEntitlements[0].entitlementData, abi.encode(users));
   }
 
-  function test_getCrossChainEntitlementData() external {
-    address alice = _randomAddress();
+  function test_fuzz_getCrossChainEntitlementData(
+    address user
+  ) external assumeEOA(user) {
+    // TODO: find a better way to exclude user from being a minter
+    vm.assume(user != alice && user != charlie);
 
     vm.recordLogs();
 
-    vm.prank(alice);
-    membership.joinSpace(alice);
+    vm.prank(user);
+    membership.joinSpace(user);
 
     Vm.Log[] memory requestLogs = vm.getRecordedLogs(); // Retrieve the recorded logs
 
@@ -115,10 +113,7 @@ contract EntitlementDataQueryableTest is
       .getCrossChainEntitlementData(transactionId, roleId);
 
     assertTrue(data.entitlementData.length > 0);
-    assertEq(
-      keccak256(abi.encodePacked(data.entitlementType)),
-      keccak256(abi.encodePacked("RuleEntitlement"))
-    );
+    assertEq(data.entitlementType, "RuleEntitlementV2");
   }
 
   function _getRequestedEntitlementData(
@@ -133,7 +128,7 @@ contract EntitlementDataQueryableTest is
       address[] memory selectedNodes
     )
   {
-    for (uint i = 0; i < requestLogs.length; i++) {
+    for (uint256 i; i < requestLogs.length; ++i) {
       if (
         requestLogs[i].topics.length > 0 &&
         requestLogs[i].topics[0] == CHECK_REQUESTED
@@ -142,7 +137,9 @@ contract EntitlementDataQueryableTest is
           requestLogs[i].data,
           (address, address, bytes32, uint256, address[])
         );
+        return (contractAddress, transactionId, roleId, selectedNodes);
       }
     }
+    revert("Entitlement check request not found");
   }
 }
