@@ -103,10 +103,8 @@ wait_for_process "$BUILD_PID" "build"
 echo "STARTED ALL CHAINS AND DEPLOYED ALL CONTRACTS"
 
 # Now generate the core server config
-./river/scripts/configure-nodes.sh --single
-#./river/scripts/configure-nodes.sh --single_ne
-#./river/scripts/configure-nodes.sh --multi
-#./river/scripts/configure-nodes.sh --multi_ne
+./river/scripts/configure-nodes.sh --multi
+./river/scripts/configure-nodes.sh --multi_ne
 
 # Continue with rest of the script
 echo "Continuing with the rest of the script..."
@@ -132,11 +130,8 @@ commands=(
     "worker_gateway:cd servers/workers/gateway-worker && yarn dev:local"
     "notification_service:sleep 4 && ./scripts/start-local-notification-service.sh"
     "worker_stackup:cd servers/workers/stackup-worker && yarn dev:local"
-    "core_single:sleep 3 && ./river/core/node/run_single.sh -r"
-    #"core_single_ne:./river/scripts/wait-for-core.sh && ./river/core/node/run_single.sh -r --de"
-    #"core:./river/core/node/run_multi.sh -r"
-    #"core:./river/core/node/run_multi.sh -r --de"
-    "xchain:RUN_ENV=single ./river/core/xchain/launch_multi.sh"
+    "core:./river/core/node/run_multi.sh -r"
+    "core:./river/core/node/run_multi.sh -r --de"
 )
 
 # Create a Tmux window for each command

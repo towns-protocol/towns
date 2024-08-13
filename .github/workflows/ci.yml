@@ -226,9 +226,6 @@ jobs:
                   for i in {5170..5179}; do yarn wait-on https://localhost:$i/debug/multi --timeout=900000 --i=5000 --verbose; done
               working-directory: river/core/node
 
-            - name: Start xchain node with entitlements
-              run: (RUN_ENV=multi ./river/core/xchain/launch_multi.sh &) && sleep 10
-
             - name: Build & Test (with entitlements)
               run: RIVER_ENV=local_multi yarn csb:turbo-no-sdk
 
@@ -238,17 +235,8 @@ jobs:
               with:
                   name: 'river-node-${{ github.job }}'
                   path: |
-                      ./river/core/node/run_files/
-                      !./river/core/node/run_files/**/bin/**
-
-            - name: Archive River XChain Logs and Settings
-              if: always()
-              uses: actions/upload-artifact@v4
-              with:
-                  name: 'xchain-${{ github.job }}'
-                  path: |
-                      ./river/core/xchain/run_files/
-                      !./river/core/xchain/run_files/**/bin/**
+                      ./river/core/run_files/
+                      !./river/core/run_files/bin/**
 
     Slack_Notification:
         # NOTE: We should make sure that new jobs get added here
