@@ -131,7 +131,7 @@ commands=(
     "notification_service:sleep 4 && ./scripts/start-local-notification-service.sh"
     "worker_stackup:cd servers/workers/stackup-worker && yarn dev:local"
     "core:./river/core/node/run_multi.sh -r"
-    "core:./river/core/node/run_multi.sh -r --de"
+    "core_de:./river/core/node/run_multi.sh -r --de"
 )
 
 # Create a Tmux window for each command

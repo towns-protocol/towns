@@ -236,7 +236,7 @@ jobs:
                   name: 'river-node-${{ github.job }}'
                   path: |
                       ./river/core/run_files/
-                      !./river/core/run_files/bin/**
+                      !./river/core/run_files/**/bin/**
 
     Slack_Notification:
         # NOTE: We should make sure that new jobs get added here
