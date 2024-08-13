@@ -14,6 +14,7 @@ if (process.env.TRACING_ENABLED === 'true') {
         env: process.env.RIVER_ENV,
         profiling: process.env.PROFILING_ENABLED === 'true',
         logInjection: true,
+        version: process.env.DD_GIT_COMMIT_SHA?.substring(0, 7),
     })
 }
 
