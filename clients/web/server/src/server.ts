@@ -9,7 +9,7 @@ import fsSync from 'node:fs'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import NodeCache from 'node-cache'
-import { getPackageVersion } from './utils/getPackageVersion'
+import { appPackageVersion } from './utils/app-package-version'
 import { config } from './config'
 import { getWeb3Deployment, ISpaceOwnerShim, SpaceOwner } from '@river-build/web3'
 
@@ -72,10 +72,7 @@ server.setNotFoundHandler(async (request, reply) => {
         const html = await updateTemplate({ townId, route: exactMatch ? 'town-page' : 'page' })
         return reply.header('Content-Type', 'text/html').send(html)
     } else if (urlPath === '/version') {
-        const version = await getPackageVersion()
-        if (version) {
-            return reply.header('Content-Type', 'text/json').send(JSON.stringify({ version }))
-        }
+        return reply.header('Content-Type', 'text/json').send({ version: appPackageVersion })
     }
 
     const html = await updateTemplate()
