@@ -153,6 +153,20 @@
                     "peer"
                 ],
                 "isIgnored": true
+            },
+            {
+                "label": "Different versions in /river & client",
+                "dependencies": [
+                    "@fastify/cors"
+                ],
+                "packages": [
+                    "harmonyserver"
+                ],
+                "dependencyTypes": [
+                    "prod",
+                    "dev",
+                    "peer"
+                ]
             }
         ]
     },

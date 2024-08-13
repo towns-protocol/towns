@@ -128,7 +128,11 @@ func registerImpl(operatorKeyfile string, userConfirmationMessage string, regist
 		return err
 	}
 
-	receipt := <-pendingTx.Wait()
+	receipt, err := pendingTx.Wait(ctx)
+	if err != nil {
+		return err
+	}
+
 	if receipt == nil || receipt.Status != crypto.TransactionResultSuccess {
 		return fmt.Errorf("transaction failed")
 	}

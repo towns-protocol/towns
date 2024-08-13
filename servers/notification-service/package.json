@@ -30,7 +30,7 @@
         "@river-build/proto": "workspace:^",
         "cors": "^2.8.5",
         "dd-trace": "^5.19.0",
-        "dotenv": "^16.3.1",
+        "dotenv": "^16.4.5",
         "express": "^4.18.2",
         "express-async-errors": "^3.1.1",
         "express-async-handler": "^1.2.0",

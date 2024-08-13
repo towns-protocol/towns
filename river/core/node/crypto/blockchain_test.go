@@ -63,9 +63,11 @@ func TestBlockchain(t *testing.T) {
 		assert.Equal(firstBlockNum+1, secondBlockNum)
 	}
 
-	receipt1 := <-tx1.Wait()
+	receipt1, err := tx1.Wait(ctx)
+	require.NoError(err)
 	require.Equal(uint64(1), receipt1.Status)
-	receipt2 := <-tx2.Wait()
+	receipt2, err := tx2.Wait(ctx)
+	require.NoError(err)
 	require.Equal(uint64(1), receipt2.Status)
 
 	nodes, err := tc.NodeRegistry.GetAllNodes(nil)
@@ -110,7 +112,8 @@ func TestBlockchain(t *testing.T) {
 
 	tc.Commit(ctx)
 
-	receipt := <-tx1.Wait()
+	receipt, err := tx1.Wait(ctx)
+	require.NoError(err)
 	require.Equal(uint64(1), receipt.Status)
 
 	stream, mbHash, mb, err := tc.StreamRegistry.GetStreamWithGenesis(nil, streamId)
@@ -174,7 +177,8 @@ func TestBlockchain(t *testing.T) {
 	tc.Commit(ctx)
 
 	// wait for the last transaction to finish
-	<-lastPendingTx.Wait()
+	_, err = lastPendingTx.Wait(ctx)
+	require.NoError(err)
 
 	// Read with pagination
 	const pageSize int64 = 4
@@ -242,7 +246,8 @@ func TestBlockchainMultiMonitor(t *testing.T) {
 	})
 
 	require.NoError(err, "submit RegisterNode tx")
-	receipt := <-pendingTx.Wait()
+	receipt, err := pendingTx.Wait(ctx)
+	require.NoError(err, "wait RegisterNode tx")
 	require.Equal(TransactionResultSuccess, receipt.Status, "RegisterNode tx failed")
 
 	// make sure that all chain monitor received the event

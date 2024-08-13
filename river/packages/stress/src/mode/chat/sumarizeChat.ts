@@ -20,7 +20,19 @@ export async function sumarizeChat(
     const message = defaultChannel.view.timeline.find(
         channelMessagePostWhere((value) => value.body.includes(cfg.sessionId)),
     )
-    check(isDefined(message), 'message not found')
+
+    if (!message) {
+        logger.error('message not found', { defaultChannel })
+        return {
+            containerIndex: cfg.containerIndex,
+            processIndex: cfg.processIndex,
+            freeMemory: getSystemInfo().FreeMemory,
+            checkinCounts: {},
+            errors: [
+                `message not found in ${cfg.announceChannelId} that includes ${cfg.sessionId}`,
+            ],
+        }
+    }
 
     const checkinCounts: Record<string, Record<string, number>> = {}
 

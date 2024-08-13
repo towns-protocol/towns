@@ -8,18 +8,23 @@ import (
 )
 
 type CreateStreamRules struct {
-	CreatorStreamId     shared.StreamId
-	RequiredUserAddrs   [][]byte
-	RequiredUsers       []string
+	CreatorStreamId shared.StreamId
+	// user ids that must have valid user streams before creating the stream
+	RequiredUserAddrs [][]byte
+	// stream ids that the creator must be a member of to create the stream
 	RequiredMemberships [][]byte
-	ChainAuth           *auth.ChainAuthArgs
-	DerivedEvents       []*DerivedEvent
+	// on chain requirements for creating the stream
+	ChainAuth *auth.ChainAuthArgs
+	// DerivedEvents: events that should be added after the stream is created
+	// derived events events must always be replayable - meaning that in the case of a no-op, the can_add_event
+	// function should return false, nil, nil, nil to indicate
+	// that the event cannot be added to the stream, but there is no error
+	DerivedEvents []*DerivedEvent
 }
 
 type ruleBuilderCS interface {
 	check(fn ...func() error) ruleBuilderCS
 	checkOneOf(fns ...func() error) ruleBuilderCS
-	requireUser(userIds ...string) ruleBuilderCS
 	requireUserAddr(userAddresses ...[]byte) ruleBuilderCS
 	requireMembership(streamIds ...[]byte) ruleBuilderCS
 	requireChainAuth(f func() (*auth.ChainAuthArgs, error)) ruleBuilderCS
@@ -32,7 +37,6 @@ type ruleBuilderCS interface {
 type ruleBuilderCSImpl struct {
 	failErr             error
 	creatorStreamId     shared.StreamId
-	requiredUsers       []string
 	requiredUserAddrs   [][]byte
 	requiredMemberships [][]byte
 	checks              [][]func() error
@@ -46,7 +50,6 @@ func csBuilder(creatorStreamId shared.StreamId) ruleBuilderCS {
 		creatorStreamId:     creatorStreamId,
 		failErr:             nil,
 		checks:              nil,
-		requiredUsers:       nil,
 		requiredUserAddrs:   nil,
 		requiredMemberships: nil,
 		chainAuth: func() (*auth.ChainAuthArgs, error) {
@@ -65,11 +68,6 @@ func (re *ruleBuilderCSImpl) check(fns ...func() error) ruleBuilderCS {
 
 func (re *ruleBuilderCSImpl) checkOneOf(fns ...func() error) ruleBuilderCS {
 	re.checks = append(re.checks, fns)
-	return re
-}
-
-func (re *ruleBuilderCSImpl) requireUser(userIds ...string) ruleBuilderCS {
-	re.requiredUsers = append(re.requiredUsers, userIds...)
 	return re
 }
 
@@ -172,7 +170,6 @@ func (re *ruleBuilderCSImpl) run() (*CreateStreamRules, error) {
 	}
 	return &CreateStreamRules{
 		CreatorStreamId:     re.creatorStreamId,
-		RequiredUsers:       re.requiredUsers,
 		RequiredUserAddrs:   re.requiredUserAddrs,
 		RequiredMemberships: re.requiredMemberships,
 		ChainAuth:           chainAuthArgs,

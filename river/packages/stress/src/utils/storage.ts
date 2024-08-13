@@ -10,26 +10,11 @@ export interface IStorage {
     close(): Promise<void>
 }
 
-function parseRedisUrl(uri: string) {
-    const defaultRedisPort = 6379
-    try {
-        const url = new URL(uri)
-        const host = `${url.protocol}//${url.hostname}`
-        const port = url.port.length > 0 ? parseInt(url.port) : defaultRedisPort
-        const opts = host.includes('localhost') ? { port } : { host, port }
-        return opts
-    } catch (error) {
-        return { host: uri, port: defaultRedisPort }
-    }
-}
-
 export class RedisStorage implements IStorage {
     private client: Redis
 
-    constructor(uri: string) {
-        const opts = parseRedisUrl(uri)
-        logger.log('New Redis connection', opts)
-        this.client = new Redis(opts)
+    constructor(host: string, port?: number) {
+        this.client = new Redis({ host, port: port ?? 6379 })
     }
     async get(key: string): Promise<string | null> {
         try {

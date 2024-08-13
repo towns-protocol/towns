@@ -25,7 +25,7 @@
         "@river-build/web3": "workspace:^",
         "dd-trace": "^5.19.0",
         "ejs": "^3.1.10",
-        "fastify": "^4.28.0",
+        "fastify": "^4.28.1",
         "node-cache": "^5.1.2",
         "viem": "^1.18.2",
         "zod": "^3.21.4"

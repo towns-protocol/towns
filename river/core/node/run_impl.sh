@@ -2,7 +2,7 @@
 set -euo pipefail
 cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 
-: ${RUN_ENV:?} # values are single, single_ne, multi, multi_ne
+: ${RUN_ENV:?} # values are multi, multi_ne
 
 # check given env.env exists to validate RUN_ENV
 export ENV_PATH_BASE="../env/local"
@@ -161,7 +161,10 @@ if [ "$RUN" == "true" ]; then
 
         pushd $INSTANCE
         echo "Running instance '$INSTANCE' with extra aguments: '${args[@]:-}'"
-        cast rpc -r http://127.0.0.1:8545 anvil_setBalance `cat ./wallet/node_address` 10000000000000000000
+        # could be a geth node, in which case funding should be handled elsewhere
+        if ! cast rpc -r http://127.0.0.1:8545 anvil_setBalance `cat ./wallet/node_address` 10000000000000000000; then
+            echo "Failed to set balance on port 8545, continuing..."
+        fi
         cast rpc -r http://127.0.0.1:8546 anvil_setBalance `cat ./wallet/node_address` 10000000000000000000
 
         ../bin/river_node ${RUN_CMD} --config ../common.yaml --config ../contracts.env --config ../config.yaml --config config/config.env "${args[@]:-}" &

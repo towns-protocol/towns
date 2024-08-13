@@ -83,19 +83,6 @@ func (s *Service) createStream(ctx context.Context, req *CreateStreamRequest) (*
 		}
 	}
 
-	// DEPRECATED check that all required users exist in the system
-	for _, userId := range csRules.RequiredUsers {
-		addr, err := AddressStrToEthAddress(userId)
-		if err != nil {
-			return nil, RiverError(Err_PERMISSION_DENIED, "invalid user id", "requiredUserId", userId)
-		}
-		userStreamId := UserStreamIdFromAddr(addr)
-		_, err = s.streamRegistry.GetStreamInfo(ctx, userStreamId)
-		if err != nil {
-			return nil, RiverError(Err_PERMISSION_DENIED, "user does not exist", "requiredUserId", userId)
-		}
-	}
-
 	// check that all required users exist in the system
 	for _, userAddress := range csRules.RequiredUserAddrs {
 		addr, err := BytesToAddress(userAddress)

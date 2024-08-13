@@ -209,7 +209,11 @@ func (c *RiverRegistryContract) AllocateStream(
 			Message("Smart contract call failed")
 	}
 
-	receipt := <-pendingTx.Wait()
+	receipt, err := pendingTx.Wait(ctx)
+	if err != nil {
+		return err
+	}
+
 	if receipt != nil && receipt.Status == crypto.TransactionResultSuccess {
 		return nil
 	}
@@ -343,7 +347,10 @@ func (c *RiverRegistryContract) SetStreamLastMiniblockBatch(
 		}
 	}
 
-	receipt := <-tx.Wait()
+	receipt, err := tx.Wait(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	if receipt != nil && receipt.Status == crypto.TransactionResultSuccess {
 		for _, l := range receipt.Logs {
@@ -463,7 +470,11 @@ func (c *RiverRegistryContract) SetStreamLastMiniblock(
 				lastMiniblockHash, "lastMiniblockNum", lastMiniblockNum, "isSealed", isSealed)
 	}
 
-	receipt := <-pendingTx.Wait()
+	receipt, err := pendingTx.Wait(ctx)
+	if err != nil {
+		return err
+	}
+
 	if receipt != nil && receipt.Status == crypto.TransactionResultSuccess {
 		return nil
 	}

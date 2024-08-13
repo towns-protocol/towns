@@ -193,7 +193,8 @@ func TestConfigSwitchAfterNewBlock(t *testing.T) {
 
 	require.NoError(err, "unable to set configuration")
 	tc.Commit(ctx)
-	receipt := <-pendingTx.Wait()
+	receipt, err := pendingTx.Wait(ctx)
+	require.NoError(err)
 	require.Equal(TransactionResultSuccess, receipt.Status, "tx failed")
 
 	// make sure new change is not yet active, should happen on a future block
@@ -238,7 +239,8 @@ func TestConfigDefaultValue(t *testing.T) {
 
 	require.NoError(err, "unable to set configuration")
 	tc.Commit(ctx)
-	receipt := <-pendingTx.Wait()
+	receipt, err := pendingTx.Wait(ctx)
+	require.NoError(err)
 	require.Equal(TransactionResultSuccess, receipt.Status, "tx failed")
 
 	// make sure the chain config moved after the block the key was updated
@@ -262,7 +264,8 @@ func TestConfigDefaultValue(t *testing.T) {
 
 	require.NoError(err, "unable to set configuration")
 	tc.Commit(ctx)
-	receipt = <-pendingTx.Wait()
+	receipt, err = pendingTx.Wait(ctx)
+	require.NoError(err)
 	require.Equal(TransactionResultSuccess, receipt.Status, "tx failed")
 
 	// make sure the chain config moved after the block the key was deleted

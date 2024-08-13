@@ -77,10 +77,10 @@ func NewBlockchain(
 
 	if tracer != nil {
 		instrumentedClient := NewInstrumentedEthClient(client, tracer)
-		return NewBlockchainWithClient(ctx, cfg, wallet, instrumentedClient, instrumentedClient, metrics)
+		return NewBlockchainWithClient(ctx, cfg, wallet, instrumentedClient, instrumentedClient, metrics, tracer)
 	}
 
-	return NewBlockchainWithClient(ctx, cfg, wallet, client, client, metrics)
+	return NewBlockchainWithClient(ctx, cfg, wallet, client, client, metrics, tracer)
 }
 
 func NewBlockchainWithClient(
@@ -90,6 +90,7 @@ func NewBlockchainWithClient(
 	client BlockchainClient,
 	clientCloser Closable,
 	metrics infra.MetricsFactory,
+	tracer trace.Tracer,
 ) (*Blockchain, error) {
 	if cfg.BlockTimeMs <= 0 {
 		return nil, RiverError(Err_BAD_CONFIG, "BlockTimeMs must be set").
@@ -133,7 +134,7 @@ func NewBlockchainWithClient(
 	if wallet != nil {
 		bc.Wallet = wallet
 		bc.TxPool, err = NewTransactionPoolWithPoliciesFromConfig(
-			ctx, cfg, bc.Client, wallet, bc.ChainMonitor, initialBlockNum, metrics)
+			ctx, cfg, bc.Client, wallet, bc.ChainMonitor, initialBlockNum, metrics, tracer)
 		if err != nil {
 			return nil, err
 		}

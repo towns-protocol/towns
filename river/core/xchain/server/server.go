@@ -434,7 +434,13 @@ func (x *xchain) writeEntitlementCheckResults(ctx context.Context, checkResults 
 
 	// wait until all transactions are processed before returning
 	for task := range pending {
-		receipt := <-task.ptx.Wait() // Base transaction receipt
+		receipt, err := task.ptx.Wait(ctx) // Base transaction receipt
+		if err != nil {
+			log.Warn("waiting for entitlement check response receipt failed",
+				"err", err, "tx.hash", task.ptx.TransactionHash())
+			x.entitlementCheckProcessed.IncFail()
+			continue
+		}
 
 		x.entitlementCheckTx.IncPass()
 		if receipt.Status == types.ReceiptStatusFailed {

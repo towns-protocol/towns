@@ -9,9 +9,26 @@ echo "stress/scripts/localhost_demo.sh"
 # simple test that runs in ci to ensure that the stress test can run in node against local env
 #
 
+# List of environment files to source
+ENV_FILES=(
+    "./scripts/.env.storage"
+)
+
+# Loop through each file in the list
+for file in "${ENV_FILES[@]}"; do
+    if [ -f "$file" ]; then
+        source "$file"
+        echo "Sourced: $file"
+    else
+        echo "Skipped: $file file does not exist."
+    fi
+done
+
 export RIVER_ENV="${RIVER_ENV:-local_multi}"
 export STRESS_MODE="${STRESS_MODE:-test}"
 export SESSION_ID="${SESSION_ID:-$(uuidgen)}"
+
+export REDIS_HOST="${REDIS_HOST:-}"
 
 export MNEMONIC="toy alien remain valid print employ age multiply claim student story aware" 
 export WALLET_ADDRESS="0x95D7701A0Faa5F514B4c5B49bf66580fCE9ffbf7"

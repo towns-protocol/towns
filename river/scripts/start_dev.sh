@@ -119,7 +119,6 @@ commands=(
     "watch_go:cd protocol && yarn watch:go"
     "core_multi:./core/node/run_multi.sh -r"
     "core_multi_ne:./core/node/run_multi.sh -r --de"
-    "xchain_multi:RUN_ENV=multi ./core/xchain/launch_multi.sh"
 )
 
 # Create a Tmux window for each command

@@ -85,17 +85,10 @@ type csUserInboxRules struct {
 * a pure function with no side effects that returns a boolean value and prerequesits
 * for creating a stream.
 *
-  - @return creatorStreamId string // the id of the creator's user stream
-  - @return requiredUsers []string // user ids that must have valid user streams before creating the stream
-  - @return requiredMemberships []string // stream ids that the creator must be a member of to create the stream
-    // every case except for the user stream the creator must be a member of their own user stream first
-  - @return chainAuthArgs *auth.ChainAuthArgs // on chain requirements for creating the stream
-  - @return derivedEvents []*DerivedEvent // event that should be added after the stream is created
-    // derived events events must be replayable - meaning that in the case of a no-op, the can_add_event
-    // function should return false, nil, nil, nil to indicate
-    // that the event cannot be added to the stream, but there is no error
+  - @return CreateStreamRules // rules for creating a stream
   - @return error // if adding result would result in invalid state
 
+    
 *
 * example valid states:
 * (nil, nil, nil) // stream can be created
@@ -271,7 +264,7 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 				ru.params.eventCountGreaterThanOrEqualTo(4),
 				ru.checkGDMPayloads,
 			).
-			requireUser(ru.getGDMUserIds()[1:]...).
+			requireUserAddr(ru.getGDMUserIds()[1:]...).
 			requireDerivedEvents(ru.derivedGDMMembershipEvents)
 
 	case *UserPayload_Inception:
@@ -768,8 +761,8 @@ func (ru *csGdmChannelRules) checkGDMPayloads() error {
 	return nil
 }
 
-func (ru *csGdmChannelRules) getGDMUserIds() []string {
-	userIds := make([]string, 0, len(ru.params.parsedEvents)-1)
+func (ru *csGdmChannelRules) getGDMUserIds() [][]byte {
+	userIds := make([][]byte, 0, len(ru.params.parsedEvents)-1)
 	for _, event := range ru.params.parsedEvents[1:] {
 		payload := event.Event.GetMemberPayload()
 		if payload == nil {
@@ -779,12 +772,7 @@ func (ru *csGdmChannelRules) getGDMUserIds() []string {
 		if membershipPayload == nil {
 			continue
 		}
-		// todo we should remove the conversions here
-		userId, err := shared.AddressHex(membershipPayload.UserAddress)
-		if err != nil {
-			continue
-		}
-		userIds = append(userIds, userId)
+		userIds = append(userIds, membershipPayload.UserAddress)
 	}
 	return userIds
 }

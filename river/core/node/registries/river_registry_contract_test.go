@@ -215,9 +215,12 @@ func TestStreamEvents(t *testing.T) {
 
 	tc.Commit(ctx)
 
-	receipt1 := <-tx1.Wait()
+	receipt1, err := tx1.Wait(ctx)
+	require.NoError(err)
 	require.Equal(crypto.TransactionResultSuccess, receipt1.Status)
-	receipt2 := <-tx2.Wait()
+	require.NoError(err)
+	receipt2, err := tx2.Wait(ctx)
+	require.NoError(err)
 	require.Equal(crypto.TransactionResultSuccess, receipt2.Status)
 
 	rr1, err := NewRiverRegistryContract(ctx, bc1, &config.ContractConfig{Address: tc.RiverRegistryAddress})
@@ -267,7 +270,8 @@ func TestStreamEvents(t *testing.T) {
 	)
 	require.NoError(err)
 	tc.Commit(ctx)
-	receipt := <-tx.Wait()
+	receipt, err := tx.Wait(ctx)
+	require.NoError(err)
 	require.Equal(crypto.TransactionResultSuccess, receipt.Status)
 
 	placement := <-placementC

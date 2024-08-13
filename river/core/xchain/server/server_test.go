@@ -264,8 +264,12 @@ func (st *serviceTester) Start(t *testing.T) {
 		)
 
 		st.AssertNoEVMError(err)
-		receipt := <-pendingTx.Wait()
-		if receipt == nil || receipt.Status != node_crypto.TransactionResultSuccess {
+		receipt, err := pendingTx.Wait(ctx)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if receipt.Status != node_crypto.TransactionResultSuccess {
 			log.Fatal("unable to register node")
 		}
 
@@ -342,7 +346,10 @@ func (st *serviceTester) linkWalletToRootWallet(
 	)
 
 	st.AssertNoEVMError(err)
-	receipt := <-pendingTx.Wait()
+	receipt, err := pendingTx.Wait(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
 	st.require.Equal(uint64(1), receipt.Status)
 }
 

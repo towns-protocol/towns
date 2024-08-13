@@ -18,8 +18,8 @@ else
 
   # write the environment variables to a file so the tests can load it
   FILE="./scripts/.env.storage"
-  ENV_VAR="REDIS_HOST=http://localhost:6379"
-  echo $ENV_VAR >> $FILE # hard coded port from the docker compose file 
+  ENV_VAR="REDIS_HOST=localhost"
+  echo $ENV_VAR > $FILE # overwrites the .env file
   
   docker-compose -p "stress" -f ./scripts/docker_compose_redis.yml up
 fi

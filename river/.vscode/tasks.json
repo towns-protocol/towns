@@ -63,7 +63,6 @@
         "Start Watches",
         "Casablanca",
         "Casablanca-No-Entitlements",
-        "XChain-Single",
         "Playground",
       ],
       "group": {
@@ -292,16 +291,6 @@
         "group": "ephemeral",
         "focus": true,
         "panel": "shared",
-      }
-    },
-    {
-      "label": "XChain-Multi",
-      "type": "shell",
-      "command": "sleep 1 && RUN_ENV=multi ./core/xchain/launch_multi.sh",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "xchain"
       }
     },
     {

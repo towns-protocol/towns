@@ -208,7 +208,8 @@ func TestChainMonitorEvents(t *testing.T) {
 		tc.Commit(ctx)
 	}
 
-	receipt := <-pendingTx.Wait()
+	receipt, err := pendingTx.Wait(ctx)
+	require.NoError(err)
 	require.Equal(uint64(1), receipt.Status)
 
 	// wait a bit for the monitor to catch up and has called the callbacks
@@ -300,7 +301,8 @@ func TestContractAllEventsFromFuture(t *testing.T) {
 		tc.Commit(ctx)
 	}
 
-	receipt := <-pendingTx.Wait()
+	receipt, err := pendingTx.Wait(ctx)
+	require.NoError(err)
 	require.Equal(crypto.TransactionResultSuccess, receipt.Status)
 
 	var (
@@ -360,7 +362,8 @@ func TestContractAllEventsFromFuture(t *testing.T) {
 		tc.Commit(ctx)
 	}
 
-	receipt = <-pendingTx.Wait()
+	receipt, err = pendingTx.Wait(ctx)
+	require.NoError(err)
 	require.Equal(crypto.TransactionResultSuccess, receipt.Status)
 
 	// ensure that futureContractEventsCallbackCapturedEvents received old NodeAdded events
@@ -444,7 +447,8 @@ func TestContractAllEventsFromPast(t *testing.T) {
 		tc.Commit(ctx)
 	}
 
-	receipt := <-pendingTx.Wait()
+	receipt, err := pendingTx.Wait(ctx)
+	require.NoError(err)
 	require.Equal(crypto.TransactionResultSuccess, receipt.Status)
 
 	var (
@@ -564,7 +568,8 @@ func TestContractEventsWithTopicsFromPast(t *testing.T) {
 		tc.Commit(ctx)
 	}
 
-	receipt := <-pendingTx.Wait()
+	receipt, err := pendingTx.Wait(ctx)
+	require.NoError(err)
 	require.Equal(crypto.TransactionResultSuccess, receipt.Status)
 
 	var (
@@ -668,17 +673,22 @@ func TestEventsOrder(t *testing.T) {
 	require.NoError(err)
 
 	// generate blocks until last tx is processed
-	var receipt *types.Receipt
-	for receipt == nil {
-		tc.Commit(ctx)
-		select {
-		case r := <-pendingTx.Wait():
-			receipt = r
-		default:
+	done := make(chan struct{})
+	go func() {
+		for {
+			select {
+			case <-time.After(10 * time.Millisecond):
+				tc.Commit(ctx)
+			case <-done:
+				return
+			}
 		}
-		time.Sleep(10 * time.Millisecond)
-	}
+	}()
 
+	receipt, err := pendingTx.Wait(ctx)
+	close(done)
+
+	require.NoError(err)
 	require.Equal(crypto.TransactionResultSuccess, receipt.Status)
 
 	// make sure that the event callback is called in the correct order

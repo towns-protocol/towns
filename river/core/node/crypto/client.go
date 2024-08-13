@@ -43,7 +43,10 @@ func (ic *otelEthClient) SendTransaction(ctx context.Context, tx *types.Transact
 	ctx, span := ic.tracer.Start(ctx, "eth_sendRawTransaction")
 	defer span.End()
 
-	setTxOrMsgData(tx.To(), tx.Data(), span)
+	span.SetAttributes(attribute.String("tx_hash", tx.Hash().String()))
+	if len(tx.Data()) >= 4 {
+		span.SetAttributes(attribute.String("func_selector", hex.EncodeToString(tx.Data()[:4])))
+	}
 
 	return ic.Client.SendTransaction(ctx, tx)
 }
@@ -64,10 +67,11 @@ func (ic *otelEthClient) BlockByNumber(ctx context.Context, number *big.Int) (*t
 
 func (ic *otelEthClient) CallContract(ctx context.Context, msg ethereum.CallMsg, blockNumber *big.Int) ([]byte, error) {
 	ctx, span := ic.tracer.Start(ctx, "eth_callContract")
-
-	setTxOrMsgData(msg.To, msg.Data, span)
-
 	defer span.End()
+
+	if len(msg.Data) >= 4 {
+		span.SetAttributes(attribute.String("func_selector", hex.EncodeToString(msg.Data[:4])))
+	}
 
 	return ic.Client.CallContract(ctx, msg, blockNumber)
 }
@@ -76,7 +80,9 @@ func (ic *otelEthClient) CallContractAtHash(ctx context.Context, msg ethereum.Ca
 	ctx, span := ic.tracer.Start(ctx, "eth_callContractAtHash")
 	defer span.End()
 
-	setTxOrMsgData(msg.To, msg.Data, span)
+	if len(msg.Data) >= 4 {
+		span.SetAttributes(attribute.String("func_selector", hex.EncodeToString(msg.Data[:4])))
+	}
 
 	return ic.Client.CallContractAtHash(ctx, msg, blockHash)
 }
@@ -85,7 +91,9 @@ func (ic *otelEthClient) PendingCallContract(ctx context.Context, msg ethereum.C
 	ctx, span := ic.tracer.Start(ctx, "eth_pendingCallContract")
 	defer span.End()
 
-	setTxOrMsgData(msg.To, msg.Data, span)
+	if len(msg.Data) >= 4 {
+		span.SetAttributes(attribute.String("func_selector", hex.EncodeToString(msg.Data[:4])))
+	}
 
 	return ic.Client.PendingCallContract(ctx, msg)
 }
@@ -130,13 +138,4 @@ func (ic *otelEthClient) FilterLogs(ctx context.Context, q ethereum.FilterQuery)
 	}
 
 	return ic.Client.FilterLogs(ctx, q)
-}
-
-func setTxOrMsgData(to *common.Address, data []byte, span trace.Span) {
-	if to != nil {
-		span.SetAttributes(attribute.String("to", to.Hex()))
-		if len(data) >= 4 {
-			span.SetAttributes(attribute.String("func_selector", hex.EncodeToString(data[:4])))
-		}
-	}
 }

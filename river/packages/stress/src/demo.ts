@@ -9,6 +9,7 @@ import { expect, isSet } from './utils/expect'
 import { printSystemInfo } from './utils/systemInfo'
 import { waitFor } from './utils/waitFor'
 import { Wallet } from 'ethers'
+import { RedisStorage } from './utils/storage'
 
 check(isSet(process.env.RIVER_ENV), 'process.env.RIVER_ENV')
 
@@ -116,9 +117,23 @@ async function encryptDecrypt() {
     bobAccount.free()
 }
 
+async function demoExternalStoreage() {
+    if (isSet(process.env.REDIS_HOST)) {
+        const storage = new RedisStorage(process.env.REDIS_HOST)
+        const value = await storage.get('demo_key')
+        logger.info('value', value)
+        const nextValue = value ? parseInt(value) + 1 : 1
+        await storage.set('demo_key', nextValue.toString())
+        const newValue = await storage.get('demo_key')
+        logger.info('value updated', { from: value, to: newValue })
+    }
+}
+
 printSystemInfo(logger)
 
 const run = async () => {
+    logger.log('========================storage========================')
+    await demoExternalStoreage()
     logger.log('==========================spamInfo==========================')
     await spamInfo(1)
     logger.log('=======================encryptDecrypt=======================')
