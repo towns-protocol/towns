@@ -4,7 +4,8 @@
 # this is actually the entrypoint address
 PAYMASTER_ADDRESS=
 
-# the paymaster rpc url is either stackup or localhost
+# PAYMASTER_RPC_URL is used for stackup's paymaster
+# as of 8.14.2024, this only needs to be set for development against local stackup devnet
 PAYMASTER_RPC_URL=
 
 # skips all verification checks for an operation
@@ -16,17 +17,23 @@ SKIP_LIMIT_VERIFICATION=
 # skips the privy verification for the operation (testing purposes only)
 SKIP_PRIVY_VERIFICATION=
 
+# Authorization auth header token for requests, same as other workers
 AUTH_SECRET=
+# Authorization auth header token for /admin endpoints
 ADMIN_AUTH_SECRET=
 
-# these are required if SKIP_TOWNID_VERIFICATION is not true
+# required if SKIP_TOWNID_VERIFICATION is not true
 PRIVY_APP_KEY=
+# required if SKIP_TOWNID_VERIFICATION is not true
 PRIVY_APP_ID=
+# required if SKIP_TOWNID_VERIFICATION is not true
+# needed for creating an ethers provider for limit checks
 ALCHEMY_API_KEY=
 
-# these are required if using Alchemy for userop sponsorship
+# required if using Alchemy for userop sponsorship
+# as of 8.14.2024, this is needed for production envs only
 ALCHEMY_PAYMASTER_RPC_URL=
 ALCHEMY_GM_POLICY_ID=
 
-# should be test-beta if you are running against base sepolia
+# development, test-beta, alpha, omega
 ENVIRONMENT=development
