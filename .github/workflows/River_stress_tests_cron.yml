@@ -1,0 +1,27 @@
+name: 'Run River Stress Tests'
+
+on:
+    schedule:
+        # Once per hour
+        - cron: '0 * * * *'
+
+concurrency:
+    group: run-river-stress-tests-cron
+    cancel-in-progress: false
+
+jobs:
+    stress_tests:
+        name: Stress Tests
+        uses: './.github/workflows/Run_river_stress_tests.yml'
+        strategy:
+            matrix:
+                environment_name: [alpha, gamma]
+            fail-fast: false
+        secrets:
+            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL: ${{ secrets.SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL }}
+            TF_VAR_datadog_api_key: ${{ secrets.TF_VAR_datadog_api_key }}
+            TF_VAR_datadog_app_key: ${{ secrets.TF_VAR_datadog_app_key }}
+        with:
+            environment_name: ${{ matrix.environment_name }}
