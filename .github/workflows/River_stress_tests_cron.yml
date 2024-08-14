@@ -1,4 +1,4 @@
-name: 'Run River Stress Tests'
+name: 'River Stress Tests CRON'
 
 on:
     schedule:
