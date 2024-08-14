@@ -289,6 +289,7 @@ export const RichTextEditor = ({
                         tabIndex={tabIndex}
                         disabled={isSendingMessage}
                         isTouch={isTouch}
+                        isEditorEmpty={isEditorEmpty}
                         handleSendOnEnter={handleSendOnEnter}
                         onFocus={onFocus}
                         onBlur={onBlur}

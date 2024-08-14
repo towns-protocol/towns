@@ -12,36 +12,55 @@ const Editor = React.forwardRef<
     PlateContentProps & {
         handleSendOnEnter?: (e: React.KeyboardEvent<HTMLDivElement>) => void
         isTouch: boolean
+        isEditorEmpty: boolean
     }
->(({ className, disabled, isTouch, readOnly, handleSendOnEnter, onKeyDown, ...props }, ref) => {
-    /**
-     * We need to make sure `onKeyDown` passed as `PlateContentProps` is called as well, to ensure default behavior is intact
-     */
-    const _onKeyDown = useCallback(
-        (e: React.KeyboardEvent<HTMLDivElement>) => {
-            handleSendOnEnter?.(e)
-            onKeyDown?.(e)
+>(
+    (
+        {
+            className,
+            disabled,
+            isEditorEmpty,
+            isTouch,
+            readOnly,
+            handleSendOnEnter,
+            onKeyDown,
+            ...props
         },
-        [onKeyDown, handleSendOnEnter],
-    )
+        ref,
+    ) => {
+        /**
+         * We need to make sure `onKeyDown` passed as `PlateContentProps` is called as well, to ensure default behavior is intact
+         */
+        const _onKeyDown = useCallback(
+            (e: React.KeyboardEvent<HTMLDivElement>) => {
+                if (!isTouch && e.key === 'Backspace' && isEditorEmpty) {
+                    e.preventDefault()
+                    return false
+                }
+                handleSendOnEnter?.(e)
+                onKeyDown?.(e)
+            },
+            [onKeyDown, handleSendOnEnter, isEditorEmpty, isTouch],
+        )
 
-    return (
-        <PlateContent
-            disableDefaultStyles
-            className={clsx(inputClassName, {
-                [styles.contentEditablePWA]: isTouch,
-            })}
-            readOnly={disabled || readOnly}
-            aria-disabled={disabled}
-            spellCheck={!isTouch}
-            autoCapitalize="on"
-            autoComplete="off"
-            ref={ref}
-            {...props}
-            onKeyDown={_onKeyDown}
-        />
-    )
-})
+        return (
+            <PlateContent
+                disableDefaultStyles
+                className={clsx(inputClassName, {
+                    [styles.contentEditablePWA]: isTouch,
+                })}
+                readOnly={disabled || readOnly}
+                aria-disabled={disabled}
+                spellCheck={!isTouch}
+                autoCapitalize="on"
+                autoComplete="off"
+                ref={ref}
+                {...props}
+                onKeyDown={_onKeyDown}
+            />
+        )
+    },
+)
 Editor.displayName = 'Editor'
 
 export { Editor }
