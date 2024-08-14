@@ -40,7 +40,7 @@ export const NodeStatusPanel = () => {
     }, [])
 
     return (
-        <Panel label="Node Connection" style={{ userSelect: 'none' }} onScroll={onScroll}>
+        <Panel label="River Network" style={{ userSelect: 'none' }} onScroll={onScroll}>
             <Box centerContent ref={ref}>
                 <Box width="300" height="300" />
                 <Box
