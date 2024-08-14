@@ -75,7 +75,12 @@ export const EditorToolbarBottom = (props: Props) => {
     const mediaInputId = useId()
 
     return (
-        <Stack horizontal gap={isTouch ? 'sm' : 'xs'} alignItems="center">
+        <Stack
+            horizontal
+            gap={isTouch ? 'sm' : 'xs'}
+            alignItems="center"
+            data-testid="editor-toolbar-bottom"
+        >
             {isTouch ? (
                 <>
                     {props.visible && (

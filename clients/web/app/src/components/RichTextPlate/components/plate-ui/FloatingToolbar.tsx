@@ -58,7 +58,7 @@ export const FloatingToolbar = withRef<
 
     return (
         <PortalBody key={`floating-toolbar-${editorId}`}>
-            <div ref={ref} {...rootProps} {...props}>
+            <div ref={ref} {...rootProps} {...props} data-testid="editor-floating-toolbar">
                 {children}
             </div>
         </PortalBody>

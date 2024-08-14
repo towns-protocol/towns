@@ -89,15 +89,21 @@ export const EditMessageButtons = (props: {
         <Stack
             horizontal
             gap="sm"
+            data-testid="editor-cta-buttons"
             justifyContent={verticalButtons ? 'start' : 'end'}
             paddingX={isTouch ? 'none' : 'xs'}
         >
             {isEditing ? (
                 <>
-                    <Button size="button_xs" {...clickHandlers.cancel}>
+                    <Button size="button_xs" data-testid="cancel" {...clickHandlers.cancel}>
                         Cancel
                     </Button>
-                    <Button size="button_xs" tone="cta1" {...clickHandlers.save}>
+                    <Button
+                        size="button_xs"
+                        data-testid="submit"
+                        tone="cta1"
+                        {...clickHandlers.save}
+                    >
                         Save
                     </Button>
                 </>
@@ -110,6 +116,7 @@ export const EditMessageButtons = (props: {
                                   opacity: 0.8,
                               }
                     }
+                    data-testid="submit"
                     icon={disabled ? 'touchSendDisabled' : 'touchSendEnabled'}
                     size="square_lg"
                     onMouseDown={disabled ? cancelButtonPressed : saveButtonPressed}
@@ -123,6 +130,7 @@ export const EditMessageButtons = (props: {
                                   opacity: 0.8,
                               }
                     }
+                    data-testid="submit"
                     icon={disabled ? 'touchSendDisabled' : 'touchSendEnabled'}
                     size="square_md"
                     onClick={disabled ? undefined : saveButtonPressed}

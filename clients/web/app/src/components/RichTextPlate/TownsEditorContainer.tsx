@@ -209,7 +209,7 @@ const TownsTextEditorWithoutBoundary = ({
             </Box>
             <Stack
                 background={background}
-                data-testid="parent-stack"
+                data-testid="editor-container"
                 rounded={{ default: 'sm', touch: 'none' }}
             >
                 <RichTextEditor

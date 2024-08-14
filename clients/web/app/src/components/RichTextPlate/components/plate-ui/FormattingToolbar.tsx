@@ -95,6 +95,7 @@ export const FormattingToolbar = withRef<'div', FormattingToolbarProps>(
                         <Box
                             paddingTop={isTouch ? 'none' : 'sm'}
                             paddingX="sm"
+                            data-testid="editor-formatting-toolbar"
                             {...floatingContainerProps}
                         >
                             <Stack

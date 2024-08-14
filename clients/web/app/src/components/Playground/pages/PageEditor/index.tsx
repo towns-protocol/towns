@@ -130,13 +130,14 @@ export const PageEditor = () => {
                     </Text>
                     {markdown.length > 0 && (
                         <Box as="pre" overflowY="scroll" className={codeBlock}>
-                            <code>{markdown}</code>
+                            <code data-testid="editor-md-preview">{markdown}</code>
                         </Box>
                     )}
                     <Box
                         border="level3"
                         background="level2"
                         width="100%"
+                        data-testid="editor-container"
                         style={{ marginTop: 'auto' }}
                         ref={ref}
                     >
@@ -148,7 +149,9 @@ export const PageEditor = () => {
                         Plate JSON
                     </Text>
                     <Box as="pre" overflowY="scroll" className={codeBlock}>
-                        <code>{JSON.stringify(editorChildren, null, 2)}</code>
+                        <code data-testid="editor-json-preview">
+                            {JSON.stringify(editorChildren, null, 2)}
+                        </code>
                     </Box>
                 </Box>
             </Stack>

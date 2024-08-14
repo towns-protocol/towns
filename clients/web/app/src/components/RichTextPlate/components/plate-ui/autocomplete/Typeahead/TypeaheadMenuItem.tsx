@@ -26,7 +26,7 @@ export const TypeaheadMenuItem = React.forwardRef<HTMLDivElement, TypeaheadMenuI
                 className={typeaheadMenuItem}
             >
                 {Icon && (
-                    <Box centerContent width="x3">
+                    <Box centerContent width="x3" role="icon">
                         {Icon}
                     </Box>
                 )}
@@ -40,7 +40,9 @@ export const TypeaheadMenuItem = React.forwardRef<HTMLDivElement, TypeaheadMenuI
                 {trailingContent && (
                     <>
                         <Box grow />
-                        <Box justifyContent="center">{trailingContent}</Box>
+                        <Box justifyContent="center" role="trailing-text">
+                            {trailingContent}
+                        </Box>
                     </>
                 )}
             </Stack>

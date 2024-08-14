@@ -261,6 +261,7 @@ const InlineComboboxInput = forwardRef<
                     {...props}
                     ref={ref}
                     value={value}
+                    data-testid="editor-autosuggest-input"
                     className={clsx([mentionInputInner, className])}
                     onKeyDown={handleKeyDown}
                 />
@@ -275,7 +276,11 @@ const InlineComboboxContent: typeof ComboboxPopover = ({ className, ...props }) 
     // Portal prevents CSS from leaking into popover
     return (
         <Portal>
-            <ComboboxPopover {...props} className={clsx([typeaheadMenuWrapper, className])} />
+            <ComboboxPopover
+                {...props}
+                data-testid="editor-autosuggest-popover"
+                className={clsx([typeaheadMenuWrapper, className])}
+            />
         </Portal>
     )
 }

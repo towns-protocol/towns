@@ -29,6 +29,7 @@ export const RichTextPlaceholder = ({
             color="gray2"
             justifyContent="center"
             padding="md"
+            data-testid="editor-placeholder"
         >
             <Box as="p">{placeholder}</Box>
         </Box>
