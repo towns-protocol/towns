@@ -383,10 +383,9 @@ func TestAddEventConsistencyChecksImproperGeneration(t *testing.T) {
 	err := pgEventStore.WriteEvent(ctx, streamId, 1, 3, []byte("event4"))
 
 	require.NotNil(err)
-	require.Contains(err.Error(), "Wrong event generation in minipool")
-	require.Equal(AsRiverError(err).GetTag("ActualGeneration"), int64(777))
-	require.Equal(AsRiverError(err).GetTag("ExpectedGeneration"), int64(1))
-	require.Equal(AsRiverError(err).GetTag("SlotNumber"), 1)
+	require.Contains(err.Error(), "Wrong slot number in minipool")
+	require.Equal(AsRiverError(err).GetTag("ActualSlotNumber"), 2)
+	require.Equal(AsRiverError(err).GetTag("ExpectedSlotNumber"), 1)
 }
 
 // Test that if there is a gap in minipool records, we will get error

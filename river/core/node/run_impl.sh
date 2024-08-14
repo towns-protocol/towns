@@ -95,6 +95,7 @@ if [ "$CONFIG" == "true" ]; then
     ../../scripts/set-riverchain-config.sh
 
     cp ${ENV_PATH_BASE}/common/common.yaml ${RUN_BASE}/common.yaml
+    cp ${ENV_PATH_BASE}/common/run.sh ${RUN_BASE}/run.sh
     cp ${ENV_PATH}/config.yaml ${RUN_BASE}/config.yaml
 
     for ((i=0; i<NUM_INSTANCES; i++)); do
