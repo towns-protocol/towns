@@ -12,7 +12,7 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 
 // contracts
 
-contract PricingModulesBase is IPricingModulesBase {
+abstract contract PricingModulesBase is IPricingModulesBase {
   using EnumerableSet for EnumerableSet.AddressSet;
 
   function _isPricingModule(address module) internal view returns (bool) {

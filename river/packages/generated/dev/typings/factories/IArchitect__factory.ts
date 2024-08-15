@@ -267,6 +267,11 @@ const _abi = [
   },
   {
     type: "error",
+    name: "Architect__InvalidPricingModule",
+    inputs: [],
+  },
+  {
+    type: "error",
     name: "Architect__InvalidStringLength",
     inputs: [],
   },

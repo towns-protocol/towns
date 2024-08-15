@@ -18,6 +18,11 @@
       {
         "inputs": [],
         "type": "error",
+        "name": "Architect__InvalidPricingModule"
+      },
+      {
+        "inputs": [],
+        "type": "error",
         "name": "Architect__InvalidStringLength"
       },
       {
@@ -49,6 +54,17 @@
         "inputs": [],
         "type": "error",
         "name": "Introspection_NotSupported"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "module",
+            "type": "address"
+          }
+        ],
+        "type": "error",
+        "name": "InvalidPricingModule"
       },
       {
         "inputs": [
@@ -155,6 +171,45 @@
         ],
         "type": "event",
         "name": "Paused",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "module",
+            "type": "address",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "PricingModuleAdded",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "module",
+            "type": "address",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "PricingModuleRemoved",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "module",
+            "type": "address",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "PricingModuleUpdated",
         "anonymous": false
       },
       {
@@ -734,10 +789,10 @@
       "license": "MIT"
     },
     "contracts/src/factory/facets/architect/ArchitectBase.sol": {
-      "keccak256": "0x4f3b740b4e0648d550859c1c4a9ab44c8a924f4c8aaf8d1f38333dba90cbe2dd",
+      "keccak256": "0x23842e5d9bc934a26ec05fa21a11d72ab3ddee2fc9f57f4fa2f7a40a4f4f6351",
       "urls": [
-        "bzz-raw://e3fc29f0c8be30f64e7b36a1f8b036102dca2f9bd24f3793b62079b5ff4dc5f9",
-        "dweb:/ipfs/QmX5tcMHdiANo756psbK5gRexcyPaHVvSBaBNRcHqhzZ8v"
+        "bzz-raw://31dc6c97865beda0dd97fdc020698d0e97b5856bbbe5b56b057cb43ee4fe2933",
+        "dweb:/ipfs/QmdasGnxWpatQZZiZhrYgMfPXyRufsPiEB5N29v7vK3KdP"
       ],
       "license": "MIT"
     },
@@ -750,10 +805,10 @@
       "license": "MIT"
     },
     "contracts/src/factory/facets/architect/IArchitect.sol": {
-      "keccak256": "0xbd6208492b7f6efbb0b73ac430be6bd3ab0b9faf2d087a6cb4711367a2e46fab",
+      "keccak256": "0x39e5ad1daecd6499704c68024a95242bb5007980a2e1c20f0bf6de49ac1db0dc",
       "urls": [
-        "bzz-raw://aa652f85efd9f0259c0144073cd7a517ab94fb468f7505a52ea94357a1601db5",
-        "dweb:/ipfs/QmRo8rhuvP4hbQvmJFogFkEMjYdSbSADfLfyPaN1wDd5J5"
+        "bzz-raw://a59aedd182ac661022b3e3043cfff5367adfae5b5dfdb172a201e5ac15f8ddde",
+        "dweb:/ipfs/QmV58DzCEM7r8FFfEvT3jp99SVAV6fGiagVKB5U5cChJr7"
       ],
       "license": "MIT"
     },
@@ -770,6 +825,22 @@
       "urls": [
         "bzz-raw://15f95100f32791a9aa2e3cc47fb9cd58542e9250834bfc38756012cc4baaa786",
         "dweb:/ipfs/QmYGPF6HQLoq5bCgMYW1AyT2Vz1H12Lt8LDdmzTadN5Ppm"
+      ],
+      "license": "MIT"
+    },
+    "contracts/src/factory/facets/architect/pricing/PricingModulesBase.sol": {
+      "keccak256": "0x5853efe27bcebe135c4925110690ea9e8d6de1d69789f5f7c5511fb41f124488",
+      "urls": [
+        "bzz-raw://c7c48c477ddfb70e519fee1e53fc9f368f343dd8be5b981a16a0b84ac4017686",
+        "dweb:/ipfs/QmZQsD8F9maUG5MECF7rYrwPM448bRQxohzow7TpTzCe1o"
+      ],
+      "license": "MIT"
+    },
+    "contracts/src/factory/facets/architect/pricing/PricingModulesStorage.sol": {
+      "keccak256": "0x88ecfde80e4a4efc905356f55462300868a8d181fca835b0f18d55e85481c2d3",
+      "urls": [
+        "bzz-raw://60e4e031c4aca8c85e225960db2faa03783d6b0632e2151dae32302652b90834",
+        "dweb:/ipfs/Qmee4HJEx982dgTX6pYYnZUDPUgPHW55ZYZT1FZdShs69T"
       ],
       "license": "MIT"
     },
@@ -878,10 +949,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/membership/MembershipBase.sol": {
-      "keccak256": "0x4f42c9176fb345d3da7825e0045e57707396d52bb8e208c81ed81e9d76bd90eb",
+      "keccak256": "0x381b4854f17a692959bce55faebdec1ffe55d12a84026d9b366a1dfe2509bbc2",
       "urls": [
-        "bzz-raw://1fac0c230acd543d90c1b88174e3dcdc9a135e7217741a32580b250941ad30bf",
-        "dweb:/ipfs/QmXaLoyaFmomPPZCcJiY3dzsRjZiWoVkNdKtDa67vh16CR"
+        "bzz-raw://5eb7dbd301eca5ce1f158de0ce8e1924411428adc971b09f625803b2a15eef82",
+        "dweb:/ipfs/QmQXfoXppTaNJVfyQb2WEP2n7ZkDfcigmdMbc3uRXYrXq1"
       ],
       "license": "MIT"
     },

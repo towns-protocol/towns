@@ -63,6 +63,7 @@
         <th>Status in Contract</th>
         <th>Operator</th>
         <th>River Eth Balance</th>
+        <th>Base Eth Balance</th>
       </tr>
 
       <!-- Data rows for each Node -->
@@ -104,6 +105,7 @@ UTC: {{.StartTime}}</pre></span>
         <td>{{.Record.Status}} ({{.Record.StatusText}})</td>
         <td>{{.Record.Operator}}</td>
         <td>{{.RiverEthBalance}}</td>
+        <td>{{.BaseEthBalance}}</td>
       </tr>
       {{end}}
     </table>

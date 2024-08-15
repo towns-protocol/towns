@@ -1,33 +1,39 @@
 import * as dotenv from 'dotenv'
-
-import { Config } from './types'
 import { getWeb3Deployment } from '@river-build/web3'
-
-const isDev = process.env.NODE_ENV === 'development'
-const envFile = isDev ? '.env.localhost' : '.env'
+import { z } from 'zod'
 
 dotenv.config({
-	path: envFile,
+	path: ['.env', '.env.local'],
 })
 
-export const SERVER_PORT = parseInt(process.env.PORT ?? '443', 10)
-export const config = makeConfig(process.env.RIVER_ENV, process.env.RIVER_CHAIN_RPC_URL)
+const IntStringSchema = z.string().regex(/^[0-9]+$/)
+const NumberFromIntStringSchema = IntStringSchema.transform((str) => parseInt(str, 10))
 
-function makeConfig(
-	riverEnv = 'omega',
-	riverChainRpcUrl = 'https://mainnet.rpc.river.build/http',
-): Config {
-	const web3Config = getWeb3Deployment(riverEnv)
+const envSchema = z.object({
+	RIVER_ENV: z.string(),
+	RIVER_CHAIN_RPC_URL: z.string().url(),
+	PORT: NumberFromIntStringSchema,
+	LOG_LEVEL: z.string().optional().default('info'),
+	LOG_PRETTY: z.boolean().optional().default(true),
+})
+
+function makeConfig() {
+	// eslint-disable-next-line no-process-env -- this is the only line where we're allowed to use process.env
+	const env = envSchema.parse(process.env)
+	const web3Config = getWeb3Deployment(env.RIVER_ENV)
+
 	return {
-		...web3Config,
-		riverEnv,
-		riverChainRpcUrl,
+		web3Config,
+		log: {
+			level: env.LOG_LEVEL,
+			pretty: env.LOG_PRETTY,
+		},
+		port: env.PORT,
+		riverEnv: env.RIVER_ENV,
+		riverChainRpcUrl: env.RIVER_CHAIN_RPC_URL,
 	}
 }
 
-console.log('config', {
-	riverEnv: config.riverEnv,
-	chainId: config.river.chainId,
-	riverRegistry: config.river.addresses.riverRegistry,
-	riverChainRpcUrl: config.riverChainRpcUrl,
-})
+export type Config = ReturnType<typeof makeConfig>
+
+export const config = makeConfig()

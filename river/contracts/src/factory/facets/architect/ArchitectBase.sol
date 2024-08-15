@@ -28,11 +28,12 @@ import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 // contracts
 import {Factory} from "contracts/src/utils/Factory.sol";
 import {SpaceProxy} from "contracts/src/spaces/facets/proxy/SpaceProxy.sol";
+import {PricingModulesBase} from "contracts/src/factory/facets/architect/pricing/PricingModulesBase.sol";
 
 // modules
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-abstract contract ArchitectBase is Factory, IArchitectBase {
+abstract contract ArchitectBase is Factory, IArchitectBase, PricingModulesBase {
   using StringSet for StringSet.Set;
   using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -299,10 +300,18 @@ abstract contract ArchitectBase is Factory, IArchitectBase {
     return _deploy(initCode);
   }
 
+  function _verifyPricingModule(address pricingModule) internal view {
+    if (pricingModule == address(0) || !_isPricingModule(pricingModule)) {
+      revert Architect__InvalidPricingModule();
+    }
+  }
+
   function _getSpaceDeploymentInfo(
     uint256 spaceTokenId,
     Membership calldata membership
   ) internal view returns (bytes memory initCode, bytes32 salt) {
+    _verifyPricingModule(membership.settings.pricingModule);
+
     address spaceToken = address(ImplementationStorage.layout().spaceToken);
 
     // calculate salt

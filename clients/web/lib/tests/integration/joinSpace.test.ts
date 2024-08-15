@@ -17,6 +17,7 @@ import {
     LegacyMembershipStruct,
     createExternalNFTStruct,
     getDynamicPricingModule,
+    LogicalOperationType,
 } from '@river-build/web3'
 import { TestConstants } from './helpers/TestConstants'
 import { ethers } from 'ethers'
@@ -221,7 +222,12 @@ test(
     'joinSpace gated with 2 NFTs',
     async () => {
         // create clients
-        const { alice, bob, carol } = await registerAndStartClients(['alice', 'bob', 'carol'])
+        const { alice, bob, carol, dave } = await registerAndStartClients([
+            'alice',
+            'bob',
+            'carol',
+            'dave',
+        ])
 
         // bob creates a space
         const [tokenA, tokenB] = await Promise.all([
@@ -232,10 +238,9 @@ test(
         const ruleData = createExternalNFTStruct([tokenA, tokenB])
 
         await Promise.all([
-            // Mint both required tokens for Bob
-            await TestERC721.publicMint('tokenA', bob.walletAddress as Address),
+            // Bob has only token A
             await TestERC721.publicMint('tokenB', bob.walletAddress as Address),
-            // Carol only has one of the needed tokens
+            // Carol has only token B
             await TestERC721.publicMint('tokenA', carol.walletAddress as Address),
         ])
         const dynamicPricingModule = await getDynamicPricingModule(alice.spaceDapp)
@@ -267,11 +272,14 @@ test(
         assert(spaceId !== undefined, 'createSpace failed')
         // Alice is the space creator and should already be a town member
         expect(alice.getRoomData(spaceId)?.id).toEqual(spaceId)
-        // Bob has both NFTs and should be able to join
+        // Bob should be able to join with tokenA
         await bob.joinTown(spaceId, bob.wallet)
         expect(bob.getRoomData(spaceId)?.id).toEqual(spaceId)
-        // Carol only has one of the required NFTs and should not be able to join
-        await expect(carol.joinTown(spaceId, carol.wallet)).rejects.toThrow(/execution reverted/)
+        // Carol should be able to join with tokenB
+        await carol.joinTown(spaceId, bob.wallet)
+        expect(carol.getRoomData(spaceId)?.id).toEqual(spaceId)
+        // Dave has neither tokenA nor tokenB, so he should not be able to join
+        await expect(dave.joinTown(spaceId, dave.wallet)).rejects.toThrow(/execution reverted/)
     },
     120 * 1000,
 )
@@ -285,7 +293,10 @@ test('joinSpace gated with 2 NFTs, wallet linking', async () => {
         TestERC721.getContractAddress('tokenB'),
     ])
     // TODO: remove this struct helper - it's from river/web3 and only used in tests
-    const ruleData = createExternalNFTStruct([tokenA, tokenB])
+    // Create a rule that requires both tokenA and tokenB
+    const ruleData = createExternalNFTStruct([tokenA, tokenB], {
+        logicalOp: LogicalOperationType.AND,
+    })
 
     await Promise.all([
         // Mint both required tokens for Bob, one in each wallet

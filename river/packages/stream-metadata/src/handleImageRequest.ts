@@ -1,13 +1,20 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
+import { ChunkedMedia } from '@river-build/proto'
 import { StreamPrefix, StreamStateView, makeStreamId } from '@river-build/sdk'
+
+import { Config } from './environment'
+import { StreamIdHex } from './types'
 import { getMediaStreamContent, getStream } from './riverStreamRpcClient'
 import { isBytes32String, isValidEthereumAddress } from './validators'
+import { getLogger } from './logger'
 
-import { ChunkedMedia } from '@river-build/proto'
-import { StreamIdHex } from './types'
-import { config } from './environment'
+const logger = getLogger('handleImageRequest')
 
-export async function handleImageRequest(request: FastifyRequest, reply: FastifyReply) {
+export async function handleImageRequest(
+	config: Config,
+	request: FastifyRequest,
+	reply: FastifyReply,
+) {
 	const { spaceAddress } = request.params as { spaceAddress?: string }
 
 	if (!spaceAddress) {
@@ -27,7 +34,10 @@ export async function handleImageRequest(request: FastifyRequest, reply: Fastify
 		const streamId = makeStreamId(StreamPrefix.Space, spaceAddress)
 		stream = await getStream(config, streamId)
 	} catch (e) {
-		console.error(`Failed to get stream for space ${spaceAddress}: ${e}`)
+		logger.error(`Failed to get stream`, {
+			error: e,
+			spaceAddress,
+		})
 		return reply.code(404).send('Stream not found')
 	}
 
@@ -69,11 +79,16 @@ async function getSpaceImage(streamView: StreamStateView): Promise<ChunkedMedia 
 
 function getEncryption(chunkedMedia: ChunkedMedia): { key: Uint8Array; iv: Uint8Array } {
 	switch (chunkedMedia.encryption.case) {
-		case 'aesgcm':
+		case 'aesgcm': {
 			const key = new Uint8Array(chunkedMedia.encryption.value.secretKey)
 			const iv = new Uint8Array(chunkedMedia.encryption.value.iv)
 			return { key, iv }
+		}
 		default:
-			throw new Error(`Unsupported encryption: ${chunkedMedia.encryption}`)
+			logger.error('Unsupported encryption', {
+				case: chunkedMedia.encryption.case,
+				value: chunkedMedia.encryption.value,
+			})
+			throw new Error('Unsupported encryption')
 	}
 }

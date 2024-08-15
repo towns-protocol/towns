@@ -32,8 +32,6 @@ abstract contract MembershipBase is IMembershipBase {
       _verifyFreeAllocation(info.freeAllocation);
     }
 
-    _verifyPricingModule(info.pricingModule);
-
     if (info.price > 0) {
       _verifyPrice(info.price);
       IMembershipPricing(ds.pricingModule).setPrice(info.price);

@@ -19,7 +19,7 @@ import (
 func runPing(cfg *config.Config) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
 
-	blockchain, err := crypto.NewBlockchain(
+	riverChain, err := crypto.NewBlockchain(
 		ctx,
 		&cfg.RiverChain,
 		nil,
@@ -30,18 +30,29 @@ func runPing(cfg *config.Config) error {
 		return err
 	}
 
-	registryContract, err := registries.NewRiverRegistryContract(ctx, blockchain, &cfg.RegistryContract)
+	baseChain, err := crypto.NewBlockchain(
+		ctx,
+		&cfg.BaseChain,
+		nil,
+		infra.NewMetricsFactory(nil, "base", "cmdline"),
+		nil,
+	)
+	if err != nil {
+		return err
+	}
+
+	registryContract, err := registries.NewRiverRegistryContract(ctx, riverChain, &cfg.RegistryContract)
 	if err != nil {
 		return err
 	}
 
 	nodeRegistry, err := nodes.LoadNodeRegistry(
-		ctx, registryContract, common.Address{}, blockchain.InitialBlockNum, blockchain.ChainMonitor, nil)
+		ctx, registryContract, common.Address{}, riverChain.InitialBlockNum, riverChain.ChainMonitor, nil)
 	if err != nil {
 		return err
 	}
 
-	result, err := rpc.GetRiverNetworkStatus(ctx, cfg, nodeRegistry, blockchain, nil)
+	result, err := rpc.GetRiverNetworkStatus(ctx, cfg, nodeRegistry, riverChain, baseChain, nil)
 	if err != nil {
 		return err
 	}

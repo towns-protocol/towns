@@ -16,6 +16,7 @@ import { SyncedStream } from './syncedStream'
 import { StubPersistenceStore } from './persistenceStore'
 import { PartialMessage, PlainMessage } from '@bufbuild/protobuf'
 import { Envelope, StreamEvent } from '@river-build/proto'
+import { nanoid } from 'nanoid'
 
 const log = dlog('csb:test:syncedStreams')
 
@@ -125,6 +126,46 @@ describe('syncStreams', () => {
                 ),
             ).toBeDefined(),
         )
+        const sendPing = async () => {
+            const n1 = nanoid()
+            const n2 = nanoid()
+            alicesSyncedStreams.pingInfo.nonces[n1] = {
+                sequence: alicesSyncedStreams.pingInfo.currentSequence++,
+                nonce: n1,
+                pingAt: performance.now(),
+            }
+            alicesSyncedStreams.pingInfo.nonces[n2] = {
+                sequence: alicesSyncedStreams.pingInfo.currentSequence++,
+                nonce: n2,
+                pingAt: performance.now(),
+            }
+            // ping the stream twice in a row
+            const p1 = rpcClient.pingSync({
+                syncId: alicesSyncedStreams.getSyncId()!,
+                nonce: n1,
+            })
+            const p2 = rpcClient.pingSync({
+                syncId: alicesSyncedStreams.getSyncId()!,
+                nonce: n2,
+            })
+            await Promise.all([p1, p2])
+            await waitFor(() =>
+                expect(alicesSyncedStreams.pingInfo.nonces[n2].receivedAt).toBeDefined(),
+            )
+            await waitFor(() =>
+                expect(alicesSyncedStreams.pingInfo.nonces[n1].receivedAt).toBeDefined(),
+            )
+        }
+
+        for (let i = 0; i < 3; i++) {
+            await sendPing()
+        }
+
+        // get stream
+        const stream = await rpcClient.getStream({
+            streamId: alicesUserInboxStreamId,
+        })
+        expect(stream.stream).toBeDefined()
 
         // drop the stream
         await rpcClient.info({

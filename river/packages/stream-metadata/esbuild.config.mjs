@@ -1,17 +1,19 @@
 import { build } from "esbuild";
+import esbuildPluginPino from "esbuild-plugin-pino";
 
 build({
 	bundle: true,
-	entryPoints: ["./src/node.ts"],
+	entryPoints: { node_esbuild: "./src/node.ts" }, // Rename the entry point to control the output file name
 	format: "cjs",
 	logLevel: "info",
 	loader: {
 		".ts": "ts",
 		".wasm": "file",
 	},
-	outfile: "dist/node_esbuild.cjs",
-	outExtension: { ".js": ".cjs" },
+	outdir: "dist",
+	outExtension: { ".js": ".cjs" }, // Ensure the output file has .cjs extension
 	platform: "node",
+	plugins: [esbuildPluginPino({ transports: ["pino-pretty"] })],
 	sourcemap: "inline",
 	target: "es2022",
 }).catch((e) => {

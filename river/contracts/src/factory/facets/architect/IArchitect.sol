@@ -58,6 +58,7 @@ interface IArchitectBase {
   error Architect__InvalidNetworkId();
   error Architect__InvalidAddress();
   error Architect__NotContract();
+  error Architect__InvalidPricingModule();
 }
 
 interface IArchitect is IArchitectBase {

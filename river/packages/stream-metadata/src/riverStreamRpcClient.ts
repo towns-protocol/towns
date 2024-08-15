@@ -1,5 +1,4 @@
 import { ConnectTransportOptions, createConnectTransport } from '@connectrpc/connect-web'
-import { Config, MediaContent, StreamIdHex } from './types'
 import {
 	ParsedStreamResponse,
 	StreamStateView,
@@ -9,11 +8,16 @@ import {
 	unpackStream,
 } from '@river-build/sdk'
 import { PromiseClient, createPromiseClient } from '@connectrpc/connect'
-
 import { BigNumber } from 'ethers'
 import { StreamService } from '@river-build/proto'
 import { filetypemime } from 'magic-bytes.js'
+
+import { Config } from './environment'
+import { MediaContent, StreamIdHex } from './types'
 import { getNodeForStream } from './streamRegistry'
+import { getLogger } from './logger'
+
+const logger = getLogger('riverStreamRpcClient')
 
 const clients = new Map<string, StreamRpcClient>()
 
@@ -22,7 +26,9 @@ const contentCache: Record<string, MediaContent | undefined> = {}
 export type StreamRpcClient = PromiseClient<typeof StreamService> & { url?: string }
 
 function makeStreamRpcClient(url: string): StreamRpcClient {
-	console.log(`makeStreamRpcClient: Connecting to url=${url}`)
+	logger.info(`makeStreamRpcClient: Connecting`, {
+		url,
+	})
 
 	const options: ConnectTransportOptions = {
 		baseUrl: url,
@@ -42,7 +48,7 @@ async function getStreamClient(config: Config, streamId: `0x${string}`) {
 		clients.set(client.url!, client)
 		url = client.url!
 	}
-	console.log(`getStreamClient: url=${url}`)
+	logger.info('getStreamClient: client url', url)
 
 	const client = clients.get(url)
 	if (!client) {
@@ -78,7 +84,9 @@ async function mediaContentFromStreamView(
 ): Promise<MediaContent> {
 	const mediaInfo = streamView.mediaContent.info
 	if (mediaInfo) {
-		console.log(`mediaContentFromStreamView: mediaInfo.spaceId=${mediaInfo.spaceId}`)
+		logger.info(`mediaContentFromStreamView`, {
+			spaceId: mediaInfo.spaceId,
+		})
 
 		// Aggregate data chunks into a single Uint8Array
 		const data = new Uint8Array(
@@ -96,7 +104,9 @@ async function mediaContentFromStreamView(
 		// Determine the MIME type
 		const mimeType = filetypemime(decrypted)
 		if (mimeType?.length > 0) {
-			console.log(`mediaContentFromStreamView: type=${JSON.stringify(mimeType[0])}`)
+			logger.info(`mediaContentFromStreamView`, {
+				mimeType,
+			})
 
 			// Return decrypted data and MIME type
 			return {
@@ -128,18 +138,23 @@ export async function getStream(
 		client = result.client
 		lastMiniblockNum = result.lastMiniblockNum
 	} catch (e) {
-		console.error(`Failed to get client for stream ${streamId}: ${e}`)
+		logger.error('Failed to get client for stream', {
+			err: e,
+			streamId,
+		})
 		return undefined
 	}
 
 	if (!client) {
-		console.error(`Failed to get client for stream ${streamId}`)
+		logger.error(`Failed to get client for stream`, { streamId })
 		return undefined
 	}
 
-	console.log(
-		`getStream: client=${client.url}; streamId=${streamId}; lastMiniblockNum=${lastMiniblockNum}`,
-	)
+	logger.info(`getStream`, {
+		clientUrl: client.url,
+		streamId,
+		lastMiniblockNum: lastMiniblockNum.toString(),
+	})
 
 	const start = Date.now()
 
@@ -147,7 +162,9 @@ export async function getStream(
 		streamId: streamIdAsBytes(streamId),
 	})
 
-	console.log(`getStream: getStream took ${Date.now() - start}ms`)
+	logger.info(`getStream finished`, {
+		duration: Date.now() - start,
+	})
 
 	const unpackedResponse = await unpackStream(response.stream)
 	return streamViewFromUnpackedResponse(streamId, unpackedResponse)
@@ -183,7 +200,10 @@ export async function getMediaStreamContent(
 	try {
 		result = await mediaContentFromStreamView(sv, secret, iv)
 	} catch (e) {
-		console.error(`Failed to get media content for stream ${fullStreamId}: ${e}`)
+		logger.error(`Failed to get media content for stream`, {
+			err: e,
+			streamId: fullStreamId,
+		})
 		return { data: null, mimeType: null }
 	}
 

@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
+import {IPricingModules} from "contracts/src/factory/facets/architect/pricing/IPricingModules.sol";
 import {IEntitlementsManager} from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
 import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
@@ -241,6 +242,27 @@ contract ArchitectTest is
     vm.expectRevert(Factory.Factory__FailedDeployment.selector);
 
     vm.prank(address(this));
+    spaceArchitect.createSpace(spaceInfo);
+  }
+
+  function test_fuzz_revertIfInvalidPricingModule(
+    string memory spaceName,
+    address founder,
+    address _pricingModule
+  ) external assumeEOA(founder) {
+    vm.assume(bytes(spaceName).length > 2);
+    vm.assume(
+      _pricingModule == address(0) ||
+        !IPricingModules(address(spaceArchitect)).isPricingModule(
+          _pricingModule
+        )
+    );
+
+    SpaceInfo memory spaceInfo = _createSpaceInfo(spaceName);
+    spaceInfo.membership.settings.pricingModule = _pricingModule;
+
+    vm.prank(founder);
+    vm.expectRevert(Architect__InvalidPricingModule.selector);
     spaceArchitect.createSpace(spaceInfo);
   }
 

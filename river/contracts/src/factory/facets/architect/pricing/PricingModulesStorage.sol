@@ -21,9 +21,8 @@ library PricingModulesStorage {
   }
 
   function layout() internal pure returns (Layout storage l) {
-    bytes32 slot = SLOT_POSITION;
     assembly {
-      l.slot := slot
+      l.slot := SLOT_POSITION
     }
   }
 }

@@ -105,7 +105,7 @@ export class SyncedStreams {
     // and are cleared when sync stops
     private responsesQueue: SyncStreamsResponse[] = []
     private inProgressTick?: Promise<void>
-    private pingInfo: PingInfo = {
+    public pingInfo: PingInfo = {
         currentSequence: 0,
         nonces: {},
     }
@@ -408,7 +408,7 @@ export class SyncedStreams {
                                             resolve()
                                         }
                                         this.interruptSync = (e: unknown) => {
-                                            this.log('sync interrupted', e)
+                                            this.logError('sync interrupted', e)
                                             reject(e)
                                         }
                                     },

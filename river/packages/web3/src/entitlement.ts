@@ -608,39 +608,47 @@ export async function evaluateTree(
     }
 }
 
+type AndOr = LogicalOperationType.AND | LogicalOperationType.OR
+
 // These two methods are used to create a rule data struct for an external token or NFT
 // checks for testing.
 export function createExternalTokenStruct(
     addresses: Address[],
-    checkOptions?: Partial<Omit<ContractCheckOperation, 'address'>>,
+    options?: {
+        checkOptions?: Partial<Omit<ContractCheckOperation, 'address'>>
+        logicalOp?: AndOr
+    },
 ) {
     if (addresses.length === 0) {
         return NoopRuleData
     }
     const defaultChain = addresses.map((address) => ({
-        chainId: checkOptions?.chainId ?? 1n,
+        chainId: options?.checkOptions?.chainId ?? 1n,
         address: address,
-        type: checkOptions?.type ?? (CheckOperationType.ERC20 as const),
-        threshold: checkOptions?.threshold ?? BigInt(1),
+        type: options?.checkOptions?.type ?? (CheckOperationType.ERC20 as const),
+        threshold: options?.checkOptions?.threshold ?? BigInt(1),
     }))
-    return createOperationsTree(defaultChain)
+    return createOperationsTree(defaultChain, options?.logicalOp ?? LogicalOperationType.OR)
 }
 
 export function createExternalNFTStruct(
     addresses: Address[],
-    checkOptions?: Partial<Omit<ContractCheckOperation, 'address'>>,
+    options?: {
+        checkOptions?: Partial<Omit<ContractCheckOperation, 'address'>>
+        logicalOp?: AndOr
+    },
 ) {
     if (addresses.length === 0) {
         return NoopRuleData
     }
     const defaultChain = addresses.map((address) => ({
         // Anvil chain id
-        chainId: checkOptions?.chainId ?? 31337n,
+        chainId: options?.checkOptions?.chainId ?? 31337n,
         address: address,
-        type: checkOptions?.type ?? (CheckOperationType.ERC721 as const),
-        threshold: checkOptions?.threshold ?? BigInt(1),
+        type: options?.checkOptions?.type ?? (CheckOperationType.ERC721 as const),
+        threshold: options?.checkOptions?.threshold ?? BigInt(1),
     }))
-    return createOperationsTree(defaultChain)
+    return createOperationsTree(defaultChain, options?.logicalOp ?? LogicalOperationType.OR)
 }
 
 export type ContractCheckOperation = {
@@ -654,6 +662,7 @@ export function createOperationsTree(
     checkOp: (Omit<ContractCheckOperation, 'threshold'> & {
         threshold?: bigint
     })[],
+    logicalOp: AndOr = LogicalOperationType.OR,
 ): IRuleEntitlementBase.RuleDataStruct {
     if (checkOp.length === 0) {
         return {
@@ -677,7 +686,7 @@ export function createOperationsTree(
             if (i + 1 < operations.length) {
                 newOperations.push({
                     opType: OperationType.LOGICAL,
-                    logicalType: LogicalOperationType.AND,
+                    logicalType: logicalOp,
                     leftOperation: operations[i],
                     rightOperation: operations[i + 1],
                 })

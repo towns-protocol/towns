@@ -3,7 +3,7 @@ set -euo pipefail
 cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 cd ..
 
-echo "stress/scripts/localhost_setup_chat.sh"
+echo "stress/scripts/localhost_chat_setup.sh"
 
 #
 # create space and channels for stress testing

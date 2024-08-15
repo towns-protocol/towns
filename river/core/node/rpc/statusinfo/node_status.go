@@ -91,6 +91,7 @@ type NodeStatus struct {
 	Http20          HttpResult       `json:"http20"`
 	Grpc            GrpcResult       `json:"grpc"`
 	RiverEthBalance string           `json:"river_eth_balance"`
+	BaseEthBalance  string           `json:"base_eth_balance"`
 }
 
 type RiverStatus struct {

@@ -1,6 +1,9 @@
 import { BigNumber } from 'ethers'
-import { Config, StreamIdHex } from './types'
+
+import { StreamIdHex } from './types'
 import { getRiverRegistry } from './evmRpcClient'
+import { getLogger } from './logger'
+import { Config } from './environment'
 
 type CachedStreamData = {
 	url: string
@@ -9,12 +12,14 @@ type CachedStreamData = {
 }
 
 const cache: Record<string, CachedStreamData> = {}
+const logger = getLogger('streamRegistry')
 
+// TODO: remove this entire file
 export async function getNodeForStream(
 	config: Config,
 	streamId: StreamIdHex,
 ): Promise<{ url: string; lastMiniblockNum: BigNumber }> {
-	console.log('getNodeForStream', streamId)
+	logger.info('getNodeForStream', streamId)
 
 	const now = Date.now()
 	const cachedData = cache[streamId]
@@ -26,7 +31,7 @@ export async function getNodeForStream(
 
 	const riverRegistry = getRiverRegistry(config)
 
-	console.log('getNodeForStream', {
+	logger.info('getNodeForStream', {
 		streamId,
 		riverRegistryAddress: riverRegistry.config.addresses.riverRegistry,
 	})
@@ -34,8 +39,13 @@ export async function getNodeForStream(
 	const streamData = await riverRegistry.streamRegistry.read.getStream(streamId)
 
 	if (streamData.nodes.length === 0) {
-		console.error(`No nodes found for stream ${streamId}`)
-		throw new Error(`No nodes found for stream ${streamId}`)
+		const err = new Error(`No nodes found for stream ${streamId}`)
+		logger.error(`No nodes found for stream`, {
+			streamId,
+			err,
+		})
+
+		throw err
 	}
 
 	const lastMiniblockNum = streamData.lastMiniblockNum
@@ -43,7 +53,11 @@ export async function getNodeForStream(
 	const randomIndex = Math.floor(Math.random() * streamData.nodes.length)
 	const node = await riverRegistry.nodeRegistry.read.getNode(streamData.nodes[randomIndex])
 
-	console.log(`connected to node=${node.url}; lastMiniblockNum=${lastMiniblockNum}`)
+	logger.info(`connected to node`, {
+		streamId,
+		nodeUrl: node.url,
+		lastMiniblockNum,
+	})
 
 	// Cache the result with a 15-minute expiration
 	cache[streamId] = {

@@ -204,13 +204,13 @@ func getGrpcStatus(
 func getEthBalance(
 	ctx context.Context,
 	result *string,
-	riverChain *crypto.Blockchain,
+	blockchain *crypto.Blockchain,
 	address common.Address,
 	wg *sync.WaitGroup,
 ) {
 	defer wg.Done()
 
-	balance, err := riverChain.Client.BalanceAt(ctx, address, nil)
+	balance, err := blockchain.Client.BalanceAt(ctx, address, nil)
 	if err != nil {
 		*result = "Error getting balance: " + err.Error()
 		return
@@ -230,6 +230,7 @@ func GetRiverNetworkStatus(
 	cfg *config.Config,
 	nodeRegistry nodes.NodeRegistry,
 	riverChain *crypto.Blockchain,
+	baseChain *crypto.Blockchain,
 	connectOtelIterceptor *otelconnect.Interceptor,
 ) (*statusinfo.RiverStatus, error) {
 	startTime := time.Now()
@@ -291,6 +292,10 @@ func GetRiverNetworkStatus(
 		go getHttpStatus(ctx, n.Url(), &r.Http20, http20client, &wg)
 		go getGrpcStatus(ctx, r, NewStreamServiceClient(grpcHttpClient, n.Url(), connectOpts...), &wg)
 		go getEthBalance(ctx, &r.RiverEthBalance, riverChain, n.Address(), &wg)
+		if baseChain != nil {
+			wg.Add(1)
+			go getEthBalance(ctx, &r.BaseEthBalance, baseChain, n.Address(), &wg)
+		}
 	}
 
 	wg.Wait()
@@ -309,7 +314,14 @@ func (s *Service) handleDebugMulti(w http.ResponseWriter, r *http.Request) {
 
 	log := s.defaultLogger
 
-	status, err := GetRiverNetworkStatus(ctx, s.config, s.nodeRegistry, s.riverChain, s.otelConnectIterceptor)
+	status, err := GetRiverNetworkStatus(
+		ctx,
+		s.config,
+		s.nodeRegistry,
+		s.riverChain,
+		s.baseChain,
+		s.otelConnectIterceptor,
+	)
 	if err == nil {
 		err = render.ExecuteAndWrite(&render.DebugMultiData{Status: status}, w)
 		if !s.config.Log.Simplify {
@@ -333,7 +345,14 @@ func (s *Service) handleDebugMultiJson(w http.ResponseWriter, r *http.Request) {
 	log := s.defaultLogger
 
 	w.Header().Set("Content-Type", "application/json")
-	status, err := GetRiverNetworkStatus(ctx, s.config, s.nodeRegistry, s.riverChain, s.otelConnectIterceptor)
+	status, err := GetRiverNetworkStatus(
+		ctx,
+		s.config,
+		s.nodeRegistry,
+		s.riverChain,
+		s.baseChain,
+		s.otelConnectIterceptor,
+	)
 	if err == nil {
 		// Write status as json
 		err = json.NewEncoder(w).Encode(status)

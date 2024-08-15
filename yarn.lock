@@ -17162,6 +17162,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"esbuild-plugin-pino@npm:^2.2.0":
+  version: 2.2.0
+  resolution: "esbuild-plugin-pino@npm:2.2.0"
+  peerDependencies:
+    esbuild: ^0.17.1 || ^0.18.0 || ^0.19.0 || ^0.20.0 || ^0.21.0
+  checksum: 7dace40169cfeb583c493ef6d82db7892598502d1717a9d02a5f7b1025068003c4d8c1c9f72cc0a4962414f9a4ecc0889f62ed3624136203d56d4f175e6cc8c5
+  languageName: node
+  linkType: hard
+
 "esbuild-plugin-wasm@npm:^1.1.0":
   version: 1.1.0
   resolution: "esbuild-plugin-wasm@npm:1.1.0"
@@ -26544,6 +26553,30 @@ __metadata:
   languageName: node
   linkType: hard
 
+"pino-pretty@npm:^10.2.3":
+  version: 10.3.1
+  resolution: "pino-pretty@npm:10.3.1"
+  dependencies:
+    colorette: ^2.0.7
+    dateformat: ^4.6.3
+    fast-copy: ^3.0.0
+    fast-safe-stringify: ^2.1.1
+    help-me: ^5.0.0
+    joycon: ^3.1.1
+    minimist: ^1.2.6
+    on-exit-leak-free: ^2.1.0
+    pino-abstract-transport: ^1.0.0
+    pump: ^3.0.0
+    readable-stream: ^4.0.0
+    secure-json-parse: ^2.4.0
+    sonic-boom: ^3.0.0
+    strip-json-comments: ^3.1.1
+  bin:
+    pino-pretty: bin.js
+  checksum: 51e2d670745a396ddfd12da9f7ea5c2e4dc93a84589ffb29f64f4118d4b83ab636ee21f4aee7a47adb04664d5d921fb33e039e0ea961bb1c1cffefa28444563c
+  languageName: node
+  linkType: hard
+
 "pino-std-serializers@npm:^4.0.0":
   version: 4.0.0
   resolution: "pino-std-serializers@npm:4.0.0"
@@ -29753,21 +29786,31 @@ __metadata:
   dependencies:
     "@bufbuild/buf": ^1.32.0
     "@bufbuild/protobuf": ^1.9.0
+    "@connectrpc/connect": ^1.4.0
     "@connectrpc/connect-web": ^1.4.0
     "@fastify/cors": ^9.0.1
+    "@river-build/eslint-config": "workspace:^"
     "@river-build/generated": "workspace:^"
+    "@river-build/prettier-config": "workspace:^"
     "@river-build/proto": "workspace:^"
     "@river-build/sdk": "workspace:^"
+    "@river-build/web3": "workspace:^"
     "@types/node": ^20.5.0
+    "@typescript-eslint/parser": ^7.14.1
     dotenv: ^16.4.5
     esbuild: ^0.21.5
+    esbuild-plugin-pino: ^2.2.0
+    eslint: ^8.53.0
     ethers: ^5.7.2
     fastify: ^4.28.1
     magic-bytes.js: ^1.10.0
+    pino: ^8.17.1
+    pino-pretty: ^10.2.3
+    prettier: ^2.8.8
     rollup: ^4.18.1
     ts-node: ^10.9.1
     typescript: ^5.1.6
-    viem: ^1.18.2
+    zod: ^3.21.4
   languageName: unknown
   linkType: soft
 

@@ -318,6 +318,45 @@ export default [
   },
   {
     "type": "event",
+    "name": "PricingModuleAdded",
+    "inputs": [
+      {
+        "name": "module",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "PricingModuleRemoved",
+    "inputs": [
+      {
+        "name": "module",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "PricingModuleUpdated",
+    "inputs": [
+      {
+        "name": "module",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "SpaceCreated",
     "inputs": [
       {
@@ -366,6 +405,11 @@ export default [
   },
   {
     "type": "error",
+    "name": "Architect__InvalidPricingModule",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "Architect__InvalidStringLength",
     "inputs": []
   },
@@ -398,6 +442,17 @@ export default [
     "type": "error",
     "name": "Introspection_NotSupported",
     "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidPricingModule",
+    "inputs": [
+      {
+        "name": "module",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
   },
   {
     "type": "error",
