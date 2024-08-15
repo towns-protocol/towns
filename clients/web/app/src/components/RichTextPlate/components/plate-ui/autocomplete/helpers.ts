@@ -7,6 +7,7 @@ import {
 } from '@udecode/plate-mention'
 import { UserWithDisplayName, getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import {
+    AtChannelUser,
     ComboboxTypes,
     TComboboxItemWithData,
     TUserIDNameMap,
@@ -73,7 +74,7 @@ export const getUserHashMap = (
     }
     const map: TUserIDNameMap = {}
     users.forEach((user) => {
-        if (user.userId) {
+        if (user.userId && user.userId !== AtChannelUser.userId) {
             map[user.userId] = getPrettyDisplayName(user as UserWithDisplayName, true)
         }
     })
