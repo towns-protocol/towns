@@ -19,6 +19,7 @@ const isProd = !env.DEV && !isTest()
 export class Analytics implements TownsAnalytics {
     private static instance: Analytics
     private _pseudoId: string | undefined
+    private static didWarn = false
     private readonly analytics: RudderAnalytics
     public readonly commoneProperties: ApiObject
     public readonly trackedEvents: Set<string> = new Set()
@@ -42,7 +43,10 @@ export class Analytics implements TownsAnalytics {
             const isAnalyticsConfigured = writeKey && dataPlaneUrl && destSDKBaseURL && configUrl
 
             if (!isAnalyticsConfigured) {
-                console.warn('[analytics] Analytics is not enabled in production!')
+                if (!Analytics.didWarn) {
+                    Analytics.didWarn = true
+                    console.warn('[analytics] Analytics is not enabled in production!')
+                }
                 return
             }
 
