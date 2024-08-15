@@ -21,7 +21,7 @@ import { useDevice } from 'hooks/useDevice'
 import { MotionBoxProps } from 'ui/components/Motion/MotionComponents'
 import { getDraftDMStorageId } from 'utils'
 import { MessageDropDown } from './MessageDropDown'
-import { UserOption, UserPillSelector } from './UserPillSelector'
+import { UserOrDMOption, UserPillSelector } from './UserPillSelector'
 import { useMatchingMessages } from './hooks/useMatchingMessages'
 
 export const CreateMessageSelect = () => {
@@ -89,7 +89,7 @@ export const CreateMessageSelect = () => {
             !numSelectedUsers ? undefined : numSelectedUsers === 1 && firstUser ? (
                 matchingDM ? undefined : (
                     <Stack horizontal grow gap="sm" alignItems="center">
-                        <UserOption user={firstUser} selected={false} />
+                        <UserOrDMOption data={firstUser} selected={false} />
                     </Stack>
                 )
             ) : isTouch ? (
@@ -176,6 +176,7 @@ export const CreateMessageSelect = () => {
                     emptySelectionElement={emptySelectionElement}
                     onSelectionChange={onSelectionChange}
                     onConfirm={onSelectCurrentChoice}
+                    onSelectChannel={onSelectChannel}
                 />
             </ZLayerBox>
         </MessageContainerLayout>

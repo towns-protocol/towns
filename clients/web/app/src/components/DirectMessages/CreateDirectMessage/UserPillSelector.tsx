@@ -1,10 +1,12 @@
 import React, { CSSProperties, useCallback, useMemo, useState } from 'react'
 import { firstBy } from 'thenby'
 import {
+    DMChannelIdentifier,
     LookupUser,
     useMyUserId,
     useSpaceId,
     useSpaceMembersWithFallback,
+    useTownsContext,
     useUserLookupContext,
 } from 'use-towns-client'
 import { Avatar } from '@components/Avatar/Avatar'
@@ -16,14 +18,31 @@ import { useDevice } from 'hooks/useDevice'
 import { lookupUserNameSearchString } from 'hooks/useSearch'
 import { notUndefined } from 'ui/utils/utils'
 import { PillSelector } from './PillSelector'
+import { DirectMessageRowContent } from '../DirectMessageListItem'
 
 type Props = {
     disabled?: boolean
     onSelectionChange: (users: Set<string>) => void
     emptySelectionElement?: (params: { searchTerm: string }) => JSX.Element
     onConfirm: () => void
-    onUserPreviewChange?: (previewItem: LookupUser | undefined) => void
+    onUserPreviewChange?: (previewItem: LookupUser | ChannelSearchItem | undefined) => void
+    onSelectChannel?: (channelId: string) => void
 }
+
+const toSearchItems = (channels: DMChannelIdentifier[]): ChannelSearchItem[] => {
+    return channels
+        .filter((f) => f.properties?.name)
+        .map((channel) => ({
+            ...channel,
+            type: 'channel-search-item',
+            search: channel.properties?.name ?? '',
+        }))
+}
+
+type ChannelSearchItem = DMChannelIdentifier & { type: 'channel-search-item'; search: string }
+
+const isChannelOption = (option: LookupUser | ChannelSearchItem): option is ChannelSearchItem =>
+    typeof option === 'object' && 'type' in option && option.type === 'channel-search-item'
 
 export const UserPillSelector = (props: Props) => {
     const { disabled = false } = props
@@ -50,7 +69,7 @@ export const UserPillSelector = (props: Props) => {
     const spaceId = useSpaceId()
     const { memberIds } = useSpaceMembersWithFallback(spaceId)
 
-    const users = useMemo(() => {
+    const userSuggestions = useMemo(() => {
         return (
             memberIds
                 .map((m) => lookupUser(m))
@@ -65,11 +84,26 @@ export const UserPillSelector = (props: Props) => {
 
     // -------------------------------------------------------------------------
 
+    const { dmChannels } = useTownsContext()
+
+    const channelSuggestions = useMemo(() => {
+        const channels =
+            numSelected === 0
+                ? dmChannels
+                : dmChannels.filter((c) => selectedIdsArray.every((u) => c.userIds.includes(u)))
+        return toSearchItems(channels)
+    }, [dmChannels, numSelected, selectedIdsArray])
+
+    // -------------------------------------------------------------------------
+
     const optionSorter = useCallback(
-        (options: LookupUser[]) =>
+        (options: (LookupUser | ChannelSearchItem)[]) =>
             [...options].sort(
-                firstBy<LookupUser>((u) => [...recentUsers].reverse().indexOf(u.userId), -1).thenBy(
-                    (id) => lookupUser(id.userId)?.displayName,
+                firstBy<LookupUser | ChannelSearchItem>(
+                    (u) => [...recentUsers].reverse().indexOf(isChannelOption(u) ? '' : u.userId),
+                    -1,
+                ).thenBy((u) =>
+                    isChannelOption(u) ? u.properties?.name : lookupUser(u.userId)?.displayName,
                 ),
             ),
         [lookupUser, recentUsers],
@@ -81,12 +115,16 @@ export const UserPillSelector = (props: Props) => {
             selected,
             onAddItem,
         }: {
-            option: LookupUser
+            option: LookupUser | ChannelSearchItem
             selected: boolean
             onAddItem: (customKey?: string) => void
         }) => (
             <Box cursor="pointer" onClick={() => onAddItem()}>
-                <UserOption key={option.userId} user={option} selected={selected} />
+                <UserOrDMOption
+                    key={isChannelOption(option) ? option.id : option.userId}
+                    data={option}
+                    selected={selected}
+                />
             </Box>
         ),
         [],
@@ -143,7 +181,7 @@ export const UserPillSelector = (props: Props) => {
                 <Box zIndex="layer">
                     <PillSelector
                         hideResultsWhenNotActive={disabled}
-                        options={users}
+                        options={[...channelSuggestions, ...userSuggestions]}
                         keys={['search']}
                         cta={ctaElement}
                         label={labelElement}
@@ -158,9 +196,15 @@ export const UserPillSelector = (props: Props) => {
                         optionRenderer={optionRenderer}
                         pillRenderer={pillRenderer}
                         optionSorter={optionSorter}
-                        getOptionKey={(o) => o.userId}
+                        getOptionKey={(o) => (isChannelOption(o) ? o.id : o.userId)}
                         emptySelectionElement={props.emptySelectionElement}
                         onSelectionChange={onSelectionChange}
+                        onBeforeOptionAdded={(option) => {
+                            if (isChannelOption(option)) {
+                                props.onSelectChannel?.(option.id)
+                                return false
+                            }
+                        }}
                         onConfirm={props.onConfirm}
                         onPreviewChange={props.onUserPreviewChange}
                     />
@@ -168,6 +212,17 @@ export const UserPillSelector = (props: Props) => {
             </Box>
         </Stack>
     )
+}
+
+export const UserOrDMOption = (props: {
+    data: LookupUser | ChannelSearchItem
+    selected: boolean
+}) => {
+    if (isChannelOption(props.data)) {
+        return <ChannelOption dm={props.data} selected={props.selected} />
+    } else {
+        return <UserOption user={props.data} selected={props.selected} />
+    }
 }
 
 export const UserOption = (props: { user: LookupUser; selected: boolean }) => {
@@ -192,6 +247,23 @@ export const UserOption = (props: { user: LookupUser; selected: boolean }) => {
                     </Text>
                 )}
             </Box>
+        </Box>
+    )
+}
+
+const ChannelOption = (props: { dm: ChannelSearchItem; selected: boolean }) => {
+    const { selected, dm: dm } = props
+    return (
+        <Box
+            horizontal
+            gap
+            key={dm.id}
+            background={selected ? 'level3' : undefined}
+            insetX="xs"
+            padding="sm"
+            rounded={selected ? 'xs' : undefined}
+        >
+            <DirectMessageRowContent channel={dm} unread={false} />
         </Box>
     )
 }

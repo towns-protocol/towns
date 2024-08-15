@@ -39,6 +39,7 @@ type Props<T> = {
     placeholder?: string
     initialFocusIndex?: number
     initialSelection?: Set<string>
+    onBeforeOptionAdded?: (option: T) => false | void
     /**
      * Pass a function to transform the selection before rendering the pills
      * A hack for manipulating the selection strings to shove in extra data, later we should allow selection to be whatever we want
@@ -73,6 +74,7 @@ export const PillSelector = <T,>(props: Props<T>) => {
         initialSelection,
         isError,
         fieldRefOverride,
+        onBeforeOptionAdded,
     } = props
 
     const containerRef = useRef<HTMLDivElement>(null)
@@ -177,9 +179,14 @@ export const PillSelector = <T,>(props: Props<T>) => {
         setFocusIndex(initialFocusIndex)
     }, [getOptionKey, initialFocusIndex, searchItems])
 
-    const onAddItem = useCallback((key: string) => {
-        setSelection((s) => new Set(s.add(key)))
-    }, [])
+    const onAddItem = useCallback(
+        (key: string) => {
+            if (onBeforeOptionAdded?.(options.find((o) => getOptionKey(o) === key)!) !== false) {
+                setSelection((s) => new Set(s.add(key)))
+            }
+        },
+        [getOptionKey, options, onBeforeOptionAdded],
+    )
 
     const onDeleteItem = useCallback((key: string) => {
         setSelection((s) => {
