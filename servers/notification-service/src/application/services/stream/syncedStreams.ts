@@ -143,12 +143,11 @@ export class SyncedStreams {
                 streamId: streamIdAsString(syncCookie?.streamId ?? ''),
             })
         } catch (error) {
-            // Trigger restart of sync loop
             logger.error(`addedStreamToSync error`, { error })
             if (errorContains(error, Err.BAD_SYNC_COOKIE)) {
                 logger.error('addStreamToSync BAD_SYNC_COOKIE', { syncCookie })
-                throw error
             }
+            // TODO handle retry logic
         } finally {
             // The next request will be started when the current one is completed
             this.addSyncTask = undefined
@@ -343,6 +342,35 @@ export class SyncedStreams {
                 resSyncId: res.syncId,
             })
             process.exit(1)
+        }
+        if (res.streamId) {
+            const streamId = streamIdAsString(res.streamId)
+            setTimeout(async () => {
+                try {
+                    const start = Date.now()
+
+                    const lastSyncedStream = await database.syncedStream.findUnique({
+                        where: { StreamId: streamIdAsString(streamId) },
+                    })
+
+                    if (lastSyncedStream) {
+                        logger.info('restarting sync on stream', {
+                            streamId,
+                            lastSyncedStream,
+                            duration: Date.now() - start,
+                        })
+                        const syncCookie = SyncCookie.fromJsonString(lastSyncedStream.SyncCookie)
+                        this.addStreamToSync(syncCookie)
+                    } else {
+                        logger.info('restarting sync on stream not found', {
+                            streamId,
+                            duration: Date.now() - start,
+                        })
+                    }
+                } catch (error) {
+                    logger.error('restarting sync on stream error', { error, streamId })
+                }
+            }, 5000)
         }
     }
 
