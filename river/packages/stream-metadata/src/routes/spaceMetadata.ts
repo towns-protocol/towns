@@ -1,12 +1,8 @@
 import { FastifyRequest, FastifyReply } from 'fastify'
 
-import { isValidEthereumAddress } from './validators'
+import { isValidEthereumAddress } from '../validators'
 
-export function handleMetadataRequest(
-	request: FastifyRequest,
-	reply: FastifyReply,
-	baseUrl: string,
-) {
+export function fetchSpaceMetadata(request: FastifyRequest, reply: FastifyReply, baseUrl: string) {
 	const { spaceAddress } = request.params as { spaceAddress?: string }
 
 	if (!spaceAddress) {

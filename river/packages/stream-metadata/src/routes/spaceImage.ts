@@ -2,19 +2,14 @@ import { FastifyReply, FastifyRequest } from 'fastify'
 import { ChunkedMedia } from '@river-build/proto'
 import { StreamPrefix, StreamStateView, makeStreamId } from '@river-build/sdk'
 
-import { Config } from './environment'
-import { StreamIdHex } from './types'
-import { getMediaStreamContent, getStream } from './riverStreamRpcClient'
-import { isBytes32String, isValidEthereumAddress } from './validators'
-import { getLogger } from './logger'
+import { StreamIdHex } from '../types'
+import { getMediaStreamContent, getStream } from '../riverStreamRpcClient'
+import { isBytes32String, isValidEthereumAddress } from '../validators'
+import { getLogger } from '../logger'
 
 const logger = getLogger('handleImageRequest')
 
-export async function handleImageRequest(
-	config: Config,
-	request: FastifyRequest,
-	reply: FastifyReply,
-) {
+export async function fetchSpaceImage(request: FastifyRequest, reply: FastifyReply) {
 	const { spaceAddress } = request.params as { spaceAddress?: string }
 
 	if (!spaceAddress) {
@@ -32,7 +27,7 @@ export async function handleImageRequest(
 	let stream: StreamStateView | undefined
 	try {
 		const streamId = makeStreamId(StreamPrefix.Space, spaceAddress)
-		stream = await getStream(config, streamId)
+		stream = await getStream(streamId)
 	} catch (e) {
 		logger.error(`Failed to get stream`, {
 			error: e,
@@ -59,7 +54,7 @@ export async function handleImageRequest(
 
 	const { key, iv } = getEncryption(mediaStreamInfo)
 
-	const { data, mimeType } = await getMediaStreamContent(config, fullStreamId, key, iv)
+	const { data, mimeType } = await getMediaStreamContent(fullStreamId, key, iv)
 
 	if (data && mimeType) {
 		return reply.header('Content-Type', mimeType).send(Buffer.from(data))

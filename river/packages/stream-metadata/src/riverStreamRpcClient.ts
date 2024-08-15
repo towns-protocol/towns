@@ -12,7 +12,6 @@ import { BigNumber } from 'ethers'
 import { StreamService } from '@river-build/proto'
 import { filetypemime } from 'magic-bytes.js'
 
-import { Config } from './environment'
 import { MediaContent, StreamIdHex } from './types'
 import { getNodeForStream } from './streamRegistry'
 import { getLogger } from './logger'
@@ -40,8 +39,8 @@ function makeStreamRpcClient(url: string): StreamRpcClient {
 	return client
 }
 
-async function getStreamClient(config: Config, streamId: `0x${string}`) {
-	const node = await getNodeForStream(config, streamId)
+async function getStreamClient(streamId: `0x${string}`) {
+	const node = await getNodeForStream(streamId)
 	let url = node?.url
 	if (!clients.has(url)) {
 		const client = makeStreamRpcClient(url)
@@ -126,15 +125,12 @@ function stripHexPrefix(hexString: string): string {
 	return hexString
 }
 
-export async function getStream(
-	config: Config,
-	streamId: string,
-): Promise<StreamStateView | undefined> {
+export async function getStream(streamId: string): Promise<StreamStateView | undefined> {
 	let client: StreamRpcClient | undefined
 	let lastMiniblockNum: BigNumber | undefined
 
 	try {
-		const result = await getStreamClient(config, `0x${streamId}`)
+		const result = await getStreamClient(`0x${streamId}`)
 		client = result.client
 		lastMiniblockNum = result.lastMiniblockNum
 	} catch (e) {
@@ -171,7 +167,6 @@ export async function getStream(
 }
 
 export async function getMediaStreamContent(
-	config: Config,
 	fullStreamId: StreamIdHex,
 	secret: Uint8Array,
 	iv: Uint8Array,
@@ -190,7 +185,7 @@ export async function getMediaStreamContent(
 	*/
 
 	const streamId = stripHexPrefix(fullStreamId)
-	const sv = await getStream(config, streamId)
+	const sv = await getStream(streamId)
 
 	if (!sv) {
 		return { data: null, mimeType: null }

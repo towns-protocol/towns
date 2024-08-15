@@ -1,13 +1,14 @@
+import { Server as HTTPServer, IncomingMessage, ServerResponse } from 'http'
 import { Server as HTTPSServer } from 'https'
 
-import Fastify from 'fastify'
+import Fastify, { FastifyInstance } from 'fastify'
 import cors from '@fastify/cors'
 
 import { config } from './environment'
 import { getLogger } from './logger'
-import { handleHealthCheckRequest } from './handleHealthCheckRequest'
-import { handleImageRequest } from './handleImageRequest'
-import { handleMetadataRequest } from './handleMetadataRequest'
+import { checkHealth } from './routes/health'
+import { fetchSpaceImage } from './routes/spaceImage'
+import { fetchSpaceMetadata } from './routes/spaceMetadata'
 
 // Set the process title to 'stream-metadata' so it can be easily identified
 // or killed with `pkill stream-metadata`
@@ -26,6 +27,13 @@ logger.info({
 /*
  * Server setup
  */
+export type Server = FastifyInstance<
+	HTTPServer | HTTPSServer,
+	IncomingMessage,
+	ServerResponse,
+	typeof logger
+>
+
 const server = Fastify({
 	logger,
 })
@@ -38,29 +46,29 @@ async function registerPlugins() {
 	logger.info('CORS registered successfully')
 }
 
-function setupRoutes() {
+export function setupRoutes(srv: Server) {
 	/*
 	 * Routes
 	 */
-	server.get('/health', async (request, reply) => {
+	srv.get('/health', async (request, reply) => {
 		logger.info(`GET /health`)
-		return handleHealthCheckRequest(config, request, reply)
+		return checkHealth(request, reply)
 	})
 
-	server.get('/space/:spaceAddress', async (request, reply) => {
+	srv.get('/space/:spaceAddress', async (request, reply) => {
 		const { spaceAddress } = request.params as { spaceAddress?: string }
 		logger.info(`GET /space`, { spaceAddress })
 		const { protocol, serverAddress } = getServerInfo()
-		return handleMetadataRequest(request, reply, `${protocol}://${serverAddress}`)
+		return fetchSpaceMetadata(request, reply, `${protocol}://${serverAddress}`)
 	})
 
-	server.get('/space/:spaceAddress/image', async (request, reply) => {
+	srv.get('/space/:spaceAddress/image', async (request, reply) => {
 		const { spaceAddress } = request.params as { spaceAddress?: string }
 		logger.info(`GET /space/../image`, {
 			spaceAddress,
 		})
 
-		return handleImageRequest(config, request, reply)
+		return fetchSpaceImage(request, reply)
 	})
 
 	// Generic / route to return 404
@@ -96,7 +104,7 @@ process.on('SIGTERM', async () => {
 async function main() {
 	try {
 		await registerPlugins()
-		setupRoutes()
+		setupRoutes(server)
 		await server.listen({ port: config.port })
 		logger.info('Server started')
 	} catch (err) {

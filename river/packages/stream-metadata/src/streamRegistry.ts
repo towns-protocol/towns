@@ -1,9 +1,8 @@
 import { BigNumber } from 'ethers'
 
 import { StreamIdHex } from './types'
-import { getRiverRegistry } from './evmRpcClient'
 import { getLogger } from './logger'
-import { Config } from './environment'
+import { getRiverRegistry } from './evmRpcClient'
 
 type CachedStreamData = {
 	url: string
@@ -16,7 +15,6 @@ const logger = getLogger('streamRegistry')
 
 // TODO: remove this entire file
 export async function getNodeForStream(
-	config: Config,
 	streamId: StreamIdHex,
 ): Promise<{ url: string; lastMiniblockNum: BigNumber }> {
 	logger.info('getNodeForStream', streamId)
@@ -29,13 +27,7 @@ export async function getNodeForStream(
 		return { url: cachedData.url, lastMiniblockNum: cachedData.lastMiniblockNum }
 	}
 
-	const riverRegistry = getRiverRegistry(config)
-
-	logger.info('getNodeForStream', {
-		streamId,
-		riverRegistryAddress: riverRegistry.config.addresses.riverRegistry,
-	})
-
+	const riverRegistry = getRiverRegistry()
 	const streamData = await riverRegistry.streamRegistry.read.getStream(streamId)
 
 	if (streamData.nodes.length === 0) {

@@ -34,6 +34,4 @@ function makeConfig() {
 	}
 }
 
-export type Config = ReturnType<typeof makeConfig>
-
 export const config = makeConfig()
