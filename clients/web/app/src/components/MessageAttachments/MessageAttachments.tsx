@@ -261,19 +261,21 @@ const TownsContent = (
                         <Paragraph color="gray2">{spaceInfo?.shortDescription}</Paragraph>
                     )}
                 </Stack>
-                {spaceInfo?.longDescription && (
+                {!!spaceInfo?.longDescription && (
                     <Stack>
                         <Paragraph color="gray2" size="sm">
                             {spaceInfo?.longDescription}
                         </Paragraph>
                     </Stack>
                 )}
-                <Stack horizontal gap="sm" alignItems="center">
-                    <Paragraph size="sm" color="gray2">
-                        By
-                    </Paragraph>
-                    <OwnerPill userId={spaceInfo?.owner} />
-                </Stack>
+                {!!spaceInfo?.owner && (
+                    <Stack horizontal gap="sm" alignItems="center">
+                        <Paragraph size="sm" color="gray2">
+                            By
+                        </Paragraph>
+                        <OwnerPill userId={spaceInfo?.owner} />
+                    </Stack>
+                )}
                 {!isLoading && (
                     <Stack horizontal flexWrap="wrap" gap="sm">
                         {(memberInfo?.totalSupply ?? 0 > 1) && (
