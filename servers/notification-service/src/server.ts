@@ -31,9 +31,6 @@ const run = async () => {
         notificationServiceLogger.info('Server started in', { duration: Date.now() - start })
 
         gracefulShutdown(server, {
-            onShutdown: async () => {
-                await StreamsMonitorService.instance.stopMonitoringStreams()
-            },
             finally: () => {
                 notificationServiceLogger.info('Notification service is shutting down')
             },

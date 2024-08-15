@@ -3,7 +3,7 @@ import { StatusCodes } from 'http-status-codes'
 import { database } from './prisma'
 import { Metrics } from '@prisma/client/runtime/library'
 import { StreamsMonitorService } from './services/stream/streamsMonitorService'
-import { NonceStats } from './services/stream/syncedStreams'
+import { PingInfo } from './services/stream/syncedStreams'
 
 import asyncHandler from 'express-async-handler'
 
@@ -17,7 +17,10 @@ type PrismaStatus = {
 
 type SyncStatus = {
     status: 'UP' | 'DOWN'
-    metrics?: NonceStats
+    metrics?: {
+        pingSendFailures: number
+        pingInfo: PingInfo
+    }
     error?: unknown
 }
 
@@ -25,18 +28,6 @@ type Status = {
     Prisma: PrismaStatus
     Sync: SyncStatus
 }
-
-const createTimeoutPromise = <
-    T extends {
-        status: 'UP' | 'DOWN'
-        error: string
-    },
->(
-    ms: number,
-): Promise<T> =>
-    new Promise<T>((resolve) =>
-        setTimeout(() => resolve({ status: 'DOWN' as const, error: 'Timeout' } as T), ms),
-    )
 
 const healthCheckSync = async () => {
     try {
@@ -60,12 +51,9 @@ publicRoutes.get(
     '/health',
     asyncHandler(async (req, res) => {
         try {
-            const syncMetricsPromise = Promise.race([healthCheckSync(), createTimeoutPromise(5000)])
+            const syncMetricsPromise = await healthCheckSync()
 
-            const prismaMetricsPromise = Promise.race([
-                healthCheckPrisma(),
-                createTimeoutPromise(5000),
-            ])
+            const prismaMetricsPromise = await healthCheckPrisma()
 
             const [syncMetricsResult, databaseMetricsResult] = await Promise.all([
                 syncMetricsPromise,
@@ -79,7 +67,11 @@ publicRoutes.get(
 
             req.logger.info('Health check', status)
 
-            res.status(StatusCodes.OK).json(status)
+            if (status.Prisma.status === 'UP' && status.Sync.status === 'UP') {
+                res.status(StatusCodes.OK).json(status)
+            } else {
+                res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(status)
+            }
             return
         } catch (error) {
             req.logger.error('Error in health check', error)

@@ -45,62 +45,39 @@ export enum SyncState {
     Syncing = 'Syncing', // syncLoop and syncId
 }
 
-/**
- * See https://www.notion.so/herenottherelabs/RFC-Sync-hardening-e0552a4ed68a4d07b42ae34c69ee1bec?pvs=4#861081756f86423ea668c62b9eb76f4b
- Valid state transitions:
-	[*] --> NotSyncing
-	NotSyncing --> Starting
-	Starting --> Syncing
-	Starting --> Canceling: failed / stop sync
-	Starting --> Retrying: connection error
-	Syncing --> Canceling: connection aborted / stop sync
-	Syncing --> Retrying: connection error
-    Syncing --> Syncing: resync
-	Retrying --> Canceling: stop sync
-	Retrying --> Syncing: resume
-    Retrying --> Retrying: still retrying
-	Canceling --> NotSyncing
- */
-const stateConstraints: Record<SyncState, Set<SyncState>> = {
-    [SyncState.NotSyncing]: new Set([SyncState.Starting]),
-    [SyncState.Starting]: new Set([SyncState.Syncing, SyncState.Retrying, SyncState.Canceling]),
-    [SyncState.Syncing]: new Set([SyncState.Canceling, SyncState.Retrying]),
-    [SyncState.Retrying]: new Set([
-        SyncState.Starting,
-        SyncState.Canceling,
-        SyncState.Syncing,
-        SyncState.Retrying,
-    ]),
-    [SyncState.Canceling]: new Set([SyncState.NotSyncing]),
-}
-
 export interface NonceStats {
     sequence: number
     nonce: string
     pingAt: number
     receivedAt?: number
     duration?: number
-    callback?: (value: NonceStats | PromiseLike<NonceStats>) => void
 }
 
 interface Nonces {
     [nonce: string]: NonceStats
 }
 
-interface PingInfo {
+interface PingHistogram {
+    '0-10ms': number
+    '10-50ms': number
+    '50-100ms': number
+    '100-500ms': number
+    '500ms-1s': number
+    '1s-5s': number
+    '5s+': number
+}
+
+export interface PingInfo {
     nonces: Nonces // the nonce that the server should echo back
     currentSequence: number // the current sequence number
     pingInterval?: NodeJS.Timeout // for cancelling the next ping
+    histogram: PingHistogram
 }
-
-const SYNC_DOWN_RETRY_DELAY = 5000
 
 export class SyncedStreams {
     // Starting the client creates the syncLoop
-    // While a syncLoop exists, the client tried to keep the syncLoop connected, and if it reconnects, it
-    // will restart sync for all Streams
-    // on stop, the syncLoop will be cancelled if it is runnign and removed once it stops
-    private syncLoop?: Promise<number>
+    // If an unrecverable error occurs, the process is exited(1)
+    private syncLoop?: Promise<void>
 
     // syncId is used to add and remove streams from the sync subscription
     // The syncId is only set once a connection is established
@@ -110,16 +87,13 @@ export class SyncedStreams {
 
     // rpcClient is used to receive sync updates from the server
     private rpcClient: StreamRpcClient
-    // syncState is used to track the current sync state
-    private _syncState: SyncState = SyncState.NotSyncing
+
     // retry logic
-    private abortRetry: (() => void) | undefined
-    private currentRetryCount: number = 0
-    private forceStopSyncStreams: (() => void) | undefined
-    private interruptSync: ((err: unknown) => void) | undefined
     private addToSyncQueue: SyncCookie[] = []
     private addToSyncInProcess: string | undefined = undefined
     private addSyncTask: Promise<void> | undefined
+
+    private pingSendFailures: number = 0
 
     // Only responses related to the current syncId are processed.
     // Responses are queued and processed in order
@@ -127,6 +101,16 @@ export class SyncedStreams {
     private pingInfo: PingInfo = {
         currentSequence: 0,
         nonces: {},
+        histogram: {
+            '0-10ms': 0,
+            '10-50ms': 0,
+            '50-100ms': 0,
+            '100-500ms': 0,
+            '500ms-1s': 0,
+            '1s-5s': 0,
+            '5s+': 0,
+        },
+        pingInterval: undefined,
     }
 
     constructor(rpcClient: StreamRpcClient) {
@@ -146,45 +130,6 @@ export class SyncedStreams {
         logger.info('startSyncStreams called')
         await this.createSyncLoop()
         logger.info('startSyncStreams created sync loop')
-    }
-
-    public async stopSync() {
-        logger.info('sync STOP CALLED')
-        if (stateConstraints[this.syncState].has(SyncState.Canceling)) {
-            const syncId = this.syncId
-            const syncLoop = this.syncLoop
-            const syncState = this.syncState
-            this.setSyncState(SyncState.Canceling)
-            this.stopPing()
-            this.addToSyncQueue = []
-            try {
-                this.abortRetry?.()
-                // Give the server 5 seconds to respond to the cancelSync RPC before forceStopSyncStreams
-                const breakTimeout = syncId
-                    ? setTimeout(() => {
-                          logger.info(`calling forceStopSyncStreams ${syncId}`, {
-                              syncId,
-                          })
-                          this.forceStopSyncStreams?.()
-                      }, 5000)
-                    : undefined
-
-                logger.info('stopSync syncState', { syncState })
-                logger.info('stopSync syncLoop', { syncLoop })
-                logger.info('stopSync syncId', { syncId })
-                const result = await Promise.allSettled([
-                    syncId ? await this.rpcClient.cancelSync({ syncId }) : undefined,
-                    syncLoop,
-                ])
-                logger.info('syncLoop awaited', { syncId, result })
-                clearTimeout(breakTimeout)
-            } catch (error) {
-                logger.info('sync STOP ERROR', { error })
-            }
-            logger.info('sync STOP DONE', { syncId })
-        } else {
-            logger.info(`WARN: stopSync called from invalid state ${this.syncState}`)
-        }
     }
 
     private async addSyncTaskFunction(syncCookie: SyncCookie) {
@@ -225,7 +170,7 @@ export class SyncedStreams {
 
     // adds stream to the sync subscription
     public addStreamToSync(syncCookie: SyncCookie) {
-        if (this.syncState === SyncState.Syncing && this.syncId) {
+        if (this.syncId) {
             this.addToSyncQueue.push(syncCookie)
 
             if (!this.addToSyncInProcess) {
@@ -250,7 +195,7 @@ export class SyncedStreams {
 
     // remove stream from the sync subsbscription
     public async removeStreamFromSync(streamId: string): Promise<void> {
-        if (this.syncState === SyncState.Syncing && this.syncId) {
+        if (this.syncId) {
             try {
                 await this.rpcClient.removeStreamFromSync({
                     syncId: this.syncId,
@@ -275,204 +220,81 @@ export class SyncedStreams {
     private async createSyncLoop() {
         logger.info('createSyncLoop called')
         return new Promise<void>((resolve, reject) => {
-            if (stateConstraints[this.syncState].has(SyncState.Starting)) {
-                this.setSyncState(SyncState.Starting)
-                logger.info('starting sync loop')
-            } else {
-                logger.info(
-                    `runSyncLoop invalid state transition: ${this.syncState} -> ${SyncState.Starting}`,
-                )
-                reject(new Error('invalid state transition'))
-            }
+            logger.info('starting sync loop')
 
             if (this.syncLoop) {
                 reject(new Error('createSyncLoop called while a loop exists'))
             }
 
-            this.syncLoop = (async (): Promise<number> => {
-                let iteration = 0
-
+            this.syncLoop = (async (): Promise<void> => {
                 logger.info('sync loop created')
                 resolve()
 
                 try {
-                    while (
-                        this.syncState === SyncState.Starting ||
-                        this.syncState === SyncState.Syncing ||
-                        this.syncState === SyncState.Retrying
-                    ) {
-                        logger.info(`sync ITERATION start ${++iteration} ${this.syncState}`)
-                        if (this.syncState === SyncState.Retrying) {
-                            this.setSyncState(SyncState.Starting)
+                    // syncId needs to be reset before starting a new syncStreams
+                    // syncStreams() should return a new syncId
+                    this.syncId = undefined
+
+                    logger.info('calling syncStreams')
+                    // Start an empty sync, streams will be added later
+                    const streams = this.rpcClient.syncStreams({})
+
+                    logger.info('called syncStreams', { streams })
+                    const iterator = streams[Symbol.asyncIterator]()
+
+                    let result
+
+                    while (!(result = await iterator.next()).done) {
+                        const { value } = result
+                        logger.info('syncStreams received next', { value })
+
+                        if (value === undefined) {
+                            logger.warn('syncStreams received undefined')
+                            process.exit(1)
                         }
 
-                        try {
-                            // syncId needs to be reset before starting a new syncStreams
-                            // syncStreams() should return a new syncId
-                            this.syncId = undefined
-
-                            // Start an empty sync, streams will be added later
-                            const streams = this.rpcClient.syncStreams({})
-
-                            const iterator = streams[Symbol.asyncIterator]()
-
-                            while (
-                                this.syncState === SyncState.Syncing ||
-                                this.syncState === SyncState.Starting
-                            ) {
-                                const interruptSyncPromise = new Promise<{
-                                    value: undefined
-                                    done: true
-                                }>((resolve) => {
-                                    this.forceStopSyncStreams = () => {
-                                        logger.info('forceStopSyncStreams called')
-                                        resolve({ value: undefined, done: true })
-                                    }
-                                    this.interruptSync = (err) => {
-                                        logger.info('interruptSync called', { error: err })
-                                        reject(err)
-                                    }
-                                })
-
-                                logger.info('syncStreams waiting for next')
-                                const { value, done } = await Promise.race([
-                                    iterator.next(),
-                                    interruptSyncPromise,
-                                ])
-                                logger.info('syncStreams received next', { value, done })
-
-                                if (value === undefined) {
-                                    if (done) {
-                                        logger.info('exiting syncStreams', done, value)
-                                        // exit the syncLoop, it's done
-                                        this.forceStopSyncStreams = undefined
-                                        this.interruptSync = undefined
-                                        return iteration
-                                    }
-                                }
-
-                                if (!value.syncId || !value.syncOp) {
-                                    logger.info('missing syncId or syncOp', {
-                                        value,
-                                    })
-                                    continue
-                                }
-                                switch (value.syncOp) {
-                                    case SyncOp.SYNC_NEW:
-                                        await this.syncStarted(value.syncId)
-                                        break
-                                    case SyncOp.SYNC_CLOSE:
-                                        this.syncClose()
-                                        break
-                                    case SyncOp.SYNC_UPDATE:
-                                        await this.syncUpdate(value)
-                                        break
-                                    case SyncOp.SYNC_PONG:
-                                        this.syncPong(value)
-                                        break
-                                    case SyncOp.SYNC_DOWN:
-                                        await this.syncDown(value)
-                                        break
-                                    default:
-                                        logger.warn(
-                                            `unknown syncOp { syncId: ${this.syncId}, syncOp: ${value.syncOp} }`,
-                                        )
-                                        break
-                                }
-                            }
-                        } catch (error) {
-                            logger.error('syncLoop error', { error })
-                            await this.attemptRetry()
+                        if (!value.syncId || !value.syncOp) {
+                            logger.info('missing syncId or syncOp', {
+                                value,
+                            })
+                            continue
+                        }
+                        switch (value.syncOp) {
+                            case SyncOp.SYNC_NEW:
+                                await this.syncStarted(value.syncId)
+                                break
+                            case SyncOp.SYNC_CLOSE:
+                                this.syncClose(value)
+                                break
+                            case SyncOp.SYNC_UPDATE:
+                                await this.syncUpdate(value)
+                                break
+                            case SyncOp.SYNC_PONG:
+                                this.syncPong(value)
+                                break
+                            case SyncOp.SYNC_DOWN:
+                                await this.syncDown(value)
+                                break
+                            default:
+                                logger.warn(
+                                    `unknown syncOp { syncId: ${this.syncId}, syncOp: ${value.syncOp} }`,
+                                )
+                                break
                         }
                     }
-                } finally {
-                    logger.info(`sync loop stopping ITERATION ${iteration}`)
-                    this.stopPing()
-                    if (stateConstraints[this.syncState].has(SyncState.NotSyncing)) {
-                        this.setSyncState(SyncState.NotSyncing)
-                        this.abortRetry = undefined
-                        this.syncId = undefined
-                    } else {
-                        logger.info(
-                            `onStopped: invalid state transition ${this.syncState} -> ${SyncState.NotSyncing}`,
-                        )
-                    }
-                    logger.info(`sync loop stopped ITERATION ${iteration}`)
+                } catch (error) {
+                    logger.error('syncLoop error', { error })
+                    // This is running in AWA ECS, so it will get restarted
+                    process.exit(1)
                 }
-                return iteration
             })()
         })
     }
 
-    public get syncState(): SyncState {
-        return this._syncState
-    }
-
-    private setSyncState(newState: SyncState) {
-        if (this._syncState === newState) {
-            throw new Error('setSyncState called for the existing state')
-        }
-        if (!stateConstraints[this._syncState].has(newState)) {
-            throw this.logInvalidStateAndReturnError(this._syncState, newState)
-        }
-        logger.info(`syncState ${this._syncState} -> ${newState}`)
-        this._syncState = newState
-    }
-
-    // The sync loop will keep retrying until it is shutdown, it has no max attempts
-    private async attemptRetry(): Promise<void> {
-        logger.info(`attemptRetry`, this.syncState)
-        this.stopPing()
-        if (stateConstraints[this.syncState].has(SyncState.Retrying)) {
-            if (this.syncState !== SyncState.Retrying) {
-                this.setSyncState(SyncState.Retrying)
-                this.addToSyncQueue = []
-                this.addToSyncInProcess = undefined
-                this.addSyncTask = undefined
-                this.syncId = undefined
-            }
-
-            // currentRetryCount will increment until MAX_RETRY_COUNT. Then it will stay
-            // fixed at this value
-            // 6 retries = 2^6 = 64 seconds (~1 min)
-            const MAX_RETRY_DELAY_FACTOR = 6
-            const nextRetryCount =
-                this.currentRetryCount >= MAX_RETRY_DELAY_FACTOR
-                    ? MAX_RETRY_DELAY_FACTOR
-                    : this.currentRetryCount + 1
-            const retryDelay = 2 ** nextRetryCount * 1000 // 2^n seconds
-            logger.info(`sync error, retrying in ${retryDelay} ms`, {
-                currentRetryCount: this.currentRetryCount,
-                nextRetryCount,
-                MAX_RETRY_DELAY_FACTOR,
-            })
-            this.currentRetryCount = nextRetryCount
-
-            await new Promise<void>((resolve) => {
-                const timeout = setTimeout(() => {
-                    this.abortRetry = undefined
-                    resolve()
-                }, retryDelay)
-                this.abortRetry = () => {
-                    clearTimeout(timeout)
-                    this.abortRetry = undefined
-                    resolve()
-                }
-            })
-        } else {
-            logger.error('attemptRetry: invalid state transition', {
-                syncState: this.syncState,
-            })
-            // throw new Error('attemptRetry from invalid state')
-        }
-    }
-
     private async syncStarted(syncId: string) {
-        if (!this.syncId && stateConstraints[this.syncState].has(SyncState.Syncing)) {
-            this.setSyncState(SyncState.Syncing)
+        if (!this.syncId) {
             this.syncId = syncId
-            // On sucessful sync, reset retryCount
-            this.currentRetryCount = 0
+
             this.sendKeepAlivePings() // ping the server periodically to keep the connection alive
             logger.info(`syncStarted syncId: ${this.syncId}`, {
                 syncId: this.syncId,
@@ -497,28 +319,20 @@ export class SyncedStreams {
                 streamCount: dbSyncedStreams.length,
             })
         } else {
-            logger.info(
-                `syncStarted: invalid state transition ${this.syncState} -> ${SyncState.Syncing}`,
-            )
-            //throw new Error('syncStarted: invalid state transition')
+            logger.info(`syncStarted: invalid state transition `)
+            process.exit(1)
         }
     }
 
-    private syncClose() {
-        this.stopPing()
-        if (this.syncState === SyncState.Canceling) {
-            logger.info(`server acknowledged our close attempt ${this.syncId}`, {
+    private async syncClose(res: SyncStreamsResponse) {
+        logger.warn('syncClose', { res })
+        if (this.syncId !== res.syncId) {
+            logger.error('syncDown syncId mismatch', {
                 syncId: this.syncId,
+                resSyncId: res.syncId,
             })
-        } else {
-            logger.info(
-                `server cancelled unepexectedly, go through the retry loop ${this.syncId}`,
-                {
-                    syncId: this.syncId,
-                },
-            )
-            this.setSyncState(SyncState.Retrying)
         }
+        process.exit(1)
     }
 
     private async syncDown(res: SyncStreamsResponse) {
@@ -528,31 +342,26 @@ export class SyncedStreams {
                 syncId: this.syncId,
                 resSyncId: res.syncId,
             })
-            return
+            process.exit(1)
         }
-        // The server is telling us to restart the sync with the streamId, queue it up
-        setTimeout(async () => {
-            const streamId = streamIdAsString(res.streamId)
+    }
 
-            const start = Date.now()
-
-            const syncedStream = await database.syncedStream.findUnique({
-                where: {
-                    StreamId: streamId,
-                },
-            })
-            logger.info('syncDown fetched syncCooke to restart sync', {
-                streamId,
-                syncedStream: syncedStream,
-                duration: Date.now() - start,
-            })
-
-            if (syncedStream) {
-                const syncCookie = SyncCookie.fromJsonString(syncedStream.SyncCookie)
-                this.addStreamToSync(syncCookie)
-                logger.info('syncDown addStreamToSync completed with len of syncCookies')
-            }
-        }, SYNC_DOWN_RETRY_DELAY)
+    private updatePingHistogram(duration: number) {
+        if (duration <= 10) {
+            this.pingInfo.histogram['0-10ms']++
+        } else if (duration <= 50) {
+            this.pingInfo.histogram['10-50ms']++
+        } else if (duration <= 100) {
+            this.pingInfo.histogram['50-100ms']++
+        } else if (duration <= 500) {
+            this.pingInfo.histogram['100-500ms']++
+        } else if (duration <= 1000) {
+            this.pingInfo.histogram['500ms-1s']++
+        } else if (duration <= 5000) {
+            this.pingInfo.histogram['1s-5s']++
+        } else {
+            this.pingInfo.histogram['5s+']++
+        }
     }
 
     private syncPong(value: SyncStreamsResponse) {
@@ -560,104 +369,97 @@ export class SyncedStreams {
         if (pingStats) {
             pingStats.receivedAt = performance.now()
             pingStats.duration = pingStats.receivedAt - pingStats.pingAt
-            if (pingStats.callback) {
-                pingStats.callback(pingStats)
-            }
+
+            this.updatePingHistogram(pingStats.duration)
+            delete this.pingInfo.nonces[value.pongNonce]
         } else {
-            logger.error(`pong nonce not found ${value.pongNonce}`)
-            this.printNonces()
+            logger.error(`pong nonce not found`, { pingInfo: this.pingInfo, value })
         }
     }
 
     private async syncUpdate(res: SyncStreamsResponse): Promise<void> {
         const start = Date.now()
         // Until we've completed canceling, accept responses
-        if (this.syncState === SyncState.Syncing || this.syncState === SyncState.Canceling) {
-            if (this.syncId != res.syncId) {
-                throw new Error(
-                    `syncId mismatch; has:'${this.syncId}', got:${res.syncId}'. Throw away update.`,
-                )
-            }
-            const syncStream = res.stream
-            if (syncStream !== undefined) {
-                logger.info('check addToSyncInProcess ', {
-                    addToSyncInProcess: this.addToSyncInProcess,
-                    nextSyncCookie: syncStream.nextSyncCookie,
-                    streamId: streamIdAsString(syncStream.nextSyncCookie?.streamId ?? ''),
-                })
-                // Once we have data acknowling the pending addStreamToSync, we can start the next one
-                if (
-                    this.addToSyncInProcess &&
-                    syncStream.nextSyncCookie &&
-                    this.addToSyncInProcess === streamIdAsString(syncStream.nextSyncCookie.streamId)
-                ) {
-                    logger.info('addToSyncInProcess acknowledged', {
-                        streamId: this.addToSyncInProcess,
-                    })
-                    if (this.addToSyncQueue.length > 0) {
-                        const nextSyncCookie = this.addToSyncQueue.shift()
-                        if (nextSyncCookie) {
-                            this.addToSyncInProcess = streamIdAsString(nextSyncCookie.streamId)
-                            this.startAddToSyncRequest(nextSyncCookie)
-                        }
-                    }
-                }
-                const streamId = syncStream.nextSyncCookie?.streamId
-                    ? bin_toHexString(syncStream.nextSyncCookie.streamId)
-                    : ''
-                try {
-                    logger.info('sync onUpdate', { streamId })
-                    if (syncStream.syncReset) {
-                        logger.warn('syncReset', { streamId })
-                    }
-
-                    const streamAndCookie = await unpackStreamAndCookie(syncStream)
-
-                    if (streamAndCookie.events.length > 0) {
-                        if (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)) {
-                            await this.handleDmOrGDMStreamUpdate(streamAndCookie, streamId)
-                        } else if (isChannelStreamId(streamId)) {
-                            await this.handleChannelStreamUpdate(streamAndCookie, streamId)
-                        }
-                    }
-
-                    const kind = isDMChannelStreamId(streamId)
-                        ? StreamKind.DM
-                        : isChannelStreamId(streamId)
-                        ? StreamKind.Channel
-                        : isGDMChannelStreamId(streamId)
-                        ? StreamKind.GDM
-                        : undefined
-
-                    if (kind === undefined) {
-                        logger.error('stream kind is undefined', { streamId })
-                    } else {
-                        await database.syncedStream.upsert({
-                            where: {
-                                StreamId: streamId,
-                            },
-                            update: {
-                                SyncCookie: streamAndCookie.nextSyncCookie.toJsonString(),
-                            },
-                            create: {
-                                Kind: kind,
-                                StreamId: streamId,
-                                SyncCookie: streamAndCookie.nextSyncCookie.toJsonString(),
-                            },
-                        })
-                    }
-                } catch (error) {
-                    logger.error('onUpdate error:', { error, syncStream, streamId })
-                }
-            } else {
-                logger.info('sync RESULTS no stream', { syncStream })
-            }
-        } else {
-            logger.info(
-                `onUpdate: invalid state ${this.syncState}, should have been ${SyncState.Syncing}`,
+        if (this.syncId != res.syncId) {
+            throw new Error(
+                `syncId mismatch; has:'${this.syncId}', got:${res.syncId}'. Throw away update.`,
             )
         }
-        logger.info('onUpdate duration', { duration: Date.now() - start })
+        const syncStream = res.stream
+        if (syncStream !== undefined) {
+            logger.info('check addToSyncInProcess ', {
+                addToSyncInProcess: this.addToSyncInProcess,
+                nextSyncCookie: syncStream.nextSyncCookie,
+                streamId: streamIdAsString(syncStream.nextSyncCookie?.streamId ?? ''),
+            })
+            // Once we have data acknowling the pending addStreamToSync, we can start the next one
+            if (
+                this.addToSyncInProcess &&
+                syncStream.nextSyncCookie &&
+                this.addToSyncInProcess === streamIdAsString(syncStream.nextSyncCookie.streamId)
+            ) {
+                logger.info('addToSyncInProcess acknowledged', {
+                    streamId: this.addToSyncInProcess,
+                })
+                if (this.addToSyncQueue.length > 0) {
+                    const nextSyncCookie = this.addToSyncQueue.shift()
+                    if (nextSyncCookie) {
+                        this.addToSyncInProcess = streamIdAsString(nextSyncCookie.streamId)
+                        this.startAddToSyncRequest(nextSyncCookie)
+                    }
+                }
+            }
+            const streamId = syncStream.nextSyncCookie?.streamId
+                ? bin_toHexString(syncStream.nextSyncCookie.streamId)
+                : ''
+            try {
+                logger.info('sync onUpdate', { streamId })
+                if (syncStream.syncReset) {
+                    logger.warn('syncReset', { streamId })
+                }
+
+                const streamAndCookie = await unpackStreamAndCookie(syncStream)
+
+                if (streamAndCookie.events.length > 0) {
+                    if (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)) {
+                        await this.handleDmOrGDMStreamUpdate(streamAndCookie, streamId)
+                    } else if (isChannelStreamId(streamId)) {
+                        await this.handleChannelStreamUpdate(streamAndCookie, streamId)
+                    }
+                }
+
+                const kind = isDMChannelStreamId(streamId)
+                    ? StreamKind.DM
+                    : isChannelStreamId(streamId)
+                    ? StreamKind.Channel
+                    : isGDMChannelStreamId(streamId)
+                    ? StreamKind.GDM
+                    : undefined
+
+                if (kind === undefined) {
+                    logger.error('stream kind is undefined', { streamId })
+                } else {
+                    await database.syncedStream.upsert({
+                        where: {
+                            StreamId: streamId,
+                        },
+                        update: {
+                            SyncCookie: streamAndCookie.nextSyncCookie.toJsonString(),
+                        },
+                        create: {
+                            Kind: kind,
+                            StreamId: streamId,
+                            SyncCookie: streamAndCookie.nextSyncCookie.toJsonString(),
+                        },
+                    })
+                }
+            } catch (error) {
+                logger.error('onUpdate error:', { error, syncStream, streamId })
+            }
+        } else {
+            logger.info('sync RESULTS no stream', { syncStream })
+        }
+        logger.info('syncUpdate completed', { duration: Date.now() - start })
     }
 
     private async handleDmOrGDMStreamUpdate(
@@ -998,88 +800,52 @@ export class SyncedStreams {
         })
     }
 
-    public async healthCheck(): Promise<NonceStats> {
-        return new Promise<NonceStats>((resolve, reject) => {
-            if (this.syncState !== SyncState.Syncing) {
-                reject(new Error('not syncing'))
-                return
-            }
-            if (!this.syncId) {
-                reject(new Error('no syncId'))
-                return
-            }
-            try {
-                const nonce = generateRandomUUID()
-                this.pingInfo.nonces[nonce] = {
-                    sequence: this.pingInfo.currentSequence++,
-                    nonce,
-                    pingAt: performance.now(),
-                    callback: resolve,
-                }
-                this.rpcClient
-                    .pingSync({
-                        syncId: this.syncId,
-                        nonce,
-                    })
-                    .catch((error) => {
-                        console.error('pingSync error', error)
-                        reject(error)
-                    })
-            } catch (error) {
-                reject(error)
-            }
-        })
+    public async healthCheck() {
+        notificationServiceLogger.info(`logging heahtlCheck`)
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { pingInterval, ...pingInfoWithoutInterval } = this.pingInfo
+
+        return { pingSendFailures: this.pingSendFailures, pingInfo: pingInfoWithoutInterval }
     }
 
     private sendKeepAlivePings() {
         // periodically ping the server to keep the connection alive
         this.pingInfo.pingInterval = setTimeout(() => {
             const ping = async () => {
-                if (this.syncState === SyncState.Syncing && this.syncId) {
+                if (this.syncId) {
                     const n = generateRandomUUID()
-                    this.pingInfo.nonces[n] = {
-                        sequence: this.pingInfo.currentSequence++,
-                        nonce: n,
-                        pingAt: performance.now(),
+                    try {
+                        this.pingInfo.nonces[n] = {
+                            sequence: this.pingInfo.currentSequence++,
+                            nonce: n,
+                            pingAt: performance.now(),
+                        }
+                        //
+                        if (Object.keys(this.pingInfo.nonces).length > 5) {
+                            logger.error('too many outstanding pings', { pingInfo: this.pingInfo })
+                            process.exit(1)
+                        }
+                        await this.rpcClient.pingSync({
+                            syncId: this.syncId,
+                            nonce: n,
+                        })
+                        this.pingSendFailures = 0
+                    } catch (error) {
+                        this.pingSendFailures++
+                        logger.error('sendKeepAlivePings error', {
+                            error,
+                            pingSendFailures: this.pingSendFailures,
+                        })
+                        if (this.pingSendFailures > 5) {
+                            logger.error('too many ping failures')
+                            process.exit(1)
+                        }
                     }
-                    await this.rpcClient.pingSync({
-                        syncId: this.syncId,
-                        nonce: n,
-                    })
-                }
-                if (this.syncState === SyncState.Syncing) {
-                    // schedule the next ping
                     this.sendKeepAlivePings()
                 }
             }
-            ping().catch((error) => {
-                logger.error('sendKeepAlivePings error', { error })
-                this.interruptSync?.(error)
-            })
-        }, 5 * 1000 * 60) // every 5 minutes
-    }
-
-    private stopPing() {
-        clearTimeout(this.pingInfo.pingInterval)
-        this.pingInfo.pingInterval = undefined
-        // print out the nonce stats
-        this.printNonces()
-        // reset the nonce stats
-        this.pingInfo.nonces = {}
-        this.pingInfo.currentSequence = 0
-    }
-
-    private printNonces() {
-        const sortedNonces = Object.values(this.pingInfo.nonces).sort(
-            (a, b) => a.sequence - b.sequence,
-        )
-        for (const n of sortedNonces) {
-            logger.info(
-                `sequence=${n.sequence}, nonce=${n.nonce}, pingAt=${n.pingAt}, receivedAt=${
-                    n.receivedAt ?? 'none'
-                }, duration=${n.duration ?? 'none'}`,
-            )
-        }
+            void ping()
+        }, 10 * 1000) // every 10 seconds
     }
 
     private logInvalidStateAndReturnError(currentState: SyncState, newState: SyncState): Error {

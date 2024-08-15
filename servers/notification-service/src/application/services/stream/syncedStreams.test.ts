@@ -1,7 +1,7 @@
 import './../../utils/envs.mock'
 
 import { SyncCookie, SyncOp } from '@river-build/proto'
-import { SyncState, SyncedStreams } from './syncedStreams'
+import { SyncedStreams } from './syncedStreams'
 
 import { StreamRpcClient } from './streamRpcClient'
 import { SyncedStream } from '@prisma/client'
@@ -37,13 +37,10 @@ function generateFakeSyncCookie(): SyncCookie {
     })
 }
 
-function newPromiseToWaitForSyncedStreamsState(
-    syncedStreams: SyncedStreams,
-    expectedState: SyncState,
-): Promise<void> {
+function newPromiseToWaitForSyncedStreamsState(syncedStreams: SyncedStreams): Promise<void> {
     return new Promise((resolve) => {
         const subscription = setInterval(() => {
-            if (syncedStreams.syncState === expectedState) {
+            if (syncedStreams.syncId) {
                 clearInterval(subscription)
                 resolve()
             }
@@ -111,10 +108,7 @@ describe('SyncedStreams', () => {
         ]
         mockRpcStreamData(mockStreamData, mockRpcClient.syncStreams as jest.Mock)
         // simulate an asynchronous operation that changes syncState to Syncing
-        const syncingPromise = newPromiseToWaitForSyncedStreamsState(
-            syncedStreams,
-            SyncState.Syncing,
-        )
+        const syncingPromise = newPromiseToWaitForSyncedStreamsState(syncedStreams)
 
         // start syncing streams
         syncedStreams.startSyncStreams()
@@ -122,7 +116,6 @@ describe('SyncedStreams', () => {
         // await the promise to ensure it resolves successfully
         await expect(syncingPromise).resolves.toBeUndefined()
         expect(syncedStreams.syncId).toEqual(syncId)
-        await expect(syncedStreams.stopSync()).resolves.toBeUndefined()
     })
 
     it('should add stream to sync', async () => {
@@ -146,10 +139,7 @@ describe('SyncedStreams', () => {
         ]
         mockRpcStreamData(mockStreamData, mockRpcClient.syncStreams as jest.Mock)
         // Simulate an asynchronous operation that changes syncState to Syncing
-        const syncingPromise = newPromiseToWaitForSyncedStreamsState(
-            syncedStreams,
-            SyncState.Syncing,
-        )
+        const syncingPromise = newPromiseToWaitForSyncedStreamsState(syncedStreams)
         // start syncing streams
         syncedStreams.startSyncStreams()
 
@@ -163,42 +153,12 @@ describe('SyncedStreams', () => {
             syncId,
             syncPos: syncCookie,
         })
-        await expect(syncedStreams.stopSync()).resolves.toBeUndefined()
     })
 
     it('should skip addStreamToSync if sync loop is NOT STARTED', () => {
         const syncCookie = generateFakeSyncCookie()
         syncedStreams.addStreamToSync(syncCookie)
         expect(mockRpcClient.addStreamToSync).not.toHaveBeenCalled()
-    })
-
-    it('should skip addStreamToSync if the sync loop is retrying', async () => {
-        // simualate db streams
-        const dbStreams: SyncedStream[] = [
-            {
-                StreamId: 'streamId',
-                UserIds: [],
-                Kind: 'Channel',
-                SyncCookie: '',
-            },
-        ]
-        mockDbSyncedStreamFindMany(dbStreams)
-        // simulate an asynchronous operation that changes syncState to Retrying
-        const retryingPromise = newPromiseToWaitForSyncedStreamsState(
-            syncedStreams,
-            SyncState.Retrying,
-        )
-        // start syncing streams
-        syncedStreams.startSyncStreams()
-
-        // await the promise to ensure it resolves successfully
-        await expect(retryingPromise).resolves.toBeUndefined()
-
-        const syncCookie = generateFakeSyncCookie()
-        await syncedStreams.addStreamToSync(syncCookie)
-
-        expect(mockRpcClient.addStreamToSync).not.toHaveBeenCalled()
-        await expect(syncedStreams.stopSync()).resolves.toBeUndefined()
     })
 
     it('should remove stream to sync', async () => {
@@ -223,10 +183,7 @@ describe('SyncedStreams', () => {
         ]
         mockRpcStreamData(mockStreamData, mockRpcClient.syncStreams as jest.Mock)
         // Simulate an asynchronous operation that changes syncState to Syncing
-        const syncingPromise = newPromiseToWaitForSyncedStreamsState(
-            syncedStreams,
-            SyncState.Syncing,
-        )
+        const syncingPromise = newPromiseToWaitForSyncedStreamsState(syncedStreams)
         // start syncing streams
         syncedStreams.startSyncStreams()
 
@@ -243,43 +200,11 @@ describe('SyncedStreams', () => {
             syncId,
             streamId: streamIdToBytes(streamId),
         })
-
-        await expect(syncedStreams.stopSync()).resolves.toBeUndefined()
     })
 
     it('should skip removeStreamFromSync if sync loop is NOT STARTED', () => {
         const streamId = '20c2584fe85b9a83c2b25dbeb338cf07e53ad47714521ed7215dca3740f769c4'
         syncedStreams.removeStreamFromSync(streamId)
         expect(mockRpcClient.removeStreamFromSync).not.toHaveBeenCalled()
-    })
-
-    it('should skip removeStreamFromSync if the sync loop is retrying', async () => {
-        // simualate db streams
-        const streamId = '20c2584fe85b9a83c2b25dbeb338cf07e53ad47714521ed7215dca3740f769c4'
-        const dbStreams: SyncedStream[] = [
-            {
-                StreamId: streamId,
-                UserIds: [],
-                Kind: 'Channel',
-                SyncCookie: '',
-            },
-        ]
-        mockDbSyncedStreamFindMany(dbStreams)
-        // simulate an asynchronous operation that changes syncState to Retrying
-        const retryingPromise = newPromiseToWaitForSyncedStreamsState(
-            syncedStreams,
-            SyncState.Retrying,
-        )
-        // start syncing streams
-        syncedStreams.startSyncStreams()
-
-        // await the promise to ensure it resolves successfully
-        await expect(retryingPromise).resolves.toBeUndefined()
-
-        // remove the stream
-        await syncedStreams.removeStreamFromSync(streamId)
-
-        expect(mockRpcClient.removeStreamFromSync).not.toHaveBeenCalled()
-        await expect(syncedStreams.stopSync()).resolves.toBeUndefined()
     })
 })

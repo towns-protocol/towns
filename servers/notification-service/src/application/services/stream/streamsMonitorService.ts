@@ -1,6 +1,6 @@
 import { Err, MemberPayload_Membership, MembershipOp, MiniblockHeader } from '@river-build/proto'
 import { StreamRpcClient, errorContains, makeStreamRpcClient } from './streamRpcClient'
-import { NonceStats, SyncedStreams, unpackStream } from './syncedStreams'
+import { PingInfo, SyncedStreams, unpackStream } from './syncedStreams'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './id'
 import { streamIdFromBytes, streamIdToBytes, userIdFromAddress } from './utils'
 
@@ -22,8 +22,6 @@ type StreamsMetadata = {
 export class StreamsMonitorService {
     private rpcClient: StreamRpcClient = makeStreamRpcClient()
     private streams: SyncedStreams = new SyncedStreams(this.rpcClient)
-    private intervalId: NodeJS.Timeout | null = null
-    private releaseServiceAwait: (() => void) | undefined
     private lastestStreamIdsProcessed: Set<string> = new Set()
 
     private static _instance: StreamsMonitorService | undefined = undefined
@@ -36,30 +34,21 @@ export class StreamsMonitorService {
 
     public async healthCheck(): Promise<{
         status: 'UP' | 'DOWN'
-        metrics?: NonceStats
+        metrics?: {
+            pingSendFailures: number
+            pingInfo: PingInfo
+        }
         error?: unknown
     }> {
         try {
             const pingStat = await this.streams.healthCheck()
-            if (pingStat.duration === undefined) {
-                return { status: 'DOWN', error: 'ping duration is undefined' }
-            } else if (pingStat.duration > 1000) {
-                return { status: 'DOWN', error: 'ping duration is more than 1s' }
-            } else {
-                return { status: 'UP', metrics: pingStat }
-            }
+            return { status: 'UP', metrics: pingStat }
         } catch (error) {
             logger.error('Failed healthCheck', error)
             let errorString: string = 'unset'
 
             if (error instanceof Error) {
                 errorString = error.message
-            } else {
-                try {
-                    errorString = JSON.stringify(error)
-                } catch (jsonError) {
-                    errorString = 'Unknown error occurred'
-                }
             }
 
             return { status: 'DOWN', error: errorString }
@@ -368,22 +357,12 @@ export class StreamsMonitorService {
             const start = Date.now()
             logger.info('notification sync is enabled')
             await this.refreshChannelStreams()
-            const tenMinutes = 10 * 60 * 1000
-            this.intervalId = setInterval(async () => {
-                await this.refreshChannelStreams()
-            }, tenMinutes)
 
             logger.info('starting notification startSyncStreams')
             await this.streams.startSyncStreams()
             logger.info('notification sync started', { duration: Date.now() - start })
         } else {
             logger.info('notification sync is disabled')
-            return new Promise<void>((resolve) => {
-                this.releaseServiceAwait = () => {
-                    this.releaseServiceAwait = undefined
-                    resolve()
-                }
-            })
         }
     }
 
@@ -577,17 +556,6 @@ export class StreamsMonitorService {
                     })
                 }
             })
-        }
-    }
-
-    public async stopMonitoringStreams() {
-        if (env.NOTIFICATION_SYNC_ENABLED) {
-            if (this.intervalId) {
-                clearInterval(this.intervalId!)
-            }
-            return this.streams.stopSync()
-        } else {
-            this.releaseServiceAwait?.()
         }
     }
 }

@@ -5,7 +5,6 @@ import morganjson from 'morgan-json'
 import 'express-async-errors'
 
 import { cors } from './middleware/cors'
-import { validateAuthToken } from './middleware/auth'
 import { handleGlobalError, handleNotFound } from './middleware/errors'
 import { publicRoutes } from './publicRoutes'
 import { routes } from './routes'
@@ -48,7 +47,6 @@ export async function initializeApp() {
     // public routes
     app.use(publicRoutes)
 
-    app.use(validateAuthToken)
     app.use(routes)
 
     app.use('/*', handleNotFound)
