@@ -71,19 +71,22 @@ export function ServiceWorkerMetadataSyncer() {
         }
     }, [cryptoStoreDatabaseName, currentUser, myUserId])
 
-    return (
-        <>
-            {/* wait for the notification store to be opened before processing metadata for notification */}
-            {store ? <UsersMetadata store={store} /> : null}
-            {store ? <DmMetadata store={store} /> : null}
-            {store
-                ? Object.keys(spaceHierarchies).map((spaceId) => (
-                      <SpaceContextProvider key={spaceId} spaceId={spaceId}>
-                          <SpacesAndChannelsMetadata spaceId={spaceId} store={store} />
-                      </SpaceContextProvider>
-                  ))
-                : null}
-        </>
+    return useMemo(
+        () => (
+            <>
+                {/* wait for the notification store to be opened before processing metadata for notification */}
+                {store ? <UsersMetadata store={store} /> : null}
+                {store ? <DmMetadata store={store} /> : null}
+                {store
+                    ? Object.keys(spaceHierarchies).map((spaceId) => (
+                          <SpaceContextProvider key={spaceId} spaceId={spaceId}>
+                              <SpacesAndChannelsMetadata spaceId={spaceId} store={store} />
+                          </SpaceContextProvider>
+                      ))
+                    : null}
+            </>
+        ),
+        [store, spaceHierarchies],
     )
 }
 
