@@ -13,6 +13,7 @@ const Editor = React.forwardRef<
         handleSendOnEnter?: (e: React.KeyboardEvent<HTMLDivElement>) => void
         isTouch: boolean
         isEditorEmpty: boolean
+        isEditing: boolean
     }
 >(
     (
@@ -20,6 +21,7 @@ const Editor = React.forwardRef<
             className,
             disabled,
             isEditorEmpty,
+            isEditing,
             isTouch,
             readOnly,
             handleSendOnEnter,
@@ -48,6 +50,7 @@ const Editor = React.forwardRef<
                 disableDefaultStyles
                 className={clsx(inputClassName, {
                     [styles.contentEditablePWA]: isTouch,
+                    [styles.editMode]: isEditing,
                 })}
                 readOnly={disabled || readOnly}
                 aria-disabled={disabled}

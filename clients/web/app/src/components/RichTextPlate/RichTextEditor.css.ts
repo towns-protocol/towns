@@ -9,6 +9,8 @@ export const richText = style([
     }),
 ])
 
+export const editMode = style({})
+
 export const contentEditable = style([
     scrollContainerClass,
     atoms({
@@ -26,8 +28,6 @@ export const contentEditablePWA = style([
         minHeight: `${baseline * 7}px`,
     },
 ])
-
-export const root = style({})
 
 export const paragraph = style({
     overflowWrap: 'anywhere',
@@ -185,7 +185,7 @@ export const code = style([
         background: 'level2',
         paddingX: 'xxs',
         rounded: 'xs',
-        border: 'level3',
+        border: 'level4',
     }),
     {
         fontFamily: 'monospace',
@@ -236,6 +236,10 @@ globalStyle(`${richText} ul ul, ${richText} ul ol`, {
 
 globalStyle(`${richText} ${codeBlock} ${code}`, {
     border: 'none',
+})
+
+globalStyle(`${richText}${editMode} ${code}`, {
+    background: vars.color.background.level2,
 })
 
 globalStyle(`${richText} ${listitem} > *`, {

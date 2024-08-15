@@ -1,4 +1,3 @@
-// #TODO: Separate the editor and business logic
 import React, { startTransition, useCallback, useMemo, useRef, useState } from 'react'
 import {
     Channel,
@@ -289,6 +288,7 @@ export const RichTextEditor = ({
                         tabIndex={tabIndex}
                         disabled={isSendingMessage}
                         isTouch={isTouch}
+                        isEditing={isEditing}
                         isEditorEmpty={isEditorEmpty}
                         handleSendOnEnter={handleSendOnEnter}
                         onFocus={onFocus}
