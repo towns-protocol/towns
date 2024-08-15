@@ -1,4 +1,4 @@
-import { AnimatePresence } from 'framer-motion'
+import { AnimatePresence, MotionProps } from 'framer-motion'
 import React, { useEffect, useMemo } from 'react'
 import { matchPath, useLocation } from 'react-router'
 import { TransitionLogo } from '@components/Logo/Logo'
@@ -30,25 +30,26 @@ export const AppProgressOverlay = (props: { debug?: boolean }) => {
     }, [])
 
     useEffect(() => {
-        console.log('[app progress] overlay:', appProgressOverlay)
-    }, [appProgressOverlay])
-
-    useEffect(() => {
-        console.log('[app progress] overlay key:', content.key)
+        console.log('[app progress] overlay key:', {
+            showing: appProgressOverlay !== AppProgressState.None,
+            overlay: appProgressOverlay,
+            content: content.key,
+        })
     }, [appProgressOverlay, content.key])
 
     return (
         <ZLayerProvider>
             <AnimatePresence mode="sync">
-                {appProgressOverlay !== AppProgressState.None ? (
-                    <>
-                        <TransitionContainer key={content.key}>
-                            {content.element}
-                            {props.debug && <AppOverlayDebugger debugText={appProgressOverlay} />}
-                            <AppBugReportButton topRight key="bug-report" />
-                        </TransitionContainer>
-                    </>
-                ) : null}
+                {appProgressOverlay === AppProgressState.None ? null : (
+                    <TransitionContainer
+                        key={content.key}
+                        data-test-id={`transition-container-${content.key}`}
+                    >
+                        {content.element}
+                        {props.debug && <AppOverlayDebugger debugText={appProgressOverlay} />}
+                        <AppBugReportButton topRight key="bug-report" />
+                    </TransitionContainer>
+                )}
             </AnimatePresence>
         </ZLayerProvider>
     )
@@ -98,14 +99,23 @@ export const useAppOverlayContent = (
 }
 
 const transition = {
+    initial: {
+        opacity: 0,
+        display: 'flex',
+    },
+    animate: {
+        opacity: 1,
+        display: 'flex',
+        transition: { duration: 0.1, ease: 'easeOut' },
+    },
     exit: {
         opacity: 0,
         transitionEnd: {
             display: 'none',
         },
-        transition: { duration: 0.4, delay: 0.2 },
+        transition: { duration: 0.1, delay: 0.1 },
     },
-} as const
+} satisfies MotionProps
 
 export const TransitionContainer = (props: Pick<BoxProps, 'children' | 'background'>) => {
     return (

@@ -19267,9 +19267,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"framer-motion@npm:^11.3.12":
-  version: 11.3.12
-  resolution: "framer-motion@npm:11.3.12"
+"framer-motion@npm:^11.3.28":
+  version: 11.3.28
+  resolution: "framer-motion@npm:11.3.28"
   dependencies:
     tslib: ^2.4.0
   peerDependencies:
@@ -19283,7 +19283,7 @@ __metadata:
       optional: true
     react-dom:
       optional: true
-  checksum: d13fa5fd2a21e73846a1171b8e6cad0be214b48f0c9b91070397975977758a98c66ea55d3e8dc027d959831027d76d0d8044cf41c49942cc3362a7b0cce7d4a0
+  checksum: de9485e9ae4d6a7376c011bbccf9968103118a3ea1348875cdf8f5397edce7808d46addbefaa7991e50ef3f8de4f5d92dae7c2103632a4345ea0653dda318407
   languageName: node
   linkType: hard
 
@@ -20109,7 +20109,7 @@ __metadata:
     eslint-plugin-unused-imports: ^2.0.0
     ethers: ^5.7.2
     fake-indexeddb: ^4.0.1
-    framer-motion: ^11.3.12
+    framer-motion: ^11.3.28
     fuzzysort: ^2.0.1
     hast-util-to-jsx-runtime: ^2.3.0
     html-to-text: ^9.0.5
