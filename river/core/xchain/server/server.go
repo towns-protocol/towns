@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/hex"
+	"fmt"
 	"log/slog"
 	"math/big"
 
@@ -24,6 +25,8 @@ import (
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/infra"
+
+	contract_types "github.com/river-build/river/core/contracts/types"
 )
 
 type (
@@ -40,15 +43,15 @@ type (
 		evaluator       *entitlement.Evaluator
 
 		// Metrics
-		metrics                   infra.MetricsFactory
-		metricsPublisher          *infra.MetricsPublisher
-		entitlementCheckRequested *infra.StatusCounterVec
-		entitlementCheckProcessed *infra.StatusCounterVec
-		entitlementCheckTx        *infra.StatusCounterVec
-		getRootKeyForWalletCalls  *infra.StatusCounterVec
-		getWalletsByRootKeyCalls  *infra.StatusCounterVec
-		getRuleDataCalls          *infra.StatusCounterVec
-		callDurations             *prometheus.HistogramVec
+		metrics                           infra.MetricsFactory
+		metricsPublisher                  *infra.MetricsPublisher
+		entitlementCheckRequested         *infra.StatusCounterVec
+		entitlementCheckProcessed         *infra.StatusCounterVec
+		entitlementCheckTx                *infra.StatusCounterVec
+		getRootKeyForWalletCalls          *infra.StatusCounterVec
+		getWalletsByRootKeyCalls          *infra.StatusCounterVec
+		getCrosschainEntitlementDataCalls *infra.StatusCounterVec
+		callDurations                     *prometheus.HistogramVec
 	}
 
 	// entitlementCheckReceipt holds the outcome of an xchain entitlement check request
@@ -189,8 +192,8 @@ func New(
 		getWalletsByRootKeyCalls: contractCounter.MustCurryWith(
 			map[string]string{"op": "read", "name": "get_wallets_by_root_key"},
 		),
-		getRuleDataCalls: contractCounter.MustCurryWith(
-			map[string]string{"op": "read", "name": "get_rule_data"},
+		getCrosschainEntitlementDataCalls: contractCounter.MustCurryWith(
+			map[string]string{"op": "read", "name": "get_crosschain_entitlement_data"},
 		),
 		callDurations: metrics.NewHistogramVecEx(
 			"call_duration_seconds",
@@ -525,22 +528,48 @@ func (x *xchain) getRuleData(
 	roleId *big.Int,
 	contractAddress common.Address,
 	client crypto.BlockchainClient,
-) (*base.IRuleEntitlementBaseRuleData, error) {
+) (*base.IRuleEntitlementBaseRuleDataV2, error) {
 	log := x.Log(ctx).With("function", "getRuleData", "req.txid", transactionId)
-	gater, err := base.NewIEntitlementGated(contractAddress, client)
+	queryable, err := base.NewEntitlementDataQueryable(contractAddress, client)
 	if err != nil {
-		return nil, x.handleContractError(log, err, "Failed to create NewEntitlementGated")
+		return nil, x.handleContractError(log, err, "Failed to create EntitlementDataQueryable")
 	}
 
 	defer prometheus.NewTimer(x.callDurations.WithLabelValues("GetRuleData")).ObserveDuration()
 
-	ruleData, err := gater.GetRuleData(&bind.CallOpts{Context: ctx}, transactionId, roleId)
+	entitlementdata, err := queryable.GetCrossChainEntitlementData(
+		&bind.CallOpts{Context: ctx},
+		transactionId,
+		roleId,
+	)
 	if err != nil {
-		x.getRuleDataCalls.IncFail()
-		return nil, x.handleContractError(log, err, "Failed to GetEncodedRuleData")
+		x.getCrosschainEntitlementDataCalls.IncFail()
+		return nil, x.handleContractError(log, err, "failed to GetCrossChainEntitlementData")
 	}
-	x.getRuleDataCalls.IncPass()
-	return &ruleData, nil
+	x.getCrosschainEntitlementDataCalls.IncPass()
+	entitlement, err := contract_types.MarshalEntitlement(ctx, entitlementdata)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal entitlement: %w", err)
+	}
+
+	if entitlement.RuleEntitlementV2 != nil {
+		return entitlement.RuleEntitlementV2, nil
+	}
+
+	if entitlement.RuleEntitlement == nil {
+		log.Error("No decoded rule entitlements for role",
+			"roleId", roleId,
+			"transactionId", hex.EncodeToString(transactionId[:]),
+			"contractAddress", contractAddress.Hex(),
+		)
+		return nil, fmt.Errorf("no decoded rule entitlements for role")
+	}
+
+	ruleDataV2, err := contract_types.ConvertV1RuleDataToV2(ctx, entitlement.RuleEntitlement)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert rule data to V2: %w", err)
+	}
+	return ruleDataV2, nil
 }
 
 // process the given entitlement request.

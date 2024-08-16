@@ -4,6 +4,7 @@ pragma solidity ^0.8.23;
 import {IEntitlementChecker} from "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
 import {EntitlementGated} from "contracts/src/spaces/facets/gated/EntitlementGated.sol";
 import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
+import {IEntitlementDataQueryableBase} from "contracts/src/spaces/facets/entitlements/extensions/IEntitlementDataQueryable.sol";
 
 contract MockEntitlementGated is EntitlementGated {
   mapping(uint256 => IRuleEntitlement.RuleData) ruleDatasByRoleId;
@@ -59,5 +60,28 @@ contract MockEntitlementGated is EntitlementGated {
       roleId
     );
     return transactionId;
+  }
+
+  function getCrossChainEntitlementData(
+    bytes32,
+    uint256 roleId
+  )
+    external
+    view
+    returns (IEntitlementDataQueryableBase.EntitlementData memory)
+  {
+    if (ruleDatasByRoleId[roleId].operations.length > 0) {
+      return
+        IEntitlementDataQueryableBase.EntitlementData(
+          "RuleEntitlement",
+          abi.encode(ruleDatasByRoleId[roleId])
+        );
+    } else {
+      return
+        IEntitlementDataQueryableBase.EntitlementData(
+          "RuleEntitlementV2",
+          abi.encode(ruleDatasV2ByRoleId[roleId])
+        );
+    }
   }
 }

@@ -5,15 +5,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/river-build/river/core/contracts/base"
 	"github.com/river-build/river/core/node/shared"
-)
 
-type Entitlement struct {
-	entitlementType string
-	ruleEntitlement *base.IRuleEntitlementBaseRuleData
-	userEntitlement []common.Address
-}
+	"github.com/river-build/river/core/contracts/types"
+)
 
 type SpaceContract interface {
 	IsSpaceDisabled(ctx context.Context, spaceId shared.StreamId) (bool, error)
@@ -39,13 +34,13 @@ type SpaceContract interface {
 		ctx context.Context,
 		spaceId shared.StreamId,
 		permission Permission,
-	) ([]Entitlement, common.Address, error)
+	) ([]types.Entitlement, common.Address, error)
 	GetChannelEntitlementsForPermission(
 		ctx context.Context,
 		spaceId shared.StreamId,
 		channelId shared.StreamId,
 		permission Permission,
-	) ([]Entitlement, common.Address, error)
+	) ([]types.Entitlement, common.Address, error)
 	IsMember(
 		ctx context.Context,
 		spaceId shared.StreamId,

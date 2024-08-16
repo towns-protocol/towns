@@ -2,20 +2,17 @@ package auth
 
 import (
 	"context"
-	"encoding/json"
 	"math/big"
-	"strings"
 	"sync"
 
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/contracts/base"
+	"github.com/river-build/river/core/contracts/types"
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/dlog"
-	. "github.com/river-build/river/core/node/protocol"
 	"github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/xchain/bindings/erc721"
 	"github.com/river-build/river/core/xchain/bindings/ierc5313"
@@ -106,82 +103,17 @@ func (sc *SpaceContractV3) IsEntitledToSpace(
 func (sc *SpaceContractV3) marshalEntitlements(
 	ctx context.Context,
 	entitlementData []base.IEntitlementDataQueryableBaseEntitlementData,
-) ([]Entitlement, error) {
+) ([]types.Entitlement, error) {
 	log := dlog.FromCtx(ctx)
-	entitlements := make([]Entitlement, len(entitlementData))
+	entitlements := make([]types.Entitlement, len(entitlementData))
 
-	for i, entitlement := range entitlementData {
-		if entitlement.EntitlementType == "RuleEntitlement" {
-			entitlements[i].entitlementType = entitlement.EntitlementType
-			log.Info("Entitlement data", "entitlement_data", entitlement.EntitlementData)
-			// Parse the ABI definition
-			parsedABI, err := base.IEntitlementGatedMetaData.GetAbi()
-			if err != nil {
-				log.Error("Failed to parse ABI", "error", err)
-				return nil, err
-			}
-
-			var ruleData base.IRuleEntitlementBaseRuleData
-
-			unpackedData, err := parsedABI.Unpack("getRuleData", entitlement.EntitlementData)
-			if err != nil {
-				log.Warn(
-					"Failed to unpack rule data",
-					"error",
-					err,
-					"entitlement",
-					entitlement,
-					"entitlement_data",
-					entitlement.EntitlementData,
-					"len(entitlement.EntitlementData)",
-					len(entitlement.EntitlementData),
-				)
-			}
-
-			if len(unpackedData) > 0 {
-				// Marshal into JSON, because for some UnpackIntoInterface doesn't work when unpacking diretly into a struct
-				jsonData, err := json.Marshal(unpackedData[0])
-				if err != nil {
-					log.Warn("Failed to marshal data to JSON", "error", err, "unpackedData", unpackedData)
-				}
-
-				err = json.Unmarshal(jsonData, &ruleData)
-				if err != nil {
-					log.Warn(
-						"Failed to unmarshal JSON to struct",
-						"error",
-						err,
-						"jsonData",
-						jsonData,
-						"ruleData",
-						ruleData,
-					)
-				}
-			} else {
-				log.Warn("No data unpacked", "unpackedData", unpackedData)
-			}
-
-			entitlements[i].ruleEntitlement = &ruleData
-
-		} else if entitlement.EntitlementType == "UserEntitlement" {
-			entitlements[i].entitlementType = entitlement.EntitlementType
-			abiDef := `[{"name":"getAddresses","outputs":[{"type":"address[]","name":"out"}],"constant":true,"payable":false,"type":"function"}]`
-
-			// Parse the ABI definition
-			parsedABI, err := abi.JSON(strings.NewReader(abiDef))
-			if err != nil {
-				return nil, err
-			}
-			var addresses []common.Address
-			// Unpack the data
-			err = parsedABI.UnpackIntoInterface(&addresses, "getAddresses", entitlement.EntitlementData)
-			if err != nil {
-				return nil, err
-			}
-			entitlements[i].userEntitlement = addresses
-		} else {
-			return nil, RiverError(Err_UNKNOWN, "Invalid entitlement type").Tag("entitlement_type", entitlement.EntitlementType)
+	for i, rawEntitlement := range entitlementData {
+		entitlement, err := types.MarshalEntitlement(ctx, rawEntitlement)
+		if err != nil {
+			log.Warn("Failed to marshal entitlement", "index", i, "error", err)
+			return nil, AsRiverError(err)
 		}
+		entitlements[i] = entitlement
 	}
 	return entitlements, nil
 }
@@ -213,7 +145,7 @@ func (sc *SpaceContractV3) GetChannelEntitlementsForPermission(
 	spaceId shared.StreamId,
 	channelId shared.StreamId,
 	permission Permission,
-) ([]Entitlement, common.Address, error) {
+) ([]types.Entitlement, common.Address, error) {
 	log := dlog.FromCtx(ctx)
 	// get the channel entitlements and check if user is entitled.
 	space, err := sc.getSpace(ctx, spaceId)
@@ -278,7 +210,7 @@ func (sc *SpaceContractV3) GetSpaceEntitlementsForPermission(
 	ctx context.Context,
 	spaceId shared.StreamId,
 	permission Permission,
-) ([]Entitlement, common.Address, error) {
+) ([]types.Entitlement, common.Address, error) {
 	log := dlog.FromCtx(ctx)
 	// get the space entitlements and check if user is entitled.
 	space, err := sc.getSpace(ctx, spaceId)

@@ -10,8 +10,9 @@ import (
 	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/node/infra"
 	"github.com/river-build/river/core/xchain/contracts"
-	"github.com/river-build/river/core/xchain/entitlement"
 	"github.com/river-build/river/core/xchain/examples"
+
+	contract_types "github.com/river-build/river/core/contracts/types"
 
 	node_crypto "github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
@@ -104,13 +105,13 @@ func customEntitlementExample(cfg *config.Config) base.IRuleEntitlementBaseRuleD
 	return base.IRuleEntitlementBaseRuleData{
 		Operations: []base.IRuleEntitlementBaseOperation{
 			{
-				OpType: uint8(entitlement.CHECK),
+				OpType: uint8(contract_types.CHECK),
 				Index:  0,
 			},
 		},
 		CheckOperations: []base.IRuleEntitlementBaseCheckOperation{
 			{
-				OpType:  uint8(entitlement.ISENTITLED),
+				OpType:  uint8(contract_types.ISENTITLED),
 				ChainId: big.NewInt(1),
 				// This contract is deployed on our local base dev chain.
 				ContractAddress: cfg.GetTestCustomEntitlementContractAddress(),
@@ -124,13 +125,13 @@ func erc721Example() base.IRuleEntitlementBaseRuleData {
 	return base.IRuleEntitlementBaseRuleData{
 		Operations: []base.IRuleEntitlementBaseOperation{
 			{
-				OpType: uint8(entitlement.CHECK),
+				OpType: uint8(contract_types.CHECK),
 				Index:  0,
 			},
 		},
 		CheckOperations: []base.IRuleEntitlementBaseCheckOperation{
 			{
-				OpType:  uint8(entitlement.ERC721),
+				OpType:  uint8(contract_types.ERC721),
 				ChainId: examples.EthSepoliaChainId,
 				// Custom NFT contract example
 				ContractAddress: examples.EthSepoliaTestNftContract,
@@ -144,13 +145,13 @@ func erc20Example() base.IRuleEntitlementBaseRuleData {
 	return base.IRuleEntitlementBaseRuleData{
 		Operations: []base.IRuleEntitlementBaseOperation{
 			{
-				OpType: uint8(entitlement.CHECK),
+				OpType: uint8(contract_types.CHECK),
 				Index:  0,
 			},
 		},
 		CheckOperations: []base.IRuleEntitlementBaseCheckOperation{
 			{
-				OpType:  uint8(entitlement.ERC20),
+				OpType:  uint8(contract_types.ERC20),
 				ChainId: examples.EthSepoliaChainId,
 				// Chainlink is a good ERC 20 token to use for testing because it's easy to get from faucets.
 				ContractAddress: examples.EthSepoliaChainlinkContract,
@@ -179,6 +180,11 @@ type ClientSimulator interface {
 	Start(ctx context.Context)
 	Stop()
 	EvaluateRuleData(ctx context.Context, cfg *config.Config, ruleData base.IRuleEntitlementBaseRuleData) (bool, error)
+	EvaluateRuleDataV2(
+		ctx context.Context,
+		cfg *config.Config,
+		ruleData base.IRuleEntitlementBaseRuleDataV2,
+	) (bool, error)
 	Wallet() *node_crypto.Wallet
 }
 
@@ -362,6 +368,57 @@ func (cs *clientSimulator) executeCheck(ctx context.Context, ruleData *deploy.IR
 	return nil
 }
 
+func (cs *clientSimulator) executeV2Check(ctx context.Context, ruleData *deploy.IRuleEntitlementBaseRuleDataV2) error {
+	log := dlog.FromCtx(ctx).With("application", "clientSimulator")
+	log.Info("ClientSimulator executing v2 check", "ruleData", ruleData, "cfg", cs.cfg)
+
+	pendingTx, err := cs.baseChain.TxPool.Submit(
+		ctx,
+		"RequestEntitlementCheckV2",
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			log.Info("Calling RequestEntitlementCheck", "opts", opts, "ruleData", ruleData)
+			gated, err := deploy.NewMockEntitlementGated(
+				cs.cfg.GetTestEntitlementContractAddress(),
+				cs.baseChain.Client,
+			)
+			if err != nil {
+				log.Error("Failed to get NewMockEntitlementGated", "err", err)
+				return nil, err
+			}
+			log.Info("NewMockEntitlementGated", "gated", gated.RequestEntitlementCheck, "err", err)
+			tx, err := gated.RequestEntitlementCheckV2(opts, big.NewInt(0), *ruleData)
+			log.Info("RequestEntitlementCheckV2 called", "tx", tx, "err", err)
+			return tx, err
+		})
+
+	log.Info("Submitted entitlement check...")
+
+	customErr, stringErr, err := cs.decoder.DecodeEVMError(err)
+	switch {
+	case customErr != nil:
+		log.Error("Failed to submit v2 entitlement check", "type", "customErr", "err", customErr)
+		return err
+	case stringErr != nil:
+		log.Error("Failed to submit v2 entitlement check", "type", "stringErr", "err", stringErr)
+		return err
+	case err != nil:
+		log.Error("Failed to submit v2 entitlement check", "type", "err", "err", err)
+		return err
+	}
+
+	receipt, err := pendingTx.Wait(ctx)
+	if err != nil {
+		return err
+	}
+
+	log.Info("Entitlement check mined", "receipt", receipt)
+	if receipt.Status == types.ReceiptStatusFailed {
+		log.Error("Failed to execute check - could not execute transaction")
+		return fmt.Errorf("failed to execute check - could not execute transaction")
+	}
+	return nil
+}
+
 func (cs *clientSimulator) waitForNextRequest(ctx context.Context) ([32]byte, error) {
 	log := dlog.FromCtx(ctx).With("application", "clientSimulator")
 
@@ -513,22 +570,43 @@ func convertRuleDataFromBaseToDeploy(ruleData base.IRuleEntitlementBaseRuleData)
 	}
 }
 
-func (cs *clientSimulator) EvaluateRuleData(
-	ctx context.Context,
-	cfg *config.Config,
-	baseRuleData base.IRuleEntitlementBaseRuleData,
-) (bool, error) {
-	ruleData := convertRuleDataFromBaseToDeploy(baseRuleData)
-
-	log := dlog.FromCtx(ctx).With("application", "clientSimulator")
-	log.Info("ClientSimulator evaluating rule data", "ruleData", ruleData)
-
-	err := cs.executeCheck(ctx, &ruleData)
-	if err != nil {
-		log.Error("Failed to execute entitlement check", "err", err)
-		return false, err
+func convertRuleDataV2FromBaseToDeploy(
+	ruleData base.IRuleEntitlementBaseRuleDataV2,
+) deploy.IRuleEntitlementBaseRuleDataV2 {
+	operations := make([]deploy.IRuleEntitlementBaseOperation, len(ruleData.Operations))
+	for i, op := range ruleData.Operations {
+		operations[i] = deploy.IRuleEntitlementBaseOperation{
+			OpType: op.OpType,
+			Index:  op.Index,
+		}
 	}
 
+	checkOperations := make([]deploy.IRuleEntitlementBaseCheckOperationV2, len(ruleData.CheckOperations))
+	for i, op := range ruleData.CheckOperations {
+		checkOperations[i] = deploy.IRuleEntitlementBaseCheckOperationV2{
+			OpType:          op.OpType,
+			ChainId:         op.ChainId,
+			ContractAddress: op.ContractAddress,
+			Params:          op.Params[:],
+		}
+	}
+	logicalOperations := make([]deploy.IRuleEntitlementBaseLogicalOperation, len(ruleData.LogicalOperations))
+	for i, op := range ruleData.LogicalOperations {
+		logicalOperations[i] = deploy.IRuleEntitlementBaseLogicalOperation{
+			LogOpType:           op.LogOpType,
+			LeftOperationIndex:  op.LeftOperationIndex,
+			RightOperationIndex: op.RightOperationIndex,
+		}
+	}
+	return deploy.IRuleEntitlementBaseRuleDataV2{
+		Operations:        operations,
+		CheckOperations:   checkOperations,
+		LogicalOperations: logicalOperations,
+	}
+}
+
+func (cs *clientSimulator) awaitNextResult(ctx context.Context) (bool, error) {
+	log := dlog.FromCtx(ctx).With("application", "clientSimulator").With("function", "waitForNextRequest")
 	log.Info("ClientSimulator waiting for request to publish")
 	txId, err := cs.waitForNextRequest(ctx)
 	if err != nil {
@@ -548,6 +626,42 @@ func (cs *clientSimulator) EvaluateRuleData(
 	}
 	log.Info("ClientSimulator logged entitlement check result", "Result", result)
 	return result, nil
+}
+
+func (cs *clientSimulator) EvaluateRuleDataV2(
+	ctx context.Context,
+	cfg *config.Config,
+	baseRuleData base.IRuleEntitlementBaseRuleDataV2,
+) (bool, error) {
+	ruleData := convertRuleDataV2FromBaseToDeploy(baseRuleData)
+
+	log := dlog.FromCtx(ctx).With("application", "clientSimulator")
+	log.Info("ClientSimulator evaluating rule data v2", "ruleData", ruleData)
+
+	err := cs.executeV2Check(ctx, &ruleData)
+	if err != nil {
+		log.Error("Failed to execute entitlement check", "err", err)
+		return false, err
+	}
+	return cs.awaitNextResult(ctx)
+}
+
+func (cs *clientSimulator) EvaluateRuleData(
+	ctx context.Context,
+	cfg *config.Config,
+	baseRuleData base.IRuleEntitlementBaseRuleData,
+) (bool, error) {
+	ruleData := convertRuleDataFromBaseToDeploy(baseRuleData)
+
+	log := dlog.FromCtx(ctx).With("application", "clientSimulator")
+	log.Info("ClientSimulator evaluating rule data", "ruleData", ruleData)
+
+	err := cs.executeCheck(ctx, &ruleData)
+	if err != nil {
+		log.Error("Failed to execute entitlement check", "err", err)
+		return false, err
+	}
+	return cs.awaitNextResult(ctx)
 }
 
 func RunClientSimulator(ctx context.Context, cfg *config.Config, wallet *node_crypto.Wallet, simType SimulationType) {

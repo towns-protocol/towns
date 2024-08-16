@@ -119,6 +119,28 @@ interface IRuleEntitlementBase {
     uint256 grantedTime;
     bytes data;
   }
+
+  // Parameters are not used in contracts but are defined here for documentation purposes.
+  struct MockParams {
+    uint256 threshold; // used for testing
+  }
+
+  struct ERC20Params {
+    uint256 threshold;
+  }
+
+  struct ERC721Params {
+    uint256 threshold;
+  }
+
+  struct ERC1155Params {
+    uint256 threshold;
+    uint256 tokenId;
+  }
+
+  struct NativeCoinBalanceParams {
+    uint256 threshold;
+  }
 }
 
 interface IRuleEntitlementV2 is IRuleEntitlementBase, IEntitlement {
