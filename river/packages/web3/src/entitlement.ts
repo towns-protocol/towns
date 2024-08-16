@@ -68,7 +68,6 @@ export enum LogicalOperationType {
     AND,
     OR,
 }
-
 export type ContractOperation = {
     opType: OperationType
     index: number
@@ -123,6 +122,8 @@ export const NoopRuleData = {
 type EntitledWalletOrZeroAddress = string
 
 export type LogicalOperation = OrOperation | AndOperation
+export type SupportedLogicalOperationType = LogicalOperation['logicalType']
+
 export type Operation = CheckOperation | OrOperation | AndOperation | NoOperation
 
 function isCheckOperation(operation: Operation): operation is CheckOperation {
@@ -137,14 +138,14 @@ function isAndOperation(operation: LogicalOperation): operation is AndOperation 
     return operation.logicalType === LogicalOperationType.AND
 }
 
+function isOrOperation(operation: LogicalOperation): operation is OrOperation {
+    return operation.logicalType === LogicalOperationType.OR
+}
+
 const publicClient: PublicClient = createPublicClient({
     chain: mainnet,
     transport: http(),
 })
-
-function isOrOperation(operation: LogicalOperation): operation is OrOperation {
-    return operation.logicalType === LogicalOperationType.OR
-}
 
 export function postOrderArrayToTree(operations: Operation[]): Operation {
     const stack: Operation[] = []
@@ -258,13 +259,10 @@ export function ruleDataToOperations(data: IRuleEntitlementBase.RuleDataStruct[]
             const logicalOperation = firstData.logicalOperations[operation.index]
             decodedOperations.push({
                 opType: OperationType.LOGICAL,
-                logicalType: logicalOperation.logOpType as
-                    | LogicalOperationType.AND
-                    | LogicalOperationType.OR,
-
+                logicalType: logicalOperation.logOpType,
                 leftOperation: decodedOperations[logicalOperation.leftOperationIndex],
                 rightOperation: decodedOperations[logicalOperation.rightOperationIndex],
-            })
+            } satisfies LogicalOperation)
             // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
         } else if (operation.opType === OperationType.NONE) {
             decodedOperations.push(NoopOperation)
@@ -330,7 +328,7 @@ export function treeToRuleData(root: Operation): IRuleEntitlementBase.RuleDataSt
 async function evaluateAndOperation(
     controller: AbortController,
     linkedWallets: string[],
-    providers: ethers.providers.StaticJsonRpcProvider[],
+    providers: ethers.providers.BaseProvider[],
     operation?: AndOperation,
 ): Promise<EntitledWalletOrZeroAddress> {
     if (!operation?.leftOperation || !operation?.rightOperation) {
@@ -396,7 +394,7 @@ async function evaluateAndOperation(
 async function evaluateOrOperation(
     controller: AbortController,
     linkedWallets: string[],
-    providers: ethers.providers.StaticJsonRpcProvider[],
+    providers: ethers.providers.BaseProvider[],
     operation?: OrOperation,
 ): Promise<EntitledWalletOrZeroAddress> {
     if (!operation?.leftOperation || !operation?.rightOperation) {
@@ -458,7 +456,7 @@ async function evaluateOrOperation(
 async function evaluateCheckOperation(
     controller: AbortController,
     linkedWallets: string[],
-    providers: ethers.providers.StaticJsonRpcProvider[],
+    providers: ethers.providers.BaseProvider[],
     operation?: CheckOperation,
 ): Promise<EntitledWalletOrZeroAddress> {
     if (!operation) {
@@ -565,7 +563,7 @@ async function evaluateCheckOperation(
 export async function evaluateOperationsForEntitledWallet(
     operations: Operation[],
     linkedWallets: string[],
-    providers: ethers.providers.StaticJsonRpcProvider[],
+    providers: ethers.providers.BaseProvider[],
 ) {
     const controller = new AbortController()
     const result = evaluateTree(
@@ -581,7 +579,7 @@ export async function evaluateOperationsForEntitledWallet(
 export async function evaluateTree(
     controller: AbortController,
     linkedWallets: string[],
-    providers: ethers.providers.StaticJsonRpcProvider[],
+    providers: ethers.providers.BaseProvider[],
     entry?: Operation,
 ): Promise<EntitledWalletOrZeroAddress> {
     if (!entry) {
@@ -608,15 +606,13 @@ export async function evaluateTree(
     }
 }
 
-type AndOr = LogicalOperationType.AND | LogicalOperationType.OR
-
 // These two methods are used to create a rule data struct for an external token or NFT
 // checks for testing.
 export function createExternalTokenStruct(
     addresses: Address[],
     options?: {
         checkOptions?: Partial<Omit<ContractCheckOperation, 'address'>>
-        logicalOp?: AndOr
+        logicalOp?: SupportedLogicalOperationType
     },
 ) {
     if (addresses.length === 0) {
@@ -635,7 +631,7 @@ export function createExternalNFTStruct(
     addresses: Address[],
     options?: {
         checkOptions?: Partial<Omit<ContractCheckOperation, 'address'>>
-        logicalOp?: AndOr
+        logicalOp?: SupportedLogicalOperationType
     },
 ) {
     if (addresses.length === 0) {
@@ -662,7 +658,7 @@ export function createOperationsTree(
     checkOp: (Omit<ContractCheckOperation, 'threshold'> & {
         threshold?: bigint
     })[],
-    logicalOp: AndOr = LogicalOperationType.OR,
+    logicalOp: SupportedLogicalOperationType = LogicalOperationType.OR,
 ): IRuleEntitlementBase.RuleDataStruct {
     if (checkOp.length === 0) {
         return {
@@ -746,7 +742,7 @@ async function evaluateMockOperation(
 async function evaluateERC721Operation(
     operation: CheckOperation,
     controller: AbortController,
-    provider: ethers.providers.StaticJsonRpcProvider,
+    provider: ethers.providers.BaseProvider,
     linkedWallets: string[],
 ): Promise<EntitledWalletOrZeroAddress> {
     return evaluateContractBalanceAcrossWallets(
@@ -761,7 +757,7 @@ async function evaluateERC721Operation(
 async function evaluateERC20Operation(
     operation: CheckOperation,
     controller: AbortController,
-    provider: ethers.providers.StaticJsonRpcProvider,
+    provider: ethers.providers.BaseProvider,
     linkedWallets: string[],
 ): Promise<EntitledWalletOrZeroAddress> {
     return evaluateContractBalanceAcrossWallets(
@@ -776,7 +772,7 @@ async function evaluateERC20Operation(
 async function evaluateCustomEntitledOperation(
     operation: CheckOperation,
     controller: AbortController,
-    provider: ethers.providers.StaticJsonRpcProvider,
+    provider: ethers.providers.BaseProvider,
     linkedWallets: string[],
 ): Promise<EntitledWalletOrZeroAddress> {
     const contract = new ethers.Contract(
@@ -801,7 +797,7 @@ async function evaluateCustomEntitledOperation(
 async function evaluateNativeCoinBalanceOperation(
     operation: CheckOperation,
     controller: AbortController,
-    provider: ethers.providers.StaticJsonRpcProvider,
+    provider: ethers.providers.BaseProvider,
     linkedWallets: string[],
 ): Promise<EntitledWalletOrZeroAddress> {
     const walletBalances = await Promise.all(
@@ -840,7 +836,7 @@ async function evaluateContractBalanceAcrossWallets(
     contractAddress: Address,
     threshold: bigint,
     controller: AbortController,
-    provider: ethers.providers.StaticJsonRpcProvider,
+    provider: ethers.providers.BaseProvider,
     linkedWallets: string[],
 ): Promise<EntitledWalletOrZeroAddress> {
     const contract = new ethers.Contract(
@@ -888,10 +884,7 @@ async function evaluateContractBalanceAcrossWallets(
     }
 }
 
-function findProviderFromChainId(
-    providers: ethers.providers.StaticJsonRpcProvider[],
-    chainId: bigint,
-) {
+function findProviderFromChainId(providers: ethers.providers.BaseProvider[], chainId: bigint) {
     return providers.find((p) => p.network.chainId === Number(chainId))
 }
 

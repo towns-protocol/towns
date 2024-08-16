@@ -74,9 +74,9 @@ contract TieredLogPricingOracle is IMembershipPricing, IntrospectionFacet {
     // prettier-ignore
     (
        uint80 roundId ,
-      int answer,
+      int256 answer,
       /*uint startedAt*/,
-      uint updatedAt,
+      uint256 updatedAt,
       /*uint80 answeredInRound*/
     ) = dataFeed.latestRoundData();
 

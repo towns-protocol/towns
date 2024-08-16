@@ -21,7 +21,7 @@ contract DeployEntitlementGated is FacetHelper, Deployer {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "entitlementGated";
+    return "entitlementGatedFacet";
   }
 
   function __deploy(address deployer) public override returns (address) {

@@ -20,14 +20,6 @@ abstract contract Deployer is Script, DeployBase {
   // - logging
   function __deploy(address deployer) public virtual returns (address);
 
-  function cache() public returns (address) {
-    address cachedAddress = getDeployment(versionName());
-    if (cachedAddress == address(0)) {
-      revert("no cached deployment found");
-    }
-    return cachedAddress;
-  }
-
   // will first try to load existing deployments from `deployments/<network>/<contract>.json`
   // if OVERRIDE_DEPLOYMENTS is set to true or if no cached deployment is found:
   // - read PRIVATE_KEY from env
@@ -96,6 +88,19 @@ abstract contract Deployer is Script, DeployBase {
   function postDeploy(address deployer, address deployment) public virtual {}
 
   function run() public virtual {
-    deploy();
+    bytes memory data = abi.encodeWithSignature("deploy()");
+
+    (bool success, bytes memory returnData) = address(this).delegatecall(data);
+    if (!success) {
+      if (returnData.length > 0) {
+        /// @solidity memory-safe-assembly
+        assembly {
+          let returnDataSize := mload(returnData)
+          revert(add(32, returnData), returnDataSize)
+        }
+      } else {
+        revert("FAILED_TO_CALL: deploy()");
+      }
+    }
   }
 }

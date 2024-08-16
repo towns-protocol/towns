@@ -13,7 +13,7 @@ import {RolesBaseSetup} from "contracts/test/spaces/roles/RolesBaseSetup.sol";
 
 // mocks
 
-contract RolesTest_SetChannelPermissionsOverrides is RolesBaseSetup {
+contract RolesTestSetChannelPermissionsOverrides is RolesBaseSetup {
   // =============================================================
   // Channel Permissions
   // =============================================================

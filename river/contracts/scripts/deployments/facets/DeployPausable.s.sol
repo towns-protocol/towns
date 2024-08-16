@@ -18,7 +18,7 @@ contract DeployPausable is FacetHelper, Deployer {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "pausable";
+    return "pausableFacet";
   }
 
   function initializer() public pure override returns (bytes4) {

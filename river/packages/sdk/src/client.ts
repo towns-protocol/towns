@@ -1021,19 +1021,29 @@ export class Client
         return stream.view.getUserMetadata().usernames.cleartextUsernameAvailable(username) ?? false
     }
 
-    async waitForStream(streamId: string | Uint8Array): Promise<Stream> {
-        this.logCall('waitForStream', streamId)
+    async waitForStream(
+        inStreamId: string | Uint8Array,
+        opts?: { timeoutMs?: number },
+    ): Promise<Stream> {
+        this.logCall('waitForStream', inStreamId)
+        const timeoutMs = opts?.timeoutMs ?? 15000
+        const streamId = streamIdAsString(inStreamId)
         let stream = this.stream(streamId)
         if (stream !== undefined && stream.view.isInitialized) {
             this.logCall('waitForStream: stream already initialized', streamId)
             return stream
         }
 
-        await new Promise<void>((resolve) => {
+        await new Promise<void>((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                this.off('streamInitialized', handler)
+                reject(new Error(`waitForStream: timeout waiting for ${streamId}`))
+            }, timeoutMs)
             const handler = (newStreamId: string) => {
                 if (newStreamId === streamId) {
                     this.logCall('waitForStream: got streamInitialized', newStreamId)
                     this.off('streamInitialized', handler)
+                    clearTimeout(timeout)
                     resolve()
                 } else {
                     this.logCall(

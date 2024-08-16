@@ -28,10 +28,10 @@ import {SpaceOwner} from "contracts/src/spaces/facets/owner/SpaceOwner.sol";
 import {ISpaceDelegation} from "contracts/src/base/registry/facets/delegation/ISpaceDelegation.sol";
 
 // deployments
-import {DeploySpaceFactory} from "contracts/scripts/deployments/DeploySpaceFactory.s.sol";
-import {DeployRiverBase} from "contracts/scripts/deployments/DeployRiverBase.s.sol";
-import {DeployProxyBatchDelegation} from "contracts/scripts/deployments/DeployProxyBatchDelegation.s.sol";
-import {DeployBaseRegistry} from "contracts/scripts/deployments/DeployBaseRegistry.s.sol";
+import {DeploySpaceFactory} from "contracts/scripts/deployments/diamonds/DeploySpaceFactory.s.sol";
+import {DeployRiverBase} from "contracts/scripts/deployments/utils/DeployRiverBase.s.sol";
+import {DeployProxyBatchDelegation} from "contracts/scripts/deployments/utils/DeployProxyBatchDelegation.s.sol";
+import {DeployBaseRegistry} from "contracts/scripts/deployments/diamonds/DeployBaseRegistry.s.sol";
 
 /*
  * @notice - This is the base setup to start testing the entire suite of contracts

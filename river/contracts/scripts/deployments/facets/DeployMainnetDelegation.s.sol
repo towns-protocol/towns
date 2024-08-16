@@ -36,7 +36,7 @@ contract DeployMainnetDelegation is FacetHelper, Deployer {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "mainnetDelegation";
+    return "mainnetDelegationFacet";
   }
 
   function __deploy(address deployer) public override returns (address) {

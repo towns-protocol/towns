@@ -28,7 +28,7 @@ contract DeployPlatformRequirements is FacetHelper, Deployer {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "platformRequirements";
+    return "platformRequirementsFacet";
   }
 
   function __deploy(address deployer) public override returns (address) {

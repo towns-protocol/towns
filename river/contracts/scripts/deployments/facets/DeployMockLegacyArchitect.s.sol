@@ -36,7 +36,7 @@ contract DeployMockLegacyArchitect is FacetHelper, Deployer {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "legacyArchitectFacet";
+    return "mockLegacyArchitectFacet";
   }
 
   function __deploy(address deployer) public override returns (address) {

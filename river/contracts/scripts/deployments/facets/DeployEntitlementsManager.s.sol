@@ -22,7 +22,7 @@ contract DeployEntitlementsManager is FacetHelper, Deployer {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "entitlementsManager";
+    return "entitlementsManagerFacet";
   }
 
   function __deploy(address deployer) public override returns (address) {

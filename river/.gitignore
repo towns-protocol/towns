@@ -24,7 +24,7 @@ coverage.json
 contracts/.openzeppelin/unknown-*.json
 contracts/docs/coverage
 contracts/.env
-contracts/deployments
+
 lib/
 abi/
 
@@ -35,13 +35,20 @@ clients/web/app/storybook-static
 /**/dist/
 /packages/proto/src/gen/
 
-contracts/deployments/localhost/
 contracts/cache
 .eslintcache
 cache_hardhat
 artifacts_*
 tsconfig.tsbuildinfo
-broadcast/
+
+
+!/contracts/deployments
+/contracts/deployments/base_anvil
+/contracts/deployments/river_anvil
+/contracts/deployments/alpha/base_anvil
+/contracts/deployments/alpha/river_anvil
+/broadcast
+
 
 *.pem
 

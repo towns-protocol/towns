@@ -4,6 +4,7 @@ import { INodeRegistryShim } from './INodeRegistryShim'
 import { ethers } from 'ethers'
 import { IStreamRegistryShim } from './IStreamRegistryShim'
 import { IOperatorRegistryShim } from './IOperatorRegistryShim'
+import { StreamStructOutput } from '@river-build/generated/dev/typings/IStreamRegistry'
 
 interface RiverNodesMap {
     [nodeAddress: string]: NodeStructOutput
@@ -87,6 +88,23 @@ export class RiverRegistry {
 
     async getStreamCount(): Promise<ethers.BigNumber> {
         return this.streamRegistry.read.getStreamCount()
+    }
+
+    async getStream(streamAddress: Uint8Array): Promise<StreamStructOutput> {
+        return this.streamRegistry.read.getStream(streamAddress)
+    }
+
+    async streamExists(streamAddress: Uint8Array): Promise<boolean> {
+        try {
+            await this.getStream(streamAddress)
+            return true
+        } catch (error) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            if ((error as any).reason === 'NOT_FOUND') {
+                return false
+            }
+            throw error
+        }
     }
 
     private async getStreamCountOnNode(nodeAddress: string): Promise<ethers.BigNumber> {

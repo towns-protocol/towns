@@ -16,7 +16,7 @@ library Validator {
     if (byteName.length == 0) revert Validator__InvalidStringLength();
   }
 
-  function checkLength(string memory name, uint min) internal pure {
+  function checkLength(string memory name, uint256 min) internal pure {
     bytes memory byteName = bytes(name);
     if (byteName.length < min) revert Validator__InvalidStringLength();
   }

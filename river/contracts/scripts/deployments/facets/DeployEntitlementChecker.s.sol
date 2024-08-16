@@ -22,7 +22,7 @@ contract DeployEntitlementChecker is Deployer, FacetHelper {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "entitlementChecker";
+    return "entitlementCheckerFacet";
   }
 
   function __deploy(address deployer) public override returns (address) {

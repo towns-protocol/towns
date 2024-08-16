@@ -23,7 +23,7 @@ import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
 // mocks
 import {MockERC721} from "contracts/test/mocks/MockERC721.sol";
 
-contract Integration_CreateSpace is
+contract IntegrationCreateSpace is
   BaseSetup,
   IRolesBase,
   IArchitectBase,

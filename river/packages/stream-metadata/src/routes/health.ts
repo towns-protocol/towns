@@ -11,9 +11,9 @@ export async function checkHealth(request: FastifyRequest, reply: FastifyReply) 
 		await getRiverRegistry().getAllNodes()
 		// healthy
 		return reply.code(200).send({ status: 'ok' })
-	} catch (e) {
+	} catch (error) {
 		// unhealthy
-		logger.error('Failed to get river registry', { err: e })
+		logger.error(error, 'Failed to get river registry')
 		return reply.code(500).send({ status: 'error' })
 	}
 }

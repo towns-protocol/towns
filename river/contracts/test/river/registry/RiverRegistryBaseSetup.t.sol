@@ -15,7 +15,7 @@ import {IRiverConfig} from "contracts/src/river/registry/facets/config/IRiverCon
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 
 // deployments
-import {DeployRiverRegistry} from "contracts/scripts/deployments/DeployRiverRegistry.s.sol";
+import {DeployRiverRegistry} from "contracts/scripts/deployments/diamonds/DeployRiverRegistry.s.sol";
 
 contract RiverRegistryBaseSetup is TestUtils {
   DeployRiverRegistry internal deployRiverRegistry = new DeployRiverRegistry();

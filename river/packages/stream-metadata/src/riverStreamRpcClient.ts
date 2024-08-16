@@ -25,9 +25,7 @@ const contentCache: Record<string, MediaContent | undefined> = {}
 export type StreamRpcClient = PromiseClient<typeof StreamService> & { url?: string }
 
 function makeStreamRpcClient(url: string): StreamRpcClient {
-	logger.info(`makeStreamRpcClient: Connecting`, {
-		url,
-	})
+	logger.info({ url }, 'makeStreamRpcClient: Connecting')
 
 	const options: ConnectTransportOptions = {
 		baseUrl: url,
@@ -47,7 +45,7 @@ async function getStreamClient(streamId: `0x${string}`) {
 		clients.set(client.url!, client)
 		url = client.url!
 	}
-	logger.info('getStreamClient: client url', url)
+	logger.info({ url }, 'getStreamClient: client url')
 
 	const client = clients.get(url)
 	if (!client) {
@@ -83,9 +81,12 @@ async function mediaContentFromStreamView(
 ): Promise<MediaContent> {
 	const mediaInfo = streamView.mediaContent.info
 	if (mediaInfo) {
-		logger.info(`mediaContentFromStreamView`, {
-			spaceId: mediaInfo.spaceId,
-		})
+		logger.info(
+			{
+				spaceId: mediaInfo.spaceId,
+			},
+			'mediaContentFromStreamView',
+		)
 
 		// Aggregate data chunks into a single Uint8Array
 		const data = new Uint8Array(
@@ -103,9 +104,7 @@ async function mediaContentFromStreamView(
 		// Determine the MIME type
 		const mimeType = filetypemime(decrypted)
 		if (mimeType?.length > 0) {
-			logger.info(`mediaContentFromStreamView`, {
-				mimeType,
-			})
+			logger.info({ mimeType }, 'mediaContentFromStreamView')
 
 			// Return decrypted data and MIME type
 			return {
@@ -133,24 +132,30 @@ export async function getStream(streamId: string): Promise<StreamStateView | und
 		const result = await getStreamClient(`0x${streamId}`)
 		client = result.client
 		lastMiniblockNum = result.lastMiniblockNum
-	} catch (e) {
-		logger.error('Failed to get client for stream', {
-			err: e,
-			streamId,
-		})
+	} catch (error) {
+		logger.error(
+			{
+				error,
+				streamId,
+			},
+			'Failed to get client for stream',
+		)
 		return undefined
 	}
 
 	if (!client) {
-		logger.error(`Failed to get client for stream`, { streamId })
+		logger.error({ streamId }, 'Failed to get client for stream')
 		return undefined
 	}
 
-	logger.info(`getStream`, {
-		clientUrl: client.url,
-		streamId,
-		lastMiniblockNum: lastMiniblockNum.toString(),
-	})
+	logger.info(
+		{
+			clientUrl: client.url,
+			streamId,
+			lastMiniblockNum: lastMiniblockNum.toString(),
+		},
+		'getStream',
+	)
 
 	const start = Date.now()
 
@@ -158,9 +163,12 @@ export async function getStream(streamId: string): Promise<StreamStateView | und
 		streamId: streamIdAsBytes(streamId),
 	})
 
-	logger.info(`getStream finished`, {
-		duration: Date.now() - start,
-	})
+	logger.info(
+		{
+			duration: Date.now() - start,
+		},
+		'getStream finished',
+	)
 
 	const unpackedResponse = await unpackStream(response.stream)
 	return streamViewFromUnpackedResponse(streamId, unpackedResponse)
@@ -194,11 +202,14 @@ export async function getMediaStreamContent(
 	let result: MediaContent | undefined
 	try {
 		result = await mediaContentFromStreamView(sv, secret, iv)
-	} catch (e) {
-		logger.error(`Failed to get media content for stream`, {
-			err: e,
-			streamId: fullStreamId,
-		})
+	} catch (error) {
+		logger.error(
+			{
+				error,
+				streamId: fullStreamId,
+			},
+			'Failed to get media content for stream',
+		)
 		return { data: null, mimeType: null }
 	}
 

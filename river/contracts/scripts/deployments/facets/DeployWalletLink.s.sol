@@ -22,7 +22,7 @@ contract DeployWalletLink is FacetHelper, Deployer {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "walletLink";
+    return "walletLinkFacet";
   }
 
   function __deploy(address deployer) public override returns (address) {

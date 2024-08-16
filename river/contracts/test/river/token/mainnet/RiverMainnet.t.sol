@@ -13,7 +13,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 //contracts
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
-import {DeployRiverMainnet} from "contracts/scripts/deployments/DeployRiverMainnet.s.sol";
+import {DeployRiverMainnet} from "contracts/scripts/deployments/utils/DeployRiverMainnet.s.sol";
 import {River} from "contracts/src/tokens/river/mainnet/River.sol";
 
 contract RiverMainnetTest is TestUtils, IRiverBase, ILockBase {

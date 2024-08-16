@@ -22,32 +22,108 @@ lint :; yarn solhint "{scripts,src,test}/**/*.sol"
 
 anvil :; anvil -m 'test test test test test test test test test test test junk'
 
-clear-anvil-deployments :; rm -rf deployments/base_anvil deployments/river_anvil
+clear-anvil-deployments :; rm -rf deployments/alpha/base_anvil deployments/base_anvil deployments/river_anvil
+
+# ================================== UTILITIES ==================================
+
+help:
+	@echo  'Local Deployments'
+	@echo  '  deploy-any-local - deploys any contract to a local network using a local private key'
+	@echo  '  interact-any-local - runs an interaction to a local network using a local private key'
+	@echo  'Remote Deployments'
+	@echo  '  deploy-any - deploys any contract to a remote network using a local private key'
+	@echo  '  resume-any - resumes a transaction using a local private key'
+	@echo  '  interact-any - runs an interaction to a remote network using a local private key'
+	@echo  '  fork-any - runs an interaction to a forked remote network'
+	@echo  '  verify-any - verifies a contract on a remote network'
+	@echo  '  explicit-verify-any - explicitly verifies a contract on a remote network'
+	@echo  'Remote Deployments with Ledger'
+	@echo  '  deploy-any-ledger - deploys any contract to a remote network using a ledger wallet'
+	@echo  '  resume-any-ledger - resumes a transaction using a ledger wallet'
+	@echo  '  interact-any-ledger - runs an interaction to a remote network using a ledger wallet'
+	@echo  ''
+
+deploy-any-local :;
+	@echo "Running $(contract) on local chain"
+	@SAVE_DEPLOYMENTS=1 $(if $(context),DEPLOYMENT_CONTEXT=$(context)) \
+	forge script scripts/deployments/${type}/${contract}.s.sol:${contract} \
+	--ffi --rpc-url ${rpc} --private-key ${LOCAL_PRIVATE_KEY} --broadcast
+
+interact-any-local :;
+	@echo "Running $(contract) on local chain"
+	@$(if $(context),DEPLOYMENT_CONTEXT=$(context)) \
+	forge script scripts/interactions/${contract}.s.sol:${contract} \
+	--ffi --rpc-url ${rpc} --private-key ${LOCAL_PRIVATE_KEY} --broadcast
+
+deploy-any :;
+	@echo "Running $(contract) on remote network"
+	@SAVE_DEPLOYMENTS=1 $(if $(context),DEPLOYMENT_CONTEXT=$(context)) \
+	forge script scripts/deployments/${type}/${contract}.s.sol:${contract} \
+	--ffi --rpc-url ${rpc} --private-key ${private_key} --broadcast --verify
+
+resume-any :;
+	@forge script scripts/deployments/${type}/${contract}.s.sol:${contract} \
+	--ffi --rpc-url ${rpc} --private-key ${private_key} --verifier-url ${verifier} --etherscan-api-key ${etherscan} --verify --resume
+
+interact-any :;
+	@echo "Running $(contract) on remote network"
+	@$(if $(context),DEPLOYMENT_CONTEXT=$(context)) \
+	forge script scripts/interactions/${contract}.s.sol:${contract} \
+	--ffi --rpc-url ${rpc} --private-key ${private_key} --broadcast
+
+fork-any :;
+	@echo "Running $(contract) on a forked remote network"
+	@forge script scripts/interactions/${contract}.s.sol:${contract} \
+	--ffi --fork-url ${rpc} --private-key ${private_key} -vvvv
+
+verify-any :;
+	@echo "Verifying $(contract) on a remote network"
+	@forge verify-contract ${address} ${contract}	--rpc-url ${rpc}
+
+explicit-verify-any :;
+	@echo "Verifying $(contract) on a remote network"
+	@forge verify-contract ${address} ${contract} --verifier-url ${verifier} --etherscan-api-key ${etherscan}
+
+deploy-any-ledger :;
+	@echo "Running $(contract) on remote network"
+	@SAVE_DEPLOYMENTS=1 $(if $(context),DEPLOYMENT_CONTEXT=$(context)) \
+	forge script scripts/deployments/${type}/${contract}.s.sol:${contract} \
+	--ledger --hd-paths ${hd_path} --sender ${sender} \
+	--ffi --rpc-url ${rpc} --broadcast --verify
+
+resume-any-ledger :;
+	@forge script scripts/deployments/${type}/${contract}.s.sol:${contract} \
+	--ledger --hd-paths ${hd_path} --sender ${sender} \
+	--ffi --rpc-url ${rpc} --broadcast --verify --resume
+
+interact-any-ledger :;
+	@echo "Running $(contract) on remote network"
+	@$(if $(context),DEPLOYMENT_CONTEXT=$(context)) \
+	forge script scripts/interactions/${contract}.s.sol:${contract} \
+	--ledger --hd-paths ${hd_path} --sender ${sender} \
+	--ffi --rpc-url ${rpc} --broadcast
+
+
 
 # ================================== LOCAL ==================================
 
 # ===========================
 # 				Base Anvil
 # ===========================
-deploy-base-anvil:;
-	@echo "Deploying $(contract)..."
-	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ffi --rpc-url base_anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast
+deploy-base-anvil :;
+	@$(MAKE) deploy-any-local rpc=base_anvil
 
 interact-base-anvil :;
-	@SAVE_DEPLOYMENTS=1 forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url base_anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast
+	@$(MAKE) interact-any-local rpc=base_anvil
 
 # ===========================
 # 				River Anvil
 # ===========================
 deploy-river-anvil:
-	@echo "Deploying $(contract)..."
-	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 \
-	forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} \
-	--ffi --rpc-url river_anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast
+	@$(MAKE) deploy-any-local rpc=river_anvil
 
 interact-river-anvil :;
-	@echo "Interacting through $(contract)..."
-	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url river_anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast
+	@$(MAKE) interact-any-local rpc=river_anvil
 
 # ================================== TESTNETS ==================================
 
@@ -55,137 +131,114 @@ interact-river-anvil :;
 # 			River Testnet
 # ===========================
 deploy-river-testnet :;
-	@echo "Deploying $(contract)..."
-	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ffi --rpc-url river_devnet --private-key ${TESTNET_PRIVATE_KEY} --verifier blockscout --verifier-url ${RIVERSCAN_DEVNET_URL} --broadcast --verify
+	@$(MAKE) deploy-any rpc=river_devnet private_key=${TESTNET_PRIVATE_KEY}
 
 interact-river-testnet :;
-	@echo "Interacting through $(contract)..."
-	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url river_devnet --private-key ${TESTNET_PRIVATE_KEY} --broadcast
+	@$(MAKE) interact-any rpc=river_devnet private_key=${TESTNET_PRIVATE_KEY}
 
-test-river-testnet :;
-	@forge build
-	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --fork-url river_devnet --private-key ${TESTNET_PRIVATE_KEY}
+fork-river-testnet :;
+	@$(MAKE) fork-any rpc=river_devnet private_key=${TESTNET_PRIVATE_KEY}
 
 verify-river-testnet :;
-	@echo "Verifying $(address)..."
-	@forge verify-contract ${address} ${contract} --chain river_devnet
+	@$(MAKE) verify-any rpc=river_devnet
 
 # ===========================
 # 				 Base Sepolia
 # ===========================
-deploy-base-sepolia :;
-	@echo "Deploying $(contract)..."
-	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ffi --rpc-url base_sepolia --private-key ${TESTNET_PRIVATE_KEY} --broadcast --verify --verifier blockscout --verifier-url ${BLOCKSCOUT_SEPOLIA_URL}
-
 deploy-ledger-base-sepolia :;
-	@echo "Deploying $(contract)..."
-	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ledger --hd-paths "m/44'/60'/1'/0/0" --sender ${PRODUCTION_ADDRESS} --ffi --rpc-url base_sepolia --broadcast --verify --verifier blockscout --verifier-url ${BLOCKSCOUT_SEPOLIA_URL}
+	@$(MAKE) deploy-any-ledger rpc=base_sepolia hd_path="m/44\'/60\'/1\'/0/0" sender=${PRODUCTION_ADDRESS}
+	@$(MAKE) resume-any-ledger rpc=base_sepolia hd_path="m/44\'/60\'/1\'/0/0" sender=${PRODUCTION_ADDRESS} verifier=${BASESCAN_SEPOLIA_URL} etherscan=${BASESCAN_API_KEY}
+
+deploy-base-sepolia :;
+	@$(MAKE) deploy-any rpc=base_sepolia private_key=${TESTNET_PRIVATE_KEY}
+	@$(MAKE) resume-any rpc=base_sepolia private_key=${TESTNET_PRIVATE_KEY} verifier=${BASESCAN_SEPOLIA_URL} etherscan=${BASESCAN_API_KEY}
 
 interact-base-sepolia :;
-	@echo "Interacting through $(contract)..."
-	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url base_sepolia --private-key ${TESTNET_PRIVATE_KEY} --broadcast --verify --verifier-url ${BASESCAN_SEPOLIA_URL} --etherscan-api-key ${BASESCAN_API_KEY}
+	@$(MAKE) interact-any rpc=base_sepolia private_key=${TESTNET_PRIVATE_KEY}
 
-interact-alpha-base-sepolia :;
-	@echo "Interacting through $(contract)..."
-	@SAVE_DEPLOYMENTS=1 DEPLOYMENT_CONTEXT=alpha forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url base_sepolia --private-key ${TESTNET_PRIVATE_KEY} --broadcast
+fork-base-sepolia :;
+	@$(MAKE) fork-any rpc=base_sepolia private_key=${TESTNET_PRIVATE_KEY}
 
-test-base-sepolia :;
-	@echo "Testing $(contract)..."
-	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --fork-url base_sepolia --private-key ${TESTNET_PRIVATE_KEY}
-
-verify-basescan-base-sepolia :;
-	@forge verify-contract ${address} ${contract} --chain-id 84532 --verifier-url ${BASESCAN_SEPOLIA_URL} --etherscan-api-key ${BASESCAN_API_KEY}
-
-verify-blockscout-base-sepolia :;
-	@forge verify-contract ${address} ${contract} --chain-id 84532 --verifier blockscout --verifier-url ${BLOCKSCOUT_SEPOLIA_URL}
+verify-base-sepolia :;
+	@$(MAKE) verify-any rpc=base_sepolia
+	@$(MAKE) explicit-verify-any rpc=base_sepolia verifier=${BASESCAN_SEPOLIA_URL} etherscan=${BASESCAN_API_KEY}
 
 # ===========================
 # 				Sepolia
 # ===========================
 
 deploy-sepolia :;
-	@echo "Deploying $(contract)..."
-	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ffi --rpc-url sepolia --private-key ${TESTNET_PRIVATE_KEY} --broadcast --verify --legacy -vvvv
-
-verify-etherscan-sepolia :;
-	@forge verify-contract ${address} ${contract} --chain sepolia --verifier-url ${ETHERSCAN_SEPOLIA_URL} --etherscan-api-key ${ETHERSCAN_API_KEY}
-
-verify-sepolia :;
-	@forge verify-contract ${address} ${contract} --chain sepolia
+	@$(MAKE) deploy-any rpc=sepolia private_key=${TESTNET_PRIVATE_KEY}
 
 interact-sepolia :;
-	@echo "Interacting through $(contract)..."
-	@forge script scripts/interactions/${contract}.s.sol:${contract} --ffi --rpc-url sepolia --private-key ${TESTNET_PRIVATE_KEY} --broadcast --legacy
+	@$(MAKE) interact-any rpc=sepolia private_key=${TESTNET_PRIVATE_KEY}
 
-# ================================== ALPHA ==================================
+fork-sepolia :;
+	@$(MAKE) fork-any rpc=sepolia private_key=${TESTNET_PRIVATE_KEY}
 
-deploy-alpha-base-anvil:;
-	@echo "Deploying $(contract)..."
-	@SAVE_DEPLOYMENTS=1 DEPLOYMENT_CONTEXT=alpha forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ffi --rpc-url base_anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast
-
-deploy-alpha-sepolia :;
-	@echo "Deploying $(contract)..."
-	@SAVE_DEPLOYMENTS=1 DEPLOYMENT_CONTEXT=alpha forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ffi --rpc-url sepolia --private-key ${TESTNET_PRIVATE_KEY} --broadcast --verify --legacy -vvvv
-
-deploy-alpha-base-sepolia :;
-	@echo "Deploying $(contract)..."
-	@SAVE_DEPLOYMENTS=1 DEPLOYMENT_CONTEXT=alpha forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ffi --rpc-url base_sepolia --private-key ${TESTNET_PRIVATE_KEY} --broadcast --verify --verifier blockscout --verifier-url ${BLOCKSCOUT_SEPOLIA_URL}
-
-deploy-alpha-river-testnet :;
-	@echo "Deploying $(contract)..."
-	@SAVE_DEPLOYMENTS=1 DEPLOYMENT_CONTEXT=alpha forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ffi --rpc-url river_devnet --private-key ${TESTNET_PRIVATE_KEY} --verifier blockscout --verifier-url ${RIVERSCAN_DEVNET_URL} --broadcast --verify
-
+verify-sepolia :;
+	@$(MAKE) verify-any rpc=sepolia
 
 # ================================== PRODUCTION ==================================
 
-# ===========================
-# 				 	Any
-# ===========================
-deploy-any :;
-	@echo "Deploying $(contract)..."
-	@forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ffi --rpc-url ${rpc} --private-key ${TESTNET_PRIVATE_KEY} --broadcast --verifier-url ${verifier} --etherscan-api-key ${etherscan} --verify -vvvv
 
 # ===========================
 # 				 	River
 # ===========================
 deploy-river :;
-	@echo "Deploying $(contract)..."
-	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ledger --hd-paths "m/44'/60'/1'/0/0" --sender ${PRODUCTION_ADDRESS} --ffi --rpc-url river --verifier blockscout --verifier-url ${RIVERSCAN_URL} --broadcast --verify -vvvv
+	@$(MAKE) deploy-any-ledger rpc=river hd_path="m/44\'/60\'/1\'/0/0" sender=${PRODUCTION_ADDRESS}
 
 interact-river :;
-	@echo "Interacting through $(contract)..."
-	@forge script scripts/interactions/${contract}.s.sol:${contract} --ledger --hd-paths "m/44'/60'/1'/0/0" --sender ${PRODUCTION_ADDRESS} --ffi --rpc-url river --broadcast
+	@$(MAKE) interact-any-ledger rpc=river hd_path="m/44\'/60\'/1\'/0/0" sender=${PRODUCTION_ADDRESS}
 
 # ===========================
 # 				 		Base
 # ===========================
-
 deploy-base :;
-	@echo "Deploying $(contract)..."
-	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ledger --hd-paths "m/44'/60'/1'/0/0" --sender ${PRODUCTION_ADDRESS} --ffi --rpc-url base --verifier-url ${BASESCAN_URL} --etherscan-api-key ${BASESCAN_API_KEY} --broadcast --verify -vvvv
-
-test-base :;
-	@forge test --fork-url base --mc ${contract} -vvvv
+	@$(MAKE) deploy-any-ledger rpc=base hd_path="m/44\'/60\'/1\'/0/0" sender=${PRODUCTION_ADDRESS}
+	@$(MAKE) resume-any-ledger rpc=base hd_path="m/44\'/60\'/1\'/0/0" sender=${PRODUCTION_ADDRESS} verifier=${BASESCAN_URL} etherscan=${BASESCAN_API_KEY}
 
 interact-base :;
-	@echo "Interacting through $(contract)..."
-	@forge script scripts/interactions/${contract}.s.sol:${contract} --ledger --hd-paths "m/44'/60'/1'/0/0" --sender ${PRODUCTION_ADDRESS} --ffi --rpc-url base --broadcast
+	@$(MAKE) interact-any-ledger rpc=base hd_path="m/44\'/60\'/1\'/0/0" sender=${PRODUCTION_ADDRESS}
+
+fork-base :;
+	@$(MAKE) fork-any rpc=base private_key=${TESTNET_PRIVATE_KEY}
 
 verify-base :;
-	@forge verify-contract ${address} ${contract} --chain-id base --verifier-url ${BASESCAN_URL} -e ${BASESCAN_API_KEY}
-
-verify-blockscout-base :;
-	@forge verify-contract ${address} ${contract} --chain-id base --verifier blockscout --verifier-url ${BLOCKSCOUT_BASE_URL}
+	@$(MAKE) verify-any rpc=base
+	@$(MAKE) explicit-verify-any rpc=base verifier=${BASESCAN_URL} etherscan=${BASESCAN_API_KEY}
 
 # ===========================
 # 				Mainnet
 # ===========================
-
 deploy-mainnet :;
-	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/$(if $(findstring facet,$(type)),facets/)${contract}.s.sol:${contract} --ledger --hd-paths "m/44'/60'/1'/0/0" --sender ${PRODUCTION_ADDRESS} --ffi --rpc-url mainnet --broadcast --verify --legacy -vvvv
+	@$(MAKE) deploy-any-ledger rpc=mainnet hd_path="m/44\'/60\'/1\'/0/0" sender=${PRODUCTION_ADDRESS}
+
+interact-mainnet :;
+	@$(MAKE) interact-any-ledger rpc=mainnet hd_path="m/44\'/60\'/1\'/0/0" sender=${PRODUCTION_ADDRESS}
+
+fork-mainnet :;
+	@$(MAKE) fork-any rpc=mainnet private_key=${TESTNET_PRIVATE_KEY}
 
 verify-mainnet :;
-	@forge verify-contract ${address} ${contract} --chain mainnet
+	@$(MAKE) verify-any rpc=mainnet
+	@$(MAKE) explicit-verify-any rpc=mainnet verifier=${BASESCAN_URL} etherscan=${BASESCAN_API_KEY}
 
-test-mainnet :;
-	@forge test --fork-url mainnet --mc ${contract} -vvvv
+
+# ================================== ENVIRONMENTS ==================================
+
+# ===========================
+# 				ALPHA
+# ===========================
+
+deploy-alpha-base-anvil:;
+	@$(MAKE) deploy-any-local context=alpha rpc=base_anvil
+
+deploy-alpha-sepolia :;
+	@$(MAKE) deploy-any context=alpha rpc=sepolia private_key=${TESTNET_PRIVATE_KEY}
+
+deploy-alpha-base-sepolia :;
+	@$(MAKE) deploy-any context=alpha rpc=base_sepolia private_key=${TESTNET_PRIVATE_KEY}
+
+deploy-alpha-river-testnet :;
+	@$(MAKE) deploy-any context=alpha rpc=river_devnet private_key=${TESTNET_PRIVATE_KEY}

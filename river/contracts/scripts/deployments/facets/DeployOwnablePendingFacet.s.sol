@@ -8,7 +8,7 @@ pragma solidity ^0.8.23;
 //contracts
 import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {OwnablePendingFacet} from "./../../../src/diamond/facets/ownable/pending/OwnablePendingFacet.sol";
+import {OwnablePendingFacet} from "contracts/src/diamond/facets/ownable/pending/OwnablePendingFacet.sol";
 
 contract DeployOwnablePendingFacet is FacetHelper, Deployer {
   constructor() {

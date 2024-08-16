@@ -17,7 +17,7 @@ const logger = getLogger('streamRegistry')
 export async function getNodeForStream(
 	streamId: StreamIdHex,
 ): Promise<{ url: string; lastMiniblockNum: BigNumber }> {
-	logger.info('getNodeForStream', streamId)
+	logger.info({ streamId }, 'getNodeForStream')
 
 	const now = Date.now()
 	const cachedData = cache[streamId]
@@ -31,13 +31,16 @@ export async function getNodeForStream(
 	const streamData = await riverRegistry.streamRegistry.read.getStream(streamId)
 
 	if (streamData.nodes.length === 0) {
-		const err = new Error(`No nodes found for stream ${streamId}`)
-		logger.error(`No nodes found for stream`, {
-			streamId,
-			err,
-		})
+		const error = new Error(`No nodes found for stream ${streamId}`)
+		logger.error(
+			{
+				streamId,
+				err: error,
+			},
+			'No nodes found for stream',
+		)
 
-		throw err
+		throw error
 	}
 
 	const lastMiniblockNum = streamData.lastMiniblockNum
@@ -45,11 +48,14 @@ export async function getNodeForStream(
 	const randomIndex = Math.floor(Math.random() * streamData.nodes.length)
 	const node = await riverRegistry.nodeRegistry.read.getNode(streamData.nodes[randomIndex])
 
-	logger.info(`connected to node`, {
-		streamId,
-		nodeUrl: node.url,
-		lastMiniblockNum,
-	})
+	logger.info(
+		{
+			streamId,
+			nodeUrl: node.url,
+			lastMiniblockNum,
+		},
+		'connected to node',
+	)
 
 	// Cache the result with a 15-minute expiration
 	cache[streamId] = {

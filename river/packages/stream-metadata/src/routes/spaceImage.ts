@@ -28,11 +28,14 @@ export async function fetchSpaceImage(request: FastifyRequest, reply: FastifyRep
 	try {
 		const streamId = makeStreamId(StreamPrefix.Space, spaceAddress)
 		stream = await getStream(streamId)
-	} catch (e) {
-		logger.error(`Failed to get stream`, {
-			error: e,
-			spaceAddress,
-		})
+	} catch (error) {
+		logger.error(
+			{
+				error,
+				spaceAddress,
+			},
+			'Failed to get stream',
+		)
 		return reply.code(404).send('Stream not found')
 	}
 
@@ -80,10 +83,13 @@ function getEncryption(chunkedMedia: ChunkedMedia): { key: Uint8Array; iv: Uint8
 			return { key, iv }
 		}
 		default:
-			logger.error('Unsupported encryption', {
-				case: chunkedMedia.encryption.case,
-				value: chunkedMedia.encryption.value,
-			})
+			logger.error(
+				{
+					case: chunkedMedia.encryption.case,
+					value: chunkedMedia.encryption.value,
+				},
+				'Unsupported encryption',
+			)
 			throw new Error('Unsupported encryption')
 	}
 }

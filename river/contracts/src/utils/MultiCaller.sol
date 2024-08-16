@@ -39,7 +39,7 @@ abstract contract MultiCaller {
         // solhint-disable-next-line max-line-length
         // ref: https://docs.soliditylang.org/en/v0.8.0/control-structures.html#panic-via-assert-and-error-via-require)
         string memory reason = "panicked: 0x__";
-        uint errorCode;
+        uint256 errorCode;
         assembly {
           errorCode := mload(add(returnedData, 0x24))
           let reasonWord := mload(add(reason, 0x20))
@@ -61,7 +61,7 @@ abstract contract MultiCaller {
       } else {
         // case 3: Error(string) (Defined at least since 0.7.0)
         // case 4: Custom errors (Defined since 0.8.0)
-        uint len = returnedData.length;
+        uint256 len = returnedData.length;
         assembly {
           revert(add(returnedData, 32), len)
         }

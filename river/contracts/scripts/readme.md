@@ -5,36 +5,38 @@ Inspired by [hardhat-deploy](https://github.com/wighawag/hardhat-deploy)
 For each contract being deployed, we create a script that will:
 
 1. inherit from `Deployer`
-2. implements a `versionName()` and `__deploy()` function
+2. implement a `versionName()` and `__deploy()` function
+
+Example contract
 
 ```solidity
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.20;
+pragma solidity ^0.8.24;
 
-import { Deployer } from "./common/Deployer.s.sol";
-import { Pioneer } from "contracts/src/core/tokens/Pioneer.sol";
+import { Deployer } from "contracts/scripts/common/Deployer.s.sol";
+import { MockERC721A } from "contracts/test/mocks/MockERC721A.sol";
 
-contract DeployPioneer is Deployer {
+contract DeployMockERC721A is Deployer {
   function versionName() public pure override returns (string memory) {
-    return "pioneerToken"; // will show up in contracts/deployments/{chain}/{pioneerToken}.json
+    return "mockERC721A";
   }
 
   function __deploy(address deployer) public override returns (address) {
     vm.broadcast(deployer);
-    return address(new Pioneer("Pioneer", "PIONEER", ""));
+    return address(new MockERC721A());
   }
 }
 ```
 
 The framework will:
 
-1. Load an existing deployment from `contracts/deployments/<network>/<contracts>.json`
+1. Load an existing deployment from `contracts/deployments/<deploymentContext>/<chainIdAlias>/<contracts>.json`
 
 2. if `OVERRIDE_DEPLOYMENTS=1` is set or if no deployments are found, it will:
 
-- read `PRIVATE_KEY` from env (LOCAL_PRIVATE_KEY for anvil)
-- invoke `__deploy()` with the private key
-- if `SAVE_DEPLOYMENTS` is set; it will save the deployment to `contracts/deployments/<network>/<contract>.json`
+- read `PRIVATE_KEY` from env (LOCAL_PRIVATE_KEY for anvil) or wait for ledger
+- invoke `__deploy()` function
+- if `SAVE_DEPLOYMENTS` is set; it will save the deployment to `contracts/deployments/deploymentContext/<network>/<contract>.json`
 
 This makes it easy to:
 
@@ -47,17 +49,19 @@ This makes it easy to:
 
 - `OVERRIDE_DEPLOYMENTS=1`: It will redeploy a version of the contracts even if there's a cache in deployments assigned, be very careful when using this
 - `SAVE_DEPLOYMENTS=1`: It will save a cached address of deployments to `contracts/deployments/<network>/<contract>.json`
+- `DEPLOYMENT_CONTEXT=string`: It will save the addresses on a subdirectory with the given name, useful for deployment contract to same network
 
-## How to deploy
+## How to deploy locally (step-by-step)
 
 ```bash
-# say you want to deploy a new ${CONTRACT}
+# say you want to deploy a new MockERC721A
 
 # Provision a new deployer
 -> cast wallet new
 
-# save the private in .env (PRIVATE_KEY=...||LOCAL_PRIVATE_KEY=...)
-# Fund the deployer address
+# save the key in .env (LOCAL_PRIVATE_KEY=...)
+
+# Fund the deployer address (this is the first address shown when runing `anvil`)
 -> cast send ${NEW_WALLET_ADDRESS} --value 1ether -f 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 
 # perform a local simulation
@@ -66,45 +70,24 @@ This makes it easy to:
 # perform a simulation against a network
 -> forge script script/${CONTRACT}.s.sol --rpc-url <network>
 
-# perform the deployment
--> SAVE_DEPLOYMENTS=1 forge script script/${CONTRACT}.s.sol --ffi --rpc-url <network> --broadcast --verify --watch
+# run anvil in separate terminal
+-> anvil
 
-# Optionally verify the contract as a separate step
--> forge verify-contract <CONTRACT_ADDRESS> <CONTRACT_NAME> --chain <network> --watch
+# perform the deployment to a local network
+-> make deploy-any-local contract=DeployMockERC721A
 ```
 
 ## How to script (interact with deployed contracts through foundry)
 
 ```bash
-# say you want to upgrade an implementation of Space inside SpaceFactory
+# say you want to mint from MockERC721A
 
-# deploy the same implementation contract you used to deploy SpaceImpl
-# but with flags OVERRIDE_DEPLOYMENTS and SAVE_DEPLOYMENTS equal to 1
--> OVERRIDE_DEPLOYMENTS=1 SAVE_DEPLOYMENTS=1 make deploy-base-anvil contract=DeploySpaceImpl
+# deploy a local implementation of MockERC721A by calling DeployMockERC721A
+-> make deploy-any-local rpc=base_anvil contract=DeployMockERC721A
 
-# next we'll deploy the script UpgradeSpaceImpl without flags
+# next we'll call the script InteractMockERC721A
 # This will grab new and existing deployment addresses from our deployments cache and use those to interact with each other
--> make deploy-base-anvil contract=UpgradeSpaceImpl
-```
-
-## How to deploy a new space factory implementation, a new space implementation and update space factory to point to both of these?
-
-1. Deploy new Space Factory implementation and `upgrade` current Space Factory proxy contract
-
-```bash
-SAVE_DEPLOYMENTS=1 make deploy-goerli contract=UpgradeSpaceFactoryImpl
-```
-
-2. Deploy new Space implementation, you can either override the current cached address or just change your `versionName()` in the contract to `spaceImplv2` and remove the `OVERRIDE_DEPLOYMENTS=1` flag
-
-```bash
-SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 make deploy-goerli contract=DeploySpaceImpl
-```
-
-3. Update the Space Factory with the new Space Implementation
-
-```bash
-SAVE_DEPLOYMENTS=1 make deploy-goerli contract=UpgradeSpaceImpl
+-> make interact-any-local rpc=base_anvil contract=InteractMockERC721A
 ```
 
 # How to deploy predeterministic contracts?
@@ -130,7 +113,7 @@ contract DeployHello is Deployer {
   }
 
   function __deploy(address deployer) public override returns (address) {
-    bytes32 salt = bytes32(uint256(deployer)); // create a salt
+    bytes32 salt = bytes32(uint256(deployer)); // create a salt from address
 
     bytes32 initCodeHash = hashInitCode(
       type(Hello).creationCode,

@@ -13,11 +13,11 @@ import {SpaceDelegationFacet} from "contracts/src/base/registry/facets/delegatio
 import {Interaction} from "contracts/scripts/common/Interaction.s.sol";
 
 // deployments
-import {DeploySpaceOwner} from "contracts/scripts/deployments/DeploySpaceOwner.s.sol";
-import {DeploySpaceFactory} from "contracts/scripts/deployments/DeploySpaceFactory.s.sol";
-import {DeployBaseRegistry} from "contracts/scripts/deployments/DeployBaseRegistry.s.sol";
-import {DeployRiverBase} from "contracts/scripts/deployments/DeployRiverBase.s.sol";
-import {DeployProxyBatchDelegation} from "contracts/scripts/deployments/DeployProxyBatchDelegation.s.sol";
+import {DeploySpaceOwner} from "contracts/scripts/deployments/diamonds/DeploySpaceOwner.s.sol";
+import {DeploySpaceFactory} from "contracts/scripts/deployments/diamonds/DeploySpaceFactory.s.sol";
+import {DeployBaseRegistry} from "contracts/scripts/deployments/diamonds/DeployBaseRegistry.s.sol";
+import {DeployRiverBase} from "contracts/scripts/deployments/utils/DeployRiverBase.s.sol";
+import {DeployProxyBatchDelegation} from "contracts/scripts/deployments/utils/DeployProxyBatchDelegation.s.sol";
 
 contract InteractPostDeploy is Interaction {
   DeploySpaceOwner deploySpaceOwner = new DeploySpaceOwner();

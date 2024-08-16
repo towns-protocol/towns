@@ -16,13 +16,16 @@ process.title = 'stream-metadata'
 
 const logger = getLogger('server')
 
-logger.info({
-	riverEnv: config.riverEnv,
-	chainId: config.web3Config.river.chainId,
-	port: config.port,
-	riverRegistry: config.web3Config.river.addresses.riverRegistry,
-	riverChainRpcUrl: config.riverChainRpcUrl,
-})
+logger.info(
+	{
+		riverEnv: config.riverEnv,
+		chainId: config.web3Config.river.chainId,
+		port: config.port,
+		riverRegistry: config.web3Config.river.addresses.riverRegistry,
+		riverChainRpcUrl: config.riverChainRpcUrl,
+	},
+	'config',
+)
 
 /*
  * Server setup
@@ -57,16 +60,15 @@ export function setupRoutes(srv: Server) {
 
 	srv.get('/space/:spaceAddress', async (request, reply) => {
 		const { spaceAddress } = request.params as { spaceAddress?: string }
-		logger.info(`GET /space`, { spaceAddress })
+		logger.info({ spaceAddress }, 'GET /space/../metadata')
+
 		const { protocol, serverAddress } = getServerInfo()
 		return fetchSpaceMetadata(request, reply, `${protocol}://${serverAddress}`)
 	})
 
 	srv.get('/space/:spaceAddress/image', async (request, reply) => {
 		const { spaceAddress } = request.params as { spaceAddress?: string }
-		logger.info(`GET /space/../image`, {
-			spaceAddress,
-		})
+		logger.info({ spaceAddress }, 'GET /space/../image')
 
 		return fetchSpaceImage(request, reply)
 	})
@@ -95,8 +97,8 @@ process.on('SIGTERM', async () => {
 		await server.close()
 		logger.info('Server closed gracefully')
 		process.exit(0)
-	} catch (err) {
-		logger.error('Error during server shutdown', err)
+	} catch (error) {
+		logger.error(error, 'Error during server shutdown')
 		process.exit(1)
 	}
 })
@@ -107,8 +109,8 @@ async function main() {
 		setupRoutes(server)
 		await server.listen({ port: config.port })
 		logger.info('Server started')
-	} catch (err) {
-		logger.error('Error starting server', err)
+	} catch (error) {
+		logger.error(error, 'Error starting server')
 		process.exit(1)
 	}
 }

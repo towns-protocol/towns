@@ -23,7 +23,7 @@ contract DeployImplementationRegistry is FacetHelper, Deployer {
   }
 
   function versionName() public pure override returns (string memory) {
-    return "implementationRegistry";
+    return "implementationRegistryFacet";
   }
 
   function __deploy(address deployer) public override returns (address) {

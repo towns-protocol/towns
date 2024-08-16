@@ -11,7 +11,7 @@ import {MockMessenger} from "contracts/test/mocks/MockMessenger.sol";
 
 contract DeployMockMessenger is Deployer {
   function versionName() public pure override returns (string memory) {
-    return "mockMessenger";
+    return "mockMessengerFacet";
   }
 
   function __deploy(address deployer) public override returns (address) {

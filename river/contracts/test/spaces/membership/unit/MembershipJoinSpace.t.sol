@@ -57,7 +57,7 @@ contract MembershipJoinSpace is
       address[] memory selectedNodes
     ) = _getRequestedEntitlementData(logs);
 
-    for (uint i = 0; i < 3; i++) {
+    for (uint256 i = 0; i < 3; i++) {
       vm.prank(selectedNodes[i]);
       IEntitlementGated(contractAddress).postEntitlementCheckResult(
         transactionId,
@@ -167,7 +167,7 @@ contract MembershipJoinSpace is
     uint256 nextTokenId = membership.totalSupply();
     IEntitlementGated _entitlementGated = IEntitlementGated(contractAddress);
 
-    for (uint i = 0; i < selectedNodes.length; i++) {
+    for (uint256 i = 0; i < selectedNodes.length; i++) {
       // First quorum nodes should pass, the rest should fail.
       if (i <= quorum) {
         vm.prank(selectedNodes[i]);
@@ -214,7 +214,7 @@ contract MembershipJoinSpace is
     uint256 numCheckRequests = 0;
 
     // Capture relevant event logs
-    for (uint i = 0; i < requestLogs.length; i++) {
+    for (uint256 i = 0; i < requestLogs.length; i++) {
       address callerAddress;
       address contractAddress;
       uint256 roleId;
@@ -247,7 +247,7 @@ contract MembershipJoinSpace is
     EntitlementCheckRequestEvent memory firstRequest = entitlementCheckRequests[
       0
     ];
-    for (uint j = 0; j < firstRequest.selectedNodes.length; j++) {
+    for (uint256 j = 0; j < firstRequest.selectedNodes.length; j++) {
       IEntitlementGatedBase.NodeVoteStatus status = IEntitlementGatedBase
         .NodeVoteStatus
         .PASSED;
@@ -322,7 +322,7 @@ contract MembershipJoinSpace is
     uint256 quorum = selectedNodes.length / 2;
 
     // All checks fail, should result in no token mint.
-    for (uint i = 0; i < selectedNodes.length; i++) {
+    for (uint256 i = 0; i < selectedNodes.length; i++) {
       if (i <= quorum) {
         vm.prank(selectedNodes[i]);
         IEntitlementGated(contractAddress).postEntitlementCheckResult(
@@ -363,7 +363,7 @@ contract MembershipJoinSpace is
       address[] memory selectedNodes
     ) = _getRequestedEntitlementData(logs);
 
-    for (uint i = 0; i < 3; i++) {
+    for (uint256 i = 0; i < 3; i++) {
       vm.prank(selectedNodes[i]);
       IEntitlementGated(contractAddress).postEntitlementCheckResult(
         transactionId,
@@ -402,7 +402,7 @@ contract MembershipJoinSpace is
       address[] memory selectedNodes
     ) = _getRequestedEntitlementData(requestLogs);
 
-    for (uint k = 0; k < 3; k++) {
+    for (uint256 k = 0; k < 3; k++) {
       if (k == 2) {
         vm.recordLogs(); // Start recording logs
       }
@@ -418,7 +418,7 @@ contract MembershipJoinSpace is
 
       if (k == 2) {
         Vm.Log[] memory resultLogs = vm.getRecordedLogs(); // Retrieve the recorded logs
-        for (uint l; l < resultLogs.length; l++) {
+        for (uint256 l; l < resultLogs.length; l++) {
           if (resultLogs[l].topics[0] == RESULT_POSTED) {
             checkRequestedMatched = true;
           }
@@ -459,7 +459,7 @@ contract MembershipJoinSpace is
   function _getEntitlementCheckRequestCount(
     Vm.Log[] memory logs
   ) internal pure returns (uint256 count) {
-    for (uint i = 0; i < logs.length; i++) {
+    for (uint256 i = 0; i < logs.length; i++) {
       if (logs[i].topics[0] == CHECK_REQUESTED) {
         count++;
       }
@@ -478,7 +478,7 @@ contract MembershipJoinSpace is
       address[] memory selectedNodes
     )
   {
-    for (uint i = 0; i < requestLogs.length; i++) {
+    for (uint256 i = 0; i < requestLogs.length; i++) {
       if (
         requestLogs[i].topics.length > 0 &&
         requestLogs[i].topics[0] == CHECK_REQUESTED
