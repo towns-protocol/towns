@@ -37,11 +37,11 @@ export class RuleEntitlementShim
         return this.read.getRuleData(roleId)
     }
 
-    public decodeGetRuleData(entitlmentData: string): LocalhostBase.RuleDataStruct[] | undefined {
+    public decodeGetRuleData(entitlementData: string): LocalhostBase.RuleDataStruct[] | undefined {
         try {
             const decoded = this.decodeFunctionResult(
                 'getRuleData',
-                entitlmentData,
+                entitlementData,
             ) as unknown as LocalhostBase.RuleDataStruct[]
 
             if (decoded.length === 0) {
