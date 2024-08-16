@@ -8,6 +8,7 @@ export type UploadImageRequestConfig = {
     file: File
     type: 'spaceIcon' | 'avatar'
     imageUrl: string
+    setProgress: (progress: number) => void
 }
 
 async function uploadImage(args: UploadImageRequestConfig) {

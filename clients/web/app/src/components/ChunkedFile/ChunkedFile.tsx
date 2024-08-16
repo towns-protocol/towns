@@ -5,7 +5,7 @@ import { useChunkedMedia } from 'use-towns-client'
 import { useDownloadFile } from 'use-towns-client/dist/hooks/use-chunked-media'
 import { useMutation } from '@tanstack/react-query'
 import { Box, Button, Icon, IconButton, Stack, Text } from '@ui'
-import { isMediaMimeType } from 'utils/isMediaMimeType'
+import { isImageMimeType } from 'utils/isMediaMimeType'
 import { useDevice } from 'hooks/useDevice'
 import { useIsMessageAttachementContext } from '@components/MessageAttachments/hooks/useIsMessageAttachementContext'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
@@ -75,7 +75,7 @@ export const ChunkedFile = (props: Props) => {
         [mutateAsync],
     )
 
-    if (isMediaMimeType(props.mimetype)) {
+    if (isImageMimeType(props.mimetype)) {
         return <ChunkedImageMedia {...props} onDownloadClicked={onDownloadClicked} />
     } else if (props.mimetype.match('video')) {
         return <ChunkedVideoMedia {...props} onDownloadClicked={onDownloadClicked} />

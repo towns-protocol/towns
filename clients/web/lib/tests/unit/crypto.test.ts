@@ -26,7 +26,11 @@ describe('Crypto', () => {
         expect(info.iv.reduce((a, b) => a + b, 0)).not.toEqual(0)
         expect(info.secretKey.reduce((a, b) => a + b, 0)).not.toEqual(0)
 
-        const decrypted = await decryptAESGCM(info.ciphertext, info.iv, info.secretKey)
+        const decrypted = await decryptAESGCM({
+            ciphertext: info.ciphertext,
+            secretKey: info.secretKey,
+            iv: info.iv,
+        })
         expect(decrypted).toEqual(data)
     })
 

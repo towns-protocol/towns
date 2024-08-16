@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { isSpaceStreamId } from '@river-build/sdk'
+import { getImageServiceUrl } from 'api/lib/fetchImage'
 import { useImageStore } from './useImageStore'
 
 export const ImageVariants = {
@@ -17,7 +19,12 @@ const dateNow = Date.now()
 export const useImageSource = (resourceId: string, variant: ImageVariant) => {
     const storedImageUrl = useImageStore((state) => state.loadedResource[resourceId]?.imageUrl)
 
-    const externalImageUrl = `https://imagedelivery.net/qaaQ52YqlPXKEVQhjChiDA/${resourceId}/${variant}`
+    let externalImageUrl =
+        `https://imagedelivery.net/qaaQ52YqlPXKEVQhjChiDA/${resourceId}/${variant}` + `?${dateNow}`
+
+    if (isSpaceStreamId(resourceId)) {
+        externalImageUrl = getImageServiceUrl(resourceId) || externalImageUrl
+    }
 
     const [imageLoaded, setImageLoaded] = useState<boolean>(false)
     const [imageError, setImageError] = useState<boolean>(false)
@@ -51,6 +58,6 @@ export const useImageSource = (resourceId: string, variant: ImageVariant) => {
         // TODO: temporary cache busting
         // new images eventually show up, but the browser caches them and users who upload anything might see their old image for a while, even after refreshing
         // We're calling images directly from imagedelivery.net, we can't modify those headers unless we use some proxy - will need to revisit the CF worker or add a service worker interceptor
-        imageSrc: storedImageUrl || externalImageUrl + `?${dateNow}`,
+        imageSrc: storedImageUrl || externalImageUrl,
     }
 }

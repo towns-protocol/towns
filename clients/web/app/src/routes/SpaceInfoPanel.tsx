@@ -1,5 +1,5 @@
 import { Permission } from '@river-build/web3'
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useSearchParams } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
@@ -15,8 +15,10 @@ import {
     useSpaceId,
     useSpaceMembers,
     useTownsClient,
+    useTownsContext,
     useUser,
 } from 'use-towns-client'
+import { isValidStreamId } from '@river-build/sdk'
 import { EditTownInfo } from '@components/Panel/EditTownInfo'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { MembersPageTouchModal } from '@components/MembersPage/MembersPage'
@@ -50,6 +52,8 @@ import { useTokenMetadataForChainId } from 'api/lib/collectionMetadata'
 import { NetworkName } from '@components/Tokens/TokenSelector/NetworkName'
 import { useAppProgressStore } from '@components/AppProgressOverlay/store/appProgressStore'
 import { useNotificationSettings } from 'hooks/useNotificationSettings'
+import { UploadImageRequestConfig } from 'api/lib/uploadImage'
+import { useUploadAttachment } from '@components/MediaDropContext/useUploadAttachment'
 import { PublicTownPage } from './PublicTownPage/PublicTownPage'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 
@@ -77,6 +81,7 @@ export const SpaceInfo = () => {
         !isTouch && searchParams.get(CHANNEL_INFO_PARAMS.SPACE_SETTINGS_NAVIGATION) != null
     const isBannedUsersPanel = !isTouch && searchParams.get(CHANNEL_INFO_PARAMS.BANNED) != null
     const { leaveRoom } = useTownsClient()
+    const { casablancaClient } = useTownsContext()
     const channels = useSpaceChannels()
     const { loggedInWalletAddress } = useConnectivity()
 
@@ -226,6 +231,27 @@ export const SpaceInfo = () => {
 
     const setModalUndefined = useCallback(() => setActiveModal(undefined), [])
 
+    const { uploadTownImageToStream } = useUploadAttachment()
+    const isUploadingSpaceIconRef = useRef<boolean>(false)
+    const onUploadSpaceIcon = useCallback(
+        async ({ imageUrl, file, id: spaceId, type, setProgress }: UploadImageRequestConfig) => {
+            if (isUploadingSpaceIconRef.current) {
+                return
+            }
+
+            if (type === 'spaceIcon' && isValidStreamId(spaceId) && casablancaClient) {
+                isUploadingSpaceIconRef.current = true
+                try {
+                    // upload the space icon
+                    await uploadTownImageToStream(spaceId, file, setProgress)
+                } finally {
+                    isUploadingSpaceIconRef.current = false
+                }
+            }
+        },
+        [casablancaClient, uploadTownImageToStream],
+    )
+
     return (
         <>
             {space?.id && (
@@ -252,6 +278,7 @@ export const SpaceInfo = () => {
                                 register={register}
                                 formState={formState}
                                 clearErrors={clearErrors}
+                                overrideUploadCb={onUploadSpaceIcon}
                                 imageRestrictions={{
                                     // no limits on dimensions for spaces
                                     minDimension: {

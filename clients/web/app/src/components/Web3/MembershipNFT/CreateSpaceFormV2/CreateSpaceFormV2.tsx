@@ -28,7 +28,6 @@ import {
     UploadImageTemplateSize,
 } from '@components/UploadImage/LargeUploadImageTemplate'
 import { useImageStore } from '@components/UploadImage/useImageStore'
-import { UploadImageRequestConfig } from 'api/lib/uploadImage'
 import { InteractiveTownsToken } from '@components/TownsToken/InteractiveTownsToken'
 import { shortAddress } from 'ui/utils/utils'
 import { FadeInBox } from '@components/Transitions'
@@ -43,6 +42,7 @@ import { TokenInfoBox } from '@components/TownPageLayout/TokenInfoBox'
 import { CreateSpaceAnimation } from '@components/SetupAnimation/CreateSpaceAnimation'
 import { SECOND_MS } from 'data/constants'
 import { AppBugReportButton } from '@components/AppBugReport/AppBugReportButton'
+import { UploadImageRequestConfig } from 'api/lib/uploadImage'
 import { CreateSpaceFormV2SchemaType, schema } from './CreateSpaceFormV2.schema'
 import { AvatarPlaceholder } from '../AvatarPlaceholder'
 import { PanelType, TransactionDetails } from './types'
@@ -779,7 +779,7 @@ export const UploadImageField = ({
     const _isTouch = isTouch()
 
     const onUpload = useCallback(
-        ({ imageUrl, file, id }: Omit<UploadImageRequestConfig, 'type'>) => {
+        ({ imageUrl, file, id, type }: UploadImageRequestConfig) => {
             // set resource on image store so the image updates in the upload component
             const { setLoadedResource } = useImageStore.getState()
 

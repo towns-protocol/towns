@@ -15,7 +15,7 @@ export interface CreateSpaceFormState {
     step2: {
         [SPACE_NAME]: string | null
     }
-    spaceImageData: Omit<UploadImageRequestConfig, 'type' | 'id'> | null
+    spaceImageData: Omit<UploadImageRequestConfig, 'id'> | null
     createdSpaceId: string | null
     mintedTokenAddress: string | null
 }

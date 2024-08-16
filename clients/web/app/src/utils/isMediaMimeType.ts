@@ -13,6 +13,6 @@ const allowedMimeTypes = [
     'image/apng',
 ]
 
-export function isMediaMimeType(mimetype: string): boolean {
+export function isImageMimeType(mimetype: string): boolean {
     return allowedMimeTypes.includes(mimetype)
 }

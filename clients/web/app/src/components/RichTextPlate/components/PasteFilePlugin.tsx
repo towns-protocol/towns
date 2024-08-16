@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { Box, IconButton, MotionBox, Stack, Text } from '@ui'
 import { useMediaDropContext } from '@components/MediaDropContext/MediaDropContext'
-import { isMediaMimeType } from 'utils/isMediaMimeType'
+import { isImageMimeType } from 'utils/isMediaMimeType'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { FileUpload } from '@components/MediaDropContext/mediaDropTypes'
 
@@ -93,7 +93,7 @@ export const PastedFile = (props: PastedFileProps) => {
         }
     }, [content])
 
-    const showImagePreview = isMediaMimeType(info.mimetype)
+    const showImagePreview = isImageMimeType(info.mimetype)
     const [objectURL, setObjectURL] = useState<string | undefined>(undefined)
 
     useEffect(() => {

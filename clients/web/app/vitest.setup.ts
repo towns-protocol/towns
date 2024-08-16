@@ -6,6 +6,9 @@ import { act } from 'react-test-renderer'
 import { ResizeObserver } from '@juggle/resize-observer' // dependency of react-hook/resize-observer
 import { ConnectedWallet, EIP1193Provider, PrivyProvider } from '@privy-io/react-auth'
 import { Chain } from 'viem'
+import dotenv from 'dotenv'
+
+dotenv.config({ path: '.env.test' })
 
 server.listen()
 

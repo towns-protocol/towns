@@ -1,4 +1,4 @@
-import { Empty } from '@bufbuild/protobuf'
+import { Empty, PlainMessage } from '@bufbuild/protobuf'
 import { BigNumber, ContractReceipt, ContractTransaction, ethers } from 'ethers'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
@@ -24,7 +24,7 @@ import {
     IRuleEntitlementBase,
     UpdateChannelParams,
 } from '@river-build/web3'
-import { ChannelMessage_Post_Mention, FullyReadMarker } from '@river-build/proto'
+import { ChannelMessage_Post_Mention, ChunkedMedia, FullyReadMarker } from '@river-build/proto'
 import {
     ChannelTransactionContext,
     ChannelUpdateTransactionContext,
@@ -46,6 +46,7 @@ import {
 import {
     CreateChannelInfo,
     CreateSpaceInfo,
+    MediaStreamBlockInfo,
     Membership,
     MessageType,
     RoomMember,
@@ -457,7 +458,7 @@ export class TownsClient
 
         const args: CreateLegacySpaceParams = {
             spaceName: createSpaceInfo.name,
-            uri: '',
+            uri: createSpaceInfo.uri ?? '',
             channelName: createSpaceInfo.defaultChannelName ?? 'general', // default channel name
             membership,
             shortDescription: createSpaceInfo.shortDescription ?? '',
@@ -783,10 +784,10 @@ export class TownsClient
      * Media
      *************************************************/
     public async createMediaStream(
-        channelId: string,
+        channelId: string | undefined,
         spaceId: string | undefined,
         chunkCount: number,
-    ): Promise<{ streamId: string; prevMiniblockHash: Uint8Array }> {
+    ): Promise<MediaStreamBlockInfo> {
         if (!this.casablancaClient) {
             throw new Error("Casablanca client doesn't exist")
         }
@@ -1968,7 +1969,7 @@ export class TownsClient
         data: Uint8Array,
         chunkIndex: number,
         prevMiniblockHash: Uint8Array,
-    ): Promise<{ prevMiniblockHash: Uint8Array }> {
+    ): Promise<{ prevMiniblockHash: Uint8Array; eventId: string }> {
         if (!this.casablancaClient) {
             throw new Error('Casablanca client not initialized')
         }
@@ -2167,6 +2168,16 @@ export class TownsClient
             throw new Error('No casablanca client')
         }
         await this.casablancaClient.redactMessage(streamId, eventId)
+    }
+
+    public async setSpaceImage(
+        spaceStreamId: string,
+        chunkedMedia: PlainMessage<ChunkedMedia>,
+    ): Promise<void> {
+        if (!this.casablancaClient) {
+            throw new Error('No casablanca client')
+        }
+        await this.casablancaClient.setSpaceImage(spaceStreamId, chunkedMedia)
     }
 
     /************************************************

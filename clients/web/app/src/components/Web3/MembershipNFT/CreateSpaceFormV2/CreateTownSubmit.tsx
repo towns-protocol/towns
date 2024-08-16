@@ -24,14 +24,13 @@ import { CreateSpaceFlowStatus } from 'use-towns-client/dist/client/TownsClientT
 import { Box, Icon, IconButton, Text } from '@ui'
 import { PATHS } from 'routes'
 import { useImageStore } from '@components/UploadImage/useImageStore'
-import { useUploadImage } from 'api/lib/uploadImage'
-import { FailedUploadAfterSpaceCreation } from '@components/Notifications/FailedUploadAfterSpaceCreation'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { convertTokenTypeToOperationType } from '@components/Tokens/utils'
 import { useStore } from 'store/store'
 import { useAnalytics } from 'hooks/useAnalytics'
 import { useNotificationSettings } from 'hooks/useNotificationSettings'
 import { usePlatformMinMembershipPriceInEth } from 'hooks/usePlatformMinMembershipPriceInEth'
+import { useUploadAttachment } from '@components/MediaDropContext/useUploadAttachment'
 import { PanelType, TransactionDetails } from './types'
 import { CreateSpaceFormV2SchemaType } from './CreateSpaceFormV2.schema'
 import { mapToErrorMessage } from '../../utils'
@@ -62,11 +61,13 @@ export function CreateTownSubmit({
 
     // use the hook props instead of BlockchainStore/BlockchainTxNotifier
     // b/c creating a space does a lot of things on river and we want to wait for those too, not just for the tx
-    const { data, isLoading, error, createSpaceTransactionWithRole } = useCreateSpaceTransaction()
+    const { isLoading, error, createSpaceTransactionWithRole } = useCreateSpaceTransaction()
 
     const navigate = useNavigate()
     const { analytics } = useAnalytics()
     const spaceInfoCache = useMutationSpaceInfoCache()
+
+    const { uploadTownImageToStream } = useUploadAttachment()
 
     const hasError = useMemo(() => {
         return Boolean(error && error.name !== 'ACTION_REJECTED')
@@ -77,29 +78,6 @@ export function CreateTownSubmit({
             datadogRum.addError(new Error(`Error creating town: ${error?.name} ${error?.message}`))
         }
     }, [error, hasError])
-
-    const { mutate: uploadImage } = useUploadImage(undefined, {
-        onError: () => {
-            if (data?.spaceId === undefined) {
-                console.warn('No space id, cannot upload space image')
-                return
-            }
-            const { removeLoadedResource } = useImageStore.getState()
-            removeLoadedResource(data.spaceId)
-            toast.custom(
-                (t) => (
-                    <FailedUploadAfterSpaceCreation
-                        toast={t}
-                        spaceId={data.spaceId ?? ''}
-                        message="There was an error uploading your town image."
-                    />
-                ),
-                {
-                    duration: 10_000,
-                },
-            )
-        },
-    })
 
     const onSubmit = useCallback(async () => {
         toast.dismiss()
@@ -119,8 +97,6 @@ export function CreateTownSubmit({
                     name: spaceName ?? '',
                     shortDescription: values.shortDescription ?? '',
                     longDescription: values.longDescription ?? '',
-                    // TODO: spaceMetadata
-                    // TODO: defaultChannelName?
                 }
 
                 analytics?.track('submitting create town form', {}, () => {
@@ -345,18 +321,12 @@ export function CreateTownSubmit({
                     })
 
                     if (values.spaceIconUrl && values.spaceIconFile) {
+                        await uploadTownImageToStream(networkId, values.spaceIconFile, () => {})
+
                         const { setLoadedResource } = useImageStore.getState()
-                        const { spaceIconUrl, spaceIconFile } = values
                         // set the image before upload so that it displays immediately
                         setLoadedResource(networkId, {
                             imageUrl: values.spaceIconUrl,
-                        })
-
-                        uploadImage({
-                            id: networkId,
-                            file: spaceIconFile,
-                            imageUrl: spaceIconUrl,
-                            type: 'spaceIcon',
                         })
                     }
 
@@ -409,7 +379,7 @@ export function CreateTownSubmit({
         createSpaceTransactionWithRole,
         onCreateSpaceFlowStatus,
         addChannelNotificationSettings,
-        uploadImage,
+        uploadTownImageToStream,
         spaceInfoCache,
         navigate,
     ])

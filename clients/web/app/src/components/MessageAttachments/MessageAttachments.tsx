@@ -17,7 +17,7 @@ import { isUrl } from 'utils/isUrl'
 import { ChunkedFile } from '@components/ChunkedFile/ChunkedFile'
 import { EmbeddedMessage } from '@components/EmbeddedMessageAttachement/EmbeddedMessage'
 import { Box, BoxProps, Heading, Paragraph, Stack, Text } from '@ui'
-import { isMediaMimeType } from 'utils/isMediaMimeType'
+import { isImageMimeType } from 'utils/isMediaMimeType'
 import { RatioedBackgroundImage } from '@components/RatioedBackgroundImage'
 import { getTownParamsFromUrl } from 'utils/getTownParamsFromUrl'
 import { LoadingUnfurledLinkAttachment } from 'hooks/useExtractInternalLinks'
@@ -140,11 +140,11 @@ export function trimMessageBodyLinks(messageBody: string) {
 export function isRichMediaAttachment(
     attachment: Attachment,
 ): attachment is ChunkedMediaAttachment {
-    return attachment.type === 'chunked_media' && isMediaMimeType(attachment.info.mimetype)
+    return attachment.type === 'chunked_media' && isImageMimeType(attachment.info.mimetype)
 }
 
 function isRegularFileAttachment(attachment: Attachment): attachment is ChunkedMediaAttachment {
-    return attachment.type === 'chunked_media' && !isMediaMimeType(attachment.info.mimetype)
+    return attachment.type === 'chunked_media' && !isImageMimeType(attachment.info.mimetype)
 }
 
 function isUnfurledLinkAttachment(attachment: Attachment): attachment is UnfurledLinkAttachment {

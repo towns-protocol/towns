@@ -405,6 +405,7 @@ export type MediaInfo = Pick<
     MediaInfoStruct,
     'filename' | 'mimetype' | 'sizeBytes' | 'widthPixels' | 'heightPixels'
 >
+
 export type ImageInfo = Pick<ChannelMessage_Post_Content_Image_Info, 'url' | 'width' | 'height'>
 
 export type ImageAttachment = {
@@ -571,10 +572,7 @@ export function transformAttachments(attachments?: Attachment[]): ChannelMessage
                                 streamId: attachment.streamId,
                                 encryption: {
                                     case: 'aesgcm',
-                                    value: {
-                                        iv: attachment.encryption?.iv,
-                                        secretKey: attachment.encryption?.secretKey,
-                                    },
+                                    value: attachment.encryption,
                                 },
                                 thumbnail: {
                                     info: attachment.thumbnail?.info,

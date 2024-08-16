@@ -1,16 +1,36 @@
-import { Attachment, MediaInfo, encryptAESGCM, useTownsClient } from 'use-towns-client'
+import {
+    Attachment,
+    ChunkedMediaAttachment,
+    EncryptionResult,
+    MediaInfo,
+    encryptAESGCM,
+    useTownsClient,
+} from 'use-towns-client'
 import { useCallback } from 'react'
 import imageCompression from 'browser-image-compression'
-import { isMediaMimeType } from 'utils/isMediaMimeType'
+import { useQueryClient } from '@tanstack/react-query'
+import { ChunkedMedia } from '@river-build/proto'
+import { fetchSpaceImage } from 'api/lib/fetchImage'
+import { isImageMimeType } from 'utils/isMediaMimeType'
+import { useImageStore } from '@components/UploadImage/useImageStore'
+import { SPACE_IMAGE_QUERY_KEY } from '@components/UploadImage/useFetchImage'
 
 const CHUNK_SIZE = 500_000
 const MAX_THUMBNAIL_WIDTH = 30 // pixels
 const MAX_THUMBNAIL_SIZE = 0.003 // mb
 
+export type EncryptionMetadataForUpload = {
+    encryptionResult: EncryptionResult
+    dataLength: number
+    uri: URL
+}
+
 export const useUploadAttachment = () => {
-    const { createMediaStream, sendMediaPayload } = useTownsClient()
+    const { client, createMediaStream, sendMediaPayload } = useTownsClient()
+    const queryClient = useQueryClient()
+
     function shouldCompressFile(file: File): boolean {
-        return file.type !== 'image/gif' && isMediaMimeType(file.type)
+        return file.type !== 'image/gif' && isImageMimeType(file.type)
     }
 
     const createChunkedAttachment = useCallback(
@@ -19,7 +39,7 @@ export const useUploadAttachment = () => {
             width: number,
             height: number,
             file: File,
-            channelId: string,
+            channelId: string | undefined,
             spaceId: string | undefined,
             thumbnail: File | undefined,
             setProgress: (progress: number) => void,
@@ -30,6 +50,12 @@ export const useUploadAttachment = () => {
             if (!mediaStreamInfo) {
                 throw new Error('Failed to create media stream')
             }
+
+            console.log('createChunkedAttachment', {
+                spaceId: spaceId ?? 'undefined',
+                channelId: channelId ?? 'undefined',
+                mediaStreamInfo: mediaStreamInfo.streamId ?? 'undefined',
+            })
 
             let chunkIndex = 0
             for (let i = 0; i < encryptionResult.ciphertext.length; i += CHUNK_SIZE) {
@@ -78,7 +104,7 @@ export const useUploadAttachment = () => {
                     sizeBytes: BigInt(data.length),
                 },
                 thumbnail: thumbnailInfo,
-            } satisfies Attachment
+            } satisfies ChunkedMediaAttachment
         },
         [createMediaStream, sendMediaPayload],
     )
@@ -109,7 +135,7 @@ export const useUploadAttachment = () => {
 
     const uploadImageFile = useCallback(
         async (
-            channelId: string,
+            channelId: string | undefined,
             spaceId: string | undefined,
             file: File,
             setProgress: (progress: number) => void,
@@ -158,7 +184,7 @@ export const useUploadAttachment = () => {
             setError: () => void,
         ) => {
             try {
-                if (isMediaMimeType(file.type)) {
+                if (isImageMimeType(file.type)) {
                     return await uploadImageFile(channelId, spaceId, file, setProgress)
                 } else {
                     return await uploadFile(channelId, spaceId, file, setProgress)
@@ -170,7 +196,74 @@ export const useUploadAttachment = () => {
         [uploadImageFile, uploadFile],
     )
 
-    return { uploadAttachment }
+    const uploadTownImageToStream = useCallback(
+        async (
+            spaceId: string,
+            file: File,
+            setProgress: (progress: number) => void,
+        ): Promise<boolean> => {
+            if (!isImageMimeType(file.type)) {
+                return false
+            }
+
+            console.log('uploadTownImageToStream', { spaceId })
+
+            // set progress to 1 to start the spinner
+            setProgress(1)
+
+            try {
+                const mediaInfo = (await uploadImageFile(
+                    undefined,
+                    spaceId,
+                    file,
+                    () => {}, // disabled. Control the spinner in uploadTownImageToStream()
+                )) as ChunkedMediaAttachment
+
+                // add a spaceImage event to the stream
+                // will be encrypted by client.setSpaceImage()
+                // no need for encryption here
+                const chunkedMedia = new ChunkedMedia({
+                    info: mediaInfo.info,
+                    streamId: mediaInfo.streamId,
+                    encryption: {
+                        case: 'aesgcm',
+                        value: {
+                            iv: mediaInfo.encryption.iv,
+                            secretKey: mediaInfo.encryption.secretKey,
+                        },
+                    },
+                })
+                await client?.setSpaceImage(spaceId, chunkedMedia)
+                console.log('setSpaceImage', {
+                    spaceId,
+                    mediaStreamId: mediaInfo.streamId,
+                })
+
+                // fetch the image and ...
+                const { imageObjectUrl } = await fetchSpaceImage(spaceId)
+                console.log('fetchSpaceImage', { spaceId, imageObjectUrl })
+                // update the query cache ...
+                queryClient.setQueryData([SPACE_IMAGE_QUERY_KEY, spaceId], imageObjectUrl)
+                // then update the image store
+                const { setLoadedResource } = useImageStore.getState()
+                setLoadedResource(spaceId, {
+                    imageUrl: imageObjectUrl,
+                })
+
+                // no issues uploading the image
+                return true
+            } catch (e) {
+                console.error('Error uploading image to stream', e)
+                return false
+            } finally {
+                // stop the spinner
+                setProgress(0)
+            }
+        },
+        [client, queryClient, uploadImageFile],
+    )
+
+    return { uploadAttachment, uploadTownImageToStream }
 }
 
 async function imageSize(file: File): Promise<{ width: number; height: number }> {

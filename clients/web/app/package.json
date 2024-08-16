@@ -14,7 +14,7 @@
         "serve": "node server.js",
         "test": "yarn test:unit",
         "test:unit": "yarn test:unit:watch run",
-        "test:unit:watch": "VITE_TOKEN_SERVER_URL=http://fake.com VITE_AUTH_WORKER_HEADER_SECRET=fake VITE_GIPHY_API_KEY=fake VITE_UNFURL_SERVER_URL=http://fake.com VITE_ALCHEMY_API_KEY=fake VITE_GATEWAY_URL=http://fake.com VITE_PRIVY_ID=imustbe25charslong_______ VITE_BASE_SEPOLIA_RPC_URL=http://fake-provide-rpc.com VITE_AA_BUNDLER_URL=http://fake.com VITE_AA_PAYMASTER_PROXY_URL=http://fake.com VITE_ETHEREUM_RPC_URL=http://fake-provide-rpc.com vitest",
+        "test:unit:watch": "vitest",
         "vitest-preview": "vitest-preview"
     },
     "dependencies": {
@@ -149,6 +149,7 @@
         "@vanilla-extract/sprinkles": "^1.6.2",
         "@vanilla-extract/vite-plugin": "^3.9.3",
         "@vitejs/plugin-react": "^4.3.1",
+        "dotenv": "^16.4.5",
         "eslint": "^8.53.0",
         "eslint-config-react-app": "^7.0.1",
         "eslint-config-standard-with-typescript": "^35.0.0",

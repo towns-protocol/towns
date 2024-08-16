@@ -126,6 +126,7 @@
         "App",
         "UnfurlWorker",
         "TokenWorker",
+        "StreamMetadataService",
         "GatewayWorker",
         "NotificationService",
         "4337: StackupWorker",
@@ -160,6 +161,7 @@
         "SampleApp",
         "UnfurlWorker",
         "TokenWorker",
+        "StreamMetadataService",
         "GatewayWorker",
         "NotificationService",
         "StackupWorker"
@@ -539,6 +541,19 @@
       "label": "TokenWorker",
       "type": "shell",
       "command": "sleep 2 && cd servers/workers/token-worker && yarn dev:local",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-workers"
+      }
+    },
+    {
+      "label": "StreamMetadataService",
+      "type": "shell",
+      "command": "./river/scripts/start-stream-metadata-service.sh",
+      "args": [
+                "river"
+            ],
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {

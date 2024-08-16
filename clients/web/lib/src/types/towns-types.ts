@@ -127,7 +127,7 @@ export interface UserIdToMember {
 
 export interface CreateSpaceInfo {
     name: string
-    spaceMetadata?: string
+    uri?: string
     defaultChannelName?: string
     shortDescription?: string
     longDescription?: string
@@ -203,6 +203,11 @@ export type SendImageMessageOptions = SendMessageOptionsBase & {
         width: number
         height: number
     }
+}
+
+export type MediaStreamBlockInfo = {
+    streamId: string
+    prevMiniblockHash: Uint8Array
 }
 
 export interface SendTownsReactionOptions {

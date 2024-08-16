@@ -44,7 +44,11 @@ async function getObjectURL(
         offset += chunk.length
     })
 
-    const decrypted = await decryptAESGCM(data, iv, secretKey)
+    const decrypted = await decryptAESGCM({
+        ciphertext: data,
+        secretKey,
+        iv,
+    })
 
     const blob = new Blob([decrypted], mimetype ? { type: mimetype } : undefined)
     const objectURL = URL.createObjectURL(blob)

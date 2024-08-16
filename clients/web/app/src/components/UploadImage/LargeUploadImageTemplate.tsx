@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { FieldValues, Path, UseFormReturn } from 'react-hook-form'
 import { Box, BoxProps, ErrorMessage, Icon, IconProps, Text } from '@ui'
 import { Spinner } from '@components/Spinner'
@@ -69,7 +69,7 @@ export const LargeUploadImageTemplate = <T extends FieldValues>(props: Props<T>)
         size = 'lg',
     } = props
 
-    const { onChange, isPending } = useOnImageChangeEvent({
+    const { onChange, isLoading, isUploading } = useOnImageChangeEvent({
         overrideUploadCb,
         resourceId,
         type,
@@ -80,10 +80,21 @@ export const LargeUploadImageTemplate = <T extends FieldValues>(props: Props<T>)
         formState,
     })
 
+    const isLoadingOrUploading = isLoading || isUploading
+
+    const spinnerText = useMemo(() => {
+        if (isUploading) {
+            return 'Uploading Image'
+        } else if (isLoading) {
+            return 'Getting Image'
+        }
+        return ''
+    }, [isLoading, isUploading])
+
     const ref = React.useRef<HTMLInputElement>(null)
 
     function onClick() {
-        if (isPending) {
+        if (isLoadingOrUploading) {
             return
         }
         ref.current?.click()
@@ -93,14 +104,14 @@ export const LargeUploadImageTemplate = <T extends FieldValues>(props: Props<T>)
 
     return (
         <Box position="relative" data-testid="upload-image-container">
-            <Box className={isPending ? loadingStyles : ''}>{children}</Box>
+            <Box className={isLoadingOrUploading ? loadingStyles : ''}>{children}</Box>
 
-            {isPending && (
+            {isLoadingOrUploading && (
                 <>
                     <Box className={spinnerStyles}>
                         <Spinner />
                         <Box>
-                            <Text size="sm">Uploading Image</Text>
+                            <Text size="sm">{spinnerText}</Text>
                         </Box>
                     </Box>
                 </>
@@ -130,7 +141,7 @@ export const LargeUploadImageTemplate = <T extends FieldValues>(props: Props<T>)
                     <Box position={uploadIconPosition} padding="md" pointerEvents="none">
                         <Box
                             centerContent
-                            disabled={isPending}
+                            disabled={isLoadingOrUploading}
                             data-testid="upload-image-button"
                             top="xs"
                             right="xs"

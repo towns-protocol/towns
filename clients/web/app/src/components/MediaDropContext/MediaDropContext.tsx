@@ -4,7 +4,7 @@ import { toast } from 'react-hot-toast/headless'
 import { useDevice } from 'hooks/useDevice'
 import { FileUploadFailedToast } from '@components/FileUploadFailedToast/FileUploadFailedToast'
 import { Box, Heading, Icon, Stack } from '@ui'
-import { isMediaMimeType } from 'utils/isMediaMimeType'
+import { isImageMimeType } from 'utils/isMediaMimeType'
 import { FileUpload, FileUploadFileContent } from './mediaDropTypes'
 import { useUploadToMessage } from './useUploadToMessage'
 
@@ -79,7 +79,7 @@ export const MediaDropContextProvider = ({
                 }
                 // Images are compressed, so we don't need to check their filesize here
                 // with the exception of gifs, which are not compressed before upload
-                if (file.type !== 'image/gif' && isMediaMimeType(file.type)) {
+                if (file.type !== 'image/gif' && isImageMimeType(file.type)) {
                     filteredFiles.push({
                         content: { kind: 'file', file: file },
                         id: uniqueId(),

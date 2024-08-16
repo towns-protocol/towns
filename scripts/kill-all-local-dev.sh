@@ -117,3 +117,5 @@ fi
 ./scripts/stop-local-notification-db.sh
 
 ./scripts/stop-4337.sh
+
+./river/scripts/stop-stream-metadata-service.sh

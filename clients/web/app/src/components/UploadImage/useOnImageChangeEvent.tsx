@@ -1,14 +1,12 @@
-import React, { ChangeEvent, useMemo } from 'react'
+import { ChangeEvent, useMemo, useState } from 'react'
 import { FieldValues, Path, UseFormReturn } from 'react-hook-form'
-import { toast } from 'react-hot-toast/headless'
-import { UploadImageRequestConfig, useUploadImage } from 'api/lib/uploadImage'
-import { errorHasInvalidCookieResponseHeader } from 'api/apiClient'
-import { InvalidCookieNotification } from '@components/Notifications/InvalidCookieNotification'
+import { UploadImageRequestConfig } from 'api/lib/uploadImage'
+import { FetchImageResourceType, useFetchImage } from './useFetchImage'
 
 export type UseOnImageChangeEventProps<T extends FieldValues> = {
     formFieldName: Path<T>
     resourceId: string
-    type: 'spaceIcon' | 'avatar'
+    type: FetchImageResourceType
     imageRestrictions?: {
         maxSize?: {
             message: string
@@ -19,7 +17,7 @@ export type UseOnImageChangeEventProps<T extends FieldValues> = {
             min: number
         }
     }
-    overrideUploadCb?: (args: Omit<UploadImageRequestConfig, 'type'>) => void
+    overrideUploadCb?: (args: UploadImageRequestConfig) => void
 } & Pick<UseFormReturn<T>, 'setError' | 'clearErrors' | 'formState'>
 
 export function useOnImageChangeEvent<T extends FieldValues>({
@@ -43,7 +41,11 @@ export function useOnImageChangeEvent<T extends FieldValues>({
         },
     } = imageRestrictions ?? {}
 
-    const { mutate: upload, isPending } = useUploadImage(resourceId)
+    const { isLoading } = useFetchImage(resourceId, type)
+
+    const [uploadProgress, setUploadProgress] = useState<number>(0)
+
+    const isUploading = useMemo(() => uploadProgress > 0 && uploadProgress < 100, [uploadProgress])
 
     async function onChange(e: ChangeEvent<HTMLInputElement>) {
         const files = e.target.files
@@ -69,8 +71,15 @@ export function useOnImageChangeEvent<T extends FieldValues>({
             }
 
             if (overrideUploadCb) {
-                overrideUploadCb({ id: _resourceId, file: files[0], imageUrl: url })
+                overrideUploadCb({
+                    id: _resourceId,
+                    file: files[0],
+                    imageUrl: url,
+                    type,
+                    setProgress: setUploadProgress,
+                })
             } else {
+                /*
                 upload(
                     { id: _resourceId, file: files[0], type, imageUrl: url },
                     {
@@ -91,13 +100,15 @@ export function useOnImageChangeEvent<T extends FieldValues>({
                         },
                     },
                 )
+                    */
             }
         }
     }
 
     return {
         onChange,
-        isPending,
+        isLoading,
+        isUploading,
     }
 }
 

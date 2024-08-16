@@ -17,6 +17,7 @@ import {
 import {
     CreateChannelInfo,
     CreateSpaceInfo,
+    MediaStreamBlockInfo,
     SendMessageOptions,
     SendTextMessageOptions,
     StreamView,
@@ -110,10 +111,10 @@ interface TownsClientImpl {
         context: ChannelUpdateTransactionContext | undefined,
     ) => Promise<ChannelUpdateTransactionContext | undefined>
     createMediaStream: (
-        channelId: string,
+        channelId: string | undefined,
         spaceId: string | undefined,
         chunkCount: number,
-    ) => Promise<{ streamId: string; prevMiniblockHash: Uint8Array } | undefined>
+    ) => Promise<MediaStreamBlockInfo | undefined>
     createRoleTransaction: (
         spaceNetworkId: string,
         roleName: string,
@@ -213,7 +214,7 @@ interface TownsClientImpl {
         data: Uint8Array,
         chunkIndex: number,
         prevMiniblockHash: Uint8Array,
-    ) => Promise<{ prevMiniblockHash: Uint8Array } | undefined>
+    ) => Promise<{ prevMiniblockHash: Uint8Array; eventId: string } | undefined>
     sendReadReceipt: (marker: FullyReadMarker, isUnread?: boolean) => Promise<void>
     setAvatarUrl: (ravatarUrl: string) => Promise<void>
     setRoomProperties: (roomId: string, title: string, topic: string) => Promise<void>

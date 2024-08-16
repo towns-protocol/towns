@@ -935,12 +935,8 @@ function toAttachment(
     switch (attachment.content.case) {
         case 'chunkedMedia': {
             const info = attachment.content.value.info
-            const encryption =
-                attachment.content.value.encryption.case === 'aesgcm'
-                    ? attachment.content.value.encryption.value
-                    : undefined
 
-            if (!info || !encryption) {
+            if (!info) {
                 console.error('$$$ useCasablancaTimelines invalid chunkedMedia attachment', {
                     attachment,
                 })
@@ -957,11 +953,22 @@ function toAttachment(
                       }
                     : undefined
 
+            const encryption =
+                attachment.content.value.encryption.case === 'aesgcm'
+                    ? attachment.content.value.encryption.value
+                    : undefined
+            if (!encryption) {
+                console.error('$$$ useCasablancaTimelines invalid chunkedMedia encryption', {
+                    attachment,
+                })
+                return undefined
+            }
+
             return {
                 type: 'chunked_media',
                 info,
                 streamId: attachment.content.value.streamId,
-                encryption: encryption,
+                encryption,
                 id,
                 thumbnail: thumbnail,
             } satisfies ChunkedMediaAttachment

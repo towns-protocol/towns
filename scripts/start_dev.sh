@@ -130,6 +130,7 @@ commands=(
     "worker_gateway:cd servers/workers/gateway-worker && yarn dev:local"
     "notification_service:sleep 4 && ./scripts/start-local-notification-service.sh"
     "worker_stackup:cd servers/workers/stackup-worker && yarn dev:local"
+    "river_stream_metadata:./river/scripts/start-stream-metadata-service.sh river"
     "core:./river/core/node/run_multi.sh -r"
     "core_de:./river/core/node/run_multi.sh -r --de"
 )
@@ -154,6 +155,7 @@ is_closed() {
 # Wait for the session to close
 if is_closed ; then
     echo "Session $SESSION_NAME has closed; delete postgres containers and volumes"
+    ./river/scripts/stop-stream-metadata-service.sh
     ./river/core/scripts/stop_storage.sh
     ./scripts/stop-local-notification-db.sh
 fi
