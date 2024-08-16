@@ -1,0 +1,28 @@
+name: Upgrade Alpha Facets
+env:
+    FOUNDRY_VERSION: nightly
+on:
+    workflow_dispatch: # Allows manual triggering
+jobs:
+    Upgrade_Facets:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Cancel previous runs
+              if: github.event_name != 'schedule'
+              uses: styfle/cancel-workflow-action@0.12.1
+              with:
+                  access_token: ${{ github.token }}
+
+            - name: Checkout code
+              uses: actions/checkout@v4
+              with:
+                  ref: main
+
+            - name: Install Foundry
+              uses: foundry-rs/foundry-toolchain@v1
+              with:
+                  version: ${{ env.FOUNDRY_VERSION }}
+
+            - name: Run Base Sepolia Interaction
+              run: make interact-any context=alpha rpc=base_sepolia private_key=${{ secrets.ALPHA_BASE_SEPOLIA_DEPLOYER_PK }} contract=InteractAlpha
+              working-directory: river/contracts
