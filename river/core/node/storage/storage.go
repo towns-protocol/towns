@@ -13,9 +13,10 @@ const (
 )
 
 type ReadStreamFromLastSnapshotResult struct {
-	StartMiniblockNumber int64
-	Miniblocks           [][]byte
-	MinipoolEnvelopes    [][]byte
+	StartMiniblockNumber    int64
+	SnapshotMiniblockOffset int
+	Miniblocks              [][]byte
+	MinipoolEnvelopes       [][]byte
 }
 
 type StreamStorage interface {
@@ -24,12 +25,14 @@ type StreamStorage interface {
 	// Minipool is set to generation number 1 (i.e. number of miniblock that is going to be produced next) and is empty.
 	CreateStreamStorage(ctx context.Context, streamId StreamId, genesisMiniblock []byte) error
 
-	// Returns all stream blocks starting from last snapshot miniblock index and all envelopes in the given minipool.
-	// TODO: tests with precedingBlockCount > 0
+	// ReadStreamFromLastSnapshot reads last stream miniblocks and gurantees that last snapshot miniblock is included.
+	// It attempts to read at least numToRead miniblocks, but may return less if there are not enough miniblocks in storage,
+	// or more, if there are more miniblocks since the last snapshot.
+	// Also returns minipool envelopes for the current minipool.
 	ReadStreamFromLastSnapshot(
 		ctx context.Context,
 		streamId StreamId,
-		precedingBlockCount int,
+		numToRead int,
 	) (*ReadStreamFromLastSnapshotResult, error)
 
 	// Returns miniblocks with miniblockNum or "generation" from fromInclusive, to toExlusive.
@@ -46,9 +49,8 @@ type StreamStorage interface {
 		envelope []byte,
 	) error
 
-	// WriteBlockProposal adds a proposal candidate for future
-	// TODO: rename to WriteMiniblockCandidate
-	WriteBlockProposal(
+	// WriteMiniblockCandidate adds a proposal candidate for future miniblock.
+	WriteMiniblockCandidate(
 		ctx context.Context,
 		streamId StreamId,
 		blockHash common.Hash,
@@ -69,8 +71,7 @@ type StreamStorage interface {
 	// stores miniblock proposal with given hash at minipoolGeneration index and wipes all candidates for stream.
 	// If snapshotMiniblock is true, stores minipoolGeneration as last snapshot miniblock index,
 	// stores envelopes in the new minipool in slots starting with 0.
-	// TODO: rename to PromoteMiniblockCandidate
-	PromoteBlock(
+	PromoteMiniblockCandidate(
 		ctx context.Context,
 		streamId StreamId,
 		minipoolGeneration int64,

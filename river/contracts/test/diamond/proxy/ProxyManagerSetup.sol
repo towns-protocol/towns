@@ -65,11 +65,11 @@ abstract contract ProxyManagerSetup is FacetTest {
     // The owner of the implementation is the deployer
     implementation = mockDiamondHelper.createDiamond(deployer);
 
-    address cut = diamondCutHelper.deploy();
-    address loupe = diamondLoupeHelper.deploy();
-    address introspection = introspectionHelper.deploy();
-    address ownable = ownableHelper.deploy();
-    address manager = proxyManagerHelper.deploy();
+    address cut = diamondCutHelper.deploy(deployer);
+    address loupe = diamondLoupeHelper.deploy(deployer);
+    address introspection = introspectionHelper.deploy(deployer);
+    address ownable = ownableHelper.deploy(deployer);
+    address manager = proxyManagerHelper.deploy(deployer);
 
     addFacet(
       diamondCutHelper.makeCut(cut, IDiamond.FacetCutAction.Add),

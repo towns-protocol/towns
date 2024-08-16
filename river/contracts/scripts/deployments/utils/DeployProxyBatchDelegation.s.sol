@@ -40,9 +40,9 @@ contract DeployProxyBatchDelegation is Deployer {
   }
 
   function __deploy(address deployer) public override returns (address) {
-    riverToken = riverHelper.deploy();
+    riverToken = riverHelper.deploy(deployer);
     vault = riverHelper.vault();
-    claimers = claimersHelper.deploy();
+    claimers = claimersHelper.deploy(deployer);
 
     if (messenger == address(0)) {
       if (isAnvil() || isTesting()) {

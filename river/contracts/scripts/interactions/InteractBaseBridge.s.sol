@@ -21,7 +21,7 @@ contract InteractBaseBridge is Interaction {
 
   address oldRiverOnBaseSepolia = 0xDaF401580d509117738bF1F38D2CD4ABAEd3c2c5;
 
-  function __interact(address deployer) public override {
+  function __interact(address deployer) internal override {
     // Bridge from Base Sepolia to Sepolia
     // vm.startBroadcast(deployer);
     // IERC20(oldRiverOnBaseSepolia).approve(l2StandardBridge, tokensToDeposit);

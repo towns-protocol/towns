@@ -30,7 +30,7 @@ contract RiverRegistryBaseSetup is TestUtils {
 
   function setUp() public virtual {
     deployer = getDeployer();
-    diamond = deployRiverRegistry.deploy();
+    diamond = deployRiverRegistry.deploy(deployer);
 
     nodeRegistry = INodeRegistry(diamond);
     streamRegistry = IStreamRegistry(diamond);

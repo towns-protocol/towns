@@ -37,8 +37,8 @@ contract DeployBaseRegistry is DiamondHelper, Deployer {
 
   // deployments
   DeployMultiInit deployMultiInit = new DeployMultiInit();
-  DeployDiamondCut cutHelper = new DeployDiamondCut();
-  DeployDiamondLoupe loupeHelper = new DeployDiamondLoupe();
+  DeployDiamondCut diamondCutHelper = new DeployDiamondCut();
+  DeployDiamondLoupe diamondLoupeHelper = new DeployDiamondLoupe();
   DeployIntrospection introspectionHelper = new DeployIntrospection();
   DeployOwnable ownableHelper = new DeployOwnable();
   DeployMainnetDelegation mainnetDelegationHelper =
@@ -70,38 +70,48 @@ contract DeployBaseRegistry is DiamondHelper, Deployer {
     return "baseRegistry";
   }
 
-  function diamondInitParams(
-    address deployer
-  ) internal returns (Diamond.InitParams memory) {
-    multiInit = deployMultiInit.deploy();
-    diamondCut = cutHelper.deploy();
-    diamondLoupe = loupeHelper.deploy();
-    introspection = introspectionHelper.deploy();
-    ownable = ownableHelper.deploy();
-    metadata = metadataHelper.deploy();
-    entitlementChecker = checkerHelper.deploy();
-    operator = operatorHelper.deploy();
-    distribution = distributionHelper.deploy();
-    mainnetDelegation = mainnetDelegationHelper.deploy();
-    spaceDelegation = spaceDelegationHelper.deploy();
-    nft = deployNFT.deploy();
-    messenger = messengerHelper.deploy();
+  function addImmutableCuts(address deployer) internal {
+    multiInit = deployMultiInit.deploy(deployer);
+
+    diamondCut = diamondCutHelper.deploy(deployer);
+    diamondLoupe = diamondLoupeHelper.deploy(deployer);
+    introspection = introspectionHelper.deploy(deployer);
+    ownable = ownableHelper.deploy(deployer);
 
     addFacet(
-      cutHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
+      diamondCutHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
       diamondCut,
-      cutHelper.makeInitData("")
+      diamondCutHelper.makeInitData("")
     );
     addFacet(
-      loupeHelper.makeCut(diamondLoupe, IDiamond.FacetCutAction.Add),
+      diamondLoupeHelper.makeCut(diamondLoupe, IDiamond.FacetCutAction.Add),
       diamondLoupe,
-      loupeHelper.makeInitData("")
+      diamondLoupeHelper.makeInitData("")
+    );
+    addFacet(
+      introspectionHelper.makeCut(introspection, IDiamond.FacetCutAction.Add),
+      introspection,
+      introspectionHelper.makeInitData("")
     );
     addFacet(
       ownableHelper.makeCut(ownable, IDiamond.FacetCutAction.Add),
       ownable,
       ownableHelper.makeInitData(deployer)
     );
+  }
+
+  function diamondInitParams(
+    address deployer
+  ) public returns (Diamond.InitParams memory) {
+    metadata = metadataHelper.deploy(deployer);
+    entitlementChecker = checkerHelper.deploy(deployer);
+    operator = operatorHelper.deploy(deployer);
+    distribution = distributionHelper.deploy(deployer);
+    mainnetDelegation = mainnetDelegationHelper.deploy(deployer);
+    spaceDelegation = spaceDelegationHelper.deploy(deployer);
+    nft = deployNFT.deploy(deployer);
+    messenger = messengerHelper.deploy(deployer);
+
     addFacet(
       deployNFT.makeCut(nft, IDiamond.FacetCutAction.Add),
       nft,
@@ -112,11 +122,7 @@ contract DeployBaseRegistry is DiamondHelper, Deployer {
       operator,
       operatorHelper.makeInitData("")
     );
-    addFacet(
-      introspectionHelper.makeCut(introspection, IDiamond.FacetCutAction.Add),
-      introspection,
-      introspectionHelper.makeInitData("")
-    );
+
     addFacet(
       metadataHelper.makeCut(metadata, IDiamond.FacetCutAction.Add),
       metadata,
@@ -165,6 +171,8 @@ contract DeployBaseRegistry is DiamondHelper, Deployer {
   }
 
   function __deploy(address deployer) public override returns (address) {
+    addImmutableCuts(deployer);
+
     Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);
 
     vm.broadcast(deployer);

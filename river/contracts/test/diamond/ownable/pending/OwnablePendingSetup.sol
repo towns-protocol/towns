@@ -31,7 +31,7 @@ abstract contract OwnablePendingSetup is FacetTest {
   {
     MultiInit multiInit = new MultiInit();
 
-    address ownablePending = ownableHelper.deploy();
+    address ownablePending = ownableHelper.deploy(deployer);
 
     addFacet(
       ownableHelper.makeCut(ownablePending, IDiamond.FacetCutAction.Add),

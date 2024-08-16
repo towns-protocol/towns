@@ -62,7 +62,7 @@ This makes it easy to:
 # save the key in .env (LOCAL_PRIVATE_KEY=...)
 
 # Fund the deployer address (this is the first address shown when runing `anvil`)
--> cast send ${NEW_WALLET_ADDRESS} --value 1ether -f 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+-> cast send ${NEW_WALLET_ADDRESS} --value 1ether -f 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --unlocked
 
 # perform a local simulation
 -> forge script script/${CONTRACT}.s.sol

@@ -80,6 +80,7 @@
         "WatchCasablancaWeb3",
         "WatchCasablancaSdk",
         "WatchReactSdk",
+        "WatchStress",
       ],
       "group": {
         "kind": "build",
@@ -403,6 +404,16 @@
       "label": "WatchCasablancaProto",
       "type": "shell",
       "command": "cd packages/proto && yarn watch",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-watch-proto"
+      }
+    },
+    {
+      "label": "WatchStress",
+      "type": "shell",
+      "command": "cd packages/stress && yarn watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {

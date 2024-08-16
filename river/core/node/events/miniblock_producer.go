@@ -438,7 +438,7 @@ func mbProduceCandiate(
 			return err
 		}
 
-		return params.Storage.WriteBlockProposal(
+		return params.Storage.WriteMiniblockCandidate(
 			ctx,
 			stream.streamId,
 			mbInfo.Hash,

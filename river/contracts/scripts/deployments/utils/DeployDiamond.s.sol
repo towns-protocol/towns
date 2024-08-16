@@ -27,17 +27,17 @@ contract DeployDiamond is DiamondHelper, Deployer {
   DeployOwnable private ownableHelper = new DeployOwnable();
 
   function versionName() public pure override returns (string memory) {
-    return "Diamond";
+    return "diamond";
   }
 
   function diamondInitParams(
     address deployer
   ) internal returns (Diamond.InitParams memory) {
-    address multiInit = multiInitHelper.deploy();
-    address diamondCut = diamondCutHelper.deploy();
-    address diamondLoupe = diamondLoupeHelper.deploy();
-    address introspection = introspectionHelper.deploy();
-    address ownable = ownableHelper.deploy();
+    address multiInit = multiInitHelper.deploy(deployer);
+    address diamondCut = diamondCutHelper.deploy(deployer);
+    address diamondLoupe = diamondLoupeHelper.deploy(deployer);
+    address introspection = introspectionHelper.deploy(deployer);
+    address ownable = ownableHelper.deploy(deployer);
 
     addFacet(
       diamondCutHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
@@ -74,8 +74,10 @@ contract DeployDiamond is DiamondHelper, Deployer {
 
   function __deploy(address deployer) public override returns (address) {
     Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);
-    vm.broadcast(deployer);
+
+    vm.startBroadcast(deployer);
     Diamond diamond = new Diamond(initDiamondCut);
+    vm.stopBroadcast();
 
     return address(diamond);
   }

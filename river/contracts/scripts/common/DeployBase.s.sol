@@ -54,10 +54,11 @@ contract DeployBase is DeployHelpers, Script {
 
   /// @notice returns the chain alias for the current chain
   function chainIdAlias() internal returns (string memory) {
-    return
-      block.chainid == 31337
-        ? "base_anvil"
-        : getChain(block.chainid).chainAlias;
+    string memory chainAlias = block.chainid == 31337
+      ? "base_anvil"
+      : getChain(block.chainid).chainAlias;
+
+    return getInitialStringFromUnderscore(chainAlias);
   }
 
   function networkDirPath() internal returns (string memory path) {
@@ -79,14 +80,21 @@ contract DeployBase is DeployHelpers, Script {
     path = string.concat(vm.projectRoot(), "/", context);
   }
 
-  function cachePath(
+  function addressesPath(
     string memory contractName
   ) internal returns (string memory path) {
-    path = string.concat(networkDirPath(), "/", contractName, ".json");
+    path = string.concat(
+      networkDirPath(),
+      "/",
+      "addresses",
+      "/",
+      contractName,
+      ".json"
+    );
   }
 
   function getDeployment(string memory versionName) internal returns (address) {
-    string memory path = cachePath(versionName);
+    string memory path = addressesPath(versionName);
 
     if (!exists(path)) {
       debug(
@@ -114,15 +122,20 @@ contract DeployBase is DeployHelpers, Script {
     }
 
     // create addresses directory
-    createDir(networkDirPath());
+    createDir(string.concat(networkDirPath(), "/", "addresses"));
+    createChainIdFile(networkDirPath());
 
     // get deployment path
-    string memory path = cachePath(versionName);
+    string memory path = addressesPath(versionName);
 
     // save deployment
-    string memory jsonStr = vm.serializeAddress("{}", "address", contractAddr);
+    string memory contractJson = vm.serializeAddress(
+      "addresses",
+      "address",
+      contractAddr
+    );
     debug("saving deployment to: ", path);
-    vm.writeFile(path, jsonStr);
+    vm.writeJson(contractJson, path);
   }
 
   function isAnvil() internal view returns (bool) {
@@ -135,5 +148,45 @@ contract DeployBase is DeployHelpers, Script {
 
   function isTesting() internal view returns (bool) {
     return vm.envOr("IN_TESTING", false);
+  }
+
+  // Utils
+  function createChainIdFile(string memory networkDir) internal {
+    string memory chainIdFilePath = string.concat(
+      networkDir,
+      "/",
+      "chainId.json"
+    );
+
+    if (!exists(chainIdFilePath)) {
+      debug("creating chain id file: ", chainIdFilePath);
+      string memory jsonStr = vm.serializeUint("chainIds", "id", block.chainid);
+      vm.writeJson(jsonStr, chainIdFilePath);
+    }
+  }
+
+  function getInitialStringFromUnderscore(
+    string memory fullString
+  ) internal pure returns (string memory) {
+    bytes memory fullStringBytes = bytes(fullString);
+    uint256 underscoreIndex = 0;
+
+    for (uint256 i = 0; i < fullStringBytes.length; i++) {
+      if (fullStringBytes[i] == "_") {
+        underscoreIndex = i;
+        break;
+      }
+    }
+
+    if (underscoreIndex == 0) {
+      return fullString;
+    }
+
+    bytes memory result = new bytes(underscoreIndex);
+    for (uint256 i = 0; i < underscoreIndex; i++) {
+      result[i] = fullStringBytes[i];
+    }
+
+    return string(result);
   }
 }

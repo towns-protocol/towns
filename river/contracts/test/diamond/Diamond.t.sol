@@ -9,6 +9,8 @@ pragma solidity ^0.8.0;
 import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
 
 abstract contract DiamondHelper is IDiamond {
+  string public name = "DiamondHelper";
+
   uint256 private _index = 0;
 
   FacetCut[] internal _cuts;
@@ -24,6 +26,10 @@ abstract contract DiamondHelper is IDiamond {
     _cuts.push(cut);
   }
 
+  function clearCuts() internal {
+    delete _cuts;
+  }
+
   function addFacet(
     FacetCut memory cut,
     address initAddress,
@@ -31,6 +37,10 @@ abstract contract DiamondHelper is IDiamond {
   ) internal {
     addCut(cut);
     addInit(initAddress, initData);
+  }
+
+  function getCuts() external view returns (FacetCut[] memory) {
+    return _cuts;
   }
 
   function baseFacets() internal view returns (FacetCut[] memory) {

@@ -26,6 +26,12 @@ abstract contract Deployer is Script, DeployBase {
   // - invoke __deploy() with the private key
   // - save the deployment to `deployments/<network>/<contract>.json`
   function deploy() public virtual returns (address deployedAddr) {
+    return deploy(_msgSender());
+  }
+
+  function deploy(
+    address deployer
+  ) public virtual returns (address deployedAddr) {
     bool overrideDeployment = vm.envOr("OVERRIDE_DEPLOYMENTS", uint256(0)) > 0;
 
     address existingAddr = isTesting()
@@ -43,17 +49,6 @@ abstract contract Deployer is Script, DeployBase {
       );
       return existingAddr;
     }
-
-    uint256 pk = isAnvil()
-      ? vm.envUint("LOCAL_PRIVATE_KEY")
-      : vm.envUint("TESTNET_PRIVATE_KEY");
-
-    address potential = vm.addr(pk);
-    address deployer = isAnvil()
-      ? potential
-      : msg.sender != potential
-        ? msg.sender
-        : potential;
 
     if (!isTesting()) {
       info(
@@ -90,6 +85,7 @@ abstract contract Deployer is Script, DeployBase {
   function run() public virtual {
     bytes memory data = abi.encodeWithSignature("deploy()");
 
+    // we use a dynamic call to call deploy as we do not want to prescribe a return type
     (bool success, bytes memory returnData) = address(this).delegatecall(data);
     if (!success) {
       if (returnData.length > 0) {
@@ -102,5 +98,9 @@ abstract contract Deployer is Script, DeployBase {
         revert("FAILED_TO_CALL: deploy()");
       }
     }
+  }
+
+  function _msgSender() internal view returns (address) {
+    return msg.sender;
   }
 }

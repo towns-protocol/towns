@@ -47,6 +47,7 @@ tsconfig.tsbuildinfo
 /contracts/deployments/river_anvil
 /contracts/deployments/alpha/base_anvil
 /contracts/deployments/alpha/river_anvil
+/contracts/deployments/local*
 /broadcast
 
 

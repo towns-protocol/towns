@@ -10,7 +10,7 @@ import {Interaction} from "../common/Interaction.s.sol";
 import {Airdrop} from "contracts/src/utils/Airdrop.sol";
 
 contract InteractAirdrop is Interaction {
-  function __interact(address deployer) public override {
+  function __interact(address deployer) internal override {
     address airdrop = getDeployment("airdrop");
 
     uint256 totalAccounts = 20;

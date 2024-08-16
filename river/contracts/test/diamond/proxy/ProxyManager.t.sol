@@ -97,7 +97,7 @@ contract ProxyManagerTest is ProxyManagerSetup {
     // add some facets to diamond
     IDiamond.FacetCut[] memory extensions = new IDiamond.FacetCut[](1);
     extensions[0] = mockFacetHelper.makeCut(
-      mockFacetHelper.deploy(),
+      mockFacetHelper.deploy(deployer),
       IDiamond.FacetCutAction.Add
     );
 

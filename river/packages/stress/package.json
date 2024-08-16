@@ -6,6 +6,7 @@
     "scripts": {
         "build": "yarn typecheck && yarn build-esbuild",
         "typecheck": "tsc --noEmit",
+        "watch": "tsc --watch",
         "build-esbuild": "node esbuild.config.mjs",
         "lint": "eslint . --ext .ts",
         "my-jest": "NODE_TLS_REJECT_UNAUTHORIZED=0 yarn node -r ../../scripts/node-no-warn.js --experimental-vm-modules $(yarn bin jest)",

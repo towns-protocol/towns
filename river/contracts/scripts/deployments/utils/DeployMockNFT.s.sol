@@ -43,11 +43,11 @@ contract DeployMockNFT is DiamondHelper, Deployer {
   function diamondInitParams(
     address deployer
   ) internal returns (Diamond.InitParams memory) {
-    address multiInit = multiInitHelper.deploy();
+    address multiInit = multiInitHelper.deploy(deployer);
 
-    diamondCut = diamondCutHelper.deploy();
-    diamondLoupe = loupeHelper.deploy();
-    introspection = introspectionHelper.deploy();
+    diamondCut = diamondCutHelper.deploy(deployer);
+    diamondLoupe = loupeHelper.deploy(deployer);
+    introspection = introspectionHelper.deploy(deployer);
 
     vm.startBroadcast(deployer);
     erc721aMock = address(new MockERC721A());

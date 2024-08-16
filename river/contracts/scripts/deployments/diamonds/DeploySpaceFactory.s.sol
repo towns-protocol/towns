@@ -42,7 +42,6 @@ import {DeployEIP712Facet} from "contracts/scripts/deployments/facets/DeployEIP7
 
 import {SpaceFactory} from "contracts/src/factory/SpaceFactory.sol";
 
-// legacy
 import {DeployMockLegacyArchitect} from "contracts/scripts/deployments/facets/DeployMockLegacyArchitect.s.sol";
 
 contract DeploySpaceFactory is DiamondHelper, Deployer {
@@ -53,6 +52,7 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
   DeployIntrospection introspectionHelper = new DeployIntrospection();
   DeployMetadata metadataHelper = new DeployMetadata();
 
+  // facets
   DeployArchitect architectHelper = new DeployArchitect();
   DeployPricingModules pricingModulesHelper = new DeployPricingModules();
   DeployImplementationRegistry registryHelper =
@@ -60,6 +60,11 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
   DeployWalletLink walletLinkHelper = new DeployWalletLink();
   DeployProxyManager proxyManagerHelper = new DeployProxyManager();
   DeployPausable pausableHelper = new DeployPausable();
+  DeployPlatformRequirements platformReqsHelper =
+    new DeployPlatformRequirements();
+  DeployEIP712Facet eip712Helper = new DeployEIP712Facet();
+  DeployMockLegacyArchitect deployMockLegacyArchitect =
+    new DeployMockLegacyArchitect();
   DeployMultiInit deployMultiInit = new DeployMultiInit();
 
   // dependencies
@@ -73,14 +78,9 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
 
   DeployTieredLogPricing deployTieredLogPricing = new DeployTieredLogPricing();
   DeployFixedPricing deployFixedPricing = new DeployFixedPricing();
-  DeployPlatformRequirements platformReqsHelper =
-    new DeployPlatformRequirements();
-  DeployEIP712Facet eip712Helper = new DeployEIP712Facet();
-
-  DeployMockLegacyArchitect deployMockLegacyArchitect =
-    new DeployMockLegacyArchitect();
 
   // helpers
+  address multiInit;
 
   // diamond addresses
   address ownable;
@@ -95,12 +95,14 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
   address proxyManager;
   address pausable;
   address platformReqs;
+  address pricingModulesFacet;
 
   address registry;
   address walletLink;
   address eip712;
 
   // external contracts
+  address public spaceImpl;
   address public userEntitlement;
   address public legacyRuleEntitlement;
   address public ruleEntitlement;
@@ -108,53 +110,35 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
 
   address public tieredLogPricing;
   address public fixedPricing;
+  address[] pricingModules;
 
   function versionName() public pure override returns (string memory) {
     return "spaceFactory";
   }
 
-  function diamondInitParams(
-    address deployer
-  ) internal returns (Diamond.InitParams memory) {
-    address multiInit = deployMultiInit.deploy();
-
-    address spaceImpl = deploySpace.deploy();
-    spaceOwner = deploySpaceOwner.deploy();
+  function addImmutableCuts(address deployer) internal {
+    spaceImpl = deploySpace.deploy(deployer);
+    spaceOwner = deploySpaceOwner.deploy(deployer);
 
     // entitlement modules
-    userEntitlement = deployUserEntitlement.deploy();
-    ruleEntitlement = deployRuleEntitlementV2.deploy();
-    legacyRuleEntitlement = deployLegacyRuleEntitlement.deploy();
+    userEntitlement = deployUserEntitlement.deploy(deployer);
+    ruleEntitlement = deployRuleEntitlementV2.deploy(deployer);
+    legacyRuleEntitlement = deployLegacyRuleEntitlement.deploy(deployer);
 
     // pricing modules
-    tieredLogPricing = deployTieredLogPricing.deploy();
-    fixedPricing = deployFixedPricing.deploy();
+    tieredLogPricing = deployTieredLogPricing.deploy(deployer);
+    fixedPricing = deployFixedPricing.deploy(deployer);
 
-    // pricing modules facet
-    address pricingModulesFacet = pricingModulesHelper.deploy();
-    address[] memory pricingModules = new address[](2);
-    pricingModules[0] = tieredLogPricing;
-    pricingModules[1] = fixedPricing;
+    // pricing modules
+    pricingModules.push(tieredLogPricing);
+    pricingModules.push(fixedPricing);
 
-    // diamond facets
-    ownable = ownableHelper.deploy();
-    diamondCut = diamondCutHelper.deploy();
-    diamondLoupe = diamondLoupeHelper.deploy();
-    introspection = introspectionHelper.deploy();
-    metadata = metadataHelper.deploy();
+    multiInit = deployMultiInit.deploy(deployer);
 
-    architect = architectHelper.deploy();
-    registry = registryHelper.deploy();
-    walletLink = walletLinkHelper.deploy();
-    proxyManager = proxyManagerHelper.deploy();
-
-    pausable = pausableHelper.deploy();
-    platformReqs = platformReqsHelper.deploy();
-
-    eip712 = eip712Helper.deploy();
-
-    // legacy
-    legacyArchitect = deployMockLegacyArchitect.deploy();
+    diamondCut = diamondCutHelper.deploy(deployer);
+    diamondLoupe = diamondLoupeHelper.deploy(deployer);
+    introspection = introspectionHelper.deploy(deployer);
+    ownable = ownableHelper.deploy(deployer);
 
     addFacet(
       diamondCutHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
@@ -172,15 +156,34 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
       introspectionHelper.makeInitData("")
     );
     addFacet(
-      metadataHelper.makeCut(metadata, IDiamond.FacetCutAction.Add),
-      metadata,
-      metadataHelper.makeInitData(bytes32("SpaceFactory"), "")
-    );
-    addFacet(
       ownableHelper.makeCut(ownable, IDiamond.FacetCutAction.Add),
       ownable,
       ownableHelper.makeInitData(deployer)
     );
+  }
+
+  function diamondInitParams(
+    address deployer
+  ) public returns (Diamond.InitParams memory) {
+    metadata = metadataHelper.deploy(deployer);
+    architect = architectHelper.deploy(deployer);
+    registry = registryHelper.deploy(deployer);
+    walletLink = walletLinkHelper.deploy(deployer);
+    proxyManager = proxyManagerHelper.deploy(deployer);
+    pausable = pausableHelper.deploy(deployer);
+    platformReqs = platformReqsHelper.deploy(deployer);
+    eip712 = eip712Helper.deploy(deployer);
+    pricingModulesFacet = pricingModulesHelper.deploy(deployer);
+
+    // legacy
+    legacyArchitect = deployMockLegacyArchitect.deploy(deployer);
+
+    addFacet(
+      metadataHelper.makeCut(metadata, IDiamond.FacetCutAction.Add),
+      metadata,
+      metadataHelper.makeInitData(bytes32("SpaceFactory"), "")
+    );
+
     addFacet(
       architectHelper.makeCut(architect, IDiamond.FacetCutAction.Add),
       architect,
@@ -262,6 +265,8 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
   }
 
   function __deploy(address deployer) public override returns (address) {
+    addImmutableCuts(deployer);
+
     Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);
     vm.broadcast(deployer);
     Diamond diamond = new Diamond(initDiamondCut);

@@ -29,7 +29,7 @@ abstract contract GuardianSetup is FacetTest {
   {
     MultiInit multiInit = new MultiInit();
 
-    address guardianFacet = guardianHelper.deploy();
+    address guardianFacet = guardianHelper.deploy(deployer);
 
     addFacet(
       guardianHelper.makeCut(guardianFacet, IDiamond.FacetCutAction.Add),

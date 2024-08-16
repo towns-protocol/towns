@@ -61,16 +61,16 @@ contract DeployRiverRegistry is DiamondHelper, Deployer {
   function diamondInitParams(
     address deployer
   ) internal returns (Diamond.InitParams memory) {
-    address multiInit = deployMultiInit.deploy();
+    address multiInit = deployMultiInit.deploy(deployer);
 
-    diamondCut = cutHelper.deploy();
-    diamondLoupe = loupeHelper.deploy();
-    introspection = introspectionHelper.deploy();
-    ownable = ownableHelper.deploy();
-    riverConfig = riverConfigHelper.deploy();
-    nodeRegistry = nodeRegistryHelper.deploy();
-    streamRegistry = streamRegistryHelper.deploy();
-    operatorRegistry = operatorRegistryHelper.deploy();
+    diamondCut = cutHelper.deploy(deployer);
+    diamondLoupe = loupeHelper.deploy(deployer);
+    introspection = introspectionHelper.deploy(deployer);
+    ownable = ownableHelper.deploy(deployer);
+    riverConfig = riverConfigHelper.deploy(deployer);
+    nodeRegistry = nodeRegistryHelper.deploy(deployer);
+    streamRegistry = streamRegistryHelper.deploy(deployer);
+    operatorRegistry = operatorRegistryHelper.deploy(deployer);
 
     operators[0] = deployer;
     configManagers[0] = deployer;

@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"embed"
+	"math/rand"
 	"reflect"
 	"strings"
 	"testing"
@@ -242,14 +243,14 @@ func TestPostgresEventStore(t *testing.T) {
 	testEnvelopes = append(testEnvelopes, []byte("event2"))
 	blockHash := common.BytesToHash([]byte("block_hash"))
 	blockData := []byte("block1")
-	err = pgEventStore.WriteBlockProposal(ctx, streamId1, blockHash, 1, blockData)
+	err = pgEventStore.WriteMiniblockCandidate(ctx, streamId1, blockHash, 1, blockData)
 	if err != nil {
 		t.Fatal("error creating block candidate")
 	}
 	mbBytes, err := pgEventStore.ReadMiniblockCandidate(ctx, streamId1, blockHash, 1)
 	require.NoError(err)
 	require.EqualValues(blockData, mbBytes)
-	err = pgEventStore.PromoteBlock(ctx, streamId1, 1, blockHash, false, testEnvelopes)
+	err = pgEventStore.PromoteMiniblockCandidate(ctx, streamId1, 1, blockHash, false, testEnvelopes)
 	if err != nil {
 		t.Fatal("error promoting block", err)
 	}
@@ -257,12 +258,12 @@ func TestPostgresEventStore(t *testing.T) {
 	var testEnvelopes2 [][]byte
 	testEnvelopes2 = append(testEnvelopes2, []byte("event3"))
 	blockHash2 := common.BytesToHash([]byte("block_hash_2"))
-	err = pgEventStore.WriteBlockProposal(ctx, streamId1, blockHash2, 2, []byte("block2"))
+	err = pgEventStore.WriteMiniblockCandidate(ctx, streamId1, blockHash2, 2, []byte("block2"))
 	if err != nil {
 		t.Fatal("error creating block proposal with snapshot", err)
 	}
 
-	err = pgEventStore.PromoteBlock(ctx, streamId1, 2, blockHash2, true, testEnvelopes2)
+	err = pgEventStore.PromoteMiniblockCandidate(ctx, streamId1, 2, blockHash2, true, testEnvelopes2)
 	if err != nil {
 		t.Fatal("error promoting block with snapshot", err)
 	}
@@ -284,31 +285,31 @@ func TestPromoteMiniblockCandidate(t *testing.T) {
 	miniblock_bytes := []byte("miniblock_bytes")
 
 	// Miniblock candidate seq number must be at least current
-	err := pgEventStore.WriteBlockProposal(ctx, streamId, candidateHash, 0, miniblock_bytes)
+	err := pgEventStore.WriteMiniblockCandidate(ctx, streamId, candidateHash, 0, miniblock_bytes)
 	require.ErrorContains(err, "Miniblock proposal blockNumber mismatch")
 	require.Equal(AsRiverError(err).GetTag("ExpectedBlockNumber"), int64(1))
 	require.Equal(AsRiverError(err).GetTag("ActualBlockNumber"), int64(0))
 
 	// Future candidates fine
-	err = pgEventStore.WriteBlockProposal(ctx, streamId, candidateHash_block2, 2, miniblock_bytes)
+	err = pgEventStore.WriteMiniblockCandidate(ctx, streamId, candidateHash_block2, 2, miniblock_bytes)
 	require.NoError(err)
 
 	// Write two candidates for this block number
-	err = pgEventStore.WriteBlockProposal(ctx, streamId, candidateHash, 1, miniblock_bytes)
+	err = pgEventStore.WriteMiniblockCandidate(ctx, streamId, candidateHash, 1, miniblock_bytes)
 	require.NoError(err)
 
 	// Double write with the same hash should produce no errors, it's possible multiple nodes may propose the same candidate.
-	err = pgEventStore.WriteBlockProposal(ctx, streamId, candidateHash, 1, miniblock_bytes)
+	err = pgEventStore.WriteMiniblockCandidate(ctx, streamId, candidateHash, 1, miniblock_bytes)
 	require.NoError(err)
 
-	err = pgEventStore.WriteBlockProposal(ctx, streamId, candidateHash2, 1, miniblock_bytes)
+	err = pgEventStore.WriteMiniblockCandidate(ctx, streamId, candidateHash2, 1, miniblock_bytes)
 	require.NoError(err)
 
 	// Add candidate from another stream. This candidate should be untouched by the delete when a
 	// candidate from the first stream is promoted.
 	genesisMiniblock := []byte("genesisMiniblock")
 	_ = pgEventStore.CreateStreamStorage(ctx, streamId2, genesisMiniblock)
-	err = pgEventStore.WriteBlockProposal(ctx, streamId2, candidateHash, 1, []byte("some bytes"))
+	err = pgEventStore.WriteMiniblockCandidate(ctx, streamId2, candidateHash, 1, []byte("some bytes"))
 	require.NoError(err)
 
 	var testEnvelopes [][]byte
@@ -316,7 +317,7 @@ func TestPromoteMiniblockCandidate(t *testing.T) {
 	testEnvelopes = append(testEnvelopes, []byte("event2"))
 
 	// Nonexistent hash promotion fails
-	err = pgEventStore.PromoteBlock(
+	err = pgEventStore.PromoteMiniblockCandidate(
 		ctx,
 		streamId,
 		1,
@@ -327,7 +328,7 @@ func TestPromoteMiniblockCandidate(t *testing.T) {
 	require.ErrorContains(err, "No candidate block found")
 
 	// Stream 1 promotion succeeds.
-	err = pgEventStore.PromoteBlock(
+	err = pgEventStore.PromoteMiniblockCandidate(
 		ctx,
 		streamId,
 		1,
@@ -338,7 +339,7 @@ func TestPromoteMiniblockCandidate(t *testing.T) {
 	require.NoError(err)
 
 	// Stream 1 able to promote candidate block from round 2 - candidate unaffected by delete at round 1 promotion.
-	err = pgEventStore.PromoteBlock(
+	err = pgEventStore.PromoteMiniblockCandidate(
 		ctx,
 		streamId,
 		2,
@@ -349,7 +350,7 @@ func TestPromoteMiniblockCandidate(t *testing.T) {
 	require.NoError(err)
 
 	// Stream 2 should be unaffected by stream 1 promotion, which deletes all candidates for stream 1 only.
-	err = pgEventStore.PromoteBlock(
+	err = pgEventStore.PromoteMiniblockCandidate(
 		ctx,
 		streamId2,
 		1,
@@ -456,16 +457,16 @@ func TestCreateBlockProposalConsistencyChecksProperNewMinipoolGeneration(t *test
 	blockHash1 := common.BytesToHash([]byte("hash1"))
 	blockHash2 := common.BytesToHash([]byte("hash2"))
 	blockHash3 := common.BytesToHash([]byte("hash3"))
-	_ = pgEventStore.WriteBlockProposal(ctx, streamId, blockHash1, 1, []byte("block1"))
-	_ = pgEventStore.PromoteBlock(ctx, streamId, 1, blockHash1, true, testEnvelopes1)
+	_ = pgEventStore.WriteMiniblockCandidate(ctx, streamId, blockHash1, 1, []byte("block1"))
+	_ = pgEventStore.PromoteMiniblockCandidate(ctx, streamId, 1, blockHash1, true, testEnvelopes1)
 
-	_ = pgEventStore.WriteBlockProposal(ctx, streamId, blockHash2, 2, []byte("block2"))
-	_ = pgEventStore.PromoteBlock(ctx, streamId, 2, blockHash2, false, testEnvelopes2)
+	_ = pgEventStore.WriteMiniblockCandidate(ctx, streamId, blockHash2, 2, []byte("block2"))
+	_ = pgEventStore.PromoteMiniblockCandidate(ctx, streamId, 2, blockHash2, false, testEnvelopes2)
 
 	_, _ = pgEventStore.pool.Exec(ctx, "DELETE FROM miniblocks WHERE seq_num = 2")
 
 	// Future candidate writes are fine, these may come from other nodes.
-	err := pgEventStore.WriteBlockProposal(ctx, streamId, blockHash3, 3, []byte("block3"))
+	err := pgEventStore.WriteMiniblockCandidate(ctx, streamId, blockHash3, 3, []byte("block3"))
 	require.Nil(err)
 }
 
@@ -489,16 +490,16 @@ func TestPromoteBlockConsistencyChecksProperNewMinipoolGeneration(t *testing.T) 
 	blockHash1 := common.BytesToHash([]byte("hash1"))
 	blockHash2 := common.BytesToHash([]byte("hash2"))
 	blockHash3 := common.BytesToHash([]byte("hash3"))
-	_ = pgEventStore.WriteBlockProposal(ctx, streamId, blockHash1, 1, []byte("block1"))
-	_ = pgEventStore.PromoteBlock(ctx, streamId, 1, blockHash1, true, testEnvelopes1)
+	_ = pgEventStore.WriteMiniblockCandidate(ctx, streamId, blockHash1, 1, []byte("block1"))
+	_ = pgEventStore.PromoteMiniblockCandidate(ctx, streamId, 1, blockHash1, true, testEnvelopes1)
 
-	_ = pgEventStore.WriteBlockProposal(ctx, streamId, blockHash2, 2, []byte("block2"))
-	_ = pgEventStore.PromoteBlock(ctx, streamId, 2, blockHash2, false, testEnvelopes2)
+	_ = pgEventStore.WriteMiniblockCandidate(ctx, streamId, blockHash2, 2, []byte("block2"))
+	_ = pgEventStore.PromoteMiniblockCandidate(ctx, streamId, 2, blockHash2, false, testEnvelopes2)
 
-	_ = pgEventStore.WriteBlockProposal(ctx, streamId, blockHash3, 3, []byte("block3"))
+	_ = pgEventStore.WriteMiniblockCandidate(ctx, streamId, blockHash3, 3, []byte("block3"))
 
 	_, _ = pgEventStore.pool.Exec(ctx, "DELETE FROM miniblocks WHERE seq_num = 2")
-	err := pgEventStore.PromoteBlock(ctx, streamId, 3, blockHash3, false, testEnvelopes3)
+	err := pgEventStore.PromoteMiniblockCandidate(ctx, streamId, 3, blockHash3, false, testEnvelopes3)
 
 	// TODO(crystal): tune these
 	require.NotNil(err)
@@ -518,7 +519,13 @@ func TestCreateBlockProposalNoSuchStreamError(t *testing.T) {
 
 	_, _ = pgEventStore.pool.Exec(ctx, "DELETE FROM miniblocks")
 
-	err := pgEventStore.WriteBlockProposal(ctx, streamId, common.BytesToHash([]byte("block_hash")), 1, []byte("block1"))
+	err := pgEventStore.WriteMiniblockCandidate(
+		ctx,
+		streamId,
+		common.BytesToHash([]byte("block_hash")),
+		1,
+		[]byte("block1"),
+	)
 
 	require.NotNil(err)
 	require.Contains(err.Error(), "No blocks for the stream found in block storage")
@@ -538,11 +545,11 @@ func TestPromoteBlockNoSuchStreamError(t *testing.T) {
 	var testEnvelopes1 [][]byte
 	testEnvelopes1 = append(testEnvelopes1, []byte("event1"))
 	block_hash := common.BytesToHash([]byte("block_hash"))
-	_ = pgEventStore.WriteBlockProposal(ctx, streamId, block_hash, 1, []byte("block1"))
+	_ = pgEventStore.WriteMiniblockCandidate(ctx, streamId, block_hash, 1, []byte("block1"))
 
 	_, _ = pgEventStore.pool.Exec(ctx, "DELETE FROM miniblocks")
 
-	err := pgEventStore.PromoteBlock(ctx, streamId, 1, block_hash, true, testEnvelopes1)
+	err := pgEventStore.PromoteMiniblockCandidate(ctx, streamId, 1, block_hash, true, testEnvelopes1)
 
 	require.NotNil(err)
 	require.Contains(err.Error(), "No blocks for the stream found in block storage")
@@ -612,21 +619,60 @@ func TestGetStreamFromLastSnapshotConsistencyChecksMissingBlockFailure(t *testin
 	var testEnvelopes3 [][]byte
 	testEnvelopes3 = append(testEnvelopes3, []byte("event3"))
 
-	_ = pgEventStore.WriteBlockProposal(ctx, streamId, common.BytesToHash([]byte("blockhash1")), 1, []byte("block1"))
-	_ = pgEventStore.PromoteBlock(ctx, streamId, 1, common.BytesToHash([]byte("blockhash1")), true, testEnvelopes1)
+	_ = pgEventStore.WriteMiniblockCandidate(
+		ctx,
+		streamId,
+		common.BytesToHash([]byte("blockhash1")),
+		1,
+		[]byte("block1"),
+	)
+	_ = pgEventStore.PromoteMiniblockCandidate(
+		ctx,
+		streamId,
+		1,
+		common.BytesToHash([]byte("blockhash1")),
+		true,
+		testEnvelopes1,
+	)
 
-	_ = pgEventStore.WriteBlockProposal(ctx, streamId, common.BytesToHash([]byte("blockhash2")), 2, []byte("block2"))
-	_ = pgEventStore.PromoteBlock(ctx, streamId, 2, common.BytesToHash([]byte("blockhash2")), false, testEnvelopes2)
+	_ = pgEventStore.WriteMiniblockCandidate(
+		ctx,
+		streamId,
+		common.BytesToHash([]byte("blockhash2")),
+		2,
+		[]byte("block2"),
+	)
+	_ = pgEventStore.PromoteMiniblockCandidate(
+		ctx,
+		streamId,
+		2,
+		common.BytesToHash([]byte("blockhash2")),
+		false,
+		testEnvelopes2,
+	)
 
-	_ = pgEventStore.WriteBlockProposal(ctx, streamId, common.BytesToHash([]byte("blockhash3")), 3, []byte("block3"))
-	_ = pgEventStore.PromoteBlock(ctx, streamId, 3, common.BytesToHash([]byte("blockhash3")), false, testEnvelopes3)
+	_ = pgEventStore.WriteMiniblockCandidate(
+		ctx,
+		streamId,
+		common.BytesToHash([]byte("blockhash3")),
+		3,
+		[]byte("block3"),
+	)
+	_ = pgEventStore.PromoteMiniblockCandidate(
+		ctx,
+		streamId,
+		3,
+		common.BytesToHash([]byte("blockhash3")),
+		false,
+		testEnvelopes3,
+	)
 
 	_, _ = pgEventStore.pool.Exec(ctx, "DELETE FROM miniblocks WHERE seq_num = 2")
 
 	_, err := pgEventStore.ReadStreamFromLastSnapshot(ctx, streamId, 0)
 
 	require.NotNil(err)
-	require.Contains(err.Error(), "Miniblocks consistency violation - wrong block sequence number")
+	require.EqualValues(Err_INTERNAL, AsRiverError(err).Code)
 	require.Equal(AsRiverError(err).GetTag("ActualSeqNum"), int64(3))
 	require.Equal(AsRiverError(err).GetTag("ExpectedSeqNum"), int64(2))
 }
@@ -647,19 +693,43 @@ func TestGetStreamFromLastSnapshotConsistencyCheckWrongEnvelopeGeneration(t *tes
 	testEnvelopes2 = append(testEnvelopes2, []byte("event2"))
 	testEnvelopes2 = append(testEnvelopes2, []byte("event3"))
 
-	_ = pgEventStore.WriteBlockProposal(ctx, streamId, common.BytesToHash([]byte("blockhash1")), 1, []byte("block1"))
-	_ = pgEventStore.PromoteBlock(ctx, streamId, 1, common.BytesToHash([]byte("blockhash1")), true, testEnvelopes1)
-	_ = pgEventStore.WriteBlockProposal(ctx, streamId, common.BytesToHash([]byte("blockhash2")), 2, []byte("block2"))
-	_ = pgEventStore.PromoteBlock(ctx, streamId, 2, common.BytesToHash([]byte("blockhash2")), false, testEnvelopes2)
+	_ = pgEventStore.WriteMiniblockCandidate(
+		ctx,
+		streamId,
+		common.BytesToHash([]byte("blockhash1")),
+		1,
+		[]byte("block1"),
+	)
+	_ = pgEventStore.PromoteMiniblockCandidate(
+		ctx,
+		streamId,
+		1,
+		common.BytesToHash([]byte("blockhash1")),
+		true,
+		testEnvelopes1,
+	)
+	_ = pgEventStore.WriteMiniblockCandidate(
+		ctx,
+		streamId,
+		common.BytesToHash([]byte("blockhash2")),
+		2,
+		[]byte("block2"),
+	)
+	_ = pgEventStore.PromoteMiniblockCandidate(
+		ctx,
+		streamId,
+		2,
+		common.BytesToHash([]byte("blockhash2")),
+		false,
+		testEnvelopes2,
+	)
 
 	_, _ = pgEventStore.pool.Exec(ctx, "UPDATE minipools SET generation = 777 WHERE slot_num = 1")
 
 	_, err := pgEventStore.ReadStreamFromLastSnapshot(ctx, streamId, 0)
 
 	require.NotNil(err)
-	require.Contains(err.Error(), "Minipool consistency violation - wrong event generation")
-	require.Equal(AsRiverError(err).GetTag("ActualGeneration"), int64(777))
-	require.Equal(AsRiverError(err).GetTag("ExpectedGeneration"), int64(1))
+	require.EqualValues(Err_MINIBLOCKS_STORAGE_FAILURE, AsRiverError(err).Code)
 }
 
 func TestGetStreamFromLastSnapshotConsistencyCheckNoZeroIndexEnvelope(t *testing.T) {
@@ -679,10 +749,36 @@ func TestGetStreamFromLastSnapshotConsistencyCheckNoZeroIndexEnvelope(t *testing
 	testEnvelopes2 = append(testEnvelopes2, []byte("event3"))
 	testEnvelopes2 = append(testEnvelopes2, []byte("event4"))
 
-	_ = pgEventStore.WriteBlockProposal(ctx, streamId, common.BytesToHash([]byte("blockhash1")), 1, []byte("block1"))
-	_ = pgEventStore.PromoteBlock(ctx, streamId, 1, common.BytesToHash([]byte("blockhash1")), true, testEnvelopes1)
-	_ = pgEventStore.WriteBlockProposal(ctx, streamId, common.BytesToHash([]byte("blockhash2")), 2, []byte("block2"))
-	_ = pgEventStore.PromoteBlock(ctx, streamId, 2, common.BytesToHash([]byte("blockhash2")), false, testEnvelopes2)
+	_ = pgEventStore.WriteMiniblockCandidate(
+		ctx,
+		streamId,
+		common.BytesToHash([]byte("blockhash1")),
+		1,
+		[]byte("block1"),
+	)
+	_ = pgEventStore.PromoteMiniblockCandidate(
+		ctx,
+		streamId,
+		1,
+		common.BytesToHash([]byte("blockhash1")),
+		true,
+		testEnvelopes1,
+	)
+	_ = pgEventStore.WriteMiniblockCandidate(
+		ctx,
+		streamId,
+		common.BytesToHash([]byte("blockhash2")),
+		2,
+		[]byte("block2"),
+	)
+	_ = pgEventStore.PromoteMiniblockCandidate(
+		ctx,
+		streamId,
+		2,
+		common.BytesToHash([]byte("blockhash2")),
+		false,
+		testEnvelopes2,
+	)
 
 	_, _ = pgEventStore.pool.Exec(ctx, "DELETE FROM minipools WHERE slot_num = 0")
 
@@ -690,8 +786,6 @@ func TestGetStreamFromLastSnapshotConsistencyCheckNoZeroIndexEnvelope(t *testing
 
 	require.NotNil(err)
 	require.Contains(err.Error(), "Minipool consistency violation - slotNums are not sequential")
-	require.Equal(AsRiverError(err).GetTag("ActualSlotNumber"), int64(1))
-	require.Equal(AsRiverError(err).GetTag("ExpectedSlotNumber"), int64(0))
 }
 
 func TestGetStreamFromLastSnapshotConsistencyCheckGapInEnvelopesIndexes(t *testing.T) {
@@ -711,19 +805,43 @@ func TestGetStreamFromLastSnapshotConsistencyCheckGapInEnvelopesIndexes(t *testi
 	testEnvelopes2 = append(testEnvelopes2, []byte("event3"))
 	testEnvelopes2 = append(testEnvelopes2, []byte("event4"))
 
-	_ = pgEventStore.WriteBlockProposal(ctx, streamId, common.BytesToHash([]byte("blockhash1")), 1, []byte("block1"))
-	_ = pgEventStore.PromoteBlock(ctx, streamId, 1, common.BytesToHash([]byte("blockhash1")), true, testEnvelopes1)
-	_ = pgEventStore.WriteBlockProposal(ctx, streamId, common.BytesToHash([]byte("blockhash2")), 2, []byte("block2"))
-	_ = pgEventStore.PromoteBlock(ctx, streamId, 2, common.BytesToHash([]byte("blockhash2")), false, testEnvelopes2)
+	_ = pgEventStore.WriteMiniblockCandidate(
+		ctx,
+		streamId,
+		common.BytesToHash([]byte("blockhash1")),
+		1,
+		[]byte("block1"),
+	)
+	_ = pgEventStore.PromoteMiniblockCandidate(
+		ctx,
+		streamId,
+		1,
+		common.BytesToHash([]byte("blockhash1")),
+		true,
+		testEnvelopes1,
+	)
+	_ = pgEventStore.WriteMiniblockCandidate(
+		ctx,
+		streamId,
+		common.BytesToHash([]byte("blockhash2")),
+		2,
+		[]byte("block2"),
+	)
+	_ = pgEventStore.PromoteMiniblockCandidate(
+		ctx,
+		streamId,
+		2,
+		common.BytesToHash([]byte("blockhash2")),
+		false,
+		testEnvelopes2,
+	)
 
 	_, _ = pgEventStore.pool.Exec(ctx, "DELETE FROM minipools WHERE slot_num = 1")
 
 	_, err := pgEventStore.ReadStreamFromLastSnapshot(ctx, streamId, 0)
 
 	require.NotNil(err)
-	require.Contains(err.Error(), "Minipool consistency violation - slotNums are not sequential")
-	require.Equal(AsRiverError(err).GetTag("ActualSlotNumber"), int64(2))
-	require.Equal(AsRiverError(err).GetTag("ExpectedSlotNumber"), int64(1))
+	require.EqualValues(Err_MINIBLOCKS_STORAGE_FAILURE, AsRiverError(err).Code)
 }
 
 func TestGetMiniblocksConsistencyChecks(t *testing.T) {
@@ -742,12 +860,51 @@ func TestGetMiniblocksConsistencyChecks(t *testing.T) {
 	var testEnvelopes3 [][]byte
 	testEnvelopes3 = append(testEnvelopes3, []byte("event3"))
 
-	_ = pgEventStore.WriteBlockProposal(ctx, streamId, common.BytesToHash([]byte("blockhash1")), 1, []byte("block1"))
-	_ = pgEventStore.PromoteBlock(ctx, streamId, 1, common.BytesToHash([]byte("blockhash1")), true, testEnvelopes1)
-	_ = pgEventStore.WriteBlockProposal(ctx, streamId, common.BytesToHash([]byte("blockhash2")), 2, []byte("block2"))
-	_ = pgEventStore.PromoteBlock(ctx, streamId, 2, common.BytesToHash([]byte("blockhash2")), false, testEnvelopes2)
-	_ = pgEventStore.WriteBlockProposal(ctx, streamId, common.BytesToHash([]byte("blockhash3")), 3, []byte("block3"))
-	_ = pgEventStore.PromoteBlock(ctx, streamId, 3, common.BytesToHash([]byte("blockhash3")), false, testEnvelopes3)
+	_ = pgEventStore.WriteMiniblockCandidate(
+		ctx,
+		streamId,
+		common.BytesToHash([]byte("blockhash1")),
+		1,
+		[]byte("block1"),
+	)
+	_ = pgEventStore.PromoteMiniblockCandidate(
+		ctx,
+		streamId,
+		1,
+		common.BytesToHash([]byte("blockhash1")),
+		true,
+		testEnvelopes1,
+	)
+	_ = pgEventStore.WriteMiniblockCandidate(
+		ctx,
+		streamId,
+		common.BytesToHash([]byte("blockhash2")),
+		2,
+		[]byte("block2"),
+	)
+	_ = pgEventStore.PromoteMiniblockCandidate(
+		ctx,
+		streamId,
+		2,
+		common.BytesToHash([]byte("blockhash2")),
+		false,
+		testEnvelopes2,
+	)
+	_ = pgEventStore.WriteMiniblockCandidate(
+		ctx,
+		streamId,
+		common.BytesToHash([]byte("blockhash3")),
+		3,
+		[]byte("block3"),
+	)
+	_ = pgEventStore.PromoteMiniblockCandidate(
+		ctx,
+		streamId,
+		3,
+		common.BytesToHash([]byte("blockhash3")),
+		false,
+		testEnvelopes3,
+	)
 
 	_, _ = pgEventStore.pool.Exec(ctx, "DELETE FROM miniblocks WHERE seq_num = 2")
 
@@ -782,4 +939,113 @@ func TestNotFound(t *testing.T) {
 	result, err := pgEventStore.ReadStreamFromLastSnapshot(ctx, streamId, 0)
 	require.Nil(result)
 	require.Equal(Err_NOT_FOUND, AsRiverError(err).Code)
+}
+
+type dataMaker rand.Rand
+
+func newDataMaker() *dataMaker {
+	return (*dataMaker)(rand.New(rand.NewSource(42)))
+}
+
+func (m *dataMaker) mb() ([]byte, common.Hash) {
+	b := make([]byte, 200)
+	_, _ = (*rand.Rand)(m).Read(b)
+	// Hash is fake
+	return b, common.BytesToHash(b)
+}
+
+func (m *dataMaker) events() [][]byte {
+	var ret [][]byte
+	for range 5 {
+		b := make([]byte, 50)
+		_, _ = (*rand.Rand)(m).Read(b)
+		ret = append(ret, b)
+	}
+	return ret
+}
+
+func requireSnapshotResult(
+	t *testing.T,
+	result *ReadStreamFromLastSnapshotResult,
+	startMiniblockNumber int64,
+	snapshotOffset int,
+	miniblocks [][]byte,
+	minipoolEnvelopes [][]byte,
+) {
+	require.EqualValues(t, startMiniblockNumber, result.StartMiniblockNumber, "StartMiniblockNumber")
+	require.EqualValues(t, snapshotOffset, result.SnapshotMiniblockOffset, "SnapshotMiniblockOffset")
+	require.Equal(t, len(result.Miniblocks), len(miniblocks), "len of miniblocks")
+	require.EqualValues(t, miniblocks, result.Miniblocks)
+	require.Equal(t, len(result.MinipoolEnvelopes), len(minipoolEnvelopes), "len of minipoolEnvelopes")
+	require.EqualValues(t, minipoolEnvelopes, result.MinipoolEnvelopes)
+}
+
+func TestReadStreamFromLastSnapshot(t *testing.T) {
+	require := require.New(t)
+
+	ctx, pgEventStore, testParams := setupTest()
+	defer testParams.closer()
+
+	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+
+	dataMaker := newDataMaker()
+
+	var store StreamStorage = pgEventStore
+
+	genMB, _ := dataMaker.mb()
+	mbs := [][]byte{genMB}
+	require.NoError(store.CreateStreamStorage(ctx, streamId, genMB))
+
+	mb1, h1 := dataMaker.mb()
+	mbs = append(mbs, mb1)
+	require.NoError(store.WriteMiniblockCandidate(ctx, streamId, h1, 1, mb1))
+
+	mb1read, err := store.ReadMiniblockCandidate(ctx, streamId, h1, 1)
+	require.NoError(err)
+	require.EqualValues(mb1, mb1read)
+
+	eventPool1 := dataMaker.events()
+	require.NoError(store.PromoteMiniblockCandidate(ctx, streamId, 1, h1, false, eventPool1))
+
+	streamData, err := store.ReadStreamFromLastSnapshot(ctx, streamId, 10)
+	require.NoError(err)
+	requireSnapshotResult(t, streamData, 0, 0, mbs, eventPool1)
+
+	mb2, h2 := dataMaker.mb()
+	mbs = append(mbs, mb2)
+	require.NoError(store.WriteMiniblockCandidate(ctx, streamId, h2, 2, mb2))
+
+	mb2read, err := store.ReadMiniblockCandidate(ctx, streamId, h2, 2)
+	require.NoError(err)
+	require.EqualValues(mb2, mb2read)
+
+	eventPool2 := dataMaker.events()
+	require.NoError(store.PromoteMiniblockCandidate(ctx, streamId, 2, h2, true, eventPool2))
+
+	streamData, err = store.ReadStreamFromLastSnapshot(ctx, streamId, 10)
+	require.NoError(err)
+	requireSnapshotResult(t, streamData, 0, 2, mbs, eventPool2)
+
+	var lastEvents [][]byte
+	for i := range 12 {
+		mb, h := dataMaker.mb()
+		mbs = append(mbs, mb)
+		require.NoError(store.WriteMiniblockCandidate(ctx, streamId, h, 3+int64(i), mb))
+		lastEvents = dataMaker.events()
+		require.NoError(store.PromoteMiniblockCandidate(ctx, streamId, 3+int64(i), h, false, lastEvents))
+	}
+
+	streamData, err = store.ReadStreamFromLastSnapshot(ctx, streamId, 14)
+	require.NoError(err)
+	requireSnapshotResult(t, streamData, 1, 1, mbs[1:], lastEvents)
+
+	mb, h := dataMaker.mb()
+	mbs = append(mbs, mb)
+	require.NoError(store.WriteMiniblockCandidate(ctx, streamId, h, 15, mb))
+	lastEvents = dataMaker.events()
+	require.NoError(store.PromoteMiniblockCandidate(ctx, streamId, 15, h, true, lastEvents))
+
+	streamData, err = store.ReadStreamFromLastSnapshot(ctx, streamId, 6)
+	require.NoError(err)
+	requireSnapshotResult(t, streamData, 10, 5, mbs[10:], lastEvents)
 }

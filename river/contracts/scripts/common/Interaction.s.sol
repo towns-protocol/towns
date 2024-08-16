@@ -15,7 +15,7 @@ abstract contract Interaction is Script, DeployBase {
   // - loading private keys
   // - saving deployments
   // - logging
-  function __interact(address deployer) public virtual;
+  function __interact(address deployer) internal virtual;
 
   // will first try to load existing deployments from `deployments/<network>/<contract>.json`
   // if OVERRIDE_DEPLOYMENTS is set or if no deployment is found:
@@ -23,16 +23,7 @@ abstract contract Interaction is Script, DeployBase {
   // - invoke __deploy() with the private key
   // - save the deployment to `deployments/<network>/<contract>.json`
   function interact() public virtual {
-    uint256 pk = isAnvil()
-      ? vm.envUint("LOCAL_PRIVATE_KEY")
-      : vm.envUint("TESTNET_PRIVATE_KEY");
-
-    address potential = vm.addr(pk);
-    address deployer = isAnvil()
-      ? potential
-      : msg.sender != potential
-        ? msg.sender
-        : potential;
+    address deployer = _msgSender();
 
     info(
       string.concat(
@@ -51,5 +42,9 @@ abstract contract Interaction is Script, DeployBase {
 
   function run() public virtual {
     interact();
+  }
+
+  function _msgSender() internal view returns (address) {
+    return msg.sender;
   }
 }

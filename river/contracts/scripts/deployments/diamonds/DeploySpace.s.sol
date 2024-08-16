@@ -85,33 +85,14 @@ contract DeploySpace is DiamondHelper, Deployer {
     return "space";
   }
 
-  function diamondInitParams(
-    address deployer
-  ) internal returns (Diamond.InitParams memory) {
-    diamondCut = diamondCutHelper.deploy();
-    diamondLoupe = diamondLoupeHelper.deploy();
-    introspection = introspectionHelper.deploy();
-    erc721aQueryable = erc721aQueryableHelper.deploy();
-    banning = banningHelper.deploy();
-    membership = membershipHelper.deploy();
-    membershipMetadata = membershipMetadataHelper.deploy();
-    entitlementDataQueryable = entitlementDataQueryableHelper.deploy();
-    ownablePending = ownablePendingHelper.deploy();
-    tokenOwnable = tokenOwnableHelper.deploy();
-    entitlements = entitlementsHelper.deploy();
-    roles = rolesHelper.deploy();
-    channels = channelsHelper.deploy();
-    tokenPausable = tokenPausableHelper.deploy();
+  function addImmutableCuts(address deployer) internal {
+    multiInit = deployMultiInit.deploy(deployer);
+    diamondCut = diamondCutHelper.deploy(deployer);
+    diamondLoupe = diamondLoupeHelper.deploy(deployer);
+    introspection = introspectionHelper.deploy(deployer);
+    ownablePending = ownablePendingHelper.deploy(deployer);
+    tokenOwnable = tokenOwnableHelper.deploy(deployer);
 
-    prepay = prepayHelper.deploy();
-    multiInit = deployMultiInit.deploy();
-
-    membershipHelper.addSelectors(erc721aHelper.selectors());
-    membershipHelper.removeSelector(IERC721A.tokenURI.selector);
-
-    addCut(
-      tokenOwnableHelper.makeCut(tokenOwnable, IDiamond.FacetCutAction.Add)
-    );
     addCut(diamondCutHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add));
     addCut(
       diamondLoupeHelper.makeCut(diamondLoupe, IDiamond.FacetCutAction.Add)
@@ -119,6 +100,37 @@ contract DeploySpace is DiamondHelper, Deployer {
     addCut(
       introspectionHelper.makeCut(introspection, IDiamond.FacetCutAction.Add)
     );
+    addCut(
+      ownablePendingHelper.makeCut(ownablePending, IDiamond.FacetCutAction.Add)
+    );
+    addCut(
+      tokenOwnableHelper.makeCut(tokenOwnable, IDiamond.FacetCutAction.Add)
+    );
+
+    addInit(diamondCut, diamondCutHelper.makeInitData(""));
+    addInit(diamondLoupe, diamondLoupeHelper.makeInitData(""));
+    addInit(introspection, introspectionHelper.makeInitData(""));
+    addInit(ownablePending, ownablePendingHelper.makeInitData(deployer));
+  }
+
+  function diamondInitParams(
+    address deployer
+  ) public returns (Diamond.InitParams memory) {
+    erc721aQueryable = erc721aQueryableHelper.deploy(deployer);
+    banning = banningHelper.deploy(deployer);
+    membership = membershipHelper.deploy(deployer);
+    membershipMetadata = membershipMetadataHelper.deploy(deployer);
+    entitlementDataQueryable = entitlementDataQueryableHelper.deploy(deployer);
+
+    entitlements = entitlementsHelper.deploy(deployer);
+    roles = rolesHelper.deploy(deployer);
+    channels = channelsHelper.deploy(deployer);
+    tokenPausable = tokenPausableHelper.deploy(deployer);
+    prepay = prepayHelper.deploy(deployer);
+
+    membershipHelper.addSelectors(erc721aHelper.selectors());
+    membershipHelper.removeSelector(IERC721A.tokenURI.selector);
+
     addCut(
       entitlementsHelper.makeCut(entitlements, IDiamond.FacetCutAction.Add)
     );
@@ -152,15 +164,7 @@ contract DeploySpace is DiamondHelper, Deployer {
         IDiamond.FacetCutAction.Add
       )
     );
-    addCut(
-      ownablePendingHelper.makeCut(ownablePending, IDiamond.FacetCutAction.Add)
-    );
     addCut(prepayHelper.makeCut(prepay, IDiamond.FacetCutAction.Add));
-
-    addInit(ownablePending, ownablePendingHelper.makeInitData(deployer));
-    addInit(diamondCut, diamondCutHelper.makeInitData(""));
-    addInit(diamondLoupe, diamondLoupeHelper.makeInitData(""));
-    addInit(introspection, introspectionHelper.makeInitData(""));
 
     return
       Diamond.InitParams({
@@ -175,6 +179,8 @@ contract DeploySpace is DiamondHelper, Deployer {
   }
 
   function __deploy(address deployer) public override returns (address) {
+    addImmutableCuts(deployer);
+
     Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);
     vm.broadcast(deployer);
     Diamond diamond = new Diamond(initDiamondCut);

@@ -8309,6 +8309,40 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@river-build/stream-metadata@workspace:river/packages/stream-metadata":
+  version: 0.0.0-use.local
+  resolution: "@river-build/stream-metadata@workspace:river/packages/stream-metadata"
+  dependencies:
+    "@bufbuild/buf": ^1.32.0
+    "@bufbuild/protobuf": ^1.9.0
+    "@connectrpc/connect": ^1.4.0
+    "@connectrpc/connect-web": ^1.4.0
+    "@fastify/cors": ^9.0.1
+    "@river-build/eslint-config": "workspace:^"
+    "@river-build/generated": "workspace:^"
+    "@river-build/prettier-config": "workspace:^"
+    "@river-build/proto": "workspace:^"
+    "@river-build/sdk": "workspace:^"
+    "@river-build/web3": "workspace:^"
+    "@types/node": ^20.5.0
+    "@typescript-eslint/parser": ^7.14.1
+    dotenv: ^16.4.5
+    esbuild: ^0.21.5
+    esbuild-plugin-pino: ^2.2.0
+    eslint: ^8.53.0
+    ethers: ^5.7.2
+    fastify: ^4.28.1
+    magic-bytes.js: ^1.10.0
+    pino: ^8.17.1
+    pino-pretty: ^10.2.3
+    prettier: ^2.8.8
+    rollup: ^4.18.1
+    ts-node: ^10.9.1
+    typescript: ^5.1.6
+    zod: ^3.21.4
+  languageName: unknown
+  linkType: soft
+
 "@river-build/stress@workspace:river/packages/stress":
   version: 0.0.0-use.local
   resolution: "@river-build/stress@workspace:river/packages/stress"
@@ -29779,40 +29813,6 @@ __metadata:
   checksum: c9b78453aeb0c84fcc59555518ac62bacab9fa98e323e7b7666e5f9f58af8f3155e34481078509b02929bd1268427f664d186604cdccee95abc446099b339f83
   languageName: node
   linkType: hard
-
-"stream-metadata@workspace:river/packages/stream-metadata":
-  version: 0.0.0-use.local
-  resolution: "stream-metadata@workspace:river/packages/stream-metadata"
-  dependencies:
-    "@bufbuild/buf": ^1.32.0
-    "@bufbuild/protobuf": ^1.9.0
-    "@connectrpc/connect": ^1.4.0
-    "@connectrpc/connect-web": ^1.4.0
-    "@fastify/cors": ^9.0.1
-    "@river-build/eslint-config": "workspace:^"
-    "@river-build/generated": "workspace:^"
-    "@river-build/prettier-config": "workspace:^"
-    "@river-build/proto": "workspace:^"
-    "@river-build/sdk": "workspace:^"
-    "@river-build/web3": "workspace:^"
-    "@types/node": ^20.5.0
-    "@typescript-eslint/parser": ^7.14.1
-    dotenv: ^16.4.5
-    esbuild: ^0.21.5
-    esbuild-plugin-pino: ^2.2.0
-    eslint: ^8.53.0
-    ethers: ^5.7.2
-    fastify: ^4.28.1
-    magic-bytes.js: ^1.10.0
-    pino: ^8.17.1
-    pino-pretty: ^10.2.3
-    prettier: ^2.8.8
-    rollup: ^4.18.1
-    ts-node: ^10.9.1
-    typescript: ^5.1.6
-    zod: ^3.21.4
-  languageName: unknown
-  linkType: soft
 
 "stream-shift@npm:^1.0.0, stream-shift@npm:^1.0.2":
   version: 1.0.3

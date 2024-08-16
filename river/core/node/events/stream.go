@@ -100,7 +100,7 @@ func (s *streamImpl) loadInternal(ctx context.Context) error {
 	streamData, err := s.params.Storage.ReadStreamFromLastSnapshot(
 		ctx,
 		s.streamId,
-		max(0, streamRecencyConstraintsGenerations-1),
+		streamRecencyConstraintsGenerations,
 	)
 	if err != nil {
 		if AsRiverError(err).Code == Err_NOT_FOUND {
@@ -158,7 +158,7 @@ func (s *streamImpl) applyMiniblockImplNoLock(ctx context.Context, miniblock *Mi
 		newMinipool = append(newMinipool, b)
 	}
 
-	err = s.params.Storage.PromoteBlock(
+	err = s.params.Storage.PromoteMiniblockCandidate(
 		ctx,
 		s.streamId,
 		s.view.minipool.generation,
@@ -392,7 +392,6 @@ func (s *streamImpl) addEventImpl(ctx context.Context, event *ParsedEvent) error
 		return err
 	}
 
-
 	prevSyncCookie := s.view.SyncCookie(s.params.Wallet.Address)
 	s.view = newSV
 	newSyncCookie := s.view.SyncCookie(s.params.Wallet.Address)
@@ -597,7 +596,7 @@ func (s *streamImpl) SaveMiniblockCandidate(ctx context.Context, mb *Miniblock) 
 		)
 	}
 
-	return s.params.Storage.WriteBlockProposal(
+	return s.params.Storage.WriteMiniblockCandidate(
 		ctx,
 		s.streamId,
 		mbInfo.Hash,

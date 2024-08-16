@@ -30,45 +30,56 @@ contract DeploySpaceOwner is DiamondHelper, Deployer {
   DeployGuardianFacet guardianHelper = new DeployGuardianFacet();
   DeployMultiInit multiInitHelper = new DeployMultiInit();
 
+  address multiInit;
+  address diamondCut;
+  address diamondLoupe;
+  address introspection;
+  address ownable;
+
+  address metadata;
+  address spaceOwner;
+  address guardian;
+
   function versionName() public pure override returns (string memory) {
     return "spaceOwner";
   }
 
-  function diamondInitParams(
-    address deployer
-  ) internal returns (Diamond.InitParams memory) {
-    address diamondCut = diamondCutHelper.deploy();
-    address diamondLoupe = diamondLoupeHelper.deploy();
-    address introspection = introspectionHelper.deploy();
-    address ownable = ownableHelper.deploy();
-    address metadata = metadataHelper.deploy();
-    address spaceOwner = spaceOwnerHelper.deploy();
-    address guardian = guardianHelper.deploy();
-    address multiInit = multiInitHelper.deploy();
+  function addImmutableCuts(address deployer) internal {
+    multiInit = multiInitHelper.deploy(deployer);
+
+    diamondCut = diamondCutHelper.deploy(deployer);
+    diamondLoupe = diamondLoupeHelper.deploy(deployer);
+    introspection = introspectionHelper.deploy(deployer);
+    ownable = ownableHelper.deploy(deployer);
 
     addFacet(
       diamondCutHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
       diamondCut,
       diamondCutHelper.makeInitData("")
     );
-
     addFacet(
       diamondLoupeHelper.makeCut(diamondLoupe, IDiamond.FacetCutAction.Add),
       diamondLoupe,
       diamondLoupeHelper.makeInitData("")
     );
-
-    addFacet(
-      ownableHelper.makeCut(ownable, IDiamond.FacetCutAction.Add),
-      ownable,
-      ownableHelper.makeInitData(deployer)
-    );
-
     addFacet(
       introspectionHelper.makeCut(introspection, IDiamond.FacetCutAction.Add),
       introspection,
       introspectionHelper.makeInitData("")
     );
+    addFacet(
+      ownableHelper.makeCut(ownable, IDiamond.FacetCutAction.Add),
+      ownable,
+      ownableHelper.makeInitData(deployer)
+    );
+  }
+
+  function diamondInitParams(
+    address deployer
+  ) public returns (Diamond.InitParams memory) {
+    metadata = metadataHelper.deploy(deployer);
+    spaceOwner = spaceOwnerHelper.deploy(deployer);
+    guardian = guardianHelper.deploy(deployer);
 
     addFacet(
       spaceOwnerHelper.makeCut(spaceOwner, IDiamond.FacetCutAction.Add),
@@ -101,6 +112,8 @@ contract DeploySpaceOwner is DiamondHelper, Deployer {
   }
 
   function __deploy(address deployer) public override returns (address) {
+    addImmutableCuts(deployer);
+
     Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);
 
     vm.broadcast(deployer);

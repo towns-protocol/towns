@@ -33,11 +33,11 @@ contract MockDiamondHelper {
   function createDiamond(address owner) public returns (Diamond) {
     MultiInit multiInit = new MultiInit();
 
-    address ownable = ownableHelper.deploy();
-    address diamondCut = diamondCutHelper.deploy();
-    address diamondLoupe = diamondLoupeHelper.deploy();
-    address introspection = introspectionHelper.deploy();
-    address managedProxy = managedProxyHelper.deploy();
+    address ownable = ownableHelper.deploy(owner);
+    address diamondCut = diamondCutHelper.deploy(owner);
+    address diamondLoupe = diamondLoupeHelper.deploy(owner);
+    address introspection = introspectionHelper.deploy(owner);
+    address managedProxy = managedProxyHelper.deploy(owner);
 
     cuts.push(
       diamondCutHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add)

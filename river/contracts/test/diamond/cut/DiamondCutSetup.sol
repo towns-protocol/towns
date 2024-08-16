@@ -43,10 +43,10 @@ abstract contract DiamondCutSetup is FacetTest {
   {
     MultiInit multiInit = new MultiInit();
 
-    address cut = cutHelper.deploy();
-    address loupe = loupeHelper.deploy();
-    address introspection = introspectionHelper.deploy();
-    address ownable = ownableHelper.deploy();
+    address cut = cutHelper.deploy(deployer);
+    address loupe = loupeHelper.deploy(deployer);
+    address introspection = introspectionHelper.deploy(deployer);
+    address ownable = ownableHelper.deploy(deployer);
 
     addFacet(
       cutHelper.makeCut(cut, IDiamond.FacetCutAction.Add),

@@ -27,12 +27,12 @@ contract InteractPostDeploy is Interaction {
   DeployProxyBatchDelegation deployProxyDelegation =
     new DeployProxyBatchDelegation();
 
-  function __interact(address deployer) public override {
-    address spaceOwner = deploySpaceOwner.deploy();
-    address spaceFactory = deploySpaceFactory.deploy();
-    address baseRegistry = deployBaseRegistry.deploy();
-    address riverBaseToken = deployRiverBaseToken.deploy();
-    address mainnetProxyDelegation = deployProxyDelegation.deploy();
+  function __interact(address deployer) internal override {
+    address spaceOwner = deploySpaceOwner.deploy(deployer);
+    address spaceFactory = deploySpaceFactory.deploy(deployer);
+    address baseRegistry = deployBaseRegistry.deploy(deployer);
+    address riverBaseToken = deployRiverBaseToken.deploy(deployer);
+    address mainnetProxyDelegation = deployProxyDelegation.deploy(deployer);
 
     vm.startBroadcast(deployer);
     ISpaceOwner(spaceOwner).setFactory(spaceFactory);
