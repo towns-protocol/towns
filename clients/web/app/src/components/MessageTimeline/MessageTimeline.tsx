@@ -3,7 +3,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { MessageType, TimelineEvent, ZTEvent, useChannelData } from 'use-towns-client'
 import { MessageTimelineItem } from '@components/MessageTimeIineItem/TimelineItem'
 import { useVisualViewportContext } from '@components/VisualViewportContext/VisualViewportContext'
-import { Box, Divider, Paragraph } from '@ui'
+import { Box, Divider, Paragraph, SizeBox } from '@ui'
 import { SECOND_MS } from 'data/constants'
 import { useDevice } from 'hooks/useDevice'
 import { useExperimentsStore } from 'store/experimentsStore'
@@ -563,7 +563,7 @@ export const MessageTimeline = (props: Props) => {
     return displaySimpleList ? (
         <Box paddingY="md">{listItems.map((item) => itemRenderer(item))}</Box>
     ) : (
-        <Box grow position="relative" justifyContent="end">
+        <SizeBox grow position="relative" justifyContent="end">
             <VList
                 overscan={1}
                 align={props.align}
@@ -584,7 +584,7 @@ export const MessageTimeline = (props: Props) => {
                 itemRenderer={itemRenderer}
                 offscreenMarker={offscreenMarker}
             />
-        </Box>
+        </SizeBox>
     )
 }
 

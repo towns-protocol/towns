@@ -1,5 +1,5 @@
 import { format, formatDistance } from 'date-fns'
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { MouseEventHandler, useCallback, useEffect, useRef, useState } from 'react'
 import {
     Address,
     LookupUser,
@@ -121,9 +121,19 @@ export const MessageLayout = (props: Props) => {
 
     const backgroundProps = useHighlightBackground(isHighlight, !!pin)
 
-    const onClick = useCallback(() => {
-        setIsModalSheetVisible(true)
-    }, [setIsModalSheetVisible])
+    const onClick: MouseEventHandler = useCallback(
+        (e) => {
+            // skip context menu when clicking on links or video elements
+            if (
+                e.target instanceof Element &&
+                (e.target.closest('a') || e.target.closest('video'))
+            ) {
+                return
+            }
+            setIsModalSheetVisible(true)
+        },
+        [setIsModalSheetVisible],
+    )
 
     const { createLink } = useCreateLink()
     const { data: abstractAccountAddress } = useAbstractAccountAddress({

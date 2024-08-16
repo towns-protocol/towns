@@ -76,7 +76,9 @@ export const ChunkedFile = (props: Props) => {
     )
 
     if (isMediaMimeType(props.mimetype)) {
-        return <ChunkedMedia {...props} onDownloadClicked={onDownloadClicked} />
+        return <ChunkedImageMedia {...props} onDownloadClicked={onDownloadClicked} />
+    } else if (props.mimetype.match('video')) {
+        return <ChunkedVideoMedia {...props} onDownloadClicked={onDownloadClicked} />
     } else {
         return (
             <ChunkedFileDownload
@@ -138,7 +140,7 @@ const ChunkedFileDownload = (
 const getClosestEventDiv = (element: React.RefObject<HTMLDivElement>) =>
     element.current?.closest('[id^="event-"]') as HTMLDivElement
 
-const ChunkedMedia = (
+const ChunkedImageMedia = (
     props: Props & {
         onDownloadClicked: (event: React.MouseEvent<Element, MouseEvent>) => Promise<void>
     },
@@ -266,5 +268,59 @@ const ChunkedMedia = (
             )}
             {touchButton}
         </Box>
+    )
+}
+
+const ChunkedVideoMedia = (
+    props: Props & {
+        onDownloadClicked: (event: React.MouseEvent<Element, MouseEvent>) => Promise<void>
+    },
+) => {
+    const { aspectRatio, containerWidth, containerHeight } = useSizeContext()
+    const { objectURL } = useChunkedMedia(props)
+    const { isMessageAttachementContext } = useIsMessageAttachementContext()
+    const src = objectURL
+
+    const style = useMemo(() => {
+        if (aspectRatio > 1) {
+            // landscape
+            return {
+                width: 'auto',
+                height: containerHeight * 0.66,
+                maxWidth: containerWidth / 2,
+            } as const
+        } else {
+            // portrait
+            return {
+                width: '100%',
+                height: 'auto',
+                maxHeight: containerHeight,
+            } as const
+        }
+    }, [aspectRatio, containerHeight, containerWidth])
+
+    const onLoadedMetadata = useCallback((event: React.SyntheticEvent<HTMLVideoElement>) => {
+        const video = event.currentTarget
+        // hack to get the first frame on safary
+        video.currentTime = 0.01
+    }, [])
+
+    return isMessageAttachementContext ? (
+        <></>
+    ) : (
+        <Box
+            controls
+            playsInline
+            muted
+            preload="metadata"
+            rounded="sm"
+            overflow="hidden"
+            role="video"
+            as="video"
+            src={src}
+            style={style}
+            objectFit="cover"
+            onLoadedMetadata={onLoadedMetadata}
+        />
     )
 }

@@ -9,15 +9,20 @@ export const SizeContext = createContext<{
 })
 
 export const useSizeContext = () => {
-    const { width } = useContext(SizeContext).size
+    const { width, height } = useContext(SizeContext).size
 
-    const isNumber = typeof width === 'number'
+    const isDefinedWidth = typeof width === 'number'
+    const isDefinedHeight = typeof height === 'number'
 
-    const w = (isNumber && Math.floor(width)) || 0
+    const containerWidth = (isDefinedWidth && Math.floor(width)) || 0
+    const containerHeight = (isDefinedHeight && Math.floor(height)) || 0
 
     return useMemo(() => {
         return {
-            lessThan: (value: number) => isNumber && w < value,
+            lessThan: (value: number) => isDefinedWidth && containerWidth < value,
+            aspectRatio: width && height ? width / height : 0,
+            containerWidth,
+            containerHeight,
         }
-    }, [isNumber, w])
+    }, [containerHeight, height, isDefinedWidth, containerWidth, width])
 }
