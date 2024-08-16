@@ -3,7 +3,7 @@ import { ELEMENT_MENTION } from '@udecode/plate-mention'
 import every from 'lodash/every'
 import isEqual from 'lodash/isEqual'
 import { clsx } from 'clsx'
-import { Channel, OTWMention, useUserLookupContext } from 'use-towns-client'
+import { Channel, LookupUserFn, OTWMention, useUserLookupContext } from 'use-towns-client'
 import { Box } from '@ui'
 import { MessageStatusAnnotation } from '@components/MessageTimeIineItem/items/MessageItem/MessageStatusAnnotation'
 import { getUserHashMap } from './components/plate-ui/autocomplete/helpers'
@@ -39,19 +39,19 @@ interface RichTextPreviewProps {
     onMentionClick?: (mentionName: string) => void
     onMentionHover?: (element?: HTMLElement, userId?: string) => void
     highlightTerms?: string[]
+    lookupUser?: LookupUserFn
 }
 
-const RichTextPreviewInternal = ({
+export const RichTextPreviewInternal = ({
     content,
     statusAnnotation,
     mentions = [],
     channels,
     onMentionClick,
     onMentionHover,
+    lookupUser,
 }: RichTextPreviewProps) => {
     const ref = React.useRef<HTMLElement>(null)
-
-    const { lookupUser } = useUserLookupContext()
 
     const _onMentionHover = useCallback(
         (element?: HTMLElement, userId?: string) => {
@@ -138,6 +138,7 @@ const RichTextPreviewInternal = ({
                 className={clsx(fieldClassName, {
                     [singleEmojiMessage]: isSingleEmoji,
                 })}
+                data-testid={isSingleEmoji ? 'single-emoji-message' : undefined}
             >
                 <MarkdownToJSX
                     // eslint-disable-next-line
@@ -145,7 +146,7 @@ const RichTextPreviewInternal = ({
                     components={memoizedComponents}
                     channels={channels}
                     userHashMap={userHashMap}
-                    lookupUser={lookupUser}
+                    lookupUser={lookupUser as LookupUserFn}
                 >
                     {content}
                 </MarkdownToJSX>
@@ -175,4 +176,9 @@ const arePropsEqual = (
     )
 }
 
-export const RichTextPreview = React.memo(RichTextPreviewInternal, arePropsEqual)
+const RichTextPreviewContainer = (props: RichTextPreviewProps) => {
+    const { lookupUser } = useUserLookupContext()
+    return <RichTextPreviewInternal {...props} lookupUser={lookupUser} />
+}
+
+export const RichTextPreview = React.memo(RichTextPreviewContainer, arePropsEqual)

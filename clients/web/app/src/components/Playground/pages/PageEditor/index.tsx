@@ -2,10 +2,12 @@
 // @ts-nocheck
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { PlateEditor, Value } from '@udecode/plate-common'
-import { SendTextMessageOptions } from 'use-towns-client'
+import { LookupUser, SendTextMessageOptions } from 'use-towns-client'
 import { PlaygroundEditor } from '@components/Playground/pages/PageEditor/PlaygroundEditor'
 import { code, codeBlock } from '@components/RichTextPlate/RichTextEditor.css'
-import { Box, Button, Stack, Text } from '@ui'
+import { RichTextPreviewInternal } from '@components/RichTextPlate/RichTextPreview'
+import { Box, Button, Paragraph, Stack, Text } from '@ui'
+import { channels, roomMembers } from './data'
 
 type InputEvent = {
     type: string
@@ -28,6 +30,9 @@ const EVENTS_TO_CAPTURE = [
     'paste',
     'textInput',
 ]
+
+const lookupUser = (userId: string) =>
+    roomMembers.find((user) => user.userId === userId) as LookupUser
 
 export const PageEditor = () => {
     const ref = useRef<HTMLDivElement>(null)
@@ -122,6 +127,7 @@ export const PageEditor = () => {
                     width="50%"
                     height="100%"
                     minWidth="200"
+                    gap
                     justifyContent="end"
                     overflowY="scroll"
                 >
@@ -129,9 +135,27 @@ export const PageEditor = () => {
                         Output markdown (updated on send / enter)
                     </Text>
                     {markdown.length > 0 && (
-                        <Box as="pre" overflowY="scroll" className={codeBlock}>
-                            <code data-testid="editor-md-preview">{markdown}</code>
-                        </Box>
+                        <>
+                            <Paragraph strong>Markdown</Paragraph>
+                            <Box as="pre" overflowY="scroll" className={codeBlock}>
+                                <code data-testid="editor-md-preview">{markdown}</code>
+                            </Box>
+                            <Paragraph strong>Rich Text Preview</Paragraph>
+                            <Box
+                                padding="sm"
+                                paddingY="lg"
+                                minHeight="100"
+                                border="level3"
+                                data-testid="editor-jsx-preview"
+                            >
+                                <RichTextPreviewInternal
+                                    channels={channels}
+                                    mentions={roomMembers}
+                                    content={markdown}
+                                    lookupUser={lookupUser}
+                                />
+                            </Box>
+                        </>
                     )}
                     <Box
                         border="level3"
@@ -141,7 +165,11 @@ export const PageEditor = () => {
                         style={{ marginTop: 'auto' }}
                         ref={ref}
                     >
-                        <PlaygroundEditor onChange={onChange} onSend={onSend} />
+                        <PlaygroundEditor
+                            onChange={onChange}
+                            onSend={onSend}
+                            lookupUser={lookupUser}
+                        />
                     </Box>
                 </Stack>
                 <Box grow maxWidth="50%" height="100%" borderLeft="level4" paddingLeft="md">

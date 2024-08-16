@@ -1,6 +1,6 @@
 import React, { useRef } from 'react'
 import { PlateEditor, Value } from '@udecode/plate-common'
-import { ChannelContextProvider, LookupUser, SendTextMessageOptions } from 'use-towns-client'
+import { ChannelContextProvider, LookupUserFn, SendTextMessageOptions } from 'use-towns-client'
 import { RichTextEditor } from '@components/RichTextPlate/RichTextEditor'
 import { useEditorChannelData } from '@components/RichTextPlate/hooks/editorHooks'
 import {
@@ -9,14 +9,12 @@ import {
 } from '@components/RichTextPlate/components/plate-ui/autocomplete/helpers'
 import { channels, roomMembers } from './data'
 
-const lookupUser = (userId: string) =>
-    roomMembers.find((user) => user.userId === userId) as LookupUser
-
 type Props = {
     onChange?: (editor: PlateEditor<Value>) => void
     onSend?: (message: string, options: SendTextMessageOptions) => void
+    lookupUser: LookupUserFn
 }
-export const PlaygroundEditor = ({ onChange, onSend }: Props) => {
+export const PlaygroundEditor = ({ lookupUser, onChange, onSend }: Props) => {
     const userMentions = useRef(
         roomMembers.map((user) => convertUserToCombobox(user, ['1', '2', '5', '6'])),
     )
