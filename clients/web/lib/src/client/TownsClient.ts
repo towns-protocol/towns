@@ -122,7 +122,10 @@ export class TownsClient
         this.opts = opts
         this.analytics = opts.analytics
         this.name = name || Math.random().toString(36).substring(7)
-        console.log('~~~ new TownsClient ~~~', this.name, this.opts)
+
+        // Don't log the analytics object, it's large and not useful
+        const { analytics: _, ...rest } = this.opts
+        console.log('~~~ new TownsClient ~~~', this.name, rest)
         this.spaceDapp = spaceDapp
 
         if (opts.accountAbstractionConfig?.aaRpcUrl) {

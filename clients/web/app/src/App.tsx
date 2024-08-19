@@ -40,7 +40,6 @@ const DEFAULT_TIMELINE_FILTER = new Set([ZTEvent.Fulfillment, ZTEvent.KeySolicit
 const analyticsInstance = Analytics.getInstance()
 
 export const App = () => {
-    const _envornmentId = useRef<string | undefined>(undefined)
     const theme = useStore((state) => state.getTheme())
     const mutedChannelIds = useStore((state) => state.mutedChannelIds)
     const spaceIdBookmark = useStore((state) => state.spaceIdBookmark)
@@ -76,13 +75,12 @@ export const App = () => {
     const environment = useEnvironment()
 
     // Log environment changes
-    if (environment.id !== _envornmentId.current) {
-        _envornmentId.current = environment.id
+    useEffect(() => {
         console.log('Environment: ', {
             current: environment.id,
-            ENVIRONMENTS,
+            currentEnv: ENVIRONMENTS.find(({ id }) => id === environment.id),
         })
-    }
+    }, [environment.id])
 
     const supportedXChainRpcMapping = useMemo(() => {
         const config = env.VITE_XCHAIN_CONFIG
