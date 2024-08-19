@@ -47,17 +47,21 @@ export async function sendNotificationViaWebPush(
         subject: env.VAPID_SUBJECT as string,
     }
     if (!vapidDetails.publicKey || !vapidDetails.privateKey || !vapidDetails.subject) {
+        notificationServiceLogger.error('Missing required VAPID environment variables', {
+            userId: options.userId,
+            channelId: options.channelId,
+        })
         throw new Error('Missing required VAPID environment variables')
     }
-    const logger = notificationServiceLogger.child({
-        label: 'sendNotification',
-        userId: options.userId,
-    })
 
     try {
         const subscription: WebPushSubscription = JSON.parse(subscribed.PushSubscription)
         if (!subscription) {
-            logger.error('cannot parse subscription')
+            notificationServiceLogger.error('cannot parse subscription', {
+                userId: options.userId,
+                pushSubscription: subscribed.PushSubscription,
+                channelId: options.channelId,
+            })
             return {
                 status: SendPushStatus.Error,
                 message: 'cannot parse subscription',
@@ -88,14 +92,23 @@ export async function sendNotificationViaWebPush(
 
         // create the request to send to the push service
         const request = await createRequest(pushOptions, subscription)
-        logger.info(`request url ${request.url}`)
 
         const response = await fetch(request)
         const status = response.status
+        notificationServiceLogger.info('sendNotificationViaWebPush response', {
+            status,
+            userId: options.userId,
+            channelId: options.channelId,
+        })
 
         const success = status >= 200 && status <= 204
 
         if (status === 410 || status === 404) {
+            notificationServiceLogger.warn('sendNotificationViaWebPush subscription not found', {
+                userId: options.userId,
+                channelId: options.channelId,
+                status,
+            })
             await deleteFailedSubscription(options.userId, subscribed.PushSubscription)
         }
 
@@ -107,8 +120,12 @@ export async function sendNotificationViaWebPush(
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
-        logger.error('sendNotificationViaWebPush exception', {
+        notificationServiceLogger.error('sendNotificationViaWebPush exception', {
             error: e,
+            message: e.message,
+            stack: e.stack,
+            channelId: options.channelId,
+            userId: options.userId,
         })
 
         return {
@@ -124,19 +141,16 @@ export async function sendNotificationViaAPNS(
     options: NotificationOptions,
     subscribed: PushSubscription,
 ): Promise<SendPushResponse> {
-    const logger = notificationServiceLogger.child({
-        label: 'sendNotification',
-        userId: options.userId,
-    })
-
     try {
         const subscription: WebPushSubscription = JSON.parse(subscribed.PushSubscription)
         if (
             subscription.endpoint !== ApnsEndpoint.Production &&
             subscription.endpoint !== ApnsEndpoint.Sandbox
         ) {
-            logger.error('invalid APNS endpoint', {
+            notificationServiceLogger.error('sendNotificationViaAPNS invalid APNS endpoint', {
                 endpoint: subscription.endpoint,
+                userId: options.userId,
+                channel: options.channelId,
             })
             await deleteFailedSubscription(options.userId, subscribed.PushSubscription)
             return {
@@ -160,18 +174,38 @@ export async function sendNotificationViaAPNS(
         notification.mutableContent = true
 
         const response = await provider.send(notification, subscription.keys.auth)
-        logger.info('sendNotificationViaAPNS response', {
+        notificationServiceLogger.info('sendNotificationViaAPNS response', {
             environment: subscription.endpoint,
             failed: response.failed,
             sent: response.sent,
+            userId: options.userId,
+            channel: options.channelId,
         })
         if (response.failed.length > 0) {
+            if (response.failed.length > 1) {
+                notificationServiceLogger.warn(
+                    'sendNotificationViaAPNS multiple failed to send APNS notification',
+                    {
+                        failed: response.failed,
+                        channelId: options.channelId,
+                        userId: options.userId,
+                    },
+                )
+            }
             // We only send one notification at a time
             if (response.failed[0].status === 410) {
                 await deleteFailedSubscription(options.userId, subscribed.PushSubscription)
+            }
+            if (
+                response.failed[0].status === 400 &&
+                response.failed[0].response?.reason === 'BadDeviceToken'
+            ) {
+                await deleteFailedSubscription(options.userId, subscribed.PushSubscription)
             } else {
-                logger.error('failed to send APNS notification', {
+                notificationServiceLogger.error('failed to send APNS notification', {
                     failed: response.failed,
+                    userId: options.userId,
+                    channel: options.channelId,
                 })
             }
             return {
@@ -188,8 +222,10 @@ export async function sendNotificationViaAPNS(
             }
         }
     } catch (err) {
-        logger.error('sendNotificationViaAPNS error', {
+        notificationServiceLogger.error('sendNotificationViaAPNS error', {
             err,
+            userId: options.userId,
+            channel: options.channelId,
         })
 
         return {
@@ -214,7 +250,10 @@ async function deleteFailedSubscription(userId: string, pushSubscription: string
             },
         })
     } catch (err) {
-        notificationServiceLogger.error('failed to delete subscription from the db', { err })
+        notificationServiceLogger.error('failed to delete subscription from the db', {
+            err,
+            userId: userId,
+        })
     }
 }
 
