@@ -14,9 +14,19 @@ Welcome to the Harmony mono repo. Here you will find all of the components to ru
 
 - **Node v20.x.x**, I recommend using nvm to install node: <https://github.com/nvm-sh/nvm>, then you can run `nvm use` to switch to the node version specified in .nvmrc, or `nvm alias default 20 && nvm use default` to set the default version across all of your terminals
 
-- **golang** <https://go.dev/>
+- **golang** <https://go.dev/>, you can also install it with brew:
+
+```
+    brew install go
+```
 
 - **yarn 2** `npm install --global yarn` We're using yarn 2, which means that there should only be one node_modules folder and one yarn.lock file at the root of the repository. yarn 2 installation instructions are here <https://yarnpkg.com/getting-started/install>, if you're already using yarn it will automatically upgrade you behind the scenes.
+
+We now require yarn 3.8.0, so after installing you should run:
+
+```
+    yarn set version 3.8.0
+```
 
 - **CMake** <https://cmake.org/download/>, Once cmake is installed, run and go to `Tools > How to Install For Command Line Usage` for instructions on how to add cmake to your path
 
@@ -50,11 +60,17 @@ cp clients/web/app/.env.local-sample clients/web/app/.env.local
 
 Then update `clients/web/app/.env.local` with the required (blank) keys.
 
-3. For local Cloudflare workers to run properly, you'll need to add their secret env variables. At `servers/workers/` you'll see: `gateway-worker`, `token-worker`, `unfurl-worker`, and `stackup-worker`. For each, `cp .dev.vars-sample .dev.vars` and add the required config.
+3. For local Cloudflare workers to run properly, you'll need to add their secret env variables. At `servers/workers/` you'll see: `gateway-worker`, `token-worker`, `unfurl-worker`, and `stackup-worker`. For each, `cp .dev.vars-sample .dev.vars` and add the required config. You can do all this with the following command:
+
+```
+    for dir in gateway-worker token-worker unfurl-worker stackup-worker; do
+  (cd servers/workers/$dir && cp .dev.vars-sample .dev.vars && echo "Copied .dev.vars for $dir")
+done
+```
 
 > !! YOU CAN FIND A SAMPLE OF ALL THE REQUIRED VALUES FOR 1 AND 2 IN [THIS NOTION DOC](https://www.notion.so/herenottherelabs/env-files-for-local-dev-046b81ff5bb947d69b9c3cf107c3597d) !!
 
-4. Create a Certificate Authority. Run `./core/scripts/register-ca.sh` from the root of the repository. This will create the required `$HOME/river-ca-cert.pem` and `$HOME/river-ca-key.pem` files.
+4. Create a Certificate Authority. Run `./river/core/scripts/register-ca.sh` from the root of the repository. This will create the required `$HOME/river-ca-cert.pem` and `$HOME/river-ca-key.pem` files.
 
 ## Running everything locally
 
