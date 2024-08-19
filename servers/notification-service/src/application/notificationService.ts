@@ -215,13 +215,12 @@ export class NotificationService {
             }
         }
 
+        const recipientsArray = Object.values(recipients)
         notificationServiceLogger.info(
-            `found ${Object.keys(recipients).length} users to notify in ${
-                Date.now() - startTime
-            }ms`,
-            { recipients },
+            `found ${recipientsArray.length} users to notify in ${Date.now() - startTime}ms`,
+            { recipientsArray, channelId },
         )
-        return Object.values(recipients)
+        return recipientsArray
     }
 
     public async createNotificationAsyncRequests(

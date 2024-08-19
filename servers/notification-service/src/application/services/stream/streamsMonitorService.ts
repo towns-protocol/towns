@@ -37,6 +37,7 @@ export class StreamsMonitorService {
         metrics?: {
             pingSendFailures: number
             pingInfo: PingInfo
+            callHistogram: Record<string, { total: number; error?: number }>
         }
         error?: unknown
     }> {
@@ -106,15 +107,7 @@ export class StreamsMonitorService {
             return currentMembers
         }
 
-        const response = await this.rpcClient.getStream({
-            streamId: streamIdToBytes(streamId),
-            optional: false,
-        })
-        const unpacked = await unpackStream(response.stream)
-
-        if (response.stream) {
-            this.streams.addStreamToSync(response.stream.nextSyncCookie!)
-        }
+        const unpacked = await this.getAndParseStream(streamId)
 
         if (unpacked.miniblocks.length === 0) {
             return currentMembers
@@ -141,7 +134,7 @@ export class StreamsMonitorService {
                         StreamId: streamId,
                         UserIds: Array.from(currentMembers),
                         Kind: StreamKind.DM,
-                        SyncCookie: response.stream?.nextSyncCookie?.toJsonString() || '',
+                        SyncCookie: unpacked.nextSyncCookie?.toJsonString() || '',
                     },
                 })
             } else if (
@@ -169,7 +162,7 @@ export class StreamsMonitorService {
                         StreamId: streamId,
                         UserIds: Array.from(currentMembers),
                         Kind: StreamKind.DM,
-                        SyncCookie: response.stream?.nextSyncCookie?.toJsonString() || '',
+                        SyncCookie: unpacked.nextSyncCookie?.toJsonString() || '',
                     },
                 })
             }
@@ -192,11 +185,13 @@ export class StreamsMonitorService {
         }
         const unpacked = await this.getAndParseStream(streamId)
         const currentMembers = this.getUserIdsFromChannelOrGDMStreams(unpacked)
+        const syncCookie = unpacked.nextSyncCookie.toJsonString()
+
         await database.syncedStream.create({
             data: {
                 StreamId: streamId,
                 Kind: StreamKind.GDM,
-                SyncCookie: unpacked?.nextSyncCookie?.toJsonString() || '',
+                SyncCookie: syncCookie,
                 UserIds: Array.from(currentMembers),
             },
         })
@@ -210,11 +205,14 @@ export class StreamsMonitorService {
         }
         const unpacked = await this.getAndParseStream(streamId)
         const currentMembers = this.getUserIdsFromChannelOrGDMStreams(unpacked)
+
+        const syncCookie = unpacked.nextSyncCookie.toJsonString()
+
         await database.syncedStream.create({
             data: {
                 StreamId: streamId,
                 Kind: StreamKind.Channel,
-                SyncCookie: unpacked?.nextSyncCookie?.toJsonString() || '',
+                SyncCookie: syncCookie,
                 UserIds: Array.from(currentMembers),
             },
         })

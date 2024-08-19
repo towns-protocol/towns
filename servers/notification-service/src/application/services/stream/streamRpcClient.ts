@@ -15,20 +15,7 @@ import { notificationServiceLogger } from '../../logger'
 import { AnyMessage } from '@bufbuild/protobuf'
 import { genShortId, isIConnectError, streamIdAsString } from '@river-build/sdk'
 
-const histogramIntervalMs = 5000
-
 const logger = notificationServiceLogger.child({ label: 'rpcClient' })
-const histogramLogger = notificationServiceLogger.child({ label: 'rpcClient:histogram' })
-
-const sortObjectKey = (obj: Record<string, unknown>) => {
-    const sorted: Record<string, unknown> = {}
-    Object.keys(obj)
-        .sort()
-        .forEach((key) => {
-            sorted[key] = obj[key]
-        })
-    return sorted
-}
 
 export type StreamRpcClient = PromiseClient<typeof StreamService> & { url?: string }
 
@@ -59,51 +46,24 @@ export function makeStreamRpcClient(): StreamRpcClient {
     return client
 }
 
+export const callHistogram: Record<string, { total: number; error?: number }> = {}
+
 const loggingInterceptor: () => Interceptor = () => {
     // Histogram data structure
-    const callHistogram: Record<string, { interval: number; total: number; error?: number }> = {}
 
     // Function to update histogram
-    const updateHistogram = (methodName: string, suffix?: string, error?: boolean) => {
-        const name = suffix ? `${methodName} ${suffix}` : methodName
+    const updateHistogram = (methodName: string, streamId?: string, error?: boolean) => {
+        const name = streamId ? `${methodName} ${streamId}` : methodName
         let e = callHistogram[name]
         if (!e) {
-            e = { interval: 0, total: 0 }
+            e = { total: 0 }
             callHistogram[name] = e
         }
-        e.interval++
         e.total++
         if (error) {
             e.error = (e.error ?? 0) + 1
         }
     }
-
-    // Periodic logging
-    setInterval(() => {
-        if (Object.keys(callHistogram).length !== 0) {
-            let interval = 0
-            let total = 0
-            let error = 0
-            for (const key in callHistogram) {
-                const e = callHistogram[key]
-                interval += e.interval
-                total += e.total
-                error += e.error ?? 0
-            }
-            if (interval > 0) {
-                histogramLogger.info('RPC stats', {
-                    interval,
-                    total,
-                    error,
-                    histogramIntervalMs,
-                    histogram: sortObjectKey(callHistogram),
-                })
-                for (const key in callHistogram) {
-                    callHistogram[key].interval = 0
-                }
-            }
-        }
-    }, histogramIntervalMs)
 
     return (next) =>
         async (

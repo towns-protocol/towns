@@ -62,7 +62,7 @@ publicRoutes.get(
 
             const status: Status = {
                 Prisma: databaseMetricsResult,
-                Sync: syncMetricsResult,
+                Sync: { status: syncMetricsResult.status, metrics: syncMetricsResult.metrics },
             }
 
             req.logger.info('Health check', status)

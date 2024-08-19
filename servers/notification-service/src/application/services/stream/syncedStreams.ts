@@ -13,7 +13,7 @@ import {
 } from '@river-build/proto'
 import assert from 'assert'
 
-import { StreamRpcClient, errorContains } from './streamRpcClient'
+import { StreamRpcClient, callHistogram, errorContains } from './streamRpcClient'
 import {
     bin_toHexString,
     generateRandomUUID,
@@ -399,6 +399,7 @@ export class SyncedStreams {
             pingStats.duration = pingStats.receivedAt - pingStats.pingAt
 
             this.updatePingHistogram(pingStats.duration)
+            logger.info('pingStats', { pingStats })
             delete this.pingInfo.nonces[value.pongNonce]
         } else {
             logger.error(`pong nonce not found`, { pingInfo: this.pingInfo, value })
@@ -616,15 +617,21 @@ export class SyncedStreams {
         )
 
         if (usersToNotify.length === 0) {
-            logger.info(`no users to notify for channel stream ${streamId}`, {
+            logger.info(`handleChannelMessageUpdate no users to notify for channel stream`, {
                 streamId,
             })
             return
+        } else {
+            logger.info(
+                `handleChannelMessageUpdate ${usersToNotify.length} users to notify for channel stream`,
+                {
+                    streamId,
+                    usersToNotify,
+                },
+            )
         }
 
-        logger.info(`usersToNotify`, { usersToNotify })
-
-        await this.dispatchNotification(notificationData, usersToNotify)
+        await this.dispatchNotification(notificationData, usersToNotify, streamId)
 
         await database.notificationTag.deleteMany({
             where: {
@@ -646,6 +653,7 @@ export class SyncedStreams {
         if (!dbStreamUsers.includes(creatorUserId)) {
             logger.error(`creatorUserId not in stream: ${creatorUserId}`, {
                 dbStreamUsers,
+                streamId,
             })
             return
         }
@@ -684,13 +692,21 @@ export class SyncedStreams {
         )
 
         if (usersToNotify.length === 0) {
-            logger.info(`no users to notify for channel stream ${streamId}`, {
+            logger.info(`handleDmOrGdmMessageUpdate no users to notify for channel`, {
                 streamId,
             })
             return
+        } else {
+            logger.info(
+                `handleDmOrGdmMessageUpdate ${usersToNotify.length} users to notify for channel `,
+                {
+                    usersToNotify,
+                    streamId,
+                },
+            )
         }
 
-        await this.dispatchNotification(notificationData, Object.values(usersToNotify))
+        await this.dispatchNotification(notificationData, usersToNotify, streamId)
 
         await database.notificationTag.deleteMany({
             where: {
@@ -798,6 +814,7 @@ export class SyncedStreams {
     private async dispatchNotification(
         notificationData: NotifyUsersSchema,
         usersToNotify: NotifyUser[],
+        streamId: string,
     ) {
         const pushNotificationRequests = await notificationService.createNotificationAsyncRequests(
             notificationData,
@@ -810,7 +827,7 @@ export class SyncedStreams {
         let notificationExceptionCount = 0
         for (const r of result) {
             if (r.status === 'rejected') {
-                logger.error('dispatchNotification exception', { exception: r.reason })
+                logger.error('dispatchNotification exception', { exception: r.reason, streamId })
                 notificationExceptionCount++
             } else {
                 if (r.value.status === 'success') {
@@ -821,6 +838,7 @@ export class SyncedStreams {
             }
         }
         logger.info('notificationsSentCount', {
+            streamId,
             userNotifiedCount: usersToNotify.length,
             notificationSuccessCount,
             notificationFailureCount,
@@ -831,7 +849,11 @@ export class SyncedStreams {
     public async healthCheck() {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { pingInterval: _, ...pingInfoWithoutInterval } = this.pingInfo
-        return { pingSendFailures: this.pingSendFailures, pingInfo: pingInfoWithoutInterval }
+        return {
+            pingSendFailures: this.pingSendFailures,
+            pingInfo: pingInfoWithoutInterval,
+            callHistogram: callHistogram,
+        }
     }
 
     private sendKeepAlivePings() {
