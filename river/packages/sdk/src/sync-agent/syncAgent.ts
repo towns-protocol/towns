@@ -5,7 +5,7 @@ import { RetryParams } from '../rpcInterceptors'
 import { Store } from '../store/store'
 import { SignerContext } from '../signerContext'
 import { userIdFromAddress } from '../id'
-import { StreamNodeUrlsModel } from './river-connection/models/streamNodeUrls'
+import { RiverChainModel } from './river-connection/models/riverChain'
 import { User, UserModel } from './user/user'
 import { makeBaseProvider, makeRiverProvider } from './utils/providers'
 import { UserMembershipsModel } from './user/models/userMemberships'
@@ -19,6 +19,9 @@ import { UserDeviceKeysModel } from './user/models/userDeviceKeys'
 import { UserSettingsModel } from './user/models/userSettings'
 import { Spaces, SpacesModel } from './spaces/spaces'
 import { AuthStatus } from './river-connection/models/authStatus'
+import { ethers } from 'ethers'
+import { makeStreamRpcClient, type MakeRpcClientType } from '../makeStreamRpcClient'
+import type { EncryptionDeviceInitOpts } from '@river-build/encryption'
 
 export interface SyncAgentConfig {
     context: SignerContext
@@ -26,6 +29,11 @@ export interface SyncAgentConfig {
     retryParams?: RetryParams
     highPriorityStreamIds?: string[]
     deviceId?: string
+    disablePersistenceStore?: boolean
+    riverProvider?: ethers.providers.Provider
+    baseProvider?: ethers.providers.Provider
+    makeRpcClient?: MakeRpcClientType
+    encryptionDevice?: EncryptionDeviceInitOpts
 }
 
 export class SyncAgent {
@@ -35,12 +43,13 @@ export class SyncAgent {
     store: Store
     user: User
     spaces: Spaces
+    private stopped = false
 
     // flattened observables - just pointers to the observable objects in the models
     observables: {
         riverAuthStatus: Observable<AuthStatus>
         riverConnection: PersistedObservable<RiverConnectionModel>
-        riverStreamNodeUrls: PersistedObservable<StreamNodeUrlsModel>
+        riverChain: PersistedObservable<RiverChainModel>
         spaces: PersistedObservable<SpacesModel>
         user: PersistedObservable<UserModel>
         userMemberships: PersistedObservable<UserMembershipsModel>
@@ -54,21 +63,29 @@ export class SyncAgent {
         this.config = config
         const base = config.riverConfig.base
         const river = config.riverConfig.river
-        const baseProvider = makeBaseProvider(config.riverConfig)
-        const riverProvider = makeRiverProvider(config.riverConfig)
+        const baseProvider = config.baseProvider ?? makeBaseProvider(config.riverConfig)
+        const riverProvider = config.riverProvider ?? makeRiverProvider(config.riverConfig)
         this.store = new Store(this.syncAgentDbName(), DB_VERSION, DB_MODELS)
         this.store.newTransactionGroup('SyncAgent::initalization')
         const spaceDapp = new SpaceDapp(base.chainConfig, baseProvider)
         const riverRegistryDapp = new RiverRegistry(river.chainConfig, riverProvider)
-        this.riverConnection = new RiverConnection(this.store, spaceDapp, riverRegistryDapp, {
-            signerContext: config.context,
-            cryptoStore: RiverDbManager.getCryptoDb(this.userId, this.cryptoDbName()),
-            entitlementsDelegate: new Entitlements(this.config.riverConfig, spaceDapp),
-            persistenceStoreName: this.persistenceDbName(),
-            logNamespaceFilter: undefined,
-            highPriorityStreamIds: this.config.highPriorityStreamIds,
-            rpcRetryParams: config.retryParams,
-        })
+        this.riverConnection = new RiverConnection(
+            this.store,
+            spaceDapp,
+            riverRegistryDapp,
+            config.makeRpcClient ?? makeStreamRpcClient,
+            {
+                signerContext: config.context,
+                cryptoStore: RiverDbManager.getCryptoDb(this.userId, this.cryptoDbName()),
+                entitlementsDelegate: new Entitlements(this.config.riverConfig, spaceDapp),
+                persistenceStoreName:
+                    config.disablePersistenceStore !== true ? this.persistenceDbName() : undefined,
+                logNamespaceFilter: undefined,
+                highPriorityStreamIds: this.config.highPriorityStreamIds,
+                rpcRetryParams: config.retryParams,
+                encryptionDevice: config.encryptionDevice,
+            },
+        )
 
         this.user = new User(this.userId, this.store, this.riverConnection)
         this.spaces = new Spaces(this.store, this.riverConnection, this.user.memberships, spaceDapp)
@@ -77,7 +94,7 @@ export class SyncAgent {
         this.observables = {
             riverAuthStatus: this.riverConnection.authStatus,
             riverConnection: this.riverConnection,
-            riverStreamNodeUrls: this.riverConnection.streamNodeUrls,
+            riverChain: this.riverConnection.riverChain,
             spaces: this.spaces,
             user: this.user,
             userMemberships: this.user.memberships,
@@ -88,11 +105,18 @@ export class SyncAgent {
     }
 
     async start() {
+        if (this.stopped) {
+            throw new Error('SyncAgent is stopped, please instantiate a new sync agent')
+        }
         // commit the initialization transaction, which triggers onLoaded on the models
         await this.store.commitTransaction()
+        // start thie river connection, this will log us in if the user is already signed up
+        // it will leave us in a connected state otherwise, see riverConnection.authStatus
+        await this.riverConnection.start()
     }
 
     async stop() {
+        this.stopped = true
         await this.riverConnection.stop()
     }
 

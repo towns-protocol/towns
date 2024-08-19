@@ -19,9 +19,12 @@ describe('syncAgent.test.ts', () => {
     test('syncAgent', async () => {
         const syncAgent = await testUser.makeSyncAgent()
         expect(syncAgent.user.value.status).toBe('loading')
+        expect(syncAgent.riverConnection.authStatus.value).toBe(AuthStatus.Initializing)
         await syncAgent.start()
         expect(syncAgent.user.value.status).toBe('loaded')
-        expect(syncAgent.riverConnection.authStatus.value).toBe(AuthStatus.Initializing)
+        await waitFor(() =>
+            expect(syncAgent.riverConnection.authStatus.value).toBe(AuthStatus.Credentialed),
+        )
         expect(Object.keys(syncAgent.user.memberships.data.memberships).length).toBe(0)
         syncAgent.store.newTransactionGroup('createSpace')
         const { spaceId, defaultChannelId } = await syncAgent.spaces.createSpace(
@@ -45,13 +48,10 @@ describe('syncAgent.test.ts', () => {
         const syncAgent = await testUser.makeSyncAgent()
         expect(syncAgent.user.value.status).toBe('loading')
         await syncAgent.start()
+        expect(syncAgent.riverConnection.authStatus.value).toBe(AuthStatus.ConnectedToRiver)
         expect(syncAgent.user.value.status).toBe('loaded')
         expect(syncAgent.user.memberships.value.status).toBe('loaded')
         expect(syncAgent.user.memberships.data.initialized).toBe(true)
-        expect(syncAgent.riverConnection.authStatus.value).toBe(AuthStatus.ConnectingToRiver)
-        await waitFor(() => {
-            expect(syncAgent.riverConnection.authStatus.value).toBe(AuthStatus.ConnectedToRiver)
-        })
         await syncAgent.stop()
     })
 })

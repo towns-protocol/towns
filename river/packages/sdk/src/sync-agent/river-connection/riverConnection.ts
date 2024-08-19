@@ -1,22 +1,23 @@
 import { RiverRegistry, SpaceDapp } from '@river-build/web3'
-import { makeStreamRpcClient } from '../../makeStreamRpcClient'
-import { StreamNodeUrls, StreamNodeUrlsModel } from './models/streamNodeUrls'
+import { MakeRpcClientType } from '../../makeStreamRpcClient'
+import { RiverChain } from './models/riverChain'
 import { Identifiable, LoadPriority, Store } from '../../store/store'
-import { dlogger } from '@river-build/dlog'
+import { check, dlogger } from '@river-build/dlog'
 import { PromiseQueue } from '../utils/promiseQueue'
-import { CryptoStore, EntitlementsDelegate } from '@river-build/encryption'
+import {
+    CryptoStore,
+    EntitlementsDelegate,
+    type EncryptionDeviceInitOpts,
+} from '@river-build/encryption'
 import { Client } from '../../client'
 import { SignerContext } from '../../signerContext'
-import {
-    PersistedModel,
-    PersistedObservable,
-    persistedObservable,
-} from '../../observable/persistedObservable'
+import { PersistedObservable, persistedObservable } from '../../observable/persistedObservable'
 import { userIdFromAddress } from '../../id'
 import { TransactionalClient } from './models/transactionalClient'
 import { Observable } from '../../observable/observable'
 import { AuthStatus } from './models/authStatus'
 import { RetryParams } from '../../rpcInterceptors'
+import { isDefined } from '../../check'
 
 const logger = dlogger('csb:riverConnection')
 
@@ -28,6 +29,7 @@ export interface ClientParams {
     logNamespaceFilter?: string
     highPriorityStreamIds?: string[]
     rpcRetryParams?: RetryParams
+    encryptionDevice?: EncryptionDeviceInitOpts
 }
 
 export type OnStoppedFn = () => void
@@ -45,13 +47,12 @@ class LoginContext {
 @persistedObservable({ tableName: 'riverConnection' })
 export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
     client?: TransactionalClient
-    streamNodeUrls: StreamNodeUrls
+    riverChain: RiverChain
     authStatus = new Observable<AuthStatus>(AuthStatus.Initializing)
     loginError?: Error
     private clientQueue = new PromiseQueue<Client>()
     private views: onClientStartedFn[] = []
     private onStoppedFns: OnStoppedFn[] = []
-    private stopped = false
     public newUserMetadata?: { spaceId: Uint8Array | string }
     private loginPromise?: { promise: Promise<void>; context: LoginContext }
 
@@ -59,28 +60,45 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
         store: Store,
         public spaceDapp: SpaceDapp,
         public riverRegistryDapp: RiverRegistry,
+        private makeRpcClient: MakeRpcClientType,
         private clientParams: ClientParams,
     ) {
         super({ id: '0', userExists: false }, store, LoadPriority.high)
-        this.streamNodeUrls = new StreamNodeUrls(store, riverRegistryDapp)
+        this.riverChain = new RiverChain(store, riverRegistryDapp, this.userId)
     }
 
     override async onLoaded() {
-        this.streamNodeUrls.subscribe(this.onNodeUrlsChanged, { fireImediately: true })
+        //
     }
 
     get userId(): string {
         return userIdFromAddress(this.clientParams.signerContext.creatorAddress)
     }
+    async start() {
+        check(this.value.status === 'loaded', 'riverConnection not loaded')
+        const [urls, userStreamExists] = await Promise.all([
+            this.riverChain.urls(),
+            this.riverChain.userStreamExists(),
+        ])
+        this.createStreamsClient(urls)
+        if (userStreamExists) {
+            await this.login()
+        } else {
+            this.authStatus.setValue(AuthStatus.Credentialed)
+        }
+    }
 
     async stop() {
-        this.stopped = true
-        this.streamNodeUrls.unsubscribe(this.onNodeUrlsChanged)
         for (const fn of this.onStoppedFns) {
             fn()
         }
         this.onStoppedFns = []
+        if (this.loginPromise) {
+            this.loginPromise.context.cancelled = true
+        }
+        this.riverChain.stop()
         await this.client?.stop()
+        this.client = undefined
         this.authStatus.setValue(AuthStatus.Disconnected)
     }
 
@@ -101,23 +119,18 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
         this.views.push(viewFn)
     }
 
-    private onNodeUrlsChanged = (value: PersistedModel<StreamNodeUrlsModel>) => {
-        this.createClient(value.data.urls)
-    }
-
-    private createClient(urls?: string): void {
+    private createStreamsClient(urls: string): void {
         if (this.client !== undefined) {
+            // this is wired up to be reactive to changes in the urls
             logger.log('RiverConnection: rpc urls changed, client already set', urls)
             return
         }
-        if (this.stopped) {
-            return
-        }
         if (!urls) {
+            logger.error('RiverConnection: urls is not set')
             return
         }
         logger.log(`setting rpcClient with urls: "${urls}"`)
-        const rpcClient = makeStreamRpcClient(urls, this.clientParams.rpcRetryParams, () =>
+        const rpcClient = this.makeRpcClient(urls, this.clientParams.rpcRetryParams, () =>
             this.riverRegistryDapp.getOperationalNodeUrls(),
         )
         const client = new TransactionalClient(
@@ -138,24 +151,20 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
                 this.onStoppedFns.push(onStopFn)
             })
         })
-        // try to log in
-        logger.log('attempting login after new client')
-        this.login().catch((err) => {
-            logger.log('error logging in', err)
-        })
     }
 
     async login(newUserMetadata?: { spaceId: Uint8Array | string }) {
         if (!this.client) {
+            logger.error('login called before client is set')
             return
         }
-        this.newUserMetadata = this.newUserMetadata ?? newUserMetadata
+        this.newUserMetadata = newUserMetadata ?? this.newUserMetadata
         logger.log('login', { newUserMetadata })
-        const loginContext = new LoginContext(this.client)
-        await this.loginWithRetries(loginContext)
+        await this.loginWithRetries()
     }
 
-    private async loginWithRetries(loginContext: LoginContext) {
+    private async loginWithRetries() {
+        check(isDefined(this.client), 'riverConnection::loginWithRetries client is not defined')
         logger.log('login', { authStatus: this.authStatus.value, promise: this.loginPromise })
         if (this.loginPromise) {
             this.loginPromise.context.cancelled = true
@@ -164,36 +173,42 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
         if (this.authStatus.value === AuthStatus.ConnectedToRiver) {
             return
         }
+        if (!this.client) {
+            logger.info('riverConnection::login client is not defined, exiting loop')
+            return
+        }
+        const loginContext = new LoginContext(this.client)
         this.authStatus.setValue(AuthStatus.EvaluatingCredentials)
         const login = async () => {
             let retryCount = 0
             const MAX_RETRY_COUNT = 20
             while (!loginContext.cancelled) {
                 try {
-                    logger.log('logging in')
+                    logger.log('logging in', {
+                        userExists: this.data.userExists,
+                        newUserMetadata: this.newUserMetadata,
+                    })
                     const { client } = loginContext
-                    const canInitialize =
-                        this.data.userExists ||
-                        this.newUserMetadata !== undefined ||
-                        (await client.userExists(this.userId))
-                    logger.log('canInitialize', canInitialize)
-                    if (canInitialize) {
-                        this.authStatus.setValue(AuthStatus.ConnectingToRiver)
-                        await client.initializeUser({ spaceId: this.newUserMetadata?.spaceId })
-                        client.startSync()
-                        this.setData({ userExists: true })
-                        this.authStatus.setValue(AuthStatus.ConnectedToRiver)
-                        // New rpcClient is available, resolve all queued requests
-                        this.clientQueue.flush(client)
-                    } else {
-                        this.authStatus.setValue(AuthStatus.Credentialed)
-                    }
+                    this.authStatus.setValue(AuthStatus.ConnectingToRiver)
+                    await client.initializeUser({
+                        spaceId: this.newUserMetadata?.spaceId,
+                        encryptionDeviceInit: this.clientParams.encryptionDevice,
+                    })
+                    client.startSync()
+                    this.setData({ userExists: true })
+                    this.authStatus.setValue(AuthStatus.ConnectedToRiver)
+                    // New rpcClient is available, resolve all queued requests
+                    this.clientQueue.flush(client)
+
                     break
                 } catch (err) {
                     retryCount++
                     this.loginError = err as Error
                     logger.log('encountered exception while initializing', err)
-                    if (retryCount >= MAX_RETRY_COUNT) {
+                    if (loginContext.cancelled) {
+                        logger.log('login cancelled after error')
+                        break
+                    } else if (retryCount >= MAX_RETRY_COUNT) {
                         this.authStatus.setValue(AuthStatus.Error)
                         throw err
                     } else {

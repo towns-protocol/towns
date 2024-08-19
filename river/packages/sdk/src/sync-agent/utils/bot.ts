@@ -2,7 +2,7 @@ import { RiverConfig, makeRiverConfig } from '../../riverConfig'
 import { ethers } from 'ethers'
 import { LocalhostWeb3Provider } from '@river-build/web3'
 import { makeSignerContext } from '../../signerContext'
-import { SyncAgent } from '../syncAgent'
+import { SyncAgent, type SyncAgentConfig } from '../syncAgent'
 
 export class Bot {
     riverConfig: RiverConfig
@@ -29,14 +29,15 @@ export class Bot {
         return this.web3Provider.fundWallet()
     }
 
-    async makeSyncAgent(opts?: { deviceId?: string }) {
+    async makeSyncAgent(opts?: Partial<SyncAgentConfig>) {
         const signerContext = await makeSignerContext(this.rootWallet, this.delegateWallet, {
             days: 1,
         })
         const syncAgent = new SyncAgent({
             context: signerContext,
             riverConfig: this.riverConfig,
-            deviceId: opts?.deviceId,
+            baseProvider: this.web3Provider,
+            ...opts,
         })
         return syncAgent
     }

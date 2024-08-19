@@ -1,3 +1,3 @@
 _Example Persisted Observable_
 
-[Check out RiverNodeUrls](./riverConnection/models/riverNodeUrls.ts)
+[Check out RiverChain](./riverConnection/models/riverChain.ts)
