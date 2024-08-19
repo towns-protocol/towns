@@ -1,15 +1,16 @@
 import 'fake-indexeddb/auto' // used to mock indexdb in dexie, don't remove
-import { isDecryptedEvent, makeRiverConfig } from '@river-build/sdk'
+import { isDecryptedEvent, makeRiverConfig, randomUrlSelector } from '@river-build/sdk'
 import { check, dlogger } from '@river-build/dlog'
 import { InfoRequest } from '@river-build/proto'
 import { EncryptionDelegate } from '@river-build/encryption'
-import { makeConnection } from './utils/connection'
 import { makeStressClient } from './utils/stressClient'
 import { expect, isSet } from './utils/expect'
 import { printSystemInfo } from './utils/systemInfo'
 import { waitFor } from './utils/waitFor'
-import { Wallet } from 'ethers'
+import { ethers, Wallet } from 'ethers'
 import { RedisStorage } from './utils/storage'
+import { makeHttp2StreamRpcClient } from './utils/rpc-http2'
+import { createRiverRegistry } from '@river-build/web3'
 
 check(isSet(process.env.RIVER_ENV), 'process.env.RIVER_ENV')
 
@@ -25,8 +26,13 @@ function getRootWallet() {
 }
 
 async function spamInfo(count: number) {
-    const connection = await makeConnection(config)
-    const { rpcClient } = connection
+    const staticRiverProvider = new ethers.providers.StaticJsonRpcProvider(config.river.rpcUrl)
+    const riverRegistry = createRiverRegistry(staticRiverProvider, config.river.chainConfig)
+    const urls = await riverRegistry.getOperationalNodeUrls()
+    const selectedUrl = randomUrlSelector(urls)
+    const rpcClient = makeHttp2StreamRpcClient(selectedUrl, undefined, () =>
+        riverRegistry.getOperationalNodeUrls(),
+    )
     for (let i = 0; i < count; i++) {
         logger.log(`iteration ${i}`)
         const info = await rpcClient.info(new InfoRequest({}), {

@@ -102,7 +102,7 @@ async function startRootClient(
     spaceId: string,
     defaultChannelId: string,
 ) {
-    const userExists = await client.userExists()
+    const userExists = client.userExists()
     if (!userExists) {
         if (balance.lte(0)) {
             throw new Error('Insufficient balance')
@@ -112,8 +112,6 @@ async function startRootClient(
         const isMember = await client.isMemberOf(spaceId)
         if (!isMember) {
             await client.joinSpace(spaceId)
-        } else {
-            await client.startStreamsClient({ spaceId })
         }
     }
 

@@ -2,22 +2,28 @@
 import { PromiseClient, createPromiseClient } from '@connectrpc/connect'
 import { ConnectTransportOptions, createConnectTransport } from '@connectrpc/connect-node'
 import { StreamService } from '@river-build/proto'
-import { loggingInterceptor, retryInterceptor, type RetryParams } from '@river-build/sdk'
+import {
+    loggingInterceptor,
+    randomUrlSelector,
+    retryInterceptor,
+    type RetryParams,
+} from '@river-build/sdk'
 import { dlogger } from '@river-build/dlog'
 
-const logger = dlogger('csb:rpc:info')
+const logger = dlogger('csb:rpc:rpc-http2')
 
 export type StreamRpcClient = PromiseClient<typeof StreamService> & { url?: string }
 
 let nextRpcClientNum = 0
 
-export function makeStreamRpcClient(
-    url: string,
-    refreshNodeUrl?: () => Promise<string>,
+export function makeHttp2StreamRpcClient(
+    urls: string,
     retryParams: RetryParams = { maxAttempts: 3, initialRetryDelay: 2000, maxRetryDelay: 6000 },
+    refreshNodeUrl?: () => Promise<string>,
 ): StreamRpcClient {
     const transportId = nextRpcClientNum++
-    logger.info(`makeStreamRpcClient: Connecting to url=${url}`)
+    const url = randomUrlSelector(urls)
+    logger.info(`makeHttp2StreamRpcClient: Connecting to url=${url}`, 'all urls', urls)
     const options: ConnectTransportOptions = {
         httpVersion: '2',
         baseUrl: url,

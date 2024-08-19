@@ -101,15 +101,13 @@ async function startFollowerClient(
     spaceId: string,
     announceChannelId: string,
 ) {
-    const userExists = await client.userExists()
+    const userExists = client.userExists()
     if (!userExists) {
         await client.joinSpace(spaceId, { skipMintMembership: true })
     } else {
         const isMember = await client.isMemberOf(spaceId)
         if (!isMember) {
             await client.joinSpace(spaceId, { skipMintMembership: true })
-        } else {
-            await client.startStreamsClient({ spaceId })
         }
     }
 
