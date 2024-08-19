@@ -38,6 +38,21 @@ resource "aws_acm_certificate" "primary_hosted_zone_cert" {
   tags = merge(module.global_constants.tags, { Name = module.global_constants.primary_hosted_zone_name })
 }
 
+resource "aws_acm_certificate" "river_delivery_hosted_zone_cert" {
+  domain_name       = module.global_constants.river_delivery_hosted_zone_name
+  validation_method = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  subject_alternative_names = [
+    "*.${module.global_constants.river_delivery_hosted_zone_name}"
+  ]
+
+  tags = merge(module.global_constants.tags, { Name = module.global_constants.river_delivery_hosted_zone_name })
+}
+
 resource "aws_iam_role" "ecs_task_execution_role" {
   name                = "ecsTaskExecutionRole"
   managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"]

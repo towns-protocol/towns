@@ -13,6 +13,11 @@ output "primary_hosted_zone_name" {
   sensitive = false
 }
 
+output "river_delivery_hosted_zone_name" {
+  value     = "river.delivery"
+  sensitive = false
+}
+
 locals {
   sre_goalie_slack_handle = "<@kerem>"
   sre_slack_channel       = "@slack-Here_Not_There_Labs-sre-alerts"

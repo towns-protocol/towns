@@ -133,6 +133,24 @@ module "node_metadata" {
   num_archive_nodes = local.num_archive_nodes
 }
 
+module "stream_metadata" {
+  source = "../../modules/stream-metadata"
+
+  vpc_id = module.vpc.vpc_id
+
+  alb_dns_name           = module.river_alb.lb_dns_name
+  alb_https_listener_arn = module.river_alb.lb_https_listener_arn
+  alb_security_group_id  = module.river_alb.security_group_id
+
+  ecs_cluster = {
+    id   = aws_ecs_cluster.river_ecs_cluster.id
+    name = aws_ecs_cluster.river_ecs_cluster.name
+  }
+
+  river_chain_rpc_url_secret_arn = local.global_remote_state.river_sepolia_rpc_url_secret.arn
+  subnets                        = module.vpc.private_subnets
+}
+
 module "river_node" {
   source = "../../modules/river-node"
   count  = local.num_full_nodes

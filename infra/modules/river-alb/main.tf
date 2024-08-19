@@ -70,12 +70,17 @@ data "aws_acm_certificate" "primary_hosted_zone_cert" {
   domain = module.global_constants.primary_hosted_zone_name
 }
 
+data "aws_acm_certificate" "river_delivery_hosted_zone_cert" {
+  domain = module.global_constants.river_delivery_hosted_zone_name
+}
+
 resource "aws_lb_listener" "https_listener" {
   load_balancer_arn = module.river_alb.lb_arn
   port              = "443"
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-2016-08"
-  certificate_arn   = data.aws_acm_certificate.primary_hosted_zone_cert.arn
+
+  certificate_arn = data.aws_acm_certificate.primary_hosted_zone_cert.arn
 
   default_action {
     type = "fixed-response"
@@ -85,4 +90,9 @@ resource "aws_lb_listener" "https_listener" {
       status_code  = "503"
     }
   }
+}
+
+resource "aws_lb_listener_certificate" "river_delivery_cert" {
+  listener_arn    = aws_lb_listener.https_listener.arn
+  certificate_arn = data.aws_acm_certificate.river_delivery_hosted_zone_cert.arn
 }

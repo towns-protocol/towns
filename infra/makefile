@@ -2,6 +2,8 @@ CMD                     ?= docker compose run --rm terraform
 NOCACHECMD              ?= docker compose build --no-cache terraform
 terraform_folder		= environments/${ENV}
 terraform_workspace_name = $(ENV)
+LOCK_ID 				?= 
+
 
 override CI_AUTOAPPROVE := $(if $(filter true,$(CI_AUTOAPPROVE)),-auto-approve,$(CI_AUTOAPPROVE))
 
@@ -106,6 +108,16 @@ apply: pre_apply
 	@echo "TF_ACTION_TYPE=Provision" >> .env
 	@echo "LOG_MESSAGE=Provision step is done for $(GIT_PR_NUMBER) PR" >> .env
 	@$(CMD) sh log_datadog.sh
+
+force_unlock: env check
+ifndef LOCK_ID
+	$(error LOCK_ID is undefined)
+endif
+	@$(CMD) make _force_unlock LOCK_ID=$(LOCK_ID)
+
+_force_unlock:
+	terraform -chdir=${terraform_folder} workspace select $(terraform_workspace_name)
+	terraform -chdir=${terraform_folder} force-unlock $(LOCK_ID)
 
 wait_for_lock_release:
 	$(CMD) sh lock_wait.sh
