@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import {
     Address,
     useChannelData,
@@ -10,7 +10,7 @@ import {
 import { isGDMChannelStreamId } from '@river-build/sdk'
 import { Sheet } from 'react-modal-sheet'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
-import { Box, Button, Icon, Paragraph, Stack, Text } from '@ui'
+import { Box, Button, Icon, Paragraph, Stack, Text, TextField } from '@ui'
 import { atoms } from 'ui/styles/atoms.css'
 import { shortAddress } from 'ui/utils/utils'
 import { ModalContainer } from '@components/Modals/ModalContainer'
@@ -23,6 +23,8 @@ import { useDevice } from 'hooks/useDevice'
 import { modalSheetClass } from 'ui/styles/globals/sheet.css'
 import { TableCell } from '@components/TableCell/TableCell'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { NoMatches } from '@components/NoMatches/NoMatches'
+import { useFuzzySearchByProperty } from 'hooks/useFuzzySearchByProperty'
 import { ChannelInviteModal } from './ChannelInvitePanel'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 
@@ -93,8 +95,8 @@ const ChannelMembers = (props: {
     const { canAddMembers, onRemoveMember } = props
     const { memberIds } = useChannelMembers()
     const myUserId = useMyUserId()
-
     const { openPanel } = usePanelActions()
+    const { lookupUser } = useUserLookupContext()
 
     const addMembersClick = useCallback(() => {
         if (props.onAddMembersClick) {
@@ -105,16 +107,41 @@ const ChannelMembers = (props: {
         }
     }, [openPanel, props])
 
+    const membersWithNames = useMemo(() => {
+        return memberIds.map((userId) => {
+            const user = lookupUser(userId)
+            return {
+                userId,
+                name: getPrettyDisplayName(user),
+            }
+        })
+    }, [memberIds, lookupUser])
+
+    const {
+        searchText,
+        filteredItems: filteredMembers,
+        handleSearchChange,
+    } = useFuzzySearchByProperty(membersWithNames)
+
     return (
-        <Stack minHeight="forceScroll">
+        <Stack minHeight="forceScroll" gap="md">
             {canAddMembers && <AddMemberRow onClick={addMembersClick} />}
-            {memberIds.map((userId) => (
+            <Box position="sticky" top="none" padding="md" paddingBottom="none">
+                <TextField
+                    background="level2"
+                    placeholder="Search members"
+                    value={searchText}
+                    onChange={handleSearchChange}
+                />
+            </Box>
+            {filteredMembers.map(({ userId }) => (
                 <ChannelMemberRow
                     key={userId}
                     userId={userId}
                     onRemoveMember={userId === myUserId ? undefined : onRemoveMember}
                 />
             ))}
+            {filteredMembers.length === 0 && <NoMatches searchTerm={searchText} />}
         </Stack>
     )
 }

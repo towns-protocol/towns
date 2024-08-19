@@ -3,7 +3,7 @@ import { firstBy } from 'thenby'
 import { Address, LookupUser, useOfflineStore, useUserLookupContext } from 'use-towns-client'
 import { isAddress } from 'ethers/lib/utils'
 import { Avatar } from '@components/Avatar/Avatar'
-import { Box, Icon, IconButton, Paragraph, Text } from '@ui'
+import { Box, IconButton, Text } from '@ui'
 import { useRecentUsers } from 'hooks/useRecentUsers'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { PillSelector } from '@components/DirectMessages/CreateDirectMessage/PillSelector'
@@ -15,6 +15,7 @@ import {
     LookupUserWithAbstractAccountAddress,
     useLookupUsersWithAbstractAccountAddress,
 } from 'hooks/useAbstractAccountAddress'
+import { NoMatches } from '@components/NoMatches/NoMatches'
 
 const CUSTOM_USER_ADDRESS = 'CUSTOM_USER_ADDRESS'
 
@@ -262,20 +263,5 @@ function EmptySelectionElement({
         )
     }
 
-    return (
-        <Box
-            padding
-            horizontal
-            gap="sm"
-            background="level2"
-            height="x7"
-            alignItems="center"
-            rounded="sm"
-            color="gray2"
-            boxShadow="card"
-        >
-            <Icon type="alert" size="square_xs" />
-            <Paragraph>No matches for &quot;{searchTerm}&quot;</Paragraph>
-        </Box>
-    )
+    return <NoMatches searchTerm={searchTerm} />
 }

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { Address, useSpaceMembers, useUserLookupContext } from 'use-towns-client'
 import { isDefined } from '@river-build/sdk'
 import { shortAddress } from 'ui/utils/utils'
-import { Box, CardLabel, Grid, Paragraph, Stack } from '@ui'
+import { Box, CardLabel, Grid, Paragraph, Stack, TextField } from '@ui'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
@@ -12,6 +12,8 @@ import { Avatar } from '@components/Avatar/Avatar'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
 import { useDevice } from 'hooks/useDevice'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
+import { NoMatches } from '@components/NoMatches/NoMatches'
+import { useFuzzySearchByProperty } from 'hooks/useFuzzySearchByProperty'
 
 type Props = {
     memberIds: string[]
@@ -19,20 +21,46 @@ type Props = {
 
 export const MembersPage = (props: Props) => {
     const { lookupUser } = useUserLookupContext()
+
     const members = useMemo(
         () => props.memberIds.map((userId) => lookupUser(userId)).filter(isDefined),
         [lookupUser, props.memberIds],
     )
+
+    const membersWithNames = useMemo(
+        () => members.map((member) => ({ ...member, name: getPrettyDisplayName(member) })),
+        [members],
+    )
+
+    const {
+        searchText,
+        filteredItems: filteredMembers,
+        handleSearchChange,
+    } = useFuzzySearchByProperty(membersWithNames)
+
     return members?.length ? (
         <Stack height="100%">
             <CardLabel label="Members" />
-
+            <Box padding="md">
+                <TextField
+                    placeholder="Search members"
+                    value={searchText}
+                    background="level2"
+                    onChange={handleSearchChange}
+                />
+            </Box>
             <Stack grow overflowY="scroll">
-                <Grid columnMinSize="180px">
-                    {props.memberIds.map((userId) => (
-                        <GridProfile userId={userId} key={userId} />
-                    ))}
-                </Grid>
+                {filteredMembers.length > 0 ? (
+                    <Grid columnMinSize="180px">
+                        {filteredMembers.map((member) => (
+                            <GridProfile userId={member.userId} key={member.userId} />
+                        ))}
+                    </Grid>
+                ) : (
+                    <Box paddingX="md">
+                        <NoMatches searchTerm={searchText} />
+                    </Box>
+                )}
             </Stack>
         </Stack>
     ) : (

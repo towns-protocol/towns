@@ -14,6 +14,7 @@ import { DraftChannel } from '@components/Channel/Channel'
 import { PanelContext, PanelStack } from '@components/Panel/PanelContext'
 import { UserList } from '@components/UserList/UserList'
 import { ZLayerBox } from '@components/ZLayer/ZLayerContext'
+import { NoMatches } from '@components/NoMatches/NoMatches'
 import { Box, Button, Icon, MotionBox, Paragraph, Stack, Text } from '@ui'
 import { useAnalytics } from 'hooks/useAnalytics'
 import { useCreateLink } from 'hooks/useCreateLink'
@@ -217,22 +218,6 @@ export const MessageContainerLayout = React.forwardRef<
         {props.children}
     </Stack>
 ))
-
-const NoMatches = ({ searchTerm }: { searchTerm: string }) => (
-    <Box
-        padding
-        horizontal
-        gap="sm"
-        background="level2"
-        height="x7"
-        alignItems="center"
-        rounded="sm"
-        color="gray2"
-    >
-        <Icon type="alert" size="square_xs" />
-        <Paragraph>No matches for &quot;{searchTerm}&quot;</Paragraph>
-    </Box>
-)
 
 const FadeBox = (props: MotionBoxProps) => (
     <MotionBox
