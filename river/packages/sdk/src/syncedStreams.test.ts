@@ -4,7 +4,8 @@
 
 /* eslint-disable jest/no-commented-out-tests */
 import { makeEvent, unpackStream } from './sign'
-import { SyncState, SyncedStreams, stateConstraints } from './syncedStreams'
+import { SyncedStreams } from './syncedStreams'
+import { SyncState, stateConstraints } from './syncedStreamsLoop'
 import { makeDonePromise, makeRandomUserContext, makeTestRpcClient, waitFor } from './util.test'
 import { makeUserInboxStreamId, streamIdToBytes, userIdFromAddress } from './id'
 import { make_UserInboxPayload_Ack, make_UserInboxPayload_Inception } from './types'
@@ -127,6 +128,9 @@ describe('syncStreams', () => {
             ).toBeDefined(),
         )
         const sendPing = async () => {
+            if (!alicesSyncedStreams.pingInfo) {
+                throw new Error('syncId not set')
+            }
             const n1 = nanoid()
             const n2 = nanoid()
             alicesSyncedStreams.pingInfo.nonces[n1] = {
@@ -150,10 +154,10 @@ describe('syncStreams', () => {
             })
             await Promise.all([p1, p2])
             await waitFor(() =>
-                expect(alicesSyncedStreams.pingInfo.nonces[n2].receivedAt).toBeDefined(),
+                expect(alicesSyncedStreams.pingInfo?.nonces[n2].receivedAt).toBeDefined(),
             )
             await waitFor(() =>
-                expect(alicesSyncedStreams.pingInfo.nonces[n1].receivedAt).toBeDefined(),
+                expect(alicesSyncedStreams.pingInfo?.nonces[n1].receivedAt).toBeDefined(),
             )
         }
 

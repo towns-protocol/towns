@@ -35,6 +35,10 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
         return this._view.streamId
     }
 
+    get syncCookie(): SyncCookie | undefined {
+        return this.view.syncCookie
+    }
+
     /**
      * NOTE: Separating initial rollup from the constructor allows consumer to subscribe to events
      * on the new stream event and still access this object through Client.streams.

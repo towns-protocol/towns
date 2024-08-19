@@ -7,9 +7,10 @@ import { isDefined } from './check'
 import { IPersistenceStore } from './persistenceStore'
 import { StreamEvents } from './streamEvents'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './id'
+import { ISyncedStream } from './syncedStreamsLoop'
 
 const CACHED_SCROLLBACK_COUNT = 3
-export class SyncedStream extends Stream {
+export class SyncedStream extends Stream implements ISyncedStream {
     log: DLogger
     isUpToDate = false
     readonly persistenceStore: IPersistenceStore

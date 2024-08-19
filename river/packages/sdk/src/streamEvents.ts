@@ -17,7 +17,7 @@ import {
 } from './types'
 import { KeySolicitationContent, UserDevice } from '@river-build/encryption'
 import { EncryptedContent } from './encryptedContentTypes'
-import { SyncState } from './syncedStreams'
+import { SyncState } from './syncedStreamsLoop'
 import { Pin } from './streamStateView_Members'
 
 export type StreamChange = {
