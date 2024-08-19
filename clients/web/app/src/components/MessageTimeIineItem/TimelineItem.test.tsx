@@ -4,6 +4,7 @@ import {
     MessageType,
     RoomMessageEvent,
     RoomMessageEventContentOneOf,
+    TimelineEvent,
     ZTEvent,
 } from 'use-towns-client'
 import { describe, expect, test, vi } from 'vitest'
@@ -48,6 +49,7 @@ function generateMessageRenderEvent(messageContent: MessageContent): MessageRend
         event: {
             eventId: 'event-id',
             eventNum: 0n,
+            latestEventId: 'event-id',
             createdAtEpochMs: 0,
             fallbackContent: '',
             isLocalPending: false,
@@ -60,7 +62,7 @@ function generateMessageRenderEvent(messageContent: MessageContent): MessageRend
                 id: 'sender-id',
                 displayName: 'beavis',
             },
-        },
+        } satisfies TimelineEvent,
     }
 }
 

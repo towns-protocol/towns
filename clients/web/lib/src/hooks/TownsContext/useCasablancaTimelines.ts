@@ -276,6 +276,7 @@ export function toEvent(timelineEvent: StreamTimelineEvent, userId: string): Tim
         eventId: eventId,
         localEventId: timelineEvent.localEvent?.localId,
         eventNum: timelineEvent.eventNum,
+        latestEventId: eventId,
         status: isSender ? getEventStatus(timelineEvent) : undefined,
         createdAtEpochMs: Number(timelineEvent.createdAtEpochMs),
         updatedAtEpochMs: undefined,

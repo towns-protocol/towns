@@ -122,6 +122,7 @@ export class ConversationBuilder {
         return {
             eventId: eventId,
             eventNum: BigInt(this.index),
+            latestEventId: eventId,
             status: params.isSender ? undefined : undefined, // todo: set status for events this user sent
             createdAtEpochMs: timestamp,
             updatedAtEpochMs: timestamp,

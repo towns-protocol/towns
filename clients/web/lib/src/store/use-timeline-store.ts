@@ -450,6 +450,7 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
             ...next,
             eventId: eventId,
             eventNum: prev.eventNum,
+            latestEventId: next.eventId,
             confirmedEventNum: prev.confirmedEventNum ?? next.confirmedEventNum,
             confirmedInBlockNum: prev.confirmedInBlockNum ?? next.confirmedInBlockNum,
             createdAtEpochMs: prev.createdAtEpochMs,
@@ -469,6 +470,7 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
             ...next,
             eventId: prev.eventId,
             eventNum: prev.eventNum,
+            latestEventId: next.eventId,
             confirmedEventNum: prev.confirmedEventNum ?? next.confirmedEventNum,
             confirmedInBlockNum: prev.confirmedInBlockNum ?? next.confirmedInBlockNum,
             createdAtEpochMs: prev.createdAtEpochMs,
@@ -480,6 +482,7 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
         // replacing a redacted event should maintain the redacted state
         return {
             ...prev,
+            latestEventId: next.eventId,
             confirmedEventNum: prev.confirmedEventNum ?? next.confirmedEventNum,
             confirmedInBlockNum: prev.confirmedInBlockNum ?? next.confirmedInBlockNum,
         }
@@ -490,6 +493,7 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
             ...next,
             eventId: prev.eventId,
             eventNum: prev.eventNum,
+            latestEventId: next.eventId,
             confirmedEventNum: prev.confirmedEventNum ?? next.confirmedEventNum,
             confirmedInBlockNum: prev.confirmedInBlockNum ?? next.confirmedInBlockNum,
             createdAtEpochMs: prev.createdAtEpochMs,
