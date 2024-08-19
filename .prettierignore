@@ -36,6 +36,7 @@ cache/*
 lib/*
 out/*
 
+.turbo/*
 .yarn/*
 .vscode
 yarn.lock
