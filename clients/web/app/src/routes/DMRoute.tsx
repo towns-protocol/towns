@@ -60,7 +60,7 @@ export const DirectMessages = () => {
                         </Box>
                         <Heading level={3}>Welcome to your DMs</Heading>
                         <Paragraph textAlign="center" color="gray2">
-                            Direct messages are end to end encrypted conversations between you and
+                            Direct messages are end-to-end encrypted conversations between you and
                             other users
                         </Paragraph>
                     </Stack>
