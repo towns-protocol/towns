@@ -829,10 +829,8 @@ export class SyncedStreams {
     }
 
     public async healthCheck() {
-        notificationServiceLogger.info(`logging heahtlCheck`)
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { pingInterval, ...pingInfoWithoutInterval } = this.pingInfo
-
+        const { pingInterval: _, ...pingInfoWithoutInterval } = this.pingInfo
         return { pingSendFailures: this.pingSendFailures, pingInfo: pingInfoWithoutInterval }
     }
 
