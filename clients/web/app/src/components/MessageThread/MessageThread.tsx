@@ -48,6 +48,7 @@ export const MessageThread = (props: {
             eventId: parentId,
             eventNum: 0n,
             latestEventId: parentId,
+            latestEventNum: 0n,
             createdAtEpochMs: 0,
             fallbackContent: '',
             isEncrypting: false,

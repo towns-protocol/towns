@@ -191,7 +191,11 @@ function makeTimelineStoreInterface(
 
         if (eventIndex === -1) {
             // if we didn't find an event to replace...
-            if (state.pendingReplacedEvents[roomId]?.[replacedMsgId]) {
+            if (
+                state.pendingReplacedEvents[roomId]?.[replacedMsgId] &&
+                state.pendingReplacedEvents[roomId][replacedMsgId].latestEventNum >
+                    timelineEvent.latestEventNum
+            ) {
                 // if we already have a replacement here, leave it, because we sync backwards, we assume the first one is the correct one
                 return state
             } else {
@@ -209,6 +213,9 @@ function makeTimelineStoreInterface(
             }
         }
         const oldEvent = timeline[eventIndex]
+        if (timelineEvent.latestEventNum < oldEvent.latestEventNum) {
+            return state
+        }
         const newEvent = toReplacedMessageEvent(oldEvent, timelineEvent)
 
         const threadParentId = newEvent.threadParentId
@@ -451,6 +458,7 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
             eventId: eventId,
             eventNum: prev.eventNum,
             latestEventId: next.eventId,
+            latestEventNum: next.eventNum,
             confirmedEventNum: prev.confirmedEventNum ?? next.confirmedEventNum,
             confirmedInBlockNum: prev.confirmedInBlockNum ?? next.confirmedInBlockNum,
             createdAtEpochMs: prev.createdAtEpochMs,
@@ -471,6 +479,7 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
             eventId: prev.eventId,
             eventNum: prev.eventNum,
             latestEventId: next.eventId,
+            latestEventNum: next.eventNum,
             confirmedEventNum: prev.confirmedEventNum ?? next.confirmedEventNum,
             confirmedInBlockNum: prev.confirmedInBlockNum ?? next.confirmedInBlockNum,
             createdAtEpochMs: prev.createdAtEpochMs,
@@ -483,6 +492,7 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
         return {
             ...prev,
             latestEventId: next.eventId,
+            latestEventNum: next.eventNum,
             confirmedEventNum: prev.confirmedEventNum ?? next.confirmedEventNum,
             confirmedInBlockNum: prev.confirmedInBlockNum ?? next.confirmedInBlockNum,
         }
@@ -494,6 +504,7 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
             eventId: prev.eventId,
             eventNum: prev.eventNum,
             latestEventId: next.eventId,
+            latestEventNum: next.eventNum,
             confirmedEventNum: prev.confirmedEventNum ?? next.confirmedEventNum,
             confirmedInBlockNum: prev.confirmedInBlockNum ?? next.confirmedInBlockNum,
             createdAtEpochMs: prev.createdAtEpochMs,

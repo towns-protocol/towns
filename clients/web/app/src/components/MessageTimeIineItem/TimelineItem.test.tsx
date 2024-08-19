@@ -50,6 +50,7 @@ function generateMessageRenderEvent(messageContent: MessageContent): MessageRend
             eventId: 'event-id',
             eventNum: 0n,
             latestEventId: 'event-id',
+            latestEventNum: 0n,
             createdAtEpochMs: 0,
             fallbackContent: '',
             isLocalPending: false,

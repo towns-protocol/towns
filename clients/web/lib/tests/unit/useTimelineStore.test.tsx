@@ -121,6 +121,19 @@ describe('UseTimelineStore', () => {
             // results
             execute('alice', events, { timeline: ['MSG_0 alice: hi bob! (edited2)'] })
         }),
+        test('test send and multiple edits out of order', () => {
+            // events (use a custom id for the fist message so we can edit it)
+            const events = new ConversationBuilder()
+                .sendMessage({ id: 'MSG_0', from: 'alice', body: 'hi bob!' })
+                .editMessage({ edits: 'MSG_0', newBody: 'hi bob! (edited)' })
+                .editMessage({ edits: 'MSG_0', newBody: 'hi bob! (edited2)' })
+                .getEvents()
+            // results
+            const ex = events[events.length - 1]
+            events[events.length - 1] = events[events.length - 2]
+            events[events.length - 2] = ex
+            execute('alice', events, { timeline: ['MSG_0 alice: hi bob! (edited2)'] })
+        }),
         test('test threads and thread stats', () => {
             // events
             const events = new ConversationBuilder()
