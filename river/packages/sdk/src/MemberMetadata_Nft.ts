@@ -4,7 +4,7 @@ import { StreamStateEvents } from './streamEvents'
 import { bin_toString, dlog } from '@river-build/dlog'
 import { userIdFromAddress } from './id'
 
-export class userMetadata_Nft {
+export class MemberMetadata_Nft {
     log = dlog('csb:streams:Nft')
     readonly streamId: string
     readonly userIdToEventId = new Map<string, string>()

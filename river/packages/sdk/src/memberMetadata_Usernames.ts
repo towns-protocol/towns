@@ -4,7 +4,7 @@ import { usernameChecksum } from './utils'
 import { dlog } from '@river-build/dlog'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 
-export class UserMetadata_Usernames {
+export class MemberMetadata_Usernames {
     log = dlog('csb:streams:usernames')
     readonly streamId: string
     readonly plaintextUsernames = new Map<string, string>()

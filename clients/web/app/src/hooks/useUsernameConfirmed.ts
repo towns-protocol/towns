@@ -21,7 +21,7 @@ export const useUsernameConfirmed = () => {
 
     usernameConfirmedFromStreamRef.current =
         spaceId && userId
-            ? casablancaClient?.streams.get(spaceId)?.view.getUserMetadata()?.userInfo(userId)
+            ? casablancaClient?.streams.get(spaceId)?.view.getMemberMetadata()?.userInfo(userId)
             : undefined
 
     useEffect(() => {

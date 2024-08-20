@@ -47,7 +47,7 @@ import {
 import { StreamStateView_UserInbox } from './streamStateView_UserInbox'
 import { DecryptedContent } from './encryptedContentTypes'
 import { StreamStateView_UnknownContent } from './streamStateView_UnknownContent'
-import { StreamStateView_UserMetadata } from './streamStateView_UserMetadata'
+import { StreamStateView_MemberMetadata } from './streamStateView_MemberMetadata'
 import { StreamStateView_ChannelMetadata } from './streamStateView_ChannelMetadata'
 import { StreamEvents, StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import isEqual from 'lodash/isEqual'
@@ -83,7 +83,7 @@ export interface IStreamStateView {
     get userInboxContent(): StreamStateView_UserInbox
     get mediaContent(): StreamStateView_Media
     getMembers(): StreamStateView_Members
-    getUserMetadata(): StreamStateView_UserMetadata
+    getMemberMetadata(): StreamStateView_MemberMetadata
     getChannelMetadata(): StreamStateView_ChannelMetadata | undefined
     getContent(): StreamStateView_AbstractContent
     userIsEntitledToKeyExchange(userId: string): boolean
@@ -746,8 +746,8 @@ export class StreamStateView implements IStreamStateView {
         return this.membershipContent
     }
 
-    getUserMetadata(): StreamStateView_UserMetadata {
-        return this.membershipContent.userMetadata
+    getMemberMetadata(): StreamStateView_MemberMetadata {
+        return this.membershipContent.memberMetadata
     }
 
     getChannelMetadata(): StreamStateView_ChannelMetadata | undefined {

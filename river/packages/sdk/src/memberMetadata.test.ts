@@ -15,7 +15,7 @@ import {
 import { make_MemberPayload_Nft } from './types'
 import { bin_fromString, bin_toString } from '@river-build/dlog'
 
-describe('userMetadataTests', () => {
+describe('memberMetadataTests', () => {
     let bobsClient: Client
     let alicesClient: Client
     let evesClient: Client
@@ -68,7 +68,7 @@ describe('userMetadataTests', () => {
         const expected = new Map<string, string>([[bobsClient.userId, 'bob']])
         for (const client of [bobsClient, alicesClient]) {
             const streamView = client.streams.get(streamId)!.view
-            expect(streamView.getUserMetadata().displayNames.plaintextDisplayNames).toEqual(
+            expect(streamView.getMemberMetadata().displayNames.plaintextDisplayNames).toEqual(
                 expected,
             )
         }
@@ -116,7 +116,7 @@ describe('userMetadataTests', () => {
             const streamView = client.streams.get(streamId)?.view
             expect(streamView).toBeDefined()
             const clientDisplayNames =
-                streamView!.getUserMetadata().displayNames.plaintextDisplayNames
+                streamView!.getMemberMetadata().displayNames.plaintextDisplayNames
             expect(clientDisplayNames).toEqual(expected)
         }
     })
@@ -176,7 +176,7 @@ describe('userMetadataTests', () => {
             const streamView = client.streams.get(streamId)?.view
             expect(streamView).toBeDefined()
             const clientDisplayNames =
-                streamView!.getUserMetadata().displayNames.plaintextDisplayNames
+                streamView!.getMemberMetadata().displayNames.plaintextDisplayNames
             expect(clientDisplayNames).toEqual(expected)
         }
     })
@@ -204,7 +204,7 @@ describe('userMetadataTests', () => {
 
         const expected = new Map<string, string>([[bobsClient.userId, 'bob']])
         const alicesClientDisplayNames =
-            alicesClient.streams.get(streamId)?.view.membershipContent.userMetadata.displayNames
+            alicesClient.streams.get(streamId)?.view.membershipContent.memberMetadata.displayNames
                 .plaintextDisplayNames
         expect(alicesClientDisplayNames).toEqual(expected)
     })
@@ -239,13 +239,13 @@ describe('userMetadataTests', () => {
         const expected = new Map<string, string>([[bobsClient.userId, 'bob-username']])
         // expect username to get updated immediately
         expect(
-            bobsClient.streams.get(streamId)!.view.getUserMetadata().usernames.plaintextUsernames,
+            bobsClient.streams.get(streamId)!.view.getMemberMetadata().usernames.plaintextUsernames,
         ).toEqual(expected)
 
         expect(
             bobsClient.streams
                 .get(streamId)!
-                .view.getUserMetadata()
+                .view.getMemberMetadata()
                 .usernames.info(bobsClient.userId).username,
         ).toEqual('bob-username')
 
@@ -257,10 +257,10 @@ describe('userMetadataTests', () => {
 
         for (const client of [bobsClient, alicesClient]) {
             const streamView = client.streams.get(streamId)!.view
-            expect(streamView.getUserMetadata().usernames.plaintextUsernames).toEqual(expected)
-            expect(streamView.getUserMetadata().usernames.info(bobsClient.userId).username).toEqual(
-                'bob-username',
-            )
+            expect(streamView.getMemberMetadata().usernames.plaintextUsernames).toEqual(expected)
+            expect(
+                streamView.getMemberMetadata().usernames.info(bobsClient.userId).username,
+            ).toEqual('bob-username')
         }
     })
 
@@ -304,7 +304,7 @@ describe('userMetadataTests', () => {
 
         for (const client of [bobsClient, alicesClient]) {
             const streamView = client.streams.get(streamId)!.view
-            expect(streamView.getUserMetadata()?.usernames.plaintextUsernames).toEqual(expected)
+            expect(streamView.getMemberMetadata()?.usernames.plaintextUsernames).toEqual(expected)
         }
     })
 
@@ -365,7 +365,7 @@ describe('userMetadataTests', () => {
 
         for (const client of [bobsClient, alicesClient, evesClient]) {
             const streamView = client.streams.get(streamId)!.view
-            expect(streamView.getUserMetadata().usernames.plaintextUsernames).toEqual(expected)
+            expect(streamView.getMemberMetadata().usernames.plaintextUsernames).toEqual(expected)
         }
     })
 
@@ -407,7 +407,7 @@ describe('userMetadataTests', () => {
         ])
         for (const client of [bobsClient, alicesClient]) {
             const streamView = client.streams.get(streamId)!.view
-            expect(streamView.getUserMetadata().ensAddresses.confirmedEnsAddresses).toEqual(
+            expect(streamView.getMemberMetadata().ensAddresses.confirmedEnsAddresses).toEqual(
                 expected,
             )
         }
@@ -455,7 +455,7 @@ describe('userMetadataTests', () => {
         for (const client of [bobsClient, alicesClient]) {
             const streamView = client.streams.get(streamId)?.view
             expect(streamView).toBeDefined()
-            const ensAddresses = streamView!.getUserMetadata().ensAddresses.confirmedEnsAddresses
+            const ensAddresses = streamView!.getMemberMetadata().ensAddresses.confirmedEnsAddresses
             expect(ensAddresses).toEqual(expected)
         }
     })
@@ -515,7 +515,7 @@ describe('userMetadataTests', () => {
         for (const client of [bobsClient, alicesClient, evesClient]) {
             const streamView = client.streams.get(streamId)?.view
             expect(streamView).toBeDefined()
-            const ensAddresses = streamView!.getUserMetadata().ensAddresses.confirmedEnsAddresses
+            const ensAddresses = streamView!.getMemberMetadata().ensAddresses.confirmedEnsAddresses
             expect(ensAddresses).toEqual(expected)
         }
     })
@@ -591,9 +591,9 @@ describe('userMetadataTests', () => {
         const expected = new Map<string, MemberPayload_Nft>([[bobsClient.userId, nft]])
         for (const client of [bobsClient, alicesClient]) {
             const streamView = client.streams.get(streamId)!.view
-            expect(streamView.getUserMetadata().nfts.confirmedNfts).toEqual(expected)
-            const bobInfo = streamView.getUserMetadata().nfts.info(bobsClient.userId)
-            expect(bobInfo!.tokenId).toEqual('11111111112222222233333333')
+            expect(streamView.getMemberMetadata().nfts.confirmedNfts).toEqual(expected)
+            const bobInfo = streamView.getMemberMetadata().nfts.info(bobsClient.userId)
+            expect(bobInfo?.tokenId).toEqual('11111111112222222233333333')
         }
     })
 

@@ -3,14 +3,14 @@
  */
 
 import { userIdFromAddress } from './id'
-import { userMetadata_EnsAddresses } from './userMetadata_EnsAddresses'
+import { MemberMetadata_EnsAddresses } from './memberMetadata_EnsAddresses'
 import { makeRandomUserAddress } from './util.test'
 
-describe('userMetadata_EnsAddressesTests', () => {
+describe('memberMetadata_EnsAddressesTests', () => {
     const streamId = 'streamid1'
-    let ensAddresses: userMetadata_EnsAddresses
+    let ensAddresses: MemberMetadata_EnsAddresses
     beforeEach(() => {
-        ensAddresses = new userMetadata_EnsAddresses(streamId)
+        ensAddresses = new MemberMetadata_EnsAddresses(streamId)
     })
 
     test('clientCanSetEnsAddress', async () => {

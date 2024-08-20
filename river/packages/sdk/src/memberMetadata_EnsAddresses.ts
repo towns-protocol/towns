@@ -3,7 +3,7 @@ import { dlog } from '@river-build/dlog'
 import { StreamStateEvents } from './streamEvents'
 import { userIdFromAddress } from './id'
 
-export class userMetadata_EnsAddresses {
+export class MemberMetadata_EnsAddresses {
     log = dlog('csb:streams:ensAddresses')
     readonly streamId: string
     readonly userIdToEventId = new Map<string, string>()

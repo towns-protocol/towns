@@ -6,11 +6,11 @@ import {
 import TypedEmitter from 'typed-emitter'
 import { ConfirmedTimelineEvent, RemoteTimelineEvent } from './types'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
-import { UserMetadata_Usernames } from './userMetadata_Usernames'
-import { UserMetadata_DisplayNames } from './userMetadata_DisplayNames'
+import { MemberMetadata_Usernames } from './memberMetadata_Usernames'
+import { MemberMetadata_DisplayNames } from './memberMetadata_DisplayNames'
 import { bin_toHexString } from '@river-build/dlog'
-import { userMetadata_EnsAddresses } from './userMetadata_EnsAddresses'
-import { userMetadata_Nft } from './userMetadata_Nft'
+import { MemberMetadata_EnsAddresses } from './memberMetadata_EnsAddresses'
+import { MemberMetadata_Nft } from './MemberMetadata_Nft'
 
 export type UserInfo = {
     username: string
@@ -26,17 +26,17 @@ export type UserInfo = {
     }
 }
 
-export class StreamStateView_UserMetadata {
-    readonly usernames: UserMetadata_Usernames
-    readonly displayNames: UserMetadata_DisplayNames
-    readonly ensAddresses: userMetadata_EnsAddresses
-    readonly nfts: userMetadata_Nft
+export class StreamStateView_MemberMetadata {
+    readonly usernames: MemberMetadata_Usernames
+    readonly displayNames: MemberMetadata_DisplayNames
+    readonly ensAddresses: MemberMetadata_EnsAddresses
+    readonly nfts: MemberMetadata_Nft
 
     constructor(streamId: string) {
-        this.usernames = new UserMetadata_Usernames(streamId)
-        this.displayNames = new UserMetadata_DisplayNames(streamId)
-        this.ensAddresses = new userMetadata_EnsAddresses(streamId)
-        this.nfts = new userMetadata_Nft(streamId)
+        this.usernames = new MemberMetadata_Usernames(streamId)
+        this.displayNames = new MemberMetadata_DisplayNames(streamId)
+        this.ensAddresses = new MemberMetadata_EnsAddresses(streamId)
+        this.nfts = new MemberMetadata_Nft(streamId)
     }
 
     applySnapshot(

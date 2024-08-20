@@ -3,13 +3,13 @@
  */
 
 import { EncryptedData } from '@river-build/proto'
-import { UserMetadata_DisplayNames } from './userMetadata_DisplayNames'
+import { MemberMetadata_DisplayNames } from './memberMetadata_DisplayNames'
 
-describe('userMetadata_DisplayNamesTests', () => {
+describe('memberMetadata_DisplayNamesTests', () => {
     const streamId = 'streamid1'
-    let displayNames: UserMetadata_DisplayNames
+    let displayNames: MemberMetadata_DisplayNames
     beforeEach(() => {
-        displayNames = new UserMetadata_DisplayNames(streamId)
+        displayNames = new MemberMetadata_DisplayNames(streamId)
     })
 
     test('clientCanSetDisplayName', async () => {

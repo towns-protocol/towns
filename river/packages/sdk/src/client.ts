@@ -929,7 +929,7 @@ export class Client
         check(isDefined(this.cryptoBackend))
         const stream = this.stream(streamId)
         check(isDefined(stream), 'stream not found')
-        stream.view.getUserMetadata().usernames.setLocalUsername(this.userId, username)
+        stream.view.getMemberMetadata().usernames.setLocalUsername(this.userId, username)
         const encryptedData = await this.cryptoBackend.encryptGroupEvent(streamId, username)
         encryptedData.checksum = usernameChecksum(username, streamId)
         try {
@@ -941,7 +941,7 @@ export class Client
                 },
             )
         } catch (err) {
-            stream.view.getUserMetadata().usernames.resetLocalUsername(this.userId)
+            stream.view.getMemberMetadata().usernames.resetLocalUsername(this.userId)
             throw err
         }
     }
@@ -1004,7 +1004,9 @@ export class Client
     isUsernameAvailable(streamId: string, username: string): boolean {
         const stream = this.streams.get(streamId)
         check(isDefined(stream), 'stream not found')
-        return stream.view.getUserMetadata().usernames.cleartextUsernameAvailable(username) ?? false
+        return (
+            stream.view.getMemberMetadata().usernames.cleartextUsernameAvailable(username) ?? false
+        )
     }
 
     async waitForStream(

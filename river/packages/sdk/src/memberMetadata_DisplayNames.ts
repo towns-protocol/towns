@@ -3,7 +3,7 @@ import TypedEmitter from 'typed-emitter'
 import { dlog } from '@river-build/dlog'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 
-export class UserMetadata_DisplayNames {
+export class MemberMetadata_DisplayNames {
     log = dlog('csb:streams:displaynames')
     readonly streamId: string
     readonly userIdToEventId = new Map<string, string>()

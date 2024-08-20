@@ -69,7 +69,7 @@ export const useUserLookupUpdater = (
             dlog.info('onStreamMetadataUpdated', streamId, userId)
             if (isSpaceStreamId(streamId)) {
                 const stream = client?.streams.get(streamId)
-                const metadata = stream?.view.getUserMetadata()
+                const metadata = stream?.view.getMemberMetadata()
                 const info = metadata?.userInfo(userId)
                 if (isUserInfo(info)) {
                     const update = async () => {
@@ -84,7 +84,7 @@ export const useUserLookupUpdater = (
                 }
             } else if (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)) {
                 const stream = client?.streams.get(streamId)
-                const metadata = stream?.view.getUserMetadata()
+                const metadata = stream?.view.getMemberMetadata()
                 const info = metadata?.userInfo(userId)
                 if (meaningfulInfo(info)) {
                     const update = async () => {
@@ -106,7 +106,7 @@ export const useUserLookupUpdater = (
         (streamId: string, contentKind: SnapshotCaseType) => {
             dlog.info('onStreamInitialized', streamId, contentKind)
             const stream = client?.streams.get(streamId)
-            const metadata = stream?.view.getUserMetadata()
+            const metadata = stream?.view.getMemberMetadata()
 
             if (!stream || !metadata) {
                 return

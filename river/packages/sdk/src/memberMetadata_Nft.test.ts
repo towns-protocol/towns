@@ -3,15 +3,15 @@
  */
 
 import { MemberPayload_Nft } from '@river-build/proto'
-import { userMetadata_Nft } from './userMetadata_Nft'
+import { MemberMetadata_Nft } from './MemberMetadata_Nft'
 import { makeRandomUserAddress } from './util.test'
 import { bin_fromString } from '@river-build/dlog'
 
-describe('userMetadata_NftTests', () => {
+describe('memberMetadata_NftTests', () => {
     const streamId = 'streamid1'
-    let nfts: userMetadata_Nft
+    let nfts: MemberMetadata_Nft
     beforeEach(() => {
-        nfts = new userMetadata_Nft(streamId)
+        nfts = new MemberMetadata_Nft(streamId)
     })
 
     test('clientCanSetNft', async () => {

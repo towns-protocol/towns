@@ -19,7 +19,7 @@ import { StreamStateView_Members_Membership } from './streamStateView_Members_Me
 import { StreamStateView_Members_Solicitations } from './streamStateView_Members_Solicitations'
 import { bin_toHexString, check } from '@river-build/dlog'
 import { DecryptedContent } from './encryptedContentTypes'
-import { StreamStateView_UserMetadata } from './streamStateView_UserMetadata'
+import { StreamStateView_MemberMetadata } from './streamStateView_MemberMetadata'
 import { KeySolicitationContent } from '@river-build/encryption'
 import { makeParsedEvent } from './sign'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
@@ -46,7 +46,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
     readonly joined = new Map<string, StreamMember>()
     readonly membership: StreamStateView_Members_Membership
     readonly solicitHelper: StreamStateView_Members_Solicitations
-    readonly userMetadata: StreamStateView_UserMetadata
+    readonly memberMetadata: StreamStateView_MemberMetadata
     readonly pins: Pin[] = []
 
     constructor(streamId: string) {
@@ -54,7 +54,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
         this.streamId = streamId
         this.membership = new StreamStateView_Members_Membership(streamId)
         this.solicitHelper = new StreamStateView_Members_Solicitations(streamId)
-        this.userMetadata = new StreamStateView_UserMetadata(streamId)
+        this.memberMetadata = new StreamStateView_MemberMetadata(streamId)
     }
 
     // initialization
@@ -120,7 +120,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                 nft: member.nft!,
             }))
 
-        this.userMetadata.applySnapshot(
+        this.memberMetadata.applySnapshot(
             usernames,
             displayNames,
             ensAddresses,
@@ -228,7 +228,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                     stateMember.encryptedDisplayName = new WrappedEncryptedData({
                         data: payload.content.value,
                     })
-                    this.userMetadata.appendDisplayName(
+                    this.memberMetadata.appendDisplayName(
                         event.hashStr,
                         payload.content.value,
                         event.creatorUserId,
@@ -245,7 +245,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                     stateMember.encryptedUsername = new WrappedEncryptedData({
                         data: payload.content.value,
                     })
-                    this.userMetadata.appendUsername(
+                    this.memberMetadata.appendUsername(
                         event.hashStr,
                         payload.content.value,
                         event.creatorUserId,
@@ -258,7 +258,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
             case 'ensAddress': {
                 const stateMember = this.joined.get(event.creatorUserId)
                 check(isDefined(stateMember), 'username from non-member')
-                this.userMetadata.appendEnsAddress(
+                this.memberMetadata.appendEnsAddress(
                     event.hashStr,
                     payload.content.value,
                     event.creatorUserId,
@@ -269,7 +269,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
             case 'nft': {
                 const stateMember = this.joined.get(event.creatorUserId)
                 check(isDefined(stateMember), 'nft from non-member')
-                this.userMetadata.appendNft(
+                this.memberMetadata.appendNft(
                     event.hashStr,
                     payload.content.value,
                     event.creatorUserId,
@@ -341,7 +341,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
             case 'username':
             case 'ensAddress':
             case 'nft':
-                this.userMetadata.onConfirmedEvent(event, stateEmitter)
+                this.memberMetadata.onConfirmedEvent(event, stateEmitter)
                 break
             case 'pin':
                 break
@@ -360,7 +360,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
         if (content.kind === 'text') {
-            this.userMetadata.onDecryptedContent(eventId, content.content, stateEmitter)
+            this.memberMetadata.onDecryptedContent(eventId, content.content, stateEmitter)
         }
         const pinIndex = this.pins.findIndex((pin) => pin.event.hashStr === eventId)
         if (pinIndex !== -1) {
