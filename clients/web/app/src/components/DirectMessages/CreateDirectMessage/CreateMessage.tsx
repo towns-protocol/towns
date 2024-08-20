@@ -17,6 +17,7 @@ export const CreateMessage = () => {
 
     const userIdsFromParams = searchParams.get('to')?.split(',')
     const isDraft = !!userIdsFromParams?.length
+    const messageKey = userIdsFromParams?.sort().join() ?? 'new'
 
     return isTouch ? (
         <>
@@ -32,6 +33,6 @@ export const CreateMessage = () => {
     ) : !isDraft ? (
         <CreateMessageSelect />
     ) : (
-        <DraftDirectMessage userIdsFromParams={userIdsFromParams} />
+        <DraftDirectMessage userIdsFromParams={userIdsFromParams} key={messageKey} />
     )
 }
