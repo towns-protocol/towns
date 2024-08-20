@@ -2,7 +2,8 @@ name: Release Alpha
 
 on:
     schedule:
-        - cron: '0 0 * * *' # Runs every day at midnight UTC
+        # Runs everyday at 6am GMT+3
+        - cron: '0 3 * * *'
 
     workflow_dispatch:
 
@@ -75,6 +76,17 @@ jobs:
             SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL: ${{ secrets.SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL }}
         with:
             environment_name: alpha
+
+    upgrade_alpha_facets:
+        name: Upgrade Alpha Facets
+        uses: './.github/workflows/Upgrade_alpha_facets.yml'
+        secrets:
+            ALPHA_BASE_SEPOLIA_DEPLOYER_PK: ${{ secrets.ALPHA_BASE_SEPOLIA_DEPLOYER_PK }}
+            SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL: ${{ secrets.SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL }}
+            ALPHA_BASE_SEPOLIA_RPC_URL: ${{ secrets.ALPHA_BASE_SEPOLIA_RPC_URL }}
+            RIVER_TESTNET_RPC_URL: ${{ secrets.RIVER_TESTNET_RPC_URL }}
+            BLOCKSCOUT_BASE_SEPOLIA_API_KEY: ${{ secrets.BLOCKSCOUT_BASE_SEPOLIA_API_KEY }}
+            BASESCAN_SEPOLIA_API_KEY: ${{ secrets.BASESCAN_SEPOLIA_API_KEY }}
 
     on_failure:
         name: On Failure
