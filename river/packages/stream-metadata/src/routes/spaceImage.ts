@@ -1,33 +1,36 @@
-import { FastifyReply, FastifyRequest } from 'fastify'
+import { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify'
 import { ChunkedMedia } from '@river-build/proto'
 import { StreamPrefix, StreamStateView, makeStreamId } from '@river-build/sdk'
 
 import { StreamIdHex } from '../types'
 import { getMediaStreamContent, getStream } from '../riverStreamRpcClient'
 import { isBytes32String, isValidEthereumAddress } from '../validators'
-import { getLogger } from '../logger'
-
-const logger = getLogger('handleImageRequest')
+import { getFunctionLogger } from '../logger'
 
 export async function fetchSpaceImage(request: FastifyRequest, reply: FastifyReply) {
+	const logger = getFunctionLogger(request.log, 'fetchSpaceImage')
 	const { spaceAddress } = request.params as { spaceAddress?: string }
 
 	if (!spaceAddress) {
+		logger.info('spaceAddress parameter is required')
 		return reply
 			.code(400)
 			.send({ error: 'Bad Request', message: 'spaceAddress parameter is required' })
 	}
 
 	if (!isValidEthereumAddress(spaceAddress)) {
+		logger.info({ spaceAddress }, 'Invalid spaceAddress format')
 		return reply
 			.code(400)
 			.send({ error: 'Bad Request', message: 'Invalid spaceAddress format' })
 	}
 
+	logger.info({ spaceAddress }, 'Fetching space image')
+
 	let stream: StreamStateView | undefined
 	try {
 		const streamId = makeStreamId(StreamPrefix.Space, spaceAddress)
-		stream = await getStream(streamId)
+		stream = await getStream(logger, streamId)
 	} catch (error) {
 		logger.error(
 			{
@@ -58,7 +61,7 @@ export async function fetchSpaceImage(request: FastifyRequest, reply: FastifyRep
 	let key: Uint8Array | undefined
 	let iv: Uint8Array | undefined
 	try {
-		const { key: _key, iv: _iv } = getEncryption(spaceImage)
+		const { key: _key, iv: _iv } = getEncryption(logger, spaceImage)
 		key = _key
 		iv = _iv
 		if (key?.length === 0 || iv?.length === 0) {
@@ -89,6 +92,7 @@ export async function fetchSpaceImage(request: FastifyRequest, reply: FastifyRep
 	let mimeType: string | null
 	try {
 		const { data: _data, mimeType: _mimType } = await getMediaStreamContent(
+			logger,
 			fullStreamId,
 			key,
 			iv,
@@ -132,7 +136,11 @@ async function getSpaceImage(streamView: StreamStateView): Promise<ChunkedMedia 
 	return spaceImage
 }
 
-function getEncryption(chunkedMedia: ChunkedMedia): { key: Uint8Array; iv: Uint8Array } {
+function getEncryption(
+	log: FastifyBaseLogger,
+	chunkedMedia: ChunkedMedia,
+): { key: Uint8Array; iv: Uint8Array } {
+	const logger = getFunctionLogger(log, 'getEncryption')
 	switch (chunkedMedia.encryption.case) {
 		case 'aesgcm': {
 			const key = new Uint8Array(chunkedMedia.encryption.value.secretKey)

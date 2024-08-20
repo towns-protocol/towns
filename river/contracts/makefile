@@ -114,8 +114,8 @@ deploy-any-ledger :;
 
 resume-any-ledger :;
 	@forge script scripts/deployments/${type}/${contract}.s.sol:${contract} \
-	--ledger --hd-paths ${hd_path} --sender ${sender} \
-	--ffi --rpc-url ${rpc} --broadcast --verify --resume
+	--ledger --hd-paths ${hd_path} \
+	--ffi --rpc-url ${rpc} --broadcast --verifier-url ${verifier} --etherscan-api-key ${etherscan} --verify --resume
 
 interact-any-ledger :;
 	@echo "Running $(contract) on remote network"
@@ -136,7 +136,7 @@ deploy-base-anvil :;
 
 # THIS IS FOR TESTING ONLY
 deploy-base-anvil-ledger :;
-	@$(MAKE) deploy-any-local-ledger context=local_multi rpc=base_anvil hd_path="m/44\'/60\'/1\'/0/0" sender=${PRODUCTION_ADDRESS}
+	@$(MAKE) deploy-any-local-ledger context=local_multi rpc=base_anvil hd_path=${HD_PATH} sender=${SENDER_ADDRESS}
 
 interact-base-anvil :;
 	@$(MAKE) interact-any-local context=local_multi rpc=base_anvil
@@ -174,8 +174,8 @@ verify-river-testnet :;
 # 				 Base Sepolia
 # ===========================
 deploy-ledger-base-sepolia :;
-	@$(MAKE) deploy-any-ledger rpc=base_sepolia hd_path="m/44\'/60\'/1\'/0/0" sender=${PRODUCTION_ADDRESS}
-	@$(MAKE) resume-any-ledger rpc=base_sepolia hd_path="m/44\'/60\'/1\'/0/0" sender=${PRODUCTION_ADDRESS} verifier=${BASESCAN_SEPOLIA_URL} etherscan=${BASESCAN_API_KEY}
+	@$(MAKE) deploy-any-ledger rpc=base_sepolia hd_path=${HD_PATH} sender=${SENDER_ADDRESS}
+	@$(MAKE) resume-any-ledger rpc=base_sepolia hd_path=${HD_PATH} sender=${SENDER_ADDRESS} verifier=${BASESCAN_SEPOLIA_URL} etherscan=${BASESCAN_API_KEY}
 
 deploy-base-sepolia :;
 	@$(MAKE) deploy-any rpc=base_sepolia private_key=${TESTNET_PRIVATE_KEY}
@@ -214,36 +214,36 @@ verify-sepolia :;
 # 				 	River
 # ===========================
 deploy-river :;
-	@$(MAKE) deploy-any-ledger rpc=river hd_path="m/44\'/60\'/1\'/0/0" sender=${PRODUCTION_ADDRESS}
+	@$(MAKE) deploy-any-ledger rpc=river hd_path=${HD_PATH} sender=${SENDER_ADDRESS}
 
 interact-river :;
-	@$(MAKE) interact-any-ledger rpc=river hd_path="m/44\'/60\'/1\'/0/0" sender=${PRODUCTION_ADDRESS}
+	@$(MAKE) interact-any-ledger rpc=river hd_path=${HD_PATH} sender=${SENDER_ADDRESS}
 
 # ===========================
 # 				 		Base
 # ===========================
 deploy-base :;
-	@$(MAKE) deploy-any-ledger rpc=base hd_path="m/44\'/60\'/1\'/0/0" sender=${PRODUCTION_ADDRESS}
-	@$(MAKE) resume-any-ledger rpc=base hd_path="m/44\'/60\'/1\'/0/0" sender=${PRODUCTION_ADDRESS} verifier=${BASESCAN_URL} etherscan=${BASESCAN_API_KEY}
+	@$(MAKE) deploy-any-ledger rpc=base hd_path=${HD_PATH} sender=${SENDER_ADDRESS}
+	@$(MAKE) resume-any-ledger rpc=base hd_path=${HD_PATH} sender=${SENDER_ADDRESS} verifier=${BASESCAN_URL} etherscan=${BASESCAN_API_KEY}
 
 interact-base :;
-	@$(MAKE) interact-any-ledger rpc=base hd_path="m/44\'/60\'/1\'/0/0" sender=${PRODUCTION_ADDRESS}
+	@$(MAKE) interact-any-ledger rpc=base hd_path=${HD_PATH} sender=${SENDER_ADDRESS}
 
 fork-base :;
 	@$(MAKE) fork-any rpc=base private_key=${TESTNET_PRIVATE_KEY}
 
 verify-base :;
 	@$(MAKE) verify-any rpc=base
-	@$(MAKE) explicit-verify-any rpc=base verifier=${BASESCAN_URL} etherscan=${BASESCAN_API_KEY}
+	@$(MAKE) explicit-verify-any rpc=base verifier=${BLOCKSCOUT_BASE_URL} etherscan=${BLOCKSCOUT_BASE_API_KEY}
 
 # ===========================
 # 				Mainnet
 # ===========================
 deploy-mainnet :;
-	@$(MAKE) deploy-any-ledger rpc=mainnet hd_path="m/44\'/60\'/1\'/0/0" sender=${PRODUCTION_ADDRESS}
+	@$(MAKE) deploy-any-ledger rpc=mainnet hd_path=${HD_PATH} sender=${SENDER_ADDRESS}
 
 interact-mainnet :;
-	@$(MAKE) interact-any-ledger rpc=mainnet hd_path="m/44\'/60\'/1\'/0/0" sender=${PRODUCTION_ADDRESS}
+	@$(MAKE) interact-any-ledger rpc=mainnet hd_path=${HD_PATH} sender=${SENDER_ADDRESS}
 
 fork-mainnet :;
 	@$(MAKE) fork-any rpc=mainnet private_key=${TESTNET_PRIVATE_KEY}
@@ -274,3 +274,11 @@ interact-alpha-base-sepolia :;
 
 deploy-alpha-river-testnet :;
 	@$(MAKE) deploy-any context=alpha rpc=river_devnet private_key=${TESTNET_PRIVATE_KEY}
+
+# ===========================
+# 				OMEGA
+# ===========================
+
+deploy-omega-base :;
+	@$(MAKE) deploy-any-ledger context=omega rpc=base hd_path=${HD_PATH} sender=${SENDER_ADDRESS}
+	@$(MAKE) resume-any-ledger context=omega rpc=base hd_path=${HD_PATH} sender=${SENDER_ADDRESS} verifier=${BASESCAN_URL} etherscan=${BASESCAN_API_KEY}

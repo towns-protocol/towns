@@ -1009,7 +1009,7 @@ export class Client
 
     async waitForStream(
         inStreamId: string | Uint8Array,
-        opts?: { timeoutMs?: number },
+        opts?: { timeoutMs?: number; logId?: string },
     ): Promise<Stream> {
         this.logCall('waitForStream', inStreamId)
         const timeoutMs = opts?.timeoutMs ?? 15000
@@ -1023,7 +1023,13 @@ export class Client
         await new Promise<void>((resolve, reject) => {
             const timeout = setTimeout(() => {
                 this.off('streamInitialized', handler)
-                reject(new Error(`waitForStream: timeout waiting for ${streamId}`))
+                reject(
+                    new Error(
+                        `waitForStream: timeout waiting for ${
+                            opts?.logId ? opts.logId + ' ' : ''
+                        }${streamId}`,
+                    ),
+                )
             }, timeoutMs)
             const handler = (newStreamId: string) => {
                 if (newStreamId === streamId) {

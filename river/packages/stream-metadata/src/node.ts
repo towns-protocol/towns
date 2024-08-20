@@ -3,6 +3,7 @@ import { Server as HTTPSServer } from 'https'
 
 import Fastify, { FastifyInstance } from 'fastify'
 import cors from '@fastify/cors'
+import { v4 as uuidv4 } from 'uuid'
 
 import { config } from './environment'
 import { getLogger } from './logger'
@@ -39,57 +40,47 @@ export type Server = FastifyInstance<
 
 const server = Fastify({
 	logger,
+	genReqId: () => uuidv4(),
 })
 
-async function registerPlugins() {
-	await server.register(cors, {
+server.addHook('onRequest', (request, reply, done) => {
+	const reqId = request.id // Use Fastify's generated reqId, which is now a UUID
+	request.log = request.log.child({ reqId })
+	done()
+})
+
+// for testability, pass server instance as an argument
+export async function registerPlugins(srv: Server) {
+	await srv.register(cors, {
 		origin: '*', // Allow any origin
 		methods: ['GET'], // Allowed HTTP methods
 	})
 	logger.info('CORS registered successfully')
 }
 
-function setupRoutes() {
+// for testability, pass server instance as an argument
+export function setupRoutes(srv: Server) {
 	/*
 	 * Routes
 	 */
-	server.get('/health', async (request, reply) => {
-		logger.info(`GET /health`)
-		return checkHealth(request, reply)
-	})
+	srv.get('/health', checkHealth)
+	srv.get('/space/:spaceAddress', async (request, reply) =>
+		fetchSpaceMetadata(request, reply, getServerUrl(srv)),
+	)
+	srv.get('/space/:spaceAddress/image', fetchSpaceImage)
 
-	server.get('/space/:spaceAddress', async (request, reply) => {
-		const { spaceAddress } = request.params as { spaceAddress?: string }
-		logger.info({ spaceAddress }, 'GET /space/../metadata')
-
-		const { protocol, serverAddress } = getServerInfo()
-		return fetchSpaceMetadata(request, reply, `${protocol}://${serverAddress}`)
-	})
-
-	server.get('/space/:spaceAddress/image', async (request, reply) => {
-		const { spaceAddress } = request.params as { spaceAddress?: string }
-		logger.info({ spaceAddress }, 'GET /space/../image')
-
-		return fetchSpaceImage(request, reply)
-	})
-
-	// Generic / route to return 404
-	server.get('/', async (request, reply) => {
-		return reply.code(404).send('Not found')
-	})
+	// Fastify will return 404 for any unmatched routes
 }
 
-/*
- * Start the server
- */
-function getServerInfo() {
-	const addressInfo = server.server.address()
-	const protocol = server.server instanceof HTTPSServer ? 'https' : 'http'
+// for testability, pass server instance as an argument
+export function getServerUrl(srv: Server) {
+	const addressInfo = srv.server.address()
+	const protocol = srv.server instanceof HTTPSServer ? 'https' : 'http'
 	const serverAddress =
 		typeof addressInfo === 'string'
 			? addressInfo
 			: `${addressInfo?.address}:${addressInfo?.port}`
-	return { protocol, serverAddress }
+	return `${protocol}://${serverAddress}`
 }
 
 process.on('SIGTERM', async () => {
@@ -105,8 +96,8 @@ process.on('SIGTERM', async () => {
 
 async function main() {
 	try {
-		await registerPlugins()
-		setupRoutes()
+		await registerPlugins(server)
+		setupRoutes(server)
 		await server.listen({
 			port: config.port,
 			host: config.host,

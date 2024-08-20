@@ -30,16 +30,16 @@ contract InteractAlpha is Interaction, DiamondHelper, IDiamondLoupeBase {
   function __interact(address deployer) internal override {
     vm.setEnv("OVERRIDE_DEPLOYMENTS", "1");
     address space = getDeployment("space");
-    // address spaceOwner = getDeployment("spaceOwner");
-    // address spaceFactory = getDeployment("spaceFactory");
-    // address baseRegistry = getDeployment("baseRegistry");
+    address spaceOwner = getDeployment("spaceOwner");
+    address spaceFactory = getDeployment("spaceFactory");
+    address baseRegistry = getDeployment("baseRegistry");
 
     FacetCut[] memory newCuts;
 
     removeRemoteFacets(deployer, space);
-    // removeRemoteFacets(deployer, spaceOwner);
-    // removeRemoteFacets(deployer, spaceFactory);
-    // removeRemoteFacets(deployer, baseRegistry);
+    removeRemoteFacets(deployer, spaceOwner);
+    removeRemoteFacets(deployer, spaceFactory);
+    removeRemoteFacets(deployer, baseRegistry);
 
     // // Deploy Space
     deploySpace.diamondInitParams(deployer);
@@ -48,22 +48,22 @@ contract InteractAlpha is Interaction, DiamondHelper, IDiamondLoupeBase {
     IDiamondCut(space).diamondCut(newCuts, address(0), "");
 
     // // Deploy Space Owner
-    // deploySpaceOwner.diamondInitParams(deployer);
-    // newCuts = deploySpaceOwner.getCuts();
-    // vm.broadcast(deployer);
-    // IDiamondCut(spaceOwner).diamondCut(newCuts, address(0), "");
+    deploySpaceOwner.diamondInitParams(deployer);
+    newCuts = deploySpaceOwner.getCuts();
+    vm.broadcast(deployer);
+    IDiamondCut(spaceOwner).diamondCut(newCuts, address(0), "");
 
     // // Deploy Space Factory
-    // deploySpaceFactory.diamondInitParams(deployer);
-    // newCuts = deploySpaceFactory.getCuts();
-    // vm.broadcast(deployer);
-    // IDiamondCut(spaceFactory).diamondCut(newCuts, address(0), "");
+    deploySpaceFactory.diamondInitParams(deployer);
+    newCuts = deploySpaceFactory.getCuts();
+    vm.broadcast(deployer);
+    IDiamondCut(spaceFactory).diamondCut(newCuts, address(0), "");
 
     // // Deploy Base Registry
-    // deployBaseRegistry.diamondInitParams(deployer);
-    // newCuts = deployBaseRegistry.getCuts();
-    // vm.broadcast(deployer);
-    // IDiamondCut(baseRegistry).diamondCut(newCuts, address(0), "");
+    deployBaseRegistry.diamondInitParams(deployer);
+    newCuts = deployBaseRegistry.getCuts();
+    vm.broadcast(deployer);
+    IDiamondCut(baseRegistry).diamondCut(newCuts, address(0), "");
   }
 
   function removeRemoteFacets(address deployer, address diamond) internal {

@@ -11,7 +11,7 @@ reviews:
     poem: false
     collapse_walkthrough: false
     sequence_diagrams: false
-    path_filters: ['!packages/generated/**']
+    path_filters: ['!packages/generated/**', '!package.json', '!yarn.lock']
     auto_review:
         enabled: true
         drafts: false
