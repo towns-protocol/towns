@@ -21,12 +21,12 @@ export class Analytics implements TownsAnalytics {
     private _pseudoId: string | undefined
     private static didWarn = false
     private readonly analytics: RudderAnalytics
-    public readonly commoneProperties: ApiObject
+    public readonly commonProperties: ApiObject
     public readonly trackedEvents: Set<string> = new Set()
 
     private constructor(analytics: RudderAnalytics) {
         this.analytics = analytics
-        this.commoneProperties = getCommonAnalyticsProperties()
+        this.commonProperties = getCommonAnalyticsProperties()
     }
 
     public static getInstance(): Analytics | undefined {
@@ -89,7 +89,7 @@ export class Analytics implements TownsAnalytics {
             name,
             {
                 ...properties,
-                ...this.commoneProperties,
+                ...this.commonProperties,
             },
             callback,
         )
@@ -100,7 +100,7 @@ export class Analytics implements TownsAnalytics {
             event,
             {
                 ...properties,
-                ...this.commoneProperties,
+                ...this.commonProperties,
             },
             callback,
         )
