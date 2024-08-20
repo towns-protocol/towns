@@ -197,6 +197,21 @@ const InlineComboboxInput = forwardRef<
                 }
             }
 
+            /** Select the currently active item value using Tab key */
+            if (isHotkey('Tab', event) && store.getState().activeId) {
+                const activeItem = store.item(
+                    store.getState().activeId,
+                ) as unknown as TComboboxItemWithData
+                if (!activeItem) {
+                    return
+                }
+                event.preventDefault()
+                event.stopPropagation()
+                removeInput(true)
+                onMentionSelectTriggerMap(trigger)?.(editor, activeItem, activeItem.text)
+                return
+            }
+
             /**
              * If there are no item suggestion when user presses enter or space, remove the input
              * and combobox, append the existing value to the editor as text node (handled in cancelInput)
@@ -205,7 +220,11 @@ const InlineComboboxInput = forwardRef<
              * propagated to the editor by default. SetTimeout is used to ensure that editor migrations
              * are done before the event is dispatched.
              */
-            if ((isHotkey('Enter', event) || isHotkey('Space', event)) && resultsLength === 0) {
+            if (
+                (isHotkey('Enter', event) &&
+                    (!store.getState().activeValue || resultsLength === 0)) ||
+                (isHotkey('Space', event) && resultsLength === 0)
+            ) {
                 event.preventDefault()
                 event.stopPropagation()
                 cancelInput('manual', true)
