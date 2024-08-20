@@ -24,6 +24,7 @@ type Props = {
     canReact?: boolean
     messageBody?: string
     threadParentId?: string
+    isPinned?: boolean
 }
 
 const emojis: { id: string; native: string }[] = [
@@ -46,11 +47,13 @@ export const MessageModalSheet = (props: Props) => {
         canReply,
         canEdit,
         canReact,
+        isPinned,
         messageBody,
         threadParentId,
     } = props
     const [isHidden, setIsHidden] = React.useState(false)
-    const { redactEvent, sendReaction, sendReadReceipt } = useTownsClient()
+    const { redactEvent, sendReaction, sendReadReceipt, pinMessage, unpinMessage } =
+        useTownsClient()
     const { threadId } = useRouteParams()
 
     const [isOpen, setIsOpen] = useState(false)
@@ -163,6 +166,20 @@ export const MessageModalSheet = (props: Props) => {
         }
     }, [markAsUnread, sendReadReceipt])
 
+    const onPinMessage = useCallback(() => {
+        if (channelId && eventId) {
+            pinMessage(channelId, eventId)
+            closeSheet()
+        }
+    }, [channelId, closeSheet, eventId, pinMessage])
+
+    const onUnpinMessage = useCallback(() => {
+        if (channelId && eventId) {
+            unpinMessage(channelId, eventId)
+            closeSheet()
+        }
+    }, [channelId, closeSheet, eventId, unpinMessage])
+
     return (
         <>
             <Sheet
@@ -250,6 +267,20 @@ export const MessageModalSheet = (props: Props) => {
                                             iconType="delete"
                                             text="Delete Message"
                                             onClick={onDeleteClick}
+                                        />
+                                    )}
+
+                                    {isPinned ? (
+                                        <TableCell
+                                            iconType="unpin"
+                                            text="Unpin message"
+                                            onClick={onUnpinMessage}
+                                        />
+                                    ) : (
+                                        <TableCell
+                                            iconType="pin"
+                                            text="Pin Message"
+                                            onClick={onPinMessage}
                                         />
                                     )}
                                 </Stack>

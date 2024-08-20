@@ -318,6 +318,7 @@ export const MessageLayout = (props: Props) => {
                         canEdit={isEditable && isChannelWritable}
                         messageBody={messageBody}
                         threadParentId={threadParentId}
+                        isPinned={!!pin}
                         onClose={() => setIsModalSheetVisible(false)}
                     />
                 )}
