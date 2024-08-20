@@ -97,6 +97,14 @@ const parsed = envSchema.safeParse(import.meta.env)
 
 if (!parsed.success) {
     console.error(parsed.error)
+
+    if (import.meta.env.DEV && parsed.error.issues?.length) {
+        console.error(
+            'Issues parsing env:',
+            parsed.error.issues.map((issue) => `${issue.path.join()} (${issue.message})`),
+        )
+    }
+
     throw new Error('Invalid environment variables')
 }
 
