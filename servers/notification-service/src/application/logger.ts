@@ -2,16 +2,14 @@ import { Logger, format, transports, createLogger as winstonCreateLogger } from 
 import { env, isProduction } from './utils/environment'
 import { Request, Response, NextFunction } from 'express'
 
-function createLogger(label: string): Logger {
+function createLogger(): Logger {
     const metadataFormat = format.metadata({
         fillExcept: ['message', 'level', 'timestamp', 'label'],
     })
-    const labelFormat = format.label({ label })
     const errorFormat = format.errors({ stack: true })
 
     const devTransport = new transports.Console({
         format: format.combine(
-            labelFormat,
             metadataFormat,
             errorFormat,
             format.timestamp(),
@@ -26,13 +24,7 @@ function createLogger(label: string): Logger {
     })
 
     const prodTransport = new transports.Console({
-        format: format.combine(
-            labelFormat,
-            metadataFormat,
-            errorFormat,
-            format.timestamp(),
-            format.json(),
-        ),
+        format: format.combine(metadataFormat, errorFormat, format.timestamp(), format.json()),
     })
 
     const logger = winstonCreateLogger({
@@ -49,7 +41,9 @@ function createLogger(label: string): Logger {
     return logger
 }
 
-export const notificationServiceLogger = createLogger('notificationService')
+export const notificationServiceLogger = createLogger().child({
+    label: 'root',
+})
 
 // Needs to be installed after JSON parsing middleware
 export function attachReqLogger(req: Request, res: Response, next: NextFunction) {

@@ -19,6 +19,16 @@ type StreamsMetadata = {
     }
 }
 
+export type SyncStatus = {
+    status: 'UP' | 'DOWN'
+    metrics?: {
+        pingSendFailures: number
+        pingInfo: PingInfo
+        callHistogram: Record<string, { total: number; error?: number }>
+    }
+    error?: unknown
+}
+
 export class StreamsMonitorService {
     private rpcClient: StreamRpcClient = makeStreamRpcClient()
     private streams: SyncedStreams = new SyncedStreams(this.rpcClient)
@@ -32,15 +42,7 @@ export class StreamsMonitorService {
         return StreamsMonitorService._instance
     }
 
-    public async healthCheck(): Promise<{
-        status: 'UP' | 'DOWN'
-        metrics?: {
-            pingSendFailures: number
-            pingInfo: PingInfo
-            callHistogram: Record<string, { total: number; error?: number }>
-        }
-        error?: unknown
-    }> {
+    public async healthCheck(): Promise<SyncStatus> {
         try {
             const pingStat = await this.streams.healthCheck()
             return { status: 'UP', metrics: pingStat }

@@ -200,11 +200,11 @@ export class SyncedStreams {
                     syncId: this.syncId,
                     streamId: streamIdToBytes(streamId),
                 })
+                logger.info(`removed stream ${streamId} from sync`, { streamId })
             } catch (error) {
                 // Trigger restart of sync loop
                 logger.info('removeStreamFromSync error', { error })
             }
-            logger.info(`removed stream ${streamId} from sync`, { streamId })
         } else {
             logger.info(
                 'removeStreamFromSync: not in "syncing" state; let main sync loop handle this with its streams map',

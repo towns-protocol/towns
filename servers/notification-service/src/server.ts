@@ -11,33 +11,29 @@ const port = env.PORT
 notificationServiceLogger.info('Starting notification service', env.NOTIFICATION_DATABASE_URL)
 
 const run = async () => {
-    try {
-        const startSync = Date.now()
+    const startSync = Date.now()
 
-        await StreamsMonitorService.instance.startMonitoringStreams()
+    await StreamsMonitorService.instance.startMonitoringStreams()
 
-        notificationServiceLogger.info('Streams monitoring started in', {
-            duration: Date.now() - startSync,
-        })
+    notificationServiceLogger.info('Streams monitoring started in', {
+        duration: Date.now() - startSync,
+    })
 
-        const start = Date.now()
-        const app = await initializeApp()
+    const start = Date.now()
+    const app = await initializeApp()
 
-        const server = app.listen(port, () => {
-            notificationServiceLogger.info(
-                `notification service is running at http://localhost:${port}`,
-            )
-        })
-        notificationServiceLogger.info('Server started in', { duration: Date.now() - start })
+    const server = app.listen(port, () => {
+        notificationServiceLogger.info(
+            `notification service is running at http://localhost:${port}`,
+        )
+    })
+    notificationServiceLogger.info('Server started in', { duration: Date.now() - start })
 
-        gracefulShutdown(server, {
-            finally: () => {
-                notificationServiceLogger.info('Notification service is shutting down')
-            },
-        })
-    } catch (error) {
-        notificationServiceLogger.error('Failed to start notification service', error)
-    }
+    gracefulShutdown(server, {
+        finally: () => {
+            notificationServiceLogger.info('Notification service is shutting down')
+        },
+    })
 }
 
 run().catch((error) => {

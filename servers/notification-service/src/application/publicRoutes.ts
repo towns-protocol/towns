@@ -2,9 +2,7 @@ import { Router } from 'express'
 import { StatusCodes } from 'http-status-codes'
 import { database } from './prisma'
 import { Metrics } from '@prisma/client/runtime/library'
-import { StreamsMonitorService } from './services/stream/streamsMonitorService'
-import { PingInfo } from './services/stream/syncedStreams'
-
+import { StreamsMonitorService, SyncStatus } from './services/stream/streamsMonitorService'
 import asyncHandler from 'express-async-handler'
 
 export const publicRoutes = Router()
@@ -12,15 +10,6 @@ export const publicRoutes = Router()
 type PrismaStatus = {
     status: 'UP' | 'DOWN'
     metrics?: Metrics
-    error?: unknown
-}
-
-type SyncStatus = {
-    status: 'UP' | 'DOWN'
-    metrics?: {
-        pingSendFailures: number
-        pingInfo: PingInfo
-    }
     error?: unknown
 }
 
@@ -47,25 +36,41 @@ const healthCheckPrisma = async () => {
     }
 }
 
+// we resolve the /health endpoint with the complete status object to help with live debugging
+// but we log a simplified version of the status object do not pollute the logs
+const getLogOutputFromHealthCheckStatus = (status: Status) => {
+    const { Prisma, Sync } = status
+    return {
+        Prisma: Prisma,
+        Sync: {
+            status: Sync.status,
+            metrics: {
+                callHistogram: {
+                    AddStreamToSync: {
+                        total: Sync.metrics?.callHistogram.AddStreamToSync.total,
+                    },
+                },
+            },
+        },
+    }
+}
+
 publicRoutes.get(
     '/health',
     asyncHandler(async (req, res) => {
         try {
-            const syncMetricsPromise = await healthCheckSync()
-
-            const prismaMetricsPromise = await healthCheckPrisma()
-
             const [syncMetricsResult, databaseMetricsResult] = await Promise.all([
-                syncMetricsPromise,
-                prismaMetricsPromise,
+                healthCheckSync(),
+                healthCheckPrisma(),
             ])
 
             const status: Status = {
                 Prisma: databaseMetricsResult,
                 Sync: { status: syncMetricsResult.status, metrics: syncMetricsResult.metrics },
             }
+            const statusLogOutput = getLogOutputFromHealthCheckStatus(status)
 
-            req.logger.info('Health check', status)
+            req.logger.info('Health check', statusLogOutput)
 
             if (status.Prisma.status === 'UP' && status.Sync.status === 'UP') {
                 res.status(StatusCodes.OK).json(status)
