@@ -2000,14 +2000,12 @@ export class Client
             retryCount = retryCount ?? 0
             if (errorContains(err, Err.BAD_PREV_MINIBLOCK_HASH) && retryCount < 3) {
                 const expectedHash = getRpcErrorProperty(err, 'expected')
-                this.logInfo(
-                    'RETRYING event after BAD_PREV_MINIBLOCK_HASH response',
+                this.logInfo('RETRYING event after BAD_PREV_MINIBLOCK_HASH response', {
+                    syncStats: this.streams.stats(),
                     retryCount,
-                    'prevHash:',
                     prevMiniblockHash,
-                    'expectedHash:',
                     expectedHash,
-                )
+                })
                 check(isDefined(expectedHash), 'expected hash not found in error')
                 return await this.makeEventWithHashAndAddToStream(
                     streamId,

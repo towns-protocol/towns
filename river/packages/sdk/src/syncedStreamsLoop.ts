@@ -140,6 +140,15 @@ export class SyncedStreamsLoop {
         return this._syncState
     }
 
+    public stats() {
+        return {
+            syncState: this.syncState,
+            streams: this.streams.size,
+            syncId: this.syncId,
+            queuedResponses: this.responsesQueue.length,
+        }
+    }
+
     public getSyncId(): string | undefined {
         return this.syncId
     }

@@ -46,6 +46,10 @@ export class SyncedStreams {
         return this.syncedStreamsLoop?.pingInfo
     }
 
+    public stats() {
+        return this.syncedStreamsLoop?.stats()
+    }
+
     public has(streamId: string | Uint8Array): boolean {
         return this.streams.get(streamIdAsString(streamId)) !== undefined
     }
