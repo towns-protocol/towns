@@ -1,6 +1,14 @@
 name: Upgrade Alpha Facets
 env:
     FOUNDRY_VERSION: nightly
+    ALPHA_BASE_SEPOLIA_DEPLOYER_PK: ${{ secrets.ALPHA_BASE_SEPOLIA_DEPLOYER_PK }}
+    BASE_SEPOLIA_RPC_URL: ${{ secrets.ALPHA_BASE_SEPOLIA_RPC_URL }}
+    RIVER_RPC_URL: ${{ secrets.RIVER_TESTNET_RPC_URL }}
+    BLOCKSCOUT_SEPOLIA_API_KEY: ${{ secrets.BLOCKSCOUT_BASE_SEPOLIA_API_KEY }}
+    BLOCKSCOUT_SEPOLIA_URL: 'https://base-sepolia.blockscout.com/api'
+    BASESCAN_SEPOLIA_URL: 'https://api-sepolia.basescan.org/api'
+    BASESCAN_SEPOLIA_API_KEY: ${{ secrets.BASESCAN_SEPOLIA_API_KEY }}
+
 on:
     workflow_dispatch: # Allows manual triggering
 
@@ -18,7 +26,6 @@ on:
                 required: true
             BASESCAN_SEPOLIA_API_KEY:
                 required: true
-
 jobs:
     Upgrade_Facets:
         runs-on: ubuntu-latest
@@ -50,14 +57,16 @@ jobs:
                   etherscan=${{ env.BLOCKSCOUT_SEPOLIA_API_KEY }} \
                   verifier=${{ env.BLOCKSCOUT_SEPOLIA_URL }}
               working-directory: river/contracts
-              env:
-                  ALPHA_BASE_SEPOLIA_DEPLOYER_PK: ${{ secrets.ALPHA_BASE_SEPOLIA_DEPLOYER_PK }}
-                  BASE_SEPOLIA_RPC_URL: ${{ secrets.ALPHA_BASE_SEPOLIA_RPC_URL }}
-                  RIVER_RPC_URL: ${{ secrets.RIVER_TESTNET_RPC_URL }}
-                  BLOCKSCOUT_SEPOLIA_API_KEY: ${{ secrets.BLOCKSCOUT_BASE_SEPOLIA_API_KEY }}
-                  BLOCKSCOUT_SEPOLIA_URL: 'https://base-sepolia.blockscout.com/api'
-                  BASESCAN_SEPOLIA_URL: 'https://api-sepolia.basescan.org/api'
-                  BASESCAN_SEPOLIA_API_KEY: ${{ secrets.BASESCAN_SEPOLIA_API_KEY }}
+
+            - name: Verify Base Sepolia Interaction
+              run: make interact-resume-any-explicit \
+                  context=alpha \
+                  rpc=base_sepolia \
+                  contract=InteractAlpha \
+                  private_key=${{ env.ALPHA_BASE_SEPOLIA_DEPLOYER_PK }} \
+                  etherscan=${{ env.BASESCAN_SEPOLIA_API_KEY }} \
+                  verifier=${{ env.BASESCAN_SEPOLIA_URL }}
+              working-directory: river/contracts
 
             # If action failed, we send a slack notification
             - name: Slack notification
