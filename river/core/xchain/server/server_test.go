@@ -51,6 +51,7 @@ type serviceTester struct {
 	cancel              context.CancelFunc
 	require             *require.Assertions
 	btc                 *node_crypto.BlockchainTestContext
+	clientSimBlockchain *node_crypto.Blockchain
 	nodes               []*testNodeRecord
 	stopBlockAutoMining func()
 
@@ -101,6 +102,7 @@ func newServiceTester(numNodes int, require *require.Assertions) *serviceTester 
 	)
 	require.NoError(err)
 	st.btc = btc
+	st.clientSimBlockchain = st.btc.GetBlockchain(st.ctx, len(st.nodes))
 
 	st.deployXchainTestContracts()
 
@@ -186,7 +188,7 @@ func (st *serviceTester) AssertNoEVMError(err error) {
 }
 
 func (st *serviceTester) ClientSimulatorBlockchain() *node_crypto.Blockchain {
-	return st.btc.GetBlockchain(st.ctx, len(st.nodes))
+	return st.clientSimBlockchain
 }
 
 func (st *serviceTester) Close() {

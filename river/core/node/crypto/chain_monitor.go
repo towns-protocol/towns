@@ -9,7 +9,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/prometheus/client_golang/prometheus"
-
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/infra"
 )
@@ -70,15 +69,22 @@ type (
 
 	// ChainMonitorPollInterval determines the next poll interval for the chain monitor
 	ChainMonitorPollInterval interface {
-		Interval(took time.Duration, hitBlockRangeLimit bool, gotErr bool) time.Duration
+		Interval(took time.Duration, gotBlock bool, hitBlockRangeLimit bool, gotErr bool) time.Duration
 	}
 
 	defaultChainMonitorPollIntervalCalculator struct {
-		blockPeriod      time.Duration
-		errCounter       int64
-		errSlowdownLimit time.Duration
+		blockPeriod time.Duration
+		// closeDownDuration is the duration that the poll interval is decreased to get closer to the block production
+		// period/moment.
+		closeDownDuration time.Duration
+		errCounter        int64
+		errSlowdownLimit  time.Duration
+		noBlockCounter    int64
 	}
 )
+
+var _ ChainMonitor = (*chainMonitor)(nil)
+var _ ChainMonitorPollInterval = (*defaultChainMonitorPollIntervalCalculator)(nil)
 
 // NewChainMonitor constructs an EVM chain monitor that can track state changes on an EVM chain.
 func NewChainMonitor() *chainMonitor {
@@ -88,17 +94,22 @@ func NewChainMonitor() *chainMonitor {
 }
 
 func NewChainMonitorPollIntervalCalculator(
-	blockPeriod time.Duration, errSlowdownLimit time.Duration,
+	blockPeriod time.Duration,
+	errSlowdownLimit time.Duration,
 ) *defaultChainMonitorPollIntervalCalculator {
 	return &defaultChainMonitorPollIntervalCalculator{
-		blockPeriod:      blockPeriod,
-		errCounter:       0,
-		errSlowdownLimit: max(errSlowdownLimit, time.Second),
+		blockPeriod:       blockPeriod,
+		closeDownDuration: max(25*time.Millisecond, blockPeriod/50), // 2s block period -> close down each poll by 40ms
+		errCounter:        0,
+		errSlowdownLimit:  max(errSlowdownLimit, time.Second),
 	}
 }
 
 func (p *defaultChainMonitorPollIntervalCalculator) Interval(
-	took time.Duration, hitBlockRangeLimit bool, gotErr bool,
+	took time.Duration,
+	gotBlock bool,
+	hitBlockRangeLimit bool,
+	gotErr bool,
 ) time.Duration {
 	if gotErr {
 		// increments each time an error was encountered the time for the next poll until errSlowdownLimit
@@ -107,10 +118,26 @@ func (p *defaultChainMonitorPollIntervalCalculator) Interval(
 	}
 
 	p.errCounter = 0
-	if hitBlockRangeLimit { // fallen behind chain, fetch immediately next block range
+
+	if hitBlockRangeLimit { // fallen behind chain, fetch immediately next block range to catch up
+		p.noBlockCounter = 0
 		return time.Duration(0)
 	}
-	return max(p.blockPeriod-took, 0)
+
+	if gotBlock { // caught up with chain, try to get closer to block period
+		p.noBlockCounter = 0
+		return max(p.blockPeriod-took-p.closeDownDuration, 0)
+	}
+
+	p.noBlockCounter++
+
+	if p.noBlockCounter <= 2 { // previous poll was too soon, wait a bit
+		return 250 * time.Millisecond
+	}
+
+	// block period seem to be way off or the rpc node/chain has an issue and not receiving new blocks
+	// wait block period and try to narrow down from that moment again
+	return max(p.blockPeriod, 0)
 }
 
 // setFromBlock must be called with ecm.mu locked.
@@ -252,14 +279,15 @@ func (cm *chainMonitor) RunWithBlockPeriod(
 
 		case <-time.After(pollInterval):
 			var (
-				start     = time.Now()
-				fromBlock uint64
+				start       = time.Now()
+				fromBlock   uint64
+				gotNewBlock = false
 			)
 
 			head, err := client.HeaderByNumber(ctx, nil)
 			if err != nil {
 				log.Warn("chain monitor is unable to retrieve chain head", "error", err)
-				pollInterval = poll.Interval(time.Since(start), false, true)
+				pollInterval = poll.Interval(time.Since(start), gotNewBlock, false, true)
 				continue
 			}
 
@@ -272,12 +300,14 @@ func (cm *chainMonitor) RunWithBlockPeriod(
 			cm.mu.Lock()
 			if frmBlock := cm.fromBlock; frmBlock == nil || frmBlock.Uint64() > head.Number.Uint64() { // no new block
 				cm.mu.Unlock()
-				pollInterval = poll.Interval(time.Since(start), false, false)
+				pollInterval = poll.Interval(time.Since(start), gotNewBlock, false, false)
 				continue
 			} else {
 				fromBlock = frmBlock.Uint64()
 				cm.mu.Unlock()
 			}
+
+			gotNewBlock = true
 
 			var (
 				newBlocks           []BlockNumber
@@ -308,7 +338,7 @@ func (cm *chainMonitor) RunWithBlockPeriod(
 				collectedLogs, err = client.FilterLogs(ctx, query)
 				if err != nil {
 					log.Warn("unable to retrieve logs", "error", err, "from", query.FromBlock, "to", query.ToBlock)
-					pollInterval = poll.Interval(time.Since(start), false, true)
+					pollInterval = poll.Interval(time.Since(start), gotNewBlock, false, true)
 					cm.mu.Unlock()
 					continue
 				}
@@ -350,7 +380,7 @@ func (cm *chainMonitor) RunWithBlockPeriod(
 			cm.mu.Unlock()
 
 			processedBlockGauge.Set(float64(query.ToBlock.Uint64()))
-			pollInterval = poll.Interval(time.Since(start), moreBlocksAvailable, false)
+			pollInterval = poll.Interval(time.Since(start), gotNewBlock, moreBlocksAvailable, false)
 		}
 	}
 }

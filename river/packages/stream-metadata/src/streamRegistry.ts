@@ -19,7 +19,7 @@ export async function getNodeForStream(
 	streamId: StreamIdHex,
 ): Promise<{ url: string; lastMiniblockNum: BigNumber }> {
 	const logger = getFunctionLogger(log, 'getNodeForStream')
-	logger.info({ streamId }, 'getNodeForStream')
+	logger.info({ streamId }, `find node for stream ${streamId}`)
 
 	const now = Date.now()
 	const cachedData = cache[streamId]
