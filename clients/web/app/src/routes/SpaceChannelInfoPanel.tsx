@@ -203,7 +203,7 @@ export const ChannelInfo = () => {
 
                 <PanelButton onClick={onMembersClick}>
                     <Icon type="people" size="square_sm" color="gray2" />
-                    <Paragraph color="default">
+                    <Paragraph fontWeight="medium" color="default">
                         {`${memberIds.length} member${memberIds.length > 1 ? `s` : ``}`}
                     </Paragraph>
                 </PanelButton>
@@ -222,7 +222,7 @@ export const ChannelInfo = () => {
                                 color="gray2"
                             />
                             <Stack gap="sm">
-                                <Paragraph color="default">
+                                <Paragraph fontWeight="medium" color="default">
                                     {spaceIsMuted ? (
                                         spaceData?.name && <>{spaceData?.name} is muted</>
                                     ) : (
@@ -239,7 +239,11 @@ export const ChannelInfo = () => {
                 {canEditChannel && (
                     <PanelButton onClick={onOpenEditChannelSettingsPanel}>
                         <Icon type="settings" size="square_sm" color="gray2" />
-                        <Paragraph color="default" data-testid="edit-channel-settings-button">
+                        <Paragraph
+                            fontWeight="medium"
+                            color="default"
+                            data-testid="edit-channel-settings-button"
+                        >
                             Channel Settings
                         </Paragraph>
                     </PanelButton>
@@ -247,7 +251,9 @@ export const ChannelInfo = () => {
 
                 <PanelButton tone="negative" onClick={onLeaveClick}>
                     <Icon type="logout" size="square_sm" />
-                    <Paragraph color="error">Leave #{channel?.label}</Paragraph>
+                    <Paragraph fontWeight="medium" color="error">
+                        Leave #{channel?.label}
+                    </Paragraph>
                 </PanelButton>
             </Stack>
 

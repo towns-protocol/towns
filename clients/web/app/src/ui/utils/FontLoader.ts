@@ -2,7 +2,7 @@ import { precomputeValues } from '@capsizecss/vanilla-extract'
 import { getTypedEntries } from './utils'
 
 const BodyFontStyles = {
-    letterSpacing: '-0.02em',
+    letterSpacing: '0em',
 }
 
 const HeadingFontStyles = {
@@ -20,7 +20,7 @@ const fontConfig = {
         // webkit (hnt-1690) - need to integrate capssize the right way at some point
         systemFallback: 'sans-serif',
         fontMetrics: {
-            ascent: 1150,
+            ascent: 1200,
             descent: -350,
             lineGap: 0,
             unitsPerEm: 1000,
