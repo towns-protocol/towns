@@ -250,7 +250,7 @@ module "notification_service" {
   vpc_id  = module.vpc.vpc_id
 
   apns_auth_key_secret_arn  = local.global_remote_state.notification_apns_auth_key_secret.arn
-  apns_towns_app_identifier = "com.towns.internal"
+  apns_towns_app_identifier = "com.towns.ios.alpha"
 
   vapid_subject = "mailto:support@towns.com"
 
