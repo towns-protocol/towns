@@ -127,13 +127,11 @@ export const FormattingToolbar = withRef<'div', FormattingToolbarProps>(
                                     icon="italic"
                                     tooltip={ShortcutTooltip({ action: 'ItalicText' })}
                                 />
-                                {!isFloating && (
-                                    <MarkToolbarButton
-                                        nodeType={MARK_STRIKETHROUGH}
-                                        icon="strikethrough"
-                                        tooltip="Strikethrough"
-                                    />
-                                )}
+                                <MarkToolbarButton
+                                    nodeType={MARK_STRIKETHROUGH}
+                                    icon="strikethrough"
+                                    tooltip="Strikethrough"
+                                />
                                 <LinkToolbarButton onClick={onLinkClick} />
                                 <DividerEditorToolbar />
                                 <ListToolbarButton
@@ -149,8 +147,8 @@ export const FormattingToolbar = withRef<'div', FormattingToolbarProps>(
                                     editor={editor}
                                 />
                                 <DividerEditorToolbar />
-                                {!isFloating && <BlockQuoteToolbarButton />}
-                                {!isFloating && <DividerEditorToolbar />}
+                                <BlockQuoteToolbarButton />
+                                <DividerEditorToolbar />
                                 <MarkToolbarButton
                                     nodeType={MARK_CODE}
                                     icon="code"
