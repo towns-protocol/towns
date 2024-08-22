@@ -10,6 +10,14 @@ const port = env.PORT
 
 notificationServiceLogger.info('Starting notification service', env.NOTIFICATION_DATABASE_URL)
 
+// 6 hours
+const SERVER_KILL_TIMEOUT = 6 * 60 * 60 * 1000
+
+setTimeout(() => {
+    notificationServiceLogger.error('Auto-killing the server')
+    process.exit(1)
+}, SERVER_KILL_TIMEOUT)
+
 const run = async () => {
     const startSync = Date.now()
 
