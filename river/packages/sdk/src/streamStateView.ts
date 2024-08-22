@@ -26,7 +26,7 @@ import { StreamStateView_Space } from './streamStateView_Space'
 import { StreamStateView_Channel } from './streamStateView_Channel'
 import { StreamStateView_User } from './streamStateView_User'
 import { StreamStateView_UserSettings } from './streamStateView_UserSettings'
-import { StreamStateView_UserDeviceKeys } from './streamStateView_UserDeviceKey'
+import { StreamStateView_UserMetadata } from './streamStateView_UserMetadata'
 import { StreamStateView_Members } from './streamStateView_Members'
 import { StreamStateView_Media } from './streamStateView_Media'
 import { StreamStateView_GDMChannel } from './streamStateView_GDMChannel'
@@ -79,7 +79,7 @@ export interface IStreamStateView {
     get gdmChannelContent(): StreamStateView_GDMChannel
     get userContent(): StreamStateView_User
     get userSettingsContent(): StreamStateView_UserSettings
-    get userDeviceKeyContent(): StreamStateView_UserDeviceKeys
+    get userMetadataContent(): StreamStateView_UserMetadata
     get userInboxContent(): StreamStateView_UserInbox
     get mediaContent(): StreamStateView_Media
     getMembers(): StreamStateView_Members
@@ -158,13 +158,13 @@ export class StreamStateView implements IStreamStateView {
         return this._userSettingsContent
     }
 
-    private readonly _userDeviceKeyContent?: StreamStateView_UserDeviceKeys
-    get userDeviceKeyContent(): StreamStateView_UserDeviceKeys {
+    private readonly _userMetadataContent?: StreamStateView_UserMetadata
+    get userMetadataContent(): StreamStateView_UserMetadata {
         check(
-            isDefined(this._userDeviceKeyContent),
-            `userDeviceKeyContent not defined for ${this.contentKind}`,
+            isDefined(this._userMetadataContent),
+            `userMetadataContent not defined for ${this.contentKind}`,
         )
-        return this._userDeviceKeyContent
+        return this._userMetadataContent
     }
 
     private readonly _userInboxContent?: StreamStateView_UserInbox
@@ -209,8 +209,8 @@ export class StreamStateView implements IStreamStateView {
             this.contentKind = 'userSettingsContent'
             this._userSettingsContent = new StreamStateView_UserSettings(streamId)
         } else if (isUserDeviceStreamId(streamId)) {
-            this.contentKind = 'userDeviceKeyContent'
-            this._userDeviceKeyContent = new StreamStateView_UserDeviceKeys(streamId)
+            this.contentKind = 'userMetadataContent'
+            this._userMetadataContent = new StreamStateView_UserMetadata(streamId)
         } else if (isUserInboxStreamId(streamId)) {
             this.contentKind = 'userInboxContent'
             this._userInboxContent = new StreamStateView_UserInbox(streamId)
@@ -270,8 +270,8 @@ export class StreamStateView implements IStreamStateView {
             case 'userContent':
                 this.userContent.applySnapshot(snapshot, snapshot.content.value, encryptionEmitter)
                 break
-            case 'userDeviceKeyContent':
-                this.userDeviceKeyContent.applySnapshot(
+            case 'userMetadataContent':
+                this.userMetadataContent.applySnapshot(
                     snapshot,
                     snapshot.content.value,
                     encryptionEmitter,
@@ -768,8 +768,8 @@ export class StreamStateView implements IStreamStateView {
                 return this.userContent
             case 'userSettingsContent':
                 return this.userSettingsContent
-            case 'userDeviceKeyContent':
-                return this.userDeviceKeyContent
+            case 'userMetadataContent':
+                return this.userMetadataContent
             case 'userInboxContent':
                 return this.userInboxContent
             case 'mediaContent':

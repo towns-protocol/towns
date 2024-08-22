@@ -16,9 +16,9 @@ const envSchema = z.object({
 	RIVER_ENV: z.string(),
 	RIVER_CHAIN_RPC_URL: z.string().url(),
 	PORT: NumberFromIntStringSchema,
+	HOST: z.string().optional().default('127.0.0.1'),
 	LOG_LEVEL: z.string().optional().default('info'),
 	LOG_PRETTY: BoolFromStringSchema.optional().default('true'),
-	HOST: z.string().optional().default('127.0.0.1'),
 })
 
 function makeConfig() {

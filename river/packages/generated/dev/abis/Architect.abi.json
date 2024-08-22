@@ -16,6 +16,11 @@
       {
         "name": "ruleEntitlementImplementation",
         "type": "address",
+        "internalType": "contract IRuleEntitlementV2"
+      },
+      {
+        "name": "legacyRuleEntitlement",
+        "type": "address",
         "internalType": "contract IRuleEntitlement"
       }
     ],
@@ -179,6 +184,11 @@
       {
         "name": "ruleEntitlementImplementation",
         "type": "address",
+        "internalType": "contract IRuleEntitlementV2"
+      },
+      {
+        "name": "legacyRuleEntitlement",
+        "type": "address",
         "internalType": "contract IRuleEntitlement"
       }
     ],
@@ -238,6 +248,11 @@
       },
       {
         "name": "ruleEntitlementImplementation",
+        "type": "address",
+        "internalType": "contract IRuleEntitlementV2"
+      },
+      {
+        "name": "legacyRuleEntitlement",
         "type": "address",
         "internalType": "contract IRuleEntitlement"
       }

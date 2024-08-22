@@ -331,14 +331,14 @@ func Make_UserPayload_Inception(streamId StreamId, settings *StreamSettings) *St
 	}
 }
 
-func Make_UserDeviceKeyPayload_Inception(
+func Make_UserMetadataPayload_Inception(
 	streamId StreamId,
 	settings *StreamSettings,
-) *StreamEvent_UserDeviceKeyPayload {
-	return &StreamEvent_UserDeviceKeyPayload{
-		UserDeviceKeyPayload: &UserDeviceKeyPayload{
-			Content: &UserDeviceKeyPayload_Inception_{
-				Inception: &UserDeviceKeyPayload_Inception{
+) *StreamEvent_UserMetadataPayload {
+	return &StreamEvent_UserMetadataPayload{
+		UserMetadataPayload: &UserMetadataPayload{
+			Content: &UserMetadataPayload_Inception_{
+				Inception: &UserMetadataPayload_Inception{
 					StreamId: streamId[:],
 					Settings: settings,
 				},

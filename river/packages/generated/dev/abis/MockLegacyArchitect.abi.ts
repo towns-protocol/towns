@@ -2,28 +2,7 @@ export default [
   {
     "type": "function",
     "name": "__Architect_init",
-    "inputs": [
-      {
-        "name": "ownerImplementation",
-        "type": "address",
-        "internalType": "contract ISpaceOwner"
-      },
-      {
-        "name": "userEntitlementImplementation",
-        "type": "address",
-        "internalType": "contract IUserEntitlement"
-      },
-      {
-        "name": "ruleEntitlementImplementation",
-        "type": "address",
-        "internalType": "contract IRuleEntitlement"
-      },
-      {
-        "name": "legacyRuleEntitlement",
-        "type": "address",
-        "internalType": "contract IRuleEntitlement"
-      }
-    ],
+    "inputs": [],
     "outputs": [],
     "stateMutability": "nonpayable"
   },
@@ -235,90 +214,6 @@ export default [
     "stateMutability": "nonpayable"
   },
   {
-    "type": "function",
-    "name": "getSpaceArchitectImplementations",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "spaceToken",
-        "type": "address",
-        "internalType": "contract ISpaceOwner"
-      },
-      {
-        "name": "userEntitlementImplementation",
-        "type": "address",
-        "internalType": "contract IUserEntitlement"
-      },
-      {
-        "name": "ruleEntitlementImplementation",
-        "type": "address",
-        "internalType": "contract IRuleEntitlement"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "getSpaceByTokenId",
-    "inputs": [
-      {
-        "name": "tokenId",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "getTokenIdBySpace",
-    "inputs": [
-      {
-        "name": "space",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "setSpaceArchitectImplementations",
-    "inputs": [
-      {
-        "name": "spaceToken",
-        "type": "address",
-        "internalType": "contract ISpaceOwner"
-      },
-      {
-        "name": "userEntitlementImplementation",
-        "type": "address",
-        "internalType": "contract IUserEntitlement"
-      },
-      {
-        "name": "ruleEntitlementImplementation",
-        "type": "address",
-        "internalType": "contract IRuleEntitlement"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
     "type": "event",
     "name": "Initialized",
     "inputs": [
@@ -353,25 +248,6 @@ export default [
         "type": "bytes4",
         "indexed": true,
         "internalType": "bytes4"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "OwnershipTransferred",
-    "inputs": [
-      {
-        "name": "previousOwner",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "newOwner",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
       }
     ],
     "anonymous": false
@@ -470,22 +346,6 @@ export default [
   {
     "type": "error",
     "name": "Introspection_NotSupported",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "Ownable__NotOwner",
-    "inputs": [
-      {
-        "name": "account",
-        "type": "address",
-        "internalType": "address"
-      }
-    ]
-  },
-  {
-    "type": "error",
-    "name": "Ownable__ZeroAddress",
     "inputs": []
   },
   {

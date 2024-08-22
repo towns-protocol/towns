@@ -263,8 +263,13 @@
             "type": "address"
           },
           {
-            "internalType": "contract IRuleEntitlement",
+            "internalType": "contract IRuleEntitlementV2",
             "name": "ruleEntitlementImplementation",
+            "type": "address"
+          },
+          {
+            "internalType": "contract IRuleEntitlement",
+            "name": "legacyRuleEntitlement",
             "type": "address"
           }
         ],
@@ -428,8 +433,13 @@
             "type": "address"
           },
           {
-            "internalType": "contract IRuleEntitlement",
+            "internalType": "contract IRuleEntitlementV2",
             "name": "ruleEntitlementImplementation",
+            "type": "address"
+          },
+          {
+            "internalType": "contract IRuleEntitlement",
+            "name": "legacyRuleEntitlement",
             "type": "address"
           }
         ]
@@ -485,8 +495,13 @@
             "type": "address"
           },
           {
-            "internalType": "contract IRuleEntitlement",
+            "internalType": "contract IRuleEntitlementV2",
             "name": "ruleEntitlementImplementation",
+            "type": "address"
+          },
+          {
+            "internalType": "contract IRuleEntitlement",
+            "name": "legacyRuleEntitlement",
             "type": "address"
           }
         ],
@@ -512,6 +527,7 @@
       "@prb/math/=lib/@prb/math/src/",
       "@prb/test/=lib/@prb/test/src/",
       "account-abstraction/=lib/account-abstraction/contracts/",
+      "base64/=lib/base64/",
       "ds-test/=lib/ds-test/src/",
       "forge-std/=lib/forge-std/src/",
       "hardhat-deploy/=lib/hardhat-deploy/",
@@ -781,18 +797,18 @@
       "license": "MIT"
     },
     "contracts/src/factory/facets/architect/Architect.sol": {
-      "keccak256": "0xd420da847daaa9b8d7b1b2f67188c5fe995f9dfd54f89fffac2bfa1231b894d2",
+      "keccak256": "0xef3ba564d9ba7e3392da7c80e127714b7dacd3881e298ce3a930b57685b07cb1",
       "urls": [
-        "bzz-raw://8290230b72271aa78ebb2cb261682b65c896e2207b09a75cd0cc76c92b5f1d60",
-        "dweb:/ipfs/QmYUiitoXPeiEBSwrYjvBBbXam6UM1tGovpb7oNvbZHEAM"
+        "bzz-raw://0f0766a21963844a7a2ebe13d4c220d4363070fc71d053823db0b04ea71a3983",
+        "dweb:/ipfs/QmZWqnuaQiJ8TWfjtiwk8SwfFPAP76y74X8rhyzsiaGcNF"
       ],
       "license": "MIT"
     },
     "contracts/src/factory/facets/architect/ArchitectBase.sol": {
-      "keccak256": "0x23842e5d9bc934a26ec05fa21a11d72ab3ddee2fc9f57f4fa2f7a40a4f4f6351",
+      "keccak256": "0x8d74e57d341a8c366e9f331c8429d25681af3ed5b0b37cb803025cdbe9c919ab",
       "urls": [
-        "bzz-raw://31dc6c97865beda0dd97fdc020698d0e97b5856bbbe5b56b057cb43ee4fe2933",
-        "dweb:/ipfs/QmdasGnxWpatQZZiZhrYgMfPXyRufsPiEB5N29v7vK3KdP"
+        "bzz-raw://2219a0577bc894bea0aa545155c3934c11024b412b93499575768e49d3038734",
+        "dweb:/ipfs/QmVpEKd1dmTVHovsNz4bEep7LwodxT7e4wK8crbN1SaC8Q"
       ],
       "license": "MIT"
     },
@@ -805,18 +821,18 @@
       "license": "MIT"
     },
     "contracts/src/factory/facets/architect/IArchitect.sol": {
-      "keccak256": "0x39e5ad1daecd6499704c68024a95242bb5007980a2e1c20f0bf6de49ac1db0dc",
+      "keccak256": "0x691bc1354e327c1b109fc7ac918dd946d9691db8d1f788bf108aca0621125bde",
       "urls": [
-        "bzz-raw://a59aedd182ac661022b3e3043cfff5367adfae5b5dfdb172a201e5ac15f8ddde",
-        "dweb:/ipfs/QmV58DzCEM7r8FFfEvT3jp99SVAV6fGiagVKB5U5cChJr7"
+        "bzz-raw://e49adc7171306da3baa78fd463b361b95d6ddf74a0b25b9e4d749ef0fe21cab8",
+        "dweb:/ipfs/QmY9v93cJotsJxECWRT2CKh8KwSf3r2kjoEftB5iXMVptu"
       ],
       "license": "MIT"
     },
     "contracts/src/factory/facets/architect/ImplementationStorage.sol": {
-      "keccak256": "0x8723f6419d43068a91f571a3329474e97c7c446216703ab997cc93daca4960a9",
+      "keccak256": "0x0f2132b798bc62a7d8973e219ab38bcddd9ea4d096e7bd16d3d6ad231f0b5ee9",
       "urls": [
-        "bzz-raw://bb856d4d9d358c77ca7b9abdf073b5961b704a1fa6a9488111729a2a3a5978a3",
-        "dweb:/ipfs/QmTLungC3a3s7Mjbt54SN4PexJaPgttQuLu34nsFWgb1jh"
+        "bzz-raw://4a10eab69387dd4d66d6b069db4a6c6f2e1284afa79a7d21d4dab4286b9c1696",
+        "dweb:/ipfs/QmW4yWp1REDHYvvypN35E6PpjTKbaxzVvhfGqkoqCcgF6m"
       ],
       "license": "MIT"
     },

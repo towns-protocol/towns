@@ -128,7 +128,7 @@ export interface IArchitectInterface extends utils.Interface {
     "getSpaceArchitectImplementations()": FunctionFragment;
     "getSpaceByTokenId(uint256)": FunctionFragment;
     "getTokenIdBySpace(address)": FunctionFragment;
-    "setSpaceArchitectImplementations(address,address,address)": FunctionFragment;
+    "setSpaceArchitectImplementations(address,address,address,address)": FunctionFragment;
   };
 
   getFunction(
@@ -159,6 +159,7 @@ export interface IArchitectInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "setSpaceArchitectImplementations",
     values: [
+      PromiseOrValue<string>,
       PromiseOrValue<string>,
       PromiseOrValue<string>,
       PromiseOrValue<string>
@@ -240,10 +241,11 @@ export interface IArchitect extends BaseContract {
     getSpaceArchitectImplementations(
       overrides?: CallOverrides
     ): Promise<
-      [string, string, string] & {
+      [string, string, string, string] & {
         ownerTokenImplementation: string;
         userEntitlementImplementation: string;
         ruleEntitlementImplementation: string;
+        legacyRuleEntitlement: string;
       }
     >;
 
@@ -261,6 +263,7 @@ export interface IArchitect extends BaseContract {
       ownerTokenImplementation: PromiseOrValue<string>,
       userEntitlementImplementation: PromiseOrValue<string>,
       ruleEntitlementImplementation: PromiseOrValue<string>,
+      legacyRuleEntitlement: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
@@ -273,10 +276,11 @@ export interface IArchitect extends BaseContract {
   getSpaceArchitectImplementations(
     overrides?: CallOverrides
   ): Promise<
-    [string, string, string] & {
+    [string, string, string, string] & {
       ownerTokenImplementation: string;
       userEntitlementImplementation: string;
       ruleEntitlementImplementation: string;
+      legacyRuleEntitlement: string;
     }
   >;
 
@@ -294,6 +298,7 @@ export interface IArchitect extends BaseContract {
     ownerTokenImplementation: PromiseOrValue<string>,
     userEntitlementImplementation: PromiseOrValue<string>,
     ruleEntitlementImplementation: PromiseOrValue<string>,
+    legacyRuleEntitlement: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -306,10 +311,11 @@ export interface IArchitect extends BaseContract {
     getSpaceArchitectImplementations(
       overrides?: CallOverrides
     ): Promise<
-      [string, string, string] & {
+      [string, string, string, string] & {
         ownerTokenImplementation: string;
         userEntitlementImplementation: string;
         ruleEntitlementImplementation: string;
+        legacyRuleEntitlement: string;
       }
     >;
 
@@ -327,6 +333,7 @@ export interface IArchitect extends BaseContract {
       ownerTokenImplementation: PromiseOrValue<string>,
       userEntitlementImplementation: PromiseOrValue<string>,
       ruleEntitlementImplementation: PromiseOrValue<string>,
+      legacyRuleEntitlement: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
   };
@@ -368,6 +375,7 @@ export interface IArchitect extends BaseContract {
       ownerTokenImplementation: PromiseOrValue<string>,
       userEntitlementImplementation: PromiseOrValue<string>,
       ruleEntitlementImplementation: PromiseOrValue<string>,
+      legacyRuleEntitlement: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
   };
@@ -396,6 +404,7 @@ export interface IArchitect extends BaseContract {
       ownerTokenImplementation: PromiseOrValue<string>,
       userEntitlementImplementation: PromiseOrValue<string>,
       ruleEntitlementImplementation: PromiseOrValue<string>,
+      legacyRuleEntitlement: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };

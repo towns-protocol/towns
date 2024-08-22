@@ -82,24 +82,26 @@ contract RewardsDistribution is
       ds.distributionByOperator[operatorsForClaimer[i]] = 0;
     }
 
+    _transferRewards(amount, msg.sender);
+  }
+
+  function _transferRewards(uint256 amount, address recipient) internal {
     if (amount == 0) revert RewardsDistribution_NoRewardsToClaim();
 
     SpaceDelegationStorage.Layout storage sd = SpaceDelegationStorage.layout();
-    if (IERC20(sd.riverToken).balanceOf(address(this)) < amount)
+    address riverToken = sd.riverToken;
+    if (IERC20(riverToken).balanceOf(address(this)) < amount)
       revert RewardsDistribution_InsufficientRewardBalance();
 
     CurrencyTransfer.transferCurrency(
-      sd.riverToken,
+      riverToken,
       address(this),
-      msg.sender,
+      recipient,
       amount
     );
   }
 
   function operatorClaimByAddress(address operatorAddress) external {
-    RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage
-      .layout();
-
     NodeOperatorStorage.Layout storage nos = NodeOperatorStorage.layout();
     if (nos.claimerByOperator[operatorAddress] != msg.sender)
       revert RewardsDistribution_UnauthorizedOperatorClaimer(
@@ -108,19 +110,12 @@ contract RewardsDistribution is
       );
 
     uint256 amount = getClaimableAmountForOperator(operatorAddress);
-    if (amount == 0) revert RewardsDistribution_NoRewardsToClaim();
+
+    RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage
+      .layout();
     ds.distributionByOperator[operatorAddress] = 0;
 
-    SpaceDelegationStorage.Layout storage sd = SpaceDelegationStorage.layout();
-    if (IERC20(sd.riverToken).balanceOf(address(this)) < amount)
-      revert RewardsDistribution_InsufficientRewardBalance();
-
-    CurrencyTransfer.transferCurrency(
-      sd.riverToken,
-      address(this),
-      msg.sender,
-      amount
-    );
+    _transferRewards(amount, msg.sender);
   }
 
   function mainnetClaim() external {
@@ -137,25 +132,10 @@ contract RewardsDistribution is
       ds.distributionByDelegator[delegatorsForClaimer[i]] = 0;
     }
 
-    if (totalClaimableAmount == 0)
-      revert RewardsDistribution_NoRewardsToClaim();
-
-    SpaceDelegationStorage.Layout storage sd = SpaceDelegationStorage.layout();
-    if (IERC20(sd.riverToken).balanceOf(address(this)) < totalClaimableAmount)
-      revert RewardsDistribution_InsufficientRewardBalance();
-
-    CurrencyTransfer.transferCurrency(
-      sd.riverToken,
-      address(this),
-      msg.sender,
-      totalClaimableAmount
-    );
+    _transferRewards(totalClaimableAmount, msg.sender);
   }
 
   function mainnetClaimByAddress(address mainnetDelegatorToClaim) external {
-    RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage
-      .layout();
-
     if (_getAuthorizedClaimer(mainnetDelegatorToClaim) != msg.sender)
       revert RewardsDistribution_UnauthorizedClaimer(
         mainnetDelegatorToClaim,
@@ -163,41 +143,22 @@ contract RewardsDistribution is
       );
 
     uint256 amount = getClaimableAmountForDelegator(mainnetDelegatorToClaim);
-    if (amount == 0) revert RewardsDistribution_NoRewardsToClaim();
 
+    RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage
+      .layout();
     ds.distributionByDelegator[mainnetDelegatorToClaim] = 0;
 
-    SpaceDelegationStorage.Layout storage sd = SpaceDelegationStorage.layout();
-    if (IERC20(sd.riverToken).balanceOf(address(this)) < amount)
-      revert RewardsDistribution_InsufficientRewardBalance();
-
-    CurrencyTransfer.transferCurrency(
-      sd.riverToken,
-      address(this),
-      msg.sender,
-      amount
-    );
+    _transferRewards(amount, msg.sender);
   }
 
   function delegatorClaim() external {
     uint256 amount = getClaimableAmountForDelegator(msg.sender);
-    if (amount == 0) revert RewardsDistribution_NoRewardsToClaim();
-
-    SpaceDelegationStorage.Layout storage sd = SpaceDelegationStorage.layout();
-    if (IERC20(sd.riverToken).balanceOf(address(this)) < amount)
-      revert RewardsDistribution_InsufficientRewardBalance();
 
     RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage
       .layout();
-
     ds.distributionByDelegator[msg.sender] = 0;
 
-    CurrencyTransfer.transferCurrency(
-      sd.riverToken,
-      address(this),
-      msg.sender,
-      amount
-    );
+    _transferRewards(amount, msg.sender);
   }
 
   function distributeRewards(address operator) external onlyOwner {
@@ -268,13 +229,12 @@ contract RewardsDistribution is
   }
 
   function withdraw() external onlyOwner {
+    address riverToken = SpaceDelegationStorage.layout().riverToken;
     CurrencyTransfer.transferCurrency(
-      SpaceDelegationStorage.layout().riverToken,
+      riverToken,
       address(this),
       RewardsDistributionStorage.layout().withdrawalRecipient,
-      IERC20(SpaceDelegationStorage.layout().riverToken).balanceOf(
-        address(this)
-      )
+      IERC20(riverToken).balanceOf(address(this))
     );
   }
 
@@ -322,6 +282,7 @@ contract RewardsDistribution is
     address[] memory combinedDelegators = new address[](totalLength);
     uint256 count = 0;
     uint256 totalDelegation = 0;
+    address riverToken = sd.riverToken;
 
     //iterate through each of the categories of delegation and build an array of all the delegator addresses
     //and the sum of their combined delegations
@@ -330,7 +291,7 @@ contract RewardsDistribution is
     for (uint256 i = 0; i < delegators.length; i++) {
       combinedDelegators[count++] = delegators[i];
       //balance is retrieved from the Base token directly
-      totalDelegation += IERC20(sd.riverToken).balanceOf(delegators[i]);
+      totalDelegation += IERC20(riverToken).balanceOf(delegators[i]);
     }
 
     // Copy elements from the space delegators
@@ -345,7 +306,7 @@ contract RewardsDistribution is
       for (uint256 j = 0; j < spaceDelegatorDelegators.length; j++) {
         combinedDelegators[count++] = spaceDelegatorDelegators[j];
         //get their balance from the Base token since Spaces live on Base
-        totalDelegation += IERC20(sd.riverToken).balanceOf(
+        totalDelegation += IERC20(riverToken).balanceOf(
           spaceDelegatorDelegators[j]
         );
       }
@@ -379,6 +340,7 @@ contract RewardsDistribution is
     RewardsDistributionStorage.Layout storage ds = RewardsDistributionStorage
       .layout();
 
+    address riverToken = sd.riverToken;
     address[] memory seenAddresses = new address[](delegatorsLen);
     for (uint256 i = 0; i < delegatorsLen; i++) {
       //check if this address has already been distributed since it could be in here twice
@@ -396,15 +358,15 @@ contract RewardsDistribution is
 
       uint256 amount = 0;
       //check if this user is delegating to the operator on Base
-      if (IVotes(sd.riverToken).delegates(combinedDelegators[i]) == operator) {
-        amount = IERC20(sd.riverToken).balanceOf(combinedDelegators[i]);
+      if (IVotes(riverToken).delegates(combinedDelegators[i]) == operator) {
+        amount = IERC20(riverToken).balanceOf(combinedDelegators[i]);
       }
       //check if this user is delegating to the operator on the Spaces
       address spaceDelegatee = sd.operatorBySpace[
-        IVotes(sd.riverToken).delegates(combinedDelegators[i])
+        IVotes(riverToken).delegates(combinedDelegators[i])
       ];
       if (spaceDelegatee == operator) {
-        amount += IERC20(sd.riverToken).balanceOf(combinedDelegators[i]);
+        amount += IERC20(riverToken).balanceOf(combinedDelegators[i]);
       }
       //check if this user is delegating to the operator on the mainnet
       if (
@@ -452,14 +414,15 @@ contract RewardsDistribution is
     SpaceDelegationStorage.Layout storage sd,
     address operator
   ) internal view returns (address[] memory) {
-    address[] memory delegators = IVotesEnumerable(sd.riverToken)
+    address riverToken = sd.riverToken;
+    address[] memory delegators = IVotesEnumerable(riverToken)
       .getDelegatorsByDelegatee(operator);
     address[] memory validDelegators = new address[](delegators.length);
     uint256 activeDelegators = 0;
     for (uint256 i = 0; i < delegators.length; i++) {
       if (
         _isActiveSinceLastCycle(
-          IVotesEnumerable(sd.riverToken).getDelegationTimeForDelegator(
+          IVotesEnumerable(riverToken).getDelegationTimeForDelegator(
             delegators[i]
           )
         )

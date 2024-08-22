@@ -17,7 +17,7 @@ type ReturnOf<T> = Awaited<ReturnType<ActionFn<T>>>
 export const useAction = <Namespace, Key extends keyof Namespace, Fn extends Namespace[Key]>(
     namespace: Namespace,
     fnName: Key & string,
-    config: ActionConfig<Fn> = {},
+    config?: ActionConfig<Fn>,
 ) => {
     const [status, setStatus] = useState<'loading' | 'error' | 'success' | 'idle'>('idle')
     const [error, setError] = useState<Error | undefined>()
@@ -31,15 +31,16 @@ export const useAction = <Namespace, Key extends keyof Namespace, Fn extends Nam
             }
             setStatus('loading')
             try {
-                const data = await fn.apply(namespace, args)
-                setData(data as ReturnOf<Fn>)
+                const data = (await fn.apply(namespace, args)) as ReturnOf<Fn>
+                setData(data)
                 setStatus('success')
+                config?.onSuccess?.(data)
                 return data as ReturnOf<Fn>
             } catch (error: unknown) {
                 setStatus('error')
                 if (error instanceof Error) {
                     setError(error)
-                    config.onError?.(error)
+                    config?.onError?.(error)
                 }
                 // Let the caller handle the error
                 throw error

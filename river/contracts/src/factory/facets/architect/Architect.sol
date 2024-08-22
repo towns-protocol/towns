@@ -4,6 +4,7 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IArchitect} from "contracts/src/factory/facets/architect/IArchitect.sol";
 import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
+import {IRuleEntitlementV2} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
 import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
 import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
 
@@ -27,12 +28,14 @@ contract Architect is
   function __Architect_init(
     ISpaceOwner ownerImplementation,
     IUserEntitlement userEntitlementImplementation,
-    IRuleEntitlement ruleEntitlementImplementation
+    IRuleEntitlementV2 ruleEntitlementImplementation,
+    IRuleEntitlement legacyRuleEntitlement
   ) external onlyInitializing {
     _setImplementations(
       ownerImplementation,
       userEntitlementImplementation,
-      ruleEntitlementImplementation
+      ruleEntitlementImplementation,
+      legacyRuleEntitlement
     );
   }
 
@@ -60,12 +63,14 @@ contract Architect is
   function setSpaceArchitectImplementations(
     ISpaceOwner spaceToken,
     IUserEntitlement userEntitlementImplementation,
-    IRuleEntitlement ruleEntitlementImplementation
+    IRuleEntitlementV2 ruleEntitlementImplementation,
+    IRuleEntitlement legacyRuleEntitlement
   ) external onlyOwner {
     _setImplementations(
       spaceToken,
       userEntitlementImplementation,
-      ruleEntitlementImplementation
+      ruleEntitlementImplementation,
+      legacyRuleEntitlement
     );
   }
 
@@ -75,7 +80,8 @@ contract Architect is
     returns (
       ISpaceOwner spaceToken,
       IUserEntitlement userEntitlementImplementation,
-      IRuleEntitlement ruleEntitlementImplementation
+      IRuleEntitlementV2 ruleEntitlementImplementation,
+      IRuleEntitlement legacyRuleEntitlement
     )
   {
     return _getImplementations();

@@ -45,11 +45,12 @@ async function getStreamClient(log: FastifyBaseLogger, streamId: `0x${string}`) 
 		clients.set(client.url!, client)
 		url = client.url!
 	}
-	logger.info({ url }, `client connected to node ${url}`)
+	logger.info({ url }, 'client connected to node')
 
 	const client = clients.get(url)
 	if (!client) {
-		throw new Error(`Failed to get client for url ${url}`)
+		logger.error({ url }, 'Failed to get client for url')
+		throw new Error('Failed to get client for url')
 	}
 
 	return { client, lastMiniblockNum: node.lastMiniblockNum }
@@ -98,7 +99,7 @@ async function mediaContentFromStreamView(
 			spaceId: mediaInfo.spaceId,
 			mediaStreamId: streamView.mediaContent.streamId,
 		},
-		`decrypting media content in stream ${streamView.mediaContent.streamId}`,
+		'decrypting media content in stream',
 	)
 
 	// Aggregate data chunks into a single Uint8Array
@@ -134,7 +135,7 @@ async function mediaContentFromStreamView(
 			mediaStreamId: streamView.mediaContent.streamId,
 			mimeType,
 		},
-		`decrypted media content in stream ${streamView.mediaContent.streamId}`,
+		'decrypted media content in stream',
 	)
 
 	// Return decrypted data and MIME type
@@ -171,7 +172,7 @@ export async function getStream(
 			streamId,
 			lastMiniblockNum: lastMiniblockNum.toString(),
 		},
-		`getStream ${streamId}`,
+		'getStream',
 	)
 
 	const start = Date.now()
@@ -185,7 +186,7 @@ export async function getStream(
 		{
 			duration_ms,
 		},
-		`getStream finished in ${duration_ms}ms`,
+		'getStream finished',
 	)
 
 	const unpackedResponse = await unpackStream(response.stream)

@@ -7,7 +7,7 @@ import { useSyncAgent } from './useSyncAgent'
 
 export const useCreateChannel = (
     spaceId: string,
-    config: ActionConfig<Space['createChannel']> = {},
+    config?: ActionConfig<Space['createChannel']>,
 ) => {
     const sync = useSyncAgent()
     const space = useMemo(() => sync.spaces.getSpace(spaceId), [spaceId, sync.spaces])

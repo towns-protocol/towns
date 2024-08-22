@@ -183,9 +183,7 @@ describe('spaceTests', () => {
                 isEncryptedData(encryptedData) &&
                 encryptedData.algorithm === AES_GCM_DERIVED_ALGORITHM,
         ).toBe(true)
-        const decrypted = encryptedData
-            ? await bobsClient.decryptSpaceImage(spaceId, encryptedData)
-            : undefined
+        const decrypted = await spaceStream.view.spaceContent.getSpaceImage()
         expect(
             decrypted !== undefined &&
                 decrypted.info?.mimetype === image.mimetype &&

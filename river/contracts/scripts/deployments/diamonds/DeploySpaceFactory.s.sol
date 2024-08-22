@@ -30,7 +30,8 @@ import {DeployUserEntitlement} from "contracts/scripts/deployments/utils/DeployU
 import {DeployMultiInit} from "contracts/scripts/deployments/utils/DeployMultiInit.s.sol";
 import {DeploySpace} from "contracts/scripts/deployments/diamonds/DeploySpace.s.sol";
 import {DeploySpaceOwner} from "contracts/scripts/deployments/diamonds/DeploySpaceOwner.s.sol";
-import {DeployRuleEntitlement, DeployRuleEntitlementV2} from "contracts/scripts/deployments/utils/DeployRuleEntitlement.s.sol";
+import {DeployRuleEntitlement} from "contracts/scripts/deployments/utils/DeployRuleEntitlement.s.sol";
+import {DeployRuleEntitlementV2} from "contracts/scripts/deployments/utils/DeployRuleEntitlementV2.s.sol";
 import {DeployWalletLink} from "contracts/scripts/deployments/facets/DeployWalletLink.s.sol";
 import {DeployTieredLogPricing} from "contracts/scripts/deployments/utils/DeployTieredLogPricing.s.sol";
 import {DeployFixedPricing} from "contracts/scripts/deployments/utils/DeployFixedPricing.s.sol";
@@ -190,7 +191,8 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
       architectHelper.makeInitData(
         spaceOwner, // spaceOwner
         userEntitlement, // userEntitlement
-        ruleEntitlement // ruleEntitlement
+        ruleEntitlement, // ruleEntitlement
+        legacyRuleEntitlement // legacyRuleEntitlement
       )
     );
     addFacet(
@@ -199,12 +201,7 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
         IDiamond.FacetCutAction.Add
       ),
       legacyArchitect,
-      deployMockLegacyArchitect.makeInitData(
-        spaceOwner, // spaceOwnerToken
-        userEntitlement, // userEntitlement
-        ruleEntitlement, // ruleEntitlement
-        legacyRuleEntitlement // legacy ruleEntitlement
-      )
+      deployMockLegacyArchitect.makeInitData("")
     );
     addFacet(
       proxyManagerHelper.makeCut(proxyManager, IDiamond.FacetCutAction.Add),

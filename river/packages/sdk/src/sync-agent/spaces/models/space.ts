@@ -7,6 +7,7 @@ import { RiverConnection } from '../../river-connection/riverConnection'
 import { Channel } from './channel'
 import { ethers } from 'ethers'
 import { SpaceDapp, SpaceInfo } from '@river-build/web3'
+import { Members } from '../../members/members'
 
 const logger = dlogger('csb:space')
 
@@ -20,6 +21,7 @@ export interface SpaceModel extends Identifiable {
 @persistedObservable({ tableName: 'space' })
 export class Space extends PersistedObservable<SpaceModel> {
     private channels: Record<string, Channel>
+    members: Members
     constructor(
         id: string,
         private riverConnection: RiverConnection,
@@ -36,6 +38,7 @@ export class Space extends PersistedObservable<SpaceModel> {
                 store,
             ),
         }
+        this.members = new Members(id, riverConnection, store)
     }
 
     protected override async onLoaded() {

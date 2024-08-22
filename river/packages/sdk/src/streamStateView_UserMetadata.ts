@@ -2,9 +2,9 @@ import TypedEmitter from 'typed-emitter'
 import { RemoteTimelineEvent } from './types'
 import {
     Snapshot,
-    UserDeviceKeyPayload,
-    UserDeviceKeyPayload_EncryptionDevice,
-    UserDeviceKeyPayload_Snapshot,
+    UserMetadataPayload,
+    UserMetadataPayload_EncryptionDevice,
+    UserMetadataPayload_Snapshot,
 } from '@river-build/proto'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { check } from '@river-build/dlog'
@@ -13,7 +13,7 @@ import { UserDevice } from '@river-build/encryption'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import { getUserIdFromStreamId } from './id'
 
-export class StreamStateView_UserDeviceKeys extends StreamStateView_AbstractContent {
+export class StreamStateView_UserMetadata extends StreamStateView_AbstractContent {
     readonly streamId: string
     readonly streamCreatorId: string
 
@@ -28,7 +28,7 @@ export class StreamStateView_UserDeviceKeys extends StreamStateView_AbstractCont
 
     applySnapshot(
         snapshot: Snapshot,
-        content: UserDeviceKeyPayload_Snapshot,
+        content: UserMetadataPayload_Snapshot,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
         // dispatch events for all device keys, todo this seems inefficient?
@@ -52,8 +52,8 @@ export class StreamStateView_UserDeviceKeys extends StreamStateView_AbstractCont
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
-        check(event.remoteEvent.event.payload.case === 'userDeviceKeyPayload')
-        const payload: UserDeviceKeyPayload = event.remoteEvent.event.payload.value
+        check(event.remoteEvent.event.payload.case === 'userMetadataPayload')
+        const payload: UserMetadataPayload = event.remoteEvent.event.payload.value
         switch (payload.content.case) {
             case 'inception':
                 break
@@ -68,7 +68,7 @@ export class StreamStateView_UserDeviceKeys extends StreamStateView_AbstractCont
     }
 
     private addUserDeviceKey(
-        value: UserDeviceKeyPayload_EncryptionDevice,
+        value: UserMetadataPayload_EncryptionDevice,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ) {

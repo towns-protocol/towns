@@ -22,8 +22,8 @@ const (
 	STREAM_MEDIA_PREFIX                = "ff"
 	STREAM_SPACE_BIN              byte = 0x10
 	STREAM_SPACE_PREFIX                = "10"
-	STREAM_USER_DEVICE_KEY_BIN    byte = 0xad
-	STREAM_USER_DEVICE_KEY_PREFIX      = "ad"
+	STREAM_USER_METADATA_KEY_BIN    byte = 0xad
+	STREAM_USER_METADATA_KEY_PREFIX      = "ad"
 	STREAM_USER_INBOX_BIN         byte = 0xa1
 	STREAM_USER_INBOX_PREFIX           = "a1"
 	STREAM_USER_BIN               byte = 0xa8
@@ -113,7 +113,7 @@ func (id StreamId) Compare(other StreamId) int {
 // user streams are expected to have 20 bytes of address, so the expected content length is 21 when including the prefix
 func StreamIdContentLengthForType(t byte) (int, error) {
 	switch t {
-	case STREAM_USER_DEVICE_KEY_BIN:
+	case STREAM_USER_METADATA_KEY_BIN:
 		return 21, nil
 	case STREAM_USER_INBOX_BIN:
 		return 21, nil

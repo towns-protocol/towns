@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
+import {ILegacyArchitectBase} from "contracts/test/mocks/legacy/IMockLegacyArchitect.sol";
 import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 
@@ -21,6 +22,38 @@ abstract contract SpaceHelper {
     info.membership.requirements.ruleData = abi.encode(
       RuleEntitlementUtil.getMockERC721RuleData()
     );
+  }
+
+  function _createLegacySpaceInfo(
+    string memory spaceId
+  ) internal pure returns (ILegacyArchitectBase.SpaceInfo memory) {
+    return
+      ILegacyArchitectBase.SpaceInfo({
+        name: spaceId,
+        uri: "ipfs://test",
+        shortDescription: "short description",
+        longDescription: "long description",
+        membership: ILegacyArchitectBase.Membership({
+          settings: IMembershipBase.Membership({
+            name: "Member",
+            symbol: "MEM",
+            price: 0,
+            maxSupply: 0,
+            duration: 0,
+            currency: address(0),
+            feeRecipient: address(0),
+            freeAllocation: 0,
+            pricingModule: address(0)
+          }),
+          requirements: ILegacyArchitectBase.MembershipRequirements({
+            everyone: false,
+            users: new address[](0),
+            ruleData: RuleEntitlementUtil.getLegacyNoopRuleData()
+          }),
+          permissions: new string[](0)
+        }),
+        channel: ILegacyArchitectBase.ChannelInfo({metadata: "ipfs://test"})
+      });
   }
 
   function _createSpaceInfo(
@@ -59,9 +92,10 @@ abstract contract SpaceHelper {
     string memory spaceId
   ) internal pure returns (IArchitectBase.SpaceInfo memory info) {
     info = _createSpaceInfo(spaceId);
-    string[] memory permissions = new string[](2);
+    string[] memory permissions = new string[](3);
     permissions[0] = Permissions.Read;
     permissions[1] = Permissions.Write;
+    permissions[2] = Permissions.React;
 
     info.membership.requirements.everyone = true;
     info.membership.permissions = permissions;

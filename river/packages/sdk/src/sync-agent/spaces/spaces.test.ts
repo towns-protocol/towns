@@ -29,6 +29,7 @@ describe('spaces.test.ts', () => {
         expect(space.data.channelIds[0]).toBe(defaultChannelId)
         expect(space.getChannel(defaultChannelId)).toBeDefined()
         const channel = space.getChannel(defaultChannelId)
+        expect(channel.data.isJoined).toBe(true)
         await channel.sendMessage('hello world')
         expect(channel.timeline.events.value.length).toBeGreaterThan(1)
         expect(channel.timeline.events.value.find((x) => x.text === 'hello world')).toBeDefined()

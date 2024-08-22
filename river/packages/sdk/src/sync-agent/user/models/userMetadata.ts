@@ -2,15 +2,15 @@ import { check, dlogger } from '@river-build/dlog'
 import { LoadPriority, Store } from '../../../store/store'
 import { UserDevice } from '@river-build/encryption'
 import { PersistedObservable, persistedObservable } from '../../../observable/persistedObservable'
-import { makeUserDeviceKeyStreamId } from '../../../id'
+import { makeUserMetadataStreamId } from '../../../id'
 import { RiverConnection } from '../../river-connection/riverConnection'
 import { IStreamStateView } from '../../../streamStateView'
 import { isDefined } from '../../../check'
 import { Client } from '../../../client'
 
-const logger = dlogger('csb:userDeviceKeys')
+const logger = dlogger('csb:userMetadata')
 
-export interface UserDeviceKeysModel {
+export interface UserMetadataModel {
     id: string
     streamId: string
     initialized: boolean
@@ -18,11 +18,11 @@ export interface UserDeviceKeysModel {
     deviceKeys: UserDevice[]
 }
 
-@persistedObservable({ tableName: 'userDeviceKeys' })
-export class UserDeviceKeys extends PersistedObservable<UserDeviceKeysModel> {
+@persistedObservable({ tableName: 'userMetadata' })
+export class UserMetadata extends PersistedObservable<UserMetadataModel> {
     constructor(id: string, store: Store, private riverConnection: RiverConnection) {
         super(
-            { id, streamId: makeUserDeviceKeyStreamId(id), initialized: false, deviceKeys: [] },
+            { id, streamId: makeUserMetadataStreamId(id), initialized: false, deviceKeys: [] },
             store,
             LoadPriority.high,
         )
@@ -43,10 +43,10 @@ export class UserDeviceKeys extends PersistedObservable<UserDeviceKeysModel> {
                 this.setData({ deviceId })
             }
         }
-        client.addListener('userDeviceKeysUpdated', this.onUserDeviceKeysUpdated)
+        client.addListener('userDeviceKeysUpdated', this.onUserMetadataUpdated)
         client.addListener('streamInitialized', this.onStreamInitialized)
         return () => {
-            client.removeListener('userDeviceKeysUpdated', this.onUserDeviceKeysUpdated)
+            client.removeListener('userDeviceKeysUpdated', this.onUserMetadataUpdated)
             client.removeListener('streamInitialized', this.onStreamInitialized)
         }
     }
@@ -61,7 +61,7 @@ export class UserDeviceKeys extends PersistedObservable<UserDeviceKeysModel> {
         }
     }
 
-    private onUserDeviceKeysUpdated = (streamId: string, deviceKeys: UserDevice[]) => {
+    private onUserMetadataUpdated = (streamId: string, deviceKeys: UserDevice[]) => {
         if (streamId === this.data.streamId) {
             logger.log('updated', streamId, deviceKeys)
             this.setData({ deviceKeys })
@@ -72,7 +72,7 @@ export class UserDeviceKeys extends PersistedObservable<UserDeviceKeysModel> {
         this.setData({
             initialized: true,
             deviceId,
-            deviceKeys: streamView.userDeviceKeyContent.deviceKeys,
+            deviceKeys: streamView.userMetadataContent.deviceKeys,
         })
     }
 }

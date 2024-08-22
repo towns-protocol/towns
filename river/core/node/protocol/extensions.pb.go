@@ -12,7 +12,7 @@ type IsGdmChannelPayload_Content = isGdmChannelPayload_Content
 type IsUserPayload_Content = isUserPayload_Content
 type IsUserInboxPayload_Content = isUserInboxPayload_Content
 type IsUserSettingsPayload_Content = isUserSettingsPayload_Content
-type IsUserDeviceKeyPayload_Content = isUserDeviceKeyPayload_Content
+type IsUserMetadataPayload_Content = isUserMetadataPayload_Content
 type IsMediaPayload_Content = isMediaPayload_Content
 type IsSnapshot_Content = isSnapshot_Content
 type IsGetStreamExResponse_Data = isGetStreamExResponse_Data
@@ -29,7 +29,7 @@ func (*GdmChannelPayload_Inception) isInceptionPayload() {}
 func (*UserPayload_Inception) isInceptionPayload() {}
 func (*UserInboxPayload_Inception) isInceptionPayload() {}
 func (*UserSettingsPayload_Inception) isInceptionPayload() {}
-func (*UserDeviceKeyPayload_Inception) isInceptionPayload() {}
+func (*UserMetadataPayload_Inception) isInceptionPayload() {}
 func (*MediaPayload_Inception) isInceptionPayload() {}
 
 func (e *Snapshot) GetInceptionPayload() IsInceptionPayload {
@@ -76,8 +76,8 @@ func (e *Snapshot) GetInceptionPayload() IsInceptionPayload {
 			return nil
 		}
 		return r
-	case *Snapshot_UserDeviceKeyContent:
-		r := e.Content.(*Snapshot_UserDeviceKeyContent).UserDeviceKeyContent.GetInception()
+	case *Snapshot_UserMetadataContent:
+		r := e.Content.(*Snapshot_UserMetadataContent).UserMetadataContent.GetInception()
 		if r == nil {
 			return nil
 		}
@@ -137,8 +137,8 @@ func (e *StreamEvent) GetInceptionPayload() IsInceptionPayload {
 			return nil
 		}
 		return r
-	case *StreamEvent_UserDeviceKeyPayload:
-		r := e.Payload.(*StreamEvent_UserDeviceKeyPayload).UserDeviceKeyPayload.GetInception()
+	case *StreamEvent_UserMetadataPayload:
+		r := e.Payload.(*StreamEvent_UserMetadataPayload).UserMetadataPayload.GetInception()
 		if r == nil {
 			return nil
 		}
@@ -191,10 +191,10 @@ func (e *StreamEvent) VerifyPayloadTypeMatchesStreamType(i IsInceptionPayload) e
 		if !ok {
 			return fmt.Errorf("inception type mismatch: *protocol.StreamEvent_UserSettingsPayload::%T vs %T", e.GetUserSettingsPayload().Content, i)
 		}
-	case *StreamEvent_UserDeviceKeyPayload:
-		_, ok := i.(*UserDeviceKeyPayload_Inception)
+	case *StreamEvent_UserMetadataPayload:
+		_, ok := i.(*UserMetadataPayload_Inception)
 		if !ok {
-			return fmt.Errorf("inception type mismatch: *protocol.StreamEvent_UserDeviceKeyPayload::%T vs %T", e.GetUserDeviceKeyPayload().Content, i)
+			return fmt.Errorf("inception type mismatch: *protocol.StreamEvent_UserMetadataPayload::%T vs %T", e.GetUserMetadataPayload().Content, i)
 		}
 	case *StreamEvent_MediaPayload:
 		_, ok := i.(*MediaPayload_Inception)

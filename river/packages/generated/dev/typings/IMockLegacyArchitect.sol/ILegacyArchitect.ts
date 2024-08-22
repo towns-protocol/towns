@@ -188,64 +188,17 @@ export declare namespace ILegacyArchitectBase {
 export interface ILegacyArchitectInterface extends utils.Interface {
   functions: {
     "createSpace((string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],((uint8,uint8)[],(uint8,uint256,address,uint256)[],(uint8,uint8,uint8)[])),string[]),(string),string,string))": FunctionFragment;
-    "getSpaceArchitectImplementations()": FunctionFragment;
-    "getSpaceByTokenId(uint256)": FunctionFragment;
-    "getTokenIdBySpace(address)": FunctionFragment;
-    "setSpaceArchitectImplementations(address,address,address)": FunctionFragment;
   };
 
-  getFunction(
-    nameOrSignatureOrTopic:
-      | "createSpace"
-      | "getSpaceArchitectImplementations"
-      | "getSpaceByTokenId"
-      | "getTokenIdBySpace"
-      | "setSpaceArchitectImplementations"
-  ): FunctionFragment;
+  getFunction(nameOrSignatureOrTopic: "createSpace"): FunctionFragment;
 
   encodeFunctionData(
     functionFragment: "createSpace",
     values: [ILegacyArchitectBase.SpaceInfoStruct]
   ): string;
-  encodeFunctionData(
-    functionFragment: "getSpaceArchitectImplementations",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getSpaceByTokenId",
-    values: [PromiseOrValue<BigNumberish>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getTokenIdBySpace",
-    values: [PromiseOrValue<string>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setSpaceArchitectImplementations",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<string>,
-      PromiseOrValue<string>
-    ]
-  ): string;
 
   decodeFunctionResult(
     functionFragment: "createSpace",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getSpaceArchitectImplementations",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getSpaceByTokenId",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getTokenIdBySpace",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setSpaceArchitectImplementations",
     data: BytesLike
   ): Result;
 
@@ -299,64 +252,10 @@ export interface ILegacyArchitect extends BaseContract {
       SpaceInfo: ILegacyArchitectBase.SpaceInfoStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
-
-    getSpaceArchitectImplementations(
-      overrides?: CallOverrides
-    ): Promise<
-      [string, string, string] & {
-        ownerTokenImplementation: string;
-        userEntitlementImplementation: string;
-        ruleEntitlementImplementation: string;
-      }
-    >;
-
-    getSpaceByTokenId(
-      tokenId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[string] & { space: string }>;
-
-    getTokenIdBySpace(
-      space: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    setSpaceArchitectImplementations(
-      ownerTokenImplementation: PromiseOrValue<string>,
-      userEntitlementImplementation: PromiseOrValue<string>,
-      ruleEntitlementImplementation: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
   };
 
   createSpace(
     SpaceInfo: ILegacyArchitectBase.SpaceInfoStruct,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  getSpaceArchitectImplementations(
-    overrides?: CallOverrides
-  ): Promise<
-    [string, string, string] & {
-      ownerTokenImplementation: string;
-      userEntitlementImplementation: string;
-      ruleEntitlementImplementation: string;
-    }
-  >;
-
-  getSpaceByTokenId(
-    tokenId: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  getTokenIdBySpace(
-    space: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  setSpaceArchitectImplementations(
-    ownerTokenImplementation: PromiseOrValue<string>,
-    userEntitlementImplementation: PromiseOrValue<string>,
-    ruleEntitlementImplementation: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -365,33 +264,6 @@ export interface ILegacyArchitect extends BaseContract {
       SpaceInfo: ILegacyArchitectBase.SpaceInfoStruct,
       overrides?: CallOverrides
     ): Promise<string>;
-
-    getSpaceArchitectImplementations(
-      overrides?: CallOverrides
-    ): Promise<
-      [string, string, string] & {
-        ownerTokenImplementation: string;
-        userEntitlementImplementation: string;
-        ruleEntitlementImplementation: string;
-      }
-    >;
-
-    getSpaceByTokenId(
-      tokenId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<string>;
-
-    getTokenIdBySpace(
-      space: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    setSpaceArchitectImplementations(
-      ownerTokenImplementation: PromiseOrValue<string>,
-      userEntitlementImplementation: PromiseOrValue<string>,
-      ruleEntitlementImplementation: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
   };
 
   filters: {
@@ -412,53 +284,11 @@ export interface ILegacyArchitect extends BaseContract {
       SpaceInfo: ILegacyArchitectBase.SpaceInfoStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
-
-    getSpaceArchitectImplementations(
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getSpaceByTokenId(
-      tokenId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getTokenIdBySpace(
-      space: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    setSpaceArchitectImplementations(
-      ownerTokenImplementation: PromiseOrValue<string>,
-      userEntitlementImplementation: PromiseOrValue<string>,
-      ruleEntitlementImplementation: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
   };
 
   populateTransaction: {
     createSpace(
       SpaceInfo: ILegacyArchitectBase.SpaceInfoStruct,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    getSpaceArchitectImplementations(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getSpaceByTokenId(
-      tokenId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getTokenIdBySpace(
-      space: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    setSpaceArchitectImplementations(
-      ownerTokenImplementation: PromiseOrValue<string>,
-      userEntitlementImplementation: PromiseOrValue<string>,
-      ruleEntitlementImplementation: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };

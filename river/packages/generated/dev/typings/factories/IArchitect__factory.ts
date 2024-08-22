@@ -164,6 +164,11 @@ const _abi = [
       {
         name: "ruleEntitlementImplementation",
         type: "address",
+        internalType: "contract IRuleEntitlementV2",
+      },
+      {
+        name: "legacyRuleEntitlement",
+        type: "address",
         internalType: "contract IRuleEntitlement",
       },
     ],
@@ -223,6 +228,11 @@ const _abi = [
       },
       {
         name: "ruleEntitlementImplementation",
+        type: "address",
+        internalType: "contract IRuleEntitlementV2",
+      },
+      {
+        name: "legacyRuleEntitlement",
         type: "address",
         internalType: "contract IRuleEntitlement",
       },

@@ -407,9 +407,9 @@ function toTownsContent_fromParsedEvent(
                 message.event.payload.value,
                 description,
             )
-        case 'userDeviceKeyPayload':
+        case 'userMetadataPayload':
             return {
-                error: `${description} userDeviceKeyPayload not supported?`,
+                error: `${description} userMetadataPayload not supported?`,
             }
         case 'userSettingsPayload':
             return {

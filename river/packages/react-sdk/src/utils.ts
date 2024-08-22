@@ -1,8 +1,11 @@
 import type { PersistedModel } from '@river-build/sdk'
 
-export const isPersistedModel = <T>(data: T | PersistedModel<T>): data is PersistedModel<T> => {
-    if (typeof data === 'object' && data !== null) {
-        return 'status' in data
+export const isPersistedModel = <T>(value: T | PersistedModel<T>): value is PersistedModel<T> => {
+    if (typeof value !== 'object') {
+        return false
     }
-    return false
+    if (value === null) {
+        return false
+    }
+    return 'status' in value && 'data' in value
 }

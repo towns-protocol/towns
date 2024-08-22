@@ -8,7 +8,7 @@ import { useSyncAgent } from './useSyncAgent'
 export const useSendMessage = (
     spaceId: string,
     channelId: string,
-    config: ActionConfig<Channel['sendMessage']> = {},
+    config?: ActionConfig<Channel['sendMessage']>,
 ) => {
     const sync = useSyncAgent()
     const channel = useMemo(

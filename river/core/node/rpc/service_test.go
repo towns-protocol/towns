@@ -6,7 +6,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"github.com/river-build/river/core/node/base"
 	"math/rand"
 	"net"
 	"net/http"
@@ -17,6 +16,8 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/river-build/river/core/node/base"
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/accounts"
@@ -57,16 +58,16 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func createUserDeviceKeyStream(
+func createUserMetadataStream(
 	ctx context.Context,
 	wallet *crypto.Wallet,
 	client protocolconnect.StreamServiceClient,
 	streamSettings *protocol.StreamSettings,
 ) (*protocol.SyncCookie, []byte, error) {
-	userDeviceKeyStreamId := UserDeviceKeyStreamIdFromAddress(wallet.Address)
+	userMetadataStreamId := UserMetadataStreamIdFromAddress(wallet.Address)
 	inception, err := events.MakeEnvelopeWithPayload(
 		wallet,
-		events.Make_UserDeviceKeyPayload_Inception(userDeviceKeyStreamId, streamSettings),
+		events.Make_UserMetadataPayload_Inception(userMetadataStreamId, streamSettings),
 		nil,
 	)
 	if err != nil {
@@ -74,7 +75,7 @@ func createUserDeviceKeyStream(
 	}
 	res, err := client.CreateStream(ctx, connect.NewRequest(&protocol.CreateStreamRequest{
 		Events:   []*protocol.Envelope{inception},
-		StreamId: userDeviceKeyStreamId[:],
+		StreamId: userMetadataStreamId[:],
 	}))
 	if err != nil {
 		return nil, nil, err
@@ -380,7 +381,7 @@ func testMethodsWithClient(tester *serviceTester, client protocolconnect.StreamS
 	require.NoError(err)
 	require.NotNil(res, "nil sync cookie")
 
-	_, _, err = createUserDeviceKeyStream(ctx, wallet1, client, nil)
+	_, _, err = createUserMetadataStream(ctx, wallet1, client, nil)
 	require.NoError(err)
 
 	// get stream optional should now return not nil
@@ -396,7 +397,7 @@ func testMethodsWithClient(tester *serviceTester, client protocolconnect.StreamS
 	require.NoError(err)
 	require.NotNil(resuser, "nil sync cookie")
 
-	_, _, err = createUserDeviceKeyStream(ctx, wallet2, client, nil)
+	_, _, err = createUserMetadataStream(ctx, wallet2, client, nil)
 	require.NoError(err)
 
 	// create space
@@ -533,7 +534,7 @@ func testRiverDeviceId(tester *serviceTester) {
 	require.NoError(err)
 	require.NotNil(resuser)
 
-	_, _, err = createUserDeviceKeyStream(ctx, wallet, client, nil)
+	_, _, err = createUserMetadataStream(ctx, wallet, client, nil)
 	require.NoError(err)
 
 	spaceId := testutils.FakeStreamId(STREAM_SPACE_BIN)
@@ -610,8 +611,8 @@ func testSyncStreams(tester *serviceTester) {
 	wallet, _ := crypto.NewWallet(ctx)
 	_, _, err := createUser(ctx, wallet, client, nil)
 	require.Nilf(err, "error calling createUser: %v", err)
-	_, _, err = createUserDeviceKeyStream(ctx, wallet, client, nil)
-	require.Nilf(err, "error calling createUserDeviceKeyStream: %v", err)
+	_, _, err = createUserMetadataStream(ctx, wallet, client, nil)
+	require.Nilf(err, "error calling createUserMetadataStream: %v", err)
 	// create space
 	spaceId := testutils.FakeStreamId(STREAM_SPACE_BIN)
 	space1, _, err := createSpace(ctx, wallet, client, spaceId, nil)
@@ -683,8 +684,8 @@ func testAddStreamsToSync(tester *serviceTester) {
 	alice, _, err := createUser(ctx, aliceWallet, aliceClient, nil)
 	require.Nilf(err, "error calling createUser: %v", err)
 	require.NotNil(alice, "nil sync cookie for alice")
-	_, _, err = createUserDeviceKeyStream(ctx, aliceWallet, aliceClient, nil)
-	require.Nilf(err, "error calling createUserDeviceKeyStream: %v", err)
+	_, _, err = createUserMetadataStream(ctx, aliceWallet, aliceClient, nil)
+	require.Nilf(err, "error calling createUserMetadataStream: %v", err)
 
 	// create bob's client, wallet, and streams
 	bobClient := tester.testClient(0)
@@ -692,8 +693,8 @@ func testAddStreamsToSync(tester *serviceTester) {
 	bob, _, err := createUser(ctx, bobWallet, bobClient, nil)
 	require.Nilf(err, "error calling createUser: %v", err)
 	require.NotNil(bob, "nil sync cookie for bob")
-	_, _, err = createUserDeviceKeyStream(ctx, bobWallet, bobClient, nil)
-	require.Nilf(err, "error calling createUserDeviceKeyStream: %v", err)
+	_, _, err = createUserMetadataStream(ctx, bobWallet, bobClient, nil)
+	require.Nilf(err, "error calling createUserMetadataStream: %v", err)
 	// alice creates a space
 	spaceId := testutils.FakeStreamId(STREAM_SPACE_BIN)
 	space1, _, err := createSpace(ctx, aliceWallet, aliceClient, spaceId, nil)
@@ -783,7 +784,7 @@ func testRemoveStreamsFromSync(tester *serviceTester) {
 	alice, _, err := createUser(ctx, aliceWallet, aliceClient, nil)
 	require.Nilf(err, "error calling createUser: %v", err)
 	require.NotNil(alice, "nil sync cookie for alice")
-	_, _, err = createUserDeviceKeyStream(ctx, aliceWallet, aliceClient, nil)
+	_, _, err = createUserMetadataStream(ctx, aliceWallet, aliceClient, nil)
 	require.NoError(err)
 
 	// create bob's client, wallet, and streams
@@ -792,8 +793,8 @@ func testRemoveStreamsFromSync(tester *serviceTester) {
 	bob, _, err := createUser(ctx, bobWallet, bobClient, nil)
 	require.Nilf(err, "error calling createUser: %v", err)
 	require.NotNil(bob, "nil sync cookie for bob")
-	_, _, err = createUserDeviceKeyStream(ctx, bobWallet, bobClient, nil)
-	require.Nilf(err, "error calling createUserDeviceKeyStream: %v", err)
+	_, _, err = createUserMetadataStream(ctx, bobWallet, bobClient, nil)
+	require.Nilf(err, "error calling createUserMetadataStream: %v", err)
 	// alice creates a space
 	spaceId := testutils.FakeStreamId(STREAM_SPACE_BIN)
 	space1, _, err := createSpace(ctx, aliceWallet, aliceClient, spaceId, nil)
@@ -1080,7 +1081,7 @@ func TestUnstableStreams(t *testing.T) {
 		syncCookie, _, err := createUser(ctx, wallet, client0, nil)
 		req.NoError(err, "create user")
 
-		_, _, err = createUserDeviceKeyStream(ctx, wallet, client0, nil)
+		_, _, err = createUserMetadataStream(ctx, wallet, client0, nil)
 		req.NoError(err)
 
 		wallets = append(wallets, wallet)
@@ -1601,7 +1602,7 @@ func TestSyncSubscriptionWithTooSlowClient(t *testing.T) {
 		syncCookie, _, err := createUser(ctx, wallet, client0, nil)
 		req.NoError(err, "create user")
 
-		_, _, err = createUserDeviceKeyStream(ctx, wallet, client0, nil)
+		_, _, err = createUserMetadataStream(ctx, wallet, client0, nil)
 		req.NoError(err)
 
 		wallets = append(wallets, wallet)

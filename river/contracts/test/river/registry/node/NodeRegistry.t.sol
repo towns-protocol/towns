@@ -45,6 +45,7 @@ contract NodeRegistryTest is RiverRegistryBaseSetup, INodeRegistryBase {
     vm.assume(node != address(0));
     vm.assume(nodeOperator != address(0));
     vm.assume(nodeOperator != node);
+    vm.assume(operatorRegistry.isOperator(nodeOperator) == false);
 
     vm.prank(nodeOperator);
     vm.expectRevert(bytes(RiverRegistryErrors.BAD_AUTH));

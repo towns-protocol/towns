@@ -123,9 +123,9 @@ func UserSettingStreamIdFromAddr(addr common.Address) StreamId {
 	return b
 }
 
-func UserDeviceKeyStreamIdFromAddress(addr common.Address) StreamId {
+func UserMetadataStreamIdFromAddress(addr common.Address) StreamId {
 	var b StreamId
-	b[0] = STREAM_USER_DEVICE_KEY_BIN
+	b[0] = STREAM_USER_METADATA_KEY_BIN
 	copy(b[1:], addr.Bytes())
 	return b
 }
@@ -141,7 +141,7 @@ func GetUserAddressFromStreamIdBytes(inStreamId []byte) (common.Address, error) 
 func GetUserAddressFromStreamId(streamId StreamId) (common.Address, error) {
 	prefix := streamId.Type()
 	if prefix != STREAM_USER_BIN &&
-		prefix != STREAM_USER_DEVICE_KEY_BIN &&
+		prefix != STREAM_USER_METADATA_KEY_BIN &&
 		prefix != STREAM_USER_INBOX_BIN &&
 		prefix != STREAM_USER_SETTINGS_BIN {
 		return common.Address{}, RiverError(

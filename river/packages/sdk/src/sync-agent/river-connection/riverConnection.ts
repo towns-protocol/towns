@@ -17,6 +17,7 @@ import { TransactionalClient } from './models/transactionalClient'
 import { Observable } from '../../observable/observable'
 import { AuthStatus } from './models/authStatus'
 import { RetryParams } from '../../rpcInterceptors'
+import { Stream } from '../../stream'
 import { isDefined } from '../../check'
 
 const logger = dlogger('csb:riverConnection')
@@ -109,6 +110,23 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
             // Enqueue the request if client is not available
             return this.clientQueue.enqueue(fn)
         }
+    }
+
+    withStream<T>(streamId: string): {
+        call: (fn: (client: Client, stream: Stream) => Promise<T>) => Promise<T>
+    } {
+        return {
+            call: (fn) => {
+                return this.call(async (client) => {
+                    const stream = await client.waitForStream(streamId)
+                    return fn(client, stream)
+                })
+            },
+        }
+    }
+
+    callWithStream<T>(streamId: string, fn: (client: Client, stream: Stream) => Promise<T>) {
+        return this.withStream(streamId).call(fn)
     }
 
     registerView(viewFn: onClientStartedFn) {

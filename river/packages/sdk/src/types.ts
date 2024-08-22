@@ -3,7 +3,7 @@ import {
     StreamEvent,
     ChannelMessage,
     ChannelMessage_Post_Content_Text,
-    UserDeviceKeyPayload_Inception,
+    UserMetadataPayload_Inception,
     UserPayload_Inception,
     SpacePayload_Inception,
     ChannelProperties,
@@ -25,7 +25,7 @@ import {
     GdmChannelPayload_Inception,
     UserInboxPayload_Ack,
     UserInboxPayload_Inception,
-    UserDeviceKeyPayload_EncryptionDevice,
+    UserMetadataPayload_EncryptionDevice,
     UserInboxPayload_GroupEncryptionSessions,
     SyncCookie,
     Snapshot,
@@ -536,11 +536,11 @@ export const make_UserSettingsPayload_UserBlock = (
     }
 }
 
-export const make_UserDeviceKeyPayload_Inception = (
-    value: PlainMessage<UserDeviceKeyPayload_Inception>,
+export const make_UserMetadataPayload_Inception = (
+    value: PlainMessage<UserMetadataPayload_Inception>,
 ): PlainMessage<StreamEvent>['payload'] => {
     return {
-        case: 'userDeviceKeyPayload',
+        case: 'userMetadataPayload',
         value: {
             content: {
                 case: 'inception',
@@ -592,11 +592,11 @@ export const make_UserInboxPayload_Ack = (
     }
 }
 
-export const make_UserDeviceKeyPayload_EncryptionDevice = (
-    value: PlainMessage<UserDeviceKeyPayload_EncryptionDevice>,
+export const make_UserMetadataPayload_EncryptionDevice = (
+    value: PlainMessage<UserMetadataPayload_EncryptionDevice>,
 ): PlainMessage<StreamEvent>['payload'] => {
     return {
-        case: 'userDeviceKeyPayload',
+        case: 'userMetadataPayload',
         value: {
             content: {
                 case: 'encryptionDevice',

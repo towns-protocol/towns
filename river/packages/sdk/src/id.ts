@@ -55,7 +55,7 @@ export enum StreamPrefix {
     Media = 'ff',
     Space = '10',
     User = 'a8',
-    UserDevice = 'ad',
+    UserMetadata = 'ad',
     UserInbox = 'a1',
     UserSettings = 'a5',
 }
@@ -66,7 +66,7 @@ export const allowedStreamPrefixes = (): string[] => allowedStreamPrefixesVar
 
 const expectedIdentityLenByPrefix: { [key in StreamPrefix]: number } = {
     [StreamPrefix.User]: 40,
-    [StreamPrefix.UserDevice]: 40,
+    [StreamPrefix.UserMetadata]: 40,
     [StreamPrefix.UserSettings]: 40,
     [StreamPrefix.UserInbox]: 40,
     [StreamPrefix.Space]: 40,
@@ -104,10 +104,10 @@ export const makeUserSettingsStreamId = (userId: string | Uint8Array): string =>
     )
 }
 
-export const makeUserDeviceKeyStreamId = (userId: string | Uint8Array): string => {
+export const makeUserMetadataStreamId = (userId: string | Uint8Array): string => {
     check(isUserId(userId), 'Invalid user id: ' + userId.toString())
     return makeStreamId(
-        StreamPrefix.UserDevice,
+        StreamPrefix.UserMetadata,
         userId instanceof Uint8Array ? userIdFromAddress(userId) : userId,
     )
 }
@@ -171,7 +171,7 @@ export const isChannelStreamId = (streamId: string | Uint8Array): boolean =>
 export const isDMChannelStreamId = (streamId: string | Uint8Array): boolean =>
     streamIdAsString(streamId).startsWith(StreamPrefix.DM)
 export const isUserDeviceStreamId = (streamId: string | Uint8Array): boolean =>
-    streamIdAsString(streamId).startsWith(StreamPrefix.UserDevice)
+    streamIdAsString(streamId).startsWith(StreamPrefix.UserMetadata)
 export const isUserSettingsStreamId = (streamId: string | Uint8Array): boolean =>
     streamIdAsString(streamId).startsWith(StreamPrefix.UserSettings)
 export const isMediaStreamId = (streamId: string | Uint8Array): boolean =>
@@ -185,7 +185,7 @@ export const getUserAddressFromStreamId = (streamId: string): Uint8Array => {
     const prefix = streamId.slice(0, 2) as StreamPrefix
     if (
         prefix !== StreamPrefix.User &&
-        prefix !== StreamPrefix.UserDevice &&
+        prefix !== StreamPrefix.UserMetadata &&
         prefix !== StreamPrefix.UserSettings &&
         prefix !== StreamPrefix.UserInbox
     ) {

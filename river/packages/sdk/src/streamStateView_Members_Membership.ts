@@ -40,6 +40,16 @@ export class StreamStateView_Members_Membership {
         }
     }
 
+    info(userId: string): MembershipOp {
+        const isJoined = this.joinedUsers.has(userId)
+        if (isJoined) return MembershipOp.SO_JOIN
+        const isInvited = this.invitedUsers.has(userId)
+        if (isInvited) return MembershipOp.SO_INVITE
+        const hasLeft = this.leftUsers.has(userId)
+        if (hasLeft) return MembershipOp.SO_LEAVE
+        return MembershipOp.SO_UNSPECIFIED
+    }
+
     participants(): Set<string> {
         return new Set([...this.joinedUsers, ...this.invitedUsers, ...this.leftUsers])
     }

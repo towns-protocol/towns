@@ -6,6 +6,7 @@ import {IArchitectBase} from "./IArchitect.sol";
 import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
 import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
+import {IRuleEntitlementV2} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
 import {IRoles, IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
 import {IChannel} from "contracts/src/spaces/facets/channels/IChannel.sol";
 import {IEntitlementsManager} from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
@@ -134,7 +135,8 @@ abstract contract ArchitectBase is Factory, IArchitectBase, PricingModulesBase {
   function _setImplementations(
     ISpaceOwner spaceToken,
     IUserEntitlement userEntitlement,
-    IRuleEntitlement ruleEntitlement
+    IRuleEntitlementV2 ruleEntitlement,
+    IRuleEntitlement legacyRuleEntitlement
   ) internal {
     if (address(spaceToken).code.length == 0) revert Architect__NotContract();
     if (address(userEntitlement).code.length == 0)
@@ -146,6 +148,7 @@ abstract contract ArchitectBase is Factory, IArchitectBase, PricingModulesBase {
     ds.spaceToken = spaceToken;
     ds.userEntitlement = userEntitlement;
     ds.ruleEntitlement = ruleEntitlement;
+    ds.legacyRuleEntitlement = legacyRuleEntitlement;
   }
 
   function _getImplementations()
@@ -154,12 +157,18 @@ abstract contract ArchitectBase is Factory, IArchitectBase, PricingModulesBase {
     returns (
       ISpaceOwner spaceToken,
       IUserEntitlement userEntitlementImplementation,
-      IRuleEntitlement ruleEntitlementImplementation
+      IRuleEntitlementV2 ruleEntitlementImplementation,
+      IRuleEntitlement legacyRuleEntitlement
     )
   {
     ImplementationStorage.Layout storage ds = ImplementationStorage.layout();
 
-    return (ds.spaceToken, ds.userEntitlement, ds.ruleEntitlement);
+    return (
+      ds.spaceToken,
+      ds.userEntitlement,
+      ds.ruleEntitlement,
+      ds.legacyRuleEntitlement
+    );
   }
 
   // =============================================================

@@ -51,22 +51,6 @@
         "name": "Introspection_NotSupported"
       },
       {
-        "inputs": [
-          {
-            "internalType": "address",
-            "name": "account",
-            "type": "address"
-          }
-        ],
-        "type": "error",
-        "name": "Ownable__NotOwner"
-      },
-      {
-        "inputs": [],
-        "type": "error",
-        "name": "Ownable__ZeroAddress"
-      },
-      {
         "inputs": [],
         "type": "error",
         "name": "Pausable__NotPaused"
@@ -129,25 +113,6 @@
         "inputs": [
           {
             "internalType": "address",
-            "name": "previousOwner",
-            "type": "address",
-            "indexed": true
-          },
-          {
-            "internalType": "address",
-            "name": "newOwner",
-            "type": "address",
-            "indexed": true
-          }
-        ],
-        "type": "event",
-        "name": "OwnershipTransferred",
-        "anonymous": false
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "address",
             "name": "account",
             "type": "address",
             "indexed": false
@@ -196,28 +161,7 @@
         "anonymous": false
       },
       {
-        "inputs": [
-          {
-            "internalType": "contract ISpaceOwner",
-            "name": "ownerImplementation",
-            "type": "address"
-          },
-          {
-            "internalType": "contract IUserEntitlement",
-            "name": "userEntitlementImplementation",
-            "type": "address"
-          },
-          {
-            "internalType": "contract IRuleEntitlement",
-            "name": "ruleEntitlementImplementation",
-            "type": "address"
-          },
-          {
-            "internalType": "contract IRuleEntitlement",
-            "name": "legacyRuleEntitlement",
-            "type": "address"
-          }
-        ],
+        "inputs": [],
         "stateMutability": "nonpayable",
         "type": "function",
         "name": "__Architect_init"
@@ -428,89 +372,6 @@
             "type": "address"
           }
         ]
-      },
-      {
-        "inputs": [],
-        "stateMutability": "view",
-        "type": "function",
-        "name": "getSpaceArchitectImplementations",
-        "outputs": [
-          {
-            "internalType": "contract ISpaceOwner",
-            "name": "spaceToken",
-            "type": "address"
-          },
-          {
-            "internalType": "contract IUserEntitlement",
-            "name": "userEntitlementImplementation",
-            "type": "address"
-          },
-          {
-            "internalType": "contract IRuleEntitlement",
-            "name": "ruleEntitlementImplementation",
-            "type": "address"
-          }
-        ]
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "uint256",
-            "name": "tokenId",
-            "type": "uint256"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function",
-        "name": "getSpaceByTokenId",
-        "outputs": [
-          {
-            "internalType": "address",
-            "name": "",
-            "type": "address"
-          }
-        ]
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "address",
-            "name": "space",
-            "type": "address"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function",
-        "name": "getTokenIdBySpace",
-        "outputs": [
-          {
-            "internalType": "uint256",
-            "name": "",
-            "type": "uint256"
-          }
-        ]
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "contract ISpaceOwner",
-            "name": "spaceToken",
-            "type": "address"
-          },
-          {
-            "internalType": "contract IUserEntitlement",
-            "name": "userEntitlementImplementation",
-            "type": "address"
-          },
-          {
-            "internalType": "contract IRuleEntitlement",
-            "name": "ruleEntitlementImplementation",
-            "type": "address"
-          }
-        ],
-        "stateMutability": "nonpayable",
-        "type": "function",
-        "name": "setSpaceArchitectImplementations"
       }
     ],
     "devdoc": {
@@ -530,6 +391,7 @@
       "@prb/math/=lib/@prb/math/src/",
       "@prb/test/=lib/@prb/test/src/",
       "account-abstraction/=lib/account-abstraction/contracts/",
+      "base64/=lib/base64/",
       "ds-test/=lib/ds-test/src/",
       "forge-std/=lib/forge-std/src/",
       "hardhat-deploy/=lib/hardhat-deploy/",
@@ -611,22 +473,6 @@
       "urls": [
         "bzz-raw://d5be56219a4ab8d9709db7ffb74c73ee1be268b8f77308ef7a72d8f2820fb30b",
         "dweb:/ipfs/QmeTuAZMwRf3uRHMtHEd7M7LvGyRAEmoCikF4Pb6dCAKXd"
-      ],
-      "license": "MIT"
-    },
-    "contracts/src/diamond/facets/ownable/OwnableBase.sol": {
-      "keccak256": "0x272abaecc104d5f23d77a623cf1548620d24b0f447eb2a12144e27561ff489f2",
-      "urls": [
-        "bzz-raw://fcb8c20ff7346bdc5dba82e6680cc0ea64087460a12153e3b6c3416f6addf875",
-        "dweb:/ipfs/QmfEEufJBzudSDekQteQkb3CzmnzUPT3GDhNgVpHNC9xaf"
-      ],
-      "license": "MIT"
-    },
-    "contracts/src/diamond/facets/ownable/OwnableStorage.sol": {
-      "keccak256": "0xda650482ce08c04110366cb01408aaabd01383d9c504b7cacfb2674aae688dcd",
-      "urls": [
-        "bzz-raw://694f42ffb353fccaa1eadf91dee3a3cee7253e3f357bcba2b175fd7be701e27e",
-        "dweb:/ipfs/QmPxxVerATSYrNLp7snnSvNVsbLPm1wzHULhBbtR333eik"
       ],
       "license": "MIT"
     },
@@ -807,10 +653,10 @@
       "license": "MIT"
     },
     "contracts/src/factory/facets/architect/ImplementationStorage.sol": {
-      "keccak256": "0x8723f6419d43068a91f571a3329474e97c7c446216703ab997cc93daca4960a9",
+      "keccak256": "0x0f2132b798bc62a7d8973e219ab38bcddd9ea4d096e7bd16d3d6ad231f0b5ee9",
       "urls": [
-        "bzz-raw://bb856d4d9d358c77ca7b9abdf073b5961b704a1fa6a9488111729a2a3a5978a3",
-        "dweb:/ipfs/QmTLungC3a3s7Mjbt54SN4PexJaPgttQuLu34nsFWgb1jh"
+        "bzz-raw://4a10eab69387dd4d66d6b069db4a6c6f2e1284afa79a7d21d4dab4286b9c1696",
+        "dweb:/ipfs/QmW4yWp1REDHYvvypN35E6PpjTKbaxzVvhfGqkoqCcgF6m"
       ],
       "license": "MIT"
     },
@@ -1031,26 +877,26 @@
       "license": "MIT"
     },
     "contracts/test/mocks/legacy/IMockLegacyArchitect.sol": {
-      "keccak256": "0xfb3e446f9e8b75cbf3bfaad6af6eb9a87d40597434c4f4f3a6e3254b1f480132",
+      "keccak256": "0xda4956d5384fc1493ead294982a1e30d70f321093c03a3eaedba4114b4ea6433",
       "urls": [
-        "bzz-raw://55b7cbdffbb555bf0fa2ddb8c08f7ab31062bf4bea82054ded785bb9296601e5",
-        "dweb:/ipfs/QmeYKg3fSpe2SLAKEJuPYMNWHeEoEvKAJViKqyzDu92mHo"
+        "bzz-raw://8a3edbce99bb79f5dd48e5db23fbd19db3e30ecb02084db05c494b9fcc19fc4f",
+        "dweb:/ipfs/QmYZixqcSWawJb7664ArqyHvcRa1cFCxdLKC1naGKyyBMK"
       ],
       "license": "MIT"
     },
     "contracts/test/mocks/legacy/MockLegacyArchitect.sol": {
-      "keccak256": "0x78ab26b6aae235cda9ff95f616225e54958f717e3aceaea8869a23a9e174b967",
+      "keccak256": "0x805daac63e5de4a1352d2fb77c05c11ffb28a21cf5e282662bf1f39954d3cb87",
       "urls": [
-        "bzz-raw://f3b4d72eceac8374733dd296be00749e283b2043c3ffa853a9ac4fd3ada568c2",
-        "dweb:/ipfs/QmeSzzWWgw9BjUzqWUHcNxq9t41vzaXVAgUzwtSjPTBUY7"
+        "bzz-raw://015927f0a4dda7b68cc9baccffb31a9a66ff18e14cb670576e8f074ce25c6891",
+        "dweb:/ipfs/QmWWrNkvpjrnxd3CVVdHpxDNiWUBPXjh9EdYHqD92RKbqU"
       ],
       "license": "MIT"
     },
     "contracts/test/mocks/legacy/MockLegacyArchitectBase.sol": {
-      "keccak256": "0xf1f3cdd09a76d9f0e0d1895ce73a5d0d09cba056df8a661c5224b7362088fa7d",
+      "keccak256": "0x464db19dc945ad7dfa7fabd5725638e13ca0f766a925710d80960b58abca215a",
       "urls": [
-        "bzz-raw://d8ae0f51be4daa2583cbae331cac8ea20eaf2bce123693aded0c3f5d02b86079",
-        "dweb:/ipfs/QmQWgi6tqD7AFvpEbnPHHx8jA8YScSpWiohETAWKKWNcnd"
+        "bzz-raw://e5c4f9ba6bab4181bb76f3e44b8f8436b84e98e33fef02e202b385c34a248b8a",
+        "dweb:/ipfs/QmUMaQgKmKDnFcPfXJAnMn4mPmchJ2s6sFT2KUXy4ZND14"
       ],
       "license": "MIT"
     },

@@ -4,6 +4,25 @@ pragma solidity ^0.8.23;
 import {IRuleEntitlementBase} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
 
 library RuleEntitlementUtil {
+  function getLegacyNoopRuleData()
+    internal
+    pure
+    returns (IRuleEntitlementBase.RuleData memory data)
+  {
+    data = IRuleEntitlementBase.RuleData({
+      operations: new IRuleEntitlementBase.Operation[](1),
+      checkOperations: new IRuleEntitlementBase.CheckOperation[](0),
+      logicalOperations: new IRuleEntitlementBase.LogicalOperation[](0)
+    });
+    IRuleEntitlementBase.Operation memory noop = IRuleEntitlementBase
+      .Operation({
+        opType: IRuleEntitlementBase.CombinedOperationType.NONE,
+        index: 0
+      });
+
+    data.operations[0] = noop;
+  }
+
   function getNoopRuleData()
     internal
     pure

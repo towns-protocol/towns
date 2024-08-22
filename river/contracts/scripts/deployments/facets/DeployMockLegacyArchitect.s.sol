@@ -19,22 +19,6 @@ contract DeployMockLegacyArchitect is FacetHelper, Deployer {
     return MockLegacyArchitect.__Architect_init.selector;
   }
 
-  function makeInitData(
-    address _spaceOwnerToken,
-    address _userEntitlement,
-    address _ruleEntitlement,
-    address _legacyRuleEntitlement
-  ) public pure returns (bytes memory) {
-    return
-      abi.encodeWithSelector(
-        initializer(),
-        _spaceOwnerToken,
-        _userEntitlement,
-        _ruleEntitlement,
-        _legacyRuleEntitlement
-      );
-  }
-
   function versionName() public pure override returns (string memory) {
     return "mockLegacyArchitectFacet";
   }

@@ -184,8 +184,8 @@ func (params *aeParams) canAddEvent() ruleBuilderAE {
 		return params.canAddSpacePayload(payload)
 	case *StreamEvent_UserPayload:
 		return params.canAddUserPayload(payload)
-	case *StreamEvent_UserDeviceKeyPayload:
-		return params.canAddUserDeviceKeyPayload(payload)
+	case *StreamEvent_UserMetadataPayload:
+		return params.canAddUserMetadataPayload(payload)
 	case *StreamEvent_UserSettingsPayload:
 		return params.canAddUserSettingsPayload(payload)
 	case *StreamEvent_UserInboxPayload:
@@ -320,12 +320,12 @@ func (params *aeParams) canAddUserPayload(payload *StreamEvent_UserPayload) rule
 	}
 }
 
-func (params *aeParams) canAddUserDeviceKeyPayload(payload *StreamEvent_UserDeviceKeyPayload) ruleBuilderAE {
-	switch content := payload.UserDeviceKeyPayload.Content.(type) {
-	case *UserDeviceKeyPayload_Inception_:
+func (params *aeParams) canAddUserMetadataPayload(payload *StreamEvent_UserMetadataPayload) ruleBuilderAE {
+	switch content := payload.UserMetadataPayload.Content.(type) {
+	case *UserMetadataPayload_Inception_:
 		return aeBuilder().
 			fail(invalidContentType(content))
-	case *UserDeviceKeyPayload_EncryptionDevice_:
+	case *UserMetadataPayload_EncryptionDevice_:
 		return aeBuilder().
 			check(params.creatorIsMember)
 	default:

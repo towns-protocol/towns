@@ -14,7 +14,6 @@ import {ITokenOwnableBase} from "contracts/src/diamond/facets/ownable/token/ITok
 import {IManagedProxyBase} from "contracts/src/diamond/proxy/managed/IManagedProxy.sol";
 import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
 import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
-import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -133,37 +132,6 @@ abstract contract LegacyArchitectBase is Factory, ILegacyArchitectBase {
   function _setLegacyRuleEntitlement(IRuleEntitlement entitlement) internal {
     ImplementationStorage.Layout storage ds = ImplementationStorage.layout();
     ds.legacyRuleEntitlement = entitlement;
-  }
-
-  function _setImplementations(
-    ISpaceOwner spaceToken,
-    IUserEntitlement userEntitlement,
-    IRuleEntitlement ruleEntitlement
-  ) internal {
-    if (address(spaceToken).code.length == 0) revert Architect__NotContract();
-    if (address(userEntitlement).code.length == 0)
-      revert Architect__NotContract();
-    if (address(ruleEntitlement).code.length == 0)
-      revert Architect__NotContract();
-
-    ImplementationStorage.Layout storage ds = ImplementationStorage.layout();
-    ds.spaceToken = spaceToken;
-    ds.userEntitlement = userEntitlement;
-    ds.ruleEntitlement = ruleEntitlement;
-  }
-
-  function _getImplementations()
-    internal
-    view
-    returns (
-      ISpaceOwner spaceToken,
-      IUserEntitlement userEntitlementImplementation,
-      IRuleEntitlement ruleEntitlementImplementation
-    )
-  {
-    ImplementationStorage.Layout storage ds = ImplementationStorage.layout();
-
-    return (ds.spaceToken, ds.userEntitlement, ds.ruleEntitlement);
   }
 
   // =============================================================

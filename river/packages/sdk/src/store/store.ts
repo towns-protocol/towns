@@ -121,7 +121,7 @@ export class Store {
             this.newTransactionGroup(name)
             const result = fn()
             this.commitTransaction().catch((e) => {
-                log(`uncaught commitTransaction error in groun ${name}`, e)
+                log(`uncaught commitTransaction error in group ${name}`, e)
                 throw e
             })
             return result

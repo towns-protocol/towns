@@ -15,7 +15,7 @@ import { PersistedObservable } from '../observable/persistedObservable'
 import { Observable } from '../observable/observable'
 import { UserInboxModel } from './user/models/userInbox'
 import { DB_MODELS, DB_VERSION } from './db'
-import { UserDeviceKeysModel } from './user/models/userDeviceKeys'
+import { UserMetadataModel } from './user/models/userMetadata'
 import { UserSettingsModel } from './user/models/userSettings'
 import { Spaces, SpacesModel } from './spaces/spaces'
 import { AuthStatus } from './river-connection/models/authStatus'
@@ -54,7 +54,7 @@ export class SyncAgent {
         user: PersistedObservable<UserModel>
         userMemberships: PersistedObservable<UserMembershipsModel>
         userInbox: PersistedObservable<UserInboxModel>
-        userDeviceKeys: PersistedObservable<UserDeviceKeysModel>
+        userMetadata: PersistedObservable<UserMetadataModel>
         userSettings: PersistedObservable<UserSettingsModel>
     }
 
@@ -99,7 +99,7 @@ export class SyncAgent {
             user: this.user,
             userMemberships: this.user.memberships,
             userInbox: this.user.inbox,
-            userDeviceKeys: this.user.deviceKeys,
+            userMetadata: this.user.deviceKeys,
             userSettings: this.user.settings,
         }
     }

@@ -100,9 +100,9 @@ func make_SnapshotContent(iInception IsInceptionPayload) (IsSnapshot_Content, er
 				Inception: inception,
 			},
 		}, nil
-	case *UserDeviceKeyPayload_Inception:
-		return &Snapshot_UserDeviceKeyContent{
-			UserDeviceKeyContent: &UserDeviceKeyPayload_Snapshot{
+	case *UserMetadataPayload_Inception:
+		return &Snapshot_UserMetadataContent{
+			UserMetadataContent: &UserMetadataPayload_Snapshot{
 				Inception: inception,
 			},
 		}, nil
@@ -123,7 +123,7 @@ func make_SnapshotMembers(iInception IsInceptionPayload, creatorAddress []byte) 
 	}
 
 	switch inception := iInception.(type) {
-	case *UserPayload_Inception, *UserSettingsPayload_Inception, *UserInboxPayload_Inception, *UserDeviceKeyPayload_Inception:
+	case *UserPayload_Inception, *UserSettingsPayload_Inception, *UserInboxPayload_Inception, *UserMetadataPayload_Inception:
 		// for all user streams, get the address from the stream id
 		userAddress, err := shared.GetUserAddressFromStreamIdBytes(iInception.GetStreamId())
 		if err != nil {
@@ -169,8 +169,8 @@ func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent, miniblockNum int64
 		return update_Snapshot_User(iSnapshot, payload.UserPayload)
 	case *StreamEvent_UserSettingsPayload:
 		return update_Snapshot_UserSettings(iSnapshot, payload.UserSettingsPayload)
-	case *StreamEvent_UserDeviceKeyPayload:
-		return update_Snapshot_UserDeviceKey(iSnapshot, payload.UserDeviceKeyPayload)
+	case *StreamEvent_UserMetadataPayload:
+		return update_Snapshot_UserDeviceKey(iSnapshot, payload.UserMetadataPayload)
 	case *StreamEvent_UserInboxPayload:
 		return update_Snapshot_UserInbox(iSnapshot, payload.UserInboxPayload, miniblockNum)
 	case *StreamEvent_MemberPayload:
@@ -345,38 +345,38 @@ func update_Snapshot_UserSettings(iSnapshot *Snapshot, userSettingsPayload *User
 	}
 }
 
-func update_Snapshot_UserDeviceKey(iSnapshot *Snapshot, userDeviceKeyPayload *UserDeviceKeyPayload) error {
-	snapshot := iSnapshot.Content.(*Snapshot_UserDeviceKeyContent)
+func update_Snapshot_UserDeviceKey(iSnapshot *Snapshot, userMetadataPayload *UserMetadataPayload) error {
+	snapshot := iSnapshot.Content.(*Snapshot_UserMetadataContent)
 	if snapshot == nil {
 		return RiverError(Err_INVALID_ARGUMENT, "blockheader snapshot is not a user device key snapshot")
 	}
-	switch content := userDeviceKeyPayload.Content.(type) {
-	case *UserDeviceKeyPayload_Inception_:
+	switch content := userMetadataPayload.Content.(type) {
+	case *UserMetadataPayload_Inception_:
 		return RiverError(Err_INVALID_ARGUMENT, "cannot update blockheader with inception event")
-	case *UserDeviceKeyPayload_EncryptionDevice_:
-		if snapshot.UserDeviceKeyContent.EncryptionDevices == nil {
-			snapshot.UserDeviceKeyContent.EncryptionDevices = make([]*UserDeviceKeyPayload_EncryptionDevice, 0)
+	case *UserMetadataPayload_EncryptionDevice_:
+		if snapshot.UserMetadataContent.EncryptionDevices == nil {
+			snapshot.UserMetadataContent.EncryptionDevices = make([]*UserMetadataPayload_EncryptionDevice, 0)
 		}
 		// filter out the key if it already exists
 		i := 0
-		for _, key := range snapshot.UserDeviceKeyContent.EncryptionDevices {
+		for _, key := range snapshot.UserMetadataContent.EncryptionDevices {
 			if key.DeviceKey != content.EncryptionDevice.DeviceKey {
-				snapshot.UserDeviceKeyContent.EncryptionDevices[i] = key
+				snapshot.UserMetadataContent.EncryptionDevices[i] = key
 				i++
 			}
 		}
-		if i == len(snapshot.UserDeviceKeyContent.EncryptionDevices)-1 {
+		if i == len(snapshot.UserMetadataContent.EncryptionDevices)-1 {
 			// just an inplace sort operation
-			snapshot.UserDeviceKeyContent.EncryptionDevices[i] = content.EncryptionDevice
+			snapshot.UserMetadataContent.EncryptionDevices[i] = content.EncryptionDevice
 		} else {
 			// truncate and stick the new key on the end
 			MAX_DEVICES := 10
 			startIndex := max(0, i-MAX_DEVICES)
-			snapshot.UserDeviceKeyContent.EncryptionDevices = append(snapshot.UserDeviceKeyContent.EncryptionDevices[startIndex:i], content.EncryptionDevice)
+			snapshot.UserMetadataContent.EncryptionDevices = append(snapshot.UserMetadataContent.EncryptionDevices[startIndex:i], content.EncryptionDevice)
 		}
 		return nil
 	default:
-		return RiverError(Err_INVALID_ARGUMENT, "unknown user device key payload type %T", userDeviceKeyPayload.Content)
+		return RiverError(Err_INVALID_ARGUMENT, "unknown user device key payload type %T", userMetadataPayload.Content)
 	}
 }
 

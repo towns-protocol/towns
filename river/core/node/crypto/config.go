@@ -83,7 +83,7 @@ func (m MinSnapshotEventsSettings) ForType(streamType byte) uint64 {
 		return m.UserSettings
 	case shared.STREAM_USER_BIN:
 		return m.User
-	case shared.STREAM_USER_DEVICE_KEY_BIN:
+	case shared.STREAM_USER_METADATA_KEY_BIN:
 		return m.UserDevice
 	default:
 		return m.Default

@@ -41,25 +41,25 @@ contract InteractAlpha is Interaction, DiamondHelper, IDiamondLoupeBase {
     removeRemoteFacets(deployer, spaceFactory);
     removeRemoteFacets(deployer, baseRegistry);
 
-    // // Deploy Space
+    // Deploy Space
     deploySpace.diamondInitParams(deployer);
     newCuts = deploySpace.getCuts();
     vm.broadcast(deployer);
     IDiamondCut(space).diamondCut(newCuts, address(0), "");
 
-    // // Deploy Space Owner
+    // Deploy Space Owner
     deploySpaceOwner.diamondInitParams(deployer);
     newCuts = deploySpaceOwner.getCuts();
     vm.broadcast(deployer);
     IDiamondCut(spaceOwner).diamondCut(newCuts, address(0), "");
 
-    // // Deploy Space Factory
+    // Deploy Space Factory
     deploySpaceFactory.diamondInitParams(deployer);
     newCuts = deploySpaceFactory.getCuts();
     vm.broadcast(deployer);
     IDiamondCut(spaceFactory).diamondCut(newCuts, address(0), "");
 
-    // // Deploy Base Registry
+    // Deploy Base Registry
     deployBaseRegistry.diamondInitParams(deployer);
     newCuts = deployBaseRegistry.getCuts();
     vm.broadcast(deployer);
