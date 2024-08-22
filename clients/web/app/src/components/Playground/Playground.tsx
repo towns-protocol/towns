@@ -286,7 +286,7 @@ export const Playground = () => {
                                     value: 'multiple',
                                     title: 'Token holders',
                                     description: 'People who hold a specific token',
-                                    children: () =>
+                                    children:
                                         watch('someProp') === 'multiple' ? (
                                             <Box padding="lg">{getValues().someProp}</Box>
                                         ) : null,

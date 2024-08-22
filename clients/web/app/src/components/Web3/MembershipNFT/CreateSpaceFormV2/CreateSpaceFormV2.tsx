@@ -240,6 +240,7 @@ function CreateSpaceFormV2WithoutAuth() {
                     }
 
                     const isEveryoneMembership = membershipType === 'everyone'
+                    const isTokenFieldTouched = _form.formState.touchedFields.tokensGatingMembership
 
                     return (
                         <FormProvider {..._form}>
@@ -341,11 +342,13 @@ function CreateSpaceFormV2WithoutAuth() {
                                                             tokensGatingMembership={
                                                                 tokensGatingMembership
                                                             }
-                                                            hasError={Boolean(
-                                                                _form.formState.errors[
-                                                                    'tokensGatingMembership'
-                                                                ],
-                                                            )}
+                                                            hasError={
+                                                                Boolean(
+                                                                    _form.formState.errors[
+                                                                        'tokensGatingMembership'
+                                                                    ],
+                                                                ) && !!isTokenFieldTouched
+                                                            }
                                                             title="For"
                                                             subtitle={
                                                                 isEveryoneMembership

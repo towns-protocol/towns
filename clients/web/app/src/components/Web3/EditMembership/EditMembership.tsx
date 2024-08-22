@@ -34,7 +34,7 @@ export function EditMembership() {
                     <Stack gap="paragraph">
                         <Text>Max Memberships</Text>
                         <Text color="gray2" size="sm">
-                            Limit how many people can join.
+                            Limit how many people can join
                         </Text>
                     </Stack>
                     <Stack maxWidth="x15">

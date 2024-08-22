@@ -12,7 +12,7 @@ type Props<T extends FieldValues> = {
     title: string
     description: string
     selected?: boolean
-    children?: () => React.ReactNode
+    children?: React.ReactNode
     name: string
     onClick?: () => void
 } & Partial<UseFormReturn<T>>
@@ -22,7 +22,7 @@ export const RadioCard = <T extends FieldValues>(props: Props<T>) => {
 
     return (
         <Stack padding gap background="level2" cursor="pointer" borderRadius="sm" onClick={onClick}>
-            <Stack horizontal gap justifyContent="spaceBetween" alignItems="start">
+            <Stack horizontal gap justifyContent="spaceBetween" alignItems="center">
                 <Stack gap="paragraph">
                     <Paragraph>{title}</Paragraph>
                     <Paragraph size="sm" color="gray2">
@@ -50,7 +50,7 @@ export const RadioCard = <T extends FieldValues>(props: Props<T>) => {
                     }}
                 />
             </Stack>
-            {children?.() ?? <></>}
+            {children}
         </Stack>
     )
 }

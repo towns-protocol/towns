@@ -2,14 +2,14 @@ import React, { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState }
 import { z } from 'zod'
 import { TokenType } from '@token-worker/types'
 import { TokenDataWithChainId } from '@components/Tokens/types'
-import { Box, Button, Icon, IconButton, Text, TextField } from '@ui'
+import { Box, Button, Icon, IconButton, Stack, Text, TextField } from '@ui'
 import { useTokenMetadataAcrossNetworks } from 'api/lib/collectionMetadata'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { useClickedOrFocusedOutside } from 'hooks/useClickedOrFocusedOutside'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { isTouch } from 'hooks/useDevice'
 import { TokenOption } from './TokenOption'
-import { TokenSelection } from './TokenSelection'
+import { TokenSelectionDisplay, TokenSelectionInput } from './TokenSelection'
 
 type Props = {
     isValidationError: boolean
@@ -161,14 +161,14 @@ export function TokenSelector(props: Props) {
             {anyResultIsERC1155OrERC20 && (
                 <Box>
                     <Text size="sm" color="error">
-                        We currently only support ERC-71 tokens.
+                        We currently only support ERC-721 tokens.
                     </Text>
                 </Box>
             )}
 
             <Box gap="sm">
-                {Array.from(selection).map((token) => (
-                    <TokenSelection
+                {selection.map((token) => (
+                    <TokenSelectionInput
                         key={token.chainId + token.data.address}
                         onDelete={onDelete}
                         onEdit={onEdit}
@@ -183,7 +183,7 @@ export function TokenSelector(props: Props) {
                 </Box>
             )}
 
-            {knownTokens?.length ? (
+            {Array.isArray(knownTokens) && knownTokens.length > 0 ? (
                 <TokenOptions tokens={knownTokens} onAddItem={onAddItem} />
             ) : showUnknownTokensList ? (
                 <>
@@ -286,7 +286,6 @@ function TokenEditor(props: {
     onHide: () => void
 }) {
     const { token, onUpdate, onHide } = props
-    const { address } = token.data
     const [errorMessage, setErrorMessage] = useState<string | undefined>()
     const fieldRef = useRef<HTMLInputElement>(null)
     const onOpenRef = useRef(false)
@@ -332,74 +331,56 @@ function TokenEditor(props: {
     }, [token, validate])
 
     return (
-        <>
-            <IconButton padding="xs" alignSelf="end" icon="close" onClick={onHide} />
-            <Box centerContent gap="md" maxWidth="400">
-                <Box>
-                    <Text strong size="lg">
-                        Edit Token
-                    </Text>
-                </Box>
-                <Box gap alignSelf="start">
-                    <Text>Contract Address</Text>
-                    {address}
-                </Box>
+        <Box centerContent gap="md" padding="md" width="100%">
+            <Stack
+                justifyContent="spaceBetween"
+                flexDirection="row"
+                alignItems="center"
+                width="100%"
+            >
+                <Box width="x3" />
+                <Text strong size="lg">
+                    Edit Token
+                </Text>
+                <IconButton padding="xs" icon="close" onClick={onHide} />
+            </Stack>
 
-                <Box gap alignSelf="start" width="100%">
-                    <Text>Quantity</Text>
-                    <TextField
-                        ref={fieldRef}
-                        tone="neutral"
-                        background="level2"
-                        placeholder="Enter a quantity"
-                        minLength={1}
-                        defaultValue={token.data.quantity?.toString()}
-                        onChange={onChange}
-                    />
-                </Box>
-                <Text color="error">{errorMessage}&nbsp;</Text>
-                <Button
-                    tone="cta1"
-                    disabled={!!errorMessage}
-                    onClick={() => {
-                        onUpdate({
-                            ...token,
-                            data: {
-                                ...token.data,
-                                quantity:
-                                    fieldRef.current?.value && +fieldRef.current.value > 0
-                                        ? +fieldRef.current.value
-                                        : token.data.quantity,
-                            },
-                        })
-                        onHide()
-                    }}
-                >
-                    Update
-                </Button>
+            <TokenSelectionDisplay {...token} />
 
-                {/* <Box horizontal gap="sm">
-                    <TokenImage imgSrc={imgSrc} width="x4" />
-                    <Box>
-                        <Box
-                            display="block"
-                            overflow="hidden"
-                            whiteSpace="nowrap"
-                            style={{
-                                textOverflow: 'ellipsis',
-                            }}
-                        >
-                            {label ?? 'Unknown NFT'}
-                        </Box>
-                        {address && (
-                            <Box color="gray2" fontSize="sm">
-                                {address}
-                            </Box>
-                        )}
-                    </Box>
-                </Box> */}
+            <Box gap alignSelf="start" width="100%">
+                <Text>Quantity</Text>
+                <TextField
+                    ref={fieldRef}
+                    tone="neutral"
+                    background="level2"
+                    placeholder="Enter a quantity"
+                    minLength={1}
+                    defaultValue={token.data.quantity?.toString()}
+                    onChange={onChange}
+                />
             </Box>
-        </>
+            {errorMessage && <Text color="error">{errorMessage}</Text>}
+
+            <Button
+                tone="cta1"
+                disabled={!!errorMessage}
+                onClick={() => {
+                    onUpdate({
+                        ...token,
+                        data: {
+                            ...token.data,
+                            quantity:
+                                fieldRef.current?.value && +fieldRef.current.value > 0
+                                    ? +fieldRef.current.value
+                                    : token.data.quantity,
+                        },
+                    })
+                    onHide()
+                }}
+            >
+                Update
+            </Button>
+        </Box>
     )
 }
 

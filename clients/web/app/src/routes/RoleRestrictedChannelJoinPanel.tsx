@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router'
 import {
+    Address,
     BlockchainTransactionType,
     EVERYONE_ADDRESS,
     Permission,
@@ -17,6 +18,7 @@ import {
     useUser,
 } from 'use-towns-client'
 import headlessToast, { Toast } from 'react-hot-toast/headless'
+import { utils } from 'ethers'
 import { Panel } from '@components/Panel/Panel'
 import { Box, Button, Icon, MotionIcon, Pill, Stack, Text } from '@ui'
 import { Accordion } from 'ui/components/Accordion/Accordion'
@@ -25,7 +27,7 @@ import { Avatar } from '@components/Avatar/Avatar'
 import { TokenEntitlement } from '@components/Tokens/TokenSelector/tokenSchemas'
 import { TokenImage } from '@components/Tokens/TokenSelector/TokenImage'
 import { useTokenMetadataForChainId } from 'api/lib/collectionMetadata'
-import { TokenDetails } from '@components/Web3/TokenDetails'
+import { TokenSelectionDisplay } from '@components/Tokens/TokenSelector/TokenSelection'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { useConnectThenLink } from '@components/Web3/WalletLinkingPanel'
 import { PrivyWrapper } from 'privy/PrivyProvider'
@@ -349,7 +351,6 @@ function RoleAccordion(props: {
                             <TokenDetailsWithWalletMatch
                                 key={token.address}
                                 token={token}
-                                tone={tone}
                                 tokensInWallet={showQualifiedStatus ? tokensInWallet : undefined}
                             />
                         ))}
@@ -363,13 +364,32 @@ function RoleAccordion(props: {
 export function TokenDetailsWithWalletMatch(props: {
     token: TokenEntitlement
     tokensInWallet: ReturnType<typeof useTokenBalances>['data']
-    tone?: 'default' | 'lighter'
 }) {
-    const { token, tokensInWallet, tone } = props
+    const { token, tokensInWallet } = props
     const match = tokensInWallet?.find((t) => t.data?.tokenAddress === token.address)
     const ownsToken = match?.data ? match.data.status === 'success' : undefined
+    const { data: tokenMetadata } = useTokenMetadataForChainId(token.address, token.chainId)
 
-    return <TokenDetails tone={tone} token={token} userOwnsToken={ownsToken} />
+    const isAddress = utils.isAddress(token.address)
+
+    if (!isAddress) {
+        return null
+    }
+
+    return (
+        <TokenSelectionDisplay
+            elevate
+            data={{
+                ...token,
+                imgSrc: tokenMetadata?.data.imgSrc ?? '',
+                label: tokenMetadata?.data.label ?? token.address,
+                address: token.address as Address,
+                openSeaCollectionUrl: tokenMetadata?.data.openSeaCollectionUrl,
+            }}
+            chainId={token.chainId}
+            userOwnsToken={ownsToken}
+        />
+    )
 }
 
 function UserList({ users }: { users: string[] }) {

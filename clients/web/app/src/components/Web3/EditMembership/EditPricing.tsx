@@ -80,7 +80,7 @@ export function EditPricing({
                     name="membershipPricingType"
                     value="dynamic"
                     title="Dynamic"
-                    description="Free for the first 100 members, then logarithmically increasing price."
+                    description="Free for the first 100 members, then logarithmically increasing price"
                     onClick={() => onDynamicClick(formProps)}
                     {...formProps}
                 />
@@ -89,32 +89,23 @@ export function EditPricing({
                 name="membershipPricingType"
                 value="fixed"
                 title="Fixed"
-                description="Everyone pays the same price."
+                description="Everyone pays the same price"
                 onClick={() => onFixedClick(formProps)}
                 {...formProps}
             >
-                {() => {
-                    if (priceType !== 'fixed') {
-                        return null
-                    }
-                    return (
-                        <>
-                            <TextField
-                                autoFocus
-                                background="level3"
-                                autoComplete="one-time-code"
-                                {...regiserTextFieldResult}
-                                disabled={isLoadingMinMembershipPrice}
-                                border={
-                                    formProps.formState.errors['membershipCost']
-                                        ? 'negative'
-                                        : undefined
-                                }
-                                onChange={onCostChange}
-                            />
-                        </>
-                    )
-                }}
+                {priceType === 'fixed' ? (
+                    <TextField
+                        autoFocus
+                        background="level3"
+                        autoComplete="one-time-code"
+                        {...regiserTextFieldResult}
+                        disabled={isLoadingMinMembershipPrice}
+                        border={
+                            formProps.formState.errors['membershipCost'] ? 'negative' : undefined
+                        }
+                        onChange={onCostChange}
+                    />
+                ) : null}
             </RadioCard>
             {formState.errors['membershipCost'] ? (
                 <FadeInBox key="error">

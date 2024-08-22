@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react'
-import { UseFormReturn, useFormContext } from 'react-hook-form'
+import React, { useCallback, useMemo, useRef } from 'react'
+import { useFormContext } from 'react-hook-form'
 import { useConnectivity } from 'use-towns-client'
 import { useMultipleTokenMetadatasForChainIds } from 'api/lib/collectionMetadata'
 import { TokenDataWithChainId } from '@components/Tokens/types'
@@ -7,55 +7,37 @@ import { mapTokenOptionsToTokenDataStruct } from '@components/SpaceSettingsPanel
 import { ErrorMessage, RadioCard, Stack } from '@ui'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { TokenSelector } from '@components/Tokens/TokenSelector/TokenSelector'
-
 import { MembershipSettingsSchemaType } from '../MembershipNFT/CreateSpaceFormV2/CreateSpaceFormV2.schema'
 
 export function EditGating() {
     const { loggedInWalletAddress: wallet } = useConnectivity()
     const formProps = useFormContext<MembershipSettingsSchemaType>()
-    const setValue = formProps.setValue
-    const getValues = formProps.getValues
-    const isValid = !Object.values(formProps.formState.errors).length
+    const { setValue, getValues, watch, formState, reset } = formProps
+    const isValid = !Object.values(formState.errors).length
     const inputRef = useRef<HTMLInputElement>(null)
-    const [tokenFieldKey, setTokenFieldKey] = useState(0)
 
-    const onEveryoneClick = useCallback(
-        (formProps: UseFormReturn<MembershipSettingsSchemaType>) => {
-            formProps.setValue('membershipType', 'everyone', {
-                shouldValidate: true,
-            })
-            formProps.setValue('tokensGatingMembership', [], {
-                shouldValidate: true,
-            })
-            // reset token component so pills clear
-            setTokenFieldKey((prev) => prev + 1)
-        },
-        [],
-    )
+    const onEveryoneClick = useCallback(() => {
+        reset(
+            {
+                ...getValues(),
+                membershipType: 'everyone',
+                tokensGatingMembership: [],
+            },
+            { keepDefaultValues: true },
+        )
+    }, [reset, getValues])
 
-    const onTokensCardClick = useCallback(
-        (formProps: UseFormReturn<MembershipSettingsSchemaType>) => {
-            formProps.setValue('membershipType', 'tokenHolders', {
-                shouldValidate: true,
-            })
-            if (formProps.getValues('membershipType') === 'everyone') {
-                inputRef.current?.focus()
-            }
-        },
-        [],
-    )
+    const onTokensCardClick = useCallback(() => {
+        setValue('membershipType', 'tokenHolders')
+        if (getValues('membershipType') === 'tokenHolders') {
+            setTimeout(() => inputRef.current?.focus(), 0)
+        }
+    }, [setValue, getValues, inputRef])
 
     const initialTokenValues = useMemo(() => {
-        // if the everyone card was clicked while the panel was open, the token field is reset and shouldn't be prepopulated
-        if (tokenFieldKey > 0) {
-            return []
-        }
         const tokens = getValues('tokensGatingMembership')
-        if (tokens.length) {
-            return tokens
-        }
-        return []
-    }, [getValues, tokenFieldKey])
+        return tokens?.length > 0 ? tokens : []
+    }, [getValues])
 
     const { data: initialTokensData, isLoading: isLoadingInitialTokens } =
         useMultipleTokenMetadatasForChainIds(initialTokenValues)
@@ -74,6 +56,9 @@ export function EditGating() {
         return null
     }
 
+    const membershipType = watch('membershipType')
+    const isTokenFieldTouched = formState.touchedFields.tokensGatingMembership
+
     return (
         <Stack gap="sm">
             <Stack>
@@ -81,8 +66,8 @@ export function EditGating() {
                     name="membershipType"
                     value="everyone"
                     title="Everyone"
-                    description="Anyone with the town link may join your town."
-                    onClick={() => onEveryoneClick(formProps)}
+                    description="Anyone with the town link may join your town"
+                    onClick={onEveryoneClick}
                     {...formProps}
                 />
             </Stack>
@@ -92,32 +77,28 @@ export function EditGating() {
                     name="membershipType"
                     value="tokenHolders"
                     title="Gate access by digital assets"
-                    description="People must hold the following tokens to claim membership."
-                    onClick={() => onTokensCardClick(formProps)}
+                    description="Any of the following tokens must be held to claim membership"
+                    onClick={onTokensCardClick}
                     {...formProps}
                 >
-                    {() => {
-                        return isLoadingInitialTokens ? (
+                    {membershipType === 'tokenHolders' &&
+                        (isLoadingInitialTokens ? (
                             <Stack centerContent padding>
                                 <ButtonSpinner />
                             </Stack>
                         ) : (
-                            <>
-                                <Stack key={'tokens' + tokenFieldKey}>
-                                    <TokenSelector
-                                        key={'tokens' + tokenFieldKey}
-                                        isValidationError={
-                                            formProps.formState.errors.tokensGatingMembership !==
-                                            undefined
-                                        }
-                                        initialSelection={initialTokensData}
-                                        inputRef={inputRef}
-                                        onSelectionChange={onSelectedTokensChange}
-                                    />
-                                </Stack>
-                            </>
-                        )
-                    }}
+                            <Stack>
+                                <TokenSelector
+                                    isValidationError={
+                                        formState.errors.tokensGatingMembership !== undefined &&
+                                        !!isTokenFieldTouched
+                                    }
+                                    initialSelection={initialTokensData}
+                                    inputRef={inputRef}
+                                    onSelectionChange={onSelectedTokensChange}
+                                />
+                            </Stack>
+                        ))}
                 </RadioCard>
             )}
             <Stack>
@@ -125,15 +106,14 @@ export function EditGating() {
                     <>&nbsp;</>
                 ) : (
                     <>
-                        <ErrorMessage
-                            errors={formProps.formState.errors}
-                            fieldName="membershipType"
-                        />
+                        <ErrorMessage errors={formState.errors} fieldName="membershipType" />
 
-                        <ErrorMessage
-                            errors={formProps.formState.errors}
-                            fieldName="tokensGatingMembership"
-                        />
+                        {isTokenFieldTouched && membershipType === 'tokenHolders' && (
+                            <ErrorMessage
+                                errors={formState.errors}
+                                fieldName="tokensGatingMembership"
+                            />
+                        )}
                     </>
                 )}
             </Stack>
