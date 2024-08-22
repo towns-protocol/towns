@@ -283,25 +283,19 @@ export const MessageLayout = (props: Props) => {
                     )}
                     {sendStatus && <SendStatusIndicator status={sendStatus} />}
                 </Stack>
-                {!isTouch &&
-                    isChannelWritable &&
-                    channelId &&
-                    eventId &&
-                    isActive &&
-                    !isEditing &&
-                    isSelectable && (
-                        <MessageContextMenu
-                            canEdit={isEditable}
-                            canReact={isChannelReactable}
-                            canReply={canReply && isChannelWritable}
-                            channelId={channelId}
-                            eventId={eventId}
-                            isFocused={isFocused}
-                            isPinned={!!pin}
-                            spaceId={spaceId}
-                            threadParentId={threadParentId}
-                        />
-                    )}
+                {!isTouch && channelId && eventId && isActive && !isEditing && isSelectable && (
+                    <MessageContextMenu
+                        canEdit={isEditable}
+                        canReact={isChannelReactable}
+                        canReply={canReply && isChannelWritable}
+                        channelId={channelId}
+                        eventId={eventId}
+                        isFocused={isFocused}
+                        isPinned={!!pin}
+                        spaceId={spaceId}
+                        threadParentId={threadParentId}
+                    />
+                )}
             </Stack>
             {isModalSheetVisible &&
                 isTouch &&

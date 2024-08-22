@@ -325,7 +325,9 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
             selectable={selectable}
             userId={userId}
             senderId={sender.id}
-            canReply={!event.isLocalPending && type !== MessageTimelineType.Thread}
+            canReply={
+                isChannelWritable && !event.isLocalPending && type !== MessageTimelineType.Thread
+            }
             timestamp={event.createdAtEpochMs}
             channelId={channelId}
             editable={isOwn && !event.isLocalPending}
