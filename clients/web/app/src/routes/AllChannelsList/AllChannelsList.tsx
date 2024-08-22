@@ -188,10 +188,11 @@ export const ChannelItem = ({
             <Stack horizontal justifyContent="spaceBetween" alignItems="center">
                 <Stack
                     horizontal
-                    centerContent
+                    grow
                     gap="sm"
                     overflow="hidden"
                     cursor="pointer"
+                    alignItems="center"
                     onClick={onOpenChannelClick}
                 >
                     <Icon

@@ -34,6 +34,10 @@ vi.mock('use-towns-client', async () => {
             isAutojoin: false,
             hideUserJoinLeaveEvents: false,
         }),
+        useConnectivity: (): ReturnType<typeof Lib.useConnectivity> => ({
+            ...actual.useConnectivity(),
+            loggedInWalletAddress: '0x123',
+        }),
     }
 })
 
@@ -67,7 +71,16 @@ describe('<SpaceChannelInfoPanel />', () => {
         }))
     })
 
-    test('renders correct basic details', async () => {
+    test('renders correct basic details for unjoined channels', async () => {
+        render(<Wrapper />)
+
+        expect(screen.getByText('#my-channel')).toBeInTheDocument()
+        expect(screen.getByText('Description')).toBeInTheDocument()
+        expect(screen.getByText('Room Topic')).toBeInTheDocument()
+        expect(screen.getByText('1 member')).toBeInTheDocument()
+    })
+
+    test('renders correct basic details for joined channels', async () => {
         render(<Wrapper />)
 
         expect(screen.getByText('#my-channel')).toBeInTheDocument()

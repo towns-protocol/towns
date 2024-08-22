@@ -45,7 +45,7 @@ export const UnjoinedChannelComponent = (props: {
     return (
         <>
             {!hideHeader && <ChannelHeader channel={channel} spaceId={spaceId} />}
-            <Box absoluteFill centerContent padding="lg">
+            <Box grow centerContent padding="lg">
                 <Box centerContent gap="md">
                     <Box padding="md" color="gray2" background="level2" rounded="sm">
                         <Icon type={hasSomeEntitlement ? 'lock' : 'tag'} size="square_sm" />
@@ -53,7 +53,7 @@ export const UnjoinedChannelComponent = (props: {
                     <Box centerContent gap="sm">
                         <Heading level={3}>Join #{channel.label}</Heading>
                         <Paragraph textAlign="center" color="gray2">
-                            You aren’t a member yet. Join to get access:
+                            You aren&apos;t a member yet. Join to get access:
                         </Paragraph>
                     </Box>
                     <Button

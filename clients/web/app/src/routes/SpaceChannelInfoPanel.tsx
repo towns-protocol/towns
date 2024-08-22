@@ -56,6 +56,10 @@ export const ChannelInfo = () => {
     const navigate = useNavigate()
     const { leaveChannel } = useLeaveChannel()
 
+    const isUserChannelMember = useMemo(() => {
+        return loggedInWalletAddress && memberIds.includes(loggedInWalletAddress)
+    }, [loggedInWalletAddress, memberIds])
+
     const { channelSettings } = useChannelSettings(spaceData?.id ?? '', channel?.id ?? '')
 
     const roles = channelSettings?.roles
@@ -145,13 +149,13 @@ export const ChannelInfo = () => {
                     <Stack
                         padding
                         data-testid="channel-permission-details"
-                        gap="sm"
+                        gap="md"
                         background="level2"
                         rounded="sm"
                     >
                         <Stack horizontal justifyContent="spaceBetween">
                             <Paragraph strong truncate color="default">
-                                {'Channel Permissions'}
+                                Channel Permissions
                             </Paragraph>
                             {canEditChannel && (
                                 <TextButton
@@ -191,7 +195,7 @@ export const ChannelInfo = () => {
                             <TextButton onClick={onShowChannelSettingsPopup}>Edit</TextButton>
                         )}
                     </Stack>
-                    <Paragraph color="gray2">{room?.topic ?? 'No description'}</Paragraph>
+                    <Paragraph color="gray2">{room?.topic || 'No description'}</Paragraph>
                 </Stack>
                 {!!info?.length &&
                     info.map((n) => (
@@ -201,14 +205,16 @@ export const ChannelInfo = () => {
                         </Stack>
                     ))}
 
-                <PanelButton onClick={onMembersClick}>
+                <PanelButton disabled={memberIds.length === 0} onClick={onMembersClick}>
                     <Icon type="people" size="square_sm" color="gray2" />
-                    <Paragraph fontWeight="medium" color="default">
-                        {`${memberIds.length} member${memberIds.length > 1 ? `s` : ``}`}
+                    <Paragraph color="default">
+                        {memberIds.length === 0
+                            ? 'No members'
+                            : `${memberIds.length} member${memberIds.length > 1 ? `s` : ``}`}
                     </Paragraph>
                 </PanelButton>
 
-                {channel && (
+                {channel && isUserChannelMember && (
                     <>
                         <PanelButton
                             disabled={spaceIsMuted || isSettingNotification}
@@ -249,12 +255,12 @@ export const ChannelInfo = () => {
                     </PanelButton>
                 )}
 
-                <PanelButton tone="negative" onClick={onLeaveClick}>
-                    <Icon type="logout" size="square_sm" />
-                    <Paragraph fontWeight="medium" color="error">
-                        Leave #{channel?.label}
-                    </Paragraph>
-                </PanelButton>
+                {isUserChannelMember && (
+                    <PanelButton tone="negative" onClick={onLeaveClick}>
+                        <Icon type="logout" size="square_sm" />
+                        <Paragraph color="error">Leave #{channel?.label}</Paragraph>
+                    </PanelButton>
+                )}
             </Stack>
 
             {activeModal === 'members' && (

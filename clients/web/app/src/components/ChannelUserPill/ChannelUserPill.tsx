@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useMemo } from 'react'
 import { ZTEvent } from 'use-towns-client'
 import { uniq } from 'lodash'
-import { Box, Paragraph, Stack } from '@ui'
+import { Box, Icon, Paragraph, Stack } from '@ui'
 import { CopySpaceLink } from '@components/CopySpaceLink/CopySpaceLink'
 import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimelineContext'
 import { Avatar } from '@components/Avatar/Avatar'
@@ -23,11 +23,8 @@ export const ChannelUsersPill = (props: { spaceId: string | undefined; channelId
                 continue
             }
             const senderId = eventIds[i].sender.id
-            if (
-                !lastUniqueIds.includes(senderId) &&
-                memberIds.some((userId) => userId === senderId)
-            ) {
-                lastUniqueIds.push(eventIds[i].sender.id)
+            if (!lastUniqueIds.includes(senderId) && memberIds.includes(senderId)) {
+                lastUniqueIds.push(senderId)
             }
         }
 
@@ -51,23 +48,34 @@ export const ChannelUsersPill = (props: { spaceId: string | undefined; channelId
             background="level2"
             onClick={onClickPreventPropagation}
         >
-            <PanelLink
-                horizontal
-                grow
-                hoverable
-                panel={CHANNEL_INFO_PARAMS.DIRECTORY}
-                gap="sm"
-                padding="sm"
-                alignItems="center"
-                background="level2"
-            >
-                <Stack horizontal gap="line">
-                    {lastInteractedUniqueUserIds.map((userId) => (
-                        <Avatar key={userId} size="avatar_xs" userId={userId} />
-                    ))}
-                </Stack>
-                <Paragraph size="sm">{memberIds.length > 0 && memberIds.length}</Paragraph>
-            </PanelLink>
+            {memberIds.length > 0 ? (
+                <PanelLink
+                    horizontal
+                    grow
+                    hoverable
+                    panel={CHANNEL_INFO_PARAMS.DIRECTORY}
+                    gap="sm"
+                    padding="sm"
+                    alignItems="center"
+                    background="level2"
+                >
+                    <Stack horizontal gap="line">
+                        {lastInteractedUniqueUserIds.length === 0 ? (
+                            <Icon type="people" size="square_sm" color="gray2" />
+                        ) : (
+                            lastInteractedUniqueUserIds.map((userId) => (
+                                <Avatar key={userId} size="avatar_xs" userId={userId} />
+                            ))
+                        )}
+                    </Stack>
+                    <Paragraph size="sm">{memberIds.length}</Paragraph>
+                </PanelLink>
+            ) : (
+                <Box horizontal grow gap="sm" padding="sm" alignItems="center" background="level2">
+                    <Icon type="people" size="square_sm" color="gray2" />
+                    <Paragraph size="sm">0</Paragraph>
+                </Box>
+            )}
 
             {spaceId && (
                 <Box centerContent borderLeft hoverable padding="xs" background="level2">
