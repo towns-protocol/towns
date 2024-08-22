@@ -128,7 +128,7 @@
         "TokenWorker",
         "StreamMetadataService",
         "GatewayWorker",
-        "NotificationService",
+        //"NotificationService",
         "4337: StackupWorker",
         "Casablanca-Multinode",
         "4337: Fund XChain"
@@ -163,7 +163,7 @@
         "TokenWorker",
         "StreamMetadataService",
         "GatewayWorker",
-        "NotificationService",
+        //"NotificationService",
         "StackupWorker"
       ],
       "group": {
