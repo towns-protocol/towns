@@ -20,10 +20,12 @@ import { DeleteMessagePrompt } from './DeleteMessagePrompt'
 
 type Props = {
     eventId: string
+    latestEventId?: string
     channelId?: string
     threadParentId?: string
     spaceId?: string
     canEdit?: boolean
+    canPin?: boolean
     canReply?: boolean
     canReact?: boolean
     isFocused?: boolean
@@ -37,7 +39,8 @@ const style = {
 }
 
 export const MessageContextMenu = (props: Props) => {
-    const { eventId, channelId, spaceId, threadParentId, isFocused, isPinned } = props
+    const { eventId, latestEventId, channelId, spaceId, threadParentId, isFocused, isPinned } =
+        props
 
     const {
         redactEvent,
@@ -185,16 +188,18 @@ export const MessageContextMenu = (props: Props) => {
     }, [setDeletePrompt])
 
     const onPinMessage = useCallback(() => {
-        if (channelId && eventId) {
-            pinMessage(channelId, eventId)
+        const e = latestEventId ?? eventId
+        if (channelId && e) {
+            pinMessage(channelId, e)
         }
-    }, [channelId, eventId, pinMessage])
+    }, [channelId, eventId, latestEventId, pinMessage])
 
     const onUnpinMessage = useCallback(() => {
-        if (channelId && eventId) {
-            unpinMessage(channelId, eventId)
+        const e = latestEventId ?? eventId
+        if (channelId && e) {
+            unpinMessage(channelId, e)
         }
-    }, [channelId, eventId, unpinMessage])
+    }, [channelId, eventId, latestEventId, unpinMessage])
 
     const submenuItems = useMemo(() => {
         const submenuItems = []
@@ -209,22 +214,23 @@ export const MessageContextMenu = (props: Props) => {
                 onClick: onEditClick,
             } as const)
         }
-
-        submenuItems.push(
-            isPinned
-                ? ({
-                      key: 'unpin',
-                      icon: 'unpin',
-                      text: 'Unpin message',
-                      onClick: onUnpinMessage,
-                  } as const)
-                : ({
-                      key: 'pin',
-                      icon: 'pin',
-                      text: 'Pin message',
-                      onClick: onPinMessage,
-                  } as const),
-        )
+        if (props.canPin) {
+            submenuItems.push(
+                isPinned
+                    ? ({
+                          key: 'unpin',
+                          icon: 'unpin',
+                          text: 'Unpin message',
+                          onClick: onUnpinMessage,
+                      } as const)
+                    : ({
+                          key: 'pin',
+                          icon: 'pin',
+                          text: 'Pin message',
+                          onClick: onPinMessage,
+                      } as const),
+            )
+        }
 
         if (props.canEdit || (canRedact && spaceId)) {
             submenuItems.push({
@@ -247,6 +253,7 @@ export const MessageContextMenu = (props: Props) => {
         onPinMessage,
         onUnpinMessage,
         props.canEdit,
+        props.canPin,
         spaceId,
     ])
 

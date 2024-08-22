@@ -2,7 +2,7 @@ import { Pin } from '@river-build/sdk'
 import { useTownsContext } from '../components/TownsContextProvider'
 import isEqual from 'lodash/isEqual'
 import { useEffect, useState } from 'react'
-import { TimelineEvent } from 'types/timeline-types'
+import { TimelineEvent } from '../types/timeline-types'
 import { toEvent } from './TownsContext/useCasablancaTimelines'
 
 export type TimelinePin = Pin & {

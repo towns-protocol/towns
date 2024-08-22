@@ -10,7 +10,6 @@ import {
 } from 'use-towns-client'
 import { MostRecentMessageInfo_OneOf } from 'use-towns-client/dist/hooks/use-dm-latest-message'
 import { Avatar } from '@components/Avatar/Avatar'
-import { TimelineEncryptedContent } from '@components/EncryptedContent/EncryptedMessageBody'
 import { UserList } from '@components/UserList/UserList'
 import { Box, BoxProps, Icon, MotionBox, Paragraph, Stack, Text } from '@ui'
 import { notUndefined } from 'ui/utils/utils'
@@ -100,7 +99,7 @@ export const DirectMessageRowContent = (props: {
                             display: '-webkit-box',
                         }}
                     >
-                        <LastDirectMessageContent
+                        <DMMessageContentSummary
                             info={latest?.info}
                             latestUser={latestUser}
                             myUserId={myUserId}
@@ -193,7 +192,7 @@ export const DirectMessageIcon = (props: {
 const getMessageDisplayName = (user: LookupUser | undefined, myUserId: string | undefined) =>
     user?.userId === myUserId ? 'You' : getPrettyDisplayName(user)
 
-const LastDirectMessageContent = (props: {
+const DMMessageContentSummary = (props: {
     info: undefined | MostRecentMessageInfo_OneOf
     latestUser: undefined | LookupUser
     myUserId: undefined | string
@@ -208,54 +207,23 @@ const LastDirectMessageContent = (props: {
     )
 
     switch (info?.kind) {
-        case 'image': {
-            const { images } = info
+        case 'text':
+        case 'image':
+        case 'attachment':
+        case 'gif':
+        case 'encrypted': {
             return (
-                <Box horizontal gap="xs">
-                    {authorDisplayName && <Text size="sm">{authorDisplayName}:</Text>}
-                    <Box horizontal gap="xxs">
-                        <Icon type="camera" size="square_xs" />
-                        <Text size="sm">
-                            {images && images.length > 1 ? `${images.length} photos` : 'Photo'}
-                        </Text>
-                    </Box>
-                </Box>
-            )
-        }
-        case 'attachment': {
-            const { attachments } = info
-
-            let filename = 'file'
-            if (attachments && attachments.length > 0) {
-                const file = attachments?.[0]
-                if (file.type === 'chunked_media' || file.type === 'embedded_media') {
-                    filename = file.info.filename
-                }
-            }
-
-            return (
-                <Box horizontal gap="xs">
-                    {authorDisplayName && <Text size="sm">{authorDisplayName}:</Text>}
-                    <Box horizontal gap="xxs">
-                        <Icon type="file" size="square_xs" />
-                        <Text size="sm">
-                            {attachments && attachments.length > 1
-                                ? `${attachments.length} files`
-                                : filename}
-                        </Text>
-                    </Box>
-                </Box>
-            )
-        }
-        case 'gif': {
-            return (
-                <Box horizontal gap="xs">
-                    {authorDisplayName && <Text size="sm">{authorDisplayName}:</Text>}
-                    <Box horizontal gap="xxs">
-                        <Icon type="gif" size="square_xs" />
-                        <Text size="sm">Gif</Text>
-                    </Box>
-                </Box>
+                <MessageContentSummary
+                    info={info}
+                    authorDisplayName={authorDisplayName}
+                    textSize="sm"
+                    Wrapper={(props) => (
+                        <Box horizontal gap="xs">
+                            {authorDisplayName && <Text size="sm">{authorDisplayName}:</Text>}
+                            {props.children}
+                        </Box>
+                    )}
+                />
             )
         }
         case 'dm_created': {
@@ -300,25 +268,78 @@ const LastDirectMessageContent = (props: {
             return `${displayName} got invited to this group`
         }
 
-        case 'text': {
-            const unescapedText = htmlToText(info.text)
-            return authorDisplayName ? `${authorDisplayName}: ${unescapedText}` : unescapedText
-        }
-        case 'encrypted':
-            return (
-                <Box grow horizontal paddingY="xs" width="200" shrink={false}>
-                    <TimelineEncryptedContent
-                        event={{ createdAtEpochMs: 0 }}
-                        content={info.content}
-                    />
-                </Box>
-            )
         default:
             return (
                 <Box horizontal>
                     <Paragraph size="sm">New message</Paragraph>
                 </Box>
             )
+    }
+}
+
+export const MessageContentSummary = (props: {
+    info: MostRecentMessageInfo_OneOf
+    authorDisplayName?: string
+    textSize?: 'sm' | 'md'
+    Wrapper?: React.FC<{ children: React.ReactNode }>
+}) => {
+    const { info, authorDisplayName, textSize, Wrapper = (props) => props.children } = props
+
+    switch (info.kind) {
+        case 'text': {
+            const unescapedText = htmlToText(info.text)
+            return authorDisplayName
+                ? `${authorDisplayName}: ${unescapedText}`
+                : unescapedText ?? ''
+        }
+
+        case 'image': {
+            const { images } = info
+            return (
+                <Wrapper>
+                    <Box horizontal gap="xs">
+                        <Icon type="camera" size="square_xs" alignSelf="start" />
+                        <Text size={textSize}>
+                            {images && images.length > 1 ? `${images.length} photos` : 'Photo'}
+                        </Text>
+                    </Box>
+                </Wrapper>
+            )
+        }
+        case 'attachment': {
+            const { attachments } = info
+
+            let filename = 'file'
+            if (attachments && attachments.length > 0) {
+                const file = attachments?.[0]
+                if (file.type === 'chunked_media' || file.type === 'embedded_media') {
+                    filename = file.info.filename
+                }
+            }
+
+            return (
+                <Wrapper>
+                    <Box horizontal gap="xxs">
+                        <Icon type="file" size="square_xs" />
+                        <Text size={textSize}>
+                            {attachments && attachments.length > 1
+                                ? `${attachments.length} files`
+                                : filename}
+                        </Text>
+                    </Box>
+                </Wrapper>
+            )
+        }
+        case 'gif': {
+            return (
+                <Wrapper>
+                    <Box horizontal gap="xxs">
+                        <Icon type="gif" size="square_xs" />
+                        <Text size={textSize}>Gif</Text>
+                    </Box>
+                </Wrapper>
+            )
+        }
     }
 }
 

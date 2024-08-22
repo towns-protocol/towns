@@ -46,6 +46,7 @@ type Props = {
     editing?: boolean
     editable?: boolean
     eventId?: string
+    latestEventId?: string
     threadParentId?: string
     highlight?: boolean
     selectable?: boolean
@@ -64,6 +65,7 @@ type Props = {
     sendStatus?: SendStatus
     sessionId?: string
     pin?: Pin
+    canPin?: boolean
 } & BoxProps
 
 export type MessageLayoutProps = Props
@@ -74,6 +76,7 @@ export const MessageLayout = (props: Props) => {
         senderId,
         threadParentId,
         eventId,
+        latestEventId,
         avatarSize = 'avatar_md',
         user,
         messageBody,
@@ -85,6 +88,7 @@ export const MessageLayout = (props: Props) => {
         highlight: isHighlight,
         isChannelWritable = true,
         isChannelReactable,
+
         selectable: isSelectable,
         listView: isListView,
         displayContext = 'single',
@@ -92,6 +96,7 @@ export const MessageLayout = (props: Props) => {
         reactions,
         relativeDate: isRelativeDate,
         replies,
+        canPin,
         canReply,
         sendStatus,
         timestamp,
@@ -119,7 +124,7 @@ export const MessageLayout = (props: Props) => {
             : format(timestamp, 'h:mm a')
         : undefined
 
-    const backgroundProps = useHighlightBackground(isHighlight, !!pin)
+    const backgroundProps = useHighlightBackground(isHighlight, !!pin, props.background)
 
     const onClick: MouseEventHandler = useCallback(
         (e) => {
@@ -157,7 +162,7 @@ export const MessageLayout = (props: Props) => {
             onMouseEnter={onMouseEnter}
             {...boxProps}
             hoverable={isSelectable}
-            elevate={isEditing || isHighlight}
+            elevate={(isEditing && !pin) || isHighlight}
             hoverActive={isEditing || isHighlight}
             {...backgroundProps}
             tabIndex={props.tabIndex ?? 0}
@@ -226,17 +231,18 @@ export const MessageLayout = (props: Props) => {
 
                         {/* date, alignment tbc depending on context */}
                         {date && (
-                            <Text
-                                grow
-                                shrink={false}
-                                fontSize={{ desktop: 'xs', mobile: 'xs' }}
-                                color="gray2"
-                                as="span"
-                                textAlign={isListView ? 'right' : 'left'}
-                            >
-                                {date}
-                                {debugHash}
-                            </Text>
+                            <Box height="paragraph" justifyContent="end">
+                                <Text
+                                    shrink={false}
+                                    fontSize={{ desktop: 'xs', mobile: 'xs' }}
+                                    color="gray2"
+                                    as="span"
+                                    textAlign={isListView ? 'right' : 'left'}
+                                >
+                                    {date}
+                                    {debugHash}
+                                </Text>
+                            </Box>
                         )}
                     </Stack>
                 )}
@@ -283,13 +289,16 @@ export const MessageLayout = (props: Props) => {
                     )}
                     {sendStatus && <SendStatusIndicator status={sendStatus} />}
                 </Stack>
+
                 {!isTouch && channelId && eventId && isActive && !isEditing && isSelectable && (
                     <MessageContextMenu
                         canEdit={isEditable}
                         canReact={isChannelReactable}
+                        canPin={canPin}
                         canReply={canReply && isChannelWritable}
                         channelId={channelId}
                         eventId={eventId}
+                        latestEventId={latestEventId}
                         isFocused={isFocused}
                         isPinned={!!pin}
                         spaceId={spaceId}
@@ -304,6 +313,7 @@ export const MessageLayout = (props: Props) => {
                 eventId &&
                 isSelectable && (
                     <MessageModalSheet
+                        canPin={canPin}
                         canReply={canReply && isChannelWritable}
                         canReact={isChannelReactable}
                         channelId={channelId}
@@ -329,7 +339,7 @@ const UserName = ({ user }: { user?: LookupUser }) => {
     const resolvedNft = useResolveNft({ walletAddress: user?.userId || '', info: user?.nft })
 
     return (
-        <Stack horizontal gap="xs" alignItems="center">
+        <Stack horizontal gap="xxs" alignItems="center">
             <Text truncate fontWeight="strong" color="default" as="span">
                 {name}&nbsp;
             </Text>
@@ -386,14 +396,16 @@ export const RedactedMessageLayout = (props: {
     )
 }
 
-const useHighlightBackground = (isHighlight?: boolean, pinned?: boolean) => {
+const useHighlightBackground = (
+    isHighlight?: boolean,
+    pinned?: boolean,
+    defaultBackground?: BoxProps['background'],
+) => {
     const [isHighlightActive, setHighlightActive] = useState(isHighlight)
 
     const background = isHighlightActive
-        ? ('level3' as const)
-        : pinned
-        ? ('negativeSubtle' as const)
-        : undefined
+        ? ('level2' as const)
+        : defaultBackground ?? (pinned ? ('positiveSubtle' as const) : undefined)
 
     useEffect(() => {
         if (isHighlightActive) {
@@ -441,12 +453,14 @@ const PinnedContent = (props: { pin: Pin }) => {
     const { pin } = props
     const user = useUserLookup(pin.creatorUserId)
     return (
-        <Stack horizontal grow gap="xs" height="height_sm" alignItems="center">
+        <Stack horizontal grow gap="xs" height="height_sm" alignItems="center" color="cta1">
             <Box>
                 <Icon type="pinFill" size="square_xxs" />
             </Box>
             <Box>
-                Pinned by {myUserId === pin.creatorUserId ? 'you' : getPrettyDisplayName(user)}
+                <Paragraph size="sm">
+                    Pinned by {myUserId === pin.creatorUserId ? 'you' : getPrettyDisplayName(user)}
+                </Paragraph>
             </Box>
         </Stack>
     )

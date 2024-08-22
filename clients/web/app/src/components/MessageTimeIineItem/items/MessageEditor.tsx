@@ -17,6 +17,7 @@ import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDrop
 
 type Props = {
     eventId: string
+    latestEventId: string
     eventContent: RoomMessageEvent
     channelId: string
     spaceId: string | undefined
@@ -28,17 +29,17 @@ export const TimelineMessageEditor = (props: Props) => {
     const { isTouch } = useDevice()
     const { attachments, initialValue, channelId, spaceId, eventId, eventContent } = props
     const { timelineActions } = useContext(MessageTimelineContext) ?? {}
-    const editChannelEvent = useEditMessage(channelId)
+    const { editChannelMessage } = useEditMessage(channelId)
 
     const onSend = useCallback(
         (value: string, options: SendTextMessageOptions | undefined) => {
             if (options) {
                 options.attachments = mergeAttachments(attachments, options.attachments)
             }
-            editChannelEvent({ eventId, value }, eventContent, options)
+            editChannelMessage({ eventId, value }, eventContent, options)
             timelineActions?.onCancelEditingMessage?.()
         },
-        [editChannelEvent, eventContent, eventId, timelineActions, attachments],
+        [editChannelMessage, eventId, eventContent, timelineActions, attachments],
     )
 
     const onCancel = useCallback(() => {
@@ -74,7 +75,7 @@ export const TimelineMessageEditor = (props: Props) => {
             </MediaDropContextProvider>
         </TouchEditMessageWrapper>
     ) : (
-        <Stack gap>
+        <Stack gap="xs">
             <MediaDropContextProvider
                 channelId={channelId}
                 spaceId={spaceId}

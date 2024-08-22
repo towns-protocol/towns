@@ -4,7 +4,7 @@ import { RoomMessageEvent, SendTextMessageOptions, useTownsClient } from 'use-to
 export const useEditMessage = (channelId?: string) => {
     const { editMessage } = useTownsClient()
 
-    const editChannelEvent = useCallback(
+    const editChannelMessage = useCallback(
         (
             { value, eventId }: { value: string; eventId: string },
             originalEventContent: RoomMessageEvent,
@@ -17,5 +17,5 @@ export const useEditMessage = (channelId?: string) => {
         [channelId, editMessage],
     )
 
-    return editChannelEvent
+    return { editChannelMessage }
 }

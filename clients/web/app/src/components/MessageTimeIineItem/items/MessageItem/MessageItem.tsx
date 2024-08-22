@@ -166,6 +166,7 @@ export const MessageItem = (props: Props) => {
                         <TimelineMessageEditor
                             initialValue={event.content.body}
                             eventId={event.eventId}
+                            latestEventId={event.latestEventId}
                             eventContent={event.content}
                             channelId={channelId}
                             spaceId={spaceId}
@@ -268,6 +269,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
         channelId,
         handleReaction,
         isChannelWritable,
+        isChannelPinnable,
         isChannelReactable,
         messageReactionsMap,
         pins,
@@ -314,7 +316,9 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
         [setSearchParams, threadParentId],
     )
 
-    const pin = pins?.find((p) => p.event.hashStr === event.eventId)
+    const pin = pins?.find(
+        (p) => p.event.hashStr === event.eventId || p.event.hashStr === event.latestEventId,
+    )
 
     return !event ? null : (
         <MessageLayout
@@ -325,6 +329,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
             selectable={selectable}
             userId={userId}
             senderId={sender.id}
+            canPin={!event.isLocalPending && isChannelPinnable}
             canReply={
                 isChannelWritable && !event.isLocalPending && type !== MessageTimelineType.Thread
             }
@@ -332,6 +337,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
             channelId={channelId}
             editable={isOwn && !event.isLocalPending}
             eventId={event.eventId}
+            latestEventId={event.latestEventId}
             threadParentId={event.threadParentId}
             displayContext={displayContext}
             isChannelWritable={isChannelWritable}

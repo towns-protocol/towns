@@ -66,7 +66,7 @@ const TownsTextEditorWithoutBoundary = ({
     mentions,
     spaceMemberIds,
     initialValue,
-    background = 'level2',
+    background = 'lightHover',
 }: Props) => {
     const { uploadFiles, files } = useMediaDropContext()
     const { inlineReplyPreview, onCancelInlineReply } = useInlineReplyAttchmentPreview()

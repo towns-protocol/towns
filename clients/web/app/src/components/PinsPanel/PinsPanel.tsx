@@ -1,44 +1,68 @@
-import { Pin } from '@river-build/sdk'
-import React, { useCallback, useMemo } from 'react'
-import { useChannelId, usePins, useUserLookup } from 'use-towns-client'
+import React, { useCallback } from 'react'
+import {
+    TimelinePin,
+    useChannelId,
+    useConnectivity,
+    usePins,
+    useSpaceId,
+    useTownsClient,
+    useUserLookup,
+} from 'use-towns-client'
 import { useLocation, useNavigate } from 'react-router'
+import { isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
 import { MessageLayout } from '@components/MessageLayout'
 import { Panel } from '@components/Panel/Panel'
 import { RichTextPreview } from '@components/RichTextPlate/RichTextPreview'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
-import { Stack } from '@ui'
+import { Box, Icon, IconButton, Paragraph, Stack } from '@ui'
+import { MessageAttachments } from '@components/MessageAttachments/MessageAttachments'
+import { isRoomMessage } from '@components/MessageTimeline/util/getEventsByDate'
+import { useIsChannelPinnable } from 'hooks/useIsChannelPinnable'
 
 export const PinsPanel = () => {
+    const { loggedInWalletAddress } = useConnectivity()
+    const spaceId = useSpaceId()
     const channelId = useChannelId()
+
+    const isDmOrGDM = isDMChannelStreamId(channelId) || isGDMChannelStreamId(channelId)
+
+    const isChannelPinnable = !!useIsChannelPinnable(
+        isDmOrGDM ? undefined : spaceId,
+        channelId,
+        loggedInWalletAddress,
+    )?.isChannelPinnable
+
     const pins = usePins(channelId)
+
     return (
-        <Panel paddingX paddingY="sm" label="Pinned">
-            <Stack gap paddingY="sm">
-                {pins?.map((pin) => (
-                    <PinnedMessage key={pin.event.hashStr} pin={pin} channelId={channelId} />
-                ))}
+        <Panel label="Pinned" padding="none">
+            <Stack grow paddingY="sm" paddingX="sm">
+                {pins?.length ? (
+                    pins?.map((pin) => (
+                        <PinnedMessage
+                            key={pin.event.hashStr}
+                            pin={pin}
+                            channelId={channelId}
+                            canPin={isChannelPinnable}
+                        />
+                    ))
+                ) : (
+                    <Box centerContent grow gap color="gray2">
+                        <Icon type="pin" />
+                        <Paragraph>No pins just yet</Paragraph>
+                    </Box>
+                )}
             </Stack>
         </Panel>
     )
 }
 
-const PinnedMessage = (props: { pin: Pin; channelId: string }) => {
-    const { pin } = props
-    const { event } = pin
-    const senderId = event.creatorUserId
+const PinnedMessage = (props: { pin: TimelinePin; channelId: string; canPin?: boolean }) => {
+    const { canPin, channelId, pin } = props
+    const { unpinMessage } = useTownsClient()
+    const { event: pinnedEvent, timelineEvent } = pin
+    const senderId = pinnedEvent.creatorUserId
     const sender = useUserLookup(senderId)
-
-    const content = useMemo(() => {
-        const content = pin.event.decryptedContent
-
-        if (
-            content?.kind === 'channelMessage' &&
-            content?.content.payload.case === 'post' &&
-            content?.content.payload.value.content.case === 'text'
-        ) {
-            return content.content.payload.value.content.value
-        }
-    }, [pin.event.decryptedContent])
 
     const navigate = useNavigate()
     const location = useLocation()
@@ -46,15 +70,22 @@ const PinnedMessage = (props: { pin: Pin; channelId: string }) => {
         navigate({
             pathname: location.pathname,
             search: location.search,
-            hash: event.hashStr,
+            hash: pinnedEvent.hashStr,
         })
-    }, [event.hashStr, location.pathname, location.search, navigate])
+    }, [location.pathname, location.search, navigate, pinnedEvent.hashStr])
+
+    const onUnpin = useCallback(() => {
+        unpinMessage(channelId, pin.event.hashStr)
+    }, [channelId, pin.event.hashStr, unpinMessage])
 
     return (
         <MessageLayout
             relativeDate
-            padding
-            background="inherit"
+            hoverable
+            paddingX="sm"
+            paddingY="md"
+            id={`event-${pinnedEvent.hashStr}`}
+            background={{ hover: 'positiveSubtle', default: 'none' }}
             tabIndex={-1}
             avatarSize="avatar_x4"
             userId={senderId}
@@ -63,22 +94,33 @@ const PinnedMessage = (props: { pin: Pin; channelId: string }) => {
             pin={pin}
             cursor="pointer"
             rounded="sm"
-            // reactions={reactions}
-            // onReaction={onReaction}
-
             user={sender}
-            // messageSourceAnnotation={sourceAnnotation}
-            timestamp={Number(event.createdAtEpochMs)}
+            timestamp={Number(timelineEvent.createdAtEpochMs)}
             onClick={onMessageClick}
         >
-            {content ? (
-                <RichTextPreview
-                    // mentions={event}
-                    // channels={[...channels, ...dmChannels]}
-                    content={content.body}
-                />
+            {isRoomMessage(timelineEvent) ? (
+                <>
+                    <RichTextPreview
+                        mentions={timelineEvent.content.mentions}
+                        content={timelineEvent.content.body}
+                    />
+                    {(timelineEvent.content.attachments?.length ?? 0) > 0 && (
+                        <MessageAttachments attachments={timelineEvent.content.attachments} />
+                    )}
+                </>
             ) : (
                 <></>
+            )}
+            {canPin && (
+                <IconButton
+                    background="positiveSubtle"
+                    tooltip="Unpin"
+                    position="topRight"
+                    icon="unpin"
+                    color="cta1"
+                    size="square_xxs"
+                    onClick={onUnpin}
+                />
             )}
         </MessageLayout>
     )

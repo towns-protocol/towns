@@ -76,7 +76,7 @@ export interface MostRecentDMCreated {
 
 type LatestMessageInfo = {
     createdAtEpochMs: number
-    info: ReturnType<typeof toMostRecentMessageInfo> | undefined
+    info: ReturnType<typeof toMessageInfo> | undefined
     sender: TimelineEvent['sender']
 }
 
@@ -94,7 +94,7 @@ export function useDMLatestMessage(roomId: string, ignoreThreads = true) {
         let latest: LatestMessageInfo | undefined
         for (let i = timeline.length - 1; i >= 0; i--) {
             const message = timeline[i]
-            const info = toMostRecentMessageInfo(message)
+            const info = toMessageInfo(message)
 
             if (!markerReached && info && hasRelevantUnreadMarker) {
                 unreadCount++
@@ -143,7 +143,7 @@ export function useDMLatestMessage(roomId: string, ignoreThreads = true) {
     return latest
 }
 
-function toMostRecentMessageInfo(message: TimelineEvent): MostRecentMessageInfo_OneOf | undefined {
+export function toMessageInfo(message: TimelineEvent): MostRecentMessageInfo_OneOf | undefined {
     const { content, sender } = message
     if (content?.kind === ZTEvent.RoomMessageEncrypted) {
         return {

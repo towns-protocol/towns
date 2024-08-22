@@ -20,6 +20,7 @@ type Props = {
     channelId?: string
     spaceId?: string
     canEdit?: boolean
+    canPin?: boolean
     canReply?: boolean
     canReact?: boolean
     messageBody?: string
@@ -46,6 +47,7 @@ export const MessageModalSheet = (props: Props) => {
         channelId,
         canReply,
         canEdit,
+        canPin,
         canReact,
         isPinned,
         messageBody,
@@ -270,19 +272,21 @@ export const MessageModalSheet = (props: Props) => {
                                         />
                                     )}
 
-                                    {isPinned ? (
-                                        <TableCell
-                                            iconType="unpin"
-                                            text="Unpin message"
-                                            onClick={onUnpinMessage}
-                                        />
-                                    ) : (
-                                        <TableCell
-                                            iconType="pin"
-                                            text="Pin Message"
-                                            onClick={onPinMessage}
-                                        />
-                                    )}
+                                    {canPin ? (
+                                        isPinned ? (
+                                            <TableCell
+                                                iconType="unpin"
+                                                text="Unpin message"
+                                                onClick={onUnpinMessage}
+                                            />
+                                        ) : (
+                                            <TableCell
+                                                iconType="pin"
+                                                text="Pin Message"
+                                                onClick={onPinMessage}
+                                            />
+                                        )
+                                    ) : null}
                                 </Stack>
                             </Stack>
                         </Sheet.Scroller>
