@@ -6,6 +6,7 @@ import { clsx } from 'clsx'
 import { Channel, LookupUserFn, OTWMention, useUserLookupContext } from 'use-towns-client'
 import { Box } from '@ui'
 import { MessageStatusAnnotation } from '@components/MessageTimeIineItem/items/MessageItem/MessageStatusAnnotation'
+import { isEmoji } from 'utils/isEmoji'
 import { getUserHashMap } from './components/plate-ui/autocomplete/helpers'
 import { getChannelNames, getMentionIds } from './utils/helpers'
 import { CodeBlockElement } from './components/plate-ui/CodeBlockElement'
@@ -71,12 +72,7 @@ export const RichTextPreviewInternal = ({
         return getUserHashMap(mentions)
     }, [mentions])
 
-    const isSingleEmoji = useMemo(() => {
-        const emojiRegex =
-            /^(?:\p{Emoji_Presentation}|\p{Emoji}\uFE0F?)(?:\u200D(?:\p{Emoji_Presentation}|\p{Emoji}\uFE0F?))*$/u
-
-        return content.length < 6 && emojiRegex.test(content)
-    }, [content])
+    const isSingleEmoji = useMemo(isEmoji, [content])
 
     const memoizedComponents = useMemo(
         () => ({
