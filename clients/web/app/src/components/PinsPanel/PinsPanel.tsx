@@ -18,6 +18,7 @@ import { Box, Icon, IconButton, Paragraph, Stack } from '@ui'
 import { MessageAttachments } from '@components/MessageAttachments/MessageAttachments'
 import { isRoomMessage } from '@components/MessageTimeline/util/getEventsByDate'
 import { useIsChannelPinnable } from 'hooks/useIsChannelPinnable'
+import { useDevice } from 'hooks/useDevice'
 
 export const PinsPanel = () => {
     const { loggedInWalletAddress } = useConnectivity()
@@ -66,13 +67,14 @@ const PinnedMessage = (props: { pin: TimelinePin; channelId: string; canPin?: bo
 
     const navigate = useNavigate()
     const location = useLocation()
+    const { isTouch } = useDevice()
     const onMessageClick = useCallback(() => {
         navigate({
             pathname: location.pathname,
-            search: location.search,
+            search: isTouch ? undefined : location.search,
             hash: pinnedEvent.hashStr,
         })
-    }, [location.pathname, location.search, navigate, pinnedEvent.hashStr])
+    }, [isTouch, location.pathname, location.search, navigate, pinnedEvent.hashStr])
 
     const onUnpin = useCallback(() => {
         unpinMessage(channelId, pin.event.hashStr)
