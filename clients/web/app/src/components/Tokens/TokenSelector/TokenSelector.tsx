@@ -291,11 +291,24 @@ function TokenEditor(props: {
 
     const schema = z.object({
         quantity: z
-            .number({
+            .string({
                 required_error: 'Quantity is required',
-                invalid_type_error: 'Quantity must be a number',
+                invalid_type_error: 'Quantity must be a string',
             })
-            .min(1, 'Quantity must be at least 1'),
+            .min(1, 'Quantity must not be empty')
+            .refine(
+                (val) => {
+                    try {
+                        const bigIntValue = BigInt(val)
+                        return bigIntValue >= 1n
+                    } catch {
+                        return false
+                    }
+                },
+                {
+                    message: 'Quantity must be a number greater than or equal to 1',
+                },
+            ),
     })
 
     const {
@@ -353,19 +366,22 @@ function TokenEditor(props: {
                         render={({ field }) => (
                             <TextField
                                 {...field}
-                                type="number"
-                                step={token.data.type === TokenType.ERC20 ? 'any' : '1'}
+                                type="text"
                                 tone="neutral"
                                 background="level2"
                                 placeholder="Enter a quantity"
                                 onChange={(e) => {
-                                    // We only accept decimal numbers for ERC20 tokens
+                                    const value = e.target.value
                                     if (token.data.type === TokenType.ERC20) {
-                                        const value = parseFloat(e.target.value)
-                                        field.onChange(isNaN(value) ? '' : value)
+                                        // Allow decimal input for ERC20 tokens
+                                        if (/^\d*\.?\d*$/.test(value)) {
+                                            field.onChange(value)
+                                        }
                                     } else {
-                                        const value = parseInt(e.target.value, 10)
-                                        field.onChange(isNaN(value) ? '' : value)
+                                        // Only allow integer input for non-ERC20 tokens
+                                        if (/^\d*$/.test(value)) {
+                                            field.onChange(value)
+                                        }
                                     }
                                 }}
                             />
