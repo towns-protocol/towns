@@ -2,22 +2,23 @@
 
 Fetches river images from river streams.
 
-## Local development
-
-Start the river image service:
+## Start the blockchains, river node, and the stream-metadata service
 
 ```bash
-# make sure the river chain is running, and the contracts are deployed.
-# check that the deployed contract addresses and abis are generated.
-#
-# Look for these dependencies:
-# - packages/generated/config/deployments.json
-# - packages/generated/dev/abis/NodeRegistry.abi.ts
-# - packages/generated/dev/abis/StreamRegistry.abi.ts
-#
-# if the dependencies are not present, run:
-# ./<projectRoot>/scripts/start_dev.sh
+# from river root:
+./scripts/start_dev.sh
 
-cp .env.local.sample .env.local
+```
+
+## Local development in vscode
+
+Run `./scripts/start_dev.sh`, and then kill the stream-metadata
+service. Running the script will:
+
+- build all the dependencies: core/_, packages/_, etc
+- start the base chain, river chain, and river node
+
+```bash
+cd packages/stream-metadata
 yarn dev
 ```

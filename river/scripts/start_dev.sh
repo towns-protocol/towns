@@ -119,6 +119,7 @@ commands=(
     "watch_go:cd protocol && yarn watch:go"
     "core_multi:./core/node/run_multi.sh -r"
     "core_multi_ne:./core/node/run_multi.sh -r --de"
+    "river_stream_metadata_multi_ne:yarn workspace @river-build/stream-metadata dev:local_multi_ne"
 )
 
 # Create a Tmux window for each command
@@ -142,4 +143,5 @@ is_closed() {
 if is_closed ; then
     echo "Session $SESSION_NAME has closed; delete core postgres container and volume"
     ./core/scripts/stop_storage.sh
+    yarn workspace @river-build/stream-metadata kill:local_multi_ne
 fi

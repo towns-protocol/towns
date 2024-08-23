@@ -550,10 +550,7 @@
     {
       "label": "StreamMetadataService",
       "type": "shell",
-      "command": "./river/scripts/start-stream-metadata-service.sh",
-      "args": [
-                "river"
-            ],
+      "command": "yarn workspace @river-build/stream-metadata dev:local_multi",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {

@@ -7,10 +7,16 @@
 	"type": "module",
 	"scripts": {
 		"build": "node ./esbuild.config.mjs",
+		"cp-config": "cp ./.env.local-sample ./.env.local && echo .env.local file copied successfully",
+		"dev": "yarn dev:local_multi",
+		"dev:local_multi": "yarn cp-config && RIVER_ENV=local_multi PORT=3002 yarn run-build",
+		"dev:local_multi_ne": "yarn cp-config && RIVER_ENV=local_multi_ne PORT=3003 yarn run-build",
+		"kill:local_multi": "kill -9 $(lsof -t -i:3002)",
+		"kill:local_multi_ne": "kill -9 $(lsof -t -i:3003)",
 		"lint": "eslint . --ext .ts",
 		"lint:fix": "eslint . --ext .ts --fix",
-		"dev": "yarn build && node ./dist/node_esbuild.cjs",
 		"prettier": "prettier --config ../prettier-config/config.js --ignore-path .prettierignore .",
+		"run-build": "yarn build && node ./dist/node_esbuild.cjs",
 		"start": "node ./dist/node_esbuild.cjs"
 	},
 	"dependencies": {
