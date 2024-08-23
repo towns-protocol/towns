@@ -1,7 +1,6 @@
 import { createPluginFactory } from '@udecode/plate-common'
-import linkifyit from 'linkify-it'
 import { deserializeMd } from '../utils/deserializeMD'
-const linkify = linkifyit()
+import { convertPlainTextLinksToMd, isUrl } from '../utils/helpers'
 
 export const KEY_FORMAT_TEXT_LINK = 'KEY_FORMAT_TEXT_LINK'
 
@@ -35,7 +34,7 @@ export const createFormatTextLinkPlugin = createPluginFactory({
                 const isHTML =
                     dataTransfer.types.includes('text/html') &&
                     dataTransfer.getData('text/html').includes('<a')
-                return !isHTML && linkify.test(data)
+                return !isHTML && isUrl(data)
             },
             getFragment: ({ data }) => {
                 return deserializeMd(convertPlainTextLinksToMd(data))
@@ -64,7 +63,7 @@ export const createIOSPasteLinkPlugin = createPluginFactory({
                     return false
                 }
 
-                return linkify.test(data)
+                return isUrl(data)
             },
             getFragment: ({ data }) => {
                 return deserializeMd(convertPlainTextLinksToMd(data))
@@ -72,23 +71,3 @@ export const createIOSPasteLinkPlugin = createPluginFactory({
         },
     },
 })
-
-const convertPlainTextLinksToMd = (fullText: string) => {
-    const links = linkify.match(fullText)
-    if (!links) {
-        return fullText
-    }
-    let result = fullText
-    links.forEach((link) => {
-        if (isLinkMD(link, fullText)) {
-            return
-        }
-        const linkText = fullText.substring(link.index, link.lastIndex)
-        result = result.replace(linkText, `[${linkText}](${link.url})`)
-    })
-    return result
-}
-
-const isLinkMD = (link: linkifyit.Match, fullText: string) => {
-    return [']', ')', '>'].includes(fullText.charAt(link.lastIndex + 1))
-}
