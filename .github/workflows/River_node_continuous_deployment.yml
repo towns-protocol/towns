@@ -5,6 +5,7 @@ on:
         branches:
             - main
             - omega
+            - debug-omega-cd
         paths:
             - 'scripts/river-node-tag/tag.txt'
 
