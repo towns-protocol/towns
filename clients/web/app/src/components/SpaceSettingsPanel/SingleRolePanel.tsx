@@ -128,7 +128,7 @@ export function SingleRolePanelWithoutAuth() {
     }, [channelRoleDetails])
 
     return (
-        <Panel label="Roles">
+        <Panel label="Roles" padding="none">
             {isLoading ? (
                 <Stack grow centerContent>
                     <ButtonSpinner />

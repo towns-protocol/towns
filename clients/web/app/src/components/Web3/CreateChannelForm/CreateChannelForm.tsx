@@ -350,32 +350,38 @@ export const CreateChannelForm = (props: Props) => {
                                 {...restOfTopicProps}
                             />
                         </Stack>
-                        <Stack gap="sm" maxHeight="50vh" overflow="auto">
+                        <Stack gap="sm">
                             <Box paddingTop="md" paddingBottom="sm">
                                 <Text>Who can join?</Text>
                             </Box>
-
-                            {rolesWithDetails?.map((role) => {
-                                return (
-                                    <Box
-                                        padding="md"
-                                        background="level2"
-                                        borderRadius="sm"
-                                        key={role.id}
-                                    >
-                                        <Checkbox
-                                            width="100%"
-                                            name="roleIds"
-                                            label={
-                                                // parse tokens from TODO ruleData
-                                                <TokenCheckboxLabel label={role.name} tokens={[]} />
-                                            }
-                                            value={role.id.toString()}
-                                            register={register}
-                                        />
-                                    </Box>
-                                )
-                            })}
+                            {rolesWithDetails.length > 0 && (
+                                <Stack scrollbars maxHeight="50vh" gap="sm" insetRight="xs">
+                                    {rolesWithDetails.map((role) => {
+                                        return (
+                                            <Box
+                                                padding="md"
+                                                background="level2"
+                                                borderRadius="sm"
+                                                key={role.id}
+                                            >
+                                                <Checkbox
+                                                    width="100%"
+                                                    name="roleIds"
+                                                    label={
+                                                        // parse tokens from TODO ruleData
+                                                        <TokenCheckboxLabel
+                                                            label={role.name}
+                                                            tokens={[]}
+                                                        />
+                                                    }
+                                                    value={role.id.toString()}
+                                                    register={register}
+                                                />
+                                            </Box>
+                                        )
+                                    })}
+                                </Stack>
+                            )}
 
                             {canEditRoles && (
                                 <PanelButton onClick={onCreateNewRole}>
@@ -413,8 +419,11 @@ export const CreateChannelForm = (props: Props) => {
                             </Box>
                         </Stack>
 
+                        {/* placeholder for absolute positioned button */}
+                        <Stack height="x8" />
+
                         {isTouch ? (
-                            <Box flexDirection="row" justifyContent="end" gap="sm" paddingTop="lg">
+                            <Stack horizontal justifyContent="end" gap="sm" paddingTop="lg">
                                 <Button type="button" disabled={!isAbleToInteract} onClick={onHide}>
                                     Cancel
                                 </Button>
@@ -427,9 +436,15 @@ export const CreateChannelForm = (props: Props) => {
                                 >
                                     {!isAbleToInteract ? 'Creating' : 'Create Channel'}
                                 </FancyButton>
-                            </Box>
+                            </Stack>
                         ) : (
-                            <Box padding position="absolute" bottom="none" left="none" right="none">
+                            <Stack
+                                padding
+                                position="absolute"
+                                bottom="none"
+                                left="none"
+                                right="none"
+                            >
                                 <FancyButton
                                     cta={isAbleToInteract && formState.isValid}
                                     type="submit"
@@ -438,7 +453,7 @@ export const CreateChannelForm = (props: Props) => {
                                 >
                                     {isAbleToInteract ? 'Create Channel' : 'Creating'}
                                 </FancyButton>
-                            </Box>
+                            </Stack>
                         )}
                     </Stack>
                 )
