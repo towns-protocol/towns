@@ -190,16 +190,30 @@ export const MessageContextMenu = (props: Props) => {
     const onPinMessage = useCallback(() => {
         const e = latestEventId ?? eventId
         if (channelId && e) {
+            const tracked = {
+                spaceId,
+                channelId,
+                channelType: getChannelType(channelId),
+                isThread: !!threadId,
+            }
+            analytics?.track('clicked pin message', tracked)
             pinMessage(channelId, e)
         }
-    }, [channelId, eventId, latestEventId, pinMessage])
+    }, [analytics, channelId, eventId, latestEventId, pinMessage, spaceId, threadId])
 
     const onUnpinMessage = useCallback(() => {
         const e = latestEventId ?? eventId
         if (channelId && e) {
+            const tracked = {
+                spaceId,
+                channelId,
+                channelType: getChannelType(channelId),
+                isThread: !!threadId,
+            }
+            analytics?.track('clicked unpin message', tracked)
             unpinMessage(channelId, e)
         }
-    }, [channelId, eventId, latestEventId, unpinMessage])
+    }, [analytics, channelId, eventId, latestEventId, spaceId, threadId, unpinMessage])
 
     const submenuItems = useMemo(() => {
         const submenuItems = []

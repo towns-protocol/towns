@@ -13,7 +13,7 @@ import { datadogLogs } from '@datadog/browser-logs'
 import { env, isTest } from 'utils'
 import { getBrowserName, isAndroid, isIOS, isPWA } from './useDevice'
 
-const ANOYNOMOUS_ID = 'analytics-anonymousId'
+const ANOYNOMOUS_ID_KEY = 'analytics-anonymousId'
 const isProd = !env.DEV && !isTest()
 
 export class Analytics implements TownsAnalytics {
@@ -164,18 +164,18 @@ function isErrorLike(e: unknown) {
 }
 
 export function getAnonymousId() {
-    let anonymousId = localStorage.getItem(ANOYNOMOUS_ID)
+    let anonymousId = localStorage.getItem(ANOYNOMOUS_ID_KEY)
 
     if (!anonymousId) {
         anonymousId = crypto.randomUUID()
-        localStorage.setItem(ANOYNOMOUS_ID, anonymousId)
+        localStorage.setItem(ANOYNOMOUS_ID_KEY, anonymousId)
     }
 
     return anonymousId
 }
 
 export function clearAnonymousId() {
-    localStorage.removeItem(ANOYNOMOUS_ID)
+    localStorage.removeItem(ANOYNOMOUS_ID_KEY)
 }
 
 export function getPseudoId(userId: string) {
