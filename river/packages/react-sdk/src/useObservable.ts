@@ -39,10 +39,10 @@ type ObservableValue<Data> = Data extends PersistedModel<infer UnwrappedData>
           // Its a non persisted object - Observable<T>
           data: Data
           error: undefined
-          status: 'loaded'
-          isLoading: false
+          status: 'loading' | 'loaded'
+          isLoading: boolean
           isError: false
-          isLoaded: true
+          isLoaded: boolean
       }
 
 export function useObservable<T>(

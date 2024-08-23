@@ -10,6 +10,7 @@ import { getLogger } from './logger'
 import { checkHealth } from './routes/health'
 import { fetchSpaceImage } from './routes/spaceImage'
 import { fetchSpaceMetadata } from './routes/spaceMetadata'
+import { fetchUserProfileImage } from './routes/profileImage'
 
 // Set the process title to 'stream-metadata' so it can be easily identified
 // or killed with `pkill stream-metadata`
@@ -68,6 +69,7 @@ export function setupRoutes(srv: Server) {
 		fetchSpaceMetadata(request, reply, getServerUrl(srv)),
 	)
 	srv.get('/space/:spaceAddress/image', fetchSpaceImage)
+	srv.get('/user/:userId/image', fetchUserProfileImage)
 
 	// Fastify will return 404 for any unmatched routes
 }

@@ -79,6 +79,7 @@ import {
     makeSpaceStreamId,
     STREAM_ID_STRING_LENGTH,
     contractAddressFromSpaceId,
+    isUserId,
 } from './id'
 import { makeEvent, unpackMiniblock, unpackStream, unpackStreamEx } from './sign'
 import { StreamEvents } from './streamEvents'
@@ -123,6 +124,7 @@ import {
     make_SpacePayload_UpdateChannelAutojoin,
     make_SpacePayload_UpdateChannelHideUserJoinLeaveEvents,
     make_SpacePayload_SpaceImage,
+    make_UserMetadataPayload_ProfileImage,
 } from './types'
 
 import debug from 'debug'
@@ -682,14 +684,18 @@ export class Client
     async createMediaStream(
         channelId: string | Uint8Array | undefined,
         spaceId: string | Uint8Array | undefined,
+        userId: string | undefined,
         chunkCount: number,
         streamSettings?: PlainMessage<StreamSettings>,
     ): Promise<{ streamId: string; prevMiniblockHash: Uint8Array }> {
         assert(this.userStreamId !== undefined, 'userStreamId must be set')
-        if (!channelId) {
-            assert(spaceId !== undefined, 'spaceId must be set')
+        if (!channelId && !spaceId && !userId) {
+            throw Error('channelId, spaceId or userId must be set')
+        }
+        if (spaceId) {
             assert(isSpaceStreamId(spaceId), 'spaceId must be a valid streamId')
-        } else {
+        }
+        if (channelId) {
             assert(
                 isChannelStreamId(channelId) ||
                     isDMChannelStreamId(channelId) ||
@@ -697,17 +703,20 @@ export class Client
                 'channelId must be a valid streamId',
             )
         }
+        if (userId) {
+            assert(isUserId(userId), 'userId must be a valid userId')
+        }
 
         const streamId = makeUniqueMediaStreamId()
 
-        this.logCall('createMedia', channelId ?? spaceId, streamId)
-
+        this.logCall('createMedia', channelId ?? spaceId, userId, streamId)
         const inceptionEvent = await makeEvent(
             this.signerContext,
             make_MediaPayload_Inception({
                 streamId: streamIdAsBytes(streamId),
                 channelId: channelId ? streamIdAsBytes(channelId) : undefined,
                 spaceId: spaceId ? streamIdAsBytes(spaceId) : undefined,
+                userId: userId ? addressFromUserId(userId) : undefined,
                 chunkCount,
                 settings: streamSettings,
             }),
@@ -899,6 +908,36 @@ export class Client
         // add the event to the stream
         const event = make_SpacePayload_SpaceImage(encryptedData)
         return this.makeEventAndAddToStream(spaceStreamId, event, { method: 'setSpaceImage' })
+    }
+
+    async setUserProfileImage(chunkedMediaInfo: PlainMessage<ChunkedMedia>) {
+        this.logCall('setUserProfileImage', chunkedMediaInfo.streamId, chunkedMediaInfo.info)
+
+        // create the chunked media to be added
+        const context = this.userId.toLowerCase()
+        const userStreamId = makeUserMetadataStreamId(this.userId)
+
+        // encrypt the chunked media
+        // use the lowercased userId as the key phrase
+        const { key, iv } = await deriveKeyAndIV(context)
+        const { ciphertext } = await encryptAESGCM(
+            new ChunkedMedia(chunkedMediaInfo).toBinary(),
+            key,
+            iv,
+        )
+        const encryptedData = new EncryptedData({
+            ciphertext: uint8ArrayToBase64(ciphertext),
+            algorithm: AES_GCM_DERIVED_ALGORITHM,
+        })
+
+        // add the event to the stream
+        const event = make_UserMetadataPayload_ProfileImage(encryptedData)
+        return this.makeEventAndAddToStream(userStreamId, event, { method: 'setUserProfileImage' })
+    }
+
+    async getUserProfileImage(userId: string | Uint8Array) {
+        const streamId = makeUserMetadataStreamId(userId)
+        return this.stream(streamId)?.view.userMetadataContent.getProfileImage()
     }
 
     async setDisplayName(streamId: string, displayName: string) {

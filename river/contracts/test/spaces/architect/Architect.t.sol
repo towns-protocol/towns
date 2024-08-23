@@ -112,12 +112,13 @@ contract ArchitectTest is
       ISpaceOwner spaceTokenAddress,
       IUserEntitlement userEntitlementAddress,
       IRuleEntitlementV2 ruleEntitlementAddress,
-      IRuleEntitlement legacyRuleEntitlement
+      IRuleEntitlement legacyRuleEntitlementAddress
     ) = spaceArchitect.getSpaceArchitectImplementations();
 
     assertEq(spaceOwner, address(spaceTokenAddress));
     assertEq(userEntitlement, address(userEntitlementAddress));
     assertEq(ruleEntitlement, address(ruleEntitlementAddress));
+    assertEq(legacyRuleEntitlement, address(legacyRuleEntitlementAddress));
   }
 
   function test_fuzz_setImplementations(address user) external {

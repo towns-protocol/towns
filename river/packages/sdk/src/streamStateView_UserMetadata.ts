@@ -5,6 +5,8 @@ import {
     UserMetadataPayload,
     UserMetadataPayload_EncryptionDevice,
     UserMetadataPayload_Snapshot,
+    ChunkedMedia,
+    type EncryptedData,
 } from '@river-build/proto'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { check } from '@river-build/dlog'
@@ -12,10 +14,16 @@ import { logNever } from './check'
 import { UserDevice } from '@river-build/encryption'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import { getUserIdFromStreamId } from './id'
+import { decryptDerivedAESGCM } from './crypto_utils'
 
 export class StreamStateView_UserMetadata extends StreamStateView_AbstractContent {
     readonly streamId: string
     readonly streamCreatorId: string
+    private profileImage: ChunkedMedia | undefined
+    private encryptedProfileImage: EncryptedData | undefined
+    private decryptionInProgress:
+        | { encryptedData: EncryptedData; promise: Promise<ChunkedMedia | undefined> }
+        | undefined
 
     // user_id -> device_keys, fallback_keys
     readonly deviceKeys: UserDevice[] = []
@@ -35,6 +43,9 @@ export class StreamStateView_UserMetadata extends StreamStateView_AbstractConten
         for (const value of content.encryptionDevices) {
             this.addUserDeviceKey(value, encryptionEmitter, undefined)
         }
+        if (content.profileImage?.data) {
+            this.addProfileImage(content.profileImage.data)
+        }
     }
 
     prependEvent(
@@ -43,7 +54,7 @@ export class StreamStateView_UserMetadata extends StreamStateView_AbstractConten
         _encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
         _stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): void {
-        // nohing to do
+        // nothing to do
     }
 
     appendEvent(
@@ -59,6 +70,9 @@ export class StreamStateView_UserMetadata extends StreamStateView_AbstractConten
                 break
             case 'encryptionDevice':
                 this.addUserDeviceKey(payload.content.value, encryptionEmitter, stateEmitter)
+                break
+            case 'profileImage':
+                this.addProfileImage(payload.content.value, stateEmitter)
                 break
             case undefined:
                 break
@@ -83,5 +97,53 @@ export class StreamStateView_UserMetadata extends StreamStateView_AbstractConten
         this.deviceKeys.push(device)
         encryptionEmitter?.emit('userDeviceKeyMessage', this.streamId, this.streamCreatorId, device)
         stateEmitter?.emit('userDeviceKeysUpdated', this.streamId, this.deviceKeys)
+    }
+
+    private addProfileImage(
+        data: EncryptedData,
+        stateEmitter?: TypedEmitter<StreamStateEvents> | undefined,
+    ) {
+        this.encryptedProfileImage = data
+        stateEmitter?.emit('userProfileImageUpdated', this.streamId)
+    }
+
+    public async getProfileImage() {
+        // if we have an encrypted space image, decrypt it
+        if (this.encryptedProfileImage) {
+            const encryptedData = this.encryptedProfileImage
+            this.encryptedProfileImage = undefined
+            this.decryptionInProgress = {
+                promise: this.decryptProfileImage(encryptedData),
+                encryptedData,
+            }
+            return this.decryptionInProgress.promise
+        }
+
+        // if there isn't an updated encrypted profile image, but a decryption is
+        // in progress, return the promise
+        if (this.decryptionInProgress) {
+            return this.decryptionInProgress.promise
+        }
+
+        return this.profileImage
+    }
+
+    private async decryptProfileImage(
+        encryptedData: EncryptedData,
+    ): Promise<ChunkedMedia | undefined> {
+        try {
+            const userId = getUserIdFromStreamId(this.streamId)
+            const context = userId.toLowerCase()
+            const plaintext = await decryptDerivedAESGCM(context, encryptedData)
+            const decryptedImage = ChunkedMedia.fromBinary(plaintext)
+            if (encryptedData === this.decryptionInProgress?.encryptedData) {
+                this.profileImage = decryptedImage
+            }
+            return decryptedImage
+        } finally {
+            if (encryptedData === this.decryptionInProgress?.encryptedData) {
+                this.decryptionInProgress = undefined
+            }
+        }
     }
 }

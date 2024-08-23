@@ -226,6 +226,18 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 			params:    ru,
 			inception: inception,
 		}
+		
+		if shared.ValidUserIdBytes(inception.UserId) {
+			return builder.
+				check(
+					ru.params.streamIdTypeIsCorrect(shared.STREAM_MEDIA_BIN),
+					ru.params.eventCountMatches(1),
+					ru.checkMediaInceptionPayload,
+				).
+				requireUserAddr(inception.UserId).
+				requireChainAuth(ru.getChainAuthForMediaStream)
+		}
+
 		return builder.
 			check(
 				ru.params.streamIdTypeIsCorrect(shared.STREAM_MEDIA_BIN),
@@ -527,6 +539,10 @@ func (ru *csMediaRules) checkMediaInceptionPayload() error {
 			Err_BAD_STREAM_CREATION_PARAMS,
 			fmt.Sprintf("chunk count must be less than or equal to %d", ru.params.maxChunkCount),
 		)
+	}
+
+	if len(ru.inception.ChannelId) == 0 && len(ru.inception.SpaceId) == 0 && shared.ValidUserIdBytes(ru.inception.UserId) {
+		return nil
 	}
 
 	// checks for space or channel media stream

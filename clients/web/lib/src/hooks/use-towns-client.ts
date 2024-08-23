@@ -113,6 +113,7 @@ interface TownsClientImpl {
     createMediaStream: (
         channelId: string | undefined,
         spaceId: string | undefined,
+        userId: string | undefined,
         chunkCount: number,
     ) => Promise<MediaStreamBlockInfo | undefined>
     createRoleTransaction: (

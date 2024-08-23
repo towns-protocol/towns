@@ -789,12 +789,13 @@ export class TownsClient
     public async createMediaStream(
         channelId: string | undefined,
         spaceId: string | undefined,
+        userId: string | undefined,
         chunkCount: number,
     ): Promise<MediaStreamBlockInfo> {
         if (!this.casablancaClient) {
             throw new Error("Casablanca client doesn't exist")
         }
-        return await this.casablancaClient.createMediaStream(channelId, spaceId, chunkCount)
+        return await this.casablancaClient.createMediaStream(channelId, spaceId, userId, chunkCount)
     }
 
     /************************************************

@@ -1,9 +1,21 @@
-import { useChannel, useSendMessage, useTimeline } from '@river-build/react-sdk'
+import {
+    useChannel,
+    useDisplayName,
+    useEnsAddress,
+    useNft,
+    useSendMessage,
+    useSyncAgent,
+    useTimeline,
+    useUsername,
+} from '@river-build/react-sdk'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
+import type { TimelineEvent } from '@river-build/sdk'
+import { useMemo } from 'react'
 import { useCurrentSpaceId } from '@/hooks/current-space'
 import { useCurrentChannelId } from '@/hooks/current-channel'
+import { cn } from '@/utils'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '../ui/form'
 import { Button } from '../ui/button'
 import { Block } from '../ui/block'
@@ -21,7 +33,7 @@ export const TimelineBlock = () => {
             <div className="flex flex-col gap-1">
                 {timeline.map((event) => (
                     <JsonHover key={event.eventId} data={event}>
-                        <span>{event.text}</span>
+                        <Message event={event} />
                     </JsonHover>
                 ))}
             </div>
@@ -65,5 +77,39 @@ export const SendMessage = () => {
                 <Button type="submit"> {isPending ? 'Sending...' : 'Send'}</Button>
             </form>
         </Form>
+    )
+}
+
+const Message = ({ event }: { event: TimelineEvent }) => {
+    const sync = useSyncAgent()
+    const spaceId = useCurrentSpaceId()
+    const member = useMemo(
+        () => sync.spaces.getSpace(spaceId).members.get(event.creatorUserId),
+        [sync, spaceId, event.creatorUserId],
+    )
+    const { username } = useUsername(member)
+    const { displayName } = useDisplayName(member)
+    const { ensAddress } = useEnsAddress(member)
+    const { nft } = useNft(member)
+    const prettyDisplayName = displayName || username
+
+    return (
+        <div className="flex gap-1">
+            {prettyDisplayName && (
+                <JsonHover data={{ username, displayName, ensAddress, nft }}>
+                    <span
+                        className={cn(
+                            'font-semibold',
+                            event.creatorUserId === sync.userId
+                                ? 'text-sky-500'
+                                : 'text-purple-500',
+                        )}
+                    >
+                        {prettyDisplayName}:
+                    </span>
+                </JsonHover>
+            )}
+            <span>{event.text}</span>
+        </div>
     )
 }

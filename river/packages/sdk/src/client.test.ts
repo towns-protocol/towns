@@ -13,6 +13,7 @@ import {
     makeUserInboxStreamId,
     makeUniqueChannelStreamId,
     addressFromUserId,
+    makeUniqueMediaStreamId,
 } from './id'
 import {
     makeDonePromise,
@@ -26,12 +27,14 @@ import {
     CancelSyncRequest,
     CancelSyncResponse,
     ChannelMessage,
+    MediaInfo,
     SnapshotCaseType,
     SyncOp,
     SyncStreamsRequest,
     SyncStreamsResponse,
+    type ChunkedMedia,
 } from '@river-build/proto'
-import { PartialMessage } from '@bufbuild/protobuf'
+import { PartialMessage, type PlainMessage } from '@bufbuild/protobuf'
 import { CallOptions } from '@connectrpc/connect'
 import { jest } from '@jest/globals'
 import {
@@ -41,6 +44,8 @@ import {
     make_MemberPayload_KeySolicitation,
 } from './types'
 import { SignerContext } from './signerContext'
+import { deriveKeyAndIV } from './crypto_utils'
+import { nanoid } from 'nanoid'
 
 const log = dlog('csb:test')
 
@@ -998,5 +1003,46 @@ describe('clientTest', () => {
 
         const keys = stream.view.userMetadataContent.deviceKeys
         expect(keys).toHaveLength(1)
+    })
+
+    test('setUserProfilePicture', async () => {
+        await expect(await bobsClient.initializeUser()).toResolve()
+        bobsClient.startSync()
+        const streamId = bobsClient.userMetadataStreamId!
+        const userMetadataStream = await bobsClient.waitForStream(streamId)
+
+        // assert assumptionsP
+        expect(userMetadataStream).toBeDefined()
+        expect(
+            userMetadataStream.view.snapshot?.content.case === 'userMetadataContent' &&
+                userMetadataStream.view.snapshot?.content.value.profileImage === undefined,
+        ).toBe(true)
+
+        // make a space image event
+        const mediaStreamId = makeUniqueMediaStreamId()
+        const image = new MediaInfo({
+            mimetype: 'image/png',
+            filename: 'bob-1.png',
+        })
+        const { key, iv } = await deriveKeyAndIV(nanoid(128)) // if in browser please use window.crypto.subtle.generateKey
+        const chunkedMediaInfo = {
+            info: image,
+            streamId: mediaStreamId,
+            encryption: {
+                case: 'aesgcm',
+                value: { secretKey: key, iv },
+            },
+            thumbnail: undefined,
+        } satisfies PlainMessage<ChunkedMedia>
+
+        const { eventId } = await bobsClient.setUserProfileImage(chunkedMediaInfo)
+        expect(await waitFor(() => userMetadataStream.view.events.has(eventId))).toBe(true)
+
+        const decrypted = await bobsClient.getUserProfileImage(bobsClient.userId)
+        expect(decrypted).toBeDefined()
+        expect(decrypted?.info?.mimetype).toBe(image.mimetype)
+        expect(decrypted?.info?.filename).toBe(image.filename)
+        expect(decrypted?.encryption.case).toBe(chunkedMediaInfo.encryption.case)
+        expect(decrypted?.encryption.value?.secretKey).toBeDefined()
     })
 })

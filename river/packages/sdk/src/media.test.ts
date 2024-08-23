@@ -30,7 +30,7 @@ describe('mediaTests', () => {
         const channelId = makeUniqueChannelStreamId(spaceId)
         await expect(bobsClient.createChannel(spaceId, 'Channel', 'Topic', channelId)).toResolve()
 
-        return bobsClient.createMediaStream(channelId, spaceId, chunkCount)
+        return bobsClient.createMediaStream(channelId, spaceId, undefined, chunkCount)
     }
 
     async function bobSendMediaPayloads(
@@ -81,8 +81,8 @@ describe('mediaTests', () => {
         const mediaInfo = await bobsClient.createMediaStream(
             undefined,
             spaceId,
-            chunkCount,
             undefined,
+            chunkCount,
         )
         return mediaInfo
     }
@@ -205,7 +205,7 @@ describe('mediaTests', () => {
         const nonExistentSpaceId = makeUniqueSpaceStreamId()
         const nonExistentChannelId = makeUniqueChannelStreamId(nonExistentSpaceId)
         await expect(
-            bobsClient.createMediaStream(nonExistentChannelId, nonExistentSpaceId, 10),
+            bobsClient.createMediaStream(nonExistentChannelId, nonExistentSpaceId, undefined, 10),
         ).toReject()
     })
 
@@ -215,7 +215,9 @@ describe('mediaTests', () => {
         alicesClient.startSync()
 
         const nonExistentChannelId = makeDMStreamId(bobsClient.userId, alicesClient.userId)
-        await expect(bobsClient.createMediaStream(nonExistentChannelId, undefined, 10)).toReject()
+        await expect(
+            bobsClient.createMediaStream(nonExistentChannelId, undefined, undefined, 10),
+        ).toReject()
         await alicesClient.stop()
     })
 
@@ -225,8 +227,8 @@ describe('mediaTests', () => {
         alicesClient.startSync()
 
         const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
-        await expect(bobsClient.createMediaStream(streamId, undefined, 10)).toResolve()
-        await expect(alicesClient.createMediaStream(streamId, undefined, 10)).toResolve()
+        await expect(bobsClient.createMediaStream(streamId, undefined, undefined, 10)).toResolve()
+        await expect(alicesClient.createMediaStream(streamId, undefined, undefined, 10)).toResolve()
         await alicesClient.stop()
     })
 
@@ -243,7 +245,7 @@ describe('mediaTests', () => {
             alicesClient.userId,
             charliesClient.userId,
         ])
-        await expect(bobsClient.createMediaStream(streamId, undefined, 10)).toResolve()
+        await expect(bobsClient.createMediaStream(streamId, undefined, undefined, 10)).toResolve()
         await alicesClient.stop()
         await charliesClient.stop()
     })
@@ -259,7 +261,9 @@ describe('mediaTests', () => {
 
         const { streamId } = await bobsClient.createDMChannel(alicesClient.userId)
 
-        await expect(charliesClient.createMediaStream(streamId, undefined, 10)).toReject()
+        await expect(
+            charliesClient.createMediaStream(streamId, undefined, undefined, 10),
+        ).toReject()
         await alicesClient.stop()
         await charliesClient.stop()
     })
@@ -296,5 +300,14 @@ describe('mediaTests', () => {
         // use-chunked-media.ts utilizes the tream.mediaContent.info property, so equality here
         // will result in the same behavior in the client app.
         expect(stream.mediaContent).toEqual(streamEx.mediaContent)
+    })
+
+    test('userMediaStream', async () => {
+        const alicesClient = await makeTestClient()
+        await alicesClient.initializeUser()
+        alicesClient.startSync()
+        await expect(
+            alicesClient.createMediaStream(undefined, undefined, alicesClient.userId, 10),
+        ).toResolve()
     })
 })

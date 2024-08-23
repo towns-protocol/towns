@@ -246,3 +246,7 @@ func ValidGDMChannelStreamIdBytes(streamId []byte) bool {
 func ValidGDMChannelStreamId(streamId *StreamId) bool {
 	return streamId.Type() == STREAM_GDM_CHANNEL_BIN
 }
+
+func ValidUserIdBytes(userId []byte) bool {
+	return len(userId) == 20
+}

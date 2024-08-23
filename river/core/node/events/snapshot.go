@@ -170,7 +170,7 @@ func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent, miniblockNum int64
 	case *StreamEvent_UserSettingsPayload:
 		return update_Snapshot_UserSettings(iSnapshot, payload.UserSettingsPayload)
 	case *StreamEvent_UserMetadataPayload:
-		return update_Snapshot_UserDeviceKey(iSnapshot, payload.UserMetadataPayload)
+		return update_Snapshot_UserMetadata(iSnapshot, payload.UserMetadataPayload, eventNum, event.Hash.Bytes())
 	case *StreamEvent_UserInboxPayload:
 		return update_Snapshot_UserInbox(iSnapshot, payload.UserInboxPayload, miniblockNum)
 	case *StreamEvent_MemberPayload:
@@ -345,10 +345,15 @@ func update_Snapshot_UserSettings(iSnapshot *Snapshot, userSettingsPayload *User
 	}
 }
 
-func update_Snapshot_UserDeviceKey(iSnapshot *Snapshot, userMetadataPayload *UserMetadataPayload) error {
+func update_Snapshot_UserMetadata(
+	iSnapshot *Snapshot,
+	userMetadataPayload *UserMetadataPayload,
+	eventNum int64,
+	eventHash []byte,
+) error {
 	snapshot := iSnapshot.Content.(*Snapshot_UserMetadataContent)
 	if snapshot == nil {
-		return RiverError(Err_INVALID_ARGUMENT, "blockheader snapshot is not a user device key snapshot")
+		return RiverError(Err_INVALID_ARGUMENT, "blockheader snapshot is not a user metadata snapshot")
 	}
 	switch content := userMetadataPayload.Content.(type) {
 	case *UserMetadataPayload_Inception_:
@@ -375,8 +380,11 @@ func update_Snapshot_UserDeviceKey(iSnapshot *Snapshot, userMetadataPayload *Use
 			snapshot.UserMetadataContent.EncryptionDevices = append(snapshot.UserMetadataContent.EncryptionDevices[startIndex:i], content.EncryptionDevice)
 		}
 		return nil
+	case *UserMetadataPayload_ProfileImage:
+		snapshot.UserMetadataContent.ProfileImage = &WrappedEncryptedData{Data: content.ProfileImage, EventNum: eventNum, EventHash: eventHash}
+		return nil
 	default:
-		return RiverError(Err_INVALID_ARGUMENT, "unknown user device key payload type %T", userMetadataPayload.Content)
+		return RiverError(Err_INVALID_ARGUMENT, "unknown user metadata payload type %T", userMetadataPayload.Content)
 	}
 }
 

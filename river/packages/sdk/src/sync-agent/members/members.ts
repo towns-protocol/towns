@@ -87,14 +87,18 @@ export class Members extends PersistedObservable<MembersModel> {
         )
         for (const userId of userIds) {
             if (userId === this.riverConnection.userId) {
-                this._myself = new Myself(streamId, this.riverConnection, this.store)
+                if (!this._myself) {
+                    this._myself = new Myself(streamId, this.riverConnection, this.store)
+                }
             } else {
-                this.members[userId] = new Member(
-                    userId,
-                    streamId,
-                    this.riverConnection,
-                    this.store,
-                )
+                if (!this.members[userId]) {
+                    this.members[userId] = new Member(
+                        userId,
+                        streamId,
+                        this.riverConnection,
+                        this.store,
+                    )
+                }
             }
         }
         this.setData({ initialized: true, userIds })
@@ -113,9 +117,18 @@ export class Members extends PersistedObservable<MembersModel> {
         if (streamId !== this.data.id) return
         this.setData({ userIds: [...this.data.userIds, userId] })
         if (userId === this.riverConnection.userId) {
-            this._myself = new Myself(streamId, this.riverConnection, this.store)
+            if (!this._myself) {
+                this._myself = new Myself(streamId, this.riverConnection, this.store)
+            }
         } else {
-            this.members[userId] = new Member(userId, streamId, this.riverConnection, this.store)
+            if (!this.members[userId]) {
+                this.members[userId] = new Member(
+                    userId,
+                    streamId,
+                    this.riverConnection,
+                    this.store,
+                )
+            }
         }
     }
 }

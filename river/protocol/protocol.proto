@@ -497,6 +497,8 @@ message UserMetadataPayload {
         Inception inception = 1;
         // device keys for this user, unique by device_key, capped at N, most recent last
         repeated EncryptionDevice encryption_devices = 2;
+        // user profile image
+        WrappedEncryptedData profile_image = 3;
     }
 
     message Inception {
@@ -512,6 +514,7 @@ message UserMetadataPayload {
     oneof content {
         Inception inception = 1;
         EncryptionDevice encryption_device = 2;
+        EncryptedData profile_image = 3;
     }
 }
 

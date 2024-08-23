@@ -124,14 +124,83 @@ describe('mediaWithEntitlements', () => {
          * Real test starts here
          * Bob is a member of the channel and can therefore create a media stream
          */
-        await expect(bobClient.createMediaStream(channelId, spaceStreamId, 10)).toResolve()
+        await expect(
+            bobClient.createMediaStream(channelId, spaceStreamId, undefined, 10),
+        ).toResolve()
         await bobClient.stop()
 
         await aliceClient.initializeUser({ spaceId: space2Id })
         aliceClient.startSync()
 
         // Alice is NOT a member of the channel is prevented from creating a media stream
-        await expect(aliceClient.createMediaStream(channelId, spaceStreamId, 10)).toReject()
+        await expect(
+            aliceClient.createMediaStream(channelId, spaceStreamId, undefined, 10),
+        ).toReject()
         await aliceClient.stop()
+    })
+
+    test('can create user media stream with user id only', async () => {
+        log('start clientCanCreateUserMediaStream')
+        /**
+         * Setup
+         * Bob creates a space, both on chain and in River, in order to initialize the user
+         */
+
+        const provider = new LocalhostWeb3Provider(baseConfig.rpcUrl, bobWallet)
+        await provider.fundWallet()
+        const spaceDapp = createSpaceDapp(provider, baseConfig.chainConfig)
+
+        const pricingModules = await spaceDapp.listPricingModules()
+        const dynamicPricingModule = getDynamicPricingModule(pricingModules)
+        expect(dynamicPricingModule).toBeDefined()
+
+        // create a space stream,
+        const membershipInfo: LegacyMembershipStruct = {
+            settings: {
+                name: 'Everyone',
+                symbol: 'MEMBER',
+                price: 0,
+                maxSupply: 1000,
+                duration: 0,
+                currency: ETH_ADDRESS,
+                feeRecipient: bobClient.userId,
+                freeAllocation: 0,
+                pricingModule: dynamicPricingModule!.module,
+            },
+            permissions: [Permission.Read, Permission.Write],
+            requirements: {
+                everyone: true,
+                users: [],
+                ruleData: NoopRuleData,
+            },
+        }
+
+        log('transaction start bob creating space')
+        const transaction = await spaceDapp.createLegacySpace(
+            {
+                spaceName: 'space-name',
+                uri: 'http://bobs-space-metadata.com',
+                channelName: 'general', // default channel name
+                membership: membershipInfo,
+            },
+            provider.wallet,
+        )
+
+        const receipt = await transaction.wait()
+        log('transaction receipt', receipt)
+        const spaceAddress = spaceDapp.getSpaceAddress(receipt)
+        expect(spaceAddress).toBeDefined()
+        const spaceStreamId = makeSpaceStreamId(spaceAddress!)
+        await bobClient.initializeUser({ spaceId: spaceStreamId })
+        bobClient.startSync()
+        await bobClient.createSpace(spaceStreamId)
+        /**
+         * Real test starts here
+         * Bob creates a user media stream
+         */
+        await expect(
+            bobClient.createMediaStream(undefined, undefined, bobClient.userId, 10),
+        ).toResolve()
+        await bobClient.stop()
     })
 })

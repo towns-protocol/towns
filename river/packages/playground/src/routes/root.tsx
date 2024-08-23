@@ -10,6 +10,7 @@ import { TimelineBlock } from '@/components/blocks/timeline'
 import { ChannelsBlock } from '@/components/blocks/channels'
 import { SpaceProvider } from '@/hooks/current-space'
 import { ChannelProvider } from '@/hooks/current-channel'
+import { MetadataBlock } from '@/components/blocks/metadata'
 
 export const ConnectRoute = () => {
     const { isConnected: isWalletConnected } = useAccount()
@@ -81,6 +82,7 @@ const ConnectedContent = () => {
             <SpaceProvider spaceId={spaceId}>
                 <ChannelsBlock changeChannel={changeChannel} />
                 <ChannelProvider channelId={channelId}>
+                    <MetadataBlock />
                     <TimelineBlock />
                 </ChannelProvider>
             </SpaceProvider>

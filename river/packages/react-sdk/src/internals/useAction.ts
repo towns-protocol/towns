@@ -15,7 +15,7 @@ type ParamsOf<T> = Parameters<ActionFn<T>>
 type ReturnOf<T> = Awaited<ReturnType<ActionFn<T>>>
 
 export const useAction = <Namespace, Key extends keyof Namespace, Fn extends Namespace[Key]>(
-    namespace: Namespace,
+    namespace: Namespace | undefined,
     fnName: Key & string,
     config?: ActionConfig<Fn>,
 ) => {
@@ -25,6 +25,9 @@ export const useAction = <Namespace, Key extends keyof Namespace, Fn extends Nam
 
     const action = useCallback(
         async (...args: MultipleParams<ParamsOf<Fn>>): Promise<ReturnOf<Fn>> => {
+            if (!namespace) {
+                throw new Error(`useAction: namespace is undefined`)
+            }
             const fn = namespace[fnName] as ActionFn<Fn>
             if (typeof fn !== 'function') {
                 throw new Error(`useAction: fn ${fnName} is not a function`)

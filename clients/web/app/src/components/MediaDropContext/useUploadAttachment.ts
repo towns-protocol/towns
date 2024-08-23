@@ -46,7 +46,12 @@ export const useUploadAttachment = () => {
         ): Promise<Attachment> => {
             const encryptionResult = await encryptAESGCM(data)
             const chunkCount = Math.ceil(encryptionResult.ciphertext.length / CHUNK_SIZE)
-            const mediaStreamInfo = await createMediaStream(channelId, spaceId, chunkCount)
+            const mediaStreamInfo = await createMediaStream(
+                channelId,
+                spaceId,
+                undefined,
+                chunkCount,
+            )
             if (!mediaStreamInfo) {
                 throw new Error('Failed to create media stream')
             }
