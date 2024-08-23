@@ -335,7 +335,7 @@ function SubmitButton({
         //////////////////////////////////////////
         if (data.tokensGatingMembership.length > 0) {
             const missingQuantity = data.tokensGatingMembership.some(
-                (token) => token.quantity === 0 || token.quantity === undefined,
+                (token) => token.quantity === 0n || token.quantity === undefined,
             )
             if (missingQuantity) {
                 setError('tokensGatingMembership', {

@@ -44,7 +44,8 @@ function TokenSelection(props: TokenSelectionProps) {
                 <Stack grow gap="sm">
                     <Stack horizontal gap="sm" alignItems="center">
                         <Text truncate>
-                            {quantity} {label?.length ? label : 'Unknown Token'}
+                            {quantity !== undefined ? `${quantity} ` : ''}
+                            {label?.length ? label : 'Unknown Token'}
                         </Text>
                         {'userOwnsToken' in props && (
                             <Box

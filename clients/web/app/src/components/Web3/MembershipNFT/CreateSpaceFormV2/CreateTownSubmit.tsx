@@ -193,7 +193,7 @@ export function CreateTownSubmit({
                 //////////////////////////////////////////
                 if (tokensGatingMembership.length > 0) {
                     const missingQuantity = tokensGatingMembership.some(
-                        (token) => token.quantity === 0 || token.quantity === undefined,
+                        (token) => token.quantity === 0n || token.quantity === undefined,
                     )
                     if (missingQuantity) {
                         form.setError('tokensGatingMembership', {
@@ -316,8 +316,15 @@ export function CreateTownSubmit({
                             quantity: t.quantity,
                         })),
                     }
-                    analytics?.track('created town', tracked, () => {
-                        console.log('[analytics] created town', tracked)
+                    const trackedAnalytics = {
+                        ...tracked,
+                        tokensGatingMembership: tracked.tokensGatingMembership.map((token) => ({
+                            ...token,
+                            quantity: token.quantity.toString(),
+                        })),
+                    }
+                    analytics?.track('created town', trackedAnalytics, () => {
+                        console.log('[analytics] created town', trackedAnalytics)
                     })
 
                     if (values.spaceIconUrl && values.spaceIconFile) {

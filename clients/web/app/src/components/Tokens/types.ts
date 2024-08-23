@@ -6,7 +6,7 @@ export type TokenData = {
     label: string
     address: Address
     type: TokenType
-    quantity: number | undefined
+    quantity: bigint | undefined
     displayNft?: {
         tokenId?: string | null
         name?: string | null

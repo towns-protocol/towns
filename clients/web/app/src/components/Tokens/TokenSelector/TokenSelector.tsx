@@ -1,5 +1,7 @@
 import React, { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Controller, useForm } from 'react-hook-form'
 import { TokenType } from '@token-worker/types'
 import { TokenDataWithChainId } from '@components/Tokens/types'
 import { Box, Button, Icon, IconButton, Stack, Text, TextField } from '@ui'
@@ -83,7 +85,7 @@ export function TokenSelector(props: Props) {
                 ...option,
                 data: {
                     ...option.data,
-                    quantity: 1,
+                    quantity: 1n,
                 },
             })
         })
@@ -286,49 +288,44 @@ function TokenEditor(props: {
     onHide: () => void
 }) {
     const { token, onUpdate, onHide } = props
-    const [errorMessage, setErrorMessage] = useState<string | undefined>()
-    const fieldRef = useRef<HTMLInputElement>(null)
-    const onOpenRef = useRef(false)
 
     const schema = z.object({
         quantity: z
             .number({
-                errorMap: (err) => {
-                    if (err.code === 'too_small') {
-                        return { message: 'Quantity must be at least 1.' }
-                    }
-
-                    return { message: 'Quantity must be a number.' }
-                },
+                required_error: 'Quantity is required',
+                invalid_type_error: 'Quantity must be a number',
             })
-            .min(1),
+            .min(1, 'Quantity must be at least 1'),
     })
 
-    const validate = useCallback(
-        (value: string) => {
-            const result = schema.safeParse({ quantity: Number(value) })
-            if (!result.success) {
-                setErrorMessage(JSON.parse(result.error.message)[0].message)
-                return false
-            }
-            setErrorMessage(undefined)
-            return true
+    const {
+        control,
+        handleSubmit,
+        formState: { errors },
+        setFocus,
+    } = useForm({
+        resolver: zodResolver(schema),
+        defaultValues: {
+            // TODO: Convert back and forth decimal places for ERC20 tokens
+            quantity: token.data.quantity ? Number(token.data.quantity) : 1,
         },
-        [schema],
-    )
+    })
 
-    const onChange = (e: ChangeEvent<HTMLInputElement>) => {
-        validate(e.target.value)
+    const onSubmit = (data: { quantity: number }) => {
+        onUpdate({
+            ...token,
+            data: {
+                ...token.data,
+                // TODO: Convert back and forth decimal places for ERC20 tokens
+                quantity: BigInt(data.quantity),
+            },
+        })
+        onHide()
     }
 
     useEffect(() => {
-        if (onOpenRef.current) {
-            return
-        }
-        onOpenRef.current = true
-        fieldRef.current?.focus()
-        validate(token.data.quantity?.toString() ?? '')
-    }, [token, validate])
+        setFocus('quantity')
+    }, [setFocus])
 
     return (
         <Box centerContent gap="md" padding="md" width="100%">
@@ -347,39 +344,42 @@ function TokenEditor(props: {
 
             <TokenSelectionDisplay {...token} />
 
-            <Box gap alignSelf="start" width="100%">
-                <Text>Quantity</Text>
-                <TextField
-                    ref={fieldRef}
-                    tone="neutral"
-                    background="level2"
-                    placeholder="Enter a quantity"
-                    minLength={1}
-                    defaultValue={token.data.quantity?.toString()}
-                    onChange={onChange}
-                />
-            </Box>
-            {errorMessage && <Text color="error">{errorMessage}</Text>}
+            <Box as="form" style={{ width: '100%' }} gap="md" onSubmit={handleSubmit(onSubmit)}>
+                <Box gap alignSelf="start" width="100%">
+                    <Text>Quantity</Text>
+                    <Controller
+                        name="quantity"
+                        control={control}
+                        render={({ field }) => (
+                            <TextField
+                                {...field}
+                                type="number"
+                                step={token.data.type === TokenType.ERC20 ? 'any' : '1'}
+                                tone="neutral"
+                                background="level2"
+                                placeholder="Enter a quantity"
+                                onChange={(e) => {
+                                    // We only accept decimal numbers for ERC20 tokens
+                                    if (token.data.type === TokenType.ERC20) {
+                                        const value = parseFloat(e.target.value)
+                                        field.onChange(isNaN(value) ? '' : value)
+                                    } else {
+                                        const value = parseInt(e.target.value, 10)
+                                        field.onChange(isNaN(value) ? '' : value)
+                                    }
+                                }}
+                            />
+                        )}
+                    />
+                </Box>
+                {errors.quantity && <Text color="error">{errors.quantity.message}</Text>}
 
-            <Button
-                tone="cta1"
-                disabled={!!errorMessage}
-                onClick={() => {
-                    onUpdate({
-                        ...token,
-                        data: {
-                            ...token.data,
-                            quantity:
-                                fieldRef.current?.value && +fieldRef.current.value > 0
-                                    ? +fieldRef.current.value
-                                    : token.data.quantity,
-                        },
-                    })
-                    onHide()
-                }}
-            >
-                Update
-            </Button>
+                <Box centerContent>
+                    <Button type="submit" tone="cta1">
+                        Update
+                    </Button>
+                </Box>
+            </Box>
         </Box>
     )
 }
@@ -399,7 +399,6 @@ function useValidTokens(args: {
         return tokens
     }, [args.allowedTokenTypes, args.tokenMetadata])
 }
-
 function useSorted(tokenMetadata: TokenDataWithChainId[] | undefined) {
     return useMemo(
         () =>

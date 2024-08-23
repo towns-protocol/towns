@@ -85,7 +85,7 @@ export function mapTokenOptionsToTokenDataStruct(tokens: TokenDataWithChainId[])
             chainId: t.chainId,
             type: t.data.type,
             tokenIds: [],
-            quantity: t.data.quantity ?? 1,
+            quantity: t.data.quantity ? BigInt(t.data.quantity) : 1n,
         }
     })
 }

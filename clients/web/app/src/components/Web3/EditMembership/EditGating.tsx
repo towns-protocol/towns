@@ -28,8 +28,9 @@ export function EditGating() {
     }, [reset, getValues])
 
     const onTokensCardClick = useCallback(() => {
+        const currentMembershipType = getValues('membershipType')
         setValue('membershipType', 'tokenHolders')
-        if (getValues('membershipType') === 'tokenHolders') {
+        if (currentMembershipType !== 'tokenHolders') {
             setTimeout(() => inputRef.current?.focus(), 0)
         }
     }, [setValue, getValues, inputRef])
