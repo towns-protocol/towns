@@ -306,26 +306,21 @@ export const MessageLayout = (props: Props) => {
                     />
                 )}
             </Stack>
-            {isModalSheetVisible &&
-                isTouch &&
-                isChannelWritable &&
-                channelId &&
-                eventId &&
-                isSelectable && (
-                    <MessageModalSheet
-                        canPin={canPin}
-                        canReply={canReply && isChannelWritable}
-                        canReact={isChannelReactable}
-                        channelId={channelId}
-                        spaceId={spaceId}
-                        eventId={eventId}
-                        canEdit={isEditable && isChannelWritable}
-                        messageBody={messageBody}
-                        threadParentId={threadParentId}
-                        isPinned={!!pin}
-                        onClose={() => setIsModalSheetVisible(false)}
-                    />
-                )}
+            {isModalSheetVisible && isTouch && channelId && eventId && isSelectable && (
+                <MessageModalSheet
+                    canPin={canPin}
+                    canReply={canReply && isChannelWritable}
+                    canReact={isChannelReactable}
+                    channelId={channelId}
+                    spaceId={spaceId}
+                    eventId={eventId}
+                    canEdit={isEditable && isChannelWritable}
+                    messageBody={messageBody}
+                    threadParentId={threadParentId}
+                    isPinned={!!pin}
+                    onClose={() => setIsModalSheetVisible(false)}
+                />
+            )}
             {showDecryptionDebugger && sessionId && eventId && (
                 <DecryptionDebugger sessionId={sessionId} eventId={eventId} timestamp={timestamp} />
             )}
