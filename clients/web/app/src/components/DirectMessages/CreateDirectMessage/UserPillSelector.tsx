@@ -187,11 +187,7 @@ export const UserPillSelector = (props: Props) => {
                         label={labelElement}
                         initialFocusIndex={isTouch ? -1 : 0}
                         placeholder={
-                            !numSelected
-                                ? 'Search for people or channels'
-                                : numSelected === 1
-                                ? 'Add people...'
-                                : ''
+                            !numSelected ? 'Search people' : numSelected >= 1 ? 'Add people' : ''
                         }
                         optionRenderer={optionRenderer}
                         pillRenderer={pillRenderer}
@@ -231,7 +227,7 @@ export const UserOption = (props: { user: LookupUser; selected: boolean }) => {
     return (
         <Box
             horizontal
-            gap
+            gap="sm"
             key={user.userId}
             background={selected ? 'level3' : undefined}
             insetX="xs"

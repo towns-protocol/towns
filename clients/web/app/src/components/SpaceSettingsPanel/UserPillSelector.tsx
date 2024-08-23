@@ -109,7 +109,7 @@ export const UserPillSelector = (props: Props) => {
             initialSelection={props.initialSelection}
             keys={['username', 'displayName', 'abstractAccountAddress']}
             label="Suggested"
-            placeholder={!numSelected ? 'Search people' : numSelected === 1 ? 'Add people...' : ''}
+            placeholder={!numSelected ? 'Search people' : numSelected >= 1 ? 'Add people' : ''}
             optionRenderer={optionRenderer}
             pillRenderer={(p) => (
                 <PillRenderer address={p.key} lookupUser={lookupUser} onDelete={p.onDelete} />
