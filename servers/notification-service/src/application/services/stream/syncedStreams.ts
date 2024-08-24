@@ -816,6 +816,11 @@ export class SyncedStreams {
         usersToNotify: NotifyUser[],
         streamId: string,
     ) {
+        logger.info('dispatchNotification called', {
+            streamId,
+            userNotifiedCount: usersToNotify.length,
+            notificationData,
+        })
         const pushNotificationRequests = await notificationService.createNotificationAsyncRequests(
             notificationData,
             usersToNotify,
