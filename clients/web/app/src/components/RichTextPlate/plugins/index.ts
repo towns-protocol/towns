@@ -65,7 +65,7 @@ import {
     TUserIDNameMap,
     TUserWithChannel,
 } from '../components/plate-ui/autocomplete/types'
-import { getUrlHref, isUrl } from '../utils/helpers'
+import { isLinkURIDecoded } from '../utils/helpers'
 import { createPasteMentionsPlugin } from './createPasteMentionsPlugin'
 
 const platePlugins = (
@@ -91,8 +91,7 @@ const platePlugins = (
             }),
             createLinkPlugin({
                 options: {
-                    isUrl,
-                    getUrlHref,
+                    getUrlHref: (url: string) => (isLinkURIDecoded(url) ? url : decodeURI(url)),
                 },
             }),
             createListPlugin(),

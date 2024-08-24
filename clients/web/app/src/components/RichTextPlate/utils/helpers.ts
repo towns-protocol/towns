@@ -1,4 +1,3 @@
-import linkifyit from 'linkify-it'
 import { ELEMENT_BLOCKQUOTE } from '@udecode/plate-block-quote'
 import { ELEMENT_CODE_LINE } from '@udecode/plate-code-block'
 import { ELEMENT_PARAGRAPH } from '@udecode/plate-paragraph'
@@ -24,53 +23,17 @@ import get from 'lodash/get'
 import { isType } from '@udecode/plate-utils'
 import { Channel } from 'use-towns-client'
 
-const linkify = linkifyit()
 export const BREAK_TAG = '<br>'
 
 export const isInputFocused = () => document.activeElement?.tagName === 'INPUT'
 
-export const convertPlainTextLinksToMd = (fullText: string) => {
-    const links = linkify.match(fullText)
-    if (!links) {
-        return fullText
-    }
-    let result = fullText
-    links.forEach((link) => {
-        if (isLinkMD(link, fullText)) {
-            return
-        }
-        const linkText = fullText.substring(link.index, link.lastIndex)
-        result = result.replace(linkText, `[${linkText}](${link.url})`)
-    })
-    return result
-}
-
-export const isLinkMD = (link: linkifyit.Match, fullText: string) => {
-    const regex = new RegExp(`\\[${link.text}](.*)`)
-    return fullText.match(regex)
-}
-
-export const isUrl = (url: string) => linkify.test(url)
-
-export const getUrlHref = (url: string) => {
+export const isLinkURIDecoded = (link: string) => {
     try {
-        if (!url || url === '%') {
-            return url
-        }
-
-        let _url = url
-        const linkSchema = linkify.match(url)?.[0]
-        if (linkSchema && linkSchema.url !== url) {
-            _url = linkSchema.url
-        }
-
-        const decodedUrl = decodeURI(url)
-        if (decodedUrl !== url) {
-            _url = decodedUrl
-        }
-        return _url
+        // '%' doesn't decode to a valid URI and throws a malformed URI
+        return link === '%' || decodeURI(link) !== link
     } catch (e) {
-        return url
+        // saftey catch for malformed URIs
+        return true
     }
 }
 
