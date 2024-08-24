@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router'
 import { useSearchParams } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
 import {
+    convertRuleDataV1ToV2,
     useBannedWalletAddresses,
     useConnectivity,
     useContractSpaceInfo,
@@ -519,7 +520,11 @@ const TokensGatingSpace = ({
 }) => {
     const { isLoading: isLoadingRoleDetails, roleDetails } = useRoleDetails(spaceId ?? '', 1)
     const tokens = roleDetails?.ruleData
-        ? convertRuleDataToTokenFormSchema(roleDetails.ruleData)
+        ? convertRuleDataToTokenFormSchema(
+              roleDetails.ruleData.kind === 'v2'
+                  ? roleDetails.ruleData.rules
+                  : convertRuleDataV1ToV2(roleDetails.ruleData.rules),
+          )
         : []
 
     if (isLoadingRoleDetails || tokens.length === 0) {

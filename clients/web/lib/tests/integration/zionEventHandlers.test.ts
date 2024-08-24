@@ -12,8 +12,8 @@ import { waitFor } from '@testing-library/dom'
 import { sleep } from '../../src/utils/towns-utils'
 import {
     getTestGatingNftAddress,
-    LegacyMembershipStruct,
-    NoopRuleData,
+    MembershipStruct,
+    EncodedNoopRuleData,
     Permission,
     getDynamicPricingModule,
 } from '@river-build/web3'
@@ -49,7 +49,7 @@ describe('Towns event handlers test', () => {
 
         const dynamicPricingModule = await getDynamicPricingModule(alice.spaceDapp)
 
-        const membership: LegacyMembershipStruct = {
+        const membership: MembershipStruct = {
             settings: {
                 name: 'Member',
                 symbol: 'MEMBER',
@@ -65,7 +65,7 @@ describe('Towns event handlers test', () => {
             requirements: {
                 everyone: false,
                 users: [alice.wallet.address],
-                ruleData: NoopRuleData,
+                ruleData: EncodedNoopRuleData,
             },
         }
         // createSpace is gated by the mock NFT. Mint one for yourself before proceeding.

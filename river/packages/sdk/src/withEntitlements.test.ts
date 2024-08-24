@@ -8,6 +8,7 @@ import {
     makeTestClient,
     makeDonePromise,
     getDynamicPricingModule,
+    createVersionedSpace,
 } from './util.test'
 import {
     isValidStreamId,
@@ -75,7 +76,8 @@ describe('withEntitlements', () => {
         }
 
         log('transaction start bob creating space')
-        const transaction = await spaceDapp.createLegacySpace(
+        const transaction = await createVersionedSpace(
+            spaceDapp,
             {
                 spaceName: 'bobs-space-metadata',
                 uri: 'http://bobs-space-metadata.com',

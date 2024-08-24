@@ -7,6 +7,9 @@
         "test:ci": {
             "dependsOn": ["build"]
         },
+        "test:ci:legacy": {
+            "dependsOn": ["build"]
+        },
         "test:unit": {
             "dependsOn": ["build"]
         },

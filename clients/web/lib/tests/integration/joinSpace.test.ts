@@ -14,10 +14,11 @@ import {
     Address,
     Permission,
     TestERC721,
-    LegacyMembershipStruct,
+    MembershipStruct,
     createExternalNFTStruct,
     getDynamicPricingModule,
     LogicalOperationType,
+    encodeRuleDataV2,
 } from '@river-build/web3'
 import { TestConstants } from './helpers/TestConstants'
 import { ethers } from 'ethers'
@@ -245,7 +246,7 @@ test(
         ])
         const dynamicPricingModule = await getDynamicPricingModule(alice.spaceDapp)
 
-        const membershipInfo: LegacyMembershipStruct = {
+        const membershipInfo: MembershipStruct = {
             settings: {
                 name: 'Member',
                 symbol: 'MEMBER',
@@ -261,7 +262,7 @@ test(
             requirements: {
                 everyone: false,
                 users: [],
-                ruleData: ruleData,
+                ruleData: encodeRuleDataV2(ruleData),
             },
         }
 
@@ -316,7 +317,7 @@ test('joinSpace gated with 2 NFTs, wallet linking', async () => {
     expect(tx_link.error).toBeUndefined()
     const dynamicPricingModule = await getDynamicPricingModule(alice.spaceDapp)
 
-    const membershipInfo: LegacyMembershipStruct = {
+    const membershipInfo: MembershipStruct = {
         settings: {
             name: 'Member',
             symbol: 'MEMBER',
@@ -332,7 +333,7 @@ test('joinSpace gated with 2 NFTs, wallet linking', async () => {
         requirements: {
             everyone: false,
             users: [],
-            ruleData: ruleData,
+            ruleData: encodeRuleDataV2(ruleData),
         },
     }
 

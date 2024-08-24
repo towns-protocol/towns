@@ -1,7 +1,7 @@
 import {
     CheckOperationType,
-    IRuleEntitlementBase,
-    createContractCheckOperationFromTree,
+    IRuleEntitlementV2Base,
+    createDecodedCheckOperationFromTree,
 } from 'use-towns-client'
 import { TokenType } from './types'
 import { TokenEntitlement } from './TokenSelector/tokenSchemas'
@@ -33,16 +33,16 @@ export function convertOperationTypeToTokenType(type: CheckOperationType) {
 }
 
 export function convertRuleDataToTokenFormSchema(
-    ruleData: IRuleEntitlementBase.RuleDataStruct,
+    ruleData: IRuleEntitlementV2Base.RuleDataV2Struct,
 ): TokenEntitlement[] {
-    return createContractCheckOperationFromTree(ruleData).map((p) => {
+    return createDecodedCheckOperationFromTree(ruleData).map((p) => {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { threshold, ...rest } = p
         return {
             ...rest,
             chainId: Number(p.chainId),
             type: convertOperationTypeToTokenType(p.type),
-            quantity: p.threshold,
+            quantity: p.threshold!,
             tokenIds: [], // todo: add token ids
         }
     })

@@ -23,8 +23,8 @@ type Entitlement struct {
 
 const (
 	ModuleTypeRuleEntitlement   = "RuleEntitlement"
-	ModuleTypeUserEntitlement   = "UserEntitlement"
 	ModuleTypeRuleEntitlementV2 = "RuleEntitlementV2"
+	ModuleTypeUserEntitlement   = "UserEntitlement"
 )
 
 func MarshalEntitlement(
@@ -32,7 +32,11 @@ func MarshalEntitlement(
 	rawEntitlement base.IEntitlementDataQueryableBaseEntitlementData,
 ) (Entitlement, error) {
 	log := dlog.FromCtx(ctx)
-	log.Info("Entitlement data", "entitlement_data", rawEntitlement.EntitlementData)
+	log.Debug(
+		"Marshalling entitlement data",
+		"entitlement_data", rawEntitlement.EntitlementData,
+		"entitlement_type", rawEntitlement.EntitlementType,
+	)
 	if rawEntitlement.EntitlementType == ModuleTypeRuleEntitlement {
 		// Parse the ABI definition
 		parsedABI, err := base.RuleEntitlementMetaData.GetAbi()
@@ -84,24 +88,6 @@ func MarshalEntitlement(
 		return Entitlement{
 			EntitlementType: rawEntitlement.EntitlementType,
 			RuleEntitlement: &ruleData,
-		}, nil
-	} else if rawEntitlement.EntitlementType == ModuleTypeUserEntitlement {
-		abiDef := `[{"name":"getAddresses","outputs":[{"type":"address[]","name":"out"}],"constant":true,"payable":false,"type":"function"}]`
-
-		// Parse the ABI definition
-		parsedABI, err := abi.JSON(strings.NewReader(abiDef))
-		if err != nil {
-			return Entitlement{}, err
-		}
-		var addresses []common.Address
-		// Unpack the data
-		err = parsedABI.UnpackIntoInterface(&addresses, "getAddresses", rawEntitlement.EntitlementData)
-		if err != nil {
-			return Entitlement{}, err
-		}
-		return Entitlement{
-			EntitlementType: rawEntitlement.EntitlementType,
-			UserEntitlement: addresses,
 		}, nil
 	} else if rawEntitlement.EntitlementType == ModuleTypeRuleEntitlementV2 {
 		// Parse the ABI definition
@@ -155,9 +141,27 @@ func MarshalEntitlement(
 			EntitlementType:   rawEntitlement.EntitlementType,
 			RuleEntitlementV2: &ruleData,
 		}, nil
-	} else {
-		return Entitlement{}, fmt.Errorf("invalid entitlement type '%s'", rawEntitlement.EntitlementType)
+	} else if rawEntitlement.EntitlementType == ModuleTypeUserEntitlement {
+		abiDef := `[{"name":"getAddresses","outputs":[{"type":"address[]","name":"out"}],"constant":true,"payable":false,"type":"function"}]`
+
+		// Parse the ABI definition
+		parsedABI, err := abi.JSON(strings.NewReader(abiDef))
+		if err != nil {
+			return Entitlement{}, err
+		}
+		var addresses []common.Address
+		// Unpack the data
+		err = parsedABI.UnpackIntoInterface(&addresses, "getAddresses", rawEntitlement.EntitlementData)
+		if err != nil {
+			return Entitlement{}, err
+		}
+		return Entitlement{
+			EntitlementType: rawEntitlement.EntitlementType,
+			UserEntitlement: addresses,
+		}, nil
 	}
+
+	return Entitlement{}, fmt.Errorf("invalid entitlement type '%s'", rawEntitlement.EntitlementType)
 }
 
 type ThresholdParams struct {
@@ -215,10 +219,6 @@ func ConvertV1RuleDataToV2(
 	ctx context.Context,
 	ruleData *base.IRuleEntitlementBaseRuleData,
 ) (*base.IRuleEntitlementBaseRuleDataV2, error) {
-	log := dlog.FromCtx(ctx)
-	log.Info("Rule data", "rule_data", ruleData)
-	// Parse the ABI definition
-
 	var ruleDataV2 base.IRuleEntitlementBaseRuleDataV2
 
 	// Straight copy of base operations and logical operations

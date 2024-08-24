@@ -25,7 +25,7 @@ import { dlog } from '@river-build/dlog'
 import {
     Address,
     NoopRuleData,
-    IRuleEntitlementBase,
+    IRuleEntitlementV2Base,
     Permission,
     TestERC721,
     TestERC20,
@@ -37,6 +37,7 @@ import {
     CheckOperationType,
     treeToRuleData,
     ISpaceDapp,
+    encodeThresholdParams,
 } from '@river-build/web3'
 import { Client } from './client'
 import { make_MemberPayload_KeySolicitation } from './types'
@@ -49,7 +50,7 @@ const oneHalfEth = BigInt(5e17)
 // pass in users as 'alice', 'bob', 'carol' - b/c their wallets are created here
 async function setupChannelWithCustomRole(
     userNames: string[],
-    ruleData: IRuleEntitlementBase.RuleDataStruct,
+    ruleData: IRuleEntitlementV2Base.RuleDataV2Struct,
     permissions: Permission[] = [Permission.Read],
 ) {
     const {
@@ -892,12 +893,13 @@ describe('channelsWithEntitlements', () => {
         const testNft1Address = await TestERC721.getContractAddress('TestNFT1')
         const testNft2Address = await TestERC721.getContractAddress('TestNFT2')
         const testNft3Address = await TestERC721.getContractAddress('TestNFT3')
+        const params = encodeThresholdParams({ threshold: 1n })
         const leftOperation: Operation = {
             opType: OperationType.CHECK,
             checkType: CheckOperationType.ERC721,
             chainId: 31337n,
             contractAddress: testNft1Address,
-            threshold: 1n,
+            params,
         }
 
         const rightOperation: Operation = {
@@ -905,7 +907,7 @@ describe('channelsWithEntitlements', () => {
             checkType: CheckOperationType.ERC721,
             chainId: 31337n,
             contractAddress: testNft2Address,
-            threshold: 1n,
+            params,
         }
         const two: Operation = {
             opType: OperationType.LOGICAL,
@@ -923,7 +925,7 @@ describe('channelsWithEntitlements', () => {
                 checkType: CheckOperationType.ERC721,
                 chainId: 31337n,
                 contractAddress: testNft3Address,
-                threshold: 1n,
+                params,
             },
         }
 

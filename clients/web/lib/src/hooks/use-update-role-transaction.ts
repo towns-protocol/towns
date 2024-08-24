@@ -9,7 +9,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { TSigner } from '../types/web3-types'
 import { blockchainKeys } from '../query/query-keys'
 import { useQueryClient } from '../query/queryClient'
-import { Permission, IRuleEntitlementBase } from '@river-build/web3'
+import { Permission, IRuleEntitlementV2Base } from '@river-build/web3'
 import { useTownsClient } from './use-towns-client'
 import { getTransactionHashOrUserOpHash } from '@towns/userops'
 
@@ -42,7 +42,7 @@ export function useUpdateRoleTransaction() {
             roleName: string,
             permissions: Permission[],
             users: string[],
-            ruleData: IRuleEntitlementBase.RuleDataStruct,
+            ruleData: IRuleEntitlementV2Base.RuleDataV2Struct,
             signer: TSigner,
         ): Promise<TransactionContext<void> | undefined> {
             if (isTransacting.current) {

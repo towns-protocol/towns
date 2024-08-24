@@ -2,8 +2,10 @@ import React, { useMemo } from 'react'
 import {
     Address,
     BlockchainTransactionType,
+    IRuleEntitlementV2Base,
     NoopRuleData,
     TransactionStatus,
+    convertRuleDataV1ToV2,
     createOperationsTree,
     findDynamicPricingModule,
     findFixedPricingModule,
@@ -85,9 +87,12 @@ function EditMembershipForm({
         BlockchainTransactionType.EditSpaceMembership,
     )
 
-    const defaultTokens = roleDetails?.ruleData
-        ? convertRuleDataToTokenFormSchema(roleDetails?.ruleData)
-        : []
+    const ruleData: IRuleEntitlementV2Base.RuleDataV2Struct | undefined =
+        roleDetails?.ruleData.kind === 'v1'
+            ? convertRuleDataV1ToV2(roleDetails.ruleData.rules)
+            : roleDetails?.ruleData.rules
+
+    const defaultTokens = ruleData ? convertRuleDataToTokenFormSchema(ruleData!) : []
 
     const defaultValues: EditMembershipSchemaType = {
         membershipType: defaultTokens.length > 0 ? 'tokenHolders' : 'everyone',

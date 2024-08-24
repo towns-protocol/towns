@@ -25,6 +25,7 @@ export interface TownsOpts {
     highPriorityStreamIds?: string[]
     ethMainnetRpcUrl?: string
     analytics?: TownsAnalytics
+    createV2Spaces?: boolean
 }
 
 export interface SpaceIdentifier {

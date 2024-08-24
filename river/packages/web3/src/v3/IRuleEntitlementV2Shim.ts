@@ -6,6 +6,6 @@ import {
 import LocalhostEntitlementV2Abi from '@river-build/generated/dev/abis/IRuleEntitlementV2.abi'
 
 export type { LocalhostIRuleEntitlementV2 as IRuleEntitlementV2 }
-export type { IRuleEntitlementBase }
+export type { IRuleEntitlementBase as IRuleEntitlementV2Base }
 
 export { LocalhostEntitlementV2Abi as IRuleEntitlementV2Abi }

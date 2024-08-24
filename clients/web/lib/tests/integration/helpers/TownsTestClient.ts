@@ -29,8 +29,8 @@ import {
 } from '@river-build/sdk'
 import {
     Permission,
-    LegacyMembershipStruct,
-    IRuleEntitlementBase,
+    MembershipStruct,
+    IRuleEntitlementV2Base,
     createSpaceDapp,
 } from '@river-build/web3'
 import { bin_fromHexString } from '@river-build/dlog'
@@ -88,6 +88,7 @@ export class TownsTestClient extends TownsClient {
                     [foundry.id]: String(foundry.rpcUrls.public.http),
                 },
                 verbose: true,
+                createV2Spaces: process.env.CREATE_V2_SPACES === 'true',
             },
             spaceDapp,
             name,
@@ -114,7 +115,7 @@ export class TownsTestClient extends TownsClient {
      *************************************************/
     public async createSpace(
         createSpaceInfo: CreateSpaceInfo,
-        membership: LegacyMembershipStruct,
+        membership: MembershipStruct,
     ): Promise<string> {
         const signerContext =
             this.signerContext ??
@@ -166,7 +167,7 @@ export class TownsTestClient extends TownsClient {
         roleName: string,
         permissions: Permission[],
         users: string[],
-        ruleData: IRuleEntitlementBase.RuleDataStruct,
+        ruleData: IRuleEntitlementV2Base.RuleDataV2Struct,
     ): Promise<RoleIdentifier | undefined> {
         const txContext = await this.createRoleTransaction(
             spaceNetworkId,

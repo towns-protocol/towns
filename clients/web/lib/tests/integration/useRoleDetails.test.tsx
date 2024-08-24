@@ -28,6 +28,10 @@ import {
     LOCALHOST_CHAIN_ID,
     CheckOperationType,
     getDynamicPricingModule,
+    encodeRuleDataV2,
+    Operation,
+    convertRuleDataV1ToV2,
+    decodeThresholdParams,
 } from '@river-build/web3'
 import { useTownsClient } from '../../src/hooks/use-towns-client'
 import { TSigner } from '../../src/types/web3-types'
@@ -150,13 +154,15 @@ function TestComponent(args: {
                     requirements: {
                         everyone: true,
                         users: [],
-                        ruleData: createOperationsTree([
-                            {
-                                address: args.councilNftAddress as `0x${string}`,
-                                chainId: BigInt(LOCALHOST_CHAIN_ID),
-                                type: CheckOperationType.ERC721,
-                            },
-                        ]),
+                        ruleData: encodeRuleDataV2(
+                            createOperationsTree([
+                                {
+                                    address: args.councilNftAddress as `0x${string}`,
+                                    chainId: BigInt(LOCALHOST_CHAIN_ID),
+                                    type: CheckOperationType.ERC721,
+                                },
+                            ]),
+                        ),
                     },
                     pricingModule: dynamicPricingModule.module,
                 }),
@@ -213,6 +219,15 @@ function RoleDetailsComponent({
             roleDetails,
         })
     }, [error, isLoading, roleDetails])
+    let operations: Operation[] = []
+    if (roleDetails?.ruleData.rules.operations.length) {
+        if (roleDetails?.ruleData.kind === 'v1') {
+            const ruleDataV2 = convertRuleDataV1ToV2(roleDetails.ruleData.rules)
+            operations = ruleDataToOperations(ruleDataV2)
+        } else if (roleDetails?.ruleData.kind === 'v2') {
+            operations = ruleDataToOperations(roleDetails.ruleData.rules)
+        }
+    }
     return (
         <div key={`${spaceId}_${roleId}`}>
             <div>roleId:{roleDetails?.id}</div>
@@ -232,23 +247,24 @@ function RoleDetailsComponent({
             </div>
             <div>
                 {/* tokens in the role */}
-                {ruleDataToOperations(roleDetails?.ruleData ? [roleDetails.ruleData] : []).map(
-                    (operation) => {
-                        switch (operation.opType) {
-                            case OperationType.CHECK:
-                                return (
-                                    <div key={operation.opType}>
-                                        <div>
-                                            , {operation.contractAddress}
-                                            :quantity:{operation.threshold.toString()}
-                                        </div>
+                {operations.map((operation) => {
+                    switch (operation.opType) {
+                        case OperationType.CHECK:
+                            return (
+                                <div key={operation.opType}>
+                                    <div>
+                                        , {operation.contractAddress}
+                                        :quantity:
+                                        {decodeThresholdParams(
+                                            operation.params,
+                                        ).threshold.toString()}
                                     </div>
-                                )
-                            default:
-                                return <div key={operation.opType}></div>
-                        }
-                    },
-                )}{' '}
+                                </div>
+                            )
+                        default:
+                            return <div key={operation.opType}></div>
+                    }
+                })}{' '}
             </div>
             <div>
                 {/* users in the role */}

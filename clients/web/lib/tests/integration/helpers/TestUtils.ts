@@ -9,16 +9,19 @@ import {
     BasicRoleInfo,
     Permission,
     getFilteredRolesFromSpace,
-    LegacyMembershipStruct,
-    LegacyMembershipRequirementsStruct,
-    NoopRuleData,
+    MembershipRequirementsStruct,
     MembershipStruct,
     getDynamicPricingModule,
     getFixedPricingModule,
     createOperationsTree,
     getTestGatingNftAddress,
     CheckOperationType,
-    IRuleEntitlementBase,
+    IRuleEntitlementV2Base,
+    encodeRuleDataV2,
+    EncodedNoopRuleData,
+    VersionedRuleData,
+    convertRuleDataV2ToV1,
+    convertRuleDataV1ToV2,
 } from '@river-build/web3'
 import { makeRiverConfig } from '@river-build/sdk'
 
@@ -115,7 +118,7 @@ export async function createTestSpaceGatedByTownsNfts(
     }
 
     const dynamicPricingModule = await getDynamicPricingModule(client.spaceDapp)
-    const membershipInfo: LegacyMembershipStruct = {
+    const membershipInfo: MembershipStruct = {
         settings: {
             name: 'Member',
             symbol: 'MEMBER',
@@ -131,13 +134,15 @@ export async function createTestSpaceGatedByTownsNfts(
         requirements: {
             everyone: false,
             users: [],
-            ruleData: createOperationsTree([
-                {
-                    address: await getTestGatingNftAddress(client.opts.baseChainId),
-                    chainId: BigInt(client.opts.baseChainId),
-                    type: CheckOperationType.ERC721,
-                },
-            ]),
+            ruleData: encodeRuleDataV2(
+                createOperationsTree([
+                    {
+                        address: await getTestGatingNftAddress(client.opts.baseChainId),
+                        chainId: BigInt(client.opts.baseChainId),
+                        type: CheckOperationType.ERC721,
+                    },
+                ]),
+            ),
         },
     }
     if (!createSpaceInfo) {
@@ -174,7 +179,7 @@ export async function createTestSpaceGatedByTownNft(
     const dynamicPricingModule = await getDynamicPricingModule(client.spaceDapp)
 
     // Everyone role
-    const membershipInfo: LegacyMembershipStruct = {
+    const membershipInfo: MembershipStruct = {
         settings: {
             name: 'Everyone',
             symbol: 'MEMBER',
@@ -190,7 +195,7 @@ export async function createTestSpaceGatedByTownNft(
         requirements: {
             everyone: true,
             users: [],
-            ruleData: NoopRuleData,
+            ruleData: EncodedNoopRuleData,
         },
     }
     if (!createSpaceInfo) {
@@ -224,7 +229,7 @@ export async function createPaidTestSpaceGatedByTownNft(
     const fixedPricingModule = await getFixedPricingModule(client.spaceDapp)
 
     // Everyone role
-    const membershipInfo: LegacyMembershipStruct = {
+    const membershipInfo: MembershipStruct = {
         settings: {
             name: 'Everyone',
             symbol: 'MEMBER',
@@ -247,7 +252,7 @@ export async function createPaidTestSpaceGatedByTownNft(
         requirements: {
             everyone: true,
             users: [],
-            ruleData: NoopRuleData,
+            ruleData: EncodedNoopRuleData,
         },
     }
     if (!createSpaceInfo) {
@@ -290,7 +295,7 @@ export async function createGatedChannel(
     client: TownsTestClient,
     createChannelInfo: CreateChannelInfo,
     users: string[],
-    ruleData: IRuleEntitlementBase.RuleDataStruct,
+    ruleData: IRuleEntitlementV2Base.RuleDataV2Struct,
 ): Promise<string> {
     const roleId = await client.createRole(
         createChannelInfo.parentSpaceId,
@@ -374,7 +379,7 @@ export async function waitForWithRetries<T>(
 type CreateMembershipStructArgs = {
     name: string
     permissions: Permission[]
-    requirements: LegacyMembershipRequirementsStruct
+    requirements: MembershipRequirementsStruct
     pricingModule: MembershipStruct['settings']['pricingModule']
 }
 
@@ -383,7 +388,7 @@ export function createMembershipStruct({
     permissions,
     requirements,
     pricingModule,
-}: CreateMembershipStructArgs): LegacyMembershipStruct {
+}: CreateMembershipStructArgs): MembershipStruct {
     return {
         settings: {
             name,
@@ -399,4 +404,27 @@ export function createMembershipStruct({
         permissions,
         requirements,
     }
+}
+
+export function createVersionedRuleData(
+    client: TownsTestClient,
+    ruleData: IRuleEntitlementV2Base.RuleDataV2Struct,
+): VersionedRuleData {
+    if (client.createV2Spaces) {
+        return {
+            kind: 'v1',
+            rules: convertRuleDataV2ToV1(ruleData),
+        }
+    } else {
+        return {
+            kind: 'v2',
+            rules: ruleData,
+        }
+    }
+}
+
+export function getRuleDataV2(versionedRuleData: VersionedRuleData) {
+    return versionedRuleData.kind === 'v2'
+        ? versionedRuleData.rules
+        : convertRuleDataV1ToV2(versionedRuleData.rules)
 }

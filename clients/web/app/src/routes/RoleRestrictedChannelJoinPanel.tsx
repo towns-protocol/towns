@@ -7,6 +7,7 @@ import {
     Permission,
     RoleEntitlements,
     blockchainQueryKeys,
+    convertRuleDataV1ToV2,
     useChannelSettings,
     useConnectivity,
     useGetRootKeyFromLinkedWallet,
@@ -563,8 +564,12 @@ function getGeneralEntitlmemntData({
     wallets: string[] | undefined
 }) {
     const hasUserEntitlement = role.users.length > 0 && !role.users.includes(EVERYONE_ADDRESS)
-    const hasRuleEntitlement = role.ruleData.checkOperations.length > 0
-    const tokens = convertRuleDataToTokenFormSchema(role.ruleData)
+    const hasRuleEntitlement = role.ruleData.rules.checkOperations.length > 0
+    const tokens = convertRuleDataToTokenFormSchema(
+        role.ruleData.kind === 'v2'
+            ? role.ruleData.rules
+            : convertRuleDataV1ToV2(role.ruleData.rules),
+    )
     const tokenTypes = [...new Set(tokens.map((p) => p.type))].join(', ')
     const qualifiesForUserEntitlement =
         hasUserEntitlement && wallets?.some((w) => role.users.includes(w))

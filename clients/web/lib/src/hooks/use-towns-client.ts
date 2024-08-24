@@ -34,7 +34,7 @@ import {
     useCasablancaWalletSignIn,
 } from './use-casablanca-wallet-signin'
 import { create } from 'zustand'
-import { LegacyMembershipStruct, Permission, IRuleEntitlementBase } from '@river-build/web3'
+import { MembershipStruct, Permission, IRuleEntitlementV2Base } from '@river-build/web3'
 import { TSigner } from 'types/web3-types'
 import { SignerContext } from '@river-build/sdk'
 import { UserOps } from '@towns/userops'
@@ -64,7 +64,7 @@ interface TownsClientImpl {
     spaceDapp: TownsClient['spaceDapp'] | undefined
     createSpaceTransaction: (
         createSpaceInfo: CreateSpaceInfo,
-        membership: LegacyMembershipStruct,
+        membership: MembershipStruct,
         signer: TSigner | undefined,
         onCreateFlowStatus?: (update: CreateSpaceFlowStatus) => void,
     ) => Promise<CreateSpaceTransactionContext | undefined>
@@ -121,7 +121,7 @@ interface TownsClientImpl {
         roleName: string,
         permissions: Permission[],
         users: string[],
-        ruleData: IRuleEntitlementBase.RuleDataStruct,
+        ruleData: IRuleEntitlementV2Base.RuleDataV2Struct,
         signer: TSigner | undefined,
     ) => Promise<RoleTransactionContext | undefined>
     waitForCreateRoleTransaction: (
@@ -142,7 +142,7 @@ interface TownsClientImpl {
         roleName: string,
         permissions: Permission[],
         users: string[],
-        ruleData: IRuleEntitlementBase.RuleDataStruct,
+        ruleData: IRuleEntitlementV2Base.RuleDataV2Struct,
         signer: TSigner | undefined,
     ) => Promise<TransactionContext<void> | undefined>
     waitForUpdateRoleTransaction: (

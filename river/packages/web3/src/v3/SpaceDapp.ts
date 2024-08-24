@@ -6,24 +6,33 @@ import {
     Permission,
     PricingModuleStruct,
     RoleDetails,
+    VersionedRuleData,
 } from '../ContractTypes'
 import { BytesLike, ContractReceipt, ContractTransaction, ethers } from 'ethers'
 import {
     CreateLegacySpaceParams,
+    CreateSpaceParams,
     ISpaceDapp,
     TransactionOpts,
     UpdateChannelParams,
+    LegacyUpdateRoleParams,
     UpdateRoleParams,
 } from '../ISpaceDapp'
 import { LOCALHOST_CHAIN_ID } from '../Web3Constants'
 import { IRolesBase } from './IRolesShim'
 import { Space } from './Space'
 import { SpaceRegistrar } from './SpaceRegistrar'
-import { createEntitlementStruct } from '../ConvertersRoles'
+import { createEntitlementStruct, createLegacyEntitlementStruct } from '../ConvertersRoles'
+import { convertRuleDataV1ToV2 } from '../ConvertersEntitlements'
 import { BaseChainConfig } from '../IStaticContractsInfo'
 import { WalletLink, INVALID_ADDRESS } from './WalletLink'
 import { SpaceInfo } from '../types'
-import { IRuleEntitlementBase, UNKNOWN_ERROR, UserEntitlementShim } from './index'
+import {
+    IRuleEntitlementBase,
+    IRuleEntitlementV2Base,
+    UNKNOWN_ERROR,
+    UserEntitlementShim,
+} from './index'
 import { PricingModules } from './PricingModules'
 import { dlogger, isJest } from '@river-build/dlog'
 import { EVERYONE_ADDRESS, stringifyChannelMetadataJSON } from '../Utils'
@@ -32,12 +41,13 @@ import { RuleEntitlementShim } from './RuleEntitlementShim'
 import { PlatformRequirements } from './PlatformRequirements'
 import { EntitlementDataStructOutput } from './IEntitlementDataQueryableShim'
 import { CacheResult, EntitlementCache, Keyable } from '../EntitlementCache'
+import { RuleEntitlementV2Shim } from './RuleEntitlementV2Shim'
 
 const logger = dlogger('csb:SpaceDapp:debug')
 
 type EntitlementData = {
     entitlementType: EntitlementModuleType
-    ruleEntitlement: IRuleEntitlementBase.RuleDataStruct[] | undefined
+    ruleEntitlement: VersionedRuleData | undefined
     userEntitlement: string[] | undefined
 }
 
@@ -121,6 +131,7 @@ function newChannelEntitlementRequest(
 
 type EntitledWallet = string | undefined
 export class SpaceDapp implements ISpaceDapp {
+    private isLegacySpaceCache: Map<string, boolean>
     public readonly config: BaseChainConfig
     public readonly provider: ethers.providers.Provider
     public readonly spaceRegistrar: SpaceRegistrar
@@ -133,6 +144,7 @@ export class SpaceDapp implements ISpaceDapp {
     public readonly entitlementEvaluationCache: EntitlementCache<EntitlementRequest, boolean>
 
     constructor(config: BaseChainConfig, provider: ethers.providers.Provider) {
+        this.isLegacySpaceCache = new Map()
         this.config = config
         this.provider = provider
         this.spaceRegistrar = new SpaceRegistrar(config, provider)
@@ -158,6 +170,24 @@ export class SpaceDapp implements ISpaceDapp {
         this.entitlementCache = new EntitlementCache(cacheOpts)
         this.entitledWalletCache = new EntitlementCache(cacheOpts)
         this.entitlementEvaluationCache = new EntitlementCache(cacheOpts)
+    }
+
+    public async isLegacySpace(spaceId: string): Promise<boolean> {
+        const cachedValue = this.isLegacySpaceCache.get(spaceId)
+        if (cachedValue !== undefined) {
+            return cachedValue
+        }
+
+        const space = this.getSpace(spaceId)
+        if (!space) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+        }
+
+        // Legacy spaces do not have RuleEntitlementV2
+        const maybeShim = await space.findEntitlementByType(EntitlementModuleType.RuleEntitlementV2)
+        const isLegacy = maybeShim === null
+        this.isLegacySpaceCache.set(spaceId, isLegacy)
+        return isLegacy
     }
 
     public async addRoleToChannel(
@@ -254,6 +284,27 @@ export class SpaceDapp implements ISpaceDapp {
         )
     }
 
+    public async createSpace(
+        params: CreateSpaceParams,
+        signer: ethers.Signer,
+        txnOpts?: TransactionOpts,
+    ): Promise<ContractTransaction> {
+        const spaceInfo = {
+            name: params.spaceName,
+            uri: params.uri,
+            membership: params.membership,
+            channel: {
+                metadata: params.channelName || '',
+            },
+            shortDescription: params.shortDescription ?? '',
+            longDescription: params.longDescription ?? '',
+        }
+        return wrapTransaction(
+            () => this.spaceRegistrar.SpaceArchitect.write(signer).createSpace(spaceInfo),
+            txnOpts,
+        )
+    }
+
     public async createChannel(
         spaceId: string,
         channelName: string,
@@ -284,12 +335,32 @@ export class SpaceDapp implements ISpaceDapp {
         )
     }
 
-    public async createRole(
+    public async legacyCreateRole(
         spaceId: string,
         roleName: string,
         permissions: Permission[],
         users: string[],
         ruleData: IRuleEntitlementBase.RuleDataStruct,
+        signer: ethers.Signer,
+        txnOpts?: TransactionOpts,
+    ): Promise<ContractTransaction> {
+        const space = this.getSpace(spaceId)
+        if (!space) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+        }
+        const entitlements = await createLegacyEntitlementStruct(space, users, ruleData)
+        return wrapTransaction(
+            () => space.Roles.write(signer).createRole(roleName, permissions, entitlements),
+            txnOpts,
+        )
+    }
+
+    public async createRole(
+        spaceId: string,
+        roleName: string,
+        permissions: Permission[],
+        users: string[],
+        ruleData: IRuleEntitlementV2Base.RuleDataV2Struct,
         signer: ethers.Signer,
         txnOpts?: TransactionOpts,
     ): Promise<ContractTransaction> {
@@ -427,10 +498,16 @@ export class SpaceDapp implements ISpaceDapp {
             userEntitlement: undefined,
         }))
 
-        const [userEntitlementShim, ruleEntitlementShim] = (await Promise.all([
-            space.findEntitlementByType(EntitlementModuleType.UserEntitlement),
-            space.findEntitlementByType(EntitlementModuleType.RuleEntitlement),
-        ])) as [UserEntitlementShim | null, RuleEntitlementShim | null]
+        const [userEntitlementShim, ruleEntitlementShim, ruleEntitlementV2Shim] =
+            (await Promise.all([
+                space.findEntitlementByType(EntitlementModuleType.UserEntitlement),
+                space.findEntitlementByType(EntitlementModuleType.RuleEntitlement),
+                space.findEntitlementByType(EntitlementModuleType.RuleEntitlementV2),
+            ])) as [
+                UserEntitlementShim | null,
+                RuleEntitlementShim | null,
+                RuleEntitlementV2Shim | null,
+            ]
 
         for (let i = 0; i < entitlementData.length; i++) {
             const entitlement = entitlementData[i]
@@ -443,7 +520,24 @@ export class SpaceDapp implements ISpaceDapp {
                     entitlement.entitlementData,
                 )
                 if (decodedData) {
-                    entitlements[i].ruleEntitlement = decodedData
+                    entitlements[i].ruleEntitlement = {
+                        kind: 'v1',
+                        rules: decodedData,
+                    }
+                }
+            } else if (
+                (entitlement.entitlementType as EntitlementModuleType) ===
+                EntitlementModuleType.RuleEntitlementV2
+            ) {
+                entitlements[i].entitlementType = EntitlementModuleType.RuleEntitlementV2
+                const decodedData = ruleEntitlementV2Shim?.decodeGetRuleData(
+                    entitlement.entitlementData,
+                )
+                if (decodedData) {
+                    entitlements[i].ruleEntitlement = {
+                        kind: 'v2',
+                        rules: decodedData,
+                    }
                 }
             } else if (
                 (entitlement.entitlementType as EntitlementModuleType) ===
@@ -574,9 +668,29 @@ export class SpaceDapp implements ISpaceDapp {
         )
         await Promise.all(providers.map((p) => p.ready))
 
+        // Accumulate all RuleDataV1 entitlements and convert to V2s.
         const ruleEntitlements = entitlements
-            .filter((x) => x.entitlementType === EntitlementModuleType.RuleEntitlement)
-            .map((x) => x.ruleEntitlement)
+            .filter(
+                (x) =>
+                    x.entitlementType === EntitlementModuleType.RuleEntitlement &&
+                    x.ruleEntitlement?.kind == 'v1',
+            )
+            .map((x) =>
+                convertRuleDataV1ToV2(
+                    x.ruleEntitlement!.rules as IRuleEntitlementBase.RuleDataStruct,
+                ),
+            )
+
+        // Add all RuleDataV2 entitlements.
+        ruleEntitlements.push(
+            ...entitlements
+                .filter(
+                    (x) =>
+                        x.entitlementType === EntitlementModuleType.RuleEntitlementV2 &&
+                        x.ruleEntitlement?.kind == 'v2',
+                )
+                .map((x) => x.ruleEntitlement!.rules as IRuleEntitlementV2Base.RuleDataV2Struct),
+        )
 
         const entitledWalletsForAllRuleEntitlements = await Promise.all(
             ruleEntitlements.map(async (ruleData) => {
@@ -873,6 +987,28 @@ export class SpaceDapp implements ISpaceDapp {
             encodedCallData.push(callData)
         }
         return encodedCallData
+    }
+
+    public async legacyUpdateRole(
+        params: LegacyUpdateRoleParams,
+        signer: ethers.Signer,
+        txnOpts?: TransactionOpts,
+    ): Promise<ContractTransaction> {
+        const space = this.getSpace(params.spaceNetworkId)
+        if (!space) {
+            throw new Error(`Space with spaceId "${params.spaceNetworkId}" is not found.`)
+        }
+        const updatedEntitlemets = await this.createLegacyUpdatedEntitlements(space, params)
+        return wrapTransaction(
+            () =>
+                space.Roles.write(signer).updateRole(
+                    params.roleId,
+                    params.roleName,
+                    params.permissions,
+                    updatedEntitlemets,
+                ),
+            txnOpts,
+        )
     }
 
     public async updateRole(
@@ -1246,6 +1382,13 @@ export class SpaceDapp implements ISpaceDapp {
             encodedCallData.push(encodedBytes)
         }
         return encodedCallData
+    }
+
+    public async createLegacyUpdatedEntitlements(
+        space: Space,
+        params: LegacyUpdateRoleParams,
+    ): Promise<IRolesBase.CreateEntitlementStruct[]> {
+        return createLegacyEntitlementStruct(space, params.users, params.ruleData)
     }
 
     public async createUpdatedEntitlements(

@@ -3,9 +3,11 @@ import { useSearchParams } from 'react-router-dom'
 import {
     Address,
     BlockchainTransactionType,
+    IRuleEntitlementV2Base,
     NoopRuleData,
     Permission,
     RoleDetails,
+    convertRuleDataV1ToV2,
     createOperationsTree,
     useCreateRoleTransaction,
     useDeleteRoleTransaction,
@@ -127,6 +129,13 @@ export function SingleRolePanelWithoutAuth() {
         return [...new Set(defaultP)]
     }, [channelRoleDetails])
 
+    const ruleData: IRuleEntitlementV2Base.RuleDataV2Struct | undefined =
+        roleDetails?.ruleData.kind === 'v1'
+            ? convertRuleDataV1ToV2(roleDetails.ruleData.rules)
+            : roleDetails?.ruleData.rules
+
+    const tokens = ruleData ? convertRuleDataToTokenFormSchema(ruleData!) : []
+
     return (
         <Panel label="Roles" padding="none">
             {isLoading ? (
@@ -148,9 +157,7 @@ export function SingleRolePanelWithoutAuth() {
                                 : defaultChannelPermissionsValues,
                             townPermissions: townRoleDetails?.permissions ?? [],
                             users: roleDetails?.users ?? [],
-                            tokens: roleDetails?.ruleData
-                                ? convertRuleDataToTokenFormSchema(roleDetails.ruleData)
-                                : [],
+                            tokens,
                         }}
                     >
                         {(hookForm) => {

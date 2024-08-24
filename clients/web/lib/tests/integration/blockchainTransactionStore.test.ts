@@ -5,8 +5,8 @@ import { jest } from '@jest/globals'
 import { registerAndStartClients, createTestSpaceGatedByTownsNfts } from './helpers/TestUtils'
 
 import {
-    LegacyMembershipStruct,
-    NoopRuleData,
+    MembershipStruct,
+    EncodedNoopRuleData,
     Permission,
     getDynamicPricingModule,
 } from '@river-build/web3'
@@ -63,7 +63,7 @@ test('should clear all promises when client stops', async () => {
         'abort',
     )
 
-    const membershipInfo: LegacyMembershipStruct = {
+    const membershipInfo: MembershipStruct = {
         settings: {
             name: 'Member',
             symbol: 'MEMBER',
@@ -77,7 +77,7 @@ test('should clear all promises when client stops', async () => {
         },
         permissions: [],
         requirements: {
-            ruleData: NoopRuleData,
+            ruleData: EncodedNoopRuleData,
             everyone: false,
             users: [],
         },

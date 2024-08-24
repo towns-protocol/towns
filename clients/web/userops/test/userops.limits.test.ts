@@ -6,6 +6,8 @@ import {
     getSpaceId,
     sleepBetweenTxs,
     waitForOpAndTx,
+    sendCreateRoleOp,
+    sendUpdateRoleOp,
 } from './utils'
 import { makeUniqueChannelStreamId } from '@river-build/sdk'
 import { TestConstants } from 'use-towns-client/tests/integration/helpers/TestConstants'
@@ -66,27 +68,29 @@ test('will reject each userop if beyond the limit', async () => {
     // create role
     ////////////////////////////////////////
 
-    const createRoleOp = await userOpsAlice.sendCreateRoleOp([
+    const createRoleOp = await sendCreateRoleOp(
+        userOpsAlice,
         spaceId,
         'dummy role',
         [],
         [EVERYONE_ADDRESS],
         NoopRuleData,
         alice.wallet,
-    ])
+    )
 
     const createRoleRecipt = await waitForOpAndTx(createRoleOp, alice, 'create role')
     expect(createRoleRecipt.status).toBe(1)
     await sleepBetweenTxs()
 
     await expect(() =>
-        userOpsAlice.sendCreateRoleOp([spaceId, 'dummy role', [], [], NoopRuleData, alice.wallet]),
+        sendCreateRoleOp(userOpsAlice, spaceId, 'dummy role', [], [], NoopRuleData, alice.wallet),
     ).rejects.toThrow()
 
     ////////////////////////////////////////
     // update role
     ////////////////////////////////////////
-    const updateRoleOp = await userOpsAlice.sendUpdateRoleOp([
+    const updateRoleOp = await sendUpdateRoleOp(
+        userOpsAlice,
         {
             spaceNetworkId: spaceId,
             roleId: 3, // created role will have been the 3rd role
@@ -96,12 +100,13 @@ test('will reject each userop if beyond the limit', async () => {
             ruleData: NoopRuleData,
         },
         alice.wallet,
-    ])
+    )
     const updateReceipt = await waitForOpAndTx(updateRoleOp, alice, 'update role')
     expect(updateReceipt.status).toBe(1)
 
     await expect(() =>
-        userOpsAlice.sendUpdateRoleOp([
+        sendUpdateRoleOp(
+            userOpsAlice,
             {
                 spaceNetworkId: spaceId,
                 roleId: 3, // created role will have been the 3rd role
@@ -111,7 +116,7 @@ test('will reject each userop if beyond the limit', async () => {
                 ruleData: NoopRuleData,
             },
             alice.wallet,
-        ]),
+        ),
     ).rejects.toThrow()
 
     ////////////////////////////////////////

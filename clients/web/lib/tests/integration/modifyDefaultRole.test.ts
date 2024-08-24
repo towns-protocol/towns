@@ -3,7 +3,7 @@
  */
 import { TestConstants } from './helpers/TestConstants'
 import { createTestSpaceGatedByTownNft, registerAndStartClients } from './helpers/TestUtils'
-import { NoopRuleData, Permission } from '@river-build/web3'
+import { convertRuleDataV1ToV2, NoopRuleData, Permission } from '@river-build/web3'
 
 // TODO: https://linear.app/hnt-labs/issue/HNT-5071/cannot-create-a-channel-when-the-default-member-role-has-the-addremove
 describe('modifyDefaultRole', () => {
@@ -21,8 +21,12 @@ describe('modifyDefaultRole', () => {
         // 1 is the Minter role
         // 2 is the member role
         const role = await alice.spaceDapp.getRole(spaceId, 2)
-
         expect(role).toBeDefined()
+
+        const ruleDataV2 =
+            role?.ruleData.kind === 'v2'
+                ? role.ruleData.rules
+                : convertRuleDataV1ToV2(role?.ruleData.rules ?? NoopRuleData)
 
         const _r = role!
         const updatedRoleTx = await alice.updateRoleTransaction(
@@ -31,10 +35,11 @@ describe('modifyDefaultRole', () => {
             _r.name,
             _r.permissions.concat([Permission.AddRemoveChannels]),
             _r.users,
-            _r.ruleData,
+            ruleDataV2,
             alice.wallet,
         )
         const updateRoleResult = await alice.waitForUpdateRoleTransaction(updatedRoleTx)
+        expect(updateRoleResult.error).toBeUndefined()
         expect(updateRoleResult.receipt?.status).toBe(1)
         const updatedRole = await alice.spaceDapp.getRole(spaceId, 2)
         expect(updatedRole?.permissions).toContain(Permission.AddRemoveChannels)

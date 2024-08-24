@@ -3,7 +3,11 @@
  */
 
 import { dlog } from '@river-build/dlog'
-import { makeUserContextFromWallet, getDynamicPricingModule } from './util.test'
+import {
+    makeUserContextFromWallet,
+    getDynamicPricingModule,
+    createVersionedSpace,
+} from './util.test'
 import {
     isValidStreamId,
     makeDefaultChannelStreamId,
@@ -64,7 +68,8 @@ describe('membershipManagement', () => {
         }
 
         log('transaction start bob creating space')
-        const transaction = await spaceDapp.createLegacySpace(
+        const transaction = await createVersionedSpace(
+            spaceDapp,
             {
                 spaceName: 'bobs-space-metadata',
                 uri: 'http://bobs-space-metadata.com',

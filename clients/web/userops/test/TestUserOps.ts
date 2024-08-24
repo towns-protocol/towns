@@ -28,4 +28,8 @@ export class TestUserOps extends UserOps {
     private isAnvil() {
         return this.spaceDapp?.config.chainId === LOCALHOST_CHAIN_ID
     }
+
+    public createLegacySpaces() {
+        return true
+    }
 }

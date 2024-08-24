@@ -1,8 +1,10 @@
 import {
+    IRuleEntitlementBase,
     ISpaceDapp,
     LocalhostWeb3Provider,
     NoopRuleData,
     Space,
+    convertRuleDataV1ToV2,
     findFixedPricingModule,
 } from '@river-build/web3'
 import { Permission } from '@river-build/web3'
@@ -16,6 +18,8 @@ import {
     getSpaceId,
     sleepBetweenTxs,
     waitForOpAndTx,
+    sendEditMembershipSettingsOp,
+    encodeUpdateRoleData,
 } from './utils'
 import { vi } from 'vitest'
 import { ethers } from 'ethers'
@@ -54,29 +58,27 @@ test('should update ungated minter role to gated', async () => {
     })
 
     // updated role data
-    const sendEditOp = await userOps.sendEditMembershipSettingsOp({
+    const sendEditOp = await sendEditMembershipSettingsOp(
+        userOps,
         spaceId,
-        updateRoleParams: {
+        {
             ...ogRoleData,
             users: [],
             ruleData: boredApeRuleData,
         },
-        membershipParams: ogMembershipData,
-        signer: alice.wallet,
-    })
+        ogMembershipData,
+        alice.wallet,
+    )
 
     // make sure only sending operation with changed data
     const lastSendOpCall = sendSpy.mock.lastCall
     expect(lastSendOpCall?.[0].toAddress).toStrictEqual([space!.Roles.address])
     expect(lastSendOpCall?.[0].callData).toStrictEqual([
         (
-            await userOps.encodeUpdateRoleData({
-                space: space!,
-                updateRoleParams: {
-                    ...ogRoleData,
-                    users: [],
-                    ruleData: boredApeRuleData,
-                },
+            await encodeUpdateRoleData(userOps, space!, {
+                ...ogRoleData,
+                users: [],
+                ruleData: boredApeRuleData,
             })
         ).callData,
     ])
@@ -90,11 +92,11 @@ test('should update ungated minter role to gated', async () => {
         userOps,
     })
     expect(updatedRoleData.users).toStrictEqual([])
-    expect(updatedRoleData.ruleData.checkOperations[0].chainId.toString()).toBe(
+    expect(updatedRoleData.ruleData?.rules.checkOperations[0].chainId.toString()).toBe(
         boredApeRuleData.checkOperations[0].chainId.toString(),
     )
     expect(
-        updatedRoleData.ruleData.checkOperations[0].contractAddress.toString().toLowerCase(),
+        updatedRoleData.ruleData?.rules.checkOperations[0].contractAddress.toString().toLowerCase(),
     ).toBe(boredApeRuleData.checkOperations[0].contractAddress.toString().toLowerCase())
 })
 
@@ -130,29 +132,27 @@ test('should update gated minter role to everyone', async () => {
     })
 
     // updated role data
-    const sendEditOp = await userOps.sendEditMembershipSettingsOp({
+    const sendEditOp = await sendEditMembershipSettingsOp(
+        userOps,
         spaceId,
-        updateRoleParams: {
+        {
             ...ogRoleData,
             users: [EVERYONE_ADDRESS],
             ruleData: NoopRuleData,
         },
-        membershipParams: ogMembershipData,
-        signer: alice.wallet,
-    })
+        ogMembershipData,
+        alice.wallet,
+    )
 
     // make sure only sending operation with changed data
     const lastSendOpCall = sendSpy.mock.lastCall
     expect(lastSendOpCall?.[0].toAddress).toStrictEqual([space!.Roles.address])
     expect(lastSendOpCall?.[0].callData).toStrictEqual([
         (
-            await userOps.encodeUpdateRoleData({
-                space: space!,
-                updateRoleParams: {
-                    ...ogRoleData,
-                    users: [EVERYONE_ADDRESS],
-                    ruleData: NoopRuleData,
-                },
+            await encodeUpdateRoleData(userOps, space!, {
+                ...ogRoleData,
+                users: [EVERYONE_ADDRESS],
+                ruleData: NoopRuleData,
             })
         ).callData,
     ])
@@ -166,7 +166,7 @@ test('should update gated minter role to everyone', async () => {
         userOps,
     })
     expect(updatedRoleData.users).toStrictEqual([EVERYONE_ADDRESS])
-    expect(updatedRoleData.ruleData.checkOperations).toStrictEqual([])
+    expect(updatedRoleData.ruleData.rules.checkOperations).toStrictEqual([])
 })
 
 test('should update free space to paid space', async () => {
@@ -206,16 +206,25 @@ test('should update free space to paid space', async () => {
     expect(fixedPricingModule).toBeDefined()
 
     // updated pricing module
-    const sendEditPricingModuleOp = await userOps.sendEditMembershipSettingsOp({
+    const sendEditPricingModuleOp = await sendEditMembershipSettingsOp(
+        userOps,
         spaceId,
-        updateRoleParams: ogRoleData,
-        membershipParams: {
+        {
+            ...ogRoleData,
+            ruleData:
+                ogRoleData.ruleData.kind === 'v2'
+                    ? ogRoleData.ruleData.rules
+                    : convertRuleDataV1ToV2(
+                          ogRoleData.ruleData.rules as IRuleEntitlementBase.RuleDataStruct,
+                      ),
+        },
+        {
             ...ogMembershipData,
             pricingModule: fixedPricingModule!.module as string,
             membershipPrice: ethers.utils.parseEther('0.1'),
         },
-        signer: alice.wallet,
-    })
+        alice.wallet,
+    )
 
     // make sure only sending operation with changed data
     const lastSendOpCall = sendSpy.mock.lastCall
@@ -286,15 +295,24 @@ test('should update membership price on a paid space', async () => {
     )
 
     // updated membership pricing
-    const sendEditOp = await userOps.sendEditMembershipSettingsOp({
+    const sendEditOp = await sendEditMembershipSettingsOp(
+        userOps,
         spaceId,
-        updateRoleParams: ogRoleData,
-        membershipParams: {
+        {
+            ...ogRoleData,
+            ruleData:
+                ogRoleData.ruleData.kind === 'v2'
+                    ? ogRoleData.ruleData.rules
+                    : convertRuleDataV1ToV2(
+                          ogRoleData.ruleData.rules as IRuleEntitlementBase.RuleDataStruct,
+                      ),
+        },
+        {
             ...ogMembershipData,
             membershipPrice: ethers.utils.parseEther('0.1'),
         },
-        signer: alice.wallet,
-    })
+        alice.wallet,
+    )
 
     // make sure only sending operation with changed data
     const lastSendOpCall = sendSpy.mock.lastCall
@@ -351,15 +369,24 @@ test('should update limit on the membership', async () => {
     })
 
     // updated membership limit
-    const sendEditOp = await userOps.sendEditMembershipSettingsOp({
+    const sendEditOp = await sendEditMembershipSettingsOp(
+        userOps,
         spaceId,
-        updateRoleParams: ogRoleData,
-        membershipParams: {
+        {
+            ...ogRoleData,
+            ruleData:
+                ogRoleData.ruleData.kind === 'v2'
+                    ? ogRoleData.ruleData.rules
+                    : convertRuleDataV1ToV2(
+                          ogRoleData.ruleData.rules as IRuleEntitlementBase.RuleDataStruct,
+                      ),
+        },
+        {
             ...ogMembershipData,
             membershipSupply: 1_000_000,
         },
-        signer: alice.wallet,
-    })
+        alice.wallet,
+    )
 
     // make sure only sending operation with changed data
     const lastSendOpCall = sendSpy.mock.lastCall

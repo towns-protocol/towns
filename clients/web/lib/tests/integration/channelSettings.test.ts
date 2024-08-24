@@ -5,7 +5,9 @@ import {
     EVERYONE_ADDRESS,
     createTestSpaceGatedByTownsNfts,
     findRoleByName,
+    getRuleDataV2,
     registerAndStartClients,
+    createVersionedRuleData,
 } from 'use-towns-client/tests/integration/helpers/TestUtils'
 
 import { RoleIdentifier, RoleEntitlements, Address } from '../../src/types/web3-types'
@@ -42,7 +44,10 @@ describe('channel settings', () => {
             roleId: 4, // dummy
             name: 'moderator',
             permissions: [Permission.Read, Permission.Write, Permission.Ban],
-            ruleData: NoopRuleData,
+            ruleData: {
+                kind: 'v2',
+                rules: NoopRuleData,
+            },
             users: [bob.walletAddress],
         }
         if (!spaceId) {
@@ -58,7 +63,7 @@ describe('channel settings', () => {
             moderatorRole.name,
             moderatorRole.permissions,
             moderatorRole.users,
-            moderatorRole.ruleData,
+            getRuleDataV2(moderatorRole.ruleData),
         )
         if (!moderatorRoleIdentifier) {
             throw new Error('moderatorRoleIdentifier is undefined')
@@ -97,29 +102,32 @@ describe('channel settings', () => {
 
         for (const role of channelSettings.roles) {
             if (role.name === 'Minter') {
-                assertRole(role, {
+                assertRolesEqual(role, {
                     roleId: 0, // dummy
                     name: 'Minter',
                     permissions: memberPermissions,
                     users: [],
-                    ruleData: createOperationsTree([
-                        {
-                            address: membershipTokenAddress,
-                            chainId: BigInt(LOCALHOST_CHAIN_ID),
-                            type: CheckOperationType.ERC721,
-                        },
-                    ]),
+                    ruleData: createVersionedRuleData(
+                        alice,
+                        createOperationsTree([
+                            {
+                                address: membershipTokenAddress,
+                                chainId: BigInt(LOCALHOST_CHAIN_ID),
+                                type: CheckOperationType.ERC721,
+                            },
+                        ]),
+                    ),
                 })
             } else if (role.name === 'Member') {
-                assertRole(role, {
+                assertRolesEqual(role, {
                     roleId: 1, // dummy
                     name: 'Member',
                     permissions: memberPermissions,
                     users: [EVERYONE_ADDRESS],
-                    ruleData: NoopRuleData,
+                    ruleData: createVersionedRuleData(alice, NoopRuleData),
                 })
             } else if (role.name === moderatorRole.name) {
-                assertRole(role, moderatorRole)
+                assertRolesEqual(role, moderatorRole)
             } else {
                 throw new Error(`Unexpected role: ${role.name}`)
             }
@@ -127,16 +135,18 @@ describe('channel settings', () => {
     })
 })
 
-function assertRole(actualRole: RoleEntitlements, expectedRole: RoleEntitlements) {
+function assertRolesEqual(actualRole: RoleEntitlements, expectedRole: RoleEntitlements) {
     expect(actualRole.name).toBe(expectedRole.name)
     expect(actualRole.permissions.length).toEqual(expectedRole.permissions.length)
     expect(actualRole.permissions).toEqual(expect.arrayContaining(expectedRole.permissions))
     expect(actualRole.users.length).toEqual(expectedRole.users.length)
     expect(actualRole.users).toEqual(expect.arrayContaining(expectedRole.users))
 
-    expect(actualRole.ruleData.operations.length).toEqual(expectedRole.ruleData.operations.length)
-    for (const token of actualRole.ruleData.checkOperations) {
-        const expectedToken = expectedRole.ruleData.checkOperations.find(
+    const actualRuleData = actualRole.ruleData.rules
+    const expectedRuleData = expectedRole.ruleData.rules
+    expect(actualRuleData.operations.length).toEqual(expectedRuleData.operations.length)
+    for (const token of actualRuleData.checkOperations) {
+        const expectedToken = expectedRuleData.checkOperations.find(
             (t) => t.contractAddress === token.contractAddress,
         )
         if (!expectedToken) {

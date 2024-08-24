@@ -22,7 +22,7 @@ import { useUpdateChannelTransaction } from '../../src/hooks/use-update-channel-
 import { useSpaceData } from '../../src/hooks/use-space-data'
 import {
     getTestGatingNftAddress,
-    NoopRuleData,
+    EncodedNoopRuleData,
     Permission,
     getDynamicPricingModule,
 } from '@river-build/web3'
@@ -200,7 +200,7 @@ function TestComponent(args: {
                     requirements: {
                         everyone: true,
                         users: [],
-                        ruleData: NoopRuleData,
+                        ruleData: EncodedNoopRuleData,
                     },
                     pricingModule: dynamicPricingModule.module,
                 }),

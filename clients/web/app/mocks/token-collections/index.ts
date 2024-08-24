@@ -14,7 +14,7 @@ export const DAISEN_MOCK = {
     address: TEST_NFT_COLLECTION_METADATA_ADDRESSES[0],
     name: 'Daisen.fi Investor Pass',
     symbol: 'Daisen.fi Investor Pass',
-    tokenType: 'ERC1155',
+    tokenType: 'ERC20',
     imageUrl: 'https://i.seadn.io/gcs/files/65e3614fe54db77743b34bb1dccd8c85.jpg?w=500&auto=format',
 }
 

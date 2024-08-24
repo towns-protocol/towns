@@ -1,7 +1,7 @@
 import {
     ETH_ADDRESS,
-    LegacyMembershipStruct,
-    NoopRuleData,
+    MembershipStruct,
+    EncodedNoopRuleData,
     Permission,
     SpaceDapp,
     getDynamicPricingModule,
@@ -33,7 +33,7 @@ export async function makeDefaultMembershipInfo(
         requirements: {
             everyone: true,
             users: [],
-            ruleData: NoopRuleData,
+            ruleData: EncodedNoopRuleData,
         },
-    } satisfies LegacyMembershipStruct
+    } satisfies MembershipStruct
 }

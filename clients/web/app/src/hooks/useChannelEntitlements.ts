@@ -2,7 +2,8 @@ import { useMemo } from 'react'
 import {
     CheckOperationType,
     EVERYONE_ADDRESS,
-    createContractCheckOperationFromTree,
+    convertRuleDataV1ToV2,
+    createDecodedCheckOperationFromTree,
     useChannelSettings,
 } from 'use-towns-client'
 
@@ -19,14 +20,17 @@ export function useChannelEntitlements({
         const ruleEntitlements = channelSettings?.roles.map((r) => r.ruleData)
         const userEntitlments = channelSettings?.roles.map((r) => r.users)
 
-        const hasRuleEntitlement = ruleEntitlements?.some((r) => r.checkOperations.length > 0)
+        const hasRuleEntitlement = ruleEntitlements?.some((r) => {
+            return r.rules.checkOperations.length > 0
+        })
         const hasUserEntitlement = userEntitlments?.some(
             (u) => u.length > 0 && !u.includes(EVERYONE_ADDRESS),
         )
 
         const tokenTypes = hasRuleEntitlement
             ? ruleEntitlements
-                  ?.map((r) => createContractCheckOperationFromTree(r))
+                  ?.map((r) => (r.kind === 'v2' ? r.rules : convertRuleDataV1ToV2(r.rules)))
+                  ?.map((r) => createDecodedCheckOperationFromTree(r))
                   ?.flatMap((c) => c.map((p) => p.type))
                   .filter(
                       (t) =>

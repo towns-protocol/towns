@@ -47,7 +47,10 @@ export const roleDataWithBothRolesAssignedToChannel: townsClient.RoleDetails[] =
         permissions: [Permission.Read],
         users: [EVERYONE_ADDRESS],
         channels: [channelDataForRole],
-        ruleData: NoopRuleData,
+        ruleData: {
+            kind: 'v2',
+            rules: NoopRuleData,
+        },
     },
     {
         id: 8,
@@ -55,18 +58,21 @@ export const roleDataWithBothRolesAssignedToChannel: townsClient.RoleDetails[] =
         permissions: [Permission.Read, Permission.Write],
         users: [],
         channels: [channelDataForRole],
-        ruleData: townsClient.createOperationsTree([
-            {
-                address: TEST_NFT_COLLECTION_METADATA_ADDRESSES[0] as townsClient.Address,
-                chainId: BigInt(1),
-                type: convertTokenTypeToOperationType(TokenType.ERC1155),
-            },
-            {
-                address: TEST_NFT_COLLECTION_METADATA_ADDRESSES[1] as townsClient.Address,
-                chainId: BigInt(1),
-                type: convertTokenTypeToOperationType(TokenType.ERC721),
-            },
-        ]),
+        ruleData: {
+            kind: 'v2',
+            rules: townsClient.createOperationsTree([
+                {
+                    address: TEST_NFT_COLLECTION_METADATA_ADDRESSES[0] as townsClient.Address,
+                    chainId: BigInt(1),
+                    type: convertTokenTypeToOperationType(TokenType.ERC20),
+                },
+                {
+                    address: TEST_NFT_COLLECTION_METADATA_ADDRESSES[1] as townsClient.Address,
+                    chainId: BigInt(1),
+                    type: convertTokenTypeToOperationType(TokenType.ERC721),
+                },
+            ]),
+        },
     },
 ]
 

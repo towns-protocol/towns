@@ -1,6 +1,7 @@
 import { Address, LocalhostWeb3Provider, NoopRuleData } from '@river-build/web3'
 import { Permission } from '@river-build/web3'
 import {
+    sendCreateRoleOp,
     createSpaceDappAndUserops,
     createUngatedSpace,
     generatePrivyWalletIfKey,
@@ -52,16 +53,15 @@ test('can create and update channel', async () => {
     const createdChannel = channels.find((c) => c.name === TEST_CHANNEL_NAME)
     expect(createdChannel).toBeDefined()
 
-    // create a role
-    const createRoleOp = await userOps.sendCreateRoleOp([
+    const createRoleOp = await sendCreateRoleOp(
+        userOps,
         spaceId,
         NEW_ROLE_NAME,
         [Permission.Read],
         [],
         NoopRuleData,
         alice.wallet,
-    ])
-
+    )
     await waitForOpAndTx(createRoleOp, alice)
     await sleepBetweenTxs()
 
@@ -138,14 +138,15 @@ test("can create a channel when roles is gated by user's smart account", async (
     expect(bobsSmartAccount).toBeDefined()
 
     // create a role gated by bob's smart account
-    const createRoleOp = await userOpsAlice.sendCreateRoleOp([
+    const createRoleOp = await sendCreateRoleOp(
+        userOpsAlice,
         spaceId,
         NEW_ROLE_NAME,
         [Permission.Read, Permission.Write, Permission.AddRemoveChannels],
         [bobsSmartAccount!],
         NoopRuleData,
         alice.wallet,
-    ])
+    )
     await waitForOpAndTx(createRoleOp, alice)
     await sleepBetweenTxs()
 

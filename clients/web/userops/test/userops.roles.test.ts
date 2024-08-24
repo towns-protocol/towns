@@ -7,6 +7,8 @@ import {
     getSpaceId,
     sleepBetweenTxs,
     waitForOpAndTx,
+    sendCreateRoleOp,
+    sendUpdateRoleOp,
 } from './utils'
 
 const ROLE_NAME = 'role_name'
@@ -33,14 +35,15 @@ test('can create, update, and delete a role with user ops', async () => {
     const spaceId = await getSpaceId(spaceDapp, txReceipt)
 
     // create a role
-    const createRoleOp = await userOps.sendCreateRoleOp([
+    const createRoleOp = await sendCreateRoleOp(
+        userOps,
         spaceId,
         ROLE_NAME,
         [],
         [EVERYONE_ADDRESS],
         NoopRuleData,
         alice.wallet,
-    ])
+    )
 
     await waitForOpAndTx(createRoleOp, alice)
     await sleepBetweenTxs()
@@ -52,7 +55,8 @@ test('can create, update, and delete a role with user ops', async () => {
     expect(role).toBeDefined()
 
     // update role
-    const updateRoleOp = await userOps.sendUpdateRoleOp([
+    const updateRoleOp = await sendUpdateRoleOp(
+        userOps,
         {
             spaceNetworkId: spaceId,
             roleId: role!.roleId,
@@ -62,7 +66,7 @@ test('can create, update, and delete a role with user ops', async () => {
             ruleData: NoopRuleData,
         },
         alice.wallet,
-    ])
+    )
 
     await waitForOpAndTx(updateRoleOp, alice)
     await sleepBetweenTxs()

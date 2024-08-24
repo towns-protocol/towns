@@ -6,8 +6,13 @@ import {
 import { ILegacyArchitectBase } from './v3/ILegacySpaceArchitectShim'
 import { IRolesBase as IRolesBaseV3 } from './v3/IRolesShim'
 import { RuleEntitlementShim } from './v3/RuleEntitlementShim'
-import { IRuleEntitlementBase } from './v3'
+import { IRuleEntitlementBase, IRuleEntitlementV2Base } from './v3'
 import { IPricingModulesBase } from './v3/IPricingShim'
+
+import { RuleEntitlementV2Shim } from './v3/RuleEntitlementV2Shim'
+import { NoopRuleData } from './entitlement'
+
+import { CreateSpaceParams, CreateLegacySpaceParams } from './ISpaceDapp'
 
 export const Permission = {
     Undefined: 'Undefined', // No permission required
@@ -25,7 +30,7 @@ export const Permission = {
 
 export type Permission = (typeof Permission)[keyof typeof Permission]
 
-export type EntitlementShim = UserEntitlementShimV3 | RuleEntitlementShim
+export type EntitlementShim = UserEntitlementShimV3 | RuleEntitlementShim | RuleEntitlementV2Shim
 
 export type EntitlementStruct = IRolesBaseV3.CreateEntitlementStruct
 
@@ -58,15 +63,45 @@ export enum EntitlementModuleType {
     RuleEntitlementV2 = 'RuleEntitlementV2',
 }
 
+export function isLegacyMembershipType(
+    object: MembershipStruct | LegacyMembershipStruct,
+): object is LegacyMembershipStruct {
+    return typeof object.requirements.ruleData === typeof NoopRuleData
+}
+
+export function isCreateLegacySpaceParams(
+    object: CreateSpaceParams | CreateLegacySpaceParams,
+): object is CreateLegacySpaceParams {
+    return typeof object.membership.requirements.ruleData === typeof NoopRuleData
+}
+
+export function isRuleDataV1(
+    ruleData: IRuleEntitlementBase.RuleDataStruct | IRuleEntitlementV2Base.RuleDataV2Struct,
+): ruleData is IRuleEntitlementBase.RuleDataStruct {
+    return ruleData.checkOperations.length === 0 || 'threshold' in ruleData.checkOperations[0]
+}
+
 /**
  * Role details from multiple contract sources
  */
+
+interface RuleDataV1 {
+    kind: 'v1'
+    rules: IRuleEntitlementBase.RuleDataStruct
+}
+interface RuleDataV2 {
+    kind: 'v2'
+    rules: IRuleEntitlementV2Base.RuleDataV2Struct
+}
+
+export type VersionedRuleData = RuleDataV1 | RuleDataV2
+
 export interface RoleDetails {
     id: number
     name: string
     permissions: Permission[]
     users: string[]
-    ruleData: IRuleEntitlementBase.RuleDataStruct
+    ruleData: VersionedRuleData
     channels: ChannelMetadata[]
 }
 
@@ -100,7 +135,7 @@ export interface RoleEntitlements {
     name: string
     permissions: Permission[]
     users: string[]
-    ruleData: IRuleEntitlementBase.RuleDataStruct
+    ruleData: VersionedRuleData
 }
 
 /*
@@ -108,7 +143,7 @@ export interface RoleEntitlements {
 */
 export interface EntitlementDetails {
     users: string[]
-    ruleData: IRuleEntitlementBase.RuleDataStruct
+    ruleData: VersionedRuleData
 }
 
 export interface BasicRoleInfo {
@@ -130,6 +165,12 @@ export function isRuleEntitlement(
     entitlement: EntitlementModule,
 ): entitlement is RuleEntitlementShim {
     return entitlement.moduleType === EntitlementModuleType.RuleEntitlement
+}
+
+export function isRuleEntitlementV2(
+    entitlement: EntitlementModule,
+): entitlement is RuleEntitlementV2Shim {
+    return entitlement.moduleType === EntitlementModuleType.RuleEntitlementV2
 }
 
 export function isStringArray(

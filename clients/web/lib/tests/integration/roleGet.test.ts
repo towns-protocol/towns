@@ -8,6 +8,7 @@ import {
     findRoleByName,
     registerAndStartClients,
     EVERYONE_ADDRESS,
+    createVersionedRuleData,
 } from 'use-towns-client/tests/integration/helpers/TestUtils'
 
 import { RoleIdentifier } from '../../src/types/web3-types'
@@ -16,9 +17,9 @@ import {
     getTestGatingNftAddress,
     Permission,
     RoleDetails,
-    NoopRuleData,
     CheckOperationType,
     createOperationsTree,
+    NoopRuleData,
 } from '@river-build/web3'
 
 describe('get role details', () => {
@@ -136,13 +137,16 @@ describe('get role details', () => {
             id: 1,
             name: 'Minter',
             users: [],
-            ruleData: createOperationsTree([
-                {
-                    address: councilNftAddress,
-                    chainId: BigInt(alice.opts.baseChainId),
-                    type: CheckOperationType.ERC721,
-                },
-            ]),
+            ruleData: createVersionedRuleData(
+                alice,
+                createOperationsTree([
+                    {
+                        address: councilNftAddress,
+                        chainId: BigInt(alice.opts.baseChainId),
+                        type: CheckOperationType.ERC721,
+                    },
+                ]),
+            ),
             permissions: [Permission.JoinSpace],
             channels: [],
         }
@@ -150,7 +154,7 @@ describe('get role details', () => {
             id: 2,
             name: 'Member',
             users: [EVERYONE_ADDRESS], // workaround for now
-            ruleData: NoopRuleData,
+            ruleData: createVersionedRuleData(alice, NoopRuleData),
             permissions,
             channels: [],
         }
@@ -189,7 +193,7 @@ describe('get role details', () => {
             id: 1,
             name: 'Minter',
             users: [TestConstants.EveryoneAddress],
-            ruleData: NoopRuleData,
+            ruleData: createVersionedRuleData(alice, NoopRuleData),
             permissions: [Permission.JoinSpace],
             channels: [],
         }
@@ -197,7 +201,7 @@ describe('get role details', () => {
             id: 2,
             name: 'Everyone',
             users: [EVERYONE_ADDRESS],
-            ruleData: NoopRuleData,
+            ruleData: createVersionedRuleData(alice, NoopRuleData),
             permissions,
             channels: [],
         }

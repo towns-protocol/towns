@@ -1,11 +1,13 @@
 import { ethers } from 'ethers'
 import {
-    CheckOperation,
+    CheckOperationV2,
     CheckOperationType,
     LogicalOperationType,
+    encodeRuleData,
+    decodeRuleData,
+    encodeRuleDataV2,
+    decodeRuleDataV2,
     OperationType,
-    decodeEntitlementData,
-    encodeEntitlementData,
     evaluateTree,
     postOrderArrayToTree,
     Operation,
@@ -13,10 +15,15 @@ import {
     OrOperation,
     treeToRuleData,
     ruleDataToOperations,
+    encodeThresholdParams,
+    decodeThresholdParams,
+    encodeERC1155Params,
+    decodeERC1155Params,
 } from '../src/entitlement'
 import { MOCK_ADDRESS } from '../src/Utils'
 import { zeroAddress } from 'viem'
 import { Address } from '../src/ContractTypes'
+import { convertRuleDataV2ToV1 } from '../src/ConvertersEntitlements'
 
 function makeRandomOperation(depth: number): Operation {
     const rand = Math.random()
@@ -41,7 +48,7 @@ function makeRandomOperation(depth: number): Operation {
             checkType: CheckOperationType.MOCK,
             chainId: rand > 0.5 ? 1n : 0n,
             contractAddress: generateRandomEthAddress(),
-            threshold: rand > 0.5 ? 500n : 10n,
+            params: encodeThresholdParams({ threshold: rand > 0.5 ? 500n : 10n }),
         }
     }
 }
@@ -65,36 +72,36 @@ function generateRandomEthAddress(): Address {
 /**
  * An operation that always returns true
  */
-const falseCheck: CheckOperation = {
+const falseCheck: CheckOperationV2 = {
     opType: OperationType.CHECK,
     checkType: CheckOperationType.MOCK,
     chainId: 0n,
     contractAddress: `0x0`,
-    threshold: 10n,
+    params: encodeThresholdParams({ threshold: 10n }),
 } as const
 
-const slowFalseCheck: CheckOperation = {
+const slowFalseCheck: CheckOperationV2 = {
     opType: OperationType.CHECK,
     checkType: CheckOperationType.MOCK,
     chainId: 0n,
     contractAddress: '0x1',
-    threshold: 500n,
+    params: encodeThresholdParams({ threshold: 500n }),
 } as const
 
-const trueCheck: CheckOperation = {
+const trueCheck: CheckOperationV2 = {
     opType: OperationType.CHECK,
     checkType: CheckOperationType.MOCK,
     chainId: 1n,
     contractAddress: '0x0',
-    threshold: 10n,
+    params: encodeThresholdParams({ threshold: 10n }),
 } as const
 
-const slowTrueCheck: CheckOperation = {
+const slowTrueCheck: CheckOperationV2 = {
     opType: OperationType.CHECK,
     checkType: CheckOperationType.MOCK,
     chainId: 1n,
     contractAddress: '0x1',
-    threshold: 500n,
+    params: encodeThresholdParams({ threshold: 500n }),
 } as const
 
 // We have a custom NFT contract deployed to both ethereum sepolia and base sepolia where we
@@ -111,52 +118,52 @@ const SepoliaTestNftWallet_2Tokens: Address = '0x8cECcB1e5537040Fc63A06C88b4c1dE
 const ethereumSepoliaChainId = 11155111n
 const baseSepoliaChainId = 84532n
 
-const nftCheckEthereumSepolia: CheckOperation = {
+const nftCheckEthereumSepolia: CheckOperationV2 = {
     opType: OperationType.CHECK,
     checkType: CheckOperationType.ERC721,
     chainId: ethereumSepoliaChainId,
     contractAddress: SepoliaTestNftContract,
-    threshold: 1n,
+    params: encodeThresholdParams({ threshold: 1n }),
 } as const
 
-const nftMultiCheckEthereumSepolia: CheckOperation = {
+const nftMultiCheckEthereumSepolia: CheckOperationV2 = {
     opType: OperationType.CHECK,
     checkType: CheckOperationType.ERC721,
     chainId: ethereumSepoliaChainId,
     contractAddress: SepoliaTestNftContract,
-    threshold: 6n,
+    params: encodeThresholdParams({ threshold: 6n }),
 } as const
 
-const nftMultiCheckHighThresholdEthereumSepolia: CheckOperation = {
+const nftMultiCheckHighThresholdEthereumSepolia: CheckOperationV2 = {
     opType: OperationType.CHECK,
     checkType: CheckOperationType.ERC721,
     chainId: ethereumSepoliaChainId,
     contractAddress: SepoliaTestNftContract,
-    threshold: 100n,
+    params: encodeThresholdParams({ threshold: 100n }),
 } as const
 
-const nftCheckBaseSepolia: CheckOperation = {
+const nftCheckBaseSepolia: CheckOperationV2 = {
     opType: OperationType.CHECK,
     checkType: CheckOperationType.ERC721,
     chainId: 84532n,
     contractAddress: SepoliaTestNftContract,
-    threshold: 1n,
+    params: encodeThresholdParams({ threshold: 1n }),
 } as const
 
-const nftMultiCheckBaseSepolia: CheckOperation = {
+const nftMultiCheckBaseSepolia: CheckOperationV2 = {
     opType: OperationType.CHECK,
     checkType: CheckOperationType.ERC721,
     chainId: 84532n,
     contractAddress: SepoliaTestNftContract,
-    threshold: 6n,
+    params: encodeThresholdParams({ threshold: 6n }),
 } as const
 
-const nftMultiCheckHighThresholdBaseSepolia: CheckOperation = {
+const nftMultiCheckHighThresholdBaseSepolia: CheckOperationV2 = {
     opType: OperationType.CHECK,
     checkType: CheckOperationType.ERC721,
     chainId: 84532n,
     contractAddress: SepoliaTestNftContract,
-    threshold: 100n,
+    params: encodeThresholdParams({ threshold: 100n }),
 } as const
 
 const ethSepoliaProvider = new ethers.providers.JsonRpcProvider(
@@ -289,96 +296,96 @@ const sepolia0_015EthWallet = '0xB4d85De80afE92C97293c32B1C0c604133d0332E'
 
 const chainlinkExp = BigInt(10) ** BigInt(18)
 
-const nativeCoinBalance0_1Eth_Sepolia: CheckOperation = {
+const nativeCoinBalance0_1Eth_Sepolia: CheckOperationV2 = {
     opType: OperationType.CHECK,
     checkType: CheckOperationType.NATIVE_COIN_BALANCE,
     chainId: ethereumSepoliaChainId,
     contractAddress: ethers.constants.AddressZero,
-    threshold: 100_000_000_000_000_000n,
+    params: encodeThresholdParams({ threshold: 100_000_000_000_000_000n }),
 }
 
-const nativeCoinBalance0_2Eth_Sepolia: CheckOperation = {
+const nativeCoinBalance0_2Eth_Sepolia: CheckOperationV2 = {
     ...nativeCoinBalance0_1Eth_Sepolia,
-    threshold: 200_000_000_000_000_000n,
+    params: encodeThresholdParams({ threshold: 200_000_000_000_000_000n }),
 }
 
-const nativeCoinBalance0_21Eth_Sepolia: CheckOperation = {
+const nativeCoinBalance0_21Eth_Sepolia: CheckOperationV2 = {
     ...nativeCoinBalance0_1Eth_Sepolia,
-    threshold: 210_000_000_000_000_000n,
+    params: encodeThresholdParams({ threshold: 210_000_000_000_000_000n }),
 }
 
-const nativeCoinBalance0_3Eth_Sepolia: CheckOperation = {
+const nativeCoinBalance0_3Eth_Sepolia: CheckOperationV2 = {
     ...nativeCoinBalance0_1Eth_Sepolia,
-    threshold: 300_000_000_000_000_000n,
+    params: encodeThresholdParams({ threshold: 300_000_000_000_000_000n }),
 }
 
-const nativeCoinBalance0_4Eth_BaseSepolia: CheckOperation = {
+const nativeCoinBalance0_4Eth_BaseSepolia: CheckOperationV2 = {
     opType: OperationType.CHECK,
     checkType: CheckOperationType.NATIVE_COIN_BALANCE,
     chainId: baseSepoliaChainId,
     contractAddress: ethers.constants.AddressZero,
-    threshold: 400_000_000_000_000_000n,
+    params: encodeThresholdParams({ threshold: 400_000_000_000_000_000n }),
 }
 
-const nativeCoinBalance0_5Eth_BaseSepolia: CheckOperation = {
+const nativeCoinBalance0_5Eth_BaseSepolia: CheckOperationV2 = {
     ...nativeCoinBalance0_4Eth_BaseSepolia,
-    threshold: 500_000_000_000_000_000n,
+    params: encodeThresholdParams({ threshold: 500_000_000_000_000_000n }),
 }
 
-const nativeCoinBalance0_52Eth_BaseSepolia: CheckOperation = {
+const nativeCoinBalance0_52Eth_BaseSepolia: CheckOperationV2 = {
     ...nativeCoinBalance0_4Eth_BaseSepolia,
-    threshold: 520_000_000_000_000_000n,
+    params: encodeThresholdParams({ threshold: 520_000_000_000_000_000n }),
 }
 
-const nativeCoinBalance0_6Eth_BaseSepolia: CheckOperation = {
+const nativeCoinBalance0_6Eth_BaseSepolia: CheckOperationV2 = {
     ...nativeCoinBalance0_4Eth_BaseSepolia,
-    threshold: 600_000_000_000_000_000n,
+    params: encodeThresholdParams({ threshold: 600_000_000_000_000_000n }),
 }
 
-const erc20ChainLinkCheckBaseSepolia_20Tokens: CheckOperation = {
+const erc20ChainLinkCheckBaseSepolia_20Tokens: CheckOperationV2 = {
     opType: OperationType.CHECK,
     checkType: CheckOperationType.ERC20,
     chainId: 84532n,
     contractAddress: baseSepoliaChainLinkContract,
-    threshold: 20n * chainlinkExp,
+    params: encodeThresholdParams({ threshold: 20n * chainlinkExp }),
 }
 
-const erc20ChainLinkCheckBaseSepolia_30Tokens: CheckOperation = {
+const erc20ChainLinkCheckBaseSepolia_30Tokens: CheckOperationV2 = {
     ...erc20ChainLinkCheckBaseSepolia_20Tokens,
-    threshold: 30n * chainlinkExp,
+    params: encodeThresholdParams({ threshold: 30n * chainlinkExp }),
 }
 
-const erc20ChainLinkCheckBaseSepolia_75Tokens: CheckOperation = {
+const erc20ChainLinkCheckBaseSepolia_75Tokens: CheckOperationV2 = {
     ...erc20ChainLinkCheckBaseSepolia_20Tokens,
-    threshold: 75n * chainlinkExp,
+    params: encodeThresholdParams({ threshold: 75n * chainlinkExp }),
 }
 
-const erc20ChainLinkCheckBaseSepolia_90Tokens: CheckOperation = {
+const erc20ChainLinkCheckBaseSepolia_90Tokens: CheckOperationV2 = {
     ...erc20ChainLinkCheckBaseSepolia_20Tokens,
-    threshold: 90n * chainlinkExp,
+    params: encodeThresholdParams({ threshold: 90n * chainlinkExp }),
 }
 
-const erc20ChainLinkEthereumSepolia_20Tokens: CheckOperation = {
+const erc20ChainLinkEthereumSepolia_20Tokens: CheckOperationV2 = {
     opType: OperationType.CHECK,
     checkType: CheckOperationType.ERC20,
     chainId: ethereumSepoliaChainId,
     contractAddress: ethSepoliaChainLinkContract,
-    threshold: 20n * chainlinkExp,
+    params: encodeThresholdParams({ threshold: 20n * chainlinkExp }),
 }
 
-const erc20ChainLinkCheckEthereumSepolia_30Tokens: CheckOperation = {
+const erc20ChainLinkCheckEthereumSepolia_30Tokens: CheckOperationV2 = {
     ...erc20ChainLinkEthereumSepolia_20Tokens,
-    threshold: 30n * chainlinkExp,
+    params: encodeThresholdParams({ threshold: 30n * chainlinkExp }),
 }
 
-const erc20ChainLinkCheckEthereumSepolia_75Tokens: CheckOperation = {
+const erc20ChainLinkCheckEthereumSepolia_75Tokens: CheckOperationV2 = {
     ...erc20ChainLinkEthereumSepolia_20Tokens,
-    threshold: 75n * chainlinkExp,
+    params: encodeThresholdParams({ threshold: 75n * chainlinkExp }),
 }
 
-const erc20ChainLinkCheckEthereumSepolia_90Tokens: CheckOperation = {
+const erc20ChainLinkCheckEthereumSepolia_90Tokens: CheckOperationV2 = {
     ...erc20ChainLinkEthereumSepolia_20Tokens,
-    threshold: 90n * chainlinkExp,
+    params: encodeThresholdParams({ threshold: 90n * chainlinkExp }),
 }
 
 const nativeCoinBalanceCases = [
@@ -594,13 +601,6 @@ const errorTests = [
         error: 'Invalid chain id for check operation ERC20',
     },
     {
-        desc: 'erc20 invalid check (threshold)',
-        check: {
-            ...erc20ChainLinkCheckBaseSepolia_20Tokens,
-            threshold: -1n,
-        },
-    },
-    {
         desc: 'erc20 invalid check (contractAddress)',
         check: {
             ...erc20ChainLinkCheckBaseSepolia_20Tokens,
@@ -613,14 +613,6 @@ const errorTests = [
             ...nftCheckBaseSepolia,
             opType: OperationType.CHECK,
             chainId: -1n,
-        },
-    },
-    {
-        desc: 'erc721 invalid check (threshold)',
-        check: {
-            ...nftCheckBaseSepolia,
-            opType: OperationType.CHECK,
-            threshold: -1n,
         },
     },
     {
@@ -637,7 +629,6 @@ const errorTests = [
             opType: OperationType.CHECK,
             checkType: CheckOperationType.ISENTITLED,
             chainId: 1n,
-            threshold: 1n,
             contractAddress: ethers.constants.AddressZero as Address,
         },
     },
@@ -647,7 +638,6 @@ const errorTests = [
             opType: OperationType.CHECK,
             checkType: CheckOperationType.ISENTITLED,
             chainId: -1n,
-            threshold: 1n,
             contractAddress: nftCheckBaseSepolia.contractAddress,
         },
     },
@@ -657,7 +647,6 @@ const errorTests = [
             opType: OperationType.CHECK,
             checkType: CheckOperationType.ERC1155,
             chainId: 1n,
-            threshold: 1n,
             contractAddress: ethers.constants.AddressZero as Address,
         },
     },
@@ -671,7 +660,7 @@ test.each(errorTests)('error - $desc', async (props) => {
             controller,
             [SepoliaTestNftWallet_1Token],
             [ethSepoliaProvider],
-            check as CheckOperation,
+            check as CheckOperationV2,
         ),
     ).rejects.toThrow(error)
 })
@@ -837,14 +826,81 @@ test('false', async () => {
     expect(result).toBe(ethers.constants.AddressZero)
 })
 
-test('encode', async () => {
+test('encode/decode rule data v2', async () => {
     const randomTree = makeRandomOperation(5)
 
     const data = treeToRuleData(randomTree)
-    const encoded = encodeEntitlementData(data)
+    const encoded = encodeRuleDataV2(data)
 
-    const decodedDag = decodeEntitlementData(encoded)
+    const decodedDag = decodeRuleDataV2(encoded)
     const operations = ruleDataToOperations(decodedDag)
     const newTree = postOrderArrayToTree(operations)
     expect(randomTree.opType === newTree.opType).toBeTruthy()
+})
+
+// encode/decode should respect address equality semantics but may not maintain case
+function addressesEqual(a: string, b: string): boolean {
+    return a.toLowerCase() === b.toLowerCase()
+}
+
+test('encode/decode rule data', async () => {
+    const randomTree = makeRandomOperation(5)
+    const data = treeToRuleData(randomTree)
+    const v1 = convertRuleDataV2ToV1(data)
+    const encoded = encodeRuleData(v1)
+    const decodedDag = decodeRuleData(encoded)
+
+    for (let i = 0; i < v1.operations.length; i++) {
+        expect(v1.operations[i].opType).toBe(decodedDag.operations[i].opType)
+        expect(v1.operations[i].index).toBe(decodedDag.operations[i].index)
+    }
+
+    for (let i = 0; i < v1.logicalOperations.length; i++) {
+        expect(v1.logicalOperations[i].logOpType).toBe(decodedDag.logicalOperations[i].logOpType)
+        expect(v1.logicalOperations[i].leftOperationIndex).toBe(
+            decodedDag.logicalOperations[i].leftOperationIndex,
+        )
+        expect(v1.logicalOperations[i].rightOperationIndex).toBe(
+            decodedDag.logicalOperations[i].rightOperationIndex,
+        )
+    }
+
+    for (let i = 0; i < v1.checkOperations.length; i++) {
+        expect(v1.checkOperations[i].opType).toBe(decodedDag.checkOperations[i].opType)
+        expect(v1.checkOperations[i].chainId).toBe(decodedDag.checkOperations[i].chainId)
+        expect(
+            addressesEqual(
+                v1.checkOperations[i].contractAddress as string,
+                decodedDag.checkOperations[i].contractAddress as string,
+            ),
+        ).toBeTruthy()
+        expect(v1.checkOperations[i].threshold).toBe(decodedDag.checkOperations[i].threshold)
+    }
+})
+
+describe('threshold params', () => {
+    test('encode/decode', () => {
+        const encodedParams = encodeThresholdParams({ threshold: BigInt(100) })
+        const decodedParams = decodeThresholdParams(encodedParams)
+        expect(decodedParams).toEqual({ threshold: BigInt(100) })
+    })
+
+    test('encode invalid params', () => {
+        expect(() => encodeThresholdParams({ threshold: BigInt(-1) })).toThrow(
+            'Invalid threshold -1: must be greater than or equal to 0',
+        )
+    })
+})
+
+describe('erc1155 params', () => {
+    test('encode invalid params', () => {
+        expect(() => encodeERC1155Params({ threshold: BigInt(-1), tokenId: BigInt(100) })).toThrow(
+            'Invalid threshold -1: must be greater than or equal to 0',
+        )
+    })
+    test('encode/decode', () => {
+        const encodedParams = encodeERC1155Params({ threshold: BigInt(200), tokenId: BigInt(100) })
+        const decodedParams = decodeERC1155Params(encodedParams)
+        expect(decodedParams).toEqual({ threshold: BigInt(200), tokenId: BigInt(100) })
+    })
 })

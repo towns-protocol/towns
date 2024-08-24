@@ -1,4 +1,4 @@
-import { useRoleDetails } from 'use-towns-client'
+import { convertRuleDataV1ToV2, useRoleDetails } from 'use-towns-client'
 import { useMemo } from 'react'
 import { isEveryoneAddress } from '@components/Web3/utils'
 import { convertRuleDataToTokenFormSchema } from '@components/Tokens/utils'
@@ -20,7 +20,11 @@ export function useTokensGatingMembership(spaceId: string | undefined) {
         return {
             data: {
                 tokens: minterRoleDetails?.ruleData
-                    ? convertRuleDataToTokenFormSchema(minterRoleDetails.ruleData)
+                    ? convertRuleDataToTokenFormSchema(
+                          minterRoleDetails.ruleData.kind === 'v2'
+                              ? minterRoleDetails.ruleData.rules
+                              : convertRuleDataV1ToV2(minterRoleDetails.ruleData.rules),
+                      )
                     : [],
                 users: minterRoleDetails?.users ?? [],
             },

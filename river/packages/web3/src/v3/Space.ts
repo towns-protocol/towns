@@ -9,7 +9,7 @@ import {
     RoleDetails,
     RoleEntitlements,
     isRuleEntitlement,
-    isStringArray,
+    isRuleEntitlementV2,
     isUserEntitlement,
 } from '../ContractTypes'
 import { IChannelBase, IChannelShim } from './IChannelShim'
@@ -27,7 +27,8 @@ import { toPermissions } from '../ConvertersRoles'
 import { IMembershipShim } from './IMembershipShim'
 import { NoopRuleData } from '../entitlement'
 import { RuleEntitlementShim } from './RuleEntitlementShim'
-import { IRuleEntitlementBase } from '.'
+import { RuleEntitlementV2Shim } from './RuleEntitlementV2Shim'
+import { IRuleEntitlementBase, IRuleEntitlementV2Base } from '.'
 import { IBanningShim } from './IBanningShim'
 import { IERC721AQueryableShim } from './IERC721AQueryableShim'
 import { IEntitlementDataQueryableShim } from './IEntitlementDataQueryableShim'
@@ -318,6 +319,12 @@ export class Space {
                         this.provider,
                     )
                     break
+                case EntitlementModuleType.RuleEntitlementV2:
+                    this.addressToEntitlement[address] = new RuleEntitlementV2Shim(
+                        address,
+                        this.provider,
+                    )
+                    break
                 default:
                     throw new Error(
                         `Unsupported entitlement module type: ${entitlement.moduleType}`,
@@ -353,38 +360,41 @@ export class Space {
         roleId: BigNumberish,
     ): Promise<EntitlementDetails> {
         let users: string[] = []
-        let ruleData
+        let ruleData: IRuleEntitlementBase.RuleDataStruct | undefined = undefined
+        let ruleDataV2: IRuleEntitlementV2Base.RuleDataV2Struct | undefined = undefined
+        let useRuleDataV1 = false
+
         // with the shims, get the role details for each entitlement
-        const entitlements = await Promise.all(
+        await Promise.all(
             entitlementShims.map(async (entitlement) => {
                 if (isUserEntitlement(entitlement)) {
-                    return await entitlement.getRoleEntitlement(roleId)
+                    users = (await entitlement.getRoleEntitlement(roleId)) ?? []
                 } else if (isRuleEntitlement(entitlement)) {
-                    return await entitlement.getRoleEntitlement(roleId)
+                    ruleData = (await entitlement.getRoleEntitlement(roleId)) ?? undefined
+                    useRuleDataV1 = true
+                } else if (isRuleEntitlementV2(entitlement)) {
+                    ruleDataV2 = (await entitlement.getRoleEntitlement(roleId)) ?? undefined
                 }
-                return undefined
             }),
         )
-
-        function isRuleDataStruct(
-            ruleData: IRuleEntitlementBase.RuleDataStruct | undefined,
-        ): ruleData is IRuleEntitlementBase.RuleDataStruct {
-            return ruleData !== undefined
-        }
-
-        for (const entitlment of entitlements) {
-            if (entitlment) {
-                if (isStringArray(entitlment)) {
-                    users = users.concat(entitlment)
-                } else if (isRuleDataStruct(entitlment)) {
-                    ruleData = entitlment
-                }
+        if (useRuleDataV1) {
+            return {
+                users,
+                ruleData: {
+                    kind: 'v1',
+                    rules: ruleData ?? NoopRuleData,
+                },
+            }
+        } else {
+            return {
+                users,
+                ruleData: {
+                    kind: 'v2',
+                    rules: ruleDataV2 ?? NoopRuleData,
+                },
             }
         }
-
-        return { users, ruleData: ruleData ?? NoopRuleData }
     }
-
     private async getChannelsWithRole(roleId: BigNumberish): Promise<ChannelMetadata[]> {
         const channelMetadatas = new Map<string, ChannelMetadata>()
         // get all the channels from the space

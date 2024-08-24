@@ -4,6 +4,7 @@ import {
     ChannelMetadata,
     MembershipInfo,
     LegacyMembershipStruct,
+    MembershipStruct,
     Permission,
     PricingModuleStruct,
     RoleDetails,
@@ -13,7 +14,13 @@ import {
 import { WalletLink as WalletLinkV3 } from './v3/WalletLink'
 import { BigNumber, BytesLike, ContractReceipt, ContractTransaction, ethers } from 'ethers'
 import { SpaceInfo } from './types'
-import { IRolesBase, Space, SpaceRegistrar, IRuleEntitlementBase } from './v3'
+import {
+    IRolesBase,
+    Space,
+    SpaceRegistrar,
+    IRuleEntitlementBase,
+    IRuleEntitlementV2Base,
+} from './v3'
 import { PricingModules } from './v3/PricingModules'
 import { BaseChainConfig } from './IStaticContractsInfo'
 import { PlatformRequirements } from './v3/PlatformRequirements'
@@ -29,6 +36,15 @@ export interface CreateLegacySpaceParams {
     longDescription?: string
 }
 
+export interface CreateSpaceParams {
+    spaceName: string
+    uri: string
+    channelName: string
+    membership: MembershipStruct
+    shortDescription?: string
+    longDescription?: string
+}
+
 export interface UpdateChannelParams {
     spaceId: string
     channelId: string
@@ -38,13 +54,22 @@ export interface UpdateChannelParams {
     disabled?: boolean
 }
 
-export interface UpdateRoleParams {
+export interface LegacyUpdateRoleParams {
     spaceNetworkId: string
     roleId: number
     roleName: string
     permissions: Permission[]
     users: string[]
     ruleData: IRuleEntitlementBase.RuleDataStruct
+}
+
+export interface UpdateRoleParams {
+    spaceNetworkId: string
+    roleId: number
+    roleName: string
+    permissions: Permission[]
+    users: string[]
+    ruleData: IRuleEntitlementV2Base.RuleDataV2Struct
 }
 
 export interface TransactionOpts {
@@ -68,6 +93,7 @@ export interface ISpaceDapp {
     readonly walletLink: WalletLinkV3
     readonly pricingModules: PricingModules
     readonly platformRequirements: PlatformRequirements
+    isLegacySpace: (spaceId: string) => Promise<boolean>
     addRoleToChannel: (
         spaceId: string,
         channelNetworkId: string,
@@ -91,6 +117,11 @@ export interface ISpaceDapp {
         signer: SignerType,
         txnOpts?: TransactionOpts,
     ) => Promise<TransactionType>
+    createSpace: (
+        params: CreateSpaceParams,
+        signer: SignerType,
+        txnOpts?: TransactionOpts,
+    ) => Promise<TransactionType>
     createChannel: (
         spaceId: string,
         channelName: string,
@@ -100,7 +131,7 @@ export interface ISpaceDapp {
         signer: SignerType,
         txnOpts?: TransactionOpts,
     ) => Promise<TransactionType>
-    createRole(
+    legacyCreateRole(
         spaceId: string,
         roleName: string,
         permissions: Permission[],
@@ -109,6 +140,19 @@ export interface ISpaceDapp {
         signer: SignerType,
         txnOpts?: TransactionOpts,
     ): Promise<TransactionType>
+    createRole(
+        spaceId: string,
+        roleName: string,
+        permissions: Permission[],
+        users: string[],
+        ruleData: IRuleEntitlementV2Base.RuleDataV2Struct,
+        signer: SignerType,
+        txnOpts?: TransactionOpts,
+    ): Promise<TransactionType>
+    createLegacyUpdatedEntitlements(
+        space: Space,
+        params: LegacyUpdateRoleParams,
+    ): Promise<IRolesBase.CreateEntitlementStruct[]>
     createUpdatedEntitlements(
         space: Space,
         params: UpdateRoleParams,
@@ -148,6 +192,11 @@ export interface ISpaceDapp {
     ) => Promise<(ethers.utils.LogDescription | undefined)[]>
     updateChannel: (
         params: UpdateChannelParams,
+        signer: SignerType,
+        txnOpts?: TransactionOpts,
+    ) => Promise<TransactionType>
+    legacyUpdateRole: (
+        params: LegacyUpdateRoleParams,
         signer: SignerType,
         txnOpts?: TransactionOpts,
     ) => Promise<TransactionType>

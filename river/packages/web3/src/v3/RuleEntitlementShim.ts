@@ -37,7 +37,7 @@ export class RuleEntitlementShim
         return this.read.getRuleData(roleId)
     }
 
-    public decodeGetRuleData(entitlementData: string): LocalhostBase.RuleDataStruct[] | undefined {
+    public decodeGetRuleData(entitlementData: string): LocalhostBase.RuleDataStruct | undefined {
         try {
             const decoded = this.decodeFunctionResult(
                 'getRuleData',
@@ -48,7 +48,7 @@ export class RuleEntitlementShim
                 logger.error('RuleEntitlementShim No rule data', decoded)
                 return undefined
             }
-            return decoded
+            return decoded?.length > 0 ? decoded[0] : undefined
         } catch (error) {
             logger.error('RuleEntitlementShim Error decoding RuleDataStruct', error)
         }

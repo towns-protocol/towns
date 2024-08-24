@@ -498,7 +498,6 @@ func (ca *chainAuth) evaluateEntitlementData(
 			if err != nil {
 				return false, err
 			}
-			log.Debug("Converted rule data to V2", "ruleData", reV2)
 
 			result, err := ca.evaluator.EvaluateRuleData(ctx, wallets, reV2)
 			if err != nil {
@@ -561,7 +560,6 @@ func (ca *chainAuth) evaluateWithEntitlements(
 
 	// 1. Check if the user is the space owner
 	// Space owner has su over all space operations.
-	log.Info("evaluateWithEntitlements", "args", args, "owner", owner.Hex(), "wallets", args.linkedWallets)
 	wallets := deserializeWallets(args.linkedWallets)
 	for _, wallet := range wallets {
 		if wallet == owner {

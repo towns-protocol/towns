@@ -2,7 +2,12 @@
  * @group with-entitilements
  */
 
-import { makeUserContextFromWallet, makeTestClient, getDynamicPricingModule } from './util.test'
+import {
+    makeUserContextFromWallet,
+    makeTestClient,
+    getDynamicPricingModule,
+    createVersionedSpace,
+} from './util.test'
 import { makeDefaultChannelStreamId, makeSpaceStreamId } from './id'
 import { ethers, Wallet } from 'ethers'
 import { Client } from './client'
@@ -80,7 +85,8 @@ describe('mediaWithEntitlements', () => {
         }
 
         log('transaction start bob creating space')
-        const transaction = await spaceDapp.createLegacySpace(
+        const transaction = await createVersionedSpace(
+            spaceDapp,
             {
                 spaceName: 'space-name',
                 uri: 'http://bobs-space-metadata.com',
@@ -104,7 +110,8 @@ describe('mediaWithEntitlements', () => {
         await bobClient.createChannel(spaceStreamId, 'Channel', 'Topic', channelId)
 
         // create a second space and join alice so she can start up a client
-        const transaction2 = await spaceDapp.createLegacySpace(
+        const transaction2 = await createVersionedSpace(
+            spaceDapp,
             {
                 spaceName: 'space2',
                 uri: 'bobs-space2-metadata',

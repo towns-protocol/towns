@@ -30,7 +30,7 @@ import {
     CheckOperationType,
     ETH_ADDRESS,
     LogicalOperationType,
-    LegacyMembershipStruct,
+    MembershipStruct,
     NoopRuleData,
     Operation,
     OperationType,
@@ -40,8 +40,10 @@ import {
     TestERC721,
     TestEthBalance,
     treeToRuleData,
-    IRuleEntitlementBase,
+    IRuleEntitlementV2Base,
     ISpaceDapp,
+    encodeRuleDataV2,
+    encodeThresholdParams,
 } from '@river-build/web3'
 
 const log = dlog('csb:test:spaceWithEntitlements')
@@ -51,7 +53,7 @@ const log = dlog('csb:test:spaceWithEntitlements')
 async function createTownWithRequirements(requirements: {
     everyone: boolean
     users: string[]
-    ruleData: IRuleEntitlementBase.RuleDataStruct
+    ruleData: IRuleEntitlementV2Base.RuleDataV2Struct
 }) {
     const {
         alice,
@@ -79,7 +81,7 @@ async function createTownWithRequirements(requirements: {
     }
     requirements.users = requirements.users.map((user) => userNameToWallet[user])
 
-    const membershipInfo: LegacyMembershipStruct = {
+    const membershipInfo: MembershipStruct = {
         settings: {
             name: 'Everyone',
             symbol: 'MEMBER',
@@ -92,7 +94,11 @@ async function createTownWithRequirements(requirements: {
             pricingModule: dynamicPricingModule!.module,
         },
         permissions: [Permission.Read, Permission.Write],
-        requirements,
+        requirements: {
+            everyone: requirements.everyone,
+            users: requirements.users,
+            ruleData: encodeRuleDataV2(requirements.ruleData),
+        },
     }
 
     // This helper method validates that the owner can join the space and default channel.
@@ -710,12 +716,13 @@ describe('spaceWithEntitlements', () => {
     })
 
     test('orOfTwoNftOrOneNftGateJoinPass', async () => {
+        const params = encodeThresholdParams({ threshold: 1n })
         const leftOperation: Operation = {
             opType: OperationType.CHECK,
             checkType: CheckOperationType.ERC721,
             chainId: 31337n,
             contractAddress: testNft1Address as Address,
-            threshold: 1n,
+            params,
         }
 
         const rightOperation: Operation = {
@@ -723,7 +730,7 @@ describe('spaceWithEntitlements', () => {
             checkType: CheckOperationType.ERC721,
             chainId: 31337n,
             contractAddress: testNft2Address as Address,
-            threshold: 1n,
+            params,
         }
         const two: Operation = {
             opType: OperationType.LOGICAL,
@@ -741,7 +748,7 @@ describe('spaceWithEntitlements', () => {
                 checkType: CheckOperationType.ERC721,
                 chainId: 31337n,
                 contractAddress: testNft3Address as Address,
-                threshold: 1n,
+                params,
             },
         }
 
@@ -1081,7 +1088,7 @@ describe('spaceWithEntitlements', () => {
             checkType: CheckOperationType.ISENTITLED,
             chainId: 31337n,
             contractAddress: customAddress,
-            threshold: 0n,
+            params: '0x',
         }
         const ruleData = treeToRuleData(op)
         const {

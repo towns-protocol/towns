@@ -5,15 +5,24 @@ import {
     Address,
     CheckOperationType,
     CreateLegacySpaceParams,
+    CreateSpaceParams,
+    MembershipStruct,
     LegacyMembershipStruct,
     LocalhostWeb3Provider,
-    NoopRuleData,
+    EncodedNoopRuleData,
     Permission,
     SpaceDapp,
     createOperationsTree,
     getDynamicPricingModule,
     getFixedPricingModule,
     getWeb3Deployment,
+    NoopRuleData,
+    convertRuleDataV2ToV1,
+    encodeRuleDataV2,
+    IRuleEntitlementV2Base,
+    UpdateRoleParams,
+    LegacyUpdateRoleParams,
+    Space,
 } from '@river-build/web3'
 import { ISendUserOperationResponse } from 'userop'
 
@@ -86,34 +95,65 @@ export async function createUngatedSpace({
     const name = spaceName ?? generatedSpaceName
     const dynamicPricingModule = await getDynamicPricingModule(spaceDapp)
 
-    const membershipInfo: LegacyMembershipStruct = {
-        settings: {
-            name: 'Everyone',
-            symbol: 'MEMBER',
-            price: 0,
-            maxSupply: 100,
-            duration: 0,
-            currency: ethers.constants.AddressZero,
-            feeRecipient: ethers.constants.AddressZero,
-            freeAllocation: 0,
-            pricingModule: dynamicPricingModule.module,
-        },
-        permissions: rolePermissions,
-        requirements: {
-            everyone: true,
-            users: [],
-            ruleData: NoopRuleData,
-        },
+    if (userOps.createLegacySpaces()) {
+        console.log('OPS creating legacy space')
+        const downgradedMembershipInfo: LegacyMembershipStruct = {
+            settings: {
+                name: 'Everyone',
+                symbol: 'MEMBER',
+                price: 0,
+                maxSupply: 100,
+                duration: 0,
+                currency: ethers.constants.AddressZero,
+                feeRecipient: ethers.constants.AddressZero,
+                freeAllocation: 0,
+                pricingModule: dynamicPricingModule.module,
+            },
+            permissions: rolePermissions,
+            requirements: {
+                everyone: true,
+                users: [],
+                ruleData: NoopRuleData,
+            },
+        }
+        return userOps.sendCreateLegacySpaceOp([
+            {
+                spaceName: name,
+                uri: name,
+                channelName,
+                membership: downgradedMembershipInfo,
+            } satisfies CreateLegacySpaceParams,
+            signer,
+        ])
+    } else {
+        console.log('OPS creating v2 space')
+        const membershipInfo: MembershipStruct = {
+            settings: {
+                name: 'Everyone',
+                symbol: 'MEMBER',
+                price: 0,
+                maxSupply: 100,
+                duration: 0,
+                currency: ethers.constants.AddressZero,
+                feeRecipient: ethers.constants.AddressZero,
+                freeAllocation: 0,
+                pricingModule: dynamicPricingModule.module,
+            },
+            permissions: rolePermissions,
+            requirements: {
+                everyone: true,
+                users: [],
+                ruleData: EncodedNoopRuleData,
+            },
+        }
+        const townInfo = {
+            spaceName: name,
+            uri: name,
+            channelName,
+            membership: membershipInfo,
+        } satisfies CreateSpaceParams
+        return userOps.sendCreateSpaceOp([townInfo, signer])
     }
-
-    const townInfo = {
-        spaceName: name,
-        uri: name,
-        channelName,
-        membership: membershipInfo,
-    } satisfies CreateLegacySpaceParams
-
-    return userOps.sendCreateLegacySpaceOp([townInfo, signer])
 }
 
 export async function createGatedSpace({
@@ -136,34 +176,66 @@ export async function createGatedSpace({
 
     const dynamicPricingModule = await getDynamicPricingModule(spaceDapp)
 
-    const membershipInfo: LegacyMembershipStruct = {
-        settings: {
-            name: 'Gated Space',
-            symbol: 'MEMBER',
-            price: 0,
-            maxSupply: 100,
-            duration: 0,
-            currency: ethers.constants.AddressZero,
-            feeRecipient: ethers.constants.AddressZero,
-            freeAllocation: 0,
-            pricingModule: dynamicPricingModule.module,
-        },
-        permissions: rolePermissions,
-        requirements: {
-            everyone: false,
-            users: [],
-            ruleData: boredApeRuleData,
-        },
+    if (userOps.createLegacySpaces()) {
+        console.log('OPS creating legacy space')
+        const membershipInfo: LegacyMembershipStruct = {
+            settings: {
+                name: 'Gated Space',
+                symbol: 'MEMBER',
+                price: 0,
+                maxSupply: 100,
+                duration: 0,
+                currency: ethers.constants.AddressZero,
+                feeRecipient: ethers.constants.AddressZero,
+                freeAllocation: 0,
+                pricingModule: dynamicPricingModule.module,
+            },
+            permissions: rolePermissions,
+            requirements: {
+                everyone: false,
+                users: [],
+                ruleData: convertRuleDataV2ToV1(boredApeRuleData),
+            },
+        }
+
+        const townInfo = {
+            spaceName: name,
+            uri: name,
+            channelName,
+            membership: membershipInfo,
+        } satisfies CreateLegacySpaceParams
+
+        return userOps.sendCreateLegacySpaceOp([townInfo, signer])
+    } else {
+        console.log('OPS creating v2 space')
+        const membershipInfo: MembershipStruct = {
+            settings: {
+                name: 'Gated Space',
+                symbol: 'MEMBER',
+                price: 0,
+                maxSupply: 100,
+                duration: 0,
+                currency: ethers.constants.AddressZero,
+                feeRecipient: ethers.constants.AddressZero,
+                freeAllocation: 0,
+                pricingModule: dynamicPricingModule.module,
+            },
+            permissions: rolePermissions,
+            requirements: {
+                everyone: false,
+                users: [],
+                ruleData: encodeRuleDataV2(boredApeRuleData),
+            },
+        }
+
+        const townInfo = {
+            spaceName: name,
+            uri: name,
+            channelName,
+            membership: membershipInfo,
+        } satisfies CreateSpaceParams
+        return userOps.sendCreateSpaceOp([townInfo, signer])
     }
-
-    const townInfo = {
-        spaceName: name,
-        uri: name,
-        channelName,
-        membership: membershipInfo,
-    } satisfies CreateLegacySpaceParams
-
-    return userOps.sendCreateLegacySpaceOp([townInfo, signer])
 }
 
 export async function createFixedPriceSpace({
@@ -188,34 +260,65 @@ export async function createFixedPriceSpace({
 
     const fixedPricingModule = await getFixedPricingModule(spaceDapp)
 
-    const membershipInfo: LegacyMembershipStruct = {
-        settings: {
-            name: 'Gated Space',
-            symbol: 'MEMBER',
-            price: ethers.utils.parseEther(price ?? '0.5'),
-            maxSupply: 100,
-            duration: 0,
-            currency: ethers.constants.AddressZero,
-            feeRecipient: ethers.constants.AddressZero,
-            freeAllocation: 1, // needs to be > 0
-            pricingModule: fixedPricingModule.module,
-        },
-        permissions: rolePermissions,
-        requirements: {
-            everyone: true,
-            users: [],
-            ruleData: NoopRuleData,
-        },
+    if (userOps.createLegacySpaces()) {
+        const membershipInfo: LegacyMembershipStruct = {
+            settings: {
+                name: 'Gated Space',
+                symbol: 'MEMBER',
+                price: ethers.utils.parseEther(price ?? '0.5'),
+                maxSupply: 100,
+                duration: 0,
+                currency: ethers.constants.AddressZero,
+                feeRecipient: ethers.constants.AddressZero,
+                freeAllocation: 1, // needs to be > 0
+                pricingModule: fixedPricingModule.module,
+            },
+            permissions: rolePermissions,
+            requirements: {
+                everyone: true,
+                users: [],
+                ruleData: NoopRuleData,
+            },
+        }
+
+        const townInfo = {
+            spaceName: name,
+            uri: name,
+            channelName,
+            membership: membershipInfo,
+        } satisfies CreateLegacySpaceParams
+
+        return userOps.sendCreateLegacySpaceOp([townInfo, signer])
+    } else {
+        const membershipInfo: MembershipStruct = {
+            settings: {
+                name: 'Gated Space',
+                symbol: 'MEMBER',
+                price: ethers.utils.parseEther(price ?? '0.5'),
+                maxSupply: 100,
+                duration: 0,
+                currency: ethers.constants.AddressZero,
+                feeRecipient: ethers.constants.AddressZero,
+                freeAllocation: 1, // needs to be > 0
+                pricingModule: fixedPricingModule.module,
+            },
+            permissions: rolePermissions,
+            requirements: {
+                everyone: true,
+                users: [],
+                ruleData: EncodedNoopRuleData,
+            },
+        }
+
+        const townInfo = {
+            spaceName: name,
+            uri: name,
+            channelName,
+            membership: membershipInfo,
+        } satisfies CreateSpaceParams
+
+        return userOps.sendCreateSpaceOp([townInfo, signer])
     }
-
-    const townInfo = {
-        spaceName: name,
-        uri: name,
-        channelName,
-        membership: membershipInfo,
-    } satisfies CreateLegacySpaceParams
-
-    return userOps.sendCreateLegacySpaceOp([townInfo, signer])
 }
 
 export function generatePrivyWalletIfKey(privateKey?: string) {
@@ -278,4 +381,105 @@ export async function isSmartAccountDeployed(signer: ethers.Signer, userOps: Tes
  */
 export async function sleepBetweenTxs(sleepTime = 2_000) {
     return new Promise((resolve) => setTimeout(resolve, sleepTime))
+}
+
+export async function sendCreateRoleOp(
+    userOps: TestUserOps,
+    spaceId: string,
+    roleName: string,
+    rolePermissions: Permission[],
+    users: string[],
+    ruleData: IRuleEntitlementV2Base.RuleDataV2Struct,
+    signer: ethers.Signer,
+) {
+    if (userOps.createLegacySpaces()) {
+        return userOps.sendLegacyCreateRoleOp([
+            spaceId,
+            roleName,
+            rolePermissions,
+            users,
+            convertRuleDataV2ToV1(ruleData),
+            signer,
+        ])
+    } else {
+        return userOps.sendCreateRoleOp([
+            spaceId,
+            roleName,
+            rolePermissions,
+            users,
+            ruleData,
+            signer,
+        ])
+    }
+}
+
+export async function sendUpdateRoleOp(
+    userOps: TestUserOps,
+    params: UpdateRoleParams,
+    signer: ethers.Signer,
+) {
+    if (userOps.createLegacySpaces()) {
+        const legacyParams = {
+            ...params,
+            ruleData: convertRuleDataV2ToV1(params.ruleData),
+        } as LegacyUpdateRoleParams
+        return userOps.sendLegacyUpdateRoleOp([legacyParams, signer])
+    } else {
+        return userOps.sendUpdateRoleOp([params, signer])
+    }
+}
+
+export async function sendEditMembershipSettingsOp(
+    userOps: TestUserOps,
+    spaceId: string,
+    updateRoleParams: UpdateRoleParams,
+    membershipParams: {
+        pricingModule: string
+        membershipPrice: ethers.BigNumberish // wei
+        membershipSupply: ethers.BigNumberish
+        freeAllocationForPaidSpace?: ethers.BigNumberish
+    },
+    signer: ethers.Signer,
+) {
+    if (userOps.createLegacySpaces()) {
+        const legacyUpdateRoleParams = {
+            ...updateRoleParams,
+            ruleData: convertRuleDataV2ToV1(updateRoleParams.ruleData),
+        } as LegacyUpdateRoleParams
+        return userOps.sendLegacyEditMembershipSettingsOp({
+            spaceId,
+            legacyUpdateRoleParams,
+            membershipParams,
+            signer,
+        })
+    } else {
+        return userOps.sendEditMembershipSettingsOp({
+            spaceId,
+            updateRoleParams,
+            membershipParams,
+            signer,
+        })
+    }
+}
+
+export async function encodeUpdateRoleData(
+    userOps: TestUserOps,
+    space: Space,
+    updateRoleParams: UpdateRoleParams,
+) {
+    if (userOps.createLegacySpaces()) {
+        const legacyUpdateRoleParams = {
+            ...updateRoleParams,
+            ruleData: convertRuleDataV2ToV1(updateRoleParams.ruleData),
+        } as LegacyUpdateRoleParams
+        return userOps.encodeLegacyUpdateRoleData({
+            space,
+            legacyUpdateRoleParams,
+        })
+    } else {
+        return userOps.encodeUpdateRoleData({
+            space,
+            updateRoleParams,
+        })
+    }
 }

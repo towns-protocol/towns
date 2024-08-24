@@ -5,6 +5,7 @@
   "version": "0.2.0",
   "configurations": [
 
+
     {
       "name": "Attach to RiverNode",
       "type": "go",
@@ -57,6 +58,16 @@
       "type": "node",
       "request": "launch",
       "env": { "NODE_ENV": "development", "NODE_TLS_REJECT_UNAUTHORIZED": "0", "RIVER_ENV": "local_multi", "DEBUG": "csb:*,test:*", "DEBUG_DEPTH":"10" },
+      "program": "${workspaceFolder}/node_modules/.bin/jest",
+      "runtimeArgs": ["--experimental-vm-modules", "--experimental-wasm-modules"],
+      "args": ["${file}", "--config", "${workspaceFolder}/packages/sdk/jest.config.ts", "-i", "--no-cache", "--forceExit"],
+      "console": "integratedTerminal",
+    },
+    {
+      "name": "Jest: current file in 'packages/sdk/' (multi entitlements, legacy)",
+      "type": "node",
+      "request": "launch",
+      "env": { "NODE_ENV": "development", "NODE_TLS_REJECT_UNAUTHORIZED": "0", "RIVER_ENV": "local_multi", "DEBUG": "csb:*,test:*", "DEBUG_DEPTH":"10", "USE_LEGACY_SPACES": true},
       "program": "${workspaceFolder}/node_modules/.bin/jest",
       "runtimeArgs": ["--experimental-vm-modules", "--experimental-wasm-modules"],
       "args": ["${file}", "--config", "${workspaceFolder}/packages/sdk/jest.config.ts", "-i", "--no-cache", "--forceExit"],

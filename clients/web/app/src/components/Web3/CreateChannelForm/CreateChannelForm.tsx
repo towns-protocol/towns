@@ -1,9 +1,11 @@
 import {
     CreateChannelInfo,
+    IRuleEntitlementV2Base,
     Permission,
     SignerUndefinedError,
     TransactionStatus,
     WalletDoesNotMatchSignedInAccountError,
+    convertRuleDataV1ToV2,
     useConnectivity,
     useCreateChannelTransaction,
     useHasPermission,
@@ -37,6 +39,7 @@ import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
 import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'
 import { Spinner } from '@components/Spinner'
 
+import { convertRuleDataToTokenFormSchema } from '@components/Tokens/utils'
 import { TokenCheckboxLabel } from '@components/Tokens/TokenCheckboxLabel'
 import { useContractRoles } from 'hooks/useContractRoles'
 import { ModalContainer } from '@components/Modals/ModalContainer'
@@ -218,15 +221,24 @@ export const CreateChannelForm = (props: Props) => {
                             const r = rolesWithDetails?.find((role) => role.id === roleId)
                             if (r) {
                                 const { ruleData } = r
-                                const tokens =
-                                    ruleData?.checkOperations?.map((op) => {
+
+                                const ruleDataV2:
+                                    | IRuleEntitlementV2Base.RuleDataV2Struct
+                                    | undefined =
+                                    ruleData.kind === 'v1'
+                                        ? convertRuleDataV1ToV2(ruleData.rules)
+                                        : ruleData.rules
+
+                                const tokens = convertRuleDataToTokenFormSchema(ruleDataV2).map(
+                                    (t) => {
                                         return {
-                                            chainId: op.chainId,
-                                            contractAddress: op.contractAddress,
-                                            opType: op.opType,
-                                            threshold: op.threshold,
+                                            chainId: t.chainId,
+                                            contractAddress: t.address,
+                                            opType: t.type,
+                                            threshold: parseInt(t.quantity.toString()),
                                         } as ApiObject
-                                    }) ?? []
+                                    },
+                                )
                                 return {
                                     id: r.id,
                                     name: r.name,

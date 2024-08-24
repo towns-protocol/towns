@@ -20,9 +20,13 @@ import { EntitlementsDelegate, DecryptionStatus } from '@river-build/encryption'
 import {
     BASE_MAINNET,
     BASE_SEPOLIA,
+    convertRuleDataV2ToV1,
     CreateLegacySpaceParams,
-    IRuleEntitlementBase,
+    CreateSpaceParams,
+    IRuleEntitlementV2Base,
     UpdateChannelParams,
+    decodeRuleDataV2,
+    LegacyUpdateRoleParams,
 } from '@river-build/web3'
 import { ChannelMessage_Post_Mention, ChunkedMedia, FullyReadMarker } from '@river-build/proto'
 import {
@@ -77,13 +81,13 @@ import {
     Address,
     TSigner,
 } from '../types/web3-types'
-import { LegacyMembershipStruct, Permission, SpaceInfo, ISpaceDapp } from '@river-build/web3'
+import { MembershipStruct, Permission, SpaceInfo, ISpaceDapp } from '@river-build/web3'
 import { BlockchainTransactionStore } from './BlockchainTransactionStore'
 import { UserOps, getTransactionHashOrUserOpHash, isUserOpResponse } from '@towns/userops'
 import { TimeTrackerEvents, getTimeTracker } from '../SequenceTimeTracker'
 import { waitForTimeoutOrMembership } from '../utils/waitForTimeoutOrMembershipEvent'
 import { TownsAnalytics } from '../types/TownsAnalytics'
-
+import { Hex } from 'viem'
 /***
  * Towns Client
  * for calls that originate from a roomIdentifier, or for createing new rooms
@@ -116,10 +120,12 @@ export class TownsClient
     public userOps: UserOps | undefined = undefined
     private supportedXChainIds: number[] | undefined
     private analytics: TownsAnalytics | undefined
+    public readonly createV2Spaces: boolean | undefined
 
     constructor(opts: TownsOpts, spaceDapp: ISpaceDapp, name?: string) {
         super()
         this.opts = opts
+        this.createV2Spaces = opts.createV2Spaces === false
         this.analytics = opts.analytics
         this.name = name || Math.random().toString(36).substring(7)
 
@@ -321,7 +327,7 @@ export class TownsClient
 
     public async createSpaceTransaction(
         createSpaceInfo: CreateSpaceInfo,
-        membership: LegacyMembershipStruct,
+        membership: MembershipStruct,
         signer: ethers.Signer | undefined,
         onSpaceCreateFlowStatus?: (update: CreateSpaceFlowStatus) => void,
     ): Promise<CreateSpaceTransactionContext> {
@@ -445,7 +451,7 @@ export class TownsClient
 
     private async createCasablancaSpaceTransaction(
         createSpaceInfo: CreateSpaceInfo,
-        membership: LegacyMembershipStruct,
+        membership: MembershipStruct,
         signer: ethers.Signer,
         onCreateSpageFlowStatus?: (status: CreateSpaceFlowStatus) => void,
     ): Promise<CreateSpaceTransactionContext> {
@@ -459,27 +465,62 @@ export class TownsClient
             data: {},
         })
 
-        const args: CreateLegacySpaceParams = {
-            spaceName: createSpaceInfo.name,
-            uri: createSpaceInfo.uri ?? '',
-            channelName: createSpaceInfo.defaultChannelName ?? 'general', // default channel name
-            membership,
-            shortDescription: createSpaceInfo.shortDescription ?? '',
-            longDescription: createSpaceInfo.longDescription ?? '',
-        }
-
-        try {
-            if (this.isAccountAbstractionEnabled()) {
-                transaction = await this.userOps?.sendCreateLegacySpaceOp([args, signer])
-            } else {
-                transaction = await this.spaceDapp.createLegacySpace(args, signer)
+        if (this.createV2Spaces) {
+            this.log('[createCasablancaSpaceTransaction] creating v2 space', createSpaceInfo)
+            const args: CreateSpaceParams = {
+                spaceName: createSpaceInfo.name,
+                uri: createSpaceInfo.uri ?? '',
+                channelName: createSpaceInfo.defaultChannelName ?? 'general', // default channel name
+                membership,
+                shortDescription: createSpaceInfo.shortDescription ?? '',
+                longDescription: createSpaceInfo.longDescription ?? '',
             }
+            try {
+                if (this.isAccountAbstractionEnabled()) {
+                    transaction = await this.userOps?.sendCreateSpaceOp([args, signer])
+                } else {
+                    transaction = await this.spaceDapp.createSpace(args, signer)
+                }
 
-            this.log(`[createCasablancaSpaceTransaction] transaction created` /*, transaction*/)
-        } catch (err) {
-            console.error('[createCasablancaSpaceTransaction] error', err)
-            error = this.getDecodedErrorForSpaceFactory(err)
-            addCategoryToError(error, getErrorCategory(err) ?? 'userop')
+                this.log(`[createCasablancaSpaceTransaction] transaction created` /*, transaction*/)
+            } catch (err) {
+                console.error('[createCasablancaSpaceTransaction] error', err)
+                error = this.getDecodedErrorForSpaceFactory(err)
+                addCategoryToError(error, getErrorCategory(err) ?? 'userop')
+            }
+        } else {
+            this.log('[createCasablancaSpaceTransaction] creating legacy space', createSpaceInfo)
+            // Downgrade the request parameters and create a legacy space
+            const args: CreateLegacySpaceParams = {
+                spaceName: createSpaceInfo.name,
+                uri: createSpaceInfo.uri ?? '',
+                channelName: createSpaceInfo.defaultChannelName ?? 'general', // default channel name
+                membership: {
+                    settings: membership.settings,
+                    permissions: membership.permissions,
+                    requirements: {
+                        everyone: membership.requirements.everyone,
+                        users: membership.requirements.users,
+                        ruleData: convertRuleDataV2ToV1(
+                            decodeRuleDataV2(membership.requirements.ruleData as Hex),
+                        ),
+                    },
+                },
+                shortDescription: createSpaceInfo.shortDescription ?? '',
+                longDescription: createSpaceInfo.longDescription ?? '',
+            }
+            try {
+                if (this.isAccountAbstractionEnabled()) {
+                    transaction = await this.userOps?.sendCreateLegacySpaceOp([args, signer])
+                } else {
+                    transaction = await this.spaceDapp.createLegacySpace(args, signer)
+                }
+                this.log(`[createCasablancaSpaceTransaction] transaction created` /*, transaction*/)
+            } catch (err) {
+                console.error('[createCasablancaSpaceTransaction] error', err)
+                error = this.getDecodedErrorForSpaceFactory(err)
+                addCategoryToError(error, getErrorCategory(err) ?? 'userop')
+            }
         }
 
         continueStoreTx({
@@ -962,7 +1003,7 @@ export class TownsClient
         roleName: string,
         permissions: Permission[],
         users: string[],
-        ruleData: IRuleEntitlementBase.RuleDataStruct,
+        ruleData: IRuleEntitlementV2Base.RuleDataV2Struct,
         signer: ethers.Signer | undefined,
     ): Promise<RoleTransactionContext> {
         if (!signer) {
@@ -978,13 +1019,38 @@ export class TownsClient
             },
         })
 
-        const args = [spaceNetworkId, roleName, permissions, users, ruleData, signer] as const
-
         try {
-            if (this.isAccountAbstractionEnabled()) {
-                transaction = await this.userOps?.sendCreateRoleOp([...args])
+            const isLegacySpace = await this.spaceDapp.isLegacySpace(spaceNetworkId)
+            if (isLegacySpace) {
+                const ruleDataV1 = convertRuleDataV2ToV1(ruleData)
+                const args = [
+                    spaceNetworkId,
+                    roleName,
+                    permissions,
+                    users,
+                    ruleDataV1,
+                    signer,
+                ] as const
+
+                if (this.isAccountAbstractionEnabled()) {
+                    transaction = await this.userOps?.sendLegacyCreateRoleOp([...args])
+                } else {
+                    transaction = await this.spaceDapp.legacyCreateRole(...args)
+                }
             } else {
-                transaction = await this.spaceDapp.createRole(...args)
+                const args = [
+                    spaceNetworkId,
+                    roleName,
+                    permissions,
+                    users,
+                    ruleData,
+                    signer,
+                ] as const
+                if (this.isAccountAbstractionEnabled()) {
+                    transaction = await this.userOps?.sendCreateRoleOp([...args])
+                } else {
+                    transaction = await this.spaceDapp.createRole(...args)
+                }
             }
 
             this.log(`[createRoleTransaction] transaction created` /*, transaction*/)
@@ -1154,15 +1220,37 @@ export class TownsClient
         })
 
         try {
-            if (this.isAccountAbstractionEnabled()) {
-                transaction = await this.userOps?.sendEditMembershipSettingsOp({
-                    spaceId,
-                    updateRoleParams,
-                    membershipParams,
-                    signer,
-                })
+            const isLegacySpace = await this.spaceDapp.isLegacySpace(args.spaceId)
+            if (isLegacySpace) {
+                const legacyUpdateRoleParams = {
+                    ...updateRoleParams,
+                    ruleData: convertRuleDataV2ToV1(updateRoleParams.ruleData),
+                } as LegacyUpdateRoleParams
+
+                if (this.isAccountAbstractionEnabled()) {
+                    transaction = await this.userOps?.sendLegacyEditMembershipSettingsOp({
+                        spaceId,
+                        legacyUpdateRoleParams,
+                        membershipParams,
+                        signer,
+                    })
+                } else {
+                    transaction = await this.spaceDapp.legacyUpdateRole(
+                        legacyUpdateRoleParams,
+                        signer,
+                    )
+                }
             } else {
-                transaction = await this.spaceDapp.updateRole(updateRoleParams, signer)
+                if (this.isAccountAbstractionEnabled()) {
+                    transaction = await this.userOps?.sendEditMembershipSettingsOp({
+                        spaceId,
+                        updateRoleParams,
+                        membershipParams,
+                        signer,
+                    })
+                } else {
+                    transaction = await this.spaceDapp.updateRole(updateRoleParams, signer)
+                }
             }
 
             this.log(`[updateRoleTransaction] transaction created` /*, transaction*/)
@@ -1197,7 +1285,7 @@ export class TownsClient
         roleName: string,
         permissions: Permission[],
         users: string[],
-        ruleData: IRuleEntitlementBase.RuleDataStruct,
+        ruleData: IRuleEntitlementV2Base.RuleDataV2Struct,
         signer: ethers.Signer | undefined,
     ): Promise<TransactionContext<void>> {
         if (!signer) {
@@ -1213,19 +1301,36 @@ export class TownsClient
             },
         })
 
-        const args = {
-            spaceNetworkId,
-            roleId,
-            roleName,
-            permissions,
-            users,
-            ruleData,
-        }
         try {
-            if (this.isAccountAbstractionEnabled()) {
-                transaction = await this.userOps?.sendUpdateRoleOp([args, signer])
+            const isLegacySpace = await this.spaceDapp.isLegacySpace(spaceNetworkId)
+            if (isLegacySpace) {
+                const args = {
+                    spaceNetworkId,
+                    roleId,
+                    roleName,
+                    permissions,
+                    users,
+                    ruleData: convertRuleDataV2ToV1(ruleData),
+                }
+                if (this.isAccountAbstractionEnabled()) {
+                    transaction = await this.userOps?.sendLegacyUpdateRoleOp([args, signer])
+                } else {
+                    transaction = await this.spaceDapp.legacyUpdateRole(args, signer)
+                }
             } else {
-                transaction = await this.spaceDapp.updateRole(args, signer)
+                const args = {
+                    spaceNetworkId,
+                    roleId,
+                    roleName,
+                    permissions,
+                    users,
+                    ruleData,
+                }
+                if (this.isAccountAbstractionEnabled()) {
+                    transaction = await this.userOps?.sendUpdateRoleOp([args, signer])
+                } else {
+                    transaction = await this.spaceDapp.updateRole(args, signer)
+                }
             }
 
             this.log(`[updateRoleTransaction] transaction created` /*, transaction*/)

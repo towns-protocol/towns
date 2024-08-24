@@ -23,7 +23,7 @@ import { useCreateSpaceTransactionWithRetries } from 'use-towns-client/src/hooks
 import { useSpacesFromContract } from 'use-towns-client/src/hooks/use-spaces-from-contract'
 import {
     getTestGatingNftAddress,
-    NoopRuleData,
+    EncodedNoopRuleData,
     Permission,
     getDynamicPricingModule,
 } from '@river-build/web3'
@@ -68,7 +68,7 @@ describe('spaceManagerContractHooks', () => {
                             requirements: {
                                 everyone: true,
                                 users: [],
-                                ruleData: NoopRuleData,
+                                ruleData: EncodedNoopRuleData,
                             },
                             pricingModule: dynamicPricingModule.module,
                         }),
@@ -100,7 +100,7 @@ describe('spaceManagerContractHooks', () => {
                             requirements: {
                                 everyone: true,
                                 users: [],
-                                ruleData: NoopRuleData,
+                                ruleData: EncodedNoopRuleData,
                             },
                             pricingModule: dynamicPricingModule.module,
                         }),

@@ -1,9 +1,10 @@
 import { UseFormReturn } from 'react-hook-form'
 import {
-    LegacyMembershipStruct,
+    MembershipStruct,
     NoopRuleData,
     Permission,
     createOperationsTree,
+    encodeRuleDataV2,
 } from '@river-build/web3'
 import {
     Address,
@@ -227,7 +228,7 @@ export function CreateTownSubmit({
                 //////////////////////////////////////////
                 // create space
                 //////////////////////////////////////////
-                const requirements: LegacyMembershipStruct = {
+                const requirements: MembershipStruct = {
                     settings: {
                         name: createSpaceInfo.name + ' - Member',
                         symbol: 'MEMBER',
@@ -247,7 +248,7 @@ export function CreateTownSubmit({
                         // TODO: make sure token gating works after xchain updated
                         everyone: isEveryone,
                         users: [],
-                        ruleData,
+                        ruleData: encodeRuleDataV2(ruleData),
                     },
                     permissions: [Permission.Read, Permission.Write, Permission.React],
                 }

@@ -9,7 +9,7 @@ import { UserMemberships, UserMembershipsModel } from '../user/models/userMember
 import { MembershipOp } from '@river-build/proto'
 import { isSpaceStreamId, makeDefaultChannelStreamId, makeSpaceStreamId } from '../../id'
 import { RiverConnection } from '../river-connection/riverConnection'
-import { CreateLegacySpaceParams, SpaceDapp } from '@river-build/web3'
+import { CreateSpaceParams, SpaceDapp } from '@river-build/web3'
 import { makeDefaultMembershipInfo } from '../utils/spaceUtils'
 import { ethers } from 'ethers'
 import { check, dlogger } from '@river-build/dlog'
@@ -80,14 +80,14 @@ export class Spaces extends PersistedObservable<SpacesModel> {
     }
 
     async createSpace(
-        params: Partial<Omit<CreateLegacySpaceParams, 'spaceName'>> & { spaceName: string },
+        params: Partial<Omit<CreateSpaceParams, 'spaceName'>> & { spaceName: string },
         signer: ethers.Signer,
     ) {
         const membershipInfo =
             params.membership ??
             (await makeDefaultMembershipInfo(this.spaceDapp, this.riverConnection.userId))
         const channelName = params.channelName ?? 'general'
-        const transaction = await this.spaceDapp.createLegacySpace(
+        const transaction = await this.spaceDapp.createSpace(
             {
                 spaceName: params.spaceName,
                 uri: params.uri ?? '',

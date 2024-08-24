@@ -2,9 +2,12 @@ import {
     Address,
     ISpaceDapp,
     LegacySpaceInfoStruct,
+    SpaceInfoStruct,
     SpaceDapp,
     createEntitlementStruct,
+    createLegacyEntitlementStruct,
     UpdateRoleParams,
+    LegacyUpdateRoleParams,
     Space,
     findDynamicPricingModule,
     findFixedPricingModule,
@@ -320,13 +323,110 @@ export class UserOps {
             endLinkCheck?.()
 
             const functionHashForPaymasterProxy = getFunctionSigHash(
-                this.spaceDapp.spaceRegistrar.SpaceArchitect.interface,
+                this.spaceDapp.spaceRegistrar.LegacySpaceArchitect.interface,
                 createSpaceFnName,
             )
 
             const op = await this.sendUserOp(
                 {
                     toAddress: this.spaceDapp.spaceRegistrar.LegacySpaceArchitect.address,
+                    callData: callDataCreateSpace,
+                    signer,
+                    spaceId: undefined,
+                    functionHashForPaymasterProxy,
+                },
+                TimeTrackerEvents.CREATE_SPACE,
+            )
+            return op
+        }
+        endLinkCheck?.()
+
+        // wallet isn't linked, create a user op that both links and creates the space
+        const functionName = 'createSpace_linkWallet'
+
+        // TODO: this needs to accept an array of names/interfaces
+        const functionHashForPaymasterProxy = getFunctionSigHash(
+            this.spaceDapp.spaceRegistrar.LegacySpaceArchitect.interface,
+            functionName,
+        )
+
+        const callDataForLinkingSmartAccount = await this.encodeDataForLinkingSmartAccount(
+            signer,
+            abstractAccountAddress,
+        )
+
+        const op = await this.sendUserOp(
+            {
+                toAddress: [
+                    this.spaceDapp.walletLink.address,
+                    this.spaceDapp.spaceRegistrar.LegacySpaceArchitect.address,
+                ],
+                callData: [callDataForLinkingSmartAccount, callDataCreateSpace],
+                signer,
+                spaceId: undefined,
+                functionHashForPaymasterProxy,
+            },
+            TimeTrackerEvents.CREATE_SPACE,
+        )
+        return op
+    }
+
+    public async sendCreateSpaceOp(
+        args: Parameters<SpaceDapp['createSpace']>,
+    ): Promise<ISendUserOperationResponse> {
+        if (!this.spaceDapp) {
+            throw new Error('spaceDapp is required')
+        }
+        const [createpaceParams, signer] = args
+
+        const spaceInfo: SpaceInfoStruct = {
+            name: createpaceParams.spaceName,
+            uri: createpaceParams.uri,
+            shortDescription: createpaceParams.shortDescription ?? '',
+            longDescription: createpaceParams.longDescription ?? '',
+            membership: createpaceParams.membership,
+            channel: {
+                metadata: createpaceParams.channelName || '',
+            },
+        }
+
+        const endGetAA = this.timeTracker?.startMeasurement(
+            TimeTrackerEvents.CREATE_SPACE,
+            'userops_get_abstract_account_address',
+        )
+        const abstractAccountAddress = await this.getAbstractAccountAddress({
+            rootKeyAddress: await getSignerAddress(signer),
+        })
+
+        endGetAA?.()
+
+        if (!abstractAccountAddress) {
+            throw new Error('abstractAccountAddress is required')
+        }
+
+        const createSpaceFnName = 'createSpace'
+
+        const callDataCreateSpace = this.spaceDapp.spaceRegistrar.SpaceArchitect.encodeFunctionData(
+            createSpaceFnName,
+            [spaceInfo],
+        )
+
+        const endLinkCheck = this.timeTracker?.startMeasurement(
+            TimeTrackerEvents.CREATE_SPACE,
+            'userops_check_if_linked',
+        )
+
+        if (await this.spaceDapp.walletLink.checkIfLinked(signer, abstractAccountAddress)) {
+            endLinkCheck?.()
+
+            const functionHashForPaymasterProxy = getFunctionSigHash(
+                this.spaceDapp.spaceRegistrar.SpaceArchitect.interface,
+                createSpaceFnName,
+            )
+
+            const op = await this.sendUserOp(
+                {
+                    toAddress: this.spaceDapp.spaceRegistrar.SpaceArchitect.address,
                     callData: callDataCreateSpace,
                     signer,
                     spaceId: undefined,
@@ -772,6 +872,43 @@ export class UserOps {
         throw new Error('Not implemented')
     }
 
+    public async sendLegacyCreateRoleOp(
+        args: Parameters<SpaceDapp['legacyCreateRole']>,
+    ): Promise<ISendUserOperationResponse> {
+        const [spaceId, roleName, permissions, users, ruleData, signer] = args
+
+        if (!this.spaceDapp) {
+            throw new Error('spaceDapp is required')
+        }
+        const space = await this.spaceDapp.getSpace(spaceId)
+        if (!space) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+        }
+
+        const functionName = 'createRole'
+
+        const functionHashForPaymasterProxy = getFunctionSigHash(
+            space.Roles.interface,
+            functionName,
+        )
+
+        const entitlements = await createLegacyEntitlementStruct(space, users, ruleData)
+
+        const callData = await space.Roles.encodeFunctionData(functionName, [
+            roleName,
+            permissions,
+            entitlements,
+        ])
+
+        return this.sendUserOp({
+            toAddress: [space.Roles.address],
+            callData: [callData],
+            signer,
+            spaceId: spaceId,
+            functionHashForPaymasterProxy,
+        })
+    }
+
     public async sendCreateRoleOp(
         args: Parameters<SpaceDapp['createRole']>,
     ): Promise<ISendUserOperationResponse> {
@@ -860,6 +997,67 @@ export class UserOps {
             callData: [callData],
             signer,
             spaceId: updateRoleParams.spaceNetworkId,
+            functionHashForPaymasterProxy,
+        })
+    }
+
+    public async encodeLegacyUpdateRoleData({
+        space,
+        legacyUpdateRoleParams,
+    }: {
+        space: Space
+        legacyUpdateRoleParams: LegacyUpdateRoleParams
+    }) {
+        const functionName = 'updateRole'
+
+        const functionHashForPaymasterProxy = getFunctionSigHash(
+            space.Roles.interface,
+            functionName,
+        )
+
+        if (!this.spaceDapp) {
+            throw new Error('spaceDapp is required')
+        }
+
+        const updatedEntitlements = await createLegacyEntitlementStruct(
+            space,
+            legacyUpdateRoleParams.users,
+            legacyUpdateRoleParams.ruleData,
+        )
+
+        const callData = await space.Roles.encodeFunctionData(functionName, [
+            legacyUpdateRoleParams.roleId,
+            legacyUpdateRoleParams.roleName,
+            legacyUpdateRoleParams.permissions,
+            updatedEntitlements,
+        ])
+
+        return { functionHashForPaymasterProxy, callData }
+    }
+
+    public async sendLegacyUpdateRoleOp(
+        args: Parameters<SpaceDapp['legacyUpdateRole']>,
+    ): Promise<ISendUserOperationResponse> {
+        const [legacyUpdateRoleParams, signer] = args
+        if (!this.spaceDapp) {
+            throw new Error('spaceDapp is required')
+        }
+        const space = this.spaceDapp.getSpace(legacyUpdateRoleParams.spaceNetworkId)
+        if (!space) {
+            throw new Error(
+                `Space with spaceId "${legacyUpdateRoleParams.spaceNetworkId}" is not found.`,
+            )
+        }
+        const { functionHashForPaymasterProxy, callData } = await this.encodeLegacyUpdateRoleData({
+            space,
+            legacyUpdateRoleParams,
+        })
+
+        return this.sendUserOp({
+            toAddress: [space.Roles.address],
+            callData: [callData],
+            signer,
+            spaceId: legacyUpdateRoleParams.spaceNetworkId,
             functionHashForPaymasterProxy,
         })
     }
@@ -1021,8 +1219,11 @@ export class UserOps {
         if (!entitlementShims.length) {
             throw new Error('Rule entitlement not found')
         }
+        if (roleEntitlements?.ruleData.kind === 'v1') {
+            throw new Error('Cannot use update role params on a legacy space')
+        }
 
-        if (!isEqual(newRuleData, roleEntitlements?.ruleData)) {
+        if (!isEqual(newRuleData, roleEntitlements?.ruleData.rules)) {
             const newRuleDataIsNoop = isEqual(newRuleData, NoopRuleData)
 
             if (newRuleDataIsNoop && !newUsers.includes(EVERYONE_ADDRESS)) {
@@ -1042,6 +1243,193 @@ export class UserOps {
             const roleData = await this.encodeUpdateRoleData({
                 space,
                 updateRoleParams: args.updateRoleParams,
+            })
+
+            txs.push({
+                callData: roleData.callData,
+                toAddress: space.Roles.address,
+            })
+        }
+
+        ///////////////////////////////////////////////////////////////////////////////////
+        //// update membership pricing ////////////////////////////////////////////////////
+        // To change a free membership to a paid membership:
+        // 1. pricing module must be changed to a non-fixed pricing module
+        // 2. freeAllocation must be > 0 (contract reverts otherwise). If set to 1 (recommended), the first membership on the paid space will be free
+        // 3. membership price must be set
+        //
+        // Cannot change a paid space to a free space (contract reverts)
+
+        const pricingModules = await this.spaceDapp.listPricingModules()
+        const fixedPricingModule = findFixedPricingModule(pricingModules)
+        const dynamicPricingModule = findDynamicPricingModule(pricingModules)
+
+        if (!fixedPricingModule || !dynamicPricingModule) {
+            throw new Error('Pricing modules not found')
+        }
+
+        const currentPricingModule = await space.Membership.read.getMembershipPricingModule()
+        const currentIsFixedPricing =
+            currentPricingModule.toLowerCase() ===
+            fixedPricingModule.module.toString().toLowerCase()
+        const newIsFixedPricing =
+            newPricingModule.toLowerCase() === fixedPricingModule.module.toString().toLowerCase()
+
+        // switching to paid space
+        if (!currentIsFixedPricing && newIsFixedPricing) {
+            const pricingModuleCallData = await space.Membership.encodeFunctionData(
+                'setMembershipPricingModule',
+                [fixedPricingModule.module],
+            )
+            txs.push({
+                callData: pricingModuleCallData,
+                toAddress: space.Membership.address,
+            })
+
+            const freeAllocationCallData = await space.Membership.encodeFunctionData(
+                'setMembershipFreeAllocation',
+                [newFreeAllocationForPaidSpace],
+            )
+            txs.push({
+                callData: freeAllocationCallData,
+                toAddress: space.Membership.address,
+            })
+
+            const membershipPriceCallData = await space.Membership.encodeFunctionData(
+                'setMembershipPrice',
+                [newMembershipPrice],
+            )
+            txs.push({
+                callData: membershipPriceCallData,
+                toAddress: space.Membership.address,
+            })
+        }
+        // switching to free space
+        else if (currentIsFixedPricing && !newIsFixedPricing) {
+            throw new CodeException({
+                message: 'Cannot change a paid space to a free space',
+                code: 'USER_OPS_CANNOT_CHANGE_TO_FREE_SPACE',
+                category: 'userop',
+            })
+        }
+        // price update only
+        else if (currentIsFixedPricing && newIsFixedPricing) {
+            const membershipPriceCallData = await space.Membership.encodeFunctionData(
+                'setMembershipPrice',
+                [newMembershipPrice],
+            )
+            txs.push({
+                callData: membershipPriceCallData,
+                toAddress: space.Membership.address,
+            })
+        }
+        // free space to free space
+        else if (!currentIsFixedPricing && !newIsFixedPricing) {
+            // do nothing
+        }
+
+        ///////////////////////////////////////////////////////////////////////////////////
+        //// update membership limit ////////////////////////////////////////////////////
+        if (
+            !ethers.BigNumber.from(membershipInfo.maxSupply).eq(
+                ethers.BigNumber.from(newMembershipSupply),
+            )
+        ) {
+            const callData = await space.Membership.encodeFunctionData('setMembershipLimit', [
+                newMembershipSupply,
+            ])
+            txs.push({
+                callData,
+                toAddress: space.Membership.address,
+            })
+        }
+
+        return this.sendUserOp({
+            toAddress: txs.map((tx) => tx.toAddress),
+            callData: txs.map((tx) => tx.callData),
+            signer: args.signer,
+            spaceId,
+            functionHashForPaymasterProxy: 'editMembershipSettings',
+        })
+    }
+
+    public async sendLegacyEditMembershipSettingsOp(args: {
+        spaceId: string
+        legacyUpdateRoleParams: LegacyUpdateRoleParams
+        membershipParams: {
+            pricingModule: string
+            membershipPrice: ethers.BigNumberish // wei
+            membershipSupply: ethers.BigNumberish
+            freeAllocationForPaidSpace?: ethers.BigNumberish
+        }
+        signer: ethers.Signer
+    }) {
+        const spaceId = args.spaceId
+        if (!this.spaceDapp) {
+            throw new Error('spaceDapp is required')
+        }
+        const txs: {
+            callData: string
+            toAddress: string
+        }[] = []
+
+        const space = await this.spaceDapp.getSpace(spaceId)
+
+        if (!space) {
+            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
+        }
+
+        const {
+            pricingModule: newPricingModule,
+            membershipPrice: newMembershipPrice,
+            membershipSupply: newMembershipSupply,
+            freeAllocationForPaidSpace: freeAllocation,
+        } = args.membershipParams
+        const newFreeAllocationForPaidSpace = freeAllocation ?? 1
+
+        const newRuleData = args.legacyUpdateRoleParams.ruleData
+        const newUsers = args.legacyUpdateRoleParams.users
+
+        const { membershipInfo, roleEntitlements } =
+            await this.getDetailsForEditingMembershipSettings(spaceId, space)
+
+        ///////////////////////////////////////////////////////////////////////////////////
+        //// update minter role ///////////////////////////////////////////////////////////
+        const entitlementShims = await space.getEntitlementShims()
+        if (!entitlementShims.length) {
+            throw new Error('Rule entitlement not found')
+        }
+        if (roleEntitlements?.ruleData.kind === 'v2') {
+            throw new Error('Cannot use legacy update role params on a v2 space')
+        }
+
+        // TODO: why did this require a change? Once upon a time, the returned rule
+        // data had no extra fields, but now it does.
+        const updatedRuleData = {
+            operations: roleEntitlements?.ruleData.rules.operations,
+            checkOperations: roleEntitlements?.ruleData.rules.checkOperations,
+            logicalOperations: roleEntitlements?.ruleData.rules.logicalOperations,
+        }
+        if (!isEqual(newRuleData, updatedRuleData)) {
+            const newRuleDataIsNoop = isEqual(newRuleData, NoopRuleData)
+
+            if (newRuleDataIsNoop && !newUsers.includes(EVERYONE_ADDRESS)) {
+                throw new CodeException({
+                    message: 'Noop rule entitlement must be used with the everyone address',
+                    code: 'USER_OPS_NOOP_REQUIRES_EVERYONE',
+                    category: 'userop',
+                })
+            } else if (!newRuleDataIsNoop && newUsers.includes(EVERYONE_ADDRESS)) {
+                throw new CodeException({
+                    message: 'Rule entitlements cannot be used with the everyone address',
+                    code: 'USER_OPS_RULES_CANNOT_BE_USED_WITH_EVERYONE',
+                    category: 'userop',
+                })
+            }
+
+            const roleData = await this.encodeLegacyUpdateRoleData({
+                space,
+                legacyUpdateRoleParams: args.legacyUpdateRoleParams,
             })
 
             txs.push({

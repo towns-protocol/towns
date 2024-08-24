@@ -15,7 +15,7 @@ import { useCreateChannelTransaction } from '../../src/hooks/use-create-channel-
 import { CreateChannelInfo } from '../../src/types/towns-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'
-import { NoopRuleData, getDynamicPricingModule } from '@river-build/web3'
+import { EncodedNoopRuleData, getDynamicPricingModule } from '@river-build/web3'
 import { useTownsClient } from '../../src/hooks/use-towns-client'
 import { ethers } from 'ethers'
 import { AuthStatus } from '../../src/hooks/login'
@@ -67,7 +67,7 @@ describe('createSpaceChannelHooks', () => {
                             requirements: {
                                 everyone: true,
                                 users: [],
-                                ruleData: NoopRuleData,
+                                ruleData: EncodedNoopRuleData,
                             },
                         },
 

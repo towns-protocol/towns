@@ -5,6 +5,7 @@ import (
 	"log/slog"
 
 	"connectrpc.com/connect"
+
 	"github.com/river-build/river/core/node/dlog"
 )
 
@@ -26,7 +27,7 @@ func CtxAndLogForRequest[T any](ctx context.Context, req *connect.Request[T]) (c
 	if reqMsg, ok := any(req.Msg).(RequestWithStreamId); ok {
 		streamId := reqMsg.GetStreamId()
 		if streamId != "" {
-			log = log.With(RpcStreamIdKey, streamId)
+			log = log.With(RpcStreamIdKey, streamId).With("application", "streamNode")
 			return dlog.CtxWithLog(ctx, log), log
 		}
 	}

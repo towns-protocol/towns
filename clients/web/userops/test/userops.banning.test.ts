@@ -31,6 +31,7 @@ test('can send banning user ops', async () => {
         signer: alice.wallet,
         rolePermissions: [Permission.Read, Permission.Write],
     })
+
     const txReceipt = await waitForOpAndTx(createSpaceOp, alice)
     await sleepBetweenTxs()
 

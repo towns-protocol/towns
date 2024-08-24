@@ -25,10 +25,13 @@ import {
     BasicRoleInfo,
     Permission,
     createExternalTokenStruct,
-    NoopRuleData,
+    EncodedNoopRuleData,
     ruleDataToOperations,
     OperationType,
     getDynamicPricingModule,
+    Operation,
+    convertRuleDataV1ToV2,
+    decodeThresholdParams,
 } from '@river-build/web3'
 import { TSigner } from '../../src/types/web3-types'
 import { useTownsClient } from '../../src/hooks/use-towns-client'
@@ -175,7 +178,7 @@ function TestComponent(args: {
                     requirements: {
                         everyone: true,
                         users: [],
-                        ruleData: NoopRuleData,
+                        ruleData: EncodedNoopRuleData,
                     },
                     pricingModule: dynamicPricingModule.module,
                 }),
@@ -268,6 +271,15 @@ function RoleDetailsComponent({
             roleDetails,
         })
     }, [error, isLoading, roleDetails])
+    let operations: Operation[] = []
+    if (roleDetails?.ruleData.rules.operations.length) {
+        if (roleDetails?.ruleData.kind === 'v1') {
+            const ruleDataV2 = convertRuleDataV1ToV2(roleDetails.ruleData.rules)
+            operations = ruleDataToOperations(ruleDataV2)
+        } else if (roleDetails?.ruleData.kind === 'v2') {
+            operations = ruleDataToOperations(roleDetails.ruleData.rules)
+        }
+    }
     return (
         <div key={`${spaceId}_${roleId}`}>
             <div>roleId:{roleDetails?.id}</div>
@@ -282,23 +294,24 @@ function RoleDetailsComponent({
             </div>
             <div>
                 {/* tokens in the role */}
-                {ruleDataToOperations(roleDetails?.ruleData ? [roleDetails.ruleData] : []).map(
-                    (operation) => {
-                        switch (operation.opType) {
-                            case OperationType.CHECK:
-                                return (
-                                    <div key={operation.opType}>
-                                        <div>
-                                            {roleDetails?.name}:{operation.contractAddress}
-                                            :quantity:{operation.threshold.toString()}
-                                        </div>
+                {operations.map((operation) => {
+                    switch (operation.opType) {
+                        case OperationType.CHECK:
+                            return (
+                                <div key={operation.opType}>
+                                    <div>
+                                        {roleDetails?.name}:{operation.contractAddress}
+                                        :quantity:
+                                        {decodeThresholdParams(
+                                            operation.params,
+                                        ).threshold.toString()}
                                     </div>
-                                )
-                            default:
-                                return <div key={operation.opType}></div>
-                        }
-                    },
-                )}{' '}
+                                </div>
+                            )
+                        default:
+                            return <div key={operation.opType}></div>
+                    }
+                })}{' '}
             </div>
             <div>
                 {/* users in the role */}

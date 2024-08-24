@@ -629,7 +629,7 @@ describe('SingleRolePanel', () => {
                 roleWithMemberMNft.name,
                 [Lib.Permission.React, Lib.Permission.Read, Lib.Permission.Write],
                 [EVERYONE_ADDRESS],
-                roleWithMemberMNft.ruleData,
+                roleWithMemberMNft.ruleData.rules,
                 {},
             )
         })
@@ -644,7 +644,10 @@ describe('SingleRolePanel', () => {
             permissions: [Lib.Permission.Read, Lib.Permission.Write],
             users: [],
             channels: [],
-            ruleData: Lib.createOperationsTree([]),
+            ruleData: {
+                kind: 'v2',
+                rules: Lib.createOperationsTree([]),
+            },
         }
         render(<Wrapper />)
         const roleName = await screen.findByPlaceholderText(/Enter a name for the role/gi)
@@ -665,7 +668,10 @@ describe('SingleRolePanel', () => {
             permissions: [Lib.Permission.Read],
             users: [],
             channels: [],
-            ruleData: Lib.createOperationsTree([]),
+            ruleData: {
+                kind: 'v2',
+                rules: Lib.createOperationsTree([]),
+            },
         }
         render(<Wrapper />)
         const roleName = await screen.findByPlaceholderText(/Enter a name for the role/gi)
@@ -686,7 +692,10 @@ describe('SingleRolePanel', () => {
             permissions: [Lib.Permission.Read],
             users: [],
             channels: [],
-            ruleData: Lib.createOperationsTree([]),
+            ruleData: {
+                kind: 'v2',
+                rules: Lib.createOperationsTree([]),
+            },
         }
         render(<Wrapper />)
         const roleName = await screen.findByPlaceholderText(/Enter a name for the role/gi)
@@ -711,7 +720,10 @@ describe('SingleRolePanel', () => {
             permissions: [Lib.Permission.Read],
             users: [],
             channels: [],
-            ruleData: Lib.createOperationsTree([]),
+            ruleData: {
+                kind: 'v2',
+                rules: Lib.createOperationsTree([]),
+            },
         }
         render(<Wrapper />)
         const roleName = await screen.findByPlaceholderText(/Enter a name for the role/gi)
