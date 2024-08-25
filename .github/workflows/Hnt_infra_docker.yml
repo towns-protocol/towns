@@ -62,7 +62,7 @@ jobs:
                   payload: |
                       {
                           "step": "Build Infra Docker Image",
-                          "environment": "N/",
+                          "environment": "N/A",
                           "branch": "${{ github.ref }}",
                           "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
                           "commit": "${{ github.sha }}",
