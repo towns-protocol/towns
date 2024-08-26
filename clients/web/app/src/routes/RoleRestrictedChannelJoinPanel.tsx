@@ -132,18 +132,12 @@ function Roles(props: {
                 const wallets = blockchainQueryKeys.linkedWallets(loggedInWalletAddress)
 
                 for (const role of roles) {
-                    const {
-                        hasUserEntitlement,
-                        hasRuleEntitlement,
-                        tokens,
-                        qualifiesForUserEntitlement,
-                    } = getGeneralEntitlmemntData({ role, wallets })
+                    const { hasUserEntitlement, hasRuleEntitlement, qualifiesForUserEntitlement } =
+                        getGeneralEntitlementData({ role, wallets })
 
                     const tokenBalances = checkWalletsForTokens2QueryDataBalances()
 
-                    const hasAllTokens =
-                        Object.keys(tokenBalances).length === tokens.length &&
-                        Object.values(tokenBalances).every((b) => b > 0)
+                    const hasMatchingToken = Object.values(tokenBalances).some((b) => b > 0)
 
                     if (
                         qualifiesForRole({
@@ -151,7 +145,7 @@ function Roles(props: {
                             hasRuleEntitlement,
                             qualifiesForUserEntitlement,
                             isLoadingTokensInWallet: false,
-                            hasAllTokens,
+                            hasMatchingToken,
                         })
                     ) {
                         qualifiedRoles.push(role.name)
@@ -289,13 +283,13 @@ function RoleAccordion(props: {
         tokens,
         tokenTypes,
         qualifiesForUserEntitlement,
-    } = getGeneralEntitlmemntData({ role, wallets })
+    } = getGeneralEntitlementData({ role, wallets })
 
     const { data: tokensInWallet, isLoading: isLoadingTokensInWallet } = useTokenBalances({
         tokens,
     })
 
-    const hasAllTokens = tokensInWallet?.every((d) => d.data?.status === 'success')
+    const hasMatchingToken = tokensInWallet?.some((d) => d.data?.status === 'success')
 
     const _qualifiesForRole = useMemo(() => {
         if (!showQualifiedStatus) {
@@ -306,10 +300,10 @@ function RoleAccordion(props: {
             hasRuleEntitlement,
             qualifiesForUserEntitlement,
             isLoadingTokensInWallet,
-            hasAllTokens,
+            hasMatchingToken,
         })
     }, [
-        hasAllTokens,
+        hasMatchingToken,
         hasRuleEntitlement,
         hasUserEntitlement,
         isLoadingTokensInWallet,
@@ -556,7 +550,7 @@ function useTrackedWallets() {
     )
 }
 
-function getGeneralEntitlmemntData({
+function getGeneralEntitlementData({
     role,
     wallets,
 }: {
@@ -588,25 +582,25 @@ function qualifiesForRole({
     hasRuleEntitlement,
     qualifiesForUserEntitlement,
     isLoadingTokensInWallet,
-    hasAllTokens,
+    hasMatchingToken,
 }: {
     hasUserEntitlement: boolean
     hasRuleEntitlement: boolean
     qualifiesForUserEntitlement: boolean | undefined
     isLoadingTokensInWallet: boolean
-    hasAllTokens: boolean | undefined
+    hasMatchingToken: boolean | undefined
 }) {
     if (hasUserEntitlement && hasRuleEntitlement) {
         if (isLoadingTokensInWallet) {
             return
         }
-        return qualifiesForUserEntitlement && hasAllTokens === true
+        return qualifiesForUserEntitlement && hasMatchingToken === true
     } else if (hasUserEntitlement) {
         return qualifiesForUserEntitlement
     } else if (hasRuleEntitlement) {
         if (isLoadingTokensInWallet) {
             return
         }
-        return hasAllTokens === true
+        return hasMatchingToken === true
     }
 }
