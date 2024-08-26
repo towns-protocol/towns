@@ -4,6 +4,7 @@ import { dlog, dlogError } from '@river-build/dlog'
 import { EncryptedData } from '@river-build/proto'
 
 import { UserRecord } from 'store/notificationSchema'
+import { getDDLogApiURL } from '../datadog'
 import {
     AppNotification,
     AppNotificationType,
@@ -85,9 +86,43 @@ async function initCurrentUserNotificationStore(): Promise<
     return undefined
 }
 
+const sendLogToDatadog = async (
+    level: 'debug' | 'info' | 'error' | 'warn',
+    message: string,
+    metadata?: Record<string, unknown>,
+) => {
+    const url = getDDLogApiURL()
+    if (!url) {
+        log('Datadog API URL not available')
+        return
+    }
+    const currentUser = await initCurrentUserNotificationStore()
+    const body = JSON.stringify({
+        status: level,
+        message: message,
+        metadata: { ...(metadata ?? {}), currentUser }, // Add more metadata fields if necessary
+    })
+
+    try {
+        const res = await fetch(url, {
+            method: 'POST',
+            keepalive: true, // Finish even if the browser is closing
+            headers: {
+                'Content-Type': 'text/plain;charset=UTF-8',
+            } as HeadersInit,
+            body,
+            mode: 'cors',
+        })
+        log('Log sent to Datadog:', { level, message, metadata, response: res })
+    } catch (error) {
+        logError('Failed to send log to Datadog:', error)
+    }
+}
+
 export function handleNotifications(worker: ServiceWorkerGlobalScope) {
     const prod = !env.DEV
     if (prod) {
+        sendLogToDatadog('info', 'handleNotifications() was called')
         log(`handleNotifications() was called.`)
     }
 
@@ -120,6 +155,7 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
             log('"push" event')
             const clientVisible = await checkClientIsVisible(worker)
             if (clientVisible) {
+                await sendLogToDatadog('info', 'Client is visible, not showing notification')
                 log('client is visible, not showing notification')
                 return
             }
@@ -133,6 +169,7 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
             const notification = appNotificationFromPushEvent(data)
 
             if (!notification) {
+                await sendLogToDatadog('warn', "worker couldn't parse notification")
                 log("sw:push: ''worker couldn't parse notification")
                 return
             }
@@ -150,6 +187,7 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                     icon: `https://imagedelivery.net/qaaQ52YqlPXKEVQhjChiDA/${notification.content.senderId}/thumbnail100`,
                 }
                 await worker.registration.showNotification(content.title, options)
+                await sendLogToDatadog('info', 'Notification shown', { content })
                 log('Notification shown')
             } else {
                 log(
@@ -167,6 +205,9 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
             worker.clients.matchAll({ type: 'window' }).then(async (clientsArr) => {
                 const data = notificationContentFromEvent(event.notification.data)
                 if (!data) {
+                    await sendLogToDatadog('warn', 'worker could not parse notification data', {
+                        data: event.notification.data,
+                    })
                     logError('worker could not parse notification data', 'notificationData', {
                         data: event.notification.data ?? 'undefined',
                     })
@@ -203,6 +244,11 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                     const navigationChannel = new BroadcastChannel(WEB_PUSH_NAVIGATION_CHANNEL)
                     // avoid reloading the page
                     navigationChannel.postMessage({ path: url, channelId, threadId })
+                    await sendLogToDatadog('info', 'Broadcast navigation event', {
+                        path: url,
+                        channelId,
+                        threadId,
+                    })
                 } else {
                     // update the path with specific search params
                     const url = getUrlWithParams(
@@ -224,6 +270,11 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                     })
                     const window = await worker.clients.openWindow(url.toString())
                     await window?.focus()
+                    await sendLogToDatadog('info', 'Opened browser window', {
+                        path: url,
+                        channelId,
+                        threadId,
+                    })
                 }
             }),
         )

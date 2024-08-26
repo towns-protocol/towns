@@ -2,11 +2,10 @@ import 'allotment/dist/style.css'
 import 'index.css'
 import React from 'react'
 import { createRoot } from 'react-dom/client'
-import { datadogLogs } from '@datadog/browser-logs'
-import { datadogRum } from '@datadog/browser-rum'
 import { Main } from 'Main'
 import { env } from 'utils'
 import { bufferedLogger } from 'utils/wrappedlogger'
+import { initDatadog } from './datadog'
 
 if (!env.DEV) {
     console.log = bufferedLogger.getLogger().info
@@ -50,44 +49,7 @@ if (env.DEV) {
     window.addEventListener('unhandledrejection', ({ reason }) => showErrorOverlay(reason))
 }
 
-if (env.VITE_DD_CLIENT_TOKEN) {
-    const service = 'towns-webapp'
-
-    // Disabling RUM
-
-    // datadogRum.init({
-    //     applicationId: 'c6afdc65-2431-48ff-b8f2-c4879fc75293',
-    //     clientToken: 'pub947b3cbe543e47b9a64b2abca5028974',
-    //     site: 'datadoghq.com',
-    //     service,
-    //     version: env.VITE_APP_RELEASE_VERSION,
-    //     env: datadogEnvName,
-    //     sessionSampleRate: 100,
-    //     sessionReplaySampleRate: 100,
-    //     trackUserInteractions: true,
-    //     trackResources: true,
-    //     trackLongTasks: true,
-    //     defaultPrivacyLevel: 'mask',
-    // })
-
-    datadogLogs.init({
-        clientToken: env.VITE_DD_CLIENT_TOKEN,
-        service,
-        forwardConsoleLogs: ['error', 'warn'],
-        forwardErrorsToLogs: true,
-        sessionSampleRate: env.VITE_LOG_SAMPLING_RATE,
-        telemetrySampleRate: 0,
-        env: env.MODE,
-        version: VITE_APP_VERSION,
-        beforeSend: (event) => {
-            event.session_id = datadogRum.getInternalContext()?.session_id
-        },
-    })
-
-    console.info(`datadogLogs initialized for env: ${env.MODE}`)
-} else {
-    console.info('datadogLogs not initialized')
-}
+initDatadog()
 
 const node = document.getElementById('root')
 
