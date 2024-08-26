@@ -15,33 +15,13 @@ on:
                 required: false
                 default: false
                 type: boolean
-            skip_client_noentitlements:
-                description: Skip Client Tests without entitlements
-                required: false
-                default: false
-                type: boolean
-            skip_multinode:
-                description: Skip Multi-node Tests
-                required: false
-                default: false
-                type: boolean
-            skip_client_entitlements:
-                description: Skip Client Tests with entitlements
-                required: false
-                default: false
-                type: boolean
             skip_multinode_ent:
                 description: Skip Multi-node Ent Tests
                 required: false
                 default: false
                 type: boolean
-            skip_node:
-                description: Skip Node Tests
-                required: false
-                default: false
-                type: boolean
-            skip_xchain_node:
-                description: Skip XChain Node Tests
+            skip_multinode_ent_legacy:
+                description: Skip Multi-node Ent Legacy Tests
                 required: false
                 default: false
                 type: boolean
