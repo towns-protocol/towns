@@ -3,7 +3,7 @@
  */
 
 import { MemberPayload_Nft } from '@river-build/proto'
-import { MemberMetadata_Nft } from './MemberMetadata_Nft'
+import { MemberMetadata_Nft } from './memberMetadata_Nft'
 import { makeRandomUserAddress } from './util.test'
 import { bin_fromString } from '@river-build/dlog'
 

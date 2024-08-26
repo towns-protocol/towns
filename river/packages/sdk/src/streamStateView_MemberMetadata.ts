@@ -10,7 +10,7 @@ import { MemberMetadata_Usernames } from './memberMetadata_Usernames'
 import { MemberMetadata_DisplayNames } from './memberMetadata_DisplayNames'
 import { bin_toHexString } from '@river-build/dlog'
 import { MemberMetadata_EnsAddresses } from './memberMetadata_EnsAddresses'
-import { MemberMetadata_Nft } from './MemberMetadata_Nft'
+import { MemberMetadata_Nft } from './memberMetadata_Nft'
 
 export type UserInfo = {
     username: string

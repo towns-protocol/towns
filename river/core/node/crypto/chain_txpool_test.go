@@ -7,18 +7,15 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/river-build/river/core/node/base/test"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/infra"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewTransactionPoolWithReplaceTx(t *testing.T) {
 	var (
 		require        = require.New(t)
-		assert         = assert.New(t)
 		N              = 3
 		ctx, cancel    = test.NewTestContext()
 		resubmitPolicy = crypto.NewTransactionPoolDeadlinePolicy(250 * time.Millisecond)
@@ -75,5 +72,7 @@ func TestNewTransactionPoolWithReplaceTx(t *testing.T) {
 		require.Equal(types.ReceiptStatusSuccessful, receipt.Status)
 	}
 
-	assert.EqualValues(0, txPool.PendingTransactionsCount(), "tx pool must have no pending tx")
+	require.Eventually(func() bool {
+		return txPool.PendingTransactionsCount() == 0
+	}, 20*time.Second, 100*time.Millisecond, "tx pool must have no pending tx")
 }

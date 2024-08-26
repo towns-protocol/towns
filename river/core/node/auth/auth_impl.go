@@ -412,8 +412,9 @@ func (ca *chainAuth) isEntitledToChannelUncached(
 	log := dlog.FromCtx(ctx)
 	log.Debug("isEntitledToChannelUncached", "args", args)
 
-	// For read and write permissions, fetch the entitlements and evaluate them locally.
-	if (args.permission == PermissionRead) || (args.permission == PermissionWrite) {
+	// For read, write and react permissions, fetch the entitlements and evaluate them locally.
+	if (args.permission == PermissionRead) || (args.permission == PermissionWrite) ||
+		(args.permission == PermissionReact) {
 		result, cacheHit, err := ca.entitlementManagerCache.executeUsingCache(
 			ctx,
 			cfg,
