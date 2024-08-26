@@ -639,19 +639,23 @@ resource "cloudflare_record" "nlb_cname_dns_record" {
 
 locals {
   # notifies the "infra - goalie" slack group
-  datadog_monitor_slack_mention = "@slack-Here_Not_There_Labs-sre-alerts <!subteam^S064UNJ7YQ2>"
+  datadog_monitor_slack_channel = "@slack-Here_Not_There_Labs-sre-alerts"
+  datadog_monitor_slack_mention = "<!subteam^S064UNJ7YQ2>"
+  datadog_monitor_slack_message = "${local.datadog_monitor_slack_mention}{{^is_recovery}} ${local.datadog_monitor_slack_mention}{{/is_recovery}}"
+
+  datadog_monitor_alert_min_duration_minutes = local.run_mode == "archive" ? 8 : 2
 }
 
 module "datadog_sythetics_test" {
   source  = "../../modules/datadog/synthetic-test"
-  name    = "${local.node_name} - 1min - 1 location"
+  name    = "${local.node_name} - uptime"
   type    = "api"
   subtype = "http"
   enabled = true
 
   locations = ["aws:us-west-1"]
   tags      = ["created_by:terraform", "env:${terraform.workspace}", "node_url:${local.node_url}"]
-  message   = local.datadog_monitor_slack_mention
+  message   = local.datadog_monitor_slack_message
   request_definition = {
     method = "GET"
     url    = "${local.node_url}/status"
@@ -679,7 +683,7 @@ module "datadog_sythetics_test" {
     monitor_options = {
       renotify_interval = 30 #Min
     }
-    min_failure_duration = 60 #Sec
+    min_failure_duration = 60 * local.datadog_monitor_alert_min_duration_minutes
     min_location_failed  = 1
   }
 }
