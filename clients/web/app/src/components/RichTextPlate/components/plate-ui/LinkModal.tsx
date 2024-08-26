@@ -14,8 +14,8 @@ export const AddLinkModal = (props: { onHide: () => void; onSaveLink: (link: str
     }, [props])
 
     return (
-        <ModalContainer data-testid="editor-add-link-modal" onHide={props.onHide}>
-            <Stack gap="lg">
+        <ModalContainer onHide={props.onHide}>
+            <Stack gap="lg" data-testid="editor-add-link-modal">
                 <Text strong size="lg">
                     Add Link
                 </Text>
