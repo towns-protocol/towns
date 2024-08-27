@@ -26,6 +26,10 @@ export const channelPermissionDescriptions: {
         name: 'Remove messages',
         description: 'Allow members to remove messages.',
     },
+    [Permission.PinMessage]: {
+        name: 'Pin messages',
+        description: 'Allow members to pin messages to the channel.',
+    },
 } as const
 
 export const townPermissionDescriptions: {
