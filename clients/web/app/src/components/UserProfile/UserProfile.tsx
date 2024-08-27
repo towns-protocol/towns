@@ -89,14 +89,14 @@ export const UserProfile = (props: Props) => {
     }, [hasNftProfilePicture])
 
     const resourceId = useMemo(() => {
-        return abstractAccountAddress ?? ''
-    }, [abstractAccountAddress])
+        return userId ?? ''
+    }, [userId])
 
     const { uploadUserProfileImageToStream } = useUploadAttachment()
     const isUploadingUserProfileImageRef = useRef<boolean>(false)
     const onUploadUserProfileImage = useCallback(
         async ({ file, id: userId, type, setProgress }: UploadImageRequestConfig) => {
-            if (isUploadingUserProfileImageRef.current) {
+            if (isUploadingUserProfileImageRef.current || !userId) {
                 return
             }
             if (type === 'avatar') {
