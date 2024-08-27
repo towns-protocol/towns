@@ -58,6 +58,11 @@ services:
       bundler:
         condition: service_started
 
+  # sleep-step: sometimes the fund-account step fails because the node is not ready yet
+  sleep-step:
+    image: openresty/openresty:1.25.3.1-2-alpine
+    command: ["sh", "-c", "sleep 3"]
+
   fund-account:
     platform: ${DOCKER_PLATFORM:-linux/amd64}
     image: evanhnt/stackup-go-ethereum
@@ -85,6 +90,8 @@ services:
       }
       " attach http://node:8545
     depends_on:
+      sleep-step:
+        condition: service_completed_successfully
       proxy:
         condition: service_started
 
