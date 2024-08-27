@@ -1,5 +1,6 @@
 import { Logger, pino } from 'pino'
 import stringify from 'json-stringify-safe'
+import EventEmitter from 'events'
 
 export class BufferedLogger {
     private buffer: CircularBuffer<unknown>
@@ -62,6 +63,9 @@ export class BufferedLogger {
 function stringifyReplacer(key: string, value: unknown) {
     if (typeof value === 'bigint') {
         return value.toString()
+    }
+    if (value instanceof EventEmitter) {
+        return undefined
     }
     return value
 }
@@ -131,7 +135,13 @@ class CircularBuffer<T> {
         for (let i = 0; i < this.count; i++) {
             const index = (this.head + i) % this.size
             if (this.buffer[index] !== null) {
-                result += stringify(this.buffer[index], stringifyReplacer)
+                const str = stringify(this.buffer[index], stringifyReplacer)
+                const maxLength = 100_000
+                if (str.length > maxLength) {
+                    result += str.slice(0, maxLength) + '~~ TRUNCATED ~~'
+                } else {
+                    result += str
+                }
                 if (result && i < this.count - 1) {
                     result += delimiter
                 }
