@@ -15,12 +15,12 @@ const zBioReadData: z.ZodType<{
 })
 
 export async function getUserBio(
-    walletAddress: string,
+    userId: string,
     cachedBio: string | undefined,
-    setOfflineUserBio: (walletAddress: string, bio: string) => void,
+    setOfflineUserBio: (userId: string, bio: string) => void,
 ): Promise<string> {
     const metadataUrl = new URL(env.VITE_RIVER_STREAM_METADATA_URL)
-    metadataUrl.pathname = `/user/${walletAddress}/bio`
+    metadataUrl.pathname = `/user/${userId}/bio`
     const userBio = await axiosClient.get(metadataUrl.toString())
     const parseResult = zBioReadData.safeParse(userBio.data)
 
@@ -30,29 +30,24 @@ export async function getUserBio(
     }
 
     const bio = parseResult.data.bio
-    setOfflineUserBio(walletAddress, bio)
+    setOfflineUserBio(userId, bio)
     return bio
 }
 
-export const useGetUserBio = (walletAddress: string | undefined) => {
-    // walletAddress is the abstractAccountAddress
+export const useGetUserBio = (userId: string | undefined) => {
     const { offlineUserBioMap, setOfflineUserBio } = useOfflineStore()
 
     const _getUserBio = useCallback(async () => {
-        if (!walletAddress) {
+        if (!userId) {
             return
         }
-        return await getUserBio(
-            walletAddress as string,
-            offlineUserBioMap[walletAddress],
-            setOfflineUserBio,
-        )
-    }, [walletAddress, offlineUserBioMap, setOfflineUserBio])
+        return await getUserBio(userId, offlineUserBioMap[userId], setOfflineUserBio)
+    }, [userId, offlineUserBioMap, setOfflineUserBio])
 
     return useQuery({
-        queryKey: [queryKey, walletAddress],
+        queryKey: [queryKey, userId],
         queryFn: _getUserBio,
-        enabled: !!walletAddress,
+        enabled: !!userId,
         refetchOnMount: false,
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,

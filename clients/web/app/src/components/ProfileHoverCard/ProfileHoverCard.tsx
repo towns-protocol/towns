@@ -1,12 +1,11 @@
 import React from 'react'
-import { Address, useUserLookupContext } from 'use-towns-client'
+import { useUserLookupContext } from 'use-towns-client'
 import { Avatar } from '@components/Avatar/Avatar'
 import { useGetUserBio } from 'hooks/useUserBio'
 import { Stack } from 'ui/components/Stack/Stack'
 import { Paragraph } from 'ui/components/Text/Paragraph'
 import { Tooltip } from 'ui/components/Tooltip/Tooltip'
 import { MutualTowns } from '@components/MutualTowns/MutualTowns'
-import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { useResolveEnsName } from 'api/lib/ensNames'
 import { Icon, Text } from '@ui'
 
@@ -19,10 +18,7 @@ export const ProfileHoverCard = (props: Props) => {
 
     const { lookupUser } = useUserLookupContext()
     const user = lookupUser(userId)
-    const { data: abstractAccountAddress } = useAbstractAccountAddress({
-        rootKeyAddress: userId as Address | undefined,
-    })
-    const { data: userBio } = useGetUserBio(abstractAccountAddress)
+    const { data: userBio } = useGetUserBio(userId)
     const { resolvedEnsName } = useResolveEnsName({ userId, ensAddress: user?.ensAddress })
 
     return user ? (

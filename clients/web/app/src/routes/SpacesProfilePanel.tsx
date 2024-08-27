@@ -187,7 +187,7 @@ const SpaceProfileWithoutAuth = () => {
         permission: Permission.Ban,
     })
 
-    const { data: userBio } = useGetUserBio(userAbstractAccountAddress)
+    const { data: userBio } = useGetUserBio(user?.userId)
 
     const canEdit = loggedInAbstractAccountAddress === userAbstractAccountAddress
 
