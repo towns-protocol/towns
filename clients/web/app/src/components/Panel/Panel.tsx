@@ -11,7 +11,7 @@ import { ZLayerBox } from '@components/ZLayer/ZLayerContext'
 import { Card, CardLabel, IconButton } from '@ui'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { Box, BoxProps } from '../../ui/components/Box/Box'
-import { Stack } from '../../ui/components/Stack/Stack'
+import { SizeBox } from '../../ui/components/Box/SizeBox'
 import { useZLayerContext } from '../../ui/components/ZLayer/ZLayer'
 import { PanelContext, PanelStack } from './PanelContext'
 
@@ -198,4 +198,4 @@ const TouchPanel = (props: Props) => {
 
 export const TouchPanelContext = createContext({ triggerPanelClose: () => {} })
 
-const PanelContent = (props: BoxProps) => <Stack grow scroll padding gap {...props} />
+const PanelContent = (props: BoxProps) => <SizeBox grow scroll padding gap {...props} />
