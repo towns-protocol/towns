@@ -1,20 +1,21 @@
-import { isSpaceStreamId, isUserStreamId } from '@river-build/sdk'
-
 import { useQuery } from '@tanstack/react-query'
-import { fetchSpaceImage } from 'api/lib/fetchImage'
+import { fetchSpaceImage, fetchUserProfileImage } from 'api/lib/fetchImage'
 
-export const SPACE_IMAGE_QUERY_KEY = 'spaceImage'
+export const SPACE_IMAGE_QUERY_KEY = 'stream_metadata_spaceIcon'
+export const USER_PROFILE_IMAGE_QUERY_KEY = 'stream_metadata_avatar'
 export type FetchImageResourceType = 'spaceIcon' | 'avatar'
 
 export function useFetchImage(resourceId: string | undefined, type: FetchImageResourceType) {
     return useQuery({
-        queryKey: [SPACE_IMAGE_QUERY_KEY, resourceId],
-        queryFn: async () =>
-            type === 'spaceIcon'
-                ? fetchSpaceImage(resourceId)
-                : type === 'avatar'
-                ? /* todo */ null
-                : null,
-        enabled: !!resourceId && (isSpaceStreamId(resourceId) || isUserStreamId(resourceId)),
+        queryKey: [`stream_metadata_${type}`, resourceId],
+        queryFn: async () => {
+            if (type === 'spaceIcon') {
+                return fetchSpaceImage(resourceId)
+            }
+            if (type === 'avatar') {
+                return fetchUserProfileImage(resourceId)
+            }
+        },
+        enabled: !!resourceId,
     })
 }

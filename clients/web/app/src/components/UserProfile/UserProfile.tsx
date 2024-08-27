@@ -1,5 +1,5 @@
 import { Nft, useMemberOf, useUserLookup } from 'use-towns-client'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { toast } from 'react-hot-toast/headless'
 import { isDefined } from '@river-build/sdk'
@@ -38,6 +38,8 @@ import { ModalContainer } from '@components/Modals/ModalContainer'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { useDevice } from 'hooks/useDevice'
 import { VerifiedOnChainAssetTooltip } from '@components/VerifiedOnChainAssetTooltip/VerifiedOnChainAssetTooltip'
+import { UploadImageRequestConfig } from 'api/lib/uploadImage'
+import { useUploadAttachment } from '@components/MediaDropContext/useUploadAttachment'
 import { UserWalletContent } from './UserWalletContent'
 
 type Props = {
@@ -90,6 +92,25 @@ export const UserProfile = (props: Props) => {
         return abstractAccountAddress ?? ''
     }, [abstractAccountAddress])
 
+    const { uploadUserProfileImageToStream } = useUploadAttachment()
+    const isUploadingUserProfileImageRef = useRef<boolean>(false)
+    const onUploadUserProfileImage = useCallback(
+        async ({ file, id: userId, type, setProgress }: UploadImageRequestConfig) => {
+            if (isUploadingUserProfileImageRef.current) {
+                return
+            }
+            if (type === 'avatar') {
+                isUploadingUserProfileImageRef.current = true
+                try {
+                    await uploadUserProfileImageToStream(userId, file, setProgress)
+                } finally {
+                    isUploadingUserProfileImageRef.current = false
+                }
+            }
+        },
+        [uploadUserProfileImageToStream],
+    )
+
     const onSaveItem = useEvent((id: string, content: undefined | string) => {
         switch (id) {
             case InputId.Bio: {
@@ -129,6 +150,7 @@ export const UserProfile = (props: Props) => {
                             register={register}
                             formState={formState}
                             clearErrors={clearErrors}
+                            overrideUploadCb={onUploadUserProfileImage}
                             imageRestrictions={{
                                 minDimension: {
                                     message: `Image is too small. Please upload an image with a minimum height & width of 300px.`,

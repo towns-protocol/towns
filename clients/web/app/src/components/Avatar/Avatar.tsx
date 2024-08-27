@@ -1,13 +1,12 @@
 import { clsx } from 'clsx'
 import React, { forwardRef, useCallback, useEffect, useMemo } from 'react'
-import { Address, useUserLookup } from 'use-towns-client'
+import { useUserLookup } from 'use-towns-client'
 import { AnimatePresence } from 'framer-motion'
 import { ImageVariant, useImageSource } from '@components/UploadImage/useImageSource'
 import { useImageStore } from '@components/UploadImage/useImageStore'
 import { FadeInBox } from '@components/Transitions'
 import { useGreenDot } from 'hooks/useGreenDot'
 import { Box, BoxProps } from '@ui'
-import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { useResolveNft } from 'hooks/useNfts'
 import {
     AvatarAtoms,
@@ -42,18 +41,11 @@ type Props = {
 
 export type AvatarProps = Props
 
-function useAvatarImageSrc(props: {
-    imageVariant?: ImageVariant
-    abstractAccountAddress?: string
-}) {
-    const { imageVariant = 'thumbnail100', abstractAccountAddress } = props
-    const resourceId = useMemo(() => {
-        return abstractAccountAddress ?? ''
-    }, [abstractAccountAddress])
+function useAvatarImageSrc(props: { imageVariant?: ImageVariant; userId?: string }) {
+    const { imageVariant = 'thumbnail100', userId } = props
+    const { imageSrc } = useImageSource(userId ?? '', imageVariant)
 
-    const { imageSrc } = useImageSource(resourceId, imageVariant)
-
-    return { imageSrc, resourceId }
+    return { imageSrc }
 }
 
 export const Avatar = forwardRef<HTMLElement, Props>((props, ref) => {
@@ -66,9 +58,6 @@ export const AvatarWithoutDot = forwardRef<HTMLElement, Props & { dot?: boolean 
     const { src, userId, imageVariant, ...rest } = props
     const user = useUserLookup(userId ?? '')
 
-    const { data: abstractAccountAddress } = useAbstractAccountAddress({
-        rootKeyAddress: userId as Address | undefined,
-    })
     const _imageVariant = imageVariant ?? 'thumbnail100'
     const resolvedNft = useResolveNft({ walletAddress: userId ?? '', info: user?.nft })
     const nftUrl = useMemo(() => {
@@ -89,9 +78,9 @@ export const AvatarWithoutDot = forwardRef<HTMLElement, Props & { dot?: boolean 
         }
     }, [resolvedNft])
 
-    const { imageSrc, resourceId } = useAvatarImageSrc({
+    const { imageSrc } = useAvatarImageSrc({
         imageVariant: _imageVariant,
-        abstractAccountAddress,
+        userId,
     })
 
     useEffect(() => {
@@ -102,10 +91,19 @@ export const AvatarWithoutDot = forwardRef<HTMLElement, Props & { dot?: boolean 
         }
     }, [src, userId])
 
+    const resourceId = useMemo(() => {
+        if (!userId) {
+            return ''
+        }
+        if (nftUrl) {
+            return userId + '_' + nftUrl
+        }
+        return userId
+    }, [userId, nftUrl])
     return (
         <_Avatar
             key={imageSrc}
-            resourceId={resourceId ? resourceId + '_' + (nftUrl ?? _imageVariant) : undefined}
+            resourceId={resourceId}
             src={nftUrl ?? src ?? imageSrc}
             {...rest}
             ref={ref}
@@ -156,7 +154,7 @@ const _Avatar = forwardRef<
     const failedResource = useImageStore((state) => state.erroredResources[resourceId])
     const loadedResource = useImageStore((state) => state.loadedResource[resourceId])
 
-    const content = () => {
+    const content = useMemo(() => {
         if (icon) {
             return (
                 <Box centerContent horizontal height="100%" background="level4">
@@ -183,7 +181,7 @@ const _Avatar = forwardRef<
         if (loadedResource) {
             return <img src={src} className={avatarImageStyle} />
         }
-    }
+    }, [failedResource, icon, iconSize, loadedResource, onError, onLoad, src])
 
     const dot = _dot && (
         <FadeInBox
@@ -238,7 +236,7 @@ const _Avatar = forwardRef<
                     backgroundImage: failedResource ? `url(/placeholders/pp1.png)` : 'none',
                 }}
             >
-                {content()}
+                {content}
             </Box>
             <AnimatePresence>{dot}</AnimatePresence>
         </Container>

@@ -10,10 +10,13 @@ import { useCallback } from 'react'
 import imageCompression from 'browser-image-compression'
 import { useQueryClient } from '@tanstack/react-query'
 import { ChunkedMedia } from '@river-build/proto'
-import { fetchSpaceImage } from 'api/lib/fetchImage'
+import { fetchSpaceImage, fetchUserProfileImage } from 'api/lib/fetchImage'
 import { isImageMimeType } from 'utils/isMediaMimeType'
 import { useImageStore } from '@components/UploadImage/useImageStore'
-import { SPACE_IMAGE_QUERY_KEY } from '@components/UploadImage/useFetchImage'
+import {
+    SPACE_IMAGE_QUERY_KEY,
+    USER_PROFILE_IMAGE_QUERY_KEY,
+} from '@components/UploadImage/useFetchImage'
 
 const CHUNK_SIZE = 500_000
 const MAX_THUMBNAIL_WIDTH = 30 // pixels
@@ -26,7 +29,8 @@ export type EncryptionMetadataForUpload = {
 }
 
 export const useUploadAttachment = () => {
-    const { client, createMediaStream, sendMediaPayload } = useTownsClient()
+    const { client, createMediaStream, setUserProfileImage, sendMediaPayload } = useTownsClient()
+    const setLoadedResource = useImageStore((state) => state.setLoadedResource)
     const queryClient = useQueryClient()
 
     function shouldCompressFile(file: File): boolean {
@@ -41,17 +45,13 @@ export const useUploadAttachment = () => {
             file: File,
             channelId: string | undefined,
             spaceId: string | undefined,
+            userId: string | undefined,
             thumbnail: File | undefined,
             setProgress: (progress: number) => void,
         ): Promise<Attachment> => {
             const encryptionResult = await encryptAESGCM(data)
             const chunkCount = Math.ceil(encryptionResult.ciphertext.length / CHUNK_SIZE)
-            const mediaStreamInfo = await createMediaStream(
-                channelId,
-                spaceId,
-                undefined,
-                chunkCount,
-            )
+            const mediaStreamInfo = await createMediaStream(channelId, spaceId, userId, chunkCount)
             if (!mediaStreamInfo) {
                 throw new Error('Failed to create media stream')
             }
@@ -59,6 +59,7 @@ export const useUploadAttachment = () => {
             console.log('createChunkedAttachment', {
                 spaceId: spaceId ?? 'undefined',
                 channelId: channelId ?? 'undefined',
+                userId: userId ?? 'undefined',
                 mediaStreamInfo: mediaStreamInfo.streamId ?? 'undefined',
             })
 
@@ -116,12 +117,11 @@ export const useUploadAttachment = () => {
 
     const uploadFile = useCallback(
         async (
-            channelId: string,
+            channelId: string | undefined,
             spaceId: string | undefined,
             file: File,
             setProgress: (progress: number) => void,
         ) => {
-            //
             const buffer = await file.arrayBuffer()
             const bytes = new Uint8Array(buffer)
             return await createChunkedAttachment(
@@ -131,6 +131,7 @@ export const useUploadAttachment = () => {
                 file,
                 channelId,
                 spaceId,
+                undefined,
                 undefined,
                 setProgress,
             )
@@ -142,6 +143,7 @@ export const useUploadAttachment = () => {
         async (
             channelId: string | undefined,
             spaceId: string | undefined,
+            userId: string | undefined,
             file: File,
             setProgress: (progress: number) => void,
         ) => {
@@ -173,6 +175,7 @@ export const useUploadAttachment = () => {
                 compressed,
                 channelId,
                 spaceId,
+                userId,
                 thumbnail,
                 setProgress,
             )
@@ -190,7 +193,7 @@ export const useUploadAttachment = () => {
         ) => {
             try {
                 if (isImageMimeType(file.type)) {
-                    return await uploadImageFile(channelId, spaceId, file, setProgress)
+                    return await uploadImageFile(channelId, spaceId, undefined, file, setProgress)
                 } else {
                     return await uploadFile(channelId, spaceId, file, setProgress)
                 }
@@ -220,6 +223,7 @@ export const useUploadAttachment = () => {
                 const mediaInfo = (await uploadImageFile(
                     undefined,
                     spaceId,
+                    undefined,
                     file,
                     () => {}, // disabled. Control the spinner in uploadTownImageToStream()
                 )) as ChunkedMediaAttachment
@@ -250,7 +254,6 @@ export const useUploadAttachment = () => {
                 // update the query cache ...
                 queryClient.setQueryData([SPACE_IMAGE_QUERY_KEY, spaceId], imageObjectUrl)
                 // then update the image store
-                const { setLoadedResource } = useImageStore.getState()
                 setLoadedResource(spaceId, {
                     imageUrl: imageObjectUrl,
                 })
@@ -265,10 +268,59 @@ export const useUploadAttachment = () => {
                 setProgress(0)
             }
         },
-        [client, queryClient, uploadImageFile],
+        [client, queryClient, setLoadedResource, uploadImageFile],
     )
 
-    return { uploadAttachment, uploadTownImageToStream }
+    const uploadUserProfileImageToStream = useCallback(
+        async (
+            userId: string,
+            file: File,
+            setProgress: (progress: number) => void,
+        ): Promise<boolean> => {
+            if (!isImageMimeType(file.type)) {
+                return false
+            }
+
+            setProgress(1)
+            try {
+                const mediaInfo = (await uploadImageFile(
+                    undefined,
+                    undefined,
+                    userId,
+                    file,
+                    () => {}, // disabled. We're controlling the spinner in uploadUserProfileImageToStream
+                )) as ChunkedMediaAttachment
+
+                // Will be encrypted by client.setUserProfileImage()
+                const chunkedMedia = new ChunkedMedia({
+                    info: mediaInfo.info,
+                    streamId: mediaInfo.streamId,
+                    encryption: {
+                        case: 'aesgcm',
+                        value: {
+                            iv: mediaInfo.encryption.iv,
+                            secretKey: mediaInfo.encryption.secretKey,
+                        },
+                    },
+                })
+                await setUserProfileImage(chunkedMedia)
+                const { imageObjectUrl } = await fetchUserProfileImage(userId)
+                queryClient.setQueryData([USER_PROFILE_IMAGE_QUERY_KEY, userId], imageObjectUrl)
+                setLoadedResource(userId, {
+                    imageUrl: imageObjectUrl,
+                })
+                return true
+            } catch (e) {
+                console.error('Error uploading image to stream', e)
+                return false
+            } finally {
+                setProgress(0)
+            }
+        },
+        [queryClient, setLoadedResource, setUserProfileImage, uploadImageFile],
+    )
+
+    return { uploadAttachment, uploadTownImageToStream, uploadUserProfileImageToStream }
 }
 
 async function imageSize(file: File): Promise<{ width: number; height: number }> {

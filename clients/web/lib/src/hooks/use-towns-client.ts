@@ -1,7 +1,8 @@
 /* eslint-disable no-restricted-imports */
 /* eslint-disable @typescript-eslint/unbound-method */
 import { useCallback, useMemo } from 'react'
-import { FullyReadMarker } from '@river-build/proto'
+import { FullyReadMarker, type ChunkedMedia } from '@river-build/proto'
+import { PlainMessage } from '@bufbuild/protobuf'
 import {
     BanUnbanWalletTransactionContext,
     ChannelTransactionContext,
@@ -221,6 +222,7 @@ interface TownsClientImpl {
     setRoomProperties: (roomId: string, title: string, topic: string) => Promise<void>
     setDisplayName: (streamId: string, displayName: string) => Promise<void>
     setHighPriorityStreams: (streamIds: string[]) => Promise<void>
+    setUserProfileImage: (chunkedMedia: PlainMessage<ChunkedMedia>) => Promise<void>
     updateSpaceInfoTransaction: (
         spaceId: string,
         name: string,
@@ -376,6 +378,7 @@ export function useTownsClient(): TownsClientImpl {
         setRoomProperties: useWithCatch(clientSingleton?.setRoomProperties),
         setAvatarUrl: useWithCatch(clientSingleton?.setAvatarUrl),
         setHighPriorityStreams: useWithCatch(clientSingleton?.setHighPriorityStreams),
+        setUserProfileImage: useWithCatch(clientSingleton?.setUserProfileImage),
         linkEOAToRootKey: useWithCatch(clientSingleton?.linkEOAToRootKey),
         linkCallerToRootKey: useWithCatch(clientSingleton?.linkCallerToRootKey),
         removeLink: useWithCatch(clientSingleton?.removeLink),

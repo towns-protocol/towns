@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { isSpaceStreamId } from '@river-build/sdk'
-import { getImageServiceUrl } from 'api/lib/fetchImage'
+import { getImageUrlFromStreamMetadata } from 'api/lib/fetchImage'
 import { useImageStore } from './useImageStore'
 
 export const ImageVariants = {
@@ -19,12 +18,9 @@ const dateNow = Date.now()
 export const useImageSource = (resourceId: string, variant: ImageVariant) => {
     const storedImageUrl = useImageStore((state) => state.loadedResource[resourceId]?.imageUrl)
 
-    let externalImageUrl =
+    const externalImageUrl =
+        getImageUrlFromStreamMetadata(resourceId) ||
         `https://imagedelivery.net/qaaQ52YqlPXKEVQhjChiDA/${resourceId}/${variant}` + `?${dateNow}`
-
-    if (isSpaceStreamId(resourceId)) {
-        externalImageUrl = getImageServiceUrl(resourceId) || externalImageUrl
-    }
 
     const [imageLoaded, setImageLoaded] = useState<boolean>(false)
     const [imageError, setImageError] = useState<boolean>(false)

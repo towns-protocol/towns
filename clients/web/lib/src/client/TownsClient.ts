@@ -2289,6 +2289,13 @@ export class TownsClient
         await this.casablancaClient.setSpaceImage(spaceStreamId, chunkedMedia)
     }
 
+    public async setUserProfileImage(chunkedMedia: PlainMessage<ChunkedMedia>): Promise<void> {
+        if (!this.casablancaClient) {
+            throw new Error('No casablanca client')
+        }
+        await this.casablancaClient.setUserProfileImage(chunkedMedia)
+    }
+
     /************************************************
      * setDisplayName
      ************************************************/
