@@ -1,39 +1,13 @@
-name: Release Alpha
+name: Omega Continuous Deployment
 
 on:
-    schedule:
-        # Runs everyday at 6am GMT+3
-        - cron: '0 3 * * *'
-
     workflow_dispatch:
 
+    push:
+        branches:
+            - omega
+
 jobs:
-    tag_rc:
-        name: Tag Release Candidate
-        runs-on: ubuntu-latest
-
-        permissions:
-            contents: write
-            pull-requests: write
-
-        steps:
-            - name: Checkout repository
-              uses: actions/checkout@v3
-
-            - name: Get current date
-              run: echo "DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
-
-            - name: Create and push tag
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  DATE: ${{ env.DATE }}
-              run: |
-                  TAG_NAME="rc-$DATE"
-                  git config --global user.name "github-actions[bot]"
-                  git config --global user.email "github-actions[bot]@users.noreply.github.com"
-                  git tag $TAG_NAME
-                  git push origin $TAG_NAME
-
     river_nodes:
         name: River Nodes
         uses: './.github/workflows/River_node_continuous_deployment.yml'
@@ -44,18 +18,7 @@ jobs:
             SLACK_CD_INFO_WORKFLOW_WEBHOOK_URL: ${{ secrets.SLACK_CD_INFO_WORKFLOW_WEBHOOK_URL }}
             TF_VAR_datadog_api_key: ${{ secrets.TF_VAR_datadog_api_key }}
         with:
-            environment_name: alpha
-
-    render_app:
-        name: Render App
-        uses: './.github/workflows/Render_deploy.yml'
-        secrets:
-            RENDER_BEARER_TOKEN: ${{ secrets.RENDER_BEARER_TOKEN }}
-            HARMONY_WEB_WEBHOOK_URL_ALPHA: ${{ secrets.HARMONY_WEB_WEBHOOK_URL_ALPHA }}
-            HARMONY_WEB_SERVICE_ID_ALPHA: ${{ secrets.HARMONY_WEB_SERVICE_ID_ALPHA }}
-            SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL: ${{ secrets.SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL }}
-        with:
-            environment_name: alpha
+            environment_name: omega
 
     notification_service:
         name: Notification Service
@@ -66,7 +29,7 @@ jobs:
             SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL: ${{ secrets.SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL }}
             SLACK_CD_INFO_WORKFLOW_WEBHOOK_URL: ${{ secrets.SLACK_CD_INFO_WORKFLOW_WEBHOOK_URL }}
         with:
-            environment_name: alpha
+            environment_name: omega
 
     stream_metadata_service:
         name: Stream Metadata Service
@@ -77,7 +40,7 @@ jobs:
             SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL: ${{ secrets.SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL }}
             SLACK_CD_INFO_WORKFLOW_WEBHOOK_URL: ${{ secrets.SLACK_CD_INFO_WORKFLOW_WEBHOOK_URL }}
         with:
-            environment_name: alpha
+            environment_name: omega
 
     cloudflare_workers:
         name: Cloudflare Workers
@@ -86,32 +49,13 @@ jobs:
             CLOUDFLARE_WORKERS_API_TOKEN: ${{ secrets.CLOUDFLARE_WORKERS_API_TOKEN }}
             SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL: ${{ secrets.SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL }}
         with:
-            environment_name: alpha
-
-    upgrade_alpha_facets:
-        name: Upgrade Alpha Facets
-        uses: './.github/workflows/Upgrade_alpha_facets.yml'
-        secrets:
-            ALPHA_BASE_SEPOLIA_DEPLOYER_PK: ${{ secrets.ALPHA_BASE_SEPOLIA_DEPLOYER_PK }}
-            SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL: ${{ secrets.SLACK_CD_ALERT_WORKFLOW_WEBHOOK_URL }}
-            ALPHA_BASE_SEPOLIA_RPC_URL: ${{ secrets.ALPHA_BASE_SEPOLIA_RPC_URL }}
-            RIVER_TESTNET_RPC_URL: ${{ secrets.RIVER_TESTNET_RPC_URL }}
-            BLOCKSCOUT_BASE_SEPOLIA_API_KEY: ${{ secrets.BLOCKSCOUT_BASE_SEPOLIA_API_KEY }}
-            BASESCAN_SEPOLIA_API_KEY: ${{ secrets.BASESCAN_SEPOLIA_API_KEY }}
+            environment_name: omega
 
     on_failure:
         name: On Failure
         runs-on: ubuntu-latest
 
-        needs:
-            [
-                tag_rc,
-                river_nodes,
-                render_app,
-                notification_service,
-                cloudflare_workers,
-                stream_metadata_service,
-            ]
+        needs: [river_nodes, notification_service, cloudflare_workers]
 
         if: failure()
 
@@ -124,8 +68,8 @@ jobs:
               with:
                   payload: |
                       {
-                          "step": "Release Alpha",
-                          "environment": "alpha",
+                          "step": "Omega Continuous Deployment",
+                          "environment": "omega",
                           "branch": "${{ github.ref }}",
                           "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
                           "commit": "${{ github.sha }}",
@@ -136,15 +80,7 @@ jobs:
         name: On Success
         runs-on: ubuntu-latest
 
-        needs:
-            [
-                tag_rc,
-                river_nodes,
-                render_app,
-                notification_service,
-                cloudflare_workers,
-                stream_metadata_service,
-            ]
+        needs: [river_nodes, notification_service, cloudflare_workers]
 
         if: success()
 
@@ -156,8 +92,8 @@ jobs:
               with:
                   payload: |
                       {
-                          "message": "Release candidate ready.",
-                          "environment": "alpha",
+                          "message": "Omega Continuous Deployment was successful.",
+                          "environment": "omega",
                           "branch": "${{ github.ref }}",
                           "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
                           "commit": "${{ github.sha }}",

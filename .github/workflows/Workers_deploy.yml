@@ -4,7 +4,6 @@ on:
     push:
         branches:
             - main
-            - omega
         paths:
             - 'servers/workers/**'
             - 'river/**'
@@ -54,10 +53,8 @@ jobs:
                     echo "ENV_NAME=$ENVIRONMENT_NAME_INPUT" >> $GITHUB_ENV
                   elif [ $BRANCH_NAME = "refs/heads/main" ]; then
                     echo "ENV_NAME=test-beta" >> $GITHUB_ENV
-                  elif [ $BRANCH_NAME = "refs/heads/omega" ]; then
-                    echo "ENV_NAME=omega" >> $GITHUB_ENV
                   else
-                    echo "Error: Branch name is not main or omega. Exiting."
+                    echo "Error: Branch name is not main. Exiting."
                     exit 1
                   fi
 

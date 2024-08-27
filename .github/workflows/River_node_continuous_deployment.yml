@@ -4,7 +4,6 @@ on:
     push:
         branches:
             - main
-            - omega
             - debug-omega-cd
         paths:
             - 'scripts/river-node-tag/tag.txt'
@@ -73,8 +72,6 @@ jobs:
                     ENV_NAME=$ENVIRONMENT_NAME_INPUT
                   elif [ $BRANCH_NAME = "refs/heads/main" ]; then
                     ENV_NAME="gamma"
-                  elif [ $BRANCH_NAME = "refs/heads/omega" ]; then
-                    ENV_NAME="omega"
                   else
                       echo "Error: Could not determine environment name. Exiting."
                       exit 1
