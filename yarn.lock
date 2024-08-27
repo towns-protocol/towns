@@ -8316,7 +8316,7 @@ __metadata:
     "@bufbuild/buf": ^1.32.0
     "@bufbuild/protobuf": ^1.9.0
     "@connectrpc/connect": ^1.4.0
-    "@connectrpc/connect-web": ^1.4.0
+    "@connectrpc/connect-node": ^1.4.0
     "@fastify/cors": ^9.0.1
     "@river-build/eslint-config": "workspace:^"
     "@river-build/generated": "workspace:^"

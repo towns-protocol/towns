@@ -15,6 +15,8 @@ export interface MemberDisplayNameModel extends Identifiable {
     isEncrypted?: boolean
 }
 
+// This model doenst listen to events here.
+// They are listened in the members model, which propagates the updates to this model.
 @persistedObservable({ tableName: 'member_displayName' })
 export class MemberDisplayName extends PersistedObservable<MemberDisplayNameModel> {
     constructor(
@@ -36,24 +38,7 @@ export class MemberDisplayName extends PersistedObservable<MemberDisplayNameMode
         )
     }
 
-    protected override async onLoaded() {
-        this.riverConnection.registerView((client) => {
-            if (
-                client.streams.has(this.data.id) &&
-                client.streams.get(this.data.id)?.view.isInitialized
-            ) {
-                this.onStreamInitialized(this.data.id)
-            }
-            client.on('streamInitialized', this.onStreamInitialized)
-            client.on('streamDisplayNameUpdated', this.onStreamDisplayNameUpdated)
-            return () => {
-                client.off('streamInitialized', this.onStreamInitialized)
-                client.off('streamDisplayNameUpdated', this.onStreamDisplayNameUpdated)
-            }
-        })
-    }
-
-    private onStreamInitialized = (streamId: string) => {
+    public onStreamInitialized = (streamId: string) => {
         if (streamId === this.data.streamId) {
             const streamView = this.riverConnection.client?.stream(this.data.streamId)?.view
             check(isDefined(streamView), 'streamView is not defined')
@@ -67,7 +52,7 @@ export class MemberDisplayName extends PersistedObservable<MemberDisplayNameMode
         }
     }
 
-    private onStreamDisplayNameUpdated = (streamId: string, userId: string) => {
+    public onStreamDisplayNameUpdated = (streamId: string, userId: string) => {
         if (streamId === this.data.streamId && userId === this.data.id) {
             const stream = this.riverConnection.client?.streams.get(streamId)
             const metadata = stream?.view.getMemberMetadata()

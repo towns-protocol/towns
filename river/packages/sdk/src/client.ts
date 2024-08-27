@@ -1046,17 +1046,12 @@ export class Client
             this.logCall('waitForStream: stream already initialized', streamId)
             return stream
         }
-
+        const logId = opts?.logId ? opts.logId + ' ' : ''
+        const timeoutError = new Error(`waitForStream: timeout waiting for ${logId}${streamId}`)
         await new Promise<void>((resolve, reject) => {
             const timeout = setTimeout(() => {
                 this.off('streamInitialized', handler)
-                reject(
-                    new Error(
-                        `waitForStream: timeout waiting for ${
-                            opts?.logId ? opts.logId + ' ' : ''
-                        }${streamId}`,
-                    ),
-                )
+                reject(timeoutError)
             }, timeoutMs)
             const handler = (newStreamId: string) => {
                 if (newStreamId === streamId) {

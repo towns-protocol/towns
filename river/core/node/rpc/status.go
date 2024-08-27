@@ -4,47 +4,97 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
+	"math/big"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 
+	"github.com/ethereum/go-ethereum/ethclient"
+
+	"github.com/river-build/river/core/config"
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/rpc/render"
 	"github.com/river-build/river/core/node/rpc/statusinfo"
 	"github.com/river-build/river/core/river_node/version"
 )
 
-func (s *Service) blockchainPing(ctx context.Context, chain *crypto.Blockchain) *statusinfo.BlockchainPing {
-	if chain == nil {
-		return nil
-	}
-
+func (s *Service) blockchainPingWithClient(
+	ctx context.Context,
+	expectedChainId uint64,
+	client crypto.BlockchainClient,
+) *statusinfo.BlockchainPing {
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
-	start := time.Now()
-	blockNum, err := chain.Client.BlockNumber(ctx)
-	latency := time.Since(start).String()
+	var blockNum uint64
+	var chainId *big.Int = new(big.Int)
+	var blockErr, chainErr error
+	var latency string
+	var wg sync.WaitGroup
 
-	if err != nil {
-		errStr := "FAIL: " + err.Error()
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		start := time.Now()
+		blockNum, blockErr = client.BlockNumber(ctx)
+		latency = time.Since(start).String()
+	}()
+	go func() {
+		defer wg.Done()
+		chainId, chainErr = client.ChainID(ctx)
+	}()
+
+	wg.Wait()
+
+	if blockErr != nil || chainErr != nil {
+		var errStr string
+		if blockErr != nil {
+			errStr = "FAIL: " + blockErr.Error()
+		} else {
+			errStr = "FAIL: " + chainErr.Error()
+		}
 		if len(errStr) > 80 {
-			errStr = errStr[0:80]
+			errStr = errStr[:80]
 		}
 		return &statusinfo.BlockchainPing{
 			Result:  errStr,
-			ChainId: chain.ChainId.Uint64(),
+			ChainId: expectedChainId,
+			Latency: latency,
+		}
+	}
+
+	if chainId.Uint64() != expectedChainId {
+		return &statusinfo.BlockchainPing{
+			Result:  fmt.Sprintf("FAIL: Chain ID mismatch. Expected %d, got %d", expectedChainId, chainId.Uint64()),
+			ChainId: expectedChainId,
 			Latency: latency,
 		}
 	}
 
 	return &statusinfo.BlockchainPing{
 		Result:  "OK",
-		ChainId: chain.ChainId.Uint64(),
+		ChainId: expectedChainId,
 		Block:   blockNum,
 		Latency: latency,
 	}
+}
+
+func (s *Service) blockchainPingWithUrl(
+	ctx context.Context,
+	chainId uint64,
+	url string,
+) *statusinfo.BlockchainPing {
+	client, err := ethclient.DialContext(ctx, url)
+	if err != nil {
+		return &statusinfo.BlockchainPing{
+			Result:  "FAIL: " + err.Error(),
+			ChainId: chainId,
+		}
+	}
+	return s.blockchainPingWithClient(ctx, chainId, client)
 }
 
 func (s *Service) getStatusReponse(ctx context.Context, url *url.URL) (*statusinfo.StatusResponse, int) {
@@ -58,16 +108,48 @@ func (s *Service) getStatusReponse(ctx context.Context, url *url.URL) (*statusin
 
 	var riverPing *statusinfo.BlockchainPing
 	var basePing *statusinfo.BlockchainPing
+	var otherChainsPing []statusinfo.BlockchainPing
+	var mu sync.Mutex
 	status := http.StatusOK
 	if bc == "" || bc == "1" {
-		riverPing = s.blockchainPing(ctx, s.riverChain)
-		basePing = s.blockchainPing(ctx, s.baseChain)
+		var wg sync.WaitGroup
+		wg.Add(2)
+		go func() {
+			riverPing = s.blockchainPingWithClient(ctx, s.riverChain.ChainId.Uint64(), s.riverChain.Client)
+			wg.Done()
+		}()
+		go func() {
+			if s.baseChain != nil {
+				basePing = s.blockchainPingWithClient(ctx, s.baseChain.ChainId.Uint64(), s.baseChain.Client)
+			}
+			wg.Done()
+		}()
+
+		for _, chain := range s.config.ChainConfigs {
+			if chain.ChainId == s.riverChain.ChainId.Uint64() || chain.ChainId == s.baseChain.ChainId.Uint64() {
+				continue
+			}
+			wg.Add(1)
+			go func(chain *config.ChainConfig) {
+				defer wg.Done()
+				chainPing := s.blockchainPingWithUrl(ctx, chain.ChainId, chain.NetworkUrl)
+				mu.Lock()
+				defer mu.Unlock()
+				otherChainsPing = append(otherChainsPing, *chainPing)
+			}(chain)
+		}
+		wg.Wait()
 		if bc == "1" {
 			if riverPing != nil && riverPing.Result != "OK" {
 				status = http.StatusServiceUnavailable
 			}
 			if basePing != nil && basePing.Result != "OK" {
 				status = http.StatusServiceUnavailable
+			}
+			for _, chainPing := range otherChainsPing {
+				if chainPing.Result != "OK" {
+					status = http.StatusServiceUnavailable
+				}
 			}
 		}
 	}
@@ -81,15 +163,17 @@ func (s *Service) getStatusReponse(ctx context.Context, url *url.URL) (*statusin
 		statusStr = "UNAVAILABLE"
 	}
 	return &statusinfo.StatusResponse{
-		Status:     statusStr,
-		InstanceId: s.instanceId,
-		Address:    addr,
-		Version:    version.GetFullVersion(),
-		StartTime:  s.startTime.UTC().Format(time.RFC3339),
-		Uptime:     time.Since(s.startTime).String(),
-		Graffiti:   s.config.GetGraffiti(),
-		River:      riverPing,
-		Base:       basePing,
+		Status:            statusStr,
+		InstanceId:        s.instanceId,
+		Address:           addr,
+		Version:           version.GetFullVersion(),
+		StartTime:         s.startTime.UTC().Format(time.RFC3339),
+		Uptime:            time.Since(s.startTime).String(),
+		Graffiti:          s.config.GetGraffiti(),
+		River:             riverPing,
+		Base:              basePing,
+		OtherChains:       otherChainsPing,
+		XChainBlockchains: s.config.XChainBlockchains,
 	}, status
 }
 

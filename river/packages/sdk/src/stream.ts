@@ -154,12 +154,12 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
                     resolve()
                 }
             }
-
+            const timeoutError = new Error(`waitFor timeout waiting for ${event}`)
             // Set up the timeout
             const timeout = setTimeout(() => {
                 this.logEmitFromStream('waitFor timeout', this.streamId, event)
                 this.off(event, handler as StreamEvents[E])
-                reject(new Error(`Timed out waiting for event: ${event}`))
+                reject(timeoutError)
             }, opts.timeoutMs)
 
             this.on(event, handler as StreamEvents[E])

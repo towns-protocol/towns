@@ -12,6 +12,7 @@ import {RolesBase} from "./RolesBase.sol";
 import {Entitled} from "../Entitled.sol";
 
 contract Roles is IRoles, RolesBase, Entitled {
+  /// @inheritdoc IRoles
   function createRole(
     string calldata roleName,
     string[] memory permissions,
@@ -21,10 +22,12 @@ contract Roles is IRoles, RolesBase, Entitled {
     return _createRole(roleName, permissions, entitlements);
   }
 
+  /// @inheritdoc IRoles
   function getRoles() external view override returns (Role[] memory) {
     return _getRoles();
   }
 
+  /// @inheritdoc IRoles
   function getRoleById(
     uint256 roleId
   ) external view override returns (Role memory) {
@@ -32,6 +35,7 @@ contract Roles is IRoles, RolesBase, Entitled {
     return _getRoleById(roleId);
   }
 
+  /// @inheritdoc IRoles
   function updateRole(
     uint256 roleId,
     string calldata roleName,
@@ -42,12 +46,14 @@ contract Roles is IRoles, RolesBase, Entitled {
     _updateRole(roleId, roleName, permissions, entitlements);
   }
 
+  /// @inheritdoc IRoles
   function removeRole(uint256 roleId) external override {
     _validatePermission(Permissions.ModifyRoles);
     _removeRole(roleId);
   }
 
   // permissions
+  /// @inheritdoc IRoles
   function addPermissionsToRole(
     uint256 roleId,
     string[] memory permissions
@@ -56,6 +62,7 @@ contract Roles is IRoles, RolesBase, Entitled {
     _addPermissionsToRole(roleId, permissions);
   }
 
+  /// @inheritdoc IRoles
   function removePermissionsFromRole(
     uint256 roleId,
     string[] memory permissions
@@ -64,6 +71,7 @@ contract Roles is IRoles, RolesBase, Entitled {
     _removePermissionsFromRole(roleId, permissions);
   }
 
+  /// @inheritdoc IRoles
   function getPermissionsByRoleId(
     uint256 roleId
   ) external view override returns (string[] memory permissions) {
@@ -71,6 +79,7 @@ contract Roles is IRoles, RolesBase, Entitled {
   }
 
   // entitlements
+  /// @inheritdoc IRoles
   function addRoleToEntitlement(
     uint256 roleId,
     CreateEntitlement memory entitlement
@@ -79,6 +88,7 @@ contract Roles is IRoles, RolesBase, Entitled {
     _addRoleToEntitlement(roleId, entitlement);
   }
 
+  /// @inheritdoc IRoles
   function removeRoleFromEntitlement(
     uint256 roleId,
     CreateEntitlement memory entitlement
@@ -88,6 +98,7 @@ contract Roles is IRoles, RolesBase, Entitled {
   }
 
   // custom channel permission overrides
+  /// @inheritdoc IRoles
   function setChannelPermissionOverrides(
     uint256 roleId,
     bytes32 channelId,
@@ -97,6 +108,7 @@ contract Roles is IRoles, RolesBase, Entitled {
     _setChannelPermissionOverrides(roleId, channelId, permissions);
   }
 
+  /// @inheritdoc IRoles
   function getChannelPermissionOverrides(
     uint256 roleId,
     bytes32 channelId
@@ -104,6 +116,7 @@ contract Roles is IRoles, RolesBase, Entitled {
     return _getChannelPermissionOverrides(roleId, channelId);
   }
 
+  /// @inheritdoc IRoles
   function clearChannelPermissionOverrides(
     uint256 roleId,
     bytes32 channelId

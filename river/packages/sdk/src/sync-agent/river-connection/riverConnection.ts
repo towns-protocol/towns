@@ -103,7 +103,7 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
         this.authStatus.setValue(AuthStatus.Disconnected)
     }
 
-    call<T>(fn: (client: Client) => Promise<T>) {
+    call<T>(fn: (client: Client) => Promise<T>): Promise<T> {
         if (this.client) {
             return fn(this.client)
         } else {
@@ -116,7 +116,7 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
         call: (fn: (client: Client, stream: Stream) => Promise<T>) => Promise<T>
     } {
         return {
-            call: (fn) => {
+            call: (fn): Promise<T> => {
                 return this.call(async (client) => {
                     const stream = await client.waitForStream(streamId)
                     return fn(client, stream)
@@ -161,7 +161,7 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
             this.clientParams.logNamespaceFilter,
             this.clientParams.highPriorityStreamIds,
         )
-        client.setMaxListeners(5000)
+        client.setMaxListeners(100)
         this.client = client
         // initialize views
         this.store.withTransaction('RiverConnection::onNewClient', () => {

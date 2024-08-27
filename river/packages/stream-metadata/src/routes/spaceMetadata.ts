@@ -1,14 +1,13 @@
 import { FastifyRequest, FastifyReply } from 'fastify'
 
 import { isValidEthereumAddress } from '../validators'
-import { getFunctionLogger } from '../logger'
 
 export function fetchSpaceMetadata(
 	request: FastifyRequest,
 	reply: FastifyReply,
 	serverUrl: string,
 ) {
-	const logger = getFunctionLogger(request.log, 'fetchSpaceMetadata')
+	const logger = request.log.child({ name: fetchSpaceMetadata.name })
 	const { spaceAddress } = request.params as { spaceAddress?: string }
 	logger.info({ spaceAddress }, 'GET /space/../metadata')
 

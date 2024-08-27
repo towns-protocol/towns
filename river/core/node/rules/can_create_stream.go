@@ -64,7 +64,7 @@ type csUserRules struct {
 	inception *UserPayload_Inception
 }
 
-type csUserDeviceKeyRules struct {
+type csUserMetadataRules struct {
 	params    *csParams
 	inception *UserMetadataPayload_Inception
 }
@@ -292,7 +292,7 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 			requireChainAuth(ru.params.getNewUserStreamChainAuth)
 
 	case *UserMetadataPayload_Inception:
-		ru := &csUserDeviceKeyRules{
+		ru := &csUserMetadataRules{
 			params:    ru,
 			inception: inception,
 		}

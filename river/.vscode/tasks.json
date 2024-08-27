@@ -465,7 +465,7 @@
     {
       "label": "Kill Watches",
       "type": "shell",
-      "command": "echo 'killing watches' && kill $(ps -ax | grep 'yarn watch' | awk '{print $1}') && return 0",
+      "command": "./scripts/kill-watches.sh",
       "isBackground": false,
       "problemMatcher": [],
       "presentation": {

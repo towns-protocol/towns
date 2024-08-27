@@ -72,7 +72,6 @@ type (
 		chainIDStr             string
 		signerFn               bind.SignerFn
 		tracer                 trace.Tracer
-		processedTxCount       atomic.Int64
 		pricePolicy            TransactionPricePolicy
 
 		// metrics
@@ -606,7 +605,7 @@ func (r *transactionPool) Balance(ctx context.Context, _ *types.Header) {
 }
 
 func (r *transactionPool) ProcessedTransactionsCount() int64 {
-	return r.processedTxCount.Load()
+	return r.pendingTransactionPool.processedTxCount.Load()
 }
 
 func (r *transactionPool) PendingTransactionsCount() int64 {

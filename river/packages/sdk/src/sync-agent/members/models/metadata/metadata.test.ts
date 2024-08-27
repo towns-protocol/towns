@@ -23,11 +23,12 @@ describe('metadata.test.ts', () => {
 
     test('update username', async () => {
         expect(bob).toBeDefined()
+        expect(bob.username).toBe('')
         await bob.setUsername('bob123')
         expect(bob.username).toBe('bob123')
     })
     test('update displayname', async () => {
-        expect(bob.displayName).toBe(undefined)
+        expect(bob.displayName).toBe('')
         await bob.setDisplayName('Bob')
         expect(bob.displayName).toBe('Bob')
     })

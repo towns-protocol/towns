@@ -44,15 +44,11 @@ export class Observable<T> {
         condition: (value: T) => boolean,
         opts: { timeoutMs: number; description?: string } = { timeoutMs: 5000 },
     ): Promise<T> {
+        const logId = opts.description ? ` ${opts.description}` : ''
+        const timeoutError = new Error(`Timeout waiting for condition${logId}`)
         return new Promise((resolve, reject) => {
             const timeoutHandle = setTimeout(() => {
-                reject(
-                    new Error(
-                        `Timeout waiting for condition${
-                            opts.description ? ': ' + opts.description : ''
-                        } `,
-                    ),
-                )
+                reject(timeoutError)
             }, opts.timeoutMs)
             this.subscribe(
                 (value) => {

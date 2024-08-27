@@ -13,6 +13,8 @@ export interface MemberMembershipModel extends Identifiable {
     op: MembershipOp
 }
 
+// This model doenst listen to events here.
+// They are listened in the members model, which propagates the updates to this model.
 @persistedObservable({ tableName: 'member_membership' })
 export class MemberMembership extends PersistedObservable<MemberMembershipModel> {
     constructor(
@@ -33,37 +35,7 @@ export class MemberMembership extends PersistedObservable<MemberMembershipModel>
         )
     }
 
-    protected override async onLoaded() {
-        this.riverConnection.registerView((client) => {
-            if (
-                client.streams.has(this.data.id) &&
-                client.streams.get(this.data.id)?.view.isInitialized
-            ) {
-                this.onStreamInitialized(this.data.id)
-            }
-            client.on('streamInitialized', this.onStreamInitialized)
-            client.on(
-                'streamNewUserInvited',
-                this.onStreamMembershipUpdated(MembershipOp.SO_INVITE),
-            )
-            client.on('streamNewUserJoined', this.onStreamMembershipUpdated(MembershipOp.SO_JOIN))
-            client.on('streamUserLeft', this.onStreamMembershipUpdated(MembershipOp.SO_LEAVE))
-            return () => {
-                client.off('streamInitialized', this.onStreamInitialized)
-                client.off(
-                    'streamNewUserInvited',
-                    this.onStreamMembershipUpdated(MembershipOp.SO_INVITE),
-                )
-                client.off(
-                    'streamNewUserJoined',
-                    this.onStreamMembershipUpdated(MembershipOp.SO_JOIN),
-                )
-                client.off('streamUserLeft', this.onStreamMembershipUpdated(MembershipOp.SO_LEAVE))
-            }
-        })
-    }
-
-    private onStreamInitialized = (streamId: string) => {
+    public onStreamInitialized = (streamId: string) => {
         if (streamId === this.data.streamId) {
             const streamView = this.riverConnection.client?.stream(this.data.streamId)?.view
             check(isDefined(streamView), 'streamView is not defined')
@@ -72,11 +44,9 @@ export class MemberMembership extends PersistedObservable<MemberMembershipModel>
         }
     }
 
-    private onStreamMembershipUpdated =
-        (op: MembershipOp.SO_JOIN | MembershipOp.SO_INVITE | MembershipOp.SO_LEAVE) =>
-        (streamId: string, userId: string) => {
-            if (streamId === this.data.streamId && userId === this.data.id) {
-                this.setData({ op })
-            }
+    public onStreamMembershipUpdated = (streamId: string, userId: string, op: MembershipOp) => {
+        if (streamId === this.data.streamId && userId === this.data.id) {
+            this.setData({ op })
         }
+    }
 }

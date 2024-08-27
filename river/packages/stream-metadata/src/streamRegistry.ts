@@ -3,7 +3,6 @@ import { FastifyBaseLogger } from 'fastify'
 
 import { StreamIdHex } from './types'
 import { getRiverRegistry } from './evmRpcClient'
-import { getFunctionLogger } from './logger'
 
 type CachedStreamData = {
 	url: string
@@ -15,10 +14,9 @@ const cache: Record<string, CachedStreamData> = {}
 
 // TODO: remove this entire file
 export async function getNodeForStream(
-	log: FastifyBaseLogger,
+	logger: FastifyBaseLogger,
 	streamId: StreamIdHex,
 ): Promise<{ url: string; lastMiniblockNum: BigNumber }> {
-	const logger = getFunctionLogger(log, 'getNodeForStream')
 	logger.info({ streamId }, 'find node for stream')
 
 	const now = Date.now()

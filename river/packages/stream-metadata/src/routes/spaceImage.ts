@@ -5,11 +5,10 @@ import { StreamPrefix, StreamStateView, makeStreamId } from '@river-build/sdk'
 import { StreamIdHex } from '../types'
 import { getMediaStreamContent, getStream } from '../riverStreamRpcClient'
 import { isBytes32String, isValidEthereumAddress } from '../validators'
-import { getFunctionLogger } from '../logger'
 import { getMediaEncryption } from '../media-encryption'
 
 export async function fetchSpaceImage(request: FastifyRequest, reply: FastifyReply) {
-	const logger = getFunctionLogger(request.log, 'fetchSpaceImage')
+	const logger = request.log.child({ name: fetchSpaceImage.name })
 	const { spaceAddress } = request.params as { spaceAddress?: string }
 
 	if (!spaceAddress) {

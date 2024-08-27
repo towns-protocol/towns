@@ -65,13 +65,16 @@ export interface IRolesInterface extends utils.Interface {
   functions: {
     "addPermissionsToRole(uint256,string[])": FunctionFragment;
     "addRoleToEntitlement(uint256,(address,bytes))": FunctionFragment;
+    "clearChannelPermissionOverrides(uint256,bytes32)": FunctionFragment;
     "createRole(string,string[],(address,bytes)[])": FunctionFragment;
+    "getChannelPermissionOverrides(uint256,bytes32)": FunctionFragment;
     "getPermissionsByRoleId(uint256)": FunctionFragment;
     "getRoleById(uint256)": FunctionFragment;
     "getRoles()": FunctionFragment;
     "removePermissionsFromRole(uint256,string[])": FunctionFragment;
     "removeRole(uint256)": FunctionFragment;
     "removeRoleFromEntitlement(uint256,(address,bytes))": FunctionFragment;
+    "setChannelPermissionOverrides(uint256,bytes32,string[])": FunctionFragment;
     "updateRole(uint256,string,string[],(address,bytes)[])": FunctionFragment;
   };
 
@@ -79,13 +82,16 @@ export interface IRolesInterface extends utils.Interface {
     nameOrSignatureOrTopic:
       | "addPermissionsToRole"
       | "addRoleToEntitlement"
+      | "clearChannelPermissionOverrides"
       | "createRole"
+      | "getChannelPermissionOverrides"
       | "getPermissionsByRoleId"
       | "getRoleById"
       | "getRoles"
       | "removePermissionsFromRole"
       | "removeRole"
       | "removeRoleFromEntitlement"
+      | "setChannelPermissionOverrides"
       | "updateRole"
   ): FunctionFragment;
 
@@ -98,12 +104,20 @@ export interface IRolesInterface extends utils.Interface {
     values: [PromiseOrValue<BigNumberish>, IRolesBase.CreateEntitlementStruct]
   ): string;
   encodeFunctionData(
+    functionFragment: "clearChannelPermissionOverrides",
+    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BytesLike>]
+  ): string;
+  encodeFunctionData(
     functionFragment: "createRole",
     values: [
       PromiseOrValue<string>,
       PromiseOrValue<string>[],
       IRolesBase.CreateEntitlementStruct[]
     ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getChannelPermissionOverrides",
+    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BytesLike>]
   ): string;
   encodeFunctionData(
     functionFragment: "getPermissionsByRoleId",
@@ -127,6 +141,14 @@ export interface IRolesInterface extends utils.Interface {
     values: [PromiseOrValue<BigNumberish>, IRolesBase.CreateEntitlementStruct]
   ): string;
   encodeFunctionData(
+    functionFragment: "setChannelPermissionOverrides",
+    values: [
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BytesLike>,
+      PromiseOrValue<string>[]
+    ]
+  ): string;
+  encodeFunctionData(
     functionFragment: "updateRole",
     values: [
       PromiseOrValue<BigNumberish>,
@@ -144,7 +166,15 @@ export interface IRolesInterface extends utils.Interface {
     functionFragment: "addRoleToEntitlement",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "clearChannelPermissionOverrides",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "createRole", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "getChannelPermissionOverrides",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "getPermissionsByRoleId",
     data: BytesLike
@@ -161,6 +191,10 @@ export interface IRolesInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "removeRole", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "removeRoleFromEntitlement",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setChannelPermissionOverrides",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "updateRole", data: BytesLike): Result;
@@ -299,12 +333,24 @@ export interface IRoles extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    clearChannelPermissionOverrides(
+      roleId: PromiseOrValue<BigNumberish>,
+      channelId: PromiseOrValue<BytesLike>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     createRole(
       roleName: PromiseOrValue<string>,
       permissions: PromiseOrValue<string>[],
       entitlements: IRolesBase.CreateEntitlementStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
+
+    getChannelPermissionOverrides(
+      roleId: PromiseOrValue<BigNumberish>,
+      channelId: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<[string[]] & { permissions: string[] }>;
 
     getPermissionsByRoleId(
       roleId: PromiseOrValue<BigNumberish>,
@@ -341,6 +387,13 @@ export interface IRoles extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    setChannelPermissionOverrides(
+      roleId: PromiseOrValue<BigNumberish>,
+      channelId: PromiseOrValue<BytesLike>,
+      permissions: PromiseOrValue<string>[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     updateRole(
       roleId: PromiseOrValue<BigNumberish>,
       roleName: PromiseOrValue<string>,
@@ -362,12 +415,24 @@ export interface IRoles extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  clearChannelPermissionOverrides(
+    roleId: PromiseOrValue<BigNumberish>,
+    channelId: PromiseOrValue<BytesLike>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   createRole(
     roleName: PromiseOrValue<string>,
     permissions: PromiseOrValue<string>[],
     entitlements: IRolesBase.CreateEntitlementStruct[],
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
+
+  getChannelPermissionOverrides(
+    roleId: PromiseOrValue<BigNumberish>,
+    channelId: PromiseOrValue<BytesLike>,
+    overrides?: CallOverrides
+  ): Promise<string[]>;
 
   getPermissionsByRoleId(
     roleId: PromiseOrValue<BigNumberish>,
@@ -398,6 +463,13 @@ export interface IRoles extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  setChannelPermissionOverrides(
+    roleId: PromiseOrValue<BigNumberish>,
+    channelId: PromiseOrValue<BytesLike>,
+    permissions: PromiseOrValue<string>[],
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   updateRole(
     roleId: PromiseOrValue<BigNumberish>,
     roleName: PromiseOrValue<string>,
@@ -419,12 +491,24 @@ export interface IRoles extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    clearChannelPermissionOverrides(
+      roleId: PromiseOrValue<BigNumberish>,
+      channelId: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     createRole(
       roleName: PromiseOrValue<string>,
       permissions: PromiseOrValue<string>[],
       entitlements: IRolesBase.CreateEntitlementStruct[],
       overrides?: CallOverrides
     ): Promise<BigNumber>;
+
+    getChannelPermissionOverrides(
+      roleId: PromiseOrValue<BigNumberish>,
+      channelId: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<string[]>;
 
     getPermissionsByRoleId(
       roleId: PromiseOrValue<BigNumberish>,
@@ -452,6 +536,13 @@ export interface IRoles extends BaseContract {
     removeRoleFromEntitlement(
       roleId: PromiseOrValue<BigNumberish>,
       entitlement: IRolesBase.CreateEntitlementStruct,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    setChannelPermissionOverrides(
+      roleId: PromiseOrValue<BigNumberish>,
+      channelId: PromiseOrValue<BytesLike>,
+      permissions: PromiseOrValue<string>[],
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -539,11 +630,23 @@ export interface IRoles extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    clearChannelPermissionOverrides(
+      roleId: PromiseOrValue<BigNumberish>,
+      channelId: PromiseOrValue<BytesLike>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     createRole(
       roleName: PromiseOrValue<string>,
       permissions: PromiseOrValue<string>[],
       entitlements: IRolesBase.CreateEntitlementStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    getChannelPermissionOverrides(
+      roleId: PromiseOrValue<BigNumberish>,
+      channelId: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     getPermissionsByRoleId(
@@ -575,6 +678,13 @@ export interface IRoles extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    setChannelPermissionOverrides(
+      roleId: PromiseOrValue<BigNumberish>,
+      channelId: PromiseOrValue<BytesLike>,
+      permissions: PromiseOrValue<string>[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     updateRole(
       roleId: PromiseOrValue<BigNumberish>,
       roleName: PromiseOrValue<string>,
@@ -597,11 +707,23 @@ export interface IRoles extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
+    clearChannelPermissionOverrides(
+      roleId: PromiseOrValue<BigNumberish>,
+      channelId: PromiseOrValue<BytesLike>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
     createRole(
       roleName: PromiseOrValue<string>,
       permissions: PromiseOrValue<string>[],
       entitlements: IRolesBase.CreateEntitlementStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    getChannelPermissionOverrides(
+      roleId: PromiseOrValue<BigNumberish>,
+      channelId: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     getPermissionsByRoleId(
@@ -630,6 +752,13 @@ export interface IRoles extends BaseContract {
     removeRoleFromEntitlement(
       roleId: PromiseOrValue<BigNumberish>,
       entitlement: IRolesBase.CreateEntitlementStruct,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setChannelPermissionOverrides(
+      roleId: PromiseOrValue<BigNumberish>,
+      channelId: PromiseOrValue<BytesLike>,
+      permissions: PromiseOrValue<string>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

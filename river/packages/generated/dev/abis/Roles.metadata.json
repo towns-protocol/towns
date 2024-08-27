@@ -961,12 +961,143 @@
     ],
     "devdoc": {
       "kind": "dev",
-      "methods": {},
+      "methods": {
+        "addPermissionsToRole(uint256,string[])": {
+          "params": {
+            "permissions": "List of permissions to add",
+            "roleId": "Unique identifier of the role"
+          }
+        },
+        "addRoleToEntitlement(uint256,(address,bytes))": {
+          "params": {
+            "entitlement": "Entitlement to add",
+            "roleId": "Unique identifier of the role"
+          }
+        },
+        "clearChannelPermissionOverrides(uint256,bytes32)": {
+          "params": {
+            "channelId": "Unique identifier of the channel",
+            "roleId": "Unique identifier of the role"
+          }
+        },
+        "createRole(string,string[],(address,bytes)[])": {
+          "params": {
+            "entitlements": "List of entitlements for the role",
+            "permissions": "List of permissions for the role",
+            "roleName": "Name of the role"
+          },
+          "returns": {
+            "_0": "Unique identifier of the created role"
+          }
+        },
+        "getChannelPermissionOverrides(uint256,bytes32)": {
+          "params": {
+            "channelId": "Unique identifier of the channel",
+            "roleId": "Unique identifier of the role"
+          },
+          "returns": {
+            "permissions": "List of permission overrides for the channel"
+          }
+        },
+        "getPermissionsByRoleId(uint256)": {
+          "params": {
+            "roleId": "Unique identifier of the role"
+          },
+          "returns": {
+            "permissions": "List of permissions for the role"
+          }
+        },
+        "getRoleById(uint256)": {
+          "params": {
+            "roleId": "Unique identifier of the role"
+          },
+          "returns": {
+            "_0": "The role struct"
+          }
+        },
+        "getRoles()": {
+          "returns": {
+            "_0": "Array of all roles"
+          }
+        },
+        "removePermissionsFromRole(uint256,string[])": {
+          "params": {
+            "permissions": "List of permissions to remove",
+            "roleId": "Unique identifier of the role"
+          }
+        },
+        "removeRole(uint256)": {
+          "params": {
+            "roleId": "Unique identifier of the role to remove"
+          }
+        },
+        "removeRoleFromEntitlement(uint256,(address,bytes))": {
+          "params": {
+            "entitlement": "Entitlement to remove",
+            "roleId": "Unique identifier of the role"
+          }
+        },
+        "setChannelPermissionOverrides(uint256,bytes32,string[])": {
+          "params": {
+            "channelId": "Unique identifier of the channel",
+            "permissions": "List of permissions to set as overrides",
+            "roleId": "Unique identifier of the role"
+          }
+        },
+        "updateRole(uint256,string,string[],(address,bytes)[])": {
+          "params": {
+            "entitlements": "New list of entitlements for the role",
+            "permissions": "New list of permissions for the role",
+            "roleId": "Unique identifier of the role to update",
+            "roleName": "New name for the role"
+          }
+        }
+      },
       "version": 1
     },
     "userdoc": {
       "kind": "user",
-      "methods": {},
+      "methods": {
+        "addPermissionsToRole(uint256,string[])": {
+          "notice": "Adds permissions to a role"
+        },
+        "addRoleToEntitlement(uint256,(address,bytes))": {
+          "notice": "Adds an entitlement to a role"
+        },
+        "clearChannelPermissionOverrides(uint256,bytes32)": {
+          "notice": "Clears channel permission overrides for a role"
+        },
+        "createRole(string,string[],(address,bytes)[])": {
+          "notice": "Creates a new role"
+        },
+        "getChannelPermissionOverrides(uint256,bytes32)": {
+          "notice": "Retrieves channel permission overrides for a role"
+        },
+        "getPermissionsByRoleId(uint256)": {
+          "notice": "Retrieves permissions for a role"
+        },
+        "getRoleById(uint256)": {
+          "notice": "Retrieves a role by its ID"
+        },
+        "getRoles()": {
+          "notice": "Retrieves all roles"
+        },
+        "removePermissionsFromRole(uint256,string[])": {
+          "notice": "Removes permissions from a role"
+        },
+        "removeRole(uint256)": {
+          "notice": "Removes a role"
+        },
+        "removeRoleFromEntitlement(uint256,(address,bytes))": {
+          "notice": "Removes an entitlement from a role"
+        },
+        "setChannelPermissionOverrides(uint256,bytes32,string[])": {
+          "notice": "Sets channel permission overrides for a role"
+        },
+        "updateRole(uint256,string,string[],(address,bytes)[])": {
+          "notice": "Updates an existing role"
+        }
+      },
       "version": 1
     }
   },
@@ -1214,18 +1345,18 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/roles/IRoles.sol": {
-      "keccak256": "0x7cd041ba078b6023f17e877540b89b5c0d1f581163c4067332f6b43bf3bbffa6",
+      "keccak256": "0x8e83ae75871b3aa2f2c2885770c0c810e7cf53b4bcb06ff3d73bbcc49b7a7a65",
       "urls": [
-        "bzz-raw://33d2b6a1215ae41ca4bd40867dd7bb11bb1faf17e3d4010afb93186b4ea0fee3",
-        "dweb:/ipfs/QmbP6zEQmue7yEWdhCdjbrrVg7Ex6QZ7z1Gwi4zDjvimzP"
+        "bzz-raw://3995418818a37c318df894c3a64f646f9a70113b0edf54fa34dc4c5ba2f426ed",
+        "dweb:/ipfs/QmSeDc6kasbA8THfZU5fS5uQbbeV3X85qauF8PapgXzgT3"
       ],
       "license": "MIT"
     },
     "contracts/src/spaces/facets/roles/Roles.sol": {
-      "keccak256": "0xc5c4139416f3da15d78e054d36c98deac9f66f1fcc6dffbec2822d036290920e",
+      "keccak256": "0x152b002c2e5257990510d3e491ce3790458020800cbed984f9ac974d1edada79",
       "urls": [
-        "bzz-raw://9137f200a36df84319f6dcb4aef4e6282f26d82f67d46d63c9c71cb37cb07401",
-        "dweb:/ipfs/QmaYtmaygBhJrSH2DMd8hmXPrTEBPpomyyVA5Uj5jBkeyT"
+        "bzz-raw://c5a81bc0878a63073881831098ef7eb5f231784ca52b2f7cc72cc924605918a3",
+        "dweb:/ipfs/QmWNwQfys3M2S5VSRswyCiopdcz8AVY56AV8Wyx8BR6ov9"
       ],
       "license": "MIT"
     },
