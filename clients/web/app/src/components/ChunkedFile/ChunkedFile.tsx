@@ -1,15 +1,15 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import useResizeObserver from '@react-hook/resize-observer'
+import { useMutation } from '@tanstack/react-query'
 import debounce from 'lodash/debounce'
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useChunkedMedia } from 'use-towns-client'
 import { useDownloadFile } from 'use-towns-client/dist/hooks/use-chunked-media'
-import { useMutation } from '@tanstack/react-query'
 import { Box, Button, Icon, IconButton, Stack, Text } from '@ui'
-import { isImageMimeType } from 'utils/isMediaMimeType'
 import { useDevice } from 'hooks/useDevice'
-import { useIsMessageAttachementContext } from '@components/MessageAttachments/hooks/useIsMessageAttachementContext'
-import { useSizeContext } from 'ui/hooks/useSizeContext'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
+import { useSizeContext } from 'ui/hooks/useSizeContext'
+import { useIsMessageAttachementContext } from '@components/MessageAttachments/hooks/useIsMessageAttachementContext'
+import { isImageMimeType, isVideoMimeType } from 'utils/isMediaMimeType'
 
 type Props = {
     streamId: string
@@ -77,7 +77,7 @@ export const ChunkedFile = (props: Props) => {
 
     if (isImageMimeType(props.mimetype)) {
         return <ChunkedImageMedia {...props} onDownloadClicked={onDownloadClicked} />
-    } else if (props.mimetype.match('video')) {
+    } else if (isVideoMimeType(props.mimetype)) {
         return <ChunkedVideoMedia {...props} onDownloadClicked={onDownloadClicked} />
     } else {
         return (
@@ -306,7 +306,22 @@ const ChunkedVideoMedia = (
     }, [])
 
     return isMessageAttachementContext ? (
-        <></>
+        <Stack
+            horizontal
+            border
+            background="level1"
+            overflow="hidden"
+            width="x8"
+            height="x8"
+            position="relative"
+            cursor="zoom-in"
+            borderRadius="sm"
+            onClick={props.onClick}
+        >
+            <Box absoluteFill centerContent>
+                <Icon type="play" />
+            </Box>
+        </Stack>
     ) : (
         <Box
             controls

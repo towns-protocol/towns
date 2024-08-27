@@ -1710,6 +1710,15 @@ const PersonEdit = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     </svg>
 ))
 
+const PlayIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" {...props} ref={ref}>
+        <path
+            d="M19.5 11.134C20.1667 11.5189 20.1667 12.4811 19.5 12.866L7.5 19.7942C6.83333 20.1791 6 19.698 6 18.9282L6 5.0718C6 4.302 6.83333 3.82087 7.5 4.20577L19.5 11.134Z"
+            fill="currentColor"
+        />
+    </svg>
+))
+
 const Help = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     <svg
         width="24"
@@ -1878,6 +1887,7 @@ const iconMap = {
     people: PeopleIcon,
     personAdd: PersonAdd,
     personEdit: PersonEdit,
+    play: PlayIcon,
     pin: PinIcon,
     pinFill: PinFillIcon,
     plus: PlusIcon,

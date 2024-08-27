@@ -17,7 +17,7 @@ import { isUrl } from 'utils/isUrl'
 import { ChunkedFile } from '@components/ChunkedFile/ChunkedFile'
 import { EmbeddedMessage } from '@components/EmbeddedMessageAttachement/EmbeddedMessage'
 import { Box, BoxProps, Heading, Paragraph, Stack, Text } from '@ui'
-import { isImageMimeType } from 'utils/isMediaMimeType'
+import { isImageMimeType, isMediaMimeType, isVideoMimeType } from 'utils/isMediaMimeType'
 import { RatioedBackgroundImage } from '@components/RatioedBackgroundImage'
 import { getTownParamsFromUrl } from 'utils/getTownParamsFromUrl'
 import { LoadingUnfurledLinkAttachment } from 'hooks/useExtractInternalLinks'
@@ -49,7 +49,7 @@ export const MessageAttachments = (props: {
         return null
     }
 
-    const mediaAttachments = attachments.filter(isRichMediaAttachment)
+    const mediaAttachments = attachments.filter(isMediaAttachment)
     const fileAttachments = attachments.filter(isRegularFileAttachment)
     const unfurledLinkAttachments = attachments.filter(isUnfurledLinkAttachment)
     const messageAttachments = isMessageAttachementContext
@@ -137,14 +137,20 @@ export function trimMessageBodyLinks(messageBody: string) {
     return messageBody.replace(/(?:https?|ftp):\/\/[\n\S]+/g, '...')
 }
 
-export function isRichMediaAttachment(
-    attachment: Attachment,
-): attachment is ChunkedMediaAttachment {
+export function isMediaAttachment(attachment: Attachment): attachment is ChunkedMediaAttachment {
+    return attachment.type === 'chunked_media' && isMediaMimeType(attachment.info.mimetype)
+}
+
+export function isImageAttachment(attachment: Attachment): attachment is ChunkedMediaAttachment {
     return attachment.type === 'chunked_media' && isImageMimeType(attachment.info.mimetype)
 }
 
+export function isVideoAttachment(attachment: Attachment): attachment is ChunkedMediaAttachment {
+    return attachment.type === 'chunked_media' && isVideoMimeType(attachment.info.mimetype)
+}
+
 function isRegularFileAttachment(attachment: Attachment): attachment is ChunkedMediaAttachment {
-    return attachment.type === 'chunked_media' && !isImageMimeType(attachment.info.mimetype)
+    return attachment.type === 'chunked_media' && !isMediaMimeType(attachment.info.mimetype)
 }
 
 function isUnfurledLinkAttachment(attachment: Attachment): attachment is UnfurledLinkAttachment {

@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { Attachment, useChunkedMedia, useUser } from 'use-towns-client'
 import { formatDistance } from 'date-fns'
 import { Box, Stack, Text } from '@ui'
 import { darkTheme } from 'ui/styles/vars.css'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { Avatar } from '@components/Avatar/Avatar'
+import { isVideoMimeType } from 'utils/isMediaMimeType'
 
 type Props = {
     attachment: Attachment
@@ -19,7 +20,6 @@ type MediaSenderInfoProps = {
 
 export const FullScreenMediaItem = (props: Props) => {
     const { attachment, userId, timestamp } = props
-
     if (attachment.type === 'chunked_media' && attachment.encryption) {
         return (
             <ChunkedMediaFullScreen
@@ -29,6 +29,7 @@ export const FullScreenMediaItem = (props: Props) => {
                 userId={userId}
                 timestamp={timestamp}
                 thumbnail={attachment.thumbnail?.content}
+                mimetype={attachment.info.mimetype}
             />
         )
     }
@@ -42,6 +43,7 @@ const ChunkedMediaFullScreen = (
         iv: Uint8Array
         secretKey: Uint8Array
         thumbnail?: Uint8Array
+        mimetype: string
     } & MediaSenderInfoProps,
 ) => {
     const { thumbnail, ...mediaProps } = props
@@ -61,18 +63,24 @@ const ChunkedMediaFullScreen = (
             url={objectURL ?? thumbnailURL ?? ''}
             userId={props.userId}
             timestamp={props.timestamp}
+            mimetype={props.mimetype}
         />
     )
 }
 
-const MediaItemWithBackground = (props: { url: string } & MediaSenderInfoProps) => {
-    const { url, userId, timestamp } = props
+const MediaItemWithBackground = (
+    props: { url: string; mimetype: string } & MediaSenderInfoProps,
+) => {
+    const { mimetype, url, userId, timestamp } = props
+
+    const isVideo = isVideoMimeType(mimetype)
+
     return (
         <Box
             absoluteFill
             background="level1"
             style={{
-                backgroundImage: `url(${url})`,
+                backgroundImage: !isVideo ? `url(${url})` : undefined,
                 backgroundPosition: 'center',
                 backgroundSize: 'cover',
                 backgroundRepeat: 'no-repeat',
@@ -85,16 +93,22 @@ const MediaItemWithBackground = (props: { url: string } & MediaSenderInfoProps) 
                     WebkitBackdropFilter: 'blur(10px) brightness(10%)',
                 }}
             >
-                <Box
-                    width="100%"
-                    height="100%"
-                    style={{
-                        backgroundImage: `url(${url})`,
-                        backgroundPosition: 'center',
-                        backgroundSize: 'contain',
-                        backgroundRepeat: 'no-repeat',
-                    }}
-                />
+                {!isVideo ? (
+                    <Box
+                        width="100%"
+                        height="100%"
+                        style={{
+                            backgroundImage: `url(${url})`,
+                            backgroundPosition: 'center',
+                            backgroundSize: 'contain',
+                            backgroundRepeat: 'no-repeat',
+                        }}
+                    />
+                ) : (
+                    <>
+                        <VideoPreview src={url} />
+                    </>
+                )}
             </Box>
             <Box
                 padding
@@ -108,6 +122,27 @@ const MediaItemWithBackground = (props: { url: string } & MediaSenderInfoProps) 
                 <MediaSenderInfo userId={userId} timestamp={timestamp} />
             </Box>
         </Box>
+    )
+}
+
+const VideoPreview = (props: { src: string }) => {
+    const { src } = props
+
+    const onRef = useCallback((instance: HTMLVideoElement | null) => {
+        instance?.load()
+    }, [])
+
+    return (
+        <Box
+            padding
+            controls
+            width="100%"
+            height="100%"
+            as="video"
+            src={src}
+            objectFit="contain"
+            ref={onRef}
+        />
     )
 }
 

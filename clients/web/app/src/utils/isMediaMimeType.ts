@@ -11,8 +11,21 @@ const allowedMimeTypes = [
     'image/webp',
     'image/gif',
     'image/apng',
+    'video/mp4',
+    'video/webm',
+    'video/mpeg',
+    'video/ogg',
+    'video/quicktime',
 ]
 
+export function isMediaMimeType(mimetype: string): boolean {
+    return isImageMimeType(mimetype) || isVideoMimeType(mimetype)
+}
+
 export function isImageMimeType(mimetype: string): boolean {
-    return allowedMimeTypes.includes(mimetype)
+    return mimetype?.startsWith('image/') && allowedMimeTypes.includes(mimetype)
+}
+
+export function isVideoMimeType(mimetype: string): boolean {
+    return mimetype?.startsWith('video/') //&& allowedMimeTypes.includes(mimetype)
 }
