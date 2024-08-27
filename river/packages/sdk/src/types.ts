@@ -620,6 +620,20 @@ export const make_UserMetadataPayload_ProfileImage = (
     }
 }
 
+export const make_UserMetadataPayload_Bio = (
+    value: EncryptedData,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'userMetadataPayload',
+        value: {
+            content: {
+                case: 'bio',
+                value,
+            },
+        },
+    }
+}
+
 export const make_SpacePayload_ChannelUpdate = (
     value: PlainMessage<SpacePayload_ChannelUpdate>,
 ): PlainMessage<StreamEvent>['payload'] => {

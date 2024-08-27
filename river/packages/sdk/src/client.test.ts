@@ -32,6 +32,7 @@ import {
     SyncOp,
     SyncStreamsRequest,
     SyncStreamsResponse,
+    UserBio,
     type ChunkedMedia,
 } from '@river-build/proto'
 import { PartialMessage, type PlainMessage } from '@bufbuild/protobuf'
@@ -1044,5 +1045,25 @@ describe('clientTest', () => {
         expect(decrypted?.info?.filename).toBe(image.filename)
         expect(decrypted?.encryption.case).toBe(chunkedMediaInfo.encryption.case)
         expect(decrypted?.encryption.value?.secretKey).toBeDefined()
+    })
+
+    test('setUserBio', async () => {
+        await expect(await bobsClient.initializeUser()).toResolve()
+        bobsClient.startSync()
+        const streamId = bobsClient.userMetadataStreamId!
+        const userMetadataStream = await bobsClient.waitForStream(streamId)
+
+        expect(userMetadataStream).toBeDefined()
+        expect(
+            userMetadataStream.view.snapshot?.content.case === 'userMetadataContent' &&
+                userMetadataStream.view.snapshot?.content.value.profileImage === undefined,
+        ).toBe(true)
+
+        const bio = new UserBio({ bio: 'Hello, world!' })
+        const { eventId } = await bobsClient.setUserBio(bio)
+        expect(await waitFor(() => userMetadataStream.view.events.has(eventId))).toBe(true)
+
+        const decrypted = await bobsClient.getUserBio(bobsClient.userId)
+        expect(decrypted).toStrictEqual(bio)
     })
 })

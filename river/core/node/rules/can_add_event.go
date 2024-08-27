@@ -331,6 +331,9 @@ func (params *aeParams) canAddUserMetadataPayload(payload *StreamEvent_UserMetad
 	case *UserMetadataPayload_ProfileImage:
 		return aeBuilder().
 			check(params.creatorIsMember)
+	case *UserMetadataPayload_Bio:
+		return aeBuilder().
+			check(params.creatorIsMember)
 	default:
 		return aeBuilder().
 			fail(unknownContentType(content))

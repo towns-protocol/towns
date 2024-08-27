@@ -7,6 +7,7 @@ import {
     UserMetadataPayload_Snapshot,
     ChunkedMedia,
     type EncryptedData,
+    UserBio,
 } from '@river-build/proto'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { check } from '@river-build/dlog'
@@ -21,9 +22,12 @@ export class StreamStateView_UserMetadata extends StreamStateView_AbstractConten
     readonly streamCreatorId: string
     private profileImage: ChunkedMedia | undefined
     private encryptedProfileImage: EncryptedData | undefined
-    private decryptionInProgress:
-        | { encryptedData: EncryptedData; promise: Promise<ChunkedMedia | undefined> }
-        | undefined
+    private bio: UserBio | undefined
+    private encryptedBio: EncryptedData | undefined
+    private decryptionInProgress: {
+        bio: Promise<UserBio> | undefined
+        image: Promise<ChunkedMedia> | undefined
+    } = { bio: undefined, image: undefined }
 
     // user_id -> device_keys, fallback_keys
     readonly deviceKeys: UserDevice[] = []
@@ -45,6 +49,9 @@ export class StreamStateView_UserMetadata extends StreamStateView_AbstractConten
         }
         if (content.profileImage?.data) {
             this.addProfileImage(content.profileImage.data)
+        }
+        if (content.bio?.data) {
+            this.addBio(content.bio.data)
         }
     }
 
@@ -73,6 +80,9 @@ export class StreamStateView_UserMetadata extends StreamStateView_AbstractConten
                 break
             case 'profileImage':
                 this.addProfileImage(payload.content.value, stateEmitter)
+                break
+            case 'bio':
+                this.addBio(payload.content.value, stateEmitter)
                 break
             case undefined:
                 break
@@ -107,43 +117,94 @@ export class StreamStateView_UserMetadata extends StreamStateView_AbstractConten
         stateEmitter?.emit('userProfileImageUpdated', this.streamId)
     }
 
+    private addBio(
+        data: EncryptedData,
+        stateEmitter?: TypedEmitter<StreamStateEvents> | undefined,
+    ) {
+        this.encryptedBio = data
+        stateEmitter?.emit('userBioUpdated', this.streamId)
+    }
+
     public async getProfileImage() {
         // if we have an encrypted space image, decrypt it
         if (this.encryptedProfileImage) {
             const encryptedData = this.encryptedProfileImage
             this.encryptedProfileImage = undefined
             this.decryptionInProgress = {
-                promise: this.decryptProfileImage(encryptedData),
-                encryptedData,
+                ...this.decryptionInProgress,
+                image: this.decrypt(
+                    encryptedData,
+                    (decrypted) => {
+                        const profileImage = ChunkedMedia.fromBinary(decrypted)
+                        this.profileImage = profileImage
+                        return profileImage
+                    },
+                    () => {
+                        this.decryptionInProgress = {
+                            ...this.decryptionInProgress,
+                            image: undefined,
+                        }
+                    },
+                ),
             }
-            return this.decryptionInProgress.promise
+            return this.decryptionInProgress.image
         }
 
         // if there isn't an updated encrypted profile image, but a decryption is
         // in progress, return the promise
-        if (this.decryptionInProgress) {
-            return this.decryptionInProgress.promise
+        if (this.decryptionInProgress.image) {
+            return this.decryptionInProgress.image
         }
 
         return this.profileImage
     }
 
-    private async decryptProfileImage(
+    public async getBio() {
+        // if we have an encrypted bio, decrypt it
+        if (this.encryptedBio) {
+            const encryptedData = this.encryptedBio
+            this.encryptedBio = undefined
+            this.decryptionInProgress = {
+                ...this.decryptionInProgress,
+                bio: this.decrypt(
+                    encryptedData,
+                    (plaintext) => {
+                        const bioPlaintext = UserBio.fromBinary(plaintext)
+                        this.bio = bioPlaintext
+                        return bioPlaintext
+                    },
+                    () => {
+                        this.decryptionInProgress = {
+                            ...this.decryptionInProgress,
+                            bio: undefined,
+                        }
+                    },
+                ),
+            }
+            return this.decryptionInProgress.bio
+        }
+
+        // if there isn't an updated encrypted bio, but a decryption is
+        // in progress, return the promise
+        if (this.decryptionInProgress.bio) {
+            return this.decryptionInProgress.bio
+        }
+
+        return this.bio
+    }
+
+    private async decrypt<T>(
         encryptedData: EncryptedData,
-    ): Promise<ChunkedMedia | undefined> {
+        onDecrypted: (decrypted: Uint8Array) => T,
+        cleanup: () => void,
+    ): Promise<T> {
         try {
             const userId = getUserIdFromStreamId(this.streamId)
             const context = userId.toLowerCase()
             const plaintext = await decryptDerivedAESGCM(context, encryptedData)
-            const decryptedImage = ChunkedMedia.fromBinary(plaintext)
-            if (encryptedData === this.decryptionInProgress?.encryptedData) {
-                this.profileImage = decryptedImage
-            }
-            return decryptedImage
+            return onDecrypted(plaintext)
         } finally {
-            if (encryptedData === this.decryptionInProgress?.encryptedData) {
-                this.decryptionInProgress = undefined
-            }
+            cleanup()
         }
     }
 }

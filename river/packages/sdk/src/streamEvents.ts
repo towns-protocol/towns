@@ -65,6 +65,7 @@ export type StreamStateEvents = {
     userLeftStream: (streamId: string) => void
     userStreamMembershipChanged: (streamId: string, payload: UserPayload_UserMembership) => void
     userProfileImageUpdated: (streamId: string) => void
+    userBioUpdated: (streamId: string) => void
     userInboxDeviceSummaryUpdated: (
         streamId: string,
         deviceKey: string,

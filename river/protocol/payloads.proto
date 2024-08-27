@@ -185,3 +185,7 @@ message ChunkedMedia {
         AESGCM aesgcm = 101;
     }
 }
+
+message UserBio {
+    string bio = 1;
+}

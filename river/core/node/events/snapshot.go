@@ -383,6 +383,9 @@ func update_Snapshot_UserMetadata(
 	case *UserMetadataPayload_ProfileImage:
 		snapshot.UserMetadataContent.ProfileImage = &WrappedEncryptedData{Data: content.ProfileImage, EventNum: eventNum, EventHash: eventHash}
 		return nil
+	case *UserMetadataPayload_Bio:
+		snapshot.UserMetadataContent.Bio = &WrappedEncryptedData{Data: content.Bio, EventNum: eventNum, EventHash: eventHash}
+		return nil
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown user metadata payload type %T", userMetadataPayload.Content)
 	}
