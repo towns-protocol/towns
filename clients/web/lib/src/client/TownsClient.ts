@@ -28,7 +28,12 @@ import {
     decodeRuleDataV2,
     LegacyUpdateRoleParams,
 } from '@river-build/web3'
-import { ChannelMessage_Post_Mention, ChunkedMedia, FullyReadMarker } from '@river-build/proto'
+import {
+    ChannelMessage_Post_Mention,
+    ChunkedMedia,
+    FullyReadMarker,
+    UserBio,
+} from '@river-build/proto'
 import {
     ChannelTransactionContext,
     ChannelUpdateTransactionContext,
@@ -2294,6 +2299,13 @@ export class TownsClient
             throw new Error('No casablanca client')
         }
         await this.casablancaClient.setUserProfileImage(chunkedMedia)
+    }
+
+    public async setUserBio(bio: UserBio): Promise<void> {
+        if (!this.casablancaClient) {
+            throw new Error('No casablanca client')
+        }
+        await this.casablancaClient.setUserBio(bio)
     }
 
     /************************************************

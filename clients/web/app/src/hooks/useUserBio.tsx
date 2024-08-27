@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
 import { z } from 'zod'
-import { useOfflineStore } from 'use-towns-client'
+import { useOfflineStore, useTownsClient } from 'use-towns-client'
+import { UserBio } from '@river-build/proto'
 import { env } from 'utils'
 import { axiosClient } from '../api/apiClient'
 
@@ -18,10 +19,9 @@ export async function getUserBio(
     cachedBio: string | undefined,
     setOfflineUserBio: (walletAddress: string, bio: string) => void,
 ): Promise<string> {
-    const GATEWAY_SERVER_URL = env.VITE_GATEWAY_URL
-    const url = `${GATEWAY_SERVER_URL}/user/${walletAddress}/bio`
-
-    const userBio = await axiosClient.get(url)
+    const metadataUrl = new URL(env.VITE_RIVER_STREAM_METADATA_URL)
+    metadataUrl.pathname = `/user/${walletAddress}/bio`
+    const userBio = await axiosClient.get(metadataUrl.toString())
     const parseResult = zBioReadData.safeParse(userBio.data)
 
     if (!parseResult.success) {
@@ -32,14 +32,6 @@ export async function getUserBio(
     const bio = parseResult.data.bio
     setOfflineUserBio(walletAddress, bio)
     return bio
-}
-
-export async function setUserBio(walletAddress: string, bio: string): Promise<void> {
-    const GATEWAY_SERVER_URL = env.VITE_GATEWAY_URL
-    const url = `${GATEWAY_SERVER_URL}/user/${walletAddress}/bio`
-    await axiosClient.post(url, JSON.stringify({ bio: bio }), {
-        withCredentials: true,
-    })
 }
 
 export const useGetUserBio = (walletAddress: string | undefined) => {
@@ -68,27 +60,25 @@ export const useGetUserBio = (walletAddress: string | undefined) => {
     })
 }
 
-export const useSetUserBio = (walletAddress: string | undefined) => {
+export const useSetUserBio = (userId: string | undefined) => {
     const queryClient = useQueryClient()
+    const { offlineUserBioMap, setOfflineUserBio } = useOfflineStore()
+    const { client } = useTownsClient()
 
-    const _setUserBio = useCallback(
-        (bio: string) => {
-            if (!walletAddress) {
-                return Promise.reject('No wallet address')
+    const setUserBio = useCallback(
+        async (bio: string) => {
+            if (!userId) {
+                return
             }
-
-            return setUserBio(walletAddress, bio)
+            await client?.setUserBio(new UserBio({ bio }))
+            const updated = await getUserBio(userId, offlineUserBioMap[userId], setOfflineUserBio)
+            setOfflineUserBio(userId, updated)
+            queryClient.setQueryData([queryKey, userId], updated)
         },
-        [walletAddress],
+        [client, offlineUserBioMap, queryClient, setOfflineUserBio, userId],
     )
 
     return useMutation({
-        mutationFn: _setUserBio,
-        onSuccess: async () => {
-            return queryClient.invalidateQueries({ queryKey: [queryKey, walletAddress] })
-        },
-        onError: (error) => {
-            console.error('[useSetUserBio] error', error)
-        },
+        mutationFn: setUserBio,
     })
 }

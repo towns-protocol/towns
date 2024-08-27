@@ -78,7 +78,7 @@ export const UserProfile = (props: Props) => {
         [setNft, streamId],
     )
     const resolvedNft = useResolveNft({ walletAddress: userId ?? '', info: user?.nft })
-    const { mutateAsync: mutateAsyncBio } = useSetUserBio(abstractAccountAddress)
+    const { mutateAsync: mutateAsyncBio } = useSetUserBio(userId)
 
     const hasNftProfilePicture = useMemo(() => !!user?.nft, [user?.nft])
 
