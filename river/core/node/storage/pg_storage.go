@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"database/sql"
 	"embed"
 	"encoding/hex"
 	"fmt"
@@ -1394,7 +1395,7 @@ func getSSLMode(dbURL string) string {
 	return "disable"
 }
 
-func (s *PostgresEventStore) runMigrations() error {
+func (s *PostgresEventStore) runMigrations(ctx context.Context) error {
 	// Run migrations
 	iofsMigrationsDir, err := iofs.New(s.migrationDir, "migrations")
 	if err != nil {
@@ -1411,8 +1412,53 @@ func (s *PostgresEventStore) runMigrations() error {
 		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error creating migration instance")
 	}
 
+	// Get the current migration version before running Up()
+	beforeVersion, _, err := migration.Version()
+	if err != nil && err != migrate.ErrNilVersion {
+		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error fetching migration version before running migrations")
+	}
+	
+
 	if err = migration.Up(); err != nil && err != migrate.ErrNoChange {
 		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error running migrations")
+	}
+
+	// Get the migration version after running Up()
+	afterVersion, _, err := migration.Version()
+	if err != nil {
+		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error fetching migration version after running migrations")
+	}
+
+	// Trigger a full vacuum if we're upgrading to 5 to reclaim disk space
+	if beforeVersion < 5 && afterVersion == 5 {
+		// Run VACUUM FULL on the relevant tables
+		if err = s.vacuumTables(ctx, dbUrlWithSchema); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// vacuumTables runs VACUUM FULL on the list of tables
+func (s *PostgresEventStore) vacuumTables(ctx context.Context, dbUrlWithSchema string) error {
+	log := dlog.FromCtx(ctx)
+
+	db, err := sql.Open("postgres", dbUrlWithSchema)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	// Skipping miniblocks table as it can be very large and VACUUM FULL can take a long time
+	tables := []string{"miniblock_candidates", "es", "minipools"}
+
+	for _, table := range tables {
+		query := fmt.Sprintf("VACUUM FULL %s;", table)
+		if _, err := db.Exec(query); err != nil {
+			return WrapRiverError(Err_DB_OPERATION_FAILURE, err).Message("Error running VACUUM FULL").Tag("table", table)
+		}
+		log.Info("Successfully vacuumed table", "table", table)
 	}
 
 	return nil
@@ -1560,7 +1606,7 @@ func (s *PostgresEventStore) initStorage(ctx context.Context) error {
 		return err
 	}
 
-	err = s.runMigrations()
+	err = s.runMigrations(ctx)
 	if err != nil {
 		return err
 	}

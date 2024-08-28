@@ -1,6 +1,6 @@
 {
     "name": "@river-build/sdk",
-    "version": "0.0.50",
+    "version": "0.0.51",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
@@ -26,7 +26,6 @@
         "@bufbuild/protobuf": "^1.9.0",
         "@connectrpc/connect": "^1.4.0",
         "@connectrpc/connect-web": "^1.4.0",
-        "@datadog/browser-rum": "^5.8.0",
         "@ethereumjs/util": "^8.0.1",
         "@river-build/dlog": "workspace:^",
         "@river-build/encryption": "workspace:^",

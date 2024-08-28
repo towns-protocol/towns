@@ -324,6 +324,13 @@ func (cm *chainMonitor) RunWithBlockPeriod(
 				toBlock.SetUint64(fromBlock + 25)
 			}
 
+			// log when the chain monitor is fetching more than 1 block, this is an indication that either the
+			// chain monitor isn't able to keep up or the rpc node is having issues and importing chain segments
+			// instead of single blocks.
+			if fromBlock < toBlock.Uint64() {
+				log.Info("process chain segment", "from", fromBlock, "to", toBlock)
+			}
+
 			cm.mu.Lock()
 			query := cm.builder.Query()
 			query.FromBlock, query.ToBlock = new(big.Int).SetUint64(fromBlock), toBlock

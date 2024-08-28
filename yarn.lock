@@ -8264,7 +8264,6 @@ __metadata:
     "@bufbuild/protobuf": ^1.9.0
     "@connectrpc/connect": ^1.4.0
     "@connectrpc/connect-web": ^1.4.0
-    "@datadog/browser-rum": ^5.8.0
     "@ethereumjs/util": ^8.0.1
     "@jest/globals": ^29.6.2
     "@river-build/dlog": "workspace:^"

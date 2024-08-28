@@ -478,7 +478,7 @@ export async function createVersionedSpaceFromMembership(
                 settings: membership.settings,
                 permissions: membership.permissions,
                 requirements: {
-                    everyone: true,
+                    everyone: membership.requirements.everyone,
                     users: [],
                     ruleData: encodeRuleDataV2(
                         convertRuleDataV1ToV2(
@@ -523,7 +523,7 @@ export async function createVersionedSpace(
                     settings: createSpaceParams.membership.settings,
                     permissions: createSpaceParams.membership.permissions,
                     requirements: {
-                        everyone: true,
+                        everyone: createSpaceParams.membership.requirements.everyone,
                         users: [],
                         ruleData: encodeRuleDataV2(
                             convertRuleDataV1ToV2(

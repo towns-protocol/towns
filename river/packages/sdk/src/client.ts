@@ -2,7 +2,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-redundant-type-constituents */
 import { Message, PlainMessage } from '@bufbuild/protobuf'
-import { datadogRum } from '@datadog/browser-rum'
 import { Permission } from '@river-build/web3'
 import {
     MembershipOp,
@@ -350,10 +349,7 @@ export class Client
         this.syncedStreamsExtensions.start()
         const initializeUserEndTime = performance.now()
         const executionTime = initializeUserEndTime - initializeUserStartTime
-
-        datadogRum.addAction('userInitializationDuration', {
-            userInitializationDuration: executionTime,
-        })
+        this.logCall('initializeUser::executionTime', executionTime)
     }
 
     private async initUserStream(metadata: { spaceId: Uint8Array } | undefined) {

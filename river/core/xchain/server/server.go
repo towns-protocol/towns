@@ -529,7 +529,7 @@ func (x *xchain) getRuleData(
 	contractAddress common.Address,
 	client crypto.BlockchainClient,
 ) (*base.IRuleEntitlementBaseRuleDataV2, error) {
-	log := x.Log(ctx).With("function", "getRuleData", "req.txid", transactionId)
+	log := x.Log(ctx).With("function", "getRuleData", "req.txid", hex.EncodeToString(transactionId[:]))
 	queryable, err := base.NewEntitlementDataQueryable(contractAddress, client)
 	if err != nil {
 		return nil, x.handleContractError(log, err, "Failed to create EntitlementDataQueryable")

@@ -172,10 +172,12 @@ func (sc *SpaceContractV3) GetChannelEntitlementsForPermission(
 		channelId,
 		permission.String(),
 	)
-	log.Info(
+	if err != nil {
+		return nil, EMPTY_ADDRESS, err
+	}
+
+	log.Debug(
 		"Got channel entitlement data",
-		"err",
-		err,
 		"entitlement_data",
 		entitlementData,
 		"space_id",
@@ -185,9 +187,6 @@ func (sc *SpaceContractV3) GetChannelEntitlementsForPermission(
 		"permission",
 		permission.String(),
 	)
-	if err != nil {
-		return nil, EMPTY_ADDRESS, err
-	}
 
 	entitlements, err := sc.marshalEntitlements(ctx, entitlementData)
 	if err != nil {

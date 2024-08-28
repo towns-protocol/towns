@@ -10,7 +10,6 @@ import { check, dlog, dlogError } from '@river-build/dlog'
 import { Stream } from './stream'
 import { ClientInitStatus } from './types'
 import pLimit from 'p-limit'
-import { datadogRum } from '@datadog/browser-rum'
 
 interface StreamSyncItem {
     streamId: string
@@ -105,7 +104,7 @@ export class SyncedStreamsExtension {
             const initStreamsEndTime = performance.now()
             const executionTime = initStreamsEndTime - this.initStreamsStartTime
 
-            datadogRum.addAction('streamInitializationDuration', {
+            this.log('streamInitializationDuration', {
                 streamInitializationDuration: executionTime,
                 streamsInitializedFromCache: this.numStreamsLoadedFromCache,
                 streamsInitializedFromNetwork: this.numStreamsLoadedFromNetwork,
