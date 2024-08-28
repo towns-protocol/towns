@@ -176,6 +176,7 @@ locals {
   subdomain        = terraform.workspace == "omega" ? "@" : terraform.workspace
   hosted_zone_name = module.global_constants.river_delivery_hosted_zone_name
   host             = local.subdomain == "@" ? local.hosted_zone_name : "${local.subdomain}.${local.hosted_zone_name}"
+  base_url         = "https://${local.host}"
 }
 
 
@@ -257,6 +258,10 @@ resource "aws_ecs_task_definition" "fargate_task_definition" {
       {
         name  = "LOG_PRETTY",
         value = "false"
+      },
+      {
+        name  = "RIVER_STREAM_METADATA_BASE_URL",
+        value = local.base_url
       }
     ]
 
