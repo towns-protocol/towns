@@ -66,7 +66,7 @@ jobs:
               # https://linear.app/hnt-labs/issue/HNT-4569/change-paymaster-address-to-entrypoint-address-in-paymaster-proxy
               run: PORT=8787 yarn dev:local --var PAYMASTER_ADDRESS:0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789 SKIP_LIMIT_VERIFICATION:true SKIP_PRIVY_VERIFICATION:true PAYMASTER_RPC_URL:http://localhost:43371 PRIVY_APP_KEY:${{ secrets.PRIVY_APP_KEY }} PRIVY_APP_ID:clml5fp7s013vmf0fnkabuaiw ALCHEMY_API_KEY:FAKE AUTH_SECRET:foo ENVIRONMENT:development &
 
-            - name: Spin up stackup worker with fake privy verification and strict limits (includes new user flow)
+            - name: Spin up stackup worker with fake privy verification and strict limits
               working-directory: ./servers/workers/stackup-worker
               # PAYMASTER_ADDRESS is actually the entrypoint address and we need to change the name of this env var
               # https://linear.app/hnt-labs/issue/HNT-4569/change-paymaster-address-to-entrypoint-address-in-paymaster-proxy
@@ -88,9 +88,8 @@ jobs:
                   RIVER_ENV: local_multi
 
               working-directory: ./clients/web/userops
-              run: yarn test:userops:privy-wallet
+              run: yarn test:userops:random-wallet
 
-            # this also covers brand new users
             - name: Run @towns/userop package tests with max daily limits of 1
               timeout-minutes: 10
               env:
