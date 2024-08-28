@@ -160,7 +160,10 @@ export class SyncedStreams {
             // If the pending addSyncTask is already in progress, wait for it to complete
             logger.warn('startAddToSyncRequest: addSyncTask already exists')
             this.addSyncTask.then(() => {
-                this.addSyncTask = this.addSyncTaskFunction(syncCookie)
+                logger.info('previous addSyncTask completed, starting the new one')
+                this.addSyncTask = this.addSyncTaskFunction(syncCookie).then(() => {
+                    logger.info('newly started addSyncTask completed')
+                })
             })
         } else {
             this.addSyncTask = this.addSyncTaskFunction(syncCookie)
