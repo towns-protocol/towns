@@ -10,6 +10,7 @@ import { ELEMENT_LI, ELEMENT_LIC, ELEMENT_OL, ELEMENT_UL, unwrapList } from '@ud
 import { ELEMENT_PARAGRAPH } from '@udecode/plate-paragraph'
 import { ResetNodePluginRule } from '@udecode/plate-reset-node'
 import { getLowestBlockquoteNode, getLowestParagraphNode } from '../utils/helpers'
+import { isSelectionAtCodeBlockEnd } from '../utils/isSelectionAtCodeBlockEnd'
 
 type ResetNodePluginRuleWithHotKey = ResetNodePluginRule & { hotkey: string | string[] }
 
@@ -38,10 +39,18 @@ export const nodeResetRules: ResetNodePluginRuleWithHotKey[] = [
     },
     {
         ...resetBlockTypesCodeBlockRule,
-        hotkey: ['down', 'shift+enter'],
+        hotkey: 'shift+enter',
         predicate: isBlockAboveEmpty,
         onReset: (editor) => {
             editor.deleteBackward('block')
+            exitBreak(editor, {})
+        },
+    },
+    {
+        ...resetBlockTypesCodeBlockRule,
+        hotkey: 'down',
+        predicate: isSelectionAtCodeBlockEnd,
+        onReset: (editor) => {
             exitBreak(editor, {})
         },
     },
