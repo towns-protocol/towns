@@ -1,8 +1,7 @@
 import { LogsInitConfiguration, datadogLogs } from '@datadog/browser-logs'
+import datadogSDKPackageJSON from '@datadog/browser-logs/package.json'
+import webAppPackageJSON from '../package.json'
 import { env } from './utils'
-
-// TODO: see if we can pull this dynamically
-const HARDCODED_SDK_VERSION = '4.48.1'
 
 const getDDSettings = () => {
     if (env.VITE_DD_CLIENT_TOKEN) {
@@ -24,7 +23,12 @@ export const initDatadog = () => {
     const ddSettings = getDDSettings()
     if (ddSettings) {
         datadogLogs.init(ddSettings)
-        console.info(`datadogLogs initialized for env: ${ddSettings.env}`)
+        // logging with console.warn to make sure the logs make it to datadog
+        console.warn(`datadogLogs initialized`, {
+            sdkVersion: datadogSDKPackageJSON.version,
+            appVersion: webAppPackageJSON.version,
+            commitHash: VITE_APP_COMMIT_HASH,
+        })
     } else {
         console.warn('datadogLogs not initialized')
     }
@@ -39,17 +43,18 @@ export const getDDLogApiURL = () => {
     }
     const requestId = Math.random().toString(36).substring(2)
     const tags = [
-        `sdk_version:${HARDCODED_SDK_VERSION}`,
+        `sdk_version:${datadogSDKPackageJSON.version}`,
         `api:fetch`,
         `env:${ddSettings.env}`,
         `service:${ddSettings.service}`,
         `version:${ddSettings.version}`,
+        `via:url`,
     ].join(',')
     const queryParams = new URLSearchParams({
         ddsource: 'browser',
         ddtags: tags,
         'dd-api-key': ddSettings.clientToken,
-        'dd-evp-origin-version': HARDCODED_SDK_VERSION,
+        'dd-evp-origin-version': datadogSDKPackageJSON.version,
         'dd-evp-origin': 'browser',
         'dd-request-id': requestId,
     }).toString()
