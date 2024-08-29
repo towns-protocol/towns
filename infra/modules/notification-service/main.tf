@@ -235,13 +235,9 @@ resource "aws_ecs_task_definition" "fargate_task_definition" {
   task_role_arn      = aws_iam_role.ecs_task_execution_role.arn
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
 
-  # 4 vCPU
-  # TODO: observe performance & update
-  cpu = 4096
+  cpu = 512
 
-  # 30 GB
-  # TODO: observe performance & update
-  memory = 30720
+  memory = 1024
 
   requires_compatibilities = ["FARGATE"]
 

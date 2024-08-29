@@ -40,13 +40,13 @@ locals {
 
   dd_required_tags = "env:${terraform.workspace}, node_url:${local.node_url}"
 
-  total_vcpu   = 4096
-  total_memory = 30720
+  total_vcpu   = 1024
+  total_memory = 8192
 
-  dd_agent_cpu   = 1024
+  dd_agent_cpu   = 128
   river_node_cpu = local.total_vcpu - local.dd_agent_cpu
 
-  dd_agent_memory   = 1024
+  dd_agent_memory   = 256
   river_node_memory = local.total_memory - local.dd_agent_memory
 
   ephemeral_storage_size_in_gib = 100

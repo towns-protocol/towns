@@ -196,11 +196,9 @@ resource "aws_ecs_task_definition" "fargate_task_definition" {
   task_role_arn      = aws_iam_role.ecs_task_execution_role.arn
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
 
-  # TODO: observe performance & update
-  cpu = 4096
+  cpu = 512
 
-  # TODO: observe performance & update
-  memory = 8192
+  memory = 1024
 
   requires_compatibilities = ["FARGATE"]
 
@@ -312,8 +310,8 @@ resource "aws_ecs_task_definition" "fargate_task_definition" {
         "protocol" : "tcp"
       }]
 
-      cpu    = 1024
-      memory = 2048
+      cpu    = 384
+      memory = 768
 
       dependsOn = [
         {
