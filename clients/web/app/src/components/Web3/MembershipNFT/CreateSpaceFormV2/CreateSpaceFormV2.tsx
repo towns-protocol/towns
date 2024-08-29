@@ -42,7 +42,7 @@ import { TokenInfoBox } from '@components/TownPageLayout/TokenInfoBox'
 import { CreateSpaceAnimation } from '@components/SetupAnimation/CreateSpaceAnimation'
 import { SECOND_MS } from 'data/constants'
 import { AppBugReportButton } from '@components/AppBugReport/AppBugReportButton'
-import { UploadImageRequestConfig } from 'api/lib/uploadImage'
+import { UploadImageRequestConfig } from '@components/UploadImage/useOnImageChangeEvent'
 import { CreateSpaceFormV2SchemaType, schema } from './CreateSpaceFormV2.schema'
 import { AvatarPlaceholder } from '../AvatarPlaceholder'
 import { PanelType, TransactionDetails } from './types'
@@ -816,10 +816,10 @@ export const UploadImageField = ({
                         },
                     }}
                     clearErrors={clearErrors}
-                    overrideUploadCb={onUpload}
                     uploadIconSize="square_md"
                     uploadIconPosition={imageSrc ? 'topRight' : 'absoluteCenter'}
                     size={size ?? 'tabletToDesktop'}
+                    onUploadImage={onUpload}
                 >
                     <InteractiveTownsToken
                         mintMode

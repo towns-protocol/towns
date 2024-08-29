@@ -1,7 +1,6 @@
 import { Nft, useMemberOf, useUserLookup } from 'use-towns-client'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
-import { toast } from 'react-hot-toast/headless'
 import { isDefined } from '@river-build/sdk'
 import { AnimatePresence, MotionConfig } from 'framer-motion'
 import {
@@ -20,8 +19,6 @@ import {
 import { useSetUserBio } from 'hooks/useUserBio'
 import { TextArea } from 'ui/components/TextArea/TextArea'
 import { Spinner } from '@components/Spinner'
-import { errorHasInvalidCookieResponseHeader } from 'api/apiClient'
-import { InvalidCookieNotification } from '@components/Notifications/InvalidCookieNotification'
 import { LargeUploadImageTemplate } from '@components/UploadImage/LargeUploadImageTemplate'
 import { Avatar } from '@components/Avatar/Avatar'
 import {
@@ -38,8 +35,8 @@ import { ModalContainer } from '@components/Modals/ModalContainer'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { useDevice } from 'hooks/useDevice'
 import { VerifiedOnChainAssetTooltip } from '@components/VerifiedOnChainAssetTooltip/VerifiedOnChainAssetTooltip'
-import { UploadImageRequestConfig } from 'api/lib/uploadImage'
 import { useUploadAttachment } from '@components/MediaDropContext/useUploadAttachment'
+import { UploadImageRequestConfig } from '@components/UploadImage/useOnImageChangeEvent'
 import { UserWalletContent } from './UserWalletContent'
 
 type Props = {
@@ -120,18 +117,7 @@ export const UserProfile = (props: Props) => {
 
                 content = content?.trim() ?? ''
 
-                return mutateAsyncBio(content, {
-                    onError: (error) => {
-                        if (errorHasInvalidCookieResponseHeader(error)) {
-                            toast.custom((t) => (
-                                <InvalidCookieNotification
-                                    toast={t}
-                                    actionMessage="edit the description"
-                                />
-                            ))
-                        }
-                    },
-                })
+                return mutateAsyncBio(content)
             }
         }
     })
@@ -150,13 +136,13 @@ export const UserProfile = (props: Props) => {
                             register={register}
                             formState={formState}
                             clearErrors={clearErrors}
-                            overrideUploadCb={onUploadUserProfileImage}
                             imageRestrictions={{
                                 minDimension: {
                                     message: `Image is too small. Please upload an image with a minimum height & width of 300px.`,
                                     min: 300,
                                 },
                             }}
+                            onUploadImage={onUploadUserProfileImage}
                         >
                             <Stack centerContent aspectRatio="1/1">
                                 <Avatar

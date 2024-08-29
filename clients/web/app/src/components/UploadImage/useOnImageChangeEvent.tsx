@@ -1,7 +1,14 @@
 import { ChangeEvent, useMemo, useState } from 'react'
 import { FieldValues, Path, UseFormReturn } from 'react-hook-form'
-import { UploadImageRequestConfig } from 'api/lib/uploadImage'
 import { FetchImageResourceType, useFetchImage } from './useFetchImage'
+
+export type UploadImageRequestConfig = {
+    id: string
+    file: File
+    imageUrl: string
+    type: 'spaceIcon' | 'avatar'
+    setProgress: (progress: number) => void
+}
 
 export type UseOnImageChangeEventProps<T extends FieldValues> = {
     formFieldName: Path<T>
@@ -17,7 +24,7 @@ export type UseOnImageChangeEventProps<T extends FieldValues> = {
             min: number
         }
     }
-    overrideUploadCb?: (args: UploadImageRequestConfig) => void
+    onUploadImage?: (args: UploadImageRequestConfig) => void
 } & Pick<UseFormReturn<T>, 'setError' | 'clearErrors' | 'formState'>
 
 export function useOnImageChangeEvent<T extends FieldValues>({
@@ -27,7 +34,7 @@ export function useOnImageChangeEvent<T extends FieldValues>({
     setError,
     clearErrors,
     type,
-    overrideUploadCb,
+    onUploadImage,
 }: UseOnImageChangeEventProps<T>) {
     const _resourceId = useMemo(() => resourceId, [resourceId])
     const {
@@ -70,38 +77,13 @@ export function useOnImageChangeEvent<T extends FieldValues>({
                 return
             }
 
-            if (overrideUploadCb) {
-                overrideUploadCb({
-                    id: _resourceId,
-                    file: files[0],
-                    imageUrl: url,
-                    type,
-                    setProgress: setUploadProgress,
-                })
-            } else {
-                /*
-                upload(
-                    { id: _resourceId, file: files[0], type, imageUrl: url },
-                    {
-                        onError: (error) => {
-                            if (errorHasInvalidCookieResponseHeader(error)) {
-                                toast.custom((t) => (
-                                    <InvalidCookieNotification
-                                        toast={t}
-                                        actionMessage="upload an image"
-                                    />
-                                ))
-                            }
-
-                            setError?.(formFieldName, {
-                                message:
-                                    'There was an error uploading your image. Please try again.',
-                            })
-                        },
-                    },
-                )
-                    */
-            }
+            onUploadImage?.({
+                id: _resourceId,
+                file: files[0],
+                imageUrl: url,
+                type,
+                setProgress: setUploadProgress,
+            })
         }
     }
 

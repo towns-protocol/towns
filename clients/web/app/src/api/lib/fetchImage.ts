@@ -3,7 +3,7 @@ import { contractAddressFromSpaceId, isSpaceStreamId, isUserId } from '@river-bu
 import { axiosClient } from 'api/apiClient'
 import { env } from 'utils'
 
-export function getImageUrlFromStreamMetadata(resourceId: string): string | undefined {
+export function getImageUrlFromStreamMetadata(resourceId: string) {
     const imageServiceUrl = new URL(env.VITE_RIVER_STREAM_METADATA_URL)
     if (isSpaceStreamId(resourceId)) {
         const contractAddress = contractAddressFromSpaceId(resourceId)
@@ -14,7 +14,6 @@ export function getImageUrlFromStreamMetadata(resourceId: string): string | unde
         imageServiceUrl.pathname = `/user/${resourceId}/image`
         return imageServiceUrl.toString()
     }
-    return
 }
 
 export async function fetchSpaceImage(spaceId: string | undefined) {

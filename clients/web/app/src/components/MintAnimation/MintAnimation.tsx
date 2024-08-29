@@ -139,7 +139,7 @@ const AnimatedToken = (props: {
     translate: { x: number; y: number }
     targetCenter: { x: number; y: number }
     targetRect?: DOMRect
-    imageSrc: string
+    imageSrc?: string
     onDone: () => void
 }) => {
     const [shouldAnimateOut, setShouldAnimateOut] = React.useState(false)

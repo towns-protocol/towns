@@ -12,15 +12,11 @@ export const ImageVariants = {
 
 export type ImageVariant = (typeof ImageVariants)[keyof typeof ImageVariants]
 
-// for cache busting. we want a variable that will not change between mount/unmount, BUT is unique for each session.
-const dateNow = Date.now()
-
-export const useImageSource = (resourceId: string, variant: ImageVariant) => {
+export const useImageSource = (resourceId: string, _variant: ImageVariant) => {
     const storedImageUrl = useImageStore((state) => state.loadedResource[resourceId]?.imageUrl)
 
-    const externalImageUrl =
-        getImageUrlFromStreamMetadata(resourceId) ||
-        `https://imagedelivery.net/qaaQ52YqlPXKEVQhjChiDA/${resourceId}/${variant}` + `?${dateNow}`
+    // TODO: image variant
+    const externalImageUrl = getImageUrlFromStreamMetadata(resourceId)
 
     const [imageLoaded, setImageLoaded] = useState<boolean>(false)
     const [imageError, setImageError] = useState<boolean>(false)

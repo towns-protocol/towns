@@ -20,6 +20,7 @@ import {
     useUser,
 } from 'use-towns-client'
 import { isValidStreamId } from '@river-build/sdk'
+import { UploadImageRequestConfig } from '@components/UploadImage/useOnImageChangeEvent'
 import { EditTownInfo } from '@components/Panel/EditTownInfo'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { MembersPageTouchModal } from '@components/MembersPage/MembersPage'
@@ -53,7 +54,6 @@ import { useTokenMetadataForChainId } from 'api/lib/collectionMetadata'
 import { NetworkName } from '@components/Tokens/TokenSelector/NetworkName'
 import { useAppProgressStore } from '@components/AppProgressOverlay/store/appProgressStore'
 import { useNotificationSettings } from 'hooks/useNotificationSettings'
-import { UploadImageRequestConfig } from 'api/lib/uploadImage'
 import { useUploadAttachment } from '@components/MediaDropContext/useUploadAttachment'
 import { PublicTownPage } from './PublicTownPage/PublicTownPage'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
@@ -279,7 +279,6 @@ export const SpaceInfo = () => {
                                 register={register}
                                 formState={formState}
                                 clearErrors={clearErrors}
-                                overrideUploadCb={onUploadSpaceIcon}
                                 imageRestrictions={{
                                     // no limits on dimensions for spaces
                                     minDimension: {
@@ -287,6 +286,7 @@ export const SpaceInfo = () => {
                                         min: 0,
                                     },
                                 }}
+                                onUploadImage={onUploadSpaceIcon}
                             >
                                 <TownContractOpener address={address}>
                                     <InteractiveSpaceIcon

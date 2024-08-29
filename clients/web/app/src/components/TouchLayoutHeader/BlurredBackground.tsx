@@ -4,7 +4,7 @@ import { MotionBoxProps } from 'ui/components/Motion/MotionComponents'
 import * as styles from './BlurredBackground.css'
 
 type Props = {
-    imageSrc: string
+    imageSrc: string | undefined
     blur?: number
     height?: BoxProps['height']
     initial?: MotionBoxProps['initial']

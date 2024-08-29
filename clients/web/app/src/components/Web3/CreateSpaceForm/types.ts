@@ -1,4 +1,4 @@
-import { UploadImageRequestConfig } from 'api/lib/uploadImage'
+import { UploadImageRequestConfig } from '@components/UploadImage/useOnImageChangeEvent'
 import { MEMBERSHIP_TYPE, SPACE_NAME } from '../constants'
 
 // export type TokenDataStruct = {
