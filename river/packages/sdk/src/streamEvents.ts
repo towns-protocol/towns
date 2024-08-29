@@ -81,6 +81,7 @@ export type StreamStateEvents = {
         hideUserJoinLeaveEvents: boolean,
     ) => void
     spaceChannelDeleted: (spaceId: string, channelId: string) => void
+    spaceImageUpdated: (spaceId: string) => void
     channelPinAdded: (channelId: string, pin: Pin) => void
     channelPinRemoved: (channelId: string, pin: Pin, index: number) => void
     channelPinDecrypted: (channelId: string, pin: Pin, index: number) => void
