@@ -463,6 +463,14 @@ func (r *streamViewImpl) indexOfMiniblockWithNum(mininblockNum int64) (int, erro
 	)
 }
 
+func (r *streamViewImpl) blockWithNum(mininblockNum int64) (*MiniblockInfo, error) {
+	index, err := r.indexOfMiniblockWithNum(mininblockNum)
+	if err != nil {
+		return nil, err
+	}
+	return r.blocks[index], nil
+}
+
 // iterate over events starting at startBlock including events in the minipool
 func (r *streamViewImpl) forEachEvent(
 	startBlock int,

@@ -516,6 +516,8 @@ export class Client
                 await this.streams.addStreamToSync(stream.view.syncCookie)
             }
         } catch (err) {
+            this.logError('Failed to initialize stream', streamId)
+            this.streams.delete(streamId)
             this.creatingStreamIds.delete(streamId)
             throw err
         }
@@ -1072,7 +1074,11 @@ export class Client
             return stream
         }
         const logId = opts?.logId ? opts.logId + ' ' : ''
-        const timeoutError = new Error(`waitForStream: timeout waiting for ${logId}${streamId}`)
+        const timeoutError = new Error(
+            `waitForStream: timeout waiting for ${logId}${streamId} creating streams: ${Array.from(
+                this.creatingStreamIds,
+            ).join(',')}`,
+        )
         await new Promise<void>((resolve, reject) => {
             const timeout = setTimeout(() => {
                 this.off('streamInitialized', handler)

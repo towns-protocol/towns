@@ -228,6 +228,9 @@ jobs:
             - name: Install node dependencies
               run: yarn install --immutable
 
+            - name: Build all packages
+              run: yarn build
+
             - name: Print versions
               run: ./scripts/print-versions.sh
 
@@ -266,17 +269,24 @@ jobs:
                   echo "NODE_EXTRA_CA_CERTS=$HOME/river-ca-cert.pem" >> $GITHUB_ENV
 
             - name: Run multiple nodes
+              working-directory: core/node
               run: |
-                  cd ./core/node
                   ./run_multi.sh --de -c
                   ./run_multi.sh --de -r &
                   for i in {5180..5189}; do yarn wait-on https://localhost:$i/debug/multi --timeout=900000 --i=5000 --verbose; done
 
             - name: Run SDK Tests (without entitlements)
+              working-directory: packages/sdk
+              run: yarn test:ci:multi:ne
+
+            - name: Run Stream Metadata Nodes
               run: |
-                  yarn run turbo run build
-                  cd packages/sdk
-                  yarn test:ci:multi:ne
+                  yarn workspace @river-build/stream-metadata dev:local_multi_ne &
+                  yarn wait-on http://localhost:3003/health --timeout=120000 --i=5000 --verbose
+
+            - name: Run Stream Metadata Tests (without entitlements)
+              working-directory: packages/stream-metadata
+              run: yarn test:integration
 
             - name: Archive River Node Logs and Settings
               if: always()

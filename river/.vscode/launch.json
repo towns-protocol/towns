@@ -83,5 +83,30 @@
       "args": ["${file}", "--config", "${workspaceFolder}/packages/stress/jest.config.ts", "-i", "--no-cache", "--forceExit"],
       "console": "integratedTerminal",
     },
+    {
+      "name": "Jest: current file in 'packages/stream-metadata (local_multi_ne)'",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/packages/stream-metadata",
+      "program": "${workspaceFolder}/node_modules/.bin/jest",
+      "runtimeArgs": [
+        "--experimental-vm-modules"
+      ],
+      "args": [
+        "${relativeFile}",
+        "--config",
+        "${workspaceFolder}/packages/stream-metadata/jest.config.ts",
+        "--runInBand",
+        "--no-cache",
+        "--forceExit"
+      ],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "env": {
+        "NODE_TLS_REJECT_UNAUTHORIZED": "0",
+        "RIVER_ENV": "local_multi_ne",
+        "PORT": "3003",
+      }
+    }
   ]
 }

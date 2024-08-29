@@ -45,11 +45,34 @@
         "stateMutability": "nonpayable",
         "type": "function",
         "name": "setEntitled"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes4",
+            "name": "interfaceId",
+            "type": "bytes4"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function",
+        "name": "supportsInterface",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ]
       }
     ],
     "devdoc": {
       "kind": "dev",
-      "methods": {},
+      "methods": {
+        "supportsInterface(bytes4)": {
+          "details": "Returns true if this contract implements the interface defined by `interfaceId`. See the corresponding https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified[EIP section] to learn more about how these ids are created. This function call must use less than 30 000 gas."
+        }
+      },
       "version": 1
     },
     "userdoc": {
@@ -86,18 +109,26 @@
   },
   "sources": {
     "contracts/src/spaces/entitlements/ICustomEntitlement.sol": {
-      "keccak256": "0x228e49e82d252c14776d6230e33ca144f3356d691aa38f361b3e8c9581e1d746",
+      "keccak256": "0x898618a1c86c7e561c79d39e82a0d1fb9823525ac95d3efb08af779b6f6cbd5c",
       "urls": [
-        "bzz-raw://ad378879fbd8021da9861042be4249ad532646156352e444f177a3b941252e7a",
-        "dweb:/ipfs/QmWcF7qipqDSwMDATBtwNDoyJtzA9zNsHzWwYwWf2rJqcc"
+        "bzz-raw://f56813e903bf9dc5cd19adde95722067c100d34978c21cc1f9d9921982e5cfd6",
+        "dweb:/ipfs/QmVu6zNqfbnAUzF1AmenknzNHuMMPiB2agRLGUkGqXuE4a"
       ],
       "license": "MIT"
     },
     "contracts/test/mocks/MockCustomEntitlement.sol": {
-      "keccak256": "0x99a8c364152ef8f6a33bb93c8b2df6d29541a56cb2129a6d3260aecb1a0d0077",
+      "keccak256": "0x4dd6c3ff7f64fa4ddf3da7ae761db83d55246db42560dc1c3b79737cdabf3565",
       "urls": [
-        "bzz-raw://b6a13501aadf349bb71309de5760dfe7971634e8dcff329e0ae8295b8830aace",
-        "dweb:/ipfs/QmT8xRoZX8gCWaNo1BPZia9GrEkCtthuxpYFFJ1dwoy46Y"
+        "bzz-raw://a619b4a850a39345d46a2e528ec7290d8f733f443f21f5ed20d416ef13c69792",
+        "dweb:/ipfs/QmZmfvNRyaXJkiKN3dG7GoTUB3f2aRXnnWHgaUentNABQc"
+      ],
+      "license": "MIT"
+    },
+    "lib/@openzeppelin/contracts/utils/introspection/IERC165.sol": {
+      "keccak256": "0x4296879f55019b23e135000eb36896057e7101fb7fb859c5ef690cf14643757b",
+      "urls": [
+        "bzz-raw://87b3541437c8c443ccd36795e56a338ed12855eec17f8da624511b8d1a7e14df",
+        "dweb:/ipfs/QmeJQCtZrQjtJLr6u7ZHWeH3pBnjtLWzvRrKViAi7UZqxL"
       ],
       "license": "MIT"
     }

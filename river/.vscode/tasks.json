@@ -163,16 +163,6 @@
       }
     },
     {
-      "label": "Start Load Testing Redis",
-      "type": "shell",
-      "command": "./scripts/start-load-testing-redis.sh",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "local-servers"
-      }
-    },
-    {
       "label": "Start Stress Testing Redis",
       "type": "shell",
       "command": "./packages/stress/scripts/start_redis.sh",

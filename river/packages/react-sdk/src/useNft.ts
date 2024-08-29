@@ -2,7 +2,10 @@ import type { Member, MemberNft, Myself } from '@river-build/sdk'
 import { ObservableConfig, useObservable } from './useObservable'
 import { type ActionConfig, useAction } from './internals/useAction'
 
-export const useNft = (member: Member, config?: ObservableConfig.FromObservable<MemberNft>) => {
+export const useNft = (
+    member: Member | Myself,
+    config?: ObservableConfig.FromObservable<MemberNft>,
+) => {
     const { data, ...rest } = useObservable(member?.observables.nft, config)
     return {
         ...data,

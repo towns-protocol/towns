@@ -1,6 +1,44 @@
 {
 	"root": true,
-	"extends": ["@river-build/eslint-config/typescript"],
+	"extends": [
+		"@river-build/eslint-config/typescript",
+		"eslint:recommended",
+		"plugin:import/recommended",
+		"plugin:import/typescript",
+		"plugin:@typescript-eslint/recommended",
+		"plugin:@typescript-eslint/recommended-requiring-type-checking",
+		"plugin:prettier/recommended",
+		"plugin:jest/recommended"
+	],
 	"parser": "@typescript-eslint/parser",
-	"parserOptions": { "project": ["./tsconfig.json"] }
+	"parserOptions": {
+		"project": "./tsconfig.json"
+	},
+	"plugins": ["@typescript-eslint", "import"],
+	"settings": {
+		"import/resolver": {
+			"typescript": {
+				"project": ["./tsconfig.json", "./tsconfig.test.json"]
+			}
+		}
+	},
+	"ignorePatterns": ["dist/**", ".turbo/**", "node_modules/**"],
+	"overrides": [
+		{
+			"files": ["tests/**/*.ts"],
+			"parserOptions": {
+				"project": "./tsconfig.test.json"
+			},
+			"rules": {
+				"jest/no-standalone-expect": "off",
+				"jest/expect-expect": "off",
+				"jest/no-conditional-expect": "off",
+				"jest/no-disabled-tests": "off",
+				"@typescript-eslint/no-unsafe-call": "off",
+				"@typescript-eslint/no-non-null-assertion": "off",
+				"@typescript-eslint/no-unsafe-argument": "off",
+				"no-console": "off" // Allow console.log in tests
+			}
+		}
+	]
 }

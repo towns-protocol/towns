@@ -6,7 +6,7 @@ import { config } from './environment'
 let riverRegistry: ReturnType<typeof createRiverRegistry> | undefined
 
 function createRiverRegistry() {
-	const provider = new ethers.providers.JsonRpcProvider(config.riverChainRpcUrl)
+	const provider = new ethers.providers.StaticJsonRpcProvider(config.riverChainRpcUrl)
 	return new RiverRegistry(config.web3Config.river, provider)
 }
 

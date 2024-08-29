@@ -188,6 +188,22 @@ func (s *streamImpl) PromoteCandidate(ctx context.Context, mbHash common.Hash, m
 		}
 	}
 
+	// Check if the miniblock is already applied.
+	if mbNum <= s.view.LastBlock().Num {
+		// Log error if hash doesn't match.
+		mb, _ := s.view.blockWithNum(mbNum)
+		if mb != nil && mbHash != mb.Hash {
+			dlog.FromCtx(ctx).Error("PromoteCandidate: Miniblock is already applied",
+				"streamId", s.streamId,
+				"blockNum", mbNum,
+				"blockHash", mbHash,
+				"lastBlockNum", s.view.LastBlock().Num,
+				"lastBlockHash", s.view.LastBlock().Hash,
+			)
+		}
+		return nil
+	}
+
 	miniblockBytes, err := s.params.Storage.ReadMiniblockCandidate(ctx, s.streamId, mbHash, mbNum)
 	if err != nil {
 		return err

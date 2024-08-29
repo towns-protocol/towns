@@ -3,7 +3,7 @@ import { ObservableConfig, useObservable } from './useObservable'
 import { type ActionConfig, useAction } from './internals/useAction'
 
 export const useDisplayName = (
-    member: Member,
+    member: Member | Myself,
     config?: ObservableConfig.FromObservable<MemberDisplayName>,
 ) => {
     const { data, ...rest } = useObservable(member?.observables.displayName, config)

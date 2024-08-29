@@ -1,17 +1,37 @@
 import type { Address } from '@river-build/web3'
-import type { Store } from '../../../store/store'
 import type { RiverConnection } from '../../river-connection/riverConnection'
 import { type NftModel } from './metadata/nft'
 import { addressFromUserId } from '../../../id'
 import { Member } from './member'
 
-export class Myself extends Member {
+export class Myself {
+    observables: Member['observables']
     constructor(
-        private streamId: string,
+        public member: Member,
+        protected streamId: string,
         protected riverConnection: RiverConnection,
-        store: Store,
     ) {
-        super(riverConnection.userId, streamId, riverConnection, store)
+        this.observables = member.observables
+    }
+
+    get username() {
+        return this.member.username
+    }
+
+    get displayName() {
+        return this.member.displayName
+    }
+
+    get ensAddress() {
+        return this.member.ensAddress
+    }
+
+    get nft() {
+        return this.member.nft
+    }
+
+    get membership() {
+        return this.member.membership
     }
 
     async setUsername(username: string) {

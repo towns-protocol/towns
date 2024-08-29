@@ -23,16 +23,27 @@ import type {
 export interface ICustomEntitlementInterface extends utils.Interface {
   functions: {
     "isEntitled(address[])": FunctionFragment;
+    "supportsInterface(bytes4)": FunctionFragment;
   };
 
-  getFunction(nameOrSignatureOrTopic: "isEntitled"): FunctionFragment;
+  getFunction(
+    nameOrSignatureOrTopic: "isEntitled" | "supportsInterface"
+  ): FunctionFragment;
 
   encodeFunctionData(
     functionFragment: "isEntitled",
     values: [PromiseOrValue<string>[]]
   ): string;
+  encodeFunctionData(
+    functionFragment: "supportsInterface",
+    values: [PromiseOrValue<BytesLike>]
+  ): string;
 
   decodeFunctionResult(functionFragment: "isEntitled", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "supportsInterface",
+    data: BytesLike
+  ): Result;
 
   events: {};
 }
@@ -68,6 +79,11 @@ export interface ICustomEntitlement extends BaseContract {
       user: PromiseOrValue<string>[],
       overrides?: CallOverrides
     ): Promise<[boolean]>;
+
+    supportsInterface(
+      interfaceId: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<[boolean]>;
   };
 
   isEntitled(
@@ -75,9 +91,19 @@ export interface ICustomEntitlement extends BaseContract {
     overrides?: CallOverrides
   ): Promise<boolean>;
 
+  supportsInterface(
+    interfaceId: PromiseOrValue<BytesLike>,
+    overrides?: CallOverrides
+  ): Promise<boolean>;
+
   callStatic: {
     isEntitled(
       user: PromiseOrValue<string>[],
+      overrides?: CallOverrides
+    ): Promise<boolean>;
+
+    supportsInterface(
+      interfaceId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<boolean>;
   };
@@ -89,11 +115,21 @@ export interface ICustomEntitlement extends BaseContract {
       user: PromiseOrValue<string>[],
       overrides?: CallOverrides
     ): Promise<BigNumber>;
+
+    supportsInterface(
+      interfaceId: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
   };
 
   populateTransaction: {
     isEntitled(
       user: PromiseOrValue<string>[],
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    supportsInterface(
+      interfaceId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
   };

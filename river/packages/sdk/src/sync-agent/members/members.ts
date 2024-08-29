@@ -54,20 +54,18 @@ export class Members extends PersistedObservable<MembersModel> {
         })
     }
 
-    // Lazy loading the myself object, so we dont create unneeded e.g: if we're not in the stream yet
-    // but we create it if we want to access it
     get myself() {
-        if (this._myself) return this._myself
-        this._myself = new Myself(this.data.id, this.riverConnection, this.store)
-        this._myself.onStreamInitialized(this.data.id)
-        return this._myself
+        if (this._myself) {
+            return this._myself
+        }
+        const member = this.get(this.riverConnection.userId)
+        const my = new Myself(member, this.data.id, this.riverConnection)
+        this._myself = my
+        return my
     }
 
     get(userId: string) {
         check(isUserId(userId), 'invalid user id')
-        if (userId === this.riverConnection.userId) {
-            return this.myself
-        }
         // Its possible to get a member that its not in the userIds array, if the user left the stream for example
         // We can get a member that left, to get the last snapshot of the member
         if (!this.members[userId]) {
@@ -98,16 +96,14 @@ export class Members extends PersistedObservable<MembersModel> {
             (member) => member.userId,
         )
         for (const userId of userIds) {
-            if (userId !== this.riverConnection.userId) {
-                if (!this.members[userId]) {
-                    this.members[userId] = new Member(
-                        userId,
-                        streamId,
-                        this.riverConnection,
-                        this.store,
-                    )
-                    this.members[userId].onStreamInitialized(streamId)
-                }
+            if (!this.members[userId]) {
+                this.members[userId] = new Member(
+                    userId,
+                    streamId,
+                    this.riverConnection,
+                    this.store,
+                )
+                this.members[userId].onStreamInitialized(streamId)
             }
         }
         this.setData({ initialized: true, userIds })
@@ -130,52 +126,28 @@ export class Members extends PersistedObservable<MembersModel> {
     private onMemberJoin = (streamId: string, userId: string): void => {
         if (streamId !== this.data.id) return
         this.setData({ userIds: [...this.data.userIds, userId] })
-        if (userId === this.riverConnection.userId) {
-            if (!this._myself) {
-                this._myself = new Myself(streamId, this.riverConnection, this.store)
-                this._myself.onStreamInitialized(streamId)
-            }
-        } else {
-            if (!this.members[userId]) {
-                this.members[userId] = new Member(
-                    userId,
-                    streamId,
-                    this.riverConnection,
-                    this.store,
-                )
-                this.members[userId].onStreamInitialized(streamId)
-                this.members[userId].observables.membership.onStreamMembershipUpdated(
-                    streamId,
-                    userId,
-                    MembershipOp.SO_JOIN,
-                )
-            }
+        if (!this.members[userId]) {
+            this.members[userId] = new Member(userId, streamId, this.riverConnection, this.store)
+            this.members[userId].onStreamInitialized(streamId)
+            this.members[userId].observables.membership.onStreamMembershipUpdated(
+                streamId,
+                userId,
+                MembershipOp.SO_JOIN,
+            )
         }
     }
 
     private onMemberInvite = (streamId: string, userId: string): void => {
         if (streamId !== this.data.id) return
         this.setData({ userIds: [...this.data.userIds, userId] })
-        if (userId === this.riverConnection.userId) {
-            if (!this._myself) {
-                this._myself = new Myself(streamId, this.riverConnection, this.store)
-                this._myself.onStreamInitialized(streamId)
-            }
-        } else {
-            if (!this.members[userId]) {
-                this.members[userId] = new Member(
-                    userId,
-                    streamId,
-                    this.riverConnection,
-                    this.store,
-                )
-                this.members[userId].onStreamInitialized(streamId)
-                this.members[userId].observables.membership.onStreamMembershipUpdated(
-                    streamId,
-                    userId,
-                    MembershipOp.SO_INVITE,
-                )
-            }
+        if (!this.members[userId]) {
+            this.members[userId] = new Member(userId, streamId, this.riverConnection, this.store)
+            this.members[userId].onStreamInitialized(streamId)
+            this.members[userId].observables.membership.onStreamMembershipUpdated(
+                streamId,
+                userId,
+                MembershipOp.SO_INVITE,
+            )
         }
     }
 

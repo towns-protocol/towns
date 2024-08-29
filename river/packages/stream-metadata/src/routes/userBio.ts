@@ -1,19 +1,25 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { StreamPrefix, StreamStateView, makeStreamId } from '@river-build/sdk'
+import { z } from 'zod'
 
 import { getStream } from '../riverStreamRpcClient'
 import { isValidEthereumAddress } from '../validators'
 
+const paramsSchema = z.object({
+	userId: z.string().min(1, 'userId parameter is required'),
+})
+
 export async function fetchUserBio(request: FastifyRequest, reply: FastifyReply) {
 	const logger = request.log.child({ name: fetchUserBio.name })
-	const { userId } = request.params as { userId?: string }
+	const parseResult = paramsSchema.safeParse(request.params)
 
-	if (!userId) {
-		logger.info('userId parameter is required')
-		return reply
-			.code(400)
-			.send({ error: 'Bad Request', message: 'userId parameter is required' })
+	if (!parseResult.success) {
+		const errorMessage = parseResult.error.errors[0]?.message || 'Invalid parameters'
+		logger.info(errorMessage)
+		return reply.code(400).send({ error: 'Bad Request', message: errorMessage })
 	}
+
+	const { userId } = parseResult.data
 
 	if (!isValidEthereumAddress(userId)) {
 		logger.info({ userId }, 'Invalid userId')

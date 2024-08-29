@@ -127,11 +127,11 @@ export async function fetchSpaceImage(request: FastifyRequest, reply: FastifyRep
 	return reply.header('Content-Type', mimeType).send(Buffer.from(data))
 }
 
-async function getSpaceImage(streamView: StreamStateView): Promise<ChunkedMedia | undefined> {
+export async function getSpaceImage(
+	streamView: StreamStateView,
+): Promise<ChunkedMedia | undefined> {
 	if (streamView.contentKind !== 'spaceContent') {
 		return undefined
 	}
-
-	const spaceImage = await streamView.spaceContent.getSpaceImage()
-	return spaceImage
+	return streamView.spaceContent.getSpaceImage()
 }

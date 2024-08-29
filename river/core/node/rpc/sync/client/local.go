@@ -100,7 +100,7 @@ func (s *localSyncer) OnUpdate(r *StreamAndCookie) {
 	default:
 		err := RiverError(Err_BUFFER_FULL, "Client sync subscription message channel is full").
 			Tag("syncId", s.globalSyncOpID).
-			Func("sendSyncStreamResponseToClient")
+			Func("OnUpdate")
 
 		_ = err.LogError(dlog.FromCtx(s.syncStreamCtx))
 

@@ -3,7 +3,7 @@ import { ObservableConfig, useObservable } from './useObservable'
 import { type ActionConfig, useAction } from './internals/useAction'
 
 export const useEnsAddress = (
-    member: Member,
+    member: Member | Myself,
     config?: ObservableConfig.FromObservable<MemberEnsAddress>,
 ) => {
     const { data, ...rest } = useObservable(member?.observables.ensAddress, config)

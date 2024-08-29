@@ -29,6 +29,7 @@ type remoteSyncer struct {
 	messages           chan<- *SyncStreamsResponse
 	streams            sync.Map
 	responseStream     *connect.ServerStreamForClient[SyncStreamsResponse]
+	unsubStream        func(streamID StreamId)
 }
 
 func newRemoteSyncer(
@@ -38,6 +39,7 @@ func newRemoteSyncer(
 	remoteAddr common.Address,
 	client protocolconnect.StreamServiceClient,
 	cookies []*SyncCookie,
+	unsubStream func(streamID StreamId),
 	messages chan<- *SyncStreamsResponse,
 ) (*remoteSyncer, error) {
 	syncStreamCtx, syncStreamCancel := context.WithCancel(ctx)
@@ -78,6 +80,7 @@ func newRemoteSyncer(
 		messages:           messages,
 		responseStream:     responseStream,
 		remoteAddr:         remoteAddr,
+		unsubStream:        unsubStream,
 	}
 
 	s.syncID = responseStream.Msg().GetSyncId()
@@ -120,6 +123,7 @@ func (s *remoteSyncer) Run() {
 			}
 		} else if res.GetSyncOp() == SyncOp_SYNC_DOWN {
 			if streamID, err := StreamIdFromBytes(res.GetStreamId()); err == nil {
+				s.unsubStream(streamID)
 				if err := s.sendSyncStreamResponseToClient(res); err != nil {
 					if !errors.Is(err, context.Canceled) {
 						log.Error("Cancel remote sync with client", "remote", s.remoteAddr, "err", err)

@@ -31,7 +31,7 @@ var (
 
 // ICustomEntitlementMetaData contains all meta data concerning the ICustomEntitlement contract.
 var ICustomEntitlementMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"isEntitled\",\"inputs\":[{\"name\":\"user\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"isEntitled\",\"inputs\":[{\"name\":\"user\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"supportsInterface\",\"inputs\":[{\"name\":\"interfaceId\",\"type\":\"bytes4\",\"internalType\":\"bytes4\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"}]",
 }
 
 // ICustomEntitlementABI is the input ABI used to generate the binding from.
@@ -209,4 +209,35 @@ func (_ICustomEntitlement *ICustomEntitlementSession) IsEntitled(user []common.A
 // Solidity: function isEntitled(address[] user) view returns(bool)
 func (_ICustomEntitlement *ICustomEntitlementCallerSession) IsEntitled(user []common.Address) (bool, error) {
 	return _ICustomEntitlement.Contract.IsEntitled(&_ICustomEntitlement.CallOpts, user)
+}
+
+// SupportsInterface is a free data retrieval call binding the contract method 0x01ffc9a7.
+//
+// Solidity: function supportsInterface(bytes4 interfaceId) view returns(bool)
+func (_ICustomEntitlement *ICustomEntitlementCaller) SupportsInterface(opts *bind.CallOpts, interfaceId [4]byte) (bool, error) {
+	var out []interface{}
+	err := _ICustomEntitlement.contract.Call(opts, &out, "supportsInterface", interfaceId)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
+}
+
+// SupportsInterface is a free data retrieval call binding the contract method 0x01ffc9a7.
+//
+// Solidity: function supportsInterface(bytes4 interfaceId) view returns(bool)
+func (_ICustomEntitlement *ICustomEntitlementSession) SupportsInterface(interfaceId [4]byte) (bool, error) {
+	return _ICustomEntitlement.Contract.SupportsInterface(&_ICustomEntitlement.CallOpts, interfaceId)
+}
+
+// SupportsInterface is a free data retrieval call binding the contract method 0x01ffc9a7.
+//
+// Solidity: function supportsInterface(bytes4 interfaceId) view returns(bool)
+func (_ICustomEntitlement *ICustomEntitlementCallerSession) SupportsInterface(interfaceId [4]byte) (bool, error) {
+	return _ICustomEntitlement.Contract.SupportsInterface(&_ICustomEntitlement.CallOpts, interfaceId)
 }

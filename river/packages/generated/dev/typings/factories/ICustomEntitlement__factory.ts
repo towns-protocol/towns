@@ -29,6 +29,25 @@ const _abi = [
     ],
     stateMutability: "view",
   },
+  {
+    type: "function",
+    name: "supportsInterface",
+    inputs: [
+      {
+        name: "interfaceId",
+        type: "bytes4",
+        internalType: "bytes4",
+      },
+    ],
+    outputs: [
+      {
+        name: "",
+        type: "bool",
+        internalType: "bool",
+      },
+    ],
+    stateMutability: "view",
+  },
 ] as const;
 
 export class ICustomEntitlement__factory {
