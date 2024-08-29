@@ -97,7 +97,7 @@ func (s *Service) blockchainPingWithUrl(
 	return s.blockchainPingWithClient(ctx, chainId, client)
 }
 
-func (s *Service) getStatusReponse(ctx context.Context, url *url.URL) (*statusinfo.StatusResponse, int) {
+func (s *Service) getStatusResponse(ctx context.Context, url *url.URL) (*statusinfo.StatusResponse, int) {
 	// blockchain=0 - do not query blockchain providers
 	// blockchain= (not set or empty) - query and include result in json
 	// blockchain=1 - query, include result in json and 503 if not available
@@ -126,9 +126,13 @@ func (s *Service) getStatusReponse(ctx context.Context, url *url.URL) (*statusin
 		}()
 
 		for _, chain := range s.config.ChainConfigs {
-			if chain.ChainId == s.riverChain.ChainId.Uint64() || chain.ChainId == s.baseChain.ChainId.Uint64() {
+			if s.riverChain != nil && chain.ChainId == s.riverChain.ChainId.Uint64() {
 				continue
 			}
+			if s.baseChain != nil && chain.ChainId == s.baseChain.ChainId.Uint64() {
+				continue
+			}
+
 			wg.Add(1)
 			go func(chain *config.ChainConfig) {
 				defer wg.Done()
@@ -179,7 +183,7 @@ func (s *Service) getStatusReponse(ctx context.Context, url *url.URL) (*statusin
 
 func (s *Service) handleStatus(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	result, status := s.getStatusReponse(r.Context(), r.URL)
+	result, status := s.getStatusResponse(r.Context(), r.URL)
 	w.WriteHeader(status)
 	err := json.NewEncoder(w).Encode(result)
 	if err != nil {
@@ -190,7 +194,7 @@ func (s *Service) handleStatus(w http.ResponseWriter, r *http.Request) {
 func (s *Service) handleInfo(w http.ResponseWriter, r *http.Request) {
 	var output *bytes.Buffer
 
-	result, status := s.getStatusReponse(r.Context(), r.URL)
+	result, status := s.getStatusResponse(r.Context(), r.URL)
 	json, err := json.MarshalIndent(result, "", "  ")
 	if err == nil {
 		output, err = render.Execute(&render.InfoIndexData{Status: status, StatusJson: string(json)})
