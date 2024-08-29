@@ -15,7 +15,6 @@ export type TownsUserOperation = {
         functionHash: (typeof FunctionHash)[keyof typeof FunctionHash]
         rootKeyAddress: string
     }
-    accessToken: string
 }
 
 export type TransactionLimitRequest = {

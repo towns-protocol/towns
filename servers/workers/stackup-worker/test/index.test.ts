@@ -1,6 +1,7 @@
 import { Env, worker } from '../src/index'
 import { toJson } from '../src/utils'
 import { createSpaceFakeRequest, joinTownFakeRequest, linkWalletFakeRequest } from './test_utils'
+import { jest } from '@jest/globals'
 
 const FAKE_SERVER_URL = 'http:/server.com'
 const AUTH_TOKEN = 'Zm9v'
@@ -44,7 +45,6 @@ describe('http router', () => {
                 },
                 toJson({
                     data: JSON.parse(createSpaceFakeRequest),
-                    accessToken: 'fake',
                 }) as BodyInit,
                 env,
             ),
@@ -55,43 +55,49 @@ describe('http router', () => {
         expect(text).toContain('Unauthorized')
     })
 
-    test('verify createSpace with mocked fetch to Stackup api', async () => {
+    test('verify createSpace with mocked fetch to Alchemy api', async () => {
         const fetchMock = getMiniflareFetchMock()
         fetchMock.disableNetConnect()
         const env = getMiniflareBindings()
         const url = new URL(env.PAYMASTER_RPC_URL)
         const origin = fetchMock.get(url.origin)
         env.SKIP_TOWNID_VERIFICATION = 'true'
-        const resultErrorStackup = {
+
+        const resultError = {
             id: 1,
             jsonrpc: '2.0',
-            error: { message: 'stackup api error', code: 1 },
+            error: { message: 'api error', code: 1 },
         }
         origin
             .intercept({
                 method: 'POST',
-                path: `${url.pathname}`, // user 1, public image variant
+                path: `${url.pathname}`,
             })
-            .reply(400, resultErrorStackup)
+            .reply(400, resultError)
 
-        const result = await worker.fetch(
+        const spy = jest.spyOn(globalThis, 'fetch')
+
+        await worker.fetch(
             ...generateRequest(
-                'api/sponsor-userop',
+                'api/sponsor-userop/alchemy',
                 'POST',
                 {
                     Authorization: `Bearer ${AUTH_TOKEN}`,
                 },
                 toJson({
                     data: JSON.parse(createSpaceFakeRequest),
-                    accessToken: 'fake',
                 }) as BodyInit,
                 env,
             ),
         )
-        expect(result.status).toBe(400)
 
-        const text = await result.text()
-        expect(text).toContain('Invalid Paymaster Response')
+        let lastCall = spy.mock.lastCall
+        let requestBody = JSON.parse(lastCall?.[1]?.body as string)
+        expect(requestBody.method).toBe('alchemy_requestGasAndPaymasterAndData')
+        expect(requestBody.params[0].overrides).toStrictEqual({
+            maxPriorityFeePerGas: { multiplier: 1.2 },
+            preVerificationGas: { multiplier: 1.2 },
+        })
     })
 
     test('verify createSpace with mocked fetch to Alchemy api', async () => {
@@ -122,7 +128,6 @@ describe('http router', () => {
                 },
                 toJson({
                     data: JSON.parse(createSpaceFakeRequest),
-                    accessToken: 'fake',
                 }) as BodyInit,
                 env,
             ),
@@ -161,7 +166,6 @@ describe('http router', () => {
                 },
                 toJson({
                     data: JSON.parse(joinTownFakeRequest),
-                    accessToken: 'fake',
                 }) as BodyInit,
                 env,
             ),
@@ -200,7 +204,6 @@ describe('http router', () => {
                 },
                 toJson({
                     data: JSON.parse(linkWalletFakeRequest),
-                    accessToken: 'fake',
                 }) as BodyInit,
                 env,
             ),

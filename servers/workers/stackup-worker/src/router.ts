@@ -225,9 +225,9 @@ router.post(
             entryPoint: env.PAYMASTER_ADDRESS,
         })
         console.log('paymaster API request:', requestInit.body)
-        const durationStackupApiRequest = durationLogger('paymaster API Request')
+        const durationAlchemyApiRequest = durationLogger('paymaster API Request')
         const responseFetched = await fetch(`${env.ALCHEMY_PAYMASTER_RPC_URL}`, requestInit)
-        durationStackupApiRequest()
+        durationAlchemyApiRequest()
 
         return handlePaymasterResponse({
             paymasterResponse: responseFetched,

@@ -2,7 +2,11 @@ import { FunctionHash, TimeTrackerEvents } from './types'
 import { BigNumberish } from 'ethers'
 
 type MiddlewareProps = {
-    preverificationGasMultiplierValue: number
+    /**
+     * Tracks the number of times the user operation has been attempted
+     * Not currently used but may be used for logging or retry logic
+     */
+    operationAttempt: number
     txValue?: BigNumberish | undefined
     sequenceName?: TimeTrackerEvents | undefined
     functionHashForPaymasterProxy?: FunctionHash | undefined
@@ -23,7 +27,7 @@ export class MiddlewareVars {
         >,
     ) {
         this.middlewareProps = {
-            preverificationGasMultiplierValue: 1,
+            operationAttempt: 1,
             sequenceName: props.sequenceName,
             functionHashForPaymasterProxy: props.functionHashForPaymasterProxy,
             spaceId: props.spaceId,
@@ -35,8 +39,8 @@ export class MiddlewareVars {
         return this.middlewareProps?.txValue
     }
 
-    public get preverificationGasMultiplierValue() {
-        return this.middlewareProps?.preverificationGasMultiplierValue
+    public get operationAttempt() {
+        return this.middlewareProps?.operationAttempt
     }
 
     public get sequenceName() {
@@ -51,8 +55,8 @@ export class MiddlewareVars {
         return this.middlewareProps?.spaceId
     }
 
-    public set preverificationGasMultiplierValue(value: number) {
-        this.middlewareProps.preverificationGasMultiplierValue = value
+    public set operationAttempt(value: number) {
+        this.middlewareProps.operationAttempt = value
     }
 
     public set sequenceName(name: TimeTrackerEvents | undefined) {

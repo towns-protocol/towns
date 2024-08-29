@@ -22,15 +22,10 @@ import { userOpsStore } from './userOpsStore'
 // TODO: we can probably add these via @account-abrstraction/contracts if preferred
 import { EntryPoint__factory, SimpleAccountFactory__factory } from 'userop/dist/typechain'
 import { ERC4337 } from 'userop/dist/constants'
-import { CodeException, errorToCodeException, isPreverificationGasTooLowError } from './errors'
+import { CodeException, errorToCodeException, matchGasTooLowError } from './errors'
 import { UserOperationEventEvent } from 'userop/dist/typechain/EntryPoint'
 import { EVERYONE_ADDRESS, getFunctionSigHash } from './utils'
-import {
-    simpleEstimateGas,
-    preverificationGasMultiplier,
-    promptUser,
-    signUserOpHash,
-} from './middlewares'
+import { simpleEstimateGas, promptUser, signUserOpHash } from './middlewares'
 import { paymasterProxyMiddleware } from './paymasterProxyMiddleware'
 import { MiddlewareVars } from './MiddlewareVars'
 import { abstractAddressMap } from './abstractAddressMap'
@@ -70,7 +65,7 @@ export class UserOps {
         this.timeTracker = config.timeTracker
         this.fetchAccessTokenFn = config.fetchAccessTokenFn
         this.middlewareVars = new MiddlewareVars({
-            preverificationGasMultiplierValue: 1,
+            operationAttempt: 1,
         })
     }
 
@@ -244,13 +239,19 @@ export class UserOps {
                         error,
                         sponsoredOp ? 'userop_sponsored' : 'userop_non_sponsored',
                     )
-                    // so far observed bundler errors for both paid and free ops seem to be b/c of preverification gas
-                    // may need to handle additional errors in the future
-                    // for now, only retrying the known preverification gas error
+                    // if any gas too low errors, retry
                     // https://docs.stackup.sh/docs/bundler-errors
-                    if (isPreverificationGasTooLowError(error)) {
-                        this.middlewareVars.preverificationGasMultiplierValue =
-                            this.middlewareVars.preverificationGasMultiplierValue + 1
+                    const gasTooLowErrorType = matchGasTooLowError(error)
+                    if (gasTooLowErrorType) {
+                        this.middlewareVars.operationAttempt++
+
+                        userOpsStore.setState({
+                            retryDetails: {
+                                type: 'gasTooLow',
+                                data: gasTooLowErrorType,
+                            },
+                        })
+
                         await new Promise((resolve) => setTimeout(resolve, 500))
                         // this is a paid op. just retry until the user dismisses
                         if (
@@ -1595,20 +1596,12 @@ export class UserOps {
         }
         this.middlewareInitialized = true
         const timeTracker = this.timeTracker
-        // We get back preverification gas too low errors sometimes
-        // - for pm sponsored ops, pretty much all we can do is retry. The paymaster is going to do its own esitamtes and provide a sig. We can't change it or the sig will be invalid
-        // - for non-pm sponsored ops, we can up the preverification gas and retry
 
-        // 1 - increase preverification gas (on retries). don't think this has any impact on paymaster's gas estimation, but we can pass it along just in case it does
-        builder.useMiddleware(async (ctx) =>
-            preverificationGasMultiplier(this.middlewareVars.preverificationGasMultiplierValue)(
-                ctx,
-            ),
-        )
-        // 2 - pass user op with new gas data to paymaster.
-        // Unclear if pm_sponsorUserOperation called in paymaster uses any incoming estimate when estimating sponsored gas
-        // paymaster returns preverification gas and we assign it to the user operation.
+        // pass user op with new gas data to paymaster.
+        // If approved, paymaster returns preverification gas and we assign it to the user operation.
         // The userop fields can no longer be manipulated or else the paymaster sig will be invalid
+        //
+        // If rejected, gas must be estimated in later middleware
         if (this.paymasterProxyUrl && this.paymasterProxyAuthSecret) {
             builder.useMiddleware(async (ctx) => {
                 const { sequenceName, functionHashForPaymasterProxy, spaceId } = this.middlewareVars
@@ -1634,17 +1627,12 @@ export class UserOps {
             })
         }
 
-        // 3 - prompt user if the paymaster rejected. recalculate preverification gas
+        // prompt user if the paymaster rejected. recalculate preverification gas
         if (!this.skipPromptUserOnPMRejectedOp) {
             builder.useMiddleware(async (ctx) => {
-                const {
-                    sequenceName,
-                    functionHashForPaymasterProxy,
-                    spaceId,
-                    preverificationGasMultiplierValue,
-                    txValue,
-                } = this.middlewareVars
-                return promptUser(preverificationGasMultiplierValue, this.spaceDapp, txValue, {
+                const { sequenceName, functionHashForPaymasterProxy, spaceId, txValue } =
+                    this.middlewareVars
+                return promptUser(this.spaceDapp, txValue, {
                     sequenceName,
                     timeTracker,
                     stepPrefix: functionHashForPaymasterProxy,
@@ -1665,7 +1653,7 @@ export class UserOps {
             )
         }
 
-        // 4 - sign the user operation
+        // sign the user operation
         builder.useMiddleware(async (ctx) => signUserOpHash(ctx, signer))
     }
 
@@ -1682,7 +1670,7 @@ export class UserOps {
         this.userOpClient = undefined
         this.middlewareInitialized = false
         this.middlewareVars = new MiddlewareVars({
-            preverificationGasMultiplierValue: 1,
+            operationAttempt: 1,
         })
         this.clearStore()
     }

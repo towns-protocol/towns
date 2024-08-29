@@ -53,7 +53,13 @@ export const boredApeRuleData = createOperationsTree([
     },
 ])
 
-export const UserOps = ({ spaceDapp }: { spaceDapp: ISpaceDapp }) => {
+export const UserOps = ({
+    spaceDapp,
+    skipPromptUserOnPMRejectedOp,
+}: {
+    spaceDapp: ISpaceDapp
+    skipPromptUserOnPMRejectedOp?: boolean
+}) => {
     return new TestUserOps({
         provider: spaceDapp.provider,
         config: spaceDapp.config,
@@ -64,7 +70,7 @@ export const UserOps = ({ spaceDapp }: { spaceDapp: ISpaceDapp }) => {
         entryPointAddress: process.env.AA_ENTRY_POINT_ADDRESS,
         factoryAddress: process.env.AA_FACTORY_ADDRESS,
         paymasterProxyAuthSecret: process.env.AA_PAYMASTER_PROXY_AUTH_SECRET!,
-        skipPromptUserOnPMRejectedOp: true,
+        skipPromptUserOnPMRejectedOp: skipPromptUserOnPMRejectedOp ?? true,
         fetchAccessTokenFn: undefined,
     })
 }
@@ -327,12 +333,18 @@ export function generatePrivyWalletIfKey(privateKey?: string) {
     }
 }
 
-export const createSpaceDappAndUserops = (provider: ethers.providers.StaticJsonRpcProvider) => {
+export const createSpaceDappAndUserops = (
+    provider: ethers.providers.StaticJsonRpcProvider,
+    useropsOpts: { skipPromptUserOnPMRejectedOp?: boolean } = {},
+) => {
     const baseConfig = getWeb3Deployment(process.env.RIVER_ENV as string).base // see util.test.ts for loading from env
     const spaceDapp = new SpaceDapp(baseConfig, provider)
     return {
         spaceDapp,
-        userOps: UserOps({ spaceDapp }),
+        userOps: UserOps({
+            spaceDapp,
+            skipPromptUserOnPMRejectedOp: useropsOpts.skipPromptUserOnPMRejectedOp,
+        }),
     }
 }
 

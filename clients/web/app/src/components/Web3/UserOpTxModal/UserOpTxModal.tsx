@@ -49,12 +49,12 @@ function UserOpTxModalContent({
     valueLabel,
     endPublicPageLoginFlow,
 }: Props & { endPublicPageLoginFlow: () => void }) {
-    const { currOpGas, currOpValue, confirm, deny, retryType } = userOpsStore(
+    const { currOpGas, currOpValue, confirm, deny, retryDetails } = userOpsStore(
         useShallow((s) => ({
             currOpGas: s.currOpGas,
             confirm: s.confirm,
             deny: s.deny,
-            retryType: s.retryType,
+            retryDetails: s.retryDetails,
             currOpValue: s.currOpValue,
         })),
     )
@@ -246,7 +246,7 @@ function UserOpTxModalContent({
                         )}
                     </Box>
                 </Box>
-                {retryType === 'preVerification' && (
+                {retryDetails?.type === 'gasTooLow' && (
                     <Box
                         horizontal
                         padding
@@ -256,10 +256,13 @@ function UserOpTxModalContent({
                         background="level2"
                         width="100%"
                     >
-                        <Icon type="alert" color="error" />
+                        <Icon type="alert" color="error" shrink={false} />
                         <Text color="error">
-                            Preverification gas was too low. Would you like to try this transaction
-                            again?
+                            Estimated gas was too low{' '}
+                            {typeof retryDetails?.data === 'string'
+                                ? `for ${retryDetails.data}`
+                                : ''}
+                            . Would you like to try this transaction again?
                         </Text>
                     </Box>
                 )}

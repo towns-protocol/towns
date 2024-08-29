@@ -5,36 +5,10 @@ import { CodeException, errorCategories } from './errors'
 import { BaseChainConfig, ISpaceDapp } from '@river-build/web3'
 import { TimeTracker, TimeTrackerEvents } from './types'
 
-function increaseByPercentage({
-    gas,
-    multiplier,
-    percentage = 10,
-}: {
-    gas: BigNumberish
-    multiplier: number
-    percentage?: number
-}) {
-    return (
-        ethers.BigNumber.from(gas)
-            // 1 -> 100%
-            // 2 -> 110%
-            // 3 -> 120%
-            .mul(100 + (multiplier - 1) * percentage)
-            .div(100)
-    )
-}
-
-export function preverificationGasMultiplier(multiplier: number) {
-    return (ctx: IUserOperationMiddlewareCtx) => {
-        // retrying
-        if (multiplier > 1) {
-            userOpsStore.setState({ retryType: 'preVerification' })
-        }
-        ctx.op.preVerificationGas = increaseByPercentage({
-            gas: ctx.op.preVerificationGas,
-            multiplier,
-        })
-    }
+function increaseByPercentage({ gas, percentage }: { gas: BigNumberish; percentage: number }) {
+    return ethers.BigNumber.from(gas)
+        .mul(100 + percentage)
+        .div(100)
 }
 
 export async function signUserOpHash(ctx: IUserOperationMiddlewareCtx, signer: ethers.Signer) {
@@ -42,7 +16,6 @@ export async function signUserOpHash(ctx: IUserOperationMiddlewareCtx, signer: e
 }
 
 export function promptUser(
-    preverificationGasMultiplier: number,
     spaceDapp: ISpaceDapp | undefined,
     value?: ethers.BigNumberish,
     timeTrackArgs?: {
@@ -108,7 +81,7 @@ export function promptUser(
 
                     ctx.op.preVerificationGas = increaseByPercentage({
                         gas: estimate.preVerificationGas,
-                        multiplier: preverificationGasMultiplier,
+                        percentage: 10,
                     })
                     ctx.op.verificationGasLimit =
                         estimate.verificationGasLimit ?? estimate.verificationGas
@@ -140,7 +113,7 @@ export function promptUser(
                         body = JSON.parse(_e.body ?? '{}')
                     } catch (error) {
                         // ignore
-                        console.log('[paymasterProxyMiddleware] failed to parse error body', error)
+                        console.log('[promptUser] failed to parse error body', error)
                     }
 
                     const exception = new CodeException({
@@ -156,13 +129,10 @@ export function promptUser(
                         error: exception,
                     })
 
-                    console.error(
-                        '[paymasterProxyMiddleware] calling estimateUserOperationGas failed:',
-                        {
-                            originalError: exception,
-                            parsedError: spaceDappError,
-                        },
-                    )
+                    console.error('[promptUser] calling estimateUserOperationGas failed:', {
+                        originalError: exception,
+                        parsedError: spaceDappError,
+                    })
 
                     throw exception
                 }

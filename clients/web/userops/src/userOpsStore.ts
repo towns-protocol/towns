@@ -12,21 +12,26 @@ export type UserOpGas = {
 export const userOpsStore = create<{
     currOpGas: UserOpGas | undefined
     currOpValue: BigNumberish | undefined
-    retryType: 'preVerification' | undefined
+    retryDetails:
+        | {
+              type: 'gasTooLow'
+              data: unknown
+          }
+        | undefined
     confirm: () => void
     deny: () => void
     clear: () => void
 }>((set) => ({
     currOpGas: undefined,
     currOpValue: undefined,
-    retryType: undefined,
+    retryDetails: undefined,
     confirm: () => {},
     deny: () => {},
     clear: () =>
         set({
             currOpGas: undefined,
             currOpValue: undefined,
-            retryType: undefined,
+            retryDetails: undefined,
             confirm: () => {},
             deny: () => {},
         }),

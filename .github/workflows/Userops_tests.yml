@@ -78,7 +78,7 @@ jobs:
             - name: Wait for stackup worker with limits enforced to be up on 8989
               run: PORT=8989 yarn worker:wait:stackup
 
-            - name: Run @towns/userop package tests with pre-existing privy users
+            - name: Run @towns/userop package tests
               timeout-minutes: 10
               env:
                   AA_PAYMASTER_PROXY_URL: http://127.0.0.1:8787
