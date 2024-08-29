@@ -2,10 +2,18 @@ import { ELEMENT_BLOCKQUOTE } from '@udecode/plate-block-quote'
 import { exitBreak } from '@udecode/plate-break'
 import {
     ELEMENT_CODE_BLOCK,
+    ELEMENT_CODE_SYNTAX,
     isSelectionAtCodeBlockStart,
     unwrapCodeBlock,
 } from '@udecode/plate-code-block'
-import { getNodeString, isBlockAboveEmpty, isSelectionAtBlockStart } from '@udecode/plate-common'
+import {
+    getNodeString,
+    isBlockAboveEmpty,
+    isSelectionAtBlockEnd,
+    isSelectionAtBlockStart,
+} from '@udecode/plate-common'
+import { MARK_CODE } from '@udecode/plate-basic-marks'
+import { isMarkActive, toggleMark } from '@udecode/slate-utils'
 import { ELEMENT_LI, ELEMENT_LIC, ELEMENT_OL, ELEMENT_UL, unwrapList } from '@udecode/plate-list'
 import { ELEMENT_PARAGRAPH } from '@udecode/plate-paragraph'
 import { ResetNodePluginRule } from '@udecode/plate-reset-node'
@@ -103,5 +111,18 @@ export const nodeResetRules: ResetNodePluginRuleWithHotKey[] = [
         ...resetListBlockRule,
         hotkey: 'Backspace',
         predicate: isSelectionAtBlockStart,
+    },
+    {
+        types: [ELEMENT_CODE_SYNTAX],
+        hotkey: 'right',
+        predicate: (editor) => {
+            if (isMarkActive(editor, MARK_CODE) && isSelectionAtBlockEnd(editor)) {
+                toggleMark(editor, { key: MARK_CODE })
+                editor.insertText(' ')
+            }
+            // return false so that the default behavior of resetting the node
+            // to paragraph is not triggered
+            return false
+        },
     },
 ]
