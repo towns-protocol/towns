@@ -1,6 +1,6 @@
 import { dlogger } from '@river-build/dlog'
 import { StressClient } from '../../utils/stressClient'
-import { ChatConfig } from './types'
+import { ChatConfig } from '../common/types'
 import { makeSillyMessage } from '../../utils/messages'
 
 export async function chitChat(client: StressClient, cfg: ChatConfig) {

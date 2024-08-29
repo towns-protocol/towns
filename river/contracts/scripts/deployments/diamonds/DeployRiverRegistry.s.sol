@@ -42,6 +42,8 @@ contract DeployRiverRegistry is DiamondHelper, Deployer {
   // deployer
   DeployMultiInit deployMultiInit = new DeployMultiInit();
 
+  address internal multiInit;
+
   address internal diamondCut;
   address internal diamondLoupe;
   address internal introspection;
@@ -58,28 +60,13 @@ contract DeployRiverRegistry is DiamondHelper, Deployer {
     return "riverRegistry";
   }
 
-  function diamondInitParams(
-    address deployer
-  ) internal returns (Diamond.InitParams memory) {
-    address multiInit = deployMultiInit.deploy(deployer);
-
+  function addImmutableCuts(address deployer) internal {
+    multiInit = deployMultiInit.deploy(deployer);
     diamondCut = cutHelper.deploy(deployer);
     diamondLoupe = loupeHelper.deploy(deployer);
     introspection = introspectionHelper.deploy(deployer);
     ownable = ownableHelper.deploy(deployer);
-    riverConfig = riverConfigHelper.deploy(deployer);
-    nodeRegistry = nodeRegistryHelper.deploy(deployer);
-    streamRegistry = streamRegistryHelper.deploy(deployer);
-    operatorRegistry = operatorRegistryHelper.deploy(deployer);
 
-    operators[0] = deployer;
-    configManagers[0] = deployer;
-
-    addFacet(
-      ownableHelper.makeCut(ownable, IDiamond.FacetCutAction.Add),
-      ownable,
-      ownableHelper.makeInitData(deployer)
-    );
     addFacet(
       cutHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add),
       diamondCut,
@@ -95,6 +82,24 @@ contract DeployRiverRegistry is DiamondHelper, Deployer {
       introspection,
       introspectionHelper.makeInitData("")
     );
+    addFacet(
+      ownableHelper.makeCut(ownable, IDiamond.FacetCutAction.Add),
+      ownable,
+      ownableHelper.makeInitData(deployer)
+    );
+  }
+
+  function diamondInitParams(
+    address deployer
+  ) public returns (Diamond.InitParams memory) {
+    riverConfig = riverConfigHelper.deploy(deployer);
+    nodeRegistry = nodeRegistryHelper.deploy(deployer);
+    streamRegistry = streamRegistryHelper.deploy(deployer);
+    operatorRegistry = operatorRegistryHelper.deploy(deployer);
+
+    operators[0] = deployer;
+    configManagers[0] = deployer;
+
     addFacet(
       operatorRegistryHelper.makeCut(
         operatorRegistry,
@@ -128,6 +133,8 @@ contract DeployRiverRegistry is DiamondHelper, Deployer {
   }
 
   function __deploy(address deployer) public override returns (address) {
+    addImmutableCuts(deployer);
+
     Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);
 
     vm.broadcast(deployer);

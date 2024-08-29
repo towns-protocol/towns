@@ -2,7 +2,8 @@ import { ecrecover, fromRpcSig, hashPersonalMessage } from '@ethereumjs/util'
 import { ethers } from 'ethers'
 import { bin_equal, bin_fromHexString, bin_toHexString, check } from '@river-build/dlog'
 import { publicKeyToAddress, publicKeyToUint8Array, riverDelegateHashSrc } from './sign'
-import { Err } from '@river-build/proto'
+import { AuthToken, Err } from '@river-build/proto'
+import { bytesToHex, hexToBytes } from 'ethereum-cryptography/utils'
 
 /**
  * SignerContext is a context used for signing events.
@@ -109,14 +110,53 @@ export async function makeSignerContext(
     }
 }
 
+// make auth token
+export async function makeAuthToken(
+    signer: ethers.Signer,
+    expiry:
+        | bigint
+        | {
+              days?: number
+              hours?: number
+              minutes?: number
+              seconds?: number
+          },
+): Promise<string> {
+    const delegate = await makeSignerDelegate(signer, expiry)
+    const authToken = new AuthToken({
+        delegatePrivateKey: delegate.delegateWallet.privateKey,
+        delegateSig: delegate.signerContext.delegateSig,
+        expiryEpochMs: delegate.signerContext.delegateExpiryEpochMs,
+    })
+    return bytesToHex(authToken.toBinary())
+}
+
+export async function makeSignerContextFromAuthToken(authTokenStr: string): Promise<SignerContext> {
+    const authToken = AuthToken.fromBinary(hexToBytes(authTokenStr))
+    const delegateWallet = new ethers.Wallet(authToken.delegatePrivateKey)
+    const creatorAddress = recoverPublicKeyFromDelegateSig({
+        delegatePubKey: delegateWallet.publicKey,
+        delegateSig: authToken.delegateSig,
+        expiryEpochMs: authToken.expiryEpochMs,
+    })
+    return {
+        signerPrivateKey: () => authToken.delegatePrivateKey.slice(2), // remove the 0x prefix,
+        creatorAddress,
+        delegateSig: authToken.delegateSig,
+        delegateExpiryEpochMs: authToken.expiryEpochMs,
+    }
+}
+
 export async function makeSignerDelegate(
     signer: ethers.Signer,
-    expiry?: {
-        days?: number
-        hours?: number
-        minutes?: number
-        seconds?: number
-    },
+    expiry?:
+        | bigint
+        | {
+              days?: number
+              hours?: number
+              minutes?: number
+              seconds?: number
+          },
 ): Promise<{ delegateWallet: ethers.Wallet; signerContext: SignerContext }> {
     const delegateWallet = ethers.Wallet.createRandom()
     const signerContext = await makeSignerContext(signer, delegateWallet, expiry)

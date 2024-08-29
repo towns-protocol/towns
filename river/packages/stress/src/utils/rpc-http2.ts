@@ -23,7 +23,7 @@ export function makeHttp2StreamRpcClient(
 ): StreamRpcClient {
     const transportId = nextRpcClientNum++
     const url = randomUrlSelector(urls)
-    logger.info(`makeHttp2StreamRpcClient: Connecting to url=${url}`, 'all urls', urls)
+    logger.info(`makeHttp2StreamRpcClient: Connecting to url=${url}`)
     const options: ConnectTransportOptions = {
         httpVersion: '2',
         baseUrl: url,

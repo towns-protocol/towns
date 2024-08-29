@@ -1,6 +1,6 @@
 import { check, dlogger, shortenHexString } from '@river-build/dlog'
 import { StressClient } from '../../utils/stressClient'
-import { ChatConfig } from './types'
+import { ChatConfig } from '../common/types'
 import { getSystemInfo } from '../../utils/systemInfo'
 import { channelMessagePostWhere } from '../../utils/timeline'
 import { isDefined } from '@river-build/sdk'

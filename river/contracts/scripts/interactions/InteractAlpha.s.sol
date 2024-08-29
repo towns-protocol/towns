@@ -14,14 +14,14 @@ import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
 // libraries
 
 // contracts
-import {Interaction} from "contracts/scripts/common/Interaction.s.sol";
+import {AlphaHelper} from "contracts/scripts/interactions/helpers/AlphaHelper.sol";
 
 import {DeploySpace} from "contracts/scripts/deployments/diamonds/DeploySpace.s.sol";
 import {DeploySpaceFactory} from "contracts/scripts/deployments/diamonds/DeploySpaceFactory.s.sol";
 import {DeployBaseRegistry} from "contracts/scripts/deployments/diamonds/DeployBaseRegistry.s.sol";
 import {DeploySpaceOwner} from "contracts/scripts/deployments/diamonds/DeploySpaceOwner.s.sol";
 
-contract InteractAlpha is Interaction, DiamondHelper, IDiamondLoupeBase {
+contract InteractAlpha is AlphaHelper {
   DeploySpace deploySpace = new DeploySpace();
   DeploySpaceFactory deploySpaceFactory = new DeploySpaceFactory();
   DeployBaseRegistry deployBaseRegistry = new DeployBaseRegistry();
@@ -64,51 +64,5 @@ contract InteractAlpha is Interaction, DiamondHelper, IDiamondLoupeBase {
     newCuts = deployBaseRegistry.getCuts();
     vm.broadcast(deployer);
     IDiamondCut(baseRegistry).diamondCut(newCuts, address(0), "");
-  }
-
-  function removeRemoteFacets(address deployer, address diamond) internal {
-    Facet[] memory facets = IDiamondLoupe(diamond).facets();
-
-    address diamondCut = IDiamondLoupe(diamond).facetAddress(
-      IDiamondCut.diamondCut.selector
-    );
-    address diamondLoupe = IDiamondLoupe(diamond).facetAddress(
-      IDiamondLoupe.facets.selector
-    );
-    address introspection = IDiamondLoupe(diamond).facetAddress(
-      IERC165.supportsInterface.selector
-    );
-    address ownable = IDiamondLoupe(diamond).facetAddress(
-      IERC173.owner.selector
-    );
-    address ownablePending = IDiamondLoupe(diamond).facetAddress(
-      IOwnablePending.currentOwner.selector
-    );
-
-    for (uint256 i; i < facets.length; i++) {
-      if (
-        facets[i].facet == diamondCut ||
-        facets[i].facet == diamondLoupe ||
-        facets[i].facet == introspection ||
-        facets[i].facet == ownable ||
-        facets[i].facet == ownablePending
-      ) {
-        info("Skipping facet: %s", facets[i].facet);
-        continue;
-      }
-
-      addCut(
-        FacetCut({
-          facetAddress: facets[i].facet,
-          action: FacetCutAction.Remove,
-          functionSelectors: facets[i].selectors
-        })
-      );
-    }
-
-    vm.broadcast(deployer);
-    IDiamondCut(diamond).diamondCut(baseFacets(), address(0), "");
-
-    clearCuts();
   }
 }

@@ -5,6 +5,7 @@ import { exit } from 'process'
 import { Wallet } from 'ethers'
 import { isSet } from './utils/expect'
 import { setupChat, startStressChat } from './mode/chat/root_chat'
+import { startStressSlowChat } from './mode/slowchat/root_slowchat'
 
 check(isSet(process.env.RIVER_ENV), 'process.env.RIVER_ENV')
 check(isSet(process.env.PROCESS_INDEX), 'process.env.PROCESS_INDEX')
@@ -47,6 +48,13 @@ const run = async () => {
         case 'setup_chat':
             await setupChat({
                 config,
+                rootWallet: getRootWallet().wallet,
+            })
+            break
+        case 'slowchat':
+            await startStressSlowChat({
+                config,
+                processIndex,
                 rootWallet: getRootWallet().wallet,
             })
             break

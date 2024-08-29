@@ -1,7 +1,7 @@
 import { StressClient } from '../../utils/stressClient'
 import { getSystemInfo } from '../../utils/systemInfo'
 import { BigNumber, Wallet } from 'ethers'
-import { ChatConfig } from './types'
+import { ChatConfig } from '../common/types'
 import { check, dlogger } from '@river-build/dlog'
 import { makeCodeBlock } from '../../utils/messages'
 

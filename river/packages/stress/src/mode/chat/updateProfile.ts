@@ -1,7 +1,7 @@
 import { dlogger } from '@river-build/dlog'
 import { makeBotName } from '../../utils/botName'
 import { StressClient } from '../../utils/stressClient'
-import { ChatConfig } from './types'
+import { ChatConfig } from '../common/types'
 
 export async function updateProfile(client: StressClient, cfg: ChatConfig) {
     const logger = dlogger(`stress:updateProfile:${client.logId}`)

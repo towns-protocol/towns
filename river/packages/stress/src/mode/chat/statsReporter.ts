@@ -1,6 +1,6 @@
 import { dlogger } from '@river-build/dlog'
 import type { StressClient } from '../../utils/stressClient'
-import { ChatConfig } from './types'
+import { ChatConfig } from '../common/types'
 
 const logger = dlogger('stress:statsReporter')
 

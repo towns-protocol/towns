@@ -2,12 +2,10 @@ import { StressClient } from '../../utils/stressClient'
 import { ChatConfig } from '../common/types'
 import { dlogger } from '@river-build/dlog'
 import { getRandomEmoji } from '../../utils/emoji'
-import { getSystemInfo } from '../../utils/systemInfo'
 import { channelMessagePostWhere } from '../../utils/timeline'
-import { makeSillyMessage } from '../../utils/messages'
 
-export async function joinChat(client: StressClient, cfg: ChatConfig) {
-    const logger = dlogger(`stress:joinChat:${client.logId}}`)
+export async function joinSlowChat(client: StressClient, cfg: ChatConfig) {
+    const logger = dlogger(`stress:joinSlowChat:${client.logId}}`)
     // is user a member of all the channels?
     // is user a member of the space?
     // does user exist on the stream node?
@@ -55,19 +53,8 @@ export async function joinChat(client: StressClient, cfg: ChatConfig) {
         { interval: 1000, timeoutMs: cfg.waitForChannelDecryptionTimeoutMs },
     )
 
-    if (client.clientIndex === cfg.localClients.startIndex) {
-        logger.log('sharing keys')
-        await client.streamsClient.cryptoBackend?.ensureOutboundSession(announceChannelId, {
-            awaitInitialShareSession: true,
-        })
-        logger.log('check in with root client')
-        await client.sendMessage(
-            announceChannelId,
-            `c${cfg.containerIndex}p${cfg.processIndex} Starting up! freeMemory: ${
-                getSystemInfo().FreeMemory
-            } clientStart:${cfg.localClients.startIndex} ${cfg.localClients.endIndex}`,
-            { threadId: message.hashStr },
-        )
+    if (!cfg.kickoffMessageEventId) {
+        cfg.kickoffMessageEventId = message.hashStr
     }
 
     logger.log('emoji it')
@@ -75,27 +62,7 @@ export async function joinChat(client: StressClient, cfg: ChatConfig) {
     // emoji it
     await client.sendReaction(announceChannelId, message.hashStr, getRandomEmoji())
 
-    logger.log('join channels')
-    for (const channelId of cfg.channelIds) {
-        if (
-            !client.streamsClient.streams
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                .get(client.streamsClient.userStreamId!)
-                ?.view.userContent.isJoined(channelId)
-        ) {
-            await client.streamsClient.joinStream(channelId)
-            await client.streamsClient.waitForStream(channelId)
-        }
-        await client.streamsClient.cryptoBackend?.ensureOutboundSession(channelId, {
-            awaitInitialShareSession: true,
-        })
-        await client.sendMessage(
-            channelId,
-            `${makeSillyMessage({ maxWords: 2 })}! ${cfg.sessionId}`,
-        )
-    }
-
-    logger.log('done')
+    logger.log('joined')
 }
 
 // cruft we need to do for process leader
