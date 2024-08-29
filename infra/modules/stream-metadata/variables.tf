@@ -8,6 +8,11 @@ variable "river_chain_rpc_url_secret_arn" {
   type        = string
 }
 
+variable "base_chain_rpc_url_secret_arn" {
+  description = "The secret ARN for the base chain rpc url"
+  type        = string
+}
+
 variable "subnets" {
   description = "A list of subnets to associate with the service"
   type        = list(string)

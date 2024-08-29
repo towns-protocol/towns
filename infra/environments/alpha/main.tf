@@ -148,7 +148,9 @@ module "stream_metadata" {
   }
 
   river_chain_rpc_url_secret_arn = local.global_remote_state.river_sepolia_rpc_url_secret.arn
-  subnets                        = module.vpc.private_subnets
+  base_chain_rpc_url_secret_arn  = local.global_remote_state.base_sepolia_rpc_url_secret.arn
+
+  subnets = module.vpc.private_subnets
 }
 
 module "river_node" {

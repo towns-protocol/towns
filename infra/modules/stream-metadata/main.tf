@@ -118,7 +118,8 @@ resource "aws_iam_role_policy" "iam_policy" {
         ],
         Resource = [
           local.global_remote_state.river_global_dd_agent_api_key.arn,
-          var.river_chain_rpc_url_secret_arn
+          var.river_chain_rpc_url_secret_arn,
+          var.base_chain_rpc_url_secret_arn
         ]
       },
       {
@@ -235,6 +236,10 @@ resource "aws_ecs_task_definition" "fargate_task_definition" {
       {
         name      = "RIVER_CHAIN_RPC_URL",
         valueFrom = var.river_chain_rpc_url_secret_arn
+      },
+      {
+        name      = "BASE_CHAIN_RPC_URL",
+        valueFrom = var.base_chain_rpc_url_secret_arn
       }
     ]
 
