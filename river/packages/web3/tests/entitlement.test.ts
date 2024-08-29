@@ -2,11 +2,14 @@ import { ethers } from 'ethers'
 import {
     CheckOperationV2,
     CheckOperationType,
+    DecodedCheckOperation,
     LogicalOperationType,
+    LogicalOperation,
     encodeRuleData,
     decodeRuleData,
     encodeRuleDataV2,
     decodeRuleDataV2,
+    NoopOperation,
     OperationType,
     evaluateTree,
     postOrderArrayToTree,
@@ -19,11 +22,13 @@ import {
     decodeThresholdParams,
     encodeERC1155Params,
     decodeERC1155Params,
+    createOperationsTree,
 } from '../src/entitlement'
-import { MOCK_ADDRESS } from '../src/Utils'
+import { MOCK_ADDRESS, MOCK_ADDRESS_2, MOCK_ADDRESS_3 } from '../src/Utils'
 import { zeroAddress } from 'viem'
 import { Address } from '../src/ContractTypes'
 import { convertRuleDataV2ToV1 } from '../src/ConvertersEntitlements'
+import { IRuleEntitlementV2Base } from '../src/v3/IRuleEntitlementV2Shim'
 
 function makeRandomOperation(depth: number): Operation {
     const rand = Math.random()
@@ -902,5 +907,319 @@ describe('erc1155 params', () => {
         const encodedParams = encodeERC1155Params({ threshold: BigInt(200), tokenId: BigInt(100) })
         const decodedParams = decodeERC1155Params(encodedParams)
         expect(decodedParams).toEqual({ threshold: BigInt(200), tokenId: BigInt(100) })
+    })
+})
+
+function assertRuleDatasEqual(
+    actual: IRuleEntitlementV2Base.RuleDataV2Struct,
+    expected: IRuleEntitlementV2Base.RuleDataV2Struct,
+) {
+    expect(expected.operations.length).toBe(actual.operations.length)
+    for (let i = 0; i < expected.operations.length; i++) {
+        expect(expected.operations[i].opType).toBe(actual.operations[i].opType)
+        expect(expected.operations[i].index).toBe(actual.operations[i].index)
+    }
+    expect(expected.checkOperations.length).toBe(actual.checkOperations.length)
+    for (let i = 0; i < expected.checkOperations.length; i++) {
+        console.log('actual check type contents: ', i, actual.checkOperations[i].params)
+        expect(expected.checkOperations[i].opType).toBe(actual.checkOperations[i].opType)
+        expect(expected.checkOperations[i].chainId).toBe(actual.checkOperations[i].chainId)
+        expect(expected.checkOperations[i].contractAddress).toBe(
+            actual.checkOperations[i].contractAddress,
+        )
+        expect(expected.checkOperations[i].params as string).toBe(
+            actual.checkOperations[i].params as string,
+        )
+    }
+    expect(expected.logicalOperations.length).toBe(actual.logicalOperations.length)
+    for (let i = 0; i < expected.logicalOperations.length; i++) {
+        expect(expected.logicalOperations[i].logOpType).toBe(actual.logicalOperations[i].logOpType)
+        expect(expected.logicalOperations[i].leftOperationIndex).toBe(
+            actual.logicalOperations[i].leftOperationIndex,
+        )
+    }
+}
+
+function assertOperationEqual(actual: Operation, expected: Operation) {
+    if (expected.opType === OperationType.CHECK) {
+        let actualCheck = actual as CheckOperationV2
+        let expectedCheck = expected as CheckOperationV2
+        expect(actualCheck.checkType).toBe(expectedCheck.checkType)
+        expect(actualCheck.chainId).toBe(expectedCheck.chainId)
+        expect(actualCheck.contractAddress).toBe(expectedCheck.contractAddress)
+        expect(actualCheck.params).toBe(expectedCheck.params)
+    } else if (expected.opType === OperationType.LOGICAL) {
+        let actualLogical = actual as LogicalOperation
+        let expectedLogical = expected as LogicalOperation
+        expect(actualLogical.logicalType).toBe(expectedLogical.logicalType)
+        // This check involves some redundance since these element have been visited already,
+        // but it ensures that embedded operations in the tree are equal since the
+        // operations tree does not use indices, but builds a tree directly.
+        assertOperationEqual(actualLogical.leftOperation, expectedLogical.leftOperation)
+        assertOperationEqual(actualLogical.rightOperation, expectedLogical.rightOperation)
+    } else if (expected.opType === OperationType.NONE) {
+        expect(actual.opType).toBe(expected.opType)
+    }
+}
+
+function assertOperationsEqual(actual: Operation[], expected: Operation[]) {
+    expect(expected.length).toBe(actual.length)
+    for (let i = 0; i < expected.length; i++) {
+        assertOperationEqual(actual[i], expected[i])
+    }
+}
+
+describe('createOperationsTree', () => {
+    test('empty', () => {
+        const checkOp: DecodedCheckOperation[] = []
+        const tree = createOperationsTree(checkOp)
+        expect(tree).toEqual({
+            operations: [NoopOperation],
+            checkOperations: [],
+            logicalOperations: [],
+        })
+
+        // Validate conversion of rule data to operations tree (used for evaluation)
+        const operations = ruleDataToOperations(tree)
+        assertOperationsEqual(operations, [NoopOperation])
+    })
+
+    test('single check', () => {
+        const checkOp: DecodedCheckOperation[] = [
+            {
+                type: CheckOperationType.ERC721,
+                chainId: 1n,
+                address: MOCK_ADDRESS,
+                threshold: BigInt(1),
+            },
+        ]
+        const tree = createOperationsTree(checkOp)
+
+        // Validate the constructed rule data
+        assertRuleDatasEqual(tree, {
+            operations: [
+                {
+                    opType: OperationType.CHECK,
+                    index: 0,
+                },
+            ],
+            checkOperations: [
+                {
+                    opType: CheckOperationType.ERC721,
+                    chainId: 1n,
+                    contractAddress: MOCK_ADDRESS,
+                    params: encodeThresholdParams({ threshold: BigInt(1) }),
+                },
+            ],
+            logicalOperations: [],
+        })
+    })
+
+    test('two checks', () => {
+        const checkOp: DecodedCheckOperation[] = [
+            {
+                type: CheckOperationType.ISENTITLED,
+                chainId: 1n,
+                address: MOCK_ADDRESS,
+            },
+            {
+                type: CheckOperationType.ERC721,
+                chainId: 1n,
+                address: MOCK_ADDRESS_2,
+                threshold: BigInt(1),
+            },
+        ]
+
+        const tree = createOperationsTree(checkOp)
+
+        // Validate the constructed rule data
+        assertRuleDatasEqual(tree, {
+            operations: [
+                {
+                    opType: OperationType.CHECK,
+                    index: 0,
+                },
+                {
+                    opType: OperationType.CHECK,
+                    index: 1,
+                },
+                {
+                    opType: OperationType.LOGICAL,
+                    index: 0,
+                },
+            ],
+            checkOperations: [
+                {
+                    opType: CheckOperationType.ISENTITLED,
+                    chainId: 1n,
+                    contractAddress: MOCK_ADDRESS,
+                    params: '0x',
+                },
+                {
+                    opType: CheckOperationType.ERC721,
+                    chainId: 1n,
+                    contractAddress: MOCK_ADDRESS_2,
+                    params: encodeThresholdParams({ threshold: BigInt(1) }),
+                },
+            ],
+            logicalOperations: [
+                {
+                    logOpType: LogicalOperationType.OR,
+                    leftOperationIndex: 0,
+                    rightOperationIndex: 1,
+                },
+            ],
+        })
+
+        // Validate conversion of rule data to operations tree (used for evaluation)
+        const operations = ruleDataToOperations(tree)
+
+        const check1: CheckOperationV2 = {
+            opType: OperationType.CHECK,
+            checkType: CheckOperationType.ISENTITLED,
+            chainId: 1n,
+            contractAddress: MOCK_ADDRESS,
+            params: '0x',
+        }
+        const check2: CheckOperationV2 = {
+            opType: OperationType.CHECK,
+            checkType: CheckOperationType.ERC721,
+            chainId: 1n,
+            contractAddress: MOCK_ADDRESS_2,
+            params: encodeThresholdParams({ threshold: BigInt(1) }),
+        }
+        assertOperationsEqual(operations, [
+            check1,
+            check2,
+            {
+                opType: OperationType.LOGICAL,
+                logicalType: LogicalOperationType.OR,
+                leftOperation: check1,
+                rightOperation: check2,
+            } satisfies LogicalOperation,
+        ])
+    })
+
+    test('three checks', () => {
+        const checkOp: DecodedCheckOperation[] = [
+            {
+                type: CheckOperationType.ISENTITLED,
+                chainId: 1n,
+                address: MOCK_ADDRESS,
+            },
+            {
+                type: CheckOperationType.ERC721,
+                chainId: 2n,
+                address: MOCK_ADDRESS_2,
+                threshold: BigInt(1),
+            },
+            {
+                type: CheckOperationType.ERC20,
+                chainId: 3n,
+                address: MOCK_ADDRESS_3,
+                threshold: BigInt(1),
+            },
+        ]
+
+        const tree = createOperationsTree(checkOp)
+
+        // Validate the constructed rule data
+        assertRuleDatasEqual(tree, {
+            operations: [
+                {
+                    opType: OperationType.CHECK,
+                    index: 0,
+                },
+                {
+                    opType: OperationType.CHECK,
+                    index: 1,
+                },
+                {
+                    opType: OperationType.LOGICAL,
+                    index: 0,
+                },
+                {
+                    opType: OperationType.CHECK,
+                    index: 2,
+                },
+                {
+                    opType: OperationType.LOGICAL,
+                    index: 1,
+                },
+            ],
+            checkOperations: [
+                {
+                    opType: CheckOperationType.ISENTITLED,
+                    chainId: 1n,
+                    contractAddress: MOCK_ADDRESS,
+                    params: '0x',
+                },
+                {
+                    opType: CheckOperationType.ERC721,
+                    chainId: 2n,
+                    contractAddress: MOCK_ADDRESS_2,
+                    params: encodeThresholdParams({ threshold: BigInt(1) }),
+                },
+                {
+                    opType: CheckOperationType.ERC20,
+                    chainId: 3n,
+                    contractAddress: MOCK_ADDRESS_3,
+                    params: encodeThresholdParams({ threshold: BigInt(1) }),
+                },
+            ],
+            logicalOperations: [
+                {
+                    logOpType: LogicalOperationType.OR,
+                    leftOperationIndex: 0,
+                    rightOperationIndex: 1,
+                },
+                {
+                    logOpType: LogicalOperationType.OR,
+                    leftOperationIndex: 2,
+                    rightOperationIndex: 3,
+                },
+            ],
+        })
+
+        // Validate conversion of rule data to operations tree (used for evaluation)
+        const operations = ruleDataToOperations(tree)
+
+        const check1: CheckOperationV2 = {
+            opType: OperationType.CHECK,
+            checkType: CheckOperationType.ISENTITLED,
+            chainId: 1n,
+            contractAddress: MOCK_ADDRESS,
+            params: '0x',
+        }
+        const check2: CheckOperationV2 = {
+            opType: OperationType.CHECK,
+            checkType: CheckOperationType.ERC721,
+            chainId: 2n,
+            contractAddress: MOCK_ADDRESS_2,
+            params: encodeThresholdParams({ threshold: BigInt(1) }),
+        }
+        const check3: CheckOperationV2 = {
+            opType: OperationType.CHECK,
+            checkType: CheckOperationType.ERC20,
+            chainId: 3n,
+            contractAddress: MOCK_ADDRESS_3,
+            params: encodeThresholdParams({ threshold: BigInt(1) }),
+        }
+
+        const logical1: LogicalOperation = {
+            opType: OperationType.LOGICAL,
+            logicalType: LogicalOperationType.OR,
+            leftOperation: check1,
+            rightOperation: check2,
+        }
+
+        const logical2: LogicalOperation = {
+            opType: OperationType.LOGICAL,
+            logicalType: LogicalOperationType.OR,
+            leftOperation: logical1,
+            rightOperation: check3,
+        }
+
+        assertOperationsEqual(operations, [check1, check2, logical1, check3, logical2])
     })
 })

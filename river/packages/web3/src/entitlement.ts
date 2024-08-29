@@ -367,8 +367,8 @@ export function postOrderTraversal(operation: Operation, data: DeepWriteable<Rul
     } else if (isLogicalOperation(operation)) {
         data.logicalOperations.push({
             logOpType: operation.logicalType,
-            leftOperationIndex: data.logicalOperations.length, // Index of left child
-            rightOperationIndex: data.logicalOperations.length + 1, // Index of right child
+            leftOperationIndex: data.operations.length - 2, // Index of left child
+            rightOperationIndex: data.operations.length - 1, // Index of right child
         })
         data.operations.push({
             opType: OperationType.LOGICAL,
@@ -740,13 +740,32 @@ export function createOperationsTree(
         }
     }
 
-    let operations: Operation[] = checkOp.map((op) => ({
-        opType: OperationType.CHECK,
-        checkType: op.type,
-        chainId: op.chainId,
-        contractAddress: op.address,
-        params: encodeThresholdParams({ threshold: op.threshold ?? BigInt(1) }), // default threshold of 1
-    }))
+    let operations: Operation[] = checkOp.map((op) => {
+        let params: Hex
+        switch (op.type) {
+            case CheckOperationType.ERC20:
+            case CheckOperationType.ERC721:
+            case CheckOperationType.NATIVE_COIN_BALANCE:
+                params = encodeThresholdParams({ threshold: op.threshold ?? BigInt(1) })
+                break
+            case CheckOperationType.ERC1155:
+                params = encodeERC1155Params({
+                    threshold: op.threshold ?? BigInt(1),
+                    tokenId: op.tokenId ?? BigInt(0),
+                })
+                break
+            default:
+                params = '0x'
+        }
+
+        return {
+            opType: OperationType.CHECK,
+            checkType: op.type,
+            chainId: op.chainId,
+            contractAddress: op.address,
+            params,
+        }
+    })
 
     while (operations.length > 1) {
         const newOperations: Operation[] = []
