@@ -8,6 +8,7 @@ import { Text } from '../Text/Text'
 type HeaderProps = {
     title?: string
     subTitle?: string
+    canOpen?: boolean
 }
 
 type BaseProps = {
@@ -60,6 +61,7 @@ function _Accordion<X extends number | boolean>(props: Props<X>) {
         header,
         title,
         subTitle,
+        canOpen,
         ...boxProps
     } = props
     const onClick = React.useCallback(() => {
@@ -72,7 +74,11 @@ function _Accordion<X extends number | boolean>(props: Props<X>) {
 
     return (
         <Box background="level2" rounded="sm" {...boxProps}>
-            <Box padding="md" cursor="pointer" onClick={onClick}>
+            <Box
+                padding="md"
+                cursor={canOpen ? 'pointer' : undefined}
+                onClick={canOpen ? onClick : undefined}
+            >
                 {header ? (
                     header({
                         isExpanded,
@@ -111,10 +117,15 @@ export const Accordion = (
         HeaderProps &
         BoxProps,
 ) => {
-    const { initialExpanded, children } = props
+    const { initialExpanded, canOpen = true, children } = props
     const [isExpanded, setIsExpanded] = useState(initialExpanded || false)
     return (
-        <_Accordion isExpanded={isExpanded} setIsExpanded={setIsExpanded} {...props}>
+        <_Accordion
+            isExpanded={isExpanded}
+            setIsExpanded={setIsExpanded}
+            canOpen={canOpen}
+            {...props}
+        >
             {children}
         </_Accordion>
     )

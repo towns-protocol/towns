@@ -144,7 +144,7 @@ function WalletLinkingPanelWithoutAuth() {
 
 export function FullPanelOverlay({
     text,
-    background = 'level3',
+    background,
     withSpinner = true,
     opacity = '0.9',
 }: {
@@ -154,19 +154,12 @@ export function FullPanelOverlay({
     opacity?: BoxProps['opacity']
 }) {
     return (
-        <Stack
-            position="absolute"
-            left="none"
-            top="none"
-            width="100%"
-            height="100%"
-            justifyContent="center"
-            alignItems="center"
-        >
+        <Stack absoluteFill centerContent>
             <Stack
                 opacity={opacity}
                 position="absolute"
                 background={background}
+                style={!background ? { background: 'var(--background)' } : undefined}
                 width="100%"
                 height="100%"
             />

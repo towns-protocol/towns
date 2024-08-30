@@ -148,6 +148,7 @@ export const ChannelInfo = () => {
                 {roles && (
                     <Stack
                         padding
+                        elevate
                         data-testid="channel-permission-details"
                         gap="md"
                         background="level2"
@@ -180,7 +181,6 @@ export const ChannelInfo = () => {
                             hideNegativeUI
                             roles={roles}
                             headerSubtitle={(r) => r.permissions.join(', ')}
-                            tone="lighter"
                         />
                     </Stack>
                 )}

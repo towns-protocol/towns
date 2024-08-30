@@ -230,10 +230,9 @@ function Roles(props: {
 export function RolesList(props: {
     roles: RoleEntitlements[]
     hideNegativeUI?: boolean
-    tone?: 'default' | 'lighter'
     headerSubtitle?: (role: RoleEntitlements) => string
 }) {
-    const { roles, hideNegativeUI, headerSubtitle, tone } = props
+    const { roles, hideNegativeUI, headerSubtitle } = props
     const { allWallets, newWallets } = useTrackedWallets()
 
     const showQualifiedStatus =
@@ -247,10 +246,10 @@ export function RolesList(props: {
                       role={role}
                       wallets={allWallets}
                       showQualifiedStatus={showQualifiedStatus}
-                      tone={tone}
                       header={(props) => (
                           <AccordionHeader
                               {...props}
+                              roleId={role.roleId}
                               subTitle={headerSubtitle ? headerSubtitle(role) : props.subTitle}
                               hideNegativeUI={hideNegativeUI ?? false}
                           />
@@ -265,7 +264,6 @@ function RoleAccordion(props: {
     role: RoleEntitlements
     wallets: string[] | undefined
     showQualifiedStatus?: boolean
-    tone?: 'default' | 'lighter'
     header: (props: {
         qualified?: boolean
         title: string
@@ -273,10 +271,10 @@ function RoleAccordion(props: {
         isExpanded: boolean
         tokens: TokenEntitlement[]
         role: RoleEntitlements
+        canOpen?: boolean
     }) => JSX.Element
 }) {
-    const { role, wallets, showQualifiedStatus, header, tone: _tone } = props
-    const tone = _tone ?? 'default'
+    const { role, wallets, showQualifiedStatus, header } = props
     const {
         hasUserEntitlement,
         hasRuleEntitlement,
@@ -323,10 +321,13 @@ function RoleAccordion(props: {
         return message
     }, [hasRuleEntitlement, hasUserEntitlement, role.users.length, tokenTypes])
 
+    const canOpen = hasUserEntitlement || hasRuleEntitlement
+
     return (
         <Accordion
             border={_qualifiesForRole ? 'positive' : 'faint'}
-            background={tone === 'lighter' ? 'level3' : 'level2'}
+            background="level2"
+            canOpen={canOpen}
             header={({ isExpanded }) =>
                 header({
                     qualified: _qualifiesForRole,
@@ -335,6 +336,7 @@ function RoleAccordion(props: {
                     isExpanded,
                     tokens,
                     role,
+                    canOpen,
                 })
             }
         >
@@ -398,14 +400,16 @@ function UserList({ users }: { users: string[] }) {
 }
 
 function AccordionHeader(props: {
+    roleId: number
     title: string
     subTitle: string
     isExpanded: boolean
     tokens: TokenEntitlement[]
     qualified?: boolean
     hideNegativeUI: boolean
+    canOpen?: boolean
 }) {
-    const { title, subTitle, isExpanded, tokens, qualified, hideNegativeUI } = props
+    const { canOpen, hideNegativeUI, isExpanded, qualified, subTitle, title, tokens } = props
 
     return (
         <Box horizontal gap="sm" justifyContent="spaceBetween">
@@ -441,15 +445,17 @@ function AccordionHeader(props: {
                     </Box>
                 )}
             </Box>
-            <MotionIcon
-                animate={{
-                    rotate: isExpanded ? '0deg' : '-180deg',
-                }}
-                shrink={false}
-                initial={{ rotate: '-180deg' }}
-                transition={{ duration: 0.2 }}
-                type="arrowDown"
-            />
+            {!!canOpen && (
+                <MotionIcon
+                    animate={{
+                        rotate: isExpanded ? '0deg' : '-180deg',
+                    }}
+                    shrink={false}
+                    initial={{ rotate: '-180deg' }}
+                    transition={{ duration: 0.2 }}
+                    type="arrowDown"
+                />
+            )}
         </Box>
     )
 }
