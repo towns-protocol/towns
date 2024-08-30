@@ -125,12 +125,12 @@ export class TownsClient
     public userOps: UserOps | undefined = undefined
     private supportedXChainIds: number[] | undefined
     private analytics: TownsAnalytics | undefined
-    public readonly createV2Spaces: boolean | undefined
+    public readonly createLegacySpaces: boolean | undefined
 
     constructor(opts: TownsOpts, spaceDapp: ISpaceDapp, name?: string) {
         super()
         this.opts = opts
-        this.createV2Spaces = opts.createV2Spaces === true
+        this.createLegacySpaces = opts.createLegacySpaces === true
         this.analytics = opts.analytics
         this.name = name || Math.random().toString(36).substring(7)
 
@@ -470,30 +470,7 @@ export class TownsClient
             data: {},
         })
 
-        if (this.createV2Spaces) {
-            this.log('[createCasablancaSpaceTransaction] creating v2 space', createSpaceInfo)
-            const args: CreateSpaceParams = {
-                spaceName: createSpaceInfo.name,
-                uri: createSpaceInfo.uri ?? '',
-                channelName: createSpaceInfo.defaultChannelName ?? 'general', // default channel name
-                membership,
-                shortDescription: createSpaceInfo.shortDescription ?? '',
-                longDescription: createSpaceInfo.longDescription ?? '',
-            }
-            try {
-                if (this.isAccountAbstractionEnabled()) {
-                    transaction = await this.userOps?.sendCreateSpaceOp([args, signer])
-                } else {
-                    transaction = await this.spaceDapp.createSpace(args, signer)
-                }
-
-                this.log(`[createCasablancaSpaceTransaction] transaction created` /*, transaction*/)
-            } catch (err) {
-                console.error('[createCasablancaSpaceTransaction] error', err)
-                error = this.getDecodedErrorForSpaceFactory(err)
-                addCategoryToError(error, getErrorCategory(err) ?? 'userop')
-            }
-        } else {
+        if (this.createLegacySpaces) {
             this.log('[createCasablancaSpaceTransaction] creating legacy space', createSpaceInfo)
             // Downgrade the request parameters and create a legacy space
             const args: CreateLegacySpaceParams = {
@@ -520,6 +497,29 @@ export class TownsClient
                 } else {
                     transaction = await this.spaceDapp.createLegacySpace(args, signer)
                 }
+                this.log(`[createCasablancaSpaceTransaction] transaction created` /*, transaction*/)
+            } catch (err) {
+                console.error('[createCasablancaSpaceTransaction] error', err)
+                error = this.getDecodedErrorForSpaceFactory(err)
+                addCategoryToError(error, getErrorCategory(err) ?? 'userop')
+            }
+        } else {
+            this.log('[createCasablancaSpaceTransaction] creating v2 space', createSpaceInfo)
+            const args: CreateSpaceParams = {
+                spaceName: createSpaceInfo.name,
+                uri: createSpaceInfo.uri ?? '',
+                channelName: createSpaceInfo.defaultChannelName ?? 'general', // default channel name
+                membership,
+                shortDescription: createSpaceInfo.shortDescription ?? '',
+                longDescription: createSpaceInfo.longDescription ?? '',
+            }
+            try {
+                if (this.isAccountAbstractionEnabled()) {
+                    transaction = await this.userOps?.sendCreateSpaceOp([args, signer])
+                } else {
+                    transaction = await this.spaceDapp.createSpace(args, signer)
+                }
+
                 this.log(`[createCasablancaSpaceTransaction] transaction created` /*, transaction*/)
             } catch (err) {
                 console.error('[createCasablancaSpaceTransaction] error', err)

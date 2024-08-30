@@ -50,7 +50,7 @@ export const TownsTestApp = (props: Props) => {
             supportedXChainRpcMapping={{
                 [foundry.id]: foundry.rpcUrls.default.http[0],
             }}
-            createV2Spaces={process.env.CREATE_V2_SPACES === 'true'}
+            createLegacySpaces={process.env.CREATE_LEGACY_SPACES === 'true'}
         >
             <>
                 {children}

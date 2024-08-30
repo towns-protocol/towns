@@ -88,7 +88,7 @@ export class TownsTestClient extends TownsClient {
                     [foundry.id]: String(foundry.rpcUrls.public.http),
                 },
                 verbose: true,
-                createV2Spaces: process.env.CREATE_V2_SPACES === 'true',
+                createLegacySpaces: process.env.CREATE_LEGACY_SPACES === 'true',
             },
             spaceDapp,
             name,

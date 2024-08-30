@@ -410,15 +410,15 @@ export function createVersionedRuleData(
     client: TownsTestClient,
     ruleData: IRuleEntitlementV2Base.RuleDataV2Struct,
 ): VersionedRuleData {
-    if (client.createV2Spaces) {
-        return {
-            kind: 'v2',
-            rules: ruleData,
-        }
-    } else {
+    if (client.createLegacySpaces) {
         return {
             kind: 'v1',
             rules: convertRuleDataV2ToV1(ruleData),
+        }
+    } else {
+        return {
+            kind: 'v2',
+            rules: ruleData,
         }
     }
 }
