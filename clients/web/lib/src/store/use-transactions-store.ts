@@ -43,12 +43,14 @@ export const useOnTransactionUpdated = (
     }, [clientSingleton])
 }
 
-export const useIsTransactionPending = (type: BlockchainStoreTx['type']) => {
+export const useIsTransactionPending = (...type: BlockchainStoreTx['type'][]) => {
     const transactions = useTransactionStore()
     return useMemo(
         () =>
             Object.values(transactions).some(
-                (tx) => tx.type === type && (tx.status === 'pending' || tx.status === 'potential'),
+                (tx) =>
+                    type.includes(tx.type) &&
+                    (tx.status === 'pending' || tx.status === 'potential'),
             ),
         [transactions, type],
     )
