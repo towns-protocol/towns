@@ -29,6 +29,11 @@ export function useSlashCommand(): {
                     openPanel(CHANNEL_INFO_PARAMS.MINT_BOT)
                 },
             },
+            {
+                name: 'authtoken',
+                description: 'Get your auth token',
+                execute: async (_params: string[]) => openPanel(CHANNEL_INFO_PARAMS.AUTH_TOKEN),
+            },
         ]
     }, [channelId, openPanel])
 
