@@ -171,6 +171,7 @@ export async function sendNotificationViaAPNS(
         notification.pushType = 'alert'
         notification.payload = options.payload
         notification.threadId = options.channelId
+        notification.contentAvailable = true
         notification.mutableContent = true
 
         const response = await provider.send(notification, subscription.keys.auth)
