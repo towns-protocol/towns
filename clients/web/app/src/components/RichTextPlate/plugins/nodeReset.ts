@@ -18,7 +18,10 @@ import { ELEMENT_LI, ELEMENT_LIC, ELEMENT_OL, ELEMENT_UL, unwrapList } from '@ud
 import { ELEMENT_PARAGRAPH } from '@udecode/plate-paragraph'
 import { ResetNodePluginRule } from '@udecode/plate-reset-node'
 import { getLowestBlockquoteNode, getLowestParagraphNode } from '../utils/helpers'
-import { isSelectionAtCodeBlockEnd } from '../utils/isSelectionAtCodeBlockEnd'
+import {
+    isSelectionAtBlockQuoteEnd,
+    isSelectionAtCodeBlockEnd,
+} from '../utils/isSelectionAtCodeBlockEnd'
 
 type ResetNodePluginRuleWithHotKey = ResetNodePluginRule & { hotkey: string | string[] }
 
@@ -63,16 +66,28 @@ export const nodeResetRules: ResetNodePluginRuleWithHotKey[] = [
         },
     },
     {
-        types: [ELEMENT_BLOCKQUOTE],
+        ...resetBlockTypesCommonRule,
+        hotkey: 'down',
+        predicate: (editor) => {
+            if (isSelectionAtBlockQuoteEnd(editor)) {
+                editor.insertNode({ type: ELEMENT_PARAGRAPH, children: [{ text: '' }] })
+                return true
+            }
+            return false
+        },
+    },
+    {
+        ...resetBlockTypesCommonRule,
         hotkey: 'shift+enter',
         predicate: (editor) => {
             const blockQuoteNode = getLowestBlockquoteNode(editor)
             if (!blockQuoteNode) {
                 return false
             }
-            const hasTwoNewLines = getNodeString(blockQuoteNode).endsWith('\n\n')
-            if (hasTwoNewLines) {
-                editor.deleteBackward('character')
+            if (
+                isSelectionAtBlockQuoteEnd(editor) &&
+                getNodeString(blockQuoteNode).endsWith('\n')
+            ) {
                 editor.deleteBackward('character')
                 editor.insertNode({ type: ELEMENT_PARAGRAPH, children: [{ text: '' }] })
                 return true

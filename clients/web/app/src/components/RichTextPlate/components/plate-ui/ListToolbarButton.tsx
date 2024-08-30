@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react'
-import { PlateEditor, Value } from '@udecode/plate-common'
+import { PlateEditor, Value, collapseSelection } from '@udecode/plate-common'
 import { ListStyleType } from '@udecode/plate-indent-list'
 import {
     ELEMENT_OL,
@@ -38,6 +38,7 @@ export const ListToolbarButton = withRef<
                 splitParagraphsByNewLines(editor)
             }
             props.onClick()
+            collapseSelection(editor)
         },
         [props, pressed, editor],
     )
