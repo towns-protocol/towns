@@ -412,13 +412,13 @@ export function createVersionedRuleData(
 ): VersionedRuleData {
     if (client.createV2Spaces) {
         return {
-            kind: 'v1',
-            rules: convertRuleDataV2ToV1(ruleData),
+            kind: 'v2',
+            rules: ruleData,
         }
     } else {
         return {
-            kind: 'v2',
-            rules: ruleData,
+            kind: 'v1',
+            rules: convertRuleDataV2ToV1(ruleData),
         }
     }
 }

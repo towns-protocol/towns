@@ -130,7 +130,7 @@ export class TownsClient
     constructor(opts: TownsOpts, spaceDapp: ISpaceDapp, name?: string) {
         super()
         this.opts = opts
-        this.createV2Spaces = opts.createV2Spaces === false
+        this.createV2Spaces = opts.createV2Spaces === true
         this.analytics = opts.analytics
         this.name = name || Math.random().toString(36).substring(7)
 

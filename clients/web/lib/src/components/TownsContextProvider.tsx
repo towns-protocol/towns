@@ -87,6 +87,7 @@ interface TownsContextProviderProps {
     }
     ethMainnetRpcUrl?: string
     analytics?: TownsAnalytics
+    createV2Spaces?: boolean
 }
 
 export function TownsContextProvider({
@@ -159,6 +160,7 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
             supportedXChainRpcMapping: props.supportedXChainRpcMapping,
             ethMainnetRpcUrl: props.ethMainnetRpcUrl,
             analytics: props.analytics,
+            createV2Spaces: props.createV2Spaces,
         } satisfies TownsOpts
     }, [
         baseChain.id,
@@ -172,6 +174,7 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
         props.pushNotificationWorkerUrl,
         props.supportedXChainRpcMapping,
         props.analytics,
+        props.createV2Spaces,
         riverChain.chainId,
         riverConfig,
         riverProvider,
