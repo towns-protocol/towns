@@ -70,6 +70,12 @@ resource "aws_iam_role" "ecs_task_execution_role" {
   tags = module.global_constants.tags
 }
 
+module "alb" {
+  source  = "./load-balancer"
+  vpc_id  = var.vpc_id
+  subnets = var.public_subnets
+}
+
 # Behind the load balancer
 module "internal_sg" {
   source = "terraform-aws-modules/security-group/aws"
@@ -83,7 +89,7 @@ module "internal_sg" {
   ingress_with_source_security_group_id = [
     {
       rule                     = "http-80-tcp"
-      source_security_group_id = var.alb_security_group_id
+      source_security_group_id = module.alb.security_group_id
     }
   ]
 
@@ -182,7 +188,7 @@ locals {
 
 
 resource "aws_lb_listener_rule" "http_rule" {
-  listener_arn = var.alb_https_listener_arn
+  listener_arn = module.alb.https_listener_arn
 
   lifecycle {
     ignore_changes = [action]
@@ -343,7 +349,7 @@ resource "aws_ecs_service" "ecs-service" {
 
   network_configuration {
     security_groups  = [module.internal_sg.security_group_id]
-    subnets          = var.subnets
+    subnets          = var.private_subnets
     assign_public_ip = false
   }
 
@@ -357,10 +363,7 @@ data "cloudflare_zone" "zone" {
 resource "cloudflare_record" "http_dns" {
   zone_id = data.cloudflare_zone.zone.id
   name    = local.subdomain
-  value   = var.alb_dns_name
+  value   = module.alb.dns_name
   type    = "CNAME"
   ttl     = 60
-  lifecycle {
-    ignore_changes = all
-  }
 }

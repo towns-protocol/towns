@@ -138,10 +138,6 @@ module "stream_metadata" {
 
   vpc_id = module.vpc.vpc_id
 
-  alb_dns_name           = module.river_alb.lb_dns_name
-  alb_https_listener_arn = module.river_alb.lb_https_listener_arn
-  alb_security_group_id  = module.river_alb.security_group_id
-
   ecs_cluster = {
     id   = aws_ecs_cluster.river_ecs_cluster.id
     name = aws_ecs_cluster.river_ecs_cluster.name
@@ -150,7 +146,8 @@ module "stream_metadata" {
   river_chain_rpc_url_secret_arn = local.global_remote_state.river_sepolia_rpc_url_secret.arn
   base_chain_rpc_url_secret_arn  = local.global_remote_state.base_sepolia_rpc_url_secret.arn
 
-  subnets = module.vpc.private_subnets
+  private_subnets = module.vpc.private_subnets
+  public_subnets  = module.vpc.public_subnets
 }
 
 module "river_node" {

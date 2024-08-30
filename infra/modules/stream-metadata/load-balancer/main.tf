@@ -1,16 +1,27 @@
 module "global_constants" {
-  source = "../global-constants"
+  source = "../../global-constants"
 }
 
 data "aws_vpc" "vpc" {
   id = var.vpc_id
 }
 
-module "river_alb_sg" {
+locals {
+  service_name = "stream-metadata-alb"
+  local_name   = "${terraform.workspace}-${local.service_name}"
+  tags = merge(
+    module.global_constants.tags,
+    {
+      Service = local.service_name
+    }
+  )
+}
+
+module "alb_sg" {
   source = "terraform-aws-modules/security-group/aws"
 
-  name        = "${terraform.workspace}_river_alb_sg"
-  description = "Security group river load balancer"
+  name        = "${local.local_name}-sg"
+  description = "Security group for ${local.local_name}"
   vpc_id      = var.vpc_id
 
   ingress_cidr_blocks = ["0.0.0.0/0"] # public internet
@@ -28,50 +39,31 @@ module "river_alb_sg" {
   ]
 
   number_of_computed_egress_with_cidr_blocks = 1
+
+  tags = local.tags
 }
 
-module "river_alb" {
+module "alb" {
   source  = "terraform-aws-modules/alb/aws"
   version = "6.0.0"
 
-  name               = "${terraform.workspace}-river-alb"
+  name               = local.local_name
   load_balancer_type = "application"
 
   vpc_id          = var.vpc_id
   subnets         = var.subnets
-  security_groups = [module.river_alb_sg.security_group_id]
+  security_groups = [module.alb_sg.security_group_id]
 
-  http_tcp_listeners = [
-    {
-      port        = 80
-      protocol    = "HTTP"
-      action_type = "redirect"
-      redirect = {
-        port        = "443"
-        protocol    = "HTTPS"
-        status_code = "HTTP_301"
-      }
-    }
-  ]
-
-
-  tags = merge(
-    module.global_constants.tags,
-    {
-      Service = "river-node-load-balancer"
-    }
-  )
-
-  # setting it to 30 minutes because river context keeps getting cancelled
-  idle_timeout = 1800
+  tags = local.tags
 }
 
+
 data "aws_acm_certificate" "primary_hosted_zone_cert" {
-  domain = module.global_constants.primary_hosted_zone_name
+  domain = module.global_constants.river_delivery_hosted_zone_name
 }
 
 resource "aws_lb_listener" "https_listener" {
-  load_balancer_arn = module.river_alb.lb_arn
+  load_balancer_arn = module.alb.lb_arn
   port              = "443"
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-2016-08"
@@ -82,8 +74,19 @@ resource "aws_lb_listener" "https_listener" {
     type = "fixed-response"
     fixed_response {
       content_type = "text/plain"
-      message_body = "Unknown host"
-      status_code  = "503"
+      status_code  = "204" // No Content
     }
   }
+}
+
+output "security_group_id" {
+  value = module.alb_sg.security_group_id
+}
+
+output "https_listener_arn" {
+  value = aws_lb_listener.https_listener.arn
+}
+
+output "dns_name" {
+  value = module.alb.lb_dns_name
 }

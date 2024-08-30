@@ -13,8 +13,13 @@ variable "base_chain_rpc_url_secret_arn" {
   type        = string
 }
 
-variable "subnets" {
+variable "private_subnets" {
   description = "A list of subnets to associate with the service"
+  type        = list(string)
+}
+
+variable "public_subnets" {
+  description = "A list of subnets to associate with the load balancer"
   type        = list(string)
 }
 
@@ -24,19 +29,4 @@ variable "ecs_cluster" {
     name = string
     id   = string
   })
-}
-
-variable "alb_security_group_id" {
-  description = "The security group id for the alb"
-  type        = string
-}
-
-variable "alb_https_listener_arn" {
-  description = "The arn of the alb https listener"
-  type        = string
-}
-
-variable "alb_dns_name" {
-  description = "The dns name of the alb"
-  type        = string
 }
