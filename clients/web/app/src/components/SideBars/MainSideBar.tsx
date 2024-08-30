@@ -47,6 +47,7 @@ export const MainSideBar = () => {
                     placement: 'horizontal',
                     immediate: true,
                 }}
+                data-testid="direct-messages"
             >
                 <Box position="relative">
                     <Icon
@@ -69,6 +70,7 @@ export const MainSideBar = () => {
                         placement: 'horizontal',
                         immediate: true,
                     }}
+                    data-testid="add-new-town"
                     onClick={onShowCreateSpace}
                 />
             </TransitionItem>

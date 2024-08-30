@@ -5,6 +5,7 @@ export const ChannelNavGroup = (props: {
     label: string
     children?: React.ReactNode
     badgeValue?: number
+    dataTestId?: string
 }) => (
     <Box
         horizontal
@@ -14,7 +15,13 @@ export const ChannelNavGroup = (props: {
         height="height_lg"
         style={{ transform: 'translateY(2px)' }}
     >
-        <Box horizontal gap="sm" justifyContent="spaceBetween" alignItems="center">
+        <Box
+            horizontal
+            gap="sm"
+            justifyContent="spaceBetween"
+            alignItems="center"
+            data-testid={props.dataTestId}
+        >
             <Label>{props.label}</Label>
             {props.badgeValue ? <Badge value={props.badgeValue} /> : <></>}
         </Box>

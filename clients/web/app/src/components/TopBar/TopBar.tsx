@@ -28,6 +28,7 @@ export const TopBar = () => {
                         placement: 'horizontal',
                         immediate: true,
                     }}
+                    data-testid="towns-logo"
                 >
                     <a href="https://towns.com" rel=", noopener noreferrer" target="_blank">
                         <LogoSingleLetter />

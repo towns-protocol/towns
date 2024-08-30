@@ -283,6 +283,7 @@ export const RichTextEditor = ({
             <Stack horizontal width="100%" paddingRight="sm" alignItems="end">
                 <Box grow paddingX="md" position="relative" ref={editableContainerRef}>
                     <Editor
+                        data-testid="send-message-text-box"
                         readOnly={!editable}
                         autoFocus={autoFocus && !isOtherInputFocused}
                         tabIndex={tabIndex}

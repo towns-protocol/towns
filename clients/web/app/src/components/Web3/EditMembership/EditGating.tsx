@@ -68,6 +68,7 @@ export function EditGating() {
                     value="everyone"
                     title="Everyone"
                     description="Anyone with the town link may join your town"
+                    dataTestId="membership-type-everyone"
                     onClick={onEveryoneClick}
                     {...formProps}
                 />
@@ -79,6 +80,7 @@ export function EditGating() {
                     value="tokenHolders"
                     title="Gate access by digital assets"
                     description="Any of the following tokens must be held to claim membership"
+                    dataTestId="membership-type-token-holders"
                     onClick={onTokensCardClick}
                     {...formProps}
                 >

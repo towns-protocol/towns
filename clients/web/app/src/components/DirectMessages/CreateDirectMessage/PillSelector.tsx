@@ -351,7 +351,7 @@ export const PillSelector = <T,>(props: Props<T>) => {
                     )}
                     {/* list container*/}
                     {searchItems.length > 0 && (
-                        <Stack gap="sm" ref={listRef}>
+                        <Stack gap="sm" ref={listRef} data-testid="suggested-people-list-entries">
                             {searchItems.map((o, i) => (
                                 <Box key={getOptionKey(o)}>
                                     {optionRenderer({

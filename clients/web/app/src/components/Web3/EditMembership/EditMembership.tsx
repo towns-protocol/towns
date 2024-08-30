@@ -43,6 +43,7 @@ export function EditMembership() {
                             border={formState.errors['membershipLimit'] ? 'negative' : 'none'}
                             {...register('membershipLimit')}
                             textAlign="right"
+                            data-testid="membership-limit-input"
                             onChange={onLimitChange}
                         />
                     </Stack>

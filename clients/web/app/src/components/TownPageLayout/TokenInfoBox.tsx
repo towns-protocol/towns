@@ -15,6 +15,7 @@ export const TokenInfoBox = ({
     subtitle,
     anyoneCanJoin,
     isTokensGatingMembershipLoading,
+    dataTestId,
 }: {
     tokensGatingMembership: { address: string; chainId: number }[] | undefined
     isTokensGatingMembershipLoading?: boolean
@@ -23,6 +24,7 @@ export const TokenInfoBox = ({
     subtitle: string
     hasError?: boolean
     anyoneCanJoin: boolean
+    dataTestId?: string
 }) => {
     return (
         <InformationBox
@@ -67,6 +69,7 @@ export const TokenInfoBox = ({
                 </>
             }
             subtitle={subtitle}
+            dataTestId={dataTestId}
             onClick={onInfoBoxClick}
         />
     )

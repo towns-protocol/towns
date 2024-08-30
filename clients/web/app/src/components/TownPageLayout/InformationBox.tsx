@@ -10,6 +10,7 @@ export type Props = {
     border?: BoxProps['border']
     onClick?: () => void
     placeholder?: boolean
+    dataTestId?: string
 }
 
 export const InformationBox = (props: Props) => {
@@ -35,6 +36,7 @@ export const InformationBox = (props: Props) => {
             transition={{ duration: 0.3 }}
             layout="position"
             border={props.border}
+            data-testid={props.dataTestId}
             onPointerEnter={onPointerEnter}
             onPointerLeave={onPointerLeave}
             onClick={props.onClick}

@@ -31,6 +31,7 @@ export const ActionNavItem = (props: Props) => {
         tooltipOptions,
         minHeight,
         children,
+        ...restProps
     } = props
 
     const isIconName = (icon: Props['icon']): icon is IconName => typeof icon === 'string'
@@ -46,6 +47,7 @@ export const ActionNavItem = (props: Props) => {
             paddingY="xxs"
             minHeight={minHeight}
             onClick={onClick}
+            {...restProps}
         >
             {(isIconName(icon) && (
                 <Icon

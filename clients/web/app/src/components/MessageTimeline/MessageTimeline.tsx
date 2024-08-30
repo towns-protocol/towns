@@ -582,6 +582,7 @@ export const MessageTimeline = (props: Props) => {
                 groupIds={groupIds}
                 pointerEvents={isTouch && tabBarHidden ? 'none' : undefined}
                 itemRenderer={itemRenderer}
+                itemDataTestId="chat-message-container"
                 offscreenMarker={offscreenMarker}
             />
         </SizeBox>

@@ -350,7 +350,11 @@ const SpaceProfileWithoutAuth = () => {
                         <Paragraph color="default">Switch theme</Paragraph>
                     </PanelButton>
 
-                    <PanelButton tone="negative" onClick={onLogoutClick}>
+                    <PanelButton
+                        tone="negative"
+                        data-testid="logout-button"
+                        onClick={onLogoutClick}
+                    >
                         <Box width="height_md" alignItems="center">
                             <Icon type="logout" size="square_sm" />
                         </Box>

@@ -167,7 +167,10 @@ export const SpaceSideBarHeader = (props: {
 
             <Stack gap paddingX insetX="xs">
                 <Paragraph textAlign="center" color="cta2" size="sm">
-                    <Link to={`/${PATHS.SPACES}/${space.id}/members`}>
+                    <Link
+                        to={`/${PATHS.SPACES}/${space.id}/members`}
+                        data-testid="all-town-members-list-button"
+                    >
                         {hasMembers
                             ? `${membersCount} member${membersCount > 1 ? 's' : ''}`
                             : 'fetching members...'}
@@ -213,6 +216,7 @@ const ShareTownLinkButton = (props: { spaceId: string }) => {
             background="level2"
             transition="default"
             cursor="pointer"
+            data-testid="share-town-link-button"
             onClick={onCopyClick}
         >
             {!copyDisplay ? (

@@ -71,12 +71,13 @@ export const CardLabel = (props: {
     onClose?: () => void
     leftBarButton?: React.ReactNode
     rightBarButton?: React.ReactNode
+    dataTestId?: string
 }) => (
     <CardHeader gap="sm">
         {props.leftBarButton}
         <Box grow paddingY="sm" width="none" /* truncate hack */>
             {typeof props.label === 'string' ? (
-                <Paragraph truncate fontWeight="medium">
+                <Paragraph truncate fontWeight="medium" data-testid={props.dataTestId}>
                     {props.label}
                 </Paragraph>
             ) : (

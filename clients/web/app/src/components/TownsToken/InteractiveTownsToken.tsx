@@ -197,6 +197,7 @@ export const InteractiveTownsToken = (props: Props) => {
                         height: config.containerSize,
                     } as React.CSSProperties
                 }
+                data-testid="interactive-towns-image"
             >
                 <TownsToken
                     key={props.imageSrcRenderKey}

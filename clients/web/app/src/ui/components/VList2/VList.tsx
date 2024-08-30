@@ -100,6 +100,8 @@ interface Props<T> {
     containerRef?: MutableRefObject<HTMLDivElement | null>
 
     pointerEvents?: 'none' | 'auto'
+
+    itemDataTestId?: string
 }
 
 export function VList<T>(props: Props<T>) {
@@ -110,6 +112,7 @@ export function VList<T>(props: Props<T>) {
         padding = 0,
         align = 'top',
         pointerEvents = 'auto',
+        itemDataTestId,
     } = props
 
     const { isTouch } = useDevice()
@@ -995,6 +998,7 @@ export function VList<T>(props: Props<T>) {
                                     itemRenderer={itemRenderer}
                                     isGroup={!!groupIds?.includes(key)}
                                     groupHeight={groupHeights[key]}
+                                    dataTestId={itemDataTestId}
                                     onAdded={onItemAdded}
                                     onRemoved={onItemRemoved}
                                 />

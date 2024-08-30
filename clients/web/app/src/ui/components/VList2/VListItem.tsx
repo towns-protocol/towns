@@ -29,10 +29,20 @@ type VListItemProps<T> = {
     itemRenderer: (item: T, ref?: RefObject<HTMLDivElement>, index?: number) => JSX.Element
     isGroup?: boolean
     groupHeight?: number
+    dataTestId?: string
 }
 
 export const VListItem = <T,>(props: VListItemProps<T>) => {
-    const { uid, index, onAdded, onRemoved, itemRenderer, isGroup, groupHeight } = props
+    const {
+        uid,
+        index,
+        onAdded,
+        onRemoved,
+        itemRenderer,
+        isGroup,
+        groupHeight,
+        dataTestId = 'list-item',
+    } = props
 
     const ref = useRef<HTMLDivElement>(null)
     const heightRef: MutableRefObject<HTMLDivElement | null> = useRef(null)
@@ -75,7 +85,7 @@ export const VListItem = <T,>(props: VListItemProps<T>) => {
     }, [groupHeight, isGroup, isRendered])
 
     return (
-        <div ref={ref} style={style} data-item-key={uid}>
+        <div ref={ref} style={style} data-item-key={uid} data-testid={dataTestId}>
             {itemRenderer(props.item, isGroup ? heightRef : undefined, index)}
         </div>
     )

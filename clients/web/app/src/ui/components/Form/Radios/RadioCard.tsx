@@ -14,6 +14,7 @@ type Props<T extends FieldValues> = {
     selected?: boolean
     children?: React.ReactNode
     name: string
+    dataTestId?: string
     onClick?: () => void
 } & Partial<UseFormReturn<T>>
 
@@ -42,6 +43,7 @@ export const RadioCard = <T extends FieldValues>(props: Props<T>) => {
                                     name={field.name}
                                     checked={field.value === props.value}
                                     value={props.value}
+                                    data-testid={props.dataTestId}
                                     onChange={() => field.onChange(props.value)}
                                 />
                                 <FieldOutline tone="neutral" disabled={false} rounded="full" />

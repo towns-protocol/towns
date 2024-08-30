@@ -56,6 +56,7 @@ const PanelHeaderButton = ({ icon, ...boxProps }: { icon: IconName } & Omit<BoxP
             color="default"
             insetRight="xs"
             background="level2"
+            data-testid="compose-new-chat-button"
             {...boxProps}
         />
     )

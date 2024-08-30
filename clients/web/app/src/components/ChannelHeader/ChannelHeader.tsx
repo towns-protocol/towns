@@ -140,6 +140,7 @@ const DesktopChannelHeader = (props: Props & HeaderProps) => {
                     rounded="sm"
                     minHeight="x4"
                     cursor="pointer"
+                    data-testid="channel-dm-title"
                 >
                     {channelType === 'channel' ? (
                         <>

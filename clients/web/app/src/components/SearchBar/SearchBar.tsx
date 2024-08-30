@@ -102,6 +102,7 @@ export const SearchBar = () => {
                             borderTopLeftRadius="sm"
                             borderTopRightRadius="sm"
                             zIndex="tooltipsAbove"
+                            data-testid="top-search-bar"
                             onClick={() => setIsSearchActive(true)}
                         >
                             {isSearchActive ? (
@@ -114,6 +115,7 @@ export const SearchBar = () => {
                                         width="700"
                                         placeholder={searchLabel}
                                         value={value ?? undefined}
+                                        data-testid="top-search-bar-input"
                                         onChange={onChange}
                                     />
                                 </Box>

@@ -81,6 +81,7 @@ export function EditPricing({
                     value="dynamic"
                     title="Dynamic"
                     description="Free for the first 100 members, then logarithmically increasing price"
+                    dataTestId="membership-pricing-type-dynamic"
                     onClick={() => onDynamicClick(formProps)}
                     {...formProps}
                 />
@@ -90,6 +91,7 @@ export function EditPricing({
                 value="fixed"
                 title="Fixed"
                 description="Everyone pays the same price"
+                dataTestId="membership-pricing-type-fixed"
                 onClick={() => onFixedClick(formProps)}
                 {...formProps}
             >

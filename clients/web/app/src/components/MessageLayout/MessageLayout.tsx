@@ -215,7 +215,11 @@ export const MessageLayout = (props: Props) => {
                                 }
                             >
                                 {profileLink ? (
-                                    <Link to={profileLink ?? ''} tabIndex={-1}>
+                                    <Link
+                                        to={profileLink ?? ''}
+                                        tabIndex={-1}
+                                        data-testid="profile-link-button"
+                                    >
                                         <UserName user={user} />
                                     </Link>
                                 ) : (

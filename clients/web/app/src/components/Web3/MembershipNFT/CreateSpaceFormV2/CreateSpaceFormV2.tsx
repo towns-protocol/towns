@@ -356,6 +356,7 @@ function CreateSpaceFormV2WithoutAuth() {
                                                                     : 'ERC-721'
                                                             }
                                                             anyoneCanJoin={isEveryoneMembership}
+                                                            dataTestId="membership-token-type"
                                                             onInfoBoxClick={onInfoBoxClick}
                                                         />
 
@@ -383,6 +384,7 @@ function CreateSpaceFormV2WithoutAuth() {
                                                                     ? 'First 100'
                                                                     : 'ETH'
                                                             }
+                                                            dataTestId="membership-cost-type"
                                                             onClick={onInfoBoxClick}
                                                         />
 
@@ -410,6 +412,7 @@ function CreateSpaceFormV2WithoutAuth() {
                                                                 </Box>
                                                             }
                                                             subtitle="Memberships"
+                                                            dataTestId="membership-limit"
                                                             onClick={onInfoBoxClick}
                                                         />
 
@@ -424,12 +427,14 @@ function CreateSpaceFormV2WithoutAuth() {
                                                             subtitle={shortAddress(
                                                                 abstractAccountAddress ?? '',
                                                             )}
+                                                            dataTestId="town-founder"
                                                         />
 
                                                         <InformationBox
                                                             title="Valid For"
                                                             centerContent={1}
                                                             subtitle="Year"
+                                                            dataTestId="town-valid-for"
                                                         />
                                                     </MotionBox>
 
@@ -450,6 +455,7 @@ function CreateSpaceFormV2WithoutAuth() {
                                                             counterOffset={{
                                                                 bottom: 'none',
                                                             }}
+                                                            data-testid="town-motto-textarea"
                                                             {..._form.register('shortDescription')}
                                                         />
                                                     </Box>
@@ -469,6 +475,7 @@ function CreateSpaceFormV2WithoutAuth() {
                                                             counterOffset={{
                                                                 bottom: 'none',
                                                             }}
+                                                            data-testid="town-description-textarea"
                                                             {..._form.register('longDescription')}
                                                         />
                                                     </Box>
@@ -707,7 +714,12 @@ const SubmitButton = ({
     transactionDetails: TransactionDetails
 }) => {
     return (
-        <Button disabled={disabled} tone={disabled ? 'level3' : 'cta1'} onClick={onSubmit}>
+        <Button
+            disabled={disabled}
+            tone={disabled ? 'level3' : 'cta1'}
+            data-testid="create-town-button"
+            onClick={onSubmit}
+        >
             {transactionDetails.isTransacting && <ButtonSpinner />}
             {transactionDetails.isTransacting ? 'Creating your town...' : 'Create Town'}
         </Button>
@@ -866,6 +878,7 @@ function SpaceNameField({
                     tone="none"
                     autoComplete="one-time-code"
                     rounded="sm"
+                    data-testid="town-name-input"
                     onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                             e.preventDefault()

@@ -15,6 +15,7 @@ type Props = {
     favorite?: boolean
     mentionCount?: number
     isUnreadSection?: boolean
+    dataTestId?: string
 }
 
 export const ChannelNavItem = (props: Props) => {
@@ -50,7 +51,13 @@ export const ChannelNavItem = (props: Props) => {
     return (
         <>
             <NavItem to={link} id={id} exact={false} paddingY="xxs" minHeight="x5">
-                <Stack horizontal width="100%" gap="sm" alignItems="center">
+                <Stack
+                    horizontal
+                    width="100%"
+                    gap="sm"
+                    alignItems="center"
+                    data-testid={props.dataTestId}
+                >
                     <Box>
                         {}
                         <Icon

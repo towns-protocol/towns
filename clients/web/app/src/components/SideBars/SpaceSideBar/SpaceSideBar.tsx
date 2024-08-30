@@ -138,6 +138,7 @@ export const SpaceSideBar = (props: Props) => {
                             mentionCount={u.mentionCount}
                             favorite={u.favorite}
                             isUnreadSection={isUnreadSection}
+                            dataTestId={`${u.channel.label}-channel`}
                         />
                     )}
                 </SpaceSideBarListItem>
@@ -195,6 +196,7 @@ export const SpaceSideBar = (props: Props) => {
                                             }
                                             minHeight="x5"
                                             key="threads"
+                                            data-testid="threads-nav-item"
                                         />
                                     </SpaceSideBarListItem>
 
@@ -207,6 +209,7 @@ export const SpaceSideBar = (props: Props) => {
                                             link={`/${PATHS.SPACES}/${space.id}/mentions`}
                                             minHeight="x5"
                                             key="mentions"
+                                            data-testid="mentions-nav-item"
                                         />
                                     </SpaceSideBarListItem>
                                 </MenuGroup>
@@ -233,6 +236,7 @@ export const SpaceSideBar = (props: Props) => {
                                     <SpaceSideBarSectionHeader
                                         label="Channels"
                                         badgeValue={unseenChannelIds.size}
+                                        dataTestId="channels-header"
                                         headerContent={
                                             <Stack horizontal alignItems="center">
                                                 <IconButton
@@ -365,10 +369,15 @@ const SpaceSideBarSectionHeader = (props: {
     badgeValue?: number
     hidden?: boolean
     headerContent?: React.ReactNode
+    dataTestId?: string
 }) => {
     return props.hidden ? null : (
         <SpaceSideBarListItem key={props.label}>
-            <ChannelNavGroup label={props.label} badgeValue={props.badgeValue}>
+            <ChannelNavGroup
+                label={props.label}
+                badgeValue={props.badgeValue}
+                dataTestId={props.dataTestId}
+            >
                 {props.headerContent}
             </ChannelNavGroup>
         </SpaceSideBarListItem>

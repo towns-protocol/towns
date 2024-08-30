@@ -23,7 +23,7 @@ export const ProfileCardButton = () => {
     const hasAvatar = isAuthenticated && userId
 
     return (
-        <Box centerContent>
+        <Box centerContent data-testid="user-profile-button">
             <Box
                 hoverable={!isSpaceCreateRoute}
                 cursor="pointer"

@@ -127,6 +127,7 @@ export const SetUsernameForm = (props: Props & { onHide: () => void }) => {
                             background="level2"
                             value={value}
                             autoComplete="off"
+                            data-testid="town-username-input"
                             onChange={onTextFieldChange}
                         />
                         <AnimatePresence>
@@ -155,7 +156,12 @@ export const SetUsernameForm = (props: Props & { onHide: () => void }) => {
                             )}
                         </AnimatePresence>
                         <Box paddingTop="md">
-                            <FancyButton cta type="submit" disabled={!submitButtonEnabled}>
+                            <FancyButton
+                                cta
+                                type="submit"
+                                disabled={!submitButtonEnabled}
+                                data-testid="submit-username-button"
+                            >
                                 {requestInFlight ? 'Joining Town' : 'Join Town'}
                             </FancyButton>
                         </Box>
