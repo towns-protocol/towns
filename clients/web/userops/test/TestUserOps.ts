@@ -30,6 +30,6 @@ export class TestUserOps extends UserOps {
     }
 
     public createLegacySpaces() {
-        return true
+        return process.env.CREATE_LEGACY_SPACES === 'true'
     }
 }

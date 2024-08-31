@@ -102,5 +102,31 @@ jobs:
               working-directory: ./clients/web/userops
               run: yarn test:userops:paymaster-limits
 
+            - name: Run @towns/userop package tests against legacy spaces
+              timeout-minutes: 10
+              env:
+                  AA_PAYMASTER_PROXY_URL: http://127.0.0.1:8787
+                  AA_PAYMASTER_PROXY_AUTH_SECRET: Zm9v
+                  AA_RPC_URL: http://localhost:8545
+                  AA_BUNDLER_URL: http://localhost:43370
+                  RIVER_ENV: local_multi
+                  CREATE_LEGACY_SPACES: true
+
+              working-directory: ./clients/web/userops
+              run: yarn test:userops:random-wallet
+
+            - name: Run @towns/userop package tests with max daily limits of 1 against legacy spaces
+              timeout-minutes: 10
+              env:
+                  AA_PAYMASTER_PROXY_URL: http://127.0.0.1:8989
+                  AA_PAYMASTER_PROXY_AUTH_SECRET: Zm9v
+                  AA_RPC_URL: http://localhost:8545
+                  AA_BUNDLER_URL: http://localhost:43370
+                  RIVER_ENV: local_multi
+                  CREATE_LEGACY_SPACES: true
+
+              working-directory: ./clients/web/userops
+              run: yarn test:userops:paymaster-limits
+
             - name: Stop 4337
               run: ./scripts/stop-4337.sh
