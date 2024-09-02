@@ -41,23 +41,25 @@ export const PasteFilePlugin = ({
     }
 
     return (
-        <Box overflowX="scroll">
-            <Stack horizontal gap>
-                <AnimatePresence>
-                    {files.map((imageFile, index) => {
-                        return (
-                            <PastedFile
-                                key={imageFile.id}
-                                {...imageFile}
-                                waitingToSend
-                                sending={false}
-                                removeFile={removeFile}
-                            />
-                        )
-                    })}
-                </AnimatePresence>
-            </Stack>
-        </Box>
+        <AnimatePresence>
+            {files?.length ? (
+                <Box overflowX="scroll">
+                    <Stack horizontal gap>
+                        {files.map((imageFile, index) => {
+                            return (
+                                <PastedFile
+                                    key={imageFile.id}
+                                    {...imageFile}
+                                    waitingToSend
+                                    sending={false}
+                                    removeFile={removeFile}
+                                />
+                            )
+                        })}
+                    </Stack>
+                </Box>
+            ) : null}
+        </AnimatePresence>
     )
 }
 

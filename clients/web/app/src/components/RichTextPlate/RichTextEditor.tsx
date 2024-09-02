@@ -280,75 +280,87 @@ export const RichTextEditor = ({
             onChange={onChangeHandler}
         >
             {!isTouch && toolbarTop}
-            <Stack horizontal width="100%" paddingRight="sm" alignItems="end">
-                <Box grow paddingX="md" position="relative" ref={editableContainerRef}>
-                    <Editor
-                        data-testid="send-message-text-box"
-                        readOnly={!editable}
-                        autoFocus={autoFocus && !isOtherInputFocused}
-                        tabIndex={tabIndex}
-                        disabled={isSendingMessage}
-                        isTouch={isTouch}
-                        isEditing={isEditing}
-                        isEditorEmpty={isEditorEmpty}
-                        handleSendOnEnter={handleSendOnEnter}
-                        onFocus={onFocus}
-                        onBlur={onBlur}
-                    />
-                    {editorText.length === 0 &&
-                        (!valueFromStore || valueFromStore.trim().length === 0) && (
-                            <RichTextPlaceholder placeholder={placeholder} />
-                        )}
-                </Box>
-                <OnFocusPlugin
-                    autoFocus={autoFocus}
-                    editorRef={editorRef}
-                    onFocusChange={onFocusChange}
-                />
-                <CaptureLinkAttachmentsPlugin onUpdate={onMessageLinksUpdated} />
-                <RememberInputPlugin storageId={storageId.current} />
-                {!isEditing && sendButtons}
-            </Stack>
-            {unfurledLinkAttachments.length > 0 && (
-                <Box horizontal gap padding flexWrap="wrap" width="100%">
-                    {unfurledLinkAttachments.map((attachment) => (
-                        <UnfurledLinkAttachmentPreview
-                            key={attachment.id}
-                            attachment={attachment}
-                            onRemove={onRemoveUnfurledLinkAttachment}
+            <Box position="relative">
+                <Stack horizontal width="100%" paddingRight="sm" alignItems="end">
+                    <Box grow paddingX="md" position="relative" ref={editableContainerRef}>
+                        <Editor
+                            data-testid="send-message-text-box"
+                            readOnly={!editable}
+                            autoFocus={autoFocus && !isOtherInputFocused}
+                            tabIndex={tabIndex}
+                            disabled={isSendingMessage}
+                            isTouch={isTouch}
+                            isEditing={isEditing}
+                            isEditorEmpty={isEditorEmpty}
+                            handleSendOnEnter={handleSendOnEnter}
+                            onFocus={onFocus}
+                            onBlur={onBlur}
                         />
-                    ))}
-                </Box>
-            )}
-            <Box paddingX="md" paddingBottom="sm">
-                <PasteFilePlugin editableContainerRef={editableContainerRef} />
+                        {editorText.length === 0 &&
+                            (!valueFromStore || valueFromStore.trim().length === 0) && (
+                                <RichTextPlaceholder placeholder={placeholder} />
+                            )}
+                    </Box>
+                    <OnFocusPlugin
+                        autoFocus={autoFocus}
+                        editorRef={editorRef}
+                        onFocusChange={onFocusChange}
+                    />
+                    <CaptureLinkAttachmentsPlugin onUpdate={onMessageLinksUpdated} />
+                    <RememberInputPlugin storageId={storageId.current} />
+                    {!isEditing && sendButtons}
+                </Stack>
+                {unfurledLinkAttachments.length > 0 && (
+                    <Box horizontal gap padding flexWrap="wrap" width="100%">
+                        {unfurledLinkAttachments.map((attachment) => (
+                            <UnfurledLinkAttachmentPreview
+                                key={attachment.id}
+                                attachment={attachment}
+                                onRemove={onRemoveUnfurledLinkAttachment}
+                            />
+                        ))}
+                    </Box>
+                )}
+                <Stack paddingX paddingBottom="sm">
+                    <PasteFilePlugin editableContainerRef={editableContainerRef} />
+
+                    {isTouch && toolbarTop}
+                    <Stack
+                        gap
+                        shrink
+                        horizontal
+                        flexWrap="wrap"
+                        pointerEvents={editable ? 'auto' : 'none'}
+                    >
+                        <EditorToolbarBottom
+                            editing={isEditing}
+                            focused={focused}
+                            threadId={threadId}
+                            threadPreview={threadPreview}
+                            visible={
+                                (isTouch &&
+                                    !isFormattingToolbarOpen &&
+                                    (focused || !isEditorEmpty)) ||
+                                (!isTouch && (focused || !isEditorEmpty))
+                            }
+                            isFormattingToolbarOpen={isFormattingToolbarOpen}
+                            setIsFormattingToolbarOpen={setIsFormattingToolbarOpen}
+                            key="toolbar"
+                        />
+                        <Box grow />
+                        {isEditing && sendButtons}
+                        {!editable && (
+                            <Box
+                                absoluteFill
+                                borderRadius="sm"
+                                background="level2"
+                                opacity="0.7"
+                                pointerEvents="all"
+                            />
+                        )}
+                    </Stack>
+                </Stack>
             </Box>
-            {isTouch && toolbarTop}
-            <Stack
-                gap
-                shrink
-                horizontal
-                paddingX
-                paddingBottom="sm"
-                flexWrap="wrap"
-                pointerEvents={editable ? 'auto' : 'none'}
-            >
-                <EditorToolbarBottom
-                    editing={isEditing}
-                    focused={focused}
-                    threadId={threadId}
-                    threadPreview={threadPreview}
-                    visible={
-                        (isTouch && !isFormattingToolbarOpen && (focused || !isEditorEmpty)) ||
-                        (!isTouch && (focused || !isEditorEmpty))
-                    }
-                    isFormattingToolbarOpen={isFormattingToolbarOpen}
-                    setIsFormattingToolbarOpen={setIsFormattingToolbarOpen}
-                    key="toolbar"
-                />
-                <Box grow />
-                {isEditing && sendButtons}
-            </Stack>
         </Plate>
     )
 }
