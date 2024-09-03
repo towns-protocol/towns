@@ -235,7 +235,7 @@ export const CreateChannelForm = (props: Props) => {
                                             chainId: t.chainId,
                                             contractAddress: t.address,
                                             opType: t.type,
-                                            threshold: parseInt(t.quantity.toString()),
+                                            threshold: t.quantity.toString(),
                                         } as ApiObject
                                     },
                                 )
