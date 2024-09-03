@@ -50,7 +50,12 @@ export const AppBugReportOverlay = () => {
                                 </Box>
                             )}
                             <Stack gap alignItems="center" paddingY="lg">
-                                <Text size="lg" fontWeight="strong" color="default">
+                                <Text
+                                    size="lg"
+                                    fontWeight="strong"
+                                    color="default"
+                                    data-testid="bug-report-header"
+                                >
                                     Bug Report
                                 </Text>
                             </Stack>

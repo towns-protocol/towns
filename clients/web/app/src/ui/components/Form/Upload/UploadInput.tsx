@@ -8,13 +8,14 @@ type Props<T extends FieldValues> = {
     onChange?: (event: ChangeEvent<HTMLInputElement>) => void
     onClick?: () => void
     accept?: string
+    dataTestId?: string
 } & Pick<UseFormReturn<T>, 'register'>
 
 const InputComponent = <T extends FieldValues>(
     props: Props<T>,
     ref: ForwardedRef<HTMLInputElement>,
 ) => {
-    const { register, name, className, onChange, accept } = props
+    const { register, name, className, onChange, accept, dataTestId } = props
 
     const { ref: hookFormRef, onChange: hookFormOnChange, ...registerProps } = register(name)
 
@@ -24,6 +25,7 @@ const InputComponent = <T extends FieldValues>(
                 type="file"
                 className={clsx([className])}
                 accept={accept}
+                data-testid={dataTestId}
                 ref={(instance) => {
                     hookFormRef?.(instance)
                     if (ref && instance) {

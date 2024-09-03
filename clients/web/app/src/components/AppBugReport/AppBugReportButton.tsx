@@ -19,6 +19,7 @@ export const AppBugReportButton = (props: { topRight?: true }) => {
                 width="x4"
                 height="x4"
                 shrink={false}
+                data-testid="report-bug-button"
                 onClick={onShowBugReport}
             />
         </>

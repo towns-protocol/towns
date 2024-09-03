@@ -289,6 +289,7 @@ const _ErrorReportForm = (props: {
                                                 fieldName={FormStateKeys.name}
                                             />
                                         }
+                                        data-testid="bug-report-name-input"
                                         {...register(FormStateKeys.name)}
                                     />
                                 </MotionBox>
@@ -308,6 +309,7 @@ const _ErrorReportForm = (props: {
                                                 fieldName={FormStateKeys.email}
                                             />
                                         }
+                                        data-testid="bug-report-email-input"
                                         {...register(FormStateKeys.email)}
                                     />
                                 </MotionBox>
@@ -330,6 +332,7 @@ const _ErrorReportForm = (props: {
                                                 fieldName={FormStateKeys.comments}
                                             />
                                         }
+                                        data-testid="bug-report-description-textarea"
                                         onPaste={(e) => {
                                             const files = Array.from(e.clipboardData?.files ?? [])
                                             addFiles(files)
@@ -397,6 +400,7 @@ const _ErrorReportForm = (props: {
                                                         ref={inputRef}
                                                         name={name}
                                                         register={register}
+                                                        dataTestId="bug-report-file-upload"
                                                         onChange={(e) => {
                                                             addFiles(
                                                                 Array.from(e.target.files ?? []),
@@ -457,6 +461,7 @@ const _ErrorReportForm = (props: {
                                 disabled={isLoading}
                                 spinner={isLoading}
                                 width="100%"
+                                data-testid="bug-report-submit-button"
                             >
                                 Submit
                             </FancyButton>

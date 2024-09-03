@@ -28,6 +28,7 @@ export const BugReportButton = () => {
                 rounded="sm"
                 width="x4"
                 height="x4"
+                data-testid="report-bug-button"
                 onClick={onBugReportClick}
             >
                 <Icon
