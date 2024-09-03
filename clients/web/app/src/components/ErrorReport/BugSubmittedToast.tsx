@@ -5,7 +5,7 @@ import { Box, Icon, IconButton, Text } from '@ui'
 export const BugSubmittedToast = ({ toast, message }: { toast: Toast; message: string }) => {
     return (
         <Box horizontal width="300" justifyContent="spaceBetween">
-            <Box horizontal gap alignItems="center">
+            <Box horizontal gap alignItems="center" data-testid="bug-reported-toast-message">
                 <Icon color="gray2" type="tag" background="level4" padding="xs" />
                 <Text>{message}</Text>
             </Box>
