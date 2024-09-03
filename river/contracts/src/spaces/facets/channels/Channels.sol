@@ -11,8 +11,9 @@ import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 import {Facet} from "contracts/src/diamond/facets/Facet.sol";
 import {Entitled} from "contracts/src/spaces/facets/Entitled.sol";
 import {ChannelBase} from "./ChannelBase.sol";
+import {RolesBase} from "contracts/src/spaces/facets/roles/RolesBase.sol";
 
-contract Channels is IChannel, ChannelBase, Entitled, Facet {
+contract Channels is IChannel, ChannelBase, RolesBase, Entitled, Facet {
   function createChannel(
     bytes32 channelId,
     string memory metadata,
@@ -20,6 +21,28 @@ contract Channels is IChannel, ChannelBase, Entitled, Facet {
   ) external {
     _validatePermission(Permissions.ModifyChannels);
     _createChannel(channelId, metadata, roleIds);
+  }
+
+  function createChannelWithOverridePermissions(
+    bytes32 channelId,
+    string memory metadata,
+    RolePermissions[] calldata rolePermissions
+  ) external {
+    _validatePermission(Permissions.ModifyChannels);
+
+    uint256[] memory roleIds = new uint256[](rolePermissions.length);
+    for (uint256 i = 0; i < rolePermissions.length; i++) {
+      roleIds[i] = rolePermissions[i].roleId;
+    }
+    _createChannel(channelId, metadata, roleIds);
+
+    for (uint256 i = 0; i < rolePermissions.length; i++) {
+      _setChannelPermissionOverrides(
+        rolePermissions[i].roleId,
+        channelId,
+        rolePermissions[i].permissions
+      );
+    }
   }
 
   function getChannel(

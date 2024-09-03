@@ -23,6 +23,10 @@ import (
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
 	eth_crypto "github.com/ethereum/go-ethereum/crypto"
+	"github.com/stretchr/testify/require"
+	"golang.org/x/net/http2"
+	"google.golang.org/protobuf/proto"
+
 	"github.com/river-build/river/core/node/crypto"
 	"github.com/river-build/river/core/node/dlog"
 	"github.com/river-build/river/core/node/events"
@@ -32,9 +36,6 @@ import (
 	river_sync "github.com/river-build/river/core/node/rpc/sync"
 	. "github.com/river-build/river/core/node/shared"
 	"github.com/river-build/river/core/node/testutils"
-	"github.com/stretchr/testify/require"
-	"golang.org/x/net/http2"
-	"google.golang.org/protobuf/proto"
 )
 
 func setupTestHttpClient() {

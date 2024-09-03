@@ -63,7 +63,7 @@ func TestStreamCacheViewEviction(t *testing.T) {
 
 	time.Sleep(10 * time.Millisecond) // make sure we hit the cache expiration of 1 ms
 	ctxShort, cancelShort := context.WithTimeout(ctx, 25*time.Millisecond)
-	streamCache.cacheCleanup(ctxShort, true, time.Millisecond)
+	streamCache.CacheCleanup(ctxShort, true, time.Millisecond)
 	cancelShort()
 
 	// cache must have view dropped even there is a subscriber
@@ -87,7 +87,7 @@ func TestStreamCacheViewEviction(t *testing.T) {
 	// no subscribers anymore so its view must be dropped from cache
 	time.Sleep(10 * time.Millisecond) // make sure we hit the cache expiration of 1 ms
 	ctxShort, cancelShort = context.WithTimeout(ctx, 25*time.Millisecond)
-	streamCache.cacheCleanup(ctxShort, true, time.Millisecond)
+	streamCache.CacheCleanup(ctxShort, true, time.Millisecond)
 	cancelShort()
 
 	streamWithoutLoadedView = 0
@@ -163,7 +163,7 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 	// ensure that view is dropped from cache
 	time.Sleep(10 * time.Millisecond) // make sure we hit the cache expiration of 1 ms
 	ctxShort, cancelShort := context.WithTimeout(ctx, 25*time.Millisecond)
-	streamCache.cacheCleanup(ctxShort, true, time.Millisecond)
+	streamCache.CacheCleanup(ctxShort, true, time.Millisecond)
 	cancelShort()
 	loadedStream, _ := streamCache.cache.Load(streamID)
 	require.Nil(loadedStream.(*streamImpl).view, "view not unloaded")
@@ -177,7 +177,7 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 	// with event in minipool ensure that view isn't evicted from cache
 	time.Sleep(10 * time.Millisecond) // make sure we hit the cache expiration of 1 ms
 	ctxShort, cancelShort = context.WithTimeout(ctx, 25*time.Millisecond)
-	streamCache.cacheCleanup(ctxShort, true, time.Millisecond)
+	streamCache.CacheCleanup(ctxShort, true, time.Millisecond)
 	cancelShort()
 	loadedStream, _ = streamCache.cache.Load(streamID)
 	require.NotNil(loadedStream.(*streamImpl).view, "view unloaded")
@@ -190,7 +190,7 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 	// minipool should be empty now and view should be evicted from cache
 	time.Sleep(10 * time.Millisecond) // make sure we hit the cache expiration of 1 ms
 	ctxShort, cancelShort = context.WithTimeout(ctx, 25*time.Millisecond)
-	streamCache.cacheCleanup(ctxShort, true, time.Millisecond)
+	streamCache.CacheCleanup(ctxShort, true, time.Millisecond)
 	cancelShort()
 	loadedStream, _ = streamCache.cache.Load(streamID)
 	require.Nil(loadedStream.(*streamImpl).view, "view loaded in cache")

@@ -39,6 +39,7 @@ type StreamCache interface {
 	ForceFlushAll(ctx context.Context)
 	GetLoadedViews(ctx context.Context) []StreamView
 	GetMbCandidateStreams(ctx context.Context) []*streamImpl
+	CacheCleanup(ctx context.Context, enabled bool, expiration time.Duration) CacheCleanupResult
 }
 
 type streamCacheImpl struct {
@@ -91,9 +92,9 @@ func NewStreamCache(
 		nodes := NewStreamNodes(stream.Nodes, params.Wallet.Address)
 		if nodes.IsLocal() {
 			s.cache.Store(stream.StreamId, &streamImpl{
-				params:   params,
-				streamId: stream.StreamId,
-				nodes:    nodes,
+				params:           params,
+				streamId:         stream.StreamId,
+				nodes:            nodes,
 				lastAccessedTime: time.Now(),
 			})
 		}
@@ -168,7 +169,7 @@ func (s *streamCacheImpl) runCacheCleanup(ctx context.Context) {
 		}
 		select {
 		case <-time.After(pollInterval):
-			s.cacheCleanup(ctx, expirationEnabled, s.params.ChainConfig.Get().StreamCacheExpiration)
+			s.CacheCleanup(ctx, expirationEnabled, s.params.ChainConfig.Get().StreamCacheExpiration)
 		case <-ctx.Done():
 			log.Debug("stream cache cache cleanup shutdown")
 			return
@@ -176,32 +177,38 @@ func (s *streamCacheImpl) runCacheCleanup(ctx context.Context) {
 	}
 }
 
-func (s *streamCacheImpl) cacheCleanup(ctx context.Context, enabled bool, expiration time.Duration) {
+type CacheCleanupResult struct {
+	TotalStreams    int
+	UnloadedStreams int
+}
+
+func (s *streamCacheImpl) CacheCleanup(ctx context.Context, enabled bool, expiration time.Duration) CacheCleanupResult {
 	var (
-		log                  = dlog.FromCtx(ctx)
-		totalStreamsCount    = 0
-		unloadedStreamsCount = 0
+		log    = dlog.FromCtx(ctx)
+		result CacheCleanupResult
 	)
 
 	// TODO: add data structure that supports to loop over streams that have their view loaded instead of
 	// looping over all streams.
 	s.cache.Range(func(streamID, streamVal any) bool {
-		totalStreamsCount++
+		result.TotalStreams++
 		if enabled {
 			if stream := streamVal.(*streamImpl); stream.tryCleanup(expiration) {
-				unloadedStreamsCount++
+				result.UnloadedStreams++
 				log.Debug("stream view is unloaded from cache", "streamId", stream.streamId)
 			}
 		}
 		return true
 	})
 
-	s.streamCacheSizeGauge.Set(float64(totalStreamsCount))
+	s.streamCacheSizeGauge.Set(float64(result.TotalStreams))
 	if enabled {
-		s.streamCacheUnloadedGauge.Set(float64(unloadedStreamsCount))
+		s.streamCacheUnloadedGauge.Set(float64(result.UnloadedStreams))
 	} else {
 		s.streamCacheUnloadedGauge.Set(float64(-1))
 	}
+
+	return result
 }
 
 func (s *streamCacheImpl) tryLoadStreamRecord(

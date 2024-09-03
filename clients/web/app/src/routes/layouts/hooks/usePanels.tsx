@@ -29,7 +29,7 @@ import { SpaceBannedUsers } from 'routes/SpaceBannedUsers'
 import { MutualTownsPanel } from '@components/MutualTownsPanel/MutualTownsPanel'
 import { PinsPanel } from '@components/PinsPanel/PinsPanel'
 import { ChannelRiverMetadataSettingsPanel } from '@components/ChannelSettings/ChannelRiverMetadataSettingsForm'
-import { AuthTokenPrivyWrapper } from '@components/AuthTokenPanel/AuthTokenPanel'
+import { BearerTokenPrivyWrapper } from '@components/BearerTokenPanel/BearerTokenPanel'
 
 export const usePanels = () => {
     const [searchParams] = useSearchParams()
@@ -146,8 +146,8 @@ export const usePanels = () => {
         case CHANNEL_INFO_PARAMS.MINT_BOT: {
             return withWrapper(<MintBotPrivyWrapper />)
         }
-        case CHANNEL_INFO_PARAMS.AUTH_TOKEN: {
-            return <AuthTokenPrivyWrapper />
+        case CHANNEL_INFO_PARAMS.BEARER_TOKEN: {
+            return <BearerTokenPrivyWrapper />
         }
         case CHANNEL_INFO_PARAMS.ROLE_RESTRICTED_CHANNEL_JOIN: {
             return <RoleRestrictedChannelJoinPanel />

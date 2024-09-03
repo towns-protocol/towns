@@ -1077,7 +1077,7 @@ export class Client
         const timeoutError = new Error(
             `waitForStream: timeout waiting for ${logId}${streamId} creating streams: ${Array.from(
                 this.creatingStreamIds,
-            ).join(',')}`,
+            ).join(',')} rpcUrl: ${this.rpcClient.url}`,
         )
         await new Promise<void>((resolve, reject) => {
             const timeout = setTimeout(() => {

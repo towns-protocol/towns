@@ -155,6 +155,10 @@ export interface EntitlementModule {
     moduleType: EntitlementModuleType
 }
 
+export function isPermission(permission: string): permission is Permission {
+    return Object.values(Permission).includes(permission as Permission)
+}
+
 export function isUserEntitlement(
     entitlement: EntitlementModule,
 ): entitlement is UserEntitlementShim {

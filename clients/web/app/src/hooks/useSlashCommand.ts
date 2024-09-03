@@ -30,9 +30,9 @@ export function useSlashCommand(): {
                 },
             },
             {
-                name: 'authtoken',
-                description: 'Get your auth token',
-                execute: async (_params: string[]) => openPanel(CHANNEL_INFO_PARAMS.AUTH_TOKEN),
+                name: 'bearer-token',
+                description: 'Get your bearer token',
+                execute: async (_params: string[]) => openPanel(CHANNEL_INFO_PARAMS.BEARER_TOKEN),
             },
         ]
     }, [channelId, openPanel])

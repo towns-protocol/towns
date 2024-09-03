@@ -18,7 +18,7 @@ export interface MemberMembershipModel extends Identifiable {
 @persistedObservable({ tableName: 'member_membership' })
 export class MemberMembership extends PersistedObservable<MemberMembershipModel> {
     constructor(
-        userId: string,
+        private userId: string,
         streamId: string,
         private riverConnection: RiverConnection,
         store: Store,
@@ -39,13 +39,13 @@ export class MemberMembership extends PersistedObservable<MemberMembershipModel>
         if (streamId === this.data.streamId) {
             const streamView = this.riverConnection.client?.stream(this.data.streamId)?.view
             check(isDefined(streamView), 'streamView is not defined')
-            const op = streamView.getMembers().membership.info(this.data.id)
+            const op = streamView.getMembers().membership.info(this.userId)
             this.setData({ initialized: true, op })
         }
     }
 
     public onStreamMembershipUpdated = (streamId: string, userId: string, op: MembershipOp) => {
-        if (streamId === this.data.streamId && userId === this.data.id) {
+        if (streamId === this.data.streamId && userId === this.userId) {
             this.setData({ op })
         }
     }

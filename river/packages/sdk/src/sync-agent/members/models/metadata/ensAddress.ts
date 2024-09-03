@@ -20,7 +20,7 @@ export interface MemberEnsAddressModel extends Identifiable {
 @persistedObservable({ tableName: 'member_ensAddress' })
 export class MemberEnsAddress extends PersistedObservable<MemberEnsAddressModel> {
     constructor(
-        userId: string,
+        private userId: string,
         streamId: string,
         private riverConnection: RiverConnection,
         store: Store,
@@ -37,13 +37,13 @@ export class MemberEnsAddress extends PersistedObservable<MemberEnsAddressModel>
             const streamView = this.riverConnection.client?.stream(this.data.streamId)?.view
             check(isDefined(streamView), 'streamView is not defined')
             const metadata = streamView.getMemberMetadata()
-            const ensAddress = metadata?.ensAddresses.info(this.data.id) as Address | undefined
+            const ensAddress = metadata?.ensAddresses.info(this.userId) as Address | undefined
             this.setData({ initialized: true, ensAddress })
         }
     }
 
     public onStreamEnsAddressUpdated = (streamId: string, userId: string) => {
-        if (streamId === this.data.streamId && userId === this.data.id) {
+        if (streamId === this.data.streamId && userId === this.userId) {
             const stream = this.riverConnection.client?.streams.get(streamId)
             const metadata = stream?.view.getMemberMetadata()
             const ensAddress = metadata?.ensAddresses.info(userId)

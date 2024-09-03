@@ -83,6 +83,7 @@ contract MembershipFacet is
   /// @inheritdoc IMembership
   function joinSpace(address receiver) external payable nonReentrant {
     _validateJoinSpace(receiver);
+    _validatePayment();
 
     address sender = msg.sender;
     bytes32 keyHash = keccak256(abi.encodePacked(sender, block.number));
@@ -142,47 +143,52 @@ contract MembershipFacet is
     }
   }
 
+  function _validatePayment() internal {
+    if (msg.value > 0) {
+      uint256 membershipPrice = _getMembershipPrice(_totalSupply());
+      if (msg.value != membershipPrice) revert Membership__InvalidPayment();
+    }
+  }
+
   function _issueToken(bytes32 transactionId) internal {
     (address sender, address receiver) = abi.decode(
       _getCapturedData(transactionId),
       (address, address)
     );
 
-    uint256 totalSupply = _totalSupply();
-    uint256 membershipPrice;
-
     uint256 freeAllocation = _getMembershipFreeAllocation();
     uint256 prepaidSupply = _getPrepaidSupply();
 
-    if (freeAllocation > totalSupply) {
-      membershipPrice = 0;
+    bool shouldCharge = true;
+    uint256 paidPrice;
+
+    if (freeAllocation > _totalSupply()) {
+      shouldCharge = false;
       _refundBalance(transactionId, sender);
     } else if (prepaidSupply > 0) {
-      membershipPrice = 0;
+      shouldCharge = false;
       _reducePrepay(1);
       _refundBalance(transactionId, sender);
-    } else {
-      membershipPrice = _getMembershipPrice(totalSupply);
+    }
+
+    if (shouldCharge) {
+      paidPrice = _getCapturedValue(transactionId);
+      if (paidPrice == 0) revert Membership__InsufficientPayment();
     }
 
     // get token id
     uint256 tokenId = _nextTokenId();
 
-    if (membershipPrice > 0) {
-      uint256 userValue = _getCapturedValue(transactionId);
-
-      if (userValue == 0) revert Membership__InsufficientPayment();
-      if (userValue != membershipPrice) revert Membership__InvalidPayment();
-
+    if (shouldCharge) {
       // set renewal price for token
-      _setMembershipRenewalPrice(tokenId, membershipPrice);
-      uint256 protocolFee = _collectProtocolFee(sender, membershipPrice);
+      _setMembershipRenewalPrice(tokenId, paidPrice);
+      uint256 protocolFee = _collectProtocolFee(sender, paidPrice);
 
-      uint256 surplus = membershipPrice - protocolFee;
+      uint256 surplus = paidPrice - protocolFee;
       if (surplus > 0) _transferIn(sender, surplus);
 
       // release captured value
-      _releaseCapturedValue(transactionId, membershipPrice);
+      _releaseCapturedValue(transactionId, paidPrice);
       _captureData(transactionId, "");
     }
 

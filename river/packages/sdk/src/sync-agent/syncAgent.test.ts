@@ -6,7 +6,7 @@ import { waitFor } from '../util.test'
 import { MembershipOp } from '@river-build/proto'
 import { Bot } from './utils/bot'
 import { AuthStatus } from './river-connection/models/authStatus'
-import { makeAuthToken, makeSignerContextFromAuthToken } from '../signerContext'
+import { makeBearerToken, makeSignerContextFromBearerToken } from '../signerContext'
 import { SyncAgent } from './syncAgent'
 import { makeRiverConfig } from '../riverConfig'
 
@@ -62,9 +62,9 @@ describe('syncAgent.test.ts', () => {
         await syncAgent.stop()
     })
     test('logIn with delegate', async () => {
-        const authToken = await makeAuthToken(testUser.signer, { days: 1 })
-        logger.log('authTokenStr', authToken)
-        const signerContext = await makeSignerContextFromAuthToken(authToken)
+        const bearerToken = await makeBearerToken(testUser.signer, { days: 1 })
+        logger.log('bearerTokenStr', bearerToken)
+        const signerContext = await makeSignerContextFromBearerToken(bearerToken)
         const syncAgent = new SyncAgent({ riverConfig: makeRiverConfig(), context: signerContext })
         await syncAgent.start()
         expect(syncAgent.riverConnection.authStatus.value).toBe(AuthStatus.ConnectedToRiver)

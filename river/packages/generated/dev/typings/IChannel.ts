@@ -28,6 +28,16 @@ import type {
 } from "./common";
 
 export declare namespace IChannelBase {
+  export type RolePermissionsStruct = {
+    roleId: PromiseOrValue<BigNumberish>;
+    permissions: PromiseOrValue<string>[];
+  };
+
+  export type RolePermissionsStructOutput = [BigNumber, string[]] & {
+    roleId: BigNumber;
+    permissions: string[];
+  };
+
   export type ChannelStruct = {
     id: PromiseOrValue<BytesLike>;
     disabled: PromiseOrValue<boolean>;
@@ -47,6 +57,7 @@ export interface IChannelInterface extends utils.Interface {
   functions: {
     "addRoleToChannel(bytes32,uint256)": FunctionFragment;
     "createChannel(bytes32,string,uint256[])": FunctionFragment;
+    "createChannelWithOverridePermissions(bytes32,string,(uint256,string[])[])": FunctionFragment;
     "getChannel(bytes32)": FunctionFragment;
     "getChannels()": FunctionFragment;
     "getRolesByChannel(bytes32)": FunctionFragment;
@@ -59,6 +70,7 @@ export interface IChannelInterface extends utils.Interface {
     nameOrSignatureOrTopic:
       | "addRoleToChannel"
       | "createChannel"
+      | "createChannelWithOverridePermissions"
       | "getChannel"
       | "getChannels"
       | "getRolesByChannel"
@@ -77,6 +89,14 @@ export interface IChannelInterface extends utils.Interface {
       PromiseOrValue<BytesLike>,
       PromiseOrValue<string>,
       PromiseOrValue<BigNumberish>[]
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "createChannelWithOverridePermissions",
+    values: [
+      PromiseOrValue<BytesLike>,
+      PromiseOrValue<string>,
+      IChannelBase.RolePermissionsStruct[]
     ]
   ): string;
   encodeFunctionData(
@@ -114,6 +134,10 @@ export interface IChannelInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "createChannel",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "createChannelWithOverridePermissions",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "getChannel", data: BytesLike): Result;
@@ -252,6 +276,13 @@ export interface IChannel extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    createChannelWithOverridePermissions(
+      channelId: PromiseOrValue<BytesLike>,
+      metadata: PromiseOrValue<string>,
+      rolePermissions: IChannelBase.RolePermissionsStruct[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     getChannel(
       channelId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
@@ -306,6 +337,13 @@ export interface IChannel extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  createChannelWithOverridePermissions(
+    channelId: PromiseOrValue<BytesLike>,
+    metadata: PromiseOrValue<string>,
+    rolePermissions: IChannelBase.RolePermissionsStruct[],
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   getChannel(
     channelId: PromiseOrValue<BytesLike>,
     overrides?: CallOverrides
@@ -349,6 +387,13 @@ export interface IChannel extends BaseContract {
       channelId: PromiseOrValue<BytesLike>,
       metadata: PromiseOrValue<string>,
       roleIds: PromiseOrValue<BigNumberish>[],
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    createChannelWithOverridePermissions(
+      channelId: PromiseOrValue<BytesLike>,
+      metadata: PromiseOrValue<string>,
+      rolePermissions: IChannelBase.RolePermissionsStruct[],
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -450,6 +495,13 @@ export interface IChannel extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    createChannelWithOverridePermissions(
+      channelId: PromiseOrValue<BytesLike>,
+      metadata: PromiseOrValue<string>,
+      rolePermissions: IChannelBase.RolePermissionsStruct[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     getChannel(
       channelId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
@@ -492,6 +544,13 @@ export interface IChannel extends BaseContract {
       channelId: PromiseOrValue<BytesLike>,
       metadata: PromiseOrValue<string>,
       roleIds: PromiseOrValue<BigNumberish>[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    createChannelWithOverridePermissions(
+      channelId: PromiseOrValue<BytesLike>,
+      metadata: PromiseOrValue<string>,
+      rolePermissions: IChannelBase.RolePermissionsStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

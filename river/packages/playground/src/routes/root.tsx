@@ -2,8 +2,7 @@ import { useAccount, useConnect } from 'wagmi'
 import { useRiverConnection } from '@river-build/react-sdk'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { UserAuthStatusBlock } from '@/components/blocks/auth-block'
-import { ConnectionBlock } from '@/components/blocks/connection-block'
+import { ConnectionBlock } from '@/components/blocks/connection'
 import { SpacesBlock } from '@/components/blocks/spaces'
 import { type Env, RiverEnvSwitcher } from '@/components/dialog/env-switcher'
 import { TimelineBlock } from '@/components/blocks/timeline'
@@ -11,6 +10,7 @@ import { ChannelsBlock } from '@/components/blocks/channels'
 import { SpaceProvider } from '@/hooks/current-space'
 import { ChannelProvider } from '@/hooks/current-channel'
 import { MetadataBlock } from '@/components/blocks/metadata'
+import { UserStatusBlock } from '@/components/blocks/user-status'
 
 export const ConnectRoute = () => {
     const { isConnected: isWalletConnected } = useAccount()
@@ -76,14 +76,18 @@ const ConnectedContent = () => {
 
     return (
         <div className="grid grid-cols-4 gap-4">
-            <ConnectionBlock />
-            <UserAuthStatusBlock />
+            <div className="grid grid-cols-subgrid gap-2">
+                <ConnectionBlock />
+                <UserStatusBlock />
+            </div>
             <SpacesBlock changeSpace={changeSpace} />
             <SpaceProvider spaceId={spaceId}>
                 <ChannelsBlock changeChannel={changeChannel} />
                 <ChannelProvider channelId={channelId}>
                     <MetadataBlock />
-                    <TimelineBlock />
+                    <div className="col-span-2">
+                        <TimelineBlock />
+                    </div>
                 </ChannelProvider>
             </SpaceProvider>
         </div>

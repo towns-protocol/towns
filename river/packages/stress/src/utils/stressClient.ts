@@ -80,7 +80,12 @@ export class StressClient {
         public globalPersistedStore: IStorage | undefined,
         public storageKey: string,
     ) {
-        logger.log('StressClient', { clientIndex, userId, logId: this.logId })
+        logger.log('StressClient', {
+            clientIndex,
+            userId,
+            logId: this.logId,
+            rpcUrl: this.streamsClient.rpcClient.url,
+        })
     }
 
     get logId(): string {

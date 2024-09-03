@@ -20,6 +20,7 @@ contract DeployChannels is FacetHelper, Deployer {
     addSelector(Channels.addRoleToChannel.selector);
     addSelector(Channels.getRolesByChannel.selector);
     addSelector(Channels.removeRoleFromChannel.selector);
+    addSelector(Channels.createChannelWithOverridePermissions.selector);
   }
 
   function versionName() public pure override returns (string memory) {

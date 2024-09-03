@@ -53,7 +53,7 @@ export const CHANNEL_INFO_PARAMS = {
     ROLE_RESTRICTED_CHANNEL_JOIN: 'role-restricted-channel-join',
     MUTUAL_TOWNS: 'mutual-towns',
     PINS: 'pins',
-    AUTH_TOKEN: 'auth-token',
+    BEARER_TOKEN: 'bearer-token',
 } as const
 
 export type CHANNEL_INFO_PARAMS_VALUES =

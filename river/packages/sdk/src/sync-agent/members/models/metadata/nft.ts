@@ -25,7 +25,7 @@ export interface MemberNftModel extends Identifiable {
 @persistedObservable({ tableName: 'member_nft' })
 export class MemberNft extends PersistedObservable<MemberNftModel> {
     constructor(
-        userId: string,
+        private userId: string,
         streamId: string,
         private riverConnection: RiverConnection,
         store: Store,
@@ -42,7 +42,7 @@ export class MemberNft extends PersistedObservable<MemberNftModel> {
             const streamView = this.riverConnection.client?.stream(this.data.streamId)?.view
             check(isDefined(streamView), 'streamView is not defined')
             const metadata = streamView.getMemberMetadata()
-            const nft = metadata?.nfts.confirmedNfts.get(this.data.id)
+            const nft = metadata?.nfts.confirmedNfts.get(this.userId)
             this.setData({
                 initialized: true,
                 nft: nft
@@ -57,7 +57,7 @@ export class MemberNft extends PersistedObservable<MemberNftModel> {
     }
 
     public onStreamNftUpdated = (streamId: string, userId: string) => {
-        if (streamId === this.data.streamId && userId === this.data.id) {
+        if (streamId === this.data.streamId && userId === this.userId) {
             const streamView = this.riverConnection.client?.stream(streamId)?.view
             const metadata = streamView?.getMemberMetadata()
             if (metadata) {

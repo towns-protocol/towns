@@ -20,7 +20,7 @@ export interface MemberDisplayNameModel extends Identifiable {
 @persistedObservable({ tableName: 'member_displayName' })
 export class MemberDisplayName extends PersistedObservable<MemberDisplayNameModel> {
     constructor(
-        userId: string,
+        private userId: string,
         streamId: string,
         private riverConnection: RiverConnection,
         store: Store,
@@ -43,7 +43,7 @@ export class MemberDisplayName extends PersistedObservable<MemberDisplayNameMode
             const streamView = this.riverConnection.client?.stream(this.data.streamId)?.view
             check(isDefined(streamView), 'streamView is not defined')
             const metadata = streamView.getMemberMetadata()
-            const info = metadata?.displayNames.info(this.data.id)
+            const info = metadata?.displayNames.info(this.userId)
             this.setData({
                 initialized: true,
                 displayName: info?.displayName,
@@ -53,7 +53,7 @@ export class MemberDisplayName extends PersistedObservable<MemberDisplayNameMode
     }
 
     public onStreamDisplayNameUpdated = (streamId: string, userId: string) => {
-        if (streamId === this.data.streamId && userId === this.data.id) {
+        if (streamId === this.data.streamId && userId === this.userId) {
             const stream = this.riverConnection.client?.streams.get(streamId)
             const metadata = stream?.view.getMemberMetadata()
             const info = metadata?.displayNames.info(userId)

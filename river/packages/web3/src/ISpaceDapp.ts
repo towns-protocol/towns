@@ -72,6 +72,19 @@ export interface UpdateRoleParams {
     ruleData: IRuleEntitlementV2Base.RuleDataV2Struct
 }
 
+export interface SetChannelPermissionOverridesParams {
+    spaceNetworkId: string
+    channelId: string
+    roleId: number
+    permissions: Permission[]
+}
+
+export interface ClearChannelPermissionOverridesParams {
+    spaceNetworkId: string
+    channelId: string
+    roleId: number
+}
+
 export interface TransactionOpts {
     retryCount?: number
 }
@@ -131,6 +144,15 @@ export interface ISpaceDapp {
         signer: SignerType,
         txnOpts?: TransactionOpts,
     ) => Promise<TransactionType>
+    createChannelWithPermissionOverrides: (
+        spaceId: string,
+        channelName: string,
+        channelDescription: string,
+        channelNetworkId: string,
+        roles: { roleId: number; permissions: Permission[] }[],
+        signer: SignerType,
+        txnOpts?: TransactionOpts,
+    ) => Promise<TransactionType>
     legacyCreateRole(
         spaceId: string,
         roleName: string,
@@ -167,6 +189,11 @@ export interface ISpaceDapp {
     getChannels: (spaceId: string) => Promise<ChannelMetadata[]>
     getChannelDetails: (spaceId: string, channelId: string) => Promise<ChannelDetails | null>
     getPermissionsByRoleId: (spaceId: string, roleId: number) => Promise<Permission[]>
+    getChannelPermissionOverrides(
+        spaceId: string,
+        roleId: number,
+        channelId: string,
+    ): Promise<Permission[]>
     getRole: (spaceId: string, roleId: number) => Promise<RoleDetails | null>
     getRoles: (spaceId: string) => Promise<BasicRoleInfo[]>
     getSpaceInfo: (spaceId: string) => Promise<SpaceInfo | undefined>
@@ -202,6 +229,16 @@ export interface ISpaceDapp {
     ) => Promise<TransactionType>
     updateRole: (
         params: UpdateRoleParams,
+        signer: SignerType,
+        txnOpts?: TransactionOpts,
+    ) => Promise<TransactionType>
+    setChannelPermissionOverrides: (
+        params: SetChannelPermissionOverridesParams,
+        signer: SignerType,
+        txnOpts?: TransactionOpts,
+    ) => Promise<TransactionType>
+    clearChannelPermissionOverrides: (
+        params: ClearChannelPermissionOverridesParams,
         signer: SignerType,
         txnOpts?: TransactionOpts,
     ) => Promise<TransactionType>

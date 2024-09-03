@@ -23,12 +23,12 @@ import {
     encodeERC1155Params,
     decodeERC1155Params,
     createOperationsTree,
-} from '../src/entitlement'
-import { MOCK_ADDRESS, MOCK_ADDRESS_2, MOCK_ADDRESS_3 } from '../src/Utils'
+} from './entitlement'
+import { MOCK_ADDRESS, MOCK_ADDRESS_2, MOCK_ADDRESS_3 } from './Utils'
 import { zeroAddress } from 'viem'
-import { Address } from '../src/ContractTypes'
-import { convertRuleDataV2ToV1 } from '../src/ConvertersEntitlements'
-import { IRuleEntitlementV2Base } from '../src/v3/IRuleEntitlementV2Shim'
+import { Address } from './ContractTypes'
+import { convertRuleDataV2ToV1 } from './ConvertersEntitlements'
+import { IRuleEntitlementV2Base } from './v3/IRuleEntitlementV2Shim'
 
 function makeRandomOperation(depth: number): Operation {
     const rand = Math.random()
@@ -921,7 +921,6 @@ function assertRuleDatasEqual(
     }
     expect(expected.checkOperations.length).toBe(actual.checkOperations.length)
     for (let i = 0; i < expected.checkOperations.length; i++) {
-        console.log('actual check type contents: ', i, actual.checkOperations[i].params)
         expect(expected.checkOperations[i].opType).toBe(actual.checkOperations[i].opType)
         expect(expected.checkOperations[i].chainId).toBe(actual.checkOperations[i].chainId)
         expect(expected.checkOperations[i].contractAddress).toBe(
@@ -941,16 +940,17 @@ function assertRuleDatasEqual(
 }
 
 function assertOperationEqual(actual: Operation, expected: Operation) {
+    expect(actual.opType).toBe(expected.opType)
     if (expected.opType === OperationType.CHECK) {
-        let actualCheck = actual as CheckOperationV2
-        let expectedCheck = expected as CheckOperationV2
+        const actualCheck = actual as CheckOperationV2
+        const expectedCheck = expected
         expect(actualCheck.checkType).toBe(expectedCheck.checkType)
         expect(actualCheck.chainId).toBe(expectedCheck.chainId)
         expect(actualCheck.contractAddress).toBe(expectedCheck.contractAddress)
         expect(actualCheck.params).toBe(expectedCheck.params)
     } else if (expected.opType === OperationType.LOGICAL) {
-        let actualLogical = actual as LogicalOperation
-        let expectedLogical = expected as LogicalOperation
+        const actualLogical = actual as LogicalOperation
+        const expectedLogical = expected
         expect(actualLogical.logicalType).toBe(expectedLogical.logicalType)
         // This check involves some redundance since these element have been visited already,
         // but it ensures that embedded operations in the tree are equal since the

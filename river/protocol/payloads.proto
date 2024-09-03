@@ -190,8 +190,8 @@ message UserBio {
     string bio = 1;
 }
 
-// a client created with an auth token cannot make blockchain transactions, but can add events to the river nodes
-message AuthToken {
+// a client created with an bearer token cannot make blockchain transactions, but can add events to the river nodes
+message BearerToken {
     string delegate_private_key = 1;
     bytes delegate_sig = 2;
     int64 expiry_epoch_ms = 3;

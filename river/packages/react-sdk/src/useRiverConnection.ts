@@ -1,7 +1,7 @@
 import type { SyncAgentConfig } from '@river-build/sdk'
 import { useCallback, useMemo, useState } from 'react'
 import type { ethers } from 'ethers'
-import { signAndConnect } from './connectRiver'
+import { connectRiverWithBearerToken, signAndConnect } from './connectRiver'
 import { useRiverSync } from './internals/useRiverSync'
 
 export const useRiverConnection = () => {
@@ -25,9 +25,25 @@ export const useRiverConnection = () => {
         [river],
     )
 
+    const connectUsingBearerToken = useCallback(
+        async (bearerToken: string, config: Omit<SyncAgentConfig, 'context'>) => {
+            if (river?.syncAgent) {
+                return
+            }
+            setConnecting(true)
+            return connectRiverWithBearerToken(bearerToken, config)
+                .then((syncAgent) => {
+                    river?.setSyncAgent(syncAgent)
+                    return syncAgent
+                })
+                .finally(() => setConnecting(false))
+        },
+        [river],
+    )
+
     const disconnect = useCallback(() => river?.setSyncAgent(undefined), [river])
 
     const isConnected = useMemo(() => !!river?.syncAgent, [river])
 
-    return { connect, disconnect, isConnecting, isConnected }
+    return { connect, connectUsingBearerToken, disconnect, isConnecting, isConnected }
 }

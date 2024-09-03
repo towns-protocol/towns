@@ -10,7 +10,7 @@ const (
 	PermissionJoin
 	PermissionRedact
 	PermissionBan
-	PermissionPinMessages
+	PermissionPinMessage
 	PermissionAddRemoveChannels
 	PermissionModifySpaceSettings
 	PermissionReact
@@ -32,8 +32,8 @@ func (p Permission) String() string {
 		return "Redact"
 	case PermissionBan:
 		return "Ban"
-	case PermissionPinMessages:
-		return "PinMessages"
+	case PermissionPinMessage:
+		return "PinMessage"
 	case PermissionAddRemoveChannels:
 		return "AddRemoveChannels"
 	case PermissionModifySpaceSettings:

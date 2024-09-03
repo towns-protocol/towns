@@ -321,8 +321,10 @@ describe('channelSpaceSettingsTests', () => {
         expect(eventId).toBeDefined()
 
         // Validate updateHideUserJoinLeaveEvent event was emitted for channel1
-        expect(updatedChannelHideJoinLeaveEventsState.size).toBe(1)
-        expect(updatedChannelHideJoinLeaveEventsState.get(defaultChannelId)).toBe(true)
+        await waitFor(() => {
+            expect(updatedChannelHideJoinLeaveEventsState.size).toBe(1)
+            expect(updatedChannelHideJoinLeaveEventsState.get(defaultChannelId)).toBe(true)
+        })
 
         // Expect hideUserJoinLeaveEvents change to sync to space stream view
         await waitFor(() => {

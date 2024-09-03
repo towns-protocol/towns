@@ -159,6 +159,7 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) err
 
 	mbsInContract := stream.numBlocksInContract.Load()
 	if mbsInDb >= mbsInContract {
+		a.streamsUpToDate.Add(1)
 		return nil
 	}
 
@@ -171,11 +172,6 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) err
 		"numBlocksInContract",
 		mbsInContract,
 	)
-
-	if mbsInDb >= mbsInContract {
-		a.streamsUpToDate.Add(1)
-		return nil
-	}
 
 	nodeAddr := stream.nodes.GetStickyPeer()
 

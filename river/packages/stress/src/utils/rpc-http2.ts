@@ -8,9 +8,6 @@ import {
     retryInterceptor,
     type RetryParams,
 } from '@river-build/sdk'
-import { dlogger } from '@river-build/dlog'
-
-const logger = dlogger('csb:rpc:rpc-http2')
 
 export type StreamRpcClient = PromiseClient<typeof StreamService> & { url?: string }
 
@@ -23,7 +20,6 @@ export function makeHttp2StreamRpcClient(
 ): StreamRpcClient {
     const transportId = nextRpcClientNum++
     const url = randomUrlSelector(urls)
-    logger.info(`makeHttp2StreamRpcClient: Connecting to url=${url}`)
     const options: ConnectTransportOptions = {
         httpVersion: '2',
         baseUrl: url,

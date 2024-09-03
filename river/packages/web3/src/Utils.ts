@@ -9,6 +9,37 @@ export const MOCK_ADDRESS = '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef'
 export const MOCK_ADDRESS_2 = '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbee2'
 export const MOCK_ADDRESS_3 = '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbee3'
 
+export class NoEntitledWalletError extends Error {
+    constructor() {
+        super('No entitled wallet found')
+        this.name = 'NoEntitledWalletError'
+
+        // Setting the prototype is necessary for instanceof to work correctly
+        // It ensures that instanceof NoEntitledWalletError returns true
+        // This is because TypeScript's class syntax doesn't set up the prototype chain correctly for custom errors
+        Object.setPrototypeOf(this, NoEntitledWalletError.prototype)
+    }
+
+    /**
+     * throwIfRuntimeErrors is a helper function to process AggregateErrors emitted from Promise.any that may
+     * contain promises rejected with NoEntitledWalletErrors, which represent an entitlement check that evaluates
+     * to false, and not a true error condition. This method will filter out NoEntitledWalletErrors and throw an
+     * AggregateError with the remaining errors, if any exist. Otherwise, it will simply return undefined.
+     * @param error AggregateError
+     * @returns undefined
+     * @throws AggregateError
+     */
+    static throwIfRuntimeErrors = (error: AggregateError) => {
+        const runtimeErrors = error.errors.filter(
+            (e) => !(e instanceof NoEntitledWalletError),
+        ) as Error[]
+        if (runtimeErrors.length > 0) {
+            throw new AggregateError(runtimeErrors)
+        }
+        return undefined
+    }
+}
+
 export function isEthersProvider(
     provider: ethers.providers.Provider | PublicClient,
 ): provider is ethers.providers.Provider {

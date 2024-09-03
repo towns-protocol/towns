@@ -2,7 +2,7 @@ import { ecrecover, fromRpcSig, hashPersonalMessage } from '@ethereumjs/util'
 import { ethers } from 'ethers'
 import { bin_equal, bin_fromHexString, bin_toHexString, check } from '@river-build/dlog'
 import { publicKeyToAddress, publicKeyToUint8Array, riverDelegateHashSrc } from './sign'
-import { AuthToken, Err } from '@river-build/proto'
+import { BearerToken, Err } from '@river-build/proto'
 import { bytesToHex, hexToBytes } from 'ethereum-cryptography/utils'
 
 /**
@@ -111,7 +111,7 @@ export async function makeSignerContext(
 }
 
 // make auth token
-export async function makeAuthToken(
+export async function makeBearerToken(
     signer: ethers.Signer,
     expiry:
         | bigint
@@ -123,27 +123,29 @@ export async function makeAuthToken(
           },
 ): Promise<string> {
     const delegate = await makeSignerDelegate(signer, expiry)
-    const authToken = new AuthToken({
+    const bearerToken = new BearerToken({
         delegatePrivateKey: delegate.delegateWallet.privateKey,
         delegateSig: delegate.signerContext.delegateSig,
         expiryEpochMs: delegate.signerContext.delegateExpiryEpochMs,
     })
-    return bytesToHex(authToken.toBinary())
+    return bytesToHex(bearerToken.toBinary())
 }
 
-export async function makeSignerContextFromAuthToken(authTokenStr: string): Promise<SignerContext> {
-    const authToken = AuthToken.fromBinary(hexToBytes(authTokenStr))
-    const delegateWallet = new ethers.Wallet(authToken.delegatePrivateKey)
+export async function makeSignerContextFromBearerToken(
+    bearerTokenStr: string,
+): Promise<SignerContext> {
+    const bearerToken = BearerToken.fromBinary(hexToBytes(bearerTokenStr))
+    const delegateWallet = new ethers.Wallet(bearerToken.delegatePrivateKey)
     const creatorAddress = recoverPublicKeyFromDelegateSig({
         delegatePubKey: delegateWallet.publicKey,
-        delegateSig: authToken.delegateSig,
-        expiryEpochMs: authToken.expiryEpochMs,
+        delegateSig: bearerToken.delegateSig,
+        expiryEpochMs: bearerToken.expiryEpochMs,
     })
     return {
-        signerPrivateKey: () => authToken.delegatePrivateKey.slice(2), // remove the 0x prefix,
+        signerPrivateKey: () => bearerToken.delegatePrivateKey.slice(2), // remove the 0x prefix,
         creatorAddress,
-        delegateSig: authToken.delegateSig,
-        delegateExpiryEpochMs: authToken.expiryEpochMs,
+        delegateSig: bearerToken.delegateSig,
+        delegateExpiryEpochMs: bearerToken.expiryEpochMs,
     }
 }
 

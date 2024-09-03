@@ -50,6 +50,41 @@ const _abi = [
   },
   {
     type: "function",
+    name: "createChannelWithOverridePermissions",
+    inputs: [
+      {
+        name: "channelId",
+        type: "bytes32",
+        internalType: "bytes32",
+      },
+      {
+        name: "metadata",
+        type: "string",
+        internalType: "string",
+      },
+      {
+        name: "rolePermissions",
+        type: "tuple[]",
+        internalType: "struct IChannelBase.RolePermissions[]",
+        components: [
+          {
+            name: "roleId",
+            type: "uint256",
+            internalType: "uint256",
+          },
+          {
+            name: "permissions",
+            type: "string[]",
+            internalType: "string[]",
+          },
+        ],
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
     name: "getChannel",
     inputs: [
       {

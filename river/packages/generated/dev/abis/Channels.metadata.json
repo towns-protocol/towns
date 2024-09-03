@@ -209,6 +209,41 @@
       {
         "inputs": [],
         "type": "error",
+        "name": "Roles__EntitlementAlreadyExists"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "Roles__EntitlementDoesNotExist"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "Roles__InvalidEntitlementAddress"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "Roles__InvalidPermission"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "Roles__PermissionAlreadyExists"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "Roles__PermissionDoesNotExist"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "Roles__RoleDoesNotExist"
+      },
+      {
+        "inputs": [],
+        "type": "error",
         "name": "TransferCallerNotOwnerNorApproved"
       },
       {
@@ -517,6 +552,138 @@
       {
         "inputs": [
           {
+            "internalType": "address",
+            "name": "updater",
+            "type": "address",
+            "indexed": true
+          },
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256",
+            "indexed": true
+          },
+          {
+            "internalType": "bytes32",
+            "name": "channelId",
+            "type": "bytes32",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "PermissionsAddedToChannelRole",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "updater",
+            "type": "address",
+            "indexed": true
+          },
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256",
+            "indexed": true
+          },
+          {
+            "internalType": "bytes32",
+            "name": "channelId",
+            "type": "bytes32",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "PermissionsRemovedFromChannelRole",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "updater",
+            "type": "address",
+            "indexed": true
+          },
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256",
+            "indexed": true
+          },
+          {
+            "internalType": "bytes32",
+            "name": "channelId",
+            "type": "bytes32",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "PermissionsUpdatedForChannelRole",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "creator",
+            "type": "address",
+            "indexed": true
+          },
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "RoleCreated",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "remover",
+            "type": "address",
+            "indexed": true
+          },
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "RoleRemoved",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "updater",
+            "type": "address",
+            "indexed": true
+          },
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "RoleUpdated",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
             "internalType": "uint256",
             "name": "tokenId",
             "type": "uint256",
@@ -628,6 +795,40 @@
         "stateMutability": "nonpayable",
         "type": "function",
         "name": "createChannel"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "channelId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "string",
+            "name": "metadata",
+            "type": "string"
+          },
+          {
+            "internalType": "struct IChannelBase.RolePermissions[]",
+            "name": "rolePermissions",
+            "type": "tuple[]",
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "roleId",
+                "type": "uint256"
+              },
+              {
+                "internalType": "string[]",
+                "name": "permissions",
+                "type": "string[]"
+              }
+            ]
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function",
+        "name": "createChannelWithOverridePermissions"
       },
       {
         "inputs": [
@@ -792,6 +993,13 @@
             "roleIds": "the roleIds to add to the channel"
           }
         },
+        "createChannelWithOverridePermissions(bytes32,string,(uint256,string[])[])": {
+          "params": {
+            "channelId": "the channelId of the channel",
+            "metadata": "the metadata of the channel",
+            "rolePermissions": "the rolePermissions (role->permissions[])[] to add to the channel"
+          }
+        },
         "getChannel(bytes32)": {
           "params": {
             "channelId": "the channelId to get"
@@ -842,6 +1050,9 @@
         },
         "createChannel(bytes32,string,uint256[])": {
           "notice": "creates a channel"
+        },
+        "createChannelWithOverridePermissions(bytes32,string,(uint256,string[])[])": {
+          "notice": "creates a channel with override permissions"
         },
         "getChannel(bytes32)": {
           "notice": "gets a channel"
@@ -1101,10 +1312,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/channels/ChannelBase.sol": {
-      "keccak256": "0xcb9670d1b4b843f0c35c4a753593cd06e364d42155db682bd4ac6e49b7f8d782",
+      "keccak256": "0xde0ead26e3b9f80ab9d8e034691ca028be80ab988fa2249109d93b07507aed6c",
       "urls": [
-        "bzz-raw://42d397f5a0de269ac93cf1cb7e4cfdaa62d98c1ed9f3c5087598ffe742239067",
-        "dweb:/ipfs/QmWNQzs1Y2sSSbHBpbHgDXsvU5DEDamSYUU7NwRzCyQsFV"
+        "bzz-raw://8e332b40e5e9063a3c0e4babce9785c493648f6a1f39cd889ab70f95b0709cb2",
+        "dweb:/ipfs/QmTMZkPTKwGosCZ9SWCqxkaLkdbb3MAgZjsQGCLuRaEdiC"
       ],
       "license": "MIT"
     },
@@ -1125,18 +1336,18 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/channels/Channels.sol": {
-      "keccak256": "0xc556d10424e70cf85ed25e6d217f991b2a9a278733d9971406e278bf3884c1ec",
+      "keccak256": "0x2f6d41026cf847c7c1ceaddd4a10e53a4e0de2e9b2b387c3bf4fc2dda5c1c0cd",
       "urls": [
-        "bzz-raw://af936eafbb288acfe5e94c6452016b56d170141b2e161fd95af5ee5ee8f3d180",
-        "dweb:/ipfs/QmbGXMtErxmEwaAo8GPyT93TQKXy9LebTu8ApVDkdYFi3w"
+        "bzz-raw://859558ea36bd5fc995232df691dcf061a40f7889fb0ed6b557615127669e990f",
+        "dweb:/ipfs/QmZa6APUMmf4EYkBGZTFK1a54QZqzGTEbca4tC98D3b4im"
       ],
       "license": "MIT"
     },
     "contracts/src/spaces/facets/channels/IChannel.sol": {
-      "keccak256": "0x8f461ec8c49234f27257fc5cf20dd5e9fdb4692d9b17075be63e8ee6db854554",
+      "keccak256": "0x8940643f9701981062aeb6adfb8d0b7387acdaecae0baaca01e372330252769e",
       "urls": [
-        "bzz-raw://52673312b7dfe3fa2b0e8b603a368036f3b428b303f9e539b558ccfdf5490b54",
-        "dweb:/ipfs/Qme3LoUvB1Axz9ZJZ8Erv6Cw6GLPQB7PNghMQ3FUYfA4VV"
+        "bzz-raw://aa59ac6c1cd515f476398776e27fc0dfa5f5563192d60a793620cde2f84e6ed9",
+        "dweb:/ipfs/QmVLiENXctwtHuSBmw5z4458bw8EbYzfKCVn3ZgqoaJ1MA"
       ],
       "license": "MIT"
     },
@@ -1156,6 +1367,14 @@
       ],
       "license": "MIT"
     },
+    "contracts/src/spaces/facets/entitlements/EntitlementsManagerService.sol": {
+      "keccak256": "0x85433740dc34b5a8c76e512f168e5eec3c03b9ed8683ce0c0acb5368150d5c3d",
+      "urls": [
+        "bzz-raw://10706ddceeecee6b1d429175430f3439c25e59070ad3cf5918cf9795c113f501",
+        "dweb:/ipfs/QmRS5ag8k4GSatGkWMKVvCBfxo2HPgh917UndkaF4VKCWa"
+      ],
+      "license": "MIT"
+    },
     "contracts/src/spaces/facets/entitlements/EntitlementsManagerStorage.sol": {
       "keccak256": "0x688692231af49bcca80f7da97be12d448b0c20a4338d259d5f654b95c5b046ca",
       "urls": [
@@ -1169,6 +1388,38 @@
       "urls": [
         "bzz-raw://3fec75bce4b207c375b54dacc0296dc11991f7cc89da0e81e13457ae2120146a",
         "dweb:/ipfs/QmXzZdw5FnTZqpskq3yLguKTRmhLRBVueMVfH6RY4HuSsa"
+      ],
+      "license": "MIT"
+    },
+    "contracts/src/spaces/facets/roles/IRoles.sol": {
+      "keccak256": "0x8e83ae75871b3aa2f2c2885770c0c810e7cf53b4bcb06ff3d73bbcc49b7a7a65",
+      "urls": [
+        "bzz-raw://3995418818a37c318df894c3a64f646f9a70113b0edf54fa34dc4c5ba2f426ed",
+        "dweb:/ipfs/QmSeDc6kasbA8THfZU5fS5uQbbeV3X85qauF8PapgXzgT3"
+      ],
+      "license": "MIT"
+    },
+    "contracts/src/spaces/facets/roles/RolesBase.sol": {
+      "keccak256": "0xf5eba5be4ae6b14bea2dbf18332735926320842e6aab00413bf3eb3e19f7770d",
+      "urls": [
+        "bzz-raw://9dd51baafe57ec1eec1e3680745911047d2e8115dc6043ea4a5069e4baf037f4",
+        "dweb:/ipfs/QmVw68YXiWfrVNYPboUyWKnHLQtMXx8ZSw44rRX3ej6bWR"
+      ],
+      "license": "MIT"
+    },
+    "contracts/src/spaces/facets/roles/RolesStorage.sol": {
+      "keccak256": "0xb7cd94235e366821c3dbdaa7dda9f66c6a0f55ced761a0cafc0de0ee2af41385",
+      "urls": [
+        "bzz-raw://f667b95874e4299f93064815001f7f1170e3268e677bb969c70e909f0086d53f",
+        "dweb:/ipfs/QmRpEpYsMN4C3yB9ujW3MRa8VxwQRoFHP1qoyFEko7W575"
+      ],
+      "license": "MIT"
+    },
+    "contracts/src/utils/StringSet.sol": {
+      "keccak256": "0x2b9880e846f275864e847e8c7079d29a02c4a060c5a9d580fb153ff0e7b49ff6",
+      "urls": [
+        "bzz-raw://df9c170f28318746eab23befba1318735652c7d198e273a322a0ff2702680605",
+        "dweb:/ipfs/QmanQQi9YiPHb9Cn4wpfQ9VYUi7UZ9iQibLL6V46JPibLu"
       ],
       "license": "MIT"
     },

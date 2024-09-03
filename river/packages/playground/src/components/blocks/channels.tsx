@@ -35,7 +35,7 @@ export const ChannelsBlock = ({ changeChannel }: ChannelsBlockProps) => {
             <CreateChannel variant="secondary" spaceId={spaceId} onChannelCreated={changeChannel} />
             <div className="flex flex-col gap-2">
                 <span className="text-xs">Select a channel to start messaging</span>
-                <div className="flex max-h-64 flex-col gap-1 overflow-y-auto">
+                <div className="flex max-h-96 flex-col gap-1 overflow-y-auto">
                     {space.channelIds.map((channelId) => (
                         <ChannelInfo
                             key={`${spaceId}-${channelId}`}

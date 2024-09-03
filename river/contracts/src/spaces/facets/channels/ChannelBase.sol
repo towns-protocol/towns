@@ -63,6 +63,15 @@ abstract contract ChannelBase is IChannelBase {
     return channels;
   }
 
+  function _setChannelRoleOverrides(
+    bytes32 channelId,
+    uint256[] memory roleIds
+  ) internal {
+    for (uint256 i = 0; i < roleIds.length; i++) {
+      _addRoleToChannel(channelId, roleIds[i]);
+    }
+  }
+
   function _updateChannel(
     bytes32 channelId,
     string memory metadata,

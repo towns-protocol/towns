@@ -5,7 +5,7 @@ pragma solidity ^0.8.23;
 
 //interfaces
 import {IRoles} from "contracts/src/spaces/facets/roles/IRoles.sol";
-import {IChannel} from "contracts/src/spaces/facets/channels/IChannel.sol";
+import {IChannel, IChannelBase} from "contracts/src/spaces/facets/channels/IChannel.sol";
 import {IEntitlementsManager} from "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol";
 import {IEntitlementBase} from "contracts/src/spaces/entitlements/IEntitlement.sol";
 
@@ -85,6 +85,72 @@ contract ChannelsTest is BaseSetup, IEntitlementBase {
 
     vm.prank(founder);
     IChannel(space).createChannel(channelId, channelMetadata, roleIds);
+
+    IChannel.Channel memory _channel = IChannel(space).getChannel(channelId);
+    assertEq(_channel.roleIds.length, roleIds.length);
+
+    assertFalse(
+      IEntitlementsManager(space).isEntitledToSpace(
+        _randomAddress(),
+        Permissions.Write
+      )
+    );
+
+    assertFalse(
+      IEntitlementsManager(space).isEntitledToChannel(
+        channelId,
+        _randomAddress(),
+        Permissions.Write
+      )
+    );
+  }
+
+  function test_createChannel_with_override_permissions() public {
+    bytes32 channelId = "my-cool-channel";
+    string memory channelMetadata = "Metadata";
+
+    string[] memory permissionsWrite = new string[](1);
+    permissionsWrite[0] = Permissions.Write;
+
+    string[] memory permissionsRead = new string[](1);
+    permissionsRead[0] = Permissions.Read;
+
+    vm.prank(founder);
+    uint256 writerRoleId = IRoles(space).createRole(
+      "WriterRole",
+      permissionsWrite,
+      new IRoles.CreateEntitlement[](0)
+    );
+
+    vm.prank(founder);
+    uint256 readerRoleId = IRoles(space).createRole(
+      "ReaderRole",
+      permissionsRead,
+      new IRoles.CreateEntitlement[](0)
+    );
+
+    uint256[] memory roleIds = new uint256[](2);
+    roleIds[0] = writerRoleId;
+    roleIds[1] = readerRoleId;
+
+    IChannelBase.RolePermissions[]
+      memory rolePermissions = new IChannelBase.RolePermissions[](2);
+
+    rolePermissions[0] = IChannelBase.RolePermissions(
+      writerRoleId,
+      permissionsWrite
+    );
+    rolePermissions[1] = IChannelBase.RolePermissions(
+      readerRoleId,
+      permissionsRead
+    );
+
+    vm.prank(founder);
+    IChannel(space).createChannelWithOverridePermissions(
+      channelId,
+      channelMetadata,
+      rolePermissions
+    );
 
     IChannel.Channel memory _channel = IChannel(space).getChannel(channelId);
     assertEq(_channel.roleIds.length, roleIds.length);

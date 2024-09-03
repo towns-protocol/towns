@@ -27,6 +27,7 @@ library MembershipStorage {
     uint256 tokenBalance;
     mapping(bytes32 => address) pendingJoinRequests;
     string membershipImage;
+    bool freeAllocationEnabled;
   }
 
   function layout() internal pure returns (Layout storage l) {

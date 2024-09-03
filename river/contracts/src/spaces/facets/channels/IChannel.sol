@@ -17,6 +17,11 @@ interface IChannelBase {
     uint256[] roleIds;
   }
 
+  struct RolePermissions {
+    uint256 roleId;
+    string[] permissions;
+  }
+
   // =============================================================
   //                           Events
   // =============================================================
@@ -44,6 +49,16 @@ interface IChannel is IChannelBase {
     bytes32 channelId,
     string memory metadata,
     uint256[] memory roleIds
+  ) external;
+
+  /// @notice creates a channel with override permissions
+  /// @param channelId the channelId of the channel
+  /// @param metadata the metadata of the channel
+  /// @param rolePermissions the rolePermissions (role->permissions[])[] to add to the channel
+  function createChannelWithOverridePermissions(
+    bytes32 channelId,
+    string memory metadata,
+    RolePermissions[] memory rolePermissions
   ) external;
 
   /// @notice gets a channel
