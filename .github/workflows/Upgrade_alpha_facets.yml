@@ -5,9 +5,11 @@ env:
     BASE_SEPOLIA_RPC_URL: ${{ secrets.ALPHA_BASE_SEPOLIA_RPC_URL }}
     RIVER_RPC_URL: ${{ secrets.RIVER_TESTNET_RPC_URL }}
     BLOCKSCOUT_SEPOLIA_API_KEY: ${{ secrets.BLOCKSCOUT_BASE_SEPOLIA_API_KEY }}
+    RIVERSCAN_DEVNET_API_KEY: 'PLACEHOLDER_STRING'
     BLOCKSCOUT_SEPOLIA_URL: 'https://base-sepolia.blockscout.com/api'
     BASESCAN_SEPOLIA_URL: 'https://api-sepolia.basescan.org/api'
     BASESCAN_SEPOLIA_API_KEY: ${{ secrets.BASESCAN_SEPOLIA_API_KEY }}
+    RIVERSCAN_DEVNET_URL: 'https://towns-devnet.explorer.caldera.xyz/api'
 
 on:
     workflow_dispatch: # Allows manual triggering
@@ -66,6 +68,16 @@ jobs:
                   private_key=${{ env.ALPHA_BASE_SEPOLIA_DEPLOYER_PK }} \
                   etherscan=${{ env.BASESCAN_SEPOLIA_API_KEY }} \
                   verifier=${{ env.BASESCAN_SEPOLIA_URL }}
+              working-directory: river/contracts
+
+            - name: Run River Devnet Interaction
+              run: make interact-any-explicit \
+                  context=alpha \
+                  rpc=river_devnet \
+                  contract=InteractRiverAlpha \
+                  private_key=${{ env.ALPHA_BASE_SEPOLIA_DEPLOYER_PK }} \
+                  etherscan=${{ env.RIVERSCAN_DEVNET_API_KEY }} \
+                  verifier=${{ env.RIVERSCAN_DEVNET_URL }}
               working-directory: river/contracts
 
             # If action failed, we send a slack notification
