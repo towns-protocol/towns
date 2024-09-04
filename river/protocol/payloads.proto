@@ -188,6 +188,7 @@ message ChunkedMedia {
 
 message UserBio {
     string bio = 1;
+    optional uint64 updated_at_epoch_ms = 2;
 }
 
 // a client created with an bearer token cannot make blockchain transactions, but can add events to the river nodes

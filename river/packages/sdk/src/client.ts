@@ -950,6 +950,7 @@ export class Client
         // encrypt the chunked media
         // use the lowercased userId as the key phrase
         const { key, iv } = await deriveKeyAndIV(context)
+        bio.updatedAtEpochMs = BigInt(Date.now())
         const bioBinary = bio.toBinary()
         const { ciphertext } = await encryptAESGCM(bioBinary, key, iv)
         const encryptedData = new EncryptedData({
