@@ -70,10 +70,37 @@ resource "aws_iam_role" "ecs_task_execution_role" {
   tags = module.global_constants.tags
 }
 
+resource "aws_lb_target_group" "target_group" {
+  name        = "${local.local_name}-tg"
+  protocol    = "HTTP"
+  port        = local.service_port
+  target_type = "ip"
+  vpc_id      = var.vpc_id
+
+
+  health_check {
+    path                = "/health"
+    interval            = 60
+    timeout             = 6
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+  }
+
+  tags = module.global_constants.tags
+}
+
 module "alb" {
   source  = "./load-balancer"
   vpc_id  = var.vpc_id
   subnets = var.public_subnets
+
+  default_target_group_arn = aws_lb_target_group.target_group.arn
+}
+
+module "cdn" {
+  source             = "./cdn"
+  alias_domain_name  = local.host
+  origin_domain_name = module.alb.dns_name
 }
 
 # Behind the load balancer
@@ -160,50 +187,11 @@ locals {
   service_port = 80
 }
 
-resource "aws_lb_target_group" "target_group" {
-  name        = "${local.local_name}-tg"
-  protocol    = "HTTP"
-  port        = local.service_port
-  target_type = "ip"
-  vpc_id      = var.vpc_id
-
-
-  health_check {
-    path                = "/health"
-    interval            = 60
-    timeout             = 6
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-  }
-
-  tags = module.global_constants.tags
-}
-
 locals {
   subdomain        = terraform.workspace == "omega" ? "@" : terraform.workspace
   hosted_zone_name = module.global_constants.river_delivery_hosted_zone_name
   host             = local.subdomain == "@" ? local.hosted_zone_name : "${local.subdomain}.${local.hosted_zone_name}"
   base_url         = "https://${local.host}"
-}
-
-
-resource "aws_lb_listener_rule" "http_rule" {
-  listener_arn = module.alb.https_listener_arn
-
-  lifecycle {
-    ignore_changes = [action]
-  }
-
-  action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.target_group.arn
-  }
-
-  condition {
-    host_header {
-      values = [local.host]
-    }
-  }
 }
 
 resource "aws_ecs_task_definition" "fargate_task_definition" {
@@ -363,7 +351,8 @@ data "cloudflare_zone" "zone" {
 resource "cloudflare_record" "http_dns" {
   zone_id = data.cloudflare_zone.zone.id
   name    = local.subdomain
-  value   = module.alb.dns_name
-  type    = "CNAME"
-  ttl     = 60
+  value   = module.cdn.domain_name
+
+  type = "CNAME"
+  ttl  = 60
 }
