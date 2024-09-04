@@ -10,6 +10,7 @@ env:
     BASESCAN_SEPOLIA_URL: 'https://api-sepolia.basescan.org/api'
     BASESCAN_SEPOLIA_API_KEY: ${{ secrets.BASESCAN_SEPOLIA_API_KEY }}
     RIVERSCAN_DEVNET_URL: 'https://towns-devnet.explorer.caldera.xyz/api'
+    RIVER_DEVNET_RPC_URL: 'https://towns-devnet.rpc.caldera.xyz/http'
 
 on:
     workflow_dispatch: # Allows manual triggering
