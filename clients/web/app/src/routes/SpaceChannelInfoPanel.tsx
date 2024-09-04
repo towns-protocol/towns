@@ -30,7 +30,7 @@ import { ChannelPermissionsNameDescriptionModal } from '@components/ChannelSetti
 import { PrivyWrapper } from 'privy/PrivyProvider'
 import { ChannelMembersModal } from './SpaceChannelDirectoryPanel'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
-import { RolesList } from './RoleRestrictedChannelJoinPanel'
+import { ChannelsRolesList } from './RoleRestrictedChannelJoinPanel'
 
 export const ChannelInfoPanel = React.memo(() => {
     return (
@@ -48,6 +48,14 @@ export const ChannelInfo = () => {
     const { isTouch } = useDevice()
     const spaceData = useSpaceData()
     const { loggedInWalletAddress } = useConnectivity()
+
+    const { hasPermission: canJoinChannel, isLoading: isLoadingCanJoinChannel } = useHasPermission({
+        spaceId: spaceData?.id,
+        channelId: channel?.id,
+        walletAddress: loggedInWalletAddress,
+        permission: Permission.Read,
+    })
+
     const { hasPermission: canEditChannel } = useHasPermission({
         spaceId: spaceData?.id ?? '',
         walletAddress: loggedInWalletAddress ?? '',
@@ -177,8 +185,9 @@ export const ChannelInfo = () => {
                                 Only members of these roles can access:
                             </Text>
                         </Stack>
-                        <RolesList
-                            hideNegativeUI
+                        <ChannelsRolesList
+                            canJoin={canJoinChannel}
+                            isLoadingCanJoin={isLoadingCanJoinChannel}
                             roles={roles}
                             headerSubtitle={(r) => r.permissions.join(', ')}
                         />

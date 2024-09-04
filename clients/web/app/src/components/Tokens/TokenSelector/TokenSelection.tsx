@@ -18,7 +18,7 @@ type TokenSelectionInputProps = BaseTokenSelectionProps & {
 }
 
 type TokenSelectionDisplayProps = BaseTokenSelectionProps & {
-    userOwnsToken?: boolean
+    userPassesEntitlement?: boolean
 }
 
 type TokenSelectionProps = TokenSelectionInputProps | TokenSelectionDisplayProps
@@ -53,27 +53,20 @@ function TokenSelection(props: TokenSelectionProps) {
                         <Text truncate>
                             {transformedQuantity} {label?.length ? label : 'Unknown Token'}
                         </Text>
-                        {'userOwnsToken' in props && (
-                            <Box
-                                tooltip={
-                                    <Box background="level2" padding="sm" rounded="sm">
-                                        <Text fontSize="sm">
-                                            {props.userOwnsToken
-                                                ? 'You own this token'
-                                                : 'You do not own this token'}
-                                        </Text>
-                                    </Box>
-                                }
-                            >
-                                {props.userOwnsToken !== undefined && (
-                                    <Icon
-                                        type={props.userOwnsToken ? 'check' : 'close'}
-                                        color={props.userOwnsToken ? 'positive' : 'negative'}
-                                        size="square_xs"
-                                    />
-                                )}
-                            </Box>
-                        )}
+                        {'userPassesEntitlement' in props &&
+                            props.userPassesEntitlement === false && (
+                                <Box
+                                    tooltip={
+                                        <Box background="level2" padding="sm" rounded="sm">
+                                            <Text fontSize="sm">
+                                                You do not meet this requirement
+                                            </Text>
+                                        </Box>
+                                    }
+                                >
+                                    <Icon type="close" color="negative" size="square_xs" />
+                                </Box>
+                            )}
                     </Stack>
                     <Stack horizontal alignItems="center" gap="sm">
                         <ClipboardCopy clipboardContent={address}>

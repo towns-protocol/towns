@@ -2,7 +2,9 @@ import React, { PropsWithChildren, useCallback, useState } from 'react'
 import {
     Address,
     BlockchainTransactionType,
+    Permission,
     useConnectivity,
+    useHasPermission,
     useIsTransactionPending,
     useLinkEOAToRootKeyTransaction,
     useLinkedWallets,
@@ -16,17 +18,16 @@ import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { TokenGatingMembership, useTokensGatingMembership } from 'hooks/useTokensGatingMembership'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
-import { TokenDetailsWithWalletMatch } from 'routes/RoleRestrictedChannelJoinPanel'
+import { TokenSelectionDisplayWithMetadata } from 'routes/RoleRestrictedChannelJoinPanel'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { FullPanelOverlay, LinkedWallet, useConnectThenLink } from '../WalletLinkingPanel'
 import { mapToErrorMessage } from '../utils'
-import { currentWalletLinkingStore, useTokenBalances } from './tokenStatus'
 
 export function TokenVerification({ onHide, spaceId }: { spaceId: string; onHide: () => void }) {
     const { data: linkedWallets } = useLinkedWallets()
     const { loggedInWalletAddress } = useConnectivity()
-    const { data: tokensGatingMembership } = useTokensGatingMembership(spaceId)
-    const tokensLength = tokensGatingMembership?.tokens.length ?? 0
+    const { data: entitlements } = useTokensGatingMembership(spaceId)
+    const tokensLength = entitlements?.tokens.length ?? 0
     const maxWidth = tokensLength > 2 ? 'auto' : '400'
     const { getSigner } = useGetEmbeddedSigner()
     const { data: aaAdress } = useAbstractAccountAddress({
@@ -66,12 +67,9 @@ export function TokenVerification({ onHide, spaceId }: { spaceId: string; onHide
                 <Text strong size="lg">
                     Digital Asset Required
                 </Text>
-                <Text color="gray1">{`To join this town, you need to prove ownership of the following digital asset(s):`}</Text>
+                <Text color="gray1">{`Any of the following tokens must be held to claim membership:`}</Text>
 
-                <Content
-                    linkedWallets={linkedWallets}
-                    tokensGatingMembership={tokensGatingMembership}
-                >
+                <Content linkedWallets={linkedWallets} entitlements={entitlements}>
                     {linkedWallets && linkedWallets.length > 1 ? (
                         <Paragraph strong>Linked Wallets</Paragraph>
                     ) : null}
@@ -101,19 +99,27 @@ export function TokenVerification({ onHide, spaceId }: { spaceId: string; onHide
 }
 
 function Content({
-    tokensGatingMembership,
+    entitlements,
     linkedWallets,
     children,
 }: PropsWithChildren<{
     linkedWallets: string[] | undefined
-    tokensGatingMembership: TokenGatingMembership
+    entitlements: TokenGatingMembership
 }>) {
-    const { data: tokensInWallet, isLoading: isLoadingTokensInWallet } = useTokenBalances({
-        tokens: tokensGatingMembership.tokens,
-        refetchInterval: 4_000,
-    })
-    const noAssets = currentWalletLinkingStore((s) => s.noAssets)
+    const { loggedInWalletAddress } = useConnectivity()
     const spaceId = useSpaceIdFromPathname()
+    const {
+        hasPermission: meetsMembershipRequirements,
+        isLoading: isLoadingMeetsMembership,
+        invalidate: invalidateJoinSpace,
+        getQueryData: getJoinSpaceQueryData,
+    } = useHasPermission({
+        spaceId: spaceId,
+        walletAddress: loggedInWalletAddress,
+        permission: Permission.JoinSpace,
+    })
+
+    const { noAssets, tickNoAssets } = useNoAssetsState()
     const { joinSpace, errorMessage: errorJoinSpace } = useJoinTown(spaceId)
     const [isJoining, setIsJoining] = useState(false)
     const isJoinPending = useIsTransactionPending(BlockchainTransactionType.JoinSpace)
@@ -123,7 +129,19 @@ function Content({
         isLoading: isLoadingLinkingWallet,
         linkEOAToRootKeyTransaction,
         error: errorLinkWallet,
-    } = useLinkEOAToRootKeyTransaction()
+    } = useLinkEOAToRootKeyTransaction({
+        onSuccess: async () => {
+            if (!loggedInWalletAddress) {
+                return
+            }
+            await invalidateJoinSpace()
+
+            const canJoin = getJoinSpaceQueryData()
+            if (!canJoin) {
+                tickNoAssets()
+            }
+        },
+    })
 
     const connectWalletThenLink = useConnectThenLink({
         onLinkWallet: linkEOAToRootKeyTransaction,
@@ -142,12 +160,6 @@ function Content({
         errorMessage: errorJoinSpace ? errorJoinSpace : undefined,
     })
 
-    // probably can update to use useHasPermission Persmission.JoinSpace
-    // but entitlement is somewhat broken atm
-    // also this will update at inteveral of 2s and need to adjust useHasPermission to allow for that
-    const allTokensSuccessful =
-        tokensInWallet?.length && tokensInWallet?.every((t) => t.data?.status === 'success')
-
     const onJoinClick = useCallback(async () => {
         if (isJoining) {
             return
@@ -157,7 +169,7 @@ function Content({
         setIsJoining(false)
     }, [isJoining, joinSpace])
 
-    if (linkedWallets === undefined || isLoadingTokensInWallet) {
+    if (linkedWallets === undefined || isLoadingMeetsMembership) {
         return (
             <Stack centerContent height="x20">
                 <ButtonSpinner />
@@ -168,24 +180,22 @@ function Content({
     return (
         <>
             <Stack width="100%" gap="sm">
-                {isLoadingTokensInWallet ? (
-                    <Stack centerContent height="x16" background="negative">
-                        <ButtonSpinner />
-                    </Stack>
-                ) : (
-                    tokensGatingMembership.tokens.map((token) => {
-                        return (
-                            <TokenDetailsWithWalletMatch
-                                key={token.address as Address}
-                                tokensInWallet={tokensInWallet}
-                                token={token}
-                            />
-                        )
-                    })
-                )}
+                {entitlements.tokens.map((token) => {
+                    return (
+                        <TokenSelectionDisplayWithMetadata
+                            wallets={linkedWallets}
+                            key={token.address as Address}
+                            token={token}
+                            passesEntitlement={
+                                meetsMembershipRequirements !== undefined &&
+                                meetsMembershipRequirements
+                            }
+                        />
+                    )
+                })}
             </Stack>
 
-            {allTokensSuccessful ? (
+            {meetsMembershipRequirements ? (
                 <Button
                     disabled={!isPrivyReady || isJoining || isJoinPending}
                     tone="cta1"
@@ -225,4 +235,17 @@ function Content({
             )}
         </>
     )
+}
+
+export function useNoAssetsState() {
+    const [noAssets, setNoAssets] = useState(false)
+
+    const tickNoAssets = useCallback(() => {
+        setNoAssets(true)
+        setTimeout(() => {
+            setNoAssets(false)
+        }, 3000)
+    }, [])
+
+    return { noAssets, tickNoAssets }
 }

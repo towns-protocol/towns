@@ -6,7 +6,6 @@ import {
     EVERYONE_ADDRESS,
     Permission,
     RoleEntitlements,
-    blockchainQueryKeys,
     convertRuleDataV1ToV2,
     useChannelSettings,
     useConnectivity,
@@ -32,10 +31,6 @@ import { TokenSelectionDisplay } from '@components/Tokens/TokenSelector/TokenSel
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { useConnectThenLink } from '@components/Web3/WalletLinkingPanel'
 import { PrivyWrapper } from 'privy/PrivyProvider'
-import {
-    checkWalletsForTokens2QueryDataBalances,
-    useTokenBalances,
-} from '@components/Web3/TokenVerification/tokenStatus'
 import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast } from '@components/Notifications/StandardToast'
 import { mapToErrorMessage } from '@components/Web3/utils'
@@ -85,6 +80,7 @@ function Roles(props: {
 
     const {
         hasPermission: canJoinChannel,
+        isLoading: isLoadingCanJoinChannel,
         invalidate: invalidateJoinChannel,
         getQueryData: getJoinChannelQueryData,
     } = useHasPermission({
@@ -128,35 +124,10 @@ function Roles(props: {
             const canJoin = getJoinChannelQueryData()
 
             if (canJoin) {
-                const qualifiedRoles: string[] = []
-                const wallets = blockchainQueryKeys.linkedWallets(loggedInWalletAddress)
-
-                for (const role of roles) {
-                    const { hasUserEntitlement, hasRuleEntitlement, qualifiesForUserEntitlement } =
-                        getGeneralEntitlementData({ role, wallets })
-
-                    const tokenBalances = checkWalletsForTokens2QueryDataBalances()
-
-                    const hasMatchingToken = Object.values(tokenBalances).some((b) => b > 0)
-
-                    if (
-                        qualifiesForRole({
-                            hasUserEntitlement,
-                            hasRuleEntitlement,
-                            qualifiesForUserEntitlement,
-                            isLoadingTokensInWallet: false,
-                            hasMatchingToken,
-                        })
-                    ) {
-                        qualifiedRoles.push(role.name)
-                    }
-                }
                 headlessToast.dismiss()
                 popupToast(({ toast: t }) => (
                     <StandardToast.Success
-                        message={`You've been verified for the ${qualifiedRoles.join(', ')} role${
-                            qualifiedRoles.length > 1 ? 's' : ''
-                        } and now have access to this channel.`}
+                        message={`You've been verified and now have access to this channel.`}
                         cta={`Go to #${channelName}`}
                         toast={t}
                         onCtaClick={async ({ dismissToast }) => {
@@ -201,7 +172,11 @@ function Roles(props: {
 
     return (
         <>
-            <RolesList roles={roles} />
+            <ChannelsRolesList
+                roles={roles}
+                canJoin={canJoinChannel}
+                isLoadingCanJoin={isLoadingCanJoinChannel}
+            />
             <Stack grow gap="sm" justifyContent="end">
                 {canJoinChannel && (
                     <Button
@@ -227,12 +202,13 @@ function Roles(props: {
     )
 }
 
-export function RolesList(props: {
+export function ChannelsRolesList(props: {
     roles: RoleEntitlements[]
-    hideNegativeUI?: boolean
     headerSubtitle?: (role: RoleEntitlements) => string
+    canJoin: boolean | undefined
+    isLoadingCanJoin: boolean
 }) {
-    const { roles, hideNegativeUI, headerSubtitle } = props
+    const { roles, headerSubtitle, canJoin, isLoadingCanJoin } = props
     const { allWallets, newWallets } = useTrackedWallets()
 
     const showQualifiedStatus =
@@ -246,12 +222,14 @@ export function RolesList(props: {
                       role={role}
                       wallets={allWallets}
                       showQualifiedStatus={showQualifiedStatus}
+                      canJoin={canJoin}
+                      isLoadingCanJoin={isLoadingCanJoin}
                       header={(props) => (
                           <AccordionHeader
                               {...props}
                               roleId={role.roleId}
                               subTitle={headerSubtitle ? headerSubtitle(role) : props.subTitle}
-                              hideNegativeUI={hideNegativeUI ?? false}
+                              qualified={canJoin}
                           />
                       )}
                   />
@@ -263,6 +241,8 @@ export function RolesList(props: {
 function RoleAccordion(props: {
     role: RoleEntitlements
     wallets: string[] | undefined
+    canJoin: boolean | undefined
+    isLoadingCanJoin: boolean
     showQualifiedStatus?: boolean
     header: (props: {
         qualified?: boolean
@@ -274,40 +254,9 @@ function RoleAccordion(props: {
         canOpen?: boolean
     }) => JSX.Element
 }) {
-    const { role, wallets, showQualifiedStatus, header } = props
-    const {
-        hasUserEntitlement,
-        hasRuleEntitlement,
-        tokens,
-        tokenTypes,
-        qualifiesForUserEntitlement,
-    } = getGeneralEntitlementData({ role, wallets })
-
-    const { data: tokensInWallet, isLoading: isLoadingTokensInWallet } = useTokenBalances({
-        tokens,
-    })
-
-    const hasMatchingToken = tokensInWallet?.some((d) => d.data?.status === 'success')
-
-    const _qualifiesForRole = useMemo(() => {
-        if (!showQualifiedStatus) {
-            return
-        }
-        return qualifiesForRole({
-            hasUserEntitlement,
-            hasRuleEntitlement,
-            qualifiesForUserEntitlement,
-            isLoadingTokensInWallet,
-            hasMatchingToken,
-        })
-    }, [
-        hasMatchingToken,
-        hasRuleEntitlement,
-        hasUserEntitlement,
-        isLoadingTokensInWallet,
-        qualifiesForUserEntitlement,
-        showQualifiedStatus,
-    ])
+    const { role, wallets, header, canJoin } = props
+    const { hasUserEntitlement, hasRuleEntitlement, tokens, tokenTypes } =
+        extractRoleEntitlementDetails({ role, wallets })
 
     const subTitle = useMemo(() => {
         let message = ''
@@ -315,7 +264,7 @@ function RoleAccordion(props: {
             message += `${role.users.length} member${role.users.length > 1 ? 's' : ''} whitelisted`
         }
         if (hasRuleEntitlement) {
-            message += `${message.length > 0 ? ', ' : ''}${tokenTypes} Required`
+            message += `${tokenTypes} requirements`
         }
 
         return message
@@ -325,12 +274,12 @@ function RoleAccordion(props: {
 
     return (
         <Accordion
-            border={_qualifiesForRole ? 'positive' : 'faint'}
+            border="faint"
             background="level2"
             canOpen={canOpen}
             header={({ isExpanded }) =>
                 header({
-                    qualified: _qualifiesForRole,
+                    qualified: canJoin,
                     title: role.name,
                     subTitle,
                     isExpanded,
@@ -344,11 +293,16 @@ function RoleAccordion(props: {
                 {hasUserEntitlement && <UserList users={role.users} />}
                 {hasRuleEntitlement && (
                     <Stack gap="sm">
+                        {tokens.length > 1 ? (
+                            <Text color="gray2" size="sm">
+                                One of the following is required for this role
+                            </Text>
+                        ) : null}
                         {tokens.map((token) => (
-                            <TokenDetailsWithWalletMatch
+                            <TokenSelectionDisplayWithMetadata
+                                wallets={wallets}
                                 key={token.address}
                                 token={token}
-                                tokensInWallet={showQualifiedStatus ? tokensInWallet : undefined}
                             />
                         ))}
                     </Stack>
@@ -358,13 +312,12 @@ function RoleAccordion(props: {
     )
 }
 
-export function TokenDetailsWithWalletMatch(props: {
+export function TokenSelectionDisplayWithMetadata(props: {
+    wallets: string[] | undefined
     token: TokenEntitlement
-    tokensInWallet: ReturnType<typeof useTokenBalances>['data']
+    passesEntitlement?: boolean | undefined
 }) {
-    const { token, tokensInWallet } = props
-    const match = tokensInWallet?.find((t) => t.data?.tokenAddress === token.address)
-    const ownsToken = match?.data ? match.data.status === 'success' : undefined
+    const { token, passesEntitlement } = props
     const { data: tokenMetadata } = useTokenMetadataForChainId(token.address, token.chainId)
 
     const isAddress = utils.isAddress(token.address)
@@ -384,7 +337,7 @@ export function TokenDetailsWithWalletMatch(props: {
                 openSeaCollectionUrl: tokenMetadata?.data.openSeaCollectionUrl,
             }}
             chainId={token.chainId}
-            userOwnsToken={ownsToken}
+            userPassesEntitlement={passesEntitlement}
         />
     )
 }
@@ -406,20 +359,16 @@ function AccordionHeader(props: {
     isExpanded: boolean
     tokens: TokenEntitlement[]
     qualified?: boolean
-    hideNegativeUI: boolean
     canOpen?: boolean
 }) {
-    const { canOpen, hideNegativeUI, isExpanded, qualified, subTitle, title, tokens } = props
+    const { canOpen, isExpanded, qualified, subTitle, title, tokens } = props
 
     return (
         <Box horizontal gap="sm" justifyContent="spaceBetween">
             <Box grow gap="sm">
                 <Stack horizontal alignItems="center" gap="sm">
                     <Text color="default">{title}</Text>
-                    {!hideNegativeUI && qualified === false && (
-                        <Icon size="square_xs" type="close" color="negative" />
-                    )}
-                    {qualified === true && <Icon size="square_xs" type="check" color="positive" />}
+                    {qualified === false && <Icon size="square_xs" type="close" color="negative" />}
                 </Stack>
                 <Text color="gray2" size="sm">
                     {subTitle}
@@ -556,7 +505,7 @@ function useTrackedWallets() {
     )
 }
 
-function getGeneralEntitlementData({
+function extractRoleEntitlementDetails({
     role,
     wallets,
 }: {
@@ -570,7 +519,7 @@ function getGeneralEntitlementData({
             ? role.ruleData.rules
             : convertRuleDataV1ToV2(role.ruleData.rules),
     )
-    const tokenTypes = [...new Set(tokens.map((p) => p.type))].join(', ')
+    const tokenTypes = [...new Set(tokens.map((p) => p.type))].join(', or')
     const qualifiesForUserEntitlement =
         hasUserEntitlement && wallets?.some((w) => role.users.includes(w))
 
@@ -580,33 +529,5 @@ function getGeneralEntitlementData({
         tokens,
         tokenTypes,
         qualifiesForUserEntitlement,
-    }
-}
-
-function qualifiesForRole({
-    hasUserEntitlement,
-    hasRuleEntitlement,
-    qualifiesForUserEntitlement,
-    isLoadingTokensInWallet,
-    hasMatchingToken,
-}: {
-    hasUserEntitlement: boolean
-    hasRuleEntitlement: boolean
-    qualifiesForUserEntitlement: boolean | undefined
-    isLoadingTokensInWallet: boolean
-    hasMatchingToken: boolean | undefined
-}) {
-    if (hasUserEntitlement && hasRuleEntitlement) {
-        if (isLoadingTokensInWallet) {
-            return
-        }
-        return qualifiesForUserEntitlement && hasMatchingToken === true
-    } else if (hasUserEntitlement) {
-        return qualifiesForUserEntitlement
-    } else if (hasRuleEntitlement) {
-        if (isLoadingTokensInWallet) {
-            return
-        }
-        return hasMatchingToken === true
     }
 }
