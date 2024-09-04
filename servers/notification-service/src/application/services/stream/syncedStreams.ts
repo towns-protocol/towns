@@ -923,7 +923,7 @@ export class SyncedStreams {
                 }
             }
             void ping()
-        }, 10 * 1000) // every 10 seconds
+        }, (process.env.PING_SEC ? parseInt(process.env.PING_SEC) : 10) * 1000) // use PING_SEC env var if set, or 10 seconds
     }
 
     private logInvalidStateAndReturnError(currentState: SyncState, newState: SyncState): Error {
