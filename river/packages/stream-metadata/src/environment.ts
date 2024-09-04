@@ -16,6 +16,7 @@ const envSchema = z.object({
 	RIVER_ENV: z.string(),
 	RIVER_CHAIN_RPC_URL: z.string().url(),
 	BASE_CHAIN_RPC_URL: z.string().url(),
+	RIVER_STREAM_METADATA_BASE_URL: z.string().url(),
 	PORT: NumberFromIntStringSchema,
 	HOST: z.string().optional().default('127.0.0.1'),
 	LOG_LEVEL: z.string().optional().default('info'),
@@ -26,12 +27,14 @@ function makeConfig() {
 	// eslint-disable-next-line no-process-env -- this is the only line where we're allowed to use process.env
 	const env = envSchema.parse(process.env)
 	const web3Config = getWeb3Deployment(env.RIVER_ENV)
+	const baseUrl = new URL(env.RIVER_STREAM_METADATA_BASE_URL)
 
 	return {
 		web3Config,
 		riverEnv: env.RIVER_ENV,
 		baseChainRpcUrl: env.BASE_CHAIN_RPC_URL,
 		riverChainRpcUrl: env.RIVER_CHAIN_RPC_URL,
+		streamMetadataBaseUrl: baseUrl.origin,
 		host: env.HOST,
 		port: env.PORT,
 		log: {

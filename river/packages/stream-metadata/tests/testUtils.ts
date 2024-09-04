@@ -15,6 +15,16 @@ import {
 	SignerContext,
 	userIdFromAddress,
 } from '@river-build/sdk'
+import {
+	CreateLegacySpaceParams,
+	ETH_ADDRESS,
+	getDynamicPricingModule,
+	LegacyMembershipStruct,
+	LocalhostWeb3Provider,
+	NoopRuleData,
+	Permission,
+	SpaceDapp,
+} from '@river-build/web3'
 
 import { config } from '../src/environment'
 import { getRiverRegistry } from '../src/evmRpcClient'
@@ -67,7 +77,11 @@ export function makeStreamRpcClient(url: string): StreamRpcClient {
 	return client
 }
 
-export async function makeTestClient(wallet: ethers.Wallet) {
+export function makeEthersProvider(wallet: ethers.Wallet) {
+	return new LocalhostWeb3Provider(config.baseChainRpcUrl, wallet)
+}
+
+export async function makeTestClient(wallet: ethers.Wallet): Promise<Client> {
 	// create all the constructor arguments for the SDK client
 
 	// arg: user context
@@ -175,4 +189,52 @@ export async function encryptAndSendMediaPayload(
 	})
 
 	return chunkedMedia
+}
+
+export interface SpaceMetadataParams {
+	name: string
+	uri: string
+	shortDescription: string
+	longDescription: string
+}
+
+export async function makeCreateSpaceParams(
+	userId: string,
+	spaceDapp: SpaceDapp,
+	args: SpaceMetadataParams,
+) {
+	const { name: spaceName, uri: spaceImageUri, shortDescription, longDescription } = args
+	/*
+	 * assemble all the parameters needed to create a space.
+	 */
+	const dynamicPricingModule = await getDynamicPricingModule(spaceDapp)
+	const membership: LegacyMembershipStruct = {
+		settings: {
+			name: 'Everyone',
+			symbol: 'MEMBER',
+			price: 0,
+			maxSupply: 1000,
+			duration: 0,
+			currency: ETH_ADDRESS,
+			feeRecipient: userId,
+			freeAllocation: 0,
+			pricingModule: dynamicPricingModule.module,
+		},
+		permissions: [Permission.Read, Permission.Write],
+		requirements: {
+			everyone: true,
+			users: [],
+			ruleData: NoopRuleData,
+		},
+	}
+	// all create space args
+	const createSpaceParams: CreateLegacySpaceParams = {
+		spaceName: spaceName,
+		uri: spaceImageUri,
+		channelName: 'general',
+		membership,
+		shortDescription,
+		longDescription,
+	}
+	return createSpaceParams
 }

@@ -27,6 +27,7 @@ logger.info(
 		riverRegistry: config.web3Config.river.addresses.riverRegistry,
 		riverChainRpcUrl: config.riverChainRpcUrl,
 		baseChainRpcUrl: config.baseChainRpcUrl,
+		streamMetadataBaseUrl: config.streamMetadataBaseUrl,
 	},
 	'config',
 )
@@ -67,9 +68,7 @@ export function setupRoutes(srv: Server) {
 	 * Routes
 	 */
 	srv.get('/health', checkHealth)
-	srv.get('/space/:spaceAddress', async (request, reply) =>
-		fetchSpaceMetadata(request, reply, getServerUrl(srv)),
-	)
+	srv.get('/space/:spaceAddress', async (request, reply) => fetchSpaceMetadata(request, reply))
 	srv.get('/space/:spaceAddress/image', fetchSpaceImage)
 	srv.get('/user/:userId/image', fetchUserProfileImage)
 	srv.get('/user/:userId/bio', fetchUserBio)

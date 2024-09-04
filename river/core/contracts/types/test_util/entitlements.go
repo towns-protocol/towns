@@ -29,6 +29,38 @@ func Erc721Check(chainId uint64, contractAddress common.Address, threshold uint6
 	}
 }
 
+func Erc1155Check(
+	chainId uint64,
+	contractAddress common.Address,
+	threshold uint64,
+	tokenId uint64,
+) base.IRuleEntitlementBaseRuleDataV2 {
+	params := contract_types.ERC1155Params{
+		Threshold: new(big.Int).SetUint64(threshold),
+		TokenId:   new(big.Int).SetUint64(tokenId),
+	}
+	encodedParams, err := params.AbiEncode()
+	if err != nil {
+		panic(err)
+	}
+	return base.IRuleEntitlementBaseRuleDataV2{
+		Operations: []base.IRuleEntitlementBaseOperation{
+			{
+				OpType: uint8(contract_types.CHECK),
+				Index:  0,
+			},
+		},
+		CheckOperations: []base.IRuleEntitlementBaseCheckOperationV2{
+			{
+				OpType:          uint8(contract_types.ERC1155),
+				ChainId:         new(big.Int).SetUint64(chainId),
+				ContractAddress: contractAddress,
+				Params:          encodedParams,
+			},
+		},
+	}
+}
+
 func Erc20Check(chainId uint64, contractAddress common.Address, threshold uint64) base.IRuleEntitlementBaseRuleData {
 	return base.IRuleEntitlementBaseRuleData{
 		Operations: []base.IRuleEntitlementBaseOperation{

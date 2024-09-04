@@ -53,6 +53,7 @@ generate_go base/deploy deploy EntitlementChecker entitlement_checker
 generate_go base/deploy deploy WalletLink wallet_link
 generate_go base/deploy deploy MockERC20 mock_erc20
 generate_go base/deploy deploy MockERC721 mock_erc721
+generate_go base/deploy deploy MockERC1155 mock_erc1155
 generate_go base/deploy deploy MockWalletLink mock_wallet_link
 
 # River contracts interfaces

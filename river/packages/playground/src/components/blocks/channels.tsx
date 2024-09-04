@@ -19,20 +19,24 @@ import { Input } from '../ui/input'
 import { JsonHover } from '../utils/json-hover'
 
 type ChannelsBlockProps = {
-    changeChannel: (channelId: string) => void
+    onChannelChange: (channelId: string) => void
 }
 
 const formSchema = z.object({
     channelName: z.string().min(1, { message: 'Space name is required' }),
 })
 
-export const ChannelsBlock = ({ changeChannel }: ChannelsBlockProps) => {
+export const ChannelsBlock = ({ onChannelChange }: ChannelsBlockProps) => {
     const spaceId = useCurrentSpaceId()
     const { data: space } = useSpace(spaceId)
 
     return (
         <Block title={`Channels in ${space.metadata?.name || 'Unnamed Space'}`}>
-            <CreateChannel variant="secondary" spaceId={spaceId} onChannelCreated={changeChannel} />
+            <CreateChannel
+                variant="secondary"
+                spaceId={spaceId}
+                onChannelCreated={onChannelChange}
+            />
             <div className="flex flex-col gap-2">
                 <span className="text-xs">Select a channel to start messaging</span>
                 <div className="flex max-h-96 flex-col gap-1 overflow-y-auto">
@@ -41,7 +45,7 @@ export const ChannelsBlock = ({ changeChannel }: ChannelsBlockProps) => {
                             key={`${spaceId}-${channelId}`}
                             spaceId={space.id}
                             channelId={channelId}
-                            changeChannel={changeChannel}
+                            onChannelChange={onChannelChange}
                         />
                     ))}
                 </div>
@@ -58,18 +62,18 @@ export const ChannelsBlock = ({ changeChannel }: ChannelsBlockProps) => {
 const ChannelInfo = ({
     spaceId,
     channelId,
-    changeChannel,
+    onChannelChange,
 }: {
     spaceId: string
     channelId: string
-    changeChannel: (channelId: string) => void
+    onChannelChange: (channelId: string) => void
 }) => {
     const { data: channel } = useChannel(spaceId, channelId)
 
     return (
         <JsonHover data={channel}>
             <div>
-                <Button variant="outline" onClick={() => changeChannel(channelId)}>
+                <Button variant="outline" onClick={() => onChannelChange(channelId)}>
                     {channel.metadata?.name || 'Unnamed Channel'}
                 </Button>
             </div>

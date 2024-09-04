@@ -1,22 +1,29 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { ChunkedMedia } from '@river-build/proto'
 import { StreamPrefix, StreamStateView, makeStreamId } from '@river-build/sdk'
+import { z } from 'zod'
 
 import { StreamIdHex } from '../types'
 import { getMediaStreamContent, getStream } from '../riverStreamRpcClient'
 import { isBytes32String, isValidEthereumAddress } from '../validators'
 import { getMediaEncryption } from '../media-encryption'
 
+const paramsSchema = z.object({
+	spaceAddress: z.string().min(1, 'spaceAddress parameter is required'),
+})
+
 export async function fetchSpaceImage(request: FastifyRequest, reply: FastifyReply) {
 	const logger = request.log.child({ name: fetchSpaceImage.name })
-	const { spaceAddress } = request.params as { spaceAddress?: string }
 
-	if (!spaceAddress) {
-		logger.info('spaceAddress parameter is required')
-		return reply
-			.code(400)
-			.send({ error: 'Bad Request', message: 'spaceAddress parameter is required' })
+	const parseResult = paramsSchema.safeParse(request.params)
+
+	if (!parseResult.success) {
+		const errorMessage = parseResult.error.errors[0]?.message || 'Invalid parameters'
+		logger.info(errorMessage)
+		return reply.code(400).send({ error: 'Bad Request', message: errorMessage })
 	}
+
+	const { spaceAddress } = parseResult.data
 
 	if (!isValidEthereumAddress(spaceAddress)) {
 		logger.info({ spaceAddress }, 'Invalid spaceAddress format')

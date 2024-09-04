@@ -631,6 +631,152 @@ func deployMockErc20Contract(
 	return auth, contractAddress, erc20
 }
 
+func deployMockErc1155Contract(
+	require *require.Assertions,
+	st *serviceTester,
+) (*bind.TransactOpts, common.Address, *test_contracts.MockErc1155) {
+	// Deploy mock ERC1155 contract to anvil chain
+	nonce, err := anvilClient.PendingNonceAt(context.Background(), anvilWallet.Address)
+	require.NoError(err)
+	auth, err := bind.NewKeyedTransactorWithChainID(anvilWallet.PrivateKeyStruct, big.NewInt(31337))
+	require.NoError(err)
+	auth.Nonce = big.NewInt(int64(nonce))
+	auth.Value = big.NewInt(0)         // in wei
+	auth.GasLimit = uint64(30_000_000) // in units
+
+	contractAddress, txn, erc1155, err := test_contracts.DeployMockErc1155(auth, anvilClient)
+	require.NoError(err)
+	require.NotNil(xc_common.WaitForTransaction(anvilClient, txn), "Failed to mine ERC1155 contract deployment")
+	return auth, contractAddress, erc1155
+}
+
+const (
+	TokenGold   = 1
+	TokenSilver = 2
+	TokenBronze = 3
+)
+
+func mintErc1155TokensForWallet(
+	require *require.Assertions,
+	auth *bind.TransactOpts,
+	st *serviceTester,
+	erc1155 *test_contracts.MockErc1155,
+	wallet *node_crypto.Wallet,
+	tokenId int,
+) {
+	nonce, err := anvilClient.PendingNonceAt(context.Background(), anvilWallet.Address)
+	require.NoError(err)
+	auth.Nonce = big.NewInt(int64(nonce))
+	var txn *types.Transaction
+	var mintErr error
+	switch tokenId {
+	case TokenGold:
+		txn, mintErr = erc1155.MintGold(auth, wallet.Address)
+	case TokenSilver:
+		txn, mintErr = erc1155.MintSilver(auth, wallet.Address)
+	case TokenBronze:
+		txn, mintErr = erc1155.MintBronze(auth, wallet.Address)
+	default:
+		require.FailNow("Invalid token id", "tokenId", tokenId)
+	}
+	st.AssertNoEVMError(mintErr)
+	require.NotNil(xc_common.WaitForTransaction(anvilClient, txn), "Failed to mint token for ERC1155 contract")
+}
+
+func TestErc1155Entitlements(t *testing.T) {
+	tests := map[string]struct {
+		sentByRootKeyWallet bool
+	}{
+		"v2 request sent by root key wallet": {sentByRootKeyWallet: true},
+		"v2 request sent by linked wallet":   {sentByRootKeyWallet: false},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			ctx, cancel := test.NewTestContext()
+			defer cancel()
+
+			require := require.New(t)
+			st := newServiceTester(5, require)
+			defer st.Close()
+			st.Start(t)
+
+			cfg := st.Config()
+			bc := st.ClientSimulatorBlockchain()
+			cs, err := client_simulator.New(ctx, cfg, bc, bc.Wallet)
+			require.NoError(err)
+			cs.Start(ctx)
+			defer cs.Stop()
+
+			// Deploy mock ERC1155 contract to anvil chain
+			auth, contractAddress, erc1155 := deployMockErc1155Contract(require, st)
+
+			oneGoldCheck := test_util.Erc1155Check(ChainID, contractAddress, 1, TokenGold)
+			expectV2EntitlementCheckResult(
+				require,
+				cs,
+				ctx,
+				cfg,
+				oneGoldCheck,
+				false,
+			)
+
+			// Mint 1 gold token for client simulator wallet
+			mintErc1155TokensForWallet(require, auth, st, erc1155, cs.Wallet(), TokenGold)
+
+			// Check for balance of 1 gold token should pass
+			expectV2EntitlementCheckResult(
+				require,
+				cs,
+				ctx,
+				cfg,
+				oneGoldCheck,
+				true,
+			)
+
+			threeGoldCheck := test_util.Erc1155Check(ChainID, contractAddress, 3, TokenGold)
+			oneSilverCheck := test_util.Erc1155Check(ChainID, contractAddress, 1, TokenSilver)
+
+			// Create a set of 3 linked wallets using client simulator address.
+			_, wallet1, wallet2, _ := generateLinkedWallets(ctx, require, tc.sentByRootKeyWallet, st, cs.Wallet())
+
+			expectV2EntitlementCheckResult(
+				require,
+				cs,
+				ctx,
+				cfg,
+				threeGoldCheck,
+				false,
+			)
+
+			// Mint 1 gold token for wallet1
+			mintErc1155TokensForWallet(require, auth, st, erc1155, wallet1, TokenGold)
+
+			// Mint 1 gold token for wallet2
+			mintErc1155TokensForWallet(require, auth, st, erc1155, wallet2, TokenGold)
+
+			// Check for balance of 3 gold tokens should now pass
+			expectV2EntitlementCheckResult(
+				require,
+				cs,
+				ctx,
+				cfg,
+				threeGoldCheck,
+				true,
+			)
+			// Sanity check: erc 1155 balance checks respect token ids.
+			// Check for balance of 1 silver token, of token id 2, should fail.
+			expectV2EntitlementCheckResult(
+				require,
+				cs,
+				ctx,
+				cfg,
+				oneSilverCheck,
+				false,
+			)
+		})
+	}
+}
+
 func TestErc20Entitlements(t *testing.T) {
 	tests := map[string]struct {
 		v2                  bool

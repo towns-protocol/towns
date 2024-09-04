@@ -1,5 +1,6 @@
-import { createBrowserRouter } from 'react-router-dom'
+import { Navigate, createBrowserRouter } from 'react-router-dom'
 import { RootLayout } from './layout'
+import { IndexRoute } from './root'
 
 export const router = createBrowserRouter([
     {
@@ -8,12 +9,48 @@ export const router = createBrowserRouter([
         children: [
             {
                 path: '/',
+                element: <IndexRoute />,
+            },
+            {
+                path: '/auth',
                 lazy: async () => {
-                    const { ConnectRoute } = await import('./root')
+                    const { AuthRoute } = await import('./auth')
                     return {
-                        Component: ConnectRoute,
+                        Component: AuthRoute,
                     }
                 },
+            },
+            {
+                path: '/t',
+                lazy: async () => {
+                    const { TLayout } = await import('./t/layout')
+                    return {
+                        Component: TLayout,
+                    }
+                },
+                errorElement: <Navigate to="/" />,
+                children: [
+                    {
+                        path: '/t/:spaceId',
+                        lazy: async () => {
+                            const { SpaceRoute } = await import('./t/space')
+                            return {
+                                Component: SpaceRoute,
+                            }
+                        },
+                        children: [
+                            {
+                                path: '/t/:spaceId/:channelId',
+                                lazy: async () => {
+                                    const { ChannelRoute } = await import('./t/channel')
+                                    return {
+                                        Component: ChannelRoute,
+                                    }
+                                },
+                            },
+                        ],
+                    },
+                ],
             },
             {
                 path: 'components',

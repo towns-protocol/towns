@@ -45,5 +45,12 @@ export const useRiverConnection = () => {
 
     const isConnected = useMemo(() => !!river?.syncAgent, [river])
 
-    return { connect, connectUsingBearerToken, disconnect, isConnecting, isConnected }
+    return {
+        connect,
+        connectUsingBearerToken,
+        disconnect,
+        isConnecting,
+        isConnected,
+        env: river?.syncAgent?.config.riverConfig.environmentId,
+    }
 }
