@@ -1282,8 +1282,8 @@ func (ru *aePinRules) validPin() (bool, error) {
 		return false, err
 	}
 	// check if we have too many pins
-	if len(existingPins) > 5 {
-		// if we have more than 5 pins, we can't add more
+	if len(existingPins) > 100 {
+		// if we have more than N pins, we can't add more
 		return false, RiverError(Err_INVALID_ARGUMENT, "channel has too many pins")
 	}
 	// check if the hash is already pinned
