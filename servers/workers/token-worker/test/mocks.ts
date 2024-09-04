@@ -3,6 +3,7 @@ import {
     GetContractMetadataAlchemyResponse,
     ContractMetadata,
     TokenType,
+    GetTokenMetadataAlchemyResponse,
 } from '../src/types'
 
 export const getNftsMock = {
@@ -374,6 +375,15 @@ export const getCollectionMetadataAlchemyMock: GetContractMetadataAlchemyRespons
     },
 }
 
+export const getErc20MetadataAlchemyMock: { result: GetTokenMetadataAlchemyResponse } = {
+    result: {
+        logo: 'https://static.alchemyapi.io/images/assets/3408.png',
+        name: 'USDC',
+        symbol: 'USDC',
+        decimals: 18,
+    },
+}
+
 export const getCollectionMetadataInfuraMock: GetCollectionMetadataInfuraResponse = {
     contract: '0xe785e82358879f061bc3dcac6f0444462d4b5330',
     name: 'World Of Women',
@@ -388,6 +398,14 @@ export const getContractMetadataMock: ContractMetadata = {
     tokenType: TokenType.ERC721,
     imageUrl:
         'https://i.seadn.io/gae/EFAQpIktMBU5SU0TqSdPWZ4byHr3hFirL_mATsR8KWhM5z-GJljX8E73V933lkyKgv2SAFlfRRjGsWvWbQQmJAwu3F2FDXVa1C9F?w=500&auto=format',
+}
+
+export const getErc20MetadataMock: ContractMetadata = {
+    address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+    name: 'USDC',
+    symbol: 'USDC',
+    tokenType: TokenType.ERC20,
+    decimals: 18,
 }
 
 export const alchemyGetCollectionsMock = {

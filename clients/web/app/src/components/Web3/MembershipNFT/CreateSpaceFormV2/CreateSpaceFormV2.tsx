@@ -353,7 +353,7 @@ function CreateSpaceFormV2WithoutAuth() {
                                                             subtitle={
                                                                 isEveryoneMembership
                                                                     ? 'Anyone'
-                                                                    : 'ERC-721'
+                                                                    : 'Holders'
                                                             }
                                                             anyoneCanJoin={isEveryoneMembership}
                                                             dataTestId="membership-token-type"

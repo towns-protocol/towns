@@ -13,6 +13,8 @@ export type TokenData = {
     }
     image?: NftImageMetadata
     openSeaCollectionUrl?: string | null
+    symbol?: string
+    decimals?: number
 }
 
 export type TokenDataWithChainId = {

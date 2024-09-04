@@ -4,6 +4,7 @@ import {
     GetContractMetadataAlchemyResponse,
     GetContractsForOwnerAlchemyResponse,
     GetNftMetadataResponse,
+    GetTokenMetadataAlchemyResponse,
     SimpleHashCollectionsResponse,
     TokenType,
 } from './types'
@@ -11,7 +12,7 @@ import { throwCustomError } from './router'
 import { createPublicClient, http } from 'viem'
 import { GetOwnersForNftResponse } from 'alchemy-sdk'
 
-const nftNetworkMap = [
+const tokenNetworkMap = [
     { vChain: mainnet, alchemyIdentifier: 'eth-mainnet', simpleHashIdentifier: 'ethereum' },
     { vChain: arbitrum, alchemyIdentifier: 'arb-mainnet', simpleHashIdentifier: 'arbitrum' },
     { vChain: optimism, alchemyIdentifier: 'opt-mainnet', simpleHashIdentifier: 'optimism' },
@@ -24,28 +25,69 @@ const nftNetworkMap = [
     },
 ] as const
 
-export function supportedNftNetworkMap(supportedChains: number[]) {
-    return nftNetworkMap.filter((n) => supportedChains.includes(n.vChain.id))
+export function supportedTokenNetworkMap(supportedChains: number[]) {
+    return tokenNetworkMap.filter((n) => supportedChains.includes(n.vChain.id))
 }
 
 function getChainFromChainId(supportedChains: number[], id: number) {
-    return supportedNftNetworkMap(supportedChains).find((n) => n.vChain.id === id)
+    const chain = supportedTokenNetworkMap(supportedChains).find((n) => n.vChain.id === id)
+    if (!chain) {
+        throw new Error(`invalid chainId:: ${id}`)
+    }
+    return chain
 }
 
-export function generateAlchemyNftUrl(chainIds: number[], targetId: number, apiKey: string) {
-    const chain = getChainFromChainId(chainIds, targetId)
-    if (!chain) {
-        throw new Error(`invalid chainId:: ${targetId}`)
-    }
+export function generateAlchemyNftUrl(chainIds: number[], targetChainId: number, apiKey: string) {
+    const chain = getChainFromChainId(chainIds, targetChainId)
     return `https://${chain.alchemyIdentifier}.g.alchemy.com/nft/v3/${apiKey}`
 }
 
-export function generateAlchemyRpcUrl(chainIds: number[], targetId: number, apiKey: string) {
-    const chain = getChainFromChainId(chainIds, targetId)
-    if (!chain) {
-        throw new Error(`invalid chainId:: ${targetId}`)
-    }
+export function generateAlchemyRpcUrl(chainIds: number[], targetChainId: number, apiKey: string) {
+    const chain = getChainFromChainId(chainIds, targetChainId)
     return `https://${chain.alchemyIdentifier}.g.alchemy.com/v2/${apiKey}`
+}
+
+export async function fetchAlchemyTokenMetadata(
+    chainIds: number[],
+    targetChainId: number,
+    apiKey: string,
+    tokenAddress: string,
+): Promise<GetTokenMetadataAlchemyResponse> {
+    const rpcUrl = generateAlchemyRpcUrl(chainIds, targetChainId, apiKey)
+    const fetchOptions = {
+        method: 'POST',
+        headers: {
+            accept: 'application/json',
+            'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+            id: 1,
+            jsonrpc: '2.0',
+            method: 'alchemy_getTokenMetadata',
+            params: [tokenAddress],
+        }),
+    }
+
+    try {
+        const response = await fetch(rpcUrl, fetchOptions)
+        if (!response.ok) {
+            throwCustomError(
+                (await response.text()) || 'could not fetch token metadata from Alchemy',
+                response.status,
+            )
+        }
+        const responseData = (await response.json()) as { result?: GetTokenMetadataAlchemyResponse }
+        if (responseData.result === undefined) {
+            throw new Error('Invalid response structure from Alchemy')
+        }
+        return responseData.result
+    } catch (error) {
+        if (error instanceof Error) {
+            throw throwCustomError(error.message, (error as { code?: number })?.code || 500)
+        } else {
+            throw throwCustomError('An unknown error occurred', 500)
+        }
+    }
 }
 
 export function withOpenSeaImage(
@@ -178,7 +220,7 @@ export async function withSimpleHashImage({
         return contractMetadata
     }
 
-    const simpleHashIdentifier = nftNetworkMap.find(
+    const simpleHashIdentifier = tokenNetworkMap.find(
         (x) => x.vChain.id === chainId,
     )?.simpleHashIdentifier
 
@@ -217,7 +259,7 @@ export async function withSimpleHashImage({
 }
 
 export function generatePublicClients(supportedChainIds: number[], alchemyApiKey: string) {
-    return supportedNftNetworkMap(supportedChainIds).map((n) => {
+    return supportedTokenNetworkMap(supportedChainIds).map((n) => {
         return createPublicClient({
             chain: n.vChain,
             transport: http(generateAlchemyRpcUrl(supportedChainIds, n.vChain.id, alchemyApiKey)),

@@ -1,4 +1,4 @@
-import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
+import { UseQueryOptions, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ContractMetadata, GetCollectionMetadataAcrossNetworksResponse } from '@token-worker/types'
 import { ethers } from 'ethers'
 import { ZodEffects, ZodNativeEnum, z } from 'zod'
@@ -24,15 +24,6 @@ const TokenTypeSchema = z.preprocess((val) => {
     TokenType
 >
 
-const metadataForSingleNetworkSchema: z.ZodType<ContractMetadata> = z.object({
-    address: z.string().optional().nullable(),
-    name: z.string().optional().nullable(),
-    symbol: z.string().optional().nullable(),
-    tokenType: TokenTypeSchema,
-    imageUrl: z.string().optional().nullable(),
-    openSeaCollectionUrl: z.string().optional().nullable(),
-})
-
 const metadataAcrossNetworksSchema: z.ZodType<GetCollectionMetadataAcrossNetworksResponse[]> =
     z.array(
         z.object({
@@ -44,6 +35,7 @@ const metadataAcrossNetworksSchema: z.ZodType<GetCollectionMetadataAcrossNetwork
                 tokenType: TokenTypeSchema,
                 imageUrl: z.string().optional().nullable(),
                 openSeaCollectionUrl: z.string().optional().nullable(),
+                decimals: z.number().optional().nullable(),
             }),
         }),
     )
@@ -51,35 +43,15 @@ const metadataAcrossNetworksSchema: z.ZodType<GetCollectionMetadataAcrossNetwork
 async function getCollectionMetadataAcrossNetworks(
     address: string,
     supportedChainIds: number[],
+    chainId?: number,
 ): Promise<GetCollectionMetadataAcrossNetworksResponse[]> {
     const TOKENS_SERVER_URL = env.VITE_TOKEN_SERVER_URL
     // See token-worker README for more information
     const url = `${TOKENS_SERVER_URL}/api/getCollectionMetadataAcrossNetworks/alchemy?contractAddress=${address}&supportedChainIds=${joinSupportedChainIds(
         supportedChainIds,
-    )}`
+    )}&chainId=${chainId}`
     const response = await axiosClient.get(url)
     const parseResult = metadataAcrossNetworksSchema.safeParse(response.data)
-
-    if (!parseResult.success) {
-        console.error(`Error parsing getCollectionMetadataAcrossNetworks:: ${parseResult.error}`)
-        throw new Error(`Error parsing getCollectionMetadataAcrossNetworks:: ${parseResult.error}`)
-    }
-
-    return response.data
-}
-
-async function getCollectionMetadataForChainId(
-    address: string,
-    nftNetwork: number,
-    supportedChainIds: number[],
-): Promise<ContractMetadata> {
-    const TOKENS_SERVER_URL = env.VITE_TOKEN_SERVER_URL
-    // See token-worker README for more information
-    const url = `${TOKENS_SERVER_URL}/api/getCollectionMetadata/alchemy/${nftNetwork}?contractAddress=${address}&supportedChainIds=${joinSupportedChainIds(
-        supportedChainIds,
-    )}`
-    const response = await axiosClient.get(url)
-    const parseResult = metadataForSingleNetworkSchema.safeParse(response.data)
 
     if (!parseResult.success) {
         console.error(`Error parsing getCollectionMetadataAcrossNetworks:: ${parseResult.error}`)
@@ -133,7 +105,7 @@ function singleTokenQuerySetup(args: {
     chainId: number
     queryClient: ReturnType<typeof useQueryClient>
     supportedChainIds: number[] | undefined
-}) {
+}): UseQueryOptions<TokenDataWithChainId> {
     const { tokenAddress, chainId, queryClient } = args
     const _address = tokenAddress.toLowerCase()
 
@@ -157,10 +129,19 @@ function singleTokenQuerySetup(args: {
                 }
             }
 
-            return mapToTokenData(
-                await getCollectionMetadataForChainId(_address, chainId, args.supportedChainIds),
+            const metadata = await getCollectionMetadataAcrossNetworks(
+                _address,
+                args.supportedChainIds,
                 chainId,
             )
+            if (!metadata || metadata.length === 0) {
+                throw new Error('No metadata found')
+            }
+            const targetMetadata = metadata.find((m) => m.chainId === chainId)
+            if (!targetMetadata) {
+                throw new Error(`No metadata found for chain ID ${chainId}`)
+            }
+            return mapToTokenData(targetMetadata.data, chainId)
         },
         retry: (failureCount: number, _error: Error) => {
             if (failureCount > 3) {
@@ -217,7 +198,18 @@ export function useMultipleTokenMetadatasForChainIds(tokens: TokenEntitlement[] 
         combine: (results) => {
             return {
                 data: results
-                    .map((r) => r.data)
+                    .map((r, index) => {
+                        if (r.data && tokens && tokens[index]) {
+                            return {
+                                ...r.data,
+                                data: {
+                                    ...r.data.data,
+                                    quantity: tokens[index].quantity,
+                                },
+                            }
+                        }
+                        return r.data
+                    })
                     .filter((r): r is TokenDataWithChainId => r !== undefined),
                 isError: results.some((r) => r.isError),
                 isLoading: results.some((r) => r.isLoading),
@@ -244,6 +236,8 @@ export function mapToTokenData(token: ContractMetadata, chainId: number): TokenD
             address: (token.address || '') as Address,
             type: (token?.tokenType as TokenType) || undefined,
             quantity: undefined,
+            symbol: token?.symbol || undefined,
+            decimals: token?.decimals || undefined,
         },
     }
 }

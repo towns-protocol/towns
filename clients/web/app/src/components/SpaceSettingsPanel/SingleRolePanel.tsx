@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
     Address,
@@ -134,7 +134,26 @@ export function SingleRolePanelWithoutAuth() {
             ? convertRuleDataV1ToV2(roleDetails.ruleData.rules)
             : roleDetails?.ruleData.rules
 
-    const tokens = ruleData ? convertRuleDataToTokenFormSchema(ruleData!) : []
+    const tokens = useMemo(() => {
+        if (!ruleData) {
+            return []
+        }
+        return convertRuleDataToTokenFormSchema(ruleData)
+    }, [ruleData])
+
+    const values = useMemo(
+        () => ({
+            // roleDetails is undefined when creating a new role
+            name: roleDetails?.name ?? '',
+            channelPermissions: isCreateRole
+                ? [Permission.Read, Permission.React]
+                : defaultChannelPermissionsValues,
+            townPermissions: townRoleDetails?.permissions ?? [],
+            users: roleDetails?.users ?? [],
+            tokens,
+        }),
+        [tokens, roleDetails, isCreateRole, defaultChannelPermissionsValues, townRoleDetails],
+    )
 
     return (
         <Panel label="Roles" padding="none">
@@ -149,16 +168,7 @@ export function SingleRolePanelWithoutAuth() {
                         id="RoleForm"
                         mode="onChange"
                         height="100%"
-                        defaultValues={{
-                            // roleDetails is undefined when creating a new role
-                            name: roleDetails?.name ?? '',
-                            channelPermissions: isCreateRole
-                                ? [Permission.Read, Permission.React]
-                                : defaultChannelPermissionsValues,
-                            townPermissions: townRoleDetails?.permissions ?? [],
-                            users: roleDetails?.users ?? [],
-                            tokens,
-                        }}
+                        defaultValues={values}
                     >
                         {(hookForm) => {
                             const _form = hookForm as unknown as UseFormReturn<RoleFormSchemaType>
@@ -390,7 +400,6 @@ function SubmitButton({
     const { handleSubmit, formState, watch } = useFormContext<RoleFormSchemaType>()
     const { defaultValues } = formState
     const watchAllFields = watch()
-    // success and error statuses are handled by <BlockchainTxNotifier />
     const { createRoleTransaction } = useCreateRoleTransaction()
     const { updateRoleTransaction } = useUpdateRoleTransaction()
     const { getSigner, isPrivyReady } = useGetEmbeddedSigner()
@@ -398,7 +407,7 @@ function SubmitButton({
     const isUnchanged = useMemo(() => {
         const def = structuredClone(defaultValues)
         const cur = structuredClone(watchAllFields)
-        function sorter(arr: typeof defaultValues | undefined) {
+        const sorter = (arr: typeof defaultValues | undefined) => {
             arr?.channelPermissions?.sort()
             arr?.townPermissions?.sort()
             arr?.users?.sort()
@@ -407,7 +416,6 @@ function SubmitButton({
         }
         sorter(def)
         sorter(cur)
-
         return isEqual(def, cur)
     }, [defaultValues, watchAllFields])
 
@@ -420,19 +428,19 @@ function SubmitButton({
         transactionIsPending
 
     const onValid = useEvent(async (data: RoleFormSchemaType) => {
+        if (!spaceId) {
+            return
+        }
+
         const signer = await getSigner()
-
-        // just in case
-        const _channelPermissions = [...new Set(data.channelPermissions)].sort()
-        const _townPermissions = [...new Set(data.townPermissions)].sort()
-
         if (!signer) {
             createPrivyNotAuthenticatedNotification()
             return
         }
-        if (!spaceId) {
-            return
-        }
+
+        // just in case
+        const _channelPermissions = [...new Set(data.channelPermissions)].sort()
+        const _townPermissions = [...new Set(data.townPermissions)].sort()
 
         const ruleData =
             data.tokens.length > 0
@@ -441,6 +449,7 @@ function SubmitButton({
                           address: t.address as Address,
                           chainId: BigInt(t.chainId),
                           type: convertTokenTypeToOperationType(t.type),
+                          threshold: t.quantity,
                       })),
                   )
                 : NoopRuleData
@@ -472,7 +481,7 @@ function SubmitButton({
     })
 
     const onInvalid: SubmitErrorHandler<RoleFormSchemaType> = useEvent((errors) => {
-        console.log(errors)
+        console.error(errors)
     })
 
     return (
@@ -491,10 +500,15 @@ function SubmitButton({
 }
 
 function UserSearch({ isCreateRole }: { isCreateRole: boolean }) {
-    const { getValues, setValue, formState } = useFormContext<RoleFormSchemaType>()
+    const { getValues, setValue, formState, trigger } = useFormContext<RoleFormSchemaType>()
+    const hadValueRef = useRef(false)
 
     const onSelectionChange = useEvent((addresses: Set<Address>) => {
-        setValue('users', Array.from(addresses))
+        setValue('users', Array.from(addresses), { shouldDirty: true })
+        if (addresses.size) {
+            hadValueRef.current = true
+        }
+        triggerTokensAndUsersValidation(trigger, hadValueRef.current)
     })
 
     const initialSelection = useMemo(() => {
@@ -527,62 +541,36 @@ function UserSearch({ isCreateRole }: { isCreateRole: boolean }) {
     )
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function TokenSearch({ isCreateRole }: { isCreateRole: boolean }) {
-    const { getValues, setValue, trigger, watch, formState } = useFormContext<RoleFormSchemaType>()
-    const valueRef = useRef(false)
-    const tokenWatch = watch('tokens')
-    const usersWatch = watch('users')
-    const hadAValueAtSomePoint = useMemo(() => {
-        if (tokenWatch.length) {
-            valueRef.current = true
-        }
-        return valueRef.current
-    }, [tokenWatch])
+// superrefine is not triggering w/ react-hook-form onChange mode
+// so we need to manually trigger the validation
+// https://github.com/react-hook-form/resolvers/issues/661
+function triggerTokensAndUsersValidation(
+    trigger: ReturnType<typeof useFormContext<RoleFormSchemaType>>['trigger'],
+    everHadValue: boolean,
+) {
+    if (everHadValue) {
+        trigger(['tokens', 'users'])
+    }
+}
 
-    const initialTokenValues = useMemo(() => {
-        const tokens = getValues('tokens')
-        if (tokens.length) {
-            return tokens
-        }
-        return []
-    }, [getValues])
+function TokenSearch({ isCreateRole }: { isCreateRole: boolean }) {
+    const { getValues, setValue, trigger, formState } = useFormContext<RoleFormSchemaType>()
+
+    const initialTokenValues = useMemo(() => getValues('tokens') || [], [getValues])
 
     const { data: initialTokensData, isLoading: isLoadingInitialTokens } =
         useMultipleTokenMetadatasForChainIds(initialTokenValues)
-
-    useEffect(() => {
-        // trigger token validation on either one of these values changes
-        // see ./schema.ts for the custom validation via superRefine
-        // which doesn't run when the form normally validates in "onChange" mode
-        usersWatch
-        tokenWatch
-        if (isLoadingInitialTokens) {
-            return
-        }
-        if (isCreateRole) {
-            if (hadAValueAtSomePoint || formState.isSubmitted) {
-                trigger('tokens')
-            }
-        } else {
-            trigger('tokens')
-        }
-    }, [
-        usersWatch,
-        tokenWatch,
-        isCreateRole,
-        hadAValueAtSomePoint,
-        formState.isSubmitted,
-        trigger,
-        isLoadingInitialTokens,
-    ])
+    const hadValueRef = useRef(false)
 
     const onSelectionChange = useCallback(
-        (args: { tokens: TokenDataWithChainId[] }) => {
-            const tokenDataArray = mapTokenOptionsToTokenDataStruct(args.tokens)
-            setValue('tokens', tokenDataArray)
+        ({ tokens }: { tokens: TokenDataWithChainId[] }) => {
+            setValue('tokens', mapTokenOptionsToTokenDataStruct(tokens), { shouldDirty: true })
+            if (tokens.length) {
+                hadValueRef.current = true
+            }
+            triggerTokensAndUsersValidation(trigger, hadValueRef.current)
         },
-        [setValue],
+        [setValue, trigger],
     )
 
     return (

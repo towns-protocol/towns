@@ -536,7 +536,7 @@ const TokensGatingSpace = ({
             <Box horizontal gap="sm" alignItems="center" paddingY="sm" paddingX="md">
                 <Box horizontal gap centerContent>
                     <Icon type="lock" size="square_sm" color="gray2" />
-                    For ERC-721 Holders
+                    For Holders
                 </Box>
                 <Box
                     horizontal

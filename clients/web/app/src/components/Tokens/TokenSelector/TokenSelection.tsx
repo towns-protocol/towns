@@ -2,8 +2,9 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { Box, Icon, IconButton, Stack, Text } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
+import { formatUnits } from 'hooks/useBalance'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
-import { TokenDataWithChainId } from '../types'
+import { TokenDataWithChainId, TokenType } from '../types'
 import { TokenImage } from './TokenImage'
 import { NetworkName } from './NetworkName'
 
@@ -26,6 +27,12 @@ function TokenSelection(props: TokenSelectionProps) {
     const { elevate = false } = props
     const { address, imgSrc, label, quantity, openSeaCollectionUrl } = props.data
 
+    const isErc20 = props.data.type === TokenType.ERC20
+
+    const transformedQuantity = isErc20
+        ? formatUnits(quantity ?? 1n, props.data.decimals)
+        : quantity?.toString() ?? '1'
+
     return (
         <Stack
             horizontal
@@ -44,8 +51,7 @@ function TokenSelection(props: TokenSelectionProps) {
                 <Stack grow gap="sm">
                     <Stack horizontal gap="sm" alignItems="center">
                         <Text truncate>
-                            {quantity !== undefined ? `${quantity} ` : ''}
-                            {label?.length ? label : 'Unknown Token'}
+                            {transformedQuantity} {label?.length ? label : 'Unknown Token'}
                         </Text>
                         {'userOwnsToken' in props && (
                             <Box

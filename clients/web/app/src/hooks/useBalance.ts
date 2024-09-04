@@ -70,20 +70,30 @@ export function useBalance({
     })
 }
 
-export function formatUnits(value: bigint, decimals: number) {
-    let display = value.toString()
-
-    const negative = display.startsWith('-')
-    if (negative) {
-        display = display.slice(1)
+export function formatUnits(value: bigint, decimals: number = 18): string {
+    if (value === 0n) {
+        return '0'
     }
 
-    display = display.padStart(decimals, '0')
+    const isNegative = value < 0n
+    const absoluteValue = isNegative ? -value : value
 
-    const [integer, fraction] = [
-        display.slice(0, display.length - decimals),
-        display.slice(display.length - decimals),
-    ]
-    const _fraction = fraction.replace(/(0+)$/, '')
-    return `${negative ? '-' : ''}${integer || '0'}${_fraction ? `.${_fraction}` : ''}`
+    const stringValue = absoluteValue.toString().padStart(decimals + 1, '0')
+    const integerPart = stringValue.slice(0, -decimals) || '0'
+    const fractionalPart = stringValue.slice(-decimals).replace(/0+$/, '')
+
+    const formattedValue = fractionalPart ? `${integerPart}.${fractionalPart}` : integerPart
+    return isNegative ? `-${formattedValue}` : formattedValue
+}
+
+export function parseUnits(value: string, decimals: number = 18): bigint {
+    if (!value || value === '.') {
+        return 0n
+    }
+
+    const [integerPart = '0', fractionalPart = ''] = value.split('.')
+    const paddedFractionalPart = fractionalPart.padEnd(decimals, '0').slice(0, decimals)
+    const combinedValue = `${integerPart}${paddedFractionalPart}`
+
+    return BigInt(combinedValue)
 }

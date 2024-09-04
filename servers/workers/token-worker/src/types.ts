@@ -69,11 +69,18 @@ export interface GetContractMetadataAlchemyResponse extends ContractMetadata {
     address: string
     name: string
     symbol: string
-    totalSupply: string
+    totalSupply?: string
     contractDeployer: string
     deployedBlockNumber: number
     tokenType: TokenType
-    openSeaMetadata: OpenSeaCollectionMetadata & { collectionSlug?: string | null }
+    openSeaMetadata?: OpenSeaCollectionMetadata & { collectionSlug?: string | null }
+}
+
+export interface GetTokenMetadataAlchemyResponse {
+    decimals: number
+    logo: string
+    name: string
+    symbol: string
 }
 
 // worker response for /getCollectionsForOwner
@@ -123,6 +130,8 @@ export type ContractMetadata = {
     openSeaCollectionUrl?: string | null
     image?: NftImageMetadata | null
     displayNft?: NftDisplayNft | null
+    decimals?: number | null
+    quantity?: bigint | null
 }
 
 export type NftImageMetadata = {
@@ -149,6 +158,7 @@ export enum TokenType {
     ERC721 = 'ERC721',
     ERC20 = 'ERC20',
     NOT_A_CONTRACT = 'NOT_A_CONTRACT',
+    NO_SUPPORTED_NFT_STANDARD = 'NO_SUPPORTED_NFT_STANDARD',
     UNKNOWN = 'UNKNOWN',
 }
 

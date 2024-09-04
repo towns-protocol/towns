@@ -3,13 +3,14 @@ import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller, useForm } from 'react-hook-form'
 import { TokenType } from '@token-worker/types'
-import { TokenDataWithChainId } from '@components/Tokens/types'
+import { TokenData, TokenDataWithChainId } from '@components/Tokens/types'
 import { Box, Button, Icon, IconButton, Stack, Text, TextField } from '@ui'
 import { useTokenMetadataAcrossNetworks } from 'api/lib/collectionMetadata'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { useClickedOrFocusedOutside } from 'hooks/useClickedOrFocusedOutside'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { isTouch } from 'hooks/useDevice'
+import { formatUnits, parseUnits } from 'hooks/useBalance'
 import { TokenOption } from './TokenOption'
 import { TokenSelectionDisplay, TokenSelectionInput } from './TokenSelection'
 
@@ -30,7 +31,7 @@ type Props = {
 // if UNKNOWN or NOT_A_CONTRACT, it can be added by entering the contract address
 // the user must select the network (if allowed), and be made aware that only ERC721 tokens are supported
 export function TokenSelector(props: Props) {
-    const allowedTokenTypes = props.allowedTokenTypes ?? [TokenType.ERC721]
+    const allowedTokenTypes = props.allowedTokenTypes ?? [TokenType.ERC721, TokenType.ERC20]
     const { isValidationError, onSelectionChange, initialSelection, allowedNetworks } = props
     const [textFieldValue, setTextFieldValue] = useState('')
     const [selection, setSelection] = useState<TokenDataWithChainId[]>(initialSelection ?? [])
@@ -47,10 +48,8 @@ export function TokenSelector(props: Props) {
         return tokenMetadata?.filter((t) => allowedNetworks.includes(t.chainId))
     }, [allowedNetworks, tokenMetadata])
 
-    const anyResultIsERC1155OrERC20 = useMemo(() => {
-        return tokenMetadata?.some(
-            (t) => t.data.type === TokenType.ERC1155 || t.data.type === TokenType.ERC20,
-        )
+    const anyResultIsERC1155 = useMemo(() => {
+        return tokenMetadata?.some((t) => t.data.type === TokenType.ERC1155)
     }, [tokenMetadata])
 
     const allResultsOnAllowedNetworkAreUnknownOrNotAContract = useMemo(() => {
@@ -60,7 +59,7 @@ export function TokenSelector(props: Props) {
     }, [resultsOnAllowedNetworks])
 
     const showUnknownTokensList =
-        allResultsOnAllowedNetworkAreUnknownOrNotAContract && !anyResultIsERC1155OrERC20
+        allResultsOnAllowedNetworkAreUnknownOrNotAContract && !anyResultIsERC1155
 
     const knownTokens = useValidTokens({
         tokenMetadata: useSorted(resultsOnAllowedNetworks),
@@ -85,7 +84,13 @@ export function TokenSelector(props: Props) {
                 ...option,
                 data: {
                     ...option.data,
-                    quantity: 1n,
+                    quantity:
+                        option.data.type === TokenType.ERC20
+                            ? parseUnits(
+                                  option.data.quantity?.toString() ?? '1',
+                                  option.data.decimals,
+                              )
+                            : option.data.quantity ?? 1n,
                 },
             })
         })
@@ -146,7 +151,7 @@ export function TokenSelector(props: Props) {
                 flexWrap="wrap"
                 minHeight="x6"
                 overflow="hidden"
-                border={isValidationError || anyResultIsERC1155OrERC20 ? 'negative' : 'default'}
+                border={isValidationError || anyResultIsERC1155 ? 'negative' : 'default'}
             >
                 <TextField
                     ref={props.inputRef}
@@ -160,10 +165,10 @@ export function TokenSelector(props: Props) {
                 />
             </Box>
 
-            {anyResultIsERC1155OrERC20 && (
+            {anyResultIsERC1155 && (
                 <Box>
                     <Text size="sm" color="error">
-                        We currently only support ERC-721 tokens.
+                        We currently only support ERC-721 or ERC-20 tokens.
                     </Text>
                 </Box>
             )}
@@ -212,15 +217,7 @@ export function TokenSelector(props: Props) {
                                     t.data.type === TokenType.NOT_A_CONTRACT,
                             ) ?? []
                         }
-                        onAddItem={(o) =>
-                            onAddItem({
-                                ...o,
-                                data: {
-                                    ...o.data,
-                                    type: TokenType.ERC721,
-                                },
-                            })
-                        }
+                        onAddItem={(o) => onAddItem(o)}
                     />
                 </>
             ) : null}
@@ -295,42 +292,67 @@ function TokenEditor(props: {
                 required_error: 'Quantity is required',
                 invalid_type_error: 'Quantity must be a string',
             })
-            .min(1, 'Quantity must not be empty')
+            .min(0, 'Quantity must not be empty')
             .refine(
                 (val) => {
-                    try {
-                        const bigIntValue = BigInt(val)
-                        return bigIntValue >= 1n
-                    } catch {
-                        return false
+                    if (token.data.type === TokenType.ERC20) {
+                        // For ERC20, allow decimal values
+                        const regex = /^\d*\.?\d*$/
+                        if (!regex.test(val)) {
+                            return false
+                        }
+                        const number = parseFloat(val)
+                        return !isNaN(number) && number > 0
+                    } else {
+                        // For non-ERC20, keep the original integer check
+                        try {
+                            const bigIntValue = BigInt(val)
+                            return bigIntValue >= 1n
+                        } catch {
+                            return false
+                        }
                     }
                 },
                 {
-                    message: 'Quantity must be a number greater than or equal to 1',
+                    message:
+                        token.data.type === TokenType.ERC20
+                            ? 'Quantity must be a positive number'
+                            : 'Quantity must be an integer greater than or equal to 1',
                 },
             ),
     })
+
+    const transformedDefaultValues = useMemo(() => {
+        return {
+            quantity:
+                token.data.type === TokenType.ERC20
+                    ? formatUnits(token.data.quantity ?? 1n, token.data.decimals)
+                    : token.data.quantity?.toString() ?? '1',
+        }
+    }, [token.data])
+
+    const transformQuantityForSubmit = useCallback((quantity: string, tokenData: TokenData) => {
+        return tokenData.type === TokenType.ERC20
+            ? parseUnits(quantity, tokenData.decimals)
+            : BigInt(quantity)
+    }, [])
 
     const {
         control,
         handleSubmit,
         formState: { errors },
         setFocus,
-    } = useForm({
+    } = useForm<{ quantity: string }>({
         resolver: zodResolver(schema),
-        defaultValues: {
-            // TODO: Convert back and forth decimal places for ERC20 tokens
-            quantity: token.data.quantity ? Number(token.data.quantity) : 1,
-        },
+        defaultValues: transformedDefaultValues,
     })
 
-    const onSubmit = (data: { quantity: number }) => {
+    const onSubmit = (data: { quantity: string }) => {
         onUpdate({
             ...token,
             data: {
                 ...token.data,
-                // TODO: Convert back and forth decimal places for ERC20 tokens
-                quantity: BigInt(data.quantity),
+                quantity: transformQuantityForSubmit(data.quantity, token.data),
             },
         })
         onHide()

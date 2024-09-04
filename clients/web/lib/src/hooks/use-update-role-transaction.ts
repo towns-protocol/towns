@@ -4,7 +4,7 @@ import {
     createTransactionContext,
 } from '../client/TownsClientTypes'
 import { SignerUndefinedError, toError } from '../types/error-types'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 
 import { TSigner } from '../types/web3-types'
 import { blockchainKeys } from '../query/query-keys'
@@ -101,16 +101,6 @@ export function useUpdateRoleTransaction() {
         },
         [queryClient, updateRoleTransaction, waitForUpdateRoleTransaction],
     )
-
-    useEffect(() => {
-        console.log('useUpdateRoleTransaction', 'states', {
-            isLoading,
-            data,
-            error,
-            transactionStatus,
-            transactionHash,
-        })
-    }, [data, error, isLoading, transactionHash, transactionStatus])
 
     return {
         isLoading,

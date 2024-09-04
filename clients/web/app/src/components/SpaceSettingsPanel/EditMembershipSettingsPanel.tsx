@@ -92,7 +92,7 @@ function EditMembershipForm({
             ? convertRuleDataV1ToV2(roleDetails.ruleData.rules)
             : roleDetails?.ruleData.rules
 
-    const defaultTokens = ruleData ? convertRuleDataToTokenFormSchema(ruleData!) : []
+    const defaultTokens = ruleData ? convertRuleDataToTokenFormSchema(ruleData) : []
 
     const defaultValues: EditMembershipSchemaType = {
         membershipType: defaultTokens.length > 0 ? 'tokenHolders' : 'everyone',
@@ -101,11 +101,10 @@ function EditMembershipForm({
         membershipPricingType: pricingModule?.isFixed ? 'fixed' : 'dynamic',
         tokensGatingMembership: defaultTokens,
         // TODO: currency defaults to ETH when addressZero
-        membershipCurrency: membershipInfo?.currency
-            ? (membershipInfo.currency as string)
-            : ethers.constants.AddressZero,
+        membershipCurrency: (membershipInfo?.currency as string) ?? ethers.constants.AddressZero,
         prepaidMemberships: 0,
     }
+
     return (
         <>
             <FormRender schema={editMembershipSchema} defaultValues={defaultValues} mode="all">
@@ -404,7 +403,7 @@ function SubmitButton({
     })
 
     const onInvalid: SubmitErrorHandler<EditMembershipSchemaType> = useEvent((errors) => {
-        console.log(errors)
+        console.error(errors)
     })
 
     return (
