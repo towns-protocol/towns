@@ -248,7 +248,6 @@ export class SyncedStreams {
 
                     while (!(result = await iterator.next()).done) {
                         const { value } = result
-                        logger.info('syncStreams received next', { value })
 
                         if (value === undefined) {
                             logger.warn('syncStreams received undefined')
@@ -261,6 +260,29 @@ export class SyncedStreams {
                             })
                             continue
                         }
+
+                        // Also log resets and acks
+                        let opStr = ''
+                        if (value.syncOp === SyncOp.SYNC_UPDATE) {
+                            if (value.stream !== undefined && value.stream.syncReset) {
+                                opStr = 'SYNC_RESET'
+                            } else if (
+                                value.stream !== undefined &&
+                                value.stream.events.length === 0 &&
+                                value.stream.miniblocks.length === 0
+                            ) {
+                                opStr = 'SYNC_ACK'
+                            } else {
+                                opStr = 'SYNC_UPDATE'
+                            }
+                        } else {
+                            opStr = SyncOp[value.syncOp] as string
+                        }
+                        logger.info('syncStreams received next', {
+                            value: { syncOp: opStr },
+                            data: value,
+                        })
+
                         switch (value.syncOp) {
                             case SyncOp.SYNC_NEW:
                                 await this.syncStarted(value.syncId)
