@@ -49,3 +49,7 @@ export function getFunctionSigHash<ContractInterface extends ethers.utils.Interf
     // const frag = contractInterface.getFunction(functionName)
     // return frag.format() // format sigHash
 }
+
+export function isUsingAlchemyBundler(bundlerUrl: string) {
+    return bundlerUrl.includes('alchemy')
+}

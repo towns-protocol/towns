@@ -16,7 +16,7 @@ import {
 } from '@river-build/web3'
 import { ethers } from 'ethers'
 import isEqual from 'lodash/isEqual'
-import { ISendUserOperationResponse, Client as UseropClient, Presets } from 'userop'
+import { ISendUserOperationResponse, Client as UseropClient } from 'userop'
 import { UserOpsConfig, UserOpParams, FunctionHash, TimeTracker, TimeTrackerEvents } from './types'
 import { userOpsStore } from './userOpsStore'
 // TODO: we can probably add these via @account-abrstraction/contracts if preferred
@@ -24,11 +24,18 @@ import { EntryPoint__factory, SimpleAccountFactory__factory } from 'userop/dist/
 import { ERC4337 } from 'userop/dist/constants'
 import { CodeException, errorToCodeException, matchGasTooLowError } from './errors'
 import { UserOperationEventEvent } from 'userop/dist/typechain/EntryPoint'
-import { EVERYONE_ADDRESS, getFunctionSigHash } from './utils'
-import { simpleEstimateGas, promptUser, signUserOpHash } from './middlewares'
+import { EVERYONE_ADDRESS, getFunctionSigHash, isUsingAlchemyBundler } from './utils'
+import {
+    simpleEstimateGas,
+    promptUser,
+    signUserOpHash,
+    estimateAlchemyGasFees,
+} from './middlewares'
 import { paymasterProxyMiddleware } from './paymasterProxyMiddleware'
 import { MiddlewareVars } from './MiddlewareVars'
 import { abstractAddressMap } from './abstractAddressMap'
+import { TownsSimpleAccount } from './TownsSimpleAccount'
+import { getGasPrice as getEthMaxPriorityFeePerGas } from 'userop/dist/preset/middleware'
 
 export class UserOps {
     private bundlerUrl: string
@@ -41,7 +48,7 @@ export class UserOps {
     private paymasterProxyAuthSecret: string | undefined
     private skipPromptUserOnPMRejectedOp = false
     private userOpClient: Promise<UseropClient> | undefined
-    private builder: Promise<Presets.Builder.SimpleAccount> | undefined
+    private builder: Promise<TownsSimpleAccount> | undefined
     protected spaceDapp: ISpaceDapp | undefined
     private timeTracker: TimeTracker | undefined
     private fetchAccessTokenFn: (() => Promise<string | null>) | undefined
@@ -69,6 +76,7 @@ export class UserOps {
         })
     }
 
+    // TODO: extract this to a separate function b/c client uses this to get AA address for all users
     public async getAbstractAccountAddress({
         rootKeyAddress,
     }: {
@@ -81,7 +89,7 @@ export class UserOps {
         // copied from userop.js
         // easier b/c we don't need the signer, which we don't store
         //
-        // alternative to this is calling Presets.Builder.SimpleAccount.init with signer, no paymaster required,
+        // alternative to this is calling TownsSimpleAccount.init with signer, no paymaster required,
         // which can then call getSenderAddress
         try {
             if (!this.factoryAddress) {
@@ -171,7 +179,7 @@ export class UserOps {
             throw new Error('callData is required')
         }
 
-        let simpleAccount: Presets.Builder.SimpleAccount
+        let simpleAccount: TownsSimpleAccount
         if (Array.isArray(toAddress)) {
             if (!Array.isArray(callData)) {
                 throw new Error('callData must be an array if toAddress is an array')
@@ -1569,16 +1577,12 @@ export class UserOps {
     public async getBuilder(args: { signer: ethers.Signer }) {
         if (!this.builder) {
             const { signer } = args
-            this.builder = Presets.Builder.SimpleAccount.init(signer, this.aaRpcUrl, {
+            this.builder = TownsSimpleAccount.init(signer, this.aaRpcUrl, {
                 entryPoint: this.entryPointAddress,
                 factory: this.factoryAddress,
                 overrideBundlerRpc: this.bundlerUrl,
                 // salt?: BigNumberish;
                 // nonceKey?: number;
-                paymasterMiddleware: async () => {
-                    // this is moved to sendUserOp but passing an empty function here so
-                    // that userop does not call eth_estimateUserOperationGas, which we do in other middleware
-                },
             })
         }
         return this.builder
@@ -1588,7 +1592,7 @@ export class UserOps {
         builder,
         signer,
     }: {
-        builder: Presets.Builder.SimpleAccount
+        builder: TownsSimpleAccount
         signer: ethers.Signer
     }) {
         if (this.middlewareInitialized) {
@@ -1596,6 +1600,14 @@ export class UserOps {
         }
         this.middlewareInitialized = true
         const timeTracker = this.timeTracker
+
+        // stackup bundler (local dev)
+        // stackup paymaster requires gas fee estimates to be included in the user operation
+        // alchemy bundler does not require gas fee estimates b/c we are using alchemy_requestGasAndPaymasterAndData in the paymaster proxy server
+        // https://docs.alchemy.com/reference/alchemy-requestgasandpaymasteranddata
+        if (!isUsingAlchemyBundler(this.bundlerUrl)) {
+            builder.useMiddleware(getEthMaxPriorityFeePerGas(builder.provider))
+        }
 
         // pass user op with new gas data to paymaster.
         // If approved, paymaster returns preverification gas and we assign it to the user operation.
@@ -1627,6 +1639,11 @@ export class UserOps {
             })
         }
 
+        // if the op isn't sponsored, we need to estimate the gas fees
+        if (isUsingAlchemyBundler(this.bundlerUrl)) {
+            builder.useMiddleware(async (ctx) => estimateAlchemyGasFees(ctx, builder.provider))
+        }
+
         // prompt user if the paymaster rejected. recalculate preverification gas
         if (!this.skipPromptUserOnPMRejectedOp) {
             builder.useMiddleware(async (ctx) => {
@@ -1637,7 +1654,7 @@ export class UserOps {
                     timeTracker,
                     stepPrefix: functionHashForPaymasterProxy,
                 })(ctx, {
-                    provider: this.spaceDapp?.provider,
+                    bundlerProvider: builder.provider,
                     config: this.spaceDapp?.config,
                     rpcUrl: this.aaRpcUrl,
                     bundlerUrl: this.bundlerUrl,
@@ -1649,7 +1666,7 @@ export class UserOps {
         // time tracking not needed as this is for error reporting in test scenarios
         else {
             builder.useMiddleware(async (ctx) =>
-                simpleEstimateGas(ctx, this.aaRpcUrl, this.bundlerUrl),
+                simpleEstimateGas(ctx, builder.provider, this.bundlerUrl),
             )
         }
 

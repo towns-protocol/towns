@@ -4,6 +4,9 @@ import { userOpsStore } from './userOpsStore'
 import { CodeException, errorCategories } from './errors'
 import { BaseChainConfig, ISpaceDapp } from '@river-build/web3'
 import { TimeTracker, TimeTrackerEvents } from './types'
+import { BigNumber } from 'ethers'
+import { getGasPrice as getEthMaxPriorityFeePerGas } from 'userop/dist/preset/middleware'
+import { isUsingAlchemyBundler } from './utils'
 
 function increaseByPercentage({ gas, percentage }: { gas: BigNumberish; percentage: number }) {
     return ethers.BigNumber.from(gas)
@@ -28,13 +31,12 @@ export function promptUser(
     return async function (
         ctx: IUserOperationMiddlewareCtx,
         {
-            provider,
+            bundlerProvider: provider,
             config,
-            rpcUrl,
             bundlerUrl,
             spaceId,
         }: {
-            provider: ethers.providers.Provider | undefined
+            bundlerProvider: BundlerJsonRpcProvider | undefined
             config: BaseChainConfig | undefined
             rpcUrl: string
             bundlerUrl: string
@@ -71,7 +73,7 @@ export function promptUser(
                                 },
                             },
                         },
-                        rpcUrl,
+                        provider,
                         bundlerUrl,
                     )
 
@@ -179,7 +181,7 @@ type GasEstimate = {
 
 export const simpleEstimateGas = async (
     ctx: IUserOperationMiddlewareCtx,
-    rpcUrl: string,
+    provider: BundlerJsonRpcProvider,
     bundlerUrl: string,
 ) => {
     if (ctx.op.paymasterAndData !== '0x') {
@@ -195,7 +197,7 @@ export const simpleEstimateGas = async (
                 },
             },
         },
-        rpcUrl,
+        provider,
         bundlerUrl,
     )
 
@@ -206,11 +208,9 @@ export const simpleEstimateGas = async (
 
 const estimateUserOperationGas = async (
     ctx: IUserOperationMiddlewareCtx,
-    rpcUrl: string,
+    provider: BundlerJsonRpcProvider,
     bundlerUrl: string,
 ) => {
-    const provider = new BundlerJsonRpcProvider(rpcUrl).setBundlerRpc(bundlerUrl)
-
     let op:
         | IUserOperation
         | Pick<
@@ -218,7 +218,7 @@ const estimateUserOperationGas = async (
               'sender' | 'nonce' | 'initCode' | 'callData' | 'paymasterAndData' | 'signature'
           > = OpToJSON(ctx.op)
 
-    if (bundlerUrl.includes('alchemy')) {
+    if (isUsingAlchemyBundler(bundlerUrl)) {
         op = {
             sender: op.sender,
             nonce: op.nonce,
@@ -255,4 +255,35 @@ export const OpToJSON = (op: IUserOperation): IUserOperation => {
             }),
             {},
         ) as IUserOperation
+}
+
+// calculate maxFeePerGas and maxPriorityFeePerGas
+export async function estimateAlchemyGasFees(
+    ctx: IUserOperationMiddlewareCtx,
+    provider: BundlerJsonRpcProvider,
+) {
+    if (ctx.op.paymasterAndData !== '0x') {
+        return
+    }
+
+    try {
+        // https://docs.alchemy.com/reference/bundler-api-fee-logic
+        const [fee, block] = await Promise.all([
+            provider.send('rundler_maxPriorityFeePerGas', []),
+            provider.getBlock('latest'),
+        ])
+
+        const tip = BigNumber.from(fee)
+        const maxPriorityFeePerGasBuffer = tip.div(100).mul(25)
+        const maxPriorityFeePerGas = tip.add(maxPriorityFeePerGasBuffer)
+        const maxFeePerGas = block.baseFeePerGas
+            ? block.baseFeePerGas.mul(2).add(maxPriorityFeePerGas)
+            : maxPriorityFeePerGas
+
+        ctx.op.maxFeePerGas = maxFeePerGas
+        ctx.op.maxPriorityFeePerGas = maxPriorityFeePerGas
+    } catch (error) {
+        // fallback to using eth_getMaxPriorityFeePerGas
+        await getEthMaxPriorityFeePerGas(provider)(ctx)
+    }
 }

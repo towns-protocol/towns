@@ -3,6 +3,7 @@ import { BigNumber } from 'ethers'
 import { IUserOperation, IUserOperationMiddlewareCtx } from 'userop'
 import { z } from 'zod'
 import { CodeException } from './errors'
+import { isUsingAlchemyBundler } from './utils'
 
 type PaymasterProxyResponse = {
     paymasterAndData: string
@@ -98,7 +99,7 @@ export const paymasterProxyMiddleware = async (
 
         let sponsorUserOpUrl = `${paymasterProxyUrl}/api/sponsor-userop`
 
-        if (bundlerUrl.includes('alchemy')) {
+        if (isUsingAlchemyBundler(bundlerUrl)) {
             sponsorUserOpUrl = `${paymasterProxyUrl}/api/sponsor-userop/alchemy`
         }
 
@@ -162,9 +163,6 @@ export const paymasterProxyMiddleware = async (
         }
     } catch (error) {
         // if the paymaster responds with an error
-        // just estimate the gas the same way Presets.SimpleAccount does when no paymaster is passed
-        // meaning a user will have to pay for gas and this can still fail if they don't have funds
-        // console.error('[paymasterProxyMiddleware] using fallback gas estimate:', error)
-        // await waitForConfirmOrDeny()
+        // ignore, let subsequent middleware handle it
     }
 }
