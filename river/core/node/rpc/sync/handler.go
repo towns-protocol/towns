@@ -6,6 +6,9 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 
 	. "github.com/river-build/river/core/node/base"
 	"github.com/river-build/river/core/node/events"
@@ -64,6 +67,8 @@ type (
 		streamCache events.StreamCache
 		// nodeRegistry is used to find a node endpoint to subscribe on remote streams
 		nodeRegistry nodes.NodeRegistry
+		// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
+		otelTracer trace.Tracer
 		// activeSyncOperations keeps a mapping from SyncID -> *StreamSyncOperation
 		activeSyncOperations sync.Map
 	}
@@ -81,11 +86,13 @@ func NewHandler(
 	nodeAddr common.Address,
 	cache events.StreamCache,
 	nodeRegistry nodes.NodeRegistry,
+	otelTracer trace.Tracer,
 ) *handlerImpl {
 	return &handlerImpl{
 		nodeAddr:     nodeAddr,
 		streamCache:  cache,
 		nodeRegistry: nodeRegistry,
+		otelTracer:   otelTracer,
 	}
 }
 
@@ -106,13 +113,60 @@ func (h *handlerImpl) SyncStreams(
 	doneChan := make(chan error, 1)
 	defer close(doneChan)
 
-	go h.runSyncStreams(req, res, op, doneChan)
+	var sender StreamsResponseSubscriber = res
+	if h.otelTracer != nil {
+		sender = &otelSender{
+			ctx:        ctx,
+			otelTracer: h.otelTracer,
+			sender:     res,
+		}
+	}
+
+	go h.runSyncStreams(req, sender, op, doneChan)
 	return <-doneChan
+}
+
+// StreamsResponseSubscriber is helper interface that allows a custom streams sync subscriber to be given in unit tests.
+type StreamsResponseSubscriber interface {
+	Send(msg *SyncStreamsResponse) error
+}
+
+type otelSender struct {
+	ctx        context.Context
+	otelTracer trace.Tracer
+	sender     StreamsResponseSubscriber
+}
+
+func (s *otelSender) Send(msg *SyncStreamsResponse) error {
+	_, span := s.otelTracer.Start(s.ctx, "SyncStreamsResponse")
+	defer span.End()
+
+	streamIdBytes := msg.GetStreamId()
+	if streamIdBytes == nil {
+		streamIdBytes = msg.Stream.GetNextSyncCookie().GetStreamId()
+	}
+	if streamIdBytes != nil {
+		id, err := shared.StreamIdFromBytes(streamIdBytes)
+		if err == nil {
+			span.SetAttributes(attribute.String("streamId", id.String()))
+		}
+	}
+	span.SetAttributes(
+		attribute.String("syncOp", msg.GetSyncOp().String()),
+		attribute.String("syncId", msg.GetSyncId()),
+	)
+
+	err := s.sender.Send(msg)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+	}
+	return err
 }
 
 func (h *handlerImpl) runSyncStreams(
 	req *connect.Request[SyncStreamsRequest],
-	res *connect.ServerStream[SyncStreamsResponse],
+	res StreamsResponseSubscriber,
 	op *StreamSyncOperation,
 	doneChan chan error,
 ) {

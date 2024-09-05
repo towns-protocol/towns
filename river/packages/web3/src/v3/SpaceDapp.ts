@@ -208,8 +208,9 @@ export class SpaceDapp implements ISpaceDapp {
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
+        const channelId = ensureHexPrefix(channelNetworkId)
         return wrapTransaction(
-            () => space.Channels.write(signer).addRoleToChannel(channelNetworkId, roleId),
+            () => space.Channels.write(signer).addRoleToChannel(channelId, roleId),
             txnOpts,
         )
     }

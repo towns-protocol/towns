@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"connectrpc.com/otelconnect"
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
@@ -117,7 +116,6 @@ func (s *Service) initTracing() {
 
 	s.otelTracer = s.otelTraceProvider.Tracer("")
 
-	otel.GetTextMapPropagator()
 	s.otelConnectIterceptor, err = otelconnect.NewInterceptor(
 		otelconnect.WithTracerProvider(traceProvider),
 		otelconnect.WithoutMetrics(),

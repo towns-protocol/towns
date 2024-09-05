@@ -84,11 +84,6 @@ func NewStreamsSyncOperation(
 	}, nil
 }
 
-// StreamsResponseSubscriber is helper interface that allows a custom streams sync subscriber to be given in unit tests.
-type StreamsResponseSubscriber interface {
-	Send(msg *SyncStreamsResponse) error
-}
-
 // Run the stream sync until either sub.Cancel is called or until sub.ctx expired
 func (syncOp *StreamSyncOperation) Run(
 	req *connect.Request[SyncStreamsRequest],
