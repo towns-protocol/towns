@@ -909,18 +909,8 @@ export async function createRole(
         }
     }
 
-    const receipt = await provider.waitForTransaction(txn.hash)
-    if (receipt.status === 0) {
-        return { roleId: undefined, error: new Error('Transaction failed') }
-    }
-
-    const parsedLogs = await spaceDapp.parseSpaceLogs(spaceId, receipt.logs)
-    const roleCreatedEvent = parsedLogs.find((log) => log?.name === 'RoleCreated')
-    if (!roleCreatedEvent) {
-        return { roleId: undefined, error: new Error('RoleCreated event not found') }
-    }
-    const roleId = (roleCreatedEvent.args[1] as ethers.BigNumber).toNumber()
-    return { roleId, error: undefined }
+    const { roleId, error: roleError } = await spaceDapp.waitForRoleCreated(spaceId, txn)
+    return { roleId, error: roleError }
 }
 
 export interface CreateChannelContext {

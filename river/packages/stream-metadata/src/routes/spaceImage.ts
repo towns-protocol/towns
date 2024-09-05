@@ -2,14 +2,20 @@ import { FastifyReply, FastifyRequest } from 'fastify'
 import { ChunkedMedia } from '@river-build/proto'
 import { StreamPrefix, StreamStateView, makeStreamId } from '@river-build/sdk'
 import { z } from 'zod'
+import { bin_toHexString } from '@river-build/dlog'
 
-import { StreamIdHex } from '../types'
-import { getMediaStreamContent, getStream } from '../riverStreamRpcClient'
-import { isBytes32String, isValidEthereumAddress } from '../validators'
+import { config } from '../environment'
+import { getStream } from '../riverStreamRpcClient'
+import { isValidEthereumAddress } from '../validators'
 import { getMediaEncryption } from '../media-encryption'
 
 const paramsSchema = z.object({
-	spaceAddress: z.string().min(1, 'spaceAddress parameter is required'),
+	spaceAddress: z
+		.string()
+		.min(1, 'spaceAddress parameter is required')
+		.refine(isValidEthereumAddress, {
+			message: 'Invalid spaceAddress format',
+		}),
 })
 
 export async function fetchSpaceImage(request: FastifyRequest, reply: FastifyReply) {
@@ -24,14 +30,6 @@ export async function fetchSpaceImage(request: FastifyRequest, reply: FastifyRep
 	}
 
 	const { spaceAddress } = parseResult.data
-
-	if (!isValidEthereumAddress(spaceAddress)) {
-		logger.info({ spaceAddress }, 'Invalid spaceAddress format')
-		return reply
-			.code(400)
-			.send({ error: 'Bad Request', message: 'Invalid spaceAddress format' })
-	}
-
 	logger.info({ spaceAddress }, 'Fetching space image')
 
 	let stream: StreamStateView | undefined
@@ -55,22 +53,12 @@ export async function fetchSpaceImage(request: FastifyRequest, reply: FastifyRep
 
 	// get the image metatdata from the stream
 	const spaceImage = await getSpaceImage(stream)
-
 	if (!spaceImage) {
 		return reply.code(404).send('spaceImage not found')
 	}
 
-	const fullStreamId: StreamIdHex = `0x${spaceImage.streamId}`
-	if (!isBytes32String(fullStreamId)) {
-		return reply.code(422).send('Invalid stream ID')
-	}
-
-	let key: Uint8Array | undefined
-	let iv: Uint8Array | undefined
 	try {
-		const { key: _key, iv: _iv } = getMediaEncryption(logger, spaceImage)
-		key = _key
-		iv = _iv
+		const { key, iv } = getMediaEncryption(logger, spaceImage)
 		if (key?.length === 0 || iv?.length === 0) {
 			logger.error(
 				{
@@ -83,6 +71,11 @@ export async function fetchSpaceImage(request: FastifyRequest, reply: FastifyRep
 			)
 			return reply.code(422).send('Failed to get encryption key or iv')
 		}
+		const redirectUrl = `${config.streamMetadataBaseUrl}/media/${
+			spaceImage.streamId
+		}?key=${bin_toHexString(key)}&iv=${bin_toHexString(iv)}`
+
+		return reply.redirect(redirectUrl)
 	} catch (error) {
 		logger.error(
 			{
@@ -94,44 +87,6 @@ export async function fetchSpaceImage(request: FastifyRequest, reply: FastifyRep
 		)
 		return reply.code(422).send('Failed to get encryption key or iv')
 	}
-
-	let data: ArrayBuffer | null
-	let mimeType: string | null
-	try {
-		const { data: _data, mimeType: _mimType } = await getMediaStreamContent(
-			logger,
-			fullStreamId,
-			key,
-			iv,
-		)
-		data = _data
-		mimeType = _mimType
-		if (!data || !mimeType) {
-			logger.error(
-				{
-					data: data ? 'has data' : 'no data',
-					mimeType: mimeType ? mimeType : 'no mimeType',
-					spaceAddress,
-					mediaStreamId: spaceImage.streamId,
-				},
-				'Invalid data or mimeType',
-			)
-			return reply.code(422).send('Invalid data or mimeTypet')
-		}
-	} catch (error) {
-		logger.error(
-			{
-				error,
-				spaceAddress,
-				mediaStreamId: spaceImage.streamId,
-			},
-			'Failed to get image content',
-		)
-		return reply.code(422).send('Failed to get image content')
-	}
-
-	// got the image data, send it back
-	return reply.header('Content-Type', mimeType).send(Buffer.from(data))
 }
 
 export async function getSpaceImage(

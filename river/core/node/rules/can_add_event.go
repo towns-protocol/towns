@@ -482,12 +482,12 @@ func (params *aeParams) canAddMemberPayload(payload *StreamEvent_MemberPayload) 
 			return aeBuilder().
 				check(params.creatorIsMember).
 				check(pinRuls.validPin).
-				requireChainAuth(params.spaceEntitlements(auth.PermissionWrite))
+				requireChainAuth(params.spaceEntitlements(auth.PermissionPinMessage))
 		} else if shared.ValidChannelStreamId(params.streamView.StreamId()) {
 			return aeBuilder().
 				check(params.creatorIsMember).
 				check(pinRuls.validPin).
-				requireChainAuth(params.channelEntitlements(auth.PermissionWrite))
+				requireChainAuth(params.channelEntitlements(auth.PermissionPinMessage))
 		} else {
 			return aeBuilder().
 				check(params.creatorIsMember).
@@ -502,12 +502,12 @@ func (params *aeParams) canAddMemberPayload(payload *StreamEvent_MemberPayload) 
 			return aeBuilder().
 				check(params.creatorIsMember).
 				check(unpinRules.validUnpin).
-				requireChainAuth(params.spaceEntitlements(auth.PermissionWrite))
+				requireChainAuth(params.spaceEntitlements(auth.PermissionPinMessage))
 		} else if shared.ValidChannelStreamId(params.streamView.StreamId()) {
 			return aeBuilder().
 				check(params.creatorIsMember).
 				check(unpinRules.validUnpin).
-				requireChainAuth(params.channelEntitlements(auth.PermissionWrite))
+				requireChainAuth(params.channelEntitlements(auth.PermissionPinMessage))
 		} else {
 			return aeBuilder().
 				check(params.creatorIsMember).

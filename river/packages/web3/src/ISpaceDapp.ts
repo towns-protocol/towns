@@ -171,6 +171,10 @@ export interface ISpaceDapp {
         signer: SignerType,
         txnOpts?: TransactionOpts,
     ): Promise<TransactionType>
+    waitForRoleCreated(
+        spaceId: string,
+        txn: ContractTransaction,
+    ): Promise<{ roleId: number | undefined; error: Error | undefined }>
     createLegacyUpdatedEntitlements(
         space: Space,
         params: LegacyUpdateRoleParams,

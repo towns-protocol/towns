@@ -215,6 +215,24 @@ export class SpaceDapp implements ISpaceDapp {
         )
     }
 
+    public async waitForRoleCreated(
+        spaceId: string,
+        txn: ContractTransaction,
+    ): Promise<{ roleId: number | undefined; error: Error | undefined }> {
+        const receipt = await this.provider.waitForTransaction(txn.hash)
+        if (receipt.status === 0) {
+            return { roleId: undefined, error: new Error('Transaction failed') }
+        }
+
+        const parsedLogs = await this.parseSpaceLogs(spaceId, receipt.logs)
+        const roleCreatedEvent = parsedLogs.find((log) => log?.name === 'RoleCreated')
+        if (!roleCreatedEvent) {
+            return { roleId: undefined, error: new Error('RoleCreated event not found') }
+        }
+        const roleId = (roleCreatedEvent.args[1] as ethers.BigNumber).toNumber()
+        return { roleId, error: undefined }
+    }
+
     public async banWalletAddress(
         spaceId: string,
         walletAddress: string,

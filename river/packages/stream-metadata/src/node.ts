@@ -12,6 +12,9 @@ import { fetchSpaceImage } from './routes/spaceImage'
 import { fetchSpaceMetadata } from './routes/spaceMetadata'
 import { fetchUserProfileImage } from './routes/profileImage'
 import { fetchUserBio } from './routes/userBio'
+import { fetchMedia } from './routes/media'
+import { spaceRefresh } from './routes/spaceRefresh'
+import { userRefresh } from './routes/userRefresh'
 
 // Set the process title to 'stream-metadata' so it can be easily identified
 // or killed with `pkill stream-metadata`
@@ -28,6 +31,8 @@ logger.info(
 		riverChainRpcUrl: config.riverChainRpcUrl,
 		baseChainRpcUrl: config.baseChainRpcUrl,
 		streamMetadataBaseUrl: config.streamMetadataBaseUrl,
+		aws: config.aws ? 'enabled' : 'disabled',
+		openSeaApiKey: config.openSeaApiKey ? 'enabled' : 'disabled',
 	},
 	'config',
 )
@@ -70,8 +75,11 @@ export function setupRoutes(srv: Server) {
 	srv.get('/health', checkHealth)
 	srv.get('/space/:spaceAddress', async (request, reply) => fetchSpaceMetadata(request, reply))
 	srv.get('/space/:spaceAddress/image', fetchSpaceImage)
+	srv.get('/space/:spaceAddress/refresh', spaceRefresh)
 	srv.get('/user/:userId/image', fetchUserProfileImage)
+	srv.get('/user/:userId/refresh', userRefresh)
 	srv.get('/user/:userId/bio', fetchUserBio)
+	srv.get('/media/:mediaStreamId', fetchMedia)
 
 	// Fastify will return 404 for any unmatched routes
 }

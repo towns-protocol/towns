@@ -22,6 +22,7 @@
 		"test:integration": "yarn test --testNamePattern='integration/stream-metadata'"
 	},
 	"dependencies": {
+		"@aws-sdk/client-cloudfront": "^3.645.0",
 		"@bufbuild/buf": "^1.32.0",
 		"@bufbuild/protobuf": "^1.9.0",
 		"@connectrpc/connect": "^1.4.0",

@@ -12,7 +12,7 @@ const BoolStringSchema = z.string().regex(/^(true|false)$/)
 const NumberFromIntStringSchema = IntStringSchema.transform((str) => parseInt(str, 10))
 const BoolFromStringSchema = BoolStringSchema.transform((str) => str === 'true')
 
-const envSchema = z.object({
+const envMainSchema = z.object({
 	RIVER_ENV: z.string(),
 	RIVER_CHAIN_RPC_URL: z.string().url(),
 	BASE_CHAIN_RPC_URL: z.string().url(),
@@ -21,26 +21,40 @@ const envSchema = z.object({
 	HOST: z.string().optional().default('127.0.0.1'),
 	LOG_LEVEL: z.string().optional().default('info'),
 	LOG_PRETTY: BoolFromStringSchema.optional().default('true'),
+	OPENSEA_API_KEY: z.string().optional(),
 })
+
+const envAwsSchema = z
+	.object({
+		AWS_REGION: z.string().min(1),
+		AWS_ACCESS_KEY_ID: z.string().min(1),
+		AWS_SECRET_ACCESS_KEY: z.string().min(1),
+		CLOUDFRONT_DISTRIBUTION_ID: z.string().min(1),
+	})
+	.optional()
 
 function makeConfig() {
 	// eslint-disable-next-line no-process-env -- this is the only line where we're allowed to use process.env
-	const env = envSchema.parse(process.env)
-	const web3Config = getWeb3Deployment(env.RIVER_ENV)
-	const baseUrl = new URL(env.RIVER_STREAM_METADATA_BASE_URL)
+
+	const envMain = envMainSchema.parse(process.env)
+	const envAws = envAwsSchema.safeParse(process.env)
+	const web3Config = getWeb3Deployment(envMain.RIVER_ENV)
+	const baseUrl = new URL(envMain.RIVER_STREAM_METADATA_BASE_URL)
 
 	return {
 		web3Config,
-		riverEnv: env.RIVER_ENV,
-		baseChainRpcUrl: env.BASE_CHAIN_RPC_URL,
-		riverChainRpcUrl: env.RIVER_CHAIN_RPC_URL,
+		riverEnv: envMain.RIVER_ENV,
+		baseChainRpcUrl: envMain.BASE_CHAIN_RPC_URL,
+		riverChainRpcUrl: envMain.RIVER_CHAIN_RPC_URL,
 		streamMetadataBaseUrl: baseUrl.origin,
-		host: env.HOST,
-		port: env.PORT,
+		host: envMain.HOST,
+		port: envMain.PORT,
+		openSeaApiKey: envMain.OPENSEA_API_KEY,
 		log: {
-			level: env.LOG_LEVEL,
-			pretty: env.LOG_PRETTY,
+			level: envMain.LOG_LEVEL,
+			pretty: envMain.LOG_PRETTY,
 		},
+		aws: envAws?.success ? envAws.data : undefined,
 	}
 }
 

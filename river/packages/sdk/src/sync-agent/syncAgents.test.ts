@@ -5,6 +5,7 @@ import { dlogger } from '@river-build/dlog'
 import { SyncAgent } from './syncAgent'
 import { Bot } from './utils/bot'
 import { waitFor } from '../util.test'
+import { NoopRuleData, Permission } from '@river-build/web3'
 
 const logger = dlogger('csb:test:syncAgents')
 
@@ -102,11 +103,34 @@ describe('syncAgents.test.ts', () => {
         expect(result2).toBeDefined()
         expect(result2.error).toBeUndefined()
 
-        // alice can pin too (for now)
+        // alice can't pin yet, she doesn't have permissions
         const aliceChannel = alice.spaces.getSpace(spaceId).getChannel(channelId)
         await waitFor(() => aliceChannel.value.status === 'loaded')
-        const aliceEvent = await aliceChannel.pin(event!.eventId)
-        expect(aliceEvent).toBeDefined()
-        expect(aliceEvent.error).toBeUndefined()
+
+        // grant permissions
+        const txn1 = await alice.riverConnection.spaceDapp.createRole(
+            spaceId,
+            'pin message role',
+            [Permission.PinMessage],
+            [aliceUser.rootWallet.address],
+            NoopRuleData,
+            bobUser.signer,
+        )
+        const { roleId, error: roleError } =
+            await alice.riverConnection.spaceDapp.waitForRoleCreated(spaceId, txn1)
+        expect(roleError).toBeUndefined()
+        expect(roleId).toBeDefined()
+        const txn2 = await bob.riverConnection.spaceDapp.addRoleToChannel(
+            spaceId,
+            channelId,
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+            roleId!,
+            bobUser.signer,
+        )
+        await txn2.wait()
+        // alice can pin
+        const result3 = await aliceChannel.pin(event!.eventId)
+        expect(result3).toBeDefined()
+        expect(result3.error).toBeUndefined()
     })
 })
