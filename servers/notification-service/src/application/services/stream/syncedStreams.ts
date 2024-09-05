@@ -246,6 +246,8 @@ export class SyncedStreams {
 
                     let result
 
+                    let i = 0
+
                     while (!(result = await iterator.next()).done) {
                         const { value } = result
 
@@ -281,30 +283,43 @@ export class SyncedStreams {
                         logger.info('syncStreams received next', {
                             value: { syncOp: opStr },
                             data: value,
+                            iteration: i,
                         })
 
-                        switch (value.syncOp) {
-                            case SyncOp.SYNC_NEW:
-                                await this.syncStarted(value.syncId)
-                                break
-                            case SyncOp.SYNC_CLOSE:
-                                this.syncClose(value)
-                                break
-                            case SyncOp.SYNC_UPDATE:
-                                await this.syncUpdate(value)
-                                break
-                            case SyncOp.SYNC_PONG:
-                                this.syncPong(value)
-                                break
-                            case SyncOp.SYNC_DOWN:
-                                await this.syncDown(value)
-                                break
-                            default:
-                                logger.warn(
-                                    `unknown syncOp { syncId: ${this.syncId}, syncOp: ${value.syncOp} }`,
-                                )
-                                break
-                        }
+                        queueMicrotask(async () => {
+                            logger.info('syncLoop queueMicrotask', {
+                                iteration: i,
+                            })
+                            try {
+                                switch (value.syncOp) {
+                                    case SyncOp.SYNC_NEW:
+                                        await this.syncStarted(value.syncId)
+                                        break
+                                    case SyncOp.SYNC_CLOSE:
+                                        this.syncClose(value)
+                                        break
+                                    case SyncOp.SYNC_UPDATE:
+                                        await this.syncUpdate(value)
+                                        break
+                                    case SyncOp.SYNC_PONG:
+                                        this.syncPong(value)
+                                        break
+                                    case SyncOp.SYNC_DOWN:
+                                        await this.syncDown(value)
+                                        break
+                                    default:
+                                        logger.warn(
+                                            `unknown syncOp { syncId: ${this.syncId}, syncOp: ${value.syncOp} }`,
+                                        )
+                                        break
+                                }
+                            } catch (error) {
+                                logger.error('syncLoop queueMicrotask error', { error })
+                                process.exit(1)
+                            }
+                        })
+
+                        i++
                     }
                 } catch (error) {
                     logger.error('syncLoop error', { error })
