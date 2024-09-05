@@ -10,7 +10,12 @@ import { useCallback } from 'react'
 import imageCompression from 'browser-image-compression'
 import { useQueryClient } from '@tanstack/react-query'
 import { ChunkedMedia } from '@river-build/proto'
-import { fetchSpaceImage, fetchUserProfileImage } from 'api/lib/fetchImage'
+import {
+    fetchSpaceImage,
+    fetchUserProfileImage,
+    refreshSpaceCache,
+    refreshUserCache,
+} from 'api/lib/fetchImage'
 import { isImageMimeType } from 'utils/isMediaMimeType'
 import { useImageStore } from '@components/UploadImage/useImageStore'
 import {
@@ -257,7 +262,7 @@ export const useUploadAttachment = () => {
                 setLoadedResource(spaceId, {
                     imageUrl: imageObjectUrl,
                 })
-
+                await refreshSpaceCache(spaceId)
                 // no issues uploading the image
                 return true
             } catch (e) {
@@ -309,6 +314,7 @@ export const useUploadAttachment = () => {
                 setLoadedResource(userId, {
                     imageUrl: imageObjectUrl,
                 })
+                await refreshUserCache(userId)
                 return true
             } catch (e) {
                 console.error('Error uploading image to stream', e)

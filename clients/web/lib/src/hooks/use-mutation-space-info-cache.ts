@@ -4,7 +4,11 @@ import { SpaceInfo } from '@river-build/web3'
 import { blockchainKeys } from '../query/query-keys'
 import { useOfflineStore } from '../store/use-offline-store'
 
-export function useMutationSpaceInfoCache() {
+export type UseMutationSpaceInfoCacheProps = {
+    onSuccess?: (spaceInfo: SpaceInfo) => void
+}
+
+export function useMutationSpaceInfoCache(props?: UseMutationSpaceInfoCacheProps) {
     const queryClient = useQueryClient()
     return useMutation({
         mutationFn: (spaceInfo: SpaceInfo | undefined) => {
@@ -19,6 +23,7 @@ export function useMutationSpaceInfoCache() {
                 return
             }
             const queryKey = blockchainKeys.spaceInfo(data.networkId ?? '')
+            props?.onSuccess?.(data)
             return queryClient.invalidateQueries({
                 queryKey,
             })

@@ -68,3 +68,26 @@ export async function fetchUserProfileImage(userId: string | undefined) {
 
     return { imageObjectUrl, mimeType }
 }
+
+export async function refreshSpaceCache(spaceId: string): Promise<{ ok: boolean }> {
+    const route = new URL(env.VITE_RIVER_STREAM_METADATA_URL)
+    const contractAddress = contractAddressFromSpaceId(spaceId)
+    route.pathname = `/space/${contractAddress}/refresh`
+    try {
+        const { data } = await axiosClient.get(route.toString())
+        return { ok: data.ok }
+    } catch (e) {
+        return { ok: false }
+    }
+}
+
+export async function refreshUserCache(userId: string): Promise<{ ok: boolean }> {
+    const route = new URL(env.VITE_RIVER_STREAM_METADATA_URL)
+    route.pathname = `/user/${userId}/refresh`
+    try {
+        const { data } = await axiosClient.get(route.toString())
+        return { ok: data.ok }
+    } catch (e) {
+        return { ok: false }
+    }
+}

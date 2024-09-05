@@ -18,6 +18,7 @@ import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { PrivyWrapper } from 'privy/PrivyProvider'
+import { refreshSpaceCache } from 'api/lib/fetchImage'
 
 type Props = {
     onHide: () => void
@@ -62,7 +63,9 @@ export const TownInfoModalWithoutAuth = (props: Props) => {
         transactionHash,
         transactionStatus,
         updateSpaceInfoTransaction,
-    } = useUpdateSpaceInfoTransaction()
+    } = useUpdateSpaceInfoTransaction({
+        onSuccess: () => (space?.id ? refreshSpaceCache(space.id) : undefined),
+    })
 
     const transactionUIState = toTransactionUIStates(transactionStatus, Boolean(data))
     const hasPendingTx = Boolean(transactionUIState != TransactionUIState.None)

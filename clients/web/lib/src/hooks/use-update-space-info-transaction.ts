@@ -9,19 +9,28 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { TSigner } from '../types/web3-types'
 import { useTownsClient } from './use-towns-client'
 import { getTransactionHashOrUserOpHash } from '@towns/userops'
-import { useMutationSpaceInfoCache } from './use-mutation-space-info-cache'
+import {
+    UseMutationSpaceInfoCacheProps,
+    useMutationSpaceInfoCache,
+} from './use-mutation-space-info-cache'
+
+type UseUpdateSpaceInfoTransactionProps = {
+    onSuccess?: UseMutationSpaceInfoCacheProps['onSuccess']
+}
 
 /**
  * Hook to update space name with a transaction.
  */
-export function useUpdateSpaceInfoTransaction() {
+export function useUpdateSpaceInfoTransaction(props?: UseUpdateSpaceInfoTransactionProps) {
     const [transactionContext, setTransactionContext] = useState<
         TransactionContext<void> | undefined
     >(undefined)
     const isTransacting = useRef<boolean>(false)
     const { updateSpaceInfoTransaction, waitForUpdateSpaceInfoTransaction, spaceDapp } =
         useTownsClient()
-    const spaceInfoCache = useMutationSpaceInfoCache()
+    const spaceInfoCache = useMutationSpaceInfoCache({
+        onSuccess: props?.onSuccess,
+    })
 
     const { data, isLoading, transactionHash, transactionStatus, error } = useMemo(() => {
         return {
