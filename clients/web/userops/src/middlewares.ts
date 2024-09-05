@@ -1,7 +1,7 @@
 import { BundlerJsonRpcProvider, IUserOperation, IUserOperationMiddlewareCtx } from 'userop'
 import { ethers, BigNumberish } from 'ethers'
 import { userOpsStore } from './userOpsStore'
-import { CodeException, errorCategories } from './errors'
+import { CodeException, errorCategories, errorToCodeException } from './errors'
 import { BaseChainConfig, ISpaceDapp } from '@river-build/web3'
 import { TimeTracker, TimeTrackerEvents } from './types'
 import { BigNumber } from 'ethers'
@@ -97,33 +97,10 @@ export function promptUser(
                         callGasLimit: ctx.op.callGasLimit,
                     }
                 } catch (error: unknown) {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const _e = error as Error & { body?: any }
-
-                    let body:
-                        | {
-                              error: {
-                                  code?: string | number
-                                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                  data?: any
-                                  message?: string
-                              }
-                          }
-                        | undefined = undefined
-
-                    try {
-                        body = JSON.parse(_e.body ?? '{}')
-                    } catch (error) {
-                        // ignore
-                        console.log('[promptUser] failed to parse error body', error)
-                    }
-
-                    const exception = new CodeException({
-                        message: body?.error?.message ?? 'Error estimating gas for user operation',
-                        code: body?.error?.code ?? 'UNKNOWN_ERROR',
-                        data: body?.error?.data,
-                        category: errorCategories.userop_non_sponsored,
-                    })
+                    const exception = errorToCodeException(
+                        error,
+                        errorCategories.userop_non_sponsored,
+                    )
 
                     // better logs
                     const spaceDappError = spaceDapp?.parseAllContractErrors({

@@ -64,19 +64,38 @@ export function errorToCodeException(error: unknown, category: ErrorCategory) {
     const reason = err?.message || err?.reason
 
     if (typeof reason === 'string') {
+        // matching something like:
+        // {"error":"{\"code\":-32602,\"message\":\"preVerificationGas: below expected gas\",\"data\":{\"revertData\":null}}"}
         const errorMatch = reason?.match(/error\\":\{([^}]+)\}/)?.[1]
         if (errorMatch) {
-            try {
-                const parsedData = JSON.parse(`{${errorMatch?.replace(/\\/g, '')}}`)
+            // Update the makeCodeException function
+            const makeCodeException = (parsedData: unknown): CodeException => {
+                if (!isParsedErrorData(parsedData)) {
+                    throw new Error('failed isParsedErrorData')
+                }
+
                 return new CodeException({
-                    message: parsedData.message ?? err?.message ?? 'Unknown error',
-                    code: parsedData.code,
-                    data: parsedData.data,
+                    message: parsedData.message ?? 'Unknown error',
+                    code: parsedData.code ?? '',
+                    data:
+                        (containsRevertData(parsedData.data)
+                            ? parsedData.data.revertData
+                            : parsedData.data) ?? null,
                     category,
                 })
+            }
+
+            try {
+                const parsedData = JSON.parse(`{${errorMatch?.replace(/\\/g, '')}}`)
+                return makeCodeException(parsedData)
             } catch (error) {
-                // ignore
-                console.error('[errorToCodeException] failed to parse error', error)
+                try {
+                    // if nested in revertData, needs an extra curly brace to be valid JSON
+                    const parsedData = JSON.parse(`{${errorMatch?.replace(/\\/g, '')}}}`)
+                    return makeCodeException(parsedData)
+                } catch (error) {
+                    console.error('[errorToCodeException] failed to parse error', error)
+                }
             }
         }
     }
@@ -85,7 +104,31 @@ export function errorToCodeException(error: unknown, category: ErrorCategory) {
         message: err?.message ?? 'Unknown error',
         code: err.code,
         // alchemy might nest in revertData
-        data: (err.data as { revertData: unknown })?.revertData ?? err.data ?? null,
+        data: (containsRevertData(err.data) ? err.data.revertData : err.data) ?? null,
         category,
     })
+}
+
+type ParsedErrorData = {
+    message: string | undefined
+    code: number | string | undefined
+    data?:
+        | {
+              revertData?: unknown
+          }
+        | unknown
+}
+
+function isParsedErrorData(parsedData: unknown): parsedData is ParsedErrorData {
+    return (
+        typeof parsedData === 'object' &&
+        parsedData !== null &&
+        'message' in parsedData &&
+        'data' in parsedData &&
+        'code' in parsedData
+    )
+}
+
+function containsRevertData(data: unknown): data is { revertData: unknown } {
+    return typeof data === 'object' && data !== null && 'revertData' in data
 }
