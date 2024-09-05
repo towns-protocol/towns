@@ -77,7 +77,7 @@ export class Channel extends PersistedObservable<ChannelModel> {
         },
     ): Promise<{ eventId: string }> {
         const channelId = this.data.id
-        const eventId = await this.riverConnection
+        const result = await this.riverConnection
             .withStream<{ eventId: string }>(channelId)
             .call((client) => {
                 return client.sendChannelMessage_Text(channelId, {
@@ -92,7 +92,19 @@ export class Channel extends PersistedObservable<ChannelModel> {
                     },
                 })
             })
-        return eventId
+        return result
+    }
+
+    async pin(eventId: string) {
+        const channelId = this.data.id
+        const result = await this.riverConnection.call((client) => client.pin(channelId, eventId))
+        return result
+    }
+
+    async unpin(eventId: string) {
+        const channelId = this.data.id
+        const result = await this.riverConnection.call((client) => client.unpin(channelId, eventId))
+        return result
     }
 
     async sendReaction(refEventId: string, reaction: string) {

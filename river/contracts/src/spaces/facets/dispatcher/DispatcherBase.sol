@@ -69,4 +69,29 @@ abstract contract DispatcherBase is IDispatcherBase {
   ) internal pure returns (bytes32) {
     return keccak256(abi.encodePacked(keyHash, inputSeed));
   }
+
+  function _registerTransaction(
+    address sender,
+    bytes memory data,
+    uint256 value
+  ) internal returns (bytes32) {
+    bytes32 keyHash = keccak256(abi.encodePacked(sender, block.number));
+
+    bytes32 transactionId = _makeDispatchId(
+      keyHash,
+      _makeDispatchInputSeed(keyHash, sender, _useDispatchNonce(keyHash))
+    );
+
+    // revert if the transaction already exists
+    if (_getCapturedData(transactionId).length > 0) {
+      revert Dispatcher__TransactionAlreadyExists();
+    }
+
+    _captureData(transactionId, data);
+    if (value != 0) {
+      _captureValue(transactionId, value);
+    }
+
+    return transactionId;
+  }
 }

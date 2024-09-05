@@ -266,7 +266,7 @@ export class SpaceDapp implements ISpaceDapp {
         }
         const bannedTokenIds = await space.Banning.read.banned()
         const bannedWalletAddresses = await Promise.all(
-            bannedTokenIds.map(async (tokenId) => await space.Membership.read.ownerOf(tokenId)),
+            bannedTokenIds.map(async (tokenId) => await space.ERC721A.read.ownerOf(tokenId)),
         )
         return bannedWalletAddresses
     }
@@ -878,43 +878,34 @@ export class SpaceDapp implements ISpaceDapp {
 
         const channelId = ensureHexPrefix(channelNetworkId)
 
-        if (
-            permission === Permission.Read ||
-            permission === Permission.Write ||
-            permission === Permission.React ||
-            permission === Permission.PinMessage
-        ) {
-            const linkedWallets = await this.getLinkedWallets(user)
+        const linkedWallets = await this.getLinkedWallets(user)
 
-            const owner = await space.Ownable.read.owner()
+        const owner = await space.Ownable.read.owner()
 
-            // Space owner is entitled to all channels
-            if (linkedWallets.includes(owner)) {
-                return true
-            }
-
-            const bannedWallets = await this.bannedWalletAddresses(spaceId)
-            for (const wallet of linkedWallets) {
-                if (bannedWallets.includes(wallet)) {
-                    return false
-                }
-            }
-
-            const entitlements = await this.getChannelEntitlementsForPermission(
-                spaceId,
-                channelId,
-                permission,
-            )
-            const entitledWallet = await this.evaluateEntitledWallet(
-                user,
-                linkedWallets,
-                entitlements,
-                supportedXChainRpcUrls,
-            )
-            return entitledWallet !== undefined
+        // Space owner is entitled to all channels
+        if (linkedWallets.includes(owner)) {
+            return true
         }
 
-        return space.Entitlements.read.isEntitledToChannel(channelId, user, permission)
+        const bannedWallets = await this.bannedWalletAddresses(spaceId)
+        for (const wallet of linkedWallets) {
+            if (bannedWallets.includes(wallet)) {
+                return false
+            }
+        }
+
+        const entitlements = await this.getChannelEntitlementsForPermission(
+            spaceId,
+            channelId,
+            permission,
+        )
+        const entitledWallet = await this.evaluateEntitledWallet(
+            user,
+            linkedWallets,
+            entitlements,
+            supportedXChainRpcUrls,
+        )
+        return entitledWallet !== undefined
     }
 
     public parseSpaceFactoryError(error: unknown): Error {
@@ -1347,7 +1338,7 @@ export class SpaceDapp implements ISpaceDapp {
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
-        const totalSupply = await space.Membership.read.totalSupply()
+        const totalSupply = await space.ERC721A.read.totalSupply()
 
         return { totalSupply: totalSupply.toNumber() }
     }
@@ -1364,7 +1355,7 @@ export class SpaceDapp implements ISpaceDapp {
                 space.Membership.read.getMembershipCurrency(),
                 space.Ownable.read.owner(),
                 space.Membership.read.getMembershipDuration(),
-                space.Membership.read.totalSupply(),
+                space.ERC721A.read.totalSupply(),
                 space.Membership.read.getMembershipPricingModule(),
             ])
 

@@ -4,55 +4,25 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IMembership} from "./IMembership.sol";
 import {IMembershipPricing} from "./pricing/IMembershipPricing.sol";
-import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
-import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
-import {IEntitlementGatedBase} from "contracts/src/spaces/facets/gated/IEntitlementGated.sol";
-import {IRolesBase} from "contracts/src/spaces/facets/roles/IRoles.sol";
 
 // libraries
-import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 import {CurrencyTransfer} from "contracts/src/utils/libraries/CurrencyTransfer.sol";
 
 // contracts
-import {MembershipBase} from "./MembershipBase.sol";
-import {ERC721A} from "contracts/src/diamond/facets/token/ERC721A/ERC721A.sol";
-import {ERC5643Base} from "contracts/src/diamond/facets/token/ERC5643/ERC5643Base.sol";
 import {ReentrancyGuard} from "contracts/src/diamond/facets/reentrancy/ReentrancyGuard.sol";
-import {Entitled} from "contracts/src/spaces/facets/Entitled.sol";
-import {RolesBase} from "contracts/src/spaces/facets/roles/RolesBase.sol";
-import {DispatcherBase} from "contracts/src/spaces/facets/dispatcher/DispatcherBase.sol";
-import {PrepayBase} from "contracts/src/spaces/facets/prepay/PrepayBase.sol";
-
-import {EntitlementGated} from "contracts/src/spaces/facets/gated/EntitlementGated.sol";
-
+import {MembershipJoin} from "./join/MembershipJoin.sol";
+import {Facet} from "contracts/src/diamond/facets/Facet.sol";
 contract MembershipFacet is
   IMembership,
-  MembershipBase,
-  ERC5643Base,
+  MembershipJoin,
   ReentrancyGuard,
-  ERC721A,
-  Entitled,
-  RolesBase,
-  DispatcherBase,
-  PrepayBase,
-  EntitlementGated
+  Facet
 {
-  bytes32 constant JOIN_SPACE =
-    bytes32(abi.encodePacked(Permissions.JoinSpace));
-
-  /// @dev Initialization logic when facet is added to diamond
-  function __Membership_init(
-    Membership memory info,
-    address spaceFactory
-  ) external onlyInitializing {
-    _addInterface(type(IMembership).interfaceId);
-    __MembershipBase_init(info, spaceFactory);
-    __ERC721A_init_unchained(info.name, info.symbol);
-  }
-
   // =============================================================
   //                           Withdrawal
   // =============================================================
+
+  /// @inheritdoc IMembership
   function withdraw(address account) external onlyOwner {
     if (account == address(0)) revert Membership__InvalidAddress();
     uint256 balance = _getCreatorBalance();
@@ -66,138 +36,20 @@ contract MembershipFacet is
   }
 
   // =============================================================
-  //                           Minting
-  // =============================================================
-  function _validateJoinSpace(address receiver) internal view {
-    if (receiver == address(0)) revert Membership__InvalidAddress();
-    if (
-      _getMembershipSupplyLimit() != 0 &&
-      _totalSupply() >= _getMembershipSupplyLimit()
-    ) revert Membership__MaxSupplyReached();
-  }
-
-  // =============================================================
   //                           Join
   // =============================================================
 
   /// @inheritdoc IMembership
   function joinSpace(address receiver) external payable nonReentrant {
-    _validateJoinSpace(receiver);
-    _validatePayment();
-
-    address sender = msg.sender;
-    bytes32 keyHash = keccak256(abi.encodePacked(sender, block.number));
-    bytes32 transactionId = _makeDispatchId(
-      keyHash,
-      _makeDispatchInputSeed(keyHash, sender, _useDispatchNonce(keyHash))
-    );
-
-    _captureData(transactionId, abi.encode(sender, receiver));
-    if (msg.value > 0) {
-      _captureValue(transactionId, msg.value);
-    }
-
-    IRolesBase.Role[] memory roles = _getRolesWithPermission(
-      Permissions.JoinSpace
-    );
-
-    bool isCrosschainPending;
-    bool shouldRefund;
-
-    address[] memory linkedWallets = _getLinkedWalletsWithUser(msg.sender);
-    uint256 rolesLen = roles.length;
-
-    for (uint256 i = 0; i < rolesLen; i++) {
-      IRolesBase.Role memory role = roles[i];
-
-      if (!role.disabled) {
-        for (uint256 j = 0; j < role.entitlements.length; j++) {
-          IEntitlement entitlement = IEntitlement(role.entitlements[j]);
-
-          if (!entitlement.isCrosschain()) {
-            if (entitlement.isEntitled(IN_TOWN, linkedWallets, JOIN_SPACE)) {
-              _issueToken(transactionId);
-              return;
-            } else {
-              shouldRefund = true;
-            }
-          } else {
-            _requestEntitlementCheck(
-              transactionId,
-              IRuleEntitlement(address(entitlement)),
-              role.id
-            );
-            shouldRefund = false;
-            isCrosschainPending = true;
-          }
-        }
-      }
-    }
-
-    if (!isCrosschainPending && shouldRefund) {
-      _captureData(transactionId, "");
-      if (msg.value > 0) {
-        _refundBalance(transactionId, sender);
-      }
-      emit MembershipTokenRejected(receiver);
-    }
+    _joinSpaceWithReferral(receiver, ReferralTypes(address(0), address(0), ""));
   }
 
-  function _validatePayment() internal {
-    if (msg.value > 0) {
-      uint256 membershipPrice = _getMembershipPrice(_totalSupply());
-      if (msg.value != membershipPrice) revert Membership__InvalidPayment();
-    }
-  }
-
-  function _issueToken(bytes32 transactionId) internal {
-    (address sender, address receiver) = abi.decode(
-      _getCapturedData(transactionId),
-      (address, address)
-    );
-
-    uint256 freeAllocation = _getMembershipFreeAllocation();
-    uint256 prepaidSupply = _getPrepaidSupply();
-
-    bool shouldCharge = true;
-    uint256 paidPrice;
-
-    if (freeAllocation > _totalSupply()) {
-      shouldCharge = false;
-      _refundBalance(transactionId, sender);
-    } else if (prepaidSupply > 0) {
-      shouldCharge = false;
-      _reducePrepay(1);
-      _refundBalance(transactionId, sender);
-    }
-
-    if (shouldCharge) {
-      paidPrice = _getCapturedValue(transactionId);
-      if (paidPrice == 0) revert Membership__InsufficientPayment();
-    }
-
-    // get token id
-    uint256 tokenId = _nextTokenId();
-
-    if (shouldCharge) {
-      // set renewal price for token
-      _setMembershipRenewalPrice(tokenId, paidPrice);
-      uint256 protocolFee = _collectProtocolFee(sender, paidPrice);
-
-      uint256 surplus = paidPrice - protocolFee;
-      if (surplus > 0) _transferIn(sender, surplus);
-
-      // release captured value
-      _releaseCapturedValue(transactionId, paidPrice);
-      _captureData(transactionId, "");
-    }
-
-    // mint membership
-    _safeMint(receiver, 1);
-
-    // set expiration of membership
-    _renewSubscription(tokenId, _getMembershipDuration());
-    emit MembershipTokenIssued(receiver, tokenId);
+  /// @inheritdoc IMembership
+  function joinSpaceWithReferral(
+    address receiver,
+    ReferralTypes memory referral
+  ) external payable nonReentrant {
+    _joinSpaceWithReferral(receiver, referral);
   }
 
   // =============================================================
@@ -348,42 +200,5 @@ contract MembershipFacet is
   /// @inheritdoc IMembership
   function getSpaceFactory() external view returns (address) {
     return _getSpaceFactory();
-  }
-
-  // =============================================================
-  //                           Overrides
-  // =============================================================
-
-  /// @dev Hook called after a node has posted the result of an entitlement check
-  function _onEntitlementCheckResultPosted(
-    bytes32 transactionId,
-    IEntitlementGatedBase.NodeVoteStatus result
-  ) internal override {
-    if (result == NodeVoteStatus.PASSED) {
-      _issueToken(transactionId);
-    } else {
-      (address sender, address receiver) = abi.decode(
-        _getCapturedData(transactionId),
-        (address, address)
-      );
-
-      _captureData(transactionId, "");
-      _refundBalance(transactionId, sender);
-
-      emit MembershipTokenRejected(receiver);
-    }
-  }
-
-  function _refundBalance(bytes32 transactionId, address sender) internal {
-    uint256 userValue = _getCapturedValue(transactionId);
-    if (userValue > 0) {
-      _releaseCapturedValue(transactionId, userValue);
-      CurrencyTransfer.transferCurrency(
-        _getMembershipCurrency(),
-        address(this),
-        sender,
-        userValue
-      );
-    }
   }
 }

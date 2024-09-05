@@ -32,7 +32,7 @@ contract MembershipMintLimitTest is MembershipBaseSetup {
     external
     givenAliceHasMintedMembership
   {
-    uint256 totalSupply = membership.totalSupply();
+    uint256 totalSupply = membershipToken.totalSupply();
 
     vm.prank(founder);
     vm.expectRevert(Membership__InvalidMaxSupply.selector);

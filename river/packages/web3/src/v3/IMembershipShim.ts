@@ -3,6 +3,8 @@ import {
     MembershipFacetInterface as LocalhostInterface,
 } from '@river-build/generated/dev/typings/MembershipFacet'
 
+import { IERC721AShim } from './IERC721AShim'
+
 import { BigNumber, BigNumberish, ethers } from 'ethers'
 import { BaseContractShim } from './BaseContractShim'
 
@@ -12,12 +14,15 @@ import { dlogger } from '@river-build/dlog'
 const log = dlogger('csb:IMembershipShim')
 
 export class IMembershipShim extends BaseContractShim<LocalhostContract, LocalhostInterface> {
+    private erc721Shim: IERC721AShim
+
     constructor(address: string, provider: ethers.providers.Provider | undefined) {
         super(address, provider, LocalhostAbi)
+        this.erc721Shim = new IERC721AShim(address, provider)
     }
 
     async hasMembership(wallet: string) {
-        const balance = (await this.read.balanceOf(wallet)).toNumber()
+        const balance = (await this.erc721Shim.read.balanceOf(wallet)).toNumber()
         return balance > 0
     }
 

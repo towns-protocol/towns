@@ -33,7 +33,7 @@ contract MembershipTokenUriTest is MembershipBaseSetup {
 
     uint256 tokenId = tokenIds[0];
 
-    string memory uri = membership.tokenURI(tokenId);
+    string memory uri = membershipToken.tokenURI(tokenId);
     assertTrue(
       keccak256(abi.encodePacked(uri)) != keccak256(abi.encodePacked(""))
     );

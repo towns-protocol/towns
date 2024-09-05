@@ -412,59 +412,44 @@ func (ca *chainAuth) isEntitledToChannelUncached(
 	log := dlog.FromCtx(ctx)
 	log.Debug("isEntitledToChannelUncached", "args", args)
 
-	// For read, write and react permissions, fetch the entitlements and evaluate them locally.
-	if (args.permission == PermissionRead) || (args.permission == PermissionWrite) ||
-		(args.permission == PermissionReact) {
-		result, cacheHit, err := ca.entitlementManagerCache.executeUsingCache(
-			ctx,
-			cfg,
-			args,
-			ca.getChannelEntitlementsForPermissionUncached,
-		)
-		if err != nil {
-			return &boolCacheResult{
-					allowed: false,
-				}, AsRiverError(
-					err,
-				).Func("isEntitledToChannel").
-					Message("Failed to get channel entitlements")
-		}
-
-		if cacheHit {
-			ca.entitlementCacheHit.Inc()
-		} else {
-			ca.entitlementCacheMiss.Inc()
-		}
-
-		temp := (result.(*timestampedCacheValue).Result())
-		entitlementData := temp.(*entitlementCacheResult) // Assuming result is of *entitlementCacheResult type
-
-		allowed, err := ca.evaluateWithEntitlements(
-			ctx,
-			cfg,
-			args,
-			entitlementData.owner,
-			entitlementData.entitlementData,
-		)
-		if err != nil {
-			err = AsRiverError(err).
-				Func("isEntitledToChannel").
-				Message("Failed to evaluate entitlements").
-				Tag("channelId", args.channelId)
-		}
-		return &boolCacheResult{allowed}, err
+	result, cacheHit, err := ca.entitlementManagerCache.executeUsingCache(
+		ctx,
+		cfg,
+		args,
+		ca.getChannelEntitlementsForPermissionUncached,
+	)
+	if err != nil {
+		return &boolCacheResult{
+				allowed: false,
+			}, AsRiverError(
+				err,
+			).Func("isEntitledToChannel").
+				Message("Failed to get channel entitlements")
 	}
 
-	// For all other permissions, defer the entitlement check to existing synchronous logic on the space contract.
-	// This call will ignore cross-chain entitlements.
-	allowed, err := ca.spaceContract.IsEntitledToChannel(
+	if cacheHit {
+		ca.entitlementCacheHit.Inc()
+	} else {
+		ca.entitlementCacheMiss.Inc()
+	}
+
+	temp := (result.(*timestampedCacheValue).Result())
+	entitlementData := temp.(*entitlementCacheResult) // Assuming result is of *entitlementCacheResult type
+
+	allowed, err := ca.evaluateWithEntitlements(
 		ctx,
-		args.spaceId,
-		args.channelId,
-		args.principal,
-		args.permission,
+		cfg,
+		args,
+		entitlementData.owner,
+		entitlementData.entitlementData,
 	)
-	return &boolCacheResult{allowed: allowed}, err
+	if err != nil {
+		err = AsRiverError(err).
+			Func("isEntitledToChannel").
+			Message("Failed to evaluate entitlements").
+			Tag("channelId", args.channelId)
+	}
+	return &boolCacheResult{allowed}, err
 }
 
 func deserializeWallets(serialized string) []common.Address {

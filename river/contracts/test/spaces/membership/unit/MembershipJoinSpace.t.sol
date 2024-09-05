@@ -8,7 +8,6 @@ import {MembershipBaseSetup} from "../MembershipBaseSetup.sol";
 import {IEntitlementGated} from "contracts/src/spaces/facets/gated/IEntitlementGated.sol";
 import {IEntitlementGatedBase} from "contracts/src/spaces/facets/gated/IEntitlementGated.sol";
 import {IEntitlementCheckerBase} from "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
-import {IWalletLink, IWalletLinkBase} from "contracts/src/factory/facets/wallet-link/IWalletLink.sol";
 import {IArchitect, IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
 
 //libraries
@@ -17,11 +16,10 @@ import {Vm} from "forge-std/Test.sol";
 //contracts
 import {MembershipFacet} from "contracts/src/spaces/facets/membership/MembershipFacet.sol";
 
-contract MembershipJoinSpace is
+contract MembershipJoinSpaceTest is
   MembershipBaseSetup,
   IEntitlementCheckerBase,
-  IEntitlementGatedBase,
-  IWalletLinkBase
+  IEntitlementGatedBase
 {
   bytes32 internal constant CHECK_REQUESTED =
     keccak256(
@@ -32,46 +30,6 @@ contract MembershipJoinSpace is
   bytes32 internal constant TOKEN_EMITTED =
     keccak256("MembershipTokenIssued(address,uint256)");
 
-  function test_joinSpace() external givenAliceHasMintedMembership {
-    assertEq(membership.balanceOf(alice), 1);
-  }
-
-  function test_multipleJoinSpace()
-    external
-    givenAliceHasMintedMembership
-    givenAliceHasMintedMembership
-  {
-    assertEq(membership.balanceOf(alice), 2);
-  }
-
-  function test_joinPaidSpace() external givenMembershipHasPrice {
-    vm.deal(bob, MEMBERSHIP_PRICE);
-    vm.prank(bob);
-
-    vm.recordLogs();
-    membership.joinSpace{value: MEMBERSHIP_PRICE}(bob);
-    Vm.Log[] memory logs = vm.getRecordedLogs();
-
-    (
-      address contractAddress,
-      bytes32 transactionId,
-      uint256 roleId,
-      address[] memory selectedNodes
-    ) = _getRequestedEntitlementData(logs);
-
-    for (uint256 i = 0; i < 3; i++) {
-      vm.prank(selectedNodes[i]);
-      IEntitlementGated(contractAddress).postEntitlementCheckResult(
-        transactionId,
-        roleId,
-        IEntitlementGatedBase.NodeVoteStatus.PASSED
-      );
-    }
-
-    assertEq(membership.balanceOf(bob), 1);
-    assertEq(bob.balance, 0);
-  }
-
   struct EntitlementCheckRequestEvent {
     address callerAddress;
     address contractAddress;
@@ -80,67 +38,46 @@ contract MembershipJoinSpace is
     address[] selectedNodes;
   }
 
-  function test_joinSpaceWithUserEntitlement_passes() external {
+  function test_joinSpaceOnly() external givenAliceHasMintedMembership {
+    assertEq(membershipToken.balanceOf(alice), 1);
+  }
+
+  function test_joinSpaceMultipleTimes()
+    external
+    givenAliceHasMintedMembership
+    givenAliceHasMintedMembership
+  {
+    assertEq(membershipToken.balanceOf(alice), 2);
+  }
+
+  // alice is entitled, see MembershipBaseSetup.sol
+  function test_joinPaidSpace() external givenMembershipHasPrice {
+    vm.deal(alice, MEMBERSHIP_PRICE);
     vm.prank(alice);
-    membership.joinSpace(alice);
-    assertEq(membership.balanceOf(alice), 1);
+    membership.joinSpace{value: MEMBERSHIP_PRICE}(alice);
+
+    assertEq(membershipToken.balanceOf(alice), 1);
+    assertEq(alice.balance, 0);
   }
 
-  function test_joinSpaceWithRootWalletUserEntitlement_passes() external {
-    IWalletLink wl = IWalletLink(spaceFactory);
-    Vm.Wallet memory daveWallet = vm.createWallet("dave");
-
-    uint256 nonce = walletLink.getLatestNonceForRootKey(daveWallet.addr);
-
-    bytes memory signature = _signWalletLink(
-      aliceWallet.privateKey,
-      daveWallet.addr,
-      nonce
-    );
-
-    vm.startPrank(daveWallet.addr);
-    vm.expectEmit(address(wl));
-    emit LinkWalletToRootKey(daveWallet.addr, aliceWallet.addr);
-    walletLink.linkCallerToRootKey(
-      LinkedWallet(aliceWallet.addr, signature, LINKED_WALLET_MESSAGE),
-      nonce
-    );
-
-    membership.joinSpace(daveWallet.addr);
-    assertEq(membership.balanceOf(daveWallet.addr), 1);
+  /// @dev Test that a user can join a space with an entitled root wallet as the signer
+  function test_joinSpaceWithEntitledRootWallet()
+    external
+    givenWalletIsLinked(aliceWallet, bobWallet)
+  {
+    vm.prank(bobWallet.addr);
+    membership.joinSpace(bobWallet.addr);
+    assertEq(membershipToken.balanceOf(bobWallet.addr), 1);
   }
 
-  function test_joinSpaceWithLinkedWalletUserEntitlement_passes() external {
-    IWalletLink wl = IWalletLink(spaceFactory);
-    Vm.Wallet memory emilyWallet = vm.createWallet("emily");
-
-    uint256 nonce = walletLink.getLatestNonceForRootKey(aliceWallet.addr);
-
-    bytes memory signature = _signWalletLink(
-      emilyWallet.privateKey,
-      aliceWallet.addr,
-      nonce
-    );
-
-    vm.startPrank(alice);
-    vm.expectEmit(address(wl));
-    emit IWalletLinkBase.LinkWalletToRootKey(
-      aliceWallet.addr,
-      emilyWallet.addr
-    );
-    walletLink.linkCallerToRootKey(
-      IWalletLinkBase.LinkedWallet(
-        emilyWallet.addr,
-        signature,
-        LINKED_WALLET_MESSAGE
-      ),
-      nonce
-    );
-    vm.stopPrank();
-
-    vm.prank(emilyWallet.addr);
-    membership.joinSpace(emilyWallet.addr);
-    assertEq(membership.balanceOf(emilyWallet.addr), 1);
+  /// @dev Test that a user can join a space with a linked wallet as the signer but the linked wallet is entitled
+  function test_joinSpaceWithEntitledLinkedWallet()
+    external
+    givenWalletIsLinked(bobWallet, aliceWallet)
+  {
+    vm.prank(bobWallet.addr);
+    membership.joinSpace(bobWallet.addr);
+    assertEq(membershipToken.balanceOf(bobWallet.addr), 1);
   }
 
   function test_joinSpace_multipleCrosschainEntitlementChecks_finalPasses()
@@ -163,10 +100,10 @@ contract MembershipJoinSpace is
     uint256 numCheckRequests = _getEntitlementCheckRequestCount(requestLogs);
 
     assertEq(numCheckRequests, 3);
-    assertEq(membership.balanceOf(bob), 0);
+    assertEq(membershipToken.balanceOf(bob), 0);
 
     uint256 quorum = selectedNodes.length / 2;
-    uint256 nextTokenId = membership.totalSupply();
+    uint256 nextTokenId = membershipToken.totalSupply();
     IEntitlementGated _entitlementGated = IEntitlementGated(contractAddress);
 
     for (uint256 i = 0; i < selectedNodes.length; i++) {
@@ -194,7 +131,7 @@ contract MembershipJoinSpace is
       );
     }
 
-    assertEq(membership.balanceOf(bob), 1);
+    assertEq(membershipToken.balanceOf(bob), 1);
   }
 
   function test_joinSpace_multipleCrosschainEntitlementChecks_earlyPass()
@@ -222,6 +159,7 @@ contract MembershipJoinSpace is
       uint256 roleId;
       bytes32 transactionId;
       address[] memory selectedNodes;
+
       if (requestLogs[i].topics[0] == CHECK_REQUESTED) {
         (, contractAddress, transactionId, roleId, selectedNodes) = abi.decode(
           requestLogs[i].data,
@@ -241,6 +179,7 @@ contract MembershipJoinSpace is
         tokenEmittedMatched = true;
       }
     }
+
     // Validate that a check requested event was emitted and no tokens were minted.
     assertEq(numCheckRequests, 3);
     assertFalse(tokenEmittedMatched);
@@ -319,7 +258,7 @@ contract MembershipJoinSpace is
     ) = _getRequestedEntitlementData(requestLogs);
 
     // Validate that a check requested event was emitted and no tokens were minted.
-    assertEq(membership.balanceOf(bob), 0);
+    assertEq(membershipToken.balanceOf(bob), 0);
 
     uint256 quorum = selectedNodes.length / 2;
 
@@ -345,13 +284,11 @@ contract MembershipJoinSpace is
     }
 
     // Validate that a check requested event was emitted and no tokens were minted.
-    assertEq(membership.balanceOf(bob), 0);
+    assertEq(membershipToken.balanceOf(bob), 0);
   }
 
   function test_joinPaidSpaceRefund() external givenMembershipHasPrice {
     vm.deal(bob, MEMBERSHIP_PRICE);
-
-    assertEq(membership.balanceOf(bob), 0);
 
     vm.recordLogs();
     vm.prank(bob);
@@ -374,7 +311,7 @@ contract MembershipJoinSpace is
       );
     }
 
-    assertEq(membership.balanceOf(bob), 0);
+    assertEq(membershipToken.balanceOf(bob), 0);
     assertEq(bob.balance, MEMBERSHIP_PRICE);
   }
 
@@ -384,7 +321,7 @@ contract MembershipJoinSpace is
     membership.joinSpace(address(0));
   }
 
-  function test_joinSpace_passWhen_CallerIsFounder() external {
+  function test_joinSpaceAsFounder() external {
     vm.prank(founder);
     membership.joinSpace(bob);
   }
@@ -431,7 +368,7 @@ contract MembershipJoinSpace is
     assertTrue(checkRequestedMatched);
   }
 
-  function test_joinSpace_revert_LimitReached() external {
+  function test_reverWhen_joinSpaceLimitReached() external {
     vm.prank(founder);
     membership.setMembershipLimit(1);
 
@@ -443,12 +380,11 @@ contract MembershipJoinSpace is
     membership.joinSpace(alice);
   }
 
-  function test_joinSpace_revert_when_updating_maxSupply() external {
+  function test_revertWhen_setMembershipLimitToLowerThanCurrentBalance()
+    external
+  {
     vm.prank(founder);
     membership.setMembershipLimit(2);
-
-    assertTrue(membership.getMembershipPrice() == 0);
-    assertTrue(membership.getMembershipLimit() == 2);
 
     vm.prank(alice);
     membership.joinSpace(alice);
@@ -457,6 +393,67 @@ contract MembershipJoinSpace is
     vm.expectRevert(Membership__InvalidMaxSupply.selector);
     membership.setMembershipLimit(1);
   }
+
+  function test_joinSpace_withValueAndFreeAllocation() external {
+    uint256 value = membership.getMembershipPrice();
+
+    // assert there are freeAllocations available
+    vm.prank(founder);
+    membership.setMembershipFreeAllocation(1000);
+    uint256 freeAlloc = membership.getMembershipFreeAllocation();
+    assertTrue(freeAlloc > 0);
+
+    vm.prank(alice);
+    vm.deal(alice, value);
+    membership.joinSpace{value: value}(alice);
+
+    // alice gets a refund
+    assertTrue(address(membership).balance == 0);
+    assertTrue(alice.balance == value);
+
+    // Attempt to withdraw
+    address withdrawAddress = _randomAddress();
+    vm.prank(founder);
+    vm.expectRevert(Membership__InsufficientPayment.selector);
+    membership.withdraw(withdrawAddress);
+
+    // withdraw address balance is 0
+    assertEq(withdrawAddress.balance, 0);
+    assertEq(address(membership).balance, 0);
+  }
+
+  function test_joinSpace_priceChangesMidTransaction()
+    external
+    givenMembershipHasPrice
+  {
+    vm.deal(bob, MEMBERSHIP_PRICE);
+
+    vm.recordLogs();
+    vm.prank(bob);
+    membership.joinSpace{value: MEMBERSHIP_PRICE}(bob);
+    Vm.Log[] memory logs = vm.getRecordedLogs();
+
+    (
+      address contractAddress,
+      bytes32 transactionId,
+      uint256 roleId,
+      address[] memory selectedNodes
+    ) = _getRequestedEntitlementData(logs);
+
+    for (uint256 i = 0; i < 3; i++) {
+      vm.prank(selectedNodes[i]);
+      IEntitlementGated(contractAddress).postEntitlementCheckResult(
+        transactionId,
+        roleId,
+        IEntitlementGatedBase.NodeVoteStatus.FAILED
+      );
+    }
+
+    assertEq(membershipToken.balanceOf(bob), 0);
+    assertEq(bob.balance, MEMBERSHIP_PRICE);
+  }
+
+  // utils
 
   function _getEntitlementCheckRequestCount(
     Vm.Log[] memory logs
@@ -493,41 +490,13 @@ contract MembershipJoinSpace is
     }
   }
 
-  function test_joinSpace_withValueAndFreeAllocation() external {
-    uint256 price = membership.getMembershipPrice();
-
-    // assert there are freeAllocations available
-    vm.prank(founder);
-    membership.setMembershipFreeAllocation(1000);
-    uint256 freeAlloc = membership.getMembershipFreeAllocation();
-    assertTrue(freeAlloc > 0);
-
-    vm.prank(alice);
-    vm.deal(alice, price);
-    membership.joinSpace{value: price}(alice);
-
-    // space has balance
-    assertTrue(address(membership).balance == 0);
-    assertTrue(alice.balance == price);
-
-    // Attempt to withdraw
-    address withdrawAddress = _randomAddress();
-    vm.prank(founder);
-    vm.expectRevert(Membership__InsufficientPayment.selector);
-    membership.withdraw(withdrawAddress);
-
-    // withdraw address balance is 0
-    assertEq(withdrawAddress.balance, 0);
-    assertEq(address(membership).balance, 0);
-  }
-
   function test_joinSpacePriceChangesMidTransaction()
     external
     givenMembershipHasPrice
   {
     vm.deal(bob, MEMBERSHIP_PRICE);
 
-    assertEq(membership.balanceOf(bob), 0);
+    assertEq(membershipToken.balanceOf(bob), 0);
 
     vm.recordLogs();
     vm.prank(bob);
@@ -553,7 +522,7 @@ contract MembershipJoinSpace is
       );
     }
 
-    assertEq(membership.balanceOf(bob), 1);
+    assertEq(membershipToken.balanceOf(bob), 1);
     assertTrue(address(membership).balance > 0);
   }
 

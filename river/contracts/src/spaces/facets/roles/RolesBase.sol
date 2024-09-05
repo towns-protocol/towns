@@ -96,42 +96,37 @@ abstract contract RolesBase is IRolesBase {
   ) internal view returns (Role[] memory) {
     uint256[] memory roleIds = _getRoleIds();
     uint256 roleIdLen = roleIds.length;
-    uint256[] memory matchedRoleIds = new uint256[](roleIdLen);
+    Role[] memory rolesWithPermission = new Role[](roleIdLen);
     uint256 count = 0;
 
     bytes32 requestedPermission = keccak256(bytes(permission));
 
-    // First pass to find roles with the permission and capture their IDs
     for (uint256 i = 0; i < roleIdLen; i++) {
-      (, , string[] memory permissions, ) = _getRole(roleIds[i]);
+      (
+        string memory name,
+        bool isImmutable,
+        string[] memory permissions,
+        IEntitlement[] memory entitlements
+      ) = _getRole(roleIds[i]);
+
       for (uint256 j = 0; j < permissions.length; j++) {
         if (keccak256(bytes(permissions[j])) == requestedPermission) {
-          matchedRoleIds[count] = roleIds[i];
+          rolesWithPermission[count] = Role({
+            id: roleIds[i],
+            name: name,
+            disabled: isImmutable,
+            permissions: permissions,
+            entitlements: entitlements
+          });
           count++;
           break;
         }
       }
     }
 
-    // Initialize the array of roles with the correct size
-    Role[] memory rolesWithPermission = new Role[](count);
-
-    // Populate the array using the captured role IDs
-    for (uint256 i = 0; i < count; i++) {
-      uint256 roleId = matchedRoleIds[i];
-      (
-        string memory name,
-        bool isImmutable,
-        string[] memory permissions,
-        IEntitlement[] memory entitlements
-      ) = _getRole(roleId);
-      rolesWithPermission[i] = Role({
-        id: roleId,
-        name: name,
-        disabled: isImmutable,
-        permissions: permissions,
-        entitlements: entitlements
-      });
+    // Resize the array to remove unused slots
+    assembly {
+      mstore(rolesWithPermission, count)
     }
 
     return rolesWithPermission;
@@ -372,9 +367,13 @@ abstract contract RolesBase is IRolesBase {
 
     // check if new permissions are not empty then add them
     uint256 permissionsLen = permissions.length;
-    for (uint256 i = 0; i < permissionsLen; i++) {
-      _checkEmptyString(permissions[i]);
-      permissionsSet.add(permissions[i]);
+    if (permissionsLen > 0) {
+      for (uint256 i = 0; i < permissionsLen; i++) {
+        _checkEmptyString(permissions[i]);
+        permissionsSet.add(permissions[i]);
+      }
+    } else {
+      _clearChannelPermissionOverrides(roleId, channelId);
     }
 
     emit PermissionsAddedToChannelRole(msg.sender, roleId, channelId);

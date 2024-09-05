@@ -61,6 +61,7 @@ import {
     treeToRuleData,
     SpaceDapp,
     TestERC20,
+    TestERC1155,
     TestCustomEntitlement,
     CreateSpaceParams,
     CreateLegacySpaceParams,
@@ -71,6 +72,7 @@ import {
     IRuleEntitlementV2Base,
     isRuleDataV1,
     encodeThresholdParams,
+    encodeERC1155Params,
     convertRuleDataV2ToV1,
 } from '@river-build/web3'
 
@@ -145,6 +147,21 @@ export const TEST_ENCRYPTED_MESSAGE_PROPS: PlainMessage<EncryptedData> = {
 export const getXchainSupportedRpcUrlsForTesting = (): string[] => {
     // TODO: generate this for test environment and read from it
     return ['http://127.0.0.1:8545', 'http://127.0.0.1:8546']
+}
+
+export async function erc1155CheckOp(
+    contractName: string,
+    tokenId: bigint,
+    threshold: bigint,
+): Promise<Operation> {
+    const contractAddress = await TestERC1155.getContractAddress(contractName)
+    return {
+        opType: OperationType.CHECK,
+        checkType: CheckOperationType.ERC1155,
+        chainId: 31337n,
+        contractAddress,
+        params: encodeERC1155Params({ threshold, tokenId }),
+    }
 }
 
 export async function erc20CheckOp(contractName: string, threshold: bigint): Promise<Operation> {
@@ -952,4 +969,274 @@ export function isEncryptedData(obj: unknown): obj is EncryptedData {
         (typeof data.checksum === 'string' || data.checksum === undefined) &&
         (typeof data.refEventId === 'string' || data.refEventId === undefined)
     )
+}
+
+// Users need to be mapped from 'alice', 'bob', etc to their wallet addresses,
+// because the wallets are created within this helper method.
+export async function createTownWithRequirements(requirements: {
+    everyone: boolean
+    users: string[]
+    ruleData: IRuleEntitlementV2Base.RuleDataV2Struct
+}) {
+    const {
+        alice,
+        bob,
+        carol,
+        aliceSpaceDapp,
+        bobSpaceDapp,
+        carolSpaceDapp,
+        aliceProvider,
+        bobProvider,
+        carolProvider,
+        alicesWallet,
+        bobsWallet,
+        carolsWallet,
+    } = await setupWalletsAndContexts()
+
+    const pricingModules = await bobSpaceDapp.listPricingModules()
+    const dynamicPricingModule = getDynamicPricingModule(pricingModules)
+    expect(dynamicPricingModule).toBeDefined()
+
+    const userNameToWallet: Record<string, string> = {
+        alice: alicesWallet.address,
+        bob: bobsWallet.address,
+        carol: carolsWallet.address,
+    }
+    requirements.users = requirements.users.map((user) => userNameToWallet[user])
+
+    const membershipInfo: MembershipStruct = {
+        settings: {
+            name: 'Everyone',
+            symbol: 'MEMBER',
+            price: 0,
+            maxSupply: 1000,
+            duration: 0,
+            currency: ETH_ADDRESS,
+            feeRecipient: bob.userId,
+            freeAllocation: 0,
+            pricingModule: dynamicPricingModule!.module,
+        },
+        permissions: [Permission.Read, Permission.Write],
+        requirements: {
+            everyone: requirements.everyone,
+            users: requirements.users,
+            ruleData: encodeRuleDataV2(requirements.ruleData),
+        },
+    }
+
+    // This helper method validates that the owner can join the space and default channel.
+    const {
+        spaceId,
+        defaultChannelId: channelId,
+        userStreamView: bobUserStreamView,
+    } = await createSpaceAndDefaultChannel(
+        bob,
+        bobSpaceDapp,
+        bobProvider.wallet,
+        'bobs',
+        membershipInfo,
+    )
+
+    // Validate that owner passes entitlement check
+    const entitledWallet = await bobSpaceDapp.getEntitledWalletForJoiningSpace(
+        spaceId,
+        bobsWallet.address,
+        getXchainSupportedRpcUrlsForTesting(),
+    )
+    expect(entitledWallet).toBeDefined()
+
+    return {
+        alice,
+        bob,
+        carol,
+        aliceSpaceDapp,
+        bobSpaceDapp,
+        carolSpaceDapp,
+        aliceProvider,
+        bobProvider,
+        carolProvider,
+        alicesWallet,
+        bobsWallet,
+        carolsWallet,
+        spaceId,
+        channelId,
+        bobUserStreamView,
+    }
+}
+
+export async function expectUserCannotJoinSpace(
+    spaceId: string,
+    client: Client,
+    spaceDapp: ISpaceDapp,
+    address: string,
+) {
+    // Check that the local evaluation of the user's entitlements for joining the space
+    // fails.
+    const entitledWallet = await spaceDapp.getEntitledWalletForJoiningSpace(
+        spaceId,
+        address,
+        getXchainSupportedRpcUrlsForTesting(),
+    )
+    expect(entitledWallet).toBeUndefined()
+    await expect(client.joinStream(spaceId)).rejects.toThrow(/PERMISSION_DENIED/)
+}
+
+// pass in users as 'alice', 'bob', 'carol' - b/c their wallets are created here
+export async function setupChannelWithCustomRole(
+    userNames: string[],
+    ruleData: IRuleEntitlementV2Base.RuleDataV2Struct,
+    permissions: Permission[] = [Permission.Read],
+) {
+    const {
+        alice,
+        bob,
+        carol,
+        alicesWallet,
+        bobsWallet,
+        carolsWallet,
+        aliceProvider,
+        bobProvider,
+        carolProvider,
+        aliceSpaceDapp,
+        bobSpaceDapp,
+        carolSpaceDapp,
+    } = await setupWalletsAndContexts()
+
+    const userNameToWallet: Record<string, string> = {
+        alice: alicesWallet.address,
+        bob: bobsWallet.address,
+        carol: carolsWallet.address,
+    }
+    const users = userNames.map((user) => userNameToWallet[user])
+
+    const { spaceId, defaultChannelId } = await createSpaceAndDefaultChannel(
+        bob,
+        bobSpaceDapp,
+        bobProvider.wallet,
+        'bob',
+        await everyoneMembershipStruct(bobSpaceDapp, bob),
+    )
+
+    const { roleId, error: roleError } = await createRole(
+        bobSpaceDapp,
+        bobProvider,
+        spaceId,
+        'gated role',
+        permissions,
+        users,
+        ruleData,
+        bobProvider.wallet,
+    )
+    expect(roleError).toBeUndefined()
+    log('roleId', roleId)
+
+    // Create a channel gated by the above role in the space contract.
+    const { channelId, error: channelError } = await createChannel(
+        bobSpaceDapp,
+        bobProvider,
+        spaceId,
+        'custom-role-gated-channel',
+        [roleId!.valueOf()],
+        bobProvider.wallet,
+    )
+    expect(channelError).toBeUndefined()
+    log('channelId', channelId)
+
+    // Then, establish a stream for the channel on the river node.
+    const { streamId: channelStreamId } = await bob.createChannel(
+        spaceId,
+        'nft-gated-channel',
+        'talk about nfts here',
+        channelId!,
+    )
+    expect(channelStreamId).toEqual(channelId)
+    // As the space owner, Bob should always be able to join the channel regardless of the custom role.
+    await expect(bob.joinStream(channelId!)).toResolve()
+
+    // Join alice to the town so she can attempt to join the role-gated channel.
+    // Alice should have no issue joining the space and default channel for an "everyone" town.
+    await expectUserCanJoin(
+        spaceId,
+        defaultChannelId,
+        'alice',
+        alice,
+        aliceSpaceDapp,
+        alicesWallet.address,
+        aliceProvider.wallet,
+    )
+
+    // Add carol to the space also so she can attempt to join role-gated channels.
+    await expectUserCanJoin(
+        spaceId,
+        defaultChannelId,
+        'carol',
+        carol,
+        carolSpaceDapp,
+        carolsWallet.address,
+        carolProvider.wallet,
+    )
+
+    return {
+        alice,
+        bob,
+        carol,
+        alicesWallet,
+        bobsWallet,
+        carolsWallet,
+        aliceProvider,
+        bobProvider,
+        carolProvider,
+        aliceSpaceDapp,
+        bobSpaceDapp,
+        carolSpaceDapp,
+        spaceId,
+        defaultChannelId,
+        channelId,
+        roleId,
+    }
+}
+
+export async function expectUserCanJoinChannel(
+    client: Client,
+    spaceDapp: ISpaceDapp,
+    spaceId: string,
+    channelId: string,
+) {
+    // Space dapp should evaluate the user as entitled to the channel
+    await expect(
+        spaceDapp.isEntitledToChannel(
+            spaceId,
+            channelId,
+            client.userId,
+            Permission.Read,
+            getXchainSupportedRpcUrlsForTesting(),
+        ),
+    ).resolves.toBeTruthy()
+
+    // Stream node should allow the join
+    await expect(client.joinStream(channelId)).toResolve()
+    const userStreamView = (await client.waitForStream(makeUserStreamId(client.userId))!).view
+    // Wait for alice's user stream to have the join
+    await waitFor(() => userStreamView.userContent.isMember(channelId, MembershipOp.SO_JOIN))
+}
+
+export async function expectUserCannotJoinChannel(
+    client: Client,
+    spaceDapp: ISpaceDapp,
+    spaceId: string,
+    channelId: string,
+) {
+    // Space dapp should evaluate the user as not entitled to the channel
+    await expect(
+        spaceDapp.isEntitledToChannel(
+            spaceId,
+            channelId,
+            client.userId,
+            Permission.Read,
+            getXchainSupportedRpcUrlsForTesting(),
+        ),
+    ).resolves.toBeFalsy()
+
+    // Stream node should not allow the join
+    await expect(client.joinStream(channelId)).rejects.toThrow(/7:PERMISSION_DENIED/)
 }

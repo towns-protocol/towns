@@ -1337,10 +1337,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/membership/MembershipStorage.sol": {
-      "keccak256": "0xe9085b2b8ec900936853d0f8d7204f11eb5db3aba8c9c72799da62817afed8c0",
+      "keccak256": "0x901e36addd71ab233a40af5185e6070be44b5aa7b1487dab3b0f9dc75d05e972",
       "urls": [
-        "bzz-raw://3fec75bce4b207c375b54dacc0296dc11991f7cc89da0e81e13457ae2120146a",
-        "dweb:/ipfs/QmXzZdw5FnTZqpskq3yLguKTRmhLRBVueMVfH6RY4HuSsa"
+        "bzz-raw://017f70c4ed3fdc4cbef99380339b07f161ea01797acd0181d9d802e407f4b6cd",
+        "dweb:/ipfs/QmeJNCJwAPU7VCyfNJSeTxf56dBVXNoJxYV4NN6AhtxsCa"
       ],
       "license": "MIT"
     },
@@ -1361,10 +1361,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/roles/RolesBase.sol": {
-      "keccak256": "0xf5eba5be4ae6b14bea2dbf18332735926320842e6aab00413bf3eb3e19f7770d",
+      "keccak256": "0x9ae2421fa644345be37a7dbeef5f033a46d4417a908aaad265ff0767454199af",
       "urls": [
-        "bzz-raw://9dd51baafe57ec1eec1e3680745911047d2e8115dc6043ea4a5069e4baf037f4",
-        "dweb:/ipfs/QmVw68YXiWfrVNYPboUyWKnHLQtMXx8ZSw44rRX3ej6bWR"
+        "bzz-raw://ef46b2b435b033d1863c99df89dfb5917284851bd48c60ff84cbaa19f0d7a09d",
+        "dweb:/ipfs/QmVMD26vPpaTpLkNDA5pGzR6ZXeVjUhCLnZaLfwYZpea3w"
       ],
       "license": "MIT"
     },

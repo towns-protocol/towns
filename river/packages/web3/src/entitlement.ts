@@ -563,11 +563,18 @@ async function evaluateCheckOperation(
         [
             CheckOperationType.ERC20,
             CheckOperationType.ERC721,
-            CheckOperationType.ERC1155,
             CheckOperationType.NATIVE_COIN_BALANCE,
         ]
     ) {
         const { threshold } = decodeThresholdParams(operation.params)
+        if (threshold <= 0n) {
+            throw new Error(`Invalid threshold for check operation ${operation.checkType}`)
+        }
+    } else if (operation.checkType === CheckOperationType.ERC1155) {
+        const { tokenId, threshold } = decodeERC1155Params(operation.params)
+        if (tokenId < 0n) {
+            throw new Error(`Invalid token id for check operation ${operation.checkType}`)
+        }
         if (threshold <= 0n) {
             throw new Error(`Invalid threshold for check operation ${operation.checkType}`)
         }
@@ -599,6 +606,16 @@ async function evaluateCheckOperation(
                 linkedWallets,
             )
         }
+        case CheckOperationType.ERC1155: {
+            await Promise.all(providers.map((p) => p.ready))
+            const provider = findProviderFromChainId(providers, operation.chainId)
+
+            if (!provider) {
+                controller.abort()
+                return zeroAddress
+            }
+            return evaluateERC1155Operation(operation, controller, provider, linkedWallets)
+        }
         case CheckOperationType.ERC20: {
             await Promise.all(providers.map((p) => p.ready))
             const provider = findProviderFromChainId(providers, operation.chainId)
@@ -619,8 +636,6 @@ async function evaluateCheckOperation(
             }
             return evaluateERC721Operation(operation, controller, provider, linkedWallets)
         }
-        case CheckOperationType.ERC1155:
-            throw new Error('CheckOperationType.ERC1155 not implemented')
         default:
             throw new Error('Unknown check operation type')
     }
@@ -904,6 +919,56 @@ async function evaluateCustomEntitledOperation(
         controller.abort()
         return zeroAddress
     })
+}
+
+async function evaluateERC1155Operation(
+    operation: CheckOperationV2,
+    controller: AbortController,
+    provider: ethers.providers.BaseProvider,
+    linkedWallets: string[],
+): Promise<EntitledWalletOrZeroAddress> {
+    const contract = new ethers.Contract(
+        operation.contractAddress,
+        ['function balanceOf(address, uint256) view returns (uint)'],
+        provider,
+    )
+
+    const { threshold, tokenId } = decodeERC1155Params(operation.params)
+
+    const walletBalances = await Promise.all(
+        linkedWallets.map(async (wallet) => {
+            try {
+                const result = (await contract.callStatic.balanceOf(
+                    wallet,
+                    tokenId,
+                )) as ethers.BigNumberish
+                const resultAsBigNumber = ethers.BigNumber.from(result)
+                return {
+                    wallet,
+                    balance: resultAsBigNumber,
+                }
+            } catch (error) {
+                return {
+                    wallet,
+                    balance: ethers.BigNumber.from(0),
+                }
+            }
+        }),
+    )
+
+    const walletsWithAsset = walletBalances.filter((result) => result.balance.gt(0))
+
+    const accumulatedBalance = walletsWithAsset.reduce(
+        (acc, el) => acc.add(el.balance),
+        ethers.BigNumber.from(0),
+    )
+
+    if (walletsWithAsset.length > 0 && accumulatedBalance.gte(threshold)) {
+        return walletsWithAsset[0].wallet
+    } else {
+        controller.abort()
+        return zeroAddress
+    }
 }
 
 async function evaluateNativeCoinBalanceOperation(

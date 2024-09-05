@@ -14,11 +14,11 @@ import {BasisPoints} from "contracts/src/utils/libraries/BasisPoints.sol";
 
 contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
   modifier givenMembershipHasExpired() {
-    uint256 totalSupply = membership.totalSupply();
+    uint256 totalSupply = membershipToken.totalSupply();
     uint256 tokenId;
 
     for (uint256 i = 1; i <= totalSupply; i++) {
-      if (membership.ownerOf(i) == alice) {
+      if (membershipToken.ownerOf(i) == alice) {
         tokenId = i;
         break;
       }
@@ -34,19 +34,19 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
     givenAliceHasMintedMembership
     givenMembershipHasExpired
   {
-    uint256 totalSupply = membership.totalSupply();
+    uint256 totalSupply = membershipToken.totalSupply();
     uint256 tokenId;
 
     for (uint256 i = 1; i <= totalSupply; i++) {
-      if (membership.ownerOf(i) == alice) {
+      if (membershipToken.ownerOf(i) == alice) {
         tokenId = i;
         break;
       }
     }
 
     // membership has expired but alice still owns the token
-    assertEq(membership.balanceOf(alice), 1);
-    assertEq(membership.ownerOf(tokenId), alice);
+    assertEq(membershipToken.balanceOf(alice), 1);
+    assertEq(membershipToken.ownerOf(tokenId), alice);
 
     uint256 expiration = membership.expiresAt(tokenId);
     vm.expectEmit(address(membership));
@@ -56,7 +56,7 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
     );
     membership.renewMembership(tokenId);
 
-    assertEq(membership.balanceOf(alice), 1);
+    assertEq(membershipToken.balanceOf(alice), 1);
   }
 
   function test_renewPaidMembership()
@@ -69,11 +69,11 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
     uint256 protocolBalance = protocol.balance;
     uint256 spaceBalance = address(membership).balance;
 
-    uint256 totalSupply = membership.totalSupply();
+    uint256 totalSupply = membershipToken.totalSupply();
     uint256 tokenId;
 
     for (uint256 i = 1; i <= totalSupply; i++) {
-      if (membership.ownerOf(i) == alice) {
+      if (membershipToken.ownerOf(i) == alice) {
         tokenId = i;
         break;
       }
@@ -100,11 +100,11 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
     external
     givenAliceHasMintedMembership
   {
-    uint256 totalSupply = membership.totalSupply();
+    uint256 totalSupply = membershipToken.totalSupply();
     uint256 tokenId;
 
     for (uint256 i = 1; i <= totalSupply; i++) {
-      if (membership.ownerOf(i) == alice) {
+      if (membershipToken.ownerOf(i) == alice) {
         tokenId = i;
         break;
       }

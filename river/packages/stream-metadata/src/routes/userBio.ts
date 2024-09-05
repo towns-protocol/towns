@@ -47,11 +47,11 @@ export async function fetchUserBio(request: FastifyRequest, reply: FastifyReply)
 		return reply.code(404).send('Stream not found')
 	}
 
-	const bio = await getUserBio(stream)
-
-	if (!bio) {
+	const protobufBio = await getUserBio(stream)
+	if (!protobufBio) {
 		return reply.code(404).send('bio not found')
 	}
+	const bio = protobufBio.bio
 
 	return reply.header('Content-Type', 'application/json').send({ bio })
 }
@@ -60,6 +60,5 @@ async function getUserBio(streamView: StreamStateView) {
 	if (streamView.contentKind !== 'userMetadataContent') {
 		return undefined
 	}
-	const bio = await streamView.userMetadataContent.getBio()
-	return bio?.bio
+	return streamView.userMetadataContent.getBio()
 }

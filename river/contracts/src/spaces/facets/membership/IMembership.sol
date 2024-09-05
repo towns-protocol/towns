@@ -23,6 +23,12 @@ interface IMembershipBase {
     address pricingModule;
   }
 
+  struct ReferralTypes {
+    address partner;
+    address userReferral;
+    string referralCode;
+  }
+
   // =============================================================
   //                           Errors
   // =============================================================
@@ -43,6 +49,7 @@ interface IMembershipBase {
   error Membership__NotExpired();
   error Membership__InsufficientAllowance();
   error Membership__InvalidPayment();
+  error Membership__InvalidTransactionType();
 
   // =============================================================
   //                           Events
@@ -64,6 +71,10 @@ interface IMembership is IMembershipBase {
   // =============================================================
   //                           Funds
   // =============================================================
+  /**
+   * @notice Withdraws the balance of the contract
+   * @param receiver The address to receive the withdrawn funds
+   */
   function withdraw(address receiver) external;
 
   // =============================================================
@@ -74,6 +85,16 @@ interface IMembership is IMembershipBase {
    * @param receiver The address of the receiver
    */
   function joinSpace(address receiver) external payable;
+
+  /**
+   * @notice Join a space with a referral
+   * @param receiver The address of the receiver
+   * @param referral The referral data
+   */
+  function joinSpaceWithReferral(
+    address receiver,
+    ReferralTypes memory referral
+  ) external payable;
 
   /**
    * @notice Renew a space membership

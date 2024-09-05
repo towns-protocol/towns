@@ -35,6 +35,7 @@ import { IEntitlementDataQueryableShim } from './IEntitlementDataQueryableShim'
 import { BaseChainConfig } from '../IStaticContractsInfo'
 import { parseChannelMetadataJSON } from '../Utils'
 import { IPrepayShim } from './IPrepayShim'
+import { IERC721AShim } from './IERC721AShim'
 
 interface AddressToEntitlement {
     [address: string]: EntitlementShim
@@ -57,6 +58,7 @@ export class Space {
     private readonly erc721AQueryable: IERC721AQueryableShim
     private readonly entitlementDataQueryable: IEntitlementDataQueryableShim
     private readonly prepay: IPrepayShim
+    private readonly erc721A: IERC721AShim
 
     constructor(
         address: string,
@@ -82,6 +84,7 @@ export class Space {
         this.erc721AQueryable = new IERC721AQueryableShim(address, provider)
         this.entitlementDataQueryable = new IEntitlementDataQueryableShim(address, provider)
         this.prepay = new IPrepayShim(address, provider)
+        this.erc721A = new IERC721AShim(address, provider)
     }
 
     private getAllShims() {
@@ -98,6 +101,7 @@ export class Space {
             this.erc721AQueryable,
             this.entitlementDataQueryable,
             this.prepay,
+            this.erc721A,
         ] as const
     }
 
@@ -155,6 +159,10 @@ export class Space {
 
     public get Prepay(): IPrepayShim {
         return this.prepay
+    }
+
+    public get ERC721A(): IERC721AShim {
+        return this.erc721A
     }
 
     public getSpaceInfo(): Promise<ISpaceOwnerBase.SpaceStruct> {
@@ -458,13 +466,13 @@ export class Space {
      */
     public async __expensivelyGetMembers(untilTokenId?: BigNumberish): Promise<string[]> {
         if (untilTokenId === undefined) {
-            untilTokenId = await this.Membership.read.totalSupply()
+            untilTokenId = await this.erc721A.read.totalSupply()
         }
 
         untilTokenId = Number(untilTokenId)
 
         const tokenIds = Array.from({ length: untilTokenId }, (_, i) => i)
-        const promises = tokenIds.map((tokenId) => this.Membership.read.ownerOf(tokenId))
+        const promises = tokenIds.map((tokenId) => this.erc721A.read.ownerOf(tokenId))
         return Promise.all(promises)
     }
 }

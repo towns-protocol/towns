@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity ^0.8.24;
 
 interface IL2StandardBridge {
   /// @notice Sends ETH to the sender's address on the other chain.

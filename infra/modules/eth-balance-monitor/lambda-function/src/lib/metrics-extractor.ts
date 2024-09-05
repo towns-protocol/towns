@@ -163,7 +163,7 @@ export class MetricsExtractor {
             tokenId,
         )
         const space = this.spaceRegistrar.getSpace(spaceAddress)!
-        const numMembershipsBigInt = await space.Membership.read.totalSupply()
+        const numMembershipsBigInt = await space.ERC721A.read.totalSupply()
         const numMemberships = numMembershipsBigInt.toNumber()
         const membershipTokenIds = Array.from({ length: numMemberships }, (_, i) => i)
         const tokenOwnerships = await space.ERC721AQueryable.read.explicitOwnershipsOf(

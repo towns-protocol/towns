@@ -1,139 +1,6 @@
 export default [
   {
     "type": "function",
-    "name": "__ERC721A_init",
-    "inputs": [
-      {
-        "name": "name_",
-        "type": "string",
-        "internalType": "string"
-      },
-      {
-        "name": "symbol_",
-        "type": "string",
-        "internalType": "string"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "__EntitlementGated_init",
-    "inputs": [
-      {
-        "name": "entitlementChecker",
-        "type": "address",
-        "internalType": "contract IEntitlementChecker"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "__Membership_init",
-    "inputs": [
-      {
-        "name": "info",
-        "type": "tuple",
-        "internalType": "struct IMembershipBase.Membership",
-        "components": [
-          {
-            "name": "name",
-            "type": "string",
-            "internalType": "string"
-          },
-          {
-            "name": "symbol",
-            "type": "string",
-            "internalType": "string"
-          },
-          {
-            "name": "price",
-            "type": "uint256",
-            "internalType": "uint256"
-          },
-          {
-            "name": "maxSupply",
-            "type": "uint256",
-            "internalType": "uint256"
-          },
-          {
-            "name": "duration",
-            "type": "uint64",
-            "internalType": "uint64"
-          },
-          {
-            "name": "currency",
-            "type": "address",
-            "internalType": "address"
-          },
-          {
-            "name": "feeRecipient",
-            "type": "address",
-            "internalType": "address"
-          },
-          {
-            "name": "freeAllocation",
-            "type": "uint256",
-            "internalType": "uint256"
-          },
-          {
-            "name": "pricingModule",
-            "type": "address",
-            "internalType": "address"
-          }
-        ]
-      },
-      {
-        "name": "spaceFactory",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "approve",
-    "inputs": [
-      {
-        "name": "to",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "tokenId",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "payable"
-  },
-  {
-    "type": "function",
-    "name": "balanceOf",
-    "inputs": [
-      {
-        "name": "owner",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
     "name": "expiresAt",
     "inputs": [
       {
@@ -147,25 +14,6 @@ export default [
         "name": "",
         "type": "uint256",
         "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "getApproved",
-    "inputs": [
-      {
-        "name": "tokenId",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "address",
-        "internalType": "address"
       }
     ],
     "stateMutability": "view"
@@ -282,98 +130,6 @@ export default [
   },
   {
     "type": "function",
-    "name": "getRuleData",
-    "inputs": [
-      {
-        "name": "transactionId",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      },
-      {
-        "name": "roleId",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "tuple",
-        "internalType": "struct IRuleEntitlementBase.RuleData",
-        "components": [
-          {
-            "name": "operations",
-            "type": "tuple[]",
-            "internalType": "struct IRuleEntitlementBase.Operation[]",
-            "components": [
-              {
-                "name": "opType",
-                "type": "uint8",
-                "internalType": "enum IRuleEntitlementBase.CombinedOperationType"
-              },
-              {
-                "name": "index",
-                "type": "uint8",
-                "internalType": "uint8"
-              }
-            ]
-          },
-          {
-            "name": "checkOperations",
-            "type": "tuple[]",
-            "internalType": "struct IRuleEntitlementBase.CheckOperation[]",
-            "components": [
-              {
-                "name": "opType",
-                "type": "uint8",
-                "internalType": "enum IRuleEntitlementBase.CheckOperationType"
-              },
-              {
-                "name": "chainId",
-                "type": "uint256",
-                "internalType": "uint256"
-              },
-              {
-                "name": "contractAddress",
-                "type": "address",
-                "internalType": "address"
-              },
-              {
-                "name": "threshold",
-                "type": "uint256",
-                "internalType": "uint256"
-              }
-            ]
-          },
-          {
-            "name": "logicalOperations",
-            "type": "tuple[]",
-            "internalType": "struct IRuleEntitlementBase.LogicalOperation[]",
-            "components": [
-              {
-                "name": "logOpType",
-                "type": "uint8",
-                "internalType": "enum IRuleEntitlementBase.LogicalOperationType"
-              },
-              {
-                "name": "leftOperationIndex",
-                "type": "uint8",
-                "internalType": "uint8"
-              },
-              {
-                "name": "rightOperationIndex",
-                "type": "uint8",
-                "internalType": "uint8"
-              }
-            ]
-          }
-        ]
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
     "name": "getSpaceFactory",
     "inputs": [],
     "outputs": [
@@ -381,30 +137,6 @@ export default [
         "name": "",
         "type": "address",
         "internalType": "address"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "isApprovedForAll",
-    "inputs": [
-      {
-        "name": "owner",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "operator",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "bool",
-        "internalType": "bool"
       }
     ],
     "stateMutability": "view"
@@ -424,58 +156,38 @@ export default [
   },
   {
     "type": "function",
-    "name": "name",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "string",
-        "internalType": "string"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "ownerOf",
+    "name": "joinSpaceWithReferral",
     "inputs": [
       {
-        "name": "tokenId",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
+        "name": "receiver",
         "type": "address",
         "internalType": "address"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "postEntitlementCheckResult",
-    "inputs": [
-      {
-        "name": "transactionId",
-        "type": "bytes32",
-        "internalType": "bytes32"
       },
       {
-        "name": "roleId",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "result",
-        "type": "uint8",
-        "internalType": "enum IEntitlementGatedBase.NodeVoteStatus"
+        "name": "referral",
+        "type": "tuple",
+        "internalType": "struct IMembershipBase.ReferralTypes",
+        "components": [
+          {
+            "name": "partner",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "userReferral",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "referralCode",
+            "type": "string",
+            "internalType": "string"
+          }
+        ]
       }
     ],
     "outputs": [],
-    "stateMutability": "nonpayable"
+    "stateMutability": "payable"
   },
   {
     "type": "function",
@@ -489,75 +201,6 @@ export default [
     ],
     "outputs": [],
     "stateMutability": "payable"
-  },
-  {
-    "type": "function",
-    "name": "safeTransferFrom",
-    "inputs": [
-      {
-        "name": "from",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "to",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "tokenId",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "payable"
-  },
-  {
-    "type": "function",
-    "name": "safeTransferFrom",
-    "inputs": [
-      {
-        "name": "from",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "to",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "tokenId",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "_data",
-        "type": "bytes",
-        "internalType": "bytes"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "payable"
-  },
-  {
-    "type": "function",
-    "name": "setApprovalForAll",
-    "inputs": [
-      {
-        "name": "operator",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "approved",
-        "type": "bool",
-        "internalType": "bool"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -623,74 +266,6 @@ export default [
     ],
     "outputs": [],
     "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "symbol",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "string",
-        "internalType": "string"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "tokenURI",
-    "inputs": [
-      {
-        "name": "tokenId",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "string",
-        "internalType": "string"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "totalSupply",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "transferFrom",
-    "inputs": [
-      {
-        "name": "from",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "to",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "tokenId",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "payable"
   },
   {
     "type": "function",
@@ -807,6 +382,19 @@ export default [
   },
   {
     "type": "event",
+    "name": "DefaultBpsFeeUpdated",
+    "inputs": [
+      {
+        "name": "defaultBpsFee",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "EntitlementCheckResultPosted",
     "inputs": [
       {
@@ -859,6 +447,32 @@ export default [
         "type": "bytes4",
         "indexed": true,
         "internalType": "bytes4"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "MaxBpsFeeUpdated",
+    "inputs": [
+      {
+        "name": "maxBpsFee",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "MaxPartnerFeeSet",
+    "inputs": [
+      {
+        "name": "fee",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
       }
     ],
     "anonymous": false
@@ -1000,6 +614,45 @@ export default [
   },
   {
     "type": "event",
+    "name": "PartnerRegistered",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "PartnerRemoved",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "PartnerUpdated",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "Paused",
     "inputs": [
       {
@@ -1092,6 +745,82 @@ export default [
     "inputs": [
       {
         "name": "supply",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "ReferralRegistered",
+    "inputs": [
+      {
+        "name": "referralCode",
+        "type": "bytes32",
+        "indexed": false,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "basisPoints",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "recipient",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "ReferralRemoved",
+    "inputs": [
+      {
+        "name": "referralCode",
+        "type": "bytes32",
+        "indexed": false,
+        "internalType": "bytes32"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "ReferralUpdated",
+    "inputs": [
+      {
+        "name": "referralCode",
+        "type": "bytes32",
+        "indexed": false,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "basisPoints",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "recipient",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "RegistryFeeSet",
+    "inputs": [
+      {
+        "name": "fee",
         "type": "uint256",
         "indexed": false,
         "internalType": "uint256"
@@ -1324,6 +1053,11 @@ export default [
   },
   {
     "type": "error",
+    "name": "Dispatcher__TransactionAlreadyExists",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "ERC5643__DurationZero",
     "inputs": []
   },
@@ -1416,11 +1150,6 @@ export default [
   },
   {
     "type": "error",
-    "name": "Initializable_NotInInitializingState",
-    "inputs": []
-  },
-  {
-    "type": "error",
     "name": "Introspection_AlreadySupported",
     "inputs": []
   },
@@ -1501,6 +1230,11 @@ export default [
   },
   {
     "type": "error",
+    "name": "Membership__InvalidTransactionType",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "Membership__MaxSupplyReached",
     "inputs": []
   },
@@ -1557,6 +1291,77 @@ export default [
   },
   {
     "type": "error",
+    "name": "PartnerRegistry__InvalidPartnerFee",
+    "inputs": [
+      {
+        "name": "fee",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "PartnerRegistry__InvalidRecipient",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "PartnerRegistry__NotPartnerAccount",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "PartnerRegistry__PartnerAlreadyRegistered",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "PartnerRegistry__PartnerNotActive",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "PartnerRegistry__PartnerNotRegistered",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "PartnerRegistry__RegistryFeeNotPaid",
+    "inputs": [
+      {
+        "name": "fee",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
     "name": "Pausable__NotPaused",
     "inputs": []
   },
@@ -1588,6 +1393,31 @@ export default [
   {
     "type": "error",
     "name": "ReentrancyGuard__ReentrantCall",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "Referrals__InvalidBasisPoints",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "Referrals__InvalidBpsFee",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "Referrals__InvalidRecipient",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "Referrals__InvalidReferralCode",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "Referrals__ReferralAlreadyExists",
     "inputs": []
   },
   {

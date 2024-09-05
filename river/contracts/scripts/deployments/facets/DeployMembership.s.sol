@@ -18,6 +18,7 @@ contract DeployMembership is Deployer, FacetHelper {
 
     // Minting
     addSelector(IMembership.joinSpace.selector);
+    addSelector(IMembership.joinSpaceWithReferral.selector);
     addSelector(IMembership.renewMembership.selector);
 
     addSelector(IMembership.expiresAt.selector);
@@ -51,10 +52,6 @@ contract DeployMembership is Deployer, FacetHelper {
 
     // Factory
     addSelector(IMembership.getSpaceFactory.selector);
-  }
-
-  function initializer() public pure override returns (bytes4) {
-    return MembershipFacet.__Membership_init.selector;
   }
 
   function versionName() public pure override returns (string memory) {

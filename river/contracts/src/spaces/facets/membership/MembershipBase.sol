@@ -191,9 +191,8 @@ abstract contract MembershipBase is IMembershipBase {
   function _getMembershipFreeAllocation() internal view returns (uint256) {
     MembershipStorage.Layout storage ds = MembershipStorage.layout();
 
-    uint256 freeAllocation = ds.freeAllocation;
+    if (ds.freeAllocationEnabled) return ds.freeAllocation;
 
-    if (ds.freeAllocationEnabled) return freeAllocation;
     return IPlatformRequirements(ds.spaceFactory).getMembershipMintLimit();
   }
 
