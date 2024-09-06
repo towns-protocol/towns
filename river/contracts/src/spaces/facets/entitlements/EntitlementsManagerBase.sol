@@ -10,8 +10,8 @@ import {EntitlementsManagerService} from "contracts/src/spaces/facets/entitlemen
 // contracts
 
 contract EntitlementsManagerBase is IEntitlementsManagerBase {
-  function _addImmutableEntitlements(address[] memory entitlements) internal {
-    for (uint256 i = 0; i < entitlements.length; i++) {
+  function _addImmutableEntitlements(address[] calldata entitlements) internal {
+    for (uint256 i; i < entitlements.length; ++i) {
       EntitlementsManagerService.validateEntitlement(entitlements[i]);
       EntitlementsManagerService.addEntitlement(entitlements[i], true);
     }
@@ -73,7 +73,7 @@ contract EntitlementsManagerBase is IEntitlementsManagerBase {
 
     modules = new Entitlement[](entitlements.length);
 
-    for (uint256 i = 0; i < entitlements.length; i++) {
+    for (uint256 i; i < entitlements.length; ++i) {
       (
         string memory name,
         address entitlementAddress,

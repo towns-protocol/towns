@@ -49,7 +49,7 @@ abstract contract Entitled is
     uint256[] memory bannedTokens = _bannedTokenIds();
     uint256 bannedTokensLen = bannedTokens.length;
 
-    for (uint256 i = 0; i < linkedWalletsLength; i++) {
+    for (uint256 i; i < linkedWalletsLength; ++i) {
       address wallet = wallets[i];
 
       if (wallet == owner) {
@@ -57,7 +57,7 @@ abstract contract Entitled is
       }
 
       // check if banned
-      for (uint256 j; j < bannedTokensLen; j++) {
+      for (uint256 j; j < bannedTokensLen; ++j) {
         if (_ownerOf(bannedTokens[j]) == wallet) {
           return false;
         }
@@ -69,13 +69,13 @@ abstract contract Entitled is
       .layout();
     uint256 entitlementsLength = ds.entitlements.length();
 
-    for (uint256 i = 0; i < entitlementsLength; i++) {
-      EntitlementsManagerStorage.Entitlement memory e = ds.entitlementByAddress[
-        ds.entitlements.at(i)
-      ];
+    for (uint256 i; i < entitlementsLength; ++i) {
+      IEntitlement entitlement = ds
+        .entitlementByAddress[ds.entitlements.at(i)]
+        .entitlement;
       if (
-        !e.entitlement.isCrosschain() &&
-        e.entitlement.isEntitled(channelId, wallets, permission)
+        !entitlement.isCrosschain() &&
+        entitlement.isEntitled(channelId, wallets, permission)
       ) {
         return true;
       }

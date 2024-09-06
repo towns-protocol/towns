@@ -24,7 +24,7 @@ interface IEntitlementsManagerBase {
 interface IEntitlementsManager is IEntitlementsManagerBase {
   /// @notice Allows the space owner to add immutable entitlements to the space
   /// @param entitlements The entitlements to add
-  function addImmutableEntitlements(address[] memory entitlements) external;
+  function addImmutableEntitlements(address[] calldata entitlements) external;
 
   /// @notice Checks if a user is entitled to a permission in the space
   /// @param user The user to check

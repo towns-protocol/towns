@@ -16,7 +16,7 @@ contract EntitlementsManager is
   Entitled
 {
   function addImmutableEntitlements(
-    address[] memory entitlements
+    address[] calldata entitlements
   ) external onlyOwner {
     _addImmutableEntitlements(entitlements);
   }

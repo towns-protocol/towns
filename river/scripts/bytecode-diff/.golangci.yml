@@ -1,0 +1,7 @@
+linters:
+    enable-all: true
+    disable:
+        - gochecknoinits # If you want to allow init functions
+        - depguard
+        - forbidigo
+        - wsl
