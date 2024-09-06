@@ -151,6 +151,7 @@ resource "aws_iam_role_policy" "iam_policy" {
         ],
         Resource = [
           local.global_remote_state.river_global_dd_agent_api_key.arn,
+          local.global_remote_state.opensea_api_key_secret.arn,
           var.river_chain_rpc_url_secret_arn,
           var.base_chain_rpc_url_secret_arn
         ]
@@ -198,15 +199,14 @@ resource "aws_iam_role_policy" "iam_policy" {
   })
 }
 
-locals {
-  service_port = 80
-}
 
 locals {
   subdomain        = terraform.workspace == "omega" ? "@" : terraform.workspace
   hosted_zone_name = module.global_constants.river_delivery_hosted_zone_name
   host             = local.subdomain == "@" ? local.hosted_zone_name : "${local.subdomain}.${local.hosted_zone_name}"
   base_url         = "https://${local.host}"
+
+  service_port = 80
 }
 
 resource "aws_ecs_task_definition" "fargate_task_definition" {
@@ -249,6 +249,10 @@ resource "aws_ecs_task_definition" "fargate_task_definition" {
       {
         name      = "BASE_CHAIN_RPC_URL",
         valueFrom = var.base_chain_rpc_url_secret_arn
+      },
+      {
+        name      = "OPENSEA_API_KEY",
+        valueFrom = local.global_remote_state.opensea_api_key_secret.arn
       }
     ]
 

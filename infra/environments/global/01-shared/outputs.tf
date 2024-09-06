@@ -104,3 +104,7 @@ output "gamma_chainsstring_secret" {
 output "omega_chainsstring_secret" {
   value = aws_secretsmanager_secret.omega_chainsstring_secret
 }
+
+output "opensea_api_key_secret" {
+  value = aws_secretsmanager_secret.opensea_api_key_secret
+}

@@ -278,3 +278,8 @@ resource "aws_secretsmanager_secret" "notification_apns_auth_key" {
   name        = "notifications-apns-auth-key-${terraform.workspace}"
   description = "APNS auth key for notification service"
 }
+
+resource "aws_secretsmanager_secret" "opensea_api_key_secret" {
+  name        = "opensea-api-key-${terraform.workspace}"
+  description = "API key for OpenSea"
+}
