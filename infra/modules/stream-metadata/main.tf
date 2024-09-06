@@ -178,6 +178,21 @@ resource "aws_iam_role_policy" "iam_policy" {
           "ssmmessages:OpenDataChannel"
         ],
         Resource = "*"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "cloudfront:CreateInvalidation",
+        ],
+        Resource = module.cdn.arn
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "cloudfront:GetDistribution",
+          "cloudfront:ListDistributions"
+        ],
+        Resource = "*"
       }
     ]
   })
@@ -261,6 +276,10 @@ resource "aws_ecs_task_definition" "fargate_task_definition" {
       {
         name  = "RIVER_STREAM_METADATA_BASE_URL",
         value = local.base_url
+      },
+      {
+        name  = "CLOUDFRONT_DISTRIBUTION_ID",
+        value = module.cdn.id
       }
     ]
 
