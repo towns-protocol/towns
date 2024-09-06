@@ -4,11 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { PlateEditor, Value } from '@udecode/plate-common'
 import { LookupUser } from 'use-towns-client'
 import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDropContext'
-import {
-    FileUpload,
-    FileUploadAttachmentContent,
-    FileUploadFileContent,
-} from '@components/MediaDropContext/mediaDropTypes'
+import { FileUpload, FileUploadFileContent } from '@components/MediaDropContext/mediaDropTypes'
 import { PlaygroundEditor } from '@components/Playground/pages/PageEditor/PlaygroundEditor'
 import { code, codeBlock } from '@components/RichTextPlate/RichTextEditor.css'
 import { RichTextPreviewInternal } from '@components/RichTextPlate/RichTextPreview'
@@ -51,6 +47,7 @@ export const PageEditor = () => {
     const ref = useRef<HTMLDivElement>(null)
     const [editorChildren, setEditorChildren] = useState<Value>([])
     const [markdown, setMarkdown] = useState<string>('')
+    const [isEditing, setIsEditing] = useState<boolean>(false)
     const [attachments, setAttachments] = useState<FileUpload[]>([])
     const [events, setEvents] = useState<InputEvent[]>([])
 
@@ -60,6 +57,10 @@ export const PageEditor = () => {
         },
         [setEditorChildren],
     )
+
+    const toggleEditMode = useCallback(() => {
+        setIsEditing((prev) => !prev)
+    }, [setIsEditing])
 
     const clearEvents = useCallback(() => {
         setEvents([])
@@ -155,11 +156,22 @@ export const PageEditor = () => {
                     </Text>
                     {markdown.length > 0 && (
                         <>
-                            <Paragraph strong>Markdown</Paragraph>
+                            <Paragraph strong textAlign="center">
+                                Markdown
+                            </Paragraph>
                             <Box as="pre" overflowY="scroll" className={codeBlock}>
                                 <code data-testid="editor-md-preview">{markdown}</code>
                             </Box>
-                            <Paragraph strong>Rich Text Preview</Paragraph>
+                            <Stack horizontal gap justifyContent="center" alignItems="center">
+                                <Text strong>Rich Text Preview</Text>
+                                <Button
+                                    size="button_xs"
+                                    onClick={toggleEditMode}
+                                    data-testid="toggle-edit"
+                                >
+                                    {isEditing ? 'Preview' : 'Edit'}
+                                </Button>
+                            </Stack>
                             <Box
                                 padding="sm"
                                 paddingY="lg"
@@ -178,7 +190,9 @@ export const PageEditor = () => {
                     )}
                     {attachments.length > 0 && (
                         <>
-                            <Paragraph strong>Attachments</Paragraph>
+                            <Paragraph strong textAlign="center">
+                                Attachments
+                            </Paragraph>
                             <Box as="pre" overflowY="scroll" className={codeBlock}>
                                 <code data-testid="editor-attachments-preview">
                                     {JSON.stringify(getAttachmentDetails(attachments), null, 2)}
@@ -204,7 +218,11 @@ export const PageEditor = () => {
                                 onChange={onChange}
                                 setMarkdown={setMarkdown}
                                 setAttachments={setAttachments}
+                                setIsEditing={setIsEditing}
                                 lookupUser={lookupUser}
+                                isEditing={isEditing}
+                                initialValue={isEditing ? markdown : undefined}
+                                key={isEditing ? 'edit' : 'preview'}
                             />
                         </MediaDropContextProvider>
                     </Box>

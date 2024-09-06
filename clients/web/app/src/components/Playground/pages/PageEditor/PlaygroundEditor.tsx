@@ -12,12 +12,23 @@ import {
 import { channels, roomMembers } from './data'
 
 type Props = {
-    onChange?: (editor: PlateEditor<Value>) => void
-    setMarkdown?: (message: string) => void
-    setAttachments?: (attachments: FileUpload[]) => void
+    onChange: (editor: PlateEditor<Value>) => void
+    setMarkdown: React.Dispatch<React.SetStateAction<string>>
+    setIsEditing: React.Dispatch<React.SetStateAction<boolean>>
+    setAttachments: React.Dispatch<React.SetStateAction<FileUpload[]>>
     lookupUser: LookupUserFn
+    initialValue?: string
+    isEditing?: boolean
 }
-export const PlaygroundEditor = ({ lookupUser, onChange, setMarkdown, setAttachments }: Props) => {
+export const PlaygroundEditor = ({
+    initialValue,
+    isEditing = false,
+    lookupUser,
+    onChange,
+    setMarkdown,
+    setAttachments,
+    setIsEditing,
+}: Props) => {
     const userMentions = useRef(
         roomMembers.map((user) => convertUserToCombobox(user, ['1', '2', '5', '6'])),
     )
@@ -29,14 +40,22 @@ export const PlaygroundEditor = ({ lookupUser, onChange, setMarkdown, setAttachm
         (message: string, _: SendTextMessageOptions) => {
             setMarkdown?.(message)
             setAttachments?.(files)
+            setIsEditing(false)
             setTimeout(() => clearFiles?.(), 0)
         },
-        [setMarkdown, setAttachments, files, clearFiles],
+        [setMarkdown, setIsEditing, setAttachments, files, clearFiles],
     )
+
+    const onCancel = useCallback(() => {
+        setIsEditing(false)
+        setTimeout(() => clearFiles?.(), 0)
+    }, [setIsEditing, clearFiles])
 
     return (
         <ChannelContextProvider channelId="playground-editor">
             <RichTextEditor
+                initialValue={initialValue}
+                editing={isEditing}
                 userHashMap={userHashMap.current}
                 userMentions={userMentions.current}
                 channelMentions={channelMentions}
@@ -45,6 +64,7 @@ export const PlaygroundEditor = ({ lookupUser, onChange, setMarkdown, setAttachm
                 lookupUser={lookupUser}
                 onChange={onChange}
                 onSend={onSend}
+                onCancel={onCancel}
             />
         </ChannelContextProvider>
     )
