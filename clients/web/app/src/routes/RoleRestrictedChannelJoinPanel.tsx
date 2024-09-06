@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router'
 import {
     Address,
@@ -34,6 +34,7 @@ import { PrivyWrapper } from 'privy/PrivyProvider'
 import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast } from '@components/Notifications/StandardToast'
 import { mapToErrorMessage } from '@components/Web3/utils'
+import { useAnalytics } from 'hooks/useAnalytics'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 import { useOnJoinChannel } from './AllChannelsList/AllChannelsList'
 
@@ -48,10 +49,24 @@ export const RoleRestrictedChannelJoinPanel = React.memo(() => {
 function RoleRestrictedChannelJoinPanelWithoutAuth() {
     const { data: channelId } = usePanelActions()
     const { spaceSlug } = useParams()
+    const tracked = useRef(false)
 
     const { channelSettings, isLoading } = useChannelSettings(spaceSlug ?? '', channelId ?? '')
 
     const roles = channelSettings?.roles
+
+    const { analytics } = useAnalytics()
+
+    useEffect(() => {
+        if (tracked.current) {
+            return
+        }
+        tracked.current = true
+        analytics?.track('view gated channel requirements panel', {
+            spaceId: spaceSlug,
+            channelId,
+        })
+    }, [analytics, spaceSlug, channelId])
 
     return (
         <Panel label="Role Required to Join">
@@ -91,6 +106,7 @@ function Roles(props: {
     })
 
     const space = useSpaceData()
+    const { analytics } = useAnalytics()
 
     const {
         syncingSpace,
@@ -115,8 +131,19 @@ function Roles(props: {
         ),
     })
 
+    const LINK_LABEL = 'link wallet from gated channel panel'
+    const GRANTED_LABEL = 'linked wallet granted access to channel'
+    const trackEvent = (description: string, success: boolean) => {
+        analytics?.track(description, {
+            spaceId,
+            channelId,
+            success,
+        })
+    }
+
     const { linkEOAToRootKeyTransaction } = useLinkEOAToRootKeyTransaction({
         onSuccess: async () => {
+            trackEvent(LINK_LABEL, true)
             if (!channelId || !loggedInWalletAddress) {
                 return
             }
@@ -124,6 +151,7 @@ function Roles(props: {
             const canJoin = getJoinChannelQueryData()
 
             if (canJoin) {
+                trackEvent(GRANTED_LABEL, true)
                 headlessToast.dismiss()
                 popupToast(({ toast: t }) => (
                     <StandardToast.Success
@@ -141,6 +169,7 @@ function Roles(props: {
                     />
                 ))
             } else {
+                trackEvent(GRANTED_LABEL, false)
                 headlessToast.dismiss()
                 popupToast(({ toast: t }) => (
                     <StandardToast.Error
@@ -151,6 +180,7 @@ function Roles(props: {
             }
         },
         onError: async (e) => {
+            trackEvent(LINK_LABEL, false)
             headlessToast.dismiss()
             console.error('Error linking wallet to root key', e)
             popupToast(({ toast: t }) => (

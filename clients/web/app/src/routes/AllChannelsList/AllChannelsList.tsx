@@ -128,6 +128,7 @@ export const ChannelItem = ({
         spaceId: space?.id,
         channelId: channelNetworkId,
     })
+    const { analytics } = useAnalytics()
 
     const { loggedInWalletAddress } = useConnectivity()
 
@@ -163,6 +164,10 @@ export const ChannelItem = ({
         if (!canJoinChannel) {
             openPanel(CHANNEL_INFO_PARAMS.ROLE_RESTRICTED_CHANNEL_JOIN, {
                 data: channelIdentifier,
+            })
+            analytics?.track('clicked join gated channel button', {
+                spaceId: space.id,
+                channelId: channelIdentifier,
             })
             return
         }
