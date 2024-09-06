@@ -46,7 +46,7 @@ describe('useSpaceDataHook', () => {
         await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
-            roleIds: [],
+            roles: [],
         })
 
         // going to use alice in react component

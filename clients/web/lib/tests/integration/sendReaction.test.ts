@@ -38,7 +38,7 @@ describe('sendReaction', () => {
         const channelId = await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
-            roleIds: [],
+            roles: [{ roleId: 2, permissions: [] }],
         })
 
         console.log("bob's spaceId", { spaceId, channelId })

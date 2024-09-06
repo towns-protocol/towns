@@ -54,7 +54,7 @@ export function CreateChannelForm(props: Props): JSX.Element {
         const createRoomInfo: CreateChannelInfo = {
             name: channelName,
             parentSpaceId: parentSpaceId,
-            roleIds: [],
+            roles: [],
         }
 
         // Use the roles from the parent space to create the channel
@@ -62,7 +62,10 @@ export function CreateChannelForm(props: Props): JSX.Element {
             for (const r of spaceRoles) {
                 if (roles[r.name]?.isSelected) {
                     console.log(`Adding role ${r.name} to channel`)
-                    createRoomInfo.roleIds.push(BigNumber.from(r.roleId).toNumber())
+                    createRoomInfo.roles.push({
+                        roleId: BigNumber.from(r.roleId).toNumber(),
+                        permissions: [],
+                    })
                 }
             }
         }

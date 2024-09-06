@@ -30,8 +30,11 @@ export const usePanelActions = () => {
                 options: {
                     stackId?: string
                     channelId?: string
+                    channelFormId?: string // unique identifier for create channel form
                     profileId?: string
+                    roleId?: string
                     data?: string
+                    roles?: 'new'
                 } = {},
             ) => {
                 const { stackId = contextStackId, ...restOptions } = options

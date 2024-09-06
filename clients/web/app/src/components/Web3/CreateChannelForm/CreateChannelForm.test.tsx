@@ -247,7 +247,7 @@ describe('CreateChannelForm', () => {
                     name: 'test-channel',
                     parentSpaceId: '',
                     topic: '',
-                    roleIds: [7, 8],
+                    roles: [7, 8].map((roleId) => ({ roleId, permissions: [] })),
                     channelSettings: {
                         autojoin: true,
                         hideUserJoinLeaveEvents: true,

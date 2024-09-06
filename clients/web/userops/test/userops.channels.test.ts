@@ -161,7 +161,7 @@ test("can create a channel when roles is gated by user's smart account", async (
         'channel description',
         makeUniqueChannelStreamId(spaceId),
         // roleIds
-        [newRole!.roleId],
+        [{ roleId: newRole!.roleId, permissions: [] }],
         alice.wallet,
     ])
     await waitForOpAndTx(createChannelOp, alice)

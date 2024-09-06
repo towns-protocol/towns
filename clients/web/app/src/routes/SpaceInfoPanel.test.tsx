@@ -11,6 +11,14 @@ import { TestApp, getWalletAddress } from 'test/testUtils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { SpaceInfoPanel } from './SpaceInfoPanel'
 
+vi.mock('zustand', async (importOriginal) => {
+    const actual = (await vi.importActual('zustand')) as typeof import('zustand')
+    return {
+        ...actual,
+        createStore: actual.createStore,
+    }
+})
+
 const ownerUser = {
     userId: getWalletAddress(),
     username: 'beavis',

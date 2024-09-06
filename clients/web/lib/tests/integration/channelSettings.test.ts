@@ -74,7 +74,10 @@ describe('channel settings', () => {
             {
                 name: channelName,
                 parentSpaceId: spaceId,
-                roleIds: [memberRoleDetails.id, moderatorRoleId],
+                roles: [memberRoleDetails.id, moderatorRoleId].map((roleId) => ({
+                    roleId,
+                    permissions: [],
+                })),
                 topic: channelTopic,
             },
             alice.provider.wallet,

@@ -145,7 +145,7 @@ describe('Towns event handlers test', () => {
         const channelId = await createTestChannelWithSpaceRoles(alice, {
             name: alice.makeUniqueName(),
             parentSpaceId: spaceId,
-            roleIds: [],
+            roles: [],
         })
 
         if (!channelId) {
@@ -246,7 +246,7 @@ describe('Towns event handlers test', () => {
         const channelId = await createTestChannelWithSpaceRoles(alice, {
             name: alice.makeUniqueName(),
             parentSpaceId: spaceId,
-            roleIds: [],
+            roles: [],
         })
 
         if (!channelId) {

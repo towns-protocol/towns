@@ -40,7 +40,7 @@ describe('messageTypes', () => {
         const channelId = await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
-            roleIds: [],
+            roles: [],
         })
 
         // alice joins the room
@@ -101,7 +101,7 @@ describe('messageTypes', () => {
         const channelId = await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
-            roleIds: [],
+            roles: [],
         })
 
         // alice joins the room

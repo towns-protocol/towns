@@ -32,7 +32,7 @@ describe('channelSettingsHooks', () => {
             {
                 name: 'channel 1',
                 parentSpaceId: spaceId,
-                roleIds: [0, 1, 2], // default member role
+                roles: [], // default member role
                 channelSettings: {
                     autojoin: true,
                     hideUserJoinLeaveEvents: false,

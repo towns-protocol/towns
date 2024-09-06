@@ -40,6 +40,7 @@ export const EventByMethod = new Map<keyof typeof FunctionName, keyof typeof Eve
     ['updateRole', 'RoleUpdated'],
     // ChannelBase.sol
     ['createChannel', 'ChannelCreated'],
+    ['createChannelWithOverridePermissions', 'ChannelCreated'],
     ['updateChannel', 'ChannelUpdated'],
     ['removeChannel', 'ChannelRemoved'],
     ['addRoleToChannel', 'ChannelRoleAdded'],

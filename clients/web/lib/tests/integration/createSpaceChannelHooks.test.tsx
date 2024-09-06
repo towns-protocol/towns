@@ -87,7 +87,7 @@ describe('createSpaceChannelHooks', () => {
                     const createRoomInfo: CreateChannelInfo = {
                         name,
                         parentSpaceId,
-                        roleIds: [],
+                        roles: [],
                     }
 
                     await createChannelTransaction(createRoomInfo, aliceProvider.wallet)

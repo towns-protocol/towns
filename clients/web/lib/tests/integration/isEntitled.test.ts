@@ -116,7 +116,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
             {
                 name: `aliceChannel${Date.now()}`,
                 parentSpaceId: spaceId,
-                roleIds: [roleId.roleId],
+                roles: [roleId.roleId].map((roleId) => ({ roleId, permissions: [] })),
             },
             alice.provider.wallet,
         )
@@ -154,7 +154,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
             {
                 name: `aliceChannel${Date.now()}`,
                 parentSpaceId: spaceId,
-                roleIds: [roleId.roleId],
+                roles: [roleId.roleId].map((roleId) => ({ roleId, permissions: [] })),
             },
             alice.provider.wallet,
         )
@@ -374,7 +374,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
             {
                 name: `aliceChannel${Date.now()}`,
                 parentSpaceId: spaceId,
-                roleIds: [roleId.roleId],
+                roles: [roleId.roleId].map((roleId) => ({ roleId, permissions: [] })),
             },
             alice.provider.wallet,
         )
@@ -421,7 +421,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
             {
                 name: `aliceChannel${Date.now()}`,
                 parentSpaceId: spaceId,
-                roleIds: [roleId.roleId],
+                roles: [roleId.roleId].map((roleId) => ({ roleId, permissions: [] })),
             },
             alice.provider.wallet,
         )
@@ -464,7 +464,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
             {
                 name: `aliceChannel${Date.now()}`,
                 parentSpaceId: spaceId,
-                roleIds: [roleId!.roleId],
+                roles: [roleId!.roleId].map((roleId) => ({ roleId, permissions: [] })),
             },
             alice.provider.wallet,
         )

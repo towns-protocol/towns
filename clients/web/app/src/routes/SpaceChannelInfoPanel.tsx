@@ -8,6 +8,7 @@ import {
     useChannelSettings,
     useConnectivity,
     useHasPermission,
+    usePermissionOverrides,
     useRoom,
     useSpaceData,
 } from 'use-towns-client'
@@ -141,6 +142,18 @@ export const ChannelInfo = () => {
         [isEncrypted],
     )
 
+    const onEditRolePermissions = useCallback(
+        (roleId: number) => {
+            openPanel(CHANNEL_INFO_PARAMS.EDIT_CHANNEL_PERMISSION_OVERRIDES, {
+                channelId: channel?.id ?? '',
+                roleId: roleId.toString(),
+            })
+        },
+        [channel?.id, openPanel],
+    )
+    const spaceId = spaceData?.id
+    const channelId = channel?.id
+
     return (
         <>
             <Stack gap>
@@ -176,7 +189,7 @@ export const ChannelInfo = () => {
                             )}
                         </Stack>
                         <Stack horizontal alignItems="center" gap="xs" color="gray2">
-                            <Icon type="lock" size="square_sm" color="gray2" />
+                            <Icon type="lock" size="square_xs" color="gray2" />
                             <Text
                                 size={{
                                     mobile: 'sm',
@@ -189,7 +202,21 @@ export const ChannelInfo = () => {
                             canJoin={canJoinChannel}
                             isLoadingCanJoin={isLoadingCanJoinChannel}
                             roles={roles}
-                            headerSubtitle={(r) => r.permissions.join(', ')}
+                            headerSubtitle={(role) =>
+                                spaceId && channelId ? (
+                                    <PermissionText
+                                        spaceId={spaceId}
+                                        channelId={channelId}
+                                        roleId={role.roleId}
+                                        permissions={role.permissions}
+                                    />
+                                ) : (
+                                    role.permissions.join(', ')
+                                )
+                            }
+                            onEditRolePermissions={
+                                canEditChannel ? onEditRolePermissions : undefined
+                            }
                         />
                     </Stack>
                 )}
@@ -279,5 +306,20 @@ export const ChannelInfo = () => {
                 <ChannelPermissionsNameDescriptionModal onHide={onHideChannelSettingsPopup} />
             )}
         </>
+    )
+}
+
+const PermissionText = (props: {
+    spaceId: string
+    roleId: number
+    channelId: string
+    permissions: Permission[]
+}) => {
+    const { spaceId, roleId, channelId, permissions } = props
+    const { permissions: permissionOverrides } = usePermissionOverrides(spaceId, channelId, roleId)
+    return (
+        <Paragraph color="gray2" size="sm">
+            {(permissionOverrides ?? permissions).join(', ')}
+        </Paragraph>
     )
 }

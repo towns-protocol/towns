@@ -75,12 +75,12 @@ describe('sendThreadedMessageHooks', () => {
         const channel_1 = await createTestChannelWithSpaceRoles(jane, {
             name: 'channel_1',
             parentSpaceId: spaceId,
-            roleIds: [],
+            roles: [],
         })
         const channel_2 = await createTestChannelWithSpaceRoles(jane, {
             name: 'channel_2',
             parentSpaceId: spaceId,
-            roleIds: [],
+            roles: [],
         })
 
         // 3 chnannels should exist b/c of default channel

@@ -42,7 +42,7 @@ describe('unreadMessageCountEdgeCases', () => {
         const channelId = await createTestChannelWithSpaceRoles(jane, {
             name: 'janes channel',
             parentSpaceId: spaceId,
-            roleIds: [],
+            roles: [],
         })
 
         // create a veiw for bob

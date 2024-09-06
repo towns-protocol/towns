@@ -61,7 +61,7 @@ describe('write messages', () => {
         const channelId = await createTestChannelWithSpaceRoles(bob, {
             name: 'new channel',
             parentSpaceId: spaceId,
-            roleIds: [], // empty roleIds = all roles
+            roles: [], // empty roleIds = all roles
         })
 
         const spaceContent = Array.from(
@@ -140,7 +140,7 @@ describe('write messages', () => {
         const channelId = await createTestChannelWithSpaceRoles(bob, {
             name: 'new channel',
             parentSpaceId: spaceId,
-            roleIds: [], // empty roleIds = all roles
+            roles: [], // empty roleIds = all roles
         })
 
         const spaceContent = Array.from(
@@ -241,7 +241,7 @@ describe('write messages', () => {
         const channelId = await createTestChannelWithSpaceRoles(bob, {
             name: 'main channel',
             parentSpaceId: spaceId,
-            roleIds: [],
+            roles: [],
         })
 
         /** Act */
@@ -286,7 +286,7 @@ describe('write messages', () => {
         const channelId = await createTestChannelWithSpaceRoles(bob, {
             name: 'main channel',
             parentSpaceId: spaceId,
-            roleIds: [],
+            roles: [],
         })
 
         /** Act */

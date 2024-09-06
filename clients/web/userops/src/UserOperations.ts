@@ -13,6 +13,8 @@ import {
     findFixedPricingModule,
     NoopRuleData,
     stringifyChannelMetadataJSON,
+    SetChannelPermissionOverridesParams,
+    ClearChannelPermissionOverridesParams,
 } from '@river-build/web3'
 import { ethers } from 'ethers'
 import isEqual from 'lodash/isEqual'
@@ -798,36 +800,35 @@ export class UserOps {
     }
 
     public async sendCreateChannelOp(
-        args: Parameters<SpaceDapp['createChannel']>,
+        args: Parameters<SpaceDapp['createChannelWithPermissionOverrides']>,
     ): Promise<ISendUserOperationResponse> {
         if (!this.spaceDapp) {
             throw new Error('spaceDapp is required')
         }
-        const [spaceId, channelName, channelDescription, channelNetworkId, roleIds, signer] = args
+        const [spaceId, channelName, channelDescription, channelNetworkId, roles, signer] = args
         const channelId = channelNetworkId.startsWith('0x')
             ? channelNetworkId
             : `0x${channelNetworkId}`
 
-        const space = await this.spaceDapp.getSpace(spaceId)
+        const space = this.spaceDapp.getSpace(spaceId)
 
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
 
-        const functionName = 'createChannel'
+        const functionName = 'createChannelWithOverridePermissions'
 
         const functionHashForPaymasterProxy = getFunctionSigHash(
             space.Channels.interface,
             functionName,
         )
-
-        const callData = await space.Channels.encodeFunctionData(functionName, [
+        const callData = space.Channels.encodeFunctionData(functionName, [
             channelId,
             stringifyChannelMetadataJSON({
                 name: channelName,
                 description: channelDescription,
             }),
-            roleIds,
+            roles,
         ])
 
         return this.sendUserOp({
@@ -1010,6 +1011,66 @@ export class UserOps {
         })
     }
 
+    public async sendSetChannelPermissionOverridesOp(
+        args: Parameters<SpaceDapp['setChannelPermissionOverrides']>,
+    ): Promise<ISendUserOperationResponse> {
+        const [params, signer] = args
+
+        if (!this.spaceDapp) {
+            throw new Error('spaceDapp is required')
+        }
+
+        const space = this.spaceDapp.getSpace(params.spaceNetworkId)
+
+        if (!space) {
+            throw new Error(`Space with spaceId "${params.spaceNetworkId}" is not found.`)
+        }
+
+        const { functionHashForPaymasterProxy, callData } =
+            await this.encodeSetChannelRoleOverridesData({
+                space,
+                params,
+            })
+
+        return this.sendUserOp({
+            toAddress: [space.Roles.address],
+            callData: [callData],
+            signer,
+            spaceId: params.spaceNetworkId,
+            functionHashForPaymasterProxy,
+        })
+    }
+
+    public async sendClearChannelPermissionOverridesOp(
+        args: Parameters<SpaceDapp['clearChannelPermissionOverrides']>,
+    ): Promise<ISendUserOperationResponse> {
+        const [params, signer] = args
+
+        if (!this.spaceDapp) {
+            throw new Error('spaceDapp is required')
+        }
+
+        const space = this.spaceDapp.getSpace(params.spaceNetworkId)
+
+        if (!space) {
+            throw new Error(`Space with spaceId "${params.spaceNetworkId}" is not found.`)
+        }
+
+        const { functionHashForPaymasterProxy, callData } =
+            await this.encodeClearChannelRoleOverridesData({
+                space,
+                params,
+            })
+
+        return this.sendUserOp({
+            toAddress: [space.Roles.address],
+            callData: [callData],
+            signer,
+            spaceId: params.spaceNetworkId,
+            functionHashForPaymasterProxy,
+        })
+    }
+
     public async encodeLegacyUpdateRoleData({
         space,
         legacyUpdateRoleParams,
@@ -1099,6 +1160,58 @@ export class UserOps {
             updateRoleParams.roleName,
             updateRoleParams.permissions,
             updatedEntitlements,
+        ])
+
+        return { functionHashForPaymasterProxy, callData }
+    }
+
+    public async encodeSetChannelRoleOverridesData({
+        space,
+        params,
+    }: {
+        space: Space
+        params: SetChannelPermissionOverridesParams
+    }) {
+        const functionName = 'setChannelPermissionOverrides'
+
+        const functionHashForPaymasterProxy = getFunctionSigHash(
+            space.Roles.interface,
+            functionName,
+        )
+
+        if (!this.spaceDapp) {
+            throw new Error('spaceDapp is required')
+        }
+
+        const callData = await space.Roles.encodeFunctionData(functionName, [
+            params.roleId,
+            params.channelId.startsWith('0x') ? params.channelId : `0x${params.channelId}`,
+            params.permissions,
+        ])
+
+        return { functionHashForPaymasterProxy, callData }
+    }
+
+    public async encodeClearChannelRoleOverridesData({
+        space,
+        params,
+    }: {
+        space: Space
+        params: ClearChannelPermissionOverridesParams
+    }) {
+        const functionName = 'clearChannelPermissionOverrides'
+
+        const functionHashForPaymasterProxy = getFunctionSigHash(
+            space.Roles.interface,
+            functionName,
+        )
+
+        if (!this.spaceDapp) {
+            throw new Error('spaceDapp is required')
+        }
+        const callData = await space.Roles.encodeFunctionData(functionName, [
+            params.roleId,
+            params.channelId.startsWith('0x') ? params.channelId : `0x${params.channelId}`,
         ])
 
         return { functionHashForPaymasterProxy, callData }

@@ -35,6 +35,7 @@ export const CHANNEL_INFO_PARAMS = {
     DIRECTORY: 'directory',
     DM_CHANNEL_INFO: 'dm',
     EDIT_CHANNEL_PERMISSIONS: 'edit-channel-permissions',
+    EDIT_CHANNEL_PERMISSION_OVERRIDES: 'channel-permission-overrides',
     EDIT_CHANNEL_RIVER_METADATA: 'edit-channel-river-metadata',
     GDM_CHANNEL_INFO: 'gdm',
     INVITE: 'invite',

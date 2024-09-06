@@ -117,6 +117,7 @@ export function UserPreferences() {
                     <Checkbox
                         labelLast
                         defaultChecked
+                        justifyContent="start"
                         key={key}
                         checked={checked}
                         name={key}

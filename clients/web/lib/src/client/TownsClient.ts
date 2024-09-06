@@ -580,7 +580,7 @@ export class TownsClient
         const channelInfo: CreateChannelInfo = {
             name: channelName ?? 'general',
             parentSpaceId,
-            roleIds: [],
+            roles: [],
         }
         return await this.createChannelRoom(channelInfo, channelId)
     }
@@ -644,7 +644,7 @@ export class TownsClient
             createChannelInfo.name,
             createChannelInfo.topic ?? '',
             roomId,
-            createChannelInfo.roleIds,
+            createChannelInfo.roles,
             signer,
         ] as const
 
@@ -652,7 +652,7 @@ export class TownsClient
             if (this.isAccountAbstractionEnabled()) {
                 transaction = await this.userOps?.sendCreateChannelOp([...args])
             } else {
-                transaction = await this.spaceDapp.createChannel(...args)
+                transaction = await this.spaceDapp.createChannelWithPermissionOverrides(...args)
             }
             this.log(`[createChannelTransaction] transaction created` /*, transaction*/)
         } catch (err) {
@@ -1356,6 +1356,122 @@ export class TownsClient
         })
     }
 
+    public async setChannelPermissionOverridesTransaction(
+        spaceNetworkId: string,
+        channelId: string,
+        roleId: number,
+        permissions: Permission[],
+        signer: ethers.Signer | undefined,
+    ): Promise<TransactionContext<void>> {
+        if (!signer) {
+            throw new SignerUndefinedError()
+        }
+        let transaction: TransactionOrUserOperation | undefined = undefined
+        let error: Error | undefined = undefined
+
+        const continueStoreTx = this.blockchainTransactionStore.begin({
+            type: BlockchainTransactionType.SetChannelPermissionOverrides,
+            data: {
+                spaceStreamId: spaceNetworkId,
+                roleId,
+            },
+        })
+
+        try {
+            const args = {
+                spaceNetworkId,
+                roleId,
+                channelId,
+                permissions,
+            }
+
+            if (this.isAccountAbstractionEnabled()) {
+                transaction = await this.userOps?.sendSetChannelPermissionOverridesOp([
+                    args,
+                    signer,
+                ])
+            } else {
+                transaction = await this.spaceDapp.setChannelPermissionOverrides(args, signer)
+            }
+
+            this.log(
+                `[setChannelPermissionOverridesTransaction] transaction created` /*, transaction*/,
+            )
+        } catch (err) {
+            error = this.spaceDapp.parseSpaceError(spaceNetworkId, err)
+        }
+        // todo: add necessary contextual data
+        continueStoreTx({
+            hashOrUserOpHash: getTransactionHashOrUserOpHash(transaction),
+            transaction,
+            error,
+        })
+
+        return createTransactionContext({
+            transaction,
+            status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
+            error,
+        })
+    }
+
+    public async clearChannelPermissionOverridesTransaction(
+        spaceNetworkId: string,
+        channelId: string,
+        roleId: number,
+        signer: ethers.Signer | undefined,
+    ): Promise<TransactionContext<void>> {
+        if (!signer) {
+            throw new SignerUndefinedError()
+        }
+        let transaction: TransactionOrUserOperation | undefined = undefined
+        let error: Error | undefined = undefined
+
+        const continueStoreTx = this.blockchainTransactionStore.begin({
+            type: BlockchainTransactionType.ClearChannelPermissionOverrides,
+            data: {
+                spaceNetworkId,
+                roleId,
+                channelId,
+            },
+        })
+
+        try {
+            const args = {
+                spaceNetworkId,
+                roleId,
+                channelId,
+            }
+
+            if (this.isAccountAbstractionEnabled()) {
+                transaction = await this.userOps?.sendClearChannelPermissionOverridesOp([
+                    args,
+                    signer,
+                ])
+            } else {
+                transaction = await this.spaceDapp.clearChannelPermissionOverrides(args, signer)
+            }
+
+            this.log(
+                `[setChannelPermissionOverridesTransaction] transaction created` /*, transaction*/,
+            )
+        } catch (err) {
+            error = this.spaceDapp.parseSpaceError(spaceNetworkId, err)
+        }
+
+        // todo: add necessary contextual data
+        continueStoreTx({
+            hashOrUserOpHash: getTransactionHashOrUserOpHash(transaction),
+            transaction,
+            error,
+        })
+
+        return createTransactionContext({
+            transaction,
+            status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
+            error,
+        })
+    }
+
     public async waitForAddRoleToChannelTransaction(
         context: TransactionContext<void> | undefined,
     ): Promise<TransactionContext<void>> {
@@ -1377,6 +1493,14 @@ export class TownsClient
     ): Promise<TransactionContext<void>> {
         const txnContext = await this._waitForBlockchainTransaction(context)
         logTxnResult('waitForUpdateRoleTransaction', txnContext)
+        return txnContext
+    }
+
+    public async waitForSetChannelPermissionOverridesTransaction(
+        context: TransactionContext<void> | undefined,
+    ): Promise<TransactionContext<void>> {
+        const txnContext = await this._waitForBlockchainTransaction(context)
+        logTxnResult('waitForSetChannelPermissionOverridesTransaction', txnContext)
         return txnContext
     }
 

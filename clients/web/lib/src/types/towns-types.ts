@@ -2,6 +2,7 @@ import { PlainMessage } from '@bufbuild/protobuf'
 import { MembershipOp, SpacePayload_ChannelSettings, StreamSettings } from '@river-build/proto'
 import { Attachment } from './timeline-types'
 import { staticAssertNever } from '../utils/towns-utils'
+import { Permission } from '@river-build/web3'
 
 export enum Membership {
     Join = 'join',
@@ -136,7 +137,7 @@ export interface CreateSpaceInfo {
 export interface CreateChannelInfo {
     name: string
     parentSpaceId: string
-    roleIds: number[]
+    roles: { roleId: number; permissions: Permission[] }[]
     topic?: string
     streamSettings?: PlainMessage<StreamSettings>
     channelSettings?: PlainMessage<SpacePayload_ChannelSettings>

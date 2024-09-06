@@ -55,7 +55,7 @@ describe('modifyDefaultRole', () => {
                 {
                     name: 'test_channel',
                     parentSpaceId: spaceId,
-                    roleIds: [2],
+                    roles: [2].map((roleId) => ({ roleId, permissions: [] })),
                 },
                 bob.provider.wallet,
             )
@@ -97,7 +97,7 @@ describe('modifyDefaultRole', () => {
             {
                 name: 'test_channel',
                 parentSpaceId: spaceId,
-                roleIds: [2],
+                roles: [2].map((roleId) => ({ roleId, permissions: [] })),
             },
             bob.provider.wallet,
         )

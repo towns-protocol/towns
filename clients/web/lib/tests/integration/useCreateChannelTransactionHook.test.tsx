@@ -143,7 +143,7 @@ describe('useCreateChannelTransactionHook', () => {
                     const createRoomInfo: CreateChannelInfo = {
                         name: channelName,
                         parentSpaceId,
-                        roleIds,
+                        roles: roleIds.map((roleId) => ({ roleId, permissions: [] })),
                     }
                     const channelInfo = await createChannelTransaction(createRoomInfo, signer)
                     console.log(channelInfo)

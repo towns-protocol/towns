@@ -44,7 +44,7 @@ describe('redact messages', () => {
             {
                 name: 'test channel',
                 parentSpaceId: spaceId,
-                roleIds: [roleDetails.id],
+                roles: [roleDetails.id].map((roleId) => ({ roleId, permissions: [] })),
             },
             alice.provider.wallet,
         )
@@ -93,7 +93,7 @@ describe('redact messages', () => {
         const channelId = await createTestChannelWithSpaceRoles(alice, {
             name: 'alices channel',
             parentSpaceId: spaceId,
-            roleIds: [],
+            roles: [],
         })
         // invite user to join the channel
         const bobUserId = bob.getUserId()
@@ -161,7 +161,10 @@ describe('redact messages', () => {
                 name: 'test channel',
                 parentSpaceId: spaceId,
                 // add the space role and the moderator role to the channel
-                roleIds: [roleDetails.id, moderatorRoleId.roleId],
+                roles: [roleDetails.id, moderatorRoleId.roleId].map((roleId) => ({
+                    roleId,
+                    permissions: [],
+                })),
             },
             alice.provider.wallet,
         )

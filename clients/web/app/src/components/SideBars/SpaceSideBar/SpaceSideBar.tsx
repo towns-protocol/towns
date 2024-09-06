@@ -10,6 +10,7 @@ import {
     useSpaceUnreadThreadMentions,
 } from 'use-towns-client'
 import { LayoutGroup } from 'framer-motion'
+import { genId } from '@river-build/sdk'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { ActionNavItem } from '@components/NavItem/ActionNavItem'
 import { ChannelNavGroup } from '@components/NavItem/ChannelNavGroup'
@@ -57,7 +58,9 @@ export const SpaceSideBar = (props: Props) => {
         analytics?.track('clicked new channel', { spaceId: space.id }, () => {
             console.log('[analytics] clicked new channel')
         })
-        openPanel(CHANNEL_INFO_PARAMS.CREATE_CHANNEL)
+        openPanel(CHANNEL_INFO_PARAMS.CREATE_CHANNEL, {
+            channelFormId: `formid-${genId(5)}`,
+        })
     })
 
     const { openPanel } = usePanelActions()

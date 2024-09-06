@@ -71,7 +71,7 @@ describe('delete role', () => {
             {
                 name: 'test_channel',
                 parentSpaceId: roomId,
-                roleIds: [roleId],
+                roles: [roleId]?.map((roleId) => ({ roleId, permissions: [] })),
             },
             alice.provider.wallet,
         )
@@ -197,7 +197,7 @@ describe('delete role', () => {
             {
                 name: 'test_channel',
                 parentSpaceId: roomId,
-                roleIds: [roleId],
+                roles: [roleId].map((roleId) => ({ roleId, permissions: [] })),
             },
             alice.provider.wallet,
         )

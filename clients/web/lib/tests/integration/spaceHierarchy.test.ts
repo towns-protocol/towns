@@ -38,7 +38,7 @@ describe('spaceHierarchy', () => {
         const roomId = await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
-            roleIds: [],
+            roles: [],
         })
 
         await waitFor(() => {
@@ -83,7 +83,7 @@ describe('spaceHierarchy', () => {
         const roomId = await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
-            roleIds: [],
+            roles: [],
         })
 
         await waitFor(() => {

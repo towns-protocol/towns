@@ -18,6 +18,7 @@ import { useGetEmbeddedSigner } from '@towns/privy'
 import { Toast, toast } from 'react-hot-toast/headless'
 import { ApiObject } from '@rudderstack/analytics-js/*'
 import { UseFormReturn } from 'react-hook-form'
+import { useSearchParams } from 'react-router-dom'
 import { PrivyWrapper } from 'privy/PrivyProvider'
 import {
     Box,
@@ -28,6 +29,7 @@ import {
     FormRender,
     Icon,
     IconButton,
+    Paragraph,
     Stack,
     Text,
     TextField,
@@ -40,7 +42,6 @@ import { CHANNEL_INFO_PARAMS, PATHS } from 'routes'
 import { Spinner } from '@components/Spinner'
 
 import { convertRuleDataToTokenFormSchema } from '@components/Tokens/utils'
-import { TokenCheckboxLabel } from '@components/Tokens/TokenCheckboxLabel'
 import { useContractRoles } from 'hooks/useContractRoles'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
@@ -51,6 +52,9 @@ import { useAnalytics } from 'hooks/useAnalytics'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { PanelButton } from '@components/Panel/PanelButton'
+import { useChangePermissionOverridesStore } from '@components/ChannelSettings/useChangePermissionOverridesStore'
+import { atoms } from 'ui/styles/atoms.css'
+import { PersistForm, usePeristedFormValue } from 'ui/components/Form/PersistForm'
 import { mapToErrorMessage } from '../utils'
 
 type Props = {
@@ -74,6 +78,10 @@ export const CreateChannelForm = (props: Props) => {
     const { data: roles } = useContractRoles(props.spaceId)
     const roledIds = useMemo(() => roles?.map((r) => r.roleId) ?? [], [roles])
     const { data: _rolesDetails, invalidateQuery } = useMultipleRoleDetails(props.spaceId, roledIds)
+
+    const [searchParams] = useSearchParams()
+    const channelFormId = searchParams.get('channelFormId')
+
     const rolesWithDetails = useMemo(() => {
         return _rolesDetails?.filter((role) => role.permissions.includes(Permission.Read))
     }, [_rolesDetails])
@@ -95,7 +103,7 @@ export const CreateChannelForm = (props: Props) => {
     const { openPanel } = usePanelActions()
 
     const onCreateNewRole = useCallback(() => {
-        openPanel('roles')
+        openPanel('roles', { roles: 'new', stackId: 'main' })
     }, [openPanel])
 
     useEffect(() => {
@@ -194,13 +202,31 @@ export const CreateChannelForm = (props: Props) => {
         [channelNames],
     )
 
+    const channelFormPermissionOverrides = useChangePermissionOverridesStore((state) =>
+        !channelFormId ? undefined : state.channels[channelFormId]?.roles,
+    )
+
+    const onChangePermissions = useCallback(
+        (roleId: number) => {
+            openPanel(CHANNEL_INFO_PARAMS.EDIT_CHANNEL_PERMISSION_OVERRIDES, {
+                roleId: roleId.toString(),
+                channelFormId: channelFormId ?? undefined,
+            })
+        },
+        [openPanel, channelFormId],
+    )
+
+    const formData = usePeristedFormValue(channelFormId)
+
     return rolesWithDetails ? (
         <FormRender<FormState>
             schema={schema}
-            defaultValues={{
-                name: '',
-                roleIds: firstRoleIDWithReadPermission ? [firstRoleIDWithReadPermission] : [],
-            }}
+            defaultValues={
+                formData ?? {
+                    name: '',
+                    roleIds: firstRoleIDWithReadPermission ? [firstRoleIDWithReadPermission] : [],
+                }
+            }
             mode="onChange"
             onSubmit={async ({ name, topic, roleIds, autojoin, hideUserJoinLeaveEvents }) => {
                 const signer = await getSigner()
@@ -209,12 +235,16 @@ export const CreateChannelForm = (props: Props) => {
                     name: name,
                     topic: topic,
                     parentSpaceId: props.spaceId,
-                    roleIds: _roleIds,
+                    roles: _roleIds.map((r) => ({
+                        roleId: r,
+                        permissions: channelFormPermissionOverrides?.[r]?.permissions ?? [],
+                    })),
                     channelSettings: {
                         hideUserJoinLeaveEvents,
                         autojoin,
                     },
                 } satisfies CreateChannelInfo
+
                 const _rolesWithDetails =
                     (_roleIds
                         .map((roleId): ApiObject | undefined => {
@@ -265,6 +295,7 @@ export const CreateChannelForm = (props: Props) => {
                 }
 
                 const txResult = await createChannelTransaction(channelInfo, signer)
+
                 console.log('[CreateChannelForm]', 'createChannelTransaction result', txResult)
                 if (txResult?.status === TransactionStatus.Success) {
                     invalidateQuery()
@@ -306,6 +337,7 @@ export const CreateChannelForm = (props: Props) => {
                     </Stack>
                 ) : (
                     <Stack>
+                        {!!channelFormId && <PersistForm formId={channelFormId} />}
                         <Stack gap>
                             <TextField
                                 autoFocus
@@ -366,44 +398,76 @@ export const CreateChannelForm = (props: Props) => {
                             <Box paddingTop="md" paddingBottom="sm">
                                 <Text>Who can join?</Text>
                             </Box>
+
                             {rolesWithDetails.length > 0 && (
                                 <Stack scrollbars maxHeight="50vh" gap="sm" insetRight="xs">
                                     {rolesWithDetails.map((role) => {
+                                        const permissionOverrides =
+                                            channelFormPermissionOverrides?.[role.id]?.permissions
                                         return (
-                                            <Box
-                                                padding="md"
+                                            <Stack
+                                                padding
+                                                paddingTop="xs"
                                                 background="level2"
                                                 borderRadius="sm"
                                                 key={role.id}
+                                                gap="none"
                                             >
-                                                <Checkbox
-                                                    width="100%"
-                                                    name="roleIds"
-                                                    label={
-                                                        // parse tokens from TODO ruleData
-                                                        <TokenCheckboxLabel
-                                                            label={role.name}
-                                                            tokens={[]}
-                                                        />
-                                                    }
-                                                    value={role.id.toString()}
-                                                    register={register}
-                                                />
-                                            </Box>
+                                                <Box paddingY="sm">
+                                                    <Checkbox
+                                                        width="100%"
+                                                        name="roleIds"
+                                                        label={
+                                                            <Text>
+                                                                {role.name}{' '}
+                                                                {permissionOverrides ? (
+                                                                    <span
+                                                                        className={atoms({
+                                                                            color: 'cta2',
+                                                                        })}
+                                                                    >
+                                                                        *
+                                                                    </span>
+                                                                ) : (
+                                                                    ''
+                                                                )}
+                                                            </Text>
+                                                        }
+                                                        value={role.id.toString()}
+                                                        register={register}
+                                                    />
+                                                </Box>
+                                                <Stack
+                                                    gap="sm"
+                                                    cursor="pointer"
+                                                    onClick={() => onChangePermissions(role.id)}
+                                                >
+                                                    {!permissionOverrides ? (
+                                                        <Paragraph color="gray2" size="sm">
+                                                            {role.permissions.join(', ')}{' '}
+                                                        </Paragraph>
+                                                    ) : (
+                                                        <Paragraph color="gray2" size="sm">
+                                                            {permissionOverrides.join(', ')}
+                                                        </Paragraph>
+                                                    )}
+
+                                                    <Paragraph color="cta2" size="sm">
+                                                        Change Permissions
+                                                    </Paragraph>
+                                                </Stack>
+                                            </Stack>
                                         )
                                     })}
                                 </Stack>
                             )}
-
                             {canEditRoles && (
                                 <PanelButton onClick={onCreateNewRole}>
                                     <Icon type="plus" size="square_sm" />
                                     Create new role
                                 </PanelButton>
                             )}
-
                             <ErrorMessage errors={formState.errors} fieldName="roleIds" />
-
                             {errorBox}
                         </Stack>
 

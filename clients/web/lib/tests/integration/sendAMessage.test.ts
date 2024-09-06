@@ -45,7 +45,7 @@ describe('sendAMessage', () => {
         const channelId = await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
-            roleIds: [],
+            roles: [],
         })
 
         console.log("bob's spaceId", { spaceId, channelId })

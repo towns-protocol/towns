@@ -86,6 +86,25 @@ interface TownsClientImpl {
         updateChannelInfo: UpdateChannelInfo,
         signer: TSigner | undefined,
     ) => Promise<ChannelUpdateTransactionContext | undefined>
+    setChannelPermissionOverridesTransaction: (
+        spaceNetworkId: string,
+        channelId: string,
+        roleId: number,
+        permissions: Permission[],
+        signer: TSigner | undefined,
+    ) => Promise<TransactionContext<void> | undefined>
+    waitForSetChannelPermissionOverridesTransaction: (
+        context: TransactionContext<void> | undefined,
+    ) => Promise<TransactionContext<void> | undefined>
+    clearChannelPermissionOverridesTransaction: (
+        spaceNetworkId: string,
+        channelId: string,
+        roleId: number,
+        signer: TSigner | undefined,
+    ) => Promise<TransactionContext<void> | undefined>
+    waitForClearChannelPermissionOverridesTransaction: (
+        context: TransactionContext<void> | undefined,
+    ) => Promise<TransactionContext<void> | undefined>
     banTransaction: (
         spaceNetworkId: string,
         walletAddress: string,
@@ -321,6 +340,18 @@ export function useTownsClient(): TownsClientImpl {
             clientSingleton?.waitForCreateChannelTransaction,
         ),
         updateChannelTransaction: useWithCatch(clientSingleton?.updateChannelTransaction),
+        setChannelPermissionOverridesTransaction: useWithCatch(
+            clientSingleton?.setChannelPermissionOverridesTransaction,
+        ),
+        waitForSetChannelPermissionOverridesTransaction: useWithCatch(
+            clientSingleton?.waitForSetChannelPermissionOverridesTransaction,
+        ),
+        clearChannelPermissionOverridesTransaction: useWithCatch(
+            clientSingleton?.clearChannelPermissionOverridesTransaction,
+        ),
+        waitForClearChannelPermissionOverridesTransaction: useWithCatch(
+            clientSingleton?.waitForSetChannelPermissionOverridesTransaction,
+        ),
         waitForUpdateChannelTransaction: useWithCatch(
             clientSingleton?.waitForUpdateChannelTransaction,
         ),

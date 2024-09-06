@@ -2,6 +2,7 @@ import React from 'react'
 import { FieldValues, Path, UseFormReturn } from 'react-hook-form'
 import { Box, BoxProps } from 'ui/components/Box/Box'
 import { CheckIcon } from 'ui/components/Icon'
+import { Paragraph } from 'ui/components/Text/Paragraph'
 import * as style from './Checkbox.css'
 
 type Props<HookFormValues extends FieldValues> = {
@@ -16,10 +17,20 @@ type Props<HookFormValues extends FieldValues> = {
     checked?: boolean
     defaultChecked?: boolean
     labelLast?: boolean
-} & Partial<UseFormReturn<HookFormValues>>
+} & Partial<UseFormReturn<HookFormValues>> &
+    Pick<BoxProps, 'justifyContent' | 'display'>
 
 export const Checkbox = <HookFormValues extends FieldValues>(props: Props<HookFormValues>) => {
-    const { name, label, value, register, width, labelLast } = props
+    const {
+        name,
+        label,
+        value,
+        register,
+        width,
+        labelLast,
+        display = 'flex',
+        justifyContent = 'spaceBetween',
+    } = props
     const { onChange, ...registerProps } = register?.(name) || {}
     const _value =
         !value && typeof label === 'string' ? label.replace(' ', '').toLowerCase() : value
@@ -28,13 +39,17 @@ export const Checkbox = <HookFormValues extends FieldValues>(props: Props<HookFo
             <Box
                 as="label"
                 flexDirection="row"
-                display="inline-flex"
+                display={display}
                 width={width || 'auto'}
                 alignItems="center"
                 cursor="pointer"
-                justifyContent="spaceBetween"
+                justifyContent={justifyContent}
             >
-                {!labelLast && <Box paddingRight="md">{label}</Box>}
+                {!labelLast && (
+                    <Box paddingRight="md">
+                        {typeof label === 'string' ? <Paragraph>{label}</Paragraph> : label}
+                    </Box>
+                )}
                 <Box className={style.checkboxWrapper} onClick={props.onClick}>
                     <input
                         data-testid={`checkbox-${name}`}
@@ -50,7 +65,11 @@ export const Checkbox = <HookFormValues extends FieldValues>(props: Props<HookFo
                     />
                     <CheckIcon className={style.svg} />
                 </Box>
-                {labelLast && <Box paddingLeft="sm">{label}</Box>}
+                {labelLast && (
+                    <Box paddingLeft="sm">
+                        {typeof label === 'string' ? <Paragraph>{label}</Paragraph> : label}
+                    </Box>
+                )}
             </Box>
         </Box>
     )

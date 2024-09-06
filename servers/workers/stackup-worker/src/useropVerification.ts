@@ -275,6 +275,7 @@ export async function verifyUseTown(
         let maxActionsPerDay: number | null = null
         switch (params.transactionName) {
             case 'createChannel':
+            case 'createChannelWithOverridePermissions':
             case 'updateChannel':
             case 'removeChannel':
                 maxActionsPerDay =
@@ -401,6 +402,7 @@ export async function verifyUpdateSpaceInfo(
 
 function mapSpaceContractTransactionNameToContractName(transactionName: FunctionName) {
     switch (transactionName) {
+        case 'createChannelWithOverridePermissions':
         case 'createChannel':
         case 'updateChannel':
         case 'removeChannel':

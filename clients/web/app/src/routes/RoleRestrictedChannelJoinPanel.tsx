@@ -204,11 +204,12 @@ function Roles(props: {
 
 export function ChannelsRolesList(props: {
     roles: RoleEntitlements[]
-    headerSubtitle?: (role: RoleEntitlements) => string
+    headerSubtitle?: (role: RoleEntitlements) => JSX.Element | string
     canJoin: boolean | undefined
     isLoadingCanJoin: boolean
+    onEditRolePermissions?: (roleId: number) => void
 }) {
-    const { roles, headerSubtitle, canJoin, isLoadingCanJoin } = props
+    const { roles, headerSubtitle, canJoin, onEditRolePermissions, isLoadingCanJoin } = props
     const { allWallets, newWallets } = useTrackedWallets()
 
     const showQualifiedStatus =
@@ -230,6 +231,7 @@ export function ChannelsRolesList(props: {
                               roleId={role.roleId}
                               subTitle={headerSubtitle ? headerSubtitle(role) : props.subTitle}
                               qualified={canJoin}
+                              onEditPermissions={onEditRolePermissions}
                           />
                       )}
                   />
@@ -355,13 +357,15 @@ function UserList({ users }: { users: string[] }) {
 function AccordionHeader(props: {
     roleId: number
     title: string
-    subTitle: string
+    subTitle: JSX.Element | string
     isExpanded: boolean
     tokens: TokenEntitlement[]
     qualified?: boolean
     canOpen?: boolean
+    onEditPermissions?: (roleId: number) => void
 }) {
-    const { canOpen, isExpanded, qualified, subTitle, title, tokens } = props
+    const { canOpen, isExpanded, onEditPermissions, qualified, roleId, subTitle, title, tokens } =
+        props
 
     return (
         <Box horizontal gap="sm" justifyContent="spaceBetween">
@@ -373,6 +377,13 @@ function AccordionHeader(props: {
                 <Text color="gray2" size="sm">
                     {subTitle}
                 </Text>
+                {!!onEditPermissions && (
+                    <Box cursor="pointer" onClick={() => onEditPermissions(roleId)}>
+                        <Text color="cta2" size="sm">
+                            Change permissions
+                        </Text>
+                    </Box>
+                )}
             </Box>
             <Box horizontal gap="xs">
                 {tokens.slice(0, 3).map((token) => (

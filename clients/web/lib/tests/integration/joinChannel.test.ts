@@ -54,7 +54,7 @@ test('create a public space and a public room, and have user join', async () => 
         {
             name: 'test_channel',
             parentSpaceId: spaceId,
-            roleIds: [roleIdentifier.roleId],
+            roles: [roleIdentifier.roleId].map((roleId) => ({ roleId, permissions: [] })),
         },
         bob.provider.wallet,
     )

@@ -271,7 +271,7 @@ export async function createTestChannelWithSpaceRoles(
     client: TownsTestClient,
     createChannelInfo: CreateChannelInfo,
 ): Promise<string> {
-    if (createChannelInfo.roleIds.length === 0) {
+    if (createChannelInfo.roles.length === 0) {
         // In the app, the user is shown roles from the space and chooses
         // at least one role from the UI.
         // For testing, get the roles from the space and select all of them.
@@ -280,7 +280,10 @@ export async function createTestChannelWithSpaceRoles(
             createChannelInfo.parentSpaceId,
         )
         for (const r of filteredRoles) {
-            createChannelInfo.roleIds.push(BigNumber.from(r.roleId).toNumber())
+            createChannelInfo.roles.push({
+                roleId: BigNumber.from(r.roleId).toNumber(),
+                permissions: [],
+            })
         }
     }
 
@@ -305,7 +308,10 @@ export async function createGatedChannel(
         ruleData,
     )
     expect(roleId).toBeDefined()
-    createChannelInfo.roleIds = [...createChannelInfo.roleIds, roleId!.roleId]
+    createChannelInfo.roles = [
+        ...createChannelInfo.roles,
+        { roleId: roleId!.roleId, permissions: [] },
+    ]
     const streamId = await client.createChannel(createChannelInfo, client.provider.wallet)
     expect(streamId).toBeDefined()
     return streamId

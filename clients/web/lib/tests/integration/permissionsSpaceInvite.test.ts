@@ -274,7 +274,7 @@ describe('space invite', () => {
         const channelId = await createTestChannelWithSpaceRoles(bob, {
             name: 'alice channel',
             parentSpaceId: spaceId,
-            roleIds: [],
+            roles: [],
         })
 
         // users to join the space.

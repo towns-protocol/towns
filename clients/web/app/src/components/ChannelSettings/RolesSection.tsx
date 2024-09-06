@@ -18,6 +18,7 @@ export function getCheckedValuesForRoleIdsField(rolesWithDetails: RoleCheckboxPr
 
 export function RolesSection<HookFormValues extends FieldValues>(props: {
     spaceId: string
+    channelId: string
     fieldName: Path<HookFormValues>
     rolesWithDetails: RoleCheckboxProps[]
     register: UseFormRegister<HookFormValues>
@@ -52,7 +53,7 @@ export function RolesSection<HookFormValues extends FieldValues>(props: {
                 )
             })}
             <PanelButton onClick={() => openPanel(CHANNEL_INFO_PARAMS.ROLES)}>
-                <Icon type="plus" /> Create new role
+                <Icon type="plus" size="square_sm" /> Create new role
             </PanelButton>
         </>
     )
@@ -65,7 +66,7 @@ function RoleDetailsComponent<HookFormValues extends FieldValues>(props: {
     register: UseFormRegister<HookFormValues>
 }): JSX.Element {
     return (
-        <Box padding="md" background="level2" borderRadius="sm" key={props.role.id}>
+        <Box padding="md" background="level2" borderRadius="sm" key={props.role.id} gap="xs">
             <Checkbox
                 width="100%"
                 name={props.fieldName}

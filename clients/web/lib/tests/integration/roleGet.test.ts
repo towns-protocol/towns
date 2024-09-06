@@ -89,7 +89,10 @@ describe('get role details', () => {
             {
                 name: channelName,
                 parentSpaceId: roomId,
-                roleIds: [roleIdentifier.roleId],
+                roles: [roleIdentifier.roleId].map((roleId) => ({
+                    roleId,
+                    permissions: [],
+                })),
             },
             alice.provider.wallet,
         )

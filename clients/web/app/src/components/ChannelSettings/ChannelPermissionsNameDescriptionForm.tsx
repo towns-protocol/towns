@@ -302,6 +302,7 @@ export function ChannelPermissionsNameDescriptionForm({
                             {(editType === 'roles' || editType === 'all') && (
                                 <Stack grow gap="sm">
                                     <RolesSection
+                                        channelId={channelId}
                                         rolesWithDetails={rolesWithDetails}
                                         resetField={resetField}
                                         spaceId={spaceId}
@@ -350,7 +351,7 @@ export const ChannelPermissionsNameDescriptionPanel = React.memo(() => {
 
     return (
         <PrivyWrapper>
-            <Panel label="Edit Channel Permissions">
+            <Panel label="Edit Roles">
                 <Form
                     editType="roles"
                     onSuccess={() => openPanel(CHANNEL_INFO_PARAMS.CHANNEL_INFO)}

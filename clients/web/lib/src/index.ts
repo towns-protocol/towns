@@ -54,6 +54,7 @@ export { useMyProfile } from './hooks/use-my-profile'
 export { useMyUserId } from './hooks/use-my-user-id'
 export { useNetworkStatus } from './hooks/use-network-status'
 export * from './hooks/use-pins'
+export { usePermissionOverrides } from './hooks/use-permission-overrides'
 export {
     useRoleDetails,
     useMultipleRoleDetails,
@@ -61,6 +62,7 @@ export {
 } from './hooks/use-role-details'
 export { useRoles } from './hooks/use-roles'
 export { useRoom } from './hooks/use-room'
+export { useSetChannelPermissionOverrides } from './hooks/use-set-channel-permission-overrides'
 export {
     useSpaceData,
     useSpaceDataStore,

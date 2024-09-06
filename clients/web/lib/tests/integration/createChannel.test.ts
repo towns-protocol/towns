@@ -21,7 +21,7 @@ describe('On-chain channel creation tests', () => {
             {
                 name: 'test_channel',
                 parentSpaceId: roomId,
-                roleIds: [],
+                roles: [],
             },
             alice.provider.wallet,
         )
@@ -52,7 +52,7 @@ describe('On-chain channel creation tests', () => {
             {
                 name: 'test_channel',
                 parentSpaceId: roomId,
-                roleIds,
+                roles: roleIds.map((roleId) => ({ roleId, permissions: [] })),
             },
             alice.provider.wallet,
         )
@@ -87,7 +87,7 @@ describe('On-chain channel creation tests', () => {
                 {
                     name: 'test_channel',
                     parentSpaceId: roomId,
-                    roleIds,
+                    roles: roleIds.map((roleId) => ({ roleId, permissions: [] })),
                 },
                 alice.provider.wallet,
             )

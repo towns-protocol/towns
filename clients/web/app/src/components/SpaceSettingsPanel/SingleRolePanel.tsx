@@ -27,6 +27,7 @@ import { Panel } from '@components/Panel/Panel'
 import {
     Button,
     ErrorMessage,
+    FancyButton,
     FormRender,
     Icon,
     MotionStack,
@@ -391,7 +392,7 @@ function SubmitButton({
     spaceId,
     transactionIsPending,
 }: {
-    children?: React.ReactNode
+    children?: string
     isCreateRole: boolean
     roleId?: number
     spaceId: string | undefined
@@ -485,17 +486,14 @@ function SubmitButton({
     })
 
     return (
-        <Button
+        <FancyButton
+            cta
             data-testid="submit-button"
             disabled={isDisabled}
-            tone={isDisabled ? 'level2' : 'cta1'}
-            style={{
-                pointerEvents: isDisabled ? 'none' : 'initial',
-            }}
             onClick={handleSubmit(onValid, onInvalid)}
         >
             {children}
-        </Button>
+        </FancyButton>
     )
 }
 
@@ -609,10 +607,12 @@ function TokenSearch({ isCreateRole }: { isCreateRole: boolean }) {
     )
 }
 
-function ChannelPermissionsToggles({
+export function ChannelPermissionsToggles({
     roleDetails,
+    onPermissionChange,
 }: {
     roleDetails: ReturnType<typeof useRoleDetails>['roleDetails']
+    onPermissionChange?: (permissions: Permission[]) => void
 }) {
     const { setValue, getValues } = useFormContext<RoleFormSchemaType>()
 
@@ -647,6 +647,8 @@ function ChannelPermissionsToggles({
         }))
 
         setValue('channelPermissions', newPermissions)
+
+        onPermissionChange?.(newPermissions)
     })
 
     return enabledChannelPermissions.map((permissionId: Permission) => {

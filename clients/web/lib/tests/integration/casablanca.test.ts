@@ -64,7 +64,7 @@ describe('casablanca', () => {
         const channelId = await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
-            roleIds: [],
+            roles: [],
         })
 
         log("bob's spaceId and channelId", { spaceId, channelId })
@@ -102,7 +102,7 @@ describe('casablanca', () => {
         const channelId = await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
-            roleIds: [],
+            roles: [],
         })
 
         log("bob's spaceId and channelId", { spaceId, channelId })
@@ -147,7 +147,7 @@ describe('casablanca', () => {
         const channelId = await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
-            roleIds: [],
+            roles: [],
         })
 
         log("bob's spaceId and channelId", { spaceId, channelId })

@@ -167,7 +167,7 @@ function MonitoringNotification(props: ToastProps & { toast: Toast }) {
 
     const [status, setStatus] = useState(tx.status)
 
-    const [searchParams, setSearchParams] = useSearchParams()
+    const [searchParams] = useSearchParams()
     const rolesParam = searchParams.get('roles')
 
     const { message } = useMemo(() => {
@@ -223,22 +223,23 @@ function MonitoringNotification(props: ToastProps & { toast: Toast }) {
         },
     )
 
+    const { closePanel } = usePanelActions()
+
     const onSuccess = useCallback(() => {
         switch (tx.type) {
             case BlockchainTransactionType.CreateRole:
             case BlockchainTransactionType.DeleteRole:
             case BlockchainTransactionType.UpdateRole:
-                // navigate back to the role list panel
+                // navigate back to past panel (role list / channel creation)
                 if (rolesParam) {
-                    searchParams.set('roles', '')
-                    setSearchParams(searchParams)
+                    closePanel()
                 }
                 break
 
             default:
                 break
         }
-    }, [rolesParam, searchParams, setSearchParams, tx.type])
+    }, [closePanel, rolesParam, tx.type])
 
     // prevent flash when user rejects tx
     if (tx.status === 'failure' && !errorMessage) {

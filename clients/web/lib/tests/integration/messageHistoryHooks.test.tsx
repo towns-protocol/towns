@@ -45,7 +45,7 @@ describe('messageHistoryHooks', () => {
             const channelId = await createTestChannelWithSpaceRoles(bob, {
                 name: 'bobs channel',
                 parentSpaceId: spaceId,
-                roleIds: [],
+                roles: [],
             })
             //
             // send 15 messages, make block every 5

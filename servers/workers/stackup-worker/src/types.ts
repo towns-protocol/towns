@@ -181,10 +181,13 @@ export const FunctionName = {
     updateRole: 'updateRole',
     // ChannelBase.sol
     createChannel: 'createChannel',
+    createChannelWithOverridePermissions: 'createChannelWithOverridePermissions',
     updateChannel: 'updateChannel',
     removeChannel: 'removeChannel',
     addRoleToChannel: 'addRoleToChannel',
     removeRoleFromChannel: 'removeRoleFromChannel',
+    setChannelPermissionOverrides: 'setChannelPermissionOverrides',
+    clearChannelPermissionOverrides: 'clearChannelPermissionOverrides',
     // EntitlementsManagerBase.sol
     removeEntitlementModule: 'removeEntitlementModule',
     addEntitlementModule: 'addEntitlementModule',

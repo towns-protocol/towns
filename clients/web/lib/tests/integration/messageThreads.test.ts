@@ -33,7 +33,7 @@ describe('messageThreads', () => {
         const channelId = await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
-            roleIds: [],
+            roles: [],
         })
 
         // alice joins the room

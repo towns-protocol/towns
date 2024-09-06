@@ -52,6 +52,7 @@ export const FunctionHash = {
     updateRole: 'updateRole',
     // ChannelBase.sol
     createChannel: 'createChannel',
+    createChannelWithOverridePermissions: 'createChannelWithOverridePermissions',
     updateChannel: 'updateChannel',
     removeChannel: 'removeChannel',
     addRoleToChannel: 'addRoleToChannel',
@@ -70,6 +71,8 @@ export const FunctionHash = {
     joinSpace_linkWallet: 'joinSpace_linkWallet',
     prepayMembership: 'prepayMembership',
     editMembershipSettings: 'editMembershipSettings',
+    setChannelPermissionOverrides: 'setChannelPermissionOverrides',
+    clearChannelPermissionOverrides: 'clearChannelPermissionOverrides',
 } as const
 
 export type FunctionHash = keyof typeof FunctionHash

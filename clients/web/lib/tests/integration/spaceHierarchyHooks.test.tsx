@@ -46,7 +46,7 @@ describe('spaceHierarchyHooks', () => {
         await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
-            roleIds: [],
+            roles: [],
         })
         // set the space child prop on the room to 0 so that anyone can make channels
         // stop bob, we'll be using him in the react component
@@ -101,7 +101,7 @@ describe('spaceHierarchyHooks', () => {
         await createTestChannelWithSpaceRoles(alice, {
             name: 'alices channel',
             parentSpaceId: spaceId,
-            roleIds: [],
+            roles: [],
         })
         await waitFor(
             async () => expect((await alice.spaceDapp.getChannels(spaceId)).length).toBe(3),

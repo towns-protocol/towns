@@ -35,6 +35,8 @@ export enum BlockchainTransactionType {
     CreateChannel = 'createChannel',
     EditChannel = 'editChannel',
     UpdateRole = 'updateRole',
+    SetChannelPermissionOverrides = 'setChannelPermissionOverrides',
+    ClearChannelPermissionOverrides = 'clearChannelPermissionOverrides',
     CreateRole = 'createRole',
     DeleteRole = 'deleteRole',
     UpdateSpaceInfo = 'updateSpaceInfo',

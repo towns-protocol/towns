@@ -82,7 +82,7 @@ test('create space with additional autojoin channels, and have user join', async
         {
             name: 'channel 1',
             parentSpaceId: spaceId,
-            roleIds: [0, 1, 2], // default member role
+            roles: [1, 2].map((roleId) => ({ roleId, permissions: [] })),
         },
         bob.provider.wallet,
     )
@@ -91,7 +91,7 @@ test('create space with additional autojoin channels, and have user join', async
         {
             name: 'channel 2',
             parentSpaceId: spaceId,
-            roleIds: [0, 1, 2], // default member role
+            roles: [1, 2].map((roleId) => ({ roleId, permissions: [] })),
             channelSettings: {
                 autojoin: true,
                 hideUserJoinLeaveEvents: false,

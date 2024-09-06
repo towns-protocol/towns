@@ -143,6 +143,7 @@ export async function handleVerifications(args: {
             case 'removeEntitlementModule':
             case 'addEntitlementModule':
             case 'createChannel':
+            case 'createChannelWithOverridePermissions':
             case 'updateChannel':
             case 'removeChannel':
             case 'ban':
@@ -292,6 +293,15 @@ export async function handleVerifications(args: {
                 }
                 break
             }
+
+            case 'setChannelPermissionOverrides': {
+                break
+            }
+
+            case 'clearChannelPermissionOverrides': {
+                break
+            }
+
             default:
                 // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
                 return new Response(toJson({ error: `Unknown functionHash ${functionHash}` }), {

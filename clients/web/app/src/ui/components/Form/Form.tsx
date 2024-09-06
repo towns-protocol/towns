@@ -1,5 +1,13 @@
 import React from 'react'
-import { DefaultValues, FieldValues, Mode, UseFormReturn, useForm } from 'react-hook-form'
+import {
+    DefaultValues,
+    FieldValues,
+    FormProvider,
+    Mode,
+    UseFormReturn,
+    useForm,
+    useFormContext,
+} from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ZodTypeAny } from 'zod'
 import { Box, BoxProps } from 'ui/components/Box/Box'
@@ -36,17 +44,16 @@ export function Form<T extends FieldValues>({
     })
 
     return (
-        <Box as="form" id={id} onSubmit={form.handleSubmit(onSubmit ?? (() => null))} {...boxProps}>
-            {React.Children.map(children, (child) => {
-                if (React.isValidElement(child) && typeof child.type === 'function') {
-                    return React.cloneElement(child, {
-                        ...child.props,
-                        ...form,
-                    })
-                }
-                return child
-            })}
-        </Box>
+        <FormProvider {...form}>
+            <Box
+                as="form"
+                id={id}
+                onSubmit={form.handleSubmit(onSubmit ?? (() => null))}
+                {...boxProps}
+            >
+                {children}
+            </Box>
+        </FormProvider>
     )
 }
 
@@ -58,7 +65,8 @@ type FormChildrenFnProps<T extends FieldValues> = Omit<FormProps<T>, 'children'>
     ChildrenWithFormProps<T>
 
 const FormChild = <T extends FieldValues>(props: unknown & ChildrenWithFormProps<T>) => {
-    const { children, ...formProps } = props
+    const { children } = props
+    const formProps = useFormContext()
     return children(formProps as UseFormReturn<T>)
 }
 

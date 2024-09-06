@@ -46,7 +46,7 @@ describe('mentionsHooks', () => {
         const channelId = await createTestChannelWithSpaceRoles(bob, {
             name: 'bobs channel',
             parentSpaceId: spaceId,
-            roleIds: [],
+            roles: [],
         })
         expect(spaceId).toBeDefined()
         expect(channelId).toBeDefined()

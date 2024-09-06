@@ -223,7 +223,7 @@ function TestComponent(args: {
                 const createRoomInfo: CreateChannelInfo = {
                     name: args.channelName,
                     parentSpaceId: spaceId,
-                    roleIds,
+                    roles: roleIds.map((roleId) => ({ roleId, permissions: [] })),
                     topic: args.channelTopic,
                 }
                 await createChannelTransaction(createRoomInfo, args.signer)

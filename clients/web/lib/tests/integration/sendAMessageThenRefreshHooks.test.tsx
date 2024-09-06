@@ -42,7 +42,7 @@ describe('sendAMessageThenRefresh.hooks', () => {
         const janesChannelId = await createTestChannelWithSpaceRoles(jane, {
             name: 'janes channel',
             parentSpaceId: janesSpaceId,
-            roleIds: [],
+            roles: [],
         })
 
         await jane.sendMessage(janesChannelId, 'Hello World')

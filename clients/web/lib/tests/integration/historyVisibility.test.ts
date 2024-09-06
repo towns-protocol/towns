@@ -33,7 +33,7 @@ describe('historyVisibility', () => {
         const roomId = await createTestChannelWithSpaceRoles(bob, {
             parentSpaceId: spaceId,
             name: 'bobs channel',
-            roleIds: [],
+            roles: [],
         })
 
         await john.joinTown(spaceId, john.wallet)

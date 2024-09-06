@@ -112,6 +112,7 @@ router.post('/api/transaction-limits', async (request: WorkerRequest, env: Env) 
                 break
             }
             case 'createChannel':
+            case 'createChannelWithOverridePermissions':
             case 'updateChannel':
             case 'removeChannel': {
                 // default: channels can be created for a valid town 10 times / day
@@ -128,6 +129,16 @@ router.post('/api/transaction-limits', async (request: WorkerRequest, env: Env) 
                 // todo:
                 break
             }
+
+            case 'setChannelPermissionOverrides': {
+                // todo:
+                break
+            }
+            case 'clearChannelPermissionOverrides': {
+                // todo:
+                break
+            }
+
             default:
                 // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
                 return new Response(toJson({ error: `Unknown operation ${operation}` }), {

@@ -55,7 +55,7 @@ describe('sendReactionHooks', () => {
         const janesChannelId = await createTestChannelWithSpaceRoles(jane, {
             name: 'janes channel',
             parentSpaceId: janesSpaceId,
-            roleIds: [],
+            roles: [],
         })
         // create a veiw for bob
         const TestRoomMessages = ({ signer }: { signer: TSigner }) => {

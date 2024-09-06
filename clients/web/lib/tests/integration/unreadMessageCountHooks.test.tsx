@@ -45,7 +45,7 @@ describe('unreadMessageCountHooks', () => {
         const janesChannelId = await createTestChannelWithSpaceRoles(jane, {
             name: 'janes channel',
             parentSpaceId: janesSpaceId,
-            roleIds: [],
+            roles: [],
         })
         // send 20 messages to the space after we make the channel
         // dendrite doesn't natively send space child events with state
@@ -224,7 +224,7 @@ describe('unreadMessageCountHooks', () => {
             {
                 name: 'janes channel',
                 parentSpaceId: janesSpaceId,
-                roleIds: [],
+                roles: [],
             },
             jane.provider.wallet,
         )

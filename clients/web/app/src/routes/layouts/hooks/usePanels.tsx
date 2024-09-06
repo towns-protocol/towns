@@ -29,6 +29,7 @@ import { SpaceBannedUsers } from 'routes/SpaceBannedUsers'
 import { MutualTownsPanel } from '@components/MutualTownsPanel/MutualTownsPanel'
 import { PinsPanel } from '@components/PinsPanel/PinsPanel'
 import { ChannelRiverMetadataSettingsPanel } from '@components/ChannelSettings/ChannelRiverMetadataSettingsForm'
+import { ChannelPermissionOverridesPanel } from '@components/ChannelSettings/ChannelPermissionOverridesPanel'
 import { BearerTokenPrivyWrapper } from '@components/BearerTokenPanel/BearerTokenPanel'
 
 export const usePanels = () => {
@@ -162,6 +163,15 @@ export const usePanels = () => {
         }
         case CHANNEL_INFO_PARAMS.PINS: {
             return withWrapper(<PinsPanel />)
+        }
+
+        case CHANNEL_INFO_PARAMS.EDIT_CHANNEL_PERMISSION_OVERRIDES: {
+            const roleId = Number(searchParams.get('roleId'))
+            if (typeof roleId === 'number') {
+                return withWrapper(<ChannelPermissionOverridesPanel roleId={roleId} />)
+            } else {
+                return null
+            }
         }
     }
 

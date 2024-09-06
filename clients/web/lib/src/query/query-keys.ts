@@ -31,6 +31,14 @@ export const blockchainKeys = {
         QuerKeysEnum.ThenByRoleIds,
         roleId,
     ],
+    channelPermissionOverrides: (spaceId: string, roleId: number, channelId: string) => [
+        'channelPermissionOverrides',
+        QuerKeysEnum.FirstBySpaceIds,
+        spaceId,
+        QuerKeysEnum.ThenByRoleIds,
+        roleId,
+        channelId,
+    ],
     spaceInfo: (spaceId: string) => ['spaceInfo', QuerKeysEnum.FirstBySpaceIds, spaceId] as const,
     channelInfo: (channelId: string, updatedAtKey: string) => [
         'channelInfo',

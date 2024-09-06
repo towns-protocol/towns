@@ -42,7 +42,7 @@ describe('channel with roles and permissions', () => {
         const channelId = await createTestChannelWithSpaceRoles(alice, {
             name: 'alice channel',
             parentSpaceId: spaceId,
-            roleIds: [],
+            roles: [],
         })
 
         /** Act */
@@ -78,7 +78,7 @@ describe('channel with roles and permissions', () => {
             {
                 name: 'gated channel',
                 parentSpaceId: spaceId,
-                roleIds: [],
+                roles: [],
             },
             [],
             ruleData,
@@ -129,7 +129,7 @@ describe('channel with roles and permissions', () => {
             {
                 name: 'gated channel',
                 parentSpaceId: spaceId,
-                roleIds: [],
+                roles: [],
             },
             [],
             ruleData,
@@ -170,7 +170,7 @@ describe('channel with roles and permissions', () => {
         const channelId = await createTestChannelWithSpaceRoles(alice, {
             name: 'alice channel',
             parentSpaceId: spaceId,
-            roleIds: [],
+            roles: [],
         })
 
         /** Act */
@@ -211,7 +211,7 @@ describe('channel with roles and permissions', () => {
         const channelId = await createTestChannelWithSpaceRoles(alice, {
             name: 'alice channel',
             parentSpaceId: spaceId,
-            roleIds: [roleIdentifier.roleId],
+            roles: [roleIdentifier.roleId].map((roleId) => ({ roleId, permissions: [] })),
         })
 
         /** Act & Assert */
@@ -241,7 +241,7 @@ describe('channel with roles and permissions', () => {
             {
                 name: 'gated channel',
                 parentSpaceId: spaceId,
-                roleIds: [],
+                roles: [],
             },
             [carol.wallet.address],
             NoopRuleData,
@@ -281,7 +281,7 @@ describe('channel with roles and permissions', () => {
             {
                 name: 'gated channel',
                 parentSpaceId: spaceId,
-                roleIds: [],
+                roles: [],
             },
             [carol.wallet.address],
             NoopRuleData,
@@ -332,7 +332,7 @@ describe('channel with roles and permissions', () => {
             {
                 name: 'gated channel',
                 parentSpaceId: spaceId,
-                roleIds: [],
+                roles: [],
             },
             [carol.wallet.address],
             NoopRuleData,
