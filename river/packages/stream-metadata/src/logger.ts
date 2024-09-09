@@ -18,5 +18,5 @@ const pinoOptions: LoggerOptions = {
 const baseLogger = pino(pinoOptions)
 
 export function getLogger(name: string, meta: Record<string, unknown> = {}) {
-	return baseLogger.child({ name, ...meta })
+	return baseLogger.child({ name, instance: config.instance, ...meta })
 }

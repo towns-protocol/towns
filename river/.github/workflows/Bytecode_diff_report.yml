@@ -1,0 +1,4 @@
+name: Bytecode diff report
+
+on:
+    workflow_dispatch:

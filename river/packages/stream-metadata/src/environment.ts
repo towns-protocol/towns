@@ -1,6 +1,7 @@
 import * as dotenv from 'dotenv'
 import { getWeb3Deployment } from '@river-build/web3'
 import { z } from 'zod'
+import { v4 } from 'uuid'
 
 dotenv.config({
 	path: ['.env', '.env.local'],
@@ -52,6 +53,10 @@ function makeConfig() {
 			pretty: envMain.LOG_PRETTY,
 		},
 		aws: envAws?.success ? envAws.data : undefined,
+		instance: {
+			id: v4(),
+			deployedAt: new Date().toISOString(),
+		},
 	}
 }
 

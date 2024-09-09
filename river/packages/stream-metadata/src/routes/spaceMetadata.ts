@@ -6,7 +6,7 @@ import { config } from '../environment'
 import { isValidEthereumAddress } from '../validators'
 import { spaceDapp } from '../contract-utils'
 
-export const spaceMetadataBaseUrl = `${config.streamMetadataBaseUrl}space`.toLowerCase()
+export const spaceMetadataBaseUrl = `${config.streamMetadataBaseUrl}/space`.toLowerCase()
 
 const paramsSchema = z.object({
 	spaceAddress: z.string().min(1, 'spaceAddress parameter is required'),
