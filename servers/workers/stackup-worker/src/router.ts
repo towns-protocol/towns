@@ -176,14 +176,14 @@ router.post('/api/sponsor-userop', async (request: WorkerRequest, env: Env, { pr
 
     const requestInit = createStackupPMSponsorUserOperationRequest({
         userOperation,
-        entryPoint: env.PAYMASTER_ADDRESS,
+        entryPoint: env.ERC4337_ENTRYPOINT_ADDRESS,
         // can be 'payg' or 'erc20token'
         // see https://docs.stackup.sh/reference/pm-sponsoruseroperation
         type: { type: 'payg' },
     })
     console.log('paymaster API request:', requestInit.body)
     const durationStackupApiRequest = durationLogger('paymaster API Request')
-    const responseFetched = await fetch(`${env.PAYMASTER_RPC_URL}`, requestInit)
+    const responseFetched = await fetch(`${env.STACKUP_PAYMASTER_RPC_URL}`, requestInit)
     durationStackupApiRequest()
 
     return handlePaymasterResponse({
@@ -233,7 +233,7 @@ router.post(
         const requestInit = createAlchemyRequestGasAndPaymasterDataRequest({
             policyId: env.ALCHEMY_GM_POLICY_ID,
             userOperation,
-            entryPoint: env.PAYMASTER_ADDRESS,
+            entryPoint: env.ERC4337_ENTRYPOINT_ADDRESS,
         })
         console.log('paymaster API request:', requestInit.body)
         const durationAlchemyApiRequest = durationLogger('paymaster API Request')

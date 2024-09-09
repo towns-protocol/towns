@@ -74,7 +74,7 @@ curl http://127.0.0.1:8686/
 ```bash
 
 # ensure the following are set in .dev.vars
-PAYMASTER_ADDRESS=0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789
+ERC4337_ENTRYPOINT_ADDRESS=0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789
 STACKUP_API_TOKEN=${YOU_API_KEY}
 # if override is not for every_wallet_can_mint_town
 SKIP_TOWNID_VERIFICATION=true
@@ -91,7 +91,7 @@ curl -X POST -H "Content-Type: application/json" -d '{"sender":"0x9a3f50137aC64c
 
 ```
 # ensure the following are set in .dev.vars
-PAYMASTER_ADDRESS=0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789
+ERC4337_ENTRYPOINT_ADDRESS=0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789
 STACKUP_API_TOKEN=${YOU_API_KEY}
 
 # if override is not for every_wallet_can_mint_town

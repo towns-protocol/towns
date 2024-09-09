@@ -22,7 +22,7 @@ PAYMASTER_LIMIT="false"
 
 usage() {
     echo "Usage: run-stackup-worker.sh [OPTIONS]"
-    echo "Prerequisites: you must ether have a .dev.vars file in ./servers/workers/stackup-worker or pass the following environment variables: PAYMASTER_RPC_URL, PRIVY_APP_KEY"
+    echo "Prerequisites: you must ether have a .dev.vars file in ./servers/workers/stackup-worker or pass the following environment variables: STACKUP_PAYMASTER_RPC_URL, PRIVY_APP_KEY"
 }
 
 # Parse command line arguments
@@ -69,8 +69,8 @@ if [ -n "$ENVIRONMENT" ]; then
   ENVIRONMENT_OVERRIDE="$ENVIRONMENT"
 fi
 
-if [ -n "$PAYMASTER_RPC_URL" ]; then
-  PAYMASTER_RPC_URL_OVERRIDE="$PAYMASTER_RPC_URL"
+if [ -n "$STACKUP_PAYMASTER_RPC_URL" ]; then
+  STACKUP_PAYMASTER_RPC_URL_OVERRIDE="$STACKUP_PAYMASTER_RPC_URL"
 fi
 
 PRIVY_APP_KEY=""
@@ -91,13 +91,13 @@ if [ -n "$ENVIRONMENT_OVERRIDE" ]; then
   ENVIRONMENT="$ENVIRONMENT_OVERRIDE"
 fi
 
-if [ -n "$PAYMASTER_RPC_URL_OVERRIDE" ]; then
-  PAYMASTER_RPC_URL="$PAYMASTER_RPC_URL_OVERRIDE"
+if [ -n "$STACKUP_PAYMASTER_RPC_URL_OVERRIDE" ]; then
+  STACKUP_PAYMASTER_RPC_URL="$STACKUP_PAYMASTER_RPC_URL_OVERRIDE"
 fi
 
 # if variables are not present, throw an error
-if [ -z "$PAYMASTER_RPC_URL" ]; then
-    echo "ERROR: Missing PAYMASTER_RPC_URL"
+if [ -z "$STACKUP_PAYMASTER_RPC_URL" ]; then
+    echo "ERROR: Missing STACKUP_PAYMASTER_RPC_URL"
     exit 1
 fi
 
@@ -106,13 +106,13 @@ if [ "$SKIP_PRIVY_VERIFICATION" = "false" ] && [ -z "$PRIVY_APP_KEY" ]; then
     exit 1
 fi
 
-echo "PAYMASTER_RPC_URL: ${PAYMASTER_RPC_URL}"
+echo "STACKUP_PAYMASTER_RPC_URL: ${STACKUP_PAYMASTER_RPC_URL}"
 echo "PRIVY_APP_KEY: ${PRIVY_APP_KEY}"
 echo "ALCHEMY_API_KEY: ${ALCHEMY_API_KEY}"
 echo "ENVIRONMENT: ${ENVIRONMENT}"
 
 # Define the yarn command without output redirection
-stackup_command="cd ./servers/workers/stackup-worker && yarn dev:local --var PAYMASTER_ADDRESS:0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789 SKIP_PRIVY_VERIFICATION:$SKIP_PRIVY_VERIFICATION PAYMASTER_RPC_URL:$PAYMASTER_RPC_URL PRIVY_APP_KEY:$PRIVY_APP_KEY PRIVY_APP_ID:clml5fp7s013vmf0fnkabuaiw ALCHEMY_API_KEY:$ALCHEMY_API_KEY AUTH_SECRET:foo"
+stackup_command="cd ./servers/workers/stackup-worker && yarn dev:local --var ERC4337_ENTRYPOINT_ADDRESS:0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789 SKIP_PRIVY_VERIFICATION:$SKIP_PRIVY_VERIFICATION STACKUP_PAYMASTER_RPC_URL:$STACKUP_PAYMASTER_RPC_URL PRIVY_APP_KEY:$PRIVY_APP_KEY PRIVY_APP_ID:clml5fp7s013vmf0fnkabuaiw ALCHEMY_API_KEY:$ALCHEMY_API_KEY AUTH_SECRET:foo"
 
 if [ -n "$ENVIRONMENT" ]; then
     stackup_command="$stackup_command ENVIRONMENT:$ENVIRONMENT"

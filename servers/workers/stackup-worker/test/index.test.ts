@@ -59,7 +59,7 @@ describe('http router', () => {
         const fetchMock = getMiniflareFetchMock()
         fetchMock.disableNetConnect()
         const env = getMiniflareBindings()
-        const url = new URL(env.PAYMASTER_RPC_URL)
+        const url = new URL(env.STACKUP_PAYMASTER_RPC_URL)
         const origin = fetchMock.get(url.origin)
         env.SKIP_TOWNID_VERIFICATION = 'true'
 
@@ -104,7 +104,7 @@ describe('http router', () => {
         const fetchMock = getMiniflareFetchMock()
         fetchMock.disableNetConnect()
         const env = getMiniflareBindings()
-        const url = new URL(env.PAYMASTER_RPC_URL)
+        const url = new URL(env.STACKUP_PAYMASTER_RPC_URL)
         const origin = fetchMock.get(url.origin)
         env.SKIP_TOWNID_VERIFICATION = 'true'
         const resultErrorStackup = {
@@ -142,7 +142,7 @@ describe('http router', () => {
         const fetchMock = getMiniflareFetchMock()
         fetchMock.disableNetConnect()
         const env = getMiniflareBindings()
-        const url = new URL(env.PAYMASTER_RPC_URL)
+        const url = new URL(env.STACKUP_PAYMASTER_RPC_URL)
         const origin = fetchMock.get(url.origin)
         env.SKIP_TOWNID_VERIFICATION = 'true'
         const resultErrorStackup = {
@@ -180,7 +180,7 @@ describe('http router', () => {
         const fetchMock = getMiniflareFetchMock()
         fetchMock.disableNetConnect()
         const env = getMiniflareBindings()
-        const url = new URL(env.PAYMASTER_RPC_URL)
+        const url = new URL(env.STACKUP_PAYMASTER_RPC_URL)
         const origin = fetchMock.get(url.origin)
         env.SKIP_TOWNID_VERIFICATION = 'true'
         const resultErrorStackup = {

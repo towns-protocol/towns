@@ -16,7 +16,7 @@ import { PrivyClient } from '@privy-io/server-auth'
 
 export interface Env extends AuthEnv {
     ENVIRONMENT: Environment
-    PAYMASTER_ADDRESS: string
+    ERC4337_ENTRYPOINT_ADDRESS: string
     SKIP_TOWNID_VERIFICATION: string
     CREATE_TOWN: KVNamespace // KV Namespace for createSpaces transactions
     OVERRIDES: KVNamespace // KV Namespace for createSpaces transactions
@@ -25,7 +25,7 @@ export interface Env extends AuthEnv {
     ADDRESS_WHITELIST: KVNamespace
     //JOIN_TOWN: KVNamespace // KV Namespace for joinTowns transactions
     //LINK_WALLET_TO_ROOT_KEY: KVNamespace // KV Namespace for linkWalletToRootKey transactions
-    PAYMASTER_RPC_URL: string
+    STACKUP_PAYMASTER_RPC_URL: string
     PRIVY_APP_KEY: string
     PRIVY_APP_ID: string
     ALCHEMY_API_KEY: string
