@@ -6,7 +6,10 @@ env:
     RIVER_RPC_URL: ${{ secrets.RIVER_TESTNET_RPC_URL }}
     BLOCKSCOUT_SEPOLIA_API_KEY: ${{ secrets.BLOCKSCOUT_BASE_SEPOLIA_API_KEY }}
     RIVERSCAN_DEVNET_API_KEY: 'PLACEHOLDER_STRING'
+    RIVERSCAN_API_KEY: 'PLACEHOLDER_STRING'
+    BLOCKSCOUT_BASE_URL: 'https://base.blockscout.com/api'
     BLOCKSCOUT_SEPOLIA_URL: 'https://base-sepolia.blockscout.com/api'
+    BLOCKSCOUT_BASE_API_KEY: ${{ secrets.BLOCKSCOUT_BASE_SEPOLIA_API_KEY }}
     BASESCAN_SEPOLIA_URL: 'https://api-sepolia.basescan.org/api'
     BASESCAN_SEPOLIA_API_KEY: ${{ secrets.BASESCAN_SEPOLIA_API_KEY }}
     RIVERSCAN_DEVNET_URL: 'https://towns-devnet.explorer.caldera.xyz/api'
@@ -61,23 +64,24 @@ jobs:
                   verifier=${{ env.BLOCKSCOUT_SEPOLIA_URL }}
               working-directory: river/contracts
 
-            - name: Verify Base Sepolia Interaction
-              run: make interact-resume-any-explicit \
-                  context=alpha \
-                  rpc=base_sepolia \
-                  contract=InteractAlpha \
-                  private_key=${{ env.ALPHA_BASE_SEPOLIA_DEPLOYER_PK }} \
-                  etherscan=${{ env.BASESCAN_SEPOLIA_API_KEY }} \
-                  verifier=${{ env.BASESCAN_SEPOLIA_URL }}
-              working-directory: river/contracts
+            # - name: Verify Base Sepolia Interaction
+            #   run: make interact-resume-any-explicit \
+            #       context=alpha \
+            #       rpc=base_sepolia \
+            #       contract=InteractAlpha \
+            #       private_key=${{ env.ALPHA_BASE_SEPOLIA_DEPLOYER_PK }} \
+            #       etherscan=${{ env.BASESCAN_SEPOLIA_API_KEY }} \
+            #       verifier=${{ env.BASESCAN_SEPOLIA_URL }}
+            #   working-directory: river/contracts
 
             - name: Run River Devnet Interaction
-              run: make interact-any-explicit \
+              env:
+                  ETHERSCAN_API_KEY: ${{ env.RIVERSCAN_DEVNET_API_KEY }}
+              run: make interact-any-explicit-blockscout \
                   context=alpha \
                   rpc=river_devnet \
                   contract=InteractRiverAlpha \
                   private_key=${{ env.ALPHA_BASE_SEPOLIA_DEPLOYER_PK }} \
-                  etherscan=${{ env.RIVERSCAN_DEVNET_API_KEY }} \
                   verifier=${{ env.RIVERSCAN_DEVNET_URL }}
               working-directory: river/contracts
 
