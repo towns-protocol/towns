@@ -71,13 +71,13 @@ export const ValidateMembership = () => {
 
     useEffect(() => {
         if (analytics && userId) {
-            const pId = analytics.setPseudoId(userId)
-            const tracked = {
-                anonymousId: analytics.anonymousId,
-                pseudoId: pId,
-            }
-            analytics?.identify(pId, tracked, () => {
-                console.log('[analytics][ValidateMembership] identify logged in user', tracked)
+            analytics.setUserId(userId)
+            analytics?.identify({}, () => {
+                console.log('[analytics][ValidateMembership] identify user', {
+                    pseudoId: analytics.pseudoId,
+                    anonymousId: analytics.anonymousId,
+                    userId: userId,
+                })
             })
         }
     }, [analytics, userId])

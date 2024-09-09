@@ -132,35 +132,23 @@ function usePrivyLoginWithErrorHandler({
             // so we need to check if the user is already authenticated to river too (loggedInWalletAddress)
             if (!wasAlreadyAuthenticated && !loggedInWalletAddress) {
                 loginToRiverAfterPrivy?.()
-                const pseudoId = user?.wallet?.address
-                    ? analytics?.setPseudoId(user.wallet.address)
-                    : undefined
-                try {
-                    if (pseudoId) {
-                        analytics?.identify(
-                            pseudoId,
-                            {
-                                loginMethod,
-                            },
-                            () => {
-                                console.log('[analytics] identify logged in user', {
-                                    pseudoId,
-                                    loginMethod,
-                                })
-                            },
-                        )
-                    }
-                    const tracked = {
-                        isNewUser,
+                analytics?.identify(
+                    {
                         loginMethod,
-                        pseudoId,
-                    }
-                    analytics?.track('login success', tracked, () => {
-                        console.log('[analytics] login success', tracked)
-                    })
-                } catch (error) {
-                    console.error('[analytics] Error tracking login success', error)
+                    },
+                    () => {
+                        console.log('[analytics] identify logged in user', {
+                            loginMethod,
+                        })
+                    },
+                )
+                const tracked = {
+                    isNewUser,
+                    loginMethod,
                 }
+                analytics?.track('login success', tracked, () => {
+                    console.log('[analytics] login success', tracked)
+                })
             }
         },
         onError: (error) => {

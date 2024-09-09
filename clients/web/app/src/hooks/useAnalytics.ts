@@ -13,16 +13,16 @@ import { datadogLogs } from '@datadog/browser-logs'
 import { env, isTest } from 'utils'
 import { getBrowserName, isAndroid, isIOS, isPWA } from './useDevice'
 
-const ANOYNOMOUS_ID_KEY = 'analytics-anonymousId'
+const USER_ID_KEY = 'analytics-userId'
 const isProd = !env.DEV && !isTest()
 
 export class Analytics implements TownsAnalytics {
     private static instance: Analytics
-    private _pseudoId: string | undefined
     private static didWarn = false
     private readonly analytics: RudderAnalytics
-    public readonly commonProperties: ApiObject
-    public readonly trackedEvents: Set<string> = new Set()
+    private readonly commonProperties: ApiObject
+    private readonly trackedEvents: Set<string> = new Set()
+    private _user?: { userId: string | null }
 
     private constructor(analytics: RudderAnalytics) {
         this.analytics = analytics
@@ -50,37 +50,51 @@ export class Analytics implements TownsAnalytics {
                 return
             }
 
-            const analyticsInstance = new RudderAnalytics()
-            analyticsInstance.load(writeKey, dataPlaneUrl, {
+            const analyticsBackend = new RudderAnalytics()
+            analyticsBackend.load(writeKey, dataPlaneUrl, {
                 useBeacon: true,
                 destSDKBaseURL,
                 pluginsSDKBaseURL,
                 configUrl,
             })
-            analyticsInstance.ready(() => {
+            analyticsBackend.ready(() => {
                 console.log('[analytics] Analytics is ready!')
             })
-            Analytics.instance = new Analytics(analyticsInstance)
+            Analytics.instance = new Analytics(analyticsBackend)
         }
 
         return Analytics.instance
     }
 
-    public get anonymousId() {
-        return getAnonymousId()
+    public setUserId(userId: string) {
+        this._user = { userId }
+        localStorage.setItem(USER_ID_KEY, userId)
     }
 
-    public get pseudoId(): string | undefined {
-        return this._pseudoId
+    get pseudoId(): string | undefined {
+        if (!this._user) {
+            this._user = {
+                userId: localStorage.getItem(USER_ID_KEY),
+            }
+        }
+        if (this._user.userId) {
+            return makePseudoId(this._user.userId)
+        }
+        return undefined
     }
 
-    public setPseudoId(userId: string): string {
-        this._pseudoId = getPseudoId(userId)
-        return this._pseudoId
+    get anonymousId(): string | undefined {
+        return this.analytics.getAnonymousId()
     }
 
-    public identify(userId: string, traits?: IdentifyTraits | ApiOptions, callback?: ApiCallback) {
-        this.analytics.identify(userId, traits, callback)
+    public reset() {
+        this._user = undefined
+        localStorage.removeItem(USER_ID_KEY)
+        this.analytics.reset(true)
+    }
+
+    public identify(traits?: IdentifyTraits | ApiOptions, callback?: ApiCallback) {
+        this.analytics.identify(this.pseudoId, traits, callback)
     }
 
     public page(category?: string, name?: string, properties?: ApiObject, callback?: ApiCallback) {
@@ -163,22 +177,7 @@ function isErrorLike(e: unknown) {
     return e && typeof e === 'object' && 'message' in e && typeof e.message === 'string'
 }
 
-export function getAnonymousId() {
-    let anonymousId = localStorage.getItem(ANOYNOMOUS_ID_KEY)
-
-    if (!anonymousId) {
-        anonymousId = crypto.randomUUID()
-        localStorage.setItem(ANOYNOMOUS_ID_KEY, anonymousId)
-    }
-
-    return anonymousId
-}
-
-export function clearAnonymousId() {
-    localStorage.removeItem(ANOYNOMOUS_ID_KEY)
-}
-
-export function getPseudoId(userId: string) {
+function makePseudoId(userId: string) {
     return keccak256(userId)
 }
 
@@ -210,7 +209,6 @@ function getCommonAnalyticsProperties(): ApiObject {
     const device = isIOS() ? 'ios' : isAndroid() ? 'android' : 'desktop'
     const platform = isPWA() ? 'pwa' : 'browser'
     return {
-        anonymousId: getAnonymousId(),
         browserName: getBrowserName(),
         device,
         platform,

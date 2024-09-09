@@ -36,15 +36,9 @@ export const Main = () => {
 
     const { analytics } = useAnalytics()
     useEffect(() => {
-        analytics?.identify(
-            analytics.anonymousId,
-            {
-                anonymousId: analytics.anonymousId,
-            },
-            () => {
-                console.log('[analytics] anonymousId', analytics.anonymousId)
-            },
-        )
+        analytics?.identify({}, () => {
+            console.log('[analytics] identify')
+        })
     }, [analytics])
 
     usePeriodicUpdates()

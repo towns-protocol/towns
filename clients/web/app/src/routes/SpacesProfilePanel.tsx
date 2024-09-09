@@ -44,7 +44,7 @@ import { PanelButton } from '@components/Panel/PanelButton'
 import { useBlockedUsers } from 'hooks/useBlockedUsers'
 import { UserPreferences } from '@components/UserProfile/UserPreferences'
 // import { useMatchingMessages } from '@components/DirectMessages/CreateDirectMessage/hooks/useMatchingMessages'
-import { clearAnonymousId, useAnalytics } from 'hooks/useAnalytics'
+import { useAnalytics } from 'hooks/useAnalytics'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 
 export const SpaceProfilePanel = () => {
@@ -104,16 +104,10 @@ const SpaceProfileWithoutAuth = () => {
     const { loggedInWalletAddress } = useConnectivity()
 
     const onLogoutClick = useEvent(() => {
-        analytics?.track(
-            'clicked logout',
-            {
-                psuedoId: analytics?.pseudoId,
-            },
-            () => {
-                console.log('[analytics] clicked logout')
-            },
-        )
-        clearAnonymousId()
+        analytics?.track('clicked logout', {}, () => {
+            console.log('[analytics] clicked logout')
+        })
+        analytics?.reset()
         logout()
     })
 
