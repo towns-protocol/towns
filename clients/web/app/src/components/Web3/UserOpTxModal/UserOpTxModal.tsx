@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import { userOpsStore } from '@towns/userops'
-import { BigNumber, utils } from 'ethers'
+import { BigNumber } from 'ethers'
 
 import { Address, BASE_SEPOLIA, useConnectivity } from 'use-towns-client'
 import { useShallow } from 'zustand/react/shallow'
@@ -9,12 +9,11 @@ import { shortAddress } from 'ui/utils/utils'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { isTouch, useDevice } from 'hooks/useDevice'
 import { useIsSmartAccountDeployed } from 'hooks/useIsSmartAccountDeployed'
-import { useBalance } from 'hooks/useBalance'
+import { formatUnitsToFixedLength, useBalance } from 'hooks/useBalance'
 import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
 import { AboveAppProgressModalContainer } from '@components/AppProgressOverlay/AboveAppProgress/AboveAppProgress'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
-import { formatEthDisplay } from '../utils'
 import { CopyWalletAddressButton } from '../TokenVerification/Buttons'
 import { useWalletPrefix } from '../useWalletPrefix'
 
@@ -82,13 +81,11 @@ function UserOpTxModalContent({
 
     const totalCost = gasCost.add(BigNumber.from(currOpValue ?? 0))
 
-    const gasInEth = utils.formatEther(gasCost)
-    const gasInEthFixedTo8 = parseFloat(gasInEth).toFixed(8)
-    const currOpValueInEth = currOpValue ? utils.formatEther(currOpValue) : undefined
-    const totalInEth = utils.formatEther(totalCost.toBigInt())
-    const totalInEthFixedTo5 = parseFloat(totalInEth).toFixed(5)
-    const totalInEthFixedTo8 = parseFloat(totalInEth).toFixed(8)
-    const displayTotalEthPrice = totalInEthFixedTo5 === '0.00000' ? '< 0.00001' : totalInEthFixedTo5
+    const gasInEth = formatUnitsToFixedLength(gasCost.toBigInt())
+    const currOpValueInEth = currOpValue
+        ? formatUnitsToFixedLength(BigNumber.from(currOpValue).toBigInt())
+        : undefined
+    const totalInEth = formatUnitsToFixedLength(totalCost.toBigInt())
     const [showWalletWarning, setShowWalletWarning] = useState(false)
 
     const { data: balanceData, isLoading: isLoadingBalance } = useBalance({
@@ -96,10 +93,7 @@ function UserOpTxModalContent({
         enabled: !!smartAccountAddress,
         watch: true,
     })
-    const formattedBalance =
-        formatEthDisplay(Number.parseFloat(balanceData?.formatted ?? '0')) +
-        ' ' +
-        (balanceData?.symbol ? balanceData.symbol : '')
+    const formattedBalance = `${balanceData?.formatted ?? 0} ${balanceData?.symbol ?? ''}`
 
     const balanceIsLessThanCost = balanceData && balanceData.value < totalCost.toBigInt()
     const _isTouch = isTouch()
@@ -188,7 +182,7 @@ function UserOpTxModalContent({
                         Confirm Transaction
                     </Text>
                 </Box>
-                <Heading level={2}>{displayTotalEthPrice + ' ETH'}</Heading>
+                <Heading level={2}>{totalInEth + ' ETH'}</Heading>
                 <Box padding background="level3" rounded="sm" width="100%" gap="md" color="default">
                     <Box horizontal width="100%" justifyContent="spaceBetween">
                         <Text>
@@ -197,7 +191,7 @@ function UserOpTxModalContent({
                                 (estimated)
                             </Text>
                         </Text>
-                        <Text> {gasInEthFixedTo8 + ' ETH'}</Text>
+                        <Text> {gasInEth + ' ETH'}</Text>
                     </Box>
                     {/* {isLoadingMembershipPrice ? <ButtonSpinner /> : null} */}
                     {currOpValue ? (
@@ -215,7 +209,7 @@ function UserOpTxModalContent({
                         justifyContent="spaceBetween"
                     >
                         <Text strong>Total</Text>
-                        <Text strong> {totalInEthFixedTo8 + ' ETH'}</Text>
+                        <Text strong> {totalInEth + ' ETH'}</Text>
                     </Box>
                 </Box>
                 <Box
@@ -236,7 +230,7 @@ function UserOpTxModalContent({
                                     ? 'Fetching balance...'
                                     : smartAccountAddress
                                     ? shortAddress(smartAccountAddress)
-                                    : 'asdff'}
+                                    : ''}
                             </Text>
                         </Box>
                         {formattedBalance ? (

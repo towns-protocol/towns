@@ -1,6 +1,5 @@
 import React from 'react'
 import { useConnectivity } from 'use-towns-client'
-import { formatEthDisplay } from '@components/Web3/utils'
 import { Box, Button, Text } from '@ui'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { useBalance } from 'hooks/useBalance'
@@ -10,7 +9,7 @@ export function NoFundsModal({ onHide }: { onHide: () => void }) {
     const { data } = useBalance({
         address: loggedInWalletAddress,
     })
-    const balance = formatEthDisplay(Number.parseFloat(data?.formatted ?? '0')) + ' ' + data?.symbol
+    const balance = `${data?.formatted ?? 0} ${data?.symbol ?? ''}`
 
     return (
         <Box gap background="level2" padding="lg" alignItems="center" width="350">

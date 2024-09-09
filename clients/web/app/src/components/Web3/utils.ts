@@ -27,13 +27,6 @@ export function isEthAddress(address: string): boolean {
     return address === ETH_ADDRESS
 }
 
-export function formatEthDisplay(num: number) {
-    let formatted = num.toFixed(5)
-    formatted = formatted.replace(/(\.\d*?[1-9])0+$/, '$1')
-    formatted = formatted.replace(/(\.0*?)$/, '')
-    return formatted
-}
-
 const walletLinkError = new WalletAlreadyLinkedError()
 const walletNotLinkedError = new WalletNotLinkedError()
 

@@ -60,7 +60,7 @@ export function useBalance({
                 decimals: 18,
                 // TODO: if we ever needed to, then chain.nativeCurrency.symbol
                 symbol: 'ETH',
-                formatted: formatUnits(value ?? '0', 18),
+                formatted: formatUnitsToFixedLength(value ?? '0', 18, 5),
                 value,
             }
         },
@@ -96,4 +96,25 @@ export function parseUnits(value: string, decimals: number = 18): bigint {
     const combinedValue = `${integerPart}${paddedFractionalPart}`
 
     return BigInt(combinedValue)
+}
+
+export function formatUnitsToFixedLength(
+    value: bigint,
+    baseDecimals: number = 18,
+    displayDecimals: number = 5,
+): string {
+    // Calculate the scaling factor to shift decimal places correctly
+    const scaleFactor = 10n ** BigInt(baseDecimals - displayDecimals)
+
+    // Scale and round the BigInt value
+    const roundedValue = (value + scaleFactor / 2n) / scaleFactor
+
+    const smallestDisplayableValue = `0.${'0'.repeat(displayDecimals - 1)}1`
+    if (roundedValue === 0n) {
+        return `< ${smallestDisplayableValue}`
+    } else if (roundedValue === 1n) {
+        return `> ${smallestDisplayableValue}`
+    }
+
+    return formatUnits(roundedValue, displayDecimals)
 }

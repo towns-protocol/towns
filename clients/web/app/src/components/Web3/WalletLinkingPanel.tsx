@@ -23,7 +23,6 @@ import {
 } from 'hooks/useAbstractAccountAddress'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { useBalance } from 'hooks/useBalance'
-import { formatEthDisplay } from './utils'
 import { useWalletPrefix } from './useWalletPrefix'
 
 export const WalletLinkingPanel = React.memo(() => {
@@ -214,9 +213,8 @@ export function LinkedWallet({
             <Stack gap="sm" alignItems="start">
                 {isAbstractAccount && (
                     <Paragraph>
-                        Towns Wallet -{' '}
-                        {formatEthDisplay(Number.parseFloat(aaBalance?.data?.formatted ?? '0'))}{' '}
-                        Base {aaBalance?.data?.symbol}
+                        Towns Wallet - `${aaBalance.data?.formatted ?? 0} $
+                        {aaBalance.data?.symbol ?? ''}`
                     </Paragraph>
                 )}
 

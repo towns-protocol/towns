@@ -1,17 +1,15 @@
 import { MONTH_MS, SECOND_MS, YEAR_MS } from 'data/constants'
+import { formatUnitsToFixedLength, parseUnits } from 'hooks/useBalance'
 
 export const getPriceText = (price: string | undefined) => {
     if (typeof price === 'undefined') {
         return undefined
     }
-    const precisionMultiplier = 1_0_0_0_0_0_0
     const numericPrice = parseFloat(price || '0')
     const isFree = price?.toLowerCase() === 'free' || numericPrice === 0
 
     return {
-        value: isFree
-            ? 'Free'
-            : `${Math.round(parseFloat(price) * precisionMultiplier) / precisionMultiplier}`,
+        value: isFree ? 'Free' : `${formatUnitsToFixedLength(parseUnits(price))}`,
         suffix: isFree ? 'First 100' : 'ETH',
     }
 }
