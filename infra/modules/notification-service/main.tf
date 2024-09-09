@@ -235,9 +235,9 @@ resource "aws_ecs_task_definition" "fargate_task_definition" {
   task_role_arn      = aws_iam_role.ecs_task_execution_role.arn
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
 
-  cpu = 512
+  cpu = 2048
 
-  memory = 1024
+  memory = 4096
 
   requires_compatibilities = ["FARGATE"]
 
@@ -404,10 +404,6 @@ resource "aws_ecs_service" "river-ecs-service" {
 
   launch_type      = "FARGATE"
   platform_version = "1.4.0"
-
-  lifecycle {
-    ignore_changes = [task_definition, desired_count]
-  }
 
   load_balancer {
     target_group_arn = aws_lb_target_group.target_group.arn
