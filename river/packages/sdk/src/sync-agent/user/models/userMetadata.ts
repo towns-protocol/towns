@@ -28,7 +28,7 @@ export class UserMetadata extends PersistedObservable<UserMetadataModel> {
         )
     }
 
-    protected override async onLoaded() {
+    protected override onLoaded() {
         this.riverConnection.registerView(this.onClientStarted)
     }
 

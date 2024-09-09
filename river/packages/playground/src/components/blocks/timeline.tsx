@@ -1,8 +1,5 @@
 import {
-    useChannel,
     useDisplayName,
-    useEnsAddress,
-    useNft,
     useSendMessage,
     useSyncAgent,
     useTimeline,
@@ -18,26 +15,24 @@ import { useCurrentChannelId } from '@/hooks/current-channel'
 import { cn } from '@/utils'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '../ui/form'
 import { Button } from '../ui/button'
-import { Block } from '../ui/block'
-import { JsonHover } from '../utils/json-hover'
 import { Input } from '../ui/input'
+import { ScrollArea } from '../ui/scroll-area'
 
-export const TimelineBlock = () => {
+export const Timeline = () => {
     const spaceId = useCurrentSpaceId()
     const channelId = useCurrentChannelId()
-    const { data: channel } = useChannel(spaceId, channelId)
     const { data: timeline } = useTimeline(spaceId, channelId)
     return (
-        <Block title={`#${channel.metadata?.name} timeline`} className="w-full">
+        <div className="grid grid-rows-[auto,1fr] gap-2">
+            <ScrollArea className="h-[calc(100dvh-172px)]">
+                <div className="flex flex-col gap-1.5">
+                    {timeline.map((event) => (
+                        <Message key={event.eventId} event={event} />
+                    ))}
+                </div>
+            </ScrollArea>
             <SendMessage />
-            <div className="flex flex-col gap-1">
-                {timeline.map((event) => (
-                    <JsonHover key={event.eventId} data={event}>
-                        <Message event={event} />
-                    </JsonHover>
-                ))}
-            </div>
-        </Block>
+        </div>
     )
 }
 
@@ -89,25 +84,19 @@ const Message = ({ event }: { event: TimelineEvent }) => {
     )
     const { username } = useUsername(member)
     const { displayName } = useDisplayName(member)
-    const { ensAddress } = useEnsAddress(member)
-    const { nft } = useNft(member)
     const prettyDisplayName = displayName || username
 
     return (
         <div className="flex gap-1">
             {prettyDisplayName && (
-                <JsonHover data={{ username, displayName, ensAddress, nft }}>
-                    <span
-                        className={cn(
-                            'font-semibold',
-                            event.creatorUserId === sync.userId
-                                ? 'text-sky-500'
-                                : 'text-purple-500',
-                        )}
-                    >
-                        {prettyDisplayName}:
-                    </span>
-                </JsonHover>
+                <span
+                    className={cn(
+                        'font-semibold',
+                        event.creatorUserId === sync.userId ? 'text-sky-500' : 'text-purple-500',
+                    )}
+                >
+                    {prettyDisplayName}:
+                </span>
             )}
             <span>{event.text}</span>
         </div>

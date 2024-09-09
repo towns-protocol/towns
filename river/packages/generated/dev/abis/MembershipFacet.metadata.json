@@ -1656,7 +1656,6 @@
       "@prb/math/=lib/@prb/math/src/",
       "@prb/test/=lib/@prb/test/src/",
       "account-abstraction/=lib/account-abstraction/contracts/",
-      "base64/=lib/base64/",
       "ds-test/=lib/ds-test/src/",
       "forge-std/=lib/forge-std/src/",
       "hardhat-deploy/=lib/hardhat-deploy/",
@@ -2062,10 +2061,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/membership/MembershipBase.sol": {
-      "keccak256": "0xe79610bb98ea4d6ccf4265007df5f8be1b036cf456d9446e01680a47df02a5ec",
+      "keccak256": "0x05ff331416d3cc54728c1fb3a59d0a312a8eceefa667a20fbfce74900afd55f5",
       "urls": [
-        "bzz-raw://754cf7f607744b233bf0b6eabf5c010a5f3cd238ebc941f1fb5b7c22f131ab69",
-        "dweb:/ipfs/QmP1j3p7riXnEbJceSKk5iU4CFuiBF9C1NLoP8YbfPkThr"
+        "bzz-raw://2310c22209027c0379f09df78a3bfe106b16347ebc98c2ee61269e1eaf008aef",
+        "dweb:/ipfs/Qmd85R9jbWen2V4xUusdLsUbqZ4HpAtsgQ6u8n2W18t4EV"
       ],
       "license": "MIT"
     },
@@ -2086,10 +2085,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/membership/join/MembershipJoin.sol": {
-      "keccak256": "0xb9646f43bee6713ea49f928de3de5cf1dc29144413bdfa5dc702ebfeaab5b588",
+      "keccak256": "0x9561c8b66c2c133ab2cf6818de249251abe796931c19f6b2afca2fe82015eee8",
       "urls": [
-        "bzz-raw://a5c53e2c981589082131de35925e1ef5b307e361fb5f582a8957812055122503",
-        "dweb:/ipfs/QmNyNMP2dM5izZ7ewisUPyJJCZUdawjgTHuWeC6EQZD3cu"
+        "bzz-raw://a31df993ed6e91ee6c4b8f499ae51f1382ce317783dccba61090b47b58bb9a3f",
+        "dweb:/ipfs/QmfWcrpFC2QCRVowndHJzwRqhVTcrqNsE2DBXir2rxjUho"
       ],
       "license": "MIT"
     },
@@ -2158,10 +2157,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/roles/RolesBase.sol": {
-      "keccak256": "0x9ae2421fa644345be37a7dbeef5f033a46d4417a908aaad265ff0767454199af",
+      "keccak256": "0x6b984e7391d7a9a7399240c98fdc46d1d83c2f551f5a18d1d9f41c0b7f4f3080",
       "urls": [
-        "bzz-raw://ef46b2b435b033d1863c99df89dfb5917284851bd48c60ff84cbaa19f0d7a09d",
-        "dweb:/ipfs/QmVMD26vPpaTpLkNDA5pGzR6ZXeVjUhCLnZaLfwYZpea3w"
+        "bzz-raw://d675dfc528d2b12e180d3c737d3f4e6f1e90b81f3366dfed861a787b1e27b3ca",
+        "dweb:/ipfs/QmVnsDdZeKD5jLnDjwAqvgwMC5iUbn7RrrCDcnw9ijH35E"
       ],
       "license": "MIT"
     },

@@ -25,7 +25,7 @@ export class UserSettings extends PersistedObservable<UserSettingsModel> {
         )
     }
 
-    protected override async onLoaded() {
+    protected override onLoaded() {
         this.riverConnection.registerView(this.onClientStarted)
     }
 

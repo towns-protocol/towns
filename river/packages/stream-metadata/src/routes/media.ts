@@ -61,9 +61,21 @@ export async function fetchMedia(request: FastifyRequest, reply: FastifyReply) {
 			return reply.code(422).send('Invalid data or mimeType')
 		}
 
-		return reply.header('Content-Type', mimeType).send(Buffer.from(data))
+		return (
+			reply
+				.header('Content-Type', mimeType)
+				/**
+				 * public: The response may be cached by any cache, including shared caches like a CDN.
+				 * max-age=31536000: The response may be cached for up to 1 year. This is the maximum value for max-age.
+				 */
+				.header('Cache-Control', 'public, max-age=31536000')
+				.send(Buffer.from(data))
+		)
 	} catch (error) {
 		logger.error({ mediaStreamId, error }, 'Failed to fetch media stream content')
+		// TODO: this should be a 500, not a 404.
+		// Handle 404s explicitly in the block above. And give it a proper cache-control header.
+		// And return a 500 here, and again, give it a proper cache-control header.
 		return reply
 			.code(404)
 			.send({ error: 'Not Found', message: 'Failed to fetch media stream content' })

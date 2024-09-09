@@ -6,14 +6,18 @@ pragma solidity ^0.8.23;
 // libraries
 
 // contracts
-import {Multicall} from "contracts/src/diamond/utils/multicall/Multicall.sol";
+import {Multicallable} from "solady/utils/Multicallable.sol";
 
-contract MockMulticall is Multicall {
+contract MockMulticall is Multicallable {
   function one() external pure returns (uint256) {
     return 1;
   }
 
   function two() external pure returns (uint256) {
     return 2;
+  }
+
+  fallback(bytes calldata) external returns (bytes memory) {
+    return msg.data;
   }
 }

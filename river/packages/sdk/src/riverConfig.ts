@@ -35,6 +35,8 @@ function getBaseRpcUrlForChain(chainId: number): string {
             return 'http://localhost:8545'
         case 84532:
             return 'https://sepolia.base.org'
+        case 8453:
+            return 'https://mainnet.base.org'
         default:
             throw new Error(`No preset RPC url for base chainId ${chainId}`)
     }
@@ -51,6 +53,8 @@ function getRiverRpcUrlForChain(chainId: number): string {
             return 'http://localhost:8546'
         case 6524490:
             return 'https://devnet.rpc.river.build'
+        case 550:
+            return 'https://mainnet.rpc.river.build'
         default:
             throw new Error(`No preset RPC url for river chainId ${chainId}`)
     }

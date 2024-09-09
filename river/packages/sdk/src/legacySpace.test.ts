@@ -1,5 +1,5 @@
 /**
- * @group with-entitilements
+ * @group with-entitlements
  */
 
 import { MembershipStruct, convertRuleDataV1ToV2, encodeRuleDataV2 } from '@river-build/web3'

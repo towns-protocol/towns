@@ -555,28 +555,35 @@ async function evaluateCheckOperation(
         operation.checkType !== CheckOperationType.NATIVE_COIN_BALANCE &&
         operation.contractAddress === zeroAddress
     ) {
-        throw new Error('Invalid contract address for check operation NATIVE_COIN_BALANCE')
+        throw new Error(
+            `Invalid contract address for check operation ${checkOpString(operation.checkType)}`,
+        )
     }
 
     if (
-        operation.checkType in
         [
             CheckOperationType.ERC20,
             CheckOperationType.ERC721,
             CheckOperationType.NATIVE_COIN_BALANCE,
-        ]
+        ].includes(operation.checkType)
     ) {
         const { threshold } = decodeThresholdParams(operation.params)
         if (threshold <= 0n) {
-            throw new Error(`Invalid threshold for check operation ${operation.checkType}`)
+            throw new Error(
+                `Invalid threshold for check operation ${checkOpString(operation.checkType)}`,
+            )
         }
     } else if (operation.checkType === CheckOperationType.ERC1155) {
         const { tokenId, threshold } = decodeERC1155Params(operation.params)
         if (tokenId < 0n) {
-            throw new Error(`Invalid token id for check operation ${operation.checkType}`)
+            throw new Error(
+                `Invalid token id for check operation ${checkOpString(operation.checkType)}`,
+            )
         }
         if (threshold <= 0n) {
-            throw new Error(`Invalid threshold for check operation ${operation.checkType}`)
+            throw new Error(
+                `Invalid threshold for check operation ${checkOpString(operation.checkType)}`,
+            )
         }
     }
 

@@ -67,7 +67,15 @@ export async function fetchUserProfileImage(request: FastifyRequest, reply: Fast
 			profileImage.streamId
 		}?key=${bin_toHexString(key)}&iv=${bin_toHexString(iv)}`
 
-		return reply.redirect(redirectUrl)
+		return (
+			reply
+				.redirect(redirectUrl)
+				/**
+				 * public: The response may be cached by any cache, including shared caches like a CDN.
+				 * max-age=300: The response may be cached by the client for 300 seconds (5 minutes).
+				 */
+				.header('Cache-Control', 'public, max-age=300')
+		)
 	} catch (error) {
 		logger.error(
 			{

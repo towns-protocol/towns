@@ -1,5 +1,5 @@
 /**
- * @group with-entitilements
+ * @group with-entitlements
  */
 
 import { dlogger } from '@river-build/dlog'

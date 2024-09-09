@@ -1,4 +1,4 @@
-import { Navigate, createBrowserRouter } from 'react-router-dom'
+import { createBrowserRouter } from 'react-router-dom'
 import { RootLayout } from './layout'
 import { IndexRoute } from './root'
 
@@ -23,32 +23,29 @@ export const router = createBrowserRouter([
             {
                 path: '/t',
                 lazy: async () => {
-                    const { TLayout } = await import('./t/layout')
+                    const { SelectSpaceRoute } = await import('./t/spaces')
                     return {
-                        Component: TLayout,
+                        Component: SelectSpaceRoute,
                     }
                 },
-                errorElement: <Navigate to="/" />,
+            },
+            {
+                path: '/t/:spaceId',
+                lazy: async () => {
+                    const { SelectChannelRoute } = await import('./t/channels')
+                    return {
+                        Component: SelectChannelRoute,
+                    }
+                },
                 children: [
                     {
-                        path: '/t/:spaceId',
+                        path: '/t/:spaceId/:channelId',
                         lazy: async () => {
-                            const { SpaceRoute } = await import('./t/space')
+                            const { TimelineRoute } = await import('./t/timeline')
                             return {
-                                Component: SpaceRoute,
+                                Component: TimelineRoute,
                             }
                         },
-                        children: [
-                            {
-                                path: '/t/:spaceId/:channelId',
-                                lazy: async () => {
-                                    const { ChannelRoute } = await import('./t/channel')
-                                    return {
-                                        Component: ChannelRoute,
-                                    }
-                                },
-                            },
-                        ],
                     },
                 ],
             },

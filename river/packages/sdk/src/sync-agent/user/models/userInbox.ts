@@ -28,7 +28,7 @@ export class UserInbox extends PersistedObservable<UserInboxModel> {
         )
     }
 
-    protected override async onLoaded() {
+    protected override onLoaded() {
         this.riverConnection.registerView(this.onClientStarted)
     }
 

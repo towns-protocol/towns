@@ -23,7 +23,7 @@ export class Members extends PersistedObservable<MembersModel> {
         this.members = {}
     }
 
-    protected override async onLoaded() {
+    protected override onLoaded() {
         this.riverConnection.registerView((client) => {
             if (
                 client.streams.has(this.data.id) &&
@@ -91,20 +91,12 @@ export class Members extends PersistedObservable<MembersModel> {
         if (streamId !== this.data.id) return
         const stream = this.riverConnection.client?.stream(streamId)
         check(isDefined(stream), 'stream is not defined')
-        this.members = {}
         const userIds = Array.from(stream.view.getMembers().joined.values()).map(
             (member) => member.userId,
         )
         for (const userId of userIds) {
-            if (!this.members[userId]) {
-                this.members[userId] = new Member(
-                    userId,
-                    streamId,
-                    this.riverConnection,
-                    this.store,
-                )
-                this.members[userId].onStreamInitialized(streamId)
-            }
+            // prefetch the member
+            this.get(userId)
         }
         this.setData({ initialized: true, userIds })
     }
@@ -116,39 +108,35 @@ export class Members extends PersistedObservable<MembersModel> {
         // In the next sync, the member map will be reinitialized, cleaning up the map.
         // We remove the member from the userIds array, so that we don't try to access it later.
         this.setData({ userIds: this.data.userIds.filter((id) => id !== userId) })
-        this.members[userId].observables.membership.onStreamMembershipUpdated(
-            streamId,
-            userId,
-            MembershipOp.SO_LEAVE,
-        )
+        if (this.members[userId]) {
+            this.members[userId].observables.membership.onStreamMembershipUpdated(
+                streamId,
+                userId,
+                MembershipOp.SO_LEAVE,
+            )
+        }
     }
 
     private onMemberJoin = (streamId: string, userId: string): void => {
         if (streamId !== this.data.id) return
         this.setData({ userIds: [...this.data.userIds, userId] })
-        if (!this.members[userId]) {
-            this.members[userId] = new Member(userId, streamId, this.riverConnection, this.store)
-            this.members[userId].onStreamInitialized(streamId)
-            this.members[userId].observables.membership.onStreamMembershipUpdated(
-                streamId,
-                userId,
-                MembershipOp.SO_JOIN,
-            )
-        }
+        const member = this.get(userId)
+        member.observables.membership.onStreamMembershipUpdated(
+            streamId,
+            userId,
+            MembershipOp.SO_JOIN,
+        )
     }
 
     private onMemberInvite = (streamId: string, userId: string): void => {
         if (streamId !== this.data.id) return
         this.setData({ userIds: [...this.data.userIds, userId] })
-        if (!this.members[userId]) {
-            this.members[userId] = new Member(userId, streamId, this.riverConnection, this.store)
-            this.members[userId].onStreamInitialized(streamId)
-            this.members[userId].observables.membership.onStreamMembershipUpdated(
-                streamId,
-                userId,
-                MembershipOp.SO_INVITE,
-            )
-        }
+        const member = this.get(userId)
+        member.observables.membership.onStreamMembershipUpdated(
+            streamId,
+            userId,
+            MembershipOp.SO_INVITE,
+        )
     }
 
     private onUsernameUpdated = (streamId: string, userId: string): void => {

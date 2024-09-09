@@ -34,7 +34,7 @@ export class Spaces extends PersistedObservable<SpacesModel> {
         super({ id: '0', spaceIds: [] }, store, LoadPriority.high)
     }
 
-    protected override async onLoaded() {
+    protected override onLoaded() {
         this.userMemberships.subscribe(
             (value) => {
                 this.onUserMembershipsChanged(value)

@@ -1,8 +1,12 @@
 import { check, dlogger } from '@river-build/dlog'
 import { isDefined } from '../../../check'
-import { makeDefaultChannelStreamId, makeUniqueChannelStreamId } from '../../../id'
+import {
+    isChannelStreamId,
+    makeDefaultChannelStreamId,
+    makeUniqueChannelStreamId,
+} from '../../../id'
 import { PersistedObservable, persistedObservable } from '../../../observable/persistedObservable'
-import { Identifiable, Store } from '../../../store/store'
+import { Identifiable, LoadPriority, Store } from '../../../store/store'
 import { RiverConnection } from '../../river-connection/riverConnection'
 import { Channel } from './channel'
 import { ethers } from 'ethers'
@@ -28,7 +32,7 @@ export class Space extends PersistedObservable<SpaceModel> {
         store: Store,
         private spaceDapp: SpaceDapp,
     ) {
-        super({ id, channelIds: [], initialized: false }, store)
+        super({ id, channelIds: [], initialized: false }, store, LoadPriority.high)
         this.channels = {
             [makeDefaultChannelStreamId(id)]: new Channel(
                 makeDefaultChannelStreamId(id),
@@ -41,7 +45,7 @@ export class Space extends PersistedObservable<SpaceModel> {
         this.members = new Members(id, riverConnection, store)
     }
 
-    protected override async onLoaded() {
+    protected override onLoaded() {
         this.riverConnection.registerView((client) => {
             if (
                 client.streams.has(this.data.id) &&
@@ -111,9 +115,7 @@ export class Space extends PersistedObservable<SpaceModel> {
     }
 
     getChannel(channelId: string): Channel {
-        if (!this.data.channelIds.includes(channelId)) {
-            throw new Error(`channel ${channelId} not found in space ${this.data.id}`)
-        }
+        check(isChannelStreamId(channelId), 'channelId is not a channel stream id')
         if (!this.channels[channelId]) {
             this.channels[channelId] = new Channel(
                 channelId,

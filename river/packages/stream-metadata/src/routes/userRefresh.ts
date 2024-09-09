@@ -2,8 +2,7 @@ import { FastifyReply, FastifyRequest } from 'fastify'
 import { z } from 'zod'
 
 import { isValidEthereumAddress } from '../validators'
-import { config } from '../environment'
-import { cloudFront } from '../aws'
+import { createCloudfrontInvalidation } from '../aws'
 
 const paramsSchema = z.object({
 	userId: z.string().min(1, 'userId parameter is required').refine(isValidEthereumAddress, {
@@ -29,17 +28,7 @@ export async function userRefresh(request: FastifyRequest, reply: FastifyReply) 
 		const path = `/user/${userId}/image`
 
 		// Refresh CloudFront cache
-		await cloudFront?.createInvalidation({
-			DistributionId: config.aws?.CLOUDFRONT_DISTRIBUTION_ID,
-			InvalidationBatch: {
-				CallerReference: `user-refresh-${userId}-${Date.now()}`,
-				Paths: {
-					Quantity: 1,
-					Items: [path],
-				},
-			},
-		})
-		logger.info({ path }, 'CloudFront cache invalidated')
+		await createCloudfrontInvalidation({ path, logger })
 
 		return reply.code(200).send({ ok: true })
 	} catch (error) {

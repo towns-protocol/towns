@@ -37,7 +37,7 @@ export class UserMemberships extends PersistedObservable<UserMembershipsModel> {
         this.riverConnection = riverConnection
     }
 
-    override async onLoaded() {
+    protected override onLoaded() {
         this.riverConnection.registerView(this.onClientStarted)
     }
 

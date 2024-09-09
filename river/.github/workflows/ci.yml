@@ -301,7 +301,7 @@ jobs:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_multinode_ent
         runs-on: ubuntu-latest-8-cores
-        timeout-minutes: 30
+        timeout-minutes: 40
         services:
             postgres-core:
                 image: postgres:latest
@@ -431,7 +431,7 @@ jobs:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_multinode_ent_legacy
         runs-on: ubuntu-latest-8-cores
-        timeout-minutes: 30
+        timeout-minutes: 40
         services:
             postgres-core:
                 image: postgres:latest

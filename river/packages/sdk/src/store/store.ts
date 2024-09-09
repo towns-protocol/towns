@@ -18,7 +18,7 @@ class TransactionBundler {
     tableNames: string[] = []
     dbOps: (() => Promise<void>)[] = []
     effects: (() => void)[] = []
-    onCommitted: (() => Promise<void>)[] = []
+    onCommitted: (() => void)[] = []
 }
 
 class TransactionGroup implements Record<LoadPriority, TransactionBundler> {
@@ -71,7 +71,7 @@ export class Store {
         // log(`newTransactionGroup "${name}"`)
         check(
             this.transactionGroup === undefined,
-            `transaction already in progress named: ${this.transactionGroup?.name}`,
+            `transaction already in progress named: ${this.transactionGroup?.name} while trying to start ${name}`,
         )
         this.transactionGroup = new TransactionGroup(name)
     }
@@ -105,10 +105,10 @@ export class Store {
                 }
             })
             if (bundle.effects.length > 0 || bundle.onCommitted.length > 0) {
-                this.newTransactionGroup(`${tGroup.name}>effects_${bundle.name}`)
-                bundle.effects.forEach((fn) => fn())
-                await Promise.all(bundle.onCommitted.map((fn) => fn()))
-                await this.commitTransaction()
+                this.withTransaction(`${tGroup.name}>effects_${bundle.name}`, () => {
+                    bundle.effects.forEach((fn) => fn())
+                    bundle.onCommitted.map((fn) => fn())
+                })
             }
         }
         log(`commitTransaction "${tGroup.name}" done`, 'elapsedMs:', Date.now() - time)
@@ -134,7 +134,7 @@ export class Store {
         loadPriority: LoadPriority,
         onLoad: (data?: T) => void,
         onError: (e: Error) => void,
-        onCommitted: () => Promise<void>,
+        onCommitted: () => void,
     ) {
         log('+enqueue load', tableName, id, loadPriority)
         this.checkTableName(tableName)
@@ -162,7 +162,7 @@ export class Store {
         data: T,
         onSaved: () => void,
         onError: (e: Error) => void,
-        onCommitted: () => Promise<void>,
+        onCommitted: () => void,
     ) {
         log('+enqueue save', tableName, data.id)
         this.checkTableName(tableName)

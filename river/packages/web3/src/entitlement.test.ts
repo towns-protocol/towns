@@ -740,6 +740,14 @@ test.each(erc20Cases)('erc20Check - $desc', async (props) => {
 
 const errorTests = [
     {
+        desc: 'unknown check type',
+        check: {
+            ...erc20ChainLinkCheckBaseSepolia_20Tokens,
+            checkType: CheckOperationType.NONE,
+        },
+        error: 'Unknown check operation type',
+    },
+    {
         desc: 'erc20 invalid check (chainId)',
         check: {
             ...erc20ChainLinkCheckBaseSepolia_20Tokens,
@@ -753,6 +761,15 @@ const errorTests = [
             ...erc20ChainLinkCheckBaseSepolia_20Tokens,
             contractAddress: ethers.constants.AddressZero as Address,
         },
+        error: 'Invalid contract address for check operation ERC20',
+    },
+    {
+        desc: 'erc20 invalid check (threshold)',
+        check: {
+            ...erc20ChainLinkCheckBaseSepolia_20Tokens,
+            params: encodeThresholdParams({ threshold: 0n }),
+        },
+        error: 'Invalid threshold for check operation ERC20',
     },
     {
         desc: 'erc721 invalid check (chainId)',
@@ -761,6 +778,7 @@ const errorTests = [
             opType: OperationType.CHECK,
             chainId: -1n,
         },
+        error: 'Invalid chain id for check operation ERC721',
     },
     {
         desc: 'erc721 invalid check (contractAddress)',
@@ -769,15 +787,16 @@ const errorTests = [
             opType: OperationType.CHECK,
             contractAddress: ethers.constants.AddressZero as Address,
         },
+        error: 'Invalid contract address for check operation ERC721',
     },
     {
-        desc: 'custom entitlement invalid check (contractAddress)',
+        desc: 'erc721 invalid check (threshold)',
         check: {
+            ...nftCheckBaseSepolia,
             opType: OperationType.CHECK,
-            checkType: CheckOperationType.ISENTITLED,
-            chainId: 1n,
-            contractAddress: ethers.constants.AddressZero as Address,
+            params: encodeThresholdParams({ threshold: 0n }),
         },
+        error: 'Invalid threshold for check operation ERC721',
     },
     {
         desc: 'custom entitlement invalid check (chainId)',
@@ -787,6 +806,28 @@ const errorTests = [
             chainId: -1n,
             contractAddress: nftCheckBaseSepolia.contractAddress,
         },
+        error: 'Invalid chain id for check operation ISENTITLED',
+    },
+    {
+        desc: 'custom entitlement invalid check (contractAddress)',
+        check: {
+            opType: OperationType.CHECK,
+            checkType: CheckOperationType.ISENTITLED,
+            chainId: 1n,
+            contractAddress: ethers.constants.AddressZero as Address,
+        },
+        error: 'Invalid contract address for check operation ISENTITLED',
+    },
+    {
+        desc: 'erc1155 invalid check (chainId)',
+        check: {
+            opType: OperationType.CHECK,
+            checkType: CheckOperationType.ERC1155,
+            chainId: -1n,
+            contractAddress: MOCK_ADDRESS,
+            params: encodeERC1155Params({ tokenId: 1n, threshold: 1n }),
+        },
+        error: 'Invalid chain id for check operation ERC1155',
     },
     {
         desc: 'erc 1155 invalid check (contractAddress)',
@@ -796,6 +837,18 @@ const errorTests = [
             chainId: 1n,
             contractAddress: ethers.constants.AddressZero as Address,
         },
+        error: 'Invalid contract address for check operation ERC1155',
+    },
+    {
+        desc: 'erc1155 invalid check (threshold)',
+        check: {
+            opType: OperationType.CHECK,
+            checkType: CheckOperationType.ERC1155,
+            chainId: 1n,
+            contractAddress: MOCK_ADDRESS,
+            params: encodeERC1155Params({ tokenId: 1n, threshold: 0n }),
+        },
+        error: 'Invalid threshold for check operation ERC1155',
     },
 ]
 

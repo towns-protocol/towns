@@ -65,8 +65,8 @@ export class PersistedObservable<T extends Identifiable>
             (error: Error) => {
                 super.setValue({ status: 'error', data: this.data, error })
             },
-            async () => {
-                await this.onLoaded()
+            () => {
+                this.onLoaded()
             },
         )
     }
@@ -98,20 +98,18 @@ export class PersistedObservable<T extends Identifiable>
                 (e) => {
                     super.setValue({ status: 'error', data: prevData, error: e })
                 },
-                async () => {
-                    await this.onSaved()
+                () => {
+                    this.onSaved()
                 },
             )
         })
     }
 
-    protected async onLoaded() {
+    protected onLoaded() {
         // abstract
-        return Promise.resolve()
     }
 
-    protected async onSaved() {
+    protected onSaved() {
         // abstract
-        return Promise.resolve()
     }
 }

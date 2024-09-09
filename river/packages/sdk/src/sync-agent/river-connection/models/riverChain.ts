@@ -34,7 +34,7 @@ export class RiverChain extends PersistedObservable<RiverChainModel> {
     }
 
     // implement start function then wire it up from parent
-    override async onLoaded() {
+    protected override onLoaded() {
         this.withInfiniteRetries(() => this.fetchUrls())
         this.withInfiniteRetries(() => this.fetchStreamExists(makeUserStreamId(this.userId)))
     }

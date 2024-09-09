@@ -15,7 +15,7 @@ import {MembershipBase} from "contracts/src/spaces/facets/membership/MembershipB
 import {ERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol";
 import {IntrospectionBase} from "contracts/src/diamond/facets/introspection/IntrospectionBase.sol";
 import {EntitlementGatedBase} from "contracts/src/spaces/facets/gated/EntitlementGatedBase.sol";
-import {Multicall} from "contracts/src/diamond/utils/multicall/Multicall.sol";
+import {Multicallable} from "solady/utils/Multicallable.sol";
 
 contract SpaceProxy is
   IntrospectionBase,
@@ -24,7 +24,7 @@ contract SpaceProxy is
   ERC721ABase,
   MembershipBase,
   EntitlementGatedBase,
-  Multicall
+  Multicallable
 {
   constructor(
     address owner,

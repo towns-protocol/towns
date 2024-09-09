@@ -68,7 +68,7 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
         this.riverChain = new RiverChain(store, riverRegistryDapp, this.userId)
     }
 
-    override async onLoaded() {
+    protected override onLoaded() {
         //
     }
 
@@ -112,11 +112,11 @@ export class RiverConnection extends PersistedObservable<RiverConnectionModel> {
         }
     }
 
-    withStream<T>(streamId: string): {
-        call: (fn: (client: Client, stream: Stream) => Promise<T>) => Promise<T>
+    withStream(streamId: string): {
+        call: <T>(fn: (client: Client, stream: Stream) => Promise<T>) => Promise<T>
     } {
         return {
-            call: (fn): Promise<T> => {
+            call: (fn) => {
                 return this.call(async (client) => {
                     const stream = await client.waitForStream(streamId)
                     return fn(client, stream)

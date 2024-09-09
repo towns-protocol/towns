@@ -1,6 +1,6 @@
 import { PlainMessage } from '@bufbuild/protobuf'
 import { PersistedObservable, persistedObservable } from '../../../observable/persistedObservable'
-import { Identifiable, Store } from '../../../store/store'
+import { Identifiable, LoadPriority, Store } from '../../../store/store'
 import { RiverConnection } from '../../river-connection/riverConnection'
 import { ChannelMessage_Post_Attachment, ChannelMessage_Post_Mention } from '@river-build/proto'
 import { Timeline } from '../../timeline/timeline'
@@ -29,12 +29,12 @@ export class Channel extends PersistedObservable<ChannelModel> {
         private spaceDapp: SpaceDapp,
         store: Store,
     ) {
-        super({ id, spaceId, isJoined: false }, store)
+        super({ id, spaceId, isJoined: false }, store, LoadPriority.high)
         this.timeline = new Timeline(riverConnection.userId)
         this.members = new Members(id, riverConnection, store)
     }
 
-    protected override async onLoaded() {
+    protected override onLoaded() {
         this.riverConnection.registerView((client) => {
             if (
                 client.streams.has(this.data.id) &&
@@ -77,33 +77,35 @@ export class Channel extends PersistedObservable<ChannelModel> {
         },
     ): Promise<{ eventId: string }> {
         const channelId = this.data.id
-        const result = await this.riverConnection
-            .withStream<{ eventId: string }>(channelId)
-            .call((client) => {
-                return client.sendChannelMessage_Text(channelId, {
-                    threadId: options?.threadId,
-                    threadPreview: options?.threadId ? '🙉' : undefined,
-                    replyId: options?.replyId,
-                    replyPreview: options?.replyId ? '🙈' : undefined,
-                    content: {
-                        body: message,
-                        mentions: options?.mentions ?? [],
-                        attachments: options?.attachments ?? [],
-                    },
-                })
+        const result = await this.riverConnection.withStream(channelId).call((client) => {
+            return client.sendChannelMessage_Text(channelId, {
+                threadId: options?.threadId,
+                threadPreview: options?.threadId ? '🙉' : undefined,
+                replyId: options?.replyId,
+                replyPreview: options?.replyId ? '🙈' : undefined,
+                content: {
+                    body: message,
+                    mentions: options?.mentions ?? [],
+                    attachments: options?.attachments ?? [],
+                },
             })
+        })
         return result
     }
 
     async pin(eventId: string) {
         const channelId = this.data.id
-        const result = await this.riverConnection.call((client) => client.pin(channelId, eventId))
+        const result = await this.riverConnection
+            .withStream(channelId)
+            .call((client) => client.pin(channelId, eventId))
         return result
     }
 
     async unpin(eventId: string) {
         const channelId = this.data.id
-        const result = await this.riverConnection.call((client) => client.unpin(channelId, eventId))
+        const result = await this.riverConnection
+            .withStream(channelId)
+            .call((client) => client.unpin(channelId, eventId))
         return result
     }
 

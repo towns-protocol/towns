@@ -391,7 +391,6 @@
       "@prb/math/=lib/@prb/math/src/",
       "@prb/test/=lib/@prb/test/src/",
       "account-abstraction/=lib/account-abstraction/contracts/",
-      "base64/=lib/base64/",
       "ds-test/=lib/ds-test/src/",
       "forge-std/=lib/forge-std/src/",
       "hardhat-deploy/=lib/hardhat-deploy/",
@@ -628,22 +627,6 @@
       ],
       "license": "MIT"
     },
-    "contracts/src/diamond/utils/multicall/IMulticall.sol": {
-      "keccak256": "0x6dc9ea0a61c25be2ccf2812ae27c4044d2471b113862f242ef5d11fba1167ec1",
-      "urls": [
-        "bzz-raw://31d7c5626cb8817e9a638b42dac9d19eafdbb5e7db50a54a667bf9a8e469e0e8",
-        "dweb:/ipfs/Qmex9vaHpj8wPwG31Rvft9oXtdLeK1JRCrzgGSVMqszRGZ"
-      ],
-      "license": "MIT"
-    },
-    "contracts/src/diamond/utils/multicall/Multicall.sol": {
-      "keccak256": "0xd033d4a233fbfee42239cea898cfb995d1e3aa2585aee8def257703cd00a3b5b",
-      "urls": [
-        "bzz-raw://03cb097e17b5443b71058d028b3409db07a7ecad1d1edc360c72ed32cbd9c0dd",
-        "dweb:/ipfs/QmTbqyWToxcJynYhRBioTTPHucUExeEiriKekZ1vBToUpg"
-      ],
-      "license": "MIT"
-    },
     "contracts/src/factory/facets/architect/ArchitectStorage.sol": {
       "keccak256": "0xc62e53da3472373306030cd9bb5621f895b5ebbab23ab5d03311c237fe3fb19c",
       "urls": [
@@ -773,10 +756,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/membership/MembershipBase.sol": {
-      "keccak256": "0xe79610bb98ea4d6ccf4265007df5f8be1b036cf456d9446e01680a47df02a5ec",
+      "keccak256": "0x05ff331416d3cc54728c1fb3a59d0a312a8eceefa667a20fbfce74900afd55f5",
       "urls": [
-        "bzz-raw://754cf7f607744b233bf0b6eabf5c010a5f3cd238ebc941f1fb5b7c22f131ab69",
-        "dweb:/ipfs/QmP1j3p7riXnEbJceSKk5iU4CFuiBF9C1NLoP8YbfPkThr"
+        "bzz-raw://2310c22209027c0379f09df78a3bfe106b16347ebc98c2ee61269e1eaf008aef",
+        "dweb:/ipfs/Qmd85R9jbWen2V4xUusdLsUbqZ4HpAtsgQ6u8n2W18t4EV"
       ],
       "license": "MIT"
     },
@@ -805,10 +788,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/proxy/SpaceProxy.sol": {
-      "keccak256": "0x0abbcfe10500b16399e91aefced93c460a0916e43738b06701c6994aff0e7c4f",
+      "keccak256": "0xa9ea5edf71ba3056f24a6470f41181c3e0b192f2de0fa171182169ba831e726a",
       "urls": [
-        "bzz-raw://074691333cc1da44a2768dcd7c6d8ec62cf119449114e1cde7516285cccfed7b",
-        "dweb:/ipfs/QmQ7bwLuNgHpnPGbzMH9CNtG8ap4neP6pwEGmVJT5nrD8J"
+        "bzz-raw://36b59fd609500f0485424855d3682c8ed78559f4deebe9bc9cd8e9a81b72cbf7",
+        "dweb:/ipfs/QmPhY34jmR3CWQ3PAfc1B6B4QDAgvHyBaSVAHT3RPKdYSE"
       ],
       "license": "MIT"
     },
@@ -993,6 +976,14 @@
       "urls": [
         "bzz-raw://f33b424b3d85944e32c9dace9939f9faa4d30ef7f2d2b0b9f8238f956c8ed89d",
         "dweb:/ipfs/QmYpf82Ufq9bEr3vaz7HYSkrjB1pryYYFP4pALqnGbhUgi"
+      ],
+      "license": "MIT"
+    },
+    "lib/solady/src/utils/Multicallable.sol": {
+      "keccak256": "0x0f5895a87b561dcf8b4d4068e1a56ab28bbebde08ff88534bdc8fe0379516d1c",
+      "urls": [
+        "bzz-raw://bbf0a55f90662536abe978d26b44a76a3ead4e962db205e64850d6c8276129bf",
+        "dweb:/ipfs/QmZXGTxig4Kk4uxeCJzMW5xRBqWSUEKTtdwRDd93121CyV"
       ],
       "license": "MIT"
     }

@@ -12,13 +12,9 @@ import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 import {MockMulticall} from "contracts/test/mocks/MockMulticall.sol";
 
 contract MulticallTest is TestUtils {
-  MockMulticall public mockMulticall;
+  MockMulticall internal mockMulticall = new MockMulticall();
 
-  function setUp() external {
-    mockMulticall = new MockMulticall();
-  }
-
-  function testMulticall() external {
+  function test_multicall() external {
     bytes[] memory data = new bytes[](2);
 
     data[0] = abi.encodeWithSelector(MockMulticall.one.selector);
@@ -29,5 +25,12 @@ contract MulticallTest is TestUtils {
     assertEq(results.length, 2);
     assertEq(abi.decode(results[0], (uint256)), 1);
     assertEq(abi.decode(results[1], (uint256)), 2);
+  }
+
+  function test_fuzz_multicall(bytes[] memory data) external {
+    bytes[] memory results = mockMulticall.multicall(data);
+    for (uint256 i; i < results.length; ++i) {
+      assertEq(results[i], data[i]);
+    }
   }
 }
