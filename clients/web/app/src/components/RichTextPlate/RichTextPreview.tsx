@@ -72,7 +72,7 @@ export const RichTextPreviewInternal = ({
         return getUserHashMap(mentions)
     }, [mentions])
 
-    const isSingleEmoji = useMemo(isEmoji, [content])
+    const isSingleEmoji = useMemo(() => isEmoji(content), [content])
 
     const memoizedComponents = useMemo(
         () => ({
