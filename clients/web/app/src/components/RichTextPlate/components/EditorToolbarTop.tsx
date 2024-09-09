@@ -1,8 +1,7 @@
 import React, { useState } from 'react'
 import linkifyit from 'linkify-it'
 import { useEvent } from 'react-use-event-hook'
-import { focusEditor } from '@udecode/slate-react'
-import { useEditorRef } from '@udecode/plate-common'
+import { focusEditor, useEditorRef } from '@udecode/plate-common'
 import { getEditorString } from '@udecode/slate'
 import { upsertLink } from '@udecode/plate-link'
 import { useDevice } from 'hooks/useDevice'
@@ -48,10 +47,12 @@ export const EditorToolbarTop = ({ editorId, ...props }: Props) => {
         const linkText = selectionText ? undefined : parsedLink.text
 
         upsertLink(editor, { url: parsedLink.url, text: linkText })
+        focusEditor(editor)
     })
 
     const onHideModal = useEvent(() => {
         setLinkModal(false)
+        focusEditor(editor)
     })
 
     const { isTouch } = useDevice()
