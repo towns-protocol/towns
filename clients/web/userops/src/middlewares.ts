@@ -109,6 +109,7 @@ export function promptUser(
                     })
 
                     console.error('[promptUser] calling estimateUserOperationGas failed:', {
+                        op: OpToJSON(ctx.op),
                         originalError: exception,
                         parsedError: spaceDappError,
                     })
