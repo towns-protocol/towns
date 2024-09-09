@@ -72,7 +72,12 @@ export function BottomBarContent({
                         <Stack grow centerContent gap={isTouch ? 'sm' : 'md'} color="default">
                             {totalSupply && maxSupply && (
                                 <>
-                                    <Stack horizontal={!isTouch} width="100%" gap="sm">
+                                    <Stack
+                                        horizontal={!isTouch}
+                                        width="100%"
+                                        gap="sm"
+                                        data-testid="town-preview-memberships-available-container"
+                                    >
                                         <Text fontWeight="strong" fontSize={isTouch ? 'sm' : 'md'}>
                                             Memberships Left
                                         </Text>

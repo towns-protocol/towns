@@ -78,7 +78,7 @@ function LoginComponent({
                     cta
                     disabled={!privyReady || isBusy}
                     spinner={isBusy}
-                    data-testid="login-button"
+                    data-testid={`${text.toLowerCase()}-button`}
                     onClick={onButtonClick}
                 >
                     {loginContent()}
