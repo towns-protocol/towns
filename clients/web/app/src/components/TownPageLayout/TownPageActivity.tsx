@@ -120,10 +120,14 @@ export const TownPageActivity = (props: { townId: string }) => {
                         key="members"
                     >
                         <Stack gap="md">
-                            <Text strong size="md">
+                            <Text strong size="md" data-testid="town-preview-members-count">
                                 {members.length} {members.length === 1 ? 'Member' : 'Members'}
                             </Text>
-                            <Stack horizontal gap="sm">
+                            <Stack
+                                horizontal
+                                gap="sm"
+                                data-testid="town-preview-members-avatars-container"
+                            >
                                 {members.slice(0, maxMembers).map((m) => (
                                     <AvatarWithoutDot key={m} userId={m} size="avatar_x4" />
                                 ))}
@@ -148,7 +152,7 @@ export const TownPageActivity = (props: { townId: string }) => {
                 {renderedActivities.length > 0 && (
                     <FadeInBox gap="md" key="activities">
                         <Stack horizontal gap alignItems="center">
-                            <Text strong size="md">
+                            <Text strong size="md" data-testid="town-preview-activity-header">
                                 Activity
                             </Text>
                         </Stack>
@@ -160,6 +164,11 @@ export const TownPageActivity = (props: { townId: string }) => {
                                 key={a.title + a.body + `${i}`}
                                 alignItems="center"
                                 paddingBottom="sm"
+                                data-testid={
+                                    a.body.includes('active')
+                                        ? 'town-preview-members-active-container'
+                                        : 'town-preview-messages-sent-container'
+                                }
                             >
                                 <Box centerContent width="x6" shrink={false}>
                                     {a.icon && (

@@ -216,6 +216,7 @@ const Header = (props: { isPreview: boolean; onClosePreview?: () => void }) => {
                                 tone="lightHover"
                                 color="default"
                                 size="button_sm"
+                                data-testid="town-preview-log-in-button"
                                 onClick={onClickLogin}
                             >
                                 Log In

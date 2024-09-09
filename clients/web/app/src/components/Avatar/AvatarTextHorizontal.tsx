@@ -23,6 +23,7 @@ export function AvatarTextHorizontal({ abstractAccountaddress, name, prepend, us
                 rounded="full"
                 paddingRight="sm"
                 background="lightHover"
+                data-testid="town-preview-author-container"
             >
                 <Avatar userId={userId} size="avatar_sm" />
                 {name && (

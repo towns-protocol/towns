@@ -187,6 +187,7 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                                         width="300"
                                         tone="lightHover"
                                         color="default"
+                                        data-testid="town-preview-share-link-button"
                                         onClick={onCopyInviteLink}
                                     >
                                         {copiedLink ? (
@@ -271,7 +272,11 @@ const Header = (props: {
     return (
         <Stack gap width="100%" justifyContent="spaceBetween" paddingTop={isTouch ? 'sm' : 'none'}>
             <Stack gap>
-                <Heading level={2} style={{ textTransform: 'none' }}>
+                <Heading
+                    level={2}
+                    style={{ textTransform: 'none' }}
+                    data-testid="town-preview-header"
+                >
                     {name}
                 </Heading>
                 {motto && <Text color="gray2">{motto}</Text>}
@@ -358,6 +363,7 @@ const InformationBoxes = (props: {
                 anyoneCanJoin={anyoneCanJoin}
                 isTokensGatingMembershipLoading={isTokensGatingMembershipLoading}
                 tokensGatingMembership={_tokens}
+                dataTestId="town-preview-membership-info-bubble"
             />
             <InformationBox
                 key="cost"
@@ -369,6 +375,7 @@ const InformationBoxes = (props: {
                     </Text>
                 }
                 subtitle={price?.suffix}
+                dataTestId="town-preview-cost-info-bubble"
             />
             <InformationBox
                 key="duration"
@@ -380,6 +387,7 @@ const InformationBoxes = (props: {
                     </Text>
                 }
                 subtitle={duration?.suffix}
+                dataTestId="town-preview-valid-for-info-bubble"
                 onClick={onAddressClick}
             />
             {address && (
@@ -388,6 +396,7 @@ const InformationBoxes = (props: {
                     title="Explore"
                     centerContent={<Icon type="etherscan" />}
                     subtitle="Etherscan"
+                    dataTestId="town-preview-etherscan-info-bubble"
                     onClick={onAddressClick}
                 />
             )}
@@ -397,6 +406,7 @@ const InformationBoxes = (props: {
                     title="View"
                     centerContent={<Icon type="openSeaPlain" />}
                     subtitle="OpenSea"
+                    dataTestId="town-preview-opeansea-info-bubble"
                     onClick={onOpenSeaClick}
                 />
             )}
