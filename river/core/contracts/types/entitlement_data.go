@@ -245,7 +245,7 @@ func ConvertV1RuleDataToV2(
 			fallthrough
 		case ERC721:
 			fallthrough
-		case NATIVE_COIN_BALANCE:
+		case ETH_BALANCE:
 			params, err := (&ThresholdParams{
 				Threshold: checkOp.Threshold,
 			}).AbiEncode()

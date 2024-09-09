@@ -149,7 +149,7 @@ func TestConvertV1RuleDataToV2(t *testing.T) {
 				},
 			},
 		},
-		"NativeCoinBalance": {
+		"EthBalance": {
 			ruleData: test_util.EthBalanceCheck(15, 1500),
 			expected: base.IRuleEntitlementBaseRuleDataV2{
 				Operations: []base.IRuleEntitlementBaseOperation{
@@ -160,7 +160,7 @@ func TestConvertV1RuleDataToV2(t *testing.T) {
 				},
 				CheckOperations: []base.IRuleEntitlementBaseCheckOperationV2{
 					{
-						OpType:  uint8(types.NATIVE_COIN_BALANCE),
+						OpType:  uint8(types.ETH_BALANCE),
 						ChainId: big.NewInt(15),
 						Params:  encodeThresholdParams(t, 1500),
 					},

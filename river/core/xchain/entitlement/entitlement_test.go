@@ -159,76 +159,36 @@ var erc1155CheckBaseSepolia_TokenId1_151Tokens = CheckOperation{
 	Params:          encodeErc1155Params(big.NewInt(151), big.NewInt(1)),
 }
 
-var nativeCoinBalance0_1EthEthereumSepolia = CheckOperation{
+var ethBalance_gt_0_7 = CheckOperation{
 	OpType:          CHECK,
-	CheckType:       CheckOperationType(NATIVE_COIN_BALANCE),
-	ChainID:         examples.EthSepoliaChainId,
+	CheckType:       CheckOperationType(ETH_BALANCE),
 	ContractAddress: common.Address{},
-	// .1ETH in Wei
-	Params: encodeThresholdParams(big.NewInt(100_000_000_000_000_000)),
+	// .7ETH in Wei
+	Params: encodeThresholdParams(big.NewInt(700_000_000_000_000_001)),
 }
 
-var nativeCoinBalance0_2EthEthereumSepolia = CheckOperation{
+var ethBalance0_7 = CheckOperation{
 	OpType:          CHECK,
-	CheckType:       CheckOperationType(NATIVE_COIN_BALANCE),
-	ChainID:         examples.EthSepoliaChainId,
+	CheckType:       CheckOperationType(ETH_BALANCE),
 	ContractAddress: common.Address{},
-	// .2ETH in Wei
-	Params: encodeThresholdParams(big.NewInt(200_000_000_000_000_000)),
+	// .7ETH in Wei
+	Params: encodeThresholdParams(big.NewInt(700_000_000_000_000_000)),
 }
 
-var nativeCoinBalance0_21EthEthereumSepolia = CheckOperation{
+var ethBalance0_5 = CheckOperation{
 	OpType:          CHECK,
-	CheckType:       CheckOperationType(NATIVE_COIN_BALANCE),
-	ChainID:         examples.EthSepoliaChainId,
-	ContractAddress: common.Address{},
-	// .21ETH in Wei
-	Params: encodeThresholdParams(big.NewInt(210_000_000_000_000_000)),
-}
-
-var nativeCoinBalance0_3EthEthereumSepolia = CheckOperation{
-	OpType:          CHECK,
-	CheckType:       CheckOperationType(NATIVE_COIN_BALANCE),
-	ChainID:         examples.EthSepoliaChainId,
-	ContractAddress: common.Address{},
-	// .3ETH in Wei
-	Params: encodeThresholdParams(big.NewInt(300_000_000_000_000_000)),
-}
-
-var nativeCoinBalance0_4EthBaseSepolia = CheckOperation{
-	OpType:          CHECK,
-	CheckType:       CheckOperationType(NATIVE_COIN_BALANCE),
-	ChainID:         examples.BaseSepoliaChainId,
-	ContractAddress: common.Address{},
-	// .4ETH in Wei
-	Params: encodeThresholdParams(big.NewInt(400_000_000_000_000_000)),
-}
-
-var nativeCoinBalance0_5EthBaseSepolia = CheckOperation{
-	OpType:          CHECK,
-	CheckType:       CheckOperationType(NATIVE_COIN_BALANCE),
-	ChainID:         examples.BaseSepoliaChainId,
+	CheckType:       CheckOperationType(ETH_BALANCE),
 	ContractAddress: common.Address{},
 	// .5ETH in Wei
 	Params: encodeThresholdParams(big.NewInt(500_000_000_000_000_000)),
 }
 
-var nativeCoinBalance0_52EthBaseSepolia = CheckOperation{
+var ethBalance0_4 = CheckOperation{
 	OpType:          CHECK,
-	CheckType:       CheckOperationType(NATIVE_COIN_BALANCE),
-	ChainID:         examples.BaseSepoliaChainId,
+	CheckType:       CheckOperationType(ETH_BALANCE),
 	ContractAddress: common.Address{},
-	// .52ETH in Wei
-	Params: encodeThresholdParams(big.NewInt(520_000_000_000_000_000)),
-}
-
-var nativeCoinBalance0_6EthBaseSepolia = CheckOperation{
-	OpType:          CHECK,
-	CheckType:       CheckOperationType(NATIVE_COIN_BALANCE),
-	ChainID:         examples.BaseSepoliaChainId,
-	ContractAddress: common.Address{},
-	// .6ETH in Wei
-	Params: encodeThresholdParams(big.NewInt(600_000_000_000_000_000)),
+	// .4ETH in Wei
+	Params: encodeThresholdParams(big.NewInt(400_000_000_000_000_000)),
 }
 
 var erc20TrueCheckBaseSepolia = CheckOperation{
@@ -325,7 +285,10 @@ var cfg = &config.Config{
 			BlockTimeMs: 2000,
 		},
 	},
-	XChainBlockchains: []uint64{examples.EthSepoliaChainIdUint64, examples.BaseSepoliaChainIdUint64},
+	XChainBlockchains: []uint64{
+		examples.EthSepoliaChainIdUint64,
+		examples.BaseSepoliaChainIdUint64,
+	},
 }
 
 var evaluator *Evaluator
@@ -494,7 +457,7 @@ func TestCheckOperation(t *testing.T) {
 
 func TestCheckOperation_Untimed(t *testing.T) {
 	testCases := map[string]struct {
-		a           Operation
+		op          Operation
 		wallets     []common.Address
 		expected    bool
 		expectedErr error
@@ -785,90 +748,44 @@ func TestCheckOperation_Untimed(t *testing.T) {
 			nil,
 		},
 		"ETH balance empty wallets": {
-			&nativeCoinBalance0_2EthEthereumSepolia,
+			&ethBalance0_5,
 			[]common.Address{},
 			false,
 			nil,
 		},
-		"ETH balance invalid check (no chainId)": {
-			&CheckOperation{
-				OpType:    CHECK,
-				CheckType: CheckOperationType(NATIVE_COIN_BALANCE),
-				Params:    encodeThresholdParams(big.NewInt(1)),
-			},
-			[]common.Address{examples.Sepolia0_2EthWallet},
-			false,
-			fmt.Errorf("validateCheckOperation: chain ID is nil for operation NATIVE_COIN_BALANCE"),
-		},
 		"ETH balance invalid check (invalid threshold: 0)": {
 			&CheckOperation{
 				OpType:          CHECK,
-				CheckType:       CheckOperationType(NATIVE_COIN_BALANCE),
+				CheckType:       CheckOperationType(ETH_BALANCE),
 				ChainID:         examples.EthSepoliaChainId,
 				Params:          encodeThresholdParams(big.NewInt(0)),
 				ContractAddress: common.Address{},
 			},
-			[]common.Address{examples.Sepolia0_2EthWallet},
+			[]common.Address{},
 			false,
-			fmt.Errorf("validateCheckOperation: threshold 0 is nonpositive for operation NATIVE_COIN_BALANCE"),
+			fmt.Errorf("validateCheckOperation: threshold 0 is nonpositive for operation ETH_BALANCE"),
 		},
-		"ETH balance eth sepolia": {
-			&nativeCoinBalance0_2EthEthereumSepolia,
-			[]common.Address{examples.Sepolia0_2EthWallet},
+		"ETH balance across chains": {
+			&ethBalance0_5,
+			[]common.Address{examples.EthWallet_0_5Eth},
 			true,
 			nil,
 		},
-		"ETH balance eth sepolia (multiwallet)": {
-			&nativeCoinBalance0_21EthEthereumSepolia,
-			[]common.Address{examples.Sepolia0_2EthWallet, examples.Sepolia0_015EthWallet},
+		"Insufficient ETH balance": {
+			&ethBalance0_5,
+			[]common.Address{examples.EthWallet_0_2Eth},
+			false,
+			nil,
+		},
+		"ETH balance across chains, multiwallet": {
+			&ethBalance0_7,
+			[]common.Address{examples.EthWallet_0_5Eth, examples.EthWallet_0_2Eth},
 			true,
 			nil,
 		},
-		"ETH balance eth sepolia (insufficient balance)": {
-			&nativeCoinBalance0_1EthEthereumSepolia,
-			[]common.Address{examples.Sepolia0_015EthWallet},
-			false,
-			nil,
-		},
-		"ETH balance eth sepolia (multiwallet, insufficient balance)": {
-			&nativeCoinBalance0_3EthEthereumSepolia,
-			[]common.Address{examples.Sepolia0_2EthWallet, examples.Sepolia0_015EthWallet},
-			false,
-			nil,
-		},
-		"ETH balance eth sepolia (no eth)": {
-			&nativeCoinBalance0_1EthEthereumSepolia,
-			[]common.Address{examples.EmptyEthTestAccount},
-			false,
-			nil,
-		},
-		"ETH balance base sepolia": {
-			&nativeCoinBalance0_5EthBaseSepolia,
-			[]common.Address{examples.BaseSepolia0_5EthWallet},
-			true,
-			nil,
-		},
-		"ETH balance base sepolia (multiwallet)": {
-			&nativeCoinBalance0_52EthBaseSepolia,
-			[]common.Address{examples.BaseSepolia0_5EthWallet, examples.BaseSepolia0_05EthWallet},
-			true,
-			nil,
-		},
-		"ETH balance base sepolia (insufficient balance)": {
-			&nativeCoinBalance0_4EthBaseSepolia,
-			[]common.Address{examples.BaseSepolia0_05EthWallet},
-			false,
-			nil,
-		},
-		"ETH balance base sepolia (multiwallet, insufficient balance)": {
-			&nativeCoinBalance0_6EthBaseSepolia,
-			[]common.Address{examples.BaseSepolia0_5EthWallet, examples.BaseSepolia0_05EthWallet},
-			false,
-			nil,
-		},
-		"ETH balance base sepolia (no eth, insufficient balance)": {
-			&nativeCoinBalance0_4EthBaseSepolia,
-			[]common.Address{examples.EmptyEthTestAccount},
+		"ETH balance across chains, multiwallet, insufficient balance": {
+			&ethBalance_gt_0_7,
+			[]common.Address{examples.EthWallet_0_5Eth, examples.EthWallet_0_2Eth},
 			false,
 			nil,
 		},
@@ -876,14 +793,113 @@ func TestCheckOperation_Untimed(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			result, err := evaluator.evaluateOp(context.Background(), tc.a, tc.wallets)
+			result, err := evaluator.evaluateOp(context.Background(), tc.op, tc.wallets)
 			if tc.expectedErr == nil {
 				require.NoError(t, err)
 			} else {
 				require.EqualError(t, err, tc.expectedErr.Error())
 			}
 			if result != tc.expected {
-				t.Errorf("evaluateCheckOperation result (%v) = %v; want %v", tc.a, result, tc.expected)
+				t.Errorf("evaluateCheckOperation result (%v) = %v; want %v", tc.op, result, tc.expected)
+			}
+		})
+	}
+}
+
+var singleEtherChainBlockChainInfo = map[uint64]config.BlockchainInfo{
+	examples.EthSepoliaChainId.Uint64(): {
+		ChainId:      examples.EthSepoliaChainId.Uint64(),
+		Name:         "Ethereum Seplia",
+		Blocktime:    12000,
+		IsEtherBased: true,
+	},
+	examples.BaseSepoliaChainId.Uint64(): {
+		ChainId:      examples.BaseSepoliaChainId.Uint64(),
+		Name:         "Base Sepolia",
+		Blocktime:    2000,
+		IsEtherBased: false, // for the sake of testing
+	},
+}
+
+func Test_evaluateEthBalance_withConfig(t *testing.T) {
+	tests := map[string]struct {
+		cfg         config.Config
+		op          Operation
+		wallets     []common.Address
+		expected    bool
+		expectedErr error
+	}{
+		"Ether chains < supported chains (positive result)": {
+			cfg: config.Config{
+				ChainConfigs: map[uint64]*config.ChainConfig{
+					examples.EthSepoliaChainIdUint64: {
+						NetworkUrl:  "https://ethereum-sepolia-rpc.publicnode.com",
+						ChainId:     examples.EthSepoliaChainIdUint64,
+						BlockTimeMs: 12000,
+					},
+					examples.BaseSepoliaChainIdUint64: {
+						NetworkUrl:  "https://sepolia.base.org",
+						ChainId:     examples.BaseSepoliaChainIdUint64,
+						BlockTimeMs: 2000,
+					},
+				},
+				XChainBlockchains: []uint64{
+					examples.EthSepoliaChainIdUint64,
+					examples.BaseSepoliaChainIdUint64,
+				},
+			},
+			op: &ethBalance0_4,
+			wallets: []common.Address{
+				examples.EthWallet_0_5Eth,
+			},
+			expected: true,
+		},
+		"Ether chains < supported chains (negative result)": {
+			cfg: config.Config{
+				ChainConfigs: map[uint64]*config.ChainConfig{
+					examples.EthSepoliaChainIdUint64: {
+						NetworkUrl:  "https://ethereum-sepolia-rpc.publicnode.com",
+						ChainId:     examples.EthSepoliaChainIdUint64,
+						BlockTimeMs: 12000,
+					},
+					examples.BaseSepoliaChainIdUint64: {
+						NetworkUrl:  "https://sepolia.base.org",
+						ChainId:     examples.BaseSepoliaChainIdUint64,
+						BlockTimeMs: 2000,
+					},
+				},
+				XChainBlockchains: []uint64{
+					examples.EthSepoliaChainIdUint64,
+					examples.BaseSepoliaChainIdUint64,
+				},
+			},
+			op: &ethBalance0_5,
+			wallets: []common.Address{
+				examples.EthWallet_0_5Eth,
+			},
+			expected: false, // This entitlement evaluation would pass if the balance of the wallet on both networks was considered
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			require := require.New(t)
+			customEvaluator, err := NewEvaluatorFromConfigWithBlockchainInfo(
+				context.Background(),
+				&tc.cfg,
+				singleEtherChainBlockChainInfo,
+				infra.NewMetricsFactory(nil, "", ""),
+			)
+			require.NoError(err)
+
+			result, err := customEvaluator.evaluateOp(context.Background(), tc.op, tc.wallets)
+			if tc.expectedErr == nil {
+				require.NoError(err)
+			} else {
+				require.EqualError(err, tc.expectedErr.Error())
+			}
+			if result != tc.expected {
+				t.Errorf("evaluateCheckOperation result (%v) = %v; want %v", tc.op, result, tc.expected)
 			}
 		})
 	}

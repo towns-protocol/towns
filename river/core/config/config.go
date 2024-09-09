@@ -468,8 +468,8 @@ func parseBlockchainDurations(str string, result map[uint64]BlockchainInfo) erro
 }
 
 func (c *Config) parseChains() error {
-	bcDurations := GetDefaultBlockchainInfo()
-	err := parseBlockchainDurations(c.ChainBlocktimes, bcDurations)
+	defaultChainInfo := GetDefaultBlockchainInfo()
+	err := parseBlockchainDurations(c.ChainBlocktimes, defaultChainInfo)
 	if err != nil {
 		return err
 	}
@@ -493,7 +493,7 @@ func (c *Config) parseChains() error {
 				return WrapRiverError(Err_BAD_CONFIG, err).Message("Failed to pase chain Id").Tag("chainId", parts[0])
 			}
 
-			info, ok := bcDurations[chainID]
+			info, ok := defaultChainInfo[chainID]
 			if !ok {
 				return RiverError(Err_BAD_CONFIG, "Chain blocktime not set").Tag("chainId", chainID)
 			}
@@ -515,6 +515,7 @@ func (c *Config) parseChains() error {
 			c.XChainBlockchains = append(c.XChainBlockchains, chainID)
 		}
 	}
+
 	return nil
 }
 

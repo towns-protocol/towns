@@ -48,13 +48,13 @@ func validateCheckOperation(ctx context.Context, op *types.CheckOperation) error
 	// 3. Threshold is positive
 	// 4. Token ID is non-negative
 	log := dlog.FromCtx(ctx).With("function", "validateCheckOperation")
-	if op.ChainID == nil {
+	if op.CheckType != types.ETH_BALANCE && op.ChainID == nil {
 		log.Error("Entitlement check: chain ID is nil for operation", "operation", op.CheckType.String())
 		return fmt.Errorf("validateCheckOperation: chain ID is nil for operation %s", op.CheckType)
 	}
 
 	zeroAddress := common.Address{}
-	if op.CheckType != types.NATIVE_COIN_BALANCE && op.ContractAddress == zeroAddress {
+	if op.CheckType != types.ETH_BALANCE && op.ContractAddress == zeroAddress {
 		log.Error("Entitlement check: contract address is nil for operation", "operation", op.CheckType.String())
 		return fmt.Errorf(
 			"validateCheckOperation: contract address is nil for operation %s",
@@ -62,7 +62,7 @@ func validateCheckOperation(ctx context.Context, op *types.CheckOperation) error
 		)
 	}
 
-	if op.CheckType == types.ERC20 || op.CheckType == types.ERC721 || op.CheckType == types.NATIVE_COIN_BALANCE {
+	if op.CheckType == types.ERC20 || op.CheckType == types.ERC721 || op.CheckType == types.ETH_BALANCE {
 		params, err := types.DecodeThresholdParams(op.Params)
 		if err != nil {
 			log.Error(
@@ -148,8 +148,8 @@ func (e *Evaluator) evaluateCheckOperation(
 		return e.evaluateErc721Operation(ctx, op, linkedWallets)
 	case types.ERC1155:
 		return e.evaluateErc1155Operation(ctx, op, linkedWallets)
-	case types.NATIVE_COIN_BALANCE:
-		return e.evaluateNativeCoinBalanceOperation(ctx, op, linkedWallets)
+	case types.ETH_BALANCE:
+		return e.evaluateEthBalanceOperation(ctx, op, linkedWallets)
 	case types.CheckNONE:
 		fallthrough
 	case types.MOCK:
@@ -232,48 +232,54 @@ func (e *Evaluator) evaluateIsEntitledOperation(
 	return false, nil
 }
 
-// Check balance in decimals of native token
-func (e *Evaluator) evaluateNativeCoinBalanceOperation(
+// Check ETH balance, in decimals, across all supported chains that use Ether as the native token for payments.
+func (e *Evaluator) evaluateEthBalanceOperation(
 	ctx context.Context,
 	op *types.CheckOperation,
 	linkedWallets []common.Address,
 ) (bool, error) {
-	log := dlog.FromCtx(ctx).With("function", "evaluateNativeTokenBalanceOperation")
-	client, err := e.clients.Get(op.ChainID.Uint64())
-	if err != nil {
-		log.Error("Chain ID not found", "chainID", op.ChainID)
-		return false, fmt.Errorf("evaluateNativeTokenBalanceOperation: Chain ID %v not found", op.ChainID)
-	}
-	params, err := types.DecodeThresholdParams(op.Params)
-	if err != nil {
-		log.Error("evaluateNativeCoinBalance: failed to decode threshold params", "error", err)
-		return false, fmt.Errorf("evaluateNativeCoinBalance: failed to decode threshold params, %w", err)
-	}
+	log := dlog.FromCtx(ctx).With("function", "evaluateEthBalanceOperation")
 
+	// Accumulator for the total balance across all chains.
 	total := big.NewInt(0)
-	for _, wallet := range linkedWallets {
-		// Balance is returned as a representation of the balance according the denomination of the
-		// native token. The default decimals for most native tokens is 18, and we don't convert
-		// according to decimals here, but compare the threshold directly with the balance.
-		balance, err := client.BalanceAt(ctx, wallet, nil)
+
+	for _, chainID := range e.ethChainIds {
+		log.Info("Evaluating ETH balance on chain", "chainID", chainID, "wallets", linkedWallets)
+		client, err := e.clients.Get(chainID)
 		if err != nil {
-			log.Error("Failed to retrieve native token balance", "chain", op.ChainID, "error", err)
-			return false, err
+			log.Error("Provider for Chain ID not found", "chainID", chainID)
+			return false, fmt.Errorf("evaluateEthBalanceOperation: Providerfor chain ID %v not found", chainID)
 		}
-		total.Add(total, balance)
+		params, err := types.DecodeThresholdParams(op.Params)
+		if err != nil {
+			log.Error("Failed to decode threshold params", "error", err)
+			return false, fmt.Errorf("evaluateEthBalanceOperation: failed to decode threshold params, %w", err)
+		}
 
-		log.Info("Retrieved native token balance",
-			"balance", balance.String(),
-			"total", total.String(),
-			"threshold", params.Threshold.String(),
-			"chainID", op.ChainID.String(),
-		)
+		for _, wallet := range linkedWallets {
+			// Balance is returned as a representation of the balance according the denomination of the
+			// ETH, which is 18. We do not convert away from decimals here, but compare the threshold
+			// directly with the decimalized balance.
+			balance, err := client.BalanceAt(ctx, wallet, nil)
+			if err != nil {
+				log.Error("Failed to retrieve ETH balance", "chain", chainID, "error", err)
+				return false, err
+			}
+			total.Add(total, balance)
 
-		// Balance is a *big.Int
-		// Iteratively check if the total balance of evaluated wallets is greater than or equal to the
-		// threshold. Note threshold is always positive and total is non-negative.
-		if total.Cmp(params.Threshold) >= 0 {
-			return true, nil
+			log.Info("Accumulated ETH balance for chain",
+				"balance", balance.String(),
+				"total", total.String(),
+				"threshold", params.Threshold.String(),
+				"chainID", chainID,
+			)
+
+			// Balance is a *big.Int
+			// Iteratively check if the total balance of evaluated wallets is greater than or equal to the
+			// threshold. Note threshold is always positive and total is non-negative.
+			if total.Cmp(params.Threshold) >= 0 {
+				return true, nil
+			}
 		}
 	}
 	return false, nil
