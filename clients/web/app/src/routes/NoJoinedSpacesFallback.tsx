@@ -12,7 +12,7 @@ import { Button, Heading, Icon, Stack, Text } from '@ui'
 
 import { useDevice } from 'hooks/useDevice'
 import { useStore } from 'store/store'
-import { useAnalytics } from 'hooks/useAnalytics'
+import { Analytics } from 'hooks/useAnalytics'
 import { AppProgressState } from '@components/AppProgressOverlay/AppProgressState'
 import { AppProgressOverlayTrigger } from '@components/AppProgressOverlay/AppProgressOverlayTrigger'
 
@@ -29,7 +29,6 @@ export const NoJoinedSpacesFallback = () => {
 
     const { isTouch } = useDevice()
     const location = useLocation()
-    const { analytics } = useAnalytics()
 
     useEffect(() => {
         console.log('[NoJoinedSpacesFallback][route]', 'route', {
@@ -41,10 +40,10 @@ export const NoJoinedSpacesFallback = () => {
     }, [isTouch, location.pathname, location.search, spaceIdBookmark])
 
     useEffect(() => {
-        analytics?.page('home-page', 'no joined towns page', {}, () => {
+        Analytics.getInstance().page('home-page', 'no joined towns page', {}, () => {
             console.log('[analytics] no joined towns page')
         })
-    }, [analytics, location.pathname, location.search])
+    }, [location.pathname, location.search])
 
     useEffect(() => {
         if (!client) {
@@ -66,11 +65,11 @@ export const NoJoinedSpacesFallback = () => {
     }, [spaces, navigate, client, spaceIdBookmark, isTouch])
 
     const openTownPanel = useCallback(() => {
-        analytics?.track('clicked create a town', {}, () => {
+        Analytics.getInstance().track('clicked create a town', {}, () => {
             console.log('[analytics] clicked create a town')
         })
         navigate(`/${PATHS.SPACES}/new`)
-    }, [analytics, navigate])
+    }, [navigate])
 
     // need to default spaceHierarchies to undefined and check for it here
     // to prevent flash on load

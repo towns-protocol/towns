@@ -16,7 +16,7 @@ import { UserList } from '@components/UserList/UserList'
 import { ZLayerBox } from '@components/ZLayer/ZLayerContext'
 import { NoMatches } from '@components/NoMatches/NoMatches'
 import { Box, Button, Icon, MotionBox, Paragraph, Stack, Text } from '@ui'
-import { useAnalytics } from 'hooks/useAnalytics'
+import { Analytics } from 'hooks/useAnalytics'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { useDevice } from 'hooks/useDevice'
 import { MotionBoxProps } from 'ui/components/Motion/MotionComponents'
@@ -27,7 +27,6 @@ import { useMatchingMessages } from './hooks/useMatchingMessages'
 
 export const CreateMessageSelect = () => {
     const { isTouch } = useDevice()
-    const { analytics } = useAnalytics()
     const { createLink } = useCreateLink()
     const { lookupUser } = useUserLookupContext()
     const { dmChannels } = useTownsContext()
@@ -73,7 +72,7 @@ export const CreateMessageSelect = () => {
             totalParticipants: numSelectedUsers + 1,
             dmType: numSelectedUsers === 1 ? 'direct' : numSelectedUsers > 1 ? 'group' : 'invalid',
         }
-        analytics?.track('confirmed create direct message', tracked, () => {
+        Analytics.getInstance().track('confirmed create direct message', tracked, () => {
             console.log('[analytics] confirmed create direct message', tracked)
         })
 
@@ -247,12 +246,11 @@ const useCaptureContainerClick = (onClick: () => void) => {
 }
 
 const useEscapeCreateMessage = () => {
-    const { analytics } = useAnalytics()
     const navigate = useNavigate()
     useEffect(() => {
         const onKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
-                analytics?.track(
+                Analytics.getInstance().track(
                     'escape key pressed',
                     { panel: PanelStack.DIRECT_MESSAGES },
                     () => {
@@ -268,5 +266,5 @@ const useEscapeCreateMessage = () => {
         return () => {
             window.removeEventListener('keydown', onKeyDown)
         }
-    }, [analytics, navigate])
+    }, [navigate])
 }

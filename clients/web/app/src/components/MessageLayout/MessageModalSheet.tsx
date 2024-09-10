@@ -12,7 +12,7 @@ import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyTo
 import { getLinkToMessage } from 'utils/getLinkToMessage'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { useRouteParams } from 'hooks/useRouteParams'
-import { getChannelType, useAnalytics } from 'hooks/useAnalytics'
+import { Analytics, getChannelType } from 'hooks/useAnalytics'
 import { DeleteMessagePrompt } from './DeleteMessagePrompt'
 
 type Props = {
@@ -40,7 +40,6 @@ const emojis: { id: string; native: string }[] = [
 export const MessageModalSheet = (props: Props) => {
     const timelineContext = useContext(MessageTimelineContext)
     const mountPoint = useZLayerContext().rootLayerRef?.current ?? undefined
-    const { analytics } = useAnalytics()
     const {
         onClose,
         eventId,
@@ -177,11 +176,11 @@ export const MessageModalSheet = (props: Props) => {
                 channelType: getChannelType(channelId),
                 isThread: !!threadId,
             }
-            analytics?.track('clicked pin message', tracked)
+            Analytics.getInstance().track('clicked pin message', tracked)
             pinMessage(channelId, eventId)
             closeSheet()
         }
-    }, [analytics, channelId, closeSheet, eventId, pinMessage, spaceId, threadId])
+    }, [channelId, closeSheet, eventId, pinMessage, spaceId, threadId])
 
     const onUnpinMessage = useCallback(() => {
         if (channelId && eventId) {
@@ -191,11 +190,11 @@ export const MessageModalSheet = (props: Props) => {
                 channelType: getChannelType(channelId),
                 isThread: !!threadId,
             }
-            analytics?.track('clicked unpin message', tracked)
+            Analytics.getInstance().track('clicked unpin message', tracked)
             unpinMessage(channelId, eventId)
             closeSheet()
         }
-    }, [analytics, channelId, closeSheet, eventId, spaceId, threadId, unpinMessage])
+    }, [channelId, closeSheet, eventId, spaceId, threadId, unpinMessage])
 
     return (
         <>

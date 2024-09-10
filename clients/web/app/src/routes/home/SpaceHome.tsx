@@ -6,7 +6,7 @@ import { useSearchParams } from 'react-router-dom'
 import { PATHS } from 'routes'
 import { useStore } from 'store/store'
 import { useDevice } from 'hooks/useDevice'
-import { useAnalytics } from 'hooks/useAnalytics'
+import { Analytics } from 'hooks/useAnalytics'
 import {
     LINKED_NOTIFICATION_KIND,
     LINKED_NOTIFICATION_REL_ENTRY,
@@ -21,7 +21,7 @@ export const SpaceHome = () => {
     const { authStatus } = useConnectivity()
     const spaceId = space?.id
     const navigate = useNavigate()
-    const { analytics } = useAnalytics()
+
     const channels = useMemo(
         () => space?.channelGroups.flatMap((g) => g.channels),
         [space?.channelGroups],
@@ -80,7 +80,7 @@ export const SpaceHome = () => {
     ])
 
     useEffect(() => {
-        analytics?.page(
+        Analytics.getInstance().page(
             'home-page',
             'home page',
             {
@@ -90,7 +90,7 @@ export const SpaceHome = () => {
                 console.log('[analytics] home page')
             },
         )
-    }, [analytics, spaceId])
+    }, [spaceId])
 
     useEffect(() => {
         // TODO: this hijacks invite routes if you leave and then rejoin a space with an invite link.

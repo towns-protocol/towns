@@ -7,7 +7,7 @@ import { useJoinTown } from 'hooks/useJoinTown'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { TokenVerification } from '@components/Web3/TokenVerification/TokenVerification'
 import { useErrorToast } from 'hooks/useErrorToast'
-import { useAnalytics } from 'hooks/useAnalytics'
+import { Analytics } from 'hooks/useAnalytics'
 import { AboveAppProgressModalContainer } from '@components/AppProgressOverlay/AboveAppProgress/AboveAppProgress'
 import { useCombinedAuth } from 'privy/useCombinedAuth'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
@@ -49,8 +49,6 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
             permission: Permission.JoinSpace,
         })
 
-    const { analytics } = useAnalytics()
-
     const onJoinClick = useCallback(async () => {
         if (isJoining) {
             return
@@ -62,7 +60,7 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
             return
         }
 
-        analytics?.track(
+        Analytics.getInstance().track(
             'clicked join town',
             {
                 spaceId,
@@ -86,7 +84,6 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
     }, [
         isJoining,
         getSigner,
-        analytics,
         spaceId,
         startPublicPageloginFlow,
         meetsMembershipRequirements,
@@ -95,7 +92,7 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
     ])
 
     const onLoginClick = useCallback(() => {
-        analytics?.track(
+        Analytics.getInstance().track(
             'clicked join town',
             {
                 spaceId,
@@ -105,7 +102,7 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
             },
         )
         startPublicPageloginFlow()
-    }, [analytics, spaceId, startPublicPageloginFlow])
+    }, [spaceId, startPublicPageloginFlow])
 
     useErrorToast({ errorMessage: isNoFundsError ? undefined : errorMessage })
 

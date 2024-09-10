@@ -5,7 +5,7 @@ import { useCombinedAuth } from 'privy/useCombinedAuth'
 import { Box, FancyButton } from '@ui'
 import { useErrorToast } from 'hooks/useErrorToast'
 import { mapToErrorMessage } from '@components/Web3/utils'
-import { useAnalytics } from 'hooks/useAnalytics'
+import { Analytics } from 'hooks/useAnalytics'
 
 type LoginComponentProps = {
     text?: string
@@ -28,8 +28,6 @@ function LoginComponent({
 
     const isBusy = libAuthStatus === AuthStatus.EvaluatingCredentials || isAutoLoggingInToRiver
 
-    const { analytics } = useAnalytics()
-
     const loginContent = () => {
         if (isAutoLoggingInToRiver) {
             return loggingInText
@@ -48,7 +46,7 @@ function LoginComponent({
             return
         }
         if (!onLoginClick) {
-            analytics?.track(
+            Analytics.getInstance().track(
                 'clicked login',
                 {
                     buttonText: text,
@@ -60,7 +58,7 @@ function LoginComponent({
         }
         await onLoginClick?.()
         await login()
-    }, [privyReady, isBusy, onLoginClick, login, analytics, text])
+    }, [privyReady, isBusy, onLoginClick, login, text])
 
     useErrorToast({
         errorMessage,

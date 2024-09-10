@@ -34,7 +34,7 @@ import { PrivyWrapper } from 'privy/PrivyProvider'
 import { popupToast } from '@components/Notifications/popupToast'
 import { StandardToast } from '@components/Notifications/StandardToast'
 import { mapToErrorMessage } from '@components/Web3/utils'
-import { useAnalytics } from 'hooks/useAnalytics'
+import { Analytics } from 'hooks/useAnalytics'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 import { useOnJoinChannel } from './AllChannelsList/AllChannelsList'
 
@@ -55,18 +55,16 @@ function RoleRestrictedChannelJoinPanelWithoutAuth() {
 
     const roles = channelSettings?.roles
 
-    const { analytics } = useAnalytics()
-
     useEffect(() => {
         if (tracked.current) {
             return
         }
         tracked.current = true
-        analytics?.track('view gated channel requirements panel', {
+        Analytics.getInstance().track('view gated channel requirements panel', {
             spaceId: spaceSlug,
             channelId,
         })
-    }, [analytics, spaceSlug, channelId])
+    }, [spaceSlug, channelId])
 
     return (
         <Panel label="Role Required to Join">
@@ -106,7 +104,6 @@ function Roles(props: {
     })
 
     const space = useSpaceData()
-    const { analytics } = useAnalytics()
 
     const {
         syncingSpace,
@@ -134,7 +131,7 @@ function Roles(props: {
     const LINK_LABEL = 'link wallet from gated channel panel'
     const GRANTED_LABEL = 'linked wallet granted access to channel'
     const trackEvent = (description: string, success: boolean) => {
-        analytics?.track(description, {
+        Analytics.getInstance().track(description, {
             spaceId,
             channelId,
             success,

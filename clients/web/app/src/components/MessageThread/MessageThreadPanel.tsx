@@ -20,7 +20,7 @@ import { atoms } from 'ui/styles/atoms.css'
 import { useDevice } from 'hooks/useDevice'
 import { Panel } from '@components/Panel/Panel'
 import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDropContext'
-import { getChannelType, useAnalytics } from 'hooks/useAnalytics'
+import { Analytics, getChannelType } from 'hooks/useAnalytics'
 import { useIsChannelReactable } from 'hooks/useIsChannelReactable'
 
 type Props = {
@@ -43,7 +43,6 @@ export const MessageThreadPanel = (props: Props) => {
     const { memberIds } = useSpaceMembers()
 
     const { sendReply } = useSendReply(messageId)
-    const { analytics } = useAnalytics()
 
     const onSend = useCallback(
         (value: string, options: SendMessageOptions | undefined) => {
@@ -54,7 +53,7 @@ export const MessageThreadPanel = (props: Props) => {
                 isThread: true,
                 messageType: options?.messageType,
             }
-            analytics?.track('posted message', tracked, () => {
+            Analytics.getInstance().track('posted message', tracked, () => {
                 console.log('[analytics] posted message (thread)', tracked)
             })
             const userIds = parent?.userIds ?? new Set<string>()
@@ -63,7 +62,7 @@ export const MessageThreadPanel = (props: Props) => {
             }
             sendReply(value, channelId, options, userIds)
         },
-        [analytics, channelId, parent, sendReply, spaceId],
+        [channelId, parent, sendReply, spaceId],
     )
 
     const userId = useMyProfile()?.userId

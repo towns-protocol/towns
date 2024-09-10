@@ -30,7 +30,7 @@ import {
     LINKED_RESOURCE,
     NotificationRelEntry,
 } from 'data/rel'
-import { Analytics, useAnalytics } from 'hooks/useAnalytics'
+import { Analytics } from 'hooks/useAnalytics'
 import { useNotificationRoute } from 'hooks/useNotificationRoute'
 
 FontLoader.init()
@@ -98,7 +98,6 @@ export const App = () => {
             notificationKind: searchParams.get(LINKED_NOTIFICATION_KIND),
         }
     }, [searchParams])
-    const { analytics } = useAnalytics()
 
     const navigateTo = useEvent((path: string) => {
         navigate(path, { state: { fromNotification: true } })
@@ -123,7 +122,7 @@ export const App = () => {
                 notificationEntry,
                 notificationKind,
             }
-            analytics?.track('clicked notification', tracked, () => {
+            Analytics.getInstance().track('clicked notification', tracked, () => {
                 console.log('[analytics][App][route] clicked notification', tracked)
             })
 

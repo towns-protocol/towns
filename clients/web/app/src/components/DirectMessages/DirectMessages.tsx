@@ -5,7 +5,7 @@ import { useShortcut } from 'hooks/useShortcut'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { Panel } from '@components/Panel/Panel'
 import { PanelStack } from '@components/Panel/PanelContext'
-import { useAnalytics } from 'hooks/useAnalytics'
+import { Analytics } from 'hooks/useAnalytics'
 import { ReloadPrompt } from '@components/ReloadPrompt/ReloadPrompt'
 import { env } from 'utils'
 import { useDevice } from 'hooks/useDevice'
@@ -14,17 +14,16 @@ import { DirectMessageList } from './DirectMessageList'
 export const DirectMessagesPanel = () => {
     const navigate = useNavigate()
     const { createLink } = useCreateLink()
-    const { analytics } = useAnalytics()
 
     const onDisplayCreate = useCallback(() => {
-        analytics?.track('clicked new direct message', {}, () => {
+        Analytics.getInstance().track('clicked new direct message', {}, () => {
             console.log('[analytics]', 'clicked new direct message')
         })
         const link = createLink({ messageId: 'new' })
         if (link) {
             navigate(`${link}?stackId=${PanelStack.DIRECT_MESSAGES}`)
         }
-    }, [analytics, createLink, navigate])
+    }, [createLink, navigate])
 
     useShortcut('CreateMessage', onDisplayCreate)
 

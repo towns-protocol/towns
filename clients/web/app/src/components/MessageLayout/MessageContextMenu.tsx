@@ -10,7 +10,7 @@ import { ShortcutTooltip } from '@components/Shortcuts/ShortcutTooltip'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { ReplyToMessageContext } from '@components/ReplyToMessageContext/ReplyToMessageContext'
 import { getLinkToMessage } from 'utils/getLinkToMessage'
-import { getChannelType, useAnalytics } from 'hooks/useAnalytics'
+import { Analytics, getChannelType } from 'hooks/useAnalytics'
 import { useRouteParams } from 'hooks/useRouteParams'
 import { ShortcutAction, ShortcutActions } from 'data/shortcuts'
 import { ShortcutKeys } from '@components/Shortcuts/ShortcutKeys'
@@ -58,7 +58,6 @@ export const MessageContextMenu = (props: Props) => {
     const [copiedText, copy] = useCopyToClipboard()
     const hasCopied = !!copiedText
     const { loggedInWalletAddress } = useConnectivity()
-    const { analytics } = useAnalytics()
     const { threadId } = useRouteParams()
 
     const { hasPermission: canRedact } = useHasPermission({
@@ -85,12 +84,12 @@ export const MessageContextMenu = (props: Props) => {
                 messageType: 'emoji reaction',
                 emojiId: data.id,
             }
-            analytics?.track('posted message', tracked, () => {
+            Analytics.getInstance().track('posted message', tracked, () => {
                 console.log('[analytics] posted message (emoji reaction)', tracked)
             })
             sendReaction(channelId, eventId, data.id, threadId)
         },
-        [analytics, channelId, eventId, sendReaction, spaceId, threadId],
+        [channelId, eventId, sendReaction, spaceId, threadId],
     )
     const ref = useRef<HTMLDivElement>(null)
 
@@ -196,10 +195,10 @@ export const MessageContextMenu = (props: Props) => {
                 channelType: getChannelType(channelId),
                 isThread: !!threadId,
             }
-            analytics?.track('clicked pin message', tracked)
+            Analytics.getInstance().track('clicked pin message', tracked)
             pinMessage(channelId, e)
         }
-    }, [analytics, channelId, eventId, latestEventId, pinMessage, spaceId, threadId])
+    }, [channelId, eventId, latestEventId, pinMessage, spaceId, threadId])
 
     const onUnpinMessage = useCallback(() => {
         const e = latestEventId ?? eventId
@@ -210,10 +209,10 @@ export const MessageContextMenu = (props: Props) => {
                 channelType: getChannelType(channelId),
                 isThread: !!threadId,
             }
-            analytics?.track('clicked unpin message', tracked)
+            Analytics.getInstance().track('clicked unpin message', tracked)
             unpinMessage(channelId, e)
         }
-    }, [analytics, channelId, eventId, latestEventId, spaceId, threadId, unpinMessage])
+    }, [channelId, eventId, latestEventId, spaceId, threadId, unpinMessage])
 
     const submenuItems = useMemo(() => {
         const submenuItems = []

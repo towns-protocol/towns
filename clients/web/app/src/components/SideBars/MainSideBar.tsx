@@ -18,7 +18,7 @@ import { useDevice } from 'hooks/useDevice'
 import { PATHS } from 'routes'
 import { Box, Card, Dot, Icon } from '@ui'
 import { NavItem } from '@components/NavItem/_NavItem'
-import { useAnalytics } from 'hooks/useAnalytics'
+import { Analytics } from 'hooks/useAnalytics'
 import { useUserStore } from 'store/userSettingsStore'
 
 export const MainSideBar = () => {
@@ -27,10 +27,9 @@ export const MainSideBar = () => {
     const { spaceId } = useSpaceContext()
     const invites = useInvites()
     const { dmUnreadChannelIds } = useTownsContext()
-    const { analytics } = useAnalytics()
 
     const onShowCreateSpace = useEvent(() => {
-        analytics?.track('clicked new town', {}, () => {
+        Analytics.getInstance().track('clicked new town', {}, () => {
             console.log('[analytics] clicked new town')
         })
     })

@@ -14,6 +14,9 @@ servers/*
 servers/workers/**/coverage/*
 servers/workers/**/dist/*
 servers/workers/**/.keys/*
+servers/workers/**/temp/*
+
+clients/web/userops/coverage/*
 core/**/gen/*
 core/**/coverage/*
 core/**/run_files/*

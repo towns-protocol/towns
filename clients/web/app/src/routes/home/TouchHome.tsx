@@ -66,7 +66,7 @@ import { env } from 'utils'
 import { useUnseenChannelIds } from 'hooks/useUnseenChannelIdsCount'
 import { usePanels } from 'routes/layouts/hooks/usePanels'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
-import { useAnalytics } from 'hooks/useAnalytics'
+import { Analytics } from 'hooks/useAnalytics'
 import { useChannelEntitlements } from 'hooks/useChannelEntitlements'
 import { CHANNEL_INFO_PARAMS } from 'routes'
 import { ChannelItem } from '../AllChannelsList/AllChannelsList'
@@ -120,8 +120,6 @@ export const TouchHome = () => {
         permission: Permission.AddRemoveChannels,
     })
 
-    const { analytics } = useAnalytics()
-
     useEffect(() => {
         console.log('[TouchHome][route]', 'route', {
             authStatus,
@@ -134,7 +132,7 @@ export const TouchHome = () => {
     }, [authStatus, spaceId, storeBookmarkedRoute, storeBookmarkedSpaceId])
 
     useEffect(() => {
-        analytics?.page(
+        Analytics.getInstance().page(
             'home-page',
             'home page',
             {
@@ -144,7 +142,7 @@ export const TouchHome = () => {
                 console.log('[analytics] home page')
             },
         )
-    }, [analytics, spaceId])
+    }, [spaceId])
 
     const { openPanel } = usePanelActions()
 
@@ -236,7 +234,7 @@ export const TouchHome = () => {
     }, [])
 
     const onShowBrowseChannels = useCallback(() => {
-        analytics?.track(
+        Analytics.getInstance().track(
             'clicked browse channels',
             {
                 spaceId: space?.id,
@@ -246,7 +244,7 @@ export const TouchHome = () => {
             },
         )
         openPanel(CHANNEL_INFO_PARAMS.BROWSE_CHANNELS)
-    }, [analytics, openPanel, space?.id])
+    }, [openPanel, space?.id])
 
     const { imageSrc } = useImageSource(space?.id ?? '', ImageVariants.thumbnail300)
 

@@ -1,11 +1,10 @@
 import React from 'react'
 import { TransitionLogo } from '@components/Logo/Logo'
 import { Box, Paragraph, Stack } from '@ui'
-import { useAnalytics } from 'hooks/useAnalytics'
+import { Analytics } from 'hooks/useAnalytics'
 
 export const WelcomeLayout = (props: { children?: React.ReactNode; debugText?: string }) => {
-    const { analytics } = useAnalytics()
-    analytics?.trackOnce('welcome_layout', {
+    Analytics.getInstance().trackOnce('welcome_layout', {
         debug: true,
     })
     return (

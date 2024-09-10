@@ -4,7 +4,7 @@ import { AnimatePresence } from 'framer-motion'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { Box, FancyButton, MotionText, Stack, Text, TextField } from '@ui'
 import { useSetUsername } from 'hooks/useSetUsername'
-import { useAnalytics } from 'hooks/useAnalytics'
+import { Analytics } from 'hooks/useAnalytics'
 import { validateUsername } from './validateUsername'
 
 export type Props = {
@@ -24,7 +24,6 @@ export const SetUsernameForm = (props: Props & { onHide: () => void }) => {
     const { setUsername } = useSetUsername()
     const isModified = useRef<boolean>(false)
     const [requestInFlight, setRequestInFlight] = useState<boolean>(false)
-    const { analytics } = useAnalytics()
 
     const [value, setValue] = useState<string>('')
     const [usernameAvailable, setUsernameAvailable] = useState<boolean>(true)
@@ -50,9 +49,13 @@ export const SetUsernameForm = (props: Props & { onHide: () => void }) => {
                 // If we succeed, we'll be redirected to the space. If not, we'll stay on this page.
                 try {
                     await setUsername(spaceData.id, value)
-                    analytics?.track('set username when joining town', undefined, () => {
-                        console.log('[analytics] set username when joining town')
-                    })
+                    Analytics.getInstance().track(
+                        'set username when joining town',
+                        undefined,
+                        () => {
+                            console.log('[analytics] set username when joining town')
+                        },
+                    )
                 } catch (e) {
                     setRequestInFlight(false)
                 }
@@ -60,7 +63,7 @@ export const SetUsernameForm = (props: Props & { onHide: () => void }) => {
             void submit()
             props.onHide()
         },
-        [analytics, props, setUsername, spaceData.id, value],
+        [props, setUsername, spaceData.id, value],
     )
 
     const usernameValid = useMemo(() => {

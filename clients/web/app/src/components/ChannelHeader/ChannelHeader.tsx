@@ -29,7 +29,7 @@ import { FavoriteChannelButtonTouch } from '@components/FavoriteChannelButton/Fa
 import { useFavoriteChannels } from 'hooks/useFavoriteChannels'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { useChannelHeaderMembers } from 'hooks/useChannelHeaderMembers'
-import { useAnalytics } from 'hooks/useAnalytics'
+import { Analytics } from 'hooks/useAnalytics'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
 import { TouchPanelContext } from '@components/Panel/Panel'
 import { useChannelEntitlements } from 'hooks/useChannelEntitlements'
@@ -95,7 +95,6 @@ const DesktopChannelHeader = (props: Props & HeaderProps) => {
     const { displayNotificationBanner, requestPushPermission, denyPushPermission } =
         usePushNotifications()
     const topic = useRoom(channel.id)?.topic
-    const { analytics } = useAnalytics()
 
     const { channelIsMuted, spaceIsMuted } = useMuteSettings({
         spaceId: spaceId,
@@ -110,22 +109,22 @@ const DesktopChannelHeader = (props: Props & HeaderProps) => {
             spaceId,
             channelId: channel.id,
         }
-        analytics?.track('clicked request notifications permission', tracked, () => {
+        Analytics.getInstance().track('clicked request notifications permission', tracked, () => {
             console.log('[analytics] clicked request notifications permission', tracked)
         })
         requestPushPermission()
-    }, [analytics, channel.id, requestPushPermission, spaceId])
+    }, [channel.id, requestPushPermission, spaceId])
 
     const onClickDenyPermission = useCallback(() => {
         const tracked = {
             spaceId,
             channelId: channel.id,
         }
-        analytics?.track('clicked deny notifications permission', tracked, () => {
+        Analytics.getInstance().track('clicked deny notifications permission', tracked, () => {
             console.log('[analytics] clicked deny notifications permission', tracked)
         })
         denyPushPermission()
-    }, [analytics, channel.id, denyPushPermission, spaceId])
+    }, [channel.id, denyPushPermission, spaceId])
 
     return (
         <>
@@ -271,7 +270,6 @@ const TouchChannelHeader = (props: Props & HeaderProps) => {
     const { favoriteChannelIds } = useFavoriteChannels()
     const { displayNotificationBanner, requestPushPermission, denyPushPermission } =
         usePushNotifications()
-    const { analytics } = useAnalytics()
     const channelType = useChannelType(channel.id)
     const { channelIsMuted, spaceIsMuted } = useMuteSettings({
         spaceId: spaceId,
@@ -289,22 +287,22 @@ const TouchChannelHeader = (props: Props & HeaderProps) => {
             spaceId,
             channelId: channel.id,
         }
-        analytics?.track('clicked request notifications permission', tracked, () => {
+        Analytics.getInstance().track('clicked request notifications permission', tracked, () => {
             console.log('[analytics] clicked request notifications permission', tracked)
         })
         requestPushPermission()
-    }, [analytics, channel.id, requestPushPermission, spaceId])
+    }, [channel.id, requestPushPermission, spaceId])
 
     const onClickDenyPermission = useCallback(() => {
         const tracked = {
             spaceId,
             channelId: channel.id,
         }
-        analytics?.track('clicked deny notifications permission', tracked, () => {
+        Analytics.getInstance().track('clicked deny notifications permission', tracked, () => {
             console.log('[analytics] clicked deny notifications permission', tracked)
         })
         denyPushPermission()
-    }, [analytics, channel.id, denyPushPermission, spaceId])
+    }, [channel.id, denyPushPermission, spaceId])
 
     return (
         <Stack gap="sm">

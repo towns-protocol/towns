@@ -28,7 +28,7 @@ import { useImageStore } from '@components/UploadImage/useImageStore'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { convertTokenTypeToOperationType } from '@components/Tokens/utils'
 import { useStore } from 'store/store'
-import { useAnalytics } from 'hooks/useAnalytics'
+import { Analytics } from 'hooks/useAnalytics'
 import { useNotificationSettings } from 'hooks/useNotificationSettings'
 import { usePlatformMinMembershipPriceInEth } from 'hooks/usePlatformMinMembershipPriceInEth'
 import { useUploadAttachment } from '@components/MediaDropContext/useUploadAttachment'
@@ -65,7 +65,7 @@ export function CreateTownSubmit({
     const { isLoading, error, createSpaceTransactionWithRole } = useCreateSpaceTransaction()
 
     const navigate = useNavigate()
-    const { analytics } = useAnalytics()
+
     const spaceInfoCache = useMutationSpaceInfoCache()
 
     const { uploadTownImageToStream } = useUploadAttachment()
@@ -100,7 +100,7 @@ export function CreateTownSubmit({
                     longDescription: values.longDescription ?? '',
                 }
 
-                analytics?.track('submitting create town form', {}, () => {
+                Analytics.getInstance().track('submitting create town form', {}, () => {
                     console.log('[analytics] submitting create town form')
                 })
 
@@ -277,7 +277,7 @@ export function CreateTownSubmit({
                         mapToErrorMessage({ error: result.error, source: 'create space' })
 
                     if (errorMessage) {
-                        analytics?.track(
+                        Analytics.getInstance().track(
                             'error creating town',
                             {
                                 error: errorMessage,
@@ -324,7 +324,7 @@ export function CreateTownSubmit({
                             quantity: token.quantity.toString(),
                         })),
                     }
-                    analytics?.track('created town', trackedAnalytics, () => {
+                    Analytics.getInstance().track('created town', trackedAnalytics, () => {
                         console.log('[analytics] created town', trackedAnalytics)
                     })
 
@@ -378,7 +378,6 @@ export function CreateTownSubmit({
         setRecentlyMintedSpaceToken,
         setTransactionDetails,
         form,
-        analytics,
         getSigner,
         spaceDapp,
         membershipPricingType,

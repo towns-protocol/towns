@@ -48,7 +48,7 @@ import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { useDevice } from 'hooks/useDevice'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
-import { useAnalytics } from 'hooks/useAnalytics'
+import { Analytics } from 'hooks/useAnalytics'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { PanelButton } from '@components/Panel/PanelButton'
@@ -90,7 +90,6 @@ export const CreateChannelForm = (props: Props) => {
     const { loggedInWalletAddress } = useConnectivity()
 
     const { isTouch } = useDevice()
-    const { analytics } = useAnalytics()
 
     const {
         createChannelTransaction,
@@ -285,7 +284,7 @@ export const CreateChannelForm = (props: Props) => {
                     parentSpaceId: props.spaceId,
                     rolesWithDetails: _rolesWithDetails,
                 }
-                analytics?.track('submitting create channel form', tracked, () => {
+                Analytics.getInstance().track('submitting create channel form', tracked, () => {
                     console.log('[analytics] submitting create channel form', tracked)
                 })
 
@@ -305,7 +304,7 @@ export const CreateChannelForm = (props: Props) => {
                         channelId,
                     }
                     if (channelId) {
-                        analytics?.track('created channel', trackCreated, () => {
+                        Analytics.getInstance().track('created channel', trackCreated, () => {
                             console.log('[analytics] created channel', trackCreated)
                         })
                         toast.custom((t) => {

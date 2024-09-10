@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Outlet } from 'react-router'
 import {
     Membership,
@@ -11,7 +11,7 @@ import isEqual from 'lodash/isEqual'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { SetUsernameFormWithClose } from '@components/SetUsernameForm/SetUsernameForm'
 import { useUsernameConfirmed } from 'hooks/useUsernameConfirmed'
-import { useAnalytics } from 'hooks/useAnalytics'
+import { Analytics } from 'hooks/useAnalytics'
 import { AppProgressState } from '@components/AppProgressOverlay/AppProgressState'
 import { AppProgressOverlayTrigger } from '@components/AppProgressOverlay/AppProgressOverlayTrigger'
 import { useAppProgressStore } from '@components/AppProgressOverlay/store/appProgressStore'
@@ -41,13 +41,11 @@ export const ValidateMembership = () => {
     const { joiningSpace: isJoining } = usePublicPageLoginFlow()
     const [_PublicTownPage] = useState(<PublicTownPage />)
     const spaceDataIds = useSpaceDataIds()
-    const { analytics } = useAnalytics()
-    const trackPublicTownPage = useTrackPublicTownPage()
+
     const userId = useMyUserId()
 
     useEffect(() => {
         console.log('ValidateMembership', spaceIdFromPathname, {
-            analytics: analytics !== undefined,
             usernameConfirmed,
             isLocalDataLoaded,
             isRemoteDataLoaded,
@@ -68,14 +66,14 @@ export const ValidateMembership = () => {
         spaceDataIds,
         spaceIdFromPathname,
         usernameConfirmed,
-        analytics,
     ])
 
     useEffect(() => {
+        const analytics = Analytics.getInstance()
         if (analytics && userId) {
             console.log('[analytics][ValidateMembership] setUserId')
             analytics.setUserId(userId)
-            analytics?.identify({}, () => {
+            analytics.identify({}, () => {
                 console.log('[analytics][ValidateMembership] identify user', {
                     pseudoId: analytics.pseudoId,
                     anonymousId: analytics.anonymousId,
@@ -83,7 +81,7 @@ export const ValidateMembership = () => {
                 })
             })
         }
-    }, [analytics, userId])
+    }, [userId])
 
     const deferPublicPage = useDeferPublicPage({ spaceId: spaceIdFromPathname })
 
@@ -144,13 +142,13 @@ export const ValidateMembership = () => {
         return _PublicTownPage
     }
 
-    analytics?.trackOnce('is_member', {
+    Analytics.getInstance().trackOnce('is_member', {
         debug: true,
         isMember,
     })
 
     if (!isRemoteDataLoaded || !isLocalDataLoaded) {
-        analytics?.trackOnce('load_local_data', {
+        Analytics.getInstance().trackOnce('load_local_data', {
             debug: true,
             isRemoteDataLoaded,
             isLocalDataLoaded,
@@ -226,14 +224,8 @@ function useSpaceDataIds() {
     return newIds
 }
 
-function useTrackPublicTownPage() {
-    const { analytics } = useAnalytics()
-
-    return useCallback(() => {
-        if (analytics) {
-            analytics.trackOnce('public_town_page', {
-                debug: true,
-            })
-        }
-    }, [analytics])
+function trackPublicTownPage() {
+    Analytics.getInstance().trackOnce('public_town_page', {
+        debug: true,
+    })
 }

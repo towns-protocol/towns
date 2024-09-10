@@ -23,7 +23,7 @@ import { useStore } from 'store/store'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useUnseenChannelIds } from 'hooks/useUnseenChannelIdsCount'
 import { LinkParams, useCreateLink } from 'hooks/useCreateLink'
-import { useAnalytics } from 'hooks/useAnalytics'
+import { Analytics } from 'hooks/useAnalytics'
 import { useLeaveChannel } from 'hooks/useLeaveChannel'
 import { useNotificationSettings } from 'hooks/useNotificationSettings'
 import { useChannelEntitlements } from 'hooks/useChannelEntitlements'
@@ -128,7 +128,6 @@ export const ChannelItem = ({
         spaceId: space?.id,
         channelId: channelNetworkId,
     })
-    const { analytics } = useAnalytics()
 
     const { loggedInWalletAddress } = useConnectivity()
 
@@ -165,7 +164,7 @@ export const ChannelItem = ({
             openPanel(CHANNEL_INFO_PARAMS.ROLE_RESTRICTED_CHANNEL_JOIN, {
                 data: channelIdentifier,
             })
-            analytics?.track('clicked join gated channel button', {
+            Analytics.getInstance().track('clicked join gated channel button', {
                 spaceId: space.id,
                 channelId: channelIdentifier,
             })
@@ -265,7 +264,7 @@ export function useOnJoinChannel(props: {
     const [syncingSpace, setSyncingSpace] = React.useState(false)
     const [joinFailed, setJoinFailed] = React.useState(false)
     const setTownRouteBookmark = useStore((s) => s.setTownRouteBookmark)
-    const { analytics } = useAnalytics()
+
     const groups = useMyChannels(space)
     const myJoinedChannelsInSpace = useMemo(() => groups.flatMap((c) => c.channels), [groups])
     const { leaveChannel } = useLeaveChannel()
@@ -295,7 +294,7 @@ export function useOnJoinChannel(props: {
                 channelId: channelId,
                 isJoined: isJoined ? 'leave' : 'join',
             }
-            analytics?.track('clicked join / leave channel', tracked, () => {
+            Analytics.getInstance().track('clicked join / leave channel', tracked, () => {
                 console.log('[analytics] track', 'clicked join / leave channel', tracked)
             })
 
@@ -392,7 +391,6 @@ export function useOnJoinChannel(props: {
         },
         [
             addChannelNotificationSettings,
-            analytics,
             channelId,
             client,
             closePanel,

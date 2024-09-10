@@ -17,7 +17,7 @@ import { FadeInBox } from '@components/Transitions'
 import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
 import { Box, BoxProps, Button, Heading, Icon, IconButton, Paragraph, Stack } from '@ui'
 import { useAbstractAccountAddress } from 'hooks/useAbstractAccountAddress'
-import { useAnalytics } from 'hooks/useAnalytics'
+import { Analytics } from 'hooks/useAnalytics'
 import { useDevice } from 'hooks/useDevice'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { PrivyWrapper } from 'privy/PrivyProvider'
@@ -49,7 +49,6 @@ const PublicTownPageWithoutAuth = (props: { isPreview?: boolean; onClosePreview?
     const className = clsx([darkTheme, atoms({ color: 'default' })])
     const isJoining = !!usePublicPageLoginFlow().joiningSpace
 
-    const { analytics } = useAnalytics()
     const { isTouch } = useDevice()
     const location = useLocation()
     const [searchParams] = useSearchParams()
@@ -85,10 +84,10 @@ const PublicTownPageWithoutAuth = (props: { isPreview?: boolean; onClosePreview?
             isInvite,
             oauthProvider,
         }
-        analytics?.page('home-page', 'public town page', tracked, () => {
+        Analytics.getInstance().page('home-page', 'public town page', tracked, () => {
             console.log('[analytics] public town page', tracked)
         })
-    }, [analytics, isInvite, joinSpaceId, oauthProvider, spaceId])
+    }, [isInvite, joinSpaceId, oauthProvider, spaceId])
 
     useEffect(() => {
         console.log('[analytics]')
@@ -156,10 +155,9 @@ const Header = (props: { isPreview: boolean; onClosePreview?: () => void }) => {
     const { isAuthenticated } = useConnectivity()
     const { isPreview, onClosePreview } = props
     const { login } = useCombinedAuth()
-    const { analytics } = useAnalytics()
 
     const onClickLogin = useCallback(() => {
-        analytics?.track(
+        Analytics.getInstance().track(
             'clicked login',
             {
                 buttonText: 'Log In',
@@ -169,7 +167,7 @@ const Header = (props: { isPreview: boolean; onClosePreview?: () => void }) => {
             },
         )
         login()
-    }, [analytics, login])
+    }, [login])
 
     const fromLink = useLocation().state?.fromLink === true
     const navigate = useNavigate()

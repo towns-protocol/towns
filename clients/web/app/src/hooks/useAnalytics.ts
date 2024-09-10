@@ -5,7 +5,6 @@ import {
     IdentifyTraits,
     RudderAnalytics,
 } from '@rudderstack/analytics-js'
-import { useCallback, useRef } from 'react'
 import { keccak256 } from 'ethers/lib/utils'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
 import { TownsAnalytics } from 'use-towns-client'
@@ -160,24 +159,6 @@ export class Analytics implements TownsAnalytics {
 
         this.track(event, properties, callback)
     }
-}
-
-export function useAnalytics() {
-    const analyticsRef = useRef<Analytics>()
-
-    const getAnalyticsInstance = useCallback(() => {
-        if (!analyticsRef.current) {
-            const analyticsInstance = Analytics.getInstance()
-            if (analyticsInstance) {
-                analyticsRef.current = analyticsInstance
-            }
-        }
-        return analyticsRef.current
-    }, [])
-
-    return {
-        analytics: getAnalyticsInstance(),
-    } as const
 }
 
 export function trackError(args: {

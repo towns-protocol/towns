@@ -6,7 +6,7 @@ import { AppErrorFallback } from 'AppErrorFallback'
 import { ZLayerProvider } from '@ui'
 import { useRootTheme } from 'hooks/useRootTheme'
 import { usePeriodicUpdates } from 'hooks/usePeriodicUpdates'
-import { useAnalytics } from 'hooks/useAnalytics'
+import { Analytics } from 'hooks/useAnalytics'
 import { AppProgressOverlay } from '@components/AppProgressOverlay/AppProgressOverlay'
 import { AppProgressState } from '@components/AppProgressOverlay/AppProgressState'
 import { WelcomeLayout } from 'routes/layouts/WelcomeLayout'
@@ -34,13 +34,12 @@ export const Main = () => {
         useDefaultOSTheme: true,
     })
 
-    const { analytics } = useAnalytics()
     useEffect(() => {
         console.log('[analytics] Main useEffect')
-        analytics?.identify({}, () => {
+        Analytics.getInstance().identify({}, () => {
             console.log('[analytics] identify')
         })
-    }, [analytics])
+    }, [])
 
     usePeriodicUpdates()
 

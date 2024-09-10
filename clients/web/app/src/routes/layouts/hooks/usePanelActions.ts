@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { PanelContext } from '@components/Panel/PanelContext'
 import { CHANNEL_INFO_PARAMS_VALUES } from 'routes'
 import { useDevice } from 'hooks/useDevice'
-import { useAnalytics } from 'hooks/useAnalytics'
+import { Analytics } from 'hooks/useAnalytics'
 
 export const usePanelActions = () => {
     const { isTouch } = useDevice()
@@ -13,7 +13,6 @@ export const usePanelActions = () => {
     const contextStackId = context?.stackId
     const contextParentRoute = context?.parentRoute
     const isRootPanel = context?.isRootPanel
-    const { analytics } = useAnalytics()
 
     return {
         data: useMemo(() => searchParams.get('data'), [searchParams]),
@@ -53,8 +52,8 @@ export const usePanelActions = () => {
         closePanel: useCallback(
             (params?: { preventPopStack?: boolean; force?: boolean }) => {
                 const panel = searchParams.get('panel')
-                if (panel && analytics) {
-                    analytics.track(
+                if (panel) {
+                    Analytics.getInstance().track(
                         'closed panel',
                         {
                             panel,
@@ -78,7 +77,7 @@ export const usePanelActions = () => {
                     setSearchParams({ ...searchParams })
                 }
             },
-            [analytics, contextParentRoute, isTouch, navigate, searchParams, setSearchParams],
+            [contextParentRoute, isTouch, navigate, searchParams, setSearchParams],
         ),
 
         isPanelOpen: useCallback(

@@ -44,7 +44,7 @@ import { PanelButton } from '@components/Panel/PanelButton'
 import { useBlockedUsers } from 'hooks/useBlockedUsers'
 import { UserPreferences } from '@components/UserProfile/UserPreferences'
 // import { useMatchingMessages } from '@components/DirectMessages/CreateDirectMessage/hooks/useMatchingMessages'
-import { useAnalytics } from 'hooks/useAnalytics'
+import { Analytics } from 'hooks/useAnalytics'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 
 export const SpaceProfilePanel = () => {
@@ -71,7 +71,6 @@ const SpaceProfileWithoutAuth = () => {
     const isAccountAbstractionEnabled = client?.isAccountAbstractionEnabled()
     const [search] = useSearchParams()
     const space = useSpaceData()
-    const { analytics } = useAnalytics()
 
     const cameFromSpaceInfoPanel = search.get('spaceInfo') !== null
     const [searchParams] = useSearchParams()
@@ -104,10 +103,11 @@ const SpaceProfileWithoutAuth = () => {
     const { loggedInWalletAddress } = useConnectivity()
 
     const onLogoutClick = useEvent(() => {
-        analytics?.track('clicked logout', {}, () => {
+        const analytics = Analytics.getInstance()
+        analytics.track('clicked logout', {}, () => {
             console.log('[analytics] clicked logout')
         })
-        analytics?.reset()
+        analytics.reset()
         logout()
     })
 
@@ -200,7 +200,7 @@ const SpaceProfileWithoutAuth = () => {
             (simplifiedPermissionState === 'soft-denied' ||
                 simplifiedPermissionState === 'hard-denied')
         ) {
-            analytics?.page(
+            Analytics.getInstance().page(
                 'toast',
                 'toast shown to enable notifications',
                 {
@@ -213,7 +213,7 @@ const SpaceProfileWithoutAuth = () => {
                 },
             )
         }
-    }, [analytics, isCurrentUser, simplifiedPermissionState, space?.id])
+    }, [isCurrentUser, simplifiedPermissionState, space?.id])
 
     if (isLoadingRootKey) {
         return (
