@@ -20,6 +20,7 @@ import {
     useSpaceUnreadThreadMentions,
     useUserLookupContext,
 } from 'use-towns-client'
+import { genId } from '@river-build/sdk'
 import { Avatar } from '@components/Avatar/Avatar'
 import {
     DirectMessageIcon,
@@ -276,7 +277,9 @@ export const TouchHome = () => {
         mentionsLink && (!isSearching || filteredMenuItems.some((f) => f.obj.value === 'mentions'))
 
     const openCreateChannelPanel = useCallback(() => {
-        openPanel('create-channel')
+        openPanel(CHANNEL_INFO_PARAMS.CREATE_CHANNEL, {
+            channelFormId: `formid-${genId(5)}`,
+        })
     }, [openPanel])
 
     useEffect(() => {
