@@ -14,17 +14,16 @@ export type Role = {
     users: string[]
 }
 
-type RoleProps = {
+type Props = {
     permissionId: Permission
-    role: Role
     defaultToggled: boolean
     metaData: PermissionMeta
     onToggle: (id: Permission, value: boolean) => void
     disabled?: boolean
 }
 
-export const RoleRow = (props: RoleProps) => {
-    const { permissionId, metaData, defaultToggled, role } = props
+export const PermissionToggle = (props: Props) => {
+    const { permissionId, metaData, defaultToggled } = props
     const [checked, setChecked] = React.useState(defaultToggled)
     const onToggle = (checked: boolean) => {
         if (props.disabled) {
@@ -36,12 +35,8 @@ export const RoleRow = (props: RoleProps) => {
     // since a role can be reset to its default state (an individual permission can be toggled withtout user clicking this toggle)
     // listen to the role changes and update the toggle state accordingly
     useEffect(() => {
-        if (!role) {
-            return
-        }
-        const { permissions } = role
-        setChecked(!!permissions.includes(permissionId))
-    }, [permissionId, role])
+        setChecked(defaultToggled)
+    }, [defaultToggled])
 
     return (
         <Stack horizontal grow gap as="label">

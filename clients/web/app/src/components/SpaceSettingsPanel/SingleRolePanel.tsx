@@ -43,7 +43,7 @@ import {
     enabledTownPermissions,
     townPermissionDescriptions,
 } from '@components/SpaceSettingsPanel/rolePermissions.const'
-import { RoleRow } from '@components/SpaceSettingsPanel/RoleSettingsPermissions'
+import { PermissionToggle } from '@components/SpaceSettingsPanel/PermissionToggle'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { FullPanelOverlay } from '@components/Web3/WalletLinkingPanel'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
@@ -616,13 +616,13 @@ export function ChannelPermissionsToggles({
 }) {
     const { setValue, getValues } = useFormContext<RoleFormSchemaType>()
 
+    // use the default form values, which map to the roleDetails
+    const formValues = getValues()
+
     // TODO: once SpaceSettings is gone and RoleRow lives here only, we can refactor RoleRow to just use the initial permissions of the form
     // and pass only the permissions to the row, no need to pass the whole role
 
     const [role, setRole] = useState(() => {
-        // use the default form values, which map to the roleDetails
-        const formValues = getValues()
-
         return {
             id: roleDetails?.id.toString() ?? '',
             name: formValues.name,
@@ -633,10 +633,8 @@ export function ChannelPermissionsToggles({
     })
 
     const onToggleChannelPermissions = useEvent((permissionId: Permission, isChecked: boolean) => {
-        const currentPermissions = role.permissions
-
         const newPermissions = createNewChannelPermissions(
-            currentPermissions,
+            formValues.channelPermissions,
             permissionId,
             isChecked,
         )
@@ -656,10 +654,9 @@ export function ChannelPermissionsToggles({
             permissionId === Permission.Read ||
             (permissionId === Permission.React && role.permissions.includes(Permission.Write))
         return role ? (
-            <RoleRow
+            <PermissionToggle
                 permissionId={permissionId}
-                role={role}
-                defaultToggled={!!role?.permissions?.includes(permissionId)}
+                defaultToggled={!!formValues.channelPermissions.includes(permissionId)}
                 metaData={channelPermissionDescriptions[permissionId]}
                 key={permissionId}
                 disabled={isDisabled}
@@ -708,9 +705,8 @@ function TownPermissionsToggles({
 
     return enabledTownPermissions.map((permissionId: Permission) => {
         return role ? (
-            <RoleRow
+            <PermissionToggle
                 permissionId={permissionId}
-                role={role}
                 defaultToggled={!!role?.permissions?.includes(permissionId)}
                 metaData={townPermissionDescriptions[permissionId]}
                 key={permissionId}

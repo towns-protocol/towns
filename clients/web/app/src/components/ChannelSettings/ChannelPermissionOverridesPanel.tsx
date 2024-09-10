@@ -17,6 +17,7 @@ import {
 } from 'use-towns-client'
 import { useClearChannelPermissionOverrides } from 'use-towns-client/dist/hooks/use-set-channel-permission-overrides'
 import { z } from 'zod'
+import { AnimatePresence } from 'framer-motion'
 import { atoms } from 'ui/styles/atoms.css'
 import { PrivyWrapper } from 'privy/PrivyProvider'
 import { Box, FancyButton, FormRender, Icon, Paragraph, Stack, Text, TextButton } from '@ui'
@@ -26,6 +27,7 @@ import { ChannelPermissionsToggles } from '@components/SpaceSettingsPanel/Single
 import { Panel } from '@components/Panel/Panel'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
+import { FadeIn } from '@components/Transitions'
 import { useChangePermissionOverridesStore } from './useChangePermissionOverridesStore'
 
 export const formSchema = z.object({
@@ -44,74 +46,59 @@ export const ChannelPermissionOverridesPanel = React.memo((props: { roleId: numb
 
     const { isLoading, roleDetails } = useRoleDetails(spaceId, roleId)
 
+    const rolePermissions = useMemo(
+        () => roleDetails?.permissions ?? [],
+        [roleDetails?.permissions],
+    )
+
     const hasPendingTx = useIsTransactionPending(
         BlockchainTransactionType.SetChannelPermissionOverrides,
         BlockchainTransactionType.ClearChannelPermissionOverrides,
     )
 
+    const [searchParams] = useSearchParams()
+    const [channelFormId] = useState(() => searchParams.get('channelFormId'))
+
     return (
         <PrivyWrapper>
             <Panel label="Edit Channel Permissions">
-                <Form
-                    spaceId={spaceId}
-                    roleId={roleId}
-                    roleDetails={roleDetails}
-                    isLoading={isLoading}
-                />
+                <Stack scroll>
+                    {channelFormId ? (
+                        <NewChannelPermissionOverridesMemoryForm
+                            spaceId={spaceId}
+                            roleId={roleId}
+                            channelFormId={channelFormId}
+                            roleDetails={roleDetails}
+                            rolePermissions={rolePermissions}
+                            isLoading={isLoading}
+                        />
+                    ) : (
+                        <UpdateExistingChannelPermissionsForm
+                            spaceId={spaceId}
+                            roleId={roleId}
+                            roleDetails={roleDetails}
+                            rolePermissions={rolePermissions}
+                            isLoading={isLoading}
+                        />
+                    )}
+                </Stack>
+                <UserOpTxModal />
                 {(hasPendingTx || isLoading) && <FullPanelOverlay />}
             </Panel>
         </PrivyWrapper>
     )
 })
 
-const Form = ({
-    isLoading,
-    roleDetails,
-    roleId,
-    spaceId,
-}: {
-    isLoading: boolean
-    roleDetails: RoleDetails | null | undefined
-    roleId: number
-    spaceId: string
-}) => {
-    const [searchParams] = useSearchParams()
-    const [channelFormId] = useState(() => searchParams.get('channelFormId'))
-
-    return (
-        <>
-            <Stack scroll>
-                {channelFormId ? (
-                    <NewChannelPermissionOverridesMemoryForm
-                        spaceId={spaceId}
-                        roleId={roleId}
-                        channelFormId={channelFormId}
-                        roleDetails={roleDetails}
-                        isLoading={isLoading}
-                    />
-                ) : (
-                    <UpdateExistingChannelPermissionsForm
-                        spaceId={spaceId}
-                        roleId={roleId}
-                        roleDetails={roleDetails}
-                        isLoading={isLoading}
-                    />
-                )}
-            </Stack>
-            <UserOpTxModal />
-        </>
-    )
-}
-
 type Props = {
     spaceId: string
     roleId: number
     roleDetails: RoleDetails | null | undefined
+    rolePermissions: Permission[]
     isLoading?: boolean
 }
 
 const UpdateExistingChannelPermissionsForm = (props: Props) => {
-    const { spaceId, roleId, roleDetails } = props
+    const { spaceId, roleId, roleDetails, rolePermissions } = props
 
     const channelId = useChannelId()
 
@@ -122,11 +109,11 @@ const UpdateExistingChannelPermissionsForm = (props: Props) => {
     )
 
     const defaultPermissions = useMemo(
-        () => (!permissionOverrides ? roleDetails?.permissions : permissionOverrides) ?? [],
-        [permissionOverrides, roleDetails?.permissions],
+        () => (!permissionOverrides ? rolePermissions : permissionOverrides) ?? [],
+        [permissionOverrides, rolePermissions],
     )
 
-    const hasChanges = Array.isArray(permissionOverrides)
+    const hasOverrides = Array.isArray(permissionOverrides)
 
     const { clearPermissionOverrides } = useClearPermissionOverrides(spaceId, roleId, channelId)
 
@@ -136,6 +123,7 @@ const UpdateExistingChannelPermissionsForm = (props: Props) => {
 
     const { getSigner, isPrivyReady } = useGetEmbeddedSigner()
     const { setChannelPermissionOverridesTransaction } = useSetChannelPermissionOverrides()
+    const { clearChannelPermissionOverridesTransaction } = useClearChannelPermissionOverrides()
 
     const onSubmit = useEvent(async (permissions: Permission[]) => {
         const signer = await getSigner()
@@ -143,13 +131,23 @@ const UpdateExistingChannelPermissionsForm = (props: Props) => {
             createPrivyNotAuthenticatedNotification()
             return
         }
-        await setChannelPermissionOverridesTransaction(
-            spaceId,
-            channelId,
-            roleId,
-            permissions,
-            signer,
-        )
+
+        const action =
+            hasOverrides && isEqual(new Set(permissions), new Set(rolePermissions))
+                ? 'clear'
+                : 'set'
+
+        if (action === 'clear') {
+            await clearChannelPermissionOverridesTransaction(spaceId, channelId, roleId, signer)
+        } else {
+            await setChannelPermissionOverridesTransaction(
+                spaceId,
+                channelId,
+                roleId,
+                permissions,
+                signer,
+            )
+        }
     })
 
     const transactionIsPending = useIsTransactionPending(
@@ -165,9 +163,10 @@ const UpdateExistingChannelPermissionsForm = (props: Props) => {
             channelId={channelId}
             isLoading={props.isLoading || isLoading}
             roleDetails={roleDetails}
-            permissionOverrides={permissionOverrides}
+            rolePermissions={rolePermissions}
             defaultPermissions={defaultPermissions}
-            hasChanges={hasChanges}
+            defaultResetPermissions={rolePermissions}
+            hasOverrides={hasOverrides}
             isDisabled={!isPrivyReady || transactionIsPending}
             onClearPermissions={onClearPermissions}
             onSubmit={onSubmit}
@@ -176,9 +175,7 @@ const UpdateExistingChannelPermissionsForm = (props: Props) => {
 }
 
 const NewChannelPermissionOverridesMemoryForm = (props: Props & { channelFormId: string }) => {
-    const { spaceId, channelFormId, roleId, roleDetails } = props
-
-    const rolePermissions = roleDetails?.permissions
+    const { spaceId, channelFormId, roleId, roleDetails, rolePermissions, isLoading } = props
 
     const permissionOverrides = useChangePermissionOverridesStore(
         (state) => state.channels[channelFormId]?.roles[roleId]?.permissions,
@@ -187,9 +184,6 @@ const NewChannelPermissionOverridesMemoryForm = (props: Props & { channelFormId:
     const defaultPermissions = useChangePermissionOverridesStore(
         (state) => permissionOverrides ?? rolePermissions ?? [],
     )
-
-    const hasChanges =
-        !!permissionOverrides && !isEqual(rolePermissions?.sort(), permissionOverrides?.sort())
 
     const setPermissionOverrides = useChangePermissionOverridesStore(
         (state) => state.setPermissionOverrides,
@@ -213,10 +207,11 @@ const NewChannelPermissionOverridesMemoryForm = (props: Props & { channelFormId:
             roleId={roleId}
             channelFormId={channelFormId}
             roleDetails={roleDetails}
-            isLoading={false}
-            permissionOverrides={undefined}
+            isLoading={isLoading}
+            hasOverrides={false}
             defaultPermissions={defaultPermissions}
-            hasChanges={hasChanges}
+            defaultResetPermissions={rolePermissions}
+            rolePermissions={rolePermissions}
             onClearPermissions={onClearPermissions}
             onSubmit={onSubmit}
         />
@@ -227,8 +222,8 @@ const PermissionForm = React.memo(
     (
         props: Props & {
             defaultPermissions: Permission[]
-            hasChanges: boolean
-            permissionOverrides: Permission[] | null | undefined
+            hasOverrides: boolean
+            defaultResetPermissions: Permission[]
             onClearPermissions: () => void
             onSubmit: (permissions: Permission[]) => void
             isDisabled?: boolean
@@ -245,10 +240,10 @@ const PermissionForm = React.memo(
     ) => {
         const {
             defaultPermissions,
-            hasChanges,
+            hasOverrides,
             isDisabled = false,
             isLoading,
-            onClearPermissions,
+            defaultResetPermissions,
             onSubmit,
             roleDetails,
         } = props
@@ -261,7 +256,6 @@ const PermissionForm = React.memo(
                         id="PermissionRoleForm"
                         mode="onChange"
                         height="100%"
-                        key={defaultPermissions.join()}
                         defaultValues={{
                             channelPermissions: defaultPermissions,
                         }}
@@ -272,7 +266,7 @@ const PermissionForm = React.memo(
                             return (
                                 <FormProvider {..._form}>
                                     <Stack gap="lg" paddingY="sm">
-                                        {!hasChanges ? (
+                                        {!hasOverrides ? (
                                             <DefaultDisclaimer roleName={roleDetails?.name} />
                                         ) : (
                                             <OverridesDisclaimer roleName={roleDetails?.name} />
@@ -284,14 +278,10 @@ const PermissionForm = React.memo(
                                                 alignItems="end"
                                             >
                                                 <Text>Channel permissions</Text>
-                                                {hasChanges && (
-                                                    <TextButton
-                                                        color="cta2"
-                                                        onClick={onClearPermissions}
-                                                    >
-                                                        Reset to default
-                                                    </TextButton>
-                                                )}
+
+                                                <ResetPermissionsButton
+                                                    defaultValues={defaultResetPermissions}
+                                                />
                                             </Stack>
 
                                             <Stack
@@ -309,6 +299,9 @@ const PermissionForm = React.memo(
                                         <SubmitButton
                                             permissions={_form.watch('channelPermissions')}
                                             isDisabled={isDisabled}
+                                            defaultValues={{
+                                                channelPermissions: defaultPermissions,
+                                            }}
                                             onSubmit={onSubmit}
                                         >
                                             Save
@@ -354,27 +347,46 @@ const OverridesDisclaimer = (props: { roleName?: string }) => (
     </Stack>
 )
 
+const ResetPermissionsButton = (props: { defaultValues: Permission[] }) => {
+    const { setValue, getValues } = useFormContext<RoleOverrideFormSchemaType>()
+
+    const hasChanges = !isEqual(
+        new Set(getValues().channelPermissions),
+        new Set(props.defaultValues),
+    )
+    const onReset = useEvent(() => {
+        setValue('channelPermissions', props.defaultValues)
+    })
+
+    return (
+        <AnimatePresence>
+            {hasChanges && (
+                <FadeIn>
+                    <TextButton color="cta2" onClick={onReset}>
+                        Reset to default
+                    </TextButton>
+                </FadeIn>
+            )}
+        </AnimatePresence>
+    )
+}
+
 const SubmitButton = (props: {
     children?: string
-    permissions?: Permission[]
+    permissions: Permission[]
+    defaultValues: { channelPermissions: Permission[] }
     isDisabled: boolean
     onSubmit: (permissions: Permission[]) => void
 }) => {
-    const { children, onSubmit, permissions } = props
+    const { children, onSubmit, permissions, defaultValues } = props
     const { handleSubmit, formState, watch } = useFormContext<RoleOverrideFormSchemaType>()
-    const { defaultValues } = formState
     const watchAllFields = watch()
 
     const isUnchanged = useMemo(() => {
-        const def = structuredClone(defaultValues)
-        const cur = structuredClone(watchAllFields)
-        function sorter(arr: typeof defaultValues | undefined) {
-            arr?.channelPermissions?.sort()
-        }
-        sorter(def)
-        sorter(cur)
-
-        return isEqual(def, cur)
+        return isEqual(
+            new Set(defaultValues?.channelPermissions),
+            new Set(watchAllFields.channelPermissions),
+        )
     }, [defaultValues, watchAllFields])
 
     const isDisabled =
