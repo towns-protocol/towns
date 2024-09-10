@@ -41,28 +41,16 @@ data "cloudflare_zone" "zone" {
 }
 
 locals {
-  reference_webapp_name     = "gamma"
-  reference_sample_app_name = "sample-gamma"
+  reference_webapp_name = "towns-server-alpha"
 
   preview_app_cname_record_name  = "${var.git_pr_number}.app-preview"
   preview_app_cname_record_value = "${local.reference_webapp_name}-pr-${var.git_pr_number}.onrender.com"
-
-  preview_sample_app_cname_record_name  = "${var.git_pr_number}.sample-app-preview"
-  preview_sample_app_cname_record_value = "${local.reference_sample_app_name}-pr-${var.git_pr_number}.onrender.com"
 }
 
 resource "cloudflare_record" "app_dns" {
   zone_id = data.cloudflare_zone.zone.id
   name    = local.preview_app_cname_record_name
   value   = local.preview_app_cname_record_value
-  type    = "CNAME"
-  ttl     = 60
-}
-
-resource "cloudflare_record" "sample_app_dns" {
-  zone_id = data.cloudflare_zone.zone.id
-  name    = local.preview_sample_app_cname_record_name
-  value   = local.preview_sample_app_cname_record_value
   type    = "CNAME"
   ttl     = 60
 }

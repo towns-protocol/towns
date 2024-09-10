@@ -36,11 +36,6 @@ function check_env() {
         exit 1
     fi
 
-    if [ -z "$PREVIEW_DOMAIN_SUFFIX" ]; then
-        echo "PREVIEW_DOMAIN_SUFFIX must be set by the calling script"
-        exit 1
-    fi
-
     if [ -z "$RENDER_SERVICE_ID" ]; then
         echo "RENDER_SERVICE_ID must be set automatically by the render builder"
         exit 1
@@ -49,7 +44,7 @@ function check_env() {
 
 function set_domain() {
     local pr_number="$1"
-    domain="$pr_number.$PREVIEW_DOMAIN_SUFFIX"
+    domain="$pr_number.app-preview.towns.com"
 
     echo "Setting service $RENDER_SERVICE_ID domain to $domain"
     curl  \

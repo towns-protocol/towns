@@ -63,10 +63,8 @@ jobs:
                   script: |
                       const gitPrNumber = process.env.GIT_PR_NUMBER;
                       const webAppUrl = `https://${gitPrNumber}.app-preview.towns.com`;
-                      const sampleAppUrl = `https://${gitPrNumber}.sample-app-preview.towns.com`;
                       const message = `
                       Web App: [${webAppUrl}](${webAppUrl})
-                      Sample App: [${sampleAppUrl}](${sampleAppUrl})
                       `;
 
                       github.rest.issues.createComment({
