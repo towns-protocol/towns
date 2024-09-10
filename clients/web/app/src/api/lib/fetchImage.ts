@@ -17,32 +17,20 @@ export function getImageUrlFromStreamMetadata(resourceId: string) {
 }
 
 export async function fetchSpaceImage(spaceId: string | undefined) {
-    console.log('getSpaceImage', { spaceId })
     if (!spaceId || !isSpaceStreamId(spaceId)) {
         throw new Error('Invalid space id')
     }
-
     const imageServiceUrl = getImageUrlFromStreamMetadata(spaceId)
-
     if (!imageServiceUrl) {
         throw new Error('Invalid image service url')
     }
 
-    console.log('getSpaceImage', { url: imageServiceUrl })
-
-    const response = await axiosClient.get(imageServiceUrl, {
-        responseType: 'blob',
-    })
-
+    const response = await fetch(imageServiceUrl)
     if (response.status !== 200) {
         throw new Error('Network response was not ok')
     }
 
-    const blob = response.data
-    const mimeType = blob.type // Get the MIME type from the blob
-    const imageObjectUrl = URL.createObjectURL(blob)
-
-    return { imageObjectUrl, mimeType }
+    return { imageUrl: response.url }
 }
 
 export async function fetchUserProfileImage(userId: string | undefined) {
@@ -53,20 +41,13 @@ export async function fetchUserProfileImage(userId: string | undefined) {
     if (!imageServiceUrl) {
         throw new Error('Invalid image service url')
     }
-    const response = await axiosClient.get(imageServiceUrl, {
-        responseType: 'blob',
-    })
 
+    const response = await fetch(imageServiceUrl)
     if (response.status !== 200) {
         throw new Error('Network response was not ok')
     }
 
-    const blob = response.data
-    const mimeType = blob.type // Get the MIME type from the blob
-    const imageObjectUrl = URL.createObjectURL(blob)
-    console.log('fetchUserProfileImage', imageObjectUrl)
-
-    return { imageObjectUrl, mimeType }
+    return { imageUrl: response.url }
 }
 
 export async function refreshSpaceCache(spaceId: string): Promise<{ ok: boolean }> {

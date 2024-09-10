@@ -9,6 +9,7 @@ import { srOnlyClass } from 'ui/styles/globals/utils.css'
 import { FieldOutline } from 'ui/components/_internal/Field/FieldOutline/FieldOutline'
 import { loadingStyles, spinnerStyles } from './UploadImage.css'
 import { UseOnImageChangeEventProps, useOnImageChangeEvent } from './useOnImageChangeEvent'
+import { useImageStore } from './useImageStore'
 
 export type UploadImageTemplateSize = 'tabletToDesktop' | 'lg' | 'sm'
 
@@ -69,7 +70,7 @@ export const LargeUploadImageTemplate = <T extends FieldValues>(props: Props<T>)
         size = 'lg',
     } = props
 
-    const { onChange, isLoading, isUploading } = useOnImageChangeEvent({
+    const { onChange, isUploading } = useOnImageChangeEvent({
         onUploadImage,
         resourceId,
         type,
@@ -79,6 +80,10 @@ export const LargeUploadImageTemplate = <T extends FieldValues>(props: Props<T>)
         clearErrors,
         formState,
     })
+
+    const failedResource = useImageStore((state) => state.erroredResources[resourceId])
+    const loadedResource = useImageStore((state) => state.loadedResource[resourceId])
+    const isLoading = !failedResource && !loadedResource
 
     const isLoadingOrUploading = isLoading || isUploading
 

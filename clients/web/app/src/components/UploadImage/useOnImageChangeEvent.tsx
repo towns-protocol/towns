@@ -1,6 +1,5 @@
 import { ChangeEvent, useMemo, useState } from 'react'
 import { FieldValues, Path, UseFormReturn } from 'react-hook-form'
-import { FetchImageResourceType, useFetchImage } from './useFetchImage'
 
 export type UploadImageRequestConfig = {
     id: string
@@ -9,6 +8,8 @@ export type UploadImageRequestConfig = {
     type: 'spaceIcon' | 'avatar'
     setProgress: (progress: number) => void
 }
+
+type FetchImageResourceType = 'spaceIcon' | 'avatar'
 
 export type UseOnImageChangeEventProps<T extends FieldValues> = {
     formFieldName: Path<T>
@@ -47,8 +48,6 @@ export function useOnImageChangeEvent<T extends FieldValues>({
             min: 400,
         },
     } = imageRestrictions ?? {}
-
-    const { isLoading } = useFetchImage(resourceId, type)
 
     const [uploadProgress, setUploadProgress] = useState<number>(0)
 
@@ -89,7 +88,6 @@ export function useOnImageChangeEvent<T extends FieldValues>({
 
     return {
         onChange,
-        isLoading,
         isUploading,
     }
 }

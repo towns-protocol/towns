@@ -8,7 +8,6 @@ import {
 } from 'use-towns-client'
 import { useCallback } from 'react'
 import imageCompression from 'browser-image-compression'
-import { useQueryClient } from '@tanstack/react-query'
 import { ChunkedMedia } from '@river-build/proto'
 import {
     fetchSpaceImage,
@@ -18,10 +17,6 @@ import {
 } from 'api/lib/fetchImage'
 import { isImageMimeType } from 'utils/isMediaMimeType'
 import { useImageStore } from '@components/UploadImage/useImageStore'
-import {
-    SPACE_IMAGE_QUERY_KEY,
-    USER_PROFILE_IMAGE_QUERY_KEY,
-} from '@components/UploadImage/useFetchImage'
 
 const CHUNK_SIZE = 500_000
 const MAX_THUMBNAIL_WIDTH = 30 // pixels
@@ -36,7 +31,6 @@ export type EncryptionMetadataForUpload = {
 export const useUploadAttachment = () => {
     const { client, createMediaStream, setUserProfileImage, sendMediaPayload } = useTownsClient()
     const setLoadedResource = useImageStore((state) => state.setLoadedResource)
-    const queryClient = useQueryClient()
 
     function shouldCompressFile(file: File): boolean {
         return file.type !== 'image/gif' && isImageMimeType(file.type)
@@ -254,14 +248,9 @@ export const useUploadAttachment = () => {
                 })
 
                 // fetch the image and ...
-                const { imageObjectUrl } = await fetchSpaceImage(spaceId)
-                console.log('fetchSpaceImage', { spaceId, imageObjectUrl })
-                // update the query cache ...
-                queryClient.setQueryData([SPACE_IMAGE_QUERY_KEY, spaceId], imageObjectUrl)
+                const { imageUrl } = await fetchSpaceImage(spaceId)
                 // then update the image store
-                setLoadedResource(spaceId, {
-                    imageUrl: imageObjectUrl,
-                })
+                setLoadedResource(spaceId, { imageUrl })
                 await refreshSpaceCache(spaceId)
                 // no issues uploading the image
                 return true
@@ -273,7 +262,7 @@ export const useUploadAttachment = () => {
                 setProgress(0)
             }
         },
-        [client, queryClient, setLoadedResource, uploadImageFile],
+        [client, setLoadedResource, uploadImageFile],
     )
 
     const uploadUserProfileImageToStream = useCallback(
@@ -309,11 +298,8 @@ export const useUploadAttachment = () => {
                     },
                 })
                 await setUserProfileImage(chunkedMedia)
-                const { imageObjectUrl } = await fetchUserProfileImage(userId)
-                queryClient.setQueryData([USER_PROFILE_IMAGE_QUERY_KEY, userId], imageObjectUrl)
-                setLoadedResource(userId, {
-                    imageUrl: imageObjectUrl,
-                })
+                const { imageUrl } = await fetchUserProfileImage(userId)
+                setLoadedResource(userId, { imageUrl })
                 await refreshUserCache(userId)
                 return true
             } catch (e) {
@@ -323,7 +309,7 @@ export const useUploadAttachment = () => {
                 setProgress(0)
             }
         },
-        [queryClient, setLoadedResource, setUserProfileImage, uploadImageFile],
+        [setLoadedResource, setUserProfileImage, uploadImageFile],
     )
 
     return { uploadAttachment, uploadTownImageToStream, uploadUserProfileImageToStream }
