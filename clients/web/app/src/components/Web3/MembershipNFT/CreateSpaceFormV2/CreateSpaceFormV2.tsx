@@ -127,6 +127,7 @@ function CreateSpaceFormV2WithoutAuth() {
     const [createFlowStatus, setCreateFlowStatus] = useState<CreateSpaceFlowStatus>()
 
     const onCreateSpaceFlowStatus = useCallback((status: CreateSpaceFlowStatus) => {
+        console.log('[createSpace] onCreateSpaceFlowStatus', status)
         setCreateFlowStatus(status)
     }, [])
 
@@ -682,6 +683,7 @@ const ProgressOverlay = (props: { status?: CreateSpaceFlowStatus; isTransacting:
                 return 0
             case CreateSpaceFlowStatus.CreatingSpace:
                 return 1
+            case CreateSpaceFlowStatus.CreatingChannel:
             case CreateSpaceFlowStatus.CreatingUser:
                 return 2
         }
