@@ -38,7 +38,12 @@ export const useSpaceDataStore = create<SpaceDataStore>((set) => ({
             if (isEqual(state.spaceDataMap[spaceData.id], spaceData)) {
                 return state
             }
-            console.log(`setSpaceData<${spaceData.id}> data changed`, { spaceData })
+
+            console.log(`setSpaceData<${spaceData.id}> data changed`, {
+                prevSpaceId: state.spaceDataMap[spaceData.id]?.id,
+                spaceData,
+            })
+
             return {
                 spaceDataMap: {
                     ...state.spaceDataMap,

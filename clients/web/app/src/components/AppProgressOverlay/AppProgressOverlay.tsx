@@ -13,8 +13,20 @@ import { useAppProgressStore } from './store/appProgressStore'
 
 export const AppProgressOverlay = (props: { debug?: boolean }) => {
     const spaceIdBookmark = useStore((s) => s.spaceIdBookmark)
-    const spaceId =
-        matchPath('/t/:spaceId/*', useLocation().pathname)?.params.spaceId || spaceIdBookmark
+
+    const { pathname } = useLocation()
+
+    const spaceId = useMemo(() => {
+        return matchPath('/t/:spaceId/*', pathname)?.params.spaceId //|| spaceIdBookmark
+    }, [pathname])
+
+    useEffect(() => {
+        console.log('[routing] spaceIdBookmark:', spaceIdBookmark)
+    }, [spaceId, spaceIdBookmark])
+
+    useEffect(() => {
+        console.log('[routing] spaceId:', spaceId)
+    }, [spaceId])
 
     const { appProgressOverlay, isOptimisticInitialized } = useAppProgressStore(
         ({ appProgressOverlay, optimisticInitializedSpaces }) => ({

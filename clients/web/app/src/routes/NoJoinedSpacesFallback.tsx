@@ -15,6 +15,8 @@ import { useStore } from 'store/store'
 import { Analytics } from 'hooks/useAnalytics'
 import { AppProgressState } from '@components/AppProgressOverlay/AppProgressState'
 import { AppProgressOverlayTrigger } from '@components/AppProgressOverlay/AppProgressOverlayTrigger'
+import { useDebounce } from 'hooks/useDebounce'
+import { SECOND_MS } from 'data/constants'
 
 export const NoJoinedSpacesFallback = () => {
     const navigate = useNavigate()
@@ -45,24 +47,57 @@ export const NoJoinedSpacesFallback = () => {
         })
     }, [location.pathname, location.search])
 
+    // attempting a tiny debounce in case the spaces are still loading
+    // TODO: may want to remove this
+    const numSpaces = useDebounce(spaces.length, SECOND_MS * 0.25)
+    const hasSpaces = numSpaces > 0
+
+    useEffect(() => {
+        console.log('[NoJoinedSpacesFallback][route] spaces.length', spaces.length)
+    }, [spaces.length])
+
+    useEffect(() => {
+        console.log('[NoJoinedSpacesFallback][route] numSpaces', numSpaces)
+    }, [numSpaces])
+
+    useEffect(() => {
+        console.log('[NoJoinedSpacesFallback][route] clientStatus', clientStatus)
+    }, [clientStatus])
+
     useEffect(() => {
         if (!client) {
             return
         }
-        if (spaces.length) {
-            const firstSpaceId =
-                spaces.find((space) => space.id === spaceIdBookmark)?.id ?? spaces[0].id
+        if (hasSpaces) {
+            const firstSpaceId = spaces[0].id
+            const bookmarkedSpaceId =
+                spaces.find((space) => space.id === spaceIdBookmark)?.id ?? firstSpaceId
 
-            if (client.getMembership(firstSpaceId) === Membership.Join) {
+            const defaultSpaceId = bookmarkedSpaceId ?? firstSpaceId
+
+            if (defaultSpaceId === firstSpaceId) {
+                console.log(
+                    `[NoJoinedSpacesFallback][route] warning first space selected out of ${spaces.length} spaces`,
+                )
+            }
+
+            console.log('[NoJoinedSpacesFallback][route] Bookmark info', {
+                bookmarkedSpaceId,
+                firstSpaceId,
+                defaultSpaceId,
+                spaceIds: spaces.map((s) => s.id),
+            })
+
+            if (client.getMembership(defaultSpaceId) === Membership.Join) {
                 console.log('[NoJoinedSpacesFallback][route] Navigating to first space', {
-                    firstSpaceId,
-                    path: `/${PATHS.SPACES}/${firstSpaceId}/`,
+                    firstSpaceId: defaultSpaceId,
+                    path: `/${PATHS.SPACES}/${defaultSpaceId}/`,
                     deviceType: isTouch ? 'mobile' : 'desktop',
                 })
-                navigate(`/${PATHS.SPACES}/${firstSpaceId}/`)
+                navigate(`/${PATHS.SPACES}/${defaultSpaceId}/`)
             }
         }
-    }, [spaces, navigate, client, spaceIdBookmark, isTouch])
+    }, [client, hasSpaces, isTouch, navigate, spaceIdBookmark, spaces])
 
     const openTownPanel = useCallback(() => {
         Analytics.getInstance().track('clicked create a town', {}, () => {
@@ -77,12 +112,12 @@ export const NoJoinedSpacesFallback = () => {
     //     return <AppSkeletonView />
     // }
 
-    if (spaces.length) {
+    if (hasSpaces) {
         console.log('[app progress] no joined spaces fallback: no spaces')
         return (
             <AppProgressOverlayTrigger
                 progressState={AppProgressState.LoggingIn}
-                debugSource="no-joined-spaces spaces.length"
+                debugSource={`no-joined-spaces spaces:${spaces.length}`}
             />
         )
     } else if (authStatus === AuthStatus.EvaluatingCredentials) {

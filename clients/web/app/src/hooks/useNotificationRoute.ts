@@ -1,5 +1,5 @@
 import { isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
-import { useCallback, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 
 import { PATHS } from 'routes'
 import { useStore } from 'store/store'
@@ -15,6 +15,10 @@ export function useNotificationRoute() {
     })
 
     defaultSpaceIdRef.current = spaceIdBookmark
+
+    useEffect(() => {
+        console.log('[routing] useNotification route spaceIdBookmark:', spaceIdBookmark)
+    }, [spaceIdBookmark])
 
     const urlPathnameSafeToNavigate = useCallback(
         (pathnameWithSearch: string, channelId: string) => {
