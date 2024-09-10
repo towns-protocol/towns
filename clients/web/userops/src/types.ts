@@ -88,6 +88,6 @@ export type TimeTracker = {
     startMeasurement: (
         sequence: TimeTrackerEvents,
         step: string,
-    ) => ((endSequence?: boolean) => void) | undefined
-    endMeasurement: (sequence: string, step: string, endSequence?: boolean) => void
+    ) => ((data?: Record<string, unknown>) => void) | undefined
+    endMeasurement: (sequence: string, step: string, data?: Record<string, unknown>) => void
 }

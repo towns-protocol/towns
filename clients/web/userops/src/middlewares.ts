@@ -53,7 +53,7 @@ export function promptUser(
                 try {
                     // this is a new estimate because at this point the paymaster would have rejected our operation
                     // and we need an estimate to display to the user and to submit to the bundler
-                    let endEstimateGas: ((endSequence?: boolean) => void) | undefined
+                    let endEstimateGas: ((data?: Record<string, unknown>) => void) | undefined
                     if (sequenceName && timeTracker) {
                         endEstimateGas = timeTracker.startMeasurement(
                             sequenceName,

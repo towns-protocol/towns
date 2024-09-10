@@ -89,7 +89,7 @@ import {
 import { MembershipStruct, Permission, SpaceInfo, ISpaceDapp } from '@river-build/web3'
 import { BlockchainTransactionStore } from './BlockchainTransactionStore'
 import { UserOps, getTransactionHashOrUserOpHash, isUserOpResponse } from '@towns/userops'
-import { TimeTrackerEvents, getTimeTracker } from '../SequenceTimeTracker'
+import { StartMeasurementReturn, TimeTrackerEvents, getTimeTracker } from '../SequenceTimeTracker'
 import { waitForTimeoutOrMembership } from '../utils/waitForTimeoutOrMembershipEvent'
 import { TownsAnalytics } from '../types/TownsAnalytics'
 import { Hex } from 'viem'
@@ -2005,6 +2005,9 @@ export class TownsClient
             const endWaitForMembership = timeTracker.startMeasurement(
                 TimeTrackerEvents.JOIN_SPACE,
                 'contract_wait_for_membership_issued',
+                {
+                    userOpHash: getTransactionHashOrUserOpHash(transaction),
+                },
             )
             const { issued, tokenId, error } = await membershipOrTimeout
             endWaitForMembership?.()
@@ -2861,30 +2864,31 @@ export class TownsClient
 
         try {
             if (isUserOpResponse(transaction)) {
-                // wait for the userop event - this .wait is not the same as ethers.ContractTransaction.wait - see userop.js sendUserOperation
-                let endWaitForUserOpEvent: ((endSequence?: boolean) => void) | undefined
+                let endWaitForUserOpReceipt: StartMeasurementReturn | undefined
                 if (sequenceName) {
-                    endWaitForUserOpEvent = getTimeTracker().startMeasurement(
+                    endWaitForUserOpReceipt = getTimeTracker().startMeasurement(
                         sequenceName,
-                        'userops_wait_for_op_confirmation',
+                        'userops_wait_for_user_operation_receipt',
+                        {
+                            userOpHash: transaction.userOpHash,
+                        },
                     )
                 }
+                const userOpReceipt = await transaction.getUserOperationReceipt()
 
-                const userOpEvent = await transaction.wait()
-
-                if (endWaitForUserOpEvent) {
-                    endWaitForUserOpEvent()
+                if (endWaitForUserOpReceipt) {
+                    endWaitForUserOpReceipt()
                 }
 
-                if (userOpEvent) {
-                    if (userOpEvent.args.success === false) {
+                if (userOpReceipt) {
+                    if (userOpReceipt.success === false) {
                         // TODO: parse the user operation error
                         throw new Error(
                             `[_waitForBlockchainTransaction] user operation was not successful`,
                         )
                     }
 
-                    let endWaitForTxConfirmation: ((endSequence?: boolean) => void) | undefined
+                    let endWaitForTxConfirmation: StartMeasurementReturn | undefined
                     // we probably don't need to wait for this transaction, but for now we can convert it to a receipt for less refactoring
                     if (sequenceName) {
                         endWaitForTxConfirmation = getTimeTracker().startMeasurement(
@@ -2893,7 +2897,7 @@ export class TownsClient
                         )
                     }
                     receipt = await this.opts.baseProvider?.waitForTransaction(
-                        userOpEvent.transactionHash,
+                        userOpReceipt.receipt.transactionHash,
                     )
                     if (endWaitForTxConfirmation) {
                         endWaitForTxConfirmation()

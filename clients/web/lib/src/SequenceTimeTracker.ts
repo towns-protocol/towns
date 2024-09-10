@@ -30,7 +30,11 @@ class TimeTracker {
         window.listSequenceTimes = this.getAllMetrics.bind(this)
     }
 
-    public startMeasurement(sequence: TimeTrackerEvents, step: string) {
+    public startMeasurement(
+        sequence: TimeTrackerEvents,
+        step: string,
+        data?: Record<string, unknown>,
+    ) {
         try {
             if (!sequence) {
                 console.error('Measurement name is required.')
@@ -75,13 +79,13 @@ class TimeTracker {
                 this.metrics[sequence].count++
             }
 
-            return (endSequence?: boolean) => this.endMeasurement(sequence, step, endSequence)
+            return () => this.endMeasurement(sequence, step, data)
         } catch (error) {
             console.error('Error starting measurement:', error)
         }
     }
 
-    public endMeasurement(sequence: string, step: string, endSequence?: boolean): void {
+    public endMeasurement(sequence: string, step: string, data?: Record<string, unknown>): void {
         try {
             if (!sequence || !this.metrics[sequence]) {
                 console.error(`Measurement "${sequence}" not found or not started.`)
@@ -112,30 +116,10 @@ class TimeTracker {
                     step,
                     sequenceId: this.metrics[sequence].sequenceId,
                     durationMs,
+                    ...data,
                 })
             } catch (error) {
                 console.log('[SequenceTimeTracker] Error logging sequence time:', error)
-            }
-
-            if (endSequence) {
-                const sequenceStartTime = this.metrics[sequence].startTime
-                if (sequenceStartTime) {
-                    try {
-                        datadogLogs.logger.info(
-                            `sequence_time: ${sequence} complete ${durationMs}ms`,
-                            {
-                                sequence,
-                                step: 'complete',
-                                sequenceId: this.metrics[sequence].sequenceId,
-                                durationMs: endTime - sequenceStartTime,
-                            },
-                        )
-                    } catch (error) {
-                        console.log('[SequenceTimeTracker] Error logging sequence time:', error)
-                    }
-                }
-
-                this.metrics[sequence].startTime = undefined
             }
         } catch (error) {
             console.error('Error ending measurement:', error)
@@ -207,3 +191,5 @@ export const TimeTrackerEvents = {
 } as const
 
 export type TimeTrackerEvents = keyof typeof TimeTrackerEvents
+
+export type StartMeasurementReturn = ReturnType<TimeTracker['startMeasurement']>

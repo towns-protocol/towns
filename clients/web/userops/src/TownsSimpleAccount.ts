@@ -21,16 +21,10 @@ import {
     SimpleAccountFactory,
     SimpleAccountFactory__factory,
 } from 'userop/dist/typechain'
+import { ERC4337 } from './constants'
 
 interface ISigner extends Pick<Signer, 'signMessage'> {}
 type EOASigner = ISigner & Pick<Signer, 'getAddress'>
-
-const ERC4337 = {
-    EntryPoint: '0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789', // V0.6
-    SimpleAccount: {
-        Factory: '0x9406Cc6185a346906296840746125a0E44976454',
-    },
-}
 
 /**
  * Mostly a copy of SimpleAccount Builder Prest from userop.js

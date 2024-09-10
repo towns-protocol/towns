@@ -4,8 +4,8 @@ import {
     ISpaceDapp as R_ISpaceDapp,
     ContractEventListener,
 } from '@river-build/web3'
+import { TownsUserOpClientSendUserOperationResponse } from '@towns/userops'
 import { ContractReceipt, ContractTransaction, Signer, providers } from 'ethers'
-import { ISendUserOperationResponse } from 'userop.js'
 
 // TODO: replace instances of wagmi/viem Address with this type
 export type Address = `0x${string}`
@@ -68,7 +68,9 @@ export type RoleDetails = R_RoleDetails
 export type ISpaceDapp = R_ISpaceDapp
 export type ReceiptType = ContractReceipt
 
-export type TransactionOrUserOperation = ContractTransaction | ISendUserOperationResponse
+export type TransactionOrUserOperation =
+    | ContractTransaction
+    | TownsUserOpClientSendUserOperationResponse
 
 export interface IChainConfig {
     chainId: number

@@ -18,7 +18,6 @@ import {
 } from '@river-build/web3'
 import { ethers } from 'ethers'
 import isEqual from 'lodash/isEqual'
-import { ISendUserOperationResponse, Client as UseropClient } from 'userop'
 import { UserOpsConfig, UserOpParams, FunctionHash, TimeTracker, TimeTrackerEvents } from './types'
 import { userOpsStore } from './userOpsStore'
 // TODO: we can probably add these via @account-abrstraction/contracts if preferred
@@ -38,6 +37,7 @@ import { MiddlewareVars } from './MiddlewareVars'
 import { abstractAddressMap } from './abstractAddressMap'
 import { TownsSimpleAccount } from './TownsSimpleAccount'
 import { getGasPrice as getEthMaxPriorityFeePerGas } from 'userop/dist/preset/middleware'
+import { TownsUserOpClient, TownsUserOpClientSendUserOperationResponse } from './TownsUserOpClient'
 
 export class UserOps {
     private bundlerUrl: string
@@ -49,7 +49,7 @@ export class UserOps {
     private factoryAddress: string | undefined
     private paymasterProxyAuthSecret: string | undefined
     private skipPromptUserOnPMRejectedOp = false
-    private userOpClient: Promise<UseropClient> | undefined
+    private userOpClient: Promise<TownsUserOpClient> | undefined
     private builder: Promise<TownsSimpleAccount> | undefined
     protected spaceDapp: ISpaceDapp | undefined
     private timeTracker: TimeTracker | undefined
@@ -135,7 +135,7 @@ export class UserOps {
 
     public async getUserOpClient() {
         if (!this.userOpClient) {
-            this.userOpClient = UseropClient.init(this.aaRpcUrl, {
+            this.userOpClient = TownsUserOpClient.init(this.aaRpcUrl, {
                 entryPoint: this.entryPointAddress,
                 overrideBundlerRpc: this.bundlerUrl,
             })
@@ -151,7 +151,7 @@ export class UserOps {
             retryCount?: number
         },
         sequenceName?: TimeTrackerEvents,
-    ): Promise<ISendUserOperationResponse> {
+    ): Promise<TownsUserOpClientSendUserOperationResponse> {
         const { toAddress, callData, value } = args
 
         // new op, reset the middleware props
@@ -213,10 +213,6 @@ export class UserOps {
         }
 
         const userOpClient = await this.getUserOpClient()
-        // update the userop.wait() timeout and interval
-        // .wait() will poll the entrypoint every 500 ms for 30 seconds to see if the user operation was sent
-        userOpClient.waitTimeoutMs = 30_000
-        userOpClient.waitIntervalMs = 500
 
         endInitClient?.()
 
@@ -286,7 +282,7 @@ export class UserOps {
 
     public async sendCreateLegacySpaceOp(
         args: Parameters<SpaceDapp['createLegacySpace']>,
-    ): Promise<ISendUserOperationResponse> {
+    ): Promise<TownsUserOpClientSendUserOperationResponse> {
         if (!this.spaceDapp) {
             throw new Error('spaceDapp is required')
         }
@@ -384,7 +380,7 @@ export class UserOps {
 
     public async sendCreateSpaceOp(
         args: Parameters<SpaceDapp['createSpace']>,
-    ): Promise<ISendUserOperationResponse> {
+    ): Promise<TownsUserOpClientSendUserOperationResponse> {
         if (!this.spaceDapp) {
             throw new Error('spaceDapp is required')
         }
@@ -506,7 +502,7 @@ export class UserOps {
      */
     public async sendJoinSpaceOp(
         args: Parameters<SpaceDapp['joinSpace']>,
-    ): Promise<ISendUserOperationResponse> {
+    ): Promise<TownsUserOpClientSendUserOperationResponse> {
         if (!this.spaceDapp) {
             throw new Error('spaceDapp is required')
         }
@@ -654,7 +650,7 @@ export class UserOps {
         rootKeySigner: ethers.Signer,
         abstractAccountAddress: Address,
         sequenceName?: TimeTrackerEvents,
-    ): Promise<ISendUserOperationResponse> {
+    ): Promise<TownsUserOpClientSendUserOperationResponse> {
         if (!this.spaceDapp) {
             throw new Error('spaceDapp is required')
         }
@@ -730,7 +726,7 @@ export class UserOps {
     public async sendRemoveWalletLinkOp(
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         args: Parameters<SpaceDapp['walletLink']['removeLink']>,
-    ): Promise<ISendUserOperationResponse> {
+    ): Promise<TownsUserOpClientSendUserOperationResponse> {
         if (!this.spaceDapp) {
             throw new Error('spaceDapp is required')
         }
@@ -761,7 +757,7 @@ export class UserOps {
 
     public async sendUpdateSpaceInfoOp(
         args: Parameters<SpaceDapp['updateSpaceInfo']>,
-    ): Promise<ISendUserOperationResponse> {
+    ): Promise<TownsUserOpClientSendUserOperationResponse> {
         if (!this.spaceDapp) {
             throw new Error('spaceDapp is required')
         }
@@ -801,7 +797,7 @@ export class UserOps {
 
     public async sendCreateChannelOp(
         args: Parameters<SpaceDapp['createChannelWithPermissionOverrides']>,
-    ): Promise<ISendUserOperationResponse> {
+    ): Promise<TownsUserOpClientSendUserOperationResponse> {
         if (!this.spaceDapp) {
             throw new Error('spaceDapp is required')
         }
@@ -842,7 +838,7 @@ export class UserOps {
 
     public async sendUpdateChannelOp(
         args: Parameters<SpaceDapp['updateChannel']>,
-    ): Promise<ISendUserOperationResponse> {
+    ): Promise<TownsUserOpClientSendUserOperationResponse> {
         const [params, signer] = args
 
         if (!this.spaceDapp) {
@@ -868,23 +864,23 @@ export class UserOps {
     }
 
     // no delete channel in spaceDapp
-    public async sendDeleteChannelOp(): Promise<ISendUserOperationResponse> {
+    public async sendDeleteChannelOp(): Promise<TownsUserOpClientSendUserOperationResponse> {
         throw new Error('Not implemented')
     }
 
     // add role to channel is not currently directly used in app
-    public async sendAddRoleToChannelOp(): Promise<ISendUserOperationResponse> {
+    public async sendAddRoleToChannelOp(): Promise<TownsUserOpClientSendUserOperationResponse> {
         throw new Error('Not implemented')
     }
 
     // remove role from channel is not currently directly used in app
-    public async sendRemoveRoleFromChannelOp(): Promise<ISendUserOperationResponse> {
+    public async sendRemoveRoleFromChannelOp(): Promise<TownsUserOpClientSendUserOperationResponse> {
         throw new Error('Not implemented')
     }
 
     public async sendLegacyCreateRoleOp(
         args: Parameters<SpaceDapp['legacyCreateRole']>,
-    ): Promise<ISendUserOperationResponse> {
+    ): Promise<TownsUserOpClientSendUserOperationResponse> {
         const [spaceId, roleName, permissions, users, ruleData, signer] = args
 
         if (!this.spaceDapp) {
@@ -921,7 +917,7 @@ export class UserOps {
 
     public async sendCreateRoleOp(
         args: Parameters<SpaceDapp['createRole']>,
-    ): Promise<ISendUserOperationResponse> {
+    ): Promise<TownsUserOpClientSendUserOperationResponse> {
         const [spaceId, roleName, permissions, users, ruleData, signer] = args
 
         if (!this.spaceDapp) {
@@ -958,7 +954,7 @@ export class UserOps {
 
     public async sendDeleteRoleOp(
         args: Parameters<SpaceDapp['deleteRole']>,
-    ): Promise<ISendUserOperationResponse> {
+    ): Promise<TownsUserOpClientSendUserOperationResponse> {
         const [spaceId, roleId, signer] = args
 
         if (!this.spaceDapp) {
@@ -988,7 +984,7 @@ export class UserOps {
 
     public async sendUpdateRoleOp(
         args: Parameters<SpaceDapp['updateRole']>,
-    ): Promise<ISendUserOperationResponse> {
+    ): Promise<TownsUserOpClientSendUserOperationResponse> {
         const [updateRoleParams, signer] = args
         if (!this.spaceDapp) {
             throw new Error('spaceDapp is required')
@@ -1013,7 +1009,7 @@ export class UserOps {
 
     public async sendSetChannelPermissionOverridesOp(
         args: Parameters<SpaceDapp['setChannelPermissionOverrides']>,
-    ): Promise<ISendUserOperationResponse> {
+    ): Promise<TownsUserOpClientSendUserOperationResponse> {
         const [params, signer] = args
 
         if (!this.spaceDapp) {
@@ -1043,7 +1039,7 @@ export class UserOps {
 
     public async sendClearChannelPermissionOverridesOp(
         args: Parameters<SpaceDapp['clearChannelPermissionOverrides']>,
-    ): Promise<ISendUserOperationResponse> {
+    ): Promise<TownsUserOpClientSendUserOperationResponse> {
         const [params, signer] = args
 
         if (!this.spaceDapp) {
@@ -1107,7 +1103,7 @@ export class UserOps {
 
     public async sendLegacyUpdateRoleOp(
         args: Parameters<SpaceDapp['legacyUpdateRole']>,
-    ): Promise<ISendUserOperationResponse> {
+    ): Promise<TownsUserOpClientSendUserOperationResponse> {
         const [legacyUpdateRoleParams, signer] = args
         if (!this.spaceDapp) {
             throw new Error('spaceDapp is required')
