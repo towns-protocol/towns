@@ -132,6 +132,9 @@ function usePrivyLoginWithErrorHandler({
             // so we need to check if the user is already authenticated to river too (loggedInWalletAddress)
             if (!wasAlreadyAuthenticated && !loggedInWalletAddress) {
                 loginToRiverAfterPrivy?.()
+                console.log('[analytics] identify logged in user', {
+                    loginMethod,
+                })
                 analytics?.identify(
                     {
                         loginMethod,

@@ -36,6 +36,7 @@ export const Main = () => {
 
     const { analytics } = useAnalytics()
     useEffect(() => {
+        console.log('[analytics] Main useEffect')
         analytics?.identify({}, () => {
             console.log('[analytics] identify')
         })

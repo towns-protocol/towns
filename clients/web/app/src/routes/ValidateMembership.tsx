@@ -47,6 +47,7 @@ export const ValidateMembership = () => {
 
     useEffect(() => {
         console.log('ValidateMembership', spaceIdFromPathname, {
+            analytics: analytics !== undefined,
             usernameConfirmed,
             isLocalDataLoaded,
             isRemoteDataLoaded,
@@ -67,10 +68,12 @@ export const ValidateMembership = () => {
         spaceDataIds,
         spaceIdFromPathname,
         usernameConfirmed,
+        analytics,
     ])
 
     useEffect(() => {
         if (analytics && userId) {
+            console.log('[analytics][ValidateMembership] setUserId')
             analytics.setUserId(userId)
             analytics?.identify({}, () => {
                 console.log('[analytics][ValidateMembership] identify user', {

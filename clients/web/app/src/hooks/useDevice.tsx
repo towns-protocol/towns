@@ -28,7 +28,7 @@ export function isAndroid() {
 }
 
 export function isPWA() {
-    return matchMedia !== undefined && matchMedia('(display-mode: standalone)').matches
+    return matchMedia !== undefined && matchMedia('(display-mode: standalone)')?.matches
 }
 
 export function getBrowserName() {
@@ -37,7 +37,7 @@ export function getBrowserName() {
 }
 
 export function isReduceMotion() {
-    return !!window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    return !!window?.matchMedia('(prefers-reduced-motion: reduce)')?.matches
 }
 
 const device = {

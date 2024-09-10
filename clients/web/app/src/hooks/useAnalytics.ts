@@ -10,30 +10,64 @@ import { keccak256 } from 'ethers/lib/utils'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from '@river-build/sdk'
 import { TownsAnalytics } from 'use-towns-client'
 import { datadogLogs } from '@datadog/browser-logs'
-import { env, isTest } from 'utils'
+import { env } from 'utils'
 import { getBrowserName, isAndroid, isIOS, isPWA } from './useDevice'
 
 const USER_ID_KEY = 'analytics-userId'
-const isProd = !env.DEV && !isTest()
+
+interface IAnalyticsBackend {
+    track(event: string, properties?: ApiObject, callback?: ApiCallback): void
+    page(category?: string, name?: string, properties?: ApiObject, callback?: ApiCallback): void
+    identify(
+        pseudoId: string | undefined,
+        traits: IdentifyTraits | ApiOptions | undefined,
+        callback?: ApiCallback,
+    ): void
+    reset(resetId: boolean): void
+    getAnonymousId(): string | undefined
+}
+
+class LocalhostAnalyticsBackend implements IAnalyticsBackend {
+    constructor() {}
+
+    track(event: string, properties?: ApiObject, _callback?: ApiCallback): void {
+        console.log('[analytics-localhost] track', event, properties)
+    }
+
+    page(category?: string, name?: string, properties?: ApiObject, _callback?: ApiCallback): void {
+        console.log('[analytics-localhost] page', category, name, properties)
+    }
+
+    identify(
+        pseudoId: string | undefined,
+        traits: IdentifyTraits | ApiOptions | undefined,
+        _callback?: ApiCallback,
+    ): void {
+        console.log('[analytics-localhost] identify', pseudoId, traits)
+    }
+
+    reset(resetId: boolean): void {
+        console.log('[analytics-localhost] reset', resetId)
+    }
+
+    getAnonymousId(): string | undefined {
+        return 'localhost-anonymous-id'
+    }
+}
 
 export class Analytics implements TownsAnalytics {
     private static instance: Analytics
-    private static didWarn = false
-    private readonly analytics: RudderAnalytics
+    private readonly backend: IAnalyticsBackend
     private readonly commonProperties: ApiObject
     private readonly trackedEvents: Set<string> = new Set()
     private _user?: { userId: string | null }
 
-    private constructor(analytics: RudderAnalytics) {
-        this.analytics = analytics
+    private constructor(analytics: IAnalyticsBackend) {
+        this.backend = analytics
         this.commonProperties = getCommonAnalyticsProperties()
     }
 
-    public static getInstance(): Analytics | undefined {
-        if (!isProd) {
-            return
-        }
-
+    public static getInstance(): Analytics {
         if (!Analytics.instance) {
             const writeKey = env.VITE_RUDDERSTACK_WRITE_KEY
             const dataPlaneUrl = env.VITE_RUDDERSTACK_DATA_PLANE_URL
@@ -43,24 +77,21 @@ export class Analytics implements TownsAnalytics {
             const isAnalyticsConfigured = writeKey && dataPlaneUrl && destSDKBaseURL && configUrl
 
             if (!isAnalyticsConfigured) {
-                if (!Analytics.didWarn) {
-                    Analytics.didWarn = true
-                    console.warn('[analytics] Analytics is not enabled in production!')
-                }
-                return
+                console.warn('[analytics] Analytics is not enabled')
+                Analytics.instance = new Analytics(new LocalhostAnalyticsBackend())
+            } else {
+                const rudder = new RudderAnalytics()
+                rudder.load(writeKey, dataPlaneUrl, {
+                    useBeacon: true,
+                    destSDKBaseURL,
+                    pluginsSDKBaseURL,
+                    configUrl,
+                })
+                rudder.ready(() => {
+                    console.log('[analytics] Analytics is ready!')
+                })
+                Analytics.instance = new Analytics(rudder)
             }
-
-            const analyticsBackend = new RudderAnalytics()
-            analyticsBackend.load(writeKey, dataPlaneUrl, {
-                useBeacon: true,
-                destSDKBaseURL,
-                pluginsSDKBaseURL,
-                configUrl,
-            })
-            analyticsBackend.ready(() => {
-                console.log('[analytics] Analytics is ready!')
-            })
-            Analytics.instance = new Analytics(analyticsBackend)
         }
 
         return Analytics.instance
@@ -84,21 +115,21 @@ export class Analytics implements TownsAnalytics {
     }
 
     get anonymousId(): string | undefined {
-        return this.analytics.getAnonymousId()
+        return this.backend.getAnonymousId()
     }
 
     public reset() {
         this._user = undefined
         localStorage.removeItem(USER_ID_KEY)
-        this.analytics.reset(true)
+        this.backend.reset(true)
     }
 
     public identify(traits?: IdentifyTraits | ApiOptions, callback?: ApiCallback) {
-        this.analytics.identify(this.pseudoId, traits, callback)
+        this.backend.identify(this.pseudoId, traits, callback)
     }
 
     public page(category?: string, name?: string, properties?: ApiObject, callback?: ApiCallback) {
-        this.analytics.page(
+        this.backend.page(
             category,
             name,
             {
@@ -110,7 +141,7 @@ export class Analytics implements TownsAnalytics {
     }
 
     public track(event: string, properties?: ApiObject, callback?: ApiCallback) {
-        this.analytics.track(
+        this.backend.track(
             event,
             {
                 ...properties,
@@ -135,7 +166,7 @@ export function useAnalytics() {
     const analyticsRef = useRef<Analytics>()
 
     const getAnalyticsInstance = useCallback(() => {
-        if (isProd && !analyticsRef.current) {
+        if (!analyticsRef.current) {
             const analyticsInstance = Analytics.getInstance()
             if (analyticsInstance) {
                 analyticsRef.current = analyticsInstance
