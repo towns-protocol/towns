@@ -144,7 +144,7 @@ function TestComponent(args: {
             await updateSpaceInfoTransaction(
                 spaceNetworkId,
                 args.newSpaceName,
-                'uri',
+                '',
                 'shortDescription',
                 'longDescription',
                 args.signer,

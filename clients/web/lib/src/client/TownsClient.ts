@@ -1172,10 +1172,17 @@ export class TownsClient
         })
         try {
             const spaceInfo = await this.spaceDapp.getSpaceInfo(spaceNetworkId)
+            // default space uris === '' but there's a contract check that will revert if uri is < 1 char
+            // See SpaceOwnerBase.sol _updateSpace()
+            // also uri is being passed in as undefined somehow
+            // https://linear.app/hnt-labs/issue/TOWNS-11977/revisit-space-uri-in-updating-a-town
+            const _inUri = uri?.length > 0 ? uri : undefined
+            const _currentUri = spaceInfo && spaceInfo.uri?.length > 0 ? spaceInfo.uri : ' '
+
             const args = [
                 spaceNetworkId,
                 name,
-                uri ?? spaceInfo?.uri ?? '',
+                _inUri ?? _currentUri,
                 shortDescription ?? spaceInfo?.shortDescription ?? '',
                 longDescription ?? spaceInfo?.longDescription ?? '',
                 signer,
