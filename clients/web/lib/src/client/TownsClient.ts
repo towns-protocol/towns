@@ -1823,10 +1823,14 @@ export class TownsClient
                                 TimeTrackerEvents.JOIN_SPACE,
                                 'river_joinroom_channel',
                             )
-                            await this.joinRoom(key, undefined, {
-                                skipWaitForMiniblockConfirmation: true,
-                                skipWaitForUserStreamUpdate: true,
-                            })
+                            try {
+                                await this.joinRoom(key, undefined, {
+                                    skipWaitForMiniblockConfirmation: true,
+                                    skipWaitForUserStreamUpdate: true,
+                                })
+                            } catch (e) {
+                                console.error('[joinTown] Failed auto-joining channel', e)
+                            }
                             endJoinChannel?.()
                         }),
                 )
