@@ -357,6 +357,7 @@ function SubmitButton({
                           address: t.address as Address,
                           chainId: BigInt(t.chainId),
                           type: convertTokenTypeToOperationType(t.type),
+                          threshold: t.quantity,
                       })),
                   )
                 : NoopRuleData
