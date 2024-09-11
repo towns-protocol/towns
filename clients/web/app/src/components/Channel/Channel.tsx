@@ -290,7 +290,14 @@ export const ChannelLayout = (props: ExtendedProps) => {
                         <></>
                     )}
 
-                    <Box paddingBottom={isTouch ? 'none' : 'md'} paddingX={isTouch ? 'none' : 'md'}>
+                    <Box
+                        paddingBottom={isTouch ? 'none' : 'md'}
+                        paddingX={isTouch ? 'none' : 'md'}
+                        // this id is added to both MessageThreadPanel.tsx and Channel.tsx
+                        // to allow for the MessageEditor to be attached in the same
+                        // container via React.createPortal
+                        id={!hasThreadOpen ? 'editor-container' : ''}
+                    >
                         {isBlocked && counterParty ? (
                             <BlockedUserBottomBanner userId={counterParty} />
                         ) : (

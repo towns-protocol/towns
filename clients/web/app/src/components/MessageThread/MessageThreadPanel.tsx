@@ -139,6 +139,10 @@ export const MessageThreadPanel = (props: Props) => {
                         paddingBottom={{ default: 'md', touch: 'none' }}
                         paddingTop={{ default: 'none', touch: 'none' }}
                         bottom={isTouch ? 'sm' : 'none'}
+                        // this id is added to both MessageThreadPanel.tsx and Channel.tsx
+                        // to allow for the MessageEditor to be attached in the same
+                        // container via React.createPortal
+                        id="editor-container"
                     >
                         <TownsEditorContainer
                             isFullWidthOnTouch

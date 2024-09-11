@@ -118,7 +118,6 @@ export const EmojiPickerButtonTouch = (props: {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     icon="emoji"
-                    alignSelf="start"
                     onMouseDown={onOpenSheet}
                 />
             )}

@@ -89,7 +89,6 @@ export const EditorToolbarBottom = (props: Props) => {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             icon="text"
-                            alignSelf="start"
                             active={false}
                             onMouseDown={onFormattingButtonClicked}
                         />

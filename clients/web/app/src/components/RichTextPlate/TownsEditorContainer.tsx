@@ -66,7 +66,7 @@ const TownsTextEditorWithoutBoundary = ({
     mentions,
     spaceMemberIds,
     initialValue,
-    background = 'lightHover',
+    background = 'level2',
 }: Props) => {
     const { uploadFiles, files } = useMediaDropContext()
     const { inlineReplyPreview, onCancelInlineReply } = useInlineReplyAttchmentPreview()
@@ -246,6 +246,7 @@ const arePropsEqual = (prevProps: Props, nextProps: Props) => {
     return every(
         [
             isEqual(prevProps.editable, nextProps.editable),
+            isEqual(prevProps.editing, nextProps.editing),
             isEqual(prevProps.displayButtons, nextProps.displayButtons),
             isEqual(prevProps.placeholder, nextProps.placeholder),
             isEqual(prevProps.initialValue, nextProps.initialValue),

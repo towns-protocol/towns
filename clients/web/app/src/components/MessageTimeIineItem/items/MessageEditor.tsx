@@ -121,13 +121,14 @@ export const TouchEditMessageWrapper = (props: {
     }
 
     return createPortal(
-        <Box zIndex="tooltips" pointerEvents="auto">
+        <Box zIndex="tooltips" pointerEvents="auto" paddingTop="x4">
             <Box absoluteFill onClick={backgroundPressed} />
             <Box position="absolute" bottom="none" right="none" left="none">
                 {props.children}
             </Box>
         </Box>,
-        root,
+        // Attaching to root creates overlap & scroll issues on mobile due to height mismatch
+        document.getElementById('editor-container') as Element,
     )
 }
 
