@@ -183,7 +183,8 @@ describe('mediaWithEntitlements', () => {
         }
 
         log('transaction start bob creating space')
-        const transaction = await spaceDapp.createLegacySpace(
+        const transaction = await createVersionedSpace(
+            spaceDapp,
             {
                 spaceName: 'space-name',
                 uri: 'http://bobs-space-metadata.com',

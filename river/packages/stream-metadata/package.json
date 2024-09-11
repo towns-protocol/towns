@@ -6,7 +6,9 @@
 	"main": "dist/node.cjs",
 	"type": "module",
 	"scripts": {
-		"build": "node ./esbuild.config.mjs",
+		"compile": "node ./esbuild.config.mjs",
+		"typecheck": "tsc --noEmit",
+		"build": "yarn typecheck && yarn compile",
 		"cp-config": "cp ./.env.local-sample ./.env.local && echo .env.local file copied successfully",
 		"dev": "yarn dev:local_multi",
 		"dev:local_multi": "yarn cp-config && RIVER_ENV=local_multi PORT=3002 RIVER_STREAM_METADATA_BASE_URL=http://localhost:3002 yarn run-build",

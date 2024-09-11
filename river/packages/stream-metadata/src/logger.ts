@@ -13,6 +13,11 @@ const pretty: TransportSingleOptions = {
 const pinoOptions: LoggerOptions = {
 	transport: config.log.pretty ? pretty : undefined,
 	level: config.log.level,
+	formatters: {
+		level(level) {
+			return { level }
+		},
+	},
 }
 
 const baseLogger = pino(pinoOptions)

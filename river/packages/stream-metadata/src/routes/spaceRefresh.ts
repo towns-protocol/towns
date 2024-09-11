@@ -2,7 +2,7 @@ import { FastifyReply, FastifyRequest } from 'fastify'
 import { z } from 'zod'
 
 import { isValidEthereumAddress } from '../validators'
-import { createCloudfrontInvalidation } from '../aws'
+import { CloudfrontManager } from '../aws'
 import { refreshOpenSea } from '../opensea'
 
 const paramsSchema = z.object({
@@ -30,11 +30,12 @@ export async function spaceRefresh(request: FastifyRequest, reply: FastifyReply)
 
 	try {
 		const path = `/space/${spaceAddress}/image`
-
-		await Promise.all([
-			createCloudfrontInvalidation({ path, logger }),
-			refreshOpenSea({ spaceAddress, logger }),
-		])
+		await CloudfrontManager.createCloudfrontInvalidation({
+			path,
+			logger,
+			waitUntilFinished: true,
+		})
+		await refreshOpenSea({ spaceAddress, logger })
 
 		return reply.code(200).send({ ok: true })
 	} catch (error) {
