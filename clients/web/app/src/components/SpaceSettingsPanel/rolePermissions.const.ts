@@ -18,10 +18,6 @@ export const channelPermissionDescriptions: {
         name: 'React',
         description: 'Allow members to emoji react to messages.',
     },
-    [Permission.AddRemoveChannels]: {
-        name: 'Manage channels',
-        description: 'Allow members to create, edit or delete channels.',
-    },
     [Permission.Redact]: {
         name: 'Remove messages',
         description: 'Allow members to remove messages.',
@@ -31,6 +27,9 @@ export const channelPermissionDescriptions: {
         description: 'Allow members to pin messages to the channel.',
     },
 } as const
+
+export const isChannelPermission = (permission: Permission) =>
+    permission in channelPermissionDescriptions
 
 export const townPermissionDescriptions: {
     [key in Permission]?: {

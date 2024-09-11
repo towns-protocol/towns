@@ -30,6 +30,7 @@ import { useLeaveChannel } from 'hooks/useLeaveChannel'
 import { ChannelPermissionsNameDescriptionModal } from '@components/ChannelSettings/ChannelPermissionsNameDescriptionForm'
 import { PrivyWrapper } from 'privy/PrivyProvider'
 import { atoms } from 'ui/styles/atoms.css'
+import { isChannelPermission } from '@components/SpaceSettingsPanel/rolePermissions.const'
 import { ChannelMembersModal } from './SpaceChannelDirectoryPanel'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
 import { ChannelsRolesList } from './RoleRestrictedChannelJoinPanel'
@@ -320,7 +321,7 @@ const PermissionText = (props: {
     const { permissions: permissionOverrides } = usePermissionOverrides(spaceId, channelId, roleId)
     return (
         <Paragraph color="gray2" size="sm">
-            {(permissionOverrides ?? permissions).join(', ')}
+            {(permissionOverrides ?? permissions).filter(isChannelPermission).join(', ')}
             {permissionOverrides ? (
                 <span
                     className={atoms({

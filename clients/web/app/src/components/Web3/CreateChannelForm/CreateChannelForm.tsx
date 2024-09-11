@@ -55,6 +55,7 @@ import { PanelButton } from '@components/Panel/PanelButton'
 import { useChangePermissionOverridesStore } from '@components/ChannelSettings/useChangePermissionOverridesStore'
 import { atoms } from 'ui/styles/atoms.css'
 import { PersistForm, usePeristedFormValue } from 'ui/components/Form/PersistForm'
+import { isChannelPermission } from '@components/SpaceSettingsPanel/rolePermissions.const'
 import { mapToErrorMessage } from '../utils'
 
 type Props = {
@@ -443,11 +444,15 @@ export const CreateChannelForm = (props: Props) => {
                                                 >
                                                     {!permissionOverrides ? (
                                                         <Paragraph color="gray2" size="sm">
-                                                            {role.permissions.join(', ')}{' '}
+                                                            {role.permissions
+                                                                .filter(isChannelPermission)
+                                                                .join(', ')}{' '}
                                                         </Paragraph>
                                                     ) : (
                                                         <Paragraph color="gray2" size="sm">
-                                                            {permissionOverrides.join(', ')}
+                                                            {permissionOverrides
+                                                                .filter(isChannelPermission)
+                                                                .join(', ')}
                                                         </Paragraph>
                                                     )}
 

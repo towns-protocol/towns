@@ -407,7 +407,7 @@ function AccordionHeader(props: {
                 {!!onEditPermissions && (
                     <Box cursor="pointer" onClick={() => onEditPermissions(roleId)}>
                         <Text color="cta2" size="sm">
-                            Change permissions
+                            Change Permissions
                         </Text>
                     </Box>
                 )}
