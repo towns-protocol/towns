@@ -105,6 +105,7 @@ export const AvatarWithoutDot = forwardRef<HTMLElement, Props & { dot?: boolean 
             key={imageSrc}
             resourceId={resourceId}
             src={nftUrl ?? src ?? imageSrc}
+            userId={userId}
             {...rest}
             ref={ref}
         />
@@ -113,8 +114,9 @@ export const AvatarWithoutDot = forwardRef<HTMLElement, Props & { dot?: boolean 
 
 const _Avatar = forwardRef<
     HTMLElement,
-    Omit<Props & { dot?: boolean }, 'userId'> & {
+    Props & {
         resourceId: string | undefined
+        dot?: boolean
     }
 >((props, ref) => {
     const {
@@ -132,6 +134,7 @@ const _Avatar = forwardRef<
         tooltipOptions,
         onClick,
         iconSize,
+        userId,
         ...boxProps
     } = props
 
@@ -205,6 +208,11 @@ const _Avatar = forwardRef<
         </FadeInBox>
     )
 
+    const fallbackImage = useMemo(
+        () => `url(/placeholders/${userId ? getFallbackIcon(userId) : 'pp1'}.png)`,
+        [userId],
+    )
+
     return (
         <Container
             display="block"
@@ -233,7 +241,7 @@ const _Avatar = forwardRef<
                 )}
                 style={{
                     // all users should have a image uploaded but in the case they somehow don't, or fails to load, we use a placeholder image
-                    backgroundImage: failedResource ? `url(/placeholders/pp1.png)` : 'none',
+                    backgroundImage: failedResource ? fallbackImage : 'none',
                 }}
             >
                 {content}
@@ -242,3 +250,10 @@ const _Avatar = forwardRef<
         </Container>
     )
 })
+
+function getFallbackIcon(userId: string): string {
+    // pick last byte of address and convert to number, then mod 25 to get a
+    // number between 1-25 (based on iOS version)
+    const index = (parseInt(userId.slice(-2), 16) % 25) + 1
+    return `pp${index}`
+}
