@@ -42,8 +42,6 @@ import {DeployPlatformRequirements} from "contracts/scripts/deployments/facets/D
 import {DeployEIP712Facet} from "contracts/scripts/deployments/facets/DeployEIP712Facet.s.sol";
 import {DeployPartnerRegistry} from "contracts/scripts/deployments/facets/DeployPartnerRegistry.s.sol";
 
-import {SpaceFactory} from "contracts/src/factory/SpaceFactory.sol";
-
 import {DeployMockLegacyArchitect} from "contracts/scripts/deployments/facets/DeployMockLegacyArchitect.s.sol";
 
 contract DeploySpaceFactory is DiamondHelper, Deployer {

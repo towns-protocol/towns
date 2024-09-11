@@ -2,23 +2,22 @@ name: Network Diff Upgrade
 
 on:
     workflow_dispatch:
+    schedule:
+        - cron: '0 6 * * 1' # Run every Monday at 6:00 AM UTC
 
 jobs:
-    Run_Bytecode_Diff_Upgrade:
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
-              with:
-                  ref: main
-
-            - name: Gamma Network Diff Report
-              uses: ./.github/workflows/Bytecode_diff_report.yml
-              with:
-                  origin_environment: alpha
-                  target_environment: gamma
-
-            - name: Upgrade Gamma Facets
-              uses: ./.github/workflows/Upgrade_network_facets.yml
-              with:
-                  environment_name: gamma
+    Run_Alpha_to_Gamma:
+        name: Run Alpha to Gamma Diff Upgrade
+        uses: ./.github/workflows/Bytecode_diff_report.yml
+        with:
+            origin_environment: alpha
+            target_environment: gamma
+        secrets:
+            BASE_RPC_URL: ${{ secrets.BASE_RPC_URL }}
+            BASE_SEPOLIA_RPC_URL: ${{ secrets.BASE_SEPOLIA_RPC_URL }}
+            BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+            BLOCKSCOUT_BASE_SEPOLIA_API_KEY: ${{ secrets.BLOCKSCOUT_BASE_SEPOLIA_API_KEY }}
+            GAMMA_BASE_SEPOLIA_DEPLOYER_PK: ${{ secrets.GAMMA_BASE_SEPOLIA_DEPLOYER_PK }}
+            RIVER_S3_AWS_ACCESS_KEY_ID: ${{ secrets.RIVER_S3_AWS_ACCESS_KEY_ID }}
+            RIVER_S3_AWS_SECRET_ACCESS_KEY: ${{ secrets.RIVER_S3_AWS_SECRET_ACCESS_KEY }}
+            RIVER_S3_AWS_REGION: ${{ secrets.RIVER_S3_AWS_REGION }}

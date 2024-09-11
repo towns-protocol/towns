@@ -391,6 +391,7 @@
       "@prb/math/=lib/@prb/math/src/",
       "@prb/test/=lib/@prb/test/src/",
       "account-abstraction/=lib/account-abstraction/contracts/",
+      "base64/=lib/base64/",
       "ds-test/=lib/ds-test/src/",
       "forge-std/=lib/forge-std/src/",
       "hardhat-deploy/=lib/hardhat-deploy/",
@@ -716,10 +717,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol": {
-      "keccak256": "0x3be8ab93ad7f1417c0b0f6aa3f74dca36034464085d40fd2e94f3b31ff5be03d",
+      "keccak256": "0x3a706517df398a51e19fac4a3c1987886605b8a8fdff319dbe8acc8efb786d30",
       "urls": [
-        "bzz-raw://4e97436fca686896a1ffc56dd64f58997775bef504e0568c62ba4d103a99939c",
-        "dweb:/ipfs/QmWn5wvuuEFDhnqXJcJVb69ndDmhUMXWdUGYKR2VBfLsEw"
+        "bzz-raw://7ba8da65886f17602bad12eac53f57079321b88030d77be1437d5a77b51b7763",
+        "dweb:/ipfs/QmZWdoM6Drtd9XaPJ8UxBQLSSrqBPViE5UvukDw3i7rah3"
       ],
       "license": "MIT"
     },

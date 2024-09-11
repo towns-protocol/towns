@@ -12,7 +12,8 @@ import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.
 import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.sol";
 import {IRuleEntitlementBase} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
 import {IEntitlement} from "contracts/src/spaces/entitlements/IEntitlement.sol";
-
+import {IPlatformRequirements} from "contracts/src/factory/facets/platform/requirements/IPlatformRequirements.sol";
+import {IPrepay} from "contracts/src/spaces/facets/prepay/IPrepay.sol";
 // libraries
 import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 
@@ -246,6 +247,44 @@ contract IntegrationCreateSpace is
     assertTrue(
       isEntitledToChannelAfter,
       "Member should be able to access the channel"
+    );
+  }
+
+  function test_fuzz_createSpaceWithPrepay(
+    string memory spaceId,
+    address founder,
+    address member
+  ) external assumeEOA(founder) assumeEOA(member) {
+    vm.assume(bytes(spaceId).length > 2 && bytes(spaceId).length < 100);
+    vm.assume(founder != member);
+
+    // create space with default channel
+    CreateSpace memory spaceInfo = _createSpaceWithPrepayInfo(spaceId);
+    spaceInfo.membership.settings.pricingModule = pricingModule;
+    spaceInfo.prepay.supply = 100;
+    spaceInfo.membership.requirements.everyone = true;
+
+    uint256 cost = spaceInfo.prepay.supply *
+      IPlatformRequirements(spaceFactory).getMembershipFee();
+
+    vm.deal(founder, cost);
+    vm.prank(founder);
+    address newSpace = spaceArchitect.createSpaceWithPrepay{value: cost}(
+      spaceInfo
+    );
+
+    uint256 prepaidSupply = IPrepay(newSpace).prepaidMembershipSupply();
+
+    assertTrue(
+      IEntitlementsManager(newSpace).isEntitledToSpace(
+        member,
+        Permissions.JoinSpace
+      )
+    );
+
+    assertTrue(
+      prepaidSupply == spaceInfo.prepay.supply,
+      "Prepaid supply should be equal to the supply"
     );
   }
 }

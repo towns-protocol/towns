@@ -74,6 +74,7 @@ import {
     encodeThresholdParams,
     encodeERC1155Params,
     convertRuleDataV2ToV1,
+    XchainConfig,
 } from '@river-build/web3'
 
 const log = dlog('csb:test:util')
@@ -144,9 +145,15 @@ export const TEST_ENCRYPTED_MESSAGE_PROPS: PlainMessage<EncryptedData> = {
     senderKey: '',
 }
 
-export const getXchainSupportedRpcUrlsForTesting = (): string[] => {
+export const getXchainConfigForTesting = (): XchainConfig => {
     // TODO: generate this for test environment and read from it
-    return ['http://127.0.0.1:8545', 'http://127.0.0.1:8546']
+    return {
+        supportedRpcUrls: {
+            31337: 'http://127.0.0.1:8545',
+            31338: 'http://127.0.0.1:8546',
+        },
+        etherBasedChains: [31337, 31338],
+    }
 }
 
 export async function erc1155CheckOp(
@@ -191,10 +198,10 @@ export const oneEth = BigInt(1e18)
 export const threeEth = BigInt(3e18)
 export const oneHalfEth = BigInt(5e17)
 
-export function nativeCoinBalanceCheckOp(threshold: bigint): Operation {
+export function ethBalanceCheckOp(threshold: bigint): Operation {
     return {
         opType: OperationType.CHECK,
-        checkType: CheckOperationType.NATIVE_COIN_BALANCE,
+        checkType: CheckOperationType.ETH_BALANCE,
         chainId: 31337n,
         contractAddress: ethers.constants.AddressZero,
         params: encodeThresholdParams({ threshold }),
@@ -613,7 +620,7 @@ export async function expectUserCanJoin(
     const entitledWallet = await spaceDapp.getEntitledWalletForJoiningSpace(
         spaceId,
         address,
-        getXchainSupportedRpcUrlsForTesting(),
+        getXchainConfigForTesting(),
     )
     expect(entitledWallet).toBeDefined()
 
@@ -1031,7 +1038,7 @@ export async function createTownWithRequirements(requirements: {
     const entitledWallet = await bobSpaceDapp.getEntitledWalletForJoiningSpace(
         spaceId,
         bobsWallet.address,
-        getXchainSupportedRpcUrlsForTesting(),
+        getXchainConfigForTesting(),
     )
     expect(entitledWallet).toBeDefined()
 
@@ -1065,7 +1072,7 @@ export async function expectUserCannotJoinSpace(
     const entitledWallet = await spaceDapp.getEntitledWalletForJoiningSpace(
         spaceId,
         address,
-        getXchainSupportedRpcUrlsForTesting(),
+        getXchainConfigForTesting(),
     )
     expect(entitledWallet).toBeUndefined()
     await expect(client.joinStream(spaceId)).rejects.toThrow(/PERMISSION_DENIED/)
@@ -1199,7 +1206,7 @@ export async function expectUserCanJoinChannel(
             channelId,
             client.userId,
             Permission.Read,
-            getXchainSupportedRpcUrlsForTesting(),
+            getXchainConfigForTesting(),
         ),
     ).resolves.toBeTruthy()
 
@@ -1223,7 +1230,7 @@ export async function expectUserCannotJoinChannel(
             channelId,
             client.userId,
             Permission.Read,
-            getXchainSupportedRpcUrlsForTesting(),
+            getXchainConfigForTesting(),
         ),
     ).resolves.toBeFalsy()
 

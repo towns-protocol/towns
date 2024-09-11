@@ -42,6 +42,24 @@ interface IArchitectBase {
     string longDescription;
   }
 
+  struct Metadata {
+    string name;
+    string uri;
+    string shortDescription;
+    string longDescription;
+  }
+
+  struct Prepay {
+    uint256 supply;
+  }
+
+  struct CreateSpace {
+    Metadata metadata;
+    Membership membership;
+    ChannelInfo channel;
+    Prepay prepay;
+  }
+
   // =============================================================
   //                           EVENTS
   // =============================================================
@@ -75,6 +93,12 @@ interface IArchitect is IArchitectBase {
   /// @notice Creates a new space
   /// @param SpaceInfo Space information
   function createSpace(SpaceInfo memory SpaceInfo) external returns (address);
+
+  /// @notice Creates a new space with a prepayment
+  /// @param createSpace Space information
+  function createSpaceWithPrepay(
+    CreateSpace memory createSpace
+  ) external payable returns (address);
 
   // =============================================================
   //                         Implementations

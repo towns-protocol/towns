@@ -114,4 +114,38 @@ abstract contract SpaceHelper {
     );
     info.membership.permissions = permissions;
   }
+
+  function _createSpaceWithPrepayInfo(
+    string memory spaceId
+  ) internal pure returns (IArchitectBase.CreateSpace memory info) {
+    info = IArchitectBase.CreateSpace({
+      metadata: IArchitectBase.Metadata({
+        name: spaceId,
+        uri: "ipfs://test",
+        shortDescription: "short description",
+        longDescription: "long description"
+      }),
+      membership: IArchitectBase.Membership({
+        settings: IMembershipBase.Membership({
+          name: "Member",
+          symbol: "MEM",
+          price: 0,
+          maxSupply: 0,
+          duration: 0,
+          currency: address(0),
+          feeRecipient: address(0),
+          freeAllocation: 0,
+          pricingModule: address(0)
+        }),
+        requirements: IArchitectBase.MembershipRequirements({
+          everyone: false,
+          users: new address[](0),
+          ruleData: abi.encode(RuleEntitlementUtil.getNoopRuleData())
+        }),
+        permissions: new string[](0)
+      }),
+      channel: IArchitectBase.ChannelInfo({metadata: "ipfs://test"}),
+      prepay: IArchitectBase.Prepay({supply: 0})
+    });
+  }
 }

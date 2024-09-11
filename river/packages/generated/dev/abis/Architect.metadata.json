@@ -417,6 +417,164 @@
         ]
       },
       {
+        "inputs": [
+          {
+            "internalType": "struct IArchitectBase.CreateSpace",
+            "name": "spaceInfo",
+            "type": "tuple",
+            "components": [
+              {
+                "internalType": "struct IArchitectBase.Metadata",
+                "name": "metadata",
+                "type": "tuple",
+                "components": [
+                  {
+                    "internalType": "string",
+                    "name": "name",
+                    "type": "string"
+                  },
+                  {
+                    "internalType": "string",
+                    "name": "uri",
+                    "type": "string"
+                  },
+                  {
+                    "internalType": "string",
+                    "name": "shortDescription",
+                    "type": "string"
+                  },
+                  {
+                    "internalType": "string",
+                    "name": "longDescription",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "internalType": "struct IArchitectBase.Membership",
+                "name": "membership",
+                "type": "tuple",
+                "components": [
+                  {
+                    "internalType": "struct IMembershipBase.Membership",
+                    "name": "settings",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "internalType": "string",
+                        "name": "name",
+                        "type": "string"
+                      },
+                      {
+                        "internalType": "string",
+                        "name": "symbol",
+                        "type": "string"
+                      },
+                      {
+                        "internalType": "uint256",
+                        "name": "price",
+                        "type": "uint256"
+                      },
+                      {
+                        "internalType": "uint256",
+                        "name": "maxSupply",
+                        "type": "uint256"
+                      },
+                      {
+                        "internalType": "uint64",
+                        "name": "duration",
+                        "type": "uint64"
+                      },
+                      {
+                        "internalType": "address",
+                        "name": "currency",
+                        "type": "address"
+                      },
+                      {
+                        "internalType": "address",
+                        "name": "feeRecipient",
+                        "type": "address"
+                      },
+                      {
+                        "internalType": "uint256",
+                        "name": "freeAllocation",
+                        "type": "uint256"
+                      },
+                      {
+                        "internalType": "address",
+                        "name": "pricingModule",
+                        "type": "address"
+                      }
+                    ]
+                  },
+                  {
+                    "internalType": "struct IArchitectBase.MembershipRequirements",
+                    "name": "requirements",
+                    "type": "tuple",
+                    "components": [
+                      {
+                        "internalType": "bool",
+                        "name": "everyone",
+                        "type": "bool"
+                      },
+                      {
+                        "internalType": "address[]",
+                        "name": "users",
+                        "type": "address[]"
+                      },
+                      {
+                        "internalType": "bytes",
+                        "name": "ruleData",
+                        "type": "bytes"
+                      }
+                    ]
+                  },
+                  {
+                    "internalType": "string[]",
+                    "name": "permissions",
+                    "type": "string[]"
+                  }
+                ]
+              },
+              {
+                "internalType": "struct IArchitectBase.ChannelInfo",
+                "name": "channel",
+                "type": "tuple",
+                "components": [
+                  {
+                    "internalType": "string",
+                    "name": "metadata",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "internalType": "struct IArchitectBase.Prepay",
+                "name": "prepay",
+                "type": "tuple",
+                "components": [
+                  {
+                    "internalType": "uint256",
+                    "name": "supply",
+                    "type": "uint256"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "stateMutability": "payable",
+        "type": "function",
+        "name": "createSpaceWithPrepay",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ]
+      },
+      {
         "inputs": [],
         "stateMutability": "view",
         "type": "function",
@@ -512,12 +670,30 @@
     ],
     "devdoc": {
       "kind": "dev",
-      "methods": {},
+      "methods": {
+        "createSpace((string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes),string[]),(string),string,string))": {
+          "params": {
+            "SpaceInfo": "Space information"
+          }
+        },
+        "createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes),string[]),(string),(uint256)))": {
+          "params": {
+            "createSpace": "Space information"
+          }
+        }
+      },
       "version": 1
     },
     "userdoc": {
       "kind": "user",
-      "methods": {},
+      "methods": {
+        "createSpace((string,string,((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes),string[]),(string),string,string))": {
+          "notice": "Creates a new space"
+        },
+        "createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes),string[]),(string),(uint256)))": {
+          "notice": "Creates a new space with a prepayment"
+        }
+      },
       "version": 1
     }
   },
@@ -527,6 +703,7 @@
       "@prb/math/=lib/@prb/math/src/",
       "@prb/test/=lib/@prb/test/src/",
       "account-abstraction/=lib/account-abstraction/contracts/",
+      "base64/=lib/base64/",
       "ds-test/=lib/ds-test/src/",
       "forge-std/=lib/forge-std/src/",
       "hardhat-deploy/=lib/hardhat-deploy/",
@@ -780,18 +957,18 @@
       "license": "MIT"
     },
     "contracts/src/factory/facets/architect/Architect.sol": {
-      "keccak256": "0xef3ba564d9ba7e3392da7c80e127714b7dacd3881e298ce3a930b57685b07cb1",
+      "keccak256": "0xdbecbdf1a7e1e122cbd62c08206048c9c54bc5b754a2bda4e5929265862e7cce",
       "urls": [
-        "bzz-raw://0f0766a21963844a7a2ebe13d4c220d4363070fc71d053823db0b04ea71a3983",
-        "dweb:/ipfs/QmZWqnuaQiJ8TWfjtiwk8SwfFPAP76y74X8rhyzsiaGcNF"
+        "bzz-raw://735d98c992f619cf3b1092053178bf96ca3364476449397e3fcec5125524d82e",
+        "dweb:/ipfs/Qmf51MVgQ2bAKPLhFf7KtSi9dtGDvpxwEXuwAHK1LnkMvL"
       ],
       "license": "MIT"
     },
     "contracts/src/factory/facets/architect/ArchitectBase.sol": {
-      "keccak256": "0x8d74e57d341a8c366e9f331c8429d25681af3ed5b0b37cb803025cdbe9c919ab",
+      "keccak256": "0xf00dc63696877de0e3a828d511f6da2ce5bf9d5653bbcf12bd4d601678212067",
       "urls": [
-        "bzz-raw://2219a0577bc894bea0aa545155c3934c11024b412b93499575768e49d3038734",
-        "dweb:/ipfs/QmVpEKd1dmTVHovsNz4bEep7LwodxT7e4wK8crbN1SaC8Q"
+        "bzz-raw://77629ae6868f4e3cbc249a2ec46a22bc78b67e041edf5f779420a59f9e5c8264",
+        "dweb:/ipfs/Qmf2FKuxA594krdH6vgYU6bd1HyxW11z76vCPmvN4FEb2S"
       ],
       "license": "MIT"
     },
@@ -804,10 +981,10 @@
       "license": "MIT"
     },
     "contracts/src/factory/facets/architect/IArchitect.sol": {
-      "keccak256": "0x691bc1354e327c1b109fc7ac918dd946d9691db8d1f788bf108aca0621125bde",
+      "keccak256": "0x1ea9ec73b105a887d08bc6faf8572458fbbaad6f872d5ad3657d9dcb89955c2e",
       "urls": [
-        "bzz-raw://e49adc7171306da3baa78fd463b361b95d6ddf74a0b25b9e4d749ef0fe21cab8",
-        "dweb:/ipfs/QmY9v93cJotsJxECWRT2CKh8KwSf3r2kjoEftB5iXMVptu"
+        "bzz-raw://497421a6061c4c6c22312229f9f3369bdec7cdc1efdbd64a708e70d3dcf939d8",
+        "dweb:/ipfs/QmeySQ1hSPBGMZXpJ2ksGKEiv9CeSUFdTdUKAwVtPduLh4"
       ],
       "license": "MIT"
     },
@@ -908,10 +1085,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/entitlements/IEntitlementsManager.sol": {
-      "keccak256": "0x3be8ab93ad7f1417c0b0f6aa3f74dca36034464085d40fd2e94f3b31ff5be03d",
+      "keccak256": "0x3a706517df398a51e19fac4a3c1987886605b8a8fdff319dbe8acc8efb786d30",
       "urls": [
-        "bzz-raw://4e97436fca686896a1ffc56dd64f58997775bef504e0568c62ba4d103a99939c",
-        "dweb:/ipfs/QmWn5wvuuEFDhnqXJcJVb69ndDmhUMXWdUGYKR2VBfLsEw"
+        "bzz-raw://7ba8da65886f17602bad12eac53f57079321b88030d77be1437d5a77b51b7763",
+        "dweb:/ipfs/QmZWdoM6Drtd9XaPJ8UxBQLSSrqBPViE5UvukDw3i7rah3"
       ],
       "license": "MIT"
     },
@@ -976,6 +1153,14 @@
       "urls": [
         "bzz-raw://4d702b63539e714f343482f80de3f342d7870647cbeb01b42abab7dc9805683a",
         "dweb:/ipfs/QmcTDjumaJfXvAoyT6G38meixc7omy6MUuX33FrRuc8hNw"
+      ],
+      "license": "MIT"
+    },
+    "contracts/src/spaces/facets/prepay/IPrepay.sol": {
+      "keccak256": "0x4cc23cd204f20bd4a094d9292aaa494f73478d27c8f59e646454cbba11d781fa",
+      "urls": [
+        "bzz-raw://4f54c224f56396ac03335c95c4808acbeec6366f0c475d29edb2461cd53bcd15",
+        "dweb:/ipfs/QmdDKUR8VVXJuR5Fj29SZxvR9GwxXeNQ6rtAT3TxX8VjwT"
       ],
       "license": "MIT"
     },

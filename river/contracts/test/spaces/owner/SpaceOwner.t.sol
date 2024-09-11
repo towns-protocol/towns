@@ -147,19 +147,34 @@ contract SpaceOwnerTest is ISpaceOwnerBase, IOwnableBase, BaseSetup {
     );
   }
 
-  function test_updateSpace_revert_invalidUri() external {
+  function test_updateSpace_emptyUri() external {
+    string memory defaultUri = "ipfs://default-uri";
+
+    vm.prank(deployer);
+    spaceOwnerToken.setDefaultUri(defaultUri);
+
     address spaceAddress = _randomAddress();
 
     mintSpace(uri, spaceAddress);
 
     vm.prank(spaceFactory);
-    vm.expectRevert(Validator__InvalidStringLength.selector);
     spaceOwnerToken.updateSpaceInfo(
       spaceAddress,
       "New Name",
       "",
       "new short description",
       "new long description"
+    );
+
+    Space memory space = spaceOwnerToken.getSpaceInfo(spaceAddress);
+    string memory tokenUri = spaceOwnerToken.tokenURI(space.tokenId);
+
+    assertEq(space.uri, "");
+    assertTrue(
+      LibString.endsWith(
+        LibString.toCase(tokenUri, false),
+        LibString.toHexString(spaceAddress)
+      )
     );
   }
 

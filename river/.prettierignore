@@ -47,4 +47,5 @@ yarn.lock
 
 packages/generated/*
 
+scripts/bytecode-diff/templates/*
 packages/proto/src/protocol_*.ts

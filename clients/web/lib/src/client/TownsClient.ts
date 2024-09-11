@@ -14,12 +14,9 @@ import {
     makeRiverRpcClient,
     isChannelStreamId,
     isDMChannelStreamId,
-    isDefined,
 } from '@river-build/sdk'
 import { EntitlementsDelegate, DecryptionStatus } from '@river-build/encryption'
 import {
-    BASE_MAINNET,
-    BASE_SEPOLIA,
     convertRuleDataV2ToV1,
     CreateLegacySpaceParams,
     CreateSpaceParams,
@@ -27,6 +24,7 @@ import {
     UpdateChannelParams,
     decodeRuleDataV2,
     LegacyUpdateRoleParams,
+    XchainConfig,
 } from '@river-build/web3'
 import {
     ChannelMessage_Post_Mention,
@@ -67,6 +65,7 @@ import {
 } from '../types/towns-types'
 import { SignerContext } from '@river-build/sdk'
 import { PushNotificationClient } from './PushNotificationClient'
+import { getDefaultXChainIds, marshallXChainConfig } from './XChainConfig'
 import {
     addCategoryToError,
     getErrorCategory,
@@ -89,7 +88,7 @@ import {
 import { MembershipStruct, Permission, SpaceInfo, ISpaceDapp } from '@river-build/web3'
 import { BlockchainTransactionStore } from './BlockchainTransactionStore'
 import { UserOps, getTransactionHashOrUserOpHash, isUserOpResponse } from '@towns/userops'
-import { StartMeasurementReturn, TimeTrackerEvents, getTimeTracker } from '../SequenceTimeTracker'
+import { TimeTrackerEvents, getTimeTracker } from '../SequenceTimeTracker'
 import { waitForTimeoutOrMembership } from '../utils/waitForTimeoutOrMembershipEvent'
 import { TownsAnalytics } from '../types/TownsAnalytics'
 import { Hex } from 'viem'
@@ -124,6 +123,7 @@ export class TownsClient
     private pushNotificationClient?: PushNotificationClient
     public userOps: UserOps | undefined = undefined
     private supportedXChainIds: number[] | undefined
+    private xchainConfig: XchainConfig | undefined
     private analytics: TownsAnalytics | undefined
     public readonly createLegacySpaces: boolean | undefined
 
@@ -297,7 +297,7 @@ export class TownsClient
             })
         })
 
-        const xChainRpcUrls = await this.getSupportedXChainRpcUrls()
+        const xChainRpcUrls = await this.getXchainConfig()
         this.log('xChainRpcUrls', xChainRpcUrls)
 
         this.casablancaClient.startSync()
@@ -878,7 +878,7 @@ export class TownsClient
                 channelId,
                 user,
                 permission,
-                await this.getSupportedXChainRpcUrls(),
+                await this.getXchainConfig(),
             )
         } else if (spaceId) {
             if (permission === Permission.JoinSpace) {
@@ -899,47 +899,25 @@ export class TownsClient
         return isEntitled
     }
 
-    // this is eventually going to be read from river
+    // this is eventually going to be read from river, hence the induced async type
     public async getSupportedXChainIds(): Promise<number[]> {
         if (!this.supportedXChainIds) {
-            // always supporting mainnet ids regardless of environment
-            this.supportedXChainIds = await Promise.resolve([
-                // ethereum
-                1,
-                // polygon
-                137,
-                // arb
-                42161,
-                // optimism
-                10,
-                // base
-                8453,
-            ])
-            // if we're not on base mainnet, add the testnet chains
-            if (this.opts.baseChainId !== BASE_MAINNET) {
-                this.supportedXChainIds.push(BASE_SEPOLIA, 11155111)
-            }
+            this.supportedXChainIds = getDefaultXChainIds(this.opts.baseChainId)
         }
-
-        return this.supportedXChainIds
+        return await Promise.resolve(this.supportedXChainIds)
     }
 
     /**
      *
      * @returns a list of ethers providers for the supported xchains plus the base provider
      */
-    public async getSupportedXChainRpcUrls(): Promise<string[]> {
+    public async getXchainConfig(): Promise<XchainConfig> {
         const xChainIds = await this.getSupportedXChainIds()
-
-        const filteredByRiverSupported = Object.entries(this.opts.supportedXChainRpcMapping ?? {})
-            .filter(([chainId, rpcUrl]) => isDefined(rpcUrl) && xChainIds.includes(+chainId))
-            .map(([, rpcUrl]) => rpcUrl)
-
-        if (xChainIds.length !== filteredByRiverSupported.length) {
-            console.warn('Some xchain rpc urls are missing from the supported xchains list')
-        }
-
-        return filteredByRiverSupported
+        const xchainConfig = marshallXChainConfig(
+            xChainIds,
+            this.opts.supportedXChainRpcMapping ?? {},
+        )
+        return Promise.resolve(xchainConfig)
     }
 
     private async isEntitledToJoinSpace(spaceId: string | undefined, rootKey: string) {
@@ -947,7 +925,7 @@ export class TownsClient
             throw new Error('spaceId is required for permission JoinSpace')
         }
 
-        const supportedXChainRpcUrls = await this.getSupportedXChainRpcUrls()
+        const supportedXChainRpcUrls = await this.getXchainConfig()
         const entitledWallet = await this.spaceDapp.getEntitledWalletForJoiningSpace(
             spaceId,
             rootKey,
@@ -975,7 +953,7 @@ export class TownsClient
                 channelId,
                 wallet,
                 permission,
-                await this.getSupportedXChainRpcUrls(),
+                await this.getXchainConfig(),
             )
         } else if (spaceId) {
             if (permission === Permission.JoinSpace) {
@@ -1172,17 +1150,10 @@ export class TownsClient
         })
         try {
             const spaceInfo = await this.spaceDapp.getSpaceInfo(spaceNetworkId)
-            // default space uris === '' but there's a contract check that will revert if uri is < 1 char
-            // See SpaceOwnerBase.sol _updateSpace()
-            // also uri is being passed in as undefined somehow
-            // https://linear.app/hnt-labs/issue/TOWNS-11977/revisit-space-uri-in-updating-a-town
-            const _inUri = uri?.length > 0 ? uri : undefined
-            const _currentUri = spaceInfo && spaceInfo.uri?.length > 0 ? spaceInfo.uri : ' '
-
             const args = [
                 spaceNetworkId,
                 name,
-                _inUri ?? _currentUri,
+                uri ?? spaceInfo?.uri ?? '',
                 shortDescription ?? spaceInfo?.shortDescription ?? '',
                 longDescription ?? spaceInfo?.longDescription ?? '',
                 signer,
@@ -1823,14 +1794,10 @@ export class TownsClient
                                 TimeTrackerEvents.JOIN_SPACE,
                                 'river_joinroom_channel',
                             )
-                            try {
-                                await this.joinRoom(key, undefined, {
-                                    skipWaitForMiniblockConfirmation: true,
-                                    skipWaitForUserStreamUpdate: true,
-                                })
-                            } catch (e) {
-                                console.error('[joinTown] Failed auto-joining channel', e)
-                            }
+                            await this.joinRoom(key, undefined, {
+                                skipWaitForMiniblockConfirmation: true,
+                                skipWaitForUserStreamUpdate: true,
+                            })
                             endJoinChannel?.()
                         }),
                 )
@@ -1917,7 +1884,7 @@ export class TownsClient
             const entitledWallet = await this.spaceDapp.getEntitledWalletForJoiningSpace(
                 spaceId,
                 rootWallet,
-                await this.getSupportedXChainRpcUrls(),
+                await this.getXchainConfig(),
             )
             endGetEndtitledWallet?.()
 
@@ -2009,9 +1976,6 @@ export class TownsClient
             const endWaitForMembership = timeTracker.startMeasurement(
                 TimeTrackerEvents.JOIN_SPACE,
                 'contract_wait_for_membership_issued',
-                {
-                    userOpHash: getTransactionHashOrUserOpHash(transaction),
-                },
             )
             const { issued, tokenId, error } = await membershipOrTimeout
             endWaitForMembership?.()
@@ -2868,31 +2832,30 @@ export class TownsClient
 
         try {
             if (isUserOpResponse(transaction)) {
-                let endWaitForUserOpReceipt: StartMeasurementReturn | undefined
+                // wait for the userop event - this .wait is not the same as ethers.ContractTransaction.wait - see userop.js sendUserOperation
+                let endWaitForUserOpEvent: ((endSequence?: boolean) => void) | undefined
                 if (sequenceName) {
-                    endWaitForUserOpReceipt = getTimeTracker().startMeasurement(
+                    endWaitForUserOpEvent = getTimeTracker().startMeasurement(
                         sequenceName,
-                        'userops_wait_for_user_operation_receipt',
-                        {
-                            userOpHash: transaction.userOpHash,
-                        },
+                        'userops_wait_for_op_confirmation',
                     )
                 }
-                const userOpReceipt = await transaction.getUserOperationReceipt()
 
-                if (endWaitForUserOpReceipt) {
-                    endWaitForUserOpReceipt()
+                const userOpEvent = await transaction.wait()
+
+                if (endWaitForUserOpEvent) {
+                    endWaitForUserOpEvent()
                 }
 
-                if (userOpReceipt) {
-                    if (userOpReceipt.success === false) {
+                if (userOpEvent) {
+                    if (userOpEvent.args.success === false) {
                         // TODO: parse the user operation error
                         throw new Error(
                             `[_waitForBlockchainTransaction] user operation was not successful`,
                         )
                     }
 
-                    let endWaitForTxConfirmation: StartMeasurementReturn | undefined
+                    let endWaitForTxConfirmation: ((endSequence?: boolean) => void) | undefined
                     // we probably don't need to wait for this transaction, but for now we can convert it to a receipt for less refactoring
                     if (sequenceName) {
                         endWaitForTxConfirmation = getTimeTracker().startMeasurement(
@@ -2901,7 +2864,7 @@ export class TownsClient
                         )
                     }
                     receipt = await this.opts.baseProvider?.waitForTransaction(
-                        userOpReceipt.receipt.transactionHash,
+                        userOpEvent.transactionHash,
                     )
                     if (endWaitForTxConfirmation) {
                         endWaitForTxConfirmation()

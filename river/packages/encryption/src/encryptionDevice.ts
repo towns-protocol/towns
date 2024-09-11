@@ -140,8 +140,8 @@ export class EncryptionDevice {
                 }
                 await this.initializeAccount(account)
             }
-            e2eKeys = JSON.parse(account.identity_keys())
             await this.generateFallbackKeyIfNeeded()
+            e2eKeys = JSON.parse(account.identity_keys())
             this.fallbackKey = await this.getFallbackKey()
         } finally {
             account.free()

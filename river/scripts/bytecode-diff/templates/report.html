@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base Facets Bytecode Diff Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; padding: 20px; }
+        h1 { color: forestgreen; }
+        h2, h3 { color: #333; }
+        table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .true { background-color: #90EE90; }
+        .false { background-color: #FFCCCB; }
+    </style>
+</head>
+<body>
+    <h1>{{.environment}}: Base Facets Bytecode Diff Report</h1>
+    <p>Generated on: {{.reportTime}}</p>
+
+    <h2>Deployments</h2>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Address</th>
+            <th>Bytecode Hash</th>
+            <th>Basescan Link</th>
+            <th>Deployment Date</th>
+        </tr>
+        {{range $name, $deployment := .deployments}}
+        <tr>
+            <td>{{$name}}</td>
+            <td>
+                {{if eq $.environment "gamma"}}
+                    <a href="https://sepolia.basescan.org/address/{{$deployment.address}}" target="_blank">{{$deployment.address}}</a>
+                {{else if eq $.environment "omega"}}
+                    <a href="https://basescan.org/address/{{$deployment.address}}" target="_blank">{{$deployment.address}}</a>
+                {{else}}
+                    {{$deployment.address}}
+                {{end}}
+            </td>
+            <td>{{$deployment.bytecodeHash}}</td>
+            <td><a href="{{$deployment.baseScanLink}}" target="_blank">View on Basescan</a></td>
+            <td>{{$deployment.deploymentDate}}</td>
+        </tr>
+        {{end}}
+    </table>
+
+    <h2>Diamonds</h2>
+    {{if .diamonds}}
+        {{range $name, $diamond := .diamonds}}
+            <h3>Diamond: {{$diamond.name}}</h3>
+            <h4>Facets</h4>
+            {{if $diamond.facets}}
+                <table>
+                    <tr>
+                        <th>Contract Name</th>
+                        <th>Origin Address</th>
+                        <th>Origin Bytecode Hash</th>
+                        <th>Target Addresses</th>
+                        <th>Target Bytecode Hashes</th>
+						<th>Selectors Missing on {{$.environment}}</th>
+						<th>Origin Verified</th>
+						<th>Target Verified</th>
+
+                    </tr>
+                    {{range $facet := $diamond.facets}}
+                    <tr>
+                        <td>{{$facet.originContractName}}</td>
+                        <td>
+                            {{if eq $.environment "gamma"}}
+                                <a href="https://sepolia.basescan.org/address/{{$facet.originFacetAddress}}" target="_blank">{{$facet.originFacetAddress}}</a>
+                            {{else if eq $.environment "omega"}}
+                                <a href="https://basescan.org/address/{{$facet.originFacetAddress}}" target="_blank">{{$facet.originFacetAddress}}</a>
+                            {{else}}
+                                {{$facet.originFacetAddress}}
+                            {{end}}
+                        </td>
+                        <td>{{$facet.originBytecodeHash}}</td>
+                        <td>
+                            {{range $addr := $facet.targetContractAddresses}}
+                                {{if eq $.environment "gamma"}}
+                                    <a href="https://sepolia.basescan.org/address/{{$addr}}" target="_blank">{{$addr}}</a><br>
+                                {{else if eq $.environment "omega"}}
+                                    <a href="https://basescan.org/address/{{$addr}}" target="_blank">{{$addr}}</a><br>
+                                {{else}}
+                                    {{$addr}}<br>
+                                {{end}}
+                            {{end}}
+                        </td>
+                        <td>
+                            {{range $hash := $facet.targetBytecodeHashes}}
+                                {{$hash}}<br>
+                            {{end}}
+                        </td>
+						<td>{{$facet.selectorsDiff}}</td>
+						<td class="{{$facet.originVerified}}">{{$facet.originVerified}}</td>
+						<td class="{{$facet.targetVerified}}">{{$facet.targetVerified}}</td>
+                    </tr>
+                    {{end}}
+                </table>
+            {{else}}
+                <p>No facets found for this diamond.</p>
+            {{end}}
+        {{end}}
+    {{else}}
+        <p>No diamonds found in the YAML data.</p>
+    {{end}}
+
+    {{range $key, $value := .}}
+    {{if and (ne $key "deployments") (ne $key "diamonds")}}
+    <h2>{{$key}}</h2>
+    <pre>{{$value | printf "%#v"}}</pre>
+    {{end}}
+    {{end}}
+</body>
+</html>

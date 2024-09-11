@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -89,10 +90,16 @@ func ReadAllFacets(client *ethclient.Client, contractAddress string, basescanAPI
 	}
 
 	for i, facet := range facets {
+		// Throttle API calls to 2 per second to avoid being rate limited
+		time.Sleep(500 * time.Millisecond)
+
 		// read contract name from basescan source code api
 		contractName, err := GetContractNameFromBasescan(basescanUrl, facet.FacetAddress.Hex(), basescanAPIKey)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get contract name from Basescan: %w", err)
+			return nil, fmt.Errorf(
+				"failed to get contract name from Basescan: %w",
+				err,
+			)
 		}
 
 		facets[i].ContractName = contractName
@@ -127,7 +134,13 @@ func ReadAllFacets(client *ethclient.Client, contractAddress string, basescanAPI
 	return facets, nil
 }
 
-func CreateEthereumClients(baseRpcUrl, baseSepoliaRpcUrl, originEnvironment, targetEnvironment string, verbose bool) (map[string]*ethclient.Client, error) {
+func CreateEthereumClients(
+	baseRpcUrl string,
+	baseSepoliaRpcUrl string,
+	originEnvironment string,
+	targetEnvironment string,
+	verbose bool,
+) (map[string]*ethclient.Client, error) {
 	clients := make(map[string]*ethclient.Client)
 
 	for _, env := range []string{originEnvironment, targetEnvironment} {
@@ -180,10 +193,16 @@ func GetContractNameFromBasescan(baseURL, address, apiKey string) (string, error
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("Basescan API returned non-200 status code: %d", resp.StatusCode)
+	}
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", fmt.Errorf("failed to read response body: %w", err)
 	}
+
+	Log.Debug().Msgf("Raw Basescan JSON response: %s", string(body))
 
 	var result struct {
 		Status  string `json:"status"`
@@ -209,20 +228,26 @@ func GetContractNameFromBasescan(baseURL, address, apiKey string) (string, error
 	return result.Result[0].ContractName, nil
 }
 
+// GetContractCodeHash fetches the deployed code and calculates its keccak256 hash
+func GetContractCodeHash(client *ethclient.Client, address common.Address) (string, error) {
+	code, err := client.CodeAt(context.Background(), address, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to read contract code for address %s: %w", address.Hex(), err)
+	}
+
+	hash := crypto.Keccak256Hash(code)
+	return hash.Hex(), nil
+}
+
 // AddContractCodeHashes reads the contract code for each facet and adds its keccak256 hash to the Facet struct
 func AddContractCodeHashes(client *ethclient.Client, facets []Facet) error {
 	for i, facet := range facets {
-		// Read the contract code
-		code, err := client.CodeAt(context.Background(), facet.FacetAddress, nil)
+		hash, err := GetContractCodeHash(client, facet.FacetAddress)
 		if err != nil {
-			return fmt.Errorf("failed to read contract code for address %s: %w", facet.FacetAddress.Hex(), err)
+			return err
 		}
 
-		// Hash the code using Keccak256Hash
-		hash := crypto.Keccak256Hash(code)
-
-		// Store the hash hex string in the Facet struct
-		facets[i].BytecodeHash = hash.Hex()
+		facets[i].BytecodeHash = hash
 	}
 
 	return nil

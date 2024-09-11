@@ -1,6 +1,7 @@
 import type { ExtractAbiFunction } from 'abitype'
 import { IRuleEntitlementBase, IRuleEntitlementAbi } from './v3/IRuleEntitlementShim'
 import { IRuleEntitlementV2Base, IRuleEntitlementV2Abi } from './v3/IRuleEntitlementV2Shim'
+import { dlogger } from '@river-build/dlog'
 
 import {
     encodeAbiParameters,
@@ -13,6 +14,15 @@ import {
 import { ethers } from 'ethers'
 import { Address } from './ContractTypes'
 import { MOCK_ADDRESS } from './Utils'
+
+const log = dlogger('csb:entitlement')
+
+export type XchainConfig = {
+    supportedRpcUrls: { [chainId: number]: string }
+    // The chain ids for supported chains that use ether as the native currency.
+    // These chains will be used to determine a user's cumulative ether balance.
+    etherBasedChains: number[]
+}
 
 const zeroAddress = ethers.constants.AddressZero
 
@@ -35,7 +45,7 @@ export enum CheckOperationType {
     ERC721,
     ERC1155,
     ISENTITLED,
-    NATIVE_COIN_BALANCE,
+    ETH_BALANCE,
 }
 
 function checkOpString(operation: CheckOperationType): string {
@@ -52,8 +62,8 @@ function checkOpString(operation: CheckOperationType): string {
             return 'ERC1155'
         case CheckOperationType.ISENTITLED:
             return 'ISENTITLED'
-        case CheckOperationType.NATIVE_COIN_BALANCE:
-            return 'NATIVE_COIN_BALANCE'
+        case CheckOperationType.ETH_BALANCE:
+            return 'ETH_BALANCE'
         default:
             return 'UNKNOWN'
     }
@@ -400,7 +410,7 @@ export function treeToRuleData(root: Operation): IRuleEntitlementV2Base.RuleData
 async function evaluateAndOperation(
     controller: AbortController,
     linkedWallets: string[],
-    providers: ethers.providers.BaseProvider[],
+    xchainConfig: XchainConfig,
     operation?: AndOperation,
 ): Promise<EntitledWalletOrZeroAddress> {
     if (!operation?.leftOperation || !operation?.rightOperation) {
@@ -427,7 +437,7 @@ async function evaluateAndOperation(
 
     async function racer(operationEntry: Operation): Promise<EntitledWalletOrZeroAddress> {
         const result = await Promise.race([
-            evaluateTree(newController, linkedWallets, providers, operationEntry),
+            evaluateTree(newController, linkedWallets, xchainConfig, operationEntry),
             interupted,
         ])
         if (result === interuptFlag) {
@@ -466,7 +476,7 @@ async function evaluateAndOperation(
 async function evaluateOrOperation(
     controller: AbortController,
     linkedWallets: string[],
-    providers: ethers.providers.BaseProvider[],
+    xchainConfig: XchainConfig,
     operation?: OrOperation,
 ): Promise<EntitledWalletOrZeroAddress> {
     if (!operation?.leftOperation || !operation?.rightOperation) {
@@ -494,7 +504,7 @@ async function evaluateOrOperation(
 
     async function racer(operation: Operation): Promise<EntitledWalletOrZeroAddress> {
         const result = await Promise.race([
-            evaluateTree(newController, linkedWallets, providers, operation),
+            evaluateTree(newController, linkedWallets, xchainConfig, operation),
             interupted,
         ])
         if (result === interuptFlag) {
@@ -528,7 +538,7 @@ async function evaluateOrOperation(
 async function evaluateCheckOperation(
     controller: AbortController,
     linkedWallets: string[],
-    providers: ethers.providers.BaseProvider[],
+    xchainConfig: XchainConfig,
     operation?: CheckOperationV2,
 ): Promise<EntitledWalletOrZeroAddress> {
     if (!operation) {
@@ -545,14 +555,14 @@ async function evaluateCheckOperation(
         default:
     }
 
-    if (operation.chainId < 0n) {
+    if (operation.checkType !== CheckOperationType.ETH_BALANCE && operation.chainId < 0n) {
         throw new Error(
             `Invalid chain id for check operation ${checkOpString(operation.checkType)}`,
         )
     }
 
     if (
-        operation.checkType !== CheckOperationType.NATIVE_COIN_BALANCE &&
+        operation.checkType !== CheckOperationType.ETH_BALANCE &&
         operation.contractAddress === zeroAddress
     ) {
         throw new Error(
@@ -564,7 +574,7 @@ async function evaluateCheckOperation(
         [
             CheckOperationType.ERC20,
             CheckOperationType.ERC721,
-            CheckOperationType.NATIVE_COIN_BALANCE,
+            CheckOperationType.ETH_BALANCE,
         ].includes(operation.checkType)
     ) {
         const { threshold } = decodeThresholdParams(operation.params)
@@ -589,8 +599,7 @@ async function evaluateCheckOperation(
 
     switch (operation.checkType) {
         case CheckOperationType.ISENTITLED: {
-            await Promise.all(providers.map((p) => p.ready))
-            const provider = findProviderFromChainId(providers, operation.chainId)
+            const provider = await findProviderFromChainId(xchainConfig, operation.chainId)
 
             if (!provider) {
                 controller.abort()
@@ -598,24 +607,23 @@ async function evaluateCheckOperation(
             }
             return evaluateCustomEntitledOperation(operation, controller, provider, linkedWallets)
         }
-        case CheckOperationType.NATIVE_COIN_BALANCE: {
-            await Promise.all(providers.map((p) => p.ready))
-            const provider = findProviderFromChainId(providers, operation.chainId)
+        case CheckOperationType.ETH_BALANCE: {
+            const etherChainProviders = await findEtherChainProviders(xchainConfig)
 
-            if (!provider) {
+            if (!etherChainProviders.length) {
                 controller.abort()
                 return zeroAddress
             }
-            return evaluateNativeCoinBalanceOperation(
+
+            return evaluateEthBalanceOperation(
                 operation,
                 controller,
-                provider,
+                etherChainProviders,
                 linkedWallets,
             )
         }
         case CheckOperationType.ERC1155: {
-            await Promise.all(providers.map((p) => p.ready))
-            const provider = findProviderFromChainId(providers, operation.chainId)
+            const provider = await findProviderFromChainId(xchainConfig, operation.chainId)
 
             if (!provider) {
                 controller.abort()
@@ -624,8 +632,7 @@ async function evaluateCheckOperation(
             return evaluateERC1155Operation(operation, controller, provider, linkedWallets)
         }
         case CheckOperationType.ERC20: {
-            await Promise.all(providers.map((p) => p.ready))
-            const provider = findProviderFromChainId(providers, operation.chainId)
+            const provider = await findProviderFromChainId(xchainConfig, operation.chainId)
 
             if (!provider) {
                 controller.abort()
@@ -634,13 +641,13 @@ async function evaluateCheckOperation(
             return evaluateERC20Operation(operation, controller, provider, linkedWallets)
         }
         case CheckOperationType.ERC721: {
-            await Promise.all(providers.map((p) => p.ready))
-            const provider = findProviderFromChainId(providers, operation.chainId)
+            const provider = await findProviderFromChainId(xchainConfig, operation.chainId)
 
             if (!provider) {
                 controller.abort()
                 return zeroAddress
             }
+
             return evaluateERC721Operation(operation, controller, provider, linkedWallets)
         }
         default:
@@ -658,13 +665,13 @@ async function evaluateCheckOperation(
 export async function evaluateOperationsForEntitledWallet(
     operations: Operation[],
     linkedWallets: string[],
-    providers: ethers.providers.BaseProvider[],
+    xchainConfig: XchainConfig,
 ) {
     const controller = new AbortController()
     const result = evaluateTree(
         controller,
         linkedWallets,
-        providers,
+        xchainConfig,
         operations[operations.length - 1],
     )
     controller.abort()
@@ -674,7 +681,7 @@ export async function evaluateOperationsForEntitledWallet(
 export async function evaluateTree(
     controller: AbortController,
     linkedWallets: string[],
-    providers: ethers.providers.BaseProvider[],
+    xchainConfig: XchainConfig,
     entry?: Operation,
 ): Promise<EntitledWalletOrZeroAddress> {
     if (!entry) {
@@ -688,14 +695,14 @@ export async function evaluateTree(
 
     if (isLogicalOperation(entry)) {
         if (isAndOperation(entry)) {
-            return evaluateAndOperation(newController, linkedWallets, providers, entry)
+            return evaluateAndOperation(newController, linkedWallets, xchainConfig, entry)
         } else if (isOrOperation(entry)) {
-            return evaluateOrOperation(newController, linkedWallets, providers, entry)
+            return evaluateOrOperation(newController, linkedWallets, xchainConfig, entry)
         } else {
             throw new Error('Unknown operation type')
         }
     } else if (isCheckOperationV2(entry)) {
-        return evaluateCheckOperation(newController, linkedWallets, providers, entry)
+        return evaluateCheckOperation(newController, linkedWallets, xchainConfig, entry)
     } else {
         throw new Error('Unknown operation type')
     }
@@ -767,7 +774,7 @@ export function createOperationsTree(
         switch (op.type) {
             case CheckOperationType.ERC20:
             case CheckOperationType.ERC721:
-            case CheckOperationType.NATIVE_COIN_BALANCE:
+            case CheckOperationType.ETH_BALANCE:
                 params = encodeThresholdParams({ threshold: op.threshold ?? BigInt(1) })
                 break
             case CheckOperationType.ERC1155:
@@ -978,32 +985,41 @@ async function evaluateERC1155Operation(
     }
 }
 
-async function evaluateNativeCoinBalanceOperation(
+async function getEthBalance(
+    provider: ethers.providers.BaseProvider,
+    wallet: string,
+): Promise<{ wallet: string; balance: ethers.BigNumber }> {
+    try {
+        const balance = await provider.getBalance(wallet)
+        return {
+            wallet,
+            balance,
+        }
+    } catch (error) {
+        return {
+            wallet,
+            balance: ethers.BigNumber.from(0),
+        }
+    }
+}
+
+async function evaluateEthBalanceOperation(
     operation: CheckOperationV2,
     controller: AbortController,
-    provider: ethers.providers.BaseProvider,
+    providers: ethers.providers.BaseProvider[],
     linkedWallets: string[],
 ): Promise<EntitledWalletOrZeroAddress> {
     const { threshold } = decodeThresholdParams(operation.params)
-    const walletBalances = await Promise.all(
-        linkedWallets.map(async (wallet) => {
-            try {
-                const result = await provider.getBalance(wallet)
-                return {
-                    wallet,
-                    balance: result,
-                }
-            } catch (error) {
-                return {
-                    wallet,
-                    balance: ethers.BigNumber.from(0),
-                }
-            }
-        }),
-    )
+
+    const balancePromises: Promise<{ wallet: string; balance: ethers.BigNumber }>[] = []
+    for (const wallet of linkedWallets) {
+        for (const provider of providers) {
+            balancePromises.push(getEthBalance(provider, wallet))
+        }
+    }
+    const walletBalances = await Promise.all(balancePromises)
 
     const walletsWithAsset = walletBalances.filter((balance) => balance.balance.gt(0))
-
     const accumulatedBalance = walletsWithAsset.reduce(
         (acc, el) => acc.add(el.balance),
         ethers.BigNumber.from(0),
@@ -1069,8 +1085,29 @@ async function evaluateContractBalanceAcrossWallets(
     }
 }
 
-function findProviderFromChainId(providers: ethers.providers.BaseProvider[], chainId: bigint) {
-    return providers.find((p) => p.network.chainId === Number(chainId))
+async function findProviderFromChainId(xchainConfig: XchainConfig, chainId: bigint) {
+    if (!(Number(chainId) in xchainConfig.supportedRpcUrls)) {
+        return undefined
+    }
+
+    const url = xchainConfig.supportedRpcUrls[Number(chainId)]
+    const provider = new ethers.providers.StaticJsonRpcProvider(url)
+    await provider.ready
+    return provider
+}
+
+async function findEtherChainProviders(xchainConfig: XchainConfig) {
+    const etherChainProviders = []
+    for (const chainId of xchainConfig.etherBasedChains) {
+        if (!(Number(chainId) in xchainConfig.supportedRpcUrls)) {
+            log.info(`(WARN) findEtherChainProviders: No supported RPC URL for chain id ${chainId}`)
+        } else {
+            const url = xchainConfig.supportedRpcUrls[Number(chainId)]
+            etherChainProviders.push(new ethers.providers.StaticJsonRpcProvider(url))
+        }
+    }
+    await Promise.all(etherChainProviders.map((p) => p.ready))
+    return etherChainProviders
 }
 
 function isValidAddress(value: unknown): value is Address {

@@ -83,6 +83,28 @@ diamonds:
 
 ```
 
+### Run keccak256 hash generation on deployed contracts
+
+```bash
+GOWORK=off go run main.go add-hashes gamma deployed-diffs/facet_diff_090624_1.yaml
+
+# output to new yaml file suffixed with _hashed.yaml including bytecodeHash for each contract in deployments section
+➜  bytecode-diff git:(jt/net-62-upgrade-script-2) ✗ yq e '.deployments' deployed-diffs/facet_diff_090624_1_hashed.yaml
+Architect:
+  address: 0xa18a3df4f63cdcae943d9c76730adf2812388de4
+  baseScanLink: https://sepolia.basescan.org/tx/0x4280ef1300fe001e7d85e7495eba13fc99be53ee7a7060e753d466f8bebf1622
+  bytecodeHash: 0x20d0a86e9ea31a39663285aacfe88705983520a4482a7bac5ada891c9adfe090
+  deploymentDate: 2024-09-06 19:04
+  transactionHash: 0x4280ef1300fe001e7d85e7495eba13fc99be53ee7a7060e753d466f8bebf1622
+Banning:
+  address: 0x4d88d1fbba6ce6bcdb4381549ee0b7c0d2b56919
+  baseScanLink: https://sepolia.basescan.org/tx/0x4ccbaf9750bcd0971975e73a24b05f1c51d4703cf72a406356c79eb54de9c33c
+  bytecodeHash: 0xa2ce3e77ba060ff1d59ed384e1c6c5788f308ad8bbbef612eb3e5de4e1d79de8
+  deploymentDate: 2024-09-06 19:05
+  transactionHash: 0x4ccbaf9750bcd0971975e73a24b05f1c51d4703cf72a406356c79eb54de9c33c
+...
+```
+
 ### Flags
 
 ```bash

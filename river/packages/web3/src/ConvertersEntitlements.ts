@@ -82,7 +82,7 @@ export function convertRuleDataV1ToV2(
                 case CheckOperationType.MOCK:
                 case CheckOperationType.ERC20:
                 case CheckOperationType.ERC721:
-                case CheckOperationType.NATIVE_COIN_BALANCE: {
+                case CheckOperationType.ETH_BALANCE: {
                     const threshold = ethers.BigNumber.from(op.threshold).toBigInt()
                     return {
                         opType: op.opType,
@@ -133,7 +133,7 @@ export function convertRuleDataV2ToV1(
                 case CheckOperationType.MOCK:
                 case CheckOperationType.ERC20:
                 case CheckOperationType.ERC721:
-                case CheckOperationType.NATIVE_COIN_BALANCE: {
+                case CheckOperationType.ETH_BALANCE: {
                     const { threshold } = decodeThresholdParams(op.params as Hex)
                     return {
                         opType: op.opType,

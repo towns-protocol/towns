@@ -154,7 +154,7 @@ describe('delete role', () => {
                 channel,
                 bobWithNft.getUserId(),
                 Permission.Read,
-                await bobWithNft.getSupportedXChainRpcUrls(),
+                await bobWithNft.getXchainConfig(),
             ),
         ).toBe(false)
     })
@@ -272,7 +272,7 @@ describe('delete role', () => {
                 channel,
                 bob.getUserId(),
                 Permission.Read,
-                await bob.getSupportedXChainRpcUrls(),
+                await bob.getXchainConfig(),
             ),
         ).toBe(false)
     })

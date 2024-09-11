@@ -1,4 +1,0 @@
-name: Upgrade network facets
-
-on:
-    workflow_dispatch:

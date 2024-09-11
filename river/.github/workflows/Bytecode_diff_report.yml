@@ -1,4 +1,174 @@
-name: Bytecode diff report
+name: Bytecode Diff Report
+env:
+    FOUNDRY_VERSION: nightly
+    TESTNET_PRIVATE_KEY: ${{ secrets.GAMMA_BASE_SEPOLIA_DEPLOYER_PK }}
+    BASE_RPC_URL: ${{ secrets.BASE_RPC_URL }}
+    BASE_SEPOLIA_RPC_URL: ${{ secrets.BASE_SEPOLIA_RPC_URL }}
+    FACET_SOURCE_PATH: ../../contracts/src
+    REPORT_OUT_DIR: ${{ vars.REPORT_OUT_DIR }}
+    BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+    BASESCAN_SEPOLIA_URL: 'https://api-sepolia.basescan.org/api'
+    BLOCKSCOUT_SEPOLIA_URL: 'https://base-sepolia.blockscout.com/api'
+    BLOCKSCOUT_SEPOLIA_API_KEY: ${{ secrets.BLOCKSCOUT_BASE_SEPOLIA_API_KEY }}
+    AWS_ACCESS_KEY_ID: ${{ secrets.RIVER_S3_AWS_ACCESS_KEY_ID }}
+    AWS_SECRET_ACCESS_KEY: ${{ secrets.RIVER_S3_AWS_SECRET_ACCESS_KEY }}
+    AWS_REGION: ${{ secrets.RIVER_S3_AWS_REGION }}
+    GOWORK: off
 
 on:
     workflow_dispatch:
+        inputs:
+            origin_environment:
+                description: 'Origin environment'
+                required: true
+                type: choice
+                options:
+                    - 'alpha'
+                    - 'gamma'
+                    - 'omega'
+                default: 'alpha'
+            target_environment:
+                description: 'Target environment'
+                required: true
+                type: choice
+                options:
+                    - 'alpha'
+                    - 'gamma'
+                    - 'omega'
+                default: 'gamma'
+
+    workflow_call:
+        inputs:
+            origin_environment:
+                description: 'Origin environment'
+                required: true
+                type: string
+            target_environment:
+                description: 'Target environment'
+                required: true
+                type: string
+        secrets:
+            BASE_RPC_URL:
+                required: true
+            BASE_SEPOLIA_RPC_URL:
+                required: true
+            BASESCAN_API_KEY:
+                required: true
+            BLOCKSCOUT_BASE_SEPOLIA_API_KEY:
+                required: true
+            GAMMA_BASE_SEPOLIA_DEPLOYER_PK:
+                required: true
+            RIVER_S3_AWS_ACCESS_KEY_ID:
+                required: true
+            RIVER_S3_AWS_SECRET_ACCESS_KEY:
+                required: true
+            RIVER_S3_AWS_REGION:
+                required: true
+
+jobs:
+    Render_Network_Diff_Upgrade_Report:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+              with:
+                  ref: ${{ github.ref }}
+
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: '20'
+                  cache: 'yarn'
+
+            - name: Install Foundry
+              uses: foundry-rs/foundry-toolchain@v1
+              with:
+                  version: ${{ env.FOUNDRY_VERSION }}
+
+            - name: Install node dependencies
+              run: yarn install --immutable
+
+            - name: Set up Go
+              uses: actions/setup-go@v4
+              with:
+                  go-version: '1.22' # Specify the Go version you need
+
+            - name: Install dependencies
+              run: |
+                  go mod download
+                  go mod tidy
+              working-directory: scripts/bytecode-diff
+
+            - name: Run report generation
+              run: |
+                  go run main.go -v ${{ inputs.origin_environment }} ${{ inputs.target_environment }}
+              working-directory: scripts/bytecode-diff
+              env:
+                  REPORT_OUT_DIR: ${{ env.REPORT_OUT_DIR }}
+                  BASESCAN_API_KEY: ${{ env.BASESCAN_API_KEY }}
+                  BASE_RPC_URL: ${{ env.BASE_RPC_URL }}
+                  BASE_SEPOLIA_RPC_URL: ${{ env.BASE_SEPOLIA_RPC_URL }}
+                  FACET_SOURCE_PATH: ${{ env.FACET_SOURCE_PATH }}
+                  GOWORK: ${{ env.GOWORK }}
+
+            - name: Get latest facet diff file
+              run: |
+                  FACET_DIFF_FILE=$(find ${{ env.REPORT_OUT_DIR }} -name "facet_diff*.yaml" | sort -r | head -n 1 | xargs basename)
+                  echo "Latest facet diff file: $FACET_DIFF_FILE"
+                  echo "FACET_DIFF_FILE=$FACET_DIFF_FILE" >> $GITHUB_ENV
+              working-directory: scripts/bytecode-diff
+
+            - name: Run facet upgrades based on diffs
+              run: |
+                  ./scripts/upgrade-facets.sh ${{ inputs.target_environment }} ${{ env.REPORT_OUT_DIR }} ${{ env.FACET_DIFF_FILE }}
+              working-directory: scripts/bytecode-diff
+              env:
+                  BASE_RPC_URL: ${{ env.BASE_RPC_URL }}
+                  BASE_SEPOLIA_RPC_URL: ${{ env.BASE_SEPOLIA_RPC_URL }}
+                  BLOCKSCOUT_SEPOLIA_URL: ${{ env.BLOCKSCOUT_SEPOLIA_URL }}
+                  BLOCKSCOUT_SEPOLIA_API_KEY: ${{ env.BLOCKSCOUT_SEPOLIA_API_KEY }}
+                  BASESCAN_API_KEY: ${{ env.BASESCAN_API_KEY }}
+                  BASESCAN_SEPOLIA_URL: ${{ env.BASESCAN_SEPOLIA_URL }}
+                  TESTNET_PRIVATE_KEY: ${{ env.TESTNET_PRIVATE_KEY }}
+
+            - name: Run final html report generation w/ updated hashes
+              id: gen_html_report
+
+              run: |
+                  go run main.go add-hashes ${{ inputs.target_environment }} ${{ env.REPORT_OUT_DIR }}/${{ env.FACET_DIFF_FILE }}
+              working-directory: scripts/bytecode-diff
+              env:
+                  BASE_RPC_URL: ${{ env.BASE_RPC_URL }}
+                  BASE_SEPOLIA_RPC_URL: ${{ env.BASE_SEPOLIA_RPC_URL }}
+                  GOWORK: ${{ env.GOWORK }}
+
+            - name: Configure AWS credentials
+              if: steps.gen_html_report.outcome == 'success'
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: ${{ env.AWS_REGION }}
+
+            - name: Copy HTML report to S3
+              if: steps.gen_html_report.outcome == 'success'
+              run: |
+                  # Find the latest hashed HTML file
+                  HTML_FILE=$(find ${{ env.REPORT_OUT_DIR }} -name "*_hashed_*.html" | sort -r | head -n 1)
+
+                  if [ -z "$HTML_FILE" ]; then
+                    echo "Error: No HTML file found"
+                    exit 1
+                  fi
+
+                  echo "Latest HTML file: $HTML_FILE"
+
+                  # Copy to report.html
+                  aws s3 cp $HTML_FILE s3://${{ inputs.target_environment }}-reports/report.html
+
+                  # Copy to report_YYYYMMDD.html
+                  DATED_FILENAME="report_$(date -u +%Y%m%d).html"
+                  aws s3 cp $HTML_FILE s3://${{ inputs.target_environment }}-reports/$DATED_FILENAME
+
+                  echo "HTML report copied to S3 bucket ${{ inputs.target_environment }}-reports files report.html and $DATED_FILENAME"
+              working-directory: scripts/bytecode-diff

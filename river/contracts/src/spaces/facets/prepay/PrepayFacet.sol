@@ -20,9 +20,7 @@ contract PrepayFacet is IPrepay, PrepayBase, ReentrancyGuard, Entitled, Facet {
     _addInterface(type(IPrepay).interfaceId);
   }
 
-  function prepayMembership(
-    uint256 supply
-  ) external payable nonReentrant onlyOwner {
+  function prepayMembership(uint256 supply) external payable nonReentrant {
     if (supply == 0) revert Prepay__InvalidSupplyAmount();
 
     MembershipStorage.Layout storage ds = MembershipStorage.layout();

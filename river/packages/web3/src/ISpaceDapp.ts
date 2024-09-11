@@ -10,6 +10,7 @@ import {
     RoleDetails,
     TotalSupplyInfo,
 } from './ContractTypes'
+import { XchainConfig } from './entitlement'
 
 import { WalletLink as WalletLinkV3 } from './v3/WalletLink'
 import { BigNumber, BytesLike, ContractReceipt, ContractTransaction, ethers } from 'ethers'
@@ -207,12 +208,12 @@ export interface ISpaceDapp {
         channelId: string,
         user: string,
         permission: Permission,
-        supportedXChainRpcUrls: string[],
+        xchainConfig: XchainConfig,
     ) => Promise<boolean>
     getEntitledWalletForJoiningSpace: (
         spaceId: string,
         wallet: string,
-        supportedXChainRpcUrls: string[],
+        xchainConfig: XchainConfig,
     ) => Promise<string | undefined>
     parseAllContractErrors: (args: { spaceId?: string; error: unknown }) => Error
     parseSpaceFactoryError: (error: unknown) => Error

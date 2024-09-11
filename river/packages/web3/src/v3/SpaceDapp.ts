@@ -39,7 +39,11 @@ import {
 import { PricingModules } from './PricingModules'
 import { dlogger, isJest } from '@river-build/dlog'
 import { EVERYONE_ADDRESS, stringifyChannelMetadataJSON, NoEntitledWalletError } from '../Utils'
-import { evaluateOperationsForEntitledWallet, ruleDataToOperations } from '../entitlement'
+import {
+    XchainConfig,
+    evaluateOperationsForEntitledWallet,
+    ruleDataToOperations,
+} from '../entitlement'
 import { RuleEntitlementShim } from './RuleEntitlementShim'
 import { PlatformRequirements } from './PlatformRequirements'
 import { EntitlementDataStructOutput } from './IEntitlementDataQueryableShim'
@@ -134,6 +138,11 @@ function newChannelEntitlementRequest(
 
 function ensureHexPrefix(value: string): string {
     return value.startsWith('0x') ? value : `0x${value}`
+}
+
+const EmptyXchainConfig: XchainConfig = {
+    supportedRpcUrls: {},
+    etherBasedChains: [],
 }
 
 type EntitledWallet = string | undefined
@@ -697,7 +706,7 @@ export class SpaceDapp implements ISpaceDapp {
         rootKey: string,
         allWallets: string[],
         entitlements: EntitlementData[],
-        supportedXChainRpcUrls: string[],
+        xchainConfig: XchainConfig,
     ): Promise<EntitledWallet> {
         const isEveryOneSpace = entitlements.some((e) =>
             e.userEntitlement?.includes(EVERYONE_ADDRESS),
@@ -715,11 +724,6 @@ export class SpaceDapp implements ISpaceDapp {
                 }
             }
         }
-
-        const providers = supportedXChainRpcUrls.map(
-            (url) => new ethers.providers.StaticJsonRpcProvider(url),
-        )
-        await Promise.all(providers.map((p) => p.ready))
 
         // Accumulate all RuleDataV1 entitlements and convert to V2s.
         const ruleEntitlements = entitlements
@@ -755,7 +759,7 @@ export class SpaceDapp implements ISpaceDapp {
                 const result = await evaluateOperationsForEntitledWallet(
                     operations,
                     allWallets,
-                    providers,
+                    xchainConfig,
                 )
                 if (result !== ethers.constants.AddressZero) {
                     return result
@@ -773,7 +777,7 @@ export class SpaceDapp implements ISpaceDapp {
     public async getEntitledWalletForJoiningSpace(
         spaceId: string,
         rootKey: string,
-        supportedXChainRpcUrls: string[],
+        xchainConfig: XchainConfig,
     ): Promise<EntitledWallet> {
         const { value } = await this.entitledWalletCache.executeUsingCache(
             newSpaceEntitlementEvaluationRequest(spaceId, rootKey, Permission.JoinSpace),
@@ -781,7 +785,7 @@ export class SpaceDapp implements ISpaceDapp {
                 const entitledWallet = await this.getEntitledWalletForJoiningSpaceUncached(
                     request.spaceId,
                     request.userId,
-                    supportedXChainRpcUrls,
+                    xchainConfig,
                 )
                 return new EntitledWalletCacheResult(entitledWallet)
             },
@@ -792,7 +796,7 @@ export class SpaceDapp implements ISpaceDapp {
     private async getEntitledWalletForJoiningSpaceUncached(
         spaceId: string,
         rootKey: string,
-        supportedXChainRpcUrls: string[],
+        xchainConfig: XchainConfig,
     ): Promise<EntitledWallet> {
         const allWallets = await this.getLinkedWallets(rootKey)
 
@@ -816,12 +820,7 @@ export class SpaceDapp implements ISpaceDapp {
         }
 
         const entitlements = await this.getEntitlementsForPermission(spaceId, Permission.JoinSpace)
-        return await this.evaluateEntitledWallet(
-            rootKey,
-            allWallets,
-            entitlements,
-            supportedXChainRpcUrls,
-        )
+        return await this.evaluateEntitledWallet(rootKey, allWallets, entitlements, xchainConfig)
     }
 
     public async isEntitledToSpace(
@@ -864,7 +863,7 @@ export class SpaceDapp implements ISpaceDapp {
         channelNetworkId: string,
         user: string,
         permission: Permission,
-        supportedXChainRpcUrls: string[] = [],
+        xchainConfig: XchainConfig = EmptyXchainConfig,
     ): Promise<boolean> {
         const { value } = await this.entitlementEvaluationCache.executeUsingCache(
             newChannelEntitlementEvaluationRequest(spaceId, channelNetworkId, user, permission),
@@ -874,7 +873,7 @@ export class SpaceDapp implements ISpaceDapp {
                     request.channelId,
                     request.userId,
                     request.permission,
-                    supportedXChainRpcUrls,
+                    xchainConfig,
                 )
                 return new BooleanCacheResult(isEntitled)
             },
@@ -887,7 +886,7 @@ export class SpaceDapp implements ISpaceDapp {
         channelNetworkId: string,
         user: string,
         permission: Permission,
-        supportedXChainRpcUrls: string[] = [],
+        xchainConfig: XchainConfig,
     ): Promise<boolean> {
         const space = this.getSpace(spaceId)
         if (!space) {
@@ -921,7 +920,7 @@ export class SpaceDapp implements ISpaceDapp {
             user,
             linkedWallets,
             entitlements,
-            supportedXChainRpcUrls,
+            xchainConfig,
         )
         return entitledWallet !== undefined
     }

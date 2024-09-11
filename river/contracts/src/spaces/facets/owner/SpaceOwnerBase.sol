@@ -48,6 +48,7 @@ abstract contract SpaceOwnerBase is ISpaceOwnerBase {
     string memory longDescription
   ) internal {
     Validator.checkLength(name, 2);
+    // if the space uri is empty, it will default to `${defaultUri}/${spaceAddress}`
     Validator.checkLength(uri, 0);
     Validator.checkAddress(space);
 
@@ -74,7 +75,8 @@ abstract contract SpaceOwnerBase is ISpaceOwnerBase {
     string memory longDescription
   ) internal {
     Validator.checkLength(name, 2);
-    Validator.checkLength(uri, 1);
+    // if the space uri is empty, it will default to `${defaultUri}/${spaceAddress}`
+    Validator.checkLength(uri, 0);
 
     SpaceOwnerStorage.Layout storage ds = SpaceOwnerStorage.layout();
 

@@ -16,6 +16,7 @@ import {IManagedProxyBase} from "contracts/src/diamond/proxy/managed/IManagedPro
 import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
 import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
+import {IPrepay} from "contracts/src/spaces/facets/prepay/IPrepay.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -53,8 +54,29 @@ abstract contract ArchitectBase is Factory, IArchitectBase, PricingModulesBase {
     return ArchitectStorage.layout().spaceByTokenId[tokenId];
   }
 
+  function _createSpaceWithPrepay(
+    CreateSpace memory createSpace
+  ) internal returns (address spaceAddress) {
+    SpaceInfo memory spaceInfo = SpaceInfo({
+      name: createSpace.metadata.name,
+      uri: createSpace.metadata.uri,
+      shortDescription: createSpace.metadata.shortDescription,
+      longDescription: createSpace.metadata.longDescription,
+      membership: createSpace.membership,
+      channel: createSpace.channel
+    });
+
+    spaceAddress = _createSpace(spaceInfo);
+
+    if (createSpace.prepay.supply > 0) {
+      IPrepay(spaceAddress).prepayMembership{value: msg.value}(
+        createSpace.prepay.supply
+      );
+    }
+  }
+
   function _createSpace(
-    SpaceInfo calldata spaceInfo
+    SpaceInfo memory spaceInfo
   ) internal returns (address spaceAddress) {
     ArchitectStorage.Layout storage ds = ArchitectStorage.layout();
     ImplementationStorage.Layout storage ims = ImplementationStorage.layout();
@@ -178,7 +200,7 @@ abstract contract ArchitectBase is Factory, IArchitectBase, PricingModulesBase {
   function _createDefaultChannel(
     address space,
     uint256 roleId,
-    ChannelInfo calldata channelInfo
+    ChannelInfo memory channelInfo
   ) internal {
     uint256[] memory roleIds = new uint256[](1);
     roleIds[0] = roleId;
@@ -202,7 +224,7 @@ abstract contract ArchitectBase is Factory, IArchitectBase, PricingModulesBase {
     address spaceAddress,
     IUserEntitlement userEntitlement,
     IRuleEntitlement ruleEntitlement,
-    MembershipRequirements calldata requirements
+    MembershipRequirements memory requirements
   ) internal returns (uint256 roleId) {
     string[] memory joinPermissions = new string[](1);
     joinPermissions[0] = Permissions.JoinSpace;
@@ -258,8 +280,8 @@ abstract contract ArchitectBase is Factory, IArchitectBase, PricingModulesBase {
 
   function _createMemberEntitlement(
     address spaceAddress,
-    string calldata memberName,
-    string[] calldata memberPermissions,
+    string memory memberName,
+    string[] memory memberPermissions,
     IUserEntitlement userEntitlement
   ) internal returns (uint256 roleId) {
     address[] memory users = new address[](1);
@@ -283,7 +305,7 @@ abstract contract ArchitectBase is Factory, IArchitectBase, PricingModulesBase {
 
   function _deploySpace(
     uint256 spaceTokenId,
-    Membership calldata membership
+    Membership memory membership
   ) internal returns (address space) {
     // get deployment info
     (bytes memory initCode, bytes32 salt) = _getSpaceDeploymentInfo(
@@ -317,7 +339,7 @@ abstract contract ArchitectBase is Factory, IArchitectBase, PricingModulesBase {
 
   function _getSpaceDeploymentInfo(
     uint256 spaceTokenId,
-    Membership calldata membership
+    Membership memory membership
   ) internal view returns (bytes memory initCode, bytes32 salt) {
     _verifyPricingModule(membership.settings.pricingModule);
 
