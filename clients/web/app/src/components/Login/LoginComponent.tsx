@@ -3,8 +3,6 @@ import { AuthStatus, useConnectivity } from 'use-towns-client'
 import { usePrivy } from '@privy-io/react-auth'
 import { useCombinedAuth } from 'privy/useCombinedAuth'
 import { Box, FancyButton } from '@ui'
-import { useErrorToast } from 'hooks/useErrorToast'
-import { mapToErrorMessage } from '@components/Web3/utils'
 import { Analytics } from 'hooks/useAnalytics'
 
 type LoginComponentProps = {
@@ -20,11 +18,7 @@ function LoginComponent({
 }: LoginComponentProps) {
     const { ready: privyReady } = usePrivy()
     const { login, isAutoLoggingInToRiver } = useCombinedAuth()
-    const { authError, authStatus: libAuthStatus } = useConnectivity()
-
-    const errorMessage = authError
-        ? mapToErrorMessage({ error: authError, source: 'login' })
-        : undefined
+    const { authStatus: libAuthStatus } = useConnectivity()
 
     const isBusy = libAuthStatus === AuthStatus.EvaluatingCredentials || isAutoLoggingInToRiver
 
@@ -59,11 +53,6 @@ function LoginComponent({
         await onLoginClick?.()
         await login()
     }, [privyReady, isBusy, onLoginClick, login, text])
-
-    useErrorToast({
-        errorMessage,
-        contextMessage: 'There was an error logging in, please try again.',
-    })
 
     if (AuthStatus.EvaluatingCredentials === libAuthStatus) {
         return <></>

@@ -3,6 +3,8 @@ import { useEmbeddedWallet } from './useEmbeddedWallet'
 import { TSigner } from 'use-towns-client'
 import { ConnectedWallet, usePrivy } from '@privy-io/react-auth'
 import { create } from 'zustand'
+import { subscribeWithSelector } from 'zustand/middleware'
+import { retryGetAccessToken } from './fetchAccessToken'
 
 const EmbeddedSignerContext = createContext<
     | {
@@ -15,10 +17,12 @@ const EmbeddedSignerContext = createContext<
 const store = create<{
     embeddedWallet: ConnectedWallet | undefined
     setEmbeddedWallet: (embeddedWallet: ConnectedWallet | undefined) => void
-}>((set) => ({
-    embeddedWallet: undefined,
-    setEmbeddedWallet: (embeddedWallet) => set({ embeddedWallet }),
-}))
+}>()(
+    subscribeWithSelector((set) => ({
+        embeddedWallet: undefined,
+        setEmbeddedWallet: (embeddedWallet) => set({ embeddedWallet }),
+    })),
+)
 
 export function EmbeddedSignerContextProvider({
     children,
@@ -50,28 +54,60 @@ export function EmbeddedSignerContextProvider({
 }
 
 function useGetEmbeddedSignerContext(chainId: number) {
-    const { ready: privyReady, authenticated } = usePrivy()
+    const { ready: privyReady } = usePrivy()
 
-    // always get the embedded signer on the correct chain
     const getSigner = useCallback(async () => {
-        if (!privyReady) {
-            console.warn('[useGetEmbeddedSignerContext] Privy not ready')
+        try {
+            const accessToken = await retryGetAccessToken(3)
+            if (!accessToken) {
+                clearEmbeddedWalletStorage()
+                return
+            }
+        } catch (error) {
+            clearEmbeddedWalletStorage()
             return
         }
-        if (!authenticated) {
-            console.warn('[useGetEmbeddedSignerContext] not authenticated')
-            return
-        }
-        // get value at time of call
-        const storedEmbeddedWallet = store.getState().embeddedWallet
-        if (!storedEmbeddedWallet) {
-            console.warn('[useGetEmbeddedSignerContext] no embedded wallet')
-            return
-        }
-        await storedEmbeddedWallet?.switchChain(chainId)
-        const provider = await storedEmbeddedWallet.getEthersProvider()
-        return provider.getSigner()
-    }, [authenticated, chainId, privyReady])
+
+        return new Promise<TSigner | undefined>((resolve) => {
+            const timeoutId = setTimeout(() => {
+                cleanup()
+                console.log('[useGetEmbeddedSignerContext]: timed out fetching signer')
+                resolve(undefined)
+                // different users on the same browser, same network, consistently had very different times for the signer to be ready
+            }, 5_000)
+
+            const unsubscribe = store.subscribe(
+                (s) => s.embeddedWallet,
+                async (embeddedWallet) => {
+                    try {
+                        await embeddedWallet?.switchChain(chainId)
+                        const provider = await embeddedWallet?.getEthersProvider()
+                        const signer = provider?.getSigner()
+
+                        if (signer) {
+                            cleanup()
+                            resolve(signer)
+                        }
+                    } catch (error) {
+                        console.error(
+                            '[useGetEmbeddedSignerContext]: Error fetching signer:',
+                            error,
+                        )
+                        cleanup()
+                        resolve(undefined)
+                    }
+                },
+                {
+                    fireImmediately: true,
+                },
+            )
+
+            const cleanup = () => {
+                clearTimeout(timeoutId)
+                unsubscribe()
+            }
+        })
+    }, [chainId])
 
     return useMemo(() => ({ getSigner, isPrivyReady: privyReady }), [getSigner, privyReady])
 }

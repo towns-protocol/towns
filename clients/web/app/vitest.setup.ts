@@ -6,6 +6,7 @@ import { act } from 'react-test-renderer'
 import { ResizeObserver } from '@juggle/resize-observer' // dependency of react-hook/resize-observer
 import { ConnectedWallet, EIP1193Provider, PrivyProvider } from '@privy-io/react-auth'
 import { Chain } from 'viem'
+import * as zustand from 'zustand'
 import dotenv from 'dotenv'
 
 dotenv.config({ path: '.env.test' })
@@ -82,31 +83,6 @@ vi.mock('@towns/privy', async (importOriginal) => {
     }
 })
 
-const storeResetFns = new Set<() => void>()
-
-// resetting zustand stores between tests
-vi.mock('zustand', async () => {
-    const actual = await vi.importActual<typeof import('zustand')>('zustand')
-    return {
-        create: (createStatee) => {
-            const { create } = actual
-            const store = create(createStatee)
-            const initialState = store.getState()
-            storeResetFns.add(() => store.setState(initialState, true))
-            return store
-        },
-        createStore: (createStatee) => {
-            const { createStore } = actual
-            const store = createStore(createStatee)
-            const initialState = store.getInitialState()
-            storeResetFns.add(() => {
-                store.setState(initialState, true)
-            })
-            return store
-        },
-    }
-})
-
 beforeAll(() => {
     globalThis.ResizeObserver = ResizeObserver
     // for @coinbase/wallet-sdk via rainbowkit from lib, throws errors when no network connection
@@ -121,7 +97,6 @@ beforeEach(() => {
     window.HTMLElement.prototype.scrollIntoView = () => {}
 
     server.resetHandlers()
-    act(() => storeResetFns.forEach((resetFn) => resetFn()))
 })
 
 afterAll(() => {
@@ -141,3 +116,63 @@ Object.defineProperty(window, 'matchMedia', {
         dispatchEvent: vi.fn(),
     })),
 })
+
+// https://zustand.docs.pmnd.rs/guides/testing
+//////////////////////
+// ZUSTAND STORES ////
+//////////////////////
+const { create: actualCreate, createStore: actualCreateStore } = await vi.importActual<
+    typeof zustand
+>('zustand')
+
+// a variable to hold reset functions for all stores declared in the app
+export const storeResetFns = new Set<() => void>()
+
+const createUncurried = <T>(stateCreator: zustand.StateCreator<T>) => {
+    const store = actualCreate(stateCreator)
+    const initialState = store.getInitialState()
+    storeResetFns.add(() => {
+        store.setState(initialState, true)
+    })
+    return store
+}
+
+// when creating a store, we get its initial state, create a reset function and add it in the set
+export const create = (<T>(stateCreator: zustand.StateCreator<T>) => {
+    console.log('zustand create mock')
+
+    // to support curried version of create
+    return typeof stateCreator === 'function' ? createUncurried(stateCreator) : createUncurried
+}) as typeof zustand.create
+
+const createStoreUncurried = <T>(stateCreator: zustand.StateCreator<T>) => {
+    const store = actualCreateStore(stateCreator)
+    const initialState = store.getInitialState()
+    storeResetFns.add(() => {
+        store.setState(initialState, true)
+    })
+    return store
+}
+
+// when creating a store, we get its initial state, create a reset function and add it in the set
+export const createStore = (<T>(stateCreator: zustand.StateCreator<T>) => {
+    console.log('zustand createStore mock')
+
+    // to support curried version of createStore
+    return typeof stateCreator === 'function'
+        ? createStoreUncurried(stateCreator)
+        : createStoreUncurried
+}) as typeof zustand.createStore
+
+// reset all stores after each test run
+afterEach(() => {
+    act(() => {
+        storeResetFns.forEach((resetFn) => {
+            resetFn()
+        })
+    })
+})
+
+//////////////////////
+// END ZUSTAND ///////
+//////////////////////

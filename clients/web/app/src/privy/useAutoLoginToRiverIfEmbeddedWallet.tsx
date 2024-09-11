@@ -1,16 +1,24 @@
-import React, { useCallback, useEffect } from 'react'
-import { useConnectivity } from 'use-towns-client'
+import React, { useCallback } from 'react'
+import { useConnectivity, useTownsClient } from 'use-towns-client'
 import { useGetEmbeddedSigner } from '@towns/privy'
 import useStateMachine from '@cassiozen/usestatemachine'
-import { toast } from 'react-hot-toast/headless'
-import { ethers } from 'ethers'
+import { Signer } from 'ethers'
 import { usePrivy } from '@privy-io/react-auth'
 import { clearEmbeddedWalletStorage } from '@towns/privy/EmbeddedSignerContext'
-import { ErrorNotification } from '@components/Notifications/ErrorNotifcation'
-import { waitFor } from 'utils'
 import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
 import { trackError } from 'hooks/useAnalytics'
+import { popupToast } from '@components/Notifications/popupToast'
+import { StandardToast } from '@components/Notifications/StandardToast'
+import { mapToErrorMessage } from '@components/Web3/utils'
 type UseConnectivtyReturnValue = ReturnType<typeof useConnectivity>
+
+// useStateMachine has issues w typescript 5.4
+// https://github.com/cassiozen/useStateMachine/issues/94
+type Context = {
+    isAutoLoggingInToRiver: boolean
+    hasSuccessfulLogin: boolean
+}
+type SetContextFn = (fn: (c: Context) => Context) => void
 
 export function useAutoLoginToRiverIfEmbeddedWallet({
     riverLogin,
@@ -24,6 +32,8 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
     const { getSigner } = useGetEmbeddedSigner()
     const { logout: privyLogout } = usePrivy()
     const { end: endPublicPageLoginFlow } = usePublicPageLoginFlow()
+    const { clientSingleton } = useTownsClient()
+    const userOps = clientSingleton?.userOps
 
     const [state, send] = useStateMachine({
         context: { isAutoLoggingInToRiver: false, hasSuccessfulLogin: false },
@@ -33,7 +43,7 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
                 on: {
                     LOG_IN_TO_RIVER: {
                         target: 'loggingInToRiver',
-                        guard({ context }) {
+                        guard({ context }: { context: Context }) {
                             if (context.isAutoLoggingInToRiver || context.hasSuccessfulLogin) {
                                 return false
                             }
@@ -41,8 +51,8 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
                         },
                     },
                 },
-                effect({ setContext }) {
-                    setContext((c) => ({
+                effect({ setContext }: { setContext: SetContextFn }) {
+                    setContext(() => ({
                         isAutoLoggingInToRiver: false,
                         hasSuccessfulLogin: false,
                     }))
@@ -54,25 +64,10 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
                 },
                 effect() {
                     async function _logout() {
-                        await privyLogout()
+                        clientSingleton?.userOps?.reset()
                         clearEmbeddedWalletStorage()
+                        await privyLogout()
                         send('RESET')
-                        const displayText = "Can't detect signer."
-                        trackError({
-                            error: new Error('privy_no_signer'),
-                            name: '',
-                            code: '',
-                            displayText: displayText,
-                            category: 'privy',
-                            source: 'auto login to river',
-                        })
-                        toast.custom((t) => (
-                            <ErrorNotification
-                                toast={t}
-                                errorMessage={displayText}
-                                contextMessage="There was an error logging in, please try again."
-                            />
-                        ))
                     }
                     _logout()
                 },
@@ -82,7 +77,7 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
                     LOGGED_IN_TO_RIVER: 'loggedInBoth',
                     NO_SIGNER: 'noSigner',
                 },
-                effect({ setContext }) {
+                effect({ setContext }: { setContext: SetContextFn }) {
                     async function _login() {
                         // just in case
                         if (isRiverAuthencticated) {
@@ -90,24 +85,33 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
                             return
                         }
 
-                        setContext((c) => ({ ...c, isAutoLoggingInToRiver: true }))
+                        setContext((c: Context) => ({ ...c, isAutoLoggingInToRiver: true }))
 
-                        let signer: ethers.Signer | undefined
+                        let signer: Signer | undefined
+                        let privyError: unknown | undefined = undefined
+
                         try {
-                            // same machine, same browser, different users
-                            // i've found that for certain of my privy accounts, this takes much longer to be true???
-                            signer = await waitFor(() => getSigner(), 10_000)
+                            signer = await getSigner()
                         } catch (error) {
+                            privyError = error
+                        }
+
+                        if (!signer || privyError) {
                             send('NO_SIGNER')
+                            alertPrivyError(privyError)
                             return
                         }
-                        if (!signer) {
-                            console.warn('useAutoLogin: No signer found')
-                            send('NO_SIGNER')
-                            return
-                        }
-                        await riverLogin(signer)
-                        send('LOGGED_IN_TO_RIVER')
+
+                        await riverLogin(signer, {
+                            onSuccess: () => {
+                                send('LOGGED_IN_TO_RIVER')
+                            },
+                            onError: (error) => {
+                                endPublicPageLoginFlow()
+                                alertRiverError(error)
+                                send('NO_SIGNER')
+                            },
+                        })
                     }
                     _login()
                     return () => {
@@ -122,19 +126,24 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
                 on: {
                     RESET: 'loggedOutBoth',
                 },
-                effect({ setContext }) {
+                effect({ setContext }: { setContext: SetContextFn }) {
                     setContext((c) => ({ ...c, hasSuccessfulLogin: true }))
+                    async function _setupUserops() {
+                        let signer: Signer | undefined
+                        try {
+                            signer = await getSigner()
+                        } catch (error) {
+                            return
+                        }
+                        if (signer) {
+                            await userOps?.setup(signer)
+                        }
+                    }
+                    void _setupUserops()
                 },
             },
         },
     })
-
-    useEffect(() => {
-        if (riverAuthError) {
-            send('NO_SIGNER')
-            endPublicPageLoginFlow()
-        }
-    }, [riverAuthError, send, endPublicPageLoginFlow])
 
     const resetAutoLoginState = useCallback(() => {
         send('RESET')
@@ -149,4 +158,30 @@ export function useAutoLoginToRiverIfEmbeddedWallet({
         resetAutoLoginState,
         loginToRiverAfterPrivy,
     }
+}
+
+function alertPrivyError(pError: unknown | undefined) {
+    const displayText =
+        pError &&
+        typeof pError === 'object' &&
+        'message' in pError &&
+        typeof pError.message === 'string'
+            ? pError.message
+            : `There was an error logging in, we couldn't detect your embedded wallet.`
+
+    trackError({
+        error: pError ?? new Error('privy_no_signer'),
+        name: '',
+        code: '',
+        displayText: displayText,
+        category: 'privy',
+        source: 'auto login to river',
+    })
+    popupToast(({ toast }) => <StandardToast.Error toast={toast} message={displayText} />)
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function alertRiverError(e: any) {
+    const errorMessage = mapToErrorMessage(e) ?? 'An error occurred logging in to River.'
+    popupToast(({ toast }) => <StandardToast.Error toast={toast} message={errorMessage} />)
 }
