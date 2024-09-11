@@ -184,6 +184,7 @@ resource "aws_iam_role_policy" "iam_policy" {
         Effect = "Allow",
         Action = [
           "cloudfront:CreateInvalidation",
+          "cloudfront:GetInvalidation"
         ],
         Resource = module.cdn.arn
       },
