@@ -88,7 +88,7 @@ import {
 import { MembershipStruct, Permission, SpaceInfo, ISpaceDapp } from '@river-build/web3'
 import { BlockchainTransactionStore } from './BlockchainTransactionStore'
 import { UserOps, getTransactionHashOrUserOpHash, isUserOpResponse } from '@towns/userops'
-import { TimeTrackerEvents, getTimeTracker } from '../SequenceTimeTracker'
+import { StartMeasurementReturn, TimeTrackerEvents, getTimeTracker } from '../SequenceTimeTracker'
 import { waitForTimeoutOrMembership } from '../utils/waitForTimeoutOrMembershipEvent'
 import { TownsAnalytics } from '../types/TownsAnalytics'
 import { Hex } from 'viem'
@@ -1150,10 +1150,17 @@ export class TownsClient
         })
         try {
             const spaceInfo = await this.spaceDapp.getSpaceInfo(spaceNetworkId)
+            // default space uris === '' but there's a contract check that will revert if uri is < 1 char
+            // See SpaceOwnerBase.sol _updateSpace()
+            // also uri is being passed in as undefined somehow
+            // https://linear.app/hnt-labs/issue/TOWNS-11977/revisit-space-uri-in-updating-a-town
+            const _inUri = uri?.length > 0 ? uri : undefined
+            const _currentUri = spaceInfo && spaceInfo.uri?.length > 0 ? spaceInfo.uri : ' '
+
             const args = [
                 spaceNetworkId,
                 name,
-                uri ?? spaceInfo?.uri ?? '',
+                _inUri ?? _currentUri,
                 shortDescription ?? spaceInfo?.shortDescription ?? '',
                 longDescription ?? spaceInfo?.longDescription ?? '',
                 signer,
@@ -1794,10 +1801,14 @@ export class TownsClient
                                 TimeTrackerEvents.JOIN_SPACE,
                                 'river_joinroom_channel',
                             )
-                            await this.joinRoom(key, undefined, {
-                                skipWaitForMiniblockConfirmation: true,
-                                skipWaitForUserStreamUpdate: true,
-                            })
+                            try {
+                                await this.joinRoom(key, undefined, {
+                                    skipWaitForMiniblockConfirmation: true,
+                                    skipWaitForUserStreamUpdate: true,
+                                })
+                            } catch (e) {
+                                console.error('[joinTown] Failed auto-joining channel', e)
+                            }
                             endJoinChannel?.()
                         }),
                 )
@@ -1976,6 +1987,9 @@ export class TownsClient
             const endWaitForMembership = timeTracker.startMeasurement(
                 TimeTrackerEvents.JOIN_SPACE,
                 'contract_wait_for_membership_issued',
+                {
+                    userOpHash: getTransactionHashOrUserOpHash(transaction),
+                },
             )
             const { issued, tokenId, error } = await membershipOrTimeout
             endWaitForMembership?.()
@@ -2833,29 +2847,32 @@ export class TownsClient
         try {
             if (isUserOpResponse(transaction)) {
                 // wait for the userop event - this .wait is not the same as ethers.ContractTransaction.wait - see userop.js sendUserOperation
-                let endWaitForUserOpEvent: ((endSequence?: boolean) => void) | undefined
+                let endWaitForUserOpReceipt: ((endSequence?: boolean) => void) | undefined
                 if (sequenceName) {
-                    endWaitForUserOpEvent = getTimeTracker().startMeasurement(
+                    endWaitForUserOpReceipt = getTimeTracker().startMeasurement(
                         sequenceName,
-                        'userops_wait_for_op_confirmation',
+                        'userops_wait_for_user_operation_receipt',
+                        {
+                            userOpHash: transaction.userOpHash,
+                        },
                     )
                 }
 
-                const userOpEvent = await transaction.wait()
+                const userOpReceipt = await transaction.getUserOperationReceipt()
 
-                if (endWaitForUserOpEvent) {
-                    endWaitForUserOpEvent()
+                if (endWaitForUserOpReceipt) {
+                    endWaitForUserOpReceipt()
                 }
 
-                if (userOpEvent) {
-                    if (userOpEvent.args.success === false) {
+                if (userOpReceipt) {
+                    if (userOpReceipt.success === false) {
                         // TODO: parse the user operation error
                         throw new Error(
                             `[_waitForBlockchainTransaction] user operation was not successful`,
                         )
                     }
 
-                    let endWaitForTxConfirmation: ((endSequence?: boolean) => void) | undefined
+                    let endWaitForTxConfirmation: StartMeasurementReturn | undefined
                     // we probably don't need to wait for this transaction, but for now we can convert it to a receipt for less refactoring
                     if (sequenceName) {
                         endWaitForTxConfirmation = getTimeTracker().startMeasurement(
@@ -2864,7 +2881,7 @@ export class TownsClient
                         )
                     }
                     receipt = await this.opts.baseProvider?.waitForTransaction(
-                        userOpEvent.transactionHash,
+                        userOpReceipt.receipt?.transactionHash,
                     )
                     if (endWaitForTxConfirmation) {
                         endWaitForTxConfirmation()
