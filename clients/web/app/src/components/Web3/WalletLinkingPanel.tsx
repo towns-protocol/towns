@@ -213,8 +213,8 @@ export function LinkedWallet({
             <Stack gap="sm" alignItems="start">
                 {isAbstractAccount && (
                     <Paragraph>
-                        Towns Wallet - `${aaBalance.data?.formatted ?? 0} $
-                        {aaBalance.data?.symbol ?? ''}`
+                        Towns Wallet - {aaBalance.data?.formatted ?? 0}{' '}
+                        {aaBalance.data?.symbol ?? ''}
                     </Paragraph>
                 )}
 
