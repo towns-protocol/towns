@@ -4,8 +4,11 @@ import headlessToast, { Toast } from 'react-hot-toast/headless'
 
 export function popupToast(
     ToastComponent: React.ElementType<{ toast: Toast }>,
-    options?: ToastOptions,
+    options?: ToastOptions & { dismissAll?: boolean },
 ) {
+    if (options?.dismissAll) {
+        headlessToast.dismiss()
+    }
     return headlessToast.custom((t) => <ToastComponent toast={t} />, {
         ...options,
         duration: options?.duration ?? 8_000,

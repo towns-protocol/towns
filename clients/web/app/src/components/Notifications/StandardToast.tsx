@@ -4,7 +4,7 @@ import { Box, Icon, IconButton, IconProps, Text } from '@ui'
 import { TextProps } from 'ui/components/Text/Text'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 
-type Props<T extends IconProps['type'] | undefined = IconProps['type']> = {
+export type Props<T extends IconProps['type'] | undefined = IconProps['type']> = {
     toast: Toast
     icon?: T
     iconColor?: IconProps['color']
@@ -109,7 +109,11 @@ StandardToast.Success = (props: Props) => (
 )
 
 StandardToast.Error = (props: Props) => (
-    <StandardToast icon="alert" iconColor="error" ctaColor="positive" {...props} />
+    <StandardToast icon="alert" iconColor="error" ctaColor="negative" {...props} />
 )
 
 StandardToast.Pending = (props: Props<undefined>) => <StandardToast pending {...props} />
+
+export function dismissToast(toast: Toast) {
+    headlessToast.dismiss(toast.id)
+}

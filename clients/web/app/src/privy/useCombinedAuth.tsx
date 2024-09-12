@@ -1,11 +1,13 @@
 import { Address, useConnectivity } from 'use-towns-client'
 import React, { createContext, useCallback, useContext, useMemo } from 'react'
 import { useLogin, usePrivy } from '@privy-io/react-auth'
-import { useEmbeddedWallet, useGetEmbeddedSigner } from '@towns/privy'
+import { retryGetAccessToken, useEmbeddedWallet, useGetEmbeddedSigner } from '@towns/privy'
 import { clearEmbeddedWalletStorage } from '@towns/privy/EmbeddedSignerContext'
 import { usePublicPageLoginFlow } from 'routes/PublicTownPage/usePublicPageLoginFlow'
 import { useUnsubscribeNotification } from 'hooks/usePushSubscription'
 import { Analytics } from 'hooks/useAnalytics'
+import { popupToast } from '@components/Notifications/popupToast'
+import { StandardToast } from '@components/Notifications/StandardToast'
 import { useAutoLoginToRiverIfEmbeddedWallet } from './useAutoLoginToRiverIfEmbeddedWallet'
 
 type CombinedAuthContext = {
@@ -26,6 +28,10 @@ type CombinedAuthContext = {
      * logout of both privy and river
      */
     logout: () => Promise<void>
+    /**
+     * login to privy
+     */
+    privyLogin: () => void
 }
 
 const CombinedAuthContext = createContext<CombinedAuthContext | undefined>(undefined)
@@ -102,8 +108,9 @@ function useCombinedAuthContext(): CombinedAuthContext {
             logout,
             isConnected, // isConnected means privy account is created and logged in
             isAutoLoggingInToRiver,
+            privyLogin,
         }),
-        [isConnected, login, logout, isAutoLoggingInToRiver],
+        [isConnected, login, logout, isAutoLoggingInToRiver, privyLogin],
     )
 }
 
@@ -124,9 +131,10 @@ function usePrivyLoginWithErrorHandler({
     loginToRiverAfterPrivy?: () => void
 }) {
     const { end: endPublicPageLoginFlow } = usePublicPageLoginFlow()
+    const { logout: privyLogout } = usePrivy()
 
     const { login: privyLogin } = useLogin({
-        onComplete(user, isNewUser, wasAlreadyAuthenticated, loginMethod) {
+        async onComplete(user, isNewUser, wasAlreadyAuthenticated, loginMethod, loginAccount) {
             // don't call on page load when user already authenticated
             // BUG in privy: this hook is ALSO called when calling privy.useConnectWallet - and who knows when else
             // so we need to check if the user is already authenticated to river too (loggedInWalletAddress)
@@ -152,6 +160,45 @@ function usePrivyLoginWithErrorHandler({
                 Analytics.getInstance().track('login success', tracked, () => {
                     console.log('[analytics] login success', tracked)
                 })
+            }
+            // loginAccount is only present when onComplete is called by actual login component
+            // if other components have mounted useCombinedAuth, onComplete still fires, but loginAccount is undefined
+            else if (!wasAlreadyAuthenticated && loggedInWalletAddress && loginAccount) {
+                const privyWallet = user.wallet
+                if (
+                    !privyWallet ||
+                    privyWallet.address.toLowerCase() !== loggedInWalletAddress.toLowerCase()
+                ) {
+                    try {
+                        await privyLogout()
+                        // extra safe
+                        await retryGetAccessToken(1)
+                    } catch (error) {
+                        console.log('error logging out of privy', error)
+                    }
+                    popupToast(
+                        ({ toast }) => (
+                            <StandardToast.Error
+                                toast={toast}
+                                message="You're logged in to Towns with a different account. Please try again with the correct account."
+                            />
+                        ),
+                        { dismissAll: true },
+                    )
+                } else if (
+                    privyWallet &&
+                    privyWallet.address.toLowerCase() === loggedInWalletAddress.toLowerCase()
+                ) {
+                    popupToast(
+                        ({ toast }) => (
+                            <StandardToast.Success
+                                toast={toast}
+                                message="You've been re-authenticated and can continue."
+                            />
+                        ),
+                        { dismissAll: true },
+                    )
+                }
             }
         },
         onError: (error) => {

@@ -1,19 +1,14 @@
 import React from 'react'
-import { toast } from 'react-hot-toast/headless'
 import { PrivyNotAuthenticatedNotification } from '@components/Notifications/PrivyNotAuthenticatedNotification'
 import { PrivyWrapper } from 'privy/PrivyProvider'
+import { popupToast } from './popupToast'
 
 export function createPrivyNotAuthenticatedNotification() {
-    return toast.custom(
-        (t) => {
-            return (
-                <PrivyWrapper>
-                    <PrivyNotAuthenticatedNotification toast={t} />
-                </PrivyWrapper>
-            )
-        },
-        {
-            duration: Infinity,
-        },
-    )
+    return popupToast(({ toast }) => {
+        return (
+            <PrivyWrapper>
+                <PrivyNotAuthenticatedNotification toast={toast} />
+            </PrivyWrapper>
+        )
+    })
 }
