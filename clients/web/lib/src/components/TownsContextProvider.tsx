@@ -27,6 +27,7 @@ import { BaseChainConfig, RiverChainConfig } from '@river-build/web3'
 import { AccountAbstractionConfig } from '@towns/userops'
 import { useUserLookupUpdater } from '../hooks/use-user-lookup-updater'
 import { TownsAnalytics } from '../types/TownsAnalytics'
+import { useSpaceImageUpdater } from '../hooks/use-space-image-updater'
 
 export type InitialSyncSortPredicate = (a: string, b: string) => number
 
@@ -88,6 +89,7 @@ interface TownsContextProviderProps {
     ethMainnetRpcUrl?: string
     analytics?: TownsAnalytics
     createLegacySpaces?: boolean
+    streamMetadataUrl?: string
 }
 
 export function TownsContextProvider({
@@ -191,6 +193,7 @@ const TownsContextImpl = (props: TownsContextProviderProps): JSX.Element => {
     const spaceHierarchies = useCasablancaSpaceHierarchies(casablancaClient)
     const blockedUserIds = useBlockedUsers(casablancaClient)
     useUserLookupUpdater(townsOpts, casablancaClient, client)
+    useSpaceImageUpdater(casablancaClient, client, props.streamMetadataUrl)
 
     const { spaceUnreads, spaceMentions, spaceUnreadChannelIds } = useSpaceUnreads({
         client,

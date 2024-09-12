@@ -134,6 +134,8 @@ export * from './types/towns-types'
 export { Membership, MessageType } from './types/towns-types'
 export { toRoomIdentifier } from './types/room-identifier'
 export { toMessageInfo } from './hooks/use-dm-latest-message'
+export { useSpaceImageUpdater } from './hooks/use-space-image-updater'
+export { useImageStore } from './store/use-image-store'
 export * from './types/timeline-types'
 export {
     WalletStatus,

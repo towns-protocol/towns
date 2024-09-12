@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react'
 import { FieldValues, Path, UseFormReturn } from 'react-hook-form'
+import { useImageStore } from 'use-towns-client'
 import { Box, BoxProps, ErrorMessage, Icon, IconProps, Text } from '@ui'
 import { Spinner } from '@components/Spinner'
 import { vars } from 'ui/styles/vars.css'
@@ -9,7 +10,6 @@ import { srOnlyClass } from 'ui/styles/globals/utils.css'
 import { FieldOutline } from 'ui/components/_internal/Field/FieldOutline/FieldOutline'
 import { loadingStyles, spinnerStyles } from './UploadImage.css'
 import { UseOnImageChangeEventProps, useOnImageChangeEvent } from './useOnImageChangeEvent'
-import { useImageStore } from './useImageStore'
 
 export type UploadImageTemplateSize = 'tabletToDesktop' | 'lg' | 'sm'
 

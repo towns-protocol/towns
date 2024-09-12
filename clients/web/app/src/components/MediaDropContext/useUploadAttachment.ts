@@ -4,19 +4,14 @@ import {
     EncryptionResult,
     MediaInfo,
     encryptAESGCM,
+    useImageStore,
     useTownsClient,
 } from 'use-towns-client'
 import { useCallback } from 'react'
 import imageCompression from 'browser-image-compression'
 import { ChunkedMedia } from '@river-build/proto'
-import {
-    fetchSpaceImage,
-    fetchUserProfileImage,
-    refreshSpaceCache,
-    refreshUserCache,
-} from 'api/lib/fetchImage'
+import { fetchUserProfileImage, refreshSpaceCache, refreshUserCache } from 'api/lib/fetchImage'
 import { isImageMimeType } from 'utils/isMediaMimeType'
-import { useImageStore } from '@components/UploadImage/useImageStore'
 
 const CHUNK_SIZE = 500_000
 const MAX_THUMBNAIL_WIDTH = 30 // pixels
@@ -247,10 +242,6 @@ export const useUploadAttachment = () => {
                     mediaStreamId: mediaInfo.streamId,
                 })
 
-                // fetch the image and ...
-                const { imageUrl } = await fetchSpaceImage(spaceId)
-                // then update the image store
-                setLoadedResource(spaceId, { imageUrl })
                 await refreshSpaceCache(spaceId)
                 // no issues uploading the image
                 return true
@@ -262,7 +253,7 @@ export const useUploadAttachment = () => {
                 setProgress(0)
             }
         },
-        [client, setLoadedResource, uploadImageFile],
+        [client, uploadImageFile],
     )
 
     const uploadUserProfileImageToStream = useCallback(

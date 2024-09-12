@@ -3,7 +3,7 @@ import { FormProvider, UseFormReturn, useFormContext } from 'react-hook-form'
 import { ethers } from 'ethers'
 
 import { useNavigate } from 'react-router'
-import { useConnectivity } from 'use-towns-client'
+import { useConnectivity, useImageStore } from 'use-towns-client'
 import { CreateSpaceFlowStatus } from 'use-towns-client/dist/client/TownsClientTypes'
 import { AnimatePresence } from 'framer-motion'
 import { PrivyWrapper } from 'privy/PrivyProvider'
@@ -27,7 +27,6 @@ import {
     LargeUploadImageTemplate,
     UploadImageTemplateSize,
 } from '@components/UploadImage/LargeUploadImageTemplate'
-import { useImageStore } from '@components/UploadImage/useImageStore'
 import { InteractiveTownsToken } from '@components/TownsToken/InteractiveTownsToken'
 import { shortAddress } from 'ui/utils/utils'
 import { FadeInBox } from '@components/Transitions'
@@ -800,9 +799,7 @@ export const UploadImageField = ({
             // set resource on image store so the image updates in the upload component
             const { setLoadedResource } = useImageStore.getState()
 
-            setLoadedResource(id, {
-                imageUrl,
-            })
+            setLoadedResource(id, { imageUrl })
             setValue('spaceIconUrl', imageUrl)
             setValue('spaceIconFile', file)
         },

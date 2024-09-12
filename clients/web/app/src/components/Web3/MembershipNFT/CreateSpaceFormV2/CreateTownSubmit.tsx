@@ -12,6 +12,7 @@ import {
     findDynamicPricingModule,
     findFixedPricingModule,
     useCreateSpaceTransaction,
+    useImageStore,
     useMutationSpaceInfoCache,
     useTownsClient,
 } from 'use-towns-client'
@@ -24,7 +25,6 @@ import { useGetEmbeddedSigner } from '@towns/privy'
 import { CreateSpaceFlowStatus } from 'use-towns-client/dist/client/TownsClientTypes'
 import { Box, Icon, IconButton, Text } from '@ui'
 import { PATHS } from 'routes'
-import { useImageStore } from '@components/UploadImage/useImageStore'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { convertTokenTypeToOperationType } from '@components/Tokens/utils'
 import { useStore } from 'store/store'
@@ -333,9 +333,7 @@ export function CreateTownSubmit({
 
                         const { setLoadedResource } = useImageStore.getState()
                         // set the image before upload so that it displays immediately
-                        setLoadedResource(networkId, {
-                            imageUrl: values.spaceIconUrl,
-                        })
+                        setLoadedResource(networkId, { imageUrl: values.spaceIconUrl })
                     }
 
                     let timeoutDuration = 0

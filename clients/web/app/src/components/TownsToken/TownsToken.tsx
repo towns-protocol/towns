@@ -1,4 +1,5 @@
 import React from 'react'
+import { useImageStore } from 'use-towns-client'
 import { Box, BoxProps } from '@ui'
 import { FitMaxHeading } from 'ui/components/Text/FitMaxHeading'
 import { useImageStore } from '@components/UploadImage/useImageStore'

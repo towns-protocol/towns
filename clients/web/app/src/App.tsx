@@ -152,6 +152,7 @@ export const App = () => {
             supportedXChainRpcMapping={supportedXChainRpcMapping}
             ethMainnetRpcUrl={env.VITE_ETHEREUM_RPC_URL}
             analytics={analyticsInstance}
+            streamMetadataUrl={env.VITE_RIVER_STREAM_METADATA_URL}
         >
             <>
                 <FaviconBadge />

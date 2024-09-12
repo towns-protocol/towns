@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useImageStore } from 'use-towns-client'
 import { getImageUrlFromStreamMetadata } from 'api/lib/fetchImage'
-import { useImageStore } from './useImageStore'
 
 export const ImageVariants = {
     public: 'public',
