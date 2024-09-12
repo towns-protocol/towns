@@ -43,7 +43,7 @@ export const MessageTimelineContext = createContext<{
     messageRepliesMap: ReturnType<typeof useTimelineThreadStats>
     messageReactionsMap: ReturnType<typeof useTimelineReactions>
     timelineActions: ReturnType<typeof useTimelineMessageEditing>
-    handleReaction: ReturnType<typeof useHandleReaction>
+    handleReaction?: ReturnType<typeof useHandleReaction>
     sendReadReceipt: ReturnType<typeof useTownsClient>['sendReadReceipt']
     memberIds: string[]
     onMentionClick?: (mentionName: string) => void
@@ -131,7 +131,7 @@ export const MessageTimelineWrapper = (props: {
             channelId,
             channels,
             events,
-            handleReaction,
+            handleReaction: isChannelReactable ? handleReaction : undefined,
             isChannelEncrypted,
             isChannelWritable,
             isChannelPinnable,

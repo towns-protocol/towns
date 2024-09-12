@@ -54,7 +54,7 @@ type Props = {
     channelId?: string
     spaceId?: string
     children?: React.ReactNode
-    onReaction?: ReturnType<typeof useHandleReaction> | null
+    onReaction?: ReturnType<typeof useHandleReaction>
     relativeDate?: boolean
     rounded?: BoxProps['rounded']
     padding?: BoxProps['padding']
@@ -148,7 +148,7 @@ export const MessageLayout = (props: Props) => {
 
     const hasReplies = replies && replies.replyEventIds.size > 0 && eventId
     const numReactions = reactions ? Object.values(reactions).length : 0
-    const hasReactions = reactions && numReactions && onReaction
+    const hasReactions = reactions && numReactions
     const displayButtonsInRow = numReactions < 3 && isTouch
 
     const debugHash = debug.enabled('app:vlist') ? ` [${eventId?.substring(0, 4)}]` : ''

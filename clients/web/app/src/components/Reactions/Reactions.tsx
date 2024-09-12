@@ -45,11 +45,15 @@ export const Reactions = (props: Props) => {
                     onReaction={onReaction}
                 />
             </Suspense>
-            <EmojiPickerButton
-                pill
-                size={isTouch ? 'square_sm' : 'square_xs'}
-                onSelectEmoji={onReactionPicker}
-            />
+            {onReaction ? (
+                <EmojiPickerButton
+                    pill
+                    size={isTouch ? 'square_sm' : 'square_xs'}
+                    onSelectEmoji={onReactionPicker}
+                />
+            ) : (
+                <></>
+            )}
         </Stack>
     )
 }
@@ -62,7 +66,7 @@ const ReactionRow = ({
 }: {
     reactions: MessageReactions
     userId?: Props['userId']
-    onReaction: Props['onReaction']
+    onReaction?: Props['onReaction']
     parentId?: Props['parentId']
 }) => {
     const onReact = useCallback(
@@ -96,7 +100,7 @@ const ReactionRow = ({
                   name={reaction}
                   users={users}
                   isOwn={!!(userId && users[userId])}
-                  onReact={onReact}
+                  onReact={onReaction ? onReact : undefined}
               />
           ))
         : undefined
@@ -106,14 +110,14 @@ const ReactionRow = ({
 const Reaction = (props: {
     name: string
     users?: Record<string, { eventId: string }>
-    onReact: (reaction: string, remove: boolean) => void
+    onReact?: (reaction: string, remove: boolean) => void
     isOwn?: boolean
 }) => {
     const { name, users, onReact, isOwn } = props
 
     const onClick = useCallback(() => {
         const remove = !!isOwn
-        onReact(name, remove)
+        onReact?.(name, remove)
     }, [isOwn, name, onReact])
 
     return users && Object.keys(users).length ? (
@@ -126,7 +130,7 @@ const Reaction = (props: {
                 gap="xs"
                 background={isOwn ? 'level3' : undefined}
                 border={isOwn ? 'textDefault' : undefined}
-                onClick={onClick}
+                onClick={onReact ? onClick : undefined}
             >
                 <Text size="md" fontSize={{ desktop: 'mds', mobile: 'xs' }}>
                     {getNativeEmojiFromName(props.name)}
