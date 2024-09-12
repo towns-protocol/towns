@@ -1,15 +1,19 @@
-import React, { useCallback, useRef } from 'react'
-import { isHotkey } from '@udecode/plate-common'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { PlateEditor, Value, findNode, isHotkey } from '@udecode/plate-common'
+import { ELEMENT_LINK } from '@udecode/plate-link'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { Button, Stack, Text, TextField } from '@ui'
 
 export const AddLinkModal = ({
+    editor,
     onSaveLink,
     onHide,
 }: {
+    editor: PlateEditor<Value>
     onHide: () => void
     onSaveLink: (link: string) => void
 }) => {
+    const [existingLink, setExistingLink] = useState<string | undefined>(undefined)
     const fieldRef = useRef<HTMLInputElement>(null)
 
     const onSave = useCallback(() => {
@@ -36,11 +40,18 @@ export const AddLinkModal = ({
         [onSave, onHide],
     )
 
+    useEffect(() => {
+        const linkEntry = findNode(editor, { match: { type: ELEMENT_LINK } })
+        if (Array.isArray(linkEntry) && linkEntry[0]?.url) {
+            setExistingLink(linkEntry[0].url as string)
+        }
+    }, [editor, setExistingLink])
+
     return (
         <ModalContainer onHide={onHide}>
             <Stack gap="lg" data-testid="editor-add-link-modal">
                 <Text strong size="lg">
-                    Add Link
+                    {existingLink ? 'Edit' : 'Add'} Link
                 </Text>
                 <TextField
                     autoFocus
@@ -50,6 +61,7 @@ export const AddLinkModal = ({
                     label="Link"
                     autoComplete="false"
                     type="text"
+                    defaultValue={existingLink}
                     placeholder="e.g. https://mirror.xyz/"
                     onKeyDown={onKeyDown}
                 />

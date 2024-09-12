@@ -69,7 +69,9 @@ export const EditorToolbarTop = ({ editorId, ...props }: Props) => {
                     />
                 </FloatingToolbar>
             )}
-            {linkLinkModal && <AddLinkModal onHide={onHideModal} onSaveLink={onSaveLink} />}
+            {linkLinkModal && (
+                <AddLinkModal editor={editor} onHide={onHideModal} onSaveLink={onSaveLink} />
+            )}
         </>
     )
 }
