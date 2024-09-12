@@ -84,6 +84,7 @@ export const InteractiveSpaceIcon = (
     const { imageSrc } = useImageSource(props.spaceId, imageVariant)
     return (
         <InteractiveTownsToken
+            spaceId={props.spaceId}
             size={size}
             imageSrc={overrideSrc ?? imageSrc}
             address={address}

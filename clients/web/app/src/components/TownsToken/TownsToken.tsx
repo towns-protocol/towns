@@ -1,6 +1,7 @@
 import React from 'react'
 import { Box, BoxProps } from '@ui'
 import { FitMaxHeading } from 'ui/components/Text/FitMaxHeading'
+import { useImageStore } from '@components/UploadImage/useImageStore'
 import * as styles from './TownsToken.css'
 import { TokenAddress } from './layers/TokenAddress'
 import { HologramLayer } from './layers/TokenHologram'
@@ -10,6 +11,7 @@ import { TownsTokenConfig, TownsTokenSize } from './TownsTokenConfig'
 type Props = {
     spaceName?: string
     address?: string
+    spaceId?: string
     size: TownsTokenSize
     imageSrc?: string
     reduceMotion?: boolean
@@ -19,15 +21,21 @@ type Props = {
 export type TownsTokenProps = Props
 
 export const TownsToken = (props: Props) => {
-    const { imageSrc, address, size, spaceName, reduceMotion, ...boxProps } = props
+    const { imageSrc, address, size, spaceName, reduceMotion, spaceId, ...boxProps } = props
     const config = TownsTokenConfig.sizes[size]
     const [loaded, setLoaded] = React.useState(false)
     const [error, setError] = React.useState(false)
 
     const onLoad = () => {
+        if (spaceId) {
+            useImageStore.getState().setLoadedResource(spaceId, { imageUrl: imageSrc })
+        }
         setLoaded(true)
     }
     const onError = () => {
+        if (spaceId) {
+            useImageStore.getState().addErroredResource(spaceId)
+        }
         setError(true)
     }
     const initial = spaceName?.trim()[0] ?? ''

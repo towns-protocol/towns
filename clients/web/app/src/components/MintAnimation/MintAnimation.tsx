@@ -94,6 +94,7 @@ export const MintAnimation = (props: {
                             <Box ref={fromRef}>
                                 {!shouldAnimate && (
                                     <TownsToken
+                                        spaceId={info.spaceId}
                                         size="xxs"
                                         imageSrc={imageSrc}
                                         spaceName={spaceData?.name}

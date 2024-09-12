@@ -135,6 +135,7 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                         <Stack horizontal gap="sm" alignContent="start">
                             {isTouch && (
                                 <InteractiveTownsToken
+                                    spaceId={spaceId}
                                     key={imageSrc}
                                     size="sm"
                                     address={address}
@@ -174,6 +175,7 @@ export const TownPageLayout = (props: TownPageLayoutProps) => {
                             <Box height="x2" shrink={false} />
                             <InteractiveTownsToken
                                 key={imageSrc}
+                                spaceId={spaceId}
                                 size="xl"
                                 address={address}
                                 imageSrc={imageSrc ?? undefined}

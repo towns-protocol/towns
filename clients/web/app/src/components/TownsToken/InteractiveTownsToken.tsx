@@ -200,6 +200,7 @@ export const InteractiveTownsToken = (props: Props) => {
                 data-testid="interactive-towns-image"
             >
                 <TownsToken
+                    spaceId={props.spaceId}
                     key={props.imageSrcRenderKey}
                     spaceName={props.spaceName}
                     address={props.address}
