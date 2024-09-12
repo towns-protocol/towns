@@ -349,6 +349,10 @@ resource "aws_ecs_service" "ecs-service" {
   deployment_minimum_healthy_percent = 50
   deployment_maximum_percent         = 200
 
+  lifecycle {
+    ignore_changes = [desired_count]
+  }
+
   enable_execute_command = true
 
   launch_type      = "FARGATE"
@@ -368,6 +372,51 @@ resource "aws_ecs_service" "ecs-service" {
 
   tags = local.server_tags
 }
+
+
+
+resource "aws_appautoscaling_target" "ecs" {
+  service_namespace  = "ecs"
+  resource_id        = "service/${var.ecs_cluster.name}/${aws_ecs_service.ecs-service.name}"
+  scalable_dimension = "ecs:service:DesiredCount"
+  min_capacity       = 1
+  max_capacity       = 5
+}
+
+resource "aws_appautoscaling_policy" "cpu" {
+  name               = "cpu-scale-out-policy-${local.local_name}"
+  service_namespace  = "ecs"
+  resource_id        = aws_appautoscaling_target.ecs.resource_id
+  scalable_dimension = "ecs:service:DesiredCount"
+  policy_type        = "TargetTrackingScaling"
+
+  target_tracking_scaling_policy_configuration {
+    target_value = 70.0
+    predefined_metric_specification {
+      predefined_metric_type = "ECSServiceAverageCPUUtilization"
+    }
+    scale_in_cooldown  = 300 // begin scale in after 5 minutes of low CPU
+    scale_out_cooldown = 60  // begin scale out after 1 minute of high CPU
+  }
+}
+
+resource "aws_appautoscaling_policy" "memory" {
+  name               = "memory-scale-out-policy-${local.local_name}"
+  service_namespace  = "ecs"
+  resource_id        = aws_appautoscaling_target.ecs.resource_id
+  scalable_dimension = "ecs:service:DesiredCount"
+  policy_type        = "TargetTrackingScaling"
+
+  target_tracking_scaling_policy_configuration {
+    target_value = 70.0
+    predefined_metric_specification {
+      predefined_metric_type = "ECSServiceAverageMemoryUtilization"
+    }
+    scale_in_cooldown  = 300 // begin scale in after 5 minutes of low memory use
+    scale_out_cooldown = 60  // begin scale out after 1 minute of high memory use
+  }
+}
+
 
 data "cloudflare_zone" "zone" {
   name = local.hosted_zone_name
