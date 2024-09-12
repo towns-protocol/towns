@@ -641,7 +641,7 @@ locals {
   # notifies the "infra - goalie" slack group
   datadog_monitor_slack_channel = "@slack-Here_Not_There_Labs-sre-alerts"
   datadog_monitor_slack_mention = "<!subteam^S064UNJ7YQ2>"
-  datadog_monitor_slack_message = "${local.datadog_monitor_slack_mention}{{^is_recovery}} ${local.datadog_monitor_slack_mention}{{/is_recovery}}"
+  datadog_monitor_slack_message = "${local.datadog_monitor_slack_channel} {{#is_alert}}${local.datadog_monitor_slack_mention}{{/is_alert}}"
 
   datadog_monitor_alert_min_duration_minutes = local.run_mode == "archive" ? 8 : 2
 }
