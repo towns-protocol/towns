@@ -56,6 +56,7 @@ export class DatadogMetricsClient {
             this.postNodeStatusOnBase(combinedNodes),
             this.postNodeStatusOnRiver(combinedNodes),
             this.postNodePingResults(nodePingResults),
+            this.postNodeChainStatusMetrics(nodePingResults),
             // TODO: uncomment to post stream counts
             // await datadog.postNodeStreamCounts(nodesOnRiverWithStreamCounts)
             this.postBaseOperatorStatus(combinedOperators),
@@ -164,6 +165,55 @@ export class DatadogMetricsClient {
         return this.postSeries(series)
     }
 
+    public async postNodeChainStatusMetrics(pingNodeResults: RiverNodePingResults) {
+        const series: MetricSeries[] = []
+        pingNodeResults.forEach(({ ping, node }) => {
+            const nodeUrl = typeof node.url === 'string' ? node.url : 'unknown'
+            if (ping.result === 'success') {
+                const tags = [
+                    `env:${this.env}`,
+                    `wallet_address:${node.nodeAddress}`,
+                    `node_url:${encodeURI(nodeUrl)}`,
+                    `version:${ping.response.version}`,
+                ]
+
+                const allChains = [
+                    ping.response.base,
+                    ping.response.river,
+                    ...ping.response.other_chains,
+                ]
+
+                allChains.forEach((chain) => {
+                    const currentTags = [
+                        ...tags,
+                        `chain_id:${chain.chain_id}`,
+                        `status:${chain.result}`,
+                    ]
+                    // remove 'ms' from the end of the string
+                    const latency = parseInt(chain.latency.slice(0, -2))
+                    series.push({
+                        metric: `river_node.chain.status`,
+                        points: [{ timestamp: this.timestamp, value: 1 }],
+                        tags: currentTags,
+                    })
+
+                    series.push({
+                        metric: `river_node.chain.latency`,
+                        points: [{ timestamp: this.timestamp, value: latency }],
+                        tags: currentTags,
+                    })
+
+                    series.push({
+                        metric: `river_node.chain.latest_block_number`,
+                        points: [{ timestamp: this.timestamp, value: chain.block }],
+                        tags: currentTags,
+                    })
+                })
+            }
+        })
+        return this.postSeries(series)
+    }
+
     public async postNodePingResults(pingNodeResults: RiverNodePingResults) {
         console.log('Posting node ping results to Datadog:')
 
@@ -175,21 +225,17 @@ export class DatadogMetricsClient {
                 `river_operator_address:${node.riverOperator}`,
                 `base_operator_address:${node.baseOperator}`,
                 `node_url:${encodeURI(nodeUrl)}`,
+                `result:${ping.result}`,
             ]
 
-            const value = ping.kind === 'success' ? 1 : 0
-
-            if (ping.kind === 'success') {
-                tags.push(`status:${ping.response.status}`)
+            if (ping.response) {
                 tags.push(`version:${ping.response.version}`)
-                tags.push(`success:true`)
-            } else {
-                tags.push(`success:false`)
+                tags.push(`status:${ping.response.status}`)
             }
 
             return {
                 metric: `river_node.ping`,
-                points: [{ timestamp: this.timestamp, value }],
+                points: [{ timestamp: this.timestamp, value: 1 }],
                 tags,
             }
         })
@@ -240,7 +286,6 @@ export class DatadogMetricsClient {
         numTotalStreams: number
         numMissingNodesOnBase: number
         numMissingNodesOnRiver: number
-        numUnhealthyPings: number
         numTotalSpaceMemberships: number
         numTotalUniqueSpaceMembers: number
     }) {
@@ -277,10 +322,6 @@ export class DatadogMetricsClient {
             {
                 name: 'river_network.total_missing_nodes_on_river',
                 value: stats.numMissingNodesOnRiver,
-            },
-            {
-                name: 'river_network.total_unhealthy_pings',
-                value: stats.numUnhealthyPings,
             },
             {
                 name: 'river_network.total_space_memberships',

@@ -290,7 +290,6 @@ export class MetricsExtractor {
         ])
 
         const walletBalances = riverChainWalletBalances.concat(baseChainWalletBalances)
-        const numUnhealthyPings = nodePingResults.filter(({ ping }) => ping.kind === 'error').length
         const missingNodesOnRiver = combinedNodes.filter((node) => node.isMissingOnRiver)
         const missingNodesOnBase = combinedNodes.filter((node) => node.isMissingOnBase)
         const numMissingNodesOnRiver = missingNodesOnRiver.length
@@ -339,7 +338,6 @@ export class MetricsExtractor {
                 numTotalOperatorsOnRiver,
                 numMissingNodesOnBase,
                 numMissingNodesOnRiver,
-                numUnhealthyPings,
                 numTotalUniqueSpaceMembers,
             },
         }

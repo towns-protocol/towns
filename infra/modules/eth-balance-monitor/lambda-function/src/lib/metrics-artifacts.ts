@@ -19,6 +19,7 @@ export class MetricsArtifacts {
         await this.generateNumMembershipsPerSpaceCSV()
         await this.generateNodesJSON()
         await this.generateOperatorsJSON()
+        await this.generatePingResultsJSON()
     }
 
     private async setup() {
@@ -64,6 +65,12 @@ export class MetricsArtifacts {
             destination,
             JSON.stringify(this.metrics.combinedOperatorsWithNodes, null, 2),
         )
+        console.log(`Created: ${destination}`)
+    }
+
+    private async generatePingResultsJSON() {
+        const destination = path.join(this.artifactsDir, 'pingResults.json')
+        await fs.writeFile(destination, JSON.stringify(this.metrics.nodePingResults, null, 2))
         console.log(`Created: ${destination}`)
     }
 }

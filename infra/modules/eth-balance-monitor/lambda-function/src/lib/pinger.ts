@@ -2,6 +2,13 @@ import { z } from 'zod'
 import { Unpromisify } from './utils'
 import { CombinedNode } from './metrics-integrator'
 
+const chainHealthSchema = z.object({
+    result: z.string(),
+    chain_id: z.number(),
+    block: z.number(),
+    latency: z.string(),
+})
+
 const NodeStatusSchema = z.object({
     status: z.string(),
     instance_id: z.string(),
@@ -9,6 +16,9 @@ const NodeStatusSchema = z.object({
     version: z.string(),
     start_time: z.string(),
     uptime: z.string(),
+    base: chainHealthSchema,
+    river: chainHealthSchema,
+    other_chains: z.array(chainHealthSchema),
 })
 
 export type RiverNodePingResults = Unpromisify<ReturnType<Ping['pingNodes']>>
@@ -19,7 +29,7 @@ export class Ping {
     private async pingNode(node: CombinedNode) {
         if (typeof node.url === 'undefined') {
             return {
-                kind: 'exempt' as const,
+                result: 'exempt' as const,
                 message: `Node ${node.nodeAddress} has unknown URL`,
             }
         }
@@ -33,7 +43,7 @@ export class Ping {
         } catch (e: unknown) {
             console.error(`Failed to ping node ${node.url}: ${e}`)
             return {
-                kind: 'error' as const,
+                result: 'error' as const,
                 message: `Failed to ping node ${node.url}: ${e}`,
             }
         }
@@ -41,7 +51,7 @@ export class Ping {
         if (response.status !== 200) {
             console.warn(`Node ${node.url} returned status ${response.status}`)
             return {
-                kind: 'error' as const,
+                result: 'error' as const,
                 message: `Node ${node.url} returned status ${response.status}`,
             }
         }
@@ -53,7 +63,7 @@ export class Ping {
         } catch (e: unknown) {
             console.error(`Failed to parse JSON response from node ${node.url}: ${e}`)
             return {
-                kind: 'error' as const,
+                result: 'error' as const,
                 message: `Failed to parse JSON response from node ${node.url}: ${e}`,
             }
         }
@@ -65,13 +75,13 @@ export class Ping {
                 `Failed to validate JSON response from node ${node.url}: ${parsedResponse.error}`,
             )
             return {
-                kind: 'error' as const,
+                result: 'error' as const,
                 message: `Failed to validate JSON response from node ${node.url}: ${parsedResponse.error}`,
             }
         }
 
         return {
-            kind: 'success' as const,
+            result: 'success' as const,
             response: parsedResponse.data,
         }
     }
