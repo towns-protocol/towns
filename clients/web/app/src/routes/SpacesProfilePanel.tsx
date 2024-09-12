@@ -183,7 +183,7 @@ const SpaceProfileWithoutAuth = () => {
 
     const { data: userBio } = useGetUserBio(user?.userId)
 
-    const canEdit = loggedInAbstractAccountAddress === userAbstractAccountAddress
+    const canEdit = !!client && loggedInAbstractAccountAddress === userAbstractAccountAddress
 
     const toggleTheme = useStore(({ toggleTheme }) => toggleTheme)
 
