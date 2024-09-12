@@ -21,9 +21,31 @@ data "aws_acm_certificate" "cert" {
 }
 
 locals {
-  origin_id                                     = var.origin_domain_name // just need it to be unique 
-  origin_request_policy_managed_all_viewer      = "216adef6-5c7f-47e4-b989-5492eafa07d3"
-  cache_policy_use_origin_cache_control_headers = "83da9c7e-98b4-4e11-a168-04f0df8e2c65"
+  origin_id                                = var.origin_domain_name // just need it to be unique 
+  origin_request_policy_managed_all_viewer = "216adef6-5c7f-47e4-b989-5492eafa07d3"
+}
+
+resource "aws_cloudfront_cache_policy" "cache_policy" {
+  name = "stream-metadata-cache-policy-${terraform.workspace}"
+
+  min_ttl     = 0 // use origin's cache-control headers
+  default_ttl = 0 // use origin's cache-control headers
+  max_ttl     = 31536000
+
+  parameters_in_cache_key_and_forwarded_to_origin {
+    enable_accept_encoding_brotli = true
+    enable_accept_encoding_gzip   = true
+    headers_config {
+      header_behavior = "none"
+    }
+    cookies_config {
+      cookie_behavior = "none"
+    }
+    query_strings_config {
+      query_string_behavior = "none"
+    }
+  }
+
 }
 
 resource "aws_cloudfront_distribution" "this" {
@@ -52,16 +74,11 @@ resource "aws_cloudfront_distribution" "this" {
 
     viewer_protocol_policy = "https-only"
 
-    // TODO: AWS says query strings are not included in the cache key. we should validate this.
-    cache_policy_id = local.cache_policy_use_origin_cache_control_headers
+    cache_policy_id = aws_cloudfront_cache_policy.cache_policy.id
 
-    // TODO: Aws says all parameters will be forwarded to the origin. we should validate this.
     origin_request_policy_id = local.origin_request_policy_managed_all_viewer
 
-    compress    = true
-    max_ttl     = 0 // cache nothing
-    default_ttl = 0 // cache nothing
-    min_ttl     = 0 // cache nothing
+    compress = true
   }
 
   origin {
