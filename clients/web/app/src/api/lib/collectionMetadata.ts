@@ -110,7 +110,7 @@ function singleTokenQuerySetup(args: {
     const _address = tokenAddress.toLowerCase()
 
     return {
-        queryKey: [singleTokenQueryKey, _address],
+        queryKey: [singleTokenQueryKey, _address, chainId],
         queryFn: async (): Promise<TokenDataWithChainId> => {
             if (!args.supportedChainIds) {
                 throw new Error('supportedChainIds is required')

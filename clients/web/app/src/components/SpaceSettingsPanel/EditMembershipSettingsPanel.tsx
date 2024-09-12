@@ -38,6 +38,7 @@ import { usePanelActions } from 'routes/layouts/hooks/usePanelActions'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { EVERYONE_ADDRESS } from 'utils'
 import { usePlatformMinMembershipPriceInEth } from 'hooks/usePlatformMinMembershipPriceInEth'
+import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { EditMembershipSchemaType, editMembershipSchema } from './editMembershipSchema'
 
 export const EDIT_MEMBERSHIP_SETTINGS_PANEL = 'editMembershipSettings'
@@ -163,6 +164,7 @@ function EditMembershipForm({
                     )
                 }}
             </FormRender>
+            <UserOpTxModal />
         </>
     )
 }
