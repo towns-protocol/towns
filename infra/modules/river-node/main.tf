@@ -658,7 +658,7 @@ module "datadog_sythetics_test" {
   message   = local.datadog_monitor_slack_message
   request_definition = {
     method = "GET"
-    url    = "${local.node_url}/status"
+    url    = "${local.node_url}/status?blockchain=0"
   }
   assertions = [
     {
@@ -715,7 +715,7 @@ resource "aws_lb_target_group" "river_node_target_group" {
   deregistration_delay = 300
 
   health_check {
-    path                = "/status"
+    path                = "/status?blockchain=0"
     protocol            = "HTTPS"
     port                = local.rpc_https_port
     interval            = 10
