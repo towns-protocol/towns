@@ -37,3 +37,9 @@ export const spaceHeader = style({
     position: 'fixed',
     width: `calc(var(--sizebox-width) - 1px)`,
 })
+
+// position tweaks to keep spacing while maintinaing correct position as sticky
+export const stickyHeaderInset = style({
+    marginTop: `calc(-1 * ${vars.dims.baseline.x3})`,
+    marginBottom: `calc(-1 * ${vars.dims.baseline.x1})`,
+})

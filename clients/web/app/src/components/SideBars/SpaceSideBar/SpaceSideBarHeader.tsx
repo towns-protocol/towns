@@ -122,6 +122,7 @@ export const SpaceSideBarHeader = (props: {
             </Stack>
 
             <Stack
+                className={styles.stickyHeaderInset}
                 width="100%"
                 position="sticky"
                 top="none"
