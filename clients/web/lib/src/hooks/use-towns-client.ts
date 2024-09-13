@@ -190,6 +190,7 @@ interface TownsClientImpl {
     getIsWalletRegisteredWithCasablanca: () => Promise<boolean>
     getServerVersions: () => Promise<ITownsServerVersions | undefined>
     getSupportedXChainIds: () => Promise<number[] | undefined>
+    getUserProfileImage: (userId: string) => Promise<ChunkedMedia | undefined>
     updateUserBlock: (userId: string, isBlocked: boolean) => Promise<void>
     inviteUser: (roomId: string, userId: string) => Promise<void>
     joinRoom: (roomId: string, parentNetworkId?: string) => Promise<StreamView | undefined>
@@ -385,6 +386,7 @@ export function useTownsClient(): TownsClientImpl {
         getIsUsernameAvailable: useWithCatch(clientSingleton?.getIsUsernameAvailable),
         getIsWalletRegisteredWithCasablanca,
         getServerVersions: useWithCatch(clientSingleton?.getServerVersions),
+        getUserProfileImage: useWithCatch(clientSingleton?.getUserProfileImage),
         updateUserBlock: useWithCatch(clientSingleton?.updateUserBlock),
         inviteUser: useWithCatch(clientSingleton?.inviteUser),
         joinRoom: useWithCatch(clientSingleton?.joinRoom),

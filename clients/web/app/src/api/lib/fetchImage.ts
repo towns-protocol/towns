@@ -72,3 +72,11 @@ export async function refreshUserCache(userId: string): Promise<{ ok: boolean }>
         return { ok: false }
     }
 }
+
+export const buildImageUrl = (mediaStreamId: string, key: string, iv: string) => {
+    const url = new URL(env.VITE_RIVER_STREAM_METADATA_URL)
+    url.pathname = `/media/${mediaStreamId}`
+    url.searchParams.set('key', key)
+    url.searchParams.set('iv', iv)
+    return url.toString()
+}

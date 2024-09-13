@@ -2417,6 +2417,13 @@ export class TownsClient
         await this.casablancaClient.setUserProfileImage(chunkedMedia)
     }
 
+    public async getUserProfileImage(userId: string): Promise<ChunkedMedia | undefined> {
+        if (!this.casablancaClient) {
+            throw new Error('No casablanca client')
+        }
+        return this.casablancaClient.getUserProfileImage(userId)
+    }
+
     public async setUserBio(bio: UserBio): Promise<void> {
         if (!this.casablancaClient) {
             throw new Error('No casablanca client')

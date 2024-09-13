@@ -10,7 +10,8 @@ import {
 import { useCallback } from 'react'
 import imageCompression from 'browser-image-compression'
 import { ChunkedMedia } from '@river-build/proto'
-import { fetchUserProfileImage, refreshSpaceCache, refreshUserCache } from 'api/lib/fetchImage'
+import { bin_toHexString } from '@river-build/dlog'
+import { buildImageUrl, refreshSpaceCache, refreshUserCache } from 'api/lib/fetchImage'
 import { isImageMimeType } from 'utils/isMediaMimeType'
 
 const CHUNK_SIZE = 500_000
@@ -24,7 +25,13 @@ export type EncryptionMetadataForUpload = {
 }
 
 export const useUploadAttachment = () => {
-    const { client, createMediaStream, setUserProfileImage, sendMediaPayload } = useTownsClient()
+    const {
+        client,
+        createMediaStream,
+        setUserProfileImage,
+        sendMediaPayload,
+        getUserProfileImage,
+    } = useTownsClient()
     const setLoadedResource = useImageStore((state) => state.setLoadedResource)
 
     function shouldCompressFile(file: File): boolean {
@@ -289,7 +296,16 @@ export const useUploadAttachment = () => {
                     },
                 })
                 await setUserProfileImage(chunkedMedia)
-                const { imageUrl } = await fetchUserProfileImage(userId)
+                const imageUrl = await getUserProfileImage(userId).then((image) => {
+                    if (!image || !image.info || !image.encryption?.value) {
+                        return
+                    }
+                    return buildImageUrl(
+                        image.streamId,
+                        bin_toHexString(image.encryption.value.secretKey),
+                        bin_toHexString(image.encryption.value.iv),
+                    )
+                })
                 setLoadedResource(userId, { imageUrl })
                 await refreshUserCache(userId)
                 return true
@@ -300,7 +316,7 @@ export const useUploadAttachment = () => {
                 setProgress(0)
             }
         },
-        [setLoadedResource, setUserProfileImage, uploadImageFile],
+        [getUserProfileImage, setLoadedResource, setUserProfileImage, uploadImageFile],
     )
 
     return { uploadAttachment, uploadTownImageToStream, uploadUserProfileImageToStream }
