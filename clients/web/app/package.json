@@ -67,7 +67,7 @@
         "@udecode/plate-reset-node": "^36.0.0",
         "@udecode/plate-select": "^36.0.0",
         "@udecode/plate-serializer-md": "^36.0.7",
-        "allotment": "^1.20.1",
+        "allotment": "^1.20.2",
         "axios": "^1.2.6",
         "browser-image-compression": "^2.0.2",
         "class-variance-authority": "^0.7.0",
