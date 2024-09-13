@@ -219,22 +219,29 @@ const InlineComboboxInput = forwardRef<
              * In the end we dispatch that keyboard event to the editor because combobox events are not
              * propagated to the editor by default. SetTimeout is used to ensure that editor migrations
              * are done before the event is dispatched.
+             *
+             * This needs to be wrapped in a setTimeout because the store is updated asynchronously after the
+             * keydown event fires. This is a workaround to ensure that the store updates before we check
+             * the updated results length.
              */
-            if (
-                (isHotkey('Enter', event) &&
-                    (!store.getState().activeValue || resultsLength === 0)) ||
-                (isHotkey('Space', event) && resultsLength === 0)
-            ) {
-                event.preventDefault()
-                event.stopPropagation()
-                cancelInput('manual', true)
-                if (isHotkey('Enter', event)) {
-                    setTimeout(dispatchMockEnterEvent, 10)
-                } else {
-                    editor.insertText(' ')
+            setTimeout(() => {
+                const updatedResultsLength = store.getState().items.length
+                if (
+                    (isHotkey('Enter', event) &&
+                        (!store.getState().activeValue || updatedResultsLength === 0)) ||
+                    (isHotkey('Space', event) && updatedResultsLength === 0)
+                ) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                    cancelInput('manual', true)
+                    if (isHotkey('Enter', event)) {
+                        setTimeout(dispatchMockEnterEvent, 10)
+                    } else {
+                        editor.insertText(' ')
+                    }
+                    return
                 }
-                return
-            }
+            }, 100)
 
             onKeyDown?.(event)
         },

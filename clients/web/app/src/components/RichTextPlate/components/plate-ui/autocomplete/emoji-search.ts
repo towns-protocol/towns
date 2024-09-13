@@ -8,6 +8,20 @@ let emojiCache: Array<{
     keyword: string
 }>
 
+/**
+ * If user types :), we want to suggest the emojis with the keyword "smile".
+ * Similarly, if user types :D, we want to suggest the emojis with the keyword "grin" and so on.
+ */
+const emojiShortCodes: { [x: string]: string } = {
+    ':)': 'smile',
+    ':))': 'laugh',
+    ':d': 'grin',
+    ':p': 'tongue',
+    ':o': 'surprised',
+    ':(': 'sad',
+    ":'(": 'cry',
+}
+
 const EMOJI_SEARCH_PATTERN = /[^a-zA-Z0-9\s]/gi
 
 export const emojiSearch = async (
@@ -25,8 +39,15 @@ export const emojiSearch = async (
             return { emoji: emoji.default, keywords: keywords, name: emoji.name }
         })
 
+    let _query = ':' + query.toLowerCase()
+
+    // If the query is a short code, convert it to the corresponding emoji keyword for better search results
+    if (emojiShortCodes[_query]) {
+        _query = emojiShortCodes[_query]
+    }
+
     return fuzzysort
-        .go(query.replace(EMOJI_SEARCH_PATTERN, ''), emojiCache, {
+        .go(_query.replace(EMOJI_SEARCH_PATTERN, ''), emojiCache, {
             keys: ['name', 'keywords'],
             all: false,
             limit: 5,
