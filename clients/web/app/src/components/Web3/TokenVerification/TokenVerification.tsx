@@ -13,7 +13,6 @@ import {
 import { useGetEmbeddedSigner } from '@towns/privy'
 import { Button, Icon, IconButton, MotionBox, Paragraph, Stack, Text } from '@ui'
 import { useErrorToast } from 'hooks/useErrorToast'
-import { useJoinTown } from 'hooks/useJoinTown'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { TokenGatingMembership, useTokensGatingMembership } from 'hooks/useTokensGatingMembership'
@@ -23,7 +22,13 @@ import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { FullPanelOverlay, LinkedWallet, useConnectThenLink } from '../WalletLinkingPanel'
 import { mapToErrorMessage } from '../utils'
 
-export function TokenVerification({ onHide, spaceId }: { spaceId: string; onHide: () => void }) {
+type Props = {
+    onHide: () => void
+    spaceId: string
+    joinSpace: () => Promise<void>
+}
+
+export function TokenVerification({ onHide, spaceId, joinSpace }: Props) {
     const { data: linkedWallets } = useLinkedWallets()
     const { loggedInWalletAddress } = useConnectivity()
     const { data: entitlements } = useTokensGatingMembership(spaceId)
@@ -69,7 +74,12 @@ export function TokenVerification({ onHide, spaceId }: { spaceId: string; onHide
                 </Text>
                 <Text color="gray1">{`Any of the following tokens must be held to claim membership:`}</Text>
 
-                <Content linkedWallets={linkedWallets} entitlements={entitlements}>
+                <Content
+                    linkedWallets={linkedWallets}
+                    entitlements={entitlements}
+                    joinSpace={joinSpace}
+                    onHide={onHide}
+                >
                     {linkedWallets && linkedWallets.length > 1 ? (
                         <Paragraph strong>Linked Wallets</Paragraph>
                     ) : null}
@@ -102,10 +112,14 @@ function Content({
     entitlements,
     linkedWallets,
     children,
-}: PropsWithChildren<{
-    linkedWallets: string[] | undefined
-    entitlements: TokenGatingMembership
-}>) {
+    onHide,
+    joinSpace,
+}: PropsWithChildren<
+    {
+        linkedWallets: string[] | undefined
+        entitlements: TokenGatingMembership
+    } & Omit<Props, 'spaceId'>
+>) {
     const { loggedInWalletAddress } = useConnectivity()
     const spaceId = useSpaceIdFromPathname()
     const {
@@ -120,8 +134,6 @@ function Content({
     })
 
     const { noAssets, tickNoAssets } = useNoAssetsState()
-    const { joinSpace, errorMessage: errorJoinSpace } = useJoinTown(spaceId)
-    const [isJoining, setIsJoining] = useState(false)
     const isJoinPending = useIsTransactionPending(BlockchainTransactionType.JoinSpace)
     const { isPrivyReady } = useGetEmbeddedSigner()
 
@@ -156,18 +168,10 @@ function Content({
             : undefined,
     })
 
-    useErrorToast({
-        errorMessage: errorJoinSpace ? errorJoinSpace : undefined,
-    })
-
     const onJoinClick = useCallback(async () => {
-        if (isJoining) {
-            return
-        }
-        setIsJoining(true)
+        onHide()
         await joinSpace()
-        setIsJoining(false)
-    }, [isJoining, joinSpace])
+    }, [joinSpace, onHide])
 
     if (linkedWallets === undefined || isLoadingMeetsMembership) {
         return (
@@ -197,7 +201,7 @@ function Content({
 
             {meetsMembershipRequirements ? (
                 <Button
-                    disabled={!isPrivyReady || isJoining || isJoinPending}
+                    disabled={!isPrivyReady || isJoinPending}
                     tone="cta1"
                     width="100%"
                     type="button"

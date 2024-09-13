@@ -23,11 +23,7 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
     const { isConnected: connected } = useCombinedAuth()
     const { getSigner } = useGetEmbeddedSigner()
 
-    const {
-        start: startPublicPageloginFlow,
-        joiningSpace,
-        end: endPublicPageLoginFlow,
-    } = usePublicPageLoginFlow()
+    const { start: startPublicPageloginFlow, joiningSpace } = usePublicPageLoginFlow()
 
     const { isTouch } = useDevice()
     const { joinSpace, errorMessage, isNoFundsError } = useJoinTown(spaceId)
@@ -35,7 +31,6 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
     const [assetModal, setAssetModal] = useState(false)
     const showAssetModal = () => setAssetModal(true)
     const hideAssetModal = () => {
-        endPublicPageLoginFlow()
         setAssetModal(false)
     }
     const { addTownNotificationSettings } = useNotificationSettings()
@@ -172,7 +167,11 @@ export function JoinLoginButton({ spaceId }: { spaceId: string | undefined }) {
                     background="none"
                     onHide={hideAssetModal}
                 >
-                    <TokenVerification spaceId={spaceId} onHide={hideAssetModal} />
+                    <TokenVerification
+                        spaceId={spaceId}
+                        joinSpace={joinSpace}
+                        onHide={hideAssetModal}
+                    />
                 </AboveAppProgressModalContainer>
             )}
         </>
