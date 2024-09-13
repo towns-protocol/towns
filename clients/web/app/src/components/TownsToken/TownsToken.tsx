@@ -23,20 +23,19 @@ export type TownsTokenProps = Props
 export const TownsToken = (props: Props) => {
     const { imageSrc, address, size, spaceName, reduceMotion, spaceId, ...boxProps } = props
     const config = TownsTokenConfig.sizes[size]
-    const [loaded, setLoaded] = React.useState(false)
-    const [error, setError] = React.useState(false)
+
+    const loaded = useImageStore((state) => (spaceId ? state.loadedResource?.[spaceId] : false))
+    const error = useImageStore((state) => (spaceId ? state.erroredResources?.[spaceId] : true))
 
     const onLoad = () => {
         if (spaceId) {
             useImageStore.getState().setLoadedResource(spaceId, { imageUrl: imageSrc })
         }
-        setLoaded(true)
     }
     const onError = () => {
         if (spaceId) {
             useImageStore.getState().addErroredResource(spaceId)
         }
-        setError(true)
     }
     const initial = spaceName?.trim()[0] ?? ''
 
