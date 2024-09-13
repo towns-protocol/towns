@@ -42,6 +42,10 @@ export const townPermissionDescriptions: {
         name: 'Ban members',
         description: 'Allow members to ban other members.',
     },
+    [Permission.AddRemoveChannels]: {
+        name: 'Manage channels',
+        description: 'Allow members to create, edit or delete channels.',
+    },
     [Permission.ModifySpaceSettings]: {
         name: 'Manage roles',
         description:
