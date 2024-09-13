@@ -58,7 +58,7 @@ export const ClipboardCopy = forwardRef<HTMLDivElement, Props>((props, ref) => {
             <Stack
                 horizontal
                 gap="sm"
-                alignItems="center"
+                alignItems="end"
                 cursor={!copied ? 'pointer' : 'default'}
                 ref={ref}
                 onClick={onCopy}
@@ -66,11 +66,11 @@ export const ClipboardCopy = forwardRef<HTMLDivElement, Props>((props, ref) => {
                 <Text truncate size={fontSize} color={color}>
                     {props.children || props.label}
                 </Text>
-                <Box ref={iconRef} pointerEvents="none">
+                <Box centerContent ref={iconRef} pointerEvents="none" height="paragraph">
                     {!copied ? (
-                        <Icon type="copy" color={color} size="square_xs" insetTop="xxs" />
+                        <Icon type="copy" color={color} size="square_xs" />
                     ) : (
-                        <Icon type="check" color="positive" size="square_xs" insetTop="xxs" />
+                        <Icon type="check" color="positive" size="square_xs" />
                     )}
                 </Box>
             </Stack>

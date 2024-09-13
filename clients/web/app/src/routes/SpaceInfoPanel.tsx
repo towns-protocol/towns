@@ -20,16 +20,15 @@ import {
     useUser,
 } from 'use-towns-client'
 import { isValidStreamId } from '@river-build/sdk'
+import { BigNumberish } from 'ethers'
 import { UploadImageRequestConfig } from '@components/UploadImage/useOnImageChangeEvent'
-import { EditTownInfo } from '@components/Panel/EditTownInfo'
-import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { MembersPageTouchModal } from '@components/MembersPage/MembersPage'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { PanelButton } from '@components/Panel/PanelButton'
 import { InteractiveSpaceIcon } from '@components/SpaceIcon'
 import { TownInfoModal } from '@components/TownInfoModal/TownInfoModal'
 import { LargeUploadImageTemplate } from '@components/UploadImage/LargeUploadImageTemplate'
-import { Box, BoxProps, FormRender, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
+import { Box, FormRender, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
 import {
     toggleMuteSetting,
     useMuteSettings,
@@ -55,14 +54,10 @@ import { NetworkName } from '@components/Tokens/TokenSelector/NetworkName'
 import { useAppProgressStore } from '@components/AppProgressOverlay/store/appProgressStore'
 import { useNotificationSettings } from 'hooks/useNotificationSettings'
 import { useUploadAttachment } from '@components/MediaDropContext/useUploadAttachment'
+import { EditTownInfo } from '@components/Panel/EditTownInfo'
+import { ContractInfoButtons } from '@components/Panel/ContractInfoButtons'
 import { PublicTownPage } from './PublicTownPage/PublicTownPage'
 import { usePanelActions } from './layouts/hooks/usePanelActions'
-
-const MdGap = ({ children, ...boxProps }: { children: JSX.Element } & BoxProps) => (
-    <Box padding="md" gap="md" {...boxProps} background="level2" rounded="sm">
-        {children}
-    </Box>
-)
 
 export const SpaceInfoPanel = () => {
     return (
@@ -310,20 +305,28 @@ export const SpaceInfo = () => {
                 <EditTownInfo
                     canEdit={isOwner}
                     name={space?.name}
+                    owner={owner}
                     address={address}
                     shortDescription={shortDescription}
                     longDescription={longDescription}
                     onEdit={onEditTownInfoClick}
                 />
-                {!!owner && <TownOwnerButton owner={owner} address={address} />}
+                {!!owner && <TownOwnerButton contract={contractSpaceInfo} />}
                 <PanelButton disabled={isSettingNotification} onClick={onShowTownPreview}>
                     <Icon type="search" size="square_sm" color="gray2" />
-                    <Paragraph color="default">Preview</Paragraph>
+                    <Paragraph color="default">Preview Town Page</Paragraph>
                 </PanelButton>
                 {isOwner && (
                     <PanelButton onClick={onEditSpaceSettingsClick}>
                         <Icon type="treasury" size="square_sm" color="gray2" />
                         <Paragraph color="default">Edit Membership Settings</Paragraph>
+                    </PanelButton>
+                )}
+
+                {canEdit && (
+                    <PanelButton onClick={onManageRolesClick}>
+                        <Icon type="personEdit" size="square_sm" color="gray2" />
+                        <Paragraph color="default">Manage Roles</Paragraph>
                     </PanelButton>
                 )}
                 <PanelButton onClick={onMembersClick}>
@@ -346,16 +349,11 @@ export const SpaceInfo = () => {
                 )}
                 <PanelButton disabled={channels.length === 0} onClick={onShowBrowseChannels}>
                     <Icon type="tag" size="square_sm" color="gray2" />
-                    <Paragraph color="default" fontWeight="medium">
+                    <Paragraph color="default">
                         {`${channels.length} channel${channels.length != 1 ? `s` : ``}`}
                     </Paragraph>
                 </PanelButton>
-                {canEdit && (
-                    <PanelButton onClick={onManageRolesClick}>
-                        <Icon type="personEdit" size="square_sm" color="gray2" />
-                        <Paragraph color="default">Manage Roles</Paragraph>
-                    </PanelButton>
-                )}
+
                 {canBan && (
                     <BannedUsersPanelButton spaceId={spaceID} onClick={onBannedUsersClick} />
                 )}
@@ -420,8 +418,10 @@ export const SpaceInfo = () => {
     )
 }
 
-const TownOwnerButton = (props: { owner: string; address: string }) => {
-    const { owner, address } = props
+const TownOwnerButton = (props: {
+    contract: { owner: string; address: string; tokenId: BigNumberish }
+}) => {
+    const { owner, address, tokenId } = props.contract
     // the owner in the contract is the smart account, we need to get the user id
     const { data: spaceOwnerRiverUserId } = useGetRootKeyFromLinkedWallet({
         walletAddress: owner,
@@ -435,38 +435,39 @@ const TownOwnerButton = (props: { owner: string; address: string }) => {
         }
     }, [openPanel, owner, ownerUser])
 
+    const { spaceDapp } = useTownsClient()
+    const ownerContract = spaceDapp?.config.addresses.spaceOwner
+
+    const openSeaNft: `0x${string}/${number}` | undefined = ownerContract
+        ? `${ownerContract}/${Number(tokenId)}`
+        : undefined
+
     return (
-        <PanelButton height="auto" onClick={openFounderPanel}>
-            <Stack gap>
+        <PanelButton height="auto">
+            <Stack gap="sm">
                 <Paragraph strong color="default">
                     Founder
                 </Paragraph>
                 {ownerUser ? (
-                    <Box flexDirection="row" gap="sm" onClick={openFounderPanel}>
-                        {ownerUser && <Avatar size="avatar_x4" userId={ownerUser.userId} />}
-                        <Box
-                            justifyContent="spaceBetween"
-                            overflow="hidden"
-                            paddingY="xs"
-                            insetY="xxs"
-                            gap="paragraph"
-                        >
-                            <Paragraph truncate data-testid="owner">
-                                {ownerUser && getPrettyDisplayName(ownerUser)}
-                            </Paragraph>
-
-                            {owner && (
-                                <ClipboardCopy
-                                    label={shortAddress(owner)}
-                                    clipboardContent={address}
-                                />
-                            )}
+                    <Box horizontal gap="sm">
+                        <Box centerContent onClick={openFounderPanel}>
+                            {ownerUser && <Avatar size="avatar_x4" userId={ownerUser.userId} />}
+                        </Box>
+                        <Box overflow="hidden" paddingY="xs" gap="sm">
+                            <Box onClick={openFounderPanel}>
+                                <Paragraph truncate data-testid="owner">
+                                    {ownerUser && getPrettyDisplayName(ownerUser)}
+                                </Paragraph>
+                            </Box>
+                            <ContractInfoButtons
+                                ownerAddress={owner}
+                                contractAddress={address}
+                                openSeaNft={openSeaNft}
+                            />
                         </Box>
                     </Box>
                 ) : (
-                    <>
-                        <Paragraph color="gray2">{owner ? shortAddress(owner) : ''}</Paragraph>
-                    </>
+                    <Paragraph color="gray2">{owner ? shortAddress(owner) : ''}</Paragraph>
                 )}
             </Stack>
         </PanelButton>
@@ -532,11 +533,20 @@ const TokensGatingSpace = ({
     }
 
     return (
-        <MdGap padding="none">
+        <Stack
+            hoverable={canEdit}
+            background="level2"
+            padding="none"
+            borderRadius="xl"
+            cursor={canEdit ? 'pointer' : 'auto'}
+            onClick={onClick}
+        >
             <Box horizontal gap="sm" alignItems="center" paddingY="sm" paddingX="md">
-                <Box horizontal gap centerContent>
+                <Box horizontal centerContent gap="sm">
                     <Icon type="lock" size="square_sm" color="gray2" />
-                    For Holders
+                    <Paragraph size="sm" color="default">
+                        For Holders
+                    </Paragraph>
                 </Box>
                 <Box
                     horizontal
@@ -562,7 +572,7 @@ const TokensGatingSpace = ({
                 )}
                 {tokens.length > 3 && `+${tokens.length - 3} more`}
             </Box>
-        </MdGap>
+        </Stack>
     )
 }
 
