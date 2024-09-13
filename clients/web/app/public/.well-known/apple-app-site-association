@@ -1,0 +1,15 @@
+{
+  "applinks": {
+      "details": [
+           {
+             "appIDs": ["KG4HQQ5Y2X.com.towns.ios.alpha", "KG4HQQ5Y2X.com.towns.ios", "KG4HQQ5Y2X.com.towns.ios.alpha"],
+             "components": [
+               {
+                  "/": "*",
+                  "comment": "Matches any URL"
+               }
+             ]
+           }
+       ]
+   }
+}
