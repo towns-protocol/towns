@@ -210,32 +210,36 @@ export const MessageModalSheet = (props: Props) => {
                     <Sheet.Content>
                         <Sheet.Scroller>
                             <Stack paddingBottom="lg" alignContent="start" gap="sm">
-                                <Stack
-                                    horizontal
-                                    paddingX="md"
-                                    paddingBottom="sm"
-                                    justifyContent="spaceBetween"
-                                    width="100%"
-                                    alignItems="center"
-                                >
-                                    {emojis.map((e) => (
-                                        <EmojiButton
-                                            key={e.id}
-                                            id={e.id}
-                                            native={e.native}
-                                            onClick={sendEmoji}
-                                        />
-                                    ))}
-                                    <Button
-                                        aspectRatio="square"
-                                        size="button_rounded_md"
-                                        tone="level2"
-                                        onClick={onEmojiClick}
-                                    >
-                                        <Icon type="emojiAdd" onClick={onEmojiClick} />
-                                    </Button>
-                                </Stack>
-                                <Divider />
+                                {canReact && (
+                                    <>
+                                        <Stack
+                                            horizontal
+                                            paddingX="md"
+                                            paddingBottom="sm"
+                                            justifyContent="spaceBetween"
+                                            width="100%"
+                                            alignItems="center"
+                                        >
+                                            {emojis.map((e) => (
+                                                <EmojiButton
+                                                    key={e.id}
+                                                    id={e.id}
+                                                    native={e.native}
+                                                    onClick={sendEmoji}
+                                                />
+                                            ))}
+                                            <Button
+                                                aspectRatio="square"
+                                                size="button_rounded_md"
+                                                tone="level2"
+                                                onClick={onEmojiClick}
+                                            >
+                                                <Icon type="emojiAdd" onClick={onEmojiClick} />
+                                            </Button>
+                                        </Stack>
+                                        <Divider />
+                                    </>
+                                )}
                                 <Stack paddingX="sm" gap="sm">
                                     {canReact && (
                                         <TableCell
