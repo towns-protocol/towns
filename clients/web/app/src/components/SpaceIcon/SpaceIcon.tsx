@@ -1,6 +1,5 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { AnimatePresence } from 'framer-motion'
-import { useImageStore } from 'use-towns-client'
 import { Box, BoxProps, MotionBox } from '@ui'
 import { InteractiveTownsToken } from '@components/TownsToken/InteractiveTownsToken'
 import { TownsTokenProps } from '@components/TownsToken/TownsToken'
@@ -33,24 +32,14 @@ export const SpaceIcon = (props: Props) => {
         ...boxProps
     } = props
 
-    const [imageLoaded, setImageLoaded] = useState(false)
-    const [imageError, setImageError] = useState(false)
-    const { imageSrc } = useImageSource(spaceId, variant)
-    const onLoad = () => {
-        useImageStore.getState().setLoadedResource(spaceId, { imageUrl: imageSrc })
-        setImageLoaded(true)
-    }
-    const onError = () => {
-        useImageStore.getState().addErroredResource(spaceId)
-        setImageError(true)
-    }
+    const { imageSrc, onLoad, onError, isError, isLoaded } = useImageSource(spaceId, variant)
 
     return (
         <>
             <Box
                 centerContent
                 horizontal
-                key={imageSrc}
+                key={`${imageSrc}-${spaceId}}`}
                 background="level2"
                 borderRadius={overrideBorderRadius ?? 'full'}
                 flexDirection="row"
@@ -58,21 +47,22 @@ export const SpaceIcon = (props: Props) => {
                 position="relative"
                 {...boxProps}
             >
-                {imageError && (
+                {isError && (
                     <IconInitials letterFontSize={letterFontSize}>
                         {firstLetterOfSpaceName}
                     </IconInitials>
                 )}
-                {!imageError && (
+                {!isError && (
                     <AnimatePresence mode="wait">
                         <MotionBox
+                            key={`${imageSrc}-${spaceId}`}
                             pointerEvents="none"
                             as="img"
                             src={overrideSrc ?? imageSrc}
                             fit="full"
                             objectFit="cover"
                             initial={{ opacity: fadeIn ? 0 : 1 }}
-                            animate={{ opacity: imageLoaded || !fadeIn ? 1 : 0 }}
+                            animate={{ opacity: isLoaded || !fadeIn ? 1 : 0 }}
                             exit={{ opacity: fadeIn ? 0 : 1 }}
                             onLoad={onLoad}
                             onError={onError}

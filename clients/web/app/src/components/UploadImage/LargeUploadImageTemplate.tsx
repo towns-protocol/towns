@@ -8,6 +8,7 @@ import { UploadInput } from 'ui/components/Form/Upload'
 import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
 import { srOnlyClass } from 'ui/styles/globals/utils.css'
 import { FieldOutline } from 'ui/components/_internal/Field/FieldOutline/FieldOutline'
+import { TEMPORARY_SPACE_ICON_URL } from '@components/Web3/constants'
 import { loadingStyles, spinnerStyles } from './UploadImage.css'
 import { UseOnImageChangeEventProps, useOnImageChangeEvent } from './useOnImageChangeEvent'
 
@@ -83,7 +84,7 @@ export const LargeUploadImageTemplate = <T extends FieldValues>(props: Props<T>)
 
     const failedResource = useImageStore((state) => state.erroredResources[resourceId])
     const loadedResource = useImageStore((state) => state.loadedResource[resourceId])
-    const isLoading = !failedResource && !loadedResource
+    const isLoading = resourceId !== TEMPORARY_SPACE_ICON_URL && !failedResource && !loadedResource
 
     const isLoadingOrUploading = isLoading || isUploading
 

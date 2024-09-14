@@ -12,7 +12,6 @@ import {
     findDynamicPricingModule,
     findFixedPricingModule,
     useCreateSpaceTransaction,
-    useImageStore,
     useMutationSpaceInfoCache,
     useTownsClient,
 } from 'use-towns-client'
@@ -330,10 +329,6 @@ export function CreateTownSubmit({
 
                     if (values.spaceIconUrl && values.spaceIconFile) {
                         await uploadTownImageToStream(networkId, values.spaceIconFile, () => {})
-
-                        const { setLoadedResource } = useImageStore.getState()
-                        // set the image before upload so that it displays immediately
-                        setLoadedResource(networkId, { imageUrl: values.spaceIconUrl })
                     }
 
                     let timeoutDuration = 0

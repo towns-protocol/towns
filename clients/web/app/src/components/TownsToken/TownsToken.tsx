@@ -1,7 +1,8 @@
 import React from 'react'
-import { useImageStore } from 'use-towns-client'
 import { Box, BoxProps } from '@ui'
 import { FitMaxHeading } from 'ui/components/Text/FitMaxHeading'
+import { useImageSource } from '@components/UploadImage/useImageSource'
+import { TEMPORARY_SPACE_ICON_URL } from '@components/Web3/constants'
 import * as styles from './TownsToken.css'
 import { TokenAddress } from './layers/TokenAddress'
 import { HologramLayer } from './layers/TokenHologram'
@@ -24,19 +25,11 @@ export const TownsToken = (props: Props) => {
     const { imageSrc, address, size, spaceName, reduceMotion, spaceId, ...boxProps } = props
     const config = TownsTokenConfig.sizes[size]
 
-    const loaded = useImageStore((state) => (spaceId ? state.loadedResource?.[spaceId] : false))
-    const error = useImageStore((state) => (spaceId ? state.erroredResources?.[spaceId] : true))
+    const { isError, isLoaded, onError, onLoad } = useImageSource(
+        spaceId || TEMPORARY_SPACE_ICON_URL,
+        'thumbnail100',
+    )
 
-    const onLoad = () => {
-        if (spaceId) {
-            useImageStore.getState().setLoadedResource(spaceId, { imageUrl: imageSrc })
-        }
-    }
-    const onError = () => {
-        if (spaceId) {
-            useImageStore.getState().addErroredResource(spaceId)
-        }
-    }
     const initial = spaceName?.trim()[0] ?? ''
 
     return (
@@ -76,12 +69,15 @@ export const TownsToken = (props: Props) => {
                     {...boxProps}
                 >
                     <Box absoluteFill centerContent>
-                        {imageSrc && !error ? (
+                        {imageSrc && !isError ? (
                             <img
                                 src={imageSrc}
                                 width="100%"
                                 height="100%"
-                                style={{ opacity: loaded ? 1 : 0, objectFit: 'cover' }}
+                                style={{
+                                    opacity: isLoaded ? 1 : 0,
+                                    objectFit: 'cover',
+                                }}
                                 onLoad={onLoad}
                                 onError={onError}
                             />

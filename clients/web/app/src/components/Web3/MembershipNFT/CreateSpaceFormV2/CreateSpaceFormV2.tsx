@@ -192,6 +192,8 @@ function CreateSpaceFormV2WithoutAuth() {
                         'spaceIconUrl',
                     ])
 
+                    // b/c it's a FileList before upload
+                    const imageSrc = typeof spaceIconUrl === 'string' ? spaceIconUrl : undefined
                     const formattedLimit = new Intl.NumberFormat().format(limit)
 
                     if (spaceNameValue && !hasReached2Chars.current && spaceNameValue.length > 1) {
@@ -254,19 +256,14 @@ function CreateSpaceFormV2WithoutAuth() {
                                     position="relative"
                                     overflow="auto"
                                 >
-                                    {spaceIconUrl && (
+                                    {imageSrc && (
                                         <MotionBox
+                                            absoluteFill
                                             initial={{ opacity: 0 }}
                                             animate={{ opacity: 1 }}
                                             transition={{ duration: 0.5 }}
-                                            position="absolute"
-                                            top="none"
-                                            left="none"
-                                            bottom="none"
-                                            right="none"
-                                            pointerEvents="none"
                                         >
-                                            <BlurredBackground imageSrc={spaceIconUrl} blur={40} />
+                                            <BlurredBackground imageSrc={imageSrc} blur={40} />
                                         </MotionBox>
                                     )}
 
@@ -798,7 +795,6 @@ export const UploadImageField = ({
         ({ imageUrl, file, id, type }: UploadImageRequestConfig) => {
             // set resource on image store so the image updates in the upload component
             const { setLoadedResource } = useImageStore.getState()
-
             setLoadedResource(id, { imageUrl })
             setValue('spaceIconUrl', imageUrl)
             setValue('spaceIconFile', file)
