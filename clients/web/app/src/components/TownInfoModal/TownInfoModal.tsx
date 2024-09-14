@@ -18,7 +18,7 @@ import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
 import { UserOpTxModal } from '@components/Web3/UserOpTxModal/UserOpTxModal'
 import { createPrivyNotAuthenticatedNotification } from '@components/Notifications/utils'
 import { PrivyWrapper } from 'privy/PrivyProvider'
-import { refreshSpaceCache } from 'api/lib/fetchImage'
+import { buildSpaceMetadataUrl, refreshSpaceCache } from 'api/lib/fetchImage'
 
 type Props = {
     onHide: () => void
@@ -28,21 +28,18 @@ const FormStateKeys = {
     name: 'name',
     motto: 'motto',
     about: 'about',
-    uri: 'uri',
 } as const
 
 type FormState = {
     [FormStateKeys.name]: string
     [FormStateKeys.motto]: string
     [FormStateKeys.about]: string
-    [FormStateKeys.uri]: string // todo: not yet ready for uri
 }
 
 export const schema = z.object({
     [FormStateKeys.name]: z.string().min(1, 'Please enter a town name'),
     [FormStateKeys.motto]: z.string().optional(),
     [FormStateKeys.about]: z.string().optional(),
-    [FormStateKeys.uri]: z.string().optional(),
 })
 
 export const TownInfoModal = React.memo((props: Props) => {
@@ -86,7 +83,7 @@ export const TownInfoModalWithoutAuth = (props: Props) => {
             const txResult = await updateSpaceInfoTransaction(
                 data?.networkId,
                 changes[FormStateKeys.name],
-                changes[FormStateKeys.uri],
+                buildSpaceMetadataUrl(data.address),
                 changes[FormStateKeys.motto],
                 changes[FormStateKeys.about],
                 signer,
@@ -95,7 +92,7 @@ export const TownInfoModalWithoutAuth = (props: Props) => {
                 onHide()
             }
         },
-        [getSigner, data?.networkId, updateSpaceInfoTransaction, onHide],
+        [getSigner, data?.networkId, data?.address, updateSpaceInfoTransaction, onHide],
     )
 
     const hasTransactionError = Boolean(

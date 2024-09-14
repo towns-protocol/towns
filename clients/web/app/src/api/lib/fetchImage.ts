@@ -80,3 +80,9 @@ export const buildImageUrl = (mediaStreamId: string, key: string, iv: string) =>
     url.searchParams.set('iv', iv)
     return url.toString()
 }
+
+export const buildSpaceMetadataUrl = (spaceAddress: string) => {
+    const url = new URL(env.VITE_RIVER_STREAM_METADATA_URL)
+    url.pathname = `/space/${spaceAddress}`
+    return url.toString()
+}
