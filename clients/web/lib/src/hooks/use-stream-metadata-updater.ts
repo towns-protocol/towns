@@ -1,10 +1,10 @@
 import { bin_toHexString, dlogger } from '@river-build/dlog'
-import { Client as RiverClient } from '@river-build/sdk'
+import { Client as RiverClient, getUserIdFromStreamId } from '@river-build/sdk'
 import { TownsClient } from 'client/TownsClient'
 import { useCallback, useRef, useEffect } from 'react'
 import { useImageStore } from '../store/use-image-store'
 
-const dlog = dlogger('csb:hooks:space-image-updater')
+const dlog = dlogger('csb:hooks:stream-metadata-updater')
 
 const buildImageUrl = (
     mediaStreamId: string,
@@ -19,7 +19,7 @@ const buildImageUrl = (
     return url.toString()
 }
 
-export const useSpaceImageUpdater = (
+export const useStreamMetadataUpdater = (
     client?: RiverClient,
     townsClient?: TownsClient,
     streamMetadataUrl?: string,
@@ -51,9 +51,34 @@ export const useSpaceImageUpdater = (
         [client, setLoadedResource, streamMetadataUrl],
     )
 
+    const onMyUserProfileImageUpdated = useCallback(
+        (streamId: string) => {
+            if (!client || !streamMetadataUrl) {
+                return
+            }
+            const userId = getUserIdFromStreamId(streamId)
+            void client
+                .stream(streamId)
+                ?.view.userMetadataContent.getProfileImage()
+                .then((image) => {
+                    if (!image || !image.info || !image.encryption?.value) {
+                        return
+                    }
+                    const imageUrl = buildImageUrl(
+                        image.streamId,
+                        bin_toHexString(image.encryption.value.secretKey),
+                        bin_toHexString(image.encryption.value.iv),
+                        streamMetadataUrl,
+                    )
+                    setLoadedResource(userId, { imageUrl })
+                })
+        },
+        [client, setLoadedResource, streamMetadataUrl],
+    )
+
     useEffect(() => {
         if (oldClient.current === client) {
-            dlog.info('useSpaceImageUpdater, client changed', oldClient.current, client)
+            dlog.info('useStreamMetadataUpdater, client changed', oldClient.current, client)
             oldClient.current = client
         }
         if (!client) {
@@ -61,8 +86,10 @@ export const useSpaceImageUpdater = (
         }
 
         client.on('spaceImageUpdated', onSpaceImageUpdated)
+        client.on('userProfileImageUpdated', onMyUserProfileImageUpdated)
         return () => {
             client.off('spaceImageUpdated', onSpaceImageUpdated)
+            client.off('userProfileImageUpdated', onMyUserProfileImageUpdated)
         }
-    }, [onSpaceImageUpdated, client, townsClient])
+    }, [onSpaceImageUpdated, client, townsClient, onMyUserProfileImageUpdated])
 }

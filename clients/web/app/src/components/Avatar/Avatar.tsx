@@ -139,19 +139,23 @@ const _Avatar = forwardRef<
 
     const Container = animate ? MotionBox : Box
 
+    const { setLoadedResource, addErroredResource } = useImageStore((state) => ({
+        setLoadedResource: state.setLoadedResource,
+        addErroredResource: state.addErroredResource,
+    }))
     const onError = useCallback(() => {
         if (resourceId) {
-            useImageStore.getState().addErroredResource(resourceId)
+            addErroredResource(resourceId)
         }
-    }, [resourceId])
+    }, [addErroredResource, resourceId])
 
     const onLoad = useCallback(() => {
         if (resourceId && src) {
-            useImageStore.getState().setLoadedResource(resourceId, {
+            setLoadedResource(resourceId, {
                 imageUrl: src,
             })
         }
-    }, [resourceId, src])
+    }, [resourceId, setLoadedResource, src])
 
     const failedResource = useImageStore((state) => state.erroredResources[resourceId])
     const loadedResource = useImageStore((state) => state.loadedResource[resourceId])
