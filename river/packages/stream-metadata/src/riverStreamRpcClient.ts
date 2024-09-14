@@ -17,8 +17,6 @@ import { getNodeForStream } from './streamRegistry'
 
 const clients = new Map<string, StreamRpcClient>()
 
-const contentCache: Record<string, MediaContent | undefined> = {}
-
 export type StreamRpcClient = PromiseClient<typeof StreamService> & { url?: string }
 
 function makeStreamRpcClient(logger: FastifyBaseLogger, url: string): StreamRpcClient {
@@ -52,6 +50,13 @@ async function getStreamClient(logger: FastifyBaseLogger, streamId: `0x${string}
 	}
 
 	return { client, lastMiniblockNum: node.lastMiniblockNum }
+}
+
+function removeClient(logger: FastifyBaseLogger, clientToRemove: StreamRpcClient) {
+	logger.info({ url: clientToRemove.url }, 'removeClient')
+	if (clientToRemove.url) {
+		clients.delete(clientToRemove.url)
+	}
 }
 
 function streamViewFromUnpackedResponse(
@@ -161,7 +166,6 @@ export async function getStream(
 		logger.error({ streamId }, 'Failed to get client for stream')
 		throw new Error(`Failed to get client for stream ${streamId}`)
 	}
-
 	logger.info(
 		{
 			nodeUrl: client.url,
@@ -171,22 +175,31 @@ export async function getStream(
 		'getStream',
 	)
 
-	const start = Date.now()
+	try {
+		const start = Date.now()
 
-	const response = await client.getStream({
-		streamId: streamIdAsBytes(streamId),
-	})
+		const response = await client.getStream({
+			streamId: streamIdAsBytes(streamId),
+		})
 
-	const duration_ms = Date.now() - start
-	logger.info(
-		{
-			duration_ms,
-		},
-		'getStream finished',
-	)
+		const duration_ms = Date.now() - start
+		logger.info(
+			{
+				duration_ms,
+			},
+			'getStream finished',
+		)
 
-	const unpackedResponse = await unpackStream(response.stream)
-	return streamViewFromUnpackedResponse(streamId, unpackedResponse)
+		const unpackedResponse = await unpackStream(response.stream)
+		return streamViewFromUnpackedResponse(streamId, unpackedResponse)
+	} catch (e) {
+		logger.error(
+			{ url: client.url, streamId, error: e },
+			'getStream failed, removing client from cache',
+		)
+		removeClient(logger, client)
+		throw e
+	}
 }
 
 export async function getMediaStreamContent(
@@ -195,19 +208,6 @@ export async function getMediaStreamContent(
 	secret: Uint8Array,
 	iv: Uint8Array,
 ): Promise<MediaContent | { data: null; mimeType: null }> {
-	const toHexString = (byteArray: Uint8Array) => {
-		return Array.from(byteArray, (byte) => byte.toString(16).padStart(2, '0')).join('')
-	}
-
-	const secretHex = toHexString(secret)
-	const ivHex = toHexString(iv)
-
-	/*
-	if (contentCache[concatenatedString]) {
-		return contentCache[concatenatedString];
-	}
-	*/
-
 	const streamId = stripHexPrefix(fullStreamId)
 	const sv = await getStream(logger, streamId)
 
@@ -217,10 +217,6 @@ export async function getMediaStreamContent(
 	}
 
 	const result = await mediaContentFromStreamView(logger, sv, secret, iv)
-
-	// Cache the result
-	const concatenatedString = `${fullStreamId}${secretHex}${ivHex}`
-	contentCache[concatenatedString] = result
 
 	return result
 }

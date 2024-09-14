@@ -158,7 +158,7 @@ func (s *Service) createReplicatedStream(
 	var localSyncCookie *SyncCookie
 	if nodes.IsLocal() {
 		sender.GoLocal(func() error {
-			_, sv, err := s.cache.CreateStream(ctx, streamId)
+			_, sv, err := s.cache.GetStream(ctx, streamId)
 			if err != nil {
 				return err
 			}

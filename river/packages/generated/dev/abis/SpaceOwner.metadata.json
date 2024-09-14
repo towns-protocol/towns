@@ -8,16 +8,6 @@
       {
         "inputs": [],
         "type": "error",
-        "name": "AlreadyDisabled"
-      },
-      {
-        "inputs": [],
-        "type": "error",
-        "name": "AlreadyEnabled"
-      },
-      {
-        "inputs": [],
-        "type": "error",
         "name": "ApprovalCallerNotOwnerNorApproved"
       },
       {
@@ -60,7 +50,17 @@
       {
         "inputs": [],
         "type": "error",
-        "name": "GuardianEnabled"
+        "name": "Guardian_AlreadyDisabled"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "Guardian_AlreadyEnabled"
+      },
+      {
+        "inputs": [],
+        "type": "error",
+        "name": "Guardian_Enabled"
       },
       {
         "inputs": [
@@ -123,11 +123,6 @@
         "inputs": [],
         "type": "error",
         "name": "MintZeroQuantity"
-      },
-      {
-        "inputs": [],
-        "type": "error",
-        "name": "NotExternalAccount"
       },
       {
         "inputs": [
@@ -361,6 +356,19 @@
         "inputs": [],
         "type": "event",
         "name": "EIP712DomainChanged",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "cooldown",
+            "type": "uint256",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "GuardianDefaultCooldownUpdated",
         "anonymous": false
       },
       {
@@ -1570,10 +1578,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/guardian/GuardianBase.sol": {
-      "keccak256": "0xe76248dbf516fb6a32934062fac4f2b3e19f83ba1a4df04d55b55c15be0265d0",
+      "keccak256": "0xa407bb80710960a4faf7cda09ef05d779887d4227c1823dc92f0910d1508039f",
       "urls": [
-        "bzz-raw://a2059a7b6b82f2de1654ff8bca374e32fa000e613ffb706197edd09565cb7a70",
-        "dweb:/ipfs/QmUFTcFy64pFTwEwtGFrkoL84eZi7zVjAp46k1sWpAfUn5"
+        "bzz-raw://075ccda5d24f69c2ad13eec21e37cb1cd3eac7faef2108179fe6a23005729957",
+        "dweb:/ipfs/QmX1Q58kQtwWmwox2oA1nHJ7aoYr9cBVVzi7xdoJBfycmQ"
       ],
       "license": "MIT"
     },
@@ -1586,10 +1594,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/guardian/IGuardian.sol": {
-      "keccak256": "0x7490883034a06f610a169e87f2bd15f5c904c87ea1eda80da63d17045b77b5bd",
+      "keccak256": "0x5688fd791b42e359f37edd7b40576e5326b360f5e922ba091eb4bd2fe6234478",
       "urls": [
-        "bzz-raw://44ea9689c8d31f5c31ebb470ac85f2d6be30d7698dbe4730454e19c5f72898f7",
-        "dweb:/ipfs/QmUsWEQ4qFif8GghZGT8b7K52WrTbSgfjZPpPGxFzhz2kr"
+        "bzz-raw://93bc1fca6f842a91ae26ac7e19b1f73515c320469b35938c5ab57414b009d206",
+        "dweb:/ipfs/QmZ47oFNcHWzP3TQtRzesSz66gJZmhAndHt139nkbeoUTr"
       ],
       "license": "MIT"
     },
@@ -1602,18 +1610,18 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/owner/SpaceOwner.sol": {
-      "keccak256": "0xb70a369ccc910d3d4397e48be446fb32e308ad951ed337edbd8300f5a1dd87c3",
+      "keccak256": "0x4ebcfab63a8a42db5bef2c2681e00f438ef36e26592611feac596e09fd27f189",
       "urls": [
-        "bzz-raw://5267c28f5aebfea915e5acce5f83b1f03588772094104f1817f676865ecef8a0",
-        "dweb:/ipfs/QmRQSjcgnspgPVwkJnQ6f4uL4oAc29eKBujVaeAcmy9Lt2"
+        "bzz-raw://80288a74d35e2a8440d2d0a4f74219adde0e0c544c61c55009a37a79e4c29de2",
+        "dweb:/ipfs/QmYt2Ggj4425a3TzGWT7LmQivPsxdD7R9Bh9JoYsEhqzYE"
       ],
       "license": "MIT"
     },
     "contracts/src/spaces/facets/owner/SpaceOwnerBase.sol": {
-      "keccak256": "0xa1cb5b0bc9aec89791654a4725f7c42798245a432f3f3a741e4999fd12020f77",
+      "keccak256": "0xc099c8e138203b047385e359e26ece811fa788c180c3157f082c6c3bc22c1937",
       "urls": [
-        "bzz-raw://720a72562f1f8c129b3b276a4fb67cf403bc628db1534fed04e45a79b7773cb1",
-        "dweb:/ipfs/QmNu34EsvFQjbaE8MwdxkAn4iXGDUY4wYq2GVBwUEu1uRh"
+        "bzz-raw://ead0e7a507ae8b63abc034c3c9d711365585bb0545c89effbeb79c71cec3b17a",
+        "dweb:/ipfs/QmZa2aTL4Bm7DDBYMKsLibz5SJvced56CUBrpi2RXWGRZy"
       ],
       "license": "MIT"
     },

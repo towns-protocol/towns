@@ -1,8 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-// interfaces
+// utils
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
+
+import {SimpleAccountFactory} from "lib/account-abstraction/contracts/samples/SimpleAccountFactory.sol";
+import {SimpleAccount} from "lib/account-abstraction/contracts/samples/SimpleAccount.sol";
+
+// interfaces
 import {IArchitectBase} from "contracts/src/factory/facets/architect/IArchitect.sol";
 import {IEntitlementChecker} from "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
 import {IImplementationRegistry} from "contracts/src/factory/facets/registry/IImplementationRegistry.sol";
@@ -10,13 +15,14 @@ import {IWalletLink} from "contracts/src/factory/facets/wallet-link/IWalletLink.
 import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
 import {IMainnetDelegation} from "contracts/src/tokens/river/base/delegation/IMainnetDelegation.sol";
 import {INodeOperator} from "contracts/src/base/registry/facets/operator/INodeOperator.sol";
-import {EIP712Facet} from "contracts/src/diamond/utils/cryptography/signature/EIP712Facet.sol";
-import {NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
+import {IEntryPoint} from "lib/account-abstraction/contracts/interfaces/IEntryPoint.sol";
 
 // libraries
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 // contracts
+import {EIP712Facet} from "contracts/src/diamond/utils/cryptography/signature/EIP712Facet.sol";
+import {NodeOperatorStatus} from "contracts/src/base/registry/facets/operator/NodeOperatorStorage.sol";
 import {MockMessenger} from "contracts/test/mocks/MockMessenger.sol";
 
 // deployments
@@ -64,6 +70,7 @@ contract BaseSetup is TestUtils, SpaceHelper {
   address internal userEntitlement;
   address internal ruleEntitlement;
   address internal legacyRuleEntitlement;
+
   address internal spaceOwner;
 
   address internal baseRegistry;
@@ -79,6 +86,8 @@ contract BaseSetup is TestUtils, SpaceHelper {
   address internal pricingModule;
   address internal fixedPricingModule;
 
+  SimpleAccountFactory internal simpleAccountFactory;
+
   IEntitlementChecker internal entitlementChecker;
   IImplementationRegistry internal implementationRegistry;
   IWalletLink internal walletLink;
@@ -93,6 +102,11 @@ contract BaseSetup is TestUtils, SpaceHelper {
     deployer = getDeployer();
 
     operators = _createAccounts(10);
+
+    // Simple Account Factory
+    simpleAccountFactory = new SimpleAccountFactory(
+      IEntryPoint(_randomAddress())
+    );
 
     // Base Registry
     baseRegistry = deployBaseRegistry.deploy(deployer);
@@ -115,6 +129,7 @@ contract BaseSetup is TestUtils, SpaceHelper {
     userEntitlement = deploySpaceFactory.userEntitlement();
     ruleEntitlement = deploySpaceFactory.ruleEntitlement();
     legacyRuleEntitlement = deploySpaceFactory.legacyRuleEntitlement();
+
     spaceOwner = deploySpaceFactory.spaceOwner();
     pricingModule = deploySpaceFactory.tieredLogPricing();
     fixedPricingModule = deploySpaceFactory.fixedPricing();
@@ -252,5 +267,11 @@ contract BaseSetup is TestUtils, SpaceHelper {
           nonce
         )
       );
+  }
+
+  function _createSimpleAccount(
+    address owner
+  ) internal returns (SimpleAccount) {
+    return simpleAccountFactory.createAccount(owner, _randomUint256());
   }
 }

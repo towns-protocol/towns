@@ -160,7 +160,7 @@ func (ctc *cacheTestContext) createReplStream() (StreamId, []common.Address, []b
 	ctc.require.Len(nodes, ctc.testParams.replFactor)
 
 	for _, n := range nodes {
-		_, _, err = ctc.instancesByAddr[n].cache.CreateStream(ctc.ctx, streamId)
+		_, _, err = ctc.instancesByAddr[n].cache.GetStream(ctc.ctx, streamId)
 		ctc.require.NoError(err)
 	}
 
@@ -214,7 +214,7 @@ func (ctc *cacheTestContext) createStream(
 	genesisMiniblock *Miniblock,
 ) (SyncStream, StreamView) {
 	ctc.createStreamNoCache(streamId, genesisMiniblock)
-	s, v, err := ctc.instances[0].cache.CreateStream(ctc.ctx, streamId)
+	s, v, err := ctc.instances[0].cache.GetStream(ctc.ctx, streamId)
 	ctc.require.NoError(err)
 	return s, v
 }

@@ -7,6 +7,7 @@ import {IRuleEntitlement} from "contracts/src/spaces/entitlements/rule/IRuleEnti
 import {IRuleEntitlementV2} from "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol";
 import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
 import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEntitlement.sol";
+import {ISpaceProxyInitializer} from "contracts/src/spaces/facets/proxy/ISpaceProxyInitializer.sol";
 
 // libraries
 
@@ -98,5 +99,25 @@ contract Architect is
     )
   {
     return _getImplementations();
+  }
+
+  // =============================================================
+  //                         Proxy Initializer
+  // =============================================================
+
+  /// @inheritdoc IArchitect
+  function getProxyInitializer()
+    external
+    view
+    returns (ISpaceProxyInitializer)
+  {
+    return _getProxyInitializer();
+  }
+
+  /// @inheritdoc IArchitect
+  function setProxyInitializer(
+    ISpaceProxyInitializer proxyInitializer
+  ) external onlyOwner {
+    _setProxyInitializer(proxyInitializer);
   }
 }

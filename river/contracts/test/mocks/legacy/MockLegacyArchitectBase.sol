@@ -27,6 +27,7 @@ import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 // contracts
 import {Factory} from "contracts/src/utils/Factory.sol";
 import {SpaceProxy} from "contracts/src/spaces/facets/proxy/SpaceProxy.sol";
+import {SpaceProxyInitializer} from "contracts/src/spaces/facets/proxy/SpaceProxyInitializer.sol";
 
 // modules
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
@@ -281,32 +282,34 @@ abstract contract LegacyArchitectBase is Factory, ILegacyArchitectBase {
     // calculate salt
     salt = keccak256(abi.encode(msg.sender, spaceTokenId, block.timestamp));
 
+    IMembershipBase.Membership memory membershipSettings = membership.settings;
+    if (membershipSettings.feeRecipient == address(0)) {
+      membershipSettings.feeRecipient = msg.sender;
+    }
+
+    address proxyInitializer = address(ds.proxyInitializer);
+
     // calculate init code
     initCode = abi.encodePacked(
       type(SpaceProxy).creationCode,
       abi.encode(
-        msg.sender,
         IManagedProxyBase.ManagedProxy({
           managerSelector: IProxyManager.getImplementation.selector,
           manager: address(this)
         }),
-        ITokenOwnableBase.TokenOwnable({
-          collection: address(ds.spaceToken),
-          tokenId: spaceTokenId
-        }),
-        IMembershipBase.Membership({
-          name: membership.settings.name,
-          symbol: membership.settings.symbol,
-          price: membership.settings.price,
-          maxSupply: membership.settings.maxSupply,
-          duration: membership.settings.duration,
-          currency: membership.settings.currency,
-          feeRecipient: membership.settings.feeRecipient == address(0)
-            ? msg.sender
-            : membership.settings.feeRecipient,
-          freeAllocation: membership.settings.freeAllocation,
-          pricingModule: membership.settings.pricingModule
-        })
+        proxyInitializer,
+        abi.encodeCall(
+          SpaceProxyInitializer.initialize,
+          (
+            msg.sender,
+            address(this),
+            ITokenOwnableBase.TokenOwnable({
+              collection: address(ds.spaceToken),
+              tokenId: spaceTokenId
+            }),
+            membershipSettings
+          )
+        )
       )
     );
   }

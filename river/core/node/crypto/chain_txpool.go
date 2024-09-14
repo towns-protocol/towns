@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"math/big"
 	"strings"
 	"sync"
@@ -261,7 +260,6 @@ func (pool *pendingTransactionPool) checkPendingTransactions(ctx context.Context
 				txHash := ptx.txHashes[i]
 				receipt, err := pool.client.TransactionReceipt(ctx, txHash)
 				if receipt != nil {
-					fmt.Printf("BVK DBG got receipt for tx nonce: %d / %s\n", ptxNonce, txHash)
 					pool.pendingTxs.Delete(ptx.tx.Nonce())
 					ptx.executedHash.Store(&txHash)
 					ptx.listener <- receipt

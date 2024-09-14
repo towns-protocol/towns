@@ -16,6 +16,7 @@ import {IManagedProxyBase} from "contracts/src/diamond/proxy/managed/IManagedPro
 import {IMembershipBase} from "contracts/src/spaces/facets/membership/IMembership.sol";
 import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
+import {ISpaceProxyInitializer} from "contracts/src/spaces/facets/proxy/ISpaceProxyInitializer.sol";
 import {IPrepay} from "contracts/src/spaces/facets/prepay/IPrepay.sol";
 
 // libraries
@@ -31,7 +32,7 @@ import {Permissions} from "contracts/src/spaces/facets/Permissions.sol";
 import {Factory} from "contracts/src/utils/Factory.sol";
 import {SpaceProxy} from "contracts/src/spaces/facets/proxy/SpaceProxy.sol";
 import {PricingModulesBase} from "contracts/src/factory/facets/architect/pricing/PricingModulesBase.sol";
-
+import {SpaceProxyInitializer} from "contracts/src/spaces/facets/proxy/SpaceProxyInitializer.sol";
 // modules
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
@@ -194,6 +195,28 @@ abstract contract ArchitectBase is Factory, IArchitectBase, PricingModulesBase {
   }
 
   // =============================================================
+  //                         Proxy Initializer
+  // =============================================================
+  function _getProxyInitializer()
+    internal
+    view
+    returns (ISpaceProxyInitializer)
+  {
+    return ImplementationStorage.layout().proxyInitializer;
+  }
+
+  function _setProxyInitializer(
+    ISpaceProxyInitializer proxyInitializer
+  ) internal {
+    ImplementationStorage.Layout storage ds = ImplementationStorage.layout();
+    ds.proxyInitializer = proxyInitializer;
+
+    emit Architect__ProxyInitializerSet(address(proxyInitializer));
+  }
+
+  // =============================================================
+
+  // =============================================================
   //                  Internal Channel Helpers
   // =============================================================
 
@@ -353,20 +376,31 @@ abstract contract ArchitectBase is Factory, IArchitectBase, PricingModulesBase {
       membershipSettings.feeRecipient = msg.sender;
     }
 
+    address proxyInitializer = address(
+      ImplementationStorage.layout().proxyInitializer
+    );
+
     // calculate init code
     initCode = abi.encodePacked(
       type(SpaceProxy).creationCode,
       abi.encode(
-        msg.sender,
         IManagedProxyBase.ManagedProxy({
           managerSelector: IProxyManager.getImplementation.selector,
           manager: address(this)
         }),
-        ITokenOwnableBase.TokenOwnable({
-          collection: spaceToken,
-          tokenId: spaceTokenId
-        }),
-        membershipSettings
+        proxyInitializer,
+        abi.encodeCall(
+          SpaceProxyInitializer.initialize,
+          (
+            msg.sender,
+            address(this),
+            ITokenOwnableBase.TokenOwnable({
+              collection: spaceToken,
+              tokenId: spaceTokenId
+            }),
+            membershipSettings
+          )
+        )
       )
     );
   }

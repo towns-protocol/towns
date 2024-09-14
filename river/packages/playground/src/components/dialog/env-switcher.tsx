@@ -6,13 +6,14 @@ import {
     useWaitForTransaction,
 } from 'wagmi'
 
-import { base, baseSepolia, foundry } from 'viem/chains'
+import { foundry } from 'viem/chains'
 import { useRiverConnection } from '@river-build/react-sdk'
 import { makeRiverConfig } from '@river-build/sdk'
 import { privateKeyToAccount } from 'viem/accounts'
 import { parseEther } from 'viem'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { getWeb3Deployment, getWeb3Deployments } from '@river-build/web3'
 import { deleteAuth, storeAuth } from '@/utils/persist-auth'
 import { useEthersSigner } from '@/utils/viem-to-ethers'
 import { Button } from '../ui/button'
@@ -28,11 +29,11 @@ import {
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 
-const environments = [
-    { id: 'gamma', name: 'Gamma', chainId: baseSepolia.id },
-    { id: 'omega', name: 'Omega', chainId: base.id },
-    { id: 'local_multi', name: 'Local Multi', chainId: foundry.id },
-] as const
+const environments = getWeb3Deployments().map((id) => ({
+    id: id,
+    name: id,
+    chainId: getWeb3Deployment(id).base.chainId,
+}))
 
 export type Env = (typeof environments)[number]
 

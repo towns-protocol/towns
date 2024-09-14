@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+
 	"github.com/river-build/river/core/node/utils"
 
 	"connectrpc.com/connect"
@@ -39,7 +40,7 @@ func (s *Service) allocateStream(ctx context.Context, req *AllocateStreamRequest
 
 	// TODO: check request is signed by correct node
 	// TODO: all checks that should be done on create?
-	_, view, err := s.cache.CreateStream(ctx, streamId)
+	_, view, err := s.cache.GetStream(ctx, streamId)
 	if err != nil {
 		return nil, err
 	}

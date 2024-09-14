@@ -8,7 +8,7 @@ import {IUserEntitlement} from "contracts/src/spaces/entitlements/user/IUserEnti
 import {IWalletLink} from "contracts/src/factory/facets/wallet-link/IWalletLink.sol";
 import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
 import {IEntitlementChecker} from "contracts/src/base/registry/facets/checker/IEntitlementChecker.sol";
-
+import {ISpaceProxyInitializer} from "contracts/src/spaces/facets/proxy/ISpaceProxyInitializer.sol";
 // libraries
 
 // contracts
@@ -25,6 +25,7 @@ library ImplementationStorage {
     IWalletLink walletLink;
     IEntitlementChecker entitlementChecker;
     IRuleEntitlement legacyRuleEntitlement;
+    ISpaceProxyInitializer proxyInitializer;
   }
 
   function layout() internal pure returns (Layout storage ds) {

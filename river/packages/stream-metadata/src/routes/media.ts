@@ -26,6 +26,11 @@ const querySchema = z.object({
 		.transform((value) => bin_fromHexString(value)),
 })
 
+const CACHE_CONTROL = {
+	200: 'public, max-age=31536000',
+	'4xx': 'public, max-age=30, s-maxage=3600',
+}
+
 export async function fetchMedia(request: FastifyRequest, reply: FastifyReply) {
 	const logger = request.log.child({ name: fetchMedia.name })
 
@@ -34,12 +39,18 @@ export async function fetchMedia(request: FastifyRequest, reply: FastifyReply) {
 	if (!paramsResult.success) {
 		const errorMessage = paramsResult.error?.errors[0]?.message || 'Invalid parameters'
 		logger.info(errorMessage)
-		return reply.code(400).send({ error: 'Bad Request', message: errorMessage })
+		return reply
+			.code(400)
+			.header('Cache-Control', CACHE_CONTROL['4xx'])
+			.send({ error: 'Bad Request', message: errorMessage })
 	}
 	if (!queryResult.success) {
 		const errorMessage = queryResult.error?.errors[0]?.message || 'Invalid parameters'
 		logger.info(errorMessage)
-		return reply.code(400).send({ error: 'Bad Request', message: errorMessage })
+		return reply
+			.code(400)
+			.header('Cache-Control', CACHE_CONTROL['4xx'])
+			.send({ error: 'Bad Request', message: errorMessage })
 	}
 
 	const { mediaStreamId } = paramsResult.data
@@ -58,19 +69,16 @@ export async function fetchMedia(request: FastifyRequest, reply: FastifyReply) {
 				},
 				'Invalid data or mimeType',
 			)
-			return reply.code(422).send('Invalid data or mimeType')
+			return reply
+				.code(422)
+				.header('Cache-Control', CACHE_CONTROL['4xx'])
+				.send('Invalid data or mimeType')
 		}
 
-		return (
-			reply
-				.header('Content-Type', mimeType)
-				/**
-				 * public: The response may be cached by any cache, including shared caches like a CDN.
-				 * max-age=31536000: The response may be cached for up to 1 year. This is the maximum value for max-age.
-				 */
-				.header('Cache-Control', 'public, max-age=31536000')
-				.send(Buffer.from(data))
-		)
+		return reply
+			.header('Content-Type', mimeType)
+			.header('Cache-Control', CACHE_CONTROL[200])
+			.send(Buffer.from(data))
 	} catch (error) {
 		logger.error({ mediaStreamId, error }, 'Failed to fetch media stream content')
 		// TODO: this should be a 500, not a 404.
@@ -78,6 +86,7 @@ export async function fetchMedia(request: FastifyRequest, reply: FastifyReply) {
 		// And return a 500 here, and again, give it a proper cache-control header.
 		return reply
 			.code(404)
+			.header('Cache-Control', CACHE_CONTROL['4xx'])
 			.send({ error: 'Not Found', message: 'Failed to fetch media stream content' })
 	}
 }

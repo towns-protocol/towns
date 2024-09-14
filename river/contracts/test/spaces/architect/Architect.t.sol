@@ -17,6 +17,7 @@ import {RuleEntitlementV2} from "contracts/src/spaces/entitlements/rule/RuleEnti
 import {IRoles} from "contracts/src/spaces/facets/roles/IRoles.sol";
 import {IMembership} from "contracts/src/spaces/facets/membership/IMembership.sol";
 import {ISpaceOwner} from "contracts/src/spaces/facets/owner/ISpaceOwner.sol";
+import {ISpaceProxyInitializer} from "contracts/src/spaces/facets/proxy/ISpaceProxyInitializer.sol";
 
 // libraries
 import {LibString} from "solady/utils/LibString.sol";
@@ -28,8 +29,8 @@ import {BaseSetup} from "contracts/test/spaces/BaseSetup.sol";
 import {Architect} from "contracts/src/factory/facets/architect/Architect.sol";
 import {MockERC721} from "contracts/test/mocks/MockERC721.sol";
 import {UserEntitlement} from "contracts/src/spaces/entitlements/user/UserEntitlement.sol";
+import {SpaceProxyInitializer} from "contracts/src/spaces/facets/proxy/SpaceProxyInitializer.sol";
 import {Factory} from "contracts/src/utils/Factory.sol";
-
 // errors
 import {Validator__InvalidStringLength} from "contracts/src/utils/Validator.sol";
 
@@ -294,7 +295,7 @@ contract ArchitectTest is
     assertFalse(
       IEntitlementsManager(spaceInstance).isEntitledToSpace(
         user,
-        Permissions.ModifyChannels
+        Permissions.AddRemoveChannels
       )
     );
 
@@ -313,7 +314,7 @@ contract ArchitectTest is
     // string[] memory permissions = new string[](3);
     // permissions[0] = Permissions.Read;
     // permissions[1] = Permissions.Write;
-    // permissions[2] = Permissions.ModifyChannels;
+    // permissions[2] = Permissions.AddRemoveChannels;
     // IRoles.CreateEntitlement[]
     //   memory entitlements = new IRoles.CreateEntitlement[](0);
     // vm.prank(founder);
@@ -325,7 +326,7 @@ contract ArchitectTest is
     // );
 
     string[] memory permissions = new string[](1);
-    permissions[0] = Permissions.ModifyChannels;
+    permissions[0] = Permissions.AddRemoveChannels;
 
     vm.prank(founder);
     IRoles(spaceInstance).addPermissionsToRole(memberRole.id, permissions);
@@ -333,8 +334,30 @@ contract ArchitectTest is
     assertTrue(
       IEntitlementsManager(spaceInstance).isEntitledToSpace(
         user,
-        Permissions.ModifyChannels
+        Permissions.AddRemoveChannels
       )
+    );
+  }
+
+  function test_fuzz_setProxyInitializer(address proxyInitializer) external {
+    vm.prank(deployer);
+    vm.expectEmit(address(spaceArchitect));
+    emit Architect__ProxyInitializerSet(proxyInitializer);
+    spaceArchitect.setProxyInitializer(
+      ISpaceProxyInitializer(proxyInitializer)
+    );
+
+    assertEq(address(spaceArchitect.getProxyInitializer()), proxyInitializer);
+  }
+
+  function test_fuzz_setProxyInitializer_revertIfNotOwner(
+    address user,
+    address proxyInitializer
+  ) external assumeEOA(user) {
+    vm.prank(user);
+    vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, user));
+    spaceArchitect.setProxyInitializer(
+      ISpaceProxyInitializer(proxyInitializer)
     );
   }
 }

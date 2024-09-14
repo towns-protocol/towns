@@ -49,36 +49,36 @@ GOWORK=off go run ./main.go gamma omega -v
 ➜  bytecode-diff git:(jt/net-62-contract-differ) ✗ yq eval deployed-diffs/facet_diff_090324_18.yaml
 diamonds:
   - name: spaceOwner
-    origin: gamma
+    source: gamma
     target: omega
     facets:
-      - originContractName: ""
-        originFacetAddress: 0xfa98a1648761e494fc7d6efe5a06e357a76bd6fb
+      - sourceContractName: ""
+        sourceFacetAddress: 0xfa98a1648761e494fc7d6efe5a06e357a76bd6fb
         selectorsDiff:
           - "0x3953801b"
           - "0x91de4a83"
-        originBytecodeHash: 0xf86d9dbe53c89e14fa69cde925cca02b6efad519fe172f7b04d9515d7700a59b
-        originVerified: false
+        sourceBytecodeHash: 0xf86d9dbe53c89e14fa69cde925cca02b6efad519fe172f7b04d9515d7700a59b
+        sourceVerified: false
         targetVerified: false
-      - originContractName: SpaceOwner
-        originFacetAddress: 0x30c912d8ceb9793e4cd240862acfd0e6c4436c52
+      - sourceContractName: SpaceOwner
+        sourceFacetAddress: 0x30c912d8ceb9793e4cd240862acfd0e6c4436c52
         targetContractAddresses:
           - 0x63bC35259Ac32DF43Fba3b890F0F74951451976A
           - 0xe7EB1313f0E7076616534225e16E971B72b50C42
         selectorsDiff: []
-        originBytecodeHash: 0x461b53ab37fd24283ecd63eb0d4e71bd554a266036c73caf6d2ac39c435e7732
+        sourceBytecodeHash: 0x461b53ab37fd24283ecd63eb0d4e71bd554a266036c73caf6d2ac39c435e7732
         targetBytecodeHashes:
           - 0x86d20161a13671a6138b80551e94dd8c1638bc5151807ff2194aa1e50cdb3cac
           - 0xff0a94e93a4f4f6ee0ecd0d0e469e55ca40f1ab6c10e6af9da5b2b597f32b178
-        originVerified: true
+        sourceVerified: true
         targetVerified: true
-      - originContractName: ""
-        originFacetAddress: 0xdba2ce6125cc6b7f93c63d181a0780d5b421940b
+      - sourceContractName: ""
+        sourceFacetAddress: 0xdba2ce6125cc6b7f93c63d181a0780d5b421940b
         selectorsDiff:
           - "0x0d653654"
           - "0x466a18de"
-        originBytecodeHash: 0x583c2852056f90c96ed1cab935489f644b8ef564e0a7f11564925d07cf3bc593
-        originVerified: false
+        sourceBytecodeHash: 0x583c2852056f90c96ed1cab935489f644b8ef564e0a7f11564925d07cf3bc593
+        sourceVerified: false
         targetVerified: false
 
 ```
@@ -112,7 +112,7 @@ Banning:
 A tool to retrieve and display contract bytecode diff for Base
 
 Usage:
-  bytecode-diff [origin_environment] [target_environment] [flags]
+  bytecode-diff [source_environment] [target_environment] [flags]
 
 Flags:
   -b, --base-rpc string           Base RPC provider URL

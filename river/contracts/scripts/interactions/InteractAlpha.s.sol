@@ -2,14 +2,10 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IDiamondLoupe, IDiamondLoupeBase} from "contracts/src/diamond/facets/loupe/IDiamondLoupe.sol";
+
 import {IDiamondCut} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
-import {IOwnablePending} from "contracts/src/diamond/facets/ownable/pending/IOwnablePending.sol";
 
 import {Diamond} from "contracts/src/diamond/Diamond.sol";
-import {DiamondHelper} from "contracts/test/diamond/Diamond.t.sol";
 
 // libraries
 
@@ -56,8 +52,10 @@ contract InteractAlpha is AlphaHelper {
     // Deploy Space Factory
     deploySpaceFactory.diamondInitParams(deployer);
     newCuts = deploySpaceFactory.getCuts();
+    address spaceFactoryInit = deploySpaceFactory.spaceFactoryInit();
+    bytes memory initData = deploySpaceFactory.spaceFactoryInitData();
     vm.broadcast(deployer);
-    IDiamondCut(spaceFactory).diamondCut(newCuts, address(0), "");
+    IDiamondCut(spaceFactory).diamondCut(newCuts, spaceFactoryInit, initData);
 
     // Deploy Base Registry
     deployBaseRegistry.diamondInitParams(deployer);

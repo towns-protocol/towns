@@ -9,7 +9,7 @@ ABI_DIR="packages/generated/dev/abis"
 
 forge build
 
-CONTRACT_INTERFACES="(IDiamond|IDiamondCut|IArchitect|ILegacyArchitect|IProxyManager|IPausable|IEntitlementsManager|IChannel|IRoles|IMulticall|IRuleEntitlement|IRuleEntitlementV2|IWalletLink|INodeRegistry|IOperatorRegistry|IStreamRegistry|OwnableFacet|TokenPausableFacet|UserEntitlement|ISpaceOwner|MockERC721A|MembershipFacet|Member|IBanning|IPricingModules|ICustomEntitlement|MockEntitlementGated|PrepayFacet|IERC721AQueryable|IEntitlementDataQueryable|PlatformRequirementsFacet|IERC721A|INodeOperator,ISpaceDelegation,IEntitlementChecker|IERC5267)"
+CONTRACT_INTERFACES="(IDiamond|IDiamondCut|IArchitect|ILegacyArchitect|IProxyManager|IPausable|IEntitlementsManager|IChannel|IRoles|IMulticall|IRuleEntitlement|IRuleEntitlementV2|IWalletLink|INodeRegistry|IOperatorRegistry|IStreamRegistry|OwnableFacet|TokenPausableFacet|UserEntitlement|ISpaceOwner|MockERC721A|MembershipFacet|Member|IBanning|IPricingModules|ICustomEntitlement|MockEntitlementGated|PrepayFacet|IERC721AQueryable|IEntitlementDataQueryable|PlatformRequirementsFacet|IERC721A|INodeOperator|ISpaceDelegation|IEntitlementChecker|IERC5267)"
 
 yarn typechain --target=ethers-v5 "contracts/out/**/?${CONTRACT_INTERFACES}.json" --out-dir "packages/generated/dev/typings"
 

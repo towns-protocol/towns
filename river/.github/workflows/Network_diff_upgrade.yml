@@ -2,12 +2,23 @@ name: Network Diff Upgrade
 
 on:
     workflow_dispatch:
+        inputs:
+            target:
+                description: 'Target environment for diff upgrade'
+                default: 'gamma'
+                type: choice
+                options:
+                    - gamma
+                    - omega
+                    - all
     schedule:
-        - cron: '0 6 * * 1' # Run every Monday at 6:00 AM UTC
+        - cron: '0 6 * * *' # Run everyday at 6:00 AM UTC
+        - cron: '0 3 * * 1' # Run every Monday at 3:00 AM UTC
 
 jobs:
     Run_Alpha_to_Gamma:
         name: Run Alpha to Gamma Diff Upgrade
+        if: github.event.schedule == '0 6 * * *' || github.event.inputs.target == 'gamma' || github.event.inputs.target == 'all'
         uses: ./.github/workflows/Bytecode_diff_report.yml
         with:
             origin_environment: alpha
@@ -16,8 +27,29 @@ jobs:
             BASE_RPC_URL: ${{ secrets.BASE_RPC_URL }}
             BASE_SEPOLIA_RPC_URL: ${{ secrets.BASE_SEPOLIA_RPC_URL }}
             BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+            BLOCKSCOUT_BASE_API_KEY: ${{ secrets.BLOCKSCOUT_BASE_API_KEY }}
             BLOCKSCOUT_BASE_SEPOLIA_API_KEY: ${{ secrets.BLOCKSCOUT_BASE_SEPOLIA_API_KEY }}
             GAMMA_BASE_SEPOLIA_DEPLOYER_PK: ${{ secrets.GAMMA_BASE_SEPOLIA_DEPLOYER_PK }}
+            OMEGA_BASE_DEPLOYER_PK: ${{ secrets.OMEGA_BASE_DEPLOYER_PK }}
+            RIVER_S3_AWS_ACCESS_KEY_ID: ${{ secrets.RIVER_S3_AWS_ACCESS_KEY_ID }}
+            RIVER_S3_AWS_SECRET_ACCESS_KEY: ${{ secrets.RIVER_S3_AWS_SECRET_ACCESS_KEY }}
+            RIVER_S3_AWS_REGION: ${{ secrets.RIVER_S3_AWS_REGION }}
+
+    Run_Alpha_to_Omega:
+        name: Run Alpha to Omega Diff Upgrade
+        if: github.event.schedule == '0 3 * * 1' || github.event.inputs.target == 'omega' || github.event.inputs.target == 'all'
+        uses: ./.github/workflows/Bytecode_diff_report.yml
+        with:
+            origin_environment: alpha
+            target_environment: omega
+        secrets:
+            BASE_RPC_URL: ${{ secrets.BASE_RPC_URL }}
+            BASE_SEPOLIA_RPC_URL: ${{ secrets.BASE_SEPOLIA_RPC_URL }}
+            BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+            BLOCKSCOUT_BASE_API_KEY: ${{ secrets.BLOCKSCOUT_BASE_API_KEY }}
+            BLOCKSCOUT_BASE_SEPOLIA_API_KEY: ${{ secrets.BLOCKSCOUT_BASE_SEPOLIA_API_KEY }}
+            GAMMA_BASE_SEPOLIA_DEPLOYER_PK: ${{ secrets.GAMMA_BASE_SEPOLIA_DEPLOYER_PK }}
+            OMEGA_BASE_DEPLOYER_PK: ${{ secrets.OMEGA_BASE_DEPLOYER_PK }}
             RIVER_S3_AWS_ACCESS_KEY_ID: ${{ secrets.RIVER_S3_AWS_ACCESS_KEY_ID }}
             RIVER_S3_AWS_SECRET_ACCESS_KEY: ${{ secrets.RIVER_S3_AWS_SECRET_ACCESS_KEY }}
             RIVER_S3_AWS_REGION: ${{ secrets.RIVER_S3_AWS_REGION }}

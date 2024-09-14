@@ -326,6 +326,19 @@ export default [
   },
   {
     "type": "function",
+    "name": "getProxyInitializer",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract ISpaceProxyInitializer"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "getSpaceArchitectImplementations",
     "inputs": [],
     "outputs": [
@@ -392,6 +405,19 @@ export default [
   },
   {
     "type": "function",
+    "name": "setProxyInitializer",
+    "inputs": [
+      {
+        "name": "proxyInitializer",
+        "type": "address",
+        "internalType": "contract ISpaceProxyInitializer"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "setSpaceArchitectImplementations",
     "inputs": [
       {
@@ -417,6 +443,19 @@ export default [
     ],
     "outputs": [],
     "stateMutability": "nonpayable"
+  },
+  {
+    "type": "event",
+    "name": "Architect__ProxyInitializerSet",
+    "inputs": [
+      {
+        "name": "proxyInitializer",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
   },
   {
     "type": "event",

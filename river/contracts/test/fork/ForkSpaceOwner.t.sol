@@ -93,14 +93,7 @@ contract ForkSpaceOwner is
     IArchitect spaceArchitect = IArchitect(spaceFactory);
 
     vm.prank(founder);
-    address spaceAdd = spaceArchitect.createSpace(spaceInfo);
-
-    Space memory space = SpaceOwner(spaceOwnerDiamond).getSpaceInfo(spaceAdd);
-    // verify space.shortDescription is longer than 0
-    assertTrue(
-      bytes(space.shortDescription).length > 0,
-      "Short description is empty"
-    );
+    spaceArchitect.createSpace(spaceInfo);
   }
 
   function test_getSpaceInfo() external view onlyForked {

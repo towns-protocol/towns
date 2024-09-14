@@ -849,6 +849,19 @@ export default [
   },
   {
     "type": "event",
+    "name": "GuardianDefaultCooldownUpdated",
+    "inputs": [
+      {
+        "name": "cooldown",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "GuardianUpdated",
     "inputs": [
       {
@@ -1002,16 +1015,6 @@ export default [
   },
   {
     "type": "error",
-    "name": "AlreadyDisabled",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "AlreadyEnabled",
-    "inputs": []
-  },
-  {
-    "type": "error",
     "name": "ApprovalCallerNotOwnerNorApproved",
     "inputs": []
   },
@@ -1054,7 +1057,17 @@ export default [
   },
   {
     "type": "error",
-    "name": "GuardianEnabled",
+    "name": "Guardian_AlreadyDisabled",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "Guardian_AlreadyEnabled",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "Guardian_Enabled",
     "inputs": []
   },
   {
@@ -1117,11 +1130,6 @@ export default [
   {
     "type": "error",
     "name": "MintZeroQuantity",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "NotExternalAccount",
     "inputs": []
   },
   {

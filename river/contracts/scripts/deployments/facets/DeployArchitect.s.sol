@@ -18,6 +18,8 @@ contract DeployArchitect is FacetHelper, Deployer {
     addSelector(IArchitect.setSpaceArchitectImplementations.selector);
     addSelector(IArchitect.getSpaceArchitectImplementations.selector);
     addSelector(IArchitect.createSpaceWithPrepay.selector);
+    addSelector(IArchitect.setProxyInitializer.selector);
+    addSelector(IArchitect.getProxyInitializer.selector);
   }
 
   function initializer() public pure override returns (bytes4) {

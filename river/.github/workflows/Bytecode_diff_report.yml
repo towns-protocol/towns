@@ -1,6 +1,7 @@
 name: Bytecode Diff Report
 env:
     FOUNDRY_VERSION: nightly
+    OMEGA_PRIVATE_KEY: ${{ secrets.OMEGA_BASE_DEPLOYER_PK }}
     TESTNET_PRIVATE_KEY: ${{ secrets.GAMMA_BASE_SEPOLIA_DEPLOYER_PK }}
     BASE_RPC_URL: ${{ secrets.BASE_RPC_URL }}
     BASE_SEPOLIA_RPC_URL: ${{ secrets.BASE_SEPOLIA_RPC_URL }}
@@ -8,8 +9,11 @@ env:
     REPORT_OUT_DIR: ${{ vars.REPORT_OUT_DIR }}
     BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
     BASESCAN_SEPOLIA_URL: 'https://api-sepolia.basescan.org/api'
+    BASESCAN_URL: 'https://api.basescan.org/api'
     BLOCKSCOUT_SEPOLIA_URL: 'https://base-sepolia.blockscout.com/api'
+    BLOCKSCOUT_BASE_URL: 'https://base.blockscout.com/api'
     BLOCKSCOUT_SEPOLIA_API_KEY: ${{ secrets.BLOCKSCOUT_BASE_SEPOLIA_API_KEY }}
+    BLOCKSCOUT_BASE_API_KEY: ${{ secrets.BLOCKSCOUT_BASE_API_KEY }}
     AWS_ACCESS_KEY_ID: ${{ secrets.RIVER_S3_AWS_ACCESS_KEY_ID }}
     AWS_SECRET_ACCESS_KEY: ${{ secrets.RIVER_S3_AWS_SECRET_ACCESS_KEY }}
     AWS_REGION: ${{ secrets.RIVER_S3_AWS_REGION }}
@@ -56,7 +60,11 @@ on:
                 required: true
             BLOCKSCOUT_BASE_SEPOLIA_API_KEY:
                 required: true
+            BLOCKSCOUT_BASE_API_KEY:
+                required: true
             GAMMA_BASE_SEPOLIA_DEPLOYER_PK:
+                required: true
+            OMEGA_BASE_DEPLOYER_PK:
                 required: true
             RIVER_S3_AWS_ACCESS_KEY_ID:
                 required: true
@@ -127,9 +135,13 @@ jobs:
                   BASE_SEPOLIA_RPC_URL: ${{ env.BASE_SEPOLIA_RPC_URL }}
                   BLOCKSCOUT_SEPOLIA_URL: ${{ env.BLOCKSCOUT_SEPOLIA_URL }}
                   BLOCKSCOUT_SEPOLIA_API_KEY: ${{ env.BLOCKSCOUT_SEPOLIA_API_KEY }}
+                  BLOCKSCOUT_BASE_URL: ${{ env.BLOCKSCOUT_BASE_URL }}
+                  BLOCKSCOUT_BASE_API_KEY: ${{ env.BLOCKSCOUT_BASE_API_KEY }}
                   BASESCAN_API_KEY: ${{ env.BASESCAN_API_KEY }}
                   BASESCAN_SEPOLIA_URL: ${{ env.BASESCAN_SEPOLIA_URL }}
+                  BASESCAN_URL: ${{ env.BASESCAN_URL }}
                   TESTNET_PRIVATE_KEY: ${{ env.TESTNET_PRIVATE_KEY }}
+                  OMEGA_PRIVATE_KEY: ${{ env.OMEGA_PRIVATE_KEY }}
 
             - name: Run final html report generation w/ updated hashes
               id: gen_html_report

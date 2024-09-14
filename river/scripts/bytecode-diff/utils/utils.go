@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -9,9 +11,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"encoding/hex"
-	"encoding/json"
 
 	"github.com/ethereum/go-ethereum/crypto"
 	"gopkg.in/yaml.v2"
@@ -23,10 +22,10 @@ const (
 )
 
 type DiamondReport struct {
-	Name   string      `yaml:"name"`
-	Origin string      `yaml:"origin"`
-	Target string      `yaml:"target"`
-	Facets []FacetDiff `yaml:"facets"`
+	Name              string      `yaml:"name"`
+	SourceEnvironment string      `yaml:"sourceEnvironment"`
+	TargetEnvironment string      `yaml:"targetEnvironment"`
+	Facets            []FacetDiff `yaml:"facets"`
 }
 
 type Data struct {
@@ -323,7 +322,11 @@ func GetDiamondAddresses(basePath string, diamonds []Diamond, verbose bool) (map
 	return diamondAddresses, nil
 }
 
-func GenerateYAMLReport(originEnvironment, targetEnvironment string, facetDiffs map[string][]FacetDiff, reportOutDir string) error {
+func GenerateYAMLReport(
+	sourceEnvironment, targetEnvironment string,
+	facetDiffs map[string][]FacetDiff,
+	reportOutDir string,
+) error {
 	type Report struct {
 		Diamonds []DiamondReport `yaml:"diamonds"`
 	}
@@ -332,10 +335,10 @@ func GenerateYAMLReport(originEnvironment, targetEnvironment string, facetDiffs 
 
 	for diamondName, diffs := range facetDiffs {
 		diamondReport := DiamondReport{
-			Name:   diamondName,
-			Origin: originEnvironment,
-			Target: targetEnvironment,
-			Facets: diffs,
+			Name:              diamondName,
+			SourceEnvironment: sourceEnvironment,
+			TargetEnvironment: targetEnvironment,
+			Facets:            diffs,
 		}
 		report.Diamonds = append(report.Diamonds, diamondReport)
 	}

@@ -43,6 +43,8 @@ import {DeployEIP712Facet} from "contracts/scripts/deployments/facets/DeployEIP7
 import {DeployPartnerRegistry} from "contracts/scripts/deployments/facets/DeployPartnerRegistry.s.sol";
 
 import {DeployMockLegacyArchitect} from "contracts/scripts/deployments/facets/DeployMockLegacyArchitect.s.sol";
+import {DeploySpaceProxyInitializer} from "contracts/scripts/deployments/utils/DeploySpaceProxyInitializer.s.sol";
+import {DeploySpaceFactoryInit} from "contracts/scripts/deployments/facets/DeploySpaceFactoryInit.s.sol";
 
 contract DeploySpaceFactory is DiamondHelper, Deployer {
   // diamond helpers
@@ -79,6 +81,10 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
 
   DeployTieredLogPricing deployTieredLogPricing = new DeployTieredLogPricing();
   DeployFixedPricing deployFixedPricing = new DeployFixedPricing();
+  DeploySpaceProxyInitializer deploySpaceProxyInitializer =
+    new DeploySpaceProxyInitializer();
+
+  DeploySpaceFactoryInit deploySpaceFactoryInit = new DeploySpaceFactoryInit();
 
   // helpers
   address multiInit;
@@ -109,10 +115,14 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
   address public legacyRuleEntitlement;
   address public ruleEntitlement;
   address public spaceOwner;
-
+  address public spaceProxyInitializer;
   address public tieredLogPricing;
   address public fixedPricing;
   address[] pricingModules;
+
+  // init
+  address public spaceFactoryInit;
+  bytes public spaceFactoryInitData;
 
   function versionName() public pure override returns (string memory) {
     return "spaceFactory";
@@ -180,6 +190,11 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
 
     // legacy
     legacyArchitect = deployMockLegacyArchitect.deploy(deployer);
+    spaceProxyInitializer = deploySpaceProxyInitializer.deploy(deployer);
+    spaceFactoryInit = deploySpaceFactoryInit.deploy(deployer);
+    spaceFactoryInitData = deploySpaceFactoryInit.makeInitData(
+      spaceProxyInitializer
+    );
 
     addFacet(
       metadataHelper.makeCut(metadata, IDiamond.FacetCutAction.Add),
@@ -258,6 +273,8 @@ contract DeploySpaceFactory is DiamondHelper, Deployer {
       partnerRegistry,
       partnerRegistryHelper.makeInitData("")
     );
+
+    addInit(spaceFactoryInit, spaceFactoryInitData);
 
     return
       Diamond.InitParams({

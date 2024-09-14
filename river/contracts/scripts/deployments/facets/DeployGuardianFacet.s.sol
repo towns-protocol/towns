@@ -2,6 +2,7 @@
 pragma solidity ^0.8.23;
 
 //interfaces
+import {IGuardian} from "contracts/src/spaces/facets/guardian/IGuardian.sol";
 
 //libraries
 
@@ -12,10 +13,12 @@ import {GuardianFacet} from "contracts/src/spaces/facets/guardian/GuardianFacet.
 
 contract DeployGuardianFacet is FacetHelper, Deployer {
   constructor() {
-    addSelector(GuardianFacet.enableGuardian.selector);
-    addSelector(GuardianFacet.guardianCooldown.selector);
-    addSelector(GuardianFacet.disableGuardian.selector);
-    addSelector(GuardianFacet.isGuardianEnabled.selector);
+    addSelector(IGuardian.enableGuardian.selector);
+    addSelector(IGuardian.guardianCooldown.selector);
+    addSelector(IGuardian.disableGuardian.selector);
+    addSelector(IGuardian.isGuardianEnabled.selector);
+    addSelector(IGuardian.getDefaultCooldown.selector);
+    addSelector(IGuardian.setDefaultCooldown.selector);
   }
 
   function versionName() public pure override returns (string memory) {

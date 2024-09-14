@@ -50,14 +50,15 @@ process_file() {
     local file="$1"
     echo "Processing file: $file"
 
-    # Extract originContractNames into an array, strip "Facet" suffix, and remove duplicates
-    contract_names=($(yq e '.diamonds[].facets[].originContractName' "$file" | sed 's/Facet$//' | sort -u))
+    # Extract sourceContractNames into an array, strip "Facet" suffix, and remove duplicates
+    contract_names=($(yq e '.diamonds[].facets[].sourceContractName' "$file" | sed 's/Facet$//' | sort -u))
 
     # Determine which make command to use
     if [[ "$network" == "omega" ]]; then
         chain_id=8453
         context="omega"
-        make_command="make deploy-base"
+        make_command="make deploy-any rpc=base private_key=${OMEGA_PRIVATE_KEY}"
+        resume_any="make resume-any rpc=base private_key=${OMEGA_PRIVATE_KEY} verifier=${BASESCAN_URL} etherscan=${BASESCAN_API_KEY}"
     elif [[ "$network" == "gamma" ]]; then
         chain_id=84532
         context="gamma"
@@ -84,6 +85,15 @@ process_file() {
 
                 if [ $? -ne 0 ]; then
                     echo "Error deploying $contract"
+                else
+                    # Run resume-any command for omega network
+                    if [[ "$network" == "omega" ]]; then
+                        echo "Running resume-any for $contract"
+                        $resume_any context="$context" type=facets contract="$deploy_contract"
+                        if [ $? -ne 0 ]; then
+                            echo "Error running resume-any for $contract"
+                        fi
+                    fi
                 fi
             else
                 echo "Error: Deploy file not found for $contract. Skipping."

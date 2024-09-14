@@ -122,7 +122,7 @@ contract SpaceOwner is
   function approve(address to, uint256 tokenId) public payable override {
     // allow removing approvals even if guardian is enabled
     if (to != address(0) && _guardianEnabled(msg.sender)) {
-      revert GuardianEnabled();
+      revert Guardian_Enabled();
     }
 
     super.approve(to, tokenId);
@@ -131,7 +131,7 @@ contract SpaceOwner is
   function setApprovalForAll(address operator, bool approved) public override {
     // allow removing approvals even if guardian is enabled
     if (approved && _guardianEnabled(msg.sender)) {
-      revert GuardianEnabled();
+      revert Guardian_Enabled();
     }
 
     super.setApprovalForAll(operator, approved);
@@ -145,7 +145,7 @@ contract SpaceOwner is
   ) internal override {
     if (from != address(0) && _guardianEnabled(from)) {
       // allow transfering handle at minting time
-      revert GuardianEnabled();
+      revert Guardian_Enabled();
     }
 
     super._beforeTokenTransfers(from, to, startTokenId, quantity);

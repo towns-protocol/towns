@@ -7,17 +7,16 @@ import {IGuardianBase} from "./IGuardian.sol";
 // libraries
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {GuardianStorage} from "./GuardianStorage.sol";
+import {SpaceOwnerStorage} from "contracts/src/spaces/facets/owner/SpaceOwnerStorage.sol";
 
 abstract contract GuardianBase is IGuardianBase {
-  modifier onlyEOA() {
-    if (msg.sender.code.length > 0) {
-      revert NotExternalAccount();
-    }
-    _;
-  }
-
   function _setDefaultCooldown(uint256 cooldown) internal {
     GuardianStorage.layout().defaultCooldown = cooldown;
+    emit GuardianDefaultCooldownUpdated(cooldown);
+  }
+
+  function _getDefaultCooldown() internal view returns (uint256) {
+    return GuardianStorage.layout().defaultCooldown;
   }
 
   /**
@@ -28,7 +27,7 @@ abstract contract GuardianBase is IGuardianBase {
     GuardianStorage.Layout storage ds = GuardianStorage.layout();
 
     if (ds.cooldownByAddress[guardian] == 0) {
-      revert AlreadyEnabled();
+      revert Guardian_AlreadyEnabled();
     }
 
     ds.cooldownByAddress[guardian] = 0;
@@ -44,7 +43,7 @@ abstract contract GuardianBase is IGuardianBase {
     GuardianStorage.Layout storage ds = GuardianStorage.layout();
 
     if (ds.cooldownByAddress[guardian] != 0) {
-      revert AlreadyDisabled();
+      revert Guardian_AlreadyDisabled();
     }
 
     ds.cooldownByAddress[guardian] = block.timestamp + ds.defaultCooldown;
@@ -73,7 +72,7 @@ abstract contract GuardianBase is IGuardianBase {
     // - it has no cooldown or
     // - it has a cooldown but it has not passed yet
     return
-      guardian.code.length == 0 &&
+      SpaceOwnerStorage.layout().factory != guardian &&
       (ds.cooldownByAddress[guardian] == 0 ||
         block.timestamp < ds.cooldownByAddress[guardian]);
   }

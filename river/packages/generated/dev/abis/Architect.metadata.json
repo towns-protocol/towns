@@ -105,6 +105,19 @@
       {
         "inputs": [
           {
+            "internalType": "address",
+            "name": "proxyInitializer",
+            "type": "address",
+            "indexed": true
+          }
+        ],
+        "type": "event",
+        "name": "Architect__ProxyInitializerSet",
+        "anonymous": false
+      },
+      {
+        "inputs": [
+          {
             "internalType": "uint32",
             "name": "version",
             "type": "uint32",
@@ -578,6 +591,19 @@
         "inputs": [],
         "stateMutability": "view",
         "type": "function",
+        "name": "getProxyInitializer",
+        "outputs": [
+          {
+            "internalType": "contract ISpaceProxyInitializer",
+            "name": "",
+            "type": "address"
+          }
+        ]
+      },
+      {
+        "inputs": [],
+        "stateMutability": "view",
+        "type": "function",
         "name": "getSpaceArchitectImplementations",
         "outputs": [
           {
@@ -643,6 +669,18 @@
       {
         "inputs": [
           {
+            "internalType": "contract ISpaceProxyInitializer",
+            "name": "proxyInitializer",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function",
+        "name": "setProxyInitializer"
+      },
+      {
+        "inputs": [
+          {
             "internalType": "contract ISpaceOwner",
             "name": "spaceToken",
             "type": "address"
@@ -680,6 +718,17 @@
           "params": {
             "createSpace": "Space information"
           }
+        },
+        "getProxyInitializer()": {
+          "returns": {
+            "_0": "The address of the current ISpaceProxyInitializer contract"
+          }
+        },
+        "setProxyInitializer(address)": {
+          "details": "This function should only be callable by the contract owner or authorized roles",
+          "params": {
+            "proxyInitializer": "The address of the new ISpaceProxyInitializer contract to be set"
+          }
         }
       },
       "version": 1
@@ -692,6 +741,12 @@
         },
         "createSpaceWithPrepay(((string,string,string,string),((string,string,uint256,uint256,uint64,address,address,uint256,address),(bool,address[],bytes),string[]),(string),(uint256)))": {
           "notice": "Creates a new space with a prepayment"
+        },
+        "getProxyInitializer()": {
+          "notice": "Retrieves the current proxy initializer"
+        },
+        "setProxyInitializer(address)": {
+          "notice": "Sets a new proxy initializer"
         }
       },
       "version": 1
@@ -957,18 +1012,18 @@
       "license": "MIT"
     },
     "contracts/src/factory/facets/architect/Architect.sol": {
-      "keccak256": "0xdbecbdf1a7e1e122cbd62c08206048c9c54bc5b754a2bda4e5929265862e7cce",
+      "keccak256": "0xb81eaab5817bc8c507c43bdc558fe4742b68fb13416a730f60d432f2a99e10b4",
       "urls": [
-        "bzz-raw://735d98c992f619cf3b1092053178bf96ca3364476449397e3fcec5125524d82e",
-        "dweb:/ipfs/Qmf51MVgQ2bAKPLhFf7KtSi9dtGDvpxwEXuwAHK1LnkMvL"
+        "bzz-raw://7de10b4168e5f97fe1e7f43e0909e8d2dd5271c70c70a7c0b31990e28d179916",
+        "dweb:/ipfs/Qmb9p5yFPMrn5carX1LoHyv3oxwUm1GFAWrQ9VjtNVLFHi"
       ],
       "license": "MIT"
     },
     "contracts/src/factory/facets/architect/ArchitectBase.sol": {
-      "keccak256": "0xf00dc63696877de0e3a828d511f6da2ce5bf9d5653bbcf12bd4d601678212067",
+      "keccak256": "0x8f4984bbf8873b14c35645fee62496025ac377ddee8c731b16f325908ac7d2f0",
       "urls": [
-        "bzz-raw://77629ae6868f4e3cbc249a2ec46a22bc78b67e041edf5f779420a59f9e5c8264",
-        "dweb:/ipfs/Qmf2FKuxA594krdH6vgYU6bd1HyxW11z76vCPmvN4FEb2S"
+        "bzz-raw://c78d5acf2839f1fc2f4b66376ef3ae6a9d94a84b51c44dc81f9e2d5c785f6ebd",
+        "dweb:/ipfs/QmZQSMZMhJ3BH3Lm9X6QV6ETcFFJ5XtKkUUZQ3SqJTEUKK"
       ],
       "license": "MIT"
     },
@@ -981,18 +1036,18 @@
       "license": "MIT"
     },
     "contracts/src/factory/facets/architect/IArchitect.sol": {
-      "keccak256": "0x1ea9ec73b105a887d08bc6faf8572458fbbaad6f872d5ad3657d9dcb89955c2e",
+      "keccak256": "0x7557473a08229252796468403453dfa39c6780f7716cf06152a7d57ff4d778fd",
       "urls": [
-        "bzz-raw://497421a6061c4c6c22312229f9f3369bdec7cdc1efdbd64a708e70d3dcf939d8",
-        "dweb:/ipfs/QmeySQ1hSPBGMZXpJ2ksGKEiv9CeSUFdTdUKAwVtPduLh4"
+        "bzz-raw://f625cde9c07288ba1f24aceb0aec11eaed619df0d130dbada5cffbcd8b08f804",
+        "dweb:/ipfs/QmSHzmeL6owo321yAusyQZqnVfgvLEoxLDjEpxDF3kpn8o"
       ],
       "license": "MIT"
     },
     "contracts/src/factory/facets/architect/ImplementationStorage.sol": {
-      "keccak256": "0x0f2132b798bc62a7d8973e219ab38bcddd9ea4d096e7bd16d3d6ad231f0b5ee9",
+      "keccak256": "0x439caf29eb65f4b17dac2976e530112d6a8c35242bc39861796b631d6c1aee94",
       "urls": [
-        "bzz-raw://4a10eab69387dd4d66d6b069db4a6c6f2e1284afa79a7d21d4dab4286b9c1696",
-        "dweb:/ipfs/QmW4yWp1REDHYvvypN35E6PpjTKbaxzVvhfGqkoqCcgF6m"
+        "bzz-raw://9dabd06aceeb34fe9b5931d0468bd35d80ec6900f35b1bb375187ad84e917d66",
+        "dweb:/ipfs/QmdqduCPXcmmTEme4YjNbNz48uB1nQkARRusai8BnEXJ4f"
       ],
       "license": "MIT"
     },
@@ -1053,10 +1108,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/entitlements/rule/IRuleEntitlement.sol": {
-      "keccak256": "0x53121c9c2db2eeaa44090110909be15a494f343daa98fb41c0136497c8b2d99a",
+      "keccak256": "0x362d73e7b5a9626ffb3c76ebd7c41cae6240ce0a8d2ec401df345814a39b303b",
       "urls": [
-        "bzz-raw://c1c6a4bc911f33568d25669f96996377efbf4e2b28dd54f9bf7c3795dae49f90",
-        "dweb:/ipfs/QmXPaHFcWoPvRvqgMwgFWS91tmgMyNUn93bCzGGFRujtLw"
+        "bzz-raw://c750b186885d1af5cda10755c8443629b270d18b221c1054a7e9344adbea7ce4",
+        "dweb:/ipfs/QmcwkJjGj8PGy43KRRh2c4ggcjBVD65XDsoq8H5LozTeN2"
       ],
       "license": "MIT"
     },
@@ -1069,10 +1124,10 @@
       "license": "MIT"
     },
     "contracts/src/spaces/facets/Permissions.sol": {
-      "keccak256": "0x08f1d02cacf8b8adcb38219623f999d15908185eefca4e3d0ea2c3486091d08c",
+      "keccak256": "0x0b7ad76893a8b11877f161bf8d6180230190572f8a171ff5b124570be468976e",
       "urls": [
-        "bzz-raw://b6b021cd9adfed316fc1f43b99e5430d75469ef13d252fa5eb25057155908b77",
-        "dweb:/ipfs/QmYAhL8hWcbtHARsAY9nauyRB4BERUi9s7SSRYkb1e1kCh"
+        "bzz-raw://d21a0dd820441b95a17a5f6681a4a68fdf180fe90aaaa0f3e9e5800b2a247634",
+        "dweb:/ipfs/QmRVHasadqCqDSZRaRrddJXR23wkbVs9LQ6WcPxfDFH37x"
       ],
       "license": "MIT"
     },
@@ -1164,11 +1219,27 @@
       ],
       "license": "MIT"
     },
-    "contracts/src/spaces/facets/proxy/SpaceProxy.sol": {
-      "keccak256": "0xa9ea5edf71ba3056f24a6470f41181c3e0b192f2de0fa171182169ba831e726a",
+    "contracts/src/spaces/facets/proxy/ISpaceProxyInitializer.sol": {
+      "keccak256": "0x2f2a656a9c694243fef1de866c2d8b00850a0f7045d69ecf03d934929f5aea26",
       "urls": [
-        "bzz-raw://36b59fd609500f0485424855d3682c8ed78559f4deebe9bc9cd8e9a81b72cbf7",
-        "dweb:/ipfs/QmPhY34jmR3CWQ3PAfc1B6B4QDAgvHyBaSVAHT3RPKdYSE"
+        "bzz-raw://d09487818cd4461afea29aef2b43ca2ddc80c992b86ac678b7b255a6d2ddf4cb",
+        "dweb:/ipfs/QmZtJXRo4zJkpNxczDfEh7NQ78GKEpzaDFPL5ozVhFSjmJ"
+      ],
+      "license": "MIT"
+    },
+    "contracts/src/spaces/facets/proxy/SpaceProxy.sol": {
+      "keccak256": "0x1f94346c27a7162a679b2ef291ecee5a3a6469fc3238a0f276e838f9c659b4c2",
+      "urls": [
+        "bzz-raw://787a268528ade450f04cecf6b9aec9e8950e4d1ff2458c604193d9200352ac1b",
+        "dweb:/ipfs/QmPf7rmMpgeGTLKhyB4zCJTF1QosrK1zuhuUdXoSof7isH"
+      ],
+      "license": "MIT"
+    },
+    "contracts/src/spaces/facets/proxy/SpaceProxyInitializer.sol": {
+      "keccak256": "0x14b95a8d185bad998d4eb28986f85c07a914c2eadf1584776508bd534c527c86",
+      "urls": [
+        "bzz-raw://f62e283e307eecf64447135cdf63059982ac32623b732076416a8cf6569311aa",
+        "dweb:/ipfs/QmcYaLXdWYbipxhuqPqEmbHbX8GfHVnJDPScN1Uzyfx1WP"
       ],
       "license": "MIT"
     },

@@ -15,6 +15,11 @@ const paramsSchema = z.object({
 	}),
 })
 
+const CACHE_CONTROL = {
+	307: 'public, max-age=30, s-maxage=3600',
+	'4xx': 'public, max-age=30, s-maxage=3600',
+}
+
 export async function fetchUserProfileImage(request: FastifyRequest, reply: FastifyReply) {
 	const logger = request.log.child({ name: fetchUserProfileImage.name })
 	const parseResult = paramsSchema.safeParse(request.params)
@@ -22,7 +27,10 @@ export async function fetchUserProfileImage(request: FastifyRequest, reply: Fast
 	if (!parseResult.success) {
 		const errorMessage = parseResult.error.errors[0]?.message || 'Invalid parameters'
 		logger.info(errorMessage)
-		return reply.code(400).send({ error: 'Bad Request', message: errorMessage })
+		return reply
+			.code(400)
+			.header('Cache-Control', CACHE_CONTROL['4xx'])
+			.send({ error: 'Bad Request', message: errorMessage })
 	}
 
 	const { userId } = parseResult.data
@@ -40,13 +48,19 @@ export async function fetchUserProfileImage(request: FastifyRequest, reply: Fast
 			},
 			'Failed to get stream',
 		)
-		return reply.code(404).send('Stream not found')
+		return reply
+			.code(404)
+			.header('Cache-Control', CACHE_CONTROL['4xx'])
+			.send('Stream not found')
 	}
 
 	// get the image metadata from the stream
 	const profileImage = await getUserProfileImage(stream)
 	if (!profileImage) {
-		return reply.code(404).send('profileImage not found')
+		return reply
+			.header('Cache-Control', CACHE_CONTROL['4xx'])
+			.code(404)
+			.send('profileImage not found')
 	}
 
 	try {
@@ -61,7 +75,10 @@ export async function fetchUserProfileImage(request: FastifyRequest, reply: Fast
 				},
 				'Invalid key or iv',
 			)
-			return reply.code(422).send('Failed to get encryption key or iv')
+			return reply
+				.header('Cache-Control', CACHE_CONTROL['4xx'])
+				.code(422)
+				.send('Failed to get encryption key or iv')
 		}
 		const redirectUrl = `${config.streamMetadataBaseUrl}/media/${
 			profileImage.streamId
@@ -69,12 +86,10 @@ export async function fetchUserProfileImage(request: FastifyRequest, reply: Fast
 
 		return (
 			reply
-				.redirect(redirectUrl)
-				/**
-				 * public: The response may be cached by any cache, including shared caches like a CDN.
-				 * max-age=300: The response may be cached by the client for 300 seconds (5 minutes).
-				 */
-				.header('Cache-Control', 'public, max-age=300')
+				// client should cache the image for 30 seconds, and the CDN for 5 minutes
+				// after 30 seconds, the client will check the CDN for a new image
+				.header('Cache-Control', CACHE_CONTROL[307])
+				.redirect(redirectUrl, 307)
 		)
 	} catch (error) {
 		logger.error(
@@ -85,7 +100,10 @@ export async function fetchUserProfileImage(request: FastifyRequest, reply: Fast
 			},
 			'Failed to get encryption key or iv',
 		)
-		return reply.code(422).send('Failed to get encryption key or iv')
+		return reply
+			.code(422)
+			.header('Cache-Control', CACHE_CONTROL['4xx'])
+			.send('Failed to get encryption key or iv')
 	}
 }
 

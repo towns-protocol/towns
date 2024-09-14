@@ -137,13 +137,13 @@ func ReadAllFacets(client *ethclient.Client, contractAddress string, basescanAPI
 func CreateEthereumClients(
 	baseRpcUrl string,
 	baseSepoliaRpcUrl string,
-	originEnvironment string,
+	sourceEnvironment string,
 	targetEnvironment string,
 	verbose bool,
 ) (map[string]*ethclient.Client, error) {
 	clients := make(map[string]*ethclient.Client)
 
-	for _, env := range []string{originEnvironment, targetEnvironment} {
+	for _, env := range []string{sourceEnvironment, targetEnvironment} {
 		var rpcUrl string
 		if env == "alpha" || env == "gamma" {
 			rpcUrl = baseSepoliaRpcUrl

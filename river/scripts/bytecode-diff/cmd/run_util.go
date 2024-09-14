@@ -81,6 +81,19 @@ var AddHashesCmd = &cobra.Command{
 			log.Fatal().Err(err).Msg("Failed to unmarshal YAML data")
 		}
 
+		// Get first sourceEnvironment key from data
+		var sourceEnvironment string
+		if diamonds, ok := data["diamonds"].([]interface{}); ok && len(diamonds) > 0 {
+			if diamond, ok := diamonds[0].(map[string]interface{}); ok {
+				if env, ok := diamond["sourceEnvironment"].(string); ok {
+					sourceEnvironment = env
+				}
+			}
+		}
+		if sourceEnvironment == "" {
+			log.Fatal().Msg("Invalid YAML structure: 'sourceEnvironment' not found in diamond")
+		}
+
 		// Process deployments
 		deployments, ok := data["deployments"].(map[string]interface{})
 		if !ok {
@@ -125,7 +138,7 @@ var AddHashesCmd = &cobra.Command{
 
 		// After writing the updated YAML file
 		if htmlRender {
-			htmlContent, err := renderYAMLToHTML(updatedYAML, environment)
+			htmlContent, err := renderYAMLToHTML(updatedYAML, sourceEnvironment, environment)
 			if err != nil {
 				log.Error().Err(err).Msg("Failed to render YAML to HTML")
 			} else {
@@ -143,19 +156,39 @@ var AddHashesCmd = &cobra.Command{
 	},
 }
 
-func renderYAMLToHTML(yamlData []byte, environment string) (string, error) {
+func countMatches(hashes interface{}, sourceHash string) int {
+	count := 0
+	if hashSlice, ok := hashes.([]interface{}); ok {
+		for _, hash := range hashSlice {
+			if hashStr, ok := hash.(string); ok {
+				if hashStr == sourceHash {
+					count++
+				}
+			}
+		}
+	}
+	return count
+}
+
+func renderYAMLToHTML(yamlData []byte, sourceEnvironment string, targetEnvironment string) (string, error) {
 	var data map[string]interface{}
 	err := yaml.Unmarshal(yamlData, &data)
 	if err != nil {
 		return "", fmt.Errorf("failed to unmarshal YAML data: %w", err)
 	}
 
-	data["environment"] = environment
+	data["sourceEnvironment"] = sourceEnvironment
+	data["targetEnvironment"] = targetEnvironment
 	data["reportTime"] = time.Now().UTC().Format(time.RFC3339)
 
-	t, err := template.ParseFiles("templates/report.html")
+	funcMap := template.FuncMap{
+		"countMatches": countMatches,
+	}
+
+	// Load the main template and any associated templates
+	t, err := template.New("report.html").Funcs(funcMap).ParseFiles("templates/report.html", "templates/header.html")
 	if err != nil {
-		return "", fmt.Errorf("failed to parse HTML template: %w", err)
+		return "", fmt.Errorf("failed to parse HTML templates: %w", err)
 	}
 
 	var buf strings.Builder

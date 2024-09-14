@@ -8,14 +8,15 @@ import {IGuardian} from "./IGuardian.sol";
 
 // contracts
 import {GuardianBase} from "./GuardianBase.sol";
+import {OwnableBase} from "contracts/src/diamond/facets/ownable/OwnableBase.sol";
 import {Facet} from "contracts/src/diamond/facets/Facet.sol";
 
-contract GuardianFacet is IGuardian, GuardianBase, Facet {
+contract GuardianFacet is IGuardian, GuardianBase, OwnableBase, Facet {
   function __GuardianFacet_init(uint256 cooldown) external onlyInitializing {
     _setDefaultCooldown(cooldown);
   }
 
-  function enableGuardian() external onlyEOA {
+  function enableGuardian() external {
     _enableGuardian(msg.sender);
   }
 
@@ -23,11 +24,19 @@ contract GuardianFacet is IGuardian, GuardianBase, Facet {
     return _guardianCooldown(guardian);
   }
 
-  function disableGuardian() external onlyEOA {
+  function disableGuardian() external {
     _disableGuardian(msg.sender);
   }
 
   function isGuardianEnabled(address guardian) external view returns (bool) {
     return _guardianEnabled(guardian);
+  }
+
+  function getDefaultCooldown() external view returns (uint256) {
+    return _getDefaultCooldown();
+  }
+
+  function setDefaultCooldown(uint256 cooldown) external onlyOwner {
+    _setDefaultCooldown(cooldown);
   }
 }

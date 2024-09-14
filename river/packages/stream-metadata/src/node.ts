@@ -15,6 +15,7 @@ import { fetchUserBio } from './routes/userBio'
 import { fetchMedia } from './routes/media'
 import { spaceRefresh } from './routes/spaceRefresh'
 import { userRefresh } from './routes/userRefresh'
+import { addCacheControlCheck } from './check-cache-control'
 
 // Set the process title to 'stream-metadata' so it can be easily identified
 // or killed with `pkill stream-metadata`
@@ -72,14 +73,22 @@ export function setupRoutes(srv: Server) {
 	/*
 	 * Routes
 	 */
-	srv.get('/health', checkHealth)
-	srv.get('/space/:spaceAddress', async (request, reply) => fetchSpaceMetadata(request, reply))
-	srv.get('/space/:spaceAddress/image', fetchSpaceImage)
-	srv.get('/space/:spaceAddress/refresh', spaceRefresh)
-	srv.get('/user/:userId/image', fetchUserProfileImage)
-	srv.get('/user/:userId/refresh', userRefresh)
-	srv.get('/user/:userId/bio', fetchUserBio)
+
+	// cached
 	srv.get('/media/:mediaStreamId', fetchMedia)
+	srv.get('/user/:userId/image', fetchUserProfileImage)
+	srv.get('/space/:spaceAddress/image', fetchSpaceImage)
+	srv.get('/space/:spaceAddress', fetchSpaceMetadata)
+
+	// not cached
+	srv.get('/health', checkHealth)
+
+	// should be cached, but not before implementing /refresh on metadata routes
+	srv.get('/user/:userId/bio', fetchUserBio)
+
+	// should be rate-limited, but not yet
+	srv.get('/space/:spaceAddress/refresh', spaceRefresh)
+	srv.get('/user/:userId/refresh', userRefresh)
 
 	// Fastify will return 404 for any unmatched routes
 }
@@ -110,6 +119,9 @@ async function main() {
 	try {
 		await registerPlugins(server)
 		setupRoutes(server)
+		addCacheControlCheck(server, {
+			skippedRoutes: ['/refresh', '/health'],
+		})
 		await server.listen({
 			port: config.port,
 			host: config.host,

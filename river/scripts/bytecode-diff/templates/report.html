@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Base Facets Bytecode Diff Report</title>
+    <title>Bytecode Diff Report</title>
     <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; padding: 20px; }
         h1 { color: forestgreen; }
@@ -13,12 +13,14 @@
         th { background-color: #f2f2f2; }
         .true { background-color: #90EE90; }
         .false { background-color: #FFCCCB; }
+        .full-match { background-color: #C6F4D6; }
+        .partial-match { background-color: #F7DC6F; }
+        .no-match { background-color: #FFC0CB; }
     </style>
 </head>
 <body>
-    <h1>{{.environment}}: Base Facets Bytecode Diff Report</h1>
-    <p>Generated on: {{.reportTime}}</p>
-
+    {{template "header" .}}
+    
     <h2>Deployments</h2>
     <table>
         <tr>
@@ -56,28 +58,28 @@
                 <table>
                     <tr>
                         <th>Contract Name</th>
-                        <th>Origin Address</th>
-                        <th>Origin Bytecode Hash</th>
+                        <th>Source Address</th>
+                        <th>Source Bytecode Hash</th>
                         <th>Target Addresses</th>
                         <th>Target Bytecode Hashes</th>
-						<th>Selectors Missing on {{$.environment}}</th>
-						<th>Origin Verified</th>
-						<th>Target Verified</th>
-
+                        <th>Selectors Missing on {{$.environment}}</th>
+                        <th>Source Verified</th>
+                        <th>Target Verified</th>
+                        <th>Hash Equivalence</th>
                     </tr>
                     {{range $facet := $diamond.facets}}
                     <tr>
-                        <td>{{$facet.originContractName}}</td>
+                        <td>{{$facet.sourceContractName}}</td>
                         <td>
                             {{if eq $.environment "gamma"}}
-                                <a href="https://sepolia.basescan.org/address/{{$facet.originFacetAddress}}" target="_blank">{{$facet.originFacetAddress}}</a>
+                                <a href="https://sepolia.basescan.org/address/{{$facet.sourceFacetAddress}}" target="_blank">{{$facet.sourceFacetAddress}}</a>
                             {{else if eq $.environment "omega"}}
-                                <a href="https://basescan.org/address/{{$facet.originFacetAddress}}" target="_blank">{{$facet.originFacetAddress}}</a>
+                                <a href="https://basescan.org/address/{{$facet.sourceFacetAddress}}" target="_blank">{{$facet.sourceFacetAddress}}</a>
                             {{else}}
-                                {{$facet.originFacetAddress}}
+                                {{$facet.sourceFacetAddress}}
                             {{end}}
                         </td>
-                        <td>{{$facet.originBytecodeHash}}</td>
+                        <td>{{$facet.sourceBytecodeHash}}</td>
                         <td>
                             {{range $addr := $facet.targetContractAddresses}}
                                 {{if eq $.environment "gamma"}}
@@ -94,9 +96,24 @@
                                 {{$hash}}<br>
                             {{end}}
                         </td>
-						<td>{{$facet.selectorsDiff}}</td>
-						<td class="{{$facet.originVerified}}">{{$facet.originVerified}}</td>
-						<td class="{{$facet.targetVerified}}">{{$facet.targetVerified}}</td>
+                        <td>{{$facet.selectorsDiff}}</td>
+                        <td class="{{$facet.sourceVerified}}">{{$facet.sourceVerified}}</td>
+                        <td class="{{$facet.targetVerified}}">{{$facet.targetVerified}}</td>
+                        {{ if and $facet.targetBytecodeHashes (len $facet.targetBytecodeHashes) }}
+                            {{$matchCount := countMatches $facet.targetBytecodeHashes $facet.sourceBytecodeHash}}
+                            {{$totalCount := len $facet.targetBytecodeHashes}}
+                            <td class="{{if eq $matchCount $totalCount}}full-match{{else if gt $matchCount 0}}partial-match{{else}}no-match{{end}}">
+                                {{if eq $matchCount $totalCount}}
+                                    All Match
+                                {{else if gt $matchCount 0}}
+                                    Partial Match ({{$matchCount}}/{{$totalCount}})
+                                {{else}}
+                                    No Match (0/{{$totalCount}})
+                                {{end}}
+                            </td>
+                        {{ else }}
+                            <td class="no-match">No Match (0/0)</td>
+                        {{ end }}
                     </tr>
                     {{end}}
                 </table>
@@ -109,7 +126,7 @@
     {{end}}
 
     {{range $key, $value := .}}
-    {{if and (ne $key "deployments") (ne $key "diamonds")}}
+    {{if and (ne $key "deployments") (ne $key "diamonds") (ne $key "sourceEnvironment") (ne $key "targetEnvironment") (ne $key "reportTime")}}
     <h2>{{$key}}</h2>
     <pre>{{$value | printf "%#v"}}</pre>
     {{end}}
