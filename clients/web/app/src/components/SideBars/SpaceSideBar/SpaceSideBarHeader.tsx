@@ -144,18 +144,14 @@ export const SpaceSideBarHeader = (props: {
                 <Stack horizontal height="x6">
                     <Box width="x7" shrink={false} />
                     <Box grow position="relative">
-                        <Box
-                            absoluteFill
-                            justifyContent="center"
-                            cursor="pointer"
-                            onClick={onTokenClick}
-                        >
+                        <Box absoluteFill justifyContent="center" cursor="pointer">
                             {hasName && (
                                 <Paragraph
                                     strong
                                     truncate
                                     size={isSmall ? 'md' : 'lg'}
                                     textAlign="center"
+                                    onClick={onTokenClick}
                                 >
                                     {space.name}
                                 </Paragraph>
