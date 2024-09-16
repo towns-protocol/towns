@@ -132,7 +132,9 @@ export const LargeUploadImageTemplate = <T extends FieldValues>(props: Props<T>)
                         background={noImage ? 'level2' : 'none'}
                         justifySelf="center"
                         alignSelf="center"
-                        pointerEvents="none"
+                        cursor={noImage ? 'pointer' : 'default'}
+                        pointerEvents={noImage ? 'all' : 'none'}
+                        onClick={noImage ? onClick : undefined}
                     >
                         <UploadInput
                             name={formFieldName}
@@ -158,7 +160,7 @@ export const LargeUploadImageTemplate = <T extends FieldValues>(props: Props<T>)
                             border={noImage ? 'none' : 'strongLevel1'}
                             padding="md"
                             cursor="pointer"
-                            pointerEvents="all"
+                            pointerEvents={noImage ? 'none' : 'all'}
                             onClick={(e) => {
                                 e.stopPropagation()
                                 e.preventDefault()
