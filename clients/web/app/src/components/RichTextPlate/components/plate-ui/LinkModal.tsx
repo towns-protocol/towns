@@ -1,19 +1,17 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { PlateEditor, Value, findNode, isHotkey } from '@udecode/plate-common'
-import { ELEMENT_LINK } from '@udecode/plate-link'
+import React, { useCallback, useRef } from 'react'
+import { isHotkey } from '@udecode/plate-common'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { Button, Stack, Text, TextField } from '@ui'
 
 export const AddLinkModal = ({
-    editor,
+    existingLink,
     onSaveLink,
     onHide,
 }: {
-    editor: PlateEditor<Value>
+    existingLink?: string
     onHide: () => void
     onSaveLink: (link: string) => void
 }) => {
-    const [existingLink, setExistingLink] = useState<string | undefined>(undefined)
     const fieldRef = useRef<HTMLInputElement>(null)
 
     const onSave = useCallback(() => {
@@ -39,13 +37,6 @@ export const AddLinkModal = ({
         },
         [onSave, onHide],
     )
-
-    useEffect(() => {
-        const linkEntry = findNode(editor, { match: { type: ELEMENT_LINK } })
-        if (Array.isArray(linkEntry) && linkEntry[0]?.url) {
-            setExistingLink(linkEntry[0].url as string)
-        }
-    }, [editor, setExistingLink])
 
     return (
         <ModalContainer onHide={onHide}>

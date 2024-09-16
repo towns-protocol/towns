@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
 import linkifyit from 'linkify-it'
 import { useEvent } from 'react-use-event-hook'
-import { focusEditor, useEditorRef } from '@udecode/plate-common'
+import { findNode, focusEditor, useEditorRef } from '@udecode/plate-common'
 import { getEditorString } from '@udecode/slate'
-import { upsertLink } from '@udecode/plate-link'
+import { ELEMENT_LINK, upsertLink } from '@udecode/plate-link'
 import { useDevice } from 'hooks/useDevice'
 import { AddLinkModal } from './plate-ui/LinkModal'
 import { FloatingToolbar } from './plate-ui/FloatingToolbar'
@@ -16,11 +16,20 @@ const linkify = linkifyit()
 
 export const EditorToolbarTop = ({ editorId, ...props }: Props) => {
     const [linkLinkModal, setLinkModal] = useState(false)
+    const [existingLink, setExistingLink] = useState<string | undefined>(undefined)
+
     const editor = useEditorRef()
 
     const onLinkClick = useEvent(() => {
+        // Check if the user is adding a new link or modifying an existing one
+        const linkEntry = findNode(editor, { match: { type: ELEMENT_LINK } })
+        let link: string | undefined = undefined
+        if (Array.isArray(linkEntry) && linkEntry[0]?.url) {
+            link = linkEntry[0].url as string
+        }
+
         if (isTouch) {
-            const text = prompt('Add Link', 'https://')
+            const text = prompt(link ? 'Edit Link' : 'Add Link', link || 'https://')
             focusEditor(editor)
             if (!text) {
                 return
@@ -30,6 +39,7 @@ export const EditorToolbarTop = ({ editorId, ...props }: Props) => {
             }
             onSaveLink(text || '')
         } else {
+            setExistingLink(link)
             setLinkModal(true)
         }
     })
@@ -70,7 +80,11 @@ export const EditorToolbarTop = ({ editorId, ...props }: Props) => {
                 </FloatingToolbar>
             )}
             {linkLinkModal && (
-                <AddLinkModal editor={editor} onHide={onHideModal} onSaveLink={onSaveLink} />
+                <AddLinkModal
+                    existingLink={existingLink}
+                    onHide={onHideModal}
+                    onSaveLink={onSaveLink}
+                />
             )}
         </>
     )
